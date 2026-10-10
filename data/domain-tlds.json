@@ -1,0 +1,1216 @@
+{
+	"generatedAt": "2026-10-10T20:47:17.912Z",
+	"probed": 153,
+	"supported": 121,
+	"tlds": [
+		{
+			"tld": "academy",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "agency",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "app",
+			"yearlyUsd": 14,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": [
+				"HSTS_PRELOADED"
+			]
+		},
+		{
+			"tld": "art",
+			"yearlyUsd": 14,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "best",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "biz",
+			"yearlyUsd": 15,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "blog",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "blue",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "business",
+			"yearlyUsd": 12,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "buzz",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "cafe",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "capital",
+			"yearlyUsd": 50,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "cash",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "center",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "chat",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "city",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "cloud",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "club",
+			"yearlyUsd": 13,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "co",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "coach",
+			"yearlyUsd": 60,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "codes",
+			"yearlyUsd": 50,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "com",
+			"yearlyUsd": 12,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "community",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "company",
+			"yearlyUsd": 14,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "computer",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "consulting",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "cool",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "dance",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "de",
+			"yearlyUsd": 7,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "deals",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "design",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "dev",
+			"yearlyUsd": 12,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": [
+				"HSTS_PRELOADED"
+			]
+		},
+		{
+			"tld": "digital",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "direct",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "domains",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "earth",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "email",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "events",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "exchange",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "expert",
+			"yearlyUsd": 50,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "express",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "family",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "fan",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "farm",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "finance",
+			"yearlyUsd": 60,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "fr",
+			"yearlyUsd": 10,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "fun",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "fund",
+			"yearlyUsd": 50,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "fyi",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "gallery",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "games",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "golf",
+			"yearlyUsd": 60,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "graphics",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "group",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "guide",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "guru",
+			"yearlyUsd": 28,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "holdings",
+			"yearlyUsd": 50,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "house",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "in",
+			"yearlyUsd": 12,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "industries",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "info",
+			"yearlyUsd": 12,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "ink",
+			"yearlyUsd": 28,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "io",
+			"yearlyUsd": 60,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "land",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "life",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "live",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "love",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "ltd",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "market",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "marketing",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "media",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "money",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "net",
+			"yearlyUsd": 12,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "network",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "news",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "ninja",
+			"yearlyUsd": 19,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "nl",
+			"yearlyUsd": 8,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "one",
+			"yearlyUsd": 12,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "online",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "org",
+			"yearlyUsd": 12,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "page",
+			"yearlyUsd": 10,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": [
+				"HSTS_PRELOADED"
+			]
+		},
+		{
+			"tld": "partners",
+			"yearlyUsd": 50,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "party",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "place",
+			"yearlyUsd": 15,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "plus",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "press",
+			"yearlyUsd": 60,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "pro",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "productions",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "promo",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "run",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "sale",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "school",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "science",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "services",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "show",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "site",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "social",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "software",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "solutions",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "space",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "store",
+			"yearlyUsd": 50,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "studio",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "support",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "systems",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "team",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "tech",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "technology",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "today",
+			"yearlyUsd": 20,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "tools",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "town",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "trade",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "training",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "tube",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "uk",
+			"yearlyUsd": 12,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "wiki",
+			"yearlyUsd": 28,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "win",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "works",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "world",
+			"yearlyUsd": 40,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "wtf",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "xyz",
+			"yearlyUsd": 12,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		},
+		{
+			"tld": "zone",
+			"yearlyUsd": 30,
+			"currency": "USD",
+			"privacy": [
+				"PUBLIC_CONTACT_DATA",
+				"REDACTED_CONTACT_DATA"
+			],
+			"notices": []
+		}
+	]
+}
