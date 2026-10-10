@@ -1937,6 +1937,14 @@
 					"added": "2026-10-10"
 				},
 				{
+					"path": "/event-markets/leaderboard",
+					"title": "Event Markets leaderboard: season rankings and rewards",
+					"description": "Season and all-time rankings for the best event forecasters. Right calls on long odds score the most; streaks, badges and $THREE season rewards.",
+					"priority": 0.7,
+					"changefreq": "hourly",
+					"added": "2026-10-10"
+				},
+				{
 					"path": "/event-markets/view",
 					"title": "Event market",
 					"description": "One Event Market: entrants with live odds, odds over time, the lock countdown, how it resolves, and your pick. Opened from a shared /event-markets/<slug> link.",
