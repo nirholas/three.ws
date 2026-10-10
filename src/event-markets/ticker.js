@@ -41,7 +41,7 @@ function render() {
 	if (!open.length) { mount.replaceChildren(); return; }
 	open.sort((a, b) => Date.parse(a.locks_at) - Date.parse(b.locks_at));
 	const items = open.map(item);
-	const list = h('ul', { class: 'em-tk-list', 'data-paused': String(paused) }, items, open.length > 2 ? open.map(item).map((li) => { li.setAttribute('aria-hidden', 'true'); return li; }) : null);
+	const list = h('ul', { class: 'em-tk-list', 'data-paused': String(paused), 'data-scroll': String(open.length > 2) }, items, open.length > 2 ? open.map(item).map((li) => { li.setAttribute('aria-hidden', 'true'); return li; }) : null);
 	const btn = h('button', { class: 'em-tk-pause', type: 'button', 'aria-pressed': String(paused), onclick: () => { paused = !paused; render(); } }, paused ? 'Resume' : 'Pause');
 	mount.replaceChildren(h('span', { class: 'em-tk-tag' }, h('span', { class: 'dot', 'aria-hidden': 'true' }), 'Live'), h('div', { class: 'em-tk-view' }, list), btn);
 }

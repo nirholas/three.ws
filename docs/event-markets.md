@@ -164,3 +164,78 @@ The market page itself is the SPA at `/event-markets/view?m=<slug>`; the crawlab
 **Entry points.** The nav (Play, next to The Arena), the Arena tournament page, the `/event` page, `/launches` (launch cohort markets) and the home page, each through `src/event-markets/entry-strip.js`. A strip renders nothing when there is no open market, so no surface shows an empty promo.
 
 Code: [src/event-markets/](../src/event-markets/), [api/event-market-og.js](../api/event-market-og.js), [api/event-market-share.js](../api/event-market-share.js), [api/_lib/event-market-card.js](../api/_lib/event-market-card.js). Tests: [tests/event-market-card.test.js](../tests/event-market-card.test.js).
+
+## Live feed
+
+`GET /api/event-markets/stream` is a server-sent event stream of odds, picks and lifecycle changes. No parameter gives the global feed (every open market); `?slug=<slug>` gives one market. Config lives in [data/event-markets-feed.json](../data/event-markets-feed.json).
+
+### How it works
+
+Database triggers (migration `20261012200000_event_market_live_feed.sql`) append every pick change and status change to an append-only log, `event_market_events`, so every write path is covered: the REST route, cron resolvers and agent forecasters. A processor turns raw rows into a fresh `odds` snapshot per touched market and, when a share crossed the move threshold, a `move`. The log's bigserial id is the SSE event id, so any Cloud Run instance can serve any listener and `Last-Event-ID` resumes across instances. Each instance polls the log once per `pollIntervalMs` (250 ms) for all of its listeners. `/api/cron/event-markets-feed` runs the same processor every minute so moves are recorded when nobody is watching.
+
+### Events
+
+Every `data:` object carries `seq` (the log id). Rows carry the market `slug`.
+
+| Event | When | Data |
+| --- | --- | --- |
+| `snapshot` | First frame of a new connection | `{ seq, markets: [odds] }` |
+| `resync` | Reconnect whose gap the log cannot replay | same as `snapshot` |
+| `resume` | Reconnect that can be replayed | `{ from, to, replayed }`, followed by the missed events |
+| `open` / `lock` / `resolve` | Market status change (once per market) | `{ slug, title, status, locks_at }`, `resolve` adds `winner_outcome_id`, `winner_label` |
+| `odds` | A pick changed the odds | one odds object: `{ slug, title, status, locks_at, pick_count, outcomes: [{ id, label, picks, share, percent }] }` |
+| `pick` | A pick was placed, changed or withdrawn | `{ slug, outcome_id, batched? }` |
+| `move` | An outcome's share moved at least `move.thresholdPoints` (5) within `move.windowSeconds` (600) | `{ slug, label, outcome_id, share_from, share_to, delta_points, window_seconds }` |
+| `ping` | Every 15 s | `{ t }` |
+| `close` | Just before the connection's lifetime ends | none |
+
+A `move` fires once per outcome per window bucket and is also written to `event_market_moves`, which the announcement drafts read.
+
+### Privacy
+
+A `pick` event names the outcome and nothing else. It never carries an account, wallet or handle, and a pick's author is not derivable from the feed. Pick counts are aggregate.
+
+### Reconnecting
+
+Cloud Run ends a request at its timeout (300 s here), so the server closes a connection after about 270 s (jittered) with `event: close`, and `retry: 2000` tells the browser how long to wait. Reconnect with the last id in the `Last-Event-ID` header (a browser's EventSource does this itself) or `?lastEventId=<id>`. The client in [src/event-markets/live-feed.js](../src/event-markets/live-feed.js) additionally dedupes by `seq`, treats 33 s of silence as a dead connection, backs off exponentially with jitter, closes while the tab is hidden, falls back to polling the REST read every 5 s after three failures, and reports `live`, `reconnecting`, `polling` or `offline`.
+
+### Load handling
+
+- At most one `odds` frame per market per second per listener. Held frames are sent without an `id:` line so `Last-Event-ID` never moves backwards.
+- 20 connections per IP and 5000 per process; over the cap the endpoint answers 429 with `Retry-After`.
+- A listener whose socket backlog exceeds 256 KB is dropped and resumes from its last id.
+- Measured with `node scripts/event-markets-fanout-bench.mjs 1000 20 20` (the real hub, 1000 listeners, 20 markets, 40 log rows per round): about 1.9 ms of hub time per tick, 21,000 frames and 4.8 MB written per tick, no retained heap growth. Database cost does not scale with listeners: 2 queries per tick per process. Real socket writes add kernel time on top of the hub figure.
+
+### Where it shows
+
+The market page patches odds in place with a flash (static under `prefers-reduced-motion`) and a connection chip; the home page shows a ticker strip with a pause control, hidden unless a market is live. `/api/pulse?view=event-markets` returns `live_count`, `biggest_mover` and `closing_soon`; `/api/trending` includes `markets` ranked by picks in the last hour.
+
+## Scoring and seasons
+
+Every resolved call scores. All constants live in [data/event-market-scoring.json](../data/event-market-scoring.json); the leaderboard page quotes that file, so the docs and the code cannot drift.
+
+**Formula.** `p` is the market's chance for your pick at the moment you made it (`odds_at_pick`, stamped on the pick).
+
+```
+win   = round(stake x clamp(1 / p - 1, 0.1, 10))
+loss  = -stake
+score = running total in settle order, never below 0
+```
+
+A 80% favourite pays x0.25, an even call x1, a 20% call x4, a 5% call x10 (the cap). A heavy favourite is never worth zero (floor x0.1). Void markets are refunded and do not count. Code: [scoring.js](../api/_lib/event-markets/scoring.js), tests: [tests/event-markets-scoring.test.js](../tests/event-markets-scoring.test.js).
+
+**Stats.** Per account, per scope (season or all time) and per source kind: calls, hits, hit rate, average odds at pick, best call, current and longest streak, rank. A miss resets the current streak. You rank after 3 resolved calls and a positive score.
+
+**Seasons.** Calendar quarters in UTC, keyed `2026-Q4`. A season is final once it has ended.
+
+**Rollup.** `GET /api/cron/event-markets-rollup` ([rollup.js](../api/_lib/event-markets/rollup.js)) scores newly resolved markets into `event_market_scores` (primary key market and account, `on conflict do nothing`), recomputes stats only for seasons that changed, awards badges and, for ended seasons, proposes rewards. Running it twice changes nothing. `?full=1` recomputes everything. An admin override deletes a market's score rows and the next run re-scores them.
+
+**API.** `GET /api/event-markets/leaderboard?scope=season|all&season=2026-Q4&source_kind=all&limit=25` (your own row comes back as `me`), `GET /api/event-markets/seasons`, `GET /api/event-markets/seasons/:id/rewards`, `GET /api/event-markets/me`. Names are the display name, username or a shortened wallet; never an email.
+
+**Badges** (through the achievements system, shown on profiles): first correct call, upset call (right when the market gave the pick under 25%), 5 in a row, season top 10, season champion. Each is awarded once per account.
+
+**Rewards.** Top 10 each season: rank 1 gets 50,000 $THREE, ranks 2 to 3 get 25,000, ranks 4 to 10 get 10,000, plus platform perks. The list is computed automatically at season end into `event_market_season_payouts` as `proposed`. Paying is owner-gated: `node --env-file=.env scripts/event-markets-season-payouts.mjs --season 2026-Q4` prints the table (recipient wallet, amount, token, chain) and stops. Nothing is sent until the owner says yes; `--approve` only records that yes, `--paid <account> <signature>` records a landed transfer.
+
+**Fair play.** One account has one pick per market (primary key). A pick ranks only if, at pick time, the account is at least 24 hours old, has a linked wallet or verified email, and is not a service account. A pick that fails still plays but is stored `ranked = false`, never scores on the board and never earns rewards. Checks: [fairness.js](../api/_lib/event-markets/fairness.js).
+
+Page: `/event-markets/leaderboard`. Migration: `20261012400000_event_market_scoring.sql` (check `npm run db:status`, then the owner-approved migrate).

@@ -29872,6 +29872,24 @@
 				"feature"
 			],
 			"link": "/event-markets"
+		},
+		{
+			"date": "2026-10-10",
+			"title": "Event Markets leaderboard: seasons, streaks, badges and rewards",
+			"summary": "Every resolved call now scores. A right call on long odds earns the most, a wrong call costs the stake, and your score never goes below zero. Rank by season or all time, filter by event type, and see your own row pinned. Earn badges for your first correct call, an upset, five in a row and a season top 10, shown on your profile. Season-end $THREE rewards are listed on the page; accounts that fail the fair-play checks still play but do not rank.",
+			"tags": [
+				"feature"
+			],
+			"link": "/event-markets/leaderboard"
+		},
+		{
+			"date": "2026-10-10",
+			"title": "Event Markets: odds that move while you watch",
+			"summary": "Event market odds now update live. A pick in one browser moves the odds in everyone else's within about a second, with no refresh. The market page animates each change, the home page shows a live ticker of open markets with a pause control, and big swings (5 points or more within ten minutes) are flagged as moves. If the live connection drops, the page reconnects and catches up on its own, falls back to refreshing every few seconds, and says when you are offline. Picks stay anonymous: the feed shows counts, never who picked.",
+			"tags": [
+				"feature"
+			],
+			"link": "/event-markets"
 		}
 	]
 }
