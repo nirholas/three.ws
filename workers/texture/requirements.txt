@@ -8,7 +8,7 @@ uvicorn[standard]==0.32.1
 # operator-staged cache. torch 2.3.1 is held by the cu121 base image and the
 # xformers 0.0.27 pairing in the Dockerfile; moving it is a base-image change.
 diffusers==0.31.0
-transformers==4.57.6
+transformers==5.10.1
 accelerate==1.15.0
 safetensors==0.4.5
 controlnet-aux==0.0.9
