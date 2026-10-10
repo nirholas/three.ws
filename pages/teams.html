@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<script src="/referral-capture.js"></script>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Specialist Teams · three.ws</title>
+		<meta name="description" content="Assemble a squad of four 3D agents (Researcher, Entry, Trader, Launcher) under one spend policy. They share a live findings board, and the Trader only acts on research it can cite." />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Specialist Teams · three.ws" />
+		<meta property="og:description" content="A squad of four 3D agents that research, scout, trade and prepare launches together, on one live findings board, inside one spend policy." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Specialist+Teams&amp;d=Four+3D+agents%2C+one+spend+policy%2C+one+live+findings+board.+The+Trader+only+acts+on+research+it+can+cite.&amp;p=%2Fteams" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<meta name="robots" content="index, follow, max-image-preview:large" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/teams.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="tm" id="tmRoot" aria-busy="true">
+			<div id="tmContent">
+				<div class="tm-stack">
+					<div class="tm-skel" style="height:96px"></div>
+					<div class="tm-skel" style="height:280px"></div>
+					<div class="tm-skel" style="height:200px"></div>
+				</div>
+			</div>
+		</main>
+
+		<dialog class="tm-dialog" id="tmConfirm" aria-labelledby="tmConfirmTitle">
+			<form method="dialog" class="tm-dialog-inner">
+				<div class="tm-dialog-head">
+					<h2 id="tmConfirmTitle">Confirm</h2>
+					<button type="submit" value="cancel" class="tm-x" aria-label="Close">×</button>
+				</div>
+				<div class="tm-dialog-body" id="tmConfirmBody"></div>
+				<div class="tm-dialog-foot">
+					<button type="submit" value="cancel" class="tm-btn">Cancel</button>
+					<button type="submit" value="ok" class="tm-btn primary" id="tmConfirmOk">Confirm</button>
+				</div>
+			</form>
+		</dialog>
+
+		<div id="tmToast" class="tm-toast" role="status" aria-live="polite"></div>
+
+		<script type="module" src="/src/teams.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

@@ -1200,6 +1200,14 @@
 			"dest": "/swarms.html"
 		},
 		{
+			"src": "/teams/?",
+			"dest": "/teams.html"
+		},
+		{
+			"src": "/teams/([0-9a-fA-F-]{36})/?",
+			"dest": "/teams.html"
+		},
+		{
 			"src": "/ui-juice/?",
 			"dest": "/ui-juice.html"
 		},
@@ -5588,6 +5596,26 @@
 		{
 			"src": "/api/club/tips/stream",
 			"dest": "/api/club/tips-stream"
+		},
+		{
+			"src": "/api/teams/([^/]+)/members/([^/]+)",
+			"dest": "/api/teams/[id]"
+		},
+		{
+			"src": "/api/teams/([^/]+)/findings/stream",
+			"dest": "/api/teams/[id]"
+		},
+		{
+			"src": "/api/teams/([^/]+)/(findings|run|repair|members)",
+			"dest": "/api/teams/[id]"
+		},
+		{
+			"src": "/api/teams/([^/]+)",
+			"dest": "/api/teams/[id]"
+		},
+		{
+			"src": "/api/teams",
+			"dest": "/api/teams"
 		},
 		{
 			"src": "/api/swarms/([^/]+)/stream",

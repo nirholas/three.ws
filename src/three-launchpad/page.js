@@ -452,9 +452,24 @@ function renderLaunch() {
 		<div class="tl-span" style="margin-top:18px"><button type="submit" class="tl-btn tl-btn--primary tl-btn--block" id="tl-launch-btn">Launch on the $THREE curve</button><p class="tl-status" id="tl-launch-status" aria-live="polite"></p></div>
 	</form>`;
 	const form = $('#tl-form');
+	applyLaunchPrefill(form);
 	form.symbol.addEventListener('input', () => (form.symbol.value = form.symbol.value.toUpperCase().replace(/[^A-Z0-9]/g, '')));
 	form.buy.addEventListener('input', () => (form.buy.value = form.buy.value.replace(/[^0-9.]/g, '')));
 	form.addEventListener('submit', onLaunchSubmit);
+}
+
+// A launch plan handed over by another surface (a team's Launcher, for one)
+// arrives as ?avatar=&name=&symbol=&description=. It only fills the form: the
+// owner still reviews every field and signs in their own wallet.
+function applyLaunchPrefill(form) {
+	const wanted = params.get('avatar');
+	if (wanted && state.avatars.some((a) => a.id === wanted)) form.avatar.value = wanted;
+	const name = params.get('name');
+	const symbol = params.get('symbol');
+	const description = params.get('description');
+	if (name) form.name.value = name.slice(0, 32);
+	if (symbol) form.symbol.value = symbol.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+	if (description) form.description.value = description.slice(0, 500);
 }
 
 function fromBase64(b64) {
