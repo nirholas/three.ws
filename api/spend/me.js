@@ -114,7 +114,7 @@ export default wrap(async (req, res) => {
 		if (err?.expose && err.status) return error(res, err.status, err.code, err.message);
 		throw err;
 	}
-	return json(res, data);
+	return json(res, 200, data);
 });
 
 /** The whole read model, exported so the test can call it without HTTP. */
@@ -170,7 +170,7 @@ export async function spendReadModel({ userId, agentId = null, days = DEFAULT_DA
 			SELECT COALESCE(NULLIF(tool, ''), kind) AS tool,
 			       kind,
 			       COUNT(*)::int AS calls,
-			       COUNT(*) FILTER (WHERE status IS NULL OR status < 400)::int AS ok,
+			       COUNT(*) FILTER (WHERE status IS NULL OR status <> 'error')::int AS ok,
 			       COALESCE(SUM(cost_micro_usd), 0)::bigint AS cost_micro_usd,
 			       COALESCE(SUM(COALESCE(input_tokens, 0) + COALESCE(output_tokens, 0)), 0)::bigint AS tokens,
 			       MAX(created_at) AS last_at
