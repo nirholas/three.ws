@@ -155,6 +155,14 @@ vi.mock('../api/_lib/agent-wallet.js', async (importOriginal) => ({
 	getSolanaAddressBalances: vi.fn(async () => ({ sol: 0.5, usdc: 0 })),
 }));
 
+// The signed real-funds agreements are a database read; each test decides
+// whether the owner has signed (the default) or not.
+const signatureMock = vi.fn();
+vi.mock('../api/_lib/real-funds-agreement.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	currentSignatureFor: (...a) => signatureMock(...a),
+}));
+
 vi.mock('../api/_lib/ssrf-guard.js', async (importOriginal) => ({
 	...(await importOriginal()),
 	fetchSafePublicUrl: vi.fn(),
@@ -276,6 +284,7 @@ function glb() {
 const PNG = Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489', 'hex');
 
 beforeEach(() => {
+	signatureMock.mockReset().mockResolvedValue({ signedAt: '2026-10-01T00:00:00.000Z', signatureName: 'QA Owner', context: 'agent-wallet' });
 	db.agents.clear();
 	db.automations.clear();
 	db.runs.clear();
@@ -533,6 +542,31 @@ describe('automation tools', () => {
 			terms: { amount: '0.25 SOL per fire', asset: 'SOL', chain: 'Solana mainnet', recipient: expect.stringContaining(MINT), caps: 'dailyUsd $50' },
 		});
 		expect(res.result.content[0].text).toContain('Recipient:');
+		expect(db.automations.size).toBe(0);
+	});
+
+	it('refuses a spend automation from an owner who has not signed the real-funds agreements', async () => {
+		signatureMock.mockResolvedValue(null);
+		const res = await call('automation_create', {
+			agent_id: AGENT,
+			trigger: { type: 'tip_received' },
+			action: { type: 'transfer', destination: DEST, amountSol: 0.01 },
+			confirm_spend: true,
+		});
+		expect(res.result.isError).toBe(true);
+		expect(out(res)).toMatchObject({ status: 'risk_ack_required', sign_url: expect.stringContaining('http') });
+		expect(db.automations.size).toBe(0);
+	});
+
+	it('refuses to arm a spend automation when the agreement lookup fails', async () => {
+		signatureMock.mockRejectedValue(new Error('db down'));
+		const res = await call('automation_create', {
+			agent_id: AGENT,
+			trigger: { type: 'tip_received' },
+			action: { type: 'transfer', destination: DEST, amountSol: 0.01 },
+			confirm_spend: true,
+		});
+		expect(out(res).status).toBe('agreement_check_unavailable');
 		expect(db.automations.size).toBe(0);
 	});
 

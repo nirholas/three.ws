@@ -53,6 +53,7 @@ import {
 	listUserAutomations,
 } from '../../_lib/agents-v1/automations.js';
 import { connectorSpendError } from '../policy.js';
+import { currentSignatureFor, agreementRequirement } from '../../_lib/real-funds-agreement.js';
 
 const SPEND_ACTIONS = new Set(['swap', 'transfer']);
 const MAX_GLB_BYTES = 64 * 1024 * 1024;
@@ -130,13 +131,30 @@ function pick(args, map) {
 
 // ── spend gate ───────────────────────────────────────────────────────────────
 
-/** Refuse a connector key, or a bearer without wallet:write, before any spend config is touched. */
-function assertMaySpend(auth, toolName) {
+/**
+ * Refuse a connector key, a bearer without wallet:write, or an account that has
+ * not signed the real-funds agreements, before any spend config is touched.
+ * A failed agreement lookup refuses too: nothing is armed on an unverified signature.
+ */
+async function assertMaySpend(auth, toolName) {
 	if (auth?.connector) throw connectorSpendError(toolName);
 	if (!hasScope(auth?.scope, 'wallet:write')) {
 		return designedError(
 			'insufficient_scope',
 			'This automation spends from the agent wallet, so the connection needs the wallet:write scope. Reconnect with wallet access, or use an agent_prompt or notify action.',
+		);
+	}
+	let signature;
+	try {
+		signature = await currentSignatureFor(auth.userId);
+	} catch {
+		return designedError('agreement_check_unavailable', 'Could not verify the signed real-funds agreements, so nothing was armed. Try again in a moment.');
+	}
+	if (!signature) {
+		const requirement = agreementRequirement();
+		return toolResult(
+			{ status: 'risk_ack_required', error: 'risk_ack_required', ...requirement },
+			{ isError: true, text: `Sign the real-funds agreements before an agent can spend on its own. Nothing was armed. Sign at ${requirement.sign_url}` },
 		);
 	}
 	return null;
@@ -715,7 +733,7 @@ export const toolDefs = [
 			const norm = await api(async () => normalizeAutomation(body));
 			if (failed(norm)) return norm.__error;
 			if (SPEND_ACTIONS.has(norm.action.type)) {
-				const refused = assertMaySpend(auth, 'automation_create');
+				const refused = await assertMaySpend(auth, 'automation_create');
 				if (refused) return refused;
 				if (args.confirm_spend !== true) {
 					return spendConfirmation('automation_create', spendTerms(await displayDestination(norm.action), norm.trigger, norm.limits), { title: norm.title });
@@ -766,7 +784,7 @@ export const toolDefs = [
 			const nextType = current.source === 'automation' ? args.action?.type || current.action?.type : null;
 			const onlyDisabling = args.enabled === false && Object.keys(body).length === 1;
 			if (SPEND_ACTIONS.has(nextType) && !onlyDisabling) {
-				const refused = assertMaySpend(auth, 'automation_update');
+				const refused = await assertMaySpend(auth, 'automation_update');
 				if (refused) return refused;
 				if (args.confirm_spend !== true) {
 					const action = args.action && args.action.type && args.action.type !== current.action.type ? args.action : { ...current.action, ...(args.action || {}) };
@@ -814,7 +832,7 @@ export const toolDefs = [
 			const current = await api(() => getAutomation(auth.userId, args.automation_id));
 			if (failed(current)) return current.__error;
 			if (current.source === 'automation' && SPEND_ACTIONS.has(current.action?.type)) {
-				const refused = assertMaySpend(auth, 'automation_trigger');
+				const refused = await assertMaySpend(auth, 'automation_trigger');
 				if (refused) return refused;
 				if (args.confirm_spend !== true) {
 					return spendConfirmation('automation_trigger', spendTerms(current.action, { type: 'manual', note: 'fires once, now' }, current.limits), { automation_id: args.automation_id });
