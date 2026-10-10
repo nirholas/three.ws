@@ -989,7 +989,7 @@
 			var meta = document.createElement('div');
 			meta.className = 'showcase-card-meta';
 			meta.innerHTML = '<div class="showcase-card-name">' + escHtml(item.name || 'Agent') + '</div>'
-				+ '<div class="showcase-card-sub">' + escHtml(item.description ? item.description.slice(0, 50) : (item.kind === 'onchain' ? 'ERC-8004' : 'GLB')) + '</div>';
+				+ '<div class="showcase-card-sub">' + escHtml(item.description ? item.description : (item.kind === 'onchain' ? 'ERC-8004' : 'GLB')) + '</div>';
 			card.appendChild(meta);
 
 			if (glbUrl) bootAgent(card, skel, glbUrl, idx);

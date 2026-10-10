@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Give your AI a body</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>
+	:root {
+		--bg: #0a0a0b; --panel: #111113; --stroke: #26262a;
+		--ink: #fff; --ink-dim: #9a9aa3; --ink-faint: #5c5c66;
+		--accent: linear-gradient(100deg, #ff9a56, #ff5fa2 55%, #8b6cff);
+	}
+	* { box-sizing: border-box; margin: 0; padding: 0; }
+	html, body { background: var(--bg); overflow: hidden; }
+	#stage { position: relative; overflow: hidden; background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; }
+	#grid { position: absolute; inset: -64px; background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 64px 64px; }
+	#bloom { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,95,162,.30), rgba(139,108,255,.14) 55%, transparent 100%); will-change: transform, opacity; }
+	canvas#gl { position: absolute; inset: 0; width: 100%; height: 100%; }
+	.abs { position: absolute; will-change: transform, opacity; }
+	.mono { font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+	.head { font-family: 'Space Grotesk', sans-serif; font-weight: 700; letter-spacing: -0.035em; line-height: 1; }
+	.grad { background: var(--accent); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .06em; }
+	.word { display: inline-block; will-change: transform, opacity, filter; }
+	.panel { overflow: hidden; background: var(--panel); border: 1px solid var(--stroke); border-radius: 18px; box-shadow: 0 40px 120px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.03); }
+	.panel img { display: block; position: absolute; max-width: none; }
+	.chip { display: inline-block; border: 1px solid var(--stroke); background: rgba(17,17,19,.92); border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); white-space: nowrap; }
+	.chip i { display: inline-block; border-radius: 50%; background: var(--accent); margin-right: .7em; }
+	#stamp { opacity: .9; }
+</style>
+</head>
+<body>
+<div id="stage">
+	<div id="grid"></div>
+	<div id="bloom"></div>
+	<canvas id="gl"></canvas>
+	<div id="layers"></div>
+</div>
+<script type="importmap">
+{ "imports": {
+	"three": "/node_modules/three/build/three.module.js",
+	"three/addons/": "/node_modules/three/examples/jsm/"
+} }
+</script>
+<script type="module" src="/marketing/motion-studio/src/composition.js"></script>
+</body>
+</html>

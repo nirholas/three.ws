@@ -44,6 +44,7 @@
 	// ── localStorage keys (threews:fd:* namespace) ─────────────────────────────
 	var K_VISITED = 'threews:fd:visited';     // routes the user has opened (array)
 	var K_TRIED   = 'threews:fd:tried';       // dismissed "have you tried" prompts (map)
+	var HINT_RECHECK_MS = 8000;               // re-check while the search hint still holds the corner
 	var REVEAL_DELAY_MS = 6500;               // let the page settle before suggesting
 	// Owned by the Walk Companion (walk-sdk config keys.enabled), read-only here.
 	var K_WALK_ENABLED = 'walk:companion:enabled';
@@ -397,6 +398,14 @@
 	function showPassivePrompt() {
 		if (_card) return; // a contextual card already took the slot
 		if (alreadyPromptedThisSession()) return;
+		// One ambient chip at a time. A first visit already carries the "Getting
+		// started" pill and the search-shortcut hint in the corner; adding a third
+		// card on top of the hero buries the page. Wait for the hint to be seen
+		// or dismissed (it never returns), then suggest.
+		if (document.querySelector('.tws-atlas-hint')) {
+			_revealTimer = setTimeout(showPassivePrompt, HINT_RECHECK_MS);
+			return;
+		}
 		// When the companion agent is live it owns ambient discovery (it greets,
 		// narrates, and reacts to ⌘K commands) — don't stack a competing toast in
 		// the same corner. Contextual after-action cross-links still show.

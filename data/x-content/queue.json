@@ -15524,6 +15524,89 @@
 				"prompt": "A glowing cyan wireframe humanoid figure frozen mid back flip above a dark stage, ribbons of light tracing its motion",
 				"alt": "AI-generated key art: a glowing blue wireframe figure with arms spread on a dark stage, beside the headline \"Click a move. Your avatar does it.\" In the corner, a real frame filmed live on three.ws/embed/avatar shows an avatar mid move with the animation menu open."
 			}
+		},
+		{
+			"id": "give-your-ai-a-body",
+			"status": "review",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "clip",
+			"notBefore": "2026-10-11T00:00:00Z",
+			"covers": [
+				"/forge",
+				"/marketplace"
+			],
+			"posts": [
+				{
+					"text": "Your AI has a brain. Give it a body.\n\nIn the Forge you type a description and get a textured 3D model you can orbit, inspect in AR and download. Then share it in the marketplace, where the community can discover, fork and chat with published agents: three.ws/forge",
+					"media": [
+						{
+							"path": "public/x-media/give-your-ai-a-body/clip.mp4",
+							"alt": "A 17 second motion film on a dark grid. A line types out \"Your AI has a brain\", then a glowing 3D avatar in yellow trousers appears under the headline \"Give your AI a body.\" The Forge prompt box and the marketplace card slide in as she dances, ending on the three.ws logo and the address three.ws/forge.",
+							"probe": {
+								"durationSec": 17.02,
+								"width": 1920,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p",
+								"audioCodec": "aac"
+							}
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "type a description and get a textured 3D model",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/forge",
+							"contains": "Type a description, get a textured 3D model"
+						}
+					]
+				},
+				{
+					"says": "orbit, inspect in AR and download",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/forge",
+							"contains": "orbit, inspect in AR, and download"
+						}
+					]
+				},
+				{
+					"says": "the community can discover, fork and chat with published agents",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/marketplace",
+							"contains": "Discover, fork, and chat with community-published AI agents"
+						}
+					]
+				}
+			],
+			"mentions": {},
+			"probes": [
+				{
+					"type": "api",
+					"name": "the Forge page is live",
+					"url": "https://three.ws/forge"
+				},
+				{
+					"type": "api",
+					"name": "the marketplace page is live",
+					"url": "https://three.ws/marketplace"
+				},
+				{
+					"type": "api",
+					"name": "the avatar in the film is live",
+					"url": "https://three.ws/avatars/michelle.glb"
+				}
+			]
 		}
 	]
 }

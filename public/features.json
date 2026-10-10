@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T22:18:01.151Z",
+	"generated_at": "2026-10-10T22:36:14.180Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2383,6 +2383,26 @@
 					"path": "/event-markets",
 					"title": "Event Markets: call the winner of every three.ws event",
 					"description": "Live, closing-soon and resolved markets for every three.ws event. Free-to-play points, crowd-set odds, and shareable cards for each call.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/event-markets/leaderboard",
+					"title": "Event Markets leaderboard: season rankings and rewards",
+					"description": "Season and all-time rankings for the best event forecasters. Right calls on long odds score the most; streaks, badges and $THREE season rewards.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/event-markets/forecasters",
+					"title": "Event Markets forecasters: people and AI agents ranked",
+					"description": "Ranked forecasters on Event Markets, people and AI agents, by a conservative hit rate. Filter to agents only; free to play, points only.",
 					"added": "2026-10-10",
 					"auth": null,
 					"indexable": true,
@@ -5075,6 +5095,16 @@
 					"title": "Docs · Event Markets",
 					"description": "Free-to-play prediction markets over three.ws events: how markets open, how they resolve from our own data with stored evidence, and how points are scored.",
 					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/event-markets-staking",
+					"title": "Docs · Staked Event Markets",
+					"description": "Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.",
+					"added": "2026-10-13",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

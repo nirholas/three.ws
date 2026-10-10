@@ -706,6 +706,7 @@ const appConfig = {
 				grok: resolve(__dirname, 'pages/grok.html'),
 				'x-claim': resolve(__dirname, 'pages/x-claim.html'),
 				'event-market-announcements': resolve(__dirname, 'pages/event-market-announcements.html'),
+				'event-markets-staking-admin': resolve(__dirname, 'pages/event-markets-staking-admin.html'),
 				'event-markets': resolve(__dirname, 'pages/event-markets.html'),
 				'event-markets-leaderboard': resolve(__dirname, 'pages/event-markets-leaderboard.html'),
 				'event-markets-forecasters': resolve(__dirname, 'pages/event-markets-forecasters.html'),
@@ -844,6 +845,7 @@ const appConfig = {
 				symphony: resolve(__dirname, 'pages/symphony.html'),
 				diorama: resolve(__dirname, 'pages/diorama.html'),
 				cad: resolve(__dirname, 'pages/cad.html'),
+				anatomy: resolve(__dirname, 'pages/anatomy.html'),
 				modly: resolve(__dirname, 'pages/modly.html'),
 				'forge-desktop': resolve(__dirname, 'pages/forge-desktop.html'),
 				receipts: resolve(__dirname, 'pages/receipts.html'),
@@ -1757,6 +1759,8 @@ const appConfig = {
 					'/diorama/': resolve(root, 'pages/diorama.html'),
 					'/cad': resolve(root, 'pages/cad.html'),
 					'/cad/': resolve(root, 'pages/cad.html'),
+					'/anatomy': resolve(root, 'pages/anatomy.html'),
+					'/anatomy/': resolve(root, 'pages/anatomy.html'),
 					'/modly': resolve(root, 'pages/modly.html'),
 					'/modly/': resolve(root, 'pages/modly.html'),
 					'/forge-desktop': resolve(root, 'pages/forge-desktop.html'),
@@ -1914,6 +1918,7 @@ const appConfig = {
 					'/ar': resolve(root, 'public/ar-forge.html'),
 					'/ar/': resolve(root, 'public/ar-forge.html'),
 					'/admin/event-market-announcements': resolve(root, 'pages/event-market-announcements.html'),
+					'/admin/event-markets-staking': resolve(root, 'pages/event-markets-staking-admin.html'),
 					'/event-markets': resolve(root, 'pages/event-markets.html'),
 					'/event-markets/': resolve(root, 'pages/event-markets.html'),
 					'/event-markets/leaderboard': resolve(root, 'pages/event-markets-leaderboard.html'),
@@ -2512,6 +2517,12 @@ const appConfig = {
 					// /coin/:id  → global coin detail page (CoinGecko slug or Solana mint)
 					else if (!filePath && /^\/coin\/[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}\/?$/.test(path))
 						filePath = resolve(root, 'pages/coin.html');
+					// /anatomy/:id  → one Anatomy machine (anatomy_designs uuid)
+					else if (
+						!filePath &&
+						/^\/anatomy\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\/?$/.test(path)
+					)
+						filePath = resolve(root, 'pages/anatomy.html');
 					// /cad/:id  → CAD Forge design page (cad_designs uuid)
 					else if (
 						!filePath &&

@@ -1289,6 +1289,14 @@
 			"dest": "/cad.html"
 		},
 		{
+			"src": "/anatomy/?",
+			"dest": "/anatomy.html"
+		},
+		{
+			"src": "/anatomy/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/?",
+			"dest": "/anatomy.html"
+		},
+		{
 			"src": "/modly/?",
 			"dest": "/modly.html"
 		},
@@ -2597,6 +2605,10 @@
 		{
 			"src": "/admin/event-market-announcements/?",
 			"dest": "/event-market-announcements.html"
+		},
+		{
+			"src": "/admin/event-markets-staking/?",
+			"dest": "/event-markets-staking-admin.html"
 		},
 		{
 			"src": "/x/claim/?",

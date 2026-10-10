@@ -4122,6 +4122,12 @@
 					"added": "2026-10-10"
 				},
 				{
+					"path": "/docs/event-markets-staking",
+					"title": "Docs · Staked Event Markets",
+					"description": "Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.",
+					"added": "2026-10-13"
+				},
+				{
 					"path": "/docs/x402",
 					"title": "Docs · x402 Protocol",
 					"description": "How three.ws implements x402 HTTP 402 paid agent skills: the challenge, verify, and settle mechanics.",

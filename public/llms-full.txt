@@ -1422,6 +1422,18 @@ URL: https://three.ws/event-markets
 
 Live, closing-soon and resolved markets for every three.ws event. Free-to-play points, crowd-set odds, and shareable cards for each call.
 
+### Event Markets leaderboard: season rankings and rewards
+
+URL: https://three.ws/event-markets/leaderboard
+
+Season and all-time rankings for the best event forecasters. Right calls on long odds score the most; streaks, badges and $THREE season rewards.
+
+### Event Markets forecasters: people and AI agents ranked
+
+URL: https://three.ws/event-markets/forecasters
+
+Ranked forecasters on Event Markets, people and AI agents, by a conservative hit rate. Filter to agents only; free to play, points only.
+
 ### Event market
 
 URL: https://three.ws/event-markets/view
@@ -3060,6 +3072,12 @@ Cross-chain Agent Reputation: score any wallet, mint, or agent id (Solana or EVM
 URL: https://three.ws/docs/event-markets
 
 Free-to-play prediction markets over three.ws events: how markets open, how they resolve from our own data with stored evidence, and how points are scored.
+
+### Docs · Staked Event Markets
+
+URL: https://three.ws/docs/event-markets-staking
+
+Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.
 
 ### Docs · x402 Protocol
 

@@ -936,9 +936,13 @@
 			letter-spacing: -0.015em; margin: 0 0 3px;
 			white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 		}
+		/* A description is prose, not a label: sentence case, wrapped to two
+		   lines and ended with a real ellipsis instead of being cut mid-word. */
 		.showcase-card-sub {
-			font-family: var(--font-mono); font-size: 10px; color: var(--text-3);
-			letter-spacing: 0.08em; text-transform: uppercase;
+			font-family: var(--font-body, inherit); font-size: 12px; line-height: 1.4;
+			color: var(--text-2, var(--text-3));
+			display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+			line-clamp: 2; overflow: hidden; text-wrap: pretty;
 		}
 		.showcase-card-tag {
 			position: absolute; top: 12px; left: 12px; z-index: 4;
@@ -1211,6 +1215,10 @@
 		}
 		@media (max-width: 460px) {
 			.foot-cols { grid-template-columns: 1fr 1fr; }
+		}
+		.foot-lang {
+			display: flex; align-items: center; gap: 8px;
+			margin-bottom: 20px; font-size: 12px; color: var(--text-3);
 		}
 		.foot-inner {
 			display: flex; justify-content: space-between; align-items: center;
