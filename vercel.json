@@ -6601,6 +6601,10 @@
 			"schedule": "*/10 * * * *"
 		},
 		{
+			"path": "/api/cron/agent-automations",
+			"schedule": "* * * * *"
+		},
+		{
 			"path": "/api/cron/reconcile-decisions",
 			"schedule": "*/10 * * * *"
 		},
