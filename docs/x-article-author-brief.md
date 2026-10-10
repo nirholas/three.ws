@@ -27,6 +27,9 @@ they finish. The boundaries below are what keep them from overwriting each other
    section, and ends on the pages to try. Match its shape, voice, depth and framing.
 5. [docs/ops/x-story-findings-2026-09-30.md](./ops/x-story-findings-2026-09-30.md): surfaces found
    broken or not filmable. Do not build an article on one of them.
+6. [docs/x-archive/trythreews-articles-readers.md](./x-archive/trythreews-articles-readers.md): what
+   readers of our published Articles responded to and asked for. Choose the angle and write the
+   opening with it in mind.
 
 ## The deliverable
 

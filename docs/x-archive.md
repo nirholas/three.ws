@@ -71,6 +71,19 @@ Lift is computed against the **median**, not the mean, on purpose: with the top
 10% of posts earning roughly half of all engagement, a mean is a report about
 one viral post.
 
+## X Articles and what readers said back
+
+Articles are the long form, and the useful signal is in the replies, not just the
+counts. `npm run x:articles:pull` walks the timeline through the X API, keeps every
+post that carries an Article (title, full body, exact metrics), and collects the
+readers' replies and quotes for each one. The file format and flags are in
+[data/x-archive/README.md](../data/x-archive/README.md).
+
+[docs/x-archive/trythreews-articles-readers.md](../docs/x-archive/trythreews-articles-readers.md)
+is the hand-written reading of that pull: which Articles reached people, what
+readers asked for in their own words, and what that means for the next Article.
+Unlike the engagement report it is not generated, so update it after a fresh pull.
+
 ## Two measurement rules worth knowing
 
 **Reposts are not our posts.** A profile scrape returns the whole timeline, and
