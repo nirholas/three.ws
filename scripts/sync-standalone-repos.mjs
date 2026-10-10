@@ -106,8 +106,21 @@ const log = (...a) => console.log(...a);
 function git(args, opts = {}) {
 	return execFileSync('git', args, { cwd: root, encoding: 'utf8', ...opts }).trim();
 }
+// GitHub's secondary limit throttles bursts of writes even with core quota to
+// spare, so mutating `gh api` calls are spaced out and retried with backoff.
+const sleepSync = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 function gh(args, opts = {}) {
-	return execFileSync('gh', args, { encoding: 'utf8', ...opts }).trim();
+	const mutating = args[0] === 'api' && /^(PUT|POST|PATCH|DELETE)$/.test(args[args.indexOf('-X') + 1] || '');
+	for (let attempt = 0; ; attempt++) {
+		try {
+			if (mutating) sleepSync(1200);
+			return execFileSync('gh', args, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], ...opts }).trim();
+		} catch (e) {
+			const text = `${e.stderr || ''}${e.message}`;
+			if (attempt >= 5 || !/rate limit|secondary|abuse/i.test(text)) throw e;
+			sleepSync(30_000 * (attempt + 1));
+		}
+	}
 }
 function readJson(path) {
 	return JSON.parse(readFileSync(path, 'utf8'));
