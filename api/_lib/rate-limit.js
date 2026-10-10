@@ -1520,6 +1520,12 @@ export const limits = {
 		// (which caching can't stop). One bucket across all DAS endpoints.
 		heliusDasGlobal: () =>
 			getLimiter('helius-das:global', { limit: 3000, window: '1 h' }).limit('global'),
+		// Per-IP share of that ceiling for /api/crypto/holders, whose keyed walk is
+		// up to five DAS pages. Without it one scraper (3,500 reads/h from a single
+		// IP, 2026-10-10) spent the whole Helius plan; past it the caller still gets
+		// a real answer from the keyless lane.
+		cryptoHoldersHeliusIp: (ip) =>
+			getLimiter('crypto-holders:helius:ip', { limit: 30, window: '1 h' }).limit(ip),
 	// Free Crypto Data API family (api/crypto/*). Keyless, no-account reads an agent
 	// makes mid-task (wallet portfolio, token snapshots). Some paths fan out to the
 	// keyed Helius/public-RPC upstreams, so a generous-but-bounded per-IP burst keeps

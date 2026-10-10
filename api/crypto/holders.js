@@ -24,7 +24,7 @@
 import { cors, method, wrap, error, json, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { isValidSolanaAddress, isValidEvmAddress } from '../_lib/validate.js';
-import { composeTokenHolders, DEFAULT_LIMIT, MAX_LIMIT } from '../_lib/crypto-token-holders.js';
+import { composeTokenHolders, realHolderDeps, DEFAULT_LIMIT, MAX_LIMIT } from '../_lib/crypto-token-holders.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { staleEnvelope } from '../_lib/rpc-degrade.js';
 
@@ -33,6 +33,11 @@ import { staleEnvelope } from '../_lib/rpc-degrade.js';
 // day-old distribution is still a real position-sizing answer; a 503 is not.
 const HOLDERS_LKG_TTL_S = 24 * 3600;
 const holdersLkgKey = (address, limit) => `crypto:holders:lkg:${address}:${limit}`;
+
+// Fresh tier on the same record: a repeat read inside the CDN's own max-age is
+// answered from it, so a poller that misses the edge cache never re-walks the
+// chain for a distribution it was handed seconds ago.
+const HOLDERS_FRESH_MS = 60_000;
 
 const EXAMPLE = '/api/crypto/holders?address=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
@@ -69,7 +74,22 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	const result = await composeTokenHolders({ address, limit });
+	const lkgKey = holdersLkgKey(address, limit);
+	const cached = await cacheGet(lkgKey);
+	if (cached && cached.body && typeof cached.at === 'number' && Date.now() - cached.at < HOLDERS_FRESH_MS) {
+		return json(res, 200, cached.body, {
+			'cache-control': 'public, s-maxage=60, stale-while-revalidate=60',
+			'x-holders-cache': 'hit',
+		});
+	}
+
+	// The keyed walk spends the shared Helius DAS ceiling, so it runs only while
+	// this caller's hourly share and the global cap both have room.
+	const heliusAllowed = async () => {
+		const [ipDas, globalDas] = await Promise.all([limits.cryptoHoldersHeliusIp(ip), limits.heliusDasGlobal()]);
+		return ipDas.success && globalDas.success;
+	};
+	const result = await composeTokenHolders({ address, limit }, realHolderDeps({ heliusAllowed }));
 	const ts = new Date().toISOString();
 
 	if (result.status === 'not_found') {
@@ -78,9 +98,8 @@ export default wrap(async (req, res) => {
 		});
 	}
 	if (result.status === 'upstream_down') {
-		const lkg = await cacheGet(holdersLkgKey(address, limit));
-		if (lkg && lkg.body && typeof lkg.at === 'number') {
-			return json(res, 200, staleEnvelope(lkg.body, lkg.at), {
+		if (cached && cached.body && typeof cached.at === 'number') {
+			return json(res, 200, staleEnvelope(cached.body, cached.at), {
 				'cache-control': 'public, s-maxage=30, stale-while-revalidate=60',
 				'x-holders-stale': '1',
 			});
@@ -105,7 +124,7 @@ export default wrap(async (req, res) => {
 		sources: result.sources,
 	};
 	if (result.note) body.note = result.note;
-	cacheSet(holdersLkgKey(address, limit), { body, at: Date.now() }, HOLDERS_LKG_TTL_S).catch(() => {});
+	cacheSet(lkgKey, { body, at: Date.now() }, HOLDERS_LKG_TTL_S).catch(() => {});
 
 	// Distribution shifts trade by trade but a position-sizing read tolerates a
 	// minute of cache; this absorbs polling bursts without hammering the RPC.

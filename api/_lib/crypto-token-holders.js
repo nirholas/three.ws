@@ -19,7 +19,12 @@
 // deriveConcentration; docs/crypto-api.md mirrors the exact numbers.
 
 import { parseMintAccount } from '../v1/token/security.js';
-import { solanaRpcEndpoints, makeRotatingFetch } from './solana/connection.js';
+import {
+	solanaRpcEndpoints,
+	makeRotatingFetch,
+	isEndpointCooling,
+	markEndpointCooldown,
+} from './solana/connection.js';
 import { withDeadline } from './rpc-degrade.js';
 
 // Budget for ONE JSON-RPC read across the WHOLE failover chain, not per
@@ -135,10 +140,18 @@ async function rpcCall(rpcFetch, method, params) {
  * `complete` is true iff every account was enumerated within the page cap —
  * only then is a holder count honest.
  */
-export async function heliusHolderWalk(mint, { fetchImpl = fetch } = {}) {
+export async function heliusHolderWalk(
+	mint,
+	{ fetchImpl = fetch, isCooling = isEndpointCooling, markCooldown = markEndpointCooldown } = {},
+) {
 	const key = process.env.HELIUS_API_KEY;
 	if (!key) return null;
+	// Same URL the canonical RPC chain parks, so the fleet-wide quota verdict
+	// applies here too. Walking into a plan that is already out spent a doomed
+	// round trip per read and kept the cap pinned (2,000+ "max usage reached"
+	// replies in 6h on 2026-10-10).
 	const url = `https://mainnet.helius-rpc.com/?api-key=${key}`;
+	if (isCooling(url)) return null;
 	const accounts = [];
 	let complete = false;
 	for (let page = 1; page <= HELIUS_MAX_PAGES; page++) {
@@ -146,6 +159,7 @@ export async function heliusHolderWalk(mint, { fetchImpl = fetch } = {}) {
 		try {
 			batch = await heliusPage(url, mint, page, fetchImpl);
 		} catch (err) {
+			if (err.quota) markCooldown(url, 429, err.message);
 			// A page that fails mid-walk does not invalidate the pages already in
 			// hand: 1000 accounts is far more than any top-N needs, and discarding
 			// them dropped the read onto the keyless lane, whose
@@ -164,6 +178,10 @@ export async function heliusHolderWalk(mint, { fetchImpl = fetch } = {}) {
 	return { accounts, complete };
 }
 
+// Helius words an exhausted plan as "max usage reached" (HTTP 429, or 200 with a
+// plain-text body) or JSON-RPC -32429.
+const HELIUS_QUOTA_RE = /max usage reached|-32429/i;
+
 // One page of the walk. Helius answers an exhausted plan with HTTP 200 and the
 // plain-text body "max usage reached", so parsing the body as JSON unconditionally
 // surfaced a bare SyntaxError with no hint that the key was the problem. Read the
@@ -181,21 +199,29 @@ async function heliusPage(url, mint, page, fetchImpl) {
 		signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
 	});
 	const text = await r.text();
-	if (!r.ok) throw new Error(`helius getTokenAccounts ${r.status}: ${text.slice(0, 80)}`);
+	const quota = r.status === 429 || HELIUS_QUOTA_RE.test(text);
+	if (!r.ok) throw Object.assign(new Error(`helius getTokenAccounts ${r.status}: ${text.slice(0, 80)}`), { quota });
 	let json;
 	try {
 		json = JSON.parse(text);
 	} catch {
-		throw new Error(`helius getTokenAccounts: non-JSON response "${text.slice(0, 60)}"`);
+		throw Object.assign(new Error(`helius getTokenAccounts: non-JSON response "${text.slice(0, 60)}"`), { quota });
 	}
-	if (json?.error) throw new Error(`helius getTokenAccounts: ${JSON.stringify(json.error).slice(0, 120)}`);
+	if (json?.error) {
+		const detail = JSON.stringify(json.error);
+		throw Object.assign(new Error(`helius getTokenAccounts: ${detail.slice(0, 120)}`), { quota: HELIUS_QUOTA_RE.test(detail) });
+	}
 	const batch = json?.result?.token_accounts;
 	if (!Array.isArray(batch)) throw new Error('helius getTokenAccounts: malformed response');
 	return batch;
 }
 
-// Default network dependency bundle — injectable for tests.
-export function realHolderDeps() {
+// Default network dependency bundle, injectable for tests. `heliusAllowed` is
+// the caller's budget gate for the keyed walk: each read costs up to
+// HELIUS_MAX_PAGES DAS calls against a paid plan shared with balances, the
+// sniper and the indexers, so a free keyless endpoint must not let one client
+// spend it. A denied budget is not an error, the read takes the keyless lane.
+export function realHolderDeps({ heliusAllowed = async () => true } = {}) {
 	const rpcFetch = makeRotatingFetch(solanaRpcEndpoints('mainnet'));
 	return {
 		fetchMintAccount: (address) =>
@@ -213,7 +239,7 @@ export function realHolderDeps() {
 			});
 			return owners;
 		},
-		fetchHelius: (address) => heliusHolderWalk(address),
+		fetchHelius: async (address) => ((await heliusAllowed()) ? heliusHolderWalk(address) : null),
 	};
 }
 
