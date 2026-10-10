@@ -26,11 +26,9 @@ import { toolDefs as pairedDefs } from './tools/paired.js';
 import { toolDefs as agentLifecycleDefs } from './tools/agent-lifecycle.js';
 import { toolDefs as customSkillDefs } from './tools/custom-skills.js';
 import { toolDefs as resourceDefs } from './tools/resources.js';
+import { toolDefs as domainDefs } from './tools/domains.js';
 
 const baseDefs = [
-import { toolDefs as mailDefs } from './tools/mail.js';
-import { toolDefs as whitelistDefs } from './tools/whitelist.js';
-import { toolDefs as domainDefs } from './tools/domains.js';
 	...libraryDefs,
 	...avatarDefs,
 	...embedDefs,
@@ -54,13 +52,11 @@ import { toolDefs as domainDefs } from './tools/domains.js';
 	...cardDefs,
 	...pairedDefs,
 	...agentLifecycleDefs,
+	...domainDefs,
 ];
 
 // Free, public entry point — listed first so discovery clients see it up top.
 // priceFor annotates the per-call price of the paid tools in the overview.
-	...mailDefs,
-	...whitelistDefs,
-	...domainDefs,
 // Annotations: a static, local overview built at module load — read-only,
 // deterministic, closed-world (destructiveHint is explicit because the MCP
 // spec defaults it to true when omitted).

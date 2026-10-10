@@ -2483,6 +2483,10 @@
 			"dest": "/credits.html"
 		},
 		{
+			"src": "/domains/?",
+			"dest": "/domains.html"
+		},
+		{
 			"src": "/x-pricing/?",
 			"dest": "/x-pricing.html"
 		},
@@ -2538,10 +2542,6 @@
 		},
 		{
 			"src": "/showcase/?",
-		{
-			"src": "/domains/?",
-			"dest": "/domains.html"
-		},
 			"dest": "/app.html"
 		},
 		{
@@ -5399,6 +5399,10 @@
 			"dest": "/api/billing/summary"
 		},
 		{
+			"src": "/api/domains/([^/]+)",
+			"dest": "/api/domains/[action]?action=$1"
+		},
+		{
 			"src": "/api/three-token/([^/]+)",
 			"dest": "/api/three-token/[action]?action=$1"
 		},
@@ -5554,10 +5558,6 @@
 		{
 			"src": "/discover/a/sol/([A-Za-z0-9]+)",
 			"dest": "/api/discover-detail?kind=solana&asset=$1"
-		{
-			"src": "/api/domains/([^/]+)",
-			"dest": "/api/domains/[action]?action=$1"
-		},
 		},
 		{
 			"src": "/discover/avatar/([^/]+)",
