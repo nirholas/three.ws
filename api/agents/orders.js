@@ -155,7 +155,7 @@ async function handleGetOne(req, res, id, orderId) {
 	return json(res, 200, { data: { order: { ...order, next_fire: nextFire(order) }, fills, events, group } });
 }
 
-// GET /book — every order that can still fill, with when it next acts and why
+// GET /book: every order that can still fill, with when it next acts and why
 // the last evaluation did not fire, plus the latest history across the agent.
 async function handleBook(req, res, id) {
 	const owned = await loadOwned(req, res, id);
@@ -168,7 +168,7 @@ async function handleBook(req, res, id) {
 	return json(res, 200, { data: { network, book, events, counts: { resting: book.length, skipping } } });
 }
 
-// GET /events?order=<uuid>&limit= — order history, newest first.
+// GET /events?order=<uuid>&limit=: order history, newest first.
 async function handleEvents(req, res, id) {
 	const owned = await loadOwned(req, res, id);
 	if (owned.error) return;
@@ -181,7 +181,7 @@ async function handleEvents(req, res, id) {
 	return json(res, 200, { data: { events } });
 }
 
-// GET /dca?rail=solana|evm — one list of every DCA schedule, both rails.
+// GET /dca?rail=solana|evm: one list of every DCA schedule, both rails.
 async function handleDcaList(req, res, id) {
 	const owned = await loadOwned(req, res, id);
 	if (owned.error) return;
@@ -194,7 +194,7 @@ async function handleDcaList(req, res, id) {
 	return json(res, 200, { data: { schedules, rails: DCA_RAILS } });
 }
 
-// POST /dca — create a DCA on either rail. rail 'solana' (default) places an
+// POST /dca: create a DCA on either rail. rail 'solana' (default) places an
 // order-engine DCA from the agent wallet (any SPL token, optional price band);
 // rail 'evm' registers a schedule against an already-signed delegation.
 async function handleDcaCreate(req, res, id) {
@@ -245,7 +245,7 @@ async function evmDcaUpdate(res, owned, order, body) {
 	return error(res, 422, 'immutable', 'an EVM DCA schedule can only be paused, resumed or cancelled');
 }
 
-// POST / (or /ladder, /oco) — create a validated order or order group.
+// POST / (or /ladder, /oco): create a validated order or order group.
 async function handleCreate(req, res, id, kind = null) {
 	const owned = await loadOwned(req, res, id);
 	if (owned.error) return;

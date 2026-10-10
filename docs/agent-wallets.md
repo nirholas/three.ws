@@ -44,7 +44,7 @@ Limits are stored per agent and are **opt-in** — an unset ceiling means "no gl
 
 - `daily_usd` — rolling 24-hour USD-equivalent outflow ceiling, summed from the custody ledger
 - `per_tx_usd` — maximum USD-equivalent for a single outbound transaction
-- `withdraw_allowlist` — the active addresses on the [destination whitelist](./destination-whitelist.md); new addresses serve a cooldown (24h default, 1h minimum) and need step-up before they can receive funds
+- `withdraw_allowlist`, the active addresses on the [destination whitelist](./destination-whitelist.md); new addresses serve a cooldown (24h default, 1h minimum) and need step-up before they can receive funds
 - `frozen` — the kill switch: every **autonomous** path is refused
 - `require_capabilities` — when on, every autonomous spend must present a valid [scoped session key](agent-abilities/wallet/21-access.md)
 
