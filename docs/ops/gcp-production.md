@@ -151,6 +151,11 @@ curl -s https://three.ws/api/version | jq '{commitShort, branch, builtAt, revisi
 # Sweep every page declared in data/pages.json against the live site. deploy:gcp
 # runs this automatically after the purge; run it standalone any time.
 npm run smoke:prod
+
+# Tell Bing, Yandex, Seznam and Naver about pages added in the last 7 days so
+# they are indexed in minutes. Run only after the deploy is live (IndexNow
+# fetches every URL it is given). --days N, --since YYYY-MM-DD, --all, --dry-run.
+npm run seo:indexnow
 ```
 
 > **A fresh deploy worktree needs THREE staged artifacts, not just
