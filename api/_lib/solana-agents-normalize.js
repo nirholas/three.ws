@@ -2,6 +2,8 @@
 // I/O (no db, no RPC) so the field-parsing logic is unit-testable in isolation
 // and can be imported without dragging in the serverless DB driver.
 
+import { IPFS_GATEWAYS } from '../../src/ipfs.js';
+
 export const MAX_NAME = 200;
 export const MAX_DESC = 1000;
 
@@ -18,9 +20,9 @@ export function resolveGateway(uri) {
 	if (!uri) return null;
 	const s = String(uri).trim();
 	if (!s) return null;
-	if (s.startsWith('ipfs://')) return `https://ipfs.io/ipfs/${s.slice(7).replace(/^ipfs\//, '')}`;
+	if (s.startsWith('ipfs://')) return `${IPFS_GATEWAYS[0]}${s.slice(7).replace(/^ipfs\//, '')}`;
 	if (s.startsWith('ar://')) return `https://arweave.net/${s.slice(5)}`;
-	if (/^[a-zA-Z0-9]{46,59}$/.test(s) && !s.includes('.')) return `https://ipfs.io/ipfs/${s}`;
+	if (/^[a-zA-Z0-9]{46,59}$/.test(s) && !s.includes('.')) return `${IPFS_GATEWAYS[0]}${s}`;
 	return s;
 }
 

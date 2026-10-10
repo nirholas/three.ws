@@ -8,16 +8,16 @@
 // and take the first answer.
 //
 // The IPFS list is the one api/_lib/ipfs-pin.js verifies manifests against
-// (imported, not copied) plus 4everland, the extra mirror api/img.js races.
-// cloudflare-ipfs.com / cf-ipfs.com (retired 2024) and flk-ipfs.xyz (refusing
-// connections) are deliberately absent: a dead host in a ladder burns the
-// timeout budget and reports a network error as a miss.
+// (imported, not copied), so every server-side reader, api/img.js included,
+// walks the same gateways. Why each retired gateway is absent is recorded on
+// IPFS_READ_GATEWAYS: a dead host in a ladder burns the timeout budget and
+// reports a network error as a miss.
 
 import { IPFS_READ_GATEWAYS } from './ipfs-pin.js';
 import { fetchFirst } from '../../src/shared/failover-fetch.js';
 
 /** Ordered IPFS gateway prefixes (each ends in `/ipfs/`). */
-export const IPFS_GATEWAYS = [...IPFS_READ_GATEWAYS, 'https://4everland.io/ipfs/'];
+export const IPFS_GATEWAYS = [...IPFS_READ_GATEWAYS];
 
 /** Ordered Arweave gateway prefixes (each ends in `/`). */
 export const ARWEAVE_GATEWAYS = [

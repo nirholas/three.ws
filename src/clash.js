@@ -116,7 +116,10 @@ async function apiPost(action, payload) {
 
 // ── Avatar (image or seeded initials) ────────────────────────────────────────
 function avatar(side, cls = 'cl-avatar') {
-	if (side.image) return el('img', { class: cls, src: side.image, alt: side.symbol || '', loading: 'lazy', referrerpolicy: 'no-referrer' });
+	// Coin art lives on public IPFS gateways that the browser blocks cross-origin;
+	// /api/img fetches it server-side and always answers a valid image.
+	const src = proxiedImageURL(side.image || '', side.token || '', { width: 128 });
+	if (src) return el('img', { class: cls, src, alt: side.symbol || '', loading: 'lazy' });
 	const label = (side.symbol || side.token || '?').replace(/^\$/, '').slice(0, 2).toUpperCase();
 	return el('div', { class: `${cls} cl-avatar-ph`, text: label, 'aria-hidden': 'true' });
 }

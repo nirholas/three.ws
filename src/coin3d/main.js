@@ -61,7 +61,7 @@ import { fetchFirstOrNull } from '../shared/failover-fetch.js';
 import { dextoolsUrl } from '../shared/dextools.js';
 import { dextoolsTokenUrl } from '../shared/trading-terminals.js';
 import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from '../shared/cinematic-render.js';
-import { resolveURI, IPFS_GATEWAYS } from '../ipfs.js';
+import { proxiedImageURL, resolveURI } from '../ipfs.js';
 
 const MCP_ENDPOINT = '/api/pump-fun-mcp';
 // The one and only coin — featured on the no-mint landing.
@@ -196,7 +196,7 @@ async function loadSnapshot() {
 
 	const name = d.name || d.metadata?.name || gt?.name || 'Unknown token';
 	const symbol = (d.symbol || d.metadata?.symbol || gt?.symbol || '').toUpperCase();
-	const image = (await resolveImage(d)) || gt?.image || null;
+	const images = coinFaceCandidates(d, gt);
 
 	return {
 		mint,
@@ -204,7 +204,8 @@ async function loadSnapshot() {
 		answered,
 		name,
 		symbol,
-		image,
+		image: images[0] || null,
+		images,
 		marketCapUsd: numOrNull(d.marketCapUsd ?? d.usdMarketCap ?? d.market_cap) ?? gt?.marketCapUsd ?? null,
 		priceUsd: gt?.priceUsd ?? null,
 		volume24: gt?.volume24 ?? null,
@@ -309,45 +310,27 @@ async function fetchTokenMeta(mintAddr) {
 	], { timeoutMs: 7000, label: 'token-meta' });
 }
 
-// The token logo lives in the off-chain metadata JSON pointed to by the
-// on-chain `uri`, not in getTokenDetails directly. Resolve it (best-effort):
-// a direct image field wins; otherwise fetch the uri JSON and read .image.
-async function resolveImage(d) {
+// Coin face art, best source first, every entry a same-origin /api/img URL.
+// The logo usually lives in the off-chain metadata JSON the on-chain `uri`
+// points at; /api/img follows that `.image` server-side with gateway retry, so
+// the page never fetches an IPFS gateway itself (they send no CORS headers, and
+// ipfs.io now answers fetch clients with a service-worker notice instead of the
+// file). Same origin also keeps the WebGL texture untainted. GeckoTerminal's
+// logo is the last resort for coins whose metadata carries no image.
+const FACE_WIDTH = 480;
+
+function coinFaceCandidates(d, gt) {
+	const opts = { width: FACE_WIDTH, fallback: 'none' };
 	const direct = d.image || d.imageUrl || d.metadata?.image;
-	if (direct) return ipfsToHttp(direct);
 	const uri = d.uri || d.metadata?.uri;
-	if (!uri) return null;
-	try {
-		const res = await fetch(ipfsToHttp(uri), { signal: AbortSignal.timeout(6000) });
-		if (!res.ok) return null;
-		const meta = await res.json();
-		return meta?.image ? ipfsToHttp(meta.image) : null;
-	} catch {
-		return null;
+	const candidates = [];
+	if (direct) candidates.push(proxiedImageURL(direct, '', opts));
+	else if (typeof uri === 'string' && uri) {
+		const q = new URLSearchParams({ meta: resolveURI(uri), w: String(FACE_WIDTH), fallback: 'none' });
+		candidates.push(`/api/img?${q}`);
 	}
-}
-
-function ipfsToHttp(url) {
-	if (typeof url !== 'string') return null;
-	// Resolve through the shared gateway list so this page inherits every gateway
-	// the rest of the platform rotates through, instead of pinning one host.
-	if (url.startsWith('ipfs://')) return resolveURI(url);
-	return url;
-}
-
-// If a gateway URL fails, the content is usually still pinned elsewhere — retry
-// the same CID on a second gateway before degrading. Returns null when the URL
-// isn't a known gateway URL (nothing useful to retry).
-function altIpfsGateway(url) {
-	if (typeof url !== 'string') return null;
-	// Find which shared gateway this URL currently uses and hand back the next
-	// one in the list, so a retry walks the whole chain rather than bouncing
-	// between the same two hosts.
-	const idx = IPFS_GATEWAYS.findIndex((gw) => url.startsWith(gw));
-	if (idx === -1) return null;
-	const cid = url.slice(IPFS_GATEWAYS[idx].length);
-	const next = IPFS_GATEWAYS[(idx + 1) % IPFS_GATEWAYS.length];
-	return next === IPFS_GATEWAYS[idx] ? null : `${next}${cid}`;
+	if (gt?.image) candidates.push(proxiedImageURL(gt.image, '', opts));
+	return [...new Set(candidates.filter(Boolean))];
 }
 
 function numOrNull(v) {
@@ -586,7 +569,7 @@ function buildCoin(snapshot) {
 	spin.add(coin);
 	coinFaceMats = [faceMat];
 
-	if (snapshot.image) {
+	if (snapshot.images.length) {
 		const loader = new TextureLoader();
 		loader.setCrossOrigin('anonymous');
 
@@ -603,17 +586,15 @@ function buildCoin(snapshot) {
 			coinFaceMats = [lit];
 		};
 
-		const loadFrom = (src, allowRetry) => {
-			loader.load(src, applyTexture, undefined, () => {
-				// The primary gateway dropped the logo. The CID is usually pinned on
-				// other gateways too, so retry once on an alternate before degrading
-				// to the tinted disc.
-				const alt = allowRetry ? altIpfsGateway(src) : null;
-				if (alt) loadFrom(alt, false);
-			});
+		// Walk the candidates in order; when every source misses, the coin keeps
+		// its tinted disc.
+		const loadFrom = (i) => {
+			const src = snapshot.images[i];
+			if (!src) return;
+			loader.load(src, applyTexture, undefined, () => loadFrom(i + 1));
 		};
 
-		loadFrom(snapshot.image, true);
+		loadFrom(0);
 	}
 }
 

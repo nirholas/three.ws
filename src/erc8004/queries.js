@@ -11,6 +11,7 @@
 import { BrowserProvider, Contract } from 'ethers';
 import { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS } from './abi.js';
 import { CHAIN_META, readProvider } from './chain-meta.js';
+import { resolveURI } from '../ipfs.js';
 
 /**
  * Return a read-only ethers provider. Uses the connected wallet provider if
@@ -230,9 +231,7 @@ export async function fetchAgentMetadata(uri, { apiOrigin = '' } = {}) {
 		}
 	}
 
-	let url = uri;
-	if (uri.startsWith('ipfs://')) url = 'https://ipfs.io/ipfs/' + uri.slice(7);
-	else if (uri.startsWith('ar://')) url = 'https://arweave.net/' + uri.slice(5);
+	const url = resolveURI(uri);
 
 	if (isSameOrigin(url)) return fetchAgentMetadataDirect(url);
 

@@ -17,6 +17,7 @@ import {
 import { getConnection, solanaPubkey } from './pump.js';
 import { isRpcOutageError, rpcUnavailableError } from './rpc-degrade.js';
 import { fetchSafePublicUrlPinned } from './ssrf-guard.js';
+import { IPFS_GATEWAYS, ipfsPath } from './ipfs-gateways.js';
 
 const METADATA_PROGRAM = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 const NAME_MAX = 32;
@@ -104,10 +105,10 @@ function resolveOffchainUrl(uri) {
 	if (!uri) return null;
 	const trimmed = uri.trim();
 	if (!trimmed) return null;
-	if (trimmed.startsWith('ipfs://')) {
-		const cid = trimmed.slice('ipfs://'.length).replace(/^ipfs\//, '');
-		return `https://ipfs.io/ipfs/${cid}`;
-	}
+	// ipfs:// and URLs pinned to a gateway that stopped serving (pump.fun still
+	// hands out ipfs.io) both re-point at the first live shared gateway.
+	const cidPath = ipfsPath(trimmed);
+	if (cidPath) return IPFS_GATEWAYS[0] + cidPath;
 	if (trimmed.startsWith('ar://')) {
 		return `https://arweave.net/${trimmed.slice('ar://'.length)}`;
 	}

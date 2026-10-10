@@ -268,18 +268,18 @@ describe('SkillRegistry – manifest loading', () => {
 		expect(skill.uri).toBe('https://example.com/skill/');
 	});
 
-	it('resolves an ipfs:// URI to a dweb.link gateway URL before fetching', async () => {
-		// ipfs://QmTest → https://dweb.link/ipfs/QmTest/
+	it('resolves an ipfs:// URI to the primary gateway URL before fetching', async () => {
+		// ipfs://QmTest → https://ipfs.filebase.io/ipfs/QmTest/
 		const fetchFn = makeFetch({
-			'dweb.link/ipfs/QmTest/manifest.json': makeResponse(fixtureManifest()),
-			'dweb.link/ipfs/QmTest/SKILL.md': makeResponse('', { asText: true }),
-			'dweb.link/ipfs/QmTest/tools.json': makeResponse({ tools: [] }),
-			'dweb.link/ipfs/QmTest/handlers.js': makeResponse('', { asText: true }),
+			'ipfs.filebase.io/ipfs/QmTest/manifest.json': makeResponse(fixtureManifest()),
+			'ipfs.filebase.io/ipfs/QmTest/SKILL.md': makeResponse('', { asText: true }),
+			'ipfs.filebase.io/ipfs/QmTest/tools.json': makeResponse({ tools: [] }),
+			'ipfs.filebase.io/ipfs/QmTest/handlers.js': makeResponse('', { asText: true }),
 		});
 		const registry = new SkillRegistry({ fetchFn, trust: 'any' });
 		const skill = await registry.install({ uri: 'ipfs://QmTest' });
 		expect(skill).toBeDefined();
-		expect(skill.uri).toContain('dweb.link/ipfs/QmTest');
+		expect(skill.uri).toContain('ipfs.filebase.io/ipfs/QmTest');
 	});
 });
 

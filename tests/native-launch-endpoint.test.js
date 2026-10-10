@@ -393,7 +393,7 @@ describe('launches', () => {
 		expect(first.lane).toBe('native');
 		// cf-ipfs.com stopped resolving in 2024, so a stored URL on it has to be
 		// rewritten onto a live gateway before it reaches a client.
-		expect(first.metadata_uri).toBe('https://dweb.link/ipfs/bafkreiabc');
+		expect(first.metadata_uri).toBe('https://ipfs.filebase.io/ipfs/bafkreiabc');
 		expect(first.agent).toEqual({
 			id: 'agent-1',
 			name: 'Scout',

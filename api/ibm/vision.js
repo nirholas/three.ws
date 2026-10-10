@@ -24,6 +24,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
 import { watsonxConfig, watsonxChatComplete } from '../_lib/watsonx.js';
 import { assertSafePublicUrl } from '../_lib/ssrf-guard.js';
+import { normalizeGatewayURL } from '../../src/ipfs.js';
 
 // Granite Vision 3.2 (2B) is the default multimodal model on watsonx.ai. Override
 // per account/region with WATSONX_VISION_MODEL_ID.
@@ -70,6 +71,9 @@ export function allowedImageHost(host) {
 		'.pinata.cloud',
 		'ipfs.io',
 		'.ipfs.dweb.link',
+		'ipfs.filebase.io',
+		'4everland.io',
+		'.4everland.io',
 		'cf-ipfs.com',
 		'arweave.net',
 		'.arweave.net',
@@ -240,11 +244,14 @@ async function resolveImage(body) {
 	}
 
 	if (/^https:\/\//i.test(imageUrl)) {
-		const host = hostOf(imageUrl);
+		// Token art pinned to a retired IPFS gateway (pump.fun still hands out
+		// ipfs.io) is re-pointed at a live one before it is fetched.
+		const target = normalizeGatewayURL(imageUrl);
+		const host = hostOf(target);
 		if (!host || !allowedImageHost(host)) {
 			throw fail(400, 'image_host_not_allowed', 'imageUrl host is not allowed');
 		}
-		return await fetchImageAsDataUrl(imageUrl);
+		return await fetchImageAsDataUrl(target);
 	}
 
 	throw fail(400, 'bad_image', 'provide image (data URL) or imageUrl (https)');

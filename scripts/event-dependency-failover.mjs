@@ -21,6 +21,7 @@ import { writeFileSync } from 'node:fs';
 import process from 'node:process';
 
 import { makeRotatingFetch, solanaRpcEndpoints } from '../api/_lib/solana/connection.js';
+import { IPFS_GATEWAYS } from '../api/_lib/ipfs-gateways.js';
 
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 // The canonical $THREE coin image the event link carries, as an IPFS path.
@@ -120,17 +121,7 @@ async function checkSolanaRpc() {
 
 // -- IPFS: the coin image the event link and every OG card resolve --------------
 
-// Mirrors the gateway order in api/img.js. Kept as a literal list rather than an
-// import because api/img.js is a request handler, not a module with an exported
-// gateway table, and duplicating five strings is cheaper than reshaping a live
-// endpoint the day before an event.
-const IPFS_GATEWAYS = [
-	'https://ipfs.io/ipfs/',
-	'https://dweb.link/ipfs/',
-	'https://gateway.pinata.cloud/ipfs/',
-	'https://w3s.link/ipfs/',
-	'https://4everland.io/ipfs/',
-];
+// The same gateways api/img.js races: the shared server-side list.
 
 async function checkIpfs() {
 	const rungs = [];

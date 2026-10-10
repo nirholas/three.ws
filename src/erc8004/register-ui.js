@@ -64,6 +64,7 @@ import {
 import { onchainBadgeHTML, ensureOnchainBadgeStyles } from '../shared/onchain-badge.js';
 import { apiFetch } from '../api.js';
 import { log } from '../shared/log.js';
+import { resolveURI } from '../ipfs.js';
 ensureOnchainBadgeStyles();
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -2189,9 +2190,7 @@ export class RegisterUI {
 		else url = f.glbUrl || (f.pastedGlbUrl || '').trim();
 		if (!url) throw new Error('No 3D model to attach — choose an avatar in the Avatar step first.');
 
-		const fetchUrl = url.startsWith('ipfs://')
-			? url.replace('ipfs://', 'https://ipfs.io/ipfs/')
-			: url;
+		const fetchUrl = resolveURI(url);
 		const sameOrigin = (() => { try { return new URL(fetchUrl, location.href).origin === location.origin; } catch { return false; } })();
 		say('Fetching 3D model…');
 		let resp;
@@ -3683,9 +3682,7 @@ export class RegisterUI {
 				let glbFile = null;
 				if (existingGlb) {
 					glbFile = await this._fetchUrlAsFile(
-						existingGlb.startsWith('ipfs://')
-							? 'https://ipfs.io/ipfs/' + existingGlb.slice(7)
-							: existingGlb,
+						resolveURI(existingGlb),
 						say,
 						'3D body',
 					);
@@ -4013,8 +4010,5 @@ export class RegisterUI {
 // ───────────────────────────────────────────────────────────────────────────
 
 function resolveGateway(uri) {
-	if (!uri) return '';
-	if (uri.startsWith('ipfs://')) return 'https://ipfs.io/ipfs/' + uri.slice(7);
-	if (uri.startsWith('ar://')) return 'https://arweave.net/' + uri.slice(5);
-	return uri;
+	return uri ? resolveURI(uri) : '';
 }

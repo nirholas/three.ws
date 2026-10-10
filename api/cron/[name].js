@@ -72,6 +72,7 @@ import { runPumpAlertRules } from '../_lib/pump-alert-runner.js';
 import { publishUserEvent } from '../_lib/feed.js';
 import { confirmSkillPurchase } from '../_lib/purchase-confirm.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { resolveURI } from '../../src/ipfs.js';
 import {
 	OUTCOME,
 	applyChargeFailure,
@@ -1078,10 +1079,8 @@ async function erc8004FetchAgentMetadata(uri) {
 
 function erc8004ResolveGateway(uri) {
 	if (!uri || typeof uri !== 'string') return '';
-	if (uri.startsWith('ipfs://')) return 'https://ipfs.io/ipfs/' + uri.slice(7);
-	if (uri.startsWith('ar://')) return 'https://arweave.net/' + uri.slice(5);
-	if (uri.startsWith('http://') || uri.startsWith('https://')) return uri;
-	return '';
+	const url = resolveURI(uri);
+	return url.startsWith('http://') || url.startsWith('https://') ? url : '';
 }
 
 function erc8004Truncate(s, max) {

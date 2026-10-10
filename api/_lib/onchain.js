@@ -20,6 +20,7 @@ import {
 } from './erc8004-chains.js';
 import { KIND_GLB_SCHEMA, responsePassed } from '../../src/erc8004/validation-report.js';
 import { fetchSafePublicUrlPinned } from './ssrf-guard.js';
+import { IPFS_GATEWAYS } from './ipfs-gateways.js';
 
 const IDENTITY_ABI = [
 	'function tokenURI(uint256 tokenId) external view returns (string)',
@@ -217,7 +218,7 @@ export const SERVER_CHAIN_META = {
 	},
 };
 
-const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
+const IPFS_GATEWAY = IPFS_GATEWAYS[0];
 const AR_GATEWAY = 'https://arweave.net/';
 
 // Shared via Upstash when configured — see api/_lib/cache.js. Falls back to

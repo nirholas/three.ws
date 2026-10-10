@@ -8,6 +8,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { CHAIN_BY_ID } from '../_lib/erc8004-chains.js';
 import { evmRpcEndpoints } from '../_lib/evm/rpc.js';
 import { fetchSafePublicUrlPinned, SsrfBlockedError, MaxBytesExceededError } from '../_lib/ssrf-guard.js';
+import { resolveURI } from '../../src/ipfs.js';
 
 const REGISTERED_TOPIC = keccakId('Registered(uint256,string,address)');
 const TIMEOUT_MS = 10_000;
@@ -179,9 +180,8 @@ async function rpcCall(chainId, m, params) {
 
 function resolveGateway(uri) {
 	if (!uri) return '';
-	if (uri.startsWith('ipfs://')) return 'https://ipfs.io/ipfs/' + uri.slice(7);
-	if (uri.startsWith('ar://')) return 'https://arweave.net/' + uri.slice(5);
-	return uri.startsWith('http') ? uri : '';
+	const url = resolveURI(uri);
+	return url.startsWith('http') ? url : '';
 }
 
 async function enrichMetadata(chainId, agentId, uri) {

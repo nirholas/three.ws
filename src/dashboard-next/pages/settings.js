@@ -31,6 +31,7 @@ import { mountShell } from '../shell.js';
 import { requireUser, get, post, put, del, patch, esc, relTime, ApiError } from '../api.js';
 import { emptyStateHTML, errorStateHTML, ensureStateKitStyles, attachRetry } from '../../shared/state-kit.js';
 import { toast } from '../../shared/toast.js';
+import { IPFS_GATEWAYS } from '../../ipfs.js';
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
 
@@ -568,7 +569,7 @@ function renderNotificationPrefs(resp, onRetry) {
 // `stub:` pseudo-CID, which is a recorded content hash and not a pin. The row
 // says exactly that rather than showing a CID that resolves nowhere.
 
-const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
+const IPFS_GATEWAY = IPFS_GATEWAYS[0];
 
 function isRealCid(cid) {
 	return typeof cid === 'string' && cid.length > 0 && !cid.startsWith('stub:');

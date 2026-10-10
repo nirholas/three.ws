@@ -9,6 +9,7 @@ import { emptyStateHTML } from '/src/shared/state-kit.js';
 import { renderError as renderAsyncError } from '/src/shared/async-state.js';
 import { log } from '../shared/log.js';
 import { safeUrl } from '../safe-url.js';
+import { resolveURI } from '../ipfs.js';
 
 function escapeHtml(s) {
 	return String(s == null ? '' : s)
@@ -2873,10 +2874,7 @@ async function fetchTokenMeta(registry, tokenId) {
 }
 
 function uriToHttp(uri) {
-	if (!uri) return '';
-	if (uri.startsWith('ipfs://')) return `https://ipfs.io/ipfs/${uri.slice(7)}`;
-	if (uri.startsWith('ar://')) return `https://arweave.net/${uri.slice(5)}`;
-	return uri;
+	return uri ? resolveURI(uri) : '';
 }
 
 // Re-pin the agent's on-chain manifest with the current animations. Fetches the

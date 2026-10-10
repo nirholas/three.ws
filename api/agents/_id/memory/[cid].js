@@ -2,12 +2,7 @@ import { sql } from '../../../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../../../_lib/auth.js';
 import { cors, method, wrap, error, rateLimited } from '../../../_lib/http.js';
 import { limits, clientIp } from '../../../_lib/rate-limit.js';
-
-const IPFS_GATEWAYS = [
-	'https://dweb.link/ipfs/',
-	'https://flk-ipfs.xyz/ipfs/',
-	'https://ipfs.io/ipfs/',
-];
+import { IPFS_GATEWAYS } from '../../../_lib/ipfs-gateways.js';
 
 const CID_RE = /^[a-zA-Z0-9]+$/;
 

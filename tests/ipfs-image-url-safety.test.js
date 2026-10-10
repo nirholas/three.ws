@@ -137,7 +137,7 @@ describe('proxiedImageURL', () => {
 		const out = proxiedImageURL('https://ipfs.io/ipfs/bafyexample', MINT);
 		expect(out.startsWith('/api/img?')).toBe(true);
 		const q = new URLSearchParams(out.slice(out.indexOf('?') + 1));
-		expect(q.get('url')).toBe('https://ipfs.io/ipfs/bafyexample');
+		expect(q.get('url')).toBe('https://ipfs.filebase.io/ipfs/bafyexample');
 		expect(q.get('seed')).toBe(MINT);
 	});
 

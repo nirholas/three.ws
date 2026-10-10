@@ -20,7 +20,7 @@
 import { getAgentOnchain, fetchAgentMetadata, findAvatar3D } from './queries.js';
 import { REGISTRY_DEPLOYMENTS, agentRegistryId } from './abi.js';
 import { CHAIN_META } from './chain-meta.js';
-import { uriCandidates } from '../ipfs.js';
+import { IPFS_GATEWAYS, uriCandidates } from '../ipfs.js';
 
 // ---------------------------------------------------------------------------
 // Parsing
@@ -105,7 +105,7 @@ export function toPublicUrl(ref, { embed = false, origin } = {}) {
 // duplicated here: src/ipfs.js owns the canonical, dead-host-free gateway list
 // and the CID re-extraction that makes an already-baked gateway URL rotatable,
 // so `resolveUrlCandidates` below delegates to it rather than drifting from it.
-const PRIMARY_IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
+const PRIMARY_IPFS_GATEWAY = IPFS_GATEWAYS[0];
 const AR_GATEWAY = 'https://arweave.net/';
 
 /**

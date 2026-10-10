@@ -25,6 +25,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/au
 import { sql } from '../../_lib/db.js';
 import { cors, json, method, readJson, error } from '../../_lib/http.js';
 import { requireCsrf } from '../../_lib/csrf.js';
+import { IPFS_GATEWAYS } from '../../_lib/ipfs-gateways.js';
 import { parse } from '../../_lib/validate.js';
 import { z } from 'zod';
 
@@ -198,7 +199,7 @@ async function getPassport(res, agent) {
 			filename: p.filename,
 			bytes: p.bytes,
 			created_at: p.created_at,
-			gateway_url: `https://dweb.link/ipfs/${p.cid}`,
+			gateway_url: `${IPFS_GATEWAYS[0]}${p.cid}`,
 		})),
 		anchor: anchorState.anchor,
 		current_brain_hash: anchorState.currentBrainHash,
