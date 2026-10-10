@@ -110,7 +110,10 @@ const shot = (page, name) => page.screenshot({ path: join(out, `${name}.png`) })
 	});
 	if (lightOk.theme !== 'light') problems.push(`[theme] light did not apply (supportsLight=${lightOk.supported})`);
 	await page.mouse.move(2, 2);
-	await page.waitForTimeout(1500);
+	// The body background eases between palettes; software GL slows that
+	// transition down, so wait until it has settled before the shot.
+	await page.waitForFunction(() => getComputedStyle(document.body).backgroundColor === 'rgb(255, 255, 255)', null, { timeout: 15_000 }).catch(() => problems.push('[theme] light body background never settled'));
+	await page.waitForTimeout(500);
 	await shot(page, '09-light');
 	await page.close();
 }
