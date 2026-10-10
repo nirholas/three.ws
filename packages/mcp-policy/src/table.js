@@ -156,6 +156,27 @@ export const POLICY = {
 		agent_card_withdraw: own('cards', 'confirm_withdraw', 'agent_card_balance'),
 		agent_card_connect: r('cards'),
 		agent_card_connect_link: w('cards'),
+		// Agent lifecycle, runs and automations (api/_mcp/tools/agent-lifecycle.js).
+		// Deletes are financial-tier because they cannot be undone. Swap and
+		// transfer automations gate themselves: connector keys are refused, the
+		// bearer needs wallet:write, and the call needs confirm_spend after the
+		// terms are shown.
+		get_agent: r('agents'),
+		update_agent: w('agents'),
+		delete_agent: f('agents', 'confirm_delete', 'get_agent', ['agent_id']),
+		start_agent: w('agents'),
+		stop_agent: w('agents'),
+		upload_agent_avatar: w('agents'),
+		create_agent_run: w('runs'),
+		update_agent_run: w('runs'),
+		cancel_agent_run: w('runs'),
+		get_agent_run_steps: r('runs'),
+		automation_list: r('runs'),
+		automation_get: r('runs'),
+		automation_create: w('runs'),
+		automation_update: w('runs'),
+		automation_delete: f('runs', 'confirm_delete', 'automation_get', ['automation_id']),
+		automation_trigger: w('runs'),
 	},
 
 	// /api/mcp-agent
