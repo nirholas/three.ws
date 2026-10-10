@@ -187,7 +187,15 @@ export async function createDevPlanCheckout({ userId, planId, asset, wallet = nu
 	const sub = await getDevSubscription(userId, { fresh: true });
 	const quote = quoteDevPlanChange(sub, planId, asset);
 	if (asset !== 'credits') assertWallet(wallet);
-	const payTo = asset === 'credits' ? null : treasuryWallet();
+	let payTo = null;
+	if (asset !== 'credits') {
+		try {
+			payTo = treasuryWallet();
+			assetConfig(asset);
+		} catch (err) {
+			throw fail(503, 'payments_not_configured', `${asset} payments are not available right now; pay with credits or try again shortly`);
+		}
+	}
 	const priced = await priceInAsset(asset, quote.amountUsd);
 	const expiresAt = new Date(Date.now() + DEV_PLAN_CHECKOUT_TTL_MS).toISOString();
 

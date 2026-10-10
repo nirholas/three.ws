@@ -9,9 +9,23 @@
 // transfer and this tab shows recipient, amount, asset and chain before the
 // wallet is asked to sign. Credits are debited server side.
 
-import { get, post, esc, relTime, ApiError } from '../api.js';
+import { get, post, esc, ApiError } from '../api.js';
 import { errorStateHTML, skeletonHTML } from '../../shared/state-kit.js';
 import { getAdapter, isUserRejection } from '../../onchain/adapters/index.js';
+
+/** "in 12 days", "in 8 min", or "now" for a moment already past. The shared formatter only reads the past. */
+function untilTime(iso) {
+	const t = new Date(iso).getTime();
+	if (!Number.isFinite(t)) return '';
+	const s = Math.round((t - Date.now()) / 1000);
+	if (s <= 0) return 'now';
+	if (s < 60) return `in ${s}s`;
+	const m = Math.round(s / 60);
+	if (m < 60) return `in ${m} min`;
+	const h = Math.round(m / 60);
+	if (h < 48) return `in ${h} h`;
+	return `in ${Math.round(h / 24)} days`;
+}
 
 const CONFIRM_POLL_MS = 3000;
 const CONFIRM_MAX_TRIES = 20;
@@ -96,7 +110,7 @@ function paint(el, ctx) {
 				</div>
 				<div class="dev-plan-usage-meta">
 					<span>${fmtInt(q.remaining)} remaining</span>
-					<span>resets ${esc(relTime(q.reset_at))}</span>
+					<span>resets ${esc(untilTime(q.reset_at))}</span>
 				</div>
 				${pct >= 100
 					? `<div class="dev-plan-over">Quota reached. Calls answer <code>402 quota_exceeded</code> until ${periodEnds}${mine.next_plan ? `, or upgrade to ${esc(mine.next_plan.name)} for ${fmtInt(mine.next_plan.included_calls)} calls.` : '.'}</div>`
@@ -302,7 +316,7 @@ async function walletFlow({ asset, planId, target, go, review, showErr, close, t
 			<div><dt>From</dt><dd><code class="dn-mono-sm">${esc(address)}</code></dd></div>
 			<div><dt>Chain</dt><dd>Solana mainnet</dd></div>
 			<div><dt>Buys</dt><dd>${esc(target.name)} until ${fmtDate(c.period_end)}</dd></div>
-			<div><dt>Quote expires</dt><dd>${esc(relTime(c.expires_at))}</dd></div>
+			<div><dt>Quote expires</dt><dd>${esc(untilTime(c.expires_at))}</dd></div>
 		</dl>
 	`;
 	go.disabled = false;
