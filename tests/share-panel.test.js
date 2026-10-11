@@ -277,6 +277,14 @@ describe('vercel.json — embed route headers', () => {
 		const r = routes.find((x) => x.src === '/a/(\\d+)/(\\d+)/embed');
 		expect(r?.headers?.['content-security-policy']).toContain('frame-ancestors *');
 	});
+
+	it('applies the same frame-ancestors headers to /forge/embed, which the forge-share X player card points at', () => {
+		const r = routes.find((x) => x.src === '/forge/embed/?');
+		expect(r).toBeTruthy();
+		expect(r.dest).toBe('/forge-embed.html');
+		expect(r?.headers?.['content-security-policy']).toContain('frame-ancestors *');
+		expect(r?.headers?.['x-frame-options']).toBeUndefined();
+	});
 });
 
 describe('embed page deduplication', () => {

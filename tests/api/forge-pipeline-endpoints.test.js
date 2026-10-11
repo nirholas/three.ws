@@ -605,6 +605,37 @@ describe('forge-share', () => {
 		expect(res.body).toContain(`/api/forge-og?id=${UUID}`);
 	});
 
+	it('serves an X player card for a finished creation, embedding the real GLB via /forge/embed', async () => {
+		sqlMock.mockResolvedValueOnce([
+			{
+				id: UUID,
+				prompt: 'a brass lantern',
+				preview_image_url: null,
+				status: 'done',
+				glb_url: MESH,
+				web_glb_url: null,
+				web_size_bytes: null,
+				size_bytes: 1_800_000,
+			},
+		]);
+		const res = await call(share, { url: `/api/forge-share?id=${UUID}` });
+		expect(res.body).toContain('name="twitter:card" content="player"');
+		expect(res.body).toMatch(/name="twitter:player" content="https:\/\/three\.ws\/forge\/embed\?src=[^"]*mesh\.glb/);
+		expect(res.body).toContain('name="twitter:player:width" content="480"');
+		expect(res.body).toContain('name="twitter:player:height" content="480"');
+		// Fallback image stays present for clients that only read twitter:image/og:image.
+		expect(res.body).toMatch(/name="twitter:image" content="[^"]+"/);
+	});
+
+	it('falls back to summary_large_image, with no twitter:player tag, for a creation still in progress', async () => {
+		sqlMock.mockResolvedValueOnce([
+			{ id: UUID, prompt: 'a chair', preview_image_url: null, status: 'processing', glb_url: null },
+		]);
+		const res = await call(share, { url: `/api/forge-share?id=${UUID}` });
+		expect(res.body).toContain('name="twitter:card" content="summary_large_image"');
+		expect(res.body).not.toContain('name="twitter:player"');
+	});
+
 	it('describes a finished creation as parseable 3DModel JSON-LD, and never reads a private one', async () => {
 		sqlMock.mockResolvedValueOnce([
 			{

@@ -1640,6 +1640,12 @@
 		},
 		{
 			"src": "/forge/embed/?",
+			"headers": {
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"x-content-type-options": "nosniff",
+				"referrer-policy": "strict-origin-when-cross-origin",
+				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*"
+			},
 			"dest": "/forge-embed.html"
 		},
 		{

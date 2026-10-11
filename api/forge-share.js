@@ -64,6 +64,14 @@ export default wrap(async (req, res) => {
 		: null;
 	const poster = posterGlb ? renderPosterUrl(origin, posterGlb) : null;
 	const ogImage = row.preview_image_url || poster || `${origin}/api/forge-og?id=${id}`;
+	// X player card: interactive embed when the GLB is ready, degrading to the
+	// summary_large_image tags below for crawlers (Discord, Slack, pre-approval
+	// X) that never fetch twitter:player. Reuses /forge/embed (pages/forge-embed.html),
+	// the same model-viewer runtime the Forge UI already serves, so there is no
+	// second embed implementation to keep in sync.
+	const embedUrl = posterGlb
+		? `${origin}/forge/embed?src=${encodeURIComponent(posterGlb)}&poster=${encodeURIComponent(ogImage)}&title=${encodeURIComponent(title)}`
+		: null;
 	// Machine-readable description of the creation: the GLB, its render, the
 	// creator when signed in, the date and the terms (api/_lib/creation-jsonld.js).
 	const jsonLd = creationJsonLd({
@@ -89,7 +97,9 @@ export default wrap(async (req, res) => {
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/html; charset=utf-8');
 	res.setHeader('cache-control', 'public, max-age=60, s-maxage=600, stale-while-revalidate=3600');
-	res.end(renderHtml({ id, title, desc, pageUrl, forgeUrl, ogImage, origin, oembedJsonUrl, jsonLd }));
+	res.end(
+		renderHtml({ id, title, desc, pageUrl, forgeUrl, ogImage, embedUrl, origin, oembedJsonUrl, jsonLd }),
+	);
 });
 
 function redirect(res, to) {
@@ -99,7 +109,7 @@ function redirect(res, to) {
 	res.end();
 }
 
-function renderHtml({ id, title, desc, pageUrl, forgeUrl, ogImage, origin, oembedJsonUrl, jsonLd }) {
+function renderHtml({ id, title, desc, pageUrl, forgeUrl, ogImage, embedUrl, origin, oembedJsonUrl, jsonLd }) {
 	const t = esc(title);
 	const d = esc(desc);
 	return `<!doctype html>
@@ -122,11 +132,13 @@ function renderHtml({ id, title, desc, pageUrl, forgeUrl, ogImage, origin, oembe
 	<meta property="og:image:height" content="630">
 	<meta property="og:image:alt" content="${t} forged on three.ws">
 
-	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:card" content="${embedUrl ? 'player' : 'summary_large_image'}">
 	<meta name="twitter:title" content="${t} — three.ws Forge">
 	<meta name="twitter:description" content="${d}">
 	<meta name="twitter:image" content="${esc(ogImage)}">
 	<meta name="twitter:creator" content="@trythreews">
+	<meta name="twitter:site" content="@trythreews">
+${embedUrl ? `\t<meta name="twitter:player" content="${esc(embedUrl)}">\n\t<meta name="twitter:player:width" content="480">\n\t<meta name="twitter:player:height" content="480">\n` : ''}
 
 	<meta property="fc:frame" content="vNext">
 	<meta property="fc:frame:image" content="${esc(ogImage)}">
