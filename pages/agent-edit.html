@@ -1084,10 +1084,10 @@
 			.decision-item-reply { font-size: 0.764rem; color: rgba(255, 255, 255, 0.6); margin-top: 0.382rem; }
 			.decision-item-media { max-width: 64px; max-height: 64px; border-radius: 6px; object-fit: cover; margin-top: 0.382rem; display: block; }
 			.decision-badge { font-size: 0.618rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; }
-			.decision-badge.reply { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+			.decision-badge.reply { background: rgba(34, 197, 94, 0.15); color: var(--success); }
 			.decision-badge.skip, .decision-badge.paused, .decision-badge.pending { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.55); }
-			.decision-badge.rate_limited, .decision-badge.budget { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
-			.decision-badge.unsafe, .decision-badge.error { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+			.decision-badge.rate_limited, .decision-badge.budget { background: rgba(251, 191, 36, 0.15); color: var(--warn); }
+			.decision-badge.unsafe, .decision-badge.error { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
 			.decision-item-meta { font-size: 0.764rem; color: rgba(255, 255, 255, 0.4); }
 
 			/* Analytics */
@@ -1704,8 +1704,8 @@
 										<div class="card-sub" id="mention-access-status" role="status" aria-live="polite">Loading…</div>
 									</div>
 									<div class="card-actions">
-										<a class="btn-primary" id="mention-connect-link" href="#" hidden data-i18n="agent_edit.connect_x">Connect X</a>
-										<a class="btn-ghost" id="mention-reconnect-link" href="#" hidden data-i18n="agent_edit.reconnect_x">Reconnect X</a>
+										<a class="btn-primary" id="mention-connect-link" hidden data-i18n="agent_edit.connect_x">Connect X</a>
+										<a class="btn-ghost" id="mention-reconnect-link" hidden data-i18n="agent_edit.reconnect_x">Reconnect X</a>
 									</div>
 								</div>
 							</div>
