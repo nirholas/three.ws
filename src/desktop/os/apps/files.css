@@ -1,0 +1,731 @@
+.napp-files {
+	height: 100%;
+	min-height: 0;
+}
+.napp-files .fx {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	background: var(--card);
+	color: var(--text);
+	font-size: 13px;
+	overflow: hidden;
+	container-type: inline-size;
+}
+.napp-files .fx button {
+	font: inherit;
+	color: inherit;
+}
+.napp-files .fx button:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+/* top bar */
+.napp-files .fx-top {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 10px 4px;
+}
+.napp-files .fx-nav {
+	display: flex;
+	gap: 2px;
+}
+.napp-files .fx-btn {
+	display: grid;
+	place-items: center;
+	width: 30px;
+	height: 30px;
+	border-radius: var(--siz-radius3, 6px);
+}
+.napp-files .fx-btn:not(:disabled):hover {
+	background: var(--hover);
+}
+.napp-files .fx-btn:not(:disabled):active {
+	background: var(--hover-b, var(--hover));
+}
+.napp-files .fx-addr {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	height: 30px;
+	padding: 0 4px;
+	border: 1px solid var(--bd);
+	border-radius: var(--siz-radius3, 6px);
+	background: var(--bg30, transparent);
+	cursor: text;
+}
+.napp-files .fx-addr:focus-within {
+	border-color: var(--accent);
+}
+.napp-files .fx-crumbs {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	overflow-x: auto;
+	scrollbar-width: none;
+	white-space: nowrap;
+}
+.napp-files .fx-crumbs::-webkit-scrollbar {
+	display: none;
+}
+.napp-files .fx-crumb {
+	padding: 3px 7px;
+	border-radius: 5px;
+	max-width: 200px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.napp-files .fx-crumb:hover {
+	background: var(--hover);
+}
+.napp-files .fx-crumb[aria-current] {
+	font-weight: 600;
+}
+.napp-files .fx-chev {
+	color: var(--text2);
+	display: grid;
+}
+.napp-files .fx-addr-in {
+	flex: 1;
+	min-width: 0;
+	height: 100%;
+	padding: 0 6px;
+	border: 0;
+	outline: 0;
+	background: transparent;
+	color: var(--text);
+	font: inherit;
+}
+.napp-files .fx-addr-in.bad {
+	color: #e5484d;
+}
+.napp-files .fx-search {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: 200px;
+	flex: none;
+	height: 30px;
+	padding: 0 8px;
+	border: 1px solid var(--bd);
+	border-radius: var(--siz-radius3, 6px);
+	color: var(--text2);
+}
+.napp-files .fx-search:focus-within {
+	border-color: var(--accent);
+	color: var(--text);
+}
+.napp-files .fx-search input {
+	flex: 1;
+	min-width: 0;
+	border: 0;
+	outline: 0;
+	background: transparent;
+	color: var(--text);
+	font: inherit;
+}
+
+/* command bar */
+.napp-files .fx-cmd {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	padding: 4px 10px 6px;
+	border-bottom: 1px solid var(--bd);
+	overflow-x: auto;
+	scrollbar-width: none;
+}
+.napp-files .fx-cb {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	height: 30px;
+	padding: 0 9px;
+	border-radius: var(--siz-radius3, 6px);
+	white-space: nowrap;
+}
+.napp-files .fx-cb:not(:disabled):hover {
+	background: var(--hover);
+}
+.napp-files .fx-cb:not(:disabled):active {
+	background: var(--hover-b, var(--hover));
+}
+@container (max-width: 1000px) {
+	.napp-files .fx-cb.sec span {
+		display: none;
+	}
+}
+.napp-files .fx-sep {
+	width: 1px;
+	height: 18px;
+	background: var(--bd);
+	margin: 0 5px;
+}
+.napp-files .fx-grow {
+	flex: 1;
+}
+.napp-files .fx-views {
+	display: flex;
+	margin-left: 6px;
+	padding: 2px;
+	border: 1px solid var(--bd);
+	border-radius: var(--siz-radius3, 6px);
+}
+.napp-files .fx-vb {
+	display: grid;
+	place-items: center;
+	width: 28px;
+	height: 24px;
+	border-radius: 4px;
+}
+.napp-files .fx-vb:hover {
+	background: var(--hover);
+}
+.napp-files .fx-vb.on {
+	background: var(--accent);
+	color: #fff;
+}
+
+/* body */
+.napp-files .fx-body {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+}
+.napp-files .fx-side {
+	flex: none;
+	width: 190px;
+	padding: 8px 6px;
+	overflow-y: auto;
+	border-right: 1px solid var(--bd);
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+@media (max-width: 640px) {
+	.napp-files .fx-side {
+		width: 52px;
+	}
+	.napp-files .fx-side .fx-nv span,
+	.napp-files .fx-side .fx-nh,
+	.napp-files .fx-side .fx-meter,
+	.napp-files .fx-side .fx-count {
+		display: none;
+	}
+}
+.napp-files .fx-nh {
+	padding: 10px 10px 4px;
+	font-size: 11px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--text2);
+}
+.napp-files .fx-nv {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: 30px;
+	padding: 0 10px;
+	border-radius: var(--siz-radius3, 6px);
+	text-align: left;
+	position: relative;
+}
+.napp-files .fx-nv span {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.napp-files .fx-nv:hover {
+	background: var(--hover);
+}
+.napp-files .fx-nv.on {
+	background: var(--hover-b, var(--hover));
+}
+.napp-files .fx-nv.on::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 7px;
+	bottom: 7px;
+	width: 3px;
+	border-radius: 2px;
+	background: var(--accent);
+}
+.napp-files .fx-count {
+	font-style: normal;
+	font-size: 11px;
+	padding: 1px 6px;
+	border-radius: 9px;
+	background: var(--fill, var(--hover));
+	color: var(--text2);
+}
+.napp-files .drop-hot {
+	background: color-mix(in srgb, var(--accent) 28%, transparent) !important;
+	outline: 1px solid var(--accent);
+}
+.napp-files .fx-meter {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 2px 10px 6px 36px;
+	font-size: 11px;
+	color: var(--text2);
+}
+.napp-files .fx-meter.big {
+	padding: 0;
+	margin-top: 6px;
+	font-size: 12px;
+}
+.napp-files .fx-meter-bar {
+	height: 5px;
+	border-radius: 3px;
+	background: var(--fill, var(--hover));
+	overflow: hidden;
+}
+.napp-files .fx-meter.big .fx-meter-bar {
+	height: 8px;
+	width: 280px;
+	max-width: 100%;
+}
+.napp-files .fx-meter-bar i {
+	display: block;
+	height: 100%;
+	background: var(--accent);
+	border-radius: 3px;
+}
+.napp-files .fx-meter-sub {
+	opacity: 0.8;
+}
+
+/* main */
+.napp-files .fx-main {
+	position: relative;
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+.napp-files .fx-hdr {
+	display: grid;
+	grid-template-columns: 30px var(--cols);
+	position: sticky;
+	top: -6px;
+	z-index: 2;
+	margin: -6px -6px 4px;
+	padding: 0 6px;
+	background: var(--card);
+	border-bottom: 1px solid var(--bd);
+	font-size: 12px;
+	color: var(--text2);
+}
+.napp-files .fx-hdr[hidden] {
+	display: none;
+}
+.napp-files .fx-th {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	height: 28px;
+	padding: 0 8px;
+	text-align: left;
+	overflow: hidden;
+	white-space: nowrap;
+}
+.napp-files button.fx-th:hover {
+	background: var(--hover);
+	color: var(--text);
+}
+.napp-files .fx-th.r {
+	justify-content: flex-end;
+}
+.napp-files .fx-caret {
+	font-size: 8px;
+}
+.napp-files .fx-scroll {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	outline: 0;
+	padding: 6px;
+}
+.napp-files .fx-scroll:focus-visible {
+	box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.napp-files .fx-item {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	border-radius: var(--siz-radius3, 6px);
+	border: 1px solid transparent;
+	cursor: default;
+	user-select: none;
+	content-visibility: auto;
+}
+.napp-files .fx-item:hover {
+	background: var(--hover);
+}
+.napp-files .fx-item.sel {
+	background: color-mix(in srgb, var(--accent) 24%, transparent);
+	border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.napp-files .fx-scroll:focus-visible .fx-item.cur {
+	outline: 1px dotted var(--text2);
+}
+.napp-files .fx-item.cut {
+	opacity: 0.5;
+}
+.napp-files .fx-ic {
+	display: grid;
+	place-items: center;
+	flex: none;
+	color: var(--text2);
+}
+.napp-files .k-dir .fx-ic {
+	color: #f0b429;
+}
+.napp-files .k-image .fx-ic {
+	color: #3ecf8e;
+}
+.napp-files .k-audio .fx-ic {
+	color: #b794f6;
+}
+.napp-files .k-video .fx-ic {
+	color: #f472b6;
+}
+.napp-files .k-text .fx-ic {
+	color: #60a5fa;
+}
+.napp-files .fx-name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.napp-files .fx-rename {
+	min-width: 0;
+	flex: 1;
+	padding: 2px 4px;
+	border: 1px solid var(--accent);
+	border-radius: 4px;
+	background: var(--bg);
+	color: var(--text);
+	font: inherit;
+	outline: 0;
+}
+
+/* list */
+.napp-files .v-list .fx-items {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 1px 6px;
+}
+.napp-files .v-list .fx-item {
+	height: 32px;
+	padding: 0 8px;
+	contain-intrinsic-size: auto 32px;
+}
+
+/* details */
+.napp-files .v-details .fx-item {
+	display: grid;
+	grid-template-columns: 30px var(--cols);
+	height: 32px;
+	gap: 0;
+	padding: 0;
+	contain-intrinsic-size: auto 32px;
+}
+.napp-files .v-details .fx-ic {
+	justify-self: end;
+}
+.napp-files .v-details .fx-name,
+.napp-files .v-details .fx-c {
+	padding: 0 8px;
+}
+.napp-files .fx-c {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--text2);
+	font-size: 12px;
+}
+.napp-files .fx-c.r {
+	text-align: right;
+}
+
+/* large icons */
+.napp-files .v-grid .fx-items {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+	gap: 6px;
+}
+.napp-files .v-grid .fx-item {
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 6px;
+	padding: 10px 6px 8px;
+	height: 118px;
+	text-align: center;
+	contain-intrinsic-size: auto 118px;
+}
+.napp-files .v-grid .fx-ic {
+	width: 72px;
+	height: 60px;
+	border-radius: 6px;
+	overflow: hidden;
+}
+.napp-files .v-grid .fx-ic img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 6px;
+}
+.napp-files .v-grid .fx-name {
+	width: 100%;
+	white-space: normal;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	word-break: break-word;
+	font-size: 12px;
+}
+.napp-files .v-grid .fx-rename {
+	width: 100%;
+	text-align: center;
+}
+
+/* storage card on This PC */
+.napp-files .fx-pc {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin: 4px 4px 12px;
+	padding: 14px 16px;
+	border: 1px solid var(--bd);
+	border-radius: 10px;
+	background: var(--hover-half, transparent);
+}
+.napp-files .fx-pc > svg {
+	color: var(--accent);
+}
+
+/* states */
+.napp-files .fx-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	min-height: 220px;
+	height: 80%;
+	padding: 24px;
+	text-align: center;
+	color: var(--text2);
+}
+.napp-files .fx-empty h3 {
+	margin: 8px 0 0;
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--text);
+}
+.napp-files .fx-empty p {
+	margin: 0;
+	max-width: 380px;
+}
+.napp-files .fx-empty.err svg {
+	color: #e5484d;
+}
+.napp-files .fx-empty-act {
+	display: flex;
+	gap: 8px;
+	margin-top: 12px;
+}
+.napp-files .fx-pill {
+	height: 30px;
+	padding: 0 14px;
+	border: 1px solid var(--bd);
+	border-radius: var(--siz-radius3, 6px);
+	background: var(--hover);
+}
+.napp-files .fx-pill:hover {
+	background: var(--hover-b, var(--hover));
+}
+.napp-files .fx-pill.primary {
+	background: var(--accent);
+	border-color: transparent;
+	color: #fff;
+}
+.napp-files .fx-pill.danger {
+	background: #d13438;
+	border-color: transparent;
+	color: #fff;
+}
+.napp-files .fx-skel {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 4px;
+}
+.napp-files .fx-skel-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	height: 30px;
+}
+.napp-files .fx-skel-row i,
+.napp-files .fx-skel-row b {
+	height: 14px;
+	border-radius: 4px;
+	background: linear-gradient(90deg, var(--hover) 25%, var(--hover-b, var(--hover)) 50%, var(--hover) 75%);
+	background-size: 200% 100%;
+	animation: fx-shim 1.2s linear infinite;
+}
+.napp-files .fx-skel-row i {
+	width: 18px;
+}
+.napp-files .fx-skel-row b {
+	flex: 1;
+	max-width: 260px;
+}
+@keyframes fx-shim {
+	to {
+		background-position: -200% 0;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.napp-files .fx-skel-row i,
+	.napp-files .fx-skel-row b {
+		animation: none;
+	}
+}
+
+.napp-files .fx-drop {
+	position: absolute;
+	inset: 8px;
+	display: grid;
+	place-items: center;
+	border: 2px dashed var(--accent);
+	border-radius: 10px;
+	background: color-mix(in srgb, var(--accent) 14%, transparent);
+	font-weight: 600;
+	pointer-events: none;
+	z-index: 4;
+}
+.napp-files .fx-drop[hidden] {
+	display: none;
+}
+
+.napp-files .fx-status {
+	flex: none;
+	height: 26px;
+	display: flex;
+	align-items: center;
+	padding: 0 14px;
+	border-top: 1px solid var(--bd);
+	font-size: 12px;
+	color: var(--text2);
+	white-space: pre;
+}
+
+/* context menu and dialogs */
+.napp-files .fx-menu {
+	position: absolute;
+	z-index: 20;
+	min-width: 210px;
+	padding: 5px;
+	border: 1px solid var(--bd);
+	border-radius: 8px;
+	background: var(--cm, var(--card));
+	backdrop-filter: blur(16px);
+	box-shadow: var(--shadow-md, 0 8px 32px rgba(0, 0, 0, 0.3));
+}
+.napp-files .fx-menu button {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	height: 30px;
+	padding: 0 8px;
+	border-radius: 5px;
+	text-align: left;
+}
+.napp-files .fx-menu button:hover:not(:disabled),
+.napp-files .fx-menu button:focus-visible {
+	background: var(--hover-b, var(--hover));
+	outline: 0;
+}
+.napp-files .fx-menu button:disabled {
+	opacity: 0.4;
+}
+.napp-files .fx-menu button.danger .fx-ml {
+	color: #e5484d;
+}
+.napp-files .fx-mi {
+	display: grid;
+	place-items: center;
+	width: 16px;
+	flex: none;
+}
+.napp-files .fx-ml {
+	flex: 1;
+}
+.napp-files .fx-menu kbd {
+	font: inherit;
+	font-size: 11px;
+	color: var(--text2);
+}
+.napp-files .fx-menu hr {
+	border: 0;
+	border-top: 1px solid var(--hr, var(--bd));
+	margin: 4px 6px;
+}
+.napp-files .fx-modal {
+	position: absolute;
+	inset: 0;
+	z-index: 30;
+	display: grid;
+	place-items: center;
+	background: var(--bg50, rgba(0, 0, 0, 0.4));
+}
+.napp-files .fx-dlg {
+	width: min(380px, 90%);
+	padding: 18px;
+	border: 1px solid var(--bd);
+	border-radius: 10px;
+	background: var(--card);
+	box-shadow: var(--shadow-lg, 0 16px 64px rgba(0, 0, 0, 0.5));
+}
+.napp-files .fx-dlg h3 {
+	margin: 0 0 8px;
+	font-size: 15px;
+}
+.napp-files .fx-dlg p {
+	margin: 0 0 12px;
+	color: var(--text2);
+}
+.napp-files .fx-dlg-in {
+	width: 100%;
+	box-sizing: border-box;
+	height: 32px;
+	padding: 0 8px;
+	margin-bottom: 12px;
+	border: 1px solid var(--accent);
+	border-radius: 6px;
+	background: var(--bg);
+	color: var(--text);
+	font: inherit;
+	outline: 0;
+}
+.napp-files .fx-dlg-act {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}

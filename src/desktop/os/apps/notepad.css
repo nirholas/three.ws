@@ -1,0 +1,387 @@
+.napp-notepad {
+	height: 100%;
+	min-height: 0;
+}
+.napp-notepad .np {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	background: var(--card);
+	color: var(--text);
+	font-size: 13px;
+	overflow: hidden;
+	container-type: inline-size;
+}
+.napp-notepad .np button {
+	font: inherit;
+	color: inherit;
+}
+.napp-notepad .np button:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+.napp-notepad .np-bar {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	padding: 6px 8px;
+	border-bottom: 1px solid var(--bd);
+	overflow-x: auto;
+	scrollbar-width: none;
+}
+.napp-notepad .np-b {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	height: 28px;
+	padding: 0 9px;
+	border-radius: var(--siz-radius3, 6px);
+	white-space: nowrap;
+}
+.napp-notepad .np-b.ic {
+	width: 28px;
+	padding: 0;
+	justify-content: center;
+}
+.napp-notepad .np-b:not(:disabled):hover {
+	background: var(--hover);
+}
+.napp-notepad .np-b:not(:disabled):active {
+	background: var(--hover-b, var(--hover));
+}
+.napp-notepad .np-b[aria-pressed='true'] {
+	background: color-mix(in srgb, var(--accent) 26%, transparent);
+}
+@container (max-width: 640px) {
+	.napp-notepad .np-bar .np-b:not(.ic) span {
+		display: none;
+	}
+	.napp-notepad .np-bar [data-act='saveas'] span,
+	.napp-notepad .np-bar [data-act='goto'] span {
+		display: inline;
+	}
+}
+.napp-notepad .np-sep {
+	width: 1px;
+	height: 16px;
+	margin: 0 4px;
+	background: var(--bd);
+}
+.napp-notepad .np-grow {
+	flex: 1;
+}
+
+.napp-notepad .np-tabs {
+	display: flex;
+	align-items: flex-end;
+	gap: 2px;
+	padding: 4px 8px 0;
+	overflow-x: auto;
+	scrollbar-width: thin;
+	border-bottom: 1px solid var(--bd);
+}
+.napp-notepad .np-tab {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex: 0 1 180px;
+	min-width: 96px;
+	height: 30px;
+	padding: 0 6px 0 12px;
+	border-radius: 7px 7px 0 0;
+	border: 1px solid transparent;
+	border-bottom: 0;
+	color: var(--text2);
+	cursor: default;
+	user-select: none;
+}
+.napp-notepad .np-tab:hover {
+	background: var(--hover);
+}
+.napp-notepad .np-tab.on {
+	background: var(--bg);
+	border-color: var(--bd);
+	color: var(--text);
+	margin-bottom: -1px;
+	height: 31px;
+}
+.napp-notepad .np-tn {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.napp-notepad .np-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--accent);
+	flex: none;
+}
+.napp-notepad .np-dot[hidden] {
+	display: none;
+}
+.napp-notepad .np-x,
+.napp-notepad .np-add {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 22px;
+	height: 22px;
+	border-radius: 5px;
+	opacity: 0.7;
+}
+.napp-notepad .np-add {
+	margin: 0 0 4px 2px;
+	width: 26px;
+	height: 26px;
+}
+.napp-notepad .np-x:hover,
+.napp-notepad .np-add:hover {
+	background: var(--hover-b, var(--hover));
+	opacity: 1;
+}
+
+.napp-notepad .np-find {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 8px;
+	border-bottom: 1px solid var(--bd);
+	background: var(--hover-half, transparent);
+}
+.napp-notepad .np-find[hidden] {
+	display: none;
+}
+.napp-notepad .np-rep {
+	display: none;
+}
+.napp-notepad .np-find.with-rep .np-rep {
+	display: flex;
+}
+.napp-notepad .np-row {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+.napp-notepad .np-fi,
+.napp-notepad .np-ri,
+.napp-notepad .np-in {
+	flex: 1;
+	min-width: 0;
+	height: 28px;
+	padding: 0 8px;
+	border: 1px solid var(--bd);
+	border-radius: 6px;
+	background: var(--bg);
+	color: var(--text);
+	font: inherit;
+	outline: 0;
+}
+.napp-notepad .np-fi:focus,
+.napp-notepad .np-ri:focus,
+.napp-notepad .np-in:focus {
+	border-color: var(--accent);
+}
+.napp-notepad .np-count {
+	min-width: 72px;
+	text-align: right;
+	font-size: 12px;
+	color: var(--text2);
+}
+.napp-notepad .np-count.none {
+	color: #e5484d;
+}
+.napp-notepad .np-b.case {
+	width: 30px;
+	padding: 0;
+	justify-content: center;
+	font-weight: 600;
+}
+
+.napp-notepad .np-edit {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+	background: var(--bg);
+}
+.napp-notepad .np-ta {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	padding: 10px 14px;
+	border: 0;
+	outline: 0;
+	resize: none;
+	background: transparent;
+	color: var(--text);
+	font-family: ui-monospace, 'Cascadia Code', Consolas, 'SF Mono', Menlo, monospace;
+	line-height: 1.5;
+	tab-size: 4;
+	caret-color: var(--accent);
+}
+.napp-notepad .np-ta[hidden] {
+	display: none;
+}
+.napp-notepad .np-ta.nowrap {
+	white-space: pre;
+	overflow-wrap: normal;
+}
+.napp-notepad .np-ta::selection {
+	background: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.napp-notepad .np-status {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+	height: 26px;
+	padding: 0 14px;
+	border-top: 1px solid var(--bd);
+	font-size: 12px;
+	color: var(--text2);
+	white-space: nowrap;
+}
+
+/* dialogs */
+.napp-notepad .np-modal {
+	position: absolute;
+	inset: 0;
+	z-index: 30;
+	display: grid;
+	place-items: center;
+	background: var(--bg50, rgba(0, 0, 0, 0.4));
+}
+.napp-notepad .np-dlg {
+	width: min(400px, 92%);
+	box-sizing: border-box;
+	padding: 18px;
+	border: 1px solid var(--bd);
+	border-radius: 10px;
+	background: var(--card);
+	box-shadow: var(--shadow-lg, 0 16px 64px rgba(0, 0, 0, 0.5));
+}
+.napp-notepad .np-dlg h3 {
+	margin: 0 0 8px;
+	font-size: 15px;
+}
+.napp-notepad .np-dlg p {
+	margin: 0 0 14px;
+	color: var(--text2);
+}
+.napp-notepad .np-dlg .np-in {
+	width: 100%;
+	margin-bottom: 12px;
+	height: 32px;
+}
+.napp-notepad .np-dlg-act {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+.napp-notepad .np-pill {
+	height: 30px;
+	padding: 0 14px;
+	border: 1px solid var(--bd);
+	border-radius: var(--siz-radius3, 6px);
+	background: var(--hover);
+}
+.napp-notepad .np-pill:not(:disabled):hover {
+	background: var(--hover-b, var(--hover));
+}
+.napp-notepad .np-pill.primary {
+	background: var(--accent);
+	border-color: transparent;
+	color: #fff;
+}
+.napp-notepad .np-pill.danger {
+	background: #d13438;
+	border-color: transparent;
+	color: #fff;
+}
+.napp-notepad .np-fd {
+	width: min(520px, 94%);
+}
+.napp-notepad .np-fd-bar {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 8px;
+}
+.napp-notepad .np-fd-path {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	height: 28px;
+	padding: 0 6px;
+	border: 1px solid var(--bd);
+	border-radius: 6px;
+	overflow-x: auto;
+	scrollbar-width: none;
+	white-space: nowrap;
+	color: var(--text2);
+}
+.napp-notepad .np-fd-path button {
+	padding: 2px 5px;
+	border-radius: 4px;
+	color: var(--text);
+}
+.napp-notepad .np-fd-path button:hover {
+	background: var(--hover);
+}
+.napp-notepad .np-fd-list {
+	height: 230px;
+	margin-bottom: 10px;
+	padding: 4px;
+	overflow-y: auto;
+	border: 1px solid var(--bd);
+	border-radius: 6px;
+	background: var(--bg);
+	outline: 0;
+}
+.napp-notepad .np-fd-list:focus-visible {
+	border-color: var(--accent);
+}
+.napp-notepad .np-fd-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: 30px;
+	padding: 0 8px;
+	border-radius: 5px;
+	cursor: default;
+	outline: 0;
+}
+.napp-notepad .np-fd-row span {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.napp-notepad .np-fd-row svg {
+	flex: none;
+	color: var(--text2);
+}
+.napp-notepad .np-fd-row[data-type='dir'] svg {
+	color: #f0b429;
+}
+.napp-notepad .np-fd-row:hover {
+	background: var(--hover);
+}
+.napp-notepad .np-fd-row.sel,
+.napp-notepad .np-fd-row:focus-visible {
+	background: color-mix(in srgb, var(--accent) 26%, transparent);
+}
+.napp-notepad .np-fd-empty {
+	padding: 40px 16px;
+	text-align: center;
+	color: var(--text2);
+}

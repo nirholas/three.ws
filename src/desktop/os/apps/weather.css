@@ -1,0 +1,80 @@
+.napp-weather { display: flex; flex-direction: column; min-height: 0; background: var(--card); color: var(--text); }
+.napp-weather .wx { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.napp-weather .wx-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--bd); flex-wrap: wrap; }
+.napp-weather .wx-grow { flex: 1; }
+.napp-weather [hidden] { display: none !important; }
+.napp-weather .wx-sel, .napp-weather .wx-in { background: var(--hover); color: var(--text); border: 1px solid var(--bd); border-radius: 6px; padding: 6px 10px; font: inherit; font-size: 0.88rem; max-width: 240px; }
+.napp-weather .wx-btn, .napp-weather .wx-secondary { border: 1px solid var(--bd); background: transparent; color: var(--text); border-radius: 6px; padding: 6px 12px; font: inherit; font-size: 0.85rem; cursor: pointer; }
+.napp-weather .wx-btn:hover, .napp-weather .wx-secondary:hover { background: var(--hover); }
+.napp-weather .wx-primary { border: 0; background: var(--accent); color: #fff; border-radius: 6px; padding: 8px 18px; font: inherit; font-weight: 600; cursor: pointer; }
+.napp-weather .wx-primary:hover { filter: brightness(1.12); }
+.napp-weather .wx-primary:active, .napp-weather .wx-btn:active, .napp-weather .wx-secondary:active { transform: scale(0.97); }
+.napp-weather button:focus-visible, .napp-weather select:focus-visible, .napp-weather input:focus-visible, .napp-weather .wx-hours:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.napp-weather .wx-seg { display: inline-flex; background: var(--hover); border-radius: 999px; padding: 2px; }
+.napp-weather .wx-seg button { border: 0; background: transparent; color: var(--text2); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 0.85rem; cursor: pointer; }
+.napp-weather .wx-seg button.on { background: var(--accent); color: #fff; }
+.napp-weather .wx-body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 20px; }
+.napp-weather .wx-body section { margin-top: 18px; }
+.napp-weather h2 { margin: 0; font-size: 1.15rem; }
+.napp-weather h3 { margin: 0 0 8px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2); }
+.napp-weather .wx-hero { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-radius: 14px; padding: 20px 24px; color: #fff; background: linear-gradient(135deg, #3b8be0, #6fb6f5); }
+.napp-weather .wx-hero.night, .napp-weather .wx-hero.clear.night { background: linear-gradient(135deg, #16213e, #34497a); }
+.napp-weather .wx-hero.cloud, .napp-weather .wx-hero.fog { background: linear-gradient(135deg, #6b7b92, #98a8bd); }
+.napp-weather .wx-hero.rain, .napp-weather .wx-hero.drizzle { background: linear-gradient(135deg, #43587a, #6b86ad); }
+.napp-weather .wx-hero.storm { background: linear-gradient(135deg, #2c3550, #4d5a7e); }
+.napp-weather .wx-hero.snow { background: linear-gradient(135deg, #7d9cc3, #b4cbe6); }
+.napp-weather .wx-place { font-size: 1.05rem; font-weight: 600; }
+.napp-weather .wx-temp { font-size: 4.2rem; font-weight: 300; line-height: 1; margin: 6px 0; }
+.napp-weather .wx-temp small { font-size: 1.3rem; vertical-align: top; margin-left: 4px; opacity: 0.8; }
+.napp-weather .wx-cond { font-size: 1.1rem; }
+.napp-weather .wx-hl { font-size: 0.85rem; opacity: 0.9; margin-top: 4px; }
+.napp-weather .wx-updated, .napp-weather .wx-credit { font-size: 0.75rem; color: var(--text2); margin: 8px 2px 0; }
+.napp-weather .wx-stale { margin-top: 10px; padding: 9px 12px; border-radius: 8px; background: #f5a62326; border: 1px solid #f5a62366; font-size: 0.85rem; }
+.napp-weather .wx-hours { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; }
+.napp-weather .wx-hour { flex: none; width: 62px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border-radius: 10px; background: var(--hover); font-size: 0.8rem; }
+.napp-weather .wx-hour em { font-style: normal; font-size: 0.7rem; color: #4aa3ff; min-height: 1em; }
+.napp-weather .wx-days { list-style: none; margin: 0; padding: 0; }
+.napp-weather .wx-days li { display: grid; grid-template-columns: 56px 30px 38px 36px 1fr 36px; align-items: center; gap: 6px; padding: 6px 0; border-bottom: 1px solid var(--bd); font-size: 0.88rem; }
+.napp-weather .wx-days .rain { color: #4aa3ff; font-size: 0.75rem; }
+.napp-weather .wx-days .lo { text-align: right; color: var(--text2); }
+.napp-weather .wx-days .bar { position: relative; height: 5px; border-radius: 3px; background: var(--hover); }
+.napp-weather .wx-days .bar i { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: linear-gradient(90deg, #4aa3ff, #ffb23f); }
+.napp-weather .wx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.napp-weather .wx-tile { background: var(--hover); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.napp-weather .wx-tile span { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text2); }
+.napp-weather .wx-tile b { font-size: 1.2rem; font-weight: 600; }
+.napp-weather .wx-tile em { font-style: normal; font-size: 0.78rem; color: var(--text2); }
+.napp-weather .wx-state, .napp-weather .wx-search { max-width: 420px; margin: 40px auto; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+.napp-weather .wx-search { align-items: stretch; text-align: left; margin-top: 20px; }
+.napp-weather .wx-state p, .napp-weather .wx-note { margin: 0; color: var(--text2); font-size: 0.9rem; line-height: 1.5; }
+.napp-weather .wx-detail { font-size: 0.78rem !important; opacity: 0.8; }
+.napp-weather .wx-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+.napp-weather .wx-form { display: flex; gap: 8px; }
+.napp-weather .wx-form .wx-in { flex: 1; max-width: none; }
+.napp-weather .wx-results { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.napp-weather .wx-result { width: 100%; display: flex; justify-content: space-between; gap: 12px; text-align: left; border: 1px solid var(--bd); background: transparent; color: var(--text); border-radius: 8px; padding: 9px 12px; font: inherit; cursor: pointer; }
+.napp-weather .wx-result span { color: var(--text2); font-size: 0.82rem; }
+.napp-weather .wx-result:hover { background: var(--hover); border-color: var(--accent); }
+.napp-weather .wx-hint { color: var(--text2); font-size: 0.85rem; padding: 6px 2px; }
+.napp-weather .wx-hint.err { color: #e5484d; }
+.napp-weather .wx-spin-ring { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--bd); border-top-color: var(--accent); animation: wx-rot 0.8s linear infinite; }
+.napp-weather .wx-skel .sk { border-radius: 12px; background: linear-gradient(90deg, var(--hover) 25%, var(--bd) 50%, var(--hover) 75%); background-size: 200% 100%; animation: wx-shimmer 1.4s infinite; margin-bottom: 14px; }
+.napp-weather .wx-skel .a { height: 170px; } .napp-weather .wx-skel .b { height: 100px; } .napp-weather .wx-skel .c { height: 200px; } .napp-weather .wx-skel .d { height: 90px; }
+@keyframes wx-shimmer { to { background-position: -200% 0; } }
+@keyframes wx-rot { to { transform: rotate(360deg); } }
+.napp-weather .wx-ico { flex: none; overflow: visible; }
+.napp-weather .wx-spin { transform-origin: 32px 32px; animation: wx-rot 24s linear infinite; }
+.napp-weather .wx-drift { animation: wx-drift 6s ease-in-out infinite alternate; }
+.napp-weather .wx-bob { animation: wx-drift 5s ease-in-out infinite alternate; }
+.napp-weather .wx-twinkle { animation: wx-twinkle 2.4s ease-in-out infinite; }
+.napp-weather .wx-drop { animation: wx-fall 0.9s linear infinite; }
+.napp-weather .wx-flake { animation: wx-fall 2.2s linear infinite; }
+.napp-weather .wx-bolt { animation: wx-flash 3s steps(1) infinite; }
+@keyframes wx-drift { from { transform: translateX(-2px); } to { transform: translateX(3px); } }
+@keyframes wx-twinkle { 50% { opacity: 0.25; } }
+@keyframes wx-fall { 0% { transform: translateY(-4px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(8px); opacity: 0; } }
+@keyframes wx-flash { 0%, 88%, 94% { opacity: 1; } 91%, 97% { opacity: 0.2; } }
+@media (prefers-reduced-motion: reduce) {
+	.napp-weather .wx-ico *, .napp-weather .wx-skel .sk, .napp-weather .wx-spin-ring { animation: none !important; }
+}
+@media (max-width: 520px) { .napp-weather .wx-hero { flex-direction: column-reverse; text-align: center; } }

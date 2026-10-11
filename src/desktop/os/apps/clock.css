@@ -1,0 +1,119 @@
+.napp-clock { display: flex; flex-direction: column; min-height: 0; color: var(--text); background: var(--card); }
+.napp-clock .clk { position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.napp-clock .clk-tabs { display: flex; gap: 2px; padding: 8px 10px 0; border-bottom: 1px solid var(--bd); overflow-x: auto; scrollbar-width: none; }
+.napp-clock .clk-tab { border: 0; background: transparent; color: var(--text2); font: inherit; font-size: 0.92rem; padding: 8px 14px; border-radius: 6px 6px 0 0; cursor: pointer; position: relative; white-space: nowrap; }
+.napp-clock .clk-tab:hover { background: var(--hover); color: var(--text); }
+.napp-clock .clk-tab.on { color: var(--text); font-weight: 600; }
+.napp-clock .clk-tab.on::after { content: ''; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 3px; border-radius: 3px; background: var(--accent); }
+.napp-clock button:focus-visible, .napp-clock input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.napp-clock .clk-panel { flex: 1; min-height: 0; overflow: auto; padding: 14px; }
+.napp-clock h2 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+.napp-clock small { color: var(--text2); }
+.napp-clock .clk-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.napp-clock .clk-head small { display: block; margin-top: 2px; }
+.napp-clock .clk-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--bd); background: var(--hover); color: var(--text); font: inherit; font-size: 0.9rem; padding: 7px 14px; border-radius: 6px; cursor: pointer; transition: background 0.1s, transform 0.06s; }
+.napp-clock .clk-btn:hover:not(:disabled) { background: var(--hover-b, var(--hover)); }
+.napp-clock .clk-btn:active:not(:disabled) { transform: scale(0.97); }
+.napp-clock .clk-btn:disabled { opacity: 0.4; cursor: default; }
+.napp-clock .clk-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.napp-clock .clk-btn.primary:hover:not(:disabled) { background: var(--accent); filter: brightness(1.1); }
+.napp-clock .clk-btn.round { width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%; }
+.napp-clock .clk-btn.big { min-width: 130px; justify-content: center; padding: 11px 22px; border-radius: 999px; font-size: 1rem; }
+.napp-clock .clk-x { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 6px; background: transparent; color: var(--text2); cursor: pointer; }
+.napp-clock .clk-x:hover { background: var(--hover); color: var(--text); }
+.napp-clock .clk-input { background: var(--hover-half, var(--hover)); color: var(--text); border: 1px solid var(--bd); border-radius: 6px; padding: 8px 10px; font: inherit; font-size: 0.92rem; width: 100%; box-sizing: border-box; }
+.napp-clock .clk-empty { color: var(--text2); text-align: center; padding: 18px 8px; margin: 0; font-size: 0.9rem; line-height: 1.5; }
+.napp-clock .clk-emptybox { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; color: var(--text2); padding: 28px 16px; border: 1px dashed var(--bd); border-radius: 10px; }
+.napp-clock .clk-emptybox b { color: var(--text); }
+.napp-clock .clk-emptybox p { margin: 0; max-width: 340px; line-height: 1.5; font-size: 0.9rem; }
+.napp-clock .clk-emptybox .ico { opacity: 0.4; }
+/* ring */
+.napp-clock .clk-ringbox { display: none; flex-direction: column; gap: 6px; padding: 8px 10px; background: var(--accent); }
+.napp-clock .clk-ringbox.on { display: flex; }
+.napp-clock .clk-ring { display: flex; align-items: center; gap: 10px; color: #fff; }
+.napp-clock .clk-ring .ico svg { width: 24px; height: 24px; animation: clk-shake 0.6s infinite; transform-origin: 50% 0; }
+.napp-clock .clk-ring div { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.napp-clock .clk-ring b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.napp-clock .clk-ring small { color: #ffffffcc; }
+.napp-clock .clk-ring .clk-btn { background: #ffffff30; border-color: #ffffff50; color: #fff; }
+.napp-clock .clk-ring .clk-btn.primary { background: #fff; color: #111; }
+@keyframes clk-shake { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(14deg); } 75% { transform: rotate(-14deg); } }
+/* world */
+.napp-clock .clk-hero { display: flex; align-items: center; gap: 18px; padding: 8px 4px 14px; }
+.napp-clock .clk-face { width: 120px; height: 120px; flex: none; }
+.napp-clock .clk-face .rim { fill: var(--hover); stroke: var(--bd); }
+.napp-clock .clk-face line { stroke: var(--text2); stroke-width: 0.8; stroke-linecap: round; }
+.napp-clock .clk-face line.big { stroke: var(--text); stroke-width: 1.6; }
+.napp-clock .clk-face .hh, .napp-clock .clk-face .mh { stroke: var(--text); stroke-width: 3; }
+.napp-clock .clk-face .mh { stroke-width: 2.2; }
+.napp-clock .clk-face .sh { stroke: var(--accent); stroke-width: 1.1; }
+.napp-clock .clk-face .pin { fill: var(--accent); }
+.napp-clock .clk-hero-t .big { font-size: 2.6rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.napp-clock .clk-hero-t .sub { margin-top: 2px; }
+.napp-clock .clk-hero-t .dim { color: var(--text2); font-size: 0.85rem; }
+.napp-clock .clk-add { position: relative; margin-bottom: 10px; }
+.napp-clock .clk-sug { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 4px; list-style: none; background: var(--card); border: 1px solid var(--bd); border-radius: 8px; box-shadow: var(--shadow-md); }
+.napp-clock .clk-sug[hidden] { display: none; }
+.napp-clock .clk-sug li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
+.napp-clock .clk-sug li span { color: var(--text2); font-size: 0.8rem; }
+.napp-clock .clk-sug li.on, .napp-clock .clk-sug li:hover { background: var(--hover); }
+.napp-clock .clk-sug li.none { color: var(--text2); cursor: default; }
+.napp-clock .clk-zones { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.napp-clock .clk-zone { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 12px 40px 12px 14px; border: 1px solid var(--bd); border-radius: 10px; background: var(--hover-half, var(--hover)); }
+.napp-clock .clk-zone.night { background: linear-gradient(135deg, var(--hover-half, var(--hover)), #1b254a30); }
+.napp-clock .clk-zone .l { display: flex; flex-direction: column; min-width: 0; }
+.napp-clock .clk-zone .l b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.napp-clock .clk-zone .r { text-align: right; display: flex; flex-direction: column; }
+.napp-clock .clk-zone .t { font-size: 1.5rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.napp-clock .clk-zone .dn { position: absolute; right: 12px; bottom: 12px; color: var(--text2); }
+.napp-clock .clk-zone .clk-x { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; opacity: 0; transition: opacity 0.12s; }
+.napp-clock .clk-zone:hover .clk-x, .napp-clock .clk-zone .clk-x:focus-visible { opacity: 1; }
+/* alarms */
+.napp-clock .clk-form { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--bd); border-radius: 10px; margin-bottom: 12px; background: var(--hover-half, var(--hover)); }
+.napp-clock .clk-form label, .napp-clock .clk-form legend { display: grid; gap: 4px; font-size: 0.82rem; color: var(--text2); }
+.napp-clock .clk-form fieldset { border: 0; margin: 0; padding: 0; }
+.napp-clock .clk-form .days { display: flex; gap: 6px; margin-top: 6px; }
+.napp-clock .clk-day { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--bd); background: transparent; color: var(--text); font: inherit; cursor: pointer; }
+.napp-clock .clk-day:hover { background: var(--hover); }
+.napp-clock .clk-day.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.napp-clock .clk-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.napp-clock .clk-actions.center { justify-content: center; }
+.napp-clock .clk-alist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.napp-clock .clk-alarm { display: grid; grid-template-columns: auto 1fr auto auto auto; align-items: center; gap: 10px; padding: 12px 12px 12px 16px; border: 1px solid var(--bd); border-radius: 10px; background: var(--hover-half, var(--hover)); }
+.napp-clock .clk-alarm.off .tm, .napp-clock .clk-alarm.off .inf { opacity: 0.5; }
+.napp-clock .clk-alarm .tm span { font-size: 1.9rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+.napp-clock .clk-alarm .tm small { display: block; }
+.napp-clock .clk-alarm .inf { display: flex; flex-direction: column; min-width: 0; }
+.napp-clock .clk-alarm .inf b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.napp-clock .clk-switch { width: 42px; height: 22px; border-radius: 11px; border: 1px solid var(--text2); background: transparent; position: relative; cursor: pointer; padding: 0; transition: background 0.15s; }
+.napp-clock .clk-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--text2); transition: transform 0.15s, background 0.15s; }
+.napp-clock .clk-switch.on { background: var(--accent); border-color: var(--accent); }
+.napp-clock .clk-switch.on::after { transform: translateX(20px); background: #fff; }
+/* timers */
+.napp-clock .clk-tform { display: grid; gap: 8px; margin-bottom: 14px; }
+.napp-clock .clk-tform .clk-btn { justify-self: end; }
+.napp-clock .clk-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.napp-clock .clk-chip { border: 1px solid var(--bd); background: transparent; color: var(--text); border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 0.85rem; cursor: pointer; }
+.napp-clock .clk-chip:hover { background: var(--hover); border-color: var(--accent); }
+.napp-clock .clk-tlist { display: grid; gap: 8px; }
+.napp-clock .clk-timer { display: grid; grid-template-columns: 52px 1fr auto auto auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--bd); border-radius: 10px; background: var(--hover-half, var(--hover)); }
+.napp-clock .clk-timer .ring { width: 52px; height: 52px; transform: rotate(-90deg); }
+.napp-clock .clk-timer .ring circle { fill: none; stroke-width: 3.5; }
+.napp-clock .clk-timer .ring .bg { stroke: var(--bd); }
+.napp-clock .clk-timer .ring .fg { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 0.4s linear; }
+.napp-clock .clk-timer .left { font-size: 1.8rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.napp-clock .clk-timer.paused .left { opacity: 0.55; }
+.napp-clock .clk-timer.done { border-color: var(--accent); }
+.napp-clock .clk-timer .inf b { font-weight: 500; color: var(--text2); font-size: 0.85rem; }
+/* stopwatch */
+.napp-clock .clk-sw { display: flex; flex-direction: column; align-items: center; gap: 18px; padding-top: 14px; }
+.napp-clock .clk-swbig { font-size: 4rem; font-weight: 300; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+.napp-clock .clk-laps { align-self: stretch; }
+.napp-clock .clk-laplist { list-style: none; margin: 0; padding: 0; }
+.napp-clock .clk-laplist li { display: grid; grid-template-columns: 1fr auto auto; gap: 18px; padding: 9px 8px; border-bottom: 1px solid var(--bd); font-variant-numeric: tabular-nums; }
+.napp-clock .clk-laplist li span { color: var(--text2); }
+.napp-clock .clk-laplist li.fast b { color: #3fb950; }
+.napp-clock .clk-laplist li.slow b { color: #e5484d; }
+.napp-clock .clk-laplist small { min-width: 80px; text-align: right; }
+@media (max-width: 460px) { .napp-clock .clk-hero { flex-direction: column; text-align: center; } .napp-clock .clk-swbig { font-size: 3rem; } }
+@media (prefers-reduced-motion: reduce) { .napp-clock * { animation: none !important; transition: none !important; } }
