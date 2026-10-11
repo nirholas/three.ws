@@ -1,0 +1,44 @@
+{
+	"id": "zz-chatpick",
+	"scenarioHash": "af7da275d67466168e660d51c29a2d613bc464c14c608565bd01dced8ddc8f1a",
+	"ranAt": "2026-10-11T20:04:54.143Z",
+	"target": {
+		"commit": "66a5e93bd",
+		"revision": "three-ws-api-00494-wh5"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/chat",
+			"detail": "loaded https://three.ws/chat",
+			"ok": true,
+			"ms": 6473,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "click",
+			"target": "Gemma 4 31B",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 346,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "expect",
+			"target": "Qwen",
+			"ok": false,
+			"detail": "locator.waitFor: Timeout 8000ms exceeded.",
+			"ms": 8108,
+			"frames": 0
+		}
+	],
+	"facts": {},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": null
+}
