@@ -1,0 +1,254 @@
+{
+	"id": "quicknode",
+	"name": "Quicknode",
+	"order": 8,
+	"designation": "Quicknode Startup Program",
+	"designationEvidence": [
+		{
+			"type": "page",
+			"url": "https://three.ws/partners",
+			"contains": "member of the Quicknode Startup Program"
+		}
+	],
+	"page": "https://three.ws/blog/three-ws-quicknode-startup-program",
+	"handle": "QuickNode",
+	"mark": null,
+	"forbidden": [
+		"endorsed by Quicknode",
+		"Quicknode endorses",
+		"Quicknode recommends",
+		"Quicknode-certified",
+		"certified by Quicknode",
+		"official Quicknode partner",
+		"Quicknode partner",
+		"strategic partnership with Quicknode",
+		"powered by Quicknode",
+		"Quicknode-powered",
+		"runs on Quicknode",
+		"hosted on Quicknode",
+		"Quicknode infrastructure",
+		"our RPC provider",
+		"primary RPC",
+		"only RPC",
+		"exclusive RPC",
+		"sole RPC",
+		"Quicknode credits",
+		"free credits",
+		"credits worth",
+		"Quicknode Elite",
+		"Quicknode Enterprise",
+		"joint customers",
+		"co-sell"
+	],
+	"guidance": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits. Say that and nothing grander: it is a program membership, not an endorsement, certification or exclusive arrangement. Quicknode is one premium lane among several in the Solana RPC failover chain, enabled by an endpoint URL configured on the server, so never call it the primary or only provider and never say three.ws runs on Quicknode. Talk about the outcome: capacity and redundancy behind agent wallets and x402 settlement verification. Never state a credit amount.",
+	"docs": [
+		"docs/partners.md",
+		"docs/solana.md"
+	],
+	"features": [
+		{
+			"id": "quicknode-settlement-check",
+			"title": "Verify an x402 settlement on Solana",
+			"surface": "https://three.ws/blog/three-ws-quicknode-startup-program",
+			"covers": [],
+			"lane": "developer",
+			"summary": "One GET to verify-receipt checks a real x402 settlement signature against the Solana chain and answers with a finalized status and slot, reading through the same RPC failover chain that Quicknode capacity feeds.",
+			"docs": [
+				"docs/solana.md",
+				"docs/partners.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/api/x402/verify-receipt?hash=66Bz4Rhz7wSNHvNieRk65P6PRe7Cmk7foNXaYV5dMBDiRrAS2ZM6pKV4UhiLJLFVfcGzLFzUoBpkAs12agY9w8x5&network=solana",
+						"settle": 4000,
+						"caption": "One GET checks a real x402 settlement"
+					},
+					{
+						"hold": 2500
+					},
+					{
+						"expect": "settlement confirmed on Solana",
+						"caption": "Read straight from the Solana chain"
+					},
+					{
+						"read": "status",
+						"match": "\"status\":\\s*\"(finalized)\""
+					},
+					{
+						"hold": 4500
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "member of the Quicknode Startup Program with approved"
+						}
+					]
+				},
+				{
+					"says": "Quicknode endpoints add capacity and redundancy to the chain access behind agent wallets, x402 settlement verification, and live Solana reads.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/partners.md",
+							"contains": "x402 settlement verification"
+						}
+					]
+				},
+				{
+					"says": "The verify-receipt endpoint looks a Solana signature up and answers whether the settlement is confirmed.",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "settlement confirmed on Solana"
+						}
+					]
+				},
+				{
+					"says": "The signature in the scene finalized on Solana mainnet.",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "status",
+							"equals": "finalized"
+						}
+					]
+				},
+				{
+					"says": "Server-side Solana calls do not depend on a single endpoint: a failover chain rotates past endpoints that are rate-limited or cooling down.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/solana.md",
+							"contains": "rotates past endpoints that are rate-limited or cooling down"
+						}
+					]
+				},
+				{
+					"says": "A Quicknode endpoint URL, when configured, is one lane in that failover chain.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/solana/connection.js",
+							"contains": "QUICKNODE_RPC_URL"
+						}
+					]
+				},
+				{
+					"says": "The verify-receipt endpoint reads signature status through the shared Solana connection.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/x402/verify-receipt.js",
+							"contains": "solanaConnection"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "quicknode-agent-wallet-balance",
+			"title": "An agent wallet, read live from Solana",
+			"surface": "https://three.ws/agent-wallet",
+			"covers": [],
+			"lane": "developer",
+			"summary": "Every three.ws agent can hold a Solana wallet. The wallet endpoint reads its balance live from Solana mainnet through the shared RPC failover chain.",
+			"docs": [
+				"docs/solana.md",
+				"docs/partners.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/api/agents/f0e8ddd2-d214-4e74-b832-b750cffe7d69/solana",
+						"settle": 4000,
+						"caption": "An agent wallet, read live"
+					},
+					{
+						"hold": 2500
+					},
+					{
+						"expect": "\"chain\":\"solana\"",
+						"caption": "Balance comes from the Solana RPC chain"
+					},
+					{
+						"read": "network",
+						"match": "\"network\":\\s*\"(mainnet)\""
+					},
+					{
+						"hold": 4500
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "member of the Quicknode Startup Program with approved"
+						}
+					]
+				},
+				{
+					"says": "Quicknode endpoints add capacity and redundancy to the chain access behind agent wallets.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/partners.md",
+							"contains": "chain access behind agent wallets"
+						}
+					]
+				},
+				{
+					"says": "The agent wallet endpoint answers with chain solana.",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "\"chain\":\"solana\""
+						}
+					]
+				},
+				{
+					"says": "The wallet balance is read from Solana mainnet.",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "network",
+							"equals": "mainnet"
+						}
+					]
+				},
+				{
+					"says": "The Solana wallet code reaches the chain through the shared failover connection.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/agent-wallet.js",
+							"contains": "solanaConnection(net)"
+						}
+					]
+				},
+				{
+					"says": "Server-side Solana calls do not depend on a single endpoint.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/solana.md",
+							"contains": "do not depend on a single endpoint"
+						}
+					]
+				}
+			]
+		}
+	]
+}

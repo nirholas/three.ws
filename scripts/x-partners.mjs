@@ -9,28 +9,33 @@
 //                                                    the queue's own review and approval
 //   npm run x:partners -- one [--partner id] [--feature id] [--head card|gif|reel|art] [--pattern p] [--ship]
 //                                                    the same for one spotlight, chosen by hand
+//   npm run x:partners -- article [--partner id] [--ship]
+//                                                    the weekly deep dive: an X Article on one partner,
+//                                                    every feature filmed again, code and tables built
+//                                                    from the runs; daily writes one when it is due
 //
 // Options for daily and one:
 //   --overlay <dir>   also read the spotlights in a materialized overlay (x-bundle pull), so a
 //                     machine whose queue.json is the image's copy still rotates correctly
 //   --dry-run         film and draft, print the thread, write nothing to the queue
+//   --no-article      daily only: skip the weekly partner Article even when it is due
 //
 // A spotlight is tier 1 and carries `series: "partners"`. The queue's series
 // slot (cadence) gives it one prime-time post a day, and `approval.series`
 // releases it behind the veto window once it is filmed, reviewed, and passes
 // the series lint in api/_lib/x-content/partners.js.
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-import { loadHistory, loadQueue, validateItem } from '../api/_lib/x-content/queue.js';
-import { proveItem } from '../api/_lib/x-content/reel.js';
+import { loadHistory, loadQueue, partnerNames, validateItem } from '../api/_lib/x-content/queue.js';
+import { proveItem, reelFrames } from '../api/_lib/x-content/reel.js';
 import { browserProblem } from '../api/_lib/x-content/verify.js';
 import { callModelChain } from '../api/_lib/x-content/llm.js';
-import { HEAD_ROTATION, PATTERN_ROTATION, SERIES, buildBrief, draftSpotlight, itemFor, loadPartners, maximumLength, nextDay, partnerProblems, pickNext, spotlightId, spotlights } from '../api/_lib/x-content/partners.js';
-import { rebuildHead } from './lib/x-heads.mjs';
+import { ARTICLE_MIN_FIGURES, HEAD_ROTATION, PATTERN_ROTATION, SERIES, articleBlocks, articleId, articleItemFor, articleSeriesFindings, assembleArticle, buildArticleBrief, buildBrief, draftArticle, draftSpotlight, itemFor, loadPartners, maximumLength, nextArticleDay, nextDay, partnerArticles, partnerProblems, pickArticlePartner, pickNext, spotlightId, spotlights } from '../api/_lib/x-content/partners.js';
+import { headDir, rebuildHead, reelFrame } from './lib/x-heads.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const STORY_DIR = 'data/x-content/stories';
@@ -93,7 +98,7 @@ function registry() {
 // Every spotlight on record: this checkout's queue, plus a materialized
 // overlay's when one is given (the job runs from the image's queue.json, and
 // the bundles hold what earlier runs released).
-function history(queue) {
+function allItems(queue) {
 	const items = [...queue.items];
 	const overlay = option('overlay');
 	if (overlay) {
@@ -102,8 +107,9 @@ function history(queue) {
 		const seen = new Set(items.map((item) => item.id));
 		for (const item of JSON.parse(readFileSync(path, 'utf8')).items || []) if (!seen.has(item.id)) items.push(item);
 	}
-	return spotlights(items);
+	return items;
 }
+const history = (queue) => spotlights(allItems(queue));
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -145,6 +151,9 @@ function plan() {
 		console.log(`  ${day}  ${pick.partner.name.padEnd(14)} ${pick.feature.id.padEnd(26)} ${pick.head.padEnd(5)} ${pick.pattern}`);
 		simulated.push({ partner: pick.partner.id, feature: pick.feature.id, head: pick.head, pattern: pick.pattern, day, status: 'draft' });
 	}
+	const articles = partnerArticles(allItems(queue));
+	const due = nextArticleDay(articles, Date.now());
+	console.log(`\nPartner Article: ${articles.length ? `last ${articles.at(-1).id} (${articles.at(-1).status})` : 'none yet'}; next due ${due}, on ${pickArticlePartner(partners, articles)?.name}`);
 }
 
 // Films, drafts, and queues one spotlight. Returns what happened, never throws
@@ -247,7 +256,17 @@ async function daily() {
 	const count = has('dry-run') ? 1 : Math.max(0, want - stock.length);
 	console.log(`x-partners: ${stock.length} day(s) in stock, keeping ${want}; ${count ? `writing ${count}` : 'nothing to write'}`);
 	if (count) await generate({ count });
-	if (has('ship') && !has('dry-run') && !count) {
+	// The weekly deep dive rides on the same run, when one is due in the window.
+	let wrote = false;
+	if (!has('dry-run') && !has('no-article')) {
+		if (!count) {
+			const problem = await browserProblem();
+			if (problem) fail(`x-partners: ${problem}. Nothing was filmed.`);
+			hydrateModelEnv();
+		}
+		wrote = Boolean((await articleIfDue({ days: want }))?.ok);
+	}
+	if (has('ship') && !has('dry-run') && !count && !wrote) {
 		const ship = spawnSync(process.execPath, [resolve(root, 'scripts/x-bundle.mjs'), 'publish', '--approved'], { cwd: root, stdio: 'inherit' });
 		if (ship.status !== 0) process.exitCode = 1;
 	}
@@ -274,7 +293,163 @@ async function one() {
 	});
 }
 
-const commands = { check, plan, daily, one };
+// --- the weekly Article --------------------------------------------------------
+
+// What an API surface answers right now, for the Article's request block. A
+// page surface has no response worth printing; its scenario is the code.
+async function liveResponse(url) {
+	if (!/^https:\/\/three\.ws\/api\//.test(url)) return null;
+	try {
+		const response = await fetch(url, { signal: AbortSignal.timeout(20_000), headers: { accept: 'application/json' } });
+		if (!response.ok) return null;
+		const text = await response.text();
+		try {
+			return { url, json: true, body: JSON.stringify(JSON.parse(text), null, 2) };
+		} catch {
+			return { url, json: false, body: text };
+		}
+	} catch {
+		return null;
+	}
+}
+
+// One paragraph line per partner on three.ws/partners, from the registry where
+// it has an entry, so the section never says more than the registry proves.
+function partnersSection(partners) {
+	return partnerNames(root).map((name) => {
+		const entry = partners.find((row) => row.name === name || name.includes(row.name) || row.name.includes(name));
+		if (!entry) return `${name}: listed on three.ws/partners; say only that, and link nothing`;
+		const features = entry.features.map((feature) => feature.title).join('; ');
+		// Sentences naming an npm scope read as a tag to the lint, so they stay in the feature's own section.
+		const summary = entry.features[0].summary.split(/(?<=\.)\s+/).filter((sentence) => !/(^|\s)@\w/.test(sentence)).join(' ');
+		return `${name}: three.ws designation "${entry.designation}" (word for word). What three.ws built on it: ${features}. ${summary}`;
+	});
+}
+
+async function writeArticle({ partner, partners, queue, day, dryRun, ship }) {
+	const id = articleId(partner, day);
+	const dir = headDir(id);
+	console.log(`\n=== ${day}: ${partner.name} deep dive as ${id} ===`);
+
+	// 1. Film every feature. The first that passes leads: its run is the
+	//    Article's own proof, and its reel rides on the post that quotes it.
+	const runs = [];
+	for (const feature of partner.features) {
+		const runId = runs.length ? `${id}-${feature.id}`.slice(0, 80) : id;
+		const skeleton = { id: runId, status: 'draft', kind: 'post', tier: 1, scenario: feature.scenario, probes: [{ type: 'scenario' }], posts: [{ text: '' }], claims: [], mentions: {} };
+		try {
+			const { proof, media } = await proveItem(skeleton, { root, film: true });
+			if (!proof.passed || !media) {
+				console.log(`  ${feature.id}: did not pass; left out`);
+				if (!runs.length) rmSync(resolve(root, `data/x-content/proofs/${runId}.json`), { force: true });
+				continue;
+			}
+			runs.push({ feature, proof, media, live: await liveResponse(feature.scenario.steps[0].goto) });
+			console.log(`  ${feature.id}: filmed ${proof.video.durationSec} s${runs.at(-1).live ? ', live response captured' : ''}`);
+		} catch (err) {
+			console.log(`  ${feature.id}: ${String(err.message || err).split('\n')[0]}; left out`);
+		}
+	}
+	if (!runs.length) return { id, ok: false, reason: 'no feature passed its scenario' };
+
+	// 2. Figures from the reels (at least four, spread across the runs), and a
+	//    cover from the lead reel.
+	mkdirSync(resolve(root, dir), { recursive: true });
+	const perRun = Math.max(2, Math.ceil(ARTICLE_MIN_FIGURES / runs.length));
+	const figures = [];
+	for (const { feature, media } of runs) {
+		const captions = (feature.scenario.steps || []).map((step) => step.caption).filter(Boolean);
+		reelFrames({ root, path: media.path, count: perRun }).forEach((frame, index) => {
+			const path = `${dir}/${feature.id}-${index + 1}.jpg`;
+			writeFileSync(resolve(root, path), frame.buffer);
+			const note = captions[Math.min(captions.length - 1, Math.floor((index / perRun) * captions.length))];
+			figures.push({ path, alt: `${feature.title}, filmed live on ${new URL(feature.scenario.steps[0].goto).host}${new URL(feature.scenario.steps[0].goto).pathname}, ${frame.atSec} seconds into the run${note ? `: ${note}` : ''}`.slice(0, 900) });
+		});
+	}
+	const lead = runs[0];
+	const cover = { path: `${dir}/cover.png`, alt: `${lead.feature.title}, a frame of the live run on ${new URL(lead.feature.scenario.steps[0].goto).host}` };
+	writeFileSync(resolve(root, cover.path), reelFrame({ root, path: lead.media.path, atSec: Math.max(0.5, (lead.proof.video.durationSec || 2) * 0.6) }));
+
+	// 3. Draft around the real blocks until the queue's Article gate passes.
+	const blocks = articleBlocks(partner, runs);
+	const tryIt = [...new Set([partner.page, ...runs.map(({ feature }) => feature.surface)])];
+	const brief = buildArticleBrief({ partner, runs, figures, blocks, partnersSection: partnersSection(partners), tryIt });
+	const bodyPath = `data/x-content/articles/${id}.md`;
+	let item = null;
+	const check = (draft) => {
+		const findings = [...articleSeriesFindings(partner, draft)];
+		const { body, findings: placed } = assembleArticle(draft.markdown, blocks, figures);
+		findings.push(...placed);
+		writeFileSync(resolve(root, bodyPath), body);
+		item = articleItemFor({ partner, runs, day, draft, body, cover, media: { ...lead.media, alt: `${lead.feature.title}, filmed live on production` } });
+		findings.push(...validateItem({ ...item, status: 'review' }, root, { quality: queue.quality || {} }));
+		return [...new Set(findings)];
+	};
+	const result = await draftArticle(brief, {
+		call: (request, { parse }) => callModelChain(request, { parse }),
+		check,
+		voice: readText('docs/announce-voice.md', 12000),
+		exemplar: readText('data/x-content/articles/keeper-article.md', 30000),
+	});
+	for (const attempt of result.attempts) {
+		for (const failure of attempt.fallbacks || []) console.log(`    fell through: ${failure.split('\n')[0].slice(0, 160)}`);
+		console.log(`  draft ${attempt.attempt} on ${attempt.model}: ${attempt.findings.length ? `${attempt.findings.length} finding(s): ${attempt.findings.slice(0, 3).join(' | ')}` : 'passes'}`);
+	}
+	if (!result.ok) return { id, ok: false, reason: `no draft passed the Article gate in ${result.attempts.length} attempts: ${result.findings.slice(0, 4).join('; ')}; the last draft is at ${bodyPath}` };
+	console.log(`  title: ${result.draft.title}\n  post:  ${result.draft.post}\n  body:  ${bodyPath}`);
+	if (dryRun) return { id, ok: true, reason: `dry run: filmed and written to ${bodyPath}, nothing queued` };
+
+	// 4. Into the queue: review, and release by the Article policy.
+	const story = resolve(root, STORY_DIR, `${id}.json`);
+	mkdirSync(dirname(story), { recursive: true });
+	writeFileSync(story, `${JSON.stringify(item, null, '\t')}\n`);
+	const cli = (...rest) => spawnSync(process.execPath, [resolve(root, 'scripts/x-content.mjs'), ...rest], { cwd: root, stdio: 'inherit' });
+	if (cli('adopt', id).status !== 0) return { id, ok: false, reason: 'the queue refused the story' };
+	cli('advance', id, ...(ship ? ['--ship'] : []));
+	return { id, ok: true, status: loadQueue(root).items.find((row) => row.id === id)?.status || 'missing' };
+}
+
+// Writes the partner Article when one is due inside the stock window. Returns
+// null when none is due.
+async function articleIfDue({ days, force = false, partnerId = null }) {
+	const queue = loadQueue(root);
+	const rows = partnerArticles(allItems(queue));
+	const stocked = rows.filter((row) => row.day >= today() && ['draft', 'review', 'approved'].includes(row.status));
+	const day = nextArticleDay(rows, Date.now());
+	const horizon = new Date(Date.now() + days * DAY).toISOString().slice(0, 10);
+	if (!force && (stocked.length || day > horizon)) {
+		console.log(`x-partners: the next partner Article is due ${day}${stocked.length ? `; ${stocked[0].id} is already in stock` : ''}`);
+		return null;
+	}
+	const { partners } = registry();
+	const dryRun = has('dry-run');
+	const ship = has('ship') && !dryRun;
+	const exclude = [];
+	for (let attempt = 0; attempt < partners.length; attempt++) {
+		const partner = partnerId ? partners.find((row) => row.id === partnerId) || fail(`x-partners: no partner ${partnerId} in the registry`) : pickArticlePartner(partners, rows, { exclude });
+		if (!partner) break;
+		let outcome;
+		try {
+			outcome = await writeArticle({ partner, partners, queue, day, dryRun, ship });
+		} catch (err) {
+			outcome = { id: articleId(partner, day), ok: false, reason: String(err.message || err).split('\n')[0] };
+		}
+		console.log(`${outcome.id}: ${outcome.ok ? outcome.status || outcome.reason : `FAILED: ${outcome.reason}`}`);
+		if (outcome.ok || partnerId) return outcome;
+		exclude.push(partner.id);
+	}
+	return { ok: false };
+}
+
+async function article() {
+	const problem = await browserProblem();
+	if (problem) fail(`x-partners: ${problem}. Nothing was filmed.`);
+	hydrateModelEnv();
+	const outcome = await articleIfDue({ days: 0, force: true, partnerId: option('partner') });
+	if (!outcome?.ok) process.exitCode = 1;
+}
+
+const commands = { check, plan, daily, one, article };
 if (!commands[command]) fail(`x-partners: unknown command ${command}. Commands: ${Object.keys(commands).join(', ')}`);
 try {
 	await commands[command]();

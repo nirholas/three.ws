@@ -8,6 +8,7 @@ Every day @trythreews features one partner listed on [three.ws/partners](https:/
 | Engine: rotation, brief, drafting, series lint, claims, item | [api/_lib/x-content/partners.js](../api/_lib/x-content/partners.js) |
 | CLI | [scripts/x-partners.mjs](../scripts/x-partners.mjs) (`npm run x:partners`) |
 | Slot and approval | `slots` and `approval.series` in [data/x-content/queue.json](../data/x-content/queue.json) |
+| Scheduled runner: a Cloud Run Job image and its setup | [deploy/x-partners/](../deploy/x-partners/), [scripts/create-x-partners-job.mjs](../scripts/create-x-partners-job.mjs) |
 | Tests | [tests/x-content-partners.test.js](../tests/x-content-partners.test.js) |
 
 ## The registry
@@ -110,6 +111,18 @@ A series slot spends its series' best ready post first, ranked across every tier
 
 Spotlights are tier 1, which normally waits for the owner. `"series": ["partners"]` in `approval` releases a listed series by policy whatever its tier, behind the veto window, and only when the other conditions hold: the post was filmed and the proof covers it, it tags no one, and the review passed on the editor's own verdict. Remove `partners` from the list and every spotlight waits for `approve` again.
 
+## The weekly Article
+
+Once every seven days the series also writes a partner deep-dive as an X Article: one partner, every feature in its registry entry, filmed and measured that day. `daily` writes it when it is due (`--no-article` skips it), and `article --partner <id>` writes one on demand.
+
+1. Every feature's scenario is filmed against production. The lead feature's run binds to the Article's own id, so its reel is the proof the Article's post carries; the others are filmed under `<id>-<feature>`. Four or more frames from the reels become inline figures in `public/x-media/<id>/`, and the cover is built from the lead reel.
+2. `articleBlocks` builds the Article's code and tables from data, never from the model: a table of the runs (surface, length, values read), a facts table per feature with the evidence behind each sentence, each scenario as JSON, and for API surfaces the real request with the response production returned.
+3. The model writes the prose around them as `TITLE / POST / --- / markdown`, placing every block once as `{{block:NAME}}` and the figures as `{{figure:N}}`. `assembleArticle` substitutes them and names any block missing, repeated or unknown.
+4. The draft must pass the queue's Article gate (an 80 to 100 character title, 2400 words over at least eight sections, at least four images, enough code and tables, a section on every partner listed on the partners page, a Try it section) plus the series lint, with every finding fed back for up to three attempts.
+5. Claims come from the designation, the registry facts the prose quotes, and the lead run's values only (a non-lead run is not the proof the post carries, so its numbers stay in the tables). The item is a tier 1 Article with `spotlight: { partner, article: true, features }`, written to `data/x-content/articles/<id>.md` and handed to `adopt` and `advance`.
+
+Rotation goes to the partner whose last Article is oldest, ties by `order`. Articles post in the queue's Article slot, not the series slot, and wait for the owner's `approve` like any tier 1 Article.
+
 ## Running it
 
 ```bash
@@ -118,6 +131,7 @@ npm run x:partners -- plan --days 7             # the rotation ahead and how man
 npm run x:partners -- daily --days 3 --dry-run  # film and draft three days, print them, write nothing
 npm run x:partners -- daily --days 3            # write them to the queue and send them to review
 npm run x:partners -- one --partner aws --feature marketplace-front-door --head gif
+npm run x:partners -- article --partner ibm --dry-run   # film and draft the deep-dive Article, write nothing
 ```
 
 `--ship` on `daily` or `one` passes `--ship` to `advance`, which bundles approved spotlights for production through the overlay ([x-content-pipeline.md](x-content-pipeline.md), "Publishing without a deploy"). Shipping publishes, so it is an owner-approved step.
@@ -128,5 +142,7 @@ To keep the series in stock unattended, run `daily` once a day on a machine with
 npm run x:bundle -- pull --dir /tmp/x-overlay
 npm run x:partners -- daily --days 3 --overlay /tmp/x-overlay --ship
 ```
+
+That run is packaged as a Cloud Run Job. [deploy/x-partners/](../deploy/x-partners/) holds the image (Node, Chromium, ffmpeg and a colour emoji font, so the reels film the way they do on a workstation) and its entrypoint, which pulls the overlay and runs `daily --days 3 --ship`. `node scripts/create-x-partners-job.mjs` prints the plan; `--apply` builds the image, creates the job `three-ws-x-partners` with the production service's env and secret references, and schedules it daily at 08:10 UTC through Cloud Scheduler. Applying it ships posts unattended, so it is an owner-approved step.
 
 Keeping three days in stock means a failed run, a flaky surface, or a model outage costs nothing: the slot still has a reviewed spotlight waiting.

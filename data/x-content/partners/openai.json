@@ -1,0 +1,420 @@
+{
+	"id": "openai",
+	"name": "OpenAI",
+	"order": 1,
+	"designation": "OpenAI Select Partner",
+	"designationEvidence": [
+		{
+			"type": "page",
+			"url": "https://three.ws/partners",
+			"contains": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network"
+		},
+		{
+			"type": "page",
+			"url": "https://three.ws/openai",
+			"contains": "independent member of the OpenAI Partner Network at the Select tier"
+		}
+	],
+	"page": "https://three.ws/openai",
+	"handle": "OpenAI",
+	"mark": "public/partners/openai/openai-select-partner.svg",
+	"forbidden": [
+		"endorsed by OpenAI",
+		"OpenAI endorses",
+		"OpenAI recommends",
+		"OpenAI-certified",
+		"certified by OpenAI",
+		"official OpenAI product",
+		"an OpenAI product",
+		"built by OpenAI",
+		"made by OpenAI",
+		"powered by OpenAI",
+		"OpenAI-powered",
+		"OpenAI partnership",
+		"strategic partnership with OpenAI",
+		"joint venture with OpenAI",
+		"OpenAI invested",
+		"OpenAI credits",
+		"free credits",
+		"credits worth",
+		"OpenAI Premier",
+		"OpenAI Elite",
+		"OpenAI Enterprise partner",
+		"official ChatGPT app",
+		"featured by OpenAI",
+		"approved by OpenAI",
+		"OpenAI-backed"
+	],
+	"guidance": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network. Say exactly that: an independent member at the Select tier, not an OpenAI product, not endorsed or certified beyond the designation itself. Talk about the outcome for people using ChatGPT: real 3D that renders inline in the conversation, free and keyless. Never state credit amounts or account IDs, and never imply OpenAI built, runs or vouches for three.ws.",
+	"docs": [
+		"docs/partners.md",
+		"docs/mcp-studio.md",
+		"docs/chatgpt-ar.md",
+		"docs/spatial-mcp.md"
+	],
+	"features": [
+		{
+			"id": "openai-studio-connector",
+			"title": "The free 3D Studio connector for ChatGPT",
+			"surface": "https://three.ws/openai",
+			"covers": [],
+			"lane": "developer",
+			"summary": "The three.ws 3D Studio connector is a Streamable HTTP MCP server at one URL that ChatGPT can add with no key, no account and no wallet. The /openai page asks the live server for its tool list on load and shows how many tools answered. The generation tools return interactive 3D that renders inline in the conversation. The page also covers the Custom GPT Actions route for plans without connector support.",
+			"docs": [
+				"docs/mcp-studio.md",
+				"docs/partners.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/openai",
+						"settle": 6000,
+						"caption": "The ChatGPT connector, checked live"
+					},
+					{
+						"hold": 1500
+					},
+					{
+						"scroll": "Connect the server.",
+						"ms": 1000,
+						"caption": "No key, no account, no wallet"
+					},
+					{
+						"expect": "tools answered",
+						"within": 30000
+					},
+					{
+						"read": "live",
+						"match": "Live\\. (\\d+) tools answered"
+					},
+					{
+						"hold": 2200,
+						"caption": "The page asks the real server, right now"
+					},
+					{
+						"scroll": "The generation tools.",
+						"ms": 1200,
+						"caption": "Each tool renders inline in ChatGPT"
+					},
+					{
+						"hold": 2500
+					},
+					{
+						"scroll": 500,
+						"ms": 1200
+					},
+					{
+						"hold": 3500
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network"
+						}
+					]
+				},
+				{
+					"says": "three.ws is an independent member of the OpenAI Partner Network at the Select tier.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/openai",
+							"contains": "independent member of the OpenAI Partner Network at the Select tier"
+						}
+					]
+				},
+				{
+					"says": "The connector is a Streamable HTTP MCP server with no authentication.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/openai",
+							"contains": "Streamable HTTP (JSON-RPC over POST)"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/openai",
+							"contains": "Auth None. No key, no account, no wallet"
+						}
+					]
+				},
+				{
+					"says": "The /openai page asks the live server for its tools and reports how many answered.",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "tools answered"
+						}
+					]
+				},
+				{
+					"says": "The live server answered with its full tool list.",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "live",
+							"min": 15
+						}
+					]
+				},
+				{
+					"says": "Generation tools return a result that ChatGPT renders inline in an interactive 3D viewer.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "result inline in an interactive 3D viewer widget"
+						}
+					]
+				},
+				{
+					"says": "A Custom GPT Actions surface offers the same free lane to plans without connector support.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/openai",
+							"contains": "The same free lane as a REST Actions surface"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the live connector endpoint answers",
+					"url": "https://three.ws/openai"
+				}
+			]
+		},
+		{
+			"id": "openai-spatial-mcp",
+			"title": "Spatial MCP: 3D as a native tool result",
+			"surface": "https://three.ws/spatial-mcp",
+			"covers": [],
+			"lane": "developer",
+			"summary": "Spatial MCP is an open CC0 shape for returning a live 3D scene as a first-class MCP tool result instead of a URL in text. three.ws publishes a validator, a reference renderer and a checker page where anyone can paste a payload. A deliberately broken example shows how each error names its path and the fix. The shape is meant to be adopted by any MCP host.",
+			"docs": [
+				"docs/spatial-mcp.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/spatial-mcp",
+						"settle": 6000,
+						"caption": "Spatial MCP: 3D as a tool result"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"scroll": "CHECK YOUR OWN PAYLOAD",
+						"ms": 1200,
+						"caption": "Paste any tool result to check it"
+					},
+					{
+						"hold": 1000
+					},
+					{
+						"click": "Load a broken example",
+						"caption": "A payload that is wrong on purpose"
+					},
+					{
+						"expect": "unknown kind",
+						"within": 10000
+					},
+					{
+						"read": "errors",
+						"selector": "#check-report",
+						"match": "(\\d+) errors"
+					},
+					{
+						"scroll": "unknown kind",
+						"ms": 1400,
+						"caption": "Each error names its path and the fix"
+					},
+					{
+						"hold": 4500
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network"
+						}
+					]
+				},
+				{
+					"says": "Spatial MCP is an open shape for returning a live, interactive 3D scene as an MCP tool result.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/spatial-mcp.md",
+							"contains": "Spatial MCP is an open shape for returning a **live, interactive 3D scene** as an MCP tool result"
+						}
+					]
+				},
+				{
+					"says": "The spec is published under CC0.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/spatial-mcp.md",
+							"contains": "(v0.1, CC0)"
+						}
+					]
+				},
+				{
+					"says": "The checker on the page flags a payload with an unknown kind.",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "unknown kind"
+						}
+					]
+				},
+				{
+					"says": "The broken example produces several named errors.",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "errors",
+							"min": 1
+						}
+					]
+				},
+				{
+					"says": "The same validator is available as a package, a URL import and an MCP tool.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/spatial-mcp.md",
+							"contains": "Validator (MCP tool)"
+						},
+						{
+							"type": "file",
+							"path": "docs/spatial-mcp.md",
+							"contains": "Validator (import by URL, no npm)"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the Spatial MCP page answers",
+					"url": "https://three.ws/spatial-mcp"
+				}
+			]
+		},
+		{
+			"id": "openai-ar-handoff",
+			"title": "One link from ChatGPT to AR",
+			"surface": "https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Favatars%2Fxbot.glb&title=Robot",
+			"covers": [],
+			"lane": "community",
+			"summary": "When ChatGPT generates a model through the connector, it can hand back a single three.ws link that opens that model in a viewer. On a phone the same link offers one tap to place it in your space with AR. The link takes the GLB address and a title and needs no account.",
+			"docs": [
+				"docs/chatgpt-ar.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Favatars%2Fxbot.glb&title=Robot",
+						"settle": 7000,
+						"caption": "The one link ChatGPT prints for AR"
+					},
+					{
+						"expect": "Place in your space",
+						"within": 15000
+					},
+					{
+						"hold": 2000
+					},
+					{
+						"drag": [
+							[
+								0.3,
+								0.4
+							],
+							[
+								0.75,
+								0.4
+							]
+						],
+						"ms": 2000,
+						"caption": "Orbit it on any screen"
+					},
+					{
+						"hold": 1500,
+						"caption": "On a phone, one tap places it in AR"
+					},
+					{
+						"hold": 3500
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network"
+						}
+					]
+				},
+				{
+					"says": "The AR link takes a GLB address and a title.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/chatgpt-ar.md",
+							"contains": "/api/ar?src=<glbUrl>&title=<name>"
+						}
+					]
+				},
+				{
+					"says": "The link page offers to place the model in your space.",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "Place in your space"
+						}
+					]
+				},
+				{
+					"says": "The same link has a variant for rigged avatars.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/chatgpt-ar.md",
+							"contains": "/api/ar?src=<glbUrl>&title=<name>&kind=avatar"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the AR launch link answers",
+					"url": "https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Favatars%2Fxbot.glb&title=Robot"
+				}
+			]
+		}
+	]
+}

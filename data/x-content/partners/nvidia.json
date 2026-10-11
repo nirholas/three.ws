@@ -1,0 +1,411 @@
+{
+	"id": "nvidia",
+	"name": "NVIDIA",
+	"order": 6,
+	"designation": "NVIDIA Inception member",
+	"designationEvidence": [
+		{
+			"type": "page",
+			"url": "https://three.ws/nvidia",
+			"contains": "NVIDIA Inception member"
+		},
+		{
+			"type": "page",
+			"url": "https://three.ws/nvidia",
+			"contains": "independent member of the NVIDIA Inception program"
+		}
+	],
+	"page": "https://three.ws/nvidia",
+	"handle": "NVIDIAAIDev",
+	"mark": "public/marks/nvidia-inception-badge.svg",
+	"forbidden": [
+		"NVIDIA partner",
+		"NVIDIA partnership",
+		"partnership with NVIDIA",
+		"strategic partnership with NVIDIA",
+		"NVIDIA endorses",
+		"endorsed by NVIDIA",
+		"NVIDIA recommends",
+		"NVIDIA-certified",
+		"certified by NVIDIA",
+		"NVIDIA-approved",
+		"approved by NVIDIA",
+		"official NVIDIA",
+		"NVIDIA-backed",
+		"NVIDIA invested",
+		"NVIDIA investment",
+		"investment from NVIDIA",
+		"NVIDIA funded",
+		"NVIDIA Elite",
+		"NVIDIA Preferred",
+		"NVIDIA Premier",
+		"NVIDIA NPN",
+		"NVIDIA credits",
+		"free credits",
+		"credits worth",
+		"powered by NVIDIA",
+		"built by NVIDIA"
+	],
+	"guidance": "three.ws is a member of the NVIDIA Inception program, NVIDIA's startup program. Say NVIDIA Inception member and nothing grander: it is not a partnership, a reseller relationship or an investment, and NVIDIA does not endorse or certify three.ws. Talk about what runs on NVIDIA hardware and models, the free hosted lane and the self-hosted GPU fleet, as facts about the stack. Never state credit amounts.",
+	"docs": [
+		"docs/partners.md",
+		"docs/nvidia-inception.md",
+		"docs/nvidia-models.md"
+	],
+	"features": [
+		{
+			"id": "nvidia-voice",
+			"title": "Avatar voices on NVIDIA Magpie",
+			"surface": "https://three.ws/voice",
+			"covers": [],
+			"lane": "community",
+			"summary": "The voice picker offers NVIDIA Magpie multilingual speech as a free lane for any avatar. Speech is synthesized by NVIDIA Riva through a hosted function, with no key needed from the user. Pick the voice, type a line, and the avatar speaks it. The same lane covers many languages.",
+			"docs": [
+				"docs/nvidia-models.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/voice",
+						"settle": 6000,
+						"caption": "Pick the voice for your avatar"
+					},
+					{
+						"click": "NVIDIA Magpie",
+						"caption": "NVIDIA Magpie, a free lane"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"click": "Use this voice",
+						"caption": "One tap and the avatar has it"
+					},
+					{
+						"type": "Hello, I am your three.ws avatar. This voice runs on NVIDIA.",
+						"into": "Type something to hear it spoken"
+					},
+					{
+						"hold": 1200
+					},
+					{
+						"click": "Speak",
+						"awaits": "/api/tts/synthesize",
+						"caption": "Synthesized by NVIDIA Riva, no key"
+					},
+					{
+						"expect": "free lane",
+						"within": 60000
+					},
+					{
+						"hold": 4500
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "three.ws is an independent member of the NVIDIA Inception program.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/nvidia",
+							"contains": "independent member of the NVIDIA Inception program"
+						}
+					]
+				},
+				{
+					"says": "Inception is a startup program, not a partnership, a reseller relationship, or an investment.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/nvidia",
+							"contains": "Inception is a startup program, not a partnership, a reseller relationship, or an investment"
+						}
+					]
+				},
+				{
+					"says": "The voice picker marks the NVIDIA Magpie voices as a free lane.",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "free lane"
+						}
+					]
+				},
+				{
+					"says": "The speech model is magpie-tts-multilingual served through Riva.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/tts-nvidia.js",
+							"contains": "export const NVIDIA_TTS_MODEL = 'magpie-tts-multilingual'"
+						}
+					]
+				},
+				{
+					"says": "The /nvidia page lists Magpie text to speech as free for avatar voices.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/nvidia",
+							"contains": "magpie-tts-multilingual"
+						}
+					]
+				},
+				{
+					"says": "The speech endpoint accepts nvidia as a provider.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/tts/synthesize.js",
+							"contains": "'nvidia'"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the voice page answers",
+					"url": "https://three.ws/voice"
+				}
+			]
+		},
+		{
+			"id": "nvidia-gpu-fleet",
+			"title": "A self-hosted GPU fleet on L4 and Blackwell",
+			"surface": "https://three.ws/nvidia",
+			"covers": [],
+			"lane": "developer",
+			"summary": "Beyond the free hosted lane, three.ws runs its own fleet of Cloud Run GPU services. Each is a worker wrapping one model, autoscaled per lane. Eleven run on NVIDIA L4 and one runs on an RTX PRO 6000 Blackwell. This is where PBR materials, auto-rigging and motion get made.",
+			"docs": [
+				"docs/nvidia-inception.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/nvidia",
+						"settle": 6000,
+						"caption": "Every model here is born on NVIDIA"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"scroll": "Our own GPU fleet",
+						"ms": 1200,
+						"caption": "Two layers: hosted models, our own GPUs"
+					},
+					{
+						"read": "fleet",
+						"match": "(Twelve Cloud Run GPU services)"
+					},
+					{
+						"hold": 3000
+					},
+					{
+						"scroll": "The GPU fleet.",
+						"ms": 1400,
+						"caption": "One Cloud Run service per lane"
+					},
+					{
+						"hold": 2500
+					},
+					{
+						"scroll": 420,
+						"ms": 1200,
+						"caption": "Rigging, texture and motion on L4 GPUs"
+					},
+					{
+						"hold": 3500
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "three.ws is an independent member of the NVIDIA Inception program.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/nvidia",
+							"contains": "independent member of the NVIDIA Inception program"
+						}
+					]
+				},
+				{
+					"says": "Inception is a startup program, not a partnership, a reseller relationship, or an investment.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/nvidia",
+							"contains": "Inception is a startup program, not a partnership, a reseller relationship, or an investment"
+						}
+					]
+				},
+				{
+					"says": "The fleet is twelve Cloud Run GPU services.",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "fleet",
+							"equals": "Twelve Cloud Run GPU services"
+						}
+					]
+				},
+				{
+					"says": "Eleven of them run on nvidia-l4 and one on nvidia-rtx-pro-6000, the Blackwell.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/nvidia",
+							"contains": "Eleven on nvidia-l4, one on nvidia-rtx-pro-6000"
+						}
+					]
+				},
+				{
+					"says": "Each service is a worker wrapping one model, autoscaled per lane.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/nvidia",
+							"contains": "each a worker wrapping one model, autoscaled per lane"
+						}
+					]
+				},
+				{
+					"says": "Text to 3D, photo to avatar, auto-rigging and motion capture run on this GPU fleet.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/nvidia-inception.md",
+							"contains": "Photo-to-avatar reconstruction, auto-rigging, and motion capture"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the NVIDIA page answers",
+					"url": "https://three.ws/nvidia"
+				}
+			]
+		},
+		{
+			"id": "nvidia-model-map",
+			"title": "The free NVIDIA model map",
+			"surface": "https://three.ws/nvidia",
+			"covers": [],
+			"lane": "community",
+			"summary": "One NVIDIA API key unlocks the hosted models three.ws uses on its free lane. Text to 3D runs on hosted TRELLIS, avatar voices on Magpie, and the Brain workbench offers Nemotron models. The /nvidia page lays the whole map out in a table. Because the lane is a rate-limited free tier, the platform always keeps a fallback behind it.",
+			"docs": [
+				"docs/nvidia-models.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/nvidia",
+						"settle": 6000,
+						"caption": "three.ws on NVIDIA Inception"
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"scroll": "The free model map.",
+						"ms": 1400,
+						"caption": "The free NVIDIA model map"
+					},
+					{
+						"expect": "microsoft/trellis",
+						"caption": "Text to 3D on hosted TRELLIS"
+					},
+					{
+						"hold": 2500
+					},
+					{
+						"scroll": "Magpie",
+						"ms": 1200,
+						"caption": "Avatar voices on Riva Magpie"
+					},
+					{
+						"expect": "magpie-tts-multilingual"
+					},
+					{
+						"hold": 4500
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "three.ws is an independent member of the NVIDIA Inception program.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/nvidia",
+							"contains": "independent member of the NVIDIA Inception program"
+						}
+					]
+				},
+				{
+					"says": "Inception is a startup program, not a partnership, a reseller relationship, or an investment.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/nvidia",
+							"contains": "Inception is a startup program, not a partnership, a reseller relationship, or an investment"
+						}
+					]
+				},
+				{
+					"says": "One NVIDIA API key unlocks every hosted model the platform uses on this lane.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/nvidia-models.md",
+							"contains": "unlocks every model on this page"
+						}
+					]
+				},
+				{
+					"says": "Text to 3D on the free lane uses microsoft/trellis.",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "microsoft/trellis"
+						}
+					]
+				},
+				{
+					"says": "Avatar voices use magpie-tts-multilingual over Riva.",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "magpie-tts-multilingual"
+						}
+					]
+				},
+				{
+					"says": "The free lane is rate limited, so the platform treats it as free-first and keeps a fallback behind it.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/nvidia-models.md",
+							"contains": "free-first"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the NVIDIA page answers",
+					"url": "https://three.ws/nvidia"
+				}
+			]
+		}
+	]
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildBrief, claimsFor, draftFindings, draftSpotlight, itemFor, nextDay, parseDraft, partnerProblems, pickNext, seriesFindings, spotlights } from '../api/_lib/x-content/partners.js';
+import { articleBlocks, articleClaims, articleFacts, articleItemFor, articleSeriesFindings, assembleArticle, buildArticleBrief, draftArticle, nextArticleDay, parseArticle, partnerArticles, pickArticlePartner, buildBrief, claimsFor, draftFindings, draftSpotlight, itemFor, nextDay, parseDraft, partnerProblems, pickNext, seriesFindings, spotlights } from '../api/_lib/x-content/partners.js';
 import { validateItem } from '../api/_lib/x-content/queue.js';
 
 const scenario = { format: 'square', steps: [{ goto: 'https://three.ws/openai', caption: 'Eleven keyless 3D tools' }, { expect: 'Connect' }, { hold: 3000 }] };
@@ -166,5 +166,102 @@ describe('drafting', () => {
 
 	it('refuses a reply with no JSON in it', () => {
 		expect(() => parseDraft('no')).toThrow(/no JSON/);
+	});
+});
+
+describe('the weekly Article', () => {
+	const proven = { ...openai.features[0], facts: [...openai.features[0].facts, { says: 'the run counted the tools', evidence: [{ type: 'proof', fact: 'tools', min: 10 }] }] };
+	const runs = [
+		{ feature: proven, proof: { facts: { tools: '15' }, video: { durationSec: 12.4 } }, live: { url: 'https://three.ws/api/tools', json: true, body: '{\n  "tools": 15\n}' } },
+		{ feature: { ...proven, id: 'ar', title: 'AR in ChatGPT' }, proof: { facts: { hits: '9' }, video: { durationSec: 8 } }, live: null },
+	];
+	const figures = [1, 2, 3, 4].map((n) => ({ path: `public/x-media/a/f${n}.jpg`, alt: `Frame ${n}` }));
+
+	it('is due a week after the last one, goes to the partner whose Article is oldest, and never counts a spotlight', () => {
+		const items = [
+			{ id: 'a', kind: 'article', spotlight: { partner: 'openai', article: true }, notBefore: '2026-10-05T00:00:00Z', status: 'posted' },
+			{ id: 'b', kind: 'post', series: 'partners', spotlight: { partner: 'nvidia', feature: 'gpu' }, notBefore: '2026-10-09T00:00:00Z', status: 'approved' },
+		];
+		const rows = partnerArticles(items);
+		expect(rows.map((row) => row.id)).toEqual(['a']);
+		expect(nextArticleDay(rows, Date.parse('2026-10-08T10:00:00Z'))).toBe('2026-10-12');
+		expect(nextArticleDay(rows, Date.parse('2026-10-20T10:00:00Z'))).toBe('2026-10-20');
+		expect(nextArticleDay([], Date.parse('2026-10-08T10:00:00Z'))).toBe('2026-10-08');
+		expect(pickArticlePartner([openai, nvidia], rows).id).toBe('nvidia');
+	});
+
+	it('only lets the lead run speak for facts a run proved', () => {
+		expect(articleFacts(proven, { lead: true }).map((fact) => fact.says)).toContain('the run counted the tools');
+		expect(articleFacts(proven).map((fact) => fact.says)).not.toContain('the run counted the tools');
+	});
+
+	it('builds its code and tables from the registry and the runs', () => {
+		const blocks = articleBlocks(openai, runs);
+		expect(Object.keys(blocks).sort()).toEqual(['facts-ar', 'facts-studio', 'request-studio', 'runs', 'scenario-ar', 'scenario-studio']);
+		expect(blocks.runs).toMatch(/\| Free 3D tools inside ChatGPT \| three\.ws\/openai \| 12\.4 s \| tools = 15 \|/);
+		expect(blocks['facts-studio']).toMatch(/\| eleven keyless 3D tools \| three\.ws\/openai shows "eleven keyless 3D tools" \|/);
+		expect(blocks['facts-studio']).toMatch(/the run read tools = 15/);
+		expect(blocks['facts-ar']).not.toMatch(/the run counted/);
+		expect(blocks['request-studio']).toContain("curl -s 'https://three.ws/api/tools'");
+		const brief = buildArticleBrief({ partner: openai, runs, figures, blocks, partnersSection: ['OpenAI: Select'], tryIt: [openai.page] });
+		expect(brief.features[1].measured).toEqual({});
+		expect(brief.blocks.runs).toMatch(/^table:/);
+	});
+
+	it('places every block once and the figures by number, and names what is missing', () => {
+		const blocks = { runs: '| a |\n|---|', 'facts-x': '| b |\n|---|' };
+		const markdown = 'Intro.\n\n{{block:runs}}\n\n{{figure:1}}\n{{figure:2}}\n\n{{block:runs}}\n\n{{block:nope}}\n\nInline {{figure:3}} here.';
+		const { body, findings } = assembleArticle(markdown, blocks, figures);
+		expect(body).toContain('![Frame 1](/x-media/a/f1.jpg)');
+		expect(body.match(/\| a \|/g)).toHaveLength(1);
+		expect(findings.join('\n')).toMatch(/block:facts-x\}\} is missing/);
+		expect(findings.join('\n')).toMatch(/block:runs\}\} is placed 2 times/);
+		expect(findings.join('\n')).toMatch(/block:nope\}\} is not in brief\.blocks/);
+		expect(findings.join('\n')).toMatch(/2 figures are placed; place at least 4/);
+		expect(findings.join('\n')).toMatch(/not on a line of its own/);
+	});
+
+	it('reads the TITLE / POST / body shape and refuses anything else', () => {
+		const words = Array.from({ length: 220 }, () => 'word').join(' ');
+		expect(parseArticle(`TITLE: A title\nPOST: The post\n---\n${words}`)).toEqual({ title: 'A title', post: 'The post', markdown: words });
+		expect(() => parseArticle('{"post":"x"}')).toThrow(/TITLE \/ POST/);
+	});
+
+	it('holds the prose to the series rules and builds claims for the whole Article', () => {
+		const draft = { title: 'How three.ws built for ChatGPT', post: 'A post.', markdown: 'We are an official OpenAI partner, thanks @OpenAI.' };
+		const findings = articleSeriesFindings(openai, draft).join('\n');
+		expect(findings).toMatch(/"OpenAI Select Partner", word for word/);
+		expect(findings).toMatch(/"official OpenAI" overstates/);
+		expect(findings).toMatch(/tags no one/);
+		expect(findings).toMatch(/title must name OpenAI/);
+		expect(findings).toMatch(/link the partner page three\.ws\/openai/);
+		const texts = ['We are an OpenAI Select Partner. It runs inside ChatGPT, the run counted the tools, 15 of them, with no sign-up. The other run counted the tools too.'];
+		const claims = articleClaims(openai, runs, texts);
+		expect(claims.map((claim) => claim.says)).toEqual(['OpenAI Select Partner', 'runs inside ChatGPT', 'no sign-up', 'the run counted the tools', '15']);
+	});
+
+	it('becomes an Article item quoted by one post that carries the lead reel', () => {
+		const draft = { title: 'T', post: 'P', markdown: 'M' };
+		const item = articleItemFor({ partner: openai, runs, day: '2026-10-18', draft, body: 'B', cover: { path: 'public/x-media/a/cover.png', alt: 'c' }, media: { path: 'public/x-media/a/reel.mp4' } });
+		expect(item).toMatchObject({ id: 'partner-openai-article-20261018', kind: 'article', tier: 1, spotlight: { partner: 'openai', article: true, features: ['studio', 'ar'] }, article: { title: 'T', body: 'data/x-content/articles/partner-openai-article-20261018.md' }, scenario: proven.scenario });
+		expect(item.series).toBeUndefined();
+		expect(item.posts[0].media[0].path).toBe('public/x-media/a/reel.mp4');
+	});
+
+	it('feeds the gate back until a draft passes', async () => {
+		const words = Array.from({ length: 220 }, () => 'word').join(' ');
+		const replies = [`TITLE: one\nPOST: p\n---\n${words}`, `TITLE: two\nPOST: p\n---\n${words}`];
+		const requests = [];
+		const result = await draftArticle({ partner: { guidance: 'g' } }, {
+			call: async (request, { parse }) => {
+				requests.push(request);
+				return { value: parse(replies.shift()), model: 'stand-in' };
+			},
+			check: (draft) => (draft.title === 'one' ? ['article title is 3 characters'] : []),
+		});
+		expect(result.ok).toBe(true);
+		expect(result.attempts).toHaveLength(2);
+		expect(requests[1].parts[0].text).toMatch(/article title is 3 characters/);
+		expect(requests[0].system).toMatch(/The partners behind/);
 	});
 });

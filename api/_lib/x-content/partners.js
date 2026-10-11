@@ -396,3 +396,276 @@ export function itemFor({ partner, feature, head, pattern, day, draft, proof = n
 }
 
 export const maximumLength = (quality) => maxLengthOf(quality || {});
+
+// --- the weekly deep dive -----------------------------------------------------
+//
+// Once a week the series also writes an X Article about one partner: every
+// feature three.ws built on it, each filmed again for the occasion, with the
+// requests and the scenarios behind them set as real code and the facts set as
+// tables. The model writes the prose; the code, tables and figures are built
+// here from the registry and the runs, so nothing in a code block or a table is
+// the model's invention. The Article goes through the queue's full Article gate
+// (title length, depth, code and tables, images, the partners section, Try it).
+
+export const ARTICLE_EVERY_DAYS = 7;
+// A 2,400 word Article plus its title and post runs past the chain's default
+// answer budget, so the request asks for room to finish.
+export const ARTICLE_MAX_TOKENS = 16_000;
+export const ARTICLE_MIN_FIGURES = 4;
+const CODE_BUDGET = 9000;
+
+export const articleId = (partner, day) => `partner-${partner.id}-article-${day.replace(/-/g, '')}`;
+
+// Every partner Article queued or sent, oldest first.
+export function partnerArticles(items) {
+	return (items || [])
+		.filter((item) => item?.kind === 'article' && item.spotlight?.partner && item.spotlight.article)
+		.map((item) => ({ id: item.id, partner: item.spotlight.partner, day: String(item.notBefore || '').slice(0, 10), status: item.status }))
+		.sort((left, right) => left.day.localeCompare(right.day) || left.id.localeCompare(right.id));
+}
+
+// The day the next partner Article is due: a week after the last one, and
+// never before `now`.
+export function nextArticleDay(rows, now = Date.now(), everyDays = ARTICLE_EVERY_DAYS) {
+	const start = new Date(now).toISOString().slice(0, 10);
+	const last = rows.filter((row) => row.status !== 'paused').at(-1);
+	if (!last) return start;
+	const due = new Date(Date.parse(`${last.day}T00:00:00Z`) + everyDays * DAY).toISOString().slice(0, 10);
+	return due > start ? due : start;
+}
+
+// The partner whose Article is oldest, in page order on a tie. A partner with
+// one feature still gets its turn: its features are filmed and quoted, and the
+// figures come from more frames of the same reel.
+export function pickArticlePartner(partners, rows, { exclude = [] } = {}) {
+	const usable = partners.filter((partner) => !exclude.includes(partner.id) && partner.features?.length);
+	if (!usable.length) return null;
+	return [...usable].sort((left, right) => lastIndex(rows, (row) => row.partner === left.id) - lastIndex(rows, (row) => row.partner === right.id) || left.order - right.order)[0];
+}
+
+const fence = (lang, text) => `\`\`\`${lang}\n${text}\n\`\`\``;
+const cell = (text) => String(text ?? '').replace(/\|/g, '\\|').replace(/\s+/g, ' ').trim();
+const clip = (text, limit) => (text.length > limit ? `${text.slice(0, limit).replace(/\s+\S*$/, '')}\n...` : text);
+
+function evidenceLabel(evidence, proof) {
+	if (evidence.type === 'page') return `${bare(evidence.url)} shows "${evidence.contains}"`;
+	if (evidence.type === 'file') return `${evidence.path} contains "${evidence.contains}"`;
+	if (evidence.type === 'proof' && evidence.saw) return `the run saw "${evidence.saw}"`;
+	if (evidence.type === 'proof') return `the run read ${evidence.fact} = ${proof?.facts?.[evidence.fact] ?? evidence.equals ?? evidence.min ?? ''}`.trim();
+	if (evidence.type === 'api') return `GET ${bare(evidence.url)}`;
+	return evidence.type;
+}
+
+// The facts a run lets the Article state. The Article's own proof is its lead
+// run, so a fact proven by another feature's run can only be stated by the
+// spotlight that filmed it; here it is left out.
+export function articleFacts(feature, { lead = false } = {}) {
+	return (feature.facts || []).filter((fact) => lead || !fact.evidence.some((evidence) => evidence.type === 'proof'));
+}
+
+// The code and tables, built from the registry and the runs. `runs` holds, per
+// feature, the proof and (for an API surface) the live response it answered.
+export function articleBlocks(partner, runs) {
+	const blocks = {};
+	blocks.runs = [
+		'| Feature | Filmed on | Length | Read live |',
+		'|---|---|---|---|',
+		...runs.map(({ feature, proof }) => `| ${cell(feature.title)} | ${cell(bare(feature.scenario.steps[0].goto))} | ${proof?.video?.durationSec ? `${proof.video.durationSec} s` : 'not filmed'} | ${cell(Object.entries(proof?.facts || {}).map(([name, value]) => `${name} = ${value}`).join(', ') || 'none')} |`),
+	].join('\n');
+	runs.forEach(({ feature, proof, live }, index) => {
+		const facts = articleFacts(feature, { lead: index === 0 });
+		blocks[`facts-${feature.id}`] = ['| What we state | Checked against |', '|---|---|', ...facts.map((fact) => `| ${cell(fact.says)} | ${cell(fact.evidence.map((evidence) => evidenceLabel(evidence, proof)).join('; '))} |`)].join('\n');
+		const steps = JSON.stringify({ format: feature.scenario.format, steps: feature.scenario.steps }, null, 2);
+		blocks[`scenario-${feature.id}`] = fence('json', clip(steps, 1400));
+		const logged = (proof?.steps || []).filter((step) => step.kind !== 'hold');
+		if (logged.length) blocks[`log-${feature.id}`] = ['| Step | Did | On | Result | ms |', '|---|---|---|---|---|', ...logged.map((step) => `| ${step.index} | ${step.kind} | ${cell(clip(bare(String(step.target ?? '')), 80))} | ${step.ok ? 'passed' : 'failed'}: ${cell(clip(String(step.detail ?? ''), 90))} | ${step.ms ?? ''} |`)].join('\n');
+		if (live?.body) blocks[`request-${feature.id}`] = `${fence('bash', `curl -s '${live.url}'`)}\n\n${fence(live.json ? 'json' : 'text', clip(live.body, 900))}`;
+	});
+	// X caps code and tables per Article; trim the longest code first.
+	const weight = () => Object.values(blocks).reduce((sum, block) => sum + block.length, 0);
+	const trimmable = (key) => (key.startsWith('scenario-') ? 0 : key.startsWith('log-') ? 1 : 2);
+	for (const name of Object.keys(blocks).filter((key) => trimmable(key) < 2).sort((left, right) => trimmable(left) - trimmable(right) || blocks[right].length - blocks[left].length)) {
+		if (weight() <= CODE_BUDGET) break;
+		delete blocks[name];
+	}
+	return blocks;
+}
+
+export const ARTICLE_SYSTEM = `You write the weekly partner deep dive for @trythreews, the X account of three.ws, a platform for 3D AI agents: avatars, a web component, agent wallets on Solana, and the $THREE token. It is a long-form X Article about one partner listed on three.ws/partners and everything three.ws built on that partner's technology. Every feature in it was filmed working on production for this Article.
+
+You are given a brief. It is the only source of facts you have. Do not add anything that is not in it, do not guess at numbers, and do not describe behaviour it does not record.
+
+The Article:
+- A title of {TITLE_MIN} to {TITLE_MAX} characters that names the partner and says what three.ws built; carry a number only if a fact or a measured value holds it.
+- At least {WORDS} words of prose (code and tables do not count), in at least {SECTIONS} sections, each a "## " heading named for what the reader learns. Open with a friendly paragraph that says what the partner makes possible, then go deep: how each feature works, what a person does with it, what an agent does with it, and how it was checked.
+- Give every feature in the brief at least one section of its own.
+- State the relationship once using the designation exactly as the brief gives it, word for word, with the same capitals, and link the partner page. Thank the partner warmly and specifically.
+- Place every block in brief.blocks exactly once, each on its own line as {{block:NAME}}, inside the section it belongs to, with a sentence before it saying what it shows. Place at least {FIGURES} figures from brief.figures, each on its own line as {{figure:N}}, beside the text about what it shows. Never write code fences or tables yourself.
+- Near the end, a section headed "## The partners behind ..." (finish the heading in your own words) with one short paragraph per entry in brief.partnersSection, in that order. Write each from its line only, and keep each designation word for word.
+- The last section is headed "## Try it" and links the live pages in brief.tryIt as Markdown links.
+- Use the facts word for word, exactly as written, because each is checked against its evidence, and weave them into your own sentences without quotation marks. Every number, ordinal and absolute word (first, only, every, never, all, free, zero, instant) must sit inside a quoted fact, the designation, or a measured value. If you cannot support a number, leave it out.
+- Positive framing only. Nothing about what is missing, late, broken, or limited.
+
+Hard rules, each enforced by a machine after you answer:
+- No @mentions anywhere, and no npm scopes or anything else that starts with @. Never use a phrase in partner.forbidden, in any form, not even to deny it ("not an endorsement" still says "endorsement"): state what the relationship is, never what it is not. Never say or imply that the partner endorses, sponsors, invests in, or recommends three.ws or $THREE.
+- No hashtags, no emoji, no em-dashes or en-dashes, no stacked exclamation marks.
+- No launch-deck openers (Introducing, We are excited, Say hello to, Big news), no rhetorical question first.
+- No hype or filler: game-changer, revolutionary, seamless, powerful, robust, innovative, cutting-edge, world-class, leverage, empower, unleash, elevate, harness, journey, supercharge, delve, very, really, simply, literally, actually, basically, truly, incredibly, amazing, awesome, groundbreaking.
+- No crypto slang, no engagement asks, nothing that reads as investment advice or a price promise.
+- Names written exactly: three.ws, $THREE, X (never Twitter), GitHub, JavaScript, TypeScript, OpenAI, NVIDIA, Solana, glTF, GLB, API, MCP, AI.
+
+Answer in exactly this shape and nothing else:
+TITLE: the title
+POST: the post that quotes the Article on X, 150 to 400 characters, naming the partner and saying what the reader will learn, with no link
+---
+the Article body in Markdown, starting with the opening paragraph (no top-level # title)`;
+
+export function buildArticleBrief({ partner, runs, figures, blocks, partnersSection, tryIt }) {
+	return {
+		partner: { name: partner.name, designation: partner.designation, page: partner.page, guidance: partner.guidance, forbidden: partner.forbidden },
+		features: runs.map(({ feature, proof }, index) => ({
+			title: feature.title,
+			surface: feature.surface,
+			summary: feature.summary,
+			facts: articleFacts(feature, { lead: index === 0 }).map((fact) => fact.says),
+			reel: (feature.scenario.steps || []).map((step) => step.caption).filter(Boolean),
+			measured: index === 0 ? proof?.facts || {} : {},
+		})),
+		blocks: Object.fromEntries(Object.entries(blocks).map(([name, block]) => [name, block.startsWith('|') ? `table: ${block.split('\n')[0]}` : `code: ${block.split('\n')[0].replace(/`/g, '')} block, ${block.length} characters`])),
+		figures: figures.map((figure, index) => ({ n: index + 1, shows: figure.alt })),
+		partnersSection,
+		tryIt,
+	};
+}
+
+export function buildArticleRequest(brief, { voice = null, exemplar = null, findings = [], previous = null } = {}) {
+	const retry = previous
+		? ['## Your previous draft, and why it was rejected', `TITLE: ${previous.title}\nPOST: ${previous.post}\n---\n${previous.markdown}`, findings.map((finding) => `- ${finding}`).join('\n'), 'Write it again in full. Fix every point. Keep what was already true.'].join('\n\n')
+		: null;
+	const text = [
+		`## Brief\n${JSON.stringify(brief, null, 2)}`,
+		`## How to describe the relationship\n${brief.partner.guidance}`,
+		voice ? `## House voice contract\n${voice}` : null,
+		exemplar ? `## The house exemplar Article (match its voice, depth and warmth toward partners)\n${exemplar}` : null,
+		retry,
+		'Write the Article now, in the shape the system prompt gives.',
+	]
+		.filter(Boolean)
+		.join('\n\n');
+	const system = ARTICLE_SYSTEM.replace('{TITLE_MIN}', '80').replace('{TITLE_MAX}', '100').replace('{WORDS}', '2,400').replace('{SECTIONS}', '8').replace('{FIGURES}', String(ARTICLE_MIN_FIGURES));
+	return { system, parts: [{ type: 'text', text }], maxTokens: ARTICLE_MAX_TOKENS };
+}
+
+export function parseArticle(raw) {
+	const text = String(raw || '').replace(/\r\n/g, '\n');
+	const title = text.match(/^\s*TITLE:\s*(.+)$/m)?.[1]?.trim();
+	const post = text.match(/^\s*POST:\s*(.+)$/m)?.[1]?.trim();
+	const split = text.search(/^---\s*$/m);
+	if (!title || !post || split < 0) throw new Error('drafter did not answer in the TITLE / POST / --- shape');
+	const markdown = text.slice(split).replace(/^---\s*\n/, '').trim();
+	if (markdown.split(/\s+/).length < 200) throw new Error('drafter returned an Article body under 200 words');
+	return { title, post, markdown };
+}
+
+// Replaces the markers with the real blocks and figures. Every block must be
+// placed exactly once; figures by number.
+export function assembleArticle(markdown, blocks, figures) {
+	const findings = [];
+	const used = new Map();
+	const body = markdown
+		.replace(/^[ \t]*\{\{block:([a-z0-9-]+)\}\}[ \t]*$/gm, (match, name) => {
+			used.set(name, (used.get(name) || 0) + 1);
+			if (!blocks[name]) {
+				findings.push(`{{block:${name}}} is not in brief.blocks`);
+				return '';
+			}
+			return used.get(name) > 1 ? '' : blocks[name];
+		})
+		.replace(/^[ \t]*\{\{figure:(\d+)\}\}[ \t]*$/gm, (match, number) => {
+			const figure = figures[Number(number) - 1];
+			if (!figure) {
+				findings.push(`{{figure:${number}}} is not in brief.figures`);
+				return '';
+			}
+			used.set(`figure:${number}`, (used.get(`figure:${number}`) || 0) + 1);
+			return `![${figure.alt}](${figure.path.replace(/^public\//, '/')})`;
+		})
+		.replace(/\n{3,}/g, '\n\n');
+	for (const name of Object.keys(blocks)) {
+		if (!used.has(name)) findings.push(`{{block:${name}}} is missing; place every block once`);
+		else if (used.get(name) > 1) findings.push(`{{block:${name}}} is placed ${used.get(name)} times; place it once`);
+	}
+	const placed = [...used.keys()].filter((key) => key.startsWith('figure:')).length;
+	if (placed < ARTICLE_MIN_FIGURES) findings.push(`${placed} figures are placed; place at least ${ARTICLE_MIN_FIGURES}`);
+	if (/```|^\s*\|.*\|\s*$/m.test(markdown)) findings.push('the draft writes its own code fence or table; use the {{block:NAME}} markers only');
+	if (/\{\{[^}]*\}\}/.test(body)) findings.push('a marker is not on a line of its own, so it was not replaced; put each {{...}} on its own line');
+	return { body: `${body.trim()}\n`, findings };
+}
+
+// The series rules an Article shares with a spotlight, on its prose.
+export function articleSeriesFindings(partner, draft) {
+	const findings = [];
+	const corpus = [draft.title, draft.post, draft.markdown].join('\n');
+	if (!draft.markdown.includes(partner.designation)) findings.push(`state the relationship as "${partner.designation}", word for word with the same capitals`);
+	for (const phrase of partner.forbidden || []) if (lower(corpus).includes(lower(phrase))) findings.push(`"${phrase}" overstates the relationship with ${partner.name}; cut it`);
+	const tagged = mentionsIn(corpus);
+	if (tagged.length) findings.push(`${tagged.join(', ')}: the Article tags no one; name the partner in plain text`);
+	if (!lower(draft.title).includes(lower(partner.name))) findings.push(`the title must name ${partner.name}`);
+	if (!linksTo(draft.markdown, partner.page)) findings.push(`link the partner page ${bare(partner.page)} in the body`);
+	return findings;
+}
+
+// Claims for the whole Article: the designation, every quoted fact of every
+// feature, and the lead run's measured values (the Article's own proof).
+export function articleClaims(partner, runs, texts) {
+	const claims = [];
+	const seen = new Set();
+	runs.forEach(({ feature, proof }, index) => {
+		const facts = { ...feature, facts: articleFacts(feature, { lead: index === 0 }) };
+		for (const claim of claimsFor(partner, facts, texts, index === 0 ? proof : null)) {
+			if (seen.has(lower(claim.says))) continue;
+			seen.add(lower(claim.says));
+			claims.push(claim);
+		}
+	});
+	return claims;
+}
+
+// The queue item: an X Article, quoted by one post that carries the lead
+// feature's reel. The lead scenario is its proof, so every review films it again.
+export function articleItemFor({ partner, runs, day, draft, body, cover, media }) {
+	const lead = runs[0].feature;
+	const prose = [draft.title, draft.post, body];
+	return {
+		id: articleId(partner, day),
+		status: 'draft',
+		kind: 'article',
+		tier: 1,
+		spotlight: { partner: partner.id, article: true, features: runs.map(({ feature }) => feature.id) },
+		lane: 'article',
+		pattern: 'longform',
+		notBefore: `${day}T00:00:00.000Z`,
+		article: { title: draft.title, body: `data/x-content/articles/${articleId(partner, day)}.md`, cover },
+		scenario: lead.scenario,
+		probes: [{ type: 'scenario' }, ...runs.flatMap(({ feature }) => feature.probes || [])],
+		posts: [{ text: draft.post, media: media ? [media] : [] }],
+		claims: articleClaims(partner, runs, prose),
+		mentions: {},
+	};
+}
+
+// Drafts until `check` (the CLI's assembly and the queue's Article gate) finds
+// nothing, or the attempts run out.
+export async function draftArticle(brief, { call, check, voice = null, exemplar = null, attempts = 3 } = {}) {
+	const tries = [];
+	let previous = null;
+	let findings = [];
+	for (let attempt = 1; attempt <= attempts; attempt++) {
+		const { value, model, fallbacks = [] } = await call(buildArticleRequest(brief, { voice, exemplar, findings, previous }), { parse: parseArticle });
+		findings = await check(value);
+		tries.push({ attempt, model, fallbacks, findings });
+		if (!findings.length) return { ok: true, draft: value, model, attempts: tries };
+		previous = value;
+	}
+	return { ok: false, draft: previous, attempts: tries, findings };
+}

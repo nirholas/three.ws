@@ -1,0 +1,470 @@
+{
+	"id": "alibaba-cloud",
+	"name": "Alibaba Cloud",
+	"order": 5,
+	"designation": "listed on the Alibaba Cloud International Marketplace",
+	"designationEvidence": [
+		{
+			"type": "page",
+			"url": "https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace",
+			"contains": "now live on the Alibaba Cloud International Marketplace"
+		},
+		{
+			"type": "file",
+			"path": "docs/listings.md",
+			"contains": "| **Alibaba Cloud** International Marketplace | Live"
+		}
+	],
+	"page": "https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace",
+	"handle": "alibaba_cloud",
+	"mark": null,
+	"forbidden": [
+		"endorsed by Alibaba",
+		"Alibaba endorses",
+		"Alibaba-endorsed",
+		"certified by Alibaba",
+		"Alibaba-certified",
+		"Alibaba recommends",
+		"official Alibaba Cloud",
+		"Alibaba Cloud official",
+		"Alibaba Cloud Premier",
+		"Alibaba Cloud Advanced Partner",
+		"Alibaba Cloud Select Partner",
+		"built by Alibaba",
+		"made by Alibaba",
+		"powered by Alibaba",
+		"powered by Qwen",
+		"runs on Alibaba Cloud",
+		"hosted on Alibaba Cloud",
+		"running on Alibaba Cloud",
+		"Alibaba-hosted",
+		"Alibaba Cloud infrastructure",
+		"Alibaba Cloud invoice",
+		"Alibaba Cloud billing",
+		"billed through Alibaba",
+		"consolidated billing",
+		"one-click deploy from the Alibaba Cloud console",
+		"deploy from the Alibaba Cloud console",
+		"Qwen is the default",
+		"Qwen is our default",
+		"default brain",
+		"official Qwen",
+		"official MCP",
+		"joint customers",
+		"co-sell",
+		"#1 cloud",
+		"top-four",
+		"top four",
+		"millions of developers",
+		"200+ countries",
+		"first deployment",
+		"Alibaba Cloud customers use",
+		"Alibaba Cloud customers run"
+	],
+	"guidance": "three.ws is listed on the Alibaba Cloud International Marketplace (Live per docs/listings.md). Say that and nothing grander: a listing is a product buyers can procure, not an endorsement, certification or tier, and it does not mean the platform runs on Alibaba Cloud (production runs on Google Cloud). The Qwen work is real but narrow: the @three-ws/alibaba-cloud-mcp package is community-built, NOT affiliated with Alibaba Cloud, and calls DashScope with the user's own key on the user's machine; never call it official. In the brain compare film the Qwen column is Qwen 3.8 27B on open lanes, so never claim that column ran on Alibaba Cloud or DashScope; the DashScope Qwen Plus lane exists in the router but needs sign-in. Qwen and ModelScope as an agent brain through the listing, one-click deploy from the Alibaba Cloud console and the enterprise launchpad are announced next steps, not shipped: never present them as live. Do not use the blog's rank, reach or first claims. Keep every claim to the listing, the MCP tools and the router, each tied to a fact.",
+	"docs": [
+		"docs/partners.md",
+		"docs/listings.md",
+		"docs/brain.md",
+		"packages/alibaba-cloud-mcp/README.md"
+	],
+	"features": [
+		{
+			"id": "qwen-mcp-tools",
+			"title": "Qwen as MCP tools: chat and embeddings through DashScope",
+			"surface": "https://three.ws/mcp-tools/alibaba-cloud-mcp/qwen_chat",
+			"covers": [
+				"/mcp-tools/alibaba-cloud-mcp",
+				"packages/alibaba-cloud-mcp",
+				"public/mcp-catalog.json"
+			],
+			"lane": "developer",
+			"summary": "The @three-ws/alibaba-cloud-mcp package gives any MCP client three tools that call Alibaba Cloud Qwen models through DashScope: qwen_chat for written answers, qwen_embed for vectors and qwen_list_models. It runs as a stdio server on your own machine with your own DashScope key, and every tool has a page on three.ws with its arguments and a paste-ready client config. The package is community-built and not affiliated with Alibaba Cloud.",
+			"docs": [
+				"packages/alibaba-cloud-mcp/README.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/mcp-tools/alibaba-cloud-mcp/qwen_chat",
+						"settle": 5000,
+						"caption": "Qwen as an MCP tool"
+					},
+					{
+						"expect": "Chat completion with an Alibaba Cloud Qwen model via DashScope",
+						"within": 15000
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"scroll": "Arguments",
+						"ms": 900,
+						"caption": "Pick qwen-max, plus, turbo or long"
+					},
+					{
+						"hold": 2400
+					},
+					{
+						"click": "qwen_embed",
+						"caption": "Embeddings come with it"
+					},
+					{
+						"expect": "text-embedding-v3",
+						"within": 15000
+					},
+					{
+						"hold": 2600
+					},
+					{
+						"scroll": "Client config",
+						"ms": 900,
+						"caption": "Paste the config into any MCP client"
+					},
+					{
+						"hold": 3500
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "qwen_chat does chat completion with an Alibaba Cloud Qwen model via DashScope",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools/alibaba-cloud-mcp/qwen_chat",
+							"contains": "Chat completion with an Alibaba Cloud Qwen model via DashScope"
+						}
+					]
+				},
+				{
+					"says": "qwen_chat defaults to qwen-plus",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools/alibaba-cloud-mcp/qwen_chat",
+							"contains": "Defaults to qwen-plus"
+						}
+					]
+				},
+				{
+					"says": "the model argument accepts qwen-max, qwen-plus, qwen-turbo, qwen-long and qwen-max-latest",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools/alibaba-cloud-mcp/qwen_chat",
+							"contains": "Options: qwen-max, qwen-plus (default), qwen-turbo, qwen-long, qwen-max-latest."
+						}
+					]
+				},
+				{
+					"says": "qwen_embed returns vectors to search or cluster texts",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools/alibaba-cloud-mcp/qwen_chat",
+							"contains": "for vectors to search or cluster texts call qwen_embed instead"
+						}
+					]
+				},
+				{
+					"says": "it runs on your machine as a stdio MCP server",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools/alibaba-cloud-mcp/qwen_chat",
+							"contains": "Runs on your machine as a stdio MCP server."
+						}
+					]
+				},
+				{
+					"says": "one command starts it: npx -y @three-ws/alibaba-cloud-mcp",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools/alibaba-cloud-mcp/qwen_chat",
+							"contains": "npx -y @three-ws/alibaba-cloud-mcp"
+						}
+					]
+				},
+				{
+					"says": "the package ships qwen_chat, qwen_embed and qwen_list_models",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-alibaba-cloud-partnership",
+							"contains": "qwen_chat, qwen_embed, and qwen_list_models tools"
+						}
+					]
+				},
+				{
+					"says": "your own DashScope key talks directly to DashScope with no intermediary backend",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-alibaba-cloud-partnership",
+							"contains": "No intermediary backend; your DASHSCOPE_API_KEY talks directly to DashScope."
+						}
+					]
+				},
+				{
+					"says": "the package is community-built and not affiliated with Alibaba Cloud",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/alibaba-cloud-mcp/README.md",
+							"contains": "Community-built and not affiliated with Alibaba Cloud."
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "brain-compare",
+			"title": "The Brain lab: one prompt streamed to every model, Qwen included",
+			"surface": "https://three.ws/brain",
+			"covers": [
+				"/brain",
+				"api/brain/chat.js",
+				"api/_lib/model-roster.js"
+			],
+			"lane": "developer",
+			"summary": "The Brain lab sends one prompt to many models at once and streams the answers side by side with live speed and token counts, so you can pick an agent's brain on evidence. Qwen sits in the same roster as Claude, GPT and the rest: the router carries a DashScope lane for Qwen Plus and a ModelScope lane for Qwen3-Coder, and the film shows the open Qwen 3.8 27B lane answering next to the others.",
+			"docs": [
+				"docs/brain.md"
+			],
+			"scenario": {
+				"format": "landscape",
+				"steps": [
+					{
+						"goto": "https://three.ws/brain",
+						"settle": 5000,
+						"caption": "One prompt, every model"
+					},
+					{
+						"click": "Playground"
+					},
+					{
+						"hold": 1500,
+						"caption": "Qwen sits in the same roster as the rest"
+					},
+					{
+						"type": "In one sentence, what is a polygon mesh?",
+						"into": "Send a message..."
+					},
+					{
+						"click": "Send",
+						"awaits": "/api/brain/chat",
+						"caption": "The same prompt streams to each model"
+					},
+					{
+						"expect": "t/s",
+						"within": 45000
+					},
+					{
+						"hold": 6000,
+						"caption": "Speed and tokens, side by side"
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "the Brain lab sends a single prompt to many frontier models at once and streams their answers side by side",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/brain.md",
+							"contains": "The Brain lab sends a single prompt to many frontier models at once and streams"
+						}
+					]
+				},
+				{
+					"says": "each answer shows live latency and token stats",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/brain.md",
+							"contains": "their answers side by side, each with live latency and token stats."
+						}
+					]
+				},
+				{
+					"says": "Qwen responds in parallel with Claude, GPT, ModelScope and Groq",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/brain.md",
+							"contains": "Qwen, ModelScope, Groq, and more respond in parallel so you can compare tone, speed,"
+						}
+					]
+				},
+				{
+					"says": "the router lists DashScope for Qwen Plus and ModelScope for Qwen3-Coder 480B",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/brain.md",
+							"contains": "DashScope (Qwen Plus), ModelScope (Qwen3-Coder 480B)"
+						}
+					]
+				},
+				{
+					"says": "the chat endpoint streams the answer back as Server-Sent Events",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/brain.md",
+							"contains": "streams the answer back as Server-Sent Events:"
+						}
+					]
+				},
+				{
+					"says": "the model you pick in the Brain lab is the model your agent runs on",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/brain.md",
+							"contains": "the model you pick here is the model your agent"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "marketplace-listing",
+			"title": "three.ws on the Alibaba Cloud International Marketplace",
+			"surface": "https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace",
+			"covers": [
+				"/blog/three-ws-on-alibaba-cloud-marketplace",
+				"docs/listings.md"
+			],
+			"lane": "community",
+			"summary": "three.ws is live on the Alibaba Cloud International Marketplace, so buyers can procure the <agent-3d> stack, a single HTML tag that deploys a 3D AI agent, through their existing cloud account. Each agent is a transferable on-chain asset with a browser-native 3D body, a swappable LLM brain and x402 payments settling in USDC on Solana. The listing, the storefront and an Alibaba Cloud Marketplace editorial feature are all published.",
+			"docs": [
+				"docs/listings.md",
+				"docs/partners.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace",
+						"settle": 5000,
+						"caption": "The Alibaba Cloud Marketplace launch"
+					},
+					{
+						"expect": "now live on the Alibaba Cloud International Marketplace",
+						"within": 15000
+					},
+					{
+						"hold": 2500
+					},
+					{
+						"scroll": "What three.ws ships",
+						"ms": 1200,
+						"caption": "What the listing puts in reach"
+					},
+					{
+						"hold": 3000
+					},
+					{
+						"scroll": "The Alibaba Cloud listing",
+						"ms": 1200,
+						"caption": "A product buyers can procure directly"
+					},
+					{
+						"hold": 4500
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "three.ws is now live on the Alibaba Cloud International Marketplace",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace",
+							"contains": "now live on the Alibaba Cloud International Marketplace"
+						},
+						{
+							"type": "file",
+							"path": "docs/listings.md",
+							"contains": "| **Alibaba Cloud** International Marketplace | Live"
+						}
+					]
+				},
+				{
+					"says": "three.ws sits inside the marketplace buying flow as a directly procurable product",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace",
+							"contains": "three.ws now sits inside that flow as a directly procurable product"
+						}
+					]
+				},
+				{
+					"says": "every agent is minted as a transferable on-chain asset",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace",
+							"contains": "Each agent is minted as a transferable on-chain asset."
+						}
+					]
+				},
+				{
+					"says": "the agent body is browser-native 3D rendered in WebGL",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace",
+							"contains": "A browser-native 3D body."
+						}
+					]
+				},
+				{
+					"says": "agents settle x402 payments in USDC on Solana",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace",
+							"contains": "settling in USDC on Solana"
+						}
+					]
+				},
+				{
+					"says": "a developer integrates an agent into any web page with a single line of HTML",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace",
+							"contains": "A developer integrates an agent into any web page with a single line of HTML."
+						}
+					]
+				},
+				{
+					"says": "Claude, GPT and open-weights models are live as the agent brain today",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace",
+							"contains": "Claude, GPT, and open-weights models are live today."
+						}
+					]
+				},
+				{
+					"says": "the stack is open source",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace",
+							"contains": "The full three.ws stack is open source"
+						}
+					]
+				}
+			]
+		}
+	]
+}
