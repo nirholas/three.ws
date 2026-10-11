@@ -73,6 +73,7 @@ category; the mapping (`TYPE_CATEGORY`) lives in
 | Creations | `creations` | `forge_complete`, `forge_failed` |
 | Companion | `companion` | `companion_delivery` |
 | (no tab yet) | `knock` | `knock_received` |
+| (no tab yet) | `mail` | `mail_received` |
 | Account | `account` | `withdrawal_completed`, `withdrawal_failed`, `payment_mismatch`, `asset_payment_mismatch`, `skill_payment_mismatch`, `security_alert`, `wallet_anomaly_frozen`, plus any type not in the map |
 
 `print_update` is the single type Materialize uses for a physical order's whole
@@ -86,11 +87,11 @@ Three details worth knowing:
 - **Tab filtering is client-side** over the pages already fetched. The API's
   own `?type=` parameter filters server-side by a single exact type (e.g.
   `?type=pump_alert`), not by category.
-- **`knock` is a preference category without a tab.** The preference center
-  lists it ("Knocks at your door") and the server gates delivery on it, but
-  the page's own copy of the map has no entry for `knock_received`, so on
-  `/notifications` a knock is filtered under **Account** rather than a tab of
-  its own.
+- **`knock` and `mail` are preference categories without a tab.** The
+  preference center lists them ("Knocks at your door", "Agent mail") and the
+  server gates delivery on each, but the page's own copy of the map has no
+  entry for `knock_received` or `mail_received`, so on `/notifications` both
+  are filtered under **Account** rather than a tab of their own.
 
 ## The avatar channel: delivered in person
 
@@ -99,9 +100,10 @@ of those lands while you are on the site, the corner companion (the avatar
 that already walks your pages) turns to you, plays a gesture, and says it out
 loud, with a link straight to the thing that happened.
 
-`avatar` is a real delivery channel next to `in_app`, `push`, `email`, and
-`telegram`. It is gated by the same per-category matrix, edited in the same
-place (`/dashboard/settings`), and measured in the same funnel.
+`avatar` is a real delivery channel next to `in_app`, `push`, `email`,
+`telegram`, and `discord`. It is gated by the same per-category matrix,
+edited in the same place (`/dashboard/settings`), and measured in the same
+funnel.
 
 **What gets announced.** By default: **Sales & earnings**, **Creations**,
 **Companion deliveries**, **Knocks at your door**, and **Account**. Money
@@ -183,7 +185,9 @@ shared nav on every page and is deliberately cheap:
   load), a one-time banner offers Web Push if it is supported, configured,
   not yet subscribed, and not previously declined. Push plumbing lives in
   [src/push-notifications.js](../src/push-notifications.js) and
-  [public/push-sw.js](../public/push-sw.js).
+  [public/push-sw.js](../public/push-sw.js). Inside the three.ws iOS app the
+  same module registers with APNs instead of Web Push, since a WKWebView
+  runs no service worker; see [the iOS app](./ios-app.md#turning-on-push).
 
 ## The notification center: /notifications
 
@@ -317,14 +321,24 @@ curl -s -X PUT 'https://three.ws/api/notifications/preferences' \
 ```
 
 GET returns
-`{ categories, channels, type_categories, prefs, push: { subscribed_devices } }`:
-the categories from the table above, the channels (`in_app`, `push`, `email`,
-`telegram`, `avatar`), the type-to-category map (so a browser client can
-resolve a category without a round trip per notification), and the caller's
-resolved matrix. PUT stores a
-sparse override; unknown categories, channels, and keys are dropped, and the
+`{ categories, channels, type_categories, prefs, push, gateways }`: the
+categories from the table above, the channels (`in_app`, `push`, `email`,
+`telegram`, `discord`, `avatar`), the type-to-category map (so a browser
+client can resolve a category without a round trip per notification), and
+the caller's resolved matrix. `push` is
+`{ subscribed_devices, ios_devices }`: `subscribed_devices` is every Web
+Push browser subscription plus every iPhone enrolled through the iOS app's
+APNs path (`apns_devices`), and `ios_devices` reports the APNs share alone,
+so an iPhone-only user is never told push is off everywhere. `gateways` is
+`{ telegram, discord }`, the count of chats linked through
+[/settings/connections](https://three.ws/dashboard/settings) with
+notifications on (`api/_lib/gateway/notify.js`); the telegram and discord
+channels only deliver once that count is non-zero. PUT stores a sparse
+override; unknown categories, channels, and keys are dropped, and the
 response echoes the re-resolved matrix. The body also accepts
-`telegram_chat_id` (digits, settable and clearable) for the Telegram channel.
+`telegram_chat_id` (digits, settable and clearable) for the Telegram
+channel; pairing a Discord chat happens through the gateway connection flow
+rather than this endpoint.
 
 Delivery gating notes, all enforced in
 [api/_lib/notify-prefs.js](../api/_lib/notify-prefs.js):
