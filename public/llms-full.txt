@@ -2393,6 +2393,18 @@ URL: https://three.ws/docs/swarms
 
 How a group of agents pools real SOL into one on-chain Solana treasury and trades it by weighted consensus: reputation-weighted voting, spend-guarded contribute and exit transfers, the shared kill switch, and why no balance is virtual.
 
+### Docs · DEXTools integration
+
+URL: https://three.ws/docs/dextools
+
+How three.ws and DEXTools connect: the /dextools hub, the embed builder that turns any DEXTools pair link into a 3D scene or Social Boost card snippet, the framable Boost on DEXTools card, and the counted redirect and public totals behind every visit three.ws sends to a DEXTools pair page.
+
+### Docs · Chart Companion
+
+URL: https://three.ws/docs/chart-companion
+
+How to watch a DEXTools chart with a 3D agent that reacts to every real swap: the URL parameters, streaming it as a transparent OBS overlay, embedding it with one iframe, bringing your own agent, and exactly how whale, streak and new-high reactions are decided.
+
 ### Docs · Token in 3D, as an embed
 
 URL: https://three.ws/docs/coin3d-embed
@@ -3017,18 +3029,6 @@ URL: https://three.ws/docs/mcp
 
 Expose your agent as an MCP server for Claude, ChatGPT, and other clients.
 
-### Docs · Solana Memo Media MCP
-
-URL: https://three.ws/docs/mcp-solana-memo-media
-
-Decode validated image data embedded in Solana Memo transactions and return safe inline MCP images with provenance.
-
-### Docs · three.ws in VS Code
-
-URL: https://three.ws/docs/vscode
-
-The VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, generates and rigs new models on the free lane, and writes a pinned <agent-3d> embed.
-
 ### Docs · three.ws for Grok
 
 URL: https://three.ws/docs/grok
@@ -3040,6 +3040,18 @@ Connect Grok Bot, Grok connectors and the xAI API to one free remote MCP server 
 URL: https://three.ws/docs/grok-bot
 
 Connect Grok Bot to three.ws as a custom MCP connector: exact fields for each sign-in mode, which server to pick, the links every result carries, jobs and safe retries, free limits and install tokens, why a connector key can never spend, guided prompts, and a fix for every connection failure.
+
+### Docs · Solana Memo Media MCP
+
+URL: https://three.ws/docs/mcp-solana-memo-media
+
+Decode validated image data embedded in Solana Memo transactions and return safe inline MCP images with provenance.
+
+### Docs · three.ws in VS Code
+
+URL: https://three.ws/docs/vscode
+
+The VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, generates and rigs new models on the free lane, and writes a pinned <agent-3d> embed.
 
 ### Docs · The prompt library
 
@@ -4745,6 +4757,12 @@ URL: https://three.ws/brownout
 
 Every response from this API says where its data came from and how fresh it is, and every declared fallback has been proven by breaking the upstream it protects against, inside the real request path. Read the receipts: which provider refused, which one caught the request, and how old the answer was.
 
+### Docs · Grok Bot recipes
+
+URL: https://three.ws/docs/tutorials/grok-bot-recipes
+
+Six Grok Bot recipes run against production, not imagined: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief. Every output in the doc came from a real run.
+
 ### Docs · Write a repository guard
 
 URL: https://three.ws/docs/tutorials/write-a-guard
@@ -5248,6 +5266,13 @@ Indexable: no (excluded from sitemap)
 
 The three.ws Agent Skill: how an AI agent connects to three.ws, the rules it follows around money and official addresses, and an index of the focused skills for 3D generation, avatars and agents. Load it like any SKILL.md.
 
+### grok-skill.md
+
+URL: https://three.ws/grok-skill.md
+Indexable: no (excluded from sitemap)
+
+The three.ws skill for Grok and Grok Bot: the connector that adds a free 3D studio, runnable curl calls for a Grok with no connector, the links every model comes back with, what needs an account, and the rule that it never spends. Upload it to Grok's Skills.
+
 ### robots.txt
 
 URL: https://three.ws/robots.txt
@@ -5259,13 +5284,6 @@ Crawler directives.
 
 URL: https://three.ws/openapi.json
 Indexable: no (excluded from sitemap)
-
-### grok-skill.md
-
-URL: https://three.ws/grok-skill.md
-Indexable: no (excluded from sitemap)
-
-The three.ws skill for Grok and Grok Bot: the connector that adds a free 3D studio, runnable curl calls for a Grok with no connector, the links every model comes back with, what needs an account, and the rule that it never spends. Upload it to Grok's Skills.
 
 Machine-readable HTTP API spec.
 

@@ -43,7 +43,7 @@ production are routinely dead and a chain that depends on them fails:
 | 17 | Anthropic first-party | `ANTHROPIC_API_KEY` | paid | **absent** (no key anywhere) |
 | 18 | OpenRouter Claude mirror | `OPENROUTER_CLAUDE_MIRROR_MODEL` | paid | off by default (see below) |
 | 19 | OpenAI `gpt-5.4-nano` | `OPENAI_API_KEY` | paid | **dead**: 429 `billing_not_active` |
-| 20 | xAI Grok `grok-4.3`, reasoning off (`GROK_BUDGET_MODEL`) | `GROK_API_KEY` (or `XAI_API_KEY`) | paid | not configured in prod: no key in `.env`, `.env.local`, the `three-ws-api` service, or Secret Manager (checked 2026-10-08). A caller's own xAI key leads the chain instead, on `grok-4.7` unless they name a model. See [Grok model ids](#grok-model-ids). |
+| 20 | xAI Grok `grok-4.3`, reasoning off (`GROK_BUDGET_MODEL`) | `GROK_API_KEY` (or `XAI_API_KEY`) | paid | not configured in prod: no key in `.env`, `.env.local`, the `three-ws-api` service, or Secret Manager (checked 2026-10-11). A caller's own xAI key leads the chain instead, on `grok-4.7` unless they name a model. See [Grok model ids](#grok-model-ids). The same key, once set, also lights up a second rung of a different chain: X search for the Sentiment Scout fails over to xAI's `x_search` tool when the X bearer rung cannot answer (`searchMintPostsViaXai` in `api/_lib/x-search.js`, documented in [docs/sentiment-scout.md](../sentiment-scout.md#x-search-budget)). |
 
 The 2026-08-05 widening (SambaNova, Mistral, Z.AI, Cloudflare, LLM7,
 SiliconFlow) added six independent free quota pools; each is documented with

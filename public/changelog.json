@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-08T04:39:10.573Z",
+	"generated_at": "2026-10-11T00:07:40.265Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -7,11 +7,124 @@
 	},
 	"entries": [
 		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "Sentiment Scout's X reads gained a second, independent path through xAI",
+			"summary": "The Sentiment Scout reads X for posts quoting a coin's exact contract address, as evidence a holder can open and check. When our own X search credentials are unavailable or rate limited, it now fails over to xAI's x_search tool, a second route to the same posts, metered by its own daily cap so an outage on one path never silently costs more than planned on the other. No change for anyone reading the Scout: the evidence looks the same either way.",
+			"link": "/docs/sentiment-scout",
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
+			"title": "Docs · Grok Bot recipes",
+			"summary": "Six Grok Bot recipes run against production, not imagined: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief. Every output in the doc came from a real run.",
+			"link": "/docs/tutorials/grok-bot-recipes",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "launch",
+			"title": "Docs · Grok Bot connector reference",
+			"summary": "Connect Grok Bot to three.ws as a custom MCP connector: exact fields for each sign-in mode, which server to pick, the links every result carries, jobs and safe retries, free limits and install tokens, why a connector key can never spend, guided prompts, and a fix for every connection failure.",
+			"link": "/docs/grok-bot",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "launch",
+			"title": "three.ws for Grok Bot: a free 3D studio and a body for Grok",
+			"summary": "Everything Grok Bot can do with three.ws on one page: generate textured 3D models, rig avatars, find ready-made CC0 assets and run your agents through one custom MCP connector. Real models made minutes ago, the exact connector settings, three recipes to schedule and the Grok skill file. Free, no account, no key.",
+			"link": "/grok",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "AI agents can now read how to connect three.ws to their client",
+			"summary": "The public server directory at three.ws/.well-known/mcp.json now carries setup for each AI client: Claude, ChatGPT, Grok Bot, Cursor, VS Code and Claude Code. For each one it names the server to add, whether to pick no sign-in, OAuth or an API key, and the exact values for that client's connector form or config file, plus one-click install links where the client has them. An agent asked to connect three.ws to Grok Bot can now do it from that one file, without a person reading the setup page. The site index for AI agents (three.ws/llms.txt) points to it too.",
+			"link": "/docs/mcp",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "Avatar builds that hit a full library now say so, and the news knowledge base stops losing stories",
+			"summary": "If your avatar library filled up while a photo or prompt avatar was still generating, the finished job used to sit unresolved and retry in the background without ever telling you why nothing appeared. It now closes with a clear message: delete an avatar or upgrade, then build it again. Separately, news stories whose text contained a half-cut emoji or a stray null character were silently dropped from the knowledge base the 3D agents ground their answers on, about 120 a day. They are now cleaned and saved. Static files such as images and environment maps also stop answering a server error when the CDN revalidates them after an update.",
+			"link": "/news",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "Set up Grok Bot from the terminal with npx three-ws setup",
+			"summary": "Grok Bot keeps its connectors in xAI's cloud, so there is no config file to write, but the three-ws CLI now does every other step. Run npx three-ws setup --client grok-bot, or tick Grok Bot in the setup picker, and it prints the exact fields Grok Bot's custom MCP form asks for, copies the server URL to your clipboard, and checks the public URL live the way Grok Bot will call it. Pick how Grok Bot signs in: free with no account, free with an install token that keeps one quota across scheduled runs, a connector key it mints for you that can read and generate but never spend, or OAuth so Grok Bot signs in itself.",
+			"link": "/docs/cli",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
 			"date": "2026-10-08",
 			"type": "launch",
 			"title": "Chart Companion",
 			"summary": "Paste any DEXTools pair and a 3D agent watches the live chart with you, reacting to every real swap: cheering whale buys, flinching at dumps, calling streaks and new highs, each reaction linked to its transaction. Turn on its voice, bring your own three.ws agent, embed it with one iframe, or add it to OBS as a transparent stream overlay.",
 			"link": "/chart-companion",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "launch",
+			"title": "Docs · Chart Companion",
+			"summary": "How to watch a DEXTools chart with a 3D agent that reacts to every real swap: the URL parameters, streaming it as a transparent OBS overlay, embedding it with one iframe, bringing your own agent, and exactly how whale, streak and new-high reactions are decided.",
+			"link": "/docs/chart-companion",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "launch",
+			"title": "Docs · DEXTools integration",
+			"summary": "How three.ws and DEXTools connect: the /dextools hub, the embed builder that turns any DEXTools pair link into a 3D scene or Social Boost card snippet, the framable Boost on DEXTools card, and the counted redirect and public totals behind every visit three.ws sends to a DEXTools pair page.",
+			"link": "/docs/dextools",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "launch",
+			"title": "Docs · three.ws for Grok",
+			"summary": "Connect Grok Bot, Grok connectors and the xAI API to one free remote MCP server that turns text or an image into a textured 3D model, a rigged avatar, or a named 3D persona that lip-syncs its replies. No account, payment or API key.",
+			"link": "/docs/grok",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "launch",
+			"title": "grok-skill.md",
+			"summary": "The three.ws skill for Grok and Grok Bot: the connector that adds a free 3D studio, runnable curl calls for a Grok with no connector, the links every model comes back with, what needs an account, and the rule that it never spends. Upload it to Grok's Skills.",
+			"link": "/grok-skill.md",
 			"tags": [
 				"launch"
 			]
@@ -29,11 +142,74 @@
 		{
 			"date": "2026-10-08",
 			"type": "update",
+			"title": "3D Studio results now hand every agent plain links to the model",
+			"summary": "Every model the free 3D Studio MCP server hands back, whether freshly generated, picked from the asset catalog or saved as a persona, now comes with four plain links, both in the result data and in its first lines of text: a viewer page, the GLB file, a rendered PNG picture and a paste-ready embed snippet. Agents that cannot show a 3D widget, like Grok Bot and other browser agents, can now open, download, share and embed the model directly. A model that is still rendering comes with a viewer link that waits for the job and opens the model the moment it is ready.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "A paid call that fails after you were charged never asks you to pay again",
+			"summary": "If a paid three.ws endpoint takes your payment and the work then fails, the error now says so plainly: it carries paid: true, retry_safe: true, the settlement transaction, and the sentence \"You were charged; repeat this exact request with the same payment to get your result.\" Repeating the request with the same payment re-runs the work with no second charge, up to three times within 24 hours. Before, a download or stream that failed after payment answered with a generic error and the retry was refused as a reused payment. Errors before any charge now say paid: false, so a client always knows which case it is in. Separately, paid POST requests are now matched on their body too, so two different requests under one payment identifier can no longer receive the same cached answer.",
+			"link": "/docs/x402",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "A skill file that teaches Grok to use three.ws",
+			"summary": "three.ws/grok-skill.md is one Markdown file you can upload to Grok's Skills or hand to Grok Bot. It tells Grok exactly which connector URL to add for a free 3D studio, how to sign it in to work with your agents, and, when no connector is set up, how to search the 3D catalog, generate a model and look at it with plain curl calls that run as written. It also spells out the links every model comes back with, what needs an account, and that Grok never spends money on your behalf. It is built from the same facts as three.ws/skill.md, so the two always agree. The Grok page has a button to download it.",
+			"link": "/grok",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
 			"title": "Agent earnings are updating again",
 			"summary": "pump.fun moved the service that reports creator fees, so the Earned figures on agent pages, agent profiles, coin pages and /analytics had stopped refreshing since the end of September. Earnings now read from pump.fun's current fees service, with a second source behind it if that one stumbles, and every agent coin is back on its 30-minute refresh.",
 			"link": "/analytics",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "Agent Wallet MCP: quote an x402 service before your assistant pays it",
+			"summary": "The Agent Wallet MCP server has a new pay_quote tool. It reads what a paid x402 endpoint charges (price, network and the address that gets paid) without spending anything. pay_and_call now works end to end once you turn it on for a connection: your assistant quotes first, shows you the price, and pays only after you say yes, using that quote. Paying a different endpoint than the one quoted, or paying with an expired quote, is refused before any USDC moves.",
+			"link": "/docs/mcp-agent",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "API keys for AI agents that can never spend",
+			"summary": "When you make an API key you can now choose \"For an AI agent (Grok Bot, schedules, CI)\". That key can read, generate and edit your avatars, agents and their memory, and it can never spend: it cannot pay, send, trade, bid, launch or change where your agents get paid, and nothing done to it later can change that. If an agent holding it reaches one of those actions, it gets a clear answer with a link back to three.ws, where you approve the action yourself. The same rule now covers every route that arms an autopilot, a market maker, a launcher or a recurring charge, or moves a payout address. Keys you already have keep exactly the permissions they were made with.",
+			"link": "/docs/mcp",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "Chart Companion: a 3D agent that watches the chart with you",
+			"summary": "Paste any DEXTools pair at /chart-companion and a 3D agent sits beside the live chart, reacting to every real swap as it lands: a superhero jump for a whale buy, a facepalm for a dump, a dance for a buy streak, applause for a new daily high. Each reaction comes with a line you can trace to its transaction, and it can read them aloud. Bring your own three.ws agent, embed it on your coin's site with one iframe, or add it to OBS as a transparent overlay for your stream.",
+			"link": "/chart-companion",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -49,11 +225,42 @@
 		{
 			"date": "2026-10-08",
 			"type": "update",
+			"title": "Coin charts say plainly when a coin has no market yet",
+			"summary": "A coin with no trading pool anywhere could show a price-history error on its chart when a market data source was busy. The chart now recognises the coin has no market and shows the no-price-history state, and it asks that source one question fewer per chart load.",
+			"link": "/terminal",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "Coin pages keep their Markets table when the listing sources are busy",
+			"summary": "When both of our exchange-listing sources were rate-limited, a coin page's Markets table could show an error for coins only one of them lists. It now falls back to the coin's live DEX trading pairs, found by its contract address, with each pair's venue, chain, price, 24h volume and a link to trade it.",
+			"link": "/coins",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
 			"title": "Community sentiment readings are back on coin pages and the Oracle",
 			"summary": "pump.fun moved the feed of community callouts that our sentiment pulse reads, so every reading had been failing with an unavailable error. The pulse now reads the new feed, so launch pages, the Oracle and the sentiment_pulse MCP tool score real community commentary again, up to 100 callouts per coin.",
 			"link": "/oracle",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "Connect Grok Bot and other cloud agents with OAuth, and revoke them instantly",
+			"summary": "Cloud agents such as Grok Bot can now sign in to your three.ws account over OAuth 2.1 from wherever they run, with a callback on any https address. The sign-in screen says plainly which app is asking, which site it belongs to, where it will send you back, and what it will be able to do, and it states that the app can never spend from your wallet. Spending is only granted if you tick a separate box. Settings, Connected apps lists every app with when it last called in, and Revoke now cuts an app off on its very next request instead of up to an hour later.",
+			"link": "/docs/mcp",
+			"tags": [
+				"feature",
+				"security"
 			]
 		},
 		{
@@ -80,11 +287,153 @@
 		{
 			"date": "2026-10-08",
 			"type": "update",
+			"title": "Every MCP server now knows which AI client is calling",
+			"summary": "The three.ws MCP servers now remember which AI app opened each connection, such as Claude, ChatGPT, Cursor or Grok Bot, using the name and version the app announces when it connects, and count which tools each one uses. Only those names and counts are kept, never what anyone asked for. Each connection gets a session id that MCP apps send back automatically, so nothing changes for anyone connecting. It tells us which apps people actually use three.ws from, so we know where to make the experience better next.",
+			"link": null,
+			"tags": [
+				"infra"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "Fewer failed 3D generations when the concept image comes back blank",
+			"summary": "Text to 3D first paints a concept image, then sculpts it. When the painting service quietly returned a blank black frame instead of a picture, the studio used it anyway, and every 3D engine then failed because there was nothing in the image to sculpt. The studio now spots a blank or withheld frame and paints the concept with the next image service instead, so those prompts finish as real models.",
+			"link": "/forge",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "Grok model menus now offer xAI's current models",
+			"summary": "Every Grok picker on three.ws (the /brain menu, agent chat, the avatar page and the embed editor) now lists xAI's current line-up: Grok 4.7, xAI's flagship, Grok 4.3 with its 1M-token context at the lowest Grok price, Grok 4.20 Fast with no thinking pass, and Grok Build for coding. Agents and embeds that saved a Grok model xAI has since retired, such as Grok 4.1 Fast, keep working and answer on the model xAI recommends in its place. People who bring their own xAI key now get Grok 4.7 by default instead of an older flagship.",
+			"link": "/brain",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "Long 3D jobs and safe retries for AI agents",
+			"summary": "Agents that run on schedules can now generate 3D models without ever making the same model twice. Every generation tool on the free 3D Studio MCP server accepts an optional idempotency_key: retry a call that timed out with the same key and you get the first call's job back instead of a second generation, and the retry costs none of your quota. A new get_job tool reports any job's status, progress and time left, hands back the viewer, download, picture and embed links when it is done, and says what went wrong and what to do next when it fails. MCP clients that ask for progress updates now receive them live while the model renders.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "MCP docs now show every guided workflow as the exact calls an agent makes",
+			"summary": "The MCP guide has a new Use cases section: each of the 17 guided prompts (create an agent, set up a wallet, hire an agent, generate a 3D model and the rest) written out as the ordered tool and resource calls it drives on each server, with every step that spends money marked. A test renders every prompt against each server's live tool list and fails if the section names a tool that no longer exists or misses one a prompt now calls, so the page stays accurate as tools change.",
+			"link": "/docs/mcp",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "One Grok Bot connector for 3D and your agents",
+			"summary": "https://three.ws/api/mcp-grok is now the one URL to paste into Grok Bot. With no sign-in it is the free 3D studio: text or an image to a 3D model, a rigged avatar, or a talking persona, with links Grok can share. Give the same URL a connector API key, or sign it in with OAuth at https://three.ws/api/mcp-grok?auth=oauth, and Grok also manages your agents, their memory and skills, and your avatars. It never lists a wallet, payment, card, trading, launch or delete tool, whatever the sign-in allows, so a Grok Bot task can build with your agents but can never spend.",
+			"link": "/docs/grok",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "Picking the free Hugging Face engine no longer leaves you stuck when its Spaces are down",
+			"summary": "When every free Hugging Face Space is out of GPU quota, the Forge now pauses that engine for a few minutes, greys it out in the engine picker with the reason, and moves a generation you started on it to a working engine, showing you the switch, instead of retrying the same dead Spaces with a countdown.",
+			"link": "/forge",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "Ready-made scheduled tasks for Grok Bot and other AI agents",
+			"summary": "The free 3D Studio and the Grok Bot connector now offer guided prompts written for an agent that runs on its own schedule. daily-3d-brief turns a topic, or the day's top trending one, into a 3D model and a poster image and hands back the links. asset-pack builds a themed set of 3D assets, using ready-made catalog items first and generating only what is missing. avatar-from-photo turns a photo into a rigged avatar with a pose studio link. agent-report, once the connector is signed in, writes a read-only status report on your agents. Every prompt names the exact calls to make and marks each generation so a retried run never makes the same model twice.",
+			"link": "/docs/grok",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "See which agents earned the most on the new Earned leaderboard",
+			"summary": "The leaderboard has a second tab, Earned, that ranks every public agent by what it actually earned in the last 24 hours, 7 days, 30 days or all time. Earnings are the creator fees its coin collects from trading plus what people and other agents paid for its skills, each shown beside the total in SOL with the dollar value, along with the agent's coin and how many places it moved since the previous period. Each row matches the Earned card on that agent's own page, and the card now links straight to its spot on the board, such as \"#1 this week\". The tab and period live in the address bar, so a link opens the exact view you shared. Separately, the coin-launch ranking on /rankings and its daily Top 10 badge now count launches from the platform's own launch records, so builders who launched from an agent's wallet are no longer ranked with zero.",
+			"link": "/leaderboard",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "Shared 3D models now explain themselves to X and Grok",
+			"summary": "Every 3D model page now tells whoever reads the link exactly what it is. A model shared from three.ws unfurls on X as a large card showing a render of the model itself instead of a stock image, with its own title and description. Model, avatar and agent pages also describe themselves in a machine-readable form that search engines and AI assistants like Grok can read: the 3D file, a picture of it, who made it, when, and the terms it is shared under. So when someone asks Grok what a three.ws link is, it can answer from the model rather than guess.",
+			"link": "/creations",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
 			"title": "The coin visualizer and communities keep loading when pump.fun throttles us",
 			"summary": "The full coin board behind the pump.fun visualizer, the communities page and the home page's live coin now retries a rate-limited read once and falls back to the last board any server saw in the past 30 minutes, marked as slightly stale, instead of showing an error.",
 			"link": "/communities",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "The terminal 3D renderer animates live in every HTTP client",
+			"summary": "curl three.ws/tty streams an animated 3D character into your terminal frame by frame. Clients that ask for compressed responses, such as curl --compressed, scripts using fetch, and most HTTP libraries, used to get nothing for about ten seconds and then the whole animation at once as a wall of text. Live streams are no longer compressed, so every client now sees the character move from the first frame. Streaming agent and chat responses get the same fix.",
+			"link": "/tty",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "Topping up an agent's inference credits now asks for the real-funds agreements first",
+			"summary": "Moving USDC from an agent wallet into model credits is a real-funds action, so it now follows the same rule as withdrawals, trades and vaults. A one-off credit top-up, turning on the automatic top-up rule, and funding a new inference key from the command line all require the signed real-funds agreements (Terms of Service, Risk Disclosure and Agent Wallet Agreement). On the credits panel the signing dialog opens before the first top-up; from the CLI or an API key you get a link to sign once. Previews still work without signing, and switching the automatic top-up off never needs it.",
+			"link": "/legal/agreements",
+			"tags": [
+				"security"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "Use three.ws from Grok Bot",
+			"summary": "The connect page now has a Grok Bot tab. Grok Bot adds three.ws as a custom MCP connector, so the tab shows the exact fields to type in: the name, transport Streamable HTTP, the URL with a copy button, and whether authentication is None (the free 3D servers) or OAuth (servers that work with your account). Pick a different server above and every field follows it, and there is a ready-made sentence to send Grok Bot instead of filling in the form. Opening three.ws/connect?client=grok starts on the Grok server, which is free with no sign-in and adds your own agents when you sign in. The page also reminds you that a localhost URL never works, because Grok Bot connects from xAI's cloud.",
+			"link": "/connect?client=grok",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "Your own free 3D quota when you connect through Grok Bot or another cloud agent",
+			"summary": "Cloud agents like Grok Bot reach three.ws from one shared address, so every user of that agent used to share one free 3D quota. Now you can generate a free install token on the Connect page (pick 3D Studio (free), then Generate my connector URL) or with one POST to /api/mcp-studio/install, and add the connector with that URL. Your generations then count against a quota of your own: 4 a minute and 30 an hour. No account, no key, and the token works on every free studio URL, including the Grok one. When a limit is reached, the message now says which limit, exactly when it resets, and how to lift it.",
+			"link": "/connect?server=three-ws-studio",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -397,8 +746,8 @@
 		{
 			"date": "2026-09-29",
 			"type": "launch",
-			"title": "Connect three.ws to Claude, ChatGPT, Cursor & VS Code",
-			"summary": "Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.",
+			"title": "Connect three.ws to Claude, ChatGPT, Grok Bot, Cursor & VS Code",
+			"summary": "Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.",
 			"link": "/connect",
 			"tags": [
 				"launch"
@@ -14839,7 +15188,7 @@
 			"date": "2026-07-31",
 			"type": "launch",
 			"title": ".well-known/mcp.json",
-			"summary": "Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does.",
+			"summary": "Directory of every hosted three.ws MCP server (endpoint, transport, auth, what each one does) plus a clients block with setup for Claude, ChatGPT, Grok Bot, Cursor, VS Code and Claude Code: the recommended server, the auth mode and the exact connector settings or config file.",
 			"link": "/.well-known/mcp.json",
 			"tags": [
 				"launch"

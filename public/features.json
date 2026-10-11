@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-08T04:39:10.556Z",
+	"generated_at": "2026-10-11T00:07:40.247Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3980,6 +3980,26 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/dextools",
+					"title": "Docs · DEXTools integration",
+					"description": "How three.ws and DEXTools connect: the /dextools hub, the embed builder that turns any DEXTools pair link into a 3D scene or Social Boost card snippet, the framable Boost on DEXTools card, and the counted redirect and public totals behind every visit three.ws sends to a DEXTools pair page.",
+					"added": "2026-10-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/chart-companion",
+					"title": "Docs · Chart Companion",
+					"description": "How to watch a DEXTools chart with a 3D agent that reacts to every real swap: the URL parameters, streaming it as a transparent OBS overlay, embedding it with one iframe, bringing your own agent, and exactly how whale, streak and new-high reactions are decided.",
+					"added": "2026-10-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/coin3d-embed",
 					"title": "Docs · Token in 3D, as an embed",
 					"description": "Put a live 3D view of any Solana market on your own page with one iframe, keyed by the mint or by the pair address your chart already uses. Covers the pair-to-token bridge, the parameters, sizing, the designed failure states, and driving the scene from the host page.",
@@ -5020,26 +5040,6 @@
 					"showcase": false
 				},
 				{
-					"path": "/docs/mcp-solana-memo-media",
-					"title": "Docs · Solana Memo Media MCP",
-					"description": "Decode validated image data embedded in Solana Memo transactions and return safe inline MCP images with provenance.",
-					"added": "2026-09-15",
-					"auth": null,
-					"indexable": true,
-					"tags": [],
-					"showcase": false
-				},
-				{
-					"path": "/docs/vscode",
-					"title": "Docs · three.ws in VS Code",
-					"description": "The VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, generates and rigs new models on the free lane, and writes a pinned <agent-3d> embed.",
-					"added": "2026-09-05",
-					"auth": null,
-					"indexable": true,
-					"tags": [],
-					"showcase": false
-				},
-				{
 					"path": "/docs/grok",
 					"title": "Docs · three.ws for Grok",
 					"description": "Connect Grok Bot, Grok connectors and the xAI API to one free remote MCP server that turns text or an image into a textured 3D model, a rigged avatar, or a named 3D persona that lip-syncs its replies. No account, payment or API key.",
@@ -5054,6 +5054,26 @@
 					"title": "Docs · Grok Bot connector reference",
 					"description": "Connect Grok Bot to three.ws as a custom MCP connector: exact fields for each sign-in mode, which server to pick, the links every result carries, jobs and safe retries, free limits and install tokens, why a connector key can never spend, guided prompts, and a fix for every connection failure.",
 					"added": "2026-10-09",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/mcp-solana-memo-media",
+					"title": "Docs · Solana Memo Media MCP",
+					"description": "Decode validated image data embedded in Solana Memo transactions and return safe inline MCP images with provenance.",
+					"added": "2026-09-15",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/vscode",
+					"title": "Docs · three.ws in VS Code",
+					"description": "The VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, generates and rigs new models on the free lane, and writes a pinned <agent-3d> embed.",
+					"added": "2026-09-05",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -7390,6 +7410,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/grok",
+					"title": "three.ws for Grok Bot: a free 3D studio and a body for Grok",
+					"description": "Everything Grok Bot can do with three.ws on one page: generate textured 3D models, rig avatars, find ready-made CC0 assets and run your agents through one custom MCP connector. Real models made minutes ago, the exact connector settings, three recipes to schedule and the Grok skill file. Free, no account, no key.",
+					"added": "2026-10-09",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/mcp-tools",
 					"title": "MCP Tool Catalog",
 					"description": "Every MCP tool three.ws publishes, searchable in one place: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Generated from the source of each tool, so it never drifts from what the servers serve.",
@@ -7404,16 +7434,6 @@
 					"title": "Docs · The 10 SOL trading experiment",
 					"description": "The full risk policy behind the autonomous fleet: entry band, position sizing, taking initials at 2x, the moon-bag floor, trailing and hard stops, and how to read the decision journal.",
 					"added": "2026-07-30",
-					"auth": null,
-					"indexable": true,
-					"tags": [],
-					"showcase": false
-				},
-				{
-					"path": "/grok",
-					"title": "three.ws for Grok Bot: a free 3D studio and a body for Grok",
-					"description": "Everything Grok Bot can do with three.ws on one page: generate textured 3D models, rig avatars, find ready-made CC0 assets and run your agents through one custom MCP connector. Real models made minutes ago, the exact connector settings, three recipes to schedule and the Grok skill file. Free, no account, no key.",
-					"added": "2026-10-09",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -7894,6 +7914,16 @@
 					"title": "Brownout",
 					"description": "Every response from this API says where its data came from and how fresh it is, and every declared fallback has been proven by breaking the upstream it protects against, inside the real request path. Read the receipts: which provider refused, which one caught the request, and how old the answer was.",
 					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/tutorials/grok-bot-recipes",
+					"title": "Docs · Grok Bot recipes",
+					"description": "Six Grok Bot recipes run against production, not imagined: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief. Every output in the doc came from a real run.",
+					"added": "2026-10-10",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -8731,6 +8761,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/grok-skill.md",
+					"title": "grok-skill.md",
+					"description": "The three.ws skill for Grok and Grok Bot: the connector that adds a free 3D studio, runnable curl calls for a Grok with no connector, the links every model comes back with, what needs an account, and the rule that it never spends. Upload it to Grok's Skills.",
+					"added": "2026-10-08",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/robots.txt",
 					"title": "robots.txt",
 					"description": "Crawler directives.",
@@ -8745,16 +8785,6 @@
 					"title": "OpenAPI",
 					"description": "Machine-readable HTTP API spec.",
 					"added": "2026-04-27",
-					"auth": null,
-					"indexable": false,
-					"tags": [],
-					"showcase": false
-				},
-				{
-					"path": "/grok-skill.md",
-					"title": "grok-skill.md",
-					"description": "The three.ws skill for Grok and Grok Bot: the connector that adds a free 3D studio, runnable curl calls for a Grok with no connector, the links every model comes back with, what needs an account, and the rule that it never spends. Upload it to Grok's Skills.",
-					"added": "2026-10-08",
 					"auth": null,
 					"indexable": false,
 					"tags": [],

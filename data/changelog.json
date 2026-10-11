@@ -2,6 +2,13 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-10-11",
+			"title": "Sentiment Scout's X reads gained a second, independent path through xAI",
+			"summary": "The Sentiment Scout reads X for posts quoting a coin's exact contract address, as evidence a holder can open and check. When our own X search credentials are unavailable or rate limited, it now fails over to xAI's x_search tool, a second route to the same posts, metered by its own daily cap so an outage on one path never silently costs more than planned on the other. No change for anyone reading the Scout: the evidence looks the same either way.",
+			"tags": ["improvement", "infra"],
+			"link": "/docs/sentiment-scout"
+		},
+		{
 			"date": "2026-10-09",
 			"title": "Avatar builds that hit a full library now say so, and the news knowledge base stops losing stories",
 			"summary": "If your avatar library filled up while a photo or prompt avatar was still generating, the finished job used to sit unresolved and retry in the background without ever telling you why nothing appeared. It now closes with a clear message: delete an avatar or upgrade, then build it again. Separately, news stories whose text contained a half-cut emoji or a stray null character were silently dropped from the knowledge base the 3D agents ground their answers on, about 120 a day. They are now cleaned and saved. Static files such as images and environment maps also stop answering a server error when the CDN revalidates them after an update.",

@@ -37,7 +37,7 @@ import { cacheGet, cacheSet, cacheWrap } from './cache.js';
 import { getBondingStatus } from './pump-bonding.js';
 import { fetchPumpFunCallouts } from './pump-callouts.js';
 import { receiptTxUrl } from './trade-receipt.js';
-import { searchMintPosts, summarizePosts, xSearchConfigured } from './x-search.js';
+import { searchMintPosts, summarizePosts, anyXSearchConfigured } from './x-search.js';
 
 export const EVIDENCE_TYPES = Object.freeze([
 	'volume_spike',
@@ -546,7 +546,7 @@ export function postReceipts(posts, n = MAX_POST_RECEIPTS) {
 // X posts quoting one mint, cached per mint. A failed read is cached briefly
 // as a failure, so an X outage does not turn every board refresh into a wait.
 async function readXPosts(mint, firstSeenAt) {
-	if (!xSearchConfigured()) return { unavailable: 'not_configured' };
+	if (!anyXSearchConfigured()) return { unavailable: 'not_configured' };
 	const key = `scout:x:v1:${mint}`;
 	const hit = await cacheGet(key).catch(() => null);
 	if (hit) return hit;

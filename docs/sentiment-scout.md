@@ -167,6 +167,22 @@ Credentials: `X_BEARER_TOKEN`, or the app key pair `X_API_KEY` / `X_API_SECRET`
 from which an app token is minted. Without them X posts are listed as
 unavailable and everything else works.
 
+**Second rung: xAI's `x_search` tool.** When the bearer rung above cannot
+answer (not configured, rate limited, or X itself down) and an xAI key
+(`GROK_API_KEY` or `XAI_API_KEY`) is configured, `searchMintPosts` falls over
+to a second, independent read of the same data: xAI's `x_search` tool on its
+Responses API (`POST https://api.x.ai/v1/responses`). Grok runs the search
+server-side and is instructed to answer with a strict JSON array of matching
+posts, parsed defensively into the same post shape the bearer rung returns
+(engagement counts and author detail the tool does not expose are left null
+rather than invented). That answer is untrusted model output, never
+instructions. Every xAI call is billed per call, so a daily cap
+(`XAI_X_SEARCH_DAILY_CAP`, default 200, counted in Postgres `app_settings` so
+it holds across instances) stops the rung for the rest of the day once
+reached; callers then see the same `unavailable` shape as any other outage.
+Code: `searchMintPostsViaXai` / `parseXaiSearchPayload` in
+`api/_lib/x-search.js`.
+
 ## Related
 
 - [Trading surfaces](./trading-surfaces.md): Coin Intelligence and the launch data
