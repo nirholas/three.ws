@@ -2,6 +2,34 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-10-11",
+			"title": "API keys can no longer arm spenders or move payout addresses without the wallet scope",
+			"summary": "Sixteen routes that accept an API key could arm something that spends or redirect where money lands, for any key at all. They now require the wallet:write scope: the treasury autopilot, the auto-launcher, the market maker, live Oracle watches, the pump buyback and distribute policy, signal subscriptions, recurring agent charges, team tasks that hire paid agents, agent orders and spending mandates, an agent's wallet address, a skill listing's proceeds split, animation payout addresses, a Launchpad page's payout wallet or pricing, and opening or re-terming a vault. Pausing, cancelling and closing stay open to any key, and editing an agent no longer lets a narrow key raise its spend limits or change its payment fallbacks.",
+			"tags": [
+				"security",
+				"fix"
+			],
+			"link": "/docs/mcp"
+		},
+		{
+			"date": "2026-10-11",
+			"title": "The terminal 3D renderer animates live in every HTTP client",
+			"summary": "curl three.ws/tty streams an animated 3D character into your terminal frame by frame. Clients that ask for compressed responses, such as curl --compressed, scripts using fetch, and most HTTP libraries, used to get nothing for about ten seconds and then the whole animation at once. Live streams are no longer compressed, so every client sees the character move from the first frame. Streaming agent and chat responses get the same fix.",
+			"tags": [
+				"fix"
+			],
+			"link": "/tty"
+		},
+		{
+			"date": "2026-10-11",
+			"title": "Avatar builds that hit a full library now say so, and the news knowledge base stops losing stories",
+			"summary": "If your avatar library filled up while a photo or prompt avatar was still generating, the finished job used to sit unresolved and retry in the background without telling you why nothing appeared. It now closes with a clear message: delete an avatar or upgrade, then build it again. News stories whose text contained a half-cut emoji or a stray null character were silently dropped from the knowledge base the 3D agents ground their answers on, about 120 a day; they are now cleaned and saved. Static files such as images and environment maps stop answering a server error when the CDN revalidates them, GPU workers fetch reference photos from hosts that refuse anonymous clients, and a stalled upstream can no longer hold an image or webhook request open until the platform timeout.",
+			"tags": [
+				"fix"
+			],
+			"link": "/news"
+		},
+		{
 			"date": "2026-10-10",
 			"title": "Anatomy: describe a machine and explore it as an interactive 3D cutaway",
 			"summary": "Type a machine in one line, such as how an A380 turbofan makes thrust, and three.ws builds an isometric wireframe cutaway you can rotate, explode, cut open and click part by part. Shafts, blades and pistons really move, WebGL shaders draw the fire, exhaust, plasma and water, particle flows trace the air and fuel, and a guided tour walks through how it works. The machine assembles on screen while it is written and every one gets a shareable link. Agents can build them too with the open anatomy skill.",

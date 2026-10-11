@@ -15,6 +15,30 @@
 			<description>Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.</description>
 		</item>
 		<item>
+			<title>API keys can no longer arm spenders or move payout addresses without the wallet scope</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-10-11:API keys can no longer arm spenders or move payout addresses without the wallet scope</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Sixteen routes that accept an API key could arm something that spends or redirect where money lands, for any key at all. They now require the wallet:write scope: the treasury autopilot, the auto-launcher, the market maker, live Oracle watches, the pump buyback and distribute policy, signal subscriptions, recurring agent charges, team tasks that hire paid agents, agent orders and spending mandates, an agent's wallet address, a skill listing's proceeds split, animation payout addresses, a Launchpad page's payout wallet or pricing, and opening or re-terming a vault. Pausing, cancelling and closing stay open to any key, and editing an agent no longer lets a narrow key raise its spend limits or change its payment fallbacks.</description>
+		</item>
+		<item>
+			<title>Avatar builds that hit a full library now say so, and the news knowledge base stops losing stories</title>
+			<link>https://three.ws/news</link>
+			<guid isPermaLink="false">2026-10-11:Avatar builds that hit a full library now say so, and the news knowledge base stops losing stories</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>If your avatar library filled up while a photo or prompt avatar was still generating, the finished job used to sit unresolved and retry in the background without telling you why nothing appeared. It now closes with a clear message: delete an avatar or upgrade, then build it again. News stories whose text contained a half-cut emoji or a stray null character were silently dropped from the knowledge base the 3D agents ground their answers on, about 120 a day; they are now cleaned and saved. Static files such as images and environment maps stop answering a server error when the CDN revalidates them, GPU workers fetch reference photos from hosts that refuse anonymous clients, and a stalled upstream can no longer hold an image or webhook request open until the platform timeout.</description>
+		</item>
+		<item>
+			<title>The terminal 3D renderer animates live in every HTTP client</title>
+			<link>https://three.ws/tty</link>
+			<guid isPermaLink="false">2026-10-11:The terminal 3D renderer animates live in every HTTP client</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>curl three.ws/tty streams an animated 3D character into your terminal frame by frame. Clients that ask for compressed responses, such as curl --compressed, scripts using fetch, and most HTTP libraries, used to get nothing for about ten seconds and then the whole animation at once. Live streams are no longer compressed, so every client sees the character move from the first frame. Streaming agent and chat responses get the same fix.</description>
+		</item>
+		<item>
 			<title>Agent Commerce</title>
 			<link>https://three.ws/commerce</link>
 			<guid isPermaLink="false">2026-10-10:Agent Commerce</guid>
