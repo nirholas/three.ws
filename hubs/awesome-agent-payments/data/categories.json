@@ -1,0 +1,47 @@
+[
+  {
+    "id": "solana",
+    "title": "Solana first",
+    "blurb": "Solana is where agent micropayments are growing fastest: sub-second finality, sub-cent fees, native USDC. Facilitators, kits, and payment tooling built for or running on Solana."
+  },
+  {
+    "id": "protocols",
+    "title": "Payment protocols and standards",
+    "blurb": "Open specifications that define how agents and services negotiate and settle payments: x402, MPP, L402, A2A, ERC-8004, and friends."
+  },
+  {
+    "id": "agentic-commerce",
+    "title": "Agentic commerce and card networks",
+    "blurb": "Checkout, mandates, and tokenized card credentials that let agents buy goods and services from merchants on a user's behalf."
+  },
+  {
+    "id": "facilitators",
+    "title": "Facilitators",
+    "blurb": "Services that verify and settle x402 payments so sellers do not have to run chain infrastructure themselves."
+  },
+  {
+    "id": "sdks",
+    "title": "SDKs, middleware, and toolkits",
+    "blurb": "Libraries and frameworks for charging or paying over HTTP 402 and for wiring payment tools into agent stacks."
+  },
+  {
+    "id": "wallets",
+    "title": "Agent wallets and spend controls",
+    "blurb": "Wallets, key custody, and policy layers that let an agent hold funds and spend them within limits."
+  },
+  {
+    "id": "directories",
+    "title": "Directories and marketplaces",
+    "blurb": "Explorers, bazaars, and catalogs where agents and developers discover paid APIs and services."
+  },
+  {
+    "id": "trust",
+    "title": "Identity, trust, and receipts",
+    "blurb": "Agent identity, reputation, verifiable receipts, refunds, and monitoring for paid agent traffic."
+  },
+  {
+    "id": "lightning",
+    "title": "Lightning and Bitcoin rails",
+    "blurb": "Agent payments over the Lightning Network, including L402 tooling and wallet connections."
+  }
+]
