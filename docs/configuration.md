@@ -87,30 +87,39 @@ Higher values increase security at the cost of login latency. 11 is a reasonable
 
 ### LLM
 
-`/api/chat` routes across a provider failover ladder (see the routing comment at the top of [api/chat.js](../api/chat.js)): free-tier providers lead, paid keys are backstops. Configure at least one of these keys to enable agent conversations.
+`/api/chat` routes across a provider failover ladder (see the routing policy comment at the top of [api/_lib/llm.js](../api/_lib/llm.js)): free-tier providers lead, paid keys are the last-resort tail. **No key is required to enable agent conversations at all.** A handful of lanes need no key or account and are always in the chain, so `/api/chat` works out of the box on a fresh clone: Kilo Code's free pool, OVH AI Endpoints' anonymous tier, Pollinations, and LLM7.io. The keys below are entirely about *raising the ceiling*: more quota, higher-capability models, and a paid backstop so the chain never actually errors.
 
 #### `GROQ_API_KEY`
-**Recommended.** Free-tier Groq key; the default first provider in the chat ladder.
+**Recommended.** Free-tier Groq key; the first keyed provider in the chat ladder, ahead of the always-on keyless lanes.
 
 ```
 GROQ_API_KEY=gsk_xxxxx
 ```
 
+#### `CEREBRAS_API_KEY`
+**Optional.** Cerebras free-tier key, a second independent free lane tried alongside Groq.
+
 #### `OPENROUTER_API_KEY`
-**Optional.** OpenRouter key, tried after Groq. Backs up every LLM surface; fund it if you rely on paid-model failover.
+**Optional.** OpenRouter key, tried after Groq and Cerebras (the paid model first, then the `:free` variant on the same key). Backs up every LLM surface; fund it if you rely on paid-model failover.
 
 ```
 OPENROUTER_API_KEY=sk-or-xxxxx
 ```
 
+#### `GEMINI_API_KEY`
+**Optional.** Gemini AI Studio's free tier, another independent free lane.
+
 #### `NVIDIA_API_KEY`
-**Optional.** NVIDIA NIM free tier, a third independent free lane.
+**Optional.** NVIDIA NIM free tier: three Nemotron models (Super, Ultra, Lightning) on one key, each its own NIM function so one model's throttle or retirement is not the whole lane's.
 
 #### `SAMBANOVA_API_KEY`, `MISTRAL_API_KEY`, `ZAI_API_KEY`
-**Optional.** Three more free lanes, tried after NVIDIA in that order: SambaNova Cloud, Mistral's Experiment tier, and Z.AI's GLM Flash lane. Each joins the ladder only when its key is present, so `/api/chat` degrades across providers without a code change. The server-side completion chain in [api/_lib/llm.js](../api/_lib/llm.js) also accepts optional Cerebras, Gemini AI Studio, Cloudflare Workers AI (`CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_AI_API_TOKEN`), and SiliconFlow lanes on the same free-first rule.
+**Optional.** Three more keyed free lanes: SambaNova Cloud, Mistral's Experiment tier, and Z.AI's GLM Flash lane. Each joins the ladder only when its key is present, so `/api/chat` degrades across providers without a code change. The server-side completion chain in [api/_lib/llm.js](../api/_lib/llm.js) also accepts optional Cloudflare Workers AI (`CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_AI_API_TOKEN`), SiliconFlow, and `KILO_API_KEY` (raises Kilo's keyless rate limit; the lane itself needs no key) on the same free-first rule.
+
+#### `GOOGLE_CLOUD_PROJECT`
+**Set automatically on every Cloud Run deploy.** When present, Gemini Flash-Lite on Vertex sits between the free tiers and the paid tail as the reliability anchor: service-account auth, billed to the platform's GCP credits, no third-party quota to exhaust. Self-hosting outside Cloud Run and want this rung too? Set it to a GCP project with the Vertex AI API enabled and application-default credentials available to the process.
 
 #### `ANTHROPIC_API_KEY`
-**Optional (paid backstop).** Anthropic key, tried after the free lanes. Also accepted as a user-supplied BYOK key.
+**Optional (paid backstop).** Anthropic key, appended to the tail of every chain so a request that exhausted every free lane still succeeds instead of erroring. Also accepted as a user-supplied BYOK key, which leads the chain on the caller's own billing.
 
 ```
 ANTHROPIC_API_KEY=sk-ant-api03-xxxxx
@@ -220,6 +229,15 @@ PRIVY_APP_ID=clxxxxxxxx
 
 Both should be the same value. Get from [dashboard.privy.io](https://dashboard.privy.io).
 
+#### `GOOGLE_OAUTH_CLIENT_ID`
+#### `GOOGLE_OAUTH_CLIENT_SECRET`
+**Optional.** OAuth client for "Sign in with Google" (authorization code + PKCE, `/api/auth/google/*`): links Google to an existing account, then signs in with it. Create a "Web application" OAuth client in the Google Cloud console with the redirect URI `${PUBLIC_APP_ORIGIN}/api/auth/google/callback`. When unset, the Google sign-in buttons stay hidden and the routes answer `unconfigured`.
+
+```
+GOOGLE_OAUTH_CLIENT_ID=xxxxx.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=xxxxx
+```
+
 ---
 
 ### Avatar Pipeline
@@ -325,7 +343,7 @@ WEB3_STORAGE_TOKEN=xxxxx
 ```
 
 #### Solana signer keys (`*_SECRET_KEY_B64`)
-**Optional.** Server-side Solana keypairs the cron jobs and on-chain flows sign with: `PUMP_CRON_RELAYER_SECRET_KEY_B64` (pays tx fees for the Pump.fun buyback cron), `COIN_TREASURY_SECRET_KEY_B64`, `THREE_BUYBACK_SECRET_KEY_B64`, `CLUB_SOLANA_TREASURY_SECRET_KEY_B64`, `PUMP_X402_LAUNCHER_SECRET_KEY_B64`. Each is the **base64 encoding of the 64 raw secret-key bytes**, the format `decodeSecretKey` expects (`api/_lib/solana-signers.js`).
+**Optional.** Server-side Solana keypairs the cron jobs and on-chain flows sign with, for example `PUMP_CRON_RELAYER_SECRET_KEY_B64` (pays tx fees for the Pump.fun buyback cron), `COIN_TREASURY_SECRET_KEY_B64`, `THREE_BUYBACK_SECRET_KEY_B64`, `CLUB_SOLANA_TREASURY_SECRET_KEY_B64`, and `PUMP_X402_LAUNCHER_SECRET_KEY_B64`. The roster keeps growing (launch sponsorship, fee bridging, and more each added their own signer): read the `SOLANA_SIGNERS` array in [`api/_lib/solana-signers.js`](../api/_lib/solana-signers.js) for the current full list and each one's purpose rather than trusting an enumeration quoted in prose. Each is the **base64 encoding of the 64 raw secret-key bytes**, the format `decodeSecretKey` expects.
 
 ```
 PUMP_CRON_RELAYER_SECRET_KEY_B64=<base64 of 64-byte keypair>
@@ -385,13 +403,13 @@ A **live configuration file** consumed at runtime by the Cloud Run server ([`ser
 { "src": "/studio",              "dest": "/studio/index.html" }
 ```
 
-**Embed routes** (both the `/agents/:id/embed` and legacy `/agent/:id/embed` spellings) include security headers that allow cross-origin iframe embedding:
+**Embed routes** (both the `/agents/:id/embed` and legacy `/agent/:id/embed` spellings) include security headers that allow cross-origin iframe embedding while still allowlisting the specific third-party scripts the embed loads:
 
 ```json
 {
   "src": "/agent/([^/]+)/embed",
   "headers": {
-    "content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; report-uri /api/client-errors",
+    "content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
     "x-content-type-options": "nosniff",
     "referrer-policy": "strict-origin-when-cross-origin",
     "permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*",
@@ -400,6 +418,8 @@ A **live configuration file** consumed at runtime by the Cloud Run server ([`ser
   "dest": "/agent-embed.html"
 }
 ```
+
+The `script-src` allowlist grows as the embed adopts new CDNs; read the live entry in `vercel.json` rather than trusting this list to stay exhaustive.
 
 **Versioned CDN routes** for the web component library serve immutable assets with long cache TTLs:
 
