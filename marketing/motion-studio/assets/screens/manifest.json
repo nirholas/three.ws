@@ -1,0 +1,47 @@
+{
+  "capturedAt": "2026-10-10T22:32:25.937Z",
+  "origin": "https://three.ws",
+  "viewport": "1920x1080",
+  "shots": [
+    {
+      "id": "home",
+      "url": "https://three.ws/",
+      "status": 200,
+      "title": "three.ws - The 3D Agent Layer of the Internet",
+      "file": "marketing/motion-studio/assets/screens/home.png",
+      "pageErrors": []
+    },
+    {
+      "id": "forge",
+      "url": "https://three.ws/forge",
+      "status": 200,
+      "title": "Forge · Text & Image → 3D · three.ws",
+      "file": "marketing/motion-studio/assets/screens/forge.png",
+      "pageErrors": []
+    },
+    {
+      "id": "characters",
+      "url": "https://three.ws/characters",
+      "status": 200,
+      "title": "Characters - three.ws",
+      "file": "marketing/motion-studio/assets/screens/characters.png",
+      "pageErrors": []
+    },
+    {
+      "id": "marketplace",
+      "url": "https://three.ws/marketplace",
+      "status": 200,
+      "title": "Agent Marketplace · three.ws",
+      "file": "marketing/motion-studio/assets/screens/marketplace.png",
+      "pageErrors": []
+    },
+    {
+      "id": "atlas",
+      "url": "https://three.ws/atlas",
+      "status": 200,
+      "title": "Atlas · three.ws",
+      "file": "marketing/motion-studio/assets/screens/atlas.png",
+      "pageErrors": []
+    }
+  ]
+}

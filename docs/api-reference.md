@@ -22,7 +22,7 @@ Authorization: Bearer sk_live_xxxxx
 
 Session cookies (set after SIWE or Privy login) are accepted on all endpoints that support Bearer auth.
 
-**API keys.** Create one at [Dashboard → API](https://three.ws/dashboard/api). A key starts with `sk_live_` and is shown exactly once: three.ws stores only its SHA-256 hash plus the first 14 characters as a visible prefix, so a lost key cannot be recovered, only replaced. Each key carries the scopes you chose when you made it ([the scope table](#scopes)), and a call outside them fails with `insufficient_scope`. Revoking a key takes effect on the next request, because keys are checked against the database on every call. Keep keys server-side; never ship one in a browser or mobile bundle.
+**API keys.** Create one at [Dashboard → API](https://three.ws/dashboard/api). A key starts with `sk_live_` and is shown exactly once: three.ws stores only its SHA-256 hash plus the first 14 characters as a visible prefix, so a lost key cannot be recovered, only replaced. Each key carries the scopes you chose when you made it ([the scope table](#scopes)), and a call outside them fails with `insufficient_scope`. Revoking a key takes effect on the next request: a key row is cached in memory for thirty seconds between database reads, and revoking, rotating or editing the allowlist of a key invalidates that cache entry at once, on every server instance, so the window a revoked key keeps working is bounded by the one-second invalidation refresh, not by the cache. Keep keys server-side; never ship one in a browser or mobile bundle.
 
 **OAuth tokens.** MCP clients and the [CLI](/docs/cli) sign in with OAuth instead of a key. Access tokens last one hour and refresh automatically. Revoking a client under [Dashboard → Settings → Connected apps](https://three.ws/dashboard/settings) takes effect on its next request: its access and refresh tokens are refused from that moment.
 
@@ -67,6 +67,56 @@ Every limited response carries `RateLimit-Limit`, `RateLimit-Remaining` and `Rat
 ```
 
 If the body also has `"reason": "rate_limiter_unavailable"`, you did not hit a quota: the limiter itself was briefly unreachable and failed closed on a sensitive route. Wait `retry_after` seconds and retry as normal.
+
+### Developer plans and quotas
+
+Every call to the versioned API (`/api/v1/…`) is also held to the caller's developer plan: a monthly call quota, a burst ceiling and a concurrency ceiling, all enforced in the shared gateway rather than merely recorded. The four plans (Free, Builder, Scale, Enterprise) are defined once in `api/_lib/dev-plans/config.js`; `GET /api/v1/dev-plans` publishes that table, and the [/developers](https://three.ws/developers) page and the dashboard render it, so no document carries a typed number. The full guide, including upgrades, proration and payment, is [Developer plans](./developer-plans.md).
+
+**Headers.** Every `/api/v1` response carries the plan envelope:
+
+| Header | Meaning |
+| --- | --- |
+| `x-plan` | Plan id in force (`free`, `builder`, `scale`, `enterprise`) |
+| `x-ratelimit-limit`, `x-ratelimit-remaining`, `x-ratelimit-reset` | The plan's sliding one-minute burst window: ceiling, calls left, Unix seconds when it refills |
+| `x-quota-limit`, `x-quota-used`, `x-quota-remaining`, `x-quota-reset` | The period quota: included calls, calls made this period, calls left, Unix seconds when the period rolls over |
+| `x-concurrency-limit` | Calls the plan allows in flight at once |
+
+**Burst or concurrency exceeded: HTTP 429** with `Retry-After` (seconds) and `error` of `rate_limited` or `concurrency_limited`:
+
+```json
+{ "error": "rate_limited", "error_description": "the Free plan allows 60 calls per minute", "retry_after": 12, "plan": "free", "upgrade_url": "/developers" }
+```
+
+**Quota used up: HTTP 402** with `quota_exceeded`. The call that would exceed the quota is refused and not counted. The body names the limit, when it resets, the next plan up and where to upgrade:
+
+```json
+{
+	"error": "quota_exceeded",
+	"error_description": "the Free plan includes 10,000 calls per period and this period's calls are used up",
+	"plan": "free",
+	"limit": 10000,
+	"used": 10000,
+	"reset_at": "2026-11-09T12:00:00.000Z",
+	"upgrade_url": "/developers",
+	"manage_url": "/dashboard/developers#plan",
+	"next_plan": { "id": "builder", "name": "Builder", "included_calls": 250000, "price_usd": 29 }
+}
+```
+
+A signed-in browser session browsing its own dashboard is held to the burst and concurrency ceilings but spends no quota; only API keys and OAuth tokens consume included calls. `GET /api/v1/me/dev-plan` returns the caller's plan, period, live usage and the pro-rated quotes for every upgrade (a key asking about its own quota spends one call of it, as any v1 call does).
+
+**Plan endpoints**
+
+| Endpoint | Auth | Purpose |
+| --- | --- | --- |
+| `GET /api/v1/dev-plans` | none | The plan catalog, period length, `$THREE` discount and the calculation note, all read from the config |
+| `GET /api/v1/me/dev-plan` | session or key | Current plan, period, quota used and remaining, concurrency in flight, scheduled change, quotes and recent receipts |
+| `POST /api/v1/me/dev-plan/checkout` | session + CSRF | `{ "plan": "builder", "asset": "credits" \| "USDC" \| "THREE", "wallet"?: "<Solana address>" }`. Credits settle in the same request and return the receipt. USDC and `$THREE` return the checkout (recipient, amount, asset, chain `solana`, expiry) plus an unsigned transfer in `tx_base64` for the user's own wallet to sign; the server never holds or signs with a user key |
+| `POST /api/v1/me/dev-plan/confirm` | session + CSRF | `{ "checkout_id", "tx_signature" }`. Verifies the signed transfer on Solana and applies the plan. Answers `{ "status": "paid", "receipt" }`, or HTTP 202 `{ "status": "pending", "reason" }` while the chain is still confirming; the same signature always returns the same receipt |
+| `POST /api/v1/me/dev-plan/schedule` | session + CSRF | `{ "plan": "free" }` schedules a downgrade (or cancellation) for the end of the current period; scheduling the current plan again cancels it |
+| `GET /api/v1/me/dev-plan/receipts` | session or key | Receipts, newest first (`?limit=`, default 50) |
+
+Each plan also caps the number of webhook endpoints an account may register (`POST /api/developer/webhooks` and the agents API answer `402 limit_reached` past it, naming the plan, its cap and the upgrade link).
 
 ### Idempotency
 
@@ -195,6 +245,18 @@ Errors use `invalid_signature`, `invalid_transaction`, `not_found`, `rate_limite
 The endpoint allows cross-origin `GET` and `POST` requests and requires no authentication.
 
 ---
+
+## MCP Census API
+
+### Count every MCP tool, resource and prompt
+
+`GET /api/mcp-census` (public, no auth, rate limited per IP) returns how many tools, resources, resource templates and prompts each three.ws MCP server serves. The hosted endpoints are counted by the running server from the same catalogs it answers `tools/list` from. The stdio npm packages cannot load inside the API runtime, so their rows come from the build's [`/tools.json`](https://three.ws/tools.json).
+
+```bash
+curl -s https://three.ws/api/mcp-census | jq '.totals.all, .matchesBuild'
+```
+
+Response fields: `totals` (`all`, `hosted`, `stdio`, each with `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`), `servers` (one row per server with a `source` of `live` or `build`), `method` (how each number is calculated), `matchesBuild` (false when the build ran on different code than is serving) and `drift` (the per-server differences). Today the build counts <!-- mcp-count:all.tools -->635<!-- /mcp-count --> tools on <!-- mcp-count:all.servers -->51<!-- /mcp-count --> servers. Browse them at [/mcp-tools](https://three.ws/mcp-tools); see [MCP Tools Catalog](mcp-tools.md#how-the-totals-are-calculated) for the method.
 
 ## Asset Catalog API
 
@@ -354,6 +416,55 @@ Returns the authenticated user's default agent, creating one automatically if no
 
 ---
 
+### Public agent directory
+
+```
+GET /api/agents/public
+```
+
+The browsable index of public agents. No auth; IP rate limited; 30-second CDN cache. Internal (service-account) agents never list.
+
+| Query | Meaning |
+| --- | --- |
+| `q` | Full-text search on name and description |
+| `skill` | Only agents offering this skill slug |
+| `sort` | `popular` (default), `newest`, `name` or `live` (most recent real on-chain or skill action first) |
+| `limit` | Page size, max 48 (default 24) |
+| `before` | Cursor (`created_at <`) for `popular`, `newest` and `name` |
+| `offset` | Offset for `live` |
+| `network` | Only on-chain agents registered on this network |
+| `onchain=1` | Only agents with an on-chain identity |
+| `avatar=1` | Only agents whose avatar GLB is publicly readable |
+
+**Response**
+
+```json
+{
+	"agents": [
+		{
+			"id": "b7a2c1e4-0000-4000-8000-000000000001",
+			"name": "Aria",
+			"description": "Product guide",
+			"skills": [{ "name": "Research", "slug": "research" }],
+			"avatar_thumbnail": "https://three.ws/avatars/thumbs/default.png",
+			"avatar_model_url": "https://<public-r2-domain>/avatars/<user>/<agent>.glb",
+			"home_url": "/agents/b7a2c1e4-0000-4000-8000-000000000001",
+			"is_registered": true,
+			"chat_count": 90,
+			"created_at": "2026-01-15T10:00:00Z",
+			"onchain": { "network": "mainnet", "asset": "THREEsynthetic1111111111111111111111111111" }
+		}
+	],
+	"count": 1,
+	"has_more": false,
+	"generated_at": "2026-10-11T09:00:00Z"
+}
+```
+
+`avatar_model_url` is the agent's GLB and is present only when the avatar's visibility is public or unlisted and the server knows its public storage domain (`S3_PUBLIC_DOMAIN`); otherwise it is `null`. The desktop campus wears it to seat real agents in the 3D world, and `<agent-3d agent-id>` loads the same file. The `live` sort also returns `last_action_at`, `action_count` and, on the first page, `total` and `active_total`.
+
+---
+
 ### Get agent by ID
 
 ```
@@ -443,7 +554,7 @@ The agent's full configuration, system prompt included, canonicalized, ed25519-s
 	"issuer": "6Yb...",
 	"signed_at": "2026-08-11T12:00:00.000Z",
 	"verified": true,
-	"gatewayUrls": ["https://ipfs.io/ipfs/bafy..."],
+	"gatewayUrls": ["https://ipfs.filebase.io/ipfs/bafy..."],
 	"verifyUrl": "/api/manifest-verify?cid=bafy...",
 	"envelope": { "spec": "threews.agent.manifest.v1", "manifest": {} }
 }
@@ -588,7 +699,7 @@ An agent with no coin answers `has_coins: false` with every figure at `0` and em
 GET /api/leaderboard/earnings?window=7d&limit=25&offset=0
 ```
 
-Public agents ranked by what they earned in a window: creator fees plus service income, each returned separately beside the total. It is the data behind the Earned tab on [/leaderboard?tab=earned](https://three.ws/leaderboard?tab=earned), and every row is computed by the same read model as [Agent earnings](#agent-earnings) above (`api/_lib/agent-earnings.js`), so a row always equals `GET /api/agents/:id/earnings` for that agent and window, and the agent's Earned card links back here with its rank ("#1 this week"). No auth required. Private agents never appear; an agent that earned nothing in the window is not ranked.
+Public agents ranked by what they earned in a window: pump.fun creator fees from their coins plus service income (x402 skill sales net of the platform fee, plus completed hires by other agents), each shown separately beside the total in SOL and USD. It is the data behind the Earned tab on [/leaderboard?tab=earned](https://three.ws/leaderboard?tab=earned), and every row is computed by the same read model as [Agent earnings](#agent-earnings) above (`api/_lib/agent-earnings.js`), so a row always equals `GET /api/agents/:id/earnings` for that agent and window, and the agent's Earned card links back here with its rank ("#1 this week"). No auth required. Private agents never appear; an agent that earned nothing in the window is not ranked.
 
 | Query | Values | Default |
 |---|---|---|
@@ -2170,6 +2281,51 @@ model's creator through the in-app bell (`comment` type, social category) when
 the model has an attributed creator. Authors can delete their own comments
 only.
 
+### Slicer file: `GET /api/slicer/:id/model.stl`
+
+```
+GET /api/slicer/<uuid>/model.stl          → binary STL, auto-sized
+GET /api/slicer/<uuid>/model.3mf          → 3MF package with colour
+GET /api/slicer/<uuid>/<N>mm/model.stl    → longest edge exactly N mm (5 to 500)
+GET /api/slicer/<uuid>/<N>mm/model.3mf
+If-None-Match: "<etag>"                    # optional: 304 when unchanged
+→ 200 content-type: model/stl | model/3mf
+      content-disposition: attachment; filename="<prompt-slug>[-Nmm].stl"
+      x-slicer-size-mm: 77.6 x 20.1 x 100.0
+      x-slicer-scale: real | auto | requested
+      etag: "slc-<hash>"
+```
+
+A finished public or unlisted creation, converted on the fly into a file a
+3D-printing slicer opens ready to slice. The path ends in a literal
+`model.stl` and carries no query string on purpose: the "Open in OrcaSlicer"
+and "Open in Bambu Studio" deep links (`orcaslicer://open?file=<url>`,
+`bambustudio://open?file=<url>`) hand the slicer this URL, and slicers pick
+the importer from the last path segment. Any HTTP client can use it the same
+way, with CORS open to every origin.
+
+The file is print-ready, not just converted: rotated from glTF's Y-up to the
+slicer's Z-up, in millimetres, resting on the bed at Z = 0 and centred on the
+plate. A model whose real size is 10 to 250 mm keeps it (`x-slicer-scale:
+real`); anything else is scaled to a 100 mm longest edge (`auto`); a `<N>mm`
+segment sets the longest edge exactly (`requested`). Geometry comes from the
+same loader and exporters as the Materialize print API, capped at 1.5 million
+triangles.
+
+Responses are immutable per id, format and size: `cache-control: public,
+max-age=3600, s-maxage=86400, stale-while-revalidate=604800` plus a strong
+ETag. Conversions (cache misses) are rate limited to 30 per 5 minutes per IP.
+Errors: `400 validation_error` (id not a UUID, format not stl/3mf, size out of
+range), `404 creation_not_found` (missing, unfinished or private), `413
+too_large` / `too_complex` (over the size or triangle cap), `422
+invalid_model` / `no_geometry`, `502 fetch_failed` (the stored GLB could not
+be read), `429` with `retry-after`.
+
+```bash
+curl -sLo helmet.stl https://three.ws/api/slicer/<uuid>/model.stl
+curl -sLo helmet-80mm.3mf https://three.ws/api/slicer/<uuid>/80mm/model.3mf
+```
+
 ### Agent-forged gallery feed — `GET /api/forged`
 
 ```
@@ -2670,6 +2826,15 @@ as its own real, validated GLB**, not just a live preview swap.
 | `503`  | `not_configured`        | AI restyle needs `WATSONX_API_KEY` + `WATSONX_PROJECT_ID` set       |
 
 ---
+
+## AI API: text to parametric CAD
+
+`POST /api/cad` turns a description into a kernel-checked build123d part (`action: "generate"`, optionally streamed over SSE) or rebuilds a saved design at new dimension values (`action: "rebuild"`). `GET /api/cad?id=` reads a design, its lineage and a cached configuration; `&format=py` downloads the program; `?list=recent` returns the gallery. Every design carries STEP, STL, GLB and SVG drawing URLs plus the kernel's measurements. Full request and response shapes, errors and limits: [CAD Forge](./cad-forge.md#http-api).
+
+```bash
+curl -s https://three.ws/api/cad -H 'content-type: application/json' \
+  -d '{"action":"generate","prompt":"L bracket, 90 degrees, 3 mm thick, four M4 holes"}' | jq '.design.files'
+```
 
 ## AI API — text→image
 
@@ -3620,6 +3785,44 @@ curl -s 'https://three.ws/api/v1/gas?chains=1'
 
 ---
 
+## Solana Trading Tools API
+
+The REST face of the Solana trading tools: research, swap comparison and
+execution, and arbitrage. Each route is one entry in the tool registry
+(`api/_lib/trading-tools/registry.js`) that also serves the `threews-agent` MCP
+server, so the input schema, the guards and the refusal codes are the same on
+both surfaces. Full guide with every field explained: [Solana trading tools](./trading-tools.md).
+
+Responses use the versioned API envelope (`{ "data": …, "meta": { "requestId": … } }`).
+GET routes read the query string (arrays as a comma list); POST routes read a
+JSON body. A token argument takes a mint, a symbol, or `SOL` / `USDC`.
+
+| Method | Path | Auth | What it does |
+| --- | --- | --- | --- |
+| `GET` | `/api/v1/trading` | public | Every tool with its input schema. |
+| `GET` | `/api/v1/trading/tokens/search?query=&limit=` | public | Tokens ranked by liquidity, with price, market cap, holders and a safety read. |
+| `GET` | `/api/v1/trading/price?mint=` | public | Live USD and SOL price, 24h change, liquidity, volume, source. |
+| `GET` | `/api/v1/trading/indicators?mint=&indicators=&interval=&period=` | public | Indicators over live OHLCV candles. |
+| `GET` | `/api/v1/trading/signals?mint=` or `?window=&sections=` | public | One token's signals, or the Solana ecosystem view (macro, movers, anomalies) with inputs and `as_of`. |
+| `GET` | `/api/v1/trading/news?token=&category=&limit=` | public | The crypto news feed, filtered. |
+| `GET` | `/api/v1/trading/arbitrage/prices?token=&quote=&amount=` | public | Every venue's buy and sell price for a pair at this size. |
+| `GET` | `/api/v1/trading/arbitrage/quote?token=&quote=&amount=&accept_size_risk=` | public | Best two-leg route, worst case, verdict. Refused above $100 unless `accept_size_risk=true`, above $1000 always. |
+| `POST` | `/api/v1/trading/swap/quote` | optional; `wallet:read` with `agent_id` | Every aggregator side by side with net output, the winner and why. With `agent_id`: guard verdict, confirmation table, `quote_id` (five minutes). |
+| `POST` | `/api/v1/trading/swap/simulate` | `wallet:read` | Re-price, guard, build and simulate the quoted swap. Signs nothing. |
+| `POST` | `/api/v1/trading/swap/execute` | `wallet:trade` | Fill a confirmed quote from the agent wallet. Body `{ "quote_id", "confirm_swap": true }`. |
+
+```bash
+curl -s -X POST https://three.ws/api/v1/trading/swap/quote \
+  -H 'content-type: application/json' \
+  -d '{ "input_mint": "SOL", "output_mint": "USDC", "amount": 0.1, "dex": "auto" }'
+```
+
+`swap/execute` moves real funds. Show the user the `confirmation` table from
+`swap/quote` and send it only after a clear yes. A quote older than five
+minutes is refused (`410 quote_expired`), the route is re-priced at fill time
+and refused below the approved minimum (`409 quote_moved`), and each
+`quote_id` fills at most once.
+
 ## EVM Swap Quote API
 
 Read-only swap quotes over a keyless failover chain: ParaSwap, then KyberSwap,
@@ -3950,6 +4153,21 @@ curl -s 'https://three.ws/api/v1/pump/launches?limit=10'
 
 ---
 
+### Funded launch intents
+
+Quote a launch, fund it from the agent wallet, confirm it in the approvals inbox, and poll its stage (`quote`, `paid`, `submitted`, `confirmed`, `indexed`).
+
+| Method and path | Auth | Purpose |
+| --- | --- | --- |
+| `GET /api/pump/pairs` | none | Quote assets a launch can pair with, fee schedule and creator-fee rule. |
+| `POST /api/pump/launch-intents` | session or bearer | Create an intent and its quote. |
+| `GET /api/pump/launch-intents/:id` | session or bearer | Read an intent and its stage. |
+| `POST /api/pump/launch-intents/:id/pay` | session only | Record the funding proof, once, replayable. |
+| `POST /api/pump/launch-intents/:id/confirm` | session only | Ask the owner to approve the launch. |
+| `POST /api/pump/launch-intents/:id/dry-run` | session or bearer | Simulate the launch without sending it. |
+
+Full flow, errors and configuration: [launch-intents.md](launch-intents.md).
+
 ### Whales
 
 Whale / large-buy detection across pump.fun — **facts only**: which wallets
@@ -4108,6 +4326,164 @@ curl -s 'https://three.ws/api/pipeline?network=devnet'  | jq '.stages.recorder'
 
 ---
 
+## Strategy Objects API
+
+Strategy Objects are validated trade rule sets an agent can equip (entry filter,
+research gates, sizing with a price-impact cap, exits, risk caps, and an
+`ask`/`auto` mode). Full guide, schema, and examples:
+[docs/strategy-objects.md](strategy-objects.md).
+
+### Live match preview
+
+```
+POST /api/strategies/preview   { config, hours?: 1|6|24, network?: "mainnet"|"devnet" }
+```
+
+Public, read-only, 120 requests per IP per 5 minutes. Replays the recorded
+launches of the last `hours` (default 6) through the live entry filter and
+research gates. The config is normalized, not validated, so a half-edited config
+still previews. Returns `universe`, `passed_entry`, `passed_research`,
+`impact_blocked`, `matched`, `live_check` (cleared everything except
+firewall-only checks that history lacks), `would_buy`, `entry_rejects`,
+`blocked_by` (a map of gate key to how many coins it blocked), `sample`, `sol_usd`,
+`history_at`, and `caveats`. `502 preview_unavailable` when the history cannot be
+read.
+
+### Per-agent strategy runtime
+
+```
+GET    /api/agents/:id/strategies                       equips, live positions, kill state
+POST   /api/agents/:id/strategies                       { strategy_id, network }   equip
+POST   /api/agents/:id/strategies/unequip               { equip_id | strategy_id }
+POST   /api/agents/:id/strategies/toggle                { equip_id, active }
+POST   /api/agents/:id/strategies/kill                  toggle the owner's kill switch
+POST   /api/agents/:id/strategies/sweep                 evaluate this agent's equips now
+POST   /api/agents/:id/strategies/close                 { position_id }   sell one position now
+POST   /api/agents/:id/strategies/mode                  { equip_id, mode: "ask"|"auto" }
+GET    /api/agents/:id/strategies/decisions?decision=&limit=
+GET    /api/agents/:id/strategies/approvals?status=pending&limit=
+POST   /api/agents/:id/strategies/approve               { approval_id, payload_hash }
+POST   /api/agents/:id/strategies/deny                  { approval_id }
+```
+
+Owner only (session plus CSRF, or a bearer allowed to spend). On mainnet,
+equipping, resuming, switching to `auto`, sweeping, and approving require the
+real-funds agreement; pausing and switching to `ask` never do.
+
+- **decisions** returns `data.decisions[]`: one row per equip and coin with
+  `decision` (`blocked`, `approval`, `executed`, `skipped`, `failed`),
+  `check_name`, `reason`, `blocked_by`, `signature`, `seen_count`,
+  `strategy_name`, and `updated_at`. Filter with `decision=`.
+- **approvals** returns `data.approvals[]` with the exact `payload` the buy will
+  run, its `payload_hash`, `summary`, `amount`, `amount_usd`, `recipient_label`,
+  `risk_notes`, and `expires_at` (15 minutes after filing).
+- **approve** must carry the `payload_hash` you reviewed. It runs the buy once
+  with the original idempotency key after re-checking every guard, and returns
+  `data: { approval, already, executed, code, message }`. A guard that now
+  refuses answers `422` with `executed: false` and the reason; nothing is bought.
+
+### Compile a strategy from text
+
+```
+POST /api/sniper/compile   { agent_id, text, network? }
+```
+
+Session or bearer, agent you own. Returns the sniper rule set (`strategy`) plus
+`strategy_object` (the version 2 Strategy Object config) and `explanations[]`
+(`field`, `value`, `why`), with every money and risk knob clamped to the agent's
+trade guards and listed in `clamped`.
+
+---
+
+## Agent portfolio
+
+An agent's valued Solana portfolio, its net-worth history and its P&L, in the
+versioned v1 envelope. Owner only: a session, or an API key or OAuth token with
+`wallet:read`. The same modules back the MCP tools `get_portfolio`,
+`get_balance_history` and `get_pnl` ([MCP integration](./mcp.md#agent-wallet-portfolio-launch-sniper-alerts-and-duels)).
+
+```
+GET /api/v1/agents/:id/portfolio?network=mainnet
+GET /api/v1/agents/:id/portfolio/history?network=mainnet&days=30&max_points=120
+GET /api/v1/agents/:id/portfolio/pnl?network=mainnet
+```
+
+- **`/portfolio`**: SOL and every SPL holding valued in SOL and USD, FIFO cost
+  basis and unrealized P&L per holding, `attribution` (realized and unrealized
+  P&L by source: sniper, discretionary trades, strategies, x402 spend,
+  withdrawals), `metrics` and `risk_flags`. Each call records a net-worth
+  snapshot (at most one per agent and network every 15 minutes); the hourly
+  `/api/cron/agent-portfolio-snapshots` cron records one for every active agent.
+- **`/portfolio/history`**: `points` (recorded valuations over `days`, 1 to 365,
+  thinned to `max_points`, 2 to 500, first and last exact), `summary` (start,
+  end, change, peak, max drawdown) and `realized_curve` (exact cumulative
+  realized P&L per UTC day from closed trades).
+- **`/portfolio/pnl`**: `totals` (realized, unrealized, total, net worth, in SOL
+  and USD), `by_source`, `performance` (win rate, ROI, profit factor, drawdown,
+  Sharpe) and the top open `top_winners` and `top_losers`.
+
+```bash
+curl -s "https://three.ws/api/v1/agents/$AGENT_ID/portfolio/pnl?network=mainnet" \
+  -H "authorization: Bearer $THREE_WS_API_KEY"
+```
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `400` | `invalid_network` | `network` is not `mainnet` or `devnet` |
+| `400` | `invalid_parameter` | `days` or `max_points` out of range |
+| `401` | `unauthorized` | No session or bearer token |
+| `403` | `forbidden` | The agent belongs to another account |
+| `403` | `insufficient_scope` | The token lacks `wallet:read` |
+| `404` | `not_found` | No agent with that id, or an unknown sub-path |
+
+---
+
+## Pump alert rules API
+
+Per-user pump.fun alert rules, evaluated server-side against the live launch
+and trade stream, so they fire with no dashboard tab open. Session auth with a
+CSRF token (the pump dashboard), and the same store as the MCP tools
+`alert_rule_create`, `alert_rule_list` and `alert_rule_delete`.
+
+```
+GET    /api/alerts/rules
+POST   /api/alerts/rules         { kind, ...targeting, filters?, deliver_in_app?, webhook_url?, telegram_chat?, cooldown_seconds?, label? }
+PATCH  /api/alerts/rules/:id     { any field above, enabled? }
+DELETE /api/alerts/rules/:id
+```
+
+Kinds: `graduation`, `new_mint`, `price_above`, `price_below`, `whale_buy`,
+`market_price`, and `launch_match`. Up to 50 rules per user.
+
+**`launch_match`** fires once per new launch that coin intel has scored and that
+passes every filter set in `filters` (at least one is required, and the rule
+takes no `target_mint` or `target_agent`):
+
+| Filter | Type | Matches when |
+| ------ | ---- | ------------ |
+| `name_pattern` | string, up to 120 | The name or symbol matches, case-insensitive. `*` is any text, `\|` separates alternatives; nothing else is special. Without a `*`, an alternative matches anywhere. |
+| `min_market_cap_usd`, `max_market_cap_usd` | number | The market cap is inside the band. Min cannot exceed max. |
+| `min_safety_score` | 0 to 100 | The coin intel quality score is at least this. |
+| `min_creator_graduated` | integer | The creator's earlier launches that graduated are at least this. |
+| `max_creator_launches` | integer | The creator's earlier launches are at most this (skips serial launchers). |
+| `exclude_risk_flags` | array of `single_whale`, `low_diversity`, `sniped`, `dev_dumped`, `sell_pressure`, `bundle_launch` | None of these flags is set. |
+| `require_socials` | boolean | The launch lists at least one social link. |
+
+A filter whose data is missing on the launch (no market cap read yet) is a miss,
+never a pass. The alert payload carries the mint, name, symbol, creator, market
+cap, safety score, creator history, risk flags, the `matched` filters and a
+`/coin/:mint` link.
+
+**Delivery.** With `deliver_in_app` (the default) an alert reaches the owner
+through the platform notification fan-out as a `pump_alert`: the bell, Web Push,
+the iOS app, and every Telegram or Discord chat paired for notifications, each
+gated by the `alerts` preference category ([notifications](./notifications.md)).
+A `webhook_url` gets a signed Standard Webhooks POST, and a `telegram_chat` that
+is not already a paired chat gets a direct message. Each attempt is recorded per
+channel and returned as `recent_deliveries` on the rule.
+
+---
+
 ## Trader Passport API
 
 A trader's daily on-chain score attestation (`threews.tradescore.v1`), served as a
@@ -4248,6 +4624,66 @@ Authentication is covered in detail in the [Authentication documentation](authen
 | `/api/auth/privy/verify`    | POST     | Verify a Privy auth token, create session |
 | `/api/auth/wallets`         | GET      | List wallets linked to current user   |
 | `/api/auth/wallets`         | POST     | Link a new wallet                     |
+| `/api/auth/handoff`         | POST     | Mint a single-use code that signs Safari in as this session (iOS app) |
+| `/api/auth/handoff`         | GET      | Exchange that code in Safari for a session cookie and land on the page |
+| `/api/auth/telegram/magic`  | POST     | Start a Telegram deep-link sign-in or link; returns a deep link and poll secret |
+| `/api/auth/telegram/poll`   | GET      | Poll a magic link until the bot claims it |
+| `/api/auth/telegram/status` | GET      | Telegram link state for the signed-in account |
+| `/api/auth/telegram/unlink` | POST     | Unlink Telegram (password or fresh reauth) |
+| `/api/auth/link-codes/mint` | POST     | Mint a one-time code for a phone, desktop, CLI or Telegram chat |
+| `/api/auth/link-codes/claim`| POST     | Device side: claim a code (no login), returns a claim secret |
+| `/api/auth/link-codes/poll` | GET      | Device side: poll for the confirmed credential |
+| `/api/auth/link-codes/pending` | GET   | Owner side: pending claims awaiting confirmation |
+| `/api/auth/link-codes/decide` | POST   | Confirm or reject a claim, optionally narrowing scopes |
+| `/api/auth/link-codes/devices` | GET   | Linked devices |
+| `/api/auth/link-codes/revoke` | POST   | Revoke a linked device and its credential |
+| `/api/auth/external-wallet/challenge` | POST | Get a message to sign with a Solana or EVM wallet |
+| `/api/auth/external-wallet/verify` | POST | Verify the signature; link as owner or set the payout wallet |
+| `/api/auth/linked-accounts` | GET      | Everything linked to the account |
+
+See [account-linking.md](account-linking.md) for the flows, limits and errors.
+
+### Session handoff to Safari (iOS app)
+
+The three.ws iOS app opens payments, coin launches and trading in Safari rather
+than in its WebView (see [`ios/docs/REVIEW-RISK.md`](../ios/docs/REVIEW-RISK.md)).
+Safari has its own cookie jar, so the app carries the session across with a
+short-lived code.
+
+```
+POST /api/auth/handoff
+Content-Type: application/json
+
+{ "next": "/launch?mint=..." }
+```
+
+Requires a browser session and a same-site `Origin`. `next` must be a path on
+three.ws (it starts with `/`, is not `//`, carries no backslash or control
+character, and is at most 2048 characters). Rate limited to 30 codes per user
+per 10 minutes.
+
+```json
+{
+  "url": "https://three.ws/api/auth/handoff?code=Qm9...&next=%2Flaunch%3Fmint%3D...",
+  "expires_at": "2026-10-09T19:01:00.000Z"
+}
+```
+
+The code is single-use and expires after 60 seconds; only its SHA-256 is
+stored. Errors: `401 unauthenticated`, `403` (cross-site origin),
+`400 invalid_next`, `429`.
+
+```
+GET /api/auth/handoff?code=<code>&next=<path>
+```
+
+Opened by Safari, never called with `fetch`. On a valid code it consumes it,
+replaces any session Safari already had with one for the code's user, and
+answers `302` to the path stored at mint time. A used, expired or malformed code
+redirects to `/login?error=handoff_expired&next=<path>`, so the visitor signs in
+and still lands where they were going. Without `code` it is a plain `302` to
+`next`: the app always opens Safari through this endpoint, because universal
+links would route a bare `https://three.ws/...` URL straight back into the app.
 
 ---
 
@@ -4282,10 +4718,11 @@ Each key carries a space-separated scope string. A call outside it fails with `i
 An agent that holds a key unattended (Grok Bot storing it as a Bot secret, a schedule, a CI job) should get a **connector key**: in the dashboard choose **For an AI agent (Grok Bot, schedules, CI)**, or send `preset: "connector"`. The server fixes its scopes:
 
 ```
-avatars:read avatars:write agents:read agents:write memory:read memory:write connector
+scope: "read generate agents:write"
+preset: "connector"
 ```
 
-The trailing `connector` marks the key's kind. It is not something you can request as a raw scope, and it caps the key every time it authenticates: whatever its stored scope string says, a connector key only ever acts with the six scopes above, so it can read, generate and edit agent data and can never spend. A connector key that calls a value-moving route or tool gets an answer that says so and links back to three.ws, where a person approves the action in a browser:
+`preset: "connector"` marks the key's kind in its own field; it is not something you can request as a raw scope. Those three coarse scope names cap the key every time it authenticates: whatever its stored scope string is later edited to say, a connector key only ever expands to `avatars:read`, `memory:read`, `agents:read`, `wallet:read`, `avatars:write`, `agents:write` and `memory:write`, so it can read, generate and edit agent data and can never hold `spend` (the coarse scope behind `wallet:write`, `wallet:trade`, `wallet:launch` and `services:write`). A connector key that calls a value-moving route or tool gets an answer that says so and links back to three.ws, where a person approves the action in a browser:
 
 ```json
 { "error": "insufficient_scope", "error_description": "This action moves or routes funds, so it needs a browser session on three.ws. Connector keys read, generate and edit agent data and can never spend. Sign in at https://three.ws/dashboard to do it yourself." }
@@ -4305,20 +4742,21 @@ Browser session only. Returns every key the account has made, revoked and expire
 {
 	"keys": [
 		{
-			"id": "2c25ec0c-f1a3-475d-9a9f-fe926c832db5",
+			"id": "0b6d1f2e-0000-4000-8000-000000000000",
 			"name": "Grok Bot",
-			"prefix": "sk_live_Xb3Q",
-			"scope": "avatars:read avatars:write agents:read agents:write memory:read memory:write connector",
-			"last_used_at": "2026-10-08T08:30:00.000Z",
+			"prefix": "sk_live_AbCd12",
+			"scope": "read generate agents:write",
+			"preset": "connector",
+			"last_used_at": "2026-10-09T08:30:00Z",
 			"expires_at": null,
 			"revoked_at": null,
-			"created_at": "2026-10-08T07:00:00.000Z"
+			"created_at": "2026-10-09T08:00:00Z"
 		}
 	]
 }
 ```
 
-`GET /api/api-keys` returns the live keys only, as `{ "data": [...] }`, to a session or a `profile` bearer.
+`preset` is `null` for a custom key and `"connector"` for a key issued for an unattended AI agent. `GET /api/api-keys` returns the live keys only (revoked ones excluded), as `{ "data": [...] }`, to a session or a `profile` bearer.
 
 ---
 
@@ -4328,7 +4766,9 @@ Browser session only. Returns every key the account has made, revoked and expire
 POST /api/keys
 ```
 
-Browser session only, with the `X-CSRF-Token` header.
+Requires a browser session, with the `X-CSRF-Token` header.
+
+**Request body**
 
 ```json
 { "name": "Production server", "scope": "avatars:read avatars:write", "expires_in_days": 90, "environment": "live" }
@@ -4340,23 +4780,100 @@ or, for an AI agent:
 { "name": "Grok Bot", "preset": "connector" }
 ```
 
-| Field | Notes |
+| Field | Description |
 | --- | --- |
 | `name` | Required, 1 to 80 characters |
-| `scope` | Space-separated scopes from the table above. Defaults to `avatars:read avatars:write`. Ignored when `preset` is sent |
-| `preset` | `connector` issues the AI-agent key described above |
+| `scope` | Space-separated scopes from the table above. Defaults to `avatars:read avatars:write`. Required unless `preset` is `connector`, which ignores it |
+| `preset` | `connector` issues `read generate agents:write` (see above) and can never hold `spend` |
 | `expires_in_days` | Optional, 1 to 3650 |
 | `environment` | `live` (default) or `test`, which sets the `sk_live_` / `sk_test_` prefix |
 
-**Response** `201`
+**Scopes**
+
+| Scope | Description |
+| --- | --- |
+| `read` | Read avatars, memory, agents and wallet balances |
+| `generate` | Create 3D models and avatars |
+| `agents:write` | Create and edit agents and their memory |
+| `spend` | Move funds: pay, trade, launch, withdraw, publish paid services |
+| `avatars:read`, `avatars:write`, `avatars:delete`, `profile`, `memory:read`, `memory:write`, `agents:read`, `wallet:read`, `wallet:write`, `services:write` | Fine-grained scopes; the coarse ones above expand into these |
+
+A `connector` key asking for `spend` or any scope outside its three answers `400 validation_error`. At authentication a connector key has every spend-capable scope removed, so value-moving MCP tools answer JSON-RPC `-32003` and spend routes answer `insufficient_scope`. Keys created before scopes existed keep the power they had. See [Key scopes and the AI agent preset](./mcp.md#key-scopes-and-the-ai-agent-preset).
+
+**Response** (`201`)
 
 ```json
-{ "key": { "id": "2c25ec0c-…", "name": "Grok Bot", "prefix": "sk_live_Xb3Q", "scope": "avatars:read … connector", "expires_at": null, "created_at": "…", "secret": "sk_live_…" } }
+{
+	"key": {
+		"id": "0b6d1f2e-0000-4000-8000-000000000000",
+		"name": "Grok Bot",
+		"prefix": "sk_live_AbCd12",
+		"scope": "read generate agents:write",
+		"preset": "connector",
+		"expires_at": null,
+		"created_at": "…",
+		"secret": "sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+	}
+}
 ```
 
-The `secret` is returned **only once**. Store it immediately; it cannot be retrieved, only replaced. `POST /api/api-keys` takes `{ name, scope, expires_at }` and answers `{ "data": { ..., "token": "sk_live_…" } }`. It also takes `preset: "connector"`, which ignores `scope` like `/api/keys` does; a bearer caller gets the connector scopes it holds itself plus the marker, and one holding none of them is refused with `403 insufficient_scope`. `npx three-ws setup --client grok-bot --auth key` mints its key this way ([CLI docs](./cli.md#grok-bot)).
+The plaintext `secret` is returned **only once**. Store it immediately; it cannot be retrieved, only replaced. `POST /api/api-keys` takes `{ name, scope, expires_at }` and answers `{ "data": { ..., "token": "sk_live_…" } }`. It also takes `preset: "connector"`, which ignores `scope` like `/api/keys` does; a bearer caller must itself hold the fine scopes the preset expands to (`avatars:*`, `memory:*`, `agents:*`, `wallet:read`) or it is refused with `403 insufficient_scope`. `npx three-ws setup --client grok-bot --auth key` mints its key this way ([CLI docs](./cli.md#grok-bot)).
 
 ---
+
+### Rotate API key
+
+```
+POST /api/keys/:id/rotate
+```
+
+Requires a browser session and a CSRF token. Mints a replacement with the same name, scopes, preset, expiry, environment and IP allowlist, and keeps the old key answering for an overlap window so running deployments can swap credentials without a gap.
+
+**Body** (optional): `{ "overlap_hours": 24 }`, from `0` (the old key is revoked at once) to `168`. Default 24.
+
+**Response** (`201`)
+
+```json
+{
+	"key": { "id": "…", "name": "prod", "prefix": "sk_live_3f9a2b", "secret": "sk_live_…", "rotated_from": "…", "ip_allowlist": null },
+	"previous": { "id": "…", "overlap_until": "2026-10-11T12:00:00.000Z", "revoked": false }
+}
+```
+
+`secret` is shown once. When `overlap_until` passes, the old key reads as revoked on its next call. A key that was already rotated answers `409 already_rotated`; rotate its replacement instead.
+
+### Set an IP allowlist
+
+```
+PUT /api/keys/:id/allowlist
+```
+
+Requires a browser session and a CSRF token. `{ "ip_allowlist": ["203.0.113.0/24", "2001:db8::1"] }`: up to 64 IPv4 or IPv6 addresses or CIDR ranges. An empty array removes the allowlist. A call from an address outside the list fails with `401 unauthorized` before any scope or quota check. An invalid rule answers `400 validation_error` naming it; nothing is saved. The change takes effect on the key's next call.
+
+**Response:** `{ "id": "…", "ip_allowlist": ["203.0.113.0/24", "2001:db8::1"] }`
+
+### Key analytics
+
+```
+GET /api/keys/:id/analytics?days=7
+```
+
+Requires a browser session. `days` is 1, 7, 30 or 90. Calls, error rate and latency percentiles for one key, broken down by route and by calling address, from the same usage events that meter the quota.
+
+**Response**
+
+```json
+{
+	"key": { "id": "…", "name": "prod", "prefix": "sk_live_3f9a2b", "last_used_at": "…", "revoked_at": null, "rotated_to": null, "overlap_until": null, "ip_allowlist": null },
+	"analytics": {
+		"days": 7,
+		"totals": { "calls": 1842, "errors": 12, "error_rate": 0.0065, "p50_ms": 84, "p95_ms": 310, "p99_ms": 920, "last_call_at": "…" },
+		"by_route": [{ "route": "/api/v1/agents/:id/chat", "calls": 1200, "errors": 3, "p50_ms": 120, "p95_ms": 400, "p99_ms": 980 }],
+		"top_callers": [{ "ip": "203.0.113.7", "calls": 1700, "errors": 10, "last_call_at": "…" }],
+		"daily": [{ "day": "2026-10-04", "calls": 260, "errors": 2 }]
+	}
+}
+```
 
 ### Revoke API key
 
@@ -4364,7 +4881,9 @@ The `secret` is returned **only once**. Store it immediately; it cannot be retri
 DELETE /api/keys/:id
 ```
 
-Browser session only, with the `X-CSRF-Token` header. Revocation takes effect on the key's next request. **Response:** `{ "ok": true }`. `DELETE /api/api-keys/:id` does the same for a session or a `profile` bearer and answers `{ "data": { "id": "…", "revoked": true } }`.
+Browser session only, with the `X-CSRF-Token` header. Permanently revokes the key and invalidates its cache entry, so the very next call with it is refused. `DELETE /api/api-keys/:id` does the same for a session or a `profile` bearer and answers `{ "data": { "id": "…", "revoked": true } }`.
+
+**Response:** `{ "ok": true }`
 
 ---
 
@@ -4653,7 +5172,7 @@ GET   /api/notifications/preferences
 PATCH /api/notifications/preferences
 ```
 
-The bell inbox and its per-user preference matrix. Session required. Event types include `remix`, `dm_received`, `pump_launch_filled` (bonding-curve graduation), and `follow`. Preferences are a category × channel matrix: categories `sales`, `purchases`, `social`, `irl`, `market`, `account`; channels `in_app`, `push`, `email`, `telegram`. The `in_app` channel is always on and cannot be disabled.
+The bell inbox and its per-user preference matrix. Session required. Event types include `remix`, `dm_received`, `pump_launch_filled` (bonding-curve graduation), and `follow`. Preferences are a category × channel matrix: categories `sales`, `purchases`, `social`, `irl`, `market`, `approvals`, `account`; channels `in_app`, `push`, `email`, `telegram`. The `in_app` channel is always on and cannot be disabled.
 
 ### Push devices
 
@@ -4668,6 +5187,63 @@ Where a notification's `push` channel is delivered. Session and CSRF token requi
 
 `previous` marks a silent refresh (the app re-sending its token on launch). It succeeds only if `previous` is already registered to the caller, and answers `409 not_owner` otherwise, so a phone never enrols for whichever account happens to be signed in now. `GET /api/config` reports `nativePush.ios: true` once APNs is configured on the server (`APNS_KEY_ID`, `APNS_AUTH_KEY`, and `APNS_TEAM_ID` or `APPLE_TEAM_ID`).
 
+
+### Approvals
+
+```
+GET    /api/approvals?status=pending|done|denied|expired|all&agent=<uuid>&limit=&cursor=
+POST   /api/approvals            { action: "bulk_deny", ids }
+GET    /api/approvals/:id?t=<link token>
+POST   /api/approvals/:id        { decision: "approve"|"deny", payload_hash, token?, via? }
+GET    /api/approvals/policies
+POST   /api/approvals/policies   { venues, max_usd, agent_id?, team_id?, expires_at?, label? }
+DELETE /api/approvals/policies?id=<uuid>
+```
+
+The owner's inbox for actions an agent paused on because a spend rule is set to "Ask me". Reads take a session or bearer; every decision and rule change needs a session plus CSRF, so an agent credential can never approve its own request. Approve must carry the `payload_hash` of the action shown: a mismatch is `409 payload_mismatch`, a deep link that no longer matches is `409 link_mismatch`, a passed deadline is `410 expired`, and nothing runs in any of those cases. A repeat approve returns the current state with `idempotent: true` and never executes twice. Auto-approve rules name venues (`jupiter`, `wallet_transfer`) and a per-action cap of at most $1,000; first transfers to a new address and unpriced actions always ask. Full guide: [approvals.md](approvals.md).
+
+### Token ceilings, spend and the free-tier choices
+
+```
+GET    /api/agents/:id/token-budget
+PUT    /api/agents/:id/token-budget          { hourly?, daily?, per_run? }   whole tokens; null or omitted = no cap
+DELETE /api/agents/:id/token-budget
+POST   /api/agents/:id/token-budget/resume
+POST   /api/agents/:id/token-budget/extend   { window?, extra_tokens? }
+GET    /api/me/spend?days=30&agent=<uuid>
+```
+
+Per-agent hourly, daily and per-run token ceilings next to the dollar budget (`PATCH /api/agents/:id` with `inferenceBudget: { daily, monthly }`). Both are enforced before the model call on every metered surface; the token gate reserves the call's estimate in each capped window with one conditional upsert, so two calls racing for the last token admit exactly one. A refused call is `429 token_budget_exhausted` (the call that crossed the line) or `429 token_budget_paused` (every call after it) with `window`, `limit_tokens`, `ceiling_tokens`, `used_tokens`, `resets_at`, `retry_after_seconds`, `approval_id` and a `recover` block naming the resume, extend-once and raise calls. Hitting a ceiling stops the agent and its autopilot, sends `token_budget_paused`, and opens one extend-once approval in the [inbox](approvals.md) (venue `token_budget`, never auto-approved). `resume` is `409 still_capped` while the window is still full; `extend` opens and approves the extension in one call and is `409 already_extended` the second time for the same window (default size: half the cap, at least 1,000 tokens). Every cap raises `spend_cap_alert` once per window at 50 and 80 percent. Owner only: a session, or a bearer with `wallet:read` (or `profile`) to read and `wallet:write` to change, resume or extend.
+
+`GET /api/me/spend` is the read model behind [/spend](https://three.ws/spend): balance, month-to-date with `projected_usd` and `projected_from_week_usd`, a card per agent (dollar windows, token windows, pause), `by_day`, `by_model`, `by_tool`, and `alerts` at 50, 80 and 100 percent of any cap, from the same latches the notifications use. `days` is 1 to 90; bearer scopes `inference`, `wallet:read`, `wallet:write` or `profile`.
+
+When a free-model allowance is used up, `/api/brain/chat`, `POST /api/agents/:id/copilot`, `POST /api/v1/agents/:id/messages` and `/api/v1` answer `429 free_tier_exhausted` with `Retry-After` and a body carrying `reset_at`, `retry_after_seconds` and `choices`: `wait`, `top_up` (the `GET /api/credits` catalog and the `POST /api/credits/deposit` body), `bring_your_own_key` (`PATCH /api/user/provider-keys`), and, on the surfaces that can honor it, `paid_fallback`: resend the same request with `body_patch` (`{ "paid_fallback": true }`) merged in and it bills credits instead of the free tier, after the credit gate (`402 insufficient_credits` on an empty balance). Full guide: [inference-billing.md](inference-billing.md).
+
+### Agent mail
+
+```
+GET    /api/v1/agents/:id/mail
+POST   /api/v1/agents/:id/mail/quote          { action: "create"|"send"|"reply", ...draft }
+POST   /api/v1/agents/:id/mail/create         { quote_id, confirm_spend: true, local_part, display_name }
+POST   /api/v1/agents/:id/mail/send           { quote_id, confirm_send: true, to, cc, subject, text, attachments }
+POST   /api/v1/agents/:id/mail/reply          { quote_id, confirm_send: true, message_id, text, reply_all }
+GET    /api/v1/agents/:id/mail/messages?folder=inbox|sent|spam|all&limit=&cursor=
+GET    /api/v1/agents/:id/mail/search?q=&folder=
+GET    /api/v1/agents/:id/mail/messages/:msg
+POST   /api/v1/agents/:id/mail/messages/:msg/read   { read }
+DELETE /api/v1/agents/:id/mail/messages/:msg
+GET    /api/v1/agents/:id/mail/messages/:msg/attachments/:index
+GET    /api/v1/agents/:id/mail/settings
+PUT    /api/v1/agents/:id/mail/policy         { allowlist_enabled, allowlist, daily_send_cap }
+GET    /api/v1/agents/:id/mail/rules
+POST   /api/v1/agents/:id/mail/rules          { name, match_from, match_subject, mode: "approve"|"auto", prompt }
+PATCH  /api/v1/agents/:id/mail/rules/:rule
+DELETE /api/v1/agents/:id/mail/rules/:rule
+GET    /api/v1/agents/:id/mail/rule-events?limit=
+POST   /api/mail/inbound                      (mail provider webhook, signature verified)
+```
+
+An agent's mailbox on `agents.three.ws`. Creating a mailbox and every send or reply is quote then confirm: the quote returns the exact recipients and body bound to a ten-minute, single-use `quote_id`, and the confirm call must repeat the same draft with the confirm flag. Reads need `agents:read`; sends need `wallet:write`; the allowlist, daily cap and mail rules accept only a signed-in session (`403 owner_session_required` for an API key), so an agent cannot loosen its own limits. Received messages are returned with `direction: "in"` and are untrusted sender content. Full guide: [agent-mail.md](agent-mail.md).
 ---
 
 ## IRL API — presence, pins, money drops, world lines
@@ -6387,6 +6963,125 @@ wire format); pay in USDC and the identical upstream call runs.
 
 ---
 
+## Crawl API
+
+The API behind [/crawl](https://three.ws/crawl): agents reading the open web in real browsers, watched live, with every page filed in an open corpus. The public reads need **no authentication, no API key, no payment**, and share a limit of 240 requests per minute per IP (frames have their own, wider one). Sending your own agent out needs a signed-in session and a CSRF token. Product guide: [crawl.md](./crawl.md).
+
+### Corpus
+
+```
+GET /api/crawl/pages?limit=40&before=<id>&agent=<uuid>&format=json
+```
+
+| Parameter | Notes |
+| --- | --- |
+| `limit` | 1 to 500 (default 40) |
+| `before` | Return records older than this id; use `next` from the previous response |
+| `agent` | Only pages read by this agent |
+| `format` | `json` (default) or `jsonl` for a JSON Lines download, one record per line, no envelope |
+
+**Response**
+
+```json
+{
+	"pages": [
+		{
+			"id": 412,
+			"agentId": "6f2c...",
+			"agentName": "Mira",
+			"url": "https://en.wikipedia.org/wiki/Perlin_noise",
+			"domain": "en.wikipedia.org",
+			"title": "Perlin noise",
+			"gist": "Perlin noise is a type of gradient noise developed by Ken Perlin ...",
+			"tokens": 6120,
+			"linksOut": 48,
+			"relevance": 0.62,
+			"fromUrl": "https://www.redblobgames.com/maps/terrain-from-noise/",
+			"textUrl": "https://.../crawl/text/9a/9a41c2....txt",
+			"readAt": "2026-10-09T14:02:11.000Z"
+		}
+	],
+	"next": 411
+}
+```
+
+`next` is `null` on the last page. `textUrl` is the full cleaned text, or `null` when object storage is not configured. `tokens` is the text length divided by four. Cached for 10 seconds (30 for `jsonl`).
+
+**Errors:** `400 invalid_agent_id` when `agent` is not a UUID.
+
+---
+
+### Stats and crawlers
+
+```
+GET /api/crawl/stats
+GET /api/crawl/crawlers
+```
+
+`stats` returns `pagesRead`, `uniquePages`, `tokens`, `domains`, `pages24h`, `crawlersEnrolled`, `crawlersAwake` and `topDomains` (the 12 busiest sites of the last 7 days, `{ domain, pages }`).
+
+`crawlers` returns `{ crawlers: [...] }`, every agent that is sent out (up to 120), awake ones first: `agentId`, `name`, `description`, `topic`, `pagesRead`, `tokensRead`, `lastUrl`, `lastAt`, `awake`, `avatarUrl` (a loadable GLB) and `thumbnail`.
+
+---
+
+### Live stream
+
+```
+GET /api/crawl/live
+GET /api/crawl/frame?agent=<uuid>
+```
+
+`live` is a server-sent events stream. The first event is `snapshot` (`{ crawlers, feed, live }`, where `live: false` means the live layer is unavailable and the page should fall back to polling). Then:
+
+| Event | Data |
+| --- | --- |
+| `step` | One crawler's newest step: `agentId`, `name`, `topic`, `pagesRead`, `url`, `domain`, `title`, `thought`, `status` (`reading`, `walking`, `leaping`, `blocked`, `resting`), `links` (up to 48 on-screen link boxes as fractions of the viewport), `target` (index into `links` or `null`), `nextUrl`, `scrollY`, `seq`, `ts` |
+| `sleep` | `{ agentId }`: the crawler stopped pushing and left the stage |
+| `page` | A page just filed in the corpus |
+| `ping` | Every 15 seconds, keeps proxies from closing the stream |
+
+`frame` returns the latest JPEG of that crawler's browser (`image/jpeg`), or `404` when it has none. Rate limited to 900 requests per minute per IP.
+
+```js
+const es = new EventSource('https://three.ws/api/crawl/live');
+es.addEventListener('step', (e) => {
+	const s = JSON.parse(e.data);
+	console.log(`${s.agentId} ${s.status} ${s.url}: ${s.thought}`);
+});
+```
+
+---
+
+### Send your agent out
+
+```
+GET    /api/crawl/mine
+GET    /api/crawl/mission?agent=<uuid>
+PUT    /api/crawl/mission
+DELETE /api/crawl/mission?agent=<uuid>
+```
+
+`mine` (signed in) lists your agents with their missions. `GET mission` is public and returns `{ mission }` or `{ mission: null }`.
+
+`PUT` and `DELETE` require the agent's owner session and an `x-csrf-token` header from `GET /api/csrf-token`, and are rate limited to 30 per 10 minutes per IP.
+
+```json
+{
+	"agentId": "6f2c...",
+	"topic": "procedural terrain generation",
+	"seeds": ["https://www.redblobgames.com/maps/terrain-from-noise/"],
+	"enabled": true
+}
+```
+
+`topic` is 2 to 120 characters. `seeds` is up to 8 public `http(s)` URLs, or empty to let the agent search for its own start pages. The response is `{ mission: { agentId, name, topic, seeds, enabled, pagesRead, tokensRead, lastUrl, lastAt } }`. `DELETE` calls the agent home and answers `{ ok: true, enabled: false }`.
+
+**Errors:** `401 unauthorized` when signed out, `403 forbidden` when you do not own the agent, `400 invalid_mission` with a readable message for a bad topic or start page.
+
+The worker channel (`GET /api/crawl/roster`, `POST /api/crawl/push`) is authenticated with the fleet's bearer secret and is not for third-party use; see [workers/agent-crawler](../workers/agent-crawler/README.md).
+
+---
+
 ## Web Search API
 
 ```
@@ -6849,9 +7544,9 @@ Scores are written exclusively by the authoritative game server (through the wor
 }
 ```
 
-An event nobody has played yet is an empty board (`top: []`, `players: 0`) with a `200`, not an error: render the "no runs yet" state rather than a failure. `404 no_event` means no event is configured at all, which is what the live deployment answers between events.
+An event nobody has played yet is an empty board (`top: []`, `players: 0`) with a `200`, not an error: render the "no runs yet" state rather than a failure. The board keeps answering `200` after an event ends (with `live: false`), for as long as `public/event.json` still names that event. `404 no_event` means no event is configured at all, which is what the live deployment answers once the finished event is retired from `public/event.json` and before the next one is scheduled.
 
-<!-- runnable: 404 answers no_event whenever no event window is open in public/event.json -->
+<!-- runnable: no the status follows the event calendar in public/event.json (200 while an event is configured, 404 no_event once it is retired), so no single status is a stable contract -->
 ```bash
 curl -s 'https://three.ws/api/play/event-leaderboard?limit=10'
 ```
@@ -6994,6 +7689,63 @@ curl -s https://three.ws/api/platform/stats | jq 'select(.available) | {agents, 
 
 The sibling `/api/home-stats` uses the same `available` contract for the home
 page strip (on-chain agents, attestations, forge models).
+
+---
+
+## Skill Import API
+
+Install `SKILL.md` skills from public GitHub repositories and registry manifests: browse, scan, approve, update with a diff, fork and publish. The model behind it (pinning, licence policy, scanner rules, the spend gate for gated skills) is in [Skill import](./skill-import.md); the manifest format is [specs/SKILL_REGISTRY_MANIFEST.md](../specs/SKILL_REGISTRY_MANIFEST.md).
+
+Base path `/api/skill-imports`. Owner routes accept a session cookie or `Authorization: Bearer <api key>` (`agents:read` for GET, `agents:write` otherwise); cookie writes also need the CSRF header. Responses wrap results in `{ "data": ... }`; errors are `{ "error": code, "error_description": message }`.
+
+### `GET /api/skill-imports/browse`
+
+Public. Query: `registry` (a registry key), `category` (`defi`, `intelligence`, `social`, `infrastructure`, `security`, `data`, `other`), `q`. Rate limit 120 per 5 minutes per IP.
+
+Returns `registries[]` (`key`, `kind`, `label`, `url`, `commit`, `fetched_at`, `cached`, `skills`, or `error`), `categories` (counts), `skills[]` (`key`, `name`, `description`, `category`, `tags`, `author`, `license {spdx, class, notice}`, `requested_tools`, `pin`, `source_url`, `repo_url`, `installs`) sorted by installs, and `excluded[]` (`key`, `name`, `registry`, `reason`).
+
+### `GET /api/skill-imports/published/manifest.json` and `GET /api/skill-imports/published/<slug>/SKILL.md`
+
+Public. The registry of skills published on three.ws, in `three.ws/skill-registry@1` format, and one published `SKILL.md` (`text/markdown`). Cached 60 seconds.
+
+### Registries
+
+- `GET /registries`: the built-in registries plus the caller's own.
+- `POST /registries` `{ "registry": "owner/repo" | GitHub URL | https manifest URL, "label"?: string }`: adds one (201). Errors: `invalid_registry` (400), `already_added` (409), `limit_reached` (409, 20 per account), `no_skills_found` (422).
+- `DELETE /registries?key=<key>`: removes one of the caller's registries.
+
+### `POST /api/skill-imports/scan`
+
+`{ "agent_id": uuid, "registry": key, "skill": key or slug }`. Fetches the skill at its pin, scans it, and opens an import request (201) holding the exact bytes for 24 hours. Rate limit 40 per 10 minutes per user. A `refused` scan is closed immediately (`status: "refused"`, `decided_by: "scanner"`).
+
+The request: `id`, `status` (`pending`, `approved`, `refused`), `verdict`, `gated`, `agent_id`, `replaces_skill_id`, `skill`, `provenance` (`registry`, `repo_url`, `path`, `commit` or `revision`, `sha256`, `license`, `author`, `source_url`), `scan` (`findings[]`, `capabilities`, `requested_tools`, `tokens`, `guardian`), `content`, `expires_at`, `approve_requires`.
+
+### Requests
+
+- `GET /requests?status=pending|approved|refused`: the caller's last 30.
+- `GET /requests/<id>`: one.
+- `POST /requests/<id>` `{ "decision": "approve" | "refuse", "acknowledge_gated"?: boolean, "enabled"?: boolean }`: decide. Approve returns `{ request, skill, budget }`. Errors: `scan_refused` (422), `expired` (410), `acknowledge_gated` (428, the skill asks to spend, sign or message), `already_decided` (409), `already_installed` (409), `limit_reached` (409, the agent already holds 50 skills).
+
+### `POST /api/skill-imports/updates`
+
+`{ "agent_id": uuid, "skill_id": uuid, "open_request"?: boolean }`. Compares an installed import with the registry's current revision. Returns `{ changed: false }`, `{ changed: false, removed: true }`, or `{ changed: true, installed, latest, locally_modified, stats {added, removed}, diff, request }`.
+
+### `POST /api/skill-imports/fork`
+
+`{ "agent_id": uuid, "skill_id"?: uuid, "published_slug"?: string, "name"?: string }` with exactly one source. Returns `{ skill, budget }` (201); the skill carries `fork` with its origin.
+
+### `POST /api/skill-imports/publish`
+
+`{ "agent_id": uuid, "skill_id": uuid, "license": SPDX id, "category": string, "confirm_publish": true }`. Returns `{ slug, sha256, url, manifest, page, gated }`. Errors: `not_yours` (409), `unchanged_copy` (409), `license_conflict` (422), `scan_refused` (422).
+
+### Publications
+
+- `GET /publications`: the caller's published skills.
+- `DELETE /publications?slug=<slug>`: unpublish. Installed copies elsewhere keep their pin.
+
+```bash
+curl -s "https://three.ws/api/skill-imports/browse?q=release" | jq '.data.skills[0] | {key, license: .license.spdx, installs}'
+```
 
 ---
 
@@ -7947,9 +8699,8 @@ curl -X POST https://three.ws/api/pinning/pin \
   "cid": "QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
   "gatewayUrl": "https://ipfs.io/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
   "gatewayUrls": [
-    "https://ipfs.io/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
-    "https://dweb.link/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
-    "https://w3s.link/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
+    "https://ipfs.filebase.io/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
+    "https://4everland.io/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
     "https://gateway.pinata.cloud/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o"
   ],
   "provider": "pinata"
@@ -7991,7 +8742,7 @@ curl "https://three.ws/api/pinning/status?cid=QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQ
   "pinned": true,
   "provider": "pinata",
   "unreachableProviders": [],
-  "gatewayUrls": ["https://ipfs.io/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o"]
+  "gatewayUrls": ["https://ipfs.filebase.io/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o"]
 }
 ```
 
@@ -8617,6 +9368,9 @@ Session cookie required; writes must be same-site. `POST` answers `201` with `{ 
 | `forbidden` | 403 | write from another origin |
 | `not_found` | 404 | token or agent is not the caller's |
 | `too_many_tokens` | 409 | 12 live tokens already |
+| `payment_replayed` | 409 | An x402 payment proof that already bought its result is being used again | No | Pay again to buy it a second time; to re-read a result you already paid for, use the receipt or sign in with the paying wallet |
+| any code, with `paid: true` and `retry_safe: true` | 500, 502 | An x402 call failed AFTER your payment settled. You were charged and the work was not delivered. The body carries `settlement.transaction`, `retries_left` and `retry_until` | Yes, with the same payment | Repeat the exact request with the same `X-PAYMENT` header. Do not pay again ([x402](/docs/x402)) |
+| `payment_retries_exhausted`, or `paid: true` with `retry_safe: false` | 409, 5xx | A paid call kept failing and the proof used up its retries | No | Contact support with `settlement.transaction`; you were charged and it will be made right |
 | `rate_limited` | 429 | over the per-account write limit |
 
 ## Trading guidance API
@@ -9259,6 +10013,290 @@ Details: [docs/home-privacy.md](./home-privacy.md).
 
 ---
 
+## Agent self-signup, capabilities, stats and health
+
+Four keyless endpoints that let an autonomous agent onboard itself and find out what the platform is and whether it is up. Live status: [/status](/status).
+
+### Sign up an agent: `POST /api/v1/agents/signup`
+
+No email or browser. The agent signs a message with an Ed25519 key (a Solana wallet key works) and posts it. The response carries the new agent, its custodial wallets and an API key, **shown once**, plus a claim code for the human who will own it.
+
+The message is UTF-8, newline separated, no trailing newline:
+
+```
+three.ws agent signup v1
+public_key: <base58 public key>
+name: <requested agent name>
+timestamp: <unix seconds>
+nonce: <16-64 chars of A-Z a-z 0-9 _ ->
+```
+
+Body: `{ public_key, name, timestamp, nonce, signature }`, with the key and signature base58.
+
+```js
+import { ed25519 } from '@noble/curves/ed25519.js';
+import bs58 from 'bs58';
+
+const priv = ed25519.utils.randomSecretKey();
+const public_key = bs58.encode(ed25519.getPublicKey(priv));
+const name = 'Scout', timestamp = Math.floor(Date.now() / 1000), nonce = crypto.randomUUID().replaceAll('-', '');
+const message = ['three.ws agent signup v1', `public_key: ${public_key}`, `name: ${name}`, `timestamp: ${timestamp}`, `nonce: ${nonce}`].join('\n');
+const signature = bs58.encode(ed25519.sign(new TextEncoder().encode(message), priv));
+
+const res = await fetch('https://three.ws/api/v1/agents/signup', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ public_key, name, timestamp, nonce, signature }),
+});
+console.log((await res.json()).data);
+```
+
+A runnable version that also demonstrates replay and skew rejection: `node scripts/agent-signup-demo.mjs https://three.ws`.
+
+Response `data`: `agent` (`id`, `name`, `url`, `wallets.solana`, `wallets.evm`), `credentials` (`api_key`, shown once, scopes `read agents:read agents:write wallet:read`), `mode: "paper"`, `caps`, and `claim` (`code`, `expires_at`, `endpoint`).
+
+**Paper mode.** Until a human claims it the agent's wallet is frozen for autonomous spending, discretionary live trades are off (kill switch), perps run on the paper ledger, and the numeric caps are tight (about $5 a day, $1 a transaction). These are the platform's ordinary controls (`spend_limits`, `trade_limits`, `perps_limits`), so every spend path already honours them.
+
+**Guarantees.**
+
+| Rule | Behaviour |
+| --- | --- |
+| Clock window | The timestamp must be within 300 seconds of server time, else `400 clock_skew`. The message names the direction and gives `server_time` so the agent can resync. |
+| Replay | A nonce is accepted once per public key, enforced by a database unique key shared by every instance. A repeat is `409 replayed_nonce`. |
+| One agent per key | A second signup with the same key is `409 already_signed_up`. |
+| Rate limits | 5 an hour per IP and 10 an hour per public key, both fail closed. `429 rate_limited`. |
+| Bad input | `400 validation_error` or `invalid_encoding`; a signature that does not verify is `401 bad_signature`. |
+
+### Claim an agent: `POST /api/v1/agents/claim`
+
+A signed-in human (session, or an API key with `agents:write`) posts `{ "code": "claim_..." }`. The agent moves to their account, the agent's signup key is revoked, and the freeze and kill switch lift. The numeric caps and the live-perps lock stay until the owner raises them. Codes expire after 30 days (`410 claim_code_expired`); a used code is `409 already_claimed`.
+
+### What the platform offers: `GET /api/v1/capabilities`
+
+Every tool by group with its tier (`read`, `write`, `financial`), the confirm flag and preview tool a financial tool requires, the per-call price where it has one, the plan limits and API rate limits, and the approval rules. It is generated from the policy registry, so it cannot drift from what is enforced. Not to be confused with `/api/agents/capabilities`, which manages scoped session keys for one agent wallet.
+
+### Platform totals: `GET /api/stats`
+
+```json
+{ "stats": { "agents": { "value": 4401, "unit": "agents", "source": "agent_identities (not deleted)", "as_of": "2026-10-10T05:52:21Z" } }, "cache_ttl_seconds": 60 }
+```
+
+Keys: `agents`, `launches`, `volume_sol`, `earnings_paid` (payout count plus base units per currency mint), `active_strategies`. A figure that cannot be read returns `{ "available": false, "source", "as_of" }`, never zero. Cached for 60 seconds.
+
+### Readiness: `GET /api/health`
+
+Probes `database`, `rpc`, `worker` and `wallet` (a real encrypt/decrypt round trip of the key vault that seals agent wallets). Top-level `status` is the worst probe: `ok`, `degraded` or `down`. HTTP 200 for ok and degraded, 503 for down. `/api/healthz` is liveness only and always answers ok.
+
+---
+
+## Destination whitelist
+
+`/api/wallet-whitelist` manages the addresses an agent wallet may send to. New addresses serve a cooldown (default 24h, minimum 1h), adding or approving needs a single-use step-up grant, and machine principals (API keys, OAuth, MCP) can only propose. Full model, action table and runnable example: [Destination whitelist](./destination-whitelist.md).
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/wallet-whitelist?agent=<id>` | Entries, cooldown, enforcement state and available step-up methods |
+| POST | `/api/wallet-whitelist` | `action`: `add`, `approve`, `edit`, `remove`, `cancel`, `settings`, `stepup_code`, `stepup` |
+| GET | `/api/wallet-whitelist?cancel=<token>` | One-click cancel page linked from notifications |
+
+---
+
+## Specialist teams
+
+A team is four role agents (Researcher, Entry, Trader, Launcher) under one spend policy, sharing a findings board. Concepts, the role table and the trade rule: [docs/teams.md](./teams.md). Page: [/teams](/teams).
+
+Auth: the session cookie (plus `x-csrf-token` on writes) or a bearer token. Reads of a public team are open to anyone; everything else needs the owner. Writes share a limit of 20 an hour, specialist runs 60 every 10 minutes (`429 rate_limited`).
+
+| Method | Path | Body or query | Returns |
+| --- | --- | --- | --- |
+| `GET` | `/api/teams` | | `{ data: [team summary] }`: id, name, status, network, member_count, last_finding_at, roster, page_url |
+| `POST` | `/api/teams` | `{ name, description?, network?: "mainnet" \| "devnet", is_public?, policy? }` | `201 { data: team }` with four provisioned members |
+| `GET` | `/api/teams/:id` | | `{ data: team }` |
+| `PATCH` | `/api/teams/:id` | `{ name?, description?, is_public?, status?: "active" \| "paused", policy? }` | `{ data: team }` |
+| `DELETE` | `/api/teams/:id` | | archives; the agents stay in the account |
+| `GET` | `/api/teams/:id/findings` | `?kind=&subject=&before=&limit=` (limit up to 100) | `{ data: [finding], next_before }` |
+| `GET` | `/api/teams/:id/findings/stream` | `?since=<ISO>` or `Last-Event-ID` | `text/event-stream` |
+| `POST` | `/api/teams/:id/run` | `{ action, role? \| member_id?, input }` | `{ data: result }` |
+| `POST` | `/api/teams/:id/repair` | | `{ data: { created, team } }`: provisions any missing role |
+| `POST` | `/api/teams/:id/members` | `{ agent_id, permissions? }` | `201 { data: { member_id } }`: add a custom specialist (max 4) |
+| `PATCH` | `/api/teams/:id/members/:memberId` | `{ permissions }` | narrows or restores a grant within the role ceiling |
+| `DELETE` | `/api/teams/:id/members/:memberId` | | removes a custom specialist |
+
+**Policy.** `per_trade_sol` (0.001 to 50, default 0.05), `daily_budget_sol` (0.001 to 500, default 0.25), `finding_ttl_seconds` (60 to 86400, default 900), `allow_caution` (default false), and `entry`: `min_quality_score` (0 to 100, default 60), `max_bundle_score` (0 to 1, default 0.5), `require_two_sided_market` (default true), `require_smart_money` (default false), `min_market_cap_usd` and `max_market_cap_usd` (null for no bound). The caps are mirrored onto the Trader agent's trade limits.
+
+**Run actions.**
+
+| `action` | Role | `input` | `data` |
+| --- | --- | --- | --- |
+| `research` | Researcher | `{ mint, refresh? }` | `{ reused, finding }`: reuses a live verdict unless `refresh` |
+| `scan` | Entry | `{ mint? }` | `{ scanned, setups, findings }`, or the one mint's verdict |
+| `trade` | Trader | `{ mint, side: "buy" \| "sell", amount, mode: "quote" \| "simulate" \| "live", slippageBps?, confirm? }` | `{ finding, research, outcome }` |
+| `launch` | Launcher | `{ name, symbol, description? }` | `{ finding, ready, blockers }`; the finding's `evidence.launch_url` opens the prefilled launchpad |
+
+`amount` is SOL for a buy and tokens (or `"max"`) for a sell. A `live` trade needs `confirm: true`, the real-funds agreement (`403 agreement_required` otherwise) and, for a bearer, the `wallet:write` scope. A run on a paused team is `409 paused`; on a team missing a role, `409 not_ready`. A member without the permission is `403 permission_denied`; a grant above the role ceiling is `403 permission_above_role`.
+
+**Finding.** `{ id, team_id, member_id, author_role, kind, subject, subject_kind, verdict, score, summary, evidence, cites, expires_at, receipt_id, created_at }`. `kind` is `research` (`pass`, `caution`, `avoid`), `entry_signal` (`setup`, `no_setup`), `trade` (`quoted`, `simulated`, `executed`, `refused`, `failed`) or `launch_prep` (`ready`, `blocked`). A trade finding's `cites` holds the research finding id it acted on, and its `evidence.research_source` is `reused` or `ran`.
+
+**Stream events.** `hello` `{ team_id, status, network, since }`, `finding` (a finding; the event id is its `created_at`, so a reconnect resumes), `status` `{ status }`, `gone` (archived or no longer visible), and a heartbeat comment every 15 seconds. The server ends a stream after about 280 seconds and `EventSource` reconnects with `Last-Event-ID`.
+
+```js
+const es = new EventSource(`/api/teams/${teamId}/findings/stream`, { withCredentials: true });
+es.addEventListener('finding', (e) => {
+  const f = JSON.parse(e.data);
+  console.log(f.author_role, f.kind, f.verdict, f.summary, f.cites);
+});
+```
+
+
+## Squad chat
+
+Talk to a specialist team or a solo agent in plain language. The coordinator turns one message into role-tagged plan steps, runs them, and pauses any step that signs, transfers, launches or exceeds the cap as an approval. Concepts, the trade rule and the injection guard: [docs/team-chat.md](./team-chat.md). Page: [/team-chat](/team-chat).
+
+Auth: the owner's session cookie (plus `x-csrf-token` on writes) or a bearer token. Live mode needs the real-funds agreement (`403 risk_ack_required`) and, for a bearer, a spend scope. Messages share a limit of 40 a minute per account (`429 rate_limited`).
+
+| Method | Path | Body or query | Returns |
+| --- | --- | --- | --- |
+| `GET` | `/api/team-chat` | | `{ data: [squad] }`: your teams (`kind: "team"`) and agents (`kind: "agent"`) |
+| `GET` | `/api/teams/:id/chat` | | `{ data: { squad, prefs, pref_keys, runs } }` |
+| `POST` | `/api/teams/:id/chat` | `{ message, mode?: "paper" \| "live" }` | `text/event-stream` |
+| `GET` | `/api/teams/:id/chat/runs/:runId` | | `{ data: { run, steps, events, last_event_id } }` |
+| `POST` | `/api/teams/:id/chat/approve` | `{ step_id, decision: "approve" \| "deny", payload_hash }` | `text/event-stream` ending in `end` |
+| `GET` | `/api/teams/:id/chat/stream` | `?run=<runId>&after=<eventId>` or `Last-Event-ID` | `text/event-stream` |
+| `GET` | `/api/teams/:id/chat/prefs` | | `{ data: [{ key, value, memory_id, content, updated_at }] }` |
+| `DELETE` | `/api/teams/:id/chat/prefs/:key` | | forgets `default_trade_sol`, `risk` or `venues` |
+
+`:id` is a team id, or an agent id for a solo squad.
+
+**Events.** `{ id, kind, step_id, payload, created_at }` where `kind` is `run`, `memory`, `plan`, `step`, `approval`, `note`, `summary`, `error` or `end`. Step statuses: `queued`, `running`, `needs_approval`, `executing`, `done`, `failed`, `skipped`, `denied`, `expired`. An approval carries `{ action, payload, payload_hash, summary, table, gate_reasons, risk_notes, expires_at, mirrored, inbox_url, handoff_url }`; `gate_reasons` is any of `signs`, `exceeds_cap`, `launches`, `transfers`. Approving must echo `payload_hash`; a changed action is `409 payload_mismatch` and nothing runs. Paper approvals simulate and never sign; live trades sign from the squad wallet and are mirrored into the [approval inbox](./approvals.md); launches and transfers hand off to the page where the owner signs.
+
+---
+
+## Agent perps
+
+Perpetual futures for one agent, with USDC collateral from its custodial Solana wallet. Paper mode (the default) fills at live venue prices on a platform ledger; live mode signs from the agent wallet and needs the owner to turn it on. Guards, order types, the kill switch, alerts and the venue contract: [docs/perps.md](./perps.md). Page: [/agent-perps](/agent-perps).
+
+Auth: market routes are public. Every other route is owner-only: session cookie (plus `x-csrf-token` on writes) or a bearer with `wallet:read` for reads and previews and `wallet:write` for executes and limit changes. Only a signed-in owner may loosen a limit, turn live on or resume after the kill switch (`403 owner_session_required`). All paths are under `/api/v1/agents/:id/perps`, take an optional `venue` (default `phoenix`), and agent routes take `mode` (`paper` or `live`).
+
+| Method | Path | Body or query | Returns |
+| --- | --- | --- | --- |
+| `GET` | `/markets` | `?kind=` | `{ data: { venue, markets: [...] } }`: mark, funding, open interest, max leverage, margin rates, fees |
+| `GET` | `/market/:symbol` | `?depth=20&trades=30&funding=48` | one market with its book, recent trades and funding history |
+| `GET` | `/account` | `?mode=` | `{ data: { mode, wallet, limits, guards, summary, account, alerts } }` |
+| `GET` | `/positions` | `?mode=&limit=50` | positions, resting orders, triggers and history |
+| `GET` | `/executions`, `/alerts` | `?mode=&limit=` | executes run for the agent (with signatures); recent alerts |
+| `GET` | `/stream` | `?mode=&interval=4` | `text/event-stream` of `frame` events (PnL, funding paid, liquidation distance per position), then `reconnect` after five minutes |
+| `GET` / `PUT` | `/limits` | `{ max_leverage?, max_margin_per_position_usd?, max_slippage_bps?, max_quote_move_bps?, live_enabled?, halted?, alert_*? }` | `{ data: { limits, guards } }` |
+| `POST` | `/order/preview` | `{ symbol, side, type, size? \| margin_usd + leverage, price?, trigger_price?, size_percent?, reduce_only?, slippage_bps? }` | a preview: `preview_id`, `expires_at`, the quote, `checks`, `blocked_by`, `executable` |
+| `POST` | `/deposit/preview`, `/withdraw/preview` | `{ amount_usd }` (withdraw also takes `"max"`) | a preview with from, to, amount, asset and chain |
+| `POST` | `/cancel/preview` | `{ order_id, kind? }` | a preview |
+| `POST` | `/flatten/preview` | | a preview of the kill switch: orders and triggers to cancel, positions to close |
+| `POST` | `/order`, `/deposit`, `/withdraw`, `/cancel`, `/flatten` | `{ preview_id, confirm_trade: true }` plus an `Idempotency-Key` header | the result with each step and its signature or paper fill |
+
+An execute is refused with `409 quote_moved` when an order's entry or liquidation price moved past the agent's `max_quote_move_bps` since the preview, with `400 confirmation_required` without `confirm_trade: true`, and with `400 idempotency_key_required` without the header. A repeated key returns the first result. Guard refusals: `live_disabled`, `risk_ack_required`, `perps_halted`, `trade_kill_switch`, `wallet_frozen`, `leverage_cap_exceeded`, `position_margin_exceeded`, `insufficient_collateral`, `slippage_too_high`.
+
+---
+
+## Agent commerce
+
+Invoices, offers, purchases and limit requests under `/api/agent-commerce/*`, in
+the v1 envelope. Public routes: `GET /invoices/:id/public`,
+`POST /invoices/:id/verify`, `GET /pay/:id` (302 to the `solana:` link),
+`GET /pay/:id/qr.svg`, `GET /offers`. Owner routes (session, API key or OAuth):
+`GET/POST /invoices`, `GET /invoices/:id`, `POST /invoices/:id/cancel`,
+`GET/POST /offers/mine`, `POST /offers/:id/status`, `GET /purchases`,
+`GET /requests`. Approving a limit request (`POST /requests/:id/challenge`,
+then `POST /requests/:id`) takes a browser session and a step-up proof only.
+Webhook events: `invoice.created`, `invoice.paid`, `invoice.underpaid`,
+`invoice.expired`, `invoice.cancelled`. Full reference and examples:
+[Agent Commerce](./agent-commerce.md).
+
+## Desktop Campus API: gem mining
+
+The homepage (`/`) boots into a 3D campus in front of the web desktop (see
+[Web Desktop](./desktop.md)). Its mine is backed by one endpoint. Everything
+that matters is decided on the server: the gem is rolled there with crypto
+randomness from a fixed table, and a dig is only accepted when the miner's
+previous dig is old enough.
+
+### Read your gem balance
+
+```
+GET /api/world/gems
+GET /api/world/gems?anonId=anon_<uuid>      # visitors: the browser's walk id
+```
+
+Signed-in callers (session cookie or bearer key) read the account's ledger.
+Visitors pass the stable anonymous browser id the walk pages keep in
+`localStorage` as `twx_walk_anon` (8 to 64 characters of `A-Za-z0-9_-`). A
+visitor without an id gets an empty ledger with `miner: null`.
+
+**Response**
+
+```json
+{
+	"ok": true,
+	"miner": "browser",
+	"gems": { "quartz": 3, "amethyst": 1, "sapphire": 0, "emerald": 0, "ruby": 0, "diamond": 0 },
+	"points": 6,
+	"total": 4,
+	"recent": [{ "gem": "amethyst", "node": "vein-b", "amount": 1, "mined_at": "2026-10-11T05:20:11.000Z" }],
+	"table": [
+		{ "id": "quartz", "label": "Quartz", "weight": 520, "points": 1, "hex": 15132400 },
+		{ "id": "amethyst", "label": "Amethyst", "weight": 260, "points": 3, "hex": 12891645 },
+		{ "id": "sapphire", "label": "Sapphire", "weight": 130, "points": 8, "hex": 6333946 },
+		{ "id": "emerald", "label": "Emerald", "weight": 60, "points": 20, "hex": 3462041 },
+		{ "id": "ruby", "label": "Ruby", "weight": 24, "points": 50, "hex": 16281969 },
+		{ "id": "diamond", "label": "Diamond", "weight": 6, "points": 200, "hex": 16777215 }
+	],
+	"dig_seconds": 4
+}
+```
+
+`miner` is `account`, `browser` or `null`. `gems` always lists every gem id.
+`table` is ordered common to rare; `weight` is the drop weight out of 1000,
+`hex` the gem's colour as a number, and `recent` the last 12 digs, newest
+first.
+
+### Complete a dig
+
+```
+POST /api/world/gems
+Content-Type: application/json
+
+{ "node": "vein-a", "anonId": "anon_<uuid>" }
+```
+
+`node` is one of `vein-a` to `vein-e`. A signed-in dig that also carries the
+browser's `anonId` adopts that browser's anonymous gems onto the account
+first, so gems mined before signing in are kept.
+
+**Response**
+
+```json
+{
+	"ok": true,
+	"miner": "browser",
+	"mined": { "id": "amethyst", "label": "Amethyst", "points": 3, "hex": 12891645, "node": "vein-a" },
+	"gems": { "quartz": 3, "amethyst": 2, "sapphire": 0, "emerald": 0, "ruby": 0, "diamond": 0 },
+	"points": 9,
+	"total": 5,
+	"recent": [{ "gem": "amethyst", "node": "vein-a", "amount": 1, "mined_at": "2026-10-11T05:21:03.000Z" }]
+}
+```
+
+| Status | `error` | Meaning |
+| --- | --- | --- |
+| 400 | `invalid_node` | `node` is not a known vein |
+| 400 | `no_miner` | Not signed in and no valid `anonId`, so there is nowhere to keep the gem |
+| 429 | `dig_too_soon` | The previous dig is younger than the dig time; `retry_in_sec` says how long to wait |
+| 429 | `daily_cap` | 300 digs already today (UTC) for this miner |
+
+Rate limited per IP like the other public endpoints. The client holds E at a
+vein for `dig_seconds` of real frame time before posting; the server enforces
+the same cadence, so a client that posts early is refused.
+
+---
+
 ## X Mention Bot API
 
 Agents on three.ws can reply to their own @-mentions on X through the same connector tools Grok uses (see [docs/grok.md](./grok.md)). This is the one public, unauthenticated read: an aggregate status for the bot as a whole, with no private data.
@@ -9327,6 +10365,9 @@ Codes are lowercase snake_case: in the `error` field on most endpoints, in `erro
 | `not_found` | 404 | No such resource, or not visible to you | No | Check the id |
 | `conflict`, `idempotency_in_progress` | 409 | The resource already exists, or the same idempotent request is still running | Conflict no, in-progress yes | Read the existing resource, or retry shortly with the same `Idempotency-Key` |
 | `idempotency_key_reused` | 422 | The `Idempotency-Key` was already used with a different body | No | Use a new key for a new request |
+| `clock_skew` | 400 | A signed request's timestamp is more than 300s from server time; the message gives `server_time` | After resyncing | Fix your clock and sign again |
+| `bad_signature` | 401 | An Ed25519 signature does not match the message for that public key | No | Sign the exact message documented for the endpoint |
+| `replayed_nonce` | 409 | The nonce was already used for this key | No | Sign a fresh message with a new nonce |
 | `rate_limited` | 429 | Over the limit for this endpoint | Yes, after `Retry-After` | Back off for the stated seconds |
 | `internal_error` | 500 | An unexpected failure. The message is sanitized | Yes, with backoff | Report it with the `requestId` if it persists |
 | `upstream_error` | 502 | A third-party upstream failed | Yes, with backoff | Retry; nothing on your side to change |
@@ -9378,3 +10419,95 @@ const { agents } = await res.json();
 - [x402](/docs/x402): how the paid `/api/x402/*` endpoints settle in USDC
 - [Payment sessions](/docs/payment-sessions): the buyer side, letting an agent spend a budget without holding a key
 - [Authentication](/docs/authentication): SIWE, sessions, API keys, and scopes
+
+## Event Markets API
+
+Free-to-play "who wins this event?" markets. Picks carry points, never funds. Base `/api/event-markets`, v1 envelope. Reads are public; picks need a session or API key; create, edit, lock, void and resolve need an admin.
+
+```
+GET    /api/event-markets?status=open&source_kind=&q=&limit=&cursor=
+GET    /api/event-markets/:slug
+GET    /api/event-markets/:slug/history
+POST   /api/event-markets/:slug/pick     { "outcome_id": "<uuid>", "points": 50 }
+DELETE /api/event-markets/:slug/pick
+```
+
+A pick at or after `locks_at` returns `409 market_locked` with the closing time. A market with no picks returns an even prior and `odds.even_prior: true`. Full contract, error codes, limits and MCP tools: [event-markets.md](./event-markets.md).
+
+## Agents API (v1)
+
+`/api/v1` is the stable, key-friendly face of the agent platform: create and
+run agents, chat with them, start autonomous runs, manage automations and skills,
+and receive signed webhooks, all with one bearer key. The full machine-readable
+contract is in [/openapi.json](/openapi.json) under the tags `Agents API` and
+`Agents API: webhooks`.
+
+**Auth.** `Authorization: Bearer <key>` with an API key from
+`/dashboard/api`, or a signed-in session (writes then need the CSRF token).
+Scopes: `agents:read` for GETs, `agents:write` for everything that changes
+state. Anything that moves funds (a `swap` or `transfer` automation, a run with
+`budgetUsd`) additionally needs `wallet:write` and an explicit `confirm: true`;
+an import never spends on its own.
+
+**Envelope.** Every response is `{ "data": …, "meta": { "requestId", "timestamp" } }`
+(`meta.nextCursor` on lists; pass it back as `cursor`, or `before` for message
+history). Errors are `{ "error": { "code", "message", "details" }, "meta" }`.
+
+| Status | `error.code` | Meaning |
+|---|---|---|
+| 400 | `invalid_parameter`, `bad_json`, `validation_error` | Body or query failed validation; `details` names the field |
+| 401 | `unauthorized` | No or invalid key/session |
+| 403 | `insufficient_scope`, `csrf_invalid`, `confirmation_required` | Key lacks the scope (`details.required`), CSRF missing, or a spend was not confirmed |
+| 404 | `not_found` | Unknown id, not yours, or not a UUID |
+| 405 | `method_not_allowed` | Known path, wrong method |
+| 409 | `conflict` | State forbids it, for example cancelling a finished run |
+| 422 | `idempotency_key_reused` | Same `Idempotency-Key` sent with a different body |
+| 429 | `rate_limited` | Honor `Retry-After` |
+
+**Idempotency.** Send `Idempotency-Key: <unique string>` on any POST/PATCH. A
+retry with the same key and body replays the stored response for 24 hours and
+adds `Idempotent-Replayed: true`.
+
+### Routes
+
+| Resource | Routes |
+|---|---|
+| Agents | `GET/POST /agents`, `GET/PATCH/DELETE /agents/:id`, `POST /agents/:id/start`, `POST /agents/:id/stop`, `GET /agents/:id/export`, `POST /agents/import` |
+| Chat | `POST /agents/:id/messages` (body `{ "message" }`, waits for the reply), `GET /agents/:id/messages` |
+| Runs | `POST/GET /agents/:id/runs`, `GET/PATCH /runs/:id` (`action: pause\|resume`, budgets can only rise), `POST /runs/:id/cancel`, `GET /runs/:id/steps`, `GET /runs/:id/events` (SSE, resumable with `Last-Event-ID`) |
+| Automations | `POST/GET /automations`, `GET /agents/:id/automations`, `GET/PATCH/DELETE /automations/:id`, `POST /automations/:id/trigger` |
+| Skills | `GET /skills`, `GET /skills/community[/:slug]`, `GET/POST /agents/:id/skills/custom`, `POST /agents/:id/skills/custom/import`, `GET/PATCH/DELETE /agents/:id/skills/custom/:skillId` |
+| Webhooks | `GET/POST /webhooks`, `GET/PATCH/DELETE /webhooks/:id`, `POST /webhooks/:id/rotate-secret`, `POST /webhooks/:id/test`, `GET /webhooks/:id/deliveries`, `GET /webhooks/deliveries/:id`, `POST /webhooks/deliveries/:id/replay`, `GET /webhooks/events` |
+| Other | `GET /strategies[/:id]`, `GET /models`, `GET /me` |
+
+Passing `schedule` (a cron expression) to `POST /agents/:id/runs` creates an
+automation that starts the run on that schedule and returns it.
+
+### Example
+
+```bash
+KEY=sk_live_…            # agents:read agents:write
+curl -s https://three.ws/api/v1/agents \
+  -H "authorization: Bearer $KEY" -H 'content-type: application/json' \
+  -H 'idempotency-key: create-scout-1' \
+  -d '{"name":"Scout","systemPrompt":"Be terse."}'
+
+curl -s https://three.ws/api/v1/agents/$AGENT/messages \
+  -H "authorization: Bearer $KEY" -H 'content-type: application/json' \
+  -d '{"message":"What changed on-chain today?"}'
+
+curl -N https://three.ws/api/v1/runs/$RUN/events -H "authorization: Bearer $KEY"
+```
+
+### Webhooks
+
+Events: `run.finished`, `automation.fired`, `message.received`,
+`approval.needed` (agent-scoped, so an endpoint pinned to one agent receives
+only that agent's) plus the account events listed by `GET /webhooks/events`.
+URLs must be HTTPS and resolve to a public address. Deliveries follow the
+[Standard Webhooks](https://www.standardwebhooks.com) headers; see
+[developer-platform.md](developer-platform.md#delivery-format-and-signature-verification)
+for verification code. A failed delivery retries after 30s, 2m, 10m, 30m, 1h, 3h
+and 8h (8 attempts total) and every attempt is kept in the delivery log; replay
+a delivery from the log or the `/dashboard/developers` page. The signing secret
+(`whsec_…`) is shown once at creation and on `rotate-secret`.

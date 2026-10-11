@@ -36,7 +36,8 @@ export const def = {
 		'The default image lane (FLUX to TRELLIS) is free and needs no key, wallet, or account. The GLB is saved ' +
 		'locally, and if the output path asks for another format (.blend, .fbx, .obj, .usd) Blender converts it on ' +
 		'the way in. Returns the local path, the hosted GLB URL, and the geometry counts. Generation runs on a ' +
-		'shared GPU lane and typically takes tens of seconds to a couple of minutes. Describe ONE subject per call.',
+		'shared GPU lane and typically takes tens of seconds to a couple of minutes. Describe ONE subject per call. ' +
+		'Use this when you need a new model that does not exist yet; to work on a file you already have, open it with blender_scene_info or blender_run_python instead.',
 	inputSchema: {
 		prompt: z
 			.string()

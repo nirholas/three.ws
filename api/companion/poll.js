@@ -4,11 +4,11 @@
 // the button on the setup page, so a user who just connected something sees it
 // work in the same breath rather than waiting for the next tick.
 
-import { getRequestUser, requestUserHasScope } from '../_lib/auth.js';
-import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
+import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits } from '../_lib/rate-limit.js';
 import { pollUser } from '../_lib/companion/poll.js';
+import { companionCaller, needsCsrf } from '../_lib/companion/caller.js';
 
 export const maxDuration = 60;
 
@@ -16,12 +16,11 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const user = await getRequestUser(req, res);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
-	// Private messages and the bridge token live behind this surface, so a
-	// bearer needs the account-level profile scope, not just any grant.
-	if (!requestUserHasScope(user, 'profile')) return error(res, 403, 'insufficient_scope', 'this token needs the profile scope');
-	if (!(await requireCsrf(req, res, user.id))) return;
+	// The bridge token reaches this route: it is the credential the desktop app,
+	// the CLI and the MCP server hold. It resolves to its owner only.
+	const user = await companionCaller(req, res, { bridge: true });
+	if (!user) return;
+	if (needsCsrf(user) && !(await requireCsrf(req, res, user.id))) return;
 
 	const rl = await limits.companionPoll(user.id);
 	if (!rl.success) return rateLimited(res, rl);

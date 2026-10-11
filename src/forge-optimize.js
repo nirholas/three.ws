@@ -12,9 +12,17 @@
 // GLB output renders inline (swaps the live <model-viewer> src); every other
 // format is download-only. Nothing fakes progress — the panel polls the job.
 //
+// Above the server remesh sit the in-browser mesh tools (src/mesh-ops/): repair,
+// smooth and decimate, run in a worker with undo and reset to original. Their
+// edits swap the viewer and the download button just like a GLB remesh does;
+// the server remesh still starts from the last saved (remote) model, because a
+// local edit only exists as a blob in this tab.
+//
 // The panel injects its own markup + styles so it survives independently of the
 // forge.html template: it only needs the result panel, viewer, and download
 // button to be present.
+
+import { mountMeshTools } from './mesh-ops/panel.js';
 
 const resultPanel = document.getElementById('state-result');
 const viewer = document.getElementById('viewer');
@@ -138,6 +146,13 @@ if (resultPanel && viewer) {
 			.opt-stats { display: flex; gap: var(--space-md); flex-wrap: wrap; font-family: var(--font-mono); font-size: var(--text-xs); color: var(--ink-dim); }
 			.opt-stats strong { color: var(--ink); font-weight: 600; }
 			.opt-stats.is-hidden { display: none; }
+			.opt-section-title {
+				margin: 0; font-family: var(--font-mono); font-size: var(--text-xs); color: var(--ink-dim);
+				text-transform: uppercase; letter-spacing: 0.04em; padding-top: var(--space-sm);
+				border-top: 1px solid var(--stroke);
+			}
+			.opt-local-note { margin: 0; font-size: var(--text-xs); color: var(--warning); line-height: 1.4; }
+			.opt-local-note[hidden] { display: none; }
 		`;
 		document.head.appendChild(style);
 	}
@@ -148,13 +163,16 @@ if (resultPanel && viewer) {
 	panel.dataset.open = 'false';
 	panel.innerHTML = `
 		<button class="optimize-toggle" type="button" aria-expanded="false">
-			<span>Optimize topology, quad remesh &amp; game-ready low-poly</span>
+			<span>Optimize: repair, smooth, decimate, quad remesh &amp; low-poly</span>
 			<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 				stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 				<polyline points="6 9 12 15 18 9" />
 			</svg>
 		</button>
 		<div class="optimize-body">
+			<div class="opt-local"></div>
+			<p class="opt-section-title">Server remesh</p>
+			<p class="opt-local-note" hidden>Server remesh starts from the saved model, not your in-browser edits. Download the edited GLB above to keep them.</p>
 			<div class="opt-field">
 				<span>Mode</span>
 				<div class="seg opt-mode" role="group" aria-label="Remesh mode">
@@ -203,6 +221,32 @@ if (resultPanel && viewer) {
 	const runLabel = panel.querySelector('.opt-run-label');
 	const statusEl = panel.querySelector('.opt-status');
 	const stats = panel.querySelector('.opt-stats');
+	const localNote = panel.querySelector('.opt-local-note');
+
+	// The forge download button as forge.js left it, captured the first time a
+	// local edit repoints it, so "Reset to original" can hand it back exactly.
+	let originalDownload = null;
+	function pointDownload(href, name, text) {
+		if (!download) return;
+		download.href = href;
+		download.setAttribute('download', name);
+		download.textContent = text;
+	}
+	const meshTools = mountMeshTools(panel.querySelector('.opt-local'), {
+		onChange({ url, edited, filename }) {
+			if (download && !originalDownload) {
+				originalDownload = {
+					href: download.getAttribute('href'),
+					name: download.getAttribute('download') || 'forge.glb',
+					text: download.textContent,
+				};
+			}
+			viewer.setAttribute('src', url);
+			localNote.hidden = !edited;
+			if (edited) pointDownload(url, filename, 'Download GLB');
+			else if (originalDownload) pointDownload(originalDownload.href, originalDownload.name, originalDownload.text);
+		},
+	});
 
 	for (const [value, text] of FORMATS) {
 		const opt = document.createElement('option');
@@ -261,6 +305,9 @@ if (resultPanel && viewer) {
 		if (download) download.textContent = 'Download GLB';
 		panel.dataset.open = 'false';
 		toggle.setAttribute('aria-expanded', 'false');
+		originalDownload = null;
+		localNote.hidden = true;
+		meshTools.setSource(glbUrl, { label: state.label });
 	}
 
 	function setRunning(running) {
@@ -344,6 +391,9 @@ if (resultPanel && viewer) {
 		if (format === 'glb') {
 			viewer.setAttribute('src', result);
 			state.glbUrl = result; // chain further optimizations from the new mesh
+			originalDownload = null;
+			localNote.hidden = true;
+			meshTools.setSource(result, { label: `${state.label} ${state.mode}` });
 		}
 		const safe =
 			state.label.replace(/[^a-z0-9]+/gi, '-').slice(0, 48).replace(/^-|-$/g, '') || 'forge';
@@ -379,6 +429,7 @@ if (resultPanel && viewer) {
 		const open = panel.dataset.open === 'true';
 		panel.dataset.open = String(!open);
 		toggle.setAttribute('aria-expanded', String(!open));
+		if (!open) meshTools.activate();
 	});
 
 	modeGroup.addEventListener('click', (e) => {

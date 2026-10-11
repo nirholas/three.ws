@@ -237,6 +237,32 @@
 				color: var(--ink, #e8ebf2);
 				border-color: var(--accent, #6c8cff);
 			}
+			.rates {
+				list-style: none;
+				margin: 0.75rem 0 0;
+				padding: 0;
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.35rem 1rem;
+				font-size: 0.78rem;
+				color: var(--ink-dim, #9aa3b2);
+			}
+			.rates li {
+				display: inline-flex;
+				gap: 0.35rem;
+				align-items: baseline;
+				transition: color var(--duration-fast);
+			}
+			.rates li.is-active {
+				color: var(--ink, #e8ebf2);
+			}
+			.rates b {
+				font-weight: 600;
+			}
+			.rates .bonus {
+				color: var(--ok, #58d68d);
+				font-weight: 600;
+			}
 			.est {
 				margin-top: 0.6rem;
 				font-size: 0.85rem;
@@ -675,35 +701,12 @@
 					<!-- Deposit -->
 					<section class="card" aria-label="Add credits">
 						<h2 data-i18n="credits.add_credits">Add credits</h2>
-						<div class="seg" role="group" aria-label="Deposit asset">
-							<button
-								type="button"
-								data-asset="SOL"
-								aria-pressed="true"
-								data-i18n="credits.sol"
-							>
-								SOL
-							</button>
-							<button
-								type="button"
-								data-asset="THREE"
-								aria-pressed="false"
-								data-i18n="credits.three"
-							>
-								$THREE
-							</button>
+						<div class="seg" role="group" aria-label="Deposit asset" id="asset-seg">
+							<button type="button" data-asset="SOL" aria-pressed="true">SOL</button>
 						</div>
+						<ul class="rates" id="asset-rates" aria-label="Accepted assets and rates"></ul>
 						<div class="field">
-							<label for="amount" id="amount-label"
-								><span data-asset-label="SOL" data-i18n="credits.amount_sol"
-									>Amount (SOL)</span
-								><span
-									data-asset-label="THREE"
-									data-i18n="credits.amount_three"
-									hidden
-									>Amount ($THREE)</span
-								></label
-							>
+							<label for="amount" id="amount-label">Amount (SOL)</label>
 							<div class="amt-row">
 								<input
 									id="amount"
@@ -714,15 +717,7 @@
 									placeholder="0.0"
 									aria-describedby="estimate"
 								/>
-								<span class="unit" id="amount-unit"
-									><span data-asset-unit="SOL" data-i18n="credits.sol_2">SOL</span
-									><span
-										data-asset-unit="THREE"
-										data-i18n="credits.three_2"
-										hidden
-										>$THREE</span
-									></span
-								>
+								<span class="unit" id="amount-unit">SOL</span>
 							</div>
 							<div class="quick" id="quick"></div>
 							<div class="est" id="estimate"></div>

@@ -32,7 +32,7 @@ import { GROK_DEFAULT_MODEL } from '../api/_lib/chat-models.js';
 import { serviceEnvValue } from './lib/service-env.mjs';
 
 const RESPONSES_URL = 'https://api.x.ai/v1/responses';
-const TIMEOUT_MS = 120_000;
+const TIMEOUT_MS = 240_000;
 const DEFAULT_PROMPT = 'Find a ready-made chair in the three.ws catalog and give me its viewer link.';
 const SERVER_LABEL = 'three-ws';
 const SERVERS = {

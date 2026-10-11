@@ -134,11 +134,11 @@
 			"viewport": "wide",
 			"animated": false,
 			"authenticated": false,
-			"capturedAt": "2026-10-11T11:41:37.766Z",
+			"capturedAt": "2026-10-09T02:48:42.143Z",
 			"capturedFrom": "https://three.ws",
-			"commit": "307cd2213",
-			"sha256": "021e3ca3328a0bc8052c556d964fd178b6e6a36c896a6bff786e3d706ff1c4fe",
-			"bytes": 76502,
+			"commit": "642181bc4",
+			"sha256": "6bacabdad51e86b7c117ee3585a5cd7b1bd6dff209dc338173b1ce38068585f2",
+			"bytes": 77012,
 			"width": 1800,
 			"height": 1013
 		},
@@ -210,11 +210,11 @@
 			"hidden": [
 				"#home-nav-user"
 			],
-			"capturedAt": "2026-09-04T18:15:07.101Z",
+			"capturedAt": "2026-10-10T03:47:08.090Z",
 			"capturedFrom": "https://three.ws",
-			"commit": "4a80c8498",
-			"sha256": "6fd46eb6f9176edd492b30ce822a11b7bc9b92e86bf25d1890457bc166bf24b5",
-			"bytes": 55852,
+			"commit": "17e704069",
+			"sha256": "ed38af69e9d83eb3db869de58fc0964e135143a6341b7ca44140a05d364d2621",
+			"bytes": 57774,
 			"width": 1800,
 			"height": 1013
 		},

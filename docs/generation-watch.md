@@ -57,7 +57,7 @@ The page polls `GET /api/3d/studio?job=<id>` and moves through five states:
   from `glbUrl`). A manual link is rendered in case the redirect is blocked.
 - **Error.** An upstream failure (`status: "error"`), a stale or malformed
   link (HTTP 400), or a job that produces no viewer link shows an honest error
-  with a one-click "Forge it again" path. Generation is free, so retrying
+  with a one-click "Forge it again, free" path. Generation is free, so retrying
   costs nothing.
 - **Offline.** Four consecutive failed polls (a dropped connection, a captive
   portal, a tab woken on a dead network) stop the countdown and say so, rather

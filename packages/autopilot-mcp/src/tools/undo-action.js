@@ -20,7 +20,8 @@ export const def = {
 		'rule (create_alert) or the briefing notification (briefing) — and records a feedback memory so the ' +
 		'agent learns to be more conservative next time. WRITE. NOTE: an irreversible SOL wallet_transfer ' +
 		'is on-chain and cannot be undone — the server rejects that with `irreversible`; to send value back ' +
-		'you would have to execute a new transfer. Returns the updated proposal (status → undone) and trust.',
+		'you would have to execute a new transfer. Returns the updated proposal (status → undone) and trust. ' +
+		'Use this when the owner wants a reversible executed action taken back; to reject a proposal that never ran call dismiss_proposal.',
 	inputSchema: {
 		agentId: z
 			.string()

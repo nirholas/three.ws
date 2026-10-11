@@ -5,6 +5,8 @@
 
 import { z } from 'zod';
 import { sql } from '../_lib/db.js';
+import { logAudit } from '../_lib/audit.js';
+import { ExternalWalletError, payoutChangePolicy, stepUpProven } from '../_lib/account-link/external-wallets.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
@@ -59,13 +61,13 @@ export default wrap(async (req, res) => {
 		// Fetch all wallets for the user, optionally filtered by agent_id
 		const wallets = agentId
 			? await sql`
-				SELECT id, agent_id, address, chain, is_default, preferred_network, created_at
+				SELECT id, agent_id, address, chain, is_default, preferred_network, created_at, approved_at, effective_at, set_by
 				FROM agent_payout_wallets
 				WHERE user_id = ${userId} AND (agent_id = ${agentId} OR agent_id IS NULL)
 				ORDER BY agent_id NULLS LAST, is_default DESC, created_at DESC
 			`
 			: await sql`
-				SELECT id, agent_id, address, chain, is_default, preferred_network, created_at
+				SELECT id, agent_id, address, chain, is_default, preferred_network, created_at, approved_at, effective_at, set_by
 				FROM agent_payout_wallets
 				WHERE user_id = ${userId}
 				ORDER BY agent_id NULLS LAST, is_default DESC, created_at DESC
@@ -77,7 +79,10 @@ export default wrap(async (req, res) => {
 		// fallback. The ORDER BY above already puts agent rows ahead of user-level
 		// ones, so the first match per chain is the row that would be paid; matching
 		// on agent_id alone would report "no wallet" for an agent that inherits one.
-		const resolveWallet = (chains) => wallets.find((w) => chains.includes(w.chain));
+		// Only an approved row past its cooldown is paid; a pending replacement
+		// is listed with its effective_at so the page can say when it lands.
+		const live = (w) => Boolean(w.approved_at) && new Date(w.effective_at).getTime() <= Date.now();
+		const resolveWallet = (chains) => wallets.find((w) => chains.includes(w.chain) && live(w));
 		const evmWallet = resolveWallet(['base', 'evm']);
 		const solanaWallet = resolveWallet(['solana']);
 
@@ -134,6 +139,20 @@ export default wrap(async (req, res) => {
 		);
 	}
 
+	// Replacing a live payout address is slow on purpose (step-up, then a
+	// cooldown before withdrawals use it): api/_lib/account-link/external-wallets.js.
+	let policy;
+	try {
+		const stepUp = await stepUpProven(req, userId, body);
+		policy = {
+			solana: solana_address ? await payoutChangePolicy({ userId, agentId: agent_id, chain: 'solana', address: solana_address, stepUp }) : null,
+			evm: evm_address ? await payoutChangePolicy({ userId, agentId: agent_id, chain: 'base', address: evm_address, stepUp }) : null,
+		};
+	} catch (e) {
+		if (e instanceof ExternalWalletError) return error(res, e.status, e.code, e.message, e.extra);
+		throw e;
+	}
+
 	const results = [];
 
 	// Upsert Solana wallet
@@ -147,15 +166,20 @@ export default wrap(async (req, res) => {
 
 		const [wallet] = await sql`
 			INSERT INTO agent_payout_wallets
-				(user_id, agent_id, address, chain, is_default, preferred_network)
+				(user_id, agent_id, address, chain, is_default, preferred_network, approved_at, effective_at, set_by)
 			VALUES
-				(${userId}, ${agent_id}, ${solana_address}, 'solana', true, ${preferred_network})
+				(${userId}, ${agent_id}, ${solana_address}, 'solana', true, ${preferred_network}, ${policy.solana.approvedAt}, ${policy.solana.effectiveAt}, 'owner')
 			ON CONFLICT (user_id, agent_id, chain) DO UPDATE SET
 				address = EXCLUDED.address,
 				is_default = true,
-				preferred_network = EXCLUDED.preferred_network
-			RETURNING id, agent_id, address, chain, is_default, preferred_network, created_at
+				preferred_network = EXCLUDED.preferred_network,
+				approved_at = EXCLUDED.approved_at,
+				effective_at = EXCLUDED.effective_at,
+				set_by = EXCLUDED.set_by,
+				approval_request_id = null
+			RETURNING id, agent_id, address, chain, is_default, preferred_network, created_at, approved_at, effective_at
 		`;
+		if (policy.solana.replacing) logAudit({ userId, action: 'link_payout_wallet', resourceId: wallet.id, meta: { chain: 'solana', address: solana_address, previous: policy.solana.previous, agent_id, actor: 'owner', effective_at: policy.solana.effectiveAt, step_up: true }, req });
 		results.push(wallet);
 	}
 
@@ -178,15 +202,20 @@ export default wrap(async (req, res) => {
 
 		const [wallet] = await sql`
 			INSERT INTO agent_payout_wallets
-				(user_id, agent_id, address, chain, is_default, preferred_network)
+				(user_id, agent_id, address, chain, is_default, preferred_network, approved_at, effective_at, set_by)
 			VALUES
-				(${userId}, ${agent_id}, ${evm_address}, 'base', true, ${preferred_network})
+				(${userId}, ${agent_id}, ${evm_address}, 'base', true, ${preferred_network}, ${policy.evm.approvedAt}, ${policy.evm.effectiveAt}, 'owner')
 			ON CONFLICT (user_id, agent_id, chain) DO UPDATE SET
 				address = EXCLUDED.address,
 				is_default = true,
-				preferred_network = EXCLUDED.preferred_network
-			RETURNING id, agent_id, address, chain, is_default, preferred_network, created_at
+				preferred_network = EXCLUDED.preferred_network,
+				approved_at = EXCLUDED.approved_at,
+				effective_at = EXCLUDED.effective_at,
+				set_by = EXCLUDED.set_by,
+				approval_request_id = null
+			RETURNING id, agent_id, address, chain, is_default, preferred_network, created_at, approved_at, effective_at
 		`;
+		if (policy.evm.replacing) logAudit({ userId, action: 'link_payout_wallet', resourceId: wallet.id, meta: { chain: 'base', address: evm_address, previous: policy.evm.previous, agent_id, actor: 'owner', effective_at: policy.evm.effectiveAt, step_up: true }, req });
 		results.push(wallet);
 	}
 

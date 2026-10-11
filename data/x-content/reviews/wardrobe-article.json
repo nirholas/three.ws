@@ -1,12 +1,9 @@
 {
 	"id": "wardrobe-article",
 	"contentHash": "693ba7cbae45608e4e247702ab492412af94d94f8d68ff703d44c44f9036e80a",
-	"reviewedAt": "2026-10-08T04:46:47.174Z",
-	"passed": false,
-	"blockers": [
-		"spelling canonicalizer: did you mean canonicalize, canonicalized, canonicalizes?",
-		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"Request had insufficient authentication scopes.\",; \"status\": \"PERMISSION_DENIED\",; \"details\": [; {; \"@type\": \"type.googleapis.com/goog; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; Expected ',' or '}' after property value in JSON at position 54 (line 1 column 55)"
-	],
+	"reviewedAt": "2026-10-09T17:06:15.918Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"How we rig a 3D garment: put it on a body, rig the pair, then take the body away",
 		"A shirt has no skeleton, so our garment forge rigs each piece while a reference body is wearing it, then removes the body and keeps the weights the cloth picked up from the joints underneath. The write-up covers the seven stages, the gates a piece has to pass, and what binding to a skeleton does not fix yet: three.ws/wardrobe"
@@ -32,7 +29,7 @@
 		}
 	],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
 				"claim": "Rig one on its own and the auto-rigger fits a whole skeleton inside the cloth, which tears the shirt apart as soon as it moves",
@@ -375,15 +372,79 @@
 				"target": "https://three.ws/docs/avatar-wardrobe",
 				"ok": true,
 				"detail": "HTTP 200"
-			},
-			{
-				"kind": "spelling",
-				"target": "canonicalizer",
-				"ok": false,
-				"detail": "did you mean canonicalize, canonicalized, canonicalizes?"
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  Expected ',' or '}' after property value in JSON at position 54 (line 1 column 55)"
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 4
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "each turned in its live 3D viewer / shown side by side in their live viewers",
+				"problem": "Both alt texts describe the garments as shown inside a live 3D viewer, but the image shows the three garments floating on a plain dark background with no viewer UI, no 3D button, no chrome. A screen-reader user is told about an interface that is not in the frame.",
+				"fix": "Adjust the cover alt text to: \"Three generated 3D garments from the three.ws wardrobe catalog on a dark background: a yellow rain slicker with the hood up, a black leather biker jacket with silver zippers, and a charcoal grey hooded sweatshirt with a front pocket.\" Same change for the in-article figure caption."
+			},
+			{
+				"severity": "minor",
+				"area": "voice",
+				"quote": "very different proportions / really has / actually sits on",
+				"problem": "The article body carries three filler intensifiers flagged by the register check. Each one stands in for a fact the article already states elsewhere, so they are polish, not accuracy, but the body's register should match the post's.",
+				"fix": "\"very different proportions\" -> \"different proportions\"; \"bones a body really has\" -> \"bones the canonical skeleton has\"; \"the arm bones it actually sits on\" -> \"the arm bones it sits on\"."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"A shirt has no skeleton, so our garment forge rigs each piece while a reference body is wearing it, then removes the body and keeps the weights the cloth picked up from the joints underneath. The write-up covers the seven stages, the gates a piece has to pass, and what binding to a skeleton does not fix yet: three.ws/wardrobe"
+			],
+			"altText": [
+				"Three generated 3D garments from the three.ws wardrobe catalog on a dark background: a yellow rain slicker with the hood up, a black leather biker jacket with silver zippers, and a charcoal grey hooded sweatshirt with a front pocket."
+			]
+		},
+		"summary": "The post's mechanism, seven-stage pipeline, gates, and link are all verified against the README, source, and live wardrobe page, and the voice is clean. Two polish items remain: the alt text promises a live 3D viewer the image does not show, and the article body carries three filler intensifiers the register check flags.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"Rig one on its own and the auto-rigger fits a whole skeleton inside the cloth, which tears the shirt apart as soon as it moves\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"then takes the body away and keeps the weights each patch of cloth picked up from the joint underneath it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"top, bottom, footwear, outerwear, hair, headwear, glasses or accessory\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The forge walks it through seven stages in order, and the wardrobe page shows each one as it runs: image, mesh, compose, rig, extract, validate, publish\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A finished piece takes about seven minutes\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The image stage paints a ghost-mannequin product photo: the garment as if worn, in an A-pose, from the front, on a plain background\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The mesh stage rebuilds that photo as a textured 3D model on our image-to-3D lanes, falling through to the next engine when one is down\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"places it in its slot's region on a canonical reference body: an A-pose figure 1.667 m tall with 52 joints\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"on the same auto-rigging worker that rigs our avatars\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The rigger sees an ordinary clothed person, so the skeleton lands at body scale, and each vertex of the sleeve takes its weights from the arm bones it actually sits on\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The file is rebuilt from scratch with only the garment's geometry, skin and textures, and the joint names are rewritten to the canonical skeleton, so mixamorig:LeftArm becomes LeftArm\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The same generated shirt was skinned both ways, put on the reference body and walked through the canonical walk clip\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Rigged as a pair, the cloth stayed a mean 2.87 cm from the body across the gait. Copying weights from the nearest body vertex left it 5.88 cm away. The pair-rigging lane is the one in production\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A generator once answered a prompt for long straight hair with a mesh about 1.4 m deep whose width was still perfect\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a mesh outside it fails the job with the measurement instead of reaching the catalog\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The share of the garment's skin weight that lands on bones a body really has is measured before publishing. Under 60% and the job fails\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A region counts when it carries at least 10% of the garment's skin weight, and the result is clamped to what the slot may plausibly hide: a shirt cannot hide the legs, and hair can hide nothing at all\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The manifest pins the file's sha256 and a licence from an approved set\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The pieces in the catalog today are all generated and licensed CC0\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A piece that passes lands in its own versioned directory, and its manifest is appended to one public catalog file\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Each garment bone is matched to the avatar's bone through the same canonicalizer that lets our animation library drive any humanoid, and a helper joint the avatar lacks falls back to its nearest mapped parent\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The garment keeps its own inverse bind matrices, which is what lets a piece authored in one rest pose land on an avatar resting in another\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The client refuses a piece that binds under 60% of its skin weight, or that is larger than 0.75 times the avatar's height on any axis, and it checks the file's hash before attaching anything\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Rigid pieces such as glasses are parented to a single joint instead of deformed\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A garment keeps the shape it had on the reference body and follows the avatar's bones from there\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"you open one of your avatars in the editor and dress it from the Wardrobe tab\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Browsing the catalog and turning any piece around in 3D needs nothing\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
 }

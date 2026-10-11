@@ -1,21 +1,21 @@
 // GET /api/ops/mcp-clients?days=30: which AI clients use the hosted MCP servers.
 //
-// Per client family (claude, chatgpt, cursor, grok, ...): sessions opened,
-// tools called, calls per session, the names and versions it sent, how it
-// authenticated, which surface it used and its top tools, plus a per-day series
-// for the chart. Built from the daily aggregate in mcp_client_daily
-// (api/_lib/mcp-client-report.js); no request body is ever stored.
+// Every MCP initialize names its client. api/_lib/mcp-clients.js records that per
+// session and counts tool calls against it; this endpoint reads the aggregates:
+// per client, sessions, calls, versions, surfaces, auth kinds and top tools,
+// plus a daily series for the chart on /mcp-clients.
 //
 //   days   Rolling window in whole days, 1 to 365. Default 30.
 //
-// A failed read names itself in `degraded` and the response is 207, matching
-// the other ops boards. Auth: requireAdmin (signed-in platform admin): 401
-// without a session, 403 for anyone else. Read-only.
+// Auth: requireAdmin (a signed-in platform admin session). 401 without a
+// session, 403 for a signed-in non-admin. Read-only: SELECTs and nothing else.
+// A missing table (migration 20261009172000 not applied) answers 503 and names
+// the migration, never a bare 500.
 
-import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
+import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { requireAdmin } from '../_lib/admin.js';
-import { gatherMcpClients, clampReportDays } from '../_lib/mcp-client-report.js';
+import { gatherMcpClients, clampReportDays } from '../_lib/mcp-clients.js';
 
 export const maxDuration = 30;
 
@@ -34,6 +34,18 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://localhost');
 	const days = clampReportDays(url.searchParams.get('days') ?? undefined);
 
-	const report = await gatherMcpClients({ days });
-	return json(res, report.ok ? 200 : 207, report, { 'cache-control': 'private, no-store' });
+	try {
+		const report = await gatherMcpClients({ days });
+		return json(res, 200, report, { 'cache-control': 'private, no-store' });
+	} catch (err) {
+		if (err?.code === '42P01') {
+			return error(
+				res,
+				503,
+				'migration_pending',
+				'MCP client analytics tables are missing: apply 20261009172000_mcp_client_analytics.sql (npm run db:status)',
+			);
+		}
+		throw err;
+	}
 });

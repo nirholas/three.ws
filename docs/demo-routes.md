@@ -119,7 +119,7 @@ live at their own top-level URLs:
 
 | Route | Page file | What it does |
 |---|---|---|
-| `/coin3d` | `pages/coin3d.html` | Token-in-3D visualizer. |
+| `/coin3d` | `pages/coin3d.html` | Token-in-3D visualizer. Keyed by `?mint=` or by `?pair=` (a pool address, resolved through `/api/coin/pair`); `?embed=1` drops the site chrome, and the route serves `frame-ancestors *` so it frames anywhere. See [coin3d-embed.md](coin3d-embed.md). |
 | `/embed-demo` | `pages/embed-demo.html` | Avatar embed demo. |
 | `/hero-demo` | `pages/hero-demo.html` | Cinematic 3D hero stage: a lit avatar over glowing rings and a starfield, with pointer parallax. |
 | `/lipsync` | `public/demos/lipsync-tts.html` | Alias into the lab: TTS-driven lipsync. |

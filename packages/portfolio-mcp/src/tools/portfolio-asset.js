@@ -11,12 +11,13 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_portfolio_asset',
 	title: 'My position in one token (holdings + market + chart)',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Deep-dive on ONE asset across every agent wallet you own. Returns which wallets hold it, your ' +
 		'`total_amount` and `total_usd`, the per-wallet `holdings`, the live `market` data (price, 24h/7d/30d ' +
 		'change, market cap, volume, ATH) and a `chart` of price history over `days`. Use `id:"native"` for the ' +
 		'chain’s base coin (SOL on solana, ETH on evm), otherwise the base58 SPL mint or the 0x contract address. ' +
+		'Use this to answer questions about one token you hold; for the whole portfolio call get_portfolio_summary. ' +
 		'Requires THREE_WS_SESSION. Read-only.',
 	inputSchema: {
 		chain: z.enum(['solana', 'evm']).describe('Which chain the asset lives on.'),

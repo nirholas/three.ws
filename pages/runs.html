@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Run Receipts · three.ws</title>
+		<meta name="description" content="Every 3D generation on three.ws writes down what each stage was expected to do, what it actually did, and the verdict, signed so it cannot be edited after the fact." />
+		<link rel="canonical" href="https://three.ws/runs" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/runs" />
+		<meta property="og:title" content="Run Receipts · three.ws" />
+		<meta property="og:description" content="Expected vs observed, stage by stage, for every 3D generation. Signed, public, verifiable offline." />
+		<meta property="og:image" content="https://three.ws/api/page-og?t=Run+Receipts&amp;d=Expected+vs+observed%2C+stage+by+stage%2C+for+every+3D+generation.&amp;p=%2Fruns" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Run Receipts · three.ws" />
+		<meta name="twitter:description" content="Expected vs observed, stage by stage, for every 3D generation. Signed, public, verifiable offline." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?t=Run+Receipts&amp;d=Expected+vs+observed%2C+stage+by+stage%2C+for+every+3D+generation.&amp;p=%2Fruns" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/src/runs.css" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="rr-shell">
+			<section class="rr-hero">
+				<p class="rr-kicker">Run receipts</p>
+				<h1 class="rr-title" id="rr-title">Every generation writes down what happened.</h1>
+				<p class="rr-sub" id="rr-sub">
+					Each 3D Studio run records, stage by stage, what was expected, what was observed, and a verdict. Fallbacks are
+					named, misses carry their cause, and the record is signed so it cannot be edited after the fact.
+					<a href="/docs/run-receipts">How it works</a>.
+				</p>
+			</section>
+			<div id="rr-root" aria-live="polite"></div>
+		</main>
+
+		<script type="module" src="/src/runs.js"></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

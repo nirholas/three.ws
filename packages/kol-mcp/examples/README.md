@@ -19,7 +19,7 @@ node examples/wallet-card.mjs
 
 Nothing to install and nothing to configure: both tools on this server are
 read-only and keyless. The server prints a one-line banner to stderr on connect
-(`[kol-mcp@x.y.z] connected over stdio with 2 tools`), which is normal.
+(`[kol-mcp@x.y.z] connected over stdio with <n> tools`), which is normal.
 
 ## list-tools.mjs
 

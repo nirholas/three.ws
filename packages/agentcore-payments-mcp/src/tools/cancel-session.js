@@ -10,7 +10,8 @@ export const def = {
 	description:
 		'Cancel an active payment session. The un-spent portion of the budget is immediately refunded ' +
 		'to your credit balance. Already-completed payments are not reversed. ' +
-		'Idempotent — safe to call on an already-cancelled session. Requires THREE_WS_SESSION.',
+		'Idempotent, safe to call on an already-cancelled session. Requires THREE_WS_SESSION. ' +
+		'Use this when an agent no longer needs its budget, to stop further spending and reclaim the rest.',
 	inputSchema: {
 		session_id: z.string().uuid()
 			.describe('UUID of the session to cancel.'),

@@ -170,6 +170,20 @@ function renderError(message) {
 	document.getElementById('rh-retry')?.addEventListener('click', main);
 }
 
+/**
+ * A coin from the paired launchpad trades on its own curves, not a DEX pool,
+ * so it has its own page. Only asked when there is no DEX market, which every
+ * paired coin lacks and almost every other coin has.
+ */
+async function forwardIfPaired(address) {
+	const res = await fetch(`/api/v1/robinhood/paired-coins-detail?address=${encodeURIComponent(address)}`, {
+		headers: { accept: 'application/json' },
+	}).catch(() => null);
+	if (!res?.ok) return false;
+	location.replace(`/markets/robinhood/paired/${address}`);
+	return true;
+}
+
 async function main() {
 	const address = addressFromPath();
 	if (!address) return;
@@ -178,10 +192,12 @@ async function main() {
 	try {
 		c = await getJson(`/api/v1/robinhood/coins-detail?address=${encodeURIComponent(address)}`);
 	} catch (err) {
+		if (err.status === 404 && (await forwardIfPaired(address))) return;
 		if (err.status === 404) renderNotFound(address);
 		else renderError(err.message);
 		return;
 	}
+	if (!c.market && (await forwardIfPaired(address))) return;
 	document.getElementById('rh-main').removeAttribute('aria-busy');
 	renderHead(c);
 	renderPools(c);

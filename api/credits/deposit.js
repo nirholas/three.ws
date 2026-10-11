@@ -1,7 +1,9 @@
-// POST /api/credits/deposit — verify an on-chain SOL or $THREE transfer into the
-// platform deposit wallet and credit the caller's prepaid balance.
+// POST /api/credits/deposit: verify an on-chain SOL, USDC or $THREE transfer
+// into the platform deposit wallet and credit the caller's prepaid balance.
 //
-// Body: { asset: 'SOL'|'THREE', tx_signature: string, network?: 'mainnet'|'devnet' }
+// Body: { asset: 'SOL'|'USDC'|'THREE', tx_signature: string, network?: 'mainnet'|'devnet' }
+// USDC credits at the published fixed rate; SOL and $THREE at the live mainnet
+// quote; $THREE also earns the owner-configured bonus (bonus_usd in the reply).
 //
 // Server-authoritative: the signature alone proves nothing. credit-deposit.js
 // confirms the tx, requires a signer linked to this account, checks the deposit
@@ -20,7 +22,7 @@ import {
 	respondError,
 } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { verifyAndCreditDeposit } from '../_lib/credit-deposit.js';
+import { verifyAndCreditDeposit, DEPOSIT_ASSETS } from '../_lib/credit-deposit.js';
 
 async function resolveUser(req, res) {
 	const session = await getSessionUser(req, res);
@@ -51,8 +53,8 @@ export default wrap(async (req, res) => {
 	const network = body?.network === 'devnet' ? 'devnet' : 'mainnet';
 
 	if (!txSignature) return error(res, 400, 'bad_request', 'tx_signature is required');
-	if (asset !== 'SOL' && asset !== 'THREE')
-		return error(res, 400, 'bad_request', 'asset must be SOL or THREE');
+	if (!DEPOSIT_ASSETS.includes(asset))
+		return error(res, 400, 'bad_request', `asset must be one of ${DEPOSIT_ASSETS.join(', ')}`);
 
 	try {
 		const result = await verifyAndCreditDeposit({ user, asset, txSignature, network });

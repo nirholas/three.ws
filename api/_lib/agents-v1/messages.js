@@ -17,13 +17,15 @@
 import { randomUUID } from 'node:crypto';
 import { sql } from '../db.js';
 import { apiError, intParam, numParam, strParam, page } from './http.js';
-import { ModelChoiceError, modelChain, resolveMessageModel } from '../agent-model.js';
+import { ModelChoiceError, resolveMessageModel } from '../agent-model.js';
+import { brainChain, ownerGrokKey } from '../agent-brain.js';
 import { isFreeLane } from '../llm-pricing.js';
 import { agentToolSchemas, agentToolHandlers } from '../agent-tools.js';
 import { agentSkillsForPrompt } from '../agent-custom-skills.js';
 import { appendThreadMessage, listThread, threadHistoryForModel } from '../agent-thread.js';
 import { AGENT_SYSTEM_NOTE, createAgentLoop, finalAnswer, initialLoopState, runLoopToEnd } from '../agent-loop.js';
 import { admitCall, chargeCall } from './billing.js';
+import { FreeTierExhaustedError, freeTierErrorBody } from '../free-tier.js';
 
 export const MAX_MESSAGE_CHARS = 8000;
 // Tool rounds per message before the model must answer, and the runtime step
@@ -88,7 +90,7 @@ function toolCallsFrom(events) {
  * Send one message and wait for the reply.
  * @param {object} agent  the owned agent_identities row
  * @param {string} userId
- * @param {object} body   { message, model?, temperature?, channel? }
+ * @param {object} body   { message, model?, temperature?, channel?, paid_fallback? }
  */
 export async function sendMessage(agent, userId, body) {
 	const message = strParam(body.message, { name: 'message', max: MAX_MESSAGE_CHARS, required: true });
@@ -101,9 +103,20 @@ export async function sendMessage(agent, userId, body) {
 	});
 	const channel = channelParam(body.channel);
 
-	const { free } = await admitCall({ userId, agent, model });
-	let { chain } = modelChain(model);
-	if (free) chain = chain.filter((p) => isFreeLane(p.name, p.catalogModel || p.model));
+	let free;
+	try {
+		({ free } = await admitCall({ userId, agent, model, paidFallback: body.paid_fallback === true }));
+	} catch (err) {
+		if (!(err instanceof FreeTierExhaustedError)) throw err;
+		// Same 429 shape as /brain and the copilot, carrying the way out: wait,
+		// top up, bring a key, or resend this call with paid_fallback: true.
+		throw apiError(429, 'free_tier_exhausted', err.message, freeTierErrorBody(err, {
+			signedIn: true,
+			paidFallback: { method: 'POST', path: `/api/v1/agents/${agent.id}/messages` },
+		}));
+	}
+	let { chain } = brainChain(model, { ownerKey: await ownerGrokKey(agent.user_id || userId) });
+	if (free) chain = chain.filter((p) => p.keySource === 'owner' || isFreeLane(p.name, p.catalogModel || p.model));
 	if (!chain.length) {
 		throw apiError(503, 'no_model_available', 'No model lane is available right now. Retry shortly, or name a paid model to use your credits.');
 	}

@@ -89,6 +89,10 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 			queuedSeconds: 0,
 			failoverFrom: null,
 			elapsedS: 0,
+			// A lane running on the user's own machine (Modly). It reports its own
+			// step text, and its result is not one of the server's saved creations.
+			local: false,
+			stepText: '',
 		};
 	}
 
@@ -160,8 +164,13 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 		out.push({
 			id: 'finish',
 			label: f.status === 'done' ? 'Model ready' : 'Finalizing the GLB',
-			detail:
-				f.status === 'done'
+			detail: f.local
+				? f.status === 'done'
+					? 'Loaded in the viewer'
+					: f.status === 'finalizing'
+						? 'Fetching the GLB from your computer and loading it into the viewer'
+						: 'Fetched from your computer, then straight into the viewer'
+				: f.status === 'done'
 					? 'Saved to your creations and loaded in the viewer'
 					: f.status === 'finalizing'
 						? 'Compressing, scoring quality and loading it into the viewer'
@@ -191,6 +200,7 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 	function meshLabel() {
 		const engine = engineLabel(f.backend || f.plannedBackend);
 		if (f.mode === 'sketch') return `Sculpting geometry from your drawing on ${engine}`;
+		if (f.local) return `Building the mesh on ${engine}`;
 		return `Sculpting the textured mesh on ${engine}`;
 	}
 
@@ -204,6 +214,8 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 		if (f.failoverFrom) {
 			return `${engineLabel(f.failoverFrom)} hit a snag, so ${engineLabel(f.backend)} picked the job up`;
 		}
+		// A local engine names the step it is on; that beats any generic copy.
+		if (f.stepText && (f.status === 'queued' || f.status === 'running')) return f.stepText;
 		if (f.status === 'queued') {
 			if (f.coldStart) return 'Waiting on a GPU worker that is still booting';
 			return f.queuedSeconds >= 8
@@ -370,9 +382,10 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 		 * Start a fresh timeline for a submission. Everything passed here is known
 		 * client-side before the request goes out; the server's answer refines it.
 		 */
-		begin({ mode, backend, viewCount = 0, localPreviewUrl = null, usesReference = true }) {
+		begin({ mode, backend, viewCount = 0, localPreviewUrl = null, usesReference = true, local = false }) {
 			f = blankFacts();
 			f.mode = mode;
+			f.local = Boolean(local);
 			f.plannedBackend = backend;
 			f.backend = backend;
 			f.viewCount = viewCount;
@@ -540,6 +553,17 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 			} else if (data.status === 'failed') {
 				f.status = 'failed';
 			}
+			paint();
+		},
+
+		/**
+		 * The step a local engine says it is on (Modly's own `step` text). Empty
+		 * text falls back to the generic stage copy. No state changes.
+		 */
+		setStepText(text) {
+			const next = String(text || '').trim().slice(0, 140);
+			if (next === f.stepText) return;
+			f.stepText = next;
 			paint();
 		},
 

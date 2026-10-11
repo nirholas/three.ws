@@ -63,8 +63,8 @@ function resolved(overrides = {}) {
 describe('toManifest gateway candidates', () => {
 	it('leaves image and body.uri exactly as they were', () => {
 		const m = toManifest(resolved({ image: `ipfs://${CID}/a.png`, glbUrl: `ipfs://${CID}/a.glb` }));
-		expect(m.image).toBe(`https://ipfs.io/ipfs/${CID}/a.png`);
-		expect(m.body.uri).toBe(`https://ipfs.io/ipfs/${CID}/a.glb`);
+		expect(m.image).toBe(`${IPFS_GATEWAYS[0]}${CID}/a.png`);
+		expect(m.body.uri).toBe(`${IPFS_GATEWAYS[0]}${CID}/a.glb`);
 	});
 
 	it('adds a retry chain whose first entry is the single URL beside it', () => {

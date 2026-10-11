@@ -118,7 +118,7 @@ const BEACON_LABEL_SCALE = 0.8;
 const BEACON_LABEL_W = 6.4 * BEACON_LABEL_SCALE;
 const BEACON_LABEL_H = 2 * BEACON_LABEL_SCALE;
 
-function makeLabelSprite(title, sub, colorHex, scale = 1) {
+export function makeLabelSprite(title, sub, colorHex, scale = 1) {
 	const material = new SpriteMaterial({
 		map: makeLabelTexture(title, sub, colorHex),
 		transparent: true,
@@ -171,7 +171,7 @@ function makeGroundTexture(sectionCount) {
 	return tex;
 }
 
-function makeSkyDome() {
+export function makeSkyDome() {
 	// Vertex-coloured dome: near-black zenith into a purple horizon glow.
 	const geo = new SphereGeometry(220, 24, 12);
 	const pos = geo.attributes.position;
@@ -194,7 +194,7 @@ function makeSkyDome() {
 	);
 }
 
-function makeStars(count = 420) {
+export function makeStars(count = 420) {
 	const positions = new Float32Array(count * 3);
 	for (let i = 0; i < count; i++) {
 		// Random point on an upper-hemisphere shell so stars never sit below the

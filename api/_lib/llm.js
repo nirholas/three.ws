@@ -959,8 +959,8 @@ export function llmConfigured(opts = {}) {
 // { userId, agentId, avatarId, clientId, apiKeyId, tool } — are all optional;
 // pass whatever the call site knows. Recording is fire-and-forget (see
 // recordEvent), so it never delays or fails the completion.
-export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, timeoutMs = 30_000, track = null }) {
-	const chain = providerChain({ anthropicKey, anthropicModel, grokKey, grokModel, preferNvidia, nvidiaModel });
+export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, timeoutMs = 30_000, track = null, chain: chainOverride = null }) {
+	const chain = chainOverride?.length ? chainOverride : providerChain({ anthropicKey, anthropicModel, grokKey, grokModel, preferNvidia, nvidiaModel });
 	if (!chain.length) throw new LlmUnavailableError();
 
 	// Per-user daily spend cap on platform-paid keys. Only runs when a userId is

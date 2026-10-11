@@ -1,36 +1,21 @@
 /**
- * X search failover: the app-only bearer rung (api/_lib/x-search.js,
- * searchMintPostsBearer) and the xAI x_search rung added as a second,
- * independent path to the same data (searchMintPostsViaXai). Covers the pure
- * parsing of both rungs' payloads, the orchestrator's failover between them,
- * and the daily cap that stops the xAI rung once reached. Payloads are
- * captured, real-shaped fixtures, not live responses.
+ * X search failover: the app-only bearer rung (api/_lib/x-search.js, private
+ * searchViaBearer) and the xAI x_search rung added as a second, independent
+ * path to the same data (searchViaXai, reached through searchMintPostsDetailed
+ * / searchMintPosts). Covers the pure parsing of both rungs' payloads, the
+ * orchestrator's failover between them, the citation check that keeps a
+ * fabricated post from being believed, and the daily cap that stops the xAI
+ * rung once reached. Payloads are captured, real-shaped fixtures, not live
+ * responses.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-const settings = new Map();
+const cache = new Map();
 
-vi.mock('../api/_lib/db.js', () => ({
-	sql: vi.fn((strings, ...values) => {
-		const text = Array.isArray(strings) ? strings.join('?') : String(strings);
-		if (text.includes('CREATE TABLE')) return Promise.resolve([]);
-		if (text.includes('SELECT value FROM app_settings')) {
-			const key = values[0];
-			const row = settings.get(key);
-			return Promise.resolve(row ? [{ value: row }] : []);
-		}
-		if (text.includes('INSERT INTO app_settings')) {
-			const key = values[0];
-			const day = values[1];
-			const prev = settings.get(key);
-			const count = prev && prev.day === day ? prev.count + 1 : 1;
-			const value = { day, count };
-			settings.set(key, value);
-			return Promise.resolve([{ count }]);
-		}
-		return Promise.resolve([]);
-	}),
+vi.mock('../api/_lib/cache.js', () => ({
+	cacheGet: vi.fn((key) => Promise.resolve(cache.has(key) ? cache.get(key) : null)),
+	cacheSet: vi.fn((key, value) => { cache.set(key, value); return Promise.resolve(); }),
 }));
 
 const xs = await import('../api/_lib/x-search.js');
@@ -38,153 +23,176 @@ const xs = await import('../api/_lib/x-search.js');
 const MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
 beforeEach(() => {
-	settings.clear();
+	cache.clear();
 	xs._resetXSearch();
 	vi.clearAllMocks();
 });
 
-// --- parseXaiSearchPayload / extractResponsesOutputText --------------------
+function responsesBody(jsonText, { citations = [] } = {}) {
+	return {
+		id: 'resp_1',
+		status: 'completed',
+		citations,
+		output: [{ type: 'message', content: [{ type: 'output_text', text: jsonText, annotations: [] }] }],
+	};
+}
 
-describe('extractResponsesOutputText', () => {
+function postsJson(posts) {
+	return JSON.stringify({ posts });
+}
+
+// --- responseText ------------------------------------------------------------
+
+describe('responseText', () => {
 	it('joins text parts across every output message', () => {
 		const payload = {
-			id: 'resp_1',
 			output: [
-				{ type: 'message', content: [{ type: 'output_text', text: '[{"id":"1"' }] },
-				{ type: 'message', content: [{ type: 'output_text', text: ',"url":"https://x.com/alice/status/1"}]' }] },
+				{ type: 'message', content: [{ type: 'output_text', text: '{"posts":[' }] },
+				{ type: 'message', content: [{ type: 'output_text', text: ']}' }] },
 			],
 		};
-		expect(xs.extractResponsesOutputText(payload)).toBe('[{"id":"1","url":"https://x.com/alice/status/1"}]');
+		expect(xs.responseText(payload)).toBe('{"posts":[]}');
 	});
 
 	it('returns empty string for a malformed body', () => {
-		expect(xs.extractResponsesOutputText({})).toBe('');
-		expect(xs.extractResponsesOutputText(null)).toBe('');
+		expect(xs.responseText({})).toBe('');
+		expect(xs.responseText(null)).toBe('');
+	});
+
+	it('prefers the top-level output_text field when present', () => {
+		expect(xs.responseText({ output_text: 'hi' })).toBe('hi');
 	});
 });
 
-describe('parseXaiSearchPayload', () => {
-	function responsesBody(jsonText) {
-		return { id: 'resp_1', status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: jsonText }] }] };
-	}
+// --- citedPostIds -------------------------------------------------------------
 
-	it('normalizes a strict-JSON x_search answer into the shared post shape', () => {
-		const body = responsesBody(JSON.stringify([
-			{ id: '1999000111', url: `https://x.com/alice/status/1999000111`, text: `the mint is ${MINT} &amp; it is live`, created_at: '2026-10-10T12:00:00.000Z', author: { username: '@alice' } },
-		]));
-		const posts = xs.parseXaiSearchPayload(body);
-		expect(posts).toEqual([{
+describe('citedPostIds', () => {
+	it('collects ids from the top-level citations list', () => {
+		const ids = xs.citedPostIds({ citations: ['https://x.com/alice/status/55500'] });
+		expect(ids.has('55500')).toBe(true);
+	});
+
+	it('collects ids from url_citation annotations on message output', () => {
+		const body = {
+			output: [{
+				type: 'message',
+				content: [{ type: 'output_text', text: '{}', annotations: [{ url: 'https://x.com/bob/status/42000' }] }],
+			}],
+		};
+		expect(xs.citedPostIds(body).has('42000')).toBe(true);
+	});
+
+	it('scans non-message output items for an x.com status url', () => {
+		const body = { output: [{ type: 'tool_call', url: 'https://twitter.com/carol/status/99000' }] };
+		expect(xs.citedPostIds(body).has('99000')).toBe(true);
+	});
+
+	it('is empty when nothing cites a post', () => {
+		expect(xs.citedPostIds({}).size).toBe(0);
+	});
+});
+
+// --- parseXaiSearchResponse ---------------------------------------------------
+
+describe('parseXaiSearchResponse', () => {
+	it('keeps a post whose id is cited and whose text contains the mint', () => {
+		const body = responsesBody(
+			postsJson([{ id: '1999000111', username: '@alice', text: `the mint is ${MINT} &amp; it is live`, created_at: '2026-10-10T12:00:00.000Z', likes: 3, reposts: 1, replies: 0, quotes: 0 }]),
+			{ citations: ['https://x.com/alice/status/1999000111'] },
+		);
+		const posts = xs.parseXaiSearchResponse(body, { mint: MINT });
+		expect(posts).toHaveLength(1);
+		expect(posts[0]).toMatchObject({
 			id: '1999000111',
 			url: 'https://x.com/alice/status/1999000111',
-			text: `the mint is ${MINT} & it is live`,
-			created_at: '2026-10-10T12:00:00.000Z',
-			author: { id: null, username: 'alice', name: null, followers: null, verified: false },
-			likes: 0,
-			reposts: 0,
-			replies: 0,
-			quotes: 0,
-			impressions: null,
-		}]);
+			author: { username: 'alice' },
+			likes: 3,
+			reposts: 1,
+		});
+		expect(posts[0].text).toContain(MINT);
+	});
+
+	it('drops a post the tool did not cite, even if the model included it', () => {
+		const body = responsesBody(postsJson([{ id: '2', username: 'eve', text: `re ${MINT}`, created_at: null, likes: 0, reposts: 0, replies: 0, quotes: 0 }]), { citations: [] });
+		expect(xs.parseXaiSearchResponse(body, { mint: MINT })).toEqual([]);
+	});
+
+	it('drops a cited post whose text does not actually quote the mint', () => {
+		const body = responsesBody(postsJson([{ id: '3', username: 'frank', text: 'unrelated post', created_at: null, likes: 0, reposts: 0, replies: 0, quotes: 0 }]), { citations: ['https://x.com/frank/status/3'] });
+		expect(xs.parseXaiSearchResponse(body, { mint: MINT })).toEqual([]);
 	});
 
 	it('strips a markdown code fence around the JSON', () => {
-		const body = responsesBody('```json\n[]\n```');
-		expect(xs.parseXaiSearchPayload(body)).toEqual([]);
+		const body = responsesBody('```json\n' + postsJson([]) + '\n```');
+		expect(xs.parseXaiSearchResponse(body, { mint: MINT })).toEqual([]);
 	});
 
-	it('derives the post id from the url when id is missing, and skips posts with neither', () => {
-		const body = responsesBody(JSON.stringify([
-			{ url: 'https://x.com/bob/status/42', text: 'no id field' },
-			{ text: 'no id and no url at all' },
-		]));
-		const posts = xs.parseXaiSearchPayload(body);
-		expect(posts).toHaveLength(1);
-		expect(posts[0].id).toBe('42');
-	});
-
-	it('throws when the model answer is not a JSON array', () => {
+	it('returns [] when the model answer is not JSON', () => {
 		const body = responsesBody('sure, here are the posts: none found');
-		expect(() => xs.parseXaiSearchPayload(body)).toThrow();
+		expect(xs.parseXaiSearchResponse(body, { mint: MINT })).toEqual([]);
+	});
+
+	it('drops a post with a malformed id or handle', () => {
+		const body = responsesBody(postsJson([{ id: 'not-numeric', username: 'ok', text: MINT, created_at: null, likes: 0, reposts: 0, replies: 0, quotes: 0 }]), { citations: ['https://x.com/ok/status/not-numeric'] });
+		expect(xs.parseXaiSearchResponse(body, { mint: MINT })).toEqual([]);
 	});
 });
 
-// --- searchMintPostsViaXai ---------------------------------------------------
+// --- buildXaiSearchRequest -----------------------------------------------------
 
-function fakeResponses(jsonText) {
-	return vi.fn(async () => ({ id: 'resp_1', status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: jsonText }] }] }));
+describe('buildXaiSearchRequest', () => {
+	it('builds a strict json_schema Responses request containing the mint', () => {
+		const req = xs.buildXaiSearchRequest(MINT, { maxResults: 10, now: Date.parse('2026-10-11T00:00:00.000Z') });
+		expect(req.tools).toEqual([{ type: 'x_search' }]);
+		expect(req.text.format).toMatchObject({ type: 'json_schema', name: 'x_posts', strict: true });
+		expect(req.input.some((m) => typeof m.content === 'string' && m.content.includes(MINT))).toBe(true);
+	});
+
+	it('clamps from_date to the 7 day search window', () => {
+		const now = Date.parse('2026-10-11T00:00:00.000Z');
+		const req = xs.buildXaiSearchRequest(MINT, { sinceIso: '2020-01-01T00:00:00.000Z', now });
+		const floor = new Date(now - 7 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+		expect(req.tools[0].from_date).toBe(floor);
+	});
+});
+
+// --- searchMintPostsDetailed / searchMintPosts orchestrator (failover) --------
+
+function fakeResponses(jsonText, { citations = [] } = {}) {
+	return vi.fn(async () => new Response(JSON.stringify(responsesBody(jsonText, { citations })), {
+		status: 200,
+		headers: { 'content-type': 'application/json' },
+	}));
 }
 
-describe('searchMintPostsViaXai', () => {
-	it('throws not_configured without a key', async () => {
-		await expect(xs.searchMintPostsViaXai(MINT, { env: {}, fetchImpl: fakeResponses('[]') }))
-			.rejects.toMatchObject({ name: 'XSearchUnavailable', reason: 'not_configured' });
-	});
-
-	it('returns parsed posts on a real-shaped Responses API payload', async () => {
-		const fetchImpl = fakeResponses(JSON.stringify([
-			{ id: '555', url: 'https://x.com/carol/status/555', text: `holding ${MINT}`, created_at: '2026-10-11T00:00:00.000Z', author: { username: 'carol' } },
-		]));
-		const posts = await xs.searchMintPostsViaXai(MINT, { env: { GROK_API_KEY: 'xai-test-key' }, fetchImpl });
-		expect(posts).toHaveLength(1);
-		expect(posts[0]).toMatchObject({ id: '555', url: 'https://x.com/carol/status/555', author: { username: 'carol' } });
-		expect(fetchImpl).toHaveBeenCalledTimes(1);
-		const [url, init] = fetchImpl.mock.calls[0];
-		expect(url).toBe('https://api.x.ai/v1/responses');
-		expect(init.headers.authorization).toBe('Bearer xai-test-key');
-		const body = JSON.parse(init.body);
-		expect(body.tools).toEqual([{ type: 'x_search', to_date: expect.any(String) }]);
-		expect(body.input[0].content).toContain(MINT);
-	});
-
-	it('maps a 429 to rate_limited', async () => {
-		const fetchImpl = vi.fn(async () => { const e = new Error('rate limited'); e.status = 429; throw e; });
-		await expect(xs.searchMintPostsViaXai(MINT, { env: { XAI_API_KEY: 'k' }, fetchImpl }))
-			.rejects.toMatchObject({ reason: 'rate_limited' });
-	});
-
-	it('maps an unparseable answer to upstream_error without losing the usage count', async () => {
-		const fetchImpl = fakeResponses('not json at all');
-		await expect(xs.searchMintPostsViaXai(MINT, { env: { XAI_API_KEY: 'k' }, fetchImpl }))
-			.rejects.toMatchObject({ reason: 'upstream_error' });
-		expect(await xs.xaiSearchUsageToday()).toBe(1);
-	});
-
-	it('stops the rung once the daily cap is reached', async () => {
-		const fetchImpl = fakeResponses('[]');
-		const env = { XAI_API_KEY: 'k', XAI_X_SEARCH_DAILY_CAP: '2' };
-		await xs.searchMintPostsViaXai(MINT, { env, fetchImpl });
-		await xs.searchMintPostsViaXai(MINT, { env, fetchImpl });
-		expect(await xs.xaiSearchUsageToday()).toBe(2);
-
-		await expect(xs.searchMintPostsViaXai(MINT, { env, fetchImpl }))
-			.rejects.toMatchObject({ reason: 'xai_daily_cap' });
-		expect(fetchImpl).toHaveBeenCalledTimes(2); // the capped call never reached the network
-	});
-});
-
-// --- searchMintPosts orchestrator (failover) --------------------------------
-
-describe('searchMintPosts failover', () => {
-	it('never calls the xAI rung when the bearer rung answers', async () => {
+describe('searchMintPostsDetailed / searchMintPosts failover', () => {
+	it('never calls the xAI rung when the bearer rung answers, and reports rung "bearer"', async () => {
 		const bearerFetch = vi.fn(async () => new Response(JSON.stringify({ data: [] }), { status: 200, headers: { 'content-type': 'application/json' } }));
-		const posts = await xs.searchMintPosts(MINT, { env: { X_BEARER_TOKEN: 'bt' }, fetchImpl: bearerFetch });
-		expect(posts).toEqual([]);
+		const result = await xs.searchMintPostsDetailed(MINT, { env: { X_BEARER_TOKEN: 'bt' }, fetchImpl: bearerFetch });
+		expect(result.posts).toEqual([]);
+		expect(result.rung).toBe('bearer');
 		expect(bearerFetch).toHaveBeenCalledTimes(1);
 	});
 
-	it('falls over to the xAI rung when the bearer rung is not configured', async () => {
-		const xaiFetch = fakeResponses(JSON.stringify([
-			{ id: '7', url: 'https://x.com/dave/status/7', text: `re: ${MINT}`, author: { username: 'dave' } },
-		]));
-		// searchMintPosts shares one `fetchImpl` across both rungs; the bearer
-		// rung never configured means it throws before using fetchImpl at all.
-		const posts = await xs.searchMintPosts(MINT, { env: { XAI_API_KEY: 'k' }, fetchImpl: xaiFetch });
-		expect(posts).toHaveLength(1);
-		expect(posts[0].author.username).toBe('dave');
+	it('falls over to the xAI rung when the bearer rung is not configured, and reports rung "xai"', async () => {
+		const xaiFetch = fakeResponses(
+			postsJson([{ id: '70007', username: 'dave', text: `re: ${MINT}`, created_at: null, likes: 0, reposts: 0, replies: 0, quotes: 0 }]),
+			{ citations: ['https://x.com/dave/status/70007'] },
+		);
+		const result = await xs.searchMintPostsDetailed(MINT, { env: { XAI_API_KEY: 'k' }, fetchImpl: xaiFetch });
+		expect(result.rung).toBe('xai');
+		expect(result.posts).toHaveLength(1);
+		expect(result.posts[0].author.username).toBe('dave');
+	});
+
+	it('searchMintPosts returns just the posts array', async () => {
+		const bearerFetch = vi.fn(async () => new Response(JSON.stringify({ data: [] }), { status: 200, headers: { 'content-type': 'application/json' } }));
+		const posts = await xs.searchMintPosts(MINT, { env: { X_BEARER_TOKEN: 'bt' }, fetchImpl: bearerFetch });
+		expect(posts).toEqual([]);
 	});
 
 	it('throws the bearer error when neither rung is configured', async () => {
-		await expect(xs.searchMintPosts(MINT, { env: {} }))
+		await expect(xs.searchMintPostsDetailed(MINT, { env: {} }))
 			.rejects.toMatchObject({ name: 'XSearchUnavailable', reason: 'not_configured' });
 	});
 
@@ -195,10 +203,30 @@ describe('searchMintPosts failover', () => {
 			if (url.startsWith('https://api.twitter.com')) {
 				return new Response('', { status: 429, headers: {} });
 			}
-			return { id: 'resp_1', status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: '[]' }] }] };
+			return new Response(JSON.stringify(responsesBody(postsJson([]))), { status: 200, headers: { 'content-type': 'application/json' } });
 		});
-		const posts = await xs.searchMintPosts(MINT, { env: { X_BEARER_TOKEN: 'bt', XAI_API_KEY: 'k' }, fetchImpl });
-		expect(posts).toEqual([]);
+		const result = await xs.searchMintPostsDetailed(MINT, { env: { X_BEARER_TOKEN: 'bt', XAI_API_KEY: 'k' }, fetchImpl });
+		expect(result.posts).toEqual([]);
+		expect(result.rung).toBe('xai');
 		expect(calls).toBe(2); // bearer attempt, then the xAI rung
+	});
+
+	it('stops the xAI rung once the daily cap is reached', async () => {
+		const fetchImpl = fakeResponses(postsJson([]));
+		const env = { XAI_API_KEY: 'k', XAI_X_SEARCH_DAILY_CAP: '2' };
+		await xs.searchMintPostsDetailed(MINT, { env, fetchImpl });
+		await xs.searchMintPostsDetailed(MINT, { env, fetchImpl });
+		const stats = await xs.xSearchStats();
+		expect(stats.xai).toBe(2);
+
+		await expect(xs.searchMintPostsDetailed(MINT, { env, fetchImpl }))
+			.rejects.toMatchObject({ reason: 'xai_daily_cap' });
+		expect(fetchImpl).toHaveBeenCalledTimes(2); // the capped call never reached the network
+	});
+
+	it('maps a 429 from xAI to rate_limited', async () => {
+		const fetchImpl = vi.fn(async () => new Response('', { status: 429, headers: {} }));
+		await expect(xs.searchMintPostsDetailed(MINT, { env: { XAI_API_KEY: 'k' }, fetchImpl }))
+			.rejects.toMatchObject({ reason: 'rate_limited' });
 	});
 });

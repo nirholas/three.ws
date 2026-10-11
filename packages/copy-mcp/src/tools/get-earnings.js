@@ -16,9 +16,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_earnings',
 	title: 'Copy-trade earnings & fees owed',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Read copy-trade performance-fee accounting. Without agent_id: the authenticated account\'s own fees OWED across every leader they copy — a total plus a per-subscription breakdown (cumulative realized copy profit, closed copies, billable profit above the high-water mark, and the fee). With agent_id: a leader\'s PUBLIC aggregate earnings (active copiers, accrued fee, total copier profit) — the social-proof figure, no per-copier identity exposed and no API key required. All figures are real: realized copy profit above each subscription\'s high-water mark at the leader\'s fee, settled in $THREE. Read-only.',
+		'Read copy-trade performance-fee accounting. Without agent_id: the authenticated account\'s own fees OWED across every leader they copy: a total plus a per-subscription breakdown (cumulative realized copy profit, closed copies, billable profit above the high-water mark, and the fee). With agent_id: a leader\'s PUBLIC aggregate earnings (active copiers, accrued fee, total copier profit). This is the social-proof figure: no per-copier identity exposed and no API key required. All figures are real: realized copy profit above each subscription\'s high-water mark at the leader\'s fee, settled in $THREE. Read-only. Use this to see the fees you owe the leaders you copy, or to check a leader\'s copy track record before following them with create_subscription.',
 	inputSchema: {
 		agent_id: z
 			.string()

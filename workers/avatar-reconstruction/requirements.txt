@@ -14,7 +14,11 @@ opencv-python-headless>=4.9.0
 
 # ── Background removal ────────────────────────────────────────────────────────
 # [gpu] pulls in onnxruntime-gpu so rembg uses CUDA when the L4 is present.
-rembg[gpu]==2.0.56
+# 2.0.59 clears the 2.0.57-and-earlier CORS/SSRF advisories. The fixes for the
+# rest landed in 2.0.75, which needs Python 3.11 and numpy 2.3; this image is
+# Python 3.10 with mediapipe holding numpy<2. All of them live in rembg's own
+# HTTP server (`rembg s`), which this worker never starts: it calls rembg.remove.
+rembg[gpu]==2.0.59
 
 # ── Mesh operations (UV pre-computation, runs once at build time) ─────────────
 trimesh==4.4.0
@@ -22,7 +26,7 @@ trimesh==4.4.0
 # ── HTTP ──────────────────────────────────────────────────────────────────────
 # requests: build-time UV-map download (precompute_uv.py) from a fixed GitHub URL.
 # httpx: runtime SSRF-hardened image fetches via worker_security.fetch_remote_bytes.
-requests==2.32.3
+requests==2.33.1
 httpx==0.28.1
 
 # ── Server ────────────────────────────────────────────────────────────────────

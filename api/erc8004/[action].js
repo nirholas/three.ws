@@ -30,6 +30,7 @@ import { fetchSafePublicUrlPinned, SsrfBlockedError, MaxBytesExceededError } fro
 import { redactUrlSecrets } from '../_lib/scrub-secrets.js';
 
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { IPFS_GATEWAYS, ipfsPath } from '../_lib/ipfs-gateways.js';
 export default wrap(async (req, res) => {
 	const action = req.query?.action;
 
@@ -469,9 +470,11 @@ async function handleMetadataProxy(req, res) {
 	if (!raw) return error(res, 400, 'bad_request', 'uri is required');
 
 	// Resolve the decentralized-storage schemes to their public gateways, the
-	// same mapping the client applies before it ever reaches this endpoint.
+	// same mapping the client applies before it ever reaches this endpoint. A URL
+	// already pinned to a gateway is re-pointed too, since some stopped serving.
 	let url = raw;
-	if (raw.startsWith('ipfs://')) url = 'https://ipfs.io/ipfs/' + raw.slice(7);
+	const cidPath = ipfsPath(raw);
+	if (cidPath) url = IPFS_GATEWAYS[0] + cidPath;
 	else if (raw.startsWith('ar://')) url = 'https://arweave.net/' + raw.slice(5);
 
 	if (!/^https?:\/\//i.test(url)) {
@@ -635,7 +638,7 @@ async function uploadToWeb3Storage(token, ext, body, ct) {
 	// web3.storage and nft.storage guarantee content-addressable uploads:
 	// same bytes → same CID every time, idempotent by design.
 	const uri = `ipfs://${cid}/${filename}`;
-	const url = `https://w3s.link/ipfs/${cid}/${filename}`;
+	const url = `${IPFS_GATEWAYS[0]}${cid}/${filename}`;
 
 	return { cid, uri, url };
 }
@@ -663,7 +666,7 @@ async function uploadToNftStorage(token, ext, body, ct) {
 
 	// nft.storage guarantees content-addressable uploads: same bytes → same CID.
 	const uri = `ipfs://${cid}/${filename}`;
-	const url = `https://w3s.link/ipfs/${cid}/${filename}`;
+	const url = `${IPFS_GATEWAYS[0]}${cid}/${filename}`;
 
 	return { cid, uri, url };
 }

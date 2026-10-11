@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<script src="/referral-capture.js"></script>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Squad Chat · three.ws</title>
+		<meta name="description" content="Tell your squad what you want in one sentence. The coordinator plans it as role-tagged steps, the specialists run them live, and anything that signs, sends or launches waits for your approval." />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Squad Chat · three.ws" />
+		<meta property="og:description" content="One sentence in, a plan of specialist steps out. Research, entry checks and trades run live; anything that signs pauses for your approval and resumes with receipts." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Squad+Chat&amp;d=One+sentence+in%2C+a+plan+of+specialist+steps+out.+Anything+that+signs+waits+for+you.&amp;p=%2Fteam-chat" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<meta name="robots" content="index, follow, max-image-preview:large" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/teams.css" />
+		<link rel="stylesheet" href="/src/team-chat.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="tm tc" id="tcRoot" aria-busy="true">
+			<div id="tcContent">
+				<div class="tm-stack">
+					<div class="tm-skel" style="height:72px"></div>
+					<div class="tm-skel" style="height:160px"></div>
+					<div class="tm-skel" style="height:320px"></div>
+				</div>
+			</div>
+		</main>
+
+		<dialog class="tm-dialog" id="tcConfirm" aria-labelledby="tcConfirmTitle">
+			<form method="dialog" class="tm-dialog-inner">
+				<div class="tm-dialog-head">
+					<h2 id="tcConfirmTitle">Confirm</h2>
+					<button type="submit" value="cancel" class="tm-x" aria-label="Close">×</button>
+				</div>
+				<div class="tm-dialog-body" id="tcConfirmBody"></div>
+				<div class="tm-dialog-foot">
+					<button type="submit" value="cancel" class="tm-btn">Cancel</button>
+					<button type="submit" value="ok" class="tm-btn primary" id="tcConfirmOk">Confirm</button>
+				</div>
+			</form>
+		</dialog>
+
+		<div id="tcToast" class="tm-toast" role="status" aria-live="polite"></div>
+
+		<script type="module" src="/src/team-chat.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

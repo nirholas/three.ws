@@ -74,18 +74,22 @@ async function sendIxs(conn, feePayer, signers, instructions, { confirmMs = 30_0
 }
 
 /** SOL balance in lamports (0 for a never-seen account), or null when unreadable. */
+// readAccountInfoOrNull({ withCause: true }) always resolves to { info, cause }:
+// info === null with no cause is an account that does not exist, a cause is an
+// RPC transport failure. Reading the wrapper itself as the account reported 0
+// lamports for every wallet and kept the lane on funder_headroom forever.
 export async function readSolLamports(conn, pubkey) {
-	const info = await readAccountInfoOrNull(conn, pubkey, { commitment: 'confirmed', withCause: true });
-	if (info === null) return 0;
-	if (info === undefined) return null;
+	const { info, cause } = await readAccountInfoOrNull(conn, pubkey, { commitment: 'confirmed', withCause: true });
+	if (cause) return null;
+	if (!info) return 0;
 	return Number(info.lamports || 0);
 }
 
 /** USDC held by an owner's ATA: { exists, atomic } or null when unreadable. */
 export async function readUsdc(conn, ata) {
-	const info = await readAccountInfoOrNull(conn, ata, { commitment: 'confirmed', withCause: true });
-	if (info === null) return { exists: false, atomic: 0n };
-	if (info === undefined) return null;
+	const { info, cause } = await readAccountInfoOrNull(conn, ata, { commitment: 'confirmed', withCause: true });
+	if (cause) return null;
+	if (!info) return { exists: false, atomic: 0n };
 	return { exists: true, atomic: tokenAmountFromAccountData(info.data) };
 }
 

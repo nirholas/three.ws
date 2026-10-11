@@ -89,6 +89,7 @@ async function handleGet(req, res) {
 		  ON pw.user_id = ap.owner_user_id
 		 AND pw.chain = ap.chain
 		 AND pw.is_default = true
+		 AND pw.approved_at IS NOT NULL AND pw.effective_at <= now()
 		WHERE ap.item_type = ${itemType} AND ap.item_id = ${itemId} AND ap.is_active = true
 		ORDER BY pw.created_at ASC
 		LIMIT 1

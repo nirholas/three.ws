@@ -240,6 +240,14 @@ free with a `422` and a caller never pays for something that was going to be
 rejected. The 402 then quotes that token's own total, because every print is its
 own object with its own price.
 
+An agent has no session, so to get the `$THREE` holder discount it names the
+wallet it will pay from as `payerWallet` in the quote request, and the tier is
+read from that wallet's own on-chain holdings. A discounted quote is then bound
+to that wallet: the token carries it, and checkout refuses a payment from any
+other wallet with `403 quote_wallet_mismatch` before anything settles, so naming
+a large holder's wallet buys nothing. Leave `payerWallet` out to quote at list
+price and pay from any wallet.
+
 ```bash
 # 1. Quote (free, keyless). Keep `token` from the response.
 curl -s https://three.ws/api/print/quote \

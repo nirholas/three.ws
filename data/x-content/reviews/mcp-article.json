@@ -1,39 +1,58 @@
 {
 	"id": "mcp-article",
-	"contentHash": "d09851ce31b2f4af94bd01e55b5b5f5d95c6a3dd86a1811f0e2ef8f1b86e3f2f",
-	"reviewedAt": "2026-10-08T04:36:54.710Z",
-	"passed": false,
-	"blockers": [
-		"evidence:page https://three.ws/docs/mcp-studio: live page does not show \"All eleven are free and keyless.\"",
-		"evidence:file docs/mcp-studio.md: file does not contain \"`tools/list` returns exactly **eleven** tools\"",
-		"evidence:page https://three.ws/docs/mcp-studio: live page does not show \"All eleven are free and keyless.\"",
-		"probe:api the free server still lists eleven tools to a keyless client: result.tools.length is 14",
-		"probe:browser the docs page says all eleven tools are free: locator.waitFor: Timeout 45000ms exceeded.",
-		"editor (accuracy): The count failed verification three ways: the live docs page does not show \"All eleven are free and keyless.\", docs/mcp-studio.md no longer contains \"`tools/list` returns exactly **eleven** tools\", and the live probe of the MCP server returned result.tools.length is 14, not 11. The product has changed and the copy is stale. Every article section built on \"eleven\" (the title, \"What the eleven tools do\", \"not one of these eleven tools\") and the session screenshot alt text (\"lists all eleven tools\") is wrong against the live server.",
-		"editor (visual): The session image (session.png) shows a tools/list of eleven; the live server now returns fourteen. Per the source-of-truth rule the screenshot is stale, and the fix is to recapture, not to edit the copy to match.",
-		"editor verdict is revise"
-	],
+	"contentHash": "274e174344b45f0ad3efa61b7fe2f3be94c7bcf569a6faec30e0673e30bc6037",
+	"reviewedAt": "2026-10-09T17:16:56.619Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
-		"Eleven free 3D tools for Claude Code and any MCP client, from one address",
-		"Add one address to Claude Code or any MCP client and the assistant gets eleven free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, and look_at_model, which renders a model so the assistant can check its own work. The write-up includes a real session against the server."
+		"Fifteen free 3D tools for Claude Code and any MCP client, from one address",
+		"Add one address to Claude Code or any MCP client and the assistant gets fifteen free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, a search of the free asset catalog, a persistent agent body that speaks, and look_at_model, which renders a model so the assistant can check its own work. The write-up includes a real session against the server."
 	],
 	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
-				"claim": "Eleven free 3D tools",
-				"kind": "evidence:page",
-				"target": "https://three.ws/docs/mcp-studio",
-				"ok": false,
-				"detail": "live page does not show \"All eleven are free and keyless.\""
-			},
-			{
-				"claim": "Eleven free 3D tools",
+				"claim": "Fifteen free 3D tools",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": false,
-				"detail": "file does not contain \"`tools/list` returns exactly **eleven** tools\""
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Fifteen free 3D tools",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "fifteen free tools for 3D work",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "fifteen free tools for 3D work",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "What the fifteen tools do",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "What the fifteen tools do",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
 			},
 			{
 				"claim": "with no account or key",
@@ -50,6 +69,34 @@
 				"detail": "file supports the claim"
 			},
 			{
+				"claim": "a search of the free asset catalog",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a search of the free asset catalog",
+				"kind": "evidence:file",
+				"target": "api/_mcp/tools/library.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a persistent agent body that speaks",
+				"kind": "evidence:file",
+				"target": "api/_mcp-studio/persona-tools.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a persistent agent body that speaks",
+				"kind": "evidence:file",
+				"target": "api/_mcp-studio/persona-tools.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
 				"claim": "renders a model so the assistant can check its own work",
 				"kind": "evidence:file",
 				"target": "api/_mcp-studio/tools.js",
@@ -58,15 +105,43 @@
 			},
 			{
 				"claim": "runs an MCP server that needs no account and no API key",
-				"kind": "evidence:page",
-				"target": "https://three.ws/docs/mcp-studio",
-				"ok": false,
-				"detail": "live page does not show \"All eleven are free and keyless.\""
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
 			},
 			{
 				"claim": "runs an MCP server that needs no account and no API key",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "search a catalog of ready-made assets",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "search a catalog of ready-made assets",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "give the assistant a persistent body that speaks",
+				"kind": "evidence:file",
+				"target": "api/_mcp-studio/persona-tools.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "give the assistant a persistent body that speaks",
+				"kind": "evidence:file",
+				"target": "api/_mcp-studio/persona-tools.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
@@ -107,6 +182,13 @@
 			},
 			{
 				"claim": "Any other client only needs to know that the server speaks MCP over Streamable HTTP, protocol version 2025-06-18, and answers every request synchronously over POST",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "forge_free turns a text prompt into a textured GLB",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
@@ -176,6 +258,55 @@
 				"detail": "file supports the claim"
 			},
 			{
+				"claim": "check_job collects a generation that outlived the tool call that started it",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "get_job reports the same job as a status a script can branch on, with progress and the seconds that remain",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "get_job reports the same job as a status a script can branch on, with progress and the seconds that remain",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "get_job reports the same job as a status a script can branch on, with progress and the seconds that remain",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "search the platform's free asset catalog of CC0 props, rigged characters and motion clips, read one item in full, and return paste-ready code that renders it on any site",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "search the platform's free asset catalog of CC0 props, rigged characters and motion clips, read one item in full, and return paste-ready code that renders it on any site",
+				"kind": "evidence:file",
+				"target": "api/_mcp/tools/library.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "search the platform's free asset catalog of CC0 props, rigged characters and motion clips, read one item in full, and return paste-ready code that renders it on any site",
+				"kind": "evidence:file",
+				"target": "api/_mcp/tools/library.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
 				"claim": "save a rigged model as a persistent agent body, reload it by id in a later session, and speak a reply through it with lip-sync, emotion and gesture",
 				"kind": "evidence:file",
 				"target": "api/_mcp-studio/persona-tools.js",
@@ -218,16 +349,72 @@
 				"detail": "live page shows \"\"license\":\"CC0\"\""
 			},
 			{
-				"claim": "The server marks look_at_model as read-only, alongside get_agent_persona",
+				"claim": "The server marks five of the fifteen tools read-only: look_at_model, the three catalog tools and get_agent_persona",
 				"kind": "evidence:file",
 				"target": "api/_mcp-studio/tools.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The server marks look_at_model as read-only, alongside get_agent_persona",
+				"claim": "The server marks five of the fifteen tools read-only: look_at_model, the three catalog tools and get_agent_persona",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The server marks five of the fifteen tools read-only: look_at_model, the three catalog tools and get_agent_persona",
+				"kind": "evidence:file",
+				"target": "api/_mcp/tools/library.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The server marks five of the fifteen tools read-only: look_at_model, the three catalog tools and get_agent_persona",
 				"kind": "evidence:file",
 				"target": "api/_mcp-studio/persona-tools.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The server marks five of the fifteen tools read-only: look_at_model, the three catalog tools and get_agent_persona",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "look_at_model changes nothing on the server",
+				"kind": "evidence:file",
+				"target": "api/_mcp-studio/tools.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "look_at_model changes nothing on the server",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the four plain links that come with any model result (viewer, GLB, poster PNG and embed HTML)",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the four plain links that come with any model result (viewer, GLB, poster PNG and embed HTML)",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the four plain links that come with any model result (viewer, GLB, poster PNG and embed HTML)",
+				"kind": "evidence:file",
+				"target": "api/_mcp-studio/tools.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
@@ -323,6 +510,20 @@
 				"detail": "file supports the claim"
 			},
 			{
+				"claim": "its structured result carries a link that opens the same model in the browser viewer",
+				"kind": "evidence:file",
+				"target": "api/_mcp-studio/asset-links.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "its structured result carries a link that opens the same model in the browser viewer",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
 				"claim": "four generations a minute and 30 an hour",
 				"kind": "evidence:file",
 				"target": "api/_lib/rate-limit.js",
@@ -351,7 +552,21 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "check_job never counts against it",
+				"claim": "check_job and the catalog tools never count against it",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "check_job and the catalog tools never count against it",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "check_job and the catalog tools never count against it",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
@@ -386,31 +601,45 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The catalog search tools live on the platform's main MCP server, which asks a full MCP client to sign in when it connects",
+				"claim": "The platform's main MCP server lists the same three, but a full MCP client that connects there is sent through sign-in first",
 				"kind": "evidence:file",
-				"target": "api/_mcp/dispatch.js",
+				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The catalog search tools live on the platform's main MCP server, which asks a full MCP client to sign in when it connects",
+				"claim": "The platform's main MCP server lists the same three, but a full MCP client that connects there is sent through sign-in first",
 				"kind": "evidence:file",
-				"target": "api/_mcp/auth.js",
+				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "A plain JSON-RPC call to that search answers without a key",
+				"claim": "With no account, the free server is where a client reaches the catalog",
 				"kind": "evidence:file",
-				"target": "api/_mcp/dispatch.js",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "With no account, the free server is where a client reaches the catalog",
+				"kind": "evidence:file",
+				"target": "api/_mcp-studio/catalog-tools.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the server's own instructions tell the assistant to search it before generating anything",
+				"kind": "evidence:file",
+				"target": "api/_mcp-studio/dispatch.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
 				"kind": "probe:api",
-				"target": "the free server still lists eleven tools to a keyless client",
-				"ok": false,
-				"detail": "result.tools.length is 14"
+				"target": "the free server still lists fifteen tools to a keyless client",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
 			},
 			{
 				"kind": "probe:api",
@@ -432,9 +661,9 @@
 			},
 			{
 				"kind": "probe:browser",
-				"target": "the docs page says all eleven tools are free",
-				"ok": false,
-				"detail": "locator.waitFor: Timeout 45000ms exceeded."
+				"target": "the docs page says the tools are free and keyless",
+				"ok": true,
+				"detail": "2 steps passed"
 			},
 			{
 				"kind": "link",
@@ -463,47 +692,33 @@
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
-			"accuracy": 2,
+			"accuracy": 5,
 			"clarity": 4,
-			"specificity": 4,
+			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 3
+			"visual": 5
 		},
 		"issues": [
 			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "eleven free 3D tools",
-				"problem": "The count failed verification three ways: the live docs page does not show \"All eleven are free and keyless.\", docs/mcp-studio.md no longer contains \"`tools/list` returns exactly **eleven** tools\", and the live probe of the MCP server returned result.tools.length is 14, not 11. The product has changed and the copy is stale. Every article section built on \"eleven\" (the title, \"What the eleven tools do\", \"not one of these eleven tools\") and the session screenshot alt text (\"lists all eleven tools\") is wrong against the live server.",
-				"fix": "Do not publish any count until the docs and article are re-verified against the live server. Recapture the session screenshot so it shows the current tools/list response, update docs/mcp-studio.md and the docs page to the true count, and re-run the probe. In the X post, drop the number entirely and say \"free 3D tools\", which is supported by the passing keyless-handshake probe and the passing per-tool evidence. The article needs the same treatment before it ships: its headline and tool-list section claim eleven."
-			},
-			{
-				"severity": "blocking",
-				"area": "visual",
-				"quote": "lists all eleven tools with the two read-only ones marked",
-				"problem": "The session image (session.png) shows a tools/list of eleven; the live server now returns fourteen. Per the source-of-truth rule the screenshot is stale, and the fix is to recapture, not to edit the copy to match.",
-				"fix": "Re-run the documented session against https://three.ws/api/mcp-studio with no credentials and recapture session.png so the tool list matches the live response; update its alt text to match what the new frame actually shows."
-			},
-			{
-				"severity": "major",
-				"area": "accuracy",
-				"quote": "one address",
-				"problem": "Harmless in itself, but it rides on the same claims block whose headline number failed; confirm the connector instructions in docs/prompts.md still reflect the current server after the tool-count fix lands.",
-				"fix": "Re-verify docs/prompts.md against the live server after the docs are corrected; no text change needed in the post."
+				"severity": "minor",
+				"area": "clarity",
+				"quote": "text or an image to a textured model, rigged avatars, rigging, refinement, a search of the free asset catalog, a persistent agent body that speaks",
+				"problem": "The head post compresses fifteen tools into one long comma list, so the individual capabilities blur together slightly for a first-time reader.",
+				"fix": "Optional: split the list with semicolons, e.g. \"text or an image to a textured model; rigged avatars; rigging; refinement; a search of the free asset catalog; a persistent agent body that speaks; and look_at_model, which renders a model so the assistant can check its own work.\""
 			}
 		],
 		"rewrite": {
 			"posts": [
-				"Add one address to Claude Code or any MCP client and the assistant gets a set of free 3D tools, with no account or key: text or an image to a textured GLB, rigged and animation-ready avatars, rigging a model you already have, refinement by describing the change, and look_at_model, which renders up to six angles of any public GLB so the assistant can check its own work and regenerate with the fault named. The write-up includes a real session run against the server with no credentials."
+				"Add one address to Claude Code or any MCP client and the assistant gets fifteen free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, a search of the free asset catalog, a persistent agent body that speaks, and look_at_model, which renders a model so the assistant can check its own work. The write-up includes a real session against the server."
 			],
 			"altText": [
-				"A vintage film camera rendered in the browser 3D viewer against a dark background, seen from the front three-quarter angle with its three-lens turret, speed dial and textured olive body; the model is the one the look_at_model tool inspected in the session described in the article"
+				"A vintage film camera rendered in the browser 3D viewer against a dark background, seen from the front three-quarter angle with its three-lens turret, speed dial and textured olive body; it is the CC0 catalog model the look_at_model tool rendered in the session the article walks through, one of the fifteen free tools on the server"
 			]
 		},
-		"summary": "The post's central number is wrong against the live product: the server now lists fourteen tools, the docs no longer say eleven, and the session screenshot is stale. Everything else verified; strip the count from the post, then update the docs, recapture the session image, and re-verify before the article ships.",
+		"summary": "Every claim in the post and article matches a passing verification, including the live probes of the keyless server and the 18,682-triangle camera reading, and the cover image matches the described session. Voice, professionalism, and the alt text all conform to the contract; the only nit is a slightly dense comma list in the summary, which is not worth holding the post.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
@@ -511,8 +726,11 @@
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
 		"rewriteFindings": [
-			"claims: claim \"renders a model so the assistant can check its own work\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"fifteen free tools for 3D work\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"What the fifteen tools do\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"runs an MCP server that needs no account and no API key\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"search a catalog of ready-made assets\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"give the assistant a persistent body that speaks\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"the tools are there the next time a session starts\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"the address goes in as a custom connector with authentication set to None\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Any other client only needs to know that the server speaks MCP over Streamable HTTP, protocol version 2025-06-18, and answers every request synchronously over POST\" does not appear in the copy; claims must quote the post",
@@ -523,10 +741,14 @@
 			"claims: claim \"forge_avatar generates a rigged, animation-ready avatar in one call\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"returns the refined model with its version lineage\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"check_job collects a generation that outlived the tool call that started it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"get_job reports the same job as a status a script can branch on, with progress and the seconds that remain\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"search the platform's free asset catalog of CC0 props, rigged characters and motion clips, read one item in full, and return paste-ready code that renders it on any site\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"save a rigged model as a persistent agent body, reload it by id in a later session, and speak a reply through it with lip-sync, emotion and gesture\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"We used the official MCP TypeScript SDK to connect with no credentials at all\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"a CC0 film camera from the platform's free asset catalog\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The server marks look_at_model as read-only, alongside get_agent_persona\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The server marks five of the fifteen tools read-only: look_at_model, the three catalog tools and get_agent_persona\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"look_at_model changes nothing on the server\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the four plain links that come with any model result (viewer, GLB, poster PNG and embed HTML)\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Rendered this model from 4 angle(s): three-quarter, front, side, back\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Geometry: 18,682 triangles\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Before this tool, an assistant that generated a model could hand you a link and had no way to check its own work\" does not appear in the copy; claims must quote the post",
@@ -539,12 +761,13 @@
 			"claims: claim \"its structured result carries a link that opens the same model in the browser viewer\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"four generations a minute and 30 an hour\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"look_at_model rides the same quota, because it renders frames on the server\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"check_job never counts against it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"check_job and the catalog tools never count against it\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"the call returns a pending job, and check_job collects it later rather than letting it be lost\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"runs on a self-hosted GPU worker that scales to zero\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"the call degrades to standard rather than failing the conversation\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The catalog search tools live on the platform's main MCP server, which asks a full MCP client to sign in when it connects\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A plain JSON-RPC call to that search answers without a key\" does not appear in the copy; claims must quote the post"
+			"claims: claim \"The platform's main MCP server lists the same three, but a full MCP client that connects there is sent through sign-in first\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"With no account, the free server is where a client reaches the catalog\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the server's own instructions tell the assistant to search it before generating anything\" does not appear in the copy; claims must quote the post"
 		]
 	},
 	"editorError": null

@@ -29,9 +29,9 @@ generation quota:
 
 | URL | Serves | Use it for |
 |---|---|---|
-| `https://three.ws/api/mcp-studio` | all fourteen tools (the 3D tools, the asset catalog, the persona tools), both widgets | any MCP host, including a ChatGPT developer-mode connector |
-| `https://three.ws/api/mcp-chatgpt` | the eight 3D tools and the model viewer | the ChatGPT plugin directory listing |
-| `https://three.ws/api/mcp-grok` | all fourteen tools, every call answered within 40 s, quota per MCP session | Grok Bot, Grok connectors and the xAI Responses API ([guide](./grok.md)) |
+| `https://three.ws/api/mcp-studio` | all fifteen tools (the 3D tools, the asset catalog, the persona tools), both widgets | any MCP host, including a ChatGPT developer-mode connector |
+| `https://three.ws/api/mcp-chatgpt` | the nine 3D tools and the model viewer | the ChatGPT plugin directory listing |
+| `https://three.ws/api/mcp-grok` | all fifteen tools, every call answered within 40 s, quota per MCP session | Grok Bot, Grok connectors and the xAI Responses API ([guide](./grok.md)) |
 
 The ChatGPT surface leaves out the three catalog tools, which keeps that listing's reviewed tool set unchanged, and the three persona tools, because their widget
 frames the hosted embodiment page, which needs `frameDomains`. OpenAI's app
@@ -140,9 +140,9 @@ launcher, living avatars, link unfurls) is documented end to end in
 - **Three persona/embodiment tools** (`create_agent_persona`,
   `get_agent_persona`, `persona_say`), in the **Embodiment** section further down.
 
-All fifteen are free and keyless. `/api/mcp-chatgpt` lists eleven of them: the
-eight in the table below and the three persona tools, without `get_job` or the
-catalog reads.
+All fifteen are free and keyless. `/api/mcp-chatgpt` lists eight of them: the
+six generation tools, `check_job` and `look_at_model`, without `get_job`, the
+catalog reads or the persona tools.
 
 The six generation tools run operator-funded on the platform's own generation
 pipeline. Annotations: `readOnlyHint:false`, `destructiveHint:false`,
@@ -154,6 +154,8 @@ the creation, copying the model into our storage, recording the row and running
 the quality gate, and it can route failed work to another provider. Later checks
 of the same job are served from the done-frame cache, which is exactly why it is
 not idempotent either. It still never counts against the generation quota.
+`get_job` carries the same annotations, because its first look at a finished job
+saves the model in the same way.
 `look_at_model` is genuinely read-only and idempotent,
 but it renders frames server-side, so it rides the same per-IP generation
 quota as the six generators.
@@ -244,6 +246,30 @@ Rigged avatars additionally carry `irlUrl`, the living-agent handoff into
 Every result also includes a `spatial` field, the open Spatial MCP artifact
 (`specs/SPATIAL_MCP.md`) so any Spatial-MCP renderer can display the model.
 
+### Run receipts
+
+Every generation, rig and refinement also carries a **run receipt**, the
+pipeline's own signed record of what each stage was expected to do, what it
+actually did, and the verdict (`met`, `recovered`, `missed`, `skipped`,
+`pending`), with the cause whenever a stage fell short:
+
+```json
+"receipt": {
+  "id": "rr_81qbfUbiZNqSTD6rVmjCoA",
+  "outcome": "delivered",
+  "summary": "Delivered as expected. 1 carried by a fallback (Brief).",
+  "issues": [{ "stage": "brief", "verdict": "recovered", "expected": "…", "observed": "The fixed full-body brief was appended to the prompt as written.", "cause": "The director reply stopped mid-sentence, so it was treated as clipped and set aside. The fixed brief keeps the framing." }],
+  "url": "https://three.ws/runs/rr_81qbfUbiZNqSTD6rVmjCoA"
+}
+```
+
+The result text ends with the same link, so an agent that reads only text can
+still tell its user what fell back and why. A receipt that was still running
+when the tool answered is completed by `check_job`. Refusals are receipted too
+(outcome `refused`, prompt not stored). The rig stage is verified by reading
+the delivered file back, not by trusting the rigger. Full reference:
+[Run receipts](./run-receipts.md).
+
 ### Links for agents that render no widget
 
 ChatGPT and Claude draw the viewer widget from the camelCase fields above. An
@@ -267,7 +293,7 @@ Generated a 3D model (GLB).
 Viewer: https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fcreations%2F…%2Fmodel.glb&title=a%20red%20ceramic%20teapot
 GLB: https://three.ws/cdn/creations/…/model.glb
 Poster PNG: https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fthree.ws%2Fcdn%2Fcreations%2F…%2Fmodel.glb&width=1024&height=1024
-Embed HTML: <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js" integrity="sha384-…" crossorigin="anonymous" ></script> <model-viewer src="https://three.ws/cdn/creations/…/model.glb" alt="a red ceramic teapot" camera-controls auto-rotate ar shadow-intensity="1" style="width:100%;height:420px" ></model-viewer>
+Embed HTML: <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js" integrity="sha384-…" crossorigin="anonymous" ></script> <model-viewer src="https://three.ws/cdn/creations/…/model.glb" alt="a red ceramic teapot" camera-controls auto-rotate ar shadow-intensity="1" style="width:100%;height:420px" ></model-viewer>
 Place it in your room (AR, open on a phone): https://three.ws/api/ar?src=…
 ```
 

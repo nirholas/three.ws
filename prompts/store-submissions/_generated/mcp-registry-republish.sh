@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Republish stale/new three.ws MCP servers to the official MCP registry.
-# GENERATED 2026-09-30 by build-registry-republish.mjs. Regenerate after any manifest bump.
+# GENERATED 2026-10-10 by build-registry-republish.mjs. Regenerate after any manifest bump.
 # DO NOT run unattended. A human must be logged in and review each publish.
-# 1 servers need a republish; 51 are already current.
+# 1 servers need a republish; 52 are already current.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -11,7 +11,7 @@ cd "$(git rev-parse --show-toplevel)"
 
 # 2. Publish each manifest whose local version is newer than (or absent from) the registry:
 
-# io.github.nirholas/solana-memo-media-mcp: registry (none) -> local 0.1.0   [NEW]
+# io.github.nirholas/solana-memo-media-mcp: registry (none) -> local 0.1.1   [NEW]
 mcp-publisher publish "packages/solana-memo-media-mcp/server.json"
 
 # 3. Verify all versions match the manifests:

@@ -118,7 +118,7 @@ function makeReq(body) {
 	return {
 		method: 'POST',
 		url: '/api/forge',
-		headers: { 'content-type': 'application/json', 'x-forge-client': 'tester' },
+		headers: { 'content-type': 'application/json', 'x-forge-client': 'tester', 'x-vercel-ip-country': 'US' },
 		on(event, cb) {
 			if (event === 'data') cb(Buffer.from(JSON.stringify(body)));
 			if (event === 'end') cb();

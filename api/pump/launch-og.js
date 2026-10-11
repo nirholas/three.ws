@@ -29,6 +29,7 @@ import { cors, method, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { fetchOgImage } from '../_lib/og-avatar.js';
 import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
+import { resolveURI } from '../../src/ipfs.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const PUMP_FRONTEND_V3 = 'https://frontend-api-v3.pump.fun';
@@ -67,9 +68,7 @@ function fmtNum(v) {
 // we just omit the image; the card still renders fine without it.
 async function fetchLogoBase64(imageUri) {
 	if (!imageUri) return null;
-	const url = imageUri.startsWith('ipfs://')
-		? `https://ipfs.io/ipfs/${imageUri.slice(7)}`
-		: imageUri;
+	const url = resolveURI(imageUri);
 	// The logo URI is chosen by whoever launched the coin. fetchOgImage refuses
 	// private and metadata addresses on every redirect hop, caps the bytes, and
 	// only accepts a bare image media type, so neither internal responses nor a

@@ -121,6 +121,18 @@ The `applinks` components hand every path to the app except `/api/*` (OAuth and
 x402 callbacks must finish in the browser that started them) and the `/embed*`
 and `/widget*` entries (they exist to render inside someone else's page).
 
+## Payments open in Safari
+
+App Review does not allow buying digital goods, launching coins or trading
+inside an iOS app outside In-App Purchase (guidelines 3.1.1 and 3.1.5). So in
+the app, every step that spends money shows a **Continue in Safari** sheet, and
+Open in Safari carries the visitor to the same page in real Safari, still
+signed in, through a 60-second single-use code
+([`/api/auth/handoff`](./api-reference.md#session-handoff-to-safari-ios-app)).
+Wallet custody (viewing, depositing, withdrawing, claiming) stays in the app.
+Which surfaces leave, and why, is in
+[`ios/docs/REVIEW-RISK.md`](../ios/docs/REVIEW-RISK.md).
+
 ## What is missing
 
 - **`APPLE_TEAM_ID`**, which needs an Apple Developer Program account enrolled
@@ -135,11 +147,11 @@ and `/widget*` entries (they exist to render inside someone else's page).
 - **Listing screenshots**, which have to be captured on a real device. The icon
   and launch images are generated from the brand mark (`npm run ios:icons`) and
   a guard keeps them from drifting (`npm run check:ios-icons`).
-- **The App Review posture on crypto surfaces**, which is a product decision
-  and not a code one, and which costs a session handoff rather than a config
-  flag: `SFSafariViewController` does not share the app WebView's cookie jar, so
-  a surface routed to Safari arrives signed out. Written up in
-  [`ios/docs/REVIEW-RISK.md`](../ios/docs/REVIEW-RISK.md).
+- **A signed build.** Everything up to signing is in place: privacy manifests
+  for the app and the share extension, a shared scheme, Xcode Cloud's
+  `ci_scripts/`, and `npm run ios:release`, which archives with automatic
+  signing and uploads to TestFlight in one command once `APPLE_TEAM_ID` exists.
+  Steps in [`ios/docs/SUBMISSION.md`](../ios/docs/SUBMISSION.md).
 - **Service workers**, which `WKWebView` runs only for app-bound domains. The
   app declares none, so the site's offline caching and share-target worker do
   not run inside it; the native offline screen covers the case that matters.

@@ -13,7 +13,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'list_notifications',
 	title: 'List notifications',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		"Read the authenticated agent's notification inbox — the inbound-event feed the platform delivers " +
 		'to the account: market/pump alerts, sales & earnings, purchase receipts, social mentions, IRL ' +
@@ -21,7 +21,7 @@ export const def = {
 		'each with its `id`, `type`, the event `payload`, a `read` boolean and `read_at` timestamp (null ⇒ ' +
 		'unread), and `created_at`; plus `unread_count`, the total number of unread items in the inbox. Pass ' +
 		'`type` to return only one notification type (e.g. "pump_alert", "skill_purchased", ' +
-		'"security_alert"), and `limit` (1–50, default 20) to cap how many rows come back. Read-only — use it ' +
+		'"security_alert"), and `limit` (1-50, default 20) to cap how many rows come back. Read-only. Use it ' +
 		'to surface alerts without polling, then mark_read / delete_notification to manage them.',
 	inputSchema: {
 		type: z

@@ -13,9 +13,9 @@ import { SOLANA_DEFAULT_SECRET } from '../config.js';
 export const def = {
 	name: 'x402_wallet',
 	title: "The agent's x402 spending wallet (address + balance)",
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		"Show a Solana wallet's address and live SOL + USDC balance. With no `address`, derives the wallet from the configured signer (SOLANA_SECRET_KEY) — call this before pay_and_call to confirm there's USDC to spend. Read-only; never moves funds.",
+		"Show a Solana wallet's address and live SOL + USDC balance. With no `address`, derives the wallet from the configured signer (SOLANA_SECRET_KEY). Call this before pay_and_call to confirm there's USDC to spend. Read-only; never moves funds.",
 	inputSchema: {
 		address: z
 			.string()

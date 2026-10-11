@@ -21,7 +21,8 @@ export const def = {
 		'NOTHING, which is correct: firing the nearest scene is how a "good night" turns into an away mode. ' +
 		'Pass `dry_run: true` to resolve without running, which is the right first call when you are not sure ' +
 		'the phrase maps to anything. A macro that would open the house goes through the same gate as ' +
-		'`call_service` and is refused here too.',
+		'`call_service` and is refused here too. Use this after the person has confirmed the match from ' +
+		'`preview_macro`; for one device rather than a scene, use `call_service` instead.',
 	inputSchema: {
 		phrase: z
 			.string()

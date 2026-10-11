@@ -102,6 +102,7 @@ On success, one atomic transaction claims the intent, upserts `subscriptions`, a
 | 503 | `price_unavailable` | No live price feed for SOL/$THREE right now — retry shortly |
 | 503 | `not_configured` | `PAYMENT_RECIPIENT_SOLANA` unset |
 | 422 | `tx_not_found` | Not finalized yet — retry in a few seconds |
+| 422 | `tx_failed` | The transaction landed but errored on-chain |
 | 422 | `memo_mismatch` | Payment is missing the intent nonce memo |
 | 422 | `transfer_not_found` | Right memo, wrong asset/amount/recipient |
 | 410 | `intent_expired` | Quote lapsed beyond the grace window — create a new checkout |
@@ -119,4 +120,4 @@ On success, one atomic transaction claims the intent, upserts `subscriptions`, a
 | `SOLANA_RPC_URL` / `SOLANA_RPC_URL_DEVNET` | RPC endpoints — set a paid RPC in production |
 | `SOLANA_USDC_MINT` | Override the USDC mint (defaults to mainnet USDC) |
 
-Plan prices live in [api/payments/_config.js](../api/payments/_config.js) (`PLANS`), the single source of truth: both pricing pages and the `plans` action read from it. The EVM (USDC-only) sibling path is [api/payments/evm/[action].js](../api/payments/evm/%5Baction%5D.js). It verifies the same way with two chain-specific differences: it waits for 12 confirmations before granting (EVM reorgs, versus Solana's `finalized` commitment), and because an ERC-20 transfer carries no memo it binds the payment to the account by requiring the payer address to be a wallet linked to that user. It honors the same 1-hour post-expiry grace window, which the confirmation wait makes necessary rather than merely kind.
+Plan prices live in [data/plans.json](../data/plans.json), the single source of truth: [api/payments/_config.js](../api/payments/_config.js) builds `PLANS` from its purchasable rows (and the plan length from its `billing_period_days`), so the `/pricing` page, the quota checks and the `plans` action all quote the same number. The EVM (USDC-only) sibling path is [api/payments/evm/[action].js](../api/payments/evm/%5Baction%5D.js). It verifies the same way with two chain-specific differences: it waits for 12 confirmations before granting (EVM reorgs, versus Solana's `finalized` commitment), and because an ERC-20 transfer carries no memo it binds the payment to the account by requiring the payer address to be a wallet linked to that user. It honors the same 1-hour post-expiry grace window, which the confirmation wait makes necessary rather than merely kind.

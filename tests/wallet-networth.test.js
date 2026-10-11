@@ -6,7 +6,7 @@
 // asset-mix palette, and that the same state always yields the same look (no
 // randomness, no time input). No network: every input is a plain state object.
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
 	NETWORTH_TIERS,
 	tierForUsd,
@@ -15,6 +15,7 @@ import {
 	walletGlowForUsd,
 	formatNetWorth,
 	THREE_MINT,
+	fetchWalletState,
 } from '../src/shared/wallet-networth.js';
 
 const state = (usdTotal, mix = { sol: 1 }, extra = {}) => ({ usdTotal, mix, hasThree: false, ...extra });
@@ -139,5 +140,23 @@ describe('formatNetWorth', () => {
 describe('THREE_MINT', () => {
 	it('is the one and only coin address', () => {
 		expect(THREE_MINT).toBe('FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump');
+	});
+});
+
+describe('fetchWalletState for a wallet-less agent', () => {
+	afterEach(() => vi.unstubAllGlobals());
+
+	// The aura re-reads on a timer, so the request opts into the 204 soft miss:
+	// a 404 here would print a red console line on every poll for every agent
+	// that has not provisioned a wallet yet.
+	it('asks for the soft miss and renders a 204 as the clean dormant baseline', async () => {
+		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
+		vi.stubGlobal('fetch', fetchMock);
+		const out = await fetchWalletState('0f290230-48e0-4a39-9b32-3eb8d10a29a9');
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(new URL(fetchMock.mock.calls[0][0], 'http://x').searchParams.get('miss')).toBe('empty');
+		expect(out.usdTotal).toBe(0);
+		expect(out.assets).toEqual([]);
+		expect(out.balanceError).toBeNull();
 	});
 });

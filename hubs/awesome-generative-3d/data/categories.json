@@ -1,0 +1,15 @@
+[
+  { "id": "image-to-3d-models", "title": "Open Text and Image to 3D Models", "blurb": "Open-weight feed-forward and latent diffusion models that turn a prompt or a picture into a mesh, Gaussians or a radiance field." },
+  { "id": "text-to-3d-frameworks", "title": "Text-to-3D Optimization Frameworks", "blurb": "Score distillation and Gaussian optimization methods and the frameworks that bundle them." },
+  { "id": "multi-view-diffusion", "title": "Multi-View Diffusion", "blurb": "Models that synthesize consistent views of an object, the front end of many image-to-3D pipelines." },
+  { "id": "hosted-apis", "title": "Hosted Generators and APIs", "blurb": "Managed services for generating 3D assets from text or images, many with developer APIs." },
+  { "id": "splatting-and-nerf", "title": "Gaussian Splatting and NeRF", "blurb": "Capture, reconstruction and training tools for radiance fields, splats and neural surfaces." },
+  { "id": "splat-viewers-and-editors", "title": "Splat Viewers and Editors", "blurb": "Web viewers, editors and converters for Gaussian splat files." },
+  { "id": "rigging-and-animation", "title": "Auto-Rigging and Animation", "blurb": "Tools that add skeletons and skin weights to static meshes so they can move." },
+  { "id": "texture-and-materials", "title": "Texture and Materials", "blurb": "Texture synthesis and differentiable rendering tools for generated geometry." },
+  { "id": "mesh-processing", "title": "Mesh Cleanup and Retopology", "blurb": "Libraries and apps for repairing, decimating, remeshing and converting generated meshes." },
+  { "id": "datasets", "title": "Datasets", "blurb": "3D object collections used to train and evaluate generative models." },
+  { "id": "gltf-tooling", "title": "glTF and Pipeline Tooling", "blurb": "Specs, optimizers, validators, viewers and DCC integrations that take AI output to production." },
+  { "id": "libraries", "title": "3D Deep Learning Libraries", "blurb": "Differentiable geometry and 3D data libraries for building new generative models." },
+  { "id": "platforms-and-integrations", "title": "Platforms and Integrations", "blurb": "Products that put generated 3D content to work in applications." }
+]

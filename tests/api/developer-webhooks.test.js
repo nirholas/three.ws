@@ -29,9 +29,15 @@ vi.mock('../../api/_lib/db.js', () => {
 
 vi.mock('../../api/_lib/csrf.js', () => ({ requireCsrf: vi.fn(async () => true) }));
 
-// assertPublicHttpsUrl does real DNS resolution; the SSRF module has its own
-// suite, so here it only needs to accept the example URLs under test.
-vi.mock('../../api/_lib/ssrf.js', () => ({ assertPublicHttpsUrl: vi.fn(async () => true) }));
+// webhookUrlProblem resolves the host over real DNS (resolvePublicHost); the
+// SSRF module has its own suite, so here it only needs to accept the example
+// URLs under test.
+vi.mock('../../api/_lib/ssrf.js', () => ({
+	validatePublicUrl: vi.fn((url) => new URL(url)),
+	resolvePublicHost: vi.fn(async () => ['93.184.216.34']),
+	pinnedAgent: vi.fn(() => undefined),
+	SsrfError: class SsrfError extends Error {},
+}));
 
 const { EVENT_TYPES } = await import('../../api/_lib/webhook-dispatch.js');
 const { default: listHandler } = await import('../../api/developer/webhooks.js');

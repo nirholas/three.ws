@@ -12,14 +12,36 @@
 // policy — never a way around it. The runtime sizes a buy from `sizing.amount_sol`
 // but the trade still passes through the full guard + custody path, so a strategy
 // can never exceed the spend leash. Ever.
+//
+// Version 2 adds the strategy settings an owner tunes in the Strategy Lab:
+//   entry.sources            which launch venues a candidate may come from
+//   sizing.max_price_impact_bps  a per-strategy price-impact ceiling, applied
+//                            as min(this, the agent's own breaker)
+//   research                 pre-buy research gates evaluated against a real
+//                            gate report (holders, top holder, liquidity,
+//                            firewall security score, authorities, dev history)
+//   mode                     'auto' buys within caps; 'ask' files an approval
+//                            request and waits for the owner's explicit yes
+// A v1 config normalizes to v2 losslessly; a config with no mode becomes 'ask',
+// the conservative default (the migration backfills stored rows the same way).
 
 const ENTRY_TRIGGERS = ['new_launch'];
 const NETWORKS = ['mainnet', 'devnet'];
+const STRATEGY_MODES = ['auto', 'ask'];
+// Where a candidate can come from. `pump_curve` is any live pump.fun bonding-curve
+// launch; `three_ws_launch` is a coin an agent launched through three.ws
+// (pump_agent_mints), which is also on the curve. An empty list means every
+// source; ['three_ws_launch'] means platform launches only.
+const ENTRY_SOURCES = ['pump_curve', 'three_ws_launch'];
+export const STRATEGY_CONFIG_VERSION = 2;
 
 export const STRATEGY_CONFIG_DEFAULTS = Object.freeze({
+	version: STRATEGY_CONFIG_VERSION,
+	mode: 'ask',
 	network: 'mainnet',
 	entry: {
 		trigger: 'new_launch',
+		sources: [],
 		max_age_minutes: 60,
 		min_market_cap_usd: null,
 		max_market_cap_usd: null,
@@ -32,6 +54,7 @@ export const STRATEGY_CONFIG_DEFAULTS = Object.freeze({
 	sizing: {
 		amount_sol: 0.1,
 		max_slippage_bps: 500,
+		max_price_impact_bps: null,
 	},
 	exits: {
 		take_profit_pct: 100, // +100% = 2x
@@ -42,6 +65,19 @@ export const STRATEGY_CONFIG_DEFAULTS = Object.freeze({
 	risk: {
 		max_concurrent_positions: 3,
 		cooldown_minutes: 0,
+	},
+	research: {
+		min_holders: null,
+		max_top_holder_pct: null,
+		min_liquidity_sol: null,
+		security_min_score: null,
+		require_no_mint_authority: false,
+		require_no_freeze_authority: false,
+		dev_history: {
+			max_launches: null,
+			min_graduated: null,
+			block_dev_sold: false,
+		},
 	},
 });
 
@@ -60,7 +96,28 @@ const BOUNDS = Object.freeze({
 	market_cap_usd: { min: 0, max: 1e12 },
 	liquidity_sol: { min: 0, max: 1e9 },
 	creator_count: { min: 0, max: 100000 },
+	price_impact_bps: { min: 1, max: 10000 },
+	holders: { min: 0, max: 10000000 },
+	pct: { min: 0, max: 100 },
+	score: { min: 0, max: 100 },
 });
+
+// Owners and the natural-language compiler may write camelCase; the stored
+// shape is snake_case like every other config key. First present key wins.
+function pick(obj, ...keys) {
+	for (const k of keys) if (obj && obj[k] !== undefined) return obj[k];
+	return undefined;
+}
+
+function normalizeSources(v) {
+	if (!Array.isArray(v)) return [];
+	const out = [];
+	for (const raw of v) {
+		const s = String(raw || '').trim().toLowerCase();
+		if (ENTRY_SOURCES.includes(s) && !out.includes(s)) out.push(s);
+	}
+	return out.length === ENTRY_SOURCES.length ? [] : out;
+}
 
 function numOrNull(v, { min = -Infinity, max = Infinity } = {}) {
 	if (v === null || v === undefined || v === '') return null;
@@ -102,27 +159,43 @@ export function normalizeStrategyConfig(raw) {
 	const s = r.sizing && typeof r.sizing === 'object' ? r.sizing : {};
 	const x = r.exits && typeof r.exits === 'object' ? r.exits : {};
 	const k = r.risk && typeof r.risk === 'object' ? r.risk : {};
+	const q = r.research && typeof r.research === 'object' ? r.research : {};
+	const dvRaw = pick(q, 'dev_history', 'devHistory');
+	const dv = dvRaw && typeof dvRaw === 'object' ? dvRaw : {};
 	const d = STRATEGY_CONFIG_DEFAULTS;
 
 	const trigger = ENTRY_TRIGGERS.includes(e.trigger) ? e.trigger : d.entry.trigger;
 	const network = NETWORKS.includes(r.network) ? r.network : d.network;
+	const mode = STRATEGY_MODES.includes(r.mode) ? r.mode : d.mode;
+
+	// Creator history and liquidity exist both as cheap entry pre-filters (v1)
+	// and as research gates (v2). They are one setting: the research value wins
+	// when present, the legacy entry value fills it otherwise, and both halves are
+	// written back identical so the two evaluators can never disagree.
+	const maxLaunches = intOrNull(pick(dv, 'max_launches', 'maxLaunches') ?? e.max_creator_launches, BOUNDS.creator_count);
+	const minGraduated = intOrNull(pick(dv, 'min_graduated', 'minGraduated') ?? e.min_creator_graduated, BOUNDS.creator_count);
+	const minLiq = numOrNull(pick(q, 'min_liquidity_sol', 'minLiquiditySol') ?? e.min_liquidity_sol, BOUNDS.liquidity_sol);
 
 	return {
+		version: STRATEGY_CONFIG_VERSION,
+		mode,
 		network,
 		entry: {
 			trigger,
+			sources: normalizeSources(e.sources),
 			max_age_minutes: clampNum(e.max_age_minutes, d.entry.max_age_minutes, { ...BOUNDS.max_age_minutes, round: true }),
 			min_market_cap_usd: numOrNull(e.min_market_cap_usd, BOUNDS.market_cap_usd),
 			max_market_cap_usd: numOrNull(e.max_market_cap_usd, BOUNDS.market_cap_usd),
-			min_liquidity_sol: numOrNull(e.min_liquidity_sol, BOUNDS.liquidity_sol),
+			min_liquidity_sol: minLiq,
 			require_socials: e.require_socials === true,
-			max_creator_launches: intOrNull(e.max_creator_launches, BOUNDS.creator_count),
-			min_creator_graduated: intOrNull(e.min_creator_graduated, BOUNDS.creator_count),
+			max_creator_launches: maxLaunches,
+			min_creator_graduated: minGraduated,
 			require_sol_quote: e.require_sol_quote !== false,
 		},
 		sizing: {
 			amount_sol: clampNum(s.amount_sol, d.sizing.amount_sol, BOUNDS.amount_sol),
 			max_slippage_bps: clampNum(s.max_slippage_bps, d.sizing.max_slippage_bps, { ...BOUNDS.max_slippage_bps, round: true }),
+			max_price_impact_bps: intOrNull(pick(s, 'max_price_impact_bps', 'maxPriceImpactBps'), BOUNDS.price_impact_bps),
 		},
 		exits: {
 			take_profit_pct: numOrNull(x.take_profit_pct, BOUNDS.take_profit_pct),
@@ -135,7 +208,55 @@ export function normalizeStrategyConfig(raw) {
 			max_concurrent_positions: clampNum(k.max_concurrent_positions, d.risk.max_concurrent_positions, { ...BOUNDS.max_concurrent_positions, round: true }),
 			cooldown_minutes: clampNum(k.cooldown_minutes, d.risk.cooldown_minutes, { ...BOUNDS.cooldown_minutes, round: true }),
 		},
+		research: {
+			min_holders: intOrNull(pick(q, 'min_holders', 'minHolders'), BOUNDS.holders),
+			max_top_holder_pct: numOrNull(pick(q, 'max_top_holder_pct', 'maxTopHolderPct'), BOUNDS.pct),
+			min_liquidity_sol: minLiq,
+			security_min_score: intOrNull(pick(q, 'security_min_score', 'securityMinScore'), BOUNDS.score),
+			require_no_mint_authority: pick(q, 'require_no_mint_authority', 'requireNoMintAuthority') === true,
+			require_no_freeze_authority: pick(q, 'require_no_freeze_authority', 'requireNoFreezeAuthority') === true,
+			dev_history: {
+				max_launches: maxLaunches,
+				min_graduated: minGraduated,
+				block_dev_sold: pick(dv, 'block_dev_sold', 'blockDevSold') === true,
+			},
+		},
 	};
+}
+
+/** True when any research gate is switched on (the runtime skips the report otherwise). */
+export function researchGatesActive(config) {
+	const g = config?.research;
+	if (!g) return false;
+	const dv = g.dev_history || {};
+	return g.min_holders != null || g.max_top_holder_pct != null || g.min_liquidity_sol != null
+		|| g.security_min_score != null || g.require_no_mint_authority || g.require_no_freeze_authority
+		|| dv.max_launches != null || dv.min_graduated != null || dv.block_dev_sold === true;
+}
+
+/**
+ * The effective price-impact ceiling in percent for one strategy trade: the
+ * tighter of the agent's breaker and the strategy's own max_price_impact_bps.
+ * A strategy can only tighten the agent's limit, never loosen it.
+ */
+export function effectivePriceImpactPct(config, agentMaxPct) {
+	const own = config?.sizing?.max_price_impact_bps;
+	const ownPct = own == null ? null : own / 100;
+	const agent = agentMaxPct == null || !Number.isFinite(Number(agentMaxPct)) ? null : Number(agentMaxPct);
+	if (ownPct == null) return agent;
+	if (agent == null) return ownPct;
+	return Math.min(ownPct, agent);
+}
+
+/**
+ * The sources one launch belongs to, for the entry.sources filter. The live feed
+ * only carries bonding-curve coins (graduated ones are dropped upstream), so
+ * every candidate is `pump_curve`; a three.ws agent launch is also tagged.
+ */
+export function launchSources(launch) {
+	const out = ['pump_curve'];
+	if (launch?.three_ws_launch === true) out.push('three_ws_launch');
+	return out;
 }
 
 /**
@@ -162,6 +283,15 @@ export function validateStrategyConfig(raw) {
 	}
 	if (config.exits.take_profit_pct == null && config.exits.trailing_stop_pct == null && config.exits.max_hold_minutes == null) {
 		errors.push({ field: 'exits', message: 'Define at least one upside exit: take-profit, trailing stop, or max hold.' });
+	}
+	const rawMode = raw && typeof raw === 'object' ? raw.mode : undefined;
+	if (rawMode !== undefined && rawMode !== null && !STRATEGY_MODES.includes(rawMode)) {
+		errors.push({ field: 'mode', message: 'Mode must be "auto" (buy within caps) or "ask" (request approval for each buy).' });
+	}
+	const rawSources = raw?.entry?.sources;
+	if (Array.isArray(rawSources)) {
+		const bad = rawSources.filter((x) => !ENTRY_SOURCES.includes(String(x || '').trim().toLowerCase()));
+		if (bad.length) errors.push({ field: 'entry.sources', message: `Unknown source: ${bad.map(String).join(', ')}. Use ${ENTRY_SOURCES.join(', ')}.` });
 	}
 
 	return { valid: errors.length === 0, errors, config };
@@ -201,6 +331,14 @@ export function matchesEntry(config, launch, nowMs) {
 		return { pass: false, reasons: ['quote_not_sol'] };
 	}
 
+	// Source filter: the candidate must come from at least one allowed venue.
+	if (Array.isArray(e.sources) && e.sources.length) {
+		const have = launchSources(launch);
+		if (!have.some((src) => e.sources.includes(src))) {
+			return { pass: false, reasons: [`source_excluded:${have.join('+')}`] };
+		}
+	}
+
 	const mc = numOrNull(launch.market_cap_usd);
 	if (e.min_market_cap_usd != null) {
 		if (mc == null || mc < e.min_market_cap_usd) return { pass: false, reasons: [`mc_below_min:${mc ?? 'n/a'}`] };
@@ -233,6 +371,103 @@ export function matchesEntry(config, launch, nowMs) {
 	if (hasSocials) reasons.push('has_socials');
 
 	return { pass: true, reasons };
+}
+
+// Plain-language labels for each research check, shared by the runtime's
+// decision log, the Lab's block breakdown, and the compiler's explanations.
+export const RESEARCH_CHECK_LABELS = Object.freeze({
+	min_holders: 'Minimum holders',
+	max_top_holder_pct: 'Largest holder share',
+	min_liquidity_sol: 'Minimum liquidity',
+	security_min_score: 'Firewall security score',
+	require_no_mint_authority: 'Mint authority renounced',
+	require_no_freeze_authority: 'Freeze authority renounced',
+	dev_max_launches: 'Creator launch count',
+	dev_min_graduated: 'Creator graduations',
+	dev_block_sold: 'Creator has not sold',
+});
+
+const NUMBER_FORMATS = new Map();
+function fmt(v, digits = 2) {
+	if (v == null) return 'unknown';
+	let f = NUMBER_FORMATS.get(digits);
+	if (!f) NUMBER_FORMATS.set(digits, (f = new Intl.NumberFormat('en-US', { maximumFractionDigits: digits })));
+	return f.format(Number(v));
+}
+
+/**
+ * Evaluate a strategy's research gates against a gate report. Pure + sync.
+ *
+ * Fail closed: a gate the owner switched on whose data the report could not
+ * establish blocks the buy with an "unknown" reason. A research gate exists to
+ * prove something about a coin before money moves, so "could not check" is
+ * never treated as "passed". Gates left off are reported with status 'off'.
+ *
+ * @param {object} config  normalized strategy config
+ * @param {object} report  gate report (api/_lib/strategy-research.js#buildGateReport):
+ *   { holders:{count, top_holder_pct}, liquidity:{sol}, security:{score},
+ *     authority:{known, mint_authority, freeze_authority},
+ *     dev:{launches, graduated, sold} }
+ * @returns {{ pass:boolean, blocked_by:Array, checks:Array }}
+ *   each check: { check, label, status:'pass'|'fail'|'unknown'|'off', actual, required, reason }
+ */
+export function evaluateResearchGates(config, report) {
+	const g = config?.research || STRATEGY_CONFIG_DEFAULTS.research;
+	const dv = g.dev_history || {};
+	const r = report || {};
+	const checks = [];
+
+	const add = (check, required, actual, ok, reason) => {
+		let status;
+		if (required == null || required === false) status = 'off';
+		else if (actual == null) status = 'unknown';
+		else status = ok ? 'pass' : 'fail';
+		// Reasons are built only for checks that ran: the match preview replays tens
+		// of thousands of coins through this function, and number formatting is slow.
+		let why = null;
+		if (status === 'unknown') why = `${RESEARCH_CHECK_LABELS[check]} could not be verified, so the buy is held back.`;
+		else if (status !== 'off') why = reason();
+		checks.push({ check, label: RESEARCH_CHECK_LABELS[check], status, actual: actual ?? null, required: required === false ? null : required, reason: why });
+	};
+
+	const holders = numOrNull(r.holders?.count);
+	add('min_holders', g.min_holders, holders, holders != null && holders >= g.min_holders,
+		() => `${fmt(holders, 0)} holders against a minimum of ${fmt(g.min_holders, 0)}.`);
+
+	const top = numOrNull(r.holders?.top_holder_pct);
+	add('max_top_holder_pct', g.max_top_holder_pct, top, top != null && top <= g.max_top_holder_pct,
+		() => `The largest holder owns ${fmt(top, 1)}% against a ceiling of ${fmt(g.max_top_holder_pct, 1)}%.`);
+
+	const liq = numOrNull(r.liquidity?.sol);
+	add('min_liquidity_sol', g.min_liquidity_sol, liq, liq != null && liq >= g.min_liquidity_sol,
+		() => `${fmt(liq)} SOL of liquidity against a minimum of ${fmt(g.min_liquidity_sol)} SOL.`);
+
+	const score = numOrNull(r.security?.score);
+	add('security_min_score', g.security_min_score, score, score != null && score >= g.security_min_score,
+		() => `Firewall score ${fmt(score, 0)}/100 against a minimum of ${fmt(g.security_min_score, 0)}.`);
+
+	const authKnown = r.authority?.known === true;
+	const mintAuth = authKnown ? (r.authority.mint_authority ? 'active' : 'renounced') : null;
+	add('require_no_mint_authority', g.require_no_mint_authority || null, mintAuth, mintAuth === 'renounced',
+		() => mintAuth === 'active' ? 'The creator can still mint new supply.' : 'Mint authority is renounced.');
+	const freezeAuth = authKnown ? (r.authority.freeze_authority ? 'active' : 'renounced') : null;
+	add('require_no_freeze_authority', g.require_no_freeze_authority || null, freezeAuth, freezeAuth === 'renounced',
+		() => freezeAuth === 'active' ? 'The creator can freeze holder accounts, so a buy might never sell.' : 'Freeze authority is renounced.');
+
+	const launches = numOrNull(r.dev?.launches);
+	add('dev_max_launches', dv.max_launches, launches, launches != null && launches <= dv.max_launches,
+		() => `The creator has launched ${fmt(launches, 0)} coins against a ceiling of ${fmt(dv.max_launches, 0)}.`);
+	const grads = numOrNull(r.dev?.graduated);
+	add('dev_min_graduated', dv.min_graduated, grads, grads != null && grads >= dv.min_graduated,
+		() => `The creator has graduated ${fmt(grads, 0)} coins against a minimum of ${fmt(dv.min_graduated, 0)}.`);
+	const sold = typeof r.dev?.sold === 'boolean' ? (r.dev.sold ? 'sold' : 'holding') : null;
+	add('dev_block_sold', dv.block_dev_sold || null, sold, sold === 'holding',
+		() => sold === 'sold' ? 'The creator has already sold their own allocation.' : 'The creator has not sold.');
+
+	const blocked_by = checks
+		.filter((c) => c.status === 'fail' || c.status === 'unknown')
+		.map(({ check, label, status, actual, required, reason }) => ({ check, label, status, actual, required, reason }));
+	return { pass: blocked_by.length === 0, blocked_by, checks };
 }
 
 /**
@@ -274,4 +509,4 @@ export function shouldExit(config, pos, currentValueLamports, nowMs) {
 	return { exit: false, reason: null };
 }
 
-export { ENTRY_TRIGGERS, NETWORKS };
+export { ENTRY_TRIGGERS, NETWORKS, STRATEGY_MODES, ENTRY_SOURCES };

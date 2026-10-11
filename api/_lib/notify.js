@@ -61,6 +61,9 @@ async function deliver(userId, type, payload) {
 	// unread count are both derived from user_notifications, so skipping the
 	// insert is what keeps the two consistent.
 	let id = null;
+	// What reached the user outside the bell, so a caller with an email
+	// fallback (the approval inbox) can tell "nobody was reached" apart.
+	const delivered = { push: 0 };
 	if (wantsInApp) {
 		try {
 			const [row] = await sql`
@@ -91,8 +94,8 @@ async function deliver(userId, type, payload) {
 				sendPushToUser(userId, push).catch(() => 0),
 				sendApnsToUser(userId, push).catch(() => 0),
 			]);
-			const delivered = web + ios;
-			if (delivered > 0) recordEvent(id, userId, 'push', 'sent', { count: delivered, web, ios });
+			delivered.push = web + ios;
+			if (delivered.push > 0) recordEvent(id, userId, 'push', 'sent', { count: delivered.push, web, ios });
 		}
 	} catch (err) {
 		console.error('[notify] push fan-out failed:', err.message);
@@ -101,12 +104,15 @@ async function deliver(userId, type, payload) {
 	// 6: paired chats. Queued for the gateway worker, gated per channel.
 	try {
 		const queued = await queueChatNotifications({ userId, type, payload, notificationId: id, prefs });
-		for (const [channel, count] of Object.entries(queued)) recordEvent(id, userId, channel, 'sent', { count });
+		for (const [channel, count] of Object.entries(queued)) {
+			delivered[channel] = count;
+			recordEvent(id, userId, channel, 'sent', { count });
+		}
 	} catch (err) {
 		console.error('[notify] chat fan-out failed:', err.message);
 	}
 
-	return { id, in_app: wantsInApp };
+	return { id, in_app: wantsInApp, delivered };
 }
 
 /**

@@ -131,7 +131,7 @@ export const agentRoutes = [
 		},
 	},
 	{
-		method: 'PUT', path: '/agents/:id/predictions/limits', name: 'predictions.limits.set', auth: 'required', scope: 'wallet:write',
+		method: 'PUT', path: '/agents/:id/predictions/limits', name: 'predictions.limits.set', auth: 'required', scope: 'wallet:trade',
 		handler: ({ params, principal, body, req }) => run(() => setPredictionLimits(agentOf(params), principal.userId, body, { req })),
 	},
 	{
@@ -142,7 +142,7 @@ export const agentRoutes = [
 		})),
 	},
 	{
-		method: 'POST', path: '/agents/:id/predictions/open', name: 'predictions.open', auth: 'required', scope: 'wallet:write',
+		method: 'POST', path: '/agents/:id/predictions/open', name: 'predictions.open', auth: 'required', scope: 'wallet:trade',
 		handler: async ({ params, principal, body, req }) => {
 			await requireAgreement(principal.userId);
 			return run(() => executeOpen({ agentId: agentOf(params), userId: principal.userId, previewId: body.preview_id, confirm: body.confirm_trade, req, source: sourceOf(principal) }));
@@ -155,7 +155,7 @@ export const agentRoutes = [
 		})),
 	},
 	{
-		method: 'POST', path: '/agents/:id/predictions/close', name: 'predictions.close', auth: 'required', scope: 'wallet:write',
+		method: 'POST', path: '/agents/:id/predictions/close', name: 'predictions.close', auth: 'required', scope: 'wallet:trade',
 		handler: async ({ params, principal, body, req }) => {
 			await requireAgreement(principal.userId);
 			return run(() => executeClose({ agentId: agentOf(params), userId: principal.userId, previewId: body.preview_id, confirm: body.confirm_trade, req, source: sourceOf(principal) }));
@@ -166,7 +166,7 @@ export const agentRoutes = [
 		handler: ({ params, principal, body }) => run(() => previewRedeem({ agentId: agentOf(params), userId: principal.userId, positionId: body.position_id })),
 	},
 	{
-		method: 'POST', path: '/agents/:id/predictions/redeem', name: 'predictions.redeem', auth: 'required', scope: 'wallet:write',
+		method: 'POST', path: '/agents/:id/predictions/redeem', name: 'predictions.redeem', auth: 'required', scope: 'wallet:trade',
 		handler: async ({ params, principal, body, req }) => {
 			await requireAgreement(principal.userId);
 			return run(() => executeRedeem({ agentId: agentOf(params), userId: principal.userId, previewId: body.preview_id, confirm: body.confirm_trade, req, source: sourceOf(principal) }));
@@ -181,7 +181,7 @@ export const agentRoutes = [
 		},
 	},
 	{
-		method: 'POST', path: '/agents/:id/predictions/watch', name: 'predictions.watch.create', auth: 'required', scope: 'wallet:write',
+		method: 'POST', path: '/agents/:id/predictions/watch', name: 'predictions.watch.create', auth: 'required', scope: 'wallet:trade',
 		handler: async ({ params, principal, body }) => {
 			const agentId = agentOf(params);
 			await run(() => loadOwnedAgent(agentId, principal.userId));
@@ -189,7 +189,7 @@ export const agentRoutes = [
 		},
 	},
 	{
-		method: 'DELETE', path: '/agents/:id/predictions/watch/:watchId', name: 'predictions.watch.delete', auth: 'required', scope: 'wallet:write',
+		method: 'DELETE', path: '/agents/:id/predictions/watch/:watchId', name: 'predictions.watch.delete', auth: 'required', scope: 'wallet:trade',
 		handler: async ({ params, principal }) => {
 			await run(() => loadOwnedAgent(agentOf(params), principal.userId));
 			return run(() => deleteWatch({ userId: principal.userId, watchId: requireUuid(params.watchId, 'watch') }));

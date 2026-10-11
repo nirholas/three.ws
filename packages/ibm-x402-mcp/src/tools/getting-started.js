@@ -175,6 +175,7 @@ export function buildGettingStartedTool() {
 		// in-process — no external systems are contacted (closed world).
 		annotations: {
 			readOnlyHint: true,
+			destructiveHint: false,
 			openWorldHint: false,
 			idempotentHint: true,
 		},

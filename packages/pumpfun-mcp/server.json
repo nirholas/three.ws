@@ -18,12 +18,12 @@
 		"source": "github",
 		"subfolder": "packages/pumpfun-mcp"
 	},
-	"version": "0.2.6",
+	"version": "0.2.7",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "@three-ws/pumpfun-mcp",
-			"version": "0.2.6",
+			"version": "0.2.7",
 			"runtimeHint": "npx",
 			"transport": {
 				"type": "stdio"

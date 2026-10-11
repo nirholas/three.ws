@@ -14,6 +14,25 @@ function parseRoute() {
 	return null;
 }
 
+// Agent art is whatever URL the registering party published: an IPFS URI, a
+// gateway that may be rate-limiting, or a host that answers 404 with JSON (which
+// the browser blocks as an opaque response). Cross-origin and decentralized art
+// goes through the same-origin image proxy, which races live IPFS gateways and
+// answers 204 when nothing renderable exists.
+function heroImageURL(src) {
+	if (typeof src !== 'string' || !src) return '';
+	if (/^(ipfs|ar):\/\//i.test(src)) return `/api/img?${new URLSearchParams({ url: src, w: '640', fallback: 'none' })}`;
+	let url;
+	try {
+		url = new URL(src, location.href);
+	} catch {
+		return '';
+	}
+	if (url.origin === location.origin) return url.href;
+	if (url.protocol !== 'https:' && url.protocol !== 'http:') return '';
+	return `/api/img?${new URLSearchParams({ url: url.href, w: '640', fallback: 'none' })}`;
+}
+
 async function fetchItem(route) {
 	// SSR handler may have pre-loaded the item to avoid a round-trip
 	if (window.__DETAIL_ITEM__) return window.__DETAIL_ITEM__;
@@ -77,16 +96,23 @@ function render(item) {
 
 	// Hero media
 	const media = $('hero-media');
-	if (item.image) {
-		const img = document.createElement('img');
-		img.src = item.image;
-		img.alt = item.name;
-		media.appendChild(img);
-	} else {
+	const placeholder = () => {
 		const ph = document.createElement('div');
 		ph.className = 'detail-hero-ph';
 		ph.textContent = item.has3d ? '🎭' : '🤖';
-		media.appendChild(ph);
+		return ph;
+	};
+	const heroSrc = heroImageURL(item.image);
+	if (heroSrc) {
+		const img = document.createElement('img');
+		img.alt = item.name;
+		// A dead or non-image source (204 from the proxy) swaps in the placeholder
+		// instead of leaving a broken-image icon in the hero.
+		img.addEventListener('error', () => img.replaceWith(placeholder()), { once: true });
+		img.src = heroSrc;
+		media.appendChild(img);
+	} else {
+		media.appendChild(placeholder());
 	}
 
 	const badges = $('badges');

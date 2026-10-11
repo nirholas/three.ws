@@ -169,4 +169,33 @@ describe('mountCoinStatus: mainnet indexer fallback', () => {
 		expect(called.some((u) => u.includes('/api/pump/curve'))).toBe(false);
 		handle.destroy();
 	});
+
+	it('asks for a soft miss, then stops re-asking the indexer for an unindexed coin', async () => {
+		// Its own mint: the unindexed set is module-wide, and the cases above must
+		// still reach the indexer for MINT.
+		const mint = '3wsUnindexed1111111111111111111111111111111';
+		const noContent = () => () => Promise.resolve({ ok: true, status: 204, json: () => Promise.reject(new SyntaxError('empty body')) });
+		const fetchMock = routedFetch([
+			['/api/pump/coin', noContent()],
+			['/api/pump/curve', ok(curveBody({ mint, network: 'mainnet' }))],
+			['jup.ag', ok({ So11111111111111111111111111111111111111112: { usdPrice: 200 } })],
+		]);
+		vi.stubGlobal('fetch', fetchMock);
+		vi.useFakeTimers({ shouldAdvanceTime: true });
+
+		const handle = mountCoinStatus(container, mint, { variant: 'chip', refreshMs: 1000 });
+		await vi.waitFor(() => expect(container.querySelector('.csc-mcap')).toBeTruthy());
+		expect(container.querySelector('.csc-mcap').textContent).toBe('$6.4K');
+
+		const coinCalls = () => fetchMock.mock.calls.map(([u]) => String(u)).filter((u) => u.includes('/api/pump/coin'));
+		expect(coinCalls()).toHaveLength(1);
+		expect(coinCalls()[0]).toContain('miss=empty');
+
+		const curveCalls = () => fetchMock.mock.calls.filter(([u]) => String(u).includes('/api/pump/curve')).length;
+		const before = curveCalls();
+		await vi.advanceTimersByTimeAsync(1000);
+		await vi.waitFor(() => expect(curveCalls()).toBeGreaterThan(before));
+		expect(coinCalls()).toHaveLength(1);
+		handle.destroy();
+	});
 });

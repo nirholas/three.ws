@@ -115,7 +115,7 @@ const HANDLER_BAZAAR = {
 	schema: { type: 'object' },
 };
 
-function mockReqRes({ method = 'GET', headers = {}, url = ROUTE } = {}) {
+function mockReqRes({ method = 'GET', headers = {}, url = ROUTE, body = null } = {}) {
 	const lowerHeaders = {};
 	for (const [k, v] of Object.entries(headers)) lowerHeaders[k.toLowerCase()] = v;
 	const req = Object.assign(new Readable({ read() {} }), {
@@ -125,6 +125,10 @@ function mockReqRes({ method = 'GET', headers = {}, url = ROUTE } = {}) {
 		connection: { remoteAddress: '127.0.0.1' },
 		socket: { remoteAddress: '127.0.0.1' },
 	});
+	if (body !== null) {
+		req.rawBody = Buffer.from(JSON.stringify(body));
+		req.body = body;
+	}
 	req.push(null);
 	const chunks = [];
 	const resHeaders = {};
@@ -154,8 +158,9 @@ function mockReqRes({ method = 'GET', headers = {}, url = ROUTE } = {}) {
 	return { req, res };
 }
 
-function paymentHeader({ salt = 'a' } = {}) {
+function paymentHeader({ salt = 'a', paymentId = null } = {}) {
 	const payload = {
+		...(paymentId ? { extensions: { 'payment-identifier': { info: { required: false, id: paymentId } } } } : {}),
 		x402Version: 2,
 		scheme: 'exact',
 		network: BASE,
@@ -497,5 +502,42 @@ describe('paidEndpoint() never asks a charged buyer to pay twice', () => {
 		expect(res.statusCode).toBe(400);
 		expect(JSON.parse(res.body)).toMatchObject({ paid: false, retry_safe: true });
 		expect(settlePayment).not.toHaveBeenCalled();
+	});
+});
+
+describe('paidEndpoint() idempotency over POST bodies', () => {
+	async function callPost(body, handler) {
+		const endpoint = makeEndpoint(handler, { method: 'POST' });
+		const { req, res } = mockReqRes({
+			method: 'POST',
+			body,
+			headers: { 'x-payment': paymentHeader({ paymentId: 'pay_post_body_00000001' }), 'content-type': 'application/json' },
+		});
+		await endpoint(req, res);
+		return res;
+	}
+
+	it('does not serve one body\'s cached response to a different body under the same payment identifier', async () => {
+		let ran = 0;
+		const handler = async ({ req }) => ({ ran: ++ran, echo: req.body });
+		const first = await callPost({ q: 'one' }, handler);
+		expect(first.statusCode).toBe(200);
+
+		const second = await callPost({ q: 'two' }, handler);
+		expect(second.statusCode).toBe(409);
+		expect(second.getHeader('x-x402-idempotent')).toBe('conflict');
+		expect(second.body).not.toContain('"one"');
+		expect(ran).toBe(1);
+	});
+
+	it('still replays the cached response for the identical body', async () => {
+		let ran = 0;
+		const handler = async () => ({ ran: ++ran });
+		const first = await callPost({ q: 'same' }, handler);
+		const again = await callPost({ q: 'same' }, handler);
+
+		expect(first.statusCode).toBe(200);
+		expect(again.statusCode).toBe(200);
+		expect(ran).toBe(1);
 	});
 });

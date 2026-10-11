@@ -27,7 +27,7 @@ import { runRigMesh } from './_studio-core.js';
 
 const TOOL_NAME = 'rig_mesh';
 const TOOL_DESCRIPTION =
-	'Auto-rig a static 3D GLB mesh into an animation-ready model: adds a humanoid skeleton and per-vertex skin weights via the three.ws rig pipeline (Make-It-Animatable by default). Takes a GLB URL, returns the rigged GLB URL and a three.ws pose-studio link. Pairs with mesh_forge: forge a mesh, then rig it. Paid: $0.20 USDC.';
+	'Auto-rig a static 3D GLB mesh into an animation-ready model: adds a humanoid skeleton and per-vertex skin weights via the three.ws rig pipeline (Make-It-Animatable by default). Takes a GLB URL, returns the rigged GLB URL and a three.ws pose-studio link. Use this after mesh_forge or forge_free to rig the mesh they return; forge_avatar does both steps in one call. Paid: $0.20 USDC.';
 
 const inputZodShape = {
 	glb_url: z

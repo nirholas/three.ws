@@ -1,0 +1,98 @@
+{
+  "name": "pulse-trenches",
+  "version": "0.1.1",
+  "private": false,
+  "description": "Market intelligence for the Solana and Robinhood Chain trenches: live launch firehose, runner and death tracking, KOL and smart-money scoring, tech-vs-meme classification, a Telegram newsletter, a dashboard, an MCP server, and a Postgres archive for training trading bots.",
+  "keywords": [
+    "solana",
+    "robinhood-chain",
+    "pumpfun",
+    "pumpswap",
+    "memecoins",
+    "market-intelligence",
+    "crypto-analytics",
+    "on-chain-analytics",
+    "smart-money",
+    "kol",
+    "telegram-bot",
+    "newsletter",
+    "dashboard",
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "ai-agents",
+    "trading-bot",
+    "timescaledb",
+    "pglite"
+  ],
+  "license": "MIT",
+  "author": "nirholas <https://github.com/nirholas>",
+  "homepage": "https://nirholas.github.io/pulse/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/pulse.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nirholas/pulse/issues"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/nirholas"
+  },
+  "mcpName": "io.github.nirholas/pulse",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "pulse": "dist/pulse.js",
+    "pulse-trenches": "dist/pulse.js",
+    "pulse-mcp": "dist/pulse-mcp.js"
+  },
+  "files": [
+    "dist/pulse.js",
+    "dist/pulse-mcp.js",
+    "dist/chunks",
+    "dist/migrations",
+    "dist/web",
+    "README.md",
+    "LICENSE",
+    "AGENTS.md",
+    "llms.txt"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.ts",
+    "start": "node src/main.ts",
+    "collect": "node src/main.ts --once",
+    "report": "node src/report/cli.ts",
+    "db:migrate": "node src/main.ts --migrate",
+    "db:up": "docker compose up -d db",
+    "build": "vite build && node scripts/build.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": false
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@hono/node-server": "^2.1.4",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "bs58": "^6.0.0",
+    "hono": "^4.13.13",
+    "pg": "^8.23.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "@types/pg": "^8.23.1",
+    "echarts": "^6.1.0",
+    "esbuild": "^0.28.2",
+    "lightweight-charts": "^5.2.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3"
+  }
+}

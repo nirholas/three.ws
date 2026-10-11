@@ -82,10 +82,18 @@ import {
 } from '../_lib/pump-platform-fee.js';
 import {
 	buildLaunchTransaction,
+	countPrefixThatFits,
 	getPumpLookupTables,
 	pumpAgentBuybackAvailable,
 	transactionV1Status,
 } from '../_lib/pump-launch-tx.js';
+import {
+	creatorExtraQuoteMints,
+	creatorFeeSweepInstructions,
+	readCreatorFeeBuckets,
+	sumByQuote,
+	unsweptCreatorFees,
+} from '../_lib/pump-creator-fees.js';
 import { pinToIPFS, ipfsPinningConfigured } from '../_lib/ipfs-pin.js';
 import { THREE_WS_VANITY, hasThreeWsMark } from '../../src/solana/vanity/brand.js';
 import { grindVanityNode, GrindExhaustedError } from '../../src/solana/vanity/grinder-node.js';
@@ -170,8 +178,9 @@ function readLimit(url, fallback, max) {
 }
 
 // `spend: true` marks a handler that signs with an agent's custodial key; a
-// bearer must then hold wallet:write, not just any grant on the account.
-async function resolveAuth(req, { spend = false } = {}) {
+// bearer must then hold the scope for that kind of movement (spend-scope.js):
+// `kind: 'trade'` for a swap or a position, where value stays in the wallet.
+async function resolveAuth(req, { spend = false, kind = 'spend' } = {}) {
 	const session = await getSessionUser(req);
 	if (session) {
 		// CSRF defense-in-depth for the cookie path: these handlers sign real
@@ -187,7 +196,7 @@ async function resolveAuth(req, { spend = false } = {}) {
 	}
 	const bearer = await authenticateBearer(extractBearer(req));
 	if (!bearer) return null;
-	if (spend) assertBearerMaySpend(bearer, req);
+	if (spend) assertBearerMaySpend(bearer, req, { kind });
 	return { userId: bearer.userId };
 }
 
@@ -3054,16 +3063,42 @@ async function handleByAgent(req, res) {
 			order by pam.created_at desc limit 50
 		`;
 	}
-	const [row] = rows;
-	if (!row) return json(res, 200, { data: null, coins: [] });
-	const coins = rows.map((r) => ({
+	// Coins the agent launched on an EVM chain (Robinhood Chain through Pons)
+	// live in fixed_supply_launches. They join the history list, never `data`,
+	// whose payment and burn stats are pump.fun-mint specific.
+	const evmRows = await sql`
+		select f.mint, f.network, f.name, f.symbol, f.chain, f.venue, f.venue_url, f.image_url, f.created_at
+		from fixed_supply_launches f
+		${agentId ? sql`where f.agent_id = ${agentId}` : sql`join agent_identities ai on ai.id = f.agent_id and ai.deleted_at is null where ai.avatar_id = ${avatarId}`}
+		  and f.chain <> 'solana'
+		order by f.created_at desc limit 50
+	`;
+	const evmCoins = evmRows.map((r) => ({
 		mint: r.mint,
 		network: r.network,
 		name: r.name,
 		symbol: r.symbol,
-		buyback_bps: r.buyback_bps,
+		buyback_bps: 0,
 		created_at: r.created_at,
+		chain: r.chain,
+		venue: r.venue,
+		venue_url: r.venue_url || null,
+		image_url: r.image_url || null,
 	}));
+	const [row] = rows;
+	if (!row) return json(res, 200, { data: null, coins: evmCoins });
+	const coins = rows
+		.map((r) => ({
+			mint: r.mint,
+			network: r.network,
+			name: r.name,
+			symbol: r.symbol,
+			buyback_bps: r.buyback_bps,
+			created_at: r.created_at,
+			chain: 'solana',
+		}))
+		.concat(evmCoins)
+		.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
 	const [stats] = await sql`
 		select
@@ -3661,7 +3696,7 @@ async function handleStrategyCloseAll(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const auth = await resolveAuth(req, { spend: true });
+	const auth = await resolveAuth(req, { spend: true, kind: 'trade' });
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const rl = await limits.authIp(clientIp(req));
@@ -3767,7 +3802,7 @@ async function handleStrategyRun(req, res) {
 		// (cross-site cookie, bearer without wallet:write) is answered here.
 		let auth;
 		try {
-			auth = await resolveAuth(req, { spend: true });
+			auth = await resolveAuth(req, { spend: true, kind: 'trade' });
 		} catch (e) {
 			return error(res, e.status || 403, e.code || 'forbidden', e.message);
 		}
@@ -4151,6 +4186,17 @@ async function handleCoin(req, res) {
 	const mint = (url.searchParams.get('mint') || '').trim();
 	if (!MINT_RE.test(mint))
 		return error(res, 400, 'invalid_mint', 'mint must be a base58 address');
+	// `?miss=empty` is for callers with their own fallback (the coin-status
+	// widget reads the bonding curve next): an unindexed coin is an expected
+	// answer there, not an error, so it gets a 204 instead of a 404 that every
+	// browser prints to the console once per card on every refresh.
+	const softMiss = url.searchParams.get('miss') === 'empty';
+	const notFound = () => {
+		if (!softMiss) return error(res, 404, 'coin_not_found', 'no pump.fun coin for that mint');
+		res.setHeader('cache-control', 'public, max-age=60');
+		res.statusCode = 204;
+		return res.end();
+	};
 
 	const now = Date.now();
 	const hit = COIN_CACHE.get(mint);
@@ -4165,15 +4211,13 @@ async function handleCoin(req, res) {
 		// pump.fun returns 200 with an empty body for an unknown/unmigrated mint;
 		// pumpFetchJson reports that as ok:false with the 200 status. That is a
 		// real "coin not found", not an outage, so it never falls to last-good.
-		if (r.status >= 200 && r.status < 300) return error(res, 404, 'coin_not_found', 'no pump.fun coin for that mint');
+		if (r.status >= 200 && r.status < 300) return notFound();
 		if (r.status === 0) return serveStaleCoin(res, mint, 504, 'upstream_timeout', 'pump.fun did not respond');
-		if (r.status === 404) return error(res, 404, 'coin_not_found', 'no pump.fun coin for that mint');
+		if (r.status === 404) return notFound();
 		return serveStaleCoin(res, mint, 502, 'upstream_failed', `pump.fun returned ${r.status}`);
 	}
 	const parsed = r.body;
-	if (!parsed || typeof parsed !== 'object') {
-		return error(res, 404, 'coin_not_found', 'no pump.fun coin for that mint');
-	}
+	if (!parsed || typeof parsed !== 'object') return notFound();
 	const [body] = repairCoinImages([parsed]);
 	COIN_CACHE.set(mint, { at: now, body });
 	cacheSet(coinLkgKey(mint), { at: now, body }, COIN_LKG_TTL_S).catch(() => {});
@@ -4533,19 +4577,99 @@ const PUMP_QUOTE_LABELS = {
 	'4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU': { symbol: 'USDC', decimals: 6 },
 };
 
-async function creatorRewardBalances(connection, creator) {
+// ── unswept creator fees ───────────────────────────────────────────────────
+// v3 bonding-curve and v2 PumpSwap trades (pump-sdk 4.0) leave the creator fee
+// on the curve or in the pool until a permissionless sweep moves it into the
+// creator vault. Every claim below sweeps first, so it collects those fees in
+// the same transaction, and every balance counts what is still waiting there.
+
+const SOL_QUOTE_MINT = 'So11111111111111111111111111111111111111112';
+// Room for the compute-budget instructions submitProtected adds to a send.
+const PROTECTED_SEND_RESERVE_BYTES = 120;
+
+// Coins a creator wallet launched through three.ws, plus any the caller named.
+async function creatorCoinMints(creator, network, extra = []) {
+	const rows = await sql`
+		select mint from pump_agent_mints
+		where agent_authority = ${creator} and network = ${network}
+		order by created_at desc
+		limit 500
+	`;
+	return [...new Set([...rows.map((r) => r.mint), ...extra])];
+}
+
+// Sweeps (largest first) and the extra quote mints for one creator's collect.
+// A failed chain read degrades to a vault-only claim instead of no claim.
+async function prepareCreatorSweeps(connection, { creator, mints, payer, solOnly }) {
+	const empty = { sweeps: [], swept: [], legs: [], extraQuoteMints: [] };
+	if (!mints.length) return empty;
+	try {
+		const buckets = await readCreatorFeeBuckets(connection, mints);
+		const legs = unsweptCreatorFees(buckets.values(), creator).filter(
+			(l) => !solOnly || l.quoteMint === SOL_QUOTE_MINT,
+		);
+		const { instructions, swept } = await creatorFeeSweepInstructions(connection, { legs, payer });
+		return { sweeps: instructions, swept, legs, extraQuoteMints: creatorExtraQuoteMints(buckets.values(), creator) };
+	} catch (e) {
+		console.warn('[pump] creator-fee bucket read failed, collecting the vault only', creator, e?.message);
+		return empty;
+	}
+}
+
+// The first `count` swept legs, as the claim responses report them.
+function sweptReport(swept, count) {
+	return swept.slice(0, count).map((l) => ({
+		mint: l.mint,
+		source: l.source,
+		quote_mint: l.quoteMint,
+		amount: l.amount.toString(),
+	}));
+}
+
+// Every nonzero creator-fee bucket on one coin, swept to whoever it belongs to:
+// the programs refuse a distribution, CTO or fee-sharing change while one is
+// nonzero (CreatorFeesNotSwept), so these go first in the same transaction.
+async function coinSweepInstructions(connection, mintPk, payer) {
+	const buckets = await readCreatorFeeBuckets(connection, [mintPk.toBase58()]);
+	const { instructions } = await creatorFeeSweepInstructions(connection, {
+		legs: unsweptCreatorFees(buckets.values()),
+		payer,
+	});
+	return instructions;
+}
+
+// The quote mint and payer buildDistributeCreatorFeesInstructions needs: with
+// the payer it also sweeps the pool bucket, with the quote mint it finds a
+// token-quoted coin's pool and vaults instead of treating it as SOL.
+async function distributeOptions(onlineSdk, mintPk, payer) {
+	const { normalizeQuoteMint } = await import('@pump-fun/pump-sdk');
+	const curve = await onlineSdk.fetchBondingCurve(mintPk).catch(() => null);
+	return curve ? { payer, quoteMint: normalizeQuoteMint(curve.quoteMint) } : { payer };
+}
+
+// One creator's waiting rewards per quote mint: the vaults plus the fees still
+// on that creator's curves and pools, which the claim sweeps in first.
+async function creatorRewardBalances(connection, creator, buckets) {
 	const { OnlinePumpSdk } = await import('@pump-fun/pump-sdk');
-	const rows = await new OnlinePumpSdk(connection).getCreatorVaultQuoteBalances(new PublicKey(creator));
-	return rows
-		.map((r) => {
-			const mint = r.mint.toBase58();
+	const list = [...buckets.values()];
+	const pending = sumByQuote(unsweptCreatorFees(list, creator));
+	const rows = await new OnlinePumpSdk(connection).getCreatorVaultQuoteBalances(
+		new PublicKey(creator),
+		creatorExtraQuoteMints(list, creator),
+	);
+	const byMint = new Map(rows.map((r) => [r.mint.toBase58(), BigInt(r.total.toString())]));
+	for (const mint of pending.keys()) if (!byMint.has(mint)) byMint.set(mint, 0n);
+	return [...byMint.entries()]
+		.map(([mint, vault]) => {
 			const label = PUMP_QUOTE_LABELS[mint] || { symbol: `${mint.slice(0, 4)}…`, decimals: null };
-			const total = BigInt(r.total.toString());
+			const unswept = pending.get(mint) || 0n;
+			const total = vault + unswept;
 			return {
 				mint,
 				symbol: label.symbol,
 				amount: total.toString(),
 				amount_ui: label.decimals == null ? null : Number(total) / 10 ** label.decimals,
+				unswept: unswept.toString(),
 			};
 		})
 		.filter((r) => r.amount !== '0');
@@ -4631,10 +4755,17 @@ async function handleMyCoins(req, res) {
 	}
 
 	const connection = getConnection({ network });
+	const claimMints = [...creators.values()].flatMap((g) => g.coins);
+	const buckets = claimMints.length
+		? await readCreatorFeeBuckets(connection, claimMints).catch((e) => {
+				console.warn('[pump/my-coins] fee bucket read failed', e?.message);
+				return new Map();
+			})
+		: new Map();
 	await Promise.all(
 		[...creators.values()].map(async (group) => {
 			try {
-				group.rewards = await creatorRewardBalances(connection, group.address);
+				group.rewards = await creatorRewardBalances(connection, group.address, buckets);
 			} catch (e) {
 				group.balance_error = isRpcOutageError(e) ? 'rpc_unavailable' : 'balance_read_failed';
 				console.warn('[pump/my-coins] vault read failed', group.address, e?.message);
@@ -4661,6 +4792,9 @@ const collectCreatorFeePrepSchema = z.object({
 	// Sweep every quote mint (SOL plus USDC and any other listed quote) instead
 	// of SOL alone, so a USDC-paired coin's rewards are claimable too.
 	all_quotes: z.boolean().default(false),
+	// Coins this creator made outside three.ws whose curve or pool fees should be
+	// swept in too. Coins launched here are found from the launch records.
+	mints: z.array(z.string().min(32).max(44)).max(50).default([]),
 	transaction_version: z.union([z.literal('auto'), z.literal(0), z.literal(1)]).default('auto'),
 	v1_capable: z.boolean().default(false),
 });
@@ -4681,16 +4815,30 @@ async function handleCollectCreatorFeePrep(req, res) {
 	if (!creatorPk || !feePayer) return error(res, 400, 'validation_error', 'invalid pubkeys');
 
 	try {
-		const { sdk, connection } = await getPumpSdk({ network: body.network });
+		const { connection } = await getPumpSdk({ network: body.network });
 		const { OnlinePumpSdk } = await import('@pump-fun/pump-sdk');
 		const onlineSdk = new OnlinePumpSdk(connection);
+		const extraMints = body.mints.filter((m) => solanaPubkey(m));
+		const prep = await prepareCreatorSweeps(connection, {
+			creator: creatorPk.toBase58(),
+			mints: await creatorCoinMints(creatorPk.toBase58(), body.network, extraMints),
+			payer: feePayer,
+			solOnly: !body.all_quotes,
+		});
 		const ixs = body.all_quotes
-			? await onlineSdk.collectCoinCreatorFeeAllQuotesInstructions(creatorPk, feePayer)
+			? await onlineSdk.collectCoinCreatorFeeAllQuotesInstructions(creatorPk, feePayer, prep.extraQuoteMints)
 			: await onlineSdk.collectCoinCreatorFeeInstructions(creatorPk, feePayer);
+		const collectIxs = Array.isArray(ixs) ? ixs : [ixs];
+		const sweepCount = countPrefixThatFits({
+			payer: feePayer,
+			prefix: prep.sweeps,
+			rest: collectIxs,
+			tables: await getPumpLookupTables({ network: body.network }),
+		});
 		const built = await buildLaunchTransaction({
 			network: body.network,
 			payer: feePayer,
-			instructions: Array.isArray(ixs) ? ixs : [ixs],
+			instructions: [...prep.sweeps.slice(0, sweepCount), ...collectIxs],
 			transactionVersion: body.transaction_version,
 			v1Capable: body.v1_capable,
 		});
@@ -4699,6 +4847,10 @@ async function handleCollectCreatorFeePrep(req, res) {
 			network: body.network,
 			tx_base64: built.tx_base64,
 			transaction_version: built.transaction_version,
+			swept: sweptReport(prep.swept, sweepCount),
+			// Fee legs left on curves or pools after this claim (too many for one
+			// transaction); claiming again sweeps the next largest.
+			sweeps_remaining: prep.legs.length - sweepCount,
 		});
 	} catch (e) {
 		return error(
@@ -4750,8 +4902,10 @@ async function handleDistributeCreatorFeesPrep(req, res) {
 		const { connection } = await getPumpSdk({ network: body.network });
 		const { OnlinePumpSdk } = await import('@pump-fun/pump-sdk');
 		const onlineSdk = new OnlinePumpSdk(connection);
-		const { instructions, isGraduated } =
-			await onlineSdk.buildDistributeCreatorFeesInstructions(mintPk);
+		const { instructions, isGraduated } = await onlineSdk.buildDistributeCreatorFeesInstructions(
+			mintPk,
+			await distributeOptions(onlineSdk, mintPk, payerPk),
+		);
 		const tx_base64 = await buildUnsignedTxBase64({
 			network: body.network,
 			payer: payerPk,
@@ -4884,7 +5038,7 @@ async function handleUpdateFeeSharesPrep(req, res) {
 		const tx_base64 = await buildUnsignedTxBase64({
 			network: body.network,
 			payer: payerPk,
-			instructions: [ix],
+			instructions: [...(await coinSweepInstructions(connection, mintPk, payerPk)), ix],
 		});
 		return json(res, 201, {
 			mint: body.mint,
@@ -4964,7 +5118,7 @@ async function handleCreateFeeSharingPrep(req, res) {
 		const tx_base64 = await buildUnsignedTxBase64({
 			network: body.network,
 			payer: payerPk,
-			instructions: [ix],
+			instructions: [...(await coinSweepInstructions(connection, mintPk, payerPk)), ix],
 		});
 		return json(res, 201, {
 			mint: body.mint,
@@ -5162,7 +5316,7 @@ async function handleFeeInfo(req, res) {
 	try {
 		const connection = getConnection({ network });
 		const [
-			{ PumpSdk, OnlinePumpSdk, canonicalPumpPoolPda, creatorVaultPda, feeSharingConfigPda },
+			{ PumpSdk, OnlinePumpSdk, canonicalPumpPoolPdaWithQuote, normalizeQuoteMint, creatorVaultPda, feeSharingConfigPda },
 			{ OnlinePumpAmmSdk, coinCreatorVaultAuthorityPda, coinCreatorVaultAtaPda },
 			{ AccountLayout, NATIVE_MINT, TOKEN_PROGRAM_ID },
 		] = await Promise.all([
@@ -5177,7 +5331,7 @@ async function handleFeeInfo(req, res) {
 		if (!bondingCurve) return error(res, 404, 'not_found', 'no bonding curve for this mint');
 		const isHolderReward = bondingCurve.isHolderReward === true;
 
-		const poolPda = canonicalPumpPoolPda(mintPk);
+		const poolPda = canonicalPumpPoolPdaWithQuote(mintPk, normalizeQuoteMint(bondingCurve.quoteMint));
 		const poolInfo = await connection.getAccountInfo(poolPda);
 		let isGraduated = false;
 		let poolCoinCreator = null;
@@ -5229,11 +5383,19 @@ async function handleFeeInfo(req, res) {
 			}
 		}
 
-		// Vault balance = pump native creator vault (minus rent) + AMM WSOL vault.
+		// Vault balance = pump native creator vault (minus rent) + AMM WSOL vault,
+		// plus the SOL creator fees v3 / PumpSwap v2 trades left on this coin's
+		// curve and pool, which a claim sweeps into the vault first.
 		// When a sharing config exists, fees accrue under the config PDA.
 		let claimableLamports = 0n;
+		let unsweptLamports = 0n;
 		if (!isCashbackCoin) {
 			const vaultCreator = hasSharingConfig ? feeSharingConfigPda(mintPk) : effectiveCreator;
+			const buckets = await readCreatorFeeBuckets(connection, [mintPk.toBase58()]);
+			for (const leg of unsweptCreatorFees(buckets.values(), vaultCreator.toBase58())) {
+				if (leg.quoteMint === SOL_QUOTE_MINT) unsweptLamports += leg.amount;
+			}
+			claimableLamports += unsweptLamports;
 			const nativeVault = creatorVaultPda(vaultCreator);
 			const nativeInfo = await connection.getAccountInfo(nativeVault);
 			if (nativeInfo) {
@@ -5277,6 +5439,8 @@ async function handleFeeInfo(req, res) {
 			creator: effectiveCreator.toBase58(),
 			claimable_lamports: claimableLamports.toString(),
 			claimable_sol: Number(claimableLamports) / LAMPORTS_PER_SOL,
+			// The part of claimable still on the curve or pool (swept by the claim).
+			unswept_lamports: unsweptLamports.toString(),
 			fee_destination: feeDestination,
 			sharing_config: sharingConfig,
 		});
@@ -5293,7 +5457,7 @@ async function handleFeeInfo(req, res) {
 // Build a v0 transaction from `instructions`, sign with the agent keypair (and
 // any extra signers), send, and confirm. Mirrors the launch-agent send path so
 // every server-signed pump action uses the same RPC handling.
-async function signSendWithAgent({ network, agentKeypair, instructions, extraSigners = [] }) {
+async function signSendWithAgent({ network, agentKeypair, instructions, extraSigners = [], lookupTables = [] }) {
 	const conn = solanaConnection(network);
 	// Protected send: priority fee + CU estimate, rebroadcast with blockhash
 	// refresh, hard throw on an on-chain revert.
@@ -5302,7 +5466,7 @@ async function signSendWithAgent({ network, agentKeypair, instructions, extraSig
 		connection: conn,
 		payer: agentKeypair,
 		instructions,
-		opts: { extraSigners },
+		opts: { extraSigners, addressLookupTables: lookupTables },
 	});
 	return signature;
 }
@@ -5385,20 +5549,39 @@ async function handleCollectCreatorFeeAgent(req, res) {
 		// lamports the claim delivered (net of tx fee): callers (the launcher
 		// claimer, the studio) need the real figure, not a boolean.
 		const balanceBefore = await connection.getBalance(creatorPk).catch(() => null);
+		// Fees v3 / PumpSwap v2 trades left on the creator's curves and pools are
+		// swept into the vault first, so this one claim collects them too.
+		const prep = await prepareCreatorSweeps(connection, {
+			creator: ctx.creator,
+			mints: await creatorCoinMints(ctx.creator, body.network, [body.mint]),
+			payer: creatorPk,
+			solOnly: !body.all_quotes,
+		});
 		const ixs = body.all_quotes
-			? await onlineSdk.collectCoinCreatorFeeAllQuotesInstructions(creatorPk, creatorPk)
+			? await onlineSdk.collectCoinCreatorFeeAllQuotesInstructions(creatorPk, creatorPk, prep.extraQuoteMints)
 			: await onlineSdk.collectCoinCreatorFeeInstructions(creatorPk, creatorPk);
+		const collectIxs = Array.isArray(ixs) ? ixs : [ixs];
+		const lookupTables = await getPumpLookupTables({ network: body.network });
+		const sweepCount = countPrefixThatFits({
+			payer: creatorPk,
+			prefix: prep.sweeps,
+			rest: collectIxs,
+			tables: lookupTables,
+			reserveBytes: PROTECTED_SEND_RESERVE_BYTES,
+		});
 		const signature = await signSendWithAgent({
 			network: body.network,
 			agentKeypair: ctx.loaded.keypair,
-			instructions: Array.isArray(ixs) ? ixs : [ixs],
+			instructions: [...prep.sweeps.slice(0, sweepCount), ...collectIxs],
+			lookupTables,
 		});
+		const swept = sweptReport(prep.swept, sweepCount);
 		const balanceAfter = balanceBefore == null ? null : await connection.getBalance(creatorPk).catch(() => null);
 		const lamports = balanceBefore != null && balanceAfter != null ? Math.max(0, balanceAfter - balanceBefore) : null;
 		await sql`
 			insert into agent_actions (agent_id, type, payload, source_skill)
 			values (${ctx.agent.id}, ${'pumpfun.collect_creator_fee'},
-				${JSON.stringify({ mint: body.mint, network: body.network, signature, lamports, source: 'studio_agent_wallet' })}::jsonb,
+				${JSON.stringify({ mint: body.mint, network: body.network, signature, lamports, swept, source: 'studio_agent_wallet' })}::jsonb,
 				${'pumpfun'})
 		`.catch((e) => console.error('[pump/collect-creator-fee-agent] log failed', e?.message));
 		return json(res, 201, {
@@ -5408,6 +5591,8 @@ async function handleCollectCreatorFeeAgent(req, res) {
 			signature,
 			lamports,
 			sol: lamports == null ? null : lamports / LAMPORTS_PER_SOL,
+			swept,
+			sweeps_remaining: prep.legs.length - sweepCount,
 			explorer: `https://solscan.io/tx/${signature}${body.network === 'devnet' ? '?cluster=devnet' : ''}`,
 		});
 	} catch (e) {
@@ -5435,8 +5620,10 @@ async function handleDistributeCreatorFeesAgent(req, res) {
 		const { connection } = await getPumpSdk({ network: body.network });
 		const { OnlinePumpSdk } = await import('@pump-fun/pump-sdk');
 		const onlineSdk = new OnlinePumpSdk(connection);
+		const mintPk = new PublicKey(body.mint);
 		const { instructions } = await onlineSdk.buildDistributeCreatorFeesInstructions(
-			new PublicKey(body.mint),
+			mintPk,
+			await distributeOptions(onlineSdk, mintPk, ctx.loaded.keypair.publicKey),
 		);
 		const signature = await signSendWithAgent({
 			network: body.network,
@@ -5555,7 +5742,7 @@ async function handleFeeSharingAgent(req, res) {
 				await signSendWithAgent({
 					network: body.network,
 					agentKeypair: ctx.loaded.keypair,
-					instructions: [createIx],
+					instructions: [...(await coinSweepInstructions(connection, mintPk, creator)), createIx],
 				}),
 			);
 		}
@@ -5579,7 +5766,7 @@ async function handleFeeSharingAgent(req, res) {
 			await signSendWithAgent({
 				network: body.network,
 				agentKeypair: ctx.loaded.keypair,
-				instructions: [updateIx],
+				instructions: [...(await coinSweepInstructions(connection, mintPk, creator)), updateIx],
 			}),
 		);
 

@@ -113,7 +113,7 @@ export const toolDefs = [
 		title: 'Search the x402 bazaar',
 		annotations: DISCOVERY_ANNOTATIONS,
 		description:
-			'Ranked search across the live x402 facilitator network for paid agent services (APIs and MCP tools you can pay for in stablecoin). Returns matching services with price, networks, and resource URL. Use get_service for full payment + input details.',
+			'Ranked search across the live x402 facilitator network for paid agent services (APIs and MCP tools you can pay for in stablecoin). Returns matching services with price, networks, and resource URL. Use this when you know what capability you need; call get_service on a match for full payment and input details.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -150,7 +150,7 @@ export const toolDefs = [
 		title: 'Browse the x402 bazaar',
 		annotations: DISCOVERY_ANNOTATIONS,
 		description:
-			'List paid agent services from the live x402 facilitator network without a search query, useful for "what can I pay for?". Returns services with price, networks, and resource URL, cheapest filters applied.',
+			'List paid agent services from the live x402 facilitator network without a search query, useful for "what can I pay for?". Returns services with price, networks, and resource URL, cheapest filters applied. Use this when you have no specific need yet and want to see what is on offer; for a targeted lookup call search_services instead.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -178,7 +178,7 @@ export const toolDefs = [
 		title: 'Get full details for one x402 service',
 		annotations: DISCOVERY_ANNOTATIONS,
 		description:
-			'Resolve a single x402 service by its resource URL (and tool_name for MCP services). Returns the exact payment requirements (price, asset, network, recipient), the input/output schema, and a ready-to-use pay link on three.ws. This is what you read before paying.',
+			'Resolve a single x402 service by its resource URL (and tool_name for MCP services). Returns the exact payment requirements (price, asset, network, recipient), the input/output schema, and a ready-to-use pay link on three.ws. Use this before paying any service, to confirm the exact amount, asset, and input shape.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -245,7 +245,7 @@ export const toolDefs = [
 		title: 'Live price details for one x402 service',
 		annotations: DISCOVERY_ANNOTATIONS,
 		description:
-			"Resolve the current live price of a single x402 service by its resource URL (and tool_name for MCP services). Returns the cheapest price across networks plus a per-network breakdown (amount in atomic units, asset, recipient) and whether the service is still listed and payable. Purpose-built for price tracking and cost-model maintenance. Call it on a schedule to watch a dependency's price over time and detect hikes or drops. Use get_service instead when you also need the input/output schema and a ready pay link.",
+			"Resolve the current live price of a single x402 service by its resource URL (and tool_name for MCP services). Returns the cheapest price across networks plus a per-network breakdown (amount in atomic units, asset, recipient) and whether the service is still listed and payable. Purpose-built for price tracking and cost-model maintenance. Use this instead of get_service when you only need the current price, for example on a schedule to watch a dependency's price over time and detect hikes or drops; call get_service when you also need the input/output schema and a ready pay link.",
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -326,7 +326,7 @@ export const toolDefs = [
 			openWorldHint: false,
 		},
 		description:
-			'Read a live three.ws resource by URI: three://x402/services (the x402 service catalog), three://marketplace (paid agent skills and agent services) and three://me. Omit uri to list every resource you can read. Set format to markdown for a readable rendering.',
+			'Read a live three.ws resource by URI: three://x402/services (the x402 service catalog), three://marketplace (paid agent skills and agent services) and three://me. Omit uri to list every resource you can read. Set format to markdown for a readable rendering. Use this to read the whole service catalog or your account in one call when a search tool is too narrow.',
 		inputSchema: {
 			type: 'object',
 			properties: {

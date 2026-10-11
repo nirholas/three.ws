@@ -54,9 +54,11 @@ import bs58 from 'bs58';
 import { resolveSnsName, reverseLookupAddress } from '../src/solana/sns.js';
 import { scanFirstClaims } from './_lib/pump-claims.js';
 import { eventField } from './_lib/pump-onchain-trades.js';
+import { pumpTradesFromEvents } from '../src/pump/trade-events.js';
 import { getSolPriceUsd } from '../src/shared/usd-price.js';
 
 import { pinToIPFS, ipfsPinningConfigured } from './_lib/ipfs-pin.js';
+import { issueSession, trackMcp } from './_lib/mcp-clients.js';
 // ── On-chain handlers ──────────────────────────────────────────────────────
 
 const TOTAL_PUMP_TOKEN_SUPPLY = 1_000_000_000; // 1B pump.fun standard
@@ -665,18 +667,16 @@ async function handleWatchWhales({ mint, minUsd = 5000, durationMs = 5000 }) {
 		(logInfo) => {
 			if (logInfo.err) return;
 			try {
-				for (const event of parser.parseLogs(logInfo.logs)) {
-					if (event.name !== 'TradeEvent') continue;
-					const d = event.data;
-					if (d.mint?.toString() !== mintStr) continue;
-					const sol =
-						Number(eventField(d, 'solAmount')?.toString() ?? '0') / 1_000_000_000;
+				for (const trade of pumpTradesFromEvents(parser.parseLogs(logInfo.logs))) {
+					const d = trade.data;
+					if (trade.mint !== mintStr) continue;
+					const sol = Number(trade.solAmount) / 1_000_000_000;
 					const usd = sol * solPrice;
 					if (usd < minUsdNum) continue;
 					trades.push({
 						signature: logInfo.signature,
 						wallet: d.user?.toString() ?? null,
-						sideBuy: !!eventField(d, 'isBuy'),
+						sideBuy: trade.isBuy,
 						usd,
 						sol,
 						ts:
@@ -760,7 +760,7 @@ async function readTradesFromChain({ mint, limit, network }) {
 		const blockTime = tx.blockTime ? tx.blockTime * 1000 : Date.now();
 		let parsed;
 		try {
-			parsed = parser.parseLogs(logs);
+			parsed = [...parser.parseLogs(logs)];
 		} catch {
 			return null;
 		}
@@ -787,23 +787,23 @@ async function readTradesFromChain({ mint, limit, network }) {
 					timestamp: ts ? Number(ts.toString()) : Math.floor(blockTime / 1000),
 				};
 			}
-			if (!isAmm && event.name === 'TradeEvent') {
-				const d = event.data;
-				if (d.mint?.toString() !== mintStr) continue;
-				const sol = Number(eventField(d, 'solAmount')?.toString() ?? '0') / 1e9;
-				const ts = eventField(d, 'timestamp');
-				return {
-					signature,
-					isBuy: !!eventField(d, 'isBuy'),
-					solAmount: sol,
-					tokenAmount: eventField(d, 'tokenAmount')?.toString() ?? '0',
-					usdValue: sol * solPrice,
-					wallet: d.user?.toString() ?? null,
-					timestamp: ts ? Number(ts.toString()) : Math.floor(blockTime / 1000),
-				};
-			}
 		}
-		return null;
+		if (isAmm) return null;
+		// A buy that completed the curve also carries its synthetic-migration pool
+		// part; pumpTradesFromEvents folds it in.
+		const trade = pumpTradesFromEvents(parsed).find((t) => t.mint === mintStr);
+		if (!trade) return null;
+		const sol = Number(trade.solAmount) / 1e9;
+		const ts = eventField(trade.data, 'timestamp');
+		return {
+			signature,
+			isBuy: trade.isBuy,
+			solAmount: sol,
+			tokenAmount: trade.tokenAmount.toString(),
+			usdValue: sol * solPrice,
+			wallet: trade.user || null,
+			timestamp: ts ? Number(ts.toString()) : Math.floor(blockTime / 1000),
+		};
 	}
 
 	// Fetch in small chunks and stop as soon as we have enough trades. Most
@@ -1496,6 +1496,16 @@ export function listPumpFunTools() {
 }
 
 /**
+ * Every tool this server can serve, each flagged with whether it needs the
+ * pump.fun indexer. listPumpFunTools() is the subset live right now; the MCP
+ * census (api/_lib/mcp-census.js) publishes both numbers.
+ * @returns {Array<{ tool: object, indexer: boolean }>}
+ */
+export function listAllPumpFunTools() {
+	return TOOLS.map((tool) => ({ tool, indexer: INDEXER_TOOLS.has(tool.name) }));
+}
+
+/**
  * The raw handler for one tool, for a caller that authenticates the request
  * itself (the unified server at /mcp). Unlike callPumpFunTool this includes
  * the gated tools, so that caller owns their bearer-or-payment check and the
@@ -1950,9 +1960,20 @@ export default wrap(async (req, res) => {
 			return res.end();
 		}
 
-		return json(res, 200, isBatch ? responses : responses[0], {
+		const issuedSessionId = issueSession(res, body);
+		const gate = gateAuthPromise ? await gateAuthPromise : null;
+		const authSource = gate?.x402Ctx
+			? 'x402'
+			: gate?.principal?.startsWith('apikey:')
+				? 'apikey'
+				: gate?.principal
+					? 'oauth'
+					: null;
+		const sent = json(res, 200, isBatch ? responses : responses[0], {
 			'mcp-protocol-version': PROTOCOL_VERSION,
 		});
+		trackMcp({ surface: 'pump-fun-mcp', req, body, responses, auth: { source: authSource }, issuedSessionId });
+		return sent;
 	} finally {
 		await releaseProof();
 	}

@@ -7,6 +7,7 @@ import {
 	deriveConcentration,
 	composeTokenHolders,
 	heliusHolderWalk,
+	realHolderDeps,
 	CONCENTRATION_HIGH_PCT,
 	CONCENTRATION_MEDIUM_PCT,
 } from '../api/_lib/crypto-token-holders.js';
@@ -220,6 +221,8 @@ describe('composeTokenHolders — states', () => {
 // refuse. These pin the failure shapes that took it down without a trace.
 describe('heliusHolderWalk failure shapes', () => {
 	const MINT = THREE;
+	// The fleet-wide lane cooldown is module state; isolate each case from it.
+	const noBreaker = { isCooling: () => false, markCooldown: () => {} };
 	const page = (n) => ({
 		ok: true,
 		status: 200,
@@ -243,7 +246,7 @@ describe('heliusHolderWalk failure shapes', () => {
 		const had = process.env.HELIUS_API_KEY;
 		delete process.env.HELIUS_API_KEY;
 		try {
-			expect(await heliusHolderWalk(MINT, { fetchImpl: async () => page(0) })).toBeNull();
+			expect(await heliusHolderWalk(MINT, { fetchImpl: async () => page(0), ...noBreaker })).toBeNull();
 		} finally {
 			if (had !== undefined) process.env.HELIUS_API_KEY = had;
 		}
@@ -252,14 +255,14 @@ describe('heliusHolderWalk failure shapes', () => {
 	it('names an exhausted plan instead of throwing a bare JSON parse error', async () => {
 		await withKey(async () => {
 			const fetchImpl = async () => ({ ok: true, status: 200, text: async () => 'max usage reached' });
-			await expect(heliusHolderWalk(MINT, { fetchImpl })).rejects.toThrow(/non-JSON response .*max usage reached/);
+			await expect(heliusHolderWalk(MINT, { fetchImpl, ...noBreaker })).rejects.toThrow(/non-JSON response .*max usage reached/);
 		});
 	});
 
 	it('names a JSON-RPC error envelope', async () => {
 		await withKey(async () => {
 			const fetchImpl = async () => ({ ok: true, status: 200, text: async () => JSON.stringify({ error: { code: -32603, message: 'nope' } }) });
-			await expect(heliusHolderWalk(MINT, { fetchImpl })).rejects.toThrow(/nope/);
+			await expect(heliusHolderWalk(MINT, { fetchImpl, ...noBreaker })).rejects.toThrow(/nope/);
 		});
 	});
 
@@ -271,7 +274,7 @@ describe('heliusHolderWalk failure shapes', () => {
 				if (call === 1) return page(1000);
 				throw new Error('gateway timeout');
 			};
-			const out = await heliusHolderWalk(MINT, { fetchImpl });
+			const out = await heliusHolderWalk(MINT, { fetchImpl, ...noBreaker });
 			expect(out.accounts).toHaveLength(1000);
 			// Incomplete, so the holder COUNT is still withheld rather than guessed.
 			expect(out.complete).toBe(false);
@@ -281,15 +284,58 @@ describe('heliusHolderWalk failure shapes', () => {
 	it('still throws when the very first page fails and there is nothing to keep', async () => {
 		await withKey(async () => {
 			const fetchImpl = async () => { throw new Error('gateway timeout'); };
-			await expect(heliusHolderWalk(MINT, { fetchImpl })).rejects.toThrow(/gateway timeout/);
+			await expect(heliusHolderWalk(MINT, { fetchImpl, ...noBreaker })).rejects.toThrow(/gateway timeout/);
 		});
 	});
 
 	it('marks a short page as a complete walk', async () => {
 		await withKey(async () => {
-			const out = await heliusHolderWalk(MINT, { fetchImpl: async () => page(3) });
+			const out = await heliusHolderWalk(MINT, { fetchImpl: async () => page(3), ...noBreaker });
 			expect(out.complete).toBe(true);
 			expect(out.accounts).toHaveLength(3);
 		});
+	});
+
+	it('skips the walk while the Helius lane is parked in the quota cooldown', async () => {
+		await withKey(async () => {
+			let called = false;
+			const fetchImpl = async () => { called = true; return page(3); };
+			const out = await heliusHolderWalk(MINT, { fetchImpl, isCooling: () => true, markCooldown: () => {} });
+			expect(out).toBeNull();
+			expect(called).toBe(false);
+		});
+	});
+
+	it('parks the Helius lane fleet-wide when the plan reports max usage', async () => {
+		await withKey(async () => {
+			const marks = [];
+			const fetchImpl = async () => ({ ok: false, status: 429, text: async () => 'max usage reached' });
+			await expect(
+				heliusHolderWalk(MINT, { fetchImpl, isCooling: () => false, markCooldown: (...a) => marks.push(a) }),
+			).rejects.toThrow(/429: max usage reached/);
+			expect(marks).toHaveLength(1);
+			expect(marks[0][0]).toMatch(/mainnet\.helius-rpc\.com/);
+			expect(marks[0][1]).toBe(429);
+		});
+	});
+
+	it('does not park the lane for a transient failure', async () => {
+		await withKey(async () => {
+			const marks = [];
+			const fetchImpl = async () => { throw new Error('gateway timeout'); };
+			await expect(
+				heliusHolderWalk(MINT, { fetchImpl, isCooling: () => false, markCooldown: (...a) => marks.push(a) }),
+			).rejects.toThrow(/gateway timeout/);
+			expect(marks).toHaveLength(0);
+		});
+	});
+});
+
+describe('realHolderDeps Helius budget gate', () => {
+	it('takes the keyless lane without touching Helius when the budget says no', async () => {
+		let asked = 0;
+		const d = realHolderDeps({ heliusAllowed: async () => { asked++; return false; } });
+		expect(await d.fetchHelius(THREE)).toBeNull();
+		expect(asked).toBe(1);
 	});
 });

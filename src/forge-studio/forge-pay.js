@@ -17,6 +17,7 @@
 // { ok:true, paymentId, refId } on a verified on-chain payment.
 
 import { payWithToken } from '../token-pay.js';
+import { leaveAppForPayment } from '../shared/native-handoff.js';
 
 const ECONOMY_URL = '/three-token';
 const SIGN_IN_URL = '/login';
@@ -163,6 +164,7 @@ export function payForConsumption({
 	successText = 'Payment confirmed — continuing…',
 	refPrefix = 'forge',
 } = {}) {
+	if (leaveAppForPayment()) return Promise.resolve({ ok: false, cancelled: true });
 	injectStyles();
 	return new Promise((resolve) => {
 		const refId = clientNonce(refPrefix);

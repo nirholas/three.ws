@@ -86,9 +86,10 @@ export const handleCredits = wrap(async (req, res, agentId, action, sub) => {
 	if (!scopeOk(caller, 'wallet:write')) {
 		return error(res, 403, 'insufficient_scope', 'moving funds from an agent wallet needs the wallet:write scope');
 	}
-	// The top-up sends mainnet USDC out of the agent wallet; the preview moves
-	// nothing. Checked before CSRF so a refusal does not burn the single-use token.
-	if (sub !== 'preview' && !(await requireRealFundsAgreement(req, res, { userId: caller.userId, context: 'inference-topup' }))) return;
+	// The top-up itself sends real USDC out of the agent wallet, so it needs the
+	// signed real-funds agreements; the preview moves nothing. Checked before CSRF
+	// so a refusal does not burn the owner's single-use token.
+	if (!sub && !(await requireRealFundsAgreement(req, res, { userId: caller.userId, context: 'inference-topup' }))) return;
 	if (!(await requireCsrf(req, res, caller.userId))) return;
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -131,9 +132,10 @@ async function handleAutoFund(req, res, caller, agent) {
 	}
 	const body = (await readJson(req).catch(() => null)) || {};
 	const enabled = body.enabled !== false;
-	// An enabled rule arms autonomous USDC top-ups from the agent wallet;
-	// switching it off never needs the agreement. Checked before CSRF so a
-	// refusal does not burn the single-use token.
+	// An enabled rule lets the wallet-intents engine send USDC from the agent
+	// wallet unattended, so arming or re-arming it needs the signed real-funds
+	// agreements; switching it off never spends. Checked before CSRF so a refusal
+	// does not burn the owner's single-use token.
 	if (enabled && !(await requireRealFundsAgreement(req, res, { userId: caller.userId, context: 'inference-auto-fund' }))) return;
 	if (!(await requireCsrf(req, res, caller.userId))) return;
 	const rl = await limits.authIp(clientIp(req));

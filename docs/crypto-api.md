@@ -819,6 +819,13 @@ surfaces can never contradict each other.
   `getTokenAccounts` — pages through the token's accounts and aggregates by
   owner wallet, so a whale split across accounts reads as one holder. Walk
   capped at 5,000 accounts; beyond it `holderCount` is `null` with a `note`.
+  The walk is metered: each caller gets 30 keyed reads per hour within the
+  platform's shared indexer ceiling, and it is skipped while the indexer plan is
+  in a quota cooldown. Past either limit the read is answered from the keyless
+  path below (`holderCount: null`, marked in `note`), never refused.
+- **Repeat reads:** the same `address` + `limit` within 60 seconds is answered
+  from the previous result (`x-holders-cache: hit`), matching the response's own
+  `s-maxage=60`.
 - **Keyless fallback (always available):** Solana RPC `getTokenLargestAccounts`
   (the chain's top 20 token accounts) + `getMultipleAccounts` to resolve owners
   + the mint's supply for percentages. Coarse but real, and marked in `note`.
@@ -834,7 +841,9 @@ surfaces can never contradict each other.
   `as_of` (when it was computed), and an `x-holders-stale: 1` header; with no
   last good copy, `503` + `Retry-After`. A throttled RPC is never reported as
   "no holders". Never `500`.
-- **Rate-limited** → `429` with `RateLimit-*` + `Retry-After` headers.
+- **Rate-limited** → `429` with `RateLimit-*` + `Retry-After` headers. This
+  endpoint allows 20 reads per minute per IP (inside the family's 60), because
+  every read costs several Solana RPC calls.
 
 ### Examples
 

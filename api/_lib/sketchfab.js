@@ -108,8 +108,11 @@ function slugTag(value) {
 		.slice(0, 48);
 }
 
+// `createdwithai` is the slug of Sketchfab's "Created With AI" tag, the marking its
+// AI-generated content policy requires (help.sketchfab.com/en/articles/16152133).
+// Without it the model can be filed under "Human Created" in search filters.
 export function buildTags(modelCategory) {
-	const tags = ['ai-generated', 'generative-ai', 'text-to-3d', 'threews'];
+	const tags = ['createdwithai', 'ai-generated', 'generative-ai', 'text-to-3d', 'threews'];
 	const cat = slugTag(modelCategory);
 	if (cat && !tags.includes(cat)) tags.push(cat);
 	return tags;

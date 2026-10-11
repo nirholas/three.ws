@@ -53,6 +53,21 @@
 			]
 		},
 		{
+			"hint": "celebrate",
+			"slot": "celebrate",
+			"clip": "celebrate",
+			"skills": [
+				"jupiter-swap",
+				"paired-launch",
+				"pons-launch",
+				"pumpfun-claim-fees",
+				"pumpfun-create",
+				"pumpfun-launch-from-agent",
+				"pumpfun-self-launch",
+				"pumpfun-self-launch-from-identity"
+			]
+		},
+		{
 			"hint": "curiosity",
 			"slot": "curiosity",
 			"clip": "av-spy",
@@ -64,19 +79,6 @@
 				"pumpfun-watch-claims",
 				"pumpfun-watch-start",
 				"pumpfun.watchWhales"
-			]
-		},
-		{
-			"hint": "celebrate",
-			"slot": "celebrate",
-			"clip": "celebrate",
-			"skills": [
-				"jupiter-swap",
-				"pumpfun-claim-fees",
-				"pumpfun-create",
-				"pumpfun-launch-from-agent",
-				"pumpfun-self-launch",
-				"pumpfun-self-launch-from-identity"
 			]
 		},
 		{
@@ -159,5 +161,5 @@
 			]
 		}
 	],
-	"total_skills": 67
+	"total_skills": 69
 }

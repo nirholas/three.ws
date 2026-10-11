@@ -166,7 +166,20 @@ function footer(d) {
 	</div>`;
 }
 
+/** "2 sales · 1 hire · 3 invoices", leaving out the kinds with none. */
+function serviceBreakdown(service) {
+	const parts = [
+		[service.skill_sales_count, 'sale', 'sales'],
+		[service.hires_count, 'hire', 'hires'],
+		[service.invoices_count, 'invoice', 'invoices'],
+	]
+		.filter(([n]) => n > 0)
+		.map(([n, one, many]) => `${n} ${n === 1 ? one : many}`);
+	return parts.join(' · ');
+}
+
 function subline(zero, coins, service) {
+	if (!zero && !coins.length) return 'Service income: skill sales, hires and invoices paid on Solana.';
 	if (!zero) return `Lifetime creator fees from its coins${service.usd ? ' plus service income' : ''}.`;
 	if (coins.length && coins.every((c) => c.status === 'other_wallet')) {
 		return 'None counted for this agent: its coins pay creator fees to a wallet that is not its own, listed below.';
@@ -210,7 +223,7 @@ function render(d) {
 		stats.push([
 			'Service income',
 			fmtUsd(service.usd),
-			`${service.skill_sales_count} sales · ${service.hires_count} hires`,
+			serviceBreakdown(service),
 		]);
 	}
 	const html = `<div class="ern ern-fade">

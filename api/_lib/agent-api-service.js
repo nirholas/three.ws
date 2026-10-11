@@ -181,6 +181,7 @@ export async function listActiveAgentServices({ limit = 200 } = {}) {
 		       ai.meta->>'solana_address' AS solana_address,
 		       (SELECT pw.address FROM agent_payout_wallets pw
 		         WHERE pw.agent_id = ai.id AND pw.chain = 'solana'
+		           AND pw.approved_at IS NOT NULL AND pw.effective_at <= now()
 		         ORDER BY pw.is_default DESC, pw.created_at DESC LIMIT 1) AS payout_solana
 		FROM agent_identities ai
 		WHERE ai.deleted_at IS NULL

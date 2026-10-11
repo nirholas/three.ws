@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l = m === 'auto' ? window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches : m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Paired Coins on Robinhood Chain · three.ws</title>
+		<meta
+			name="description"
+			content="Coins on Robinhood Chain that trade against up to five assets at once: tokenized stocks, WETH, stablecoins and chain coins. Fixed supply, liquidity nobody can pull, and AI agents that launch them from their own wallets."
+		/>
+		<meta name="robots" content="index, follow, max-image-preview:large" />
+		<link rel="canonical" href="https://three.ws/markets/robinhood/paired" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/markets/robinhood/paired" />
+		<meta property="og:title" content="Paired coins on Robinhood Chain" />
+		<meta property="og:description" content="One coin, up to five markets: stocks, WETH, stablecoins and chain coins. Launched by AI agents from their own wallets." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Paired+coins&amp;d=One+coin%2C+up+to+five+markets%3A+stocks%2C+WETH%2C+stablecoins+and+chain+coins+on+Robinhood+Chain.&amp;p=%2Fmarkets%2Frobinhood%2Fpaired" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/chain-page.css" />
+		<link rel="stylesheet" href="/src/paired/paired.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Paired coins on Robinhood Chain","description":"Coins that trade against up to five assets at once on Robinhood Chain, launched by AI agents.","url":"https://three.ws/markets/robinhood/paired","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container" id="main-content">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<a href="/markets/robinhood">Robinhood Chain</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span class="here">Paired coins</span>
+			</nav>
+
+			<section class="ch-hero">
+				<h1 class="ch-title">Paired coins</h1>
+				<p class="pc-hero-lede">
+					One coin, up to five markets. Each paired coin on Robinhood Chain trades against tokenized stocks, WETH,
+					stablecoins or chain coins at the same time, each in its own bonding curve with liquidity nobody can pull.
+					The supply is fixed at one billion, and the creator earns 70% of every swap fee in every asset it trades in.
+					Your three.ws agent can launch one from its own wallet for the flat ETH fee.
+				</p>
+				<div class="pc-hero-actions">
+					<a class="pc-btn pc-btn-primary" href="/launch/paired">Launch with your agent</a>
+					<a class="pc-btn" href="/docs/paired-coins">How it works · API · MCP</a>
+				</div>
+			</section>
+
+			<section id="pc-stats" aria-label="Launchpad stats"></section>
+
+			<div class="pc-toolbar"><h2 class="cv-h2">Coins</h2></div>
+			<section id="pc-coins" aria-live="polite" aria-label="Paired coins"></section>
+
+			<div class="pc-toolbar">
+				<h2 class="cv-h2">What a coin can pair with</h2>
+				<div style="display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center">
+					<div class="pc-tabs" id="pc-market-tabs" role="tablist" aria-label="Asset class"></div>
+					<input class="pc-input" id="pc-market-search" type="search" placeholder="Search ticker or address" aria-label="Search markets" style="width:220px" />
+				</div>
+			</div>
+			<section id="pc-markets" aria-live="polite" aria-label="Markets"></section>
+			<p class="cv-src-note">Live from the paired launchpad's on-chain quote registry, priced from Robinhood Chain DEX pools and Chainlink. Coins are speculative: a pairing is launch liquidity, not backing, and a coin is not a claim on the asset it pairs with.</p>
+		</main>
+
+		<script type="module" src="/src/paired/hub.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

@@ -118,6 +118,7 @@ export default wrap(async (req, res) => {
 		select address from agent_payout_wallets
 		where user_id = ${user.id} and chain = ${walletChain}
 		  and (agent_id = ${agent_id} or agent_id is null)
+		  and approved_at is not null and effective_at <= now()
 		order by
 			case when agent_id = ${agent_id} then 0 else 1 end,
 			is_default desc,

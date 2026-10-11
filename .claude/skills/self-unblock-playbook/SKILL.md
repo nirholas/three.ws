@@ -1,0 +1,22 @@
+---
+name: self-unblock-playbook
+description: Table of blockers (missing env var, QA login, GCP access, database, quota, API down, failing tests) with the resolution to run instead of asking the owner.
+when_to_use: Before stopping to ask a question, when a credential, database, GCP, migration or test blocker appears.
+---
+
+# Self-unblock playbook
+
+| Blocker | Resolution (do this, don't ask) |
+|---|---|
+| Missing env var / credential | Look in `.env` and `.env.local`, then the Cloud Run service. Since 2026-09-02 every credential on that service is a Secret Manager reference, so `describe` shows `valueFrom` where the value used to be: read one with `node scripts/read-service-env.mjs '^NAME$' --raw`, which resolves literals and references alike (`--names` lists which is which). Never trust `vercel env pull` (returns empty for secrets). Update single vars with `--update-env-vars` (merges); `--set-env-vars` REPLACES the whole set, so never use it for one key. If a credential truly exists nowhere, build the feature fully wired behind the env var, prove it with a mock-free dry run, and list the single missing var in your report. |
+| A QA login for authed page testing | `AUDIT_EMAIL` / `AUDIT_PASSWORD` in `.env` are a real production QA account. If they are missing from `.env` (a fresh clone has no `.env` at all), `npm run audit:web:provision` creates a new one through the real `/register` page and writes both vars back; no server-side code reads them, so the Cloud Run env does not need them. Unauthenticated sweep: `npm run audit:web`. Authed sweep: `npm run audit:web:login` to mint the session, then `npm run audit:web`, which replays it. Details: `docs/ops/page-audit.md`. |
+| GCP access / project facts | Already authenticated in this workspace. Project `aerial-vehicle-466722-p5`, region `us-central1`. Fleet + quota + pre-approved scaling: `docs/ops/gcp-credits-plan.md`. Full production runbook (LB/DNS/TLS/env/rollback): `docs/ops/gcp-production.md`. Logs: `gcloud logging read 'resource.type="cloud_run_revision" resource.labels.service_name="three-ws-api" textPayload:"<term>"' --freshness=24h`. |
+| The database | `DATABASE_URL` in `.env.local` (Neon); `.env` currently holds only the QA audit login, so a script that loads `.env` alone dies on `missing required env var: DATABASE_URL`. Production's authoritative copy is on the Cloud Run service env. Migrations: `npm run db:status` previews pending ones, `npm run db:check` is the deploy gate (exit 4 if pending), and **`npm run db:migrate` APPLIES immediately, with no dry run** (the npm script hardcodes `--apply`). Read `db:status` before you ever run `db:migrate`; it applies every pending migration in `api/_lib/migrations/`, not just yours. If `db:status` reports `[drift]` because an applied migration's *comments* were edited (the banned-dash rule does this), `npm run db:restamp` re-records its hash after recovering the applied bytes from git and confirming not one statement changed; a real statement change is refused and needs a NEW migration. `forge_creations` carries per-generation backend/status/error/prompt: the fastest ground truth for generation issues. |
+| GCP quota hit | File the increase request immediately (`gcloud` or console link in your report), then route around it: lower minScale on an idle service, use another region, or queue behind existing capacity. Never park the task on the quota. |
+| Third-party API down / throttled | Every lane has a failover chain (forge lanes, LLM chain, RPC providers). Use it. If a chain is missing a rung, adding one is part of the task. |
+| Ambiguous product decision | Pick the option that is most reversible and closest to existing platform patterns, implement it, and record the decision + alternative in your report. A shipped reasonable default beats a stalled question. |
+| Build/test failure in code you didn't touch | Fix it if it blocks your verification path (root-cause it, don't mask it); otherwise note it and continue. Never let someone else's red stop your green. |
+| Whether tests pass | `npm test`; do NOT pipe through `tail` (masks exit codes); a vitest failure gates the whole Playwright stage. |
+| Model weights / assets missing | Stage them from `gs://three-ws-model-weights` or the worker README's source. Staging weights is part of deploying a worker, not a reason to stop. |
+| Where a feature lives | `STRUCTURE.md` maps every surface to its directory. |
+| How to deploy | Follow the "Deploy runbook" section below, exactly and in order. |

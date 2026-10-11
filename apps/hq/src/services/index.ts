@@ -1,0 +1,34 @@
+export * from './rss';
+export * from './trending-keywords';
+export * from './markets';
+export * from './polymarket';
+export * from './earthquakes';
+export * from './clustering';
+export * from './related-assets';
+export * from './velocity';
+export * from './storage';
+export * from './correlation';
+export * from './weather';
+export * from './outages';
+export * from './cyber-threats';
+export * from './ais';
+export * from './cable-activity';
+export * from './protests';
+export * from './flights';
+export * from './military-flights';
+export * from './military-vessels';
+export * from './eonet';
+export { analysisWorker } from './analysis-worker';
+export { activityTracker } from './activity-tracker';
+
+export * from './country-instability';
+export * from './infrastructure-cascade';
+export * from './cross-module-integration';
+export * from './data-freshness';
+
+export { generateSummary } from './summarization';
+export * from './cached-theater-posture';
+// Rebranded re-exports
+export * from './severity-classifier';
+
+

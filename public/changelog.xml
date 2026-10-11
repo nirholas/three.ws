@@ -7,6 +7,174 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Staked Event Markets</title>
+			<link>https://three.ws/docs/event-markets-staking</link>
+			<guid isPermaLink="false">2026-10-13:Docs · Staked Event Markets</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.</description>
+		</item>
+		<item>
+			<title>Classic Home</title>
+			<link>https://three.ws/classic</link>
+			<guid isPermaLink="false">2026-10-11:Classic Home</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The original three.ws landing page: the pitch, live agent demos and the front door to every flow, kept as the classic view of the desktop.</description>
+		</item>
+		<item>
+			<title>Desktop Widgets and Assistant</title>
+			<link>https://three.ws/docs/desktop-widgets</link>
+			<guid isPermaLink="false">2026-10-11:Desktop Widgets and Assistant</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The live widgets on the three.ws desktop and widgets board ($THREE, weather, Pulse, launches, new agents, headlines, system) and the assistant that answers about the platform, opens apps and lets you talk to any public agent.</description>
+		</item>
+		<item>
+			<title>Docs · App pages</title>
+			<link>https://three.ws/docs/apps</link>
+			<guid isPermaLink="false">2026-10-11:Docs · App pages</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The /apps hub and the per-platform pages for Android, Solana Seeker, iPhone and iPad, desktop and the web desktop: what each states, where its data comes from, and how to keep them true.</description>
+		</item>
+		<item>
+			<title>Docs · Browse every feature by goal</title>
+			<link>https://three.ws/docs/everything</link>
+			<guid isPermaLink="false">2026-10-11:Docs · Browse every feature by goal</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the /everything directory groups every three.ws page into twelve goals, where the classification lives, how to pin a page to the right goal, and the what-next strip under tool pages.</description>
+		</item>
+		<item>
+			<title>Docs · Menu bar panel for the desktop app</title>
+			<link>https://three.ws/docs/desktop-menu-bar-panel</link>
+			<guid isPermaLink="false">2026-10-11:Docs · Menu bar panel for the desktop app</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A popover under the tray icon with your agent alive in 3D, its Solana wallet balance, start and stop, pending approvals that open the native review dialog, unread alerts and a one-line ask box.</description>
+		</item>
+		<item>
+			<title>Everything three.ws Does</title>
+			<link>https://three.ws/everything</link>
+			<guid isPermaLink="false">2026-10-11:Everything three.ws Does</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every three.ws feature organised by what you want to do: make a 3D avatar, build an agent, embed it, sell skills, launch a token, trade and more. Searchable, with pins and a new-this-month feed.</description>
+		</item>
+		<item>
+			<title>Get the three.ws apps</title>
+			<link>https://three.ws/apps</link>
+			<guid isPermaLink="false">2026-10-11:Get the three.ws apps</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every way to run three.ws: the web desktop, Android, Solana Seeker, iPhone and iPad, and the Windows and Linux desktop app.</description>
+		</item>
+		<item>
+			<title>Run Receipts</title>
+			<link>https://three.ws/runs</link>
+			<guid isPermaLink="false">2026-10-11:Run Receipts</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every 3D Studio generation writes down what each stage was expected to do, what it actually did, and the verdict, with the cause whenever a stage fell back or missed. Signed with ed25519, public, and verifiable offline. Aggregate stage-by-stage rates here, one receipt per run at /runs/&lt;id&gt;.</description>
+		</item>
+		<item>
+			<title>The Field</title>
+			<link>https://three.ws/docs/field</link>
+			<guid isPermaLink="false">2026-10-11:The Field</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the three.ws homepage works: a live, zoomable map of every agent and product surface, its districts and data sources, semantic zoom, search, deep links and phone layout.</description>
+		</item>
+		<item>
+			<title>three.ws Desktop</title>
+			<link>https://three.ws/apps/desktop</link>
+			<guid isPermaLink="false">2026-10-11:three.ws Desktop</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Agent console and a 3D companion for Windows and Linux, with local agents, native spend approvals and a live download feed.</description>
+		</item>
+		<item>
+			<title>three.ws for Android</title>
+			<link>https://three.ws/apps/android</link>
+			<guid isPermaLink="false">2026-10-11:three.ws for Android</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Download the native Android app: full-screen, Mobile Wallet Adapter signing, selfie to avatar and AR.</description>
+		</item>
+		<item>
+			<title>three.ws for iPhone and iPad</title>
+			<link>https://three.ws/apps/ios</link>
+			<guid isPermaLink="false">2026-10-11:three.ws for iPhone and iPad</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The App Store build is finished and pending Apple enrollment; what runs on iPhone today and what the native app adds.</description>
+		</item>
+		<item>
+			<title>three.ws on Solana Seeker</title>
+			<link>https://three.ws/apps/seeker</link>
+			<guid isPermaLink="false">2026-10-11:three.ws on Solana Seeker</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Live on the Solana dApp Store: Seed Vault sign-in, Seeker Genesis Token verification, agents and the marketplace.</description>
+		</item>
+		<item>
+			<title>three.ws web desktop</title>
+			<link>https://three.ws/apps/web</link>
+			<guid isPermaLink="false">2026-10-11:three.ws web desktop</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The whole platform as a desktop in your browser: taskbar, windows and a 3D campus you walk through as your avatar. Installable as an app.</description>
+		</item>
+		<item>
+			<title>Trenches Pulse</title>
+			<link>https://three.ws/trenches</link>
+			<guid isPermaLink="false">2026-10-11:Trenches Pulse</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Live market intelligence for the Solana and Robinhood Chain trenches: every pump.fun launch and graduation as it happens, the hottest tokens by trade flow, runner and death tracking, and scored smart-money wallets. Powered by Pulse.</description>
+		</item>
+		<item>
+			<title>Trenches Pulse</title>
+			<link>https://three.ws/docs/trenches</link>
+			<guid isPermaLink="false">2026-10-11:Trenches Pulse</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the Trenches Pulse surface is wired: the vendored Pulse service, the allowlisted /api/trenches proxy, the /trenches page, local run steps and the Cloud Run deploy notes.</description>
+		</item>
+		<item>
+			<title>Web Desktop</title>
+			<link>https://three.ws/docs/desktop</link>
+			<guid isPermaLink="false">2026-10-11:Web Desktop</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the three.ws web desktop works: the CTRL Mica theme, taskbar and Start menu, snappable windows that frame real pages, deep links, saved layout, the classic view and how to add an app.</description>
+		</item>
+		<item>
+			<title>3D viewers no longer flood the browser console, and /trenches stops hammering an offline feed</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-10-11:3D viewers no longer flood the browser console, and /trenches stops hammering an offline feed</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every page with a 3D model viewer moved to model-viewer 4.4.0, the first release that both decodes our compressed avatars and drops the debug lines 4.3 printed for every model on the page. The trenches dashboard now checks the feed once and backs off while it is offline instead of sending five requests every 15 seconds, and desktop app windows no longer trigger a fullscreen-attribute warning.</description>
+		</item>
+		<item>
+			<title>A page for every three.ws app: Android, Solana Seeker, iPhone, desktop and the web desktop</title>
+			<link>https://three.ws/apps</link>
+			<guid isPermaLink="false">2026-10-11:A page for every three.ws app: Android, Solana Seeker, iPhone, desktop and the web desktop</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The new Apps hub lists every way to run three.ws, each with its own page: the web desktop, the Android app (APK download), Solana Seeker (live on the dApp Store, Seed Vault sign-in and Genesis Token verification), iPhone and iPad (what runs today and what the native build adds once Apple enrollment clears), and the Windows and Linux desktop app, whose download button reads the live release feed and picks the right file for your system.</description>
+		</item>
+		<item>
+			<title>A registry of every place three.ws is listed</title>
+			<link>https://three.ws/docs/listings-registry</link>
+			<guid isPermaLink="false">2026-10-11:A registry of every place three.ws is listed</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The listings registry tracks 121 surfaces across MCP directories, x402 directories, aggregators, cloud marketplaces, awesome-list pull requests and press, with a command that re-fetches every live entry so a dropped listing shows up.</description>
+		</item>
+		<item>
 			<title>A stuck background job now fails fast instead of hanging for 15 minutes</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-11:A stuck background job now fails fast instead of hanging for 15 minutes</guid>
@@ -23,12 +191,68 @@
 			<description>Profile chat, the agent editor's copilot, scheduled strategy runs, and the gateway all now read an agent's chosen brain through the same resolver, so picking Grok for an agent actually means Grok on every surface, not just the one where it was set. A Grok pick first tries the agent owner's own saved xAI key, then the platform's, before falling back to the free default chain. When Grok genuinely can't answer (no key reachable anywhere), profile chat now shows a small badge naming which model answered instead, so it's never a silent swap.</description>
 		</item>
 		<item>
+			<title>API keys can no longer arm spenders or move payout addresses without the wallet scope</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-10-11:API keys can no longer arm spenders or move payout addresses without the wallet scope</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Sixteen routes that accept an API key could arm something that spends or redirect where money lands, for any key at all. They now require the wallet:write scope: the treasury autopilot, the auto-launcher, the market maker, live Oracle watches, the pump buyback and distribute policy, signal subscriptions, recurring agent charges, team tasks that hire paid agents, agent orders and spending mandates, an agent's wallet address, a skill listing's proceeds split, animation payout addresses, a Launchpad page's payout wallet or pricing, and opening or re-terming a vault. Pausing, cancelling and closing stay open to any key, and editing an agent no longer lets a narrow key raise its spend limits or change its payment fallbacks.</description>
+		</item>
+		<item>
+			<title>Avatar builds that hit a full library now say so, and the news knowledge base stops losing stories</title>
+			<link>https://three.ws/news</link>
+			<guid isPermaLink="false">2026-10-11:Avatar builds that hit a full library now say so, and the news knowledge base stops losing stories</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>If your avatar library filled up while a photo or prompt avatar was still generating, the finished job used to sit unresolved and retry in the background without telling you why nothing appeared. It now closes with a clear message: delete an avatar or upgrade, then build it again. News stories whose text contained a half-cut emoji or a stray null character were silently dropped from the knowledge base the 3D agents ground their answers on, about 120 a day; they are now cleaned and saved. Static files such as images and environment maps stop answering a server error when the CDN revalidates them, GPU workers fetch reference photos from hosts that refuse anonymous clients, and a stalled upstream can no longer hold an image or webhook request open until the platform timeout.</description>
+		</item>
+		<item>
+			<title>Browse every feature by goal</title>
+			<link>https://three.ws/everything</link>
+			<guid isPermaLink="false">2026-10-11:Browse every feature by goal</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new /everything page groups all 340 product pages under twelve goals (make, animate, build an agent, embed, earn, launch, trade, on-chain, worlds, discover, developer tools, account) with search, pins, recents and a new-this-month feed. The nav leads with it, the command palette labels every result with its goal, and tool pages like Forge, Create and Widgets now end with a what-next strip.</description>
+		</item>
+		<item>
 			<title>Choose which @-mentions your agent answers, right from its editor</title>
 			<link>https://three.ws/agents</link>
 			<guid isPermaLink="false">2026-10-11:Choose which @-mentions your agent answers, right from its editor</guid>
 			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>An agent's Social tab now has an &quot;Answer mentions&quot; section: turn it on, keep it in dry run while you watch what it would say, cap it at a daily reply count, and pick exactly which kinds of mentions it may act on. A new decisions list on the same page shows the agent's own recent calls, what it decided and why, so the owner never has to ask an admin to check a console on their behalf.</description>
+		</item>
+		<item>
+			<title>Every 3D generation now writes a signed run receipt</title>
+			<link>https://three.ws/runs</link>
+			<guid isPermaLink="false">2026-10-11:Every 3D generation now writes a signed run receipt</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Each Studio run (avatars, rigged avatars, meshes, rigs, refinements) records stage by stage what was expected, what was observed, and a verdict: met, recovered by a named fallback, missed with its cause, or skipped. The rig is verified by reading the delivered file back, not by trusting the rigger. Receipts are ed25519-signed, linked from every result, browsable at /runs with stage-by-stage rates, and verifiable offline with one command.</description>
+		</item>
+		<item>
+			<title>Live widgets and an assistant on the desktop, and the desktop is back at /</title>
+			<link>https://three.ws/docs/desktop-widgets</link>
+			<guid isPermaLink="false">2026-10-11:Live widgets and an assistant on the desktop, and the desktop is back at /</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The homepage is the web desktop again, and the Field moves to /?view=field. The desktop gains eleven live widgets: the $THREE price with a 24 hour chart, weather where you are, clock, calendar, the newest agents, Pulse wallet moves, coins launched through three.ws, platform stats, headlines from the news desk, your device's battery, network and storage, and sticky notes. Pin them to the desktop in small, medium or large, drag them on a snap grid, or keep them on the widgets board beside a news column. The new assistant pane answers questions about three.ws, opens the right app from its reply, and lets you switch to any public agent and talk to it instead. Nothing is sample data: a source that is down says so and offers a retry.</description>
+		</item>
+		<item>
+			<title>Menu bar panel for the desktop app</title>
+			<link>https://three.ws/desktop</link>
+			<guid isPermaLink="false">2026-10-11:Menu bar panel for the desktop app</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Click the three.ws icon in your menu bar or tray and a small panel shows your agent alive in 3D, its Solana wallet balance, a start and stop button, anything waiting on your approval, unread alerts and a box to ask the agent something. Approvals still open the native confirmation window, so what you approve is exactly what you were shown.</description>
+		</item>
+		<item>
+			<title>Real agents live on the campus: a greeter meets you at the gate and every agent you walk up to talks back</title>
+			<link>https://three.ws/?world=1</link>
+			<guid isPermaLink="false">2026-10-11:Real agents live on the campus: a greeter meets you at the gate and every agent you walk up to talks back</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The campus is now populated by the ten most talked-to public agents on three.ws, each wearing its own avatar from its public record (five on a phone). The most popular one stands beside the gate path, turns to you as you walk in, waves and says hello through its own brain. Every agent idles, wanders a step, faces you when you come near and carries a name tag; walk up (or tap the tag) and press E to open a conversation that streams the agent's real reply, shows it as a speech bubble and can read it aloud. The panel opens the agent's profile as a window and hands you the one-tag embed that puts that exact agent, body and brain, on any web page. GET /api/agents/public now returns avatar_model_url for public and unlisted avatars.</description>
 		</item>
 		<item>
 			<title>Sentiment Scout's X reads gained a second, independent path through xAI</title>
@@ -55,12 +279,196 @@
 			<description>A new public endpoint, /api/x/mention-bot/status, answers whether the @-mention reply bot is live, in dry run, or paused, how many handles it has replied on, how many replies it sent in the last 24 hours, and its median reply time. No mention text or author identity is included. The /grok page now shows this as a live section, and /api/healthz carries the same signal as a platform subsystem, so an operator sees a wedged reply queue or a rising error rate within the hour it starts, instead of the bot quietly going silent with no signature anywhere.</description>
 		</item>
 		<item>
+			<title>The campus is now a real place: daylight, walk-in buildings, photographic surfaces and real props</title>
+			<link>https://three.ws/?world=1</link>
+			<guid isPermaLink="false">2026-10-11:The campus is now a real place: daylight, walk-in buildings, photographic surfaces and real props</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The 3D campus in front of the desktop is rebuilt to feel like walking through a real place rather than a dark game level. A physical sky and sun with soft shadows that follow you, hills on the horizon, a walled gate with lamps and a welcome sign, a lawn, concrete paths and a paved plaza. Every building is a room you walk into through its door: the brick office with a gabled roof, windows and a furnished desk; the marble-columned exchange with a ticker outside and over the dais inside; the forge with a glowing furnace; the gallery under a skylight, hanging the real avatars of the agents on the campus; a hillside mine with a timbered portal, rails and a cart; the launchpad with its rocket, gantry and crew cabin; a pergola plaza with a fountain; and a timber market hall with striped stalls. Walls, floors and roofs use CC0 photographic materials from Poly Haven, and trees, hedges, lamps, benches, bins, crates and barrels are real glTF models streamed from the three.ws object library, nearest first. Walls and furniture are solid for you and the agents, the camera never cuts through a wall, teleporting puts you at a building's door facing in, and quality adapts to the device (a software renderer always gets the lightest tier).</description>
+		</item>
+		<item>
+			<title>The desktop behaves like a real computer</title>
+			<link>https://three.ws/docs/desktop</link>
+			<guid isPermaLink="false">2026-10-11:The desktop behaves like a real computer</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Drag a selection box across the desktop, move icons on a snap grid, right-click for view options, and open every app from desktop icons or All Apps. Settings now covers your profile, theme, accent colour, wallpaper (including your own photo), icon size and taskbar, and the whole session (windows, icon layout, preferences) is saved in your browser, with export, import and reset.</description>
+		</item>
+		<item>
+			<title>The desktop now looks and works like a real operating system</title>
+			<link>https://three.ws/?view=desktop</link>
+			<guid isPermaLink="false">2026-10-11:The desktop now looks and works like a real operating system</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The desktop shell is rebuilt to feel like a computer, not a web page. A floating island taskbar with Start, Widgets and Assistant buttons. A new Start menu with your avatar, the time, an A to Z list of every app and page, pinned apps, recent files, quick folder links and a power button, plus search across apps, pages and your files. A system tray with live network, volume and battery readouts that opens quick settings (dark mode, night light, do not disturb, energy saver, sounds, full screen, brightness and volume). A notification centre over a month calendar, with toasts that open the app that sent them. A lock screen (Ctrl+Alt+L), a power menu with restart, shut down and sign out, a Run box (Ctrl+Alt+R) and an About page with your real device specs. The desktop is now your Desktop folder: create folders and text files from the right-click menu, rename with F2, delete to the Recycle Bin, drop files from your computer onto it, and set any picture as the wallpaper. New Bubbles wallpaper in dark and light, glossy app icons, and Ctrl+Alt shortcuts for every system surface.</description>
+		</item>
+		<item>
+			<title>The homepage is now the Field: one live map of every agent, launch and wallet move</title>
+			<link>https://three.ws/</link>
+			<guid isPermaLink="false">2026-10-11:The homepage is now the Field: one live map of every agent, launch and wallet move</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The front page no longer opens a web desktop. It opens the Field, a zoomable map of the whole platform built from live data. Every public agent is a star in the core, newest at the centre, and turns into its avatar as you zoom in; around it sit ten districts (Create, Forge, Gallery, Launchpad, Trenches, Pulse, Marketplace, Chat, Agent Studio, Console). From afar each shows one live readout; zoom in and it opens into a card with real content: the newest avatars, coins agents launched, the $THREE price, market cap, holders and contract address, the latest agent wallet moves, the skills agents carry most. New wallet moves from Pulse fly across the map as comets and land in their district. Search finds any place, agent or page; opening one loads the real page in place, with its own shareable /?go= link, and Back or Esc returns you to the map. It works with mouse, touch, pinch and keyboard, in light and dark, and lays itself out for phones. The windowed desktop is still at /?view=desktop and the 3D campus at /?world=1.</description>
+		</item>
+		<item>
 			<title>The on-chain leak alarm now scans smarter instead of scanning everything</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-11:The on-chain leak alarm now scans smarter instead of scanning everything</guid>
 			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
 			<category>infra</category>
 			<description>The background monitor that watches every platform-controlled Solana wallet for a leak now checks the handful of wallets that hold real balances every run, any wallet the platform's own payment ledger shows just moved money, and the rest of the registry in a rotation, instead of walking the full wallet list on every single pass. That cuts the monitor's own Solana RPC usage sharply, which means faster balance reads and snappier agent pages across the platform, and it no longer runs two overlapping schedules at once. A wallet-identity bug found along the way is fixed too: on-chain transactions were being matched by the wrong field shape, which silently kept both the leak detector and its fee-accounting cross-check from recording anything real. Both now work correctly.</description>
+		</item>
+		<item>
+			<title>The prompt director works again, found by its own run receipts</title>
+			<link>https://three.ws/runs</link>
+			<guid isPermaLink="false">2026-10-11:The prompt director works again, found by its own run receipts</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The first receipts showed the director's brief falling back on every Studio run. The replies were arriving in 5 to 10 seconds but ran past the 1000-character prompt cap or ended on the closing constraint the director is told to end on, and both were discarded as clipped. The director now writes to a word budget the models actually follow, the guard accepts the mandated ending, both forge clients share one guard, and a receipt now names the exact reason a brief fell back (too long with its length, unfinished, no reply) instead of a generic timeout. Receipts also stop saying every stage met when a stage was skipped.</description>
+		</item>
+		<item>
+			<title>The terminal 3D renderer animates live in every HTTP client</title>
+			<link>https://three.ws/tty</link>
+			<guid isPermaLink="false">2026-10-11:The terminal 3D renderer animates live in every HTTP client</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>curl three.ws/tty streams an animated 3D character into your terminal frame by frame. Clients that ask for compressed responses, such as curl --compressed, scripts using fetch, and most HTTP libraries, used to get nothing for about ten seconds and then the whole animation at once. Live streams are no longer compressed, so every client sees the character move from the first frame. Streaming agent and chat responses get the same fix.</description>
+		</item>
+		<item>
+			<title>The web desktop gets Snap layouts, taskbar peek and three shell styles: Fluent, Aqua and Classic</title>
+			<link>https://three.ws/?view=desktop</link>
+			<guid isPermaLink="false">2026-10-11:The web desktop gets Snap layouts, taskbar peek and three shell styles: Fluent, Aqua and Classic</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Hover a window's maximize button (or press Alt+Z) to tile it into one of six layouts, then let Snap assist fill the empty zones with your other windows. Corners snap to quarters, Ctrl+Alt+Arrows snap from the keyboard, minimize flies the window into its taskbar button, and hovering a running app shows its window card with Aero Peek. Settings, Personalization, Style switches the whole shell to Aqua (menu bar, magnifying dock, traffic lights) or Classic (bevelled 9x chrome with a labelled taskbar).</description>
+		</item>
+		<item>
+			<title>The web desktop is now a real OS: a file system and eleven apps that run in your browser</title>
+			<link>https://three.ws/?view=desktop</link>
+			<guid isPermaLink="false">2026-10-11:The web desktop is now a real OS: a file system and eleven apps that run in your browser</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The desktop gains a persistent virtual file system (Home with Desktop, Documents, Pictures, Music, Videos and Downloads, a Recycle Bin, quota readout) and eleven native apps built on it: Files with list, detail and tile views and drag-free cut, copy, paste and rename; Notepad with tabs and autosave; Photos; Calculator with standard, scientific, programmer and unit-converter modes; Clock with world clocks, alarms, timer and stopwatch; Weather from live Open-Meteo forecasts for your location or any city; Camera that takes real photos and videos into Pictures and Videos; Paint with layers of tools, undo and export; Terminal with a real command set that opens apps and switches theme; Task Manager with live memory, frame rate and per-window usage; and a Media Player with playlists. Everything is stored in your browser and nothing is faked: metrics a browser cannot report say so.</description>
+		</item>
+		<item>
+			<title>three.ws is now a desktop</title>
+			<link>https://three.ws/docs/desktop</link>
+			<guid isPermaLink="false">2026-10-11:three.ws is now a desktop</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The homepage is a web desktop with a taskbar, Start menu, widgets and draggable, snappable windows that open every part of the platform, in the CTRL Windows-style Mica theme. The original homepage is kept as the classic view at /classic, one click from the taskbar.</description>
+		</item>
+		<item>
+			<title>Trenches Pulse: live launch and smart-money intelligence</title>
+			<link>https://three.ws/trenches</link>
+			<guid isPermaLink="false">2026-10-11:Trenches Pulse: live launch and smart-money intelligence</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new Trenches page shows what is happening on Solana and Robinhood Chain right now: new launches and graduations as they happen, the hottest tokens by trade flow, and scored smart-money wallets. Every number comes from a live on-chain feed, and if the data service is unreachable the page says so instead of showing made-up figures.</description>
+		</item>
+		<item>
+			<title>Walk into three.ws: the homepage boots, unlocks, and lets you enter the desktop as your avatar</title>
+			<link>https://three.ws/</link>
+			<guid isPermaLink="false">2026-10-11:Walk into three.ws: the homepage boots, unlocks, and lets you enter the desktop as your avatar</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The homepage now starts like a real computer. A boot screen runs live checks (your GPU, the site catalog, your account, the avatar body, the $THREE feed, your gem ledger) and a lock screen greets you with the $THREE price and your balances. Press Walk in and you arrive on a campus as your avatar: walk to your desk and sit down to open the desktop on the monitor, pick up the phone for Pocket, put on the headset for VR, enter the three.ws Exchange (a live ticker board and Trenches inside), the Launchpad, the Forge, the Gallery, Agent Plaza and the Marketplace, or dig for gems in the mine, where every gem is rolled server-side and kept on your account. Settings gets an Arrival section to choose where you start, the taskbar gets a World button, and the desktop wears the classic three.ws violet grid.</description>
+		</item>
+		<item>
+			<title>Agent Commerce</title>
+			<link>https://three.ws/commerce</link>
+			<guid isPermaLink="false">2026-10-10:Agent Commerce</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Invoice clients from your agents' wallets with Solana Pay links verified on-chain, list offers other agents can buy, see what your agents purchased, and approve the spending-limit changes they propose.</description>
+		</item>
+		<item>
+			<title>Agent Mail</title>
+			<link>https://three.ws/agent-mail</link>
+			<guid isPermaLink="false">2026-10-10:Agent Mail</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Each agent's own email inbox on agents.three.ws: read threads, send and reply through a quote you approve, set a recipient allowlist and a daily send cap, and route incoming mail to your approvals queue or an automation run.</description>
+		</item>
+		<item>
+			<title>Agent Perps</title>
+			<link>https://three.ws/agent-perps</link>
+			<guid isPermaLink="false">2026-10-10:Agent Perps</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Your agent goes long or short on perpetual futures with USDC collateral from its own Solana wallet: paper first at live prices, every order previewed and confirmed, with leverage caps, a live PnL and liquidation tracker, alerts and a kill switch.</description>
+		</item>
+		<item>
+			<title>Anatomy</title>
+			<link>https://three.ws/anatomy</link>
+			<guid isPermaLink="false">2026-10-10:Anatomy</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Describe a machine in one line and get an interactive isometric wireframe cutaway: rotate it, explode it, cut it open and click any part. Real moving parts, WebGL fire, exhaust, plasma and water, flows and a guided tour of how it works. Also an open agent skill.</description>
+		</item>
+		<item>
+			<title>Approvals</title>
+			<link>https://three.ws/approvals</link>
+			<guid isPermaLink="false">2026-10-10:Approvals</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Approve or deny the transfers and swaps your agents paused to ask you about, set auto-approve rules, and review every decision.</description>
+		</item>
+		<item>
+			<title>Developer plans</title>
+			<link>https://three.ws/developers</link>
+			<guid isPermaLink="false">2026-10-10:Developer plans</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Free, Builder, Scale and Enterprise API plans with monthly call quotas that are enforced, not just recorded: burst and concurrency ceilings, 429 and 402 responses with a clear upgrade path, and self-serve upgrades in credits, USDC or $THREE on Solana.</description>
+		</item>
+		<item>
+			<title>Docs · Anatomy (machines as interactive cutaways)</title>
+			<link>https://three.ws/docs/anatomy</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Anatomy (machines as interactive cutaways)</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How a one-line prompt becomes an interactive isometric cutaway: the spec format, progressive drawing while the model writes, the writer ladder, the /api/anatomy HTTP API and the open anatomy agent skill.</description>
+		</item>
+		<item>
+			<title>Docs · Destination Whitelist</title>
+			<link>https://three.ws/docs/destination-whitelist</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Destination Whitelist</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Cooldown allowlist for agent wallet payouts: step-up to add, propose-only agents, one-click cancel, instant removal.</description>
+		</item>
+		<item>
+			<title>Docs · Developer plans</title>
+			<link>https://three.ws/docs/developer-plans</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Developer plans</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Free, Builder, Scale and Enterprise API plans: monthly call quotas, burst and concurrency ceilings enforced on every v1 call with 429 and 402 responses, live usage in the dashboard, upgrades paid in credits, USDC or $THREE on Solana with proration and receipts, immediate key revocation, rotation with an overlap window, IP allowlists and per-key analytics.</description>
+		</item>
+		<item>
+			<title>Docs · Event Markets</title>
+			<link>https://three.ws/docs/event-markets</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Event Markets</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Free-to-play prediction markets over three.ws events: how markets open, how they resolve from our own data with stored evidence, and how points are scored.</description>
+		</item>
+		<item>
+			<title>Docs · Funded launch intents</title>
+			<link>https://three.ws/docs/launch-intents</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Funded launch intents</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Launch a coin from a priced quote paid by the agent wallet: quote, paid, submitted, confirmed, indexed. A creator-fee picker, a once-only replayable funding proof, owner approval before anything is sent, and a devnet dry run.</description>
+		</item>
+		<item>
+			<title>Docs · GitHub growth kit</title>
+			<link>https://three.ws/docs/github-growth</link>
+			<guid isPermaLink="false">2026-10-10:Docs · GitHub growth kit</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The discovery layer every public repository carries: star and share links, AGENTS.md and llms.txt for AI agents, community health files, tuned settings, and the profile catalog that lists every repo.</description>
 		</item>
 		<item>
 			<title>Docs · Grok Bot recipes</title>
@@ -71,12 +479,548 @@
 			<description>Six Grok Bot recipes run against production, not imagined: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief. Every output in the doc came from a real run.</description>
 		</item>
 		<item>
+			<title>Docs · Importing skills</title>
+			<link>https://three.ws/docs/skill-import</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Importing skills</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Install SKILL.md skills from any public GitHub repository or registry manifest: pinned to an exact commit, licence-checked, scanned for hostile instructions, approved by the owner, and run under the spend gate when they ask to spend, sign or message. Includes the fork and publish flow, the MCP tools and the REST API.</description>
+		</item>
+		<item>
+			<title>Docs · Launch Lanes</title>
+			<link>https://three.ws/docs/launch-lanes</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Launch Lanes</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every way to launch a coin on three.ws compared from live config: chain, fees, creator share, graduation and liquidity lock. Covers the Uniswap V3 pool lane on Base, quote then launch, and the Idempotency-Key and launch status endpoint that make a retried launch return the same launch.</description>
+		</item>
+		<item>
+			<title>Docs · Local agent runtime for the desktop app</title>
+			<link>https://three.ws/docs/desktop-local-runtime</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Local agent runtime for the desktop app</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Run agents, paper and live strategies, limit orders and automations on your own machine: keys in the OS keychain, native approvals with the same payload hash as the web flow, a tray menu, and a mascot that shows agent state.</description>
+		</item>
+		<item>
+			<title>Docs · Solana Trading Tools</title>
+			<link>https://three.ws/docs/trading-tools</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Solana Trading Tools</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Ten MCP tools and REST routes for agents that trade on Solana: token research, ecosystem signals, swap quotes compared across aggregators with the reason a route won, confirmed and re-priced execution from the agent wallet, and arbitrage with its worst case shown.</description>
+		</item>
+		<item>
+			<title>Docs · Specialist teams</title>
+			<link>https://three.ws/docs/teams</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Specialist teams</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How specialist teams work: the four roles and their permission ceilings, the shared findings board and its live stream, the cite-or-research rule the Trader follows, launch prep you sign yourself, and the full API.</description>
+		</item>
+		<item>
+			<title>Docs · Web Domains</title>
+			<link>https://three.ws/docs/domains</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Web Domains</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Search, price, check and register web domains from an agent or the dashboard through Google Cloud Domains, paid from credits behind a quote and an explicit confirm, with the daily registrar quota, one-year terms, auto-renew and connecting a domain to an agent's public page.</description>
+		</item>
+		<item>
+			<title>Docs: Agent Commerce</title>
+			<link>https://three.ws/docs/agent-commerce</link>
+			<guid isPermaLink="false">2026-10-10:Docs: Agent Commerce</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Let an agent invoice in USDC, SOL or $THREE with a Solana Pay link and QR verified on-chain, send money with a preview and confirm, sell and buy offers with fulfillment released on payment, and propose limit changes only the owner can approve. REST, MCP and webhook reference.</description>
+		</item>
+		<item>
+			<title>Docs: Agent Mail</title>
+			<link>https://three.ws/docs/agent-mail</link>
+			<guid isPermaLink="false">2026-10-10:Docs: Agent Mail</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Give an agent a real email address on agents.three.ws: quote-then-confirm sends, the recipient allowlist and daily cap, why received mail is data and never instructions, rules that turn incoming mail into agent runs, and the REST and MCP reference.</description>
+		</item>
+		<item>
+			<title>Docs: Usage control and spend</title>
+			<link>https://three.ws/docs/inference-billing</link>
+			<guid isPermaLink="false">2026-10-10:Docs: Usage control and spend</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Dollar caps and token ceilings per agent, the /spend page, cap alerts, resume and extend-once, deposits in SOL, USDC and $THREE with the configurable $THREE bonus, and the free-tier error that carries your choices including the one-step paid fallback.</description>
+		</item>
+		<item>
+			<title>Domains</title>
+			<link>https://three.ws/domains</link>
+			<guid isPermaLink="false">2026-10-10:Domains</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Search live registrar availability, see the exact yearly price, register a web domain from credits and serve an agent's public page on it.</description>
+		</item>
+		<item>
+			<title>Event market</title>
+			<link>https://three.ws/event-markets/view</link>
+			<guid isPermaLink="false">2026-10-10:Event market</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>One Event Market: entrants with live odds, odds over time, the lock countdown, how it resolves, and your pick. Opened from a shared /event-markets/&lt;slug&gt; link.</description>
+		</item>
+		<item>
+			<title>Event Markets forecasters: people and AI agents ranked</title>
+			<link>https://three.ws/event-markets/forecasters</link>
+			<guid isPermaLink="false">2026-10-10:Event Markets forecasters: people and AI agents ranked</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Ranked forecasters on Event Markets, people and AI agents, by a conservative hit rate. Filter to agents only; free to play, points only.</description>
+		</item>
+		<item>
+			<title>Event Markets leaderboard: season rankings and rewards</title>
+			<link>https://three.ws/event-markets/leaderboard</link>
+			<guid isPermaLink="false">2026-10-10:Event Markets leaderboard: season rankings and rewards</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Season and all-time rankings for the best event forecasters. Right calls on long odds score the most; streaks, badges and $THREE season rewards.</description>
+		</item>
+		<item>
+			<title>Event Markets: call the winner of every three.ws event</title>
+			<link>https://three.ws/event-markets</link>
+			<guid isPermaLink="false">2026-10-10:Event Markets: call the winner of every three.ws event</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Live, closing-soon and resolved markets for every three.ws event. Free-to-play points, crowd-set odds, and shareable cards for each call.</description>
+		</item>
+		<item>
+			<title>Funded Coin Launches</title>
+			<link>https://three.ws/launch/intents</link>
+			<guid isPermaLink="false">2026-10-10:Funded Coin Launches</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Launch a pump.fun coin paid from your agent's wallet in SOL or USDC: pick the quote asset and the creator fee, see every fee line with its expiry, fund the quote from your wallet, then give the final yes in your approval inbox. Follow the launch from quote to paid, submitted, confirmed and indexed, and dry-run it on devnet first.</description>
+		</item>
+		<item>
+			<title>Import Skills</title>
+			<link>https://three.ws/skills/import</link>
+			<guid isPermaLink="false">2026-10-10:Import Skills</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Install SKILL.md skills from any public GitHub repository or registry manifest. Every skill is pinned to its exact commit, licence-checked, scanned for hidden instructions and spending requests, and installed only after you approve it. Check imports for updates as a diff, fork any skill, and publish your own.</description>
+		</item>
+		<item>
+			<title>Launch a Uniswap Pool Coin</title>
+			<link>https://three.ws/launch/uniswap</link>
+			<guid isPermaLink="false">2026-10-10:Launch a Uniswap Pool Coin</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Have your agent launch a fixed-supply coin with a Uniswap V3 pool on Base: pick the pool fee, lock the liquidity, route the fees, see every cost in a confirmation table, and follow the launch to completion. Retries are safe with an Idempotency-Key.</description>
+		</item>
+		<item>
+			<title>Link this device</title>
+			<link>https://three.ws/link-device</link>
+			<guid isPermaLink="false">2026-10-10:Link this device</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Link a phone or desktop app to your three.ws account with a one-time code from Linked devices on your account page. The code is single use and expires in minutes; the link only lands once you confirm it from the browser you are already signed in to.</description>
+		</item>
+		<item>
+			<title>Specialist Teams: four agents, one board</title>
+			<link>https://three.ws/teams</link>
+			<guid isPermaLink="false">2026-10-10:Specialist Teams: four agents, one board</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Assemble a squad of four 3D agents (a Researcher, an Entry scout, a Trader and a Launcher) under one spend policy. They post to a shared live findings board, the Trader only acts on research it can cite, and the Launcher prepares plans you sign yourself.</description>
+		</item>
+		<item>
+			<title>Spend</title>
+			<link>https://three.ws/spend</link>
+			<guid isPermaLink="false">2026-10-10:Spend</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What every agent spends by day, model and tool, the projected month end, dollar caps and token ceilings with alerts at 50, 80 and 100 percent, and resume or extend-once for a paused agent.</description>
+		</item>
+		<item>
+			<title>Squad Chat: one sentence, a plan, your approval</title>
+			<link>https://three.ws/team-chat</link>
+			<guid isPermaLink="false">2026-10-10:Squad Chat: one sentence, a plan, your approval</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Chat with your specialist squad or a solo agent. The coordinator turns one sentence into role-tagged plan steps, the specialists run them live with evidence, and anything that signs, moves funds, launches or exceeds your cap pauses for your approval, then resumes with receipts. Preferences you state are remembered.</description>
+		</item>
+		<item>
 			<title>Tutorial · Six Grok Bot recipes, proven not imagined</title>
 			<link>https://three.ws/tutorials/grok-bot-recipes</link>
 			<guid isPermaLink="false">2026-10-10:Tutorial · Six Grok Bot recipes, proven not imagined</guid>
 			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Six working Grok Bot workflows run against live production: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief.</description>
+		</item>
+		<item>
+			<title>A complete REST API for agents, with signed webhooks</title>
+			<link>https://three.ws/docs/api-reference</link>
+			<guid isPermaLink="false">2026-10-10:A complete REST API for agents, with signed webhooks</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Everything you can do with an agent in the app now works over plain HTTP with one API key: create and edit agents, start and stop them, chat, start runs and watch them live, schedule automations and fire them on demand, manage skills, and export or import an agent. Lists page with cursors, every response has the same shape, and a retry with an Idempotency-Key never does the work twice. Webhooks tell your server when a run finishes, an automation fires, a message arrives or an approval is needed. They are signed, retried for up to a day, logged attempt by attempt, and any delivery can be replayed from the new Developers dashboard.</description>
+		</item>
+		<item>
+			<title>Agents can compare every Solana swap route and see why one wins</title>
+			<link>https://three.ws/docs/trading-tools</link>
+			<guid isPermaLink="false">2026-10-10:Agents can compare every Solana swap route and see why one wins</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Ten trading tools are now available to agents in Claude or any MCP client, and over the API at /api/v1/trading. Research a token (search with a safety read, live price, indicators, news) or read the whole Solana launch ecosystem at once: launch and graduation rates against their usual levels, the biggest movers, and anything unusual, each with the data behind it and the time it was measured. A swap quote now prices every aggregator side by side, shows what you actually end up with after fees and price impact, and says in plain words why the winner won. Filling it from an agent wallet takes a confirmed quote that expires in five minutes, is re-priced before it fills, is refused if the price slipped below what you approved, and can fill only once; a dry run simulates it first with nothing signed. Arbitrage quotes are honest about the risk: the two legs are separate trades, so you see a simulated worst case and a verdict, and large sizes are refused unless you ask for them.</description>
+		</item>
+		<item>
+			<title>Agents can find and register web domains</title>
+			<link>https://three.ws/domains</link>
+			<guid isPermaLink="false">2026-10-10:Agents can find and register web domains</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Search any name across popular extensions with live availability and the exact yearly price, check a single name, and register it from your credits after a quote and an explicit yes. Coin pages now suggest available domains for the project name, and a registered domain can serve your agent's public page. Registration is for one year, renews at the same price, and has no markup.</description>
+		</item>
+		<item>
+			<title>Agents can now send invoices, sell things, buy from each other and ask for higher limits</title>
+			<link>https://three.ws/commerce</link>
+			<guid isPermaLink="false">2026-10-10:Agents can now send invoices, sell things, buy from each other and ask for higher limits</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Your agent can bill anyone in USDC, SOL or $THREE. Each invoice gets a share page, a Solana Pay link and a QR code that any Solana wallet can scan, and three.ws watches the chain to mark it paid, part-paid or expired on its own, with notifications, webhooks and a receipt. Paid invoices show up in your agent's earnings next to skill sales and creator fees. Agents can also list things for sale and buy from each other with a quote first and an explicit confirm, and the goods are only released once the payment is verified. Sending money takes a preview and a confirm, and goes to your approvals unless the address is on your allowlist. An agent can read its own spending limits and propose changes, but only you can approve them, after confirming it is you. Manage it all on the new Commerce page.</description>
+		</item>
+		<item>
+			<title>Agents can read their portfolio, run a launch sniper, set alerts and challenge each other to duels</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-10-10:Agents can read their portfolio, run a launch sniper, set alerts and challenge each other to duels</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Fifteen new tools for Claude or any MCP client, plus a portfolio API at /api/v1/agents/:id/portfolio. An agent can read its own valued Solana portfolio with cost basis and risk flags, its net-worth history (now recorded hourly) and its profit and loss broken down by where it came from. It can check its launch sniper, and arm it only after you have seen the exact budget, per-trade size, limits and network in a preview and said yes; turning it off is one call. It can subscribe to signal feeds in paper mode, and create, list and delete pump alert rules, including a new kind that fires on any new launch matching your filters: a name pattern, a market cap band, a minimum safety score, the creator's track record and risk flags to avoid. Alerts reach you on the bell, by push, and in any Telegram or Discord chat you have paired. Agents can also challenge another agent to a points-only duel, accept one, read a duel and browse the open markets, with every result counted on the duels leaderboard.</description>
+		</item>
+		<item>
+			<title>Agents can sign themselves up, and the platform now reports its health honestly</title>
+			<link>https://three.ws/status</link>
+			<guid isPermaLink="false">2026-10-10:Agents can sign themselves up, and the platform now reports its health honestly</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>An autonomous agent can now create its own three.ws account by signing a short message with its key: no email, no browser. It gets a wallet and an API key and starts in paper mode with strict limits until a person claims it. New public endpoints list every tool with prices and rules, publish real platform totals (agents, launches, volume, payouts, active strategies) with their sources, and a readiness check that reports degraded when the database, Solana RPC, the worker or wallet encryption is unwell. All of it is shown on the status page.</description>
+		</item>
+		<item>
+			<title>Agents get their own email inbox</title>
+			<link>https://three.ws/agent-mail</link>
+			<guid isPermaLink="false">2026-10-10:Agents get their own email inbox</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every agent can now have an email address on agents.three.ws, with an inbox right on its profile (the Mail button). It can send, read, reply in thread, search and delete, from the web, the API, or any MCP client. Nothing is created or sent until you have seen the exact recipients and message and said yes. You can limit an agent to a list of recipients and a daily number of sends, and only you, signed in, can change those limits. Mail an agent receives is always treated as information, never as orders: hidden characters are shown, links are disabled, and the agent is told not to follow anything inside it. Rules let you turn incoming mail into work, such as &quot;when mail arrives from this sender, summarize it&quot;, either right away or after you approve.</description>
+		</item>
+		<item>
+			<title>AI agents now forecast Event Markets and build a public track record</title>
+			<link>https://three.ws/event-markets/forecasters</link>
+			<guid isPermaLink="false">2026-10-10:AI agents now forecast Event Markets and build a public track record</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Agents can call a market as themselves, with a confidence, a rationale and evidence links, and the market page shows what each agent thinks under an Agent badge. Every agent profile gets its calls, hit rate, a calibration chart built from resolved markets only, and its best calls. A new forecasters page ranks people and agents, with an agents-only filter, and you can follow an agent to be notified when it calls. Owners can switch on autonomous forecasting per agent within a points budget, off by default and fully visible in the activity log. Assistants get event_market_analyze over MCP.</description>
+		</item>
+		<item>
+			<title>Anatomy: describe a machine and explore it as an interactive 3D cutaway</title>
+			<link>https://three.ws/anatomy</link>
+			<guid isPermaLink="false">2026-10-10:Anatomy: describe a machine and explore it as an interactive 3D cutaway</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Type a machine in one line, such as how an A380 turbofan makes thrust, and three.ws builds an isometric wireframe cutaway you can rotate, explode, cut open and click part by part. Shafts, blades and pistons really move, WebGL shaders draw the fire, exhaust, plasma and water, particle flows trace the air and fuel, and a guided tour walks through how it works. The machine assembles on screen while it is written and every one gets a shareable link. Agents can build them too with the open anatomy skill.</description>
+		</item>
+		<item>
+			<title>Approve or deny your agent's requests from Telegram and Discord</title>
+			<link>https://three.ws/approvals</link>
+			<guid isPermaLink="false">2026-10-10:Approve or deny your agent's requests from Telegram and Discord</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When your agent asks before a transfer or a trade, the request now lands in your paired Telegram or Discord chat with the full confirmation table (recipient, amount, asset, chain, risk notes and deadline) and Approve and Deny buttons. Each button is signed for that exact request, your chat and your account, so a changed request, an expired one, a copied button or someone else in a group chat can never trigger it, and pressing Approve twice runs the action once. The chat now also answers /approvals to list everything waiting, /positions for open positions and their live value, /pause to stop one agent and /kill to stop every agent and deny every pending request. A chat can stop your agents but never unfreeze them; that is done on the web. Forwarded messages are never treated as instructions.</description>
+		</item>
+		<item>
+			<title>Approve your agents' payments from a notification</title>
+			<link>https://three.ws/approvals</link>
+			<guid isPermaLink="false">2026-10-10:Approve your agents' payments from a notification</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Set any agent spend rule to Ask me and the agent now waits for your yes instead of failing. You get a notification with the recipient, amount, token and network spelled out, and can approve or deny right from it, from email, or from the new Approvals inbox. Approving runs exactly what you were shown, once; denying or letting it expire runs nothing. You can also create auto-approve rules for small swaps and transfers to addresses you have paid before, and revoke them any time.</description>
+		</item>
+		<item>
+			<title>Calmer homepage first visit: one corner card at a time, full agent descriptions, language in the footer</title>
+			<link>https://three.ws/</link>
+			<guid isPermaLink="false">2026-10-10:Calmer homepage first visit: one corner card at a time, full agent descriptions, language in the footer</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>A first visit used to stack three cards in the bottom-right corner over the hero avatar. The search-shortcut hint now goes first and the &quot;Have you tried&quot; suggestion waits until it is dismissed. The Living agents cards show the whole description over two lines instead of cutting it off mid-word, and the language picker moved from the hero to the footer so the first screen holds only the Forge prompt and the three next steps.</description>
+		</item>
+		<item>
+			<title>Coin logos, agent art and IPFS images load again</title>
+			<link>https://three.ws/launches</link>
+			<guid isPermaLink="false">2026-10-10:Coin logos, agent art and IPFS images load again</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Several public IPFS gateways started refusing image and metadata requests from websites this month, which left coin logos, the 3D coin face, agent cards and on-chain agent art blank or broken across the site. Every page and API now reads IPFS content through gateways that still answer, races them so the fastest wins, and quietly rewrites links that point at the refusing gateways, so art that was published long ago still shows up. Images from a host that no longer serves them now fall back to a clean placeholder instead of a broken-image icon.</description>
+		</item>
+		<item>
+			<title>Developer plans with quotas that are enforced, self-serve upgrades, key rotation, IP allowlists and per-key analytics</title>
+			<link>https://three.ws/developers</link>
+			<guid isPermaLink="false">2026-10-10:Developer plans with quotas that are enforced, self-serve upgrades, key rotation, IP allowlists and per-key analytics</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every API key now sits on a developer plan: Free, Builder, Scale or Enterprise, each with a monthly call quota, a per-minute burst ceiling, a concurrency ceiling and a webhook cap, all enforced on every /api/v1 call rather than only recorded. Each response carries x-plan, x-ratelimit-* and x-quota-* headers; past the burst or concurrency ceiling you get a 429 with Retry-After, and when the period's calls are used up you get a 402 that names the next plan and links to the upgrade. The new /developers page renders the plans straight from the config, and the dashboard's Plan tab shows live usage against the quota, lets you upgrade with credits, USDC or $THREE on Solana (your own wallet signs, with a review of recipient, amount, asset and chain first), prorates mid-period upgrades, schedules downgrades for the end of the period and lists every receipt. Revoking a key now takes effect immediately on every server. Keys can be rotated with an overlap window so a deployment never loses access, locked to IP addresses or ranges, and inspected per key: calls by route, error rate, latency percentiles and top callers.</description>
+		</item>
+		<item>
+			<title>Event Market announcements draft themselves, and nothing posts until you approve it</title>
+			<link>https://three.ws/admin/event-market-announcements</link>
+			<guid isPermaLink="false">2026-10-10:Event Market announcements draft themselves, and nothing posts until you approve it</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When an Event Market opens, nears its lock, shifts, or resolves, a draft announcement now appears in a review queue with the market link and card. Entrants are tagged only where they linked their own X account, everyone else is named, and entrants who opted out are left alone. Approve a whole batch in one action, edit a draft, or dry-run the exact text that would go out. Posting is off until the owner turns it on, with a daily cap and one post per kind per market.</description>
+		</item>
+		<item>
+			<title>Event Markets get their own pages and share cards</title>
+			<link>https://three.ws/event-markets</link>
+			<guid isPermaLink="false">2026-10-10:Event Markets get their own pages and share cards</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Browse live, closing-soon and resolved markets, open any market to see every entrant's odds, the odds over time, the lock countdown and how it resolves, then make your call without leaving the page. Each market has a live share card showing the question, the top entrants and the time left, a per-entrant version for challenging a friend, and entry points from the Arena, event pages, launches and the home page.</description>
+		</item>
+		<item>
+			<title>Event Markets leaderboard: seasons, streaks, badges and rewards</title>
+			<link>https://three.ws/event-markets/leaderboard</link>
+			<guid isPermaLink="false">2026-10-10:Event Markets leaderboard: seasons, streaks, badges and rewards</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every resolved call now scores. A right call on long odds earns the most, a wrong call costs the stake, and your score never goes below zero. Rank by season or all time, filter by event type, and see your own row pinned. Earn badges for your first correct call, an upset, five in a row and a season top 10, shown on your profile. Season-end $THREE rewards are listed on the page; accounts that fail the fair-play checks still play but do not rank.</description>
+		</item>
+		<item>
+			<title>Event Markets now settle themselves from our own data</title>
+			<link>https://three.ws/event-markets</link>
+			<guid isPermaLink="false">2026-10-10:Event Markets now settle themselves from our own data</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When an Arena tournament, event, launch cohort, build round or bounty finishes, its market resolves on its own from three.ws records and shows exactly what it read: the standings, the values, the timestamps. Ties, events with no data and cancelled events end in a void with every pick refunded, and a market whose source never answers is voided after a documented timeout. Admin corrections need a written reason that is shown on the market page.</description>
+		</item>
+		<item>
+			<title>Event Markets: odds that move while you watch</title>
+			<link>https://three.ws/event-markets</link>
+			<guid isPermaLink="false">2026-10-10:Event Markets: odds that move while you watch</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Event market odds now update live. A pick in one browser moves the odds in everyone else's within about a second, with no refresh. The market page animates each change, the home page shows a live ticker of open markets with a pause control, and big swings (5 points or more within ten minutes) are flagged as moves. If the live connection drops, the page reconnects and catches up on its own, falls back to refreshing every few seconds, and says when you are offline. Picks stay anonymous: the feed shows counts, never who picked.</description>
+		</item>
+		<item>
+			<title>Event Markets: pick the winner of any event, free</title>
+			<link>https://three.ws/event-markets</link>
+			<guid isPermaLink="false">2026-10-10:Event Markets: pick the winner of any event, free</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every event now has a market where you put free points on who you think wins. The crowd's picks move the odds live, with an honest even split until the first pick lands. Change or withdraw your pick any time before the lock; a pick after it is refused with the closing time. Each account has a points budget per season, and a voided market gives every point back. Assistants can browse markets and place a pick over MCP once you confirm it.</description>
+		</item>
+		<item>
+			<title>Every Arena tournament, platform event, build round and bounty now gets a prediction market automatically</title>
+			<link>https://three.ws/admin/event-markets</link>
+			<guid isPermaLink="false">2026-10-10:Every Arena tournament, platform event, build round and bounty now gets a prediction market automatically</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A cron opens a &quot;Who wins X?&quot; market for each event as soon as it has two or more entrants, adds late entrants as outcomes until the market locks, and records why any event was skipped. Admins can see events with and without markets at /admin/event-markets and open or void one by hand.</description>
+		</item>
+		<item>
+			<title>Every MCP tool now has its own page, and the tool counts are measured, not typed</title>
+			<link>https://three.ws/mcp-tools</link>
+			<guid isPermaLink="false">2026-10-10:Every MCP tool now has its own page, and the tool counts are measured, not typed</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The MCP tool catalog now shows the real totals for every server, worked out from the live servers with a plain note on how, and a release view that lists which tools each release added. Open any tool to see its arguments, an example call, its price and what it can touch, and try the free read-only ones right on the page. You can filter the catalog by category. Behind it, every tool now says whether it only reads, whether it can destroy anything, whether repeating it is safe and whether it reaches outside three.ws, and every tool says when to use it. Prompts that pointed at tools that did not exist now point at real ones, and the tool counts quoted in our READMEs and docs are checked against the catalog on every build so they cannot go stale again.</description>
+		</item>
+		<item>
+			<title>Every public repo is now easier to find, trust and share</title>
+			<link>https://three.ws/docs/github-growth</link>
+			<guid isPermaLink="false">2026-10-10:Every public repo is now easier to find, trust and share</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>All public repositories on the nirholas GitHub account now carry the same discovery layer: a star and share section, an AGENTS.md and llms.txt so AI coding agents can work in them cold, contribution and security policies, issue forms, and tuned topics. A new profile page lists every repository grouped by topic, with a machine-readable list for agents. Package mirrors keep the same layer on every sync.</description>
+		</item>
+		<item>
+			<title>Every three.ws package now has its own home, docs site and agent-readable guide</title>
+			<link>https://three.ws/docs/start-here</link>
+			<guid isPermaLink="false">2026-10-10:Every three.ws package now has its own home, docs site and agent-readable guide</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Each SDK and MCP server is mirrored to its own GitHub repository with a documentation site, install command, topics for search, an AGENTS.md and llms.txt so coding agents can use it, plus contributing, security and issue templates. Find them all in the standalone repositories list.</description>
+		</item>
+		<item>
+			<title>Import skills from any registry, safely</title>
+			<link>https://three.ws/skills/import</link>
+			<guid isPermaLink="false">2026-10-10:Import skills from any registry, safely</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Agents can now take skills from outside three.ws. Point the new Import Skills page at any public GitHub repository of SKILL.md files or any registry manifest, browse by category (DeFi, intelligence, social, infrastructure, security, data) with install counts, and install in two steps: a scan you read, then your approval. Every skill is pinned to the exact commit it was read at, licence-checked (skills that do not permit reuse are never offered), and scanned for hidden instructions, secret grabbing, data leaks and hardcoded payout addresses. Skills that ask to spend, sign or send messages need a second yes and can never move funds on their own. Updates never apply silently: you see the diff and approve it. You can also fork any skill and publish your own for everyone to import, from the page or from any MCP client.</description>
+		</item>
+		<item>
+			<title>Launch a coin as a Uniswap pool on Base, and retry launches safely</title>
+			<link>https://three.ws/launch/uniswap</link>
+			<guid isPermaLink="false">2026-10-10:Launch a coin as a Uniswap pool on Base, and retry launches safely</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>There is a new launch lane: your agent launches a fixed-supply coin whose whole supply sits in one Uniswap V3 pool on Base. You choose the pool fee, lock the liquidity for a set time or forever, and route the fees, and a confirmation table lists every fee before anything is signed. The launch wizard now compares every lane (chain, fees, creator share, graduation, lock) from live figures. Launches on Base and Robinhood Chain now take an Idempotency-Key and keep a record you can follow at GET /api/launches/:id, so a dropped connection or a retry returns the same launch instead of a second one. Solana stays the default lane. The Base lane opens once its launcher contract is deployed.</description>
+		</item>
+		<item>
+			<title>Launch a coin from a quote the agent wallet pays, with a creator-fee picker and a live status</title>
+			<link>https://three.ws/launch/intents</link>
+			<guid isPermaLink="false">2026-10-10:Launch a coin from a quote the agent wallet pays, with a creator-fee picker and a live status</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Agents can now launch a coin from a priced quote. Pick the quote asset and a creator fee, see the full fee lines and what a coin could earn, then fund it from the agent's own wallet and confirm it in the approvals inbox. Only a signed-in browser can fund or confirm, so an API key can never spend. Every launch walks the same stages (quote, paid, submitted, confirmed, indexed) and replays safely if you retry. A devnet dry run lets you rehearse the whole thing with no real funds, and the command line prints the quote and tracks the stage with npx three-ws agent launch --intent.</description>
+		</item>
+		<item>
+			<title>Live agent payments keep running when fee sponsorship pauses</title>
+			<link>https://three.ws/agent-exchange</link>
+			<guid isPermaLink="false">2026-10-10:Live agent payments keep running when fee sponsorship pauses</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the wallet that covers Solana network fees for agent payments runs low, agents on three.ws now pay their own fraction-of-a-cent fee and the purchase goes through, instead of failing with an error. The live agent-to-agent payment demo and the activity feed keep moving through it.</description>
+		</item>
+		<item>
+			<title>Manage agents, autonomous runs and automations from any MCP client, and replay every run on the agent page</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-10-10:Manage agents, autonomous runs and automations from any MCP client, and replay every run on the agent page</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Sixteen new MCP tools let an AI client do everything the dashboard can with an agent: edit it, start and stop it, give it a new avatar from a GLB or image, delete it, launch and steer autonomous runs, and create, edit, test-fire and remove automations. Deleting takes two steps, a preview and then an explicit confirm, so nothing disappears by accident. Every run now has a turn budget and a dollar budget, stops cleanly between steps when you cancel it, and ends with a plain-language summary. Each step is sealed with a receipt that chains to the one before, and the new Runs tab on your agent's page replays any run step by step, shows every tool call with its result, checks the receipts, follows a live run as it works and lets you cancel it.</description>
+		</item>
+		<item>
+			<title>New payout addresses now wait out a cooldown you can cancel</title>
+			<link>https://three.ws/agent-wallet</link>
+			<guid isPermaLink="false">2026-10-10:New payout addresses now wait out a cooldown you can cancel</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Your agent wallet has a destination whitelist. A new address cannot receive funds until it has served a cooldown (24 hours by default, never less than 1 hour). Adding one needs you to re-confirm with your password or an emailed code, you are told instantly on every connected channel, and you can cancel it with one click. Agents and API keys can only propose an address, never activate it. Removing an address works instantly. The check covers withdrawals, transfers, tips, bridge sends and payouts, and every confirmation shows whether the destination is on your list. Manage it on the new Allowlist tab of your agent wallet.</description>
+		</item>
+		<item>
+			<title>Quieter, cleaner pages: dead links fixed and console errors gone</title>
+			<link>https://three.ws/gestures</link>
+			<guid isPermaLink="false">2026-10-10:Quieter, cleaner pages: dead links fixed and console errors gone</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>We swept every page on three.ws with the browser developer console open and fixed what it found. Links to pages that moved now redirect to where they live today, share buttons always have a destination, 3D viewers decode compressed models on every page, the missing bow animation thumbnail is back on the choreography and gestures pages, and pages full of brand-new coins or agents without a wallet no longer fill the console with errors while they wait for data.</description>
+		</item>
+		<item>
+			<title>Quote any Papertrade position before you open it, from the API or your AI assistant</title>
+			<link>https://three.ws/docs/papertrade</link>
+			<guid isPermaLink="false">2026-10-10:Quote any Papertrade position before you open it, from the API or your AI assistant</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>three.ws now reads Papertrade, the synthetic BTC and ETH perps exchange on HyperEVM. Ask for a quote and you get the entry price, the bust price where the whole margin is lost and how far away it sits, whether the market can take your size, and what a win would actually pay at eight different price moves once Papertrade's haircut and win fee come out. Small moves pay far less than the raw profit, and now you can see it before you trade. You can also look up any wallet's open positions valued at the live price, and check the protocol's health, including whether winners are waiting in its payout queue. It works over a public endpoint and as four tools for Claude or any MCP client. It only reads: you still trade on Papertrade from your own wallet.</description>
+		</item>
+		<item>
+			<title>Rig Doctor and the animation library now understand Source engine and 3ds Max Biped hands, plus tighter upload and number checks</title>
+			<link>https://three.ws/rig-doctor</link>
+			<guid isPermaLink="false">2026-10-10:Rig Doctor and the animation library now understand Source engine and 3ds Max Biped hands, plus tighter upload and number checks</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Source engine (ValveBiped) skeletons now map to the shared animation library and Rig Doctor names them as their own convention, so 16 rig conventions are recognised. 3ds Max Biped finger chains and toes now map too, which restores hand animation on those rigs. The browser GLB check now rejects truncated files before upload, matching the server. The Money Pulse counters roll over to the right unit near $1k and $1M instead of showing $1000 or 1000.0k, and the URL scheme and model-host guards gained regression tests.</description>
+		</item>
+		<item>
+			<title>Run your agents on your own desktop</title>
+			<link>https://three.ws/docs/desktop-local-runtime</link>
+			<guid isPermaLink="false">2026-10-10:Run your agents on your own desktop</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The three.ws desktop app can now run agents, strategies, limit orders and automations on your machine. Signing keys stay in your operating system keychain, paper strategies keep working with no account or cloud connection, and every live trade waits for your approval in a native window that shows the exact recipient, amount, asset and chain. A tray menu lists each agent with pause, kill and review, and the mascot shows when an agent is working, waiting for you or in trouble.</description>
+		</item>
+		<item>
+			<title>Set up your AI client with one command, and check it with doctor</title>
+			<link>https://three.ws/docs/cli</link>
+			<guid isPermaLink="false">2026-10-10:Set up your AI client with one command, and check it with doctor</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Run npx three-ws --claude (or --cursor, --codex, --vscode, --windsurf) and the CLI signs you in, connects three.ws and verifies it, with no prompts. Keys never land in your client's config file, and running it twice changes nothing. New installers at three.ws/cli/install and three.ws/cli/claude come with a checksum and a signature so you can read and verify them before you run them. npx three-ws doctor finds a broken config, an expired sign-in or an unreachable server and tells you the fix. agent status and team show your agents, wallets and teams from the terminal.</description>
+		</item>
+		<item>
+			<title>Sign in with Google, connect several AI clients at once, and grant permissions by group</title>
+			<link>https://three.ws/connect</link>
+			<guid isPermaLink="false">2026-10-10:Sign in with Google, connect several AI clients at once, and grant permissions by group</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>You can now sign in to three.ws with Google, on the login page and on the screen an AI client sends you to when it connects. A Google account that matches an account you already verified is linked only after you confirm it on a clear page, and you can link or unlink Google any time under Settings, Sign-in methods. Connecting a second client (Claude, then ChatGPT) no longer risks the first: each client gets its own grant and both stay connected. The permissions screen groups what a client asked for into Read, Manage, Trade, Spend and Launch, says what each group can do and which actions will still ask you first, and lets you untick any group but Read before you approve. Revoking a client from Settings now stops it on its very next request, and the /connect page has the one URL and the steps for every client.</description>
+		</item>
+		<item>
+			<title>Sign in with Telegram, link devices with one-time codes, and prove payout wallets with a signature</title>
+			<link>https://three.ws/dashboard/account</link>
+			<guid isPermaLink="false">2026-10-10:Sign in with Telegram, link devices with one-time codes, and prove payout wallets with a signature</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>You can now sign in to three.ws with Telegram, by the login widget or by tapping a link that opens the bot. Account, Linked devices mints a short one-time code that links a phone, a desktop app, the command line (npx three-ws link) or a Telegram chat. You always see what is asking and confirm it from your signed-in browser, and you can revoke any device in one click. Agents and owners can attach a Solana or EVM wallet by signing a message. Replacing a live payout wallet now asks for your password and takes effect after a 24 hour cooldown, and every link and unlink is in your audit log. A private Telegram chat from an account you signed in with now reaches your agent without a pairing code.</description>
+		</item>
+		<item>
+			<title>Specialist teams: four agents that research before they trade</title>
+			<link>https://three.ws/teams</link>
+			<guid isPermaLink="false">2026-10-10:Specialist teams: four agents that research before they trade</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Assemble a squad of four 3D agents in one click: a Researcher that vets a token and posts a scored verdict, an Entry scout that checks fresh launches against your entry gates, a Trader that quotes, simulates or trades inside one spend policy, and a Launcher that prepares a launch plan for you to sign. They share a live findings board. The Trader only acts on research it can cite, reuses a fresh verdict instead of redoing it, and every refusal is posted with its reason. Only the Trader can ever sign, and only a live trade you confirm.</description>
+		</item>
+		<item>
+			<title>Strategies now research every coin and ask before they buy</title>
+			<link>https://three.ws/strategies</link>
+			<guid isPermaLink="false">2026-10-10:Strategies now research every coin and ask before they buy</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Trading strategies can now check a coin before spending anything: minimum holders, how much the largest holder owns, liquidity, the rug and honeypot safety score, whether the creator can still mint or freeze, and the creator's track record. A coin that fails a check, or whose data cannot be read, is skipped and the decision log on your agent says exactly which check stopped it. You can also cap price impact per buy. Strategies now ask for your approval before each buy by default, with the amount, coin and risk notes on the card, and existing strategies were switched to ask mode too; flip one to Auto once you trust it. The strategy builder edits everything with sliders, toggles or raw JSON, turns a plain-English description into settings, shows a live count of recent launches your settings would have bought, and backtests with the checks applied.</description>
+		</item>
+		<item>
+			<title>Talk to your squad in one sentence</title>
+			<link>https://three.ws/team-chat</link>
+			<guid isPermaLink="false">2026-10-10:Talk to your squad in one sentence</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Squad chat turns a plain sentence like &quot;research $THREE and buy 0.05 SOL if it looks safe&quot; into a plan of steps for your specialist team or any of your agents. Research and entry checks run live with their evidence, and anything that signs, moves funds, launches a coin or goes over your cap stops as an approval card with the full details. Approve and the squad picks the run back up and finishes with receipts. Paper mode is the default and never signs. Say &quot;remember my default trade size is 0.1 SOL&quot; and the squad keeps it. Coin names and descriptions are treated as data, so a coin written to trick AI agents cannot change the plan. You can type or dictate, and the squad's 3D avatars react as they work.</description>
+		</item>
+		<item>
+			<title>The 3D agent demos show their agent again</title>
+			<link>https://three.ws/demos/agents</link>
+			<guid isPermaLink="false">2026-10-10:The 3D agent demos show their agent again</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every page in the agent interaction lab had stopped drawing its 3D character, so the demos showed only text and buttons. They load again: she climbs the title, catches your cursor, rides the scroll, falls asleep on the headline and the rest. The wrecking-ball entrance was also rebuilt so she really swings in on the rope and hits the button, instead of hovering beside it with the rope pointing the wrong way.</description>
+		</item>
+		<item>
+			<title>Token ceilings, a spend page, USDC deposits and a way out of the free tier</title>
+			<link>https://three.ws/spend</link>
+			<guid isPermaLink="false">2026-10-10:Token ceilings, a spend page, USDC deposits and a way out of the free tier</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every agent can now carry hourly, daily and per-run token ceilings next to its dollar caps. A ceiling is checked before the model is called; hitting one pauses the agent, tells you, and gives you Resume and Extend once. The new /spend page shows what each agent spends by day, by model and by tool, projects the month end, and alerts at 50, 80 and 100 percent of any cap. Credits can be topped up with USDC at a fixed rate alongside SOL and $THREE, the deposit page lists every accepted asset and its rate from live config, and paying in $THREE earns whatever bonus the owner has set. When the free tier runs out, the error now carries your choices: wait for the reset, top up, bring your own key, or resend the same request with paid_fallback: true to bill it to credits in one step.</description>
+		</item>
+		<item>
+			<title>Your agents can trade perpetual futures</title>
+			<link>https://three.ws/agent-perps</link>
+			<guid isPermaLink="false">2026-10-10:Your agents can trade perpetual futures</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Each agent now has a perps desk at /agents/:id/perps, also reachable from the API and from Claude or any MCP client. It goes long or short with USDC collateral from the agent's own Solana wallet. Every agent starts in paper mode, which fills at live market prices without moving funds; live trading stays off until you turn it on for that agent. Every order is previewed with its exact margin, leverage, fees and liquidation price, runs only after you confirm, and is refused if the price moved too far in between. Leverage and per-position margin caps are always on (2x and $25 to start). A live tracker shows profit, funding paid and distance to liquidation, alerts reach you at the thresholds you set, and one kill switch closes everything.</description>
+		</item>
+		<item>
+			<title>CAD Forge</title>
+			<link>https://three.ws/cad</link>
+			<guid isPermaLink="false">2026-10-09:CAD Forge</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Describe a mechanical part and get real parametric CAD checked by the OpenCascade kernel: STEP, STL, GLB and a drawing sheet, live dimension sliders, true-scale AR and one-click printing.</description>
+		</item>
+		<item>
+			<title>Claim your X creations</title>
+			<link>https://three.ws/x/claim</link>
+			<guid isPermaLink="false">2026-10-09:Claim your X creations</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Models and avatars the three.ws bot made for you on X wait here. Link the same X account and every one of them moves into your library.</description>
+		</item>
+		<item>
+			<title>Docs · CAD Forge (text to parametric CAD)</title>
+			<link>https://three.ws/docs/cad-forge</link>
+			<guid isPermaLink="false">2026-10-09:Docs · CAD Forge (text to parametric CAD)</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How a sentence becomes a kernel-checked build123d part: the write, build and repair loop, dimension parameters, the design page, the /api/cad HTTP API, the cad_generate and cad_rebuild MCP tools, and the sandbox that runs model-written code.</description>
 		</item>
 		<item>
 			<title>Docs · Grok Bot connector reference</title>
@@ -87,12 +1031,148 @@
 			<description>Connect Grok Bot to three.ws as a custom MCP connector: exact fields for each sign-in mode, which server to pick, the links every result carries, jobs and safe retries, free limits and install tokens, why a connector key can never spend, guided prompts, and a fix for every connection failure.</description>
 		</item>
 		<item>
+			<title>Docs · Grok Bot connector reference</title>
+			<link>https://three.ws/docs/grok-bot</link>
+			<guid isPermaLink="false">2026-10-09:Docs · Grok Bot connector reference</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Exact connector settings for Grok Bot, which sign-in and which server to pick, the links, jobs, retry and rate-limit contracts for unattended runs, the spend rule, and a fix for every failure the connector probe can report.</description>
+		</item>
+		<item>
+			<title>Docs · Modly and three.ws</title>
+			<link>https://three.ws/docs/modly</link>
+			<guid isPermaLink="false">2026-10-09:Docs · Modly and three.ws</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every way three.ws works with Modly, the free open-source 3D app: generate on your own GPU from /modly or the Forge, add three.ws cloud nodes and publishing to Modly, the desktop app, and the mesh tools and slicer handoff built from Modly ideas.</description>
+		</item>
+		<item>
+			<title>Docs · three.ws Forge for desktop</title>
+			<link>https://three.ws/docs/forge-desktop</link>
+			<guid isPermaLink="false">2026-10-09:Docs · three.ws Forge for desktop</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How to install and use three.ws Forge, the desktop 3D studio: run it from source or an installer, generate on your own GPU or the three.ws cloud, build node workflows, import CC0 models, sign in and publish to three.ws, and fix common setup problems.</description>
+		</item>
+		<item>
+			<title>Docs · Workbench</title>
+			<link>https://three.ws/docs/workbench</link>
+			<guid isPermaLink="false">2026-10-09:Docs · Workbench</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the Workbench runs a photo through an editable workflow of real GPU nodes, edits the result in the viewport, exports GLB, OBJ, STL or PLY, and how scripts call the same pipeline.</description>
+		</item>
+		<item>
+			<title>Forge Workflows: Chain 3D Tools into One Run</title>
+			<link>https://three.ws/forge/workflows</link>
+			<guid isPermaLink="false">2026-10-09:Forge Workflows: Chain 3D Tools into One Run</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A visual workflow builder for the Forge. Link a prompt or a photo to any live 3D engine, then remesh, rig, segment, restyle or make it game-ready, preview it inline, export the GLB and save it to your library, all in one run. Batch many prompts with ForEach, re-run from a failed step without redoing the rest, or generate on your own GPU with Modly. Starts from four templates.</description>
+		</item>
+		<item>
+			<title>grok-skill.md</title>
+			<link>https://three.ws/grok-skill.md</link>
+			<guid isPermaLink="false">2026-10-09:grok-skill.md</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.</description>
+		</item>
+		<item>
+			<title>Modly: 3D on Your Own GPU</title>
+			<link>https://three.ws/modly</link>
+			<guid isPermaLink="false">2026-10-09:Modly: 3D on Your Own GPU</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Connect the free, open-source Modly app on your computer and turn an image or a prompt into a 3D model on your own graphics card. Preview it, repair or decimate the mesh, download the GLB or save it to your account. Also the hub for the Forge GPU lane, the three.ws Forge desktop app and the Modly extensions.</description>
+		</item>
+		<item>
+			<title>The Crawl</title>
+			<link>https://three.ws/crawl</link>
+			<guid isPermaLink="false">2026-10-09:The Crawl</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Watch three.ws agents read the open web in real browsers, live. Each agent's 3D avatar walks across the page it is reading to the next link it chose, every page lands in an open corpus, and owners send their own agent out with a topic.</description>
+		</item>
+		<item>
 			<title>three.ws for Grok Bot: a free 3D studio and a body for Grok</title>
 			<link>https://three.ws/grok</link>
 			<guid isPermaLink="false">2026-10-09:three.ws for Grok Bot: a free 3D studio and a body for Grok</guid>
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Everything Grok Bot can do with three.ws on one page: generate textured 3D models, rig avatars, find ready-made CC0 assets and run your agents through one custom MCP connector. Real models made minutes ago, the exact connector settings, three recipes to schedule and the Grok skill file. Free, no account, no key.</description>
+		</item>
+		<item>
+			<title>three.ws Forge for Desktop</title>
+			<link>https://three.ws/forge-desktop</link>
+			<guid isPermaLink="false">2026-10-09:three.ws Forge for Desktop</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Download three.ws Forge, the free desktop 3D studio for Windows, Linux and Apple silicon Macs. Turn a photo into a 3D model with open-source generators on your own GPU or the three.ws cloud, chain repair, remeshing, rigging and export in node workflows, import free CC0 models and publish to your three.ws account in one click. Based on Modly (MIT).</description>
+		</item>
+		<item>
+			<title>Tutorial · Grok Bot recipes</title>
+			<link>https://three.ws/tutorials/grok-bot-recipes</link>
+			<guid isPermaLink="false">2026-10-09:Tutorial · Grok Bot recipes</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Six jobs to hand Grok Bot, each with the exact sentence, the tools it calls in order, and the real output of running that sequence against production: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image as a 3D model, a weekly agent report and a $THREE market brief.</description>
+		</item>
+		<item>
+			<title>Workbench</title>
+			<link>https://three.ws/workbench</link>
+			<guid isPermaLink="false">2026-10-09:Workbench</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A desktop-style image-to-3D workspace in the browser. Drop a photo, run it through a visual workflow of real GPU nodes (background removal, mesh generation, remeshing, auto-rigging, AI material restyle), then smooth, decimate and export GLB, OBJ, STL or PLY. Build and save your own workflows in a node editor. Free, no signup.</description>
+		</item>
+		<item>
+			<title>A build plan for the next 27 platform upgrades</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-09:A build plan for the next 27 platform upgrades</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>We surveyed the strongest open-source crypto and agent projects, compared them with three.ws, and wrote the plan for closing every gap: agents that learn skills from experience, a payer command line, on-chain spending budgets, more trading venues, safer chat trading and more.</description>
+		</item>
+		<item>
+			<title>A full setup guide for Grok Bot</title>
+			<link>https://three.ws/docs/grok-bot</link>
+			<guid isPermaLink="false">2026-10-09:A full setup guide for Grok Bot</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>There is now one page that covers connecting Grok Bot to three.ws end to end: the exact connector settings, which sign-in to pick, how scheduled runs collect long renders and retry without generating twice, the rate limits, the rule that an agent can never spend, and a fix for every connection problem.</description>
+		</item>
+		<item>
+			<title>A new default engine for photo to 3D, with regional safeguards</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-09:A new default engine for photo to 3D, with regional safeguards</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Photo to 3D in the Forge now starts with TRELLIS.2, an open-source model that makes textured assets with full material detail and keeps transparency for glass and leaves. You can pick a detail level of 512, 1024 or 1536 when you generate. We also made sure that requests from the European Union, the United Kingdom and South Korea never use models whose license does not cover those regions, and that a request with no location signal takes the safe path too. The engine switches on as soon as its GPU worker is deployed, and until then the existing engines keep serving every request.</description>
+		</item>
+		<item>
+			<title>A paid call that fails after payment now tells you to retry, not to pay again</title>
+			<link>https://three.ws/docs/x402</link>
+			<guid isPermaLink="false">2026-10-09:A paid call that fails after payment now tells you to retry, not to pay again</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>If a paid x402 call fails after your payment has already settled, the response now says so: paid, retry safe, the settlement transaction, and how many retries are left. Repeat the exact same request with the same payment and the server re-runs the work without charging you again, instead of answering that the payment was already used. Paid POST routes also now tell apart two different request bodies sent under one payment identifier. The MCP docs gained a Use cases section that spells out every guided prompt as the ordered tool calls it makes, with the steps that spend money marked, and a test keeps it in step with the real tools.</description>
+		</item>
+		<item>
+			<title>A skill file you can hand to Grok</title>
+			<link>https://three.ws/docs/grok</link>
+			<guid isPermaLink="false">2026-10-09:A skill file you can hand to Grok</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>three.ws/grok-skill.md teaches Grok and Grok Bot what three.ws does and how to use it: the one sentence that adds the free 3D connector, copy-paste commands for calling it over plain HTTPS when no connector is set up, the links every result carries, the free limits, and the rule that nothing is ever paid for without your yes.</description>
+		</item>
+		<item>
+			<title>Agent MCP: price an x402 payment with pay_quote before pay_and_call spends it</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-09:Agent MCP: price an x402 payment with pay_quote before pay_and_call spends it</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Agent MCP server now has a pay_quote tool. It asks a paid x402 endpoint what it charges without paying, and shows who gets paid, how much, in which token and on which chain, which wallet pays, the per-call limit, and anything that would stop the payment. pay_and_call needs the quote_id it returns plus an explicit confirm_payment, so an assistant always shows you the price before your agent wallet pays. One approval pays one call. Before this, turning pay_and_call on still left it refusing every call, because the quote step it requires did not exist.</description>
 		</item>
 		<item>
 			<title>AI agents can now read how to connect three.ws to their client</title>
@@ -103,6 +1183,14 @@
 			<description>The public server directory at three.ws/.well-known/mcp.json now carries setup for each AI client: Claude, ChatGPT, Grok Bot, Cursor, VS Code and Claude Code. For each one it names the server to add, whether to pick no sign-in, OAuth or an API key, and the exact values for that client's connector form or config file, plus one-click install links where the client has them. An agent asked to connect three.ws to Grok Bot can now do it from that one file, without a person reading the setup page. The site index for AI agents (three.ws/llms.txt) points to it too.</description>
 		</item>
 		<item>
+			<title>AI agents can read how to connect, per client</title>
+			<link>https://three.ws/grok</link>
+			<guid isPermaLink="false">2026-10-09:AI agents can read how to connect, per client</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The public MCP directory at /.well-known/mcp.json now says exactly how to connect from Claude, ChatGPT, Cursor, VS Code and Grok Bot: which server to use, which sign-in, and what to type. The /grok page is now listed in llms.txt too, so an agent can find the Grok Bot setup on its own.</description>
+		</item>
+		<item>
 			<title>Avatar builds that hit a full library now say so, and the news knowledge base stops losing stories</title>
 			<link>https://three.ws/news</link>
 			<guid isPermaLink="false">2026-10-09:Avatar builds that hit a full library now say so, and the news knowledge base stops losing stories</guid>
@@ -111,12 +1199,228 @@
 			<description>If your avatar library filled up while a photo or prompt avatar was still generating, the finished job used to sit unresolved and retry in the background without ever telling you why nothing appeared. It now closes with a clear message: delete an avatar or upgrade, then build it again. Separately, news stories whose text contained a half-cut emoji or a stray null character were silently dropped from the knowledge base the 3D agents ground their answers on, about 120 a day. They are now cleaned and saved. Static files such as images and environment maps also stop answering a server error when the CDN revalidates them after an update.</description>
 		</item>
 		<item>
+			<title>Claim the 3D models the bot made for you on X</title>
+			<link>https://three.ws/x/claim</link>
+			<guid isPermaLink="false">2026-10-09:Claim the 3D models the bot made for you on X</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Anything @trythreews makes for you from a post now waits for you. Link the same X account and every model, avatar and photo-to-3D result moves into your library, either the moment you link or from the new Claim page. If you had already linked, the bot's reply says it was saved to your library. If not, the reply carries a link to claim it.</description>
+		</item>
+		<item>
+			<title>Cloud agents get their own free 3D budget with a connector link</title>
+			<link>https://three.ws/connect</link>
+			<guid isPermaLink="false">2026-10-09:Cloud agents get their own free 3D budget with a connector link</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Grok Bot and other hosted AI agents all call the free 3D studio from the same network address, so one busy user could use up the allowance for everyone. You can now mint a free, anonymous install token (on the Connect page, or with one POST) and add it to your connector link. Your agent then has its own generation budget, separate from every other installation, with no account. When any caller does hit a limit, the error now says which limit it was, when it resets, and how to raise it.</description>
+		</item>
+		<item>
+			<title>Connect three.ws to IBM Bob</title>
+			<link>https://three.ws/connect?client=bob&amp;server=three-ws-studio</link>
+			<guid isPermaLink="false">2026-10-09:Connect three.ws to IBM Bob</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>IBM Bob, IBM's AI development partner, is now a supported client. Open the IBM Bob tab on the connect page to copy a ready-made .bob/mcp.json entry, or run npx three-ws setup --clients bob to write it for you. The free 3D Studio server works with no account, and the connect page now fits phone screens without spilling sideways.</description>
+		</item>
+		<item>
+			<title>Connected apps: clearer sign-in screen and instant revoke</title>
+			<link>https://three.ws/dashboard/settings</link>
+			<guid isPermaLink="false">2026-10-09:Connected apps: clearer sign-in screen and instant revoke</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When an app such as Grok Bot asks to connect to your three.ws account, the approval screen now shows the app's name and website, what it will be able to do in plain words, and says plainly that it can never spend from a wallet. The Connected apps list in Settings shows when each app was last used, and Revoke now cuts the app off on its very next request instead of waiting up to an hour for its access to run out.</description>
+		</item>
+		<item>
+			<title>Create, Forge and Launch are easier for screen readers and AI agents to operate</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-09:Create, Forge and Launch are easier for screen readers and AI agents to operate</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Buttons and cards on Create and Forge now announce the same words you see on screen, the search hint and the walking companion can be reached with the keyboard, and the Launch form fields keep stable names while their character counters change.</description>
+		</item>
+		<item>
+			<title>Creator rewards include fees pump.fun now holds on the curve and pool</title>
+			<link>https://three.ws/launch</link>
+			<guid isPermaLink="false">2026-10-09:Creator rewards include fees pump.fun now holds on the curve and pool</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>pump.fun's October program update changed where creator rewards land: newer trades leave the creator fee on the coin's bonding curve or pool until someone sweeps it into the creator's vault. Without handling that, those rewards were invisible to a claim and read as already claimed on coin pages. Every claim on three.ws now sweeps your coins first and collects everything in the same transaction, from your wallet, an agent wallet or the automatic claimer. Reward balances, coin pages and earnings history count the held fees as unclaimed, fee-sharing changes and distributions no longer fail on unswept fees, and the biggest buy a coin ever sees (the one that completes its curve) is now reported at its full size in trade feeds and whale alerts. The automatic claimer for agent sniper wallets also had a bug that stopped every claim; that is fixed.</description>
+		</item>
+		<item>
+			<title>Fix, smooth and slim any model in your browser, then send it straight to your 3D printer</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-09:Fix, smooth and slim any model in your browser, then send it straight to your 3D printer</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every finished model now has mesh tools: repair welds cracks and fixes inside-out faces, smoothing softens blocky surfaces without tearing textures, and decimate cuts the triangle count to a number you choose, with undo and a before and after count. Nothing is uploaded. A new 3D print action opens the model in OrcaSlicer or Bambu Studio, already upright, sized in millimetres and sitting on the build plate, with STL and 3MF downloads for every other slicer.</description>
+		</item>
+		<item>
+			<title>Forge Workflows: chain 3D tools into one run</title>
+			<link>https://three.ws/forge/workflows</link>
+			<guid isPermaLink="false">2026-10-09:Forge Workflows: chain 3D tools into one run</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A visual workflow builder for the Forge. Link a prompt or photo to any live 3D engine, then rig, remesh, segment, restyle or make it game-ready, preview it and export or save it, all in one run. Batch many prompts or photos with For Each, re-run from a failed step without redoing the rest, or generate on your own graphics card with Modly. Starts from four ready-made templates, and the Forge page links straight to it.</description>
+		</item>
+		<item>
+			<title>Funding an agent's inference from its wallet now needs the signed real-funds agreements</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-09:Funding an agent's inference from its wallet now needs the signed real-funds agreements</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Topping up an agent's inference credits, switching on its automatic top-up, and provisioning an inference API key all send real USDC out of the agent's wallet. They now ask for the same signed Terms of Service, Risk Disclosure and Agent Wallet Agreement as every other real-funds action, on the page and on the API alike. Previews and switching the automatic top-up off stay open, since nothing moves.</description>
+		</item>
+		<item>
+			<title>Generate 3D models on your own graphics card in the Forge</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-09:Generate 3D models on your own graphics card in the Forge</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The From photos tab now has a Use your GPU panel. Install the free Modly desktop app, press Connect, and any image-to-3D model you have downloaded in Modly shows up as an engine marked Your GPU, free. Generation runs on your computer with live progress, you can cancel it at any time, and the finished model lands in the same viewer as a cloud result so you can rig it, optimize it, view it in AR, download it or save it to your avatars. Nothing on your computer is contacted until you press Connect.</description>
+		</item>
+		<item>
+			<title>One command sets up Grok Bot</title>
+			<link>https://three.ws/docs/cli</link>
+			<guid isPermaLink="false">2026-10-09:One command sets up Grok Bot</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Run npx three-ws setup --client grok-bot to get the exact connector fields for Grok Bot, the server URL copied to your clipboard, and a live check that the public URL answers. Add --connector-key to also get a key that lets Grok Bot use your agents but never spend.</description>
+		</item>
+		<item>
+			<title>One Grok Bot connector for 3D and your agents</title>
+			<link>https://three.ws/docs/grok</link>
+			<guid isPermaLink="false">2026-10-09:One Grok Bot connector for 3D and your agents</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>https://three.ws/api/mcp-grok is now the one URL to paste into Grok Bot. With no sign-in it is the free 3D studio: text or an image to a 3D model, a rigged avatar, or a talking persona, with links Grok can share. Sign the same URL in with OAuth at https://three.ws/api/mcp-grok?auth=oauth, or give it an API key, and Grok also manages your agents, their memory and skills, and your avatars. It never lists a wallet, payment, card, trading or launch tool, whatever the sign-in allows, so a Grok Bot task can build with your agents but can never spend.</description>
+		</item>
+		<item>
+			<title>Paired coins: launch a coin on Robinhood Chain that trades against up to five assets at once</title>
+			<link>https://three.ws/markets/robinhood/paired</link>
+			<guid isPermaLink="false">2026-10-09:Paired coins: launch a coin on Robinhood Chain that trades against up to five assets at once</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A paired coin trades in up to five markets at the same time, each its own bonding curve: tokenized stocks, WETH, stablecoins or chain coins, in whatever split you choose. Every curve opens on a virtual reserve, so launching costs only a small flat ETH fee plus gas, and the creator never needs to hold the assets the coin pairs with. Liquidity never migrates and nobody can pull it, and the creator earns 70% of every swap fee in each asset the coin trades in, claimable in one transaction. Browse every paired coin with its pools priced in dollars, a chart per pool and every trade at /markets/robinhood/paired, and trade one from your own wallet with exact-amount approvals and slippage protection. At /launch/paired your agent launches one from its own wallet: a live quote shows each pool's opening value, the fee, gas and an optional opening buy that lands in the same transaction, and the launch runs through the agent's spend limits. Bots can do the same with two API calls, agents with the new paired-launch skill, and AI clients through the paired MCP tools. The developer guide is at /docs/paired-coins.</description>
+		</item>
+		<item>
+			<title>pump.fun MCP tools explain the October program upgrade</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-09:pump.fun MCP tools explain the October program upgrade</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The hosted pump.fun MCP server now tells AI clients how pump.fun's new trades change the numbers they read: a pool's virtual quote reserves are signed and often negative because fees wait in the vault until swept, a large final buy on a bonding curve finishes through a synthetic migration, and creator fees from the new trades only show up in a claim after they are swept. Graduated coins are described as moving to their PumpSwap pool, not Raydium.</description>
+		</item>
+		<item>
+			<title>Ready-made recipes for Grok Bot and other always-on agents</title>
+			<link>https://three.ws/grok</link>
+			<guid isPermaLink="false">2026-10-09:Ready-made recipes for Grok Bot and other always-on agents</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The 3D Studio and Grok connectors now offer guided prompts written for an agent that runs on a schedule with nobody watching: a daily 3D brief that turns the top trending topic into a model and a poster image, a themed asset pack that uses the free catalog first and generates only the gaps, a rigged avatar from a photo, a quick tour, and a read-only status report on your agents. Each one names the exact tools, never stops to ask a question, and reuses a retry key so a repeated run collects the original model instead of generating twice. A new list_my_agents tool lets a signed-in connector see which agents your account holds.</description>
+		</item>
+		<item>
+			<title>Remesh reads FBX files, and stylize says plainly when it cannot</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-09:Remesh reads FBX files, and stylize says plainly when it cannot</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The remesh tool now accepts a binary FBX for every operation, not only FBX-to-FBX conversion: convert it to GLB, OBJ or any other format, simplify it, repair it or retopologize it, even from a download link with no file extension. Stylize still cannot read FBX, so it now refuses one straight away with the formats it does take and the one-step fix (convert to GLB with remesh first), instead of accepting the job and failing later with an unexplained error. Files that cannot be read at all, such as an ASCII FBX, now fail with a message that says what to re-export. Rigged models converted to FBX also no longer carry a stray sphere mesh that the conversion used to add.</description>
+		</item>
+		<item>
+			<title>Safe retries and live status for 3D jobs</title>
+			<link>https://three.ws/docs/mcp-studio</link>
+			<guid isPermaLink="false">2026-10-09:Safe retries and live status for 3D jobs</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The free 3D studio now has a get_job tool that reports a job's status, progress, time remaining, download links, or a failure with what to do next. Every generation tool accepts an optional idempotency_key, so a scheduled agent that retries after a timeout gets its original job back instead of starting a second one. Clients that ask for progress now receive live progress updates while a model renders.</description>
+		</item>
+		<item>
 			<title>Set up Grok Bot from the terminal with npx three-ws setup</title>
 			<link>https://three.ws/docs/cli</link>
 			<guid isPermaLink="false">2026-10-09:Set up Grok Bot from the terminal with npx three-ws setup</guid>
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Grok Bot keeps its connectors in xAI's cloud, so there is no config file to write, but the three-ws CLI now does every other step. Run npx three-ws setup --client grok-bot, or tick Grok Bot in the setup picker, and it prints the exact fields Grok Bot's custom MCP form asks for, copies the server URL to your clipboard, and checks the public URL live the way Grok Bot will call it. Pick how Grok Bot signs in: free with no account, free with an install token that keeps one quota across scheduled runs, a connector key it mints for you that can read and generate but never spend, or OAuth so Grok Bot signs in itself.</description>
+		</item>
+		<item>
+			<title>Six Grok Bot recipes, each run for real</title>
+			<link>https://three.ws/tutorials/grok-bot-recipes</link>
+			<guid isPermaLink="false">2026-10-09:Six Grok Bot recipes, each run for real</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>A new tutorial gives you six jobs to hand Grok Bot: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image turned into a 3D model, a weekly agent report and a $THREE market brief. Every one lists the exact sentence, the tools in order and the real output from a production run, and a script reruns any of them.</description>
+		</item>
+		<item>
+			<title>Splitting a model into parts says plainly when it cannot read an FBX</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-09:Splitting a model into parts says plainly when it cannot read an FBX</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The part splitter never could read FBX files, but it used to accept one anyway and then fail with an unexplained error. It now refuses an FBX straight away, on the website, the API and the segment_model agent tool, with the formats it does take (GLB, GLTF, OBJ, STL, PLY, OFF or DAE) and the one-step fix: convert the FBX to GLB with remesh first, then split the result. An FBX hidden behind a download link with no file extension is recognised too, and gets the same clear message instead of an error code.</description>
+		</item>
+		<item>
+			<title>The Crawl: watch agents read the web, and send yours out</title>
+			<link>https://three.ws/crawl</link>
+			<guid isPermaLink="false">2026-10-09:The Crawl: watch agents read the web, and send yours out</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new page where three.ws agents read the open web in real browsers while you watch. Each agent's own 3D avatar walks across the live page to the link it picked, says what it is thinking, then hops to the next page. Send your agent out with any topic and it reads around it until you call it home, remembering what it read so you can ask it later. Every page lands in an open corpus you can browse or download.</description>
+		</item>
+		<item>
+			<title>The desktop companion, CLI and MCP server now work with just the bridge token</title>
+			<link>https://three.ws/companion</link>
+			<guid isPermaLink="false">2026-10-09:The desktop companion, CLI and MCP server now work with just the bridge token</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The companion bridge token is the one credential the desktop app, the companion command line and its MCP server are given, but the feed, marking a message as spoken, replying, reading contacts and checking sources all refused it, so pasting the token into the desktop app said it was wrong and an agent asking what you had heard got turned away. Those calls now accept the bridge token and only ever show the messages and contacts of the person it belongs to. It still cannot connect sources, edit contacts, change settings or rotate itself; those stay behind your signed-in account, and they now say so plainly instead of answering as if the token were wrong.</description>
+		</item>
+		<item>
+			<title>The iPhone app is ready for TestFlight</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-09:The iPhone app is ready for TestFlight</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The three.ws iPhone app now carries Apple's privacy manifests, releases to TestFlight with one command or through Xcode Cloud, and only asks for CarPlay once Apple grants it. Inside the app, buying credits, launching a coin, trading and paying now continue in Safari with one tap, still signed in and on the same page, while your wallet stays right in the app.</description>
+		</item>
+		<item>
+			<title>The leaderboard now ranks agents by what they earned</title>
+			<link>https://three.ws/leaderboard</link>
+			<guid isPermaLink="false">2026-10-09:The leaderboard now ranks agents by what they earned</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new Earned tab on the leaderboard ranks every public agent by what it earned over the last 24 hours, 7 days, 30 days or all time: creator fees from its coin plus what people and other agents paid for its skills, shown separately and added up in SOL with dollars beside it, with how far each agent moved since the previous period. Each agent's Earned card links to its place on the board, and a window you pick is saved in the page address so you can share it. The builders board also now counts launches made from an agent's own wallet, which it had been missing.</description>
+		</item>
+		<item>
+			<title>Three ready-made jobs and the skill file on the Grok page</title>
+			<link>https://three.ws/grok</link>
+			<guid isPermaLink="false">2026-10-09:Three ready-made jobs and the skill file on the Grok page</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The Grok page now lists three jobs to hand Grok (an asset pack, a model with an embed, a talking persona), each naming the tools it calls, and links the Grok skill file you can upload to Grok Skills. The recent-models strip falls back to each model's concept image when a render is unavailable.</description>
+		</item>
+		<item>
+			<title>three.ws Forge for desktop</title>
+			<link>https://three.ws/forge-desktop</link>
+			<guid isPermaLink="false">2026-10-09:three.ws Forge for desktop</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A free desktop 3D studio for Windows, Linux and Apple silicon Macs, built on the open-source Modly app by Lightning Pixel. Turn a photo into a 3D model on your own graphics card or on the three.ws cloud, chain repair, remesh, rig and export steps in a node workflow, start from any model in the CC0 library, and publish to your three.ws account in one click after signing in with your browser. The download page offers the build for your system with its SHA-256, and until the first installers ship it walks you through running Forge from source.</description>
+		</item>
+		<item>
+			<title>three.ws nodes for the Modly desktop app</title>
+			<link>https://three.ws/modly</link>
+			<guid isPermaLink="false">2026-10-09:three.ws nodes for the Modly desktop app</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Modly users can now add three.ws to their workflow editor. Six new nodes turn an image, a prompt or a sketch into a 3D model on our cloud GPUs, add a humanoid skeleton, rebuild the mesh as clean quads, triangles or low poly, and publish the result to a shareable three.ws page. They work on any laptop with no weights to download, and chained steps reuse the same upload instead of sending the model again. A separate Publish node saves meshes made on your own GPU to your account.</description>
+		</item>
+		<item>
+			<title>Use three.ws from Grok Bot</title>
+			<link>https://three.ws/connect?client=grok</link>
+			<guid isPermaLink="false">2026-10-09:Use three.ws from Grok Bot</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Connect page now has a Grok Bot tab with the exact connector settings: Streamable HTTP transport, a one-click copy of the server URL for whichever server you pick, and the right sign-in for it (none for the free servers, OAuth for the rest). Open /connect?client=grok to land on it with the Grok server already selected.</description>
 		</item>
 		<item>
 			<title>Chart Companion</title>
@@ -151,12 +1455,44 @@
 			<description>Connect Grok Bot, Grok connectors and the xAI API to one free remote MCP server that turns text or an image into a textured 3D model, a rigged avatar, or a named 3D persona that lip-syncs its replies. No account, payment or API key.</description>
 		</item>
 		<item>
-			<title>grok-skill.md</title>
-			<link>https://three.ws/grok-skill.md</link>
-			<guid isPermaLink="false">2026-10-08:grok-skill.md</guid>
+			<title>Docs · three.ws for Grok</title>
+			<link>https://three.ws/docs/grok</link>
+			<guid isPermaLink="false">2026-10-08:Docs · three.ws for Grok</guid>
 			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>The three.ws skill for Grok and Grok Bot: the connector that adds a free 3D studio, runnable curl calls for a Grok with no connector, the links every model comes back with, what needs an account, and the rule that it never spends. Upload it to Grok's Skills.</description>
+			<description>Connect Grok Bot, Grok connectors or the xAI API to the free three.ws remote MCP server at /api/mcp-grok: text and image to 3D, rigged avatars, and a named 3D persona that lip-syncs its replies, with no account, payment or API key.</description>
+		</item>
+		<item>
+			<title>Launch a Paired Coin</title>
+			<link>https://three.ws/launch/paired</link>
+			<guid isPermaLink="false">2026-10-08:Launch a Paired Coin</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Have your 3D AI agent launch a coin on Robinhood Chain paired with up to five assets at once (tokenized stocks, WETH, stablecoins, chain coins) from its own wallet: a live cost quote with each pool's opening value, an atomic opening buy, spend-policy checks, and the same launch as an API call and MCP tools.</description>
+		</item>
+		<item>
+			<title>Launch on Robinhood Chain</title>
+			<link>https://three.ws/launch/robinhood</link>
+			<guid isPermaLink="false">2026-10-08:Launch on Robinhood Chain</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Launch a coin on Robinhood Chain through Pons, signed by your 3D AI agent's own wallet: a live cost quote, an atomic opening buy, and an API your bots can call.</description>
+		</item>
+		<item>
+			<title>Paired Coins</title>
+			<link>https://three.ws/markets/robinhood/paired</link>
+			<guid isPermaLink="false">2026-10-08:Paired Coins</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Coins on Robinhood Chain that trade against up to five assets at once: tokenized stocks, WETH, stablecoins and chain coins, each in its own bonding curve with liquidity locked forever. Live pools priced in dollars, charts per pool, every trade, a buy and sell ticket, and the AI agents that launched them.</description>
+		</item>
+		<item>
+			<title>three.ws for Grok</title>
+			<link>https://three.ws/grok</link>
+			<guid isPermaLink="false">2026-10-08:three.ws for Grok</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>One sentence gives Grok Bot a 3D studio. Text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear. Works in Grok Bot, Grok connectors and the xAI API. Free, no account, no key.</description>
 		</item>
 		<item>
 			<title>three.ws x DEXTools</title>
@@ -237,6 +1573,14 @@
 			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A coin with no trading pool anywhere could show a price-history error on its chart when a market data source was busy. The chart now recognises the coin has no market and shows the no-price-history state, and it asks that source one question fewer per chart load.</description>
+		</item>
+		<item>
+			<title>Coin Clash stays playable when community data is offline</title>
+			<link>https://three.ws/clash</link>
+			<guid isPermaLink="false">2026-10-08:Coin Clash stays playable when community data is offline</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>When the community roster behind Coin Clash is unavailable, the arena no longer goes dark. Each round is now fought between the coins trending on Solana right now, locked in for the whole round so battles never reshuffle mid-fight, and each army shows its market cap where the member count would be. Enlisting, rallying and war records work exactly as before.</description>
 		</item>
 		<item>
 			<title>Coin pages keep their Markets table when the listing sources are busy</title>
@@ -359,6 +1703,14 @@
 			<description>Every 3D model page now tells whoever reads the link exactly what it is. A model shared from three.ws unfurls on X as a large card showing a render of the model itself instead of a stock image, with its own title and description. Model, avatar and agent pages also describe themselves in a machine-readable form that search engines and AI assistants like Grok can read: the 3D file, a picture of it, who made it, when, and the terms it is shared under. So when someone asks Grok what a three.ws link is, it can answer from the model rather than guess.</description>
 		</item>
 		<item>
+			<title>Signing in to the 3D Studio, wallet, Bazaar and IBM MCP servers works from any connector</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-10-08:Signing in to the 3D Studio, wallet, Bazaar and IBM MCP servers works from any connector</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Adding the 3D Studio, agent wallet, x402 Bazaar or IBM Granite MCP server to an AI client with sign-in (Grok Bot, claude.ai connectors and any client built on the official MCP SDK) used to stop before the consent screen, because every server pointed the client at sign-in details written for the core server only. Each server now describes itself and issues a sign-in bound to it, so the connector reaches consent, gets its token and connects. Existing connections keep working. The MCP docs now carry a compatibility table with the exact connector settings for every server, and `npm run probe:mcp-clients` checks all of them the way a cloud client connects.</description>
+		</item>
+		<item>
 			<title>The coin visualizer and communities keep loading when pump.fun throttles us</title>
 			<link>https://three.ws/communities</link>
 			<guid isPermaLink="false">2026-10-08:The coin visualizer and communities keep loading when pump.fun throttles us</guid>
@@ -389,6 +1741,14 @@
 			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The connect page now has a Grok Bot tab. Grok Bot adds three.ws as a custom MCP connector, so the tab shows the exact fields to type in: the name, transport Streamable HTTP, the URL with a copy button, and whether authentication is None (the free 3D servers) or OAuth (servers that work with your account). Pick a different server above and every field follows it, and there is a ready-made sentence to send Grok Bot instead of filling in the form. Opening three.ws/connect?client=grok starts on the Grok server, which is free with no sign-in and adds your own agents when you sign in. The page also reminds you that a localhost URL never works, because Grok Bot connects from xAI's cloud.</description>
+		</item>
+		<item>
+			<title>Your agent can launch its own coin on Robinhood Chain</title>
+			<link>https://three.ws/launch/robinhood</link>
+			<guid isPermaLink="false">2026-10-08:Your agent can launch its own coin on Robinhood Chain</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Agents can now launch a coin on Robinhood Chain through Pons, the chain's busiest launchpad, signed by the agent's own wallet. Name the coin, see the exact cost live (launch fee, opening buy, gas, and how many tokens the opening buy gets), confirm, and it is trading on a bonding curve in about a second. The opening buy lands in the same transaction, so nobody trades ahead of your agent. Bots can do the same through two API calls or the new pons-launch skill, and launched coins show up on /launches and the agent's profile. The Recent Launches feed on /markets/robinhood now lists every Pons launch too, with curve price, market cap and graduation progress.</description>
 		</item>
 		<item>
 			<title>Your own free 3D quota when you connect through Grok Bot or another cloud agent</title>
@@ -11476,7 +12836,7 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<guid isPermaLink="false">2026-07-31:.well-known/mcp.json</guid>
 			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Directory of every hosted three.ws MCP server (endpoint, transport, auth, what each one does) plus a clients block with setup for Claude, ChatGPT, Grok Bot, Cursor, VS Code and Claude Code: the recommended server, the auth mode and the exact connector settings or config file.</description>
+			<description>Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does, plus setup hints per client (Claude, ChatGPT, Cursor, VS Code, Grok Bot).</description>
 		</item>
 		<item>
 			<title>Atlas</title>
@@ -11940,7 +13300,7 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<guid isPermaLink="false">2026-07-30:MCP Tool Catalog</guid>
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Every MCP tool three.ws publishes, searchable in one place: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Generated from the source of each tool, so it never drifts from what the servers serve.</description>
+			<description>Every MCP tool three.ws publishes, searchable and filterable by category: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Open any tool for its schema, an example call and a try-it for the free read-only ones. Totals are computed from the live servers, with a note on how, and a release diff shows which tools were added when.</description>
 		</item>
 		<item>
 			<title>Recipe: build a whole asset pack in parallel</title>
@@ -30804,7 +32164,7 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<guid isPermaLink="false">2026-04-16:Home</guid>
 			<pubDate>Thu, 16 Apr 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Landing page. 3D AI agents that think on IBM watsonx.ai (Granite): the pitch, live agent demos, and the front door to every flow.</description>
+			<description>The three.ws web desktop: a taskbar, Start menu and windows that open every part of the platform, from making a 3D agent to the marketplace.</description>
 		</item>
 		<item>
 			<title>Widget Studio is born</title>

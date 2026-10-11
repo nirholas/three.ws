@@ -502,13 +502,13 @@ const OVERLAY = {
 		],
 	},
 	"io.github.nirholas/solana-memo-media-mcp": {
-		tagline: "Paste a Solana transaction signature, get back the image hidden in its Memo instruction.",
-		category: "onchain-data",
-		tags: ["solana", "memo", "images", "read-only", "keyless"],
+		tagline: "See the images people embed in Solana memos: give it a signature, get the picture back inline, validated.",
+		category: "market-data",
+		tags: ["solana","memo","images","data-uri","read-only"],
 		examplePrompts: [
-			"Show any image embedded in Solana transaction <signature>.",
+			"Show any image embedded in this Solana transaction.",
 			"Scan this wallet's recent transactions for memo images.",
-			"Decode this data URI I copied from a memo.",
+			"Decode this data URI I copied from a memo and tell me its size and hash.",
 		],
 	},
 	"io.github.nirholas/three-token-mcp": {

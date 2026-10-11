@@ -1,34 +1,34 @@
 #!/usr/bin/env node
 /**
- * Computer-use operability audit (x-grok 18).
+ * Agent-operability audit: can a computer-use agent (Grok Bot, Claude in
+ * Chrome, any Playwright-driven model) finish the primary task on our key
+ * pages using only what a screen reader exposes?
  *
- * Grok Bot, and any other computer-use agent, drives a page the same way a
- * screen-reader user does: it enumerates the accessibility tree and acts on
- * roles and labels, never CSS selectors, hover reveals, or raw coordinates.
- * This script drives the primary task on five real surfaces that way, using
- * only Playwright's getByRole()/getByLabel() locators, and records any step
- * that needed something else, or that sat on a long wait with no visible
- * status text to read.
+ * Two layers:
  *
- * Surfaces: /create -> /create/prompt, /forge, /connect, an agent profile
- * chat, and /launch (read-only: it reaches the signing confirmation and
- * stops, exactly like a person who closes the tab before approving a spend).
+ *   1. Flows. For /create, /forge, /connect, an agent profile and /launch the
+ *      script completes the page's primary task through `getByRole` and
+ *      `getByLabel` only. The flow helpers below expose no other locator, so a
+ *      step that needs a CSS selector, a hover or a coordinate click cannot be
+ *      written: it fails, and the failure is the finding. Each long wait is
+ *      sampled for a visible status message (role=status/alert, aria-live,
+ *      progressbar, aria-busy); a wait with none is a "silent wait".
  *
- * Usage:
- *   BASE_URL=http://localhost:3107 node scripts/audit-agent-operability.mjs
- *   node scripts/audit-agent-operability.mjs --out prompts/x-grok/_generated/operability.json
+ *   2. Page scans. Every audited page is scanned for what flows cannot reach:
+ *      controls with no accessible name, clickable elements that are neither
+ *      semantic nor focusable, menus revealed only by :hover, and canvases
+ *      with no text alternative.
  *
- * Needs a signed-in session for avatar-limited parts of /create and for
- * /launch's agent list:
- *   BASE_URL=http://localhost:3107 npm run audit:web:login
+ * Read-only: /launch stops at the confirmation screen and asserts it renders,
+ * it never signs or submits anything that spends.
  *
- * A browser logs "Failed to load resource: ... 503" for ANY non-2xx HTTP
- * response, regardless of how gracefully the page's own JS handles it; that
- * is intrinsic browser behaviour, not a page defect, so it is recorded
- * separately from the operability findings instead of failing the run.
- *
- * Exit 0 when every surface completes with role/label locators only and no
- * step reports a silent wait. Exit 1 otherwise, with the findings printed.
+ * Usage (dev server must be up: `npm run dev`):
+ *   node scripts/audit-agent-operability.mjs                 # print the report
+ *   node scripts/audit-agent-operability.mjs --label after   # also record it
+ *     in prompts/x-grok/_generated/operability.json under "after"
+ *   BASE_URL=https://three.ws node scripts/audit-agent-operability.mjs
+ *   --wait-generate <seconds>   how long /forge may take to finish (default 240)
+ *   --strict                    exit 1 when any finding remains
  */
 import { chromium } from 'playwright';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
@@ -36,381 +36,451 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const BASE_URL = (process.env.BASE_URL || 'http://localhost:3107').replace(/\/$/, '');
-const AUTH_STATE = resolve(ROOT, '.auth/audit-state.json');
+const BASE_URL = (process.env.BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
+const EVIDENCE = resolve(ROOT, 'prompts/x-grok/_generated/operability.json');
 
 const argv = process.argv.slice(2);
 const opt = (name, fallback) => {
 	const i = argv.indexOf(`--${name}`);
 	return i !== -1 && argv[i + 1] ? argv[i + 1] : fallback;
 };
-const OUT = resolve(ROOT, opt('out', 'prompts/x-grok/_generated/operability.json'));
+const LABEL = opt('label', '');
+const STRICT = argv.includes('--strict');
+const GENERATE_WAIT_MS = Number(opt('wait-generate', '240')) * 1000;
 
-const hasAuth = existsSync(AUTH_STATE);
-
-/** One surface's findings: steps that needed a non-role/label escape hatch,
- * or that waited without visible status text. Empty means the primary task
- * completed clean. */
-function newSurface(name, task) {
-	return { name, task, consoleErrors: [], findings: [], completed: false };
-}
-
-function note(surface, kind, detail) {
-	surface.findings.push({ kind, detail });
-}
-
-function isResourceLoadError(text) {
-	return /Failed to load resource/.test(text);
-}
-
-/** Waits for the combined visible text of every element `locator` matches to
- * change away from `baseline`. Aggregating across matches (not just the
- * first) avoids a false "silent wait" when a page has several status
- * regions and only one of them is the one that actually updates. */
-async function waitForStatusChange(page, locator, { timeoutMs = 20000, pollMs = 200, baseline = '' } = {}) {
-	const start = Date.now();
-	const base = baseline.trim();
-	while (Date.now() - start < timeoutMs) {
-		const texts = await locator.allTextContents().catch(() => []);
-		const joined = texts.join(' | ').replace(/\s+/g, ' ').trim();
-		if (joined && joined !== base) return { text: joined, sawStatus: true };
-		await page.waitForTimeout(pollMs);
-	}
-	return { text: '', sawStatus: false };
-}
-
-async function auditCreate(context, results) {
-	const surface = newSurface('create', 'Describe an avatar in words and generate it in 3D (/create -> /create/prompt).');
-	results.push(surface);
-	const page = await context.newPage();
-	page.on('console', (m) => { if (m.type() === 'error') surface.consoleErrors.push(m.text()); });
-	try {
-		await page.goto(`${BASE_URL}/create`, { waitUntil: 'domcontentloaded' });
-		const promptCard = page.getByRole('button', { name: /Describe an avatar in words/i });
-		await promptCard.waitFor({ state: 'visible', timeout: 15000 });
-		await promptCard.click();
-
-		const landedOnComposer = await page.waitForURL(/\/create\/prompt/, { timeout: 8000 }).then(() => true).catch(() => false);
-		if (!landedOnComposer) {
-			// A real account-state rule (plan avatar limit) can legitimately stop
-			// this navigation. It must still surface through an accessible,
-			// visible status element, not fail silently. #status-toast is
-			// create.html's own role=status region (see showStatus()); scoping
-			// to it avoids the site-wide walk-companion widget's unrelated
-			// role=status bubble.
-			const toast = page.locator('#status-toast');
-			const { sawStatus, text } = await waitForStatusChange(page, toast, { timeoutMs: 5000 });
-			if (sawStatus) {
-				note(surface, 'blocked-with-status', `Card click did not navigate to /create/prompt, but an accessible status region explained why: "${text}".`);
-				surface.completed = true;
-				return;
-			}
-			note(surface, 'silent-wait', 'Clicking the "Describe an avatar in words" card neither navigated to /create/prompt nor showed an accessible status explaining why.');
-			return;
-		}
-
-		const promptBox = page.getByLabel('Describe the avatar you want to generate');
-		await promptBox.waitFor({ state: 'visible', timeout: 15000 });
-		await promptBox.fill('a cheerful astronaut with a glossy white suit and a blue visor');
-
-		const generateBtn = page.getByRole('button', { name: /Generate avatar/i });
-		await generateBtn.waitFor({ state: 'visible' });
-		if (await generateBtn.isDisabled()) note(surface, 'blocked', 'Generate avatar button stayed disabled after a role/label fill().');
-
-		if (!hasAuth) {
-			note(surface, 'skipped', 'No signed-in session (.auth/audit-state.json missing); generation requires sign-in, so the flow stops at the composer.');
-			surface.completed = true;
-			return;
-		}
-
-		await generateBtn.click();
-		const nextOrBlocked = await Promise.race([
-			page.waitForURL(/\/login/, { timeout: 5000 }).then(() => 'login').catch(() => null),
-			page.waitForSelector('.step.active[data-step="build"]', { timeout: 20000 }).then(() => 'build').catch(() => null),
-		]);
-		if (nextOrBlocked === 'login') {
-			note(surface, 'skipped', 'Generate avatar redirected to /login; the QA session did not count as signed in for this route.');
-			surface.completed = true;
-			return;
-		}
-		if (nextOrBlocked !== 'build') {
-			const toast = page.locator('#status-toast');
-			const { sawStatus, text } = await waitForStatusChange(page, toast, { timeoutMs: 5000 });
-			if (sawStatus) {
-				note(surface, 'blocked-with-status', `Generate avatar did not advance to the build step, but an accessible status region explained why: "${text}".`);
-				surface.completed = true;
-				return;
-			}
-			note(surface, 'silent-wait', 'Clicking Generate avatar never advanced to the build step within 20s, with no accessible status explaining why.');
-			return;
-		}
-		const buildStatus = page.locator('#build-status');
-		const { sawStatus, text } = await waitForStatusChange(page, buildStatus, { timeoutMs: 45000 });
-		if (!sawStatus) note(surface, 'silent-wait', 'Build step showed no changing visible status text while generating.');
-		else surface.lastStatus = text;
-		surface.completed = true;
-	} catch (err) {
-		note(surface, 'error', String(err?.message || err));
-	} finally {
-		await page.close();
-	}
-}
-
-async function auditForge(context, results) {
-	const surface = newSurface('forge', 'Generate a 3D model from a text prompt (/forge).');
-	results.push(surface);
-	const page = await context.newPage();
-	page.on('console', (m) => { if (m.type() === 'error') surface.consoleErrors.push(m.text()); });
-	try {
-		await page.goto(`${BASE_URL}/forge`, { waitUntil: 'domcontentloaded' });
-		const promptBox = page.getByLabel('Describe the object to generate');
-		await promptBox.waitFor({ state: 'visible', timeout: 15000 });
-		await promptBox.fill('a low-poly red fox sitting upright, matte fur, soft studio light');
-
-		const generateBtn = page.getByRole('button', { name: /^Generate/i });
-		await generateBtn.waitFor({ state: 'visible' });
-		if (await generateBtn.isDisabled()) note(surface, 'blocked', 'Generate button stayed disabled after a role/label fill().');
-		await generateBtn.click();
-
-		// #gen-warming / #gen-note / #gen-stages are the three live progress
-		// regions; aggregating all of them avoids pinning on whichever one
-		// happens to stay static while another one is doing the updating.
-		// #gen-meta is the per-second elapsed-time ticker (src/forge.js
-		// startElapsed()): one stage's own copy says it reports no sub-steps
-		// and the elapsed meter is "the real signal" during it, so it has to
-		// be in the aggregate or a long, legitimate no-substep stage reads as
-		// a silent wait. It is deliberately not aria-live (a per-second
-		// announcement would spam a screen reader), so it is read here, not
-		// asserted as an accessible status on its own.
-		const progress = page.locator('#gen-warming, #gen-note, #gen-stages, #gen-meta');
-		const { sawStatus } = await waitForStatusChange(page, progress, { timeoutMs: 30000 });
-		if (!sawStatus) note(surface, 'silent-wait', 'Forge gave no changing visible status text while generating (checked #gen-warming/#gen-note/#gen-stages).');
-
-		// Completion is the result label (now a role=status region) gaining
-		// text, or the alert-role load-error region appearing. A real GPU
-		// worker can cold-start and queue for minutes (observed 20s-220s+
-		// across runs on this machine), so a hard completion timeout tests
-		// backend throughput, not operability. Instead poll until done,
-		// tracking whether the progress text is still changing; it is only
-		// a real defect (silent wait) if that text goes static for a long
-		// stretch, not merely if the whole job runs long.
-		const resultLabel = page.locator('#result-label');
-		const loadError = page.locator('#viewer-load-error');
-		const maxWaitMs = 240000;
-		const silentThresholdMs = 60000;
-		const pollMs = 3000;
-		const start = Date.now();
-		let lastProgressText = '';
-		let lastChangeAt = start;
-		let outcome = null;
-		while (Date.now() - start < maxWaitMs) {
-			if (await resultLabel.filter({ hasText: /./ }).isVisible().catch(() => false)) { outcome = 'result'; break; }
-			if (await loadError.isVisible().catch(() => false)) { outcome = 'error'; break; }
-			const texts = await progress.allTextContents().catch(() => []);
-			const joined = texts.join(' | ').replace(/\s+/g, ' ').trim();
-			if (joined !== lastProgressText) { lastProgressText = joined; lastChangeAt = Date.now(); }
-			if (Date.now() - lastChangeAt > silentThresholdMs) break;
-			await page.waitForTimeout(pollMs);
-		}
-		if (!outcome) {
-			const wentSilent = Date.now() - lastChangeAt > silentThresholdMs;
-			if (wentSilent) note(surface, 'stalled', `Forge's progress status stopped updating for over ${silentThresholdMs / 1000}s with no result or error.`);
-			else note(surface, 'slow-backend', `Forge did not finish within ${maxWaitMs / 1000}s, but its progress status kept changing throughout (GPU queue/cold-start variance, not a silent wait).`);
-		}
-		surface.completed = true;
-	} catch (err) {
-		note(surface, 'error', String(err?.message || err));
-	} finally {
-		await page.close();
-	}
-}
-
-async function auditConnect(context, results) {
-	const surface = newSurface('connect', 'Pick the three.ws MCP server and copy its connector URL (/connect).');
-	results.push(surface);
-	const page = await context.newPage();
-	page.on('console', (m) => { if (m.type() === 'error') surface.consoleErrors.push(m.text()); });
-	try {
-		await page.goto(`${BASE_URL}/connect`, { waitUntil: 'domcontentloaded' });
-		const serverGroup = page.getByRole('radiogroup', { name: 'Hosted MCP servers' });
-		await serverGroup.waitFor({ state: 'visible', timeout: 15000 });
-		const firstServer = serverGroup.getByRole('radio').first();
-		await firstServer.waitFor({ state: 'visible', timeout: 15000 });
-		await firstServer.click();
-
-		const copyBtn = page.getByRole('button', { name: /Copy URL/i });
-		await copyBtn.waitFor({ state: 'visible' });
-		await copyBtn.click();
-
-		// The button's own accessible name flips to Copied for about 1.6s.
-		// Its own name is what changes, so a locator still filtered on the
-		// original name stops matching the instant the change happens;
-		// verify through #cn-copy-url directly instead, the same ID-scoped
-		// pattern used for every other surface's status checks in this file.
-		const copyBtnById = page.locator('#cn-copy-url');
-		const { sawStatus } = await waitForStatusChange(page, copyBtnById, { timeoutMs: 3000, pollMs: 100, baseline: 'Copy URL' });
-		if (!sawStatus) note(surface, 'silent-action', 'Copy URL gave no visible confirmation text on the button after the click.');
-
-		const tabs = page.getByRole('tablist', { name: 'AI clients' });
-		await tabs.waitFor({ state: 'visible' });
-		const claudeTab = page.getByRole('tab', { name: 'Claude', exact: true });
-		await claudeTab.click();
-		surface.completed = true;
-	} catch (err) {
-		note(surface, 'error', String(err?.message || err));
-	} finally {
-		await page.close();
-	}
-}
-
-async function auditAgentChat(context, results, agentId) {
-	const surface = newSurface('agent-chat', `Open an agent profile and chat with it (/agents/${agentId}).`);
-	results.push(surface);
-	const page = await context.newPage();
-	page.on('console', (m) => { if (m.type() === 'error') surface.consoleErrors.push(m.text()); });
-	try {
-		await page.goto(`${BASE_URL}/agents/${agentId}`, { waitUntil: 'domcontentloaded' });
-		const chatTab = page.getByRole('tab', { name: 'Chat' });
-		await chatTab.waitFor({ state: 'visible', timeout: 15000 });
-		await chatTab.click();
-
-		const chatInput = page.getByLabel(/Message/i);
-		await chatInput.waitFor({ state: 'visible', timeout: 10000 });
-		await chatInput.fill('What can you help me with?');
-
-		const sendBtn = page.getByRole('button', { name: 'Send' });
-		await sendBtn.click();
-
-		// Scoped to the chat log's own assistant bubble (see appendChatMessage() /
-		// sendChatMessage() in src/avatar-page.js), not a generic role=status
-		// query, which would also pick up the site-wide walk-companion widget's
-		// unrelated status bubble.
-		const assistantStatus = page.locator('#av-chat-log .av-chat-msg.assistant').last();
-		const immediate = await waitForStatusChange(page, assistantStatus, { timeoutMs: 3000 });
-		if (!immediate.sawStatus) {
-			note(surface, 'silent-wait', 'No accessible status appeared immediately after sending a chat message.');
-		} else {
-			const resolved = await waitForStatusChange(page, assistantStatus, { timeoutMs: 40000, baseline: immediate.text });
-			if (!resolved.sawStatus) note(surface, 'silent-wait', 'The chat status region never updated past "Thinking..." within 40s.');
-			else surface.lastReply = resolved.text.slice(0, 200);
-		}
-		surface.completed = true;
-	} catch (err) {
-		note(surface, 'error', String(err?.message || err));
-	} finally {
-		await page.close();
-	}
-}
-
-async function auditLaunch(context, results, agentName) {
-	const surface = newSurface('launch', 'Fill in a coin launch for an agent and reach the signing confirmation, read-only (/launch). Never signs.');
-	results.push(surface);
-	const page = await context.newPage();
-	page.on('console', (m) => { if (m.type() === 'error') surface.consoleErrors.push(m.text()); });
-	try {
-		await page.goto(`${BASE_URL}/launch`, { waitUntil: 'domcontentloaded' });
-		if (!hasAuth) {
-			note(surface, 'skipped', 'No signed-in session (.auth/audit-state.json missing); /launch needs a wallet-linked account to list agents.');
-			surface.completed = true;
-			return;
-		}
-		const agentsGroup = page.getByRole('radiogroup', { name: 'Your agents' });
-		await agentsGroup.waitFor({ state: 'visible', timeout: 15000 });
-		const agentRadio = agentName
-			? agentsGroup.getByRole('radio', { name: new RegExp(agentName, 'i') })
-			: agentsGroup.getByRole('radio').first();
-		await agentRadio.waitFor({ state: 'visible', timeout: 10000 });
-		await agentRadio.click();
-
-		await page.getByLabel(/Coin name/i).fill('Operability Test Coin');
-		await page.getByLabel(/Ticker/i).fill('OPTEST');
-		await page.getByLabel(/Description/i).fill('A read-only probe coin, never launched.');
-
-		// The primary action button's accessible name tracks exactly what the
-		// signer needs to do next ("Sign in to launch", "Install a Solana
-		// wallet", "Connect wallet to launch", "Launch $SYMBOL"...), so it is
-		// located by its landmark and a name pattern covering those states
-		// rather than position: the same landmark also holds model-viewer's
-		// own aria-hidden loading-poster button (#default-poster), and that
-		// vendor element sorts last in DOM order. Read only, never clicked:
-		// clicking it can end in a real on-chain spend.
-		const preview = page.getByRole('complementary', { name: 'Launch preview' });
-		const launchBtn = preview.getByRole('button', { name: /launch|wallet|sign in/i });
-		await launchBtn.waitFor({ state: 'visible', timeout: 15000 });
-		const label = (await launchBtn.textContent())?.trim() || '';
-		surface.launchButtonLabel = label;
-		if (!label) note(surface, 'blocked', 'The launch action button rendered with no accessible name.');
-		// Reached the signing confirmation surface. Stop here: never click it.
-		surface.completed = true;
-	} catch (err) {
-		note(surface, 'error', String(err?.message || err));
-	} finally {
-		await page.close();
-	}
-}
-
-async function main() {
-	const browser = await chromium.launch({
-		headless: true,
-		args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
-	});
-	const contextOpts = {
-		viewport: { width: 1280, height: 900 },
-		permissions: ['clipboard-read', 'clipboard-write'],
+/**
+ * In-page: the first visible status message (live region, alert, progress bar,
+ * busy marker) that was not already on screen when the flow started. A page
+ * that always shows a static hint in a live region must not make every wait
+ * look narrated, so the baseline is subtracted. Returns '' when nothing new
+ * is announced.
+ */
+function readVisibleStatus(baseline) {
+	const visible = (el) => {
+		const r = el.getBoundingClientRect();
+		const s = getComputedStyle(el);
+		return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none';
 	};
-	if (hasAuth) contextOpts.storageState = AUTH_STATE;
-	const context = await browser.newContext(contextOpts);
+	const sel =
+		'[role=status],[role=alert],[aria-live]:not([aria-live=off]),[role=progressbar],progress,[aria-busy=true]';
+	for (const el of document.querySelectorAll(sel)) {
+		if (!visible(el)) continue;
+		if (el.matches('[role=progressbar],progress')) return 'progressbar';
+		const text = (el.innerText || el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 120);
+		if (text && !baseline.includes(text)) return text;
+		if (!text && el.matches('[aria-busy=true]')) return 'busy';
+	}
+	return '';
+}
 
-	let agentId = process.env.AUDIT_AGENT_ID || null;
-	let agentName = null;
-	if (hasAuth && !agentId) {
+/** In-page: every status text currently visible, used as the baseline. */
+function readAllStatusTexts() {
+	const out = [];
+	for (const el of document.querySelectorAll('[role=status],[role=alert],[aria-live]:not([aria-live=off])')) {
+		const r = el.getBoundingClientRect();
+		const text = (el.innerText || el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 120);
+		if (r.width > 0 && r.height > 0 && text) out.push(text);
+	}
+	return out;
+}
+
+/** In-page scan for what role/label flows cannot see. */
+function scanPage() {
+	const visible = (el) => {
+		const r = el.getBoundingClientRect();
+		const s = getComputedStyle(el);
+		return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none';
+	};
+	const describe = (el) =>
+		el.tagName.toLowerCase() +
+		(el.id ? `#${el.id}` : '') +
+		(typeof el.className === 'string' && el.className.trim()
+			? `.${el.className.trim().split(/\s+/).slice(0, 2).join('.')}`
+			: '');
+	const nameOf = (el) => {
+		const aria = (el.getAttribute('aria-label') || '').trim();
+		if (aria) return aria;
+		const by = el.getAttribute('aria-labelledby');
+		if (by) {
+			const t = by
+				.split(/\s+/)
+				.map((id) => document.getElementById(id)?.textContent || '')
+				.join(' ')
+				.trim();
+			if (t) return t;
+		}
+		if (el.labels && el.labels.length) {
+			const t = [...el.labels].map((l) => l.textContent).join(' ').trim();
+			if (t) return t;
+		}
+		const text = (el.innerText || el.textContent || '').trim();
+		if (text) return text;
+		const img = el.querySelector('img[alt]:not([alt=""]),svg title');
+		if (img) return img.alt || img.textContent || '';
+		return (el.getAttribute('title') || el.getAttribute('alt') || '').trim();
+	};
+	const inHidden = (el) => !!el.closest('[aria-hidden=true],[inert]');
+	const focusable =
+		'button,a[href],input:not([type=hidden]),select,textarea,summary,[tabindex]:not([tabindex="-1"]),[role=button],[role=link],[role=tab],[role=checkbox],[role=switch],[role=menuitem],[role=radio],[role=combobox],[role=slider]';
+
+	const unnamed = [];
+	for (const el of document.querySelectorAll(focusable)) {
+		if (!visible(el) || inHidden(el)) continue;
+		if (!nameOf(el)) unnamed.push(describe(el));
+	}
+
+	// Name quality. A model locates a control by the words it can see, so the visible
+	// text must appear inside the accessible name (WCAG 2.5.3), a name must not drift
+	// as the user types (a live counter inside a label), and a name needs real words.
+	const nameQuality = [];
+	const squash = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+	for (const el of document.querySelectorAll(focusable)) {
+		if (!visible(el) || inHidden(el)) continue;
+		const accessible = nameOf(el);
+		if (!accessible) continue;
+		const where = `${describe(el)} :: ${accessible.slice(0, 50)}`;
+		if (!/[\p{L}\p{N}]/u.test(accessible)) {
+			nameQuality.push({ kind: 'symbol-only-name', where });
+			continue;
+		}
+		if (/\b\d+\s*\/\s*\d+\b/.test(accessible) && el.matches('input,textarea,select')) {
+			nameQuality.push({ kind: 'volatile-name', where });
+		}
+		const hasExplicitName = el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby');
+		if (!hasExplicitName || el.getAttribute('role') === 'tabpanel') continue;
+		// The first visible line is the label a model reads; every word of it must
+		// appear in the accessible name (order-free, so a longer description is fine).
+		const firstLine = (el.innerText || '').split('\n').map(squash).find(Boolean) || '';
+		const nameWords = new Set(squash(accessible).split(' '));
+		const missing = firstLine.split(' ').filter((w) => w.length > 1 && !nameWords.has(w));
+		if (missing.length) {
+			nameQuality.push({ kind: 'label-not-in-name', where: `${where} (visible: ${firstLine.slice(0, 30)}; missing: ${missing.join(' ')})` });
+		}
+	}
+
+	const pointerOnly = [];
+	const skip = /^(BUTTON|A|INPUT|SELECT|TEXTAREA|SUMMARY|OPTION|LABEL|HTML|BODY|SCRIPT|STYLE|CANVAS|VIDEO|IMG|SVG|PATH|G|USE)$/i;
+	for (const el of document.querySelectorAll('body *')) {
+		if (skip.test(el.tagName) || !visible(el) || inHidden(el)) continue;
+		// cursor inherits, so only an element that sets it differently from its parent counts.
+		const own = getComputedStyle(el).cursor === 'pointer' && getComputedStyle(el.parentElement).cursor !== 'pointer';
+		const clickable = own || el.hasAttribute('onclick');
+		if (!clickable) continue;
+		if (el.closest(focusable) || el.closest('label')) continue;
+		// A pointer shortcut over real controls is fine (the card click mirrors a button
+		// inside it). A dismiss or close control alone does not make the surface operable.
+		const equivalents = [...el.querySelectorAll(focusable)].filter((c) => !/^(dismiss|close|x|\u00d7)$/i.test(nameOf(c)));
+		if (equivalents.length) continue;
+		pointerOnly.push(`${describe(el)} :: ${(el.innerText || '').trim().slice(0, 40).replace(/\n/g, ' ')}`);
+	}
+
+	const canvases = [];
+	for (const c of document.querySelectorAll('canvas')) {
+		if (!visible(c) || inHidden(c)) continue;
+		if (c.getAttribute('aria-label') || c.getAttribute('role') === 'img' || c.getAttribute('role') === 'presentation') continue;
+		if (c.textContent && c.textContent.trim()) continue;
+		canvases.push(describe(c));
+	}
+
+	// Hover-only reveals: a stylesheet rule that shows something under :hover with
+	// no :focus-within / :focus / aria-expanded rule for the same trigger.
+	const hoverOnly = [];
+	const showing = /(display\s*:\s*(block|flex|grid)|visibility\s*:\s*visible|opacity\s*:\s*1\b|pointer-events\s*:\s*auto)/;
+	const allRules = [];
+	const walk = (rules) => {
+		for (const r of rules) {
+			if (r.cssRules && !r.selectorText) walk(r.cssRules);
+			else if (r.selectorText) allRules.push(r);
+		}
+	};
+	for (const sheet of document.styleSheets) {
 		try {
-			const cookies = JSON.parse(readFileSync(AUTH_STATE, 'utf8')).cookies
-				.map((c) => `${c.name}=${c.value}`).join('; ');
-			const r = await fetch(`${BASE_URL}/api/agents`, { headers: { cookie: cookies } });
-			const j = await r.json();
-			agentId = j?.agents?.[0]?.id || null;
-			agentName = j?.agents?.[0]?.name || null;
-		} catch {}
-	}
-
-	const results = [];
-	await auditCreate(context, results);
-	await auditForge(context, results);
-	await auditConnect(context, results);
-	if (agentId) await auditAgentChat(context, results, agentId);
-	else results.push({ ...newSurface('agent-chat', 'Open an agent profile and chat with it.'), findings: [{ kind: 'skipped', detail: 'No agent id available (no signed-in session with an agent).' }], completed: true });
-	await auditLaunch(context, results, agentName);
-
-	await browser.close();
-
-	const report = {
-		generatedAt: new Date().toISOString(),
-		baseUrl: BASE_URL,
-		authed: hasAuth,
-		surfaces: results,
-	};
-
-	mkdirSync(dirname(OUT), { recursive: true });
-	writeFileSync(OUT, JSON.stringify(report, null, '\t') + '\n');
-
-	let failed = false;
-	for (const s of results) {
-		const hard = s.findings.filter((f) => !['skipped', 'info', 'blocked-with-status', 'slow-backend'].includes(f.kind));
-		const tag = hard.length ? 'FAIL' : 'PASS';
-		if (hard.length) failed = true;
-		console.log(`${tag}  ${s.name}: ${s.task}`);
-		for (const f of s.findings) console.log(`    [${f.kind}] ${f.detail}`);
-		const resourceErrors = s.consoleErrors.filter((e) => isResourceLoadError(e));
-		const otherErrors = s.consoleErrors.filter((e) => !isResourceLoadError(e));
-		if (resourceErrors.length) console.log(`    [network] ${resourceErrors.length} HTTP error response(s) logged by the browser (not a page defect by itself).`);
-		if (otherErrors.length) {
-			failed = true;
-			console.log(`    [console-error] ${otherErrors.length} error(s): ${otherErrors[0]}`);
+			walk(sheet.cssRules);
+		} catch {
+			// cross-origin stylesheet: not ours to audit
 		}
 	}
-	console.log(`\nWrote ${OUT}`);
-	process.exit(failed ? 1 : 0);
+	const selectors = allRules.map((r) => r.selectorText);
+	for (const r of allRules) {
+		if (!r.selectorText.includes(':hover') || !showing.test(r.style.cssText)) continue;
+		for (const sel of r.selectorText.split(',')) {
+			if (!sel.includes(':hover')) continue;
+			const m = sel.trim().match(/^(.*?):hover\s+(.+)$/);
+			if (!m) continue; // a self-hover restyle shows nothing new
+			const trigger = m[1].trim();
+			const keyboardTwin = selectors.some(
+				(s) =>
+					s.includes(trigger) &&
+					/:focus-within|:focus-visible|:focus|\[aria-expanded|\.open|\.is-open|\.active/.test(s),
+			);
+			if (keyboardTwin) continue;
+			try {
+				if (!document.querySelector(trigger)) continue;
+				const target = document.querySelector(sel.replace(/:hover/g, ''));
+				if (!target) continue;
+				const cs = getComputedStyle(target);
+				const hiddenAtRest = cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) === 0;
+				if (!hiddenAtRest) continue; // a restyle on hover, not a reveal
+			} catch {
+				continue;
+			}
+			hoverOnly.push(sel.trim().slice(0, 120));
+		}
+	}
+	return { unnamed, nameQuality, pointerOnly: pointerOnly.slice(0, 20), canvases, hoverOnly: [...new Set(hoverOnly)].slice(0, 20) };
 }
 
-main().catch((e) => { console.error('audit-agent-operability crashed:', e); process.exit(1); });
+/**
+ * Flow helper. Exposes role and label locators only; every action is logged so
+ * the report shows exactly what a model would have to do.
+ */
+function makeFlow(page, flow) {
+	const log = flow.steps;
+	const run = async (label, locatorKind, fn) => {
+		const started = Date.now();
+		try {
+			const out = await fn();
+			log.push({ step: label, via: locatorKind, ok: true, ms: Date.now() - started });
+			return out;
+		} catch (err) {
+			const message = String(err.message).split('\n')[0].slice(0, 200);
+			log.push({ step: label, via: locatorKind, ok: false, error: message });
+			flow.findings.push({ kind: 'step-failed', where: label, detail: message });
+			throw err;
+		}
+	};
+	const role = (r, name, o = {}) => page.getByRole(r, { name, ...o }).first();
+	return {
+		role,
+		async click(r, name, o) {
+			return run(`click ${r} ${name}`, 'getByRole', () => role(r, name, o).click({ timeout: 8000 }));
+		},
+		async check(r, name, o) {
+			return run(`check ${r} ${name}`, 'getByRole', () => role(r, name, o).check({ timeout: 8000 }));
+		},
+		async fillByLabel(label, value) {
+			return run(`fill label ${label}`, 'getByLabel', () =>
+				page.getByLabel(label, { exact: false }).first().fill(value, { timeout: 8000 }),
+			);
+		},
+		async fillRole(r, name, value) {
+			return run(`fill ${r} ${name}`, 'getByRole', () => role(r, name).fill(value, { timeout: 8000 }));
+		},
+		async expectRole(r, name, o) {
+			return run(`see ${r} ${name}`, 'getByRole', () =>
+				role(r, name, o).waitFor({ state: 'visible', timeout: 10000 }),
+			);
+		},
+		async expectUrl(re) {
+			return run(`url matches ${re}`, 'page.url', () => page.waitForURL(re, { timeout: 10000 }));
+		},
+		async expectStatusAfter(label, action, windowMs = 2500) {
+			return run(`status visible after ${label}`, 'aria-live', async () => {
+				await action();
+				const deadline = Date.now() + windowMs;
+				let seen = '';
+				while (Date.now() < deadline && !seen) {
+					seen = await page.evaluate(readVisibleStatus, flow.baseline);
+					if (!seen) await page.waitForTimeout(150);
+				}
+				if (!seen) {
+					flow.findings.push({ kind: 'silent-wait', where: label, detail: `no visible status within ${windowMs}ms` });
+					throw new Error(`no visible status message within ${windowMs}ms of ${label}`);
+				}
+				return seen;
+			});
+		},
+	};
+}
+
+/** Sample a long wait: poll for done(), recording stretches with no visible status. */
+async function watchLongWait(page, flow, label, done, budgetMs) {
+	const started = Date.now();
+	let silentSamples = 0;
+	let samples = 0;
+	let lastStatus = '';
+	while (Date.now() - started < budgetMs) {
+		if (await done()) break;
+		const status = await page.evaluate(readVisibleStatus, flow.baseline);
+		samples += 1;
+		if (!status) silentSamples += 1;
+		else lastStatus = status;
+		await page.waitForTimeout(1000);
+	}
+	const finished = await done();
+	flow.waits.push({ label, samples, silentSamples, lastStatus, finished, ms: Date.now() - started });
+	if (silentSamples > 2) {
+		flow.findings.push({
+			kind: 'silent-wait',
+			where: label,
+			detail: `${silentSamples} of ${samples} one-second samples had no visible status message`,
+		});
+	}
+	return finished;
+}
+
+const FLOWS = [
+	{
+		id: 'create',
+		path: '/create',
+		task: 'Choose the 3D model path from the creation hub, then the describe-an-avatar path',
+		async run(page, f, flow) {
+			await f.expectRole('heading', /What do you want to create/i);
+			await f.expectRole('link', /Build an AI agent/i);
+			await f.expectRole('link', /Launch a token world/i);
+			await f.click('link', /Make a 3D avatar/i);
+			await f.expectRole('button', /Describe an avatar in words/i);
+			await f.expectRole('button', /Upload a GLB file/i);
+			await f.click('button', /Describe an avatar in words/i);
+			await f.expectUrl(/\/create\/prompt|\/login\?next=%2Fcreate%2Fprompt/);
+			await f.expectRole('heading', /./, { level: 1 });
+			void flow;
+		},
+	},
+	{
+		id: 'forge',
+		path: '/forge',
+		task: 'Describe an object, press Generate, follow the visible status to a finished model',
+		async run(page, f, flow) {
+			await f.expectRole('heading', /Forge/i, { level: 1 });
+			await f.click('tab', /Describe it/i);
+			await f.fillRole('textbox', /Describe the object to generate/i, 'a tall ceramic vase, matte terracotta');
+			await f.expectStatusAfter('Generate', () => f.click('button', /^Generate$/));
+			const finished = await watchLongWait(
+				page,
+				flow,
+				'forge generation',
+				async () => !(await page.getByRole('button', { name: /^Cancel$/ }).first().isVisible().catch(() => false)),
+				GENERATE_WAIT_MS,
+			);
+			const last = await page.evaluate(readVisibleStatus, flow.baseline);
+			if (!finished) flow.notes.push(`generation still running at the ${GENERATE_WAIT_MS / 1000}s budget; last status: ${last || 'none'}`);
+			else flow.notes.push(`generation settled; last status: ${last || 'none'}`);
+		},
+	},
+	{
+		id: 'connect',
+		path: '/connect',
+		task: 'Pick the free studio server, read its URL, copy it, open the Grok Bot setup, mint a connector URL',
+		async run(page, f) {
+			await f.expectRole('heading', /One URL/i, { level: 1 });
+			await f.check('radio', /3D Studio \(free\)/i);
+			await f.expectRole('button', /Copy URL/i);
+			await f.expectStatusAfter('Copy URL', () => f.click('button', /Copy URL/i), 2000);
+			await f.click('tab', /Grok Bot/i);
+			await f.expectRole('tabpanel', /Grok Bot/i);
+			await f.expectStatusAfter('Generate my connector URL', () => f.click('button', /Generate my connector URL/i), 6000);
+		},
+	},
+	{
+		id: 'agent-profile',
+		path: '/agents',
+		task: 'Search the agent index, open an agent profile, find its sign-in and create paths',
+		async run(page, f) {
+			await f.expectRole('heading', /Agent Index/i, { level: 1 });
+			await f.expectRole('searchbox', /Search agents/i);
+			await f.expectRole('link', /\.agent|Agent #/i);
+			await f.fillRole('searchbox', /Search agents/i, 'agent');
+			await f.click('link', /\.agent|Agent #/i);
+			await f.expectUrl(/\/a\/\d+\/\d+/);
+			await f.expectRole('heading', /./, { level: 1 });
+			await f.expectRole('link', /Sign in/i);
+			await f.expectRole('link', /Generate from text/i);
+		},
+	},
+	{
+		id: 'launch',
+		path: '/launch',
+		task: 'Fill in the coin form and reach the launch confirmation without signing',
+		async run(page, f) {
+			await f.expectRole('heading', /Launch a coin for your agent/i, { level: 1 });
+			await f.click('tab', /My coins/i);
+			await f.expectRole('tabpanel', /My coins/i);
+			await f.click('tab', /^Create$/i);
+			await f.fillRole('textbox', /Coin name/i, 'Operability Test');
+			await f.fillRole('textbox', /Ticker/i, 'OPTEST');
+			await f.check('radio', /Agent's wallet/i);
+			await f.click('button', /0\.5 SOL/i);
+			await f.expectRole('button', /0\.5 SOL/i, { pressed: true });
+			await f.expectRole('complementary', /Launch preview/i);
+			await f.expectRole('button', /Sign in to launch|Launch/i);
+		},
+	},
+];
+
+async function runFlow(browser, def) {
+	const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+	const page = await context.newPage();
+	if (/^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(BASE_URL)) {
+		// `vite dev` proxies /api to production, which would audit the deployed
+		// copy strings instead of the working tree. Serve the locale slices from the
+		// repo's own handler so the audit sees the labels this checkout ships.
+		const { sliceFor } = await import('../api/locale.js');
+		await context.route('**/api/locale?*', (route) => {
+			const q = new URL(route.request().url()).searchParams;
+			const body = sliceFor(q.get('code') || 'en', (q.get('ns') || '').split(',').filter(Boolean));
+			return body === null
+				? route.continue()
+				: route.fulfill({ status: 200, contentType: 'application/json', body });
+		});
+	}
+	const flow = { baseline: [], id: def.id, path: def.path, task: def.task, ok: false, steps: [], waits: [], notes: [], findings: [], consoleErrors: [], failedRequests: [], scan: null };
+	page.on('console', (m) => {
+		if (m.type() === 'error') flow.consoleErrors.push(m.text().slice(0, 200));
+	});
+	page.on('response', (r) => {
+		if (r.status() >= 400) flow.failedRequests.push(`${r.status()} ${r.url().slice(0, 140)}`);
+	});
+	page.on('pageerror', (e) => flow.consoleErrors.push(`pageerror: ${String(e.message).slice(0, 200)}`));
+	try {
+		await page.goto(BASE_URL + def.path, { waitUntil: 'domcontentloaded', timeout: 30000 });
+		await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+		await page.waitForTimeout(2500); // late-mounted widgets (corner chips, nav, footer) settle first
+		const scanned = await page.evaluate(scanPage);
+		flow.scan = scanned;
+		flow.baseline = await page.evaluate(readAllStatusTexts);
+		for (const name of scanned.unnamed) flow.findings.push({ kind: 'unnamed-control', where: name, detail: 'visible control with no accessible name' });
+		for (const q of scanned.nameQuality) flow.findings.push({ kind: q.kind, where: q.where, detail: 'accessible name does not match what a model reads on screen' });
+		for (const name of scanned.pointerOnly) flow.findings.push({ kind: 'pointer-only', where: name, detail: 'clickable element that is not focusable and has no role' });
+		for (const name of scanned.hoverOnly) flow.findings.push({ kind: 'hover-only', where: name, detail: 'revealed on :hover with no keyboard or click equivalent' });
+		for (const name of scanned.canvases) flow.findings.push({ kind: 'canvas-no-alt', where: name, detail: 'canvas with no aria-label, role or fallback text' });
+		const f = makeFlow(page, flow);
+		await def.run(page, f, flow);
+		flow.ok = true;
+	} catch {
+		flow.ok = false;
+	}
+	await page.evaluate(scanPage).then((s) => { flow.scanAfter = s; }).catch(() => {});
+	if (flow.consoleErrors.length) flow.findings.push({ kind: 'console-error', where: def.path, detail: `${flow.consoleErrors[0]}${flow.failedRequests.length ? ` (${flow.failedRequests[0]})` : ''}` });
+	await context.close();
+	return flow;
+}
+
+const browser = await chromium.launch();
+const flows = [];
+for (const def of FLOWS) {
+	const r = await runFlow(browser, def);
+	flows.push(r);
+	console.log(`${r.ok ? 'PASS' : 'FAIL'} ${def.id} ${def.path} (${r.steps.length} steps, ${r.findings.length} findings)`);
+	for (const fi of r.findings) console.log(`   - ${fi.kind}: ${fi.where}: ${fi.detail}`);
+}
+await browser.close();
+
+const summary = {
+	flowsPassed: flows.filter((x) => x.ok).length,
+	flowsTotal: flows.length,
+	findings: flows.reduce((n, x) => n + x.findings.length, 0),
+	consoleErrors: flows.reduce((n, x) => n + x.consoleErrors.length, 0),
+};
+const report = { ranAt: new Date().toISOString(), baseUrl: BASE_URL, summary, flows };
+console.log(JSON.stringify(summary));
+
+if (LABEL) {
+	mkdirSync(dirname(EVIDENCE), { recursive: true });
+	const doc = existsSync(EVIDENCE) ? JSON.parse(readFileSync(EVIDENCE, 'utf8')) : {};
+	doc[LABEL] = report;
+	// Captured page text can carry dash glyphs the repo bans; evidence stores a hyphen.
+	writeFileSync(EVIDENCE, JSON.stringify(doc, null, '\t').replace(/[\u2013\u2014]/g, '-') + '\n');
+	console.log(`recorded "${LABEL}" in ${EVIDENCE}`);
+}
+if (STRICT && (summary.findings > 0 || summary.flowsPassed < summary.flowsTotal)) process.exit(1);

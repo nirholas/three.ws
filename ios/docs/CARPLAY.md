@@ -24,7 +24,7 @@ channel keeps the two in step. Nothing about the phone app changes when CarPlay 
 | `native/App/App/AppDelegate.swift` | Routes a `carTemplateApplication` scene session to `CarPlaySceneDelegate`. |
 | `native/App/App/MainViewController.swift` | Attaches `DriveLink` to the Capacitor WebView on load. Inert until a CarPlay scene connects. |
 | `native/App/App/Info.plist` | `UIApplicationSupportsMultipleScenes` is now `true` (CarPlay is a second scene), plus the `CPTemplateApplicationSceneSessionRoleApplication` configuration. |
-| `native/App/App/App.entitlements` | `com.apple.developer.carplay-voice-based-conversation`. |
+| `native/App/App/App-CarPlay.entitlements` | The app's entitlements plus `com.apple.developer.carplay-voice-based-conversation`. Signed in only when a release asks for it; the default `App.entitlements` leaves the key out. |
 | `../../src/drive/bridge.js` | The web half of the same protocol. Change one side, change both. |
 
 ## The protocol
@@ -69,12 +69,18 @@ approved. Each is met in code, not by intention:
 2. The request asks what the app does in the car. The honest answer is the pitch: a
    conversational assistant with a persistent identity, launched by hand, voice in and voice
    out, no navigation and no wake word.
-3. On approval, enable the capability for bundle ID `ws.three.app` in the Developer portal
-   and regenerate the provisioning profile. The entitlement key is already in
-   `App.entitlements`, so no code changes.
+3. On approval, enable the capability for bundle ID `ws.three.app` in the Developer portal.
+   No code changes: release with `npm run ios:release -- --carplay`, or set
+   `THREEWS_CARPLAY=1` on the Xcode Cloud workflow. Either signs with
+   `App/App-CarPlay.entitlements`, and automatic signing fetches a profile that carries the
+   grant.
 
-Until then the key is harmless: a build signed without the grant simply never receives a
-CarPlay scene, and the phone app behaves exactly as it does today.
+Until then every build signs with `App/App.entitlements`, which leaves the key out. That is
+not optional tidiness: codesign refuses an archive whose entitlements name a capability the
+provisioning profile lacks, so shipping the key before the grant would block every TestFlight
+upload. Without the key the app simply never receives a CarPlay scene, and the phone app
+behaves exactly as it does today. The switch is the `THREEWS_APP_ENTITLEMENTS` build setting,
+and `npm run check:ios-app` fails if the CarPlay key ever creeps back into the default file.
 
 ## Testing it
 

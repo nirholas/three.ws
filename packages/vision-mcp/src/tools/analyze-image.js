@@ -13,7 +13,7 @@ import { buildVisionBody, ACCEPTED_IMAGE_TYPES } from '../lib/image.js';
 export const def = {
 	name: 'analyze_image',
 	title: 'Analyze an image against a prompt',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Let the agent SEE an image and answer a question about it. Supply the image as `imageUrl` (a public ' +
 		'https URL the vision server fetches) OR `image` (raw base64 / a data: URI), and a `prompt` describing ' +
@@ -21,7 +21,8 @@ export const def = {
 		'avatar render rigged correctly?". Returns the model\'s answer as `text`, plus the `provider` and `model` ' +
 		'that served it (a free NVIDIA NIM lane when available, an automatic paid backstop otherwise — the caller ' +
 		'never pays). Analysis only: it does not store or mutate anything. Accepts JPEG, PNG, WebP, or GIF up to ' +
-		'12 MB; base64 inputs are size-checked before upload.',
+		'12 MB; base64 inputs are size-checked before upload. Use this when you have a specific question about an ' +
+		'image; for a general caption or alt text with no question, call describe_image instead.',
 	inputSchema: {
 		prompt: z
 			.string()

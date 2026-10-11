@@ -57,7 +57,7 @@ test('every tool talks to a live, account-scoped service (openWorldHint)', () =>
 	}
 });
 
-test('write tools are not flagged read-only; read tools omit destructiveHint', () => {
+test('write tools are not flagged read-only; read tools set destructiveHint:false explicitly', () => {
 	for (const tool of TOOLS) {
 		if (WRITE_NAMES.has(tool.name)) {
 			assert.equal(tool.annotations.readOnlyHint, false, `${tool.name} mutates state — readOnlyHint must be false`);
@@ -65,8 +65,8 @@ test('write tools are not flagged read-only; read tools omit destructiveHint', (
 			assert.equal(tool.annotations.readOnlyHint, true, `${tool.name} should be read-only`);
 			assert.equal(
 				tool.annotations.destructiveHint,
-				undefined,
-				`${tool.name} is read-only — destructiveHint should be omitted`,
+				false,
+				`${tool.name} is read-only, so destructiveHint must be an explicit false`,
 			);
 		}
 	}

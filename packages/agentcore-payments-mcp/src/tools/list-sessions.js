@@ -6,11 +6,12 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'list_payment_sessions',
 	title: 'List payment sessions and spending stats',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: false },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: false },
 	description:
 		'List your payment sessions with aggregate spending stats. Filter by status. ' +
 		'Stats include: total budget allocated, total spent, active/exhausted/expired counts, ' +
-		'settled payment count, and unique endpoints paid. Requires THREE_WS_SESSION.',
+		'settled payment count, and unique endpoints paid. Requires THREE_WS_SESSION. ' +
+		'Use this to audit all your sessions and total spend; for one session\'s detail and executions call check_payment_session.',
 	inputSchema: {
 		status: z.enum(['active', 'exhausted', 'expired', 'cancelled']).optional()
 			.describe('Filter by session status. Omit to return all sessions.'),

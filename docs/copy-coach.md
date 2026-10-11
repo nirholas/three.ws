@@ -79,19 +79,21 @@ curl -X POST "https://three.ws/api/copy/coach" \
   -d '{"message":"Can I lose money?","step":"ghost_copy","leader_id":"<agent uuid>","window":"30d","budget_sol":1}'
 ```
 
-`GET` returns `{ network, win, leaders[], starter_caps, eligibility_bar, generated_at }`.
+`GET` takes an optional `?network=mainnet|devnet` (default `mainnet`) and returns
+`{ network, win, leaders[], starter_caps, eligibility_bar, generated_at }`.
 `win` is null when no public agent closed a signed 25%+ win in the last 14
 days, and the page says so rather than reaching further back. Each leader
 carries `copyable` and, when not, `unmet` in words.
 
 `POST` takes `message` (required, up to 500 characters), `history` (the last
 turns as `{ role: 'user'|'coach', text }`), `step` (`see_a_win`, `ghost_copy`,
-`starter_copy`, `full_copy`), `leader_id`, `window` and `budget_sol`, and
+`starter_copy`, `full_copy`), `leader_id`, `window` (`24h`, `7d`, `30d`, `all`;
+default `30d`), `budget_sol` (default 1) and `network`, and
 returns `{ reply, source: 'llm'|'guide', model, facts_used }`.
 
 Both are public and need no account. `GET` shares the public IP limit;
 `POST` has its own bucket (30 questions per 10 minutes per IP). Errors use the
-platform shape `{ error, error_description }`: `invalid_message`,
+platform shape `{ error, error_description }`: `invalid_json`, `invalid_message`,
 `message_too_long`, `invalid_leader`, `invalid_network`.
 
 ## Related

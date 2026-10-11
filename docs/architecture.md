@@ -153,7 +153,7 @@ The manifest is a JSON document that fully describes an embodied agent. It's int
 Key fields:
 
 - **`name`, `description`, `creator`** — display metadata.
-- **`body.uri`**: GLB / glTF / VRM URL. Resolution is deliberately polymorphic: `agent://chain/id` (resolved on-chain), `ipfs://CID/path`, `ar://TXID`, or plain `https://`. The resolver in `ipfs.js` walks gateway fallbacks (dweb.link → ipfs.io → flk-ipfs.xyz) so a single broken gateway never breaks an embed.
+- **`body.uri`**: GLB / glTF / VRM URL. Resolution is deliberately polymorphic: `agent://chain/id` (resolved on-chain), `ipfs://CID/path`, `ar://TXID`, or plain `https://`. The resolver in `ipfs.js` walks gateway fallbacks (ipfs.filebase.io → 4everland.io → gateway.pinata.cloud) so a single broken gateway never breaks an embed.
 - **`skills[]`** — pointers to skill bundles. Each skill is loaded and validated by the registry. Trust mode determines whether unsigned/foreign skills are allowed.
 - **`memory.mode`**: `local`, `remote`, `ipfs`, `encrypted-ipfs`, or `none`.
 - **`identity.chainId` / `identity.registryAddress`** — pin this manifest to an on-chain agent id.

@@ -1,0 +1,145 @@
+{
+	"id": "catalog-api",
+	"scenarioHash": "6675946e87cc8714585eb375cc71432c8a526f0a1a36dc5382efdc88d90cac1c",
+	"ranAt": "2026-10-09T17:16:09.263Z",
+	"target": {
+		"commit": "ec8d1d270",
+		"revision": "three-ws-api-00482-fzq"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/docs/api-reference#asset-catalog-api",
+			"detail": "loaded https://three.ws/docs/api-reference#asset-catalog-api",
+			"ok": true,
+			"ms": 7048,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "hold",
+			"target": "2600",
+			"detail": "2600 ms",
+			"ok": true,
+			"ms": 18299,
+			"frames": 78
+		},
+		{
+			"index": 3,
+			"kind": "scroll",
+			"target": "520",
+			"detail": "scrolled 520 px",
+			"ok": true,
+			"ms": 15419,
+			"frames": 54
+		},
+		{
+			"index": 4,
+			"kind": "hold",
+			"target": "2000",
+			"detail": "2000 ms",
+			"ok": true,
+			"ms": 15766,
+			"frames": 60
+		},
+		{
+			"index": 5,
+			"kind": "scroll",
+			"target": "760",
+			"detail": "scrolled 760 px",
+			"ok": true,
+			"ms": 13257,
+			"frames": 60
+		},
+		{
+			"index": 6,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 23488,
+			"frames": 66
+		},
+		{
+			"index": 7,
+			"kind": "goto",
+			"target": "https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2",
+			"detail": "loaded https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2",
+			"ok": true,
+			"ms": 3758,
+			"frames": 0
+		},
+		{
+			"index": 8,
+			"kind": "read",
+			"target": "total",
+			"detail": "total = \"3961\"",
+			"ok": true,
+			"ms": 7,
+			"frames": 0
+		},
+		{
+			"index": 9,
+			"kind": "read",
+			"target": "matched",
+			"detail": "matched = \"10\"",
+			"ok": true,
+			"ms": 8,
+			"frames": 0
+		},
+		{
+			"index": 10,
+			"kind": "read",
+			"target": "license",
+			"detail": "license = \"CC0\"",
+			"ok": true,
+			"ms": 3,
+			"frames": 0
+		},
+		{
+			"index": 11,
+			"kind": "hold",
+			"target": "2400",
+			"detail": "2400 ms",
+			"ok": true,
+			"ms": 22860,
+			"frames": 72
+		},
+		{
+			"index": 12,
+			"kind": "hold",
+			"target": "2600",
+			"detail": "2600 ms",
+			"ok": true,
+			"ms": 21962,
+			"frames": 78
+		}
+	],
+	"facts": {
+		"total": "3961",
+		"matched": "10",
+		"license": "CC0"
+	},
+	"saw": [],
+	"responses": [],
+	"cuts": [
+		{
+			"afterStep": 7,
+			"seconds": 3.7
+		}
+	],
+	"video": {
+		"path": "public/x-media/catalog-api/reel.mp4",
+		"sha256": "7754bcf9624731a2a4ef89a78e8a074d05e4e2abd3280857cdb8dc29bbf81c2f",
+		"frames": 468,
+		"motion": 0.246,
+		"durationSec": 15.6,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

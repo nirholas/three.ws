@@ -36,6 +36,11 @@ export const BADGES = Object.freeze({
 	DUEL_HIT: 'duel_hit',
 	DUEL_STREAK_3: 'duel_streak_3',
 	DUEL_SHARP: 'duel_sharp',
+	EM_FIRST_CORRECT: 'em_first_correct',
+	EM_UPSET_CALL: 'em_upset_call',
+	EM_STREAK_5: 'em_streak_5',
+	EM_SEASON_TOP10: 'em_season_top10',
+	EM_SEASON_CHAMPION: 'em_season_champion',
 	TOP10: (metric) => `top10_${metric}`,
 });
 
@@ -104,6 +109,31 @@ export const BADGE_META = {
 		label: 'Sharp Caller',
 		description: 'Right on at least 70% of ten or more decided trader duels.',
 		icon: '🧠',
+	},
+	em_first_correct: {
+		label: 'First Correct Call',
+		description: 'Called an Event Market winner correctly for the first time.',
+		icon: '🎯',
+	},
+	em_upset_call: {
+		label: 'Upset Call',
+		description: 'Called an Event Market winner the crowd gave under a 25% chance.',
+		icon: '⚡',
+	},
+	em_streak_5: {
+		label: '5 In A Row',
+		description: 'Called five Event Markets in a row correctly.',
+		icon: '🔥',
+	},
+	em_season_top10: {
+		label: 'Season Top 10',
+		description: 'Finished an Event Market season in the top 10 forecasters.',
+		icon: '🏆',
+	},
+	em_season_champion: {
+		label: 'Season Champion',
+		description: 'Finished an Event Market season as the number one forecaster.',
+		icon: '👑',
 	},
 };
 

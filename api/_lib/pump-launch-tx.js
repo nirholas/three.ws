@@ -78,6 +78,40 @@ export async function getPumpLookupTables({ network = 'mainnet' } = {}) {
 }
 
 /**
+ * How many of `prefix` (leading instructions that are worth sending but not
+ * required, such as creator-fee sweeps in front of a collect) fit with `rest`
+ * in one v0 legacy-size transaction compiled against `tables`. `reserveBytes`
+ * holds room for what a sender appends later (compute-budget instructions, a
+ * tip). Returns 0 when not even `rest` alone fits; the send then fails on its
+ * own with the real size error.
+ *
+ * @param {object} o
+ * @param {PublicKey} o.payer
+ * @param {import('@solana/web3.js').TransactionInstruction[]} o.prefix
+ * @param {import('@solana/web3.js').TransactionInstruction[]} o.rest
+ * @param {AddressLookupTableAccount[]} [o.tables]
+ * @param {number} [o.reserveBytes]
+ * @param {number} [o.extraSigners]  signatures beyond the payer's
+ */
+export function countPrefixThatFits({ payer, prefix, rest, tables = [], reserveBytes = 0, extraSigners = 0 }) {
+	const limit = LEGACY_TRANSACTION_LIMIT - reserveBytes - extraSigners * 64;
+	for (let n = prefix.length; n > 0; n--) {
+		try {
+			const msg = new TransactionMessage({
+				payerKey: payer,
+				recentBlockhash: PublicKey.default.toBase58(),
+				instructions: [...prefix.slice(0, n), ...rest],
+			}).compileToV0Message(tables);
+			if (new VersionedTransaction(msg).serialize().length <= limit) return n;
+		} catch (err) {
+			const overflow = err instanceof RangeError || /overruns|too large/i.test(/** @type {any} */ (err)?.message || '');
+			if (!overflow) throw err;
+		}
+	}
+	return 0;
+}
+
+/**
  * The PumpAgent program rejects new agents: `create` fails with custom error
  * 6015 AgentInitializationNotSupported (simulated on mainnet 2026-09-16). Every
  * launch that appended it reverted, so the buyback binding is off unless an

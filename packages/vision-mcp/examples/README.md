@@ -7,7 +7,7 @@ key and neither one costs anything.
 
 | File | What it does | Run |
 |---|---|---|
-| [`list-tools.mjs`](list-tools.mjs) | Prints all 3 tools with titles, annotation hints, and full input schemas. | `node examples/list-tools.mjs` |
+| [`list-tools.mjs`](list-tools.mjs) | Prints all <!-- mcp-count:vision-mcp.tools -->3<!-- /mcp-count --> tools with titles, annotation hints, and full input schemas. | `node examples/list-tools.mjs` |
 | [`read-an-image.mjs`](read-an-image.mjs) | Probes the lane with `get_vision_status`, gets alt text from `describe_image`, then reads the text off the same image with `analyze_image`. | `node examples/read-an-image.mjs` |
 
 Run them from the package directory:
@@ -20,7 +20,7 @@ node examples/read-an-image.mjs
 
 Nothing to install and nothing to configure: the vision lane serves anonymous
 callers on the free NVIDIA NIM models. The server prints a one-line banner to
-stderr on connect (`[vision-mcp@x.y.z] connected over stdio with 3 tools`),
+stderr on connect (`[vision-mcp@x.y.z] connected over stdio with <n> tools`),
 which is normal.
 
 ## list-tools.mjs

@@ -9,11 +9,12 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_fee_info',
 	title: 'Current platform fee rate',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'The current three.ws platform fee rate — the cut taken on marketplace sales, so an agent can reason about ' +
 		'net vs gross before a charge settles. Returns `fee_bps` (basis points, e.g. 250 = 2.5%) and `fee_percent` ' +
-		'(the same rate as a human string, e.g. "2.5"). Public — needs no session or credential. Read-only.',
+		'(the same rate as a human string, e.g. "2.5"). Public: needs no session or credential. Read-only. ' +
+		'Use this to work out what a seller nets from a marketplace sale before quoting a price.',
 	inputSchema: {},
 	async handler() {
 		const data = await apiRequest('/api/billing/fee-info');

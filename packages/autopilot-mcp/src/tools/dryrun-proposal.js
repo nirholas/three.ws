@@ -11,12 +11,12 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'dryrun_proposal',
 	title: 'Dry-run an autopilot proposal',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Preview exactly what executing a proposal WOULD do, without taking any action. Returns the kind, a ' +
 		'plain-language "willDo" sentence, and a checklist of guard checks (scope granted? params valid? ' +
 		'within the daily SOL cap? wallet balance covers a transfer?) plus a `blocked` flag if any check ' +
-		'fails. Always dry-run an irreversible wallet_transfer before executing it. Performs a live balance ' +
+		'fails. Use this before every execute_proposal, and always before an irreversible wallet_transfer. Performs a live balance ' +
 		'read but no write and no spend — safe to call freely. Read-only.',
 	inputSchema: {
 		agentId: z

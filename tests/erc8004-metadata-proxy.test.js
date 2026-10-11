@@ -110,7 +110,7 @@ describe('GET /api/erc8004/metadata', () => {
 		pinned.mockResolvedValue({ ok: true, status: 200, text: async () => '{}' });
 
 		await call({ uri: 'ipfs://bafyagent' });
-		expect(pinned.mock.calls[0][0]).toBe('https://ipfs.io/ipfs/bafyagent');
+		expect(pinned.mock.calls[0][0]).toBe('https://ipfs.filebase.io/ipfs/bafyagent');
 
 		pinned.mockClear();
 		await call({ uri: 'ar://txid123' });

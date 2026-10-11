@@ -234,6 +234,32 @@ function hits(element, event) {
 // Clicking the character opens the control room: the one gesture people try.
 body.addEventListener('click', () => window.companion?.openExternal(`${apiBase}/companion`));
 
+// ── The agents' face ────────────────────────────────────────────────────────
+
+const FACE_TITLE = {
+	working: 'Your agents are working',
+	waiting_approval: 'An agent is waiting for your approval',
+	error: 'An agent hit an error',
+	idle: 'Your agents are idle',
+};
+let attentionTimer = null;
+
+// The ring tracks the most urgent local-agent state. Waiting for approval waves
+// at you until you act; an error jumps once. Both are the embed's own gestures.
+function showFace(face) {
+	const name = face?.state || 'none';
+	stage.dataset.face = name;
+	body.title = FACE_TITLE[name] || 'Your companion';
+	clearInterval(attentionTimer);
+	attentionTimer = null;
+	if (name === 'waiting_approval') {
+		toEmbed('walk:gesture', { gesture: 'wave' });
+		attentionTimer = setInterval(() => toEmbed('walk:gesture', { gesture: 'wave' }), 20_000);
+	} else if (name === 'error') {
+		toEmbed('walk:gesture', { gesture: 'jump' });
+	}
+}
+
 // ── Wiring ───────────────────────────────────────────────────────────────────
 
 async function boot() {
@@ -261,6 +287,7 @@ async function boot() {
 		if (paused) clearBubble();
 	});
 
+	window.companion.onFace(showFace);
 	window.companion.onDelivery(deliver);
 	window.addEventListener('resize', () => walkTo(Math.min(position, maxX())));
 }

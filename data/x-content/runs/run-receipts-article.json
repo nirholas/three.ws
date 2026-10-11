@@ -1,0 +1,703 @@
+{
+	"about": "The proof behind the X Article run-receipts-article, recorded 2026-10-11 against the production database and signed with the production receipt key. Each entry is the full signed envelope exactly as GET /api/runs?id= returns it, minus the server-side verification field, so anyone can re-verify it offline with: node scripts/run-receipt-verify.mjs <file or id> --signer Fcwqit9x1KmfUboPtoVWBUdEuonNyTA8T6xtfAEPpPeH. The first two receipts are the same prompt before and after the director fix of 2026-10-11.",
+	"signer": "Fcwqit9x1KmfUboPtoVWBUdEuonNyTA8T6xtfAEPpPeH",
+	"before_after": {
+		"prompt": "a vintage red rotary telephone",
+		"before": "rr_6LFRktJgzxFnv29MyZuDwz",
+		"after": "rr_TFhcAi4mAkHsmBz3oveqJ4",
+		"fix_commit": "41e8e201a"
+	},
+	"receipts": [
+		{
+			"receipt": {
+				"id": "rr_6LFRktJgzxFnv29MyZuDwz",
+				"plan": {
+					"rig": false,
+					"tier": "standard"
+				},
+				"tool": "mesh_forge",
+				"type": "three-run-receipt/v1",
+				"input": {
+					"prompt": "a vintage red rotary telephone",
+					"reference_image": false
+				},
+				"issues": [
+					{
+						"cause": "The director model did not return a usable brief in time.",
+						"label": "Brief",
+						"stage": "brief",
+						"verdict": "recovered",
+						"expected": "A director-written brief that turns the idea into a single-subject 3D specification.",
+						"observed": "The prompt was used as written."
+					}
+				],
+				"output": {
+					"glb_url": "https://three.ws/cdn/forge/anon/2e0ce218-0308-4376-a914-f5507ac65abf.glb",
+					"viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F2e0ce218-0308-4376-a914-f5507ac65abf.glb&title=a%20vintage%20red%20rotary%20telephone"
+				},
+				"stages": [
+					{
+						"id": "input",
+						"label": "Input",
+						"verdict": "met",
+						"expected": "A request that passes the content-safety check.",
+						"observed": "Received a text prompt; it passed the safety check."
+					},
+					{
+						"id": "brief",
+						"ms": 7244,
+						"cause": "The director model did not return a usable brief in time.",
+						"label": "Brief",
+						"verdict": "recovered",
+						"expected": "A director-written brief that turns the idea into a single-subject 3D specification.",
+						"observed": "The prompt was used as written."
+					},
+					{
+						"id": "mesh",
+						"ms": 18725,
+						"label": "Mesh",
+						"metrics": {
+							"tier": "standard",
+							"engine": "TRELLIS (free)"
+						},
+						"verdict": "met",
+						"expected": "A textured 3D mesh from the standard tier.",
+						"observed": "A mesh from the standard tier on TRELLIS (free)."
+					},
+					{
+						"id": "geometry",
+						"label": "Geometry check",
+						"metrics": {
+							"bytes": 2211108,
+							"score": 0.947,
+							"textured": true,
+							"vertices": 12148,
+							"triangles": 15787
+						},
+						"verdict": "met",
+						"expected": "A valid GLB with real, textured geometry (not an empty or degenerate shell).",
+						"observed": "15,787 triangles, 12,148 vertices, textured, score 0.947."
+					},
+					{
+						"id": "visual",
+						"label": "Visual check",
+						"verdict": "skipped",
+						"expected": "A render of the model that reads as a complete, clean subject matching the prompt.",
+						"observed": "This tier does not run the vision check."
+					},
+					{
+						"id": "delivery",
+						"label": "Delivery",
+						"verdict": "met",
+						"expected": "A permanent first-party link to the finished file.",
+						"observed": "Stored permanently and served first-party."
+					}
+				],
+				"outcome": "delivered",
+				"summary": "Delivered as expected. 1 carried by a fallback (Brief).",
+				"started_at": "2026-10-11T02:10:55.896Z",
+				"duration_ms": 25975,
+				"finished_at": "2026-10-11T02:11:21.871Z"
+			},
+			"sha256": "07ae8475dc96dfd0f6d518585a4e30e6eb150408c31a1c96bcd110570079c894",
+			"signature": "5HGeQHqRTHeov7PDR8LEp8JqEwaHEUUp2Md6LLdnf9eXenmUJezUZE5H48ZZGyGJiFq32hkHGuQaqci3CnJWASJR",
+			"signer": "Fcwqit9x1KmfUboPtoVWBUdEuonNyTA8T6xtfAEPpPeH"
+		},
+		{
+			"receipt": {
+				"id": "rr_TFhcAi4mAkHsmBz3oveqJ4",
+				"plan": {
+					"rig": false,
+					"tier": "standard"
+				},
+				"tool": "mesh_forge",
+				"type": "three-run-receipt/v1",
+				"input": {
+					"prompt": "a vintage red rotary telephone",
+					"reference_image": false
+				},
+				"issues": [],
+				"output": {
+					"glb_url": "https://three.ws/cdn/forge/anon/3310f58f-9889-41bd-93f5-541a42053db3.glb",
+					"viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F3310f58f-9889-41bd-93f5-541a42053db3.glb&title=a%20vintage%20red%20rotary%20telephone"
+				},
+				"stages": [
+					{
+						"id": "input",
+						"label": "Input",
+						"verdict": "met",
+						"expected": "A request that passes the content-safety check.",
+						"observed": "Received a text prompt; it passed the safety check."
+					},
+					{
+						"id": "brief",
+						"ms": 7237,
+						"label": "Brief",
+						"verdict": "met",
+						"expected": "A director-written brief that turns the idea into a single-subject 3D specification.",
+						"observed": "The director rewrote the prompt into a 3D specification."
+					},
+					{
+						"id": "mesh",
+						"ms": 21742,
+						"label": "Mesh",
+						"metrics": {
+							"tier": "standard",
+							"engine": "TRELLIS (free)"
+						},
+						"verdict": "met",
+						"expected": "A textured 3D mesh from the standard tier.",
+						"observed": "A mesh from the standard tier on TRELLIS (free)."
+					},
+					{
+						"id": "geometry",
+						"label": "Geometry check",
+						"metrics": {
+							"bytes": 2153196,
+							"score": 0.948,
+							"textured": true,
+							"vertices": 12960,
+							"triangles": 16150
+						},
+						"verdict": "met",
+						"expected": "A valid GLB with real, textured geometry (not an empty or degenerate shell).",
+						"observed": "16,150 triangles, 12,960 vertices, textured, score 0.948."
+					},
+					{
+						"id": "visual",
+						"label": "Visual check",
+						"verdict": "skipped",
+						"expected": "A render of the model that reads as a complete, clean subject matching the prompt.",
+						"observed": "This tier does not run the vision check."
+					},
+					{
+						"id": "delivery",
+						"label": "Delivery",
+						"verdict": "met",
+						"expected": "A permanent first-party link to the finished file.",
+						"observed": "Stored permanently and served first-party."
+					}
+				],
+				"outcome": "delivered",
+				"summary": "Delivered as expected. Every stage that ran met its contract. 1 skipped (Visual check).",
+				"started_at": "2026-10-11T02:31:39.276Z",
+				"duration_ms": 28986,
+				"finished_at": "2026-10-11T02:32:08.262Z"
+			},
+			"sha256": "2312ed7a9679ca45d492d5f5e572cd5390cbde3f5a57324f1d926a549f03fdab",
+			"signature": "uQVRuvib6H5Np2ThURZt1kwMYhLCSNC9aezVG7RiRd72YBFwCR3s5e6oNmtskhkd7gkRAwoo8Ten8YBPBAixZQB",
+			"signer": "Fcwqit9x1KmfUboPtoVWBUdEuonNyTA8T6xtfAEPpPeH"
+		},
+		{
+			"receipt": {
+				"id": "rr_81qbfUbiZNqSTD6rVmjCoA",
+				"plan": {
+					"rig": true,
+					"tier": "high"
+				},
+				"tool": "forge_avatar",
+				"type": "three-run-receipt/v1",
+				"input": {
+					"prompt": "a friendly cartoon astronaut in a white suit with an orange visor",
+					"reference_image": false
+				},
+				"issues": [
+					{
+						"cause": "The director reply stopped mid-sentence, so it was treated as clipped and set aside. The fixed brief keeps the framing.",
+						"label": "Brief",
+						"stage": "brief",
+						"verdict": "recovered",
+						"expected": "A director-written brief that frames the whole figure head to toe in a neutral A-pose.",
+						"observed": "The fixed full-body brief was appended to the prompt as written."
+					}
+				],
+				"output": {
+					"glb_url": "https://three.ws/cdn/forge/anon/9d23314f-a385-432d-bd4c-41513c5119f6.glb",
+					"viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F9d23314f-a385-432d-bd4c-41513c5119f6.glb&title=a%20friendly%20cartoon%20astronaut%20in%20a%20white%20suit%20with%20an%20orange%20visor"
+				},
+				"stages": [
+					{
+						"id": "input",
+						"label": "Input",
+						"verdict": "met",
+						"expected": "A request that passes the content-safety check.",
+						"observed": "Received a text prompt; it passed the safety check."
+					},
+					{
+						"id": "subject",
+						"label": "Subject check",
+						"verdict": "met",
+						"expected": "A humanoid subject, because auto-rigging builds a two-legged skeleton.",
+						"observed": "The prompt reads as a character."
+					},
+					{
+						"id": "brief",
+						"ms": 7738,
+						"cause": "The director reply stopped mid-sentence, so it was treated as clipped and set aside. The fixed brief keeps the framing.",
+						"label": "Brief",
+						"verdict": "recovered",
+						"expected": "A director-written brief that frames the whole figure head to toe in a neutral A-pose.",
+						"observed": "The fixed full-body brief was appended to the prompt as written."
+					},
+					{
+						"id": "mesh",
+						"ms": 47093,
+						"label": "Mesh",
+						"metrics": {
+							"tier": "high",
+							"engine": "TRELLIS (free)"
+						},
+						"verdict": "met",
+						"expected": "A textured 3D mesh from the high-detail tier.",
+						"observed": "A mesh from the high-detail tier on TRELLIS (free)."
+					},
+					{
+						"id": "geometry",
+						"label": "Geometry check",
+						"metrics": {
+							"bytes": 1758048,
+							"score": 0.914,
+							"textured": true,
+							"vertices": 5465,
+							"triangles": 7755
+						},
+						"verdict": "met",
+						"expected": "A valid GLB with real, textured geometry (not an empty or degenerate shell).",
+						"observed": "7,755 triangles, 5,465 vertices, textured, score 0.914."
+					},
+					{
+						"id": "visual",
+						"label": "Visual check",
+						"metrics": {
+							"score": 85,
+							"realism": 80,
+							"completeness": 100
+						},
+						"verdict": "met",
+						"expected": "A render of the model that reads as a complete, clean subject matching the prompt.",
+						"observed": "Scored 85 and passed."
+					},
+					{
+						"id": "rig",
+						"ms": 22654,
+						"label": "Rig",
+						"metrics": {
+							"groups": {
+								"arms": "driven",
+								"legs": "driven",
+								"hands": "driven",
+								"torso": "driven"
+							},
+							"joints": 52,
+							"mapped": 52,
+							"skinned": true,
+							"convention": "Mixamo"
+						},
+						"verdict": "met",
+						"expected": "A skinned humanoid skeleton the animation library can drive: torso, arms and legs mapped.",
+						"observed": "52 joints (Mixamo), 52 mapped to the canonical skeleton; torso, arms and legs all driven."
+					},
+					{
+						"id": "delivery",
+						"label": "Delivery",
+						"verdict": "met",
+						"expected": "A permanent first-party link to the finished file.",
+						"observed": "Stored permanently and served first-party."
+					}
+				],
+				"outcome": "delivered",
+				"summary": "Delivered as expected. 1 carried by a fallback (Brief).",
+				"started_at": "2026-10-11T02:31:35.330Z",
+				"duration_ms": 77598,
+				"finished_at": "2026-10-11T02:32:52.928Z"
+			},
+			"sha256": "958c2f3a17433e5d02fc100d12c8eac025a7b2d85fefc511d284e38f6c3d834b",
+			"signature": "5E4dbKoGsJ4tLXSU6WaMAKAbSnLXhtU5LTCnAANQK3FqPWknbYxZ9XmnTYDMTGV54kyBJxB6CCidxmJHAMhcRX2m",
+			"signer": "Fcwqit9x1KmfUboPtoVWBUdEuonNyTA8T6xtfAEPpPeH"
+		},
+		{
+			"receipt": {
+				"id": "rr_DkGahG4bFxidgcWu7tR1yS",
+				"plan": {
+					"rig": true,
+					"tier": null
+				},
+				"tool": "rig_mesh",
+				"type": "three-run-receipt/v1",
+				"input": {
+					"prompt": null,
+					"reference_image": false
+				},
+				"issues": [],
+				"output": {
+					"glb_url": "https://three.ws/cdn/forge/anon/39bc539b-8847-46c0-90cf-1ae31f94d6ac.glb",
+					"viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F39bc539b-8847-46c0-90cf-1ae31f94d6ac.glb&title=3D%20avatar"
+				},
+				"stages": [
+					{
+						"id": "input",
+						"label": "Input",
+						"verdict": "met",
+						"expected": "A public GLB URL the rigger can fetch.",
+						"observed": "Received a public GLB URL."
+					},
+					{
+						"id": "subject",
+						"cause": "The rig check verifies the skeleton structure, not that the body it is bound to is a character. A non-humanoid mesh still receives a humanoid skeleton.",
+						"label": "Subject check",
+						"verdict": "skipped",
+						"expected": "A humanoid subject, because auto-rigging builds a two-legged skeleton.",
+						"observed": "The mesh was rigged as given; whether it depicts a humanoid figure was not checked."
+					},
+					{
+						"id": "rig",
+						"ms": 50791,
+						"label": "Rig",
+						"metrics": {
+							"groups": {
+								"arms": "driven",
+								"legs": "driven",
+								"hands": "driven",
+								"torso": "driven"
+							},
+							"joints": 52,
+							"mapped": 52,
+							"skinned": true,
+							"convention": "Mixamo"
+						},
+						"verdict": "met",
+						"expected": "A skinned humanoid skeleton the animation library can drive: torso, arms and legs mapped.",
+						"observed": "52 joints (Mixamo), 52 mapped to the canonical skeleton; torso, arms and legs all driven."
+					},
+					{
+						"id": "delivery",
+						"label": "Delivery",
+						"verdict": "met",
+						"expected": "A permanent first-party link to the finished file.",
+						"observed": "Stored permanently and served first-party."
+					}
+				],
+				"outcome": "delivered",
+				"summary": "Delivered as expected. Every stage that ran met its contract. 1 skipped (Subject check).",
+				"started_at": "2026-10-11T02:31:34.475Z",
+				"duration_ms": 51054,
+				"finished_at": "2026-10-11T02:32:25.529Z"
+			},
+			"sha256": "d6f60ea166dd80d38975126ce3f04cb8386c45c72e71d612970c9981af23d0a4",
+			"signature": "5FTNWbvua7JuNmuH6VBKAg2ZUhTq1pvaog6tCyjkqeCTq4h9AqHzdtQqSz77qr1H8nfwZbC8xtitW9sLsWMwyAXV",
+			"signer": "Fcwqit9x1KmfUboPtoVWBUdEuonNyTA8T6xtfAEPpPeH"
+		},
+		{
+			"receipt": {
+				"id": "rr_C6MwpDYHYH9ptoz25RJojy",
+				"plan": {
+					"rig": true,
+					"tier": "high"
+				},
+				"tool": "forge_avatar",
+				"type": "three-run-receipt/v1",
+				"input": {
+					"prompt": "a wooden chair",
+					"reference_image": false
+				},
+				"issues": [
+					{
+						"cause": "Turned away before any GPU time was spent. Use the mesh generator for objects, or set allow_non_humanoid.",
+						"label": "Subject check",
+						"stage": "subject",
+						"verdict": "missed",
+						"expected": "A humanoid subject, because auto-rigging builds a two-legged skeleton.",
+						"observed": "The prompt reads as an object or animal, not a character."
+					}
+				],
+				"output": null,
+				"stages": [
+					{
+						"id": "input",
+						"label": "Input",
+						"verdict": "met",
+						"expected": "A request that passes the content-safety check.",
+						"observed": "Received a text prompt; it passed the safety check."
+					},
+					{
+						"id": "subject",
+						"cause": "Turned away before any GPU time was spent. Use the mesh generator for objects, or set allow_non_humanoid.",
+						"label": "Subject check",
+						"verdict": "missed",
+						"expected": "A humanoid subject, because auto-rigging builds a two-legged skeleton.",
+						"observed": "The prompt reads as an object or animal, not a character."
+					}
+				],
+				"outcome": "refused",
+				"summary": "Refused before any work ran. 1 stage missed (Subject check).",
+				"started_at": "2026-10-11T02:06:29.207Z",
+				"duration_ms": 4,
+				"finished_at": "2026-10-11T02:06:29.211Z"
+			},
+			"sha256": "7cf7030989eb24fcea8398208e4a3c486fc58cb66ef75850027a7442dfd5dca0",
+			"signature": "3z9v29tec4Dk4Q5NwxEiLFntKYaWegc2cvjEngdzHr8wRPAWgBWtMJnPTtqWmRrMVUtXWL5mx92TxfDaWgv14b77",
+			"signer": "Fcwqit9x1KmfUboPtoVWBUdEuonNyTA8T6xtfAEPpPeH"
+		},
+		{
+			"receipt": {
+				"id": "rr_B78gKaZTKktWBq8rWXUYrE",
+				"plan": {
+					"rig": false,
+					"tier": "standard"
+				},
+				"tool": "forge_free",
+				"type": "three-run-receipt/v1",
+				"input": {
+					"prompt": "a weathered brass ship lantern with a glass chimney",
+					"reference_image": false
+				},
+				"issues": [
+					{
+						"cause": "The director model did not return a usable brief in time.",
+						"label": "Brief",
+						"stage": "brief",
+						"verdict": "recovered",
+						"expected": "A director-written brief that turns the idea into a single-subject 3D specification.",
+						"observed": "The prompt was used as written."
+					}
+				],
+				"output": {
+					"glb_url": "https://three.ws/cdn/forge/anon/7c2b7ec8-9ffb-40de-9d51-264eeb6ab693.glb",
+					"viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F7c2b7ec8-9ffb-40de-9d51-264eeb6ab693.glb&title=a%20weathered%20brass%20ship%20lantern%20with%20a%20glass%20chimney"
+				},
+				"stages": [
+					{
+						"id": "input",
+						"label": "Input",
+						"verdict": "met",
+						"expected": "A request that passes the content-safety check.",
+						"observed": "Received a text prompt; it passed the safety check."
+					},
+					{
+						"id": "brief",
+						"ms": 5430,
+						"cause": "The director model did not return a usable brief in time.",
+						"label": "Brief",
+						"verdict": "recovered",
+						"expected": "A director-written brief that turns the idea into a single-subject 3D specification.",
+						"observed": "The prompt was used as written."
+					},
+					{
+						"id": "mesh",
+						"ms": 18934,
+						"label": "Mesh",
+						"metrics": {
+							"tier": "standard",
+							"engine": "TRELLIS (free)"
+						},
+						"verdict": "met",
+						"expected": "A textured 3D mesh from the standard tier.",
+						"observed": "A mesh from the standard tier on TRELLIS (free)."
+					},
+					{
+						"id": "geometry",
+						"label": "Geometry check",
+						"metrics": {
+							"bytes": 2371124,
+							"score": 0.94,
+							"textured": true,
+							"vertices": 11608,
+							"triangles": 13574
+						},
+						"verdict": "met",
+						"expected": "A valid GLB with real, textured geometry (not an empty or degenerate shell).",
+						"observed": "13,574 triangles, 11,608 vertices, textured, score 0.94."
+					},
+					{
+						"id": "visual",
+						"label": "Visual check",
+						"verdict": "skipped",
+						"expected": "A render of the model that reads as a complete, clean subject matching the prompt.",
+						"observed": "This tier does not run the vision check."
+					},
+					{
+						"id": "delivery",
+						"label": "Delivery",
+						"verdict": "met",
+						"expected": "A permanent first-party link to the finished file.",
+						"observed": "Stored permanently and served first-party."
+					}
+				],
+				"outcome": "delivered",
+				"summary": "Delivered as expected. 1 carried by a fallback (Brief).",
+				"started_at": "2026-10-11T02:10:57.736Z",
+				"duration_ms": 24365,
+				"finished_at": "2026-10-11T02:11:22.101Z"
+			},
+			"sha256": "f3211c8022c256cc75929096e08a26da22f0d210f725ef8155ce78f896219ce0",
+			"signature": "JuJkhjuiWTFPgb5h6k2jekm4crNM75Vcsh2zVqZPwBWM7X6kzcGmkxFGDxhjnicNvwsH2veMtC9fYHW3Ndn2gDZ",
+			"signer": "Fcwqit9x1KmfUboPtoVWBUdEuonNyTA8T6xtfAEPpPeH"
+		}
+	],
+	"stats_7d": {
+		"days": 7,
+		"total": 14,
+		"outcomes": {
+			"delivered": 8,
+			"pending": 4,
+			"refused": 2
+		},
+		"delivery_rate": 1,
+		"clean_rate": 0.375,
+		"tools": {
+			"mesh_forge": {
+				"total": 3,
+				"outcomes": {
+					"delivered": 2,
+					"pending": 1
+				}
+			},
+			"forge_avatar": {
+				"total": 5,
+				"outcomes": {
+					"pending": 1,
+					"refused": 2,
+					"delivered": 2
+				}
+			},
+			"rig_mesh": {
+				"total": 2,
+				"outcomes": {
+					"delivered": 2
+				}
+			},
+			"forge_free": {
+				"total": 1,
+				"outcomes": {
+					"delivered": 1
+				}
+			},
+			"text_to_avatar": {
+				"total": 3,
+				"outcomes": {
+					"pending": 2,
+					"delivered": 1
+				}
+			}
+		},
+		"stages": [
+			{
+				"id": "input",
+				"label": "Input",
+				"total": 14,
+				"verdicts": {
+					"met": 14
+				},
+				"judged": 14,
+				"met_rate": 1
+			},
+			{
+				"id": "subject",
+				"label": "Subject check",
+				"total": 7,
+				"verdicts": {
+					"missed": 2,
+					"met": 3,
+					"skipped": 2
+				},
+				"judged": 5,
+				"met_rate": 0.6
+			},
+			{
+				"id": "brief",
+				"label": "Brief",
+				"total": 10,
+				"verdicts": {
+					"met": 2,
+					"recovered": 8
+				},
+				"judged": 10,
+				"met_rate": 0.2
+			},
+			{
+				"id": "mesh",
+				"label": "Mesh",
+				"total": 10,
+				"verdicts": {
+					"pending": 4,
+					"met": 6
+				},
+				"judged": 6,
+				"met_rate": 1
+			},
+			{
+				"id": "geometry",
+				"label": "Geometry check",
+				"total": 6,
+				"verdicts": {
+					"met": 6
+				},
+				"judged": 6,
+				"met_rate": 1
+			},
+			{
+				"id": "visual",
+				"label": "Visual check",
+				"total": 6,
+				"verdicts": {
+					"skipped": 5,
+					"met": 1
+				},
+				"judged": 1,
+				"met_rate": 1
+			},
+			{
+				"id": "rig",
+				"label": "Rig",
+				"total": 4,
+				"verdicts": {
+					"met": 4
+				},
+				"judged": 4,
+				"met_rate": 1
+			},
+			{
+				"id": "delivery",
+				"label": "Delivery",
+				"total": 8,
+				"verdicts": {
+					"met": 8
+				},
+				"judged": 8,
+				"met_rate": 1
+			}
+		],
+		"top_causes": [
+			{
+				"stage": "brief",
+				"label": "Brief",
+				"verdict": "recovered",
+				"cause": "The director model did not return a usable brief in time; the fixed brief keeps the framing.",
+				"count": 4
+			},
+			{
+				"stage": "brief",
+				"label": "Brief",
+				"verdict": "recovered",
+				"cause": "The director model did not return a usable brief in time.",
+				"count": 3
+			},
+			{
+				"stage": "subject",
+				"label": "Subject check",
+				"verdict": "missed",
+				"cause": "Turned away before any GPU time was spent. Use the mesh generator for objects, or set allow_non_humanoid.",
+				"count": 2
+			},
+			{
+				"stage": "brief",
+				"label": "Brief",
+				"verdict": "recovered",
+				"cause": "The director reply stopped mid-sentence, so it was treated as clipped and set aside. The fixed brief keeps the framing.",
+				"count": 1
+			}
+		],
+		"max_days": 90,
+		"signer": "Fcwqit9x1KmfUboPtoVWBUdEuonNyTA8T6xtfAEPpPeH"
+	}
+}

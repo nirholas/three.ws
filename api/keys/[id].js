@@ -3,6 +3,7 @@
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { logAudit } from '../_lib/audit.js';
+import { invalidateApiKey } from '../_lib/api-key-cache.js';
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits } from '../_lib/rate-limit.js';
@@ -35,6 +36,9 @@ export default wrap(async (req, res) => {
 		returning id
 	`;
 	if (!rows[0]) return error(res, 404, 'not_found', 'key not found or already revoked');
+	// The row is cached for authentication; drop it now, here and on every
+	// other instance, so the revoke holds on the very next call.
+	await invalidateApiKey(rows[0].id);
 	logAudit({
 		userId: user.id,
 		action: 'revoke_api_key',

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title data-i18n="workbench.page_title">Workbench · three.ws</title>
+	<meta name="description" data-i18n-attr="content:workbench.meta_desc" content="A desktop-style image-to-3D workspace in the browser. Drop a photo, run it through a visual workflow of real GPU nodes (background removal, mesh generation, remeshing, rigging, material restyle), then smooth, decimate and export GLB, OBJ, STL or PLY. Free, no signup." />
+	<link rel="canonical" href="https://three.ws/workbench" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/tokens.css" />
+	<link rel="stylesheet" href="/src/workbench/workbench.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" data-i18n-attr="content:workbench.share_title" content="Workbench · three.ws" />
+	<meta property="og:description" data-i18n-attr="content:workbench.og_desc" content="Image to 3D in a visual workflow: generate, remesh, rig, restyle, smooth, decimate and export, all in the browser. Free, no signup." />
+	<meta property="og:url" content="https://three.ws/workbench" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Workbench&amp;d=Image+to+3D+in+a+visual+workflow%3A+generate%2C+remesh%2C+rig%2C+restyle%2C+smooth%2C+decimate+and+export+in+the+browser.&amp;p=%2Fworkbench" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" data-i18n-attr="content:workbench.share_title" content="Workbench · three.ws" />
+	<meta name="twitter:description" data-i18n-attr="content:workbench.tw_desc" content="Image to 3D in a visual workflow: generate, remesh, rig, restyle, smooth, decimate and export, all in the browser." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Workbench&amp;d=Image+to+3D+in+a+visual+workflow%3A+generate%2C+remesh%2C+rig%2C+restyle%2C+smooth%2C+decimate+and+export+in+the+browser.&amp;p=%2Fworkbench" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:image:alt" content="Workbench / three.ws" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta property="og:site_name" content="three.ws">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Workbench","applicationCategory":"DesignApplication","operatingSystem":"Any (WebGL 2)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"A desktop-style image-to-3D workspace in the browser: visual workflows of real GPU nodes, in-browser smoothing and decimation, and GLB, OBJ, STL and PLY export.","url":"https://three.ws/workbench","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
+</head>
+<body>
+	<div class="wb-app" id="wb-app" data-view="generate">
+		<!-- ── top bar ─────────────────────────────────────────── -->
+		<header class="wb-top">
+			<a class="wb-brand" href="/" aria-label="three.ws home">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.8 20 7.4v9.2l-8 4.6-8-4.6V7.4z" stroke="var(--wb-accent-hi)"/><path d="M4 7.4 12 12l8-4.6M12 12v9.2" stroke="var(--wb-accent-ink)"/></svg>
+				Workbench <small>three.ws</small>
+			</a>
+			<span class="wb-top-spacer"></span>
+			<span class="wb-meter" id="wb-meter" hidden title="JavaScript heap used by this tab">
+				RAM <span class="wb-meter-bar"><i id="wb-meter-fill"></i></span> <span id="wb-meter-text">0 MB</span>
+			</span>
+			<a class="wb-top-link hide-sm" href="/forge">Forge</a>
+			<a class="wb-top-link hide-sm" href="/docs/workbench">Docs</a>
+			<button class="wb-icon-btn" id="nav-theme-toggle" type="button" aria-label="Toggle light and dark theme" title="Theme">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+			</button>
+		</header>
+
+		<!-- ── icon rail ───────────────────────────────────────── -->
+		<nav class="wb-rail" aria-label="Workbench sections">
+			<button class="wb-rail-btn" type="button" data-nav="generate" aria-current="page">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>
+				Generate
+			</button>
+			<button class="wb-rail-btn" type="button" data-nav="workflows">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="15" y="15" width="6" height="6" rx="1.5"/><path d="M9 6h4a3 3 0 0 1 3 3v6"/></svg>
+				Workflows
+			</button>
+			<button class="wb-rail-btn" type="button" data-nav="extensions">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4v3a2 2 0 1 0 4 0V3h3v7h-3a2 2 0 1 0 0 4h3v7h-7v-3a2 2 0 1 0-4 0v3H3v-7h3a2 2 0 1 0 0-4H3V3z"/></svg>
+				Extensions
+			</button>
+			<button class="wb-rail-btn" type="button" data-nav="settings">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+				Settings
+			</button>
+		</nav>
+
+		<!-- ── generate side panel ─────────────────────────────── -->
+		<aside class="wb-side" aria-label="Workflow">
+			<div class="wb-side-scroll">
+				<p class="wb-label" id="wb-flow-label">Workflow</p>
+				<div class="wb-row">
+					<select class="wb-select" id="wb-flow-select" aria-labelledby="wb-flow-label"></select>
+					<button class="wb-icon-btn" id="wb-flow-edit" type="button" aria-label="Edit this workflow" title="Edit workflow">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+					</button>
+				</div>
+				<div id="wb-nodes" aria-live="polite"></div>
+			</div>
+			<div class="wb-side-foot">
+				<button class="wb-primary" id="wb-run" type="button">
+					<span id="wb-run-label">Generate 3D Model</span>
+					<span class="wb-progress" id="wb-run-progress"></span>
+				</button>
+				<ul class="wb-run-log" id="wb-run-log" aria-live="polite"></ul>
+			</div>
+		</aside>
+
+		<!-- ── viewport ────────────────────────────────────────── -->
+		<main class="wb-main" id="wb-main">
+			<div class="wb-toolbar" role="toolbar" aria-label="Model tools">
+				<button class="wb-tool is-square" id="wb-undo" type="button" aria-label="Undo (Ctrl+Z)" title="Undo (Ctrl+Z)" disabled>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
+				</button>
+				<button class="wb-tool is-square" id="wb-redo" type="button" aria-label="Redo (Ctrl+Shift+Z)" title="Redo (Ctrl+Shift+Z)" disabled>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg>
+				</button>
+				<span class="wb-sep" aria-hidden="true"></span>
+				<div class="wb-menu-wrap">
+					<button class="wb-tool" id="wb-import-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="wb-import-menu">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+						Import
+						<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+					</button>
+					<div class="wb-menu" id="wb-import-menu" role="menu">
+						<button type="button" role="menuitem" data-import="model">3D model <small>GLB glTF OBJ STL PLY FBX</small></button>
+						<button type="button" role="menuitem" data-import="image">Reference image <small>PNG JPG WebP</small></button>
+					</div>
+				</div>
+				<div class="wb-menu-wrap">
+					<button class="wb-tool" id="wb-export-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="wb-export-menu" disabled>
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>
+						Export
+						<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+					</button>
+					<div class="wb-menu" id="wb-export-menu" role="menu">
+						<button type="button" role="menuitem" data-export="glb">GLB <small>glTF binary, textures kept</small></button>
+						<button type="button" role="menuitem" data-export="obj">OBJ <small>geometry</small></button>
+						<button type="button" role="menuitem" data-export="stl">STL <small>3D printing</small></button>
+						<button type="button" role="menuitem" data-export="ply">PLY <small>point and mesh data</small></button>
+						<button type="button" role="menuitem" data-export="link" id="wb-copy-link">Copy GLB link <small>hosted file</small></button>
+					</div>
+				</div>
+				<span class="wb-sep" aria-hidden="true"></span>
+				<div class="wb-menu-wrap">
+					<button class="wb-tool" id="wb-smooth-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="wb-smooth-pop" disabled>
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 15c3-6 6-6 9 0s6 6 9 0"/></svg>
+						Smooth
+					</button>
+					<div class="wb-popover" id="wb-smooth-pop" role="dialog" aria-label="Smooth mesh">
+						<label class="wb-row" for="wb-smooth-range">Passes <output id="wb-smooth-out">4</output></label>
+						<input type="range" id="wb-smooth-range" min="1" max="20" step="1" value="4" />
+						<p class="wb-hint">Taubin smoothing keeps volume and moves UV seams together, so textures stay put.</p>
+						<button class="wb-tool" id="wb-smooth-apply" type="button">Apply smoothing</button>
+					</div>
+				</div>
+				<div class="wb-menu-wrap">
+					<button class="wb-tool" id="wb-decimate-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="wb-decimate-pop" disabled>
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 21 20H3z"/><path d="M12 3v17M7.5 11.5 16.5 11.5"/></svg>
+						Decimate
+					</button>
+					<div class="wb-popover" id="wb-decimate-pop" role="dialog" aria-label="Decimate mesh">
+						<label class="wb-row" for="wb-decimate-range">Keep <output id="wb-decimate-out">50%</output></label>
+						<input type="range" id="wb-decimate-range" min="0.05" max="0.95" step="0.05" value="0.5" />
+						<p class="wb-hint" id="wb-decimate-est">Simplifies every mesh with edge collapse.</p>
+						<button class="wb-tool" id="wb-decimate-apply" type="button">Apply decimation</button>
+					</div>
+				</div>
+				<button class="wb-tool" id="wb-free" type="button" title="Drop the model and release its GPU memory">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>
+					Free memory
+				</button>
+			</div>
+
+			<div class="wb-stage" id="wb-stage">
+				<div class="wb-canvas" id="wb-canvas"></div>
+
+				<div class="wb-strip" role="toolbar" aria-label="View" aria-orientation="vertical">
+					<button class="wb-strip-btn" type="button" data-mode="shaded" data-tip="Shaded (1)" aria-label="Shaded view" aria-pressed="true">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>
+					</button>
+					<button class="wb-strip-btn" type="button" data-mode="wireframe" data-tip="Wireframe (2)" aria-label="Wireframe view" aria-pressed="false">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 20 7.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5 20 16.5M20 7.5 4 16.5M12 3v18"/></svg>
+					</button>
+					<button class="wb-strip-btn" type="button" data-mode="normals" data-tip="Normals (3)" aria-label="Normals view" aria-pressed="false">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 18h16"/><path d="M8 18V8M12 18V5M16 18V8"/><path d="m6.5 9.5 1.5-1.5 1.5 1.5M10.5 6.5 12 5l1.5 1.5M14.5 9.5 16 8l1.5 1.5"/></svg>
+					</button>
+					<button class="wb-strip-btn" type="button" data-mode="clay" data-tip="Clay (4)" aria-label="Clay view" aria-pressed="false">
+						<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="8" opacity="0.85"/></svg>
+					</button>
+					<hr />
+					<button class="wb-strip-btn" type="button" id="wb-grid" data-tip="Grid (G)" aria-label="Toggle grid" aria-pressed="true">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+					</button>
+					<button class="wb-strip-btn" type="button" id="wb-env" data-tip="Environment light (E)" aria-label="Toggle environment lighting" aria-pressed="true">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+					</button>
+					<button class="wb-strip-btn" type="button" id="wb-spin" data-tip="Turntable (T)" aria-label="Toggle turntable rotation" aria-pressed="false">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+					</button>
+					<button class="wb-strip-btn" type="button" id="wb-history-btn" data-tip="History (H)" aria-label="Generation history" aria-pressed="false" aria-controls="wb-history">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+					</button>
+					<hr />
+					<button class="wb-strip-btn" type="button" id="wb-frame" data-tip="Frame model (F)" aria-label="Frame the model">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="2.5"/></svg>
+					</button>
+					<button class="wb-strip-btn" type="button" id="wb-shot" data-tip="Screenshot (P)" aria-label="Save a screenshot">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h4l2-3h6l2 3h4v12H3z"/><circle cx="12" cy="13" r="3.5"/></svg>
+					</button>
+				</div>
+
+				<section class="wb-history" id="wb-history" aria-label="Generation history">
+					<header>
+						<strong>History</strong>
+						<button class="wb-btn is-danger" id="wb-history-clear" type="button">Clear</button>
+					</header>
+					<ul id="wb-history-list"></ul>
+				</section>
+
+				<div class="wb-empty" id="wb-empty">
+					<div class="wb-empty-card">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.8 20 7.4v9.2l-8 4.6-8-4.6V7.4z"/><path d="M4 7.4 12 12l8-4.6M12 12v9.2"/></svg>
+						<h2>Drop an image to begin</h2>
+						<p>Add a photo to the Image node and press <kbd>Ctrl</kbd>+<kbd>Enter</kbd>, or drop a GLB, OBJ, STL or PLY anywhere here to edit an existing model.</p>
+					</div>
+				</div>
+
+				<div class="wb-busy" id="wb-busy" hidden>
+					<div class="wb-busy-card" role="status" aria-live="polite">
+						<img id="wb-busy-img" alt="" hidden />
+						<div class="wb-spinner" aria-hidden="true"></div>
+						<strong id="wb-busy-title">Working</strong>
+						<span id="wb-busy-text"></span>
+					</div>
+				</div>
+
+				<div class="wb-dropveil" id="wb-dropveil" aria-hidden="true">Drop to import</div>
+				<div class="wb-stats" id="wb-stats" aria-live="polite"></div>
+				<div class="wb-hint-corner">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+			</div>
+		</main>
+
+		<!-- ── workflows ───────────────────────────────────────── -->
+		<section class="wb-view" data-view="workflows" aria-label="Workflows">
+			<div class="wb-flows">
+				<div class="wb-flow-list" id="wb-flow-list" role="listbox" aria-label="Saved workflows"></div>
+				<div class="wb-flow-editor">
+					<div class="wb-flow-bar">
+						<label class="wb-sr" for="wb-flow-name">Workflow name</label>
+						<input class="wb-input" id="wb-flow-name" maxlength="60" />
+						<button class="wb-btn" id="wb-flow-new" type="button">New</button>
+						<button class="wb-btn" id="wb-flow-dup" type="button">Duplicate</button>
+						<button class="wb-btn" id="wb-flow-tidy" type="button">Tidy</button>
+						<button class="wb-btn is-danger" id="wb-flow-del" type="button">Delete</button>
+						<span class="wb-flow-status" id="wb-flow-status" role="status"></span>
+						<button class="wb-btn is-accent" id="wb-flow-use" type="button">Use in Generate</button>
+					</div>
+					<div class="wb-graph" id="wb-graph" aria-label="Workflow graph. Drag empty space to pan. Delete removes the selected node."></div>
+					<div class="wb-palette" id="wb-palette"><span>Add node</span></div>
+				</div>
+			</div>
+		</section>
+
+		<!-- ── extensions ──────────────────────────────────────── -->
+		<section class="wb-view" data-view="extensions" aria-label="Extensions">
+			<div class="wb-page">
+				<div class="wb-page-head">
+					<div>
+						<h1>Extensions</h1>
+						<p>Every generation engine and mesh tool the Workbench can run, read live from the platform with its current health. Turn an engine off to hide it from the Engine picker.</p>
+					</div>
+					<button class="wb-btn" id="wb-ext-refresh" type="button">Refresh status</button>
+				</div>
+				<p class="wb-label">Generation engines</p>
+				<div class="wb-ext-grid" id="wb-ext-lanes" aria-busy="true"></div>
+				<p class="wb-label" style="margin-top:24px">Mesh tools</p>
+				<div class="wb-ext-grid" id="wb-ext-tools"></div>
+			</div>
+		</section>
+
+		<!-- ── settings ────────────────────────────────────────── -->
+		<section class="wb-view" data-view="settings" aria-label="Settings">
+			<div class="wb-page">
+				<div class="wb-page-head">
+					<div>
+						<h1>Settings</h1>
+						<p>Preferences are kept in this browser. Nothing here needs an account.</p>
+					</div>
+				</div>
+				<div class="wb-settings">
+					<section class="wb-card">
+						<h2>Viewport</h2>
+						<label class="wb-param"><span>Show grid on start</span><select class="wb-select" data-setting="grid"><option value="1">On</option><option value="0">Off</option></select></label>
+						<label class="wb-param"><span>Environment lighting</span><select class="wb-select" data-setting="env"><option value="1">On</option><option value="0">Off</option></select></label>
+						<label class="wb-param"><span>Turntable after a generation</span><select class="wb-select" data-setting="spin"><option value="0">Off</option><option value="1">On</option></select></label>
+						<label class="wb-param"><span>Theme</span><select class="wb-select" id="wb-theme-select"><option value="dark">Dark</option><option value="light">Light</option><option value="auto">Match system</option></select></label>
+					</section>
+					<section class="wb-card">
+						<h2>Your data</h2>
+						<p class="wb-hint">Generations are tied to an anonymous id for this browser, the same one <a href="/forge">Forge</a> uses, so your models show up in both.</p>
+						<label class="wb-param"><span>Browser id</span><input class="wb-input" id="wb-client-id" readonly /></label>
+						<div class="wb-row">
+							<button class="wb-btn" id="wb-clear-history" type="button">Clear history</button>
+							<button class="wb-btn is-danger" id="wb-reset-flows" type="button">Restore default workflows</button>
+						</div>
+					</section>
+					<section class="wb-card">
+						<h2>API and agents</h2>
+						<p class="wb-hint">Everything the Workbench does is a public HTTP call, so scripts and agents can run the same pipeline. Upload an image, submit it, then poll the job. Full reference in the <a href="/docs/3d-api">3D API docs</a>.</p>
+						<pre class="wb-code" id="wb-api-snippet"></pre>
+						<button class="wb-btn" id="wb-copy-snippet" type="button">Copy</button>
+					</section>
+				</div>
+			</div>
+		</section>
+	</div>
+
+	<input type="file" id="wb-model-input" accept=".glb,.gltf,.obj,.stl,.ply,.fbx" hidden />
+	<input type="file" id="wb-image-input" accept="image/png,image/jpeg,image/webp" hidden />
+	<div class="wb-toasts" id="wb-toasts" aria-live="assertive"></div>
+
+	<script src="/corner-stack.js"></script>
+	<script src="/theme-switcher.js"></script>
+	<script type="module" src="/src/workbench/main.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

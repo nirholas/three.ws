@@ -24,7 +24,8 @@ export const def = {
 		'An invalid edit is rejected with the reason and nothing changes. Only a pending proposal can be ' +
 		'adjusted. WRITE but idempotent (no action taken; re-applying the same params is a no-op). For alerts ' +
 		'the only coin is $THREE (asset:"three"); wallet_transfer sends SOL only and never sells or sends ' +
-		'$THREE. Returns the updated proposal.',
+		'$THREE. Returns the updated proposal. ' +
+		'Use this when a proposal is right in kind but wrong in detail; adjust it, run dryrun_proposal again, then execute_proposal.',
 	inputSchema: {
 		agentId: z
 			.string()

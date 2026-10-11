@@ -1,0 +1,250 @@
+{
+	"id": "catalog-api",
+	"status": "draft",
+	"kind": "post",
+	"tier": 3,
+	"lane": "developer",
+	"pattern": "number",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": [
+		"/docs/api-reference",
+		"/api/catalog",
+		"@three-ws/assets"
+	],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{
+				"goto": "https://three.ws/docs/api-reference#asset-catalog-api",
+				"settle": 5000
+			},
+			{
+				"hold": 2600,
+				"caption": "No auth, no API key, no payment"
+			},
+			{
+				"scroll": 520,
+				"ms": 1800
+			},
+			{
+				"hold": 2000,
+				"caption": "One GET searches every free asset"
+			},
+			{
+				"scroll": 760,
+				"ms": 2000
+			},
+			{
+				"hold": 2200,
+				"caption": "Each hit: id, license, GLB url, bytes"
+			},
+			{
+				"goto": "https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2",
+				"settle": 2500
+			},
+			{
+				"read": "total",
+				"match": "\"total\":\\s*(\\d+)"
+			},
+			{
+				"read": "matched",
+				"match": "\"matched\":\\s*(\\d+)"
+			},
+			{
+				"read": "license",
+				"match": "\"license\":\\s*\"(CC0)\""
+			},
+			{
+				"hold": 2400,
+				"caption": "The live answer from the public API"
+			},
+			{
+				"hold": 2600,
+				"caption": "total counts the whole catalog"
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		},
+		{
+			"type": "api",
+			"url": "https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2",
+			"expect": {
+				"status": 200,
+				"json": {
+					"path": "total",
+					"min": 3900
+				}
+			}
+		},
+		{
+			"type": "api",
+			"url": "https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2",
+			"expect": {
+				"status": 200,
+				"json": {
+					"path": "items.0.license",
+					"equals": "CC0"
+				}
+			}
+		}
+	],
+	"posts": [
+		{
+			"text": "More than 3,900 free 3D assets now answer one GET on three.ws/docs/api-reference, served from Cloud Run on @GoogleCloud. Objects, characters and motion clips sit behind a single search with no authentication, no API key and no payment. Every word of the query has to match; when nothing matches all of them the search retries on any of them and marks the answer relaxed: true, so a phrase never dead-ends silently.",
+			"media": [
+				{
+					"path": "public/x-media/catalog-api/reel.mp4",
+					"probe": {
+						"durationSec": 15.6,
+						"width": 1080,
+						"height": 1080,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "Each hit carries a direct GLB URL, its license and its byte size. Pages run 1 to 50 results with next_offset for the next page, open CORS, cached at the edge for 5 minutes. The same join backs the free MCP catalog tools and the assets CLI, so all three surfaces answer identically."
+		}
+	],
+	"claims": [
+		{
+			"says": "More than 3,900 free 3D assets",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "total",
+					"min": 3900
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/api-reference",
+					"contains": "total is the whole catalog; matched is how many the query hit"
+				}
+			]
+		},
+		{
+			"says": "answer one GET",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/api-reference",
+					"contains": "GET /api/catalog?q=wooden+chair&kind=object&limit=12&offset=0"
+				}
+			]
+		},
+		{
+			"says": "Objects, characters and motion clips sit behind a single search",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/api-reference",
+					"contains": "One search across every ready-made asset three.ws publishes: the CC0 object/prop library, the ready-made character library, and the motion-clip library."
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/api-reference",
+					"contains": "GET /api/catalog?q=wooden+chair&kind=object&limit=12&offset=0"
+				}
+			]
+		},
+		{
+			"says": "no authentication, no API key and no payment",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/api-reference",
+					"contains": "No authentication, no API key, no payment. Open CORS, cached at the edge for 5 minutes."
+				}
+			]
+		},
+		{
+			"says": "open CORS, cached at the edge for 5 minutes",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/api-reference",
+					"contains": "Open CORS, cached at the edge for 5 minutes."
+				}
+			]
+		},
+		{
+			"says": "Every word of the query has to match; when nothing matches all of them the search retries on any of them and marks the answer relaxed: true, so a phrase never dead-ends silently.",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/api-reference",
+					"contains": "Every word of q must match somewhere, which keeps a two-word query precise. If nothing matches all of them, the search retries on any of them and sets relaxed: true, so a phrase never dead-ends silently."
+				},
+				{
+					"type": "proof",
+					"saw": "relaxed"
+				}
+			]
+		},
+		{
+			"says": "Each hit carries a direct GLB URL, its license and its byte size",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "license",
+					"equals": "CC0"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/api-reference",
+					"contains": "\"license\": \"CC0\""
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/api-reference",
+					"contains": "\"format\": \"glb\""
+				}
+			]
+		},
+		{
+			"says": "Pages run 1 to 50 results with next_offset for the next page",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/api-reference",
+					"contains": "1 to 50 (default 12)"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/api-reference",
+					"contains": "use next_offset from the previous response"
+				}
+			]
+		},
+		{
+			"says": "The same join backs the free MCP catalog tools and the assets CLI, so all three surfaces answer identically",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/api-reference",
+					"contains": "so all three surfaces answer identically"
+				}
+			]
+		},
+		{
+			"says": "served from Cloud Run on @GoogleCloud",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/ops/gcp-production.md",
+					"contains": "Cloud Run service \"three-ws-api\""
+				}
+			]
+		}
+	],
+	"mentions": {
+		"@GoogleCloud": "the three.ws API, including /api/catalog, runs on Cloud Run on Google Cloud"
+	}
+}

@@ -24,6 +24,8 @@
 // (BYOK) key, and its per-(path,tier) cost/latency estimates so the UI can
 // communicate the trade-off before the user commits.
 
+import { laneAllowedInTerritory } from './forge-territory.js';
+
 export const PATHS = Object.freeze(['image', 'geometry', 'sketch']);
 export const DEFAULT_PATH = 'image';
 export const TIER_IDS = Object.freeze(['draft', 'standard', 'high']);
@@ -247,6 +249,27 @@ export const BACKENDS = Object.freeze({
 		free: true,
 		blurb: 'Free self-hosted high-poly reconstruction on our own GPU worker — image-conditioned geometry, zero vendor cost.',
 	}),
+	trellis2: Object.freeze({
+		id: 'trellis2',
+		label: 'TRELLIS.2 (self-host)',
+		vendor: 'Microsoft TRELLIS.2 · self-host',
+		paths: Object.freeze(['image']),
+		byok: false,
+		provider: 'gcp',
+		// Our own TRELLIS.2 worker (workers/model-trellis2 on Cloud Run, MIT, 4B
+		// flow transformer). Native single-hop image to 3D with PBR materials and
+		// alpha, at a 512, 1024 or 1536 voxel resolution the caller can choose.
+		// MIT licensed and territory-free, which is why it replaced Hunyuan3D as
+		// the default image lane (see api/_lib/forge-territory.js).
+		requiresEnv: Object.freeze(['MODEL_TRELLIS2_URL', 'GCP_RECONSTRUCTION_KEY']),
+		polyControl: false,
+		userImages: true,
+		baseEta: 75,
+		coldStartSeconds: 90,
+		credits: null,
+		free: true,
+		blurb: 'Free native image to 3D on our own TRELLIS.2 worker: PBR materials with transparency, up to 1536 resolution, no vendor cost, available in every region.',
+	}),
 	trellis_selfhost: Object.freeze({
 		id: 'trellis_selfhost',
 		label: 'TRELLIS (self-host)',
@@ -272,6 +295,50 @@ export const BACKENDS = Object.freeze({
 		// free lane and is the preferred free image→3D engine when configured.
 		free: true,
 		blurb: 'Free native image→3D on our own TRELLIS worker — single-hop reconstruction (image → TRELLIS → GLB), textured GLB, no vendor cost.',
+	}),
+	modly: Object.freeze({
+		id: 'modly',
+		label: 'Modly TripoSG (self-host)',
+		vendor: 'VAST AI TripoSG via Modly · self-host',
+		paths: Object.freeze(['image']),
+		byok: false,
+		provider: 'gcp',
+		// Our own Modly worker (workers/modly on Cloud Run, Modly by Lightning
+		// Pixel, MIT) running VAST AI's TripoSG (MIT code and weights). It is a
+		// geometry engine: the GLB is an untextured mesh, which the worker then
+		// decimates to the tier's poly budget through Modly's mesh optimizer, so
+		// the tier's polycount is a real target here. One worker serves this lane
+		// and modly_hunyuan; MODEL_MODLY_URL gates both.
+		requiresEnv: Object.freeze(['MODEL_MODLY_URL', 'GCP_RECONSTRUCTION_KEY']),
+		polyControl: true,
+		userImages: true,
+		baseEta: 60,
+		// Scale-to-zero worker: a cold instance copies its weights, starts Modly
+		// and runs one warm-up generation before it takes the request.
+		coldStartSeconds: 120,
+		credits: null,
+		free: true,
+		blurb: 'Free image to 3D geometry on our own Modly worker running TripoSG: clean, watertight shapes at your poly budget, no vendor cost. Untextured; retexture or stylize after.',
+	}),
+	modly_hunyuan: Object.freeze({
+		id: 'modly_hunyuan',
+		label: 'Modly Hunyuan3D Mini Turbo (self-host)',
+		vendor: 'Tencent Hunyuan3D 2 Mini Turbo via Modly · self-host',
+		paths: Object.freeze(['image']),
+		byok: false,
+		provider: 'gcp',
+		// The same Modly worker as `modly`, running Tencent's Hunyuan3D 2 Mini
+		// Turbo (0.6B, few-step). Untextured geometry decimated to the tier's
+		// budget. A Tencent model, so it is in TENCENT_LANES and never served to
+		// the EU, the UK, South Korea or an unknown country (forge-territory.js).
+		requiresEnv: Object.freeze(['MODEL_MODLY_URL', 'GCP_RECONSTRUCTION_KEY']),
+		polyControl: true,
+		userImages: true,
+		baseEta: 45,
+		coldStartSeconds: 120,
+		credits: null,
+		free: true,
+		blurb: 'Free fast image to 3D geometry on our own Modly worker running Hunyuan3D 2 Mini Turbo, decimated to your poly budget, no vendor cost. Untextured; retexture or stylize after.',
 	}),
 	triposg: Object.freeze({
 		id: 'triposg',
@@ -377,10 +444,10 @@ export const DEFAULT_BACKEND_FOR_PATH = Object.freeze({
 // highest-leverage lever on "does this look like a real photograph" the
 // platform has, and it must apply by default, not only at the high tier.
 //
-//   • draft / standard → our self-host TRELLIS worker (image-intermediate,
-//     fast, free); falls to Hunyuan3D / HuggingFace / (last) NVIDIA NIM via
-//     FREE_FALLBACK_FOR_PATH when self-host isn't configured.
-//   • high              → self-host Hunyuan3D — textured, higher-fidelity, free.
+//   • every tier → our self-host TRELLIS.2 worker (image-intermediate, PBR,
+//     free, MIT licensed, served in every region); falls to self-host TRELLIS
+//     v1, then Hunyuan3D / HuggingFace (never in the EU, UK or South Korea, see
+//     forge-territory.js) and (last) NVIDIA NIM via FREE_FALLBACK_FOR_PATH.
 //
 // NVIDIA's hosted TRELLIS preview (native text→mesh, no reference image) is
 // NEVER a named default here anymore — see BACKENDS.nvidia's `userImages:
@@ -398,15 +465,13 @@ export const DEFAULT_BACKEND_FOR_PATH = Object.freeze({
 // to recover vendor cost. Paid backends (Replicate/Meshy/Tripo) stay explicitly
 // selectable at every tier.
 export const FREE_DEFAULT_FOR_TIERS = Object.freeze({
-	draft: Object.freeze({ image: 'trellis_selfhost' }),
-	standard: Object.freeze({ image: 'trellis_selfhost' }),
-	// High names our self-host Hunyuan3D worker — the highest-fidelity engine we
-	// can run on our own GPUs. Until GCP_HUNYUAN3D_URL is configured the candidate
-	// walk falls to the per-path chain (self-host TRELLIS first). The external
-	// HuggingFace Spaces lane (the previous name here) stays in the fallback chain
-	// but no longer leads: its Hunyuan Spaces sit GPU-quota-dead for most of the
-	// day, so naming it made the tier a coin-flip.
-	high: Object.freeze({ image: 'hunyuan3d' }),
+	draft: Object.freeze({ image: 'trellis2' }),
+	standard: Object.freeze({ image: 'trellis2' }),
+	// TRELLIS.2 is the default at every tier: it is MIT licensed with no territory
+	// exclusion, and the tier maps to its resolution (workers/model-trellis2
+	// request_policy.py), so high buys 1536 rather than a different engine.
+	// Hunyuan3D stays in the fallback chain for regions its licence covers.
+	high: Object.freeze({ image: 'trellis2' }),
 });
 
 // Free lanes to fall back to per path when the tier's named free engine can't
@@ -414,8 +479,11 @@ export const FREE_DEFAULT_FOR_TIERS = Object.freeze({
 // hosted preview is text-only), which routes to a free reconstruct lane instead
 // of a paid engine. First configured + capable lane wins, and our OWN GPU workers
 // come first so the platform leans on the credits we control before any external
-// free lane: self-hosted TRELLIS (native single-hop image→3D), then self-hosted
-// Hunyuan3D, then the free HuggingFace Spaces lane. The free NVIDIA NIM TRELLIS
+// free lane: self-hosted TRELLIS.2, then self-hosted TRELLIS v1, then self-hosted
+// Hunyuan3D, then the free HuggingFace Spaces lane, then our self-hosted Modly
+// worker (TripoSG, then Hunyuan3D 2 Mini Turbo), which returns untextured
+// geometry and so ranks below every textured lane. The Tencent lanes are
+// dropped for requests from the EU, the UK, South Korea or an unknown country. The free NVIDIA NIM TRELLIS
 // lane trails as the final health-gated fallthrough so a text prompt still
 // returns a model when every GPU worker (and HuggingFace) is cold or down — this
 // is the realism-tier safety net that guarantees the High/MAX path never dead-ends
@@ -423,7 +491,7 @@ export const FREE_DEFAULT_FOR_TIERS = Object.freeze({
 // submission filters it out and stops at HuggingFace, exactly as before. Every
 // entry is env-gated, so the list degrades cleanly on partial deployments.
 export const FREE_FALLBACK_FOR_PATH = Object.freeze({
-	image: Object.freeze(['trellis_selfhost', 'hunyuan3d', 'huggingface', 'nvidia']),
+	image: Object.freeze(['trellis2', 'trellis_selfhost', 'hunyuan3d', 'huggingface', 'modly', 'modly_hunyuan', 'nvidia']),
 });
 
 // Realism subject classes. The two self-host PBR lanes have different strengths:
@@ -495,7 +563,7 @@ function freeLaneUsable(id, p, userImages) {
 // lane). De-duplicated; only configured + capable lanes survive.
 // This is the single ordering both the env-only default and the health-aware
 // resolver walk, so they can never drift apart.
-export function freeLaneCandidates(p, tierId, userImages, subjectClass = null) {
+export function freeLaneCandidates(p, tierId, userImages, subjectClass = null, country = null) {
 	const ordered = [];
 	const named = FREE_DEFAULT_FOR_TIERS[tierId]?.[p];
 	if (named) ordered.push(named);
@@ -530,7 +598,7 @@ export function freeLaneCandidates(p, tierId, userImages, subjectClass = null) {
 	for (const id of prioritized) {
 		if (seen.has(id)) continue;
 		seen.add(id);
-		if (freeLaneUsable(id, p, userImages)) out.push(id);
+		if (freeLaneUsable(id, p, userImages) && laneAllowedInTerritory(id, country)) out.push(id);
 	}
 	return out;
 }
@@ -538,8 +606,8 @@ export function freeLaneCandidates(p, tierId, userImages, subjectClass = null) {
 // Resolve the default backend for a (path, tier) when the caller didn't name one.
 // Free-for-us policy: the first configured free lane in the candidate ordering,
 // and only the paid standing default when NO free lane is live on this deployment.
-function defaultBackendFor(p, tierId, userImages, subjectClass = null) {
-	const candidates = freeLaneCandidates(p, tierId, userImages, subjectClass);
+function defaultBackendFor(p, tierId, userImages, subjectClass = null, country = null) {
+	const candidates = freeLaneCandidates(p, tierId, userImages, subjectClass, country);
 	return candidates[0] || DEFAULT_BACKEND_FOR_PATH[p];
 }
 
@@ -557,8 +625,8 @@ function defaultBackendFor(p, tierId, userImages, subjectClass = null) {
 //   3. Only when every free lane is confirmed down, the paid standing default.
 // With an empty/undefined health map this returns exactly what defaultBackendFor
 // would, so callers with no telemetry are unaffected.
-export function defaultBackendForHealthAware(p, tierId, userImages, health, subjectClass = null) {
-	const candidates = freeLaneCandidates(p, tierId, userImages, subjectClass);
+export function defaultBackendForHealthAware(p, tierId, userImages, health, subjectClass = null, country = null) {
+	const candidates = freeLaneCandidates(p, tierId, userImages, subjectClass, country);
 	if (!candidates.length) return DEFAULT_BACKEND_FOR_PATH[p];
 	const statusOf = (id) => health?.[id];
 	const preferred = candidates.find((id) => {
@@ -577,13 +645,13 @@ export function defaultBackendForHealthAware(p, tierId, userImages, health, subj
 // the resolved default must be a backend that accepts them. An explicitly named
 // backend is always honored here — the forge handler rejects an unsupported
 // (backend, input) combination with a designed error at the boundary instead.
-export function resolveBackendId({ path, tier, backend, userImages = false, subjectClass = null }) {
+export function resolveBackendId({ path, tier, backend, userImages = false, subjectClass = null, country = null }) {
 	const p = PATHS.includes(path) ? path : DEFAULT_PATH;
 	if (backend && BACKENDS[backend] && BACKENDS[backend].paths.includes(p)) {
 		return backend;
 	}
 	const tierId = tier?.id || tier || DEFAULT_TIER;
-	return defaultBackendFor(p, tierId, userImages, subjectClass);
+	return defaultBackendFor(p, tierId, userImages, subjectClass, country);
 }
 
 // Health-aware twin of resolveBackendId: an explicitly named backend is always
@@ -593,13 +661,13 @@ export function resolveBackendId({ path, tier, backend, userImages = false, subj
 // laneId → status map (see defaultBackendForHealthAware). Pure — the caller
 // gathers the (cached) snapshot and passes it in, so this stays trivially
 // testable and adds no I/O of its own.
-export function resolveBackendIdWithHealth({ path, tier, backend, userImages = false, health, subjectClass = null }) {
+export function resolveBackendIdWithHealth({ path, tier, backend, userImages = false, health, subjectClass = null, country = null }) {
 	const p = PATHS.includes(path) ? path : DEFAULT_PATH;
 	if (backend && BACKENDS[backend] && BACKENDS[backend].paths.includes(p)) {
 		return backend;
 	}
 	const tierId = tier?.id || tier || DEFAULT_TIER;
-	return defaultBackendForHealthAware(p, tierId, userImages, health, subjectClass);
+	return defaultBackendForHealthAware(p, tierId, userImages, health, subjectClass, country);
 }
 
 // Where a request goes after the free HuggingFace Spaces lane failed to serve it.
@@ -619,9 +687,9 @@ export function resolveBackendIdWithHealth({ path, tier, backend, userImages = f
 // caller named that engine, so it is never silently swapped.
 //
 // Returns 'hunyuan3d' | 'nvidia' | null (null = surface the busy state).
-export function laneAfterHfFailure({ explicit = false, userImages = false } = {}) {
+export function laneAfterHfFailure({ explicit = false, userImages = false, country = null } = {}) {
 	if (explicit) return null;
-	if (backendIsConfigured('hunyuan3d')) return 'hunyuan3d';
+	if (backendIsConfigured('hunyuan3d') && laneAllowedInTerritory('hunyuan3d', country)) return 'hunyuan3d';
 	if (!userImages && backendIsConfigured('nvidia')) return 'nvidia';
 	return null;
 }
@@ -690,6 +758,11 @@ export const SELFHOST_TRELLIS_QUALITY = Object.freeze({
 	high: Object.freeze({ ss_steps: 50, slat_steps: 50, simplify: 0.65, texture_size: 4096 }),
 });
 
+// TRELLIS.2 voxel resolutions a caller may request (workers/model-trellis2
+// request_policy.py RESOLUTIONS). Omitted, the worker maps the tier to one:
+// draft 512, standard and high 1024, max 1536.
+export const TRELLIS2_RESOLUTIONS = Object.freeze([512, 1024, 1536]);
+
 export function selfhostQualityForTier(tierId) {
 	return SELFHOST_TRELLIS_QUALITY[tierId] || SELFHOST_TRELLIS_QUALITY[DEFAULT_TIER];
 }
@@ -717,6 +790,35 @@ export function backendIsConfigured(backendId) {
 	if (!b) return false;
 	if (b.byok) return true;
 	return b.requiresEnv.every((name) => Boolean(readEnv(name)));
+}
+
+// The self-host image lanes the forge handler drives through one async GCP
+// block (api/forge.js, api/gpt-forge.js): the two TRELLIS workers and the two
+// Modly lanes, which share one worker (workers/modly).
+export const MODLY_LANES = Object.freeze(['modly', 'modly_hunyuan']);
+const SELF_HOST_IMAGE_LANES = Object.freeze(['trellis2', 'trellis_selfhost', ...MODLY_LANES]);
+
+export function isSelfHostImageLane(backendId) {
+	return SELF_HOST_IMAGE_LANES.includes(backendId);
+}
+
+// Human name for a self-host image lane in a designed "not configured" error.
+export function selfHostLaneName(backendId) {
+	return MODLY_LANES.includes(backendId) ? BACKENDS[backendId].label : 'Self-hosted TRELLIS';
+}
+
+// Where a self-host image lane retries when its worker is down, before the
+// handler leaves the self-host block for Hunyuan3D or the reconstruct chain.
+// A Modly lane goes to TRELLIS.2, then TRELLIS v1 (the two Modly lanes share a
+// worker, so one never rescues the other); TRELLIS.2 goes to TRELLIS v1. Null
+// when no configured lane is left. Both TRELLIS lanes are territory-free.
+export function nextSelfHostImageLane(backendId) {
+	const after = MODLY_LANES.includes(backendId)
+		? ['trellis2', 'trellis_selfhost']
+		: backendId === 'trellis2'
+			? ['trellis_selfhost']
+			: [];
+	return after.find((id) => backendIsConfigured(id)) || null;
 }
 
 // Estimated wall-clock seconds for a (backend, path, tier) combination —
@@ -797,6 +899,8 @@ export function buildCatalog() {
 			user_images: b.userImages !== false,
 			configured: backendIsConfigured(b.id),
 			blurb: b.blurb,
+			// Voxel resolutions the lane accepts as the `resolution` request option.
+			resolutions: b.id === 'trellis2' ? TRELLIS2_RESOLUTIONS : undefined,
 			estimates: b.paths.reduce((acc, p) => {
 				acc[p] = TIER_IDS.map((tierId) => ({
 					tier: tierId,

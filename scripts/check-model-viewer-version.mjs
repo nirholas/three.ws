@@ -75,6 +75,17 @@ const SKIPPED = [
 // rogue sixth version.
 const INTERPOLATED = /^\$\{/;
 
+// Published builds that must never be the pin again, with the reason. 4.3.x is
+// the first line that decodes KHR_meshopt_compression (api/_lib/bake.js emits
+// it), but Google shipped it with debug console.log calls left in
+// ("[$updateSource] called!", "BAILING OUT EARLY!", "IntersectionObserver
+// fired!"), so every page with a viewer flooded the visitor's console. Fixed
+// upstream in 4.4.0 (google/model-viewer#5182).
+const BANNED = {
+	'4.3.0': 'ships leftover debug console.log calls on every source update (fixed in 4.4.0)',
+	'4.3.1': 'ships leftover debug console.log calls on every source update (fixed in 4.4.0)',
+};
+
 function trackedFiles() {
 	const listed = (args) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 1 << 28 }).split('\n');
 	return [...listed(['ls-files']), ...listed(['ls-files', '-o', '--exclude-standard'])]
@@ -142,6 +153,11 @@ if (versions.size === 0) {
 	);
 }
 
+for (const [version, files] of versions) {
+	if (!BANNED[version]) continue;
+	failures.push(`model-viewer ${version} ${BANNED[version]}; it is referenced in ${files.size} file(s), e.g. ${[...files][0]}`);
+}
+
 for (const [version, byHash] of integrities) {
 	if (byHash.size < 2) continue;
 	const lines = [...byHash.entries()].map(
@@ -150,7 +166,7 @@ for (const [version, byHash] of integrities) {
 	failures.push(
 		`model-viewer ${version} is served with ${byHash.size} different integrity hashes:\n${lines.join('\n')}\n` +
 			`    One of these is stale (a bumped URL with its SRI left behind). Recompute:\n` +
-			`      curl -s https://ajax.googleapis.com/ajax/libs/model-viewer/${version}/model-viewer.min.js | openssl dgst -sha384 -binary | openssl base64 -A`,
+			`      curl -s https://cdn.jsdelivr.net/npm/@google/model-viewer@${version}/dist/model-viewer.min.js | openssl dgst -sha384 -binary | openssl base64 -A`,
 	);
 }
 
@@ -172,7 +188,7 @@ if (versions.size === 1 && integrities.has(pinned)) {
 				`    expected ${expected}\n` +
 				`    actual   ${actual}\n` +
 				`    Restage it:\n` +
-				`      curl -sSfo ${VENDORED} https://ajax.googleapis.com/ajax/libs/model-viewer/${pinned}/model-viewer.min.js`,
+				`      curl -sSfo ${VENDORED} https://cdn.jsdelivr.net/npm/@google/model-viewer@${pinned}/dist/model-viewer.min.js`,
 		);
 	}
 }

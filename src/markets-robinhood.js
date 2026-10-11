@@ -250,7 +250,7 @@ function renderCoinsShell() {
 			</div>
 		</div>
 		<div id="rh-coins-table">${skeletonTable(6)}</div>
-		<div class="cv-toolbar" style="margin: 2rem 0 1rem"><h2 class="cv-h2" style="margin: 0">Recent Launches</h2></div>
+		<div class="cv-toolbar" style="margin: 2rem 0 1rem"><h2 class="cv-h2" style="margin: 0">Recent Launches</h2><a class="rh-launch-cta" href="/launch/robinhood">Launch your agent's coin on Pons →</a></div>
 		<div id="rh-launches-table">${skeletonTable(4, 5)}</div>
 	`;
 	panel.querySelectorAll('.rh-cat-btn').forEach((btn) => {

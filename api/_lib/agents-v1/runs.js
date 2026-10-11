@@ -21,12 +21,15 @@
 import { randomUUID } from 'node:crypto';
 import { sql } from '../db.js';
 import { apiError } from './http.js';
-import { providerChainFor } from '../llm-tool-chain.js';
+import { resolveAgentBrain } from '../agent-brain.js';
 import { isFreeLane } from '../llm-pricing.js';
 import { agentToolSchemas, agentToolHandlers } from '../agent-tools.js';
 import { debitCredits } from '../credits.js';
 import { assertAgentBudget, InferenceBillingError } from '../inference-billing.js';
+import { settleTokenUsage } from '../token-budgets.js';
 import { AGENT_SYSTEM_NOTE, createAgentLoop, finalAnswer, initialLoopState, loopFinished } from '../agent-loop.js';
+import { stepReceipt, summarizeRun } from './run-receipts.js';
+import { dispatchWebhooks } from '../webhook-dispatch.js';
 
 const LEASE_SECONDS = 120;
 const TERMINAL = new Set(['completed', 'failed', 'cancelled', 'budget_exhausted']);
@@ -61,6 +64,7 @@ export function serializeRun(r) {
 		scheduledFor: r.scheduled_for,
 		result: r.result,
 		error: r.error,
+		summary: r.summary ?? null,
 		source: r.source,
 		automationId: r.automation_id,
 		cancelRequested: Boolean(r.cancel_requested_at),
@@ -83,6 +87,7 @@ export function serializeStep(s) {
 		usage: s.input_tokens == null && s.output_tokens == null ? null : { input: s.input_tokens, output: s.output_tokens },
 		costUsd: s.cost_micro_usd == null ? null : Number(s.cost_micro_usd) / 1e6,
 		latencyMs: s.latency_ms,
+		receipt: s.receipt ?? null,
 		at: s.created_at,
 	};
 }
@@ -193,7 +198,7 @@ export async function cancelRun(runId, userId) {
 }
 
 /** Pause or resume a run, or raise its budget. */
-export async function updateRun(runId, userId, { action = null, budgetCreditsUsd = null, budgetUsd = null } = {}) {
+export async function updateRun(runId, userId, { action = null, budgetCreditsUsd = null, budgetUsd = null, maxSteps = null } = {}) {
 	const run = await getOwnedRun(runId, userId);
 	if (TERMINAL.has(run.status)) throw apiError(409, 'run_finished', `This run already ${run.status}.`);
 	let status = run.status;
@@ -205,11 +210,15 @@ export async function updateRun(runId, userId, { action = null, budgetCreditsUsd
 	if (credits < toNumber(run.budget_credits_usd) || usd < toNumber(run.budget_usd)) {
 		throw apiError(400, 'budget_decrease', 'A budget can only be raised.');
 	}
+	const steps = maxSteps == null ? run.max_steps : Number(maxSteps);
+	if (!Number.isInteger(steps) || steps < Math.max(1, run.step_count) || steps > 60) {
+		throw apiError(400, 'bad_max_steps', `maxSteps must be an integer from ${Math.max(1, run.step_count)} (steps already taken) to 60.`);
+	}
 	const [row] = await sql`
-		UPDATE agent_runs SET status = ${status}, budget_credits_usd = ${credits}, budget_usd = ${usd}, updated_at = now()
+		UPDATE agent_runs SET status = ${status}, budget_credits_usd = ${credits}, budget_usd = ${usd}, max_steps = ${steps}, updated_at = now()
 		WHERE id = ${runId} RETURNING *
 	`;
-	await insertSteps(runId, await lastSeq(runId), [{ kind: 'status', output: { status, action, budgetCreditsUsd: credits } }]);
+	await insertSteps(runId, await lastSeq(runId), [{ kind: 'status', output: { status, action, budgetCreditsUsd: credits, maxSteps: steps } }]);
 	return row;
 }
 
@@ -220,17 +229,28 @@ async function lastSeq(runId) {
 
 async function insertSteps(runId, fromSeq, events) {
 	let seq = fromSeq;
+	let prev = null;
+	if (fromSeq > 0) {
+		const [p] = await sql`SELECT receipt FROM agent_run_steps WHERE run_id = ${runId} AND seq = ${fromSeq} LIMIT 1`;
+		prev = p?.receipt || null;
+	}
 	for (const e of events) {
 		seq += 1;
+		// Hash exactly what jsonb will hand back: a JSON round trip drops
+		// undefined and turns Dates into strings before the digest is taken.
+		const input = e.input == null ? null : JSON.parse(JSON.stringify(e.input));
+		const output = e.output == null ? null : JSON.parse(JSON.stringify(e.output));
+		const receipt = stepReceipt({ prev, runId, seq, kind: e.kind, tool: e.tool || null, input, output });
 		await sql`
 			INSERT INTO agent_run_steps
-				(run_id, seq, kind, provider, model, tool_name, input, output, input_tokens, output_tokens, cost_micro_usd, latency_ms)
+				(run_id, seq, kind, provider, model, tool_name, input, output, input_tokens, output_tokens, cost_micro_usd, latency_ms, receipt)
 			VALUES
 				(${runId}, ${seq}, ${e.kind}, ${e.provider || null}, ${e.model || null}, ${e.tool || null},
-				 ${e.input == null ? null : JSON.stringify(e.input)}::jsonb, ${e.output == null ? null : JSON.stringify(e.output)}::jsonb,
-				 ${e.inputTokens ?? null}, ${e.outputTokens ?? null}, ${e.costMicroUsd ?? null}, ${e.latencyMs ?? null})
+				 ${input == null ? null : JSON.stringify(input)}::jsonb, ${output == null ? null : JSON.stringify(output)}::jsonb,
+				 ${e.inputTokens ?? null}, ${e.outputTokens ?? null}, ${e.costMicroUsd ?? null}, ${e.latencyMs ?? null}, ${receipt})
 			ON CONFLICT (run_id, seq) DO NOTHING
 		`;
+		prev = receipt;
 	}
 	return seq;
 }
@@ -245,7 +265,24 @@ async function finalize(run, status, { result = null, error = null, note = null 
 	await insertSteps(run.id, await lastSeq(run.id), [
 		{ kind: status === 'completed' ? 'final' : status === 'failed' ? 'error' : 'status', output: { status, result, error, note } },
 	]);
-	return row;
+	const tally = await sql`
+		SELECT kind, tool_name, count(*)::int AS n,
+		       count(*) FILTER (WHERE kind = 'tool_result' AND output ? 'error' AND jsonb_typeof(output) = 'object')::int AS failed
+		FROM agent_run_steps WHERE run_id = ${run.id}
+		GROUP BY kind, tool_name
+	`;
+	const summary = summarizeRun(row, tally);
+	const [done] = await sql`UPDATE agent_runs SET summary = ${summary} WHERE id = ${run.id} RETURNING *`;
+	// The event ID is derived from the run, so a finalize that races another
+	// still delivers run.finished once per endpoint.
+	await dispatchWebhooks({
+		userId: done.user_id,
+		agentId: done.agent_id,
+		eventType: 'run.finished',
+		eventId: `evt_run_finished_${done.id}`,
+		data: serializeRun(done),
+	});
+	return done;
 }
 
 async function acquireLease(runId, owner) {
@@ -274,10 +311,16 @@ export async function agentSystemPrompt(agentId) {
 	return parts.join('\n\n');
 }
 
-function chainFor(run) {
-	const chain = providerChainFor(run.model || null);
+export async function chainFor(run) {
+	const [agent] = await sql`SELECT id, user_id, meta FROM agent_identities WHERE id = ${run.agent_id} LIMIT 1`;
+	const { chain } = await resolveAgentBrain({
+		agent: agent || { id: run.agent_id, user_id: run.user_id, meta: null },
+		requested: run.model || null,
+		purpose: 'run',
+		lenient: true,
+	});
 	if (toNumber(run.budget_credits_usd) > 0) return chain;
-	return chain.filter((p) => isFreeLane(p.name, p.catalogModel || p.model));
+	return chain.filter((p) => p.keySource === 'owner' || isFreeLane(p.name, p.catalogModel || p.model));
 }
 
 function toolsFor(run) {
@@ -298,7 +341,7 @@ export async function stepRun(runId, { owner = `step:${randomUUID()}` } = {}) {
 
 	if (run.cancel_requested_at) return finalize(run, 'cancelled', { note: 'cancelled by the owner' });
 
-	const chain = chainFor(run);
+	const chain = await chainFor(run);
 	if (!chain.length) {
 		return finalize(run, 'failed', {
 			error: toNumber(run.budget_credits_usd) > 0
@@ -348,7 +391,12 @@ export async function stepRun(runId, { owner = `step:${randomUUID()}` } = {}) {
 		return finalize(run, 'failed', { error: String(err?.message || err).slice(0, 500) });
 	}
 
-	const { costUsd } = await persistEvents(run, events);
+	const { costUsd, tokens } = await persistEvents(run, events);
+	if (tokens > 0) {
+		// Settles the hourly, daily and per-run token ceilings on the real
+		// count; the step's dollar debit below is a separate ledger.
+		void settleTokenUsage({ agentId: run.agent_id, runId: run.id, inputTokens: tokens, outputTokens: 0 });
+	}
 
 	let spent = toNumber(run.spent_credits_usd);
 	if (costUsd > 0) {
@@ -399,10 +447,12 @@ async function agentBudgetRefusal(run) {
 	const [agent] = await sql`SELECT id, name, meta FROM agent_identities WHERE id = ${run.agent_id} LIMIT 1`;
 	if (!agent) return null;
 	try {
-		await assertAgentBudget({ userId: run.user_id, agent });
+		// The per-run token ceiling counts this run's own tokens, so the run id
+		// is the window key; the hourly and daily ceilings ride along.
+		await assertAgentBudget({ userId: run.user_id, agent, runId: run.id });
 		return null;
 	} catch (err) {
-		if (err instanceof InferenceBillingError) {
+		if (err instanceof InferenceBillingError || err?.code === 'token_budget_exhausted' || err?.code === 'token_budget_paused') {
 			return { error: err.message, note: err.code };
 		}
 		throw err;
@@ -411,11 +461,13 @@ async function agentBudgetRefusal(run) {
 
 async function persistEvents(run, events) {
 	let costUsd = 0;
+	let tokens = 0;
 	const rows = [];
 	for (const e of events) {
 		if (e.kind === 'model_call') {
 			const paid = !e.free;
 			if (paid) costUsd += Number(e.costMicroUsd || 0) / 1e6;
+			tokens += (Number(e.usage?.input) || 0) + (Number(e.usage?.output) || 0);
 			rows.push({
 				kind: 'model_call',
 				provider: e.provider,
@@ -435,7 +487,7 @@ async function persistEvents(run, events) {
 		}
 	}
 	if (rows.length) await insertSteps(run.id, await lastSeq(run.id), rows);
-	return { costUsd };
+	return { costUsd, tokens };
 }
 
 /** Step a run until it finishes, pauses, or the deadline passes. */
@@ -480,4 +532,34 @@ export async function driveDueRuns({ limit = 10, deadlineMs = 50_000 } = {}) {
 		}),
 	);
 	return report;
+}
+
+const LISTABLE_RUN_STATUSES = new Set(['scheduled', 'queued', 'running', 'paused', 'completed', 'failed', 'cancelled', 'budget_exhausted']);
+
+/**
+ * One agent's runs, newest first, keyset-paginated on (created_at, id).
+ * @param {string} agentId  an agent the caller owns (checked by the route)
+ * @param {{ limit: number, cursor?: string|null, status?: string|null }} o
+ */
+export async function listAgentRuns(agentId, { limit, cursor = null, status = null }) {
+	if (status && !LISTABLE_RUN_STATUSES.has(status)) {
+		throw apiError(400, 'invalid_parameter', `status must be one of: ${[...LISTABLE_RUN_STATUSES].join(', ')}.`, { parameter: 'status' });
+	}
+	let anchor = null;
+	if (cursor) {
+		[anchor] = await sql`SELECT created_at, id FROM agent_runs WHERE id = ${cursor} AND agent_id = ${agentId}`;
+		if (!anchor) throw apiError(400, 'invalid_cursor', 'cursor must be a value returned in meta.nextCursor.', { parameter: 'cursor' });
+	}
+	const rows = await sql`
+		SELECT * FROM agent_runs
+		WHERE agent_id = ${agentId}
+		  AND (${status}::text IS NULL OR status = ${status})
+		  AND (${anchor?.created_at ?? null}::timestamptz IS NULL
+		       OR (created_at, id) < (${anchor?.created_at ?? null}::timestamptz, ${anchor?.id ?? null}::uuid))
+		ORDER BY created_at DESC, id DESC
+		LIMIT ${limit + 1}
+	`;
+	const hasMore = rows.length > limit;
+	const items = rows.slice(0, limit);
+	return { items: items.map(serializeRun), hasMore, nextCursor: hasMore ? items.at(-1).id : null };
 }

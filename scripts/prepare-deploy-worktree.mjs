@@ -18,8 +18,8 @@
 //      avatar-studio vite build, which gets OOM-killed (exit 144) on a box
 //      already hosting concurrent agent builds. Both land several minutes in.
 //   3. `cp -al` across a filesystem boundary. Hardlinks cannot span devices, so
-//      a worktree staged outside /workspaces silently falls back to nothing at
-//      all: cp exits non-zero and the tree is left half-staged.
+//      a worktree staged on another filesystem than the repo silently falls
+//      back to nothing at all: cp exits non-zero and the tree is left half-staged.
 //
 // This script closes all three: it BUILDS a missing artifact instead of failing
 // on it, stages every one of them, and verifies the hardlink target shares a
@@ -27,9 +27,10 @@
 //
 //   node scripts/prepare-deploy-worktree.mjs            plan only, writes nothing
 //   node scripts/prepare-deploy-worktree.mjs --apply    stage the worktree
-//   node scripts/prepare-deploy-worktree.mjs --apply --path /workspaces/.deploy-wt-2
+//   node scripts/prepare-deploy-worktree.mjs --apply --path ../.deploy-wt-2
 //
-// --path (default /workspaces/.deploy-wt) lets concurrent agents stage their own
+// --path (default .deploy-wt beside the repo, so /workspaces/.deploy-wt in the
+// codespace) lets concurrent agents stage their own
 // tree instead of colliding on the shared default. --force replaces an existing
 // tree at that path, but only when clean-deploy-worktrees.mjs would have judged
 // it reclaimable, so a tree holding uncommitted work is never destroyed.
@@ -47,7 +48,7 @@ const APPLY = process.argv.includes('--apply');
 const FORCE = process.argv.includes('--force');
 const TARGET = (() => {
 	const i = process.argv.indexOf('--path');
-	const raw = i === -1 ? '/workspaces/.deploy-wt' : process.argv[i + 1];
+	const raw = i === -1 ? path.join(path.dirname(ROOT), '.deploy-wt') : process.argv[i + 1];
 	if (!raw || raw.startsWith('--')) fail('--path needs a directory argument');
 	return path.resolve(raw);
 })();

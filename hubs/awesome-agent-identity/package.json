@@ -1,0 +1,13 @@
+{
+  "name": "awesome-agent-identity",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A curated, PR-fed directory of on-chain agent identity, registries and reputation projects.",
+  "license": "CC0-1.0",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "validate": "node scripts/validate.mjs",
+    "build": "node scripts/build-readme.mjs"
+  }
+}

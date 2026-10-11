@@ -27,14 +27,15 @@ function buildDescribePrompt(detail, focus) {
 export const def = {
 	name: 'describe_image',
 	title: 'Describe an image in natural language',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Get a plain-language description of an image — ideal for alt text, captions, or a quick "what is this?" ' +
 		'read when you have no specific question. Supply the image as `imageUrl` (a public https URL) OR `image` ' +
 		'(raw base64 / data: URI). Use `detail` to pick brief / standard / detailed, and `focus` to steer the ' +
 		'description toward something specific (e.g. "the clothing", "any visible text"). Returns the prose as ' +
 		'`description`, plus the `provider` and `model` that served it (free NVIDIA NIM first, automatic paid ' +
-		'backstop otherwise — the caller never pays). Read-only; accepts JPEG, PNG, WebP, or GIF up to 12 MB.',
+		'backstop otherwise, so the caller never pays). Read-only; accepts JPEG, PNG, WebP, or GIF up to 12 MB. ' +
+		'Use this for alt text or a caption when you have no particular question; to ask something specific about the image, call analyze_image instead.',
 	inputSchema: {
 		imageUrl: z
 			.string()

@@ -25,7 +25,7 @@ Tooling / licensing:
 
 API contract:
   POST /process  {
-    mesh: url,                       # https GLB/OBJ/FBX/STL URL (required)
+    mesh: url,                       # https GLB/GLTF/OBJ/FBX/STL/PLY/OFF/DAE URL (required)
     remesh_mode: "triangle"|"quad"|"lowpoly",   # default: "triangle"
     operation: "convert"|"simplify"|"repair"|"full",   # default: "full" (triangle mode only)
     target_faces?: int,              # default: 50000, range: 1000–500000
@@ -45,7 +45,7 @@ Environment variables:
   GCS_BUCKET     — output bucket (required)
   MAX_CONCURRENT — default 2
   QUADRIFLOW_BIN — path to the quadriflow executable (default: "quadriflow")
-  BLENDER_TIMEOUT — seconds before a Blender FBX export is killed (default: 300)
+  BLENDER_TIMEOUT: seconds before a Blender FBX conversion is killed (default: 300)
 """
 
 from __future__ import annotations
@@ -54,6 +54,7 @@ import asyncio
 import io
 import logging
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -113,6 +114,23 @@ BLENDER_TIMEOUT = int(os.environ.get("BLENDER_TIMEOUT", "300"))
 #   .off  — Blender has no OFF importer at all
 BLENDER_IMPORT_FORMATS = {".glb", ".fbx", ".obj", ".stl", ".ply"}
 
+# blender_fbx.py exits with this status when the input imported no mesh
+# polygons: an unparseable file, an ASCII FBX, or a scene of only bones/lights.
+BLENDER_EXIT_IMPORT_EMPTY = 3
+
+# Binary FBX opens with this fixed 21-byte magic. ASCII FBX opens with a
+# `; FBX <version>` comment line, and Blender's importer refuses ASCII outright.
+FBX_BINARY_MAGIC = b"Kaydara FBX Binary  \x00"
+FBX_ASCII_HEADER = b"; FBX"
+
+
+class InputFormatError(ValueError):
+    """The caller's file is in a form this worker cannot read.
+
+    Unlike every other failure, its message is about the caller's input, carries
+    nothing internal, and is returned on the task verbatim so the caller knows
+    how to fix the file instead of seeing an opaque internal-error reference."""
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -146,13 +164,29 @@ def _fetch_mesh(url: str) -> tuple[bytes, str]:
         data = fetch_remote_bytes(url, timeout=60, max_bytes=MAX_MESH_BYTES)
     except UnsafeUrlError as exc:
         raise ValueError(f"refused to fetch mesh: {exc}") from exc
-    suffix = Path(url.split("?")[0]).suffix.lower()
-    if suffix not in SUPPORTED_INPUT_FORMATS:
-        suffix = ".glb"
+    suffix = _sniff_suffix(data, Path(url.split("?")[0]).suffix.lower())
     # A meshopt-compressed asset is transcoded here, before any loader sees it:
     # trimesh cannot read one, and it is the format most three.ws avatars ship
     # as. Anything else passes through untouched.
     return decode_if_meshopt(data, suffix)
+
+
+def _sniff_suffix(data: bytes, url_suffix: str) -> str:
+    """Pick the loader suffix, trusting the bytes over the URL for FBX.
+
+    A signed or extensionless URL used to fall back to `.glb` and then fail
+    inside the glTF parser with an error that said nothing about FBX. Binary FBX
+    is recognised by its magic and routed through Blender; ASCII FBX is refused
+    here, with the fix, because Blender's importer cannot read it either."""
+    head = data[:64].lstrip(b"\xef\xbb\xbf").lstrip()
+    if head.startswith(FBX_ASCII_HEADER):
+        raise InputFormatError(
+            "ASCII FBX is not supported: re-export the model as binary FBX "
+            "(FBX 7.1 or later) or as GLB"
+        )
+    if data.startswith(FBX_BINARY_MAGIC):
+        return ".fbx"
+    return url_suffix if url_suffix in SUPPORTED_INPUT_FORMATS else ".glb"
 
 
 def _load_concatenated(data: bytes, suffix: str):
@@ -657,12 +691,16 @@ def _face_count_marker(stdout: str) -> Optional[int]:
     return None
 
 
-def _blender_to_fbx(in_path: Path, out_path: Path, static: bool) -> int:
-    """Convert a local model file to FBX via headless Blender, preserving the
-    skeleton, skin weights, and blendshapes when the input carries them.
+def _blender_convert(in_path: Path, out_path: Path, static: bool) -> int:
+    """Convert a local model file via headless Blender, by `out_path`'s suffix.
 
-    Returns the exported polygon count. Raises RuntimeError with a clipped log
-    tail on failure. `static=True` skips animation baking (used when the upstream
+    `.fbx` exports an FBX, preserving the skeleton, skin weights, and
+    blendshapes when the input carries them. `.glb` is the input bridge: it is
+    how an FBX the caller sends becomes something trimesh can read.
+
+    Returns the converted polygon count. Raises InputFormatError when the input
+    imported no mesh polygons, and RuntimeError with a clipped log tail on any
+    other failure. `static=True` skips animation baking (used when the upstream
     geometry op already discarded any rig).
 
     Completion is judged by the child's FACE_COUNT marker plus a non-empty file,
@@ -679,22 +717,66 @@ def _blender_to_fbx(in_path: Path, out_path: Path, static: bool) -> int:
             cmd, capture_output=True, text=True, timeout=BLENDER_TIMEOUT, check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        raise RuntimeError(f"FBX export timed out after {BLENDER_TIMEOUT}s") from exc
+        raise RuntimeError(
+            f"Blender {in_path.suffix} to {out_path.suffix} conversion timed out after {BLENDER_TIMEOUT}s"
+        ) from exc
+
+    if proc.returncode == BLENDER_EXIT_IMPORT_EMPTY:
+        raise InputFormatError(_import_empty_message(in_path.suffix, proc.stderr))
 
     faces = _face_count_marker(proc.stdout)
     written = out_path.exists() and out_path.stat().st_size > 0
     if faces is None or not written:
         tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-6:]
         raise RuntimeError(
-            f"FBX export failed (rc={proc.returncode}): " + " | ".join(tail)
+            f"Blender {in_path.suffix} to {out_path.suffix} conversion failed "
+            f"(rc={proc.returncode}): " + " | ".join(tail)
         )
 
     if proc.returncode != 0:
         log.warning(
-            "blender exited abnormally (rc=%s) after writing a complete %s-byte FBX; keeping it",
-            proc.returncode, out_path.stat().st_size,
+            "blender exited abnormally (rc=%s) after writing a complete %s-byte %s; keeping it",
+            proc.returncode, out_path.stat().st_size, out_path.suffix,
         )
     return faces
+
+
+def _import_empty_message(suffix: str, stderr: str) -> str:
+    """The caller-facing reason an input imported nothing.
+
+    Blender's own wording is kept when it names the problem (it says so for a
+    pre-7.1 binary FBX, for example), since that is the most precise fix."""
+    reason = ""
+    for line in (stderr or "").splitlines():
+        if line.startswith("IMPORT_EMPTY:"):
+            reason = line.split(":", 1)[1].strip()
+    if reason.lower().startswith("error:"):
+        reason = reason[len("error:"):].strip()
+    # Blender quotes the temp path it was handed ('/tmp/tmpab12/input.fbx');
+    # that is this container's filesystem, not something the caller sent.
+    reason = re.sub(r"\s*'[^']*/[^']*'", "", reason)
+    reason = re.sub(r"\s*\(\s*\)", "", reason).strip()
+    label = suffix.lstrip(".").upper() or "file"
+    detail = f": {reason}" if reason else ""
+    message = f"could not read any mesh from the {label}{detail}"
+    if suffix == ".fbx":
+        message += ". Supply a binary FBX (7.1 or later) or a GLB"
+    return message
+
+
+def _fbx_to_glb(data: bytes) -> bytes:
+    """Bridge a caller's FBX into a GLB that the trimesh pipelines can load.
+
+    trimesh 4.x has no FBX reader at all, so before this every FBX input outside
+    the rig-preserving FBX-to-FBX convert failed with "File type: fbx not
+    supported". Blender is already in this image for FBX export, and its FBX
+    importer is the same one the rest of the industry relies on."""
+    with tempfile.TemporaryDirectory() as tmp:
+        src_path = Path(tmp) / "input.fbx"
+        src_path.write_bytes(data)
+        glb_path = Path(tmp) / "bridge.glb"
+        _blender_convert(src_path, glb_path, static=True)
+        return glb_path.read_bytes()
 
 
 def _convert_to_fbx_preserving_rig(data: bytes, suffix: str, task_id: str) -> tuple[list, dict]:
@@ -708,13 +790,13 @@ def _convert_to_fbx_preserving_rig(data: bytes, suffix: str, task_id: str) -> tu
         if suffix in BLENDER_IMPORT_FORMATS:
             src_path = Path(tmp) / f"input{suffix}"
             src_path.write_bytes(data)
-            faces = _blender_to_fbx(src_path, out_path, static=False)
+            faces = _blender_convert(src_path, out_path, static=False)
         else:
             import trimesh
             mesh = _load_concatenated(data, suffix)
             glb_path = Path(tmp) / "bridge.glb"
             trimesh.scene.scene.Scene(geometry={"mesh": mesh}).export(str(glb_path))
-            faces = _blender_to_fbx(glb_path, out_path, static=True)
+            faces = _blender_convert(glb_path, out_path, static=True)
         fbx_bytes = out_path.read_bytes()
     meta = {"quad_ratio": 0.0, "textured": False, "face_count": faces}
     return [Artifact(f"{task_id}.fbx", fbx_bytes, "application/octet-stream", "model")], meta
@@ -808,7 +890,7 @@ def _export_simple(mesh, output_format: str, task_id: str) -> list:
         if fmt == "fbx":
             glb_path = Path(tmpdir) / f"{task_id}.glb"
             trimesh.scene.scene.Scene(geometry={"mesh": mesh}).export(str(glb_path))
-            _blender_to_fbx(glb_path, out_path, static=True)
+            _blender_convert(glb_path, out_path, static=True)
         elif fmt == "usdz":
             _write_usdz(mesh, task_id, out_path)
         elif fmt == "glb":
@@ -924,6 +1006,10 @@ def _run_processing(
     if output_format == "fbx" and remesh_mode == "triangle" and operation == "convert":
         return _convert_to_fbx_preserving_rig(data, suffix, task_id)
 
+    # Every other path reads the input with trimesh, which cannot parse FBX.
+    if suffix == ".fbx":
+        data, suffix = _fbx_to_glb(data), ".glb"
+
     if remesh_mode == "quad":
         source = _load_textured(data, suffix)
         return _process_quad(source, target_faces, output_format, texture_size, task_id)
@@ -998,16 +1084,27 @@ async def _process(
                 meta.get("quad_ratio"), meta.get("textured"), urls.get("model"),
             )
 
+        except InputFormatError as exc:
+            log.info("[%s] rejected input: %s", task_id, exc)
+            _tasks[task_id].update({
+                "status": "failed",
+                "error": str(exc),
+                # Same taxonomy the avatar workers report and api/_providers/gcp.js
+                # relays: `input` means `error` is caller-facing copy.
+                "error_kind": "input",
+                "elapsed_ms": int((time.time() - t0) * 1000),
+            })
         except Exception as exc:
             _tasks[task_id].update({
                 "status": "failed",
                 "error": safe_error(exc, context=f"[{task_id}] remesh"),
+                "error_kind": "internal",
                 "elapsed_ms": int((time.time() - t0) * 1000),
             })
 
 
 class ProcessRequest(BaseModel):
-    mesh: str = Field(..., description="https URL to input mesh (GLB/OBJ/FBX/STL/PLY)")
+    mesh: str = Field(..., description="https URL to input mesh (GLB/GLTF/OBJ/FBX/STL/PLY/OFF/DAE)")
     remesh_mode: str = Field(default="triangle", description="triangle|quad|lowpoly")
     operation: str = Field(default="full", description="convert|simplify|repair|full")
     target_faces: int = Field(default=50_000, ge=1_000, le=500_000)

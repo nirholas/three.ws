@@ -6,7 +6,8 @@ export { readStore, writeStore, updateStore, resolveOrigin, mask, DEFAULT_ORIGIN
 export { credentialsPath, configDir, systemEnv } from './paths.js';
 export { bearerFor, authorizeInBrowser, discover, pkcePair } from './oauth.js';
 export { deviceLogin, startLink, pollLink } from './device.js';
-export { loginKey, loginOAuth, loginDevice, logout, whoami, currentIdentity, ensureStdioKey, scopesFor } from './auth.js';
+export { linkCodeLogin, claimLinkCode, pollLinkCode, normalizeCode } from './link-code.js';
+export { loginKey, loginOAuth, loginDevice, loginLinkCode, logout, whoami, currentIdentity, ensureStdioKey, ensureConnectorKey, scopesFor } from './auth.js';
 export { CLIENTS, REMOTE_CLIENTS, PRINT_CLIENT, getClient, isRemote, detectClients, readServers, writeServer, removeServer } from './clients/index.js';
 export { hostedServers, stdioPackages, slugForPath, loadDirectory, loadCatalog } from './servers.js';
 export { recommendedServer, modesFor, defaultMode, installUrl, connectorKey, checkConnectorKey, connectorUrl, connectorFields, verifyConnector, isPublicUrl } from './remote.js';

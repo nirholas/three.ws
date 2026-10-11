@@ -105,6 +105,10 @@
 					"path": "agent-screen-control"
 				},
 				{
+					"label": "The Crawl (agents reading the web)",
+					"path": "crawl"
+				},
+				{
 					"label": "The agent shell",
 					"path": "agent-shell"
 				},
@@ -124,6 +128,10 @@
 				{
 					"label": "Forge (text & image to 3D)",
 					"path": "forge"
+				},
+				{
+					"label": "Anatomy (machines as interactive cutaways)",
+					"path": "anatomy"
 				},
 				{
 					"label": "How the Forge works (plain language)",
@@ -168,6 +176,18 @@
 				{
 					"label": "Restyle Studio",
 					"path": "restyle"
+				},
+				{
+					"label": "Workbench",
+					"path": "workbench"
+				},
+				{
+					"label": "Modly (your own GPU)",
+					"path": "modly"
+				},
+				{
+					"label": "three.ws Forge for desktop",
+					"path": "forge-desktop"
 				},
 				{
 					"label": "Scene Studio",
@@ -450,6 +470,10 @@
 					"path": "reasoning-ledger"
 				},
 				{
+					"label": "Run receipts (expected vs observed)",
+					"path": "run-receipts"
+				},
+				{
 					"label": "Coin & market pages",
 					"path": "coin-pages"
 				},
@@ -468,6 +492,10 @@
 				{
 					"label": "Arenas, Theater & Vaults",
 					"path": "trading-arenas"
+				},
+				{
+					"label": "Solana trading tools (MCP + REST)",
+					"path": "trading-tools"
 				},
 				{
 					"label": "Oracle (the conviction engine)",
@@ -650,6 +678,10 @@
 					"path": "coin-launches"
 				},
 				{
+					"label": "Agent commerce: invoices and offers",
+					"path": "agent-commerce"
+				},
+				{
 					"label": "x402 protocol",
 					"path": "x402"
 				},
@@ -680,6 +712,14 @@
 				{
 					"label": "Pump Launcher (paid launch API)",
 					"path": "pump-launcher"
+				},
+				{
+					"label": "Launch on Robinhood Chain (Pons)",
+					"path": "pons-launch"
+				},
+				{
+					"label": "Paired coins (Robinhood Chain)",
+					"path": "paired-coins"
 				},
 				{
 					"label": "Launch Studio recipes",
@@ -946,6 +986,10 @@
 				{
 					"label": "3D Studio MCP (free)",
 					"path": "mcp-studio"
+				},
+				{
+					"label": "Grok and Grok Bot",
+					"path": "grok"
 				},
 				{
 					"label": "Agent manifest",

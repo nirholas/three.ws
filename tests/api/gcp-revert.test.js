@@ -53,7 +53,7 @@ describe('forge image→3D: GCP self-host lane reverts to a free lane by unsetti
 		expect(backendIsConfigured('trellis_selfhost')).toBe(true);
 		// A photo submission can't use the text-only NVIDIA lane, so the self-host
 		// worker leads the free candidate ordering.
-		const id = resolveBackendId({ path: 'image', tier: 'standard', userImages: true });
+		const id = resolveBackendId({ path: 'image', tier: 'standard', userImages: true, country: 'US' });
 		expect(id).toBe('trellis_selfhost');
 	});
 
@@ -63,12 +63,12 @@ describe('forge image→3D: GCP self-host lane reverts to a free lane by unsetti
 		delete process.env.GCP_RECONSTRUCTION_KEY;
 		process.env.HF_TOKEN = 'hf_x'; // the pre-program free image→3D lane
 		expect(backendIsConfigured('trellis_selfhost')).toBe(false);
-		const id = resolveBackendId({ path: 'image', tier: 'standard', userImages: true });
+		const id = resolveBackendId({ path: 'image', tier: 'standard', userImages: true, country: 'US' });
 		expect(id).toBe('huggingface');
 		// And with no free lane at all, it degrades to the paid standing default —
 		// never dead-ends.
 		delete process.env.HF_TOKEN;
-		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: true })).toBe('trellis');
+		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: true, country: 'US' })).toBe('trellis');
 	});
 
 	it('the Hunyuan3D and sketch/remesh gates flip the same way', () => {
@@ -90,10 +90,10 @@ describe('forge image→3D: GCP self-host lane reverts to a free lane by unsetti
 		process.env.GCP_HUNYUAN3D_URL = 'https://h.run.app';
 		process.env.GCP_RECONSTRUCTION_KEY = 'secret';
 		process.env.HF_TOKEN = 'hf_x';
-		expect(freeLaneCandidates('image', 'standard', true)).toEqual(['trellis_selfhost', 'hunyuan3d', 'huggingface']);
+		expect(freeLaneCandidates('image', 'standard', true, null, 'US')).toEqual(['trellis_selfhost', 'hunyuan3d', 'huggingface']);
 		// Revert: only the external free lane survives.
 		for (const v of ['MODEL_TRELLIS_URL', 'GCP_HUNYUAN3D_URL', 'GCP_RECONSTRUCTION_KEY']) delete process.env[v];
-		expect(freeLaneCandidates('image', 'standard', true)).toEqual(['huggingface']);
+		expect(freeLaneCandidates('image', 'standard', true, null, 'US')).toEqual(['huggingface']);
 	});
 });
 

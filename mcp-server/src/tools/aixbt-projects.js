@@ -16,7 +16,7 @@ import { resilientFetch } from '../lib/resilient-fetch.js';
 
 const TOOL_NAME = 'aixbt_projects';
 const TOOL_DESCRIPTION =
-	'aixbt momentum scan: projects ranked by aixbt spiking/climbing/active scores, with ticker, chain, market metrics (price, mcap, 24h volume + change) and recent intel. Filter by names (comma-separated) or chain. Powered by the live aixbt REST API. Paid: $0.01 USDC.';
+	'aixbt momentum scan: projects ranked by aixbt spiking/climbing/active scores, with ticker, chain, market metrics (price, mcap, 24h volume + change) and recent intel. Filter by names (comma-separated) or chain. Powered by the live aixbt REST API. Use this to find which projects are gaining momentum; for the underlying narrative items, call aixbt_intel instead. Paid: $0.01 USDC.';
 
 function env(k, def) {
 	const v = process.env[k];

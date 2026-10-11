@@ -233,6 +233,9 @@ export async function runTick({
 	const reviews = new Map(publishable.map((item) => [item.id, loadReview(root, item.id)]));
 	const context = {
 		items: publishable,
+		// Every item the ledger may name, publishable or not, so a ledger row
+		// from before formats were recorded still says what it looked like.
+		allItems: queue.items || [],
 		state,
 		now,
 		cadence: queue.cadence,

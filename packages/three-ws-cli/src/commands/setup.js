@@ -140,11 +140,13 @@ export async function setup(ctx) {
 	spin?.stop('Verified with live tool calls');
 	const liveTools = Object.fromEntries(results.filter((r) => r.ok).map((r) => [r.server.slug, r.tools]));
 
+	// 5b. Cloud-configured clients: verify the public URL and print the fields.
+	const remote = remoteClients.length ? await connectRemote(ctx, { clients: remoteClients, directory, servers: allServers }) : [];
+
 	// 6. Write.
 	const apiKey = mode === 'apikey' ? readStore(env).auth.key : null;
-	const writes = applyToClients({ clients, servers, packages, mode, apiKey, stdioKey, liveTools, forceProxy: Boolean(flags.proxy), project: Boolean(flags.project), origin, env });
+	const writes = applyToClients({ clients, servers, packages, mode, apiKey, stdioKey, liveTools, forceProxy: Boolean(flags.proxy), secretless: Boolean(flags.secretless), project: Boolean(flags.project), origin, env });
 	const selections = readStore(env).tools || {};
-	const remote = remoteClients.length ? await connectRemote(ctx, { clients: remoteClients, directory, servers: allServers }) : [];
 	const printed = printOnly
 		? Object.fromEntries(servers.map((s) => [s.slug, buildEntry({ client: PRINT_CLIENT, server: s, mode, apiKey, selection: selections[s.slug], liveTools: liveTools[s.slug], forceProxy: Boolean(flags.proxy) })]))
 		: null;
@@ -177,7 +179,7 @@ export async function setup(ctx) {
 		for (const w of writes) {
 			if (w.error) line(`  ${c.red(sym.fail)} ${w.client.label.padEnd(15)} ${w.error}`);
 			else {
-				const viaProxy = servers.some((s) => usesProxy({ client: w.client, server: s, mode, forceProxy: flags.proxy })) ? c.dim(' (OAuth via the three-ws proxy)') : '';
+				const viaProxy = servers.some((s) => usesProxy({ client: w.client, server: s, mode, forceProxy: flags.proxy })) ? c.dim(mode === 'apikey' ? ' (via the three-ws proxy; the key stays in the credential store)' : ' (OAuth via the three-ws proxy)') : '';
 				line(`  ${c.green(sym.ok)} ${w.client.label.padEnd(15)} ${tildify(w.file)} ${c.dim(`${w.servers.length} servers`)}${viaProxy}`);
 			}
 		}

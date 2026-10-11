@@ -63,6 +63,7 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import Optional
 
+import httpx
 import numpy as np
 import torch
 import trimesh
@@ -260,17 +261,32 @@ def _require_api_key(authorization: str) -> None:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
 
 
+class InputImageError(ValueError):
+    """The caller's image cannot be used. Its message is ours, never an
+    upstream string, so it is safe to return verbatim on the task record and
+    lets an operator tell a bad input from a worker fault without the logs."""
+
+
 def _decode_image_bytes(src: str) -> bytes:
     if src.startswith("data:image"):
         return base64.b64decode(src.split(",", 1)[1])
     if src.startswith("https://"):
         # SSRF-hardened: https-only, private/loopback/link-local/metadata IPs
-        # rejected after DNS resolution, redirects re-validated per hop, bounded.
+        # rejected after DNS resolution, redirects re-validated per hop, bounded,
+        # transient failures retried.
         try:
             return fetch_remote_bytes(src, timeout=30)
         except UnsafeUrlError as exc:
-            raise ValueError(f"refused to fetch image source: {exc}") from exc
-    raise ValueError(f"unsupported image source: {src[:60]}")
+            raise InputImageError(f"refused to fetch image source: {exc}") from exc
+        except httpx.HTTPStatusError as exc:
+            raise InputImageError(
+                f"image host answered HTTP {exc.response.status_code}"
+            ) from exc
+        except httpx.TransportError as exc:
+            raise InputImageError(
+                f"image host unreachable after retries ({type(exc).__name__})"
+            ) from exc
+    raise InputImageError("unsupported image source: expected https or data:image")
 
 
 def _prepare_photo(src: str) -> Image.Image:
@@ -284,9 +300,19 @@ def _prepare_photo(src: str) -> Image.Image:
         Image.open(io.BytesIO(data)).convert("RGBA").save(tmp, format="PNG")
         tmp_path = tmp.name
     try:
-        return prepare_image(tmp_path, bg_color=np.array([1.0, 1.0, 1.0]), rmbg_net=_rmbg_net)
+        prepared = prepare_image(tmp_path, bg_color=np.array([1.0, 1.0, 1.0]), rmbg_net=_rmbg_net)
     finally:
         os.unlink(tmp_path)
+    # Upstream's load_image reports an unusable input by RETURNING a string
+    # ("invalid image: pure black image", ...) which prepare_image then calls
+    # .permute on, so a blank or fully transparent upload used to surface as an
+    # AttributeError and an opaque internal error (11 of them in the three days
+    # to 2026-10-09). Name the input as the problem instead.
+    if not isinstance(prepared, Image.Image):
+        raise InputImageError(
+            "image has no visible subject (blank, black, or fully transparent)"
+        )
+    return prepared
 
 
 def _prepare_sketch(src: str) -> Image.Image:
@@ -459,6 +485,14 @@ async def _run_inference(
                 task_id, mode, elapsed, len(glb_bytes), gcs_url,
             )
 
+        except InputImageError as exc:
+            log.warning("[%s] input rejected: %s", task_id, exc)
+            await _update_task(
+                task_id,
+                status="failed",
+                error=f"input image unusable: {exc}",
+                elapsed_ms=int((time.time() - t0) * 1000),
+            )
         except Exception as exc:
             await _update_task(
                 task_id,

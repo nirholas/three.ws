@@ -62,6 +62,7 @@ export async function fundFromAgentWallet({ bid, listing, fundingAgent }) {
 		amountAtomics: BigInt(String(bid.amount_atomics)),
 		network: marketNetwork(),
 		category: 'marketplace_bid',
+		destinationTrust: 'system',
 		idempotencyKey: `agent-market-bid:${bid.id}`,
 		rowMeta: { listing_id: listing.id, bid_id: bid.id, escrow: listing.escrow_address },
 	});

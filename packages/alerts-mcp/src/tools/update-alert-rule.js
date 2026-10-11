@@ -18,7 +18,7 @@ const dropUndefined = (o) => Object.fromEntries(Object.entries(o).filter(([, v])
 export const def = {
 	name: 'update_alert_rule',
 	title: 'Update a pump.fun alert rule',
-	annotations: { readOnlyHint: false, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
 		'Update an existing pump.fun alert rule by id on the authenticated three.ws account. Partial — only ' +
 		'the fields you pass change. Idempotent: re-applying the same values yields the same rule. Common ' +
@@ -28,7 +28,8 @@ export const def = {
 		'threshold, webhook_url, telegram_chat, label). Removing webhook_url drops its secret; adding one ' +
 		'mints a fresh webhook_secret (returned). The result must still have at least one delivery channel ' +
 		'and satisfy the kind\'s targeting/threshold rules, or the API rejects it with a precise message. ' +
-		'Returns the updated rule. Requires THREE_WS_SESSION.',
+		'Returns the updated rule. Requires THREE_WS_SESSION. ' +
+		'Use this to pause, retune, or re-route an existing rule; unlike delete_alert_rule it keeps the rule and its history.',
 	inputSchema: {
 		rule_id: z.string().uuid().describe('Id of the rule to update (from list_alert_rules).'),
 		kind: z

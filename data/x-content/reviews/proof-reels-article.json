@@ -1,11 +1,9 @@
 {
 	"id": "proof-reels-article",
 	"contentHash": "1ab762e1e3ba94c08b6f7a532d17e175310072ad8904eecec56bc75f1d8d851f",
-	"reviewedAt": "2026-10-08T04:41:45.222Z",
-	"passed": false,
-	"blockers": [
-		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"Request had insufficient authentication scopes.\",; \"status\": \"PERMISSION_DENIED\",; \"details\": [; {; \"@type\": \"type.googleapis.com/goog; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; Expected ',' or '}' after property value in JSON at position 424 (line 1 column 425)"
-	],
+	"reviewedAt": "2026-10-09T17:04:26.394Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"How our feature reels are filmed: a scripted test run against the live site",
 		"The feature videos in this feed are scripted test runs against the live site, filmed as they run. If any step fails, there is no video and the feature is not announced. The page clock is stepped one frame at a time, 1/30 of a second each, so a heavy 3D page films smoothly on a machine with no GPU. Here is how the camera works, and what it refuses to film."
@@ -537,6 +535,78 @@
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  Expected ',' or '}' after property value in JSON at position 424 (line 1 column 425)"
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 4,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "clarity",
+				"quote": "The feature videos in this feed are scripted test runs against the live site",
+				"problem": "\"this feed\" assumes the reader already knows the account posts feature reels at all; a first-time reader gets it only after the article opens. Not wrong, just slightly inside-baseball for the first line.",
+				"fix": "Optional: \"Every feature video this account posts is a scripted test run against the live site, filmed as it runs.\""
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"The feature videos in this feed are scripted test runs against the live site, filmed as they run. If any step fails, there is no video and the feature is not announced. The page clock is stepped one frame at a time, 1/30 of a second each, so a heavy 3D page films smoothly on a machine with no GPU. Here is how the camera works, and what it refuses to film."
+			],
+			"altText": [
+				"Six crops from filmed reels in a grid on black: a blue robot portrait, a nine-cylinder radial engine, a holographic foil sticker, an avatar with headphones and red sunglasses, a steam locomotive on its track, and a splat-rendered head bust, each a frame from a scripted run against the live three.ws site"
+			]
+		},
+		"summary": "Every claim in the post and article body is backed by passing file, page, API, and command checks, and the cover image matches its alt text with no contradictions. Voice is clean (no hashtags, emoji, dashes, or hype openers) and the mechanism leads the first line; ship it.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"Each one is a scripted test run against the live site, filmed while it runs\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"If any step of the run fails, no video is made, and the feature is not announced\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A step can goto a page, click a control by its visible text, type into a field, press a key, drag across the scene, expect a text to appear, or read a fact off the screen with a pattern\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"These are five of the steps behind the Machine Atlas reel\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"On the filmed run it read 9, then 5, and it waited for the new displacement before it went on\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"When the Drive reel types a question to an agent, the run waits for the chat request to answer, and an error fails the run\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The machine that films has no GPU\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A headless browser renders WebGL in software at one to three frames a second, and a screen recorder pads that out by repeating frames\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It advances the clock by one frame, a thirtieth of a second, takes a picture, and repeats\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Every frame of a reel is a distinct frame at 1/30 s of page time\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"On the galaxy page, recording in real time gave 1.3 distinct frames a second; stepping gave 30\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"one frame of a plain list page measured 3.5 to 15 seconds\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the 3D scene still renders in software exactly as before\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The holographic sticker reel is 18.13 seconds and 544 frames long\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"One drag in it is 84 frames, 2.8 seconds of reel, and took 90 seconds to film\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Nothing is drawn over the product except the pointer\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The stamp names the site, the production commit that answered, read from the site's own version endpoint, and the day the reel was filmed\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Anything that waits on the network runs on the real clock while the camera is off\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"If a wait lasts two seconds or more\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a badge such as cut 6 s appears in the bar for the next second and a half\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"each caption is set in the real bar, beside the longest stamp and the longest badge it could share the line with, and a caption that would be cut off is refused by name\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"We added that check after reels were filmed with captions that ended mid-sentence\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"together with a hash of the scenario and of the video\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Change a step or swap the file and the post no longer validates\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A record also expires after 14 days\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"When a post is reviewed, the scenario runs again without the camera\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A fact the post states exactly has to read the same as the reel shows. A fact stated as a floor has to stay at or above it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A post that states a count can also carry a check that runs again seconds before it is sent\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"it is given four frames from the reel, the captions in order, and the record of the run, and asked whether each caption is true of the frame under it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The camera saves a picture of the page at the moment the step failed\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"If fewer than 15% of its frames change, the reel does not validate\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the camera draws a waving hand emoji into a small canvas and counts the coloured pixels\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"So it refuses, and says which font to install\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Some features did not pass when we used them. They are not in this feed\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"reels are made where posts are reviewed, not in production, which reads the record and does not film\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The engine above is at three.ws/assembly\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
 }

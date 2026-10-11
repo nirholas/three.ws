@@ -18,11 +18,15 @@ const READ_ONLY_TOOLS = new Set([
 	'build_registration',
 	'list_onchain_agents',
 	'three_status',
+	// Spend-nothing previews of the two execution tools: they read balances and
+	// build the transaction, but have no path to sign or send it.
+	'preview_agent_mint',
+	'preview_agent_identity',
 ]);
 const EXECUTION_TOOLS = new Set(['mint_onchain_agent', 'send_signed_transaction', 'register_agent_identity']);
 
 test('exactly the expected tools are registered', () => {
-	assert.equal(TOOLS.length, 9);
+	assert.equal(TOOLS.length, 11);
 	assert.deepEqual(new Set(TOOLS.map((t) => t.name)), new Set([...READ_ONLY_TOOLS, ...EXECUTION_TOOLS]));
 });
 

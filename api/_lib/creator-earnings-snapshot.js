@@ -112,7 +112,7 @@ async function refreshWallet(connection, creator, coins) {
 	const walletCoins = coins.length;
 	const walletAgents = new Set(coins.map((c) => c.agent_id).filter(Boolean)).size || 1;
 	const [report, days, halfHours] = await Promise.all([
-		readCreatorFeeReport(connection, creator),
+		readCreatorFeeReport(connection, creator, { mints: coins.map((c) => c.mint) }),
 		fetchCreatorFeeBuckets(creator, '1d'),
 		fetchCreatorFeeBuckets(creator, '30m'),
 	]);

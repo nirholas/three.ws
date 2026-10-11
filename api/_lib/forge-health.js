@@ -282,6 +282,14 @@ const PROBES = {
 	// nothing flagging it. It publishes the same /health contract the other GCP
 	// workers do, load_error included, so the shared probe reads it as down.
 	trellis_selfhost: gcpWorkerProbe('trellis_selfhost', 'MODEL_TRELLIS_URL'),
+	// TRELLIS.2 is the default image lane for every tier. Same /health contract as
+	// the other workers, so a latched model-load failure reads as down here too.
+	trellis2: gcpWorkerProbe('trellis2', 'MODEL_TRELLIS2_URL'),
+	// One Modly worker serves both Modly lanes, so both read the same /health.
+	// The worker reports load_error per enabled model, so a latched bring-up
+	// failure reads as down for both.
+	modly: gcpWorkerProbe('modly', 'MODEL_MODLY_URL'),
+	modly_hunyuan: gcpWorkerProbe('modly_hunyuan', 'MODEL_MODLY_URL'),
 };
 
 // The editing lanes: everything the result panel offers AFTER a mesh exists

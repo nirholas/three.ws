@@ -1,0 +1,135 @@
+/* /developers: developer plans. Builds on pricing.css tokens and tier cards. */
+
+.dev-plans-section {
+	max-width: 1100px;
+	margin: 0 auto 72px;
+	padding: 0 24px;
+}
+.dev-plans-h2 {
+	font-family: var(--font-display, 'Space Grotesk', 'Inter', sans-serif);
+	font-size: 28px;
+	letter-spacing: -0.02em;
+	margin: 0 0 22px;
+	color: rgb(var(--pr-fg));
+}
+.dev-plans-tiers {
+	grid-template-columns: repeat(4, 1fr);
+	padding: 0;
+	min-height: 420px;
+}
+.dev-plans-tiers .pricing-tier-card {
+	padding: 36px 28px;
+}
+.dev-plans-tiers .pricing-amount {
+	font-size: 40px;
+}
+.dev-plans-tiers .pricing-features li strong {
+	color: rgb(var(--pr-fg));
+	font-variant-numeric: tabular-nums;
+}
+.dev-plans-skel {
+	min-height: 420px;
+	background: linear-gradient(90deg, var(--pr-card) 0%, var(--pr-card-2) 50%, var(--pr-card) 100%);
+	background-size: 200% 100%;
+	animation: dev-plans-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes dev-plans-shimmer {
+	0% { background-position: 200% 0; }
+	100% { background-position: -200% 0; }
+}
+.dev-plans-note {
+	max-width: 820px;
+	margin: 18px auto 0;
+	font-size: 13px;
+	line-height: 1.65;
+	color: rgba(var(--pr-fg), 0.6);
+	text-align: center;
+}
+.dev-plans-error {
+	max-width: 520px;
+	margin: 24px auto 0;
+	padding: 24px;
+	text-align: center;
+	border: 1px solid rgba(var(--pr-fg), 0.1);
+	border-radius: 14px;
+	color: rgba(var(--pr-fg), 0.75);
+}
+.dev-plans-error p { margin: 0 0 14px; font-size: 14px; }
+.dev-plans-how-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 16px;
+}
+.dev-plans-how-card {
+	background: var(--pr-card);
+	border: 1px solid rgba(var(--pr-fg), 0.08);
+	border-radius: 16px;
+	padding: 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	transition: border-color var(--duration-fast, 0.15s), transform var(--duration-fast, 0.15s);
+}
+.dev-plans-how-card:hover {
+	border-color: rgba(var(--pr-fg), 0.18);
+	transform: translateY(-2px);
+}
+.dev-plans-how-card h3 {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	color: rgb(var(--pr-fg));
+}
+.dev-plans-how-card p, .dev-plans-how-card li {
+	font-size: 14px;
+	line-height: 1.55;
+	color: rgba(var(--pr-fg), 0.7);
+	margin: 0;
+}
+.dev-plans-how-card ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.dev-plans-how-card pre {
+	margin: 0;
+	padding: 14px 16px;
+	border-radius: 10px;
+	background: rgba(var(--pr-fg), 0.04);
+	border: 1px solid rgba(var(--pr-fg), 0.06);
+	overflow-x: auto;
+	font-family: var(--font-mono, 'SF Mono', 'Fira Code', monospace);
+	font-size: 12.5px;
+	line-height: 1.6;
+	color: rgba(var(--pr-fg), 0.85);
+}
+.dev-plans-how-card code { font-family: var(--font-mono, 'SF Mono', 'Fira Code', monospace); }
+.dev-plans-how-card [data-plan-field] { color: rgb(var(--pr-fg)); font-weight: 600; }
+.pricing-hero .lead code {
+	font-family: var(--font-mono, 'SF Mono', 'Fira Code', monospace);
+	font-size: 0.9em;
+	padding: 1px 6px;
+	border-radius: 6px;
+	background: rgba(var(--pr-fg), 0.06);
+}
+.dev-plans-cta-row {
+	display: flex;
+	gap: 12px;
+	justify-content: center;
+	flex-wrap: wrap;
+}
+.dev-plans-cta-row .pricing-cta { width: auto; min-width: 200px; }
+.pricing-cta:focus-visible { outline: 2px solid rgb(var(--pr-fg)); outline-offset: 3px; }
+
+@media (max-width: 1000px) {
+	.dev-plans-tiers { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 760px) {
+	.dev-plans-how-grid { grid-template-columns: 1fr; }
+	.dev-plans-h2 { font-size: 24px; }
+}
+@media (max-width: 520px) {
+	.dev-plans-tiers { grid-template-columns: 1fr; }
+	.dev-plans-section { padding: 0 16px; margin-bottom: 48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.dev-plans-skel { animation: none; }
+	.dev-plans-how-card { transition: none; }
+	.dev-plans-how-card:hover { transform: none; }
+}

@@ -1,0 +1,10 @@
+[
+  {"id":"specs-and-docs","title":"Specs and Documentation","blurb":"The open Agent Skills format and the official guides that explain how skills are written, discovered and loaded."},
+  {"id":"official-skill-libraries","title":"Official Skill Libraries","blurb":"Skill bundles published by the teams who build the platforms, frameworks and services they teach agents to use."},
+  {"id":"community-collections","title":"Community Collections","blurb":"Curated lists and large community catalogs of skills, a good place to browse what exists."},
+  {"id":"domain-skills","title":"Domain Skills and Methodologies","blurb":"Focused skill sets for science, marketing, engineering practice and context engineering."},
+  {"id":"registries-and-marketplaces","title":"Registries and Marketplaces","blurb":"Places to search, compare, version and install skills and plugins, from public indexes to enterprise registries."},
+  {"id":"installers-and-authoring","title":"Installers and Authoring Tools","blurb":"CLIs, loaders and generators that package, validate and deliver skills to the agent of your choice."},
+  {"id":"security-and-scanning","title":"Security and Scanning","blurb":"Scanners that inspect skills, MCP servers and agent configurations before you trust them."},
+  {"id":"agent-runtimes","title":"Agent Runtimes with Skills","blurb":"Agents and harnesses that load skills or plugins natively."}
+]

@@ -12,9 +12,9 @@ import { shapeExecution } from '../lib/shapes.js';
 export const def = {
 	name: 'get_executions',
 	title: 'List copy executions (intent inbox)',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'List the authenticated account\'s copy executions — the sized, guard-checked copy INTENTS generated when a followed leader trades. Each row carries the coin (mint/symbol/name), the mirrored direction (buy/sell), the planned SOL size, the leader, the safety/quote snapshot used for the decision, the lifecycle status, and any fill signature you recorded. Filter by status: "pending" (actionable now — default), "acted", "dismissed", "skipped" (guard blocked it, with skip_reason), "expired", or "all". Reading refreshes the inbox: stale pending intents are expired automatically. Use record_execution to mark a pending intent acted/dismissed. Read-only; requires THREE_WS_API_KEY.',
+		'List the authenticated account\'s copy executions: the sized, guard-checked copy INTENTS generated when a followed leader trades. Each row carries the coin (mint/symbol/name), the mirrored direction (buy/sell), the planned SOL size, the leader, the safety/quote snapshot used for the decision, the lifecycle status, and any fill signature you recorded. Filter by status: "pending" (actionable now; the default), "acted", "dismissed", "skipped" (guard blocked it, with skip_reason), "expired", or "all". Reading refreshes the inbox: stale pending intents are expired automatically. Use this to see which copy intents are waiting on you, then call record_execution to mark each pending one acted or dismissed. Read-only; requires THREE_WS_API_KEY.',
 	inputSchema: {
 		status: z
 			.enum(['pending', 'acted', 'dismissed', 'skipped', 'expired', 'all'])

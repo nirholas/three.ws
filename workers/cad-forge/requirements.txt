@@ -1,0 +1,16 @@
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+# worker_security.py (vendored) imports httpx.
+httpx==0.27.2
+# build123d 0.13 on OpenCascade 8 (cadquery-ocp-novtk wheels): the same
+# modeling layer text-to-cad's cadgen uses, so a design's source runs unchanged
+# in either. Pinned so a kernel upgrade is a deliberate change, not a rebuild.
+build123d==0.13.0
+# Standard parts by build123d's author (Apache-2.0): involute gears, ISO
+# threads, fasteners, bearings. Programs import from it by name.
+bd_warehouse==0.4.0
+# ctypes binding to libseccomp: denies sockets, exec and fork to the program.
+pyseccomp==0.1.2
+cadquery-ocp-novtk==8.0.1.1.0
+numpy==2.4.6

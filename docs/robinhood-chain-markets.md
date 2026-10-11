@@ -14,10 +14,13 @@ actions). This page — and the API behind it — is that missing layer.
 - **Stocks** — the 24/7 tokenized-equity board. For every Stock Token: the Chainlink NAV price
   (read live on-chain), the deepest Uniswap DEX price, the premium/discount between them, 24h DEX
   volume, and liquidity. Sortable and searchable.
-- **Coins** — a memecoin screener across the chain's two launchpads (**NOXA**, an instant
-  Uniswap v3 launcher, and **The Odyssey**, a pump.fun-style bonding curve), split into CoinGecko's
-  "Robinhood Chain Meme" / "Robinhood Chain Stocks Ecosystem" / "Robinhood Ecosystem" categories,
-  plus a live feed of recent launches read directly from on-chain logs.
+- **Coins**: a memecoin screener split into CoinGecko's "Robinhood Chain Meme" / "Robinhood
+  Chain Stocks Ecosystem" / "Robinhood Ecosystem" categories, plus a live feed of recent launches
+  read directly from on-chain logs: **Pons** (the chain's busiest launchpad, an ETH bonding curve
+  that graduates into a locked Uniswap V4 pool), **NOXA** (instant Uniswap v3) and **The
+  Odyssey** (bonding curve). Pons coins still on their curve show the curve's price, market cap
+  and graduation progress. To launch one from your own agent, see
+  [Launch a coin on Robinhood Chain (Pons)](pons-launch.md).
 - **Chain** — block height, gas, transaction/address counts, and 90 days of chain TVL (DefiLlama).
 
 Every coin and Stock Token links to its own detail page —
@@ -91,9 +94,12 @@ Free, keyless, real data only:
 | `GET /api/v1/robinhood/stocks-detail?symbol=AAPL` | One Stock Token in depth: NAV history, all DEX pairs, holders, transfers, links |
 | `GET /api/v1/robinhood/coins?category=meme` | Memecoin screener (`category`: `meme` \| `stocks-ecosystem` \| `ecosystem`; `sort`: `market_cap` \| `volume` \| `gainers` \| `losers`) |
 | `GET /api/v1/robinhood/coins-detail?address=0x…` | One coin: pools, market stats, holders, transfers, links |
-| `GET /api/v1/robinhood/launches` | Recent launches from NOXA + The Odyssey, newest first |
+| `GET /api/v1/robinhood/launches` | Recent launches from Pons, NOXA and The Odyssey, newest first. Pons curve-stage coins carry `priceUsd`, `marketCapUsd` and `graduationPct` read from the curve |
 | `GET /api/v1/robinhood/desk` | The desk's market side in one read: chain vitals, the premium ridge (bins, liquidity layers, percentiles), the widest tradeable dislocations, memecoin movers, recent launches |
 | `GET /api/v1/robinhood/wallet?address=0x…` | The desk's wallet side in one read: native balance, priced ERC-20 positions, book totals, balance history (daily + per-transaction, merged), the activity tape and counterparty flow |
+| `GET /api/v1/robinhood/paired-markets` | Every asset a [paired coin](paired-coins.md) can trade against, from the launchpad's on-chain quote registry, with class, live USD price and opening value, plus the launchpad's live terms |
+| `GET /api/v1/robinhood/paired-coins` | Paired coins, newest first, every pool priced in dollars, with the verified descriptor and launching agent (`limit`, `offset`, `agent`) |
+| `GET /api/v1/robinhood/paired-coins-detail?address=0x…` | One paired coin: pools, per-pool candles (`interval`), recent trades from the launchpad's `Swap` events |
 
 Paid via x402 ($0.002 USDC, Base or Solana):
 
@@ -101,7 +107,7 @@ Paid via x402 ($0.002 USDC, Base or Solana):
 | --- | --- |
 | `GET /api/x402/robinhood-portfolio?address=0x…` | Multiplier-correct Stock Token portfolio: every held symbol's true position (raw balance × ERC-8056 `uiMultiplier`) priced at the live Chainlink NAV, plus a total USD value |
 
-Every response carries `source` and `asOf` fields. A miss is a structured error, never a bare 500. An unknown `sort` (or `category`) falls back to the default instead of 400ing a screener read, and the response echoes the `sort` (and `dir`) that actually ran, never the caller's unknown value.
+Every response carries an `asOf` field, and every one except `paired-coins` and `paired-coins-detail` (which read only the launchpad) also names its `source`. A miss is a structured error, never a bare 500. An unknown `sort` (or `category`) falls back to the default instead of 400ing a screener read, and the response echoes the `sort` (and `dir`) that actually ran, never the caller's unknown value.
 
 ### Why the multiplier matters
 
@@ -125,9 +131,10 @@ math; Chainlink feed prices are already multiplier-adjusted, so they're never re
   twice inside the cache callback, and only a persistent outage is ever cached).
 - **Chain TVL** — [DefiLlama](https://defillama.com/chain/robinhood-chain).
 - **Memecoin screener** — CoinGecko categories `robinhood-chain-meme`, `robinhood-chain-stocks-ecosystem`, `robinhood-ecosystem`.
-- **Recent launches** — decoded on-chain logs from the NOXA and Odyssey launchpad factories
-  (Blockscout's log API, filtered by event topic — the public RPC's `eth_getLogs` caps at 10k
-  matched logs and can't reliably answer "what's newest").
+- **Recent launches**: Pons V2 from its factory's `TokenLaunched` logs over RPC (the last hour
+  of blocks, inside the public RPC's range cap), with curve reserves, graduation progress and
+  supply from one multicall; NOXA and Odyssey from Blockscout's log API filtered by event topic.
+  Each source fails on its own, so one indexer outage never empties the feed.
 
 ## Related surfaces
 

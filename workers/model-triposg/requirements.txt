@@ -11,7 +11,10 @@
 # 2.3.1"), which cascades into a dead diffusers import and a container that never
 # starts (crashes before listening on $PORT).
 diffusers==0.31.0
-transformers==4.46.3
+# 4.57.6, not 4.46.3: the newest transformers that clears its ReDoS and
+# deserialization advisories and still runs on torch 2.3.1 (DTensor is only
+# imported on torch>=2.5). Needs huggingface_hub>=0.34, satisfied below.
+transformers==4.57.6
 # Upstream also leaves peft and huggingface_hub unpinned; a bad transitive
 # resolve of those crashed revision 00001 at import time (diffusers.loaders.peft
 # raised "name 'torch' is not defined" before the server could bind $PORT).

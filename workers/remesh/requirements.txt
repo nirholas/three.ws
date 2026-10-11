@@ -13,8 +13,10 @@ Pillow==12.3.0
 google-cloud-storage==2.19.0
 httpx==0.27.2
 pydantic==2.10.3
-# FBX/DAE input loading via the assimp python bindings (trimesh backend).
-pyassimp==5.2.5
+# No pyassimp. trimesh 4.x carries no assimp loader at all (DAE input goes
+# through pycollada from trimesh[easy]; FBX is not a trimesh input format), and
+# nothing in this worker imports pyassimp, so the pin only shipped the 33 OSV
+# advisories filed against the assimp C++ library without ever being called.
 # USD / USDZ support
 # usd-core 25.11, not 24.11: 24.11 carries a CRITICAL Sdf_PathNode use-after-free
 # (GHSA-58p5-r2f6-g2cj) and a file-parsing use-after-free, both RCE-class. This

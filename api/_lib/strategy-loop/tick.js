@@ -22,9 +22,7 @@
 // in worker memory between steps.
 
 import { sql } from '../db.js';
-import { agentDefaultModel, modelChain } from '../agent-model.js';
-import { loadOwnerGrokKey } from '../agent-grok-key.js';
-import { MODEL_CATALOG } from '../chat-models.js';
+import { resolveAgentBrain } from '../agent-brain.js';
 import { createAgentLoop, initialLoopState, loopFinished, finalAnswer } from '../agent-loop.js';
 import { computeContext } from '../memory-store.js';
 import { insertNotification } from '../notify.js';
@@ -326,6 +324,16 @@ async function gate({ agent, loopRow, loop }) {
 			});
 			return { outcome: 'paused', reason: 'inference_budget' };
 		}
+		if (err?.code === 'token_budget_exhausted' || err?.code === 'token_budget_paused') {
+			await enterPause({
+				agent,
+				loopRow,
+				reason: 'token_budget',
+				message: `${agent.name || 'This agent'} reached its ${err.detail?.window === 'hour' ? 'hourly' : 'daily'} token ceiling, so the strategy loop is paused until the ceiling resets, is extended once, or is raised.`,
+				until: err.detail?.resets_at ? new Date(err.detail.resets_at) : new Date(Date.now() + CREDIT_RECHECK_MS),
+			});
+			return { outcome: 'paused', reason: 'token_budget' };
+		}
 		throw err;
 	}
 
@@ -418,21 +426,6 @@ function eventRow(event) {
 }
 
 /**
- * The provider chain for this tick: the agent's chosen brain
- * (api/_lib/agent-model.js, checked across all three legacy meta locations),
- * or the platform default chain when none is set or the choice has no tool
- * calling (the loop's tools require it). A Grok choice leads with the
- * owner's saved xAI key (api/_lib/agent-grok-key.js) ahead of the server key.
- * @param {{ meta?: object, user_id?: string }} agent
- */
-export async function resolveTickChain(agent) {
-	const model = agentDefaultModel(agent.meta);
-	const usable = model && MODEL_CATALOG[model]?.tools ? model : null;
-	const grokKey = usable && MODEL_CATALOG[usable].provider === 'grok' ? await loadOwnerGrokKey(agent.user_id) : null;
-	return modelChain(usable, { grokKey }).chain;
-}
-
-/**
  * Run (or resume) one tick for an agent this worker has leased.
  *
  * @param {object} o
@@ -519,7 +512,7 @@ export async function runAgentTick({ agentId, workerId, cfg, log, signal = null,
 		({ state, context } = initialLoopState({ operationId: `tick-${tick.id}`, messages, maxSteps: runtimeSteps }));
 	}
 
-	const chain = deps.chain || await resolveTickChain(agent);
+	const chain = deps.chain || (await resolveAgentBrain({ agent, purpose: 'run', lenient: true })).chain;
 	if (!chain.length) {
 		await finishTick(tick.id, { status: 'failed', error: 'no LLM provider is configured' });
 		await scheduleNext({ agentId, slot: tick.slot, intervalSeconds: loop.intervalSeconds, status: 'failed', failed: true });
@@ -608,7 +601,9 @@ export async function runAgentTick({ agentId, workerId, cfg, log, signal = null,
 			const rows = [];
 			for (const [i, event] of pending.entries()) {
 				const row = eventRow(event);
-				if (event.kind === 'model_call') {
+				if (event.kind === 'model_call' && event.keySource === 'owner') {
+					row.cost_usd = 0;
+				} else if (event.kind === 'model_call') {
 					const charge = await chargeInference({
 						userId: agent.user_id,
 						agentId,

@@ -48,15 +48,17 @@ Every published model carries:
   ("Forged Sci-Fi"), falling back to "3D Model" for the catch-all buckets, so
   a winning image-derived model never reaches the account titled after a
   route.
-- **AI disclosure**: the `ai-generated` tag plus a plain statement that the
-  model was AI-generated on the three.ws Forge. Sketchfab has no dedicated
-  AI-content field, so tag + statement is the correct marking.
+- **AI disclosure**: Sketchfab's "Created With AI" tag (slug `createdwithai`),
+  which its [AI-generated content policy](https://help.sketchfab.com/en/articles/16152133)
+  requires on AI-generated models, plus a plain statement that the model was
+  AI-generated on the three.ws Forge. Without the tag Sketchfab can file the
+  model as "Human Created" in its search filters.
 - **Backlinks with UTM parameters** (`utm_source=sketchfab`,
   `utm_medium=referral`, `utm_campaign=showcase`): one to the creation's
   [share page](/docs/share-and-embed) (`/forge/share/<id>`), one to
   [/forge](/forge). The UTM tags make Sketchfab referrals measurable in
   analytics, which decides whether the cadence goes up or down.
-- **Tags**: `ai-generated`, `generative-ai`, `text-to-3d`, `threews`, plus the
+- **Tags**: `createdwithai`, `ai-generated`, `generative-ai`, `text-to-3d`, `threews`, plus the
   model's category.
 
 Models are published viewable and inspectable but not downloadable: creations

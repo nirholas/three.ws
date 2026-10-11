@@ -1,0 +1,144 @@
+{
+	"recorded_at": "2026-10-10T06:17:01.686Z",
+	"args": {
+		"token": "SOL",
+		"quote": "USDC",
+		"amount": 5
+	},
+	"result": {
+		"token": "So11111111111111111111111111111111111111112",
+		"quote": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		"amount_in": 5,
+		"size": {
+			"ok": true,
+			"size_usd": 5,
+			"above_default_cap": false,
+			"cap_usd": 100,
+			"hard_cap_usd": 1000
+		},
+		"venues_quoted": 8,
+		"profitable": false,
+		"verdict": "unprofitable",
+		"reason": "The expected profit does not clear both legs and their network fees.",
+		"expected": {
+			"quote_out": 5.000596,
+			"gross_profit": 0.0005959999999998189,
+			"network_fees": 0.023058,
+			"net_profit": -0.02246200000000018,
+			"net_profit_pct": -0.44924000000000364,
+			"net_profit_usd": -0.02246200000000018
+		},
+		"worst_case": {
+			"scenarios": [
+				{
+					"id": "expected",
+					"description": "Both legs fill at the quoted prices.",
+					"quote_out": 5.000596,
+					"net_profit": -0.02246200000000018
+				},
+				{
+					"id": "both_legs_slip",
+					"description": "Leg 1 returns its 1% slippage floor of tokens and leg 2 sells them at its own floor on the same venue.",
+					"quote_out": 4.90090788,
+					"net_profit": -0.12215011999999989
+				},
+				{
+					"id": "spread_closes",
+					"description": "By the time leg 2 is quoted the spread has closed: the tokens sell at the weakest venue that quoted, at its slippage floor. This is also what you hold if leg 2 fails and you unwind later.",
+					"quote_out": 4.89957534,
+					"net_profit": -0.12348265999999983
+				}
+			],
+			"worst_quote_out": 4.89957534,
+			"worst_net_profit": -0.12348265999999983,
+			"max_loss": 0.12348265999999983,
+			"max_loss_pct": 2.4696531999999967,
+			"fees_counted": true,
+			"max_loss_usd": 0.12348265999999983,
+			"inputs": {
+				"slippage_bps_per_leg": 100,
+				"leg1_tokens_expected": 0.045534927,
+				"leg1_tokens_at_floor": 0.045079577,
+				"sell_venue": "dex:Whirlpool",
+				"weakest_venue": "dex:BinaryFi",
+				"network_fee_lamports_per_leg": 105000
+			}
+		},
+		"risk": {
+			"atomic": false,
+			"summary": "The two legs are separate transactions. Leg 1 can fill and leg 2 can then fail, reprice or be front-run, leaving you holding the token. Nothing here protects against that except sizing.",
+			"factors": [
+				{
+					"id": "leg_gap",
+					"detail": "Leg 2 is quoted and signed after leg 1 confirms; any price move in between is yours."
+				},
+				{
+					"id": "slippage",
+					"detail": "Each leg accepts up to 1% slippage; the worst case above prices both at that floor."
+				},
+				{
+					"id": "stranded_inventory",
+					"detail": "If leg 2 fails you hold the leg 1 tokens; the spread_closes scenario is what they fetch at the weakest venue."
+				},
+				{
+					"id": "guards",
+					"detail": "Each leg runs the full trade guard chain on its own (spend caps, price-impact breaker, rug firewall), so leg 2 can be refused after leg 1 filled."
+				}
+			]
+		},
+		"legs": [
+			{
+				"step": 1,
+				"action": "buy",
+				"venue": "dex:Deriverse",
+				"venue_name": "Deriverse",
+				"pays": 5,
+				"receives_tokens": 0.045534927,
+				"swap_quote": {
+					"input_mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+					"output_mint": "So11111111111111111111111111111111111111112",
+					"amount": 5,
+					"dex": "dex:Deriverse",
+					"slippage_bps": 100
+				}
+			},
+			{
+				"step": 2,
+				"action": "sell",
+				"venue": "dex:Whirlpool",
+				"venue_name": "Whirlpool",
+				"sells_tokens": 0.045534927,
+				"receives": 5.000596,
+				"swap_quote": {
+					"input_mint": "So11111111111111111111111111111111111111112",
+					"output_mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+					"amount": 0.045534927,
+					"dex": "dex:Whirlpool",
+					"slippage_bps": 100
+				}
+			}
+		],
+		"alternatives": [
+			{
+				"buy_venue": "dex:Deriverse",
+				"sell_venue": "dex:Kipseli",
+				"gross_profit": 0.00011799999999961841,
+				"net_profit": -0.02294000000000038
+			},
+			{
+				"buy_venue": "dex:Whirlpool",
+				"sell_venue": "dex:Kipseli",
+				"gross_profit": 0.000009000000000369823,
+				"net_profit": -0.02304899999999963
+			},
+			{
+				"buy_venue": "dex:Deriverse",
+				"sell_venue": "dex:Byreal",
+				"gross_profit": -0.0004289999999995686,
+				"net_profit": -0.023486999999999567
+			}
+		],
+		"execution": "Not atomic. Execute leg 1 with swap_quote then swap_execute, then quote leg 2 fresh with the tokens leg 1 actually returned (the price will have moved) and execute it only if it still clears the fees. Each leg is a separate confirmed swap.",
+		"quoted_at": "2026-10-10T06:17:01.686Z"
+	}
+}

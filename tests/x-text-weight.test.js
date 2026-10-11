@@ -1,105 +1,69 @@
-// X's weighted-length rule (api/_lib/gateway/x-text-weight.js), reimplemented
-// from the documented config (scale 100, default weight 200, Latin-ish
-// ranges weighted 100, any http(s) URL fixed at 23) rather than depending on
-// the unmaintained `twitter-text` package. See the module header for why.
-
 import { describe, it, expect } from 'vitest';
-import { weightedLength, fitsInTweet, sliceToWeight, chunkForX, MAX_WEIGHTED_LENGTH, TRANSFORMED_URL_LENGTH } from '../api/_lib/gateway/x-text-weight.js';
+import { weightedLength, chunkForX, fitsInPost, findUrls, X_POST_MAX_WEIGHT } from '../api/_lib/x-text-weight.js';
 
 describe('weightedLength', () => {
-	it('counts plain ASCII as 1 per character', () => {
+	it('counts Latin text at 1 per character', () => {
 		expect(weightedLength('hello world')).toBe(11);
 	});
-
-	it('counts Latin accents and Cyrillic/Hebrew/Arabic as 1 per character', () => {
-		expect(weightedLength('café')).toBe(4);
-		expect(weightedLength('привет')).toBe(6);
-		expect(weightedLength('שלום')).toBe(4);
+	it('counts CJK at 2 per character', () => {
+		expect(weightedLength('日本語')).toBe(6);
+		expect(weightedLength('한국어')).toBe(6);
 	});
-
-	it('counts CJK ideographs as 2 per character', () => {
-		expect(weightedLength('你好')).toBe(4);
-		expect(weightedLength('こんにちは')).toBe(10);
+	it('counts a URL as 23 whatever its length, keeping trailing sentence punctuation out of it', () => {
+		const url = 'https://three.ws/a/very/long/path/that/goes/on?and=on&on=1';
+		expect(weightedLength(url)).toBe(23);
+		expect(weightedLength(`see ${url}.`)).toBe(4 + 23 + 1);
 	});
-
-	it('counts an emoji (outside the Basic Multilingual Plane) as 2', () => {
-		expect(weightedLength('🚀')).toBe(2);
+	it('counts an emoji sequence as 2, a ZWJ family included', () => {
+		expect(weightedLength('hi 👨‍👩‍👧')).toBe(3 + 2);
+		expect(weightedLength('🇺🇸')).toBe(2);
+		expect(weightedLength('👍🏽')).toBe(2);
 	});
-
-	it('counts any http(s) URL as exactly 23 regardless of its real length', () => {
-		const short = weightedLength('see https://x.co');
-		const long = weightedLength('see https://example.com/a/very/long/path/that/keeps/going?x=1&y=2');
-		expect(short).toBe('see '.length + TRANSFORMED_URL_LENGTH);
-		expect(long).toBe('see '.length + TRANSFORMED_URL_LENGTH);
-	});
-
-	it('counts multiple URLs independently', () => {
-		const text = 'https://a.example/one and https://b.example/two';
-		expect(weightedLength(text)).toBe(TRANSFORMED_URL_LENGTH + ' and '.length + TRANSFORMED_URL_LENGTH);
-	});
-
-	it('treats null/undefined/empty as zero', () => {
+	it('is 0 for empty input', () => {
 		expect(weightedLength('')).toBe(0);
 		expect(weightedLength(null)).toBe(0);
-		expect(weightedLength(undefined)).toBe(0);
 	});
-});
-
-describe('fitsInTweet', () => {
-	it('accepts exactly 280 and rejects 281', () => {
-		expect(fitsInTweet('a'.repeat(280))).toBe(true);
-		expect(fitsInTweet('a'.repeat(281))).toBe(false);
+	it('does not use string length: 140 CJK characters fill a post', () => {
+		expect(fitsInPost('日'.repeat(140))).toBe(true);
+		expect(fitsInPost('日'.repeat(141))).toBe(false);
+		expect('日'.repeat(141).length).toBeLessThan(280);
 	});
-
-	it('a CJK string hits the cap at half the codepoint count', () => {
-		expect(fitsInTweet('你'.repeat(140))).toBe(true);
-		expect(fitsInTweet('你'.repeat(141))).toBe(false);
-	});
-});
-
-describe('sliceToWeight', () => {
-	it('returns the whole string when it already fits', () => {
-		expect(sliceToWeight('short', 280)).toBe('short');
-	});
-
-	it('breaks on a word boundary near the limit', () => {
-		const words = Array.from({ length: 50 }, (_, i) => `word${i}`).join(' ');
-		const cut = sliceToWeight(words, 30);
-		expect(weightedLength(cut)).toBeLessThanOrEqual(30);
-		expect(words.startsWith(cut)).toBe(true);
-		expect(cut.endsWith(' ')).toBe(false);
-	});
-
-	it('never splits a surrogate pair', () => {
-		const text = '🚀'.repeat(20);
-		const cut = sliceToWeight(text, 7);
-		expect(weightedLength(cut)).toBeLessThanOrEqual(7);
-		expect([...cut].every((ch) => [...ch].length === 1)).toBe(true);
+	it('finds URL spans', () => {
+		expect(findUrls('a https://x.co/b, c')).toEqual([{ start: 2, end: 16 }]);
 	});
 });
 
 describe('chunkForX', () => {
-	it('returns one chunk for short text', () => {
-		expect(chunkForX('hello there')).toEqual(['hello there']);
+	it('returns one part when it fits', () => {
+		expect(chunkForX('short reply')).toEqual(['short reply']);
 	});
-
-	it('returns an empty array for blank input', () => {
-		expect(chunkForX('')).toEqual([]);
+	it('splits at a paragraph boundary into two parts that each fit', () => {
+		const a = 'a'.repeat(200);
+		const b = 'b'.repeat(200);
+		const parts = chunkForX(`${a}\n\n${b}`);
+		expect(parts).toEqual([a, b]);
+	});
+	it('never yields more than two parts and ends a truncated chain with an ellipsis within weight', () => {
+		const parts = chunkForX('word '.repeat(400));
+		expect(parts).toHaveLength(2);
+		for (const p of parts) expect(weightedLength(p)).toBeLessThanOrEqual(X_POST_MAX_WEIGHT);
+		expect(parts[1].endsWith('...')).toBe(true);
+	});
+	it('weighs CJK by two when chunking', () => {
+		const parts = chunkForX('日'.repeat(200));
+		expect(parts).toHaveLength(2);
+		for (const p of parts) expect(weightedLength(p)).toBeLessThanOrEqual(X_POST_MAX_WEIGHT);
+	});
+	it('never cuts a URL in half', () => {
+		const url = 'https://three.ws/c/' + 'z'.repeat(80);
+		const parts = chunkForX(`${'x'.repeat(255)} ${url} tail`);
+		expect(parts.join(' ')).toContain(url);
+		for (const p of parts) expect(weightedLength(p)).toBeLessThanOrEqual(X_POST_MAX_WEIGHT);
+	});
+	it('honors maxParts of 1', () => {
+		expect(chunkForX('word '.repeat(200), { maxParts: 1 })).toHaveLength(1);
+	});
+	it('returns [] for blank input', () => {
 		expect(chunkForX('   ')).toEqual([]);
-	});
-
-	it('splits text that needs two posts', () => {
-		const text = `${'a'.repeat(300)} ${'b'.repeat(100)}`;
-		const chunks = chunkForX(text);
-		expect(chunks).toHaveLength(2);
-		for (const c of chunks) expect(fitsInTweet(c)).toBe(true);
-	});
-
-	it('never yields a third part: a huge reply is truncated into exactly two', () => {
-		const text = Array.from({ length: 30 }, (_, i) => `sentence number ${i} keeps going on and on.`).join(' ');
-		const chunks = chunkForX(text);
-		expect(chunks.length).toBeLessThanOrEqual(2);
-		for (const c of chunks) expect(fitsInTweet(c)).toBe(true);
-		expect(chunks[1].endsWith('...')).toBe(true);
 	});
 });

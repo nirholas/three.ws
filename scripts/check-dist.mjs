@@ -128,11 +128,11 @@ for (const { rel, min } of distLibChecks) {
 const criticalStaticPages = ['/', '/dashboard', '/pump-dashboard', '/dashboard-next', '/create', '/discover', '/chat'];
 
 function resolvesToFile(pagePath) {
-	// vercel.json rewrites "/" -> "/home.html" (server/index.mjs's phase1Routes,
+	// vercel.json rewrites "/" -> "/desktop.html" (server/index.mjs's phase1Routes,
 	// exact literal src, no /? suffix) rather than serving dist/index.html.
 	const candidates =
 		pagePath === '/'
-			? ['home.html']
+			? ['desktop.html']
 			: [pagePath, `${pagePath}/index.html`, `${pagePath}.html`];
 	for (const rel of candidates) {
 		const abs = resolve(root, 'dist', rel.replace(/^\//, ''));

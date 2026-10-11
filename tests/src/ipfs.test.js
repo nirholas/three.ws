@@ -100,8 +100,18 @@ describe('normalizeGatewayURL', () => {
 		expect(out).toMatch(/\/ipfs\/QmCID$/);
 	});
 
+	// ipfs.io and its sibling hosts answer every programmatic read with 429 and
+	// a pointer to a service-worker gateway, so they are retired like Cloudflare's.
+	it('rewrites ipfs.io and dweb.link onto a working gateway', () => {
+		for (const host of ['ipfs.io', 'dweb.link']) {
+			const out = normalizeGatewayURL(`https://${host}/ipfs/QmCID/meta.json`);
+			expect(out).not.toContain(host);
+			expect(out).toMatch(/\/ipfs\/QmCID\/meta\.json$/);
+		}
+	});
+
 	it('leaves live gateways and arbitrary URLs untouched', () => {
-		expect(normalizeGatewayURL('https://ipfs.io/ipfs/QmCID')).toBe('https://ipfs.io/ipfs/QmCID');
+		expect(normalizeGatewayURL('https://4everland.io/ipfs/QmCID')).toBe('https://4everland.io/ipfs/QmCID');
 		expect(normalizeGatewayURL('https://example.com/x.png')).toBe('https://example.com/x.png');
 	});
 

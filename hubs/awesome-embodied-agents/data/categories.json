@@ -1,0 +1,52 @@
+[
+  {
+    "id": "avatar-agents",
+    "title": "AI Avatars and Digital Human Frameworks",
+    "blurb": "Open-source frameworks and apps that give an AI agent a face, a voice and a body you can talk to."
+  },
+  {
+    "id": "digital-human-platforms",
+    "title": "Digital Human Platforms and APIs",
+    "blurb": "Hosted services for conversational avatars, interactive video agents and AI characters."
+  },
+  {
+    "id": "realtime-agent-infra",
+    "title": "Realtime Voice and Video Agent Infrastructure",
+    "blurb": "Frameworks that stream speech, video and avatar output between users and agents with low latency."
+  },
+  {
+    "id": "web-3d-runtimes",
+    "title": "Web 3D Runtimes",
+    "blurb": "Engines and component libraries that render and animate characters in the browser."
+  },
+  {
+    "id": "vrm-gltf-tooling",
+    "title": "VRM and glTF Tooling",
+    "blurb": "Specifications, loaders, importers and optimizers for portable avatar and model formats."
+  },
+  {
+    "id": "lip-sync-facial",
+    "title": "Lip-Sync and Facial Animation",
+    "blurb": "Audio-driven and video-driven face animation, visemes, blendshapes and talking-head models."
+  },
+  {
+    "id": "avatar-creators",
+    "title": "Avatar and Character Creators",
+    "blurb": "Tools and models that build 3D characters from sliders, photos, images or text."
+  },
+  {
+    "id": "rigging-retargeting-motion",
+    "title": "Rigging, Retargeting and Motion",
+    "blurb": "Auto-rigging, body models and motion generation for animating characters."
+  },
+  {
+    "id": "performance-capture-vtubing",
+    "title": "Performance Capture and VTubing",
+    "blurb": "Webcam and sensor tracking, Live2D and 3D puppeteering software for driving avatars live."
+  },
+  {
+    "id": "agent-in-3d",
+    "title": "Agents in 3D Worlds",
+    "blurb": "Simulators, game environments and frameworks where agents perceive and act inside 3D spaces."
+  }
+]

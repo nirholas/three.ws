@@ -56,7 +56,8 @@ export const toolDefs = [
 			"routes the parent creator's royalty slice out of THIS mint's fee as a real on-chain USDC " +
 			'transfer. Returns the mint address, explorer + viewer links, royalty terms, the provenance ' +
 			'ledger reference, and (for a remix) the royalty settlement. Priced per call via x402 (USDC); ' +
-			'an OAuth bearer token bypasses payment within a small per-account mint budget (5 mainnet mints a day).',
+			'an OAuth bearer token bypasses payment within a small per-account mint budget (5 mainnet mints a day). ' +
+			'Use this when the user wants a model to exist as an ownable, tradable on-chain asset; to read one back call get_3d_asset_onchain.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -179,7 +180,8 @@ export const toolDefs = [
 			'Resolve a Solana mint address to its live 3D asset: current holder, the interactive ' +
 			'viewer link + GLB (confirmed live), baked provenance (creator, prompt, model, lineage, ' +
 			'timestamp), and the enforced on-chain royalty terms. Works on any Metaplex Core mint. ' +
-			'Assets minted through three.ws also return their platform launch record. Read-only, public.',
+			'Assets minted through three.ws also return their platform launch record. Read-only, public. ' +
+			'Use this to check who holds a 3D NFT and what its provenance and royalty terms are.',
 		inputSchema: {
 			type: 'object',
 			properties: {

@@ -90,6 +90,18 @@ function loadSearch() {
 	document.head.appendChild(s);
 }
 
+// "What next?" strip (public/next-steps.js): goal-ordered follow-ups under tool
+// pages. Does nothing on a path without an entry; honours
+// <html data-next-steps="off">.
+function loadNextSteps() {
+	if (document.documentElement.getAttribute('data-next-steps') === 'off') return;
+	if (document.querySelector('script[src="/next-steps.js"]')) return;
+	const s = document.createElement('script');
+	s.src = '/next-steps.js';
+	s.defer = true;
+	document.head.appendChild(s);
+}
+
 // Load the shared corner-stack (public/corner-stack.js) BEFORE any widget that
 // uses it, so window.twsCornerStack exists when they mount. It is also
 // order-independent (adopts orphans), but loading it first avoids the adopt
@@ -276,11 +288,35 @@ function loadAgentBusDebug() {
 	document.head.appendChild(s);
 }
 
+// A page framed by the desktop shell (src/desktop/wm.js names its iframe
+// "tws-os:<app>") drops the site header, footer and floating widgets: the
+// desktop's own taskbar is the navigation, and a second header would eat the
+// window. Theme still follows the site setting.
+function inDesktopWindow() {
+	try {
+		return window.name.startsWith('tws-os:') && window.parent !== window;
+	} catch {
+		return false;
+	}
+}
+
+function bootInDesktopWindow() {
+	document.documentElement.classList.add('tws-in-os');
+	const style = document.createElement('style');
+	style.textContent =
+		'.tws-in-os #nav-container,.tws-in-os header:has(>#nav-container),.tws-in-os #footer-container,' +
+		'.tws-in-os .h-footer,.tws-in-os #to-desktop,.tws-in-os .skip-link{display:none!important}';
+	document.head.appendChild(style);
+	loadThemeSwitcher();
+}
+
 function boot() {
+	if (inDesktopWindow()) return bootInDesktopWindow();
 	ensureSkipLink();
 	loadCornerStack();
 	loadGlossary();
 	loadSearch();
+	loadNextSteps();
 	loadAgentBusDebug();
 	loadDiscovery();
 	loadForgeCelebrate();

@@ -39,7 +39,7 @@ import {
 
 const TOOL_NAME = 'agent_reputation';
 const TOOL_DESCRIPTION =
-	'ERC-8004 on-chain reputation for an agent: aggregate score + count + average from the canonical ReputationRegistry, total ETH staked on vouches, and the latest ReputationSubmitted/ReputationStaked events. Resolves agentId from a wallet via IdentityRegistry when needed. Reads default to Base; switch chains via "chain". Paid: $0.01 USDC.';
+	'ERC-8004 on-chain reputation for an agent: aggregate score + count + average from the canonical ReputationRegistry, total ETH staked on vouches, and the latest ReputationSubmitted/ReputationStaked events. Resolves agentId from a wallet via IdentityRegistry when needed. Reads default to Base; switch chains via "chain". Use this to vet an agent\'s on-chain track record before hiring or paying it; agent_hire_discover already folds this score into its ranking. Paid: $0.01 USDC.';
 
 // Parse the agent identifier. Accepts: numeric ID, EVM wallet, or CAIP-10
 // "eip155:<chainId>:<address>" (which can also override the chain selection).

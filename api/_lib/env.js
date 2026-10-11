@@ -1600,6 +1600,14 @@ export const env = {
 	get THREE_TOKEN_DECIMALS() {
 		return parseInt(opt('THREE_TOKEN_DECIMALS', '6'), 10);
 	},
+	// Bonus credits for paying in $THREE, in basis points of the deposit's USD
+	// value (250 = 2.5% extra). Owner policy: ships at 0 so no bonus is granted
+	// until the owner sets it. Clients read the live value from
+	// /api/credits (deposit.accepts[].bonus_bps); nobody types the number into copy.
+	get THREE_CREDIT_BONUS_BPS() {
+		const n = parseInt(opt('THREE_CREDIT_BONUS_BPS', '0'), 10);
+		return Number.isFinite(n) ? Math.min(Math.max(n, 0), 10_000) : 0;
+	},
 	// Treasury wallet that receives the treasury share of every split. REQUIRED in
 	// production — token/config.js fails loudly (mirrors HOLDER_PASS_SECRET) rather
 	// than silently routing funds to a placeholder.

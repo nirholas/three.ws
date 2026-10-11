@@ -274,7 +274,6 @@ export function renderRootSkill(skills, template, facts) {
 			.map((s) => `- [\`${s.name}\`](${RAW_BASE}/${s.name}/SKILL.md): ${firstSentence(s.description)}`);
 		return [`### ${heading}`, '', ...rows].join('\n');
 	});
-	if (!template.includes('{{SKILL_INDEX}}')) throw new Error('data/skill-md.template.md is missing its {{SKILL_INDEX}} marker');
 	const filled = renderFacts(template, facts, 'data/skill-md.template.md');
 	return `${filled.replace('{{SKILL_INDEX}}', sections.join('\n\n')).trimEnd()}\n`;
 }

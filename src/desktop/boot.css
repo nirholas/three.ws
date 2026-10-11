@@ -1,0 +1,365 @@
+/* Boot and lock screens for the three.ws desktop. Classic site palette: near
+ * black, hairline strokes, Space Grotesk display, JetBrains Mono for the log. */
+
+.os-boot {
+	position: fixed;
+	inset: 0;
+	z-index: 1000;
+	background: #050505;
+	color: #fff;
+	font: 14px/1.5 'Inter', system-ui, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	overflow: hidden;
+	transition: opacity 0.7s ease, transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+	user-select: none;
+	-webkit-user-select: none;
+}
+.os-boot.is-leaving {
+	opacity: 0;
+	transform: scale(1.04);
+	pointer-events: none;
+}
+.os-boot.reduced,
+.os-boot.reduced * {
+	animation: none !important;
+	transition: none !important;
+}
+.os-boot *,
+.os-boot *::before,
+.os-boot *::after {
+	box-sizing: border-box;
+}
+.os-boot :where(button) {
+	font: inherit;
+	color: inherit;
+	background: none;
+	border: 0;
+	cursor: pointer;
+}
+.os-boot :focus-visible {
+	outline: 2px solid #c4b5fd;
+	outline-offset: 3px;
+}
+
+.os-boot-glow {
+	position: absolute;
+	inset: -20%;
+	background:
+		radial-gradient(40% 35% at 50% 38%, rgba(196, 181, 253, 0.16), transparent 70%),
+		radial-gradient(30% 30% at 20% 90%, rgba(99, 102, 241, 0.1), transparent 70%);
+	animation: os-boot-breathe 9s ease-in-out infinite alternate;
+}
+@keyframes os-boot-breathe {
+	to {
+		transform: translate3d(2%, -2%, 0) scale(1.06);
+	}
+}
+.os-boot-grid {
+	position: absolute;
+	inset: 0;
+	background-image:
+		linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+	background-size: 56px 56px;
+	mask-image: radial-gradient(70% 70% at 50% 45%, #000 20%, transparent 100%);
+	-webkit-mask-image: radial-gradient(70% 70% at 50% 45%, #000 20%, transparent 100%);
+}
+
+.os-boot-stage {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	grid-template-rows: 1fr auto auto auto;
+	gap: 20px;
+	padding: clamp(20px, 5vh, 56px) clamp(16px, 6vw, 96px);
+	max-width: 1100px;
+	margin: 0 auto;
+	transition: opacity 0.5s ease, transform 0.6s ease;
+}
+.os-boot-stage[data-phase='lock'] {
+	opacity: 0;
+	transform: translateY(-18px);
+	pointer-events: none;
+}
+.os-boot-brand {
+	align-self: center;
+	animation: os-boot-rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes os-boot-rise {
+	from {
+		opacity: 0;
+		transform: translateY(16px);
+	}
+}
+.os-boot-eyebrow,
+.os-lock-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 5px 12px;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	border-radius: 999px;
+	font: 500 12px/1 'JetBrains Mono', ui-monospace, monospace;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.72);
+}
+.os-boot-eyebrow::before {
+	content: '';
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #c4b5fd;
+	box-shadow: 0 0 12px #c4b5fd;
+	animation: os-boot-pulse 1.4s ease-in-out infinite;
+}
+@keyframes os-boot-pulse {
+	50% {
+		opacity: 0.35;
+	}
+}
+.os-boot-h,
+.os-lock-greet,
+.os-lock-clock {
+	font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+	letter-spacing: -0.03em;
+	margin: 0;
+}
+.os-boot-h {
+	margin-top: 18px;
+	font-size: clamp(32px, 5.4vw, 64px);
+	line-height: 1.02;
+	font-weight: 600;
+	max-width: 14ch;
+}
+.os-boot-h em {
+	font-style: normal;
+	color: rgba(255, 255, 255, 0.45);
+	font-weight: 500;
+}
+.os-boot-sub {
+	margin: 14px 0 0;
+	color: rgba(255, 255, 255, 0.6);
+	font-size: 15px;
+}
+
+.os-boot-log {
+	list-style: none;
+	margin: 0;
+	padding: 14px 16px;
+	max-height: min(38vh, 300px);
+	overflow: auto;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.02);
+	font: 12.5px/1.9 'JetBrains Mono', ui-monospace, monospace;
+	color: rgba(255, 255, 255, 0.78);
+	scrollbar-width: thin;
+}
+.os-boot-log li {
+	display: grid;
+	grid-template-columns: 5ch minmax(9ch, 15ch) 1fr auto;
+	gap: 14px;
+	align-items: baseline;
+	white-space: nowrap;
+	animation: os-boot-line 0.3s ease both;
+}
+@keyframes os-boot-line {
+	from {
+		opacity: 0;
+		transform: translateX(-6px);
+	}
+}
+.os-boot-log b {
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.4);
+}
+.os-boot-log li[data-state='ok'] b {
+	color: #34d399;
+}
+.os-boot-log li[data-state='skip'] b {
+	color: #c4b5fd;
+}
+.os-boot-log li[data-state='fail'] b {
+	color: #f87171;
+}
+.os-boot-log li[data-state='running'] b {
+	color: #fff;
+	animation: os-boot-pulse 0.8s ease-in-out infinite;
+}
+.os-boot-label {
+	color: #fff;
+}
+.os-boot-detail {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: rgba(255, 255, 255, 0.55);
+}
+.os-boot-ms {
+	color: rgba(255, 255, 255, 0.35);
+	font-variant-numeric: tabular-nums;
+}
+.os-boot-bar {
+	position: relative;
+	height: 2px;
+	background: rgba(255, 255, 255, 0.1);
+	border-radius: 2px;
+	overflow: hidden;
+}
+.os-boot-bar i {
+	position: absolute;
+	inset: 0 auto 0 0;
+	width: 0;
+	background: linear-gradient(90deg, #fff, #c4b5fd);
+	box-shadow: 0 0 16px rgba(196, 181, 253, 0.6);
+	transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.os-boot-foot {
+	display: flex;
+	justify-content: space-between;
+	margin: 0;
+	font: 12px/1 'JetBrains Mono', ui-monospace, monospace;
+	color: rgba(255, 255, 255, 0.45);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+/* ---------- lock ---------- */
+.os-lock {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	grid-template-rows: 1fr auto 1fr;
+	justify-items: center;
+	padding: clamp(20px, 6vh, 64px) 16px;
+	animation: os-boot-rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.os-lock-top {
+	text-align: center;
+	align-self: end;
+	padding-bottom: 28px;
+}
+.os-lock-clock {
+	display: block;
+	font-size: clamp(64px, 12vw, 132px);
+	line-height: 0.95;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	text-shadow: 0 0 60px rgba(196, 181, 253, 0.25);
+}
+.os-lock-date {
+	margin-top: 10px;
+	font-size: 17px;
+	color: rgba(255, 255, 255, 0.62);
+}
+.os-lock-card {
+	width: min(100%, 460px);
+	padding: 28px 28px 22px;
+	border-radius: 20px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+	backdrop-filter: blur(20px) saturate(1.4);
+	text-align: center;
+	box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+}
+.os-lock-avatar {
+	display: grid;
+	place-items: center;
+	width: 64px;
+	height: 64px;
+	margin: 0 auto 14px;
+	border-radius: 50%;
+	background: radial-gradient(circle at 30% 30%, hsl(var(--hue, 262) 70% 72%), hsl(var(--hue, 262) 60% 38%));
+	font: 600 22px/1 'Space Grotesk', sans-serif;
+	font-style: normal;
+	box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.06), 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+.os-lock-greet {
+	font-size: 26px;
+	font-weight: 600;
+}
+.os-lock-status {
+	margin: 8px 0 20px;
+	color: rgba(255, 255, 255, 0.6);
+	font-size: 14px;
+}
+.os-lock-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	justify-content: center;
+}
+.os-lock-enter,
+.os-lock-skip {
+	padding: 12px 22px;
+	border-radius: 999px;
+	font-weight: 600;
+	font-size: 14px;
+	transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+.os-lock-enter {
+	background: #fff;
+	color: #050505;
+	box-shadow: 0 8px 30px rgba(255, 255, 255, 0.18);
+}
+.os-lock-enter:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 12px 36px rgba(196, 181, 253, 0.35);
+}
+.os-lock-enter:active {
+	transform: translateY(0) scale(0.98);
+}
+.os-lock-skip {
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	color: rgba(255, 255, 255, 0.85);
+}
+.os-lock-skip:hover {
+	background: rgba(255, 255, 255, 0.07);
+}
+.os-lock-skip:active {
+	transform: scale(0.98);
+}
+.os-lock-hint {
+	margin: 18px 0 0;
+	font-size: 12.5px;
+	line-height: 1.55;
+	color: rgba(255, 255, 255, 0.48);
+}
+.os-lock-chips {
+	align-self: end;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: center;
+}
+.os-lock-chip {
+	text-transform: none;
+	letter-spacing: 0;
+	gap: 10px;
+	padding: 7px 12px;
+}
+.os-lock-chip small {
+	font-size: 11px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.45);
+}
+.os-lock-chip b {
+	font-weight: 600;
+	color: #fff;
+	font-variant-numeric: tabular-nums;
+}
+@media (max-width: 640px) {
+	.os-boot-stage {
+		gap: 14px;
+	}
+	.os-boot-log li {
+		grid-template-columns: 5ch 1fr auto;
+	}
+	.os-boot-log .os-boot-detail {
+		display: none;
+	}
+	.os-lock-card {
+		padding: 22px 18px 18px;
+	}
+}

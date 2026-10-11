@@ -131,7 +131,7 @@ const GENERATED_DESTS = new Set(['/news/index.html']);
 // Does a clean path resolve to a real source file (what the catch-all serves)?
 function fileForCleanPath(path) {
 	const p = path.replace(/^\/+/, '').replace(/\/+$/, '');
-	if (p === '') return 'pages/home.html'; // root served from a real homepage
+	if (p === '') return 'pages/desktop.html'; // root is the web desktop; /classic keeps the old homepage
 	// /src/** and /node_modules/** are served straight from the repo by vite in dev
 	// and rewritten to hashed assets at build time — resolve against the real tree.
 	if (p.startsWith('src/') || p.startsWith('node_modules/')) {

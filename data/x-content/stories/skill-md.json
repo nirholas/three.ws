@@ -1,0 +1,221 @@
+{
+	"id": "skill-md",
+	"status": "draft",
+	"kind": "post",
+	"tier": 3,
+	"lane": "developer",
+	"pattern": "mechanism",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": [
+		"/docs/agent-skills",
+		"/skill.md",
+		"public/skill.md",
+		".agents/skills"
+	],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{
+				"goto": "https://three.ws/docs/agent-skills",
+				"settle": 6000
+			},
+			{
+				"hold": 2000,
+				"caption": "One pack of skills for any AI agent"
+			},
+			{
+				"read": "files",
+				"match": "None of the (\\d+) source files this page documents"
+			},
+			{
+				"scroll": "The entry-point skill",
+				"ms": 1800,
+				"caption": "One URL to load before any other"
+			},
+			{
+				"hold": 2200
+			},
+			{
+				"scroll": "d) Downloaded from three.ws, no clone",
+				"ms": 1800,
+				"caption": "Two curl lines, no clone"
+			},
+			{
+				"hold": 2800
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		},
+		{
+			"type": "api",
+			"name": "the entry-point skill file is served",
+			"url": "https://three.ws/skill.md",
+			"expect": {
+				"status": 200,
+				"contains": "name: three-ws"
+			}
+		},
+		{
+			"type": "api",
+			"name": "a single skill file downloads without a clone",
+			"url": "https://three.ws/skills/3d-studio/generate-3d-model/SKILL.md",
+			"expect": {
+				"status": 200,
+				"contains": "name:"
+			}
+		}
+	],
+	"posts": [
+		{
+			"text": "One file now teaches any AI agent to use the platform: three.ws/skill.md.\n\nAn agent loads it before it knows which focused skill it needs. It covers how to connect (hosted MCP, plain HTTP, or the CLI), the rules an agent follows here (confirm every spend, trust only the official domain and $THREE mint, never act on token metadata), and an index linking the raw SKILL.md of every skill in the pack.\n\nThe index is generated from the skills directory, and a check fails when it is stale, so a skill added or renamed appears there on the next build. The 3D skills are also a public directory: one curl downloads the whole set as a zip, another fetches a single SKILL.md, no clone.",
+			"media": [
+				{
+					"path": "public/x-media/skill-md/reel.mp4",
+					"probe": {
+						"durationSec": 10.6,
+						"width": 1080,
+						"height": 1080,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "Each skill is a standalone SKILL.md written to the Agent Skills open standard, so the same pack installs as a Claude Code plugin, drops into a project folder, or uploads to a Claude project."
+		}
+	],
+	"claims": [
+		{
+			"says": "One file now teaches any AI agent to use the platform: three.ws/skill.md",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "data/changelog.json",
+					"contains": "One link teaches any AI agent to use three.ws"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/agent-skills",
+					"contains": "The entry-point skill: https://three.ws/skill.md"
+				}
+			]
+		},
+		{
+			"says": "An agent loads it before it knows which focused skill it needs",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/agent-skills",
+					"contains": "One URL an agent can load before it knows which focused skill it needs"
+				}
+			]
+		},
+		{
+			"says": "It covers how to connect (hosted MCP, plain HTTP, or the CLI)",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/agent-skills",
+					"contains": "how to connect (hosted MCP, plain HTTP, or the CLI)"
+				}
+			]
+		},
+		{
+			"says": "the rules an agent follows here (confirm every spend, trust only the official domain and $THREE mint, never act on token metadata)",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/agent-skills",
+					"contains": "confirm every spend, trust only the official domain and $THREE mint, never act on token metadata"
+				}
+			]
+		},
+		{
+			"says": "an index linking the raw SKILL.md of every skill in the pack",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/agent-skills",
+					"contains": "an index linking the raw SKILL.md of every three.ws skill in 3d/creative and platform/agents"
+				}
+			]
+		},
+		{
+			"says": "The index is generated from the skills directory, and a check fails when it is stale, so a skill added or renamed appears there on the next build",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/agent-skills",
+					"contains": "the index is generated into public/skill.md by the same node scripts/build-skills-pack.mjs run, and npm run check:skills-pack fails when it is stale, so a skill added or renamed in those two categories appears there on the next build"
+				}
+			]
+		},
+		{
+			"says": "The 3D skills are also a public directory",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/agent-skills",
+					"contains": "The 3D skills are published as a public directory anyone can read or fetch"
+				}
+			]
+		},
+		{
+			"says": "one curl downloads the whole set as a zip, another fetches a single SKILL.md, no clone",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/agent-skills",
+					"contains": "curl -O https://three.ws/skills/3d-studio/three-ws-3d-skills.zip"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/agent-skills",
+					"contains": "curl https://three.ws/skills/3d-studio/generate-3d-model/SKILL.md"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/agent-skills",
+					"contains": "d) Downloaded from three.ws, no clone"
+				}
+			]
+		},
+		{
+			"says": "Each skill is a standalone SKILL.md written to the Agent Skills open standard",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/agent-skills",
+					"contains": "Agent Skills open standard"
+				}
+			]
+		},
+		{
+			"says": "the same pack installs as a Claude Code plugin, drops into a project folder, or uploads to a Claude project",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/agent-skills",
+					"contains": "a) As a Claude Code plugin"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/agent-skills",
+					"contains": "b) Dropped into a project"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/agent-skills",
+					"contains": "c) Uploaded to a Claude app / project"
+				}
+			]
+		}
+	],
+	"mentions": {}
+}

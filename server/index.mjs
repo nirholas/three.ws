@@ -44,6 +44,7 @@ import { renderCrawlerBody } from './crawler-body.mjs';
 import { isMissingShellPage } from './shell-pages.mjs';
 import { hardenHeaderBag, hardenOnEnd } from './csp-hashes.mjs';
 import { cronEdgeAuth } from './cron-edge-auth.mjs';
+import { runWithRequestContext } from '../api/_lib/request-context.js';
 // Route resolution lives in its own module so the audit scripts
 // (scripts/audit-cron-liveness.mjs) exercise the SAME resolver production runs,
 // instead of a copy that can silently drift from it.
@@ -218,7 +219,10 @@ async function dispatchApi(req, res, pathname, extraQuery) {
 		// A handler that renders HTML or SVG gets the same inline-script CSP
 		// hardening a static page gets (server/csp-hashes.mjs).
 		hardenOnEnd(res);
-		await handler(req, res);
+		// Every helper under the handler can read the caller's address from the
+		// request context (api/_lib/request-context.js): a key's IP allowlist is
+		// enforced inside authenticateBearer, whatever route called it.
+		await runWithRequestContext({ req }, () => handler(req, res));
 	} catch (err) {
 		console.error(`[api] ${req.method} ${pathname} failed:`, err);
 		if (!res.headersSent) {
@@ -386,7 +390,29 @@ app.use((req, res, next) => {
 	res.redirect(safeMethod ? 301 : 308, `${CANONICAL_ORIGIN}${target.pathname}${target.search}`);
 });
 
-// External-dest proxy — before the body parsers (see proxyExternal above).
+// Custom domains. A host a user registered and connected here
+// (api/_lib/domain-connect.js, table web_domain_hosts) serves that agent's
+// public page at its root. Everything else on the host (assets, /api, the
+// agent page's own subpaths) resolves as on the apex, so the page works as it
+// does on three.ws. Only the root document is rewritten.
+app.use(async (req, res, next) => {
+	const host = String(req.headers.host || '').toLowerCase().split(':')[0];
+	if (!host || host === CANONICAL_HOST || host === WWW_HOST || host.endsWith('.run.app') || host === 'localhost') return next();
+	if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+	try {
+		const { agentForHost } = await import('../api/_lib/domain-connect.js');
+		const agentId = await agentForHost(host);
+		if (agentId && (req.path === '/' || req.path === '')) {
+			const q = req.url.indexOf('?');
+			req.url = `/agents/${agentId}${q === -1 ? '' : req.url.slice(q)}`;
+		}
+	} catch (err) {
+		console.error('[server] custom-domain lookup failed:', err?.message || err);
+	}
+	next();
+});
+
+// External-dest proxy: before the body parsers (see proxyExternal above).
 app.use((req, res, next) => {
 	const url = new URL(req.url, 'http://internal');
 	const pathname = url.pathname;

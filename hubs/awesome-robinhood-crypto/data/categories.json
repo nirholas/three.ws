@@ -1,0 +1,11 @@
+[
+  { "id": "official-docs", "title": "Official Documentation", "blurb": "First-party references from Robinhood for the Crypto Trading API and Robinhood Chain." },
+  { "id": "api-clients", "title": "Robinhood Crypto API Clients", "blurb": "Libraries that wrap the Robinhood Crypto Trading API, including Ed25519 request signing, in the language of your choice." },
+  { "id": "mcp-servers", "title": "MCP Servers", "blurb": "Model Context Protocol servers that give AI agents access to Robinhood Crypto and Robinhood Chain." },
+  { "id": "trading-bots", "title": "Trading Bots and CLI Tools", "blurb": "Bots, strategies and terminal tools for portfolios, holdings and order flow on Robinhood Crypto and Robinhood Chain." },
+  { "id": "agent-integrations", "title": "Agent Integrations and Payments", "blurb": "Agent runtimes, plugins and payment rails that let autonomous software operate on Robinhood Chain." },
+  { "id": "chain-sdks", "title": "Robinhood Chain SDKs and Toolkits", "blurb": "Typed SDKs, example projects and parsers for building on Robinhood Chain (mainnet chain ID 4663)." },
+  { "id": "infrastructure", "title": "Chain Infrastructure and Data APIs", "blurb": "RPC providers, explorers, indexers, oracles and faucets that serve Robinhood Chain." },
+  { "id": "analytics-alerts", "title": "Market Data, Analytics and Alerts", "blurb": "Real-time alerts, wallet intelligence and market-data clients for Robinhood Chain." },
+  { "id": "security", "title": "Security and Risk Tools", "blurb": "Token scanners and transaction checks that help developers and agents avoid bad trades." }
+]

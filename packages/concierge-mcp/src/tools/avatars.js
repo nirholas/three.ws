@@ -9,7 +9,7 @@ import { AVATARS, DEFAULT_AVATAR_ID } from '../lib/catalog.js';
 
 const DESCRIPTION =
 	'List the rigged 3D avatars a three.ws Concierge widget can wear (id, name, personality tagline, style). ' +
-	'Use the id with concierge_embed\'s "avatar" option, or omit it to let each visitor pick their own. Offline.';
+	'Use this to pick an avatar id for concierge_embed\'s "avatar" option, or skip it and omit the option to let each visitor pick their own. Offline.';
 
 const tool = defineTool({
 	id: 'concierge-avatars',
@@ -22,7 +22,7 @@ const tool = defineTool({
 			name: 'concierge_avatars',
 			title: 'List available Concierge avatars',
 			description: DESCRIPTION,
-			annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+			annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 			parameters: z.object({}),
 		},
 	],

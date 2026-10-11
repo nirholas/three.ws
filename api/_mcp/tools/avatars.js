@@ -41,7 +41,7 @@ export const toolDefs = [
 		title: 'List my avatars',
 		annotations: READ_ANNOTATIONS,
 		description:
-			"List the authenticated user's avatars. Returns id, name, slug, size, visibility, and direct model_url (when visibility permits).",
+			"List the authenticated user's avatars. Returns id, name, slug, size, visibility, and direct model_url (when visibility permits). Use this to find the id of an avatar you already own before rendering, embedding, or attaching it to an agent; to browse other people's avatars call search_public_avatars instead.",
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -73,7 +73,7 @@ export const toolDefs = [
 		title: 'Get avatar',
 		annotations: READ_ANNOTATIONS,
 		description:
-			'Fetch a single avatar by id or by owner+slug. Returns metadata and a model_url (public/unlisted) or short-lived signed URL (private).',
+			'Fetch a single avatar by id or by owner+slug. Returns metadata and a model_url (public/unlisted) or short-lived signed URL (private). Use this when you already have an avatar id or owner+slug and need its model_url or metadata; to find ids call list_my_avatars or search_public_avatars.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -107,7 +107,7 @@ export const toolDefs = [
 		title: 'Search public avatars',
 		annotations: READ_ANNOTATIONS,
 		description:
-			'Search the public avatar gallery. Useful for finding characters to render without prior knowledge of an id.',
+			'Search the public avatar gallery. Use this to find characters to render when you do not already know an avatar id; for your own avatars call list_my_avatars instead.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -140,7 +140,8 @@ export const toolDefs = [
 		annotations: READ_ANNOTATIONS,
 		description:
 			'Produce an HTML <model-viewer> snippet that renders the given avatar. ' +
-			'Return this text as an inline HTML artifact to display an interactive 3D avatar.',
+			'Return this text as an inline HTML artifact to display an interactive 3D avatar. ' +
+			'Use this when the user wants to see and rotate an avatar inline; for a flat image file call render_avatar_image, and for a snippet to paste on another site call get_embed_code.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -243,7 +244,8 @@ export const toolDefs = [
 			'return its URL — ready for an <img> tag, social card, or game loader. Choose a ' +
 			'camera framing (scene), an optional pose preset and ARKit-52 expression. Renders ' +
 			'are cached, so repeat calls with the same parameters return instantly. Works on ' +
-			'your own avatars (any visibility) and on public avatars.',
+			'your own avatars (any visibility) and on public avatars. ' +
+			'Use this when you need a still image rather than an interactive viewer; for a live 3D view call render_avatar.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -369,7 +371,7 @@ export const toolDefs = [
 			idempotentHint: false,
 			openWorldHint: true,
 		},
-		description: 'Soft-delete an avatar you own. Requires avatars:delete scope.',
+		description: 'Soft-delete an avatar you own. Requires avatars:delete scope. Use this when the user explicitly asks to remove one of their avatars; confirm which one with get_avatar first.',
 		inputSchema: {
 			type: 'object',
 			properties: {

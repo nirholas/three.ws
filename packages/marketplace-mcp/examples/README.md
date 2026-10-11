@@ -6,7 +6,7 @@ JSON-RPC to it, and read the live public marketplace.
 
 | File | What it does | Run |
 |---|---|---|
-| [`list-tools.mjs`](list-tools.mjs) | Prints all 5 tools with titles, annotation hints, and full input schemas. | `node examples/list-tools.mjs` |
+| [`list-tools.mjs`](list-tools.mjs) | Prints all <!-- mcp-count:marketplace-mcp.tools -->5<!-- /mcp-count --> tools with titles, annotation hints, and full input schemas. | `node examples/list-tools.mjs` |
 | [`browse-marketplace.mjs`](browse-marketplace.mjs) | Categories, then a page of popular agents, then one agent's full record, then the skills catalog. | `node examples/browse-marketplace.mjs` |
 
 Run them from the package directory:
@@ -19,7 +19,7 @@ node examples/browse-marketplace.mjs
 
 Nothing to install and nothing to configure: every tool on this server is
 read-only and keyless. The server prints a one-line banner to stderr on connect
-(`[marketplace-mcp@x.y.z] connected over stdio with 5 tools`), which is normal.
+(`[marketplace-mcp@x.y.z] connected over stdio with <n> tools`), which is normal.
 
 ## list-tools.mjs
 

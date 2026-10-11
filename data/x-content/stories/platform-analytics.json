@@ -1,0 +1,265 @@
+{
+	"id": "platform-analytics",
+	"tier": 3,
+	"lane": "developer",
+	"pattern": "number",
+	"format": "landscape",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": [
+		"/analytics",
+		"/api/platform/analytics"
+	],
+	"story": "Every total three.ws publishes about itself sits on one page and one public JSON endpoint, each figure read live from its own table with a note written by the code that computed it.",
+	"scenario": {
+		"format": "landscape",
+		"steps": [
+			{
+				"goto": "https://three.ws/analytics",
+				"settle": 8000
+			},
+			{
+				"hold": 2200,
+				"caption": "Every total the platform publishes, on one page"
+			},
+			{
+				"read": "agents",
+				"match": "Agents\\s+([\\d,]+)"
+			},
+			{
+				"read": "wallets",
+				"match": "Agents with a wallet\\s+([\\d,]+)"
+			},
+			{
+				"read": "models",
+				"match": "3D models generated\\s+([\\d,]+)"
+			},
+			{
+				"click": "All time",
+				"awaits": "/api/platform/analytics",
+				"caption": "All time, 90 days or 30 days"
+			},
+			{
+				"hold": 2000
+			},
+			{
+				"click": "Running total",
+				"caption": "Per day or as a running total"
+			},
+			{
+				"hold": 1800
+			},
+			{
+				"scroll": "One chart per metric over the selected window.",
+				"caption": "One chart per metric; hover a day to read it"
+			},
+			{
+				"hold": 2200
+			},
+			{
+				"scroll": "How each number is calculated",
+				"caption": "Each note is written by the code that computed the number"
+			},
+			{
+				"hold": 2600
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		},
+		{
+			"type": "api",
+			"url": "https://three.ws/api/platform/analytics",
+			"expect": {
+				"status": 200,
+				"json": {
+					"path": "metrics.agents.total",
+					"min": 4300
+				}
+			}
+		},
+		{
+			"type": "api",
+			"url": "https://three.ws/api/platform/analytics",
+			"expect": {
+				"status": 200,
+				"json": {
+					"path": "metrics.agents_with_wallet.total",
+					"min": 970
+				}
+			}
+		},
+		{
+			"type": "api",
+			"url": "https://three.ws/api/platform/analytics",
+			"expect": {
+				"status": 200,
+				"json": {
+					"path": "metrics.models_generated.total",
+					"min": 47000
+				}
+			}
+		}
+	],
+	"posts": [
+		{
+			"text": "The platform now publishes every total about itself on one page: more than 4,300 agents, more than 970 of them holding a wallet, and more than 47,000 finished 3D models, each figure read live from the table that records the activity.\n\nEvery number is charted per day over 30 days, 90 days or all time, or as a running total, and explained in a note underneath. The note is written by the same code that computes the number, so it can never describe a different query than the one that ran. A 3D model only counts when the job finished, a GLB was stored, and the quality gate did not reject it.\n\nThe same data is open as JSON at /api/platform/analytics, with the method note on every metric.",
+			"media": [
+				{
+					"path": "public/x-media/platform-analytics/reel.mp4",
+					"probe": {
+						"durationSec": 14.2,
+						"width": 1280,
+						"height": 720,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "Open it at three.ws/analytics. Hover or tap any chart to read a single day. Totals are cached for up to five minutes, days are UTC calendar days, and the running total ends on the all-time figure, so a dashboard you build on the endpoint reads the same numbers the page shows."
+		}
+	],
+	"claims": [
+		{
+			"says": "publishes every total about itself on one page",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/analytics",
+					"contains": "Every total the platform publishes about itself, on one page."
+				}
+			]
+		},
+		{
+			"says": "More than 4,300 agents",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "agents",
+					"min": 4300
+				}
+			]
+		},
+		{
+			"says": "more than 970 of them holding a wallet",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "wallets",
+					"min": 970
+				}
+			]
+		},
+		{
+			"says": "More than 47,000 finished 3D models",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "models",
+					"min": 47000
+				}
+			]
+		},
+		{
+			"says": "each figure read live from the table that records the activity",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/analytics",
+					"contains": "Each figure is read live from the table that records the activity, charted per day, and explained in a note below, so you can check exactly what was counted."
+				}
+			]
+		},
+		{
+			"says": "Every number is charted per day over 30 days, 90 days or all time, or as a running total",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/analytics",
+					"contains": "One chart per metric over the selected window. Hover or tap a chart to read a single day; switch to Running total to see the all-time curve."
+				},
+				{
+					"type": "proof",
+					"responded": "/api/platform/analytics"
+				}
+			]
+		},
+		{
+			"says": "The note is written by the same code that computes the number, so it can never describe a different query than the one that ran",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/analytics",
+					"contains": "Written by the same code that computes the numbers, so a note can never describe a different query than the one that ran."
+				}
+			]
+		},
+		{
+			"says": "A 3D model only counts when the job finished, a GLB was stored, and the quality gate did not reject it",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/analytics",
+					"contains": "Finished 3D generations (table forge_creations): status done, a GLB file stored, and not rejected by the quality gate. Failed and in-progress jobs are not counted."
+				}
+			]
+		},
+		{
+			"says": "The same data is open as JSON at /api/platform/analytics, with the method note on every metric",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/analytics",
+					"contains": "The same data is open at /api/platform/analytics."
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/api/platform/analytics",
+					"contains": "\"method\":"
+				}
+			]
+		},
+		{
+			"says": "Hover or tap any chart to read a single day",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/analytics",
+					"contains": "Hover or tap a chart to read a single day"
+				}
+			]
+		},
+		{
+			"says": "Totals are cached for up to five minutes, days are UTC calendar days",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/analytics",
+					"contains": "Days are UTC calendar days."
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/analytics",
+					"contains": "Totals are cached for up to five minutes."
+				}
+			]
+		},
+		{
+			"says": "The running total ends on the all-time figure",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/analytics",
+					"contains": "so it ends on the all-time total"
+				}
+			]
+		}
+	],
+	"mentions": {},
+	"kind": "post"
+}

@@ -14,9 +14,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'link_agent',
 	title: 'Link a three.ws identity to its AgenC agent id',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Resolve a three.ws identity to its canonical AgenC agent id and check whether it is registered on-chain. Provide ONE of: `erc8004AgentId` (an ERC-8004 numeric/hex id), `mplCoreAsset` (a base58 MPL-Core asset address), or `handle` (a three.ws handle). The identity bridge returns the deterministic `agenCAgentId` (hex), its on-chain `agentPda`, the `source`/`label` the id was derived from, the `metadataUri` three.ws would publish for it, and `registered:true|false`. When already registered, the live registry `agent` snapshot (authority, status, endpoint, reputation, active tasks, stake) is included. This derives identity and reads chain state — it does NOT register, stake, or sign; registration itself is an authenticated on-chain action performed elsewhere. Read-only; registration state is live, so results are not idempotent. Free, no key required.',
+		'Resolve a three.ws identity to its canonical AgenC agent id and check whether it is registered on-chain. Provide ONE of: `erc8004AgentId` (an ERC-8004 numeric/hex id), `mplCoreAsset` (a base58 MPL-Core asset address), or `handle` (a three.ws handle). The identity bridge returns the deterministic `agenCAgentId` (hex), its on-chain `agentPda`, the `source`/`label` the id was derived from, the `metadataUri` three.ws would publish for it, and `registered:true|false`. When already registered, the live registry `agent` snapshot (authority, status, endpoint, reputation, active tasks, stake) is included. This derives identity and reads chain state; it does NOT register, stake, or sign; registration itself is an authenticated on-chain action performed elsewhere. Read-only; registration state is live, so results are not idempotent. Free, no key required. Use this when you know a three.ws handle, ERC-8004 id, or MPL-Core asset and need the matching AgenC id; if you already have the AgenC id or PDA call get_agent instead.',
 	inputSchema: {
 		erc8004AgentId: z
 			.union([z.string(), z.number()])

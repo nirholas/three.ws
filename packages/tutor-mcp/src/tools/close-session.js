@@ -15,7 +15,7 @@ export const def = {
 	title: 'Close a tutoring session (finalize invoice)',
 	annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: true },
 	description:
-		'Finalize a Pay-As-You-Learn tutoring session and return its itemized, attested invoice. Seals the ledger for the given sessionId: status flips to "closed", a SHA-256 attestation is stamped over the line items and total, and no further questions can be billed to this session afterward. Returns sessionId, createdAt, closedAt, questionCount, the full lineItems array, the totalAtomics / totalUsd owed, and the attestation hash. Closing itself is FREE and moves no funds — the learner was already charged per answered question; this only produces the final receipt. Idempotent: closing an already-closed session returns the same total. Use load_session first if you want to review the tab before sealing it.',
+		'Finalize a Pay-As-You-Learn tutoring session and return its itemized, attested invoice. Seals the ledger for the given sessionId: status flips to "closed", a SHA-256 attestation is stamped over the line items and total, and no further questions can be billed to this session afterward. Returns sessionId, createdAt, closedAt, questionCount, the full lineItems array, the totalAtomics / totalUsd owed, and the attestation hash. Closing itself is FREE and moves no funds: the learner was already charged per answered question; this only produces the final receipt. Idempotent: closing an already-closed session returns the same total. Use this when the learner is done; call load_session first to review the tab before sealing it.',
 	inputSchema: {
 		sessionId: z
 			.string()

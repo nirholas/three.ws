@@ -1,0 +1,28 @@
+# three.ws
+
+> Open-source platform for 3D AI agents. Turn text or a photo into a rigged, animated GLB avatar, give it an LLM brain, memory and a wallet, and embed it anywhere with one web component. Remote MCP server, x402 payments, Three.js, browser-native.
+
+three.ws is an open-source repository by nirholas, part of the three.ws ecosystem.
+
+## Docs
+
+- [README](https://github.com/nirholas/three.ws/blob/HEAD/README.md): install, usage and reference
+- [Table of Contents](https://github.com/nirholas/three.ws/blob/HEAD/README.md#table-of-contents)
+- [What is three.ws?](https://github.com/nirholas/three.ws/blob/HEAD/README.md#what-is-threews)
+- [Key Features](https://github.com/nirholas/three.ws/blob/HEAD/README.md#key-features)
+- [Screenshots](https://github.com/nirholas/three.ws/blob/HEAD/README.md#screenshots)
+- [Forge: Text & Image to 3D](https://github.com/nirholas/three.ws/blob/HEAD/README.md#forge-text-image-to-3d)
+- [Platform Pages](https://github.com/nirholas/three.ws/blob/HEAD/README.md#platform-pages)
+- [Getting Started](https://github.com/nirholas/three.ws/blob/HEAD/README.md#getting-started)
+- [Examples](https://github.com/nirholas/three.ws/blob/HEAD/README.md#examples)
+- [AGENTS.md](https://github.com/nirholas/three.ws/blob/HEAD/AGENTS.md): guidance for coding agents
+- [Full text for LLMs](https://github.com/nirholas/three.ws/blob/HEAD/llms-full.txt): the README inlined
+
+## Project
+
+- [Source](https://github.com/nirholas/three.ws)
+- [Issues](https://github.com/nirholas/three.ws/issues)
+- [Discussions](https://github.com/nirholas/three.ws/discussions)
+- [Homepage](https://three.ws)
+- [three.ws](https://three.ws): the platform this is part of
+- [All repositories by nirholas](https://github.com/nirholas/nirholas#readme)

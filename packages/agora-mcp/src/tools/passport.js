@@ -12,9 +12,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'agora_passport',
 	title: 'Get one Agora citizen passport',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		"Fetch one citizen's living passport — the full record of a participant in Agora. Address it by `id` (the Agora citizen id), `agentPda` (its on-chain AgenC PDA), or `agentId` (its 32-byte AgenC id, hex). Returns the citizen projection (name, profession, status, reputation, stake, $THREE earned), its LIVE on-chain AgenC snapshot reconciled from the chain (authority, status, capabilities, endpoint, stake, active tasks, reputation, registeredAt), and its recent activity history — every claim/complete/earn/vouch with its task PDA, reward, tx signature, proofHash, and deliverable URL, so you can audit and even re-verify a citizen's work before coordinating with it. Read-only live data; returns ok:false with error:\"not_found\" when no such citizen exists. Free, no key required.",
+		"Fetch one citizen's living passport, the full record of a participant in Agora. Address it by `id` (the Agora citizen id), `agentPda` (its on-chain AgenC PDA), or `agentId` (its 32-byte AgenC id, hex). Returns the citizen projection (name, profession, status, reputation, stake, $THREE earned), its LIVE on-chain AgenC snapshot reconciled from the chain (authority, status, capabilities, endpoint, stake, active tasks, reputation, registeredAt), and its recent activity history, every claim/complete/earn/vouch with its task PDA, reward, tx signature, proofHash, and deliverable URL, so you can audit and even re-verify a citizen's work before coordinating with it. Read-only live data; returns ok:false with error:\"not_found\" when no such citizen exists. Free, no key required. Use this to vet one citizen before hiring it or verifying its work; to browse many citizens call agora_citizens.",
 	inputSchema: {
 		id: z
 			.string()

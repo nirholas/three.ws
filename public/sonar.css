@@ -19,6 +19,9 @@
 	--sn-live: var(--success);
 	--sn-warn: var(--warn);
 	--sn-error: var(--danger);
+	/* Live meters track a value sampled every frame, so they move at constant
+	   speed: an eased curve would make each sample surge and settle. */
+	--sn-ease-track: linear;
 }
 :root[data-theme='light'] {
 	--sn-border: rgba(0, 0, 0, 0.1);
@@ -283,7 +286,7 @@
 	width: 0%;
 	border-radius: inherit;
 	background: var(--sn-accent);
-	transition: width var(--duration-instant) var(--ease-standard), background var(--duration-base) var(--ease-standard);
+	transition: width var(--duration-instant) var(--sn-ease-track), background var(--duration-base) var(--ease-standard);
 }
 
 .sn-meter-fill.is-hot { background: var(--sn-live); }
@@ -319,7 +322,7 @@
 	height: 100%;
 	width: 0%;
 	background: var(--sn-accent);
-	transition: width var(--duration-fast) var(--ease-standard);
+	transition: width var(--duration-fast) var(--sn-ease-track);
 }
 
 /* ── side panels ──────────────────────────────────────────────────────── */

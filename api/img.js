@@ -41,7 +41,7 @@
 import { wrap, cors, method, error, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { fetchModel } from './_lib/fetch-model.js';
-import { safeFetchJson } from './_lib/ssrf.js';
+import { IPFS_GATEWAYS } from './_lib/ipfs-gateways.js';
 
 // `?w=<px>` resizes a raster upstream to at most that width and re-encodes it
 // as WebP. Gallery surfaces (the Forge showcase, the marketplace grid) paint
@@ -106,20 +106,6 @@ const TOTAL_BUDGET_MS = 25_000;
 // flush the placeholder SVG (or the real image) after the last upstream attempt.
 const RESPONSE_HEADROOM_MS = 1_000;
 
-// Public IPFS gateways. ipfs.io is the canonical resolver the rest of the platform
-// pins to (api/_lib/onchain.js) but is also the one most likely to ORB-block or
-// stall, so we fan out across healthy mirrors and race them: the first to return a
-// valid image wins. cloudflare-ipfs.com is intentionally absent: Cloudflare sunset
-// its public IPFS gateway, so every request to it is a guaranteed failure that only
-// wastes a connection.
-const IPFS_GATEWAYS = [
-	'https://ipfs.io/ipfs/',
-	'https://dweb.link/ipfs/',
-	'https://gateway.pinata.cloud/ipfs/',
-	'https://w3s.link/ipfs/',
-	'https://4everland.io/ipfs/',
-];
-
 // Pull the `<cid>/<path?>` portion out of any recognised IPFS URL form so we can
 // re-point it at a different gateway. Returns null for non-IPFS URLs.
 function ipfsPath(rawUrl) {
@@ -128,7 +114,10 @@ function ipfsPath(rawUrl) {
 	return m ? m[1] : null;
 }
 
-// Build the ordered list of candidate URLs to try for one logical image.
+// Build the ordered list of candidate URLs to try for one logical image. The
+// gateways are the shared server-side list (api/_lib/ipfs-gateways.js), so a
+// gateway that stops serving is dropped in one place; api/_lib/ipfs-pin.js
+// records why each retired host is absent.
 function candidates(rawUrl) {
 	const path = ipfsPath(rawUrl);
 	if (path) return IPFS_GATEWAYS.map((g) => g + path);
@@ -269,17 +258,14 @@ function imageFromMetaDoc(data) {
 	return trimmed;
 }
 
-// Resolve a token's artwork URL from its metadata JSON document, fetched through
-// the SSRF-hardened JSON client. Backs the explicit `?meta=` parameter; the
-// `?url=` path reaches the same place via raceCandidates()'s JSON detection.
-async function resolveImageFromMeta(metaUri, timeoutMs = META_TIMEOUT_MS) {
-	try {
-		const { ok, data } = await safeFetchJson(metaUri, { timeoutMs });
-		if (!ok) return null;
-		return imageFromMetaDoc(data);
-	} catch {
-		return null;
-	}
+// Resolve a token's artwork URL from its metadata JSON document. Backs the
+// explicit `?meta=` parameter; the `?url=` path reaches the same place via
+// raceCandidates()'s JSON detection. The document is raced across every
+// gateway exactly like art is, because a metadata URI pinned to one gateway
+// host (pump.fun hands out ipfs.io) dies with that host otherwise.
+async function resolveImageFromMeta(metaUri, budgetMs) {
+	const doc = await raceCandidates(candidates(metaUri), META_TIMEOUT_MS, budgetMs, true);
+	return doc?.kind === 'json' ? imageFromMetaDoc(doc.data) : null;
 }
 
 // Whatever this endpoint returns is a remote party's bytes served from the

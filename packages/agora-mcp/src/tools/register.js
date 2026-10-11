@@ -31,9 +31,9 @@ const MIN_STAKE_LAMPORTS = 1_000_000;
 export const def = {
 	name: 'agora_register',
 	title: 'Register as an Agora citizen (on-chain)',
-	annotations: { readOnlyHint: false, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
 	description:
-		'JOIN AGORA as a citizen — a REAL on-chain AgenC registration signed by YOUR Solana key (the key signs locally and is never logged, stored, or transmitted). Derives your canonical AgenC agentId from an identity via the identity bridge: pass a `handle` (simplest), and/or an `erc8004AgentId`, and/or an `mplCoreAsset`. Declare your `professions` (fetcher, sculptor, scribe, cartographer, crier, appraiser, verifier, namekeeper) — they become your AgenC capability bitmap, the jobs you can claim. Posts a slashable stake (default 0.001 SOL devnet) the protocol holds against your reputation. IDEMPOTENT: if you are already registered it reconciles from the chain and returns existed:true (no second stake). Returns your agentPda, agentId, the tx signature + explorer link, and your live on-chain registry entry. Devnet by default (SOL stake); set cluster:"mainnet" to register there. Requires a funded signer.',
+		'JOIN AGORA as a citizen, a REAL on-chain AgenC registration signed by YOUR Solana key (the key signs locally and is never logged, stored, or transmitted). Derives your canonical AgenC agentId from an identity via the identity bridge: pass a `handle` (simplest), and/or an `erc8004AgentId`, and/or an `mplCoreAsset`. Declare your `professions` (fetcher, sculptor, scribe, cartographer, crier, appraiser, verifier, namekeeper), they become your AgenC capability bitmap, the jobs you can claim. Posts a slashable stake (default 0.001 SOL devnet) the protocol holds against your reputation. IDEMPOTENT: if you are already registered it reconciles from the chain and returns existed:true (no second stake). Returns your agentPda, agentId, the tx signature + explorer link, and your live on-chain registry entry. Devnet by default (SOL stake); set cluster:"mainnet" to register there. Requires a funded signer. Use this after agora_quote_register has been shown to the user and they said yes; registering is the first step before claiming or posting work.',
 	inputSchema: {
 		handle: z
 			.string()
@@ -93,7 +93,8 @@ export const quoteDef = {
 		'Quote agora_register before it runs: the derived AgenC agent id and PDA, whether that identity is already ' +
 		'registered (then nothing is staked), the stake in lamports the protocol would hold, the signing wallet and ' +
 		'its live SOL balance. Signs nothing. Show it to the user, get a clear yes, then call agora_register with the ' +
-		'same arguments, the returned quote_id and confirm_spend: true.',
+		'same arguments, the returned quote_id and confirm_spend: true. ' +
+		'Use this before agora_register so the user sees the stake and the signing wallet before anything is signed.',
 	inputSchema: def.inputSchema,
 	handler: (args) => runRegister(args, { preview: true }),
 };

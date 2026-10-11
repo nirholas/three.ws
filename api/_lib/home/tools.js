@@ -149,7 +149,7 @@ export const HOME_TOOL_DEFS = Object.freeze([
 		scope: 'home:read',
 		annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 		description:
-			'List the entities this home has pre-approved, so a guarded action on one of them runs without asking. Read this before proposing something that would otherwise need a confirmation: if the entity is already granted, there is no prompt to warn the user about.',
+			'List the entities this home has pre-approved, so a guarded action on one of them runs without asking. Call this before proposing something that would otherwise need a confirmation: if the entity is already granted, there is no prompt to warn the user about.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -166,7 +166,7 @@ export const HOME_TOOL_DEFS = Object.freeze([
 		scope: 'home:act',
 		annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
 		description:
-			'Match a phrase like "good night" or "I am home" to one of this house\'s own scenes or scripts, and run it. Returns the match and how confident it is. If the scene would unlock, open, or disarm something, this does NOT run it: it returns a pending confirmation that a person has to approve.',
+			'Match a phrase like "good night" or "I am home" to one of this house\'s own scenes or scripts, and run it. Returns the match and how confident it is. If the scene would unlock, open, or disarm something, this does NOT run it: it returns a pending confirmation that a person has to approve. Use this when the user asks for a household routine in plain words; if no scene or script fits, use home_call instead.',
 		inputSchema: {
 			type: 'object',
 			properties: {

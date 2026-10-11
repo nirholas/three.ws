@@ -5,10 +5,11 @@
 // API key stored as a Bot secret), so this surface lists only tools that read
 // or edit agent data: agents, their memory, their custom skills, the account's
 // avatars, and read-only three:// views of the account. Nothing here moves
-// value. A tool is admitted only when it is on GROK_ACCOUNT_TOOLS AND the shared
-// policy says it moves no funds and is not in the financial tier AND the core
-// server's own tools/list advertises no price for it, so a later change to the
-// policy or the prices can only shrink this list, never widen it.
+// value. A tool is admitted only when it is on GROK_ACCOUNT_TOOLS AND the
+// shared policy keeps it out of the financial tier AND its scope is not a
+// wallet, payment or trade scope AND the core server's own tools/list
+// advertises no price for it, so a later change to the policy or the prices
+// can only shrink this list, never widen it.
 //
 // tools/call runs only a tool this caller's tools/list would show, through the
 // core dispatcher unchanged: the same tool policy (enablement, the spend gate),
@@ -22,7 +23,6 @@
 
 import { POLICY } from '@three-ws/mcp-policy';
 import { hasScope } from '../_lib/auth.js';
-import { spendScopeFor } from '../_mcp/policy.js';
 
 // The core server's @three-ws/mcp-policy id.
 const CORE_SERVER = 'three.ws';
@@ -30,6 +30,7 @@ const CORE_SERVER = 'three.ws';
 export const GROK_ACCOUNT_TOOLS = Object.freeze([
 	// Agents
 	'create_agent',
+	'list_my_agents',
 	'attach_avatar_to_agent',
 	'identity_check',
 	'call_agent',
@@ -54,10 +55,15 @@ export const GROK_ACCOUNT_TOOLS = Object.freeze([
 	'read_resource',
 ]);
 
-/** Does the shared policy put this core tool among the value-moving ones? */
-export function movesValue(name) {
-	if (spendScopeFor(CORE_SERVER, name)) return true;
-	return POLICY[CORE_SERVER]?.[name]?.tier === 'financial';
+// Scopes that authorize moving value. A tool that needs one of these is a wallet,
+// payment, trade or launch tool whatever its policy tier says.
+const VALUE_SCOPE = /^(wallet|payments?|trade|trading|spend|launch)[:.]/;
+
+/** Does the shared policy or the tool's own scope make this core tool value-moving? */
+export function movesValue(name, tools = null) {
+	if (POLICY[CORE_SERVER]?.[name]?.tier === 'financial') return true;
+	const scope = tools?.[name]?.scope;
+	return typeof scope === 'string' && VALUE_SCOPE.test(scope);
 }
 
 const ADMITTED = new Set(GROK_ACCOUNT_TOOLS.filter((name) => !movesValue(name)));
@@ -88,7 +94,7 @@ export async function accountToolCatalog(auth, req) {
 	const { tools, dispatch } = await loadCore();
 	const listed = await dispatch({ jsonrpc: '2.0', id: 'grok-account-tools', method: 'tools/list' }, auth, req);
 	return (listed?.result?.tools || []).filter((t) => {
-		if (!ADMITTED.has(t.name) || t.pricing) return false;
+		if (!ADMITTED.has(t.name) || t.pricing || movesValue(t.name, tools)) return false;
 		const scope = tools[t.name]?.scope;
 		return !scope || hasScope(auth.scope, scope);
 	});

@@ -11,7 +11,7 @@ import { ACCEPTED_IMAGE_TYPES } from '../lib/image.js';
 export const def = {
 	name: 'get_vision_status',
 	title: 'Vision availability + accepted formats',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Check whether the three.ws vision pipeline is live on the target deployment and which image formats it ' +
 		'accepts. Returns `configured` (true when at least one VLM provider — a free NVIDIA NIM lane or the paid ' +

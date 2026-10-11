@@ -76,6 +76,20 @@ export const CLIENTS = [
 		scopes: ['user', 'project'],
 	},
 	{
+		// IBM Bob (bob.ibm.com/docs/ide/configuration/mcp/mcp-in-bob): the IDE and
+		// Bob Shell share these files. A server that needs sign-in runs Bob's own
+		// OAuth discovery on first connect, so no header is required.
+		id: 'bob',
+		label: 'IBM Bob',
+		format: 'json',
+		rootKey: 'mcpServers',
+		configPath: (env, { project } = {}) => (project ? path.join(env.cwd, '.bob', 'mcp.json') : path.join(env.home, '.bob', 'settings', 'mcp.json')),
+		detect: (env) => exists(path.join(env.home, '.bob')),
+		http: ({ url, headers }) => ({ type: 'streamable-http', url, ...(Object.keys(headers).length ? { headers } : {}) }),
+		stdio: stdioJson,
+		scopes: ['user', 'project'],
+	},
+	{
 		id: 'codex',
 		label: 'Codex',
 		format: 'toml',

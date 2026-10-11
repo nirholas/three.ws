@@ -38,6 +38,7 @@ import {
 } from '@solana/spl-token';
 import { detectSolanaWallet, SOLANA_RPC, solanaTxExplorerUrl } from '../erc8004/solana-deploy.js';
 import { resolveTokenProgramId } from './spl-token-program.js';
+import { leaveAppForPayment } from './native-handoff.js';
 
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
@@ -98,6 +99,9 @@ async function waitForConfirmation(conn, signature, timeoutMs = 60_000) {
 export async function tipAgent({ toAddress, token = 'SOL', amount, mint: splMint, decimals: splDecimals, noBalanceMsg, network = 'mainnet', onStage } = {}) {
 	const stage = (s) => { try { onStage?.(s); } catch { /* listener best-effort */ } };
 
+	// In the iOS app this opens the Safari sheet; the caller's error copy then
+	// says where the tip continues.
+	if (leaveAppForPayment()) throw new TipError('Tips are sent from three.ws in Safari.', 'native_handoff');
 	if (!toAddress || !BASE58_RE.test(String(toAddress))) {
 		throw new TipError('This agent has no valid wallet address to tip.', 'no_address');
 	}

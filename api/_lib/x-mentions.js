@@ -56,7 +56,7 @@ export const EXPANSIONS = [
 	'referenced_tweets.id.author_id',
 	'referenced_tweets.id.attachments.media_keys',
 ];
-export const USER_FIELDS = ['username', 'name', 'profile_image_url', 'verified'];
+export const USER_FIELDS = ['username', 'name', 'profile_image_url', 'verified', 'created_at'];
 export const MEDIA_FIELDS = ['url', 'type', 'width', 'height', 'preview_image_url', 'alt_text'];
 
 export class XMentionsError extends Error {
@@ -170,7 +170,9 @@ export function classifyMentionsError(res, now = Date.now()) {
 		// A 429 without a usable reset still has to stop the poller; X's
 		// mention window is 15 minutes, so that is the honest fallback.
 		const resetAt = rl.resetAt && Date.parse(rl.resetAt) > now ? rl.resetAt : new Date(now + 15 * 60_000).toISOString();
-		return new XRateLimited(`X rate limit on the mention timeline until ${resetAt}`, { status, body, resetAt, limit: rl.limit });
+		const err = new XRateLimited(`X rate limit on the mention timeline until ${resetAt}`, { status, body, resetAt, limit: rl.limit });
+		err.headers = plainHeaders(res.headers);
+		return err;
 	}
 	if (status === 402 || (status === 403 && TIER_PATTERNS.some((re) => re.test(detail)))) {
 		const reason = body?.reason || body?.type || body?.title || null;
@@ -217,6 +219,7 @@ function authorOf(id, usersById) {
 		name: u?.name ? decodeXText(u.name) : null,
 		profileImageUrl: u?.profile_image_url || null,
 		verified: u?.verified === true,
+		createdAt: u?.created_at && Number.isFinite(Date.parse(u.created_at)) ? String(u.created_at) : null,
 	};
 }
 
@@ -396,7 +399,7 @@ export function bearerTransport(accessToken, fetchImpl = fetchUpstream) {
  * A caller may pass `request` to supply its own transport (the probe script
  * and tests replay captured responses through it).
  */
-async function resolveAccount(account, env) {
+export async function resolveAccount(account, env) {
 	if (account?.kind === 'agent') {
 		if (!account.agentId || !account.userId) throw new XMentionsError('agent mentions need agentId and userId', { code: 'bad_account' });
 		const { resolveXConnection, refreshIfNeeded } = await import('./x-post.js');
@@ -452,11 +455,13 @@ export async function fetchMentions({ account, sinceId = null, maxResults = PAGE
 	let token = null;
 	let pages = 0;
 	let rateLimit = null;
+	let lastHeaders = {};
 	let truncated = false;
 
 	for (;;) {
 		const res = await req(path, mentionsQuery({ sinceId, maxResults, paginationToken: token }));
 		rateLimit = readRateLimit(res.headers);
+		lastHeaders = plainHeaders(res.headers);
 		if (res.status < 200 || res.status >= 300) throw classifyMentionsError(res);
 		pages += 1;
 		const body = res.body || {};
@@ -475,5 +480,43 @@ export async function fetchMentions({ account, sinceId = null, maxResults = PAGE
 	}
 
 	const mentions = [...byId.values()].sort((a, b) => compareIds(a.id, b.id));
-	return { account: acct, mentions, newestId: newestId || (sinceId ? String(sinceId) : null), pages, truncated, rateLimit, partialErrors };
+	return { account: acct, mentions, newestId: newestId || (sinceId ? String(sinceId) : null), pages, truncated, rateLimit, headers: lastHeaders, partialErrors };
+}
+
+/**
+ * Look accounts up by username (GET /2/users/by). Returns the ones X knows;
+ * a name X does not return is simply absent. Throws the classified X error on
+ * a refusal so the caller can keep its cache and record the outcome.
+ *
+ * @param {{ usernames: string[], request: (path: string, query: Record<string,string>) => Promise<{ status: number, headers: object, body: any }> }} o
+ * @returns {Promise<{ id: string, username: string, createdAt: string|null }[]>}
+ */
+export async function lookupUsersByUsername({ usernames, request }) {
+	const names = [...new Set((usernames || []).map((n) => String(n).replace(/^@/, '').trim()).filter((n) => /^\w{1,15}$/.test(n)))];
+	if (!names.length) return [];
+	const res = await request('users/by', { usernames: names.join(','), 'user.fields': 'created_at,username' });
+	if (res.status < 200 || res.status >= 300) throw classifyMentionsError(res);
+	return (Array.isArray(res.body?.data) ? res.body.data : [])
+		.filter((u) => u?.id && u?.username)
+		.map((u) => ({ id: String(u.id), username: String(u.username), createdAt: u.created_at || null }));
+}
+
+/**
+ * The author of one post (GET /2/tweets/:id). Used to find the human at the
+ * root of a conversation a bot tagged us in. Returns null when X does not
+ * return the post (deleted, protected, suspended author). Throws the
+ * classified X error on a refusal.
+ *
+ * @param {{ postId: string, request: (path: string, query: Record<string,string>) => Promise<{ status: number, headers: object, body: any }> }} o
+ * @returns {Promise<{ id: string, username: string|null, createdAt: string|null, postId: string }|null>}
+ */
+export async function lookupPostAuthor({ postId, request }) {
+	const id = String(postId ?? '');
+	if (!/^\d{1,25}$/.test(id)) return null;
+	const res = await request(`tweets/${id}`, { expansions: 'author_id', 'tweet.fields': 'author_id,conversation_id', 'user.fields': USER_FIELDS.join(',') });
+	if (res.status < 200 || res.status >= 300) throw classifyMentionsError(res);
+	const authorId = res.body?.data?.author_id;
+	if (!authorId) return null;
+	const author = authorOf(authorId, new Map((res.body?.includes?.users || []).map((u) => [String(u.id), u])));
+	return { id: author.id, username: author.username, createdAt: author.createdAt, postId: id };
 }

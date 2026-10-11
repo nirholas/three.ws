@@ -14,11 +14,11 @@ import { SOLANA_RPC_URL } from '../config.js';
 export const def = {
 	name: 'get_wallet_balances',
 	title: 'Live on-chain balances for a Solana wallet',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Read live, on-chain balances for any Solana pubkey directly from the RPC: the native SOL balance plus ' +
 		'every non-zero SPL token position (classic SPL and Token-2022), each with mint, raw amount, ui_amount, ' +
-		'decimals, and which token program owns it. This is the raw on-chain truth (no USD pricing) — use it to ' +
+		'decimals, and which token program owns it. This is the raw on-chain truth (no USD pricing). Use it to ' +
 		'confirm the agent’s own signing wallet before a send_transfer, or to check any address. No session ' +
 		'required. Read-only.',
 	inputSchema: {

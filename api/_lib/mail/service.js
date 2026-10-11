@@ -1,7 +1,7 @@
 // Agent mail service: provisioning, quotes, metered sends, and the inbox.
 //
-// Both callers, the v1 REST routes (api/_lib/mail/routes.js) and the MCP tools
-// (api/_mcpagent/mail-tools.js), go through this module, so the rules are
+// Both callers, the v1 REST routes (api/v1/agent-mail.js) and the MCP tools
+// (api/_mcp/tools/mail.js), go through this module, so the rules are
 // identical however an agent reaches its mailbox:
 //
 //   • Ownership. Every call names an agent the caller owns; anything else is a
@@ -17,13 +17,17 @@
 //     provider rejects is refunded to credits.
 //   • Conduct. Outbound content passes checkOutboundContent, recipients are
 //     validated, and a warm-up throttle bounds a new mailbox's volume.
+//   • Owner controls. The agent's recipient allowlist and daily send cap
+//     (./controls.js) are checked on the quote and again on the confirmed send.
+//   • Routing. Recipients on the agents domain are delivered internally
+//     (./inbound.js deliverLocal); everyone else goes through the provider.
 
 import { createHash } from 'node:crypto';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { sql } from '../db.js';
 import { env } from '../env.js';
-import { r2 } from '../r2.js';
+import { r2, putObject } from '../r2.js';
 import { debitCredits, getCreditAccount, refundCredits } from '../credits.js';
 import { transferUsdcGuarded } from '../agent-usdc-transfer.js';
 import { getSolanaAddressBalances } from '../agent-wallet.js';
@@ -46,6 +50,9 @@ import {
 import { checkOutboundContent } from './content-rules.js';
 import { isValidAddress, isValidLocalPart, localPartFrom, replyHeaders, replySubject } from './threading.js';
 import { mailProvider, ProviderError } from './provider.js';
+import { loadPolicy, savePolicy, blockedRecipients, PolicyInputError, MAX_ALLOWLIST_ENTRIES, MAX_DAILY_SEND_CAP } from './controls.js';
+import { deliverLocal, localMailboxes } from './inbound.js';
+import * as rules from './rules.js';
 
 export class MailError extends Error {
 	constructor(status, code, message, details = null) {
@@ -437,7 +444,41 @@ async function canonicalDraft(mb, draft) {
 	return {
 		canonical: { to, cc, subject, text, html, attachments: atts, in_reply_to: parent?.id || null },
 		parent,
+		routing: await routeRecipients([...to, ...cc]),
 	};
+}
+
+/**
+ * Split recipients into agent mailboxes on the agents domain (delivered
+ * internally) and everyone else (delivered by the provider). An address on the
+ * agents domain that no active mailbox holds is refused before any charge.
+ */
+async function routeRecipients(all) {
+	const domain = `@${mailDomain()}`;
+	const onDomain = all.filter((a) => a.endsWith(domain));
+	const held = new Set((await localMailboxes(onDomain)).map((m) => m.address));
+	const unknown = onDomain.filter((a) => !held.has(a));
+	if (unknown.length) {
+		throw new MailError(404, 'unknown_agent_address', `No agent mailbox exists at ${unknown.join(', ')}.`, { unknown });
+	}
+	return { local: onDomain, external: all.filter((a) => !a.endsWith(domain)) };
+}
+
+/**
+ * Every limit a send must pass, checked on the quote and again on the send:
+ * the owner's allowlist and daily cap, then the platform warm-up throttle.
+ */
+async function assertSendAllowed(mb, canonical) {
+	const policy = await loadPolicy(mb.agent_id);
+	const blocked = blockedRecipients(policy, [...canonical.to, ...canonical.cc]);
+	if (blocked.length) {
+		throw new MailError(403, 'recipient_not_allowed', `This agent may only email its owner's allowlist, and ${blocked.join(', ')} ${blocked.length === 1 ? 'is' : 'are'} not on it. The owner can add ${blocked.length === 1 ? 'it' : 'them'} on the agent's mail page.`, { blocked, allowlist: policy.allowlist });
+	}
+	const throttle = await assertThrottle(mb);
+	if (policy.daily_send_cap != null && throttle.counts.lastDay >= policy.daily_send_cap) {
+		throw new MailError(429, 'daily_send_cap', `This agent reached the owner's cap of ${policy.daily_send_cap} sends per 24 hours. The owner can raise it on the agent's mail page.`, { daily_send_cap: policy.daily_send_cap, sent_last_day: throttle.counts.lastDay });
+	}
+	return { ...throttle, policy };
 }
 
 async function assertThrottle(mb) {
@@ -461,8 +502,8 @@ async function requireMailbox(agent) {
 export async function quoteSend({ userId, agentId, draft, paymentSource }) {
 	const agent = await loadOwnedAgent(agentId, userId);
 	const mb = await requireMailbox(agent);
-	const { canonical } = await canonicalDraft(mb, draft || {});
-	const throttle = await assertThrottle(mb);
+	const { canonical, routing } = await canonicalDraft(mb, draft || {});
+	const throttle = await assertSendAllowed(mb, canonical);
 	const pricing = await mailPricing();
 	const price = pricing.send_usd;
 	const funding = await fundingView(userId, agent);
@@ -484,7 +525,15 @@ export async function quoteSend({ userId, agentId, draft, paymentSource }) {
 			attachments: canonical.attachments,
 			in_reply_to: canonical.in_reply_to,
 		},
-		limits: { per_hour: throttle.limits.perHour, per_day: throttle.limits.perDay, sent_last_hour: throttle.counts.lastHour, sent_last_day: throttle.counts.lastDay },
+		delivery: { agent_mailboxes: routing.local, external: routing.external },
+		limits: {
+			per_hour: throttle.limits.perHour,
+			per_day: throttle.limits.perDay,
+			sent_last_hour: throttle.counts.lastHour,
+			sent_last_day: throttle.counts.lastDay,
+			owner_daily_cap: throttle.policy.daily_send_cap,
+			allowlist_enabled: throttle.policy.allowlist_enabled,
+		},
 		funding,
 		confirm_with: { tool: 'agent_mail_send', flag: 'confirm_send', quote_id: q.id },
 	};
@@ -519,8 +568,8 @@ export async function sendMail({ userId, agentId, quoteId, draft, confirm }) {
 	}
 	const agent = await loadOwnedAgent(agentId, userId);
 	const mb = await requireMailbox(agent);
-	const { canonical, parent } = await canonicalDraft(mb, draft || {});
-	await assertThrottle(mb);
+	const { canonical, parent, routing } = await canonicalDraft(mb, draft || {});
+	await assertSendAllowed(mb, canonical);
 	const quote = await consumeQuote({ quoteId, userId, agentId: agent.id, kind: 'send', payload: canonical });
 
 	// Fetch attachments before charging, so an unreachable file costs nothing.
@@ -536,30 +585,41 @@ export async function sendMail({ userId, agentId, quoteId, draft, confirm }) {
 	}
 	await updateSend(sendId, { status: 'sending', creditLedgerId: paid.creditLedgerId, signature: paid.signature });
 
-	const provider = mailProvider();
 	const domain = mailDomain();
 	const messageId = `${quote.id}@${domain}`;
 	const headers = { 'Message-ID': `<${messageId}>`, ...(parent ? replyHeaders(parent) : {}) };
-	let sent;
-	try {
-		sent = await provider.send({
-			from: fromHeader(mb),
-			to: canonical.to,
-			cc: canonical.cc,
-			subject: canonical.subject,
-			text: canonical.text,
-			html: canonical.html,
-			headers,
-			attachments: files,
-			idempotencyKey: `agent-mail-send:${quote.id}`,
-		});
-	} catch (err) {
-		const code = err instanceof ProviderError ? err.code : 'provider_error';
-		await refund({ quote, userId, kind: 'send', reason: code });
-		await updateSend(sendId, { status: 'refunded', provider: provider.name, errorCode: code, errorMessage: err.message });
-		throw new MailError(502, 'send_failed', `The mail provider did not accept the message (${err.message}). You were refunded $${quote.price_usd} in credits; fix the issue and retry.`, { provider_code: code, retryable: Boolean(err.retryable) });
-	}
+	const externalTo = canonical.to.filter((a) => routing.external.includes(a));
+	const externalCc = canonical.cc.filter((a) => routing.external.includes(a));
+	const goesExternal = externalTo.length + externalCc.length > 0;
 
+	// Provider leg: only the recipients outside the agents domain. A message
+	// whose "to" is all agents but whose cc is external promotes the cc.
+	let provider = null;
+	let sent = { id: `local:${quote.id}` };
+	if (goesExternal) {
+		provider = mailProvider();
+		try {
+			sent = await provider.send({
+				from: fromHeader(mb),
+				to: externalTo.length ? externalTo : externalCc,
+				cc: externalTo.length ? externalCc : [],
+				subject: canonical.subject,
+				text: canonical.text,
+				html: canonical.html,
+				headers,
+				attachments: files,
+				idempotencyKey: `agent-mail-send:${quote.id}`,
+			});
+		} catch (err) {
+			const code = err instanceof ProviderError ? err.code : 'provider_error';
+			await refund({ quote, userId, kind: 'send', reason: code });
+			await updateSend(sendId, { status: 'refunded', provider: provider.name, errorCode: code, errorMessage: err.message });
+			throw new MailError(502, 'send_failed', `The mail provider did not accept the message (${err.message}). You were refunded $${quote.price_usd} in credits; fix the issue and retry.`, { provider_code: code, retryable: Boolean(err.retryable) });
+		}
+	}
+	const providerName = provider ? provider.name : 'local';
+
+	const stored = await storeOutboundAttachments({ mailboxId: mb.id, quoteId: quote.id, files });
 	const references = parent ? [...(parent.references_ids || []), parent.message_id].filter(Boolean).slice(-20) : [];
 	const [msg] = await sql`
 		insert into agent_mail_messages
@@ -568,17 +628,94 @@ export async function sendMail({ userId, agentId, quoteId, draft, confirm }) {
 			 provider_message_id, read_at, delivery_status)
 		values
 			(${mb.id}, 'out', ${parent?.thread_id || quote.id}, ${mb.address}, ${mb.display_name}, ${canonical.to}, ${canonical.cc},
-			 ${canonical.subject}, ${canonical.text}, ${canonical.html},
-			 ${JSON.stringify(files.map((f) => ({ filename: f.filename, size: f.size, content_type: f.contentType })))}::jsonb,
-			 ${messageId}, ${parent?.message_id || null}, ${references}, ${provider.name}, ${sent.id}, now(), 'sent')
-		returning id, thread_id, created_at
+			 ${canonical.subject}, ${canonical.text}, ${canonical.html}, ${JSON.stringify(stored)}::jsonb,
+			 ${messageId}, ${parent?.message_id || null}, ${references}, ${providerName}, ${sent.id}, now(),
+			 ${goesExternal ? 'sent' : 'delivered'})
+		returning *
 	`;
-	await updateSend(sendId, { status: 'sent', provider: provider.name, providerId: sent.id, messageRowId: msg.id });
-	logAudit({ userId, action: 'agent_mail.send', resourceId: agent.id, meta: { to: canonical.to, cc: canonical.cc, message_id: msg.id, paid_with: quote.payment_source, cost_usd: quote.price_usd } });
+
+	// Local leg: agent mailboxes on the agents domain get their copy directly.
+	let delivered = [];
+	if (routing.local.length) {
+		try {
+			delivered = await deliverLocal({ fromMailbox: mb, sent: msg, recipients: routing.local });
+		} catch (err) {
+			if (!goesExternal) {
+				await refund({ quote, userId, kind: 'send', reason: 'local_delivery_failed' });
+				await sql`update agent_mail_messages set delivery_status = 'failed' where id = ${msg.id}`;
+				await updateSend(sendId, { status: 'refunded', provider: providerName, providerId: sent.id, messageRowId: msg.id, errorCode: 'local_delivery_failed', errorMessage: err.message });
+				throw new MailError(502, 'send_failed', `The message could not be delivered to ${routing.local.join(', ')}. You were refunded $${quote.price_usd} in credits; try again.`);
+			}
+			console.error('[agent-mail] local leg failed after provider send:', err.message);
+		}
+	}
+
+	await updateSend(sendId, { status: goesExternal ? 'sent' : 'delivered', provider: providerName, providerId: sent.id, messageRowId: msg.id });
+	logAudit({ userId, action: 'agent_mail.send', resourceId: agent.id, meta: { to: canonical.to, cc: canonical.cc, message_id: msg.id, local: routing.local, paid_with: quote.payment_source, cost_usd: quote.price_usd } });
 	return {
-		message: { id: msg.id, thread_id: msg.thread_id, created_at: msg.created_at, status: 'sent', provider_id: sent.id },
+		message: { id: msg.id, thread_id: msg.thread_id, created_at: msg.created_at, status: goesExternal ? 'sent' : 'delivered', provider_id: sent.id },
+		delivered_to_agents: delivered.map((d) => d.mailbox),
 		charge: { cost_usd: quote.price_usd, payment_source: quote.payment_source, signature: paid.signature, credit_ledger_id: paid.creditLedgerId },
 	};
+}
+
+/**
+ * Keep a copy of every sent attachment so the sender (and any agent mailbox
+ * that received it locally) can download it later. Same key scheme and
+ * download path as inbound attachments.
+ */
+async function storeOutboundAttachments({ mailboxId, quoteId, files }) {
+	const out = [];
+	for (const [i, f] of files.entries()) {
+		const base = { filename: f.filename, size: f.size, content_type: f.contentType };
+		const safe = String(f.filename || `attachment-${i + 1}`).replace(/[^\w.\- ]+/g, '_').slice(0, 120);
+		const key = `agent-mail/${mailboxId}/out-${quoteId}/${i}-${safe}`;
+		try {
+			await putObject({ key, body: f.content, contentType: 'application/octet-stream', metadata: { 'original-type': String(f.contentType).slice(0, 100) } });
+			out.push({ ...base, key });
+		} catch (err) {
+			out.push({ ...base, skipped_reason: `Sent, but no copy was kept: ${String(err?.message || 'storage failed').slice(0, 160)}` });
+		}
+	}
+	return out;
+}
+
+// ── replies ──────────────────────────────────────────────────────────────────
+
+/**
+ * The draft a reply to `messageId` sends. Deterministic from the stored
+ * message, so the quote and the confirmed send hash the same content.
+ * Replying to a received message answers its Reply-To (or sender); replying to
+ * one of the agent's own sent messages follows up with the same recipients.
+ */
+async function replyDraft(mb, { messageId, text, html, replyAll, attachments }) {
+	const parent = await loadMessage(mb, messageId);
+	let to;
+	let cc = [];
+	if (parent.direction === 'in') {
+		to = [(parent.reply_to && parent.reply_to[0]) || parent.from_address];
+		if (replyAll) cc = [...(parent.to_addresses || []), ...(parent.cc_addresses || [])];
+	} else {
+		to = parent.to_addresses || [];
+		if (replyAll) cc = parent.cc_addresses || [];
+	}
+	cc = cc.filter((a) => a !== mb.address && !to.includes(a));
+	return { to, cc, text, html, attachments, in_reply_to: parent.id };
+}
+
+export async function quoteReply({ userId, agentId, messageId, text, html, replyAll = false, attachments, paymentSource }) {
+	const agent = await loadOwnedAgent(agentId, userId);
+	const mb = await requireMailbox(agent);
+	const draft = await replyDraft(mb, { messageId, text, html, replyAll, attachments });
+	const quote = await quoteSend({ userId, agentId, draft, paymentSource });
+	return { ...quote, reply_to_message: messageId, confirm_with: { tool: 'agent_mail_reply', flag: 'confirm_send', quote_id: quote.quote_id } };
+}
+
+export async function sendReply({ userId, agentId, messageId, text, html, replyAll = false, attachments, quoteId, confirm }) {
+	const agent = await loadOwnedAgent(agentId, userId);
+	const mb = await requireMailbox(agent);
+	const draft = await replyDraft(mb, { messageId, text, html, replyAll, attachments });
+	return sendMail({ userId, agentId, quoteId, draft, confirm });
 }
 
 // ── inbox reads ──────────────────────────────────────────────────────────────
@@ -747,4 +884,91 @@ export async function attachmentDownloadUrl({ userId, agentId, messageId, index 
 	});
 	const url = await getSignedUrl(r2, cmd, { expiresIn: 300 });
 	return { url, filename: att.filename, size: att.size, expires_in: 300 };
+}
+
+/**
+ * Full-text-ish search across one mailbox (subject, sender, recipients, body).
+ * Same rows and paging as listMessages; every folder unless one is named.
+ */
+export async function searchMessages({ userId, agentId, query, folder = 'all', limit = 25, cursor = null }) {
+	const q = String(query || '').trim();
+	if (!q) throw new MailError(400, 'query_required', 'Pass a search query: words from the subject or body, or an address.');
+	const result = await listMessages({ userId, agentId, folder, q, limit, cursor });
+	return { ...result, query: q.slice(0, 120) };
+}
+
+// ── owner controls: allowlist, daily cap, mail rules ─────────────────────────
+
+/** Map a controls/rules validation error onto the service's error type. */
+function asMailError(err) {
+	if (err instanceof MailError) return err;
+	if (err instanceof PolicyInputError) return new MailError(400, err.code, err.message, err.details);
+	if (err instanceof rules.RuleError) return new MailError(err.status, err.code, err.message, err.details);
+	return err;
+}
+
+async function guarded(fn) {
+	try {
+		return await fn();
+	} catch (err) {
+		throw asMailError(err);
+	}
+}
+
+/** Everything the owner's mail settings panel shows. */
+export async function getMailSettings({ userId, agentId }) {
+	const agent = await loadOwnedAgent(agentId, userId);
+	const mb = await activeMailbox(agent.id);
+	const [policy, ruleList] = await Promise.all([loadPolicy(agent.id), rules.listRules(agent.id)]);
+	const counts = mb ? await outboundCounts(mb.id) : { lastHour: 0, lastDay: 0 };
+	const limits = mb ? warmupLimits(mb.created_at) : null;
+	return {
+		policy,
+		rules: ruleList,
+		usage: {
+			sent_last_hour: counts.lastHour,
+			sent_last_day: counts.lastDay,
+			warmup_per_hour: limits?.perHour ?? null,
+			warmup_per_day: limits?.perDay ?? null,
+		},
+		limits: { max_allowlist_entries: MAX_ALLOWLIST_ENTRIES, max_daily_send_cap: MAX_DAILY_SEND_CAP, max_rules: rules.MAX_RULES_PER_AGENT, max_prompt_chars: rules.MAX_PROMPT_CHARS },
+	};
+}
+
+export async function updateMailPolicy({ userId, agentId, patch }) {
+	const agent = await loadOwnedAgent(agentId, userId);
+	const policy = await guarded(() => savePolicy({ agentId: agent.id, userId, patch: patch || {} }));
+	logAudit({ userId, action: 'agent_mail.policy', resourceId: agent.id, meta: policy });
+	return { policy };
+}
+
+export async function listMailRules({ userId, agentId }) {
+	const agent = await loadOwnedAgent(agentId, userId);
+	return { rules: await rules.listRules(agent.id) };
+}
+
+export async function createMailRule({ userId, agentId, input }) {
+	const agent = await loadOwnedAgent(agentId, userId);
+	const rule = await guarded(() => rules.createRule({ agentId: agent.id, userId, input: input || {} }));
+	logAudit({ userId, action: 'agent_mail.rule_create', resourceId: agent.id, meta: { rule_id: rule.id, match_from: rule.match_from, mode: rule.mode } });
+	return { rule };
+}
+
+export async function updateMailRule({ userId, agentId, ruleId, input }) {
+	const agent = await loadOwnedAgent(agentId, userId);
+	const rule = await guarded(() => rules.updateRule({ agentId: agent.id, ruleId, input: input || {} }));
+	logAudit({ userId, action: 'agent_mail.rule_update', resourceId: agent.id, meta: { rule_id: rule.id } });
+	return { rule };
+}
+
+export async function deleteMailRule({ userId, agentId, ruleId }) {
+	const agent = await loadOwnedAgent(agentId, userId);
+	const out = await guarded(() => rules.deleteRule({ agentId: agent.id, ruleId }));
+	logAudit({ userId, action: 'agent_mail.rule_delete', resourceId: agent.id, meta: { rule_id: ruleId } });
+	return out;
+}
+
+export async function listMailRuleEvents({ userId, agentId, limit = 50 }) {
+	const agent = await loadOwnedAgent(agentId, userId);
+	return { events: await rules.listRuleEvents({ agentId: agent.id, limit }) };
 }

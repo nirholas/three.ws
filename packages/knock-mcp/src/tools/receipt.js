@@ -6,12 +6,13 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'knock_receipt',
 	title: 'Read a knock receipt',
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
 		'Read the state of a knock you sent, using the receipt_url it returned. Statuses: pending (not opened), ' +
 		'read (opened, no answer written), replied (they wrote back, and the reply is included), dismissed ' +
 		'(read and closed). The receipt carries its own proof, so this needs no account and reveals nothing ' +
-		'about the recipient beyond the reply they chose to write. Read-only.',
+		'about the recipient beyond the reply they chose to write. Use this after knock_send to see whether the ' +
+		'person read or answered your message. Read-only.',
 	inputSchema: { receipt_url: z.string().min(10).describe('The receipt_url a knock returned.') },
 	async handler({ receipt_url: receiptUrl }) {
 		const data = await apiRequest(String(receiptUrl));

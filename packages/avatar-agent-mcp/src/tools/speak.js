@@ -35,7 +35,7 @@ export const def = {
 	// MCP ToolAnnotations — safety hints surfaced to MCP clients.
 	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Synthesize speech for an avatar session and return a base64 audio data URL the client can play. Free NVIDIA NIM Magpie TTS leads when NVIDIA_API_KEY is set (non-pcm requests are served as WAV); OpenAI TTS is the paid backstop when OPENAI_API_KEY is set. Picks the session\'s configured voice unless overridden.',
+		'Synthesize speech for an avatar session and return a base64 audio data URL the client can play. Free NVIDIA NIM Magpie TTS leads when NVIDIA_API_KEY is set (non-pcm requests are served as WAV); OpenAI TTS is the paid backstop when OPENAI_API_KEY is set. Picks the session\'s configured voice unless overridden. Use this when a spawned avatar session should say a line out loud.',
 	inputSchema: {
 		sessionId: z.string().optional()
 			.describe('Avatar session id (optional — when omitted, voice falls back to the override or "nova").'),

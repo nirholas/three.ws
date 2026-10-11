@@ -14,6 +14,7 @@ const TOOL_DESCRIPTION =
 	'Generate embedding vectors for one or more texts using IBM Granite ' +
 	'(default: ibm/granite-embedding-278m-multilingual). Returns one float array per input, ' +
 	'suitable for semantic search, RAG retrieval, and similarity scoring. ' +
+	'Use this to index documents or compare texts by meaning; it returns vectors, not prose, so call ibm_granite_chat when you need a written answer. ' +
 	'Up to 64 texts per call. No IBM Cloud account required — pay $0.005 USDC per call via x402.';
 
 const inputZodShape = {

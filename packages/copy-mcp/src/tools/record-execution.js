@@ -15,9 +15,9 @@ import { shapeExecution } from '../lib/shapes.js';
 export const def = {
 	name: 'record_execution',
 	title: 'Record acting on a copy intent',
-	annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Resolve a PENDING copy intent (from get_executions) by recording how you handled it. action:"acted" records that you executed the mirrored trade from your own wallet — optionally with the on-chain tx_signature for your records; action:"dismissed" discards the intent without trading. NON-CUSTODIAL: this never signs, sends, or broadcasts a transaction — it only updates the intent\'s status after YOU traded. Not idempotent: it transitions pending → acted/dismissed once; an intent that already expired or was actioned returns "not_actionable". Returns the updated execution. Requires THREE_WS_API_KEY.',
+		'Resolve a PENDING copy intent (from get_executions) by recording how you handled it. action:"acted" records that you executed the mirrored trade from your own wallet (optionally with the on-chain tx_signature for your records); action:"dismissed" discards the intent without trading. NON-CUSTODIAL: this never signs, sends, or broadcasts a transaction; it only updates the intent\'s status after YOU traded. Not idempotent: it transitions pending → acted/dismissed once; an intent that already expired or was actioned returns "not_actionable". Returns the updated execution. Requires THREE_WS_API_KEY. Use this after you have traded (or chosen not to) on an intent from get_executions, so it leaves the pending inbox.',
 	inputSchema: {
 		id: z.string().uuid().describe('UUID of the pending copy intent (from get_executions with status:"pending").'),
 		action: z.enum(['acted', 'dismissed']).describe('"acted" = you executed the trade yourself; "dismissed" = you skipped it.'),

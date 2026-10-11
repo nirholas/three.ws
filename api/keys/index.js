@@ -2,11 +2,12 @@
 //   GET  /api/keys        list caller's keys (hashed, no secret)
 //   POST /api/keys        create a new key; returns the plaintext secret ONCE.
 //                         `preset: "connector"` issues the AI-agent key that
-//                         can never spend (api/_lib/api-keys.js KEY_PRESETS).
+//                         can never spend (api/_lib/key-scopes.js CONNECTOR_PRESET).
 
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
-import { normalizeKeyScopes, mintApiKey, presetScopes } from '../_lib/api-keys.js';
+import { normalizeKeyScopes, mintApiKey } from '../_lib/api-keys.js';
+import { CONNECTOR_PRESET, CONNECTOR_SCOPES, connectorViolations } from '../_lib/key-scopes.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits } from '../_lib/rate-limit.js';
@@ -20,11 +21,16 @@ const createSchema = z.object({
 		.optional()
 		.default('avatars:read avatars:write')
 		.transform((s) => s.trim()),
-	// A named preset replaces `scope` entirely; see KEY_PRESETS.
-	preset: z.enum(['connector']).optional(),
+	// 'connector' issues the fixed read/generate/agents:write grant for an
+	// unattended AI agent and can never hold spend (api/_lib/key-scopes.js).
+	preset: z.enum([CONNECTOR_PRESET]).optional(),
 	expires_in_days: z.number().int().positive().max(3650).optional(),
 	environment: z.enum(['live', 'test']).default('live'),
 });
+
+function rawScopeGiven(raw) {
+	return raw != null && typeof raw === 'object' && Object.hasOwn(raw, 'scope');
+}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
@@ -40,7 +46,8 @@ export default wrap(async (req, res) => {
 		const rlList = await limits.apiKeyList(user.id);
 		if (!rlList.success) return rateLimited(res, rlList);
 		const rows = await sql`
-			select id, name, prefix, scope, last_used_at, expires_at, revoked_at, created_at
+			select id, name, prefix, scope, preset, last_used_at, expires_at, revoked_at, created_at,
+				ip_allowlist, rotated_from, rotated_to, overlap_until
 			from api_keys where user_id = ${user.id} order by created_at desc
 		`;
 		return json(res, 200, { keys: rows });
@@ -51,14 +58,15 @@ export default wrap(async (req, res) => {
 
 	if (!(await requireCsrf(req, res, user.id))) return;
 
-	const body = parse(createSchema, await readJson(req));
+	const raw = await readJson(req);
+	const body = parse(createSchema, raw);
 
-	// A preset ignores `scope` rather than merging it, so a connector key can
-	// never be asked into carrying a spend scope.
-	const preset = body.preset ? presetScopes(body.preset) : null;
 	// Dedupe so "avatars:read avatars:read" stores one grant, not two: the stored
 	// string is rendered verbatim as scope chips in the dashboard key table.
-	const { scopes: requestedScopes, invalid } = preset ? { scopes: preset, invalid: [] } : normalizeKeyScopes(body.scope);
+	// A connector key's grant is fixed by the preset. A caller may omit scope or
+	// repeat exactly that grant; anything else, spend above all, is refused.
+	const scopeInput = body.preset === CONNECTOR_PRESET && !rawScopeGiven(raw) ? CONNECTOR_SCOPES.join(' ') : body.scope;
+	const { scopes: requestedScopes, invalid } = normalizeKeyScopes(scopeInput);
 	if (invalid.length)
 		return error(res, 400, 'validation_error', `unknown scopes: ${invalid.join(', ')}`);
 	// zod's .default() only fires on an absent field, so an explicit "" or "   "
@@ -69,6 +77,17 @@ export default wrap(async (req, res) => {
 	// other client.
 	if (!requestedScopes.length)
 		return error(res, 400, 'validation_error', 'scope must name at least one permission');
+
+	if (body.preset === CONNECTOR_PRESET) {
+		const beyond = connectorViolations(requestedScopes);
+		if (beyond.length)
+			return error(
+				res,
+				400,
+				'validation_error',
+				`a connector key can only hold ${CONNECTOR_SCOPES.join(', ')}; it can never hold ${beyond.join(', ')}`,
+			);
+	}
 
 	const expires = body.expires_in_days
 		? new Date(Date.now() + body.expires_in_days * 86400 * 1000).toISOString()
@@ -81,7 +100,7 @@ export default wrap(async (req, res) => {
 		expiresAt: expires,
 		environment: body.environment,
 		req,
-		via: body.preset ? `dashboard:${body.preset}` : 'dashboard',
+		preset: body.preset ?? null,
 	});
 	return json(res, 201, { key: { ...row, secret } });
 });

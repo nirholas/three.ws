@@ -6,11 +6,8 @@ import { cors, error, json, method, readJson, wrap } from '../../_lib/http.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 import { sql } from '../../_lib/db.js';
-import { selectEventTypes } from '../../_lib/webhook-dispatch.js';
-import { assertPublicHttpsUrl } from '../../_lib/ssrf.js';
+import { selectEventTypes, webhookUrlProblem } from '../../_lib/webhook-dispatch.js';
 import { isUuid } from '../../_lib/validate.js';
-
-const URL_MAX_LENGTH = 2048;
 
 export default wrap(async function handler(req, res) {
 	if (cors(req, res, { methods: 'GET,PATCH,DELETE,OPTIONS', credentials: true })) return;
@@ -36,7 +33,8 @@ export default wrap(async function handler(req, res) {
 
 	if (req.method === 'GET') {
 		const deliveries = await sql`
-			select id, event_type, event_id, status_code, error, attempt, created_at
+			select id, event_type, event_id, status, status_code, error, attempt,
+			       next_attempt_at, delivered_at, duration_ms, replay_of, created_at
 			from webhook_deliveries
 			where webhook_id = ${id}
 			order by created_at desc
@@ -58,27 +56,10 @@ export default wrap(async function handler(req, res) {
 		const updates = {};
 		if (typeof body.url === 'string') {
 			const trimmed = body.url.trim();
-			if (trimmed.length > URL_MAX_LENGTH)
-				return error(res, 400, 'bad_request', 'URL too long');
-			try {
-				const parsed = new URL(trimmed);
-				if (parsed.protocol !== 'https:')
-					return error(res, 400, 'bad_request', 'Must use HTTPS');
-			} catch {
-				return error(res, 400, 'bad_request', 'Invalid URL');
-			}
-			// SSRF: reject a URL that resolves to a non-public address (delivery
-			// also re-validates and pins per attempt).
-			try {
-				await assertPublicHttpsUrl(trimmed);
-			} catch {
-				return error(
-					res,
-					400,
-					'bad_request',
-					'Webhook URL must resolve to a public address',
-				);
-			}
+			// SSRF: HTTPS to a public address (delivery also re-validates and
+			// pins per attempt).
+			const urlProblem = await webhookUrlProblem(trimmed);
+			if (urlProblem) return error(res, 400, 'bad_request', urlProblem);
 			updates.url = trimmed;
 		}
 		if (body.events !== undefined) {
@@ -89,6 +70,9 @@ export default wrap(async function handler(req, res) {
 		if (typeof body.active === 'boolean') {
 			updates.active = body.active;
 		}
+		// Re-enabling an endpoint the failure breaker switched off clears the
+		// breaker, so it is not disabled again by the very next failure.
+		const reenable = updates.active === true && !webhook.active;
 		if (typeof body.description === 'string') {
 			updates.description = body.description.trim().slice(0, 200);
 		}
@@ -103,6 +87,8 @@ export default wrap(async function handler(req, res) {
 				events = ${updates.events ?? webhook.events},
 				active = ${updates.active ?? webhook.active},
 				description = ${updates.description !== undefined ? updates.description : webhook.description},
+				consecutive_failures = case when ${reenable} then 0 else consecutive_failures end,
+				disabled_reason = case when ${reenable} then null else disabled_reason end,
 				updated_at = now()
 			where id = ${id} and user_id = ${user.id}
 			returning id, url, events, active, description, created_at, updated_at

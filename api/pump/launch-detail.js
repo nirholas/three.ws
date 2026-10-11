@@ -89,7 +89,7 @@ async function creatorFeesFor(mint, network, price) {
 	const creators = await resolveCoinCreators(connection, [mint]).catch(() => null);
 	const creator = creators?.get(mint)?.creator;
 	if (!creator) return null;
-	const report = await readCreatorFeeReport(connection, creator);
+	const report = await readCreatorFeeReport(connection, creator, { mints: [mint] });
 	if (!report.ok) return null;
 	const earned = Number(report.earned_lamports) / 1e9;
 	return {

@@ -41,6 +41,12 @@ const COIN_ENDPOINT = '/api/pump/coin';
 const CURVE_ENDPOINT = '/api/pump/curve';
 const ORACLE_ENDPOINT = '/api/oracle/coin';
 const DEFAULT_REFRESH_MS = 30_000;
+// Mints pump.fun's indexer answered "unknown" for (204 under `miss=empty`).
+// Some live three.ws launches never appear in that index, so asking again on
+// every 30 s refresh only repeats a known miss; the curve read is the source
+// for them for the rest of the page's life. Shared across widget instances so
+// two cards for one coin do not each re-learn it.
+const UNINDEXED_MINTS = new Set();
 // pump.fun bonding curves complete (graduate) around a ~$69k USD market cap;
 // the same constant the agent token widget uses for its graduation gauge.
 const GRADUATION_CAP_USD = 69_000;
@@ -736,12 +742,15 @@ export function mountCoinStatus(container, mint, opts = {}) {
 				lastCoin = await loadFromCurve(sig);
 			} else {
 				let indexed = null;
-				try {
-					const r = await fetch(`${COIN_ENDPOINT}?mint=${encodeURIComponent(mint)}`, { signal: sig });
-					if (r.ok) indexed = mapCoin(await r.json(), mint);
-				} catch (err) {
-					// A cancelled load is not an indexer failure, so let it unwind.
-					if (err?.name === 'AbortError') throw err;
+				if (!UNINDEXED_MINTS.has(mint)) {
+					try {
+						const r = await fetch(`${COIN_ENDPOINT}?mint=${encodeURIComponent(mint)}&miss=empty`, { signal: sig });
+						if (r.status === 204) UNINDEXED_MINTS.add(mint);
+						else if (r.ok) indexed = mapCoin(await r.json(), mint);
+					} catch (err) {
+						// A cancelled load is not an indexer failure, so let it unwind.
+						if (err?.name === 'AbortError') throw err;
+					}
 				}
 				// The indexer does not know this coin, or could not be reached. The
 				// chain always knows: read the curve rather than showing "unavailable"

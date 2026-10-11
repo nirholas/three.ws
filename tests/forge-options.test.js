@@ -114,6 +114,7 @@ describe('summarizeForgeOptions', () => {
 			output_format: 'glb-draco',
 			texture_size: 1024,
 			target_polycount: null,
+			resolution: null,
 			// Material completion is on unless the caller opts out, and the echo
 			// says so, so a client can tell why its delivered file carries maps.
 			derive_pbr: true,

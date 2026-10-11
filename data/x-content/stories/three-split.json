@@ -1,0 +1,325 @@
+{
+	"id": "three-split",
+	"status": "draft",
+	"kind": "post",
+	"tier": 1,
+	"lane": "token",
+	"pattern": "number",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": [
+		"/three-token"
+	],
+	"scenario": {
+		"format": "square",
+		"hide": [
+			"[data-verified]",
+			".tk-stats",
+			".tk-why",
+			".tk-chart",
+			".tk-grid",
+			"#tk-bb-proof",
+			"#tk-social-boost",
+			".tk-ff-sub",
+			".tk-ff-wallets",
+			".tk-ff-src",
+			".tk-ff-bb",
+			".tk-foot"
+		],
+		"steps": [
+			{
+				"goto": "https://three.ws/three-token",
+				"settle": 7000
+			},
+			{
+				"scroll": "Of every $100 paid for paid compute",
+				"ms": 1600,
+				"caption": "Every $THREE payment, split on-chain"
+			},
+			{
+				"hold": 2000
+			},
+			{
+				"read": "treasuryCompute",
+				"match": "\\$(70)\\.00\\s+Treasury"
+			},
+			{
+				"read": "rewardsCompute",
+				"match": "\\$(30)\\.00\\s+Holder rewards"
+			},
+			{
+				"scroll": "Of every $100 paid for marketplace sales",
+				"ms": 1600,
+				"caption": "The seller keeps $90 of every $100"
+			},
+			{
+				"hold": 1800
+			},
+			{
+				"read": "sellerMarket",
+				"match": "\\$(90)\\.00\\s+Seller or creator"
+			},
+			{
+				"scroll": "Of every $100 paid for spins",
+				"ms": 1600,
+				"caption": "Spins: $50 treasury, $50 to holders"
+			},
+			{
+				"hold": 1800
+			},
+			{
+				"scroll": "Of every $100 paid for copy-trading",
+				"ms": 1600,
+				"caption": "Copy fees: the trader you copy keeps $80"
+			},
+			{
+				"hold": 2400
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		},
+		{
+			"type": "api",
+			"name": "the public token config still splits paid compute 70/30",
+			"url": "https://three.ws/api/token/config",
+			"expect": {
+				"json": {
+					"path": "split_policies.consumption.0.bps",
+					"equals": 7000
+				}
+			}
+		},
+		{
+			"type": "api",
+			"name": "the public token config still pays the seller 90% of a marketplace sale",
+			"url": "https://three.ws/api/token/config",
+			"expect": {
+				"json": {
+					"path": "split_policies.marketplace_sale.0.bps",
+					"equals": 9000
+				}
+			}
+		},
+		{
+			"type": "api",
+			"name": "the public token config still pays the copied trader 80% of a performance fee",
+			"url": "https://three.ws/api/token/config",
+			"expect": {
+				"json": {
+					"path": "split_policies.copy_performance_fee.0.bps",
+					"equals": 8000
+				}
+			}
+		},
+		{
+			"type": "api",
+			"name": "the public token config still splits a scarcity mint 80/20",
+			"url": "https://three.ws/api/token/config",
+			"expect": {
+				"json": {
+					"path": "split_policies.scarcity_mint.0.bps",
+					"equals": 8000
+				}
+			}
+		},
+		{
+			"type": "api",
+			"name": "the public token config still splits a spin 50/50",
+			"url": "https://three.ws/api/token/config",
+			"expect": {
+				"json": {
+					"path": "split_policies.spin.0.bps",
+					"equals": 5000
+				}
+			}
+		}
+	],
+	"posts": [
+		{
+			"text": "Every $100 paid in $THREE on three.ws/three-token is now split by a published policy, and the page shows the exact numbers. Paid compute: $70 to the treasury, $30 to holder rewards. A marketplace sale: the seller keeps $90, with $5 to the treasury and $5 to holder rewards. A copy-trading performance fee: the trader you copy keeps $80. The splits are read live from the public token config, the same one the payment code enforces, and nothing is burned: every share goes to a seller, the treasury, or holders."
+		},
+		{
+			"text": "Two more rows on the page. A scarcity mint, which covers limited drops, rare-name auctions and pay-to-mint, splits $80 to the treasury and $20 to holder rewards. A paid spin of the in-app wheel splits $50 and $50. The treasury and holder-rewards addresses are not published yet, and the page says so: payments that include those shares are paused until they are, so no money is ever sent to an unset address."
+		}
+	],
+	"claims": [
+		{
+			"text": "Every $100 paid in $THREE is split by a published policy",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "Every payment made in $THREE is split on-chain by a published policy, each share paid straight to its wallet."
+				}
+			]
+		},
+		{
+			"text": "Paid compute splits $70 to the treasury and $30 to holder rewards",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "treasuryCompute",
+					"equals": "70"
+				},
+				{
+					"type": "proof",
+					"fact": "rewardsCompute",
+					"equals": "30"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "Of every $100 paid for paid compute"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "$70.00 Treasury funds $THREE buybacks"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "$30.00 Holder rewards paid back to $THREE holders"
+				}
+			]
+		},
+		{
+			"text": "On a marketplace sale the seller keeps $90, the treasury gets $5 and holder rewards get $5",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "sellerMarket",
+					"equals": "90"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "Of every $100 paid for marketplace sales"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "$90.00 Seller or creator keeps the sale"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "$5.00 Treasury funds $THREE buybacks"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "$5.00 Holder rewards paid back to $THREE holders"
+				}
+			]
+		},
+		{
+			"text": "On a copy-trading performance fee the trader you copy keeps $80",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "Of every $100 paid for copy-trading performance fees"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "$80.00 Trader you copy keeps the sale"
+				}
+			]
+		},
+		{
+			"text": "The splits are read live from the public token config, the same one the payment code enforces",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "These splits are read live from the public token config, the same one the payment code enforces."
+				}
+			]
+		},
+		{
+			"text": "Nothing is burned: every share goes to a seller, the treasury, or holders",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "The platform never burns $THREE: every share goes to a seller, the treasury, or holders, and nothing is destroyed."
+				}
+			]
+		},
+		{
+			"text": "A scarcity mint (limited drops, rare-name auctions and pay-to-mint) splits $80 to the treasury and $20 to holder rewards",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "Of every $100 paid for scarcity mints"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "Limited drops, rare-name auctions and pay-to-mint"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "$80.00 Treasury funds $THREE buybacks"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "$20.00 Holder rewards paid back to $THREE holders"
+				}
+			]
+		},
+		{
+			"text": "A paid spin of the in-app wheel splits $50 to the treasury and $50 to holder rewards",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "Of every $100 paid for spins"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "Paid spins of the in-app wheel"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "$50.00 Treasury funds $THREE buybacks"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "$50.00 Holder rewards paid back to $THREE holders"
+				}
+			]
+		},
+		{
+			"text": "The treasury and holder-rewards addresses are not published yet, and payments that include those shares are paused until they are, so no money is ever sent to an unset address",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "Holder rewards pool"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "NOT YET PUBLISHED"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/three-token",
+					"contains": "The address has not been published yet. Payments that include this share are paused until it is, so no money is ever sent to an unset address."
+				}
+			]
+		}
+	],
+	"mentions": {}
+}

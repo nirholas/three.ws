@@ -1,0 +1,1012 @@
+/* three.ws Desktop: Snap layouts, Snap assist, taskbar peek and the three
+ * shell styles (Fluent, Aqua, Classic). Loaded after desktop.css, so the
+ * rules here refine the base shell. The active style is .os[data-style];
+ * shell.js also sets --menu-h and --task-h for it (see STYLES in layout.js). */
+
+.os {
+	--menu-h: 0px;
+	--ease-out: cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+/* Desktop icons sit between the menu bar (Aqua) and the taskbar or dock. */
+.os-icons {
+	top: var(--menu-h);
+	height: calc(100% - var(--task-h) - var(--menu-h));
+}
+
+/* Layered window shadow: a tight contact shadow plus a long soft one. */
+.win.is-focused {
+	box-shadow:
+		0 8.5px 10px rgba(0, 0, 0, 0.115),
+		0 68px 80px rgba(0, 0, 0, 0.23),
+		0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+/* Taskbar indicator: pinned apps that are not running show nothing, a
+ * running app a short grey pill, the window in front a long accent pill. */
+.os-tb.run::after {
+	background: #858585;
+}
+.os-tb.run:not(.open)::after {
+	width: 0;
+	margin-left: 0;
+	opacity: 0;
+}
+.os-tb.run.on::after {
+	background: var(--accent);
+}
+.tb-label,
+.os .os-menu-app {
+	display: none;
+}
+
+/* ---------- Snap layouts flyout ---------- */
+.snap-fly {
+	position: absolute;
+	z-index: 99990;
+	display: grid;
+	grid-template-columns: repeat(3, 76px);
+	gap: 10px;
+	padding: 12px;
+	border-radius: 10px;
+	background: var(--cm);
+	backdrop-filter: var(--blur-heavy);
+	border: 1px solid var(--hr);
+	box-shadow: var(--shadow-lg);
+	transform-origin: top center;
+	animation: snap-fly-in 0.18s var(--ease-out);
+}
+@keyframes snap-fly-in {
+	from {
+		opacity: 0;
+		transform: scale(0.92);
+	}
+}
+.snap-lay {
+	position: relative;
+	height: 50px;
+}
+.snap-zone {
+	position: absolute;
+	border: 2px solid transparent;
+	background-clip: padding-box;
+	border-radius: 5px;
+	background-color: var(--hover-b);
+	box-shadow: inset 0 0 0 1px var(--hr);
+	transition: background-color 0.12s;
+}
+.os .snap-zone {
+	background-color: var(--hover-b);
+}
+.os .snap-zone:hover,
+.os .snap-zone:focus-visible {
+	background-color: var(--accent);
+	outline: 0;
+}
+
+/* ---------- Snap assist ---------- */
+.snap-assist {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.32);
+	animation: snap-assist-in 0.2s ease-out;
+}
+@keyframes snap-assist-in {
+	from {
+		opacity: 0;
+	}
+}
+.snap-slot {
+	position: absolute;
+}
+.snap-slot::before {
+	content: '';
+	position: absolute;
+	inset: 6px;
+	border-radius: 10px;
+	background: var(--bg50);
+	border: 1px solid var(--hr);
+	backdrop-filter: var(--blur-light);
+	transition: border-color 0.15s, background 0.15s;
+}
+.snap-slot:not(.is-active) {
+	cursor: pointer;
+}
+.snap-slot:not(.is-active):hover::before {
+	border-color: var(--text2);
+}
+.snap-slot.is-active::before {
+	border: 2px solid var(--accent);
+	background: var(--material-thick);
+}
+.snap-cands {
+	position: absolute;
+	inset: 8px;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+	align-content: center;
+	gap: 10px;
+	padding: 16px;
+	overflow-y: auto;
+	scrollbar-width: thin;
+}
+.snap-cand {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	padding: 16px 10px 12px;
+	border-radius: 10px;
+	background: var(--card);
+	border: 1px solid var(--hr);
+	font-size: 12px;
+	transition: transform 0.15s var(--ease-out), border-color 0.15s, background 0.15s;
+	animation: snap-cand-in 0.24s var(--ease-out) backwards;
+}
+.snap-cand:nth-child(2) {
+	animation-delay: 30ms;
+}
+.snap-cand:nth-child(3) {
+	animation-delay: 60ms;
+}
+.snap-cand:nth-child(n + 4) {
+	animation-delay: 90ms;
+}
+@keyframes snap-cand-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px) scale(0.96);
+	}
+}
+.snap-cand:hover,
+.snap-cand:focus-visible {
+	border-color: var(--accent);
+	background: var(--hover-b);
+	transform: translateY(-2px);
+}
+.snap-cand:active {
+	transform: scale(0.97);
+}
+.snap-cand-t {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ---------- Taskbar peek and Aero Peek ---------- */
+.os-peek {
+	position: absolute;
+	z-index: 10003;
+	width: 232px;
+	padding: 6px;
+	border-radius: 10px;
+	background: var(--cm);
+	backdrop-filter: var(--blur-heavy);
+	border: 1px solid var(--hr);
+	box-shadow: var(--shadow-lg);
+	cursor: pointer;
+	animation: peek-in 0.18s var(--ease-out);
+}
+.os-peek.is-moving {
+	animation: none;
+}
+.os-peek.is-leaving {
+	animation: peek-out 0.14s ease-in forwards;
+	pointer-events: none;
+}
+@keyframes peek-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+}
+@keyframes peek-out {
+	to {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+}
+.pk-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 2px 2px 6px 4px;
+	font-size: 12px;
+}
+.pk-head b {
+	flex: 1;
+	min-width: 0;
+	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.pk-head .app-tile {
+	width: 20px;
+	height: 20px;
+	border-radius: 6px;
+	box-shadow: none;
+}
+.os .pk-x {
+	display: grid;
+	place-items: center;
+	width: 26px;
+	height: 26px;
+	border-radius: 6px;
+	opacity: 0.75;
+	transition: background 0.12s, opacity 0.12s;
+}
+.os .pk-x:hover {
+	background: #c42b1c;
+	color: #fff;
+	opacity: 1;
+}
+.pk-body {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	height: 116px;
+	padding: 10px;
+	border-radius: 7px;
+	background:
+		radial-gradient(120% 90% at 50% 0%, hsl(var(--hue) 70% 50% / 0.35), transparent 70%),
+		var(--card);
+	border: 1px solid var(--hr);
+	font-size: 11px;
+	text-align: center;
+	transition: border-color 0.15s;
+}
+.os-peek:hover .pk-body {
+	border-color: var(--accent);
+}
+.pk-body small {
+	max-width: 100%;
+	color: var(--text2);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.pk-state {
+	padding: 1px 8px;
+	border-radius: 99px;
+	background: var(--fill);
+	font-size: 10px;
+	letter-spacing: 0.02em;
+}
+.os-layer .win {
+	transition:
+		box-shadow 0.2s,
+		opacity 0.25s,
+		transform 0.2s;
+}
+.os-layer.is-peek .win:not(.is-peeked) {
+	opacity: 0.06;
+}
+.os-layer.is-peek .win.is-peeked {
+	box-shadow:
+		0 0 0 2px var(--accent),
+		var(--shadow-lg);
+}
+
+/* ---------- Settings: style picker ---------- */
+.styles {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+	gap: 10px;
+}
+.style-opt {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	padding: 8px 8px 10px;
+	border-radius: 10px;
+	border: 2px solid transparent;
+	background: var(--card);
+	text-align: left;
+	transition: border-color 0.15s, background 0.15s;
+}
+.style-opt:hover {
+	border-color: var(--hr);
+	background: var(--hover-b);
+}
+.style-opt[aria-pressed='true'] {
+	border-color: var(--accent);
+}
+.style-opt b {
+	margin-top: 5px;
+	font-size: 13px;
+	font-weight: 600;
+}
+.style-opt small {
+	color: var(--text2);
+	font-size: 11px;
+	line-height: 1.35;
+}
+.style-prev {
+	position: relative;
+	display: block;
+	height: 86px;
+	border-radius: 6px;
+	overflow: hidden;
+	background: linear-gradient(150deg, #3a2a55, #16325c 60%, #0e1c33);
+}
+.style-prev s {
+	position: absolute;
+	display: block;
+	text-decoration: none;
+}
+.style-prev .sp-win {
+	left: 16%;
+	top: 14%;
+	width: 62%;
+	height: 52%;
+	border-radius: 4px;
+	background: #1d1d22;
+	border: 1px solid #ffffff22;
+	box-shadow: 0 6px 14px #0007;
+}
+.style-prev .sp-bar {
+	left: 0;
+	right: 0;
+	top: 0;
+	height: 8px;
+	background:
+		linear-gradient(90deg, transparent calc(100% - 22px), #ffffff30 calc(100% - 22px)),
+		#2a2a32;
+}
+.style-prev .sp-task {
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 11px;
+	background:
+		radial-gradient(circle at 42% 50%, #6aa7ff 2px, transparent 2.6px),
+		radial-gradient(circle at 50% 50%, #c9a7ff 2px, transparent 2.6px),
+		radial-gradient(circle at 58% 50%, #7ee0b5 2px, transparent 2.6px),
+		#111a;
+	border-top: 1px solid #ffffff1c;
+}
+.style-prev[data-prev='aqua']::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	height: 7px;
+	background: #ffffff40;
+}
+.style-prev[data-prev='aqua'] .sp-win {
+	top: 18%;
+	border-radius: 5px;
+}
+.style-prev[data-prev='aqua'] .sp-bar {
+	background:
+		radial-gradient(circle at 5px 4px, #ff5f57 1.7px, transparent 2.2px),
+		radial-gradient(circle at 11px 4px, #febc2e 1.7px, transparent 2.2px),
+		radial-gradient(circle at 17px 4px, #28c840 1.7px, transparent 2.2px),
+		#2a2a32;
+}
+.style-prev[data-prev='aqua'] .sp-task {
+	left: 28%;
+	right: 28%;
+	bottom: 4px;
+	height: 12px;
+	border-radius: 4px;
+	border: 1px solid #ffffff33;
+	background:
+		radial-gradient(circle at 30% 50%, #6aa7ff 2.6px, transparent 3.2px),
+		radial-gradient(circle at 50% 50%, #c9a7ff 3.4px, transparent 4px),
+		radial-gradient(circle at 70% 50%, #7ee0b5 2.6px, transparent 3.2px),
+		#ffffff2a;
+}
+.style-prev[data-prev='classic'] {
+	background: #008080;
+}
+.style-prev[data-prev='classic'] .sp-win {
+	border-radius: 0;
+	border: 0;
+	background: #c0c0c0;
+	box-shadow:
+		inset -1px -1px #0a0a0a,
+		inset 1px 1px #fff;
+}
+.style-prev[data-prev='classic'] .sp-bar {
+	left: 2px;
+	right: 2px;
+	top: 2px;
+	height: 7px;
+	background: linear-gradient(90deg, #000080, #1084d0);
+}
+.style-prev[data-prev='classic'] .sp-task {
+	height: 12px;
+	border-top: 1px solid #fff;
+	background:
+		linear-gradient(#c0c0c0, #c0c0c0) 3px 2px / 18px 8px no-repeat,
+		linear-gradient(#0a0a0a, #0a0a0a) 4px 3px / 18px 8px no-repeat,
+		linear-gradient(#a8a8a8, #a8a8a8) 26px 2px / 34px 8px no-repeat,
+		#c0c0c0;
+}
+
+/* =================================================================
+ * Aqua: a menu bar across the top, a floating magnifying dock and
+ * traffic-light window controls. Desktop widths only; on a phone the
+ * shell falls back to the Fluent taskbar (shell.js bars()).
+ * ================================================================= */
+@media (min-width: 721px) {
+	.os[data-style='aqua'] .os-task {
+		display: contents;
+	}
+	.os[data-style='aqua'] .os-task-right {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: var(--menu-h);
+		padding: 0 6px 0 0;
+		gap: 0;
+		background: var(--bg70);
+		backdrop-filter: var(--blur-medium);
+		border-bottom: 1px solid var(--hr);
+		z-index: 10000;
+		font-size: 13px;
+	}
+	.os[data-style='aqua'] .os-task-left {
+		position: absolute;
+		top: 0;
+		left: 6px;
+		height: var(--menu-h);
+		gap: 2px;
+		z-index: 10001;
+	}
+	.os[data-style='aqua'] .os-task-left .os-tb,
+	.os[data-style='aqua'] .os-task-right .os-tb {
+		width: 30px;
+		height: calc(var(--menu-h) - 4px);
+		border-radius: 5px;
+	}
+	.os[data-style='aqua'] .os-task-left .ico,
+	.os[data-style='aqua'] .os-task-right .ico {
+		width: 16px;
+		height: 16px;
+	}
+	.os[data-style='aqua'] .os-clock,
+	.os[data-style='aqua'] .os-chip {
+		height: calc(var(--menu-h) - 4px);
+		border-radius: 5px;
+		padding: 0 8px;
+	}
+	.os[data-style='aqua'] .os-clock {
+		flex-direction: row-reverse;
+		align-items: center;
+		gap: 8px;
+		font-size: 13px;
+	}
+	.os[data-style='aqua'] .os .os-menu-app,
+	.os[data-style='aqua'] .os-menu-app {
+		display: flex;
+		align-items: center;
+		max-width: 260px;
+		height: calc(var(--menu-h) - 4px);
+		padding: 0 9px;
+		border-radius: 5px;
+		font-size: 13px;
+		font-weight: 700;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.os[data-style='aqua'] .os-menu-app:hover,
+	.os[data-style='aqua'] .os-menu-app:focus-visible {
+		background: var(--hover-b);
+	}
+
+	/* The dock */
+	.os[data-style='aqua'] .os-task-mid {
+		position: absolute;
+		left: 50%;
+		bottom: 8px;
+		transform: translateX(-50%);
+		z-index: 10000;
+		max-width: calc(100vw - 24px);
+		height: 64px;
+		align-items: flex-end;
+		gap: 6px;
+		padding: 6px 8px;
+		border-radius: 20px;
+		background: color-mix(in srgb, var(--bg) 42%, transparent);
+		backdrop-filter: var(--blur-heavy);
+		border: 1px solid var(--hr);
+		box-shadow:
+			inset 0 1px 0 #ffffff26,
+			0 10px 30px #0006;
+	}
+	.os[data-style='aqua'] .os-task-mid .os-tb {
+		--mag: 1;
+		width: 50px;
+		height: 50px;
+		border-radius: 12px;
+		transform: scale(var(--mag));
+		transform-origin: 50% 100%;
+		margin-inline: calc((var(--mag) - 1) * 25px);
+		transition:
+			transform 0.12s ease-out,
+			margin 0.12s ease-out;
+	}
+	.os[data-style='aqua'] .os-task-mid .os-tb:hover,
+	.os[data-style='aqua'] .os-task-mid .os-tb.run.on,
+	.os[data-style='aqua'] .os-task-mid .os-tb[aria-expanded='true'] {
+		background: none;
+	}
+	.os[data-style='aqua'] .os-task-mid .os-tb:active {
+		transform: scale(var(--mag));
+		filter: brightness(0.75);
+	}
+	.os[data-style='aqua'] .os-task-mid .app-tile.xs {
+		width: 46px;
+		height: 46px;
+		border-radius: 12px;
+	}
+	.os[data-style='aqua'] .os-task-mid .app-tile.xs .ico {
+		width: 24px;
+		height: 24px;
+	}
+	.os[data-style='aqua'] .os-task-mid .os-tb.start,
+	.os[data-style='aqua'] .os-task-mid .os-tb.hide-sm {
+		border-radius: 12px;
+		background: var(--card);
+		box-shadow:
+			inset 0 1px 0 #ffffff22,
+			0 4px 12px #0004;
+	}
+	.os[data-style='aqua'] .os-task-mid .os-tb.hide-sm {
+		margin-right: calc(8px + (var(--mag) - 1) * 25px);
+	}
+	.os[data-style='aqua'] .os-task-mid .os-tb.hide-sm::after {
+		content: '';
+		position: absolute;
+		top: 6px;
+		bottom: 6px;
+		right: -8px;
+		width: 1px;
+		background: var(--hr);
+	}
+	.os[data-style='aqua'] .os-tb.run::after {
+		bottom: -5px;
+		width: 4px;
+		height: 4px;
+		margin-left: -2px;
+		border-radius: 50%;
+		background: var(--text);
+	}
+	.os[data-style='aqua'] .os-tb.run:not(.open)::after {
+		opacity: 0;
+	}
+
+	/* Windows: rounder, traffic lights on the left, title centred. */
+	.os[data-style='aqua'] .win {
+		border-radius: 12px;
+	}
+	.os[data-style='aqua'] .win.is-max {
+		border-radius: 0;
+	}
+	/* order: -1 also moves the controls under the bar's Mica layer in paint
+	 * order, so they and the title sit on their own layer above it. */
+	.os[data-style='aqua'] .win-ctl {
+		order: -1;
+		z-index: 1;
+		align-self: center;
+		align-items: center;
+		gap: 8px;
+		padding: 0 4px 0 13px;
+	}
+	.os[data-style='aqua'] .win-bar .win-btn {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		opacity: 1;
+		color: #0009;
+		box-shadow: inset 0 0 0 0.5px #0003;
+		transition: filter 0.12s;
+	}
+	.os[data-style='aqua'] .win-bar .win-close {
+		order: 0;
+		background: #ff5f57;
+	}
+	.os[data-style='aqua'] .win-bar .win-min {
+		order: 1;
+		background: #febc2e;
+	}
+	.os[data-style='aqua'] .win-bar .win-maxbtn {
+		order: 2;
+		background: #28c840;
+	}
+	.os[data-style='aqua'] .win:not(.is-focused) .win-ctl:not(:hover) .win-btn {
+		background: var(--hover-b);
+		box-shadow: inset 0 0 0 0.5px var(--hr);
+	}
+	.os[data-style='aqua'] .win-bar .win-btn:hover,
+	.os[data-style='aqua'] .win-bar .win-close:hover {
+		color: #0009;
+	}
+	.os[data-style='aqua'] .win-bar .win-btn:active {
+		filter: brightness(0.8);
+	}
+	.os[data-style='aqua'] .win-bar .win-btn .ico {
+		width: 8px;
+		height: 8px;
+		opacity: 0;
+		transition: opacity 0.1s;
+	}
+	.os[data-style='aqua'] .win-ctl:hover .win-btn .ico,
+	.os[data-style='aqua'] .win-ctl:focus-within .win-btn .ico {
+		opacity: 1;
+	}
+	.os[data-style='aqua'] .win-bar {
+		position: relative;
+	}
+	.os[data-style='aqua'] .win-bar > .win-title {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		justify-content: center;
+		padding: 0 96px;
+		z-index: 1;
+		pointer-events: none;
+		font-weight: 600;
+	}
+	.os[data-style='aqua'] .win-tools {
+		margin-left: auto;
+	}
+
+	/* Popovers hang from the menu bar, Start rises from the dock. */
+	.os[data-style='aqua'] .widgets {
+		top: calc(var(--menu-h) + 6px);
+		bottom: auto;
+		max-height: calc(100vh - var(--menu-h) - var(--task-h) - 16px);
+		transform-origin: top left;
+		animation-name: pop-down;
+	}
+	.os[data-style='aqua'] .calendar {
+		top: calc(var(--menu-h) + 6px);
+		bottom: auto;
+		transform-origin: top right;
+		animation-name: pop-down;
+	}
+	.os[data-style='aqua'] .os-toasts {
+		top: calc(var(--menu-h) + 12px);
+		bottom: auto;
+	}
+}
+@keyframes pop-down {
+	from {
+		opacity: 0;
+		transform: translateY(-10px) scale(0.98);
+	}
+}
+
+/* =================================================================
+ * Classic: bevelled 9x chrome. Grey face, navy title bars, square
+ * corners, a labelled taskbar. The chrome keeps its own palette in
+ * both themes; app content keeps the visitor's theme.
+ * ================================================================= */
+.os[data-style='classic'] {
+	--c-face: #c0c0c0;
+	--c-bevel-out: inset -1px -1px #0a0a0a, inset 1px 1px #fff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+	--c-bevel-in: inset -1px -1px #fff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px #808080;
+}
+.os[data-style='classic'] :is(.os-task, .os-pop, .os-peek, .snap-fly, .win-bar, .os-toast) {
+	--text: #000;
+	--text2: #404040;
+	--hover-b: #d4d0c8;
+	--hover-half: transparent;
+	--fill: #a8a8a8;
+	--hr: #808080;
+	--card: #d4d0c8;
+	--cm: var(--c-face);
+	--bg50: #c0c0c0;
+	--material-thick: #c0c0c0;
+	--accent: #000080;
+	color: #000;
+	font-family: Tahoma, 'MS Sans Serif', 'Segoe UI', sans-serif;
+}
+.os[data-style='classic'] .os-icon .os-label {
+	font-family: Tahoma, 'MS Sans Serif', 'Segoe UI', sans-serif;
+}
+.os[data-style='classic'] .os-icons .os-icon.is-sel {
+	background: none;
+	border: 1px dotted #fff;
+}
+.os[data-style='classic'] .os-icons .os-icon.is-sel .os-label {
+	background: #000080;
+}
+
+/* Windows */
+.os[data-style='classic'] .win {
+	border-radius: 0;
+	border: 0;
+	padding: 3px;
+	background: var(--c-face);
+	box-shadow: var(--c-bevel-out);
+}
+.os[data-style='classic'] .win.is-focused {
+	box-shadow: var(--c-bevel-out), 4px 4px 0 #0003;
+}
+.os[data-style='classic'] .win.is-max {
+	padding: 0;
+}
+.os[data-style='classic'] .win.is-opening,
+.os[data-style='classic'] .win.is-closing {
+	animation-duration: 0.01ms;
+}
+.os[data-style='classic'] .win-bar,
+.os[data-style='classic'] .win.is-focused .win-bar {
+	height: 22px;
+	padding: 0 2px;
+	border: 0;
+	color: #fff;
+	background: linear-gradient(90deg, #808080, #b5b5b5);
+}
+.os[data-style='classic'] .win.is-focused .win-bar {
+	background: linear-gradient(90deg, #000080, #1084d0);
+}
+.os[data-style='classic'] .win.is-focused .win-bar::before {
+	display: none;
+}
+.os[data-style='classic'] .win-title {
+	padding-left: 3px;
+	gap: 5px;
+	font-size: 12px;
+	font-weight: 700;
+}
+.os[data-style='classic'] .win-glyph {
+	color: #fff;
+}
+.os[data-style='classic'] .win-glyph .ico {
+	width: 14px;
+	height: 14px;
+}
+.os[data-style='classic'] .win-tools {
+	gap: 2px;
+	padding-right: 4px;
+}
+.os[data-style='classic'] .win-ctl {
+	align-self: center;
+	gap: 0;
+}
+.os[data-style='classic'] .win-bar :is(.win-btn, .win-tool) {
+	width: 16px;
+	height: 14px;
+	border-radius: 0;
+	color: #000;
+	opacity: 1;
+	background: var(--c-face);
+	box-shadow: var(--c-bevel-out);
+}
+.os[data-style='classic'] .win-bar .win-close {
+	margin-left: 2px;
+}
+.os[data-style='classic'] .win-bar :is(.win-btn, .win-tool):hover,
+.os[data-style='classic'] .win-bar .win-btn.win-close:hover {
+	background: var(--c-face);
+	color: #000;
+}
+.os[data-style='classic'] .win-bar :is(.win-btn, .win-tool):active,
+.os[data-style='classic'] .win-bar .win-btn.win-close:active {
+	background: var(--c-face);
+	box-shadow: var(--c-bevel-in);
+}
+.os[data-style='classic'] .win-bar :is(.win-btn, .win-tool) .ico {
+	width: 9px;
+	height: 9px;
+	stroke-width: 3;
+}
+.os[data-style='classic'] .win-body {
+	margin-top: 2px;
+	box-shadow: inset 1px 1px #808080;
+}
+.os[data-style='classic'] .win-snap {
+	border-radius: 0;
+	border: 2px dotted #fff;
+	background: #ffffff18;
+	backdrop-filter: none;
+}
+
+/* Taskbar */
+.os[data-style='classic'] .os-task {
+	grid-template-columns: auto 1fr auto;
+	padding: 0 2px;
+	gap: 4px;
+	background: var(--c-face);
+	backdrop-filter: none;
+	border-top: 0;
+	box-shadow:
+		inset 0 1px #dfdfdf,
+		inset 0 2px #fff;
+}
+.os[data-style='classic'] .os-task-mid {
+	justify-content: flex-start;
+	gap: 2px;
+	min-width: 0;
+	overflow: hidden;
+}
+.os[data-style='classic'] .os-tb {
+	width: 28px;
+	height: 30px;
+	border-radius: 0;
+	transition: none;
+}
+.os[data-style='classic'] .os-tb:hover,
+.os[data-style='classic'] .os-tb[aria-pressed='true'] {
+	background: none;
+}
+.os[data-style='classic'] .os-tb:active {
+	transform: none;
+	box-shadow: var(--c-bevel-in);
+}
+.os[data-style='classic'] .os-tb .app-tile.xs {
+	width: 20px;
+	height: 20px;
+	border-radius: 3px;
+	box-shadow: none;
+}
+.os[data-style='classic'] .os-tb.start {
+	width: auto;
+	padding: 0 6px;
+	color: #000;
+	box-shadow: var(--c-bevel-out);
+}
+.os[data-style='classic'] .os-tb.start .ico {
+	filter: none;
+}
+.os[data-style='classic'] .os-tb.start[aria-expanded='true'] {
+	box-shadow: var(--c-bevel-in);
+	background: none;
+}
+.os[data-style='classic'] .os-tb.hide-sm {
+	margin-right: 6px;
+}
+.os[data-style='classic'] .os-tb.run.open {
+	display: flex;
+	justify-content: flex-start;
+	gap: 5px;
+	width: 156px;
+	min-width: 72px;
+	flex: 0 1 156px;
+	padding: 0 6px;
+	box-shadow: var(--c-bevel-out);
+}
+.os[data-style='classic'] .os-tb.run.on {
+	box-shadow: var(--c-bevel-in);
+	background: repeating-conic-gradient(#fff 0 25%, var(--c-face) 0 50%) 0 0 / 2px 2px;
+	font-weight: 700;
+}
+.os[data-style='classic'] .os-tb.run::after {
+	display: none;
+}
+.os[data-style='classic'] .tb-label {
+	display: block;
+	min-width: 0;
+	font-size: 12px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.os[data-style='classic'] .os-task-right {
+	height: 30px;
+	padding: 0 2px 0 6px;
+	box-shadow: inset 1px 1px #808080, inset -1px -1px #fff;
+}
+.os[data-style='classic'] .os-task-right .os-tb {
+	width: 24px;
+	height: 24px;
+}
+.os[data-style='classic'] .os-clock,
+.os[data-style='classic'] .os-chip {
+	height: 26px;
+	border-radius: 0;
+}
+.os[data-style='classic'] .os-clock {
+	flex-direction: row-reverse;
+	align-items: center;
+	gap: 6px;
+}
+.os[data-style='classic'] .os-clock:hover,
+.os[data-style='classic'] .os-chip:hover {
+	background: none;
+}
+
+/* Popovers, menus, toasts, peek, flyout */
+.os[data-style='classic'] :is(.os-pop, .os-peek, .snap-fly, .os-toast) {
+	border: 0;
+	border-radius: 0;
+	backdrop-filter: none;
+	background: var(--c-face);
+	box-shadow: var(--c-bevel-out), 2px 2px 0 #0004;
+	animation-duration: 0.01ms;
+}
+.os[data-style='classic'] .ctx {
+	padding: 3px;
+}
+.os[data-style='classic'] .ctx button {
+	border-radius: 0;
+	padding: 4px 10px;
+	font-size: 12px;
+}
+.os[data-style='classic'] .ctx button:hover,
+.os[data-style='classic'] .ctx button:focus-visible {
+	background: #000080;
+	color: #fff;
+	outline: 0;
+}
+.os[data-style='classic'] .ctx hr {
+	border-top: 1px solid #808080;
+	border-bottom: 1px solid #fff;
+	margin: 3px 2px;
+}
+.os[data-style='classic'] :is(.pk-body, .snap-cand) {
+	border-radius: 0;
+	border: 0;
+	background: #fff;
+	box-shadow: inset 1px 1px #808080, inset -1px -1px #dfdfdf;
+}
+.os[data-style='classic'] .snap-zone {
+	border-radius: 0;
+	box-shadow: inset 1px 1px #808080, inset -1px -1px #fff;
+}
+.os[data-style='classic'] .snap-slot::before {
+	border-radius: 0;
+	border: 2px dotted #fff;
+	backdrop-filter: none;
+}
+.os[data-style='classic'] .snap-slot.is-active::before {
+	border: 0;
+	background: var(--c-face);
+	box-shadow: var(--c-bevel-out);
+}
+.os[data-style='classic'] .snap-cand:hover,
+.os[data-style='classic'] .snap-cand:focus-visible {
+	transform: none;
+	background: #000080;
+	color: #fff;
+}
+.os[data-style='classic'] .pk-head b {
+	font-weight: 700;
+}
+.os[data-style='classic'] .os .pk-x,
+.os[data-style='classic'] .pk-x {
+	width: 16px;
+	height: 14px;
+	border-radius: 0;
+	opacity: 1;
+	background: var(--c-face);
+	box-shadow: var(--c-bevel-out);
+}
+.os[data-style='classic'] .pk-x .ico {
+	width: 9px;
+	height: 9px;
+}
+.os[data-style='classic'] .os .pk-x:hover,
+.os[data-style='classic'] .pk-x:hover {
+	background: var(--c-face);
+	color: #000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.snap-fly,
+	.snap-assist,
+	.snap-cand,
+	.os-peek {
+		animation-duration: 0.01ms !important;
+	}
+	.os[data-style='aqua'] .os-task-mid .os-tb {
+		--mag: 1 !important;
+	}
+}

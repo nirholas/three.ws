@@ -1,0 +1,16 @@
+.napp-terminal { height: 100%; display: flex; flex-direction: column; background: #0c0e12; color: #d7dae0; font: 13px/1.5 ui-monospace, 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace; }
+.napp-terminal .napp-terminal-root { flex: 1; min-height: 0; display: flex; flex-direction: column; outline: 0; }
+.napp-terminal .tm-screen { flex: 1; min-height: 0; overflow-y: auto; padding: 10px 14px 14px; user-select: text; -webkit-user-select: text; cursor: text; scrollbar-width: thin; scrollbar-color: #3a3f4a transparent; }
+.napp-terminal .tm-row { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.5em; }
+.napp-terminal .tm-prompt-row { display: flex; gap: 8px; align-items: baseline; }
+.napp-terminal .tm-prompt-row[hidden] { display: none; }
+.napp-terminal .tm-prompt { color: #5be4a0; white-space: nowrap; flex: none; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
+.napp-terminal .tm-input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #fff; font: inherit; padding: 0; caret-color: var(--accent, #4cc2ff); user-select: text; -webkit-user-select: text; }
+.napp-terminal .tm-input:focus-visible { outline: 0; }
+.napp-terminal .tm-ok { color: #5be4a0; }
+.napp-terminal .tm-err { color: #ff7b7b; }
+.napp-terminal .tm-warn { color: #f4c05a; }
+.napp-terminal .tm-dim { color: #7d8594; }
+.napp-terminal .tm-acc { color: #6cc7ff; }
+.napp-terminal .tm-dir { color: #8ab4ff; font-weight: 600; }
+.napp-terminal .tm-screen::selection, .napp-terminal .tm-screen *::selection { background: rgba(108, 199, 255, 0.35); }

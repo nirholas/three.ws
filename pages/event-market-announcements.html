@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<meta name="robots" content="noindex" />
+	<title>Announcement queue · Event Markets · three.ws</title>
+	<meta name="description" content="Admin review queue for Event Market announcement drafts: edit, approve a batch, reject, and dry-run the exact post before anything is sent." />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<style>
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.emq { max-width: 880px; margin: 0 auto; padding: 44px 18px 96px; }
+		.emq h1 { font-size: clamp(1.6rem, 4.5vw, 2.3rem); margin: 0 0 8px; letter-spacing: -0.03em; color: var(--ink-bright, var(--ink)); }
+		.emq-lede { margin: 0 0 20px; color: var(--ink-dim); line-height: 1.55; max-width: 62ch; }
+		.emq-flag { border: 1px solid var(--stroke-strong); border-radius: 10px; padding: 10px 14px; margin: 0 0 18px; font-size: 0.9rem; color: var(--ink-dim); }
+		.emq-flag[data-on="true"] { border-color: var(--accent); color: var(--ink); }
+		.emq-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 16px; }
+		.emq-tab, .emq-btn { font: inherit; font-size: 0.88rem; font-weight: 600; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--stroke-strong); background: transparent; color: var(--ink); cursor: pointer; transition: background 140ms ease, border-color 140ms ease; }
+		.emq-tab:hover, .emq-btn:hover { background: var(--surface-2, rgba(255,255,255,0.06)); }
+		.emq-tab:active, .emq-btn:active { transform: translateY(1px); }
+		.emq-tab:focus-visible, .emq-btn:focus-visible, .emq textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.emq-tab[aria-selected="true"] { border-color: var(--accent); color: var(--accent); }
+		.emq-btn[data-primary] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #000); }
+		.emq-btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+		.emq-spacer { flex: 1; }
+		.emq-card { border: 1px solid var(--stroke-strong); border-radius: 14px; background: var(--surface-2, rgba(255,255,255,0.04)); padding: 16px; margin: 0 0 12px; }
+		.emq-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 10px; font-size: 0.82rem; color: var(--ink-dim); }
+		.emq-head a { color: var(--accent); text-decoration: none; font-weight: 600; }
+		.emq-head a:hover { text-decoration: underline; }
+		.emq-kind { text-transform: uppercase; letter-spacing: 0.07em; font-weight: 650; font-size: 0.72rem; }
+		.emq-text { white-space: pre-wrap; word-break: break-word; line-height: 1.5; margin: 0 0 10px; }
+		.emq textarea { width: 100%; min-height: 120px; font: inherit; color: var(--ink); background: var(--bg-0); border: 1px solid var(--stroke-strong); border-radius: 10px; padding: 10px; resize: vertical; }
+		.emq-meta { font-size: 0.8rem; color: var(--ink-dim); margin: 0 0 10px; }
+		.emq-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+		.emq-note { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; border: 1px dashed var(--stroke-strong); font-size: 0.85rem; white-space: pre-wrap; word-break: break-word; }
+		.emq-note[data-error] { border-color: #d9534f; }
+		.emq-empty { border: 1px dashed var(--stroke-strong); border-radius: 14px; padding: 28px; text-align: center; color: var(--ink-dim); line-height: 1.6; }
+		.emq-skel { height: 118px; border-radius: 14px; margin: 0 0 12px; background: linear-gradient(90deg, var(--surface-2, rgba(255,255,255,0.04)), var(--stroke-strong), var(--surface-2, rgba(255,255,255,0.04))); background-size: 200% 100%; animation: emq-shimmer 1.4s linear infinite; }
+		@keyframes emq-shimmer { to { background-position: -200% 0; } }
+		@media (prefers-reduced-motion: reduce) { .emq-skel { animation: none; } }
+	</style>
+</head>
+<body>
+	<script src="/nav.js"></script>
+	<main class="emq">
+		<h1>Announcement queue</h1>
+		<p class="emq-lede">Drafts the cron wrote when an Event Market opened, neared its lock, shifted or resolved. Nothing is posted until you approve it, and the dry run shows the exact text that would go out.</p>
+		<div class="emq-flag" id="flag" role="status"></div>
+		<div class="emq-bar" role="tablist" aria-label="Announcement status" id="tabs"></div>
+		<div class="emq-bar" id="batch" hidden>
+			<label><input type="checkbox" id="all" /> Select all drafts</label>
+			<span class="emq-spacer"></span>
+			<button class="emq-btn" data-primary id="approve-batch" type="button">Approve selected</button>
+		</div>
+		<div id="list" aria-live="polite"></div>
+	</main>
+	<script type="module">
+		const STATUSES = ['draft', 'approved', 'posted', 'rejected'];
+		const state = { status: 'draft', rows: [], selected: new Set(), csrf: null };
+		const $ = (id) => document.getElementById(id);
+
+		const el = (tag, props = {}, ...kids) => {
+			const n = Object.assign(document.createElement(tag), props);
+			for (const k of kids) n.append(k);
+			return n;
+		};
+
+		async function csrf() {
+			if (state.csrf) return state.csrf;
+			const r = await fetch('/api/csrf-token', { credentials: 'include' });
+			const j = await r.json().catch(() => ({}));
+			state.csrf = j.data?.token || j.token || null;
+			return state.csrf;
+		}
+
+		async function call(body) {
+			const token = await csrf();
+			const r = await fetch('/api/event-markets/announcements', {
+				method: 'POST',
+				credentials: 'include',
+				headers: { 'content-type': 'application/json', ...(token ? { 'x-csrf-token': token } : {}) },
+				body: JSON.stringify(body),
+			});
+			const j = await r.json().catch(() => ({}));
+			if (!r.ok) throw new Error(j.error_description || j.message || `request failed (${r.status})`);
+			return j.data || j;
+		}
+
+		function renderTabs() {
+			const tabs = $('tabs');
+			tabs.replaceChildren(...STATUSES.map((s) => {
+				const b = el('button', { className: 'emq-tab', type: 'button', textContent: s[0].toUpperCase() + s.slice(1) });
+				b.setAttribute('role', 'tab');
+				b.setAttribute('aria-selected', String(s === state.status));
+				b.onclick = () => { state.status = s; state.selected.clear(); load(); };
+				return b;
+			}));
+		}
+
+		function note(card, text, isError) {
+			card.querySelector('.emq-note')?.remove();
+			const n = el('p', { className: 'emq-note', textContent: text });
+			n.setAttribute('role', isError ? 'alert' : 'status');
+			if (isError) n.setAttribute('data-error', '');
+			card.append(n);
+		}
+
+		function card(row) {
+			const c = el('article', { className: 'emq-card' });
+			const head = el('div', { className: 'emq-head' });
+			if (row.status === 'draft') {
+				const cb = el('input', { type: 'checkbox', checked: state.selected.has(row.id) });
+				cb.setAttribute('aria-label', `Select ${row.kind} draft for ${row.title}`);
+				cb.onchange = () => { cb.checked ? state.selected.add(row.id) : state.selected.delete(row.id); syncBatch(); };
+				head.append(cb);
+			}
+			head.append(el('span', { className: 'emq-kind', textContent: row.kind.replace('_', ' ') }));
+			head.append(el('a', { href: `/event-markets/${encodeURIComponent(row.slug)}`, textContent: row.title }));
+			head.append(el('span', { textContent: new Date(row.created_at).toLocaleString() }));
+			c.append(head);
+
+			const text = el('p', { className: 'emq-text', textContent: row.draft_text });
+			c.append(text);
+			const tags = row.tags?.length ? `Tags: ${row.tags.map((t) => '@' + t).join(', ')} (linked handles only)` : 'No tags: no entrant here has a linked handle.';
+			c.append(el('p', { className: 'emq-meta', textContent: tags }));
+			if (row.post_url) c.append(el('a', { href: row.post_url, textContent: 'View post', target: '_blank', rel: 'noopener' }));
+
+			const actions = el('div', { className: 'emq-actions' });
+			const btn = (label, fn, primary) => {
+				const b = el('button', { className: 'emq-btn', type: 'button', textContent: label });
+				if (primary) b.setAttribute('data-primary', '');
+				b.onclick = async () => {
+					b.disabled = true;
+					try { await fn(b); } catch (e) { note(c, e.message, true); } finally { b.disabled = false; }
+				};
+				return b;
+			};
+			if (row.status === 'draft' || row.status === 'approved') {
+				actions.append(btn('Edit', () => edit(c, row)));
+				actions.append(btn('Reject', async () => { await call({ action: 'reject', id: row.id }); await load(); }));
+			}
+			if (row.status === 'draft') actions.append(btn('Approve', async () => { await approve([row.id], c); }, true));
+			if (row.status === 'approved') actions.append(btn('Dry run send', async () => {
+				const out = await call({ action: 'send', id: row.id, dry_run: true });
+				note(c, `Dry run. This exact text would be sent, nothing was:\n\n${out.would_send.text}\n\nPosting flag is ${out.flag_on ? 'ON' : 'OFF'}.`, false);
+			}, true));
+			c.append(actions);
+			return c;
+		}
+
+		function edit(c, row) {
+			const ta = el('textarea', { value: row.draft_text });
+			ta.setAttribute('aria-label', 'Draft text');
+			const count = el('p', { className: 'emq-meta' });
+			const upd = () => { count.textContent = `${ta.value.length} characters (links count as 23 on X). Editing sends an approved draft back to review.`; };
+			ta.oninput = upd; upd();
+			const save = el('button', { className: 'emq-btn', type: 'button', textContent: 'Save draft' });
+			save.setAttribute('data-primary', '');
+			save.onclick = async () => {
+				save.disabled = true;
+				try { await call({ action: 'edit', id: row.id, text: ta.value.trim() }); await load(); }
+				catch (e) { note(c, e.message, true); save.disabled = false; }
+			};
+			c.querySelector('.emq-text').replaceWith(ta);
+			c.append(count, save);
+			ta.focus();
+		}
+
+		async function approve(ids, anchor) {
+			const out = await call({ action: 'approve', ids });
+			state.selected.clear();
+			await load();
+			if (out.failed?.length) {
+				const msg = out.failed.map((f) => `${f.id.slice(0, 8)}: ${f.reason}`).join('\n');
+				$('list').prepend(el('p', { className: 'emq-note', textContent: `Approved ${out.approved.length}. Not approved:\n${msg}` }));
+			}
+		}
+
+		function syncBatch() {
+			const drafts = state.rows.filter((r) => r.status === 'draft');
+			$('batch').hidden = state.status !== 'draft' || !drafts.length;
+			$('approve-batch').disabled = !state.selected.size;
+			$('approve-batch').textContent = state.selected.size ? `Approve ${state.selected.size} selected` : 'Approve selected';
+			$('all').checked = drafts.length > 0 && state.selected.size === drafts.length;
+		}
+
+		function renderList() {
+			const list = $('list');
+			if (!state.rows.length) {
+				list.replaceChildren(el('div', { className: 'emq-empty', textContent: state.status === 'draft'
+					? 'No drafts waiting. The cron writes one when a market opens, nears its lock, shifts, or resolves. Open a market and check back within 15 minutes.'
+					: `Nothing is ${state.status} yet.` }));
+			} else {
+				list.replaceChildren(...state.rows.map(card));
+			}
+			syncBatch();
+		}
+
+		async function load() {
+			renderTabs();
+			$('list').replaceChildren(el('div', { className: 'emq-skel' }), el('div', { className: 'emq-skel' }));
+			try {
+				const r = await fetch(`/api/event-markets/announcements?status=${state.status}`, { credentials: 'include' });
+				const j = await r.json().catch(() => ({}));
+				if (r.status === 401 || r.status === 403) throw new Error('Admin sign-in required. Sign in with an admin account, then reload.');
+				if (!r.ok) throw new Error(j.error_description || j.message || `could not load the queue (${r.status})`);
+				const data = j.data || j;
+				state.rows = data.announcements;
+				$('flag').dataset.on = String(data.posting_enabled);
+				$('flag').textContent = data.posting_enabled
+					? 'Posting is ON. Approved announcements can be sent live.'
+					: 'Posting is OFF (EVENT_MARKET_ANNOUNCE_POST is not "on"). Approving and dry runs work; nothing can be sent live.';
+				renderList();
+			} catch (e) {
+				const retry = el('button', { className: 'emq-btn', type: 'button', textContent: 'Try again' });
+				retry.onclick = load;
+				const box = el('div', { className: 'emq-empty', textContent: e.message });
+				box.setAttribute('role', 'alert');
+				$('list').replaceChildren(box, retry);
+			}
+		}
+
+		$('all').onchange = (e) => {
+			state.selected = new Set(e.target.checked ? state.rows.filter((r) => r.status === 'draft').map((r) => r.id) : []);
+			renderList();
+		};
+		$('approve-batch').onclick = async (e) => {
+			e.target.disabled = true;
+			try { await approve([...state.selected]); } catch (err) { $('list').prepend(el('p', { className: 'emq-note', textContent: err.message })); }
+		};
+		load();
+	</script>
+</body>
+</html>

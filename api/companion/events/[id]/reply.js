@@ -11,12 +11,12 @@
 // are refused with a message that says which lane could not do it.
 
 import { z } from 'zod';
-import { getRequestUser, requestUserHasScope } from '../../../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../../../_lib/http.js';
 import { requireCsrf } from '../../../_lib/csrf.js';
 import { limits } from '../../../_lib/rate-limit.js';
 import { parse } from '../../../_lib/validate.js';
 import { getReplyTarget, recordReply } from '../../../_lib/companion/store.js';
+import { companionCaller, needsCsrf } from '../../../_lib/companion/caller.js';
 import { laneFor } from '../../../_lib/companion/poll.js';
 
 const replyBody = z.object({
@@ -27,12 +27,11 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const user = await getRequestUser(req, res);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
-	// Private messages and the bridge token live behind this surface, so a
-	// bearer needs the account-level profile scope, not just any grant.
-	if (!requestUserHasScope(user, 'profile')) return error(res, 403, 'insufficient_scope', 'this token needs the profile scope');
-	if (!(await requireCsrf(req, res, user.id))) return;
+	// The bridge token reaches this route: it is the credential the desktop app,
+	// the CLI and the MCP server hold. It resolves to its owner only.
+	const user = await companionCaller(req, res, { bridge: true });
+	if (!user) return;
+	if (needsCsrf(user) && !(await requireCsrf(req, res, user.id))) return;
 
 	// A reply opens a connection to the user's own provider, so it shares the
 	// bucket with "check now" rather than the cheap read bucket.

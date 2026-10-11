@@ -20,6 +20,7 @@ import { createRegenProvider } from '../../api/_providers/gcp.js';
 
 const VARS = [
 	'MODEL_TRELLIS_URL',
+	'MODEL_TRELLIS2_URL',
 	'GCP_RECONSTRUCTION_KEY',
 	'NVIDIA_API_KEY',
 	'HF_TOKEN',
@@ -86,8 +87,8 @@ describe('forge-tiers — self-hosted TRELLIS routing precedence', () => {
 		process.env.HF_TOKEN = 'hf_test'; // HF also live — TRELLIS must still win the photo default
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
 		// Draft/standard photo uploads route to our self-hosted TRELLIS, ahead of HF.
-		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: true })).toBe('trellis_selfhost');
-		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: true })).toBe('trellis_selfhost');
+		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: true, country: 'US' })).toBe('trellis_selfhost');
+		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: true, country: 'US' })).toBe('trellis_selfhost');
 	});
 
 	it('leads text prompts with the self-host photoreal reference pipeline too; high stays on self-host TRELLIS', () => {
@@ -99,24 +100,24 @@ describe('forge-tiers — self-hosted TRELLIS routing precedence', () => {
 		// image-intermediate lane too — NVIDIA's native single-hop text→mesh
 		// preview skips the photoreal reference image, so it is no longer a
 		// named tier default anywhere (see forge-tiers.js FREE_DEFAULT_FOR_TIERS).
-		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: false })).toBe('trellis_selfhost');
-		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: false })).toBe('trellis_selfhost');
+		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: false, country: 'US' })).toBe('trellis_selfhost');
+		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: false, country: 'US' })).toBe('trellis_selfhost');
 		// High names our self-host Hunyuan3D engine; unconfigured here, so the
 		// candidate walk falls to the self-host TRELLIS lane.
-		expect(resolveBackendId({ path: 'image', tier: 'high' })).toBe('trellis_selfhost');
+		expect(resolveBackendId({ path: 'image', tier: 'high', country: 'US' })).toBe('trellis_selfhost');
 	});
 
 	it('degrades cleanly to HuggingFace when the worker URL is absent', () => {
 		// No MODEL_TRELLIS_URL → trellis_selfhost unconfigured → HF serves photos.
 		process.env.HF_TOKEN = 'hf_test';
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
-		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: true })).toBe('huggingface');
+		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: true, country: 'US' })).toBe('huggingface');
 	});
 
 	it('stays explicitly selectable (the handler owns any rejection)', () => {
 		// Even unconfigured, an explicit pick is honored at resolution time.
 		expect(
-			resolveBackendId({ path: 'image', tier: 'standard', backend: 'trellis_selfhost', userImages: true }),
+			resolveBackendId({ path: 'image', tier: 'standard', backend: 'trellis_selfhost', userImages: true, country: 'US' }),
 		).toBe('trellis_selfhost');
 	});
 });
@@ -229,11 +230,12 @@ describe('forge-tiers — self-host TRELLIS per-tier quality budgets', () => {
 		expect(selfhostQualityForTier(undefined)).toBe(SELFHOST_TRELLIS_QUALITY.standard);
 	});
 
-	it('names hunyuan3d for the high tier and keeps huggingface only as fallback', async () => {
+	it('names trellis2 for the high tier and keeps hunyuan3d and huggingface only as fallback', async () => {
 		const { FREE_DEFAULT_FOR_TIERS, FREE_FALLBACK_FOR_PATH } = await import(
 			'../../api/_lib/forge-tiers.js'
 		);
-		expect(FREE_DEFAULT_FOR_TIERS.high.image).toBe('hunyuan3d');
+		expect(FREE_DEFAULT_FOR_TIERS.high.image).toBe('trellis2');
+		expect(FREE_FALLBACK_FOR_PATH.image).toContain('hunyuan3d');
 		expect(FREE_FALLBACK_FOR_PATH.image).toContain('huggingface');
 	});
 });
@@ -325,5 +327,62 @@ describe('gcp provider — trellis quality forwarding', () => {
 		} finally {
 			globalThis.fetch = origFetch;
 		}
+	});
+});
+
+describe('gcp provider: trellis2 mode wire contract', () => {
+	it('forwards resolution, seed and the bake overrides to the TRELLIS.2 worker', async () => {
+		process.env.MODEL_TRELLIS2_URL = 'https://trellis2.example.run.app';
+		process.env.GCP_RECONSTRUCTION_KEY = 'secret';
+		let sent = null;
+		globalThis.fetch = vi.fn(async (url, opts) => {
+			expect(url).toBe('https://trellis2.example.run.app/infer');
+			sent = JSON.parse(opts.body);
+			return new Response(JSON.stringify({ task_id: 'task-t2', status: 'queued' }), {
+				status: 202,
+				headers: { 'content-type': 'application/json' },
+			});
+		});
+		const provider = createRegenProvider();
+		await provider.submit({
+			mode: 'trellis2',
+			sourceUrl: 'https://three.ws/cdn/photo.png',
+			params: {
+				images: ['https://three.ws/cdn/photo.png'],
+				resolution: 1536,
+				seed: 7,
+				tier: 'standard',
+				texture_size: 2048,
+				decimation_target: 300000,
+			},
+		});
+		expect(sent).toMatchObject({
+			images: ['https://three.ws/cdn/photo.png'],
+			resolution: 1536,
+			seed: 7,
+			tier: 'standard',
+			texture_size: 2048,
+			decimation_target: 300000,
+		});
+	});
+
+	it('leaves the bake overrides to the resolution preset when absent', async () => {
+		process.env.MODEL_TRELLIS2_URL = 'https://trellis2.example.run.app';
+		process.env.GCP_RECONSTRUCTION_KEY = 'secret';
+		let sent = null;
+		globalThis.fetch = vi.fn(async (_url, opts) => {
+			sent = JSON.parse(opts.body);
+			return new Response(JSON.stringify({ task_id: 'task-t3', status: 'queued' }), {
+				status: 202,
+				headers: { 'content-type': 'application/json' },
+			});
+		});
+		await createRegenProvider().submit({
+			mode: 'trellis2',
+			sourceUrl: 'https://three.ws/cdn/photo.png',
+			params: { images: ['https://three.ws/cdn/photo.png'], tier: 'draft' },
+		});
+		expect(sent).not.toHaveProperty('texture_size');
+		expect(sent).not.toHaveProperty('decimation_target');
 	});
 });

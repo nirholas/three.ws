@@ -248,7 +248,7 @@ Every auth endpoint accepts an optional `tosAccepted: true` body field. Send it 
 - `POST /api/auth/register` **requires** `tosAccepted: true`; account creation without it fails with `400 tos_required`. Registration UIs must show a real agreement control.
 - Wallet and Privy verifies (`/api/auth/siwe/verify`, `/api/auth/siws/verify`, `/api/auth/privy/verify`) and `POST /api/auth/login` treat it as an affirmation: acceptance is recorded on every sign-in, so users converge onto the current Terms version over time.
 
-An already-signed-in user can also record acceptance directly with `POST /api/legal/tos-ack { version?, context? }`. That endpoint only covers the Terms of Service; the real-funds agreements (Risk Disclosure + Agent Wallet Agreement, required before any custodial money-moving action) are a separate, heavier signing flow at `POST /api/legal/risk-ack`. See [risk acknowledgment](./risk-acknowledgment.md).
+An already-signed-in user can also record acceptance directly with `POST /api/legal/tos-ack { version?, context? }`. That endpoint only covers the Terms of Service; the real-funds agreements (Risk Disclosure + Agent Wallet Agreement, required before any custodial money-moving action) are a separate, heavier signing flow at `POST /api/legal/risk-ack` (review them at [/legal/agreements](https://three.ws/legal/agreements)). Every custodial money endpoint (withdraw, trade, pay, launch) requires a typed-name signature of all three documents; an unsigned account gets `403 risk_ack_required` over a session and an API key alike, and devnet actions are exempt. See [risk acknowledgment](./risk-acknowledgment.md).
 
 ---
 
@@ -268,7 +268,7 @@ The three.ws login and register pages run Privy **headless**: our own UI drives 
 2. **Email**: `privy.auth.email.sendCode(email, captchaToken)` sends a 6-digit code; `privy.auth.email.loginWithCode(email, code)` exchanges it for an identity token (a JWT signed with Privy's ES256 key).
 3. **EVM wallet**: the page runs Privy's SIWE ceremony (`siwe/init` for a nonce and message, `personal_sign` in the wallet, `loginWithSiwe` to finish) and gets the same kind of identity token.
 4. The frontend posts that token to `POST /api/auth/privy/verify`.
-5. The backend fetches Privy's JWKS, verifies the token signature and audience, and finds-or-creates the user record (keyed on the Privy DID).
+5. The backend fetches Privy's JWKS, verifies the token signature and audience, and finds-or-creates the user record (keyed on the Privy DID). A first Privy sign-in carrying an email links to an existing account with that email only when three.ws has verified the address; an account registered with an unverified email is left alone and the Privy identity gets its own account, so nobody can pre-register a stranger's address and catch their sign-in. SAML and wallet sign-ins follow the same rule.
 6. Linked wallets are synced best-effort from Privy's server API into the user's wallet list; a login with no wallet still succeeds.
 7. A session cookie is issued; from this point the user is authenticated identically to a SIWS or SIWE user.
 
@@ -323,6 +323,50 @@ A Privy identity attached to an account that was closed through `DELETE /api/aut
 Once a user is signed in via Privy, they can connect a browser wallet and link it to their account via `POST /api/auth/wallets`. See the [Multi-wallet section](#multi-wallet-support) below.
 
 ---
+
+## Sign in with Google
+
+Google sign-in is a direct OpenID Connect authorization-code flow with PKCE, run by [api/auth/google/[action].js](../api/auth/google/[action].js) on top of the shared identity helpers in [api/_lib/identities.js](../api/_lib/identities.js). There is no third-party SDK in the browser: the login page links to `/api/auth/google/start`, the server sends the browser to Google, and Google sends it back to `/api/auth/google/callback`.
+
+### How the flow works
+
+1. `GET /api/auth/google/start?next=/dashboard` signs a flow cookie (`__Host-gsi`, ten minutes) holding a random `state`, a `nonce`, and a PKCE verifier, then redirects to Google's authorization endpoint with `code_challenge_method=S256`, `scope=openid email profile` and `prompt=select_account`.
+2. Google redirects to `/api/auth/google/callback?code=...&state=...`. The server rejects a `state` that does not match the flow cookie, exchanges the code for tokens with the verifier, and verifies the ID token against Google's published keys: signature, issuer, audience (the client id), expiry, and the `nonce` from the flow cookie.
+3. What happens next depends on the account:
+   - **The Google account is already linked.** The person is signed in and sent to `next`.
+   - **Not linked, and a three.ws account has the same email.** Only when Google says `email_verified` and the three.ws account verified that address too, the person sees a confirm page ("Link Google to your account?"). Nothing is linked until they choose **Link and sign in**, which posts to `/api/auth/google/confirm` with a signed five-minute cookie (`__Host-glink`) carrying the verified claims. "Not my account" changes nothing. An account whose email was never verified on three.ws is never linked by email (the same rule Privy, SAML and wallet sign-ins follow), so nobody can pre-register a stranger's address and catch their sign-in; that account's owner links Google from Settings instead, where their session proves ownership.
+   - **No account at all.** A new account is created from the verified claims, born `email_verified`, with no password. Google is its sign-in method until the person sets a password or links a wallet.
+4. Signing in creates a session and leaves every other session alone, so signing in from a second MCP client never signs the first out.
+
+`next` is checked by the same `safeNext` rule as the rest of the login page: a relative path on this site, never an external URL. The MCP authorization screen passes `next=/oauth/consent?...`, which is how a person goes Google, back to three.ws, straight to the consent screen.
+
+### Linking and unlinking from Settings
+
+[Settings, Sign-in methods](https://three.ws/dashboard/settings#sign-in-methods) lists every way into the account (password, email code, wallets, Google) and offers:
+
+- **Link Google** (`/api/auth/google/start?intent=link`, session required): the same round trip, ending with the Google account linked to the signed-in user. A Google account linked to a different three.ws account is refused with `identity_in_use`; a second, different Google account on the same user is refused with `already_linked` until the first is unlinked.
+- **Unlink** (`POST /api/auth/google/unlink`, session and CSRF required): needs a fresh proof the person at the keyboard owns the account, either `{ "password": "..." }` in the body or having just completed `/api/auth/google/start?intent=reauth`, which forces Google to ask for credentials again (`prompt=login`, `max_age=0`, and the callback checks `auth_time`) and sets a five-minute `__Host-reauth` cookie. Without either, the route answers `401 reauth_required`. Google can never be unlinked when it is the only sign-in method (`409 last_sign_in_method`).
+- **Status** (`GET /api/auth/google/status`): `{ configured, google, password, email_code, wallets, count, reauthenticated }`, which is what the card renders.
+
+### Error states
+
+A failed login lands on `/login?error=google_<code>` with a message the page explains: `google_cancelled` (you closed Google's prompt), `google_expired` (the ten-minute flow cookie ran out or the state did not match), `google_email_unverified` (Google does not vouch for that address), `google_unverified_account` (a three.ws account has that email but never verified it), `google_not_linked` (you chose "Not my account"), `google_identity_in_use`, `google_already_linked`, `google_invalid_token`, `google_exchange_failed`, `google_failed`, and `google_unavailable` (not configured on this deployment). A failed link or re-authentication lands back on the settings card with `?google=<code>` instead. Nothing ever surfaces as raw JSON in the address bar.
+
+### Configuration
+
+```env
+# A "Web application" OAuth client in the Google Cloud console (APIs & Services,
+# Credentials). Its authorized redirect URI must be exactly:
+#   https://<your origin>/api/auth/google/callback
+GOOGLE_OAUTH_CLIENT_ID=
+GOOGLE_OAUTH_CLIENT_SECRET=
+```
+
+Both unset: `GET /api/config` reports `googleEnabled: false`, the login page shows no Google button, `/api/auth/google/start` sends a browser to `/login?error=google_unavailable` and answers an API caller `501 not_configured`. Nothing else changes.
+
+## Sign in with Telegram, link codes and external wallets
+
+Telegram sign-in (widget and deep-link magic link), one-time link codes for phones, desktop apps, the CLI and Telegram chats, and signed-message external wallets are documented in [account-linking.md](./account-linking.md).
 
 ## Sign in with X
 
@@ -405,6 +449,10 @@ await fetch('/api/auth/logout-everywhere', {
 });
 ```
 
+### Resetting a password
+
+Password accounts recover through `POST /api/auth/forgot-password { email }`, which always answers `200 { success: true }` (so it never reveals whether an address has an account) and emails a `/reset-password?token=...` link valid for 60 minutes. The reset page posts `POST /api/auth/reset-password { token, password }`. The token is checked and consumed in a single statement, so one link resets the password exactly once even under concurrent submits; a used or expired link answers `400 invalid_token`. A successful reset revokes every browser session and every OAuth refresh token on the account, the same sweep `logout-everywhere` performs, because a reset is how an owner takes back a compromised account.
+
 ### Deleting the account
 
 `DELETE /api/auth/me` closes an account for good. It is the endpoint behind the
@@ -470,16 +518,17 @@ API keys are for server-to-server access where session cookies don't apply — C
 
 ### Key format
 
-Keys are prefixed `sk_live_` and are shown exactly once at creation. They are stored as a SHA-256 hash; if you lose the key, create a new one.
+Keys are prefixed `sk_live_` (the dashboard can also mint `sk_test_` keys) and are shown exactly once at creation. They are stored as a SHA-256 hash; if you lose the key, create a new one.
 
 ### Creating a key
 
-Via the dashboard at `/dashboard` → **API Keys** → **Create Key**, or via the API while authenticated:
+Via the dashboard at [/dashboard/api](https://three.ws/dashboard/api), or via the API while signed in. A cookie-authenticated create needs a CSRF token, which `apiFetch` attaches for you:
 
 ```js
-const res = await fetch('/api/api-keys', {
+import { apiFetch } from '/src/api.js'; // attaches the x-csrf-token for you
+
+const res = await apiFetch('/api/api-keys', {
   method: 'POST',
-  credentials: 'include',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     name: 'My Integration',
@@ -488,7 +537,7 @@ const res = await fetch('/api/api-keys', {
   }),
 });
 const { data } = await res.json();
-// data.token = "sk_live_xxxxx" — store this; it won't be shown again
+// data.token = "sk_live_xxxxx": store this; it won't be shown again
 ```
 
 A request can send `preset: "connector"` instead of `scope`. The connector
@@ -496,8 +545,14 @@ preset is the key shape for an AI agent that holds a credential unattended
 (a bot secret, a schedule, a CI job): it can read, generate, and edit agent
 data, but carries a marker that caps it below every spend scope for as long
 as the key lives, even if the stored scope string is later edited to add one.
-A bearer caller only receives the preset's scopes it already holds itself; a
-caller holding none of them gets `403 insufficient_scope`.
+A bearer caller (an API key or OAuth token holding `profile`) can create keys
+too, but only at or below its own grant, and only receives the preset's
+scopes it already holds itself: requesting any scope the caller does not
+hold, or holding none of them, answers `403 insufficient_scope`.
+
+### Signing in from a terminal (device link)
+
+The `three-ws` CLI ([docs](cli.md)) gets an API key without a pasted secret through an RFC 8628-style device link: `POST /api/cli/link { client_name, hostname, scope }` returns a `user_code` and a `verification_uri` (`/cli/authorize`); the person opens it signed in, can narrow the scopes (money-moving ones are flagged), and approves; the CLI polls `POST /api/cli/token { device_code }` every 3 seconds and receives the minted key exactly once. Poll errors use the RFC 8628 codes (`authorization_pending`, `slow_down`, `access_denied`, `expired_token`), and a link expires after 10 minutes. Approval refuses every bearer principal, so a credential can never widen itself into a new one without a person pressing the button. `GET /api/cli/whoami` with the key as a Bearer returns the account, plan, credential, and agent wallet.
 
 ### Using a key
 
@@ -522,21 +577,26 @@ const res = await fetch('/api/agents', {
 | `memory:write` | Write agent memory |
 | `profile` | Read/write profile data; required to manage API keys themselves |
 | `herald:announce` | Post announcements through the [Herald](herald.md) (`POST /api/herald/announce`); the scope the `herald-mcp` package's `THREE_WS_API_KEY` needs |
+| `wallet:read` | See the agent wallet balance, history, and spending caps |
+| `wallet:write` | Move, commit, or redirect funds from a custodial wallet (withdraw, trade, pay, hire, launch), within its caps |
+| `services:write` | Publish paid services that earn USDC to the agent wallet |
+| `inference` | Model calls on the OpenAI-compatible endpoint (`/api/v1/chat/completions`), billed to the account's credits; keys from `/api/me/inference/provision` carry this scope alone |
 
 Scopes are space-separated in the `scope` field. Default when unspecified: `avatars:read avatars:write`.
+
+A signed-in browser session carries every scope. An API key or OAuth access token carries only what it was granted, and each route checks the scope its action needs, answering `403 insufficient_scope` otherwise. Notable gates: any state-changing request to a route that spends from or redirects a custodial wallet needs `wallet:write` (reads pass with `wallet:read`); pairing or editing a chat-gateway connection needs `agents:write wallet:write` (listing needs `agents:read`); the companion inbox and Knock settings need `profile`, plus `wallet:write` to move the Knock payout address; and granting a home entity standing permission refuses every bearer with `403 confirmation_requires_session`, because only a person in a session can say yes.
 
 > **Security:** Treat API keys as passwords. Never commit them to source control. Set the minimum scope your integration actually needs. Set an `expires_at` on keys that don't need to be permanent. Rotate keys after personnel changes.
 
 ### Revoking a key
 
 ```js
-await fetch(`/api/api-keys/${keyId}`, {
-  method: 'DELETE',
-  credentials: 'include',
-});
+import { apiFetch } from '/src/api.js'; // a cookie-authenticated revoke needs the CSRF token
+
+await apiFetch(`/api/api-keys/${keyId}`, { method: 'DELETE' });
 ```
 
-Or revoke via the dashboard. Revocation takes effect immediately — the key will start returning `401`.
+Or revoke via the dashboard. Revocation takes effect immediately: the key will start returning `401`.
 
 ---
 
@@ -554,6 +614,8 @@ If you're building a third-party app that users authorize to access their three.
 | `POST /api/oauth/register` | Dynamic client registration (RFC 7591) |
 
 PKCE (S256) is mandatory. The authorization server metadata is at `/.well-known/oauth-authorization-server`.
+
+Native clients may register a loopback redirect on `http://127.0.0.1` or `http://[::1]`; at authorize time any port on that address matches (RFC 8252 section 7.3), so a CLI or desktop app registers once and binds whatever port the OS hands it. `localhost` redirects still match their exact port.
 
 ### Client authentication
 
@@ -692,6 +754,10 @@ DATABASE_URL=postgresql://...
 # Privy (optional — needed only if you want social/email login)
 VITE_PRIVY_APP_ID=
 PRIVY_APP_ID=
+
+# Google sign-in (optional; see "Sign in with Google" above)
+GOOGLE_OAUTH_CLIENT_ID=
+GOOGLE_OAUTH_CLIENT_SECRET=
 
 # WalletConnect (optional — needed only for mobile wallet QR flow)
 VITE_WALLETCONNECT_PROJECT_ID=

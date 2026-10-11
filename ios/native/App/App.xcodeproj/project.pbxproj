@@ -42,6 +42,8 @@
 		C4A11E0330C1001400000000 /* SharedInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0330C1000300000000 /* SharedInbox.swift */; };
 		C4A11E0330C1001500000000 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0330C1000400000000 /* ShareViewController.swift */; };
 		C4A11E0330C1001600000000 /* ShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C4A11E0330C1000700000000 /* ShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C4A11E0440D1000200000000 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C4A11E0440D1000100000000 /* PrivacyInfo.xcprivacy */; };
+		C4A11E0440D1000400000000 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C4A11E0440D1000300000000 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -112,6 +114,10 @@
 		C4A11E0330C1000500000000 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C4A11E0330C1000600000000 /* ShareExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShareExtension.entitlements; sourceTree = "<group>"; };
 		C4A11E0330C1000700000000 /* ShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C4A11E0440D1000100000000 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		C4A11E0440D1000300000000 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		C4A11E0440D1000600000000 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
+		C4A11E0440D1000700000000 /* App-CarPlay.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "App-CarPlay.entitlements"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -176,6 +182,9 @@
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
 				504EC3131FED79650016851F /* Info.plist */,
+				C4A11E0440D1000100000000 /* PrivacyInfo.xcprivacy */,
+				C4A11E0440D1000600000000 /* App.entitlements */,
+				C4A11E0440D1000700000000 /* App-CarPlay.entitlements */,
 				2FAD9762203C412B000D30F8 /* config.xml */,
 				50B271D01FEDC1A000F3C39B /* public */,
 			);
@@ -226,6 +235,7 @@
 				C4A11E0330C1000400000000 /* ShareViewController.swift */,
 				C4A11E0330C1000300000000 /* SharedInbox.swift */,
 				C4A11E0330C1000500000000 /* Info.plist */,
+				C4A11E0440D1000300000000 /* PrivacyInfo.xcprivacy */,
 				C4A11E0330C1000600000000 /* ShareExtension.entitlements */,
 			);
 			path = ShareExtension;
@@ -279,6 +289,7 @@
 			buildPhases = (
 				C4A11E0330C1006100000000 /* Sources */,
 				C4A11E0330C1006200000000 /* Frameworks */,
+				C4A11E0440D1000500000000 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -347,6 +358,15 @@
 				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
+				C4A11E0440D1000200000000 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C4A11E0440D1000500000000 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C4A11E0440D1000400000000 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -550,7 +570,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "$(THREEWS_APP_ENTITLEMENTS)";
 				CURRENT_PROJECT_VERSION = 1;
 				GLANCE_APP_GROUP = group.ws.three.app;
 				GLANCE_KEYCHAIN_GROUP = "$(DEVELOPMENT_TEAM).ws.three.shared";
@@ -565,6 +585,7 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = ws.three.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				THREEWS_APP_ENTITLEMENTS = App/App.entitlements;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -576,7 +597,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "$(THREEWS_APP_ENTITLEMENTS)";
 				CURRENT_PROJECT_VERSION = 1;
 				GLANCE_APP_GROUP = group.ws.three.app;
 				GLANCE_KEYCHAIN_GROUP = "$(DEVELOPMENT_TEAM).ws.three.shared";
@@ -590,6 +611,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = ws.three.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				THREEWS_APP_ENTITLEMENTS = App/App.entitlements;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

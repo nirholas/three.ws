@@ -1,9 +1,16 @@
 {
 	"id": "forge-article",
 	"contentHash": "12279cb509f8d695672307a5096fabc5dc341b95f913978c3de06001b8821ecc",
-	"reviewedAt": "2026-10-01T19:35:28.679Z",
-	"passed": true,
-	"blockers": [],
+	"reviewedAt": "2026-10-09T17:07:43.709Z",
+	"passed": false,
+	"blockers": [
+		"evidence:file api/_lib/forge-tiers.js: file does not contain \"\tdraft: Object.freeze({ image: 'trellis_selfhost' }),\n\tstandard: Object.freeze({ image: 'trellis_selfhost' }),\"",
+		"evidence:file api/_lib/forge-tiers.js: file does not contain \"\thigh: Object.freeze({ image: 'hunyuan3d' }),\"",
+		"evidence:file api/_lib/forge-failover.js: file does not contain \"const ASYNC_REDISPATCH_ORDER = ['trellis_selfhost', 'hunyuan3d', 'trellis', 'triposg'];\"",
+		"editor (accuracy): The verification for this claim failed: api/_lib/forge-failover.js does not contain the quoted ASYNC_REDISPATCH_ORDER line. The article must not state a rescue order the code does not confirm.",
+		"editor (accuracy): Both file verifications failed: forge-tiers.js does not contain the quoted tier-routing lines. The tier routing as written is unverified against the live code.",
+		"editor verdict is revise"
+	],
 	"texts": [
 		"How a sentence becomes a textured 3D model, and where the job goes when a GPU fails",
 		"A text prompt on the Forge runs through two chains: one paints a reference picture, the other rebuilds it as a textured 3D model on our own NVIDIA GPUs on Cloud Run. When a worker fails mid-job, the job moves to the next engine under the same id. The write-up covers the lanes, the rescue order and the limits: three.ws/forge"
@@ -23,7 +30,7 @@
 		}
 	],
 	"verification": {
-		"ok": true,
+		"ok": false,
 		"checks": [
 			{
 				"claim": "one paints a reference picture, the other rebuilds it as a textured 3D model",
@@ -134,15 +141,15 @@
 				"claim": "Draft and Standard go to TRELLIS on our own worker. High goes to Hunyuan3D 2.1 on our own worker",
 				"kind": "evidence:file",
 				"target": "api/_lib/forge-tiers.js",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"\tdraft: Object.freeze({ image: 'trellis_selfhost' }),\n\tstandard: Object.freeze({ image: 'trellis_selfhost' }),\""
 			},
 			{
 				"claim": "Draft and Standard go to TRELLIS on our own worker. High goes to Hunyuan3D 2.1 on our own worker",
 				"kind": "evidence:file",
 				"target": "api/_lib/forge-tiers.js",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"\thigh: Object.freeze({ image: 'hunyuan3d' }),\""
 			},
 			{
 				"claim": "Draft and Standard go to TRELLIS on our own worker. High goes to Hunyuan3D 2.1 on our own worker",
@@ -274,8 +281,8 @@
 				"claim": "our TRELLIS worker, then our Hunyuan3D worker, then a hosted TRELLIS lane where one is configured, then TripoSG",
 				"kind": "evidence:file",
 				"target": "api/_lib/forge-failover.js",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"const ASYNC_REDISPATCH_ORDER = ['trellis_selfhost', 'hunyuan3d', 'trellis', 'triposg'];\""
 			},
 			{
 				"claim": "A job gets its first lane plus up to three backups",
@@ -470,16 +477,52 @@
 		]
 	},
 	"editor": {
-		"verdict": "publish",
+		"verdict": "revise",
 		"scores": {
-			"accuracy": 5,
-			"clarity": 5,
-			"specificity": 5,
+			"accuracy": 3,
+			"clarity": 4,
+			"specificity": 4,
 			"voice": 5,
 			"professionalism": 5,
 			"visual": 5
 		},
-		"issues": [],
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "The order for that rescue is our TRELLIS worker, then our Hunyuan3D worker, then a hosted TRELLIS lane where one is configured, then TripoSG.",
+				"problem": "The verification for this claim failed: api/_lib/forge-failover.js does not contain the quoted ASYNC_REDISPATCH_ORDER line. The article must not state a rescue order the code does not confirm.",
+				"fix": "Re-read the current forge-failover.js and quote the order it actually defines, or remove the enumerated order from the article body."
+			},
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "Draft and Standard go to TRELLIS on our own worker. High goes to Hunyuan3D 2.1 on our own worker",
+				"problem": "Both file verifications failed: forge-tiers.js does not contain the quoted tier-routing lines. The tier routing as written is unverified against the live code.",
+				"fix": "Re-read forge-tiers.js and restate the routing exactly as the code defines it, or cut the sentence."
+			},
+			{
+				"severity": "major",
+				"area": "voice",
+				"quote": "healthy or simply unknown",
+				"problem": "Mechanical check flags 'simply' as filler in the article body.",
+				"fix": "Replace with 'healthy or unknown'."
+			},
+			{
+				"severity": "major",
+				"area": "voice",
+				"quote": "the model has actually loaded",
+				"problem": "Mechanical check flags 'actually' as filler in the article body.",
+				"fix": "Replace with 'the model has loaded'."
+			},
+			{
+				"severity": "minor",
+				"area": "accuracy",
+				"quote": "The write-up covers the lanes, the rescue order and the limits",
+				"problem": "Given the rescue-order verification failure, the post endorsing 'the rescue order' as article content inherits the risk until the article is corrected.",
+				"fix": "Once the article is fixed this stands; otherwise trim to 'the lanes and the limits'."
+			}
+		],
 		"rewrite": {
 			"posts": [
 				"A text prompt on the Forge runs through two chains: one paints a reference picture, the other rebuilds it as a textured 3D model on our own NVIDIA GPUs on Cloud Run. When a worker fails mid-job, the job moves to the next engine under the same id. The write-up covers the lanes, the rescue order and the limits: three.ws/forge"
@@ -488,7 +531,7 @@
 				"A 3D model generated on the Forge from a text prompt, shown in its viewer on a dark background: a Greek hoplite in a polished bronze cuirass and crested helmet, with a red tunic, bronze greaves, sandals and a round shield held at his side"
 			]
 		},
-		"summary": "Every factual claim in the head post and article body is backed by a passing verification result against live pages, worker health endpoints, or source files, and the link resolves. The voice contract is fully respected (mechanism lead, no hashtags, emoji, dashes or hype) and the cover image matches its alt text and shows real Forge output, so this ships unchanged.",
+		"summary": "The X post itself is accurate, in-voice, and well supported, and the cover image matches its alt text. The article it links contains two claims whose code verification failed (the tier routing and the redispatch order), which must be re-verified against the current files or removed before this ships.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

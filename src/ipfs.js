@@ -4,21 +4,26 @@
  * Translates decentralised storage URIs into HTTPS gateway URLs
  * so the Three.js loader can fetch them normally.
  *
- *   ipfs://QmXyz...        → https://dweb.link/ipfs/QmXyz...
- *   ipfs://bafkreiXyz...   → https://dweb.link/ipfs/bafkreiXyz...
+ *   ipfs://QmXyz...        → https://ipfs.filebase.io/ipfs/QmXyz...
+ *   ipfs://bafkreiXyz...   → https://ipfs.filebase.io/ipfs/bafkreiXyz...
  *   ar://txId               → https://arweave.net/txId
  */
 
-// Cloudflare retired both cf-ipfs.com and cloudflare-ipfs.com (Aug 2024);
-// requests to either now fail DNS (ERR_NAME_NOT_RESOLVED). pump.fun metadata
-// still hands out cf-ipfs.com image URLs, so we keep this list dead-host-free
-// and rewrite any lingering dead-gateway URL via normalizeGatewayURL().
+// Only gateways that serve subresource and fetch() reads with open CORS. The
+// first entry is what an ipfs:// URI renders through, so it is the fastest one
+// measured (Filebase and 4everland answer in ~150ms; Pinata's public gateway
+// works but takes 4 to 7s). Every host below was dropped because it stopped
+// serving, and normalizeGatewayURL() rewrites URLs still pointing at one:
+//   - cf-ipfs.com, cloudflare-ipfs.com: Cloudflare retired both (Aug 2024), DNS fails.
+//   - flk-ipfs.xyz: DNS fails.
+//   - ipfs.io, dweb.link, w3s.link, nftstorage.link: since Oct 2026 they answer
+//     every non-navigation request with 429/403 "switching to a service worker
+//     gateway only" (gatewaychanges.ipfs.io), so <img>, fetch() and texture
+//     loads against them all fail. pump.fun metadata still hands out ipfs.io URLs.
 export const IPFS_GATEWAYS = [
-	'https://dweb.link/ipfs/',
-	'https://ipfs.io/ipfs/',
-	'https://flk-ipfs.xyz/ipfs/',
-	'https://w3s.link/ipfs/',
-	'https://nftstorage.link/ipfs/',
+	'https://ipfs.filebase.io/ipfs/',
+	'https://4everland.io/ipfs/',
+	'https://gateway.pinata.cloud/ipfs/',
 ];
 
 const AR_GATEWAY = 'https://arweave.net/';
@@ -27,9 +32,10 @@ const AR_GATEWAY = 'https://arweave.net/';
 // never answer; without a deadline the first such host holds the whole chain.
 const GATEWAY_TIMEOUT_MS = 8_000;
 
-// Hosts that no longer resolve. Any HTTPS gateway URL using one of these is
-// rewritten onto the primary working gateway (preserving the /ipfs/<cid>/path).
-const DEAD_GATEWAY_HOST_RE = /^https?:\/\/(?:cf-ipfs\.com|cloudflare-ipfs\.com)\/ipfs\/(.+)$/i;
+// Gateways that no longer serve reads (see IPFS_GATEWAYS above). Any HTTPS URL
+// on one of these is rewritten onto a working gateway, keeping /ipfs/<cid>/path.
+const DEAD_GATEWAY_HOST_RE =
+	/^https?:\/\/(?:cf-ipfs\.com|cloudflare-ipfs\.com|flk-ipfs\.xyz|ipfs\.io|dweb\.link|w3s\.link|nftstorage\.link)\/ipfs\/(.+)$/i;
 
 /**
  * Returns true when the URL uses a decentralised storage scheme.

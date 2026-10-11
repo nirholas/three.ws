@@ -58,6 +58,7 @@ function serviceMarkup(s) {
 	const parts = [];
 	if (s.skill_sales_count) parts.push(`${s.skill_sales_count} skill sale${s.skill_sales_count === 1 ? '' : 's'}`);
 	if (s.hires_count) parts.push(`${s.hires_count} hire${s.hires_count === 1 ? '' : 's'}`);
+	if (s.invoices_count) parts.push(`${s.invoices_count} invoice${s.invoices_count === 1 ? '' : 's'}`);
 	return `${fmtEarnedUsd(s.usd)}<span class="lb-sub-num">${escapeHtml(parts.join(' · '))}</span>`;
 }
 

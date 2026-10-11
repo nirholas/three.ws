@@ -307,13 +307,25 @@ export async function resolveMint(input) {
 	return found.best.mint;
 }
 
-/** Decimals for a mint: SOL and USDC are known, anything else comes from the token index. */
+/** The decimals stored in the mint account itself, read from chain. */
+async function onChainDecimals(mint) {
+	const [{ PublicKey }, { solanaConnection }] = await Promise.all([import('@solana/web3.js'), import('../agent-pumpfun.js')]);
+	const info = await solanaConnection('mainnet').getParsedAccountInfo(new PublicKey(mint), 'confirmed');
+	const d = info?.value?.data?.parsed?.info?.decimals;
+	return Number.isInteger(d) ? d : null;
+}
+
+/**
+ * Decimals for a mint: SOL and USDC are known, anything else comes from the
+ * token index, and from the mint account on chain when the index cannot answer.
+ */
 export async function tokenDecimals(mint) {
 	if (mint === WSOL_MINT) return 9;
 	if (mint === USDC_MINT) return 6;
 	const rows = await cacheWrap(`trading-tools:decimals:v1:${mint}`, 3600, async () => {
-		const hits = await jupiterTokenSearch(mint, { limit: 1 });
-		const d = hits.find((h) => h.id === mint)?.decimals;
+		const hits = await jupiterTokenSearch(mint, { limit: 1 }).catch(() => []);
+		let d = hits.find((h) => h.id === mint)?.decimals;
+		if (!Number.isInteger(d)) d = await onChainDecimals(mint).catch(() => null);
 		return Number.isInteger(d) ? { d } : null;
 	}).catch(() => null);
 	if (rows?.d != null) return rows.d;

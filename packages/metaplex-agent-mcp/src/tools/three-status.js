@@ -18,13 +18,14 @@ import { feeSchedule, resolveDeployFee, threeStats, THREE_STATS_URL } from '../l
 export const def = {
 	name: 'three_status',
 	title: 'Deploy fee, $THREE holder tier, and the live buyback ledger',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'What the next on-chain deploy costs and why. Returns the deploy-fee schedule (a flat SOL fee on mainnet, ' +
 		'free on devnet), the live $THREE balance of a wallet and the tier it earns (half price, then free), the ' +
 		'wallet the fee is paid to, and the live $THREE market + buyback figures from the public three.ws ledger. ' +
 		'Pass `wallet` to price a specific payer, or omit it to price the configured signer. Read-only: it moves ' +
-		'nothing and needs no key.',
+		'nothing and needs no key. Use this before a mint to tell the person what the deploy fee will be and how ' +
+		'holding $THREE lowers it.',
 	inputSchema: {
 		wallet: z.string().min(32).max(44).optional().describe('Price the deploy fee for this wallet. Defaults to the configured signer.'),
 		network: z.enum(['mainnet', 'devnet']).optional().describe('Cluster. Defaults to the configured network. Devnet deploys are always free.'),

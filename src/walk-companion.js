@@ -42,7 +42,10 @@ const walk = createWalkCompanion({
 	// /timeline is a full-screen 3D scene with its own idle-animated guide
 	// walking the path, and its bottom-right corner is the auto-play button:
 	// the corner mascot sat exactly on top of it and swallowed the click.
-	excludedRoutes: [...DEFAULT_EXCLUDED_PREFIXES, '/concierge', '/agent-studio', '/timeline'],
+	// /crawl already walks every crawling agent's own body across its live
+	// screen; a corner mascot narrating the page beside them is a second,
+	// unrelated avatar competing for the same attention.
+	excludedRoutes: [...DEFAULT_EXCLUDED_PREFIXES, '/concierge', '/agent-studio', '/timeline', '/crawl'],
 });
 
 // public/nav.js drives the companion through this global (toggle from the nav

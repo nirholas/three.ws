@@ -1,0 +1,69 @@
+{
+	"id": "grok-bot-recipes",
+	"status": "draft",
+	"kind": "post",
+	"tier": 3,
+	"lane": "developer",
+	"pattern": "clip",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": ["/tutorials/grok-bot-recipes", "docs/tutorials/grok-bot-recipes.md", "scripts/run-grok-recipe.mjs"],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{ "goto": "https://three.ws/tutorials/grok-bot-recipes", "settle": 6000 },
+			{ "hold": 2000, "caption": "Six jobs for Grok Bot, each run for real" },
+			{ "read": "files", "match": "None of the (\\d+) source files this page documents" },
+			{ "scroll": "Search the ready-made catalog first", "ms": 1800, "caption": "The exact sentence to hand Grok Bot" },
+			{ "hold": 1800 },
+			{ "scroll": 760, "ms": 1600, "caption": "Every tool call timed, output kept" },
+			{ "read": "matched", "match": "(\\d+) objects matched" },
+			{ "read": "catalog", "match": "out of ([\\d,]+) catalog items" },
+			{ "hold": 1800 },
+			{ "scroll": "Rerun a recipe", "ms": 1800, "caption": "One script reruns any recipe" },
+			{ "hold": 2600 }
+		]
+	},
+	"probes": [
+		{ "type": "scenario" },
+		{ "type": "api", "name": "the free Grok connector answers a tools/list without an account", "url": "https://three.ws/api/mcp-grok", "method": "POST", "headers": { "content-type": "application/json", "accept": "application/json, text/event-stream" }, "body": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}", "expect": { "contains": "search_catalog" } }
+	],
+	"posts": [
+		{
+			"text": "Six Grok Bot recipes, each run against production and written down as it happened.\n\nA recipe is the exact sentence to hand Grok Bot, the tools it calls in order, and the real output: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post's image as a 3D model, a weekly agent report, and a $THREE market brief. Recipes 1 to 4 use the free connector with no account.\n\nThe asset pack run searched the ready-made catalog for trees, kept only models under 10 MB, and listed four CC0 picks with license, size and viewer link, with every tool call timed. Nothing on the page is invented, and the script that captured each output reruns any recipe."
+		},
+		{
+			"text": "The sentences, the runs and the rerun script: three.ws/tutorials/grok-bot-recipes"
+		}
+	],
+	"claims": [
+		{ "says": "Six Grok Bot recipes", "evidence": [ { "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "This page has six jobs to hand Grok Bot" } ] },
+		{ "says": "each run against production and written down as it happened", "evidence": [ { "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "the real output we got by running that tool sequence against production on 2026-10-09" } ] },
+		{ "says": "A recipe is the exact sentence to hand Grok Bot, the tools it calls in order, and the real output", "evidence": [ { "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "each with the exact sentence to give it, the tools it calls in order, and the real output" } ] },
+		{ "says": "a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post's image as a 3D model, a weekly agent report, and a $THREE market brief", "evidence": [
+			{ "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "1. Daily 3D brief on a topic" },
+			{ "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "2. Asset pack for a game jam" },
+			{ "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "3. Avatar from a teammate's photo" },
+			{ "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "4. An X post's image as a 3D model" },
+			{ "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "5. Weekly agent report" },
+			{ "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "6. $THREE market brief" }
+		] },
+		{ "says": "Recipes 1 to 4 use the free connector with no account", "evidence": [ { "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "For recipes 1 to 4 that is the free door, https://three.ws/api/mcp-grok, no account" } ] },
+		{ "says": "searched the ready-made catalog for trees, kept only models under 10 MB", "evidence": [
+			{ "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "search_catalog for objects matching \"tree\", keep only models under 10 MB" },
+			{ "type": "proof", "fact": "matched", "min": 1 }
+		] },
+		{ "says": "listed four CC0 picks with license, size and viewer link", "evidence": [
+			{ "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "The four that fit the size budget" },
+			{ "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "list title, license, size, GLB and viewer link as a table" },
+			{ "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "Every row also carries a viewer_url" }
+		] },
+		{ "says": "with every tool call timed", "evidence": [ { "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "search_catalog 123 ms ok" } ] },
+		{ "says": "Nothing on the page is invented", "evidence": [ { "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "Nothing here is invented. Every output block was captured by scripts/run-grok-recipe.mjs" } ] },
+		{ "says": "the script that captured each output reruns any recipe", "evidence": [
+			{ "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "You can rerun any of them yourself" },
+			{ "type": "page", "url": "https://three.ws/tutorials/grok-bot-recipes", "contains": "node scripts/run-grok-recipe.mjs --list" },
+			{ "type": "file", "path": "scripts/run-grok-recipe.mjs", "contains": "asset-pack" }
+		] }
+	],
+	"mentions": {}
+}

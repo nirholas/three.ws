@@ -36,11 +36,22 @@ npm run pump:refresh-idls
 
 ## Current upstream feature boundary
 
-`@pump-fun/pump-sdk 2.0.0` adds protocol-native holder-reward coins, deprecates
-cashback for new launches, consolidates creator/fee changes into the CTO flow,
-and expands bonding-curve, global, trade, and admin event layouts.
-`@pump-fun/pump-swap-sdk 1.20.0` adds current quote-mint-aware fee collection,
-canonical pool derivation, and pricing/state support.
+`@pump-fun/pump-sdk 4.0.0` and `@pump-fun/pump-swap-sdk 2.1.0` (accepted
+2026-10-09) add the 17-account `buy_v3` / `sell_v3` curve trades and PumpSwap
+`buy_v2` / `sell_v2`, `multi_hop_swap`, pump coins as quote mints, fees kept on
+the curve and pool until a permissionless sweep, and synthetic migration (the
+buy that completes a curve keeps buying from the pool's tokens and reports that
+part in `PostCompleteBuyEvent`). How three.ws absorbed each part, and the vendored
+upstream docs, are in [docs/pumpfun-program/README.md](../pumpfun-program/README.md):
+every creator-fee claim, distribution and fee-sharing change sweeps first, every
+balance counts unswept fees, and the trade readers fold synthetic migration in.
+Our trade builders deliberately stay on `buy_v2` / `sell_v2`, which keep paying
+the creator fee per trade.
+
+Earlier: `pump-sdk 2.0.0` added protocol-native holder-reward coins, deprecated
+cashback for new launches and consolidated creator/fee changes into the CTO
+flow; `pump-swap-sdk 1.20.0` added quote-mint-aware fee collection and canonical
+pool derivation.
 
 three.ws exposes holder-reward creation through connected-wallet, autonomous
 agent-wallet, and x402 paid launch paths. Its fee inspector identifies the

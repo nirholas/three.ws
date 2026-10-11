@@ -7,81 +7,52 @@
 // `inference`-only key or an OAuth client the user approved for "Read your
 // avatars" could withdraw an agent wallet to its own address.
 //
-// Kept free of imports on purpose: route tests mock api/_lib/auth.js wholesale,
-// and a gate that lived only there would vanish under those mocks.
+// Three kinds of value movement, each with its own scope, so an OAuth client
+// approved on the consent screen for trading alone cannot send funds out:
+//
+//   spend    wallet:write    send, pay, withdraw, fund a card: value leaves the wallet
+//   trade    wallet:trade    swap, bid, open or close a position: value stays in the wallet
+//   launch   wallet:launch   launch a coin, claim its creator fees
+//
+// wallet:write implies the other two (key-scopes.js IMPLIED_SCOPES), so every
+// token issued before the narrower scopes existed keeps working unchanged.
+//
+// Imports only key-scopes.js (itself import-free) on purpose: route tests mock
+// api/_lib/auth.js wholesale, and a gate that lived only there would vanish
+// under those mocks.
+
+import { withImpliedScopes } from './key-scopes.js';
 
 // The scope a bearer principal must hold to move, commit, or redirect funds.
 export const SPEND_SCOPE = 'wallet:write';
+export const TRADE_SCOPE = 'wallet:trade';
+export const LAUNCH_SCOPE = 'wallet:launch';
 
-// Where a person goes to do in a browser what a key was refused.
-export const SPEND_BROWSER_URL = 'https://three.ws/dashboard';
-export const SCOPES_DOCS_URL = 'https://three.ws/docs/mcp#api-key-scopes';
-
-// Connector keys: the API key preset for an AI agent that holds the key
-// unattended (Grok Bot as a Bot secret, a schedule, CI). It reads, generates,
-// and edits agent data, and can never spend. The marker token rides in the
-// key's stored scope string, and capConnectorScope() is applied every time
-// the key authenticates, so the cap holds even if the stored string is ever
-// edited to name a spend scope: there is no path from a connector key to
-// wallet:write short of minting a different key in a browser.
-export const CONNECTOR_MARKER = 'connector';
-export const CONNECTOR_KEY_SCOPES = Object.freeze([
-	'avatars:read',
-	'avatars:write',
-	'agents:read',
-	'agents:write',
-	'memory:read',
-	'memory:write',
-]);
-const CONNECTOR_ALLOWED = new Set(CONNECTOR_KEY_SCOPES);
-
-function tokens(scope) {
-	return String(scope || '').split(/\s+/).filter(Boolean);
-}
+export const SPEND_KINDS = Object.freeze({
+	spend: SPEND_SCOPE,
+	trade: TRADE_SCOPE,
+	launch: LAUNCH_SCOPE,
+});
 
 function grants(scope, required) {
-	return tokens(scope).includes(required);
-}
-
-/** True when a stored or effective scope string belongs to a connector key. */
-export function isConnectorScope(scope) {
-	return grants(scope, CONNECTOR_MARKER);
-}
-
-/**
- * The effective scope of a stored API key scope string. A standard key keeps
- * exactly what it was granted. A connector key keeps only the connector set
- * (plus its marker), whatever the stored string says.
- */
-export function capConnectorScope(scope) {
-	const list = tokens(scope);
-	if (!list.includes(CONNECTOR_MARKER)) return String(scope || '');
-	return [...new Set(list.filter((s) => CONNECTOR_ALLOWED.has(s))), CONNECTOR_MARKER].join(' ');
-}
-
-/**
- * The sentence a refused bearer reads: what it cannot do, why, and where a
- * person does it instead. Shared by the HTTP routes and every MCP server.
- */
-export function spendRefusalMessage(scope, { action = 'This action', required = SPEND_SCOPE } = {}) {
-	if (isConnectorScope(scope)) {
-		return `${action} moves or routes funds, so it needs a browser session on three.ws. Connector keys read, generate and edit agent data and can never spend. Sign in at ${SPEND_BROWSER_URL} to do it yourself.`;
-	}
-	return `${action} moves or routes funds and this credential lacks the ${required} scope. Do it from a browser session at ${SPEND_BROWSER_URL}, or use a key or app grant that carries ${required}.`;
+	return withImpliedScopes(scope).includes(required);
 }
 
 // Gate for a route that spends from a custodial wallet (withdraw, trade, pay,
 // hire, launch, arm an autonomous spender) or changes where its money goes.
 // Pass the bearer only; a session never reaches here. Safe methods pass so a
-// `wallet:read` key still reads balances and history. Returns the bearer, or
-// throws a 403 `insufficient_scope` that wrap() renders as-is.
-export function assertBearerMaySpend(bearer, req) {
+// `wallet:read` key still reads balances and history. `kind` names which grade
+// of movement the route performs (default 'spend', the strictest). Returns the
+// bearer, or throws a 403 `insufficient_scope` that wrap() renders as-is.
+export function assertBearerMaySpend(bearer, req, { kind = 'spend' } = {}) {
 	if (!bearer) return bearer;
 	const verb = String(req?.method || 'POST').toUpperCase();
 	if (verb === 'GET' || verb === 'HEAD' || verb === 'OPTIONS') return bearer;
-	if (grants(bearer.scope, SPEND_SCOPE)) return bearer;
+	const required = SPEND_KINDS[kind] || SPEND_SCOPE;
+	if (grants(bearer.scope, required)) return bearer;
+	const what = kind === 'trade' ? 'trade' : kind === 'launch' ? 'launch a coin' : 'move funds';
 	throw Object.assign(
-		new Error(spendRefusalMessage(bearer.scope)),
+		new Error(`this credential lacks the ${required} scope required to ${what}`),
 		{ status: 403, code: 'insufficient_scope', expose: true },
 	);
 }

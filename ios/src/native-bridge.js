@@ -93,6 +93,100 @@ html.ios-app select,
 html.ios-app textarea {
 	font-size: max(16px, 1em);
 }
+/* The Safari handoff sheet (requireSafari below). */
+.tw-handoff {
+	position: fixed;
+	inset: 0;
+	z-index: 2147483000;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	padding: 16px 16px max(16px, env(safe-area-inset-bottom, 0px));
+	background: rgba(4, 4, 8, 0.72);
+	-webkit-backdrop-filter: blur(10px);
+	backdrop-filter: blur(10px);
+	opacity: 0;
+	transition: opacity 180ms ease;
+}
+.tw-handoff[data-open] {
+	opacity: 1;
+}
+.tw-handoff__card {
+	width: 100%;
+	max-width: 420px;
+	padding: 24px 20px 20px;
+	border-radius: 20px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: var(--surface-1, #12121a);
+	color: var(--text, #f2f2f5);
+	font: 400 15px/1.5 var(--font-sans, -apple-system, system-ui, sans-serif);
+	box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+	transform: translateY(24px);
+	transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+	will-change: transform;
+}
+.tw-handoff[data-open] .tw-handoff__card {
+	transform: none;
+}
+.tw-handoff__title {
+	margin: 0 0 8px;
+	font-size: 19px;
+	font-weight: 650;
+	line-height: 1.3;
+}
+.tw-handoff__body {
+	margin: 0 0 20px;
+	color: var(--text-muted, #a6a6b4);
+}
+.tw-handoff__actions {
+	display: grid;
+	gap: 10px;
+}
+.tw-handoff__btn {
+	min-height: 48px;
+	border-radius: 12px;
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background-color 120ms ease, transform 120ms ease, opacity 120ms ease;
+}
+.tw-handoff__btn--primary {
+	border-color: transparent;
+	background: var(--accent, #7c5cff);
+	color: #fff;
+}
+.tw-handoff__btn:hover {
+	background-color: rgba(255, 255, 255, 0.06);
+}
+.tw-handoff__btn--primary:hover {
+	background-color: var(--accent-hover, #6b4cf0);
+}
+.tw-handoff__btn:active {
+	transform: scale(0.98);
+}
+.tw-handoff__btn:focus-visible {
+	outline: 2px solid var(--focus-ring, #b8a6ff);
+	outline-offset: 2px;
+}
+.tw-handoff__btn[aria-busy='true'] {
+	opacity: 0.7;
+	cursor: progress;
+}
+.tw-handoff__error {
+	margin: -8px 0 16px;
+	color: var(--danger, #ff7a8a);
+	font-size: 14px;
+}
+@media (prefers-reduced-motion: reduce) {
+	.tw-handoff,
+	.tw-handoff__card,
+	.tw-handoff__btn {
+		transition: none;
+	}
+}
 `;
 
 /**
@@ -209,6 +303,243 @@ function routeExternalLinks() {
 		// otherwise stopPropagation() before the link is ever seen.
 		true,
 	);
+}
+
+// Pages whose whole purpose is moving money: paying, buying credits, launching
+// or trading a coin, funding a vault. App Review does not allow those inside an
+// iOS app outside In-App Purchase (guidelines 3.1.1 and 3.1.5), so in the app
+// they open in Safari instead, signed in, through api/auth/handoff.js. Wallets,
+// balances, profiles and everything else that only shows value stay in the app.
+// ios/docs/REVIEW-RISK.md has the reasoning; purchase buttons on pages that are
+// NOT in this list reach the same sheet through window.threeWsNative.
+const HANDOFF_EXACT = new Set([
+	'/autopilot',
+	'/credits',
+	'/launch-studio',
+	'/launcher',
+	'/launchpad',
+	'/markets/robinhood/desk',
+	'/pay',
+	'/payments',
+	'/three-launchpad',
+	'/vault',
+	'/vaults',
+]);
+// The launchpad and its sub-flows (/launch/paired, /launch/robinhood).
+const HANDOFF_SUBTREES = ['/launch'];
+
+/**
+ * The same-origin path to hand to Safari for `href`, or null when the link
+ * stays in the app.
+ *
+ * @param {string} href
+ * @param {string} [base]
+ * @returns {string|null}
+ */
+export function handoffPathFor(href, base = 'https://three.ws/') {
+	let url;
+	try {
+		url = new URL(href, base);
+	} catch {
+		return null;
+	}
+	if (!INTERNAL_HOSTS.has(url.hostname)) return null;
+	const path = url.pathname.replace(/\.html$/, '').replace(/\/+$/, '') || '/';
+	const matches = HANDOFF_EXACT.has(path) || HANDOFF_SUBTREES.some((root) => path === root || path.startsWith(`${root}/`));
+	return matches ? `${url.pathname}${url.search}${url.hash}` : null;
+}
+
+/**
+ * Opens `path` in Safari with this session carried across.
+ *
+ * Asks api/auth/handoff.js for a single-use code first; signed out, or if that
+ * fails, Safari still goes through the same endpoint without one, because
+ * /api/* is the only part of three.ws universal links leave alone and a bare
+ * https://three.ws/launch would open straight back into this app.
+ *
+ * @param {string} path same-origin path, e.g. '/launch?mint=...'
+ */
+export async function openInSafari(path) {
+	let url = `https://three.ws/api/auth/handoff?next=${encodeURIComponent(path)}`;
+	try {
+		const res = await fetch('/api/auth/handoff', {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ next: path }),
+		});
+		if (res.ok) {
+			const data = await res.json();
+			if (typeof data?.url === 'string') url = data.url;
+		}
+	} catch {
+		// Offline or the API is down: Safari can still open the page signed out,
+		// and the login there brings them back to it.
+	}
+	const app = plugin('ThreeWsApp');
+	if (typeof app?.openInSafari === 'function') {
+		await app.openInSafari({ url });
+		return;
+	}
+	// A dev build without the native method: the Safari sheet is the closest
+	// thing, and still leaves the WebView where it was.
+	const browser = plugin('Browser');
+	if (!browser) throw new Error('Safari is not available');
+	await browser.open({ url });
+}
+
+let handoffSheet = null;
+
+/**
+ * The full-screen sheet that explains why this step leaves the app and opens
+ * it in Safari. One instance at a time; a second call retargets it.
+ *
+ * @param {string} path what Safari should open
+ * @param {{ dismiss: 'close'|'back' }} options `back` when the page underneath
+ *   is itself a handoff page, so dismissing has to leave it too.
+ */
+function showHandoffSheet(path, { dismiss }) {
+	if (handoffSheet) {
+		handoffSheet.retarget(path, dismiss);
+		return;
+	}
+	const previousFocus = document.activeElement;
+	const root = document.createElement('div');
+	root.className = 'tw-handoff';
+	root.setAttribute('role', 'dialog');
+	root.setAttribute('aria-modal', 'true');
+	root.setAttribute('aria-labelledby', 'tw-handoff-title');
+	root.setAttribute('aria-describedby', 'tw-handoff-body');
+	root.innerHTML = `
+		<div class="tw-handoff__card">
+			<h2 class="tw-handoff__title" id="tw-handoff-title">Continue in Safari</h2>
+			<p class="tw-handoff__body" id="tw-handoff-body">Payments, coin launches and trading happen on three.ws in Safari. You stay signed in, and everything you do there shows up here.</p>
+			<p class="tw-handoff__error" role="alert" hidden></p>
+			<div class="tw-handoff__actions">
+				<button type="button" class="tw-handoff__btn tw-handoff__btn--primary" data-handoff-open>Open in Safari</button>
+				<button type="button" class="tw-handoff__btn" data-handoff-dismiss></button>
+			</div>
+		</div>`;
+	const openBtn = root.querySelector('[data-handoff-open]');
+	const dismissBtn = root.querySelector('[data-handoff-dismiss]');
+	const errorEl = root.querySelector('.tw-handoff__error');
+	let target = path;
+	let mode = dismiss;
+
+	const close = () => {
+		document.removeEventListener('keydown', onKey, true);
+		root.removeAttribute('data-open');
+		setTimeout(() => root.remove(), 200);
+		handoffSheet = null;
+		if (previousFocus?.focus) previousFocus.focus();
+	};
+	const leave = () => {
+		if (mode === 'close') return close();
+		// Landed straight on a payment page: going back means leaving it.
+		if (history.length > 1) history.back();
+		else location.replace('/');
+	};
+	function onKey(ev) {
+		if (ev.key === 'Escape') {
+			ev.preventDefault();
+			leave();
+		} else if (ev.key === 'Tab') {
+			// Two buttons; keep focus between them while the sheet is up.
+			const order = [openBtn, dismissBtn];
+			const i = order.indexOf(document.activeElement);
+			ev.preventDefault();
+			order[(i + (ev.shiftKey ? order.length - 1 : 1)) % order.length].focus();
+		}
+	}
+	openBtn.addEventListener('click', async () => {
+		if (openBtn.getAttribute('aria-busy') === 'true') return;
+		openBtn.setAttribute('aria-busy', 'true');
+		errorEl.hidden = true;
+		try {
+			await openInSafari(target);
+			if (mode === 'close') close();
+		} catch {
+			errorEl.textContent = 'Safari could not be opened. Check your connection and try again.';
+			errorEl.hidden = false;
+		} finally {
+			openBtn.removeAttribute('aria-busy');
+		}
+	});
+	dismissBtn.addEventListener('click', leave);
+
+	const retarget = (nextPath, nextDismiss) => {
+		target = nextPath;
+		mode = nextDismiss;
+		dismissBtn.textContent = mode === 'back' ? 'Go back' : 'Not now';
+	};
+	retarget(path, dismiss);
+	handoffSheet = { retarget };
+
+	document.addEventListener('keydown', onKey, true);
+	document.body.appendChild(root);
+	requestAnimationFrame(() => root.setAttribute('data-open', ''));
+	openBtn.focus();
+}
+
+// Real-funds steps that DO stay in the app, by the context slug they pass to the
+// agreements gate (public/risk-ack.js). Each one moves the visitor's own crypto
+// between their own wallets, or out to an address they chose, which is wallet
+// functionality App Review permits (guideline 3.1.5(i)). Everything else that
+// reaches the gate (trades, launches, swaps, purchases, x402, onramp, top-ups,
+// donations) opens in Safari, including any context added later and not listed
+// here: an unknown money step defaults to leaving the app.
+const IN_APP_CONTEXTS = new Set([
+	'agreements-page',
+	'claim',
+	'deposit',
+	'fund-agent',
+	'master-send',
+	'withdraw',
+]);
+
+/**
+ * Sends a money-moving step to Safari. The public half of the handoff, exposed
+ * as `window.threeWsNative.requireSafari` so purchase flows anywhere on the
+ * site can call it without importing app code (src/shared/native-handoff.js
+ * wraps it for modules, and the agreements gate calls it with its context).
+ *
+ * @param {string} [path] where Safari should land; defaults to this page.
+ * @param {{ context?: string }} [opts] the agreements-gate context, when the
+ *   caller is the gate; a context in IN_APP_CONTEXTS stays in the app.
+ * @returns {boolean} true when the app took over and the caller must stop.
+ */
+export function requireSafari(path, { context } = {}) {
+	if (!isNativeIOS()) return false;
+	if (context && IN_APP_CONTEXTS.has(context)) return false;
+	const here = `${location.pathname}${location.search}${location.hash}`;
+	const target = typeof path === 'string' && path.startsWith('/') && !path.startsWith('//') ? path : here;
+	showHandoffSheet(target, { dismiss: 'close' });
+	return true;
+}
+
+/**
+ * Routes the app's handoff pages to Safari: links to them open the sheet in
+ * place, and arriving on one directly (a push, a universal link, a redirect)
+ * covers it with the sheet, since nothing on that page can be used in the app.
+ */
+function routeHandoffPages() {
+	if (!isNativeIOS()) return;
+	globalThis.threeWsNative = Object.freeze({ requireSafari, openInSafari });
+	document.addEventListener(
+		'click',
+		(ev) => {
+			if (ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey) return;
+			const anchor = ev.target?.closest?.('a[href]');
+			if (!anchor || anchor.hasAttribute('download')) return;
+			const path = handoffPathFor(anchor.getAttribute('href') || '', location.href);
+			if (!path) return;
+			ev.preventDefault();
+			showHandoffSheet(path, { dismiss: 'close' });
+		},
+		true,
+	);
+	const here = handoffPathFor(location.href);
+	if (here) showHandoffSheet(here, { dismiss: 'back' });
 }
 
 /**
@@ -462,6 +793,7 @@ export function bootNativeIOS() {
 	installShare();
 	installHaptics();
 	routeExternalLinks();
+	routeHandoffPages();
 	routeDeepLinks();
 	routePushTaps();
 	syncBadge();

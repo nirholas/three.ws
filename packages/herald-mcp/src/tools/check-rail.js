@@ -8,7 +8,7 @@ import { THREE_WS_BASE } from '../config.js';
 export const def = {
 	name: 'check_rail',
 	title: 'Check the delivery rail',
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
 		'Verify that the configured key works and the delivery rail accepts announcements, without ' +
 		'interrupting anybody: it queues a line at importance 0, which every client drops under its own ' +

@@ -56,13 +56,13 @@ test('every tool is a read-only live query', () => {
 	}
 });
 
-test('read-only tools omit destructiveHint (spec ignores it when readOnlyHint is true)', () => {
+test('read-only tools set destructiveHint: false explicitly (a read is never destructive)', () => {
 	for (const tool of TOOLS) {
 		if (tool.annotations.readOnlyHint === true) {
 			assert.equal(
 				tool.annotations.destructiveHint,
-				undefined,
-				`${tool.name} is read-only — destructiveHint should be omitted`,
+				false,
+				`${tool.name} is read-only, so destructiveHint must be an explicit false`,
 			);
 		}
 	}

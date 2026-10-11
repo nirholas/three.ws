@@ -28,7 +28,7 @@ import {
 	isMcpProtocolClient,
 } from './_mcp/auth.js';
 import { sendX402Error, reservePaymentProof } from './_mcp/payments.js';
-import { trackMcpRequest } from './_lib/mcp-client-analytics.js';
+import { issueSession, trackMcp } from './_lib/mcp-clients.js';
 
 const RESOURCE_PATH = '/api/ibm-mcp';
 
@@ -104,9 +104,6 @@ export default wrap(async (req, res) => {
 		releaseProof = guard.release;
 	}
 
-	// Which client opened this session and what it calls (api/_lib/mcp-client-analytics.js).
-	trackMcpRequest({ body, req, res, surface: 'ibm-mcp', auth });
-
 	try {
 		const responses = [];
 		for (const msg of batch) {
@@ -141,7 +138,9 @@ export default wrap(async (req, res) => {
 		res.statusCode = 200;
 		res.setHeader('content-type', 'application/json; charset=utf-8');
 		res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
+		const issuedSessionId = issueSession(res, body);
 		res.end(JSON.stringify(Array.isArray(body) ? responses : (responses[0] ?? null)));
+		trackMcp({ surface: 'ibm-mcp', req, body, responses, auth, issuedSessionId });
 	} finally {
 		await releaseProof();
 	}

@@ -16,7 +16,7 @@ export const def = {
 		'Permanently delete a pump.fun alert rule by id from the authenticated three.ws account. ' +
 		'DESTRUCTIVE and irreversible: the rule plus its cooldown tracker and per-channel delivery log are ' +
 		'removed (cascade). The rule stops firing immediately. Deleting an already-deleted id returns ' +
-		'not_found (so this is not idempotent). To pause a rule without losing it, prefer ' +
+		'not_found (so this is not idempotent). Use this when a rule is no longer wanted at all; to pause it without losing it, prefer ' +
 		'update_alert_rule with enabled:false. Returns the deleted rule id. Requires THREE_WS_SESSION.',
 	inputSchema: {
 		rule_id: z.string().uuid().describe('Id of the rule to delete (from list_alert_rules). This cannot be undone.'),

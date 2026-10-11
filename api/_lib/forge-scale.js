@@ -59,6 +59,7 @@ export function forgeRequestHash({ path, tier, backend, prompt, images, options 
 		opt.outputFormat || 'glb',
 		opt.textureSize ?? null,
 		opt.targetPolycount ?? null,
+		...(opt.resolution ? [opt.resolution] : []),
 	]);
 	return createHash('sha256').update(basis).digest('hex').slice(0, 32);
 }

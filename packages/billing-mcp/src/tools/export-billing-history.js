@@ -40,14 +40,15 @@ function parseCsv(text) {
 export const def = {
 	name: 'export_billing_history',
 	title: 'Export my billing history as CSV',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Export a billing period\'s usage line items as a ready-to-save CSV — the same charges query_usage returns, ' +
 		'in spreadsheet form. Returns `filename` (suggested download name, e.g. three-ws-invoice-2026-06.csv), ' +
 		'`content_type` (text/csv), `csv` (the full CSV text, columns: action,label,count,units,gross_usd,fee_usd,' +
 		'discount_bps with a trailing TOTAL row), `row_count`, and `preview` (the first few parsed rows as objects ' +
 		'for a quick look). Same period selection as query_usage: pass `period` (YYYY-MM) or `from`/`to` (ISO-8601); ' +
-		'defaults to the current UTC calendar month. Requires THREE_WS_SESSION. Read-only.',
+		'defaults to the current UTC calendar month. Requires THREE_WS_SESSION. Read-only. ' +
+		'Use this when the user wants a file for their records or accounting; to read the charges inline call query_usage.',
 	inputSchema: {
 		period: z
 			.string()

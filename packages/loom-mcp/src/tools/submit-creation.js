@@ -33,7 +33,8 @@ export const def = {
 		'`backend`. No key or account is needed; the endpoint is rate-limited to ~20 submissions per hour per ' +
 		'IP. Re-submitting the exact same glbUrl returns the existing creation instead of duplicating it. ' +
 		'Returns the stored creation with its id and a ready-to-use viewer_url + iframe_snippet. The only coin ' +
-		'this platform references is $THREE — never put any other token in a prompt.',
+		'this platform references is $THREE; never put any other token in a prompt. ' +
+		'Use this after the user has asked to share a specific model publicly, and only then.',
 	inputSchema: {
 		prompt: z
 			.string()

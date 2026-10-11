@@ -10,12 +10,7 @@
  */
 
 import { getIdentityRegistry } from './agent-registry.js';
-
-const IPFS_GATEWAYS = [
-	(cid) => `https://ipfs.io/ipfs/${cid}`,
-	(cid) => `https://flk-ipfs.xyz/ipfs/${cid}`,
-	(cid) => `https://dweb.link/ipfs/${cid}`,
-];
+import { IPFS_GATEWAYS } from '../ipfs.js';
 
 /**
  * Resolve an ipfs://, ar://, or https:// URI to an HTTP URL.
@@ -25,7 +20,7 @@ const IPFS_GATEWAYS = [
  */
 export function uriToHttp(uri) {
 	if (!uri) return '';
-	if (uri.startsWith('ipfs://')) return IPFS_GATEWAYS[0](uri.slice(7));
+	if (uri.startsWith('ipfs://')) return IPFS_GATEWAYS[0] + uri.slice(7);
 	if (uri.startsWith('ar://')) return `https://arweave.net/${uri.slice(5)}`;
 	return uri;
 }
@@ -38,7 +33,7 @@ export function uriToHttp(uri) {
 export function ipfsFallbackUrls(uri) {
 	if (!uri?.startsWith('ipfs://')) return [uri];
 	const cid = uri.slice(7);
-	return IPFS_GATEWAYS.map((fn) => fn(cid));
+	return IPFS_GATEWAYS.map((gw) => gw + cid);
 }
 
 /**

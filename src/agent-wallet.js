@@ -173,7 +173,7 @@ async function fetchOwnAgents() {
 
 function mountHub(agent) {
 	setPageTitle(`${agent.name || 'Agent'} wallet · three.ws`);
-	mountAgentWalletHub({ mount: root, agent });
+	mountAgentWalletHub({ mount: root, agent, initialTab: new URLSearchParams(location.search).get('tab') || undefined });
 }
 
 /** No agent in the URL: resolve the signed-in user's own agents. */

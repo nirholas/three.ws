@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>
+			(function () {
+				document.documentElement.classList.add('js');
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l = m === 'auto' ? window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches : m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<title>Domains · three.ws</title>
+		<meta name="description" content="Search, price and register web domains with live registrar availability, paid from your credits, then serve an agent's public page on the domain." />
+		<meta property="og:title" content="Domains · three.ws" />
+		<meta property="og:description" content="Find an available domain, see the exact yearly price, register it from credits and point it at your agent." />
+		<meta property="og:url" content="https://three.ws/domains" />
+		<link rel="canonical" href="https://three.ws/domains" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<link rel="stylesheet" href="/domains.css" />
+	</head>
+	<body>
+		<a href="#main-content" class="h-skip-link">Skip to main content</a>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main id="main-content" class="dm-wrap">
+			<h1>Domains</h1>
+			<p class="dm-lede">Search live registrar availability, see the exact yearly price, and register from your credits. Registration is for one year and the same price renews it. Then serve an agent's public page on the domain.</p>
+
+			<div id="dm-banner" role="status" aria-live="polite"></div>
+
+			<section class="dm-card" aria-labelledby="dm-search-h">
+				<h2 id="dm-search-h">Find a domain</h2>
+				<form id="dm-search" class="dm-search" role="search">
+					<input id="dm-q" class="dm-input" type="text" name="q" placeholder="orbit, orbit.app or a project name" autocomplete="off" spellcheck="false" aria-label="Domain name or keyword" required />
+					<button class="dm-btn" type="submit">Search</button>
+				</form>
+				<p id="dm-search-status" class="dm-status" aria-live="polite"></p>
+				<ul id="dm-results" class="dm-results"></ul>
+			</section>
+
+			<section id="dm-register" class="dm-card" aria-labelledby="dm-reg-h" hidden>
+				<h2 id="dm-reg-h">Register</h2>
+				<div id="dm-reg-body"></div>
+			</section>
+
+			<section class="dm-card" aria-labelledby="dm-mine-h">
+				<h2 id="dm-mine-h">Your domains</h2>
+				<div id="dm-mine"></div>
+			</section>
+		</main>
+
+		<script type="module" src="/src/domains/page.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

@@ -1,0 +1,24 @@
+# The paired launchpad reuses the vendored forge-std of the parent `contracts/`
+# project (`../lib`) for tests and scripts only. `src/` has no dependencies.
+#
+# Compiler settings are load-bearing: they reproduce the bytecode deployed on
+# Robinhood Chain at 0x6a546350f79DE0Fc83ADfCe99233183aA090fa15 byte for byte
+# (see README, "Verify the deployed bytecode"). Changing solc, the optimizer
+# or the metadata hash breaks that proof.
+[profile.default]
+src = "src"
+out = "out"
+test = "test"
+script = "script"
+libs = ["../lib"]
+solc = "0.8.28"
+optimizer = true
+optimizer_runs = 1000
+via_ir = false
+remappings = ["forge-std/=../lib/forge-std/src/"]
+
+[profile.default.fuzz]
+runs = 512
+
+[rpc_endpoints]
+robinhood = "${ROBINHOOD_RPC_URL}"

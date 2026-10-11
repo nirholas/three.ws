@@ -40,6 +40,9 @@ and says it out loud.
   [three.ws/companion](https://three.ws/companion). This app is a body, not a
   second set of rules.
 - **Pauses from the tray**, and can start at login.
+- **Menu bar panel.** Click the tray icon for a popover with your agent in 3D,
+  its wallet balance, start and stop, pending approvals and a one-line ask box.
+  See [docs/desktop-menu-bar-panel.md](../../docs/desktop-menu-bar-panel.md).
 
 ## Install and run
 
@@ -60,6 +63,18 @@ Both read the same file (`~/.config/three-ws/companion.json`, or
 once signs in everything on that machine. Get the token from
 [three.ws/companion](https://three.ws/companion); rotating it there disconnects
 every device at once.
+
+### Local agents
+
+The app also runs agents on your machine, with keys in the OS keychain and
+paper strategies that work offline from the account. Open **Local agents** in
+the console (or the tray). Try the runtime headless:
+
+```bash
+npm run smoke:runtime
+```
+
+Full guide: [docs/desktop-local-runtime.md](../../docs/desktop-local-runtime.md).
 
 ### Build an installer
 

@@ -102,7 +102,10 @@ const ENGINE_LABELS = {
 	nvidia: 'Free',
 	huggingface: 'Hunyuan3D',
 	trellis: 'Fast',
+	trellis2: 'TRELLIS.2',
 	trellis_selfhost: 'TRELLIS',
+	modly: 'Modly TripoSG',
+	modly_hunyuan: 'Modly Hunyuan',
 	meshy: 'Meshy',
 	tripo: 'Tripo',
 	rodin: 'Rodin',
@@ -480,7 +483,7 @@ function buildCard(c) {
 		pay.rel = 'noopener noreferrer';
 		pay.textContent = c.x402.price_usdc != null ? `x402 · $${c.x402.price_usdc}` : 'x402';
 		pay.title = `Paid via x402 by ${c.x402.payer ? `${c.x402.payer.slice(0, 4)}…${c.x402.payer.slice(-4)}` : 'an agent'}. View settle transaction`;
-		pay.setAttribute('aria-label', 'Paid via x402. View settle transaction on Solscan');
+		pay.setAttribute('aria-label', `${pay.textContent}, paid on-chain. View settle transaction on Solscan`);
 		pay.addEventListener('click', (e) => e.stopPropagation());
 		foot.appendChild(pay);
 	}

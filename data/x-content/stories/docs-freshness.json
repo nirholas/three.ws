@@ -1,0 +1,233 @@
+{
+	"id": "docs-freshness",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "developer",
+	"pattern": "correction",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": [
+		"/docs/freshness",
+		"docs/docs-freshness.md"
+	],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{
+				"goto": "https://three.ws/docs/configuration",
+				"settle": 6000
+			},
+			{
+				"hold": 2000,
+				"caption": "Every docs page says if its code moved"
+			},
+			{
+				"click": "See what changed",
+				"caption": "One click lists the files that drifted"
+			},
+			{
+				"expect": "Does this documentation still describe the code?",
+				"within": 20000
+			},
+			{
+				"read": "docs",
+				"match": "(\\d+) docs bound to"
+			},
+			{
+				"read": "files",
+				"match": "bound to ([\\d,]+) source files"
+			},
+			{
+				"read": "commit",
+				"match": "Measured at ([0-9a-f]{7,}) on"
+			},
+			{
+				"hold": 1500,
+				"caption": "Measured from git history at every deploy"
+			},
+			{
+				"scroll": 520,
+				"ms": 1600
+			},
+			{
+				"hold": 1500,
+				"caption": "A read that finds it right counts too"
+			},
+			{
+				"type": "forge",
+				"into": "Filter by title",
+				"caption": "Filter by title, path or drifted file"
+			},
+			{
+				"hold": 2600
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		},
+		{
+			"type": "api",
+			"name": "the public freshness report still binds more than the 800 docs the post counts",
+			"url": "https://three.ws/docs-freshness.json",
+			"expect": {
+				"json": {
+					"path": "totals.docs",
+					"min": 800
+				}
+			}
+		},
+		{
+			"type": "api",
+			"name": "the public freshness report still tracks more than the 4,000 source files the post counts",
+			"url": "https://three.ws/docs-freshness.json",
+			"expect": {
+				"json": {
+					"path": "totals.trackedFiles",
+					"min": 4000
+				}
+			}
+		}
+	],
+	"posts": [
+		{
+			"text": "Docs rot quietly. A page that was right when it was written says nothing when the code it describes moves.\n\nOur docs now measure it. Every page names the source files it is about, and at every deploy git is asked whether any of them changed after the page was last written or reviewed. The badge at the top says which: verified against the code, or lightly out of date with the count of files that moved.\n\nMore than 800 docs are bound to more than 4,000 source files, and the whole ledger is public at three.ws/docs/freshness. Reading a page and finding it already right counts as a review, so nothing is faked with a cosmetic edit.",
+			"media": [
+				{
+					"path": "public/x-media/docs-freshness/reel.mp4",
+					"probe": {
+						"durationSec": 10.77,
+						"width": 1080,
+						"height": 1080,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "Open the badge and the ledger lists the commits behind every file the page documents, so whoever fixes the page knows where to look. Filter it by title, path, or the source file that drifted."
+		}
+	],
+	"claims": [
+		{
+			"says": "Every page names the source files it is about",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/freshness",
+					"contains": "Every doc names the files, npm scripts, and API routes it is about"
+				}
+			]
+		},
+		{
+			"says": "at every deploy git is asked whether any of them changed after the page was last written or reviewed",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/freshness",
+					"contains": "then ask git whether that source was committed to after the doc was last written or last reviewed"
+				},
+				{
+					"type": "file",
+					"path": "package.json",
+					"contains": "npm run build:info:snapshot && npm run docs:freshness && npm run build:lib:full"
+				}
+			]
+		},
+		{
+			"says": "The badge at the top says which: verified against the code, or lightly out of date with the count of files that moved",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/start-here",
+					"contains": "Verified against the code"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/configuration",
+					"contains": "Lightly out of date"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/configuration",
+					"contains": "files it documents changed since, so a detail here may have moved"
+				}
+			]
+		},
+		{
+			"says": "More than 800 docs are bound to more than 4,000 source files",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "docs",
+					"min": 800
+				},
+				{
+					"type": "proof",
+					"fact": "files",
+					"min": 4000
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/freshness",
+					"contains": "docs bound to"
+				}
+			]
+		},
+		{
+			"says": "the whole ledger is public at three.ws/docs/freshness",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/freshness",
+					"contains": "Does this documentation still describe the code?"
+				}
+			]
+		},
+		{
+			"says": "Reading a page and finding it already right counts as a review, so nothing is faked with a cosmetic edit",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/freshness",
+					"contains": "Reading a page and finding it already correct counts too: that check is recorded as a review, so real work never has to be faked with a cosmetic edit"
+				}
+			]
+		},
+		{
+			"says": "Open the badge and the ledger lists the commits behind every file the page documents",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/configuration",
+					"contains": "See what changed"
+				},
+				{
+					"type": "file",
+					"path": "pages/docs-freshness.html",
+					"contains": "The report is about a megabyte because it carries every drifted file and"
+				},
+				{
+					"type": "file",
+					"path": "pages/docs-freshness.html",
+					"contains": "This is the destination of the \"See what changed\" link on every drifting"
+				}
+			]
+		},
+		{
+			"says": "Filter it by title, path, or the source file that drifted",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "pages/docs-freshness.html",
+					"contains": "placeholder=\"Filter by title, path, or a source file that drifted"
+				}
+			]
+		}
+	],
+	"mentions": {}
+}

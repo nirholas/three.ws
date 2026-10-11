@@ -36,6 +36,7 @@ import { getRedis } from './redis.js';
 import { BACKENDS, backendIsConfigured, resolveTier } from './forge-tiers.js';
 import { laneHealthSnapshot } from './forge-lane-health.js';
 import { encodeJobToken } from './forge-job-token.js';
+import { laneAllowedInTerritory } from './forge-territory.js';
 
 const PREFIX = 'fr:successor:';
 // Outlive the polling window of a slow cold-start generation, with margin.
@@ -55,14 +56,21 @@ export const MAX_FAILOVER_HOPS = 3;
 // 2026-09-18..28 worker outage, which took Hunyuan3D and TRELLIS self-host
 // down together, ended roughly 400 photo jobs a day in a hard failure while
 // the TripoSG worker sat healthy.
-const ASYNC_REDISPATCH_ORDER = ['trellis_selfhost', 'hunyuan3d', 'trellis', 'triposg'];
+//
+// The Modly lanes (workers/modly) are geometry-only too, so they sit with
+// TripoSG at the tail, ahead of it: the Modly worker repairs the mesh and
+// decimates it to the tier's budget, and it is a separate service, so it still
+// serves when the TripoSG sketch worker is the one that is down.
+const ASYNC_REDISPATCH_ORDER = ['trellis2', 'trellis_selfhost', 'hunyuan3d', 'trellis', 'modly', 'modly_hunyuan', 'triposg'];
 
 // Lanes a CLIENT can retry with a fresh POST, per input mode. A fresh POST may
 // ride blocking lanes too, so HuggingFace joins here; NVIDIA only serves text.
 // TripoSG is absent: its public lane is sketch-only, so a fresh photo POST
 // naming it would be refused. It serves photos only as the poll-time rung.
-const SUGGESTION_ORDER_IMAGE = ['trellis_selfhost', 'hunyuan3d', 'huggingface', 'trellis'];
-const SUGGESTION_ORDER_TEXT = ['nvidia', 'trellis_selfhost', 'hunyuan3d', 'huggingface', 'trellis'];
+// The Modly lanes are public image lanes, so they close both lists: untextured
+// geometry is the last thing to suggest, never the first.
+const SUGGESTION_ORDER_IMAGE = ['trellis2', 'trellis_selfhost', 'hunyuan3d', 'huggingface', 'trellis', 'modly', 'modly_hunyuan'];
+const SUGGESTION_ORDER_TEXT = ['nvidia', 'trellis2', 'trellis_selfhost', 'hunyuan3d', 'huggingface', 'trellis', 'modly', 'modly_hunyuan'];
 
 function client(override) {
 	return override || getRedis();
@@ -127,9 +135,13 @@ export async function resolveLiveJob(originalHandle, { redis } = {}) {
  * lanes already attempted for this job, lanes not configured on this
  * deployment, and lanes the health snapshot marks down/cooled.
  */
-export async function pickRedispatchLane({ attempted = [] } = {}) {
+export async function pickRedispatchLane({ attempted = [], country = null } = {}) {
 	const candidates = ASYNC_REDISPATCH_ORDER.filter(
-		(id) => !attempted.includes(id) && BACKENDS[id] && backendIsConfigured(id),
+		(id) =>
+			!attempted.includes(id) &&
+			BACKENDS[id] &&
+			backendIsConfigured(id) &&
+			laneAllowedInTerritory(id, country),
 	);
 	if (!candidates.length) return null;
 	try {
@@ -149,9 +161,15 @@ export async function pickRedispatchLane({ attempted = [] } = {}) {
  * `hasImage` scopes to reconstruct-capable lanes (NVIDIA's hosted preview is
  * text-only and would 4xx a photo).
  */
-export function retryBackendSuggestions({ attempted = [], hasImage = false } = {}) {
+export function retryBackendSuggestions({ attempted = [], hasImage = false, country = null } = {}) {
 	const order = hasImage ? SUGGESTION_ORDER_IMAGE : SUGGESTION_ORDER_TEXT;
-	return order.filter((id) => !attempted.includes(id) && BACKENDS[id] && backendIsConfigured(id));
+	return order.filter(
+		(id) =>
+			!attempted.includes(id) &&
+			BACKENDS[id] &&
+			backendIsConfigured(id) &&
+			laneAllowedInTerritory(id, country),
+	);
 }
 
 /**
@@ -163,6 +181,28 @@ export function retryBackendSuggestions({ attempted = [], hasImage = false } = {
 export async function submitFailoverJob({ backend, imageUrl, prompt, tierId, path }) {
 	if (!imageUrl) throw new Error('failover needs a stored reference image');
 	const tier = resolveTier(tierId);
+
+	if (backend === 'trellis2') {
+		const { createRegenProvider } = await import('../_providers/gcp.js');
+		const job = await createRegenProvider().submit({
+			mode: 'trellis2',
+			sourceUrl: imageUrl,
+			params: { images: [imageUrl], tier: tier.id },
+		});
+		return { extJobId: job.extJobId, handle: encodeJobToken({ provider: 'gcp', kind: null, taskId: job.extJobId }) };
+	}
+
+	if (backend === 'modly' || backend === 'modly_hunyuan') {
+		const { createRegenProvider } = await import('../_providers/gcp.js');
+		// The Modly worker (workers/modly); the mode picks TripoSG or Hunyuan3D 2
+		// Mini Turbo, and the poly budget becomes its decimate target.
+		const job = await createRegenProvider().submit({
+			mode: backend,
+			sourceUrl: imageUrl,
+			params: { images: [imageUrl], tier: tier.id, target_polycount: tier.polycount },
+		});
+		return { extJobId: job.extJobId, handle: encodeJobToken({ provider: 'gcp', kind: null, taskId: job.extJobId }) };
+	}
 
 	if (backend === 'trellis_selfhost') {
 		const { createRegenProvider } = await import('../_providers/gcp.js');

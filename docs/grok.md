@@ -3,9 +3,9 @@
 Give Grok a 3D studio and a body. One remote MCP server lets Grok Bot, Grok
 connectors and the xAI API turn text or an image into a textured 3D model, a
 rigged animation-ready avatar, or a named 3D persona that lip-syncs its replies.
-It is free: no account, no payment, no API key. Sign the same URL in to your
-three.ws account and it also manages your agents, their memory and skills,
-without ever being able to spend.
+The studio is free: no account, no payment, no API key. Sign the same URL in
+to your three.ws account and it also manages your agents, their memory and
+skills, without ever being able to spend.
 
 **Live page and demo:** [three.ws/grok](/grok)
 
@@ -15,7 +15,7 @@ without ever being able to spend.
 |---|---|
 | **URL** | `https://three.ws/api/mcp-grok` |
 | **Transport** | Streamable HTTP (JSON-RPC over `POST`) |
-| **Auth** | None. Optional: a connector API key, or OAuth 2.1 at `https://three.ws/api/mcp-grok?auth=oauth` |
+| **Auth** | None for the studio. Optional: a connector API key, or OAuth 2.1 at `https://three.ws/api/mcp-grok?auth=oauth`, adds your agent tools |
 | **Protocol** | MCP `2025-06-18` |
 | **Tools** | The full free studio: the same fifteen tools as [`/api/mcp-studio`](./mcp-studio.md). Signed in, also your [account's agent tools](#your-account-on-the-same-url) |
 
@@ -135,8 +135,10 @@ A complete, zero-dependency Node script that also collects slow renders lives in
 
 [three.ws/grok-skill.md](https://three.ws/grok-skill.md) teaches Grok all of this
 in one Markdown file: what three.ws does, the connector sentence for Grok Bot,
-the sign-in options, the links contract, what needs an account, and the spend
-rule. Upload it to Grok's Skills, or ask Grok Bot to fetch it to its files:
+the sign-in options, runnable `curl` JSON-RPC calls for when no connector is set
+up (open a session, list tools, search the catalog, generate, collect with
+`check_job`), the links contract, what needs an account, and the spend rule.
+Upload it to Grok's Skills, or ask Grok Bot to fetch it to its files:
 
 ```
 Download https://three.ws/grok-skill.md to your files and follow it whenever I ask for 3D.
@@ -144,16 +146,19 @@ Download https://three.ws/grok-skill.md to your files and follow it whenever I a
 
 When no connector is set up, the file's plain HTTPS section is enough on its
 own: runnable `curl` JSON-RPC calls to the free server
-(`https://three.ws/api/mcp-studio`, the same tools without a session) that
-search the catalog, fetch embed code, generate a model and render it from
-several angles. Every example is run against production before the file
+(`https://three.ws/api/mcp-grok`, the same tools without a session) that open a
+session, search the catalog, fetch embed code, generate a model and render it
+from several angles. Every example is run against production before the file
 changes.
 
 It renders from [`data/grok-skill-md.template.md`](../data/grok-skill-md.template.md)
 with the same facts as the general [`skill.md`](./agent-skills.md#the-entry-point-skill-httpsthreewsskillmd)
 (server URLs, tool and prompt names, free limits), read from the code that owns
-each one, so the two files cannot disagree. A renamed tool fails the build
-rather than shipping a file that names it.
+each one, so the two files cannot disagree. `node scripts/build-skills-pack.mjs`
+renders it, `npm run check:skills-pack` fails when it is stale, and
+[`tests/grok-skill-md.test.js`](../tests/grok-skill-md.test.js) checks that every
+URL in it resolves to a route this server serves and that the limits match the
+handler. A renamed tool fails the build rather than shipping a file that names it.
 
 ## What Grok gets
 

@@ -22,6 +22,7 @@
 
 import { mountCoinStatus, formatMcap, NO_VALUE } from './pump/coin-status-card.js';
 import { updateValue, flipReorder } from './ui-juice.js';
+import { proxiedImageURL } from './ipfs.js';
 
 const WATCH_KEY        = 'ld_watchlist'; // shared with src/launch-detail.js
 const LAST_TIERS_KEY   = 'wl_last_tiers'; // mint → tier, for upgrade detection
@@ -110,6 +111,16 @@ function mulberry32(seed) {
 		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 	};
 }
+// Trending logos come straight from launch metadata: an ipfs.io URL (which the
+// browser blocks as NotSameOrigin behind the gateway's 429), a raw ipfs:// URI,
+// or a metadata JSON document rather than an image (ORB-blocked). /api/img
+// resolves all three server-side, so the chip gets real art or a placeholder.
+// The chip paints at 20 px; 40 is the 2x rung.
+function suggestLogo(c) {
+	const src = proxiedImageURL(c.logo || '', c.mint, { width: 40 });
+	return src ? el('img', { class: 'wl-suggest-img', src, alt: '', loading: 'lazy' }) : null;
+}
+
 function mintIdenticon(mint) {
 	const rand = mulberry32(hashString(String(mint)));
 	const svg = svgEl('svg', { viewBox: '0 0 64 64', 'aria-hidden': 'true' });
@@ -349,7 +360,7 @@ async function loadSuggestions(wrap) {
 				if (addMint(c.mint) !== 'already') showAddMsg(`Added ${label} — building your list.`, 'ok');
 			},
 		}, [
-			c.logo ? el('img', { class: 'wl-suggest-img', src: c.logo, alt: '', loading: 'lazy' }) : null,
+			suggestLogo(c),
 			el('span', { text: label }),
 			el('span', { class: 'wl-suggest-plus', text: '+', 'aria-hidden': 'true' }),
 		]);

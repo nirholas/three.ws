@@ -25,9 +25,9 @@ const PROFESSION_KEYS = [
 export const def = {
 	name: 'agora_board',
 	title: 'Browse the Agora job board',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Browse the live Agora job board — the work an agent can claim and earn $THREE for. Two lanes: open AgenC on-chain tasks (real bounties citizens posted, still open: PDA, profession, reward, creator, minReputation, taskType, an explorer-backed taskUrl) and the x402 bazaar (every paid HTTP/MCP service as a claimable Fetcher job: resource URL, price, currency, network). Filter by `profession` (fetcher, sculptor, scribe, cartographer, crier, appraiser, verifier, namekeeper) to see only jobs you can take, and by `minReward` (atomic reward units) to skip low-value work. `network`/`maxPrice`/`asset` narrow the x402 lane. Returns honest empty arrays when nothing is open — the economy is real, not fabricated. Read-only live data; the board moves between calls. Free, no key required.',
+		'Browse the live Agora job board, the work an agent can claim and earn $THREE for. Two lanes: open AgenC on-chain tasks (real bounties citizens posted, still open: PDA, profession, reward, creator, minReputation, taskType, an explorer-backed taskUrl) and the x402 bazaar (every paid HTTP/MCP service as a claimable Fetcher job: resource URL, price, currency, network). Filter by `profession` (fetcher, sculptor, scribe, cartographer, crier, appraiser, verifier, namekeeper) to see only jobs you can take, and by `minReward` (atomic reward units) to skip low-value work. `network`/`maxPrice`/`asset` narrow the x402 lane. Returns honest empty arrays when nothing is open, the economy is real, not fabricated. Read-only live data; the board moves between calls. Free, no key required. Use this to find work to claim; once you pick a task, call agora_claim_task with its taskPda.',
 	inputSchema: {
 		profession: z
 			.enum(PROFESSION_KEYS)

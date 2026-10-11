@@ -252,7 +252,8 @@ export const toolDefs = [
 			'Verify whether a 3D model (GLB) carries a genuine three.ws content credential and was not tampered with. ' +
 			'Recomputes the model’s content hash, checks the signed credential and its on-chain anchor, and returns ' +
 			'verified, tampered, or unknown — with who created it, from what prompt, by which model, and when. Free and ' +
-			'public: no account, no payment. Pass glb_url (an https .glb) or a known content hash.',
+			'public: no account, no payment. Pass glb_url (an https .glb) or a known content hash. Use this to check a GLB ' +
+			'someone shares before trusting or reusing it; to issue a credential for your own model call anchor_provenance.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,
@@ -272,7 +273,8 @@ export const toolDefs = [
 			'can later verify authenticity and tampering for free with verify_provenance. Records creator, prompt, ' +
 			'model/provider, lineage, timestamp, and the GLB content hash. Also signs the asset\u2019s simulation-readiness ' +
 			'grade (verdict, volume, real-world size, inertia tensor) when it can be computed, so the physics claim is ' +
-			'as forge-proof as the authorship claim. Real signature, real on-chain anchor.',
+			'as forge-proof as the authorship claim. Real signature, real on-chain anchor. Use this after generating a model ' +
+			'you plan to publish or sell, so its authorship can be proven later with verify_provenance.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,

@@ -62,6 +62,11 @@ Arrow keys move through the menu, `Enter`/`Tab` selects, `Esc` closes.
   saved per wallet + network in `localStorage` and restored when you return. Live trade
   proposals are intentionally **not** persisted, so a reload never resurrects a
   confirmable card grounded on a stale quote.
+- **One thread across chats**: every finished web turn is also appended to the agent's
+  cross-channel thread (channel `web`), the same thread the paired Telegram, Discord,
+  and other chat gateways ([`api/_lib/gateway/`](../api/_lib/gateway/)) read and write.
+  Each time the tab is opened or shown again it pulls what was said in those chats since
+  it last looked and shows those messages tagged "via Telegram", "via Discord", and so on.
 
 ---
 
@@ -95,14 +100,32 @@ If the firewall verdict is **block**, the buy card cannot be confirmed at all.
 ## The endpoint
 
 ```
-POST /api/agents/:id/copilot          Owner-only. Body: { messages:[{role,content}], network }
+POST /api/agents/:id/copilot          Owner-only. Body: { messages:[{role,content}], network, model? }
                                       → text/event-stream
+GET  /api/agents/:id/copilot?after=<message id>&limit=<1-100>
+                                      Owner-only. → { messages:[{id,role,content,channel,signatures,createdAt}], latest_id }
 ```
+
+`POST` keeps the last 24 user and assistant turns, each cut to 4000 characters, and
+refuses a request whose final message is not from the user (`422 no_message`). `GET`
+returns the agent's cross-channel thread oldest first (30 messages by default), so a
+client can merge what the owner said in a paired chat; pass the returned `latest_id` as
+`after` next time to fetch only newer messages.
+
+`model` overrides the agent's default model for this one message (resolved by
+[`api/_lib/agent-model.js`](../api/_lib/agent-model.js)). Because the copilot is a tool
+loop, an override without tool calling is refused (`400 model_lacks_tools`), as is an
+unknown id (`400 unknown_model`); an agent *default* without tool calling is skipped and
+the turn runs on the platform chain instead. A free open model draws on the owner's
+daily free-tier allowance and answers `429 free_tier_exhausted` with a `Retry-After`
+header once it is spent. Every model round is metered to the owner's usage ledger at the
+price of the lane that served it (free lanes cost nothing).
 
 SSE events:
 
 | Event | Payload | Meaning |
 | --- | --- | --- |
+| `model` | `{ model, source, served?, lane? }` | the model chosen for the turn; re-sent each round with the model and provider lane that actually answered |
 | `status` | `{ phase }` | thinking / continuing / finalizing |
 | `tool` | `{ name, summary, data }` | a read-only tool ran; `data` is the card payload |
 | `proposal` | trade/limits proposal | a confirm-before-execute card |
@@ -110,14 +133,16 @@ SSE events:
 | `done` | `{ reply, proposals, citations }` | final reply |
 | `error` | `{ code, message }` | turn failed |
 
-The provider chain is free-first and OpenAI-compatible, shared with the built-in chat
+With no `model` override, the provider chain is free-first and OpenAI-compatible, shared with the built-in chat
 agent loop in [`api/_lib/llm-tool-chain.js`](../api/_lib/llm-tool-chain.js): Groq →
 Cerebras → OpenRouter (including any `OPENROUTER_FALLBACK_KEYS`) → NVIDIA → SambaNova →
 Mistral → Z.ai → Gemini (API key), with paid OpenAI as the backstop, each rung present
 only when its key is set, so the copilot works without any paid key. Whenever the GCP
 project is configured, a keyless, credits-billed **Vertex Gemini** rung is appended
 unconditionally as the final anchor, so the chain always ends on a provider that cannot
-be evicted by a dead key. Each round has a 45s deadline and fails over to the next rung on
+be evicted by a dead key. A named model's own lanes are tried first and the platform
+chain follows behind them. With no rung configured at all, the request is
+`503 llm_unavailable` before the stream opens. Each round has a 45s deadline and fails over to the next rung on
 any transport or non-2xx error. A 15s heartbeat keeps the stream alive across slow tool
 rounds; the client aborts a genuinely dead stream and offers Retry rather than hanging.
 
@@ -135,7 +160,9 @@ plumbing — and never suggests, shills, or names another token on its own initi
 | --- | --- |
 | Client mount (chat UI, cards, slash, persistence, voice) | [`src/agent-copilot.js`](../src/agent-copilot.js) |
 | Wallet-hub tab wrapper | [`src/agent-wallet-hub/tabs/copilot.js`](../src/agent-wallet-hub/tabs/copilot.js) |
-| Server (tool loop, SSE, proposals) | [`api/agents/copilot.js`](../api/agents/copilot.js) |
+| Server route (auth, model choice, SSE, thread read) | [`api/agents/copilot.js`](../api/agents/copilot.js) |
+| Copilot engine (tools, prompt, loop; shared with the chat gateways) | [`api/_lib/copilot-engine.js`](../api/_lib/copilot-engine.js) |
+| Cross-channel thread store | [`api/_lib/agent-thread.js`](../api/_lib/agent-thread.js) |
 | Provider chain + streamed tool-call reader (shared with the chat agent loop) | [`api/_lib/llm-tool-chain.js`](../api/_lib/llm-tool-chain.js) |
 | Markdown renderer | [`src/md.js`](../src/md.js) |
 | UI contract tests | [`tests/agent-copilot-ui.test.js`](../tests/agent-copilot-ui.test.js) |

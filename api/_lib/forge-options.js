@@ -8,6 +8,7 @@
 //   • output_format    — glb (default) or a compressed variant (draco / meshopt)
 //   • texture_size     — bake textures at a specific resolution
 //   • target_polycount — explicit geometry budget on poly-aware backends
+//   • resolution      : TRELLIS.2 voxel resolution (512, 1024 or 1536)
 //   • derive_pbr       : the ONE exception to "off by default": the material
 //     completion pass (glb-pbr-derive.js) runs on every delivered mesh, because
 //     an albedo-only material is a defect rather than a preference. Send
@@ -17,6 +18,8 @@
 // value is reported in `errors` so the endpoint can answer 400 with an actionable
 // message rather than silently doing something the caller didn't ask for. A value
 // that is simply absent is never an error — it just keeps the current default.
+
+import { TRELLIS2_RESOLUTIONS } from './forge-tiers.js';
 
 // glb is the universal default. The two compressed variants run a post-generation
 // pass (see glb-compress.js) that shrinks the delivered file without changing the
@@ -45,6 +48,7 @@ function compressionFor(format) {
  *   compression: 'none' | 'draco' | 'meshopt',
  *   textureSize: number | null,
  *   targetPolycount: number | null,
+ *   resolution: 512 | 1024 | 1536 | null,   // TRELLIS.2 voxel resolution
  *   derivePbr: boolean,          // material completion pass, true unless opted out
  *   hasOptions: boolean,         // true iff any non-default option was supplied
  *   errors: Array<{ field: string, message: string }>,
@@ -113,6 +117,20 @@ export function normalizeForgeOptions(body) {
 		}
 	}
 
+	// resolution: TRELLIS.2 voxel resolution. Absent keeps the tier's own mapping
+	// (draft 512, standard and high 1024); any other value is rejected rather than
+	// silently clamped to a different cost and quality than the caller asked for.
+	let resolution = null;
+	if (b.resolution !== undefined && b.resolution !== null && b.resolution !== '') {
+		const n = Number(b.resolution);
+		if (TRELLIS2_RESOLUTIONS.includes(n)) resolution = n;
+		else
+			errors.push({
+				field: 'resolution',
+				message: `resolution must be one of: ${TRELLIS2_RESOLUTIONS.join(', ')}.`,
+			});
+	}
+
 	// derive_pbr: opt-OUT. Anything other than an explicit boolean false leaves
 	// the completion pass on; a non-boolean value is reported rather than
 	// silently coerced, so `derive_pbr: "no"` never reads as true.
@@ -126,7 +144,7 @@ export function normalizeForgeOptions(body) {
 	}
 
 	const hasOptions =
-		seed !== null || outputFormat !== 'glb' || textureSize !== null || targetPolycount !== null || !derivePbr;
+		seed !== null || outputFormat !== 'glb' || textureSize !== null || targetPolycount !== null || resolution !== null || !derivePbr;
 
 	return {
 		seed,
@@ -134,6 +152,7 @@ export function normalizeForgeOptions(body) {
 		compression: compressionFor(outputFormat),
 		textureSize,
 		targetPolycount,
+		resolution,
 		derivePbr,
 		hasOptions,
 		errors,
@@ -166,6 +185,7 @@ export function summarizeForgeOptions(opts) {
 		output_format: opts.outputFormat,
 		texture_size: opts.textureSize,
 		target_polycount: opts.targetPolycount,
+		resolution: opts.resolution ?? null,
 		derive_pbr: opts.derivePbr !== false,
 	};
 }

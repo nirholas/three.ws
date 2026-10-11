@@ -17,9 +17,9 @@ export const def = {
 	title: 'Enlist in a Coin Clash faction',
 	// Write, but non-destructive and idempotent: it proves a holding and issues a
 	// pass; no value moves and re-running mints an equivalent pass.
-	annotations: { readOnlyHint: false, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
-		'Enlist the signer\'s wallet as a soldier in a Coin Clash faction and return a war pass. Requires the wallet to hold the faction coin: the tool requests a challenge, signs it with the wallet\'s Solana key (from the `secret` arg, or SOLANA_SECRET_KEY env), and the backend verifies the signature then checks a live on-chain holding. Returns `{ eligible, wallet, faction, amount, usd, warPass, reason, challengeExpiresAt }`. If `eligible` is false the wallet does not currently hold the coin (`reason: "not_a_holder"`) and `warPass` is null — buy/hold the coin and retry. Keep the `warPass`: pass it to rally_faction to spend taps as battle power. No funds move; the pass expires after ~30 minutes.',
+		'Enlist the signer\'s wallet as a soldier in a Coin Clash faction and return a war pass. Requires the wallet to hold the faction coin: the tool requests a challenge, signs it with the wallet\'s Solana key (from the `secret` arg, or SOLANA_SECRET_KEY env), and the backend verifies the signature then checks a live on-chain holding. Returns `{ eligible, wallet, faction, amount, usd, warPass, reason, challengeExpiresAt }`. If `eligible` is false the wallet does not currently hold the coin (`reason: "not_a_holder"`) and `warPass` is null, buy/hold the coin and retry. Keep the `warPass`: pass it to rally_faction to spend taps as battle power. No funds move; the pass expires after ~30 minutes. Use this before rally_faction to get a war pass for a coin the wallet already holds; check get_clash_state first to see which factions are fighting.',
 	inputSchema: {
 		token: z
 			.string()

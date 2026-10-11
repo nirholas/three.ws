@@ -20,7 +20,7 @@ export const def = {
 	// MCP ToolAnnotations — EXECUTION: moves real value on Solana mainnet, irreversible.
 	annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
 	description:
-		'Collect a pump.fun coin\'s creator-fee vault and route the SOL to a safe destination, atomically, in a single tx inside a Jito bundle. Funder pays the fee + Jito tip; creator signs collectCoinCreatorFee + drain to DESTINATION. The bundle\'s atomicity blocks any competing collector from interleaving even if the creator key is leaked. EXECUTION ACTION.',
+		'Collect a pump.fun coin\'s creator-fee vault and route the SOL to a safe destination, atomically, in a single tx inside a Jito bundle. Funder pays the fee + Jito tip; creator signs collectCoinCreatorFee + drain to DESTINATION. The bundle\'s atomicity blocks any competing collector from interleaving even if the creator key is leaked. EXECUTION ACTION. Call this after pump_collect_preview has been shown to the user and they said yes, and never without that yes.',
 	inputSchema: {
 		funderSecret: z.string().describe('Base58 secret of the funder (pays fee + tip).'),
 		creatorSecret: z.string().describe('Base58 secret of the coin creator (signs collect + drain).'),

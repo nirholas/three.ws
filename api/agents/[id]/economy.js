@@ -270,7 +270,7 @@ export default wrap(async (req, res) => {
 		const policy = {
 			daily_usd: lim.daily_usd,
 			per_tx_usd: lim.per_tx_usd,
-			allowlist_count: lim.withdraw_allowlist.length,
+			allowlist_count: (await sql`SELECT count(*)::int AS n FROM destination_whitelist_entries WHERE agent_id = ${agent.id} AND status = 'active'`.catch(() => [{ n: 0 }]))[0].n,
 			frozen: lim.frozen === true,
 			spent_today_usd: spentTodayUsd == null ? null : Number(spentTodayUsd),
 		};

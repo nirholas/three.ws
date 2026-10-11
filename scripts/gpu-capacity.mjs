@@ -176,7 +176,20 @@ function gpuServices(region, project) {
  * default grant, and the fix (file a preference) is the same either way.
  */
 function quotaGrants(project) {
-	const prefs = gcloudJson(['alpha', 'quotas', 'preferences', 'list', '--project', project]) || [];
+	// The Cloud Quotas API bills the gcloud config's quota project, which is not
+	// this one and does not have the API enabled. Without --billing-project the
+	// call fails and every region read as "no preference filed" while 16 L4s sat
+	// granted in europe-west4 and asia-southeast1 (2026-10-09).
+	const r = gcloud(['alpha', 'quotas', 'preferences', 'list', '--project', project, '--billing-project', project, '--format=json']);
+	if (!r.ok) {
+		console.error(C.red(`\nquota preferences could not be read; grants below are unknown, not absent:\n${r.stderr.split('\n').find(Boolean) || ''}\n`));
+	}
+	let prefs = [];
+	try {
+		prefs = r.ok ? JSON.parse(r.stdout) : [];
+	} catch {
+		prefs = [];
+	}
 	const byRegion = new Map();
 	for (const p of prefs) {
 		if (!GPU_QUOTA_LABEL[p.quotaId]) continue;
@@ -493,6 +506,7 @@ function requestQuota(opts) {
 		'alpha', 'quotas', 'preferences', existing ? 'update' : 'create',
 		...(existing ? [prefName] : ['--preference-id', prefName]),
 		'--project', project,
+		'--billing-project', project,
 		'--service', 'run.googleapis.com',
 		'--quota-id', quotaId,
 		'--preferred-value', String(value),

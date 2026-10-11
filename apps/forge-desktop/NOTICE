@@ -1,0 +1,21 @@
+three.ws Forge
+Copyright three.ws
+
+Based on Modly (https://github.com/lightningpixel/modly)
+by Lightning Pixel (https://github.com/lightningpixel)
+
+three.ws Forge is a fork of Modly, a desktop application for local image-to-3D
+generation. Modly is released under the MIT License; its full text, including
+the attribution request quoted above, is in the LICENSE file in this
+directory and applies to the code that originates from Modly. The three.ws
+changes (the rebrand, the three.ws account and publishing integration, the
+three.ws Forge cloud generators bundled from integrations/modly, the CC0
+library browser, and the release pipeline) are released under the same MIT
+License.
+
+Model extensions that Forge installs from GitHub (for example the Hunyuan3D,
+TRELLIS and TripoSG extensions published by Lightning Pixel) download model
+weights from their original publishers. Those weights carry their own
+licenses, which Forge shows on each model's card before download. Tencent's
+Hunyuan3D weights in particular are licensed for use outside the European
+Union, the United Kingdom and South Korea only.

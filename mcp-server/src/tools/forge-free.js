@@ -31,7 +31,8 @@ const TOOL_DESCRIPTION =
 	'that actually produced it. Choose tier draft (fast, default), standard, or high — all free; higher ' +
 	'tiers just take longer. Text-only (NVIDIA\'s hosted TRELLIS preview does not accept uploaded photos); ' +
 	'for image/multi-view → 3D or the Granite-directed paid chain use mesh_forge. Feed the returned glbUrl ' +
-	'to rig_mesh to make it animation-ready. Free — no payment required.';
+	'to rig_mesh to make it animation-ready. Use this for a text-only model at no cost; switch to mesh_forge ' +
+	'for photo input or forge_avatar for a rigged character in one call. Free: no payment required.';
 
 const inputZodShape = {
 	prompt: z

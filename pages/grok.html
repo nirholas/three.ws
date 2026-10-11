@@ -398,6 +398,58 @@
 			</div>
 		</section>
 
+		<section class="gk-sec" aria-labelledby="gk-made-h">
+			<div class="gk-sec-head">
+				<h2 id="gk-made-h">Made on three.ws, just now</h2>
+				<p>The latest models anyone generated on the free studio, the same pipeline Grok calls. Open one to spin it, download it, or put it on a page.</p>
+			</div>
+			<div class="gk-strip" id="gk-strip" aria-busy="true">
+				<div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div>
+			</div>
+			<p class="gk-note" id="gk-strip-note" hidden></p>
+		</section>
+
+		<section class="gk-sec" aria-labelledby="gk-tools-h">
+			<div class="gk-sec-head">
+				<h2 id="gk-tools-h">What Grok gets</h2>
+				<p>Read live from the server's <code>tools/list</code>, so this is always the real catalog.</p>
+			</div>
+			<div class="gk-tools" id="gk-tools" aria-busy="true">
+				<div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div>
+			</div>
+			<p class="gk-note" id="gk-tools-note" hidden></p>
+		</section>
+
+		<section class="gk-sec" aria-labelledby="gk-recipes-h">
+			<div class="gk-sec-head">
+				<h2 id="gk-recipes-h">Three jobs to hand Grok</h2>
+				<p>Each one names the tools Grok calls, in order. Click one to copy the instruction.</p>
+			</div>
+			<div class="gk-asks">
+				<button type="button" class="gk-ask" data-ask="Use three-ws to build an asset pack for my game jam: search_catalog for ten low-poly props that fit a forest campsite, then list the viewer link and GLB for each.">
+					<span class="gk-ask-kind"><span>Asset pack</span><span>Copy</span></span>
+					<span class="gk-ask-text">Ten ready-made props for a game jam.</span>
+					<span class="gk-ask-text"><code>search_catalog</code>, then <code>get_catalog_item</code> per pick.</span>
+				</button>
+				<button type="button" class="gk-ask" data-ask="Use three-ws to forge_free a 3D model of a brass telescope, wait with check_job until it is done, then send me the viewer link, the GLB and the embed code.">
+					<span class="gk-ask-kind"><span>Model and embed</span><span>Copy</span></span>
+					<span class="gk-ask-text">A textured model with a link and a page-ready embed.</span>
+					<span class="gk-ask-text"><code>forge_free</code>, <code>check_job</code> until done.</span>
+				</button>
+				<button type="button" class="gk-ask" data-ask="Use three-ws to forge_avatar a friendly lighthouse keeper, then create_agent_persona from it named Keeper, and persona_say a one-line greeting with it.">
+					<span class="gk-ask-kind"><span>Talking persona</span><span>Copy</span></span>
+					<span class="gk-ask-text">A rigged character that lip-syncs a greeting.</span>
+					<span class="gk-ask-text"><code>forge_avatar</code>, <code>create_agent_persona</code>, <code>persona_say</code>.</span>
+				</button>
+			</div>
+			<div class="gk-next">
+				<a class="gk-btn" href="/grok-skill.md">Read the Grok skill file</a>
+				<a class="gk-btn" href="/tutorials/grok-bot-recipes">Six tested recipes</a>
+				<a class="gk-btn" href="/docs/grok">Full Grok guide</a>
+			</div>
+			<p class="gk-note">The skill file teaches Grok and Grok Bot the connector URL, runnable calls, the links every result returns, and the free limits. Upload it to Grok Skills, or tell Grok Bot to read <code>https://three.ws/grok-skill.md</code>.</p>
+		</section>
+
 		<section class="gk-sec" aria-labelledby="gk-setup-h">
 			<div class="gk-sec-head">
 				<h2 id="gk-setup-h">Set it up anywhere Grok runs</h2>
@@ -585,7 +637,7 @@ print(chat.sample().content)</pre>
 
 	<script src="/brand.js" defer></script>
 	<script src="/model-viewer-meshopt.js"></script>
-	<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js"></script>
+	<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js"></script>
 	<script type="module" src="/src/grok-page.js"></script>
 	<script type="module" src="/i18n.js"></script>
 </body>

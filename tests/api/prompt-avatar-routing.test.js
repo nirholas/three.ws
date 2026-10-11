@@ -100,7 +100,11 @@ async function reconstruct(body) {
 	const req = {
 		method: 'POST',
 		url: '/api/avatars/reconstruct',
-		headers: { 'content-type': 'application/json', origin: 'https://three.ws' },
+		headers: {
+			'content-type': 'application/json',
+			origin: 'https://three.ws',
+			'x-client-geo-location': 'US,California',
+		},
 		body,
 	};
 	const res = makeRes();
@@ -112,7 +116,7 @@ const stub = (name) => ({ name, instance: { supportsMode: () => true, submit: vi
 
 describe('planPromptAvatarLanes', () => {
 	it('leads with self-hosted Hunyuan3D and never offers the face pipeline', () => {
-		const plan = planPromptAvatarLanes({ platform: [{ name: 'gcp', instance: gcpInstance }] });
+		const plan = planPromptAvatarLanes({ platform: [{ name: 'gcp', instance: gcpInstance }], country: 'US' });
 		expect(plan.map((p) => p.mode)).toEqual(['hunyuan', 'trellis']);
 		expect(plan.every((p) => p.name === 'gcp')).toBe(true);
 		expect(plan[0].params).toMatchObject({ tier: 'high', path: 'image' });
@@ -122,6 +126,7 @@ describe('planPromptAvatarLanes', () => {
 		const plan = planPromptAvatarLanes({
 			platform: [stub('huggingface'), { name: 'gcp', instance: gcpInstance }, stub('replicate')],
 			byok: [stub('meshy')],
+			country: 'US',
 		});
 		expect(plan.map((p) => p.lane)).toEqual(['hunyuan3d', 'trellis_selfhost', 'replicate', 'huggingface', 'meshy']);
 		expect(plan.filter((p) => p.name !== 'gcp').every((p) => p.mode === 'reconstruct')).toBe(true);
@@ -129,7 +134,7 @@ describe('planPromptAvatarLanes', () => {
 
 	it('omits a self-host engine the gcp adapter has no worker for', () => {
 		const gcpNoTrellis = { supportsMode: (m) => m === 'hunyuan' };
-		const plan = planPromptAvatarLanes({ platform: [{ name: 'gcp', instance: gcpNoTrellis }] });
+		const plan = planPromptAvatarLanes({ platform: [{ name: 'gcp', instance: gcpNoTrellis }], country: 'US' });
 		expect(plan.map((p) => p.lane)).toEqual(['hunyuan3d']);
 	});
 
@@ -137,6 +142,7 @@ describe('planPromptAvatarLanes', () => {
 		const plan = planPromptAvatarLanes({
 			platform: [{ name: 'gcp', instance: gcpInstance }, stub('huggingface')],
 			health: { hunyuan3d: { status: 'down', warm: false } },
+			country: 'US',
 		});
 		expect(plan.map((p) => p.lane)).toEqual(['trellis_selfhost', 'huggingface', 'hunyuan3d']);
 	});
@@ -145,8 +151,27 @@ describe('planPromptAvatarLanes', () => {
 		const plan = planPromptAvatarLanes({
 			platform: [{ name: 'gcp', instance: gcpInstance }, stub('huggingface')],
 			health: { hunyuan3d: { status: 'down', warm: false, cooled: true } },
+			country: 'US',
 		});
 		expect(plan[0].lane).toBe('hunyuan3d');
+	});
+
+	it('leads with TRELLIS.2 and never offers a Tencent lane in the EU, the UK, South Korea or an unknown country', () => {
+		const withTrellis2 = {
+			supportsMode: (m) => ['reconstruct', 'trellis2', 'hunyuan', 'trellis'].includes(m),
+		};
+		for (const country of ['DE', 'GB', 'KR', null]) {
+			const plan = planPromptAvatarLanes({
+				platform: [stub('huggingface'), { name: 'gcp', instance: withTrellis2 }, stub('replicate')],
+				country,
+			});
+			expect(plan.map((p) => p.lane)).toEqual(['trellis2', 'trellis_selfhost', 'replicate']);
+		}
+		const open = planPromptAvatarLanes({
+			platform: [stub('huggingface'), { name: 'gcp', instance: withTrellis2 }],
+			country: 'US',
+		});
+		expect(open.map((p) => p.lane)).toEqual(['trellis2', 'hunyuan3d', 'trellis_selfhost', 'huggingface']);
 	});
 
 	it('returns nothing when no image→3D engine is configured', () => {

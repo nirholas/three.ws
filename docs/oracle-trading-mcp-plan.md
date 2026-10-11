@@ -1,6 +1,6 @@
 # Plan: ship Oracle and the autonomous trading agents as MCP servers
 
-**Status:** planned, not started. Written 2026-08-19; still unstarted at 2026-09-17 (no `packages/oracle-mcp`, no `api/mcp-oracle.js` in the tree). Facts below re-verified 2026-09-17.
+**Status:** planned, not started. Written 2026-08-19; still unstarted at 2026-10-09 (no `packages/oracle-mcp`, no `api/mcp-oracle.js` in the tree; `packages/oracle-model` is the local scorer library, not an MCP server). Facts below re-verified 2026-10-09.
 **Goal:** make [Oracle](https://three.ws/oracle) and the autonomous trading agents first-class,
 discoverable MCP servers, publish them to the official MCP registry
 (`registry.modelcontextprotocol.io`), document them, and announce them in one plain-language X post.
@@ -15,15 +15,15 @@ tree and the live registry on 2026-08-19, so the plan starts from facts, not ass
 Oracle is the best thing we run and almost nobody can find it from an agent client.
 
 Its four MCP tools (`oracle_top_plays`, `oracle_coin`, `oracle_arm_watch`, `oracle_watch_status`)
-live inside the main `https://three.ws/api/mcp` server, buried among 50+ avatar, model, animation,
-sign-language, memory, and market tools (55 in `public/mcp-catalog.json` today). In the registry that server is listed as
+live inside the main `https://three.ws/api/mcp` server, buried among 80+ avatar, model, animation,
+sign-language, memory, and market tools (87 in `public/mcp-catalog.json` today). In the registry that server is listed as
 "3D avatars, embeds, glTF tools, agent memory, and on-chain agent identity". An agent looking for
 a conviction signal on a new launch has no way to find it, and a human browsing the registry has
 no reason to click.
 
 The same is true of the autonomous side. `oracle_arm_watch` is the single most interesting write
 tool on the platform (it arms an agent to trade a live conviction stream inside a spend leash), and
-it is discoverable only by reading a 55-tool list on an avatar server.
+it is discoverable only by reading an 87-tool list on an avatar server.
 
 The fix is not new capability. It is **packaging**: two focused servers, named for what they do,
 listed under their own registry entries.
@@ -36,7 +36,7 @@ listed under their own registry entries.
 
 | Layer | Location | State |
 |---|---|---|
-| Conviction engine | `api/_lib/oracle/` + `conviction-model.json` | Live, fitted model, AUC 0.879 on holdout |
+| Conviction engine | `api/_lib/oracle/` + `conviction-model.json` | Live, fitted model with three heads; holdout AUC 0.840 win, 0.918 rug, 0.893 moon |
 | Public API | `api/oracle/*.js` (26 endpoints) | Live: `feed`, `coin`, `signal`, `stats`, `backtest`, `calibration`, `leaderboard`, `wins`, `movers`, `categories`, `search`, `history`, `market`, `social`, `trades`, `wallet`, `watch`, `agent-stats`, `action-stream`, `activity`, `follow`, `batch`, `stream`, and more |
 | Pages | `/oracle`, `/oracle/docs`, `/oracle/arm` (in `data/pages.json`) | Live |
 | Reference doc | `docs/oracle.md` | Complete, long-form |
@@ -47,16 +47,16 @@ listed under their own registry entries.
 
 | Surface | Location | Registry state |
 |---|---|---|
-| Sniper engine (library + CLI + MCP + x402 API) | `packages/agent-sniper`, `workers/agent-sniper` | `io.github.nirholas/agent-sniper` @ 0.1.6 in the registry; the tree and npm are both at 0.1.7, so a registry bump is still pending |
-| Autopilot control plane | `packages/autopilot-mcp` | `io.github.nirholas/autopilot-mcp` @ 0.2.0 published |
-| Copy-trade follows | `packages/copy-mcp` | published @ 0.1.1 |
-| Signal marketplace | `packages/signals-mcp` | published @ 0.1.1 |
-| Portfolio + PnL | `packages/portfolio-mcp` | published @ 0.1.1 |
+| Sniper engine (library + CLI + MCP + x402 API) | `packages/agent-sniper`, `workers/agent-sniper` | `io.github.nirholas/agent-sniper` @ 0.1.7 in the registry, matching the tree |
+| Autopilot control plane | `packages/autopilot-mcp` | `io.github.nirholas/autopilot-mcp` @ 0.2.1 in the registry; the tree is at 0.2.2 |
+| Copy-trade follows | `packages/copy-mcp` | registry @ 0.1.2; the tree is at 0.1.4 |
+| Signal marketplace | `packages/signals-mcp` | registry @ 0.1.2; the tree is at 0.1.3 |
+| Portfolio + PnL | `packages/portfolio-mcp` | registry @ 0.1.1; the tree is at 0.1.2 |
 | Market intel | `packages/intel-mcp`, `packages/kol-mcp` | published |
 | Oracle-armed agent loop | `api/oracle/watch.js`, `api/oracle/action-stream.js`, `api/oracle/agent-stats.js` | **No dedicated server. Only the two tools inside `/api/mcp`.** |
 
-72 distinct servers are already published under the `io.github.nirholas` namespace (counted against
-the live registry on 2026-09-17), so the publishing path is proven and boring. `scripts/publish-mcp-servers.mjs` (`npm run publish:mcp`)
+77 distinct servers are already published under the `io.github.nirholas` namespace (counted against
+the live registry on 2026-10-09), so the publishing path is proven and boring. `scripts/publish-mcp-servers.mjs` (`npm run publish:mcp`)
 handles npm plus registry, idempotently, and skips anything already at the target version.
 
 ### The publishing machinery (already built, do not rebuild)
@@ -66,7 +66,9 @@ handles npm plus registry, idempotently, and skips anything already at the targe
   `GITHUB_TOKEN`.
 - `npm run audit:mcp` / `audit:mcp-golden` / `audit:mcp-safety` / `audit:mcp-catalog`: manifest,
   golden-transcript, safety-annotation, and catalog checks. All four are in `npm run gate`.
-- `npm run smoke:mcp`: hits the hosted remotes for real.
+- `npm run smoke:mcp`: hits the hosted remotes for real. `npm run probe:mcp-clients`
+  (`scripts/mcp-client-probe.mjs`) drives every hosted server the way a cloud connector does,
+  OAuth discovery included.
 - `public/.well-known/mcp.json`: the hand-maintained hosted-server directory (7 entries today).
 - `public/mcp-catalog.json` + `/mcp-tools` page: the human-facing catalog, built by
   `scripts/build-mcp-catalog.mjs`.
@@ -89,10 +91,14 @@ Copy the structure of `api/mcp-3d.js` exactly: Streamable HTTP, shared OAuth/x40
 `api/_mcp/auth.js` and `api/_mcp/payments.js`, per-IP rate limits, SSE on GET, terminate on DELETE.
 Registry name `io.github.nirholas/threews-oracle`, URL `https://three.ws/api/mcp-oracle`.
 
-Route it in `vercel.json` (both the handler entry and the
-`/api/mcp-oracle/.well-known/oauth-protected-resource` route, matching the existing
-`/api/mcp/.well-known/oauth-protected-resource` → `/api/wk?name=oauth-protected-resource` entry),
-and add the entry to `public/.well-known/mcp.json`.
+Route the handler in `vercel.json` and add the entry to `public/.well-known/mcp.json`. Since
+2026-10-08 every hosted MCP server is its own OAuth resource (RFC 8707): add `/api/mcp-oracle` to
+`OAUTH_MCP_PATHS` in `api/_lib/mcp-resources.js`, and pass `resourcePath` through the `api/_mcp/auth.js`
+helpers as `api/mcp-3d.js` does. That alone makes its 401 point at
+`/.well-known/oauth-protected-resource/api/mcp-oracle` (already routed generically to `api/wk.js`, so
+no new `vercel.json` metadata route) with `resource` set to the server's own URL, which is what stock
+MCP SDK connectors check before they will sign in. `tests/mcp-resources.test.js` fails when that list
+and `public/.well-known/mcp.json` drift.
 
 **1b. stdio package: `packages/oracle-mcp`**
 
@@ -193,7 +199,8 @@ npm run smoke:mcp            # hit the hosted remotes for real
 
 Also in this phase, because they are one-line fixes that are currently drifted:
 
-- Bump `packages/agent-sniper` in the registry to 0.1.7 (the registry has 0.1.6, the tree and npm have 0.1.7).
+- Publish the version bumps the registry is missing: `autopilot-mcp` 0.2.2, `copy-mcp` 0.1.4,
+  `signals-mcp` 0.1.3, `portfolio-mcp` 0.1.2 (the registry has 0.2.1, 0.1.2, 0.1.2, 0.1.1).
 - Add both new remotes to `public/.well-known/mcp.json` (7 entries today, 8 after Phase 1).
 - Add both new server keys to the `SERVERS` array in `scripts/publish-mcp-servers.mjs`. A server
   that is not in that array is invisible to the publisher, which is the single easiest way for
@@ -226,7 +233,7 @@ Per the documentation rules in `CLAUDE.md`, all of these apply and none are opti
 
 ### Phase 5: the X post
 
-Draft lives at [`docs/oracle-trading-mcp-x-post.md`](x-posts/oracle-trading-mcp-x-post.md). Written before
+Draft lives at [`docs/x-posts/oracle-trading-mcp-x-post.md`](x-posts/oracle-trading-mcp-x-post.md). Written before
 the work ships so the announcement shapes the scope rather than the reverse: if a claim in that
 post is not true when the phases are done, the phases are not done.
 

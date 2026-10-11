@@ -23,6 +23,7 @@ export function mountSignIn(root, ctx) {
 				? html`<button type="button" class="btn" data-action="cancel">Cancel sign-in</button>
 					<div class="signin-wait"><span class="spin" aria-hidden="true"></span>Finish signing in in your browser.</div>`
 				: html`<button type="button" class="btn btn-primary" data-action="signin" autofocus>Sign in with three.ws</button>`}
+			${waiting ? '' : html`<button type="button" class="btn btn-ghost" data-action="local">Run local agents without signing in</button>`}
 			${error ? html`<div class="signin-error" role="alert">${error}</div>` : ''}
 			<ul class="signin-list">
 				<li><span class="ico ico-check" aria-hidden="true"></span>You approve the app by name on three.ws, and can revoke it any time.</li>
@@ -55,6 +56,7 @@ export function mountSignIn(root, ctx) {
 
 	const off = onAction(root, {
 		signin: signIn,
+		local: () => ctx.openLocal(),
 		cancel: () => bridge.session.cancelSignIn(),
 	});
 

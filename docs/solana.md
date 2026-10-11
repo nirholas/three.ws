@@ -84,9 +84,10 @@ Failing over is only half the contract. The other half is *how long* a lane stay
 | Dead or misrouted URL (404, 410) | 30 min | Persistent misconfiguration, not a blip. |
 | One refused *call shape* (403 + `Request blocked`) | none for the lane | The lane is healthy; only this request is unwelcome, so the *method* is demoted on that endpoint (`markMethodDemotion`) and every other call shape keeps flowing. A caller that reaches `markEndpointCooldown` directly still gets the cheapest window, 30 s. |
 | Provider 5xx | 2 min | Server-side wobble. |
+| TLS handshake refused by the lane (`ERR_SSL_*`, `ERR_TLS_*`, certificate errors) | 30 min | The provider's own TLS terminator rejected us, and every retry gets the same answer until the endpoint is fixed (a disabled or suspended QuickNode endpoint answers every handshake with `tlsv1 alert internal error`). The verdict is shared with the fleet, and it does not arm the whole-chain re-sweep that other transport failures trigger. |
 | Fetch threw (DNS, connection) | 30 s | Network blip. |
 
-The second-to-last row is the subtle one, and it cost us a primary. Each provider draws its own line between "you may not do this" and "your key is bad", and they answer both with the same status code. PublicNode returns **HTTP 403** for `getTokenAccountsByOwner` filtered by `programId` while serving every other method perfectly:
+The refused-call-shape row is the subtle one, and it cost us a primary. Each provider draws its own line between "you may not do this" and "your key is bad", and they answer both with the same status code. PublicNode returns **HTTP 403** for `getTokenAccountsByOwner` filtered by `programId` while serving every other method perfectly:
 
 ```jsonc
 // HTTP 403, but the key is fine and getBalance still works
@@ -308,7 +309,7 @@ There is no global Solana registry to query — discovery happens via the platfo
 ## What's on Solana instead of a registry contract
 
 - **Reputation**: there is no single `ReputationRegistry` contract like ERC-8004's. Instead, permissionless SPL Memo attestations (feedback, stakes, tasks, disputes) are written on-chain against the agent's asset pubkey, crawled into `solana_attestations`, and aggregated by `/api/agents/solana-reputation`. Off-chain pump.fun behavior signals land in `pumpfun_signals` and feed the same score. See [Solana reputation](solana-reputation.md) and [solana-pumpfun.md](solana-pumpfun.md).
-- **Validation**: no registry contract either; validations are `threews.validation.v1` SPL Memo attestations (including the automatic glb-schema attestation at register-confirm), plus SAS credentialed validations signed by the platform authority ([SAS attestations](sas-attestations.md)).
+- **Validation**: no registry contract either; validations are `threews.validation.v1` SPL Memo attestations (including the automatic glb-schema attestation at register-confirm), plus SAS credentialed validations signed by the platform authority ([SAS attestations](sas-attestations.md)). The Memo program accepts a memo from any wallet, so a glb-schema validation counts as the model-verified badge (in `/api/agents/solana-validation` and the agent card) only when the platform attester signed it; with no attester key configured there is no badge at all.
 
 ## What's intentionally not on Solana yet
 

@@ -35,8 +35,8 @@ export const MINIMUM_OS = {
 
 // Filename patterns electron-builder.config.cjs produces, most specific first.
 const KINDS = [
-	{ re: /-mac-universal\.dmg$/, platform: 'mac', arch: 'universal', kind: 'dmg', label: 'Disk image (.dmg)', primary: true },
-	{ re: /-mac-universal\.zip$/, platform: 'mac', arch: 'universal', kind: 'zip', label: 'Zip archive (.zip)' },
+	{ re: /-mac-(universal|arm64|x64)\.dmg$/, platform: 'mac', kind: 'dmg', label: 'Disk image (.dmg)', primary: true },
+	{ re: /-mac-(universal|arm64|x64)\.zip$/, platform: 'mac', kind: 'zip', label: 'Zip archive (.zip)' },
 	{ re: /-win-(x64|arm64)-setup\.exe$/, platform: 'win', kind: 'nsis', label: 'Installer (.exe)', primary: true },
 	{ re: /-win-(x64|arm64)-portable\.exe$/, platform: 'win', kind: 'portable', label: 'Portable (.exe, no install)' },
 	{ re: /-linux-(x86_64|x64|arm64|aarch64)\.AppImage$/, platform: 'linux', kind: 'appimage', label: 'AppImage', primary: true },
@@ -85,19 +85,21 @@ export async function describeArtifacts(dist, { baseUrl = DEFAULT_BASE_URL, sign
 }
 
 // Keep the other platforms' files from the published manifest when it is the
-// same version; this run's platforms always replace what was there.
-export function mergeManifest({ version, date, notes, files }, previous) {
+// same version; this run's platforms always replace what was there. Other
+// apps that publish through the same bucket (three.ws Forge) pass their own
+// product name and OS floors.
+export function mergeManifest({ version, date, notes, files }, previous, { product = 'three.ws Desktop', minimumOS = MINIMUM_OS } = {}) {
 	const built = new Set(files.map((f) => f.platform));
 	const carried = previous && previous.version === version ? (previous.files || []).filter((f) => !built.has(f.platform)) : [];
 	const order = { mac: 0, win: 1, linux: 2 };
 	const all = [...files, ...carried].sort((a, b) => order[a.platform] - order[b.platform] || Number(b.primary) - Number(a.primary) || a.name.localeCompare(b.name));
 	return {
 		schema: 1,
-		product: 'three.ws Desktop',
+		product,
 		version,
 		date: previous && previous.version === version && previous.date ? previous.date : date,
 		notes,
-		minimumOS: MINIMUM_OS,
+		minimumOS,
 		platforms: [...new Set(all.map((f) => f.platform))],
 		files: all,
 	};

@@ -60,7 +60,7 @@ describe('freeLaneCandidates — ordered, configured, de-duplicated', () => {
 	it('orders our own GPU workers ahead of the free external lane for photos', () => {
 		configureAllLanes();
 		// Photo: NVIDIA's text-only preview is excluded; self-host workers lead.
-		expect(freeLaneCandidates('image', 'draft', true)).toEqual([
+		expect(freeLaneCandidates('image', 'draft', true, null, 'US')).toEqual([
 			'trellis_selfhost',
 			'hunyuan3d',
 			'huggingface',
@@ -72,7 +72,7 @@ describe('freeLaneCandidates — ordered, configured, de-duplicated', () => {
 		// Text (userImages=false): the tier-named image-intermediate lane leads (the
 		// reference-image pipeline), NVIDIA's native text→mesh preview is the last
 		// free-lane resort since it skips the photoreal reference image entirely.
-		expect(freeLaneCandidates('image', 'draft', false)).toEqual([
+		expect(freeLaneCandidates('image', 'draft', false, null, 'US')).toEqual([
 			'trellis_selfhost',
 			'hunyuan3d',
 			'huggingface',
@@ -84,8 +84,8 @@ describe('freeLaneCandidates — ordered, configured, de-duplicated', () => {
 		// Only the self-host TRELLIS worker is wired.
 		process.env.MODEL_TRELLIS_URL = 'https://trellis.example.run.app';
 		process.env.GCP_RECONSTRUCTION_KEY = 'secret';
-		expect(freeLaneCandidates('image', 'standard', true)).toEqual(['trellis_selfhost']);
-		expect(freeLaneCandidates('image', 'standard', false)).toEqual(['trellis_selfhost']);
+		expect(freeLaneCandidates('image', 'standard', true, null, 'US')).toEqual(['trellis_selfhost']);
+		expect(freeLaneCandidates('image', 'standard', false, null, 'US')).toEqual(['trellis_selfhost']);
 	});
 });
 
@@ -106,7 +106,7 @@ describe('FORGE_SELFHOST_PRIMARY — hoist our own GPU fleet ahead of hosted fre
 	it('off (default) already leads with self-host TRELLIS — the photoreal reference default', () => {
 		configureAllLanes();
 		delete process.env.FORGE_SELFHOST_PRIMARY;
-		expect(freeLaneCandidates('image', 'draft', false)).toEqual([
+		expect(freeLaneCandidates('image', 'draft', false, null, 'US')).toEqual([
 			'trellis_selfhost',
 			'hunyuan3d',
 			'huggingface',
@@ -120,7 +120,7 @@ describe('FORGE_SELFHOST_PRIMARY — hoist our own GPU fleet ahead of hosted fre
 		// The named draft/standard default is now itself a self-host lane
 		// (trellis_selfhost), so hoisting self-host ahead of hosted lanes is a
 		// no-op here — the order matches the flag-off case exactly.
-		expect(freeLaneCandidates('image', 'draft', false)).toEqual([
+		expect(freeLaneCandidates('image', 'draft', false, null, 'US')).toEqual([
 			'trellis_selfhost',
 			'hunyuan3d',
 			'huggingface',
@@ -131,7 +131,7 @@ describe('FORGE_SELFHOST_PRIMARY — hoist our own GPU fleet ahead of hosted fre
 	it('on: photo lane already self-host-first is unchanged', () => {
 		configureAllLanes();
 		process.env.FORGE_SELFHOST_PRIMARY = '1';
-		expect(freeLaneCandidates('image', 'draft', true)).toEqual([
+		expect(freeLaneCandidates('image', 'draft', true, null, 'US')).toEqual([
 			'trellis_selfhost',
 			'hunyuan3d',
 			'huggingface',
@@ -143,13 +143,13 @@ describe('FORGE_SELFHOST_PRIMARY — hoist our own GPU fleet ahead of hosted fre
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
 		process.env.HF_TOKEN = 'hf_test';
 		process.env.FORGE_SELFHOST_PRIMARY = '1';
-		expect(freeLaneCandidates('image', 'draft', false)).toEqual(['huggingface', 'nvidia']);
+		expect(freeLaneCandidates('image', 'draft', false, null, 'US')).toEqual(['huggingface', 'nvidia']);
 	});
 
 	it('on: routes an unnamed text prompt to self-host TRELLIS via the resolver', () => {
 		configureAllLanes();
 		process.env.FORGE_SELFHOST_PRIMARY = '1';
-		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: false })).toBe('trellis_selfhost');
+		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: false, country: 'US' })).toBe('trellis_selfhost');
 		// Health-aware twin agrees when the fleet is healthy.
 		expect(
 			resolveBackendIdWithHealth({
@@ -167,28 +167,28 @@ describe('resolveBackendIdWithHealth — prefer healthy self-host → other free
 
 	it('routes a photo to the healthy self-host TRELLIS worker', () => {
 		const health = { trellis_selfhost: 'ok', hunyuan3d: 'ok', huggingface: 'ok' };
-		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'standard', userImages: true, health })).toBe(
+		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'standard', userImages: true, health, country: 'US' })).toBe(
 			'trellis_selfhost',
 		);
 	});
 
 	it('skips a down self-host lane and falls to the next healthy self-host worker', () => {
 		const health = { trellis_selfhost: 'down', hunyuan3d: 'ok', huggingface: 'ok' };
-		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'standard', userImages: true, health })).toBe(
+		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'standard', userImages: true, health, country: 'US' })).toBe(
 			'hunyuan3d',
 		);
 	});
 
 	it('falls to the healthy free external lane when both self-host workers are down', () => {
 		const health = { trellis_selfhost: 'down', hunyuan3d: 'down', huggingface: 'ok' };
-		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'standard', userImages: true, health })).toBe(
+		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'standard', userImages: true, health, country: 'US' })).toBe(
 			'huggingface',
 		);
 	});
 
 	it('falls to the paid standing default only when every free lane is confirmed down', () => {
 		const health = { trellis_selfhost: 'down', hunyuan3d: 'down', huggingface: 'down' };
-		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'standard', userImages: true, health })).toBe(
+		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'standard', userImages: true, health, country: 'US' })).toBe(
 			DEFAULT_BACKEND_FOR_PATH.image,
 		);
 		expect(DEFAULT_BACKEND_FOR_PATH.image).toBe('trellis');
@@ -197,12 +197,12 @@ describe('resolveBackendIdWithHealth — prefer healthy self-host → other free
 	it('treats unknown/degraded health as usable (never blocks on missing telemetry)', () => {
 		// trellis_selfhost has no entry (unknown) → still picked, ahead of an ok HF.
 		const health = { huggingface: 'ok' };
-		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'standard', userImages: true, health })).toBe(
+		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'standard', userImages: true, health, country: 'US' })).toBe(
 			'trellis_selfhost',
 		);
 		// A degraded self-host lane is skipped only if a later candidate is ok.
 		const health2 = { trellis_selfhost: 'degraded', hunyuan3d: 'ok' };
-		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'standard', userImages: true, health: health2 })).toBe(
+		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'standard', userImages: true, health: health2, country: 'US' })).toBe(
 			'hunyuan3d',
 		);
 	});
@@ -219,6 +219,7 @@ describe('resolveBackendIdWithHealth — prefer healthy self-host → other free
 				tier: 'draft',
 				userImages: false,
 				health: { trellis_selfhost: 'down', hunyuan3d: 'ok' },
+				country: 'US',
 			}),
 		).toBe('hunyuan3d');
 	});
@@ -226,16 +227,16 @@ describe('resolveBackendIdWithHealth — prefer healthy self-host → other free
 	it('honors an explicitly named backend regardless of health', () => {
 		const health = { trellis_selfhost: 'ok' };
 		expect(
-			resolveBackendIdWithHealth({ path: 'image', tier: 'standard', backend: 'meshy', userImages: true, health }),
+			resolveBackendIdWithHealth({ path: 'image', tier: 'standard', backend: 'meshy', userImages: true, health, country: 'US' }),
 		).toBe('meshy');
 	});
 
 	it('with no health map, matches the env-only resolver exactly', () => {
-		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'standard', userImages: true })).toBe(
-			resolveBackendId({ path: 'image', tier: 'standard', userImages: true }),
+		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'standard', userImages: true, country: 'US' })).toBe(
+			resolveBackendId({ path: 'image', tier: 'standard', userImages: true, country: 'US' }),
 		);
-		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'draft', userImages: false })).toBe(
-			resolveBackendId({ path: 'image', tier: 'draft', userImages: false }),
+		expect(resolveBackendIdWithHealth({ path: 'image', tier: 'draft', userImages: false, country: 'US' })).toBe(
+			resolveBackendId({ path: 'image', tier: 'draft', userImages: false, country: 'US' }),
 		);
 	});
 

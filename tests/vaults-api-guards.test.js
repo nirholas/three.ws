@@ -225,7 +225,7 @@ describe('PATCH /api/vaults/:id terms', () => {
 		const { res, out } = await call(vaultDetailHandler, patchReq({ action: 'terms', maxPerTradeUsdc: 10 }));
 		expect(res.statusCode).toBe(403);
 		expect(out.error).toBe('insufficient_scope');
-		expect(out.error_description).toContain('needs a browser session on three.ws');
+		expect(out.error_description).toContain('wallet:write');
 		expect(updateVaultTermsMock).not.toHaveBeenCalled();
 		const paused = await call(vaultDetailHandler, patchReq({ action: 'pause' }));
 		expect(paused.res.statusCode).not.toBe(403);

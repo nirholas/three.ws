@@ -33,13 +33,12 @@
 // }
 
 import { z } from 'zod';
-import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
+import { cors, json, method, wrap, readJson, rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
-import { getRequestUser, requestUserHasScope } from '../_lib/auth.js';
 import { sql } from '../_lib/db.js';
 import { loadUserProviderKeys } from '../_lib/provider-keys.js';
-import { userForIngestToken } from '../_lib/companion/store.js';
+import { companionCaller } from '../_lib/companion/caller.js';
 import { analyzeCheckout } from '../_lib/companion/checkout.js';
 import { llmComplete, llmConfigured } from '../_lib/llm.js';
 
@@ -87,23 +86,6 @@ async function anthropicKeyFor(userId) {
 	}
 }
 
-/**
- * Resolve the caller from a session or the companion bridge token.
- * Returns the user row, or null when neither credential is present or valid.
- */
-async function callerFor(req, res) {
-	const auth = req.headers.authorization || '';
-	const bearer = auth.startsWith('Bearer ') ? auth.slice(7).trim() : null;
-	if (bearer) {
-		const user = await userForIngestToken(bearer);
-		if (user) return user;
-	}
-	// A narrow bearer (an inference-only key, an avatars-only OAuth client)
-	// must not spend the account's own model key; it needs profile.
-	const user = await getRequestUser(req, res);
-	return user && requestUserHasScope(user, 'profile') ? user : null;
-}
-
 export default wrap(async function handler(req, res) {
 	// The extension calls from its own origin, which is not a three.ws page, so
 	// the browser sends `Origin: chrome-extension://<id>` and this must answer
@@ -113,10 +95,12 @@ export default wrap(async function handler(req, res) {
 	if (cors(req, res, { origins: '*', methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const user = await callerFor(req, res);
-	if (!user) {
-		return error(res, 401, 'unauthorized', 'sign in to three.ws or send your companion bridge token');
-	}
+	// A narrow bearer (an inference-only key, an avatars-only OAuth client)
+	// must not spend the account's own model key; the shared resolver holds it
+	// to the profile scope. The bridge token resolves to its owner's user id,
+	// which is what the rate limit, the model key lookup and spend tracking key on.
+	const user = await companionCaller(req, res, { bridge: true });
+	if (!user) return;
 
 	const limit = await limits.companionCheckout(user.id);
 	if (!limit.success) return rateLimited(res, limit);

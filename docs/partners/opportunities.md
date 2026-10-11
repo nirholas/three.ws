@@ -9,6 +9,9 @@ does not restate the reference docs:
 - [Publishing program](../publishing-program-2026-09.md) is the content and venue matrix.
 - [OpenAI, IBM, and NVIDIA growth plan](./openai-ibm-nvidia-growth-plan.md) turns the
   highest-value partner opportunities into a 30-day listing and co-marketing sequence.
+- [Partner prospects](./prospects.md) is the scored list of new partners from the 2026-10-09
+  sweep, and [the outreach plan](./outreach-plan.md) is how it is worked. A prospect moves
+  onto this page when it gets its first action.
 
 This page is the part those three do not answer: **what is actually stuck, on whom, and
 what unblocks it.**

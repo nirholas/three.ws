@@ -21,6 +21,8 @@ import { sql } from './db.js';
 import { scoreMint, scoreIntel } from '../../workers/agent-sniper/scorer.js';
 import { decideExit } from '../../workers/agent-sniper/exit-logic.js';
 import { getLearnedWeights } from '../../workers/agent-sniper/intel/store.js';
+import { normalizeStrategyConfig, researchGatesActive } from './strategy-schema.js';
+import { historicalGateReport, judgeHistoricalGates } from './strategy-preview.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const MAX_CANDIDATES = 6000;
@@ -35,7 +37,18 @@ const HASH_FIELDS = [
 	'require_socials', 'require_sol_quote',
 	'take_profit_pct', 'stop_loss_pct', 'trailing_stop_pct', 'max_hold_seconds',
 	'min_quality_score', 'max_bundle_score', 'max_concentration_top1', 'avoid_dev_dump', 'allowed_categories',
+	'research',
 ];
+
+/**
+ * A Strategy Object `research` block, normalized, or null when no gate is on (so
+ * a strategy without research gates keeps its existing cache hash).
+ */
+export function sanitizeResearch(raw) {
+	if (!raw || typeof raw !== 'object') return null;
+	const config = normalizeStrategyConfig({ research: raw });
+	return researchGatesActive(config) ? config.research : null;
+}
 
 /** Stable hash of the trade-determining strategy fields + window + network. */
 export function strategyHash(strategy, windowDays, network) {
@@ -80,7 +93,7 @@ function toMintEvent(row, entryMcUsd) {
 // Build the object scoreIntel() expects. smart_money is intentionally absent —
 // it's a live graph read we did not capture historically, so scoreIntel skips
 // the smart-money gate (computed:false), exactly as it does for a brand-new coin.
-function toIntelRecord(row) {
+export function toIntelRecord(row) {
 	const s = { ...(row.signals || {}) };
 	if (s.bundle_score == null && row.bundle_score != null) s.bundle_score = Number(row.bundle_score);
 	if (s.organic_score == null && row.organic_score != null) s.organic_score = Number(row.organic_score);
@@ -161,7 +174,7 @@ export async function runBacktest(strategy, { windowDays = 30, network = 'mainne
 			SELECT
 				i.mint, i.symbol, i.name, i.creator, i.first_seen_at,
 				i.twitter, i.telegram, i.website,
-				i.dev_buy_lamports, i.dev_sold, i.buy_volume_lamports,
+				i.dev_buy_lamports, i.dev_sold, i.buy_volume_lamports, i.sell_volume_lamports, i.unique_buyers,
 				i.signals, i.bundle_score, i.organic_score, i.quality_score,
 				i.category, i.risk_flags,
 				o.graduated, o.outcome, o.ath_multiple, o.ath_market_cap_usd, o.last_market_cap_usd,
@@ -186,7 +199,12 @@ export async function runBacktest(strategy, { windowDays = 30, network = 'mainne
 	const perTradeLamports = stakeSol * LAMPORTS_PER_SOL;
 
 	const entries = [];
-	const skip = { gate: 0, no_price: 0, impact: 0 };
+	const skip = { gate: 0, research: 0, no_price: 0, impact: 0 };
+	// Research gates: the same evaluator the live runtime runs before a buy,
+	// judged on what was recorded. Gates history cannot replay are counted, not faked.
+	const researchConfig = strategy.research ? { research: strategy.research } : null;
+	const researchBlockedBy = {};
+	let researchLive = 0;
 	const outcomeCounts = { graduated: 0, pumped: 0, flat: 0, rugged: 0 };
 
 	for (const row of rows) {
@@ -199,6 +217,15 @@ export async function runBacktest(strategy, { windowDays = 30, network = 'mainne
 			? scoreIntel(toIntelRecord(row), strategy, weights)
 			: scoreMint(toMintEvent(row, entryMcUsd), strategy);
 		if (!verdict.pass) { skip.gate++; continue; }
+		if (researchConfig) {
+			const gate = judgeHistoricalGates(researchConfig, historicalGateReport(row));
+			if (gate.blocked) {
+				skip.research++;
+				researchBlockedBy[gate.blocked] = (researchBlockedBy[gate.blocked] || 0) + 1;
+				continue;
+			}
+			if (gate.live) researchLive++;
+		}
 
 		// Need a real peak multiple to simulate; without it we cannot honestly model a fill.
 		if (athMult == null || athMult <= 0) { skip.no_price++; continue; }
@@ -239,7 +266,7 @@ export async function runBacktest(strategy, { windowDays = 30, network = 'mainne
 	}
 
 	const taken = entries.length;
-	const caveats = buildCaveats({ universeSize, taken, days, network, useIntel });
+	const caveats = buildCaveats({ universeSize, taken, days, network, useIntel, researchLive, research: !!researchConfig });
 
 	if (taken === 0) {
 		return {
@@ -254,6 +281,7 @@ export async function runBacktest(strategy, { windowDays = 30, network = 'mainne
 				? `No labeled launch history captured for ${network} in the last ${days} days yet. Backtest will sharpen as the intel engine logs more outcomes.`
 				: `None of the ${universeSize.toLocaleString()} labeled launches in the last ${days} days passed these filters. They may be too strict — loosen one and re-run.`,
 			skipped: skip,
+			research_blocked_by: researchBlockedBy,
 			caveats,
 		};
 	}
@@ -293,6 +321,8 @@ export async function runBacktest(strategy, { windowDays = 30, network = 'mainne
 		sample_size: taken,
 		universe_size: universeSize,
 		skipped: skip,
+		research_blocked_by: researchBlockedBy,
+		research_live_checked: researchLive,
 		stake_sol: Number(stakeSol.toFixed(4)),
 		stake_assumed: perTradeSol <= 0,
 		metrics: {
@@ -320,10 +350,12 @@ export async function runBacktest(strategy, { windowDays = 30, network = 'mainne
 	};
 }
 
-function buildCaveats({ universeSize, taken, days, network, useIntel }) {
+function buildCaveats({ universeSize, taken, days, network, useIntel, researchLive = 0, research = false }) {
 	const c = [];
 	c.push('Replayed over real captured launches only — no synthetic data. Exits are modeled at the recorded peak and final price, not a full tick-by-tick path.');
 	c.push('Survivorship/labeling: only coins observed long enough to be labeled are included, and outcomes lag launch by design, so very recent launches are excluded.');
+	if (researchLive > 0) c.push(`${researchLive} entered launches had no recorded firewall decision, so the security and authority gates could not be replayed for them; live, the firewall checks every buy.`);
+	if (research) c.push('Research gates are judged on evidence recorded over the whole observation window (holders are unique buyers seen, liquidity is net SOL bought into the curve), which includes buying after an early entry. Live, a gate only sees what exists at buy time, so treat gated results as optimistic.');
 	if (useIntel) c.push('Smart-money gates are skipped in backtest (the live wallet-graph read was not captured historically); all other gates match live exactly.');
 	let confidence = 'high';
 	if (taken < 10) { confidence = 'low'; c.push(`Only ${taken} matching launches — treat these numbers as directional, not predictive. Widen the window or loosen filters for a stronger read.`); }

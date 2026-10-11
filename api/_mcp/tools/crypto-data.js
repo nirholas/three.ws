@@ -146,7 +146,8 @@ export const toolDefs = [
 				'and swap quotes, and direct Solana RPC reads. Endpoints marked free run within a ' +
 				'per-IP quota, no wallet needed; an endpoint with no free tier (or an exhausted quota) ' +
 				'returns a payment-required error naming the exact REST URL and USDC price to pay via ' +
-				'x402.\n\nLive provider/endpoint pairs on this deployment:\n' + describePairs()
+				'x402. Use this for raw data from one named provider endpoint; for a merged one-call view of a ' +
+				'Solana token call token_snapshot.\n\nLive provider/endpoint pairs on this deployment:\n' + describePairs()
 			);
 		},
 		inputSchema: {
@@ -208,7 +209,8 @@ export const toolDefs = [
 			'supply) and merging what answers. Degrades gracefully around any provider that is absent, ' +
 			'unconfigured, or fails, never throwing on a partial result. Example mint: the $THREE CA ' +
 			'"FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump". For pump.fun-specific bonding-curve / ' +
-			'launch data use the pump_snapshot tool instead. This tool covers general market data.',
+			'launch data use the pump_snapshot tool instead. Use this for a quick general market read on one ' +
+			'Solana token (price, liquidity, supply) without choosing providers yourself.',
 		inputSchema: {
 			type: 'object',
 			required: ['mint'],

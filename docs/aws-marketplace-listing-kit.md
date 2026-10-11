@@ -218,7 +218,12 @@ The free AWS subscription only grants the x402 access key.
 Lifecycle events land on `POST /api/aws-marketplace/subscription`, which is
 deployed and accepts both transports: EventBridge agreement/license events
 relayed through the API destination (the path a new listing uses), and legacy
-signed SNS notifications with the SubscriptionConfirmation handshake.
+signed SNS notifications with the SubscriptionConfirmation handshake. On the SNS
+leg, both the signing certificate URL and the `SubscribeURL` must be HTTPS on the
+SNS service endpoint itself (`sns.<region>.amazonaws.com`, certificate at
+`/SimpleNotificationService-<id>.pem`), and neither is followed through a
+redirect. Any other `*.amazonaws.com` host is refused, because S3 buckets and API
+Gateway stages under that suffix can be created by anyone.
 
 ---
 
@@ -267,7 +272,8 @@ Done (in repo, deployed):
 - EULA HTML, S3 publish script, IAM + EventBridge provision script.
 - Welcome onboarding page.
 - Test coverage for the event mapping, the relay secret, the ambiguity guard, the
-  metering call shape, and SNS SignatureVersion 1 and 2.
+  metering call shape, SNS SignatureVersion 1 and 2, and the SNS-endpoint-only
+  certificate host check.
 
 Not done (requires AWS console / seller creds — cannot be done from this repo):
 - Running the provision + EULA-publish scripts (no AWS CLI/creds in codespace).
@@ -326,7 +332,7 @@ Seven independent confirmations:
 | 4 | [saas-code-examples](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-code-examples.html) | GetEntitlement example marks the `CUSTOMER_IDENTIFIER` filter "existing integrations only, not supported for new integrations" and prefers `CUSTOMER_AWS_ACCOUNT_ID`; a dedicated "BatchMeterUsage with License ARN" example exists for new products. |
 | 5 | [AWS Marketplace blog: Concurrent Agreements upgrade guide](https://aws.amazon.com/blogs/awsmarketplace/complete-guide-to-upgrading-your-saas-product-to-aws-marketplace-concurrent-agreements/) | "replace any existing primary keys based on `CustomerIdentifier` or `ProductCode` with `LicenseArn`" and restructure tables accordingly. |
 | 6 | [What's New, 2026-02-26](https://aws.amazon.com/about-aws/whats-new/2026/02/concurrent-agreements-february) | Concurrent Agreements launched; SaaS sellers must update entitlement + metering APIs and move notifications to EventBridge; mandatory for new products from June 1 2026. |
-| 7 | Installed SDK, `@aws-sdk/client-marketplace-metering` 3.1066.0 | `ResolveCustomerResult` and `UsageRecord` typings both carry `LicenseArn` and `CustomerAWSAccountId`, so the re-key is implementable with the SDK version already pinned in this repo; no upgrade needed. |
+| 7 | Installed SDK, `@aws-sdk/client-marketplace-metering` (3.1066.0 when verified; the repo now pins `^3.1131.0`) | `ResolveCustomerResult` and `UsageRecord` typings both carry `LicenseArn` and `CustomerAWSAccountId`, so the re-key is implementable with the SDK version already pinned in this repo; no upgrade needed. |
 
 We have never created a product, so our listing is a *new* integration by definition.
 

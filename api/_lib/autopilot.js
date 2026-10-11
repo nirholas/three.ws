@@ -751,6 +751,14 @@ async function executeWalletTransfer({ proposal, agent, userId, config }) {
 		throw new AutopilotError(`Daily SOL budget exceeded (${spent} + ${amount} > ${cap}).`, { code: 'budget_exceeded', status: 403 });
 	}
 
+	const { enforceDestinationAllowlist, SpendLimitError } = await import('./agent-trade-guards.js');
+	try {
+		await enforceDestinationAllowlist({ agentId: proposal.agentId, meta: agent.meta, category: 'autopilot', destination: recipient, usdValue: null });
+	} catch (e) {
+		if (e instanceof SpendLimitError) throw new AutopilotError(e.message, { code: e.code, status: 403 });
+		throw e;
+	}
+
 	const { ensureAgentWallet, recoverSolanaAgentKeypair } = await import('./agent-wallet.js');
 	const { transferNativeSol } = await import('./solana-transfer.js');
 

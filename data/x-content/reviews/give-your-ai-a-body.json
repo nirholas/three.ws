@@ -1,0 +1,58 @@
+{
+	"id": "give-your-ai-a-body",
+	"contentHash": "eb3cb01622028e3763d8f2b1fe6fac9bd289f9246907107762d6c6680d4c34ac",
+	"reviewedAt": "2026-10-10T23:24:50.823Z",
+	"passed": false,
+	"blockers": [
+		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"Request had insufficient authentication scopes.\",; \"status\": \"PERMISSION_DENIED\",; \"details\": [; {; \"@type\": \"type.googleapis.com/goog; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; nvidia fetch failed (after 3 tries)"
+	],
+	"texts": [
+		"Your AI has a brain. Give it a body.\n\nIn the Forge, text or photos become a textured 3D model. Orbit it, view it in AR, download it. Then share it in the marketplace: three.ws/forge"
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "text or photos become a textured 3D model",
+				"kind": "evidence:page",
+				"target": "https://three.ws/forge",
+				"ok": true,
+				"detail": "live page shows \"text or photos → textured 3D model\""
+			},
+			{
+				"claim": "Orbit it, view it in AR, download it",
+				"kind": "evidence:page",
+				"target": "https://three.ws/forge",
+				"ok": true,
+				"detail": "live page shows \"Orbit, AR, download\""
+			},
+			{
+				"kind": "probe:api",
+				"target": "the Forge page is live",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the marketplace page is live",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the avatar in the film is live",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/forge",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": null,
+	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  nvidia fetch failed (after 3 tries)"
+}

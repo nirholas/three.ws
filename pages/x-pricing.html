@@ -155,6 +155,8 @@
 		} catch {}
 
 		async function createCheckout() {
+			// In the iOS app, plans are bought on three.ws in Safari.
+			if (window.threeWsNative?.requireSafari?.() === true) return;
 			$('upgrade-btn').disabled = true;
 			$('upgrade-btn').textContent = 'Creating checkout…';
 			setStatus('');

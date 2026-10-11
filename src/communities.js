@@ -453,11 +453,14 @@ async function loadCoinProfile(mint, { force = false } = {}) {
 	let coin = null;
 	let loadFailed = false;
 	try {
-		const r = await fetch(`/api/pump/coin?mint=${encodeURIComponent(mint)}`, { headers: { accept: 'application/json' } });
-		if (r.ok) coin = await r.json();
-		// A 5xx (or any non-404 non-ok) is a transient failure, not a real "missing
+		// `miss=empty`: a coin pump.fun has not indexed answers 204 (the empty
+		// state below) instead of a 404 the browser logs as an error.
+		const r = await fetch(`/api/pump/coin?mint=${encodeURIComponent(mint)}&miss=empty`, { headers: { accept: 'application/json' } });
+		if (r.status === 204) coin = null;
+		else if (r.ok) coin = await r.json();
+		// A 5xx (or any other non-ok) is a transient failure, not a real "missing
 		// coin" — track it so we offer a retry instead of a misleading "not found".
-		else if (r.status !== 404) loadFailed = true;
+		else loadFailed = true;
 	} catch (err) {
 		loadFailed = true;
 		log.warn('[communities] coin profile', err?.message ?? err);

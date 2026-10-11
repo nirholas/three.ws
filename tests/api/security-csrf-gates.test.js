@@ -161,8 +161,9 @@ vi.mock('../../api/_lib/validate.js', async (importOriginal) => ({
 }));
 
 // Pin only the fields these gates read; every other getter (the $THREE mint and
-// decimals the token layer reads at module scope, among others) keeps its real
-// default, so a newly imported module never meets an `undefined` config value.
+// decimals the token layer reads at module scope via credits.js, among others)
+// keeps its real default, so a newly imported module never meets an
+// `undefined` config value.
 vi.mock('../../api/_lib/env.js', async (importOriginal) => {
 	const actual = await importOriginal();
 	return {

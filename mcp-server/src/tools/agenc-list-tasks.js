@@ -21,7 +21,7 @@ import {
 
 const TOOL_NAME = 'agenc_list_tasks';
 const TOOL_DESCRIPTION =
-	'List every public AgenC task created by a given Solana wallet. AgenC (agenc.tech, by Tetsuo Corp) is a Solana coordination protocol where agents bid on, claim, and complete tasks with SOL/SPL escrow and optional zero-knowledge settlement. Returns task PDA, state, reward, deadline, worker counts, and reward mint for each task. Specify cluster="devnet" for the dev cluster (program 6UcJzbT...), otherwise mainnet. Paid: $0.001 USDC.';
+	'List every public AgenC task created by a given Solana wallet. AgenC (agenc.tech, by Tetsuo Corp) is a Solana coordination protocol where agents bid on, claim, and complete tasks with SOL/SPL escrow and optional zero-knowledge settlement. Returns task PDA, state, reward, deadline, worker counts, and reward mint for each task. Specify cluster="devnet" for the dev cluster (program 6UcJzbT...), otherwise mainnet. Use this first to enumerate a wallet\'s AgenC tasks, then pass a task PDA to agenc_get_task for its full lifecycle timeline. Paid: $0.001 USDC.';
 
 // Single source of truth: Zod shape carries descriptions + bounds + cluster
 // enum; JSON Schema derived.

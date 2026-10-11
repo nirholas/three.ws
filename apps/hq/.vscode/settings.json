@@ -1,0 +1,5 @@
+{
+  // Prevent Copilot agents from opening files in the editor or preview pane
+  // - saves significant processing power in Codespaces
+  "github.copilot.chat.agent.openFileInEditor": false
+}

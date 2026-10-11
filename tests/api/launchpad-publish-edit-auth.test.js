@@ -259,7 +259,7 @@ describe('POST /api/launchpad/publish: payout edits by an API key', () => {
 		const { status, body } = await post({ ...page, identity: { ...page.identity, wallet: '0x00000000000000000000000000000000000000bb' } });
 		expect(status).toBe(403);
 		expect(body.error).toBe('insufficient_scope');
-		expect(body.error_description).toContain('needs a browser session on three.ws');
+		expect(body.error_description).toContain('wallet:write');
 		expect(findCall(/UPDATE launchpad_pages/i)).toBeUndefined();
 	});
 

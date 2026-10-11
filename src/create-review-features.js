@@ -708,7 +708,7 @@ const DOWNLOAD_FORMATS = [
 	{
 		id: 'vrm',
 		label: 'VRM',
-		blurb: 'Humanoid avatar standard. Plug into VRChat, Resonite, Mozilla Hubs, Warudo, VTube Studio, TalkingHead.',
+		blurb: 'Humanoid avatar standard (VRM 1.0). Opens in Warudo, VNyan, Resonite and any three-vrm app, and imports into VRChat through Unity.',
 		ext: '.vrm',
 		size: 'similar to GLB',
 	},
@@ -1290,7 +1290,7 @@ Content-Type: application/json
 	const body = document.createElement('div');
 	body.innerHTML = `
 		<ul class="fm-bullets">
-			<li>15 MCP tools spanning avatar management, model analysis, Solana identity, and pump.fun intel.</li>
+			<li>MCP tools for avatar management, model analysis, Solana identity and market intel. Every tool, with its schema and price, is on <a href="/mcp-tools">/mcp-tools</a>.</li>
 			<li>API keys with scoped permissions: <code>avatars:read</code>, <code>avatars:write</code>, <code>profile</code>, and more.</li>
 			<li>Works with Claude Desktop, Cursor, VS Code, or any MCP-compatible client.</li>
 		</ul>

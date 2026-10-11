@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/awesome-agent-data-apis/entry.schema.json",
+  "title": "Awesome Agent Data APIs entry list",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["id", "name", "url", "repo", "category", "chain", "description", "status", "pricing", "added"],
+    "properties": {
+      "id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+      "name": {"type": "string", "minLength": 1},
+      "url": {"type": "string", "format": "uri", "pattern": "^https?://"},
+      "repo": {"type": ["string", "null"], "format": "uri", "pattern": "^https?://"},
+      "category": {"type": "string", "description": "An id from categories.json"},
+      "chain": {"enum": ["solana", "evm", "multi", "none"]},
+      "description": {"type": "string", "minLength": 10, "maxLength": 160},
+      "status": {"enum": ["active", "early", "archived"]},
+      "pricing": {"enum": ["free", "freemium", "paid", "pay-per-call", "unknown"]},
+      "added": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"}
+    }
+  }
+}

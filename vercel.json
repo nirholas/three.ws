@@ -40,7 +40,7 @@
 		"{api/agents/networth,api/avatars/from-forge,api/pay/execute,api/pay/simulate,api/cron/launcher-claimer,api/cron/fee-bridge,api/seed/synthesize,api/cron/x402-ring-tick}.js": {
 			"maxDuration": 60
 		},
-		"{api/club/tips-stream,api/feed-stream,api/pump/trades-stream,api/oracle/stream,api/oracle/action-stream,api/sniper/stream,api/sniper/room-stream,api/sniper/radar-stream,api/agent-screen-stream}.js": {
+		"{api/club/tips-stream,api/feed-stream,api/pump/trades-stream,api/oracle/stream,api/oracle/action-stream,api/event-markets/stream,api/sniper/stream,api/sniper/room-stream,api/sniper/radar-stream,api/agent-screen-stream}.js": {
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 300
 		},
@@ -340,6 +340,14 @@
 			"dest": "/agent-cards.html"
 		},
 		{
+			"src": "/agent-perps/?",
+			"dest": "/agent-perps.html"
+		},
+		{
+			"src": "/agent-mail/?",
+			"dest": "/agent-mail.html"
+		},
+		{
 			"src": "/wallet",
 			"dest": "/wallet.html"
 		},
@@ -564,6 +572,31 @@
 			"dest": "/changelog/entry/index.html"
 		},
 		{
+			"src": "/cli/(install|claude)(?:\\.sh)?",
+			"headers": {
+				"content-type": "text/plain; charset=utf-8",
+				"cache-control": "public, max-age=300",
+				"x-content-type-options": "nosniff"
+			},
+			"dest": "/cli/$1.sh"
+		},
+		{
+			"src": "/cli/(install|claude)\\.sh\\.sha256",
+			"headers": {
+				"content-type": "text/plain; charset=utf-8",
+				"cache-control": "public, max-age=300"
+			},
+			"dest": "/cli/$1.sh.sha256"
+		},
+		{
+			"src": "/cli/signing-key\\.pem",
+			"headers": {
+				"content-type": "text/plain; charset=utf-8",
+				"cache-control": "public, max-age=3600"
+			},
+			"dest": "/cli/signing-key.pem"
+		},
+		{
 			"src": "/changelog\\.json",
 			"headers": {
 				"content-type": "application/json; charset=utf-8",
@@ -772,12 +805,36 @@
 			"dest": "/api/v1/agent-mail?id=$1"
 		},
 		{
+			"src": "/api/v1/agents/?",
+			"dest": "/api/v1/rest"
+		},
+		{
+			"src": "/api/v1/agents/import",
+			"dest": "/api/v1/rest"
+		},
+		{
+			"src": "/api/v1/agents/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(/(messages|runs|automations|skills|export|start|stop)(/.*)?)?/?",
+			"dest": "/api/v1/rest"
+		},
+		{
+			"src": "/api/v1/(runs|automations|webhooks|skills|strategies)(/.*)?",
+			"dest": "/api/v1/rest"
+		},
+		{
+			"src": "/api/v1/me/?",
+			"dest": "/api/v1/rest"
+		},
+		{
 			"src": "/api/agents/([^/]+)/custom-skills/([^/]+)",
 			"dest": "/api/agents/[id]/custom-skills?id=$1&skill_id=$2"
 		},
 		{
 			"src": "/api/agents/([^/]+)/custom-skills",
 			"dest": "/api/agents/[id]/custom-skills?id=$1"
+		},
+		{
+			"src": "/api/skill-imports/(.+)",
+			"dest": "/api/skill-imports?route=$1"
 		},
 		{
 			"src": "/api/agents/([^/]+)/bundles/([^/]+)",
@@ -814,6 +871,14 @@
 		{
 			"src": "/ledger/?",
 			"dest": "/reasoning-ledger.html"
+		},
+		{
+			"src": "/runs/([^/]+)/?",
+			"dest": "/runs.html"
+		},
+		{
+			"src": "/runs/?",
+			"dest": "/runs.html"
 		},
 		{
 			"src": "/reasoning-ledger/?",
@@ -1072,6 +1137,10 @@
 			"dest": "/skills-community.html"
 		},
 		{
+			"src": "/skills/import/?$",
+			"dest": "/skills-import.html"
+		},
+		{
 			"src": "/spotlight/?$",
 			"dest": "/spotlight.html"
 		},
@@ -1126,6 +1195,14 @@
 		{
 			"src": "/pulse/?",
 			"dest": "/pulse.html"
+		},
+		{
+			"src": "/trenches/?",
+			"dest": "/trenches.html"
+		},
+		{
+			"src": "/everything/?",
+			"dest": "/everything.html"
 		},
 		{
 			"src": "/economy-lab/?",
@@ -1200,12 +1277,52 @@
 			"dest": "/swarms.html"
 		},
 		{
+			"src": "/teams/?",
+			"dest": "/teams.html"
+		},
+		{
+			"src": "/teams/([0-9a-fA-F-]{36})/chat/?",
+			"dest": "/team-chat.html"
+		},
+		{
+			"src": "/team-chat/?",
+			"dest": "/team-chat.html"
+		},
+		{
+			"src": "/teams/([0-9a-fA-F-]{36})/?",
+			"dest": "/teams.html"
+		},
+		{
 			"src": "/ui-juice/?",
 			"dest": "/ui-juice.html"
 		},
 		{
 			"src": "/diorama/?",
 			"dest": "/diorama.html"
+		},
+		{
+			"src": "/cad/?",
+			"dest": "/cad.html"
+		},
+		{
+			"src": "/anatomy/?",
+			"dest": "/anatomy.html"
+		},
+		{
+			"src": "/anatomy/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/?",
+			"dest": "/anatomy.html"
+		},
+		{
+			"src": "/modly/?",
+			"dest": "/modly.html"
+		},
+		{
+			"src": "/forge-desktop/?",
+			"dest": "/forge-desktop.html"
+		},
+		{
+			"src": "/cad/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/?",
+			"dest": "/cad.html"
 		},
 		{
 			"src": "/api/strategies/(.*)",
@@ -1270,6 +1387,50 @@
 		{
 			"src": "/quests/?",
 			"dest": "/quests.html"
+		},
+		{
+			"src": "/spend/?",
+			"dest": "/spend.html"
+		},
+		{
+			"src": "/approvals/?",
+			"dest": "/approvals.html"
+		},
+		{
+			"src": "/approvals/([^/.]+)/?",
+			"dest": "/approvals.html"
+		},
+		{
+			"src": "/commerce/?",
+			"dest": "/commerce.html"
+		},
+		{
+			"src": "/invoices/?",
+			"dest": "/commerce.html"
+		},
+		{
+			"src": "/invoices/([^/.]+)/?",
+			"dest": "/agent-invoice.html"
+		},
+		{
+			"src": "/event-markets/leaderboard/?",
+			"dest": "/event-markets-leaderboard.html"
+		},
+		{
+			"src": "/event-markets/forecasters/?",
+			"dest": "/event-markets-forecasters.html"
+		},
+		{
+			"src": "/event-markets/?",
+			"dest": "/event-markets.html"
+		},
+		{
+			"src": "/event-markets/view/?",
+			"dest": "/event-market.html"
+		},
+		{
+			"src": "/event-markets/([a-z0-9][a-z0-9-]{1,78})/?",
+			"dest": "/api/event-market-share?m=$1"
 		},
 		{
 			"src": "/duels/?",
@@ -1374,6 +1535,30 @@
 		{
 			"src": "/markets/robinhood/coin/(0x[0-9a-fA-F]{40})/?",
 			"dest": "/robinhood-coin.html"
+		},
+		{
+			"src": "/markets/robinhood/paired/?",
+			"dest": "/paired-coins.html"
+		},
+		{
+			"src": "/markets/robinhood/paired/(0x[0-9a-fA-F]{40})/?",
+			"dest": "/paired-coin.html"
+		},
+		{
+			"src": "/launch/paired/?",
+			"dest": "/launch-paired.html"
+		},
+		{
+			"src": "/launch/uniswap/?",
+			"dest": "/launch-uniswap.html"
+		},
+		{
+			"src": "/launch/intents/?",
+			"dest": "/launch-intent.html"
+		},
+		{
+			"src": "/launch/intents/([^/.]+)/?",
+			"dest": "/launch-intent.html"
 		},
 		{
 			"src": "/fear-greed/?",
@@ -1635,8 +1820,16 @@
 			"dest": "/rig-doctor.html"
 		},
 		{
+			"src": "/crawl/?",
+			"dest": "/crawl.html"
+		},
+		{
 			"src": "/avatar-artifact/?",
 			"dest": "/avatar-artifact.html"
+		},
+		{
+			"src": "/forge/workflows/?",
+			"dest": "/forge-workflows.html"
 		},
 		{
 			"src": "/forge/embed/?",
@@ -2034,6 +2227,10 @@
 			"dest": "/mcp-clients.html"
 		},
 		{
+			"src": "/admin/event-markets/?",
+			"dest": "/event-markets-admin.html"
+		},
+		{
 			"src": "/examples/?",
 			"dest": "/examples.html"
 		},
@@ -2060,6 +2257,10 @@
 		{
 			"src": "/launchpad/?",
 			"dest": "/launchpad.html"
+		},
+		{
+			"src": "/launch/robinhood/?",
+			"dest": "/launch-robinhood.html"
 		},
 		{
 			"src": "/launch/?",
@@ -2368,6 +2569,10 @@
 			"dest": "/smart-home-satellite.html"
 		},
 		{
+			"src": "/link-device/?",
+			"dest": "/link-device.html"
+		},
+		{
 			"src": "/cli/authorize/?",
 			"dest": "/cli-authorize.html"
 		},
@@ -2400,6 +2605,10 @@
 			"dest": "/p/index.html"
 		},
 		{
+			"src": "/developers/?",
+			"dest": "/developers.html"
+		},
+		{
 			"src": "/pricing/?",
 			"dest": "/pricing.html"
 		},
@@ -2412,8 +2621,24 @@
 			"dest": "/credits.html"
 		},
 		{
+			"src": "/domains/?",
+			"dest": "/domains.html"
+		},
+		{
 			"src": "/x-pricing/?",
 			"dest": "/x-pricing.html"
+		},
+		{
+			"src": "/admin/event-market-announcements/?",
+			"dest": "/event-market-announcements.html"
+		},
+		{
+			"src": "/admin/event-markets-staking/?",
+			"dest": "/event-markets-staking-admin.html"
+		},
+		{
+			"src": "/x/claim/?",
+			"dest": "/x-claim.html"
 		},
 		{
 			"src": "/home-next/?",
@@ -2511,6 +2736,34 @@
 			"src": "/dashboard-classic/embed-policy",
 			"headers": {
 				"Location": "/dashboard/api"
+			},
+			"status": 301
+		},
+		{
+			"src": "/dashboard/api-keys/?",
+			"headers": {
+				"Location": "/dashboard/api"
+			},
+			"status": 301
+		},
+		{
+			"src": "/create-selfie/?",
+			"headers": {
+				"Location": "/create/selfie"
+			},
+			"status": 301
+		},
+		{
+			"src": "/marketplace-analytics/?",
+			"headers": {
+				"Location": "/marketplace/analytics"
+			},
+			"status": 301
+		},
+		{
+			"src": "/avatars/?",
+			"headers": {
+				"Location": "/gallery"
 			},
 			"status": 301
 		},
@@ -3239,6 +3492,10 @@
 			"dest": "/api/inference/[action]?action=usage"
 		},
 		{
+			"src": "/api/me/spend/?",
+			"dest": "/api/spend/me"
+		},
+		{
 			"src": "/api/me/inference/provision/preview/?",
 			"dest": "/api/inference/[action]?action=provision-preview"
 		},
@@ -3263,7 +3520,7 @@
 			"dest": "/api/okx/3d/[service]?service=$1"
 		},
 		{
-			"src": "/api/cron/(audit-log-cleanup|cleanup-csrf-tokens|club-payouts|confirm-pending-purchases|cosmetic-splits-sweep|erc8004-crawl|expire-pending-purchases|fetch-x-metrics|index-delegations|irl-drops-refund|monetization-payouts|process-subscriptions|process-withdrawals|pump-agent-stats|pumpfun-graduations-sync|pumpfun-monitor|pumpfun-signals|run-buyback|run-coin-cycle|run-coin-payouts|run-dca|run-distribute-payments|run-subscriptions|run-three-buyback|run-x-scheduled-posts|run-x-triggers|settle-royalties|siwx-gc|solana-agents-crawl|solana-attest-event-cleanup|solana-attestations-crawl|treasury-autopilot|unstoppable-tick)",
+			"src": "/api/cron/(audit-log-cleanup|cleanup-csrf-tokens|club-payouts|confirm-pending-purchases|cosmetic-splits-sweep|erc8004-crawl|expire-pending-purchases|fetch-x-metrics|index-delegations|irl-drops-refund|monetization-payouts|process-subscriptions|process-withdrawals|pump-agent-stats|pumpfun-graduations-sync|pumpfun-monitor|pumpfun-signals|run-buyback|run-coin-cycle|run-coin-payouts|run-dca|run-distribute-payments|run-subscriptions|run-three-buyback|run-x-scheduled-posts|run-x-triggers|settle-royalties|siwx-gc|solana-agents-crawl|solana-attest-event-cleanup|solana-attestations-crawl|treasury-autopilot|unstoppable-tick|x-mentions)",
 			"dest": "/api/cron/[name]?name=$1"
 		},
 		{
@@ -3311,6 +3568,18 @@
 			"dest": "/api/agents/pumpfun/[action]?id=$1&action=$2"
 		},
 		{
+			"src": "/api/agents/([^/]+)/paired/([^/]+)",
+			"dest": "/api/agents/paired/[action]?id=$1&action=$2"
+		},
+		{
+			"src": "/api/agents/([^/]+)/uniswap/([^/]+)",
+			"dest": "/api/agents/uniswap/[action]?id=$1&action=$2"
+		},
+		{
+			"src": "/api/launches/([^/]+)",
+			"dest": "/api/launches/[id]?id=$1"
+		},
+		{
 			"src": "/api/agents/([^/]+)/pons/([^/]+)",
 			"dest": "/api/agents/pons/[action]?id=$1&action=$2"
 		},
@@ -3340,6 +3609,10 @@
 		},
 		{
 			"src": "/api/agents/([^/]+)/usage",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/token-budget(/.*)?",
 			"dest": "/api/agents/[id]"
 		},
 		{
@@ -3519,6 +3792,90 @@
 			"dest": "/api/auth/x/[action]?action=callback"
 		},
 		{
+			"src": "/api/auth/google/start",
+			"dest": "/api/auth/google/[action]?action=start"
+		},
+		{
+			"src": "/api/auth/google/callback",
+			"dest": "/api/auth/google/[action]?action=callback"
+		},
+		{
+			"src": "/api/auth/google/confirm",
+			"dest": "/api/auth/google/[action]?action=confirm"
+		},
+		{
+			"src": "/api/auth/google/status",
+			"dest": "/api/auth/google/[action]?action=status"
+		},
+		{
+			"src": "/api/auth/google/unlink",
+			"dest": "/api/auth/google/[action]?action=unlink"
+		},
+		{
+			"src": "/api/auth/telegram/start",
+			"dest": "/api/auth/telegram/[action]?action=start"
+		},
+		{
+			"src": "/api/auth/telegram/callback",
+			"dest": "/api/auth/telegram/[action]?action=callback"
+		},
+		{
+			"src": "/api/auth/telegram/magic",
+			"dest": "/api/auth/telegram/[action]?action=magic"
+		},
+		{
+			"src": "/api/auth/telegram/poll",
+			"dest": "/api/auth/telegram/[action]?action=poll"
+		},
+		{
+			"src": "/api/auth/telegram/status",
+			"dest": "/api/auth/telegram/[action]?action=status"
+		},
+		{
+			"src": "/api/auth/telegram/unlink",
+			"dest": "/api/auth/telegram/[action]?action=unlink"
+		},
+		{
+			"src": "/api/auth/link-codes/mint",
+			"dest": "/api/auth/link-codes/[action]?action=mint"
+		},
+		{
+			"src": "/api/auth/link-codes/claim",
+			"dest": "/api/auth/link-codes/[action]?action=claim"
+		},
+		{
+			"src": "/api/auth/link-codes/poll",
+			"dest": "/api/auth/link-codes/[action]?action=poll"
+		},
+		{
+			"src": "/api/auth/link-codes/pending",
+			"dest": "/api/auth/link-codes/[action]?action=pending"
+		},
+		{
+			"src": "/api/auth/link-codes/decide",
+			"dest": "/api/auth/link-codes/[action]?action=decide"
+		},
+		{
+			"src": "/api/auth/link-codes/devices",
+			"dest": "/api/auth/link-codes/[action]?action=devices"
+		},
+		{
+			"src": "/api/auth/link-codes/revoke",
+			"dest": "/api/auth/link-codes/[action]?action=revoke"
+		},
+		{
+			"src": "/api/auth/external-wallet/challenge",
+			"dest": "/api/auth/external-wallet/[action]?action=challenge"
+		},
+		{
+			"src": "/api/auth/external-wallet/verify",
+			"dest": "/api/auth/external-wallet/[action]?action=verify"
+		},
+		{
+			"src": "/api/auth/linked-accounts",
+			"dest": "/api/auth/linked-accounts"
+		},
+		{
 			"src": "/api/auth/saml/metadata",
 			"dest": "/api/auth/saml/[action]?action=metadata"
 		},
@@ -3659,6 +4016,22 @@
 			"dest": "/api/pump/launch-og.js"
 		},
 		{
+			"src": "/api/pump/pairs",
+			"dest": "/api/pump/pairs.js"
+		},
+		{
+			"src": "/api/pump/launch-intents",
+			"dest": "/api/pump/launch-intents.js"
+		},
+		{
+			"src": "/api/pump/launch-intents/([^/]+)",
+			"dest": "/api/pump/launch-intents.js?id=$1"
+		},
+		{
+			"src": "/api/pump/launch-intents/([^/]+)/([^/]+)",
+			"dest": "/api/pump/launch-intents.js?id=$1&action=$2"
+		},
+		{
 			"src": "/api/oracle/coin",
 			"dest": "/api/oracle/coin.js"
 		},
@@ -3773,6 +4146,14 @@
 		{
 			"src": "/api/x/ops/(list|status|pause|resume|block|unblock|send)",
 			"dest": "/api/x/ops/[action]?action=$1"
+		},
+		{
+			"src": "/api/slicer/([0-9a-fA-F-]{36})/model\\.(stl|3mf)",
+			"dest": "/api/slicer/model?id=$1&format=$2"
+		},
+		{
+			"src": "/api/slicer/([0-9a-fA-F-]{36})/([0-9]{1,3})mm/model\\.(stl|3mf)",
+			"dest": "/api/slicer/model?id=$1&size=$2&format=$3"
 		},
 		{
 			"src": "/api/print/webhook/([a-z][a-z0-9-]{1,31})",
@@ -3893,6 +4274,42 @@
 		{
 			"src": "/api/agent-screen-active",
 			"dest": "/api/agent-screen-active.js"
+		},
+		{
+			"src": "/api/crawl/stats",
+			"dest": "/api/crawl/[action]?action=stats"
+		},
+		{
+			"src": "/api/crawl/crawlers",
+			"dest": "/api/crawl/[action]?action=crawlers"
+		},
+		{
+			"src": "/api/crawl/live",
+			"dest": "/api/crawl/[action]?action=live"
+		},
+		{
+			"src": "/api/crawl/frame",
+			"dest": "/api/crawl/[action]?action=frame"
+		},
+		{
+			"src": "/api/crawl/pages",
+			"dest": "/api/crawl/[action]?action=pages"
+		},
+		{
+			"src": "/api/crawl/mission",
+			"dest": "/api/crawl/[action]?action=mission"
+		},
+		{
+			"src": "/api/crawl/mine",
+			"dest": "/api/crawl/[action]?action=mine"
+		},
+		{
+			"src": "/api/crawl/roster",
+			"dest": "/api/crawl/[action]?action=roster"
+		},
+		{
+			"src": "/api/crawl/push",
+			"dest": "/api/crawl/[action]?action=push"
 		},
 		{
 			"src": "/api/agent-task",
@@ -5248,6 +5665,10 @@
 			"dest": "/api/billing/summary"
 		},
 		{
+			"src": "/api/domains/([^/]+)",
+			"dest": "/api/domains/[action]?action=$1"
+		},
+		{
 			"src": "/api/three-token/([^/]+)",
 			"dest": "/api/three-token/[action]?action=$1"
 		},
@@ -5266,6 +5687,10 @@
 		{
 			"src": "/api/auth/extension-token",
 			"dest": "/api/auth/extension-token.js"
+		},
+		{
+			"src": "/api/auth/handoff",
+			"dest": "/api/auth/handoff.js"
 		},
 		{
 			"src": "/api/auth/([^/]+)",
@@ -5294,6 +5719,14 @@
 		{
 			"src": "/agents/[^/.]+/cards/?",
 			"dest": "/agent-cards.html"
+		},
+		{
+			"src": "/agents/[^/.]+/perps/?",
+			"dest": "/agent-perps.html"
+		},
+		{
+			"src": "/agents/[^/.]+/mail/?",
+			"dest": "/agent-mail.html"
 		},
 		{
 			"src": "/agents/([^/.]+)/classic/?",
@@ -5472,6 +5905,34 @@
 			"dest": "/api/club/tips-stream"
 		},
 		{
+			"src": "/api/teams/([^/]+)/chat(?:/.*)?",
+			"dest": "/api/team-chat"
+		},
+		{
+			"src": "/api/team-chat/?",
+			"dest": "/api/team-chat"
+		},
+		{
+			"src": "/api/teams/([^/]+)/members/([^/]+)",
+			"dest": "/api/teams/[id]"
+		},
+		{
+			"src": "/api/teams/([^/]+)/findings/stream",
+			"dest": "/api/teams/[id]"
+		},
+		{
+			"src": "/api/teams/([^/]+)/(findings|run|repair|members)",
+			"dest": "/api/teams/[id]"
+		},
+		{
+			"src": "/api/teams/([^/]+)",
+			"dest": "/api/teams/[id]"
+		},
+		{
+			"src": "/api/teams",
+			"dest": "/api/teams"
+		},
+		{
 			"src": "/api/swarms/([^/]+)/stream",
 			"dest": "/api/swarms/[id]"
 		},
@@ -5596,7 +6057,7 @@
 			"dest": "/api/sitemap/[type]?type=$1"
 		},
 		{
-			"src": "/(pages|directory|everything|all-pages)/?",
+			"src": "/(pages|directory|all-pages)/?",
 			"status": 308,
 			"headers": {
 				"Location": "/sitemap"
@@ -5731,6 +6192,30 @@
 		{
 			"src": "/create/share",
 			"dest": "/api/create-share"
+		},
+		{
+			"src": "/apps/?",
+			"dest": "/apps.html"
+		},
+		{
+			"src": "/apps/web/?",
+			"dest": "/apps-web.html"
+		},
+		{
+			"src": "/apps/android/?",
+			"dest": "/apps-android.html"
+		},
+		{
+			"src": "/apps/seeker/?",
+			"dest": "/apps-seeker.html"
+		},
+		{
+			"src": "/apps/ios/?",
+			"dest": "/apps-ios.html"
+		},
+		{
+			"src": "/apps/desktop/?",
+			"dest": "/apps-desktop.html"
 		},
 		{
 			"src": "/seeker",
@@ -6013,6 +6498,10 @@
 			"dest": "/mcp-tools.html"
 		},
 		{
+			"src": "/mcp-tools/[^/]+/[^/]+/?",
+			"dest": "/mcp-tool.html"
+		},
+		{
 			"src": "/connect/?",
 			"dest": "/connect.html"
 		},
@@ -6027,6 +6516,14 @@
 		{
 			"src": "/render-lab/",
 			"dest": "/render-lab.html"
+		},
+		{
+			"src": "/workbench",
+			"dest": "/workbench.html"
+		},
+		{
+			"src": "/workbench/",
+			"dest": "/workbench.html"
 		},
 		{
 			"src": "/holo",
@@ -6118,6 +6615,10 @@
 		},
 		{
 			"src": "/",
+			"dest": "/desktop.html"
+		},
+		{
+			"src": "/classic/?",
 			"dest": "/home.html"
 		},
 		{
@@ -6423,6 +6924,10 @@
 			"schedule": "*/5 * * * *"
 		},
 		{
+			"path": "/api/cron/domain-renewals",
+			"schedule": "17 6 * * *"
+		},
+		{
 			"path": "/api/cron/marketplace-escrow-sweep",
 			"schedule": "*/2 * * * *"
 		},
@@ -6445,6 +6950,18 @@
 		{
 			"path": "/api/cron/wallet-intents",
 			"schedule": "*/10 * * * *"
+		},
+		{
+			"path": "/api/cron/agent-automations",
+			"schedule": "* * * * *"
+		},
+		{
+			"path": "/api/cron/webhook-deliveries",
+			"schedule": "* * * * *"
+		},
+		{
+			"path": "/api/cron/whitelist-activate",
+			"schedule": "*/5 * * * *"
 		},
 		{
 			"path": "/api/cron/reconcile-decisions",
@@ -6653,6 +7170,10 @@
 		{
 			"path": "/api/cron/run-x-triggers",
 			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/cron/x-mentions",
+			"schedule": "*/2 * * * *"
 		},
 		{
 			"path": "/api/cron/fetch-x-metrics",
@@ -6908,6 +7429,42 @@
 		},
 		{
 			"path": "/api/cron/duels-tick",
+			"schedule": "*/15 * * * *"
+		},
+		{
+			"path": "/api/cron/event-markets-rollup",
+			"schedule": "*/10 * * * *"
+		},
+		{
+			"path": "/api/cron/event-markets-open",
+			"schedule": "*/10 * * * *"
+		},
+		{
+			"path": "/api/cron/event-markets-forecasters",
+			"schedule": "*/15 * * * *"
+		},
+		{
+			"path": "/api/cron/event-markets-feed",
+			"schedule": "* * * * *"
+		},
+		{
+			"path": "/api/cron/event-markets-resolve",
+			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/cron/agent-portfolio-snapshots",
+			"schedule": "23 * * * *"
+		},
+		{
+			"path": "/api/cron/perps-tick",
+			"schedule": "*/2 * * * *"
+		},
+		{
+			"path": "/api/cron/agent-invoice-watch",
+			"schedule": "* * * * *"
+		},
+		{
+			"path": "/api/cron/event-market-announce",
 			"schedule": "*/15 * * * *"
 		}
 	]

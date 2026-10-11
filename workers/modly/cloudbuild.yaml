@@ -1,0 +1,93 @@
+substitutions:
+  _REGION: us-central1
+  # Runtime identity. It holds secretAccessor on avatar-reconstruction-key,
+  # objectViewer on the weights bucket and objectAdmin on the results bucket
+  # (bucket-level grants, see README.md "One-time GCP setup").
+  _RUN_SA: three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+  _SERVICE: model-modly
+  _REPO: model-modly
+  _GCS_BUCKET: three-ws-avatar-reconstructions
+  _WEIGHTS_BUCKET: three-ws-model-weights
+  _WEIGHTS_BUCKET_PREFIX: modly
+  # Both models by default. MODLY_MODELS=triposg/generate serves TripoSG alone
+  # and halves the weights held in the in-memory /tmp.
+  _MODLY_MODELS: triposg/generate,hunyuan3d-mini-turbo/generate
+  # Scale-to-zero by default. The us-central1 L4 grant is shared by every GPU
+  # lane (docs/ops/gcp-credits-plan.md), so a warm floor here is a quota
+  # decision, not a default. The first request after idle pays the weight copy,
+  # the Modly start and the warm-up generation, which the API reports as a cold
+  # start (BACKENDS.modly.coldStartSeconds). Raise it with
+  # `gcloud run services update model-modly --min-instances=1` once the grant
+  # allows, or add modly to FORGE_KEEPWARM_LANES.
+  _MIN_INSTANCES: "0"
+  _MAX_INSTANCES: "2"
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    dir: workers/modly
+    args:
+      - build
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - --cache-from
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --region=${_REGION}
+      - --service-account=${_RUN_SA}
+      - --platform=managed
+      - --port=8080
+      - --gpu=1
+      - --gpu-type=nvidia-l4
+      - --no-gpu-zonal-redundancy
+      - --no-cpu-throttling
+      - --cpu=8
+      # About 12 GB of weights live in the in-memory /tmp next to two model
+      # processes (one per extension, each loaded on first use).
+      - --memory=32Gi
+      - --min-instances=${_MIN_INSTANCES}
+      - --max-instances=${_MAX_INSTANCES}
+      - --timeout=900
+      # The worker authenticates every task route itself (API_KEY below); only
+      # /health and / are open.
+      - --allow-unauthenticated
+      - --set-env-vars=^@^GCS_BUCKET=${_GCS_BUCKET}@MAX_CONCURRENT=1@WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/${_WEIGHTS_BUCKET_PREFIX}@MODLY_MODELS=${_MODLY_MODELS}
+      - --set-secrets=API_KEY=avatar-reconstruction-key:latest
+      # Recycle an instance whose bring-up is permanently dead. main.py answers
+      # /health with 503 only once the whole bring-up retry budget is spent, so
+      # an ordinary cold start (200 while loading) is never killed mid-load.
+      - --liveness-probe=httpGet.path=/health,initialDelaySeconds=60,periodSeconds=60,timeoutSeconds=10,failureThreshold=3
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+
+options:
+  machineType: E2_HIGHCPU_32
+  logging: CLOUD_LOGGING_ONLY
+
+# Torch, two extension venvs and the diso CUDA compile push the image build well
+# past Cloud Build's 10-minute default. Give it an hour.
+timeout: 3600s
+
+# The project's default compute SA was deleted: builds must pin the dedicated
+# build account or submits fail with "Unknown service account".
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com

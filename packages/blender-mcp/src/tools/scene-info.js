@@ -12,7 +12,7 @@ import { resolveInput } from '../lib/paths.js';
 export const def = {
 	name: 'blender_scene_info',
 	title: 'Describe a 3D file with Blender',
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 	description:
 		'Open a 3D file with Blender and report what is inside it: object list with types, parents, dimensions and ' +
 		'modifiers; evaluated triangle and vertex counts; materials; armature bone names; animation actions with ' +
@@ -20,7 +20,8 @@ export const def = {
 		'usually what decides whether an asset is deliverable; and world-space bounds. Accepts .blend plus every ' +
 		'format this Blender can import (.glb, .gltf, .fbx, .obj, .stl, .ply, .dae, .abc, .usd*, .x3d). Counts describe ' +
 		'the file AS LOADED, so a GLB reports more vertices than the .blend it came from (glTF splits vertices at UV ' +
-		'and normal seams) while the triangle count is identical. Read-only: the file is never modified.',
+		'and normal seams) while the triangle count is identical. Read-only: the file is never modified. Use this ' +
+		'before blender_optimize or blender_convert to see what a file contains and what is making it heavy.',
 	inputSchema: {
 		input: z.string().min(1).describe('Path to the 3D file to inspect. Absolute, or relative to the server working directory.'),
 		include_objects: z

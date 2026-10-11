@@ -178,7 +178,7 @@ pass('the Swift client calls the endpoint with the query the server reads');
 
 // The platform hint only exists to point an unlinked card at the right
 // hand-off, so the value the client sends has to be one the server routes.
-const flows = (mine.match(/LINK_FLOWS = \{([^}]+)\}/) || [, ''])[1];
+const flows = (mine.match(/LINK_FLOWS = \{([^}]+)\}/)?.[1] ?? '');
 for (const value of ['macos', 'ios']) {
 	if (!flows.includes(`${value}:`)) fail(`api/glance/mine.js does not route ?platform=${value} to a link flow`);
 	if (!client.includes(`return "${value}"`)) fail(`the Swift client never reports platform=${value}`);
@@ -208,7 +208,7 @@ const sizes = [...svg.matchAll(/^\t(small|medium|large):/gm)].map((m) => m[1]);
 for (const size of sizes) {
 	if (!new RegExp(`case ${size}\\b`).test(card)) fail(`GlanceSize has no case for the server size "${size}"`);
 }
-const scales = (png.match(/GLANCE_PNG_SCALES = \[([^\]]+)\]/) || [, ''])[1]
+const scales = (png.match(/GLANCE_PNG_SCALES = \[([^\]]+)\]/)?.[1] ?? '')
 	.split(',')
 	.map((n) => Number(n.trim()));
 const swiftScales = [...card.matchAll(/\? (\d) : (\d)/g)].flatMap((m) => [Number(m[1]), Number(m[2])]);
@@ -219,15 +219,15 @@ pass(`sizes and scales agree with the server (${sizes.join(', ')} at ${swiftScal
 
 // The deep link, both ends.
 const link = read('apple/GlanceKit/GlanceLink.swift');
-const appleUrl = (token.match(/return `(threews:\/\/[^`]+)`/) || [, ''])[1];
+const appleUrl = (token.match(/return `(threews:\/\/[^`]+)`/)?.[1] ?? '');
 if (!appleUrl.startsWith('threews://glance/link?token=')) {
 	fail(`api/glance/token.js builds an apple link the widget does not recognise: ${appleUrl || 'none'}`);
 }
 if (!link.includes('static let host = "glance"') || !link.includes('static let path = "/link"')) {
 	fail('GlanceLink no longer claims threews://glance/link');
 }
-const serverPattern = (read('api/_lib/glance-tokens.js').match(/TOKEN_RE = \/\^(.+?)\$\//) || [, ''])[1];
-const swiftPattern = (read('apple/GlanceKit/GlanceTokenStore.swift').match(/pattern = "\^(.+?)\$"/) || [, ''])[1];
+const serverPattern = (read('api/_lib/glance-tokens.js').match(/TOKEN_RE = \/\^(.+?)\$\//)?.[1] ?? '');
+const swiftPattern = (read('apple/GlanceKit/GlanceTokenStore.swift').match(/pattern = "\^(.+?)\$"/)?.[1] ?? '');
 if (!serverPattern || serverPattern !== swiftPattern) {
 	fail(`the token shape differs: server /${serverPattern}/ against Swift /${swiftPattern}/`);
 }

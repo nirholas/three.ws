@@ -560,9 +560,10 @@ function fallbackLimiter(name, opts) {
 	};
 }
 
-// Preset limiters. Tune once viral traffic shape is known.
 // The free 3D Studio's buckets, exported so its denials can name the limit a
-// caller hit (api/_mcp-studio/handler.js) from the same numbers that enforce it.
+// caller hit (api/_mcp-studio/handler.js) from the same numbers that enforce
+// it below (limits.studioIp / studioGenBurst / studioGenHourly /
+// studioGenPoolHourly / studioInstallCreate / studioGenerateGlobal).
 export const STUDIO_LIMITS = Object.freeze({
 	genBurst: { limit: 4, window: '1 m' },
 	genHourly: { limit: 30, window: '1 h' },
@@ -572,6 +573,7 @@ export const STUDIO_LIMITS = Object.freeze({
 	installMint: { limit: 10, window: '1 h' },
 });
 
+// Preset limiters. Tune once viral traffic shape is known.
 export const limits = {
 	// One-click "Surprise me" avatar composition. Each call composes a rigged GLB
 	// (~1s CPU + a few base-body fetches), so the ceiling stops a script from
@@ -650,8 +652,32 @@ export const limits = {
 	// code; anything faster is answered `slow_down` by the handler first.
 	cliLinkIp: (ip) =>
 		getLimiter('cli:link:ip', { limit: 20, window: '10 m', critical: true, degradeToMemory: true }).limit(ip),
+	// iOS app to Safari session handoff (api/auth/handoff.js). Minting is one
+	// tap on a payment, launch or trade surface, so 30 per 10 min per user is
+	// far above a real person and keeps a hijacked WebView from filling the
+	// table with live codes.
+	sessionHandoffUser: (userId) =>
+		getLimiter('auth:handoff:user', { limit: 30, window: '10 m', critical: true, degradeToMemory: true }).limit(userId),
 	cliPoll: (deviceHash) =>
 		getLimiter('cli:poll', { limit: 240, window: '10 m', local: true }).limit(deviceHash),
+	// Account linking (api/auth/telegram, api/auth/link-codes, api/auth/external-wallet).
+	// A magic link or a link code is one tap per device; 20 per 10 min per IP
+	// covers a flaky phone retrying and stops a script from filling the table.
+	// Polls are keyed on the request id and clear one every two seconds for
+	// the ten-minute life of a token. Claims from the device side are per IP.
+	// Wallet proofs are per user: a nonce burns on use, so retries are rare.
+	telegramMagicIp: (ip) =>
+		getLimiter('tg:magic:ip', { limit: 20, window: '10 m', critical: true, degradeToMemory: true }).limit(ip),
+	telegramMagicPoll: (id) =>
+		getLimiter('tg:magic:poll', { limit: 300, window: '10 m', local: true }).limit(id),
+	linkCodeUser: (userId) =>
+		getLimiter('link:code:user', { limit: 20, window: '10 m', critical: true, degradeToMemory: true }).limit(userId),
+	linkCodeClaimIp: (ip) =>
+		getLimiter('link:code:claim:ip', { limit: 20, window: '10 m', critical: true, degradeToMemory: true }).limit(ip),
+	linkCodePoll: (id) =>
+		getLimiter('link:code:poll', { limit: 300, window: '10 m', local: true }).limit(id),
+	externalWalletUser: (userId) =>
+		getLimiter('wallet:external', { limit: 20, window: '10 m', critical: true, degradeToMemory: true }).limit(userId),
 	// Open inference network (api/nodes/*). Node registration is an idempotent
 	// upsert an operator runs once per boot, so it gets a tight per-IP ceiling.
 	// The poll loop and result submission are the node's steady-state traffic:
@@ -724,6 +750,9 @@ export const limits = {
 	// Strategy backtest (api/sniper/backtest.js) is a read-only replay over captured
 	// history; cached by strategy hash, so this only gates cache-miss origin work.
 	sniperBacktestIp: (ip) => getLimiter('sniper:backtest:ip', { limit: 40, window: '5 m' }).limit(ip),
+	// Strategy Lab live match preview (api/strategies.js preview). Fires on slider
+	// changes (debounced client side) and replays a cached history window in memory.
+	strategyPreviewIp: (ip) => getLimiter('strategy:preview:ip', { limit: 120, window: '5 m', local: true }).limit(ip),
 	// pump.fun coin metadata upload (name/symbol/image → R2 JSON). Cheap and
 	// idempotent, so it gets its own bucket instead of draining the strict
 	// `authIp` budget shared by on-chain buy/sell/launch actions. Iterating in
@@ -856,6 +885,13 @@ export const limits = {
 	// distinct override gets its own isolated bucket under the rl:api:ip prefix.
 	apiIp: (ip, opts = {}) =>
 		getLimiter('api:ip', { limit: 120, window: '1 m', ...opts }).limit(ip),
+	// The Crawl (api/crawl/[action].js). Frames are fetched once per step per tile
+	// by every viewer of /crawl, so that bucket stays in per-instance memory rather
+	// than spending a Redis command per JPEG; it guards against floods, not spend.
+	// Reads are the stats/crawlers/pages/live lane; missions are the owner write.
+	crawlFrameIp: (ip) => getLimiter('crawl:frame:ip', { limit: 900, window: '1 m', local: true }).limit(ip),
+	crawlReadIp: (ip) => getLimiter('crawl:read:ip', { limit: 240, window: '1 m', local: true }).limit(ip),
+	crawlMissionIp: (ip) => getLimiter('crawl:mission:ip', { limit: 30, window: '10 m' }).limit(ip),
 	// Free, unauthenticated 3D Studio (api/mcp-studio.js) abuse protection. Every
 	// studio tool routes through a FREE lane (NVIDIA NIM text→3D, HF Spaces
 	// image→3D) — zero marginal vendor cost — because the studio never names the
@@ -872,27 +908,26 @@ export const limits = {
 	// denial of a free feature for no spend saved. Spend is still protected in
 	// depth: /api/forge underneath fail-CLOSES its own paid-lane global breaker
 	// (mcp3dGenerateGlobal), so even a misrouted paid call can't drain budget.
-	studioGenBurst: (ip) => getLimiter('studio:gen:burst', STUDIO_LIMITS.genBurst).limit(ip),
-	studioGenHourly: (ip) => getLimiter('studio:gen:hourly', STUDIO_LIMITS.genHourly).limit(ip),
+	studioGenBurst: (ip) =>
+		getLimiter('studio:gen:burst', { limit: 4, window: '1 m' }).limit(ip),
+	studioGenHourly: (ip) =>
+		getLimiter('studio:gen:hourly', { limit: 30, window: '1 h' }).limit(ip),
 	// Ceiling on one source IP when the burst/hourly caps above are keyed per
 	// ChatGPT user (openai/subject) instead of per IP. Every ChatGPT user reaches
 	// us from OpenAI's shared egress pool, so a per-IP 30/h would ration the whole
 	// directory as one caller; the subject is client-supplied, so this pool cap is
 	// what stops a forged subject per call from escaping the limits entirely.
-	// Install-token callers (api/_mcp-studio/install-token.js) ride this pool too.
 	studioGenPoolHourly: (ip) =>
-		getLimiter('studio:gen:pool:hourly', STUDIO_LIMITS.genPoolHourly).limit(ip),
+		getLimiter('studio:gen:pool:hourly', { limit: 300, window: '1 h' }).limit(ip),
+	// Minting a free install token (POST /api/mcp-studio/install): one tiny insert,
+	// but unbounded minting would let one caller escape every per-caller cap, so it
+	// is capped per IP. Tokens still share studioGenPoolHourly per IP.
+	studioInstallCreate: (ip) =>
+		getLimiter('studio:install:create', { limit: 10, window: '1 h' }).limit(ip),
 	// Cheap per-IP cap on studio transport/discovery (initialize, tools/list,
 	// ping, resources). Bounds discovery floods without touching the generation
 	// budget. Non-critical: a missing-Redis misconfig degrades gracefully.
-	studioIp: (ip) => getLimiter('studio:ip', STUDIO_LIMITS.transport).limit(ip),
-	// Minting a free-studio install token (POST /api/mcp-studio/install). Each
-	// token is one more caller-sized generation budget, so minting is what bounds
-	// how many budgets one source can hold. Ten an hour covers a person setting up
-	// several agents; the page caches its token so a revisit never mints again.
-	// Non-critical like the caps it feeds: the per-IP pool and the global breaker
-	// still bound what any number of tokens can generate.
-	studioInstallMint: (ip) => getLimiter('studio:install:mint', STUDIO_LIMITS.installMint).limit(ip),
+	studioIp: (ip) => getLimiter('studio:ip', { limit: 300, window: '1 m' }).limit(ip),
 	// Free-studio persona writes (create_agent_persona / persona_say): each fetches
 	// or restores a bounded GLB and writes a small identity record — cheap, but not
 	// free, so a per-IP burst cap stops a scripted flood from filling storage. The
@@ -935,6 +970,11 @@ export const limits = {
 	// Per-call x402 payments skip it: each of those already covered its own cost.
 	mcpMint3dUnpaidMainnet: (key) =>
 		getLimiter('mcp:mint3d:unpaid:mainnet', { limit: 5, window: '1 d', critical: true }).limit(key),
+	// Web domains. Every uncached search or check is a metered Cloud Domains
+	// request (300 a day per project), so a caller gets a small hourly budget and
+	// a registration attempt, which spends credits, a smaller one.
+	domainsLookup: (key) => getLimiter('domains:lookup', { limit: 40, window: '1 h' }).limit(key),
+	domainsRegister: (key) => getLimiter('domains:register', { limit: 10, window: '1 h', critical: true }).limit(key),
 	mcpMint3dUnpaidDevnet: (key) =>
 		getLimiter('mcp:mint3d:unpaid:devnet', { limit: 30, window: '1 h', critical: true }).limit(key),
 	// 3D Studio MCP. Generation submits a real GPU job on Replicate (text→image
@@ -1020,7 +1060,10 @@ export const limits = {
 	// breaker only backstops. (studioIp / studioGenBurst / studioGenHourly are
 	// defined above next to the other mcp buckets.)
 	studioGenerateGlobal: () =>
-		getLimiter('studio:generate:global', STUDIO_LIMITS.genGlobal).limit('global'),
+		getLimiter('studio:generate:global', {
+			limit: FORGE_PAID_GLOBAL_HOURLY,
+			window: '1 h',
+		}).limit('global'),
 	// Forge prompt enhancer — one free-tier LLM rewrite per call. Cheap text
 	// completion, but each one hits an upstream provider, so cap per principal to
 	// keep that egress bounded. Non-critical: a Redis outage must never block a
@@ -1092,6 +1135,37 @@ export const limits = {
 			window: '1 h',
 			critical: true,
 		}).limit('global'),
+	// CAD Forge (api/cad): a design is up to four LLM completions (write plus
+	// repair rounds) and as many sandboxed kernel builds on workers/cad-forge, so
+	// it is the heaviest anonymous action here and capped like the diorama
+	// composer: per IP plus a global hourly breaker, critical so a Redis outage
+	// fails closed. Rebuilds (slider moves on an existing design) skip the LLM and
+	// cost one build, so they get a looser bucket of their own.
+	cadForgeIp: (ip) =>
+		getLimiter('cad:forge:ip', { limit: 12, window: '10 m', critical: true }).limit(ip),
+	cadForgeGlobal: () =>
+		getLimiter('cad:forge:global', {
+			limit: Math.max(60, Number(process.env.CAD_FORGE_GLOBAL_HOURLY) || 400),
+			window: '1 h',
+			critical: true,
+		}).limit('global'),
+	cadRebuildIp: (ip) =>
+		getLimiter('cad:rebuild:ip', { limit: 90, window: '10 m', critical: true }).limit(ip),
+	// Anatomy (api/anatomy): one generation streams up to two long Claude
+	// completions (write plus one repair), so it is capped per IP with a global
+	// hourly breaker, critical so a Redis outage fails closed. Publishing a spec
+	// an agent wrote itself costs no model call, only a row, so it gets a looser
+	// bucket of its own.
+	anatomyIp: (ip) =>
+		getLimiter('anatomy:ip', { limit: 12, window: '10 m', critical: true }).limit(ip),
+	anatomyGlobal: () =>
+		getLimiter('anatomy:global', {
+			limit: Math.max(60, Number(process.env.ANATOMY_GLOBAL_HOURLY) || 400),
+			window: '1 h',
+			critical: true,
+		}).limit('global'),
+	anatomyPublishIp: (ip) =>
+		getLimiter('anatomy:publish:ip', { limit: 60, window: '10 m', critical: true }).limit(ip),
 	// Portal (api/portal): fetches a caller-supplied website once and builds a
 	// walkable world from it. The spend is other people's bandwidth rather than
 	// ours, which is exactly why it is capped: a build is one origin request plus
@@ -1500,6 +1574,16 @@ export const limits = {
 		// (which caching can't stop). One bucket across all DAS endpoints.
 		heliusDasGlobal: () =>
 			getLimiter('helius-das:global', { limit: 3000, window: '1 h' }).limit('global'),
+		// Per-IP share of that ceiling for /api/crypto/holders, whose keyed walk is
+		// up to five DAS pages. Without it one scraper (3,500 reads/h from a single
+		// IP, 2026-10-10) spent the whole Helius plan; past it the caller still gets
+		// a real answer from the keyless lane.
+		cryptoHoldersHeliusIp: (ip) =>
+			getLimiter('crypto-holders:helius:ip', { limit: 30, window: '1 h' }).limit(ip),
+		// The holders read costs three RPC calls even on the keyless lane, against
+		// free nodes the whole platform shares, so it gets a tighter per-IP burst
+		// than the family's 60/min.
+		cryptoHoldersIp: (ip) => getLimiter('crypto-holders:ip', { limit: 20, window: '1 m' }).limit(ip),
 	// Free Crypto Data API family (api/crypto/*). Keyless, no-account reads an agent
 	// makes mid-task (wallet portfolio, token snapshots). Some paths fan out to the
 	// keyed Helius/public-RPC upstreams, so a generous-but-bounded per-IP burst keeps
@@ -1565,6 +1649,10 @@ export const limits = {
 	previewAgent: (agentId) =>
 		getLimiter('preview:agent', { limit: 200, window: '1 h' }).limit(agentId),
 	widgetWrite: (userId) => getLimiter('widget:write', { limit: 60, window: '1 m' }).limit(userId),
+	// Specialist teams: creating/editing a team provisions agents (write), and a
+	// role run fans out to RPC, the intel store and the trade engine (run).
+	teamWrite: (userId) => getLimiter('team:write', { limit: 20, window: '1 h' }).limit(userId),
+	teamRun: (userId) => getLimiter('team:run', { limit: 60, window: '10 m' }).limit(userId),
 	// local: embedded-widget read fetch — flood protection only, no side effects.
 	// Widgets on third-party pages poll continuously, so a Redis command per read
 	// at 600/min is pure burn; a per-instance cap bounds throughput just as well.
@@ -1657,6 +1745,13 @@ export const limits = {
 	// individual capability handlers add their own tighter ceilings on top when
 	// they fan out to a metered upstream (e.g. the shared aixbt key).
 	apiV1: (key) => getLimiter('api:v1', { limit: 120, window: '1 m' }).limit(key),
+	// Event Markets writes (picks, withdrawals, admin edits). A forecaster changes
+	// a pick a handful of times before lock; 30 per 5 minutes per account and 60
+	// per IP stop a script without touching a person reconsidering.
+	eventMarketWriteUser: (userId) =>
+		getLimiter('event-markets:write:user', { limit: 30, window: '5 m', critical: true }).limit(userId),
+	eventMarketWriteIp: (ip) =>
+		getLimiter('event-markets:write:ip', { limit: 60, window: '5 m', critical: true }).limit(ip),
 	// Auth-critical (see authIp/registerIp above): brute-forcing verification
 	// codes / spamming reset+verify emails must fail closed when Redis is down.
 	verifyEmailIp: (ip) =>
@@ -2090,6 +2185,13 @@ export const limits = {
 	// stopping a script from using the analyzer as a free mesh-processing service.
 	printQuoteIp: (ip) =>
 		getLimiter('print:quote:ip', { limit: 90, window: '5 m', local: true }).limit(ip),
+	// Slicer handoff file (api/slicer/model.js). A miss downloads the creation's
+	// GLB and writes an STL or 3MF, so it is CPU-bound like the quote analyzer;
+	// hits are served from the converted-file cache and the CDN and never reach
+	// this bucket. Sized for someone opening a few models in OrcaSlicer, re-sizing
+	// them, and downloading the fallback file, not for bulk conversion.
+	slicerFileIp: (ip) =>
+		getLimiter('slicer:file:ip', { limit: 30, window: '5 m', local: true }).limit(ip),
 	// Materialize checkout (api/print/orders.js and its confirm step). Both are
 	// session-gated and CSRF-gated already, so this is not the security boundary;
 	// it caps how often one IP can open orders or poll the chain for a payment.
@@ -2219,6 +2321,39 @@ export const limits = {
 	// (the June 2026 Upstash quota outage), and a per-instance count can only
 	// ever be more generous than the published number, never stricter.
 	planApi: (planId, key, { limit, windowSeconds }) => planWindowLimit(`${planId}\u0000${key}`, limit, windowSeconds * 1000),
+	// Approval inbox (api/approvals/*): list, read, decide. Generous because an
+	// owner clearing a backlog taps fast; it exists so a stuck client loop cannot
+	// hammer the decide path. Local: a decision is already idempotent in the DB.
+	approvalsUser: (userId) => getLimiter('approvals:user', { limit: 240, window: '5 m', local: true }).limit(userId),
+	// Destination allowlist (api/wallet-whitelist). Reads and edits per user, a tight
+	// lane for step-up attempts (password / code guessing), and a per-IP lane for the
+	// unauthenticated signed cancel link.
+	whitelistUser: (userId) => getLimiter('whitelist:user', { limit: 120, window: '5 m' }).limit(userId),
+	whitelistStepUp: (userId) => getLimiter('whitelist:stepup', { limit: 10, window: '10 m' }).limit(userId),
+	whitelistCancelIp: (ip) => getLimiter('whitelist:cancel-ip', { limit: 30, window: '10 m' }).limit(ip),
+	// Agent self-signup (api/v1/agents/signup.js). Creating an account mints
+	// wallets, so both lanes are tight and fail closed when Redis is down: a
+	// per-IP lane against one host spraying keys, and a per-public-key lane
+	// against one key hammering a signature it cannot get right.
+	agentSignupIp: (ip) => getLimiter('agent-signup:ip', { limit: 5, window: '1 h', critical: true }).limit(ip),
+	agentSignupKey: (publicKey) => getLimiter('agent-signup:key', { limit: 10, window: '1 h', critical: true }).limit(publicKey),
+	// Agent commerce (api/agent-commerce/[...route].js). The public invoice page
+	// and its verify button reach the chain, so they are capped per IP; owner
+	// writes per user; an approval decision checks a password or a signature, so
+	// it fails closed and stays tight against guessing.
+	commercePublic: (ip) => getLimiter('commerce:public', { limit: 120, window: '1 m' }).limit(ip),
+	commerceVerify: (ip) => getLimiter('commerce:verify', { limit: 20, window: '1 m' }).limit(ip),
+	commerceOwner: (userId) => getLimiter('commerce:owner', { limit: 120, window: '1 m' }).limit(userId),
+	commerceDecide: (userId) => getLimiter('commerce:decide', { limit: 10, window: '10 m', critical: true }).limit(userId),
+	// External skill import (api/skill-imports.js). Browse is served from a
+	// five-minute index cache; a scan or update check fetches upstream bytes and
+	// runs the Guardian pass, so those are capped per owner.
+	skillImportBrowseIp: (ip) => getLimiter('skill-import:browse:ip', { limit: 120, window: '5 m', local: true }).limit(ip),
+	skillImportScanUser: (userId) => getLimiter('skill-import:scan:user', { limit: 40, window: '10 m' }).limit(userId),
+	// Developer plan burst ceiling (api/_lib/dev-plans/quota.js). One sliding
+	// minute per account; the limit comes from the plan config, so each plan
+	// gets its own bucket name and the memo in getLimiter keys on the limit too.
+	devPlanBurst: (planId, key, { limit }) => getLimiter(`devplan:burst:${planId}`, { limit, window: '1 m' }).limit(key),
 };
 
 // Fixed-window counters for limits.planApi. One small record per principal, so

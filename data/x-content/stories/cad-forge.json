@@ -1,0 +1,295 @@
+{
+	"id": "cad-forge",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "community",
+	"pattern": "number",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": [
+		"/cad",
+		"/docs/cad-forge",
+		"workers/cad-forge"
+	],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{
+				"goto": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+				"settle": 7000,
+				"caption": "One sentence in. Real CAD out."
+			},
+			{
+				"read": "size",
+				"match": "([\\d.]+ × [\\d.]+ × [\\d.]+ mm)"
+			},
+			{
+				"read": "topology",
+				"match": "(\\d+ solid · \\d+ faces · \\d+ edges)"
+			},
+			{
+				"hold": 1800
+			},
+			{
+				"drag": [
+					[
+						0.3,
+						0.45
+					],
+					[
+						0.62,
+						0.45
+					]
+				],
+				"ms": 2200,
+				"caption": "Callouts read the kernel's extents"
+			},
+			{
+				"hold": 1200
+			},
+			{
+				"click": "Drawing",
+				"caption": "A drawing sheet comes with it"
+			},
+			{
+				"hold": 2200
+			},
+			{
+				"scroll": "Dimensions",
+				"ms": 900,
+				"caption": "Every key size is a slider"
+			},
+			{
+				"hold": 1500
+			},
+			{
+				"scroll": "Files",
+				"ms": 900,
+				"caption": "STEP, STL, GLB, drawing, Python"
+			},
+			{
+				"hold": 2600
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		},
+		{
+			"type": "api",
+			"name": "CAD Forge answers as available on the deployment",
+			"url": "https://three.ws/api/cad?list=recent",
+			"expect": {
+				"status": 200,
+				"json": {
+					"path": "available",
+					"equals": true
+				}
+			}
+		},
+		{
+			"type": "api",
+			"name": "the design the post measures still holds 23 faces",
+			"url": "https://three.ws/api/cad?id=26cf0ca4-c0a4-4454-a689-7871ca77633c",
+			"expect": {
+				"status": 200,
+				"json": {
+					"path": "design.metrics.faces",
+					"equals": 23
+				}
+			}
+		},
+		{
+			"type": "api",
+			"name": "the kernel's validity check on that design is true",
+			"url": "https://three.ws/api/cad?id=26cf0ca4-c0a4-4454-a689-7871ca77633c",
+			"expect": {
+				"json": {
+					"path": "design.metrics.valid",
+					"equals": true
+				}
+			}
+		}
+	],
+	"posts": [
+		{
+			"text": "75 by 19 by 90 mm, 1 solid, 23 faces, 66 edges, kernel check passed.\n\nThat is a wall-mounted phone holder, built from one sentence on CAD Forge, live now at three.ws/cad. Not a mesh guess: a parametric build123d program the OpenCascade kernel has accepted, with every key size as a slider and STEP, STL, GLB, a drawing sheet and the Python program itself to download.",
+			"media": [
+				{
+					"path": "public/x-media/cad-forge/reel.mp4",
+					"probe": {
+						"durationSec": 14.6,
+						"width": 1080,
+						"height": 1080,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "When the kernel rejects a program, its real error (kind, message, failing line) goes back to the writer, which rewrites it, up to three times. Nothing is shown until the kernel has accepted it. Moving a slider rebuilds the same program with only that value changed, on the kernel, with no model involved. Standard parts come from bd_warehouse: involute spur gears, ISO threads, nuts, cap screws, washers and ball bearings. The Python runs anywhere after pip install build123d bd_warehouse."
+		}
+	],
+	"claims": [
+		{
+			"says": "75 by 19 by 90 mm",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "size",
+					"equals": "75.0 × 19.0 × 90.0 mm"
+				}
+			]
+		},
+		{
+			"says": "1 solid, 23 faces, 66 edges",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "topology",
+					"equals": "1 solid · 23 faces · 66 edges"
+				}
+			]
+		},
+		{
+			"says": "kernel check passed",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+					"contains": "Kernel check"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+					"contains": "Valid B-rep"
+				}
+			]
+		},
+		{
+			"says": "built from one sentence",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+					"contains": "Wall-mounted phone holder with two countersunk screw holes"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/cad-forge",
+					"contains": "Describe a mechanical part in a sentence"
+				}
+			]
+		},
+		{
+			"says": "live now at three.ws/cad",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/cad",
+					"contains": "Describe a part. Get real CAD."
+				}
+			]
+		},
+		{
+			"says": "Not a mesh guess: a parametric build123d program the OpenCascade kernel has accepted",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/cad",
+					"contains": "Not a mesh guess: a parametric build123d program that the OpenCascade kernel has accepted"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/cad",
+					"contains": "Every part is built on OpenCascade before you see it."
+				}
+			]
+		},
+		{
+			"says": "every key size as a slider",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/cad",
+					"contains": "Key dimensions become sliders."
+				}
+			]
+		},
+		{
+			"says": "STEP, STL, GLB, a drawing sheet and the Python program itself to download",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/cad",
+					"contains": "Download STEP, STL, GLB, a drawing sheet, and the Python program itself."
+				}
+			]
+		},
+		{
+			"says": "its real error (kind, message, failing line) goes back to the writer, which rewrites it, up to three times",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/cad-forge",
+					"contains": "the real error (kind, message, failing line) goes back to the model, which rewrites it"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/cad-forge",
+					"contains": "This repeats up to three times."
+				}
+			]
+		},
+		{
+			"says": "Nothing is shown until the kernel has accepted it",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/cad-forge",
+					"contains": "Nothing is shown to you until the kernel has accepted it."
+				}
+			]
+		},
+		{
+			"says": "Moving a slider rebuilds the same program with only that value changed, on the kernel, with no model involved",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/cad-forge",
+					"contains": "rebuilds the same program with only that value changed, on the kernel, with no model involved"
+				}
+			]
+		},
+		{
+			"says": "Standard parts come from bd_warehouse: involute spur gears, ISO threads, nuts, cap screws, washers and ball bearings",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/cad-forge",
+					"contains": "involute spur gears, ISO threads, ISO 4032 nuts, ISO 4762 cap screws, washers and deep-groove ball bearings"
+				}
+			]
+		},
+		{
+			"says": "The Python runs anywhere after pip install build123d bd_warehouse",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/cad-forge",
+					"contains": "pip install build123d bd_warehouse"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+					"contains": "Runs anywhere with pip install build123d bd_warehouse"
+				}
+			]
+		}
+	],
+	"mentions": {}
+}

@@ -212,6 +212,103 @@ export function sendForgeCompleteEmail({ to, prompt, creationPath, previewImageU
 	return sendEmail({ to, ...renderForgeComplete({ prompt, creationPath, previewImageUrl }) });
 }
 
+// Event Markets: sent once to an entrant (with a verified address and the email
+// channel left on) when a market they are an outcome of opens.
+export function renderEventMarketEntrant({ title, outcomeLabel, probability, evenPrior, kitUrl }) {
+	const pct = `${Math.round(probability * 100)}%`;
+	const standing = evenPrior
+		? 'No one has picked yet, so the market starts as an even split.'
+		: `The crowd currently gives ${outcomeLabel} ${pct}.`;
+	return {
+		subject: `You're in a market: ${title}`,
+		html: layout("You're in a market", `
+    <p class="brand">three.ws</p>
+    <h1>You're in a market</h1>
+    <p><strong>${esc(outcomeLabel)}</strong> is an entrant in <strong>${esc(title)}</strong>. Anyone on three.ws can call who wins it. ${esc(standing)}</p>
+    <p>Your kit has a share card, ready-made post text, your link and live stats. Tell your followers to call it.</p>
+    <a class="btn" href="${esc(kitUrl)}">Open your kit</a>
+    <hr>
+    <p class="muted">Free to play: picks are points with no cash value. Turn these emails off in your <a href="${APP_URL}/settings/" style="color:#6a5cff">notification preferences</a>, or opt out of being featured in markets there.</p>
+  `),
+		text: `You're in a market: ${title}\n\n${outcomeLabel} is an entrant. ${standing}\n\nOpen your kit: ${kitUrl}\n\nManage notifications: ${APP_URL}/settings/`,
+	};
+}
+
+export function sendEventMarketEntrantEmail({ to, ...rest }) {
+	return sendEmail({ to, ...renderEventMarketEntrant(rest) });
+}
+
+// Approval inbox fallback (api/_lib/approvals.js): sent only when no push device
+// or paired chat reached the owner. Carries the full confirmation table so the
+// owner sees exactly what they would approve, and a signed deep link to it. The
+// email never approves anything itself: the decision happens on the page.
+export function renderApprovalRequest({ agentName, summary, table, riskNotes = [], link, expiresAt }) {
+	const url = `${APP_URL}${link}`;
+	const who = agentName || 'Your agent';
+	const until = new Date(expiresAt).toUTCString();
+	const rows = (table || []).map((r) => `<tr><td style="padding:6px 12px 6px 0;color:#9a9ab0;white-space:nowrap">${esc(r.label)}</td><td style="padding:6px 0;font-family:ui-monospace,Menlo,monospace;word-break:break-all">${esc(r.full && r.full !== r.value ? `${r.value}: ${r.full}` : r.value)}</td></tr>`).join('');
+	const notes = riskNotes.length ? `<ul style="padding-left:18px;margin:0 0 16px">${riskNotes.map((n) => `<li style="margin:4px 0">${esc(n)}</li>`).join('')}</ul>` : '';
+	return {
+		subject: `Approval needed: ${summary.length > 80 ? `${summary.slice(0, 77)}...` : summary}`,
+		html: layout('Approval needed', `
+    <p class="brand">three.ws</p>
+    <h1>${esc(who)} is waiting for your approval</h1>
+    <p>${esc(summary)}</p>
+    <table style="border-collapse:collapse;margin:0 0 16px;font-size:14px">${rows}</table>
+    ${notes}
+    <a class="btn" href="${esc(url)}">Review and decide</a>
+    <p class="muted">Nothing happens unless you approve. This request expires ${esc(until)}; after that it can never execute.</p>
+    <hr>
+    <p class="muted">You're getting this email because no push device or paired chat reached you. Turn on push at <a href="${APP_URL}/approvals" style="color:#6a5cff">three.ws/approvals</a> to approve in one tap.</p>
+  `),
+		text: `${who} is waiting for your approval\n\n${summary}\n\n${(table || []).map((r) => `${r.label}: ${r.full || r.value}`).join('\n')}\n${riskNotes.length ? `\n${riskNotes.map((n) => `- ${n}`).join('\n')}\n` : ''}\nReview and decide: ${url}\n\nNothing happens unless you approve. Expires ${until}.`,
+	};
+}
+
+// Destination-allowlist alert. Sent beside the in-app, push, Telegram and Discord
+// notices so an owner who is away from their phone still sees a new payout
+// address arrive. The cancel link works without a session so one tap stops it.
+export function renderWhitelistNotice({ headline, agentName, entry = null, detail = '', cancelUrl = null, link }) {
+	const who = agentName || 'Your agent';
+	const rows = entry
+		? [['Address', entry.address], ['Chain', entry.chain], ['Label', entry.label], ['Available', entry.activates_at ? new Date(entry.activates_at).toUTCString() : null]].filter((r) => r[1])
+		: [];
+	const table = rows.map(([k, v]) => `<tr><td style="padding:6px 12px 6px 0;color:#9a9ab0;white-space:nowrap">${esc(k)}</td><td style="padding:6px 0;font-family:ui-monospace,Menlo,monospace;word-break:break-all">${esc(v)}</td></tr>`).join('');
+	const cancel = cancelUrl ? `<a class="btn" href="${esc(cancelUrl)}">Cancel this address</a>` : '';
+	return {
+		subject: `${headline}: ${who}`,
+		html: layout('Wallet allowlist', `
+    <p class="brand">three.ws</p>
+    <h1>${esc(headline)}</h1>
+    <p>${esc(who)}${detail ? `: ${esc(detail)}` : ''}</p>
+    ${table ? `<table style="border-collapse:collapse;margin:0 0 16px;font-size:14px">${table}</table>` : ''}
+    ${cancel}
+    <p><a href="${esc(link)}" style="color:#6a5cff">Review the allowlist</a></p>
+    <p class="muted">If you did not make this change, cancel it now and freeze the wallet from the allowlist page.</p>
+  `),
+		text: `${headline}\n\n${who}${detail ? `: ${detail}` : ''}\n${rows.map(([k, v]) => `${k}: ${v}`).join('\n')}\n${cancelUrl ? `\nCancel this address: ${cancelUrl}\n` : ''}\nReview the allowlist: ${link}\n\nIf you did not make this change, cancel it now and freeze the wallet.`,
+	};
+}
+
+// One-time code that re-authenticates the owner for a single allowlist change.
+export function renderStepUpCode({ code, expiresInMinutes = 10 }) {
+	return {
+		subject: `Your three.ws confirmation code: ${code}`,
+		html: layout('Confirmation code', `
+    <p class="brand">three.ws</p>
+    <h1>Confirm your allowlist change</h1>
+    <p style="font-size:28px;letter-spacing:6px;font-family:ui-monospace,Menlo,monospace;margin:16px 0">${esc(code)}</p>
+    <p>Enter this code in the wallet allowlist page. It works once and expires in ${esc(expiresInMinutes)} minutes.</p>
+    <p class="muted">Nobody from three.ws will ever ask for this code. If you did not request it, ignore this email and consider changing your password.</p>
+  `),
+		text: `Your three.ws confirmation code: ${code}\n\nIt works once and expires in ${expiresInMinutes} minutes. Nobody from three.ws will ask for it. If you did not request it, ignore this email.`,
+	};
+}
+
+export function sendApprovalRequestEmail({ to, ...rest }) {
+	return sendEmail({ to, ...renderApprovalRequest(rest) });
+}
+
 // Double opt-in newsletter confirmation. Minimal localization (prompt 38) so a
 // subscriber confirms in their own language; unknown locales fall back to en.
 const NEWSLETTER_I18N = {

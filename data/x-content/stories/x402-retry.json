@@ -1,0 +1,93 @@
+{
+	"id": "x402-retry",
+	"status": "draft",
+	"kind": "post",
+	"tier": 3,
+	"lane": "developer",
+	"pattern": "correction",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": ["/docs/x402", "/api/x402"],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{ "goto": "https://three.ws/docs/x402#a-paid-call-that-fails-never-asks-the-buyer-to-pay-twice", "settle": 5000 },
+			{ "hold": 2600, "caption": "Work runs before settlement" },
+			{ "scroll": 380, "ms": 1800 },
+			{ "read": "paid", "match": "\"paid\":\\s*(true)" },
+			{ "read": "retrySafe", "match": "\"retry_safe\":\\s*(true)" },
+			{ "read": "retriesLeft", "match": "\"retries_left\":\\s*(\\d+)" },
+			{ "hold": 2600, "caption": "paid: true, retry_safe: true" },
+			{ "scroll": 420, "ms": 1800 },
+			{ "hold": 2600, "caption": "Resend the same header, get the result" },
+			{ "scroll": 300, "ms": 1500 },
+			{ "hold": 2800, "caption": "A finished call replays as 409, not twice" }
+		]
+	},
+	"probes": [{ "type": "scenario" }],
+	"posts": [
+		{
+			"text": "A paid x402 call on three.ws/docs/x402 that fails after settlement no longer asks the buyer to pay again. The response carries paid: true and retry_safe: true; repeat the exact request with the same X-PAYMENT header and the server skips verify and settle, re-runs the work and answers with the original x-payment-response header. 3 retries inside 24 hours by default; after that the route answers 409 payment_retries_exhausted and the settlement transaction, which landed on @solana, is in the body for support.",
+			"media": "reel"
+		},
+		{
+			"text": "Routes under /api/x402/* run the work before settling, so a handler that fails charges nothing. A call that completed is different: replaying its proof answers 409 payment_replayed, and buying the result again needs a new payment."
+		}
+	],
+	"claims": [
+		{
+			"says": "no longer asks the buyer to pay again",
+			"evidence": [
+				{ "type": "page", "url": "https://three.ws/docs/x402", "contains": "A paid call that fails never asks the buyer to pay twice" },
+				{ "type": "page", "url": "https://three.ws/docs/x402", "contains": "paid: true means the settlement transaction landed. Never build a second payment for this request." }
+			]
+		},
+		{
+			"says": "The response carries paid: true and retry_safe: true",
+			"evidence": [
+				{ "type": "proof", "fact": "paid", "equals": "true" },
+				{ "type": "proof", "fact": "retrySafe", "equals": "true" }
+			]
+		},
+		{
+			"says": "repeat the exact request with the same X-PAYMENT header and the server skips verify and settle, re-runs the work and answers with the original x-payment-response header",
+			"evidence": [
+				{ "type": "page", "url": "https://three.ws/docs/x402", "contains": "retry_safe: true: repeat the exact request with the same X-PAYMENT (or PAYMENT-SIGNATURE) header. The server skips verify and settle, re-runs the work, and answers with the original x-payment-response header." }
+			]
+		},
+		{
+			"says": "3 retries inside 24 hours by default",
+			"evidence": [
+				{ "type": "page", "url": "https://three.ws/docs/x402", "contains": "the proof used up its retries (X402_PAID_RETRY_MAX, default 3) or the window closed (X402_PAID_RETRY_WINDOW_SECONDS, default 24 hours)" },
+				{ "type": "proof", "fact": "retriesLeft", "equals": "3" }
+			]
+		},
+		{
+			"says": "after that the route answers 409 payment_retries_exhausted",
+			"evidence": [
+				{ "type": "page", "url": "https://three.ws/docs/x402", "contains": "The next attempt answers 409 payment_retries_exhausted. Contact support with settlement.transaction." }
+			]
+		},
+		{
+			"says": "the settlement transaction, which landed on @solana, is in the body for support",
+			"evidence": [
+				{ "type": "page", "url": "https://three.ws/docs/x402", "contains": "\"settlement\": { \"transaction\": \"5Kd...\", \"network\": \"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d\" }" },
+				{ "type": "page", "url": "https://three.ws/docs/x402", "contains": "Contact support with settlement.transaction." }
+			]
+		},
+		{
+			"says": "Routes under /api/x402/* run the work before settling, so a handler that fails charges nothing",
+			"evidence": [
+				{ "type": "page", "url": "https://three.ws/docs/x402", "contains": "The paid HTTP routes under /api/x402/* run the work before settling, so a handler that fails charges nothing." }
+			]
+		},
+		{
+			"says": "A call that completed is different: replaying its proof answers 409 payment_replayed, and buying the result again needs a new payment",
+			"evidence": [
+				{ "type": "page", "url": "https://three.ws/docs/x402", "contains": "A call that completed is different: replaying its proof answers 409 payment_replayed, and buying the result again needs a new payment." }
+			]
+		}
+	],
+	"mentions": {
+		"@solana": "x402 payments on three.ws settle as a transaction on Solana; the documented settlement network is solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d"
+	}
+}

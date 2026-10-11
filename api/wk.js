@@ -1522,6 +1522,22 @@ const MCP_TOOL_OUTPUT_SUMMARIES = Object.freeze({
 	pose_model: { ok: true, glb_url: 'https://three.ws/cdn/posed.glb', pose: 't-pose' },
 	direct_prompt: { job_id: 'f1.eyJkIjoiZXhhbXBsZSJ9.sig', status: 'queued', poll_url: '/api/forge?job=f1.eyJkIjoiZXhhbXBsZSJ9.sig' },
 	generate_material: { ok: true, material_url: 'https://three.ws/cdn/material.glb' },
+	cad_generate: {
+		id: '0b4b6e61-42aa-424d-8aef-2bddbd9b7abb',
+		title: 'Raspberry Pi 4 Case Base',
+		url: 'https://three.ws/cad/0b4b6e61-42aa-424d-8aef-2bddbd9b7abb',
+		files: { step: 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/cad/0b4b6e61-42aa-424d-8aef-2bddbd9b7abb/part.step', stl: 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/cad/0b4b6e61-42aa-424d-8aef-2bddbd9b7abb/part.stl', glb: 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/cad/0b4b6e61-42aa-424d-8aef-2bddbd9b7abb/part.glb' },
+		metrics: { size_mm: [100, 75, 12], volume_mm3: 21623.8631, solids: 1, valid: true },
+		params: [{ name: 'WIDTH', label: 'Overall width', value: 100, min: 80, max: 120, step: 1, unit: 'mm' }],
+	},
+	cad_rebuild: {
+		id: '0b4b6e61-42aa-424d-8aef-2bddbd9b7abb',
+		key: '1mf1luf',
+		url: 'https://three.ws/cad/0b4b6e61-42aa-424d-8aef-2bddbd9b7abb?v=1mf1luf',
+		values: { WIDTH: 112 },
+		files: { step: 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/cad/0b4b6e61-42aa-424d-8aef-2bddbd9b7abb/v/1mf1luf/part.step', stl: 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/cad/0b4b6e61-42aa-424d-8aef-2bddbd9b7abb/v/1mf1luf/part.stl', glb: 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/cad/0b4b6e61-42aa-424d-8aef-2bddbd9b7abb/v/1mf1luf/part.glb' },
+		cached: false,
+	},
 	search_public_avatars: {
 		count: 2,
 		avatars: [

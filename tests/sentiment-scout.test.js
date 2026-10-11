@@ -8,6 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 
 vi.mock('../api/_lib/db.js', () => ({ sql: () => Promise.resolve([]) }));
 
@@ -149,6 +150,79 @@ describe('x-search client', () => {
 	it('refuses to run without credentials rather than guessing', async () => {
 		expect(xs.xSearchConfigured({})).toBe(false);
 		await expect(xs.searchMintPosts(MINT, { env: {}, fetchImpl: vi.fn() })).rejects.toMatchObject({ reason: 'not_configured' });
+	});
+});
+
+describe('x-search xAI failover rung', () => {
+	const fixture = JSON.parse(readFileSync(new URL('./fixtures/x-search-xai-response.json', import.meta.url), 'utf8'));
+	const jsonRes = (status, body) => ({ status, ok: status >= 200 && status < 300, headers: { get: () => null }, json: async () => body });
+	const unique = () => Date.parse('2026-10-09T00:00:00Z') + Math.floor(Math.random() * 3000) * 86_400_000;
+
+	beforeEach(() => xs._resetXSearch());
+
+	it('keeps only posts the tool cited that quote the mint, as untrusted data', () => {
+		const posts = xs.parseXaiSearchResponse(fixture, { mint: MINT });
+		expect(posts.map((p) => p.id)).toEqual(['1844000000000000001', '1844000000000000002']);
+		expect(posts[0]).toMatchObject({ url: 'https://x.com/alice/status/1844000000000000001', likes: 12, reposts: 3, created_at: '2026-10-08T10:00:00.000Z' });
+		expect(posts[1].author.username).toBe('bob');
+		expect(posts[1].likes).toBe(0);
+		expect(Object.keys(posts[0])).toEqual(Object.keys(xs.parseSearchPayload({ data: [{ id: '1', text: 'x' }] })[0]));
+	});
+
+	it('returns nothing for a body that is not the requested JSON', () => {
+		expect(xs.parseXaiSearchResponse({ output_text: 'sorry, no JSON here' }, { mint: MINT })).toEqual([]);
+		expect(xs.parseXaiSearchResponse({}, { mint: MINT })).toEqual([]);
+	});
+
+	it('builds an x_search request with a strict schema and a clamped date window', () => {
+		const now = Date.parse('2026-10-09T00:00:00Z');
+		const req = xs.buildXaiSearchRequest(MINT, { sinceIso: '2026-09-01T00:00:00Z', now });
+		expect(req.tools).toEqual([{ type: 'x_search', from_date: '2026-10-02' }]);
+		expect(req.text.format).toMatchObject({ type: 'json_schema', strict: true });
+		expect(req.input[1].content).toContain(MINT);
+	});
+
+	it('serves from xAI when the bearer path is unavailable, and reports the rung', async () => {
+		const calls = [];
+		const fetchImpl = vi.fn(async (url, init) => {
+			calls.push({ url, init });
+			return jsonRes(200, fixture);
+		});
+		const out = await xs.searchMintPostsDetailed(MINT, { env: { XAI_API_KEY: 'xai-test' }, fetchImpl, now: unique() });
+		expect(out.rung).toBe('xai');
+		expect(out.posts).toHaveLength(2);
+		expect(calls).toHaveLength(1);
+		expect(calls[0].url).toBe('https://api.x.ai/v1/responses');
+		expect(calls[0].init.headers.authorization).toBe('Bearer xai-test');
+	});
+
+	it('falls over to xAI when the bearer is rate limited, and never calls xAI when the bearer answers', async () => {
+		const now = unique();
+		const bearerLimited = vi.fn(async (url) => (url.includes('api.x.ai') ? jsonRes(200, fixture) : jsonRes(429, {})));
+		const env = { X_BEARER_TOKEN: 'b', XAI_API_KEY: 'xai-test' };
+		expect((await xs.searchMintPostsDetailed(MINT, { env, fetchImpl: bearerLimited, now })).rung).toBe('xai');
+
+		xs._resetXSearch();
+		const bearerOk = vi.fn(async () => jsonRes(200, { data: [] }));
+		expect((await xs.searchMintPostsDetailed(MINT, { env, fetchImpl: bearerOk, now })).rung).toBe('bearer');
+		expect(bearerOk.mock.calls.every(([u]) => !u.includes('api.x.ai'))).toBe(true);
+	});
+
+	it('stops the rung once the daily cap is reached', async () => {
+		const now = unique();
+		const fetchImpl = vi.fn(async () => jsonRes(200, fixture));
+		const env = { XAI_API_KEY: 'xai-test', XAI_X_SEARCH_DAILY_CAP: '2' };
+		await xs.searchMintPostsDetailed(MINT, { env, fetchImpl, now });
+		await xs.searchMintPostsDetailed(MINT, { env, fetchImpl, now });
+		await expect(xs.searchMintPostsDetailed(MINT, { env, fetchImpl, now })).rejects.toMatchObject({ reason: 'xai_daily_cap' });
+		expect(fetchImpl).toHaveBeenCalledTimes(2);
+		expect((await xs.xSearchStats(now)).xai).toBe(2);
+		await expect(xs.searchMintPostsDetailed(MINT, { env: { ...env, XAI_X_SEARCH_DAILY_CAP: '0' }, fetchImpl, now: unique() })).rejects.toMatchObject({ reason: 'xai_daily_cap' });
+	});
+
+	it('surfaces an xAI auth failure as unavailable', async () => {
+		const fetchImpl = vi.fn(async () => jsonRes(401, {}));
+		await expect(xs.searchMintPostsDetailed(MINT, { env: { XAI_API_KEY: 'bad' }, fetchImpl, now: unique() })).rejects.toMatchObject({ reason: 'auth_failed' });
 	});
 });
 

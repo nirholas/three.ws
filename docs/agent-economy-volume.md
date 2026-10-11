@@ -40,7 +40,9 @@ signature on file".
 A hire is also refused outright, before a row is inserted or any spend is
 reserved, when the hiring account has not signed the real-funds agreements: the
 endpoint answers `403 risk_ack_required` and nothing reaches the ledger (see
-[the real-funds agreements](risk-acknowledgment.md)).
+[the real-funds agreements](risk-acknowledgment.md)). The same holds for a bearer
+token that lacks the `wallet:write` scope, which gets `403 insufficient_scope`
+(see [the agent wallet API](agent-wallet-api.md)).
 
 The one place pending work appears is `totals.pending_hires`, a plain count shown
 as the sub-label under "Settled hires". It never enters a money figure.
@@ -104,10 +106,14 @@ canvas on resize and on a theme change.
 
 The alert strip is built from a static translated sentence plus a dynamic detail
 clause in a separate element (`#an-error-detail`). That split is load-bearing:
-`src/i18n.js` rewrites annotated elements after first paint, so anything JS writes
-must live outside an annotated node or the catalog overwrites it. The same rule is
-why the leaderboard and feed counts sit next to their translated headings rather
-than inside them.
+`src/i18n.js` rewrites annotated elements after first paint. Its runtime now
+infers when a page script has rewritten an annotated element and leaves it alone
+(`primeOwnership`, see [i18n.md](i18n.md)), but an element the page wrote also
+stops translating, and a `data-i18n-html` pass still replaces the whole block's
+innerHTML. Keeping the live text in a sibling of the annotated node is what lets
+the static sentence translate while the detail stays live. The same rule is why
+the leaderboard and feed counts sit next to their translated headings rather than
+inside them.
 
 ---
 

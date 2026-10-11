@@ -162,6 +162,78 @@ One behavior worth knowing when using it from /chat: in agent mode the client-si
 registry. Switch back to a plain model for wallet actions, which always go through the
 approval modal and the `/api/agent/guard` preflight.
 
+## Autonomous runs: budgets, receipts and replay
+
+A run is an agent working toward one goal on its own, one checkpointed step at a time, on
+the server. You start one with the `create_agent_run` MCP tool (or an `agent_prompt`
+automation), and it keeps going after the request that started it returns: the
+`/api/cron/agent-automations` job runs every minute and advances every queued, scheduled or
+running run until it finishes. Runs live in `agent_runs` and `agent_run_steps`; the
+engine is [api/_lib/agents-v1/runs.js](../api/_lib/agents-v1/runs.js).
+
+**Two budgets.** Every run has both a step budget and a dollar budget.
+
+- `max_steps` (1 to 60) caps **model turns**. A turn is one model call plus the tool batch it
+  asked for. When the turns run out, the run ends with the best answer it has.
+- `budget_usd` caps paid model spend. `0` keeps the run on free model lanes, so it costs
+  nothing. When the spend reaches the budget, the run stops with status `budget_exhausted`
+  and an error saying how much it spent. You can raise the budget with `update_agent_run` and
+  resume it.
+
+**Cancel takes effect between steps.** The engine checks for a cancel request before every
+step. A queued, scheduled or paused run cancels at once. A running run finishes the step it
+is on, then stops; until then it reports `cancel_requested`. No step is cut off halfway, so
+the step trail is always complete.
+
+**A summary when it ends.** Every finished run, whether completed, failed, cancelled or
+stopped at its budget, gets a plain-language `summary`, for example: "Completed after 2 model
+turns in 4s. Made 1 tool call: token_price. Ran on free model lanes only, with no credit
+spend. Result: The current price of SOL is $109.87 USD."
+
+**Step receipts.** Each step stores a SHA-256 receipt over the previous step's receipt plus
+this step's run id, sequence number, kind, tool, input and output
+([api/_lib/agents-v1/run-receipts.js](../api/_lib/agents-v1/run-receipts.js)). Because each
+receipt includes the one before it, editing, dropping or reordering any step breaks the
+chain at that step. `get_agent_run_steps` and the replay endpoint recompute the chain on
+every full read and return `{ verified, checked, brokenAt }`. They also pair each
+`tool_call` with its `tool_result` (or `tool_blocked`) into a tool trace with the tool name,
+input, output, status (`ok`, `error`, `blocked`, `pending`), latency and the receipt that
+vouches for both halves.
+
+### The Runs tab
+
+On an agent's page, the owner sees a **Runs** tab (`/agents/<id>?view=runs`). It lists the
+agent's runs newest first, with status, goal, model turns used, spend and where each run came
+from (MCP, REST, automation). Selecting a run shows:
+
+- meters for model turns, credits, tool calls (with failures) and timing,
+- the run's summary,
+- the receipt-chain verdict ("Verified" across N steps, or "Broken" at the step that fails),
+- a timeline of every step: model turns with model, tokens, cost and latency; tool calls and
+  results with their input and output; and each step's short receipt hash (click to copy),
+- **Replay**, which steps through the timeline in order, plus a scrubber to jump to any step.
+
+While a run is live the tab polls for new steps every 2.5 seconds (paused while the tab is
+hidden) and offers **Cancel run**. The selected run stays in the URL (`&run=<id>`), so the
+`replay_url` from `create_agent_run` opens straight onto it.
+
+The tab reads `/api/agent-run-replay` ([api/agent-run-replay.js](../api/agent-run-replay.js)),
+which is owner-only and accepts a session cookie or a bearer token:
+
+| Request | Returns |
+|---|---|
+| `GET /api/agent-run-replay?agent=<agent_id>[&before=<run_id>]` | `{ runs, hasMore, nextBefore }`, 25 per page, each run with `turns` |
+| `GET /api/agent-run-replay?run=<run_id>[&after=<seq>]` | `{ run, live, steps, toolTraces, receiptChain, nextAfter, hasMore }`; `receiptChain` is computed on a full read (`after` 0) |
+| `POST /api/agent-run-replay?run=<run_id>&action=cancel` | `{ run, status }` where status is `cancelled` or `cancel_requested`; needs the CSRF token |
+
+```bash
+curl -s "https://three.ws/api/agent-run-replay?run=<run_id>" \
+  -H "authorization: Bearer $THREE_WS_API_KEY" | jq '.data.receiptChain, .data.toolTraces'
+```
+
+The MCP tools that drive all of this are listed in
+[docs/mcp.md](./mcp.md#agent-lifecycle-runs-and-automations).
+
 ## Related surfaces
 
 - [Agent Sniper](./agent-sniper.md) - the autonomous trading pipeline with its own trade

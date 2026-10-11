@@ -11,7 +11,7 @@ export const def = {
 	title: 'Preview a SOL send (no funds move)',
 	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Preview a wallet_send before it runs: the sender address, recipient, amount, network fee, the sender balance before and after, and any rule that would refuse it (spend cap, recipient allowlist, insufficient funds). Signs nothing and moves nothing. Show this to the user and get a clear yes before calling wallet_send with the returned preview_id.',
+		'Preview a wallet_send before it runs: the sender address, recipient, amount, network fee, the sender balance before and after, and any rule that would refuse it (spend cap, recipient allowlist, insufficient funds). Signs nothing and moves nothing. Call this before every wallet_send: show the preview to the user and get a clear yes before calling wallet_send with the returned preview_id.',
 	inputSchema: {
 		to: z.string().min(32).max(64).describe('Destination Solana pubkey (base58).'),
 		sol: z.number().positive().describe('Amount of SOL to send.'),

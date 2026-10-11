@@ -21,9 +21,10 @@
 //      public/ar-forge.html, public/spatial-mcp/, pages/daily.html). A
 //      template-interpolated embed cannot carry an integrity hash as cheaply as
 //      a hand-authored document can, which is the only reason this rung has none.
-//   2. public/viewer.html and the static first-party pages, Google's CDN with
-//      an SRI hash: top-level documents that own their whole page and can
-//      afford the stricter integrity check.
+//   2. public/viewer.html and the static first-party pages, jsdelivr with an
+//      SRI hash: top-level documents that own their whole page and can afford
+//      the stricter integrity check. (Google's ajax.googleapis.com mirror
+//      stopped at 4.3.1, the build that logged debug noise on every load.)
 //   3. src/shared/model-viewer-loader.js, three CDNs in a failover chain: the
 //      Vite-bundled first-party pages (/forge and the pickers), where a blocked
 //      CDN must fall through to the next host instead of leaving an inert box.
@@ -35,7 +36,7 @@
 // pages/ibm/vendor/ stops matching the pinned build.
 
 /** The pinned model-viewer version. One build platform-wide; see above. */
-export const MODEL_VIEWER_VERSION = '4.3.1';
+export const MODEL_VIEWER_VERSION = '4.4.0';
 
 /** CDN origin the embed surfaces load model-viewer from (must be CSP-allowlisted). */
 export const MODEL_VIEWER_CDN_ORIGIN = 'https://cdn.jsdelivr.net';

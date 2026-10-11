@@ -6,7 +6,7 @@ JSON-RPC to it, and hit live data. Neither one pays for anything.
 
 | File | What it does | Run |
 |---|---|---|
-| [`list-tools.mjs`](list-tools.mjs) | Prints all 4 tools with titles, annotation hints, and full input schemas. | `node examples/list-tools.mjs` |
+| [`list-tools.mjs`](list-tools.mjs) | Prints all <!-- mcp-count:x402-mcp.tools -->4<!-- /mcp-count --> tools with titles, annotation hints, and full input schemas. | `node examples/list-tools.mjs` |
 | [`inspect-price.mjs`](inspect-price.mjs) | Searches the live x402 bazaar with `find_services`, then reads one endpoint's 402 price with `inspect_endpoint`, without paying. | `node examples/inspect-price.mjs` |
 
 Run them from the package directory:
@@ -20,7 +20,7 @@ node examples/inspect-price.mjs
 Nothing to install and nothing to configure: `find_services` and
 `inspect_endpoint` need no key, no signer, and no funds. The server prints a
 one-line banner to stderr on connect (`[x402-mcp@x.y.z] connected over stdio
-with 4 tools`), which is normal.
+with <n> tools`), which is normal.
 
 ## list-tools.mjs
 

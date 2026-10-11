@@ -43,6 +43,7 @@ Load the skill that matches the task. Each is a standalone `SKILL.md` per the [A
 
 ### 3D models and avatars
 
+- [`anatomy`](https://raw.githubusercontent.com/nirholas/three.ws/main/.agents/skills/anatomy/SKILL.md): Explain how a machine works as an interactive isometric 3D cutaway.
 - [`create-3d-avatar`](https://raw.githubusercontent.com/nirholas/three.ws/main/.agents/skills/create-3d-avatar/SKILL.md): Turn a text prompt (or reference image) into a rigged, animation-ready 3D avatar (GLB).
 - [`embed-three-ws-avatar`](https://raw.githubusercontent.com/nirholas/three.ws/main/.agents/skills/embed-three-ws-avatar/SKILL.md): Embed a live, animated three.ws 3D avatar in any website with the <agent-3d> web component.
 - [`find-3d-assets`](https://raw.githubusercontent.com/nirholas/three.ws/main/.agents/skills/find-3d-assets/SKILL.md): Search thousands of ready-made 3D assets on three.ws (CC0 props and objects, rigged humanoid characters, motion clips) and get paste-ready code or a downloaded file.

@@ -52,9 +52,9 @@ export function resetReleaseCache() {
 // load. Kept identical to pages/objects.html on purpose: a reader who copies
 // this snippet gets exactly the renderer they saw on the site.
 const MODEL_VIEWER_SRC =
-	'https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js';
+	'https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js';
 const MODEL_VIEWER_SRI =
-	'sha384-cprcVQt7wbUl0xngF3PGP6yBB7n4/t+4AoAMG9biiMCGFiWOdzUH10Ie2COTqFNW';
+	'sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p';
 
 export const MODEL_FRAMEWORKS = ['agent-3d', 'model-viewer', 'three', 'react'];
 export const CLIP_FRAMEWORKS = ['three', 'react', 'agent-3d'];

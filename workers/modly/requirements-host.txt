@@ -1,0 +1,30 @@
+# Host environment: Modly's FastAPI backend AND the three.ws front share it
+# (system python3.10 in the image). Every line is pinned so a rebuild resolves
+# the same tree. Modly's own api/requirements.txt lists these packages with
+# lower bounds only; the versions below satisfy every bound it declares.
+
+# ── Modly backend (api/requirements.txt at the pinned Modly commit) ──────────
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+httpx==0.28.1
+mcp==1.9.4
+trimesh==4.5.3
+pymeshlab==2023.12.post2
+huggingface_hub==0.36.2
+hf_xet==1.1.10
+cryptography==45.0.7
+certifi==2025.8.3
+
+# ── Shared numeric stack (pymeshlab 2023.12 needs numpy 1.x) ─────────────────
+numpy==1.26.4
+pydantic==2.11.7
+
+# ── three.ws front: UV unwrap + bake (postprocess.py), storage, tests ────────
+# xatlas is MIT and replaces Modly's stable-fast-3d derived unwrapper; scipy
+# (BSD) provides the KD-tree for the colour transfer.
+xatlas==0.0.11
+scipy==1.13.1
+Pillow==10.4.0
+google-cloud-storage==2.18.0
+pytest==8.3.5

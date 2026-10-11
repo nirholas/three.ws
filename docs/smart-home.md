@@ -299,7 +299,10 @@ page sideways at 320px: the failure it exists to catch is a state nobody ever op
 all, connects a real Home Assistant, and is the only one that can prove the summary is the
 house's own numbers, that a real long-lived token reaches no browser storage, and that stopping
 the container really does produce `degraded` with the summary intact. It runs under
-`npm run test:home:e2e`.
+`npm run test:home:e2e`, which must carry the encryption key bound to the database it writes to
+(`HOME_E2E_ENC_KEY`, else an exported `WALLET_ENCRYPTION_KEY`); a random per-run key is refused at
+the first connect with `secret_box_key_mismatch`, and the global setup checks the binding before
+any browser opens. The exact command is in [tests/e2e/README.md](../tests/e2e/README.md).
 
 Two invariants hold the surface together, and both are asserted in those specs rather than left
 as prose.
@@ -428,7 +431,7 @@ its version number:
 
 | Difference | Releases | How it is handled |
 |---|---|---|
-| The MCP endpoint moved. Through 2025.10 `mcp_server` served only the SSE transport at `/mcp_server/sse`; the Streamable HTTP endpoint at `/api/mcp` arrived later. | 2025.10 and older vs 2026.7 and newer | `connectHomeMcp` tries Streamable HTTP, and on a 404 falls back to SSE. It reports which transport answered (`transport`, `endpoint`). Before this, a 2025.10 house with a loaded `mcp_server` entry and 22 real tools was reported as having no MCP at all. |
+| The MCP endpoint moved. Through 2025.10 `mcp_server` served only the SSE transport at `/mcp_server/sse`; the Streamable HTTP endpoint at `/api/mcp` arrived later. | 2025.10 and older vs 2026.7 and newer | `connectHomeMcp` tries Streamable HTTP, and on a 404 falls back to SSE. It reports which transport answered (`transport`, `endpoint`). Before this, a 2025.10 house with a loaded `mcp_server` entry and 22 real tools was reported as having no MCP at all. <!-- mcp-count-ignore --> |
 | The exposure command was renamed from `homeassistant/expose_entity/set` to `homeassistant/expose_entity`. | older releases vs the whole supported range | The test harness sends the current name and falls back on `unknown_command`. Every release in the supported range answers to the current name, so the fallback covers only houses below the floor. |
 | The `mcp_server` config flow's `llm_hass_api` field is a multi-select. | whole supported range | The harness reads the flow's own `data_schema` and sends the shape it asks for, rather than assuming a string. |
 

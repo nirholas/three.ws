@@ -826,10 +826,11 @@
 			}
 
 			// ── Render loop ───────────────────────────────────────────────────
-			const clock = new THREE.Clock();
-			(function tick() {
+			const clock = new THREE.Timer();
+			(function tick(timestamp) {
 				requestAnimationFrame(tick);
 				try {
+					clock.update(timestamp);
 					const dt = Math.min(clock.getDelta(), 0.05);
 					mixer?.update(dt);
 					updateSeq(dt);

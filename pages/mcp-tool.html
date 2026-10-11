@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>MCP tool · three.ws</title>
+	<meta name="description" content="One three.ws MCP tool: when to use it, its input schema, an example call, its price, and its safety hints. Free read-only tools can be run from the page." />
+	<link rel="canonical" href="https://three.ws/mcp-tools" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="MCP tool · three.ws" />
+	<meta property="og:description" content="One three.ws MCP tool: when to use it, its schema, an example call and its price." />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=MCP+Tool&amp;d=When+to+use+it%2C+its+schema%2C+an+example+call+and+its+price&amp;p=%2Fmcp-tools" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:site_name" content="three.ws">
+	<style>
+		:root {
+			--mc-read: var(--success);
+			--mc-write: var(--warn);
+			--mc-irreversible: var(--danger);
+			--mc-paid: var(--wallet-accent);
+			--mc-maxw: 980px;
+		}
+		:root[data-theme="light"] {
+			--mc-read: #15803d;
+			--mc-write: #a16207;
+			--mc-irreversible: #b91c1c;
+			--mc-paid: #6d28d9;
+		}
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+		.tp-wrap { max-width: var(--mc-maxw); margin: 0 auto; padding: 0 18px 96px; }
+		a { color: inherit; text-underline-offset: 3px; }
+		a:hover { color: var(--ink-bright, var(--ink)); }
+		a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+		.tp-crumbs { padding: 26px 0 0; font-size: 0.82rem; color: var(--ink-dim); display: flex; flex-wrap: wrap; gap: 6px; }
+		.tp-crumbs a { color: var(--ink-dim); }
+		.tp-head { padding: 14px 0 6px; }
+		.tp-head h1 { margin: 0; font: 650 clamp(1.4rem, 3.4vw, 2rem)/1.2 var(--font-mono, ui-monospace, monospace); color: var(--ink-bright, var(--ink)); word-break: break-word; letter-spacing: -0.01em; }
+		.tp-title { margin: 6px 0 0; color: var(--ink-dim); font-size: 1rem; }
+		.tp-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+		.tp-badge { font-size: 0.74rem; font-weight: 600; padding: 3px 9px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; color: var(--ink-dim); text-decoration: none; }
+		.tp-badge[data-safety="read"] { color: var(--mc-read); }
+		.tp-badge[data-safety="write"] { color: var(--mc-write); }
+		.tp-badge[data-safety="irreversible"] { color: var(--mc-irreversible); }
+		.tp-badge.paid { color: var(--mc-paid); }
+		a.tp-badge:hover { background: var(--surface-2, rgba(255,255,255,0.05)); }
+
+		.tp-when { margin: 22px 0 0; padding: 14px 16px; border-radius: var(--radius-md, 10px); border: 1px solid var(--stroke); border-left: 3px solid var(--accent); background: var(--surface-1, rgba(255,255,255,0.03)); font-size: 0.95rem; line-height: 1.55; color: var(--ink); }
+		.tp-when strong { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-dim); margin-bottom: 4px; }
+		.tp-desc { margin: 16px 0 0; font-size: 0.92rem; line-height: 1.65; color: var(--ink-dim); white-space: pre-wrap; max-width: 78ch; }
+
+		.tp-section { margin-top: 34px; }
+		.tp-section h2 { margin: 0 0 12px; font-size: 1.05rem; color: var(--ink-bright, var(--ink)); }
+		.tp-section > p { margin: 0 0 12px; font-size: 0.86rem; line-height: 1.6; color: var(--ink-dim); max-width: 76ch; }
+
+		.tp-kv { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+		.tp-kv th, .tp-kv td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--hairline); vertical-align: top; }
+		.tp-kv th { font-weight: 500; color: var(--ink-dim); width: 34%; }
+		.tp-kv td { font-family: var(--font-mono, ui-monospace, monospace); color: var(--ink); word-break: break-word; }
+		.tp-kv td small { font-family: var(--font-body, system-ui, sans-serif); color: var(--ink-dim); }
+
+		.tp-table-wrap { overflow-x: auto; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); }
+		.tp-params { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+		.tp-params th, .tp-params td { padding: 9px 11px; text-align: left; border-bottom: 1px solid var(--hairline); vertical-align: top; }
+		.tp-params thead th { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); font-weight: 600; }
+		.tp-params tbody tr:last-child td { border-bottom: 0; }
+		.tp-params code { font-family: var(--font-mono, ui-monospace, monospace); color: var(--ink-bright, var(--ink)); }
+		.tp-params .req { font-size: 0.68rem; font-weight: 600; color: var(--mc-irreversible); margin-left: 6px; }
+		.tp-params .type { font-family: var(--font-mono, ui-monospace, monospace); color: var(--mc-paid); white-space: nowrap; }
+		.tp-params .desc { color: var(--ink-dim); line-height: 1.5; }
+		.tp-params .desc small { display: block; margin-top: 3px; font-family: var(--font-mono, ui-monospace, monospace); color: var(--ink-faint, var(--ink-dim)); }
+		.tp-none { padding: 14px; color: var(--ink-dim); font-size: 0.86rem; margin: 0; }
+
+		.tp-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+		.tp-tab { font: inherit; font-size: 0.8rem; padding: 5px 12px; cursor: pointer; color: var(--ink-dim); background: transparent; border: 1px solid var(--stroke); border-radius: 999px; transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
+		.tp-tab:hover { color: var(--ink); border-color: var(--stroke-strong); }
+		.tp-tab[aria-selected="true"] { color: var(--ink-bright, var(--ink)); border-color: currentColor; background: var(--surface-3, rgba(255,255,255,0.08)); }
+		.tp-snippet { position: relative; }
+		.tp-snippet pre { margin: 0; padding: 14px 15px; overflow-x: auto; font-size: 0.78rem; line-height: 1.55; font-family: var(--font-mono, ui-monospace, monospace); color: var(--ink); background: var(--bg-1, var(--bg-0)); border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); max-height: 420px; }
+		.tp-copy { position: absolute; top: 8px; right: 8px; }
+		.tp-note { margin: 10px 0 0; font-size: 0.8rem; color: var(--ink-dim); line-height: 1.55; }
+
+		.tp-btn { font: inherit; font-size: 0.85rem; font-weight: 600; padding: 8px 16px; cursor: pointer; color: var(--btn-secondary-fg, var(--ink)); background: var(--btn-secondary-bg, var(--surface-3)); border: 1px solid var(--btn-secondary-border, var(--stroke-strong)); border-radius: var(--radius-md, 10px); transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard); }
+		.tp-btn:hover { background: var(--btn-secondary-bg-hover, rgba(255,255,255,0.12)); }
+		.tp-btn:active { transform: translateY(1px); }
+		.tp-btn:disabled { opacity: 0.6; cursor: progress; }
+		.tp-btn.primary { color: var(--btn-primary-fg, #0b0b0f); background: var(--accent); border-color: var(--accent); }
+		.tp-btn.primary:hover { background: color-mix(in srgb, var(--accent) 86%, white); }
+		.tp-btn.small { font-size: 0.72rem; padding: 5px 10px; }
+
+		.tp-try { border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px); padding: 18px; background: linear-gradient(180deg, var(--surface-2, rgba(255,255,255,0.05)), transparent 70%); }
+		.tp-fields { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-bottom: 14px; }
+		.tp-field { display: flex; flex-direction: column; gap: 5px; font-size: 0.82rem; }
+		.tp-field > span { color: var(--ink); font-family: var(--font-mono, ui-monospace, monospace); }
+		.tp-field > span em { font-style: normal; color: var(--mc-irreversible); font-family: var(--font-body, system-ui, sans-serif); font-size: 0.7rem; margin-left: 4px; }
+		.tp-field small { color: var(--ink-dim); line-height: 1.4; }
+		.tp-field input[type="text"], .tp-field input[type="number"], .tp-field select, .tp-field textarea { font: inherit; font-size: 0.86rem; padding: 8px 10px; color: var(--ink); background: var(--surface-1, rgba(255,255,255,0.04)); border: 1px solid var(--stroke); border-radius: var(--radius-sm, 8px); transition: border-color var(--duration-fast) var(--ease-standard); }
+		.tp-field input:hover, .tp-field select:hover, .tp-field textarea:hover { border-color: var(--stroke-strong); }
+		.tp-field textarea { font-family: var(--font-mono, ui-monospace, monospace); min-height: 70px; resize: vertical; }
+		.tp-field.check { flex-direction: row; align-items: center; gap: 8px; }
+		.tp-run { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+		.tp-status { font-size: 0.8rem; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+		.tp-status[data-state="error"] { color: var(--mc-irreversible); }
+		.tp-status[data-state="ok"] { color: var(--mc-read); }
+		.tp-result { margin-top: 14px; }
+		.tp-result[hidden] { display: none; }
+		.tp-result .tp-shimmer { height: 12px; border-radius: 6px; margin-top: 9px; background: linear-gradient(90deg, var(--surface-1, rgba(255,255,255,0.04)) 25%, var(--surface-3, rgba(255,255,255,0.09)) 50%, var(--surface-1, rgba(255,255,255,0.04)) 75%); background-size: 200% 100%; animation: tp-shimmer 1.4s ease-in-out infinite; }
+		@keyframes tp-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+		.tp-links { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+		.tp-links a { display: inline-block; padding: 4px 10px; border: 1px solid var(--stroke); border-radius: 999px; font: 0.78rem/1.5 var(--font-mono, ui-monospace, monospace); text-decoration: none; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
+		.tp-links a:hover { border-color: var(--stroke-strong); background: var(--surface-2, rgba(255,255,255,0.05)); }
+
+		.tp-skel { margin-top: 30px; }
+		.tp-skel div { height: 14px; border-radius: 6px; margin-top: 12px; background: linear-gradient(90deg, var(--surface-1, rgba(255,255,255,0.04)) 25%, var(--surface-3, rgba(255,255,255,0.09)) 50%, var(--surface-1, rgba(255,255,255,0.04)) 75%); background-size: 200% 100%; animation: tp-shimmer 1.4s ease-in-out infinite; }
+		.tp-skel .w30 { width: 30%; height: 26px; } .tp-skel .w60 { width: 60%; } .tp-skel .w90 { width: 90%; }
+		.tp-state { margin-top: 40px; border: 1px dashed var(--stroke-strong); border-radius: var(--radius-lg, 14px); padding: 36px 24px; text-align: center; color: var(--ink-dim); }
+		.tp-state.error { border-style: solid; border-color: var(--danger); }
+		.tp-state h1, .tp-state h2 { margin: 0 0 8px; font-size: 1.1rem; color: var(--ink-bright, var(--ink)); }
+		.tp-state p { margin: 0 auto 16px; max-width: 52ch; line-height: 1.55; font-size: 0.9rem; }
+		.tp-state .tp-links { justify-content: center; margin-bottom: 16px; }
+		@media (prefers-reduced-motion: reduce) {
+			.tp-skel div, .tp-result .tp-shimmer { animation: none; }
+			.tp-btn, .tp-tab, .tp-links a { transition: none; }
+		}
+		@media (max-width: 640px) {
+			.tp-kv th { width: 42%; }
+		}
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="tp-wrap" id="tp-main">
+		<nav class="tp-crumbs" aria-label="Breadcrumb"><a href="/mcp-tools">MCP Tool Catalog</a></nav>
+		<div class="tp-skel" aria-hidden="true"><div class="w30"></div><div class="w60"></div><div class="w90"></div><div class="w90"></div><div class="w60"></div></div>
+		<p class="sr-only" role="status">Loading the tool…</p>
+	</main>
+
+	<script src="/brand.js" defer></script>
+	<script type="module">
+		const main = document.getElementById('tp-main');
+		const ORIGIN = 'https://three.ws';
+		const REPO = 'https://github.com/nirholas/three.ws/blob/main/';
+
+		const esc = (s) =>
+			String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+		const SAFETY = {
+			read: ['Read-only', 'Does not change anything. An MCP client can run this without asking you.'],
+			write: ['Writes', 'Changes something, and the change can be corrected by a follow-up call.'],
+			irreversible: ['Irreversible', 'Cannot be undone once it runs. Approve each call deliberately.'],
+		};
+		const HINT_MEANING = {
+			readOnlyHint: ['Changes state', 'Only reads'],
+			destructiveHint: ['Additive or reversible', 'May destroy or move something for good'],
+			idempotentHint: ['Repeating it can have more effect', 'Repeating it with the same arguments has no further effect'],
+			openWorldHint: ['Works only inside three.ws', 'Reaches outside three.ws (a chain, a third-party API, the web)'],
+		};
+		// Sub-cent prices keep their digits: $0.0005 must not read as $0.001.
+		const usd = (n) => `$${n >= 0.01 ? n.toFixed(2) : String(+n.toPrecision(2))}`;
+		const priceLabel = (p) => (p.free ? 'Free' : `${usd(p.usd)} USDC`);
+
+		// ── route ─────────────────────────────────────────────────────────
+		// /mcp-tools/<server>/<tool>. Both segments are ids the catalog builds,
+		// so anything else is a not-found, not a guess.
+		function route() {
+			const parts = location.pathname.replace(/\/+$/, '').split('/').filter(Boolean);
+			if (parts[0] !== 'mcp-tools' || parts.length !== 3) return null;
+			return { server: decodeURIComponent(parts[1]), name: decodeURIComponent(parts[2]) };
+		}
+
+		// ── schema helpers ────────────────────────────────────────────────
+		function typeOf(schema) {
+			if (!schema) return 'any';
+			if (schema.enum) return 'enum';
+			const t = Array.isArray(schema.type) ? schema.type.filter((x) => x !== 'null').join(' | ') : schema.type;
+			if (t === 'array') return `array<${typeOf(schema.items)}>`;
+			if (t) return t;
+			if (schema.anyOf || schema.oneOf) return (schema.anyOf || schema.oneOf).map(typeOf).join(' | ');
+			return 'any';
+		}
+
+		/** A value for the example call: the schema's own default, enum or example first. */
+		function exampleValue(name, schema) {
+			if (!schema) return null;
+			if (schema.default !== undefined) return schema.default;
+			if (Array.isArray(schema.examples) && schema.examples.length) return schema.examples[0];
+			if (schema.enum?.length) return schema.enum[0];
+			const t = Array.isArray(schema.type) ? schema.type.find((x) => x !== 'null') : schema.type;
+			if (t === 'integer' || t === 'number') return schema.minimum ?? 1;
+			if (t === 'boolean') return false;
+			if (t === 'array') return [];
+			if (t === 'object') return {};
+			return `<${name}>`;
+		}
+
+		function exampleArgs(schema) {
+			const props = schema?.properties || {};
+			const required = new Set(schema?.required || []);
+			const args = {};
+			for (const [name, s] of Object.entries(props)) {
+				if (required.has(name) || s.default !== undefined) args[name] = exampleValue(name, s);
+			}
+			return args;
+		}
+
+		function paramsTable(schema) {
+			const props = Object.entries(schema?.properties || {});
+			if (!props.length) return '<p class="tp-none">This tool takes no arguments.</p>';
+			const required = new Set(schema.required || []);
+			const rows = props
+				.map(([name, s]) => {
+					const extras = [];
+					if (s.enum) extras.push(`one of ${s.enum.map((v) => JSON.stringify(v)).join(', ')}`);
+					if (s.default !== undefined) extras.push(`default ${JSON.stringify(s.default)}`);
+					if (s.minimum !== undefined || s.maximum !== undefined) extras.push(`range ${s.minimum ?? '…'} to ${s.maximum ?? '…'}`);
+					if (s.maxLength !== undefined) extras.push(`max ${s.maxLength} chars`);
+					if (s.pattern) extras.push(`pattern ${s.pattern}`);
+					return (
+						`<tr><td><code>${esc(name)}</code>${required.has(name) ? '<span class="req">required</span>' : ''}</td>` +
+						`<td class="type">${esc(typeOf(s))}</td>` +
+						`<td class="desc">${esc(s.description || '')}${extras.length ? `<small>${esc(extras.join(' · '))}</small>` : ''}</td></tr>`
+					);
+				})
+				.join('');
+			return `<div class="tp-table-wrap"><table class="tp-params"><thead><tr><th scope="col">Argument</th><th scope="col">Type</th><th scope="col">What it is</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+		}
+
+		// ── example call ──────────────────────────────────────────────────
+		function snippets(tool) {
+			const args = exampleArgs(tool.inputSchema);
+			const call = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: tool.name, arguments: args } };
+			const out = { jsonrpc: JSON.stringify(call, null, 2) };
+			if (tool.server.transport === 'remote') {
+				const curl =
+					`curl -X POST ${ORIGIN}${tool.server.endpoint} \\\n` +
+					`  -H 'content-type: application/json' \\\n` +
+					`  -H 'accept: application/json, text/event-stream' \\\n` +
+					`  -d '${JSON.stringify(call)}'`;
+				out.curl = tool.price.free
+					? curl
+					: `# ${tool.name} costs ${priceLabel(tool.price)} per call. Without an OAuth token or an\n# x402 payment the server answers with a payment quote for exactly that price.\n# An MCP client signed in through /connect, or one that pays x402 (for example\n# npx -y @three-ws/mcp-bridge), settles it and gets the result.\n${curl}`;
+				out.client = JSON.stringify({ mcpServers: { [tool.server.id]: { type: 'http', url: `${ORIGIN}${tool.server.endpoint}` } } }, null, 2);
+			} else {
+				const [cmd, ...rest] = tool.server.endpoint.split(' ');
+				out.client = JSON.stringify({ mcpServers: { [tool.server.id]: { command: cmd, args: rest } } }, null, 2);
+			}
+			return out;
+		}
+
+		const TAB_LABELS = { curl: 'curl', jsonrpc: 'JSON-RPC body', client: 'Client config' };
+
+		function wireCopy(btn, getText) {
+			btn.addEventListener('click', async () => {
+				try {
+					await navigator.clipboard.writeText(getText());
+					btn.textContent = 'Copied';
+				} catch {
+					btn.textContent = 'Select and copy';
+				}
+				setTimeout(() => (btn.textContent = 'Copy'), 1600);
+			});
+		}
+
+		function renderCallSection(tool) {
+			const snips = snippets(tool);
+			const order = ['curl', 'jsonrpc', 'client'].filter((k) => snips[k]);
+			let active = order[0];
+			const section = document.getElementById('tp-call');
+			const paint = () => {
+				section.querySelector('.tp-tabs').innerHTML = order
+					.map((k) => `<button type="button" class="tp-tab" role="tab" data-tab="${k}" aria-selected="${k === active}">${TAB_LABELS[k]}</button>`)
+					.join('');
+				section.querySelector('code').textContent = snips[active];
+			};
+			section.querySelector('.tp-tabs').addEventListener('click', (e) => {
+				const tab = e.target.closest('[data-tab]');
+				if (!tab) return;
+				active = tab.dataset.tab;
+				paint();
+			});
+			wireCopy(section.querySelector('.tp-copy'), () => snips[active]);
+			paint();
+		}
+
+		// ── try it ────────────────────────────────────────────────────────
+		// Only for tools the catalog marks tryIt: free, read-only, on a hosted
+		// endpoint that needs no key. The call goes straight to that endpoint.
+		function fieldHtml(name, s, required) {
+			const label = `<span>${esc(name)}${required ? '<em>required</em>' : ''}</span>`;
+			const help = s.description ? `<small>${esc(s.description)}</small>` : '';
+			const id = `tp-arg-${name}`;
+			const t = Array.isArray(s.type) ? s.type.find((x) => x !== 'null') : s.type;
+			if (s.enum) {
+				const opts = (required ? [] : ['<option value="">(not set)</option>'])
+					.concat(s.enum.map((v) => `<option value="${esc(JSON.stringify(v))}"${v === s.default ? ' selected' : ''}>${esc(v)}</option>`))
+					.join('');
+				return `<label class="tp-field" for="${id}">${label}<select id="${id}" data-arg="${esc(name)}" data-kind="enum">${opts}</select>${help}</label>`;
+			}
+			if (t === 'boolean') {
+				return `<label class="tp-field check" for="${id}"><input type="checkbox" id="${id}" data-arg="${esc(name)}" data-kind="boolean"${s.default ? ' checked' : ''} />${label}</label>`;
+			}
+			if (t === 'integer' || t === 'number') {
+				const attrs = `${s.minimum !== undefined ? ` min="${s.minimum}"` : ''}${s.maximum !== undefined ? ` max="${s.maximum}"` : ''}${t === 'integer' ? ' step="1"' : ' step="any"'}`;
+				return `<label class="tp-field" for="${id}">${label}<input type="number" id="${id}" data-arg="${esc(name)}" data-kind="number"${attrs} value="${esc(s.default ?? '')}"${required ? ' required' : ''} />${help}</label>`;
+			}
+			if (t === 'array' || t === 'object' || !t) {
+				return `<label class="tp-field" for="${id}">${label}<textarea id="${id}" data-arg="${esc(name)}" data-kind="json" placeholder="${t === 'array' ? '[ ]' : '{ }'} as JSON">${s.default !== undefined ? esc(JSON.stringify(s.default)) : ''}</textarea>${help}</label>`;
+			}
+			return `<label class="tp-field" for="${id}">${label}<input type="text" id="${id}" data-arg="${esc(name)}" data-kind="string" value="${esc(s.default ?? '')}"${s.maxLength ? ` maxlength="${s.maxLength}"` : ''}${required ? ' required' : ''} />${help}</label>`;
+		}
+
+		function readArgs(form) {
+			const args = {};
+			for (const el of form.querySelectorAll('[data-arg]')) {
+				const name = el.dataset.arg;
+				const kind = el.dataset.kind;
+				if (kind === 'boolean') {
+					if (el.checked) args[name] = true;
+					continue;
+				}
+				const raw = el.value.trim();
+				if (raw === '') continue;
+				if (kind === 'number') args[name] = Number(raw);
+				else if (kind === 'enum') args[name] = JSON.parse(raw);
+				else if (kind === 'json') {
+					try {
+						args[name] = JSON.parse(raw);
+					} catch {
+						throw new Error(`${name} is not valid JSON`);
+					}
+				} else args[name] = raw;
+			}
+			return args;
+		}
+
+		/** The readable part of an MCP tool result: text content, pretty-printed when it is JSON. */
+		function resultText(result) {
+			const parts = (result?.content || []).map((c) => {
+				if (c.type !== 'text') return `[${c.type} content${c.mimeType ? `: ${c.mimeType}` : ''}]`;
+				try {
+					return JSON.stringify(JSON.parse(c.text), null, 2);
+				} catch {
+					return c.text;
+				}
+			});
+			if (!parts.length && result?.structuredContent) return JSON.stringify(result.structuredContent, null, 2);
+			return parts.join('\n\n') || JSON.stringify(result, null, 2);
+		}
+
+		/** Parse a Streamable HTTP reply, which may be JSON or a one-event SSE stream. */
+		async function readRpc(res) {
+			const text = await res.text();
+			if ((res.headers.get('content-type') || '').includes('text/event-stream')) {
+				const data = text.split('\n').filter((l) => l.startsWith('data:')).map((l) => l.slice(5).trim()).pop();
+				return JSON.parse(data);
+			}
+			return JSON.parse(text);
+		}
+
+		function renderTry(tool) {
+			const section = document.getElementById('tp-try');
+			const props = Object.entries(tool.inputSchema?.properties || {});
+			const required = new Set(tool.inputSchema?.required || []);
+			section.innerHTML =
+				'<h2>Try it</h2>' +
+				`<p>Free and read-only, so it is safe to run from here. This sends one real <code>tools/call</code> to <code>${esc(tool.server.endpoint)}</code> with the arguments below.</p>` +
+				'<form class="tp-try" id="tp-try-form" novalidate>' +
+				(props.length ? `<div class="tp-fields">${props.map(([n, s]) => fieldHtml(n, s, required.has(n))).join('')}</div>` : '<p class="tp-note" style="margin:0 0 14px">No arguments needed.</p>') +
+				'<div class="tp-run"><button type="submit" class="tp-btn primary" id="tp-run-btn">Run</button><span class="tp-status" id="tp-status" role="status" aria-live="polite"></span></div>' +
+				'<div class="tp-result" id="tp-result" hidden><div class="tp-snippet"><pre><code id="tp-result-code"></code></pre><button type="button" class="tp-btn small tp-copy" id="tp-result-copy">Copy</button></div></div>' +
+				'</form>';
+			const form = document.getElementById('tp-try-form');
+			const btn = document.getElementById('tp-run-btn');
+			const status = document.getElementById('tp-status');
+			const resultBox = document.getElementById('tp-result');
+			const code = document.getElementById('tp-result-code');
+			wireCopy(document.getElementById('tp-result-copy'), () => code.textContent);
+
+			form.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				status.removeAttribute('data-state');
+				let args;
+				try {
+					args = readArgs(form);
+					const missing = [...required].filter((n) => args[n] === undefined);
+					if (missing.length) throw new Error(`fill in ${missing.join(', ')}`);
+				} catch (error) {
+					status.dataset.state = 'error';
+					status.textContent = `Cannot run yet: ${error.message}.`;
+					return;
+				}
+				btn.disabled = true;
+				status.textContent = 'Running…';
+				resultBox.hidden = false;
+				code.innerHTML = '<span class="tp-shimmer" style="display:block;width:60%"></span><span class="tp-shimmer" style="display:block;width:85%"></span>';
+				const started = performance.now();
+				try {
+					const res = await fetch(tool.server.endpoint, {
+						method: 'POST',
+						headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+						body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method: 'tools/call', params: { name: tool.name, arguments: args } }),
+					});
+					if (res.status === 429) throw new Error('rate limited: wait a moment and run it again');
+					if (!res.ok && res.status !== 200) throw new Error(`the server answered ${res.status}`);
+					const rpc = await readRpc(res);
+					const ms = Math.round(performance.now() - started);
+					if (rpc.error) throw new Error(rpc.error.message || `error ${rpc.error.code}`);
+					code.textContent = resultText(rpc.result);
+					status.dataset.state = rpc.result?.isError ? 'error' : 'ok';
+					status.textContent = rpc.result?.isError ? `The tool reported an error (${ms} ms).` : `Done in ${ms} ms.`;
+				} catch (error) {
+					code.textContent = String(error.message || error);
+					status.dataset.state = 'error';
+					status.textContent = 'The call failed. Check the arguments and run it again.';
+				} finally {
+					btn.disabled = false;
+				}
+			});
+		}
+
+		// ── page ──────────────────────────────────────────────────────────
+		function setMeta(tool) {
+			const title = `${tool.name} · ${tool.server.title} MCP tool · three.ws`;
+			document.title = title;
+			const description = tool.whenToUse || tool.title || `The ${tool.name} MCP tool on ${tool.server.title}.`;
+			document.querySelector('meta[name="description"]').setAttribute('content', description);
+			document.querySelector('meta[property="og:title"]').setAttribute('content', title);
+			document.querySelector('meta[property="og:description"]').setAttribute('content', description);
+			document.querySelector('link[rel="canonical"]').setAttribute('href', `${ORIGIN}${tool.page}`);
+		}
+
+		function renderTool(catalog, tool) {
+			setMeta(tool);
+			const category = catalog.categories.find((g) => g.id === tool.category);
+			const [safetyLabel, safetyBlurb] = SAFETY[tool.safety];
+			const a = tool.annotations;
+			const hintRow = (key) => {
+				const v = a[key];
+				const meaning = v === null ? 'not declared' : HINT_MEANING[key][v ? 1 : 0];
+				return `<tr><th scope="row">${key}</th><td>${v === null ? 'unset' : v} <small>${esc(meaning)}</small></td></tr>`;
+			};
+			const tiers = tool.price.tiers ? ` <small>(${tool.price.tiers.map((t) => `${esc(t.id)} ${usd(t.usd)}`).join(', ')})</small>` : '';
+			const siblings = catalog.tools.filter((t) => t.server.id === tool.server.id && t.category === tool.category && t.name !== tool.name).slice(0, 12);
+			const elsewhere = catalog.tools.filter((t) => t.name === tool.name && t.server.id !== tool.server.id);
+			const description = tool.description && tool.whenToUse ? tool.description.replace(tool.whenToUse, '').trim() : tool.description;
+
+			main.innerHTML =
+				`<nav class="tp-crumbs" aria-label="Breadcrumb"><a href="/mcp-tools">MCP Tool Catalog</a><span aria-hidden="true">/</span><a href="/mcp-tools?server=${encodeURIComponent(tool.server.id)}">${esc(tool.server.title)}</a><span aria-hidden="true">/</span><span aria-current="page">${esc(tool.name)}</span></nav>` +
+				'<header class="tp-head">' +
+				`<h1>${esc(tool.name)}</h1>` +
+				(tool.title ? `<p class="tp-title">${esc(tool.title)}</p>` : '') +
+				'<div class="tp-badges">' +
+				`<span class="tp-badge" data-safety="${tool.safety}" title="${esc(safetyBlurb)}">${safetyLabel}</span>` +
+				`<span class="tp-badge${tool.price.free ? '' : ' paid'}">${esc(priceLabel(tool.price))}${tool.price.free ? '' : ' per call'}</span>` +
+				(category ? `<a class="tp-badge" href="/mcp-tools?category=${encodeURIComponent(category.id)}" title="${esc(category.summary)}">${esc(category.label)}</a>` : '') +
+				`<span class="tp-badge">${tool.server.transport === 'remote' ? 'Hosted' : 'npm package'}</span>` +
+				(tool.requiresIndexer ? '<span class="tp-badge" title="Needs the pump.fun indexer database on the server">Needs indexer</span>' : '') +
+				'</div></header>' +
+				(tool.whenToUse ? `<div class="tp-when"><strong>When to use it</strong>${esc(tool.whenToUse)}</div>` : '') +
+				(description ? `<p class="tp-desc">${esc(description)}</p>` : '') +
+				'<section class="tp-section" aria-labelledby="tp-args-h"><h2 id="tp-args-h">Arguments</h2>' +
+				(tool.inputSchemaIsPartial ? '<p>Part of this schema is filled in at request time (from live data), so the deployed server may list more values than shown here.</p>' : '') +
+				paramsTable(tool.inputSchema) +
+				`<details style="margin-top:10px"><summary class="tp-note" style="cursor:pointer;display:inline">Raw JSON Schema</summary><div class="tp-snippet" style="margin-top:8px"><pre><code>${esc(JSON.stringify(tool.inputSchema, null, 2))}</code></pre></div></details>` +
+				'</section>' +
+				(tool.tryIt ? '<section class="tp-section" id="tp-try" aria-label="Try it"></section>' : '') +
+				'<section class="tp-section" id="tp-call" aria-labelledby="tp-call-h"><h2 id="tp-call-h">Call it</h2>' +
+				'<div class="tp-tabs" role="tablist" aria-label="Snippet format"></div>' +
+				'<div class="tp-snippet"><pre><code></code></pre><button type="button" class="tp-btn small tp-copy">Copy</button></div>' +
+				`<p class="tp-note">${tool.server.transport === 'remote'
+					? `Auth: ${esc(tool.server.auth)}. ${tool.server.auth === 'none' ? 'No key or wallet needed.' : 'Connect a client from <a href="/connect">/connect</a>, or pay per call over x402.'}`
+					: `Runs on your machine as a stdio MCP server. Add the client config to Claude, Cursor or VS Code.${tool.price.free ? '' : ` Each call quotes ${esc(priceLabel(tool.price))} and runs once it is paid over x402.`}`} Values in angle brackets are yours to fill in.</p>` +
+				'</section>' +
+				'<section class="tp-section" aria-labelledby="tp-details-h"><h2 id="tp-details-h">Details</h2><table class="tp-kv"><tbody>' +
+				`<tr><th scope="row">Server</th><td>${esc(tool.server.title)} <small>${esc(tool.server.id)}</small></td></tr>` +
+				`<tr><th scope="row">Endpoint</th><td>${esc(tool.server.endpoint)}</td></tr>` +
+				`<tr><th scope="row">Price</th><td>${esc(priceLabel(tool.price))}${tiers}</td></tr>` +
+				`<tr><th scope="row">Safety</th><td>${safetyLabel} <small>${esc(safetyBlurb)}</small></td></tr>` +
+				hintRow('readOnlyHint') + hintRow('destructiveHint') + hintRow('idempotentHint') + hintRow('openWorldHint') +
+				(tool.source ? `<tr><th scope="row">Source</th><td><a href="${REPO}${esc(tool.source)}" rel="noopener">${esc(tool.source)}</a></td></tr>` : '') +
+				'</tbody></table></section>' +
+				(elsewhere.length
+					? `<section class="tp-section" aria-labelledby="tp-else-h"><h2 id="tp-else-h">Also served by</h2><ul class="tp-links">${elsewhere.map((t) => `<li><a href="${esc(t.page)}">${esc(t.server.title)}</a></li>`).join('')}</ul></section>`
+					: '') +
+				(siblings.length
+					? `<section class="tp-section" aria-labelledby="tp-sib-h"><h2 id="tp-sib-h">More ${esc(category?.label ?? '')} tools on ${esc(tool.server.title)}</h2><ul class="tp-links">${siblings.map((t) => `<li><a href="${esc(t.page)}">${esc(t.name)}</a></li>`).join('')}</ul></section>`
+					: '');
+
+			renderCallSection(tool);
+			if (tool.tryIt) renderTry(tool);
+		}
+
+		function renderNotFound(catalog, want) {
+			document.title = 'Tool not found · three.ws';
+			const close = want
+				? catalog.tools.filter((t) => t.name === want.name || t.name.includes(want.name) || want.name.includes(t.name)).slice(0, 10)
+				: [];
+			main.innerHTML =
+				'<nav class="tp-crumbs" aria-label="Breadcrumb"><a href="/mcp-tools">MCP Tool Catalog</a></nav>' +
+				'<div class="tp-state"><h1>No such tool</h1>' +
+				`<p>${want ? `No server in the catalog serves a tool named <code>${esc(want.name)}</code> at <code>${esc(want.server)}</code>.` : 'This address does not name a tool.'} It may have been renamed or removed; the release history on the catalog page lists every change.</p>` +
+				(close.length ? `<ul class="tp-links">${close.map((t) => `<li><a href="${esc(t.page)}">${esc(t.server.id)}/${esc(t.name)}</a></li>`).join('')}</ul>` : '') +
+				'<a class="tp-btn" href="/mcp-tools">Browse every tool</a> <a class="tp-btn" href="/mcp-tools#releases">See the releases</a></div>';
+		}
+
+		function renderError(message) {
+			main.innerHTML =
+				'<nav class="tp-crumbs" aria-label="Breadcrumb"><a href="/mcp-tools">MCP Tool Catalog</a></nav>' +
+				`<div class="tp-state error"><h1>The catalog could not be loaded</h1><p>${esc(message)}</p><button type="button" class="tp-btn" id="tp-retry">Try again</button></div>`;
+			document.getElementById('tp-retry').addEventListener('click', load);
+		}
+
+		async function load() {
+			let catalog;
+			try {
+				const res = await fetch('/mcp-catalog.json', { headers: { accept: 'application/json' } });
+				if (!res.ok) throw new Error(`the server returned ${res.status}`);
+				catalog = await res.json();
+			} catch (error) {
+				renderError(`${error.message}. The catalog is a static file at /mcp-catalog.json, so this is usually a network problem.`);
+				return;
+			}
+			const want = route();
+			const tool = want && catalog.tools.find((t) => t.server.id === want.server && t.name === want.name);
+			if (tool) renderTool(catalog, tool);
+			else renderNotFound(catalog, want);
+		}
+
+		load();
+	</script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

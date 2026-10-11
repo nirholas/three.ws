@@ -5,6 +5,7 @@
 // text/event-stream opens the server-to-client stream that carries
 // notifications/resources/updated for resources/subscribe (api/_mcp/resources.js).
 import { cors, readJson, wrap } from './_lib/http.js';
+import { issueSession, trackMcp } from './_lib/mcp-clients.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { settlePayment, encodePaymentResponseHeader } from './_lib/x402-spec.js';
 import { x402AmountForTool } from './_lib/pump-pricing.js';
@@ -19,7 +20,6 @@ import {
 	isMcpProtocolClient,
 } from './_mcp/auth.js';
 import { sendX402Error, reservePaymentProof } from './_mcp/payments.js';
-import { trackMcpRequest } from './_lib/mcp-client-analytics.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,HEAD,POST,DELETE,OPTIONS', origins: '*' })) return;
@@ -91,9 +91,6 @@ export default wrap(async (req, res) => {
 		releaseProof = guard.release;
 	}
 
-	// Which client opened this session and what it calls (api/_lib/mcp-client-analytics.js).
-	trackMcpRequest({ body, req, res, surface: 'mcp', auth });
-
 	try {
 		const responses = [];
 		for (const msg of batch) {
@@ -127,7 +124,9 @@ export default wrap(async (req, res) => {
 		res.statusCode = 200;
 		res.setHeader('content-type', 'application/json; charset=utf-8');
 		res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
+		const issuedSessionId = issueSession(res, body);
 		res.end(JSON.stringify(Array.isArray(body) ? responses : (responses[0] ?? null)));
+		trackMcp({ surface: 'mcp', req, body, responses, auth, issuedSessionId });
 	} finally {
 		await releaseProof();
 	}

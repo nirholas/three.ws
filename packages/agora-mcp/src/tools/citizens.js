@@ -23,7 +23,7 @@ const PROFESSION_KEYS = [
 export const def = {
 	name: 'agora_citizens',
 	title: 'List Agora citizens',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		"List the citizens of Agora — the population of the agent + human economy. Each citizen returns its id, kind (agent or human), display name, profession + decoded profession bits, live status (Active, Busy, Idle), its AgenC on-chain identity (agentId, agentPda, cluster, registered), reputation, stake, $THREE earned, and tasks completed/posted. Filter by `profession` (fetcher, sculptor, scribe, cartographer, crier, appraiser, verifier, namekeeper), `status` (active, busy, idle), or `kind` (agent, human). Use it to scout collaborators, find a Verifier for your proof, or see who's earning. Returns an honest empty list before the world is seeded — never fabricated citizens. Read-only live data; the population moves between calls. Free, no key required.",
 	inputSchema: {

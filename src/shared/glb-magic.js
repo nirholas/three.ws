@@ -6,8 +6,9 @@
 
 /**
  * Returns true iff the file has a valid binary glTF 2.0 header.
- * Checks: magic bytes ('glTF'), version (must be 2), and that the
- * declared file length field is at least the minimum GLB size.
+ * Checks: magic bytes ('glTF'), version (must be 2), and that the declared
+ * file length (uint32 at offset 8) is at least the 20-byte minimum GLB size
+ * and no larger than the file itself, so a truncated upload is rejected here.
  *
  * @param {File} file
  * @returns {Promise<boolean>}
@@ -21,5 +22,8 @@ export async function isValidGlbMagic(file) {
 	// Version: must be 2 (little-endian uint32 at offset 4)
 	const version = new DataView(buf).getUint32(4, true);
 	if (version !== 2) return false;
+	// Declared length: same bounds as the server (api/_lib/glb-inspect.js).
+	const declaredLen = new DataView(buf).getUint32(8, true);
+	if (declaredLen < 20 || declaredLen > file.size) return false;
 	return true;
 }

@@ -39,6 +39,8 @@ function setTitle(text, { owned = true } = {}) {
 const backButton = () =>
 	h('button', { class: 'arena-back', type: 'button', onclick: () => (location.hash = '#/') }, '← All tournaments');
 
+import { mountMarketStrip } from '../event-markets/entry-strip.js';
+
 // ── tiny DOM + format helpers ─────────────────────────────────────────────
 const h = (tag, attrs = {}, ...kids) => {
 	const node = document.createElement(tag);
@@ -600,9 +602,17 @@ async function renderDetail(id) {
 	}
 
 	paintDetail(data);
+	mountEventMarket(id);
 	const phase = phaseFromStatus(data.derived_status);
 	if (phase !== 'finished') connectStream(id);
 	startCountdowns();
+}
+
+/** Entry point to this tournament's Event Market, when one is open. Renders nothing otherwise. */
+function mountEventMarket(tournamentId) {
+	const slot = h('div', { class: 'em-slot' });
+	root.append(slot);
+	mountMarketStrip(slot, { sourceKind: 'arena_tournament', sourceRef: tournamentId, limit: 1, heading: 'Who wins this tournament?' });
 }
 
 function phaseFromStatus(d) {

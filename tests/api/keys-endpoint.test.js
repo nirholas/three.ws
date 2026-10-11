@@ -119,6 +119,42 @@ describe('GET /api/keys', () => {
 	});
 });
 
+describe('POST /api/keys connector preset', () => {
+	const row = { id: KEY_ID, name: 'grok', prefix: 'sk_live_abcd', scope: 'read generate agents:write', preset: 'connector', expires_at: null, created_at: '2026-10-09T00:00:00.000Z' };
+
+	it('issues the fixed read generate agents:write grant and records the preset', async () => {
+		sqlState.queue.push([row]);
+		const { status, body } = await invoke(keysHandler, { method: 'POST', url: '/api/keys', body: { name: 'grok', preset: 'connector' } });
+		expect(status).toBe(201);
+		expect(body.key.preset).toBe('connector');
+		expect(sqlState.calls[0].values).toContain('read generate agents:write');
+		expect(sqlState.calls[0].values).toContain('connector');
+		expect(auditState.entries.find((e) => e.action === 'create_api_key').meta.preset).toBe('connector');
+	});
+
+	it('refuses to add spend or any spend-capable scope to a connector key and writes nothing', async () => {
+		for (const scope of ['read spend', 'read generate agents:write wallet:write', 'services:write', 'avatars:delete']) {
+			const { status, body } = await invoke(keysHandler, { method: 'POST', url: '/api/keys', body: { name: 'grok', preset: 'connector', scope } });
+			expect(status, scope).toBe(400);
+			expect(body.error).toBe('validation_error');
+		}
+		expect(sqlState.calls).toHaveLength(0);
+	});
+
+	it('rejects an unknown preset', async () => {
+		const { status } = await invoke(keysHandler, { method: 'POST', url: '/api/keys', body: { name: 'x', preset: 'admin' } });
+		expect(status).toBe(400);
+		expect(sqlState.calls).toHaveLength(0);
+	});
+
+	it('mints an ordinary key with no preset when none is asked for', async () => {
+		sqlState.queue.push([{ ...row, preset: null }]);
+		await invoke(keysHandler, { method: 'POST', url: '/api/keys', body: { name: 'plain', scope: 'avatars:read' } });
+		expect(sqlState.calls[0].values).toContain(null);
+		expect(sqlState.calls[0].values).not.toContain('connector');
+	});
+});
+
 describe('POST /api/keys', () => {
 	it('mints a key, returns the secret once, and records the issuance', async () => {
 		sqlState.queue.push([

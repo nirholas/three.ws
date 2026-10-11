@@ -30,6 +30,10 @@
 //   review      the AI editor's average score above or below 4
 //   variety     a penalty when the post would repeat the last lane or pattern
 //               more times in a row than the queue allows
+//   format      a penalty when the post would repeat the last feed format
+//               (video, GIF, still, text, article; formats.js) more times in a
+//               row than `maximumSameFormatInARow` allows, so a run of clips is
+//               broken by a card or a GIF whenever the stock holds one
 //
 // Small samples are shrunk toward no effect: the archive measured "names
 // $THREE" at 13.3x over only four posts, and one lucky post should not decide
@@ -40,6 +44,7 @@ import { resolve } from 'node:path';
 import { FORMAT_DIMENSIONS, LENGTH_BUCKETS, TOPICS } from '../../../scripts/x-archive-lib.mjs';
 import { weightedLength } from './quality.js';
 import { LEARNED_MIN_SAMPLE, learnedScore } from './outcomes.js';
+import { formatOf } from './formats.js';
 
 const DAY = 24 * 60 * 60_000;
 // Prior strength for shrinkage: a signal measured on n posts keeps n / (n + K)
@@ -206,6 +211,8 @@ export function scoreItem(item, { lifts, published = [], quality = {}, review = 
 	if (trailingRun(sorted, 'lane', item.lane) >= maxLane || trailingRun(sorted, 'pattern', item.pattern) >= maxPattern) {
 		parts.variety = -25;
 	}
+	const maxFormat = Number(quality.maximumSameFormatInARow ?? Infinity);
+	if (trailingRun(sorted, 'format', formatOf(item)) >= maxFormat) parts.format = -25;
 
 	const score = Math.round(Object.values(parts).reduce((sum, value) => sum + value, 0) * 10) / 10;
 	return {

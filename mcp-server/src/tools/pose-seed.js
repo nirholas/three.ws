@@ -23,7 +23,7 @@ import { PRESETS, PRESET_GROUPS } from '../lib/pose-presets.js';
 
 const TOOL_NAME = 'get_pose_seed';
 const TOOL_DESCRIPTION =
-	'Deterministic pose-studio seed + complete joint rotations for the three.ws mannequin, picked from the in-repo preset library by matching natural-language prompt tokens against preset labels, IDs, and groups. Returns the preset id, the full Euler-rotation pose map (radians), a sha256-derived seed, and a previewUrl on three.ws/pose. Paid: $0.001 USDC.';
+	'Deterministic pose-studio seed + complete joint rotations for the three.ws mannequin, picked from the in-repo preset library by matching natural-language prompt tokens against preset labels, IDs, and groups. Returns the preset id, the full Euler-rotation pose map (radians), a sha256-derived seed, and a previewUrl on three.ws/pose. Use this to turn a pose description such as "warrior pose" or "waving" into exact joint rotations and a pose-studio link. Paid: $0.001 USDC.';
 
 const PREVIEW_BASE = process.env.MCP_POSE_PREVIEW_BASE || 'https://three.ws/pose';
 

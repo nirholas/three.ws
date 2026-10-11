@@ -16,6 +16,7 @@
 
 import { sql } from './db.js';
 import { mintApiKey } from './api-keys.js';
+import { invalidateApiKey } from './api-key-cache.js';
 import { inferencePricing } from './inference-billing.js';
 import { previewTopup, executeTopup, TopupError } from './inference-topup.js';
 import { isUuid } from './validate.js';
@@ -74,6 +75,7 @@ export async function executeProvision({ userId, previewId, confirmDeposit, name
 	`;
 	if (!claimed) {
 		await sql`UPDATE api_keys SET revoked_at = now() WHERE id = ${minted.row.id}`;
+		await invalidateApiKey(minted.row.id);
 		throw new TopupError(409, 'already_provisioned', 'A concurrent request already minted the key for this top-up.');
 	}
 	await sql`

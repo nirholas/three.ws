@@ -9,7 +9,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'list_autopilot_activity',
 	title: 'List autopilot activity (signed receipts)',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Read the append-only log of every autonomous action the agent has taken, newest first — the real ' +
 		'agent_actions trail. Each receipt carries the kind (alert created / briefing authored / wallet ' +

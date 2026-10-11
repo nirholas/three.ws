@@ -1,0 +1,11 @@
+[
+  {"id": "standards", "title": "Standards and Proposals", "blurb": "Specifications, protocols, and conventions that let agents discover, read, and act on the web."},
+  {"id": "in-page-tools", "title": "WebMCP and In-Page Agent Tools", "blurb": "Libraries and demos that let a web page expose tools to agents, and MCP running in or alongside the browser."},
+  {"id": "browser-use-frameworks", "title": "Browser-Use Frameworks", "blurb": "Open-source libraries and SDKs that let LLMs drive a browser to complete tasks."},
+  {"id": "browser-mcp-servers", "title": "Browser MCP Servers", "blurb": "MCP servers that give assistants control of, or insight into, a real browser."},
+  {"id": "computer-use", "title": "Computer-Use Agents", "blurb": "Agents, sandboxes, and tooling that operate full graphical desktops from screenshots and actions."},
+  {"id": "automation-foundations", "title": "Automation Foundations", "blurb": "The browser automation engines and headless browsers that agent frameworks build on."},
+  {"id": "browser-infrastructure", "title": "Headless Browser Infrastructure", "blurb": "Self-hostable and hosted browser fleets built for agent workloads."},
+  {"id": "web-data", "title": "Web Data for Agents", "blurb": "Crawlers, readers, and extraction tools that turn pages into agent-ready content."},
+  {"id": "benchmarks", "title": "Benchmarks and Research", "blurb": "Datasets, environments, and research agents for measuring and improving web agents."}
+]

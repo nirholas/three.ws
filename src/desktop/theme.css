@@ -1,0 +1,155 @@
+/* three.ws Desktop theme: the CTRL design system (Windows-12 lineage).
+ *
+ * Token names and values follow CTRL's ctrl.css so a CTRL app or theme pack
+ * reads the same variables here: the semantic surface set (--bg, --card,
+ * --hover, --bd, --hr ...), Mica gradients, glass and blur presets, shadows,
+ * radii and the easing curves. Dark is the default; light follows the site's
+ * [data-theme='light'] switch (theme-switcher.js), so the desktop and every
+ * framed page flip together.
+ *
+ * The three.ws accent (--theme-1/--theme-2) replaces CTRL's purple-blue pair
+ * only through --accent overrides in desktop.css, never here, so this file
+ * stays a faithful copy of the upstream palette.
+ */
+
+.os {
+	--font-size-base: 1rem;
+
+	/* Core palette (dark) */
+	--col-bg1: #101010;
+	--col-bg2: #171717;
+	--col-bg3: #262626;
+	--col-bgh: #44403c;
+	--col-txt1: #ffffff;
+	--col-txt2: #dddddd;
+	--col-txth: #ffffff;
+	--col-good: #5be45b;
+	--col-bad: #d44343;
+
+	/* Semantic surfaces (dark) */
+	--bg: #000000;
+	--bg50: #00000065;
+	--bg70: #111111c5;
+	--sd: #00000055;
+	--card: #202020;
+	--hover: #2a2a2a;
+	--hover-half: #2a2a2a60;
+	--hover-b: #333333;
+	--unfoc: #1a1a1a;
+	--msg: #333333;
+	--hr: #ffffff20;
+	--bd: #333333;
+	--cm: #292929bb;
+	--bar: #00000060;
+	--fill: #ffffff25;
+	--mm: #7f7f7f10;
+	--s3d: #ffffff05;
+	--href: #4cc2ff;
+	--bg30: #00000030;
+	--bggrey: #444444;
+	--text: #eeeeee;
+	--text2: #aaaaaa;
+
+	/* Accent gradient */
+	--theme-1: #ad6eca;
+	--theme-2: #3b91d8;
+
+	/* Mica material */
+	--mica: linear-gradient(215deg, #3a2434, #1a2a4f);
+
+	/* Glass */
+	--glass-bg: rgba(26, 26, 46, 0.75);
+	--glass-border: 1px solid rgba(255, 255, 255, 0.08);
+	--glass-border-col: rgba(255, 255, 255, 0.08);
+	--material-base: rgba(16, 16, 16, 0.6);
+	--material-thick: rgba(20, 20, 32, 0.8);
+
+	/* Blur presets */
+	--blur-light: blur(12px) saturate(1.3);
+	--blur-medium: blur(20px) saturate(1.5);
+	--blur-heavy: blur(60px) saturate(3) contrast(0.8);
+
+	/* Shadows */
+	--shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
+	--shadow-md: 0 8px 32px rgba(0, 0, 0, 0.3);
+	--shadow-lg: 0 16px 64px rgba(0, 0, 0, 0.5);
+	--shadow-focus: 0 12px 48px rgba(0, 0, 0, 0.6), 0 4px 16px rgba(0, 0, 0, 0.3);
+
+	/* Sizing */
+	--sizing-normal: 0.5rem;
+	--sizing-huge: 1rem;
+	--sizing-nano: 0.3rem;
+	--siz-radius1: 0.5em;
+	--siz-radius2: 0.35em;
+	--siz-radius3: 0.2em;
+	--spacing-normal: 0.3rem;
+	--spacing-gap: 6px;
+
+	/* Easing */
+	--time1: 0.3s cubic-bezier(0.36, 0.38, 0, 0.94);
+	--time2: 0.3s cubic-bezier(0.42, 1.67, 0.21, 0.9);
+	--ease-decel: cubic-bezier(0.9, 0, 0.1, 1);
+
+	/* Decor */
+	--box-crisp: 1px solid #ffffff0c;
+	--box-crisp-col: #ffffff0c;
+	--colors-accent: rgb(97, 121, 255);
+
+	--font-size-small: calc(var(--font-size-base) * 0.85);
+	--font-size-normal: var(--font-size-base);
+	--font-size-subheading: calc(var(--font-size-base) * 1.25);
+	--font-size-big: calc(var(--font-size-base) * 2);
+
+	color-scheme: dark;
+}
+
+[data-theme='light'] .os {
+	--col-bg1: #f5f5f5;
+	--col-bg2: #ececec;
+	--col-bg3: #e0e0e0;
+	--col-bgh: #d0d0d0;
+	--col-txt1: #1a1a1a;
+	--col-txt2: #444444;
+	--col-txth: #000000;
+
+	--bg: #ffffff;
+	--bg50: #ffffff90;
+	--bg70: #fefefeb7;
+	--sd: #00000015;
+	--card: #f6f6f6;
+	--hover: #eaeaea;
+	--hover-half: #eaeaea60;
+	--hover-b: #dedede;
+	--unfoc: #fbfbfb;
+	--msg: #eeeeee;
+	--hr: #6f6f6f20;
+	--bd: #e5e5e5;
+	--cm: #f7f7f7bb;
+	--bar: #ffffff60;
+	--fill: #ffffff80;
+	--mm: #9f9f9f10;
+	--s3d: #00000020;
+	--href: #0067c0;
+	--bg30: #ffffff30;
+	--bggrey: #dddddd;
+	--text: #000000;
+	--text2: #444444;
+
+	--mica: linear-gradient(215deg, #ffe7f6, #a9c3ff);
+
+	--glass-bg: rgba(255, 255, 255, 0.75);
+	--glass-border: 1px solid rgba(0, 0, 0, 0.06);
+	--glass-border-col: rgba(0, 0, 0, 0.06);
+	--material-base: rgba(245, 245, 245, 0.6);
+	--material-thick: rgba(250, 250, 250, 0.85);
+
+	--shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+	--shadow-md: 0 8px 24px rgba(0, 0, 0, 0.1);
+	--shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.15);
+	--shadow-focus: 0 12px 40px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.08);
+
+	--box-crisp: 1px solid rgba(0, 0, 0, 0.08);
+	--box-crisp-col: rgba(0, 0, 0, 0.08);
+
+	color-scheme: light;
+}

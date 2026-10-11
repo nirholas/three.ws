@@ -180,12 +180,20 @@ function makeRes() {
 	};
 }
 
-async function call(name, args, { scope = 'memory:read memory:write', headers = {} } = {}) {
+// Every request names its tool enablement in X-Three-Tools, the way a client
+// does, so the policy never reads saved settings through the queued sql mock
+// above. `default` is the platform base: read and write on, financial off.
+// forget deletes a memory for good, so the policy keeps it financial tier: off
+// until named, and refused without confirm_delete and a fresh preview_id from
+// recall for the same agent.
+const FORGET_ON = 'default,forget';
+
+async function call(name, args, { scope = 'memory:read memory:write', tools = 'default' } = {}) {
 	authState.extracted = 'valid-token';
 	authState.bearer = { userId: 'user-1', scope, source: 'oauth' };
 	const req = makeReq({
 		body: { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } },
-		headers: { authorization: 'Bearer valid-token', ...headers },
+		headers: { authorization: 'Bearer valid-token', 'x-three-tools': tools },
 	});
 	const res = makeRes();
 	await handler(req, res);
@@ -195,23 +203,18 @@ async function call(name, args, { scope = 'memory:read memory:write', headers = 
 const AGENT_ID = '11111111-1111-4111-8111-111111111111';
 const MEM_ID = '22222222-2222-4222-8222-222222222222';
 
-// `forget` cannot be undone, so the tool policy (@three-ws/mcp-policy) keeps it
-// off by default and requires a fresh `recall` preview for the same agent plus
-// confirm_delete: true. A connection turns it on with the X-Three-Tools header,
-// exactly as `npx three-ws tools` does.
-const FORGET_ON = { 'x-three-tools': 'default,forget' };
-
-/** Run the recall that authorizes a forget and return the preview id it issues. */
+// recall is forget's preview: the caller sees what is stored, then deletes one
+// memory with the preview_id recall returned. Queues the two recall queries
+// (ownsAgent, candidates) and hands back that id.
 async function recallPreviewId() {
-	sqlState.queue = [
-		[{ user_id: 'user-1' }], // ownsAgent
-		[], // candidates
-	];
-	const { body } = await call('recall', { agent_id: AGENT_ID, query: 'mcp' }, { headers: FORGET_ON });
-	const id = body.result?._meta?.['three.ws/preview']?.preview_id;
-	expect(typeof id).toBe('string');
-	return id;
+	sqlState.queue = [[{ user_id: 'user-1' }], []];
+	const { body } = await call('recall', { agent_id: AGENT_ID, query: 'anything' }, { tools: FORGET_ON });
+	const previewId = body.result._meta?.['three.ws/preview']?.preview_id;
+	expect(previewId, 'recall issued a preview_id').toMatch(/^p_/);
+	return previewId;
 }
+
+const forgetArgs = (previewId) => ({ memory_id: MEM_ID, agent_id: AGENT_ID, preview_id: previewId, confirm_delete: true });
 
 beforeEach(() => {
 	authState.extracted = null;
@@ -290,37 +293,41 @@ describe('ownership', () => {
 	it('forget refuses a memory owned by another user', async () => {
 		const previewId = await recallPreviewId();
 		sqlState.queue = [[{ id: MEM_ID, user_id: 'someone-else' }]];
-		const { body } = await call(
-			'forget',
-			{ memory_id: MEM_ID, agent_id: AGENT_ID, preview_id: previewId, confirm_delete: true },
-			{ headers: FORGET_ON },
-		);
+		sqlState.calls = [];
+		const { body } = await call('forget', forgetArgs(previewId), { tools: FORGET_ON });
 		expect(body.result.isError).toBe(true);
 		expect(body.result.content[0].text).toMatch(/does not belong to you/i);
-		expect(sqlState.calls.some((c) => /delete from agent_memories/i.test(c.query))).toBe(false);
+		expect(sqlState.calls.some((c) => /DELETE/i.test(c.query))).toBe(false);
 	});
 });
 
-// ── Tool policy on the destructive tool ──────────────────────────────────────
-describe('forget policy', () => {
-	it('is off for a connection that has not turned it on, before any query runs', async () => {
-		const { body } = await call('forget', { memory_id: MEM_ID });
+// ── The forget policy gate ───────────────────────────────────────────────────
+describe('forget policy gate', () => {
+	it('is turned off for a default connection and touches no row', async () => {
+		const { body } = await call('forget', { memory_id: MEM_ID, agent_id: AGENT_ID });
 		expect(body.result.isError).toBe(true);
-		expect(body.result.structuredContent.reason).toBe('tool_disabled');
-		expect(sqlState.calls).toHaveLength(0);
+		expect(body.result.structuredContent).toMatchObject({ reason: 'tool_disabled', tool: 'forget', tier: 'financial' });
+		expect(sqlState.calls).toEqual([]);
 	});
 
-	it('needs confirm_delete and a recall preview even when turned on', async () => {
-		const { body: noConfirm } = await call('forget', { memory_id: MEM_ID, agent_id: AGENT_ID }, { headers: FORGET_ON });
-		expect(noConfirm.result.structuredContent.reason).toBe('confirmation_required');
+	it('refuses without confirm_delete, then without a preview, before any query', async () => {
+		const noConfirm = await call('forget', { memory_id: MEM_ID, agent_id: AGENT_ID }, { tools: FORGET_ON });
+		expect(noConfirm.body.result.structuredContent).toMatchObject({ reason: 'confirmation_required', confirm_flag: 'confirm_delete', preview_tool: 'recall' });
+		const noPreview = await call('forget', { memory_id: MEM_ID, agent_id: AGENT_ID, confirm_delete: true }, { tools: FORGET_ON });
+		expect(noPreview.body.result.structuredContent).toMatchObject({ reason: 'preview_required' });
+		expect(sqlState.calls).toEqual([]);
+	});
 
-		const { body: noPreview } = await call(
+	it('refuses a preview_id recall issued for a different agent', async () => {
+		const previewId = await recallPreviewId();
+		sqlState.calls = [];
+		const { body } = await call(
 			'forget',
-			{ memory_id: MEM_ID, agent_id: AGENT_ID, confirm_delete: true },
-			{ headers: FORGET_ON },
+			{ ...forgetArgs(previewId), agent_id: '33333333-3333-4333-8333-333333333333' },
+			{ tools: FORGET_ON },
 		);
-		expect(noPreview.result.structuredContent.reason).toBe('preview_required');
-		expect(sqlState.calls).toHaveLength(0);
+		expect(body.result.structuredContent).toMatchObject({ reason: 'preview_mismatch' });
+		expect(sqlState.calls).toEqual([]);
 	});
 });
 
@@ -408,13 +415,12 @@ describe('round trip', () => {
 			[{ id: MEM_ID, user_id: 'user-1' }], // ownership join
 			[], // DELETE
 		];
-		const { body } = await call(
-			'forget',
-			{ memory_id: MEM_ID, agent_id: AGENT_ID, preview_id: previewId, confirm_delete: true },
-			{ headers: FORGET_ON },
-		);
+		const { body } = await call('forget', forgetArgs(previewId), { tools: FORGET_ON });
 		expect(body.error).toBeUndefined();
 		expect(body.result.structuredContent).toEqual({ ok: true, id: MEM_ID });
 		expect(body.result.content[0].text).toContain(MEM_ID);
+		// The preview authorized one deletion and is spent now.
+		const replay = await call('forget', forgetArgs(previewId), { tools: FORGET_ON });
+		expect(replay.body.result.structuredContent.reason).toBe('preview_unknown');
 	});
 });

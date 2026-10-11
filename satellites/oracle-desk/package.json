@@ -14,7 +14,7 @@
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.129.0",
-		"@pump-fun/pump-sdk": "^3.2.0",
+		"@pump-fun/pump-sdk": "^4.0.0",
 		"@pump-fun/pump-swap-sdk": "^2.1.0",
 		"@solana/spl-token": "^0.4.15",
 		"@solana/web3.js": "^1.99.0",

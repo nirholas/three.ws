@@ -22,7 +22,8 @@ export const def = {
 		'(with THREE_WS_SESSION set), whether that session would settle it: its remaining budget, per-transaction ' +
 		'ceiling and host allowlist, and the budget left afterwards. Makes one unpaid probe request and moves ' +
 		'nothing. Show the price to the user, get a clear yes, then call pay_with_session with the same url and ' +
-		'method, the returned quote_id and confirm_payment: true.',
+		'method, the returned quote_id and confirm_payment: true. ' +
+		'Use this before every pay_with_session call to see the price and whether the session can cover it.',
 	inputSchema: {
 		url: z.string().url().describe('The x402 endpoint URL that will be paid.'),
 		method: z.enum(['GET', 'POST']).default('GET').describe('HTTP method. Default: GET.'),

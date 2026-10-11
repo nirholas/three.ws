@@ -274,7 +274,8 @@ const DEFS = [
 			'URL expiring, then registered under a stable persona_id. The returned view renders the LIVING body ' +
 			'inline: it idles between turns, and persona_say makes it lip-sync and emote a reply. The persona_id is ' +
 			'the handle: keep it and pass it to get_agent_persona or persona_say later to bring the exact same body ' +
-			'back. No sign-in required.',
+			'back. Use this once a rigged model should become a recurring character the assistant speaks through. ' +
+			'No sign-in required.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,
@@ -296,7 +297,7 @@ const DEFS = [
 		description:
 			'Bring back a previously saved persona by its persona_id: the SAME body and identity, in a fresh ' +
 			'session. Returns the persona name, its model, the accumulated turn count, and the inline living-body ' +
-			'view. Use this at the start of a conversation when the user returns to a named agent.',
+			'view. Use this when a conversation starts and the user returns to a named agent.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,
@@ -316,7 +317,8 @@ const DEFS = [
 			'Make a persona PERFORM a reply: the body lip-syncs the text and shows the matching facial expression ' +
 			'and body gesture. Pass the persona_id and the exact text the agent is saying this turn; the emotion is ' +
 			'detected from the text automatically (or set it explicitly). The returned view animates the body for ' +
-			'this turn: show it alongside the reply. This is the turn-by-turn embodiment hook.',
+			'this turn: show it alongside the reply. Use this whenever the persona speaks, on every turn, with the persona_id ' +
+			'from create_agent_persona or get_agent_persona.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,

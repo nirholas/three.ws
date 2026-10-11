@@ -12,8 +12,10 @@
  *       &avatar=1            only agents whose avatar GLB is publicly readable
  *
  * Returns { agents, count, has_more, generated_at }. Each agent has the
- * public-safe fields: id, name, description, skills, avatar_thumbnail_url,
- * home_url, is_registered, chat_count, created_at, onchain summary.
+ * public-safe fields: id, name, description, skills, avatar_thumbnail,
+ * avatar_model_url (the GLB, only when the avatar is public or unlisted; the
+ * desktop campus wears it), home_url, is_registered, chat_count, created_at,
+ * onchain summary.
  *
  * The `live` sort powers the /agents-live "watch them work" wall: it ranks
  * agents by their MOST RECENT real on-chain/skill action (the same
@@ -41,7 +43,7 @@
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
-import { thumbnailUrl } from '../_lib/r2.js';
+import { publicUrlOrNull, thumbnailUrl } from '../_lib/r2.js';
 
 const SORTS = new Set(['newest', 'popular', 'name', 'live']);
 
@@ -63,6 +65,10 @@ function mapAgent(r) {
 	const onchain = meta.onchain || null;
 	const thumbPub = r.avatar_visibility === 'public' || r.avatar_visibility === 'unlisted';
 	const thumbnail = r.avatar_thumbnail_key && thumbPub ? thumbnailUrl(r.avatar_thumbnail_key) : null;
+	// The body itself, under the same public/unlisted gate as /api/agents/:id.
+	// Lets a crowd surface (the desktop campus) dress every agent from one call
+	// instead of one profile fetch per agent.
+	const modelUrl = r.avatar_storage_key && thumbPub ? publicUrlOrNull(r.avatar_storage_key) : null;
 
 	return {
 		id:                r.id,
@@ -70,6 +76,7 @@ function mapAgent(r) {
 		description:       r.description || null,
 		skills:            r.skills || [],
 		avatar_thumbnail:  thumbnail,
+		avatar_model_url:  modelUrl,
 		home_url:          r.home_url || `/agents/${r.id}`,
 		chat_count:        Number(r.chat_count) || 0,
 		is_registered:     !!(onchain || meta.sol_mint_address || r.erc8004_agent_id || meta.erc8004_agent_id),
@@ -114,6 +121,7 @@ export default wrap(async (req, res) => {
 				i.id, i.name, i.description, i.skills, i.home_url,
 				i.created_at, i.meta, i.erc8004_agent_id, i.chain_id,
 				a.thumbnail_key  as avatar_thumbnail_key,
+				a.storage_key    as avatar_storage_key,
 				a.visibility     as avatar_visibility,
 				ac.last_action_at,
 				coalesce(ac.action_count, 0) as action_count,
@@ -226,6 +234,7 @@ export default wrap(async (req, res) => {
 			i.erc8004_agent_id,
 			i.chain_id,
 			a.thumbnail_key  as avatar_thumbnail_key,
+			a.storage_key    as avatar_storage_key,
 			a.visibility     as avatar_visibility
 		from agent_identities i
 		left join avatars a on a.id = i.avatar_id and a.deleted_at is null

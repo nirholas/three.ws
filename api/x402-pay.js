@@ -345,10 +345,13 @@ function buildJsonRpc(tool, args) {
 	};
 }
 
-async function buildSolanaPaymentPayload({ accept, buyer, conn, resourceUrl }) {
+export async function buildSolanaPaymentPayload({ accept, buyer, conn, resourceUrl }) {
 	const mint = new PublicKey(accept.asset);
 	const payTo = new PublicKey(accept.payTo);
-	const feePayer = new PublicKey(accept.extra.feePayer);
+	// An accept with no feePayer is the x402 self-pay contract (x402-spec.js drops
+	// it while the sponsor sits under its SOL floor): the buyer pays its own fee,
+	// as in x402-checkout.js. Only the self-routed facilitator advertises it.
+	const feePayer = accept.extra?.feePayer ? new PublicKey(accept.extra.feePayer) : buyer.publicKey;
 	const amount = BigInt(accept.amount);
 
 	const senderAta = getAssociatedTokenAddressSync(

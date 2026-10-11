@@ -84,15 +84,15 @@ const ROUTES = [
 	['POST', 'listings', { scope: 'agents:write', write: true }, (ctx) => svc.createListing(ctx.user, ctx.body, { confirm: ctx.body.confirm === true })],
 	['GET', 'listings/:id', { optional: true }, (ctx) => svc.getListingDetail(ctx.params.id, ctx.user?.id)],
 	['POST', 'listings/:id/delist', { scope: 'agents:write', write: true }, (ctx) => svc.delistListing(ctx.user, ctx.params.id, { confirm: ctx.body.confirm === true })],
-	['POST', 'listings/:id/bids', { scope: 'wallet:write', write: true }, (ctx) =>
+	['POST', 'listings/:id/bids', { scope: 'wallet:trade', write: true }, (ctx) =>
 		svc.placeBid(ctx.user, { ...ctx.body, listing_id: ctx.params.id }, { confirm: ctx.body.confirm === true, kind: 'bid' })],
-	['POST', 'listings/:id/buy', { scope: 'wallet:write', write: true }, (ctx) =>
+	['POST', 'listings/:id/buy', { scope: 'wallet:trade', write: true }, (ctx) =>
 		svc.placeBid(ctx.user, { ...ctx.body, listing_id: ctx.params.id }, { confirm: ctx.body.confirm === true, kind: 'buy_now' })],
-	['POST', 'bids/:id/confirm', { scope: 'wallet:write', write: true }, (ctx) => svc.confirmBidFunding(ctx.user, ctx.params.id, { signature: ctx.body.signature || null })],
-	['POST', 'bids/:id/transaction', { scope: 'wallet:write', write: true }, (ctx) => svc.rebuildFundingTransaction(ctx.user, ctx.params.id)],
+	['POST', 'bids/:id/confirm', { scope: 'wallet:trade', write: true }, (ctx) => svc.confirmBidFunding(ctx.user, ctx.params.id, { signature: ctx.body.signature || null })],
+	['POST', 'bids/:id/transaction', { scope: 'wallet:trade', write: true }, (ctx) => svc.rebuildFundingTransaction(ctx.user, ctx.params.id)],
 	['POST', 'bids/:id/accept', { scope: 'agents:write', write: true }, (ctx) => svc.acceptBid(ctx.user, ctx.params.id, { confirm: ctx.body.confirm === true })],
 	['POST', 'bids/:id/reject', { scope: 'agents:write', write: true }, (ctx) => svc.rejectBid(ctx.user, ctx.params.id)],
-	['POST', 'bids/:id/withdraw', { scope: 'wallet:write', write: true }, (ctx) => svc.withdrawBid(ctx.user, ctx.params.id, { confirm: ctx.body.confirm === true })],
+	['POST', 'bids/:id/withdraw', { scope: 'wallet:trade', write: true }, (ctx) => svc.withdrawBid(ctx.user, ctx.params.id, { confirm: ctx.body.confirm === true })],
 	['GET', 'transfers/:id', { scope: 'agents:read' }, (ctx) => svc.getTransferForViewer(ctx.params.id, ctx.user)],
 	['POST', 'transfers/:id/resume', { scope: 'agents:write', write: true }, (ctx) => svc.resumeTransfer(ctx.user, ctx.params.id)],
 ];

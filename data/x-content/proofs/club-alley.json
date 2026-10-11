@@ -1,0 +1,71 @@
+{
+	"id": "club-alley",
+	"scenarioHash": "a6b7a77ff9a79e2567bf015a2f5ac02006e936fdd02efb611237093150914f0a",
+	"ranAt": "2026-10-09T17:14:02.474Z",
+	"target": {
+		"commit": "ec8d1d270",
+		"revision": "three-ws-api-00482-fzq"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/club",
+			"detail": "loaded https://three.ws/club",
+			"ok": true,
+			"ms": 37429,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 117914,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "drag",
+			"target": "0.72,0.5,0.58,0.5",
+			"detail": "dragged over 42 frames",
+			"ok": true,
+			"ms": 134558,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "hold",
+			"target": "1200",
+			"detail": "1200 ms",
+			"ok": true,
+			"ms": 78667,
+			"frames": 0
+		},
+		{
+			"index": 5,
+			"kind": "press",
+			"target": "w",
+			"detail": "held w for 1800 ms",
+			"ok": true,
+			"ms": 99346,
+			"frames": 0
+		},
+		{
+			"index": 6,
+			"kind": "expect",
+			"target": "Wallet out when you are ready",
+			"ok": false,
+			"detail": "\"Wallet out when you are ready\" did not appear within 15000 ms",
+			"ms": 16421,
+			"frames": 0
+		}
+	],
+	"facts": {},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": null
+}

@@ -12,13 +12,22 @@
 		"ops/production": "Operating the three.ws production fleet. For maintainers, not for end users of the platform."
 	},
 	"counts": {
-		"3d/creative": 5,
+		"3d/creative": 6,
 		"intel/trading": 13,
 		"ops/production": 1,
 		"platform/agents": 5,
 		"wallet/payments": 24
 	},
 	"skills": [
+		{
+			"name": "anatomy",
+			"description": "Explain how a machine works as an interactive isometric 3D cutaway. Use when the user asks how an engine, turbine, reactor, pump, clock, motor or any mechanism works and wants to see it, or types \"/anatomy <machine>\", for example \"/anatomy explain how a big airliner turbofan engine like the A380's makes thrust, interactive\". Produces a shareable three.ws link with real moving parts, shader effects (fire, exhaust, plasma, water, steam, sparks, arcs), flows, a section cut, an exploded view and a guided tour.",
+			"whenToUse": "The user wants a machine or mechanism explained visually and interactively. For a static 3D object to download, use generate-3d-model. For a character, use create-3d-avatar.",
+			"category": "3d/creative",
+			"origin": "three.ws",
+			"crossPlatformSafe": true,
+			"path": ".agents/skills/anatomy"
+		},
 		{
 			"name": "create-3d-avatar",
 			"description": "Turn a text prompt (or reference image) into a rigged, animation-ready 3D avatar (GLB). Use when you or the user want to create, generate, or make a 3D avatar, character, or humanoid figure that can be posed and animated — \"make a 3D avatar of a knight\", \"generate a character I can animate\", \"create a rigged astronaut\". Generates the mesh and adds a humanoid skeleton in one step. Returns a GLB URL plus a pose-studio link.",

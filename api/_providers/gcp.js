@@ -12,6 +12,12 @@
 //                  Native single-image→3D via Microsoft TRELLIS. Standard task
 //                  shape: POST /infer → { task_id }  GET /tasks/:id → result_gcs_url.
 //
+//   trellis2     → MODEL_TRELLIS2_URL       (workers/model-trellis2)
+//   modly        → MODEL_MODLY_URL          (workers/modly, TripoSG)
+//   modly_hunyuan → MODEL_MODLY_URL         (workers/modly, Hunyuan3D 2 Mini Turbo)
+//                  One Modly worker serves both; the request's `model` field
+//                  picks the extension. Untextured geometry, repaired and
+//                  decimated to the poly budget by Modly's mesh optimizer.
 //   hunyuan      → GCP_HUNYUAN3D_URL        (workers/model-hunyuan3d)
 //                  Image→3D via Tencent Hunyuan3D-2 (shape DiT + multiview
 //                  paint). Same standard task shape as the TRELLIS worker:
@@ -96,6 +102,15 @@ function serviceUrlForMode(mode) {
 			// the avatar pipeline's `reconstruct` (face-only, /reconstruct + /jobs/:id);
 			// this worker speaks the standard /infer + /tasks/:id task shape.
 			return readEnv('MODEL_TRELLIS_URL');
+		case 'trellis2':
+			// Self-hosted Microsoft TRELLIS.2 image→3D worker (workers/model-trellis2),
+			// the default image lane. Same /infer + /tasks/:id task shape.
+			return readEnv('MODEL_TRELLIS2_URL');
+		case 'modly':
+		case 'modly_hunyuan':
+			// Self-hosted Modly worker (workers/modly): one service, two models.
+			// Same /infer + /tasks/:id task shape as the TRELLIS workers.
+			return readEnv('MODEL_MODLY_URL');
 		case 'hunyuan':
 			// Self-hosted Hunyuan3D-2 image→3D worker (workers/model-hunyuan3d).
 			// Same standard /infer + /tasks/:id task shape as the TRELLIS worker.
@@ -178,6 +193,31 @@ function buildWorkerRequest(request) {
 			resultKey: 'result_gcs_url',
 			body,
 		};
+	}
+
+	if (mode === 'trellis2') {
+		// Self-hosted TRELLIS.2 image→3D (workers/model-trellis2). One reference
+		// view in, a PBR GLB with alpha out. `resolution` (512, 1024 or 1536) is
+		// the voxel resolution; absent, the worker maps `tier` to one.
+		const photos = Array.isArray(params?.images) && params.images.length
+			? params.images
+			: [sourceUrl].filter(Boolean);
+		const body = { images: photos, body_type: params?.bodyType || 'neutral' };
+		if (Number.isFinite(Number(params?.resolution))) body.resolution = Math.round(Number(params.resolution));
+		if (params?.tier) body.tier = params.tier;
+		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
+		// The worker clamps both (512 to 4096 px, 50k to 2M faces).
+		if (Number.isFinite(Number(params?.texture_size))) body.texture_size = Math.round(Number(params.texture_size));
+		if (Number.isFinite(Number(params?.decimation_target))) body.decimation_target = Math.round(Number(params.decimation_target));
+		return {
+			path: '/infer',
+			resultKey: 'result_gcs_url',
+			body,
+		};
+	}
+
+	if (mode === 'modly' || mode === 'modly_hunyuan') {
+		return buildModlyRequest(mode, sourceUrl, params);
 	}
 
 	if (mode === 'hunyuan') {
@@ -411,11 +451,56 @@ function buildWorkerRequest(request) {
 	return null;
 }
 
+// The Modly worker's model id per forge mode, and the face budget its
+// decimate step accepts (workers/modly request_policy.py DECIMATE_MIN/MAX).
+export const MODLY_MODEL_FOR_MODE = Object.freeze({
+	modly: 'triposg',
+	modly_hunyuan: 'hunyuan3d-mini-turbo',
+});
+const MODLY_DECIMATE_MIN = 100;
+const MODLY_DECIMATE_MAX = 1_000_000;
+
+// Self-hosted Modly image to 3D (workers/modly). One reference view in, an
+// untextured GLB out. The worker maps `tier` to its sampler budget; the
+// post-process plan repairs the raw marching-cubes mesh and then decimates it to
+// the caller's poly budget, so the tier's polycount is honoured. A budget outside
+// the worker's bounds is clamped here rather than 422ing the whole generation.
+function buildModlyRequest(mode, sourceUrl, params) {
+	const photos = Array.isArray(params?.images) && params.images.length
+		? params.images
+		: [sourceUrl].filter(Boolean);
+	const body = {
+		images: photos,
+		body_type: params?.bodyType || 'neutral',
+		model: MODLY_MODEL_FOR_MODE[mode],
+	};
+	if (params?.tier) body.tier = params.tier;
+	if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
+	const postprocess = { repair: true };
+	const target = Number(params?.target_polycount);
+	if (Number.isFinite(target) && target > 0) {
+		postprocess.decimate = {
+			target_faces: Math.min(MODLY_DECIMATE_MAX, Math.max(MODLY_DECIMATE_MIN, Math.round(target))),
+		};
+	}
+	body.postprocess = postprocess;
+	return {
+		path: '/infer',
+		resultKey: 'result_gcs_url',
+		body,
+	};
+}
+
 // Expected wall-clock ETAs (seconds) per mode — used to populate the
 // progress indicator on the client side.
 const MODE_ETA = {
 	reconstruct: 120,
 	trellis: 60,
+	trellis2: 75,
+	// TripoSG's 20 to 50 flow steps plus repair and decimate on the L4.
+	modly: 60,
+	// Hunyuan3D 2 Mini Turbo is a few-step distilled sampler.
+	modly_hunyuan: 45,
 	// 50-step shape diffusion + multiview paint on the L4: much heavier than
 	// TRELLIS's single pass.
 	hunyuan: 300,
@@ -522,7 +607,7 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 			// primary view only (report 1 so a multi-view request is never
 			// silently claimed as fused); other modes are single-source.
 			const viewsUsed =
-				mode === 'hunyuan'
+				mode === 'hunyuan' || mode === 'trellis2' || mode === 'modly' || mode === 'modly_hunyuan'
 					? 1
 					: (mode === 'reconstruct' || mode === 'trellis') && Array.isArray(workerReq.body.images)
 						? workerReq.body.images.length

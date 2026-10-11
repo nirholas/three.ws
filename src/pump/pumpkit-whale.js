@@ -7,6 +7,7 @@
 // All heavy imports are lazy so the module cold-starts cheaply.
 
 import { getSolPriceUsd } from '../shared/usd-price.js';
+import { pumpTradesFromEvents } from './trade-events.js';
 
 // api.mainnet-beta.solana.com refuses most browser origins outright, so the
 // whale feed used to be dead on arrival with nothing on screen saying why. Every
@@ -190,23 +191,20 @@ export async function watchWhaleTrades({ mint, minUsd = 5000, onTrade, onStatus,
 			}
 			if (logInfo.err) return;
 			try {
-				for (const event of parser.parseLogs(logInfo.logs)) {
-					if (event.name !== 'TradeEvent') continue;
-					const d = event.data;
-					// Anchor's coder emits snake_case fields with the current pump
-					// IDL; older toolchains camelCased them — read both.
-					const f = (a, b) => (d[a] !== undefined ? d[a] : d[b]);
-					if (d.mint?.toString() !== mintStr) continue;
-					const sol = Number(f('sol_amount', 'solAmount')?.toString() ?? '0') / LAMPORTS_PER_SOL;
+				// The buy that completes a curve carries its synthetic-migration
+				// pool part in a second event; pumpTradesFromEvents folds it in.
+				for (const trade of pumpTradesFromEvents(parser.parseLogs(logInfo.logs))) {
+					if (trade.mint !== mintStr) continue;
+					const sol = Number(trade.solAmount) / LAMPORTS_PER_SOL;
 					const usd = sol * solPrice;
 					if (usd < minUsd) continue;
 					onTrade({
 						signature: logInfo.signature,
-						wallet: d.user?.toString() ?? null,
-						sideBuy: !!f('is_buy', 'isBuy'),
+						wallet: trade.user || null,
+						sideBuy: trade.isBuy,
 						usd,
 						sol,
-						ts: Number(f('timestamp', 'timestamp')?.toString() ?? '0') * 1000 || Date.now(),
+						ts: Number(trade.data.timestamp?.toString() ?? '0') * 1000 || Date.now(),
 					});
 				}
 			} catch {}

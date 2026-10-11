@@ -58,6 +58,18 @@ const paths = pathsIdx === -1 ? [] : argv.slice(pathsIdx + 1).filter((a) => !a.s
 const git = (args) =>
 	execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
 
+// A PEM whose only block is a PUBLIC KEY (a verification key such as public/cli/signing-key.pem)
+// is meant to be published; anything unreadable or with any other block stays flagged.
+function isPublicPem(file) {
+	if (!/\.pem$/i.test(file)) return false;
+	try {
+		const blocks = readFileSync(path.join(root, file), 'utf8').match(/-----BEGIN [A-Z ]+-----/g) || [];
+		return blocks.length > 0 && blocks.every((b) => b === '-----BEGIN PUBLIC KEY-----');
+	} catch {
+		return false;
+	}
+}
+
 // Filename patterns that ARE credential files, whatever they contain. Kept
 // separate from the content rules because the answer here does not depend on
 // reading the file: nobody commits a private key deliberately.
@@ -75,7 +87,8 @@ const SECRET_FILENAMES = [
 	},
 	{
 		id: 'key-file',
-		test: (file) => /\.(pem|key|p12|pfx|jks|keystore|ppk)$/i.test(file) && !/\.(public|pub)\.(pem|key)$/i.test(file),
+		test: (file) =>
+			/\.(pem|key|p12|pfx|jks|keystore|ppk)$/i.test(file) && !/\.(public|pub)\.(pem|key)$/i.test(file) && !isPublicPem(file),
 		why: 'private-key and keystore files are credential material by construction',
 	},
 	{

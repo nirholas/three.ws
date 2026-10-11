@@ -2,7 +2,11 @@
  * Agent Sniper — natural-language strategy compiler.
  *
  *   POST /api/sniper/compile  { agent_id, text, network? }
- *     → { ok, via, strategy, summary, assumptions, clamped, warnings }
+ *     → { ok, via, strategy, summary, strategy_object, explanations, assumptions, clamped, warnings }
+ *
+ * `strategy_object` is the same intent as a version 2 Strategy Object config
+ * (research gates, price-impact cap, ask/auto mode) and `explanations` says, per
+ * field, where each value came from; the /strategies builder fills from it.
  *
  * Turns a plain-English description ("snipe creators who've graduated at least
  * two, market cap under $30k, organic distribution, take profit at 3x, stop loss

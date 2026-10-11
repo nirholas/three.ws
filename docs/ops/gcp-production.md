@@ -151,6 +151,11 @@ curl -s https://three.ws/api/version | jq '{commitShort, branch, builtAt, revisi
 # Sweep every page declared in data/pages.json against the live site. deploy:gcp
 # runs this automatically after the purge; run it standalone any time.
 npm run smoke:prod
+
+# Tell Bing, Yandex, Seznam and Naver about pages added in the last 7 days so
+# they are indexed in minutes. Run only after the deploy is live (IndexNow
+# fetches every URL it is given). --days N, --since YYYY-MM-DD, --all, --dry-run.
+npm run seo:indexnow
 ```
 
 > **A fresh deploy worktree needs THREE staged artifacts, not just
@@ -461,6 +466,7 @@ only on Vercel, was never carried to Cloud Run, and nothing alerted. Restored
 | Collection authority | `SOLANA_AGENT_COLLECTION_AUTHORITY_KEY` | Agent NFT collection ops can't sign | Intentionally excluded from `scripts/wire-master-wallet.mjs` (on-chain update authority must stay its original wallet). Owner holds the key. |
 | R2/S3 storage creds | `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_PUBLIC_DOMAIN` | `/api/marketplace`, `/api/explore`, `/api/avatars/:id` — every route that resolves an asset URL — 503 `not_configured` | Real values already sit in the repo's `.env.local` (never committed). Apply with `scripts/gcp/apply-s3-env.sh` (needs a human-authed `gcloud auth login` first — the 89-var apply is still blocked on reauth per above). |
 | CoinCommunities API key | `CC_API_KEY` | Town chat renders its designed locked state. `/api/community/worlds` and `/api/clash/state` + `/api/clash/leaderboard` no longer die: they fail over to the live pump.fun trending feed (`api/_lib/pump-trending.js`) and tag the response `source: "pump-trending"`, so the world picker and the Clash arena stay alive (the Clash roster is frozen per round). The Play holders gate shows its `unavailable` state ("Holder check is offline") and offers a one-click path into the coin's open world, so a gated world is never a dead end. | Keys are provisioned manually by the CoinCommunities team (their docs say "contact support": no self-serve signup, and the SDK's `business/register` endpoints are not deployed on `api.coin-communities.xyz`). Owner outreach to @CoinComms required; set `CC_API_KEY` (+ optional `CC_SERVER_KEY`/`CC_SERVER_SECRET`) on the Cloud Run service when granted. |
+| Agent mail to and from the internet | (not a var: DNS records for `agents.three.ws`) | Mail between two `agents.three.ws` mailboxes works (delivered inside the platform). Mail to any outside address fails with `send_failed` (credits are refunded), and outside senders cannot reach an agent, because the mail provider reports the `agents.three.ws` domain as `failed`: none of its records exist at the DNS host. Checked 2026-10-10. | In the Resend dashboard, open the `agents.three.ws` domain and add every record it lists at the DNS host for `three.ws`: the DKIM TXT at `resend._domainkey.agents`, the SPF MX and TXT at `send.agents`, the return-path CNAME, and the receiving MX at `agents` (priority 10). Then press **Verify** and point the domain's inbound webhook at `https://three.ws/api/mail/inbound` with the secret in `RESEND_WEBHOOK_SECRET`. See [docs/agent-mail.md](../agent-mail.md). |
 | x402 ring payer USDC float | — (not a var: an on-chain balance) | The autonomous loop's payer wallet holds $0 USDC, so every paid call is skipped. Since 2026-07-09 this manifested as ~1 failed settle/minute (`broadcast_failed:Simulation failed`); the loop now skips paid calls instead. Free + monitoring entries are unaffected. | Send USDC to the payer wallet (`X402_SEED_SOLANA_SECRET_BASE58`'s pubkey). Floor is `X402_RING_PAYER_USDC_FLOOR_ATOMIC` (default $5) — fund meaningfully above it or it re-drains. See **x402 ring payer float** below. |
 
 ### x402 ring payer float — why an empty wallet used to storm Solana
@@ -895,3 +901,14 @@ JSON body (x402 block, monitor block) for subsystem truth.
 - `vercel.json` is now a **live config file consumed by server/index.mjs**
   (routes + crons) — do NOT delete it as "Vercel leftovers".
 - The `deploy` npm script still points at Vercel; superseded by `deploy:gcp`.
+
+## Web domains
+
+Agents register web domains through Google Cloud Domains and serve their public page on them. Product doc: [docs/domains.md](../domains.md). Code: `api/_lib/cloud-domains.js`, `api/_lib/domains-service.js`, `api/_lib/domain-connect.js`, `api/cron/domain-renewals.js`.
+
+- **Identity.** The API never calls Cloud Domains as its own runtime identity. It impersonates `three-ws-domains@aerial-vehicle-466722-p5.iam.gserviceaccount.com` through IAM Credentials `generateAccessToken`; the runtime account holds `roles/iam.serviceAccountTokenCreator` on that one account. No key exists for it. The account holds `roles/domains.admin`, `roles/dns.admin` and the custom role `threewsDomainConnect` (`compute.sslCertificates.create/delete/get/list`, `compute.targetHttpsProxies.get/setSslCertificates/use`, `compute.globalAddresses.get`, `compute.globalOperations.get`). `DOMAINS_ACCESS_TOKEN` overrides it for workstation scripts only.
+- **Quota.** `domains.googleapis.com` allows 300 sensitive requests per day and 100 per minute per project, and 20 registrations. The daily window resets about 07:00 UTC. A 3000/day increase was requested (preference `domains-sensitive-per-day`). `GET /api/domains/quota` shows the platform's approximate use.
+- **TLD snapshot.** `node scripts/refresh-domain-tlds.mjs` regenerates `data/domain-tlds.json` (about 150 candidate TLDs probed serially, around 3 minutes and 150 quota calls). Run it right after a quota reset, then commit the file.
+- **Connect procedure** (what `connectDomain` automates): Cloud DNS managed zone `tw-<sha12>` with `A` records for the apex and `www` at the named global address `three-ws-ip` (136.68.246.178); `configureDnsSettings` on the registration to the zone's nameservers; a Google-managed certificate `tw-<sha12>` created and attached to `three-ws-https-proxy` by replacing its certificate list under a Redis lock; the host becomes `live` when the certificate is `ACTIVE`. The proxy holds at most 15 certificates, one of which is `three-ws-cert`; past that `connect` answers `cert_capacity`. Express routes a `live` host's `/` to `/agents/<id>` ([server/index.mjs](../../server/index.mjs)).
+- **Renewals.** `/api/cron/domain-renewals` (daily, in `vercel.json`) debits credits 14 days before expiry and otherwise switches the name to manual renewal. After adding it, run `npm run deploy:gcp:sync-crons`.
+- **Rollback.** Detach a certificate with `gcloud compute target-https-proxies update three-ws-https-proxy --ssl-certificates=<remaining list> --global`; delete the `web_domain_hosts` row (or set status `failed`) to stop host routing.

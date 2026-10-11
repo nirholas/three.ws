@@ -193,6 +193,9 @@ describe('anonymous /api/mcp-grok', () => {
 	it('lists the free studio and no account tool', async () => {
 		const tools = await listNames();
 		const names = tools.map((t) => t.name).sort();
+		const catalog = toolCatalogFor('grok').map((t) => t.name);
+		expect(names.length).toBeGreaterThan(0);
+		for (const name of names) expect(catalog).toContain(name);
 		expect(names).toEqual(STUDIO_NAMES);
 		for (const name of GROK_ACCOUNT_TOOLS) expect(names).not.toContain(name);
 		expectNoValueMoving(tools);

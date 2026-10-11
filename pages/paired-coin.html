@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l = m === 'auto' ? window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches : m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Paired Coin on Robinhood Chain · three.ws</title>
+		<meta name="description" content="A coin on Robinhood Chain that trades against several assets at once: live pools, charts per pool, every trade, and a buy and sell ticket." />
+		<meta name="robots" content="index, follow, max-image-preview:large" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Paired coin on Robinhood Chain" />
+		<meta property="og:description" content="One coin, several markets: live pools, charts and trades." />
+		<meta name="twitter:card" content="summary" />
+		<meta name="twitter:site" content="@trythreews" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/chain-page.css" />
+		<link rel="stylesheet" href="/src/paired/paired.css" />
+		<link rel="stylesheet" href="/footer.css" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container" id="main-content" aria-busy="true">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<a href="/markets/robinhood">Robinhood Chain</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<a href="/markets/robinhood/paired">Paired coins</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span class="here" id="pc-crumb">Coin</span>
+			</nav>
+
+			<section id="pc-head"></section>
+			<div class="mkt-cols">
+				<div>
+					<div class="pc-toolbar"><h2 class="cv-h2">Pools</h2></div>
+					<section id="pc-pools" aria-label="Pools"></section>
+
+					<div id="pc-chart-wrap">
+						<div class="pc-toolbar">
+							<h2 class="cv-h2" id="pc-chart-title">Chart</h2>
+							<div class="pc-tabs" id="pc-intervals" role="tablist" aria-label="Candle interval"></div>
+						</div>
+						<div class="pc-chart"><div id="pc-chart" style="position:absolute;inset:0"></div><div class="pc-chart-empty" id="pc-chart-empty" hidden></div></div>
+					</div>
+
+					<div class="pc-toolbar"><h2 class="cv-h2">Trades</h2></div>
+					<section id="pc-trades" aria-live="polite" aria-label="Trades"></section>
+				</div>
+				<aside class="mkt-rail" id="pc-rail" aria-label="Trade"></aside>
+			</div>
+			<p class="cv-src-note">Read live from the paired launchpad on Robinhood Chain (4663). Coins are speculative: a pairing is launch liquidity, not backing, and a coin is not a claim on the asset it pairs with.</p>
+		</main>
+
+		<script type="module" src="/src/paired/coin.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

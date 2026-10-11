@@ -9,16 +9,17 @@ import { TOOL_CATALOG as studioCatalog } from '../api/_mcp3d/catalog.js';
 import { TOOL_CATALOG as agentCatalog } from '../api/_mcpagent/catalog.js';
 import { TOOL_CATALOG as ibmCatalog } from '../api/_mcpibm/catalog.js';
 import { TOOL_CATALOG as bazaarCatalog } from '../api/_mcpbazaar/catalog.js';
+import { POLICY } from '../packages/mcp-policy/src/table.js';
 
+// [label, catalog, @three-ws/mcp-policy server id]
 const CATALOGS = [
-	['three.ws main (/api/mcp)', mainCatalog],
-	['3D Studio (/api/mcp-3d)', studioCatalog],
-	['Agent (/api/agent-mcp)', agentCatalog],
-	['IBM Granite (/api/ibm-mcp)', ibmCatalog],
-	['x402 Bazaar (/api/bazaar-mcp)', bazaarCatalog],
+	['three.ws main (/api/mcp)', mainCatalog, 'three.ws'],
+	['3D Studio (/api/mcp-3d)', studioCatalog, 'threews-3d-studio'],
+	['Agent (/api/agent-mcp)', agentCatalog, 'threews-agent'],
+	['IBM Granite (/api/ibm-mcp)', ibmCatalog, 'ibm-x402-mcp-remote'],
+	['x402 Bazaar (/api/bazaar-mcp)', bazaarCatalog, 'threews-x402-bazaar'],
 ];
 
-// The ONLY tools across all five hosted servers allowed to advertise
 // destructiveHint: true. Everything else must set it explicitly to false:
 // the MCP spec defaults destructiveHint to TRUE when omitted, so an absent
 // hint silently marks a tool destructive.
@@ -35,19 +36,45 @@ const CATALOGS = [
 //   forget              - deletes a stored agent memory
 //   delete_custom_skill - permanently removes a skill an owner may have written
 //                         by hand; gated on confirm_delete
+//   delete_agent        - cancels an agent's runs and erases its memories and
+//                         action log; gated on confirm_delete
+//   automation_delete   - removes an automation (or the wallet rule or alert
+//                         rule behind it); gated on confirm_delete
 //   agent_card_reveal   - returns a card secret once and deletes the stored
 //                         encrypted copy
 //   agent_card_cancel   - cancels a card; a paid card may not come back
+//   alert_rule_delete   - removes an alert rule and its delivery history for good
 //
-// Spends or moves funds (irreversible transfer):
+// Spends or moves funds (irreversible transfer, or an on-chain transaction):
 //   pay_and_call        - spends the user's USDC
 //   persona_tip         - spends a persona's own USDC
 //   persona_send        - spends a persona's own USDC
 //   agent_card_create   - buys a gift or prepaid card from the agent wallet
 //   agent_card_withdraw - drains a prepaid card balance back to the wallet
+//   domain_register     - buys a web domain from the user's credits, one year
+//   paired_launch, uniswap_launch - launches a coin and its opening buy on
+//                         Robinhood Chain
+//   paired_claim_fees   - signs and broadcasts the fee-collection transaction
+//                         on Robinhood Chain
+//   automation_trigger  - fires an automation now, and a swap or transfer
+//                         automation spends SOL from the agent wallet
 //   predictions_open    - spends agent-wallet USDC on a prediction position
 //   predictions_close   - sells a prediction position at market
 //   predictions_redeem  - settles a resolved position on chain
+//   perps_order_execute, perps_collateral_deposit, perps_collateral_withdraw,
+//   perps_order_cancel, perps_flatten - trade perpetual futures or move USDC
+//                         collateral
+//   limit_order_create, stop_order_create, trailing_order_create,
+//   ladder_order_create, oco_order_create, dca_create - arm a standing order
+//                         or recurring buy that spends from the agent wallet
+//                         once its trigger fires
+//   sniper_activate     - arms a launch sniper that spends SOL from the
+//                         agent's wallet on every launch that passes its filters
+//   agent_mail_create, agent_mail_send, agent_mail_reply - send mail that
+//                         can carry a payment
+//   agent_send          - sends funds from the agent wallet
+//   agent_buy_confirm   - confirms and executes a marketplace purchase
+//   swap_execute        - executes a quoted token swap
 //
 // Commits or transfers a whole agent (marketplace, escrowed on Solana):
 //   create_marketplace_listing - a buy-now or an accepted bid then sells the
@@ -76,20 +103,38 @@ const CATALOGS = [
 // in front of each financial tool (agent_card_quote, preview_marketplace_action,
 // predictions_*_preview) move nothing, so they stay outside it.
 const DESTRUCTIVE_TOOLS = new Set([
-	'delete_avatar', 'forget', 'delete_custom_skill', 'agent_card_reveal', 'agent_card_cancel',
+	'delete_avatar', 'forget', 'delete_custom_skill', 'delete_agent', 'automation_delete',
+	'agent_card_reveal', 'agent_card_cancel',
 	'pay_and_call', 'persona_tip', 'persona_send',
 	'agent_card_create', 'agent_card_withdraw',
-	'predictions_open', 'predictions_close', 'predictions_redeem',
+	'domain_register', 'paired_launch', 'uniswap_launch', 'paired_claim_fees', 'automation_trigger',
 	'create_marketplace_listing', 'delist_marketplace_listing', 'place_bid', 'buy_now',
 	'accept_marketplace_bid', 'withdraw_marketplace_bid',
+	'predictions_open', 'predictions_close', 'predictions_redeem',
+	'sniper_activate', 'alert_rule_delete',
+	'perps_order_execute', 'perps_collateral_deposit', 'perps_collateral_withdraw', 'perps_order_cancel', 'perps_flatten',
+	'limit_order_create', 'stop_order_create', 'trailing_order_create', 'ladder_order_create', 'oco_order_create', 'dca_create',
 	'home_activate', 'home_call',
+	'agent_mail_create', 'agent_mail_send', 'agent_mail_reply',
+	'agent_send', 'agent_buy_confirm',
+	'swap_execute',
 ]);
+
+// Destructive tools the policy deliberately leaves in the write tier (on by
+// default, no confirm flag). paired_claim_fees collects fees into the agent's
+// own wallet, so nothing leaves the owner's control. automation_trigger gates
+// its own spend: an agent_prompt or notify fire moves nothing, and a swap or
+// transfer fire refuses connector keys, needs wallet:write, and needs
+// confirm_spend after the tool has shown recipient, amount, asset and chain.
+// Every other destructive tool must be financial tier: off until the session
+// enables it, and refused without its confirm flag.
+const DESTRUCTIVE_WRITE_TIER = new Set(['paired_claim_fees', 'automation_trigger']);
 
 // Internal/spec-only fields that must never leak into the tools/list wire
 // payload.
 const FORBIDDEN_WIRE_FIELDS = ['handler', 'scope', 'example', 'output'];
 
-describe.each(CATALOGS)('%s — tools/list catalog', (label, catalog) => {
+describe.each(CATALOGS)('%s: tools/list catalog', (label, catalog, serverId) => {
 	it('is a non-empty array', () => {
 		expect(Array.isArray(catalog)).toBe(true);
 		expect(catalog.length).toBeGreaterThan(0);
@@ -138,6 +183,42 @@ describe.each(CATALOGS)('%s — tools/list catalog', (label, catalog) => {
 			if (a.readOnlyHint) {
 				expect(a.destructiveHint, `${tool.name}: read-only yet destructive`).toBe(false);
 			}
+		}
+	});
+
+	it('gates every destructive tool behind the financial policy tier', () => {
+		const rows = POLICY[serverId];
+		for (const tool of catalog) {
+			if (tool.annotations?.destructiveHint !== true || DESTRUCTIVE_WRITE_TIER.has(tool.name)) continue;
+			const row = rows[tool.name];
+			expect(row?.tier, `${tool.name}: policy tier`).toBe('financial');
+			expect(row?.confirmFlag, `${tool.name}: confirm flag`).toMatch(/^confirm_/);
+		}
+	});
+
+	it('serves the preview tool every financial tool is gated on', () => {
+		// The policy refuses a financial tool without a fresh id from its preview
+		// tool, so a preview this server does not serve leaves the tool
+		// uncallable (pay_and_call once named a pay_quote nobody registered).
+		const names = new Set(catalog.map((t) => t.name));
+		for (const [name, row] of Object.entries(POLICY[serverId])) {
+			if (!names.has(name) || !row.previewTool) continue;
+			expect(names.has(row.previewTool), `${name} needs ${row.previewTool}`).toBe(true);
+		}
+	});
+
+	it('never asks for a preview id under a name the policy does not check', () => {
+		// The policy injects its id argument into each gated schema at list time,
+		// named after the preview tool (quote_id for a *quote* tool, preview_id
+		// otherwise). A schema that declares the OTHER name makes clients send an
+		// id the policy ignores (paired_launch once required preview_id while the
+		// policy checked quote_id, so it was uncallable as documented).
+		const byName = new Map(catalog.map((t) => [t.name, t]));
+		for (const [name, row] of Object.entries(POLICY[serverId])) {
+			const tool = byName.get(name);
+			if (!tool || !row.previewTool) continue;
+			const other = /quote/.test(row.previewTool) ? 'preview_id' : 'quote_id';
+			expect(Object.keys(tool.inputSchema?.properties || {}), `${name} declares ${other}`).not.toContain(other);
 		}
 	});
 

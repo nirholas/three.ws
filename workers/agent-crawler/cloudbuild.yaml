@@ -1,0 +1,80 @@
+# Cloud Build to Cloud Run for the crawler fleet behind /crawl (workers/agent-crawler).
+#
+# Background daemon deployed as a SERVICE: the roster loop runs continuously and
+# index.js binds a liveness endpoint on $PORT so the Cloud Run startup probe
+# passes. --no-cpu-throttling and --min-instances=1 keep the crawlers walking
+# between probes; --max-instances=1 because two instances would both claim the
+# same roster and push interleaved steps for the same agent.
+#
+# Build context is THIS directory:
+#
+#   gcloud builds submit workers/agent-crawler \
+#     --config workers/agent-crawler/cloudbuild.yaml \
+#     --region us-central1 --project aerial-vehicle-466722-p5 \
+#     --substitutions=SHORT_SHA=manual$(date +%s)
+#
+# The shared secret lives in Secret Manager as `crawl-worker-secret` (three-ws@
+# holds secretAccessor). The API reads the same value as CRAWL_WORKER_SECRET;
+# both must match or every roster poll answers 401.
+#
+# Builds run as the pinned three-ws-build service account: the project's default
+# compute service account was deleted.
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE: agent-crawler
+  _REPO: workers
+  _BASE_URL: https://three.ws
+  # Agents walking at once. Each holds one browser context (~300 MB peak with a
+  # heavy page), so 8 fits 4Gi with headroom. Raise memory with it.
+  _CRAWLERS: "8"
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+      - --cache-from
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+      - .
+    timeout: 1200s
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --no-cpu-throttling
+      - --cpu=2
+      - --memory=4Gi
+      - --min-instances=1
+      - --max-instances=1
+      - --no-allow-unauthenticated
+      - --service-account=three-ws@$PROJECT_ID.iam.gserviceaccount.com
+      - --set-env-vars=NODE_ENV=production,BASE_URL=${_BASE_URL},CRAWLERS=${_CRAWLERS}
+      - --set-secrets=CRAWL_WORKER_SECRET=crawl-worker-secret:latest
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY

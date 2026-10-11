@@ -11,14 +11,15 @@ import { decorateCreation } from '../lib/viewer.js';
 export const def = {
 	name: 'get_loom_feed',
 	title: 'Browse the Loom 3D-creation gallery',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Browse Loom — the public, world-readable gallery of community-forged 3D creations (a forged GLB plus ' +
 		'the prompt that made it and a bit of attribution), returned newest-first. Each creation includes its ' +
 		'id, prompt, glbUrl, previewImageUrl, author, tier, backend, createdAt (ms epoch), plus a ready-to-use ' +
 		'`viewer_url` (the /forge/embed orbit+AR viewer), `og_image_url`, and a paste-ready `iframe_snippet`. ' +
 		'Paginate backwards with `before`: pass the `nextBefore` cursor from the previous page to load older ' +
-		'items; a null `nextBefore` means you reached the end. Read-only, no key required.',
+		'items; a null `nextBefore` means you reached the end. Use this to browse or pick recent community ' +
+		'creations; for one known id call get_creation instead. Read-only, no key required.',
 	inputSchema: {
 		limit: z
 			.number()

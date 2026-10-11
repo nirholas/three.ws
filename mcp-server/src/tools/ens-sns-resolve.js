@@ -23,7 +23,7 @@ import { makeEvmProvider } from '../lib/evm-rpc.js';
 
 const TOOL_NAME = 'ens_sns_resolve';
 const TOOL_DESCRIPTION =
-	"Resolve a human-readable name to addresses across ENS (Ethereum) and SNS (Solana). For .eth: returns Ethereum address via ethers. For .sol: returns Solana owner wallet via Bonfida SNS plus the wallet's other owned .sol domains. Names without a suffix are tried against both registries. Paid: $0.0005 USDC.";
+	"Resolve a human-readable name to addresses across ENS (Ethereum) and SNS (Solana). For .eth: returns Ethereum address via ethers. For .sol: returns Solana owner wallet via Bonfida SNS plus the wallet's other owned .sol domains. Names without a suffix are tried against both registries. Use this to turn a .sol or .eth name into a wallet address before looking that wallet up or paying it. Paid: $0.0005 USDC.";
 
 const ENS_RE = /^(?:[a-z0-9-]+\.)*[a-z0-9-]+\.eth$/i;
 const SOL_RE = /^[a-z0-9-]{1,63}(?:\.sol)?$/i;

@@ -19,7 +19,8 @@ export const def = {
 		'The agent never needs a private key — it uses the returned session token to call pay_with_session. ' +
 		'Governance enforces your budget_usd ceiling, optional per-payment cap (max_per_tx_usd), URL allowlist, ' +
 		'and time expiry. Un-spent budget is automatically refunded on cancel or expiry. ' +
-		'Returns: session object + token (shown once — store securely). Requires THREE_WS_SESSION.',
+		'Returns: session object + token (shown once, store securely). Requires THREE_WS_SESSION. ' +
+		'Use this first to give an agent a capped spending budget; then price each call with quote_session_payment and settle it with pay_with_session.',
 	inputSchema: {
 		budget_usd: z.number().positive()
 			.describe('Total budget in USD to allocate to this session (drawn from your credits). Min $0.001, max $1000.'),

@@ -595,7 +595,7 @@
 		"reason": "Names a supported skeleton naming convention, not a partner or product. src/glb-canonicalize.js maps this rig format onto the canonical set, and CLAUDE.md's universal-animation rule requires documenting the conventions we accept, so the list is a technical identifier the way the existing \"Mixamo, Avaturn, Unreal\" entries are."
 	},
 	{
-		"pattern": "the RPM, Avaturn, and MetaHuman spellings",
+		"pattern": "the Ready Player Me, Avaturn, and MetaHuman spellings",
 		"file": "docs/nvidia-forum-browser-digital-human.md",
 		"reason": "Names a supported blendshape naming convention, not a partner or product. src/voice/arkit-blendshapes.js canonicalizes these morph-name spellings onto the ARKit set; same category as the skeleton-convention entries."
 	}

@@ -22,8 +22,15 @@ import { toolDefs as feedbackDefs } from './tools/feedback.js';
 import { toolDefs as homeDefs } from './tools/home.js';
 import { toolDefs as libraryDefs } from './tools/library.js';
 import { toolDefs as cardDefs } from './tools/cards.js';
+import { toolDefs as pairedDefs } from './tools/paired.js';
+import { toolDefs as launchDefs } from './tools/launches.js';
+import { toolDefs as agentLifecycleDefs } from './tools/agent-lifecycle.js';
 import { toolDefs as customSkillDefs } from './tools/custom-skills.js';
+import { toolDefs as skillImportDefs } from './tools/skill-imports.js';
 import { toolDefs as resourceDefs } from './tools/resources.js';
+import { toolDefs as mailDefs } from './tools/mail.js';
+import { toolDefs as whitelistDefs } from './tools/whitelist.js';
+import { toolDefs as domainDefs } from './tools/domains.js';
 
 const baseDefs = [
 	...libraryDefs,
@@ -37,6 +44,7 @@ const baseDefs = [
 	...pumpfunDefs,
 	...agentDefs,
 	...customSkillDefs,
+	...skillImportDefs,
 	...memoryDefs,
 	...oracleDefs,
 	...traderDefs,
@@ -47,6 +55,12 @@ const baseDefs = [
 	...homeDefs,
 	...resourceDefs,
 	...cardDefs,
+	...pairedDefs,
+	...launchDefs,
+	...agentLifecycleDefs,
+	...mailDefs,
+	...whitelistDefs,
+	...domainDefs,
 ];
 
 // Free, public entry point — listed first so discovery clients see it up top.

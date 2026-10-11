@@ -213,6 +213,12 @@ per-point size, which `PointsMaterial` cannot express. Area layers (hotspots,
 outages, chokepoints) render as annuli instead of filled dots so a region never
 reads as a single incident.
 
+The detail card treats every feed value as untrusted. Titles and fields are
+escaped before they reach the DOM, and the "Open source" link is only drawn when
+`safeUrl()` ([`src/safe-url.js`](../src/safe-url.js)) accepts the event's `url`
+as http(s) or site-relative; anything else (a `javascript:` URL from a poisoned
+feed, say) simply gets no link.
+
 ## Sources and their terms
 
 | Source | Access | Notes |

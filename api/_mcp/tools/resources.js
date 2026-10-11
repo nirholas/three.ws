@@ -14,7 +14,7 @@ export const toolDefs = [
 			openWorldHint: false,
 		},
 		description:
-			'Read a live three.ws resource by URI: three://me (account, scopes, quota), three://agents and three://agents/<id> (your agents), three://agents/<id>/wallet (balances, limits, freeze state), .../usage, .../chat, .../runs, .../orders, .../dca, .../intents, .../earnings (public: creator fees, claims, service income), three://wallets, three://launches, three://marketplace, three://models and three://x402/services. Omit uri to list every resource you can read. Set format to markdown for a readable rendering.',
+			'Read a live three.ws resource by URI: three://me (account, scopes, quota), three://agents and three://agents/<id> (your agents), three://agents/<id>/wallet (balances, limits, freeze state), .../usage, .../chat, .../runs, .../orders, .../dca, .../intents, .../earnings (public: creator fees, claims, service income), three://wallets, three://launches, three://marketplace, three://models and three://x402/services. Omit uri to list every resource you can read. Set format to markdown for a readable rendering. Use this to read account, agent, wallet, or catalog state that has no dedicated tool, or to see what is readable when unsure.',
 		inputSchema: {
 			type: 'object',
 			properties: {

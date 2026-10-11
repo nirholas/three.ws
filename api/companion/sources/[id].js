@@ -3,12 +3,12 @@
 // POST   /api/companion/sources/:id  → poll it right now ("check now").
 
 import { z } from 'zod';
-import { getRequestUser, requestUserHasScope } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../../_lib/http.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 import { limits } from '../../_lib/rate-limit.js';
 import { parse } from '../../_lib/validate.js';
 import { getSource, updateSource, deleteSource } from '../../_lib/companion/store.js';
+import { companionCaller } from '../../_lib/companion/caller.js';
 import { pollSource } from '../../_lib/companion/poll.js';
 
 const patchBody = z.object({
@@ -20,11 +20,8 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'PATCH,DELETE,POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['PATCH', 'DELETE', 'POST'])) return;
 
-	const user = await getRequestUser(req, res);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
-	// Private messages and the bridge token live behind this surface, so a
-	// bearer needs the account-level profile scope, not just any grant.
-	if (!requestUserHasScope(user, 'profile')) return error(res, 403, 'insufficient_scope', 'this token needs the profile scope');
+	const user = await companionCaller(req, res);
+	if (!user) return;
 	if (!(await requireCsrf(req, res, user.id))) return;
 
 	const id = String(req.query?.id || '').trim();

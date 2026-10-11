@@ -14,7 +14,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_wallet_portfolio',
 	title: 'KOL wallet portfolio + P&L',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		"Pull one KOL trader's live portfolio card from three.ws. Returns current holdings " +
 		'(total USD value, position count, and the single highest-value token the wallet ' +

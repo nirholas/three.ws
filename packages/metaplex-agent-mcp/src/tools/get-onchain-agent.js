@@ -16,12 +16,13 @@ import { buildUmi, solBalance, assetSignerAddress, agentLinks } from '../lib/sol
 export const def = {
 	name: 'get_onchain_agent',
 	title: 'Read an on-chain agent (asset, registration, wallet)',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		"Fetch a Metaplex Agent Registry agent by its Core asset address: name, owner, update authority, plugins " +
 		'(royalties, verified creators, immutable metadata, attributes), the decoded asset metadata and EIP-8004 ' +
 		'registration documents, whether the identity PDA exists, and the built-in agent wallet (Asset Signer PDA) ' +
-		'with its live SOL balance. Read-only. Works on any registered agent, e.g. the three.ws Genesis mints.',
+		'with its live SOL balance. Read-only. Works on any registered agent, e.g. the three.ws Genesis mints. ' +
+		'Use this to inspect one agent by its asset address; to discover recent agents call list_onchain_agents.',
 	inputSchema: {
 		asset: z.string().min(32).max(44).describe('The Core asset address (base58).'),
 		network: z.enum(['mainnet', 'devnet']).optional().describe('Cluster. Defaults to the configured network.'),

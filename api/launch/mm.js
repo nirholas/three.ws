@@ -65,7 +65,7 @@ function mintFrom(url, bodyMint) {
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id, session: true };
-	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req, { kind: 'launch' });
 	if (bearer) return { userId: bearer.userId, session: false };
 	return null;
 }

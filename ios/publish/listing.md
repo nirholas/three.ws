@@ -75,11 +75,11 @@ https://three.ws
 ## Privacy policy URL
 
 ```
-https://three.ws/privacy
+https://three.ws/legal/privacy
 ```
 
-Verify this route resolves before submitting; a 404 here is an automatic
-rejection.
+Not `/privacy`, which is a 404. A dead privacy URL is an automatic rejection;
+`curl -sI https://three.ws/legal/privacy` must answer `200`.
 
 ## Category
 
@@ -97,28 +97,49 @@ sexual content. Answer the questionnaire from the product, not from this note.
 
 ## App Privacy (data collection disclosure)
 
-Declare what the app actually collects and how it is used. At minimum:
+These answers must match the privacy manifest compiled into the app,
+[`../native/App/App/PrivacyInfo.xcprivacy`](../native/App/App/PrivacyInfo.xcprivacy).
+App Store Connect compares the two, and a mismatch is a rejection. Change both
+together.
 
-| Data type | Collected | Linked to identity | Used for |
+**Tracking: No.** three.ws does not link app data with third-party data for
+advertising and does not share it with data brokers. No tracking domains.
+
+| App Store Connect category | Data type | Linked to the user | Purposes |
 |---|---|---|---|
-| Email address | Yes | Yes | App functionality (account) |
-| User content (photos, models, prompts) | Yes | Yes | App functionality |
-| Coarse location | Yes | Yes | App functionality (IRL pins) |
-| Identifiers (user ID) | Yes | Yes | App functionality, analytics |
-| Usage data | Yes | Yes | Analytics, product improvement |
-| Purchases / wallet activity | Review before answering | | |
+| Contact Info | Email Address | Yes | App Functionality |
+| Identifiers | User ID | Yes | App Functionality, Analytics |
+| User Content | Photos or Videos | Yes | App Functionality |
+| User Content | Audio Data | Yes | App Functionality |
+| User Content | Other User Content (prompts, models, agent settings) | Yes | App Functionality |
+| Location | Precise Location | Yes | App Functionality |
+| Purchases | Purchase History | Yes | App Functionality |
+| Usage Data | Product Interaction | Yes | Analytics, Product Personalization |
+| Diagnostics | Other Diagnostic Data | Yes | App Functionality, Analytics |
 
-The last row needs a real answer from whoever knows the current wallet and
-payments surfaces; do not guess it on the form.
+Why each row is there: email is the account; photos come from the camera,
+selfie and share sheet flows and are stored with the generation; audio is talk
+mode and `/drive`; precise location is IRL pins, which place an agent at a real
+spot; purchase history is the record of credits, skills and subscriptions
+bought on three.ws (in Safari) that the app displays; product interaction and
+diagnostics are first-party usage and error events.
 
 ## Notes for the reviewer
 
 ```
 three.ws is a 3D content creation tool. A reviewer can exercise the whole core product without an account: open Create, type a prompt, and a 3D model is generated and rendered. Placing a model in AR needs camera access on a physical device.
 
-Demo account (if one is wanted): supplied separately in App Store Connect.
+Demo account: supplied in the Sign-In Information fields of this submission.
 
-On blockchain functionality: the app displays 3D characters that creators may optionally have registered on a public blockchain, and shows read-only wallet and ownership information. Transactional surfaces are not offered inside the app; they open in Safari.
+Things only the app does, worth a look:
+- Share sheet: in Photos, share any photo and pick three.ws. It opens in Create, ready to become a 3D avatar. A .glb file shared from Files goes into the library.
+- Home screen widget: long-press the home screen, add the three.ws widget, and your agent appears.
+- Quick actions: long-press the app icon.
+- Notifications: sales, follows and remixes arrive as push notifications and badge the icon.
+
+On blockchain functionality: three.ws is published by an organization account. The app shows 3D characters that creators may have registered on a public blockchain, and lets a signed-in user view their wallet, deposit to it, withdraw from it and claim from it. Nothing is bought, sold, traded or launched inside the app. Buying credits, skills or a subscription, launching a coin, trading and paying for services all open in Safari: the app explains this in a sheet, and Safari continues signed in on the same page.
+
+Account deletion: Settings, Danger Zone, Delete my account.
 ```
 
 Keep that last paragraph true. If the app ships with in-app transactional

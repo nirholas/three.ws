@@ -22,7 +22,8 @@ const TOOL_DESCRIPTION =
 	'returns the most-covered tickers of the newest archived weeks. IMPORTANT: search scans months ' +
 	'newest→oldest and reports exactly which months it covered (scanned.complete=false means older months ' +
 	'remain) — pass start_date/end_date to reach a specific era, e.g. the 2017 ICO boom or the 2022 FTX ' +
-	'collapse. For today\'s coverage use crypto_news or crypto_news_digest. stats and trending modes are ' +
+	'collapse. Use this for coverage older than a few days; for today\'s coverage use crypto_news or ' +
+	'crypto_news_digest. stats and trending modes are ' +
 	'always free; search includes a free daily quota (60/day per IP, no key or wallet needed), then ' +
 	'$0.001 USDC per search via x402 — an exhausted quota returns a payment_required envelope with the ' +
 	'price and accepted networks. Heavy users: a monthly Premium pass (paid on Solana in $THREE at 20% ' +

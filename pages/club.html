@@ -53,6 +53,8 @@
 				--accent-2: #4ad6ff;
 				--accent-3: #ff8a3b;
 				--ok: var(--success);
+				/* Pole progress advances at constant speed between ticks. */
+				--club-ease-track: linear;
 			}
 			* { box-sizing: border-box; }
 			html, body {
@@ -1598,7 +1600,7 @@
 				height: 100%;
 				border-radius: 3px;
 				background: linear-gradient(90deg, var(--accent), var(--accent-2));
-				transition: width var(--duration-base) var(--ease-standard);
+				transition: width var(--duration-base) var(--club-ease-track);
 				will-change: width;
 			}
 			.club-pole-stats {

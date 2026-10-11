@@ -154,12 +154,13 @@ export async function fetchWalletState(agent, opts = {}) {
 	let holdings;
 	try {
 		const r = await fetch(
-			`/api/agents/${encodeURIComponent(agentId)}/solana/holdings?network=${network}`,
+			`/api/agents/${encodeURIComponent(agentId)}/solana/holdings?network=${network}&miss=empty`,
 			{ credentials: 'include' },
 		);
+		// 204 = wallet not provisioned yet → clean dormant baseline (not an error).
+		if (r.status === 204) return empty;
 		const body = await r.json().catch(() => ({}));
 		if (!r.ok) {
-			// 404 = wallet not provisioned yet → clean dormant baseline (not an error).
 			if (r.status === 404) return empty;
 			return { ...empty, balanceError: body?.error?.code || 'holdings_error' };
 		}

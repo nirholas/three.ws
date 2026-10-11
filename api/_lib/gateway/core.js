@@ -17,6 +17,10 @@
 // @property {string} [command]       a slash command, lowercased, without the slash
 // @property {string} [args]          everything after the command
 // @property {{ verb:'approve'|'cancel', previewId:string }} [action]  a button press
+// @property {{ verb:'approve'|'deny', approvalId:string, exp:number, mac:string }} [approvalAction]
+//                                    a signed Approve/Deny press on an approval request
+// @property {boolean} [forwarded]    the message was forwarded, or posted through
+//                                    another bot: someone else's words, never an instruction
 // @property {{ fetch:() => Promise<{buffer:Buffer, mimeType:string}> }} [voice]
 // @property {{ fetch:() => Promise<{buffer:Buffer, mimeType:string}>, caption?:string }} [photo]
 // @property {object} [messageRef]    the pressed message, for button events
@@ -31,13 +35,18 @@
 // @property {(event:GatewayEvent, text?:string) => Promise<void>} ackAction      answer a button press
 
 import { limits } from '../rate-limit.js';
-import { getLiveLink, touchLink, issueChatCode, redeemSiteCode, GatewayError } from './store.js';
+import { getLiveLink, touchLink, issueChatCode, redeemSiteCode, createLink, GatewayError } from './store.js';
 import { normalizePairCode, formatPairCode } from './codes.js';
 import { COMMAND_HANDLERS, helpText } from './commands.js';
 import { converse } from './conversation.js';
 import { handleAction } from './approvals.js';
+import { handleApprovalPress } from './approval-buttons.js';
 import { transcribeVoice, describePhoto, MediaError } from './media.js';
 import { appOrigin } from './format.js';
+import { sql } from '../db.js';
+import { logAudit } from '../audit.js';
+import { claimLinkCode, LinkCodeError } from '../account-link/link-codes.js';
+import { claimMagicToken, isMagicToken } from '../account-link/telegram-login.js';
 
 function identityOf(event) {
 	return {
@@ -66,12 +75,65 @@ async function pairingPrompt(gw, event) {
 	].join('\n'));
 }
 
+// A sign-in magic link that reached the worker (the webhook claims these
+// inline; a worker that polls Telegram directly lands here instead).
+async function cmdMagic({ gw, event }) {
+	const result = await claimMagicToken({
+		token: String(event.args || '').trim(),
+		from: { id: event.userId, username: event.username, first_name: event.firstName || event.username || null },
+		chat: { id: event.chatId, type: event.chatType || 'private', title: event.chatTitle || null },
+	});
+	if (result.ok) return gw.sendText(event.chatId, result.intent === 'link' ? 'Got it. Go back to three.ws: your Telegram account is being linked there now.' : 'Got it. Go back to three.ws: you are being signed in there now.');
+	const why = {
+		group: 'Sign-in links only work in a private chat with me.',
+		expired: 'That sign-in link has expired or was already used. Go back to three.ws and start again.',
+		in_use: 'This Telegram account already signs in to a different three.ws account.',
+	};
+	return gw.sendText(event.chatId, why[result.reason] || 'That is not a sign-in link I recognise. Go back to three.ws and start again.');
+}
+
+// A code minted on /dashboard/account for a Telegram chat (link codes,
+// api/_lib/account-link/link-codes.js) is claimed here with this chat's
+// identity; the person then confirms on the site, where they see exactly
+// which chat is asking, and the pairing is created on that confirmation.
+async function claimAccountLinkCode({ gw, event, code }) {
+	try {
+		const claimed = await claimLinkCode({
+			code,
+			expectKind: 'telegram',
+			claim: {
+				name: event.chatTitle || (event.username ? `@${event.username}` : 'Telegram chat'),
+				platform: 'telegram',
+				telegram: {
+					chat_id: String(event.chatId),
+					platform_user_id: String(event.userId),
+					username: event.username || null,
+					chat_type: event.chatType || 'private',
+					chat_title: event.chatTitle || null,
+				},
+			},
+		});
+		return gw.sendText(event.chatId, `Code received. Confirm it on three.ws (${appOrigin()}/dashboard/account#linked-devices) to pair this chat. The request expires at ${new Date(claimed.expires_at).toUTCString()}.`);
+	} catch (e) {
+		if (e instanceof LinkCodeError) {
+			if (e.code === 'unknown_code' || e.code === 'wrong_kind') return null;
+			return gw.sendText(event.chatId, e.message);
+		}
+		throw e;
+	}
+}
+
 async function cmdLink({ gw, event, link }) {
+	if (isMagicToken(String(event.args || '').trim())) return cmdMagic({ gw, event });
 	const code = normalizePairCode(event.args);
 	if (!code) {
 		if (link) return gw.sendText(event.chatId, `This chat is already paired. Send /help to see what you can do, or /unlink to disconnect.`);
 		return pairingPrompt(gw, event);
 	}
+	// Site-minted pairing codes and account link codes share one alphabet, so
+	// the account link table is tried first and a miss falls through.
+	const accountLinked = await claimAccountLinkCode({ gw, event, code });
+	if (accountLinked) return accountLinked;
 	try {
 		await redeemSiteCode({ code, identity: identityOf(event) });
 	} catch (e) {
@@ -79,6 +141,27 @@ async function cmdLink({ gw, event, link }) {
 		throw e;
 	}
 	return gw.sendText(event.chatId, `Paired. This chat now talks to your three.ws account.\n\n${helpText()}`);
+}
+
+// A private chat from a Telegram account that signs in to three.ws resolves
+// to that account without a pairing code: signing in with Telegram already
+// proved the person controls it. Groups still pair explicitly, because a
+// group is shared and the pairing names which account it serves.
+async function resolveLinkedIdentity(event) {
+	if (event.platform !== 'telegram' || (event.chatType && event.chatType !== 'private')) return null;
+	const [identity] = await sql`
+		select u.id as user_id from user_identities i join users u on u.id = i.user_id
+		where i.provider = 'telegram' and i.subject = ${String(event.userId)} and u.deleted_at is null limit 1
+	`;
+	if (!identity) return null;
+	try {
+		const link = await createLink({ ...identityOf(event), userId: identity.user_id });
+		logAudit({ userId: identity.user_id, action: 'link_chat_telegram', resourceId: link.id, meta: { chat_id: String(event.chatId), via: 'telegram_identity' } });
+		return link;
+	} catch (e) {
+		if (e instanceof GatewayError) return null;
+		throw e;
+	}
 }
 
 async function textFromMedia(gw, event) {
@@ -110,9 +193,18 @@ async function textFromMedia(gw, event) {
  * @param {Gateway} gw
  */
 export async function handleEvent(event, gw) {
-	const link = await getLiveLink(event.platform, event.chatId);
+	const link = (await getLiveLink(event.platform, event.chatId)) || (await resolveLinkedIdentity(event));
 
+	if (event.approvalAction) return handleApprovalPress({ gw, event, link });
 	if (event.action) return handleAction({ gw, event, link });
+	// A forwarded message carries another person's words. Running it as a
+	// command (a forwarded /link would pair this chat to someone else's
+	// account), or handing it to the agent as the owner's request, would let
+	// anyone who gets a message in front of the owner steer their agent.
+	if (event.forwarded) {
+		if (!link || String(event.userId) !== String(link.platform_user_id)) return;
+		return gw.sendText(event.chatId, 'Forwarded messages are never treated as instructions, so your agent did not act on that. Type the request yourself if you want it done.');
+	}
 	if (event.command === 'start' || event.command === 'link') return cmdLink({ gw, event, link });
 	if (event.command === 'help') return gw.sendText(event.chatId, link ? helpText() : `${helpText()}\n\nThis chat is not paired yet: send /start to get a pairing code.`);
 

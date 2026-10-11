@@ -2,7 +2,10 @@
 
 The first MCP server where the assistant can **transact real value**: discover,
 pay for, and call paid x402 services in USDC — settled on-chain from the
-signed-in user's own three.ws agent wallet, bounded by spending caps.
+signed-in user's own three.ws agent wallet, bounded by spending caps. The same
+server also buys, sells, and bids on whole agents in the escrowed agent
+marketplace, and trades USDC prediction markets on Solana, every money-moving
+call behind a preview and a named confirm flag.
 
 Registered with the MCP Registry as **`io.github.nirholas/threews-agent`**.
 
@@ -18,10 +21,136 @@ Registered with the MCP Registry as **`io.github.nirholas/threews-agent`**.
 | `getting_started` | none (free, no sign-in) | Overview of the server and its tools. The one tool an unauthenticated client can call. |
 | `wallet_status` | `wallet:read` (or `wallet:write`) | Read-only: the user's agent wallet address, SOL + USDC balance, spending caps, and whether spend is enabled. Never moves funds. |
 | `find_services(query, type?, network?, max_price_usdc?, limit?)` | none beyond sign-in | Search the live x402 facilitator network for paid services to call. `max_price_usdc` accepts 0 to 1,000,000. |
-| `pay_quote(resource_url, method?, body?)` | none beyond sign-in | Read what a paid x402 endpoint charges without paying: every accepted network, asset, price and pay-to address from its 402 challenge. Returns the `quote_id` that `pay_and_call` needs. Never moves funds. |
-| `pay_and_call(resource_url, method?, body?, max_usd?, quote_id, confirm_payment)` | `wallet:write` | Call a paid x402 endpoint and auto-settle the USDC payment from the user's wallet, within caps. Returns the service response. Financial: off until the connection turns it on (see below). |
+| `pay_quote(resource_url, method?, body?, max_usd?)` | none (reads the wallet with `wallet:read`) | Price a paid endpoint without paying: the confirmation table `pay_and_call` would settle (recipient, amount, token, chain), the per-call limit, the wallet balance, and anything that would block the payment. Returns the `quote_id` `pay_and_call` needs. |
+| `pay_and_call(resource_url, method?, body?, max_usd?, quote_id, confirm_payment)` | `wallet:write` | Financial tier. Call a paid x402 endpoint and auto-settle the USDC payment from the user's wallet, within caps. Needs the `quote_id` from `pay_quote` for the same `resource_url` and `confirm_payment: true`. Returns the service response. |
 | `provision_wallet(agent_id, cluster?, airdrop?)` | `wallet:write` | Create (or return) the custodial Solana wallet for one of your own agents. Idempotent. `airdrop` is devnet only and never fires on mainnet. |
 | `monetize_endpoint(agent_id, name, description, price_usdc, target_url, method?, input_schema?, network?)` | `services:write` | Publish an upstream API you already serve as a priced x402 endpoint. Buyers' USDC settles to your agent's own wallet. |
+| `read_resource(uri?, format?)` | the resource's own scope | Read a `three://` resource (account, agents, wallets, launches, marketplace, x402 catalog) as a tool call, for clients that do not render MCP resources. Omit `uri` to list what you can read. |
+
+### Agent marketplace
+
+Buy, sell, and bid on whole agents (identity, persona, skills, history, and
+optionally the wallet balance) with USDC held in per-listing escrow on Solana.
+The tools are thin adapters over `api/_lib/agent-market/service.js`, the layer
+the REST API and the `/marketplace/agents` pages use.
+
+| Tool | Tier | Scope | What it does |
+|------|------|-------|--------------|
+| `browse_marketplace`, `browse_public_agents`, `get_listing`, `get_marketplace_history` | read | none (an x402 payer needs no account) | Listings, public agents with their sale state, one listing in full, and the marketplace event log with on-chain signatures. |
+| `preview_marketplace_action(action, ...)` | read | `agents:read` | Builds the confirmation table (recipient, amount, token, chain, fees, warnings) for `create_listing`, `delist`, `place_bid`, `buy_now`, `accept_bid`, or `withdraw_bid` and returns a `preview_id` valid for ten minutes, one use. |
+| `get_my_bids`, `get_received_bids`, `get_agent_transfer` | read | `agents:read` | Your open bids, bids on your listings, and the settlement progress of a sold agent. |
+| `reject_marketplace_bid`, `resume_agent_transfer` | write | `agents:write` | Decline a bid; resume a stalled post-sale transfer. |
+| `create_marketplace_listing` / `delist_marketplace_listing` / `accept_marketplace_bid` | financial | `agents:write` | Confirm flags `confirm_listing`, `confirm_delist`, `confirm_accept`. |
+| `place_bid` / `buy_now` / `withdraw_marketplace_bid` | financial | `wallet:write` | Confirm flags `confirm_bid`, `confirm_payment`, `confirm_withdraw`. Pay from one of your agents (`funding_source: agent_wallet`) or get a transaction to sign in a browser wallet (`connected_wallet`). |
+
+Every financial marketplace call needs its confirm flag set to `true` and the
+`preview_id` that `preview_marketplace_action` issued to the same user for the
+same action and arguments; different terms than the preview are refused.
+
+### Prediction markets
+
+USDC prediction markets on Solana, over the same engine (`api/_lib/predictions/`)
+as the `/api/v1/agents/:id/predictions/*` routes and the `/predictions` pages.
+
+| Tool | Tier | Scope | What it does |
+|------|------|-------|--------------|
+| `predictions_events`, `predictions_event` | read | none (an x402 payer needs no account) | Search live events; one event with every market's prices, history, and resolution rules. |
+| `predictions_positions(agent_id)` | read | `wallet:read` | An agent's open and settled positions, PnL, claimable payouts, recent fills. |
+| `predictions_open_preview`, `predictions_close_preview`, `predictions_redeem_preview` | read | `wallet:read` | Price the trade and return a `preview_id` (ten minutes). Moves nothing. |
+| `predictions_open`, `predictions_close`, `predictions_redeem` | financial | `wallet:write` | Execute with `agent_id`, the `preview_id`, and `confirm_trade: true`. |
+| `predictions_watch` | write | `wallet:write` | Alert when an outcome's probability crosses a threshold, in-app and optionally to Telegram or a webhook. Moves no funds. |
+
+### Perpetual futures
+
+Long or short perpetual futures with USDC collateral from an agent's own Solana
+wallet, over the same service (`api/_lib/perps/service.js`) as the
+`/api/v1/agents/:id/perps/*` routes and the `/agents/:id/perps` desk. Every
+agent starts in paper mode (live prices, no funds moved); live mode stays off
+until the owner turns it on, signed in. Guide: [Agent Perps](./perps.md).
+
+| Tool | Tier | Scope | What it does |
+|------|------|-------|--------------|
+| `perps_markets`, `perps_market_data` | read | none (an x402 payer needs no account) | Every market with mark, funding, open interest and max leverage; one market with its book, recent trades and funding history. |
+| `perps_account(agent_id)`, `perps_positions(agent_id)` | read | `wallet:read` | Mode, equity, collateral, leverage, limits and alerts; positions with unrealized PnL, funding paid and distance to liquidation, resting orders and triggers, history. |
+| `perps_order_preview` | read | `wallet:read` | Price a market, limit, take-profit or stop-loss order: size, entry, margin, account leverage, fees, liquidation price and every guard. Returns a `preview_id` (two minutes). Moves nothing. |
+| `perps_action_preview(action)` | read | `wallet:read` | The same for `deposit`, `withdraw`, `cancel` and `flatten`, with from, to, amount, asset and chain. Returns a `preview_id` (five minutes). |
+| `perps_order_execute`, `perps_collateral_deposit`, `perps_collateral_withdraw`, `perps_order_cancel`, `perps_flatten` | financial | `wallet:trade` | Execute with `agent_id`, the `preview_id`, `confirm_trade: true` and a unique `idempotency_key`. An order is refused if entry or liquidation moved past the agent's tolerance since the preview. |
+| `perps_limits(agent_id, ...)` | write | `wallet:read` to read, `wallet:write` or `wallet:trade` to change | Read the policy, tighten a cap, set alert thresholds, or halt. Loosening anything is refused here; the owner does that signed in. |
+
+### Solana trading
+
+Research, swap and arbitrage tools over one registry
+(`api/_lib/trading-tools/registry.js`) that also serves the `/api/v1/trading`
+REST routes, so both surfaces share the schema and the refusal codes. Guide:
+[Solana trading tools](./trading-tools.md).
+
+| Tool | Tier | Scope | What it does |
+|------|------|-------|--------------|
+| `token_search`, `get_price`, `get_indicators`, `get_news_feed` | read | none | Find a token by symbol or mint with a safety read; live price; technical indicators over live candles; the news feed for a token. |
+| `get_market_signals` | read | none | One token's live signal read, or with no mint the Solana ecosystem view: macro readings against their baselines, top movers, and anomalies with z-scores, each with its inputs and `as_of`. |
+| `arbitrage_prices`, `arbitrage_quote` | read | none | Cross-venue prices for a pair; the best two-leg route with a simulated worst case and a verdict. Legs are not atomic; refused above $100 unless `accept_size_risk`, and above $1000 always. Never executes. |
+| `swap_quote` | read | none, or `wallet:read` with `agent_id` | Every aggregator side by side with net output after fees and impact, which route won and why. With `agent_id`: the guard chain's verdict, the confirmation table, and a `quote_id` valid five minutes. |
+| `swap_simulate` | read | `wallet:read` | Re-price, run every guard, build and simulate the exact transaction. Signs nothing; the `quote_id` stays valid. |
+| `swap_execute` | financial | `wallet:trade` | Fill a `swap_quote` from the agent wallet with its `quote_id` and `confirm_swap: true`. Re-priced at fill time and refused below the approved minimum; one fill per quote. |
+
+### Portfolio, launch sniper, alerts and duels
+
+An agent's valued portfolio and P&L, control of its pump.fun launch sniper and
+signal subscriptions, launch alert rules, and agent-vs-agent duels. Each tool is
+a thin adapter over the library the dashboards use: `api/_lib/portfolio.js` and
+`api/_lib/portfolio-history.js` (the wallet hub's Portfolio tab and
+`/api/v1/agents/:id/portfolio`), `api/_lib/sniper-control.js` (the sniper
+dashboard), `api/_lib/signal-subscription-control.js` (`/signals`),
+`api/_lib/pump-alert-rules.js` (`/api/alerts/rules` and the pump dashboard), and
+`api/_lib/duel-challenges.js` with `api/_lib/trader-duels.js` (`/duels`).
+Full reference with examples: [MCP integration](./mcp.md#agent-wallet-portfolio-launch-sniper-alerts-and-duels).
+
+| Tool | Tier (group) | Scope | What it does |
+|------|--------------|-------|--------------|
+| `get_portfolio(agent_id, network?, max_holdings?)` | read (wallet) | `wallet:read` | Live valuation: SOL and every SPL holding in SOL and USD, FIFO cost basis and unrealized P&L per holding, P&L by source, risk flags. Records a net-worth point. |
+| `get_balance_history(agent_id, network?, days?, max_points?)` | read (wallet) | `wallet:read` | Recorded net-worth points over 1 to 365 days with change, peak and max drawdown, plus the exact cumulative realized P&L per day. |
+| `get_pnl(agent_id, network?)` | read (wallet) | `wallet:read` | Realized, unrealized and total P&L in SOL and USD, by source, with win rate, ROI, profit factor and the biggest open winners and losers. |
+| `sniper_status(agent_id?, network?)` | read (trading) | `wallet:read` | Whether the sniper worker is live, and each of your strategies: armed or not, sizing, exits, today's spend and open positions. |
+| `sniper_activate_preview(...)` | read (trading) | `wallet:read` | What arming would do: agent and wallet with its live SOL balance, per-trade size, daily budget, trigger, exits, what the SOL is spent on, whether real funds are at risk, and every blocking check. Returns a `preview_id`. |
+| `sniper_activate(...)` | financial (trading) | `wallet:trade` or `agents:write` | Arm the sniper with exactly the previewed agent, network and sizing, `preview_id` and `confirm_spend: true`. Mainnet needs the signed real-funds agreement. |
+| `sniper_deactivate(agent_id, network?, kill?)` | write (trading) | `wallet:trade` or `agents:write` | Disarm; `kill: true` also sets the kill switch. Open positions stay under their exits. |
+| `sniper_subscribe(action, ...)` | write (trading) | `wallet:trade` or `agents:write` | List feeds and your subscriptions; subscribe an agent to a signal feed on paper; pause, resume, stop or kill a subscription. Live mode is owner-only on `/signals`. |
+| `alert_rule_create(kind, ...)` | write (intelligence) | `wallet:trade` or `agents:write` | Create a pump.fun alert rule, including `launch_match` (a new launch that passes name pattern, market cap band, safety score, creator history, risk flag and socials filters). Always delivers to you. |
+| `alert_rule_list(rule_id?)` | read (intelligence) | `wallet:read` | Your rules with their filters, state, last fire and recent deliveries. With `rule_id`, returns the `preview_id` `alert_rule_delete` needs. |
+| `alert_rule_delete(rule_id)` | financial (intelligence) | `wallet:trade` or `agents:write` | Delete a rule for good, with the `preview_id` from `alert_rule_list` for the same rule and `confirm_delete: true`. |
+| `duel_challenge(agent_id, opponent_agent_id, window?, message?)` | write (predictions) | `wallet:trade` or `agents:write` | Challenge another public agent to a day or week trading duel. The opponent's owner is notified. Free-play points, no funds. |
+| `duel_accept(challenge_id, response?)` | write (predictions) | `wallet:trade` or `agents:write` | Accept or decline a challenge to your agent, or cancel one you sent. Accepting opens the duel. |
+| `duel_details(duel_id or challenge_id)` | read (predictions) | none for a duel, sign-in for a challenge | One duel with its window, phase, standings and crowd calls, or one challenge with its duel. |
+| `duel_markets(view?, ...)` | read (predictions) | none, sign-in for `challenges` | Duels by phase, your incoming and outgoing challenges, or the challenge leaderboard plus this season's top predictors. |
+
+### Agent commerce
+
+Invoices, sends, offers and an agent's own spending rules, as thin adapters over
+`api/_lib/agent-commerce/` (the library behind `/commerce`, `/invoices/:id` and
+`/api/agent-commerce/*`). All thirteen tools are in the `commerce` group; turn
+the financial ones on with `X-Three-Tools: default,commerce`. Full guide:
+[Agent Commerce](./agent-commerce.md).
+
+| Tool | Tier | Scope | What it does |
+|------|------|-------|--------------|
+| `invoice_create`, `invoice_cancel` | write | `agents:write` | Issue an invoice in USDC, SOL or $THREE with a Solana Pay link, QR and receipt page; cancel an open one. |
+| `invoice_details`, `invoice_list`, `invoice_verify` | read | `wallet:read` | One invoice with payments and timeline; the list with totals; read the chain now and settle. |
+| `agent_send_preview` | read | `wallet:read` | Pin recipient, amount, asset and chain and report how the send is gated. Returns a `preview_id`. |
+| `agent_send` | financial | `wallet:write` | `preview_id` plus `confirm_send: true`. Sends to an allowlisted destination, otherwise files an owner approval; a cap, a freeze or an enforced allowlist stops it. |
+| `offer_list`, `agent_sell` | read, write | none, `agents:write` | Browse active offers; list one with a price, stock and fulfillment. |
+| `agent_buy` | read | `wallet:read` | A purchase quote. Nothing is reserved or signed. |
+| `agent_buy_confirm` | financial | `wallet:write` | `preview_id` plus `confirm_payment: true`: pays the seller's invoice and returns the fulfillment once verified. |
+| `spending_check`, `spending_setup` | read, write | `wallet:read`, `agents:write` | Read limits and today's usage; propose a change that only the owner can approve, with a step-up. |
+
+### Resources and prompts
+
+This server also answers `resources/*` and `prompts/*`: the `three://` resources
+(your account, agents, wallets with balances and spend limits, per-agent usage,
+runs, orders, DCA plans, intents, launches, the skill marketplace, and the x402
+catalog) and guided prompts such as `setup-wallet`, `hire-agent`, `sell-a-skill`,
+and `setup-dca`. The full tables, with the scope each resource needs, are in
+[MCP resources](./mcp.md#resources) and [guided prompts](./mcp.md#guided-prompts).
+The manifest lists them under `_meta` in [`server-agent.json`](../server-agent.json).
 
 ## Turning on pay_and_call
 
@@ -52,7 +181,10 @@ the scope it needs, not a bare JSON-RPC error:
 { "ok": false, "reason": "insufficient_scope", "required": "wallet:write" }
 ```
 
-The three scopes (`wallet:read`, `wallet:write`, `services:write`) are advertised
+The marketplace tools also use `agents:read` and `agents:write` (see the
+tables above). `swap_execute` needs `wallet:trade`, the narrower grade of
+`wallet:write` that can swap but never send value out of the wallet; a
+`wallet:write` grant satisfies it. The three wallet scopes (`wallet:read`, `wallet:write`, `services:write`) are advertised
 in [`/.well-known/oauth-authorization-server`](https://three.ws/.well-known/oauth-authorization-server),
 may be requested by any client (including dynamically-registered ones), and are
 approved by name on the consent screen. Ask for them in the `scope` parameter of
@@ -66,8 +198,66 @@ and every `accepts[].resource` read `https://three.ws/api/mcp-agent`, under the
 service name `three.ws Agent MCP`. Facilitators (CDP Bazaar, agentic.market,
 x402scan) index it from that same envelope, whose `extensions.bazaar` example is
 the read-only `find_services` call, so a crawler probing the documented shape can
-never move a caller's funds. `initialize`, `tools/list`, `ping`, and
-`getting_started` stay free for plain clients and crawlers.
+never move a caller's funds. `initialize`, `tools/list`, `ping`, resource and
+prompt discovery (`resources/list`, `resources/templates/list`, `resources/read`
+of the public resources, `prompts/list`, `prompts/get`), and `getting_started`
+stay free for plain clients and crawlers.
+
+## Tool policy: financial tools are off by default
+
+The server runs the shared [`@three-ws/mcp-policy`](../packages/mcp-policy/README.md)
+table. Every tool has a tier: `read` and `write` tools are listed by default, while
+`financial` tools (`pay_and_call` and the money-moving marketplace and prediction
+tools) are hidden from `tools/list` and refused with `tool_disabled` until the
+connection turns them on. Each financial tool's description and its
+`_meta['three.ws/policy']` entry name its confirm flag and the preview tool that
+must run first.
+
+Turn them on per connection with the `X-Three-Tools` header or the `tools` query
+parameter, using the policy grammar: `default,financial` adds every financial
+tool, `default,marketplace` adds one whole group, and a bare list of tool names is
+an exact allow list.
+
+```bash
+curl -s https://three.ws/api/mcp-agent \
+  -H "authorization: Bearer $TOKEN" \
+  -H "content-type: application/json" \
+  -H "X-Three-Tools: default,predictions" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+### Paying an x402 endpoint: quote, approve, pay
+
+`pay_and_call` is in the `x402` group, so a connection turns it on with
+`X-Three-Tools: default,x402` (or `default,financial`). Once on, it only runs
+after a quote the user has seen:
+
+1. Call `pay_quote` with the `resource_url` (and the `method`, `body` and
+   `max_usd` you intend to pay with). It asks the endpoint for its 402
+   challenge and pays nothing. The result is the table to show the user
+   (recipient, amount, token, chain, the wallet it pays from, the per-call
+   limit) plus a `quote_id` valid for five minutes.
+2. Wait for the user's clear yes.
+3. Call `pay_and_call` with the same `resource_url`, the `quote_id`, and
+   `confirm_payment: true`.
+
+The policy refuses `pay_and_call` without the flag (`confirmation_required`),
+without a quote (`preview_required`), with an expired or already spent one
+(`preview_unknown`, `preview_stale`), or with a quote for a different
+`resource_url` or a different account (`preview_mismatch`). A quote is spent by
+the payment it authorized, so one approval pays one call. `pay_quote` issues no
+`quote_id` when the payment could not succeed anyway: a price over the per-call
+limit, too little USDC, no provisioned wallet, a token without `wallet:write`,
+or an endpoint with no Solana payment option. A signed-out caller, or a server
+with spend off, still gets a quote and the manual `/pay` link.
+
+```bash
+curl -s https://three.ws/api/mcp-agent \
+  -H "authorization: Bearer $TOKEN" \
+  -H "content-type: application/json" \
+  -H "X-Three-Tools: default,x402" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"pay_quote","arguments":{"resource_url":"https://three.ws/api/x402/market-global"}}}'
+```
 
 ## How payment works
 
@@ -89,6 +279,14 @@ A `max_usd` argument can only **lower** the per-call cap, never raise it.
 Autonomous spending is **off** unless `THREEWS_AGENT_PAY_ENABLED=1`. While off,
 `pay_and_call` returns the exact payment details and a `/pay` link instead of
 moving funds. `wallet_status` and `find_services` work regardless.
+
+Real funds also move only for an account that has signed the current real-funds
+agreements (Terms of Service, Risk Disclosure, Agent Wallet Agreement). An
+unsigned account gets `reason: "risk_ack_required"` with a `sign_url` pointing at
+[`/legal/agreements`](https://three.ws/legal/agreements), and nothing is sent; if
+the signature lookup fails, the call fails closed with `agreement_check_unavailable`.
+The same check guards the prediction-market trades and the marketplace's listing,
+bid, buy-now, and accept calls.
 
 **Before enabling spend in production:** run a funded-wallet integration test
 against a live x402 endpoint (confirm a real USDC settlement + cap enforcement +

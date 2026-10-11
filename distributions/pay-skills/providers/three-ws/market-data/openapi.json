@@ -1,0 +1,1173 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "three.ws Market Data",
+    "version": "1.0.0",
+    "description": "Crypto and DeFi market data: coin tables, coin profiles, price history, sectors, exchanges, derivatives, TVL by protocol and chain, yield pools, stablecoin pegs, fees, DEX volume, exploit history, news pulse, and token signals.",
+    "x-logo": {
+      "url": "https://three.ws/favicon.svg",
+      "altText": "three.ws"
+    },
+    "x-guidance": "Call an endpoint without payment to receive an x402 challenge, pay it in USDC on Solana mainnet, and retry with the payment header. Asynchronous 3D jobs return a token to poll for free at GET /api/forge?job=<token>."
+  },
+  "servers": [
+    {
+      "url": "https://three.ws"
+    }
+  ],
+  "paths": {
+    "/api/x402/market-pulse": {
+      "get": {
+        "operationId": "market_pulse",
+        "summary": "Fetch a one-call crypto market overview of eight feeds",
+        "description": "Return global market cap and dominance, the fear and greed index, top 10 coins, trending searches, gas, DeFi TVL with top protocols, stablecoin supply, DEX volume, and protocol fees in one response.",
+        "security": [],
+        "parameters": [],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.005"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/token-intel": {
+      "get": {
+        "operationId": "token_intel",
+        "summary": "Analyze a token by contract address with a market signal",
+        "description": "Return price, 24h change, market cap, liquidity, 24h volume, and a bullish, bearish, or neutral signal with a two-sentence rationale for any token by contract address.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "mint",
+            "in": "query",
+            "required": true,
+            "description": "Token contract address: a Solana base58 mint or an EVM 0x address.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.01"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-coins": {
+      "get": {
+        "operationId": "market_coins",
+        "summary": "Fetch a ranked crypto market table with 7-day sparklines",
+        "description": "Return coins ranked by market cap with price, market cap, 24h volume, 24h and 7d change, logo, and a 7-day sparkline, up to 250 per page. Pass q to resolve a name or ticker to coin ids.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number, 1-20. Default 1.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "1"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Rows per page, 10-250. Default 100.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "100"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "description": "Optional sector id from the market-categories endpoint to scope the table to one sector.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "Search mode: resolve a name or ticker to coin ids and return the top 10 matches.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-coin": {
+      "get": {
+        "operationId": "market_coin",
+        "summary": "Fetch a full profile for one coin by id or Solana mint",
+        "description": "Return live market stats (price, market cap, FDV, volume, change windows, all-time high and low, supply), official links, per-chain contract addresses, and developer and community stats for one coin.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "Coin id: the lowercase slug from market-coins. Required unless contract is set.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "contract",
+            "in": "query",
+            "required": false,
+            "description": "Solana token mint (base58), an alternative lookup key to id.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-chart": {
+      "get": {
+        "operationId": "market_chart",
+        "summary": "Fetch the historical price series for one coin",
+        "description": "Return [timestamp_ms, price_usd] pairs for one coin over 1, 7, 30, 90, or 365 days, 5-minutely for one day, hourly up to 90 days, and daily beyond.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "Coin id: the lowercase slug from market-coins, for example solana.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "solana"
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "Window: 1, 7, 30, 90, or 365. Default 30.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "30"
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-categories": {
+      "get": {
+        "operationId": "market_categories",
+        "summary": "Fetch crypto market sectors ranked by market cap",
+        "description": "Return every crypto sector ranked by market cap with 24h market-cap change, 24h volume, and its top three coins. Pass a sector id to market-coins to drill in.",
+        "security": [],
+        "parameters": [],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-exchanges": {
+      "get": {
+        "operationId": "market_exchanges",
+        "summary": "Fetch spot crypto exchanges ranked by trust and volume",
+        "description": "Return the top 100 spot exchanges ranked by trust score, each with 24h volume, trust rank, country, year established, and homepage.",
+        "security": [],
+        "parameters": [],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-derivatives": {
+      "get": {
+        "operationId": "market_derivatives",
+        "summary": "Fetch perpetual futures tickers, funding, and open interest",
+        "description": "Return the top 100 perpetual futures contracts by 24h volume with price, 24h change, funding rate, and open interest, or pass view=exchanges for the derivatives venue leaderboard.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "description": "Set to 'exchanges' for the derivatives-venue leaderboard; omit for perp tickers.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-global": {
+      "get": {
+        "operationId": "market_global",
+        "summary": "Fetch the global crypto market cap, volume, and sentiment",
+        "description": "Return total crypto market cap, 24h volume, dominance shares, active coin count, and the fear and greed index with its label. A one-call market-regime check.",
+        "security": [],
+        "parameters": [],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-trending": {
+      "get": {
+        "operationId": "market_trending",
+        "summary": "Fetch the most-searched coins and trending categories",
+        "description": "Return the most-searched coins over the last 24 hours with price, 24h change, market cap, and trending rank, plus trending categories and NFT collections.",
+        "security": [],
+        "parameters": [],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-defi": {
+      "get": {
+        "operationId": "market_defi",
+        "summary": "Fetch DeFi protocols ranked by total value locked",
+        "description": "Return the top 100 DeFi protocols by TVL with 1d and 7d change, chains, category, token, and market cap, plus total DeFi TVL with exchange reserves excluded.",
+        "security": [],
+        "parameters": [],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-chains": {
+      "get": {
+        "operationId": "market_chains",
+        "summary": "Fetch blockchains ranked by DeFi total value locked",
+        "description": "Return the top 100 blockchains ranked by DeFi TVL, each with its native token symbol and share of total value locked, plus whole-market TVL.",
+        "security": [],
+        "parameters": [],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-yields": {
+      "get": {
+        "operationId": "market_yields",
+        "summary": "Search DeFi yield pools by chain, protocol, and TVL",
+        "description": "Query about 15,000 DeFi yield pools filtered by chain, protocol, stablecoin exposure, or text, sorted by TVL or APY, with pagination. Pass pool for one pool's APY and TVL history.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "chain",
+            "in": "query",
+            "required": false,
+            "description": "Filter to one chain (case-insensitive, e.g. solana).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "solana"
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "description": "Filter to one protocol slug, as listed by market-defi.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stablecoin",
+            "in": "query",
+            "required": false,
+            "description": "'true' for stablecoin pools only, 'false' to exclude them.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "true"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Substring match over symbol, project, and chain.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minTvl",
+            "in": "query",
+            "required": false,
+            "description": "Minimum pool TVL in USD.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "description": "'tvl' (default) or 'apy' (dust-guarded to pools >= $10k TVL).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "apy"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Rows per page, 1-200. Default 100.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "Pagination offset. Default 0.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pool",
+            "in": "query",
+            "required": false,
+            "description": "Chart mode: a pool id from a previous market-yields row. Returns that pool's APY and TVL history.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-stablecoins": {
+      "get": {
+        "operationId": "market_stablecoins",
+        "summary": "Fetch stablecoins ranked by supply with live peg prices",
+        "description": "Return the top 100 stablecoins by circulating supply with live price for a peg check, peg type and mechanism, and chains, plus total stablecoin market cap.",
+        "security": [],
+        "parameters": [],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-fees": {
+      "get": {
+        "operationId": "market_fees",
+        "summary": "Fetch DeFi protocols ranked by fees or revenue",
+        "description": "Return the top 100 protocols by 24h fees with 24h, 7d, and 30d totals and momentum. type=revenue ranks by what the protocol keeps instead of what users pay.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "description": "'fees' (default, what users pay) or 'revenue' (what the protocol keeps).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "fees"
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-dex-volumes": {
+      "get": {
+        "operationId": "market_dex_volumes",
+        "summary": "Fetch decentralized exchanges ranked by 24h volume",
+        "description": "Return the top 100 DEXes by 24h volume with 7d volume, week-over-week change, chains, and share of total DEX volume, plus market totals and a daily chart.",
+        "security": [],
+        "parameters": [],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-hacks": {
+      "get": {
+        "operationId": "market_hacks",
+        "summary": "Search the DeFi exploit history by name or technique",
+        "description": "Return historical DeFi exploits newest first with amount stolen, attack technique, classification, chains, bridge flag, post-mortem link, and funds returned. Search by name or technique.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Case-insensitive match over incident name, technique, and classification.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "bridge"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Rows per page, 1-200. Default 100.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "Pagination offset. Default 0.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/defi-radar": {
+      "get": {
+        "operationId": "defi_radar",
+        "summary": "Fetch DeFi TVL movers, top fee earners, and top DEXes",
+        "description": "Return total DeFi TVL, the largest 24h TVL gainers and losers, the top fee-earning protocols over 24h, 7d, and 30d, and the top DEXes by 24h volume in one snapshot.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Rows per leaderboard (TVL top, gainers, losers, fees, DEX volume).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 25,
+              "default": 10
+            },
+            "example": 10
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.005"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/yield-scan": {
+      "get": {
+        "operationId": "yield_scan",
+        "summary": "Search DeFi yield pools with risk flags by APY or TVL",
+        "description": "Screen 15,000+ yield pools by chain, minimum TVL, and stablecoin-only exposure. Each pool carries base and reward APY, 30-day mean, TVL, and impermanent-loss, volatility, and spike flags.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "chain",
+            "in": "query",
+            "required": false,
+            "description": "Filter to one chain by name, for example Solana (case-insensitive).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stable",
+            "in": "query",
+            "required": false,
+            "description": "true returns stablecoin-denominated pools only.",
+            "schema": {
+              "type": "boolean"
+            },
+            "example": true
+          },
+          {
+            "name": "minTvlUsd",
+            "in": "query",
+            "required": false,
+            "description": "Minimum pool TVL in USD.",
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "default": 100000
+            },
+            "example": 1000000
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "description": "Ranking dimension.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "apy",
+                "tvl"
+              ],
+              "default": "apy"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Pools to return.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            },
+            "example": 10
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.005"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/stablecoin-health": {
+      "get": {
+        "operationId": "stablecoin_health",
+        "summary": "Monitor stablecoin peg deviation and supply flows",
+        "description": "Score every USD stablecoin on peg deviation in basis points (on-peg, drifting, or depegged), circulating supply, and 24h, 7d, and 30d supply change, with a depeg alert list.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": false,
+            "description": "Return only this stablecoin symbol, e.g. USDC (case-insensitive).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Coins to return, largest supply first.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            },
+            "example": 10
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.005"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/hack-check": {
+      "get": {
+        "operationId": "hack_check",
+        "summary": "Check a DeFi protocol for past exploits before using it",
+        "description": "Return a clean or incident-history verdict for a protocol with every matching exploit (date, amount lost, technique, chains, recovered funds) and market-wide loss stats. Omit protocol for the latest incidents.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "protocol",
+            "in": "query",
+            "required": false,
+            "description": "Protocol name to search (case-insensitive substring match). Omit for the latest incidents market-wide.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Incidents to return, newest first.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            },
+            "example": 5
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.002"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-heatmap": {
+      "get": {
+        "operationId": "market_heatmap",
+        "summary": "Fetch top coins with momentum and market-breadth stats",
+        "description": "Return the top coins by market cap with rank, price, 1h, 24h, and 7d momentum, market cap, and volume, plus breadth stats (advancers versus decliners, average and median move).",
+        "security": [],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Coins to return, largest market cap first.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "example": 50
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.002"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/market-mood": {
+      "get": {
+        "operationId": "market_mood",
+        "summary": "Calculate a 0-100 crypto market mood score",
+        "description": "Blend the fear and greed index with live headline sentiment from 192 crypto news feeds into one 0-100 mood score, returning both components, the driving headlines, and implied volatility.",
+        "security": [],
+        "parameters": [],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.002"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/news-pulse": {
+      "get": {
+        "operationId": "news_pulse",
+        "summary": "Monitor news coverage and sentiment for one token ticker",
+        "description": "Count mentions of a ticker across 192 crypto news feeds in a 1-72 hour window and return unique outlets, sentiment split, coverage velocity versus the prior window, and top headlines.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "query",
+            "required": true,
+            "description": "Ticker symbol to scan for, for example THREE. A leading $ is optional.",
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 10
+            },
+            "example": "THREE"
+          },
+          {
+            "name": "hours",
+            "in": "query",
+            "required": false,
+            "description": "Look-back window in hours.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 72,
+              "default": 24
+            },
+            "example": 24
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.002"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    }
+  }
+}

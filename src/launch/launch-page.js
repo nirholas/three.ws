@@ -122,6 +122,21 @@ const cost = () =>
 
 // ── Boot ───────────────────────────────────────────────────────────────────
 
+/** The lane comparison loads the first time its disclosure opens, so the Solana wizard never waits on it. */
+function wireLanePicker() {
+	const details = $('#lx-lanes');
+	if (!details) return;
+	details.addEventListener(
+		'toggle',
+		async () => {
+			if (!details.open) return;
+			const { mountLanePicker } = await import('./lane-picker.js');
+			mountLanePicker($('#lane-picker'), { current: 'pumpfun' });
+		},
+		{ once: true },
+	);
+}
+
 async function boot() {
 	const root = $('#launch-app');
 	const params = new URL(location.href).searchParams;
@@ -132,6 +147,7 @@ async function boot() {
 	}
 	applyPrefill(params);
 	renderShell(root);
+	wireLanePicker();
 	wireTabs(params.get('tab') === 'coins' ? 'coins' : 'create');
 	wireForm();
 	updateDerived();
@@ -245,16 +261,16 @@ function renderShell(root) {
 				<div class="lx-row">
 					<label class="lx-field" style="margin-top:0">
 						<span class="lx-label">Coin name <span class="lx-count" id="c-name">0/${NAME_MAX}</span></span>
-						<input class="lx-input" id="f-name" name="name" maxlength="${NAME_MAX}" autocomplete="off" placeholder="Name your coin" value="${esc(f.name)}" />
+						<input class="lx-input" id="f-name" name="name" aria-label="Coin name" aria-describedby="c-name" maxlength="${NAME_MAX}" autocomplete="off" placeholder="Name your coin" value="${esc(f.name)}" />
 					</label>
 					<label class="lx-field" style="margin-top:0">
 						<span class="lx-label">Ticker <span class="lx-count" id="c-symbol">0/${SYMBOL_MAX}</span></span>
-						<input class="lx-input is-mono" id="f-symbol" name="symbol" maxlength="${SYMBOL_MAX}" autocomplete="off" placeholder="e.g. AGENT" value="${esc(f.symbol)}" />
+						<input class="lx-input is-mono" id="f-symbol" name="symbol" aria-label="Ticker" aria-describedby="c-symbol" maxlength="${SYMBOL_MAX}" autocomplete="off" placeholder="e.g. AGENT" value="${esc(f.symbol)}" />
 					</label>
 				</div>
 				<label class="lx-field">
 					<span class="lx-label">Description <span class="lx-opt">optional · <span id="c-desc">0/${DESCRIPTION_MAX}</span></span></span>
-					<textarea class="lx-textarea" id="f-description" name="description" maxlength="${DESCRIPTION_MAX}" placeholder="What is this agent and why does it have a coin?">${esc(f.description)}</textarea>
+					<textarea class="lx-textarea" id="f-description" name="description" aria-label="Description (optional)" aria-describedby="c-desc" maxlength="${DESCRIPTION_MAX}" placeholder="What is this agent and why does it have a coin?">${esc(f.description)}</textarea>
 				</label>
 				<details class="lx-disclosure">
 					<summary>Social links <span class="lx-opt">optional</span></summary>
@@ -1292,12 +1308,16 @@ async function claim(address) {
 	renderCoins();
 	try {
 		let signature;
+		// Each claim sweeps the fees still held on its coins' curves and pools
+		// first; what does not fit in one transaction waits for the next claim.
+		let remaining = 0;
 		if (w.kind === 'agent') {
 			const out = await api('/api/pump/collect-creator-fee-agent', {
 				method: 'POST',
 				body: { agent_id: w.agent.id, mint: w.claim_mint, network: 'mainnet', all_quotes: true },
 			});
 			signature = out.signature;
+			remaining = out.sweeps_remaining || 0;
 		} else {
 			if (!state.wallet || state.wallet.address !== address) {
 				await connectWallet();
@@ -1307,8 +1327,16 @@ async function claim(address) {
 			}
 			const prep = await api('/api/pump/collect-creator-fee-prep', {
 				method: 'POST',
-				body: { creator_address: address, wallet_address: address, network: 'mainnet', all_quotes: true, v1_capable: !!state.wallet.v1 },
+				body: {
+					creator_address: address,
+					wallet_address: address,
+					network: 'mainnet',
+					all_quotes: true,
+					v1_capable: !!state.wallet.v1,
+					mints: w.coins.slice(0, 50),
+				},
 			});
+			remaining = prep.sweeps_remaining || 0;
 			signature = await signAndBroadcast({ txBase64: prep.tx_base64, version: prep.transaction_version, address });
 			const confirmed = await waitForConfirmation(signature);
 			if (!confirmed) {
@@ -1316,7 +1344,10 @@ async function claim(address) {
 				return;
 			}
 		}
-		status(`<div class="lx-alert is-good">Rewards claimed. <a class="lx-link" href="https://solscan.io/tx/${esc(signature)}" target="_blank" rel="noopener">View transaction</a></div>`);
+		const more = remaining > 0
+			? ` ${remaining === 1 ? 'One coin still holds' : `${remaining} coins still hold`} rewards that did not fit in this transaction: claim again to collect ${remaining === 1 ? 'it' : 'them'}.`
+			: '';
+		status(`<div class="lx-alert is-good">Rewards claimed.${more} <a class="lx-link" href="https://solscan.io/tx/${esc(signature)}" target="_blank" rel="noopener">View transaction</a></div>`);
 	} catch (err) {
 		status(`<div class="lx-alert" role="alert">${esc(friendlyLaunchError(err))}</div>`);
 	} finally {

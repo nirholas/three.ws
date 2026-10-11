@@ -1,5 +1,5 @@
 {
-	"updated": "2026-09-20",
+	"updated": "2026-10-09",
 	"summary": "Every mechanical guard that protects this repository, and the stage each one runs in. This file is the single source of truth: scripts/audit-guards.mjs proves every entry is real and every stage claim is true, docs/guards.md explains them, and /guards renders them.",
 	"stages": [
 		{
@@ -455,6 +455,52 @@
 			}
 		},
 		{
+			"id": "audit-mcp-surfaces",
+			"script": "scripts/build-mcp-surfaces.mjs",
+			"npm": "audit:mcp-surfaces",
+			"title": "MCP resource and prompt listings",
+			"protects": "Every hosted MCP server's registry manifest (server*.json) and the public directory at public/.well-known/mcp.json list exactly the resources, resource templates and guided prompts that server really serves.",
+			"why": "Registries and MCP clients decide what a server offers from these listings before they ever connect. The lists are generated from api/_mcp/resources.js and api/_mcp/prompts.js, so a prompt or resource added, renamed or removed in code leaves the published manifests advertising things that do not exist, or hiding things that do, until someone remembers to regenerate. This check fails when any committed listing no longer matches what the code serves.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "The public MCP directory advertising no guided prompts for the main server while the code still serves them.",
+				"violation": {
+					"json": [
+						{
+							"file": "public/.well-known/mcp.json",
+							"pointer": "servers.0.prompts",
+							"set": []
+						}
+					]
+				},
+				"expect": "MCP resource/prompt listings are stale"
+			}
+		},
+		{
+			"id": "check-pay-skills",
+			"script": "scripts/build-pay-skills.mjs",
+			"npm": "check:pay-skills",
+			"title": "pay registry provider listings",
+			"protects": "The committed provider files under distributions/pay-skills/ are exactly what api/_lib/service-catalog/pay-skills.js generates from the service catalog today, with no stale or orphaned file.",
+			"why": "Publishing to the pay registry is a copy of this directory, and its paths, schemas and prices are projected from the same catalog and price functions the live 402 challenges use. A catalog change that nobody regenerated would publish listings that quote a price or a route production no longer serves, and an agent paying from that listing would be charged against the wrong contract.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A committed provider listing edited by hand, so it no longer matches what the catalog generates.",
+				"violation": {
+					"write": {
+						"distributions/pay-skills/providers/three-ws/3d/PAY.md": "Hand-edited listing that no catalog generated.\n"
+					}
+				},
+				"expect": "stale: distributions/pay-skills/providers/three-ws/3d/PAY.md"
+			}
+		},
+		{
 			"id": "audit-mcp-manifests",
 			"script": "scripts/audit-mcp-manifests.mjs",
 			"npm": "audit:mcp",
@@ -514,32 +560,6 @@
 					}
 				},
 				"expect": "no annotations"
-			}
-		},
-		{
-			"id": "audit-mcp-surfaces",
-			"script": "scripts/build-mcp-surfaces.mjs",
-			"npm": "audit:mcp-surfaces",
-			"title": "MCP resources and prompts are published",
-			"protects": "Every hosted MCP server manifest (server.json, server-agent.json, server-3d.json, server-bazaar.json) and the public directory at public/.well-known/mcp.json list exactly the resources, resource templates and guided prompts the servers actually serve, read from api/_mcp/resources.js and api/_mcp/prompts.js.",
-			"why": "Registries and MCP clients discover what a server offers from these files before they ever connect. A resource added in code but not published is invisible to every directory listing, and one removed in code but still published is a promise the server breaks on first read. The lists are generated from the serving code, so the only way they drift is a change that skipped the regeneration, which is exactly what this catches.",
-			"stages": [
-				"gate"
-			],
-			"needs": "none",
-			"proof": {
-				"summary": "A resource listed in the public MCP directory that the server does not serve.",
-				"violation": {
-					"json": [
-						{
-							"file": "public/.well-known/mcp.json",
-							"pointer": "servers.0.resources",
-							"at": 0,
-							"insert": "three://guard-proof/never-served"
-						}
-					]
-				},
-				"expect": "MCP resource/prompt listings are stale"
 			}
 		},
 		{
@@ -1669,16 +1689,16 @@
 			"id": "check-xai-models",
 			"script": "scripts/check-xai-models.mjs",
 			"npm": "check:xai-models",
-			"title": "Grok model catalog matches what xAI serves",
-			"protects": "GROK_MODELS in api/_lib/chat-models.js lists every chat model xAI currently serves, no retired id, and the context window and prices xAI publishes for each. It reads the xAI API with a key, or the public xAI model docs without one.",
-			"why": "A retired id in the catalog turns the Grok rung of every failover chain into a guaranteed error, an uncatalogued id is a better or cheaper model nobody can pick, and llm-pricing.js meters Grok spend from the catalog prices, so a stale price is a wrong spend ledger. xAI changes all three on its own schedule, with no diff on our side to review.",
+			"title": "Grok model catalog matches xAI",
+			"protects": "Every Grok model id in GROK_MODELS (api/_lib/chat-models.js) is one xAI still serves, every chat model xAI serves is catalogued, and each catalogued price, context window, image input, tool calling and reasoning-effort set matches xAI's own figures.",
+			"why": "xAI ships new model ids often and retires old ones in batches. A retired id in the catalog turns the Grok rung of every LLM failover chain into a guaranteed error, a new id nobody catalogued is a better or cheaper model no one on the platform can pick, and llm-pricing.js meters Grok spend from the catalog's prices, so a stale price is a wrong spend ledger. It reads the xAI models API when GROK_API_KEY or XAI_API_KEY is set and xAI's public model docs otherwise, and exits 2 rather than 1 when neither source can be read, so an outage is never reported as drift.",
 			"stages": [
 				"manual"
 			],
 			"needs": "network",
 			"proof": {
 				"kind": "live",
-				"reason": "Compares the catalog against the live xAI model list or the published xAI model pages, so the answer changes when xAI ships or retires a model and there is no offline copy to mutate. The key, when set, is only ever sent to api.x.ai."
+				"reason": "The thing under test is what xAI serves today, read from its models API or its public model docs. There is no offline input whose mutation proves anything about a third party's live catalog, and the comparison never sends a prompt or spends a token. The key, when set, is only ever sent to api.x.ai."
 			}
 		},
 		{
@@ -1794,12 +1814,32 @@
 				},
 				"expect": "/guards"
 			}
+		},
+		{
+			"id": "check-trading-routes",
+			"script": "scripts/check-trading-routes.mjs",
+			"npm": "check:trading-routes",
+			"title": "Solana swap route liveness",
+			"protects": "Every swap aggregator behind swap_quote and swap_execute still quotes, builds, passes the wallet-outflow guard and simulates on mainnet, with nothing signed.",
+			"why": "A router that changes its transaction shape would otherwise surface as a refused or failing swap in front of a user. The guard catches it read-only, before anyone signs.",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Quotes and simulates against live aggregators and a mainnet RPC for a funded wallet's public key."
+			}
 		}
 	],
 	"exempt": [
 		{
 			"pattern": "scripts/verify-*.mjs",
 			"reason": "One-off integration verifiers for a specific vendor surface or world build, not repository guards. They prove an external service works, so they belong with that feature rather than in a guard stage."
+		},
+		{
+			"pattern": "scripts/audit-agent-operability.mjs",
+			"reason": "A live-browser walkthrough that needs a running dev server and a real generation, so it is run on demand like the page audit and never inside a repository guard stage."
 		}
 	]
 }

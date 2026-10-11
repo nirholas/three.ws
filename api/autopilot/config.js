@@ -20,7 +20,7 @@ import { isUuid } from '../_lib/validate.js';
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
-	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req, { kind: 'trade' });
 	if (bearer) return { userId: bearer.userId };
 	return null;
 }

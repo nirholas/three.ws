@@ -11,12 +11,13 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_portfolio_history',
 	title: 'My portfolio value over time',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Time series of your total portfolio USD value, oldest point first, for charting performance over time. ' +
 		'Returns `points` as { t (ISO timestamp), usd } pairs, drawn from snapshots persisted by ' +
 		'get_portfolio_summary(snapshot:true) or the website. An empty `points` array means no snapshots have been ' +
 		'captured yet in the window — take one with get_portfolio_summary(snapshot:true) to start the series. ' +
+		'Use this to chart or describe performance over time; for the current value call get_portfolio_summary. ' +
 		'Requires THREE_WS_SESSION. Read-only.',
 	inputSchema: {
 		days: z

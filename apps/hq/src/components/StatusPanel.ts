@@ -1,0 +1,232 @@
+import { escapeHtml } from '@/utils/sanitize';
+import { SITE_VARIANT } from '@/config';
+
+type StatusLevel = 'ok' | 'warning' | 'error' | 'disabled';
+
+interface FeedStatus {
+  name: string;
+  lastUpdate: Date | null;
+  status: StatusLevel;
+  itemCount: number;
+  errorMessage?: string;
+}
+
+interface ApiStatus {
+  name: string;
+  status: StatusLevel;
+  latency?: number;
+}
+
+// Allowlists for each variant - crypto/defi/web3 focused
+const TECH_FEEDS = new Set([
+  'Crypto', 'Finance', 'Markets', 'Polymarket', 'Funding'
+]);
+const TECH_APIS = new Set([
+  'CoinGecko', 'Finnhub', 'Polymarket', 'RSS Proxy'
+]);
+
+const WORLD_FEEDS = new Set([
+  'Crypto', 'Finance', 'Markets', 'Polymarket'
+]);
+const WORLD_APIS = new Set([
+  'CoinGecko', 'Finnhub', 'Polymarket', 'RSS2JSON'
+]);
+
+export class StatusPanel {
+  private element: HTMLElement;
+  private isOpen = false;
+  private feeds: Map<string, FeedStatus> = new Map();
+  private apis: Map<string, ApiStatus> = new Map();
+  private allowedFeeds: Set<string>;
+  private allowedApis: Set<string>;
+
+  constructor() {
+    // Set allowlists based on variant
+    this.allowedFeeds = SITE_VARIANT === 'tech' ? TECH_FEEDS : WORLD_FEEDS;
+    this.allowedApis = SITE_VARIANT === 'tech' ? TECH_APIS : WORLD_APIS;
+
+    this.element = document.createElement('div');
+    this.element.className = 'status-panel-container';
+    this.element.innerHTML = `
+      <button class="status-panel-toggle" title="System Status">
+        <span class="status-icon">◉</span>
+      </button>
+      <div class="status-panel hidden">
+        <div class="status-panel-header">
+          <span>System Health</span>
+          <button class="status-panel-close">×</button>
+        </div>
+        <div class="status-panel-content">
+          <div class="status-section">
+            <div class="status-section-title">Data Feeds</div>
+            <div class="feeds-list"></div>
+          </div>
+          <div class="status-section">
+            <div class="status-section-title">API Status</div>
+            <div class="apis-list"></div>
+          </div>
+          <div class="status-section">
+            <div class="status-section-title">Storage</div>
+            <div class="storage-info"></div>
+          </div>
+        </div>
+        <div class="status-panel-footer">
+          <span class="last-check">Updated just now</span>
+        </div>
+      </div>
+    `;
+
+    this.setupEventListeners();
+    this.initDefaultStatuses();
+  }
+
+  private setupEventListeners(): void {
+    const toggle = this.element.querySelector('.status-panel-toggle')!;
+    const panel = this.element.querySelector('.status-panel')!;
+    const closeBtn = this.element.querySelector('.status-panel-close')!;
+
+    toggle.addEventListener('click', () => {
+      this.isOpen = !this.isOpen;
+      panel.classList.toggle('hidden', !this.isOpen);
+      if (this.isOpen) this.updateDisplay();
+    });
+
+    closeBtn.addEventListener('click', () => {
+      this.isOpen = false;
+      panel.classList.add('hidden');
+    });
+  }
+
+  private initDefaultStatuses(): void {
+    // Initialize all allowed feeds/APIs as disabled
+    // They get enabled when App.ts reports data
+    this.allowedFeeds.forEach(name => {
+      this.feeds.set(name, { name, lastUpdate: null, status: 'disabled', itemCount: 0 });
+    });
+
+    this.allowedApis.forEach(name => {
+      this.apis.set(name, { name, status: 'disabled' });
+    });
+  }
+
+  public updateFeed(name: string, status: Partial<FeedStatus>): void {
+    // Only track feeds relevant to current variant
+    if (!this.allowedFeeds.has(name)) return;
+
+    const existing = this.feeds.get(name) || { name, lastUpdate: null, status: 'ok' as const, itemCount: 0 };
+    this.feeds.set(name, { ...existing, ...status, lastUpdate: new Date() });
+    this.updateStatusIcon();
+    if (this.isOpen) this.updateDisplay();
+  }
+
+  public updateApi(name: string, status: Partial<ApiStatus>): void {
+    // Only track APIs relevant to current variant
+    if (!this.allowedApis.has(name)) return;
+
+    const existing = this.apis.get(name) || { name, status: 'ok' as const };
+    this.apis.set(name, { ...existing, ...status });
+    this.updateStatusIcon();
+    if (this.isOpen) this.updateDisplay();
+  }
+
+  public setFeedDisabled(name: string): void {
+    const existing = this.feeds.get(name);
+    if (existing) {
+      this.feeds.set(name, { ...existing, status: 'disabled', itemCount: 0, lastUpdate: null });
+      this.updateStatusIcon();
+      if (this.isOpen) this.updateDisplay();
+    }
+  }
+
+  public setApiDisabled(name: string): void {
+    const existing = this.apis.get(name);
+    if (existing) {
+      this.apis.set(name, { ...existing, status: 'disabled' });
+      this.updateStatusIcon();
+      if (this.isOpen) this.updateDisplay();
+    }
+  }
+
+  private updateStatusIcon(): void {
+    const icon = this.element.querySelector('.status-icon')!;
+    // Only count enabled feeds/APIs (not 'disabled') for status indicator
+    const enabledFeeds = [...this.feeds.values()].filter(f => f.status !== 'disabled');
+    const enabledApis = [...this.apis.values()].filter(a => a.status !== 'disabled');
+
+    const hasError = enabledFeeds.some(f => f.status === 'error') ||
+                     enabledApis.some(a => a.status === 'error');
+    const hasWarning = enabledFeeds.some(f => f.status === 'warning') ||
+                       enabledApis.some(a => a.status === 'warning');
+
+    icon.className = 'status-icon';
+    if (hasError) {
+      icon.classList.add('error');
+      icon.textContent = '◉';
+    } else if (hasWarning) {
+      icon.classList.add('warning');
+      icon.textContent = '◉';
+    } else {
+      icon.classList.add('ok');
+      icon.textContent = '◉';
+    }
+  }
+
+  private updateDisplay(): void {
+    const feedsList = this.element.querySelector('.feeds-list')!;
+    const apisList = this.element.querySelector('.apis-list')!;
+    const storageInfo = this.element.querySelector('.storage-info')!;
+    const lastCheck = this.element.querySelector('.last-check')!;
+
+    feedsList.innerHTML = [...this.feeds.values()].map(feed => `
+      <div class="status-row">
+        <span class="status-dot ${escapeHtml(feed.status)}"></span>
+        <span class="status-name">${escapeHtml(feed.name)}</span>
+        <span class="status-detail">${escapeHtml(String(feed.itemCount))} items</span>
+        <span class="status-time">${escapeHtml(feed.lastUpdate ? this.formatTime(feed.lastUpdate) : 'Never')}</span>
+      </div>
+    `).join('');
+
+    apisList.innerHTML = [...this.apis.values()].map(api => `
+      <div class="status-row">
+        <span class="status-dot ${escapeHtml(api.status)}"></span>
+        <span class="status-name">${escapeHtml(api.name)}</span>
+        ${api.latency ? `<span class="status-detail">${escapeHtml(String(api.latency))}ms</span>` : ''}
+      </div>
+    `).join('');
+
+    this.updateStorageInfo(storageInfo);
+    lastCheck.textContent = `Updated ${this.formatTime(new Date())}`;
+  }
+
+  private async updateStorageInfo(container: Element): Promise<void> {
+    try {
+      if ('storage' in navigator && 'estimate' in navigator.storage) {
+        const estimate = await navigator.storage.estimate();
+        const used = estimate.usage ? (estimate.usage / 1024 / 1024).toFixed(2) : '0';
+        const quota = estimate.quota ? (estimate.quota / 1024 / 1024).toFixed(0) : 'N/A';
+        container.innerHTML = `
+          <div class="status-row">
+            <span class="status-name">IndexedDB</span>
+            <span class="status-detail">${used} MB / ${quota} MB</span>
+          </div>
+        `;
+      } else {
+        container.innerHTML = `<div class="status-row">Storage info unavailable</div>`;
+      }
+    } catch {
+      container.innerHTML = `<div class="status-row">Storage info unavailable</div>`;
+    }
+  }
+
+  private formatTime(date: Date): string {
+    const now = Date.now();
+    const diff = now - date.getTime();
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  public getElement(): HTMLElement {
+    return this.element;
+  }
+}

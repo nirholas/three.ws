@@ -59,12 +59,12 @@ test('concierge_avatars is a pure offline lister', () => {
 	assert.equal(tool.annotations.openWorldHint, false);
 });
 
-test('no read-only tool sets destructiveHint (it is meaningless for reads)', () => {
+test('every read-only tool sets destructiveHint: false explicitly (a read is never destructive)', () => {
 	for (const tool of TOOLS) {
 		assert.equal(
-			Object.prototype.hasOwnProperty.call(tool.annotations, 'destructiveHint'),
+			tool.annotations.destructiveHint,
 			false,
-			`${tool.name} is read-only, destructiveHint must not be set`,
+			`${tool.name} is read-only, so destructiveHint must be an explicit false`,
 		);
 	}
 });

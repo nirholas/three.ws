@@ -1,0 +1,109 @@
+{
+	"id": "agent-lab-entrance",
+	"status": "draft",
+	"kind": "post",
+	"tier": 3,
+	"lane": "community",
+	"pattern": "clip",
+	"notBefore": "2026-10-11T00:00:00Z",
+	"covers": [
+		"/demos/agents"
+	],
+	"scenario": {
+		"format": "landscape",
+		"steps": [
+			{
+				"goto": "https://three.ws/demos/agents/wrecking-ball.html",
+				"settle": 9000
+			},
+			{
+				"expect": "Make an entrance",
+				"within": 30000
+			},
+			{
+				"hold": 1600,
+				"caption": "A 3D agent that lives on the page itself"
+			},
+			{
+				"click": "Swing again",
+				"caption": "She swings in on a rope"
+			},
+			{
+				"hold": 3800
+			},
+			{
+				"click": "Hit this one",
+				"caption": "and knocks the button sideways"
+			},
+			{
+				"hold": 4200,
+				"caption": "Then she hangs around"
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		}
+	],
+	"posts": [
+		{
+			"text": "Websites have mascots. three.ws pages have agents that physically show up.\n\nThis one swings in from off screen on a rope, hits the button, watches it wobble back into place, and then just hangs there. A real 3D character rendered over the page in WebGL, not a video.",
+			"media": [
+				{
+					"path": "public/x-media/agent-lab-entrance/reel.mp4",
+					"probe": {
+						"durationSec": 11,
+						"width": 1280,
+						"height": 720,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "It is one of a set of interaction prototypes for 3D agents on ordinary web pages: entrances, pick-ups, face mocap and more.\n\nPlay with all of them: three.ws/demos/agents"
+		}
+	],
+	"claims": [
+		{
+			"says": "swings in from off screen on a rope, hits the button, watches it wobble back into place, and then just hangs there",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "public/demos/agents/wrecking-ball.html",
+					"contains": "She swings in from off-canvas on a rope and knocks the ghost button"
+				}
+			]
+		},
+		{
+			"says": "A real 3D character rendered over the page in WebGL",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "public/demos/agents/_lib.js",
+					"contains": "new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })"
+				}
+			]
+		},
+		{
+			"says": "entrances, pick-ups, face mocap and more",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "public/demos/agents/index.html",
+					"contains": "Pickup &amp; drop"
+				},
+				{
+					"type": "file",
+					"path": "public/demos/agents/index.html",
+					"contains": "Webcam drives the avatar's face in real time via ARKit blendshapes."
+				}
+			]
+		}
+	],
+	"mentions": {}
+}

@@ -3,7 +3,7 @@
   "name": "io.github.nirholas/hood-mcp",
   "title": "Robinhood Chain",
   "description": "Robinhood Chain data + guarded trading for AI agents: Stock Token quotes, portfolios, launches",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "websiteUrl": "https://nirholas.github.io/robinhood-chain-mcp/",
   "repository": {
     "url": "https://github.com/nirholas/robinhood-chain-mcp",
@@ -14,7 +14,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "hood-mcp",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "runtimeHint": "npx",
       "transport": { "type": "stdio" },
       "environmentVariables": [

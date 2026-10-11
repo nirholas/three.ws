@@ -160,7 +160,8 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | MCP safety annotations | `npm run audit:mcp-safety` | Declared `readOnlyHint` and `destructiveHint` match what handlers do. |
 | MCP tool catalog freshness | `npm run audit:mcp-catalog` | `public/mcp-catalog.json` matches what the MCP servers actually expose. |
 | MCP directory listing source | `npm run audit:mcp-listing` | The one file every third-party MCP directory listing is written from still matches the manifests, and no new server lands without listing copy. |
-| MCP resources and prompts | `npm run audit:mcp-surfaces` | Every hosted MCP server manifest and `public/.well-known/mcp.json` list exactly the resources, templates and guided prompts the servers serve, generated from `api/_mcp/resources.js` and `api/_mcp/prompts.js`. |
+| MCP resource and prompt listings | `npm run audit:mcp-surfaces` | Every hosted MCP server's registry manifest and `public/.well-known/mcp.json` list exactly the resources, templates and guided prompts the code serves. |
+| pay registry provider listings | `npm run check:pay-skills` | The provider files in `distributions/pay-skills/` are exactly what the service catalog generates, so a published listing never quotes a route or price production no longer serves. |
 | 3D Studio OpenAPI sync | `npm run check:studio-openapi` | The Actions file in the OpenAI submission kit is byte-identical to the OpenAPI schema the site serves. |
 | Live event window | `npm run check:event` | `public/event.json` describes an event that will actually happen, on every surface that reads it. |
 | Cron schedule drift | `npm run check:cron-syntax`, `npm run check:cron-drift` | Valid expressions, and agreement with the running Cloud Scheduler jobs. |
@@ -192,9 +193,11 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Wardrobe catalog integrity | `npm run audit:garments` | Every garment validates and its GLB hash matches its manifest. |
 | Rig coverage | `npm run audit:rig-coverage` | How well the canonicalizer maps skeletons actually stored in production. |
 | Service wallet configuration | `npm run audit:service-wallets` | Balances, floors, and whether the advertised x402 fee payer matches the real secret. |
+| Solana swap route liveness | `npm run check:trading-routes` | Each swap aggregator still quotes, builds, passes the outflow guard and simulates on mainnet, with nothing signed. |
 | Fleet wallet flows | `npm run audit:wallet-flows` | Where the platform's SOL is, where it went, and whether any is leaking. |
 | Relayer balances | `npm run check:relayer-balances` | Every configured Solana signer is above its documented minimum. |
 | LLM spend metering | `npm run audit:llm-metering` | Every LLM lane that spends money reports a real cost, never exactly $0 and never an unknown. |
+| Grok model catalog | `npm run check:xai-models` | Every Grok model id the platform routes to is one xAI still serves, no new xAI chat model goes uncatalogued, and each catalogued price, context window and capability matches xAI's own figures. Reads the xAI models API with a key, xAI's public model docs without one. |
 | Cron liveness | `npm run audit:cron-liveness` | Each cron in `vercel.json` resolves to a handler that exists, imports, answers a live request, and refuses an unauthenticated one. |
 | Custodial key health | `npm run audit:custodial-keys` | Every stored custodial Solana secret still decrypts under the current `WALLET_ENCRYPTION_KEY`. |
 | Home credential health | `npm run audit:home-credentials` | Every stored Home Assistant token still decrypts under the current `WALLET_ENCRYPTION_KEY`, so no connected house is sealed. |

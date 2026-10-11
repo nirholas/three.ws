@@ -1,592 +1,306 @@
-# Grok Bot connector reference
+# Grok Bot: connect three.ws as a custom MCP server
 
-Grok Bot, xAI's always-on computer-use agent, takes custom MCP servers as
-connectors. This page is the developer reference for connecting it to three.ws:
-the exact connector settings for each authentication mode, which hosted server
-to pick, the contract every tool result follows, how long jobs and retries
-behave, the limits, what a key held by a cloud agent can and cannot do, the
-guided prompts, and a fix for every failure a connector can hit.
+Grok Bot is xAI's agent that works on its own cloud computer, so it can run a
+task unattended, on a schedule, and hand files from one tool to the next. This
+page is the integration reference: the exact connector settings for each sign-in
+mode, which of the hosted servers to pick, the contract an unattended agent can
+rely on (links, jobs, retries, limits, spend), and a fix for every failure the
+connector probe can report. For the product tour read [three.ws for Grok](./grok.md);
+for every tool in depth read [the free 3D Studio MCP](./mcp-studio.md).
 
-For the product overview (what Grok gets, example asks, the xAI Responses API
-and the skill file), read [three.ws for Grok](./grok.md). For the live page and
-an in-browser demo, open [three.ws/grok](/grok).
+## Connect it
 
-| | |
-|---|---|
-| **Server URL** | `https://three.ws/api/mcp-grok` |
-| **Transport** | Streamable HTTP (JSON-RPC over `POST`; `GET` answers `405` with `Allow: POST, OPTIONS`) |
-| **Authentication** | None, an API key (connector key), or OAuth 2.1 at `https://three.ws/api/mcp-grok?auth=oauth` |
-| **Protocol** | MCP `2025-06-18`, whatever version the client opens with |
-| **Session** | `initialize` issues an `Mcp-Session-Id` (`grk_…`); echo it on every later request |
-| **Tools** | 15 free studio tools anonymously; signed in, plus the account tools your scopes allow |
-| **Prompts** | 4 anonymously, 5 signed in |
-| **Handler** | [`api/mcp-grok.js`](../api/mcp-grok.js) over [`api/_mcp-studio/handler.js`](../api/_mcp-studio/handler.js) |
-
-## Connector setup
-
-Grok Bot connects from xAI's cloud, so the URL must be public: a `localhost`
-server never works. Add the server either by telling Grok Bot in chat
-("Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok")
-or through its connector form. The form takes four fields, and
-[three.ws/connect?client=grok](/connect?client=grok) shows them with a copy
-button for every hosted server. From a terminal, `npx three-ws setup --client grok-bot`
-prints the same fields, mints the install token or connector key the mode needs,
-copies the URL and checks it live ([CLI docs](./cli.md#grok-bot)). Use the name `three-ws-grok` so the guided
-prompts, the [skill file](https://three.ws/grok-skill.md) and the `/grok` page
-all refer to the connector by the same name.
-
-### None (free, no account)
-
-| Field | Value |
-|---|---|
-| Name | `three-ws-grok` |
-| Transport | Streamable HTTP |
-| Server URL | `https://three.ws/api/mcp-grok` |
-| Authentication | None |
-
-You get the free studio: text to 3D, image to 3D, rigging, refinement, the
-catalog of ready-made assets, and personas. The generation caps key on the MCP
-session, so they last one connection.
-
-### None, with an install token (free, a quota that survives reconnects)
-
-A scheduled Grok Bot task opens a new connection, and so a new session, on
-every run. To keep one budget across all of them, mint a free install token and
-put it in the URL. No account and no key:
-
-```bash
-curl -s -X POST https://three.ws/api/mcp-studio/install | jq -r .connector_urls.grok
-```
+Send Grok Bot this sentence. Say "custom server", or it may look for a
+marketplace plugin instead:
 
 ```text
-https://three.ws/api/mcp-grok?install=tws_tmm6fp_dce3ce5583a6bd9f66889a1ef74e6a6e553ef39620867a6374fe75b9f6f039a1
+Add a custom MCP server called three-ws at https://three.ws/api/mcp-grok
 ```
 
-| Field | Value |
+Grok Bot shows the name and URL and asks you to confirm. No sign-in card appears,
+because the free studio has nothing to sign in to. The same settings go into a
+Grok custom connector (**Connectors**, then **custom**) or the `server_url` of an
+xAI Responses API `mcp` tool:
+
+| Setting | Value |
 |---|---|
-| Server URL | the `connector_urls.grok` value above |
+| Transport | Streamable HTTP |
+| URL | `https://three.ws/api/mcp-grok` |
 | Authentication | None |
+| Protocol | MCP `2025-06-18` (negotiated, whatever version the client opens with) |
 
-The token never expires and unlocks no account, tool or payment; it is only a
-rate-limit identity, and request logs redact it. Anyone holding the URL spends
-its budget, so keep it in the connector rather than in a shared prompt. On
-[/connect](/connect?server=three-ws-studio), **Generate my connector URL** mints
-the same thing in the browser. Details:
-[install tokens](./mcp-studio.md#connector-url-for-cloud-agents-install-tokens).
+Grok Bot connects from xAI's cloud, so a `localhost` or tunnel URL never works.
+[/connect](/connect) has a Grok Bot tab that shows these values with a copy button.
 
-### API key (your agents, memory and skills)
+Check the connection from any shell. This is what Grok Bot does on connect:
 
-1. At [three.ws/dashboard/api](/dashboard/api) choose **New key**, then
-   **For an AI agent (Grok Bot, schedules, CI)**, name it, and copy the key it
-   shows once.
-2. Add the connector:
+```bash
+curl -s -D - -o /dev/null https://three.ws/api/mcp-grok \
+  -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"check","version":"1"}}}' \
+  | grep -i '^HTTP\|mcp-session-id'
+# HTTP/2 200
+# mcp-session-id: grk_709488d5-93fe-4153-84b9-fb4ba13e0267
+```
 
-| Field | Value |
-|---|---|
-| Server URL | `https://three.ws/api/mcp-grok` |
-| Authentication | API key |
-| Header (if asked) | `Authorization` |
-| Value | `Bearer sk_live_…`, stored as a Bot secret |
-
-Check the key before you hand it to Grok Bot. Signed in, `tools/list` grows from
-15 to the studio plus every account tool your scopes allow:
+The `Mcp-Session-Id` is the caller's identity for the rate limits below. Send it
+back on every later request, as every current MCP client does:
 
 ```bash
 curl -s https://three.ws/api/mcp-grok \
-  -H "Authorization: Bearer $THREE_WS_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq '.result.tools | length'
+  -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+  -H "Mcp-Session-Id: $SID" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+# the free studio tools: forge_free, text_to_avatar, mesh_forge, rig_mesh, forge_avatar,
+# refine_model, check_job, get_job, look_at_model, search_catalog, get_catalog_item, get_item_source,
+# create_agent_persona, get_agent_persona, persona_say
 ```
 
-A connector key is capped on every request: it can read, generate and edit
-agent data and can never spend (see [Scoped keys and the spend rule](#scoped-keys-and-the-spend-rule)).
+## Which authentication mode
 
-### OAuth 2.1 (sign in once, revoke any time)
+| You want | Use | Connector URL | Sign-in |
+|---|---|---|---|
+| Models and avatars, nothing else | The free studio, no sign-in | `https://three.ws/api/mcp-grok` | None |
+| A budget of your own, still anonymous | An install token | `https://three.ws/api/mcp-grok?install=inst_...` | None ([below](#limits-and-install-tokens)) |
+| Grok to manage your agents, memory, skills and avatars | OAuth 2.1 | `https://three.ws/api/mcp-grok?auth=oauth` | Consent screen once, then it refreshes itself |
+| The same, unattended with a secret you hold | A connector API key | `https://three.ws/api/mcp-grok` | `Authorization: Bearer sk_live_...` |
 
-| Field | Value |
-|---|---|
-| Server URL | `https://three.ws/api/mcp-grok?auth=oauth` |
-| Authentication | OAuth 2.1 |
-| Client ID | leave empty: the connector registers itself |
+**OAuth 2.1.** Use the `?auth=oauth` URL. An anonymous request to it answers
+`401` with a `WWW-Authenticate` header naming the protected-resource metadata at
+`/.well-known/oauth-protected-resource/api/mcp-grok`, which is what makes an MCP
+client start sign-in. The client registers itself (RFC 7591), so there is no
+client ID to create; PKCE S256 is required. The consent screen names the app and
+states that it can never spend from a wallet. Revoke it any time at
+[Settings, Connected apps](https://three.ws/dashboard/settings#connected-apps);
+the app's next request fails with `401`. Details: [Cloud connectors](./mcp.md#cloud-connectors-grok-bot-and-other-hosted-agents).
 
-The `?auth=oauth` form is what makes sign-in start. An MCP client only begins
-OAuth when the server answers `401`, and the plain URL serves anonymous callers,
-so it never would. With the parameter, an anonymous `initialize` answers:
+**API key.** Create one at [three.ws/dashboard/api](/dashboard/api) with the
+**For an AI agent** preset and store it as the connector's secret. If the
+connector asks for a header, use `Authorization` with the value `Bearer sk_live_...`.
 
-```bash
-curl -s -i 'https://three.ws/api/mcp-grok?auth=oauth' \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"curl","version":"1.0"}}}' \
-  | grep -iE '^HTTP|^www-authenticate'
-```
-
-```text
-HTTP/1.1 401 Unauthorized
-www-authenticate: Bearer resource_metadata="https://three.ws/.well-known/oauth-protected-resource/api/mcp-grok", resource="https://three.ws/api/mcp-grok"
-```
-
-From there the client reads the protected-resource document, finds the
-authorization server, registers itself (RFC 7591 dynamic client registration),
-and sends you to a consent screen that names the app, the host of its
-`client_uri`, the host the code goes back to, and every permission in plain
-language. PKCE `S256` is required. Access tokens last an hour and refresh on
-their own; revoking the app in [Connected apps](/dashboard/settings#connected-apps)
-refuses its very next call. More:
-[Cloud connectors and revocation](./mcp.md#cloud-connectors-and-revocation).
+A bearer that does not verify (expired, revoked, minted for another server) gets
+the same `401` challenge instead of a silent anonymous session, so the client
+re-authenticates.
 
 ## Which server to pick
 
-Every hosted server speaks Streamable HTTP and is listed with its auth model in
-[`/.well-known/mcp.json`](https://three.ws/.well-known/mcp.json). For Grok Bot:
-
-| You want Grok Bot to | Connect | Auth |
+| Server | URL | Pick it when |
 |---|---|---|
-| Make 3D models, avatars and personas, find ready-made assets | `https://three.ws/api/mcp-grok` | None (add an install token for scheduled tasks) |
-| Do that and also run your agents, memory, skills and avatars | `https://three.ws/api/mcp-grok` | Connector key, or OAuth 2.1 at `?auth=oauth` |
-| Use the full core server (validation, market data, a connected home) | `https://three.ws/api/mcp` | Connector key or OAuth 2.1 |
-| Use paid generation, retexture and optimization | `https://three.ws/api/mcp-3d` | Connector key or OAuth 2.1 |
-| Discover paid agent services | `https://three.ws/api/mcp-bazaar` | Connector key or OAuth 2.1 |
+| Grok door of the free studio | `https://three.ws/api/mcp-grok` | The default for Grok Bot. Every call answers within 40 seconds, the quota follows your session, and it never lists a wallet or payment tool. |
+| Free studio | `https://three.ws/api/mcp-studio` | A non-Grok MCP client, or a ChatGPT-style host that renders widgets. |
+| Account server | `https://three.ws/api/mcp` | You want the whole account toolset and a larger budget. Needs OAuth or an API key. |
+| 3D Studio (paid tier) | `https://three.ws/api/mcp-3d` | Higher quality tiers. Needs OAuth or an API key. |
 
-`/api/mcp-grok` is the right default. It is the free studio with no ChatGPT
-widget templates (nothing renders inline in Grok, so every result hands back
-plain links instead), it never lets a call hang, and it keys the free quota on
-the MCP session rather than on xAI's shared egress IPs. The agent wallet server
-(`/api/mcp-agent`) is not a good fit for an unattended connector: a connector key
-there can browse and quote but every payment answers with a link back to
-three.ws, by design. x402 pay-per-call is not a connector mode at all, because
-each paid call needs a signed payment a connector cannot make for you.
+Every hosted server and its auth mode is listed in [MCP integration](./mcp.md#client-compatibility).
 
-## Links in every result
+## What every result carries: the links contract
 
-Grok Bot sees only JSON and text, so every result that carries a model also
-carries four absolute links under fixed names, both in `structuredContent` and
-as the first lines of the text content:
+Grok Bot renders no widget, so every result that carries a model carries four
+plain absolute links under fixed snake_case names, and the text content opens
+with the same lines:
 
 | Field | What it is |
 |---|---|
-| `viewer_url` | The interactive 3D viewer, opens in any browser |
-| `glb_url` | The model file, to download, re-host, or pass to `rig_mesh` or `look_at_model` |
-| `poster_png_url` | A rendered 1024 px PNG (`/api/render/glb`, CDN-cached a day) to attach to a reply or a card |
-| `embed_html` | A paste-ready `<agent-3d>` or `<model-viewer>` snippet, script pinned with an integrity hash |
-
-The generators, `get_job` and `check_job` once done, `look_at_model`, the three
-catalog tools, and the three persona tools all carry them. A catalog search puts
-them on each item:
+| `viewer_url` | The interactive viewer. Hand it to the user. |
+| `glb_url` | The model file. Download it, re-host it, feed it to `rig_mesh` or `look_at_model`. |
+| `poster_png_url` | A rendered 1024 px PNG. Attach it to a reply. |
+| `embed_html` | A paste-ready snippet for a web page. |
 
 ```bash
 curl -s https://three.ws/api/mcp-grok \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"search_catalog","arguments":{"q":"chair","limit":1}}}' \
-  | jq '.result.structuredContent.items[0] | {id, viewer_url, glb_url, poster_png_url}'
+  -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+  -H "Mcp-Session-Id: $SID" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"search_catalog","arguments":{"q":"chair","kind":"object","limit":1}}}'
+# structuredContent.items[0]: id "object:ArmChair_01", license "CC0",
+#   viewer_url  https://three.ws/viewer?src=...ArmChair_01.glb&title=Arm%20Chair%2001
+#   glb_url     https://pub-....r2.dev/objects/polyhaven/glb/ArmChair_01.glb
+#   poster_png_url https://three.ws/api/render/glb?glbUrl=...&width=1024&height=1024
+#   embed_html  <script type="module" src=".../model-viewer.min.js" ...
 ```
 
-```json
-{
-  "id": "object:ArmChair_01",
-  "viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FArmChair_01.glb&title=Arm%20Chair%2001",
-  "glb_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/ArmChair_01.glb",
-  "poster_png_url": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FArmChair_01.glb&width=1024&height=1024"
-}
-```
-
-A job that is still rendering has no GLB yet, so its result carries only a
-`viewer_url` of the form `https://three.ws/viewer?job=<job_id>`: that page waits
-for the job and opens the model the moment it lands, so Grok Bot can hand the
-link over straight away. Full field rules:
-[Links for agents that render no widget](./mcp-studio.md#links-for-agents-that-render-no-widget).
+Start with `search_catalog`: thousands of CC0 props, rigged characters and motion
+clips are free and instant, and a generation is only needed for what the catalog
+lacks. Full field reference: [Links for agents that render no widget](./mcp-studio.md#links-for-agents-that-render-no-widget).
 
 ## Jobs and idempotency
 
-Grok calls MCP from xAI's cloud with no published timeout, so on this URL no
-call runs longer than 40 seconds. A model usually lands inside that. When it
-does not (a GPU booting from zero, a heavy rig), the call answers with a pending
-job instead of hanging, and the server's instructions tell Grok to call
-`get_job` until it is done.
-
-Every generation tool (`forge_free`, `text_to_avatar`, `mesh_forge`, `rig_mesh`,
-`forge_avatar`, `refine_model`) takes an optional `idempotency_key`. A scheduled
-task should always pass one built from the task and the date, so a retry after a
-timeout collects the first run's job instead of generating twice:
-
-```bash
-RESULT=$(curl -s https://three.ws/api/mcp-grok \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"forge_free","arguments":{"prompt":"a brass ship lantern with a glass globe","idempotency_key":"lantern-brief-2026-10-09"}}}')
-echo "$RESULT" | jq '.result.structuredContent | {status, phase, job_id, progress, eta_seconds, idempotent_replay}'
-JOB=$(echo "$RESULT" | jq -r '.result.structuredContent.job_id')
-```
-
-```json
-{
-  "status": "pending",
-  "phase": "queued",
-  "job_id": "f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6…",
-  "progress": 0.37,
-  "eta_seconds": 38,
-  "idempotent_replay": false
-}
-```
-
-Then collect it, as often as you like (`get_job` never starts a generation and
-never counts against the quota). Wait the `eta_seconds` it reported, then:
+A generation usually lands in under a minute, but a cold GPU or a detailed model
+takes longer. The Grok door never blocks past 40 seconds: it answers with the
+model, or with a pending job.
 
 ```bash
 curl -s https://three.ws/api/mcp-grok \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  -d "$(jq -nc --arg job "$JOB" '{jsonrpc:"2.0",id:2,method:"tools/call",params:{name:"get_job",arguments:{job_id:$job}}}')" \
-  | jq '.result.structuredContent | {status, progress, eta_seconds, viewer_url, glb_url}'
+  -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+  -H "Mcp-Session-Id: $SID" \
+  -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"forge_free","arguments":{"prompt":"a small red ceramic teapot","idempotency_key":"teapot-2026-10-09"}}}'
 ```
 
-```json
-{
-  "status": "done",
-  "progress": 1,
-  "eta_seconds": 0,
-  "viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F45269fd0-ef73-4056-b288-0d6c5cfa8784.glb&title=a%20brass%20ship%20lantern%20with%20a%20glass%20globe",
-  "glb_url": "https://three.ws/cdn/forge/anon/45269fd0-ef73-4056-b288-0d6c5cfa8784.glb"
-}
-```
+- **`status: "pending"`** carries `job_id` (also `jobId`), a `viewer_url` that
+  shows progress, a `stage` and `etaRemainingSeconds`. Call `check_job(job_id)`
+  until the model is done. Do not ask the user in between.
+- **`get_job(job_id)`** is the machine-readable twin: `status` is one of `queued`,
+  `running`, `done`, `failed`, `not_found` or `unknown`, every field is present in
+  every state, and it never starts work or spends quota, so poll it on a schedule.
+  `failed` carries `retryable` and a `remedy`.
+- **`idempotency_key`** (1 to 200 characters) is accepted by `forge_free`,
+  `text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar` and `refine_model`.
+  The same caller sending the same key and arguments within 24 hours gets the
+  original job back with `"idempotency": {"key": "...", "replayed": true}`, so a
+  retried or double-fired schedule never generates twice. A different request
+  under the same key is refused with `idempotency_key_reused`; a call still
+  running answers `idempotency_in_progress` (retry in a few seconds); a failure
+  is never remembered, so the key retries it.
 
-What a job reports:
+Pick a key that names the task and the day, such as `daily-brief-2026-10-09`.
+In the Responses API, where Grok cannot wait between calls in one response,
+continue with `previous_response_id`. Details: [Long jobs and safe retries](./mcp-studio.md#long-jobs-and-safe-retries-get_job-idempotency_key-progress).
 
-| Field | Meaning |
+## Limits and install tokens
+
+Generation is free and operator-funded. Per caller:
+
+| Limit | Value |
 |---|---|
-| `status` | `pending`, `done` or `failed` (`unknown` when only the status check failed; retry after `retry_after`) |
-| `phase` | `submitting`, `queued`, `running`, `done` or `failed` |
-| `progress` | 0 to 1, an estimate while running, held at 0.95 until actually done |
-| `eta_seconds` | Seconds left, absent once a job runs past its estimate |
-| `reason`, `remedy` | On failure: `generation_failed`, `unknown_job` or `check_failed`, and the one action that fixes it |
+| Generation burst | 4 per minute |
+| Generation hourly | 30 per hour |
+| Persona writes | 20 per minute per IP |
+| Transport (discovery, `check_job`) | 300 requests per minute per IP, never charged against generation |
+| One IP, across every caller behind it | 300 generations per hour |
 
-The key rules, in short:
+On this URL a caller is the `Mcp-Session-Id`, because every Grok user reaches
+three.ws from xAI's shared egress and per-IP limits would ration all of Grok as
+one person. A client that never echoes the session falls back to per-IP limits.
 
-- **Same caller, same key, same arguments, within 24 hours:** the first call's
-  job comes back with `idempotent_replay: true`, and the repeat costs no quota.
-- **Same key, different arguments or a different tool:** refused with
-  `reason: "idempotency_key_reused"`; nothing starts. Use a new key for a new request.
-- **A call that never got a job** (a refused prompt, a rate limit) gives its key back.
-- **The caller owns the key.** It is whatever the rate limits key on (below), so
-  a task that reconnects keeps its keys only on an install-token URL or a
-  signed-in connector.
+An **install token** gives one installation its own identity and budget, free
+and without an account. Mint one (10 per hour per IP) and paste the
+`grok_connector_url` as the connector URL:
 
-A client that sends `_meta.progressToken` and accepts `text/event-stream` also
-gets `notifications/progress` while it waits. Everything else:
-[Job status](./mcp-studio.md#job-status-get_job),
-[Retries and `idempotency_key`](./mcp-studio.md#retries-and-idempotency_key),
-[Progress notifications](./mcp-studio.md#progress-notifications).
-
-## Rate limits and install tokens
-
-Every Grok user reaches three.ws from xAI's shared egress, so per-IP limits would
-ration all of Grok as one caller. The free caps therefore key on the most
-specific identity the request carries, in this order:
-
-1. the install token in the URL (`?install=`),
-2. the signed-in account (connector key or OAuth),
-3. the `Mcp-Session-Id` issued on `initialize`,
-4. the IP address, for a client that never echoes the session.
-
-| Limit | Value | Keyed on |
-|---|---|---|
-| Generation burst | 4 a minute | the caller above |
-| Generation hourly | 30 an hour | the caller above |
-| Per-IP pool | 300 generations an hour | the source IP, across every caller on it |
-| Transport | 300 requests a minute | the install token, else the IP |
-| Platform breaker | 600 generations an hour (`FORGE_PAID_GLOBAL_HOURLY`) | every free-studio caller combined |
-| Install token minting | 10 an hour | the IP |
-
-Generation means the six generators plus `look_at_model`, which renders the
-model on a GPU. `get_job`, `check_job`, the catalog and the persona tools ride
-the transport cap only. The numbers come from one table, `STUDIO_LIMITS` in
-[`api/_lib/rate-limit.js`](../api/_lib/rate-limit.js), and the refusal text is
-built from it, so the message always matches what is enforced.
-
-A capped generation answers HTTP 200 with a JSON-RPC error (the Python MCP SDK
-raises on a non-2xx before it reads the body), plus `Retry-After` and
-`RateLimit-*` headers. The message is written so Grok can relay it as is:
-
-```json
-{
-  "code": -32000,
-  "message": "Rate limited: the free 3D studio allows 30 generations per hour for this MCP session, and that limit is used up. It resets at 2026-10-09T14:25:00.000Z (in 1500 s). Lift it with a free install token: POST https://three.ws/api/mcp-studio/install (no account, no key) and reconnect at https://three.ws/api/mcp-grok?install=<token>, which gets its own budget. Or sign in at https://three.ws/api/mcp-3d (OAuth 2.1), metered per account.",
-  "data": {
-    "reason": "rate_limited",
-    "limit": "generation_hourly",
-    "max": 30,
-    "window": "1 h",
-    "keyed_on": "session",
-    "reset_at": "2026-10-09T14:25:00.000Z",
-    "retry_after": 1500,
-    "remedy": {
-      "kind": "install_token",
-      "install_endpoint": "https://three.ws/api/mcp-studio/install",
-      "connector_url": "https://three.ws/api/mcp-grok?install=<token>"
-    }
-  }
-}
+```bash
+curl -s -X POST https://three.ws/api/mcp-studio/install
+# {"token":"inst_...","connector_url":"https://three.ws/api/mcp-studio?install=inst_...",
+#  "grok_connector_url":"https://three.ws/api/mcp-grok?install=inst_...", ...}
 ```
 
-A caller that already has its own budget (a token or an account), or that hit
-the per-IP pool or the platform breaker, gets `remedy.kind: "account"` instead:
-wait for `reset_at`, or use the signed-in server, whose generation is metered
-per account. The transport cap alone answers HTTP `429` with `reset_at` and the
-same `remedy` object.
+Keep that URL private: whoever holds it spends the installation's budget. The
+token also keys `idempotency_key`, so a connector behind a shared address should
+use one. The keying order is install token, then session, then IP.
 
-## Scoped keys and the spend rule
+A capped call returns HTTP 429 with a `Retry-After` header and a JSON-RPC error
+with code `-32029`. `error.data` carries `retry_after`, `resets_at` and a
+`remedy` object, and the message is a plain sentence Grok can relay. Wait the
+`retry_after` seconds; do not retry in a loop. Reference:
+[Funding and limits](./mcp-studio.md#funding--limits).
 
-A key that a cloud agent holds unattended can generate, read and write agent
-data. It can never move funds, pay an x402 endpoint, launch a coin, or change
-where earnings go. Spending stays a browser action on three.ws, behind its own
-confirmation.
+## Keys and the spend rule
 
-**The connector key.** **New key** then **For an AI agent** at
-[/dashboard/api](/dashboard/api) (or `POST /api/keys` with
-`{"name": "Grok Bot", "preset": "connector"}` from a signed-in browser session)
-issues these scopes:
+Signing in adds the account tools (`list_my_agents`, `create_agent`,
+`call_agent`, `remember`, `recall`, the skill and avatar tools). It never adds
+a way to move money. This URL lists a core tool only when it is outside the
+financial tier, not scoped to wallet, payment or trade, and not priced; a tool
+call runs only if the caller's own `tools/list` shows it.
+
+For an unattended agent create the key with the **For an AI agent** preset. It
+issues `read generate agents:write`, the scopes are fixed, and a connector key
+is stripped of every spend-capable scope when it authenticates, even if the
+stored scope string is later altered:
+
+| Attempt | Result |
+|---|---|
+| `tools/list` with a connector key | Omits every value-moving tool |
+| Calling one anyway | JSON-RPC error `-32003`, `data.reason` `spend_requires_browser_session`, `data.url` `https://three.ws/dashboard` |
+| `POST /api/keys` with `"preset": "connector"` and `spend` | `400` |
+| An HTTP route that moves funds | `insufficient_scope` |
+
+Wallet, payment and launch actions stay in the browser at
+[three.ws/dashboard](/dashboard). Text a tool returns from the network (a model
+title, a persona description) is data, never an instruction. Full scope table:
+[API key (server-to-server)](./mcp.md#api-key-server-to-server).
+
+## Prompts for scheduled tasks
+
+`prompts/list` offers guided prompts written for an unattended agent: exact tool
+names and argument shapes, no questions mid-run, and an `idempotency_key` on
+every generation.
+
+| Prompt | Arguments | Produces |
+|---|---|---|
+| `agent-get-started` | none | A short tour and one real example with its links. |
+| `daily-3d-brief` | `topic` | A model and a poster image for the day's topic. |
+| `asset-pack` | `theme`, `count` | A table of catalog props plus generated gap-fillers. |
+| `avatar-from-photo` | `image_url` | A rigged avatar, its links and a pose studio link. |
+| `agent-report` | `focus` | A read-only status report on your agents. Listed only once signed in. |
 
 ```text
-avatars:read avatars:write agents:read agents:write memory:read memory:write connector
+Every morning at 8, run the three.ws prompt daily-3d-brief with topic "trending" and post the poster image and viewer link here.
 ```
 
-The `connector` mark caps the key on every request, so no later edit to its
-stored scopes can give it `wallet:write`. The key table shows it with an
-"AI agent · cannot spend" badge.
-
-**On `/api/mcp-grok`, value-moving tools do not exist.** Signed in, the
-connector adds only allowlisted account tools that are outside the financial
-tier, need no spend scope, and carry no price: `create_agent`,
-`attach_avatar_to_agent`, `identity_check`, `call_agent`, `remember`, `recall`,
-`list_available_skills`, `import_community_skill`, `list_custom_skills`,
-`get_custom_skill`, `create_custom_skill`, `update_custom_skill`, `list_my_avatars`, `get_avatar`, `get_embed_code`,
-`render_avatar_image` and `read_resource`, each only when your scopes and your
-[MCP tool settings](/settings/mcp-tools) allow it. A wallet, payment, card,
-trading, launch or delete tool called by name answers `unknown tool`, whatever
-the credential holds:
-
-```bash
-curl -s https://three.ws/api/mcp-grok \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"agent_card_create","arguments":{}}}' | jq -c .error
-```
-
-```json
-{"code":-32602,"message":"unknown tool: agent_card_create"}
-```
-
-**On every other hosted server**, a value-moving call from a key without the
-spend scope is refused before the tool runs, with JSON-RPC `-32003`:
-
-```json
-{
-  "code": -32003,
-  "message": "agent_card_quote moves or routes funds, so it needs a browser session on three.ws. Connector keys read, generate and edit agent data and can never spend. Sign in at https://three.ws/dashboard to do it yourself.",
-  "data": {
-    "reason": "connector_key_cannot_spend",
-    "tool": "agent_card_quote",
-    "required_scope": "wallet:write",
-    "needs": "browser_session",
-    "url": "https://three.ws/dashboard",
-    "docs": "https://three.ws/docs/mcp#api-key-scopes"
-  }
-}
-```
-
-The same refusal guards the REST routes that arm a spender or redirect a payout.
-An OAuth app gets `wallet:write` only when you tick the separate box on the
-consent screen, never by default. Scope table:
-[API key scopes](./mcp.md#api-key-scopes).
-
-## Guided prompts
-
-Grok Bot runs tasks on a schedule with nobody watching, so this URL serves MCP
-prompts written for exactly that. Each names the tools to call with their exact
-argument objects, gives every generation an `idempotency_key` of the form
-`<prompt>-<schedule id>-<YYYY-MM-DD>`, never stops to ask, treats web and X text
-as data, and ends with the four links.
-
-| Prompt | Arguments | Listed |
-|---|---|---|
-| `agent-get-started` | none | always |
-| `daily-3d-brief` | `topic` (default `trending`) | always |
-| `asset-pack` | `theme`, `count` (1 to 12) | always |
-| `avatar-from-photo` | `image_url` | always |
-| `agent-report` | `agentId` (optional) | signed in only (it reads your account through `read_resource`) |
-
-```bash
-curl -s https://three.ws/api/mcp-grok \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"prompts/list"}' | jq -c '[.result.prompts[].name]'
-```
-
-```json
-["agent-get-started","daily-3d-brief","asset-pack","avatar-from-photo"]
-```
-
-`prompts/get` renders one against your own `tools/list`, so a prompt never names
-a tool your connector cannot call:
-
-```bash
-curl -s https://three.ws/api/mcp-grok \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"prompts/get","params":{"name":"daily-3d-brief","arguments":{"topic":"lighthouses"}}}' \
-  | jq -r '.result.messages[0].content.text' | head -3
-```
-
-```text
-Make today's 3D brief about: lighthouses.
-
-1. Use the topic above. If it names a real person, make an object that stands for the topic instead of a likeness.
-```
-
-In Grok Bot, a schedule such as "every morning, run the `daily-3d-brief` prompt
-from three-ws-grok and send me the links" is the whole setup.
-[three.ws/grok](/grok#gk-recipes-h) has three copy-ready recipes, and
-[MCP use cases](./mcp.md#use-cases) writes each prompt out as its calls. The
-prompts live in [`api/_mcp/prompts.js`](../api/_mcp/prompts.js).
-
-[Grok Bot recipes](./tutorials/grok-bot-recipes.md) runs six of them against
-production and shows the real output: a daily 3D brief, a game-jam asset
-pack, an avatar from a photo, an X post's image turned into a 3D model, a
-weekly agent report, and a $THREE market brief.
+Grok Bot can also read [`https://three.ws/grok-skill.md`](https://three.ws/grok-skill.md),
+a plain Markdown file that teaches all of this ([how it is generated](./grok.md#a-skill-file-for-grok)).
 
 ## Troubleshooting
 
-### Check the connector the way Grok Bot does
-
-From a clone of the repository, the connector probe connects with the official
-MCP SDK client over Streamable HTTP (falling back to the legacy SSE transport),
-anonymously, with `THREE_WS_API_KEY` when it is set, and against the OAuth
-challenge on the sign-in URL. It calls only free tools and never pays:
+Run the same checks a cloud connector makes, against production or a local server:
 
 ```bash
-npm run probe:mcp-clients -- --only mcp-grok
+npm run probe:mcp-clients -- --only grok
+PUBLIC_APP_ORIGIN=http://localhost:3741 PORT=3741 node --env-file=.env.local server/index.mjs &
+npm run probe:mcp-clients -- --base http://localhost:3741
 ```
 
-```text
-PASS | https://three.ws/api/mcp-grok | init 200 | GET 405 | anon ok tools=15 prompts=4 | key ok tools=26 prompts=5 | oauth ok | call search_catalog=ok 228ms
-all 1 servers passed
-```
+It drives the official MCP SDK client over Streamable HTTP, falls back to legacy
+SSE, and runs anonymously, with `THREE_WS_API_KEY` if set, and against the OAuth
+challenge. It calls only free tools, never sends a payment, and exits non-zero
+on a failure. Each line it can print, with its fix:
 
-Without `--only` it probes every server in
-[`/.well-known/mcp.json`](https://three.ws/.well-known/mcp.json); `--base` points
-it at your own server, and `--json <file>` keeps the full evidence. Each line it
-can print under a failing server, what it means, and the fix:
-
-| Probe says | What it means | Fix |
+| Probe failure | Meaning | Fix |
 |---|---|---|
-| `anonymous connect failed: …` | Neither transport finished `initialize` and `tools/list` without credentials. | Check the URL is exactly `https://three.ws/api/mcp-grok` (no trailing path), reachable from the public internet, and answering `POST`. The text after the colon is the SDK's own error. |
-| `anonymous tools/list returned no tools` | The handshake worked but the server listed nothing. | A deployment that lost its studio tool table; report it with the probe output. |
-| `initialize answered content-type …` | `initialize` came back as something other than JSON or an event stream, usually an HTML error page from a proxy. | Remove whatever sits between the client and three.ws, or point at the real origin. |
-| `GET answered 405 without an Allow header` | A `GET` was refused without saying which methods work, so some clients give up instead of switching to `POST`. | Server-side defect; three.ws always sends `Allow: POST, OPTIONS`. |
-| `GET answered 401 without WWW-Authenticate` | A protected `GET` gave the client nothing to sign in with. | Server-side defect; every 401 must carry the challenge. |
-| `GET with accept: text/event-stream answered …` | A `GET` returned neither a stream, a 405, nor a 401. | Usually a proxy or CDN rewriting the response; connect to the origin URL. |
-| `sign-in URL: unauthenticated initialize answered 200, an OAuth client needs 401 to start sign-in` | The OAuth connector was given the plain URL, which serves anonymous callers, so it never starts sign-in. | Use `https://three.ws/api/mcp-grok?auth=oauth` as the server URL for OAuth 2.1. |
-| `sign-in URL: 401 carries no Bearer WWW-Authenticate challenge` | The 401 does not tell the client how to authenticate. | Server-side defect in the challenge; report it. |
-| `sign-in URL: WWW-Authenticate does not name resource_metadata` | The client cannot find the protected-resource document, so it cannot find the authorization server. | Server-side defect; the challenge must name `resource_metadata`. |
-| `sign-in URL: protected-resource metadata at … answered …` | The protected-resource document is missing or not JSON. | It lives at `https://three.ws/.well-known/oauth-protected-resource/api/mcp-grok`; a 404 there means the route table lost its RFC 9728 rewrite. |
-| `sign-in URL: protected resource … does not cover …, so an MCP SDK client refuses to sign in` | The document names a different server than the one connected to; the MCP SDK's `checkResourceAllowed` then refuses to redirect anyone. | Server-side: each server must publish its own resource. This was the failure on four servers before the per-server metadata fix. |
-| `sign-in URL: WWW-Authenticate resource … disagrees with the metadata resource …` | The challenge and the document name different resources. | Server-side defect; both come from one resource map and must agree. |
-| `sign-in URL: protected-resource metadata lists no authorization_servers` | Nowhere to send the user to sign in. | Server-side defect in the document. |
-| `sign-in URL: authorization server metadata at … is incomplete` | `/.well-known/oauth-authorization-server` lacks an authorization or token endpoint. | Server-side defect; report it. |
-| `sign-in URL: authorization server does not advertise PKCE S256, which OAuth 2.1 requires` | A strict OAuth 2.1 client refuses an authorization server without `S256`. | Server-side defect; three.ws only accepts `S256`. |
-| `sign-in URL: an invalid bearer answered … without a resource_metadata challenge` | An expired or revoked token got an answer the client cannot recover from. | Server-side defect: a bad bearer must get `401` and the challenge so the connector signs in again, never anonymous service. |
-| `anonymous MCP client was served on a server that requires auth` | Seen when probing a protected server (`/api/mcp`, `/api/mcp-3d`, `/api/mcp-bazaar`): it answered a client with no credentials, so an OAuth connector would never be asked to sign in. | Server-side defect on that server; `/api/mcp-grok` is open by design and is judged on its `?auth=oauth` URL instead. |
-| `signing in with an API key listed N tools, no more than the M an anonymous client sees` | The key was accepted but added no account tools. | The key's scopes allow none of the account tools, or [MCP tool settings](/settings/mcp-tools) turn them all off. Make a connector key, or turn the tools on. |
-| `api key connect failed: …` | The key was refused, or the call errored. | The key is revoked, mistyped, or missing the `Bearer ` prefix. Make a new connector key and store `Bearer sk_live_…` as the secret. |
-| `api key tools/list returned no tools` | The key connected but listed nothing. | Same as above: check the key's scopes and your MCP tool settings. |
-| `requested …, server answered … which no SDK client supports` | The server negotiated a protocol version current SDKs do not know. | Server-side defect; three.ws answers `2025-06-18` to every version a client opens with. |
+| `anonymous connect failed: ...` | The SDK client could not initialize, over Streamable HTTP or the SSE fallback | Check the URL is public `https` and spelled `/api/mcp-grok`. A corporate proxy that buffers responses breaks Streamable HTTP; test from outside it. |
+| `anonymous tools/list returned no tools` | Connected, but the server listed nothing | The caller's tool settings can switch tools off at [/mcp-tools](/mcp-tools); re-enable them, or use a fresh install token. |
+| `initialize answered content-type ...` | The reply was neither `application/json` nor `text/event-stream` | A proxy or CDN rewrote the response. Connect to `three.ws` directly. |
+| `GET with accept: text/event-stream answered ...` | The server-to-client stream probe got an unexpected status | The server should answer `405` with `Allow`, `401` with `WWW-Authenticate`, or the stream. Anything else is a bug: report it with the status. |
+| `GET answered 405 without an Allow header` / `401 without WWW-Authenticate` | The answer is right but a client cannot act on it | Same: report it. The probe is the regression gate for it. |
+| `unauthenticated initialize answered ..., an OAuth client needs 401` | The sign-in URL did not challenge | Use `?auth=oauth` on the Grok URL. The plain URL is anonymous by design. |
+| `401 carries no Bearer WWW-Authenticate challenge` / `does not name resource_metadata` | A client cannot discover where to sign in | Report it. Meanwhile use an API key. |
+| `protected-resource metadata at ... answered ...` | The metadata URL is not served | Fetch `/.well-known/oauth-protected-resource/api/mcp-grok`; a local server needs `PUBLIC_APP_ORIGIN`. |
+| `protected resource ... does not cover ..., so an MCP SDK client refuses to sign in` | The metadata names another origin | On a local server set `PUBLIC_APP_ORIGIN` to its own origin. In production, the URL you typed differs from the canonical one: use `https://three.ws/api/mcp-grok`. |
+| `WWW-Authenticate resource ... disagrees with the metadata resource ...` | The challenge and metadata name different resources | Same fix as above. |
+| `protected-resource metadata lists no authorization_servers` / `authorization server metadata ... is incomplete` | Sign-in cannot start | Fetch `/.well-known/oauth-authorization-server`; report if it is not 200. |
+| `authorization server does not advertise PKCE S256` | OAuth 2.1 needs S256 | Report it. Use an API key meanwhile. |
+| `an invalid bearer answered ... without a resource_metadata challenge` | An expired token would dead-end instead of re-authenticating | Report it. Remove the stale token from the connector and reconnect. |
+| `signing in with an API key listed N tools, no more than the M an anonymous client sees` | The key added nothing | The key may be revoked or scoped too narrowly. Create a new one with the **For an AI agent** preset. |
+| `api key connect failed: ...` | The key was rejected | Check it is sent as `Authorization: Bearer sk_live_...`, not revoked, and not pasted with a trailing newline. |
+| `requested ..., server answered ... which no SDK client supports` | Protocol version negotiation picked a version clients reject | Report it. The server negotiates `2025-06-18`. |
 
-### Prove a real Grok model drives it (xAI Responses API)
+Errors a running task can see:
 
-`npm run probe:mcp-clients` proves the connector itself works; it never calls
-a real Grok model. `scripts/xai-mcp-e2e.mjs` closes that gap: it sends an xAI
-Responses API request with `https://three.ws/api/mcp-grok` as a remote MCP
-tool and the instruction "find a ready-made chair in the three.ws catalog and
-give me its viewer link", then asserts the response contains an `mcp_call`
-output item for `search_catalog` and that the final text carries a
-`three.ws` viewer URL. With a `GROK_API_KEY` or `XAI_API_KEY` in the
-environment, `.env`/`.env.local`, or the `three-ws-api` Cloud Run service (read
-in that order, never printed), run it live with `npm run e2e:xai-mcp`:
+| Symptom | Cause | Fix |
+|---|---|---|
+| HTTP 429, code `-32029` | A generation cap was hit | Wait `error.data.retry_after` seconds, or mint an [install token](#limits-and-install-tokens). |
+| `status: "pending"` forever | The job is still rendering | Keep calling `check_job` or `get_job`. `failed` carries a `remedy`; `not_found` is final. |
+| `idempotency_key_reused` | The key was used for a different request | Send a new key. |
+| `idempotency_in_progress` | The first call under the key is still running | Repeat the call in a few seconds. |
+| `-32003` `spend_requires_browser_session` | A tool tried to move funds | By design. Do it at [three.ws/dashboard](/dashboard) in a browser. |
+| `invalid params for ...: (root) must NOT have additional properties` | An argument the tool does not take | Check `tools/list`. `idempotency_key` and `get_job` need a server that has shipped them. |
+| Grok adds a plugin instead of your URL | The sentence did not say "custom MCP server" | Resend the sentence under [Connect it](#connect-it). |
+| Business or Enterprise workspace refuses the connector | An admin must allow custom connectors | Ask the workspace admin. |
 
-```text
-sending request (key from process.env, model grok-4.7, server mcp-grok)
-mcp_call items: 1 (search_catalog)
-final text:
-...
-PASSED: search_catalog called (name "search_catalog"), viewer link https://three.ws/...
-```
+## Prove it with a Grok model
 
-With no key anywhere, run the dry run instead, which needs no key, sends
-nothing, and prints the exact request xAI's docs describe, field for field:
+xAI's Responses API takes a remote MCP server as a tool (`type: "mcp"`, `server_url`, `server_label`, optional `server_description` and `allowed_tools`; see [Remote MCP Tools](https://docs.x.ai/developers/tools/remote-mcp)). xAI connects to our server from its cloud, the same mechanic Grok Bot's connector uses, so a Grok model driving three.ws through it is the closest scriptable proof that the connector works.
 
 ```bash
-npm run e2e:xai-mcp -- --dry-run
+npm run e2e:xai-mcp                              # /api/mcp-grok (default)
+npm run e2e:xai-mcp -- --server mcp-studio       # the free studio surface instead
+npm run e2e:xai-mcp -- --dry-run                 # print the exact request, send nothing
 ```
 
-```json
-{
-	"model": "grok-4.7",
-	"input": [{ "role": "user", "content": "Find a ready-made chair in the three.ws catalog and give me its viewer link." }],
-	"tools": [{ "type": "mcp", "server_url": "https://three.ws/api/mcp-grok", "server_label": "three-ws", "server_description": "three.ws: ready-made 3D/avatar catalog, generation, agents and personas." }]
-}
-```
-
-`--server mcp-studio` runs the same proof against the free studio server
-instead of the Grok-specific one; `--base`, `--model` and `--prompt` override
-the target and the ask. If the model connects but never calls the tool, that
-is a defect in our tool descriptions (every agent client reads the same
-descriptions), not a prompt to work around: tighten `search_catalog`'s
-description in [`api/_mcp/tools/library.js`](../api/_mcp/tools/library.js) and
-record the before/after in the commit.
-
-### Errors a connected Grok Bot can see
-
-| Error | Meaning | Fix |
-|---|---|---|
-| `-32000`, `data.reason: "rate_limited"` | A generation cap is used up. `data.limit` says which, `data.reset_at` when it lifts. | Follow `data.remedy`: reconnect with an install-token URL, or sign in. A scheduled task should wait until `reset_at` rather than retry in a loop. |
-| HTTP `429` with `reset_at` | More than 300 requests a minute from one IP or token. | Slow the polling loop; `get_job` after the `eta_seconds` it reports, never faster than every few seconds. |
-| `-32002`, `data.reason: "sign_in_required"` | An account tool was called on an anonymous connector. | Reconnect with a connector key, or OAuth at the `data.oauth_url` the error gives. |
-| `-32002`, `data.reason: "tool_not_granted"` | Signed in, but the key's scopes or your MCP tool settings leave that tool off. | Turn it on at [/settings/mcp-tools](/settings/mcp-tools), or use a key with the scope. |
-| `-32602`, `unknown tool: …` | The tool is not on this connector. On `/api/mcp-grok` every value-moving tool answers this way. | Spending happens at [three.ws/dashboard](/dashboard), not through a connector. Otherwise check the name against `tools/list`. |
-| `-32602`, `invalid params for …` | An argument is not in the tool's `inputSchema` (for example `query` where `search_catalog` takes `q`). | Read the schema from `tools/list`; the guided prompts already use the exact argument objects. |
-| `-32003`, `connector_key_cannot_spend` | A connector key tried a value-moving tool on another server. | By design. Do it yourself in a browser at the `data.url` the error gives. |
-| `idempotency_key_reused` | The key was already used for a different request. | Use a new key for a new generation (add the item or the date). |
-| `status: "failed"` with a `remedy` | The generation itself failed. | Do what `remedy` says: start a new generation with a new `idempotency_key`; the retry is routed to a healthy engine. |
-| `status: "unknown"`, `reason: "check_failed"` | Only the status check timed out; the job keeps running. | Call `get_job` again after `retry_after` seconds. |
-| `401` after working for a while | The OAuth app was revoked, or the key was revoked or rotated. | Reconnect: OAuth signs in again on its own; a key needs replacing in the Bot secret. |
-| Connector added, but account tools vanished | The bearer no longer verifies, so the server answers `401` with the challenge rather than quietly serving the free tier. | Same as above. |
-| "Cannot connect" from Grok Bot to a local server | Grok Bot connects from xAI's cloud. | Use the public `https://three.ws` URL; a `localhost` server is never reachable. |
-
-## Keeping this page true
-
-Every `bash` sample here runs as written, in order, in one shell: the job
-sample's `$JOB` feeds the `get_job` sample. To re-run them all against
-production, or against a server built from your tree:
-
-```text
-node scripts/run-doc-samples.mjs docs/grok-bot.md
-node scripts/run-doc-samples.mjs docs/grok-bot.md --base http://localhost:3108
-```
-
-Set `THREE_WS_API_KEY` to a connector key first, or the key sample counts
-anonymous tools. [`tests/grok-bot-doc.test.js`](../tests/grok-bot-doc.test.js)
-checks the rest against the code on every test run: each sample's tool and
-arguments against the served `inputSchema`, the account tools, the prompt table,
-the limit numbers against `STUDIO_LIMITS`, and that the troubleshooting table
-has a row for every failure the connector probe can print.
+The run asks "Find a ready-made chair in the three.ws catalog and give me its viewer link." and exits non-zero unless the response records an MCP call to `search_catalog` and the final text carries a three.ws viewer URL. The key is `GROK_API_KEY` or `XAI_API_KEY` from the environment, `.env.local`/`.env` (via the npm script's `--env-file`), or the `three-ws-api` Cloud Run service; without one the script exits 1 and prints the request it would have sent. If the model answers without calling the tool, fix the tool descriptions (every agent client reads them), not the prompt.
 
 ## Related
 
-- [three.ws for Grok](./grok.md): the overview, the xAI Responses API, the skill file.
-- [three.ws/grok](/grok): the live page, demo and recipes; [three.ws/connect](/connect?client=grok): the connector card.
-- [The free 3D Studio MCP](./mcp-studio.md): every studio tool in depth.
-- [MCP integration](./mcp.md): every hosted server, authentication, client compatibility.
-- [MCP client analytics](./ops/mcp-clients.md): how three.ws counts which AI clients connect.
-- [`STRUCTURE.md`](../STRUCTURE.md): where the Grok surfaces live in the repository.
+- [Grok Bot recipes](./tutorials/grok-bot-recipes.md): six jobs to hand Grok Bot, each run against production with its real output.
+- [three.ws for Grok](./grok.md): the product tour, the xAI API examples and the skill file.
+- [The free 3D Studio MCP](./mcp-studio.md): every tool, tier and limit in depth.
+- [MCP integration](./mcp.md): every hosted server, OAuth and API keys.
+- [Connector probe results](../prompts/x-grok/_generated/connector-probe.json): the latest production run.
+- [Example: Responses API client](../examples/grok-remote-mcp/README.md).

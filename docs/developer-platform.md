@@ -8,7 +8,10 @@ discovery endpoints (the MCP tool catalog and the agent skills manifest).
 The browser UI for all of this lives in the dashboard:
 
 - **`/dashboard/api`**: create, list, and revoke API keys, and run the MCP
-  "Test connection" button (source: `src/dashboard-next/pages/api.js`).
+  "Test connection" button (source: `src/dashboard-next/pages/api.js`). An MCP
+  client with OAuth (Claude, ChatGPT, Cursor, VS Code) needs no key at all:
+  [/connect](https://three.ws/connect) adds three.ws with a browser sign-in.
+  Keys are for scripts, servers, and clients without OAuth.
 - **`/dashboard/developers`**: the Developer Hub with webhooks and the usage
   overview (source: `src/dashboard-next/pages/developers.js`).
 
@@ -60,12 +63,20 @@ endpoints that accept `Authorization: Bearer` (see the
 [API reference](./api-reference.md)). Each key carries a set of scopes:
 
 `avatars:read`, `avatars:write`, `avatars:delete`, `profile`, `memory:read`,
-`memory:write`, `agents:read`, `agents:write`
+`memory:write`, `agents:read`, `agents:write`, `herald:announce` (posting
+through the [Herald](./herald.md)), `wallet:read`, `wallet:write`,
+`services:write`, and `inference` (model calls on the OpenAI-compatible
+endpoint, billed to the account's credits, and nothing else).
 
-One more scope, `herald:announce` (posting through the
-[Herald](./herald.md)), is accepted by `/api/keys`, the dashboard form, and the
-older `POST /api/api-keys` route documented in
-[Authentication](./authentication.md#available-scopes).
+`wallet:write` is the scope every route that moves an agent's funds checks for
+a bearer caller, so a key without it can read balances but never spend. One
+list ([api/_lib/api-keys.js](../api/_lib/api-keys.js)) feeds every surface that
+mints a key: `/api/keys`, the dashboard form, the CLI device link, and the older
+`POST /api/api-keys` route documented in
+[Authentication](./authentication.md#available-scopes). When that older route is
+called with a bearer token rather than a session, it refuses
+(`403 insufficient_scope`) to mint any scope the calling token does not itself
+hold.
 
 Keys are stored as a SHA-256 hash. The plaintext secret is returned **exactly
 once**, in the create response. Only the 12-character prefix is kept for
@@ -455,7 +466,7 @@ Deliveries are `POST` requests in the
 | `content-type` | `application/json` |
 | `webhook-id` | unique event ID (`evt_…`), stable across retries |
 | `webhook-timestamp` | unix epoch seconds |
-| `webhook-signature` | `v1,{base64url HMAC-SHA256}` |
+| `webhook-signature` | `v1,{spec signature} v1,{legacy signature}`, space separated; accept either |
 | `user-agent` | `three.ws-webhooks/1.0` |
 
 Body:
@@ -470,7 +481,7 @@ Body:
 ```
 
 The signature is HMAC-SHA256 over `` `${id}.${timestamp}.${rawBody}` `` keyed
-with your `whsec_` secret, encoded as unpadded base64url. Verify it against the
+with your `whsec_` secret. The spec signature decodes the secret as base64 and encodes the result as base64; the legacy signature keys on the secret string and encodes base64url. Official Standard Webhooks libraries verify the first. Verify it against the
 **raw** request body, before any JSON parsing:
 
 ```js
@@ -488,7 +499,7 @@ function verifyWebhook(secret, headers, rawBody) {
 
 Delivery behavior, exactly as implemented:
 
-- Up to **3 attempts** with exponential backoff, 10-second timeout per attempt.
+- Up to **8 attempts**: the first immediately, then after 30 seconds, 2 minutes, 10 minutes, 30 minutes, 1 hour, 3 hours and 8 hours. 10-second timeout per attempt. Every attempt is logged and any delivery can be replayed (`POST /api/v1/webhooks/deliveries/:id/replay`, or the replay button on `/dashboard/developers`); a replay keeps the event id and payload.
 - Redirects are **not followed**; a 3xx is recorded as a failure
   (`redirect_not_followed`).
 - Response bodies are stored truncated to 1024 characters for the deliveries

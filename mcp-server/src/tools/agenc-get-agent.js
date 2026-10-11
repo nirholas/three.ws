@@ -20,7 +20,7 @@ import {
 
 const TOOL_NAME = 'agenc_get_agent';
 const TOOL_DESCRIPTION =
-	'Look up an AgenC agent\'s on-chain registration. Pass either agentPda (the derived account address) OR agentId (32-byte hex, "0x"-prefixed hex, or any UTF-8 label which is hashed via SHA-256). Returns the agent\'s authority wallet, capability bitmask, endpoint URL, status, reputation, stake, and active task count. AgenC = agenc.tech (Tetsuo Corp). Paid: $0.001 USDC.';
+	'Look up an AgenC agent\'s on-chain registration. Pass either agentPda (the derived account address) OR agentId (32-byte hex, "0x"-prefixed hex, or any UTF-8 label which is hashed via SHA-256). Returns the agent\'s authority wallet, capability bitmask, endpoint URL, status, reputation, stake, and active task count. AgenC = agenc.tech (Tetsuo Corp). Use this to check an AgenC agent\'s authority, stake, and reputation before assigning it work; to see the tasks a wallet created, call agenc_list_tasks instead. Paid: $0.001 USDC.';
 
 function resolveAgentId(input) {
 	const s = String(input).trim();

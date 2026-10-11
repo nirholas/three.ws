@@ -52,7 +52,7 @@ const env = (name, fallback) => process.env[name] ?? fallback;
 const CONFIG = {
 	worktree: path.resolve(env('EVOLVE_WORKTREE', path.join(ROOT, '..', '.evolve-wt'))),
 	branch: env('EVOLVE_BRANCH', 'evolve'),
-	model: env('EVOLVE_MODEL', 'opus'),
+	model: env('EVOLVE_MODEL', 'sonnet'),
 	effort: env('EVOLVE_EFFORT', ''),
 	cooldownMin: Number(env('EVOLVE_COOLDOWN_MIN', '5')),
 	limitBackoffMin: Number(env('EVOLVE_LIMIT_BACKOFF_MIN', '20')),

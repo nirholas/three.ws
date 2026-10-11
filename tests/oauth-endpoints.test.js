@@ -26,6 +26,7 @@ process.env.JWT_SECRET ||= 'vitest-ephemeral-jwt-secret-00000000000000';
 
 vi.mock('../api/_lib/zauth.js', () => ({ instrument: () => {}, drain: async () => {} }));
 vi.mock('../api/_lib/sentry.js', () => ({ captureException: () => {} }));
+vi.mock('../api/_lib/csrf.js', () => ({ requireCsrf: async () => true }));
 vi.mock('../api/_lib/audit.js', () => ({ logAudit: vi.fn() }));
 vi.mock('../api/_lib/streaks.js', () => ({ recordDailyActivity: vi.fn(async () => {}) }));
 // Connected apps (DELETE /oauth/grants) checks the dashboard's CSRF token, which
@@ -41,7 +42,7 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 }));
 
 // ── in-memory stand-in for the three oauth tables ────────────────────────────
-const db = { clients: [], codes: [], refresh: [] };
+const db = { clients: [], codes: [], refresh: [], revocations: [] };
 const statements = [];
 
 function future(seconds) {
@@ -106,25 +107,17 @@ const sqlMock = vi.fn(async (strings, ...values) => {
 	}
 	if (text.startsWith('update oauth_refresh_tokens set revoked_at = now() where user_id')) {
 		const [userId, clientId] = values;
-		const revoked = [];
+		const hit = [];
 		for (const r of db.refresh) {
-			if (r.user_id === userId && r.client_id === clientId && !r.revoked_at) {
-				r.revoked_at = new Date().toISOString();
-				revoked.push({ id: r.id });
-			}
+			if (r.user_id === userId && r.client_id === clientId && !r.revoked_at) { r.revoked_at = new Date().toISOString(); hit.push({ id: r.id }); }
 		}
-		return revoked;
+		return hit;
 	}
-	// oauthGrantRevoked (api/_lib/auth.js): stamp last use on the live row, then
-	// ask whether the grant was ended at or after the token was issued.
-	if (text.startsWith('with touched as ( update oauth_refresh_tokens set last_used_at')) {
-		const [liveUser, liveClient, userId, clientId, issuedAt] = values;
-		for (const r of db.refresh) {
-			if (r.user_id === liveUser && r.client_id === liveClient && !r.revoked_at) r.last_used_at = new Date().toISOString();
-		}
-		const revoked = db.refresh.some((r) => r.user_id === userId && r.client_id === clientId && !r.replaced_by
-			&& r.revoked_at && Date.parse(r.revoked_at) >= issuedAt * 1000);
-		return [{ revoked }];
+	if (text.startsWith('insert into oauth_client_revocations')) {
+		const [userId, clientId] = values;
+		db.revocations = db.revocations.filter((r) => !(r.user_id === userId && r.client_id === clientId));
+		db.revocations.push({ user_id: userId, client_id: clientId, revoked_at: Date.now() });
+		return [];
 	}
 	// handleGrants GET: one row per client holding a live refresh token.
 	if (text.startsWith('select c.client_id, c.name, c.client_uri')) {
@@ -139,6 +132,10 @@ const sqlMock = vi.fn(async (strings, ...values) => {
 				scopes: rows.map((r) => r.scope).join(' '),
 			};
 		});
+	}
+	if (text.startsWith('select 1 from oauth_client_revocations')) {
+		const [userId, clientId, iat] = values;
+		return db.revocations.filter((r) => r.user_id === userId && r.client_id === clientId && r.revoked_at >= iat * 1000).slice(0, 1).map(() => ({ '?column?': 1 }));
 	}
 	throw new Error(`unmodeled query: ${text}`);
 });
@@ -266,6 +263,7 @@ beforeEach(async () => {
 	db.clients.length = 0;
 	db.codes.length = 0;
 	db.refresh.length = 0;
+	db.revocations.length = 0;
 	statements.length = 0;
 	sqlMock.mockClear();
 	getSessionUser.mockReset();
@@ -283,6 +281,28 @@ describe('GET /oauth/authorize', () => {
 		expect(res.body).toContain('See your avatars');
 		expect(res.body).toContain('See your name and email');
 		expect(res.body).not.toContain('Save and erase');
+	});
+
+	it('names the asking app, its host, and that it can never spend', async () => {
+		seedClient({ name: 'Grok Bot', client_uri: 'https://grok.example/bot', redirect_uris: ['https://cb.grok.example/cb'] });
+		const res = await call('authorize', { query: authorizeQuery({ redirect_uri: 'https://cb.grok.example/cb' }) });
+		expect(res.body).toContain('Authorize <b>Grok Bot</b>');
+		expect(res.body).toContain('Site: grok.example');
+		expect(res.body).toContain('can never spend from a wallet');
+		expect(res.body).toContain('/dashboard/settings#connected-apps');
+	});
+
+	it('does not claim a client cannot spend when the grant carries wallet:write', async () => {
+		seedClient({ scope: 'avatars:read wallet:write' });
+		const res = await call('authorize', { query: authorizeQuery() });
+		expect(res.body).not.toContain('can never spend');
+		expect(res.body).toContain('asking to spend from your agent wallet');
+	});
+
+	it('escapes a hostile client name', async () => {
+		seedClient({ name: '<img src=x onerror=alert(1)>' });
+		const res = await call('authorize', { query: authorizeQuery() });
+		expect(res.body).not.toContain('<img src=x');
 	});
 
 	it('allows the client origin in form-action so the post-consent 302 is not blocked', async () => {
@@ -837,6 +857,38 @@ describe('POST /oauth/revoke', () => {
 	});
 });
 
+describe('DELETE /oauth/grants (connected apps)', () => {
+	it('kills an access token already in flight on the very next request', async () => {
+		seedClient();
+		const { access_token } = await issueTokens();
+		const audience = RESOURCE;
+		expect(await authenticateBearer(access_token, { audience })).toMatchObject({ userId: 'user-1', clientId: 'mcp_test_client' });
+
+		const res = await call('grants', { method: 'DELETE', query: { client_id: 'mcp_test_client' } });
+		expect(res.statusCode).toBe(200);
+		expect(res.json()).toEqual({ client_id: 'mcp_test_client', revoked: 1 });
+		expect(db.refresh[0].revoked_at).toBeTruthy();
+		expect(await authenticateBearer(access_token, { audience })).toBeNull();
+	});
+
+	it('accepts a token minted after the person authorizes the app again', async () => {
+		seedClient();
+		const first = await issueTokens();
+		await call('grants', { method: 'DELETE', query: { client_id: 'mcp_test_client' } });
+		await new Promise((r) => setTimeout(r, 1100));
+		const second = await issueTokens();
+		expect(await authenticateBearer(first.access_token, { audience: RESOURCE })).toBeNull();
+		expect(await authenticateBearer(second.access_token, { audience: RESOURCE })).not.toBeNull();
+	});
+
+	it('leaves other apps on the account working', async () => {
+		seedClient();
+		const { access_token } = await issueTokens();
+		await call('grants', { method: 'DELETE', query: { client_id: 'mcp_other' } });
+		expect(await authenticateBearer(access_token, { audience: RESOURCE })).not.toBeNull();
+	});
+});
+
 describe('POST /oauth/introspect', () => {
 	it('reports an access token as active with its scope and subject', async () => {
 		seedClient();
@@ -904,5 +956,107 @@ describe('dispatcher', () => {
 	it('rejects a method the action does not serve', async () => {
 		const res = await call('token', { method: 'GET' });
 		expect(res.statusCode).toBe(405);
+	});
+});
+
+// ── Grant groups on the consent screen ───────────────────────────────────────
+// The screen groups the requested scope into read / manage / trade / spend /
+// launch (api/_lib/oauth-grant-groups.js). Each group says what it can do and
+// which actions still ask the person first; any group but Read can be unticked
+// and the issued code then carries only what stayed ticked.
+
+describe('consent screen grant groups', () => {
+	it('lists each requested group with what it can do and what still asks first', async () => {
+		seedClient({ scope: 'avatars:read profile wallet:write wallet:read offline_access' });
+		const res = await call('authorize', { query: authorizeQuery() });
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toContain('name="grant_read"');
+		expect(res.body).toContain('name="grant_spend"');
+		expect(res.body).toContain('always on');
+		expect(res.body).toContain('Still asks you first:');
+		expect(res.body).toContain('withdrawals');
+		expect(res.body).toContain('Stay connected without signing in again');
+		// wallet:write implies trade and launch, and the screen says so.
+		expect(res.body).toContain('name="grant_trade"');
+		expect(res.body).toContain('name="grant_launch"');
+		expect(res.body).toContain('Included because Spend is ticked');
+		expect(res.body).not.toContain('name="grant_manage"');
+	});
+
+	it('says plainly that a read-only grant can never trade or move funds', async () => {
+		seedClient();
+		const res = await call('authorize', { query: authorizeQuery() });
+		expect(res.body).toContain('can never spend from a wallet, trade, or move funds');
+		expect(res.body).not.toContain('name="grant_trade"');
+	});
+
+	it('describes a trade-only grant as unable to move funds out', async () => {
+		seedClient({ scope: 'avatars:read wallet:trade' });
+		const res = await call('authorize', { query: authorizeQuery() });
+		expect(res.body).toContain('cannot move funds out of your agent wallet');
+		expect(res.body).toContain('asking to trade inside it');
+	});
+
+	it('issues a code without the groups the person unticked', async () => {
+		seedClient({ scope: 'avatars:read profile wallet:write memory:write offline_access' });
+		const res = await call('authorize', { method: 'POST', form: { ...authorizeQuery(), csrf: await csrf(), decision: 'allow', grant_read: 'on', grant_manage: 'on', grant_trade: 'on' } });
+		expect(res.statusCode).toBe(302);
+		expect(db.codes[0].scope.split(' ').sort()).toEqual(['avatars:read', 'memory:write', 'offline_access', 'profile', 'wallet:trade']);
+	});
+
+	it('keeps read and the connection scopes even when nothing was ticked', async () => {
+		seedClient({ scope: 'avatars:read profile wallet:write offline_access' });
+		const res = await call('authorize', { method: 'POST', form: { ...authorizeQuery(), csrf: await csrf(), decision: 'allow' } });
+		expect(res.statusCode).toBe(302);
+		expect(db.codes[0].scope.split(' ').sort()).toEqual(['avatars:read', 'offline_access', 'profile']);
+	});
+
+	it('never carries the grant tick boxes into the hidden OAuth parameters', async () => {
+		seedClient({ scope: 'avatars:read wallet:write' });
+		const res = await call('authorize', { query: authorizeQuery({ grant_spend: 'on' }) });
+		expect(res.body).not.toContain('type="hidden" name="grant_spend"');
+	});
+});
+
+// ── Two clients at once ───────────────────────────────────────────────────────
+// A person connects Claude, then ChatGPT. Both must stay connected, and revoking
+// one from Settings must stop that one on its next request without touching
+// the other, on access tokens and on refresh tokens alike.
+
+describe('two MCP clients on one account', () => {
+	async function connect(clientId) {
+		seedClient({ client_id: clientId, name: clientId });
+		const authorized = await call('authorize', { method: 'POST', form: { ...authorizeQuery({ client_id: clientId }), csrf: await csrf(), decision: 'allow' } });
+		const code = new URL(authorized.getHeader('location')).searchParams.get('code');
+		const res = await call('token', { method: 'POST', form: { grant_type: 'authorization_code', client_id: clientId, code, redirect_uri: 'https://client.example/cb', code_verifier: VERIFIER } });
+		expect(res.statusCode).toBe(200);
+		return res.json();
+	}
+
+	it('keeps the first client connected when a second one connects', async () => {
+		const first = await connect('mcp_first');
+		const second = await connect('mcp_second');
+		expect(await authenticateBearer(first.access_token, { audience: RESOURCE })).toMatchObject({ clientId: 'mcp_first' });
+		expect(await authenticateBearer(second.access_token, { audience: RESOURCE })).toMatchObject({ clientId: 'mcp_second' });
+		expect(db.refresh.filter((r) => !r.revoked_at)).toHaveLength(2);
+	});
+
+	it('revoking one client stops it immediately and leaves the other untouched', async () => {
+		const first = await connect('mcp_first');
+		const second = await connect('mcp_second');
+		const res = await call('grants', { method: 'DELETE', query: { client_id: 'mcp_first' } });
+		expect(res.json()).toEqual({ client_id: 'mcp_first', revoked: 1 });
+
+		expect(await authenticateBearer(first.access_token, { audience: RESOURCE })).toBeNull();
+		expect(await authenticateBearer(second.access_token, { audience: RESOURCE })).toMatchObject({ clientId: 'mcp_second' });
+
+		const refreshFirst = await call('token', { method: 'POST', form: { grant_type: 'refresh_token', client_id: 'mcp_first', refresh_token: first.refresh_token } });
+		expect(refreshFirst.statusCode).toBe(400);
+		// A revoked refresh token is treated as reuse: the whole chain is dead.
+		expect(['invalid_grant', 'refresh_reuse_detected']).toContain(refreshFirst.json().error);
+
+		const refreshSecond = await call('token', { method: 'POST', form: { grant_type: 'refresh_token', client_id: 'mcp_second', refresh_token: second.refresh_token } });
+		expect(refreshSecond.statusCode).toBe(200);
+		expect(await authenticateBearer(refreshSecond.json().access_token, { audience: RESOURCE })).toMatchObject({ clientId: 'mcp_second' });
 	});
 });

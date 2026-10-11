@@ -1,0 +1,17 @@
+{
+	"$comment": "Release history for three.ws Forge, newest first. scripts/release-manifest.mjs copies the current version's notes into the published release.json that https://three.ws/forge-desktop and the in-app updater show. Add an entry here before building a new version.",
+	"releases": [
+		{
+			"version": "0.5.0",
+			"date": "2026-10-09",
+			"notes": [
+				{
+					"date": "2026-10-09",
+					"title": "three.ws Forge, the desktop 3D studio",
+					"summary": "Generate 3D models from images and prompts with local open-source generators or the three.ws Forge cloud, chain mesh processing in a node workflow editor, browse the CC0 object library, and publish straight to your three.ws account. Built on Modly by Lightning Pixel (MIT).",
+					"tags": ["feature"]
+				}
+			]
+		}
+	]
+}

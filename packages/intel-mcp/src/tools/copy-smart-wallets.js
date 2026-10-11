@@ -9,9 +9,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'copy_smart_wallets',
 	title: 'Copy-trade smart wallet directory',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Browse the curated Smart Money directory for copy-trading: deduplicated wallets ranked by 30-day performance. Filter by chain (sol/bsc) and category (smart_money, launchpad, kol, sniper), search by address/name/twitter, and sort by profit, pnl, winrate, followers, or score. Returns the ranked page (wallet identity + 30-day performance, never token mints), the total, pagination flags, and category/chain facets. Read-only live data.',
+		'Browse the curated Smart Money directory for copy-trading: deduplicated wallets ranked by 30-day performance. Filter by chain (sol/bsc) and category (smart_money, launchpad, kol, sniper), search by address/name/twitter, and sort by profit, pnl, winrate, followers, or score. Returns the ranked page (wallet identity + 30-day performance, never token mints), the total, pagination flags, and category/chain facets. Read-only live data. Use this to pick wallets worth copying or following; for one wallet\'s full reputation card call wallet_intel instead.',
 	inputSchema: {
 		chain: z
 			.enum(['sol', 'bsc'])

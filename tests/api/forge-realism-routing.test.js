@@ -74,11 +74,11 @@ describe('classifyForgeSubject', () => {
 });
 
 describe('High realism tier - self-host lanes lead, NIM is the last free fallthrough', () => {
-	it('text prompt: Hunyuan3D first, self-host TRELLIS next, HF then free NIM last', () => {
+	it('text prompt: self-host TRELLIS leads, Hunyuan3D next (outside restricted territories), HF then free NIM last', () => {
 		configureAllLanes();
-		expect(freeLaneCandidates('image', 'high', false)).toEqual([
-			'hunyuan3d',
+		expect(freeLaneCandidates('image', 'high', false, null, 'US')).toEqual([
 			'trellis_selfhost',
+			'hunyuan3d',
 			'huggingface',
 			'nvidia',
 		]);
@@ -86,7 +86,7 @@ describe('High realism tier - self-host lanes lead, NIM is the last free fallthr
 
 	it('hard-surface subject hoists self-host TRELLIS ahead of Hunyuan3D', () => {
 		configureAllLanes();
-		expect(freeLaneCandidates('image', 'high', false, 'hardsurface')).toEqual([
+		expect(freeLaneCandidates('image', 'high', false, 'hardsurface', 'US')).toEqual([
 			'trellis_selfhost',
 			'hunyuan3d',
 			'huggingface',
@@ -94,11 +94,11 @@ describe('High realism tier - self-host lanes lead, NIM is the last free fallthr
 		]);
 	});
 
-	it('organic subject keeps the default Hunyuan3D-first order', () => {
+	it('organic subject keeps the default order (TRELLIS first, Hunyuan3D second)', () => {
 		configureAllLanes();
-		expect(freeLaneCandidates('image', 'high', false, 'organic')).toEqual([
-			'hunyuan3d',
+		expect(freeLaneCandidates('image', 'high', false, 'organic', 'US')).toEqual([
 			'trellis_selfhost',
+			'hunyuan3d',
 			'huggingface',
 			'nvidia',
 		]);
@@ -106,12 +106,12 @@ describe('High realism tier - self-host lanes lead, NIM is the last free fallthr
 
 	it('photo submission at high excludes the text-only NIM lane', () => {
 		configureAllLanes();
-		expect(freeLaneCandidates('image', 'high', true)).toEqual([
-			'hunyuan3d',
+		expect(freeLaneCandidates('image', 'high', true, null, 'US')).toEqual([
 			'trellis_selfhost',
+			'hunyuan3d',
 			'huggingface',
 		]);
-		expect(freeLaneCandidates('image', 'high', true, 'hardsurface')).toEqual([
+		expect(freeLaneCandidates('image', 'high', true, 'hardsurface', 'US')).toEqual([
 			'trellis_selfhost',
 			'hunyuan3d',
 			'huggingface',
@@ -120,9 +120,9 @@ describe('High realism tier - self-host lanes lead, NIM is the last free fallthr
 
 	it('resolveBackendId picks a self-host lane at high tier', () => {
 		configureAllLanes();
-		expect(resolveBackendId({ path: 'image', tier: 'high', userImages: false })).toBe('hunyuan3d');
+		expect(resolveBackendId({ path: 'image', tier: 'high', userImages: false, country: 'US' })).toBe('trellis_selfhost');
 		expect(
-			resolveBackendId({ path: 'image', tier: 'high', userImages: false, subjectClass: 'hardsurface' }),
+			resolveBackendId({ path: 'image', tier: 'high', userImages: false, subjectClass: 'hardsurface', country: 'US' }),
 		).toBe('trellis_selfhost');
 	});
 });
@@ -132,7 +132,7 @@ describe('High realism tier - health-gated fallthrough to the free NIM lane', ()
 		configureAllLanes();
 		const health = { hunyuan3d: 'down', trellis_selfhost: 'down', huggingface: 'down' };
 		expect(
-			resolveBackendIdWithHealth({ path: 'image', tier: 'high', userImages: false, health }),
+			resolveBackendIdWithHealth({ path: 'image', tier: 'high', userImages: false, health, country: 'US' }),
 		).toBe('nvidia');
 	});
 
@@ -140,7 +140,7 @@ describe('High realism tier - health-gated fallthrough to the free NIM lane', ()
 		configureAllLanes();
 		const health = { hunyuan3d: 'down' };
 		expect(
-			resolveBackendIdWithHealth({ path: 'image', tier: 'high', userImages: false, health }),
+			resolveBackendIdWithHealth({ path: 'image', tier: 'high', userImages: false, health, country: 'US' }),
 		).toBe('trellis_selfhost');
 	});
 });
@@ -178,7 +178,7 @@ describe('Free/default tier now leads with the photoreal reference-image pipelin
 	// a text prompt never dead-ends on a deployment with no self-host/HF lane.
 	it('draft text prompt leads with self-host TRELLIS; native NVIDIA NIM is the last resort', () => {
 		configureAllLanes();
-		expect(freeLaneCandidates('image', 'draft', false)).toEqual([
+		expect(freeLaneCandidates('image', 'draft', false, null, 'US')).toEqual([
 			'trellis_selfhost',
 			'hunyuan3d',
 			'huggingface',
@@ -188,9 +188,9 @@ describe('Free/default tier now leads with the photoreal reference-image pipelin
 
 	it('standard tier ordering is subject-invariant (reorder is high-only)', () => {
 		configureAllLanes();
-		const plain = freeLaneCandidates('image', 'standard', false);
-		expect(freeLaneCandidates('image', 'standard', false, 'hardsurface')).toEqual(plain);
-		expect(freeLaneCandidates('image', 'standard', false, 'organic')).toEqual(plain);
+		const plain = freeLaneCandidates('image', 'standard', false, null, 'US');
+		expect(freeLaneCandidates('image', 'standard', false, 'hardsurface', 'US')).toEqual(plain);
+		expect(freeLaneCandidates('image', 'standard', false, 'organic', 'US')).toEqual(plain);
 		expect(plain[0]).toBe('trellis_selfhost');
 	});
 });

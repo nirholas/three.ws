@@ -125,11 +125,11 @@ Or, in any client that reads a JSON config (Claude Desktop, Cursor, and most oth
 **What connected looks like.** The server prints one line to stderr on start:
 
 ```
-[home-mcp@0.1.0] connected over stdio with 5 tools, home http://127.0.0.1:42125
+[home-mcp@0.1.0] connected over stdio with <n> tools, home http://127.0.0.1:42125
 ```
 
-and your assistant gains five tools: `home_overview`, `list_entities`, `list_macros`,
-`call_service`, `run_macro`. Ask it to read the house and you get your own rooms back, in the names
+and your assistant gains <!-- mcp-count:home-mcp.tools -->6<!-- /mcp-count --> tools: `home_overview`, `list_entities`, `list_macros`,
+`call_service`, `preview_macro`, `run_macro`. Ask it to read the house and you get your own rooms back, in the names
 your household already uses:
 
 ```json

@@ -266,10 +266,21 @@ function renderInfo() {
 			<a class="mp-action" href="/materialize?creation=${encodeURIComponent(c.id)}" title="Order this model as a real physical print, shipped to you">⬢ Materialize</a>
 			<button class="mp-action" id="mp-embed" type="button">&lt;/&gt; Embed</button>
 			<button class="mp-action" id="mp-share" type="button">↗ Share</button>
+			<button class="mp-action" id="mp-slicer" type="button" aria-controls="mp-print-tools" title="Open this model in OrcaSlicer or Bambu Studio, or download a print-ready STL">⎙ 3D print</button>
 			${c.remixable ? `<button class="mp-action" id="mp-remix" type="button">Remix · $0.25</button>` : ''}
 		</div>
 		<div class="mp-geo" id="mp-geo"><span>Reading geometry…</span></div>
 		<div class="mp-sim" id="mp-sim"></div>
+		<section class="mp-tools" aria-label="Model tools">
+			<details class="mp-tool" id="mp-mesh-tools">
+				<summary>Edit mesh <span>repair, smooth, decimate in your browser</span></summary>
+				<div class="mp-tool-body" id="mp-mesh-host"></div>
+			</details>
+			<details class="mp-tool" id="mp-print-tools">
+				<summary>3D print <span>open in OrcaSlicer or Bambu Studio, or download STL</span></summary>
+				<div class="mp-tool-body" id="mp-slicer-host"></div>
+			</details>
+		</section>
 		<p class="mp-desc">${esc(c.prompt)}</p>
 		<div class="mp-published" title="${esc(publishedAbs)}">🕒 Published ${esc(timeAgo(c.created_at))}</div>
 		${chips ? `<div class="mp-chips">${chips}</div>` : ''}
@@ -279,6 +290,63 @@ function renderInfo() {
 	wireActions();
 	wireFollow();
 	renderEdition();
+	wireTools();
+}
+
+// ── model tools: in-browser mesh edits and the slicer handoff ───────────────
+//
+// Both modules load on first open, so a visitor who never edits or prints a
+// model never downloads the mesh-processing code. Mesh edits only change what
+// this tab shows and offers for download; the stored creation is untouched.
+
+function wireTools() {
+	const c = state.creation;
+	const meshTools = $('mp-mesh-tools');
+	const printTools = $('mp-print-tools');
+
+	meshTools?.addEventListener('toggle', async () => {
+		if (!meshTools.open || meshTools.dataset.mounted) return;
+		meshTools.dataset.mounted = '1';
+		const host = $('mp-mesh-host');
+		host.textContent = 'Loading mesh tools…';
+		try {
+			const { mountMeshTools } = await import('./mesh-ops/panel.js');
+			host.textContent = '';
+			const tools = mountMeshTools(host, {
+				onChange({ url, edited }) {
+					const mv = document.querySelector('#mp-viewer model-viewer');
+					if (mv) mv.setAttribute('src', edited ? url : viewerSrc(c));
+				},
+			});
+			tools.setSource(c.glb_url, { label: titleFromPrompt(c.prompt) });
+			tools.activate();
+		} catch (err) {
+			log.error('mesh tools failed to load', err);
+			delete meshTools.dataset.mounted;
+			host.textContent = 'The mesh tools could not load. Close and reopen this section to try again.';
+		}
+	});
+
+	printTools?.addEventListener('toggle', async () => {
+		if (!printTools.open || printTools.dataset.mounted) return;
+		printTools.dataset.mounted = '1';
+		const host = $('mp-slicer-host');
+		try {
+			const { renderSlicerHandoff } = await import('./slicer-handoff.js');
+			renderSlicerHandoff(host, { creationId: c.id });
+		} catch (err) {
+			log.error('slicer handoff failed to load', err);
+			delete printTools.dataset.mounted;
+			host.textContent = 'The print options could not load. Close and reopen this section to try again.';
+		}
+	});
+
+	$('mp-slicer')?.addEventListener('click', () => {
+		if (!printTools) return;
+		printTools.open = true;
+		printTools.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		printTools.querySelector('summary')?.focus({ preventScroll: true });
+	});
 }
 
 // ── physical editions ────────────────────────────────────────────────────────

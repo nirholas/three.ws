@@ -39,19 +39,28 @@ function stubFetch(plan) {
 }
 
 describe('IPFS_READ_GATEWAYS', () => {
-	// Cloudflare retired both of its public gateways in 2024 and flk-ipfs.xyz
-	// stopped accepting connections. A dead host in a fallback chain is worse
-	// than a missing one: it consumes the retry budget and reports a DNS failure
-	// as though the document were unretrievable.
+	// Cloudflare retired both of its public gateways in 2024, flk-ipfs.xyz
+	// stopped accepting connections, and since Oct 2026 ipfs.io, dweb.link,
+	// w3s.link and nftstorage.link answer programmatic reads with 429. A dead
+	// host in a fallback chain is worse than a missing one: it consumes the retry
+	// budget and reports a refusal as though the document were unretrievable.
 	it('lists no retired gateway hosts', () => {
-		const retired = ['cloudflare-ipfs.com', 'cf-ipfs.com', 'flk-ipfs.xyz'];
+		const retired = [
+			'cloudflare-ipfs.com',
+			'cf-ipfs.com',
+			'flk-ipfs.xyz',
+			'//ipfs.io',
+			'dweb.link',
+			'w3s.link',
+			'nftstorage.link',
+		];
 		for (const host of retired) {
 			expect(IPFS_READ_GATEWAYS.some((g) => g.includes(host))).toBe(false);
 		}
 	});
 
 	it('leads with gateways that are independent of the platform and its pinning vendor', () => {
-		expect(IPFS_READ_GATEWAYS[0]).toContain('ipfs.io');
+		expect(IPFS_READ_GATEWAYS[0]).not.toContain('pinata');
 		expect(IPFS_READ_GATEWAYS.some((g) => g.includes('three.ws'))).toBe(false);
 	});
 
@@ -65,17 +74,16 @@ describe('IPFS_READ_GATEWAYS', () => {
 
 describe('fetchFromGateways', () => {
 	it('returns the body and the gateway that actually served it', async () => {
-		stubFetch({ 'ipfs.io': { body: '{"ok":true}' } });
+		stubFetch({ 'filebase': { body: '{"ok":true}' } });
 		const got = await fetchFromGateways(CID);
 		expect(JSON.parse(got.text)).toEqual({ ok: true });
-		expect(got.gateway).toBe(`https://ipfs.io/ipfs/${CID}`);
+		expect(got.gateway).toBe(`https://ipfs.filebase.io/ipfs/${CID}`);
 	});
 
 	it('takes the one gateway holding the document when the rest 504', async () => {
 		stubFetch({
-			'ipfs.io': { status: 504 },
-			'dweb.link': { status: 504 },
-			'w3s.link': { status: 504 },
+			'filebase': { status: 504 },
+			'4everland': { status: 504 },
 			'pinata': { body: '{"pinned":true}' },
 		});
 		const got = await fetchFromGateways(CID);
@@ -88,9 +96,8 @@ describe('fetchFromGateways', () => {
 	// immediately sat behind the timeouts of the ones that could not.
 	it('queries every gateway concurrently rather than waiting out the slow ones', async () => {
 		const seen = stubFetch({
-			'ipfs.io': { delayMs: 60, status: 504 },
-			'dweb.link': { delayMs: 60, status: 504 },
-			'w3s.link': { delayMs: 60, status: 504 },
+			'filebase': { delayMs: 60, status: 504 },
+			'4everland': { delayMs: 60, status: 504 },
 			'pinata': { body: '{"fast":true}' },
 		});
 		const started = Date.now();
@@ -99,15 +106,14 @@ describe('fetchFromGateways', () => {
 
 		expect(got.gateway).toContain('pinata');
 		expect(seen).toHaveLength(IPFS_READ_GATEWAYS.length);
-		// Serial would have paid all three 60ms delays before reaching the winner.
+		// Serial would have paid both 60ms delays before reaching the winner.
 		expect(elapsed).toBeLessThan(120);
 	});
 
 	it('reports every gateway it tried when none of them serve the CID', async () => {
 		stubFetch({
-			'ipfs.io': { status: 504 },
-			'dweb.link': { throws: 'ENOTFOUND' },
-			'w3s.link': { status: 404 },
+			'filebase': { status: 504 },
+			'4everland': { throws: 'ENOTFOUND' },
 			'pinata': { status: 403 },
 		});
 		await expect(fetchFromGateways(CID)).rejects.toMatchObject({ code: 'gateway_unreachable' });
@@ -115,7 +121,7 @@ describe('fetchFromGateways', () => {
 	});
 
 	it('refuses a body larger than the budget the caller set', async () => {
-		stubFetch({ 'ipfs.io': { body: 'x'.repeat(500), length: 500 } });
+		stubFetch({ 'filebase': { body: 'x'.repeat(500), length: 500 } });
 		await expect(fetchFromGateways(CID, { maxBytes: 100 })).rejects.toMatchObject({
 			code: 'gateway_unreachable',
 		});

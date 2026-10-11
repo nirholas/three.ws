@@ -10,11 +10,13 @@ import { z } from 'zod';
 
 const generativeAnnotations = {
 	readOnlyHint: true,
+	destructiveHint: false,
 	openWorldHint: true,
 	idempotentHint: false,
 };
 const deterministicAnnotations = {
 	readOnlyHint: true,
+	destructiveHint: false,
 	openWorldHint: true,
 	idempotentHint: true,
 };
@@ -53,7 +55,9 @@ export function buildTools(client) {
 				'Chat completion with an Alibaba Cloud Qwen model via DashScope. ' +
 				'Pass a list of role/content messages and get the assistant reply plus ' +
 				'token usage. Defaults to qwen-plus; use qwen-max for highest quality, ' +
-				'qwen-turbo for fastest/cheapest, or qwen-long for very large contexts.',
+				'qwen-turbo for fastest/cheapest, or qwen-long for very large contexts. ' +
+				'Use this when you want a written answer from Qwen; for vectors to search or ' +
+				'cluster texts call qwen_embed instead.',
 			inputSchema: {
 				messages: z
 					.array(
@@ -91,7 +95,9 @@ export function buildTools(client) {
 			description:
 				'Generate text embeddings using Alibaba Cloud text-embedding models. ' +
 				'Returns a float vector per input string. Useful for semantic search, ' +
-				'clustering, and RAG retrieval. Defaults to text-embedding-v3 (1024-dim).',
+				'clustering, and RAG retrieval. Defaults to text-embedding-v3 (1024-dim). ' +
+				'Use this to index or compare texts by meaning; it returns vectors, not prose, ' +
+				'so call qwen_chat when you need a written reply.',
 			inputSchema: {
 				inputs: z
 					.union([z.string().min(1), z.array(z.string().min(1)).min(1)])
@@ -132,7 +138,9 @@ export function buildTools(client) {
 			annotations: deterministicAnnotations,
 			description:
 				'List the models available on this DashScope account. ' +
-				'Returns model ids, owners, and creation timestamps.',
+				'Returns model ids, owners, and creation timestamps. ' +
+				'Call this first to confirm a model id exists on the account before passing it ' +
+				'to qwen_chat or qwen_embed.',
 			inputSchema: {},
 			handler: async () => {
 				const models = await client.listModels();

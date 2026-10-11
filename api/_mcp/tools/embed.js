@@ -137,7 +137,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			'Return a ready-to-paste <iframe> embed snippet (plus shareable URL, oEmbed URL, and OG thumbnail) for a three.ws avatar, on-chain agent, or Forge creation. Embed a persistent 3D avatar into Notion, Webflow, Framer, a blog, or any site as easily as a YouTube video. Provide exactly one target: agent_id, OR chain_id + onchain_agent_id, OR creation_id.',
+			'Return a ready-to-paste <iframe> embed snippet (plus shareable URL, oEmbed URL, and OG thumbnail) for a three.ws avatar, on-chain agent, or Forge creation. Embed a persistent 3D avatar into Notion, Webflow, Framer, a blog, or any site as easily as a YouTube video. Provide exactly one target: agent_id, OR chain_id + onchain_agent_id, OR creation_id. Use this when the user wants to show an avatar, agent, or creation on a site they control; for an embed that only token holders can view call create_gated_embed instead.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -233,7 +233,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			'Turn an avatar or on-chain agent you own into a holder-only interactive 3D embed. Visitors must prove, with a real, server-verified Solana SPL token balance and never a client-reported number, that they hold at least min_amount of mint before the live scene renders; below that they see a designed locked teaser with a connect-wallet CTA. mint defaults to $THREE but accepts any SPL mint at runtime. Returns a ready-to-paste <three-d> embed snippet.',
+			'Turn an avatar or on-chain agent you own into a holder-only interactive 3D embed. Visitors must prove, with a real, server-verified Solana SPL token balance and never a client-reported number, that they hold at least min_amount of mint before the live scene renders; below that they see a designed locked teaser with a connect-wallet CTA. mint defaults to $THREE but accepts any SPL mint at runtime. Returns a ready-to-paste <three-d> embed snippet. Use this when the embed should render only for holders of a token; for an open embed anyone can see call get_embed_code.',
 		inputSchema: {
 			type: 'object',
 			properties: {

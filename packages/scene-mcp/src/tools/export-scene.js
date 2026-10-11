@@ -20,7 +20,7 @@ export const def = {
 	title: 'Export a forged diorama as one GLB scene',
 	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Merge an already-forged diorama (objects with real glbUrl values, e.g. from your own forging after compose_scene, or fetched via get_scene) into ONE glTF 2.0 binary: every object becomes a named, selectable node, plus a real ground disc and mood-tuned lighting. Returns the merged GLB URL and a ready-to-open three.ws Scene Studio link. Objects that never forged are skipped and reported rather than treated as a failure; a partial world still exports. Requires the target deployment to have object storage configured (three.ws does).',
+		'Merge an already-forged diorama (objects with real glbUrl values, e.g. from your own forging after compose_scene, or fetched via get_scene) into ONE glTF 2.0 binary: every object becomes a named, selectable node, plus a real ground disc and mood-tuned lighting. Returns the merged GLB URL and a ready-to-open three.ws Scene Studio link. Objects that never forged are skipped and reported rather than treated as a failure; a partial world still exports. Requires the target deployment to have object storage configured (three.ws does). Use this after every object in a diorama has a glbUrl and you want one downloadable GLB; to go from a sentence straight to the merged world, call build_world instead.',
 	inputSchema: {
 		diorama: z
 			.record(z.string(), z.any())

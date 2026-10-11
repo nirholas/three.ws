@@ -1,0 +1,52 @@
+[
+  {
+    "id": "solana",
+    "title": "Solana",
+    "blurb": "Agent identity, registries, naming and attestations on Solana, the home chain of this hub. Includes ERC-8004 ports and native designs."
+  },
+  {
+    "id": "standards",
+    "title": "Standards and Proposals",
+    "blurb": "ERCs, ENSIPs, W3C Recommendations and IETF drafts that define how agents are identified, named and trusted."
+  },
+  {
+    "id": "erc8004",
+    "title": "ERC-8004 Implementations and SDKs",
+    "blurb": "Reference contracts, SDKs and scaffolding tools for building on the Trustless Agents registries."
+  },
+  {
+    "id": "explorers",
+    "title": "Explorers and Marketplaces",
+    "blurb": "Index, search and discovery surfaces for registered agents, reputation and feedback."
+  },
+  {
+    "id": "attestations",
+    "title": "Attestations",
+    "blurb": "Signed claims about agents, from general attestation services to proposals that gate agent actions."
+  },
+  {
+    "id": "names",
+    "title": "Agent Names and Directories",
+    "blurb": "Naming, resolution and discovery systems that map agents to human-readable or verifiable handles."
+  },
+  {
+    "id": "dids",
+    "title": "DIDs and Verifiable Credentials",
+    "blurb": "Decentralized identifiers and verifiable credentials applied to AI agents, plus the working groups shaping them."
+  },
+  {
+    "id": "proof",
+    "title": "Proof of Human and Know Your Agent",
+    "blurb": "Systems that tie an agent to an accountable human or organization, or let services verify who is acting."
+  },
+  {
+    "id": "frameworks",
+    "title": "Agent Protocols and Networks",
+    "blurb": "Agent communication and discovery stacks with identity built in."
+  },
+  {
+    "id": "resources",
+    "title": "Docs, Guides and Lists",
+    "blurb": "Documentation and curated lists for learning and building in this space."
+  }
+]

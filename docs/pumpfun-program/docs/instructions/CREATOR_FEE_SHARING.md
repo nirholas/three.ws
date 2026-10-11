@@ -1,13 +1,13 @@
 # Creator Fee Sharing
 
-> **Note:** These instructions only apply to coins that **have** a `sharing_config` — i.e. coins whose creator vault has been migrated to the Pump Fees program for multi-recipient distribution. For single-creator-recipient coins (no `sharing_config`), use [`collect_creator_fee_v2` / `collect_coin_creator_fee`](./COLLECT_CREATOR_FEE.md) instead.
+> **Note:** These instructions only apply to coins that **have** a `sharing_config` - i.e. coins whose creator vault has been migrated to the Pump Fees program for multi-recipient distribution. For single-creator-recipient coins (no `sharing_config`), use [`collect_creator_fee_v2` / `collect_coin_creator_fee`](./COLLECT_CREATOR_FEE.md) instead.
 
 The lifecycle is:
 
-1. `create_fee_sharing_config` (Pump Fees) — opt the coin into shared distribution. Migrates the bonding curve creator (and AMM `pool.coin_creator` if graduated) to the new `sharing_config` PDA.
-2. `update_fee_shares_v2` (Pump Fees) — set the final list of shareholders. Sweeps any pending creator fees from both the AMM and the bonding curve via CPI before applying the new shares. Can only be called once per `sharing_config` (the admin is revoked after).
-3. `transfer_creator_fees_to_pump_v2` (Pump AMM) — sweep coin creator fees accrued on the AMM into the bonding curve's creator vault so they can be distributed by the pump program. Permissionless.
-4. `distribute_creator_fees_v2` (Pump program) — pay out the bonding curve's creator vault to each shareholder according to their `share_bps`. Permissionless.
+1. `create_fee_sharing_config` (Pump Fees) - opt the coin into shared distribution. Migrates the bonding curve creator (and AMM `pool.coin_creator` if graduated) to the new `sharing_config` PDA.
+2. `update_fee_shares_v2` (Pump Fees) - set the final list of shareholders. Sweeps any pending creator fees from both the AMM and the bonding curve via CPI before applying the new shares. Can only be called once per `sharing_config` (the admin is revoked after).
+3. `transfer_creator_fees_to_pump_v2` (Pump AMM) - sweep coin creator fees accrued on the AMM into the bonding curve's creator vault so they can be distributed by the pump program. Permissionless.
+4. `distribute_creator_fees_v2` (Pump program) - pay out the bonding curve's creator vault to each shareholder according to their `share_bps`. Permissionless.
 
 For every token account in the tables below, the third column tells you who is responsible for initialization: whether the caller must initialize it beforehand, whether the instruction will initialize it on the fly, or whether it can be left uninitialized when `quote_mint` is wrapped SOL (the SOL-paired code path never touches it).
 
@@ -115,7 +115,7 @@ Sweeps coin creator fees accrued on the Pump AMM out of the AMM coin creator vau
 
 ## `distribute_creator_fees_v2` (Pump program)
 
-Pays out the bonding curve creator vault to every shareholder in `sharing_config.shareholders` proportionally to their `share_bps`. Permissionless. For wrapped-SOL quotes the instruction transfers lamports directly to each shareholder address (leaving the vault rent-exempt). For non-native quotes it transfers tokens from the vault's ATA to each shareholder's ATA, and — if `initialize_ata = true` is passed — creates any missing shareholder ATAs along the way (paid for by `payer`).
+Pays out the bonding curve creator vault to every shareholder in `sharing_config.shareholders` proportionally to their `share_bps`. Permissionless. For wrapped-SOL quotes the instruction transfers lamports directly to each shareholder address (leaving the vault rent-exempt). For non-native quotes it transfers tokens from the vault's ATA to each shareholder's ATA, and - if `initialize_ata = true` is passed - creates any missing shareholder ATAs along the way (paid for by `payer`).
 
 ### Accounts
 

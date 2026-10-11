@@ -6,8 +6,8 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { requireCsrf } from './_lib/csrf.js';
 import { parse } from './_lib/validate.js';
 import { z } from 'zod';
-import { API_KEY_SCOPES, mintApiKey, presetScopes } from './_lib/api-keys.js';
-import { CONNECTOR_MARKER } from './_lib/spend-scope.js';
+import { API_KEY_SCOPES } from './_lib/api-keys.js';
+import { CONNECTOR_PRESET, CONNECTOR_SCOPES, expandKeyScopes } from './_lib/key-scopes.js';
 
 const ALLOWED_SCOPES = new Set(API_KEY_SCOPES);
 
@@ -18,11 +18,10 @@ const createSchema = z.object({
 		.optional()
 		.default('avatars:read avatars:write')
 		.transform((s) => s.trim()),
+	// 'connector' issues the fixed read/generate/agents:write grant for an
+	// unattended AI agent (Grok Bot). It can never hold spend (key-scopes.js).
+	preset: z.enum([CONNECTOR_PRESET]).optional(),
 	expires_at: z.string().datetime().optional(),
-	// A named preset replaces `scope`; see KEY_PRESETS in _lib/api-keys.js.
-	// `three-ws setup --client grok-bot` asks for `connector`, the key an AI
-	// agent holds unattended.
-	preset: z.enum(['connector']).optional(),
 });
 
 export default wrap(async (req, res) => {
@@ -54,12 +53,14 @@ export default wrap(async (req, res) => {
 	// no-op for Bearer callers (the token itself is proof of intent).
 	if (!(await requireCsrf(req, res, userId))) return;
 
-	const body = parse(createSchema, await readJson(req));
-
-	if (body.preset) return mintPreset(req, res, { userId, bearer, body });
+	const raw = await readJson(req);
+	const body = parse(createSchema, raw);
+	const connector = body.preset === CONNECTOR_PRESET;
+	if (connector && raw && typeof raw === 'object' && Object.hasOwn(raw, 'scope'))
+		return error(res, 400, 'validation_error', 'a connector key has a fixed grant; omit scope');
 
 	// Validate requested scopes are all known
-	const requestedScopes = body.scope.split(/\s+/).filter(Boolean);
+	const requestedScopes = connector ? [...CONNECTOR_SCOPES] : body.scope.split(/\s+/).filter(Boolean);
 	const invalid = requestedScopes.filter((s) => !ALLOWED_SCOPES.has(s));
 	if (invalid.length)
 		return error(res, 400, 'validation_error', `unknown scopes: ${invalid.join(', ')}`);
@@ -70,7 +71,8 @@ export default wrap(async (req, res) => {
 	// (or a narrow API key) could mint a non-expiring `wallet:write agents:write`
 	// key and walk out of the consent the user actually gave.
 	if (bearer) {
-		const beyond = requestedScopes.filter((s) => !hasScope(bearer.scope, s));
+		const needed = connector ? expandKeyScopes(CONNECTOR_SCOPES.join(' ')).filter((s) => !CONNECTOR_SCOPES.includes(s) || s === 'agents:write') : requestedScopes;
+		const beyond = needed.filter((s) => !hasScope(bearer.scope, s));
 		if (beyond.length)
 			return error(
 				res,
@@ -85,38 +87,19 @@ export default wrap(async (req, res) => {
 	const tokenHash = await sha256(token);
 
 	const [row] = await sql`
-		insert into api_keys (user_id, name, prefix, token_hash, scope, expires_at)
+		insert into api_keys (user_id, name, prefix, token_hash, scope, expires_at, preset)
 		values (
 			${userId},
 			${body.name},
 			${prefix},
 			${tokenHash},
 			${requestedScopes.join(' ')},
-			${body.expires_at ?? null}
+			${body.expires_at ?? null},
+			${connector ? CONNECTOR_PRESET : null}
 		)
-		returning id, name, prefix, scope, expires_at, created_at
+		returning id, name, prefix, scope, preset, expires_at, created_at
 	`;
 
 	// token is returned only on creation — not stored in plaintext
 	return json(res, 201, { data: { ...row, token } });
 });
-
-// A preset key. The preset fixes the scope set and ignores `scope`, so a
-// request can never ask a connector key into carrying a spend scope. A bearer
-// caller still cannot mint beyond its own grant: it gets the preset's scopes
-// it holds, plus the marker that caps the key for as long as it lives.
-async function mintPreset(req, res, { userId, bearer, body }) {
-	const preset = presetScopes(body.preset);
-	const granted = preset.filter((s) => s === CONNECTOR_MARKER || !bearer || hasScope(bearer.scope, s));
-	if (!granted.some((s) => s !== CONNECTOR_MARKER))
-		return error(res, 403, 'insufficient_scope', `this credential holds none of the scopes a ${body.preset} key carries`);
-	const { row, secret } = await mintApiKey({
-		userId,
-		name: body.name,
-		scopes: granted,
-		expiresAt: body.expires_at ?? null,
-		req,
-		via: bearer ? `bearer:${body.preset}` : `session:${body.preset}`,
-	});
-	return json(res, 201, { data: { ...row, token: secret } });
-}

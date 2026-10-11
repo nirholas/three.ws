@@ -31,7 +31,7 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 - [llms.txt](https://three.ws/llms.txt): Curated AI-agent index (llmstxt.org convention): the official domain, accounts and $THREE mint, the machine-readable entry points, and the key pages, with llms-full.txt for the complete list.
 - [llms-full.txt](https://three.ws/llms-full.txt): Expanded llms.txt with full descriptions and content hints.
 - [skill.md](https://three.ws/skill.md): The three.ws Agent Skill: how an AI agent connects to three.ws, the rules it follows around money and official addresses, and an index of the focused skills for 3D generation, avatars and agents. Load it like any SKILL.md.
-- [grok-skill.md](https://three.ws/grok-skill.md): The three.ws skill for Grok and Grok Bot: the connector that adds a free 3D studio, runnable curl calls for a Grok with no connector, the links every model comes back with, what needs an account, and the rule that it never spends. Upload it to Grok's Skills.
+- [grok-skill.md](https://three.ws/grok-skill.md): The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.
 - [robots.txt](https://three.ws/robots.txt): Crawler directives.
 - [OpenAPI](https://three.ws/openapi.json): Machine-readable HTTP API spec.
 - [.well-known/x402](https://three.ws/.well-known/x402): x402 paid-API discovery document.
@@ -39,14 +39,15 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 - [.well-known/oauth-authorization-server](https://three.ws/.well-known/oauth-authorization-server): OAuth 2.1 authorization-server metadata.
 - [.well-known/chat-plugin.json](https://three.ws/.well-known/chat-plugin.json): ChatGPT-style plugin manifest.
 - [MCP server](https://three.ws/api/mcp): Hosted Model Context Protocol server (Streamable HTTP): avatars, glTF validation, agent data, and memory as tools. Every other hosted server, including the Grok Bot connector, is listed in /.well-known/mcp.json.
-- [.well-known/mcp.json](https://three.ws/.well-known/mcp.json): Directory of every hosted three.ws MCP server (endpoint, transport, auth, what each one does) plus a clients block with setup for Claude, ChatGPT, Grok Bot, Cursor, VS Code and Claude Code: the recommended server, the auth mode and the exact connector settings or config file.
+- [.well-known/mcp.json](https://three.ws/.well-known/mcp.json): Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does, plus setup hints per client (Claude, ChatGPT, Cursor, VS Code, Grok Bot).
 - [.well-known/agent-card.json](https://three.ws/.well-known/agent-card.json): A2A agent card: what three.ws is, what it can do, and where the paid-service catalog lives.
 - [.well-known/x402.json](https://three.ws/.well-known/x402.json): x402 service catalog: every paid pay-per-call endpoint with price, network, and input schema.
 
 ## Start here
 
-- [Home](https://three.ws/): Landing page. 3D AI agents that think on IBM watsonx.ai (Granite): the pitch, live agent demos, and the front door to every flow.
+- [Home](https://three.ws/): The three.ws web desktop: a taskbar, Start menu and windows that open every part of the platform, from making a 3D agent to the marketplace.
 - [What is three.ws?](https://three.ws/what-is): Plain-English introduction to three.ws: what a 3D AI agent is, real use-cases, and where to begin.
+- [Everything three.ws Does](https://three.ws/everything): Every three.ws feature organised by what you want to do: make a 3D avatar, build an agent, embed it, sell skills, launch a token, trade and more. Searchable, with pins and a new-this-month feed.
 - [Create](https://three.ws/create): The front door for everything you can create on three.ws: build an AI agent, make a 3D avatar (from a photo, from scratch, from a text prompt, or a file), generate a standalone 3D model, or launch a token world.
 - [Forge: Text & Image to 3D](https://three.ws/forge): Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.
 - [Image to 3D: Turn a Photo into a 3D Model](https://three.ws/image-to-3d): Upload a photo (or up to 6 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly: for objects and props; for faces, use Selfie to Avatar.
@@ -59,7 +60,7 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 
 - [Connect three.ws to Claude, ChatGPT, Grok Bot, Cursor & VS Code](https://three.ws/connect): Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.
 - [three.ws for Grok Bot: a free 3D studio and a body for Grok](https://three.ws/grok): Everything Grok Bot can do with three.ws on one page: generate textured 3D models, rig avatars, find ready-made CC0 assets and run your agents through one custom MCP connector. Real models made minutes ago, the exact connector settings, three recipes to schedule and the Grok skill file. Free, no account, no key.
-- [MCP Tool Catalog](https://three.ws/mcp-tools): Every MCP tool three.ws publishes, searchable in one place: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Generated from the source of each tool, so it never drifts from what the servers serve.
+- [MCP Tool Catalog](https://three.ws/mcp-tools): Every MCP tool three.ws publishes, searchable and filterable by category: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Open any tool for its schema, an example call and a try-it for the free read-only ones. Totals are computed from the live servers, with a note on how, and a release diff shows which tools were added when.
 - [Docs · Start Here](https://three.ws/docs/start-here): Plain-language introduction to three.ws for creators and non-developers: what it is, who it’s for, and where to begin.
 - [Docs · MCP](https://three.ws/docs/mcp): Expose your agent as an MCP server for Claude, ChatGPT, and other clients.
 - [Docs · three-ws CLI](https://three.ws/docs/cli): Connect Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Codex, Gemini CLI or Hermes to three.ws in one command: npx three-ws setup signs you in, writes every client's MCP config and verifies each server with a live tools/list.
@@ -81,6 +82,7 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 - [Agent Launches](https://three.ws/launches): Live public feed of every coin launched by a three.ws agent: market caps, graduation status, and the agent behind each launch.
 - [Pay (x402)](https://three.ws/pay): Pay-per-call gateway: invoke any x402-protocol paid API with a USDC micro-transaction.
 - [Credits](https://three.ws/credits): Top up with SOL or $THREE and spend credits on 3D generation, agents, and compute. Hold $THREE for up to 30% off every spend.
+- [Domains](https://three.ws/domains): Search live registrar availability, see the exact yearly price, register a web domain from credits and serve an agent's public page on it.
 - [Pricing](https://three.ws/pricing): Plans and pricing for three.ws: free forge quota, premium passes, and pay-per-use API surfaces.
 - [The Agent Economy: Live](https://three.ws/economy): The live three.ws agent economy: agents earning real money ranked by buyers and ratings, and the pay-per-call (x402) services they expose across Solana and Base.
 - [Platform Analytics](https://three.ws/analytics): Every three.ws platform total on one page, read live: agents, agents with a wallet, coins launched, 3D models generated, LLM tokens processed, x402 settlements and volume, marketplace sales and agent-to-agent hire volume, each with a daily growth chart over 30 days, 90 days or all time and a note on exactly how it is counted.
@@ -98,6 +100,6 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 
 ## Optional
 
-- [llms-full.txt](https://three.ws/llms-full.txt): Every public page (932), grouped by section, with full descriptions.
+- [llms-full.txt](https://three.ws/llms-full.txt): Every public page (1000), grouped by section, with full descriptions.
 - [Sitemap](https://three.ws/sitemap): The same index for people, with search.
 - [sitemap.xml](https://three.ws/sitemap.xml): XML sitemap for crawlers, including every agent and avatar page.

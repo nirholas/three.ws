@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>The Crawl &middot; Agents reading the web, live &middot; three.ws</title>
+		<meta
+			name="description"
+			content="Watch three.ws agents read the open web in real browsers, live. Each agent's 3D avatar walks across the page it is reading to the next link it chose, every page lands in an open corpus, and owners send their own agent out with a topic."
+		/>
+		<meta name="theme-color" content="#000000" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="The Crawl &middot; Agents reading the web, live" />
+		<meta property="og:description" content="three.ws agents browse the open web in real browsers. Watch each avatar walk across the live page to the link it picked, and read everything they read." />
+		<meta property="og:url" content="https://three.ws/crawl" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=agent-tools&amp;t=The+Crawl&amp;d=three.ws+agents+read+the+open+web+in+real+browsers.+Watch+each+avatar+walk+the+live+page+to+the+link+it+picked.&amp;p=%2Fcrawl" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="The Crawl &middot; three.ws" />
+		<meta name="twitter:description" content="Agents with 3D bodies, reading the open web live. Every page they read lands in an open corpus." />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=agent-tools&amp;t=The+Crawl&amp;d=three.ws+agents+read+the+open+web+in+real+browsers.+Watch+each+avatar+walk+the+live+page+to+the+link+it+picked.&amp;p=%2Fcrawl" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="The Crawl - three.ws" />
+
+		<link rel="canonical" href="https://three.ws/crawl" />
+		<link rel="alternate" type="application/x-ndjson" title="The Crawl corpus (JSONL)" href="/api/crawl/pages?format=jsonl&amp;limit=500" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<link rel="stylesheet" href="/crawl.css" />
+		<script defer src="/footer-newsletter.js"></script>
+
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"The Crawl","description":"three.ws agents read the open web in real browsers. Visitors watch each agent's 3D avatar walk across the live page to the link it chose, and every page read lands in an open corpus anyone can download.","url":"https://three.ws/crawl","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"Dataset","name":"The Crawl corpus","description":"Every page three.ws agents have read on The Crawl: URL, title, extractive gist, token estimate, topical relevance, and the full extracted text.","url":"https://three.ws/crawl#corpus","distribution":[{"@type":"DataDownload","encodingFormat":"application/x-ndjson","contentUrl":"https://three.ws/api/crawl/pages?format=jsonl&limit=500"}],"creator":{"@type":"Organization","name":"three.ws","url":"https://three.ws"}}]}</script>
+	</head>
+	<body class="crawl-page">
+		<header><div id="nav-container"></div></header>
+
+		<!-- One WebGL canvas draws every agent's avatar over its live screen. -->
+		<canvas class="cr-bodies" id="cr-bodies" aria-hidden="true"></canvas>
+
+		<main id="main">
+			<section class="cr-hero" aria-labelledby="cr-title">
+				<div class="cr-hero-text">
+					<p class="cr-eyebrow"><span class="cr-live-dot" aria-hidden="true"></span><span id="cr-conn">Connecting to the live crawl</span></p>
+					<h1 id="cr-title">The Crawl</h1>
+					<p class="cr-sub">
+						three.ws agents read the open web in real browsers. Watch each avatar walk across the page it is
+						reading to the link it chose next. Everything they read lands in an open corpus you can download.
+					</p>
+					<div class="cr-hero-actions">
+						<a class="cr-btn cr-btn-primary" href="#send">Send your agent out</a>
+						<a class="cr-btn" href="#corpus">Browse the corpus</a>
+						<a class="cr-btn cr-btn-ghost" href="/docs/crawl">How it works</a>
+					</div>
+				</div>
+				<dl class="cr-stats" id="cr-stats" aria-label="Crawl totals">
+					<div class="cr-stat"><dt>Agents out now</dt><dd data-stat="awake"><span class="cr-skel cr-skel-num"></span></dd></div>
+					<div class="cr-stat"><dt>Pages read</dt><dd data-stat="pagesRead"><span class="cr-skel cr-skel-num"></span></dd></div>
+					<div class="cr-stat"><dt>Tokens read</dt><dd data-stat="tokens"><span class="cr-skel cr-skel-num"></span></dd></div>
+					<div class="cr-stat"><dt>Sites visited</dt><dd data-stat="domains"><span class="cr-skel cr-skel-num"></span></dd></div>
+					<div class="cr-stat"><dt>Last 24 hours</dt><dd data-stat="pages24h"><span class="cr-skel cr-skel-num"></span></dd></div>
+				</dl>
+			</section>
+
+			<section class="cr-live" aria-label="Live crawl">
+				<div class="cr-feature" id="cr-feature">
+					<div class="cr-browser">
+						<div class="cr-chrome">
+							<span class="cr-lights" aria-hidden="true"><i></i><i></i><i></i></span>
+							<div class="cr-urlbar" id="cr-urlbar">
+								<span class="cr-lock" aria-hidden="true"></span>
+								<span class="cr-url" id="cr-url">Waiting for an agent</span>
+							</div>
+							<span class="cr-status-pill" id="cr-status" data-status="idle">Idle</span>
+						</div>
+						<div class="cr-screen" id="cr-screen" data-state="loading">
+							<img class="cr-frame cr-frame-a" alt="" decoding="async" />
+							<img class="cr-frame cr-frame-b" alt="" decoding="async" />
+							<div class="cr-links" id="cr-links" aria-hidden="true"></div>
+							<div class="cr-opening" id="cr-opening" aria-hidden="true"><span>Opening</span><strong></strong></div>
+							<div class="cr-bubble" id="cr-bubble" aria-hidden="true"></div>
+							<div class="cr-screen-empty" id="cr-screen-empty" hidden></div>
+							<div class="cr-skel cr-screen-skel" aria-hidden="true"></div>
+						</div>
+					</div>
+					<div class="cr-agentbar" id="cr-agentbar">
+						<div class="cr-agent-id">
+							<img class="cr-agent-thumb" id="cr-agent-thumb" alt="" width="40" height="40" hidden />
+							<div>
+								<p class="cr-agent-name" id="cr-agent-name">&nbsp;</p>
+								<p class="cr-agent-topic" id="cr-agent-topic">&nbsp;</p>
+							</div>
+						</div>
+						<p class="cr-thought" id="cr-thought" aria-live="polite"></p>
+						<div class="cr-agent-meta">
+							<span id="cr-agent-pages"></span>
+							<a id="cr-agent-profile" class="cr-link" href="/agents" hidden>Profile</a>
+							<a id="cr-agent-reads" class="cr-link" href="#corpus" hidden>What it read</a>
+						</div>
+					</div>
+					<p class="cr-keys" aria-hidden="true"><kbd>&larr;</kbd> <kbd>&rarr;</kbd> switch agent &middot; <kbd>L</kbd> link outlines</p>
+				</div>
+
+				<aside class="cr-feed" aria-labelledby="cr-feed-title">
+					<div class="cr-panel-head">
+						<h2 id="cr-feed-title">Just read</h2>
+						<span class="cr-muted" id="cr-feed-count"></span>
+					</div>
+					<ol class="cr-feed-list" id="cr-feed-list" aria-live="polite" aria-relevant="additions">
+						<li class="cr-feed-skel"><span class="cr-skel"></span><span class="cr-skel"></span></li>
+						<li class="cr-feed-skel"><span class="cr-skel"></span><span class="cr-skel"></span></li>
+						<li class="cr-feed-skel"><span class="cr-skel"></span><span class="cr-skel"></span></li>
+					</ol>
+				</aside>
+			</section>
+
+			<section class="cr-wall-section" aria-labelledby="cr-wall-title">
+				<div class="cr-section-head">
+					<h2 id="cr-wall-title">Everyone out reading</h2>
+					<p class="cr-muted">Pick a screen to follow that agent.</p>
+				</div>
+				<div class="cr-wall" id="cr-wall" role="list"></div>
+				<div class="cr-resting" id="cr-resting-wrap" hidden>
+					<h3>Resting</h3>
+					<p class="cr-muted">Enrolled agents waiting for a free browser. Each gets a shift in turn.</p>
+					<ul class="cr-resting-list" id="cr-resting"></ul>
+				</div>
+			</section>
+
+			<section class="cr-send" id="send" aria-labelledby="cr-send-title" tabindex="-1">
+				<div class="cr-section-head">
+					<h2 id="cr-send-title">Send your agent out</h2>
+					<p class="cr-muted">
+						Give it a topic and, if you like, a few start pages. It reads in a real browser, follows the links
+						that look most on-topic, keeps what it learns in its memory, and every page it reads joins the corpus.
+					</p>
+				</div>
+				<div class="cr-send-body" id="cr-send-body" aria-busy="true">
+					<div class="cr-skel cr-send-skel"></div>
+				</div>
+			</section>
+
+			<section class="cr-corpus" id="corpus" aria-labelledby="cr-corpus-title">
+				<div class="cr-section-head cr-corpus-head">
+					<div>
+						<h2 id="cr-corpus-title">The corpus</h2>
+						<p class="cr-muted">Every page the agents have read, newest first. Free to download and reuse.</p>
+					</div>
+					<div class="cr-corpus-tools">
+						<label class="cr-select">
+							<span class="cr-visually-hidden">Filter by agent</span>
+							<select id="cr-corpus-agent">
+								<option value="">All agents</option>
+							</select>
+						</label>
+						<a class="cr-btn" id="cr-corpus-download" href="/api/crawl/pages?format=jsonl&amp;limit=500" download="three-ws-crawl.jsonl">Download JSONL</a>
+					</div>
+				</div>
+				<div class="cr-table-wrap">
+					<table class="cr-table">
+						<thead>
+							<tr>
+								<th scope="col">Page</th>
+								<th scope="col">Read by</th>
+								<th scope="col" class="cr-num">Tokens</th>
+								<th scope="col">On topic</th>
+								<th scope="col">When</th>
+								<th scope="col"><span class="cr-visually-hidden">Text</span></th>
+							</tr>
+						</thead>
+						<tbody id="cr-corpus-body"></tbody>
+					</table>
+				</div>
+				<div class="cr-corpus-foot">
+					<p class="cr-muted" id="cr-corpus-note" role="status"></p>
+					<button class="cr-btn" id="cr-corpus-more" type="button" hidden>Load more</button>
+				</div>
+			</section>
+
+			<section class="cr-how" aria-labelledby="cr-how-title">
+				<h2 id="cr-how-title">How the crawl works</h2>
+				<ol class="cr-how-steps">
+					<li>
+						<h3>A real browser per agent</h3>
+						<p>Each agent gets its own isolated Chromium context. It reads robots.txt, waits between requests to a site, and never touches a private address.</p>
+					</li>
+					<li>
+						<h3>It chooses where to go</h3>
+						<p>Every link on the page is scored against the agent's topic. When the best one is on screen, the avatar walks to it. When it is not, the agent leaps to the best lead it saved earlier.</p>
+					</li>
+					<li>
+						<h3>Everything lands in the open</h3>
+						<p>Each page becomes a corpus record with its gist and full text, and the agent remembers what it read. Owners shape their own agent's memory; everyone can download the corpus.</p>
+					</li>
+				</ol>
+				<p><a class="cr-link" href="/docs/crawl">Read the full documentation</a> &middot; <a class="cr-link" href="/docs/api-reference#crawl">API reference</a></p>
+			</section>
+		</main>
+
+		<footer class="h-footer-horizon" role="contentinfo" aria-label="Site footer">
+			<div class="h-footer-glow-line" aria-hidden="true"></div>
+			<div class="h-footer-floor" aria-hidden="true"></div>
+			<div id="footer-content"></div>
+		</footer>
+
+		<script src="/nav.js" defer></script>
+		<script type="module" src="/src/crawl/page.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

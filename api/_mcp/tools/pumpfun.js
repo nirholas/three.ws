@@ -62,7 +62,7 @@ export const toolDefs = [
 		title: 'Pump.fun token intel',
 		annotations: LIVE_FEED_ANNOTATIONS,
 		description:
-			'Full intel on a pump.fun token: graduation status, bonding-curve progress, creator profile, top holders, volume, bundle detection, and trust signals.',
+			'Full intel on a pump.fun token: graduation status, bonding-curve progress, creator profile, top holders, volume, bundle detection, and trust signals. Use this before buying or discussing one pump.fun token; to vet the wallet that launched it call pumpfun_creator_intel.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -81,7 +81,7 @@ export const toolDefs = [
 		title: 'Pump.fun creator intel',
 		annotations: LIVE_FEED_ANNOTATIONS,
 		description:
-			'Reputation profile for a pump.fun creator wallet: prior launches, graduation rate, claim activity, and behavioural trust signals.',
+			'Reputation profile for a pump.fun creator wallet: prior launches, graduation rate, claim activity, and behavioural trust signals. Use this to judge whether a launcher has a track record of real launches before trusting a new coin from that wallet.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -100,7 +100,7 @@ export const toolDefs = [
 		title: 'Recent pump.fun graduations',
 		annotations: LIVE_FEED_ANNOTATIONS,
 		description:
-			'Tokens that recently graduated from the bonding curve to PumpAMM, with creator + holder analysis.',
+			'Tokens that recently graduated from the bonding curve to PumpAMM, with creator + holder analysis. Use this to see which pump.fun coins just left the bonding curve; for a deep read on one of them call pumpfun_token_intel.',
 		inputSchema: {
 			type: 'object',
 			properties: {

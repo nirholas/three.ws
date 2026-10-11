@@ -4,7 +4,9 @@
 // agent on the live x402 network:
 //   * wallet_status   what the agent's wallet holds and is allowed to spend
 //   * find_services   discover paid services it can call
-//   * pay_quote        read an endpoint's price and pay-to without paying
+//   * pay_quote       price one paid endpoint without paying: the confirmation
+//                       table (recipient, amount, token, chain) and anything
+//                       that would block the payment
 //   * pay_and_call     pay an x402 endpoint in USDC from the user's own wallet
 //                       and return the result, bounded by spending caps
 //
@@ -12,6 +14,10 @@
 // the agent spends THAT user's wallet, and it is hard-gated by
 // THREEWS_AGENT_PAY_ENABLED on the server. When spend is disabled it degrades
 // to returning the exact payment requirements + a pay link rather than failing.
+// The tool policy (@three-ws/mcp-policy, row `pay_and_call`) also keeps it off
+// until the session enables the x402 group, and then refuses it without the
+// quote_id pay_quote returned for the same resource_url plus
+// confirm_payment: true, so the user sees the price before anything is signed.
 import { limits } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
@@ -24,6 +30,8 @@ import {
 	resolveSpendEnabled,
 } from '../_lib/x402-user-payer.js';
 import { getOrCreateAgentSolanaWallet, getSolanaAddressBalances } from '../_lib/agent-wallet.js';
+import { linkedAccountsFor } from '../auth/linked-accounts.js';
+import { ExternalWalletError, issueWalletChallenge, verifyWalletProof, setPayoutWallet } from '../_lib/account-link/external-wallets.js';
 import {
 	createPaidService,
 	validateTargetUrl,
@@ -34,7 +42,7 @@ import {
 	MonetizeError,
 } from '../_lib/agent-paid-services.js';
 import { currentSignatureFor, agreementRequirement } from '../_lib/real-funds-agreement.js';
-import { fetchSafePublicUrlPinned, SsrfBlockedError } from '../_lib/ssrf-guard.js';
+import { probePrice, selectRail } from '../_lib/pay/probe.js';
 import { readResourceToolResult } from '../_mcp/resources.js';
 
 function rpcError(code, message, data) {
@@ -101,67 +109,6 @@ async function agreementRequired(userId, resource) {
 			},
 		],
 		structuredContent: { paid: false, reason: 'risk_ack_required', resource, ...requirement },
-		isError: true,
-	};
-}
-
-// ── pay_quote: read an x402 challenge without paying ─────────────────────────
-// pay_and_call is a financial tool: the tool policy (@three-ws/mcp-policy) only
-// lets it run with a fresh pay_quote preview for the same resource_url. The
-// quote is one unpaid request to the endpoint; its 402 challenge names every
-// accepted network, asset, price and pay-to address, which is what the user
-// approves before any USDC moves. The probe is DNS-resolved, IP-pinned and
-// size-capped, so a caller cannot aim it at an internal address.
-const QUOTE_TIMEOUT_MS = 15_000;
-const QUOTE_MAX_BYTES = 256 * 1024;
-
-function parseJsonText(text) {
-	try {
-		return text ? JSON.parse(text) : null;
-	} catch {
-		return null;
-	}
-}
-
-// x402 v2 servers carry the challenge in a base64 `payment-required` header;
-// v1 servers put it in the 402 body. Read both.
-function readChallenge(headers, bodyText) {
-	const fromBody = parseJsonText(bodyText);
-	if (Array.isArray(fromBody?.accepts)) return fromBody;
-	const header = headers.get('payment-required');
-	if (!header) return null;
-	try {
-		const decoded = JSON.parse(Buffer.from(header, 'base64').toString('utf8'));
-		return Array.isArray(decoded?.accepts) ? decoded : null;
-	} catch {
-		return null;
-	}
-}
-
-// One accepts[] entry in the shape a person approves. v2 names the atomic charge
-// `amount`, v1 `maxAmountRequired`, and some servers a bare `price`.
-function describeAccept(a) {
-	const atomic = a.amount ?? a.maxAmountRequired ?? a.price ?? null;
-	const decimals = Number(a.extra?.decimals);
-	const assetName = String(a.extra?.name ?? '').trim();
-	const display =
-		atomic != null && Number.isFinite(decimals)
-			? `${Number(atomic) / 10 ** decimals}${assetName ? ` ${assetName}` : ''}`
-			: null;
-	return {
-		scheme: a.scheme ?? null,
-		network: a.network ?? null,
-		price_atomic: atomic != null ? String(atomic) : null,
-		price_display: display,
-		asset: a.asset ?? a.extra?.asset ?? null,
-		pay_to: a.payTo ?? null,
-	};
-}
-
-function quoteFailed(reason, text, resource) {
-	return {
-		content: [{ type: 'text', text }],
-		structuredContent: { ok: false, reason, resource },
 		isError: true,
 	};
 }
@@ -234,6 +181,50 @@ async function requestDevnetAirdrop(address) {
 	}
 }
 
+function chainLabel(network) {
+	if (typeof network !== 'string') return 'unknown chain';
+	if (network.startsWith('solana')) return `Solana (${network})`;
+	if (network === 'eip155:8453' || network === 'base') return `Base (${network})`;
+	return network;
+}
+
+function quoteRefusal(resource, reason, text, extra = {}) {
+	return {
+		content: [{ type: 'text', text: `${text} Nothing was paid.` }],
+		structuredContent: { ok: false, reason, resource, ...extra },
+		isError: true,
+	};
+}
+
+// What would stop pay_and_call from settling this price automatically. `hard`
+// blockers make pay_and_call fail after the user approves, so the quote itself
+// fails and no preview id is issued for a payment that cannot happen. A signed-
+// out caller or a server with spend off is not a hard blocker: pay_and_call
+// answers both with the manual pay link, which the quote already carries.
+function payBlockers({ auth, spendEnabled, wallet, priceUsd, perCallLimit }) {
+	if (!auth.userId) {
+		return [{ code: 'auth_required', hard: false, message: 'Sign in to three.ws to pay from your agent wallet; until then use the pay link.' }];
+	}
+	if (!spendEnabled) {
+		return [{ code: 'spend_disabled', hard: false, message: 'Autonomous spending is not enabled on this server; use the pay link to pay manually.' }];
+	}
+	const out = [];
+	if (!hasScope(auth.scope, 'wallet:write')) {
+		out.push({ code: 'insufficient_scope', hard: true, message: 'This connection lacks the wallet:write scope. Re-authorize with it granted.' });
+	}
+	if (wallet && !wallet.provisioned) {
+		out.push({ code: 'no_wallet', hard: true, message: 'No agent wallet is provisioned for this account. Run provision_wallet first.' });
+	}
+	if (perCallLimit != null && priceUsd > perCallLimit) {
+		out.push({ code: 'over_per_call_limit', hard: true, message: `The price $${priceUsd} is above the per-call limit of $${perCallLimit}.` });
+	}
+	const usdc = wallet?.balances?.usdc;
+	if (typeof usdc === 'number' && priceUsd > usdc) {
+		out.push({ code: 'insufficient_usdc', hard: true, message: `The wallet holds ${usdc} USDC, less than the $${priceUsd} price.` });
+	}
+	return out;
+}
+
 export const toolDefs = [
 	{
 		name: 'wallet_status',
@@ -294,7 +285,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			'Search the live x402 facilitator network for paid services (HTTP APIs and MCP tools). Returns each match with its price and resource URL. Feed a resource into pay_and_call to actually use it.',
+			'Search the live x402 facilitator network for paid services (HTTP APIs and MCP tools). Returns each match with its price and resource URL. Use this when a task needs a paid API or tool you do not already have; to use a match, price it with pay_quote, show the user the result, then pay with pay_and_call.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -348,26 +339,32 @@ export const toolDefs = [
 	},
 	{
 		name: 'pay_quote',
-		title: 'Quote an x402 service before paying',
-		// One unpaid request that reads the payment challenge: no funds move.
+		title: 'Price an x402 payment without paying',
+		// Probes the endpoint for its 402 challenge and reads the wallet; never
+		// signs or moves anything. Prices can change between calls.
 		annotations: {
 			readOnlyHint: true,
 			destructiveHint: false,
-			idempotentHint: true,
+			idempotentHint: false,
 			openWorldHint: true,
 		},
 		description:
-			'Read what a paid x402 endpoint charges WITHOUT paying: every accepted network, asset, price and pay-to address from its 402 challenge. Show the user this quote and get a clear yes before pay_and_call; pay_and_call needs the quote_id this returns for the same resource_url.',
+			"Price a paid x402 endpoint WITHOUT paying: asks the resource for its payment challenge and returns the confirmation table pay_and_call would settle from the signed-in user's agent wallet (recipient, amount, token, chain), the per-call limit that applies, the wallet balance, and anything that would block the payment. Use this before every pay_and_call: show the table to the user; pay_and_call needs the quote_id this returns, for the same resource_url, and confirm_payment: true after a clear yes.",
 		inputSchema: {
 			type: 'object',
 			properties: {
 				resource_url: {
 					type: 'string',
 					format: 'uri',
-					description: 'The x402 endpoint to quote.',
+					description: 'The x402 endpoint you intend to pay with pay_and_call.',
 				},
 				method: { type: 'string', enum: ['GET', 'POST'], default: 'GET' },
-				body: { type: 'object', description: 'JSON body for a POST endpoint.' },
+				body: { type: 'object', description: 'JSON body for POST requests, as pay_and_call will send it.' },
+				max_usd: {
+					type: 'number',
+					minimum: 0,
+					description: 'The ceiling you will pass to pay_and_call, so the quote checks the price against it.',
+				},
 			},
 			required: ['resource_url'],
 			additionalProperties: false,
@@ -375,84 +372,80 @@ export const toolDefs = [
 		async handler(args, auth) {
 			await enforce(limits.mcpAgent, auth);
 			const resource = args.resource_url;
-			const method = args.method === 'POST' ? 'POST' : 'GET';
+			const method = args.method || 'GET';
 
-			let res;
-			try {
-				res = await fetchSafePublicUrlPinned(
+			const probe = await probePrice(resource, { method, body: args.body ?? null });
+			if (probe.kind === 'error') {
+				return quoteRefusal(resource, probe.code, `Could not price ${resource}: ${probe.message}.`);
+			}
+			// The payer signs Solana exact-scheme payments only, so the Solana rail
+			// is the one this quote has to describe.
+			const rail = probe.kind === 'priced' ? selectRail(probe.rails, 'solana') : null;
+			if (probe.kind === 'priced' && !rail) {
+				const offered = [...new Set(probe.rails.map((r) => r.network).filter(Boolean))];
+				return quoteRefusal(
 					resource,
-					{
-						method,
-						headers: {
-							accept: 'application/json',
-							...(args.body != null ? { 'content-type': 'application/json' } : {}),
-						},
-						...(args.body != null ? { body: JSON.stringify(args.body) } : {}),
-						signal: AbortSignal.timeout(QUOTE_TIMEOUT_MS),
-					},
-					{ maxBytes: QUOTE_MAX_BYTES },
-				);
-			} catch (err) {
-				if (err instanceof SsrfBlockedError) {
-					return quoteFailed('blocked_url', 'That resource URL is not a permitted public https endpoint.', resource);
-				}
-				const timedOut = err?.name === 'TimeoutError' || err?.name === 'AbortError';
-				return quoteFailed(
-					timedOut ? 'timeout' : 'unreachable',
-					timedOut
-						? `${resource} did not answer within ${QUOTE_TIMEOUT_MS / 1000} seconds.`
-						: `Could not reach ${resource}: ${err?.message || err}`,
-					resource,
+					'no_solana_rail',
+					`${resource} does not accept payment on Solana (it offers ${offered.join(', ') || 'no readable network'}), and the three.ws agent wallet pays on Solana.`,
+					{ networks: offered },
 				);
 			}
-
-			const bodyText = await res.text();
-			if (res.status !== 402) {
-				return {
-					content: [
-						{
-							type: 'text',
-							text: `${resource} answered ${res.status} without asking for payment, so pay_and_call would call it for free.`,
-						},
-					],
-					structuredContent: { ok: true, resource, method, paywalled: false, status: res.status, accepts: [] },
-				};
+			if (rail && rail.amount_usd == null) {
+				return quoteRefusal(resource, 'unreadable_price', `${resource} sent a payment challenge whose amount could not be read.`);
 			}
+			const priceUsd = rail ? rail.amount_usd : 0;
 
-			const challenge = readChallenge(res.headers, bodyText);
-			if (!challenge) {
-				return quoteFailed(
-					'invalid_challenge',
-					`${resource} answered 402 but sent no readable x402 payment requirements.`,
-					resource,
+			const canReadWallet =
+				Boolean(auth.userId) && (hasScope(auth.scope, 'wallet:read') || hasScope(auth.scope, 'wallet:write'));
+			const wallet = canReadWallet ? await getUserWalletStatus(auth.userId) : null;
+			const capPerCall = wallet?.caps?.max_per_call_usdc ?? null;
+			const callerCap = typeof args.max_usd === 'number' && args.max_usd > 0 ? args.max_usd : null;
+			const limitsKnown = [capPerCall, callerCap].filter((v) => v != null);
+			const perCallLimit = limitsKnown.length ? Math.min(...limitsKnown) : null;
+			const spendEnabled = resolveSpendEnabled();
+			const blockers = payBlockers({ auth, spendEnabled, wallet, priceUsd, perCallLimit });
+			const hard = blockers.filter((b) => b.hard);
+
+			const token = rail ? (rail.usdc ? 'USDC' : String(rail.asset ?? 'unknown token')) : null;
+			const lines = [`Payment preview for ${method} ${resource} (nothing was paid):`];
+			if (rail) {
+				lines.push(
+					`  Recipient: ${rail.pay_to ?? 'not stated by the service'}`,
+					`  Amount: ${priceUsd} ${token}`,
+					`  Token: ${token}${rail.asset ? ` (${rail.asset})` : ''}`,
+					`  Chain: ${chainLabel(rail.network)}`,
 				);
+			} else {
+				lines.push('  This endpoint did not ask for payment, so pay_and_call would call it and pay nothing.');
 			}
-			const accepts = challenge.accepts.map(describeAccept);
-			const payable = accepts.some((a) => String(a.network || '').startsWith('solana'));
-			const lines = accepts.map(
-				(a) => `- ${a.price_display ?? `${a.price_atomic ?? '?'} atomic`} on ${a.network ?? 'an unnamed network'} to ${a.pay_to ?? 'an unnamed address'}`,
-			);
+			if (wallet?.provisioned) {
+				lines.push(`  From: ${wallet.address} (${wallet.balances?.usdc ?? '?'} USDC)`);
+			}
+			if (perCallLimit != null) lines.push(`  Per-call limit: $${perCallLimit}`);
+			for (const b of blockers) lines.push(`  ${b.hard ? 'Blocked' : 'Note'}: ${b.message}`);
+			if (!auth.userId || !spendEnabled) lines.push(`  Pay manually: ${payLink(resource)}`);
+
 			return {
-				content: [
-					{
-						type: 'text',
-						text:
-							`${resource} asks for payment:\n${lines.join('\n')}\n` +
-							(payable
-								? 'Your three.ws agent wallet settles the Solana option.'
-								: 'None of these settle on Solana, so your three.ws agent wallet cannot pay this endpoint.'),
-					},
-				],
+				content: [{ type: 'text', text: lines.join('\n') }],
 				structuredContent: {
-					ok: true,
+					ok: hard.length === 0,
 					resource,
 					method,
-					paywalled: true,
-					x402_version: challenge.x402Version ?? null,
-					accepts,
-					payable_with_agent_wallet: payable,
-					pay_link: payLink(resource),
+					free: !rail,
+					recipient: rail?.pay_to ?? null,
+					amount_usd: priceUsd,
+					amount_atomics: rail?.amount_atomics ?? '0',
+					token,
+					asset: rail?.asset ?? null,
+					network: rail?.network ?? null,
+					from: wallet?.provisioned ? wallet.address : null,
+					balance_usdc: wallet?.balances?.usdc ?? null,
+					per_call_limit_usd: perCallLimit,
+					spend_enabled: spendEnabled,
+					blockers: blockers.map(({ code, message }) => ({ code, message })),
+					...(!auth.userId || !spendEnabled ? { pay_link: payLink(resource) } : {}),
 				},
+				...(hard.length ? { isError: true } : {}),
 			};
 		},
 	},
@@ -467,7 +460,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			"Call a paid x402 endpoint and settle the USDC payment automatically from the signed-in user's three.ws agent wallet, bounded by spending caps. Returns the service's response. Requires sign-in. If the per-call price exceeds max_usd (or the caps), the call is refused before any money moves.",
+			"Call a paid x402 endpoint and settle the USDC payment automatically from the signed-in user's three.ws agent wallet, bounded by spending caps. Returns the service's response. Requires sign-in. Use this after pay_quote for the same resource_url, and only once the user approves its table. If the per-call price exceeds max_usd (or the caps), the call is refused before any money moves.",
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -582,7 +575,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			'Create (or return) the custodial Solana wallet for one of your agents so it can hold and earn USDC. Idempotent: if the agent already has a wallet, its address and live SOL/USDC balances are returned unchanged. On devnet you can request a 1 SOL airdrop for testing; mainnet wallets are never airdropped. Requires sign-in; you can only provision wallets for agents on your own account.',
+			'Create (or return) the custodial Solana wallet for one of your agents so it can hold and earn USDC. Idempotent: if the agent already has a wallet, its address and live SOL/USDC balances are returned unchanged. On devnet you can request a 1 SOL airdrop for testing; mainnet wallets are never airdropped. Use this before monetize_endpoint, or whenever an agent needs an address to receive USDC. Requires sign-in; you can only provision wallets for agents on your own account.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -666,7 +659,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			"Put a price on an upstream API your agent already serves and publish it as an x402 endpoint other agents can pay to call. three.ws hosts the paywall, settles each buyer's USDC to your agent's own wallet, and proxies the call to your target_url. The listing becomes discoverable via find_services / the bazaar and callable by pay_and_call. Requires a provisioned wallet for the chosen network; run provision_wallet first if you haven't. Requires sign-in; you can only monetize agents on your own account.",
+			"Put a price on an upstream API your agent already serves and publish it as an x402 endpoint other agents can pay to call. Use this when your agent already serves an API and you want other agents to pay per call for it. three.ws hosts the paywall, settles each buyer's USDC to your agent's own wallet, and proxies the call to your target_url. The listing becomes discoverable via find_services / the bazaar and callable by pay_and_call. Requires a provisioned wallet for the chosen network; run provision_wallet first if you haven't. Requires sign-in; you can only monetize agents on your own account.",
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -825,7 +818,7 @@ export const toolDefs = [
 			openWorldHint: false,
 		},
 		description:
-			'Read a live three.ws resource by URI: three://agents/<id>/wallet (balances, spend limits, allowlist, freeze state), three://wallets (every agent wallet), three://me, three://agents, .../usage, .../runs, .../orders, .../dca, .../intents, three://launches, three://marketplace and three://x402/services. Omit uri to list every resource you can read. Set format to markdown for a readable rendering.',
+			'Read a live three.ws resource by URI: three://agents/<id>/wallet (balances, spend limits, allowlist, freeze state), three://wallets (every agent wallet), three://me, three://agents, .../usage, .../runs, .../orders, .../dca, .../intents, three://launches, three://marketplace and three://x402/services. Omit uri to list every resource you can read. Set format to markdown for a readable rendering. Use this for a one-call snapshot of account, wallet, or launch state when no dedicated tool covers it.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -841,6 +834,109 @@ export const toolDefs = [
 		},
 		async handler(args, auth, req) {
 			return readResourceToolResult('mcp-agent', args, auth, req);
+		},
+	},
+	{
+		name: 'get_linked_accounts',
+		title: 'List everything linked to the account',
+		annotations: {
+			readOnlyHint: true,
+			destructiveHint: false,
+			idempotentHint: true,
+			openWorldHint: false,
+		},
+		description:
+			"Everything attached to the signed-in user's three.ws account: sign-in methods (password, Google, Telegram), sign-in wallets, payout wallets with their status (active, cooldown with the time they take effect, or awaiting the owner's approval), devices linked with a link code (phones, desktop apps, CLIs, Telegram chats) and paired chat gateways. Read-only; addresses and ids only, never secrets. Call it before set_external_wallet to see what a change would replace.",
+		inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+		async handler(args, auth) {
+			await enforce(limits.mcpAgent, auth);
+			if (!auth.userId) return signInRequired('Sign in to three.ws to see what is linked to your account.');
+			if (!hasScope(auth.scope, 'wallet:read') && !hasScope(auth.scope, 'wallet:write') && !hasScope(auth.scope, 'agents:read')) {
+				return scopeRequired('wallet:read');
+			}
+			const linked = await linkedAccountsFor(auth.userId);
+			const lines = [
+				`Sign-in methods (${linked.sign_in.count}): ${[
+					linked.sign_in.password ? 'password' : null,
+					linked.sign_in.email_code ? 'email code' : null,
+					...linked.sign_in.identities.map((i) => `${i.provider}${i.display_name ? ` (${i.display_name})` : ''}`),
+					...linked.wallets.map((w) => `${w.chain} wallet ${w.address}`),
+				].filter(Boolean).join(', ') || 'none'}`,
+				`Payout wallets: ${linked.payout.wallets.length ? linked.payout.wallets.map((w) => `${w.chain} ${w.address}${w.agent_name ? ` for ${w.agent_name}` : ' (account default)'} [${w.status}${w.status === 'cooldown' ? ` until ${w.effective_at}` : ''}]`).join('; ') : 'none'}`,
+				`Linked devices: ${linked.devices.length ? linked.devices.map((d) => `${d.label} (${d.kind}${d.last_used_at ? `, used ${d.last_used_at}` : ''})`).join('; ') : 'none'}`,
+				`Paired chats: ${linked.chats.length ? linked.chats.map((c) => `${c.platform} ${c.chat_title || c.username || c.chat_id}`).join('; ') : 'none'}`,
+			];
+			return { content: [{ type: 'text', text: lines.join('\n') }], structuredContent: linked };
+		},
+	},
+	{
+		name: 'set_external_wallet',
+		title: 'Attach a wallet you control as a payout wallet',
+		annotations: {
+			readOnlyHint: false,
+			destructiveHint: false,
+			idempotentHint: false,
+			openWorldHint: false,
+		},
+		description:
+			"Set where an agent's earnings are paid out, to a Solana or EVM wallet the user controls, proved by a signed message. Two calls: first with chain, address and optionally agent_id to get the exact message to sign (a Sign-In with Solana or Sign-In with Ethereum message carrying a single-use nonce); then with chain, message and signature to prove it. The first payout wallet on a chain is live at once. Replacing one files an approval the owner decides from their inbox, and the new address takes effect 24 hours after approval; withdrawals and incoming payments keep the current wallet until then. Never signs anything and never moves funds. Sign-in wallets cannot be attached from here: that needs a signed-in browser session. Use this when the owner wants an agent's earnings paid out to a wallet they control.",
+		inputSchema: {
+			type: 'object',
+			properties: {
+				chain: { type: 'string', enum: ['solana', 'evm'], description: 'solana or evm (EVM payouts settle on Base).' },
+				address: { type: 'string', maxLength: 64, description: 'The wallet address. Needed for the first call.' },
+				agent_id: { type: 'string', maxLength: 64, description: 'Set the payout wallet for this agent instead of the account default.' },
+				message: { type: 'string', maxLength: 4000, description: 'The message the first call returned, signed by the wallet. Needed for the second call.' },
+				signature: { type: 'string', maxLength: 512, description: 'The signature over message: base58 for Solana, 0x hex for EVM.' },
+			},
+			required: ['chain'],
+			additionalProperties: false,
+		},
+		async handler(args, auth, req) {
+			await enforce(limits.mcpAgent, auth);
+			if (!auth.userId) return signInRequired('Sign in to three.ws to attach a wallet.');
+			if (!hasScope(auth.scope, 'wallet:write')) return scopeRequired('wallet:write');
+			const rl = await limits.externalWalletUser(auth.userId);
+			if (!rl.success) throw rpcError(-32000, 'rate_limited', { retry_after: Math.ceil((rl.reset - Date.now()) / 1000) });
+			try {
+				if (args.message && args.signature) {
+					const proof = await verifyWalletProof({ userId: auth.userId, chain: args.chain, message: args.message, signature: args.signature });
+					if (proof.role !== 'payout') {
+						return {
+							content: [{ type: 'text', text: 'That message names a sign-in wallet, which can only be attached from a signed-in browser session on three.ws.' }],
+							structuredContent: { ok: false, reason: 'session_required' },
+							isError: true,
+						};
+					}
+					const result = await setPayoutWallet({
+						userId: auth.userId, agentId: proof.agentId, chain: args.chain, address: proof.address, signatureHash: proof.signatureHash, actor: 'agent', req,
+					});
+					const text = {
+						unchanged: `${proof.address} is already the live payout wallet.`,
+						active: `Payout wallet set to ${proof.address}. It is live now.`,
+						cooldown: `Payout wallet set to ${proof.address}; it takes effect at ${result.wallet?.effective_at}.`,
+						awaiting_approval: `Approval requested: the owner decides from their three.ws inbox (request ${result.approval?.id}). Earnings keep going to ${result.previous} until they approve and the ${result.cooldown_hours}-hour cooldown runs.`,
+					}[result.outcome];
+					return { content: [{ type: 'text', text }], structuredContent: { ok: true, ...result } };
+				}
+				if (!args.address) throw rpcError(-32602, 'address is required for the first call, or message and signature for the second');
+				let agentName = null;
+				if (args.agent_id) {
+					const [agent] = await sql`select name from agent_identities where id = ${args.agent_id} and user_id = ${auth.userId} and deleted_at is null limit 1`;
+					if (!agent) return { content: [{ type: 'text', text: 'No such agent on this account.' }], structuredContent: { ok: false, reason: 'agent_not_found' }, isError: true };
+					agentName = agent.name;
+				}
+				const challenge = await issueWalletChallenge({ userId: auth.userId, chain: args.chain, address: args.address, role: 'payout', agentId: args.agent_id || null, agentName });
+				return {
+					content: [{ type: 'text', text: `Sign this message with ${challenge.address} and call set_external_wallet again with chain, message and signature before ${challenge.expires_at}:\n\n${challenge.message}` }],
+					structuredContent: { ok: true, step: 'challenge', ...challenge },
+				};
+			} catch (err) {
+				if (err instanceof ExternalWalletError) {
+					return { content: [{ type: 'text', text: err.message }], structuredContent: { ok: false, reason: err.code, ...(err.extra || {}) }, isError: true };
+				}
+				throw err;
+			}
 		},
 	},
 ];

@@ -32,15 +32,16 @@ export function ipfsGatewayUrl(cid) {
  * pinned CID takes minutes to hours to propagate across the DHT, and until it
  * does the public gateways answer 504 for a document that is perfectly pinned.
  *
- * Deliberately absent: cloudflare-ipfs.com and cf-ipfs.com (Cloudflare retired
- * both in 2024, so they fail DNS, see src/ipfs.js) and flk-ipfs.xyz (no longer
- * accepting connections). A dead host in a fallback chain is worse than no
- * fallback: it burns the retry budget and reports a network error as a miss.
+ * Deliberately absent, because a dead host in a fallback chain burns the retry
+ * budget and reports a network error as a miss: cloudflare-ipfs.com and
+ * cf-ipfs.com (retired 2024, DNS fails), flk-ipfs.xyz (DNS fails), and ipfs.io,
+ * dweb.link, w3s.link and nftstorage.link, which since Oct 2026 answer every
+ * programmatic read with 429 "switching to a service worker gateway only"
+ * (the client-side list in src/ipfs.js carries the same history).
  */
 export const IPFS_READ_GATEWAYS = [
-	'https://ipfs.io/ipfs/',
-	'https://dweb.link/ipfs/',
-	'https://w3s.link/ipfs/',
+	'https://ipfs.filebase.io/ipfs/',
+	'https://4everland.io/ipfs/',
 	'https://gateway.pinata.cloud/ipfs/',
 ];
 

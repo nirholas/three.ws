@@ -6,12 +6,12 @@
 // or a Mac script posts with, so the setup page has to be able to show it.
 
 import { z } from 'zod';
-import { getRequestUser, requestUserHasScope } from '../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
 import { getSettings, updateSettings, rotateIngestToken } from '../_lib/companion/store.js';
+import { companionCaller } from '../_lib/companion/caller.js';
 import { TTS_VOICE_IDS } from '../_lib/tts-voices.js';
 
 const patchBody = z.object({
@@ -64,11 +64,8 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,PATCH,POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'PATCH', 'POST'])) return;
 
-	const user = await getRequestUser(req, res);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
-	// Private messages and the bridge token live behind this surface, so a
-	// bearer needs the account-level profile scope, not just any grant.
-	if (!requestUserHasScope(user, 'profile')) return error(res, 403, 'insufficient_scope', 'this token needs the profile scope');
+	const user = await companionCaller(req, res);
+	if (!user) return;
 
 	if (req.method === 'GET') {
 		const rl = await limits.companionRead(user.id);

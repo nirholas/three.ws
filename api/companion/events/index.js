@@ -6,20 +6,19 @@
 //   pending=1               only what has not been delivered or dismissed
 //   min_importance=<0-100>  floor, for the "only the loud ones" view
 
-import { getRequestUser, requestUserHasScope } from '../../_lib/auth.js';
-import { cors, json, method, wrap, error, rateLimited } from '../../_lib/http.js';
+import { cors, json, method, wrap, rateLimited } from '../../_lib/http.js';
 import { limits } from '../../_lib/rate-limit.js';
 import { listEvents, getSettings } from '../../_lib/companion/store.js';
+import { companionCaller } from '../../_lib/companion/caller.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const user = await getRequestUser(req, res);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
-	// Private messages and the bridge token live behind this surface, so a
-	// bearer needs the account-level profile scope, not just any grant.
-	if (!requestUserHasScope(user, 'profile')) return error(res, 403, 'insufficient_scope', 'this token needs the profile scope');
+	// The bridge token reaches this route: it is the credential the desktop app,
+	// the CLI and the MCP server hold. It resolves to its owner only.
+	const user = await companionCaller(req, res, { bridge: true });
+	if (!user) return;
 
 	const rl = await limits.companionRead(user.id);
 	if (!rl.success) return rateLimited(res, rl);

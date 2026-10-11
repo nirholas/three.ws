@@ -105,6 +105,22 @@ def _prefs(context):
 
 # -- scene properties ---------------------------------------------------------
 
+_BACKEND_LABELS = {
+    "trellis2": "TRELLIS.2 (free)",
+    "hunyuan3d": "Hunyuan3D (free)",
+    "nvidia": "TRELLIS on NVIDIA (free)",
+    "trellis_selfhost": "TRELLIS self-host (free)",
+    "huggingface": "Hugging Face Spaces (free)",
+    "trellis": "TRELLIS",
+    "triposg": "TripoSG (sketch)",
+    "meshy": "Meshy (your key)",
+    "tripo": "Tripo (your key)",
+    "rodin": "Rodin (your key)",
+    "stability": "Stable Fast 3D (your key)",
+    "replicate_byok": "Replicate (your key)",
+}
+
+
 def _enum(items_tuple, labels=None):
     labels = labels or {}
     return [(v, labels.get(v, v.replace("_", " ").title()), "") for v in items_tuple]
@@ -142,7 +158,7 @@ class ThreeWSProps(PropertyGroup):
     backend: EnumProperty(
         name="Backend",
         items=[("auto", "Auto", "Let three.ws pick the default for the pipeline")]
-        + _enum(BACKENDS, {"trellis": "TRELLIS", "meshy": "Meshy", "tripo": "Tripo", "hunyuan3d": "Hunyuan3D"}),
+        + _enum(BACKENDS, _BACKEND_LABELS),
         default="auto",
     )
     aspect_ratio: EnumProperty(

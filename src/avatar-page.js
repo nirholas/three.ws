@@ -161,6 +161,10 @@ const MODEL_STORAGE_KEY = 'avatar_chat_model_v1';
 // ── Init ──────────────────────────────────────────────────────────────
 
 async function init() {
+	// A working share link from the first paint: the named one below replaces it
+	// once the entity resolves, and a page whose entity never resolves still has
+	// a button that goes somewhere.
+	setShareXHref('Check this out on three.ws');
 	({ agent, avatar } = await resolveEntity(entityId));
 	avatarId = avatar.id || '';
 	viewerOwns = mode === 'agent' ? !!agent.is_owner : !!avatar.owner_id;
@@ -794,6 +798,11 @@ function renderShell(glbUrl) {
 						<div class="av-list-loading">Loading plugins…</div>
 					</div>
 				</div>
+				${mode === 'agent' && viewerOwns ? `
+				<div class="av-panel" data-panel="runs" id="av-panel-runs" role="tabpanel" aria-labelledby="av-tab-runs" tabindex="0">
+					<div id="av-runs-root"></div>
+				</div>
+				` : ''}
 				<div class="av-panel" data-panel="embed" id="av-panel-embed" role="tabpanel" aria-labelledby="av-tab-embed" tabindex="0">
 					${renderEmbedPanel(glbUrl)}
 				</div>
@@ -1112,7 +1121,7 @@ function openDownloadMenu(ev) {
 		</button>
 		<button type="button" role="menuitem" data-format="vrm">
 			<strong>VRM</strong>
-			<span>VRChat, Resonite, Hubs, VTube Studio</span>
+			<span>Warudo, VNyan, Resonite, VRChat via Unity</span>
 		</button>
 		<button type="button" role="menuitem" data-format="usdz">
 			<strong>USDZ</strong>
@@ -1347,6 +1356,8 @@ function tabList() {
 		...(avatarId ? [{ id: 'pose', label: 'Pose' }] : []),
 		{ id: 'skills', label: mode === 'agent' ? 'Capabilities' : 'Skills' },
 		{ id: 'plugins', label: 'Plugins' },
+		// Owner-only replay of the agent's autonomous runs (src/agent-run-replay.js).
+		...(mode === 'agent' && viewerOwns ? [{ id: 'runs', label: 'Runs' }] : []),
 		{ id: 'embed', label: 'Embed' },
 	];
 }
@@ -1379,7 +1390,35 @@ function activateTab(tab, { focus = false, push = true } = {}) {
 	// enter/leave pose mode correctly too.
 	if (tab === 'pose') enterPoseMode();
 	else leavePoseMode();
+	if (tab === 'runs') mountRunsTab();
 	return true;
+}
+
+// The Runs tab loads its module on first open, so visitors and owners who
+// never look at runs pay nothing for it.
+let runsTab = null;
+async function mountRunsTab() {
+	if (runsTab) return;
+	const root = $('av-runs-root');
+	if (!root) return;
+	runsTab = 'loading';
+	try {
+		const { mountRunReplay } = await import('./agent-run-replay.js');
+		runsTab = mountRunReplay(root, {
+			agentId: agent?.id || entityId,
+			agentName: agent?.name || avatar?.name,
+			initialRunId: params.get('run'),
+		});
+	} catch (err) {
+		runsTab = null;
+		log.error('[avatar-page] runs tab failed to load', err);
+		root.innerHTML = errorStateHTML({
+			title: 'Could not open runs',
+			body: 'The run viewer did not load. Check your connection and reopen this tab.',
+			actions: [{ label: 'Retry', id: 'runs-retry', primary: true }],
+		});
+		root.querySelector('[data-sk-action="runs-retry"]')?.addEventListener('click', mountRunsTab, { once: true });
+	}
 }
 
 // One URL per tab, on the canonical path. Overview is the bare page, so it
@@ -1388,6 +1427,8 @@ function syncTabUrl(tab) {
 	const url = new URL(location.href);
 	if (tab === 'overview') url.searchParams.delete('view');
 	else url.searchParams.set('view', tab);
+	// ?run= selects a run inside the Runs tab and means nothing anywhere else.
+	if (tab !== 'runs') url.searchParams.delete('run');
 	if (url.href !== location.href) history.replaceState(history.state, '', url);
 }
 
@@ -1604,7 +1645,6 @@ function bindTabs() {
 
 function bindShareButtons() {
 	const linkBtn = $('share-link');
-	const twBtn = $('share-twitter');
 	if (linkBtn) {
 		linkBtn.addEventListener('click', async () => {
 			try {
@@ -1620,14 +1660,19 @@ function bindShareButtons() {
 			}
 		});
 	}
-	if (twBtn && avatar) {
-		const text =
+	if (avatar) {
+		setShareXHref(
 			mode === 'agent'
 				? `Meet "${avatar.name}", a 3D AI agent on three.ws`
-				: `Check out "${avatar.name}", a 3D avatar on three.ws`;
-		const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
-		twBtn.href = url;
+				: `Check out "${avatar.name}", a 3D avatar on three.ws`,
+		);
 	}
+}
+
+function setShareXHref(text) {
+	const twBtn = $('share-twitter');
+	if (!twBtn) return;
+	twBtn.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
 }
 
 // ── Owner actions (Edit / Deploy on-chain / Launch Pump.fun) ─────────

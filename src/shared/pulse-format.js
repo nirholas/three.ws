@@ -15,11 +15,15 @@ import { walletChipHTML } from './agent-wallet-chip.js';
 export const esc = (s) =>
 	String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+// The unit is chosen after rounding, so a value that rounds up to the next
+// band (999.6 -> 1000) is labelled in that band ($1.0k), never "$1000".
 export function fmtUsd(n) {
 	if (!(Number(n) > 0)) return '$0';
 	const v = Number(n);
-	if (v >= 1000) return `$${(v / 1000).toFixed(1)}k`;
-	return `$${v.toFixed(v < 10 ? 2 : 0)}`;
+	if (v >= 1_000_000 || Math.round(v / 1000 * 10) / 10 >= 1000) return `$${(v / 1_000_000).toFixed(1)}M`;
+	if (v >= 1000 || Math.round(v) >= 1000) return `$${(v / 1000).toFixed(1)}k`;
+	if (v < 10 && Number(v.toFixed(2)) < 10) return `$${v.toFixed(2)}`;
+	return `$${v.toFixed(0)}`;
 }
 
 export function fmtSol(n) {
@@ -33,11 +37,11 @@ export function fmtNum(n) {
 	return String(v);
 }
 
-// Whole-token $THREE amount → compact label (e.g. 12.4k, 1.2M, 340).
+
 export function fmtThree(n) {
 	const v = Number(n) || 0;
-	if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`;
-	if (v >= 1000) return `${(v / 1000).toFixed(1)}k`;
+	if (v >= 1_000_000 || Math.round(v / 1000 * 10) / 10 >= 1000) return `${(v / 1_000_000).toFixed(2)}M`;
+	if (v >= 1000 || Math.round(v) >= 1000) return `${(v / 1000).toFixed(1)}k`;
 	if (v >= 100) return String(Math.round(v));
 	return v.toFixed(v < 1 ? 3 : 1).replace(/\.0$/, '');
 }

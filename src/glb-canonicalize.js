@@ -197,6 +197,26 @@ const EXTRA_ALIASES = (() => {
 		for (let n = 0; n <= 2; n++) put(`${jp}親指${n}`, `${side}HandThumb${n + 1}`);
 	}
 
+	// 3ds Max Biped fingers. Biped numbers fingers instead of naming them: digit
+	// 0-4 is thumb, index, middle, ring, pinky. One digit (`Finger1`) is that
+	// finger's first segment; two digits are the finger, then the segment minus
+	// one (`Finger11` = index segment 2, `Finger42` = pinky segment 3). Keyed
+	// after the `Bip<NN>` strip, so `Bip01 L Finger01` and the sanitized
+	// `Bip01_L_Finger01` both reach `lfinger01`. Toe0 is the one toe joint.
+	for (const [side, long] of [['L', 'Left'], ['R', 'Right']]) {
+		['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'].forEach((cf, f) => {
+			for (let n = 1; n <= 3; n++) put(`${side} Finger${n === 1 ? f : `${f}${n - 1}`}`, `${long}Hand${cf}${n}`);
+		});
+		put(`${side} Toe0`, `${long}ToeBase`);
+	}
+
+	// Source engine (Valve) skeletons are Biped-derived. Source numbers its
+	// four-joint spine Spine, Spine1, Spine2, Spine4 (there is no Spine3) and its
+	// neck and head Neck1 / Head1. Spine4 is the top of the chain, so it targets
+	// the canonical top spine joint, Spine2. A rig that also has Bip01_Spine2
+	// keeps the lower joint: renames are first-wins, parent first.
+	for (const [v, c] of [['Spine4', 'Spine2'], ['Neck1', 'Neck'], ['Head1', 'Head']]) put(v, c);
+
 	// Centre / torso bones with no side (VRM 1.0, Daz, generic single-chest rigs).
 	for (const [v, c] of [
 		['chest', 'Spine1'], ['lowerChest', 'Spine1'], ['chestLower', 'Spine1'],
@@ -484,6 +504,11 @@ function _lookupBone(name) {
 	// space- or underscore-separated `Bip<NN>` prefix (the digits identify the
 	// character). Strip it so `Pelvis`/`Spine`/`L UpperArm`/`L Thigh`/`L Calf`
 	// reach the canonical + sided tables instead of T-posing.
+	// Source engine rigs sit behind a `ValveBiped.` prefix. three.js deletes the
+	// `.` when it sanitizes node names at runtime (PropertyBinding.sanitizeNodeName),
+	// so the prefix arrives as `ValveBiped.` from a raw glTF and `ValveBiped`
+	// from a loaded scene; strip both before the Biped strip below.
+	s = s.replace(/^ValveBiped\.?/i, '');
 	s = s.replace(/^Bip\d+[\s_]?/i, '');
 	// Collapse separators so `Left_Arm`, `left-arm`, `left arm`, `LeftArm`,
 	// `upperarm.L` all reach the same lookup key (`.` covers Blender/MakeHuman).

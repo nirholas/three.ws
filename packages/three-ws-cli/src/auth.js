@@ -18,8 +18,8 @@ const BASE_SCOPES = ['profile', 'avatars:read', 'avatars:write', 'memory:read', 
 const FINANCIAL_SCOPES = ['wallet:write', 'services:write'];
 
 /** Scopes to request. Money-moving scopes only when the person opted in. */
-export function scopesFor({ financial = false, oauth = false } = {}) {
-	return [...(oauth ? ['offline_access'] : []), ...BASE_SCOPES, ...(financial ? FINANCIAL_SCOPES : [])].join(' ');
+export function scopesFor({ financial = false, oauth = false, extra = [] } = {}) {
+	return [...new Set([...(oauth ? ['offline_access'] : []), ...BASE_SCOPES, ...extra, ...(financial ? FINANCIAL_SCOPES : [])])].join(' ');
 }
 
 export async function whoami(origin, bearer) {
@@ -36,7 +36,7 @@ async function persist({ origin, auth, env }) {
 	const store = readStore(env);
 	// Switching accounts: the old account's stdio key must not be written into
 	// the new account's clients.
-	if (store.account?.user_id && store.account.user_id !== me.user.id) store.stdio_key = null;
+	if (store.account?.user_id && store.account.user_id !== me.user.id) { store.stdio_key = null; store.connector_key = null; }
 	store.origin = origin;
 	store.auth = auth;
 	store.account = { user_id: me.user.id, email: me.user.email || null };
@@ -44,14 +44,22 @@ async function persist({ origin, auth, env }) {
 	return me;
 }
 
-export async function loginOAuth({ origin, financial, env = systemEnv(), onUrl }) {
-	const auth = await authorizeInBrowser({ origin, scope: scopesFor({ financial, oauth: true }), env, onUrl });
+export async function loginOAuth({ origin, financial, extraScopes = [], env = systemEnv(), onUrl }) {
+	const auth = await authorizeInBrowser({ origin, scope: scopesFor({ financial, oauth: true, extra: extraScopes }), env, onUrl });
 	return persist({ origin, auth, env });
 }
 
-export async function loginDevice({ origin, financial, env = systemEnv(), onCode }) {
-	const { auth } = await deviceLogin({ origin, scope: scopesFor({ financial }), env, onCode });
+export async function loginDevice({ origin, financial, extraScopes = [], env = systemEnv(), onCode }) {
+	const { auth } = await deviceLogin({ origin, scope: scopesFor({ financial, extra: extraScopes }), env, onCode });
 	return persist({ origin, auth, env });
+}
+
+/** Link this terminal with a code minted at /dashboard/account; stores the confirmed API key. */
+export async function loginLinkCode({ origin, code, env = systemEnv(), onClaimed }) {
+	const { linkCodeLogin } = await import('./link-code.js');
+	const { auth, device_id } = await linkCodeLogin({ origin, code, onClaimed });
+	const me = await persist({ origin, auth, env });
+	return { ...me, device_id };
 }
 
 export async function loginKey({ origin, key, env = systemEnv() }) {
@@ -65,7 +73,7 @@ export async function loginKey({ origin, key, env = systemEnv() }) {
 		throw err;
 	}
 	const store = readStore(env);
-	if (store.account?.user_id && store.account.user_id !== me.user.id) store.stdio_key = null;
+	if (store.account?.user_id && store.account.user_id !== me.user.id) { store.stdio_key = null; store.connector_key = null; }
 	store.origin = origin;
 	store.auth = { type: 'apikey', key: trimmed, prefix: me.credential?.api_key?.prefix || trimmed.slice(0, 12), key_id: null, scope: me.credential?.scope || '' };
 	store.account = { user_id: me.user.id, email: me.user.email || null };
@@ -106,15 +114,41 @@ export async function ensureStdioKey({ origin, env = systemEnv() }) {
 	return minted.token;
 }
 
+/**
+ * The key Grok Bot holds as its connector secret: the "connector" preset, which
+ * reads, generates and edits agents and can never spend. Minted once through the
+ * bearer-reachable /api/api-keys route and reused, so re-running setup never
+ * piles up keys. A key the account no longer has (revoked, deleted) is replaced.
+ */
+export async function ensureConnectorKey({ origin, env = systemEnv() }) {
+	const store = readStore(env);
+	if (store.connector_key?.key && store.account?.user_id === store.connector_key.user_id) return { ...store.connector_key, minted: false };
+	const bearer = await bearerFor(env, { origin });
+	if (!bearer) throw new ApiError('sign in first: `npx three-ws login`');
+	const res = await requestJson(`${origin}/api/api-keys`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${bearer}` },
+		json: { name: `Grok Bot connector (${os.hostname()})`.slice(0, 80), preset: 'connector' },
+	});
+	const minted = res.data;
+	const record = { key: minted.token, prefix: minted.prefix, key_id: minted.id, scope: minted.scope, user_id: readStore(env).account?.user_id || null };
+	updateStore((s) => {
+		s.connector_key = record;
+		return s;
+	}, env);
+	return { ...record, minted: true };
+}
+
 export async function logout({ origin, env = systemEnv() }) {
 	const store = readStore(env);
 	let revoked = false;
 	if (store.auth?.type === 'oauth') {
 		try { revoked = await revokeOAuth(store.auth, origin); } catch { revoked = false; }
 	}
-	const had = Boolean(store.auth || store.stdio_key);
+	const had = Boolean(store.auth || store.stdio_key || store.connector_key);
 	store.auth = null;
 	store.stdio_key = null;
+	store.connector_key = null;
 	store.account = null;
 	writeStore(store, env);
 	return { had, revoked };

@@ -32,7 +32,9 @@ const EXEMPT = {
 	'api/agents/_id/_sub.js': 'config, reads, and message signing; no transfer',
 	'api/agents/_id/brain.js': 'agent key signs a digest; anchor gas is paid by the platform validator key',
 	'api/agents/alpha.js': 'read-only candidates and analysis',
+	'api/_mcp/resources.js': 'read-only MCP resources: lists orders and intents and reads the latest wallet signature over RPC; never signs',
 	'api/autopilot/activity.js': 'read-only activity feed',
+	'api/cli/[action].js': 'CLI device-link sign-in and whoami; reads the x402 wallet address, balances and caps only',
 	'api/avatars/fork.js': 'creates a fresh empty wallet for the fork; no funds move',
 	'api/irl/world-lines.js': 'agent key signs a proof-of-presence message; no transfer',
 	'api/labor/bid.js': 'bids move no money',
@@ -42,6 +44,13 @@ const EXEMPT = {
 	'api/swarms/[id].js': 'read-only state and stream',
 	'api/trading/scan.js': 'read-only candidate preview; never loads a key',
 	'api/user/wallet/history.js': 'read-only history',
+};
+
+// Routes whose every money path runs through one api/_lib service that holds
+// the gate itself, so REST and MCP share a single enforcement point. The test
+// checks the named module really calls the gate.
+const DELEGATED = {
+	'api/_mcpagent/perps-tools.js': 'api/_lib/perps/service.js',
 };
 
 function walk(dir, out = []) {
@@ -84,6 +93,11 @@ describe('real-funds agreement coverage', () => {
 
 	it.each(keyRoutes.map((r) => [r.file, r]))('%s enforces the signed agreements or is exempt with a reason', (file, { src }) => {
 		if (EXEMPT[file]) return;
+		if (DELEGATED[file]) {
+			expect(src.includes(DELEGATED[file].replace(/^api\/_lib\//, '_lib/')), `${file} no longer imports ${DELEGATED[file]}`).toBe(true);
+			expect(GATE.test(readFileSync(join(ROOT, DELEGATED[file]), 'utf8')), `${DELEGATED[file]} no longer enforces the agreements`).toBe(true);
+			return;
+		}
 		expect(GATE.test(src), `${file} uses a custodial key but never calls requireRealFundsAgreement. Gate its money paths, or add it to EXEMPT with the reason none move funds.`).toBe(true);
 	});
 

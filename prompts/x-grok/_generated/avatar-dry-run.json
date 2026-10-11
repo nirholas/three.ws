@@ -1,0 +1,112 @@
+{
+  "generatedAt": "2026-10-09T16:41:07.569Z",
+  "base": "https://three.ws",
+  "dryRun": true,
+  "rows": [
+    {
+      "label": "own profile image 1 (candidate 1)",
+      "text": "@trythreews make me an avatar",
+      "author": "@Martin1990Nik",
+      "profileImage": "https://pbs.twimg.com/profile_images/2108066700713205760/lbOURYT8_normal.jpg",
+      "fetchedAs": "https://pbs.twimg.com/profile_images/2108066700713205760/lbOURYT8_400x400.jpg",
+      "profileCheck": {
+        "status": 200,
+        "contentType": "image/jpeg"
+      },
+      "outcome": "reply",
+      "decision": "reply",
+      "reason": "avatar_done",
+      "wouldReply": "Here is your rigged 3D avatar from your profile picture. Spin it: https://three.ws/m/ef35fb38-21d5-4544-9421-a3c38f51b9dc Pose it: https://three.ws/pose?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F1ebb1985-e8c3-45c4-bb6f-ce70bbe8c2ad.glb",
+      "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F1ebb1985-e8c3-45c4-bb6f-ce70bbe8c2ad.glb&width=1024&height=1024",
+      "mediaCheck": {
+        "status": 0,
+        "error": "The operation was aborted due to timeout"
+      },
+      "link": "https://three.ws/pose?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F1ebb1985-e8c3-45c4-bb6f-ce70bbe8c2ad.glb",
+      "linkCheck": {
+        "status": 200,
+        "contentType": "text/html; charset=utf-8"
+      },
+      "creationId": "ef35fb38-21d5-4544-9421-a3c38f51b9dc",
+      "seconds": 369
+    },
+    {
+      "label": "own profile image 2 (candidate 2)",
+      "text": "@trythreews make me an avatar",
+      "author": "@Gezginkasif85",
+      "profileImage": "https://pbs.twimg.com/profile_images/2018744388726263808/5B6q0lhH_normal.jpg",
+      "fetchedAs": "https://pbs.twimg.com/profile_images/2018744388726263808/5B6q0lhH_400x400.jpg",
+      "profileCheck": {
+        "status": 200,
+        "contentType": "image/jpeg"
+      },
+      "outcome": "reply",
+      "decision": "reply",
+      "reason": "avatar_done",
+      "wouldReply": "Here is your rigged 3D avatar from your profile picture. Spin it: https://three.ws/m/3e9aefcd-5f9f-4676-90e1-06c30264f0c7 Pose it: https://three.ws/pose?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fcc363ff5-d789-451c-b568-2304c7b72615.glb",
+      "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fcc363ff5-d789-451c-b568-2304c7b72615.glb&width=1024&height=1024",
+      "mediaCheck": {
+        "status": 0,
+        "error": "The operation was aborted due to timeout"
+      },
+      "link": "https://three.ws/pose?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fcc363ff5-d789-451c-b568-2304c7b72615.glb",
+      "linkCheck": {
+        "status": 200,
+        "contentType": "text/html; charset=utf-8"
+      },
+      "creationId": "3e9aefcd-5f9f-4676-90e1-06c30264f0c7",
+      "seconds": 392
+    },
+    {
+      "label": "text names another account",
+      "text": "@trythreews make me an avatar using @jack profile picture",
+      "author": "@Martin1990Nik",
+      "profileImage": "https://pbs.twimg.com/profile_images/2108066700713205760/lbOURYT8_normal.jpg",
+      "fetchedAs": "https://pbs.twimg.com/profile_images/2108066700713205760/lbOURYT8_400x400.jpg",
+      "profileCheck": {
+        "status": 200,
+        "contentType": "image/jpeg"
+      },
+      "outcome": "reply",
+      "decision": "reply",
+      "reason": "avatar_done",
+      "wouldReply": "Here is your rigged 3D avatar from your profile picture. Spin it: https://three.ws/m/b282a7c1-0e6f-4ee9-ae60-ad5c7197d8aa Pose it: https://three.ws/pose?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F564039db-c268-47b7-a5ae-8206122e1d82.glb",
+      "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F564039db-c268-47b7-a5ae-8206122e1d82.glb&width=1024&height=1024",
+      "mediaCheck": {
+        "status": 0,
+        "error": "The operation was aborted due to timeout"
+      },
+      "link": "https://three.ws/pose?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F564039db-c268-47b7-a5ae-8206122e1d82.glb",
+      "linkCheck": {
+        "status": 200,
+        "contentType": "text/html; charset=utf-8"
+      },
+      "creationId": "b282a7c1-0e6f-4ee9-ae60-ad5c7197d8aa",
+      "seconds": 328
+    },
+    {
+      "label": "default profile image",
+      "text": "@trythreews make me an avatar",
+      "author": "@evidence_default_user",
+      "profileImage": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+      "fetchedAs": null,
+      "profileCheck": {
+        "status": 200,
+        "contentType": "image/png"
+      },
+      "outcome": "reply",
+      "decision": "reply",
+      "reason": "default_avatar",
+      "wouldReply": "You have not set a profile picture yet, so there is nothing to build from. Make your avatar in the studio: https://three.ws/create",
+      "mediaUrl": null,
+      "mediaCheck": null,
+      "link": "https://three.ws/create",
+      "linkCheck": {
+        "status": 200,
+        "contentType": "text/html; charset=utf-8"
+      },
+      "creationId": null,
+      "seconds": 0
+    }
+  ]
+}

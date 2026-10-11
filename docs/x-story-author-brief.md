@@ -9,10 +9,17 @@ finish, so the boundaries below are what keep ten authors from overwriting each 
 
 1. [docs/x-story-authoring.md](./x-story-authoring.md): how to write and film a story.
 2. [docs/announce-voice.md](./announce-voice.md): the contract the AI editor holds every post to.
-3. `data/x-content/queue.json`: the item `wardrobe` is the worked example that passed review with
-   a 5 on every dimension. Match its quality. Read the text of every item with status `posted`
-   so you do not repeat one.
-4. [docs/ops/x-story-findings-2026-09-30.md](./ops/x-story-findings-2026-09-30.md): the surfaces
+3. `data/x-content/queue.json`: the item `wardrobe` is the worked example of a post's format
+   (reel, head, replies) that passed review with a 5 on every dimension. Read the text of every
+   item with status `posted` so you do not repeat one.
+4. **The house standard for voice and framing** (owner, 2026-10-10): the X Article
+   [`data/x-content/articles/keeper-article.md`](../data/x-content/articles/keeper-article.md) and
+   its quote post (item `keeper-article`). Every post is held to it, compressed: lead with one real
+   result and its real numbers, say what it does in plain words before the mechanism, frame
+   everything positively, and name the partner programme the feature genuinely runs on. The
+   article brief's [What good looks like](./x-article-author-brief.md#what-good-looks-like) lists
+   each quality.
+5. [docs/ops/x-story-findings-2026-09-30.md](./ops/x-story-findings-2026-09-30.md): the surfaces
    already found broken or not filmable. Do not spend time on those.
 
 ## The deliverable
@@ -81,7 +88,9 @@ production and has been filmed, so that `public/x-media/<id>/reel.mp4` and
   off in the story's format (about 40 characters is safe in square).
 - Head post that opens with the strongest true statement as news, in plain words, and stands on
   its first 280 characters; then the mechanism. 250 to 600 characters is the usual range.
-- One or two replies with the detail, the limits and what to do next.
+- One or two replies with the detail, the partner it runs on and what to do next. Nothing negative:
+  a boundary is a design choice, anything unfinished is what is next, and a fact that cannot be
+  framed positively and truthfully is left out.
 - One link, in the head or the first reply as assigned; alternate between stories.
 - Openings that differ from each other and from every posted item.
 - `"notBefore"` set to tomorrow, `"probes"` starting with `{ "type": "scenario" }`, an `api`

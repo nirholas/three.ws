@@ -17,7 +17,7 @@ default material is applied.
 
 API contract:
   POST /process  {
-    mesh: url,                       # https GLB/OBJ/FBX/STL/PLY URL (required)
+    mesh: url,                       # https GLB/GLTF/OBJ/STL/PLY/OFF/DAE URL (required; FBX is refused)
     style: "voxel"|"brick"|"voronoi"|"lowpoly",   # default: "voxel"
     resolution?: int,                # style-specific density (see /styles)
     output_format?: "glb"|"obj"|"stl"|"ply",      # default: "glb"
@@ -82,7 +82,20 @@ _tasks: dict[str, dict] = {}
 # far beyond any caller's poll window, and the results themselves live in GCS.
 MAX_TRACKED_TASKS = 500
 
-SUPPORTED_INPUT_FORMATS = {".glb", ".gltf", ".obj", ".stl", ".ply", ".fbx", ".off", ".dae"}
+# Every input trimesh 4.x reads in this image (DAE through pycollada, which
+# trimesh[easy] installs). FBX is deliberately absent: trimesh has no FBX reader
+# and this image carries no converter, so an FBX is refused up front with the
+# list below instead of failing inside the parser as an internal error.
+SUPPORTED_INPUT_FORMATS = {".glb", ".gltf", ".obj", ".stl", ".ply", ".off", ".dae"}
+SUPPORTED_INPUT_LABEL = "GLB, GLTF, OBJ, STL, PLY, OFF or DAE"
+FBX_UNSUPPORTED_MESSAGE = (
+    f"FBX input is not supported by stylize: supply {SUPPORTED_INPUT_LABEL}. "
+    "To restyle an FBX, convert it to GLB first (the remesh worker's convert "
+    "operation reads FBX)."
+)
+# Binary FBX opens with this fixed magic; ASCII FBX with a `; FBX` comment line.
+FBX_BINARY_MAGIC = b"Kaydara FBX Binary  \x00"
+FBX_ASCII_HEADER = b"; FBX"
 SUPPORTED_OUTPUT_FORMATS = {"glb", "obj", "stl", "ply"}
 MAX_MESH_BYTES = 128 * 1024 * 1024
 
@@ -187,12 +200,34 @@ def _require_api_key(authorization: Optional[str]) -> None:
 # ── mesh IO ───────────────────────────────────────────────────────────────────────
 
 
+class InputFormatError(ValueError):
+    """The caller's file is in a format this worker cannot read.
+
+    Its message names the formats that do work and is returned on the task
+    verbatim (error_kind "input"), unlike internal failures, which stay opaque."""
+
+
+def _url_suffix(url: str) -> str:
+    return Path(url.split("?")[0].split("#")[0]).suffix.lower()
+
+
+def _is_fbx(data: bytes) -> bool:
+    if data.startswith(FBX_BINARY_MAGIC):
+        return True
+    return data[:64].lstrip(b"\xef\xbb\xbf").lstrip().startswith(FBX_ASCII_HEADER)
+
+
 def _fetch_mesh(url: str) -> tuple[bytes, str]:
     try:
         data = fetch_remote_bytes(url, timeout=60, max_bytes=MAX_MESH_BYTES)
     except UnsafeUrlError as exc:
         raise ValueError(f"refused to fetch mesh: {exc}") from exc
-    suffix = Path(url.split("?")[0]).suffix.lower()
+    # The bytes decide, not just the URL: a signed or extensionless URL would
+    # otherwise fall back to the glTF parser and fail there with an error that
+    # says nothing about FBX.
+    if _url_suffix(url) == ".fbx" or _is_fbx(data):
+        raise InputFormatError(FBX_UNSUPPORTED_MESSAGE)
+    suffix = _url_suffix(url)
     if suffix not in SUPPORTED_INPUT_FORMATS:
         suffix = ".glb"
     return data, suffix
@@ -572,19 +607,40 @@ async def _process(task_id: str, mesh_url: str, style: str, resolution: int, out
                 "[%s] %s done in %.2fs — %d faces, %d bytes → %s",
                 task_id, style, elapsed, face_count, len(out_bytes), result_url,
             )
+        except InputFormatError as exc:
+            log.info("[%s] rejected input: %s", task_id, exc)
+            _tasks[task_id].update({
+                "status": "failed",
+                "error": str(exc),
+                # Same taxonomy the avatar workers report and api/_providers/gcp.js
+                # relays: `input` means `error` is caller-facing copy.
+                "error_kind": "input",
+                "elapsed_ms": int((time.time() - t0) * 1000),
+            })
         except Exception as exc:  # noqa: BLE001
             _tasks[task_id].update({
                 "status": "failed",
                 "error": safe_error(exc, context=f"[{task_id}] stylize {style}"),
+                "error_kind": "internal",
                 "elapsed_ms": int((time.time() - t0) * 1000),
             })
 
 
 class ProcessRequest(BaseModel):
-    mesh: str = Field(..., description="https URL to input mesh (GLB/OBJ/FBX/STL/PLY)")
+    mesh: str = Field(..., description="https URL to input mesh (GLB/GLTF/OBJ/STL/PLY/OFF/DAE)")
     style: str = Field(default="voxel", description="|".join(STYLE_CATALOG))
     resolution: Optional[int] = Field(default=None, description="Style-specific density; see /styles")
     output_format: str = Field(default="glb")
+
+    @field_validator("mesh")
+    @classmethod
+    def validate_mesh(cls, v: str) -> str:
+        # Refuse an FBX at the door with a 422 that names the supported formats,
+        # rather than accepting a job that can only fail. An FBX behind an
+        # extensionless URL is caught by the byte sniff in _fetch_mesh.
+        if _url_suffix(v) == ".fbx":
+            raise ValueError(FBX_UNSUPPORTED_MESSAGE)
+        return v
 
     @field_validator("style")
     @classmethod

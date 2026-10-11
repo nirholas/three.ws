@@ -16,7 +16,8 @@ const DESCRIPTION =
 	'avatar) to a website. Returns every install flavor by default (flavor "all"): the one-tag <script> install, ' +
 	'the <three-concierge> web component, the npm snippet, and the imperative mount() call; pass `flavor` to get ' +
 	'just one. Configure the accent color, avatar, greeting, curated knowledge, suggested prompts, position and ' +
-	'theme. Offline: this only composes the code, it installs nothing.';
+	'theme. Offline: this only composes the code, it installs nothing. ' +
+	'Use this when a site owner wants the Concierge on their pages; call concierge_avatars first to choose an avatar id.';
 
 const tool = defineTool({
 	id: 'concierge-embed',
@@ -29,7 +30,7 @@ const tool = defineTool({
 			name: 'concierge_embed',
 			title: 'Generate a Concierge embed snippet for a website',
 			description: DESCRIPTION,
-			annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+			annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 			parameters: z.object({
 				siteName: z.string().max(120).optional().describe('Name of the site/product, used in the greeting + grounding.'),
 				flavor: z

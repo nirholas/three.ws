@@ -123,4 +123,38 @@ describe('directPrompt — in-process Granite director', () => {
 		state.watsonx.mockResolvedValue({ text: 'A red car.' });
 		expect(await directPrompt(MESH_DIRECTOR, 'a red sports car with chrome trim')).toBeNull();
 	});
+
+	// The run receipt reports why a brief fell back, so directPrompt tells the
+	// caller which failure it hit rather than collapsing them all into null.
+	it('reports the fallback reason so the receipt can state it exactly', async () => {
+		const seen = [];
+		const onFallback = (f) => seen.push(f);
+
+		state.watsonx.mockResolvedValue({ text: `${'A brass lantern with a glass chimney, '.repeat(30)}centered.` });
+		expect(await directPrompt(MESH_DIRECTOR, 'lantern', { onFallback })).toBeNull();
+		expect(seen.at(-1)).toMatchObject({ reason: 'too_long' });
+		expect(seen.at(-1).chars).toBeGreaterThan(1000);
+
+		state.watsonx.mockResolvedValue({ text: 'A classic wooden rocking chair with gracefully curved' });
+		await directPrompt(MESH_DIRECTOR, 'rocking chair', { onFallback });
+		expect(seen.at(-1)).toMatchObject({ reason: 'unfinished' });
+
+		state.watsonx.mockRejectedValue(new Error('down'));
+		state.chain.mockRejectedValue(new Error('all rungs dead'));
+		await directPrompt(MESH_DIRECTOR, 'anything', { onFallback });
+		expect(seen.at(-1)).toMatchObject({ reason: 'no_reply' });
+
+		state.watsonx.mockResolvedValue({ text: 'A worn oak chair with turned legs, centered.' });
+		const before = seen.length;
+		expect(await directPrompt(MESH_DIRECTOR, 'chair', { onFallback })).toBe('A worn oak chair with turned legs, centered.');
+		expect(seen.length).toBe(before);
+	});
+
+	it('reports the same reasons from the client the studio tools use', async () => {
+		const { directPrompt: studioDirect } = await import('../../api/_mcp-studio/gpt-forge-client.js');
+		const seen = [];
+		state.watsonx.mockResolvedValue({ text: `${'A brass lantern with a glass chimney, '.repeat(30)}centered.` });
+		expect(await studioDirect(MESH_DIRECTOR, 'lantern', { onFallback: (f) => seen.push(f) })).toBeNull();
+		expect(seen[0]).toMatchObject({ reason: 'too_long' });
+	});
 });

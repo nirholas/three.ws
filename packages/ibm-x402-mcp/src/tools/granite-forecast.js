@@ -14,6 +14,7 @@ const TOOL_DESCRIPTION =
 	'Zero-shot time-series forecasting via IBM Granite TTM (Tiny Time Mixer). ' +
 	'Provide a numeric series with ISO-8601 timestamps and a cadence, receive the forecast horizon. ' +
 	'No training required. Suitable for revenue, traffic, sensor, energy, and financial series. ' +
+	'Use this to project a numeric series of at least 64 timestamped points forward; it returns numbers only, so pass the result to ibm_granite_analyze if you need commentary. ' +
 	'No IBM Cloud account required — pay $0.05 USDC per call via x402.';
 
 const FREQ_EXAMPLES = '1min, 5min, 15min, 30min, 1h, 2h, 4h, 12h, 1D, 1W, 1ME';

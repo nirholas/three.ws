@@ -223,7 +223,7 @@ async function generateUsdz(glbUrl) {
 function showError(msg, opts = {}) {
 	const shell = $('ar-shell');
 	if (!shell) return;
-	const { retry = false, browseHref = '/avatars', browseLabel = 'Browse avatars' } = opts;
+	const { retry = false, browseHref = '/gallery', browseLabel = 'Browse avatars' } = opts;
 	const panel = document.createElement('div');
 	panel.className = 'ar-error';
 	panel.setAttribute('role', 'alert');

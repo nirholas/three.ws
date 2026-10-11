@@ -10,9 +10,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'vanity_gallery',
 	title: 'Browse the proof-of-grind rarity gallery',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Browse the public proof-of-grind gallery: rare Solana addresses people have published with a verifiable grind receipt. Sort by rarity score or recency, filter by tier, minimum pattern length, or a substring the pattern must contain, and paginate. Each entry shows the address, pattern, rarity score/bits, tier, and an explorer link. Read-only.',
+		'Browse the public proof-of-grind gallery: rare Solana addresses people have published with a verifiable grind receipt. Sort by rarity score or recency, filter by tier, minimum pattern length, or a substring the pattern must contain, and paginate. Each entry shows the address, pattern, rarity score/bits, tier, and an explorer link. Use this to browse published rare addresses; to score one address call vanity_appraise. Read-only.',
 	inputSchema: {
 		sort: z.enum(['score', 'recency']).default('score').describe('Order by rarity score (rarest first) or recency. Default score.'),
 		tier: z.string().optional().describe('Filter to a single rarity tier id.'),

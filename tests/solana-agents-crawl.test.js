@@ -21,15 +21,15 @@ describe('solana-agents-crawl helpers', () => {
 
 	describe('resolveGateway', () => {
 		it('rewrites ipfs:// to a https gateway', () => {
-			expect(resolveGateway('ipfs://bafyhash')).toBe('https://ipfs.io/ipfs/bafyhash');
-			expect(resolveGateway('ipfs://ipfs/bafyhash')).toBe('https://ipfs.io/ipfs/bafyhash');
+			expect(resolveGateway('ipfs://bafyhash')).toBe('https://ipfs.filebase.io/ipfs/bafyhash');
+			expect(resolveGateway('ipfs://ipfs/bafyhash')).toBe('https://ipfs.filebase.io/ipfs/bafyhash');
 		});
 		it('rewrites ar:// to arweave', () => {
 			expect(resolveGateway('ar://txid123')).toBe('https://arweave.net/txid123');
 		});
 		it('treats a bare CID as ipfs', () => {
 			const cid = 'QmbWqxBEKC3P8tqsKc98xmWNzrzDtRLMiMPL8wBuTGsMnR';
-			expect(resolveGateway(cid)).toBe(`https://ipfs.io/ipfs/${cid}`);
+			expect(resolveGateway(cid)).toBe(`https://ipfs.filebase.io/ipfs/${cid}`);
 		});
 		it('leaves http(s) URLs untouched and nulls empties', () => {
 			expect(resolveGateway('https://example.com/a.json')).toBe('https://example.com/a.json');

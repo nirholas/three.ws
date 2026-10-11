@@ -17,7 +17,7 @@ export function discordConfigured(env = process.env) {
 	return Boolean(env.DISCORD_BOT_TOKEN && env.DISCORD_APP_ID && env.DISCORD_PUBLIC_KEY);
 }
 
-async function telegramUsername() {
+export async function telegramUsername() {
 	if (process.env.TELEGRAM_BOT_USERNAME) return process.env.TELEGRAM_BOT_USERNAME.replace(/^@/, '');
 	const cached = await cacheGet('gateway:tg:username').catch(() => null);
 	if (cached) return cached;

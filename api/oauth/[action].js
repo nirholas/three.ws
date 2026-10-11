@@ -6,7 +6,7 @@ import { sql } from '../_lib/db.js';
 import {
 	getSessionUser, csrfTokenFor, verifyCsrfToken, isSameSiteOrigin,
 	mintAccessToken, issueRefreshToken, rotateRefreshToken,
-	revokeRefreshToken, verifyAccessToken, oauthGrantRevoked,
+	revokeRefreshToken, verifyAccessToken, revokeClientGrant,
 } from '../_lib/auth.js';
 import { randomToken, sha256, sha256Base64Url, constantTimeEquals } from '../_lib/crypto.js';
 import { cors, method, wrap, error, redirect, readForm, readJson, json, rateLimited } from '../_lib/http.js';
@@ -15,6 +15,7 @@ import { env } from '../_lib/env.js';
 import { z } from 'zod';
 import { parse } from '../_lib/validate.js';
 import { filterRegisterableScope, splitSpendScope } from '../_lib/oauth-scopes.js';
+import { SCOPE_LABELS, CONNECTION_SCOPES, groupsForScope, grantedScopeFromGroups } from '../_lib/oauth-grant-groups.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { canonicalMcpResource, allMcpAudiences } from '../_lib/mcp-resources.js';
 
@@ -67,26 +68,10 @@ const INVALID_TARGET = 'unknown resource, this server issues tokens only for the
 // keeps and the scopes /.well-known/oauth-protected-resource advertises are
 // read from one array and cannot drift apart.
 
-// Plain-language lines for the consent screen and Connected apps. A scope with
-// no line here is shown by its raw name, escaped.
-const SCOPE_LABELS = {
-	'avatars:read': 'See your avatars',
-	'avatars:write': 'Create and update your avatars',
-	'avatars:delete': 'Delete your avatars',
-	profile: 'See your name and email address',
-	offline_access: 'Stay connected without asking you to sign in again',
-	'memory:read': 'Read what your agents remember',
-	'memory:write': 'Save and erase what your agents remember',
-	'agents:read': 'See your agents and their identities',
-	'agents:write': 'Create, update and register your agents',
-	'feedback:read': 'Read feedback visitors left on your agents',
-	'wallet:read': 'See your agent wallet balance and spending caps',
-	'wallet:write': 'Spend USDC from your agent wallet, within your caps',
-	'services:write': 'Publish paid services that earn USDC into your agent wallet',
-	'home:read': 'See the state of your connected home',
-	'home:act': 'Control your connected home (unlocking, opening and disarming still need your yes each time)',
-};
-
+// Scope copy and the read / manage / trade / spend / launch grouping live in
+// ../_lib/oauth-grant-groups.js, next to the policy table that decides which
+// tool still asks the user first, so the consent screen cannot drift from what
+// the tools actually do.
 function scopeLabel(s) {
 	return SCOPE_LABELS[s] ? esc(SCOPE_LABELS[s]) : esc(s);
 }
@@ -95,28 +80,47 @@ function esc(s) {
 	return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
 
+// client_host in handleGrants (Connected apps) reads the registered site, not
+// the redirect_uri (an OAuth client's redirect can differ from its own domain).
 function hostOf(uri) {
 	try { return new URL(uri).host || null; } catch { return null; }
 }
 
-const CONSENT_CSS = `:root{color-scheme:dark;--bg:#0b0b10;--card:#14141c;--line:#2a2a36;--soft:#1b1b25;--ink:#eee;--dim:#aaa;--fade:#808090;--accent:#6a5cff;--accent-ink:#fff;--ok:#3ecf8e;--ok-bg:rgba(62,207,142,.1);--warn:#f5a524;--warn-bg:rgba(245,165,36,.1)}
-@media (prefers-color-scheme:light){:root{color-scheme:light;--bg:#f4f4f7;--card:#fff;--line:#e2e2ea;--soft:#f6f6fa;--ink:#16161d;--dim:#55556a;--fade:#6b6b80;--accent:#5a4cf0;--ok:#0f8a57;--ok-bg:rgba(15,138,87,.08);--warn:#9a5b00;--warn-bg:rgba(245,165,36,.12)}}
-*{box-sizing:border-box}body{font:16px/1.5 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);margin:0;min-height:100vh;display:grid;place-items:center;padding:24px 16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px 24px 22px;max-width:460px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25)}
-.app{display:flex;gap:14px;align-items:center;margin-bottom:16px}.mark{flex:0 0 auto;width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#6a5cff,#ff5ca8);display:grid;place-items:center;color:#fff;font-weight:700;font-size:20px}
-h1{font-size:19px;line-height:1.3;margin:0}h1 b{word-break:break-word}
-.facts{margin:0 0 12px;padding:10px 12px;background:var(--soft);border-radius:10px;font-size:14px}.facts div{display:flex;justify-content:space-between;gap:12px;padding:3px 0}.facts dt{color:var(--dim);white-space:nowrap}.facts dd{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;text-align:right;word-break:break-all}
-.unverified{margin:0 0 16px;font-size:13px;color:var(--dim)}
-.who{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px}.dot{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:var(--accent-ink);font-weight:600}.who small{display:block;color:var(--fade);font-size:13px;overflow-wrap:anywhere}
-h2{font-size:14px;font-weight:600;margin:0 0 4px}
-ul{margin:4px 0 16px;padding:0;list-style:none}li{padding:7px 0 7px 24px;border-bottom:1px solid var(--line);position:relative;font-size:15px}li:last-child{border:0}li::before{content:"";position:absolute;left:4px;top:15px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
-.safe,.warn{border-radius:10px;padding:12px 14px;font-size:14px;margin:0 0 14px}.safe{background:var(--ok-bg);border:1px solid var(--ok)}.safe strong{color:var(--ok)}.warn{display:none;background:var(--warn-bg);border:1px solid var(--warn)}.warn strong{color:var(--warn)}
-.spend{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px dashed var(--line);border-radius:10px;margin:0 0 14px;font-size:14px;cursor:pointer}.spend input{margin-top:3px;width:16px;height:16px;accent-color:var(--warn)}
-.card:has(#allow-spend:checked) .safe{display:none}.card:has(#allow-spend:checked) .warn{display:block}
-.actions{display:flex;gap:10px}button{flex:1;padding:12px 16px;border-radius:10px;border:0;font:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:filter .15s ease,background .15s ease}
-.allow{background:var(--accent);color:var(--accent-ink)}.allow:hover{filter:brightness(1.1)}.deny{background:transparent;color:var(--dim);border:1px solid var(--line)}.deny:hover{background:var(--soft);color:var(--ink)}
-button:focus-visible,.spend:has(input:focus-visible),a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.foot{margin:16px 0 0;font-size:12.5px;color:var(--fade)}a{color:var(--accent)}`;
+// Host a person can check against what they expect: the client's own site when
+// it registered one, else where the code will be sent. Both are validated URLs.
+function clientHost(client, redirectUri) {
+	for (const candidate of [client.client_uri, redirectUri]) {
+		try { return new URL(candidate).host; } catch { /* try the next candidate */ }
+	}
+	return 'unknown host';
+}
+
+// Design rule 2: a token a cloud agent holds unattended does not spend. The
+// statement describes THIS request honestly: wallet:write authorizes moving
+// funds out, wallet:trade and wallet:launch authorize value-changing actions
+// that stay inside the agent wallet (api/_lib/spend-scope.js). The person can
+// still untick any of those groups below before authorizing.
+function spendStatement(name, scopeList) {
+	if (scopeList.includes('wallet:write')) {
+		return `<b>${esc(name)}</b> is asking to spend from your agent wallet. Every spend stays inside your caps, every transfer out still asks you first, and you can revoke this at any time.`;
+	}
+	if (scopeList.includes('wallet:trade') || scopeList.includes('wallet:launch')) {
+		return `<b>${esc(name)}</b> cannot move funds out of your agent wallet. It is asking to ${scopeList.includes('wallet:trade') ? 'trade' : ''}${scopeList.includes('wallet:trade') && scopeList.includes('wallet:launch') ? ' and ' : ''}${scopeList.includes('wallet:launch') ? 'launch coins' : ''} inside it, within your caps, and you can revoke this at any time.`;
+	}
+	return `<b>${esc(name)}</b> can never spend from a wallet, trade, or move funds. Payments only happen when you confirm them yourself on three.ws.`;
+}
+
+// One tickable row per grant group. Read is the floor of every connection and
+// stays on; the others default to on (the client asked for them) but a person
+// can untick any group and the issued code carries only what stayed ticked.
+function renderGroup(g) {
+	const scopes = g.scopes.map((s) => `<li>${scopeLabel(s)}</li>`).join('');
+	const confirms = g.confirms.length ? `<p class="asks"><b>Still asks you first:</b> ${g.confirms.map(esc).join(', ')}.</p>` : '';
+	const implied = g.implied ? '<p class="asks">Included because Spend is ticked. Untick Spend to grant only this.</p>' : '';
+	const locked = g.required ? ' disabled' : '';
+	const hidden = g.required ? `<input type="hidden" name="grant_${esc(g.id)}" value="on">` : '';
+	return `<label class="group${g.required ? ' locked' : ''}"><span class="tick"><input type="checkbox" name="grant_${esc(g.id)}" value="on" checked${locked}>${hidden}</span><span class="body"><span class="name">${esc(g.label)}${g.required ? ' <small>always on</small>' : ''}</span><span class="blurb">${esc(g.blurb)}</span><ul>${scopes}</ul>${confirms}${implied}</span></label>`;
+}
 
 function renderConsent(res, { client, user, params, csrf, grantedScope }) {
 	res.statusCode = 200;
@@ -139,32 +143,12 @@ function renderConsent(res, { client, user, params, csrf, grantedScope }) {
 	// client asked for. They diverge whenever a client requests a scope it did
 	// not register: intersectScopes drops it and falls back to the client's
 	// registered scope, so showing the request itself made the consent screen
-	// promise one set of permissions and the issued code carry another. The
-	// spend scope is split off and shown only beside the box that grants it.
-	const { base, spend } = splitSpendScope(grantedScope);
-	const scopeList = base.split(/\s+/).filter(Boolean);
-	const name = esc(client.name);
-	const siteHost = hostOf(client.client_uri);
-	const returnHost = hostOf(params.redirect_uri) || params.redirect_uri;
-	const who = user.display_name || user.email;
-	const hidden = Object.entries(params)
-		.filter(([k]) => k !== 'csrf' && k !== 'decision' && k !== 'allow_spend')
-		.map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('');
-	res.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Authorize ${name} · three.ws</title><style>${CONSENT_CSS}</style></head><body><form class="card" method="post" action="/api/oauth/authorize">`
-		+ `<div class="app"><div class="mark" aria-hidden="true">${esc((client.name || '?').trim()[0]?.toUpperCase() || '?')}</div><h1><b>${name}</b> wants to connect to your three.ws account</h1></div>`
-		+ `<dl class="facts">${siteHost ? `<div><dt>App website</dt><dd data-fact="client-host">${esc(siteHost)}</dd></div>` : ''}<div><dt>Sends you back to</dt><dd data-fact="return-host">${esc(returnHost)}</dd></div></dl>`
-		+ (client.dynamically_registered ? `<p class="unverified">three.ws has not verified this app. Its name was chosen by the app itself, so continue only if you started this from ${name} and the addresses above belong to it.</p>` : '')
-		+ `<div class="who"><div class="dot" aria-hidden="true">${esc(who[0].toUpperCase())}</div><div>${esc(who)}<small>${esc(user.email)}</small></div></div>`
-		+ `<h2>${name} will be able to</h2><ul data-scopes>${scopeList.map((s) => `<li>${scopeLabel(s)}</li>`).join('')}</ul>`
-		+ `<p class="safe" data-wallet="never-spends"><strong>It can never spend from your wallet.</strong> ${name} cannot move funds, pay for anything, or launch a coin from your wallets. Those always need you, signed in on three.ws.</p>`
-		+ (spend
-			? `<label class="spend"><input type="checkbox" id="allow-spend" name="allow_spend" value="yes"><span>Also let ${name} <b>spend USDC from your agent wallet</b> on its own, within the caps you set</span></label>`
-				+ `<p class="warn" data-wallet="may-spend"><strong>${name} will be able to spend.</strong> It can pay from your agent wallet without asking you, up to your caps. Leave the box unticked for an app that runs unattended.</p>`
-			: '')
-		+ `<input type="hidden" name="csrf" value="${esc(csrf || '')}">${hidden}`
-		+ `<div class="actions"><button class="deny" type="submit" name="decision" value="deny">Cancel</button><button class="allow" type="submit" name="decision" value="allow">Authorize</button></div>`
-		+ `<p class="foot">You can see ${name} and revoke it at any time in <a href="/dashboard/settings#connected-apps">Settings, Connected apps</a>. Revoking cuts it off on its very next request.</p>`
-		+ `</form></body></html>`);
+	// promise one set of permissions and the issued code carry another.
+	const scopeList = grantedScope.split(/\s+/).filter(Boolean);
+	const groups = groupsForScope(grantedScope);
+	const connection = scopeList.filter((s) => CONNECTION_SCOPES.includes(s));
+	const connectionNote = connection.length ? `<p class="conn">${connection.map(scopeLabel).join('. ')}. Revoking from Settings ends that on the app's next request.</p>` : '';
+	res.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Authorize ${esc(client.name)} · three.ws</title><style>:root{color-scheme:light dark}body{font:16px/1.5 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;background:#0b0b10;color:#eee;margin:0;min-height:100vh;display:grid;place-items:center;padding:24px}.card{background:#14141c;border:1px solid #2a2a36;border-radius:16px;padding:28px 28px 24px;max-width:440px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.4)}h1{font-size:20px;margin:0 0 8px}.sub{color:#aaa;margin:0 0 20px}.who{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 12px;background:#1b1b25;border-radius:10px}.dot{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6a5cff,#ff5ca8);display:grid;place-items:center;color:#fff;font-weight:600}ul{margin:12px 0 20px;padding-left:0;list-style:none}li{padding:8px 0;border-bottom:1px solid #22222e;display:flex;gap:10px}li:last-child{border:0}li::before{content:"✓";color:#6a5cff}.actions{display:flex;gap:10px}button{flex:1;padding:12px 16px;border-radius:10px;border:0;font-size:15px;font-weight:600;cursor:pointer}.allow{background:#6a5cff;color:#fff}.deny{background:transparent;color:#aaa;border:1px solid #2a2a36}.foot{margin-top:16px;font-size:12px;color:#777}.host{display:block;font-size:13px;color:#aaa;word-break:break-all}.warn{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#1b1b25;border:1px solid #2a2a36;font-size:13px;color:#bbb}.nospend{margin:0 0 20px;padding:10px 12px;border-radius:10px;background:#12201a;border:1px solid #1f3a2c;font-size:13px;color:#b9e6cc}a{color:#9a8cff}.group{display:flex;gap:12px;padding:12px;margin:0 0 10px;border:1px solid #2a2a36;border-radius:12px;background:#10101a;cursor:pointer;transition:border-color .15s,background .15s}.group:hover{border-color:#6a5cff}.group:focus-within{outline:2px solid #6a5cff;outline-offset:2px}.group.locked{cursor:default;opacity:.9}.group:has(input:not(:checked)){background:transparent;opacity:.7}.tick{padding-top:2px}.tick input{width:18px;height:18px;accent-color:#6a5cff;cursor:inherit}.body{flex:1;min-width:0}.name{display:block;font-weight:600}.name small{font-weight:400;color:#888;font-size:12px}.blurb{display:block;color:#aaa;font-size:13px;margin:2px 0 4px}.group ul{margin:0}.group li{padding:4px 0;border:0;font-size:14px}.asks{margin:6px 0 0;font-size:12px;color:#c9b8ff}.conn{margin:0 0 12px;font-size:12px;color:#888}</style></head><body><form class="card" method="post" action="/api/oauth/authorize"><h1>Authorize <b>${esc(client.name)}</b></h1><p class="sub">Grant this application access to your three.ws account.</p><p class="warn"><b>${esc(client.name)}</b><span class="host">Site: ${esc(clientHost(client, params.redirect_uri))}</span>This app registered itself. Only continue if you started this connection and you recognize the site.</p><div class="who"><div class="dot">${esc((user.display_name || user.email)[0].toUpperCase())}</div><div><div>${esc(user.display_name || user.email)}</div><div style="color:#888;font-size:13px">${esc(user.email)}</div></div></div><p style="margin:0 0 10px"><b>${esc(client.name)}</b> is asking to:</p>${groups.map(renderGroup).join('')}${connectionNote}<p class="nospend">${spendStatement(client.name, scopeList)}</p><input type="hidden" name="csrf" value="${esc(csrf || '')}"> ${Object.entries(params).filter(([k]) => k !== 'csrf' && k !== 'decision' && !k.startsWith('grant_')).map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('')}<div class="actions"><button class="deny" type="submit" name="decision" value="deny">Cancel</button><button class="allow" type="submit" name="decision" value="allow">Authorize</button></div><p class="foot">You can revoke access any time from <a href="/dashboard/settings#connected-apps">Settings, Connected apps</a>.</p></form></body></html>`);
 }
 
 async function handleAuthorize(req, res) {
@@ -204,10 +188,12 @@ async function handleAuthorize(req, res) {
 		if (state) denied.searchParams.set('state', state);
 		return redirect(res, denied.toString());
 	}
-	// The spend scope rides only on a ticked box (splitSpendScope).
-	const approvedScope = params.allow_spend === 'yes' ? grantedScope : splitSpendScope(grantedScope).base;
+	// The person may have unticked a grant group on the consent screen: the code
+	// carries only what stayed ticked (read and the connection scopes always do).
+	const ticked = Object.keys(params).filter((k) => k.startsWith('grant_') && params[k]).map((k) => k.slice('grant_'.length));
+	const issuedScope = grantedScopeFromGroups(grantedScope, ticked);
 	const code = randomToken(24);
-	await sql`insert into oauth_auth_codes (code, client_id, user_id, redirect_uri, scope, resource, code_challenge, code_challenge_method, expires_at) values (${code}, ${client_id}, ${user.id}, ${redirect_uri}, ${approvedScope}, ${targetResource}, ${code_challenge}, 'S256', now() + ${'60 seconds'}::interval)`;
+	await sql`insert into oauth_auth_codes (code, client_id, user_id, redirect_uri, scope, resource, code_challenge, code_challenge_method, expires_at) values (${code}, ${client_id}, ${user.id}, ${redirect_uri}, ${issuedScope}, ${targetResource}, ${code_challenge}, 'S256', now() + ${'60 seconds'}::interval)`;
 	const back = new URL(redirect_uri);
 	back.searchParams.set('code', code);
 	if (state) back.searchParams.set('state', state);
@@ -504,7 +490,6 @@ async function handleIntrospect(req, res) {
 	try {
 		const payload = await verifyAccessToken(token, { audience: allMcpAudiences() });
 		if (payload.client_id && payload.client_id !== clientId) return json(res, 200, { active: false });
-		if (await oauthGrantRevoked({ userId: payload.sub, clientId: payload.client_id, issuedAt: payload.iat })) return json(res, 200, { active: false });
 		return json(res, 200, { active: true, scope: payload.scope, client_id: payload.client_id, sub: payload.sub, aud: payload.aud, iss: payload.iss, exp: payload.exp, iat: payload.iat, token_type: 'Bearer' });
 	} catch {
 		const h = await sha256(token);
@@ -521,8 +506,9 @@ async function handleIntrospect(req, res) {
 // token; DELETE ?client_id= revokes all of that client's refresh tokens.
 // Session only, on purpose: a bearer token must not be able to list or revoke
 // the other apps on the account, including itself.
-// Revoking ends the app's access tokens on their next request too, not just its
-// refresh tokens (oauthGrantRevoked in ../_lib/auth.js).
+// Revoking is effective on the app's very next request: revokeClientGrant also
+// records a cutoff that authenticateBearer checks against every access token's
+// issue time, so the stateless JWT stops working immediately rather than at expiry.
 
 async function handleGrants(req, res) {
 	if (cors(req, res, { methods: 'GET,DELETE,OPTIONS', credentials: true })) return;
@@ -558,12 +544,8 @@ async function handleGrants(req, res) {
 	if (!(await requireCsrf(req, res, user.id))) return;
 	const clientId = new URL(req.url, 'http://x').searchParams.get('client_id');
 	if (!clientId) return error(res, 400, 'invalid_request', 'client_id required');
-	const revoked = await sql`
-		update oauth_refresh_tokens set revoked_at = now()
-		where user_id = ${user.id} and client_id = ${clientId} and revoked_at is null
-		returning id
-	`;
-	return json(res, 200, { client_id: clientId, revoked: revoked.length });
+	const revoked = await revokeClientGrant({ userId: user.id, clientId });
+	return json(res, 200, { client_id: clientId, revoked });
 }
 
 // ── dispatcher ────────────────────────────────────────────────────────────────

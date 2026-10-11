@@ -40,6 +40,7 @@ import {
 } from './auth.js';
 import { limits, clientIp } from './rate-limit.js';
 import { recordEvent } from './usage.js';
+import { devPlanGate } from './dev-plans/quota.js';
 
 /**
  * Throw a client-facing error the gateway will render as
@@ -100,7 +101,7 @@ export function defineEndpoint(spec) {
 				// A signed-in owner acting on their own account holds every scope.
 				principal = { userId: session.id, source: 'session', scope: 'all' };
 			} else {
-				const bearer = await authenticateBearer(extractBearer(req));
+				const bearer = await authenticateBearer(extractBearer(req), { ip });
 				if (bearer) {
 					principal = {
 						userId: bearer.userId,
@@ -135,15 +136,20 @@ export function defineEndpoint(spec) {
 			}
 		}
 
-		// ── rate limit (per principal › IP) ────────────────────────────────────
-		const rlKey = principal?.apiKeyId
-			? `key:${principal.apiKeyId}`
-			: principal?.userId
-				? `user:${principal.userId}`
-				: `ip:${ip}`;
-		const rl = await limits.apiV1(rlKey);
-		setRateLimitHeaders(res, rl);
-		if (!rl.success) return rateLimited(res, rl);
+		// ── plan gate (per account) › anonymous IP limit ───────────────────────
+		// A signed-in account gets its developer plan's burst, concurrency and
+		// monthly quota on every v1 route (api/_lib/dev-plans/quota.js). A key or
+		// OAuth token spends quota; an owner browsing their own dashboard is held
+		// to the same ceilings but does not spend the calls they are paying for.
+		let gate = null;
+		if (principal?.userId) {
+			gate = await devPlanGate({ userId: principal.userId, res, countsAgainstQuota: principal.source !== 'session' });
+			if (!gate.ok) return;
+		} else {
+			const rl = await limits.apiV1(`ip:${ip}`);
+			setRateLimitHeaders(res, rl);
+			if (!rl.success) return rateLimited(res, rl);
+		}
 
 		// ── body + query ───────────────────────────────────────────────────────
 		const body = writeMethods && req.method !== 'GET' ? await readJson(req) : {};
@@ -152,7 +158,9 @@ export function defineEndpoint(spec) {
 		const ctx = { req, res, principal, body, query, ip };
 
 		// ── dispatch + meter ─────────────────────────────────────────────────────
-		const meter = (status) =>
+		// `meta` is what the per-key analytics read (api/_lib/dev-plans/analytics.js):
+		// the route, the caller's address, the plan and the HTTP status.
+		const meter = (status, httpStatus) =>
 			recordEvent({
 				kind: 'api',
 				tool: spec.name,
@@ -161,16 +169,19 @@ export function defineEndpoint(spec) {
 				clientId: principal?.clientId,
 				status,
 				latencyMs: Date.now() - started,
+				meta: { route: spec.name, method: req.method, ip, plan: gate?.sub?.planId ?? null, http_status: httpStatus },
 			});
 
 		let payload;
 		try {
 			payload = await spec.handler(ctx);
 		} catch (err) {
-			meter('error');
+			meter('error', err?.status || 500);
 			throw err; // wrap() renders the envelope (4xx descriptive, 5xx sanitized)
+		} finally {
+			gate?.release?.();
 		}
-		meter('ok');
+		meter('ok', 200);
 
 		// Handler may have already responded (redirect / streamed / binary).
 		if (res.writableEnded || res.headersSent) return;

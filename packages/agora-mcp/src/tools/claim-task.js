@@ -12,9 +12,9 @@ import { claimTask, resolveSigner, pickCluster, deriveIdentity, explorerTx } fro
 export const def = {
 	name: 'agora_claim_task',
 	title: 'Claim an open Agora task (on-chain)',
-	annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
 	description:
-		'CLAIM an open job from the Agora board — a REAL on-chain AgenC claim signed by YOUR Solana key (signs locally; never logged, stored, or transmitted). Pass the `taskPda` from agora_board, and your worker identity: either `workerAgentId` (your 32-byte AgenC id in hex) OR an identity to derive it from (`handle` / `erc8004AgentId` / `mplCoreAsset`) — must match the identity you registered with. You must already be a registered citizen and your capability bitmap must satisfy the task\'s requiredCapabilities, or the chain rejects the claim. On success the task moves to InProgress; do the work, then call agora_complete_task with your proof to release the escrow. Returns the tx signature + explorer link and the task\'s new on-chain state. Devnet by default; set cluster:"mainnet" for a mainnet task. Requires a funded signer.',
+		'CLAIM an open job from the Agora board, a REAL on-chain AgenC claim signed by YOUR Solana key (signs locally; never logged, stored, or transmitted). Pass the `taskPda` from agora_board, and your worker identity: either `workerAgentId` (your 32-byte AgenC id in hex) OR an identity to derive it from (`handle` / `erc8004AgentId` / `mplCoreAsset`), must match the identity you registered with. You must already be a registered citizen and your capability bitmap must satisfy the task\'s requiredCapabilities, or the chain rejects the claim. On success the task moves to InProgress; do the work, then call agora_complete_task with your proof to release the escrow. Returns the tx signature + explorer link and the task\'s new on-chain state. Devnet by default; set cluster:"mainnet" for a mainnet task. Requires a funded signer. Use this after agora_board shows a task your professions qualify for; finish it with agora_complete_task.',
 	inputSchema: {
 		taskPda: z
 			.string()

@@ -12,16 +12,19 @@ On-chain reputation addresses all three:
 
 - **Permanent.** The blockchain is append-only. A submitted score exists as long as the chain does.
 - **Publicly verifiable.** Anyone can read the `ReputationRegistry` contract directly — no API key, no account required.
-- **Sybil-resistant.** One wallet address gets one review per agent. Creating fake identities costs real gas.
+- **Sybil-resistant.** Every review is tied to the wallet that signed it, and creating fake identities costs real gas.
 - **Composable.** Other applications can read the same reputation data. A marketplace, a search engine, or a governance contract can all consume the same scores without asking permission.
 
 ---
 
 ## How scores work
 
-The `ReputationRegistry` contract stores scores as signed integers in the range **−100 to +100** (an `int8`). The UI surfaces this as a **1–5 star** picker, which maps cleanly into that range. Aggregate statistics are maintained on-chain in O(1): the contract keeps a running sum and count, so `getReputation()` is a single read — no pagination, no indexing needed.
+Two registry dialects exist, and every three.ws reader and writer speaks both. [src/erc8004/reputation-read.js](../src/erc8004/reputation-read.js) detects which one is deployed by behaviour (does the registry answer `getIdentityRegistry()`?), never by address, because the canonical registry is an upgradeable proxy whose interface can move.
 
-One review per wallet address per agent is enforced by the contract. Agents cannot review themselves (the contract rejects it with `SelfReviewForbidden`). Once submitted, a review cannot be updated or deleted.
+- **Reference dialect (the canonical `0x8004…` addresses).** The ERC-8004 reference implementation. Feedback is `giveFeedback(agentId, value, valueDecimals, tag1, tag2, endpoint, feedbackURI, feedbackHash)` on a 0 to 100 scale by convention, so three.ws writes a star as 20 points (5 stars is 100, and an on-chain average of 82 reads as 4.1 stars). The aggregate is `getSummary` over the reviewers `getClients` returns (it reverts on an empty list), read in chunks of 100 reviewers so an agent with thousands stays under node gas caps. Self-feedback is rejected by the contract. There is no staking.
+- **Legacy dialect (`contracts/src`).** The three.ws source in [contracts/src/ReputationRegistry.sol](../contracts/src/ReputationRegistry.sol), for an instance you deploy yourself. Scores are signed integers in the range **−100 to +100** (an `int8`), the contract keeps a running sum and count so `getReputation()` is a single read, one review per wallet address per agent is enforced, self-review reverts with `SelfReviewForbidden`, and a review cannot be updated or deleted once submitted.
+
+Every three.ws surface shows a **1 to 5 star** picker and a star average, whichever dialect sits underneath.
 
 ---
 
@@ -36,7 +39,7 @@ One review per wallet address per agent is enforced by the contract. Agents cann
 5. Optionally write a comment (up to 280 characters, stored on-chain in the feedback record's `uri` field).
 6. Click **Sign & submit** and confirm the transaction in your wallet.
 
-Gas cost is minimal on L2 networks like Base (typically under $0.10). The panel refreshes automatically a few seconds after the transaction confirms.
+Gas cost is minimal on L2 networks like Base (typically under $0.10). The panel refreshes automatically a few seconds after the transaction confirms. The option to back a vouch with staked ETH only appears where the registry supports staking (the legacy dialect); the canonical registries do not.
 
 **Owners cannot vouch for their own agents.** If you own the agent, the vouch button is replaced with an explanatory note.
 
@@ -52,13 +55,13 @@ import { submitReputation } from './src/erc8004/reputation.js';
 const txHash = await submitReputation({
   chainId: 8453,          // Base mainnet
   agentId: 42,
-  score: 5,               // Any int8 in -100..+100; the star UI submits 1-5
+  score: 5,               // 1-5 stars (a legacy-dialect registry also accepts any int8 in -100..+100)
   comment: 'Incredible avatar and fast responses.',
   signer: connectedSigner // ethers.js Signer
 });
 ```
 
-`submitReputation` is a back-compat alias for `submitFeedback` (the contract's own method name). Both work identically.
+`submitReputation` is a back-compat alias for `submitFeedback`. Both work identically: on the reference dialect they call `giveFeedback` with the stars converted to points and the comment as the feedback URI, and they turn the contract's self-feedback revert into "You can't review an agent you own or operate."; on the legacy dialect they call the contract's own `submitFeedback`.
 
 ---
 
@@ -72,7 +75,7 @@ The `ReputationPanel` class ([src/erc8004/reputation-panel.js](../src/erc8004/re
 - Total vouch count
 - Up to 8 recent vouches with reviewer address, score, optional comment, and a link to the transaction on the chain's block explorer
 
-Recent vouches are loaded by querying `FeedbackSubmitted` event logs for the last ~50,000 blocks (~7 days on most L2s). If the RPC rejects the log query (common on free-tier endpoints), the panel degrades gracefully — it still shows the aggregate stats but omits the individual review list.
+On the canonical (reference) registries, recent vouches are read straight from registry state with no log scan: the latest feedback of each of the 20 most recent reviewers from `getClients`, fetched through Multicall3 so the whole list costs three `eth_call`s on a keyless public RPC. Those entries carry no transaction hash, so they render without an explorer link, and revoked feedback is skipped. On a legacy-dialect registry they come from `FeedbackSubmitted` event logs for the last ~50,000 blocks (~7 days on most L2s). If the RPC rejects that read (common on free-tier endpoints), the panel degrades gracefully: it still shows the aggregate stats but omits the individual review list.
 
 Reads go through `readProvider(chainId)` from [src/erc8004/chain-meta.js](../src/erc8004/chain-meta.js): every keyless public node listed for the chain becomes a pinned provider and they are combined in an ethers `FallbackProvider` with quorum 1, so the first healthy node answers and a stalled or rate-limited one is passed over after four seconds instead of blanking the panel. The USD figure printed beside a stake amount comes from `getEthPriceUsd()` ([src/shared/usd-price.js](../src/shared/usd-price.js)), which walks four price feeds with per-provider cooldowns; a throttled feed leaves the ETH amount in place and only drops the USD hint.
 
@@ -127,7 +130,7 @@ reviews.forEach(r => {
 });
 ```
 
-`getReputation` returns `{ count, average }` where `average` is already computed from the contract's `avgX100` (0 if no reviews). `getRecentReviews` returns an array of objects with `agentId`, `from` (reviewer address), `score`, `comment`, `blockNumber`, and `txHash`.
+`getReputation` returns `{ count, average, reviewers, rawAverage, dialect }`: `average` is in stars (0 to 5, 0 if no reviews), `rawAverage` is the on-chain figure in the registry's own unit, and `dialect` is `'reference'` or `'legacy'`. `getRecentReviews` returns an array, oldest first, of objects with `agentId`, `from` (reviewer address), `score` (in stars on the reference dialect), `comment`, `blockNumber`, and `txHash`. On the reference dialect it reads registry state rather than logs, so `fromBlock` is ignored, `blockNumber` and `txHash` are `null`, and `comment` carries the feedback's primary tag. `supportsStaking({ chainId, runner })` tells you whether the staking helpers below can work on that chain.
 
 ### Via the Passport widget
 
@@ -141,7 +144,7 @@ The **ERC-8004 Passport** widget type ([src/widgets/passport.js](../src/widgets/
 
 ## Smart contract reference
 
-The `ReputationRegistry` contract ([contracts/src/ReputationRegistry.sol](../contracts/src/ReputationRegistry.sol)) exposes the following interface:
+This section documents the legacy-dialect source, `ReputationRegistry` ([contracts/src/ReputationRegistry.sol](../contracts/src/ReputationRegistry.sol)). The canonical addresses run the reference implementation instead; its interface is `REPUTATION_REFERENCE_ABI` in [src/erc8004/abi.js](../src/erc8004/abi.js) (`giveFeedback`, `revokeFeedback`, `getSummary`, `getClients`, `getLastIndex`, `readFeedback`). The legacy source exposes:
 
 ### Write
 
@@ -170,7 +173,9 @@ enforces the same one-review-per-wallet, no-self-review rules, and emits
 `withdrawStake` refunds only your own deposit and leaves the review on-chain, so
 a staker can reclaim their ETH at any time without erasing what they said. The
 SDK wraps both as `stakeReputation({ agentId, score, comment, stakeWei, signer,
-chainId })` and reads the pool with `getTotalStake({ agentId, runner, chainId })`.
+chainId })` and reads the pool with `getTotalStake({ agentId, runner, chainId })`;
+`stakeReputation` refuses on a reference-dialect registry and `getTotalStake`
+returns 0 there.
 
 ### Read
 
@@ -203,7 +208,7 @@ Contract addresses are the same on every supported EVM chain (CREATE2 determinis
 | Mainnet (Base, Arbitrum, Optimism, Ethereum, Polygon, and more) | `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63` |
 | Testnet (Base Sepolia, Arbitrum Sepolia, Optimism Sepolia, and more) | `0x8004B663056A597Dffe9eCcC1965A193B7388713` |
 
-One caveat, recorded in the comments of `abi.js`: the canonical addresses run the ERC-8004 reference implementation, not the three.ws source above. An `eth_call` sweep on 2026-08-15 found that deployment answering `readFeedback` / `getClients` on Base and Base Sepolia and reverting on every selector in `contracts/src/ReputationRegistry.sol` (`submitFeedback`, `getReputation`, `getFeedbackRange`, and the stake functions). The ABI and SDK helpers on this page match the three.ws source, so use them against an instance you deploy from `contracts/src` yourself; against the canonical addresses those calls revert.
+One caveat, recorded in the comments of `abi.js`: the canonical addresses run the ERC-8004 reference implementation, not the three.ws source above, and revert on every selector in `contracts/src/ReputationRegistry.sol` (`submitFeedback`, `getReputation`, `getFeedbackRange`, and the stake functions). Calling the legacy ABI directly therefore only works against an instance you deploy from `contracts/src` yourself. The SDK helpers in `src/erc8004/reputation.js`, the reputation panel, the passport widget, and the server-side trust readers all go through the dialect-aware reader, so they work against both.
 
 ---
 

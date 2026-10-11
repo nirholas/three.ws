@@ -13,11 +13,13 @@
 // tokenization, and model listing are deterministic for a given account state.
 const generativeAnnotations = {
 	readOnlyHint: true,
+	destructiveHint: false,
 	openWorldHint: true,
 	idempotentHint: false,
 };
 const deterministicAnnotations = {
 	readOnlyHint: true,
+	destructiveHint: false,
 	openWorldHint: true,
 	idempotentHint: true,
 };
@@ -71,7 +73,9 @@ export function buildTools(client) {
 				annotations: generativeAnnotations,
 				description:
 					'Chat completion with an IBM Granite (or other watsonx.ai) model. Pass a ' +
-					'list of role/content messages and get the assistant reply plus token usage.',
+					'list of role/content messages and get the assistant reply plus token usage. ' +
+					'Use this for multi-turn conversation with chat templating; for a single raw ' +
+					'prompt with decoding control call watsonx_generate instead.',
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -117,7 +121,8 @@ export function buildTools(client) {
 					'model. Provide equal-length `timestamps` (ISO-8601, uniform cadence, oldest first) ' +
 					'and numeric `values`; the series length must meet the model context window (≥512 ' +
 					'for the default). Returns the forecast horizon (up to 96 steps) as future ' +
-					'timestamps and values.',
+					'timestamps and values. Use this to project a numeric series forward; for text ' +
+					'commentary on the result call watsonx_chat.',
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -222,7 +227,9 @@ export function buildTools(client) {
 				annotations: deterministicAnnotations,
 				description:
 					'Generate embedding vectors for one or more texts using an IBM Granite ' +
-					'embedding model. Returns one vector per input plus the vector dimensionality.',
+					'embedding model. Returns one vector per input plus the vector dimensionality. ' +
+					'Use this to index texts for semantic search or similarity scoring; it returns ' +
+					'vectors, not prose.',
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -285,7 +292,9 @@ export function buildTools(client) {
 				annotations: deterministicAnnotations,
 				description:
 					'List the foundation models available to your watsonx.ai account and region. ' +
-					'Optionally filter by supported function, e.g. text_generation or embedding.',
+					'Optionally filter by supported function, e.g. text_generation or embedding. ' +
+					'Call this first to find a model id your account and region can run before ' +
+					'overriding the default model on another watsonx tool.',
 				inputSchema: {
 					type: 'object',
 					properties: {

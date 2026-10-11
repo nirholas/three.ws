@@ -58,6 +58,14 @@ The open work orders now live in `prompts/finish/` with a `roadmap-` prefix, and
 are open and what each owns. Feed one file to one fresh session. Do not invent
 new work while those sit unexecuted; they were sequenced deliberately.
 
+The queue is also worked unattended. Evolve (`npm run evolve:start`, runbook
+[docs/ops/evolve.md](../ops/evolve.md)) runs headless Claude Code sessions
+around the clock in its own worktree: it runs the lowest runnable order, writes
+new scouted orders into the `400` band when the queue runs thin, and sweeps
+production every few hours. It leaves an order alone for 6 hours after a human
+last touched it, and `npm run evolve:pause` frees the subscription for
+interactive work.
+
 ### Session patterns that fit Fable
 
 - **One work order, one session.** Each assumes a fresh context. Do not chain.
@@ -79,8 +87,8 @@ new work while those sit unexecuted; they were sequenced deliberately.
 | OSS scout | weekly | Scan npm and GitHub for movement in our dependency frontier (three.js releases, gltf-transform, meshoptimizer, gsplat, model-viewer, TalkingHead). Diff against the REUSE-MAP; open a dated addendum with license verdicts. | Manual. No script yet; this is the next routine worth automating. |
 | Docs drift | weekly | Cross-check `STRUCTURE.md`, `docs/`, and `data/pages.json` against the tree; fix stale rows in place. | `.claude/workflows/docs-drift.js`, `npm run audit:docs` |
 | Gate health | daily | Run the regression gate; on red, bisect and report. Never let the baseline rot. | `npm run gate` |
-| Production sweep | daily | Health, logs, TLS, fleet readiness, live pages, crons, migrations. | the `gcp-triage` skill, `npm run smoke:prod` |
-| Changelog to community | on deploy | Nothing to run. `/api/cron/changelog-push` reads the feed baked into the running image and posts new entries to the community Telegram channel on its own. **Do not run `npm run changelog:push`**: its file-based state is separate from the cron's DB state, so a manual push double-posts. The script survives for `--dry-run` previews and owner-directed backfills only. X delivery is retired. | Cloud Scheduler |
+| Production sweep | daily | Health, logs, TLS, fleet readiness, live pages, crons, migrations. | the `gcp-triage` skill, `npm run smoke:prod`; Evolve's `triage` lane also runs it unattended |
+| Changelog to community | on deploy | Nothing to run. `/api/cron/changelog-push` reads the feed baked into the running image and posts new entries on its own: every entry to the community Telegram channel, and every entry that passes `data/changelog-x-filter.json` as a reply in the @trythreews X thread (X was retired on 2026-07-18 and turned back on by the owner on 2026-09-24). **Do not run `npm run changelog:push`**: its file-based state is separate from the cron's DB state, so a manual push double-posts. The script survives for `--dry-run` previews and owner-directed backfills only. | Cloud Scheduler |
 | Revenue readout | weekly | Split settled x402 volume into external, internal ring, and synthetic; report the external number. That is the only number that counts toward §4. | `npm run readout:revenue` |
 
 ---
@@ -112,8 +120,10 @@ noted per item so nobody rebuilds what already exists.
 4. **Embed, oEmbed and OG thumbnails.** *Shipped.* `api/agent-oembed.js`,
    `api/play-oembed.js`, the `/embed/*` route family in `vercel.json`, and OG
    image endpoints (`api/avatar-og.js`, `api/avatar-detail-og.js`,
-   `api/og/`). Remaining upside is the same as 3: distribution is wired but not
-   yet defaulted into every share path.
+   `api/og/`). Shared `/m/:id` creation links now unfurl as a render card with
+   `3DModel` JSON-LD (`server/creation-head.mjs`, `api/_lib/creation-jsonld.js`,
+   [docs/seo.md](../seo.md)). Remaining upside is the same as 3: distribution is
+   wired but not yet defaulted into every share path.
 
 The honest reading of 2 through 4: the capability is built, the funnel is not
 measured. A generation that produces an AR link nobody clicks converts nothing.
@@ -167,21 +177,24 @@ $50M to $100M ARR. The ladder:
 
 ### The measured position
 
-Run `npm run readout:revenue -- --window all`. As of 3 September 2026 that
+Run `npm run readout:revenue -- --window all`. As of 9 October 2026 that
 returns:
 
-- **38,620 settled x402 payments, $972.098 gross.**
-- **38,614 of them (99.98%, $972.092) are the internal ring**: platform-controlled
+- **61,767 settled x402 payments, $10,303.60 gross.**
+- **61,748 of them (99.97%, $10,163.51) are the internal ring**: platform-controlled
   wallets paying platform endpoints on a cron. Real money on a real chain, and
   entirely our own.
-- **2 calls, $0.002, are synthetic**: a literal `PAYER` string from a
-  replay-test path. Not a buyer, not money.
-- **External, all time: 4 calls from 3 addresses, $0.004**, across
-  `/api/x402/skill-marketplace` and `/api/x402/solana-register-health`, the most
-  recent in August 2026.
+- **0 calls are synthetic** (the classifier's bucket for test payers such as a
+  literal `PAYER` string from a replay-test path).
+- **External, all time: 19 calls from 4 addresses, $140.09.** $140.00 of it is
+  two routes, nine `/api/x402/dance-tip` payments ($90) and five
+  `/api/x402/club-cover` payments ($50); the rest is cents across
+  `/api/x402/skill-marketplace`, `/api/x402/pump-agent-audit` and
+  `/api/x402/mint-to-mesh-batch`. Four addresses is few enough to check by hand
+  that they are strangers before any of it is cited as rung-1 proof.
 
 So we are not on rung 1. We are below it, and the gross ledger hides that by a
-factor of roughly 240,000. This is the single most important fact in this
+factor of roughly 74. This is the single most important fact in this
 document, and until this readout existed it was not visible to anyone reading
 the numbers the platform reported about itself.
 
@@ -235,13 +248,15 @@ of the map is already a dependency.
 1. **Distribution beats features from here.** The platform out-builds its
    awareness. `llms.txt`, the sitemap and the changelog rails exist; the missing
    piece is the loop that turns every artifact into a share. Wire sharing into
-   artifacts (§3.3, §3.4) rather than adding surfaces. Note that the changelog's automatic X delivery
-   stays retired and the toolkit that drove it is no longer vendored here: it
-   lives at `nirholas/XActions` and on npm (see `STRUCTURE.md`). The X surface
-   that does exist is the reviewed @trythreews content queue
-   (`/api/cron/x-content` every 15 minutes, [docs/x-content-pipeline.md](../x-content-pipeline.md)),
-   and it only previews: nothing is sent until an item is `approved` and
-   `X_CONTENT_AUTO_PUBLISH=true` is set on the service, which it is not today.
+   artifacts (§3.3, §3.4) rather than adding surfaces. X has two live lanes on
+   @trythreews. The changelog cron replies filtered release entries into one
+   thread (back on since 2026-09-24). The reviewed content queue
+   (`/api/cron/x-content` every 15 minutes, [docs/x-content-pipeline.md](../x-content-pipeline.md))
+   publishes only `approved` items, and it is live: `X_CONTENT_AUTO_PUBLISH=true`
+   is set on the service, and `X_CONTENT_REMOTE_QUEUE=true` lets a post approved
+   after the last deploy ship as a signed bundle from object storage without
+   another deploy. The old automation toolkit is no longer vendored here: it
+   lives at `nirholas/XActions` and on npm (see `STRUCTURE.md`).
 2. **Trust is a sellable feature.** We run a hash-chained economy ledger, breach
    monitoring, risk-acknowledgment gating, spend guards, and fail-closed trading
    rules. "Agents that touch real money, auditable by design" is positioning

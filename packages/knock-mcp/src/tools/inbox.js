@@ -6,7 +6,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'knock_inbox',
 	title: 'Read your knocks',
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
 		'Read the knocks your own door has taken, newest first, each with what the sender paid for it. Use ' +
 		'this to triage: the amount is the sender\'s own statement of how much reaching you was worth. Also ' +

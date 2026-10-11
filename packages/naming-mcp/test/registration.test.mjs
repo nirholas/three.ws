@@ -70,12 +70,12 @@ test('every tool advertises readOnlyHint and openWorldHint (all are live public 
 	}
 });
 
-test('no read-only tool sets destructiveHint (it is meaningless for reads)', () => {
+test('every read-only tool sets destructiveHint:false explicitly (the spec defaults an omitted one to true)', () => {
 	for (const tool of TOOLS) {
 		assert.equal(
-			Object.prototype.hasOwnProperty.call(tool.annotations, 'destructiveHint'),
+			tool.annotations.destructiveHint,
 			false,
-			`${tool.name} is read-only — destructiveHint must not be set`,
+			`${tool.name} is read-only, so destructiveHint must be an explicit false`,
 		);
 	}
 });

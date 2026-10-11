@@ -414,13 +414,21 @@ function installedHtml(s, i) {
 		: '';
 	const origin = s.source === 'community'
 		? `<a href="/skills/community?skill=${esc(s.source_slug)}" data-open="${esc(s.source_slug)}">from the registry</a>${s.registry?.removed ? ' (no longer listed)' : ''}`
-		: 'written by you';
+		: s.source === 'external' && s.external
+			? externalOrigin(s)
+			: s.fork
+				? `forked from ${esc(s.fork.slug || 'a skill')}${s.fork.license?.spdx ? ` · ${esc(s.fork.license.spdx)}` : ''}`
+				: 'written by you';
+	const gated = s.gated
+		? '<span class="sc-status is-gated" title="This skill asked for spending, signing or outbound messaging. Any transfer it proposes is held until you ask for it yourself.">Spend gate</span>'
+		: '';
 	return `<li class="sc-item${s.enabled ? '' : ' is-disabled'}" data-id="${esc(s.id)}">
 		<span class="sc-item-order" aria-hidden="true">${i + 1}</span>
 		<div class="sc-item-main">
 			<div class="sc-item-head">
 				<h3 class="sc-item-title">${esc(s.name)}</h3>
 				${status}
+				${gated}
 			</div>
 			<p class="sc-item-meta">v${esc(s.version)} · ~${fmtTokens(s.tokens)} tokens · ${origin}</p>
 			${s.description ? `<p class="sc-item-desc">${esc(s.description)}</p>` : ''}
@@ -435,6 +443,15 @@ function installedHtml(s, i) {
 			<button type="button" class="sc-btn sc-btn-sm sc-btn-danger" data-delete="${esc(s.id)}">Delete</button>
 		</div>
 	</li>`;
+}
+
+/** Provenance line for a skill imported from an external registry. */
+function externalOrigin(s) {
+	const e = s.external;
+	const pin = e.commit ? `@ ${esc(e.commit.slice(0, 7))}` : e.sha256 ? `sha256 ${esc(e.sha256.slice(0, 7))}` : '';
+	const where = e.source_url ? `<a href="${esc(e.source_url)}" rel="noopener" target="_blank">${esc(e.registry?.label || 'external registry')}</a>` : esc(e.registry?.label || 'external registry');
+	const manage = `<a href="/skills/import?view=installed&amp;agent=${esc(state.agentId)}">check for updates</a>`;
+	return `from ${where} ${pin}${e.license?.spdx ? ` · ${esc(e.license.spdx)}` : ''}${e.locally_modified ? ' · edited locally' : ''} · ${manage}`;
 }
 
 function renderInstalled() {

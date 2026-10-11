@@ -14,7 +14,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_portfolio_summary',
 	title: 'My agents’ live portfolio (holdings + USD value)',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Live aggregated portfolio for the agent wallets YOU own (resolved from your three.ws session). Returns ' +
 		'`total_usd` across all wallets and a per-wallet breakdown — each with agent_id, agent_name, chain ' +
@@ -22,7 +22,8 @@ export const def = {
 		'the SPL/ERC-20 token holdings (amount + USD), and that wallet’s USD subtotal. A wallet that failed to ' +
 		'price carries `ok:false` and an `error` instead of throwing the whole call. Note: this is the live VALUE ' +
 		'snapshot — realized PnL lives in get_trades_feed. Set `snapshot:true` to persist a point for the history ' +
-		'chart. Requires THREE_WS_SESSION. Read-only.',
+		'chart. Use this first for "what do my agents hold"; drill into one token with get_portfolio_asset. ' +
+		'Requires THREE_WS_SESSION. Read-only unless `snapshot:true`, which writes one history point.',
 	inputSchema: {
 		snapshot: z
 			.boolean()

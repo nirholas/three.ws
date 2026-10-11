@@ -200,12 +200,12 @@ if (missingEvents.length) {
 }
 pass(`the worker handles all ${REQUIRED_EVENTS.length} board lifecycle events`);
 
-const swTag = (sw.match(/const GLANCE_TAG = '([^']+)'/) || [, ''])[1];
+const swTag = (sw.match(/const GLANCE_TAG = '([^']+)'/)?.[1] ?? '');
 if (swTag !== widget.tag) {
 	fail(`the worker updates tag "${swTag}" but the manifest pins the widget to "${widget.tag}"`);
 }
-const swData = (sw.match(/const GLANCE_DATA_URL = '([^']+)'/) || [, ''])[1];
-const swTemplate = (sw.match(/const GLANCE_TEMPLATE_URL = '([^']+)'/) || [, ''])[1];
+const swData = (sw.match(/const GLANCE_DATA_URL = '([^']+)'/)?.[1] ?? '');
+const swTemplate = (sw.match(/const GLANCE_TEMPLATE_URL = '([^']+)'/)?.[1] ?? '');
 if (swData !== widget.data) fail(`the worker fetches ${swData} but the manifest declares ${widget.data}`);
 if (swTemplate !== widget.ms_ac_template) {
 	fail(`the worker falls back to ${swTemplate} but the manifest declares ${widget.ms_ac_template}`);

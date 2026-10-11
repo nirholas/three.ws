@@ -482,6 +482,27 @@
 				</p>
 				<div class="st-sublist" id="st-econlist"></div>
 			</section>
+
+			<!-- Readiness probes and platform totals, from /api/health and
+			     /api/stats; each section stays hidden until its feed answers. -->
+			<section id="st-health" aria-label="Readiness probes" hidden>
+				<h2 class="st-subhead">Readiness probes</h2>
+				<p class="st-subnote">
+					Live checks of the database, Solana RPC, the background worker and
+					custodial wallet encryption, from <a href="/api/health">/api/health</a>.
+					Unlike the liveness check, this reports degraded when something is wrong.
+				</p>
+				<div class="st-sublist" id="st-healthlist"></div>
+			</section>
+
+			<section id="st-stats" aria-label="Platform totals" hidden>
+				<h2 class="st-subhead">Platform totals</h2>
+				<p class="st-subnote">
+					Real counts read from the database, each with its source and read time,
+					from <a href="/api/stats">/api/stats</a>.
+				</p>
+				<div class="st-sublist" id="st-statslist"></div>
+			</section>
 		</main>
 
 		<script type="module">
@@ -730,6 +751,61 @@
 			load();
 			// Live page: refresh on the probe cadence without requiring a reload.
 			setInterval(load, 5 * 60 * 1000);
+
+			// Readiness probes (/api/health) and platform totals (/api/stats).
+			async function loadHealth() {
+				const wrap = document.getElementById('st-health');
+				try {
+					// /api/health answers 503 with a full body when a probe is down.
+					const res = await fetch('/api/health', { headers: { accept: 'application/json' } });
+					const h = await res.json();
+					if (!h || !h.probes) throw new Error('no probes');
+					wrap.hidden = false;
+					document.getElementById('st-healthlist').innerHTML = Object.values(h.probes)
+						.map((p) => `<div class="st-sub" data-state="${esc(p.status)}">
+							<span class="st-dot" data-state="${esc(p.status)}" aria-hidden="true"></span>
+							<span class="st-sub-name">${esc(p.name)}</span>
+							<span class="st-sub-state">${esc(SUB_STATE_WORD[p.status] || p.status)}</span>
+							${p.detail ? `<span class="st-sub-detail">${esc(p.detail)}</span>` : ''}
+						</div>`)
+						.join('');
+				} catch {
+					wrap.hidden = true;
+				}
+			}
+			const STAT_LABELS = {
+				agents: 'Agents',
+				launches: 'Coins launched',
+				volume_sol: 'Trading volume (SOL)',
+				earnings_paid: 'Earnings payouts completed',
+				active_strategies: 'Active strategies',
+			};
+			async function loadStats() {
+				const wrap = document.getElementById('st-stats');
+				try {
+					const res = await fetch('/api/stats', { headers: { accept: 'application/json' } });
+					if (!res.ok) throw new Error(`HTTP ${res.status}`);
+					const { stats } = await res.json();
+					wrap.hidden = false;
+					document.getElementById('st-statslist').innerHTML = Object.entries(stats)
+						.map(([key, m]) => {
+							const v = m.available === false ? null : key === 'earnings_paid' ? m.value.payouts : m.value;
+							return `<div class="st-sub" data-state="${v == null ? 'unknown' : 'ok'}">
+								<span class="st-dot" data-state="${v == null ? 'unknown' : 'ok'}" aria-hidden="true"></span>
+								<span class="st-sub-name">${esc(STAT_LABELS[key] || key)}</span>
+								<span class="st-sub-state">${v == null ? 'unavailable' : esc(Number(v).toLocaleString())}</span>
+								<span class="st-sub-detail">${esc(m.source)} · read ${esc(new Date(m.as_of).toLocaleTimeString())}</span>
+							</div>`;
+						})
+						.join('');
+				} catch {
+					wrap.hidden = true;
+				}
+			}
+			loadHealth();
+			loadStats();
+			setInterval(loadHealth, 60 * 1000);
+			setInterval(loadStats, 5 * 60 * 1000);
 
 			// Build traceability: show the exact commit + Cloud Run revision that is
 			// serving this page right now. Static (never changes within a revision),

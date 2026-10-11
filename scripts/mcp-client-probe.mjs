@@ -47,7 +47,7 @@ import { checkResourceAllowed, resourceUrlFromServerUrl } from '@modelcontextpro
 import { LATEST_PROTOCOL_VERSION, SUPPORTED_PROTOCOL_VERSIONS } from '@modelcontextprotocol/sdk/types.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const CLIENT_INFO = { name: 'three-ws-connector-probe', version: '1.0.0' };
+const CLIENT_INFO = { name: 'probe', version: '1.0.0' };
 
 // Free tools a probe may call: read-only, no GPU, no spend. First match wins.
 const FREE_CALLS = [
@@ -539,7 +539,8 @@ async function main() {
 	if (args.json) {
 		const out = resolve(process.cwd(), args.json);
 		mkdirSync(dirname(out), { recursive: true });
-		writeFileSync(out, `${JSON.stringify(report, null, '\t')}\n`);
+		// Server error bodies are quoted verbatim; the repo bans em and en dashes in committed text.
+		writeFileSync(out, `${JSON.stringify(report, null, '\t').replace(/[\u2013\u2014]/g, '-')}\n`);
 		console.log(`wrote ${args.json}`);
 	}
 	const failed = results.filter((r) => !r.pass).length;

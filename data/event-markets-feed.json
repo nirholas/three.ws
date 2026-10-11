@@ -1,0 +1,27 @@
+{
+	"move": {
+		"windowSeconds": 600,
+		"thresholdPoints": 5,
+		"note": "A notable move is an outcome whose share changes by at least thresholdPoints percentage points inside windowSeconds. One move per outcome per window."
+	},
+	"stream": {
+		"pollIntervalMs": 250,
+		"coalesceMs": 1000,
+		"heartbeatMs": 15000,
+		"maxConnectionMs": 270000,
+		"retryMs": 2000,
+		"maxConnectionsPerIp": 20,
+		"maxConnectionsPerProcess": 5000,
+		"replayLimit": 500,
+		"retentionHours": 48
+	},
+	"trending": {
+		"windowMinutes": 60
+	},
+	"pulse": {
+		"closingSoonHours": 24
+	},
+	"processing": {
+		"batchLimit": 2000
+	}
+}

@@ -13,6 +13,7 @@
 // Body: { keyId: string }
 // 200:  { ok, protocolVersion, serverInfo, tools: [...], scopes: [...] }
 
+import { effectiveKeyScope } from '../_lib/key-scopes.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
@@ -50,7 +51,7 @@ export default wrap(async (req, res) => {
 	if (!isUuid(keyId)) return error(res, 404, 'not_found', 'API key not found');
 
 	const [key] = await sql`
-		select id, scope, revoked_at, expires_at
+		select id, scope, preset, revoked_at, expires_at
 		from api_keys where id = ${keyId} and user_id = ${user.id} limit 1
 	`;
 	if (!key) return error(res, 404, 'not_found', 'API key not found');
@@ -60,7 +61,8 @@ export default wrap(async (req, res) => {
 
 	// Dispatch with the key's real scope — tools/call gates on scope, so this is
 	// the same principal an MCP client carrying this key would present.
-	const auth = { userId: user.id, scope: key.scope || '', source: 'apikey', apiKeyId: key.id };
+	const { scope: keyScope, connector } = effectiveKeyScope(key);
+	const auth = { userId: user.id, scope: keyScope, source: 'apikey', apiKeyId: key.id, ...(connector ? { connector: true } : {}) };
 
 	const init = await dispatch({ jsonrpc: '2.0', id: 1, method: 'initialize', params: INITIALIZE_PARAMS }, auth, req);
 	if (init?.error) return json(res, 200, { ok: false, error: init.error });

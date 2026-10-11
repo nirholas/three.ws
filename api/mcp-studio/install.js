@@ -25,7 +25,7 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['POST'])) return;
 
 	const ip = clientIp(req);
-	const rl = await limits.studioInstallMint(ip);
+	const rl = await limits.studioInstallCreate(ip);
 	if (!rl.success) {
 		const reset = new Date(Number(rl.reset) || Date.now() + 60_000).toISOString();
 		return rateLimited(

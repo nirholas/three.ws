@@ -21,6 +21,7 @@ import {
 } from 'discord.js';
 import { chunkText, MAX_TEXT } from '../../../../api/_lib/gateway/format.js';
 import { parseActionId } from '../../../../api/_lib/gateway/approvals.js';
+import { parseApprovalCallback } from '../../../../api/_lib/gateway/approval-buttons.js';
 import { DISCORD_INTERACTION } from '../../../../api/_lib/gateway/webhooks.js';
 import { PlatformError, isPermanentStatus } from '../errors.js';
 
@@ -145,9 +146,10 @@ export function createDiscordAdapter({ env = process.env, rest = null, fetch: fe
 		};
 		if (i.type === DISCORD_INTERACTION.APPLICATION_COMMAND) return { ...base, ...commandOf(i.data) };
 		if (i.type === DISCORD_INTERACTION.MESSAGE_COMPONENT) {
-			const action = parseActionId(i.data?.custom_id);
-			if (!action || !i.message?.id) return null;
-			return { ...base, action, messageRef: { kind: 'channel', channelId: String(i.channel_id), messageId: String(i.message.id) } };
+			const approvalAction = parseApprovalCallback(i.data?.custom_id);
+			const action = approvalAction ? null : parseActionId(i.data?.custom_id);
+			if ((!approvalAction && !action) || !i.message?.id) return null;
+			return { ...base, ...(approvalAction ? { approvalAction } : { action }), messageRef: { kind: 'channel', channelId: String(i.channel_id), messageId: String(i.message.id) } };
 		}
 		return null;
 	}
@@ -163,6 +165,9 @@ export function createDiscordAdapter({ env = process.env, rest = null, fetch: fe
 			userId: String(m.author.id),
 			username: m.author.username || null,
 		};
+		// A forward (message_reference type 1, carried as message_snapshots) is
+		// someone else's message; the core never acts on it.
+		if (m.message_reference?.type === 1 || (Array.isArray(m.message_snapshots) && m.message_snapshots.length)) return { ...base, forwarded: true };
 		const botId = payload.botUserId ? String(payload.botUserId) : null;
 		const text = String(m.content || '').replace(botId ? new RegExp(`<@!?${botId}>`, 'g') : /$^/, '').trim();
 		const attachments = Array.isArray(m.attachments) ? m.attachments : [];

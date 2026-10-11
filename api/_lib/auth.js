@@ -8,7 +8,10 @@ import { logAudit } from './audit.js';
 import { randomToken, sha256, hmacSha256, constantTimeEquals } from './crypto.js';
 import { recordDailyActivity } from './streaks.js';
 import { clientIp } from './rate-limit.js';
-import { capConnectorScope } from './spend-scope.js';
+import { effectiveKeyScope, withImpliedScopes } from './key-scopes.js';
+import { getCachedKeyRow, rememberKeyRow, keyRevokedSinceCached, shouldTouchLastUsed } from './api-key-cache.js';
+import { ipAllowed } from './ip-allowlist.js';
+import { currentRequest } from './request-context.js';
 
 const ACCESS_TTL_SEC = 60 * 60; // 1h access tokens
 const REFRESH_TTL_SEC = 60 * 60 * 24 * 30; // 30d refresh tokens
@@ -119,39 +122,6 @@ export async function revokeRefreshToken(secret, clientId) {
 			meta: { client_id: clientId },
 		});
 	}
-}
-
-// ── grant liveness (revocation that takes effect on the next request) ───────
-// Access tokens are stateless JWTs, so on their own a revoked app kept working
-// until its current token expired, up to an hour. Revocation now ends every
-// access token minted for that person and client before the moment it
-// happened: the person pressing Revoke in Connected apps, the client revoking
-// its own refresh token (RFC 7009 §2.1 asks the server to drop the access
-// tokens of the same grant too), refresh-token reuse, and a replayed code.
-// All four leave a refresh row with `revoked_at` set and no `replaced_by`;
-// normal rotation always sets `replaced_by`, so a refresh never cuts off the
-// token it replaces. A grant authorized again later mints tokens issued after
-// the revocation, which pass.
-//
-// The same statement stamps `last_used_at` on the live refresh row, at most
-// every five minutes, so Connected apps shows when an app last called in
-// rather than when it last refreshed.
-export async function oauthGrantRevoked({ userId, clientId, issuedAt }) {
-	if (!userId || !clientId || !issuedAt) return false;
-	const [row] = await sql`
-		with touched as (
-			update oauth_refresh_tokens set last_used_at = now()
-			where user_id = ${userId} and client_id = ${clientId} and revoked_at is null and expires_at > now()
-				and (last_used_at is null or last_used_at < now() - interval '5 minutes')
-			returning id
-		)
-		select exists (
-			select 1 from oauth_refresh_tokens
-			where user_id = ${userId} and client_id = ${clientId} and replaced_by is null
-				and revoked_at >= to_timestamp(${issuedAt})
-		) as revoked
-	`;
-	return !!row?.revoked;
 }
 
 // ── browser sessions (cookie auth for the site itself) ──────────────────────
@@ -319,46 +289,92 @@ export function extractBearer(req) {
 	return h.slice(7).trim();
 }
 
+// Access tokens are stateless JWTs, so revoking a connected app also records a
+// cutoff per (user, client). A token issued at or before the cutoff is dead on
+// its next use; a token minted after the person re-authorizes the app is not.
+async function isGrantRevoked(payload) {
+	const rows = await sql`
+		select 1 from oauth_client_revocations
+		where user_id = ${payload.sub} and client_id = ${payload.client_id}
+			and revoked_at >= to_timestamp(${payload.iat})
+		limit 1
+	`;
+	return rows.length > 0;
+}
+
+// Revoke everything one client holds for one user: its refresh tokens and, via
+// the cutoff row, every access token already in flight. Returns how many
+// refresh tokens were revoked.
+export async function revokeClientGrant({ userId, clientId }) {
+	const revoked = await sql`
+		update oauth_refresh_tokens set revoked_at = now()
+		where user_id = ${userId} and client_id = ${clientId} and revoked_at is null
+		returning id
+	`;
+	await sql`
+		insert into oauth_client_revocations (user_id, client_id, revoked_at)
+		values (${userId}, ${clientId}, now())
+		on conflict (user_id, client_id) do update set revoked_at = excluded.revoked_at
+	`;
+	return revoked.length;
+}
+
 // Returns { userId, scope, source: 'oauth'|'apikey', clientId?, apiKeyId? } or null.
-export async function authenticateBearer(token, { audience } = {}) {
+//
+// `ip` is the caller's address, used for the key's IP allowlist. Callers that
+// only hold a token (most of them) leave it out and the address is read from
+// the request context server/index.mjs opens around every API dispatch, so an
+// allowlisted key is enforced on every route, not only the ones that pass it.
+export async function authenticateBearer(token, { audience, ip } = {}) {
 	if (!token) return null;
 	// API keys are prefixed with `sk_live_` (or `sk_test_`) — short-circuit.
 	if (token.startsWith('sk_live_') || token.startsWith('sk_test_')) {
 		const hash = await sha256(token);
-		const rows = await sql`
-			select id, user_id, scope, expires_at, revoked_at
-			from api_keys where token_hash = ${hash} limit 1
-		`;
-		const row = rows[0];
+		let row = getCachedKeyRow(hash);
+		if (row === undefined) {
+			const rows = await sql`
+				select id, user_id, scope, preset, expires_at, revoked_at, ip_allowlist, overlap_until
+				from api_keys where token_hash = ${hash} limit 1
+			`;
+			row = rows[0] ?? null;
+			rememberKeyRow(hash, row);
+		} else if (row && (await keyRevokedSinceCached(row.id))) {
+			// Revoked on this or another instance since the row was cached: the
+			// cache window must never outlive a revoke (api-key-cache.js).
+			return null;
+		}
 		if (!row || row.revoked_at) return null;
-		if (row.expires_at && new Date(row.expires_at) < new Date()) return null;
-		await sql`update api_keys set last_used_at = now() where id = ${row.id}`;
-		// A connector key's power is capped here, on every request, rather than
-		// trusted from the stored string (api/_lib/spend-scope.js).
-		return { userId: row.user_id, scope: capConnectorScope(row.scope), source: 'apikey', apiKeyId: row.id };
+		const now = new Date();
+		if (row.expires_at && new Date(row.expires_at) < now) return null;
+		// A rotated key keeps working through its overlap window, then stops.
+		if (row.overlap_until && new Date(row.overlap_until) < now) return null;
+		const ctxReq = ip ? null : currentRequest();
+		const callerIp = ip ?? (ctxReq ? clientIp(ctxReq) : null);
+		if (Array.isArray(row.ip_allowlist) && row.ip_allowlist.length && !ipAllowed(callerIp, row.ip_allowlist)) return null;
+		if (shouldTouchLastUsed(row.id)) await sql`update api_keys set last_used_at = now() where id = ${row.id}`;
+		// Coarse scopes expand to the fine ones every route checks, and a
+		// connector key is stripped of every spend-capable scope (key-scopes.js).
+		const { scope, connector } = effectiveKeyScope(row);
+		return { userId: row.user_id, scope, source: 'apikey', apiKeyId: row.id, ...(connector ? { connector: true } : {}) };
 	}
 	// Otherwise treat as JWT access token.
-	let payload;
 	try {
-		payload = await verifyAccessToken(token, { audience });
+		const payload = await verifyAccessToken(token, { audience });
+		// Only ACCESS tokens authorize API calls. Refresh tokens are opaque (never
+		// JWTs) so this is belt-and-suspenders, but rejecting any non-'access'
+		// token_use prevents a future token type (e.g. an id/refresh JWT) from
+		// being replayed against resource endpoints.
+		if (payload.token_use !== 'access') return null;
+		if (payload.client_id && await isGrantRevoked(payload)) return null;
+		return {
+			userId: payload.sub,
+			scope: payload.scope || '',
+			source: 'oauth',
+			clientId: payload.client_id,
+		};
 	} catch {
 		return null;
 	}
-	// Only ACCESS tokens authorize API calls. Refresh tokens are opaque (never
-	// JWTs) so this is belt-and-suspenders, but rejecting any non-'access'
-	// token_use prevents a future token type (e.g. an id/refresh JWT) from
-	// being replayed against resource endpoints.
-	if (payload.token_use !== 'access') return null;
-	// Outside the try on purpose: a database error here surfaces as a 503 from
-	// wrap() instead of a 401, which would send every connected client back
-	// through sign-in during an outage.
-	if (await oauthGrantRevoked({ userId: payload.sub, clientId: payload.client_id, issuedAt: payload.iat })) return null;
-	return {
-		userId: payload.sub,
-		scope: payload.scope || '',
-		source: 'oauth',
-		clientId: payload.client_id,
-	};
 }
 
 // Resolve the request's user from a session cookie OR a bearer credential
@@ -370,8 +386,8 @@ export async function authenticateBearer(token, { audience } = {}) {
 export async function getRequestUser(req, res) {
 	const session = await getSessionUser(req, res);
 	if (session) return session;
-	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer) return { id: bearer.userId, source: 'bearer', scope: bearer.scope || '' };
+	const bearer = await authenticateBearer(extractBearer(req), { ip: clientIp(req) });
+	if (bearer) return { id: bearer.userId, source: 'bearer', scope: bearer.scope || '', ...(bearer.connector ? { connector: true } : {}) };
 	return null;
 }
 
@@ -431,8 +447,10 @@ export async function authenticatePrivy(req) {
 	}
 }
 
+// `wallet:write` satisfies `wallet:trade` and `wallet:launch` (key-scopes.js
+// IMPLIED_SCOPES): a credential allowed to move value out may also trade and launch.
 export function hasScope(granted, required) {
-	const g = new Set((granted || '').split(/\s+/).filter(Boolean));
+	const g = new Set(withImpliedScopes(granted));
 	return required.split(/\s+/).every((s) => g.has(s));
 }
 
@@ -450,4 +468,4 @@ export function requestUserHasScope(user, required) {
 
 // Re-exported for callers that import every auth helper from here; the gate
 // itself lives in spend-scope.js so a mocked auth.js cannot remove it.
-export { SPEND_SCOPE, assertBearerMaySpend } from './spend-scope.js';
+export { SPEND_SCOPE, TRADE_SCOPE, LAUNCH_SCOPE, assertBearerMaySpend } from './spend-scope.js';

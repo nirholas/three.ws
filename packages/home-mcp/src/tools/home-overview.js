@@ -11,7 +11,7 @@ import { freshness, home, standingAllowances } from '../lib/home.js';
 export const def = {
 	name: 'home_overview',
 	title: 'Read the house: floors, rooms, lights, climate, security',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Read the whole house at once. Returns the Home Assistant version, the floors, and one entry per room ' +
 		'with: `name`, `floor`, `entities` (a count), `lighting` ({ total, on, brightness 0-1, rgb }), `climate` ' +

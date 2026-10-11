@@ -36,8 +36,25 @@ Hard safety caps (`MAX_VOXELS = 60_000`,
 `MAX_LATTICE_EDGES = 6_000`, `MAX_MESH_BYTES = 128 MiB`) mean a hostile or huge
 input can never exhaust memory — resolution backs off automatically.
 
-Input formats: `.glb`, `.gltf`, `.obj`, `.stl`, `.ply`, `.fbx`, `.off`, `.dae`
-(FBX/DAE via `pyassimp`). Output formats: `glb` (default), `obj`, `stl`, `ply`.
+Input formats: `.glb`, `.gltf`, `.obj`, `.stl`, `.ply`, `.off`, `.dae` (DAE
+through `pycollada`, which `trimesh[easy]` installs). Output formats: `glb`
+(default), `obj`, `stl`, `ply`.
+
+**FBX is not accepted.** trimesh has no FBX reader and this image carries no
+converter, so an FBX is refused up front instead of failing inside the parser:
+
+- an `.fbx` mesh URL is a `422` whose message names the formats above;
+- an FBX behind an extensionless or signed URL is caught by its bytes (the
+  binary `Kaydara FBX Binary` magic or an ASCII `; FBX` header) and the task
+  fails with `error_kind: "input"` and that same caller-facing message, not an
+  opaque `internal error (ref …)`;
+- `/api/forge-stylize` answers `400 unsupported_mesh_format` and the
+  `stylize_model` MCP tool returns an error before any job is queued.
+
+To restyle an FBX, convert it to GLB first with the remesh worker
+(`operation: "convert"`, `output_format: "glb"`, via `/api/forge-remesh` or the
+`remesh_model` MCP tool), which reads binary FBX through headless Blender, then
+stylize the GLB it returns.
 
 A glTF asset that declares `EXT_meshopt_compression` (what `gltfpack` emits, and
 what most three.ws avatars ship as) is transcoded to plain glTF by
@@ -70,7 +87,8 @@ is a `401`. Jobs are async: `POST /process` returns immediately with a
 `worker_security.fetch_remote_bytes` rejects private/loopback/metadata hosts —
 SSRF defense; `/api/forge-stylize` also pre-validates it). `style` defaults to
 `voxel`, `resolution` is clamped to the style's bounds (a missing/`null` value
-uses the default), `output_format` defaults to `glb`.
+uses the default), `output_format` defaults to `glb`. An `.fbx` `mesh` is a
+`422` that names the supported input formats.
 
 Response:
 
@@ -95,7 +113,10 @@ Response:
 ```
 
 `status` is `queued` → `running` → `done` | `failed`. On failure the body
-carries a sanitized `error`. Unknown ids return `404`. The finished mesh is
+carries an `error` and an `error_kind`: `input` means the caller's file was the
+problem and `error` says how to fix it (an FBX, for example); `internal` means a
+service fault and `error` is an opaque `internal error (ref <id>)` that matches
+the full traceback in the service log. Unknown ids return `404`. The finished mesh is
 uploaded to the `GCS_BUCKET` under `stylize/<task_id>.<format>` and served from
 its public GCS URL; that upload retries transient transport failures, so a TLS
 blip no longer discards work the worker already did.
@@ -193,9 +214,9 @@ API_KEY=dev-secret GCS_BUCKET=your-dev-bucket \
 ```
 
 (Uploads need Application Default Credentials with write access to
-`GCS_BUCKET`.) The container image installs `libassimp` + `libgl` system libs
-so FBX/DAE input and headless mesh IO work, plus the pinned `gltfpack` binary
-for meshopt input.
+`GCS_BUCKET`.) The container image installs the GL, OpenMP and BLAS system libs
+open3d and trimesh need for headless mesh IO, plus the pinned `gltfpack` binary
+for meshopt input. It ships no assimp: nothing in the worker loads it.
 
 To run it as a self-hosted OIN node with no cloud account at all, keep results
 on disk and skip GCS entirely:
@@ -267,6 +288,6 @@ curl -s -X POST https://three.ws/api/forge-stylize \
 | [`test_gltf_meshopt.py`](test_gltf_meshopt.py) | Tests for the decode; a Docker build gate alongside the filter suite. |
 | [`oin.py`](oin.py) | OIN protocol layer: canonicalization, job digests, Ed25519 signing, the `/oin/*` routes. Vendored copy, kept byte-identical across workers. |
 | [`oin_upload.py`](oin_upload.py) | OIN result sinks: GCS in production, a local directory for self-hosted runs. |
-| [`requirements.txt`](requirements.txt) | Pinned deps (`trimesh`, `open3d`, `scipy`, `pyassimp`, `pynacl`, …). |
-| [`Dockerfile`](Dockerfile) | `python:3.11-slim` + assimp/GL system libs + pinned `gltfpack`; uvicorn on `:8080`. |
+| [`requirements.txt`](requirements.txt) | Pinned deps (`trimesh[easy]` with `pycollada`, `open3d`, `scipy`, `pynacl`, …). |
+| [`Dockerfile`](Dockerfile) | `python:3.11-slim` + GL/OpenMP/BLAS system libs + pinned `gltfpack`; uvicorn on `:8080`. |
 | [`cloudbuild.yaml`](cloudbuild.yaml) | Cloud Build → Artifact Registry → Cloud Run deploy. |

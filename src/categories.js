@@ -293,10 +293,8 @@ function bindActions(el) {
 		renderTable();
 		// Land focus on the first newly revealed row so the keyboard path
 		// continues where the button was instead of at the top of the table.
-		$('cat-table')
-			?.querySelectorAll('tbody tr')
-			[state.shown - PAGE_SIZE]?.querySelector('a')
-			?.focus();
+		const rows = $('cat-table')?.querySelectorAll('tbody tr');
+		rows?.[state.shown - PAGE_SIZE]?.querySelector('a')?.focus();
 	});
 }
 

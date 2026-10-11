@@ -21,6 +21,7 @@
 // so a quiet minute always means a dead socket, not a quiet market.
 
 import { solanaRpcEndpoints, resolveWsEndpoint } from './solana/connection.js';
+import { pumpTradesFromEvents } from '../../src/pump/trade-events.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const PUMP_TOKEN_DECIMALS = 1_000_000; // pump.fun tokens are minted with 6 decimals
@@ -203,18 +204,21 @@ export function eventField(data, camel) {
 	return data[camel.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)];
 }
 
-/** Normalize an Anchor TradeEvent into the PumpPortal wire shape. */
-function normalizeTradeEvent(data, signature) {
-	const isBuy = eventField(data, 'isBuy');
-	const solAmount = eventField(data, 'solAmount');
-	const tokenAmount = eventField(data, 'tokenAmount');
+/**
+ * Normalize one pump trade (a TradeEvent with any synthetic-migration pool part
+ * already folded in, see src/pump/trade-events.js) into the PumpPortal wire shape.
+ * @param {import('../../src/pump/trade-events.js').PumpTrade} trade
+ * @param {string} signature
+ */
+function normalizeTradeEvent(trade, signature) {
+	const { data } = trade;
 	const timestamp = eventField(data, 'timestamp');
 	return {
-		txType: isBuy ? 'buy' : 'sell',
+		txType: trade.isBuy ? 'buy' : 'sell',
 		mint: data.mint.toString(),
 		traderPublicKey: data.user.toString(),
-		solAmount: Number(solAmount.toString()) / LAMPORTS_PER_SOL,
-		tokenAmount: Number(tokenAmount.toString()) / PUMP_TOKEN_DECIMALS,
+		solAmount: Number(trade.solAmount) / LAMPORTS_PER_SOL,
+		tokenAmount: Number(trade.tokenAmount) / PUMP_TOKEN_DECIMALS,
 		signature,
 		// Chain time when present; consumers that want wall-clock use their own.
 		timestampMs: Number(timestamp?.toString?.() ?? 0) * 1000 || Date.now(),
@@ -278,13 +282,12 @@ async function startSubscription(state) {
 					return;
 				}
 				if (process.env.PUMP_ONCHAIN_DEBUG && parsed.length && !state._dbgEv) { state._dbgEv = 1; console.log('[pump-onchain-trades] first events:', parsed.map((e) => e.name).join(',')); }
-				for (const event of parsed) {
-					if (event.name !== 'TradeEvent') continue;
+				for (const trade of pumpTradesFromEvents(parsed)) {
 					state.lastEventAt = Date.now();
 					state.everReceived = true;
 					let msg;
-					try { msg = normalizeTradeEvent(event.data, logInfo.signature); } catch (e) {
-						if (process.env.PUMP_ONCHAIN_DEBUG && !state._dbgNormErr) { state._dbgNormErr = 1; console.log('[pump-onchain-trades] normalize error:', e?.message, 'keys:', Object.keys(event.data || {}).join(',')); }
+					try { msg = normalizeTradeEvent(trade, logInfo.signature); } catch (e) {
+						if (process.env.PUMP_ONCHAIN_DEBUG && !state._dbgNormErr) { state._dbgNormErr = 1; console.log('[pump-onchain-trades] normalize error:', e?.message, 'keys:', Object.keys(trade.data || {}).join(',')); }
 						continue;
 					}
 					if (process.env.PUMP_ONCHAIN_DEBUG && !state._dbgDispatch) { state._dbgDispatch = 1; console.log('[pump-onchain-trades] dispatching to', state.listeners.size, 'listeners'); }

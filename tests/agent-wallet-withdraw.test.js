@@ -42,15 +42,14 @@ vi.mock('../api/_lib/csrf.js', () => ({
 }));
 
 // ── db ──────────────────────────────────────────────────────────────────────
-// `listing` answers the marketplace check (is this balance promised to a listing
-// with open bids?) by query text, so the ordered queue only feeds the custody
-// reads and writes each case cares about.
-const sqlState = { queue: [], calls: [], listing: null };
+// The marketplace "balance is promised to bidders" lookup is answered from its
+// own slot so it never consumes a row a test queued for the idempotency path.
+const sqlState = { queue: [], calls: [], listing: [] };
 vi.mock('../api/_lib/db.js', () => ({
 	sql: vi.fn(async (strings, ...values) => {
 		const query = strings.join('?');
 		sqlState.calls.push({ query, values });
-		if (/from agent_listings/i.test(query)) return sqlState.listing ? [sqlState.listing] : [];
+		if (query.includes('FROM agent_listings')) return sqlState.listing;
 		return sqlState.queue.length ? sqlState.queue.shift() : [];
 	}),
 	isDbUnavailableError: () => false,
@@ -172,7 +171,7 @@ function queueAgentRow() {
 beforeEach(() => {
 	sqlState.queue = [];
 	sqlState.calls = [];
-	sqlState.listing = null;
+	sqlState.listing = [];
 	connState.sent = 0;
 	connState.confirmErr = null;
 	recoverState.calls = 0;
@@ -218,6 +217,17 @@ describe('handleWithdraw — validation + safety', () => {
 		expect(connState.sent).toBe(0);
 	});
 
+	it('refuses with 409 while the balance is promised to an open marketplace bid, without touching the key', async () => {
+		queueAgentRow();
+		sqlState.listing = [{ id: 'listing-1' }];
+		const res = mockRes();
+		await handleWithdraw(mockReq({ asset: 'SOL', amount: 0.1, destination: Keypair.generate().publicKey.toBase58() }), res, 'agent-1');
+		expect(res.statusCode).toBe(409);
+		expect(parse(res).error).toBe('balance_listed');
+		expect(recoverState.calls).toBe(0);
+		expect(connState.sent).toBe(0);
+	});
+
 	it('forbids withdrawing from an agent the caller does not own', async () => {
 		sqlState.queue.push([{ id: 'agent-1', user_id: 'someone-else', meta: AGENT_META }]);
 		const res = mockRes();
@@ -230,7 +240,7 @@ describe('handleWithdraw — validation + safety', () => {
 describe('handleWithdraw: marketplace listing hold', () => {
 	it('refuses to withdraw a balance promised to a listing with open bids, before touching the key', async () => {
 		queueAgentRow();
-		sqlState.listing = { id: 'listing-1' };
+		sqlState.listing = [{ id: 'listing-1' }];
 		const res = mockRes();
 		await handleWithdraw(mockReq({ asset: 'SOL', amount: 0.1, destination: Keypair.generate().publicKey.toBase58() }), res, 'agent-1');
 		expect(res.statusCode).toBe(409);
@@ -241,7 +251,7 @@ describe('handleWithdraw: marketplace listing hold', () => {
 
 	it('still previews a simulated withdrawal while the balance is listed', async () => {
 		queueAgentRow();
-		sqlState.listing = { id: 'listing-1' };
+		sqlState.listing = [{ id: 'listing-1' }];
 		sqlState.queue.push([]); // idempotency lookup: none
 		const res = mockRes();
 		await handleWithdraw(mockReq({ asset: 'SOL', amount: 'max', destination: Keypair.generate().publicKey.toBase58(), simulate: true }), res, 'agent-1');

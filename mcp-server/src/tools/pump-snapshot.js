@@ -24,7 +24,7 @@ import { withSolanaConnection, getSolanaEndpoints } from '../lib/solana-rpc.js';
 
 const TOOL_NAME = 'pump_snapshot';
 const TOOL_DESCRIPTION =
-	'Live snapshot for a Solana SPL or pump.fun token: USD price (Jupiter), 24h volume + DEX pair (Dexscreener), mint metadata + image (pump.fun frontend-api-v3), and on-chain top-holder distribution from Solana RPC getTokenLargestAccounts. Optional Helius DAS holder count when HELIUS_API_KEY is configured. Paid: $0.005 USDC.';
+	'Live snapshot for a Solana SPL or pump.fun token: USD price (Jupiter), 24h volume + DEX pair (Dexscreener), mint metadata + image (pump.fun frontend-api-v3), and on-chain top-holder distribution from Solana RPC getTokenLargestAccounts. Optional Helius DAS holder count when HELIUS_API_KEY is configured. Use this to check a token\'s price, volume, and holder concentration before trading or reporting on it; for community mood, call sentiment_pulse. Paid: $0.005 USDC.';
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || '';
 

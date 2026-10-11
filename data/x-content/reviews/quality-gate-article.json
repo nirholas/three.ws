@@ -1,9 +1,11 @@
 {
 	"id": "quality-gate-article",
 	"contentHash": "2f98cb70150ab228b36694f99c7f2b22e3d1934a78c2abb6b6609f4bf4c66ce9",
-	"reviewedAt": "2026-10-01T19:33:53.189Z",
-	"passed": true,
-	"blockers": [],
+	"reviewedAt": "2026-10-09T17:08:15.263Z",
+	"passed": false,
+	"blockers": [
+		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"Request had insufficient authentication scopes.\",; \"status\": \"PERMISSION_DENIED\",; \"details\": [; {; \"@type\": \"type.googleapis.com/goog; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; editor returned no JSON object"
+	],
 	"texts": [
 		"Two checks before a 3D model ships: the catalog gate, and a diff that names what broke",
 		"Our catalog turns away a character that arrives as more than 8 meshes, and you can run that exact check on your own .glb without uploading it. The write-up covers the five structural checks, how Model Diff names the joints and clips a change removed, the exit codes for CI, and where its rename detection still guesses wrong: three.ws/inspect"
@@ -415,61 +417,6 @@
 			}
 		]
 	},
-	"editor": {
-		"verdict": "publish",
-		"scores": {
-			"accuracy": 5,
-			"clarity": 5,
-			"specificity": 5,
-			"voice": 5,
-			"professionalism": 5,
-			"visual": 5
-		},
-		"issues": [],
-		"rewrite": {
-			"posts": [
-				"Our catalog turns away a character that arrives as more than 8 meshes, and you can run that exact check on your own .glb without uploading it. The write-up covers the five structural checks, how Model Diff names the joints and clips a change removed, the exit codes for CI, and where its rename detection still guesses wrong: three.ws/inspect"
-			],
-			"altText": [
-				"Two 3D characters overlaid in the Model Diff viewer on a black background: a translucent pink jointed mannequin, the X Bot sample highlighted as the model before the change, standing beside Michelle, a green-skinned character with leafy green hair and yellow trousers, caught mid-dance as her clip plays"
-			]
-		},
-		"summary": "Every claim in the post maps to a passing verification against the live pages or the gate and diff source, including the 8-mesh character limit, the browser-only run, the five checks, named joints and clips, CI exit codes, and the known rename-detection weakness. The post leads on the mechanism, follows the voice contract (no hashtags, emoji, dashes, or hype), keeps the single correct link, and the cover frame plus alt text accurately describe the Model Diff viewer with X Bot beside Michelle.",
-		"model": "nvidia:moonshotai/kimi-k3",
-		"fallbacks": [
-			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
-			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
-			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
-		],
-		"rewriteFindings": [
-			"claims: claim \"has to clear a structural gate before anyone sees it, and the Model Inspector runs that same gate, the same module with the same thresholds\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The seeding job that fills the catalog imports it, and so does the inspector page\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A threshold change lands in both places at once because there is only one place\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the gate reads nothing but the glTF JSON chunk\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A build check walks the real bundler graph from the page and fails the moment a Node built-in becomes reachable\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Every verdict carries a gate version, because an accept rate is only comparable within one version of the rules\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Geometry density: between 1,500 and 1,500,000 vertices\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"File weight: between 20 KB and 80 MB\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a collapsed mesh passes every triangle count and still draws as a speck\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a character may arrive as at most 8 meshes. A prop is exempt\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A failed check comes with the fix, written next to the rule it explains, so the guidance cannot drift from the rule\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The texture rule is deliberately stricter than the interactive Forge\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"It clears the density floor of 1,500 with 1,728 vertices\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Fox is the sample labelled \"Passes, barely\"\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The gate is the first of two stages. On the catalog path a vision model then renders the mesh\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"pairs objects across the two the way git pairs renamed files: by name first, then by a hash of the content, then by similarity\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Vertex data is compared at a quantum of 1e-4 units, so the float drift of a re-export does not register while a genuine edit does\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Every change set carries one severity: none, cosmetic, minor, major or breaking\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A texture swap is minor because everything still loads and plays\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"That is the failure that renders fine and never moves\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The skeleton section names the two eye joints that are gone and says clips addressing them will not play. The animation section lists the five clips that no longer exist\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The page, a command line tool and a free HTTP endpoint all run the same published package\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Zero means the diff ran and stayed below the threshold\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"caps each side at 32 MB\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The similarity pass is skipped when two models would need more than 40,000 comparisons, and the result says so\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Most avatars on the platform ship with compressed geometry\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the command line tool needs the optional meshoptimizer package installed next to it\" does not appear in the copy; claims must quote the post"
-		]
-	},
-	"editorError": null
+	"editor": null,
+	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  editor returned no JSON object"
 }

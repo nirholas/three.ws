@@ -10,10 +10,10 @@ import { describe, it, expect } from 'vitest';
 import { TOOL_CATALOG, TOOLS } from '../../api/_mcpagent/catalog.js';
 
 describe('agent-wallet MCP catalog', () => {
-	it('leads with the free getting_started tool, then the wallet, marketplace and prediction toolsets', () => {
+	it('leads with the free getting_started tool, then the wallet, marketplace, prediction, perps and Papertrade toolsets', () => {
 		expect(TOOL_CATALOG.map((t) => t.name)).toEqual([
 			'getting_started',
-			// wallet + x402 (api/_mcpagent/tools.js)
+			// Wallet and x402 (api/_mcpagent/tools.js)
 			'wallet_status',
 			'find_services',
 			'pay_quote',
@@ -21,7 +21,9 @@ describe('agent-wallet MCP catalog', () => {
 			'provision_wallet',
 			'monetize_endpoint',
 			'read_resource',
-			// agent marketplace (api/_mcpagent/marketplace-tools.js)
+			'get_linked_accounts',
+			'set_external_wallet',
+			// Agent marketplace (api/_mcpagent/marketplace-tools.js)
 			'browse_marketplace',
 			'browse_public_agents',
 			'get_listing',
@@ -38,7 +40,7 @@ describe('agent-wallet MCP catalog', () => {
 			'withdraw_marketplace_bid',
 			'get_agent_transfer',
 			'resume_agent_transfer',
-			// prediction markets (api/_mcpagent/predictions-tools.js)
+			// Prediction markets (api/_mcpagent/predictions-tools.js)
 			'predictions_events',
 			'predictions_event',
 			'predictions_positions',
@@ -49,6 +51,82 @@ describe('agent-wallet MCP catalog', () => {
 			'predictions_redeem_preview',
 			'predictions_redeem',
 			'predictions_watch',
+			// Perpetual futures (api/_mcpagent/perps-tools.js)
+			'perps_markets',
+			'perps_market_data',
+			'perps_account',
+			'perps_positions',
+			'perps_order_preview',
+			'perps_action_preview',
+			'perps_order_execute',
+			'perps_collateral_deposit',
+			'perps_collateral_withdraw',
+			'perps_order_cancel',
+			'perps_flatten',
+			'perps_limits',
+			// Papertrade synthetic perps on HyperEVM (api/_mcpagent/papertrade-tools.js)
+			'papertrade_markets',
+			'papertrade_quote',
+			'papertrade_account',
+			'papertrade_protocol',
+			// Solana trading (api/_mcpagent/trading-tools.js over api/_lib/trading-tools/registry.js)
+			'token_search',
+			'get_price',
+			'get_indicators',
+			'get_market_signals',
+			'get_news_feed',
+			'arbitrage_prices',
+			'arbitrage_quote',
+			'swap_quote',
+			'swap_simulate',
+			'swap_execute',
+			// Portfolio reads (api/_mcpagent/portfolio-tools.js)
+			'get_portfolio',
+			'get_balance_history',
+			'get_pnl',
+			// Launch sniper, signal subscriptions and alert rules (api/_mcpagent/sniper-alert-tools.js)
+			'sniper_status',
+			'sniper_activate_preview',
+			'sniper_activate',
+			'sniper_deactivate',
+			'sniper_subscribe',
+			'alert_rule_create',
+			'alert_rule_list',
+			'alert_rule_delete',
+			// Agent duels (api/_mcpagent/duels-tools.js)
+			'duel_challenge',
+			'duel_accept',
+			'duel_details',
+			'duel_markets',
+			// Agent commerce (api/_mcpagent/commerce-tools.js)
+			'invoice_create',
+			'invoice_details',
+			'invoice_list',
+			'invoice_verify',
+			'invoice_cancel',
+			'agent_send_preview',
+			'agent_send',
+			'offer_list',
+			'agent_sell',
+			'agent_buy',
+			'agent_buy_confirm',
+			'spending_check',
+			'spending_setup',
+			// Resting orders and DCA (api/_mcpagent/orders-tools.js)
+			'order_preview',
+			'limit_order_create',
+			'stop_order_create',
+			'trailing_order_create',
+			'ladder_order_create',
+			'oco_order_create',
+			'limit_order_list',
+			'limit_order_cancel',
+			'limit_order_history',
+			'order_book',
+			'dca_preview',
+			'dca_create',
+			'dca_list',
+			'dca_cancel',
 		]);
 	});
 
@@ -61,6 +139,14 @@ describe('agent-wallet MCP catalog', () => {
 			const row = POLICY['threews-agent'][name];
 			if (row?.tier === 'financial' && row.previewTool) expect(names.has(row.previewTool), `${name} needs ${row.previewTool}`).toBe(true);
 		}
+	});
+
+	it('quotes with the same arguments pay_and_call spends with', () => {
+		const quote = { resource_url: 'https://a.test/x', method: 'POST', body: { q: 1 }, max_usd: 0.05 };
+		expect(TOOLS.pay_quote.validate({ ...quote })).toBe(true);
+		expect(TOOLS.pay_and_call.validate({ ...quote })).toBe(true);
+		expect(TOOLS.pay_quote.validate({ resource_url: 'not a url' })).toBe(false);
+		expect(TOOLS.pay_quote.validate({})).toBe(false);
 	});
 
 	it('gives every catalog entry a handler in the dispatch map', () => {

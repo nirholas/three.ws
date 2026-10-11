@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Refresh the vendored Pump program IDLs under contracts/idl/pump/.
+// Refresh the vendored Pump program IDLs under contracts/idl/pump/ and the
+// reference mirror under docs/pumpfun-program/idl/.
 //
 // Source of truth: pump-fun/pump-public-docs (mirrored via nirholas/pumpkit).
 // Run after Pump publishes a new IDL version, then commit the diff.
@@ -13,7 +14,16 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const OUT_DIR = resolve(HERE, '..', 'contracts', 'idl', 'pump');
+const OUT_DIRS = [
+	resolve(HERE, '..', 'contracts', 'idl', 'pump'),
+	resolve(HERE, '..', 'docs', 'pumpfun-program', 'idl'),
+];
+
+// Upstream doc strings use em and en dashes, which this repo bans in
+// committed text. Rewrite them to a plain hyphen so a refresh lands clean.
+function scrubDashes(text) {
+	return text.replace(/ ?[\u2014\u2013] ?/g, ' - ');
+}
 
 const SOURCES = [
 	{
@@ -39,7 +49,7 @@ const SOURCES = [
 	},
 ];
 
-mkdirSync(OUT_DIR, { recursive: true });
+for (const dir of OUT_DIRS) mkdirSync(dir, { recursive: true });
 
 let failures = 0;
 for (const { name, urls } of SOURCES) {
@@ -51,7 +61,7 @@ for (const { name, urls } of SOURCES) {
 			if (!resp.ok) continue;
 			const text = await resp.text();
 			JSON.parse(text); // validate structure before writing
-			body = text;
+			body = scrubDashes(text);
 			usedUrl = url;
 			break;
 		} catch {
@@ -63,8 +73,7 @@ for (const { name, urls } of SOURCES) {
 		failures++;
 		continue;
 	}
-	const outPath = resolve(OUT_DIR, `${name}.json`);
-	writeFileSync(outPath, body);
+	for (const dir of OUT_DIRS) writeFileSync(resolve(dir, `${name}.json`), body);
 	console.log(`✓ ${name} ← ${usedUrl}`);
 }
 

@@ -13,13 +13,15 @@ that make a post checkable, and writing the thing.
 
 ```
 announce:rank  ->  announce:plan  ->  announce:kit  ->  announce:media  ->  x:content review  ->  approve  ->  cron posts
-  what is        when it goes        brief, draft,      the frame from     lint, live facts,     owner      Cloud Scheduler,
-  worth it       out, in what        pack, queue        the live route     the AI editor         decides    every 15 minutes
+  what is        when it goes        brief, draft,      the frame from     lint, live facts,     owner or   Cloud Scheduler,
+  worth it       out, in what        pack, queue        the live route     the AI editor         policy     every 15 minutes
                  shape
 ```
 
-Nothing in this chain posts. Publishing still requires a passing editorial review and the owner
-setting an item's status to `approved`.
+Nothing in this chain posts. Publishing still requires a passing editorial review and an item at
+`approved`, which the owner sets or, for the narrow class the queue's approval policy allows
+(filmed, tags no one, a listed tier, passed on the editor's own verdict), the queue sets itself
+behind a veto window. See [Who approves a post](./x-content-pipeline.md#who-approves-a-post).
 
 ---
 
@@ -39,14 +41,15 @@ publishing rather than chosen here:
 
 | Decision | Where it comes from |
 |---|---|
-| How many posts a day, at what times, and which tier owns each one | The `cadence.slots` table of [`data/x-content/queue.json`](../data/x-content/queue.json), which is the same table the publisher fills from: T3 at 04:00 UTC, T2 at 12:00, T1 at 20:00. With no table declared, the times are derived from the daily cap, minimum gap and quiet hours instead, and a slot whose jitter window could land inside quiet hours is dropped rather than promised. |
+| How many posts a day, at what times, and which tier owns each one | The `cadence.slots` table of [`data/x-content/queue.json`](../data/x-content/queue.json), which is the same table the publisher fills from: T2 at 12:00 UTC, T1 at 15:30, T3 at 19:00, plus an X Article slot at 22:30 every second day. With no table declared, the times are derived from the daily cap, minimum gap and quiet hours instead, and a slot whose jitter window could land inside quiet hours is dropped rather than promised. |
 | What order, and which shape | The ledger's scores, then rotation: no more than `maximumSameLaneInARow` of one audience, no more than `maximumSamePatternInARow` of one post shape, from the same queue file. |
 | Which tier a surface is | What it is: a flagship (T1) is a `token`-lane surface or one that legitimately names a partner, proof of work (T3) is a package, worker or service, whose frame is a typeset card rather than a route, and everything with a page behind it is a feature (T2). The tier travels into the queue item, because the publisher gives each tier a slot of its own and an item with no tier is treated as a T2 feature. |
 | Which one jumps the queue | [`data/announce-priority.json`](../data/announce-priority.json), the mirror image of the deferrals. A surface listed there enters the sequencer ahead of the backlog and takes the earliest slot its own tier owns, with the reason recorded beside it. The pin buys position only: the cadence, the tier discipline and the lane and shape rotation are unchanged, and the pack still goes through review and approval like any other. |
 | Which ones need owner approval first | Any surface in the `crypto` section of [`data/pages.json`](../data/pages.json) renders live third-party market data, so a frame of it falls under the operating rules' coin gate. Those slots carry `mediaGate: "owner-approval"` and the factory skips them unless asked. |
 
 The plan is a pure function of the ledger and the start date, so it is regenerated rather than
-maintained. A surface already queued, already carrying a pack, or listed in
+maintained. A surface already queued, named in a queued story's `covers` list (see
+[x-story-authoring.md](./x-story-authoring.md)), already carrying a pack, or listed in
 [`data/announce-deferred.json`](../data/announce-deferred.json) is dropped from it.
 
 **Gated surfaces are held out of the dated calendar.** `--hold-gated` (which `announce:kit` passes
@@ -150,8 +153,10 @@ image measured 0.875x against the account median, so "this one ships without an 
 option.
 
 **3. The draft** ([`api/_lib/announce/draft.js`](../api/_lib/announce/draft.js)) is written by the
-model chain (Claude on Vertex AI, then OpenRouter, OpenAI, NVIDIA NIM) from the brief and nothing
-else. It is then held against every gate the queue enforces: the voice lint, the editorial lint,
+model chain (Claude on Vertex AI, then gpt-oss-120b on Groq, Claude through OpenRouter, OpenAI,
+NVIDIA NIM) from the brief and nothing else. The prompt keeps a floor of 100 characters and the
+queue's `maximumLength` as the wall, and tells the model that the first 280 characters are what a
+reader sees rather than steering it into a short band. It is then held against every gate the queue enforces: the voice lint, the editorial lint,
 the claims ledger, the evidence list, and the account's own archive. Findings are handed back to
 the model verbatim and it writes again, up to three attempts. A draft that still fails is written
 to `data/announce-plan/drafts/<id>.rejected.json` instead of into the queue.
@@ -194,11 +199,17 @@ npm run x:content -- run --dry-run --id <id>    # the exact calls that would go 
 npm run x:content -- approve --status review    # the owner gate, for the whole batch
 ```
 
-`approve` is the only step that is the owner's, and it is a gate rather than a switch: it moves an
-item to `approved` only while a passing review record covers the exact bytes in the queue right
-now, and prints why it is holding anything it refuses. After that the Cloud Scheduler tick
-(`/api/cron/x-content`, every 15 minutes) sends each item at its slot, re-checks every link first,
-and records what it sent.
+`approve` is the owner's step, and it is a gate rather than a switch: it moves an item to
+`approved` only while a passing review record covers the exact bytes in the queue right now, and
+prints why it is holding anything it refuses. The queue's approval policy can also release a post
+itself, but only one that was filmed against the product, tags no one, sits in a listed tier and
+passed on the editor's own verdict, and only after a veto window in which
+`npm run x:content -- pause <id>` takes it back; `npm run x:content -- advance --ship` runs the
+whole line (film, review, policy release, publish) and says what stopped anything it held. After
+that the Cloud Scheduler tick (`/api/cron/x-content`, every 15 minutes) sends each item at its slot,
+re-checks every link first, and records what it sent. An approved post reaches production either
+with the next deploy or, with bundles enabled, straight away
+(see [Publishing without a deploy](./x-content-pipeline.md#publishing-without-a-deploy)).
 
 So a week of announcements is four commands:
 
@@ -253,7 +264,8 @@ or hold it out of this pipeline entirely.
 
 The factory needs a model for the drafting step and the editorial review. It uses the shared chain
 in [`api/_lib/x-content/llm.js`](../api/_lib/x-content/llm.js): Claude on Vertex AI first (the
-standing Google Cloud approval), then `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, `NVIDIA_API_KEY`.
+standing Google Cloud approval), then `GROQ_API_KEY` (text-only, so it drafts but never reviews an
+image), `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, `NVIDIA_API_KEY`.
 On a workstation, `gcloud auth application-default login` is enough. Everything else (ranking,
 planning, briefs, media capture, packing, the whole gate) runs with no model at all:
 `npm run announce:kit -- --brief-only` is the offline half.

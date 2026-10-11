@@ -1,0 +1,225 @@
+{
+	"id": "galaxy",
+	"status": "review",
+	"kind": "post",
+	"tier": 2,
+	"lane": "labs",
+	"pattern": "walkthrough",
+	"notBefore": "2026-10-12T12:00:00Z",
+	"covers": [
+		"/galaxy"
+	],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{
+				"goto": "https://three.ws/galaxy",
+				"settle": 7000,
+				"caption": "Every published agent, placed by meaning"
+			},
+			{
+				"read": "agents",
+				"match": "([\\d,]+)\\s*agents"
+			},
+			{
+				"read": "constellations",
+				"match": "(\\d+)\\s*constellations"
+			},
+			{
+				"hold": 2500
+			},
+			{
+				"type": "a calm tutor",
+				"into": "Search by meaning",
+				"caption": "Describe what you want in plain words"
+			},
+			{
+				"click": "Search",
+				"awaits": "/api/galaxy",
+				"caption": "Matched by meaning, not keywords"
+			},
+			{
+				"expect": "Closest to",
+				"within": 45000,
+				"caption": "The map flies to the closest agents"
+			},
+			{
+				"read": "topmatch",
+				"match": "(Monica)\\s*\\d+% match"
+			},
+			{
+				"read": "nextmatch",
+				"match": "(Quill) #\\d+\\s*\\d+% match"
+			},
+			{
+				"hold": 5500
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		}
+	],
+	"posts": [
+		{
+			"text": "Describe the agent you want in plain words and Agent Galaxy flies to the closest ones. Searching \"a calm tutor\" across more than 500 published agents put Monica first, with Quill agents next. The match is by meaning, so you do not have to guess the keyword or the category an agent was filed under.",
+			"media": [
+				{
+					"path": "public/x-media/galaxy/reel.mp4",
+					"probe": {
+						"durationSec": 10.03,
+						"width": 1080,
+						"height": 1080,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "Each agent becomes a vector, and agents that do similar things sit near each other on the map. Your query is turned into a vector the same way and ranked by closeness, and every result shows its percent match.\n\nthree.ws/galaxy"
+		},
+		{
+			"text": "Click any star to open the agent's card with its constellation and description, then jump to its profile or start a chat with it. Stars are grouped into named constellations, and a legend lists each one."
+		}
+	],
+	"claims": [
+		{
+			"says": "more than 500 published agents",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "agents",
+					"min": 500
+				}
+			]
+		},
+		{
+			"says": "flies to the closest ones",
+			"evidence": [
+				{
+					"type": "proof",
+					"responded": "/api/galaxy"
+				},
+				{
+					"type": "proof",
+					"saw": "Closest to"
+				}
+			]
+		},
+		{
+			"says": "put Monica first",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "topmatch",
+					"equals": "Monica"
+				}
+			]
+		},
+		{
+			"says": "Quill agents next",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "nextmatch",
+					"equals": "Quill"
+				}
+			]
+		},
+		{
+			"says": "The match is by meaning",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/galaxy",
+					"contains": "Search by meaning"
+				}
+			]
+		},
+		{
+			"says": "Each agent becomes a vector",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/galaxy.md",
+					"contains": "each agent becomes a vector"
+				}
+			]
+		},
+		{
+			"says": "agents that do similar things sit near each other",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/galaxy.md",
+					"contains": "agents that do similar things sit near each other"
+				}
+			]
+		},
+		{
+			"says": "ranked by closeness",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/galaxy.md",
+					"contains": "ranks stored agent vectors by cosine similarity"
+				}
+			]
+		},
+		{
+			"says": "every result shows its percent match",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "src/galaxy.js",
+					"contains": "% match"
+				}
+			]
+		},
+		{
+			"says": "open the agent's card with its constellation and description",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/galaxy.md",
+					"contains": "Clicking a star opens an in-scene card with the agent's thumbnail, constellation, description"
+				}
+			]
+		},
+		{
+			"says": "jump to its profile or start a chat with it",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/galaxy.md",
+					"contains": "\"View agent\" and \"Chat\""
+				}
+			]
+		},
+		{
+			"says": "Stars are grouped into named constellations",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/galaxy.md",
+					"contains": "agents cluster into named constellations"
+				}
+			]
+		},
+		{
+			"says": "a legend lists each one",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/galaxy",
+					"contains": "Constellations"
+				}
+			]
+		}
+	],
+	"mentions": {}
+}

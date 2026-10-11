@@ -9,9 +9,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'kol_leaderboard',
 	title: 'KOL trader leaderboard',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Rank the tracked key-opinion-leader (KOL) traders by realized performance over a recent window. Returns the leaderboard rows — each tracked wallet with its P&L, win rate, and trade activity for the chosen window. Read-only live data.',
+		'Rank the tracked key-opinion-leader (KOL) traders by realized performance over a recent window. Returns the leaderboard rows: each tracked wallet with its P&L, win rate, and trade activity for the chosen window. Read-only live data. Use this to find the KOL traders worth watching; for what they traded on one coin call kol_trades.',
 	inputSchema: {
 		window: z
 			.enum(['7d', '30d'])

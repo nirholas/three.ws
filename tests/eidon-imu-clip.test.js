@@ -57,6 +57,15 @@ function mounting(distalPrior, secondaryPrior, tiltDeg) {
 	return { quat: toSensor.clone().invert(), distal, secondary };
 }
 
+/**
+ * The synthetic recording's clock starts 42 ms in, like a real one that never
+ * begins on a round timestamp, so truth index i was stamped at i / SAMPLE_HZ + 42 ms.
+ */
+const CLOCK_OFFSET_S = 0.042;
+
+/** Mean body heading of the synthetic wearer, degrees about world up. */
+const MEAN_HEADING_DEG = 35;
+
 /** Scripted routine: returns shoulder flexion, elbow flexion and wrist wobble (degrees) at time t. */
 function routine(t) {
 	if (t < 6) return { shoulder: 0, elbow: 0, wrist: 0 };
@@ -92,7 +101,7 @@ function simulate(seconds = 40) {
 		const { shoulder, elbow, wrist } = routine(t);
 		// Body: a constant heading plus a lean about the left axis and a small yaw wobble.
 		const lean = 6 * Math.sin(t * 0.5);
-		const body = axisAngle(up, 35 + 4 * Math.sin(t * 0.3)).multiply(axisAngle(v(0, 1, 0), lean));
+		const body = axisAngle(up, MEAN_HEADING_DEG + 4 * Math.sin(t * 0.3)).multiply(axisAngle(v(0, 1, 0), lean));
 		const forward = v(1, 0, 0).applyQuaternion(body);
 		const left = v(0, 1, 0).applyQuaternion(body);
 		const bodyUp = v(0, 0, 1).applyQuaternion(body);
@@ -313,7 +322,7 @@ describe('eidon imu clip: baked motion on the canonical rig', () => {
 		const cycles = Math.max(1, Math.round(duration / idle.duration));
 		const idleSpine2 = (clipTime) => {
 			const idleTime = ((clipTime / duration) * cycles * idle.duration) % idle.duration;
-			return worldRotations(idle, Math.round(idleTime * fps)).Spine2;
+			return worldRotations(idle, Math.round(idleTime * fps) % idle.tracks[0].times.length).Spine2;
 		};
 		// The torso turn the chest sensor added, about the character's left axis
 		// (+x): positive tips the chest toward +z (forward), negative leans back.

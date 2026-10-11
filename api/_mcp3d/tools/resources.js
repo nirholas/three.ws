@@ -14,7 +14,7 @@ export const toolDefs = [
 			openWorldHint: false,
 		},
 		description:
-			'Read a live three.ws resource by URI: three://assets/<id> (a 3D asset with its GLB URL and thumbnail), three://me, three://agents, three://agents/<id> and three://models. Omit uri to list every resource you can read. Set format to markdown for a readable rendering.',
+			'Read a live three.ws resource by URI: three://assets/<id> (a 3D asset with its GLB URL and thumbnail), three://me, three://agents, three://agents/<id> and three://models. Omit uri to list every resource you can read. Set format to markdown for a readable rendering. Use this when your client renders tools but not MCP resources, or to follow a three:// link another tool returned.',
 		inputSchema: {
 			type: 'object',
 			properties: {

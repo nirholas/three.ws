@@ -42,12 +42,13 @@
 	<!-- The hero/showcase 3D viewers lazy-load model-viewer (4.0.0) from this CDN
 	     on first interaction; warm the connection so the TLS/DNS handshake is paid
 	     before the element bundle is requested. -->
-	<link rel="preconnect" href="https://ajax.googleapis.com" crossorigin />
+	<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 	<link rel="stylesheet" href="/fonts/fonts.css" />
 	<link rel="stylesheet" href="/tokens.css" />
 	<link rel="stylesheet" href="/buttons.css" />
 	<link rel="stylesheet" href="/nav.css" />
 	<link rel="stylesheet" href="/economy-ticker.css" />
+	<link rel="stylesheet" href="/src/event-markets/event-markets.css" />
 	<link rel="stylesheet" href="/home.css" />
 	<noscript><style>.reveal{opacity:1!important;transform:none!important}.hero-text>*{opacity:1!important;transform:none!important}</style></noscript>
 	<!-- Deferred, and placed BEFORE the agent-3d module: defer scripts and module
@@ -85,6 +86,7 @@
 
 <!-- ── HERO ─────────────────────────────────────────────────────── -->
 <main id="main-content" tabindex="-1">
+<div id="em-ticker" class="em-ticker" role="region" aria-label="Live event markets" hidden></div>
 <section class="hero">
 	<div class="hero-text">
 		<a class="eyebrow" href="/forge" data-i18n-html="home.eyebrow" data-i18n-attr="aria-label:home.eyebrow_aria" aria-label="New: Text to 3D is live — open the Forge">New · Text&nbsp;→&nbsp;3D is live — type a prompt, get a model <span class="eyebrow-arrow" aria-hidden="true">→</span></a>
@@ -125,10 +127,6 @@
 			<a class="btn" href="/create" data-cta="build_agent" data-cta-loc="hero" data-i18n-html="home.cta_build">Build your agent <span class="arrow">→</span></a>
 			<a class="btn" href="#embed" data-cta="see_embed" data-cta-loc="hero" data-i18n="home.cta_embed">See the embed</a>
 			<a class="btn" href="/tour" id="hero-tour-start" data-cta="guided_tour" data-cta-loc="hero"><span aria-hidden="true">▶</span>&nbsp;<span data-i18n="common.take_tour">Take the tour</span></a>
-		</div>
-		<div class="hero-lang" style="margin-top:18px;display:flex;align-items:center;gap:8px;">
-			<span style="font-size:12px;color:var(--text-3);" data-i18n="common.language">Language</span>
-			<lang-switcher></lang-switcher>
 		</div>
 	</div>
 	<div class="hero-stage" id="hero-stage">
@@ -1388,7 +1386,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 	var viewersLive = false;
 	var pendingViewerCards = [];
 
-	const MV_SRC = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js';
+	const MV_SRC = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js';
 	function ensureModelViewer() {
 		if (customElements.get('model-viewer')) return;
 		// Reuse the library if the hero/mini-forge already injected it, but match
@@ -2355,8 +2353,8 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 		await new Promise((resolve, reject) => {
 			const s = document.createElement('script');
 			s.type = 'module';
-			s.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js';
-			s.integrity = 'sha384-cprcVQt7wbUl0xngF3PGP6yBB7n4/t+4AoAMG9biiMCGFiWOdzUH10Ie2COTqFNW';
+			s.src = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js';
+			s.integrity = 'sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p';
 			s.crossOrigin = 'anonymous';
 			s.onload = resolve;
 			s.onerror = reject;
@@ -3478,6 +3476,8 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 	</div>
 </section>
 
+<div id="em-strip" data-heading="Live now: call the winner" style="max-width:1100px;margin:0 auto;padding:0 1rem 2rem"></div>
+
 </main>
 
 <!-- ── FOOTER ─────────────────────────────────────────────────────── -->
@@ -3532,6 +3532,10 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 				<a href="/legal/tos" data-i18n="home.terms">Terms</a>
 			</div>
 		</nav>
+		<div class="foot-lang">
+			<span class="foot-lang-label" data-i18n="common.language">Language</span>
+			<lang-switcher></lang-switcher>
+		</div>
 		<div class="foot-inner">
 			<div>© 2026 · three.ws · the 3D agent layer of the internet</div>
 			<button class="foot-ca" id="foot-ca-btn" title="Copy contract address" data-i18n-html="home.three_fembdox7r1psc4gecvjdsbnbza3bfztcydcatj" data-i18n-attr="title:home.copy_contract_address_title">
@@ -3647,6 +3651,8 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 </script>
 
 <script type="module" src="/src/home-live-agents.js"></script>
+<script type="module" src="/src/event-markets/mount-strip.js"></script>
+<script type="module" src="/src/event-markets/ticker.js"></script>
 <script type="module" src="/src/api-playground.js"></script>
 <script type="module" src="/src/economy-ticker.js"></script>
 <script type="module" src="/src/home-sniper.js"></script>
@@ -3924,5 +3930,16 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 	</script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
+	<!-- Classic view -> desktop. The choice is remembered (tws:view) and honoured by the "/" route. -->
+	<a id="to-desktop" href="/?view=desktop" aria-label="Switch to the three.ws desktop">
+		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+		Try the desktop
+	</a>
+	<style>
+		#to-desktop{position:fixed;left:16px;bottom:16px;z-index:60;display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:19px;font:500 13px/1 Inter,system-ui,sans-serif;color:#fff;text-decoration:none;background:linear-gradient(90deg,#ad6eca,#3b91d8);box-shadow:0 6px 24px rgba(0,0,0,.35);transition:transform .15s,filter .15s}
+		#to-desktop:hover{filter:brightness(1.1);transform:translateY(-1px)}
+		#to-desktop:active{transform:scale(.97)}
+		#to-desktop:focus-visible{outline:2px solid #fff;outline-offset:3px}
+	</style>
 </body>
 </html>

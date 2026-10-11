@@ -9,7 +9,7 @@ import { probeChallenge } from '../lib/x402-buyer.js';
 export const def = {
 	name: 'inspect_endpoint',
 	title: 'Inspect an x402 endpoint (price + requirements, no payment)',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Fetch an x402 endpoint and return its 402 payment requirements — every accepted scheme, network, asset, price and pay-to address — WITHOUT paying. If the endpoint is free, returns its result instead. No signer required. Use this to learn the cost before pay_and_call.',
 	inputSchema: {

@@ -26,7 +26,8 @@ export const def = {
 		'(or Draco) on the way out. Returns before and after triangle counts, texture bytes and file size, plus what ' +
 		'each step did, so the trade is visible rather than guessed. The input file is never modified. Decimation ' +
 		'is collapse-based and preserves vertex groups, but a heavily decimated skinned mesh should be checked with ' +
-		'blender_render before shipping.',
+		'blender_render before shipping. Use this when a model is too heavy to ship to a browser or phone; ' +
+		'run blender_scene_info first to see whether triangles or textures are the problem.',
 	inputSchema: {
 		input: z.string().min(1).describe('Path to the model to optimize.'),
 		output: z

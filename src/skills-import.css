@@ -1,0 +1,461 @@
+/* External skill import (/skills/import). Builds on skills-community.css (the
+   sc- shell, cards, dialog and controls); everything here is import-specific.
+   Values come from public/tokens.css. */
+
+.si-muted {
+	color: var(--ink-dim, rgba(255, 255, 255, 0.55));
+	font-size: var(--text-xs, 12px);
+}
+
+/* ── registries strip ─────────────────────────────────────────────────── */
+
+.si-add {
+	margin-bottom: var(--space-md, 16px);
+}
+
+.si-registries {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2, 8px);
+	margin: 0 0 var(--space-md, 16px);
+}
+
+.si-reg {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2, 8px);
+	padding: 4px 10px;
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-pill, 999px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+	font-size: var(--text-xs, 12px);
+	color: var(--ink, #e8e8e8);
+	transition: border-color 0.15s ease;
+}
+
+.si-reg:hover {
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.14));
+}
+
+.si-reg a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.si-reg a:hover,
+.si-reg a:focus-visible {
+	text-decoration: underline;
+}
+
+.si-reg.is-error {
+	border-color: color-mix(in srgb, var(--danger, #f87171) 40%, transparent);
+}
+
+.si-reg-status {
+	color: var(--ink-dim, rgba(255, 255, 255, 0.55));
+}
+
+.si-reg-status.is-error {
+	color: var(--danger, #f87171);
+}
+
+.si-reg-remove {
+	padding: 0 6px;
+	border: 0;
+	border-radius: var(--radius-sm, 6px);
+	background: transparent;
+	color: var(--ink-dim, rgba(255, 255, 255, 0.55));
+	font: inherit;
+	cursor: pointer;
+	transition: color 0.15s ease, background 0.15s ease;
+}
+
+.si-reg-remove:hover {
+	color: var(--danger, #f87171);
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+}
+
+.si-reg-remove:focus-visible {
+	outline: 2px solid var(--accent, #fff);
+	outline-offset: 2px;
+}
+
+/* ── category badges ─────────────────────────────────────────────────── */
+
+.si-cat {
+	flex: none;
+	padding: 1px 8px;
+	border-radius: var(--radius-pill, 999px);
+	font-size: var(--text-2xs, 11px);
+	letter-spacing: 0.04em;
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	color: var(--ink-dim, rgba(255, 255, 255, 0.6));
+}
+
+.si-cat-defi { color: var(--success, #4ade80); background: color-mix(in srgb, var(--success, #4ade80) 12%, transparent); }
+.si-cat-intelligence { color: var(--accent-violet, #c4b5fd); background: color-mix(in srgb, var(--accent-violet, #c4b5fd) 14%, transparent); }
+.si-cat-social { color: var(--warn, #fbbf24); background: color-mix(in srgb, var(--warn, #fbbf24) 12%, transparent); }
+.si-cat-security { color: var(--danger, #f87171); background: color-mix(in srgb, var(--danger, #f87171) 12%, transparent); }
+.si-cat-infrastructure,
+.si-cat-data { color: var(--ink, #e8e8e8); }
+
+.sc-chip:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+/* ── excluded list ───────────────────────────────────────────────────── */
+
+.si-excluded {
+	margin-top: var(--space-xl, 32px);
+	padding: var(--space-md, 16px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-md, 10px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+}
+
+.si-excluded summary {
+	cursor: pointer;
+	font-weight: var(--weight-semibold, 600);
+	color: var(--ink, #e8e8e8);
+}
+
+.si-excluded summary:focus-visible {
+	outline: 2px solid var(--accent, #fff);
+	outline-offset: 4px;
+	border-radius: var(--radius-sm, 6px);
+}
+
+.si-excluded ul {
+	display: grid;
+	gap: var(--space-2, 8px);
+	margin: var(--space-sm, 12px) 0 0;
+	padding: 0;
+	list-style: none;
+	font-size: var(--text-sm, 13px);
+}
+
+.si-reason {
+	color: var(--warn, #fbbf24);
+}
+
+/* ── dialog content ──────────────────────────────────────────────────── */
+
+.si-block {
+	margin-top: var(--space-lg, 24px);
+}
+
+.si-h3 {
+	margin: 0 0 var(--space-sm, 12px);
+	font-size: var(--text-sm, 13px);
+	font-weight: var(--weight-semibold, 600);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--ink-dim, rgba(255, 255, 255, 0.6));
+}
+
+.si-prov {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: var(--space-sm, 12px) var(--space-lg, 24px);
+	margin: 0;
+}
+
+.si-prov dt {
+	font-size: var(--text-2xs, 11px);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.55));
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.si-prov dd {
+	margin: 2px 0 0;
+	font-size: var(--text-sm, 13px);
+	color: var(--ink, #e8e8e8);
+	overflow-wrap: anywhere;
+}
+
+.si-prov a,
+.si-asks a {
+	color: inherit;
+}
+
+.si-asks p {
+	margin: 0 0 var(--space-2, 8px);
+	font-size: var(--text-sm, 13px);
+	line-height: 1.6;
+}
+
+.si-verdict {
+	display: grid;
+	gap: 4px;
+	padding: var(--space-md, 16px);
+	border-radius: var(--radius-md, 10px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+}
+
+.si-verdict a {
+	color: inherit;
+}
+
+.si-verdict.is-clean {
+	border-color: color-mix(in srgb, var(--success, #4ade80) 40%, transparent);
+	background: color-mix(in srgb, var(--success, #4ade80) 8%, transparent);
+}
+
+.si-verdict.is-flagged {
+	border-color: color-mix(in srgb, var(--warn, #fbbf24) 40%, transparent);
+	background: color-mix(in srgb, var(--warn, #fbbf24) 8%, transparent);
+}
+
+.si-verdict.is-refused {
+	border-color: color-mix(in srgb, var(--danger, #f87171) 45%, transparent);
+	background: color-mix(in srgb, var(--danger, #f87171) 9%, transparent);
+}
+
+.si-decide,
+.si-decided {
+	margin-top: var(--space-md, 16px);
+}
+
+.si-decided {
+	padding: var(--space-sm, 12px) var(--space-md, 16px);
+	border-radius: var(--radius-md, 10px);
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	font-size: var(--text-sm, 13px);
+}
+
+.si-decided a {
+	color: inherit;
+}
+
+.si-decided.is-approved {
+	color: var(--success, #4ade80);
+}
+
+.si-decided.is-refused {
+	color: var(--danger, #f87171);
+}
+
+.si-ack {
+	display: flex;
+	gap: var(--space-2, 8px);
+	align-items: flex-start;
+	margin: 0 0 var(--space-sm, 12px);
+	font-size: var(--text-sm, 13px);
+	line-height: 1.5;
+	cursor: pointer;
+}
+
+.si-ack input {
+	margin-top: 3px;
+	accent-color: var(--accent, #fff);
+}
+
+.si-caps,
+.si-findings {
+	display: grid;
+	gap: var(--space-2, 8px);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: var(--text-sm, 13px);
+}
+
+.si-gate-note {
+	margin: var(--space-sm, 12px) 0 0;
+	padding: var(--space-2, 8px) var(--space-sm, 12px);
+	border-left: 2px solid var(--warn, #fbbf24);
+	font-size: var(--text-sm, 13px);
+	color: var(--ink, #e8e8e8);
+}
+
+.si-finding {
+	display: grid;
+	grid-template-columns: 52px 1fr;
+	gap: var(--space-2, 8px);
+	align-items: start;
+}
+
+.si-sev {
+	padding: 1px 0;
+	border-radius: var(--radius-sm, 6px);
+	text-align: center;
+	font-family: var(--font-mono);
+	font-size: var(--text-2xs, 11px);
+	text-transform: uppercase;
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	color: var(--ink-dim, rgba(255, 255, 255, 0.6));
+}
+
+.si-finding.is-block .si-sev {
+	background: color-mix(in srgb, var(--danger, #f87171) 16%, transparent);
+	color: var(--danger, #f87171);
+}
+
+.si-finding.is-warn .si-sev {
+	background: color-mix(in srgb, var(--warn, #fbbf24) 16%, transparent);
+	color: var(--warn, #fbbf24);
+}
+
+.si-excerpt,
+.si-raw pre,
+.si-diff {
+	margin: 6px 0 0;
+	padding: var(--space-sm, 12px);
+	border-radius: var(--radius-sm, 6px);
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	font-family: var(--font-mono);
+	font-size: var(--text-xs, 12px);
+	line-height: 1.55;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	max-height: 420px;
+	overflow: auto;
+}
+
+.si-raw {
+	margin-bottom: var(--space-md, 16px);
+}
+
+.si-raw summary {
+	cursor: pointer;
+	font-size: var(--text-sm, 13px);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.6));
+}
+
+.si-diff .is-add {
+	color: var(--success, #4ade80);
+	background: color-mix(in srgb, var(--success, #4ade80) 8%, transparent);
+}
+
+.si-diff .is-del {
+	color: var(--danger, #f87171);
+	background: color-mix(in srgb, var(--danger, #f87171) 8%, transparent);
+}
+
+.si-diff .is-hunk {
+	color: var(--accent-violet, #c4b5fd);
+}
+
+.si-form {
+	display: grid;
+	gap: var(--space-md, 16px);
+}
+
+/* ── installed + publications ─────────────────────────────────────────── */
+
+.si-item-out:empty {
+	display: none;
+}
+
+.si-item-out {
+	margin-top: var(--space-2, 8px);
+}
+
+.si-section-title {
+	margin-top: var(--space-xl, 32px);
+}
+
+.si-pubs {
+	display: grid;
+	gap: var(--space-2, 8px);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: var(--text-sm, 13px);
+}
+
+.si-pubs li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2, 8px);
+}
+
+/* ── scan history ─────────────────────────────────────────────────────── */
+
+.si-requests {
+	display: grid;
+	gap: var(--space-2, 8px);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.si-req {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-sm, 12px);
+	padding: var(--space-sm, 12px) var(--space-md, 16px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-md, 10px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+	font-size: var(--text-sm, 13px);
+	transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.si-req:hover {
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.14));
+	transform: translateY(-1px);
+}
+
+.si-req-hit {
+	position: absolute;
+	inset: 0;
+	border: 0;
+	background: transparent;
+	border-radius: inherit;
+	cursor: pointer;
+}
+
+.si-req-hit:focus-visible {
+	outline: 2px solid var(--accent, #fff);
+	outline-offset: 2px;
+}
+
+.si-verdict-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: var(--radius-pill, 999px);
+	background: var(--ink-dim, #888);
+}
+
+.si-verdict-dot.is-clean { background: var(--success, #4ade80); }
+.si-verdict-dot.is-flagged { background: var(--warn, #fbbf24); }
+.si-verdict-dot.is-refused { background: var(--danger, #f87171); }
+
+.si-req-status {
+	margin-left: auto;
+	padding: 1px 8px;
+	border-radius: var(--radius-pill, 999px);
+	font-size: var(--text-xs, 12px);
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+}
+
+.si-req-status.is-approved { color: var(--success, #4ade80); }
+.si-req-status.is-refused { color: var(--danger, #f87171); }
+.si-req-status.is-pending { color: var(--warn, #fbbf24); }
+
+@media (max-width: 640px) {
+	.si-finding {
+		grid-template-columns: 1fr;
+	}
+
+	.si-req-status {
+		margin-left: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.si-req,
+	.si-reg {
+		transition: none;
+	}
+
+	.si-req:hover {
+		transform: none;
+	}
+}

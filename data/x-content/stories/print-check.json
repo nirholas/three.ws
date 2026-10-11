@@ -1,0 +1,95 @@
+{
+	"id": "print-check",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "community",
+	"pattern": "mechanism",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": [
+		"/materialize",
+		"api/print"
+	],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{
+				"goto": "https://three.ws/materialize?creation=f25348ec-0f5a-4bcc-a6f1-8a42967f513d",
+				"settle": 6000
+			},
+			{
+				"expect": "the analyzer flagged",
+				"within": 60000
+			},
+			{
+				"read": "score",
+				"match": "(\\d{1,3})\\s+(?:Ready to print|Prints well|Needs a repair pass|Heavy repair needed)"
+			},
+			{
+				"read": "pieces",
+				"match": "(\\d+) loose pieces"
+			},
+			{
+				"read": "triangles",
+				"match": "([\\d,]+) triangles · report"
+			},
+			{
+				"hold": 1500,
+				"caption": "Shown beside a hand at print size"
+			},
+			{
+				"scroll": "PRINTABILITY",
+				"ms": 1000,
+				"caption": "Measured before it is priced"
+			},
+			{
+				"hold": 2200
+			},
+			{
+				"scroll": 260,
+				"ms": 900,
+				"caption": "Each flaw named, repairable or not"
+			},
+			{
+				"hold": 2200
+			},
+			{
+				"click": "Tough resin",
+				"awaits": "/api/print/quote",
+				"caption": "Sizes follow the material's walls"
+			},
+			{
+				"hold": 2600
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		}
+	],
+	"posts": [
+		{
+			"text": "placeholder head",
+			"media": [
+				{
+					"path": "public/x-media/print-check/reel.mp4",
+					"probe": {
+						"durationSec": 11.1,
+						"width": 1080,
+						"height": 1080,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "placeholder reply three.ws/materialize"
+		}
+	],
+	"claims": [],
+	"mentions": {}
+}

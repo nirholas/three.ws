@@ -128,7 +128,7 @@ Drop a creation's `iframe_snippet` onto any web page, or open its `viewer_url` t
 Runnable examples live in [`examples/`](./examples):
 
 ```bash
-node examples/list-tools.mjs     # all 3 tools with their full input schemas
+node examples/list-tools.mjs     # every tool with its full input schema
 node examples/browse-loom.mjs    # a page of the gallery + one creation's embed, live
 ```
 

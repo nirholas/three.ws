@@ -10,9 +10,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'browse_skills',
 	title: 'Browse the skills catalog',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Search and page the public three.ws skills catalog — reusable tools and capabilities agents can install. Filter by free-text query and category, choose a sort order, and get back a list of skills (id, name, slug, description, category, tags, install count, rating, per-call price, author, content preview) plus a cursor for the next page. Read-only.',
+		'Search and page the public three.ws skills catalog: reusable tools and capabilities agents can install. Filter by free-text query and category, choose a sort order, and get back a list of skills (id, name, slug, description, category, tags, install count, rating, per-call price, author, content preview) plus a cursor for the next page. Use this to find an installable skill for a capability an agent lacks; filter with slugs from skill_categories. Read-only.',
 	inputSchema: {
 		q: z.string().optional().describe('Free-text search across skill name, description, and tags.'),
 		category: z.string().optional().describe('Restrict to one category slug (e.g. "general").'),

@@ -1,0 +1,6 @@
+{
+	"$comment": "Referral credit for Event Markets share links. Read by api/_lib/event-markets/entrant-config.js and quoted in docs/event-markets.md and the kit page, so the copy cannot drift from the rule.",
+	"credit_points": 25,
+	"ref_param": "ref",
+	"max_credits_per_referred_account": 1
+}

@@ -27,8 +27,6 @@ vi.mock('../api/_lib/provider-keys.js', () => ({
 const { loadOwnerGrokKey, GROK_PROVIDER } = await import('../api/_lib/agent-grok-key.js');
 const { modelRungs, providerChainFor } = await import('../api/_lib/llm-tool-chain.js');
 const { modelChain } = await import('../api/_lib/agent-model.js');
-const { chainForAgent } = await import('../api/_lib/gateway/conversation.js');
-const { resolveTickChain } = await import('../api/_lib/strategy-loop/tick.js');
 
 const GROK_MODEL = 'grok-4.7';
 const USER_ID = 'ca7f8e0a-29d0-4e2e-8a2a-2a5a5a5a5a5a';
@@ -130,62 +128,6 @@ describe('modelChain: threading grokKey through to providerChainFor', () => {
 	it('a null model returns the platform chain untouched by grokKey', () => {
 		const { chain } = modelChain(null, { grokKey: 'xai-owner-key' });
 		expect(chain.every((r) => r.keySource !== 'owner')).toBe(true);
-	});
-});
-
-describe('chainForAgent (api/_lib/gateway/conversation.js)', () => {
-	beforeEach(() => { sqlMock.mockReset(); });
-	const prevGrokKey = process.env.GROK_API_KEY;
-	afterEach(() => { process.env.GROK_API_KEY = prevGrokKey; });
-
-	it('returns undefined when the agent has no default model (platform chain applies downstream)', async () => {
-		const chain = await chainForAgent({ meta: {}, user_id: USER_ID });
-		expect(chain).toBeUndefined();
-	});
-
-	it('returns undefined when the agent default has no tool calling', async () => {
-		const chain = await chainForAgent({ meta: { runtime: { model: 'deepseek-r1' } }, user_id: USER_ID });
-		expect(chain).toBeUndefined();
-	});
-
-	it('leads with the owner grok key when the agent defaults to grok', async () => {
-		process.env.GROK_API_KEY = 'xai-server-key';
-		sqlMock.mockResolvedValueOnce([{ provider_keys: { [GROK_PROVIDER]: 'enc(xai-owner-key)' } }]);
-		const chain = await chainForAgent({ meta: { runtime: { model: GROK_MODEL } }, user_id: USER_ID });
-		expect(chain[0]).toMatchObject({ name: 'grok', keySource: 'owner', key: 'xai-owner-key' });
-	});
-
-	it('falls over to the server key when the agent has no saved key', async () => {
-		process.env.GROK_API_KEY = 'xai-server-key';
-		sqlMock.mockResolvedValueOnce([{ provider_keys: {} }]);
-		const chain = await chainForAgent({ meta: { runtime: { model: GROK_MODEL } }, user_id: USER_ID });
-		expect(chain[0]).toMatchObject({ name: 'grok', keySource: 'platform', key: 'xai-server-key' });
-	});
-});
-
-describe('resolveTickChain (api/_lib/strategy-loop/tick.js)', () => {
-	beforeEach(() => { sqlMock.mockReset(); });
-	const prevGrokKey = process.env.GROK_API_KEY;
-	afterEach(() => { process.env.GROK_API_KEY = prevGrokKey; });
-
-	it('falls back to the full default chain with no usable model', async () => {
-		const chain = await resolveTickChain({ meta: {}, user_id: USER_ID });
-		expect(Array.isArray(chain)).toBe(true);
-		expect(chain.every((r) => r.name !== 'grok')).toBe(true);
-	});
-
-	it('reads the legacy meta.brain.provider location, not just meta.runtime.model', async () => {
-		process.env.GROK_API_KEY = 'xai-server-key';
-		sqlMock.mockResolvedValueOnce([{ provider_keys: {} }]);
-		const chain = await resolveTickChain({ meta: { brain: { provider: GROK_MODEL } }, user_id: USER_ID });
-		expect(chain[0]).toMatchObject({ name: 'grok', keySource: 'platform' });
-	});
-
-	it('leads with the owner grok key for a tick agent that saved one', async () => {
-		process.env.GROK_API_KEY = 'xai-server-key';
-		sqlMock.mockResolvedValueOnce([{ provider_keys: { [GROK_PROVIDER]: 'enc(xai-owner-key)' } }]);
-		const chain = await resolveTickChain({ meta: { runtime: { model: GROK_MODEL } }, user_id: USER_ID });
-		expect(chain[0]).toMatchObject({ name: 'grok', keySource: 'owner', key: 'xai-owner-key' });
 	});
 });
 

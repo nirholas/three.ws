@@ -17,7 +17,7 @@ the platform already writes (`forge_creations`, `dioramas`, `material_restyles`,
 | Activity feed | [/feed](https://three.ws/feed), [/community](https://three.ws/community) | `GET /api/users/me/feed` |
 | Follow graph | Follow buttons on `/u/:username` | `GET|POST|DELETE /api/users/:username/follow` |
 | Notification bell | Bell in the header, preferences in `/dashboard/settings` | `GET /api/notifications` + `/preferences` |
-| Leaderboard, streaks, badges | [/rankings](https://three.ws/rankings) | `GET /api/leaderboard/unified` |
+| Leaderboard, streaks, badges | [/rankings](https://three.ws/rankings), [/leaderboard?tab=earned](https://three.ws/leaderboard?tab=earned) | `GET /api/leaderboard/unified`, `GET /api/leaderboard/earnings` |
 | Creator portfolio | `/u/:username` | `GET /api/users/:username/creations` |
 | Cross-entity search | [/search](https://three.ws/search) | `GET /api/search` |
 | Onboarding tour | [/start](https://three.ws/start) | `GET /api/me` (`show_onboarding_tour`) |
@@ -131,13 +131,23 @@ PUT   /api/notifications/preferences   → update it
 Preferences are a category × channel matrix
 ([api/_lib/notify-prefs.js](../api/_lib/notify-prefs.js)): categories are
 sales, purchases, social, IRL, market alerts, creations, companion
-deliveries, knocks at your door, and account & security; channels are
-`in_app`, `push`, `email`, `telegram`, and `avatar`. Every channel is a
+deliveries, knocks at your door, agent mail, and account & security; channels
+are `in_app`, `push`, `email`, `telegram`, `discord`, and `avatar`. Every channel is a
 per-category toggle (`in_app` defaults on everywhere, and is locked on for
 account & security so the bell record of security events never goes silent),
 edited from the Notifications panel in `/dashboard/settings`
 ([src/dashboard-next/pages/settings.js](../src/dashboard-next/pages/settings.js)).
 Bell client: [src/notifications.js](../src/notifications.js).
+
+`telegram` and `discord` deliver to chats paired with an agent through the
+chat gateways (`/api/gateway/connections`), so `GET /preferences` reports a
+`gateways: { telegram, discord }` count of paired chats with notifications on,
+and the panel keeps a column disabled until one exists (Telegram also accepts
+a legacy `telegram_chat_id`). Both default off except for market alerts.
+`push.subscribed_devices` counts Web Push browsers plus iPhones enrolled
+through the iOS app (APNs), with the iPhones also reported alone as
+`push.ios_devices`. The `mail` category (an email arriving in one of your
+agents' inboxes; spam never notifies) defaults to the bell and push only.
 
 The `avatar` channel is the corner companion walking on screen and saying the
 notification out loud. It is delivered client-side: the bell hands its unread
@@ -162,7 +172,11 @@ GET /api/leaderboard/unified?metric=creations&limit=50&offset=0
 ```
 
 `metric` is one of `creations`, `remixes_received`, `launches`, `followers`,
-`walk_distance` (limit 1..100, default 50). Sending the request with a session
+`walk_distance` (limit 1..100, default 50). `launches` counts distinct mainnet
+mints from the platform's own launch records (`pump_agent_mints`, including
+coins signed by an agent's custodial wallet, plus `fixed_supply_launches`),
+through [api/_lib/launch-counts.js](../api/_lib/launch-counts.js), the same
+count the daily top-10 badge sweep uses. Sending the request with a session
 or Bearer token pins your own row into the response even when you are outside
 the page window. `remixes_received` counts only finished derivatives made by
 someone else: both the parent and the child must be `status = 'done'`, and a
@@ -178,7 +192,13 @@ streak can never delay or fail the trade that earned it), and writes
 `user_streaks` / `user_badges`. The upsert is idempotent per UTC day, so a
 busy session still counts once: the streak measures showing up, not volume. A daily rollup
 cron ([api/cron/leaderboard-rollup.js](../api/cron/leaderboard-rollup.js))
-sweeps badge awards. Badges and streaks also render on profile pages.
+sweeps the `top10_<metric>` badge awards. The rest of the catalog
+(`BADGE_META` in the same file) is awarded where it is earned: first creation,
+first remix received, a 7-day streak, completing the copy-trade path,
+founding or joining a syndicate, daily trading quests (first quest, a daily
+clear, a 7-day quest streak), and trader duels (first call, a correct call,
+three correct in a row, and 70% or better over ten or more decided duels).
+Badges and streaks also render on profile pages.
 
 An authenticated request gets `streak` and `badges` back in the same response
 as the board, keyed on the session's user id, so the `/rankings` streak card
@@ -186,8 +206,17 @@ works for accounts that have never picked a username. Those three per-viewer
 blocks (`me`, `streak`, `badges`) make an authenticated response
 `cache-control: private`; anonymous responses stay edge-cacheable.
 
+Agents also have an earnings board:
+`GET /api/leaderboard/earnings?window=24h|7d|30d|all&limit=25&offset=0` ranks
+public agents by creator fees plus service income for the window, with each
+row's movement against the previous window of the same length. It is public,
+edge-cached for a minute, and computed the same way as each agent's Earned
+card; the full contract is in the
+[API reference](./api-reference.md#earnings-leaderboard).
+
 > Page: [pages/rankings.html](../pages/rankings.html).
-> Source: [api/leaderboard/unified.js](../api/leaderboard/unified.js).
+> Source: [api/leaderboard/unified.js](../api/leaderboard/unified.js),
+> [api/leaderboard/earnings.js](../api/leaderboard/earnings.js).
 
 ## Creator portfolio: `/u/:username`
 

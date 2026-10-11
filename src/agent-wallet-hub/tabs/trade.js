@@ -310,8 +310,8 @@ registerWalletTab({
 			renderAll();
 			let meta = null;
 			try {
-				const r = await fetch(`/api/pump/coin?mint=${encodeURIComponent(mint)}`, { headers: { accept: 'application/json' } });
-				if (r.ok) meta = await r.json();
+				const r = await fetch(`/api/pump/coin?mint=${encodeURIComponent(mint)}&miss=empty`, { headers: { accept: 'application/json' } });
+				if (r.ok && r.status !== 204) meta = await r.json();
 			} catch { /* metadata is best-effort — the mint still trades */ }
 			if (destroyed || state.coin?.mint !== mint) return;
 			state.coin = {
@@ -471,11 +471,21 @@ registerWalletTab({
 			panel.innerHTML = `
 				<div class="awh-tr">
 					${!state.isOwner ? visitorBannerHtml() : state.signable === false ? lockedCardHtml() : tradeCardHtml()}
+					${state.isOwner ? perpsLinkHtml() : ''}
 					${holdingsCardHtml()}
 					${historyCardHtml()}
 				</div>`;
 			wireEvents();
 			renderSafety();
+		}
+
+		function perpsLinkHtml() {
+			return `<div class="awh-card">
+				<div class="awh-tr-banner awh-tr-banner--info" role="note">
+					<span aria-hidden="true">↕</span>
+					<span>Go long or short with leverage on perpetual futures, paper first at live prices. <a href="/agents/${encodeURIComponent(ctx.agentId)}/perps">Open perps →</a></span>
+				</div>
+			</div>`;
 		}
 
 		function visitorBannerHtml() {

@@ -10,7 +10,7 @@ asset pipeline — not the primary generation lanes.
 Wraps `trimesh` + `open3d` for geometry, [QuadriFlow](https://github.com/hjwdzh/QuadriFlow)
 (MIT) for quad remeshing, [xatlas](https://github.com/jpcy/xatlas) (MIT) for UV
 re-unwrap, and headless [Blender](https://www.blender.org/) (`bpy`) for FBX
-export. **No GPU required** — everything runs on CPU.
+import and export. **No GPU required**: everything runs on CPU.
 
 A FastAPI service on Cloud Run. Jobs are accepted immediately (`202`) and polled
 — a quad remesh with texture re-bake runs far longer than a request should be
@@ -18,10 +18,25 @@ held open.
 
 ## Why Blender for FBX
 
-FBX is the only format here that needs Blender: `trimesh` has no FBX writer, so
-FBX is bridged through a temporary GLB handed to a one-shot headless Blender
-subprocess (`blender_fbx.py`). USDZ has no trimesh writer either, but it needs no
-Blender: it is authored directly on a USD stage with `pxr` (`_write_usdz` in
+FBX is the only format here that needs Blender: `trimesh` has neither an FBX
+writer nor an FBX reader (it answers `File type: fbx not supported`). So FBX
+goes through a one-shot headless Blender subprocess (`blender_fbx.py`) in both
+directions:
+
+- **FBX output** is bridged through a temporary GLB that Blender exports as FBX.
+- **FBX input** is imported by Blender and written out as a GLB before any
+  trimesh pipeline sees it, so every mode and operation accepts a binary FBX.
+  The worker recognises FBX by its bytes (`Kaydara FBX Binary` magic) as well as
+  by the URL, so a signed or extensionless URL works too. Blender's importer
+  reads binary FBX 7.1 and later only; an ASCII FBX (`; FBX` header), a corrupt
+  file, or one with no mesh polygons fails the task with `error_kind: "input"`
+  and a message that says what to re-export, never an opaque internal error.
+
+DAE input needs no Blender: trimesh reads it through `pycollada`, which
+`trimesh[easy]` installs. The image carries no assimp library at all; nothing
+in the worker loads it.
+
+USDZ has no trimesh writer either, but it needs no Blender: it is authored directly on a USD stage with `pxr` (`_write_usdz` in
 [`main.py`](./main.py)). Every other format trimesh writes itself.
 
 That Blender subprocess exits without running interpreter finalization, and the
@@ -91,7 +106,7 @@ curl -X POST https://$SERVICE_URL/process \
 
 | Field | Required | Default | Notes |
 |---|---|---|---|
-| `mesh` | yes | — | `https://` URL to a GLB / GLTF / OBJ / STL / PLY / FBX / OFF / DAE (≤ 128 MB) |
+| `mesh` | yes | n/a | `https://` URL to a GLB / GLTF / OBJ / STL / PLY / FBX (binary, 7.1+) / OFF / DAE (≤ 128 MB) |
 | `remesh_mode` | no | `triangle` | `triangle` \| `quad` \| `lowpoly` |
 | `operation` | no | `full` | `convert` \| `simplify` \| `repair` \| `full` (triangle mode) |
 | `target_faces` | no | `50000` | `1000`–`500000` |
@@ -130,7 +145,11 @@ against your own copy locally.
 ```
 
 `status` is `queued` | `running` | `done` | `failed`. On failure the response
-carries a sanitized `error` string; the full traceback stays in the server log.
+carries an `error` and an `error_kind`. `input` means the caller's file was the
+problem and `error` says how to fix it (for example `ASCII FBX is not supported:
+re-export the model as binary FBX (FBX 7.1 or later) or as GLB`). `internal`
+means a service fault: `error` is an opaque `internal error (ref <id>)` and the
+full traceback stays in the server log under that id.
 `texture_url` / `mtl_url` are populated when a re-bake produces a sidecar PNG or
 `.mtl` (e.g. a textured `obj` output).
 
@@ -150,7 +169,7 @@ Unauthenticated, so Cloud Run's startup probe can reach it.
 | `GCS_BUCKET` | yes | — | Output bucket; artifacts land under the `remesh/` prefix (`three-ws-avatar-reconstructions`) |
 | `MAX_CONCURRENT` | no | `2` | In-flight jobs |
 | `QUADRIFLOW_BIN` | no | `quadriflow` | Path to the QuadriFlow executable. The image builds it and sets this to `/usr/local/bin/quadriflow` |
-| `BLENDER_TIMEOUT` | no | `300` | Seconds before a Blender FBX export is killed |
+| `BLENDER_TIMEOUT` | no | `300` | Seconds before a Blender FBX conversion (export, or the FBX input bridge) is killed |
 | `MANIFOLD_BIN` | no | `manifold` | Path to the [Manifold](https://github.com/hjwdzh/Manifold) executable (built into the image). Quad mode rebuilds an open mesh watertight with it before QuadriFlow, which requires watertight manifold input |
 | `MANIFOLD_RESOLUTION` | no | `50000` | Octree resolution for that rebuild |
 | `MANIFOLD_TIMEOUT` | no | `120` | Seconds before the rebuild is abandoned and the raw mesh is used |
@@ -168,8 +187,10 @@ docker build -t remesh workers/remesh
 [`test_remesh.py`](./test_remesh.py) is the core-path smoke test: the OBJ bridge
 to QuadriFlow, repair, QEM decimation, every `operation`, xatlas UV unwrap,
 texture bake and seam dilation, every export format, request validation, a real
-QuadriFlow quad remesh, and a rigged GLB to FBX round trip re-checked with
-[`verify_fbx.py`](./verify_fbx.py). The Docker build runs it as a gate, so a
+QuadriFlow quad remesh, a rigged GLB to FBX round trip re-checked with
+[`verify_fbx.py`](./verify_fbx.py), FBX *input* through every path (FBX to GLB,
+FBX repair to OBJ, FBX behind an extensionless URL, FBX to FBX keeping the rig),
+DAE input through pycollada, and the input errors for ASCII and corrupt FBX. The Docker build runs it as a gate, so a
 regression fails the image instead of reaching Cloud Run. Run it on its own
 against the built image:
 

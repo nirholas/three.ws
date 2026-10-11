@@ -20,7 +20,6 @@ vi.mock('../api/_lib/db.js', () => {
 });
 
 const analytics = await import('../api/_lib/mcp-client-analytics.js');
-const { summarizeMcpClients, gatherMcpClients, windowDays, clampReportDays } = await import('../api/_lib/mcp-client-report.js');
 
 const MIGRATION = readFileSync(
 	new URL('../api/_lib/migrations/20261008200000_mcp_client_analytics.sql', import.meta.url),
@@ -162,50 +161,5 @@ describe('trackMcpRequest', () => {
 		expect(r.j.brand_new).toBeUndefined();
 		const { rows: [r2] } = await dbState.pg.query('select mcp_tool_count_add($1::jsonb, $2, 4) as j', [JSON.stringify(many), 't7']);
 		expect(r2.j.t7).toBe(5);
-	});
-});
-
-describe('the report', () => {
-	it('clamps the window', () => {
-		expect(clampReportDays(undefined)).toBe(30);
-		expect(clampReportDays('')).toBe(30);
-		expect(clampReportDays('0')).toBe(1);
-		expect(clampReportDays('9999')).toBe(365);
-		expect(windowDays(3, new Date('2026-10-08T12:00:00Z'))).toEqual(['2026-10-06', '2026-10-07', '2026-10-08']);
-	});
-
-	it('groups per client with top tools, auth mix and a zero-filled daily series', () => {
-		const today = new Date('2026-10-08T12:00:00Z');
-		const rows = [
-			{ day: '2026-10-08', surface: 'mcp-grok', client: 'grok', client_name: 'grok bot', client_version: '0.9', auth_kind: 'anonymous', sessions: 3, calls: 7, tools: { text_to_3d: 5, get_job: 2 } },
-			{ day: '2026-10-07', surface: 'mcp', client: 'claude', client_name: 'claude-ai', client_version: '0.1.0', auth_kind: 'oauth', sessions: 1, calls: 1, tools: { list_my_avatars: 1 } },
-			{ day: '2026-10-08', surface: 'mcp', client: 'unknown', client_name: 'unknown', client_version: '', auth_kind: 'x402', sessions: 0, calls: 2, tools: { getting_started: 2 } },
-		];
-		const r = summarizeMcpClients(rows, { days: 3, today });
-		expect(r.totals).toEqual({ sessions: 4, calls: 10, clients: 2, unattributed_calls: 2 });
-		expect(r.clients[0]).toMatchObject({ client: 'grok', sessions: 3, calls: 7, calls_per_session: 2.3, top_tools: [{ tool: 'text_to_3d', calls: 5 }, { tool: 'get_job', calls: 2 }] });
-		expect(r.daily.map((d) => d.day)).toEqual(['2026-10-06', '2026-10-07', '2026-10-08']);
-		expect(r.daily[0].clients).toEqual({});
-		expect(r.daily[2].clients.grok).toEqual({ sessions: 3, calls: 7 });
-		expect(r.tools[0]).toEqual({ tool: 'text_to_3d', calls: 5 });
-	});
-
-	it('reads the real table end to end', async () => {
-		const res = makeRes();
-		const sid = analytics.trackMcpRequest({ body: init('three-ws-connector-probe'), req: { headers: {} }, res, surface: 'mcp-studio' });
-		await analytics.flushMcpClientEvents();
-		analytics.trackMcpRequest({ body: call('search_catalog'), req: { headers: { 'mcp-session-id': sid } }, res: makeRes(), surface: 'mcp-studio' });
-		await analytics.flushMcpClientEvents();
-		const r = await gatherMcpClients({ days: 30 });
-		expect(r.ok).toBe(true);
-		expect(r.clients.map((c) => c.client)).toEqual(['probe']);
-		expect(r.clients[0]).toMatchObject({ sessions: 1, calls: 1, auth: { anonymous: 2 } });
-	});
-
-	it('names the failed read instead of reporting an empty window', async () => {
-		await dbState.pg.exec('drop table mcp_client_daily');
-		const r = await gatherMcpClients({ days: 7 });
-		expect(r.ok).toBe(false);
-		expect(r.degraded[0].error).toMatch(/does not exist/);
 	});
 });

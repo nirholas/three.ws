@@ -20,7 +20,7 @@ export const def = {
 	// Running a completion returns generated text; it does not mutate any
 	// three.ws platform state — hence read-only. Open-world (live model), and
 	// not idempotent (the same messages yield different generations each call).
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Run a chat completion through the three.ws LLM router and get back the full reply as a single message. ' +
 		'Pick `provider` from `list_providers` (default `gpt-oss-120b`, a free open-weight model). `messages` is ' +
@@ -29,7 +29,8 @@ export const def = {
 		'collapses that into one reply and reports the actual route taken, token usage, and timing. ' +
 		'Paid first-party flagships (Claude, GPT-5, o3, Grok, Qwen Plus, DeepSeek) need a three.ws API key ' +
 		'(set THREE_WS_API_KEY); the free open-weight tiers (GPT-OSS 120B, NVIDIA NIM models) need none. ' +
-		'Read-only: a completion does not change any platform state.',
+		'Read-only: a completion does not change any platform state. ' +
+		'Use this to get a model\'s answer to a prompt from inside an agent workflow; call list_providers first to choose a model.',
 	inputSchema: {
 		messages: z
 			.array(messageSchema)

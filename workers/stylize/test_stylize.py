@@ -13,6 +13,7 @@ library's default upload retry policy never engages without if_generation_match.
 
 from __future__ import annotations
 
+import asyncio
 import os
 import sys
 
@@ -148,6 +149,77 @@ check(
     client.get(
         "/tasks/nope", headers={"authorization": f"Bearer {main.API_KEY}"}
     ).status_code == 404,
+)
+
+# ── FBX is refused, with the formats that work ──────────────────────────────────
+# trimesh has no FBX reader and this image carries no converter, so an FBX used
+# to be accepted and then die inside the parser as an opaque internal error.
+
+_fbx_job = client.post(
+    "/process",
+    json={"mesh": "https://example.com/rig.FBX?sig=1", "style": "voxel"},
+    headers={"authorization": f"Bearer {main.API_KEY}"},
+)
+check(
+    "an FBX mesh URL is a 422 that names the supported formats",
+    _fbx_job.status_code == 422 and "GLB, GLTF, OBJ, STL, PLY, OFF or DAE" in _fbx_job.text,
+    f"{_fbx_job.status_code} {_fbx_job.text[:300]}",
+)
+check("fbx is not an accepted input suffix", ".fbx" not in main.SUPPORTED_INPUT_FORMATS)
+
+
+def _fetch_bytes(data: bytes, url: str):
+    real = main.fetch_remote_bytes
+    main.fetch_remote_bytes = lambda *_a, **_k: data
+    try:
+        return main._fetch_mesh(url)
+    finally:
+        main.fetch_remote_bytes = real
+
+
+for label, data, url in (
+    ("binary FBX behind an extensionless URL", main.FBX_BINARY_MAGIC + b"\x00" * 32, "https://example.com/dl?sig=1"),
+    ("ASCII FBX behind a .bin URL", b"; FBX 7.4.0 project file\n", "https://example.com/model.bin"),
+    ("an .fbx URL whatever the bytes", b"glTF\x02\x00\x00\x00", "https://example.com/model.fbx"),
+):
+    try:
+        _fetch_bytes(data, url)
+        check(f"{label} is refused as an input error", False, "accepted")
+    except main.InputFormatError as exc:
+        check(f"{label} is refused as an input error", "FBX input is not supported" in str(exc), str(exc))
+
+check("a DAE URL keeps its loader", _fetch_bytes(b"<?xml", "https://example.com/m.dae")[1] == ".dae")
+check("an extensionless GLB still loads as glb", _fetch_bytes(b"glTF", "https://example.com/dl")[1] == ".glb")
+
+_dae = trimesh.exchange.dae.export_collada(trimesh.creation.box())
+check("DAE input loads through pycollada", len(main._load_single_mesh(_dae, ".dae").faces) == 12)
+_real_fetch_bytes = main.fetch_remote_bytes
+main.fetch_remote_bytes = lambda *_a, **_k: _dae
+try:
+    _dae_out, _dae_faces, _ = main._run_processing("https://example.com/box.dae", "lowpoly", 8, "glb")
+finally:
+    main.fetch_remote_bytes = _real_fetch_bytes
+check("a DAE stylizes end to end", _dae_out[:4] == b"glTF" and _dae_faces > 0, f"faces={_dae_faces}")
+
+
+async def _run_task_on(data: bytes, url: str) -> dict:
+    main._sem = asyncio.Semaphore(1)
+    main._remember_task({"task_id": "fbx-in", "status": "queued"})
+    real = main.fetch_remote_bytes
+    main.fetch_remote_bytes = lambda *_a, **_k: data
+    try:
+        await main._process("fbx-in", url, "voxel", 16, "glb")
+    finally:
+        main.fetch_remote_bytes = real
+    return main._tasks.pop("fbx-in")
+
+
+_task = asyncio.run(_run_task_on(main.FBX_BINARY_MAGIC + b"\x00" * 32, "https://example.com/dl"))
+check(
+    "an FBX job fails with caller-facing copy, not an opaque ref",
+    _task["status"] == "failed" and _task.get("error_kind") == "input"
+    and "FBX input is not supported" in _task["error"],
+    str(_task),
 )
 
 # ── task tracking ───────────────────────────────────────────────────────────────

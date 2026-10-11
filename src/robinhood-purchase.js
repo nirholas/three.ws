@@ -15,7 +15,7 @@ import { createPublicClient, createWalletClient, custom, http, parseUnits, forma
 // viem 2.52 (pinned in package.json) predates the official `robinhood` chain
 // export in `viem/chains` (lands 2.55+) — inline chain def, same shape every
 // other custom chain in this codebase uses (src/vault.js, src/erc8004/gasless-register.js).
-const HOOD_MAINNET = {
+export const HOOD_MAINNET = {
 	id: 4663,
 	name: 'Robinhood Chain',
 	nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
@@ -118,7 +118,7 @@ async function bestQuote(tokenOutAddress, amountInWei) {
 	return ok.reduce((best, cur) => (cur.amountOut > best.amountOut ? cur : best));
 }
 
-async function ensureChain(ethProvider) {
+export async function ensureChain(ethProvider) {
 	const hex = `0x${HOOD_MAINNET.id.toString(16)}`;
 	try {
 		await ethProvider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: hex }] });

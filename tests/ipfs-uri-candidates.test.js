@@ -22,19 +22,24 @@ describe('uriCandidates', () => {
 	});
 
 	it('re-extracts the CID from a URL whose gateway was already chosen', () => {
-		const out = uriCandidates('https://ipfs.io/ipfs/bafyCID');
+		const out = uriCandidates('https://4everland.io/ipfs/bafyCID');
 		// The caller's own choice stays first (most likely warm in a CDN), and the
 		// other gateways follow as recovery options.
-		expect(out[0]).toBe('https://ipfs.io/ipfs/bafyCID');
+		expect(out[0]).toBe('https://4everland.io/ipfs/bafyCID');
 		expect(out.length).toBeGreaterThan(1);
-		expect(out.some((url) => url.startsWith('https://dweb.link/ipfs/bafyCID'))).toBe(true);
+		expect(out.some((url) => url.startsWith('https://ipfs.filebase.io/ipfs/bafyCID'))).toBe(true);
 	});
 
-	it('rewrites a retired gateway host onto a live one', () => {
-		const out = uriCandidates('https://cloudflare-ipfs.com/ipfs/bafyCID');
-		expect(out.every((url) => !url.includes('cloudflare-ipfs.com'))).toBe(true);
-		expect(out.every((url) => url.endsWith('bafyCID'))).toBe(true);
-	});
+	// Cloudflare's gateways fail DNS; ipfs.io and its sibling hosts answer every
+	// programmatic read with 429. pump.fun still hands out ipfs.io URLs.
+	it.each(['cloudflare-ipfs.com', 'ipfs.io', 'dweb.link', 'w3s.link', 'nftstorage.link'])(
+		'rewrites the retired gateway host %s onto a live one',
+		(host) => {
+			const out = uriCandidates(`https://${host}/ipfs/bafyCID`);
+			expect(out.every((url) => !url.startsWith(`https://${host}/`))).toBe(true);
+			expect(out.every((url) => url.endsWith('bafyCID'))).toBe(true);
+		},
+	);
 
 	it('returns one entry for a plain URL so callers can loop unconditionally', () => {
 		expect(uriCandidates('https://cdn.example/model.glb')).toEqual(['https://cdn.example/model.glb']);

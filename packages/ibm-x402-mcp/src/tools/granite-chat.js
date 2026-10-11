@@ -12,6 +12,7 @@ const TOOL_NAME = 'ibm_granite_chat';
 const TOOL_DESCRIPTION =
 	'Chat completion powered by IBM Granite foundation models (default: ibm/granite-3-8b-instruct). ' +
 	'Send a conversation as role/content message pairs and receive the assistant reply with token usage. ' +
+	'Use this for open-ended conversation or free-form text generation; for code tasks call ibm_granite_code, and for structured JSON extraction call ibm_granite_analyze. ' +
 	'No IBM Cloud account required — pay $0.02 USDC per call via x402.';
 
 const inputZodShape = {

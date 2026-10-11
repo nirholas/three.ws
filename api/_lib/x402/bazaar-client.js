@@ -286,6 +286,24 @@ async function listOneFacilitator(facilitatorUrl, { type, limit, maxItems, untru
 const CATALOG_TTL_MS = Math.max(0, Number(process.env.BAZAAR_CATALOG_TTL_MS) || 60_000);
 const catalogMemo = new Map();
 
+// The memo key carries caller-chosen facilitators, limit and maxItems, and
+// /api/bazaar/list is anonymous, so without a bound every distinct query would
+// pin its own multi-MB catalog in memory until the process fell over. The
+// platform's own views use a handful of keys; anything past this cap evicts the
+// oldest entry (Map iteration is insertion order).
+const CATALOG_MEMO_MAX = 16;
+
+function rememberCatalog(key, entry, now) {
+	for (const [k, v] of catalogMemo) {
+		if (now - v.at >= CATALOG_TTL_MS) catalogMemo.delete(k);
+	}
+	catalogMemo.delete(key);
+	while (catalogMemo.size >= CATALOG_MEMO_MAX) {
+		catalogMemo.delete(catalogMemo.keys().next().value);
+	}
+	catalogMemo.set(key, entry);
+}
+
 // Callers filter and sort what they get back, so hand out fresh array wrappers
 // around the shared item objects rather than the memo's own arrays.
 function shallowCopy(result) {
@@ -385,7 +403,7 @@ export class Bazaar {
 		const now = Date.now();
 		if (hit && now - hit.at < CATALOG_TTL_MS) return shallowCopy(await hit.promise);
 		const promise = this.list({ type, limit, maxItems });
-		catalogMemo.set(key, { at: now, promise });
+		rememberCatalog(key, { at: now, promise }, now);
 		try {
 			return shallowCopy(await promise);
 		} catch (e) {

@@ -6,6 +6,7 @@
 // continuous history.
 
 import { sql } from './db.js';
+import { dispatchWebhooks } from './webhook-dispatch.js';
 
 export const THREAD_CHANNELS = ['web', 'api', 'telegram', 'discord', 'slack', 'whatsapp', 'signal', 'sms', 'email'];
 const MAX_CONTENT = 8000;
@@ -42,6 +43,17 @@ export async function appendThreadMessage({
 		        ${freeTier}, ${inputTokens}, ${outputTokens}, ${costMicroUsd}, ${chargedUsd})
 		RETURNING id, created_at
 	`;
+	// Awaited so the delivery row is durable before the request returns; the
+	// HTTP attempt itself still runs in the background.
+	if (role === 'user') {
+		await dispatchWebhooks({
+			userId,
+			agentId,
+			eventType: 'message.received',
+			eventId: `evt_msg_${row.id}`,
+			data: { agent_id: agentId, message_id: Number(row.id), role, channel, content: text, created_at: row.created_at },
+		});
+	}
 	return row;
 }
 

@@ -623,7 +623,7 @@
       "transport": "stdio",
       "connect": "npx -y hood-mcp",
       "npmPackage": "hood-mcp",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Robinhood Chain data + guarded trading for AI agents: Stock Token quotes, portfolios, launches",
       "tagline": "Robinhood Chain data for agents: coin prices, portfolios, launches, and swap quotes.",
       "category": "market-data",
@@ -1069,7 +1069,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/pumpfun-mcp",
       "npmPackage": "@three-ws/pumpfun-mcp",
-      "version": "0.2.6",
+      "version": "0.2.7",
       "description": "Free, read-only pump.fun + Solana MCP: token discovery, on-chain analysis, SNS, 3D snapshots.",
       "tagline": "Free, read-only pump.fun + Solana MCP: token discovery, on-chain analysis, SNS, 3D snapshots.",
       "category": "market-data",
@@ -1158,19 +1158,19 @@
       "npmPackage": "@three-ws/solana-memo-media-mcp",
       "version": "0.1.0",
       "description": "Extract validated image data URIs from Solana SPL Memos and return them inline to MCP clients.",
-      "tagline": "Paste a Solana transaction signature, get back the image hidden in its Memo instruction.",
-      "category": "onchain-data",
+      "tagline": "See the images people embed in Solana memos: give it a signature, get the picture back inline, validated.",
+      "category": "market-data",
       "tags": [
         "solana",
         "memo",
         "images",
-        "read-only",
-        "keyless"
+        "data-uri",
+        "read-only"
       ],
       "examplePrompts": [
-        "Show any image embedded in Solana transaction <signature>.",
+        "Show any image embedded in this Solana transaction.",
         "Scan this wallet's recent transactions for memo images.",
-        "Decode this data URI I copied from a memo."
+        "Decode this data URI I copied from a memo and tell me its size and hash."
       ],
       "requiredEnv": [],
       "websiteUrl": "https://three.ws",

@@ -41,6 +41,10 @@ import {
 	nextBackoff,
 } from './shared/resilient-poll.js';
 import { coldStartLabel } from './shared/forge-frames.js';
+// model-viewer carries its own renderer (~700 KB): the shared loader fetches it
+// only once a generation is running, fails over across CDNs, and registers the
+// meshopt decoder that every Forge GLB needs.
+import { ensureModelViewer } from './shared/model-viewer-loader.js';
 
 const POLL_INTERVAL_MS = 2500;
 // Max-tier texture bakes legitimately run past 10 minutes at full quality; the
@@ -162,7 +166,6 @@ let lastPrompt = '';
 let controls = null;
 let highBlocked = false;
 let enhanceBusy = false;
-let modelViewerReady = null;
 let currentViewer = null; // the live <model-viewer> on stage
 let currentGlbUrl = ''; // what the toolbar acts on
 let currentCreationId = ''; // persisted creation id → real shareable permalink
@@ -176,23 +179,6 @@ let runSeq = 0;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// model-viewer carries its own renderer (~700 KB) — fetch it only once a
-// generation is actually running, so it's registered by the time the GLB lands.
-function ensureModelViewer() {
-	if (modelViewerReady) return modelViewerReady;
-	modelViewerReady = customElements.get('model-viewer')
-		? Promise.resolve()
-		: new Promise((resolve, reject) => {
-				const s = document.createElement('script');
-				s.type = 'module';
-				s.src = MODEL_VIEWER_SRC;
-				s.crossOrigin = 'anonymous';
-				s.onload = () => resolve();
-				s.onerror = () => reject(new Error('Failed to load the 3D viewer.'));
-				document.head.appendChild(s);
-			});
-	return modelViewerReady;
-}
 
 // Honest telemetry words for the HUD readout, keyed by state.
 const TEL_WORDS = { idle: 'standby', generating: 'forging', result: 'complete', error: 'error' };

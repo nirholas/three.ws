@@ -36,13 +36,13 @@ test('every tool has a title, description, input schema and complete annotations
 	}
 });
 
-test('read tools are read-only and omit destructiveHint; the write tool is marked correctly', () => {
+test('read tools are read-only with an explicit destructiveHint:false; the write tool is marked correctly', () => {
 	for (const tool of TOOLS) {
 		const expectWrite = WRITE_NAMES.has(tool.name);
 		assert.equal(tool.annotations.readOnlyHint, !expectWrite, `${tool.name} readOnlyHint should be ${!expectWrite}`);
 		if (!expectWrite) {
-			// Read-only tools must not set destructiveHint (spec ignores it when readOnlyHint is true).
-			assert.equal(tool.annotations.destructiveHint, undefined, `${tool.name} is read-only — destructiveHint should be omitted`);
+			// The spec defaults an omitted destructiveHint to true, so reads say false out loud.
+			assert.equal(tool.annotations.destructiveHint, false, `${tool.name} is read-only, so destructiveHint must be an explicit false`);
 			// Live feed/lookup move between calls — not idempotent.
 			assert.equal(tool.annotations.idempotentHint, false, `${tool.name} reads live data, not idempotent`);
 		}

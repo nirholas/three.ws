@@ -88,7 +88,7 @@ export const MIN_COVERAGE = 0.5;
 
 `canonicalizeBoneName(name)` takes any string and returns a canonical name or `null`. It works in stages, and the order of the stages is where the subtlety lives.
 
-**Strip namespaces and vendor prefixes.** A leading namespace (`Character1:Hips` from Autodesk HumanIK, `subject:LeftUpLeg` from mocap tools) goes first. Then known vendor prefixes, each one a single line: `mixamorig:` and its numbered variants, Blender's `Armature_`, Rigify's `DEF-`/`ORG-`/`MCH-` layers, the `CH_` prefix some avatar builders emit, Reallusion's `CC_Base_`, Sketchfab's `j_`, the 3ds Max `Bip01 ` prefix, and the numbered `5.joint_` form a VRM converter emits.
+**Strip namespaces and vendor prefixes.** A leading namespace (`Character1:Hips` from Autodesk HumanIK, `subject:LeftUpLeg` from mocap tools) goes first. Then known vendor prefixes, each one a single line: `mixamorig:` and its numbered variants, Blender's `Armature_`, Rigify's `DEF-`/`ORG-`/`MCH-` layers, CharacterStudio's `CH_`, Reallusion's `CC_Base_`, Sketchfab's `j_`, the 3ds Max `Bip01 ` prefix, and the numbered `5.joint_` form a VRM converter emits.
 
 **Collapse separators and case, then look up.** What remains is folded into one key, and the key is looked up in three tables in a fixed priority order:
 

@@ -18,8 +18,8 @@ export const def = {
 		'Unlike mark_read, which only marks it read, this REMOVES the notification for good — the action is ' +
 		'irreversible. Only a notification the caller owns can be deleted. Returns ' +
 		'`{ ok: true, id, deleted: true }` on success, or a not_found error if the id does not exist for ' +
-		'this account (e.g. it was already deleted). Prefer mark_read for normal triage; use this only to ' +
-		'discard a notification entirely.',
+		'this account (e.g. it was already deleted). Use this to discard a notification entirely; prefer ' +
+		'mark_read for normal triage.',
 	inputSchema: {
 		id: z.string().uuid().describe('UUID of the notification to permanently delete (from list_notifications).'),
 	},

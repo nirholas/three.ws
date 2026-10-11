@@ -200,6 +200,20 @@ the `recordValidation()` helper in
 [`../src/erc8004/validation-recorder.js`](../src/erc8004/validation-recorder.js)
 wraps (including the request leg when the same wallet owns the agent).
 
+## Uniswap launcher (Base)
+
+[`src/ThreeWsUniswapLauncher.sol`](./src/ThreeWsUniswapLauncher.sol) launches a fixed-supply token and its Uniswap V3
+pool in one transaction, with a lock option (none, timelock, permanent) and fee routing. Its constructor takes
+`(positionManager, weth, treasury, launchFeeWei, platformShareBps)`. Tests fork Base and run with:
+
+```bash
+export PATH=$PATH:$HOME/.foundry/bin
+forge test --match-contract ThreeWsUniswapLauncherTest --fork-url $BASE_RPC_URL
+```
+
+Deploying it to mainnet and setting `UNISWAP_LAUNCHER_ADDRESS` on the API service is the owner's action. Until that
+is set, `GET /api/launches/lanes` reports the lane as unavailable. See [../docs/launch-lanes.md](../docs/launch-lanes.md).
+
 ## Layout
 
 ```

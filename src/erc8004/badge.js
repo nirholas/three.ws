@@ -43,8 +43,10 @@ async function sha256Hex(bytes) {
 	return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Standalone embed (no imports), so the gateway is inlined. It matches the
+// head of IPFS_GATEWAYS in src/ipfs.js; w3s.link stopped serving reads.
 function ipfsToHttp(uri) {
-	if (uri.startsWith('ipfs://')) return `https://w3s.link/ipfs/${uri.slice(7)}`;
+	if (uri.startsWith('ipfs://')) return `https://ipfs.filebase.io/ipfs/${uri.slice(7)}`;
 	return uri;
 }
 

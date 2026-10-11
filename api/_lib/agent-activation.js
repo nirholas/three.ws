@@ -399,9 +399,9 @@ export async function activateAgent({ agentId, userId }) {
 		// resolves a recipient for real marketplace buyers. Best-effort — never blocks
 		// the grant.
 		sql`
-			insert into agent_payout_wallets (user_id, agent_id, address, chain, is_default, preferred_network)
-			values (${userId}, ${agentId}, ${address}, 'solana', true, 'mainnet')
-			on conflict (user_id, agent_id, chain) do update set address = excluded.address, is_default = true
+			insert into agent_payout_wallets (user_id, agent_id, address, chain, is_default, preferred_network, approved_at, effective_at, set_by)
+			values (${userId}, ${agentId}, ${address}, 'solana', true, 'mainnet', now(), now(), 'platform')
+			on conflict (user_id, agent_id, chain) do update set address = excluded.address, is_default = true, approved_at = now(), effective_at = now(), set_by = 'platform'
 		`.catch((e) => console.warn('[agent-activation] payout wallet upsert failed', e?.message));
 
 		// Cross-system milestone: funding your first agent IS a "first win" — stamp the

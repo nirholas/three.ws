@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 318,
+	"count": 320,
 	"paths": [
 		"/",
 		"/3d",
@@ -185,6 +185,7 @@
 		"/legal/privacy",
 		"/legal/risk",
 		"/legal/tos",
+		"/link-device",
 		"/live",
 		"/login",
 		"/lookup",
@@ -316,6 +317,7 @@
 		"/watch",
 		"/watchlist",
 		"/what-is",
+		"/workbench",
 		"/world-lines",
 		"/wrapped",
 		"/x402/studio",

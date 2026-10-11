@@ -15,7 +15,7 @@ Optionally exports a single part on its own (`only_part`).
 
 API contract:
   POST /segment  {
-    mesh: url,                               # https GLB/OBJ/STL/PLY/FBX URL (required)
+    mesh: url,                               # https GLB/GLTF/OBJ/STL/PLY/OFF/DAE URL (required; FBX is refused)
     method?: "auto"|"connected"|"crease",    # default: "auto"
     max_parts?: int,                         # default: 24, range 2–64
     min_part_faces?: int,                    # default: 64, range 4–100000
@@ -27,7 +27,7 @@ API contract:
     task_id, status,
     result_url?, manifest_url?,
     parts?, part_count?, source_faces?, method?,
-    error?
+    error?, error_kind?                      # error_kind: "input" | "internal"
   }
 
   GET /health    → { ok }
@@ -85,7 +85,20 @@ _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
 _tasks: dict[str, dict] = {}
 
-SUPPORTED_INPUT_FORMATS = {".glb", ".gltf", ".obj", ".stl", ".ply", ".fbx", ".off", ".dae"}
+# Every input trimesh 4.x reads in this image (DAE through pycollada, which
+# trimesh[easy] installs). FBX is deliberately absent: trimesh has no FBX reader
+# and this image carries no converter, so an FBX is refused up front with the
+# list below instead of failing inside the parser as an opaque internal error.
+SUPPORTED_INPUT_FORMATS = {".glb", ".gltf", ".obj", ".stl", ".ply", ".off", ".dae"}
+SUPPORTED_INPUT_LABEL = "GLB, GLTF, OBJ, STL, PLY, OFF or DAE"
+FBX_UNSUPPORTED_MESSAGE = (
+    f"FBX input is not supported by segment: supply {SUPPORTED_INPUT_LABEL}. "
+    "To split an FBX into parts, convert it to GLB first (the remesh worker's "
+    "convert operation reads FBX)."
+)
+# Binary FBX opens with this fixed magic; ASCII FBX with a `; FBX` comment line.
+FBX_BINARY_MAGIC = b"Kaydara FBX Binary  \x00"
+FBX_ASCII_HEADER = b"; FBX"
 VALID_METHODS = {"auto", "connected", "crease"}
 MAX_MESH_BYTES = 128 * 1024 * 1024
 TERMINAL_STATUSES = ("done", "failed")
@@ -169,6 +182,16 @@ def _evict_stale_tasks(now: float) -> None:
             _tasks.pop(task_id, None)
 
 
+def _url_suffix(url: str) -> str:
+    return Path(url.split("?")[0].split("#")[0]).suffix.lower()
+
+
+def _is_fbx(data: bytes) -> bool:
+    if data.startswith(FBX_BINARY_MAGIC):
+        return True
+    return data[:64].lstrip(b"\xef\xbb\xbf").lstrip().startswith(FBX_ASCII_HEADER)
+
+
 def _fetch_mesh(url: str) -> tuple[bytes, str]:
     import segment_core as seg
 
@@ -176,7 +199,12 @@ def _fetch_mesh(url: str) -> tuple[bytes, str]:
         data = fetch_remote_bytes(url, timeout=60, max_bytes=MAX_MESH_BYTES)
     except UnsafeUrlError as exc:
         raise seg.SegmentInputError(f"refused to fetch mesh: {exc}") from exc
-    suffix = Path(url.split("?")[0]).suffix.lower()
+    # The bytes decide, not just the URL: a signed or extensionless URL would
+    # otherwise fall back to the glTF parser and fail there with an error that
+    # says nothing about FBX.
+    if _url_suffix(url) == ".fbx" or _is_fbx(data):
+        raise seg.SegmentInputError(FBX_UNSUPPORTED_MESSAGE)
+    suffix = _url_suffix(url)
     if suffix not in SUPPORTED_INPUT_FORMATS:
         suffix = ".glb"
     # A meshopt-compressed asset is transcoded here, before segment_core loads
@@ -319,16 +347,22 @@ async def _process(
             import segment_core as seg
 
             if isinstance(exc, (seg.SegmentInputError, seg.SegmentTimeout)):
-                # Ours, and written for the caller: a bad part id or a blown
-                # time budget is fixable from the client side, so say what
+                # Ours, and written for the caller: a bad part id, an FBX, or a
+                # blown time budget is fixable from the client side, so say what
                 # happened instead of burying it behind a correlation id.
                 message = str(exc)
+                error_kind = "input"
                 log.warning("[%s] segment rejected: %s", task_id, message)
             else:
                 message = safe_error(exc, context=f"[{task_id}] segment")
+                error_kind = "internal"
             _tasks[task_id].update({
                 "status": "failed",
                 "error": message,
+                # Same taxonomy the stylize and avatar workers report and
+                # api/_providers/gcp.js relays: `input` means `error` is
+                # caller-facing copy, `internal` means it is an opaque ref.
+                "error_kind": error_kind,
                 "elapsed_ms": int((time.time() - t0) * 1000),
                 "finished_at": time.time(),
             })
@@ -338,12 +372,22 @@ async def _process(
 
 
 class SegmentRequest(BaseModel):
-    mesh: str = Field(..., description="https URL to input mesh (GLB/OBJ/FBX/STL/PLY)")
+    mesh: str = Field(..., description="https URL to input mesh (GLB/GLTF/OBJ/STL/PLY/OFF/DAE)")
     method: str = Field(default="auto", description="auto|connected|crease")
     max_parts: int = Field(default=24, ge=2, le=64)
     min_part_faces: int = Field(default=64, ge=4, le=100_000)
     crease_angle: float = Field(default=40.0, ge=5.0, le=170.0)
     only_part: Optional[str] = Field(default=None, max_length=64)
+
+    @field_validator("mesh")
+    @classmethod
+    def validate_mesh(cls, v: str) -> str:
+        # Refuse an FBX at the door with a 422 that names the supported formats,
+        # rather than accepting a job that can only fail. An FBX behind an
+        # extensionless URL is caught by the byte sniff in _fetch_mesh.
+        if _url_suffix(v) == ".fbx":
+            raise ValueError(FBX_UNSUPPORTED_MESSAGE)
+        return v
 
     @field_validator("method")
     @classmethod

@@ -7,11 +7,11 @@ file lives in each worker directory; keep them byte-identical when editing.
 
 It provides three primitives that every worker needs:
 
-  1. ``require_api_key`` — constant-time bearer-token check (timing-safe).
-  2. ``fetch_remote_bytes`` — SSRF-hardened HTTP(S) fetch of caller-supplied
+  1. ``require_api_key`` - constant-time bearer-token check (timing-safe).
+  2. ``fetch_remote_bytes`` - SSRF-hardened HTTP(S) fetch of caller-supplied
      URLs: https-only, DNS resolution with private/loopback/link-local/metadata
      IP rejection, per-hop redirect re-validation, and a bounded response size.
-  3. ``safe_error`` — turns an exception into an opaque, correlation-id-tagged
+  3. ``safe_error`` - turns an exception into an opaque, correlation-id-tagged
      message safe to persist/return to callers, after logging the full
      traceback server-side only.
 """
@@ -21,7 +21,9 @@ from __future__ import annotations
 import hmac
 import ipaddress
 import logging
+import asyncio
 import socket
+import time
 import uuid
 from typing import Iterable, Optional
 from urllib.parse import urlsplit
@@ -60,6 +62,16 @@ def require_api_key(authorization: Optional[str], api_key: str) -> None:
 # are comfortably under this; anything larger is almost certainly abuse.
 DEFAULT_MAX_BYTES = 64 * 1024 * 1024  # 64 MiB
 _MAX_REDIRECTS = 4
+
+# Transient fetch failures are retried: a dropped connection, a timeout, or a
+# 429/5xx from the image host. The public R2 dev endpoint that serves every
+# forge reference image drops connections under load ("Server disconnected
+# without sending a response"), and before this retry each drop ended a
+# generation as an opaque internal error on TripoSG and Hunyuan3D (about 20 a
+# week measured 2026-10-09). Refusals (UnsafeUrlError), oversize bodies, and
+# other 4xx answers are final and never retried.
+_FETCH_ATTEMPTS = 3
+_FETCH_BACKOFF_SECS = (0.5, 1.5)
 
 # Hosts that enforce a User-Agent policy refuse httpx's default
 # "python-httpx/<version>": upload.wikimedia.org answers it with 403 Forbidden
@@ -156,15 +168,49 @@ def fetch_remote_bytes(
 
     Hardening applied:
       * https-only (unless ``allow_http``).
-      * every URL — including each redirect target — is DNS-resolved and
+      * every URL - including each redirect target - is DNS-resolved and
         rejected if it maps to a private/loopback/link-local/metadata address.
       * redirects are followed manually (max ``_MAX_REDIRECTS``) so each hop is
         re-validated; httpx's own redirect following is disabled.
       * the response body is streamed and aborted once it exceeds ``max_bytes``.
+      * transient failures (dropped connection, timeout, 429/5xx) are retried
+        with a short backoff; see ``_FETCH_ATTEMPTS``.
 
     Raises ``UnsafeUrlError`` for disallowed targets and ``httpx.HTTPError`` /
     ``ValueError`` for transport or size failures.
     """
+    for attempt in range(_FETCH_ATTEMPTS - 1):
+        try:
+            return _fetch_once(
+                url, timeout=timeout, max_bytes=max_bytes,
+                allow_http=allow_http, headers=headers,
+            )
+        except httpx.HTTPError as exc:
+            if not _is_transient(exc):
+                raise
+            log.warning("transient fetch failure (attempt %d): %s", attempt + 1, type(exc).__name__)
+            time.sleep(_FETCH_BACKOFF_SECS[attempt])
+    return _fetch_once(
+        url, timeout=timeout, max_bytes=max_bytes,
+        allow_http=allow_http, headers=headers,
+    )
+
+
+def _is_transient(exc: httpx.HTTPError) -> bool:
+    if isinstance(exc, httpx.HTTPStatusError):
+        code = exc.response.status_code
+        return code == 429 or code >= 500
+    return isinstance(exc, httpx.TransportError)
+
+
+def _fetch_once(
+    url: str,
+    *,
+    timeout: float,
+    max_bytes: int,
+    allow_http: bool,
+    headers: Optional[dict],
+) -> bytes:
     current = assert_safe_url(url, allow_http=allow_http)
     with httpx.Client(follow_redirects=False, timeout=timeout) as client:
         for _ in range(_MAX_REDIRECTS + 1):
@@ -203,8 +249,34 @@ async def fetch_remote_bytes_async(
     """Async variant of ``fetch_remote_bytes`` using a caller-provided client.
 
     The provided ``client`` MUST be constructed with ``follow_redirects=False``
-    so this function can re-validate each redirect hop itself.
+    so this function can re-validate each redirect hop itself. Transient
+    failures are retried exactly as in the sync variant.
     """
+    for attempt in range(_FETCH_ATTEMPTS - 1):
+        try:
+            return await _fetch_once_async(
+                client, url, max_bytes=max_bytes,
+                allow_http=allow_http, headers=headers,
+            )
+        except httpx.HTTPError as exc:
+            if not _is_transient(exc):
+                raise
+            log.warning("transient fetch failure (attempt %d): %s", attempt + 1, type(exc).__name__)
+            await asyncio.sleep(_FETCH_BACKOFF_SECS[attempt])
+    return await _fetch_once_async(
+        client, url, max_bytes=max_bytes,
+        allow_http=allow_http, headers=headers,
+    )
+
+
+async def _fetch_once_async(
+    client: "httpx.AsyncClient",
+    url: str,
+    *,
+    max_bytes: int,
+    allow_http: bool,
+    headers: Optional[dict],
+) -> bytes:
     current = assert_safe_url(url, allow_http=allow_http)
     for _ in range(_MAX_REDIRECTS + 1):
         async with client.stream("GET", current, headers=_fetch_headers(headers)) as resp:

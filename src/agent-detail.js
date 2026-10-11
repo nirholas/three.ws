@@ -270,6 +270,11 @@ function mountAgentDetailAura(agent) {
 			// Living Stages cross-link: a "live now / next show" badge for visitors,
 			// and one-tap stage controls (create / go live / end show) for the owner.
 			if (main) {
+				// Event Markets track record: calls, hit rate, calibration, follow, and
+				// (owner only) autonomous mode. Enhancement; never blocks the profile.
+				import('./event-markets/forecasting.js')
+					.then((m) => m.mountForecastRecord({ agentId: agent.id, isOwner: !!agent.isOwner, container: bannerHost }))
+					.catch(() => { /* never block the profile */ });
 				mountStagePanel({ agentId: agent.id, agentName: agent.name || 'this agent', isOwner: !!agent.isOwner, container: bannerHost, position: bannerPos })
 					.catch(() => { /* stage is an enhancement; never block the profile */ });
 					// Labor Market cross-link: this agent's "Work" record (earnings, jobs,
@@ -549,6 +554,27 @@ function launchTimeAgo(iso) {
 	return new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+// A coin the agent launched on Robinhood Chain (through Pons). There is no
+// pump.fun market to stream, so the row names the chain and venue and opens
+// the on-platform Robinhood coin page, which reads the chain directly.
+function robinhoodLaunchRow(coin) {
+	const venue = coin.venue === 'pons' ? 'Pons' : coin.venue || 'launchpad';
+	const label = coin.symbol ? `$${coin.symbol}` : coin.name || 'coin';
+	return el(
+		'a',
+		{
+			class: 'ad-launch-row',
+			href: `/markets/robinhood/coin/${coin.mint}`,
+			'aria-label': `${label} on Robinhood Chain`,
+		},
+		[
+			el('span', { class: 'ad-launch-symbol', text: label }),
+			el('span', { class: 'ad-launch-mint', text: `Robinhood Chain · ${venue}` }),
+			el('span', { class: 'ad-launch-time', text: coin.created_at ? launchTimeAgo(coin.created_at) : '' }),
+		],
+	);
+}
+
 export async function renderLaunchHistory(container, agent) {
 	if (!agent.id) return;
 	let coins = [];
@@ -584,6 +610,10 @@ export async function renderLaunchHistory(container, agent) {
 			el('div', { class: 'ad-launch-history-head', text: `Launched coins (${coins.length})` }),
 		);
 		for (const coin of coins) {
+			if (coin.chain === 'robinhood') {
+				box.appendChild(robinhoodLaunchRow(coin));
+				continue;
+			}
 			const isDevnet = coin.network === 'devnet';
 			// Keep traders on-platform: each launched coin links to its three.ws
 			// coin profile (/launches/<mint>), matching the launches-feed cards.
@@ -2743,6 +2773,14 @@ function mountOwnerBar(agent) {
 	});
 	dashLink.textContent = 'Manage Agents';
 	bar.appendChild(dashLink);
+
+	// The agent's email inbox, rules and sending limits (owner only).
+	const mailLink = el('a', {
+		class: 'ad-btn',
+		href: `/agents/${encodeURIComponent(agent.id)}/mail`,
+	});
+	mailLink.textContent = '✉ Mail';
+	bar.appendChild(mailLink);
 
 	// Deploy on-chain (only if not yet deployed). The persisted wire shape is
 	// snake_case (tx_hash); legacy client code wrote txHash. Accept both so a

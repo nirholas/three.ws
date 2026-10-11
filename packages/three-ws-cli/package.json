@@ -1,7 +1,7 @@
 {
-  "name": "three-ws",
-  "version": "0.1.0",
-  "description": "One command to connect any MCP client to three.ws: sign in with OAuth or an API key, write the three.ws MCP servers into Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Codex, Gemini CLI or Hermes, print a ready Grok Bot connector, and verify each with a live tools/list.",
+  "name": "@three-ws/cli",
+  "version": "0.1.1",
+  "description": "One command to connect any MCP client to three.ws: sign in with OAuth or an API key, write the three.ws MCP servers into Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, IBM Bob, Codex, Gemini CLI or Hermes, print the connector fields for Grok Bot, and verify each with a live tools/list.",
   "keywords": [
     "three.ws",
     "mcp",
@@ -15,7 +15,8 @@
     "gemini",
     "grok",
     "solana",
-    "agents"
+    "agents",
+    "grok-bot"
   ],
   "author": "three.ws <support@three.ws> (https://three.ws)",
   "license": "Apache-2.0",
@@ -43,8 +44,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "vitest run --root ../.. packages/three-ws-cli/tests",
-    "publish:both": "node scripts/publish.mjs"
+    "test": "vitest run --root ../.. packages/three-ws-cli/tests"
   },
   "dependencies": {
     "@clack/prompts": "^1.8.0",

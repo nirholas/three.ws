@@ -683,6 +683,7 @@ const appConfig = {
 				'smart-home': resolve(__dirname, 'pages/smart-home.html'),
 				'smart-home-join': resolve(__dirname, 'pages/smart-home-join.html'),
 				'cli-authorize': resolve(__dirname, 'pages/cli-authorize.html'),
+				'link-device': resolve(__dirname, 'pages/link-device.html'),
 				'smart-home-plan': resolve(__dirname, 'pages/smart-home-plan.html'),
 				'smart-home-privacy': resolve(__dirname, 'pages/smart-home-privacy.html'),
 				'smart-home-satellite': resolve(__dirname, 'pages/smart-home-satellite.html'),
@@ -693,6 +694,7 @@ const appConfig = {
 				pocket: resolve(__dirname, 'pages/pocket.html'),
 				spotlight: resolve(__dirname, 'pages/spotlight.html'),
 				'skills-community': resolve(__dirname, 'pages/skills-community.html'),
+				'skills-import': resolve(__dirname, 'pages/skills-import.html'),
 				'spotlight-entry': resolve(__dirname, 'pages/spotlight-entry.html'),
 				stories: resolve(__dirname, 'pages/stories.html'),
 				certificate: resolve(__dirname, 'pages/certificate.html'),
@@ -703,6 +705,7 @@ const appConfig = {
 				preflight: resolve(__dirname, 'pages/preflight.html'),
 				'app-next': resolve(__dirname, 'pages/app-next.html'),
 				home: resolve(__dirname, 'pages/home.html'),
+				desktop: resolve(__dirname, 'pages/desktop.html'),
 				'what-is': resolve(__dirname, 'pages/what-is.html'),
 				atlas: resolve(__dirname, 'pages/atlas.html'),
 				tour: resolve(__dirname, 'pages/tour.html'),
@@ -713,11 +716,20 @@ const appConfig = {
 				'tour-builder': resolve(__dirname, 'pages/tour-builder.html'),
 				'agent-identities': resolve(__dirname, 'pages/agent-identities.html'),
 				'mcp-tools': resolve(__dirname, 'pages/mcp-tools.html'),
+				'mcp-tool': resolve(__dirname, 'pages/mcp-tool.html'),
 				connect: resolve(__dirname, 'pages/connect.html'),
 				grok: resolve(__dirname, 'pages/grok.html'),
+				'x-claim': resolve(__dirname, 'pages/x-claim.html'),
+				'event-market-announcements': resolve(__dirname, 'pages/event-market-announcements.html'),
+				'event-markets-staking-admin': resolve(__dirname, 'pages/event-markets-staking-admin.html'),
+				'event-markets': resolve(__dirname, 'pages/event-markets.html'),
+				'event-markets-leaderboard': resolve(__dirname, 'pages/event-markets-leaderboard.html'),
+				'event-markets-forecasters': resolve(__dirname, 'pages/event-markets-forecasters.html'),
+				'event-market': resolve(__dirname, 'pages/event-market.html'),
 				awesome: resolve(__dirname, 'pages/awesome.html'),
 				prompts: resolve(__dirname, 'pages/prompts.html'),
 				'render-lab': resolve(__dirname, 'pages/render-lab.html'),
+				workbench: resolve(__dirname, 'pages/workbench.html'),
 				holo: resolve(__dirname, 'pages/holo.html'),
 				bundles: resolve(__dirname, 'pages/bundles.html'),
 				'embed-doctor': resolve(__dirname, 'pages/embed-doctor.html'),
@@ -767,11 +779,13 @@ const appConfig = {
 				widget: resolve(__dirname, 'pages/widget.html'),
 				launchpad: resolve(__dirname, 'pages/launchpad.html'),
 				launch: resolve(__dirname, 'pages/launch.html'),
+				'launch-robinhood': resolve(__dirname, 'pages/launch-robinhood.html'),
 				'launch-studio': resolve(__dirname, 'pages/launch-studio.html'),
 				start: resolve(__dirname, 'pages/start.html'),
 				create: resolve(__dirname, 'pages/create.html'),
 				'create-agent': resolve(__dirname, 'pages/create-agent.html'),
 				forge: resolve(__dirname, 'pages/forge.html'),
+				'forge-workflows': resolve(__dirname, 'pages/forge-workflows.html'),
 				'nim-forge': resolve(__dirname, 'pages/nim-forge.html'),
 				'forge-nim': resolve(__dirname, 'pages/forge-nim.html'),
 				'forge-spark': resolve(__dirname, 'pages/forge-spark.html'),
@@ -783,6 +797,12 @@ const appConfig = {
 				segment: resolve(__dirname, 'pages/segment.html'),
 				'create-selfie': resolve(__dirname, 'pages/create-selfie.html'),
 				seeker: resolve(__dirname, 'pages/seeker.html'),
+				'apps': resolve(__dirname, 'pages/apps.html'),
+				'apps-web': resolve(__dirname, 'pages/apps-web.html'),
+				'apps-android': resolve(__dirname, 'pages/apps-android.html'),
+				'apps-seeker': resolve(__dirname, 'pages/apps-seeker.html'),
+				'apps-ios': resolve(__dirname, 'pages/apps-ios.html'),
+				'apps-desktop': resolve(__dirname, 'pages/apps-desktop.html'),
 				'create-prompt': resolve(__dirname, 'pages/create-prompt.html'),
 				genesis: resolve(__dirname, 'pages/genesis.html'),
 				worlds: resolve(__dirname, 'pages/worlds.html'),
@@ -830,6 +850,8 @@ const appConfig = {
 				monitor: resolve(__dirname, 'pages/monitor.html'),
 				'agent-wallet': resolve(__dirname, 'pages/agent-wallet.html'),
 				'agent-cards': resolve(__dirname, 'pages/agent-cards.html'),
+				'agent-perps': resolve(__dirname, 'pages/agent-perps.html'),
+				'agent-mail': resolve(__dirname, 'pages/agent-mail.html'),
 				wallet: resolve(__dirname, 'pages/wallet.html'),
 				guardian: resolve(__dirname, 'pages/guardian.html'),
 				launches: resolve(__dirname, 'pages/launches.html'),
@@ -838,11 +860,17 @@ const appConfig = {
 				creations: resolve(__dirname, 'pages/creations.html'),
 				mine: resolve(__dirname, 'pages/mine.html'),
 				pulse: resolve(__dirname, 'pages/pulse.html'),
+				trenches: resolve(__dirname, 'pages/trenches.html'),
+				everything: resolve(__dirname, 'pages/everything.html'),
 				'economy-lab': resolve(__dirname, 'pages/economy-lab.html'),
 				'data-desk': resolve(__dirname, 'pages/data-desk.html'),
 				flow: resolve(__dirname, 'pages/flow.html'),
 				symphony: resolve(__dirname, 'pages/symphony.html'),
 				diorama: resolve(__dirname, 'pages/diorama.html'),
+				cad: resolve(__dirname, 'pages/cad.html'),
+				anatomy: resolve(__dirname, 'pages/anatomy.html'),
+				modly: resolve(__dirname, 'pages/modly.html'),
+				'forge-desktop': resolve(__dirname, 'pages/forge-desktop.html'),
 				receipts: resolve(__dirname, 'pages/receipts.html'),
 				fits: resolve(__dirname, 'pages/fits.html'),
 				viability: resolve(__dirname, 'pages/viability.html'),
@@ -861,6 +889,7 @@ const appConfig = {
 				vaults: resolve(__dirname, 'pages/vaults.html'),
 				'alpha-copilot': resolve(__dirname, 'pages/alpha-copilot.html'),
 				'reasoning-ledger': resolve(__dirname, 'pages/reasoning-ledger.html'),
+				runs: resolve(__dirname, 'pages/runs.html'),
 				'fact-check': resolve(__dirname, 'pages/fact-check.html'),
 				mirror: resolve(__dirname, 'pages/mirror.html'),
 				strategies: resolve(__dirname, 'pages/strategies.html'),
@@ -879,8 +908,14 @@ const appConfig = {
 				'ghost-copy': resolve(__dirname, 'pages/ghost-copy.html'),
 				'copy-coach': resolve(__dirname, 'pages/copy-coach.html'),
 				syndicates: resolve(__dirname, 'pages/syndicates.html'),
+				teams: resolve(__dirname, 'pages/teams.html'),
+				'team-chat': resolve(__dirname, 'pages/team-chat.html'),
 				syndicate: resolve(__dirname, 'pages/syndicate.html'),
 				quests: resolve(__dirname, 'pages/quests.html'),
+				approvals: resolve(__dirname, 'pages/approvals.html'),
+				commerce: resolve(__dirname, 'pages/commerce.html'),
+				'agent-invoice': resolve(__dirname, 'pages/agent-invoice.html'),
+				spend: resolve(__dirname, 'pages/spend.html'),
 				duels: resolve(__dirname, 'pages/duels.html'),
 				duel: resolve(__dirname, 'pages/duel.html'),
 				fade: resolve(__dirname, 'pages/fade.html'),
@@ -908,6 +943,7 @@ const appConfig = {
 				'payment-outcomes': resolve(__dirname, 'pages/payment-outcomes.html'),
 				'forge-funnel': resolve(__dirname, 'pages/forge-funnel.html'),
 				'mcp-clients': resolve(__dirname, 'pages/mcp-clients.html'),
+				'event-markets-admin': resolve(__dirname, 'pages/event-markets-admin.html'),
 				search: resolve(__dirname, 'pages/search.html'),
 				rankings: resolve(__dirname, 'pages/rankings.html'),
 				'daily-match': resolve(__dirname, 'pages/daily-match.html'),
@@ -978,6 +1014,7 @@ const appConfig = {
 				'pump-visualizer': resolve(__dirname, 'pages/pump-visualizer.html'),
 				crypto: resolve(__dirname, 'pages/crypto.html'),
 				'crypto-api': resolve(__dirname, 'pages/crypto-api.html'),
+				'developers': resolve(__dirname, 'pages/developers.html'),
 				three: resolve(__dirname, 'pages/three.html'),
 				'three-live': resolve(__dirname, 'pages/three-live.html'),
 				'three-token': resolve(__dirname, 'pages/three-token.html'),
@@ -996,6 +1033,7 @@ const appConfig = {
 				'avatar-sdk': resolve(__dirname, 'pages/avatar-sdk.html'),
 				'avatar-cli': resolve(__dirname, 'pages/avatar-cli.html'),
 				'rig-doctor': resolve(__dirname, 'pages/rig-doctor.html'),
+				crawl: resolve(__dirname, 'pages/crawl.html'),
 				brain: resolve(__dirname, 'pages/brain.html'),
 				'agent-studio': resolve(__dirname, 'pages/agent-studio.html'),
 				cosmos: resolve(__dirname, 'pages/cosmos.html'),
@@ -1015,7 +1053,13 @@ const appConfig = {
 				'billing-keys': resolve(__dirname, 'pages/billing/keys.html'),
 				'robinhood-stock': resolve(__dirname, 'pages/robinhood-stock.html'),
 				'robinhood-coin': resolve(__dirname, 'pages/robinhood-coin.html'),
+				'paired-coins': resolve(__dirname, 'pages/paired-coins.html'),
+				'paired-coin': resolve(__dirname, 'pages/paired-coin.html'),
+				'launch-paired': resolve(__dirname, 'pages/launch-paired.html'),
+				'launch-uniswap': resolve(__dirname, 'pages/launch-uniswap.html'),
+				'launch-intent': resolve(__dirname, 'pages/launch-intent.html'),
 				credits: resolve(__dirname, 'pages/credits.html'),
+				domains: resolve(__dirname, 'pages/domains.html'),
 				payments: resolve(__dirname, 'pages/payments.html'),
 				'pay-simulator': resolve(__dirname, 'pages/pay-simulator.html'),
 				'x-pricing': resolve(__dirname, 'pages/x-pricing.html'),
@@ -1545,12 +1589,26 @@ const appConfig = {
 					'/agents-live/': resolve(root, 'pages/agents-live.html'),
 					'/monitor': resolve(root, 'pages/monitor.html'),
 					'/monitor/': resolve(root, 'pages/monitor.html'),
+					'/crawl': resolve(root, 'pages/crawl.html'),
+					'/crawl/': resolve(root, 'pages/crawl.html'),
 					'/start': resolve(root, 'pages/start.html'),
 					'/start/': resolve(root, 'pages/start.html'),
 					'/create': resolve(root, 'pages/create.html'),
 					'/create-agent': resolve(root, 'pages/create-agent.html'),
 					'/seeker': resolve(root, 'pages/seeker.html'),
 					'/seeker/': resolve(root, 'pages/seeker.html'),
+					'/apps': resolve(root, 'pages/apps.html'),
+					'/apps/': resolve(root, 'pages/apps.html'),
+					'/apps/web': resolve(root, 'pages/apps-web.html'),
+					'/apps/web/': resolve(root, 'pages/apps-web.html'),
+					'/apps/android': resolve(root, 'pages/apps-android.html'),
+					'/apps/android/': resolve(root, 'pages/apps-android.html'),
+					'/apps/seeker': resolve(root, 'pages/apps-seeker.html'),
+					'/apps/seeker/': resolve(root, 'pages/apps-seeker.html'),
+					'/apps/ios': resolve(root, 'pages/apps-ios.html'),
+					'/apps/ios/': resolve(root, 'pages/apps-ios.html'),
+					'/apps/desktop': resolve(root, 'pages/apps-desktop.html'),
+					'/apps/desktop/': resolve(root, 'pages/apps-desktop.html'),
 					'/create/selfie': resolve(root, 'pages/create-selfie.html'),
 					'/create/selfie/': resolve(root, 'pages/create-selfie.html'),
 					'/create/prompt': resolve(root, 'pages/create-prompt.html'),
@@ -1683,6 +1741,10 @@ const appConfig = {
 					'/my-creations/': resolve(root, 'pages/mine.html'),
 					'/pulse': resolve(root, 'pages/pulse.html'),
 					'/pulse/': resolve(root, 'pages/pulse.html'),
+					'/trenches': resolve(root, 'pages/trenches.html'),
+					'/trenches/': resolve(root, 'pages/trenches.html'),
+					'/everything': resolve(root, 'pages/everything.html'),
+					'/everything/': resolve(root, 'pages/everything.html'),
 					'/flow': resolve(root, 'pages/flow.html'),
 					'/flow/': resolve(root, 'pages/flow.html'),
 					'/symphony': resolve(root, 'pages/symphony.html'),
@@ -1709,6 +1771,8 @@ const appConfig = {
 					'/pocket/': resolve(root, 'pages/pocket.html'),
 					'/skills/community': resolve(root, 'pages/skills-community.html'),
 					'/skills/community/': resolve(root, 'pages/skills-community.html'),
+					'/skills/import': resolve(root, 'pages/skills-import.html'),
+					'/skills/import/': resolve(root, 'pages/skills-import.html'),
 					'/spotlight': resolve(root, 'pages/spotlight.html'),
 					'/spotlight/': resolve(root, 'pages/spotlight.html'),
 					'/stories': resolve(root, 'pages/stories.html'),
@@ -1747,6 +1811,14 @@ const appConfig = {
 					'/ui-juice/': resolve(root, 'pages/ui-juice.html'),
 					'/diorama': resolve(root, 'pages/diorama.html'),
 					'/diorama/': resolve(root, 'pages/diorama.html'),
+					'/cad': resolve(root, 'pages/cad.html'),
+					'/cad/': resolve(root, 'pages/cad.html'),
+					'/anatomy': resolve(root, 'pages/anatomy.html'),
+					'/anatomy/': resolve(root, 'pages/anatomy.html'),
+					'/modly': resolve(root, 'pages/modly.html'),
+					'/modly/': resolve(root, 'pages/modly.html'),
+					'/forge-desktop': resolve(root, 'pages/forge-desktop.html'),
+					'/forge-desktop/': resolve(root, 'pages/forge-desktop.html'),
 					'/trader': resolve(root, 'pages/trader.html'),
 					'/trader/': resolve(root, 'pages/trader.html'),
 					'/trade-rooms': resolve(root, 'pages/trade-room.html'),
@@ -1803,6 +1875,14 @@ const appConfig = {
 					'/markets/robinhood/': resolve(root, 'pages/markets-robinhood.html'),
 					'/markets/robinhood/desk': resolve(root, 'pages/hood-desk.html'),
 					'/markets/robinhood/desk/': resolve(root, 'pages/hood-desk.html'),
+					'/markets/robinhood/paired': resolve(root, 'pages/paired-coins.html'),
+					'/markets/robinhood/paired/': resolve(root, 'pages/paired-coins.html'),
+					'/launch/paired': resolve(root, 'pages/launch-paired.html'),
+					'/launch/paired/': resolve(root, 'pages/launch-paired.html'),
+					'/launch/uniswap': resolve(root, 'pages/launch-uniswap.html'),
+					'/launch/uniswap/': resolve(root, 'pages/launch-uniswap.html'),
+					'/launch/intents': resolve(root, 'pages/launch-intent.html'),
+					'/launch/intents/': resolve(root, 'pages/launch-intent.html'),
 					'/markets/robinhood/portfolios': resolve(root, 'pages/hood-portfolios.html'),
 					'/markets/robinhood/portfolios/': resolve(root, 'pages/hood-portfolios.html'),
 					'/markets/robinhood/portfolios/universe': resolve(root, 'pages/hood-portfolios-universe.html'),
@@ -1891,6 +1971,15 @@ const appConfig = {
 					// same way vercel.json does or the route 404s only in dev.
 					'/ar': resolve(root, 'public/ar-forge.html'),
 					'/ar/': resolve(root, 'public/ar-forge.html'),
+					'/admin/event-market-announcements': resolve(root, 'pages/event-market-announcements.html'),
+					'/admin/event-markets-staking': resolve(root, 'pages/event-markets-staking-admin.html'),
+					'/event-markets': resolve(root, 'pages/event-markets.html'),
+					'/event-markets/': resolve(root, 'pages/event-markets.html'),
+					'/event-markets/leaderboard': resolve(root, 'pages/event-markets-leaderboard.html'),
+					'/event-markets/forecasters': resolve(root, 'pages/event-markets-forecasters.html'),
+					'/event-markets/view': resolve(root, 'pages/event-market.html'),
+					'/x/claim': resolve(root, 'pages/x-claim.html'),
+					'/x/claim/': resolve(root, 'pages/x-claim.html'),
 					'/daily': resolve(root, 'pages/daily.html'),
 					'/daily/': resolve(root, 'pages/daily.html'),
 					'/irl/sign': resolve(root, 'pages/irl-sign.html'),
@@ -2001,6 +2090,8 @@ const appConfig = {
 					'/launch-week/': resolve(root, 'pages/three-ws-launch-week.html'),
 					'/launchpad': resolve(root, 'pages/launchpad.html'),
 					'/launchpad/': resolve(root, 'pages/launchpad.html'),
+					'/launch/robinhood': resolve(root, 'pages/launch-robinhood.html'),
+					'/launch/robinhood/': resolve(root, 'pages/launch-robinhood.html'),
 					'/launch': resolve(root, 'pages/launch.html'),
 					'/launch/': resolve(root, 'pages/launch.html'),
 					'/p': resolve(root, 'public/p/index.html'),
@@ -2026,7 +2117,6 @@ const appConfig = {
 					// Guessable aliases — prod 308s these to /sitemap (vercel.json)
 					'/pages': resolve(root, 'public/sitemap/index.html'),
 					'/directory': resolve(root, 'public/sitemap/index.html'),
-					'/everything': resolve(root, 'public/sitemap/index.html'),
 					'/all-pages': resolve(root, 'public/sitemap/index.html'),
 					'/blog': resolve(root, 'blog/index.html'),
 					'/blog/': resolve(root, 'blog/index.html'),
@@ -2038,7 +2128,9 @@ const appConfig = {
 					'/demo/avatar-os/': resolve(root, 'public/demo/avatar-os/index.html'),
 					'/demo/coin': resolve(root, 'public/demo/coin/index.html'),
 					'/demo/coin/': resolve(root, 'public/demo/coin/index.html'),
-					'/': resolve(root, 'pages/home.html'),
+					'/': resolve(root, 'pages/desktop.html'),
+					'/classic': resolve(root, 'pages/home.html'),
+					'/classic/': resolve(root, 'pages/home.html'),
 					'/home': resolve(root, 'pages/home.html'),
 					'/what-is': resolve(root, 'pages/what-is.html'),
 					'/what-is/': resolve(root, 'pages/what-is.html'),
@@ -2070,12 +2162,18 @@ const appConfig = {
 					'/forge-funnel/': resolve(root, 'pages/forge-funnel.html'),
 					'/mcp-clients': resolve(root, 'pages/mcp-clients.html'),
 					'/mcp-clients/': resolve(root, 'pages/mcp-clients.html'),
+					'/admin/event-markets': resolve(root, 'pages/event-markets-admin.html'),
+					'/admin/event-markets/': resolve(root, 'pages/event-markets-admin.html'),
 					'/materialize': resolve(root, 'pages/materialize.html'),
 					'/materialize/': resolve(root, 'pages/materialize.html'),
 					'/inspect': resolve(root, 'pages/inspect.html'),
 					'/inspect/': resolve(root, 'pages/inspect.html'),
 					'/render-lab': resolve(root, 'pages/render-lab.html'),
 					'/render-lab/': resolve(root, 'pages/render-lab.html'),
+					'/workbench': resolve(root, 'pages/workbench.html'),
+					'/workbench/': resolve(root, 'pages/workbench.html'),
+					'/forge/workflows': resolve(root, 'pages/forge-workflows.html'),
+					'/forge/workflows/': resolve(root, 'pages/forge-workflows.html'),
 					'/bundles': resolve(root, 'pages/bundles.html'),
 					'/bundles/': resolve(root, 'pages/bundles.html'),
 					'/search': resolve(root, 'pages/search.html'),
@@ -2337,6 +2435,9 @@ const appConfig = {
 					// /ledger and /ledger/:agentId → the Reasoning Ledger surface
 					else if (!filePath && /^\/ledger(\/[^/.]+)?\/?$/.test(path))
 						filePath = resolve(root, 'pages/reasoning-ledger.html');
+					// /runs and /runs/:receiptId → run receipts (expected vs observed per stage)
+					else if (!filePath && /^\/runs(\/[^/.]+)?\/?$/.test(path))
+						filePath = resolve(root, 'pages/runs.html');
 					// /trader/:agentId → the trader passport. Mirrors vercel.json's
 					// `/trader/([^/]+)/?`; without it the "Copy trader" CTA that /trades
 					// and the exit feed point at 404s in dev only. `/share` is an API
@@ -2347,10 +2448,34 @@ const appConfig = {
 					// `/syndicates/([^/.]+)/?`; the board itself is /syndicates.
 					else if (!filePath && /^\/syndicates\/[^/.]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/syndicate.html');
+					// /teams/:id/chat → that squad's coordinator chat. Mirrors vercel.json's
+					// `/teams/([0-9a-fA-F-]{36})/chat/?`; the squad picker is /team-chat.
+					else if (!filePath && /^\/teams\/[0-9a-fA-F-]{36}\/chat\/?$/.test(path))
+						filePath = resolve(root, 'pages/team-chat.html');
+					// /teams/:id → one specialist team. Mirrors vercel.json's
+					// `/teams/([0-9a-fA-F-]{36})/?`; the list itself is /teams.
+					else if (!filePath && /^\/teams\/[0-9a-fA-F-]{36}\/?$/.test(path))
+						filePath = resolve(root, 'pages/teams.html');
 					// /duels/:id → one trader duel. Mirrors vercel.json's
 					// `/duels/([^/.]+)/?`; the board itself is /duels.
 					else if (!filePath && /^\/duels\/[^/.]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/duel.html');
+					// /approvals/:id → the approval inbox focused on one request (the
+					// signed deep link every approval delivery carries). Mirrors
+					// vercel.json's `/approvals/([^/.]+)/?`.
+					else if (!filePath && /^\/approvals(\/[^/.]+)?\/?$/.test(path))
+						filePath = resolve(root, 'pages/approvals.html');
+					// /commerce and /invoices → the agent commerce console; /invoices/:id →
+					// the public invoice and receipt. Mirrors vercel.json.
+					else if (!filePath && /^\/(commerce|invoices)\/?$/.test(path))
+						filePath = resolve(root, 'pages/commerce.html');
+					else if (!filePath && /^\/invoices\/[^/.]+\/?$/.test(path))
+						filePath = resolve(root, 'pages/agent-invoice.html');
+					// /launch/intents/:id → one funded pump.fun launch intent (quote, funding,
+					// confirmation, stage tracker). Mirrors vercel.json's
+					// `/launch/intents/([^/.]+)/?`; the list itself is /launch/intents.
+					else if (!filePath && /^\/launch\/intents\/[^/.]+\/?$/.test(path))
+						filePath = resolve(root, 'pages/launch-intent.html');
 					// /trade-rooms/:agentId → one leader's live trade room. Mirrors
 					// vercel.json's `/trade-rooms/([^/.]+)/?`.
 					else if (!filePath && /^\/trade-rooms\/[^/.]+\/?$/.test(path))
@@ -2365,6 +2490,12 @@ const appConfig = {
 					// /agents/:id/cards and /agent-cards → Agent Cards (gift + prepaid cards).
 					else if (!filePath && /^\/(agents\/[^/.]+\/cards|agent-cards)\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-cards.html');
+					// /agents/:id/perps and /agent-perps → Agent Perps (perpetual futures).
+					else if (!filePath && /^\/(agents\/[^/.]+\/perps|agent-perps)\/?$/.test(path))
+						filePath = resolve(root, 'pages/agent-perps.html');
+					// /agents/:id/mail and /agent-mail → Agent Mail (the agent's inbox).
+					else if (!filePath && /^\/(agents\/[^/.]+\/mail|agent-mail)\/?$/.test(path))
+						filePath = resolve(root, 'pages/agent-mail.html');
 					// /agents/:id/classic → the preserved pre-redesign profile layout
 					else if (!filePath && /^\/agents?\/[^/.]+\/classic\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-detail-classic.html');
@@ -2444,6 +2575,18 @@ const appConfig = {
 					// /coin/:id  → global coin detail page (CoinGecko slug or Solana mint)
 					else if (!filePath && /^\/coin\/[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}\/?$/.test(path))
 						filePath = resolve(root, 'pages/coin.html');
+					// /anatomy/:id  → one Anatomy machine (anatomy_designs uuid)
+					else if (
+						!filePath &&
+						/^\/anatomy\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\/?$/.test(path)
+					)
+						filePath = resolve(root, 'pages/anatomy.html');
+					// /cad/:id  → CAD Forge design page (cad_designs uuid)
+					else if (
+						!filePath &&
+						/^\/cad\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\/?$/.test(path)
+					)
+						filePath = resolve(root, 'pages/cad.html');
 					// /m/:id  → model detail page (forge_creations uuid)
 					else if (
 						!filePath &&
@@ -2458,6 +2601,12 @@ const appConfig = {
 						/^\/markets\/robinhood\/stock\/[A-Za-z0-9.-]{1,10}\/?$/.test(path)
 					)
 						filePath = resolve(root, 'pages/robinhood-stock.html');
+					// /markets/robinhood/paired/:address  → paired coin detail
+					else if (
+						!filePath &&
+						/^\/markets\/robinhood\/paired\/0x[0-9a-fA-F]{40}\/?$/.test(path)
+					)
+						filePath = resolve(root, 'pages/paired-coin.html');
 					// /markets/robinhood/coin/:address  → Robinhood Chain coin detail
 					else if (
 						!filePath &&
@@ -2891,6 +3040,7 @@ const appConfig = {
 						'agent-token-page.html',
 						'nav.html',
 						'footer.html',
+						'desktop.html',
 					]);
 					const filename = (ctx.filename || ctx.path || '')
 						.replace(/\\/g, '/')
@@ -3117,6 +3267,7 @@ const appConfig = {
 						// inline script; fragments must never get it.
 						'nav.html',
 						'footer.html',
+						'desktop.html',
 					]);
 					const filename = (ctx.filename || ctx.path || '')
 						.replace(/\\/g, '/')

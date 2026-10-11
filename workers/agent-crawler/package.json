@@ -1,0 +1,15 @@
+{
+	"name": "agent-crawler",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"main": "index.js",
+	"scripts": {
+		"start": "node index.js"
+	},
+	"engines": { "node": ">=20" },
+	"dependencies": {
+		"playwright": "1.61.1",
+		"robots-parser": "^3.0.1"
+	}
+}

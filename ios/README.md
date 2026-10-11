@@ -21,20 +21,24 @@ ios/
 ├── shell/                  # local bundle: bootstrap + the designed offline screen
 ├── src/native-bridge.js    # web-side half; ships with the SITE, not the .ipa
 ├── scripts/make-icons.mjs  # derives the icon + launch images from the brand mark
+├── scripts/release.mjs     # archive + upload to TestFlight (npm run ios:release)
 ├── native/App/             # the generated Xcode project (committed)
 │   ├── App.xcodeproj
 │   ├── App/SceneDelegate.swift       # roots MainViewController, quick actions, share pickup
 │   ├── App/AppDelegate.swift         # APNs token forwarding, stale share sweep
 │   ├── App/MainViewController.swift  # swipe-back, dark chrome, edge-to-edge insets, open(path:)
 │   ├── App/QuickActions.swift        # home screen quick action types -> pages
-│   ├── App/ThreeWsAppPlugin.swift    # the app's own plugin: takeShare, setBadge
+│   ├── App/ThreeWsAppPlugin.swift    # the app's own plugin: takeShare, setBadge, openInSafari
 │   ├── App/CarPlaySceneDelegate.swift # the car screen: templates + voice control
 │   ├── App/DriveLink.swift           # CarPlay <-> /drive channel + audio session
 │   ├── App/Info.plist                # usage strings, URL scheme, quick actions, .glb type, scenes
-│   ├── App/App.entitlements          # associated domains + APNs + CarPlay + App Group
+│   ├── App/App.entitlements          # associated domains + APNs + App Group
+│   ├── App/App-CarPlay.entitlements  # the same plus CarPlay, signed only with --carplay
+│   ├── App/PrivacyInfo.xcprivacy     # privacy manifest: required-reason APIs, collected data
 │   ├── ShareExtension/               # the share sheet entry (ws.three.app.share)
 │   │   ├── ShareViewController.swift #   copies photos (as JPEG) or a .glb out of the sender
 │   │   └── SharedInbox.swift         #   App Group hand-off, compiled into app and extension
+│   ├── ci_scripts/ci_post_clone.sh   # Xcode Cloud: Node, structural check, cap sync
 │   └── CapApp-SPM/                   # Swift Package Manager plugin graph
 └── docs/                   # SUBMISSION.md, REVIEW-RISK.md, ASSETS.md, CARPLAY.md
 ```
@@ -115,6 +119,8 @@ phone's WebView runs `/drive` with the actual agent in it. The two are joined by
 
 It is inert without the `com.apple.developer.carplay-voice-based-conversation` entitlement,
 which Apple grants per app on request, so nothing about the phone app changes before then.
+Builds leave the key out unless released with `--carplay`, because signing fails on a key
+the provisioning profile does not carry.
 Read [`docs/CARPLAY.md`](docs/CARPLAY.md) before touching any of it, and
 [`../docs/carplay.md`](../docs/carplay.md) for why the architecture is shaped this way.
 
@@ -159,6 +165,20 @@ What it installs, and the breakage each one fixes:
 | Haptics on primary actions | No tactile feedback anywhere |
 | Status-bar padding on the sticky header | The nav renders under the system clock: the site's own compensation is behind `@media (display-mode: standalone)`, which a WKWebView loading a remote URL never matches |
 | 16px minimum on form fields | iOS zooms the page on focus and never zooms back out |
+| Safari handoff for payments (`window.threeWsNative`) | Buying, launching, trading and paying run inside the app, which App Review rejects under guideline 3.1.1 |
+
+### Payments open in Safari
+
+Inside the app, anything that spends money hands off to Safari, signed in, on the
+same page. A link to a payment page (`/launch`, `/credits`, `/pay` and the rest of
+`HANDOFF_EXACT`), the agreements gate for a trade or launch, and every paid flow that
+calls `leaveAppForPayment()` from
+[`../src/shared/native-handoff.js`](../src/shared/native-handoff.js) show a
+**Continue in Safari** sheet instead. Open in Safari mints a 60-second single-use code
+at `POST /api/auth/handoff` and opens `GET /api/auth/handoff?code=...` in real Safari,
+which signs Safari in and lands on the page. Wallet custody (deposit, withdraw,
+claim) stays in the app. The policy, and how to add a surface, is in
+[`docs/REVIEW-RISK.md`](docs/REVIEW-RISK.md).
 
 ## The native half
 
@@ -216,11 +236,16 @@ wired into `npm run gate`) is what a Linux machine can prove about the Swift
 half: every source is a member of a target, the share extension is embedded and
 versioned with the app, the extension and the app agree on the App Group and
 the `.glb` type, every quick action routes to a live page, the `ThreeWsApp`
-plugin's methods match their web callers, and push is wired from the app
+plugin's methods match their web callers, both targets bundle a privacy
+manifest covering every required-reason API they call, CarPlay stays out of
+the default entitlements, every target shares one build number, and push is wired from the app
 delegate to the notification fan-out. It is a structural check, not a build.
 The web half is unit tested: `tests/ios-native-*.test.js`,
 `tests/push-notifications-native.test.js`, `tests/share-target.test.js`,
-`tests/apns.test.js` and `tests/push-device-endpoint.test.js`.
+`tests/apns.test.js`, `tests/push-device-endpoint.test.js`,
+`tests/ios-safari-handoff.test.js` and `tests/auth-handoff.test.js`. The release
+script's planning is tested in `tests/ios-release.test.js`, and
+`npm run ios:release:dry` prints the exact commands a release would run.
 
 ## What is not wired yet
 
@@ -235,7 +260,9 @@ them at submission time:
 - **The APNs key.** Push is built end to end and dormant until `APNS_KEY_ID`
   and `APNS_AUTH_KEY` are set; see "Push notifications" above and
   [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
-- **Signing.** No team, no provisioning profile, no `ExportOptions.plist`. See
+- **Signing.** The team. Once it exists, `APPLE_TEAM_ID=<id> npm run ios:release`
+  archives with automatic signing and uploads to TestFlight; Xcode Cloud works
+  from the checked-in shared scheme and `ci_scripts/`. See
   [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
 - **Screenshots** for the listing, which have to be captured on a real device.
   Specs in [`docs/ASSETS.md`](docs/ASSETS.md).
@@ -244,8 +271,7 @@ Two findings that are decisions rather than missing work, both written up in
 [`docs/REVIEW-RISK.md`](docs/REVIEW-RISK.md): the app currently has no service
 workers (`limitsNavigationsToAppBoundDomains: false` disables them in
 `WKWebView`, which is why the offline screen is native rather than the site's
-own), and routing a surface to the Safari sheet signs the visitor out, because
-`SFSafariViewController` does not share the app WebView's cookie jar.
+own), and the set of surfaces that leave the app for Safari.
 
 ## Related
 

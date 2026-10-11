@@ -12,6 +12,15 @@
  * The create form previews the live fill condition + the rug/honeypot firewall
  * verdict before you arm. Open orders stream their status live; fills show real
  * signatures linked to the explorer.
+ *
+ * Any SPL token works: pick a venue (auto, the launchpad curve, or the
+ * aggregator) or let the order pin whichever prices it at placement. Ladders
+ * (up to 10 limit levels in one call) and OCO pairs (take-profit plus stop,
+ * the first fill cancels the other) are placed as a group. DCA and TWAP take an
+ * optional price band. The order book shows when each order next acts and the
+ * reason its last evaluation did not fire; the activity feed lists every fire,
+ * failure, skip and cancel. EVM DCA schedules from the unified DCA API show
+ * underneath with pause and cancel.
  */
 
 import { registerWalletTab } from '../registry.js';
@@ -25,12 +34,21 @@ const TYPE_META = {
 	limit: { icon: '🎯', label: 'Limit', blurb: 'Fill at a target price/market-cap.' },
 	stop: { icon: '🛑', label: 'Stop', blurb: 'Stop-loss on a fall, or breakout on a rise.' },
 	trailing: { icon: '📉', label: 'Trailing', blurb: 'Sell after a % drop from the high.' },
+	ladder: { icon: '🪜', label: 'Ladder', blurb: 'Scale in or out across up to 10 levels.' },
+	oco: { icon: '⚖️', label: 'OCO', blurb: 'Take-profit + stop; first fill cancels the other.' },
 	dca: { icon: '🪙', label: 'DCA', blurb: 'Recurring buys/sells on an interval.' },
 	twap: { icon: '🧊', label: 'TWAP', blurb: 'Slice one big order to cut price impact.' },
 	conditional: { icon: '🧠', label: 'Conditional', blurb: 'Fire on live signals.' },
 };
 const METRIC_LABEL = { mcap_usd: 'Market cap (USD)', mcap_sol: 'Market cap (SOL)', price_sol: 'Price (SOL/token)' };
 const OPEN_STATUSES = ['active', 'partial', 'firing', 'paused'];
+const VENUE_LABEL = { auto: 'Auto (best route)', launchpad: 'Launchpad curve / AMM', aggregator: 'Aggregator (mainnet)' };
+const EVENT_META = {
+	placed: { icon: '＋', label: 'Placed' }, fire: { icon: '⚡', label: 'Filled' }, fail: { icon: '⚠', label: 'Failed' },
+	skip: { icon: '⏸', label: 'Skipped' }, cancel: { icon: '✕', label: 'Cancelled' }, expire: { icon: '⌛', label: 'Expired' },
+	pause: { icon: '⏯', label: 'Paused' }, resume: { icon: '▶', label: 'Resumed' },
+};
+const GROUP_TYPES = ['ladder', 'oco'];
 const STATUS_TONE = { active: 'ok', partial: 'ok', firing: 'warn', filled: 'ok', cancelled: 'muted', expired: 'muted', error: 'bad', paused: 'warn' };
 
 const STYLE = `
@@ -108,6 +126,25 @@ const STYLE = `
 .aord-prog > i { display:block; height:100%; background: var(--wallet-accent,#c4b5fd); transition: width var(--duration-base,220ms); }
 .aord-item-ctl { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
 
+.aord-badge { font-size: var(--text-2xs,.6875rem); padding:1px 7px; border-radius: var(--radius-pill,999px); background: var(--wallet-accent-soft,rgba(139,92,246,.12)); color: var(--wallet-accent,#c4b5fd); font-weight:500; margin-left:6px; vertical-align:1px; }
+.aord-next { font-size: var(--text-2xs,.6875rem); color: var(--ink-dim,#aaa); margin-top:6px; }
+.aord-skip { display:inline-flex; align-items:center; gap:5px; font-size: var(--text-2xs,.6875rem); padding:2px 9px; border-radius: var(--radius-pill,999px); color: var(--warn,#fbbf24); background: color-mix(in srgb, var(--warn,#fbbf24) 10%, transparent); border:1px solid color-mix(in srgb, var(--warn,#fbbf24) 35%, transparent); margin-top:6px; }
+.aord-legs { display:flex; flex-direction:column; gap:7px; margin-bottom:11px; }
+.aord-leg { display:flex; gap:7px; align-items:center; }
+.aord-leg .n { font-family: var(--font-mono,ui-monospace,monospace); font-size: var(--text-2xs,.6875rem); color: var(--ink-dim,#888); width:22px; flex:none; }
+.aord-leg .aord-input { flex:1; min-width:0; }
+.aord-leg .x { appearance:none; cursor:pointer; border:1px solid var(--stroke,rgba(255,255,255,.12)); background:transparent; color: var(--ink-dim,#888); border-radius: var(--radius-sm,6px); width:30px; height:30px; flex:none; transition: color var(--duration-fast,140ms), border-color var(--duration-fast,140ms); }
+.aord-leg .x:hover:not(:disabled) { color: var(--danger,#f87171); border-color: color-mix(in srgb,var(--danger,#f87171) 40%,transparent); }
+.aord-leg .x:disabled { opacity:.35; cursor:not-allowed; }
+.aord-hint { font-size: var(--text-2xs,.6875rem); color: var(--ink-dim,#888); margin:-4px 0 11px; line-height:1.45; }
+.aord-ev { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; }
+.aord-ev li { display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-top:1px solid var(--stroke,rgba(255,255,255,.06)); font-size: var(--text-sm,.764rem); }
+.aord-ev li:first-child { border-top:none; }
+.aord-ev .ic { width:20px; text-align:center; flex:none; }
+.aord-ev .body { flex:1; min-width:0; color: var(--ink,#ddd); }
+.aord-ev .body small { display:block; color: var(--ink-dim,#888); margin-top:2px; overflow-wrap:anywhere; }
+.aord-ev .t { font-size: var(--text-2xs,.6875rem); color: var(--ink-faint,rgba(255,255,255,.5)); flex:none; white-space:nowrap; }
+.aord-ev .fail { color: var(--danger,#f87171); } .aord-ev .fire { color: var(--success,#4ade80); } .aord-ev .skip { color: var(--warn,#fbbf24); }
 .aord-empty { text-align:center; padding: var(--space-lg,18px) var(--space-md,14px); color: var(--ink-dim,#888); font-size: var(--text-sm,.764rem); }
 .aord-empty .ic { font-size:30px; margin-bottom:8px; }
 .aord-skel { height:14px; border-radius:6px; background: var(--surface-2,rgba(255,255,255,.05)); animation: aord-sk 1.4s ease-in-out infinite; margin:10px 0; }
@@ -154,6 +191,9 @@ function freshForm() {
 		size_sol: '0.1', sell_pct: '100', size_tokens: '',
 		total_sol: '1', total_pct: '100',
 		interval: '3600', slices: '6', slippage_bps: '500', expires_at: '',
+		venue: 'auto', band_min: '', band_max: '',
+		legs: [{ price: '', pct: '25', sol: '0.1' }, { price: '', pct: '25', sol: '0.1' }, { price: '', pct: '25', sol: '0.1' }],
+		oco_limit: '', oco_stop: '', oco_mode: 'stop',
 		condition_mode: 'all',
 		clauses: [{ signal: 'smart_money_score', op: 'gte', value: '60' }],
 	};
@@ -173,20 +213,44 @@ registerWalletTab({
 		const state = {
 			loading: true, error: null,
 			orders: [], summary: null, schema: null,
+			book: {}, bookCounts: null, events: [], evmDca: [],
 			form: freshForm(), preview: null, previewing: false, creating: false,
 			live: false,
 		};
 
 		async function load() {
 			state.loading = true; render();
-			const [res, schemaRes] = await Promise.all([call(base()), state.schema ? Promise.resolve(null) : call(base('schema'))]);
+			const [res, schemaRes, bookRes, evmRes] = await Promise.all([
+				call(base()),
+				state.schema ? Promise.resolve(null) : call(base('schema')),
+				call(base('book')),
+				call(`/api/agents/${ctx.agentId}/orders/dca?rail=evm`),
+			]);
 			if (destroyed) return;
 			state.loading = false;
 			if (schemaRes && schemaRes.ok) state.schema = schemaRes.data;
 			if (!res.ok) { state.error = res.message; }
 			else { state.error = null; state.orders = res.data.orders || []; state.summary = res.data.summary || null; }
+			applyBook(bookRes);
+			state.evmDca = evmRes?.ok ? (evmRes.data.schedules || []).filter((d) => !['cancelled', 'completed'].includes(d.status)) : [];
 			render();
 			subscribeLive();
+		}
+
+		// The book carries each order's next action and last skip reason, plus the
+		// activity feed; a failed fetch leaves the previous book in place.
+		function applyBook(bookRes) {
+			if (!bookRes?.ok) return;
+			state.book = Object.fromEntries((bookRes.data.book || []).map((o) => [o.id, o]));
+			state.bookCounts = bookRes.data.counts || null;
+			state.events = bookRes.data.events || [];
+		}
+
+		async function refreshBook() {
+			const bookRes = await call(base('book'));
+			if (destroyed) return;
+			applyBook(bookRes);
+			const act = panel.querySelector('#aord-activity'); if (act) act.outerHTML = renderActivity();
 		}
 
 		// Live order status over SSE; gracefully no-ops if EventSource is missing.
@@ -195,11 +259,17 @@ registerWalletTab({
 			try {
 				es = new EventSource(base('stream'), { withCredentials: true });
 				es.addEventListener('orders', (e) => {
-					try { const d = JSON.parse(e.data); state.orders = d.orders || state.orders; state.summary = d.summary || state.summary; state.live = true; renderListsOnly(); } catch { /* */ }
+					try { const d = JSON.parse(e.data); state.orders = d.orders || state.orders; state.summary = d.summary || state.summary; state.live = true; renderListsOnly(); scheduleBookRefresh(); } catch { /* */ }
 				});
 				es.addEventListener('open', () => { state.live = true; });
 				es.onerror = () => { state.live = false; if (es && es.readyState === EventSource.CLOSED) { es = null; } renderLiveBadge(); };
 			} catch { es = null; }
+		}
+
+		let bookTimer = null;
+		function scheduleBookRefresh() {
+			if (bookTimer || destroyed) return;
+			bookTimer = setTimeout(() => { bookTimer = null; refreshBook(); }, 15000);
 		}
 
 		// ── renderers ───────────────────────────────────────────────────────────
@@ -214,7 +284,7 @@ registerWalletTab({
 				panel.querySelector('#aord-retry')?.addEventListener('click', load);
 				return;
 			}
-			panel.innerHTML = `<div class="aord">${renderHero()}${renderForm()}${renderOpen()}${renderHistory()}</div>`;
+			panel.innerHTML = `<div class="aord">${renderHero()}${renderForm()}${renderOpen()}${renderEvmDca()}${renderActivity()}${renderHistory()}</div>`;
 			wire();
 		}
 
@@ -223,6 +293,7 @@ registerWalletTab({
 			const open = panel.querySelector('#aord-open'); if (open) open.outerHTML = renderOpen();
 			const hist = panel.querySelector('#aord-history'); if (hist) hist.outerHTML = renderHistory();
 			const stats = panel.querySelector('#aord-stats'); if (stats) stats.outerHTML = renderStats();
+			const evm = panel.querySelector('#aord-evm'); if (evm) evm.outerHTML = renderEvmDca();
 			wireLists();
 			renderLiveBadge();
 		}
@@ -238,6 +309,7 @@ registerWalletTab({
 				<div class="aord-stat"><div class="l">Active</div><div class="n">${s.active ?? 0}</div></div>
 				<div class="aord-stat"><div class="l">Filled</div><div class="n">${s.filled ?? 0}</div></div>
 				<div class="aord-stat"><div class="l">Fills</div><div class="n">${s.lifetime_fills ?? 0}</div></div>
+				<div class="aord-stat"><div class="l">Skipping</div><div class="n">${skippingCount()}</div></div>
 				<div class="aord-stat"><div class="l">Balance</div><div class="n">${s.balance_sol == null ? '—' : formatSol(s.balance_sol) + ' SOL'}</div></div>
 			</div>`;
 		}
@@ -249,7 +321,7 @@ registerWalletTab({
 			const cancelAll = s.active ? `<button type="button" class="aord-btn danger sm" id="aord-cancel-all">Cancel all (${s.active})</button>` : '';
 			return `<div class="aord-hero">
 				<div class="aord-hero-top">
-					<h2 class="aord-title">Programmable orders <span id="aord-livebadge">${state.live ? '<span class="aord-live"><span class="dot"></span>live</span>' : ''}</span><small>Limit · stop · trailing · DCA · TWAP · conditional — fired automatically, inside your guardrails.</small></h2>
+					<h2 class="aord-title">Programmable orders <span id="aord-livebadge">${state.live ? '<span class="aord-live"><span class="dot"></span>live</span>' : ''}</span><small>Limit · stop · trailing · ladder · OCO · DCA · TWAP · conditional on any SPL token, fired automatically inside your guardrails.</small></h2>
 					${cancelAll}
 				</div>
 				${renderStats()}
@@ -279,7 +351,9 @@ registerWalletTab({
 				<div class="aord-row">
 					<div class="aord-field"><label for="f-slippage">Max slippage (bps)</label><input class="aord-input" id="f-slippage" type="number" min="1" max="5000" value="${esc(f.slippage_bps)}"/></div>
 					<div class="aord-field"><label for="f-expires">Expires (optional)</label><input class="aord-input" id="f-expires" type="datetime-local" value="${esc(f.expires_at)}"/></div>
+					<div class="aord-field"><label for="f-venue">Venue</label><select class="aord-select" id="f-venue">${Object.entries(VENUE_LABEL).map(([k, l]) => `<option value="${k}" ${f.venue === k ? 'selected' : ''} ${k === 'aggregator' && ctx.getNetwork() !== 'mainnet' ? 'disabled' : ''}>${esc(l)}</option>`).join('')}</select></div>
 				</div>
+				<p class="aord-hint">Any SPL token. Auto pins the venue that prices the token when you arm; an order the launchpad no longer prices (graduated or migrated) routes through the aggregator on mainnet.</p>
 				${state.preview ? renderPreview(state.preview) : ''}
 				<div class="aord-actions">
 					<button type="button" class="aord-btn" id="aord-preview" ${state.previewing ? 'disabled' : ''} ${state.previewing ? 'aria-busy="true"' : ''}>${state.previewing ? '<span class="aord-spin"></span>Checking…' : 'Preview'}</button>
@@ -297,15 +371,69 @@ registerWalletTab({
 			if (f.type === 'limit') return `<div class="aord-row">${metricSel('f-metric')}<div class="aord-field"><label for="f-limit_price">Target (${shortMetric(f.trigger_metric)})</label><input class="aord-input" id="f-limit_price" type="number" step="any" min="0" value="${esc(f.limit_price)}" placeholder="${f.side === 'buy' ? 'buy at or below' : 'sell at or above'}"/></div></div><div class="aord-row">${sizeField}</div>`;
 			if (f.type === 'stop') return `<div class="aord-row">${metricSel('f-metric')}<div class="aord-field"><label for="f-stop_price">Stop (${shortMetric(f.trigger_metric)})</label><input class="aord-input" id="f-stop_price" type="number" step="any" min="0" value="${esc(f.stop_price)}" placeholder="${f.side === 'sell' ? 'sell if it falls to' : 'buy once it breaks'}"/></div></div><div class="aord-row">${sizeField}</div>`;
 			if (f.type === 'trailing') return `<div class="aord-row">${metricSel('f-metric')}<div class="aord-field"><label for="f-trail_pct">Trail (%)</label><input class="aord-input" id="f-trail_pct" type="number" step="0.1" min="0.1" max="99" value="${esc(f.trail_pct)}"/></div></div><div class="aord-row">${sizeField}</div>`;
-			if (f.type === 'dca') return `<div class="aord-row"><div class="aord-field"><label for="f-interval">Every</label>${intervalSelect(f)}</div><div class="aord-field"><label for="f-slices">Slices</label><input class="aord-input" id="f-slices" type="number" min="1" max="1000" value="${esc(f.slices)}"/></div></div><div class="aord-row">${sizeField}</div>`;
+			if (f.type === 'dca') return `<div class="aord-row"><div class="aord-field"><label for="f-interval">Every</label>${intervalSelect(f)}</div><div class="aord-field"><label for="f-slices">Slices</label><input class="aord-input" id="f-slices" type="number" min="1" max="1000" value="${esc(f.slices)}"/></div></div><div class="aord-row">${sizeField}</div>${bandFields(f, metricSel)}`;
+			if (f.type === 'ladder') return `<div class="aord-row">${metricSel('f-metric')}</div>${ladderFields(f)}`;
+			if (f.type === 'oco') return ocoFields(f, metricSel, sizeField);
 			if (f.type === 'twap') {
 				const total = f.side === 'buy'
 					? `<div class="aord-field"><label for="f-total_sol">Total (SOL)</label><input class="aord-input" id="f-total_sol" type="number" step="0.001" min="0" value="${esc(f.total_sol)}"/></div>`
 					: `<div class="aord-field"><label for="f-total_pct">Total (% of holding)</label><input class="aord-input" id="f-total_pct" type="number" step="1" min="1" max="100" value="${esc(f.total_pct)}"/></div>`;
-				return `<div class="aord-row"><div class="aord-field"><label for="f-interval">Every</label>${intervalSelect(f)}</div><div class="aord-field"><label for="f-slices">Slices</label><input class="aord-input" id="f-slices" type="number" min="2" max="1000" value="${esc(f.slices)}"/></div></div><div class="aord-row">${total}</div>`;
+				return `<div class="aord-row"><div class="aord-field"><label for="f-interval">Every</label>${intervalSelect(f)}</div><div class="aord-field"><label for="f-slices">Slices</label><input class="aord-input" id="f-slices" type="number" min="2" max="1000" value="${esc(f.slices)}"/></div></div><div class="aord-row">${total}</div>${bandFields(f, metricSel)}`;
 			}
 			if (f.type === 'conditional') return `${renderConditionBuilder(f)}<div class="aord-row">${sizeField}</div>`;
 			return '';
+		}
+
+		// Optional price band for scheduled orders: a slice outside it is skipped
+		// (and shows in the book as "price outside band"), not filled.
+		function bandFields(f, metricSel) {
+			const unit = shortMetric(f.trigger_metric);
+			return `<div class="aord-row">${metricSel('f-metric')}
+				<div class="aord-field"><label for="f-band_min">Only fill above (${unit})</label><input class="aord-input" id="f-band_min" type="number" step="any" min="0" value="${esc(f.band_min)}" placeholder="no floor"/></div>
+				<div class="aord-field"><label for="f-band_max">Only fill below (${unit})</label><input class="aord-input" id="f-band_max" type="number" step="any" min="0" value="${esc(f.band_max)}" placeholder="no ceiling"/></div>
+			</div>
+			<p class="aord-hint">Leave both blank to buy every slice at market. A slice that lands outside the band waits for the next interval.</p>`;
+		}
+
+		function ladderFields(f) {
+			const max = state.schema?.max_ladder_legs || 10;
+			const unit = shortMetric(f.trigger_metric);
+			const amtLabel = f.side === 'sell' ? '% of bag' : 'SOL';
+			const total = f.side === 'sell'
+				? f.legs.reduce((a, l) => a + (Number(l.pct) || 0), 0)
+				: f.legs.reduce((a, l) => a + (Number(l.sol) || 0), 0);
+			const rows = f.legs.map((l, i) => `<div class="aord-leg">
+					<span class="n">${i + 1}</span>
+					<input class="aord-input" data-li="${i}" data-lf="price" type="number" step="any" min="0" value="${esc(l.price)}" placeholder="${f.side === 'sell' ? 'sell at' : 'buy at'} (${unit})" aria-label="Leg ${i + 1} price"/>
+					<input class="aord-input" data-li="${i}" data-lf="${f.side === 'sell' ? 'pct' : 'sol'}" type="number" step="any" min="0" value="${esc(f.side === 'sell' ? l.pct : l.sol)}" placeholder="${amtLabel}" aria-label="Leg ${i + 1} ${amtLabel}"/>
+					<button type="button" class="x" data-lrm="${i}" aria-label="Remove leg ${i + 1}" ${f.legs.length <= 2 ? 'disabled' : ''}>✕</button>
+				</div>`).join('');
+			const over = f.side === 'sell' && total > 100;
+			return `<div class="aord-field"><label>Levels (price, ${amtLabel})</label><div class="aord-legs">${rows}</div>
+				<button type="button" class="aord-btn ghost sm" id="aord-add-leg" ${f.legs.length >= max ? 'disabled' : ''}>＋ Add level</button></div>
+			<p class="aord-hint" ${over ? 'style="color:var(--danger,#f87171)"' : ''}>${f.side === 'sell'
+				? `Sells ${total}% of the bag in total${over ? ', more than 100%: trim a leg' : ''}. Lowest level fills first; percentages are of the bag when the ladder is armed.`
+				: `Spends up to ${formatSol(total)} SOL in total. Highest level fills first as price falls.`} Up to ${max} levels.</p>`;
+		}
+
+		function ocoFields(f, metricSel, sizeField) {
+			const unit = shortMetric(f.trigger_metric);
+			const sell = f.side === 'sell';
+			const stopInput = f.oco_mode === 'trail'
+				? `<div class="aord-field"><label for="f-trail_pct">Trailing stop (%)</label><input class="aord-input" id="f-trail_pct" type="number" step="0.1" min="0.1" max="99" value="${esc(f.trail_pct)}"/></div>`
+				: `<div class="aord-field"><label for="f-oco_stop">${sell ? 'Stop-loss' : 'Breakout buy'} (${unit})</label><input class="aord-input" id="f-oco_stop" type="number" step="any" min="0" value="${esc(f.oco_stop)}" placeholder="${sell ? 'below the take-profit' : 'above the dip-buy'}"/></div>`;
+			return `<div class="aord-row">${metricSel('f-metric')}
+				<div class="aord-field"><label for="f-oco_limit">${sell ? 'Take-profit' : 'Dip-buy'} (${unit})</label><input class="aord-input" id="f-oco_limit" type="number" step="any" min="0" value="${esc(f.oco_limit)}" placeholder="${sell ? 'sell at or above' : 'buy at or below'}"/></div>
+			</div>
+			<div class="aord-field">
+				<label id="f-ocomode-lbl">Other leg</label>
+				<div class="aord-seg" role="group" aria-labelledby="f-ocomode-lbl">
+					<button type="button" data-ocomode="stop" aria-pressed="${f.oco_mode === 'stop'}">${sell ? 'Stop price' : 'Breakout price'}</button>
+					<button type="button" data-ocomode="trail" aria-pressed="${f.oco_mode === 'trail'}">Trailing %</button>
+				</div>
+			</div>
+			<div class="aord-row">${stopInput}${sizeField}</div>
+			<p class="aord-hint">Both legs rest at once with the same size. Whichever fills first cancels the other, so only one ever trades.</p>`;
 		}
 
 		function intervalSelect(f) {
@@ -351,6 +479,16 @@ registerWalletTab({
 			}
 			if (p.preview?.would_fire_now != null) lines.push(`<div class="ln">${p.preview.would_fire_now ? '⚡ Would fire immediately at the current price.' : '⏳ Waiting — the trigger isn’t met yet.'}</div>`);
 			if (p.preview?.missing?.length) lines.push(`<div class="ln">⚠️ No live data yet for: ${esc(p.preview.missing.join(', '))} (won’t fire until available).</div>`);
+			if (p.legs?.length) {
+				for (const l of p.legs) lines.push(`<div class="ln">Leg ${l.leg}: ${l.preview?.would_fire_now ? '⚡ would fire now' : '⏳ waiting'}${l.readback ? ' · ' + esc(l.readback) : ''}</div>`);
+			}
+			if (p.when?.label) lines.push(`<div class="ln">Acts: ${esc(p.when.label)}</div>`);
+			if (p.preview?.in_band === false) lines.push(`<div class="ln">⏸ The price is outside your band right now, so a slice would be skipped.</div>`);
+			if (p.venue) {
+				const v = p.venue;
+				const route = v.route ? `${esc(v.route)}${v.source ? ' via ' + esc(v.source) : ''}` : esc(v.reason || 'not resolved yet');
+				lines.push(`<div class="ln">Venue: <strong>${esc(VENUE_LABEL[v.requested] || v.requested || 'auto')}</strong> · route ${route}</div>`);
+			}
 			if (fw) lines.push(`<div class="ln">Firewall: <span class="aord-fw ${esc(fw.verdict)}">${esc(fw.verdict)}</span>${fw.reasons?.length ? ' · ' + esc(fw.reasons.join(', ')) : ''}</div>`);
 			return `<div class="aord-prev" role="status"><div class="rb">${esc(p.readback || '')}</div>${lines.join('')}</div>`;
 		}
@@ -378,8 +516,17 @@ registerWalletTab({
 			if (o.fill_count) foot.push(`${o.fill_count} fill${o.fill_count === 1 ? '' : 's'}`);
 			if (o.filled_sol) foot.push(`${formatSol(o.filled_sol)} SOL`);
 			if (o.last_error && o.status !== 'filled') foot.push(`<span title="${esc(o.last_error)}">⚠ ${esc(String(o.last_error).slice(0, 48))}</span>`);
+			if (o.venue && o.venue !== 'auto') foot.push(esc(VENUE_LABEL[o.venue] || o.venue));
+			else if (o.route) foot.push(`via ${esc(o.route)}`);
+			if (o.status === 'cancelled' && o.cancel_reason) foot.push(esc(cancelReasonLabel(o.cancel_reason)));
 			const sched = (o.type === 'dca' || o.type === 'twap') && o.schedule
 				? `<div class="aord-prog"><i style="width:${Math.min(100, Math.round((o.schedule.filled_slices || 0) / (o.schedule.slices || 1) * 100))}%"></i></div>` : '';
+			const open = OPEN_STATUSES.includes(o.status);
+			const next = open ? (state.book[o.id]?.next_fire || null) : null;
+			const nextLine = next ? `<div class="aord-next">Next: ${esc(next.at ? `${relTime(next.at)} · ${new Date(next.at).toLocaleString()}` : next.label)}</div>` : '';
+			const skipLine = open && o.last_skip_code
+				? `<div class="aord-skip" title="${esc(o.last_skip_detail || '')}">⏸ ${esc(skipLabelFor(o.last_skip_code))}${o.skip_count > 1 ? ` · ${o.skip_count}×` : ''}${o.last_skip_at ? ` · ${esc(relTime(o.last_skip_at))}` : ''}</div>` : '';
+			const groupBadge = o.group_kind ? `<span class="aord-badge">${o.group_kind === 'oco' ? 'OCO' : 'Ladder'} · leg ${esc(o.group_leg)}</span>` : '';
 			const ctl = OPEN_STATUSES.includes(o.status) ? `<div class="aord-item-ctl">
 					<button type="button" class="aord-btn ghost sm" data-pause="${esc(o.id)}">${o.status === 'paused' ? 'Resume' : 'Pause'}</button>
 					<button type="button" class="aord-btn danger sm" data-cancel="${esc(o.id)}">Cancel</button>
@@ -389,15 +536,56 @@ registerWalletTab({
 				<div class="aord-item-top">
 					<span class="aord-item-ic">${m.icon}</span>
 					<div class="aord-item-body">
-						<div class="aord-item-ttl">${esc((TYPE_META[o.type]?.label || o.type))} ${esc(o.side)} ${o.symbol ? '$' + esc(o.symbol) : esc(String(o.mint).slice(0, 4)) + '…'}</div>
+						<div class="aord-item-ttl">${esc((TYPE_META[o.type]?.label || o.type))} ${esc(o.side)} ${o.symbol ? '$' + esc(o.symbol) : esc(String(o.mint).slice(0, 4)) + '…'}${groupBadge}</div>
 						<div class="aord-item-desc">${esc(o.readback || '')}</div>
-						${sched}
+						${sched}${nextLine}${skipLine}
 						<div class="aord-item-foot">${foot.join('')}</div>
 						<div class="aord-fills" data-fills-for="${esc(o.id)}"></div>
 					</div>
 				</div>
 				${ctl}
 			</li>`;
+		}
+
+		function skippingCount() {
+			return state.orders.filter((o) => OPEN_STATUSES.includes(o.status) && o.last_skip_code).length;
+		}
+
+		// Delegation-signed EVM DCA schedules from the unified DCA API. Shown only
+		// when the agent has one; they run hourly from the owner's smart account.
+		function renderEvmDca() {
+			if (!state.evmDca.length) return `<div class="aord-card" id="aord-evm" style="display:none"></div>`;
+			const items = state.evmDca.map((d) => {
+				const tone = STATUS_TONE[d.status] || 'muted';
+				const foot = [`<span class="aord-pill ${tone}">${esc(d.status)}</span>`, `chain ${esc(d.chain_id)}`, `${d.executions_total} run${d.executions_total === 1 ? '' : 's'}`];
+				if (d.last_error) foot.push(`<span title="${esc(d.last_error)}">⚠ ${esc(String(d.last_error).slice(0, 48))}</span>`);
+				const next = d.status === 'active' && d.next_execution_at ? `<div class="aord-next">Next: ${esc(relTime(d.next_execution_at))} · ${esc(new Date(d.next_execution_at).toLocaleString())}</div>` : '';
+				return `<li class="aord-item">
+					<div class="aord-item-top"><span class="aord-item-ic">🔁</span><div class="aord-item-body">
+						<div class="aord-item-ttl">DCA ${esc(d.amount_display)} into ${d.token_out_symbol ? '$' + esc(d.token_out_symbol) : esc(String(d.token_out).slice(0, 6)) + '…'} ${esc(d.period_label || '')}</div>
+						${next}
+						<div class="aord-item-foot">${foot.join('')}</div>
+					</div></div>
+					<div class="aord-item-ctl">
+						<button type="button" class="aord-btn ghost sm" data-evmpause="${esc(d.id)}">${d.status === 'paused' ? 'Resume' : 'Pause'}</button>
+						<button type="button" class="aord-btn danger sm" data-evmcancel="${esc(d.id)}">Cancel</button>
+					</div>
+				</li>`;
+			}).join('');
+			return `<div class="aord-card" id="aord-evm"><h3>EVM DCA schedules</h3><p class="sub">Recurring buys signed once by delegation from the owner’s smart account. Set them up on <a href="/recurring" style="color:var(--wallet-accent,#c4b5fd)">Recurring</a>; pause or cancel here.</p><ul class="aord-list">${items}</ul></div>`;
+		}
+
+		function renderActivity() {
+			const evs = state.events.slice(0, 20);
+			const symOf = (orderId) => { const o = state.orders.find((x) => x.id === orderId) || state.book[orderId]; return o ? (o.symbol ? '$' + o.symbol : String(o.mint).slice(0, 4) + '…') : ''; };
+			const inner = evs.length
+				? `<ul class="aord-ev">${evs.map((e) => {
+					const m = EVENT_META[e.kind] || { icon: '•', label: e.kind };
+					const what = e.kind === 'skip' ? (e.label || skipLabelFor(e.code)) : e.kind === 'cancel' && e.code ? `${m.label} (${cancelReasonLabel(e.code)})` : m.label;
+					return `<li><span class="ic ${esc(e.kind)}" aria-hidden="true">${m.icon}</span><div class="body">${esc(what)} ${esc(symOf(e.order_id))}${e.detail ? `<small>${esc(String(e.detail).slice(0, 160))}</small>` : ''}</div><span class="t" title="${esc(new Date(e.created_at).toLocaleString())}">${esc(relTime(e.created_at))}</span></li>`;
+				}).join('')}</ul>`
+				: `<div class="aord-empty"><div class="ic">🛰️</div>No activity yet. Every placement, fill, failure, skip and cancel lands here, and you get a notification when an order fires or fails.</div>`;
+			return `<div class="aord-card" id="aord-activity"><h3>Activity</h3><p class="sub">Why each order did or didn’t fire, newest first.</p>${inner}</div>`;
 		}
 
 		// ── wiring ────────────────────────────────────────────────────────────────
@@ -409,6 +597,21 @@ registerWalletTab({
 			bindInput('f-metric', 'trigger_metric', true); bindInput('f-limit_price', 'limit_price'); bindInput('f-stop_price', 'stop_price');
 			bindInput('f-trail_pct', 'trail_pct'); bindInput('f-size_sol', 'size_sol'); bindInput('f-sell_pct', 'sell_pct');
 			bindInput('f-total_sol', 'total_sol'); bindInput('f-total_pct', 'total_pct'); bindInput('f-interval', 'interval', true); bindInput('f-slices', 'slices');
+			bindInput('f-venue', 'venue', true); bindInput('f-band_min', 'band_min'); bindInput('f-band_max', 'band_max');
+			bindInput('f-oco_limit', 'oco_limit'); bindInput('f-oco_stop', 'oco_stop');
+			panel.querySelectorAll('[data-ocomode]').forEach((b) => b.addEventListener('click', () => { state.form.oco_mode = b.dataset.ocomode; state.preview = null; render(); }));
+			panel.querySelectorAll('[data-li]').forEach((el) => el.addEventListener('input', () => {
+				state.form.legs[Number(el.dataset.li)][el.dataset.lf] = el.value;
+				state.preview = null;
+			}));
+			// Totals in the ladder hint update on blur so typing keeps focus.
+			panel.querySelectorAll('[data-li]').forEach((el) => el.addEventListener('change', () => { if (el.dataset.lf !== 'price') render(); }));
+			panel.querySelector('#aord-add-leg')?.addEventListener('click', () => {
+				const last = state.form.legs[state.form.legs.length - 1] || { pct: '25', sol: '0.1' };
+				state.form.legs.push({ price: '', pct: last.pct, sol: last.sol });
+				render();
+			});
+			panel.querySelectorAll('[data-lrm]').forEach((b) => b.addEventListener('click', () => { if (state.form.legs.length > 2) { state.form.legs.splice(Number(b.dataset.lrm), 1); render(); } }));
 			// re-render on metric change so unit labels update
 			panel.querySelector('#f-metric')?.addEventListener('change', () => render());
 			panel.querySelector('#aord-add-clause')?.addEventListener('click', () => { state.form.clauses.push({ signal: 'mcap_usd', op: 'lt', value: '40000' }); render(); });
@@ -428,6 +631,8 @@ registerWalletTab({
 			panel.querySelectorAll('[data-cancel]').forEach((b) => b.addEventListener('click', () => onCancel(b.dataset.cancel)));
 			panel.querySelectorAll('[data-pause]').forEach((b) => b.addEventListener('click', () => onPause(b.dataset.pause)));
 			panel.querySelectorAll('[data-fills]').forEach((b) => b.addEventListener('click', () => onFills(b.dataset.fills)));
+			panel.querySelectorAll('[data-evmpause]').forEach((b) => b.addEventListener('click', () => onEvmPause(b.dataset.evmpause)));
+			panel.querySelectorAll('[data-evmcancel]').forEach((b) => b.addEventListener('click', () => onCancel(b.dataset.evmcancel)));
 		}
 
 		function bindInput(elId, field, isSelect) {
@@ -438,8 +643,14 @@ registerWalletTab({
 
 		function buildPayload() {
 			const f = state.form;
-			const o = { type: f.type, side: f.side, mint: f.mint.trim(), slippage_bps: Number(f.slippage_bps) || 500, trigger_metric: f.trigger_metric };
+			if (GROUP_TYPES.includes(f.type)) return buildGroupPayload(f);
+			const o = { type: f.type, side: f.side, mint: f.mint.trim(), slippage_bps: Number(f.slippage_bps) || 500, trigger_metric: f.trigger_metric, venue: f.venue };
 			if (f.expires_at) o.expires_at = new Date(f.expires_at).toISOString();
+			if ((f.type === 'dca' || f.type === 'twap') && (f.band_min !== '' || f.band_max !== '')) {
+				o.price_band = { metric: f.trigger_metric };
+				if (f.band_min !== '') o.price_band.min = Number(f.band_min);
+				if (f.band_max !== '') o.price_band.max = Number(f.band_max);
+			}
 			if (f.side === 'buy') o.size_sol = Number(f.size_sol);
 			else o.sell_pct = Number(f.sell_pct);
 			if (f.type === 'limit') o.limit_price = Number(f.limit_price);
@@ -455,6 +666,22 @@ registerWalletTab({
 			return o;
 		}
 
+		// A ladder or OCO body for normalizeLadder / normalizeOco: one token, one
+		// side, and either a list of levels or a take-profit/stop pair.
+		function buildGroupPayload(f) {
+			const g = { kind: f.type, side: f.side, mint: f.mint.trim(), slippage_bps: Number(f.slippage_bps) || 500, trigger_metric: f.trigger_metric, venue: f.venue };
+			if (f.expires_at) g.expires_at = new Date(f.expires_at).toISOString();
+			if (f.type === 'ladder') {
+				g.legs = f.legs.map((l) => (f.side === 'sell' ? { price: Number(l.price), sell_pct: Number(l.pct) } : { price: Number(l.price), size_sol: Number(l.sol) }));
+				return g;
+			}
+			if (f.side === 'sell') { g.take_profit = Number(f.oco_limit); g.sell_pct = Number(f.sell_pct); }
+			else { g.limit_price = Number(f.oco_limit); g.size_sol = Number(f.size_sol); }
+			if (f.oco_mode === 'trail') g.trail_pct = Number(f.trail_pct);
+			else g.stop_loss = Number(f.oco_stop);
+			return g;
+		}
+
 		async function onPreview() {
 			state.previewing = true; state.preview = null; render();
 			const res = await call(base('preview'), { method: 'POST', body: buildPayload() });
@@ -466,11 +693,14 @@ registerWalletTab({
 
 		async function onCreate() {
 			state.creating = true; render();
-			const res = await call(base(), { method: 'POST', body: buildPayload() });
+			const kind = GROUP_TYPES.includes(state.form.type) ? state.form.type : '';
+			const res = await call(base(kind), { method: 'POST', body: buildPayload() });
 			if (destroyed) return;
 			state.creating = false;
 			if (!res.ok) { ctx.toast(res.message || 'Could not create order'); render(); return; }
-			ctx.toast('Order armed — it’ll fire when its trigger is met.');
+			const warn = res.data?.warnings?.[0];
+			const legs = res.data?.group?.orders?.length;
+			ctx.toast(warn ? `Armed. Note: ${warn}.` : legs ? `${kind === 'oco' ? 'OCO pair' : `Ladder of ${legs} levels`} armed.` : 'Order armed. It fires when its trigger is met.');
 			state.form = freshForm(); state.preview = null;
 			await load();
 		}
@@ -490,6 +720,16 @@ registerWalletTab({
 			if (destroyed) return;
 			if (!res.ok) { ctx.toast(res.message || 'Update failed'); return; }
 			ctx.toast(paused ? 'Resumed.' : 'Paused.');
+			await load();
+		}
+
+		async function onEvmPause(id) {
+			const d = state.evmDca.find((x) => x.id === id);
+			const paused = d?.status === 'paused';
+			const res = await call(`/api/agents/${ctx.agentId}/orders/${id}`, { method: 'PUT', body: { paused: !paused } });
+			if (destroyed) return;
+			if (!res.ok) { ctx.toast(res.message || 'Update failed'); return; }
+			ctx.toast(paused ? 'Schedule resumed.' : 'Schedule paused.');
 			await load();
 		}
 
@@ -520,12 +760,23 @@ registerWalletTab({
 			}).join('')}</div>`;
 		}
 
+		function skipLabelFor(code) { return state.schema?.skip_codes?.[code] || String(code || 'Skipped').replace(/_/g, ' '); }
+		function cancelReasonLabel(r) {
+			return { owner: 'by you', oco_sibling_filled: 'the other OCO leg filled', oco_sibling_cancelled: 'the other OCO leg was cancelled', expired: 'expired', cancel_all: 'cancel all' }[r] || String(r).replace(/_/g, ' ');
+		}
+		function relTime(at) {
+			const ms = new Date(at).getTime() - Date.now();
+			if (!Number.isFinite(ms)) return '';
+			const abs = Math.abs(ms);
+			const [n, u] = abs < 60_000 ? [Math.round(abs / 1000), 's'] : abs < 3_600_000 ? [Math.round(abs / 60_000), 'm'] : abs < 86_400_000 ? [Math.round(abs / 3_600_000), 'h'] : [Math.round(abs / 86_400_000), 'd'];
+			return ms >= 0 ? `in ${n}${u}` : `${n}${u} ago`;
+		}
 		function shortMetric(m) { return m === 'mcap_usd' ? 'USD' : m === 'mcap_sol' ? 'SOL' : 'SOL/tok'; }
 		function opLabel(o) { return { gt: '>', gte: '≥', lt: '<', lte: '≤', eq: '=', ne: '≠', is_true: 'is true', is_false: 'is false' }[o] || o; }
 
 		load();
 		return {
-			destroy() { destroyed = true; if (es) { try { es.close(); } catch { /* */ } es = null; } },
+			destroy() { destroyed = true; if (bookTimer) { clearTimeout(bookTimer); bookTimer = null; } if (es) { try { es.close(); } catch { /* */ } es = null; } },
 			onHide() { if (es) { try { es.close(); } catch { /* */ } es = null; state.live = false; } },
 			onShow() { if (!destroyed && !es) { subscribeLive(); } },
 		};

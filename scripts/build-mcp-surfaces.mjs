@@ -33,6 +33,9 @@ const SERVERS = [
 	{ id: 'mcp-agent', manifest: 'server-agent.json', endpoint: 'https://three.ws/api/mcp-agent', catalog: '../api/_mcpagent/catalog.js' },
 	{ id: 'mcp-3d', manifest: 'server-3d.json', endpoint: 'https://three.ws/api/mcp-3d', catalog: '../api/_mcp3d/catalog.js' },
 	{ id: 'mcp-bazaar', manifest: 'server-bazaar.json', endpoint: 'https://three.ws/api/mcp-bazaar', catalog: '../api/_mcpbazaar/catalog.js' },
+	// The studio surfaces serve prompts but no resources. Their catalog is the
+	// surface's own tools/list; the Grok surface adds the account tools a
+	// signed-in connector sees, so the directory lists agent-report there too.
 	{ id: 'mcp-studio', manifest: 'server-studio.json', endpoint: 'https://three.ws/api/mcp-studio', studio: 'full' },
 	{ id: 'mcp-grok', manifest: 'server-grok.json', endpoint: 'https://three.ws/api/mcp-grok', studio: 'grok' },
 ];

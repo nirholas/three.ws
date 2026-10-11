@@ -9,7 +9,7 @@
 //
 // Endpoints (all real):
 //   GET    /api/keys                       { keys: [...] }
-//   POST   /api/keys                       body { name, scope, expires_in_days? } → { key: { ..., secret } }
+//   POST   /api/keys                       body { name, scope, preset?, expires_in_days? } → { key: { ..., secret } }
 //   DELETE /api/keys/:id
 //   GET    /api/avatars                    { avatars: [...] }
 //   GET    /api/widgets                    { widgets: [...] }
@@ -22,9 +22,13 @@ import { mountShell } from '../shell.js';
 import { requireUser, get, post, del, put, esc, relTime, ApiError } from '../api.js';
 import { apiFetch } from '../../api.js';
 import { errorStateHTML, emptyStateHTML, skeletonHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
+import { keyToolButtons, keyLifecycleTag, wireKeyTools } from './api-key-tools.js';
 
 // Scopes accepted by /api/keys: match API_KEY_SCOPES in api/_lib/api-keys.js exactly.
 const SCOPES = [
+	{ value: 'read',           label: 'read',           note: 'Read avatars, agents, memory and wallet balances' },
+	{ value: 'generate',       label: 'generate',       note: 'Generate 3D models and avatars' },
+	{ value: 'spend',          label: 'spend',          note: 'Move funds: pay, trade, launch, withdraw, publish paid services' },
 	{ value: 'avatars:read',   label: 'avatars:read',   note: 'List, fetch, and stream avatars' },
 	{ value: 'avatars:write',  label: 'avatars:write',  note: 'Create or modify avatars' },
 	{ value: 'avatars:delete', label: 'avatars:delete', note: 'Permanently remove avatars' },
@@ -40,12 +44,16 @@ const SCOPES = [
 	{ value: 'inference',      label: 'inference',      note: 'Call the OpenAI-compatible /api/v1 endpoint, billed to your credits' },
 ];
 
-// The "For an AI agent" preset: match KEY_PRESETS.connector in
-// api/_lib/api-keys.js. The server fixes the scope set from the preset name, so
-// this list only explains it; nothing the page sends can widen it.
-const CONNECTOR_MARKER = 'connector';
-const CONNECTOR_SCOPES = ['avatars:read', 'avatars:write', 'agents:read', 'agents:write', 'memory:read', 'memory:write'];
-const CONNECTOR_NEVER = ['wallet:write', 'services:write', 'inference', 'profile'];
+// The "For an AI agent" preset. Mirrors CONNECTOR_SCOPES in api/_lib/key-scopes.js:
+// the server issues this exact grant and refuses a connector key any spend scope.
+const CONNECTOR_PRESET = 'connector';
+const CONNECTOR_SCOPES = ['read', 'generate', 'agents:write'];
+const CONNECTOR_CAPS = [
+	{ ok: true, text: 'Read your avatars, agents and memory' },
+	{ ok: true, text: 'Generate 3D models and avatars' },
+	{ ok: true, text: 'Create and edit agents and their memory' },
+	{ ok: false, text: 'Never spend: no payments, trades, launches or withdrawals' },
+];
 
 const EXPIRY_OPTIONS = [
 	{ label: 'Never',   days: null },
@@ -492,6 +500,16 @@ function renderKeys(host, state) {
 	host.querySelectorAll('[data-act="revoke"]').forEach((btn) => {
 		btn.addEventListener('click', () => confirmRevokeKey(state, btn.dataset.keyId, btn.dataset.keyName));
 	});
+	wireKeyTools(host, {
+		state,
+		toast,
+		openModal,
+		openKeyRevealModal,
+		rerender: () => {
+			renderKeys(document.querySelector('[data-section="keys"]'), state);
+			renderMcp(document.querySelector('[data-section="mcp"]'), state);
+		},
+	});
 }
 
 function renderKeysEmpty() {
@@ -516,6 +534,10 @@ export function keyStatus(k) {
 	if (k.revoked_at) return { label: 'Revoked', tag: 'danger', dead: true, at: k.revoked_at };
 	if (k.expires_at && new Date(k.expires_at) <= new Date())
 		return { label: 'Expired', tag: 'warn', dead: true, at: k.expires_at };
+	// A rotated key dies when its overlap window closes, with no revoked_at
+	// stamp: the deadline itself is what authentication checks.
+	if (k.overlap_until && new Date(k.overlap_until) <= new Date())
+		return { label: 'Retired', tag: 'warn', dead: true, at: k.overlap_until };
 	return { label: 'Active', tag: 'success', dead: false, at: null };
 }
 
@@ -539,10 +561,14 @@ export function renderKeysTable(keys) {
 						const st = keyStatus(k);
 						return `
 						<tr${st.dead ? ' class="dn-row-muted"' : ''}>
-							<td>${esc(k.name)}</td>
+							<td>${esc(k.name)}${k.preset === CONNECTOR_PRESET ? ' <span class="dn-tag success" title="Issued for an AI agent. This key can never spend.">AI agent</span>' : ''}</td>
 							<td><code class="dn-mono-sm">${esc(k.prefix)}…</code></td>
 							<td>
-								<span class="dn-tag ${st.tag}"${st.at ? ` title="${esc(st.label)} ${esc(relTime(st.at))}"` : ''}>${st.label}</span>
+								<div class="dn-key-status">
+									<span class="dn-tag ${st.tag}"${st.at ? ` title="${esc(st.label)} ${esc(relTime(st.at))}"` : ''}>${st.label}</span>
+									${keyLifecycleTag(k)}
+									${(k.ip_allowlist || []).length ? `<span class="dn-tag" title="${esc(k.ip_allowlist.join(', '))}">IP locked</span>` : ''}
+								</div>
 							</td>
 							<td>
 								<div class="dn-chip-row">
@@ -552,9 +578,12 @@ export function renderKeysTable(keys) {
 							<td><span class="dn-dim">${esc(relTime(k.created_at))}</span></td>
 							<td><span class="dn-dim">${k.last_used_at ? esc(relTime(k.last_used_at)) : 'never'}</span></td>
 							<td style="text-align:right">
-								${k.revoked_at
-									? '<span class="dn-dim">Revoked</span>'
-									: `<button class="dn-btn danger" data-act="revoke" data-key-id="${esc(k.id)}" data-key-name="${esc(k.name)}" aria-label="Revoke API key ${esc(k.name)}">Revoke</button>`}
+								<div class="dn-key-actions">
+									${keyToolButtons(k, st.dead)}
+									${k.revoked_at
+										? '<span class="dn-dim">Revoked</span>'
+										: `<button class="dn-btn danger" data-act="revoke" data-key-id="${esc(k.id)}" data-key-name="${esc(k.name)}" aria-label="Revoke API key ${esc(k.name)}">Revoke</button>`}
+								</div>
 							</td>
 						</tr>
 					`;
@@ -565,19 +594,16 @@ export function renderKeysTable(keys) {
 	`;
 }
 
-// A connector key's marker renders as one badge, not a scope chip: it is the
-// key's kind, and the page should say what that kind can never do.
+// A connector key's kind lives in its preset, not its scope string (the
+// server never embeds a literal "connector" token in the scope list), so the
+// Name column carries the "AI agent" badge and this just renders scope chips.
 export function isConnectorKey(k) {
-	return String(k?.scope || '').split(/\s+/).includes(CONNECTOR_MARKER);
+	return k?.preset === CONNECTOR_PRESET;
 }
 
 export function renderScopeChips(scope) {
 	const list = String(scope || '').split(/\s+/).filter(Boolean);
-	const connector = list.includes(CONNECTOR_MARKER);
-	const badge = connector
-		? '<span class="dn-tag dn-tag-agent" title="Made for an AI agent that holds it unattended. It reads, generates and edits agent data and can never spend.">AI agent · cannot spend</span>'
-		: '';
-	return badge + list.filter((s) => s !== CONNECTOR_MARKER).map((s) => `<span class="dn-tag">${esc(s)}</span>`).join('');
+	return list.map((s) => `<span class="dn-tag">${esc(s)}</span>`).join('');
 }
 
 function openNewKeyModal(state) {
@@ -592,32 +618,31 @@ function openNewKeyModal(state) {
 				<input data-autofocus name="name" type="text" placeholder="e.g. Production server" required maxlength="80" />
 			</label>
 			<fieldset class="dn-field">
-				<legend>What is this key for?</legend>
-				<div class="dn-presets" role="radiogroup">
+				<legend>Key type</legend>
+				<div class="dn-presets" role="radiogroup" aria-label="Key type">
 					<label class="dn-preset">
-						<input type="radio" name="preset" value="custom" checked />
-						<span class="dn-preset-body">
-							<span class="dn-preset-title">Custom scopes</span>
-							<span class="dn-preset-note">Your own server or script. Pick exactly what it may do.</span>
-						</span>
+						<input type="radio" name="preset" value="${CONNECTOR_PRESET}" checked />
+						<div>
+							<div class="dn-scope-label"><strong>For an AI agent</strong> (Grok Bot, schedules, CI)</div>
+							<div class="dn-scope-note">Safe to store as a bot secret. It can read, generate and edit agent data, and can never spend.</div>
+						</div>
 					</label>
 					<label class="dn-preset">
-						<input type="radio" name="preset" value="connector" />
-						<span class="dn-preset-body">
-							<span class="dn-preset-title">For an AI agent <span class="dn-preset-eg">Grok Bot, schedules, CI</span></span>
-							<span class="dn-preset-note">Reads, generates and edits agent data. Can never spend.</span>
-						</span>
+						<input type="radio" name="preset" value="custom" />
+						<div>
+							<div class="dn-scope-label"><strong>Custom scopes</strong></div>
+							<div class="dn-scope-note">Pick exactly what the key may do, including spending.</div>
+						</div>
 					</label>
 				</div>
 			</fieldset>
-			<div class="dn-field" data-slot="connector-scopes" hidden>
-				<span>Scopes</span>
-				<div class="dn-scopes dn-scopes-locked">
-					<div class="dn-chip-row">${CONNECTOR_SCOPES.map((s) => `<span class="dn-tag">${esc(s)}</span>`).join('')}</div>
-					<p class="dn-scope-note">Never included, and a key made this way can never gain them: ${CONNECTOR_NEVER.map((s) => `<code>${esc(s)}</code>`).join(', ')}. Paying, sending, trading and launching stay in your browser session on three.ws, where you confirm each one. <a class="dn-link" href="/docs/mcp#api-key-scopes" target="_blank" rel="noopener">How scopes work</a></p>
-				</div>
+			<div data-slot="connector-caps" class="dn-caps">
+				<ul class="dn-cap-list">
+					${CONNECTOR_CAPS.map((c) => `<li class="${c.ok ? 'ok' : 'no'}"><span aria-hidden="true">${c.ok ? '✓' : '✕'}</span> ${esc(c.text)}</li>`).join('')}
+				</ul>
+				<p class="dn-scope-note">Moving funds needs a browser session on three.ws. This cannot be changed later: to spend, create a custom key.</p>
 			</div>
-			<fieldset class="dn-field" data-slot="custom-scopes">
+			<fieldset class="dn-field" data-slot="custom-scopes" hidden>
 				<legend>Scopes</legend>
 				<div class="dn-scopes">
 					${SCOPES.map((s) => `
@@ -649,20 +674,20 @@ function openNewKeyModal(state) {
 	const errSlot = form.querySelector('[data-slot="error"]');
 	const submitBtn = form.querySelector('[data-submit]');
 	const nameInput = form.querySelector('input[name="name"]');
+	const capsSlot = form.querySelector('[data-slot="connector-caps"]');
 	const customSlot = form.querySelector('[data-slot="custom-scopes"]');
-	const connectorSlot = form.querySelector('[data-slot="connector-scopes"]');
 
-	const presetOf = () => (form.querySelector('input[name="preset"]:checked')?.value === 'connector' ? 'connector' : 'custom');
-	const syncPreset = () => {
-		const connector = presetOf() === 'connector';
+	function syncPreset() {
+		const connector = form.querySelector('input[name="preset"]:checked')?.value === CONNECTOR_PRESET;
+		capsSlot.hidden = !connector;
 		customSlot.hidden = connector;
-		connectorSlot.hidden = !connector;
 		// Hidden checkboxes still submit; disabling them keeps the form honest.
 		customSlot.querySelectorAll('input').forEach((i) => { i.disabled = connector; });
 		nameInput.placeholder = connector ? 'e.g. Grok Bot' : 'e.g. Production server';
 		errSlot.hidden = true;
-	};
+	}
 	form.querySelectorAll('input[name="preset"]').forEach((r) => r.addEventListener('change', syncPreset));
+	syncPreset();
 
 	form.addEventListener('submit', async (e) => {
 		e.preventDefault();
@@ -670,18 +695,17 @@ function openNewKeyModal(state) {
 		errSlot.textContent = '';
 		const fd = new FormData(form);
 		const name = String(fd.get('name') || '').trim();
-		const preset = presetOf();
-		const scopes = fd.getAll('scope');
+		const connector = fd.get('preset') === CONNECTOR_PRESET;
+		const scopes = connector ? CONNECTOR_SCOPES : fd.getAll('scope');
 		const expiryIdx = parseInt(String(fd.get('expiry') ?? '0'), 10);
 		if (!name) { errSlot.textContent = 'Name is required.'; errSlot.hidden = false; return; }
-		if (preset === 'custom' && !scopes.length) { errSlot.textContent = 'Pick at least one scope.'; errSlot.hidden = false; return; }
+		if (!connector && !scopes.length) { errSlot.textContent = 'Pick at least one scope.'; errSlot.hidden = false; return; }
 
 		submitBtn.disabled = true;
 		submitBtn.textContent = 'Creating…';
 		try {
-			const payload = preset === 'connector'
-				? { name, preset: 'connector', environment: 'live' }
-				: { name, scope: scopes.join(' '), environment: 'live' };
+			const payload = { name, scope: scopes.join(' '), environment: 'live' };
+			if (connector) payload.preset = CONNECTOR_PRESET;
 			const days = EXPIRY_OPTIONS[expiryIdx]?.days;
 			if (days) payload.expires_in_days = days;
 			const resp = await post('/api/keys', payload);
@@ -691,6 +715,7 @@ function openNewKeyModal(state) {
 				name: resp.key.name,
 				prefix: resp.key.prefix,
 				scope: resp.key.scope,
+				preset: resp.key.preset ?? null,
 				created_at: resp.key.created_at,
 				expires_at: resp.key.expires_at,
 				last_used_at: null,
@@ -1550,6 +1575,16 @@ function injectStyles() {
 		.dn-scopes { display: flex; flex-direction: column; gap: 10px; padding: 10px; border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-sm); background: rgba(255,255,255,0.02); }
 		.dn-scope-row { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
 		.dn-scope-row input { margin-top: 3px; }
+		.dn-presets { display: flex; flex-direction: column; gap: 8px; }
+		.dn-preset { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; padding: 10px 12px; border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-sm); background: rgba(255,255,255,0.02); transition: border-color .15s ease, background .15s ease; }
+		.dn-preset:hover { border-color: var(--nxt-ink-fade); }
+		.dn-preset:has(input:checked) { border-color: var(--nxt-accent, #7c9cff); background: rgba(124,156,255,0.07); }
+		.dn-preset input { margin-top: 3px; }
+		.dn-preset input:focus-visible { outline: 2px solid var(--nxt-accent, #7c9cff); outline-offset: 2px; }
+		.dn-caps { margin: 0 0 14px; padding: 10px 12px; border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-sm); }
+		.dn-cap-list { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--nxt-ink); }
+		.dn-cap-list li.ok span { color: #4ade80; }
+		.dn-cap-list li.no span { color: #f87171; }
 		.dn-scope-label { font-size: 13px; color: var(--nxt-ink); }
 		.dn-scope-label code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; }
 		.dn-scope-note { font-size: 12px; color: var(--nxt-ink-fade); }

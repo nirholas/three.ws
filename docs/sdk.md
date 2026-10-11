@@ -129,12 +129,12 @@ import { resolveURI, fetchWithFallback } from './src/lib.js';
 
 // Resolve ipfs:// or ar:// to an HTTPS gateway URL
 const url = resolveURI('ipfs://QmXyz...');
-// → "https://dweb.link/ipfs/QmXyz..."
+// → "https://ipfs.filebase.io/ipfs/QmXyz..."
 
 const url = resolveURI('ar://txId123');
 // → "https://arweave.net/txId123"
 
-// Fetch with automatic gateway fallback (dweb.link → cloudflare-ipfs → ipfs.io)
+// Fetch with automatic gateway fallback (filebase → 4everland → pinata)
 const res = await fetchWithFallback('ipfs://QmXyz...');
 const json = await res.json();
 ```

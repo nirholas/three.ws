@@ -1,133 +1,157 @@
 {
 	"id": "genesis",
-	"contentHash": "107b206c900f5dfa2d7a11bfd257b56e3d712267c81cf0bd6770b8a88eb36ff6",
-	"reviewedAt": "2026-09-27T07:41:55.406Z",
-	"passed": false,
-	"blockers": [
-		"head: public/announce/img/genesis-hero.webp was captured 22 days ago from /genesis; recapture with `npm run announce:media` so the frame shows the product as it is today",
-		"evidence:page https://three.ws/genesis: browserType.launch: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-RftAGq --remote-debugging-pipe --no-startup-window\n<launched> pid=25335\n[pid=25335][err] /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libxkbcommon.so.0: cannot open shared object file: No such file or directory\nCall log:\n  - <launching> /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-RftAGq --remote-debugging-pipe --no-startup-window\n  - <launched> pid=25335\n  - [pid=25335][err] /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libxkbcommon.so.0: cannot open shared object file: No such file or directory\n  - [pid=25335] <gracefully close start>\n  - [pid=25335] <kill>\n  - [pid=25335] <will force kill>\n  - [pid=25335] exception while trying to kill process: Error: kill ESRCH\n  - [pid=25335] <process did exit: exitCode=127, signal=null>\n  - [pid=25335] starting temporary directories cleanup\n  - [pid=25335] finished temporary directories cleanup\n  - [pid=25335] <gracefully close end>\n",
-		"evidence:page https://three.ws/genesis: browserType.launch: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-iEuO6K --remote-debugging-pipe --no-startup-window\n<launched> pid=25336\n[pid=25336][err] /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libxkbcommon.so.0: cannot open shared object file: No such file or directory\nCall log:\n  - <launching> /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-iEuO6K --remote-debugging-pipe --no-startup-window\n  - <launched> pid=25336\n  - [pid=25336][err] /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libxkbcommon.so.0: cannot open shared object file: No such file or directory\n  - [pid=25336] <gracefully close start>\n  - [pid=25336] <kill>\n  - [pid=25336] <will force kill>\n  - [pid=25336] <process did exit: exitCode=127, signal=null>\n  - [pid=25336] starting temporary directories cleanup\n  - [pid=25336] finished temporary directories cleanup\n  - [pid=25336] <gracefully close end>\n",
-		"evidence:page https://three.ws/genesis: browserType.launch: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-vjDjMm --remote-debugging-pipe --no-startup-window\n<launched> pid=25337\n[pid=25337][err] /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libxkbcommon.so.0: cannot open shared object file: No such file or directory\nCall log:\n  - <launching> /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-vjDjMm --remote-debugging-pipe --no-startup-window\n  - <launched> pid=25337\n  - [pid=25337][err] /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libxkbcommon.so.0: cannot open shared object file: No such file or directory\n  - [pid=25337] <gracefully close start>\n  - [pid=25337] <kill>\n  - [pid=25337] <will force kill>\n  - [pid=25337] <process did exit: exitCode=127, signal=null>\n  - [pid=25337] starting temporary directories cleanup\n  - [pid=25337] finished temporary directories cleanup\n  - [pid=25337] <gracefully close end>\n",
-		"probe genesis: no feature probe declared; add one to `probes` that proves the feature works, not just that its page loads",
-		"editor (accuracy): The only evidence for this claim is the /genesis page check, which failed (browser launch crash, so no content was verified). The docs file check that passed covers only the wallet claim, not persona or voice. An unverified claim cannot ship.",
-		"editor (accuracy): The only evidence is the /genesis page check, which failed with the same browser crash. The attached screenshot does show 'We rig it automatically so it can walk and emote', but that frame is 22 days old and flagged stale, so it cannot stand in for live verification.",
-		"editor (visual): The mechanical gate flags the image as captured 22 days ago: 'recapture with npm run announce:media so the frame shows the product as it is today'. A stale frame is a blocking finding on its own.",
-		"editor verdict is revise"
-	],
+	"contentHash": "6150f70f782b68e097347283bc1961d7680f5fc047d1ff5fd6306548814cb4b1",
+	"reviewedAt": "2026-10-10T04:15:20.109Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
-		"A sentence or a selfie becomes a rigged 3D agent holding its own custodial @solana wallet, a persona, and a voice. It walks and emotes on arrival: three.ws/genesis"
+		"Agent Genesis turns a sentence or a selfie into a working 3D agent. The body is rigged before you see it, so it walks and emotes on arrival, and it comes with its own custodial Solana wallet, a custodial EVM wallet, a persona written from your description, and a voice you pick.\n\nText mode paints a full-body reference image, reconstructs it into a textured mesh on our own Hunyuan3D GPU worker, then auto-rigs it with a humanoid skeleton. A selfie takes the face pipeline instead.",
+		"Genesis needs a sign-in, because it writes the agent and its wallet to your account. Remix forks a public avatar into an agent you own.\n\nthree.ws/genesis"
 	],
-	"lint": [
-		{
-			"where": "head",
-			"rule": "media",
-			"severity": "blocking",
-			"message": "public/announce/img/genesis-hero.webp was captured 22 days ago from /genesis; recapture with `npm run announce:media` so the frame shows the product as it is today"
-		}
-	],
+	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
-				"claim": "custodial @solana wallet",
+				"claim": "turns a sentence or a selfie into a working 3D agent",
 				"kind": "evidence:page",
 				"target": "https://three.ws/genesis",
-				"ok": false,
-				"detail": "browserType.launch: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-RftAGq --remote-debugging-pipe --no-startup-window\n<launched> pid=25335\n[pid=25335][err] /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libxkbcommon.so.0: cannot open shared object file: No such file or directory\nCall log:\n  - <launching> /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-RftAGq --remote-debugging-pipe --no-startup-window\n  - <launched> pid=25335\n  - [pid=25335][err] /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libxkbcommon.so.0: cannot open shared object file: No such file or directory\n  - [pid=25335] <gracefully close start>\n  - [pid=25335] <kill>\n  - [pid=25335] <will force kill>\n  - [pid=25335] exception while trying to kill process: Error: kill ESRCH\n  - [pid=25335] <process did exit: exitCode=127, signal=null>\n  - [pid=25335] starting temporary directories cleanup\n  - [pid=25335] finished temporary directories cleanup\n  - [pid=25335] <gracefully close end>\n"
+				"ok": true,
+				"detail": "live page shows \"A prompt or a selfie becomes a living 3D agent\""
 			},
 			{
-				"claim": "custodial @solana wallet",
+				"claim": "The body is rigged before you see it",
 				"kind": "evidence:file",
 				"target": "docs/genesis.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "a persona, and a voice",
+				"claim": "it walks and emotes on arrival",
 				"kind": "evidence:page",
 				"target": "https://three.ws/genesis",
-				"ok": false,
-				"detail": "browserType.launch: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-iEuO6K --remote-debugging-pipe --no-startup-window\n<launched> pid=25336\n[pid=25336][err] /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libxkbcommon.so.0: cannot open shared object file: No such file or directory\nCall log:\n  - <launching> /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-iEuO6K --remote-debugging-pipe --no-startup-window\n  - <launched> pid=25336\n  - [pid=25336][err] /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libxkbcommon.so.0: cannot open shared object file: No such file or directory\n  - [pid=25336] <gracefully close start>\n  - [pid=25336] <kill>\n  - [pid=25336] <will force kill>\n  - [pid=25336] <process did exit: exitCode=127, signal=null>\n  - [pid=25336] starting temporary directories cleanup\n  - [pid=25336] finished temporary directories cleanup\n  - [pid=25336] <gracefully close end>\n"
+				"ok": true,
+				"detail": "live page shows \"A rigged avatar that walks, idles and emotes\""
 			},
 			{
-				"claim": "walks and emotes on arrival",
+				"claim": "its own custodial Solana wallet, a custodial EVM wallet",
 				"kind": "evidence:page",
 				"target": "https://three.ws/genesis",
-				"ok": false,
-				"detail": "browserType.launch: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-vjDjMm --remote-debugging-pipe --no-startup-window\n<launched> pid=25337\n[pid=25337][err] /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libxkbcommon.so.0: cannot open shared object file: No such file or directory\nCall log:\n  - <launching> /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-vjDjMm --remote-debugging-pipe --no-startup-window\n  - <launched> pid=25337\n  - [pid=25337][err] /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libxkbcommon.so.0: cannot open shared object file: No such file or directory\n  - [pid=25337] <gracefully close start>\n  - [pid=25337] <kill>\n  - [pid=25337] <will force kill>\n  - [pid=25337] <process did exit: exitCode=127, signal=null>\n  - [pid=25337] starting temporary directories cleanup\n  - [pid=25337] finished temporary directories cleanup\n  - [pid=25337] <gracefully close end>\n"
+				"ok": true,
+				"detail": "live page shows \"A real Solana + EVM wallet\""
 			},
 			{
-				"kind": "probe",
-				"target": "genesis",
-				"ok": false,
-				"detail": "no feature probe declared; add one to `probes` that proves the feature works, not just that its page loads"
+				"claim": "its own custodial Solana wallet, a custodial EVM wallet",
+				"kind": "evidence:file",
+				"target": "docs/genesis.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a persona written from your description",
+				"kind": "evidence:file",
+				"target": "docs/genesis.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a persona written from your description",
+				"kind": "evidence:file",
+				"target": "docs/genesis.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a voice you pick",
+				"kind": "evidence:page",
+				"target": "https://three.ws/genesis",
+				"ok": true,
+				"detail": "live page shows \"Browser voice (default)\""
+			},
+			{
+				"claim": "paints a full-body reference image",
+				"kind": "evidence:file",
+				"target": "docs/genesis.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "reconstructs it into a textured mesh on our own Hunyuan3D GPU worker",
+				"kind": "evidence:file",
+				"target": "docs/genesis.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "auto-rigs it with a humanoid skeleton",
+				"kind": "evidence:file",
+				"target": "docs/genesis.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A selfie takes the face pipeline instead",
+				"kind": "evidence:file",
+				"target": "docs/genesis.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "it writes the agent and its wallet to your account",
+				"kind": "evidence:page",
+				"target": "https://three.ws/genesis",
+				"ok": true,
+				"detail": "live page shows \"Sign in to claim your agent and its wallet. Genesis writes to your account.\""
+			},
+			{
+				"claim": "forks a public avatar into an agent you own",
+				"kind": "evidence:page",
+				"target": "https://three.ws/genesis",
+				"ok": true,
+				"detail": "live page shows \"Fork a public avatar to own\""
+			},
+			{
+				"kind": "probe:api",
+				"target": "the voice catalog the voice picker reads still answers",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
 			},
 			{
 				"kind": "link",
 				"target": "https://three.ws/genesis",
 				"ok": true,
 				"detail": "HTTP 200"
-			},
-			{
-				"kind": "mention",
-				"target": "@solana",
-				"ok": true,
-				"detail": "Solana (business verified)"
 			}
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
-			"accuracy": 2,
-			"clarity": 4,
-			"specificity": 4,
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 2
+			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "a persona, and a voice",
-				"problem": "The only evidence for this claim is the /genesis page check, which failed (browser launch crash, so no content was verified). The docs file check that passed covers only the wallet claim, not persona or voice. An unverified claim cannot ship.",
-				"fix": "Either re-run the page check against https://three.ws/genesis until it passes and confirms the persona and voice UI, or cut the claim from the post."
-			},
-			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "It walks and emotes on arrival",
-				"problem": "The only evidence is the /genesis page check, which failed with the same browser crash. The attached screenshot does show 'We rig it automatically so it can walk and emote', but that frame is 22 days old and flagged stale, so it cannot stand in for live verification.",
-				"fix": "Re-run the page check to confirm the rigging/walk-and-emote text on the live page, and recapture the hero image in the same pass. Drop the claim if the check still fails."
-			},
-			{
-				"severity": "blocking",
-				"area": "visual",
-				"quote": "public/announce/img/genesis-hero.webp",
-				"problem": "The mechanical gate flags the image as captured 22 days ago: 'recapture with npm run announce:media so the frame shows the product as it is today'. A stale frame is a blocking finding on its own.",
-				"fix": "Run npm run announce:media to recapture genesis-hero from the live /genesis route and ship the fresh frame."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
-				"Describe an agent in a sentence and Genesis provisions it its own custodial @solana wallet as part of the same flow: three.ws/genesis"
+				"Agent Genesis turns a sentence or a selfie into a working 3D agent. The body is rigged before you see it, so it walks and emotes on arrival, and it comes with its own custodial Solana wallet, a custodial EVM wallet, a persona written from your description, and a voice you pick.\n\nText mode paints a full-body reference image, reconstructs it into a textured mesh on our own Hunyuan3D GPU worker, then auto-rigs it with a humanoid skeleton. A selfie takes the face pipeline instead.",
+				"Genesis needs a sign-in, because it writes the agent and its wallet to your account. Remix forks a public avatar into an agent you own.\n\nthree.ws/genesis"
 			],
 			"altText": [
-				"The three.ws Genesis page signed in: describe an agent's look in the text field, or switch to the Selfie or Remix entry modes above it."
+				"The three.ws Genesis page: describe an agent, upload a selfie, or remix a public avatar, with example prompts, an optional name and persona, and a voice picker."
 			]
 		},
-		"summary": "The voice, length, tagging, and professionalism are all excellent, but two of the three claims (persona/voice, walks and emotes) rest on page checks that failed with a browser crash, and the hero image is 22 days stale. The rewrite keeps only the one claim with a passing verification (the custodial Solana wallet from docs/genesis.md); ideally re-run the page checks and recapture the media so the original, stronger post can ship intact.",
+		"summary": "Every claim in the two posts passes verification against the live /genesis page and docs/genesis.md, the prose follows the mechanism-lead pattern with no voice violations, and the hero screenshot matches the live UI with accurate alt text. Nothing needs to change; this ships as written.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
-		"rewriteFindings": [
-			"claims: claim \"a persona, and a voice\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"walks and emotes on arrival\" does not appear in the copy; claims must quote the post"
-		]
+		"rewriteFindings": []
 	},
 	"editorError": null
 }

@@ -24,6 +24,7 @@ import { debitCredits } from '../credits.js';
 import { MODEL_CATALOG, resolveModelId, isFreeTierModel } from '../chat-models.js';
 import { isFreeLane } from '../llm-pricing.js';
 import { assertInferenceAllowed, chargeInference } from '../inference-billing.js';
+import { settleTokenUsage } from '../token-budgets.js';
 import { consumeFreeMessage, getFreeTierStatus, FreeTierExhaustedError } from '../free-tier.js';
 import { freeRosterIds } from '../model-roster.js';
 
@@ -58,7 +59,13 @@ export async function freeTierStatus(userId) {
  * @returns {Promise<{ free: boolean, allowance: object|null }>}
  * @throws {FreeTierExhaustedError} a named free model with the allowance spent
  */
-export async function admitCall({ userId, agent, model }) {
+export async function admitCall({ userId, agent, model, paidFallback = false }) {
+	// `paid_fallback: true` on the request is the client's one-step approval of
+	// the paid route: skip the free tier entirely and gate on credits instead.
+	if (paidFallback) {
+		await assertInferenceAllowed({ userId, agent });
+		return { free: false, allowance: null, paidFallback: true };
+	}
 	if (model && isFreeTierModel(model)) {
 		const allowance = await consumeFreeMessage({ userId, model });
 		return { free: true, allowance };
@@ -80,7 +87,8 @@ export async function admitCall({ userId, agent, model }) {
  * @returns {Promise<{ chargedUsd: number, shortfallUsd: number }>}
  */
 export async function chargeCall({ userId, agentId, callId, event, model, free }) {
-	if (free) return { chargedUsd: 0, shortfallUsd: 0 };
+	// A call on the owner's own provider key is billed by that provider, not in credits.
+	if (free || event.keySource === 'owner') return { chargedUsd: 0, shortfallUsd: 0 };
 	// The named paid model answered: bill its own metered cost.
 	if (isPaidModel(model) && !event.free && event.costMicroUsd > 0) {
 		const amountUsd = Math.ceil(event.costMicroUsd) / 1e6;
@@ -95,9 +103,13 @@ export async function chargeCall({ userId, agentId, callId, event, model, free }
 				idempotencyKey: `agent_model:${callId}`,
 				meta: { model: event.model, provider: event.provider, input_tokens: event.usage.input, output_tokens: event.usage.output },
 			});
+			void settleTokenUsage({ agentId, inputTokens: event.usage.input, outputTokens: event.usage.output });
 			return { chargedUsd: r.chargedUsd ?? amountUsd, shortfallUsd: 0 };
 		} catch (err) {
-			if (err?.code === 'insufficient_credits') return { chargedUsd: 0, shortfallUsd: amountUsd };
+			if (err?.code === 'insufficient_credits') {
+				void settleTokenUsage({ agentId, inputTokens: event.usage.input, outputTokens: event.usage.output });
+				return { chargedUsd: 0, shortfallUsd: amountUsd };
+			}
 			throw err;
 		}
 	}

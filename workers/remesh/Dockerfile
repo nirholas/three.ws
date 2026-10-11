@@ -45,12 +45,13 @@ RUN git clone --depth 1 --recursive https://github.com/hjwdzh/Manifold /tmp/mani
     && install -m 0755 /tmp/manifold/build/manifold /usr/local/bin/manifold \
     && rm -rf /tmp/manifold
 
-# ── Runtime deps for trimesh / open3d / assimp / usd / Blender ───────────────
+# ── Runtime deps for trimesh / open3d / usd / Blender ────────────────────────
 # The X11/GL libs are for the `bpy` (Blender) module, which links against them
-# even when running headless for FBX export.
+# even when running headless for FBX import and export. No libassimp: nothing in
+# this image loads it (trimesh 4.x has no assimp loader, FBX goes through
+# Blender, DAE through pycollada).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libgl1 libglib2.0-0 libgomp1 \
-        libassimp-dev libassimp5 \
         libopenblas-dev \
         libegl1 libxrender1 libxi6 libxxf86vm1 libxfixes3 libxkbcommon0 \
         libxrandr2 libxcursor1 libxinerama1 libsm6 libice6 libxext6 \

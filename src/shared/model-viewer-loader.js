@@ -10,11 +10,13 @@
 //
 // The same version is served from three independent CDNs; any one of them is
 // the whole library, so the first that loads wins and the rest are never hit.
+// Google's own ajax.googleapis.com mirror is not in the chain: it never
+// published 4.4.0, so that rung would only ever 404.
 
-const VERSION = '4.3.1';
+const VERSION = '4.4.0';
 const SOURCES = [
-	`https://ajax.googleapis.com/ajax/libs/model-viewer/${VERSION}/model-viewer.min.js`,
 	`https://cdn.jsdelivr.net/npm/@google/model-viewer@${VERSION}/dist/model-viewer.min.js`,
+	`https://cdnjs.cloudflare.com/ajax/libs/model-viewer/${VERSION}/model-viewer.min.js`,
 	`https://unpkg.com/@google/model-viewer@${VERSION}/dist/model-viewer.min.js`,
 ];
 // A script that neither loads nor errors (a black-holed CDN) is treated as
@@ -23,6 +25,24 @@ const PER_SOURCE_TIMEOUT_MS = 12_000;
 
 let _pending = null;
 let _defineGuarded = false;
+
+// model-viewer auto-loads Draco and KTX2 but leaves the meshopt decoder unset,
+// and every server-baked avatar and Forge GLB ships EXT_meshopt_compression, so
+// without it the viewer throws "setMeshoptDecoder must be called before loading
+// compressed files" and the model never renders. The decoder config is captured
+// when a load starts, so it is set inside define(), before any element upgrades.
+// Same-origin copy, vendored by scripts/vendor-meshopt-decoder.mjs (the same
+// file public/model-viewer-meshopt.js points classic-script pages at).
+const MESHOPT_DECODER_URL = '/vendor/meshopt_decoder.js';
+
+function registerMeshopt(ctor) {
+	if (!ctor || ctor.meshoptDecoderLocation) return;
+	try {
+		ctor.meshoptDecoderLocation = MESHOPT_DECODER_URL;
+	} catch {
+		/* read-only in some future build: the model-viewer default stands */
+	}
+}
 
 // The chain abandons a source after PER_SOURCE_TIMEOUT_MS, but removing a
 // <script> does not cancel a fetch already in flight: a slow first CDN can
@@ -37,7 +57,10 @@ function guardDuplicateDefine() {
 	_defineGuarded = true;
 	const nativeDefine = customElements.define;
 	customElements.define = function (name, ctor, options) {
-		if (name === 'model-viewer' && customElements.get(name)) return undefined;
+		if (name === 'model-viewer') {
+			if (customElements.get(name)) return undefined;
+			registerMeshopt(ctor);
+		}
 		return nativeDefine.call(this, name, ctor, options);
 	};
 }
@@ -74,7 +97,10 @@ function loadScript(src) {
  * @returns {Promise<void>}
  */
 export function ensureModelViewer() {
-	if (typeof customElements !== 'undefined' && customElements.get('model-viewer')) return Promise.resolve();
+	if (typeof customElements !== 'undefined' && customElements.get('model-viewer')) {
+		registerMeshopt(customElements.get('model-viewer'));
+		return Promise.resolve();
+	}
 	if (_pending) return _pending;
 	guardDuplicateDefine();
 	_pending = (async () => {

@@ -23,6 +23,7 @@ import { UI_TOOL_META } from './ui.js';
 // effects, and the same avatar state always yields the same result.
 const READ_ONLY_ANNOTATIONS = {
 	readOnlyHint: true,
+	destructiveHint: false,
 	openWorldHint: true,
 	idempotentHint: true,
 };
@@ -64,7 +65,8 @@ export function buildTools() {
 				description:
 					'Render a three.ws 3D avatar inline: shows an interactive (rotatable) 3D model ' +
 					'in the chat, plus a preview image and a ready-to-embed live URL. Identify the ' +
-					'avatar by id, @handle, or a raw GLB url.',
+					'avatar by id, @handle, or a raw GLB url. Use this when the user wants to see the avatar ' +
+					'in the conversation; for an iframe to paste into a website, call avatar_embed_code instead.',
 				// MCP Apps (SEP-1865): links this tool to its interactive UI resource so
 				// supporting hosts (Claude, etc.) render the live model-viewer in a
 				// sandboxed iframe. Hosts without app support use the content blocks below.
@@ -178,7 +180,8 @@ export function buildTools() {
 				annotations: READ_ONLY_ANNOTATIONS,
 				description:
 					'Get a ready-to-paste iframe that embeds a live, interactive three.ws 3D avatar ' +
-					'into any website or app — as easy as embedding a YouTube video.',
+					'into any website or app, as easy as embedding a YouTube video. Use this when the avatar ' +
+					'has to live on a page outside this chat; to show it here, call render_avatar instead.',
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -229,7 +232,8 @@ export function buildTools() {
 				title: 'Get avatar metadata',
 				annotations: READ_ONLY_ANNOTATIONS,
 				description:
-					'Fetch metadata for a three.ws avatar (name, GLB model url, owner, visibility) by id or @handle.',
+					'Fetch metadata for a three.ws avatar (name, GLB model url, owner, visibility) by id or @handle. ' +
+					'Use this to resolve a handle to its avatar id and GLB url before rendering, embedding, or downloading it.',
 				inputSchema: {
 					type: 'object',
 					properties: { id: selectorProps.id, handle: selectorProps.handle },

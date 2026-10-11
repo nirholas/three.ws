@@ -14,6 +14,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const lockHeld = { value: false };
 vi.mock('../api/_lib/cache.js', () => ({
 	acquireLock: vi.fn(async () => !lockHeld.value),
+	cacheGet: vi.fn(async () => 0),
+	cacheSet: vi.fn(async () => {}),
 }));
 vi.mock('../api/_lib/db.js', () => ({
 	sql: vi.fn(async () => []),

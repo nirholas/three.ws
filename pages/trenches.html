@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Trenches Pulse · three.ws</title>
+		<meta
+			name="description"
+			content="Live market intelligence for the Solana and Robinhood Chain trenches: launches, graduations, hot tokens, runners and scored smart-money wallets."/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/trenches" />
+		<meta property="og:title" content="Trenches Pulse · three.ws"/>
+		<meta
+			property="og:description"
+			content="Live Solana and Robinhood Chain launches, runners and smart-money wallets from the Pulse firehose."/>
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Money+Pulse&amp;d=The+Money+Pulse%3A+a+real-time%2C+platform-wide+feed+of+three.ws+agent+wallet+activity%3A+tips+landing%2C+coins+launching%2C+agents+trading+and+paying+each+other.+Every&amp;p=%2Ftrenches" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Trenches Pulse · three.ws"/>
+		<meta
+			name="twitter:description"
+			content="Live Solana and Robinhood Chain launches, runners and smart-money wallets from the Pulse firehose."/>
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Money+Pulse&amp;d=The+Money+Pulse%3A+a+real-time%2C+platform-wide+feed+of+three.ws+agent+wallet+activity%3A+tips+landing%2C+coins+launching%2C+agents+trading+and+paying+each+other.+Every&amp;p=%2Ftrenches" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/ui-juice.css" />
+		<link rel="stylesheet" href="/src/trenches.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<link rel="canonical" href="https://three.ws/trenches" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Trenches Pulse","description":"Live market intelligence for the Solana and Robinhood Chain trenches.","url":"https://three.ws/trenches","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Trenches Pulse · three.ws" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="tr-shell" id="tr-shell" data-state="loading">
+			<section class="tr-hero">
+				<p class="tr-kicker"><span class="tr-dot" aria-hidden="true"></span> Live from the trenches</p>
+				<h1 class="tr-title">Trenches <em>Pulse</em></h1>
+				<p class="tr-sub">Every launch, graduation and runner on Solana and Robinhood Chain, with scored smart-money wallets. Real firehose data, no samples. Powered by <a href="https://github.com/nirholas/pulse" rel="noopener">Pulse</a>.</p>
+				<p class="tr-updated" id="tr-updated" aria-live="polite"></p>
+			</section>
+
+			<dl class="tr-counters" id="tr-counters"></dl>
+
+			<div class="tr-grid">
+				<section class="tr-panel" aria-labelledby="tr-hot-h">
+					<h2 id="tr-hot-h">Hottest by trade flow</h2>
+					<div class="tr-table-wrap"><table class="tr-table"><thead><tr><th>Token</th><th class="num">Trades</th><th class="num">Buy / sell</th><th class="num">Volume (SOL)</th><th class="num">Traders</th></tr></thead><tbody id="tr-hot"></tbody></table></div>
+				</section>
+				<section class="tr-panel" aria-labelledby="tr-launch-h">
+					<h2 id="tr-launch-h">Latest launches</h2>
+					<ul class="tr-feed" id="tr-launches"></ul>
+				</section>
+			</div>
+
+			<section class="tr-panel" aria-labelledby="tr-wal-h">
+				<h2 id="tr-wal-h">Smart-money wallets</h2>
+				<div class="tr-table-wrap"><table class="tr-table"><thead><tr><th>Wallet</th><th>Kind</th><th class="num">Score</th><th class="num">Win rate</th><th class="num">Early hits</th><th class="num">Best multiple</th></tr></thead><tbody id="tr-wallets"></tbody></table></div>
+			</section>
+
+			<aside class="tr-offline" id="tr-offline" role="status" hidden>
+				<h2>Pulse is warming up</h2>
+				<p id="tr-offline-msg">The market-intelligence service is not reachable right now. Nothing is shown rather than made-up numbers. Retrying automatically.</p>
+				<button type="button" id="tr-retry" class="tr-btn">Retry now</button>
+			</aside>
+		</main>
+		<script type="module" src="/src/trenches.js"></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

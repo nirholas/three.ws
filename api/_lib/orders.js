@@ -19,12 +19,21 @@
  * No arbitrary code in conditions — only a closed set of real signals + operators.
  */
 
+import { randomUUID } from 'node:crypto';
 import { validateSolanaAddress } from './agent-trade-guards.js';
-import { sql } from './db.js';
+import { sql, sqlValues } from './db.js';
 
 export const ORDER_TYPES = Object.freeze(['limit', 'stop', 'trailing', 'dca', 'twap', 'conditional']);
 export const ORDER_SIDES = Object.freeze(['buy', 'sell']);
 export const TRIGGER_METRICS = Object.freeze(['price_sol', 'mcap_sol', 'mcap_usd']);
+// Where an order may fill. 'launchpad' = the pump bonding curve, then the
+// PumpSwap AMM once the coin graduates. 'aggregator' = the best route across
+// every Solana venue (Jupiter), mainnet only, which is what opens the engine to
+// any SPL token. 'auto' = the launchpad when the token trades there, otherwise
+// the aggregator; the worker pins the resolved route on the order.
+export const ORDER_VENUES = Object.freeze(['auto', 'launchpad', 'aggregator']);
+export const GROUP_KINDS = Object.freeze(['ladder', 'oco']);
+export const MAX_LADDER_LEGS = 10;
 
 // The closed set of live signals a conditional trigger may reference. Each maps to
 // a real, on-chain-or-derived value the worker computes per sweep (see
@@ -232,10 +241,25 @@ export function normalizeOrder(raw) {
 	if (expires_at === undefined) return err('invalid_expiry', 'expires_at must be a valid date/time');
 
 	const trigger_metric = TRIGGER_METRICS.includes(raw.trigger_metric) ? raw.trigger_metric : 'mcap_usd';
+	const network = raw.network === 'devnet' ? 'devnet' : 'mainnet';
+
+	const venue = raw.venue == null || raw.venue === '' ? 'auto' : String(raw.venue);
+	if (!ORDER_VENUES.includes(venue)) return err('invalid_venue', `venue must be one of ${ORDER_VENUES.join(', ')}`);
+	if (venue === 'aggregator' && network !== 'mainnet') {
+		return err('invalid_venue', 'the aggregator routes mainnet only; use venue "launchpad" or "auto" on devnet');
+	}
+
+	let price_band = null;
+	if (raw.price_band != null) {
+		if (type !== 'dca' && type !== 'twap') return err('invalid_band', 'price_band applies to dca and twap orders');
+		const band = parseBand(raw.price_band, trigger_metric);
+		if (!band.ok) return band;
+		price_band = band.band;
+	}
 
 	const out = {
 		type, side, mint: mintCheck.base58, symbol: typeof raw.symbol === 'string' ? raw.symbol.slice(0, 32) : null,
-		network: raw.network === 'devnet' ? 'devnet' : 'mainnet',
+		network, venue, price_band,
 		slippage_bps, max_price_impact_pct, expires_at: expires_at || null,
 		trigger_metric,
 		limit_price: null, stop_price: null, trail_pct: null,
@@ -303,6 +327,121 @@ function round8(n) {
 	return Math.round(n * 1e8) / 1e8;
 }
 
+/**
+ * A DCA/TWAP price band: a slice fires only while the metric sits inside
+ * [min, max]. Either bound may be omitted. A slice outside the band is skipped
+ * (consumed), not retried, so the schedule keeps its cadence.
+ */
+function parseBand(raw, defaultMetric) {
+	if (!raw || typeof raw !== 'object') return err('invalid_band', 'price_band must be an object with min and/or max');
+	const min = raw.min == null || raw.min === '' ? null : posNum(raw.min);
+	const max = raw.max == null || raw.max === '' ? null : posNum(raw.max);
+	if (raw.min != null && raw.min !== '' && min == null) return err('invalid_band', 'price_band.min must be a positive number');
+	if (raw.max != null && raw.max !== '' && max == null) return err('invalid_band', 'price_band.max must be a positive number');
+	if (min == null && max == null) return err('invalid_band', 'price_band needs a min, a max, or both');
+	if (min != null && max != null && min >= max) return err('invalid_band', 'price_band.min must be below price_band.max');
+	const metric = raw.metric == null ? defaultMetric : String(raw.metric);
+	if (!TRIGGER_METRICS.includes(metric)) return err('invalid_band', `price_band.metric must be one of ${TRIGGER_METRICS.join(', ')}`);
+	return { ok: true, band: { min, max, metric } };
+}
+
+// Fields every leg of a group shares with the group body.
+function groupBase(raw) {
+	return {
+		mint: raw.mint, symbol: raw.symbol, network: raw.network, venue: raw.venue,
+		slippage_bps: raw.slippage_bps, max_price_impact_pct: raw.max_price_impact_pct,
+		expires_at: raw.expires_at, trigger_metric: raw.trigger_metric,
+	};
+}
+
+/**
+ * A ladder: several limit orders on one token placed in one call, each at its
+ * own level. A sell ladder takes profit in steps (each leg's sell_pct is a share
+ * of the bag as it is when the ladder is placed, and the legs may add up to at
+ * most 100); a buy ladder scales in on the way down (each leg spends its own
+ * size_sol).
+ *
+ * Body: { mint, side?, trigger_metric?, venue?, slippage_bps?, expires_at?,
+ *         legs: [{ price, sell_pct | size_tokens | size_sol }, ...] }
+ * Returns { ok, kind:'ladder', orders } with the legs sorted in fill order.
+ */
+export function normalizeLadder(raw) {
+	if (!raw || typeof raw !== 'object') return err('invalid_order', 'a ladder object is required');
+	const side = raw.side === 'buy' ? 'buy' : 'sell';
+	const legs = Array.isArray(raw.legs) ? raw.legs : null;
+	if (!legs || legs.length < 2) return err('invalid_ladder', 'a ladder needs at least 2 legs');
+	if (legs.length > MAX_LADDER_LEGS) return err('invalid_ladder', `a ladder may have at most ${MAX_LADDER_LEGS} legs`);
+	const orders = [];
+	for (const [i, leg] of legs.entries()) {
+		if (!leg || typeof leg !== 'object') return err('invalid_ladder', `leg ${i + 1} must be an object`);
+		const r = normalizeOrder({
+			...groupBase(raw), type: 'limit', side,
+			limit_price: leg.price ?? leg.limit_price,
+			size_sol: leg.size_sol, size_tokens: leg.size_tokens, sell_pct: leg.sell_pct,
+		});
+		if (!r.ok) return { ...r, message: `leg ${i + 1}: ${r.message}` };
+		orders.push(r.order);
+	}
+	const prices = orders.map((o) => o.limit_price);
+	if (new Set(prices).size !== prices.length) return err('invalid_ladder', 'each ladder leg needs its own price');
+	if (side === 'sell') {
+		const total = orders.reduce((a, o) => a + (o.sell_pct ?? 0), 0);
+		if (total > 100 + 1e-9) return err('invalid_ladder', `the legs sell ${round8(total)}% of the bag; the total may be at most 100%`);
+	}
+	// Fill order: a sell ladder fills lowest price first, a buy ladder highest first.
+	orders.sort((a, b) => (side === 'sell' ? a.limit_price - b.limit_price : b.limit_price - a.limit_price));
+	return { ok: true, kind: 'ladder', orders };
+}
+
+/**
+ * Normalize any order request body into the legs it places. `kind` selects the
+ * shape: 'ladder' (normalizeLadder), 'oco' (normalizeOco), or a single order
+ * (normalizeOrder, the default). Every surface that places orders (HTTP, MCP,
+ * the wallet hub) goes through this one door.
+ *
+ * @returns {{ ok:true, kind:'single'|'ladder'|'oco', orders:object[] } | { ok:false, error:string, message:string }}
+ */
+export function normalizeOrderRequest(raw, kind = raw?.kind) {
+	if (kind === 'ladder') return normalizeLadder(raw);
+	if (kind === 'oco') return normalizeOco(raw);
+	if (kind != null && kind !== 'single') return err('invalid_kind', 'kind must be single, ladder or oco');
+	const r = normalizeOrder(raw);
+	return r.ok ? { ok: true, kind: 'single', orders: [r.order] } : r;
+}
+
+/**
+ * An OCO pair: two orders on one token where the first to fill cancels the
+ * other. For a sell, a take-profit limit above and a stop-loss below (or a
+ * trailing stop with trail_pct); for a buy, a dip-buy limit below and a
+ * breakout stop above. Both legs carry the same size, since only one ever fills.
+ *
+ * Body: { mint, side?, trigger_metric?, venue?, take_profit, stop_loss | trail_pct,
+ *         sell_pct | size_tokens | size_sol, ... }
+ * Returns { ok, kind:'oco', orders: [limitLeg, stopLeg] }.
+ */
+export function normalizeOco(raw) {
+	if (!raw || typeof raw !== 'object') return err('invalid_order', 'an OCO object is required');
+	const side = raw.side === 'buy' ? 'buy' : 'sell';
+	const sizing = { size_sol: raw.size_sol, size_tokens: raw.size_tokens, sell_pct: raw.sell_pct };
+	const limitPrice = posNum(raw.take_profit ?? raw.limit_price);
+	if (!limitPrice) return err('invalid_oco', side === 'sell' ? 'take_profit (the limit level) is required' : 'limit_price (the dip-buy level) is required');
+	const limitLeg = normalizeOrder({ ...groupBase(raw), ...sizing, type: 'limit', side, limit_price: limitPrice });
+	if (!limitLeg.ok) return { ...limitLeg, message: `limit leg: ${limitLeg.message}` };
+
+	let stopLeg;
+	if (raw.trail_pct != null && raw.stop_loss == null && raw.stop_price == null) {
+		stopLeg = normalizeOrder({ ...groupBase(raw), ...sizing, type: 'trailing', side, trail_pct: raw.trail_pct });
+	} else {
+		const stopPrice = posNum(raw.stop_loss ?? raw.stop_price);
+		if (!stopPrice) return err('invalid_oco', 'stop_loss (the stop level) or trail_pct is required');
+		if (side === 'sell' && stopPrice >= limitPrice) return err('invalid_oco', 'a sell OCO needs the stop below the take-profit');
+		if (side === 'buy' && stopPrice <= limitPrice) return err('invalid_oco', 'a buy OCO needs the breakout stop above the dip-buy limit');
+		stopLeg = normalizeOrder({ ...groupBase(raw), ...sizing, type: 'stop', side, stop_price: stopPrice });
+	}
+	if (!stopLeg.ok) return { ...stopLeg, message: `stop leg: ${stopLeg.message}` };
+	return { ok: true, kind: 'oco', orders: [limitLeg.order, stopLeg.order] };
+}
+
 // ── human-readable description ────────────────────────────────────────────────
 
 function metricLabel(metric, value) {
@@ -345,18 +484,26 @@ export function describeOrder(o) {
 				: `Trailing entry: buy ${sizeLabel(o)} of ${sym} after a ${o.trail_pct}% bounce from its low.`;
 		case 'dca': {
 			const every = humanInterval(o.schedule?.interval_seconds);
-			return `DCA: ${verb.toLowerCase()} ${sizeLabel(o)} of ${sym} every ${every}, ${o.schedule?.slices}× total.`;
+			return `DCA: ${verb.toLowerCase()} ${sizeLabel(o)} of ${sym} every ${every}, ${o.schedule?.slices}× total${bandLabel(o.price_band)}.`;
 		}
 		case 'twap': {
 			const every = humanInterval(o.schedule?.interval_seconds);
 			const total = o.side === 'buy' ? `${o.schedule?.total_sol} SOL` : (o.schedule?.total_pct != null ? `${o.schedule.total_pct}%` : `${o.schedule?.total_tokens} base units`);
-			return `TWAP: ${verb.toLowerCase()} ${total} of ${sym} sliced over ${o.schedule?.slices} fills, one every ${every}.`;
+			return `TWAP: ${verb.toLowerCase()} ${total} of ${sym} sliced over ${o.schedule?.slices} fills, one every ${every}${bandLabel(o.price_band)}.`;
 		}
 		case 'conditional':
 			return `${verb} ${sizeLabel(o)} of ${sym} when ${describeCondition(o.condition)}.`;
 		default:
 			return `${verb} ${sym}.`;
 	}
+}
+
+function bandLabel(band) {
+	if (!band) return '';
+	const m = band.metric || 'mcap_usd';
+	if (band.min != null && band.max != null) return `, only between ${metricLabel(m, band.min)} and ${metricLabel(m, band.max)}`;
+	if (band.max != null) return `, only at or below ${metricLabel(m, band.max)}`;
+	return `, only at or above ${metricLabel(m, band.min)}`;
 }
 
 export function describeCondition(spec) {
@@ -370,7 +517,7 @@ export function describeCondition(spec) {
 	}).join(join);
 }
 
-function humanInterval(seconds) {
+export function humanInterval(seconds) {
 	const s = Number(seconds) || 0;
 	if (s % 86400 === 0 && s >= 86400) return `${s / 86400} day${s === 86400 ? '' : 's'}`;
 	if (s % 3600 === 0 && s >= 3600) return `${s / 3600} hour${s === 3600 ? '' : 's'}`;
@@ -398,6 +545,15 @@ export function shapeOrder(row) {
 		fill_count: row.fill_count || 0,
 		last_eval_at: row.last_eval_at, last_price: numOrNull(row.last_price), last_error: row.last_error,
 		created_at: row.created_at, updated_at: row.updated_at, cancelled_at: row.cancelled_at,
+		venue: row.venue || 'auto', route: row.route || null, price_band: row.price_band || null,
+		group_id: row.group_id || null, group_kind: row.group_kind || null, group_leg: row.group_leg ?? null,
+		last_skip_code: row.last_skip_code || null, last_skip_detail: row.last_skip_detail || null,
+		last_skip_at: row.last_skip_at || null, skip_count: row.skip_count || 0, hold_until: row.hold_until || null,
+		cancel_reason: row.cancel_reason || null, last_fire_at: row.last_fire_at || null,
+		consecutive_failures: row.consecutive_failures || 0, last_error_code: row.last_error_code || null,
+		paused_at: row.paused_at || null, resumed_at: row.resumed_at || null,
+		chain_id: row.chain_id ?? null, quote_mint: row.quote_mint || null,
+		amount_in_raw: row.amount_in_raw || null, delegation_id: row.delegation_id || null,
 	};
 	o.readback = describeOrder(o);
 	return o;
@@ -409,13 +565,17 @@ function numOrNull(v) {
 	return Number.isFinite(n) ? n : null;
 }
 
-/** List an agent's orders (newest first), optionally filtered by status set. */
+/**
+ * List an agent's orders (newest first), optionally filtered by status set. The
+ * EVM DCA schedules share the table but not the Solana book: they appear only
+ * when network 'evm' is asked for (api/_lib/dca-unified.js reads them).
+ */
 export async function listOrders(agentId, { network = null, statuses = null, limit = 100 } = {}) {
 	const lim = Math.min(200, Math.max(1, Number(limit) || 100));
 	const rows = await sql`
 		SELECT * FROM orders
 		WHERE agent_id = ${agentId}
-		  AND (${network}::text IS NULL OR network = ${network})
+		  AND (network = ${network} OR (${network}::text IS NULL AND network <> 'evm'))
 		  AND (${statuses}::text[] IS NULL OR status = ANY(${statuses}::text[]))
 		ORDER BY created_at DESC
 		LIMIT ${lim}
@@ -449,29 +609,91 @@ export async function listFills(orderId, { limit = 50 } = {}) {
 }
 
 /**
- * Persist a validated order. `normalized` is the output of normalizeOrder.order.
- * Schedule-driven orders (dca/twap) get next_fire_at = now so the first slice
- * fires on the next sweep. Returns the shaped row.
+ * Persist a validated order. `normalized` is the output of normalizeOrder.order;
+ * `route` is the venue route resolved at placement (null lets the worker resolve
+ * it on the first sweep). Returns the shaped row.
  */
-export async function createOrder(agentId, userId, normalized) {
-	const o = normalized;
-	const scheduled = o.type === 'dca' || o.type === 'twap';
+export async function createOrder(agentId, userId, normalized, { route = null } = {}) {
 	const [row] = await sql`
-		INSERT INTO orders
-			(agent_id, user_id, network, mint, symbol, type, side, size_sol, size_tokens,
-			 sell_pct, trigger_metric, limit_price, stop_price, trail_pct, schedule,
-			 next_fire_at, condition, slippage_bps, max_price_impact_pct, expires_at, status)
-		VALUES (
-			${agentId}, ${userId}, ${o.network}, ${o.mint}, ${o.symbol}, ${o.type}, ${o.side},
-			${o.size_sol}, ${o.size_tokens}, ${o.sell_pct}, ${o.trigger_metric},
-			${o.limit_price}, ${o.stop_price}, ${o.trail_pct},
-			${o.schedule ? JSON.stringify(o.schedule) : null}::jsonb,
-			${scheduled ? sql`now()` : null},
-			${o.condition ? JSON.stringify(o.condition) : null}::jsonb,
-			${o.slippage_bps}, ${o.max_price_impact_pct}, ${o.expires_at}, 'active')
+		INSERT INTO orders (${orderInsertColumns()})
+		VALUES ${sqlValues([orderInsertRow(agentId, userId, normalized, { route })])}
 		RETURNING *
 	`;
-	return shapeOrder(row);
+	const order = shapeOrder(row);
+	await recordOrderEvent(order, 'placed', { detail: order.readback, meta: route ? { route } : null });
+	return order;
+}
+
+// The column list orderInsertRow fills, in order.
+const orderInsertColumns = () => sql`
+	agent_id, user_id, network, mint, symbol, type, side, size_sol, size_tokens,
+	sell_pct, trigger_metric, limit_price, stop_price, trail_pct, schedule,
+	next_fire_at, condition, slippage_bps, max_price_impact_pct, expires_at, status,
+	venue, route, price_band, group_id, group_kind, group_leg`;
+
+// One VALUES row for orderInsertColumns(). Schedule-driven orders (dca/twap)
+// get next_fire_at = now so the first slice fires on the next sweep.
+function orderInsertRow(agentId, userId, o, { route = null, group = null } = {}) {
+	const scheduled = o.type === 'dca' || o.type === 'twap';
+	return [
+		agentId, userId, o.network, o.mint, o.symbol, o.type, o.side,
+		o.size_sol, o.size_tokens, o.sell_pct, o.trigger_metric,
+		o.limit_price, o.stop_price, o.trail_pct,
+		sql`${o.schedule ? JSON.stringify(o.schedule) : null}::jsonb`,
+		scheduled ? sql`now()` : null,
+		sql`${o.condition ? JSON.stringify(o.condition) : null}::jsonb`,
+		o.slippage_bps, o.max_price_impact_pct, o.expires_at, 'active',
+		o.venue || 'auto', route,
+		sql`${o.price_band ? JSON.stringify(o.price_band) : null}::jsonb`,
+		group ? sql`${group.id}::uuid` : null, group?.kind ?? null, group?.leg ?? null,
+	];
+}
+
+/**
+ * Persist a ladder or an OCO pair (normalizeLadder / normalizeOco output) as
+ * one atomic multi-row INSERT: every leg shares a group_id and carries its leg
+ * number, so either the whole group rests or none of it does. The worker reads
+ * the group back to re-base ladder legs and to cancel OCO siblings on a fill.
+ */
+export async function createOrderGroup(agentId, userId, group, { route = null } = {}) {
+	if (!GROUP_KINDS.includes(group?.kind)) throw new Error(`unknown order group kind: ${group?.kind}`);
+	const id = randomUUID();
+	const rows = group.orders.map((o, i) => orderInsertRow(agentId, userId, o, { route, group: { id, kind: group.kind, leg: i + 1 } }));
+	const inserted = await sql`
+		INSERT INTO orders (${orderInsertColumns()})
+		VALUES ${sqlValues(rows)}
+		RETURNING *
+	`;
+	const orders = inserted.map(shapeOrder).sort((a, b) => a.group_leg - b.group_leg);
+	for (const o of orders) {
+		await recordOrderEvent(o, 'placed', { detail: o.readback, meta: { group_id: id, group_kind: group.kind, leg: o.group_leg } });
+	}
+	return { group_id: id, kind: group.kind, orders };
+}
+
+/** Every leg of a group (owner-scoped), in leg order. */
+export async function getOrderGroup(agentId, groupId) {
+	if (!UUID_RE.test(groupId)) return [];
+	const rows = await sql`
+		SELECT * FROM orders WHERE agent_id = ${agentId} AND group_id = ${groupId}::uuid
+		ORDER BY group_leg ASC
+	`;
+	return rows.map(shapeOrder);
+}
+
+/**
+ * Append one lifecycle row (placed, skip, fire, fail, cancel, expire, pause,
+ * resume) to agent_order_events. Never throws: a lost history row must not
+ * block an owner action or a fill.
+ */
+export async function recordOrderEvent(order, kind, { code = null, detail = null, meta = null } = {}) {
+	try {
+		await sql`
+			INSERT INTO agent_order_events (order_id, agent_id, kind, code, detail, meta)
+			VALUES (${order.id}, ${order.agent_id}, ${kind}, ${code}, ${detail ? String(detail).slice(0, 280) : null},
+			        ${meta ? JSON.stringify(meta) : null}::jsonb)
+		`;
+	} catch { /* history is best-effort */ }
 }
 
 /**
@@ -510,13 +732,26 @@ export async function updateOrder(agentId, orderId, patch) {
 		if (e === undefined) return { error: 'invalid_expiry', message: 'expires_at must be a valid date/time' };
 		sets.push(sql`expires_at = ${e}`);
 	}
+	if ('price_band' in patch) {
+		if (current.type !== 'dca' && current.type !== 'twap') return { error: 'invalid_band', message: 'price_band applies to dca and twap orders' };
+		if (patch.price_band == null) {
+			sets.push(sql`price_band = NULL`);
+		} else {
+			const band = parseBand(patch.price_band, current.trigger_metric);
+			if (!band.ok) return { error: band.error, message: band.message };
+			sets.push(sql`price_band = ${JSON.stringify(band.band)}::jsonb`);
+		}
+	}
+	let lifecycle = null;
 	if ('paused' in patch) {
 		// Pause parks the order in a non-evaluated 'paused' state without losing fill
 		// progress; resume returns it to 'partial' (if it has fills) or 'active'.
-		if (patch.paused === true) {
-			sets.push(sql`status = 'paused'`);
-		} else {
-			sets.push(sql`status = ${current.fill_count > 0 ? 'partial' : 'active'}`);
+		if (patch.paused === true && current.status !== 'paused') {
+			sets.push(sql`status = 'paused'`, sql`paused_at = now()`);
+			lifecycle = 'pause';
+		} else if (patch.paused === false && current.status === 'paused') {
+			sets.push(sql`status = ${current.fill_count > 0 ? 'partial' : 'active'}`, sql`resumed_at = now()`, sql`hold_until = NULL`);
+			lifecycle = 'resume';
 		}
 	}
 	if (!sets.length) return current;
@@ -528,18 +763,38 @@ export async function updateOrder(agentId, orderId, patch) {
 		WHERE id = ${orderId} AND agent_id = ${agentId}
 		RETURNING *
 	`;
-	return shapeOrder(row);
+	const order = shapeOrder(row);
+	if (order && lifecycle) await recordOrderEvent(order, lifecycle, { detail: 'by the owner' });
+	return order;
 }
 
-/** Cancel an order instantly. Idempotent; a filled order can't be cancelled. */
-export async function cancelOrder(agentId, orderId) {
+/**
+ * Cancel an order instantly. Idempotent; a filled order can't be cancelled.
+ * Cancelling one leg of an OCO pair cancels the pair (the protection is one
+ * unit); a ladder leg cancels alone so the owner can drop a single level.
+ */
+export async function cancelOrder(agentId, orderId, { reason = 'owner' } = {}) {
+	if (!UUID_RE.test(orderId)) return null;
 	const [row] = await sql`
-		UPDATE orders SET status = 'cancelled', cancelled_at = now(), updated_at = now()
+		UPDATE orders SET status = 'cancelled', cancelled_at = now(), updated_at = now(), cancel_reason = ${reason}
 		WHERE id = ${orderId} AND agent_id = ${agentId}
 		  AND status NOT IN ('filled', 'cancelled', 'expired')
 		RETURNING *
 	`;
-	if (row) return shapeOrder(row);
+	if (row) {
+		const order = shapeOrder(row);
+		await recordOrderEvent(order, 'cancel', { code: reason });
+		if (order.group_kind === 'oco' && order.group_id) {
+			const siblings = await sql`
+				UPDATE orders SET status = 'cancelled', cancelled_at = now(), updated_at = now(), cancel_reason = 'oco_sibling_cancelled'
+				WHERE agent_id = ${agentId} AND group_id = ${order.group_id}::uuid AND id <> ${order.id}
+				  AND status NOT IN ('filled', 'cancelled', 'expired')
+				RETURNING *
+			`;
+			for (const sib of siblings) await recordOrderEvent(shapeOrder(sib), 'cancel', { code: 'oco_sibling_cancelled' });
+		}
+		return order;
+	}
 	// Already terminal (or not found) — return current state so cancel is idempotent.
 	return getOrder(agentId, orderId);
 }
@@ -547,7 +802,7 @@ export async function cancelOrder(agentId, orderId) {
 /** Cancel every active/partial order for an agent (kill switch). Returns count. */
 export async function cancelAllOrders(agentId, network = null) {
 	const rows = await sql`
-		UPDATE orders SET status = 'cancelled', cancelled_at = now(), updated_at = now()
+		UPDATE orders SET status = 'cancelled', cancelled_at = now(), updated_at = now(), cancel_reason = 'cancel_all'
 		WHERE agent_id = ${agentId}
 		  AND (${network}::text IS NULL OR network = ${network})
 		  AND status IN ('active', 'partial', 'firing', 'paused')
@@ -566,7 +821,7 @@ export async function ordersSummary(agentId, network) {
 			COALESCE(SUM(fill_count), 0)::int AS fills,
 			COALESCE(SUM(filled_sol), 0)::float8 AS filled_sol
 		FROM orders
-		WHERE agent_id = ${agentId} AND (${network}::text IS NULL OR network = ${network})
+		WHERE agent_id = ${agentId} AND (network = ${network} OR (${network}::text IS NULL AND network <> 'evm'))
 	`;
 	return {
 		total: agg?.total || 0,

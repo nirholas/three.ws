@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Import Skills · three.ws</title>
+		<meta
+			name="description"
+			content="Install SKILL.md skills from any public GitHub repository or registry manifest. Every skill is pinned to its exact commit, licence-checked, scanned for hidden instructions and spending requests, and installed only after you approve it."
+		/>
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="canonical" href="https://three.ws/skills/import" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/skills-community.css" />
+		<link rel="stylesheet" href="/src/skills-import.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+	<meta property="og:type" content="website">
+	<meta property="og:site_name" content="three.ws">
+	<meta property="og:locale" content="en_US">
+	<meta property="og:title" content="Import Skills · three.ws">
+	<meta property="og:description" content="Install SKILL.md skills from any public GitHub repository or registry manifest: pinned to the exact commit, licence-checked, scanned, and installed only after you approve.">
+	<meta property="og:url" content="https://three.ws/skills/import">
+	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Import+Skills&amp;d=Install+SKILL.md+skills+from+any+public+registry%2C+pinned%2C+scanned+and+owner-approved.&amp;p=%2Fskills%2Fimport">
+	<meta property="og:image:width" content="1200">
+	<meta property="og:image:height" content="630">
+	<meta property="og:image:type" content="image/png">
+	<meta property="og:image:alt" content="Import Skills - three.ws">
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:site" content="@trythreews">
+	<meta name="twitter:title" content="Import Skills · three.ws">
+	<meta name="twitter:description" content="Install SKILL.md skills from any public GitHub repository or registry manifest: pinned to the exact commit, licence-checked, scanned, and installed only after you approve.">
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Import+Skills&amp;d=Install+SKILL.md+skills+from+any+public+registry%2C+pinned%2C+scanned+and+owner-approved.&amp;p=%2Fskills%2Fimport">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Import Skills","description":"Install SKILL.md skills from any public GitHub repository or registry manifest, pinned to the exact commit, licence-checked, scanned, and installed only after the owner approves.","url":"https://three.ws/skills/import","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Skills","item":"https://three.ws/skills"},{"@type":"ListItem","position":3,"name":"Import","item":"https://three.ws/skills/import"}]}]}</script>
+</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="sc-shell">
+			<section class="sc-hero">
+				<p class="sc-kicker"><span class="sc-dot" aria-hidden="true"></span> Pinned · scanned · owner-approved</p>
+				<h1 class="sc-title">Import skills from <em>any registry</em></h1>
+				<p class="sc-sub">
+					Any public GitHub repository of SKILL.md files, or any registry manifest, works here. Each skill is
+					pinned to the exact commit it was read at, its licence is checked, and it is scanned for hidden
+					instructions and for requests to spend, sign or send messages. Nothing reaches your agent until you approve it.
+				</p>
+				<div class="sc-ctas">
+					<a class="sc-btn" href="/skills/community">Community skills</a>
+					<a class="sc-btn" href="/docs/skill-import">How import works</a>
+					<a class="sc-btn" href="/api/skill-imports/published/manifest.json" rel="noopener">Published manifest</a>
+				</div>
+				<dl class="sc-stats" id="si-stats" aria-live="polite"></dl>
+			</section>
+
+			<div class="sc-tabs" role="tablist" aria-label="Skill import views">
+				<button type="button" class="sc-tab is-active" role="tab" id="si-tab-browse" aria-selected="true" aria-controls="si-browse" data-view="browse">Browse</button>
+				<button type="button" class="sc-tab" role="tab" id="si-tab-installed" aria-selected="false" aria-controls="si-installed" data-view="installed" tabindex="-1">Installed &amp; publishing</button>
+				<button type="button" class="sc-tab" role="tab" id="si-tab-requests" aria-selected="false" aria-controls="si-requests" data-view="requests" tabindex="-1">Scan history</button>
+			</div>
+
+			<section id="si-browse" role="tabpanel" aria-labelledby="si-tab-browse">
+				<div class="sc-controls">
+					<div class="sc-search">
+						<label class="sr-only" for="si-q">Search skills</label>
+						<input class="sc-input" id="si-q" type="search" placeholder="Search skills, tags…" autocomplete="off" />
+						<kbd class="sc-kbd" aria-hidden="true">/</kbd>
+					</div>
+					<label class="sr-only" for="si-registry">Registry</label>
+					<select class="sc-select" id="si-registry">
+						<option value="">All registries</option>
+					</select>
+					<button type="button" class="sc-btn" id="si-add-toggle" aria-expanded="false" aria-controls="si-add">Add a registry</button>
+				</div>
+
+				<form class="sc-panel si-add" id="si-add" hidden novalidate>
+					<h2 class="sc-h2">Add a registry</h2>
+					<p class="sc-note">A GitHub repository (<code>owner/repo</code>, or a URL to a folder in it) or the https URL of a <a href="/docs/skill-import#manifest">skill registry manifest</a>. It is read once now to prove it holds skills.</p>
+					<div class="sc-field">
+						<label for="si-add-input">Repository or manifest URL</label>
+						<input class="sc-input" id="si-add-input" required maxlength="500" placeholder="owner/repo or https://github.com/owner/repo/tree/main/skills" autocomplete="off" />
+					</div>
+					<div class="sc-ctas">
+						<button type="submit" class="sc-btn sc-btn-primary" id="si-add-save">Add registry</button>
+						<button type="button" class="sc-btn" id="si-add-cancel">Cancel</button>
+					</div>
+					<p class="sc-form-note" id="si-add-note" role="status" aria-live="polite"></p>
+				</form>
+
+				<div class="si-registries" id="si-registries" aria-live="polite"></div>
+				<nav class="sc-tags" id="si-cats" aria-label="Filter by category"></nav>
+				<div class="sc-grid" id="si-grid" aria-busy="true"></div>
+				<div id="si-browse-state"></div>
+				<details class="si-excluded" id="si-excluded" hidden>
+					<summary id="si-excluded-summary"></summary>
+					<p class="sc-note">These skills were found but are not offered for install. A licence must permit reuse, and a skill must be readable and fit the size limits.</p>
+					<ul id="si-excluded-list"></ul>
+				</details>
+			</section>
+
+			<section id="si-installed" role="tabpanel" aria-labelledby="si-tab-installed" hidden>
+				<div id="si-installed-gate"></div>
+				<div id="si-installed-body" hidden>
+					<div class="sc-mine-head">
+						<div class="sc-field sc-field-inline">
+							<label for="si-agent">Agent</label>
+							<select class="sc-select" id="si-agent"></select>
+						</div>
+						<a class="sc-btn" id="si-manage-link" href="/skills/community?view=mine">Manage all skills</a>
+					</div>
+					<p class="sc-note">Imported skills stay pinned to the revision you approved. Check one for an update to see the exact diff and a fresh scan before anything changes. Fork any skill to make your own editable copy, and publish your own skills so anyone can import them.</p>
+					<ol class="sc-installed" id="si-installed-list" aria-label="Skills on this agent"></ol>
+					<h2 class="sc-h2 si-section-title">Your publications</h2>
+					<ul class="si-pubs" id="si-pubs"></ul>
+				</div>
+			</section>
+
+			<section id="si-requests" role="tabpanel" aria-labelledby="si-tab-requests" hidden>
+				<div id="si-requests-gate"></div>
+				<ul class="si-requests" id="si-requests-list" aria-label="Your skill scans"></ul>
+			</section>
+		</main>
+
+		<dialog class="sc-dialog si-dialog" id="si-dialog" aria-labelledby="si-dialog-title">
+			<div class="sc-dialog-inner">
+				<header class="sc-dialog-head">
+					<div>
+						<p class="sc-kicker" id="si-dialog-kicker"></p>
+						<h2 class="sc-dialog-title" id="si-dialog-title"></h2>
+						<p class="sc-dialog-desc" id="si-dialog-desc"></p>
+					</div>
+					<button type="button" class="sc-icon-btn" id="si-dialog-close" aria-label="Close">✕</button>
+				</header>
+				<div id="si-dialog-body"></div>
+			</div>
+		</dialog>
+
+		<div id="si-live" class="sr-only" role="status" aria-live="polite"></div>
+
+		<script type="module" src="/src/skills-import.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

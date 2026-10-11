@@ -122,6 +122,7 @@ The convention detector reports which authoring tool your skeleton came from and
 | MediaPipe Pose | `foot_index` and `heel` landmark joints | `custom` |
 | Reallusion Character Creator | `CC_Base_*` joint prefix | `custom` |
 | Unreal Engine mannequin | `pelvis`, `thigh_l`, `clavicle_l` | `custom` |
+| Source engine (ValveBiped) | `ValveBiped.Bip01_*` joint prefix | `custom` |
 | 3ds Max Biped | `Bip01` / `Bip001` prefix | `custom` |
 | Blender Rigify | `DEF-` / `ORG-` / `MCH-` bone layers | `custom` |
 | Autodesk HumanIK / MotionBuilder | character-namespaced joints (`Character1:Hips`) | `custom` |

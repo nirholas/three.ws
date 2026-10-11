@@ -313,8 +313,24 @@ describe('GCE MIG shard resolution', () => {
 		const resolved = await withMetadataHost(`127.0.0.1:${port}`, () => resolveGceShardIndex(4, () => {}));
 		expect(resolved.source).toBe('unavailable');
 		expect(resolved.index).toBe(0);
-		// The metadata probe is bounded; a hung DNS lookup must not stall a run.
 		expect(performance.now() - t0).toBeLessThan(15_000);
+	});
+
+	it('bounds a hung metadata probe instead of blocking the run', async () => {
+		const { resolveGceShardIndex } = await import('../workers/vanity-grinder/gce-shard.mjs');
+		// A connection that is accepted but never answered: the only way to prove
+		// the probe's own AbortController timeout fires, rather than a fast local
+		// error (refused/DNS) that would pass even without the bound in place.
+		const hung = await listen(() => {});
+		try {
+			const { port } = hung.address();
+			const t0 = performance.now();
+			const resolved = await withMetadataHost(`127.0.0.1:${port}`, () => resolveGceShardIndex(4, () => {}));
+			expect(resolved).toEqual({ index: 0, source: 'unavailable', instance: '' });
+			expect(performance.now() - t0).toBeLessThan(15_000);
+		} finally {
+			await close(hung);
+		}
 	});
 
 	it('hashes the instance name on a VM whose instance-group listing is unavailable', async () => {

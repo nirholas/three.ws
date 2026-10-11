@@ -11,9 +11,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_holder_leaderboard',
 	title: '$THREE holder leaderboard',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		"The public $THREE holder leaderboard, ranked by on-chain balance. $THREE is the only coin three.ws ranks holders for. Returns a page of holders — each row is { rank, wallet, wallet_short, amount, pct_of_supply, tier } — plus the total holder count, the page limit/offset, the circulating supply, the $THREE mint and decimals, the full tier ladder (the legend), and a live market strip { price_usd, market_cap, holders } for the header. Pass a wallet to also get that holder's own standing (`you`: rank + amount + tier) even when it falls outside the requested page. Read-only live data; balances and ranks move between calls.",
+		"The public $THREE holder leaderboard, ranked by on-chain balance. $THREE is the only coin three.ws ranks holders for. Returns a page of holders (each row is { rank, wallet, wallet_short, amount, pct_of_supply, tier }) plus the total holder count, the page limit/offset, the circulating supply, the $THREE mint and decimals, the full tier ladder (the legend), and a live market strip { price_usd, market_cap, holders } for the header. Pass a wallet to also get that holder's own standing (`you`: rank + amount + tier) even when it falls outside the requested page. Read-only live data; balances and ranks move between calls. Use this to look up where a wallet ranks among $THREE holders or to page through the board; for the tier thresholds alone call get_tier_info.",
 	inputSchema: {
 		limit: z
 			.number()

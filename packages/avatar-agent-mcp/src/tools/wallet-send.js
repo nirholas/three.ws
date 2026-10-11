@@ -14,7 +14,7 @@ export const def = {
 	// MCP ToolAnnotations — EXECUTION: moves real value on Solana mainnet, irreversible.
 	annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
 	description:
-		'Send SOL from the configured signer to a destination pubkey. The signer is supplied via the `secret` arg (base58) or via SOLANA_SECRET_KEY env on the MCP server. Returns the confirmed signature and a Solscan link. EXECUTION ACTION — funds move on mainnet, irreversible: pass confirm:true. Capped by MAX_SOL_PER_TX; destination must be in RECIPIENT_ALLOWLIST if one is configured.',
+		'Send SOL from the configured signer to a destination pubkey. The signer is supplied via the `secret` arg (base58) or via SOLANA_SECRET_KEY env on the MCP server. Returns the confirmed signature and a Solscan link. EXECUTION ACTION: funds move on mainnet, irreversible: pass confirm:true. Capped by MAX_SOL_PER_TX; destination must be in RECIPIENT_ALLOWLIST if one is configured. Call this after wallet_send_preview has been shown to the user and they said yes, and never without that yes.',
 	inputSchema: {
 		to: z.string().min(32).max(64).describe('Destination Solana pubkey.'),
 		sol: z.number().positive().describe('Amount of SOL to send.'),

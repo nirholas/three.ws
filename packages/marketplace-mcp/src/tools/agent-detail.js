@@ -9,9 +9,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'agent_detail',
 	title: 'Fetch a marketplace agent by id',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Fetch one published marketplace agent by its id, including its full detail: name, description, category, tags, system prompt, greeting, capabilities, author, ratings, skill prices, subscription tiers, and avatar URLs. Read-only.',
+		'Fetch one published marketplace agent by its id, including its full detail: name, description, category, tags, system prompt, greeting, capabilities, author, ratings, skill prices, subscription tiers, and avatar URLs. Use this after browse_agents to read one agent\'s full profile, prices and tiers before hiring or forking it. Read-only.',
 	inputSchema: {
 		id: z.string().min(1).describe('The marketplace agent id (a UUID from a browse_agents card).'),
 	},

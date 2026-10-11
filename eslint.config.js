@@ -35,6 +35,9 @@ export default [
 			// never built or shipped. See third_party/README.md.
 			'third_party/**',
 			'**/*.bundle.js',
+			// The metaplex deployer site's esbuild output, committed so the static
+			// docs/ folder serves without a build step. Its source is linted.
+			'packages/metaplex-agent-mcp/docs/app.js',
 			'public/dashboard/avaturn-sdk.js',
 			// Self-contained sub-projects with their own ESLint flat config
 			'chat/**',

@@ -7,7 +7,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'announce',
 	title: 'Tell your human, in person',
-	annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Deliver one line to the human who owns this key, in person: their 3D companion walks onto the ' +
 		'browser tab they have open, gestures, and says it, with an optional link to click through. Use ' +

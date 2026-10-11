@@ -45,7 +45,7 @@ async function resolveUserId(req) {
 	if (session?.id) return session.id;
 	const bearer = extractBearer(req);
 	if (bearer) {
-		const auth = assertBearerMaySpend(await authenticateBearer(bearer).catch(() => null), req);
+		const auth = assertBearerMaySpend(await authenticateBearer(bearer).catch(() => null), req, { kind: 'launch' });
 		if (auth?.userId) return auth.userId;
 	}
 	return null;

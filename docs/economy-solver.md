@@ -117,7 +117,7 @@ quoted without its assumptions is a lie:
 The game's XP award wraps `Math.round` around a uniform integer roll:
 
 ```js
-const xp = Math.round((9 + Math.floor(Math.random() * 5) + lvl * 0.3) * difficulty) * got;
+let xp = Math.round((9 + Math.floor(Math.random() * 5) + lvl * 0.3) * difficulty) * got;
 ```
 
 Rounding is not linear, so `E[round(X)] ≠ round(E[X])`. Substituting the mean of the

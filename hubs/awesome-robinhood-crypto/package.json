@@ -1,0 +1,14 @@
+{
+  "name": "awesome-robinhood-crypto",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A curated, machine-readable directory of Robinhood Crypto API clients, MCP servers, trading bots, agent integrations and Robinhood Chain tooling.",
+  "license": "CC0-1.0",
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/validate.mjs",
+    "build": "node scripts/build-readme.mjs",
+    "check": "node scripts/validate.mjs && node scripts/build-readme.mjs"
+  },
+  "engines": { "node": ">=18" }
+}

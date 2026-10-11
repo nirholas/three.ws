@@ -41,9 +41,9 @@ async function setStatus(id, status) {
 export const def = {
 	name: 'update_subscription',
 	title: 'Update a copy-trade subscription',
-	annotations: { readOnlyHint: false, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
-		'Re-tune an existing copy-trade subscription by id. Pause it (stop new copies, keep the follow), resume it, stop it, and/or change its sizing rule and guard rules (caps, daily budget, market-cap band, oracle/safety gates, performance fee). MONEY-ADJACENT: guard changes alter how much of your SOL future copies may spend — non-custodial, intents only. Only the fields you pass change; the rest are preserved. Editing guards on a paused subscription keeps it paused unless you also set status:"active". Idempotent. Returns the updated subscription. Requires THREE_WS_API_KEY.',
+		'Re-tune an existing copy-trade subscription by id. Pause it (stop new copies, keep the follow), resume it, stop it, and/or change its sizing rule and guard rules (caps, daily budget, market-cap band, oracle/safety gates, performance fee). MONEY-ADJACENT: guard changes alter how much of your SOL future copies may spend (non-custodial, intents only). Only the fields you pass change; the rest are preserved. Editing guards on a paused subscription keeps it paused unless you also set status:"active". Idempotent. Returns the updated subscription. Requires THREE_WS_API_KEY. Use this to pause, resume or re-size a follow you already have (ids come from list_subscriptions); to end it outright call cancel_subscription.',
 	inputSchema: {
 		id: z.string().uuid().describe('UUID of the subscription to update (from list_subscriptions).'),
 		status: z.enum(['active', 'paused', 'stopped']).optional().describe('Set the lifecycle status: active (resume), paused (halt new copies, keep the follow), or stopped (end it, keeps history).'),

@@ -1,8 +1,9 @@
 import Foundation
 import Capacitor
+import UIKit
 import UserNotifications
 
-/// The app's own Capacitor plugin, for the two things no packaged plugin does.
+/// The app's own Capacitor plugin, for the things no packaged plugin does.
 ///
 /// - `takeShare({ id })` hands the page the files the share extension parked in
 ///   the App Group (see SharedInbox.swift). src/shared/share-target.js calls it
@@ -10,6 +11,13 @@ import UserNotifications
 /// - `setBadge({ count })` keeps the home screen icon's badge equal to the
 ///   inbox's unread count. APNs sets it when a push arrives; this is what
 ///   brings it back down when the notifications are read in the app.
+/// - `openInSafari({ url })` hands a page to the real Safari app. Payments,
+///   token launches and trading leave the app this way (ios/docs/REVIEW-RISK.md),
+///   and it has to be Safari itself: @capacitor/browser opens an in-app
+///   SFSafariViewController, which App Review treats as still inside the app.
+///   Only https://three.ws/api/auth/handoff is accepted. That endpoint carries
+///   the session across (api/auth/handoff.js), and /api/* is excluded from
+///   universal links, so iOS cannot route the URL straight back into this app.
 ///
 /// Registered in MainViewController.capacitorDidLoad, and reached from the web
 /// as `Capacitor.Plugins.ThreeWsApp`.
@@ -20,7 +28,11 @@ public class ThreeWsAppPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "takeShare", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setBadge", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "openInSafari", returnType: CAPPluginReturnPromise),
     ]
+
+    static let handoffHosts: Set<String> = ["three.ws", "www.three.ws"]
+    static let handoffPath = "/api/auth/handoff"
 
     @objc func takeShare(_ call: CAPPluginCall) {
         guard let id = call.getString("id"), SharedInbox.isValidId(id) else {
@@ -52,6 +64,28 @@ public class ThreeWsAppPlugin: CAPPlugin, CAPBridgedPlugin {
                 call.reject(error.localizedDescription)
             } else {
                 call.resolve()
+            }
+        }
+    }
+
+    @objc func openInSafari(_ call: CAPPluginCall) {
+        guard let raw = call.getString("url"),
+              let url = URL(string: raw),
+              url.scheme == "https",
+              let host = url.host?.lowercased(),
+              Self.handoffHosts.contains(host),
+              url.path == Self.handoffPath
+        else {
+            call.reject("Only three.ws handoff links open in Safari", "invalid_url")
+            return
+        }
+        DispatchQueue.main.async {
+            UIApplication.shared.open(url, options: [:]) { opened in
+                if opened {
+                    call.resolve()
+                } else {
+                    call.reject("Safari could not be opened", "open_failed")
+                }
             }
         }
     }

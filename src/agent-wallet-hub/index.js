@@ -40,6 +40,7 @@ import './tabs/pay.js';
 import './tabs/vanity.js';
 import './tabs/policy.js';
 import './tabs/withdraw.js';
+import './tabs/whitelist.js';
 import './tabs/give.js';
 import './tabs/access.js';
 import './tabs/recovery.js';

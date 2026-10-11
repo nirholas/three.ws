@@ -1,0 +1,20 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/mcp-server-card/v1.json",
+	"serverInfo": {
+		"name": "three.ws",
+		"title": "three.ws",
+		"version": "1.0.0"
+	},
+	"description": "The 3D agent economy: generate, rig, and animate 3D avatars and worlds; pay and get paid per call with x402 (USDC on Solana and Base); read live crypto market and on-chain intelligence.",
+	"websiteUrl": "https://three.ws",
+	"documentationUrl": "https://three.ws/docs/mcp",
+	"transport": {
+		"type": "streamable-http",
+		"url": "https://three.ws/api/mcp"
+	},
+	"authentication": {
+		"required": true,
+		"schemes": ["oauth2.1", "api-key", "x402"]
+	},
+	"directory": "https://three.ws/.well-known/mcp.json"
+}

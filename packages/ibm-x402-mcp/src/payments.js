@@ -118,11 +118,17 @@ async function buildAccepts({ resourceServer, priceUsd, resourceUrl }) {
  * @param {Function} handler            — async (args) → any
  * @returns {Function} MCP tool callback
  */
+// Every tool wrapped by paid() in this process, by name, with the price it
+// quotes. Registration fills it, so the MCP catalog build reads each price from
+// the same call that charges it rather than from the description text.
+export const PAID_TOOL_PRICES = new Map();
+
 export function paid(cfg, handler) {
 	const { toolName, description, priceUsd, inputSchema, example, outputExample } = cfg;
 
 	if (!toolName) throw new Error('paid(): toolName is required');
 	if (!priceUsd) throw new Error('paid(): priceUsd is required');
+	PAID_TOOL_PRICES.set(toolName, priceUsd);
 
 	let wrapperPromise = null;
 

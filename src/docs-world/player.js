@@ -18,6 +18,7 @@ import {
 import { AnimationManager } from '../animation-manager.js';
 import { gltfLoader } from '../loaders/gltf.js';
 import { log } from '../shared/log.js';
+import { resolveSolids } from '../shared/solids.js';
 import { WORLD_RADIUS, RING_RADIUS } from './world.js';
 
 // The same default body /walk, /walk-embed and the embed preview use. It must
@@ -73,9 +74,15 @@ function fallbackBody() {
 /**
  * @param {import('three').Scene} scene
  * @param {import('three').WebGLRenderer} renderer
- * @param {{ avatarUrl?: string }} [opts]
+ * @param {{ avatarUrl?: string, spawn?: {x:number, z:number}, yaw?: number, bound?: number, keepout?: number }} [opts]
+ *   `spawn`, `yaw`, `bound` and `keepout` default to the docs plaza; other worlds
+ *   (the desktop campus) pass their own layout and reuse the same body.
  */
-export function createPlayer(scene, renderer, { avatarUrl = DEFAULT_BODY_GLB } = {}) {
+export function createPlayer(
+	scene,
+	renderer,
+	{ avatarUrl = DEFAULT_BODY_GLB, spawn = { x: 1.2, z: 3.4 }, yaw = Math.PI, bound = WORLD_RADIUS, keepout = PAVILION_KEEPOUT } = {},
+) {
 	const root = new Group();
 	// Spawn a few metres off plaza centre: the beacon monolith stands at the
 	// exact origin and would otherwise occlude the freshly-loaded avatar.
@@ -89,8 +96,8 @@ export function createPlayer(scene, renderer, { avatarUrl = DEFAULT_BODY_GLB } =
 	// shrinks with the aspect ratio, so on a portrait phone the sign spans ~0.47
 	// of NDC width on its own and an offset past ~1.5m clips it off the left.
 	// 1.2m clears the avatar and still leaves the sign fully framed at 390px.
-	root.position.set(1.2, 0, 3.4);
-	root.rotation.y = Math.PI;
+	root.position.set(spawn.x, 0, spawn.z);
+	root.rotation.y = yaw;
 	scene.add(root);
 
 	const anim = new AnimationManager();
@@ -162,7 +169,7 @@ export function createPlayer(scene, renderer, { avatarUrl = DEFAULT_BODY_GLB } =
 	 * @param {{x:number, z:number}} move input vector in camera space, |v| <= 1
 	 * @param {number} camYaw camera yaw so input is screen-relative
 	 * @param {boolean} run
-	 * @param {Array<{group: import('three').Group}>} pavilions keep-out volumes
+	 * @param {Array<{group: import('three').Group, keepout?: number} | {obb: {x:number, z:number, yaw:number, hw:number, hd:number}}>} pavilions solids (see src/shared/solids.js)
 	 */
 	function update(dt, move, camYaw, run, pavilions) {
 		running = run;
@@ -189,24 +196,16 @@ export function createPlayer(scene, renderer, { avatarUrl = DEFAULT_BODY_GLB } =
 
 		// World bound: soft clamp to the walkable disc.
 		const dist = Math.hypot(root.position.x, root.position.z);
-		if (dist > WORLD_RADIUS) {
-			root.position.x *= WORLD_RADIUS / dist;
-			root.position.z *= WORLD_RADIUS / dist;
+		if (dist > bound) {
+			root.position.x *= bound / dist;
+			root.position.z *= bound / dist;
 		}
 
-		// Pavilion keep-out: push out radially so portals stay walk-aroundable.
-		if (pavilions) {
-			for (const p of pavilions) {
-				const dx = root.position.x - p.group.position.x;
-				const dz = root.position.z - p.group.position.z;
-				const d = Math.hypot(dx, dz);
-				if (d > 0.001 && d < PAVILION_KEEPOUT) {
-					const push = PAVILION_KEEPOUT / d;
-					root.position.x = p.group.position.x + dx * push;
-					root.position.z = p.group.position.z + dz * push;
-				}
-			}
-		}
+		// Keep-out: cylinders (portals, props) push out radially, oriented boxes
+		// (walls, counters) push out through their nearest face, so rooms are
+		// solid and doorways are walkable. A cylinder may carry its own
+		// `keepout` radius; the world default applies otherwise.
+		resolveSolids(root.position, pavilions, { keepout });
 
 		// Face travel direction.
 		const speed = Math.hypot(velocity.x, velocity.z);

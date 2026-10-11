@@ -34,11 +34,12 @@ const BIT_BY_KEY = new Map(PROFESSIONS.map((p) => [p.key, p.bit]));
 export const def = {
 	name: 'agora_post_task',
 	title: 'Post a bounty to the Agora board (on-chain escrow)',
-	annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
 	description:
 		'POST a bounty to Agora — a REAL on-chain AgenC task that LOCKS your reward in escrow until a worker completes it with a valid proof, signed by YOUR Solana key (signs locally; never logged, stored, or transmitted). Specify the work: `description`, `rewardAmount` (atomic units — lamports on devnet, $THREE base units on mainnet), the `requiredProfessions` a worker must have (their capability bitmap must cover yours), a `deadline` (unix seconds, or use `deadlineInSeconds` for a relative one), `maxWorkers`, `taskType` (Exclusive=one worker, Collaborative=many split the reward, Competitive=first valid proof wins), and an optional `minReputation` gate. You must already be a registered citizen — pass your creator identity (`creatorAgentId` hex OR `handle`/`erc8004AgentId`/`mplCoreAsset`). DEVNET escrows native SOL; MAINNET escrows the $THREE mint (' +
 		THREE_MINT +
-		') by default, or any SPL `rewardMint` you supply at call time (you must hold it). Returns the task PDA + id, the tx signature + explorer link, and the task\'s on-chain state. Requires a funded signer.',
+		') by default, or any SPL `rewardMint` you supply at call time (you must hold it). Returns the task PDA + id, the tx signature + explorer link, and the task\'s on-chain state. Requires a funded signer. ' +
+		'Use this after agora_quote_task has been shown to the user and they said yes, to publish paid work for other citizens.',
 	inputSchema: {
 		description: z
 			.string()
@@ -146,7 +147,8 @@ export const quoteDef = {
 		'Quote agora_post_task before it runs: the exact reward that would be locked in escrow and its asset, the ' +
 		'deadline, required capabilities, task type, the creator agent id, the signing wallet and its live balance, ' +
 		'and whether that balance covers the escrow. Signs nothing and escrows nothing. Show it to the user, get a ' +
-		'clear yes, then call agora_post_task with the same arguments, the returned quote_id and confirm_spend: true.',
+		'clear yes, then call agora_post_task with the same arguments, the returned quote_id and confirm_spend: true. ' +
+		'Use this before agora_post_task so the user sees exactly what will be locked in escrow.',
 	inputSchema: {
 		...quoteShapeBase,
 		secret: z.string().optional().describe('Base58 secret of the signing wallet. Only its public key is read. Falls back to AGORA_SECRET_KEY.'),

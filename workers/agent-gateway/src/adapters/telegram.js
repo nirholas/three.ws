@@ -11,6 +11,7 @@
 import { Api, Bot, GrammyError, HttpError, InputFile } from 'grammy';
 import { chunkText, MAX_TEXT } from '../../../../api/_lib/gateway/format.js';
 import { parseActionId } from '../../../../api/_lib/gateway/approvals.js';
+import { parseApprovalCallback } from '../../../../api/_lib/gateway/approval-buttons.js';
 import { telegramInboxKeys } from '../../../../api/_lib/gateway/webhooks.js';
 import { PlatformError, isPermanentStatus } from '../errors.js';
 
@@ -63,6 +64,16 @@ export function parseTelegramCommand(text, botUsername = null) {
 	return { command: m[1].toLowerCase(), args: (m[3] || '').trim() };
 }
 
+/**
+ * A message whose words are not the sender's own: forwarded from anyone,
+ * auto-forwarded from a linked channel, or posted through an inline bot.
+ * Bot API 7.0+ sends forward_origin; the older forward_* fields are still
+ * checked so a client on either shape is caught.
+ */
+export function isForwarded(m) {
+	return Boolean(m.forward_origin || m.forward_from || m.forward_from_chat || m.forward_sender_name || m.forward_date || m.is_automatic_forward || m.via_bot);
+}
+
 function keyboard(choices) {
 	return { inline_keyboard: choices.length ? [choices.map((c) => ({ text: String(c.label).slice(0, 64), callback_data: String(c.id).slice(0, 64) }))] : [] };
 }
@@ -103,8 +114,9 @@ export function createTelegramAdapter({ env = process.env, api = null, fetch: fe
 	function normalizeCallback(q) {
 		const msg = q.message;
 		if (!msg?.chat || !q.from) return null;
-		const action = parseActionId(q.data);
-		if (!action) return null;
+		const approvalAction = parseApprovalCallback(q.data);
+		const action = approvalAction ? null : parseActionId(q.data);
+		if (!approvalAction && !action) return null;
 		return {
 			platform: PLATFORM,
 			chatId: String(msg.chat.id),
@@ -112,7 +124,7 @@ export function createTelegramAdapter({ env = process.env, api = null, fetch: fe
 			chatTitle: msg.chat.title || msg.chat.username || null,
 			userId: String(q.from.id),
 			username: q.from.username || null,
-			action,
+			...(approvalAction ? { approvalAction } : { action }),
 			messageRef: refOf(msg),
 			callbackQueryId: q.id,
 		};
@@ -128,6 +140,7 @@ export function createTelegramAdapter({ env = process.env, api = null, fetch: fe
 			userId: String(m.from.id),
 			username: m.from.username || null,
 		};
+		if (isForwarded(m)) return { ...base, forwarded: true };
 		if (typeof m.text === 'string') {
 			const cmd = parseTelegramCommand(m.text, botUsername);
 			if (cmd?.foreign) return null;

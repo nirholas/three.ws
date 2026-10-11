@@ -10,7 +10,7 @@ import {
 import { sendX402Error } from './payments.js';
 import { streamSubscriptions, dropSubscriptions } from './resources.js';
 import { acceptedAudiences, mcpResourceFor, protectedResourceMetadataUrl } from '../_lib/mcp-resources.js';
-import { isIssuedSessionId } from '../_lib/mcp-client-analytics.js';
+import { sessionIdOf } from '../_lib/mcp-clients.js';
 
 function quoteString(s) {
 	return `"${String(s).replace(/[\\"]/g, '\\$&')}"`;
@@ -290,13 +290,13 @@ export async function handleTerminate(req, res, { resourceServer = null } = {}) 
 	}
 	// This server serves every request statelessly. The only session ids it
 	// issues are the analytics ids handed out on initialize
-	// (api/_lib/mcp-client-analytics.js), which hold no server state, so ending
-	// one is the ordinary polite teardown: 204. Any other id names a session
-	// that does not exist here, and the Streamable HTTP transport says a server
-	// MUST answer 404 for a session id it does not hold, which is the client's
+	// (api/_lib/mcp-clients.js), which hold no server state, so ending one is
+	// the ordinary polite teardown: 204. Any other id names a session that does
+	// not exist here, and the Streamable HTTP transport says a server MUST
+	// answer 404 for a session id it does not hold, which is the client's
 	// signal to start a fresh session. A DELETE with no session id: 204.
 	const sessionId = req.headers?.['mcp-session-id'];
-	if (sessionId && !isIssuedSessionId(sessionId)) {
+	if (sessionId && !sessionIdOf(req)) {
 		res.statusCode = 404;
 		res.setHeader('content-type', 'application/json');
 		res.end(JSON.stringify({ error: 'unknown_session', message: 'no such MCP session; start a new one' }));

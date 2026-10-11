@@ -126,7 +126,15 @@ curl -s https://three.ws/api/credits \
   "deposit": {
     "wallet": "<platform deposit address>",
     "network": "mainnet",
-    "accepts": ["SOL", "THREE"],
+    "assets": [
+      { "asset": "SOL", "label": "SOL", "mint": null, "decimals": 9, "native": true,
+        "rate": { "kind": "live_price", "source": "mainnet quote at verification" }, "bonus_bps": 0 },
+      { "asset": "USDC", "label": "USDC", "mint": "<USDC mint for the network>", "decimals": 6, "native": false,
+        "rate": { "kind": "fixed", "usd_per_unit": 1, "source": "published rate" }, "bonus_bps": 0 },
+      { "asset": "THREE", "label": "$THREE", "mint": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump", "decimals": 6, "native": false,
+        "rate": { "kind": "live_price", "source": "mainnet quote at verification" }, "bonus_bps": 0 }
+    ],
+    "accepts": ["SOL", "USDC", "THREE"],
     "three_mint": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
     "three_symbol": "THREE",
     "three_decimals": 6
@@ -143,6 +151,16 @@ curl -s https://three.ws/api/credits \
   "next_cursor": null
 }
 ```
+
+`deposit.assets` is the live catalog of what the deposit wallet accepts and
+how each asset is priced: SOL and $THREE at the mainnet quote when the
+transfer is verified, USDC at the published fixed rate (one USDC is one
+dollar of credits). `bonus_bps` is the extra credit granted for paying in
+that asset, read from owner policy at request time (`THREE_CREDIT_BONUS_BPS`,
+see [inference-billing.md](./inference-billing.md#topping-up-sol-usdc-and-three));
+it is zero unless the owner has set one. The [/credits](https://three.ws/credits)
+page renders its asset picker and rate list from this array. `accepts`,
+`three_mint`, `three_symbol` and `three_decimals` are kept for older clients.
 
 `holder` is the $THREE tier every debit on this account is already priced at:
 the same shape [`GET /api/pricing`](api-reference.md) returns. `discount_bps`
@@ -177,7 +195,7 @@ Body fields:
 
 | Field | Type | Notes |
 |---|---|---|
-| `asset` | string | `"SOL"` or `"THREE"`, required |
+| `asset` | string | `"SOL"`, `"USDC"` or `"THREE"`, required |
 | `tx_signature` | string | The Solana transaction signature, required |
 | `network` | string | `"mainnet"` (default) or `"devnet"` |
 
@@ -189,6 +207,8 @@ Success:
   "replay": false,
   "balance_usd": 32.5,
   "credited_usd": 20,
+  "bonus_usd": 0,
+  "bonus_bps": 0,
   "usd": 20,
   "asset": "SOL",
   "amount": 0.125,
@@ -200,8 +220,17 @@ Success:
 If the transaction is confirmed but not yet finalized you get a retryable
 `{ "ok": false, "pending": true, "status": "awaiting_finalization", ... }`;
 poll again in a few seconds. Crediting is idempotent per (signature, asset): a
-replay returns `"replay": true` with `credited_usd: 0` instead of
-double-crediting.
+replay returns `"replay": true` with `credited_usd: 0` and `bonus_usd: 0`
+instead of double-crediting.
+
+A USDC deposit reads the deposit wallet's USDC token-account delta from the
+finalized transaction (the network's USDC mint, 6 decimals) and credits it at
+the fixed rate, so `price_usd` is `1` and `usd` equals `amount`. A $THREE
+deposit also earns the configured bonus: `bonus_usd` is `usd` times
+`bonus_bps` over ten thousand, granted as a separate `grant` ledger row
+(`action` `deposit.three_bonus`, `ref_type` `deposit_three_bonus`) that replays
+with the deposit and never counts toward `lifetime_deposited_usd`. With no
+bonus configured both fields are zero.
 
 Error codes: `bad_request` (400), `wallet_not_linked` (403, the transfer was
 not signed by a wallet linked to your account), `tx_failed`, `tx_not_found`,

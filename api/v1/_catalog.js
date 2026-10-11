@@ -401,4 +401,168 @@ export const CATALOG = [
 			minSol: 'number: single-buy SOL threshold to qualify as a whale (default 5)',
 		},
 	},
+	{
+		id: 'v1.agents.signup',
+		method: 'POST',
+		path: '/api/v1/agents/signup',
+		auth: 'public',
+		summary:
+			'Agent self-signup. Sign a short message with an Ed25519 key (a Solana wallet key works) and get ' +
+			'an agent with custodial wallets and an API key, shown once. The agent starts in paper mode with ' +
+			'strict caps until a human claims it. Replay-safe (nonce per key), 300s clock window, 5/h per IP ' +
+			'and 10/h per key.',
+		params: {
+			public_key: 'string: base58 Ed25519 public key (required)',
+			name: 'string 1-100 chars: requested agent name (required)',
+			timestamp: 'number: unix seconds, within 300s of server time (required)',
+			nonce: 'string 16-64 chars [A-Za-z0-9_-]: single use per key (required)',
+			signature: 'string: base58 signature over the signup message (required)',
+		},
+	},
+	{
+		id: 'v1.agents.claim',
+		method: 'POST',
+		path: '/api/v1/agents/claim',
+		auth: 'required',
+		scope: 'agents:write',
+		summary:
+			'A signed-in human claims a self-signed agent with its one-time claim code. Ownership moves to ' +
+			'the caller, the agent signup key is revoked, and the freeze lifts; numeric caps and the live-perps ' +
+			'lock stay until the owner raises them.',
+		params: { code: 'string: the claim code returned by signup (required)' },
+	},
+	{
+		id: 'v1.capabilities',
+		method: 'GET',
+		path: '/api/v1/capabilities',
+		auth: 'public',
+		summary:
+			'Every tool by group with prices, tier and confirm rules, plan limits and approval rules, ' +
+			'generated from the policy registry. Not the scoped-session-key endpoint at /api/agents/capabilities.',
+		params: {},
+	},
+	// Solana trading tools: the same definitions the threews-agent MCP server
+	// serves (api/_lib/trading-tools/registry.js). Docs: /docs/trading-tools.
+	{
+		id: 'v1.trading.index',
+		method: 'GET',
+		path: '/api/v1/trading',
+		auth: 'public',
+		summary: 'Every trading tool with its method, path, auth, tier and JSON input schema, plus the matching MCP server and group.',
+		params: {},
+	},
+	{
+		id: 'v1.trading.token_search',
+		method: 'GET',
+		path: '/api/v1/trading/tokens/search',
+		auth: 'public',
+		summary: 'Find Solana tokens by name, symbol or mint, with verification, liquidity and a best match.',
+		params: { query: 'string: name, symbol or mint (required)', limit: 'number 1-20 (default 5)' },
+	},
+	{
+		id: 'v1.trading.get_price',
+		method: 'GET',
+		path: '/api/v1/trading/price',
+		auth: 'public',
+		summary: 'Live USD price for one token, with its source and timestamp.',
+		params: { mint: 'string: mint, symbol or SOL / USDC (required)' },
+	},
+	{
+		id: 'v1.trading.get_indicators',
+		method: 'GET',
+		path: '/api/v1/trading/indicators',
+		auth: 'public',
+		summary: 'Technical indicators over live OHLCV candles for one token: latest value, trailing series and the last candle time.',
+		params: {
+			mint: 'string: token (required)',
+			indicators: 'comma list of indicator names (default all)',
+			interval: 'string: candle interval (default 1h)',
+			period: 'number 2-200 (default 14)',
+		},
+	},
+	{
+		id: 'v1.trading.get_market_signals',
+		method: 'GET',
+		path: '/api/v1/trading/signals',
+		auth: 'public',
+		summary:
+			'With mint: that token\'s live signals. Without: the Solana ecosystem view (macro, top movers, anomalies) ' +
+			'derived from the pump feed, dex trades and smart-money flow, every signal with its inputs and timestamp.',
+		params: {
+			mint: 'string: token (optional; omit for the ecosystem view)',
+			network: 'string: mainnet | devnet (default mainnet)',
+			window: 'string: 15m | 1h | 6h | 24h (default 1h)',
+			sections: 'comma list: macro, movers, anomalies (default all)',
+		},
+	},
+	{
+		id: 'v1.trading.get_news_feed',
+		method: 'GET',
+		path: '/api/v1/trading/news',
+		auth: 'public',
+		summary: 'Recent crypto news, optionally for one token or category, with source and publish time.',
+		params: { token: 'string: symbol or mint (optional)', category: 'string (optional)', limit: 'number 1-50 (default 15)' },
+	},
+	{
+		id: 'v1.trading.arbitrage_prices',
+		method: 'GET',
+		path: '/api/v1/trading/arbitrage/prices',
+		auth: 'public',
+		summary: 'Buy and sell price for a pair on every Solana venue that can fill it at this size, and the widest spread.',
+		params: { token: 'string (required)', quote: 'string: SOL | USDC | mint (default SOL)', amount: 'number: quote-token size (default 1)' },
+	},
+	{
+		id: 'v1.trading.arbitrage_quote',
+		method: 'GET',
+		path: '/api/v1/trading/arbitrage/quote',
+		auth: 'public',
+		summary:
+			'Best two-leg route with expected profit after fees, a verdict and a simulated worst case. The legs are not ' +
+			'atomic; sizes above $100 are refused unless accept_size_risk, and above $1000 always. Never executes.',
+		params: {
+			token: 'string (required)',
+			quote: 'string: SOL | USDC | mint (default SOL)',
+			amount: 'number: quote-token size (default 1)',
+			accept_size_risk: 'boolean: quote between the $100 default cap and the $1000 ceiling',
+		},
+	},
+	{
+		id: 'v1.trading.swap_quote',
+		method: 'POST',
+		path: '/api/v1/trading/swap/quote',
+		auth: 'optional',
+		scope: 'wallet:read',
+		summary:
+			'Compare every swap aggregator for a Solana trade and rank them by net output after fees and price impact. ' +
+			'With agent_id it also runs the trade guards and returns a confirmation table and a quote_id valid for 5 minutes.',
+		params: {
+			input_mint: 'string (required)',
+			output_mint: 'string (required)',
+			amount: 'number: input-token amount (or amount_raw)',
+			amount_raw: 'string: base units (or amount)',
+			dex: 'string: auto | jupiter | lifi | raydium | dex:<label> (default auto)',
+			slippage_bps: 'number (default 100)',
+			agent_id: 'string: uuid of your agent; required for a quote_id',
+		},
+	},
+	{
+		id: 'v1.trading.swap_simulate',
+		method: 'POST',
+		path: '/api/v1/trading/swap/simulate',
+		auth: 'required',
+		scope: 'wallet:read',
+		summary: 'Dry-run a swap_quote on chain through the guarded executor without signing. The quote_id stays valid.',
+		params: { quote_id: 'string: from swap_quote (required)' },
+	},
+	{
+		id: 'v1.trading.swap_execute',
+		method: 'POST',
+		path: '/api/v1/trading/swap/execute',
+		auth: 'required',
+		scope: 'wallet:trade',
+		summary:
+			'Execute a swap_quote from the agent wallet through the guarded executor (slippage clamp, price-impact breaker, ' +
+			'rug firewall, spend caps, idempotency). Re-prices first and refuses a quote that moved below the approved minimum.',
+		params: { quote_id: 'string: from swap_quote (required)', confirm_swap: 'true, after the user approved the table (required)' },
+	},
 ];

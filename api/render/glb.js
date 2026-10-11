@@ -30,7 +30,7 @@
 //   - `background` must parse as a CSS color. It is interpolated into the
 //     render page, and that page has container network egress, so markup in
 //     this field would be script execution with an internal-network view.
-//   - GLB HEAD-fetched first to enforce a 10 MB cap before chromium boots.
+//   - GLB HEAD-fetched first to enforce a 25 MB cap before chromium boots.
 //   - Distributed IP rate limit (60 renders / 10 min / IP, shared with
 //     /api/render/avatar-clip) to keep chromium costs bounded under abuse.
 
@@ -44,7 +44,7 @@ export const maxDuration = 30;
 
 const MAX_DIM = 2048;
 const MIN_DIM = 64;
-const MAX_GLB_BYTES = 10 * 1024 * 1024;
+const MAX_GLB_BYTES = 25 * 1024 * 1024;
 
 export default wrap(async function handler(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;

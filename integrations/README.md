@@ -8,6 +8,7 @@ generated without leaving the DCC.
 |---|---|---|
 | Blender extension | [`blender/three_ws/`](blender/three_ws/) | Blender 4.2+ |
 | ComfyUI nodes | [`comfyui/three_ws_nodes/`](comfyui/three_ws_nodes/) | ComfyUI |
+| Modly extensions | [`modly/`](modly/) (`three-ws/` cloud nodes, `three-ws-publish/` publish node) | [Modly](https://github.com/lightningpixel/modly) |
 
 Driving Blender from an **agent** rather than by hand is a different job, and it
 has its own package: [`packages/blender-mcp/`](../packages/blender-mcp) is an MCP
@@ -16,12 +17,17 @@ inspect, convert, render, and script 3D files, and pull a Forge generation
 straight into a scene. The add-on below is the artist-facing surface; the two
 install side by side.
 
-Both speak to the same auth-free endpoints:
+All of them speak to the same auth-free endpoints:
 
 - `POST /api/forge` — text→3D and image→3D
 - `GET /api/forge?job=<id>` — poll
 - `GET /api/forge?catalog` — tier/backend matrix
 - `POST /api/forge-upload` — presigned image upload (image→3D)
+- `POST /api/scene-glb-upload`: presigned GLB upload, so a local mesh can be rigged or remeshed
+- `POST /api/forge?action=rig` and `POST /api/forge-remesh`: auto-rig and remesh a GLB by URL
+
+Publishing to an account (`POST /api/avatars`) is the one call that needs a
+three.ws API key.
 
 The **image pipeline** (FLUX→TRELLIS) is free and platform-keyed. The
 **geometry pipeline** (Meshy/Tripo) is BYOK — supply your own provider key in
@@ -41,6 +47,8 @@ edit the canonical file and re-copy:
 ```bash
 cp integrations/_pyclient/three_ws_client.py integrations/blender/three_ws/three_ws_client.py
 cp integrations/_pyclient/three_ws_client.py integrations/comfyui/three_ws_nodes/three_ws_client.py
+cp integrations/_pyclient/three_ws_client.py integrations/modly/three-ws/three_ws_client.py
+cp integrations/_pyclient/three_ws_client.py integrations/modly/three-ws-publish/three_ws_client.py
 ```
 
 ## Tests
@@ -53,6 +61,9 @@ python -m unittest discover -s integrations/_pyclient -p 'test_*.py'
 
 # comfyui nodes
 ( cd integrations/comfyui/three_ws_nodes && python -m unittest test_nodes )
+
+# modly extensions (loads generator.py the way Modly does)
+python -m unittest discover -s integrations/modly/tests -p 'test_*.py'
 ```
 
 The Blender add-on is import-guarded on `bpy` (only present inside Blender); its

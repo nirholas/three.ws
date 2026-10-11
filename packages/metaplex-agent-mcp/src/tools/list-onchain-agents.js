@@ -13,12 +13,13 @@ const SOLANA_CHAIN_ID = { mainnet: 101, devnet: 103 };
 export const def = {
 	name: 'list_onchain_agents',
 	title: 'List the latest on-chain agent registrations',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'The latest agents to land on-chain in the Metaplex Agent Registry, newest first, from the live three.ws ' +
 		'/api/deployments feed (which also indexes registrations minted outside three.ws). Each entry carries the ' +
 		'Core asset address, name, description, image, owner, 3D and x402 flags, and explorer links. Set ' +
-		"all_chains:true to include EVM ERC-8004 registrations in the same stream. Read-only.",
+		"all_chains:true to include EVM ERC-8004 registrations in the same stream. Use this to discover recent " +
+		'registrations; call get_onchain_agent on an address for the full record. Read-only.',
 	inputSchema: {
 		limit: z.number().int().min(1).max(60).optional().describe('How many registrations to return. Default 12.'),
 		network: z.enum(['mainnet', 'devnet']).optional().describe('Solana cluster. Defaults to the configured network.'),

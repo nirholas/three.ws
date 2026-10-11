@@ -3,7 +3,9 @@
  * Only use this script when the user explicitly requests it. Default: POST https://fun-block.pump.fun/agents/collect-fees
  *
  * Build a transaction to collect creator fees (crank) for a coin with no sharing config.
- * Uses OnlinePumpSdk.collectCoinCreatorFeeInstructions — permissionless.
+ * Sweeps the coin's creator fees still on its bonding curve or pool into the
+ * vault first (v3 / PumpSwap v2 trades leave them there), then collects with
+ * OnlinePumpSdk.collectCoinCreatorFeeInstructions. Permissionless.
  */
 import { parseArgs } from "node:util";
 import {
@@ -23,6 +25,7 @@ import {
   requirePublicKey,
 } from "./lib/args.mjs";
 import { buildAndPartialSignTx, transactionToBase64 } from "./lib/tx-build.mjs";
+import { coinCreatorFeeSweeps } from "./lib/sweep.mjs";
 
 const COLLECT_FEE_DEFAULT_UNITS = 200_000;
 
@@ -154,10 +157,11 @@ async function main() {
     }
   }
 
-  const sdkInstructions = await onlineSdk.collectCoinCreatorFeeInstructions(
-    creator,
-    user,
-  );
+  const sweeps = await coinCreatorFeeSweeps(connection, { mint, payer: user, recipient: creator });
+  const sdkInstructions = [
+    ...sweeps.instructions,
+    ...(await onlineSdk.collectCoinCreatorFeeInstructions(creator, user)),
+  ];
 
   const tx = await buildAndPartialSignTx({
     connection,
@@ -172,6 +176,7 @@ async function main() {
   printJson({
     transaction: transactionToBase64(tx),
     creator: creator.toBase58(),
+    swept: sweeps.swept,
     frontRunnerProtection,
   });
 }

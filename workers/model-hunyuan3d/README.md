@@ -75,6 +75,30 @@ and DINOv2 reference encoder carry their own upstream licenses (BSD-3 and Apache
 2.0 respectively). No weights or model code are redistributed by the platform;
 only generated GLBs are returned to callers.
 
+### Territory rule (EU, UK and South Korea are excluded)
+
+The agreement covers the worldwide territory **excluding the European Union,
+the United Kingdom and South Korea** (Section 1.l), and Section 5.c forbids using
+the model, or its output, outside that territory. The platform enforces this on
+the server, not in the client:
+
+- The requester's country comes from the edge geo header (`clientCountry` in
+  `api/_lib/client-geo.js`), never from a request body field.
+- `api/_lib/forge-territory.js` holds the restricted set (the 27 EU member
+  states, GB and KR) and `laneAllowedInTerritory`. An unknown or malformed
+  country is treated as restricted (fail closed).
+- Both Tencent-model lanes are gated: `hunyuan3d` (this worker) and
+  `huggingface` (a Spaces chain that runs Hunyuan3D-2 and 2.1). Auto routing,
+  poll-time failover, the failover suggestions and the prompt-to-avatar plan
+  all filter through it, and an explicit `backend=hunyuan3d` or
+  `backend=huggingface` request from a restricted country answers `403
+  region_restricted` with the lanes that remain open.
+- TRELLIS.2 (MIT, `workers/model-trellis2/`) is the default image-to-3D lane
+  everywhere, and the only one of the two families that serves the restricted
+  regions.
+
+The Notice file the agreement requires is in [`NOTICE`](NOTICE).
+
 ## Endpoints
 
 `POST /infer`, `POST /reconstruct`, `GET /tasks/{id}`, `GET /jobs/{id}` require
@@ -253,6 +277,27 @@ gcloud builds submit --config workers/model-hunyuan3d/cloudbuild.yaml \
 
 Every submit deploys as well as builds, so all three are owner-gated production
 deploys, not build checks.
+
+**The RTX deploy takes the lane down for one model load.** Cloud Run enforces
+the RTX PRO 6000 quota at one GPU, and the serving revision holds it, so a
+normal rolling update can never start the new revision's instance (it waits for
+a GPU until the 4 minute startup probe gives up, and the revision is left not
+Ready while traffic stays on the old one). `cloudbuild.hunyuan21rtx.yaml`
+therefore releases the GPU first with service-level manual scaling at 0,
+deploys, and restores autoscaling (`--scaling=auto --max=1`) whether or not the
+deploy succeeded. Expect about ten minutes without this lane while the new
+instance loads its weights; forge fails over to the other image lanes
+meanwhile. A config-only change (an env var, a probe) needs the same three
+steps by hand:
+
+```bash
+gcloud run services update model-hunyuan3d-21-rtx --region us-central1 --scaling=0
+gcloud run services update model-hunyuan3d-21-rtx --region us-central1 --update-env-vars KEY=VALUE
+gcloud run services update model-hunyuan3d-21-rtx --region us-central1 --scaling=auto --max=1
+```
+
+The full incident is in
+[docs/ops/production-log-triage.md](../../docs/ops/production-log-triage.md).
 
 What each config asks Cloud Run for, all in `us-central1`, all with no GPU zonal
 redundancy, a 900 s request timeout, and the `three-ws-build@` /

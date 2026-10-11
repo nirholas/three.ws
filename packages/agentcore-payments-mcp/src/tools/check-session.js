@@ -9,11 +9,12 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'check_payment_session',
 	title: 'Check a payment session\'s budget and status',
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 	description:
 		'Inspect a payment session: budget, amount spent, remaining budget, status (active/exhausted/expired/cancelled), ' +
 		'expiry time, allowlist, and per-tx ceiling. Optionally include recent payment executions. ' +
-		'Requires THREE_WS_SESSION (only the session owner can read it).',
+		'Requires THREE_WS_SESSION (only the session owner can read it). ' +
+		'Use this to see how much budget one session has left before paying; for every session at once call list_payment_sessions.',
 	inputSchema: {
 		session_id: z.string().uuid()
 			.describe('UUID of the payment session to inspect.'),

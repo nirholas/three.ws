@@ -22,7 +22,7 @@ export const def = {
 	// MCP ToolAnnotations — EXECUTION: moves real value on Solana mainnet, irreversible.
 	annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
 	description:
-		'Swap SOL → target mint via Jupiter aggregator. Direct mode = one tx signed by the buyer. Bundled mode (jitoBundle=true) = two-tx Jito bundle where funderSecret transfers SOL + tip to the buyer atomically with the swap (sweeper-resistant). Pass target="three" to use the $three reference mint. EXECUTION ACTION.',
+		'Swap SOL → target mint via Jupiter aggregator. Direct mode = one tx signed by the buyer. Bundled mode (jitoBundle=true) = two-tx Jito bundle where funderSecret transfers SOL + tip to the buyer atomically with the swap (sweeper-resistant). Pass target="three" to use the $three reference mint. EXECUTION ACTION. Call this after pump_buy_quote has been shown to the user and they said yes, and never without that yes.',
 	inputSchema: {
 		target: z.string().describe('Target mint (base58) or "three" to use the THREE_MINT env.'),
 		buySol: z.number().positive().describe('Amount of SOL to spend.'),

@@ -22,9 +22,9 @@ export const def = {
 	name: 'thumbnail_glb',
 	title: 'Render a GLB to a PNG thumbnail',
 	// MCP ToolAnnotations — safety hints surfaced to MCP clients.
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
-		'Render any public GLB URL to a PNG via three.ws\'s hosted three-light rig + auto-framing camera. Returns the PNG inline as a base64 data URL (≤ ~4 MB) plus dimensions. Background defaults to #0a0a0a — pass "transparent" for compositing.',
+		'Render any public GLB URL to a PNG via three.ws\'s hosted three-light rig + auto-framing camera. Returns the PNG inline as a base64 data URL (≤ ~4 MB) plus dimensions. Background defaults to #0a0a0a; pass "transparent" for compositing. Use this for a quick preview image of any GLB; to apply a pose, camera orbit, or facial expression, call render_avatar instead.',
 	inputSchema: {
 		glbUrl: z.string().url().describe('Public http(s) URL of a .glb file.'),
 		width: z.number().int().min(64).max(2048).optional().describe('Output width in pixels (default 1024).'),

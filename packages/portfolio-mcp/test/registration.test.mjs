@@ -18,17 +18,22 @@ const EXPECTED_NAMES = [
 	'get_portfolio_asset',
 	'get_trades_feed',
 	'get_wallet_balances',
+	'preview_transfer',
 	'send_transfer',
 ];
 
-// The ONLY write tool — it signs and broadcasts an irreversible Solana mainnet
-// transfer. Adding another write? Add it here deliberately, same commit.
-const WRITE_TOOLS = new Set(['send_transfer']);
+// The ONLY destructive tool: it signs and broadcasts an irreversible Solana
+// mainnet transfer. Adding another? Add it here deliberately, same commit.
+const DESTRUCTIVE_TOOLS = new Set(['send_transfer']);
+
+// Every tool that writes anything. get_portfolio_summary persists a history
+// point when called with snapshot:true, so it cannot claim read-only.
+const WRITE_TOOLS = new Set(['send_transfer', 'get_portfolio_summary']);
 
 test('exactly the expected tools are registered', () => {
-	assert.equal(TOOLS.length, 6);
+	assert.equal(TOOLS.length, EXPECTED_NAMES.length);
 	assert.deepEqual(new Set(TOOLS.map((t) => t.name)), new Set(EXPECTED_NAMES));
-	assert.equal(new Set(TOOLS.map((t) => t.name)).size, 6, 'tool names must be unique');
+	assert.equal(new Set(TOOLS.map((t) => t.name)).size, EXPECTED_NAMES.length, 'tool names must be unique');
 });
 
 test('every tool has a title, description, input schema and complete annotations', () => {
@@ -54,25 +59,26 @@ test('reads are read-only live queries; writes are not', () => {
 		// balances, feeds, and broadcasts all move between calls.
 		assert.equal(tool.annotations.openWorldHint, true, `${tool.name} talks to a live service`);
 		assert.equal(tool.annotations.idempotentHint, false, `${tool.name} is never idempotent`);
+		assert.equal(typeof tool.annotations.destructiveHint, 'boolean', `${tool.name} must set destructiveHint`);
 	}
 });
 
-test('read-only tools omit destructiveHint (spec ignores it when readOnlyHint is true)', () => {
+test('read-only tools set destructiveHint:false explicitly (the spec defaults an omitted one to true)', () => {
 	for (const tool of TOOLS) {
 		if (tool.annotations.readOnlyHint === true) {
 			assert.equal(
 				tool.annotations.destructiveHint,
-				undefined,
-				`${tool.name} is read-only — destructiveHint should be omitted`,
+				false,
+				`${tool.name} is read-only, so destructiveHint must be an explicit false`,
 			);
 		}
 	}
 });
 
-test('the write tool sets readOnlyHint:false and destructiveHint:true explicitly', () => {
+test('the transfer tool sets readOnlyHint:false and destructiveHint:true explicitly', () => {
 	const destructive = TOOLS.filter((t) => t.annotations.destructiveHint === true).map((t) => t.name);
-	assert.deepEqual(new Set(destructive), WRITE_TOOLS);
-	for (const name of WRITE_TOOLS) {
+	assert.deepEqual(new Set(destructive), DESTRUCTIVE_TOOLS);
+	for (const name of DESTRUCTIVE_TOOLS) {
 		const tool = TOOLS.find((t) => t.name === name);
 		assert.ok(tool, `${name} must exist in the tool registry`);
 		assert.equal(tool.annotations.readOnlyHint, false, `${name} must not be read-only`);

@@ -363,6 +363,7 @@ Vertex speaks the Anthropic Messages API with four differences, all handled in
 - Body gains `"anthropic_version": "vertex-2023-10-16"` and drops `model` (+ `stream`).
 - Auth: `Authorization: Bearer <oauth>` (via `api/_lib/gcp-auth.js`, shared with Imagen): no `x-api-key`, no `anthropic-version` header. The token is cached per process and refreshed five minutes ahead of expiry; if a refresh fails, the cached token is served until its hard expiry margin so a metadata-server blip does not fail a request.
 - Model id: bare aliases pass through (`claude-sonnet-4-6`); a dated first-party id converts to the `@` form (`claude-haiku-4-5-20251001` → `claude-haiku-4-5@20251001`) via `toVertexModelId()`.
+- Model id validation: the id is spliced into an authenticated URL path and can be caller-supplied (the x402 LLM proxy forwards any non-alias model string), so `vertexMessagesUrl()` refuses anything outside the model-id alphabet (`/`, `..`, `?`, `#`) with a 400 `invalid_model`. `providerChain()` checks `isVertexModelId()` first and simply leaves the Vertex rung out for such an id, so the rest of the chain still serves the request.
 
 SSE event shapes are identical to first-party, so every existing stream parser works unchanged.
 
@@ -407,8 +408,8 @@ behavior is intact.
 ### Deploy & rollback
 
 - **Preview first:** set `VERTEX_CLAUDE_ENABLED=1` (and optionally `VERTEX_CLAUDE_PRIMARY=1`) in Vercel **preview** only. Production flags stay unset — flipping production changes the billing lane and is the owner's call.
-- **Production flip (owner):** `printf '1' | vercel env add VERTEX_CLAUDE_ENABLED production` (+ `VERTEX_CLAUDE_PRIMARY` for chain inversion), then redeploy.
-- **Rollback (instant, no code deploy):** unset `VERTEX_CLAUDE_ENABLED` / `VERTEX_CLAUDE_PRIMARY`. Every lane falls through to the free lanes (Groq → OpenRouter → NVIDIA → SambaNova → Mistral → Z.AI, each present only when its key is) → paid backstop exactly as before.
+- **Production flip (owner):** `gcloud run services update three-ws-api --region us-central1 --update-env-vars VERTEX_CLAUDE_ENABLED=1` (add `VERTEX_CLAUDE_PRIMARY=1` for chain inversion). Never `--set-env-vars`, which replaces the whole set.
+- **Rollback (instant, no code deploy):** `--remove-env-vars VERTEX_CLAUDE_ENABLED,VERTEX_CLAUDE_PRIMARY`. Every lane falls through to the free-first chain in `providerChain()` (keyed rungs such as Groq, Cerebras, OpenRouter `:free`, NVIDIA NIM, SambaNova, Mistral and Z.AI when their keys exist; the keyless Kilo, OVH, Pollinations and LLM7 rungs always; the Vertex Gemini anchor whenever `GOOGLE_CLOUD_PROJECT` is set) → paid backstop exactly as before. The full rung order lives in [llm-lanes.md](llm-lanes.md) and is pinned by `tests/vertex-claude.test.js`.
 
 ---
 
@@ -455,7 +456,10 @@ rung runs under one shared budget (`TEXT_TO_IMAGE_BUDGET_MS`, default 60 s): a
 lane with a fallback behind it is capped at max(25% of the budget, 60% of what
 is left), a lane with under 10% left is skipped, and an exhausted ladder answers
 a retryable `rate_limited` that the forge boundary maps to a 429. Any Vertex
-error degrades cleanly to the next rung, and because Pollinations needs no key,
+error degrades cleanly to the next rung. A NIM FLUX answer whose `finishReason`
+is not `SUCCESS`, or whose frame is blank (a content filter's solid fill,
+`isBlankFrame()`), is treated as `safety_blocked` and handed to the next rung
+rather than persisted as a subjectless reference. Because Pollinations needs no key,
 no single provider's failure is ever the terminal error. Which provider served
 each image is logged (`[text-to-image] served by <model>`) and persisted on the
 forge job as `text_to_image_model`.
@@ -989,7 +993,10 @@ Prompt 04 adds one flag that makes the fleet *primary* across every tier/path:
   `selfHostPrimary()`.
 - The **fallback ladder is unchanged**: self-host error → hosted NIM / HuggingFace
   / Replicate exactly as today. The flag only reorders *preference*, never removes
-  a safety net.
+  a safety net. Since 2026-09-30 a photo job that fails on every textured lane
+  falls through, at poll time, to the TripoSG worker's photo pipeline
+  (`api/_lib/forge-failover.js`, gcp provider mode `triposg`): geometry only, so
+  it is the last rung and the forge tells the user the result has no textures.
 - **Revert:** unset `FORGE_SELFHOST_PRIMARY` (and/or the worker URLs) → today's
   ordering, no redeploy.
 
@@ -1000,7 +1007,7 @@ Env vars the router reads for the fleet (all bearer-authed with
 |---|---|---|
 | `MODEL_TRELLIS_URL` | `trellis_selfhost` | free/paid image + text→3D (primary) |
 | `GCP_HUNYUAN3D_URL` | `hunyuan3d` | image→3D failover |
-| `GCP_TRIPOSG_URL` | `triposg` | sketch→3D |
+| `GCP_TRIPOSG_URL` | `triposg` | sketch→3D, and the last poll-time photo→3D failover (untextured) |
 | `GCP_RECONSTRUCTION_URL` | controller `/reconstruct`, `/rig` | avatar scan + UniRig rigging |
 | `GCP_TEXT2MOTION_URL` | text2motion | text→animation clip |
 | `GCP_RECONSTRUCTION_KEY` | shared bearer | all of the above |

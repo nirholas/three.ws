@@ -356,7 +356,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			'Retarget a curated animation preset onto a caller-supplied rigged humanoid GLB. Returns the retargeted three.js AnimationClip JSON (keyed to the rig\'s actual bone names, hip translation rescaled to its proportions) plus a retarget report — load it alongside the model and play. Set format="glb" to also bake an animated GLB server-side (best-effort: textured rigs may exceed the headless bake budget and fall back to clip JSON — the /pose gallery is the guaranteed GLB export). SSRF-hardened: only public https model URLs are fetched.',
+			'Retarget a curated animation preset onto a caller-supplied rigged humanoid GLB. Returns the retargeted three.js AnimationClip JSON (keyed to the rig\'s actual bone names, hip translation rescaled to its proportions) plus a retarget report; load it alongside the model and play. Set format="glb" to also bake an animated GLB server-side (best-effort: textured rigs may exceed the headless bake budget and fall back to clip JSON; the /pose gallery is the guaranteed GLB export). SSRF-hardened: only public https model URLs are fetched. Use this to put a ready-made motion from list_animations on your own rigged model; for a motion the library does not have, call text_to_animation.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -519,7 +519,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			'Generate a brand-new motion from a natural-language prompt (e.g. "waving confidently", "a slow tai-chi sweep") with a motion-diffusion model, then retarget it onto a caller-supplied rigged humanoid GLB — the same retarget engine apply_animation uses. Returns the retargeted three.js AnimationClip JSON (or a baked animated GLB) plus a report. Unlike preset libraries, the motion does not pre-exist: it is synthesized for the prompt. Requires the text2motion worker configured on the deployment.',
+			'Generate a brand-new motion from a natural-language prompt (e.g. "waving confidently", "a slow tai-chi sweep") with a motion-diffusion model, then retarget it onto a caller-supplied rigged humanoid GLB, using the same retarget engine as apply_animation. Returns the retargeted three.js AnimationClip JSON (or a baked animated GLB) plus a report. Unlike preset libraries, the motion does not pre-exist: it is synthesized for the prompt. Requires the text2motion worker configured on the deployment. Use this when no preset in list_animations fits the motion you want; when one does, apply_animation is faster and repeatable.',
 		inputSchema: {
 			type: 'object',
 			properties: {

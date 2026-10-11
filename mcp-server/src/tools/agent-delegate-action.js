@@ -18,7 +18,7 @@ import { runDelegation } from '../lib/delegate-transport.js';
 
 const TOOL_NAME = 'agent_delegate_action';
 const TOOL_DESCRIPTION =
-	'Send a message to a three.ws-registered agent and receive its response. The target agent uses its configured brain (Claude model and system prompt set via its embed policy). Agents that have opted out of MCP delegation are refused. Useful for agent-to-agent collaboration and tool composition. Paid: $0.01 USDC.';
+	'Send a message to a three.ws-registered agent and receive its response. The target agent uses its configured brain (Claude model and system prompt set via its embed policy). Agents that have opted out of MCP delegation are refused. Use this for agent-to-agent collaboration when you already know which agent should answer; to find and pay an agent by task fit with a provenance receipt, use agent_hire_discover and then agent_hire instead. Paid: $0.01 USDC.';
 
 // Single source of truth: Zod shape carries descriptions + bounds; JSON Schema
 // derived. The prior hand-written JSON Schema left `model` with no bounds; the

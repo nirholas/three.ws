@@ -72,7 +72,8 @@ const DDL = `
 	);
 	create table agent_payout_wallets (
 		id serial primary key, agent_id uuid, user_id uuid, chain text, address text,
-		is_default boolean default false, created_at timestamptz default now()
+		is_default boolean default false, created_at timestamptz default now(),
+		approved_at timestamptz default now(), effective_at timestamptz not null default now()
 	);
 	create table agent_skill_prices (agent_id uuid, skill text, is_active boolean);
 	create table agent_revenue_events (

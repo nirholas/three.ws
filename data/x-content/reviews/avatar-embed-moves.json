@@ -1,0 +1,166 @@
+{
+	"id": "avatar-embed-moves",
+	"contentHash": "b6128d7e7b21b16dcb405b223982234793bfe7a7a5c4e83f93bfe913f2bba8b9",
+	"reviewedAt": "2026-10-10T07:02:19.403Z",
+	"passed": false,
+	"blockers": [
+		"spelling mocap: did you mean mcap, mobcap, MCAP?",
+		"editor verdict is revise"
+	],
+	"texts": [
+		"This three.ws avatar takes requests. One click plays a move: a boxer dance, a back flip, a flex, a round of applause. The number keys set her face, from a smile to a wink to surprise.\n\nEvery clip is retargeted onto her own skeleton live in the browser, so the same library plays on any humanoid avatar you bring.",
+		"The embed is a real control surface for your site. Your page can make the avatar speak with lip sync, set any of the 52 ARKit face shapes, turn her head toward something, or hand her the webcam for live mocap.\n\nDrop one into your own page: three.ws/docs/embedding"
+	],
+	"lint": [],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "from a smile to a wink to surprise",
+				"kind": "evidence:file",
+				"target": "src/avatar-embed.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a boxer dance, a back flip, a flex, a round of applause",
+				"kind": "evidence:file",
+				"target": "public/animations/manifest.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a boxer dance, a back flip, a flex, a round of applause",
+				"kind": "evidence:file",
+				"target": "public/animations/manifest.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a boxer dance, a back flip, a flex, a round of applause",
+				"kind": "evidence:file",
+				"target": "public/animations/manifest.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a boxer dance, a back flip, a flex, a round of applause",
+				"kind": "evidence:file",
+				"target": "public/animations/manifest.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Every clip is retargeted onto her own skeleton live in the browser",
+				"kind": "evidence:file",
+				"target": "src/animation-retarget.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the same library plays on any humanoid avatar you bring",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "speak with lip sync",
+				"kind": "evidence:file",
+				"target": "src/avatar-embed.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "set any of the 52 ARKit face shapes",
+				"kind": "evidence:file",
+				"target": "src/avatar-embed.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "turn her head toward something",
+				"kind": "evidence:file",
+				"target": "src/avatar-embed.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "hand her the webcam for live mocap",
+				"kind": "evidence:file",
+				"target": "src/avatar-embed.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "13 steps passed against the live product"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws",
+				"ok": true,
+				"detail": "HTTP 200 via https://three.ws/"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/docs/embedding",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "spelling",
+				"target": "mocap",
+				"ok": false,
+				"detail": "did you mean mcap, mobcap, MCAP?"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 4,
+			"specificity": 4,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 3
+		},
+		"issues": [
+			{
+				"severity": "major",
+				"area": "visual",
+				"quote": "public/x-media/avatar-embed-moves/art.png",
+				"problem": "Post 1, which carries the core claim, leads with AI-generated key art rather than the filmed feature. The house contract requires filming the feature for anything with motion, and a reel of the live product exists and is attached to post 2. The wireframe figure also does not depict the real avatar; only the small inset frame does.",
+				"fix": "Move the 18-second reel to post 1 and let post 2 carry the key art. The reel is on post 1 of the order in the rewrite below; no text change is needed because both posts already describe what their attachment shows."
+			},
+			{
+				"severity": "minor",
+				"area": "accuracy",
+				"quote": "from a smile to a wink to surprise",
+				"problem": "The on-screen expression bar in the reel reads 'surprised', not 'surprise'. Manifest labels should be quoted exactly.",
+				"fix": "Change to 'from a smile to a wink to surprised'."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"This three.ws avatar takes requests. One click plays a move: a boxer dance, a back flip, a flex, a round of applause. The number keys set her face, from a smile to a wink to surprised.\n\nEvery clip is retargeted onto her own skeleton live in the browser, so the same library plays on any humanoid avatar you bring.",
+				"The embed is a real control surface for your site. Your page can make the avatar speak with lip sync, set any of the 52 ARKit face shapes, turn her head toward something, or hand her the webcam for live mocap.\n\nDrop one into your own page: three.ws/docs/embedding"
+			],
+			"altText": [
+				"AI-generated key art: a glowing blue wireframe figure with arms spread on a dark stage, beside the headline \"Click a move. Your avatar does it.\" In the corner, a real frame filmed live on three.ws/embed/avatar shows an avatar mid move with the animation menu open."
+			]
+		},
+		"summary": "All claims verify against source and the filmed scenario passed; the copy is in-voice and specific. The fix is to lead with the filmed reel on post 1 instead of AI key art, align 'surprised' with the on-screen label, and move the art to post 2.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

@@ -18,12 +18,13 @@ const KINDS = ['face', 'pose', 'hand', 'vmc'];
 export const def = {
 	name: 'motion_capture_clips',
 	title: 'List motion-capture clips',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'List motion-capture clips from the three.ws library — recorded face/pose/hand/VMC tracks an avatar can play back. Returns clip ' +
 		'metadata (id, slug, name, kind, format, duration_ms, frame_count, tags, visibility, play_count, price) but NOT the frames; fetch a ' +
 		'clip by id with motion_capture_clip to get the animation track. Anonymous callers see only public clips; set THREE_WS_API_KEY to ' +
-		'include your own. Cursor-paginated via next_cursor. Read-only live data.',
+		'include your own. Cursor-paginated via next_cursor. Read-only live data. ' +
+		'Use this first to find a recorded face, pose, hand, or VMC clip, then pass its id to motion_capture_clip for the frames.',
 	inputSchema: {
 		kind: z
 			.enum(KINDS)

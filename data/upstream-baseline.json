@@ -1,20 +1,20 @@
 {
 	"generated": "scripts/audit-upstreams.mjs",
 	"summary": {
-		"total": 236,
+		"total": 248,
 		"grades": {
 			"A": 0,
-			"B": 54,
-			"C": 101,
-			"D": 81,
+			"B": 55,
+			"C": 107,
+			"D": 86,
 			"F": 0
 		},
 		"protections": {
-			"deadline": 236,
-			"retry": 106,
-			"failover": 49,
+			"deadline": 248,
+			"retry": 112,
+			"failover": 50,
 			"lastGood": 5,
-			"breaker": 95
+			"breaker": 103
 		}
 	},
 	"sites": {
@@ -115,8 +115,6 @@
 		"api/pump-fun-mcp.js::publish.twitter.com::fetch": "D",
 		"api/pump/[action].js::api.github.com::fetch": "D",
 		"api/pump/dex-trades.js::api.geckoterminal.com::fetch": "D",
-		"api/pump/launch-detail.js::frontend-api-v3.pump.fun::pumpFetchJson": "C",
-		"api/pump/launch-detail.js::swap-api.pump.fun::pumpFetchJson": "C",
 		"api/pump/launch-og.js::frontend-api-v3.pump.fun::pumpFetchJson": "C",
 		"api/tts/eleven.js::api.elevenlabs.io::fetch": "D",
 		"api/tts/eleven/library.js::api.elevenlabs.io::fetch": "D",
@@ -203,6 +201,18 @@
 		"api/_lib/globe-sources.js::api.worldbank.org::fetchUpstreamJson": "C",
 		"api/_lib/token-metadata.js::lite-api.jup.ag::fetchUpstreamJson": "C",
 		"api/pump/token-stats.js::api.dexscreener.com::pumpFetchJson": "C",
-		"src/shared/chart-embeds.js::api.geckoterminal.com::fetch": "D"
+		"src/shared/chart-embeds.js::api.geckoterminal.com::fetch": "D",
+		"api/_lib/bounties/sources/devfolio.js::api.devfolio.co::fetchUpstreamJson": "C",
+		"api/_lib/bounties/sources/devpost.js::devpost.com::fetchUpstreamJson": "C",
+		"api/_lib/bounties/sources/github.js::api.github.com::fetchUpstreamJson": "C",
+		"api/_lib/coin-fallbacks.js::api.dexscreener.com::fetchFirstOrNull": "B",
+		"api/_lib/gateway/audio.js::__expr__::fetch": "D",
+		"api/_lib/gateway/bots.js::api.telegram.org::fetch": "D",
+		"api/_lib/gateway/bots.js::discord.com::fetch": "D",
+		"api/_lib/identities.js::oauth2.googleapis.com::fetchUpstream": "C",
+		"api/_lib/predictions/solana-venue.js::clob.polymarket.com::fetchUpstreamJson": "C",
+		"api/_lib/predictions/solana-venue.js::api.elections.kalshi.com::fetchUpstreamJson": "C",
+		"api/_lib/tool-gateway/web.js::api.duckduckgo.com::fetchUpstreamJson": "C",
+		"src/dextools-boost-embed.js::api.dexscreener.com::fetch": "D"
 	}
 }

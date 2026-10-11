@@ -19,7 +19,8 @@ export const def = {
 		'file extensions: .glb, .gltf, .fbx, .obj, .stl, .ply, .dae, .abc, .usd/.usda/.usdc/.usdz, .x3d, and .blend ' +
 		'on both sides. Modifiers are applied on export by default, and an optional uniform scale is baked in. ' +
 		'Returns the output path, its size, the resulting geometry counts, and the world-space bounds. The input ' +
-		'file is never modified; omit "output" and the result lands in the server workdir.',
+		'file is never modified; omit "output" and the result lands in the server workdir. Use this to change a ' +
+		'file\'s format only; to also cut triangles and texture size for the web, call blender_optimize instead.',
 	inputSchema: {
 		input: z.string().min(1).describe('Path to the source 3D file.'),
 		output: z

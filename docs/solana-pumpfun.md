@@ -51,7 +51,7 @@ This document covers what was added, how it composes with what was already there
 |---|---|---|
 | MCP client | [api/_lib/pumpfun-mcp.js](../api/_lib/pumpfun-mcp.js) | Cached JSON-RPC client to upstream bot |
 | Read API | [api/agents/pumpfun.js](../api/agents/pumpfun.js) | `?op=claims|graduations|token|creator` |
-| SSE feed | [api/agents/pumpfun.js](../api/agents/pumpfun.js) (`?_handler=feed`) | Live event stream, 90s window, auto-reconnects |
+| SSE feed | [api/agents/pumpfun.js](../api/agents/pumpfun.js) (`/api/agents/pumpfun-feed`, rewritten to `?_handler=feed`) | Live event stream, 90s window, auto-reconnects. An anonymous `GET` answers any origin, so an `<agent-3d tracked-mint>` embed on another site can open it |
 | Cron crawler | [api/cron/\[name\].js](../api/cron/%5Bname%5D.js) (`name=pumpfun-signals`) | 15-min sweep → `pumpfun_signals` |
 | Schema | [api/_lib/schema.sql](../api/_lib/schema.sql) | New `pumpfun_signals` table |
 | Skills | [src/agent-skills-pumpfun-watch.js](../src/agent-skills-pumpfun-watch.js) | 4 skills: recent-claims, token-intel, watch-start, watch-stop |
@@ -147,7 +147,7 @@ These are **off-chain** signals — flagged as such, not on-chain attestations. 
 
 ## Widget
 
-The `pumpfun-feed` widget renders a stack of cards (claim or graduation) as an absolutely-positioned overlay on top of the 3D viewer. With `autoNarrate: true`, the avatar narrates each event through the protocol bus. Each card's trading-terminal links come from the shared builder in [src/shared/trading-terminals.js](../src/shared/trading-terminals.js) (`terminalLinks(mint)` and `referralOffers()`), the same one the copy pages use, so adding or re-pointing a terminal is one change. The overlay carries no inline event handlers (a broken token image hides through the `data-fallback="hide"` hook), which is what keeps it inside the site's CSP.
+The `pumpfun-feed` widget renders a stack of cards (claim or graduation) as an absolutely-positioned overlay on top of the 3D viewer. With `autoNarrate: true`, the avatar narrates each event through the protocol bus. Each card's trading-terminal links come from the shared builder in [src/shared/trading-terminals.js](../src/shared/trading-terminals.js) (`terminalLinks(mint, { from })` and `referralOffers()`), the same one the copy pages use, so adding or re-pointing a terminal is one change. DEXTools leads the list and its link goes through the counted `/api/coin/dextools` redirect, attributed to the `pumpfun-feed` surface. The overlay carries no inline event handlers (a broken token image hides through the `data-fallback="hide"` hook), which is what keeps it inside the site's CSP.
 
 Studio config schema (validated in `widget-types.js`):
 

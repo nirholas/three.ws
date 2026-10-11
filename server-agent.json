@@ -155,6 +155,16 @@
 					"arguments": ["capability"]
 				},
 				{
+					"name": "perps",
+					"title": "Trade perpetuals",
+					"arguments": ["agentId", "market"]
+				},
+				{
+					"name": "predictions",
+					"title": "Prediction markets",
+					"arguments": ["agentId", "topic"]
+				},
+				{
 					"name": "agent-report",
 					"title": "Agent status report",
 					"arguments": ["agentId"]

@@ -25,7 +25,7 @@ import {
 	MOBILE_HEIGHT,
 	MEAN_TOLERANCE,
 } from '../scripts/build-hdri-mobile.mjs';
-import { HDRI_PRESETS, HDRI_PRESETS_MOBILE, QUALITY_TIERS } from '../src/shared/cinematic-render.js';
+import { HDRI_PRESETS, HDRI_PRESETS_MOBILE, QUALITY_TIERS, detectQualityTier, isSoftwareRenderer } from '../src/shared/cinematic-render.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const HDRI_DIR = join(ROOT, 'public/hdri');
@@ -70,5 +70,20 @@ describe('mobile HDRI variants', () => {
 		// than 1.4 MB, not a better answer than nothing on a device that cannot
 		// afford shadows either.
 		expect(QUALITY_TIERS.mobile.hdri).toBe(false);
+	});
+});
+
+describe('software rasterisers get the lightest tier', () => {
+	const gl = (name) => ({ getExtension: () => ({ UNMASKED_RENDERER_WEBGL: 1 }), getParameter: () => name });
+	it('detects SwiftShader and llvmpipe', () => {
+		expect(isSoftwareRenderer(gl('Google SwiftShader'))).toBe(true);
+		expect(isSoftwareRenderer(gl('Mesa llvmpipe (LLVM 15.0.7, 256 bits)'))).toBe(true);
+		expect(isSoftwareRenderer(gl('ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 Direct3D11 vs_5_0 ps_5_0)'))).toBe(false);
+	});
+	it('forces the mobile tier on a software context even on a fast host', () => {
+		const navigator = { userAgent: 'Mozilla/5.0 (X11; Linux x86_64)', deviceMemory: 32, hardwareConcurrency: 16 };
+		const window = { matchMedia: () => ({ matches: false }) };
+		expect(detectQualityTier({ navigator, window })).toBe('high');
+		expect(detectQualityTier({ navigator, window, gl: gl('Google SwiftShader') })).toBe('mobile');
 	});
 });

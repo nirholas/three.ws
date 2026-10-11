@@ -2,6 +2,8 @@
 
 three.ws is open source and self-hostable. It is also distributed through cloud marketplaces (for enterprise procurement) and indexed in ecosystem dApp directories (for community discovery). This page tracks every official listing.
 
+The full machine-checked index of every surface, including awesome-list PRs and aggregators, is the [listings registry](./listings-registry.md).
+
 If you maintain a marketplace, registry, or directory and want three.ws listed, open an issue at [github.com/nirholas/three.ws/issues](https://github.com/nirholas/three.ws/issues) or reach out via the contacts on [three.ws](https://three.ws).
 
 ---

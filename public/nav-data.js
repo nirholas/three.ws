@@ -81,6 +81,12 @@ export const NAV_GROUPS = [
 						badge: 'New',
 						desc: 'Your messages, calendar and phone, delivered in person by a 3D character',
 					},
+					{
+						title: 'Get the apps',
+						href: '/apps',
+						tier: 'advanced',
+						desc: 'Android, Solana Seeker, iPhone, desktop and the web desktop',
+					},
 				],
 			},
 			{
@@ -99,6 +105,46 @@ export const NAV_GROUPS = [
 						badge: 'Live',
 						badgeTone: 'live',
 						desc: 'Upload a photo (up to 4 angles) → textured GLB of the object',
+					},
+					{
+						title: 'Workbench',
+						href: '/workbench',
+						badge: 'New',
+						badgeTone: 'live',
+						// A node-workflow workspace is a power-user surface; keep it off
+						// the lite menu, which sits at its scannable ceiling.
+						tier: 'advanced',
+						desc: 'Photo → mesh through a visual workflow: remesh, rig, smooth, decimate, export',
+					},
+					{
+						title: 'Forge Workflows',
+						href: '/forge/workflows',
+						badge: 'New',
+						badgeTone: 'live',
+						// A node editor is a power-user surface, so it stays off the lite menu.
+						tier: 'advanced',
+						desc: 'Chain prompt or photo to 3D, rig, remesh, restyle and export into one run',
+					},
+					{
+						title: 'CAD Forge',
+						href: '/cad',
+						badge: 'New',
+						badgeTone: 'live',
+						// Everything tier: the lite menu sits at its 30-link scannable
+						// ceiling (tests/onboarding-tier.test.js), and a parametric CAD
+						// tool is a specialist's first stop, not a newcomer's.
+						tier: 'advanced',
+						desc: 'Describe a part → real parametric CAD: STEP, STL, drawings and live dimension sliders',
+					},
+					{
+						title: 'Anatomy',
+						href: '/anatomy',
+						badge: 'New',
+						badgeTone: 'live',
+						// Everything tier for the same reason as CAD Forge: the lite menu
+						// is at its link ceiling.
+						tier: 'advanced',
+						desc: 'Describe a machine → an interactive cutaway with moving parts, fire, water and plasma',
 					},
 					{
 						title: 'Describe it to 3D',
@@ -205,6 +251,11 @@ export const NAV_GROUPS = [
 				label: 'Start here',
 				items: [
 					{
+						title: 'Browse by goal',
+						href: '/everything',
+						desc: 'Every feature grouped by what you want to do: make, animate, build, sell, launch, trade',
+					},
+					{
 						title: 'Search',
 						href: '/search',
 						desc: 'One search across avatars, agents, 3D models, worlds & coins — remix straight from the results',
@@ -268,6 +319,7 @@ export const NAV_GROUPS = [
 					{
 						title: 'Pocket Console',
 						href: '/pocket',
+						tier: 'advanced',
 						desc: 'A handheld with a live 3D agent in the screen: the D-pad walks it, and one iframe puts it on your site',
 					},
 					{ title: 'Agents Index', href: '/agents', desc: 'Browse every registered agent' },
@@ -440,6 +492,20 @@ export const NAV_GROUPS = [
 						desc: 'Pool capital with other agents into one auditable treasury — it trades on reputation-weighted consensus and pays profit back pro-rata on-chain',
 					},
 					{
+						title: 'Specialist Teams',
+						href: '/teams',
+						badge: 'New',
+						badgeTone: 'new',
+						desc: 'Four 3D agents under one spend policy: a Researcher, an Entry scout, a Trader and a Launcher sharing one live findings board',
+					},
+					{
+						title: 'Squad Chat',
+						href: '/team-chat',
+						badge: 'New',
+						badgeTone: 'new',
+						desc: 'Tell your squad what you want in one sentence: the coordinator plans it, the specialists run it live, and anything that signs waits for your yes',
+					},
+					{
 						title: 'Reputation Staking',
 						href: '/reputation/market',
 						badge: 'New',
@@ -501,6 +567,11 @@ export const NAV_GROUPS = [
 						badge: 'Live',
 						badgeTone: 'live',
 						desc: 'Start here: live fleet vitals, the agent scoreboard, and every trading surface in one map',
+					},
+					{
+						title: 'Approvals',
+						href: '/approvals',
+						desc: 'Approve or deny the actions your agents paused to ask you about',
 					},
 					{
 						title: 'Exit Lab',
@@ -750,6 +821,12 @@ export const NAV_GROUPS = [
 						desc: 'PvP trading tournaments — verified P&L, on-chain results, $THREE prizes',
 					},
 					{
+						title: 'Event Markets',
+						href: '/event-markets',
+						desc: 'Call the winner of every three.ws event with free-to-play points and climb the leaderboard',
+						badge: 'New',
+					},
+					{
 						title: 'Sniper Arena',
 						href: '/play/arena',
 						desc: 'Watch AI agents trade pump.fun live',
@@ -862,6 +939,7 @@ export const NAV_GROUPS = [
 // Top-level links rendered after the dropdown groups (no submenu).
 export const NAV_LINKS = [
 	{ label: 'Text → 3D', href: '/forge', highlight: true },
+	{ label: 'Everything', href: '/everything' },
 ];
 
 // Footer-of-drawer links that have no desktop dropdown home.

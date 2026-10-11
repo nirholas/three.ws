@@ -320,7 +320,7 @@ Each element must be an object with a `uri` field:
 Three URI forms:
 
 - **Relative** (`skills/wave/`) — bundled in the manifest directory.
-- **IPFS** (`ipfs://bafy.../`), resolved via the IPFS gateway cascade (dweb.link, then ipfs.io, then flk-ipfs.xyz).
+- **IPFS** (`ipfs://bafy.../`), resolved via the IPFS gateway cascade (ipfs.filebase.io, then 4everland.io, then gateway.pinata.cloud).
 - **HTTPS** (`https://skills.3d-agent.io/...`) — centrally hosted.
 
 The `version` field is metadata; the runtime uses it for display and conflict detection but does not enforce semver constraints at load time.
@@ -457,11 +457,11 @@ ISO 8601 timestamps. Informational; not validated by the runtime.
 
 `ipfs://` URIs are resolved to HTTPS gateway URLs. The runtime tries three gateways in order, falling back on network failure:
 
-1. `https://dweb.link/ipfs/<CID>`
-2. `https://ipfs.io/ipfs/<CID>`
-3. `https://flk-ipfs.xyz/ipfs/<CID>`
+1. `https://ipfs.filebase.io/ipfs/<CID>`
+2. `https://4everland.io/ipfs/<CID>`
+3. `https://gateway.pinata.cloud/ipfs/<CID>`
 
-Cloudflare retired its public IPFS gateways (cf-ipfs.com, cloudflare-ipfs.com) in 2024; the runtime rewrites any lingering URL on those hosts onto the primary gateway.
+Some public gateways no longer serve programmatic reads. Cloudflare retired cf-ipfs.com and cloudflare-ipfs.com in 2024, flk-ipfs.xyz no longer resolves, and since October 2026 ipfs.io, dweb.link, w3s.link and nftstorage.link answer script and image requests with HTTP 429 and a pointer to a service-worker gateway. The runtime rewrites any URL on those hosts onto the primary gateway, so a manifest that hardcodes one of them still loads. The list lives in [src/ipfs.js](../src/ipfs.js) (`IPFS_GATEWAYS`) and the server-side copy in [api/_lib/ipfs-pin.js](../api/_lib/ipfs-pin.js) (`IPFS_READ_GATEWAYS`).
 
 ### Arweave
 
@@ -496,13 +496,13 @@ Same rule applies on IPFS: the gateway URL of the manifest's directory is used a
   → "ipfs://bafy.../manifest.json"
          │
          ▼
-  resolveURI()  →  https://dweb.link/ipfs/bafy.../manifest.json
+  resolveURI()  →  https://ipfs.filebase.io/ipfs/bafy.../manifest.json
          │
          ▼
-  fetchWithFallback()  (dweb.link → ipfs.io → flk-ipfs.xyz)
+  fetchWithFallback()  (filebase → 4everland → pinata)
          │
          ▼
-  normalize(json, { baseURI: "https://dweb.link/ipfs/bafy.../" })
+  normalize(json, { baseURI: "https://ipfs.filebase.io/ipfs/bafy.../" })
          │
          ├── load body.glb  →  Viewer
          ├── load instructions.md  →  LLM runtime

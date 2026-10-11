@@ -48,7 +48,15 @@ Counts and rates over 1h / 3h / 24h windows for payments arriving at our paid
 routes:
 
 - `settled` / `settle_failed`: outcomes of `settlePayment` after a valid
-  verify. `settle_success_rate` = settled / (settled + settle_failed).
+  verify. `settle_success_rate` = settled / (settled + settle_failed). A Solana
+  settle that was broadcast but not yet confirmed when the response shipped
+  (the `settlement_pending` path, see
+  [x402-settlement-pending.md](../x402-settlement-pending.md)) is a
+  `payment_settled` row with `settlement_status = 'pending'` until the reconcile
+  cron promotes it, so it counts as settled here.
+- `unsettled_flush`: a handler that ended its own response before settlement
+  ran, so the buyer received the good without paying for it. Any nonzero count
+  is a route bug (it should be `streaming: true`), not buyer behaviour.
 - `verify_rejected`: `verifyPayment` refusals, written durably as
   `payment_verify_rejected` events (metadata carries `reason` and
   `rejected_proof` vs `upstream_fault`). A spike here with flat settles is the
@@ -75,7 +83,8 @@ verify and would otherwise dilute the signal.
 ### `ring_settle` (from `gatherX402SettleHealth`)
 
 The outbound settle-success sensor over `x402_autonomous_log` (3h window,
-rail-fault allowlist), verbatim: status, human detail, triage hint, and the
+rail-fault allowlist, and excluding unpaid probe pipelines such as the
+`reliability` uptime monitor, whose third-party timeouts never touch a payment), verbatim: status, human detail, triage hint, and the
 top fault signatures. This is the same object `/api/healthz` consumes; it is
 included here so the board is complete without a second request. Its triage
 map lives in [production-log-triage.md](production-log-triage.md).
@@ -84,10 +93,22 @@ The ring log is reason-blind for refusals that arrive over HTTP (they all read
 as `http_5xx`), so the sensor reconciles status-only 5xx faults against the
 facilitator's own book (`x402_self_facilitator_log.reject_reason`) for the same
 window and names the dominant cause in `ring_settle.metrics.cause`:
-`sponsor_floor` (the Solana accept was withdrawn under the SOL floor),
+`sponsor_floor` (the sponsor fee wallet is under its SOL floor),
 `fee_governor` (deliberate spend pacing, a budget problem, not a rail fault),
 or `rail` (genuine settle faults). `governorSkips` is carried even on a healthy
 rate so a wallet sliding toward its budget shows up before the rate does.
+
+`ring_settle.metrics.mechanism` is what to read second, because one cause can
+point at opposite evidence: `accept_withdrawn` (the Solana accept is gone from
+the challenge, so the facilitator never saw the calls) versus `settle_refused`
+(the accept is still advertised and the facilitator refuses each settle at the
+floor gate, naming the wallet in `fee_wallet_below_floor:<held><<floor>`), plus
+`paced`, `rail`, and `gate_bypass`. `gate_bypass` (counted in
+`metrics.gateBypass`) means a caller outside the ring is signing payments the fee
+governor then refuses at settle without asking the admission gate first; it marks
+the sensor `degraded` even while the ring's own rate looks healthy. The mechanism
+table and where each one's proof lives are in
+[production-log-triage.md](production-log-triage.md).
 
 A rent-exemption failure on the fee payer (`InsufficientFundsForRent` on
 account index 0, in either spelling the RPCs use) wears a rail-shaped reason
@@ -201,8 +222,8 @@ the floor, `sponsorKnownBelowFloor()` makes `buildRequirements()` withdraw the
 Solana accept from every 402 challenge, so the Solana-only ring never attempts a
 payment and there is nothing to reject. Settlements collapse while rail faults
 stay flat. The settle sensor reports that as `cause: sponsor_floor` (distinct
-from `fee_governor` and `rail`) in `ring_settle.metrics`; the accepts are
-checkable directly:
+from `fee_governor` and `rail`) with mechanism `accept_withdrawn` in
+`ring_settle.metrics`; the accepts are checkable directly:
 
 ```sh
 curl -s https://three.ws/api/x402/three-intel | jq '.accepts[].network'

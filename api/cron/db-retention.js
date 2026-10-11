@@ -78,6 +78,7 @@ import { sql, isDbCapacityError } from '../_lib/db.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { requireCron } from '../_lib/cron-auth.js';
 import { purgeExpiredActionLog } from '../_lib/home/privacy.js';
+import { purgeExpiredMcpSessions } from '../_lib/mcp-clients.js';
 
 // Mint-keyed satellites of pump_coin_intel, deleted before the master so no run
 // orphans a satellite row. Every name here is a fixed constant (never user input),
@@ -160,9 +161,9 @@ const TIME_SERIES_TABLES = [
 	// One row per coin the Sentiment Scout ever put on its board. Trade receipts
 	// cite the first sighting, so it keeps the audit window, not the firehose one.
 	{ table: 'sentiment_scout_reads', tsColumn: 'first_scouted_at', windowKind: 'audit' },
-	// The raw MCP session join table (api/_lib/mcp-client-analytics.js). Only
-	// the daily aggregate in mcp_client_daily is kept, so a session idle for
-	// 30 days goes. Fixed, like `spent`: the window is a privacy promise in
+	// The raw MCP session join table (api/_lib/mcp-clients.js). Only the daily
+	// aggregate in mcp_client_daily is kept, so a session idle for 30 days
+	// goes. Fixed, like `spent`: the window is a privacy promise in
 	// docs/ops/mcp-clients.md, not a storage valve.
 	{ table: 'mcp_client_sessions', tsColumn: 'last_seen_at', windowKind: 'mcpSessions' },
 ];
@@ -610,6 +611,17 @@ export default wrapCron(async (req, res) => {
 		}
 	}
 
+	// F. MCP client analytics: raw session rows expire after 30 days, the daily
+	// aggregates stay. Best-effort for the same reason as E.
+	let mcpSessions = { deleted: 0 };
+	if (await tableExists('mcp_client_sessions')) {
+		try {
+			mcpSessions = await purgeExpiredMcpSessions();
+		} catch (err) {
+			mcpSessions = { deleted: 0, error: err?.message?.slice(0, 160) };
+		}
+	}
+
 	// VACUUM only tables we actually deleted from this tick.
 	const touched = Object.keys(firehose.perTable).filter((t) => firehose.perTable[t] > 0);
 	for (const t of Object.keys(orphans)) if (!touched.includes(t)) touched.push(t);
@@ -619,6 +631,7 @@ export default wrapCron(async (req, res) => {
 	if (pendingSettlements.deleted > 0) touched.push('x402_pending_settlements');
 	if (regen.deleted > 0 || regen.stripped > 0) touched.push('avatar_regen_jobs');
 	if (homeActionLog.deleted > 0) touched.push('home_action_log');
+	if (mcpSessions.deleted > 0) touched.push('mcp_client_sessions');
 	await vacuumTables(touched);
 
 	// D. Under pressure, actually shrink the files (plain VACUUM cannot) so the
@@ -676,6 +689,7 @@ export default wrapCron(async (req, res) => {
 		pending_settlements: pendingSettlements,
 		regen,
 		home_action_log: homeActionLog,
+		mcp_client_sessions: mcpSessions,
 		vacuumed: touched,
 		compaction,
 		top_tables: topTables,

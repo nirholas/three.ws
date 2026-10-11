@@ -172,7 +172,7 @@ export const toolDefs = [
 		title: 'Oracle verdict for one coin',
 		annotations: LIVE_ANNOTATIONS,
 		description:
-			"Get Oracle's full conviction verdict for a specific pump.fun coin by mint address. Returns the fused 0-100 conviction score, tier (prime/strong/lean/watch/avoid), all four pillar scores (pedigree = who's behind it, structure = how it's built, narrative = cultural fit, momentum = early trading signal), active badges (e.g. smart_money_early, narrative_match), and a machine-readable buy/watch/skip recommendation. If the coin isn't in the Oracle cache yet, it will be scored on-demand (may add ~1s latency).",
+			"Get Oracle's full conviction verdict for a specific pump.fun coin by mint address. Returns the fused 0-100 conviction score, tier (prime/strong/lean/watch/avoid), all four pillar scores (pedigree = who's behind it, structure = how it's built, narrative = cultural fit, momentum = early trading signal), active badges (e.g. smart_money_early, narrative_match), and a machine-readable buy/watch/skip recommendation. If the coin isn't in the Oracle cache yet, it will be scored on-demand (may add ~1s latency). Use this when you already have a specific mint in mind; for the ranked board of current plays call oracle_top_plays.",
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -241,7 +241,7 @@ export const toolDefs = [
 			openWorldHint: false,
 		},
 		description:
-			"Arm your agent to automatically act on Oracle conviction signals. Once armed, the Oracle cron (every 2 min) will detect high-conviction launches that cross your floor and execute buys from your agent's custodial Solana wallet. Set mode='simulate' (default, safe) to log what it would have bought without spending. Set mode='live' to spend real SOL. The agent acts at most once per mint, per-trade SOL is capped, and you can disarm at any time by passing armed=false.",
+			"Arm your agent to automatically act on Oracle conviction signals. Once armed, the Oracle cron (every 2 min) will detect high-conviction launches that cross your floor and execute buys from your agent's custodial Solana wallet. Set mode='simulate' (default, safe) to log what it would have bought without spending. Set mode='live' to spend real SOL. The agent acts at most once per mint, per-trade SOL is capped, and you can disarm at any time by passing armed=false. Use this when the owner wants the agent to buy high-conviction Oracle picks on its own; check the setup and results afterwards with oracle_watch_status.",
 		inputSchema: {
 			type: 'object',
 			properties: {

@@ -12,7 +12,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_tier_info',
 	title: '$THREE holder tier ladder',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		"The $THREE holder tier ladder — the membership bands a wallet earns purely from its on-chain $THREE balance. Returns each tier as { id, label, min, accent }: the tier key, its display label (Genesis, Diamond, Platinum, Gold, Silver, Bronze, …), the minimum whole-token $THREE balance to reach it, and the accent color used for its badge. Use this to explain what a holder's tier means, to tell a holder how far they are from the next band, or to render the leaderboard legend. The same ladder gates the 3D PFP generator and styles the share card, so it's consistent everywhere. Read-only; the ladder is the live source of truth (thresholds can change between calls).",
 	inputSchema: {},

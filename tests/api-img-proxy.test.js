@@ -4,7 +4,8 @@
 //
 //   1. ?seed=<x> alone yields the on-brand SVG placeholder (no upstream call).
 //   2. ?meta=<json-uri> resolves the document's `.image` server-side and proxies
-//      the real artwork bytes back.
+//      the real artwork bytes back. The document is raced across every IPFS
+//      gateway like art is, so a metadata URI pinned to a dead gateway resolves.
 //   3. A metadata `image` that is a data: URI is rejected → placeholder (we never
 //      serve attacker-supplied inline content from our own origin).
 //   4. A metadata fetch failure falls through to the placeholder, never an error.
@@ -30,9 +31,6 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 	clientIp: vi.fn(() => '127.0.0.1'),
 }));
 
-const safeFetchJson = vi.fn();
-vi.mock('../api/_lib/ssrf.js', () => ({ safeFetchJson: (...a) => safeFetchJson(...a) }));
-
 const fetchModel = vi.fn();
 vi.mock('../api/_lib/fetch-model.js', () => ({ fetchModel: (...a) => fetchModel(...a) }));
 
@@ -55,9 +53,27 @@ function mockRes() {
 }
 
 beforeEach(() => {
-	safeFetchJson.mockReset();
 	fetchModel.mockReset();
 });
+
+// Serve `doc` as a JSON response and `art` as image bytes, keyed by URL, so a
+// single mock can satisfy both hops of the follow.
+function mockUpstream({ jsonAt = {}, imageAt = {} } = {}) {
+	fetchModel.mockImplementation(async (url) => {
+		if (url in jsonAt) {
+			return {
+				bytes: new TextEncoder().encode(JSON.stringify(jsonAt[url])),
+				url,
+				contentType: 'application/json; charset=utf-8',
+				filename: 'token.json',
+			};
+		}
+		if (url in imageAt) {
+			return { bytes: imageAt[url], url, contentType: 'image/png', filename: 'art.png' };
+		}
+		throw new Error(`upstream 404 ${url}`);
+	});
+}
 
 describe('api/img metadata resolution', () => {
 	it('serves the branded SVG placeholder for a seed-only request', async () => {
@@ -66,26 +82,19 @@ describe('api/img metadata resolution', () => {
 		expect(res.statusCode).toBe(200);
 		expect(res.headers['content-type']).toMatch(/image\/svg\+xml/);
 		expect(String(res.body)).toContain('<svg');
-		expect(safeFetchJson).not.toHaveBeenCalled();
 		expect(fetchModel).not.toHaveBeenCalled();
 	});
 
 	it('resolves .image from token metadata and proxies the real artwork', async () => {
-		safeFetchJson.mockResolvedValue({
-			ok: true,
-			data: { name: 'VOID', image: 'https://cdn.example/art.png' },
-		});
-		fetchModel.mockResolvedValue({
-			bytes: new Uint8Array([1, 2, 3]),
-			url: 'https://cdn.example/art.png',
-			contentType: 'image/png',
-			filename: 'art.png',
+		mockUpstream({
+			jsonAt: { 'https://meta.example/token.json': { name: 'VOID', image: 'https://cdn.example/art.png' } },
+			imageAt: { 'https://cdn.example/art.png': new Uint8Array([1, 2, 3]) },
 		});
 
 		const res = mockRes();
 		await handler(mockReq('?meta=https%3A%2F%2Fmeta.example%2Ftoken.json&seed=VOID'), res);
 
-		expect(safeFetchJson).toHaveBeenCalledWith(
+		expect(fetchModel).toHaveBeenCalledWith(
 			'https://meta.example/token.json',
 			expect.any(Object),
 		);
@@ -100,29 +109,52 @@ describe('api/img metadata resolution', () => {
 	});
 
 	it('rejects a data: image in metadata and falls back to the placeholder', async () => {
-		safeFetchJson.mockResolvedValue({
-			ok: true,
-			data: { image: 'data:image/svg+xml,<svg onload=alert(1)>' },
+		mockUpstream({
+			jsonAt: { 'https://meta.example/evil.json': { image: 'data:image/svg+xml,<svg onload=alert(1)>' } },
 		});
 
 		const res = mockRes();
 		await handler(mockReq('?meta=https%3A%2F%2Fmeta.example%2Fevil.json&seed=EVIL'), res);
 
-		expect(fetchModel).not.toHaveBeenCalled();
+		expect(fetchModel).toHaveBeenCalledTimes(1); // the document only, never the data: URI
 		expect(res.statusCode).toBe(200);
 		expect(res.headers['content-type']).toMatch(/image\/svg\+xml/);
 		expect(String(res.body)).toContain('<svg');
 	});
 
 	it('falls back to the placeholder when the metadata fetch fails', async () => {
-		safeFetchJson.mockRejectedValue(new Error('ssrf refused'));
+		mockUpstream({});
 
 		const res = mockRes();
 		await handler(mockReq('?meta=https%3A%2F%2Fmeta.example%2Fdown.json&seed=DOWN'), res);
 
 		expect(res.statusCode).toBe(200);
 		expect(res.headers['content-type']).toMatch(/image\/svg\+xml/);
-		expect(fetchModel).not.toHaveBeenCalled();
+		expect(fetchModel).toHaveBeenCalledTimes(1); // the document only
+	});
+
+	it('resolves a metadata URI pinned to a dead gateway through a live one', async () => {
+		// pump.fun hands out ipfs.io metadata URIs; ipfs.io now refuses
+		// programmatic reads, so the document must come from another gateway.
+		const CID = 'bafkreimeta';
+		const art = 'https://cdn.example/coin.png';
+		fetchModel.mockImplementation(async (url) => {
+			if (url.startsWith('https://ipfs.io/')) throw new Error('429 service worker gateway only');
+			if (url.endsWith(`/ipfs/${CID}`)) {
+				return { bytes: new TextEncoder().encode(JSON.stringify({ image: art })), url, contentType: 'application/json', filename: 'x' };
+			}
+			if (url === art) return { bytes: new Uint8Array([9]), url, contentType: 'image/png', filename: 'a' };
+			throw new Error('nope');
+		});
+
+		const res = mockRes();
+		await handler(mockReq(`?meta=${encodeURIComponent(`https://ipfs.io/ipfs/${CID}`)}&fallback=none`), res);
+
+		const tried = fetchModel.mock.calls.map((c) => c[0]).filter((u) => u.endsWith(`/ipfs/${CID}`));
+		expect(tried.length).toBeGreaterThan(1);
+		expect(res.statusCode).toBe(200);
+		expect(res.headers['content-type']).toBe('image/png');
+		expect([...res.body]).toEqual([9]);
 	});
 
 	it('400s when no url, meta, or seed is supplied', async () => {
@@ -140,7 +172,6 @@ describe('api/img metadata resolution', () => {
 // the <img>, which is what swaps in the disc.
 describe('api/img ?fallback=none', () => {
 	beforeEach(() => {
-		safeFetchJson.mockReset();
 		fetchModel.mockReset();
 	});
 
@@ -183,25 +214,6 @@ describe('api/img ?fallback=none', () => {
 		expect(String(res.body)).toContain('<svg');
 	});
 });
-
-// Serve `doc` as a JSON response and `art` as image bytes, keyed by URL, so a
-// single mock can satisfy both hops of the follow.
-function mockUpstream({ jsonAt = {}, imageAt = {} } = {}) {
-	fetchModel.mockImplementation(async (url) => {
-		if (url in jsonAt) {
-			return {
-				bytes: new TextEncoder().encode(JSON.stringify(jsonAt[url])),
-				url,
-				contentType: 'application/json; charset=utf-8',
-				filename: 'token.json',
-			};
-		}
-		if (url in imageAt) {
-			return { bytes: imageAt[url], url, contentType: 'image/png', filename: 'art.png' };
-		}
-		throw new Error(`upstream 404 ${url}`);
-	});
-}
 
 describe('api/img ?url= metadata follow', () => {
 	const DOC = 'https://meta.example/token.json';
@@ -256,11 +268,11 @@ describe('api/img ?url= metadata follow', () => {
 	});
 
 	it('does not treat a JSON body as artwork on the ?meta= path', async () => {
-		safeFetchJson.mockResolvedValue({ ok: true, data: { image: DOC } });
-		mockUpstream({ jsonAt: { [DOC]: { image: ART } }, imageAt: { [ART]: new Uint8Array([5]) } });
+		const META = 'https://meta.example/meta.json';
+		mockUpstream({ jsonAt: { [META]: { image: DOC }, [DOC]: { image: ART } }, imageAt: { [ART]: new Uint8Array([5]) } });
 
 		const res = mockRes();
-		await handler(mockReq(`?meta=${encodeURIComponent(DOC)}&seed=META`), res);
+		await handler(mockReq(`?meta=${encodeURIComponent(META)}&seed=META`), res);
 
 		expect(fetchModel).not.toHaveBeenCalledWith(ART, expect.any(Object));
 		expect(res.headers['content-type']).toMatch(/image\/svg\+xml/);

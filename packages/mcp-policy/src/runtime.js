@@ -153,10 +153,13 @@ export function createPolicy({ serverId, table = POLICY, store = createMemoryPre
 
 	/** The financial-rule sentence appended to a financial tool's description. */
 	function financialNote(e) {
+		// A tool that verifies its own preview sets its own expiry (a swap quote
+		// lives five minutes), so only the hosted store's TTL is stated here.
+		const ttl = e.ownsPreview ? 'before the expiry it states' : `valid ${PREVIEW_TTL_MS / 60000} minutes`;
+		const pass = `passing ${e.previewArg} from that result (${ttl}) and ${e.confirmFlag}: true`;
 		return (
 			` FINANCIAL: moves funds or cannot be undone. Call ${e.previewTool} first, show the user its result, ` +
-			`and call this tool only after the user clearly says yes, passing ${e.previewArg} from that result ` +
-			`(valid ${PREVIEW_TTL_MS / 60000} minutes) and ${e.confirmFlag}: true. Report the transaction signature it returns.`
+			`and call this tool only after the user clearly says yes, ${pass}. Report the transaction signature it returns.`
 		);
 	}
 

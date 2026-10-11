@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!-- No network from this page: every request goes through the main
+		     process. The one outside surface is the published walk embed. -->
+		<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' https: data:; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-src https: http://127.0.0.1:* http://localhost:*" />
+		<title>three.ws</title>
+		<link rel="stylesheet" href="panel.css" />
+	</head>
+	<body>
+		<main class="panel" id="panel" aria-busy="true">
+			<header class="top">
+				<label class="picker" id="picker-wrap">
+					<span class="sr">Agent</span>
+					<select id="picker" aria-label="Agent"></select>
+				</label>
+				<span class="pill" id="power-label" data-tone="muted"></span>
+				<button class="power" id="power" type="button" aria-label="Start or stop agent" aria-pressed="false" hidden>
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9M6.3 6.8a8 8 0 1 0 11.4 0" /></svg>
+				</button>
+			</header>
+
+			<section class="stage" aria-label="Your agent">
+				<iframe id="body" title="Agent avatar" tabindex="-1" allow="autoplay" referrerpolicy="no-referrer"></iframe>
+				<p class="face" id="face" role="status" data-tone="muted"></p>
+			</section>
+
+			<section class="numbers">
+				<div class="balance" id="balance" aria-live="polite">
+					<span class="num" id="sol"></span><span class="unit" id="sol-unit">SOL</span>
+					<button class="addr" id="addr" type="button" title="Copy wallet address"></button>
+				</div>
+				<label class="switch-card" id="companion-card">
+					<span class="switch-label">Companion</span>
+					<input type="checkbox" id="companion" role="switch" />
+					<span class="track" aria-hidden="true"><span class="knob"></span></span>
+				</label>
+			</section>
+
+			<section class="approval" id="approval" hidden aria-live="polite"></section>
+
+			<section class="tiles" id="tiles" aria-label="Status"></section>
+
+			<form class="ask" id="ask" autocomplete="off">
+				<label class="sr" for="ask-input">Ask your agent</label>
+				<input id="ask-input" type="text" maxlength="2000" placeholder="Ask your agent" />
+				<button type="submit" id="ask-send" aria-label="Send">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+				</button>
+			</form>
+			<section class="reply" id="reply" hidden aria-live="polite"></section>
+
+			<footer class="foot">
+				<span class="sync" id="sync" role="status"></span>
+				<button class="link" id="open-console" type="button">Open console</button>
+			</footer>
+		</main>
+
+		<section class="signin" id="signin" hidden>
+			<div class="signin-mark" aria-hidden="true"></div>
+			<h1>Sign in to three.ws</h1>
+			<p>See your agent, its wallet and anything waiting on you, right from the menu bar.</p>
+			<button class="primary" id="signin-btn" type="button">Sign in</button>
+		</section>
+		<script type="module" src="panel.js"></script>
+	</body>
+</html>

@@ -22,9 +22,16 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 // ── db: record every query the real store.js issues, answer from a router ─────
-const dbState = { calls: [], activeOrders: [], agent: null, claimOk: true };
+const dbState = { calls: [], activeOrders: [], agent: null, claimOk: true, group: [], cancelled: [] };
 
 function classify(q) {
+	if (q.includes('INSERT INTO agent_order_events')) return 'event';
+	if (q.includes('SET route =')) return 'set_route';
+	if (q.includes('SET last_skip_code = NULL')) return 'clear_skip';
+	if (q.includes('SET last_skip_code =')) return 'note_skip';
+	if (q.includes('FROM orders WHERE group_id')) return 'group_orders';
+	if (q.includes('WHERE group_id =') && q.includes("SET status = 'cancelled'")) return 'cancel_siblings';
+	if (q.includes('SET schedule =') && q.includes('cancel_reason')) return 'consume_slice';
 	if (q.includes('SELECT * FROM orders')) return 'active_orders';
 	if (q.includes("SET status = 'expired'")) return 'expire';
 	if (q.includes('SET status = CASE WHEN fill_count')) return 'recover_stale';
@@ -47,6 +54,8 @@ vi.mock('../api/_lib/db.js', () => ({
 		if (kind === 'active_orders') return dbState.activeOrders;
 		if (kind === 'claim') return dbState.claimOk ? [{ id: values[0] }] : [];
 		if (kind === 'load_agent') return dbState.agent ? [dbState.agent] : [];
+		if (kind === 'group_orders') return dbState.group;
+		if (kind === 'cancel_siblings') return dbState.cancelled;
 		return [];
 	}),
 	isDbUnavailableError: () => false,
@@ -83,11 +92,26 @@ vi.mock('../api/agents/agent-trade.js', async (importOriginal) => {
 	};
 });
 
+// ── the aggregator executor: real parseTradeRequest, stubbed execution ──────
+const aggState = { result: null, calls: [] };
+vi.mock('../api/agents/solana-trade.js', async (importOriginal) => {
+	const actual = await importOriginal();
+	return {
+		...actual,
+		runAgentTrade: vi.fn(async (args) => { aggState.calls.push(args); return aggState.result; }),
+	};
+});
+
+const notifications = [];
+vi.mock('../api/_lib/notify.js', () => ({
+	insertNotification: vi.fn((userId, type, payload) => { notifications.push({ userId, type, payload }); }),
+}));
+
 vi.mock('../workers/agent-orders/log.js', () => ({
 	log: { info: () => {}, warn: () => {}, error: () => {}, trade: () => {} },
 }));
 
-const { runOrderSweep } = await import('../workers/agent-orders/sweep.js');
+const { runOrderSweep, resetVenueHealth } = await import('../workers/agent-orders/sweep.js');
 const { loadConfig } = await import('../workers/agent-orders/config.js');
 
 // ── fixtures ─────────────────────────────────────────────────────────────────
@@ -128,6 +152,12 @@ beforeEach(() => {
 	dbState.calls = [];
 	dbState.activeOrders = [];
 	dbState.claimOk = true;
+	dbState.group = [];
+	dbState.cancelled = [];
+	aggState.calls = [];
+	aggState.result = null;
+	notifications.length = 0;
+	resetVenueHealth();
 	dbState.agent = { id: AGENT_ID, user_id: USER_ID, meta: { solana_address: AGENT_ADDRESS, encrypted_solana_secret: 'enc:v1:test' } };
 	marketState.market = null;
 	marketState.signals = {};
@@ -576,5 +606,244 @@ describe('runOrderSweep: live mode', () => {
 		expect(fill.values).toContain('confirmed');
 		expect(fill.values).toContain('5xSigTest');
 		expect(fill.values).toContain('ce-1');
+	});
+});
+
+// ── any SPL token: the aggregator route ─────────────────────────────────────
+describe('runOrderSweep: aggregator route for non-launchpad tokens', () => {
+	const aggOk = (over = {}) => ({
+		status: 200,
+		data: {
+			simulated: true, err: null, venue: 'aggregator', price_impact_pct: 0.3,
+			in: { asset: 'SOL', amount: 0.25, atomics: '250000000' },
+			out: { asset: 'TOKEN', amount: 1234.5, atomics: '1234500000', decimals: 6 },
+			...over,
+		},
+	});
+	const aggPrice = (mcapUsd) => { priceAt(mcapUsd); marketState.market.route = 'aggregator'; marketState.market.graduated = true; };
+
+	it('fills through runAgentTrade with the aggregator executor, simulated, with the slice key, and pins the route', async () => {
+		dbState.activeOrders = [order({ venue: 'auto', route: null })];
+		aggPrice(39_000);
+		aggState.result = aggOk();
+
+		await runOrderSweep(cfg);
+
+		expect(tradeState.calls).toHaveLength(0); // never the launchpad executor
+		expect(aggState.calls).toHaveLength(1);
+		const args = aggState.calls[0];
+		expect(args.simulate).toBe(true);
+		expect(args.executor).toBeTruthy();
+		expect(typeof args.executor.quote).toBe('function');
+		expect(args.parsed.idempotencyKey).toBe(`order:${order().id}:slice:0`);
+		expect(args.parsed.solAmount).toBe(0.25);
+		expect(args.address).toBe(AGENT_ADDRESS);
+		expect(call('set_route').values[0]).toBe('aggregator');
+		expect(call('insert_fill').values).toContain('simulated');
+		expect(call('advance').values[0]).toBe('filled');
+	});
+
+	it('sizes a percentage sell against the raw on-chain balance with integer math', async () => {
+		dbState.activeOrders = [order({ route: 'aggregator', side: 'sell', size_sol: null, sell_pct: 25, limit_price: 40_000 })];
+		aggPrice(45_000);
+		marketState.holding = { whole: 1_000, raw: 1_000_000_001n, decimals: 6 };
+		aggState.result = aggOk();
+
+		await runOrderSweep(cfg);
+
+		expect(aggState.calls).toHaveLength(1);
+		expect(aggState.calls[0].parsed.tokenAmountRaw).toBe('250000000');
+		expect(aggState.calls[0].parsed.side).toBe('sell');
+	});
+
+	it('never books a paper fill whose simulation reverted; records the skip instead', async () => {
+		dbState.activeOrders = [order({ route: 'aggregator' })];
+		aggPrice(39_000);
+		aggState.result = aggOk({ err: { InstructionError: [2, { Custom: 6001 }] } });
+
+		await runOrderSweep(cfg);
+
+		expect(kinds()).not.toContain('insert_fill');
+		expect(call('note_skip').values[0]).toBe('venue_unhealthy');
+		expect(call('note_skip').values[1]).toContain('simulation_failed');
+	});
+
+	it('reroutes an auto order to the aggregator when the launchpad says the token is not its market', async () => {
+		dbState.activeOrders = [order({ venue: 'auto', route: 'launchpad' })];
+		priceAt(39_000);
+		tradeState.result = { ok: false, status: 422, code: 'quote_not_sol', message: 'not SOL-quoted' };
+
+		await runOrderSweep(cfg);
+
+		expect(call('set_route').values[0]).toBe('aggregator');
+		expect(dbState.calls.find((c) => c.kind === 'set_status' && c.values[0] === 'error')).toBeFalsy();
+		expect(kinds()).not.toContain('insert_fill');
+	});
+
+	it('still halts a launchpad-only order on the same code', async () => {
+		dbState.activeOrders = [order({ venue: 'launchpad', route: 'launchpad' })];
+		priceAt(39_000);
+		tradeState.result = { ok: false, status: 422, code: 'quote_not_sol', message: 'not SOL-quoted' };
+
+		await runOrderSweep(cfg);
+
+		expect(dbState.calls.find((c) => c.kind === 'set_status' && c.values[0] === 'error')).toBeTruthy();
+		expect(notifications.some((n) => n.type === 'order_update' && n.payload.kind === 'fail')).toBe(true);
+	});
+
+	it('opens the per-route breaker after three venue failures and backs the next order off', async () => {
+		const ids = ['a', 'b', 'c', 'd'].map((x) => `${x.repeat(8)}-0000-4000-8000-000000000000`);
+		dbState.activeOrders = ids.map((id) => order({ id, route: 'aggregator' }));
+		aggPrice(39_000);
+		aggState.result = { status: 502, error: { code: 'quote_failed', message: 'aggregator down' } };
+
+		await runOrderSweep(cfg);
+
+		expect(aggState.calls).toHaveLength(3);
+		const held = dbState.calls.filter((c) => c.kind === 'note_skip' && c.values[0] === 'venue_unhealthy' && c.values[2]);
+		expect(held).toHaveLength(1);
+		expect(new Date(held[0].values[2]).getTime()).toBeGreaterThan(Date.now());
+	});
+});
+
+// ── order groups ─────────────────────────────────────────────────────────────
+describe('runOrderSweep: ladders and OCO pairs', () => {
+	const G = '99999999-9999-4999-8999-999999999999';
+	const leg = (id, over = {}) => order({
+		id, group_id: G, side: 'sell', size_sol: null, type: 'limit', limit_price: 40_000, ...over,
+	});
+	const A = 'aaaaaaaa-0000-4000-8000-000000000001';
+	const B = 'aaaaaaaa-0000-4000-8000-000000000002';
+	const C = 'aaaaaaaa-0000-4000-8000-000000000003';
+
+	it('re-bases a ladder leg onto what is left after earlier legs sold', async () => {
+		dbState.activeOrders = [leg(B, { group_kind: 'ladder', sell_pct: 25 })];
+		dbState.group = [
+			{ id: A, status: 'filled', sell_pct: 25 },
+			{ id: B, status: 'active', sell_pct: 25 },
+			{ id: C, status: 'active', sell_pct: 50 },
+		];
+		priceAt(45_000);
+		marketState.holding = { whole: 750, raw: 750_000_000n, decimals: 6 };
+
+		await runOrderSweep(cfg);
+
+		// 25 points of the original bag = a third of the 75% still held.
+		expect(tradeState.calls[0].input.amount).toBeCloseTo(250, 6);
+	});
+
+	it('closes the position on the last open leg of a ladder that adds up to 100', async () => {
+		dbState.activeOrders = [leg(C, { group_kind: 'ladder', sell_pct: 50 })];
+		dbState.group = [
+			{ id: A, status: 'filled', sell_pct: 25 },
+			{ id: B, status: 'filled', sell_pct: 25 },
+			{ id: C, status: 'active', sell_pct: 50 },
+		];
+		priceAt(45_000);
+		marketState.holding = { whole: 500, raw: 500_000_000n, decimals: 6 };
+
+		await runOrderSweep(cfg);
+
+		expect(tradeState.calls[0].input.isMax).toBe(true);
+	});
+
+	it('cancels the other OCO leg when one fills and says so in the notification', async () => {
+		dbState.activeOrders = [leg(A, { group_kind: 'oco', sell_pct: 100 })];
+		dbState.cancelled = [{ id: B, agent_id: AGENT_ID }];
+		priceAt(45_000);
+
+		await runOrderSweep(cfg);
+
+		const cancel = call('cancel_siblings');
+		expect(cancel.values[0]).toBe('oco_sibling_filled');
+		expect(cancel.values).toContain(G);
+		const fired = notifications.find((n) => n.payload.kind === 'fire');
+		expect(fired.type).toBe('order_update');
+		expect(fired.payload.message).toMatch(/other leg/);
+		expect(fired.payload.message).toMatch(/Paper fill/);
+	});
+});
+
+// ── the visible book ─────────────────────────────────────────────────────────
+describe('runOrderSweep: skip reasons and the DCA price band', () => {
+	const dca = (over = {}) => order({
+		type: 'dca', side: 'buy', size_sol: 0.1, limit_price: null,
+		schedule: { interval_seconds: 3600, slices: 3, filled_slices: 0 },
+		next_fire_at: new Date(Date.now() - 1_000).toISOString(),
+		...over,
+	});
+
+	it('consumes a DCA slice priced outside its band instead of buying it', async () => {
+		dbState.activeOrders = [dca({ price_band: { max: 40_000 } })];
+		priceAt(41_000);
+
+		await runOrderSweep(cfg);
+
+		expect(tradeState.calls).toHaveLength(0);
+		const consumed = call('consume_slice');
+		expect(JSON.parse(consumed.values[0]).skipped_slices).toBe(1);
+		expect(call('note_skip').values[0]).toBe('price_outside_band');
+		expect(call('event').values).toContain('skip');
+	});
+
+	it('buys a DCA slice inside its band and uses the next slice index for the key', async () => {
+		dbState.activeOrders = [dca({ price_band: { max: 40_000 }, schedule: { interval_seconds: 3600, slices: 3, filled_slices: 0, skipped_slices: 1 } })];
+		priceAt(39_000);
+
+		await runOrderSweep(cfg);
+
+		expect(tradeState.calls).toHaveLength(1);
+		expect(tradeState.calls[0].input.idempotencyKey).toBe(`order:${dca().id}:slice:1`);
+	});
+
+	it('records cap_hit when the spend guard blocks a fill and tells the owner once', async () => {
+		dbState.activeOrders = [order()];
+		priceAt(39_000);
+		tradeState.result = { ok: false, status: 429, code: 'daily_budget_exceeded', message: 'budget' };
+
+		await runOrderSweep(cfg);
+
+		expect(call('note_skip').values[0]).toBe('cap_hit');
+		expect(notifications.filter((n) => n.payload.kind === 'skip')).toHaveLength(1);
+	});
+
+	it('records no_quote when no venue prices the token', async () => {
+		dbState.activeOrders = [order()];
+		marketState.market = null;
+
+		await runOrderSweep(cfg);
+
+		expect(call('note_skip').values[0]).toBe('no_quote');
+	});
+
+	it('clears a stale skip reason once a live quote is simply waiting on the trigger', async () => {
+		dbState.activeOrders = [order({ last_skip_code: 'no_quote' })];
+		priceAt(55_000);
+
+		await runOrderSweep(cfg);
+
+		expect(kinds()).toContain('clear_skip');
+	});
+
+	it('leaves an order alone while its venue hold is in force', async () => {
+		dbState.activeOrders = [order({ hold_until: new Date(Date.now() + 60_000).toISOString() })];
+		priceAt(39_000);
+
+		await runOrderSweep(cfg);
+
+		expect(tradeState.calls).toHaveLength(0);
+		expect(kinds()).not.toContain('mark_evaluated');
+	});
+
+	it('notifies the owner on a fill', async () => {
+		dbState.activeOrders = [order()];
+		priceAt(39_000);
+
+		await runOrderSweep(cfg);
+
+		const n = notifications.find((x) => x.payload.kind === 'fire');
+		expect(n.userId).toBe(USER_ID);
+		expect(n.payload.order_id).toBe(order().id);
+		expect(n.payload.link).toContain(`/agents/${AGENT_ID}`);
 	});
 });

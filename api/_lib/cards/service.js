@@ -450,6 +450,7 @@ export async function createCard({ agentId, principal, quoteId, confirmSpend }) 
 		amountAtomics: expected,
 		network: 'mainnet',
 		category: 'card',
+		destinationTrust: 'system',
 		idempotencyKey: `card:${card.id}`,
 		rowMeta: { card_id: card.id, provider: card.provider, product_id: card.product_id, invoice_id: card.provider_invoice_id },
 	});
