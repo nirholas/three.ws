@@ -73,6 +73,21 @@ _MAX_REDIRECTS = 4
 _FETCH_ATTEMPTS = 3
 _FETCH_BACKOFF_SECS = (0.5, 1.5)
 
+# Hosts that enforce a User-Agent policy refuse httpx's default
+# "python-httpx/<version>": upload.wikimedia.org answers it with 403 Forbidden
+# and serves the same image to a descriptive agent (measured 2026-10-09, when
+# model-triposg failed every job whose reference photo was a Wikimedia link).
+# Callers may still pass their own User-Agent; it replaces this one.
+DEFAULT_USER_AGENT = "three.ws-worker/1.0 (+https://three.ws)"
+
+
+def _fetch_headers(headers: Optional[dict]) -> dict:
+    """Caller headers over the default User-Agent, matched case-insensitively."""
+    merged = dict(headers or {})
+    if not any(str(k).lower() == "user-agent" for k in merged):
+        merged["User-Agent"] = DEFAULT_USER_AGENT
+    return merged
+
 
 class UnsafeUrlError(ValueError):
     """Raised when a URL targets a disallowed scheme or a private/internal IP."""
@@ -199,7 +214,7 @@ def _fetch_once(
     current = assert_safe_url(url, allow_http=allow_http)
     with httpx.Client(follow_redirects=False, timeout=timeout) as client:
         for _ in range(_MAX_REDIRECTS + 1):
-            with client.stream("GET", current, headers=headers) as resp:
+            with client.stream("GET", current, headers=_fetch_headers(headers)) as resp:
                 if resp.is_redirect:
                     location = resp.headers.get("location")
                     if not location:
@@ -264,7 +279,7 @@ async def _fetch_once_async(
 ) -> bytes:
     current = assert_safe_url(url, allow_http=allow_http)
     for _ in range(_MAX_REDIRECTS + 1):
-        async with client.stream("GET", current, headers=headers) as resp:
+        async with client.stream("GET", current, headers=_fetch_headers(headers)) as resp:
             if resp.is_redirect:
                 location = resp.headers.get("location")
                 if not location:
