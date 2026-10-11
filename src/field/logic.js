@@ -324,8 +324,7 @@ export function deepLink(search, ids) {
 	return null;
 }
 
-/** The legacy desktop and campus still live at `?view=desktop` and `?world=1`. */
-export function wantsLegacy(search) {
-	const p = new URLSearchParams(search || '');
-	return p.get('view') === 'desktop' || p.has('world') || p.has('boot');
+/** `/` opens the desktop; the Field answers at `?view=field`. */
+export function wantsField(search) {
+	return new URLSearchParams(search || '').get('view') === 'field';
 }

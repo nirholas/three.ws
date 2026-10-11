@@ -1,9 +1,9 @@
-// `/` entry. The Field is home; the windowed desktop and the walkable campus
-// still answer at `?view=desktop` and `?world=1`.
+// `/` entry. The desktop is home (with its campus at `?world=1`); the Field,
+// the zoomable map of every agent and surface, answers at `?view=field`.
 
-import { wantsLegacy } from './logic.js';
+import { wantsField } from './logic.js';
 
-if (wantsLegacy(location.search)) {
+if (!wantsField(location.search)) {
 	import('../desktop/main.js');
 } else {
 	import('./field.js')
@@ -11,6 +11,6 @@ if (wantsLegacy(location.search)) {
 		.catch((err) => {
 			console.error('[field] failed to start', err);
 			const root = document.getElementById('os');
-			if (root) root.insertAdjacentHTML('afterbegin', '<p style="padding:24px;color:#fff;font:15px system-ui">The map could not start. Every page is linked below, or <a style="color:#b8a6ff" href="/?view=desktop">open the desktop</a>.</p>');
+			if (root) root.insertAdjacentHTML('afterbegin', '<p style="padding:24px;color:#fff;font:15px system-ui">The map could not start. <a style="color:#b8a6ff" href="/">Open the desktop</a> instead.</p>');
 		});
 }

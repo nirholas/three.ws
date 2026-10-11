@@ -23,7 +23,7 @@ import {
 	screenToWorld,
 	searchField,
 	trailAlpha,
-	wantsLegacy,
+	wantsField,
 	worldBounds,
 	worldToScreen,
 	zoomAt,
@@ -211,10 +211,11 @@ describe('field search and links', () => {
 		expect(deepLink('?go=https://evil.example', [])).toBeNull();
 		expect(deepLink('?go=//evil.example', [])).toBeNull();
 	});
-	it('keeps the desktop and campus reachable', () => {
-		expect(wantsLegacy('?view=desktop')).toBe(true);
-		expect(wantsLegacy('?world=1')).toBe(true);
-		expect(wantsLegacy('?app=forge')).toBe(false);
-		expect(wantsLegacy('')).toBe(false);
+	it('opens the desktop at / and keeps the Field one link away', () => {
+		expect(wantsField('?view=field')).toBe(true);
+		expect(wantsField('')).toBe(false);
+		expect(wantsField('?view=desktop')).toBe(false);
+		expect(wantsField('?world=1')).toBe(false);
+		expect(wantsField('?app=forge')).toBe(false);
 	});
 });

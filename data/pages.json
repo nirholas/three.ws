@@ -4245,6 +4245,14 @@
 					"added": "2026-10-11"
 				},
 				{
+					"path": "/docs/desktop-widgets",
+					"title": "Desktop Widgets and Assistant",
+					"description": "The live widgets on the three.ws desktop and widgets board ($THREE, weather, Pulse, launches, new agents, headlines, system) and the assistant that answers about the platform, opens apps and lets you talk to any public agent.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
+				},
+				{
 					"path": "/docs/event-markets",
 					"title": "Docs · Event Markets",
 					"description": "Free-to-play prediction markets over three.ws events: how markets open, how they resolve from our own data with stored evidence, and how points are scored.",
