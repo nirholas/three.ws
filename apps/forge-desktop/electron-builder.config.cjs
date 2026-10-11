@@ -69,7 +69,7 @@ module.exports = {
   win: {
     icon: 'resources/icons/icon.png',
     target: [{ target: 'nsis', arch: ['x64'] }],
-    publisherName: 'three.ws',
+    signtoolOptions: { publisherName: 'three.ws' },
     extraResources: pythonEmbed,
   },
   nsis: {
@@ -95,7 +95,7 @@ module.exports = {
     vendor: 'three.ws',
     synopsis: 'Image-to-3D generation and mesh workflows on your machine or the three.ws cloud',
     description: 'Turn images and prompts into 3D models with local open-source generators or the three.ws Forge cloud, chain mesh processing in a node workflow editor, and publish the result to your three.ws account.',
-    desktop: { StartupWMClass: 'three.ws Forge' },
+    desktop: { entry: { StartupWMClass: 'three.ws Forge' } },
   },
   deb: {
     packageName: 'three-ws-forge',
