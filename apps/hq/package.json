@@ -45,7 +45,7 @@
     "@types/maplibre-gl": "^1.13.2",
     "@types/topojson-client": "^3.1.5",
     "@types/topojson-specification": "^1.0.5",
-    "markdownlint-cli2": "^0.20.0",
+    "markdownlint-cli2": "^0.23.3",
     "typescript": "^5.7.2",
     "vite": "^6.0.7",
     "vite-plugin-pwa": "^1.2.0",
