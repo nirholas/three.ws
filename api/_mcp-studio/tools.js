@@ -18,7 +18,9 @@
 // stripped, per OpenAI's data-minimization policy. One deliberate exception:
 // a job that outlives the inline wait budget returns its PUBLIC poll handle
 // (the same job token the auth-free /api/forge REST lane hands any anonymous
-// caller); without it the still-running work would be unreachable.
+// caller); without it the still-running work would be unreachable. Each
+// generation also links its run receipt (./receipts.js): a random public id for
+// the record of what every stage was expected to do and what it did.
 // Every model-bearing result also carries the four agent-first links from
 // ./asset-links.js (viewer_url, glb_url, poster_png_url, embed_html), stated in
 // the first lines of its text too, for clients that render no widget.
@@ -48,6 +50,18 @@ import {
 	directPrompt,
 } from './gpt-forge-client.js';
 import { COMPONENT_URI } from './component.js';
+import {
+	openRun,
+	closeRun,
+	completeRun,
+	inputStage,
+	inputRejected,
+	subjectGateStage,
+	briefStage,
+	rigStage,
+	deliveryStage,
+	inspectRiggedGlb,
+} from './receipts.js';
 import { assetLinks, assetLinksText } from './asset-links.js';
 import { runOnce, normalizeKey, argsDigest } from '../_lib/idempotency.js';
 import { renderTurntable, describeGeometry, fetchGeometryStats } from '../_lib/3d-vision.js';
@@ -403,8 +417,6 @@ async function handleForgeFree(args, _auth, req, ctx = {}) {
 	const base = originFromReq(req);
 	const prompt = String(args.prompt || '').trim();
 	if (prompt.length < 3) return toolError('Provide a text prompt of at least 3 characters.');
-	const safety = checkPromptSafety(prompt);
-	if (!safety.allowed) return toolError(safety.message);
 	// Standard by default, and every doc describing this tool says exactly that.
 	// The high tier is a real, working option, not a stub: it runs on our own
 	// async Hunyuan3D worker (GCP_HUNYUAN3D_URL) behind a genuine poll handle,
@@ -418,6 +430,10 @@ async function handleForgeFree(args, _auth, req, ctx = {}) {
 	// standard on a 402 or submit timeout, and a job that outlives
 	// STUDIO_FORGE_TIMEOUT_MS comes back as a pollable handle, never an error.
 	const tier = VALID_TIER.has(args.tier) ? args.tier : 'standard';
+	const run = openRun('forge_free', { prompt, tier });
+	const safety = checkPromptSafety(prompt);
+	run.add(inputStage({ allowed: safety.allowed, message: safety.message, hasPrompt: true }));
+	if (!safety.allowed) return closeRun(run, toolError(safety.message), { base, outcome: 'refused', redactPrompt: true });
 	// Known brand marks resolve deterministically; everything else runs the
 	// subject-classified Granite director (fail-soft: original prompt on any
 	// failure) so this free lane gets the same photoreal-reference treatment as
@@ -428,25 +444,63 @@ async function handleForgeFree(args, _auth, req, ctx = {}) {
 	if (knownMark) {
 		effective = knownMark.prompt;
 		if (knownMark.imagePath) markImageUrls = [`${base}${knownMark.imagePath}`];
+		run.add(briefStage({ kind: 'mesh', knownMark: true }));
 	} else {
+		const t0 = Date.now();
 		const directed = await directPrompt(meshDirectorFor(meshSubjectClass(prompt)), prompt);
 		if (directed) effective = directed;
+		run.add(briefStage({ kind: 'mesh', directed: Boolean(directed), ms: Date.now() - t0 }));
 	}
+	return finishMesh(run, {
+		base,
+		ctx,
+		submit: markImageUrls
+			? { prompt: effective, imageUrls: markImageUrls, tier, internal: true, director: false }
+			: { prompt: effective, path: 'image', tier, internal: true, director: false },
+		pending: (job) => pendingResult({ base, jobId: job.job_id, what: 'model', prompt, ...pendingTiming(job) }),
+		done: (job) => ok({ glbUrl: job.glb_url, base, kind: 'model', prompt, referenceImageUrl: job.preview_image_url }),
+	});
+}
+
+// The shared tail of every single-stage generator: run the mesh, record what
+// came back, and close the receipt on whichever of the four endings occurred.
+async function finishMesh(run, { base, ctx, submit, pending, done, timeoutEnv = 'STUDIO_FORGE_TIMEOUT_MS', slowCopy }) {
+	const t0 = Date.now();
 	let job;
 	try {
-		job = await generate(
-			base,
-			markImageUrls
-				? { prompt: effective, imageUrls: markImageUrls, tier, internal: true, director: false }
-				: { prompt: effective, path: 'image', tier, internal: true, director: false },
-			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline, onPoll: ctx.onPoll },
-		);
+		job = await generate(base, submit, { timeoutEnv, deadline: ctx.deadline, onPoll: ctx.onPoll });
 	} catch (err) {
-		return toolError(failureMessage(err));
+		run.mesh(null, { error: failureMessage(err), ms: Date.now() - t0 });
+		return closeRun(run, toolError(failureMessage(err)), { base });
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'model', prompt, ...pendingTiming(job) });
-	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
-	return ok({ glbUrl: job.glb_url, base, kind: 'model', prompt, referenceImageUrl: job.preview_image_url });
+	const ms = Date.now() - t0;
+	if (job._timedOut && job.job_id) {
+		run.mesh(job, { timedOut: true, ms });
+		return closeRun(run, pending(job), { base, jobId: job.job_id });
+	}
+	if (job._timedOut || !job.glb_url) {
+		run.mesh(null, { error: 'The inline wait ended before the job returned a handle to collect it with.', ms });
+		return closeRun(run, toolError(slowCopy || 'Generation is taking longer than expected. Please try again.'), { base });
+	}
+	run.mesh(job, { ms });
+	run.add(deliveryStage({ frame: job }));
+	return closeRun(run, done(job), { base });
+}
+
+// Shared input boundary for the generators that take a prompt and/or an image.
+// Returns a closed refusal receipt to hand straight back, or null to proceed.
+async function admitInput(run, { base, prompt, imageUrl }) {
+	const safety = prompt ? checkPromptSafety(prompt) : { allowed: true };
+	run.add(inputStage({ allowed: safety.allowed, message: safety.message, hasPrompt: Boolean(prompt), hasImage: Boolean(imageUrl) }));
+	if (!safety.allowed) return closeRun(run, toolError(safety.message), { base, outcome: 'refused', redactPrompt: true });
+	try {
+		await guardImage(imageUrl);
+	} catch (err) {
+		const message = err.userMessage ? err.message : 'That image URL could not be used.';
+		run.add(inputRejected({ expected: 'A public image URL the generator can fetch.', message }));
+		return closeRun(run, toolError(message), { base, outcome: 'refused' });
+	}
+	return null;
 }
 
 async function handleTextToAvatar(args, _auth, req, ctx = {}) {
@@ -454,37 +508,29 @@ async function handleTextToAvatar(args, _auth, req, ctx = {}) {
 	const prompt = String(args.prompt || '').trim();
 	const imageUrl = args.image_url ? String(args.image_url).trim() : '';
 	if (!prompt && !imageUrl) return toolError('Provide a text prompt or a reference image_url.');
-	if (prompt) {
-		const safety = checkPromptSafety(prompt);
-		if (!safety.allowed) return toolError(safety.message);
-	}
-	try {
-		await guardImage(imageUrl);
-	} catch (err) {
-		return toolError(err.userMessage ? err.message : 'That image URL could not be used.');
-	}
+	const run = openRun('text_to_avatar', { prompt, hasImage: Boolean(imageUrl), tier: AVATAR_TIER });
+	const refused = await admitInput(run, { base, prompt, imageUrl });
+	if (refused) return refused;
 	// Granite avatar director (text mode only, fail-soft): without this the raw
 	// words reconstructed straight into TRELLIS/Hunyuan3D with no photoreal
 	// reference-image briefing at all — the realism gap forge_avatar already closes.
 	let effective = prompt;
 	if (prompt && !imageUrl) {
 		const subject = classifySubject(prompt) === 'animal' ? 'animal' : 'person';
+		const t0 = Date.now();
 		const directed = await directPrompt(avatarDirectorFor(subject), prompt);
 		effective = directed || avatarFallbackBrief(prompt, subject);
+		run.add(briefStage({ kind: 'avatar', directed: Boolean(directed), ms: Date.now() - t0 }));
+	} else {
+		run.add(briefStage({ kind: 'avatar', hasImage: true }));
 	}
-	let job;
-	try {
-		job = await generate(
-			base,
-			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: AVATAR_TIER, internal: true, director: false },
-			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline, onPoll: ctx.onPoll },
-		);
-	} catch (err) {
-		return toolError(failureMessage(err));
-	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'avatar', prompt: prompt || undefined, ...pendingTiming(job) });
-	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
-	return ok({ glbUrl: job.glb_url, base, kind: 'avatar', prompt: prompt || undefined, referenceImageUrl: job.preview_image_url });
+	return finishMesh(run, {
+		base,
+		ctx,
+		submit: { prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: AVATAR_TIER, internal: true, director: false },
+		pending: (job) => pendingResult({ base, jobId: job.job_id, what: 'avatar', prompt: prompt || undefined, ...pendingTiming(job) }),
+		done: (job) => ok({ glbUrl: job.glb_url, base, kind: 'avatar', prompt: prompt || undefined, referenceImageUrl: job.preview_image_url }),
+	});
 }
 
 async function handleMeshForge(args, _auth, req, ctx = {}) {
@@ -492,15 +538,9 @@ async function handleMeshForge(args, _auth, req, ctx = {}) {
 	const prompt = String(args.prompt || '').trim();
 	const imageUrl = args.image_url ? String(args.image_url).trim() : '';
 	if (!prompt && !imageUrl) return toolError('Provide a text prompt or a reference image_url.');
-	if (prompt) {
-		const safety = checkPromptSafety(prompt);
-		if (!safety.allowed) return toolError(safety.message);
-	}
-	try {
-		await guardImage(imageUrl);
-	} catch (err) {
-		return toolError(err.userMessage ? err.message : 'That image URL could not be used.');
-	}
+	const run = openRun('mesh_forge', { prompt, hasImage: Boolean(imageUrl), tier: 'standard' });
+	const refused = await admitInput(run, { base, prompt, imageUrl });
+	if (refused) return refused;
 	// Known brand marks resolve deterministically (no LLM knows a niche mark's
 	// geometry; the lexicon spec is already tight, so a rewrite could only hurt)
 	// and, when a pre-rendered reference view ships with the mark, go image→3D
@@ -513,51 +553,75 @@ async function handleMeshForge(args, _auth, req, ctx = {}) {
 		if (knownMark) {
 			effective = knownMark.prompt;
 			if (knownMark.imagePath) markImageUrls = [`${base}${knownMark.imagePath}`];
+			run.add(briefStage({ kind: 'mesh', knownMark: true }));
 		} else {
+			const t0 = Date.now();
 			const directed = await directPrompt(meshDirectorFor(meshSubjectClass(prompt)), prompt);
 			if (directed) effective = directed;
+			run.add(briefStage({ kind: 'mesh', directed: Boolean(directed), ms: Date.now() - t0 }));
 		}
+	} else {
+		run.add(briefStage({ kind: 'mesh', hasImage: true }));
 	}
-	let job;
-	try {
-		job = await generate(
-			base,
-			{
-				prompt: effective || undefined,
-				imageUrls: imageUrl ? [imageUrl] : markImageUrls,
-				aspect: '1:1',
-				tier: 'standard',
-				internal: true,
-				director: false,
-			},
-			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline, onPoll: ctx.onPoll },
-		);
-	} catch (err) {
-		return toolError(failureMessage(err));
-	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'mesh', prompt: prompt || undefined, ...pendingTiming(job) });
-	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
-	return ok({ glbUrl: job.glb_url, base, kind: 'mesh', prompt: prompt || undefined, referenceImageUrl: job.preview_image_url });
+	return finishMesh(run, {
+		base,
+		ctx,
+		submit: {
+			prompt: effective || undefined,
+			imageUrls: imageUrl ? [imageUrl] : markImageUrls,
+			aspect: '1:1',
+			tier: 'standard',
+			internal: true,
+			director: false,
+		},
+		pending: (job) => pendingResult({ base, jobId: job.job_id, what: 'mesh', prompt: prompt || undefined, ...pendingTiming(job) }),
+		done: (job) => ok({ glbUrl: job.glb_url, base, kind: 'mesh', prompt: prompt || undefined, referenceImageUrl: job.preview_image_url }),
+	});
 }
 
 async function handleRigMesh(args, _auth, req, ctx = {}) {
 	const base = originFromReq(req);
 	const glbUrl = String(args.glb_url || '').trim();
 	if (!/^https?:\/\//i.test(glbUrl)) return toolError('Provide an http(s) URL to a GLB mesh to rig.');
+	const run = openRun('rig_mesh', { rig: true });
 	try {
 		await guardImage(glbUrl);
 	} catch (err) {
-		return toolError(err.userMessage ? err.message : 'That GLB URL could not be used.');
+		const message = err.userMessage ? err.message : 'That GLB URL could not be used.';
+		run.add(inputRejected({ expected: 'A public GLB URL the rigger can fetch.', message }));
+		return closeRun(run, toolError(message), { base, outcome: 'refused' });
 	}
+	run.add({ id: 'input', label: 'Input', expected: 'A public GLB URL the rigger can fetch.', observed: 'Received a public GLB URL.', verdict: 'met' });
+	run.add(subjectGateStage({ givenMesh: true }));
+	return finishRig(run, { base, ctx, meshUrl: glbUrl, done: (job) => ok({ glbUrl: job.glb_url, base, kind: 'rigged model', rigged: true }) });
+}
+
+// Rig a mesh, then read the delivered file back and verify the skeleton with
+// Rig Doctor's analysis rather than taking the rigger's word for it. `partial`
+// builds the envelope for a rig failure when there is a mesh worth handing back.
+async function finishRig(run, { base, ctx, meshUrl, done, partial, what = 'rigged model', prompt }) {
+	const t0 = Date.now();
 	let job;
 	try {
-		job = await rig(base, glbUrl, { timeoutEnv: 'STUDIO_RIG_TIMEOUT_MS', deadline: ctx.deadline, onPoll: ctx.onPoll });
+		job = await rig(base, meshUrl, { timeoutEnv: 'STUDIO_RIG_TIMEOUT_MS', deadline: ctx.deadline, onPoll: ctx.onPoll });
 	} catch (err) {
-		return toolError(failureMessage(err));
+		run.add(rigStage({ error: failureMessage(err), ms: Date.now() - t0 }));
+		if (partial) return closeRun(run, partial(err), { base, outcome: 'partial' });
+		return closeRun(run, toolError(failureMessage(err)), { base });
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'rigged model', ...pendingTiming(job), stage: 'rig' });
-	if (job._timedOut || !job.glb_url) return toolError('Rigging is taking longer than expected. Please try again.');
-	return ok({ glbUrl: job.glb_url, base, kind: 'rigged model', rigged: true });
+	if (job._timedOut && job.job_id) {
+		run.add(rigStage({ timedOut: true, ms: Date.now() - t0 }));
+		return closeRun(run, pendingResult({ base, jobId: job.job_id, what, prompt, ...pendingTiming(job), stage: 'rig' }), { base, jobId: job.job_id });
+	}
+	if (job._timedOut || !job.glb_url) {
+		run.add(rigStage({ error: 'The inline wait ended before the rig job returned a handle to collect it with.', ms: Date.now() - t0 }));
+		return closeRun(run, toolError('Rigging is taking longer than expected. Please try again.'), { base });
+	}
+	const rigMs = Date.now() - t0;
+	const inspected = await inspectRiggedGlb(job.glb_url);
+	run.add(rigStage({ report: inspected.report, inspectError: inspected.error, ms: rigMs }));
+	run.add(deliveryStage({ frame: job }));
+	return closeRun(run, done(job), { base });
 }
 
 async function handleForgeAvatar(args, _auth, req, ctx = {}) {
@@ -565,27 +629,40 @@ async function handleForgeAvatar(args, _auth, req, ctx = {}) {
 	const prompt = String(args.prompt || '').trim();
 	const imageUrl = args.image_url ? String(args.image_url).trim() : '';
 	if (!prompt && !imageUrl) return toolError('Provide a text prompt or a reference image_url.');
-	if (prompt) {
-		const safety = checkPromptSafety(prompt);
-		if (!safety.allowed) return toolError(safety.message);
-	}
-	if (prompt && !imageUrl && args.allow_non_humanoid !== true && looksNonHumanoid(prompt)) {
-		return toolError(
-			'That looks like an object rather than a character. Auto-rigging needs a humanoid figure. Use the 3D mesh generator for objects, or set allow_non_humanoid to override.',
+	const run = openRun('forge_avatar', { prompt, hasImage: Boolean(imageUrl), tier: AVATAR_TIER, rig: true });
+	const safety = prompt ? checkPromptSafety(prompt) : { allowed: true };
+	run.add(inputStage({ allowed: safety.allowed, message: safety.message, hasPrompt: Boolean(prompt), hasImage: Boolean(imageUrl) }));
+	if (!safety.allowed) return closeRun(run, toolError(safety.message), { base, outcome: 'refused', redactPrompt: true });
+	const nonHumanoid = Boolean(prompt && !imageUrl && looksNonHumanoid(prompt));
+	run.add(subjectGateStage({ hasImage: Boolean(imageUrl), nonHumanoid, override: args.allow_non_humanoid === true }));
+	if (nonHumanoid && args.allow_non_humanoid !== true) {
+		return closeRun(
+			run,
+			toolError(
+				'That looks like an object rather than a character. Auto-rigging needs a humanoid figure. Use the 3D mesh generator for objects, or set allow_non_humanoid to override.',
+			),
+			{ base, outcome: 'refused' },
 		);
 	}
 	try {
 		await guardImage(imageUrl);
 	} catch (err) {
-		return toolError(err.userMessage ? err.message : 'That image URL could not be used.');
+		const message = err.userMessage ? err.message : 'That image URL could not be used.';
+		run.add(inputRejected({ expected: 'A public image URL the generator can fetch.', message }));
+		return closeRun(run, toolError(message), { base, outcome: 'refused' });
 	}
 	// Stage 1 — generate the mesh (Granite director in text mode, fail-soft).
 	let effective = prompt;
 	if (prompt && !imageUrl) {
 		const subject = classifySubject(prompt) === 'animal' ? 'animal' : 'person';
+		const t0 = Date.now();
 		const directed = await directPrompt(avatarDirectorFor(subject), prompt);
 		effective = directed || avatarFallbackBrief(prompt, subject);
+		run.add(briefStage({ kind: 'avatar', directed: Boolean(directed), ms: Date.now() - t0 }));
+	} else {
+		run.add(briefStage({ kind: 'avatar', hasImage: true }));
 	}
+	const t0 = Date.now();
 	let gen;
 	try {
 		gen = await generate(
@@ -594,16 +671,31 @@ async function handleForgeAvatar(args, _auth, req, ctx = {}) {
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline, onPoll: ctx.onPoll },
 		);
 	} catch (err) {
-		return toolError(failureMessage(err));
+		run.mesh(null, { error: failureMessage(err), ms: Date.now() - t0 });
+		return closeRun(run, toolError(failureMessage(err)), { base });
 	}
-	if (gen._timedOut && gen.job_id) return pendingResult({ base, jobId: gen.job_id, what: 'avatar mesh (rig it with rig_mesh once done)', prompt: prompt || undefined, ...pendingTiming(gen), stage: 'mesh', next: 'rig' });
-	if (gen._timedOut || !gen.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
+	if (gen._timedOut && gen.job_id) {
+		run.mesh(gen, { timedOut: true, ms: Date.now() - t0 });
+		return closeRun(
+			run,
+			pendingResult({ base, jobId: gen.job_id, what: 'avatar mesh (rig it with rig_mesh once done)', prompt: prompt || undefined, ...pendingTiming(gen), stage: 'mesh', next: 'rig' }),
+			{ base, jobId: gen.job_id },
+		);
+	}
+	if (gen._timedOut || !gen.glb_url) {
+		run.mesh(null, { error: 'The inline wait ended before the job returned a handle to collect it with.', ms: Date.now() - t0 });
+		return closeRun(run, toolError('Generation is taking longer than expected. Please try again.'), { base });
+	}
+	run.mesh(gen, { ms: Date.now() - t0 });
 
-	// Stage 2 — auto-rig the generated mesh.
-	let rigged;
-	try {
-		rigged = await rig(base, gen.glb_url, { timeoutEnv: 'STUDIO_RIG_TIMEOUT_MS', deadline: ctx.deadline, onPoll: ctx.onPoll });
-	} catch (err) {
+	// Stage 2: auto-rig the generated mesh, verified from the delivered file.
+	return finishRig(run, {
+		base,
+		ctx,
+		meshUrl: gen.glb_url,
+		what: 'avatar rig',
+		prompt: prompt || undefined,
+		done: (rigged) => ok({ glbUrl: rigged.glb_url, base, kind: 'avatar', prompt: prompt || undefined, rigged: true, referenceImageUrl: gen.preview_image_url }),
 		// Generation succeeded but rigging failed: hand back the (unrigged) mesh so
 		// the work isn't lost, and say so plainly.
 		// It rides the SAME ok() envelope as every other success, because this
@@ -612,22 +704,22 @@ async function handleForgeAvatar(args, _auth, req, ctx = {}) {
 		// sandbox, so this path error-stated instead of showing the mesh it just
 		// saved), the AR launch link, and the Spatial MCP artifact. Only the
 		// narration differs, so a partial result stays as usable as a whole one.
-		const partial = ok({ glbUrl: gen.glb_url, base, kind: 'mesh', prompt: prompt || undefined, referenceImageUrl: gen.preview_image_url });
-		return {
-			...partial,
-			content: [
-				{
-					type: 'text',
-					text:
-						`Generated the mesh but auto-rigging failed (${failureMessage(err)}). The model itself is fine and ready to use.\n` +
-						partial.content[0].text,
-				},
-			],
-		};
-	}
-	if (rigged._timedOut && rigged.job_id) return pendingResult({ base, jobId: rigged.job_id, what: 'avatar rig', prompt: prompt || undefined, ...pendingTiming(rigged), stage: 'rig' });
-	if (rigged._timedOut || !rigged.glb_url) return toolError('Rigging is taking longer than expected. Please try again.');
-	return ok({ glbUrl: rigged.glb_url, base, kind: 'avatar', prompt: prompt || undefined, rigged: true, referenceImageUrl: gen.preview_image_url });
+		partial: (err) => {
+			run.add(deliveryStage({ frame: gen }));
+			const result = ok({ glbUrl: gen.glb_url, base, kind: 'mesh', prompt: prompt || undefined, referenceImageUrl: gen.preview_image_url });
+			return {
+				...result,
+				content: [
+					{
+						type: 'text',
+						text:
+							`Generated the mesh but auto-rigging failed (${failureMessage(err)}). The model itself is fine and ready to use.\n` +
+							result.content[0].text,
+					},
+				],
+			};
+		},
+	});
 }
 
 // Rebuild a client-supplied lineage (refine_model's parent_lineage, or the
@@ -702,43 +794,42 @@ async function handleRefineModel(args, _auth, req, ctx = {}) {
 		}
 	}
 
-	let job;
-	try {
-		job = await generate(
-			base,
-			refImageUrl
-				? { prompt: composed, imageUrls: [refImageUrl], aspect: '1:1', tier: 'standard', internal: true }
-				: { prompt: composed, tier: 'standard', internal: true },
-			{ timeoutEnv: 'STUDIO_REFINE_TIMEOUT_MS', deadline: ctx.deadline, onPoll: ctx.onPoll },
-		);
-	} catch (err) {
-		return toolError(failureMessage(err));
-	}
-	if (job._timedOut && job.job_id)
-		return pendingResult({
-			base,
-			jobId: job.job_id,
-			what: 'refined model',
-			prompt: composed || undefined,
-			...pendingTiming(job),
-			refine: {
-				lineage: baseLineage,
+	const run = openRun('refine_model', { prompt: composed, hasImage: Boolean(refImageUrl), tier: 'standard' });
+	run.add(inputStage({ allowed: true, hasPrompt: true, hasImage: Boolean(refImageUrl) }));
+	return finishMesh(run, {
+		base,
+		ctx,
+		timeoutEnv: 'STUDIO_REFINE_TIMEOUT_MS',
+		slowCopy: 'Refinement is taking longer than expected. Please try again.',
+		submit: refImageUrl
+			? { prompt: composed, imageUrls: [refImageUrl], aspect: '1:1', tier: 'standard', internal: true }
+			: { prompt: composed, tier: 'standard', internal: true },
+		pending: (job) =>
+			pendingResult({
+				base,
+				jobId: job.job_id,
+				what: 'refined model',
+				prompt: composed || undefined,
+				...pendingTiming(job),
+				refine: {
+					lineage: baseLineage,
+					instruction,
+					refKind: refImageUrl ? 'image' : 'text',
+					...(parentIndex !== undefined ? { parentIndex } : {}),
+				},
+			}),
+		done: (job) => {
+			const lineage = appendVersion(baseLineage, {
+				glbUrl: job.glb_url,
+				viewerUrl: viewerUrl(base, job.glb_url),
+				prompt: composed,
 				instruction,
 				refKind: refImageUrl ? 'image' : 'text',
 				...(parentIndex !== undefined ? { parentIndex } : {}),
-			},
-		});
-	if (job._timedOut || !job.glb_url) return toolError('Refinement is taking longer than expected. Please try again.');
-
-	const lineage = appendVersion(baseLineage, {
-		glbUrl: job.glb_url,
-		viewerUrl: viewerUrl(base, job.glb_url),
-		prompt: composed,
-		instruction,
-		refKind: refImageUrl ? 'image' : 'text',
-		...(parentIndex !== undefined ? { parentIndex } : {}),
+			});
+			return refineOk({ glbUrl: job.glb_url, base, prompt: composed, instruction, lineage, activeIndex: lineage.length - 1 });
+		},
 	});
-	return refineOk({ glbUrl: job.glb_url, base, prompt: composed, instruction, lineage, activeIndex: lineage.length - 1 });
 }
 
 // A refinement collected by check_job joins the version history its pending
@@ -810,14 +901,16 @@ async function collectJob(args, req) {
 				prompt: typeof data.prompt === 'string' && data.prompt ? data.prompt : undefined,
 				referenceImageUrl: data.preview_image_url,
 			});
-		return { result, job: { status: 'done' } };
+		// The tool call that handed out this job left its receipt pending; record
+		// what the job actually produced and link it.
+		return { result: await completeRun(result, { base, jobId, data }), job: { status: 'done' } };
 	}
 	if (data.status === 'failed') {
 		// data.error is already sanitized server-side (sanitizeJobError): safe copy.
 		const message = data.error ? `Generation failed: ${data.error}` : failureMessage({ code: 'generation_failed' });
 		const backends = Array.isArray(data.retry_backends) ? data.retry_backends : [];
 		return {
-			result: toolError(message),
+			result: await completeRun(toolError(message), { base, jobId, data, failure: message }),
 			job: {
 				status: 'failed',
 				retryable: true,

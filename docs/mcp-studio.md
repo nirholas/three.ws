@@ -192,6 +192,30 @@ Rigged avatars additionally carry `irlUrl`, the living-agent handoff into
 Every result also includes a `spatial` field, the open Spatial MCP artifact
 (`specs/SPATIAL_MCP.md`) so any Spatial-MCP renderer can display the model.
 
+### Run receipts
+
+Every generation, rig and refinement also carries a **run receipt**, the
+pipeline's own signed record of what each stage was expected to do, what it
+actually did, and the verdict (`met`, `recovered`, `missed`, `skipped`,
+`pending`), with the cause whenever a stage fell short:
+
+```json
+"receipt": {
+  "id": "rr_88WfvqBfKtWPnaiT6S8NDb",
+  "outcome": "delivered",
+  "summary": "Delivered as expected. 1 carried by a fallback (Brief).",
+  "issues": [{ "stage": "brief", "verdict": "recovered", "expected": "…", "observed": "The prompt was used as written.", "cause": "The director model did not return a usable brief in time." }],
+  "url": "https://three.ws/runs/rr_88WfvqBfKtWPnaiT6S8NDb"
+}
+```
+
+The result text ends with the same link, so an agent that reads only text can
+still tell its user what fell back and why. A receipt that was still running
+when the tool answered is completed by `check_job`. Refusals are receipted too
+(outcome `refused`, prompt not stored). The rig stage is verified by reading
+the delivered file back, not by trusting the rigger. Full reference:
+[Run receipts](./run-receipts.md).
+
 ### Links for agents that render no widget
 
 ChatGPT and Claude draw the viewer widget from the camelCase fields above. An
