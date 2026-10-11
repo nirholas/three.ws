@@ -23,18 +23,28 @@ RUN npm install -g npm@${NPM_VERSION}
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     PUPPETEER_SKIP_DOWNLOAD=1
 
-COPY --parents package.json package-lock.json .npmrc* **/package.json /app/
-RUN npm ci --ignore-scripts --no-audit --no-fund
-
-# Chromium for the Playwright version the lockfile resolved, with its system libraries.
-RUN npx playwright install --with-deps chromium && rm -rf /var/lib/apt/lists/*
-
 # verify.js refuses to film when emoji draw as boxes; this is the font it asks for.
 RUN curl -sSL -o /usr/share/fonts/truetype/Noto-COLRv1.ttf --create-dirs \
       https://raw.githubusercontent.com/googlefonts/noto-emoji/main/2D/fonts/Noto-COLRv1.ttf \
     && fc-cache -f
 
-COPY . .
+# The run writes stories, proofs and media into the tree before bundling them,
+# so the tree belongs to the runtime user from the start. Owning it here rather
+# than with a closing chown -R keeps the image from carrying the repo twice.
+RUN mkdir -p /ms-playwright && chown node:node /app /ms-playwright
+USER node
+
+COPY --chown=node:node --parents package.json package-lock.json .npmrc* **/package.json /app/
+RUN npm ci --ignore-scripts --no-audit --no-fund
+
+# Chromium's system libraries need root; the browser itself is fetched for the
+# exact Playwright version the lockfile resolved.
+USER root
+RUN npx playwright install-deps chromium && rm -rf /var/lib/apt/lists/*
+USER node
+RUN npx playwright install chromium
+
+COPY --chown=node:node . .
 # npm rebuild runs the install hooks skipped above, among them ffmpeg-static's
 # binary download, which reel.js and the head builder use.
 RUN npm rebuild && npm run postinstall
@@ -42,9 +52,5 @@ RUN npm rebuild && npm run postinstall
 ENV NODE_ENV=production \
     NODE_OPTIONS=--no-deprecation \
     GOOGLE_CLOUD_PROJECT=aerial-vehicle-466722-p5
-
-# The run writes stories, proofs and media into the tree before bundling them.
-RUN chown -R node:node /app
-USER node
 
 ENTRYPOINT ["bash", "deploy/x-partners/run.sh"]

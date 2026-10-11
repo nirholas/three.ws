@@ -203,6 +203,9 @@ describe('the weekly Article', () => {
 		expect(blocks['facts-studio']).toMatch(/the run read tools = 15/);
 		expect(blocks['facts-ar']).not.toMatch(/the run counted/);
 		expect(blocks['request-studio']).toContain("curl -s 'https://three.ws/api/tools'");
+		const roster = articleBlocks(openai, runs, [openai, nvidia]).partners;
+		expect(roster.split('\n')).toHaveLength(4);
+		expect(roster).toContain(`| NVIDIA | ${nvidia.designation} |`);
 		const logged = articleBlocks(openai, [{ ...runs[0], proof: { ...runs[0].proof, steps: [{ index: 1, kind: 'goto', target: 'https://three.ws/openai', detail: 'loaded | ok', ok: true, ms: 812 }, { index: 2, kind: 'hold', target: '2500', ok: true, ms: 2500 }] } }]);
 		expect(logged['log-studio']).toBe('| Step | Did | On | Result | ms |\n|---|---|---|---|---|\n| 1 | goto | three.ws/openai | passed: loaded \\| ok | 812 |');
 		const brief = buildArticleBrief({ partner: openai, runs, figures, blocks, partnersSection: ['OpenAI: Select'], tryIt: [openai.page] });
@@ -226,6 +229,7 @@ describe('the weekly Article', () => {
 	it('reads the TITLE / POST / body shape and refuses anything else', () => {
 		const words = Array.from({ length: 220 }, () => 'word').join(' ');
 		expect(parseArticle(`TITLE: A title\nPOST: The post\n---\n${words}`)).toEqual({ title: 'A title', post: 'The post', markdown: words });
+		expect(parseArticle(`TITLE: Three.ws and IBM\nPOST: Three.ws met\n---\nThree.ws ran it. ${words}`)).toMatchObject({ title: 'three.ws and IBM', post: 'three.ws met', markdown: expect.stringMatching(/^three\.ws ran it/) });
 		expect(() => parseArticle('{"post":"x"}')).toThrow(/TITLE \/ POST/);
 	});
 

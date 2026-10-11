@@ -465,7 +465,7 @@ export function articleFacts(feature, { lead = false } = {}) {
 
 // The code and tables, built from the registry and the runs. `runs` holds, per
 // feature, the proof and (for an API surface) the live response it answered.
-export function articleBlocks(partner, runs) {
+export function articleBlocks(partner, runs, roster = []) {
 	const blocks = {};
 	blocks.runs = [
 		'| Feature | Filmed on | Length | Read live |',
@@ -481,6 +481,8 @@ export function articleBlocks(partner, runs) {
 		if (logged.length) blocks[`log-${feature.id}`] = ['| Step | Did | On | Result | ms |', '|---|---|---|---|---|', ...logged.map((step) => `| ${step.index} | ${step.kind} | ${cell(clip(bare(String(step.target ?? '')), 80))} | ${step.ok ? 'passed' : 'failed'}: ${cell(clip(String(step.detail ?? ''), 90))} | ${step.ms ?? ''} |`)].join('\n');
 		if (live?.body) blocks[`request-${feature.id}`] = `${fence('bash', `curl -s '${live.url}'`)}\n\n${fence(live.json ? 'json' : 'text', clip(live.body, 900))}`;
 	});
+	// The registry's view of every partner, for the closing partners section.
+	if (roster.length) blocks.partners = ['| Partner | Designation | What three.ws built on it |', '|---|---|---|', ...roster.map((row) => `| ${cell(row.name)} | ${cell(row.designation)} | ${cell(row.features.map((feature) => feature.title).join('; '))} |`)].join('\n');
 	// X caps code and tables per Article; trim the longest code first.
 	const weight = () => Object.values(blocks).reduce((sum, block) => sum + block.length, 0);
 	const trimmable = (key) => (key.startsWith('scenario-') ? 0 : key.startsWith('log-') ? 1 : 2);
@@ -496,7 +498,7 @@ export const ARTICLE_SYSTEM = `You write the weekly partner deep dive for @tryth
 You are given a brief. It is the only source of facts you have. Do not add anything that is not in it, do not guess at numbers, and do not describe behaviour it does not record.
 
 The Article:
-- A title of {TITLE_MIN} to {TITLE_MAX} characters that names the partner and says what three.ws built; carry a number only if a fact or a measured value holds it.
+- A title of {TITLE_MIN} to {TITLE_MAX} characters (aim for about 90 and count them) that names the partner and says what three.ws built; carry a number only if a fact or a measured value holds it.
 - At least {WORDS} words of prose (code and tables do not count), in at least {SECTIONS} sections, each a "## " heading named for what the reader learns. Open with a friendly paragraph that says what the partner makes possible, then go deep: how each feature works, what a person does with it, what an agent does with it, and how it was checked.
 - Give every feature in the brief at least one section of its own.
 - State the relationship once using the designation exactly as the brief gives it, word for word, with the same capitals, and link the partner page. Thank the partner warmly and specifically.
@@ -516,7 +518,7 @@ Hard rules, each enforced by a machine after you answer:
 
 Answer in exactly this shape and nothing else:
 TITLE: the title
-POST: the post that quotes the Article on X, 150 to 400 characters, naming the partner and saying what the reader will learn, with no link
+POST: the post that quotes the Article on X, 150 to 400 characters, naming the partner and saying what the reader will learn; X reads any domain as a link, so write three.ws at most once and no other domain or path
 ---
 the Article body in Markdown, starting with the opening paragraph (no top-level # title)`;
 
@@ -562,9 +564,12 @@ export function parseArticle(raw) {
 	const post = text.match(/^\s*POST:\s*(.+)$/m)?.[1]?.trim();
 	const split = text.search(/^---\s*$/m);
 	if (!title || !post || split < 0) throw new Error('drafter did not answer in the TITLE / POST / --- shape');
-	const markdown = text.slice(split).replace(/^---\s*\n/, '').trim();
+	// The brand is always lower case, even opening a sentence; that is a fixed
+	// rule, not a judgement, so it is applied rather than sent back.
+	const brand = (value) => value.replace(/\bThree\.ws\b/g, 'three.ws');
+	const markdown = brand(text.slice(split).replace(/^---\s*\n/, '').trim());
 	if (markdown.split(/\s+/).length < 200) throw new Error('drafter returned an Article body under 200 words');
-	return { title, post, markdown };
+	return { title: brand(title), post: brand(post), markdown };
 }
 
 // Replaces the markers with the real blocks and figures. Every block must be

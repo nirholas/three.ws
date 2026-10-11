@@ -371,7 +371,7 @@ async function writeArticle({ partner, partners, queue, day, dryRun, ship }) {
 	writeFileSync(resolve(root, cover.path), reelFrame({ root, path: lead.media.path, atSec: Math.max(0.5, (lead.proof.video.durationSec || 2) * 0.6) }));
 
 	// 3. Draft around the real blocks until the queue's Article gate passes.
-	const blocks = articleBlocks(partner, runs);
+	const blocks = articleBlocks(partner, runs, [...partners].sort((left, right) => left.order - right.order));
 	const tryIt = [...new Set([partner.page, ...runs.map(({ feature }) => feature.surface)])];
 	const brief = buildArticleBrief({ partner, runs, figures, blocks, partnersSection: partnersSection(partners), tryIt });
 	const bodyPath = `data/x-content/articles/${id}.md`;
@@ -392,7 +392,7 @@ async function writeArticle({ partner, partners, queue, day, dryRun, ship }) {
 		exemplar: readText('data/x-content/articles/keeper-article.md', 30000),
 	});
 	for (const attempt of result.attempts) {
-		for (const failure of attempt.fallbacks || []) console.log(`    fell through: ${failure.split('\n')[0].slice(0, 160)}`);
+		for (const failure of attempt.fallbacks || []) console.log(`    fell through: ${failure.replace(/\s+/g, ' ').slice(0, 220)}`);
 		console.log(`  draft ${attempt.attempt} on ${attempt.model}: ${attempt.findings.length ? `${attempt.findings.length} finding(s): ${attempt.findings.slice(0, 3).join(' | ')}` : 'passes'}`);
 	}
 	if (!result.ok) return { id, ok: false, reason: `no draft passed the Article gate in ${result.attempts.length} attempts: ${result.findings.slice(0, 4).join('; ')}; the last draft is at ${bodyPath}` };
