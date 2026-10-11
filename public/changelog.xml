@@ -279,6 +279,14 @@
 			<description>The campus is now populated by the ten most talked-to public agents on three.ws, each wearing its own avatar from its public record (five on a phone). The most popular one stands beside the gate path, turns to you as you walk in, waves and says hello through its own brain. Every agent idles, wanders a step, faces you when you come near and carries a name tag; walk up (or tap the tag) and press E to open a conversation that streams the agent's real reply, shows it as a speech bubble and can read it aloud. The panel opens the agent's profile as a window and hands you the one-tag embed that puts that exact agent, body and brain, on any web page. GET /api/agents/public now returns avatar_model_url for public and unlisted avatars.</description>
 		</item>
 		<item>
+			<title>Rig Doctor now diagnoses non-humanoid rigs too, not just naming mismatches</title>
+			<link>https://three.ws/rig-doctor</link>
+			<guid isPermaLink="false">2026-10-11:Rig Doctor now diagnoses non-humanoid rigs too, not just naming mismatches</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Rig Doctor's canonical-joint coverage score has nothing to say about a creature, prop, or vehicle rig: it has no Mixamo-shaped skeleton to map and always reads as &quot;will not animate&quot; by design. A new Skin weights stat answers the question that actually applies to a rig like that: how many joints influence the single heaviest-weighted vertex, and how many of the mesh's vertices came back with no joint influence at all. Zero unweighted vertices means the skin is sound even though the clip library will never retarget onto it; a nonzero count means part of the mesh will not move under any skeleton.</description>
+		</item>
+		<item>
 			<title>Sentiment Scout's X reads gained a second, independent path through xAI</title>
 			<link>https://three.ws/docs/sentiment-scout</link>
 			<guid isPermaLink="false">2026-10-11:Sentiment Scout's X reads gained a second, independent path through xAI</guid>

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-11",
+			"title": "Rig Doctor now diagnoses non-humanoid rigs too, not just naming mismatches",
+			"link": "/rig-doctor",
+			"summary": "Rig Doctor's canonical-joint coverage score has nothing to say about a creature, prop, or vehicle rig: it has no Mixamo-shaped skeleton to map and always reads as \"will not animate\" by design. A new Skin weights stat answers the question that actually applies to a rig like that: how many joints influence the single heaviest-weighted vertex, and how many of the mesh's vertices came back with no joint influence at all. Zero unweighted vertices means the skin is sound even though the clip library will never retarget onto it; a nonzero count means part of the mesh will not move under any skeleton.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
 			"title": "Forge adds a lane that hands back an already-rigged model",
 			"link": "/forge",
 			"summary": "A new Forge engine, \"Rig on generate\", predicts a model's mesh, joint skeleton and skin weights together in one pass instead of handing back a bare mesh that still needs a separate rigging step. Built on VAST-AI-Research's AniGen (MIT), running on our own self-hosted worker. Pick it from the engine grid, give it a single reference image, and the finished creation arrives already animatable, with the poll response marking it rigged and reporting its joint count so the UI never offers a redundant rerig call. It is opt-in: generating without picking it behaves exactly as before.",
