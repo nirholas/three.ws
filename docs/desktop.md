@@ -117,9 +117,10 @@ storage: migration `20261015000000_world_gems.sql`.
   and blur presets, the CTRL token names, light and dark. Dark is the default.
   Light follows the site-wide `twx_theme` switch, so the desktop and every
   framed page flip together. Tokens: `src/desktop/theme.css`.
-- **Shell.** Taskbar with pinned and running apps, Start menu (search, pinned,
-  recommended, all apps), widgets panel with a resident `<agent-3d>`, calendar,
-  desktop icons, right-click menu, toasts. `src/desktop/shell.js`.
+- **Shell.** Floating taskbar with pinned and running apps, Start menu, system
+  tray, notification centre and calendar, lock screen, power menu, Run and About
+  dialogs, desktop icons and files, right-click menus. `src/desktop/shell.js`
+  and `src/desktop/chrome/` (see "The shell" below).
 - **Windows.** Drag, eight-handle resize, snap to left, right or top edge,
   minimize, maximize, Alt+Tab, Alt+W. On a phone every window is full screen.
   `src/desktop/wm.js`; geometry in `src/desktop/layout.js` (unit tested).
@@ -135,10 +136,33 @@ storage: migration `20261015000000_world_gems.sql`.
 - **Motion.** Minimize flies the window into its taskbar button and restore flies it back; snapping, maximizing and restoring morph between the two frames. Every motion is skipped when the system asks for reduced motion.
 - **Peek.** Hover a running app in the taskbar for its window card (title, page, state, close). Hover the card and every other window fades out so the one you are pointing at shows through. The taskbar marks running apps with a short pill and the window in front with a long accent pill; pinned apps that are not running show none.
 - **Rubber band.** Drag on the empty desktop to draw a selection box; Ctrl or Shift adds to the current selection.
-- **Right-click.** The desktop menu sets icon size, sorts by name, auto-arranges, refreshes, and opens All Apps and Personalize. Icon menus open or remove the selection.
+- **Right-click.** The desktop menu has View (icon size, auto arrange, select all), Sort by, Refresh, New (Folder, Text document), Edit widgets, Add a widget, Open in Terminal, Open Desktop folder, Run, Display settings, Personalize and About. App icons open or remove the selection; file icons add Open with Files, Rename (F2), Delete and, for pictures, Set as desktop background; the Recycle Bin adds Empty Recycle Bin.
+- **Files on the desktop.** The desktop is the `/Desktop` folder of the OS file system, so anything saved there (from Notepad, Paint, Camera, the Terminal or File Explorer) appears as an icon at once, and New, Rename and Delete on the desktop write through to it. Drop files from your computer onto the desktop to import them. Delete moves to the Recycle Bin. This PC and Recycle Bin sit on the desktop like any other icon.
 - **All Apps.** A native app listing every app and page from the site navigation, with Open and Add to desktop for each.
-- **Settings.** Profile (name, avatar colour), Arrival (start in the campus or on the desktop, startup chime, a Walk the campus button), Personalization (style, dark, light or match system, seven accents, six wallpapers or your own photo; the default `three.ws` wallpaper is the classic site's violet glow over a hairline grid), Desktop and taskbar (icon size, taskbar alignment, 24-hour clock), and Session and storage.
+- **Settings.** Profile (name, avatar colour), Arrival (start in the campus or on the desktop, startup chime, a Walk the campus button), Personalization (style, dark, light or match system, seven accents, seven wallpapers or your own photo; the default `bubbles` wallpaper floats glass spheres over a violet field in dark and pastel in light, and `three.ws` is the classic site's violet glow over a hairline grid), Desktop and taskbar (icon size, taskbar alignment, 24-hour clock), and Session and storage.
 - **Session.** Open windows and their geometry, icon layout, preferences, recent apps and the custom wallpaper are saved in this browser (`tws:desktop`, `tws:icons`, `tws:prefs`, `tws:recent` in localStorage; the wallpaper image in IndexedDB database `tws-desktop`) and restored on reload. Settings can export the session to a JSON file, import one (only known `tws:` keys are accepted, files over 2 MB are refused), close all windows, or reset everything. Nothing is sent to a server.
+
+## The shell
+
+`src/desktop/chrome/` holds the parts of the shell that make it feel like an operating system rather than a page. Pure rules live in `chrome/logic.js` (clock formatting, battery and network readouts, the notification log, Run parsing; unit tested in `tests/desktop-chrome.test.js`); the UI is `chrome/index.js` and `chrome/chrome.css`.
+
+- **Taskbar.** In Fluent the taskbar is a floating island centred above the bottom edge (or anchored left with the taskbar alignment setting): Start, Widgets and Assistant on the left, pinned and running apps in the middle, the tray on the right. On a phone it is a compact full-width bar.
+- **Start.** Your avatar overlaps the top edge above a search field. Below, an A to Z list of every app and page on the left and, on the right, the time and date, a Pinned grid (with All to expand), and Recommended (recent files from the file system and recent apps). Search covers apps, pages and files and folders. The footer opens Documents, Pictures, Music, Downloads and Settings, and holds Walk the campus, classic view and the power menu.
+- **Tray.** One status pill shows network (from the Network Information API), volume and battery (from the Battery Status API; hidden when the browser has none). Click it for quick settings: dark mode, night light, do not disturb, energy saver, system sounds, full screen, brightness and volume sliders, connection and battery details, and your account with Settings and power.
+- **Notifications and calendar.** The clock opens the notification centre over a month calendar. Apps post with `notify({ title, body, app })` (passed to every native app); each notification shows as a toast, lands in the centre, and opens its app when clicked. Do not disturb holds the toasts but keeps the log. The log is saved in `tws:notifications`.
+- **Lock and power.** Ctrl+Alt+L (or Lock in the power menu) shows the lock screen: large time and date over the wallpaper, network and battery in the corner; any key or click reveals the sign-in card. The power menu offers Lock, Sign in or Sign out, Restart (saves the session, closes every window and reloads) and Shut down (saves, closes every window and leaves a dark screen with a power button).
+- **Run and About.** Ctrl+Alt+R opens Run: type an app, a page, a folder path or a URL. About shows the version, browser, platform, processor cores, memory, display, storage used, network, battery and account, read from the browser's own APIs. Run keeps a history of what you typed in `tws:run`.
+- **Keyboard.** Ctrl+Esc opens Start. With Ctrl+Alt: R Run, L lock, D show desktop, A quick settings, N notifications, T Terminal, E File Explorer, I Settings, M Task Manager, W widgets, C assistant.
+- **Widgets and assistant.** The Widgets button opens the widgets board and the Assistant button opens the chat panel; widgets pinned to the desktop sit below every window. Both live in `src/desktop/widgets/` and `src/desktop/assistant/`.
+
+## The OS layer: file system and native apps
+
+`src/desktop/os/` ([README](../src/desktop/os/README.md)) gives the desktop the apps a real computer ships with. Everything is real: no mock data, no seeded sample files.
+
+- **File system.** `os/fs.js` is a virtual file system in IndexedDB (`tws-os`, store `fs`) with Desktop, Documents, Pictures, Downloads, Music, Videos and a Recycle Bin. Files hold Blobs; delete moves to the Recycle Bin and remembers the origin; move, copy, rename, restore and permanent delete are atomic transactions. Nothing leaves the browser.
+- **Apps** (lazy loaded from `os/registry.js`): File Explorer, Notepad, Photos, Calculator (standard, scientific, programmer, converter), Clock (world clocks, alarms, timers, stopwatch), Weather (Open-Meteo, any city), Camera (`getUserMedia`, photos and video saved to the file system), Paint, Terminal (a real shell over the file system plus `three price`, `three agents`, `curl`, `weather`), Task Manager (live frame rate, heap, main-thread load, network and battery from real browser APIs; unsupported metrics say so) and Media Player (audio visualizer, video, Picture-in-Picture).
+- **Opening files.** `ctx.openPath(path)` routes by type: folders to File Explorer, text to Notepad, pictures to Photos, audio and video to the Media Player.
+- **Adding an OS app.** Add an entry to `os/registry.js`, a module in `os/apps/<id>.js` exporting `mount(host, ctx)`, and a `<id>.css` scoped under `.napp-<id>`.
 
 ## URLs and preferences
 

@@ -221,6 +221,13 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify, ge
 		if (!w) return;
 		w.el.classList.add('is-closing');
 		wins.delete(id);
+		(w.cleanups || []).forEach((fn) => {
+			try {
+				fn();
+			} catch {
+				/* an app's teardown must never block closing its window */
+			}
+		});
 		const done = () => w.el.remove();
 		if (reducedMotion()) done();
 		else {
@@ -254,6 +261,9 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify, ge
 			z: 0,
 			rect: null,
 			frame: null,
+			arg: opts.arg,
+			cleanups: [],
+			onArg: null,
 		};
 		const el = document.createElement('section');
 		el.className = 'win';
@@ -660,6 +670,7 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify, ge
 				existing.frame.src = opts.path;
 				existing.extLink.href = opts.path;
 			}
+			if (opts.arg !== undefined) existing.onArg?.(opts.arg);
 			focus(app.id);
 			return existing;
 		}
@@ -754,6 +765,14 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify, ge
 		has: (id) => wins.has(id),
 		focused: () => focusedId,
 		list: () => [...wins.values()].map(publicView),
+		setTitle(id, title) {
+			const w = wins.get(id);
+			if (!w) return;
+			w.title = String(title || w.app.title).slice(0, 80);
+			w.el.querySelector('.win-name').textContent = w.title;
+			w.el.setAttribute('aria-label', w.title);
+			emit();
+		},
 		closeAll: () => [...wins.keys()].forEach(close),
 	};
 }

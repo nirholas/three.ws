@@ -214,13 +214,16 @@ export const NATIVE_APPS = [
 	},
 ];
 
-export const ALL_APPS = [...APPS, ...NATIVE_APPS];
+import { OS_APPS } from './os/registry.js';
+
+export const ALL_APPS = [...APPS, ...NATIVE_APPS, ...OS_APPS];
 
 export function appById(id) {
 	return ALL_APPS.find((a) => a.id === id) || null;
 }
 
 export const WALLPAPERS = [
+	{ id: 'bubbles', label: 'Bubbles' },
 	{ id: 'three', label: 'three.ws' },
 	{ id: 'aurora', label: 'Aurora' },
 	{ id: 'midnight', label: 'Midnight' },
