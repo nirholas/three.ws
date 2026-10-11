@@ -111,8 +111,21 @@ export const isWeekend = (timestamp) => [0, 6].includes(new Date(timestamp).getU
 // morning's slot shut. `from` is the first day the slot opens; it then opens on
 // every `everyDays`-th UTC day after it (and, by the same arithmetic, before).
 export const isKindSlot = (slot) => Boolean(slot?.kind);
-export const slotLabel = (slot) => (isKindSlot(slot) ? slot.kind : `T${slot.tier}`);
+export const slotLabel = (slot) => (isKindSlot(slot) ? slot.kind : `T${slot.tier}${slot.series ? ` ${slot.series}` : ''}`);
 export const reservedKinds = (cadence = {}) => new Set((cadence.slots || []).filter(isKindSlot).map((slot) => slot.kind));
+
+// ── Series slots ────────────────────────────────────────────────────────────
+// A tiered slot may also belong to a series: `{ tier: 1, series: 'partners',
+// at: '15:30' }` is the daily partner spotlight (owner, 2026-10-11: one post a
+// day about a partner and the feature three.ws built on it). The slot takes
+// the series' best ready post first, ranked across every tier, and when the
+// series has nothing ready it is the tier's slot exactly as before, so the
+// prime-time flagship is never left without a home. Posts of a series that
+// owns a slot are kept for it, so the series goes out once a day and never
+// twice. A series slot is a daily slot: it counts toward the daily cap.
+export const isSeriesSlot = (slot) => Boolean(slot?.series) && !isKindSlot(slot);
+export const seriesOf = (item) => (typeof item?.series === 'string' && item.series ? item.series : null);
+export const reservedSeries = (cadence = {}) => new Set((cadence.slots || []).filter(isSeriesSlot).map((slot) => slot.series));
 
 export function slotOpensOn(slot, day) {
 	const every = Math.max(1, Math.floor(Number(slot.everyDays) || 1));
@@ -135,7 +148,7 @@ export function slotOpenings(now, cadence = DEFAULT_CADENCE, seed = null) {
 			if (cadence.flagshipWeekdaysOnly && Number(slot.tier) === 1 && isWeekend(day)) return;
 			if (!slotOpensOn(slot, day)) return;
 			const key = `${dayKey(day)}#${index}`;
-			const owner = isKindSlot(slot) ? { kind: String(slot.kind), tier: null } : { tier: Number(slot.tier) };
+			const owner = isKindSlot(slot) ? { kind: String(slot.kind), tier: null } : { tier: Number(slot.tier), ...(isSeriesSlot(slot) ? { series: String(slot.series) } : {}) };
 			openings.push({ key, ...owner, opensAt: day + (atMinutes(slot.at) + jitterMinutes(`slot:${key}`, window, seed)) * MINUTE });
 		});
 	}
@@ -235,13 +248,17 @@ export function pickDue({
 	// A kind slot takes only its kind; the tiered slots take everything a kind
 	// slot does not own.
 	const reserved = reservedKinds(cadence);
-	const fits = (item) => (isKindSlot(slot) ? item.kind === slot.kind : !reserved.has(item.kind));
+	const series = reservedSeries(cadence);
+	// A series post that a kind slot does not own is kept for its series slot.
+	const keptForSeries = (item) => !reserved.has(item.kind) && series.has(seriesOf(item));
+	const fits = (item) => (isKindSlot(slot) ? item.kind === slot.kind : !reserved.has(item.kind) && (!keptForSeries(item) || seriesOf(item) === slot.series));
 	const candidates = unpublished.filter((item) => fits(item) && !exclude.has(item.id) && !(holdFlagship && tierOf(item) === 1));
 	const ready = candidates.filter((item) => Date.parse(item.notBefore) <= now);
 	const context = { lifts, published, quality, reviews, now };
-	const choose = (pool, order, how) => {
-		// A kind slot ranks its kind across every tier at once.
-		for (const tier of isKindSlot(slot) ? [null] : order) {
+	const choose = (pool, order, how, { acrossTiers = isKindSlot(slot) } = {}) => {
+		// A kind slot ranks its kind across every tier at once, and so does a
+		// series slot ranking its series.
+		for (const tier of acrossTiers ? [null] : order) {
 			const ranked = rankItems(tier == null ? pool : pool.filter((item) => tierOf(item) === tier), context);
 			if (!ranked.length) continue;
 			const [top] = ranked;
@@ -252,6 +269,7 @@ export function pickDue({
 				filledDown: tier != null && tier > slot.tier,
 				filledUp: tier != null && tier < slot.tier,
 				vetoYielded: how === 'veto',
+				...(seriesOf(top.item) && seriesOf(top.item) === slot.series ? { series: slot.series } : {}),
 				score: top.score,
 				parts: top.parts,
 				ranking: ranked.map((row) => ({ id: row.item.id, score: row.score })),
@@ -261,6 +279,12 @@ export function pickDue({
 	};
 	const countByTier = (pool) => new Map(TIERS.map((tier) => [tier, pool.filter((item) => tierOf(item) === tier).length]));
 
+	// A series slot spends its series first. The rest of the pool is the tier's
+	// usual one, so a dry series lends the slot to its tier.
+	if (isSeriesSlot(slot)) {
+		const own = choose(ready.filter((item) => seriesOf(item) === slot.series), [], 'usual', { acrossTiers: true });
+		if (own) return own;
+	}
 	const usual = choose(ready, isKindSlot(slot) ? [] : tierOrder(slot.tier, countByTier(ready)), 'usual');
 	if (usual || !quota) return usual || empty();
 	// Three a day is a quota, not a ceiling (owner, 2026-09-30), so a slot is

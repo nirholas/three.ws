@@ -13,6 +13,7 @@
 			},
 			{
 				"tier": 1,
+				"series": "partners",
 				"at": "15:30"
 			},
 			{
@@ -89,7 +90,10 @@
 			3
 		],
 		"vetoHours": 2,
-		"articles": true
+		"articles": true,
+		"series": [
+			"partners"
+		]
 	},
 	"items": [
 		{

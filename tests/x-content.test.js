@@ -236,6 +236,42 @@ describe('schedule', () => {
 		expect(pickDue({ items: [item('demo', { tier: 3 })], state: sent, now: morning, cadence: withArticles }).item.id).toBe('demo');
 	});
 
+	it('gives a series its own daily slot, keeps its posts for that slot, and lends the slot to its tier when the series is dry', () => {
+		const withSeries = { ...cadence, slots: cadence.slots.map((slot) => (slot.tier === 1 ? { ...slot, series: 'partners' } : slot)) };
+		expect(slotLabel(slotOpenings(primeTime, withSeries).find((slot) => slot.series))).toBe('T1 partners');
+
+		const spotlight = item('nvidia-gpu-fleet', { tier: 2, series: 'partners' });
+		const flagship = item('flagship', { tier: 1, priority: 50 });
+		// The series slot takes the series post ahead of a higher-ranked flagship.
+		const pick = pickDue({ items: [spotlight, flagship], state: {}, now: primeTime, cadence: withSeries });
+		expect([pick.item.id, pick.slot.series, pick.series]).toEqual(['nvidia-gpu-fleet', 'partners', 'partners']);
+		// With no series post ready, the slot is the tier's slot as before.
+		expect(pickDue({ items: [flagship], state: {}, now: primeTime, cadence: withSeries }).item.id).toBe('flagship');
+
+		// Every other slot leaves the series post alone, even when it would sit empty.
+		const morning = Date.parse('2026-09-17T08:50:00Z');
+		expect(pickDue({ items: [spotlight], state: {}, now: morning, cadence: withSeries, quota: true }).item).toBeNull();
+		expect(pickDue({ items: [spotlight, item('feature', { tier: 2 })], state: {}, now: morning, cadence: withSeries, quota: true }).item.id).toBe('feature');
+		// Without a series slot a series post is an ordinary item of its tier.
+		expect(pickDue({ items: [spotlight], state: {}, now: morning, cadence, quota: true }).item.id).toBe('nvidia-gpu-fleet');
+	});
+
+	it('counts a series stock on its own line', () => {
+		const dir = sandbox();
+		const items = [
+			{ id: 'a', status: 'approved', tier: 1, kind: 'post', posts: [{ text: 'a' }] },
+			{ id: 's1', status: 'approved', tier: 2, kind: 'post', series: 'partners', posts: [{ text: 's1' }] },
+			{ id: 's2', status: 'approved', tier: 2, kind: 'post', series: 'partners', posts: [{ text: 's2' }] },
+		];
+		const cadence = { slots: [{ tier: 1, series: 'partners', at: '15:30' }, { tier: 2, at: '12:00' }] };
+		expect(inventory(items, { published: [] }, dir, Date.now(), cadence)).toEqual([
+			{ tier: 1, days: 1, low: true },
+			{ tier: 2, days: 0, low: true },
+			{ tier: 3, days: 0, low: true },
+			{ series: 'partners', count: 2, days: 2, low: true },
+		]);
+	});
+
 	it('resumes a half-published item ahead of pacing and priority', () => {
 		const state = { published: [{ id: 'p', publishedAt: new Date(primeTime - 10 * 60_000).toISOString() }], inflight: { a: { media: {}, postIds: ['1'] } } };
 		expect(pickDue({ items: [item('a'), item('b', { priority: 50 })], state, now: primeTime, cadence }).resuming).toBe(true);

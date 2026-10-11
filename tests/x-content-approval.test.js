@@ -62,7 +62,8 @@ describe('approval policy', () => {
 	it('leaves approval with the owner unless the queue says otherwise', () => {
 		expect(approvalPolicy({})).toEqual(DEFAULT_APPROVAL);
 		expect(approvalPolicy({ approval: { mode: 'automatic' } }).mode).toBe('owner');
-		expect(approvalPolicy({ approval: { mode: 'auto', tiers: [1, 2, 9, 'x'], vetoHours: 6 } })).toEqual({ mode: 'auto', tiers: [1, 2], vetoHours: 6, articles: false });
+		expect(approvalPolicy({ approval: { mode: 'auto', tiers: [1, 2, 9, 'x'], vetoHours: 6 } })).toEqual({ mode: 'auto', tiers: [1, 2], vetoHours: 6, articles: false, series: [] });
+		expect(approvalPolicy({ approval: { mode: 'auto', series: ['partners', '', 7] } }).series).toEqual(['partners']);
 		expect(approvalPolicy({ approval: { mode: 'auto', articles: 'yes' } }).articles).toBe(false);
 		expect(approvalPolicy({ approval: { mode: 'auto', articles: true } }).articles).toBe(true);
 	});
@@ -83,6 +84,17 @@ describe('approval policy', () => {
 	it('keeps flagship posts with the owner unless tier 1 is listed', () => {
 		expect(policyBlockers(item({ tier: 1 }), PASSED, AUTO, sandbox(), NOW)).toEqual(['tier 1 posts are approved by the owner']);
 		expect(policyBlockers(item({ tier: 1 }), PASSED, { ...AUTO, tiers: [1, 2, 3] }, sandbox(), NOW)).toEqual([]);
+	});
+
+	it('releases a listed series by policy whatever its tier, and holds it to every other rule', () => {
+		const spotlight = item({ tier: 1, series: 'partners' });
+		const policy = { ...AUTO, series: ['partners'] };
+		expect(policyBlockers(spotlight, PASSED, AUTO, sandbox(), NOW)).toEqual(['tier 1 posts are approved by the owner']);
+		expect(policyBlockers(spotlight, PASSED, policy, sandbox(), NOW)).toEqual([]);
+		expect(policyBlockers(item({ tier: 1, series: 'other' }), PASSED, policy, sandbox(), NOW)).toEqual(['tier 1 posts are approved by the owner']);
+		expect(policyBlockers({ ...spotlight, scenario: undefined }, PASSED, policy, sandbox(), NOW)).toEqual(['it was never filmed against the product']);
+		const tagged = { ...spotlight, posts: [{ ...spotlight.posts[0], text: `${spotlight.posts[0].text} with @nvidia` }] };
+		expect(policyBlockers(tagged, PASSED, policy, sandbox(), NOW)).toEqual(['it tags @nvidia']);
 	});
 
 	it('never releases a post that was not filmed', () => {

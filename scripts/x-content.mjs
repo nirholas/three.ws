@@ -37,7 +37,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import { QUEUE_PATH, loadQueue, validateItem, validateQueue } from '../api/_lib/x-content/queue.js';
-import { DEFAULT_CADENCE, TIERS, currentSlot, pickDue, reservedKinds, slotLabel, slotOpenings, tierOf } from '../api/_lib/x-content/schedule.js';
+import { DEFAULT_CADENCE, TIERS, currentSlot, pickDue, reservedKinds, reservedSeries, seriesOf, slotLabel, slotOpenings, tierOf } from '../api/_lib/x-content/schedule.js';
 import { loadLifts, rankItems } from '../api/_lib/x-content/priority.js';
 import { activeHolds, inventory, stockLabel } from '../api/_lib/x-content/runner.js';
 import { runTick } from '../api/_lib/x-content/runner.js';
@@ -143,10 +143,13 @@ async function plan() {
 	const recent = withFormats(state.published, queue.items).slice(-6).map((row) => row.format || '?');
 	if (recent.length) console.log(`  last sent: ${recent.join(' > ')}   (at most ${queue.quality?.maximumSameFormatInARow ?? 'any'} of one format in a row)`);
 
-	// Items a kind slot owns are ranked for that slot, not for their tier.
+	// Items a kind or series slot owns are ranked for that slot, not for their tier.
 	const reserved = reservedKinds(cadence);
+	const series = reservedSeries(cadence);
+	const ownSlot = (item) => reserved.has(item.kind) || series.has(seriesOf(item));
 	const groups = [
-		...TIERS.map((tier) => ({ label: `T${tier}`, match: (item) => !reserved.has(item.kind) && tierOf(item) === tier })),
+		...TIERS.map((tier) => ({ label: `T${tier}`, match: (item) => !ownSlot(item) && tierOf(item) === tier })),
+		...[...series].map((name) => ({ label: `${name} series`, match: (item) => !reserved.has(item.kind) && seriesOf(item) === name })),
 		...[...reserved].map((kind) => ({ label: `${kind} slot`, match: (item) => item.kind === kind })),
 	];
 	for (const group of groups) {

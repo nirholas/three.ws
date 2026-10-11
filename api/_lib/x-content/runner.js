@@ -14,7 +14,7 @@
 // reads the timeline again if the stored record has gone stale.
 
 import { loadQueue, validateQueue } from './queue.js';
-import { DEFAULT_CADENCE, SLOT_OPEN_MINUTES, TIERS, isKindSlot, pickDue, reservedKinds, slotLabel, slotOpenings, tierOf } from './schedule.js';
+import { DEFAULT_CADENCE, SLOT_OPEN_MINUTES, TIERS, isKindSlot, pickDue, reservedKinds, reservedSeries, seriesOf, slotLabel, slotOpenings, tierOf } from './schedule.js';
 import { loadLifts } from './priority.js';
 import { loadReview, contentHash } from './review.js';
 import { previewClient, publishItem, xClientFromEnv } from './publisher.js';
@@ -86,10 +86,13 @@ export function inventory(items, state, root, now = Date.now(), cadence = {}) {
 	const reserved = reservedKinds(cadence);
 	const counts = new Map(TIERS.map((tier) => [tier, 0]));
 	const byKind = new Map([...reserved].map((kind) => [kind, 0]));
+	const series = reservedSeries(cadence);
+	const bySeries = new Map([...series].map((name) => [name, 0]));
 	for (const item of items) {
 		if (item.status !== 'approved' || publishedIds.has(item.id) || held.has(item.id)) continue;
 		if (item.expiresAt && Date.parse(item.expiresAt) <= now) continue;
 		if (reserved.has(item.kind)) byKind.set(item.kind, byKind.get(item.kind) + 1);
+		else if (series.has(seriesOf(item))) bySeries.set(seriesOf(item), bySeries.get(seriesOf(item)) + 1);
 		else counts.set(tierOf(item), counts.get(tierOf(item)) + 1);
 	}
 	const tiers = TIERS.map((tier) => ({ tier, days: counts.get(tier), low: counts.get(tier) < INVENTORY_WARN_DAYS }));
@@ -97,10 +100,12 @@ export function inventory(items, state, root, now = Date.now(), cadence = {}) {
 		const days = byKind.get(slot.kind) * Math.max(1, Math.floor(Number(slot.everyDays) || 1));
 		return { kind: slot.kind, count: byKind.get(slot.kind), days, low: days < INVENTORY_WARN_DAYS };
 	});
-	return [...tiers, ...kinds];
+	// A series posts once a day, so a series post is a day of stock.
+	const serial = [...series].map((name) => ({ series: name, count: bySeries.get(name), days: bySeries.get(name), low: bySeries.get(name) < INVENTORY_WARN_DAYS }));
+	return [...tiers, ...kinds, ...serial];
 }
 
-export const stockLabel = (row) => (row.kind ? `${row.kind}: ${row.count} (${row.days} day(s))` : `T${row.tier}: ${row.days} day(s)`);
+export const stockLabel = (row) => (row.kind ? `${row.kind}: ${row.count} (${row.days} day(s))` : row.series ? `${row.series}: ${row.days} day(s)` : `T${row.tier}: ${row.days} day(s)`);
 
 async function alertLowInventory(state, store, stock, now) {
 	const today = new Date(now).toISOString().slice(0, 10);
@@ -307,7 +312,7 @@ async function fillSlot({ queue, state, store, root, now, requestedId, client, c
 		}
 
 		try {
-			const meta = decision.slot ? { slot: decision.slot.key, tier: decision.tier, slotTier: decision.slot.tier, ...(decision.slot.kind ? { slotKind: decision.slot.kind } : {}) } : {};
+			const meta = decision.slot ? { slot: decision.slot.key, tier: decision.tier, slotTier: decision.slot.tier, ...(decision.slot.kind ? { slotKind: decision.slot.kind } : {}), ...(decision.series ? { series: decision.series } : {}) } : {};
 			const row = await publishItem({ item, client, root, state, store, account: queue.account, meta, now });
 			if (state.holds?.[item.id]) {
 				delete state.holds[item.id];
