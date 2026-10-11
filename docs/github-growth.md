@@ -43,13 +43,29 @@ node scripts/build-github-profile.mjs --out /tmp/profile --publish   # create th
 
 The catalog is built from the live GitHub listing, so it cannot drift from what is actually public. Re-run it after adding or renaming repos.
 
+It is the owner's personal profile, so the copy stays personal: three.ws appears as one section and in its own repo listings, never as the header, badges, contact or author. The boost sweep skips the profile repo for the same reason (its generic block plugs the platform). The generator owns `README.md`, `assets/`, `llms.txt`, `llms-full.txt`, `CITATION.cff`, `AGENTS.md` and `repos.json` there.
+
+The README carries animated charts rendered by `scripts/lib/profile-visuals.mjs` into `assets/`, one SVG per theme picked with `<picture>` and `prefers-color-scheme`:
+
+| Asset | What it shows |
+|---|---|
+| `stats` | Odometer strip: repos, stars, forks, topics, languages, repos created this year |
+| `planet` | A 3D sphere spinning in real time, one dot per repo sized by stars and colored by section, with a section legend |
+| `top-stars` | Lollipops on a log axis for the 12 most-starred repos |
+| `city` | Isometric city, one tower per repo (height is log stars), one district per section, towers rise on load |
+| `growth` | Cumulative repos by creation month, stacked by section, drawn on left to right |
+| `languages` | Extruded donut of primary languages that spins in 3D |
+| `punchcard` | Repo creation by weekday and hour (UTC) |
+
+GitHub shows README images through `<img>`, so there is no script or web font. The 3D is real anyway: a ring drawn in a group rotated by `animateTransform` and squashed by `scale(1, k)` is the exact projection of a ring spinning about a vertical axis, and dots and labels ride inside a counter-rotated group so they stay round and upright. The donut wall is the same rotating ring stacked every 1.5px. Section colors follow the fixed category order, so a section keeps its color in every chart.
+
 ## What GitHub's API cannot do
 
 The repository social preview image can only be uploaded in the web UI (Settings, then Social preview). Standalone mirrors already serve a generated 1200x630 card from their docs site; set the same image as the social preview on the repos you most want shared.
 
 ## Tests
 
-`tests/repo-growth-kit.test.js` covers the block (idempotence, no duplicate sections, links only to files that exist), badges, the file set (never overwrites, never invents a license), topic merging and the mirror README decoration.
+`tests/github-profile.test.js` covers the profile: every chart renders well formed in both themes, headline numbers match the repo list, section colors are stable, and the header stays personal. `tests/repo-growth-kit.test.js` covers the block (idempotence, no duplicate sections, links only to files that exist), badges, the file set (never overwrites, never invents a license), topic merging and the mirror README decoration.
 
 ## Related
 
