@@ -1,0 +1,1124 @@
+{
+	"$comment": "Source of truth for docs/listings-registry.md. Edit here, then run npm run listings:build. Only set status \"live\" after fetching the page and seeing three.ws content.",
+	"entries": [
+		{
+			"id": "aws-marketplace",
+			"name": "AWS Marketplace",
+			"category": "cloud",
+			"status": "prerequisites",
+			"url": "https://aws.amazon.com/marketplace",
+			"evidence": "SaaS integration built and conformant; product not yet created in the Management Portal, public search returns no three.ws product",
+			"next": "Create the product in the AWS Marketplace Management Portal (docs/aws-marketplace-listing-kit.md)",
+			"checked": "2026-09-16"
+		},
+		{
+			"id": "alibaba-marketplace",
+			"name": "Alibaba Cloud International Marketplace",
+			"category": "cloud",
+			"status": "live",
+			"url": "https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html",
+			"evidence": "Product listing and storefront render three.ws",
+			"checked": "2026-09-16"
+		},
+		{
+			"id": "alibaba-marketplace-blog",
+			"name": "Alibaba Cloud Marketplace blog feature",
+			"category": "press",
+			"status": "live",
+			"url": "https://marketplace.alibabacloud.com/doc/blog/detail/mplace-sgcmfw00036800.html",
+			"evidence": "Editorial feature introducing three.ws",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gcp-marketplace",
+			"name": "Google Cloud Marketplace",
+			"category": "cloud",
+			"status": "not_listed",
+			"url": null,
+			"evidence": "Open to partnership; no listing exists",
+			"next": "Start the Partner Advantage application",
+			"checked": "2026-09-16"
+		},
+		{
+			"id": "azure-marketplace",
+			"name": "Microsoft Azure Marketplace",
+			"category": "cloud",
+			"status": "not_listed",
+			"url": null,
+			"evidence": "On roadmap; no listing exists",
+			"checked": "2026-09-16"
+		},
+		{
+			"id": "quicknode-startup",
+			"name": "Quicknode Startup Program",
+			"category": "program",
+			"status": "live",
+			"url": null,
+			"evidence": "Accepted 2026-07, free infrastructure credits approved",
+			"checked": "2026-09-16",
+			"manual": true
+		},
+		{
+			"id": "gcp-web3-startups",
+			"name": "Google Cloud for Web3 Startups",
+			"category": "program",
+			"status": "live",
+			"url": null,
+			"evidence": "Member; production runs on Cloud Run",
+			"checked": "2026-09-16",
+			"manual": true
+		},
+		{
+			"id": "nvidia-inception",
+			"name": "NVIDIA Inception",
+			"category": "program",
+			"status": "live",
+			"url": null,
+			"evidence": "Member since 2026-07; surface at /nvidia",
+			"checked": "2026-09-16",
+			"manual": true
+		},
+		{
+			"id": "bnb-dappbay",
+			"name": "BNB Chain Dappbay",
+			"category": "ecosystem",
+			"status": "live",
+			"url": "https://dappbay.bnbchain.org/detail/three",
+			"evidence": "Listed under AI Agent Launchpad, AI Data, AI Infra",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "openai-plugin-directory",
+			"name": "OpenAI Plugin Directory (ChatGPT + Codex)",
+			"category": "ai-directory",
+			"status": "prerequisites",
+			"url": null,
+			"evidence": "Public OAuth 2.1 MCP server meets the gate; submission not yet made",
+			"next": "Submit via the kit in docs/openai-listing-channels.md",
+			"checked": "2026-09-16"
+		},
+		{
+			"id": "openai-showcase",
+			"name": "OpenAI Showcase Gallery",
+			"category": "ai-directory",
+			"status": "prerequisites",
+			"url": null,
+			"evidence": "Open web form, no repo gate; not yet submitted",
+			"next": "Submit the form (docs/openai-listing-channels.md)",
+			"checked": "2026-09-16"
+		},
+		{
+			"id": "openai-cookbook",
+			"name": "OpenAI Cookbook",
+			"category": "ai-directory",
+			"status": "pr_open",
+			"url": "https://github.com/openai/openai-cookbook/pull/2874",
+			"evidence": "PR #2874 open since 2026-07-21, unmerged, review required",
+			"next": "Revival steps in docs/openai-listing-channels.md",
+			"checked": "2026-09-16"
+		},
+		{
+			"id": "nvidia-apps-catalog",
+			"name": "NVIDIA Accelerated Apps Catalog",
+			"category": "ai-directory",
+			"status": "pending",
+			"url": "https://marketplace.nvidia.com/en-us/enterprise/applications/",
+			"evidence": "Requested 2026-09-04; NVIDIA replied 2026-09-14; not among the public catalog entries on 2026-09-16",
+			"next": "Complete the Shipping product record (docs/nvidia-apps-catalog-listing.md)",
+			"checked": "2026-09-16"
+		},
+		{
+			"id": "nvidia-ngc",
+			"name": "NVIDIA NGC Catalog",
+			"category": "ai-directory",
+			"status": "prerequisites",
+			"url": "https://catalog.ngc.nvidia.com/",
+			"evidence": "EULA prerequisite closed; one build and the partner legal agreement remain",
+			"next": "See docs/nvidia-ngc-listing.md",
+			"checked": "2026-09-16"
+		},
+		{
+			"id": "mcp-official-registry",
+			"name": "Official MCP Registry",
+			"category": "mcp",
+			"status": "live",
+			"url": "https://registry.modelcontextprotocol.io/v0/servers?search=three.ws",
+			"evidence": "72 servers published under io.github.nirholas/*, including io.github.nirholas/three.ws",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "pulsemcp",
+			"name": "PulseMCP",
+			"category": "mcp",
+			"status": "live",
+			"url": "https://www.pulsemcp.com/servers/nirholas-three-ws",
+			"evidence": "Ingested from the official registry",
+			"checked": "2026-09-16"
+		},
+		{
+			"id": "glama",
+			"name": "Glama",
+			"category": "mcp",
+			"status": "live",
+			"url": "https://glama.ai/mcp/connectors/io.github.nirholas/three.ws",
+			"evidence": "Connectors ingested; main connector unclaimed and showing a failing health check (no OAuth test credentials)",
+			"next": "Claim the connector and supply test credentials via /.well-known/glama.json",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "lobehub-mcp",
+			"name": "LobeHub MCP marketplace",
+			"category": "mcp",
+			"status": "live",
+			"url": "https://lobehub.com/mcp/nirholas-three-ws-portal",
+			"evidence": "Indexed from GitHub (@three-ws/portal, @three-ws/avatar-mcp)",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "lobehub-plugin",
+			"name": "LobeHub chat plugin index",
+			"category": "mcp",
+			"status": "not_listed",
+			"url": null,
+			"evidence": "/.well-known/lobehub-plugin.json exists but the plugin is not in the index",
+			"checked": "2026-09-16"
+		},
+		{
+			"id": "smithery",
+			"name": "Smithery",
+			"category": "mcp",
+			"status": "not_listed",
+			"url": null,
+			"evidence": "No three.ws server in Smithery search on 2026-09-16",
+			"next": "Publish via Smithery CLI",
+			"checked": "2026-09-16"
+		},
+		{
+			"id": "mcp-so",
+			"name": "mcp.so",
+			"category": "mcp",
+			"status": "not_listed",
+			"url": null,
+			"evidence": "Search returns no results for three.ws on 2026-09-16",
+			"next": "Submit at mcp.so",
+			"checked": "2026-09-16"
+		},
+		{
+			"id": "ibm-community",
+			"name": "IBM Community blog",
+			"category": "press",
+			"status": "live",
+			"url": "https://community.ibm.com/community/user/blogs/nich8/2026/06/08/3d-ai-web3-just-converge-threews-shipped-the-whole",
+			"evidence": "Blog covering the three.ws stack",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "hackernoon",
+			"name": "HackerNoon",
+			"category": "press",
+			"status": "live",
+			"url": "https://hackernoon.com/u/three-ws",
+			"evidence": "Author page live; no stories published yet (2026-09-16)",
+			"next": "Submit queued drafts for editorial review",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "huggingface",
+			"name": "Hugging Face org",
+			"category": "dev-registry",
+			"status": "live",
+			"url": "https://huggingface.co/three-ws",
+			"evidence": "Avatar Viewer Space, avatars model repo, two articles",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "pumpfun-coin",
+			"name": "pump.fun $THREE coin page and article",
+			"category": "crypto",
+			"status": "live",
+			"url": "https://pump.fun/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+			"evidence": "Verified project; feature article published on the coin page",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "dextools-pair",
+			"name": "DEXTools three / SOL pair",
+			"category": "crypto",
+			"status": "live",
+			"url": "https://www.dextools.io/app/solana/pair-explorer/CnK82s8exdsK9nwqQ55kd9wcxoA22NwTchZJCBdu8LDa",
+			"evidence": "Pair page live; three Social Boost wins (2026-06-04, 06-06, 06-08)",
+			"checked": "2026-09-18"
+		},
+		{
+			"id": "claude-marketplaces-crossaitools",
+			"name": "Claude Marketplaces (crossaitools)",
+			"category": "mcp",
+			"status": "live",
+			"url": "https://claudemarketplaces.com/mcp/io.github.nirholas/three.ws",
+			"evidence": "Page describes three.ws avatar platform and GLB MCP server",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "drio-mcp-index-threews-avatar",
+			"name": "Drio MCP index (threews-avatar)",
+			"category": "mcp",
+			"status": "unverified",
+			"url": "https://www.getdrio.com/mcp/io-github-nirholas-threews-avatar/md",
+			"evidence": "Surfaced in search but fetch returned HTTP 503",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "smithery-2",
+			"name": "Smithery",
+			"category": "mcp",
+			"status": "not_listed",
+			"url": "https://smithery.ai/search?q=three.ws",
+			"evidence": "Search for three.ws returned no nirholas/three.ws listing (only unrelated ThreeJS Weaver)",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "mcp-so-2",
+			"name": "mcp.so",
+			"category": "mcp",
+			"status": "not_listed",
+			"url": "https://mcp.so/search?q=three.ws",
+			"evidence": "Search returned 0 results",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "lobehub-mcp-2",
+			"name": "LobeHub MCP",
+			"category": "mcp",
+			"status": "unverified",
+			"url": "https://lobehub.com/mcp?q=three.ws",
+			"evidence": "Search URL redirected; not checked further",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "x402-list-com-three-ws-3d-studio",
+			"name": "x402-list.com three.ws 3D Studio",
+			"category": "x402",
+			"status": "live",
+			"url": "https://x402-list.com/services/three-ws-3d-studio",
+			"evidence": "Page lists three.ws 3D Studio, 14 paid x402 endpoints",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "x402scan",
+			"name": "x402scan",
+			"category": "x402",
+			"status": "unverified",
+			"url": "https://www.x402scan.com/",
+			"evidence": "Homepage fetched without listing data; search snippet claims three.ws server listed; own retrospective claims listing",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "402index-io",
+			"name": "402index.io",
+			"category": "x402",
+			"status": "unverified",
+			"url": "https://402index.io",
+			"evidence": "Only self-reported (three.ws blog claims domain-verified); no independent page found",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "solana-foundation-pay-skills-pr-302",
+			"name": "Solana Foundation pay-skills PR #302",
+			"category": "x402",
+			"status": "pending",
+			"url": "https://github.com/solana-foundation/pay-skills/pull/302",
+			"evidence": "PR 'add three.ws providers' is open, not merged",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "dexscreener",
+			"name": "DexScreener",
+			"category": "crypto",
+			"status": "live",
+			"url": "https://dexscreener.com/solana/5byl7mzolabynwmpzkpkjf4mgkz7febzranos19pre2z",
+			"evidence": "API shows three.ws (three) with 18 pairs, PumpSwap ~$159k liquidity",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "coingecko",
+			"name": "CoinGecko",
+			"category": "crypto",
+			"status": "live",
+			"url": "https://www.coingecko.com/en/coins/three-ws",
+			"evidence": "Coin page three.ws (THREE) links three.ws, github.com/nirholas/three.ws, x.com/trythreews",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "geckoterminal",
+			"name": "GeckoTerminal",
+			"category": "crypto",
+			"status": "live",
+			"url": "https://www.geckoterminal.com/solana/tokens/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+			"evidence": "API returned token three.ws / three with price and FDV",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "jupiter",
+			"name": "Jupiter",
+			"category": "crypto",
+			"status": "live",
+			"url": "https://jup.ag/tokens/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+			"evidence": "Jupiter token API: three.ws, verified true",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "coinbase-price-page",
+			"name": "Coinbase price page",
+			"category": "crypto",
+			"status": "unverified",
+			"url": "https://www.coinbase.com/price/threews-solana-aba58c21",
+			"evidence": "Search shows page with CA; fetch 403",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "opensea-token-pages",
+			"name": "OpenSea token pages",
+			"category": "crypto",
+			"status": "unverified",
+			"url": "https://opensea.io/token/solana/3FDxhs5XqMVPiFbtwHc9KBWsVL6PwRn7d7a8dY6B7ngc",
+			"evidence": "Search hit uses a different mint than canonical; likely not $THREE",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "weex-three-usdt-listing-articles",
+			"name": "WEEX (THREE/USDT listing articles)",
+			"category": "crypto",
+			"status": "unverified",
+			"url": "https://www.weex.com/wiki/article/what-is-threewsthree-coin-a-comprehensive-guide-to-the-new-threeusdt-listing-on-weex-mvdegyfin6viz1cstasq4g2d",
+			"evidence": "Search hit; fetch 404",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "birdeye",
+			"name": "Birdeye",
+			"category": "crypto",
+			"status": "unverified",
+			"url": "https://birdeye.so/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+			"evidence": "Fetch 403",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "solscan",
+			"name": "Solscan",
+			"category": "crypto",
+			"status": "unverified",
+			"url": "https://solscan.io/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+			"evidence": "Fetch 403; CoinGecko links it",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "product-hunt-forum-post",
+			"name": "Product Hunt forum post",
+			"category": "ai-directory",
+			"status": "live",
+			"url": "https://www.producthunt.com/p/three-ws-2",
+			"evidence": "Page covers three.ws 3D AI agent embed",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "hunted-space",
+			"name": "Hunted.space",
+			"category": "ai-directory",
+			"status": "live",
+			"url": "https://www.hunted.space/product/three-ws-2",
+			"evidence": "Product Hunt launch mirror of three.ws",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "trendshift",
+			"name": "Trendshift",
+			"category": "ai-directory",
+			"status": "live",
+			"url": "https://trendshift.io/repositories/38279",
+			"evidence": "Profile for nirholas/three.ws",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "there-s-an-ai-for-that",
+			"name": "There's An AI For That",
+			"category": "ai-directory",
+			"status": "not_listed",
+			"url": null,
+			"evidence": "Searched, no listing found",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "futurepedia",
+			"name": "Futurepedia",
+			"category": "ai-directory",
+			"status": "not_listed",
+			"url": null,
+			"evidence": "Searched, no listing found",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "alternativeto",
+			"name": "AlternativeTo",
+			"category": "ai-directory",
+			"status": "not_listed",
+			"url": null,
+			"evidence": "Searched, no listing found",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "toolify",
+			"name": "Toolify",
+			"category": "ai-directory",
+			"status": "not_listed",
+			"url": null,
+			"evidence": "Searched, no listing found",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "saashub",
+			"name": "SaaSHub",
+			"category": "ai-directory",
+			"status": "not_listed",
+			"url": null,
+			"evidence": "Searched, no listing found",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "crunchbase",
+			"name": "Crunchbase",
+			"category": "ai-directory",
+			"status": "unverified",
+			"url": "https://www.crunchbase.com/organization/three-ws",
+			"evidence": "Fetch 403",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "product-hunt-product-page",
+			"name": "Product Hunt product page",
+			"category": "ai-directory",
+			"status": "unverified",
+			"url": "https://www.producthunt.com/products/three-ws",
+			"evidence": "Fetch 404 at guessed slug",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "npm-three-ws-scope",
+			"name": "npm @three-ws scope",
+			"category": "dev-registry",
+			"status": "unverified",
+			"url": "https://www.npmjs.com/org/three-ws",
+			"evidence": "npm org page 403; package names referenced by MCP registry (@three-ws/agent-sniper, metaplex-agent-mcp)",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "nirholas-awesome-3d-agents",
+			"name": "nirholas/awesome-3d-agents",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/nirholas/awesome-3d-agents",
+			"evidence": "Owner-run curated list; search snippet shows three.ws included (own list)",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "pypi",
+			"name": "PyPI",
+			"category": "dev-registry",
+			"status": "not_listed",
+			"url": null,
+			"evidence": "Searched, nothing found",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "docker-hub",
+			"name": "Docker Hub",
+			"category": "dev-registry",
+			"status": "not_listed",
+			"url": null,
+			"evidence": "Searched, nothing found",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "8004scan-solana-agent-registry",
+			"name": "8004scan / Solana agent registry",
+			"category": "agent-registry",
+			"status": "unverified",
+			"url": "https://8004scan.io",
+			"evidence": "No direct three.ws agent page found",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "ibm-partnership-press-release-ai-magazine-globenewswire",
+			"name": "IBM partnership press release (AI Magazine/GlobeNewswire)",
+			"category": "press",
+			"status": "unverified",
+			"url": "https://aimagazine.com/globenewswire/3306249",
+			"evidence": "Search hit; fetch 403",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "techintelpro-ibm-partnership",
+			"name": "TechIntelPro IBM partnership",
+			"category": "press",
+			"status": "live",
+			"url": "https://techintelpro.com/AI/Enterprise-AI/ibm-threews-partner-on-ai-powered-3d-agents",
+			"evidence": "Article on three.ws and IBM partnership",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "hackernoon-proof-of-usefulness",
+			"name": "HackerNoon Proof of Usefulness",
+			"category": "press",
+			"status": "live",
+			"url": "https://hackernoon.com/threews-earns-a-781-proof-of-usefulness-score-by-building-embeddable-3d-ai-agents",
+			"evidence": "Profile of three.ws, score 781",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "runtimewire",
+			"name": "RuntimeWire",
+			"category": "press",
+			"status": "live",
+			"url": "https://runtimewire.com/article/three-ws-open-source-3d-ai-agent-stack",
+			"evidence": "Article profiling three.ws open-source stack",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "the-menon-lab-blog",
+			"name": "The Menon Lab blog",
+			"category": "press",
+			"status": "live",
+			"url": "https://themenonlab.blog/blog/three-ws-browser-native-3d-ai-agents",
+			"evidence": "Blog post reviewing three.ws",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "audible-podcast-three-ws",
+			"name": "Audible podcast three.ws",
+			"category": "press",
+			"status": "live",
+			"url": "https://www.audible.co.uk/podcast/threews/B0GZX1SFZM",
+			"evidence": "Podcast page about three.ws",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "htx-news",
+			"name": "HTX news",
+			"category": "press",
+			"status": "live",
+			"url": "https://www.htx.com/news/after-being-noticed-by-ibm-the-token-of-threews-surged-50-ti-kKbmBNdm/",
+			"evidence": "Article on three.ws token after IBM",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "startup-map-amsterdam",
+			"name": "Startup Map Amsterdam",
+			"category": "press",
+			"status": "unverified",
+			"url": "https://startupmap.iamsterdam.com/news/feed/three-ws-partners-with-ibm-to-scale-browser-native-3d-ai-agent-platform",
+			"evidence": "Fetch 403",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "x-trythreews",
+			"name": "X @trythreews",
+			"category": "social",
+			"status": "unverified",
+			"url": "https://x.com/trythreews",
+			"evidence": "Fetch 402; CoinGecko and search confirm handle",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-punkpeye-awesome-mcp-servers",
+			"name": "punkpeye/awesome-mcp-servers (96072 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/punkpeye/awesome-mcp-servers/pull/16161",
+			"evidence": "PR open: \"Add nirholas/3d-agent-mcp 🤖🤖🤖\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-composiohq-awesome-claude-skills",
+			"name": "ComposioHQ/awesome-claude-skills (76822 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/ComposioHQ/awesome-claude-skills/pull/2050",
+			"evidence": "PR closed: \"Add three.ws 3D Studio skill\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-sickn33-agentic-awesome-skills",
+			"name": "sickn33/agentic-awesome-skills (47430 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/sickn33/agentic-awesome-skills/pull/1728",
+			"evidence": "PR closed: \"feat: add threews-3d-studio skill for text and image to 3D GLB generation\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-e2b-dev-awesome-ai-agents",
+			"name": "e2b-dev/awesome-ai-agents (30356 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/e2b-dev/awesome-ai-agents/pull/1714",
+			"evidence": "PR open: \"Add three.ws\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-ellisonleao-magictools",
+			"name": "ellisonleao/magictools (17462 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/ellisonleao/magictools/pull/423",
+			"evidence": "PR closed: \"Add three.ws Forge to Graphics > Modeling\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-steven2358-awesome-generative-ai",
+			"name": "steven2358/awesome-generative-ai (12724 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/steven2358/awesome-generative-ai/pull/1487",
+			"evidence": "PR closed: \"Add three.ws Forge to Other (Discoveries)\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-behisecc-awesome-claude-skills",
+			"name": "BehiSecc/awesome-claude-skills (10230 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/BehiSecc/awesome-claude-skills/pull/808",
+			"evidence": "PR closed: \"Add three.ws 3D Studio skills to Media & Content\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-yzfly-awesome-mcp-zh",
+			"name": "yzfly/Awesome-MCP-ZH (7717 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/yzfly/Awesome-MCP-ZH/pull/649",
+			"evidence": "PR closed: \"新增 three.ws 3D Studio 到 多媒体与内容创作\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-chubin-awesome-console-services",
+			"name": "chubin/awesome-console-services (6544 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/chubin/awesome-console-services/pull/135",
+			"evidence": "PR closed: \"Add three.ws/tty (3D character animation over curl)\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-kyrolabs-awesome-agents",
+			"name": "kyrolabs/awesome-agents (2906 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/kyrolabs/awesome-agents/pull/806",
+			"evidence": "PR closed: \"Add three.ws to Conversational / General Agents\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-slavakurilyak-awesome-ai-agents",
+			"name": "slavakurilyak/awesome-ai-agents (2426 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/slavakurilyak/awesome-ai-agents/pull/740",
+			"evidence": "PR open: \"Add three.ws to AI Agents, UI Development and MCP Servers\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-jim-schwoebel-awesome-ai-agents",
+			"name": "jim-schwoebel/awesome_ai_agents (2008 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/jim-schwoebel/awesome_ai_agents/pull/521",
+			"evidence": "PR open: \"Add three.ws to Frameworks\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-weihaox-awesome-digital-human",
+			"name": "weihaox/awesome-digital-human (1985 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/weihaox/awesome-digital-human/pull/15",
+			"evidence": "PR closed: \"Add three.ws to Industry Demo or Product\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-caramaschihg-awesome-ai-agents-2026",
+			"name": "caramaschiHG/awesome-ai-agents-2026 (1927 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/caramaschiHG/awesome-ai-agents-2026/pull/651",
+			"evidence": "PR open: \"Add three.ws to Creative AI > 3D and Design\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-vybenetwork-solana-swap-api",
+			"name": "vybenetwork/solana-swap-api (1742 stars)",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/vybenetwork/solana-swap-api/blob/6267f1b3be689ff2582d861835cf592233f2906c/public/data/token-catalog.tsv",
+			"evidence": "public/data/token-catalog.tsv: FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump three three.ws /data/token-icons/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump.jpg 6 Token2022",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-kaushikb11-awesome-llm-agents",
+			"name": "kaushikb11/awesome-llm-agents (1604 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/kaushikb11/awesome-llm-agents/pull/353",
+			"evidence": "PR open: \"Add three.ws to Agent Infrastructure\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-yuan-manx-ai-game-devtools",
+			"name": "Yuan-ManX/ai-game-devtools (1361 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/Yuan-ManX/ai-game-devtools/pull/134",
+			"evidence": "PR closed: \"Add three.ws to 3D Model\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-jenqyang-awesome-ai-agents",
+			"name": "Jenqyang/Awesome-AI-Agents (1257 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/Jenqyang/Awesome-AI-Agents/pull/583",
+			"evidence": "PR open: \"Add three.ws to Platforms/API\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-jaw9c-awesome-remote-mcp-servers",
+			"name": "jaw9c/awesome-remote-mcp-servers (1140 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/jaw9c/awesome-remote-mcp-servers/pull/969",
+			"evidence": "PR closed: \"Add three.ws remote MCP server\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-punkpeye-awesome-remote-mcp-servers",
+			"name": "punkpeye/awesome-remote-mcp-servers (1029 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/punkpeye/awesome-remote-mcp-servers/pull/865",
+			"evidence": "PR closed: \"Add three.ws 3D Studio to Art & Design 🤖🤖🤖\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-axiomecg-awesome-threejs",
+			"name": "AxiomeCG/awesome-threejs (1002 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/AxiomeCG/awesome-threejs/pull/45",
+			"evidence": "PR closed: \"Add @three-ws/motion to Libraries > Characters\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-axiomecg-awesome-threejs-2",
+			"name": "AxiomeCG/awesome-threejs (1002 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/AxiomeCG/awesome-threejs/pull/55",
+			"evidence": "PR open: \"Add three.ws to Tools > Scene Creation\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-devanshutak25-3d-resources",
+			"name": "devanshutak25/3d-resources (987 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/devanshutak25/3d-resources/pull/21",
+			"evidence": "PR closed: \"Add three.ws Forge to 3D Generation\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-dasterprokio-awesome-ai-companion",
+			"name": "DasterProkio/awesome-ai-companion (910 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/DasterProkio/awesome-ai-companion/pull/54",
+			"evidence": "PR open: \"Add three.ws to Visual Presence & VTuber-Style Companions\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-mobinx-awesome-mcp-list",
+			"name": "MobinX/awesome-mcp-list (889 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/MobinX/awesome-mcp-list/pull/552",
+			"evidence": "PR closed: \"Add nirholas/three.ws to Art & Culture\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-tensorblock-awesome-mcp-servers",
+			"name": "TensorBlock/awesome-mcp-servers (889 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/TensorBlock/awesome-mcp-servers/pull/2841",
+			"evidence": "PR closed: \"Add three.ws 3D Studio remote MCP server (Multimedia Processing)\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-jackyst0-awesome-agent-skills",
+			"name": "JackyST0/awesome-agent-skills (649 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/JackyST0/awesome-agent-skills/pull/112",
+			"evidence": "PR closed: \"Add three.ws 3D Studio skills to Design / 设计相关\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-yyeboah-awesome-text-to-3d",
+			"name": "yyeboah/Awesome-Text-to-3D (607 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/yyeboah/Awesome-Text-to-3D/pull/162",
+			"evidence": "PR closed: \"Add three.ws Forge to Frameworks & Projects\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-karanb192-awesome-claude-skills",
+			"name": "karanb192/awesome-claude-skills (544 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/karanb192/awesome-claude-skills/pull/343",
+			"evidence": "PR closed: \"Add generate-3d-model to Media & Content Creation\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-solana-foundation-awesome-solana-ai",
+			"name": "solana-foundation/awesome-solana-ai (428 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/solana-foundation/awesome-solana-ai/pull/251",
+			"evidence": "PR open: \"Add three.ws to AI Agents\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-merit-systems-x402scan",
+			"name": "Merit-Systems/x402scan (397 stars)",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/Merit-Systems/x402scan/pull/1032",
+			"evidence": "PR merged (merged 2026-08-11T20:01:45Z): \"Add three.ws self-hosted Solana facilitator\". Current README contains it: packages/external/facilitators/README.md: - **three.ws** - Self-hosted Solana facilitator for the three.ws agent economy",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-w3ctag-design-reviews",
+			"name": "w3ctag/design-reviews (370 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/w3ctag/design-reviews/issues/1226",
+			"evidence": "issue closed: \"three.ws, browser-native 3D AI agents with on-chain identity\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-xpaysh-awesome-x402",
+			"name": "xpaysh/awesome-x402 (290 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/xpaysh/awesome-x402/pull/1663",
+			"evidence": "PR closed: \"Add three.ws 3D Studio MCP\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-xpaysh-awesome-x402-2",
+			"name": "xpaysh/awesome-x402 (290 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/xpaysh/awesome-x402/pull/1785",
+			"evidence": "PR open: \"Add @three-ws/x402-server\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-xpaysh-awesome-x402-2-2",
+			"name": "xpaysh/awesome-x402 (290 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/xpaysh/awesome-x402/pull/1786",
+			"evidence": "PR open: \"Add @three-ws/x402-mcp\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-msub2-awesome-webxr",
+			"name": "msub2/awesome-webxr (282 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/msub2/awesome-webxr/pull/24",
+			"evidence": "PR open: \"Add three.ws to Avatars\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-tyaoo-picker",
+			"name": "Tyaoo/picker (257 stars)",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/Tyaoo/picker/blob/969d865f174c2b7d1abcae91025e74b559ccdb4a/archive/daily/2026/2026-05-29.md",
+			"evidence": "archive/daily/2026/2026-05-29.md: - [ ] [three.ws Earns a 78.1 Proof of Usefulness Score by Building Embeddable 3D AI Agents](https://hackernoon.com/threews-earns-a-781-proof-of-usefulness-score-by-building-embedda",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-toolsdk-ai-toolsdk-mcp-registry",
+			"name": "toolsdk-ai/toolsdk-mcp-registry (193 stars)",
+			"category": "awesome-list",
+			"status": "declined",
+			"url": "https://github.com/toolsdk-ai/toolsdk-mcp-registry/pull/582",
+			"evidence": "PR closed: \"Add three.ws 3D Studio remote MCP server\". Current README/changed file does not contain three.ws.",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-arnon-hs-open-source",
+			"name": "Arnon-hs/open-source (169 stars)",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/Arnon-hs/open-source/blob/d50f156f0da130fb5d83d93f714527a34adb4b3a/crypto/nirholas-three.ws.md",
+			"evidence": "crypto/nirholas-three.ws.md: # nirholas/three.ws",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-nix-community-nix4vscode",
+			"name": "nix-community/nix4vscode (143 stars)",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/nix-community/nix4vscode/blob/98e6b64d8e58f2968cfef2558bd49cd9becb22ee/data/openvsx/data_53.json",
+			"evidence": "data/openvsx/data_53.json: \"threews.vscode-x402\":[",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-githubevents-open-source-friday",
+			"name": "githubevents/open-source-friday (41 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/githubevents/open-source-friday/issues/254",
+			"evidence": "issue open: \"Open Source Friday - three.ws - TBD\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-rhein1-agoragentic-integrations",
+			"name": "rhein1/agoragentic-integrations (40 stars)",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/rhein1/agoragentic-integrations/blob/82da7a5d204e7ba89432b81d2aefbed76c3eb07a/examples/agoragentic-growth/2026-07-05-threews-x402-receipt-checklist-execute-d-75afc6d587/threews_x402_receipt_checklist_execute_demo.mjs",
+			"evidence": "examples/agoragentic-growth/2026-07-05-threews-x402-receipt-checklist-execute-d-75afc6d587/threews_x402_receipt_checklist_execute_demo.mjs: const DEFAULT_ENDPOINT = \"https://api.three.ws/v1/execute\";",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-bowyerapp-bowyer",
+			"name": "BowyerApp/bowyer (31 stars)",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/BowyerApp/bowyer/blob/0187c7ca90298cbac848b49feaccfc0330c8ead7/src/components/agent/agent-3d-hero.tsx",
+			"evidence": "src/components/agent/agent-3d-hero.tsx: href=\"https://three.ws\"",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-dubuqingfeng-yarb-web3",
+			"name": "dubuqingfeng/yarb-web3 (27 stars)",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/dubuqingfeng/yarb-web3/blob/35af5cad077b18c94ce2ace46ba1fd004d314ddd/archive/2026/2026-05-29.md",
+			"evidence": "archive/2026/2026-05-29.md: - [three.ws Earns a 78.1 Proof of Usefulness Score by Building Embeddable 3D AI Agents](https://hackernoon.com/threews-earns-a-781-proof-of-usefulness-score-by-building-embeddable-",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-rxmna8502-vybe-intelligence-vault",
+			"name": "rxmna8502/vybe-intelligence-vault (22 stars)",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/rxmna8502/vybe-intelligence-vault/blob/f936a29fc838b8bf2e3afafef81bf65b565b263a/daily-digests/2026-06-23/three_ws.md",
+			"evidence": "daily-digests/2026-06-23/three_ws.md: title: nirholas/three.ws",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-itachidevv-clawville",
+			"name": "ItachiDevv/ClawVille (18 stars)",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/ItachiDevv/ClawVille/blob/d939cfc9e896d9ac31e99a9253e97e8e06047246/packages/shared/src/avatar-manifest/types.ts",
+			"evidence": "packages/shared/src/avatar-manifest/types.ts: *   - three.ws-COMPATIBLE on the minimal `mesh` / `owner` / `signature` core",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-jefferylee-awesome-vibe-coded-apps",
+			"name": "JefferyLee/awesome-vibe-coded-apps (18 stars)",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/JefferyLee/awesome-vibe-coded-apps/blob/188e746cadf46225276ca2992452dbdae4423704/README.md",
+			"evidence": "README.md: - [three.ws](https://three.ws) - Create a 3D AI agent from your selfie in 60 seconds and embed it on any website. ⭐ 90 ([details](https://onesvibe.app/projects/three-ws))",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-parkerluxu-awesome-agent-cases",
+			"name": "parkerluxu/Awesome-agent-cases (17 stars)",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/parkerluxu/Awesome-agent-cases/blob/0c47461b58769b11aab61494989290175e359b1b/collections/engineering/ai-agent-web-development-cases.en.md",
+			"evidence": "collections/engineering/ai-agent-web-development-cases.en.md: | three.ws | GitHub | Open-source 3D AI agent framework, GLB/glTF avatars with LLM brains, memory, emotions, and autonomous payments. MCP server, x402, Solana/EVM, Three.js. Embed",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-tsubasakong-awesome-agent-payments-protocol",
+			"name": "tsubasakong/awesome-agent-payments-protocol (16 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/tsubasakong/awesome-agent-payments-protocol/pull/114",
+			"evidence": "PR open: \"Add x402 MCP Server (three.ws) to x402 Quickstarts\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-tsubasakong-awesome-agent-payments-protocol-2",
+			"name": "tsubasakong/awesome-agent-payments-protocol (16 stars)",
+			"category": "awesome-list",
+			"status": "pr_open",
+			"url": "https://github.com/tsubasakong/awesome-agent-payments-protocol/pull/115",
+			"evidence": "PR open: \"Add @three-ws/x402-server to x402 SDKs & Libraries\". Current README/changed file does not contain three.ws.",
+			"next": "Chase the maintainer or fix review feedback",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-linny006-mcp-servers-live",
+			"name": "linny006/mcp-servers-live (12 stars)",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/linny006/mcp-servers-live/blob/99ca9bd568ca5c647b76a15432ca850d372d2266/r/ComicsNow/comics-now/index.html",
+			"evidence": "r/ComicsNow/comics-now/index.html: <li><a href=\"https://linny006.github.io/mcp-servers-live/r/nirholas/three.ws/\">nirholas/three.ws (stars:230)</a></li>",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-decocms-mcps",
+			"name": "decocms/mcps (10 stars)",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/decocms/mcps/blob/cb9ac7b670c50e50d387c50865498ab2ab83b7d4/registry/server/lib/allowlist.ts",
+			"evidence": "registry/server/lib/allowlist.ts: \"io.github.nirholas/three.ws\",",
+			"checked": "2026-10-11"
+		},
+		{
+			"id": "gh-vibewatch-vibewatch-github-io",
+			"name": "vibewatch/vibewatch.github.io (6 stars)",
+			"category": "awesome-list",
+			"status": "live",
+			"url": "https://github.com/vibewatch/vibewatch.github.io/blob/c31bbf7c1e59ff2297b3f5c38b3200d1d4176c4a/docs/twitter/ai-agent/2026-06-06.zh.md",
+			"evidence": "docs/twitter/ai-agent/2026-06-06.zh.md: [@trythreews](https://x.com/trythreews) [已发布](https://x.com/trythreews/status/2063223928483697090)（373 个赞、61 条回复、20,856 次浏览、18 次收藏）展示了一个 3D AI 智能体",
+			"checked": "2026-10-11"
+		}
+	]
+}
