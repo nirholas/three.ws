@@ -2,6 +2,12 @@
 	"$doc": "/docs/freshness",
 	"$comment": "Review baselines for `npm run docs:freshness`. Without this file the only clock a doc has is its own last commit, so a page someone read end to end and found correct still measures as drifting, and the only way to clear it is a cosmetic edit that lies about what happened. A stamp here says a human or an agent checked this doc against the repo at that commit. Freshness is then measured from whichever is newer, the doc's last edit or its last review. Write stamps with `npm run docs:review -- <doc> [more docs] --note \"...\"`, never by hand: the tool resolves the commit, refuses a doc that does not exist, and keeps the ordering stable. kind `verified` means the prose was checked against the code and matched. kind `snapshot` means the doc is a dated record (an audit, an incident writeup, a finished work order) that documents a moment and must not be rewritten to match today's code, so it is never counted as drift.",
 	"reviews": {
+		"STRUCTURE.md": {
+			"commit": "dfd78ded2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "verified against all 80 drifted files: all are incidental touches from the model-viewer version bump, motion-token migration, and MCP/guards regenerations, none of which change which directory a product surface maps to"
+		},
 		"docs/3d-asset-pipeline.md": {
 			"commit": "53f2a200f",
 			"kind": "verified",
