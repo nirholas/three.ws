@@ -65,6 +65,10 @@ const artifactPaths = new Set([
 	// Git plumbing, not a repo path: in a linked worktree `.git` is a FILE
 	// pointing at the main checkout, so this never resolves there.
 	'.git/hooks',
+	// Gitignored and created on demand by `Agent({isolation: "worktree"})`;
+	// `npm run clean:worktrees` removes it again once a branch merges, so a
+	// quiet repo legitimately has none on disk.
+	'.claude/worktrees/',
 ]);
 /** Repo paths a markdown body names that do not exist on disk. */
 function missingPaths(body) {

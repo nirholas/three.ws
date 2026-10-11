@@ -223,6 +223,7 @@ deploy() {
 		return 1
 	fi
 	gcloud run services update-traffic "$SERVICE" --to-latest --region "$REGION" --project "$PROJECT" --quiet
+	npm run deploy:gcp:sync-crons || note cron_sync "failed: a newly declared cron may have no Scheduler job"
 	npm run deploy:gcp:purge-cdn
 	new_rev="$(serving_revision)"
 	note deploy_revision "$new_rev"
