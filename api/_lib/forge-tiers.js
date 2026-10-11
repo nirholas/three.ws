@@ -340,6 +340,39 @@ export const BACKENDS = Object.freeze({
 		free: true,
 		blurb: 'Free fast image to 3D geometry on our own Modly worker running Hunyuan3D 2 Mini Turbo, decimated to your poly budget, no vendor cost. Untextured; retexture or stylize after.',
 	}),
+	pixal3d: Object.freeze({
+		id: 'pixal3d',
+		label: 'Pixal3D (self-host)',
+		vendor: 'TencentARC Pixal3D · self-host',
+		paths: Object.freeze(['image']),
+		byok: false,
+		provider: 'gcp',
+		// Our own Pixal3D worker (workers/model-pixal3d on Cloud Run, MIT, TRELLIS.2
+		// backbone). The only image lane that actually fuses every reference photo
+		// it is given (1 to 4, each with an optional front/back/left/right label)
+		// instead of reconstructing from the first view alone: pixel-aligned
+		// fidelity to the caller's own photos rather than a hallucinated match. A
+		// single photo can also ask the worker to synthesize the other three sides
+		// (MV-Adapter) before fusing. Opt-in only: never a named free default or a
+		// failover target for another lane, so a plain request never lands here by
+		// chance, the caller asks for "Match my photo" explicitly.
+		requiresEnv: Object.freeze(['MODEL_PIXAL3D_URL', 'GCP_RECONSTRUCTION_KEY']),
+		polyControl: false,
+		userImages: true,
+		// Discoverable lane capabilities the catalog and UI read directly, rather
+		// than hardcoding "pixal3d" checks outside this registry.
+		maxImages: 4,
+		multiView: true,
+		fillOtherSides: true,
+		baseEta: 100,
+		// Cold-start budget for our own scale-to-zero worker: it streams the
+		// heavier of its two pipelines (single-view or multi-view) plus MoGe on
+		// first use, on top of the TRELLIS.2-backbone compile warm-up.
+		coldStartSeconds: 110,
+		credits: null,
+		free: true,
+		blurb: '"Match my photo": 1 to 4 reference images fused pixel-aligned into one PBR mesh on our own Pixal3D worker, no vendor cost. Label views front/back/left/right, or let the worker fill in the other sides from a single photo.',
+	}),
 	triposg: Object.freeze({
 		id: 'triposg',
 		label: 'TripoSG',
@@ -763,6 +796,17 @@ export const SELFHOST_TRELLIS_QUALITY = Object.freeze({
 // draft 512, standard and high 1024, max 1536.
 export const TRELLIS2_RESOLUTIONS = Object.freeze([512, 1024, 1536]);
 
+// Pixal3D voxel resolutions a caller may request (workers/model-pixal3d
+// request_policy.py RESOLUTIONS). Omitted, the worker maps the tier to one:
+// draft and standard 1024, high and max 1536. No 512 option: Pixal3D's
+// pixel-aligned path is the fidelity lane, not the fast-draft one.
+export const PIXAL3D_RESOLUTIONS = Object.freeze([1024, 1536]);
+
+// The four view labels Pixal3D's camera rig understands (workers/model-pixal3d
+// camera_rig.py VIEW_AZIMUTH_DEGREES). A caller tags each uploaded image with
+// one of these, or leaves it null to let the worker infer the front view.
+export const PIXAL3D_VIEW_LABELS = Object.freeze(['front', 'back', 'left', 'right']);
+
 export function selfhostQualityForTier(tierId) {
 	return SELFHOST_TRELLIS_QUALITY[tierId] || SELFHOST_TRELLIS_QUALITY[DEFAULT_TIER];
 }
@@ -793,10 +837,15 @@ export function backendIsConfigured(backendId) {
 }
 
 // The self-host image lanes the forge handler drives through one async GCP
-// block (api/forge.js, api/gpt-forge.js): the two TRELLIS workers and the two
-// Modly lanes, which share one worker (workers/modly).
+// block (api/forge.js, api/gpt-forge.js): the two TRELLIS workers, Pixal3D,
+// and the two Modly lanes, which share one worker (workers/modly). Pixal3D is
+// never a FAILOVER TARGET for the others (see nextSelfHostImageLane below) and
+// never falls over to them either: a down Pixal3D leaves the multi-image
+// request with no lane that can fuse more than one view, so it falls through
+// to the standing single-view reconstruct chain instead of silently dropping
+// the caller's second and third photos on a lane that only reads the first.
 export const MODLY_LANES = Object.freeze(['modly', 'modly_hunyuan']);
-const SELF_HOST_IMAGE_LANES = Object.freeze(['trellis2', 'trellis_selfhost', ...MODLY_LANES]);
+const SELF_HOST_IMAGE_LANES = Object.freeze(['trellis2', 'trellis_selfhost', 'pixal3d', ...MODLY_LANES]);
 
 export function isSelfHostImageLane(backendId) {
 	return SELF_HOST_IMAGE_LANES.includes(backendId);
@@ -804,7 +853,9 @@ export function isSelfHostImageLane(backendId) {
 
 // Human name for a self-host image lane in a designed "not configured" error.
 export function selfHostLaneName(backendId) {
-	return MODLY_LANES.includes(backendId) ? BACKENDS[backendId].label : 'Self-hosted TRELLIS';
+	if (MODLY_LANES.includes(backendId)) return BACKENDS[backendId].label;
+	if (backendId === 'pixal3d') return 'Pixal3D';
+	return 'Self-hosted TRELLIS';
 }
 
 // Where a self-host image lane retries when its worker is down, before the
@@ -900,7 +951,15 @@ export function buildCatalog() {
 			configured: backendIsConfigured(b.id),
 			blurb: b.blurb,
 			// Voxel resolutions the lane accepts as the `resolution` request option.
-			resolutions: b.id === 'trellis2' ? TRELLIS2_RESOLUTIONS : undefined,
+			resolutions: b.id === 'trellis2' ? TRELLIS2_RESOLUTIONS : b.id === 'pixal3d' ? PIXAL3D_RESOLUTIONS : undefined,
+			// Multi-image capability: how many reference photos the lane will
+			// actually fuse (vs. read-the-first-view-only), the labels it
+			// understands per image, and whether it can synthesize the unseen
+			// sides from a single photo. Undefined/false for every other lane.
+			max_images: b.maxImages || 1,
+			multi_view: Boolean(b.multiView),
+			view_labels: b.multiView ? PIXAL3D_VIEW_LABELS : undefined,
+			fill_other_sides: Boolean(b.fillOtherSides),
 			estimates: b.paths.reduce((acc, p) => {
 				acc[p] = TIER_IDS.map((tierId) => ({
 					tier: tierId,

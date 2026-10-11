@@ -1421,6 +1421,29 @@ async function startJobWithBody(req, res, body) {
 				message: `Provide between 1 and ${MAX_VIEWS} reference images.`,
 			});
 		}
+		// Pixal3D's "Match my photo" lane fuses every view it is given, so its cap
+		// is tighter than the generic MAX_VIEWS turnaround ceiling (4, not 6), and
+		// its optional per-image labels must line up with the images they tag.
+		if (backendId === 'pixal3d') {
+			if (imageUrls.length > 4) {
+				return json(res, 400, {
+					error: 'invalid_image_urls',
+					message: 'Match my photo accepts 1 to 4 reference images.',
+				});
+			}
+			if (opts.viewLabels && opts.viewLabels.length !== imageUrls.length) {
+				return json(res, 400, {
+					error: 'invalid_view_labels',
+					message: `view_labels must have exactly one entry per image (sent ${imageUrls.length} image(s) and ${opts.viewLabels.length} label(s)).`,
+				});
+			}
+			if (opts.fillOtherSides && imageUrls.length !== 1) {
+				return json(res, 400, {
+					error: 'invalid_fill_other_sides',
+					message: 'fill_other_sides needs exactly one reference image; send one photo and let the worker synthesize the other sides.',
+				});
+			}
+		}
 		// Validate every view at the boundary before any of them reach the model.
 		for (const u of imageUrls) {
 			if (!HTTP_URL_RE.test(u) || u.length > 2048) {
@@ -2163,6 +2186,27 @@ async function startJobWithBody(req, res, body) {
 							tier: tier.id,
 							// Bake overrides. Absent, the resolution preset decides
 							// (512: 2048 px and 300k faces, 1024 and 1536: 4096 px).
+							texture_size: opts.textureSize ?? undefined,
+							decimation_target: opts.targetPolycount ?? undefined,
+						},
+					} : backendId === 'pixal3d' ? {
+						mode: 'pixal3d',
+						sourceUrl: referenceImageUrl,
+						params: {
+							// Unlike every other lane above, Pixal3D actually fuses every view
+							// in this array (up to 4) instead of reading the first one alone,
+							// the whole point of the "Match my photo" lane. view_labels tags
+							// each entry front/back/left/right; omitted, the worker infers the
+							// front view from the camera estimator. fill_other_sides asks it to
+							// synthesize the other three sides from a single photo instead.
+							images: views,
+							view_labels: opts.viewLabels ?? undefined,
+							fill_other_sides: opts.fillOtherSides || undefined,
+							seed: opts.seed ?? undefined,
+							// Voxel resolution: an explicit request value (1024 or 1536), else
+							// the worker maps the tier (draft/standard 1024, high/max 1536).
+							resolution: opts.resolution ?? undefined,
+							tier: tier.id,
 							texture_size: opts.textureSize ?? undefined,
 							decimation_target: opts.targetPolycount ?? undefined,
 						},

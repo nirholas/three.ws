@@ -106,6 +106,36 @@ describe('normalizeForgeOptions — texture size & polycount', () => {
 	});
 });
 
+describe('normalizeForgeOptions: view_labels & fill_other_sides', () => {
+	it('accepts a valid view_labels array, including null entries', () => {
+		const o = normalizeForgeOptions({ view_labels: ['front', null, 'left'] });
+		expect(o.viewLabels).toEqual(['front', null, 'left']);
+		expect(o.errors).toEqual([]);
+		expect(o.hasOptions).toBe(true);
+	});
+
+	it('rejects a non-array view_labels', () => {
+		expect(normalizeForgeOptions({ view_labels: 'front' }).errors[0].field).toBe('view_labels');
+	});
+
+	it('rejects an unknown label inside view_labels', () => {
+		expect(normalizeForgeOptions({ view_labels: ['front', 'sideways'] }).errors[0].field).toBe('view_labels');
+	});
+
+	it('defaults view_labels to null when omitted', () => {
+		expect(normalizeForgeOptions({}).viewLabels).toBeNull();
+	});
+
+	it('accepts fill_other_sides as a boolean and defaults to false', () => {
+		expect(normalizeForgeOptions({ fill_other_sides: true }).fillOtherSides).toBe(true);
+		expect(normalizeForgeOptions({}).fillOtherSides).toBe(false);
+	});
+
+	it('rejects a non-boolean fill_other_sides', () => {
+		expect(normalizeForgeOptions({ fill_other_sides: 'yes' }).errors[0].field).toBe('fill_other_sides');
+	});
+});
+
 describe('summarizeForgeOptions', () => {
 	it('echoes the resolved options for the response', () => {
 		const o = normalizeForgeOptions({ seed: 9, output_format: 'glb-draco', texture_size: 1024 });
@@ -115,9 +145,18 @@ describe('summarizeForgeOptions', () => {
 			texture_size: 1024,
 			target_polycount: null,
 			resolution: null,
+			view_labels: null,
+			fill_other_sides: false,
 			// Material completion is on unless the caller opts out, and the echo
 			// says so, so a client can tell why its delivered file carries maps.
 			derive_pbr: true,
 		});
+	});
+
+	it('echoes view_labels and fill_other_sides when supplied', () => {
+		const o = normalizeForgeOptions({ view_labels: ['front', 'back'], fill_other_sides: true });
+		const s = summarizeForgeOptions(o);
+		expect(s.view_labels).toEqual(['front', 'back']);
+		expect(s.fill_other_sides).toBe(true);
 	});
 });

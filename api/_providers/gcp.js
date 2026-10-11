@@ -13,6 +13,12 @@
 //                  shape: POST /infer → { task_id }  GET /tasks/:id → result_gcs_url.
 //
 //   trellis2     → MODEL_TRELLIS2_URL       (workers/model-trellis2)
+//   pixal3d      → MODEL_PIXAL3D_URL        (workers/model-pixal3d)
+//                  "Match my photo": 1-4 reference views fused pixel-aligned
+//                  (unlike every other image lane above, it reads every view in
+//                  the array, not just the first). `view_labels` tags each view
+//                  front/back/left/right; `fill_other_sides` synthesizes the
+//                  other three sides from one photo via MV-Adapter.
 //   modly        → MODEL_MODLY_URL          (workers/modly, TripoSG)
 //   modly_hunyuan → MODEL_MODLY_URL         (workers/modly, Hunyuan3D 2 Mini Turbo)
 //                  One Modly worker serves both; the request's `model` field
@@ -106,6 +112,12 @@ function serviceUrlForMode(mode) {
 			// Self-hosted Microsoft TRELLIS.2 image→3D worker (workers/model-trellis2),
 			// the default image lane. Same /infer + /tasks/:id task shape.
 			return readEnv('MODEL_TRELLIS2_URL');
+		case 'pixal3d':
+			// Self-hosted TencentARC Pixal3D worker (workers/model-pixal3d): the
+			// "Match my photo" lane. Unlike every other image lane above, it fuses
+			// every one of its 1-4 reference views instead of reading the first.
+			// Same /infer + /tasks/:id task shape.
+			return readEnv('MODEL_PIXAL3D_URL');
 		case 'modly':
 		case 'modly_hunyuan':
 			// Self-hosted Modly worker (workers/modly): one service, two models.
@@ -207,6 +219,30 @@ function buildWorkerRequest(request) {
 		if (params?.tier) body.tier = params.tier;
 		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
 		// The worker clamps both (512 to 4096 px, 50k to 2M faces).
+		if (Number.isFinite(Number(params?.texture_size))) body.texture_size = Math.round(Number(params.texture_size));
+		if (Number.isFinite(Number(params?.decimation_target))) body.decimation_target = Math.round(Number(params.decimation_target));
+		return {
+			path: '/infer',
+			resultKey: 'result_gcs_url',
+			body,
+		};
+	}
+
+	if (mode === 'pixal3d') {
+		// Self-hosted Pixal3D (workers/model-pixal3d): 1-4 reference views in, a
+		// pixel-aligned PBR GLB out. `view_labels` tags each view front/back/left/
+		// right (omitted entries, or the whole field omitted, let the worker infer
+		// the front view from its camera estimator); `fill_other_sides` asks the
+		// worker to synthesize the other three sides from a single supplied photo.
+		const photos = Array.isArray(params?.images) && params.images.length
+			? params.images
+			: [sourceUrl].filter(Boolean);
+		const body = { images: photos, body_type: params?.bodyType || 'neutral' };
+		if (Array.isArray(params?.view_labels)) body.view_labels = params.view_labels;
+		if (params?.fill_other_sides === true) body.fill_other_sides = true;
+		if (Number.isFinite(Number(params?.resolution))) body.resolution = Math.round(Number(params.resolution));
+		if (params?.tier) body.tier = params.tier;
+		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
 		if (Number.isFinite(Number(params?.texture_size))) body.texture_size = Math.round(Number(params.texture_size));
 		if (Number.isFinite(Number(params?.decimation_target))) body.decimation_target = Math.round(Number(params.decimation_target));
 		return {
@@ -497,6 +533,10 @@ const MODE_ETA = {
 	reconstruct: 120,
 	trellis: 60,
 	trellis2: 75,
+	// Pixel-aligned single-view path is close to TRELLIS.2's own cost; the
+	// multi-view fusion path (2-4 images) and the optional MV-Adapter
+	// "fill the other sides" rung both run meaningfully heavier.
+	pixal3d: 100,
 	// TripoSG's 20 to 50 flow steps plus repair and decimate on the L4.
 	modly: 60,
 	// Hunyuan3D 2 Mini Turbo is a few-step distilled sampler.
@@ -602,14 +642,14 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 				);
 			}
 
-			// Report how the job was conditioned. For reconstruct the worker fuses
-			// every image in the body; the Hunyuan3D worker conditions on the
-			// primary view only (report 1 so a multi-view request is never
+			// Report how the job was conditioned. For reconstruct and Pixal3D the
+			// worker fuses every image in the body; the Hunyuan3D worker conditions
+			// on the primary view only (report 1 so a multi-view request is never
 			// silently claimed as fused); other modes are single-source.
 			const viewsUsed =
 				mode === 'hunyuan' || mode === 'trellis2' || mode === 'modly' || mode === 'modly_hunyuan'
 					? 1
-					: (mode === 'reconstruct' || mode === 'trellis') && Array.isArray(workerReq.body.images)
+					: (mode === 'reconstruct' || mode === 'trellis' || mode === 'pixal3d') && Array.isArray(workerReq.body.images)
 						? workerReq.body.images.length
 						: 0;
 

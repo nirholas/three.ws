@@ -8,7 +8,12 @@
 //   • output_format    — glb (default) or a compressed variant (draco / meshopt)
 //   • texture_size     — bake textures at a specific resolution
 //   • target_polycount — explicit geometry budget on poly-aware backends
-//   • resolution      : TRELLIS.2 voxel resolution (512, 1024 or 1536)
+//   • resolution      : TRELLIS.2 / Pixal3D voxel resolution (512, 1024 or 1536)
+//   • view_labels      : per-image front/back/left/right tag for a multi-image
+//     request (Pixal3D's "Match my photo" lane). Null entries are allowed:
+//     the worker infers the front view when every label is omitted.
+//   • fill_other_sides : ask Pixal3D to synthesize the other three sides from a
+//     single uploaded photo (MV-Adapter) instead of requiring 2-4 views.
 //   • derive_pbr       : the ONE exception to "off by default": the material
 //     completion pass (glb-pbr-derive.js) runs on every delivered mesh, because
 //     an albedo-only material is a defect rather than a preference. Send
@@ -19,7 +24,7 @@
 // message rather than silently doing something the caller didn't ask for. A value
 // that is simply absent is never an error — it just keeps the current default.
 
-import { TRELLIS2_RESOLUTIONS } from './forge-tiers.js';
+import { TRELLIS2_RESOLUTIONS, PIXAL3D_VIEW_LABELS } from './forge-tiers.js';
 
 // glb is the universal default. The two compressed variants run a post-generation
 // pass (see glb-compress.js) that shrinks the delivered file without changing the
@@ -48,7 +53,9 @@ function compressionFor(format) {
  *   compression: 'none' | 'draco' | 'meshopt',
  *   textureSize: number | null,
  *   targetPolycount: number | null,
- *   resolution: 512 | 1024 | 1536 | null,   // TRELLIS.2 voxel resolution
+ *   resolution: 512 | 1024 | 1536 | null,   // TRELLIS.2 / Pixal3D voxel resolution
+ *   viewLabels: Array<'front'|'back'|'left'|'right'|null> | null,  // per-image tag
+ *   fillOtherSides: boolean,     // synthesize the other sides from one photo
  *   derivePbr: boolean,          // material completion pass, true unless opted out
  *   hasOptions: boolean,         // true iff any non-default option was supplied
  *   errors: Array<{ field: string, message: string }>,
@@ -131,6 +138,39 @@ export function normalizeForgeOptions(body) {
 			});
 	}
 
+	// view_labels: per-image front/back/left/right tag for Pixal3D's multi-image
+	// lane. Each entry must be one of PIXAL3D_VIEW_LABELS or null (the worker
+	// infers the front view); the array's length must match the image count,
+	// but imageUrls isn't visible here, so that cross-check happens at the
+	// forge.js boundary where both are in scope.
+	let viewLabels = null;
+	if (b.view_labels !== undefined && b.view_labels !== null) {
+		if (!Array.isArray(b.view_labels)) {
+			errors.push({ field: 'view_labels', message: 'view_labels must be an array.' });
+		} else {
+			const bad = b.view_labels.some((v) => v !== null && !PIXAL3D_VIEW_LABELS.includes(v));
+			if (bad) {
+				errors.push({
+					field: 'view_labels',
+					message: `Each view_labels entry must be null or one of: ${PIXAL3D_VIEW_LABELS.join(', ')}.`,
+				});
+			} else {
+				viewLabels = b.view_labels;
+			}
+		}
+	}
+
+	// fill_other_sides: opt-IN. Asks Pixal3D to synthesize the other three sides
+	// from a single uploaded photo instead of requiring 2-4 views.
+	let fillOtherSides = false;
+	if (b.fill_other_sides !== undefined && b.fill_other_sides !== null) {
+		if (typeof b.fill_other_sides !== 'boolean') {
+			errors.push({ field: 'fill_other_sides', message: 'fill_other_sides must be true or false.' });
+		} else {
+			fillOtherSides = b.fill_other_sides;
+		}
+	}
+
 	// derive_pbr: opt-OUT. Anything other than an explicit boolean false leaves
 	// the completion pass on; a non-boolean value is reported rather than
 	// silently coerced, so `derive_pbr: "no"` never reads as true.
@@ -144,7 +184,14 @@ export function normalizeForgeOptions(body) {
 	}
 
 	const hasOptions =
-		seed !== null || outputFormat !== 'glb' || textureSize !== null || targetPolycount !== null || resolution !== null || !derivePbr;
+		seed !== null ||
+		outputFormat !== 'glb' ||
+		textureSize !== null ||
+		targetPolycount !== null ||
+		resolution !== null ||
+		viewLabels !== null ||
+		fillOtherSides ||
+		!derivePbr;
 
 	return {
 		seed,
@@ -153,6 +200,8 @@ export function normalizeForgeOptions(body) {
 		textureSize,
 		targetPolycount,
 		resolution,
+		viewLabels,
+		fillOtherSides,
 		derivePbr,
 		hasOptions,
 		errors,
@@ -186,6 +235,8 @@ export function summarizeForgeOptions(opts) {
 		texture_size: opts.textureSize,
 		target_polycount: opts.targetPolycount,
 		resolution: opts.resolution ?? null,
+		view_labels: opts.viewLabels ?? null,
+		fill_other_sides: Boolean(opts.fillOtherSides),
 		derive_pbr: opts.derivePbr !== false,
 	};
 }
