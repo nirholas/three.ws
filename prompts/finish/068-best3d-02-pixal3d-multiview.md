@@ -1,5 +1,7 @@
 # best3d 02: Pixal3D fidelity lane and 1 to 4 image multi-view input in Forge
 
+**Evolve status (2026-10-11):** Everything except the production deploy is done. `workers/model-pixal3d/` is built and tested (81 passed, 1 skipped); `api/forge.js`, `api/_lib/forge-tiers.js`, `api/_lib/forge-options.js` and `api/_providers/gcp.js` register and wire the `pixal3d` backend end to end (1-4 images, `view_labels`, `fill_other_sides`, request-boundary validation, opt-in only, never a default or failover target); `src/forge.js` and `pages/forge.html` ship the "Match my photo" engine button, panel, and per-engine slot cap; docs, STRUCTURE.md row and the changelog entry are in. What remains is the owner-gated GPU deploy (row 39 of `_context/production-100-OWNER-ACTIONS.md`): `gcloud run services describe model-pixal3d --region us-central1` still answers "Cannot find service", so the lane reports `backend_unconfigured` in production and the first two Definition of done lines (a real 3-image request returning a GLB; the `forge_creations` row recording all input URLs) cannot be verified against production until that deploy lands. Commits: `5b4f31d05` (backend + worker + tests), `d85ce1936` (frontend UI), `192c01233` (docs + changelog).
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate.
 
 ## Operating clause (binding)
