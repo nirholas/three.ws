@@ -976,6 +976,46 @@ built and verified, because the owner submits from it. Remove it with
 `git worktree remove --force /workspaces/.deploy-wt-ship100b` once the deploy lands. Disk is
 at 95% (7.2G free) with it there.
 
+## 2026-10-11: order 400 (ring leak scanner RPC burn) closed
+
+Commit `f6dcafb23` on `evolve`. The scanner now holds a lease (`acquireLock`,
+`cache.js`), runs under a 200s wall-clock budget, and scans role wallets then
+ledger-active wallets then an oldest-checked_at-first rotation slice instead
+of the full 2,006-wallet registry every run. Removed from economy-tick's
+TARGETS (its own `*/10` Cloud Scheduler job already owns it); `wallets-leak-scan`
+got the same lock. New migration `20261011230000_x402_ring_scan_checked_at.sql`
+adds the `checked_at` column the rotation needs; pending for the owner via
+`npm run db:migrate` at the next deploy.
+
+Also fixed along the way: `accountKeyStrings()` returned a live `PublicKey`
+object instead of its base58 string whenever `accountKeys` came back as
+`{ pubkey, signer, writable }` (the real shape from `@solana/web3.js`'s own
+parsed-transaction response), so every wallet-identity comparison silently
+failed on real mainnet data. `classifyWalletDebits` found zero leak/delegation
+events on every real transaction and the fee cross-check (`x402_ring_fee_observed`)
+never accumulated anything. Both now work on real traffic for the first time.
+
+Local verification against real mainnet data (RPC paid lanes still exhausted
+per OWNER-ACTIONS row 24, so all RPC calls hit the free/degraded lanes): a
+single run scanned all 2,006 registry wallets in 142s, well under the 200s
+budget, with a well-formed `results` array. The DoD's concurrent-second-curl
+check could not be exercised locally because this worktree has no Redis
+configured (`UPSTASH_REDIS_REST_URL`/`TOKEN` absent from `.env.local`), so
+`acquireLock` degrades to its documented always-true no-op locally
+(`cache.js` `redisConfigured()`); the second curl started its own real scan
+and timed out against curl's own `-m` flag rather than returning a clean
+lease-skip. That lease-skip path is covered by the existing unit test in
+`tests/x402-ring-leak-scan-run.test.js`, which exercises the same code path
+with `acquireLock` mocked to return false. Borrowing production's real
+Upstash lock to re-run this locally was rejected: it would hold the real
+9-minute lease on the live cron for no verification benefit over that test.
+
+OWNER-ACTIONS row 24 updated with the re-measurement and the ship command
+(`npm run db:migrate` then `npm run deploy:gcp:full`). `npm run test:core`
+shows the same 6 pre-existing failures as before this change (unrelated:
+`mcp-schema.test.js`, `x-content.test.js` queue staleness) plus 3 new passing
+tests, no new failures.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
