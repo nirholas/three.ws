@@ -951,7 +951,7 @@
 	border-bottom: 1px solid #fff;
 	margin: 3px 2px;
 }
-.os[data-style='classic'] :is(.wg-card, .pk-body, .snap-cand) {
+.os[data-style='classic'] :is(.pk-body, .snap-cand) {
 	border-radius: 0;
 	border: 0;
 	background: #fff;

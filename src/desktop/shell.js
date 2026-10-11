@@ -6,6 +6,10 @@ import { ALL_APPS, APPS, CUSTOM_WALL, WALLPAPERS, appById } from './apps.js';
 import { icon } from './icons.js';
 import { createIconLayer } from './icon-layer.js';
 import { createWM } from './wm.js';
+import { createChrome } from './chrome/index.js';
+import { formatClock, relTime } from './chrome/logic.js';
+import { appForPath, mountOsApp } from './os/host.js';
+import * as fs from './os/fs.js';
 import {
 	ACCENTS,
 	DEFAULT_PREFS,
@@ -36,6 +40,7 @@ const KEY = {
 	welcomed: 'tws:welcomed',
 	prefs: 'tws:prefs',
 	icons: 'tws:icons',
+	iconsV2: 'tws:icons-v2',
 };
 const THEME_KEY = 'twx_theme';
 const WALL_IDS = [...WALLPAPERS.map((w) => w.id), CUSTOM_WALL];
@@ -131,6 +136,22 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const tile = (app, size = 'sm', glyph = 18) =>
 	`<span class="app-tile ${size}" style="--hue:${app.hue}">${icon(app.icon, glyph)}</span>`;
 
+const DESK_PREFIX = 'fs:/Desktop/';
+/** Desktop shortcuts into the file system, like a real computer's This PC and Recycle Bin. */
+const SYSTEM_ICONS = {
+	thispc: { id: 'thispc', title: 'This PC', hue: 210, icon: 'pc', desc: 'Your folders, files and storage', fsPath: '/', fsType: 'dir' },
+	recycle: { id: 'recycle', title: 'Recycle Bin', hue: 195, icon: 'trash', desc: 'Deleted files, ready to restore or empty', fsPath: fs.TRASH, fsType: 'dir' },
+};
+const FILE_LOOK = {
+	dir: { icon: 'folder', hue: 44 },
+	text: { icon: 'note', hue: 205 },
+	image: { icon: 'image', hue: 285 },
+	audio: { icon: 'music', hue: 330 },
+	video: { icon: 'video', hue: 8 },
+	model: { icon: 'cube', hue: 262 },
+	other: { icon: 'files', hue: 220 },
+};
+
 /** Build launchable "page apps" from the site's own navigation data. */
 async function loadCatalog() {
 	try {
@@ -166,7 +187,19 @@ async function loadCatalog() {
 
 export async function createShell(root, opts = {}) {
 	const catalog = await loadCatalog();
-	const resolveApp = (id) => appById(id) || catalog.find((a) => a.id === id) || pageFromId(id);
+	const resolveApp = (id) => appById(id) || SYSTEM_ICONS[id] || fileApp(id) || catalog.find((a) => a.id === id) || pageFromId(id);
+	// Files and folders saved on the Desktop show up as icons with `fs:<path>` ids.
+	const deskFiles = new Map();
+	function fileApp(id) {
+		if (typeof id !== 'string' || !id.startsWith(DESK_PREFIX)) return null;
+		const path = id.slice(3);
+		const name = fs.nameOf(path);
+		const node = deskFiles.get(path);
+		const type = node?.type || (fs.extOf(name) ? 'file' : 'dir');
+		const look = type === 'dir' ? FILE_LOOK.dir : FILE_LOOK[fs.kindOf(node?.mime || name)] || FILE_LOOK.other;
+		const desc = node && type === 'file' ? `${name}\n${formatBytes(node.size)}, modified ${new Date(node.mtime).toLocaleString()}` : name;
+		return { id, title: name, hue: look.hue, icon: look.icon, desc, fsPath: path, fsType: type };
+	}
 	function pageFromId(id) {
 		const p = pagePathOf(id);
 		if (!p) return null;
@@ -181,10 +214,9 @@ export async function createShell(root, opts = {}) {
 	icons.setAttribute('aria-label', 'Desktop');
 	const layer = h('div', 'os-layer');
 	const task = h('footer', 'os-task');
-	const toasts = h('div', 'os-toasts');
-	toasts.setAttribute('role', 'status');
-	toasts.setAttribute('aria-live', 'polite');
-	root.append(wall, icons, layer, task, toasts);
+	// Desktop widgets sit above the icons and below every window.
+	const widgetsHost = h('div', 'os-widgets-host');
+	root.append(wall, icons, widgetsHost, layer, task);
 
 	// ---------- preferences (the user profile and personalization) ----------
 	const loadPrefs = () => {
@@ -203,14 +235,14 @@ export async function createShell(root, opts = {}) {
 	const prefsListeners = new Set();
 	const dark = matchMedia('(prefers-color-scheme: dark)');
 	const effectiveTheme = () => (prefs.mode === 'auto' ? (dark.matches ? 'dark' : 'light') : prefs.mode);
-	let tickClock = null;
 	let deskIcons = null;
 	// The bars the work area avoids for the current style. On a phone Aqua
 	// falls back to the Fluent taskbar (no menu bar, no magnifying dock).
 	const bars = () => {
 		const st = STYLES[prefs.style] || STYLES.fluent;
 		const small = innerWidth <= 720;
-		return small ? { menuH: 0, dockH: prefs.style === 'aqua' ? STYLES.fluent.dockH : st.dockH } : { menuH: st.menuH, dockH: st.dockH };
+		// Phones get a docked 48px bar (no island, no menu bar, no magnifying dock).
+		return small ? { menuH: 0, dockH: prefs.style === 'classic' ? st.dockH : 48 } : { menuH: st.menuH, dockH: st.dockH };
 	};
 	let shownStyle = null;
 
@@ -259,7 +291,6 @@ export async function createShell(root, opts = {}) {
 				/* cross-origin frame */
 			}
 		});
-		tickClock?.();
 		prefsListeners.forEach((fn) => fn(prefs));
 	}
 	function setPrefs(patch) {
@@ -272,12 +303,32 @@ export async function createShell(root, opts = {}) {
 	}
 	dark.addEventListener?.('change', () => prefs.mode === 'auto' && applyPrefs());
 
-	function toast(msg) {
-		const t = h('div', 'os-toast');
-		t.textContent = msg;
-		toasts.append(t);
-		setTimeout(() => t.remove(), 4200);
-	}
+	// ---------- system chrome (tray status, clock, quick settings, notifications, power, lock) ----------
+	let account = null;
+	const chrome = createChrome({
+		root,
+		store,
+		prefs: () => prefs,
+		setPrefs,
+		onPrefs: (fn) => (prefsListeners.add(fn), () => prefsListeners.delete(fn)),
+		openPop: (kind, el, trigger, onClose) => openPop(kind, el, trigger, onClose),
+		closePops: () => closePops(),
+		menu: (x, y, items, above) => menu(x, y, items, above),
+		launchId: (id, o) => launchId(id, o),
+		resolveApp: (id) => resolveApp(id),
+		searchApps: (q) => (q ? rankItems(q, everything()) : everything()),
+		openPath: (path) => openPath(path),
+		get wm() {
+			return wm;
+		},
+		save: () => save(),
+		displayName: () => displayName(),
+		account: () => account,
+		tile,
+		goClassic: () => goClassic(),
+	});
+	const toast = (msg) => chrome.toast(msg);
+	const notify = (n) => chrome.notify(n);
 
 	// ---------- recent ----------
 	const recent = () => {
@@ -300,7 +351,7 @@ export async function createShell(root, opts = {}) {
 	const wm = createWM({
 		layer,
 		getMetrics: () => ({ vw: innerWidth, vh: innerHeight, ...bars(), mobile: innerWidth <= 720 }),
-		renderNative: (app, body) => renderNative(app, body),
+		renderNative: (app, body, win) => renderNative(app, body, win),
 		notify: toast,
 		getTaskRect: (id) => {
 			const b = mid.querySelector(`.os-tb.run[data-app="${CSS.escape(id)}"]`);
@@ -322,6 +373,7 @@ export async function createShell(root, opts = {}) {
 
 	function launch(app, o = {}) {
 		if (!app) return;
+		if (app.fsPath) return launch(resolveApp(appForPath(app.fsPath, app.fsType)), { ...o, arg: app.fsPath });
 		closePops();
 		if (app.id === 'settings' && o.section) {
 			if (wm.has('settings') && settingsGo) settingsGo(o.section);
@@ -331,6 +383,13 @@ export async function createShell(root, opts = {}) {
 		wm.open(app, o);
 	}
 	const launchId = (id, o) => launch(resolveApp(id), o);
+	/** Every launchable app: framed pages, Settings, All Apps, the native OS apps and the site catalog. */
+	const everything = () => [...ALL_APPS.filter((a) => !a.native || a.os || a.id === 'settings' || a.id === 'apps'), ...catalog];
+	/** Open a three.ws path in the app that owns it, or in a page window. */
+	function openPath(path) {
+		const app = everything().find((a) => a.href === path) || resolveApp(pageAppId(path));
+		if (app) launch(app, app.href === path ? {} : { path });
+	}
 
 	// ---------- taskbar ----------
 	const pinned = [...APPS, ...ALL_APPS.filter((a) => a.native)].filter((a) => a.dock);
@@ -345,6 +404,12 @@ export async function createShell(root, opts = {}) {
 	btnWidgets.setAttribute('aria-label', 'Widgets and your agent');
 	btnWidgets.setAttribute('aria-expanded', 'false');
 	btnWidgets.title = 'Widgets';
+	const btnAssist = h('button', 'os-tb os-assist', icon('assistant', 21));
+	btnAssist.type = 'button';
+	btnAssist.setAttribute('aria-label', 'Assistant');
+	btnAssist.setAttribute('aria-haspopup', 'dialog');
+	btnAssist.setAttribute('aria-expanded', 'false');
+	btnAssist.title = 'Assistant (Ctrl+Alt+C)';
 	const btnSearch = h('button', 'os-tb hide-sm', icon('search', 20));
 	btnSearch.type = 'button';
 	btnSearch.setAttribute('aria-label', 'Search apps and pages');
@@ -369,7 +434,7 @@ export async function createShell(root, opts = {}) {
 			[`Quit ${w ? w.title : ''}`.trim(), 'close', () => wm.close(id)],
 		]);
 	});
-	left.append(btnWidgets, menuTitle);
+	left.append(btnWidgets, btnAssist, menuTitle);
 	const mid = h('div', 'os-task-mid');
 	const right = h('div', 'os-task-right');
 	task.append(left, mid, right);
@@ -538,20 +603,26 @@ export async function createShell(root, opts = {}) {
 	btnClassic.type = 'button';
 	btnClassic.title = 'Classic view';
 	btnClassic.setAttribute('aria-label', 'Switch to the classic website');
-	const chip = h('a', 'os-chip', `${icon('user', 18)}<span>Sign in</span>`);
-	chip.href = '/login';
-	chip.title = 'Account';
-	chip.addEventListener('click', (e) => {
-		if (e.metaKey || e.ctrlKey) return;
-		e.preventDefault();
-		launch(resolveApp(chip.dataset.signedIn ? 'console' : pageAppId('/login')));
-	});
-	const clock = h('button', 'os-clock');
-	clock.type = 'button';
-	clock.setAttribute('aria-haspopup', 'dialog');
-	clock.setAttribute('aria-expanded', 'false');
-	tray.append(btnTheme, btnWorld, btnClassic, chip, clock);
-	right.append(tray);
+	// The sliver at the far right edge, as on Windows: click to show the desktop, click again to bring everything back.
+	const btnDesk = h('button', 'os-showdesk hide-sm');
+	btnDesk.type = 'button';
+	btnDesk.title = 'Show desktop';
+	btnDesk.setAttribute('aria-label', 'Show desktop');
+	btnDesk.addEventListener('click', () => showDesktop());
+	tray.append(btnTheme, btnWorld, btnClassic, chrome.statusBtn, chrome.clockBtn);
+	right.append(tray, btnDesk);
+	let deskShown = null;
+	function showDesktop() {
+		closePops();
+		const open = running.filter((w) => !w.minimized);
+		if (open.length) {
+			deskShown = open.map((w) => w.id);
+			open.forEach((w) => wm.minimize(w.id));
+		} else if (deskShown) {
+			deskShown.filter((id) => wm.has(id)).forEach((id) => wm.focus(id));
+			deskShown = null;
+		}
+	}
 
 	const isLight = () => document.documentElement.getAttribute('data-theme') === 'light';
 	function syncTheme() {
@@ -580,23 +651,13 @@ export async function createShell(root, opts = {}) {
 		location.assign('/classic');
 	}
 
-	tickClock = function () {
-		const d = new Date();
-		clock.innerHTML = `<span>${d.toLocaleTimeString([], { hour: prefs.clock24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !prefs.clock24 })}</span><span>${d.toLocaleDateString([], { month: 'numeric', day: 'numeric', year: 'numeric' })}</span>`;
-		clock.setAttribute('aria-label', `${d.toLocaleString()}. Open calendar`);
-	};
-	tickClock();
-	setInterval(tickClock, 15000);
-
-	// auth chip (server session is the truth)
+	// Signed-in account: the server session is the source of truth.
 	fetch('/api/auth/me', { credentials: 'include' })
 		.then((r) => (r.ok ? r.json() : null))
 		.then((data) => {
 			const u = data && data.user;
 			if (!u) return;
-			chip.dataset.signedIn = '1';
-			chip.querySelector('span').textContent = u.display_name || u.username || 'Account';
-			chip.title = 'Open your console';
+			account = u;
 			userName = u.display_name || u.username || 'Account';
 			paintUser();
 		})
@@ -610,9 +671,7 @@ export async function createShell(root, opts = {}) {
 	function paintUser() {
 		if (!startUserEl) return;
 		startUserEl.querySelector('span').textContent = displayName();
-		const av = startUserEl.querySelector('.avatar');
-		av.textContent = initialsOf(userName || prefs.name);
-		av.style.setProperty('--hue', prefs.avatarHue);
+		chrome.paintAvatar(startUserEl.querySelector('.avatar'));
 	}
 	prefsListeners.add(paintUser);
 
@@ -664,17 +723,46 @@ export async function createShell(root, opts = {}) {
 		const el = h('div', 'os-pop start-menu');
 		el.setAttribute('role', 'dialog');
 		el.setAttribute('aria-label', 'Start');
-		const search = h('label', 'sm-search', `${icon('search', 18)}<input type="search" placeholder="Search apps and pages" aria-label="Search apps and pages" autocomplete="off" spellcheck="false">`);
-		const input = search.querySelector('input');
-		const body = h('div', 'sm-body');
-		const foot = h('div', 'sm-foot');
-		const user = h('button', 'sm-user', `<i class="avatar sm"></i><span></span>`);
+		const user = h('button', 'sm-user', `<i class="avatar"></i><span></span>`);
 		user.type = 'button';
-		user.title = 'Your profile and settings';
+		user.title = 'Your profile and account';
 		startUserEl = user;
 		paintUser();
 		user.addEventListener('click', () => launchId('settings', { section: 'profile' }));
-		const walk = h('button', 'sm-pwr sm-world', icon('world', 20));
+		const search = h('label', 'sm-search', `${icon('search', 18)}<input type="search" placeholder="Search apps, pages and files" aria-label="Search apps, pages and files" autocomplete="off" spellcheck="false">`);
+		const input = search.querySelector('input');
+		const head = h('div', 'sm-head');
+		head.append(user, search);
+
+		// Left: every app, A to Z. Right: folders, clock, pinned, recommended.
+		const side = h('nav', 'sm-side');
+		side.setAttribute('aria-label', 'All apps');
+		const body = h('div', 'sm-body');
+		const main = h('div', 'sm-main');
+		main.append(side, body);
+
+		const foot = h('div', 'sm-foot');
+		const folders = h('div', 'sm-folders');
+		[
+			['Documents', 'files', '/Documents'],
+			['Pictures', 'image', '/Pictures'],
+			['Music', 'music', '/Music'],
+			['Downloads', 'download', '/Downloads'],
+		].forEach(([name, ic, path]) => {
+			const b = h('button', 'sm-folder', icon(ic, 18));
+			b.type = 'button';
+			b.title = name;
+			b.setAttribute('aria-label', `Open ${name}`);
+			b.addEventListener('click', () => launchId('files', { arg: path }));
+			folders.append(b);
+		});
+		const gear = h('button', 'sm-folder', icon('gear', 18));
+		gear.type = 'button';
+		gear.title = 'Settings';
+		gear.setAttribute('aria-label', 'Settings');
+		gear.addEventListener('click', () => launchId('settings'));
+		folders.append(gear);
+		const walk = h('button', 'sm-pwr sm-world', icon('world', 18));
 		walk.type = 'button';
 		walk.title = 'Walk the campus';
 		walk.setAttribute('aria-label', 'Leave the desk and walk the three.ws campus as your avatar');
@@ -684,53 +772,105 @@ export async function createShell(root, opts = {}) {
 			goWorld();
 		});
 		startWorldEl = walk;
-		const pwr = h('button', 'sm-pwr', icon('classic', 20));
+		const classic = h('button', 'sm-pwr', icon('classic', 18));
+		classic.type = 'button';
+		classic.title = 'Classic view';
+		classic.setAttribute('aria-label', 'Switch to the classic website');
+		classic.addEventListener('click', goClassic);
+		const pwr = h('button', 'sm-pwr sm-power', icon('power', 18));
 		pwr.type = 'button';
-		pwr.title = 'Classic view';
-		pwr.setAttribute('aria-label', 'Switch to the classic website');
-		pwr.addEventListener('click', goClassic);
+		pwr.title = 'Power';
+		pwr.setAttribute('aria-label', 'Power: lock, sign out, restart or shut down');
+		pwr.setAttribute('aria-haspopup', 'menu');
+		pwr.addEventListener('click', (e) => {
+			e.stopPropagation();
+			const r = pwr.getBoundingClientRect();
+			chrome.powerMenu(r.right, r.top - 6, true);
+		});
 		const actions = h('div', 'sm-foot-actions');
-		actions.append(walk, pwr);
-		foot.append(user, actions);
-		el.append(search, body, foot);
+		actions.append(walk, classic, pwr);
+		foot.append(folders, actions);
+		el.append(head, main, foot);
 
 		let selectable = [];
 		let sel = -1;
-		const everything = () => [...ALL_APPS.filter((a) => !a.native || a.id === 'settings' || a.id === 'apps'), ...catalog];
-		function row(app) {
-			const r = h('button', 'sm-row', `${tile(app, 'sm', 17)}<div><b>${esc(app.title)}</b><small>${esc(app.desc || app.href || '')}</small></div>`);
-			r.type = 'button';
-			r.addEventListener('click', () => launch(app));
-			selectable.push(r);
-			return r;
-		}
-		function appBtn(app) {
-			const b = h('button', 'sm-app', `${tile(app, '', 22)}<span>${esc(app.title)}</span>`);
+		const pick = (b, fn) => {
 			b.type = 'button';
-			b.addEventListener('click', () => launch(app));
+			b.addEventListener('click', fn);
 			selectable.push(b);
 			return b;
+		};
+		const row = (app) => pick(h('button', 'sm-row', `${tile(app, 'sm', 17)}<div><b>${esc(app.title)}</b><small>${esc(app.desc || app.href || '')}</small></div>`), () => launch(app));
+		const appBtn = (app) => pick(h('button', 'sm-app', `${tile(app, '', 22)}<span>${esc(app.title)}</span>`), () => launch(app));
+		const fileRow = (n) => {
+			const look = n.type === 'dir' ? FILE_LOOK.dir : FILE_LOOK[fs.kindOf(n.mime || n.name)] || FILE_LOOK.other;
+			const where = fs.parentOf(n.path).slice(1) || 'Home';
+			return pick(h('button', 'sm-row', `${tile(look, 'sm', 17)}<div><b>${esc(n.name)}</b><small>${esc(where)} / ${esc(relTime(n.mtime))}</small></div>`), () => launch({ id: n.path, fsPath: n.path, fsType: n.type }));
+		};
+
+		const sorted = everything()
+			.slice()
+			.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
+		function paintSide() {
+			side.replaceChildren(h('div', 'sm-h', '<span>All apps</span>'));
+			let letter = '';
+			sorted.forEach((a) => {
+				const L = /^[a-z]/i.test(a.title) ? a.title[0].toUpperCase() : '#';
+				if (L !== letter) {
+					letter = L;
+					side.append(h('div', 'sm-letter', esc(L)));
+				}
+				const b = h('button', 'sm-side-app', `${tile(a, 'sm', 15)}<span>${esc(a.title)}</span>`);
+				b.type = 'button';
+				b.addEventListener('click', () => launch(a));
+				side.append(b);
+			});
 		}
+
+		const clock = h('div', 'sm-clock');
+		let clockT = 0;
+		const tickClock = () => {
+			const d = new Date();
+			const { time } = formatClock(d, { clock24: prefs.clock24 });
+			clock.innerHTML = `<b>${esc(time)}</b><span>${esc(d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' }))}</span>`;
+			clockT = setTimeout(tickClock, 60_000 - (Date.now() % 60_000) + 20);
+		};
+
 		let showAll = false;
-		function paint() {
+		let paintSeq = 0;
+		async function paint() {
+			const seq = ++paintSeq;
 			selectable = [];
 			sel = -1;
 			body.replaceChildren();
 			const q = input.value.trim();
+			el.classList.toggle('searching', !!q);
 			if (q) {
-				const hits = rankItems(q, everything()).slice(0, 24);
-				if (!hits.length) {
-					body.append(h('div', 'sm-empty', `Nothing matches "${esc(q)}". Try an app name like Forge or Chat.`));
-					return;
-				}
-				body.append(h('div', 'sm-h', '<span>Best matches</span>'));
+				const hits = rankItems(q, everything()).slice(0, 16);
 				const list = h('div', 'sm-list one');
-				hits.forEach((a) => list.append(row(a)));
-				body.append(list);
+				if (hits.length) {
+					body.append(h('div', 'sm-h', '<span>Best matches</span>'));
+					hits.forEach((a) => list.append(row(a)));
+					body.append(list);
+				}
+				const needle = q.toLowerCase();
+				const files = (await fs.walk('/').catch(() => []))
+					.filter((n) => !n.path.startsWith(`${fs.TRASH}/`) && n.name.toLowerCase().includes(needle))
+					.sort((a, b) => b.mtime - a.mtime)
+					.slice(0, 8);
+				if (seq !== paintSeq) return;
+				if (files.length) {
+					body.append(h('div', 'sm-h', '<span>Files and folders</span>'));
+					const fl = h('div', 'sm-list one');
+					files.forEach((n) => fl.append(fileRow(n)));
+					body.append(fl);
+				}
+				if (!hits.length && !files.length) body.append(h('div', 'sm-empty', `Nothing matches "${esc(q)}". Try an app like Forge, a folder like Documents, or press Ctrl+Alt+R to run a command.`));
 				return;
 			}
+			body.append(clock);
 			const hd = h('div', 'sm-h', `<span>${showAll ? 'All apps' : 'Pinned'}</span>`);
-			const toggle = h('button', '', showAll ? 'Back' : `All apps ${'›'}`);
+			const toggle = h('button', 'sm-more', showAll ? 'Back' : `All ${icon('chevron', 12)}`);
 			toggle.type = 'button';
 			toggle.addEventListener('click', () => {
 				showAll = !showAll;
@@ -740,24 +880,23 @@ export async function createShell(root, opts = {}) {
 			body.append(hd);
 			if (showAll) {
 				const list = h('div', 'sm-list');
-				everything().forEach((a) => list.append(row(a)));
+				sorted.forEach((a) => list.append(row(a)));
 				body.append(list);
 				return;
 			}
 			const grid = h('div', 'sm-grid');
-			[...APPS, ALL_APPS.find((a) => a.id === 'settings'), ALL_APPS.find((a) => a.id === 'apps')].forEach((a) => grid.append(appBtn(a)));
+			const pins = [...APPS, ...['files', 'notepad', 'terminal', 'settings', 'apps'].map(appById)].filter(Boolean);
+			pins.forEach((a) => grid.append(appBtn(a)));
 			body.append(grid);
-			const rec = recent().map(resolveApp).filter(Boolean).slice(0, 6);
-			body.append(h('div', 'sm-h', '<span>Recommended</span>'));
-			if (rec.length) {
-				const list = h('div', 'sm-list');
-				rec.forEach((a) => list.append(row(a)));
-				body.append(list);
-			} else {
-				const list = h('div', 'sm-list');
-				['create', 'forge', 'discover', 'chat'].forEach((id) => list.append(row(appById(id))));
-				body.append(list);
-			}
+			const recHead = h('div', 'sm-h', '<span>Recommended</span>');
+			const recList = h('div', 'sm-list');
+			body.append(recHead, recList);
+			const apps = recent().map(resolveApp).filter((a) => a && !a.fsPath).slice(0, 4);
+			const files = await fs.recentFiles(4).catch(() => []);
+			if (seq !== paintSeq) return;
+			const items = [...files.map((n) => fileRow(n)), ...apps.map((a) => row(a))].slice(0, 6);
+			if (items.length) items.forEach((b) => recList.append(b));
+			else ['create', 'forge', 'notepad', 'discover'].map(appById).filter(Boolean).forEach((a) => recList.append(row(a)));
 		}
 		input.addEventListener('input', () => {
 			showAll = false;
@@ -772,164 +911,295 @@ export async function createShell(root, opts = {}) {
 				selectable[sel].scrollIntoView({ block: 'nearest' });
 			} else if (e.key === 'Enter') {
 				e.preventDefault();
-				(selectable[sel >= 0 ? sel : 0])?.click();
+				selectable[sel >= 0 ? sel : 0]?.click();
 			}
 		});
-		if (!openPop('start', el, btnStart, () => (startUserEl = null))) return;
+		const opened = openPop('start', el, btnStart, () => {
+			startUserEl = null;
+			clearTimeout(clockT);
+		});
+		if (!opened) return;
 		input.value = query;
+		tickClock();
+		paintSide();
 		paint();
 		input.focus({ preventScroll: true });
 	}
 	btnStart.addEventListener('click', () => toggleStart());
 	btnSearch.addEventListener('click', () => toggleStart());
 
-	// ---------- Widgets ----------
-	let agentLoaded = false;
+	// ---------- Widgets board, desktop widgets and the assistant ----------
+	// Loaded on demand so the desktop paints before their data does.
+	const widgetsMod = () => import('./widgets/index.js');
+	const assistantMod = () => import('./assistant/index.js');
+	const flyoutCtx = (anchor) => ({ root, anchor, launchId, toast, notify, prefs: () => prefs });
+	const flyoutFailed = (what) => (err) => notify({ title: `${what} could not open`, body: err?.message || 'Check your connection and try again.' });
 	btnWidgets.addEventListener('click', () => {
-		const el = h('div', 'os-pop widgets');
-		el.setAttribute('role', 'dialog');
-		el.setAttribute('aria-label', 'Widgets');
-		const agent = h('div', 'wg-card wg-agent');
-		const stage = h('div', '', '');
-		agent.append(stage);
-		const info = h('div', '', '<h3>Your resident agent</h3><p>A living 3D agent, running on the same web component you can embed on any site.</p>');
-		const acts = h('div', 'wg-actions');
-		const talk = h('button', 'os-btn primary', `${icon('chat', 16)}Talk`);
-		talk.type = 'button';
-		talk.addEventListener('click', () => launchId('chat'));
-		const make = h('button', 'os-btn', `${icon('sparkle', 16)}Make your own`);
-		make.type = 'button';
-		make.addEventListener('click', () => launchId('create'));
-		acts.append(talk, make);
-		info.append(acts);
-		agent.append(info);
-
-		const quick = h('div', 'wg-card');
-		quick.append(h('h3', '', 'Jump in'));
-		const q = h('div', 'wg-quick');
-		['forge', 'discover', 'marketplace', 'pulse', 'trenches', 'tour'].forEach((id) => {
-			const a = appById(id);
-			const b = h('button', '', `${tile(a, 'sm', 17)}<span>${esc(a.title)}</span>`);
-			b.type = 'button';
-			b.addEventListener('click', () => launch(a));
-			q.append(b);
+		closePops();
+		assistantOpen && assistantMod().then((m) => m.closeAssistant());
+		widgetsMod()
+			.then((m) => m.toggleWidgets(flyoutCtx(btnWidgets)))
+			.catch(flyoutFailed('Widgets'));
+	});
+	let assistantOpen = false;
+	btnAssist.addEventListener('click', () => {
+		closePops();
+		widgetsMod().then((m) => m.closeWidgets());
+		assistantMod()
+			.then((m) => (assistantOpen = m.toggleAssistant(flyoutCtx(btnAssist))))
+			.catch(flyoutFailed('The assistant'));
+	});
+	widgetsMod()
+		.then((m) =>
+			m.mountDesktopWidgets({
+				root,
+				desktop: widgetsHost,
+				launchId,
+				toast,
+				insets: () => {
+					const { menuH, dockH } = bars();
+					return { top: menuH + 12, right: 12, bottom: dockH + 12, left: 120 };
+				},
+			}),
+		)
+		.catch(() => {
+			/* the board is optional; the desktop works without it */
 		});
-		quick.append(q);
-
-		const about = h('div', 'wg-card', '<h3>three.ws</h3><p>The 3D agent layer of the internet. Every window here is a real three.ws page. Prefer the original site? Use the classic view in the taskbar.</p>');
-		el.append(agent, quick, about);
-		if (!openPop('widgets', el, btnWidgets)) return;
-		mountAgent(stage);
-	});
-	function mountAgent(stage) {
-		const mk = () => {
-			const a = document.createElement('agent-3d');
-			a.setAttribute('src', 'https://three.ws/avatars/michelle.glb');
-			a.setAttribute('aria-label', 'Resident 3D agent');
-			stage.replaceChildren(a);
-		};
-		if (agentLoaded || customElements.get('agent-3d')) return mk();
-		agentLoaded = true;
-		const s = document.createElement('script');
-		s.type = 'module';
-		s.src = 'https://three.ws/agent-3d/latest/agent-3d.js';
-		s.onload = mk;
-		s.onerror = () => {
-			stage.innerHTML = '<p>The 3D agent could not load. Check your connection and reopen Widgets.</p>';
-		};
-		document.head.append(s);
-	}
-
-	// ---------- Calendar ----------
-	clock.addEventListener('click', () => {
-		let view = new Date();
-		view.setDate(1);
-		const el = h('div', 'os-pop calendar');
-		el.setAttribute('role', 'dialog');
-		el.setAttribute('aria-label', 'Calendar');
-		function paint() {
-			const today = new Date();
-			const first = new Date(view.getFullYear(), view.getMonth(), 1);
-			const start = new Date(first);
-			start.setDate(1 - first.getDay());
-			const cells = [];
-			for (let i = 0; i < 42; i++) {
-				const d = new Date(start);
-				d.setDate(start.getDate() + i);
-				const cls = [d.getMonth() !== view.getMonth() ? 'mute' : '', d.toDateString() === today.toDateString() ? 'today' : ''].join(' ');
-				cells.push(`<b class="${cls}">${d.getDate()}</b>`);
-			}
-			const dow = ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d) => `<i>${d}</i>`).join('');
-			el.innerHTML =
-				`<div class="cal-head"><span>${view.toLocaleDateString([], { month: 'long', year: 'numeric' })}</span><span>` +
-				`<button type="button" data-d="-1" aria-label="Previous month">${icon('chevron', 14).replace('<svg', '<svg style="transform:rotate(180deg)"')}</button>` +
-				`<button type="button" data-d="1" aria-label="Next month">${icon('chevron', 14)}</button></span></div>` +
-				`<div class="cal-grid">${dow}${cells.join('')}</div>`;
-			el.querySelectorAll('[data-d]').forEach((b) =>
-				b.addEventListener('click', () => {
-					view = new Date(view.getFullYear(), view.getMonth() + Number(b.dataset.d), 1);
-					paint();
-				}),
-			);
-		}
-		paint();
-		openPop('calendar', el, clock);
-	});
+	const editWidgets = () => widgetsMod().then((m) => m.editDesktopWidgets(true));
+	const addWidget = () => widgetsMod().then((m) => m.addDesktopWidget());
 
 	// ---------- context menu ----------
-	function menu(x, y, items) {
+	/**
+	 * Context menu. An item is '-' (separator) or [label, glyph, fn, sub?, hint?];
+	 * `sub` (an item list) makes it open a submenu instead. `above` anchors the
+	 * menu's bottom edge at y (menus opened from the taskbar).
+	 */
+	function menu(x, y, items, above = false) {
 		closePops();
-		const el = h('div', 'os-pop ctx');
-		el.setAttribute('role', 'menu');
-		items.forEach((it) => {
-			if (it === '-') return el.append(h('hr'));
-			const [label, ic, fn] = it;
-			const b = h('button', '', `${icon(ic, 16)}<span>${esc(label)}</span>`);
-			b.type = 'button';
-			b.setAttribute('role', 'menuitem');
-			b.addEventListener('click', () => {
-				closePops();
-				fn();
-			});
-			el.append(b);
-		});
+		const el = buildMenu(items, () => closePops());
 		root.append(el);
 		const r = el.getBoundingClientRect();
 		el.style.left = `${Math.max(4, Math.min(x, innerWidth - r.width - 4))}px`;
 		const { menuH, dockH } = bars();
-		el.style.top = `${Math.max(menuH + 4, Math.min(y, innerHeight - r.height - dockH - 4))}px`;
+		const top = above ? y - r.height : y;
+		el.style.top = `${Math.max(menuH + 4, Math.min(top, innerHeight - r.height - (above ? 4 : dockH + 4)))}px`;
 		el.style.bottom = 'auto';
 		pop = { kind: 'ctx', el, trigger: null };
 		el.querySelector('button')?.focus();
 	}
-	root.addEventListener('contextmenu', (e) => {
-		if (e.target.closest('.win, .os-task, .os-pop')) return;
-		e.preventDefault();
-		menu(e.clientX, e.clientY, [
-			['Select all', 'grid', () => deskIcons.selectAll()],
-			['Small icons', 'grid', () => setPrefs({ iconSize: 'small' })],
-			['Medium icons', 'grid', () => setPrefs({ iconSize: 'medium' })],
-			['Large icons', 'grid', () => setPrefs({ iconSize: 'large' })],
-			['Sort by name', 'folder', () => deskIcons.sortByName()],
-			['Auto arrange', 'folder', () => deskIcons.arrange()],
-			['Refresh', 'reload', () => deskIcons.refresh()],
+	function buildMenu(items, done, sub = false) {
+		const el = h('div', `os-pop ctx${sub ? ' ctx-sub' : ''}`);
+		el.setAttribute('role', 'menu');
+		let child = null;
+		const closeChild = () => {
+			child?.remove();
+			child = null;
+			el.querySelectorAll('[aria-expanded="true"]').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+		};
+		items.forEach((it) => {
+			if (it === '-') return el.append(h('hr'));
+			const [label, ic, fn, kids, hint] = it;
+			const b = h('button', '', `${ic ? icon(ic, 16) : '<i class="ico" aria-hidden="true"></i>'}<span>${esc(label)}</span>${kids ? icon('chevron', 12) : hint ? `<kbd>${esc(hint)}</kbd>` : ''}`);
+			b.type = 'button';
+			b.setAttribute('role', 'menuitem');
+			if (kids) {
+				b.setAttribute('aria-haspopup', 'menu');
+				b.setAttribute('aria-expanded', 'false');
+				const open = () => {
+					if (b.getAttribute('aria-expanded') === 'true') return;
+					closeChild();
+					b.setAttribute('aria-expanded', 'true');
+					child = buildMenu(kids, done, true);
+					el.append(child);
+					const br = b.getBoundingClientRect();
+					const er = el.getBoundingClientRect();
+					const cr = child.getBoundingClientRect();
+					const right = er.right + cr.width + 4 < innerWidth;
+					child.style.left = right ? `${er.width - 4}px` : `${-cr.width + 4}px`;
+					child.style.top = `${Math.min(br.top - er.top - 5, innerHeight - er.top - cr.height - 8)}px`;
+					return child;
+				};
+				b.addEventListener('pointerenter', open);
+				b.addEventListener('click', (e) => {
+					e.stopPropagation();
+					open()?.querySelector('button')?.focus();
+				});
+				b.addEventListener('keydown', (e) => {
+					if (e.key === 'ArrowRight') {
+						e.preventDefault();
+						open()?.querySelector('button')?.focus();
+					}
+				});
+			} else {
+				b.addEventListener('pointerenter', closeChild);
+				b.addEventListener('click', (e) => {
+					e.stopPropagation();
+					done();
+					fn();
+				});
+			}
+			el.append(b);
+		});
+		el.addEventListener('keydown', (e) => {
+			const own = [...el.children].filter((c) => c.tagName === 'BUTTON');
+			const i = own.indexOf(document.activeElement);
+			if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+				if (i < 0) return;
+				e.preventDefault();
+				e.stopPropagation();
+				own[(i + (e.key === 'ArrowDown' ? 1 : -1) + own.length) % own.length].focus();
+			} else if (e.key === 'ArrowLeft' && sub) {
+				e.preventDefault();
+				e.stopPropagation();
+				const parent = el.parentElement;
+				parent?.querySelector('[aria-expanded="true"]')?.focus();
+				el.remove();
+				parent?.querySelectorAll('[aria-expanded="true"]').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+			}
+		});
+		return el;
+	}
+	// ---------- desktop: context menu, files on the desktop ----------
+	async function newOnDesktop(kind) {
+		try {
+			const name = await fs.uniqueName('/Desktop', kind === 'dir' ? 'New folder' : 'New text document.txt');
+			const path = `/Desktop/${name}`;
+			if (kind === 'dir') await fs.mkdir(path);
+			else await fs.write(path, '', { mime: 'text/plain' });
+			await syncDesk();
+			renameFile(`fs:${path}`);
+		} catch (err) {
+			notify({ title: 'Could not create it', body: err?.message || String(err), app: 'files' });
+		}
+	}
+	function renameFile(id) {
+		const app = resolveApp(id);
+		if (!app?.fsPath || !id.startsWith(DESK_PREFIX)) return;
+		const body = h('div', 'run-body', '<label class="run-field"><span>Name:</span><input type="text" autocomplete="off" spellcheck="false" aria-label="New name"></label><p class="run-err" role="alert" hidden></p>');
+		const input = body.querySelector('input');
+		const err = body.querySelector('.run-err');
+		input.value = app.title;
+		const go = () => {
+			const next = input.value.trim();
+			if (!next || next === app.title) return true;
+			fs.rename(app.fsPath, next)
+				.then(() => {
+					deskIcons.rename(id, `fs:/Desktop/${next}`);
+					dlg.close();
+				})
+				.catch((e) => {
+					err.textContent = e?.message || String(e);
+					err.hidden = false;
+				});
+			return false;
+		};
+		const dlg = chrome.dialog({ title: 'Rename', glyph: 'edit', body, buttons: [['Rename', go, true], ['Cancel']] });
+		const dot = app.fsType === 'file' ? app.title.lastIndexOf('.') : -1;
+		input.setSelectionRange(0, dot > 0 ? dot : app.title.length);
+		input.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				if (go() !== false) dlg.close();
+			}
+		});
+	}
+	/** Send desktop files to the Recycle Bin. Returns true when every id was a file (handled). */
+	function trashFiles(ids) {
+		const files = ids.filter((id) => id.startsWith(DESK_PREFIX));
+		if (!files.length) return false;
+		Promise.all(files.map((id) => fs.remove(id.slice(3))))
+			.then(() => {
+				deskIcons.remove(files);
+				toast(files.length > 1 ? `${files.length} items moved to the Recycle Bin` : `${resolveApp(files[0])?.title || 'Item'} moved to the Recycle Bin`);
+			})
+			.catch((e) => notify({ title: 'Could not delete', body: e?.message || String(e), app: 'files' }));
+		const rest = ids.filter((id) => !id.startsWith(DESK_PREFIX));
+		if (rest.length) deskIcons.remove(rest);
+		return true;
+	}
+	async function syncDesk() {
+		let nodes;
+		try {
+			nodes = await fs.list('/Desktop');
+		} catch {
+			return;
+		}
+		const changed = [];
+		const live = new Set();
+		for (const n of nodes) {
+			const id = `fs:${n.path}`;
+			live.add(id);
+			const was = deskFiles.get(n.path);
+			if (!was ? deskIcons.has(id) : was.type !== n.type || was.mime !== n.mime) changed.push(id);
+			deskFiles.set(n.path, n);
+		}
+		for (const p of [...deskFiles.keys()]) if (!live.has(`fs:${p}`)) deskFiles.delete(p);
+		const gone = deskIcons.ids().filter((id) => id.startsWith(DESK_PREFIX) && !live.has(id));
+		if (gone.length) deskIcons.remove(gone);
+		live.forEach((id) => deskIcons.has(id) || deskIcons.add(id));
+		if (changed.length) deskIcons.refresh(changed);
+	}
+	fs.subscribe((paths) => paths.some((p) => p === '/Desktop' || p === '/') && syncDesk());
+
+	function desktopMenu(x, y) {
+		const size = prefs.iconSize;
+		const mark = (on) => (on ? 'check' : '');
+		menu(x, y, [
+			[
+				'View',
+				'grid',
+				null,
+				[
+					['Large icons', mark(size === 'large'), () => setPrefs({ iconSize: 'large' })],
+					['Medium icons', mark(size === 'medium'), () => setPrefs({ iconSize: 'medium' })],
+					['Small icons', mark(size === 'small'), () => setPrefs({ iconSize: 'small' })],
+					'-',
+					['Auto arrange icons', 'grid', () => deskIcons.arrange()],
+					['Select all', 'check', () => deskIcons.selectAll(), null, 'Ctrl+A'],
+				],
+			],
+			['Sort by', 'list', null, [['Name', 'list', () => deskIcons.sortByName()]]],
+			['Refresh', 'reload', () => (syncDesk(), deskIcons.refresh())],
 			'-',
-			['All Apps', 'search', () => launchId('apps')],
-			['Personalize', 'gear', () => launchId('settings', { section: 'personalize' })],
-			['Open Start', 'logo', () => toggleStart()],
+			[
+				'New',
+				'plus',
+				null,
+				[
+					['Folder', 'folder', () => newOnDesktop('dir')],
+					['Text document', 'note', () => newOnDesktop('file')],
+				],
+			],
+			['Edit widgets', 'widgets', editWidgets],
+			['Add a widget', 'plus', addWidget],
+			'-',
+			['Open in Terminal', 'terminal', () => launchId('terminal', { arg: '/Desktop' })],
+			['Open Desktop folder', 'files', () => launchId('files', { arg: '/Desktop' })],
+			'-',
+			['Run...', 'search', () => chrome.runDialog(), null, 'Ctrl+Alt+R'],
+			['Display settings', 'desktop', () => launchId('settings', { section: 'personalize' })],
+			['Personalize', 'paint', () => launchId('settings', { section: 'personalize' })],
+			['About three.ws OS', 'logo', () => chrome.aboutDialog()],
 			'-',
 			['Walk the campus', 'world', goWorld],
 			['Switch to classic view', 'classic', goClassic],
 			['Close all windows', 'close', () => wm.closeAll()],
 		]);
+	}
+	root.addEventListener('contextmenu', (e) => {
+		if (e.target.closest('.win, .os-task, .os-pop, .os-dialog-wrap, .os-lockscreen, .os-power')) return;
+		e.preventDefault();
+		desktopMenu(e.clientX, e.clientY);
 	});
 
 	// ---------- desktop icons ----------
+	const DEFAULT_ICONS = () => ['thispc', 'recycle', ...[...APPS, ...ALL_APPS.filter((a) => a.native)].filter((a) => a.desktop).map((a) => a.id)];
 	deskIcons = createIconLayer({
 		host: icons,
 		resolve: resolveApp,
-		isKnown: (id) => !!resolveApp(id),
-		defaults: () => [...APPS, ...ALL_APPS.filter((a) => a.native)].filter((a) => a.desktop).map((a) => a.id),
+		// Desktop files are trusted until the folder is read, then syncDesk drops any that are gone.
+		isKnown: (id) => (typeof id === 'string' && id.startsWith(DESK_PREFIX)) || !!resolveApp(id),
+		defaults: DEFAULT_ICONS,
 		load: () => {
 			const raw = store.get(KEY.icons);
 			if (raw == null) return null;
@@ -943,19 +1213,101 @@ export async function createShell(root, opts = {}) {
 		launch,
 		menu,
 		size: prefs.iconSize,
+		itemMenu: (ids, open) => {
+			const files = ids.filter((id) => id.startsWith(DESK_PREFIX));
+			const sys = ids.length === 1 && SYSTEM_ICONS[ids[0]];
+			if (sys?.id === 'recycle')
+				return [
+					['Open', 'external', open],
+					['Empty Recycle Bin', 'trash', () => fs.emptyTrash().then(() => toast('Recycle Bin emptied'))],
+					'-',
+					['Remove from desktop', 'close', () => deskIcons.remove(ids)],
+				];
+			if (!files.length) return null;
+			const one = ids.length === 1 ? resolveApp(ids[0]) : null;
+			return [
+				['Open', 'external', open, null, 'Enter'],
+				one?.fsType === 'file' && ['Open with Files', 'files', () => launchId('files', { arg: fs.parentOf(one.fsPath) })],
+				one?.fsType === 'file' && fs.kindOf(one.title) === 'image' && ['Set as desktop background', 'image', () => setFileWallpaper(one.fsPath)],
+				'-',
+				one && ['Rename', 'edit', () => renameFile(one.id), null, 'F2'],
+				['Delete', 'trash', () => trashFiles(ids), null, 'Del'],
+			].filter(Boolean);
+		},
+		onDelete: trashFiles,
+		onRename: renameFile,
 	});
 	icons.setAttribute('role', 'listbox');
 	icons.setAttribute('aria-label', 'Desktop');
 	icons.setAttribute('aria-multiselectable', 'true');
 	deskIcons.init((app) => tile(app, '', 24));
+	// People who set up their desktop before This PC and the Recycle Bin existed get them once.
+	if (!store.get(KEY.iconsV2)) {
+		['thispc', 'recycle'].forEach((id) => deskIcons.add(id));
+		store.set(KEY.iconsV2, '1');
+	}
+	syncDesk();
 	icons.addEventListener('pointerdown', (e) => {
 		if (e.target === icons) closePops();
 	});
+	// Drop files from the real computer onto the desktop to keep them here.
+	icons.addEventListener('dragover', (e) => {
+		if (![...(e.dataTransfer?.types || [])].includes('Files')) return;
+		e.preventDefault();
+		e.dataTransfer.dropEffect = 'copy';
+		icons.classList.add('drop');
+	});
+	icons.addEventListener('dragleave', (e) => e.target === icons && icons.classList.remove('drop'));
+	icons.addEventListener('drop', async (e) => {
+		const list = [...(e.dataTransfer?.files || [])];
+		icons.classList.remove('drop');
+		if (!list.length) return;
+		e.preventDefault();
+		let ok = 0;
+		for (const f of list) {
+			try {
+				await fs.importFile(f, '/Desktop');
+				ok++;
+			} catch (err) {
+				notify({ title: `Could not copy ${f.name}`, body: err?.message || String(err), app: 'files' });
+			}
+		}
+		if (ok) toast(ok > 1 ? `${ok} files copied to the desktop` : `${list[0].name} copied to the desktop`);
+	});
+	async function setFileWallpaper(path) {
+		const f = await fs.read(path);
+		if (!f) return;
+		await idb.set(CUSTOM_WALL, f.blob);
+		setPrefs({ wall: CUSTOM_WALL });
+		applyWall();
+	}
 
 	// ---------- keyboard ----------
+	// System shortcuts. A browser keeps the Windows key and Ctrl+Alt+Del for itself,
+	// so the desktop uses Ctrl+Alt plus a letter, like a remote desktop session does.
+	const SYS_KEYS = {
+		r: () => chrome.runDialog(),
+		l: () => chrome.lock(),
+		d: () => showDesktop(),
+		a: () => chrome.toggleQuick(),
+		n: () => chrome.toggleNotes(),
+		t: () => launchId('terminal'),
+		e: () => launchId('files'),
+		i: () => launchId('settings'),
+		m: () => launchId('taskmgr'),
+		w: () => btnWidgets.click(),
+		c: () => btnAssist.click(),
+	};
 	addEventListener('keydown', (e) => {
 		const mod = e.metaKey || e.ctrlKey;
-		if (mod && e.key.toLowerCase() === 'k') {
+		const sys = e.ctrlKey && e.altKey && !e.shiftKey && !e.metaKey && SYS_KEYS[e.key.toLowerCase()];
+		if (sys) {
+			e.preventDefault();
+			sys();
+		} else if (e.ctrlKey && e.key === 'Escape') {
+			e.preventDefault();
+			toggleStart();
+		} else if (mod && e.key.toLowerCase() === 'k') {
 			e.preventDefault();
 			closePops();
 			toggleStart();
@@ -985,6 +1337,7 @@ export async function createShell(root, opts = {}) {
 
 	// ---------- native apps ----------
 	const WALL_PREVIEW = {
+		bubbles: 'radial-gradient(circle 22px at 30% 35%,#c7b8ff99,transparent),radial-gradient(circle 30px at 70% 70%,#a6e9ff88,transparent),linear-gradient(140deg,#0c1238,#241052 50%,#071a3c)',
 		three: 'radial-gradient(70% 60% at 50% 110%,#8b5cf6aa,transparent 70%),#050505',
 		aurora: 'linear-gradient(215deg,#7a3fa8,#1f6fbf)',
 		midnight: 'linear-gradient(180deg,#1d2b5a,#05060d)',
@@ -1100,7 +1453,7 @@ export async function createShell(root, opts = {}) {
 		let current = 'profile';
 		const panes = { profile: paintProfile, personalize: paintPersonalize, desktop: paintDesktop, session: paintSession };
 		sections.forEach(([id, ic, label]) => {
-			const b = h('button', '', `${icon(ic, 16)}<span>${label}</span>`);
+			const b = h('button', '', `${ic ? icon(ic, 16) : '<i class="ico" aria-hidden="true"></i>'}<span>${label}</span>`);
 			b.type = 'button';
 			b.dataset.section = id;
 			b.addEventListener('click', () => go(id));
@@ -1157,9 +1510,9 @@ export async function createShell(root, opts = {}) {
 			pane.append(h('h3', '', 'Account'));
 			pane.append(
 				setRow(
-					chip.dataset.signedIn ? `Signed in as ${userName}` : 'Not signed in',
-					chip.dataset.signedIn ? 'Your agents, wallets and usage live in the Console.' : 'Sign in to sync your agents and wallets across devices.',
-					btn(chip.dataset.signedIn ? 'Open Console' : 'Sign in', () => launch(resolveApp(chip.dataset.signedIn ? 'console' : pageAppId('/login')))),
+					account ? `Signed in as ${userName}` : 'Not signed in',
+					account ? 'Your agents, wallets and usage live in the Console.' : 'Sign in to sync your agents and wallets across devices.',
+					btn(account ? 'Open Console' : 'Sign in', () => launch(resolveApp(account ? 'console' : pageAppId('/login')))),
 				),
 			);
 		}
@@ -1363,7 +1716,21 @@ export async function createShell(root, opts = {}) {
 		paint();
 	}
 
-	function renderNative(app, body) {
+	function renderNative(app, body, win) {
+		if (app.os) {
+			mountOsApp(app, body, win, {
+				tile,
+				toast,
+				notify,
+				launchId,
+				wm,
+				store,
+				prefs: () => prefs,
+				setPrefs,
+				onPrefs: (fn) => (prefsListeners.add(fn), () => prefsListeners.delete(fn)),
+			});
+			return;
+		}
 		const wrap = h('div', 'native');
 		body.append(wrap);
 		if (app.id === 'settings') return renderSettings(wrap);
@@ -1420,6 +1787,11 @@ export async function createShell(root, opts = {}) {
 			launchId('welcome');
 		},
 		toast,
+		/** Post to the notification centre: { title, body, app }. */
+		notify,
+		lock: () => chrome.lock(),
+		run: () => chrome.runDialog(),
+		about: () => chrome.aboutDialog(),
 		store,
 		KEY,
 		get prefs() {
