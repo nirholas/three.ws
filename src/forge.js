@@ -300,6 +300,9 @@ const ENGINE_LABELS = {
 	// AniGen hands back a GLB that already carries a skeleton and skin weights:
 	// the result is drivable immediately, no separate rigging call needed.
 	anigen: 'Rig on generate',
+	// PartCrafter decodes named, separable part meshes in one pass instead of
+	// one fused shape: the result opens directly in Restyle Studio's part picker.
+	partcrafter: 'Editable parts',
 };
 
 // Where to mint a key per BYOK provider, keyed by the backend's `byok` name.

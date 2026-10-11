@@ -116,7 +116,9 @@
 					<h1 data-i18n="restyle.restyle_studio">Restyle Studio</h1>
 					<p data-i18n="restyle.re_skin_any_3d_model_in_your">Re-skin any 3D model in your browser — apply a PBR material preset, describe a look in plain
 						language for an AI restyle, fan out seeded colorway variants, fine-tune metalness and roughness
-						live, then export a validated GLB. Your original is never touched; Reset restores it instantly.</p>
+						live, then export a validated GLB. Your original is never touched; Reset restores it instantly.
+						Load a model with named, separable parts (from Segment, PartCrafter, or HoloPart) and a Parts
+						panel appears below: edit, swap, or regenerate any one part on its own.</p>
 				</div>
 			</div>
 
@@ -148,6 +150,22 @@
 						</div>
 						<div class="rs-note" id="load-note" aria-live="polite"></div>
 						<div class="rs-hint">No model? The platform's sample avatar loads by default. Make one in <a href="/forge" data-i18n="restyle.forge">Forge</a>.</div>
+					</div>
+
+					<div class="rs-card" id="parts-card" hidden>
+						<h2 data-i18n="restyle.parts">Parts</h2>
+						<div class="rs-presets" id="parts-list"></div>
+						<div class="rs-row" style="margin-top: 10px">
+							<button class="rs-btn" id="part-swap" disabled data-i18n="restyle.swap_part">Swap part</button>
+							<input id="part-swap-file" type="file" accept=".glb,.gltf,model/gltf-binary" class="sr-only" tabindex="-1" aria-hidden="true" />
+							<button class="rs-btn" id="part-regenerate" disabled data-i18n="restyle.regenerate_part">Regenerate part</button>
+							<button class="rs-btn" id="part-deselect" disabled data-i18n="restyle.edit_whole_model">Edit whole model</button>
+						</div>
+						<div class="rs-note" id="parts-note" aria-live="polite"></div>
+						<div class="rs-hint" data-i18n="restyle.parts_hint">This model has named, separable parts (from Segment, PartCrafter,
+							or HoloPart). Select one to scope presets, AI restyle, and fine-tuning to it alone. Swap replaces its
+							geometry from another file; Regenerate completes its hidden geometry via HoloPart, then reassembles it
+							back into this model, leaving every other part untouched.</div>
 					</div>
 
 					<div class="rs-card">

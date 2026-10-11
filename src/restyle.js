@@ -55,6 +55,15 @@ const state = {
 	sourceUrlPending: null, // in-flight upload promise for a local File origin
 	realLineage: null,
 	activeIndex: 0,
+	// Editable parts (work order 070): top-level named nodes of the loaded
+	// model, when there are ≥2. That is the shape workers/segment,
+	// model-partcrafter and model-holopart all emit (part_01, part_02, ...),
+	// but detection is generic: any multi-mesh GLB with distinct named
+	// top-level nodes qualifies, not just the output of those three workers.
+	parts: [], // [{ name, node }]
+	selectedPartIndex: null,
+	dimmed: [], // [{ material, opacity, transparent }] restored on deselect
+	regenRunToken: 0,
 };
 
 const el = {};
@@ -80,6 +89,8 @@ function cache() {
 		'ai-instruction', 'ai-restyle', 'ai-texture', 'ai-note',
 		'lineage-strip', 'save-version', 'lineage-note',
 		'save-variants', 'variants-note',
+		'parts-card', 'parts-list', 'part-swap', 'part-swap-file',
+		'part-regenerate', 'part-deselect', 'parts-note',
 	]) {
 		el[id] = document.getElementById(id);
 	}
@@ -187,6 +198,10 @@ function mountModel(newRoot, label, opts = {}) {
 	captureOriginals(newRoot);
 	frameModel(newRoot);
 	state.scene.add(newRoot);
+	state.parts = detectParts(newRoot);
+	state.selectedPartIndex = null;
+	state.dimmed = [];
+	renderPartsPanel();
 	pushHistory('Original');
 	syncSlidersFromModel();
 	markPresetActive(null);
@@ -321,9 +336,22 @@ function frameModel(root) {
 }
 
 // ── material operations ────────────────────────────────────────────────────────
+// Every operation below edits editRoot(): the whole model, or just the
+// selected part's subtree when one is picked in the Parts panel. Reset-to-
+// original stays whole-model on purpose: it is a global undo, not scoped.
+function editRoot() {
+	if (state.selectedPartIndex == null) return state.root;
+	return state.parts[state.selectedPartIndex]?.node || state.root;
+}
+
+function partSuffix() {
+	const p = state.selectedPartIndex != null ? state.parts[state.selectedPartIndex] : null;
+	return p ? ` · ${p.name}` : '';
+}
+
 function applyPreset(name) {
 	if (!state.root) return;
-	applyMaterialPreset(THREE, state.root, name);
+	applyMaterialPreset(THREE, editRoot(), name);
 	state.baseName = name;
 	state.manual = {
 		metalness: MATERIAL_PRESETS[name].metalness ?? null,
@@ -331,14 +359,14 @@ function applyPreset(name) {
 		emissiveIntensity: MATERIAL_PRESETS[name].emissiveIntensity ?? 0,
 	};
 	markPresetActive(name);
-	pushHistory(MATERIAL_PRESETS[name].label || name);
+	pushHistory((MATERIAL_PRESETS[name].label || name) + partSuffix());
 	syncSlidersFromModel();
 }
 
 function applyVariant(config, label) {
 	if (!state.root) return;
-	applyMaterialPreset(THREE, state.root, config);
-	pushHistory(label);
+	applyMaterialPreset(THREE, editRoot(), config);
+	pushHistory(label + partSuffix());
 	syncSlidersFromModel();
 }
 
@@ -349,7 +377,7 @@ function applyVariant(config, label) {
 // server-exported GLB visually identical.
 function applyFactors(factors) {
 	if (!state.root || !factors) return;
-	state.root.traverse((n) => {
+	editRoot().traverse((n) => {
 		for (const m of materialsOf(n)) {
 			if (!isStandardLike(m)) continue;
 			if (Array.isArray(factors.baseColorFactor) && factors.baseColorFactor.length >= 3) {
@@ -394,7 +422,7 @@ async function generateAndApplyTexture(instruction) {
 	const tex = await new THREE.TextureLoader().loadAsync(data.url);
 	tex.colorSpace = THREE.SRGBColorSpace;
 	tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-	state.root.traverse((n) => {
+	editRoot().traverse((n) => {
 		for (const m of materialsOf(n)) {
 			if (!isStandardLike(m)) continue;
 			m.map = tex;
@@ -407,7 +435,7 @@ async function generateAndApplyTexture(instruction) {
 function setManual(prop, value) {
 	if (!state.root) return;
 	state.manual[prop] = value;
-	state.root.traverse((n) => {
+	editRoot().traverse((n) => {
 		for (const m of materialsOf(n)) {
 			if (!isStandardLike(m)) continue;
 			if (prop === 'metalness') m.metalness = value;
@@ -440,6 +468,252 @@ function resetModel() {
 	markPresetActive(null);
 	pushHistory('Original');
 	syncSlidersFromModel();
+	// Reset restores every material's true original opacity, which also wipes
+	// the dim highlight on non-selected parts, so reapply it if one is active.
+	if (state.selectedPartIndex != null) dimOtherParts(state.selectedPartIndex);
+}
+
+// ── parts (editable parts, work order 070) ──────────────────────────────────
+// Detects the named, separable top-level nodes workers/segment,
+// model-partcrafter and model-holopart all emit (part_01, part_02, …), but
+// generically: any loaded GLB whose root has ≥2 top-level nodes that each
+// contain real geometry qualifies, not just those three workers' output.
+// Selecting one scopes every material operation above (editRoot()) to that
+// part alone; Swap and Regenerate replace its geometry outright and
+// reassemble the result back into the SAME scene graph, under the SAME node
+// name, the stability guarantee work order 078 ("keep the rig") depends on.
+function detectParts(root) {
+	const parts = [];
+	for (const child of root.children) {
+		let hasMesh = false;
+		child.traverse((n) => {
+			if (n.isMesh) hasMesh = true;
+		});
+		if (!hasMesh) continue;
+		parts.push({ name: child.name || `Part ${parts.length + 1}`, node: child });
+	}
+	return parts.length >= 2 ? parts : [];
+}
+
+// Golden-ratio hue stepping: the same tinting convention workers/segment,
+// model-partcrafter and model-holopart use, so a part's swatch color here
+// matches the color it already carries in a manifest-driven viewer.
+function partColor(index) {
+	const hue = (index * 0.618033988749895) % 1.0;
+	return `#${new THREE.Color().setHSL(hue, 0.65, 0.55).getHexString()}`;
+}
+
+function renderPartsPanel() {
+	if (!el['parts-card']) return;
+	const has = state.parts.length >= 2;
+	el['parts-card'].hidden = !has;
+	if (!has) return;
+	el['parts-list'].innerHTML = '';
+	state.parts.forEach((p, i) => {
+		const b = document.createElement('button');
+		b.type = 'button';
+		b.className = 'rs-preset';
+		b.dataset.partIndex = String(i);
+		const active = state.selectedPartIndex === i;
+		b.setAttribute('aria-pressed', active ? 'true' : 'false');
+		b.classList.toggle('is-active', active);
+		b.innerHTML = `<span class="rs-preset__swatch" style="background:${partColor(i)}"></span><span>${escapeHtml(p.name)}</span>`;
+		b.addEventListener('click', () => selectPart(i));
+		el['parts-list'].appendChild(b);
+	});
+	const selected = state.selectedPartIndex != null;
+	el['part-swap'].disabled = !selected;
+	el['part-regenerate'].disabled = !selected;
+	el['part-deselect'].disabled = !selected;
+}
+
+function selectPart(index) {
+	if (state.selectedPartIndex === index) {
+		deselectPart();
+		return;
+	}
+	restoreDimmed();
+	state.selectedPartIndex = index;
+	dimOtherParts(index);
+	renderPartsPanel();
+	syncSlidersFromModel();
+	setNote(
+		el['parts-note'],
+		`Editing "${state.parts[index].name}" only: presets, AI restyle, and fine-tuning now apply to this part alone.`,
+	);
+}
+
+function deselectPart() {
+	restoreDimmed();
+	state.selectedPartIndex = null;
+	renderPartsPanel();
+	syncSlidersFromModel();
+	setNote(el['parts-note'], '');
+}
+
+// Dims every OTHER part's materials so the one being edited stands out. Pure
+// opacity, restored exactly (not blended into state.originals, which is
+// Reset-to-original's own baseline) so it never interferes with a real edit.
+function dimOtherParts(selectedIndex) {
+	state.dimmed = [];
+	state.parts.forEach((p, i) => {
+		if (i === selectedIndex) return;
+		p.node.traverse((n) => {
+			for (const m of materialsOf(n)) {
+				if (!isStandardLike(m)) continue;
+				state.dimmed.push({ material: m, opacity: m.opacity, transparent: m.transparent });
+				m.transparent = true;
+				m.opacity = Math.min(m.opacity, 0.22);
+				m.needsUpdate = true;
+			}
+		});
+	});
+}
+
+function restoreDimmed() {
+	for (const { material, opacity, transparent } of state.dimmed) {
+		material.opacity = opacity;
+		material.transparent = transparent;
+		material.needsUpdate = true;
+	}
+	state.dimmed = [];
+}
+
+// Swaps the selected part's entire node (geometry + material) for newContent,
+// reattaching it under the SAME name, position, rotation and scale the old
+// node had, so it reassembles back into exactly where it came from, and any
+// downstream consumer keyed on the node name still finds it.
+function swapSelectedPart(newContent, sourceLabel) {
+	const i = state.selectedPartIndex;
+	if (i == null) throw new Error('select a part first');
+	const entry = state.parts[i];
+	const oldNode = entry.node;
+	const parent = oldNode.parent;
+	if (!parent) throw new Error('the selected part has no parent to reattach to');
+
+	newContent.name = oldNode.name;
+	newContent.position.copy(oldNode.position);
+	newContent.quaternion.copy(oldNode.quaternion);
+	newContent.scale.copy(oldNode.scale);
+
+	oldNode.traverse((n) => {
+		for (const m of materialsOf(n)) state.originals.delete(m);
+	});
+	parent.remove(oldNode);
+	disposeTree(oldNode);
+	parent.add(newContent); // THREE.Object3D.add() re-parents cleanly on its own
+
+	entry.node = newContent;
+	captureOriginals(newContent);
+	renderPartsPanel();
+	pushHistory(`Swapped ${entry.name} from ${sourceLabel}`);
+}
+
+// "Swap part": load a caller-picked local GLB/GLTF and drop its content in as
+// the selected part's new geometry, in place.
+function acceptPartSwapFile(file) {
+	if (state.selectedPartIndex == null) return;
+	if (!/\.(glb|gltf)$/i.test(file.name)) {
+		setNote(el['parts-note'], `"${file.name}" is not a .glb or .gltf model.`, 'error');
+		return;
+	}
+	const entry = state.parts[state.selectedPartIndex];
+	const loader = makeLoader();
+	const reader = new FileReader();
+	reader.onload = () => {
+		loader.parse(
+			reader.result,
+			'',
+			(gltf) => {
+				try {
+					swapSelectedPart(gltf.scene, file.name);
+					setNote(el['parts-note'], `Swapped "${entry.name}" in from ${file.name}.`, 'done');
+				} catch (err) {
+					setNote(el['parts-note'], `Swap failed: ${err?.message || err}`, 'error');
+				}
+			},
+			(err) => setNote(el['parts-note'], `Could not read "${file.name}": ${err?.message || err}`, 'error'),
+		);
+	};
+	reader.onerror = () => setNote(el['parts-note'], `Could not read "${file.name}".`, 'error');
+	reader.readAsArrayBuffer(file);
+}
+
+// "Regenerate part": send the WHOLE current model (it already has ≥2 named
+// parts, or this panel would be hidden) through the real model-holopart
+// worker via /api/forge-holopart, which completes the hidden/occluded
+// geometry of every part in one pass, then pull just the regenerated part
+// matching the selected node's name back out and swap it in, reassembling
+// the result into this same scene while leaving every other part untouched.
+async function regenerateSelectedPart() {
+	if (state.selectedPartIndex == null) return;
+	const entry = state.parts[state.selectedPartIndex];
+	if (state.sourceUrlPending) {
+		setNote(el['parts-note'], 'Still checkpointing the model, try again in a moment.', 'busy');
+		return;
+	}
+	if (!state.sourceGlbUrl) {
+		setNote(
+			el['parts-note'],
+			'Regenerate needs a public model URL: load one via "Load URL", or wait for the upload checkpoint to finish.',
+			'error',
+		);
+		return;
+	}
+	const token = ++state.regenRunToken;
+	el['part-regenerate'].disabled = true;
+	setNote(el['parts-note'], `Completing hidden geometry for "${entry.name}" via HoloPart…`, 'busy');
+	try {
+		const startRes = await fetch('/api/forge-holopart', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ mesh_url: state.sourceGlbUrl }),
+		});
+		const startData = await startRes.json().catch(() => ({}));
+		if (!startRes.ok || !startData?.job_id) throw apiFailure(startData, startRes);
+
+		const result = await pollHoloPart(startData.job_id, token);
+		if (!result || token !== state.regenRunToken) return; // superseded
+
+		const gltf = await makeLoader().loadAsync(result.result_url);
+		let regenerated = null;
+		gltf.scene.traverse((n) => {
+			if (!regenerated && n.name === entry.name) regenerated = n;
+		});
+		if (!regenerated) {
+			throw new Error(`HoloPart's result has no part named "${entry.name}".`);
+		}
+		swapSelectedPart(regenerated, 'HoloPart');
+		setNote(el['parts-note'], `"${entry.name}" regenerated via HoloPart and reassembled into the model.`, 'done');
+	} catch (err) {
+		if (token !== state.regenRunToken) return;
+		setNote(el['parts-note'], `Regenerate failed: ${err?.message || err}`, 'error');
+	} finally {
+		if (token === state.regenRunToken) el['part-regenerate'].disabled = state.selectedPartIndex == null;
+	}
+}
+
+async function pollHoloPart(jobId, token) {
+	const POLL_MS = 3000;
+	const MAX_MS = 6 * 60 * 1000;
+	const deadline = performance.now() + MAX_MS;
+	while (token === state.regenRunToken && performance.now() < deadline) {
+		await sleep(POLL_MS);
+		if (token !== state.regenRunToken) return null;
+		const res = await fetch(`/api/forge-holopart?job=${encodeURIComponent(jobId)}`);
+		const data = await res.json().catch(() => ({}));
+		if (data.error === 'unconfigured') {
+			throw new Error(data.message || 'Hidden-part completion is not configured on this deployment.');
+		}
+		if (data.status === 'done' && data.result_url) return data;
+		if (data.status === 'failed') throw new Error(data.error || 'Part completion failed.');
+	}
+	if (token !== state.regenRunToken) return null;
+	throw new Error('Part completion timed out.');
+}
+
+function sleep(ms) {
+	return new Promise((r) => setTimeout(r, ms));
 }
 
 // ── variants ─────────────────────────────────────────────────────────────────
@@ -548,22 +822,35 @@ async function aiRestyle() {
 		if (!res.ok || !data?.ok) throw apiFailure(data, res);
 
 		applyFactors(data.factors);
-		state.realLineage = data.lineage;
-		state.activeIndex = data.activeIndex;
-		state.sourceGlbUrl = data.glbUrl; // anchor further edits to this new checkpoint
-		pushHistory(`AI: ${instruction}`);
-		renderLineageStrip();
+		const scopedToPart = state.selectedPartIndex != null;
+		// The server restyled the WHOLE model's GLB (it has no concept of a
+		// selected part), but the live preview above was applied to editRoot()
+		// alone. Adopting the server's checkpoint here would silently restyle
+		// every other part the next time anything reads state.sourceGlbUrl, so
+		// a part-scoped restyle keeps the PREVIOUS checkpoint and leaves "Save
+		// version" (which exports the actual live scene, correctly scoped) as
+		// the way to persist it.
+		if (!scopedToPart) {
+			state.realLineage = data.lineage;
+			state.activeIndex = data.activeIndex;
+			state.sourceGlbUrl = data.glbUrl; // anchor further edits to this new checkpoint
+			renderLineageStrip();
+		}
+		pushHistory(`AI: ${instruction}${partSuffix()}`);
 
+		const savedNote = scopedToPart
+			? 'applied to this part, click "Save version" below to persist it'
+			: 'applied and saved as a new version';
 		if (wantTexture) {
 			setNote(el['ai-note'], 'PBR applied — generating a texture too…', 'busy');
 			try {
 				await generateAndApplyTexture(instruction);
-				setNote(el['ai-note'], `Restyled "${instruction}" — PBR + texture applied, saved as a new version.`, 'done');
+				setNote(el['ai-note'], `Restyled "${instruction}": PBR + texture ${savedNote}.`, 'done');
 			} catch (texErr) {
-				setNote(el['ai-note'], `PBR applied and saved as a new version. Texture skipped: ${texErr?.message || texErr}`, 'error');
+				setNote(el['ai-note'], `PBR ${savedNote}. Texture skipped: ${texErr?.message || texErr}`, 'error');
 			}
 		} else {
-			setNote(el['ai-note'], `Restyled "${instruction}" — applied and saved as a new version.`, 'done');
+			setNote(el['ai-note'], `Restyled "${instruction}": ${savedNote}.`, 'done');
 		}
 	} catch (err) {
 		setNote(el['ai-note'], `Restyle failed: ${err?.message || err}`, 'error');
@@ -707,6 +994,15 @@ function wireControls() {
 	});
 	el['save-version'].addEventListener('click', saveVersion);
 
+	el['part-swap'].addEventListener('click', () => el['part-swap-file'].click());
+	el['part-swap-file'].addEventListener('change', (e) => {
+		const f = e.target.files?.[0];
+		if (f) acceptPartSwapFile(f);
+		e.target.value = '';
+	});
+	el['part-regenerate'].addEventListener('click', regenerateSelectedPart);
+	el['part-deselect'].addEventListener('click', deselectPart);
+
 	// The file input itself is off-screen (a bare styled <label> is not
 	// keyboard-focusable, so it left upload unreachable without a mouse).
 	el.upload.addEventListener('click', () => el.file.click());
@@ -761,9 +1057,10 @@ function acceptLocalFile(file) {
 }
 
 function syncSlidersFromModel() {
-	// Reflect the first standard material's values back into the sliders.
+	// Reflect the first standard material's values back into the sliders
+	// (editRoot()'s, so the sliders read the selected part when one is active).
 	let first = null;
-	state.root?.traverse((n) => {
+	editRoot()?.traverse((n) => {
 		if (first) return;
 		for (const m of materialsOf(n)) if (isStandardLike(m)) { first = m; break; }
 	});
