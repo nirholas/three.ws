@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-11T13:47:51.450Z",
+	"generated_at": "2026-10-11T18:53:40.209Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4029,
+	"total": 4030,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -286,6 +286,16 @@
 			"title": "Every 3D generation now writes a signed run receipt",
 			"summary": "Each Studio run (avatars, rigged avatars, meshes, rigs, refinements) records stage by stage what was expected, what was observed, and a verdict: met, recovered by a named fallback, missed with its cause, or skipped. The rig is verified by reading the delivered file back, not by trusting the rigger. Receipts are ed25519-signed, linked from every result, browsable at /runs with stage-by-stage rates, and verifiable offline with one command.",
 			"link": "/runs",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "Forge gets a fidelity lane: match your photo instead of guessing it",
+			"summary": "A new Forge engine, \"Match my photo\", fuses 1 to 4 photos of the same object into one pixel-aligned 3D model instead of generating a plausible guess from a single view. Drop photos into the existing view slots and label each one Front, Back, Left or Right; the model is pixel-aligned to every photo you give it, and more photos narrow the result further. Only one photo on hand? Toggle \"fill in the other sides\" and the worker synthesizes the missing angles before reconstructing. Built on TencentARC's Pixal3D (MIT) running on Microsoft TRELLIS.2's backbone, with MV-Adapter (Apache-2.0) for the view synthesis step. Every input photo is recorded against the finished model, and single-photo requests on every other engine are unaffected.",
+			"link": "/forge",
 			"tags": [
 				"feature"
 			]
@@ -1535,16 +1545,6 @@
 			"link": "/news",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "update",
-			"title": "Claim the 3D models the bot made for you on X",
-			"summary": "Anything @trythreews makes for you from a post now waits for you. Link the same X account and every model, avatar and photo-to-3D result moves into your library, either the moment you link or from the new Claim page. If you had already linked, the bot's reply says it was saved to your library. If not, the reply carries a link to claim it.",
-			"link": "/x/claim",
-			"tags": [
-				"feature"
 			]
 		}
 	]

@@ -36,6 +36,7 @@ Each backend declares which paths it serves, whether it needs a bring-your-own-k
 - **Hunyuan3D / TRELLIS (free)** on Hugging Face Spaces. The free photo-to-3D lane and a High-tier engine, with automatic failover across Hunyuan3D 2.1, Hunyuan3D 2, TRELLIS, and TripoSR. Queue waits vary.
 - **TRELLIS (self-host)** and **Hunyuan3D (self-host)**, our own scale-to-zero Cloud Run GPU workers, and the named defaults: TRELLIS at Draft and Standard, Hunyuan3D at High. Zero vendor cost, so free-first routing prefers them first. Self-host TRELLIS is a native single-hop image-to-3D lane; Hunyuan3D leads on people and organic subjects.
 - **TripoSG (self-host)**, the sketch-only scribble worker. Untextured geometry from a drawing. It also serves photos as the last automatic failover rung: when every textured photo lane has failed mid-job, the job continues on TripoSG's photo pipeline and returns the shape without textures rather than failing.
+- **Pixal3D (self-host)**, the fidelity lane, labeled **"Match my photo"** in the UI. Built on [TencentARC Pixal3D](https://github.com/TencentARC/Pixal3D) (MIT), pixel-aligned image-to-3D on [Microsoft TRELLIS.2](https://github.com/microsoft/TRELLIS.2)'s backbone. Where the other photo lanes read one view and generate a plausible result, Pixal3D fuses every photo you give it (1 to 4), so the result matches your photos rather than guessing. Never a named default or a failover target (a down Pixal3D must not silently drop the 2nd/3rd photo on a lane that only reads the first view) and only selectable explicitly. With exactly one photo, the optional `fill_other_sides` flag first synthesizes the other three angles with [MV-Adapter](https://github.com/huanngzh/MV-Adapter) (Apache-2.0) before reconstructing.
 - **TRELLIS** on Replicate, a paid platform lane. Selectable explicitly and used as the last-resort fallback only on deployments with no free engine configured.
 - **Meshy 6**, **Tripo v3.1**, **Rodin (Hyper3D)**, BYOK geometry-first engines with quad topology and a real poly target. You supply your own key.
 - **Stable Fast 3D** (Stability, BYOK) and **Replicate (your account)** (BYOK), single-image reconstruction lanes.
@@ -332,6 +333,32 @@ Image-to-3D over the API sends public image URLs instead of a prompt:
 curl -X POST 'https://three.ws/api/forge' \
   -H 'content-type: application/json' \
   -d '{"image_urls":["https://…/front.jpg","https://…/side.jpg"],"tier":"standard"}'
+```
+
+Pin the Pixal3D fidelity lane (1 to 4 photos, pixel-aligned to every one of
+them) with `backend`, and optionally label each photo's angle with
+`view_labels` (`"front"`, `"back"`, `"left"`, `"right"`, same order as
+`image_urls`) so the worker doesn't have to guess:
+
+```bash
+curl -X POST 'https://three.ws/api/forge' \
+  -H 'content-type: application/json' \
+  -d '{
+    "image_urls": ["https://…/front.jpg","https://…/back.jpg","https://…/left.jpg"],
+    "view_labels": ["front","back","left"],
+    "backend": "pixal3d",
+    "tier": "standard"
+  }'
+```
+
+With exactly one photo, add `"fill_other_sides": true` to synthesize the
+other three angles with MV-Adapter before reconstructing, instead of
+reconstructing from the single view alone:
+
+```bash
+curl -X POST 'https://three.ws/api/forge' \
+  -H 'content-type: application/json' \
+  -d '{"image_urls":["https://…/front.jpg"],"fill_other_sides":true,"backend":"pixal3d","tier":"standard"}'
 ```
 
 A minimal poll-until-done loop in JavaScript:
