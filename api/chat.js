@@ -35,6 +35,8 @@ import { captureException } from './_lib/sentry.js';
 import { sql } from './_lib/db.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { loadUserProviderKeys } from './_lib/provider-keys.js';
+import { agentDefaultModel } from './_lib/agent-model.js';
+import { loadOwnerGrokKey } from './_lib/agent-grok-key.js';
 import { watsonxConfig, watsonxAuthHeaders } from './_lib/watsonx.js';
 import { orchestrateConfig } from './_lib/orchestrate.js';
 import { guardianConfig, governSend, sendCapUsd } from './_lib/granite-guardian.js';
@@ -532,6 +534,46 @@ export default wrap(async (req, res) => {
 		userProviderKeys = await loadUserProviderKeys(urow?.provider_keys);
 	}
 
+	// Agent lookup happens before provider selection so an unrequested provider
+	// can default to the agent's own chosen brain (api/_lib/agent-model.js),
+	// the same resolution profile chat, the gateway, and scheduled runs now
+	// share. persona_prompt/user_id/meta in one row; the later persona-prompt
+	// block reuses `agentRow`.
+	let agentRow = null;
+	if (body.agentId) {
+		[agentRow] = await sql`
+			SELECT persona_prompt, user_id, meta FROM agent_identities
+			WHERE id = ${body.agentId} AND deleted_at IS NULL
+			  AND (is_published = true OR user_id = ${auth?.userId ?? null})
+			LIMIT 1
+		`;
+	}
+
+	// Only when the caller named neither a provider nor a model, and is signed
+	// in: grok (like every paid/BYOK provider) is sign-in-only, matching
+	// resolveMessageModel's rule in agent-model.js, and in practice the
+	// anonymous branch above has already pinned body.provider by this point.
+	// A Grok default also pulls the agent owner's saved xAI key ahead of the
+	// server key, same lane order as the gateway and scheduled runs
+	// (api/_lib/agent-grok-key.js).
+	// Echoed on `done` as `agent_brain` so the client can tell a straight answer
+	// from a failover: the badge compares what the agent's brain was supposed
+	// to be against `provider`/`model`, which is what actually answered.
+	const agentBrainDefault = agentBrainDefaultFor({
+		anonymous,
+		requestedProvider: body.provider,
+		requestedModel: body.model,
+		agentMeta: agentRow?.meta,
+	});
+	if (agentBrainDefault) {
+		body.provider = agentBrainDefault.provider;
+		body.model = agentBrainDefault.model;
+		if (agentBrainDefault.provider === 'grok' && !userProviderKeys.grok) {
+			const ownerKey = await loadOwnerGrokKey(agentRow.user_id);
+			if (ownerKey) userProviderKeys = { ...userProviderKeys, grok: ownerKey };
+		}
+	}
+
 	// Health cooldowns: a provider that recently 429'd / 5xx'd is skipped while it
 	// recovers, so a single throttle window doesn't cascade into request after
 	// request re-hitting the same dead provider. Best-effort — an unreadable
@@ -583,14 +625,9 @@ export default wrap(async (req, res) => {
 	let isOwner = false;
 	let agentVisible = false;
 	if (body.agentId) {
-		// Persona prompts are private IP: only serve them for published agents,
-		// or to the agent's owner. Anonymous callers get published personas only.
-		const [agentRow] = await sql`
-			SELECT persona_prompt, user_id FROM agent_identities
-			WHERE id = ${body.agentId} AND deleted_at IS NULL
-			  AND (is_published = true OR user_id = ${auth?.userId ?? null})
-			LIMIT 1
-		`;
+		// Persona prompts are private IP: only serve them for published agents, or
+		// to the agent's owner. Anonymous callers get published personas only.
+		// `agentRow` was already loaded above (it also feeds the brain default).
 		agentVisible = Boolean(agentRow);
 		isOwner = Boolean(auth?.userId && agentRow?.user_id === auth.userId);
 		// Brain Studio preview: the owner may audition an unsaved compiled persona.
@@ -1169,6 +1206,10 @@ export default wrap(async (req, res) => {
 		})),
 		model: route.model,
 		provider: route.name,
+		// The agent's own configured brain, when this turn used it by default
+		// (no explicit client override), null otherwise. The client compares
+		// this to `provider`/`model` to tell a straight answer from a failover.
+		agent_brain: agentBrainDefault,
 		// Exactly the memories the server injected into this reply's context — the
 		// client emits `memory:recalled` from this. Empty when nothing was recalled.
 		recalled: recalledMemories,
@@ -1503,6 +1544,25 @@ function keylessVertexAvailable(name) {
 	return false;
 }
 
+/**
+ * Whether this turn should default to the agent's own configured brain
+ * (api/_lib/agent-model.js) instead of the platform's provider ladder: only
+ * when the caller named neither provider nor model, is signed in (grok, like
+ * every paid/BYOK provider, is sign-in-only), and the agent's chosen model
+ * has a route this handler knows how to drive. Exported for tests; the
+ * handler also uses the returned `provider` to decide whether to fetch the
+ * owner's BYOK grok key.
+ * @param {{ anonymous: boolean, requestedProvider: unknown, requestedModel: unknown, agentMeta: object|null|undefined }} o
+ * @returns {{ provider: string, model: string } | null}
+ */
+export function agentBrainDefaultFor({ anonymous, requestedProvider, requestedModel, agentMeta }) {
+	if (anonymous || requestedProvider || requestedModel || !agentMeta) return null;
+	const model = agentDefaultModel(agentMeta);
+	const providerName = model ? MODEL_CATALOG[model]?.provider : null;
+	if (!model || !providerName || !PROVIDERS[providerName]) return null;
+	return { provider: providerName, model };
+}
+
 // Effective provider try-order. Vertex-served Claude is injected per flags:
 //   VERTEX_CLAUDE_PRIMARY  → Vertex leads the whole ladder (before the free
 //     lanes) — the platform's default brain becomes real Claude on GCP credits.
@@ -1610,7 +1670,7 @@ function envPinnedModelFor(providerName) {
 // kept — those are per-model rate limits where a sibling model genuinely helps.
 const FALLBACK_SIBLINGS = {
 	openrouter: OPENROUTER_SIBLINGS,
-	groq: ['llama-3.3-70b-versatile'],
+	groq: ['openai/gpt-oss-20b'],
 	// Like Groq, NVIDIA NIM rate-limits per key (one account), so a second NIM
 	// model would re-hit the same throttle — keep a single slot and give the
 	// next fallback slot to a different provider.

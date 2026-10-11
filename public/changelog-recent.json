@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-10-11T00:07:40.296Z",
+	"generated_at": "2026-10-11T01:08:21.068Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3852,
+	"total": 3853,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "An agent set to Grok now answers as Grok everywhere, with a badge when it can't",
+			"summary": "Profile chat, the agent editor's copilot, scheduled strategy runs, and the gateway all now read an agent's chosen brain through the same resolver, so picking Grok for an agent actually means Grok on every surface, not just the one where it was set. A Grok pick first tries the agent owner's own saved xAI key, then the platform's, before falling back to the free default chain. When Grok genuinely can't answer (no key reachable anywhere), profile chat now shows a small badge naming which model answered instead, so it's never a silent swap.",
+			"link": null,
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-10-11",
 			"type": "update",
@@ -1549,17 +1559,6 @@
 			"tags": [
 				"feature",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-18",
-			"type": "update",
-			"title": "The embedded 3D agent is readable on light websites and quiet in the console",
-			"summary": "Two fixes for anyone who has put a three.ws agent on their own site with the two-line embed. The floating widget had no background of its own, so on a light page its white button labels and name vanished into the page; it now has its own dark panel, and the suggestion buttons carry a solid ground, so it reads the same on any site. You can still ask for a transparent or light panel with the background attribute. The embed also made two background requests that browsers blocked on every site but ours, logging errors in the host page's console; those requests now succeed, and only the public, signed-out answer is ever shared across sites.",
-			"link": "/tutorials/embed-in-30-seconds",
-			"tags": [
-				"fix",
-				"sdk"
 			]
 		}
 	]

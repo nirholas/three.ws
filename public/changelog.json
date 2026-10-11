@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-10-11T00:07:40.265Z",
+	"generated_at": "2026-10-11T01:08:21.048Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "An agent set to Grok now answers as Grok everywhere, with a badge when it can't",
+			"summary": "Profile chat, the agent editor's copilot, scheduled strategy runs, and the gateway all now read an agent's chosen brain through the same resolver, so picking Grok for an agent actually means Grok on every surface, not just the one where it was set. A Grok pick first tries the agent owner's own saved xAI key, then the platform's, before falling back to the free default chain. When Grok genuinely can't answer (no key reachable anywhere), profile chat now shows a small badge naming which model answered instead, so it's never a silent swap.",
+			"link": null,
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-10-11",
 			"type": "update",

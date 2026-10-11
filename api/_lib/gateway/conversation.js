@@ -18,6 +18,9 @@ import { resolveChatAgent, listAccountAgents } from './agents.js';
 import { createPreview, setPreviewMessageRef, PREVIEW_TTL_MINUTES } from './store.js';
 import { chunkText, describeProposal, plainText, MAX_TEXT, PLATFORM_LABEL, appOrigin } from './format.js';
 import { maybeSpeakReply } from './voice.js';
+import { agentDefaultModel, modelChain } from '../agent-model.js';
+import { loadOwnerGrokKey } from '../agent-grok-key.js';
+import { MODEL_CATALOG } from '../chat-models.js';
 
 export const APPROVE = 'gw:ap:';
 export const CANCEL = 'gw:cx:';
@@ -110,6 +113,22 @@ async function sendReply(gw, chatId, text) {
 }
 
 /**
+ * The provider chain for this agent's chosen brain (api/_lib/agent-model.js),
+ * so a gateway reply honors the same model the owner picked for profile chat
+ * and the web copilot. A chosen model with no tool calling, or no model
+ * chosen at all, falls through to the platform default chain. A Grok choice
+ * leads with the owner's saved xAI key (api/_lib/agent-grok-key.js) ahead of
+ * the server key and the default chain.
+ * @param {{ meta?: object, user_id?: string }} agent
+ */
+export async function chainForAgent(agent) {
+	const model = agentDefaultModel(agent.meta);
+	if (!model || !MODEL_CATALOG[model]?.tools) return undefined;
+	const grokKey = MODEL_CATALOG[model].provider === 'grok' ? await loadOwnerGrokKey(agent.user_id) : null;
+	return modelChain(model, { grokKey }).chain;
+}
+
+/**
  * Run one turn for `text` in a paired chat.
  * @param {{ gw:object, event:object, link:object, text:string }} ctx
  */
@@ -129,12 +148,14 @@ export async function converse({ gw, event, link, text }) {
 
 	const stopTyping = keepTyping(gw, event.chatId);
 	const status = statusLine(gw, event.chatId);
+	const chain = await chainForAgent(agent);
 	let turn;
 	try {
 		turn = await runCopilotTurn({
 			agent,
 			history,
 			network: 'mainnet',
+			chain,
 			surfaceNote: surfaceNote(event.platform, { buttons: hasButtons(gw) }),
 			emit: (name, data) => { if (name === 'tool_start') status.working(data.name); },
 		});

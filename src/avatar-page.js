@@ -749,6 +749,7 @@ function renderShell(glbUrl) {
 								<span class="av-chat-ibm" id="av-chat-ibm" title="This avatar&#39;s brain runs on IBM watsonx (Granite) — fully embodied via Granite function calling">
 									<span class="av-chat-ibm-dot" aria-hidden="true"></span>Powered by IBM watsonx
 								</span>
+								<span class="av-chat-brain" id="av-chat-brain" data-state="hidden" aria-live="polite"></span>
 						</div>
 						<div class="av-chat-log" id="av-chat-log">
 							<div class="av-chat-empty">
@@ -2298,6 +2299,7 @@ function bindChat() {
 		});
 	}
 	syncIbmBadge();
+	hideBrainBadge();
 
 	// Persistent memory (memory skill): replay stored history on first paint.
 	if (attachedSkills.has('memory')) hydrateChatHistory();
@@ -2448,6 +2450,7 @@ async function sendChatMessage(text) {
 	assistantNode.appendChild(cursor);
 
 	showThoughtThinking();
+	hideBrainBadge();
 	send.disabled = true;
 	let acc = '';
 	try {
@@ -2508,6 +2511,7 @@ async function sendChatMessage(text) {
 					emitRecallFromChat(isUuid ? agentIdMaybe : null, evt, text);
 					// Let the agent's own words colour its mood too.
 					moodEngine.observeChat(isUuid ? agentIdMaybe : null, evt.reply || acc, 'assistant');
+					renderBrainBadge(evt);
 				} else if (evt.type === 'error') {
 					throw new Error(evt.message || evt.error || 'Stream error');
 				}
@@ -2524,6 +2528,59 @@ async function sendChatMessage(text) {
 	} finally {
 		cursor.remove();
 		send.disabled = false;
+	}
+}
+
+// Friendly label per MODEL_CATALOG/PROVIDERS provider slug (api/_lib/chat-models.js,
+// api/chat.js PROVIDERS), for the real-metadata brain badge below.
+const BRAIN_PROVIDER_LABELS = {
+	grok: 'Grok',
+	anthropic: 'Claude',
+	openai: 'GPT',
+	groq: 'Llama (Groq)',
+	openrouter: 'Llama (OpenRouter)',
+	nvidia: 'Nemotron (NVIDIA)',
+	sambanova: 'Llama (SambaNova)',
+	mistral: 'Mistral',
+	zai: 'GLM (Z.AI)',
+	watsonx: 'IBM Granite',
+	orchestrate: 'IBM Orchestrate',
+	'vertex-gemini': 'Gemini',
+	vertex: 'Claude (Vertex)',
+};
+
+function hideBrainBadge() {
+	const badge = $('av-chat-brain');
+	if (badge) badge.dataset.state = 'hidden';
+}
+
+/**
+ * Show which brain actually answered this turn, from the `/api/chat` `done`
+ * event's real response metadata (never a client-side guess). Only lights up
+ * when the server used the agent's own configured brain by default
+ * (`evt.agent_brain`, set server-side only when no visitor override was
+ * sent): a visitor who explicitly picked a model from the selector sees no
+ * badge, since that is their choice, not the agent's brain. When the agent's
+ * chosen provider could not answer (no reachable key) and a different lane
+ * served the turn instead, the badge switches to the failover state rather
+ * than silently claiming the agent's brain answered.
+ * @param {{ provider?: string, model?: string, agent_brain?: {provider:string, model:string}|null }} evt
+ */
+function renderBrainBadge(evt) {
+	const badge = $('av-chat-brain');
+	if (!badge) return;
+	if (!evt || !evt.provider || !evt.agent_brain) {
+		hideBrainBadge();
+		return;
+	}
+	const servedLabel = BRAIN_PROVIDER_LABELS[evt.provider] || evt.provider;
+	if (evt.agent_brain.provider !== evt.provider) {
+		const wantedLabel = BRAIN_PROVIDER_LABELS[evt.agent_brain.provider] || evt.agent_brain.provider;
+		badge.textContent = `${wantedLabel} unavailable, answered on ${servedLabel}`;
+		badge.dataset.state = 'failover';
+	} else {
+		badge.textContent = `Powered by ${servedLabel}`;
+		badge.dataset.state = 'on';
 	}
 }
 

@@ -45,6 +45,8 @@ import { providerChain } from '../_lib/llm-tool-chain.js';
 import { runCopilotTurn, netOf, COPILOT_MAX_MESSAGES } from '../_lib/copilot-engine.js';
 import { appendThreadMessage, listThread } from '../_lib/agent-thread.js';
 import { resolveMessageModel, modelChain, ModelChoiceError } from '../_lib/agent-model.js';
+import { loadOwnerGrokKey } from '../_lib/agent-grok-key.js';
+import { MODEL_CATALOG } from '../_lib/chat-models.js';
 import { meterFreeModel, FreeTierExhaustedError, freeTierErrorBody, retryAfterSeconds } from '../_lib/free-tier.js';
 import { recordEvent } from '../_lib/usage.js';
 import { costMicroUsd } from '../_lib/llm-pricing.js';
@@ -102,7 +104,8 @@ export default async function handler(req, res, id) {
 		return error(res, 429, 'free_tier_exhausted', e.message, freeTierErrorBody(e));
 	}
 
-	const { chain } = modelChain(choice.model);
+	const grokKey = choice.model && MODEL_CATALOG[choice.model]?.provider === 'grok' ? await loadOwnerGrokKey(row.user_id) : null;
+	const { chain } = modelChain(choice.model, { grokKey });
 	if (!chain.length) return error(res, 503, 'llm_unavailable', 'No LLM provider configured. Set GROQ_API_KEY, OPENROUTER_API_KEY, or NVIDIA_API_KEY (or GOOGLE_CLOUD_PROJECT for the Vertex credits anchor).');
 
 	// SSE open.

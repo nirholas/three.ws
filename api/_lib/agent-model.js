@@ -116,11 +116,14 @@ export function resolveMessageModel({ requested = null, agentMeta = null, purpos
  * platform chain stays behind it (also without tools for that turn) so the
  * message is still answered when every route of the model is down.
  * @param {string|null} model a catalog id, or null for the platform chain
+ * @param {{ grokKey?: string|null }} [opts] `grokKey`: the agent owner's decrypted
+ *        BYOK xAI key (api/_lib/agent-grok-key.js), threaded ahead of the server's
+ *        GROK_API_KEY rung when `model` is a Grok model.
  * @returns {{ chain: object[], tools: boolean }}
  */
-export function modelChain(model) {
+export function modelChain(model, opts = {}) {
 	if (!model) return { chain: providerChain(), tools: true };
-	if (MODEL_CATALOG[model]?.tools) return { chain: providerChainFor(model), tools: true };
+	if (MODEL_CATALOG[model]?.tools) return { chain: providerChainFor(model, opts), tools: true };
 	const own = MODEL_CATALOG[model]?.provider === 'roster' ? rosterTransports(model) : [];
 	const seen = new Set(own.map((r) => `${r.name}|${r.model}`));
 	return { chain: [...own, ...providerChain().filter((p) => !seen.has(`${p.name}|${p.model}`))], tools: false };

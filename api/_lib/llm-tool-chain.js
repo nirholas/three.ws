@@ -234,15 +234,26 @@ export function modelRung(model) {
  * model (model-roster.js) contributes one rung per reachable route; any other
  * catalog model contributes its single lane. Models without tool calling have
  * no rungs: the tool loop must never be pointed at them.
+ *
+ * A Grok model additionally gets an owner-key rung ahead of the server-key
+ * rung when `opts.grokKey` is a decrypted BYOK key: the agent's owner saved
+ * their own xAI key, so their key answers before the platform's GROK_API_KEY
+ * (and before the free default chain, appended by providerChainFor).
  * @param {string} requested a MODEL_CATALOG id (a retired id maps forward)
+ * @param {{ grokKey?: string|null }} [opts]
  */
-export function modelRungs(requested) {
+export function modelRungs(requested, opts = {}) {
 	const model = resolveModelId(requested);
 	const meta = MODEL_CATALOG[model];
 	if (!meta || !meta.tools) return [];
 	if (meta.provider === 'roster') return rosterTransports(model);
+	const rungs = [];
+	if (meta.provider === 'grok' && opts.grokKey) {
+		rungs.push({ name: 'grok', url: LANE_ENDPOINTS.grok.url, key: opts.grokKey, model, catalogModel: model, keySource: 'owner' });
+	}
 	const rung = singleLaneRung(model, meta);
-	return rung ? [rung] : [];
+	if (rung) rungs.push({ ...rung, keySource: rung.keySource || 'platform' });
+	return rungs;
 }
 
 function singleLaneRung(model, meta) {
@@ -271,11 +282,12 @@ function singleLaneRung(model, meta) {
  * rungs first (every route that serves it, in order), then the free-first
  * platform chain behind them, minus any rung that would repeat one of them.
  * @param {string|null} [model]
+ * @param {{ grokKey?: string|null }} [opts] forwarded to modelRungs
  */
-export function providerChainFor(model) {
+export function providerChainFor(model, opts = {}) {
 	const chain = providerChain();
 	if (!model) return chain;
-	const rungs = modelRungs(model);
+	const rungs = modelRungs(model, opts);
 	if (!rungs.length) return chain;
 	const seen = new Set(rungs.map((r) => `${r.name}|${r.model}`));
 	return [...rungs, ...chain.filter((p) => !seen.has(`${p.name}|${p.model}`))];

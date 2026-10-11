@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>An agent set to Grok now answers as Grok everywhere, with a badge when it can't</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-11:An agent set to Grok now answers as Grok everywhere, with a badge when it can't</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Profile chat, the agent editor's copilot, scheduled strategy runs, and the gateway all now read an agent's chosen brain through the same resolver, so picking Grok for an agent actually means Grok on every surface, not just the one where it was set. A Grok pick first tries the agent owner's own saved xAI key, then the platform's, before falling back to the free default chain. When Grok genuinely can't answer (no key reachable anywhere), profile chat now shows a small badge naming which model answered instead, so it's never a silent swap.</description>
+		</item>
+		<item>
 			<title>Sentiment Scout's X reads gained a second, independent path through xAI</title>
 			<link>https://three.ws/docs/sentiment-scout</link>
 			<guid isPermaLink="false">2026-10-11:Sentiment Scout's X reads gained a second, independent path through xAI</guid>

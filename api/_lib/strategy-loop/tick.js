@@ -22,7 +22,9 @@
 // in worker memory between steps.
 
 import { sql } from '../db.js';
-import { providerChainFor } from '../llm-tool-chain.js';
+import { agentDefaultModel, modelChain } from '../agent-model.js';
+import { loadOwnerGrokKey } from '../agent-grok-key.js';
+import { MODEL_CATALOG } from '../chat-models.js';
 import { createAgentLoop, initialLoopState, loopFinished, finalAnswer } from '../agent-loop.js';
 import { computeContext } from '../memory-store.js';
 import { insertNotification } from '../notify.js';
@@ -416,6 +418,21 @@ function eventRow(event) {
 }
 
 /**
+ * The provider chain for this tick: the agent's chosen brain
+ * (api/_lib/agent-model.js, checked across all three legacy meta locations),
+ * or the platform default chain when none is set or the choice has no tool
+ * calling (the loop's tools require it). A Grok choice leads with the
+ * owner's saved xAI key (api/_lib/agent-grok-key.js) ahead of the server key.
+ * @param {{ meta?: object, user_id?: string }} agent
+ */
+export async function resolveTickChain(agent) {
+	const model = agentDefaultModel(agent.meta);
+	const usable = model && MODEL_CATALOG[model]?.tools ? model : null;
+	const grokKey = usable && MODEL_CATALOG[usable].provider === 'grok' ? await loadOwnerGrokKey(agent.user_id) : null;
+	return modelChain(usable, { grokKey }).chain;
+}
+
+/**
  * Run (or resume) one tick for an agent this worker has leased.
  *
  * @param {object} o
@@ -502,7 +519,7 @@ export async function runAgentTick({ agentId, workerId, cfg, log, signal = null,
 		({ state, context } = initialLoopState({ operationId: `tick-${tick.id}`, messages, maxSteps: runtimeSteps }));
 	}
 
-	const chain = deps.chain || providerChainFor(agent.meta?.runtime?.model || null);
+	const chain = deps.chain || await resolveTickChain(agent);
 	if (!chain.length) {
 		await finishTick(tick.id, { status: 'failed', error: 'no LLM provider is configured' });
 		await scheduleNext({ agentId, slot: tick.slot, intervalSeconds: loop.intervalSeconds, status: 'failed', failed: true });

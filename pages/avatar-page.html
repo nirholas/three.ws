@@ -984,6 +984,27 @@
 				background: #0f62fe;
 				box-shadow: 0 0 0 3px color-mix(in srgb, #0f62fe 25%, transparent);
 			}
+			.av-chat-brain {
+				display: none;
+				align-items: center;
+				font-size: 11px;
+				font-weight: 600;
+				letter-spacing: 0.01em;
+				color: var(--text);
+				background: var(--panel);
+				border: 1px solid var(--border-2);
+				border-radius: 999px;
+				padding: 4px 10px;
+				white-space: nowrap;
+			}
+			.av-chat-brain[data-state='on'],
+			.av-chat-brain[data-state='failover'] {
+				display: inline-flex;
+			}
+			.av-chat-brain[data-state='failover'] {
+				color: #ffb020;
+				border-color: color-mix(in srgb, #ffb020 40%, var(--border-2));
+			}
 			.av-chat-log {
 				flex: 1;
 				min-height: 240px;
