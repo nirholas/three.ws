@@ -24,6 +24,7 @@
  * Run via `npm run build:pages` or automatically before `vite build`.
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { JOBS, PRODUCT_SECTIONS, jobFor } from './lib/feature-jobs.mjs';
 import { execFileSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -485,6 +486,7 @@ ${items}
 \t\t\t<h1>Sitemap</h1>
 \t\t\t<p><span>${totalPages}</span> <span data-i18n="sitemap_index.pages_grouped">pages on ${escapeHtml(site.name)}, grouped by purpose. Looking for the machine-readable versions?</span></p>
 \t\t\t<div class="sm-formats">
+\t\t\t\t<a href="/everything"><code>/everything</code> · browse by goal, not by section</a>
 \t\t\t\t<a href="/sitemap.xml"><code>sitemap.xml</code> · for search engines</a>
 \t\t\t\t<a href="/llms.txt"><code>llms.txt</code> · for AI agents</a>
 \t\t\t\t<a href="/llms-full.txt"><code>llms-full.txt</code> · long form</a>
@@ -673,8 +675,11 @@ function buildFeaturesJson() {
 				indexable: p.indexable !== false,
 				tags: p.tags || [],
 				showcase: p.showcase || false,
+				priority: p.priority ?? 0.5,
+				job: PRODUCT_SECTIONS.has(s.id) ? jobFor(p.path, s.id) : null,
 			})),
 		})),
+		jobs: JOBS.map(({ id, title, promise, start, featured }) => ({ id, title, promise, start, featured })),
 	};
 	return JSON.stringify(manifest, null, '\t') + '\n';
 }

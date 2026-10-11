@@ -27,7 +27,7 @@
 		"llms": [
 			{
 				"title": "Start here",
-				"paths": ["/", "/what-is", "/create", "/forge", "/image-to-3d", "/create-agent", "/agents", "/marketplace", "/spotlight"]
+				"paths": ["/", "/what-is", "/everything", "/create", "/forge", "/image-to-3d", "/create-agent", "/agents", "/marketplace", "/spotlight"]
 			},
 			{
 				"title": "Developers",
@@ -497,6 +497,14 @@
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-06-05"
+				},
+				{
+					"path": "/everything",
+					"title": "Everything three.ws Does",
+					"description": "Every three.ws feature organised by what you want to do: make a 3D avatar, build an agent, embed it, sell skills, launch a token, trade and more. Searchable, with pins and a new-this-month feed.",
+					"priority": 0.9,
+					"changefreq": "weekly",
+					"added": "2026-10-11"
 				},
 				{
 					"path": "/pitch",
@@ -1773,6 +1781,14 @@
 					"showcase": true
 				},
 				{
+					"path": "/trenches",
+					"title": "Trenches Pulse",
+					"description": "Live market intelligence for the Solana and Robinhood Chain trenches: every pump.fun launch and graduation as it happens, the hottest tokens by trade flow, runner and death tracking, and scored smart-money wallets. Powered by Pulse.",
+					"priority": 0.8,
+					"changefreq": "always",
+					"added": "2026-10-11"
+				},
+				{
 					"path": "/flow",
 					"title": "Money Flow Map",
 					"description": "The shape of the agent economy: a live force-directed map of who pays whom, for which skill, and how much. Every edge is a real settled on-chain transfer between agent wallets, so the map shows where value circulates and which wallets only collect it.",
@@ -3005,6 +3021,14 @@
 					"added": "2026-07-20"
 				},
 				{
+					"path": "/runs",
+					"title": "Run Receipts",
+					"description": "Every 3D Studio generation writes down what each stage was expected to do, what it actually did, and the verdict, with the cause whenever a stage fell back or missed. Signed with ed25519, public, and verifiable offline. Aggregate stage-by-stage rates here, one receipt per run at /runs/<id>.",
+					"priority": 0.6,
+					"changefreq": "daily",
+					"added": "2026-10-11"
+				},
+				{
 					"path": "/my-agents",
 					"title": "My Agents",
 					"description": "Your private collection of agents and avatars. Requires sign-in.",
@@ -3679,10 +3703,10 @@
 					"added": "2026-10-10"
 				},
 				{
-					"path": "/docs/desktop",
-					"title": "Web Desktop",
-					"description": "How the three.ws web desktop works: the CTRL Mica theme, taskbar and Start menu, snappable windows that frame real pages, deep links, saved layout, the classic view and how to add an app.",
-					"priority": 0.5,
+					"path": "/docs/desktop-menu-bar-panel",
+					"title": "Docs · Menu bar panel for the desktop app",
+					"description": "A popover under the tray icon with your agent alive in 3D, its Solana wallet balance, start and stop, pending approvals that open the native review dialog, unread alerts and a one-line ask box.",
+					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-10-11"
 				},
@@ -4147,6 +4171,22 @@
 					"title": "Docs · Trust Primitives",
 					"description": "Cross-chain Agent Reputation: score any wallet, mint, or agent id (Solana or EVM) 0-100 from real on-chain evidence before your agent pays, trades, or delegates.",
 					"added": "2026-07-07"
+				},
+				{
+					"path": "/docs/trenches",
+					"title": "Trenches Pulse",
+					"description": "How the Trenches Pulse surface is wired: the vendored Pulse service, the allowlisted /api/trenches proxy, the /trenches page, local run steps and the Cloud Run deploy notes.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
+				},
+				{
+					"path": "/docs/desktop",
+					"title": "Web Desktop",
+					"description": "How the three.ws web desktop works: the CTRL Mica theme, taskbar and Start menu, snappable windows that frame real pages, deep links, saved layout, the classic view and how to add an app.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
 				},
 				{
 					"path": "/docs/event-markets",
@@ -5009,6 +5049,13 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/run-receipts",
+					"title": "Docs: Run Receipts",
+					"description": "Every 3D Studio generation writes a signed receipt: for each stage, what was expected, what was observed, the verdict, and the cause when it fell short.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/timeline",
 					"title": "Docs: The Story So Far",
 					"description": "/timeline tells three.ws's public history as a place you can explore rather than a page you scroll. Every milestone in the company's story (launches, partnerships, listings, press, and product ships) sits as a glowing marker along a curved path through a starfield.",
@@ -5664,6 +5711,14 @@
 					"description": "Load two or more characters at once, each with its own brain, memory, and persona, sharing one stage. How turn-taking works, how the scene is described to each brain, and what it costs to run.",
 					"priority": 0.6,
 					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/everything",
+					"title": "Docs · Browse every feature by goal",
+					"description": "How the /everything directory groups every three.ws page into twelve goals, where the classification lives, how to pin a page to the right goal, and the what-next strip under tool pages.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
 				},
 				{
 					"path": "/docs/onboarding-tier",

@@ -840,6 +840,8 @@ const appConfig = {
 				creations: resolve(__dirname, 'pages/creations.html'),
 				mine: resolve(__dirname, 'pages/mine.html'),
 				pulse: resolve(__dirname, 'pages/pulse.html'),
+				trenches: resolve(__dirname, 'pages/trenches.html'),
+				everything: resolve(__dirname, 'pages/everything.html'),
 				'economy-lab': resolve(__dirname, 'pages/economy-lab.html'),
 				'data-desk': resolve(__dirname, 'pages/data-desk.html'),
 				flow: resolve(__dirname, 'pages/flow.html'),
@@ -867,6 +869,7 @@ const appConfig = {
 				vaults: resolve(__dirname, 'pages/vaults.html'),
 				'alpha-copilot': resolve(__dirname, 'pages/alpha-copilot.html'),
 				'reasoning-ledger': resolve(__dirname, 'pages/reasoning-ledger.html'),
+				runs: resolve(__dirname, 'pages/runs.html'),
 				'fact-check': resolve(__dirname, 'pages/fact-check.html'),
 				mirror: resolve(__dirname, 'pages/mirror.html'),
 				strategies: resolve(__dirname, 'pages/strategies.html'),
@@ -1706,6 +1709,10 @@ const appConfig = {
 					'/my-creations/': resolve(root, 'pages/mine.html'),
 					'/pulse': resolve(root, 'pages/pulse.html'),
 					'/pulse/': resolve(root, 'pages/pulse.html'),
+					'/trenches': resolve(root, 'pages/trenches.html'),
+					'/trenches/': resolve(root, 'pages/trenches.html'),
+					'/everything': resolve(root, 'pages/everything.html'),
+					'/everything/': resolve(root, 'pages/everything.html'),
 					'/flow': resolve(root, 'pages/flow.html'),
 					'/flow/': resolve(root, 'pages/flow.html'),
 					'/symphony': resolve(root, 'pages/symphony.html'),
@@ -2078,7 +2085,6 @@ const appConfig = {
 					// Guessable aliases — prod 308s these to /sitemap (vercel.json)
 					'/pages': resolve(root, 'public/sitemap/index.html'),
 					'/directory': resolve(root, 'public/sitemap/index.html'),
-					'/everything': resolve(root, 'public/sitemap/index.html'),
 					'/all-pages': resolve(root, 'public/sitemap/index.html'),
 					'/blog': resolve(root, 'blog/index.html'),
 					'/blog/': resolve(root, 'blog/index.html'),
@@ -2397,6 +2403,9 @@ const appConfig = {
 					// /ledger and /ledger/:agentId → the Reasoning Ledger surface
 					else if (!filePath && /^\/ledger(\/[^/.]+)?\/?$/.test(path))
 						filePath = resolve(root, 'pages/reasoning-ledger.html');
+					// /runs and /runs/:receiptId → run receipts (expected vs observed per stage)
+					else if (!filePath && /^\/runs(\/[^/.]+)?\/?$/.test(path))
+						filePath = resolve(root, 'pages/runs.html');
 					// /trader/:agentId → the trader passport. Mirrors vercel.json's
 					// `/trader/([^/]+)/?`; without it the "Copy trader" CTA that /trades
 					// and the exit feed point at 404s in dev only. `/share` is an API

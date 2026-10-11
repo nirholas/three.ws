@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T01:41:02.258Z",
+	"generated_at": "2026-10-11T02:11:16.206Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,96 @@
 			"link": "/docs/event-markets-staking",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Classic Home",
+			"summary": "The original three.ws landing page: the pitch, live agent demos and the front door to every flow, kept as the classic view of the desktop.",
+			"link": "/classic",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Docs · Browse every feature by goal",
+			"summary": "How the /everything directory groups every three.ws page into twelve goals, where the classification lives, how to pin a page to the right goal, and the what-next strip under tool pages.",
+			"link": "/docs/everything",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Docs · Menu bar panel for the desktop app",
+			"summary": "A popover under the tray icon with your agent alive in 3D, its Solana wallet balance, start and stop, pending approvals that open the native review dialog, unread alerts and a one-line ask box.",
+			"link": "/docs/desktop-menu-bar-panel",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Everything three.ws Does",
+			"summary": "Every three.ws feature organised by what you want to do: make a 3D avatar, build an agent, embed it, sell skills, launch a token, trade and more. Searchable, with pins and a new-this-month feed.",
+			"link": "/everything",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Run Receipts",
+			"summary": "Every 3D Studio generation writes down what each stage was expected to do, what it actually did, and the verdict, with the cause whenever a stage fell back or missed. Signed with ed25519, public, and verifiable offline. Aggregate stage-by-stage rates here, one receipt per run at /runs/<id>.",
+			"link": "/runs",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Trenches Pulse",
+			"summary": "Live market intelligence for the Solana and Robinhood Chain trenches: every pump.fun launch and graduation as it happens, the hottest tokens by trade flow, runner and death tracking, and scored smart-money wallets. Powered by Pulse.",
+			"link": "/trenches",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Trenches Pulse",
+			"summary": "How the Trenches Pulse surface is wired: the vendored Pulse service, the allowlisted /api/trenches proxy, the /trenches page, local run steps and the Cloud Run deploy notes.",
+			"link": "/docs/trenches",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Web Desktop",
+			"summary": "How the three.ws web desktop works: the CTRL Mica theme, taskbar and Start menu, snappable windows that frame real pages, deep links, saved layout, the classic view and how to add an app.",
+			"link": "/docs/desktop",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "A registry of every place three.ws is listed",
+			"summary": "The listings registry tracks 121 surfaces across MCP directories, x402 directories, aggregators, cloud marketplaces, awesome-list pull requests and press, with a command that re-fetches every live entry so a dropped listing shows up.",
+			"link": "/docs/listings-registry",
+			"tags": [
+				"docs"
 			]
 		},
 		{
@@ -40,11 +130,72 @@
 		{
 			"date": "2026-10-11",
 			"type": "update",
+			"title": "Browse every feature by goal",
+			"summary": "A new /everything page groups all 340 product pages under twelve goals (make, animate, build an agent, embed, earn, launch, trade, on-chain, worlds, discover, developer tools, account) with search, pins, recents and a new-this-month feed. The nav leads with it, the command palette labels every result with its goal, and tool pages like Forge, Create and Widgets now end with a what-next strip.",
+			"link": "/everything",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "Every 3D generation now writes a signed run receipt",
+			"summary": "Each Studio run (avatars, rigged avatars, meshes, rigs, refinements) records stage by stage what was expected, what was observed, and a verdict: met, recovered by a named fallback, missed with its cause, or skipped. The rig is verified by reading the delivered file back, not by trusting the rigger. Receipts are ed25519-signed, linked from every result, browsable at /runs with stage-by-stage rates, and verifiable offline with one command.",
+			"link": "/runs",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "Menu bar panel for the desktop app",
+			"summary": "Click the three.ws icon in your menu bar or tray and a small panel shows your agent alive in 3D, its Solana wallet balance, a start and stop button, anything waiting on your approval, unread alerts and a box to ask the agent something. Approvals still open the native confirmation window, so what you approve is exactly what you were shown.",
+			"link": "/desktop",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "The desktop behaves like a real computer",
+			"summary": "Drag a selection box across the desktop, move icons on a snap grid, right-click for view options, and open every app from desktop icons or All Apps. Settings now covers your profile, theme, accent colour, wallpaper (including your own photo), icon size and taskbar, and the whole session (windows, icon layout, preferences) is saved in your browser, with export, import and reset.",
+			"link": "/docs/desktop",
+			"tags": [
+				"feature",
+				"desktop"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
 			"title": "The terminal 3D renderer animates live in every HTTP client",
 			"summary": "curl three.ws/tty streams an animated 3D character into your terminal frame by frame. Clients that ask for compressed responses, such as curl --compressed, scripts using fetch, and most HTTP libraries, used to get nothing for about ten seconds and then the whole animation at once. Live streams are no longer compressed, so every client sees the character move from the first frame. Streaming agent and chat responses get the same fix.",
 			"link": "/tty",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "three.ws is now a desktop",
+			"summary": "The homepage is a web desktop with a taskbar, Start menu, widgets and draggable, snappable windows that open every part of the platform, in the CTRL Windows-style Mica theme. The original homepage is kept as the classic view at /classic, one click from the taskbar.",
+			"link": "/docs/desktop",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "Trenches Pulse: live launch and smart-money intelligence",
+			"summary": "A new Trenches page shows what is happening on Solana and Robinhood Chain right now: new launches and graduations as they happen, the hottest tokens by trade flow, and scored smart-money wallets. Every number comes from a live on-chain feed, and if the data service is unreachable the page says so instead of showing made-up figures.",
+			"link": "/trenches",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -41428,7 +41579,7 @@
 			"date": "2026-04-16",
 			"type": "launch",
 			"title": "Home",
-			"summary": "Landing page. 3D AI agents that think on IBM watsonx.ai (Granite): the pitch, live agent demos, and the front door to every flow.",
+			"summary": "The three.ws web desktop: a taskbar, Start menu and windows that open every part of the platform, from making a 3D agent to the marketplace.",
 			"link": "/",
 			"tags": [
 				"launch"

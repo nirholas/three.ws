@@ -30,7 +30,13 @@ Entry points into the product.
 
 URL: https://three.ws/
 
-Landing page. 3D AI agents that think on IBM watsonx.ai (Granite): the pitch, live agent demos, and the front door to every flow.
+The three.ws web desktop: a taskbar, Start menu and windows that open every part of the platform, from making a 3D agent to the marketplace.
+
+### Classic Home
+
+URL: https://three.ws/classic
+
+The original three.ws landing page: the pitch, live agent demos and the front door to every flow, kept as the classic view of the desktop.
 
 ### Discover
 
@@ -343,6 +349,12 @@ Discover AI characters on three.ws. Chat, trade, and create.
 URL: https://three.ws/what-is
 
 Plain-English introduction to three.ws: what a 3D AI agent is, real use-cases, and where to begin.
+
+### Everything three.ws Does
+
+URL: https://three.ws/everything
+
+Every three.ws feature organised by what you want to do: make a 3D avatar, build an agent, embed it, sell skills, launch a token, trade and more. Searchable, with pins and a new-this-month feed.
 
 ### Pitch Deck
 
@@ -1292,6 +1304,12 @@ URL: https://three.ws/pulse
 
 The Money Pulse: a real-time, platform-wide feed of three.ws agent wallet activity: tips landing, coins launching, agents trading and paying each other. Every beat is a real on-chain event.
 
+### Trenches Pulse
+
+URL: https://three.ws/trenches
+
+Live market intelligence for the Solana and Robinhood Chain trenches: every pump.fun launch and graduation as it happens, the hottest tokens by trade flow, runner and death tracking, and scored smart-money wallets. Powered by Pulse.
+
 ### Money Flow Map
 
 URL: https://three.ws/flow
@@ -2214,6 +2232,12 @@ URL: https://three.ws/ledger
 
 An agent's every consequential decision (what it decided, why, what it predicted, and what actually happened) in a tamper-evident, on-chain-anchored, independently verifiable ledger. Open any agent's at /ledger/<agentId>. Being wrong is visible; honesty is the trust signal.
 
+### Run Receipts
+
+URL: https://three.ws/runs
+
+Every 3D Studio generation writes down what each stage was expected to do, what it actually did, and the verdict, with the cause whenever a stage fell back or missed. Signed with ed25519, public, and verifiable offline. Aggregate stage-by-stage rates here, one receipt per run at /runs/<id>.
+
 ### My Agents
 
 URL: https://three.ws/my-agents
@@ -2725,6 +2749,12 @@ URL: https://three.ws/docs/desktop-local-runtime
 
 Run agents, paper and live strategies, limit orders and automations on your own machine: keys in the OS keychain, native approvals with the same payload hash as the web flow, a tray menu, and a mascot that shows agent state.
 
+### Docs · Menu bar panel for the desktop app
+
+URL: https://three.ws/docs/desktop-menu-bar-panel
+
+A popover under the tray icon with your agent alive in 3D, its Solana wallet balance, start and stop, pending approvals that open the native review dialog, unread alerts and a one-line ask box.
+
 ### Docs · How the Forge works, in plain language
 
 URL: https://three.ws/docs/how-forge-works
@@ -3078,6 +3108,18 @@ The platform's own cross-chain index of agent registrations, token launches, rep
 URL: https://three.ws/docs/trust-primitives
 
 Cross-chain Agent Reputation: score any wallet, mint, or agent id (Solana or EVM) 0-100 from real on-chain evidence before your agent pays, trades, or delegates.
+
+### Trenches Pulse
+
+URL: https://three.ws/docs/trenches
+
+How the Trenches Pulse surface is wired: the vendored Pulse service, the allowlisted /api/trenches proxy, the /trenches page, local run steps and the Cloud Run deploy notes.
+
+### Web Desktop
+
+URL: https://three.ws/docs/desktop
+
+How the three.ws web desktop works: the CTRL Mica theme, taskbar and Start menu, snappable windows that frame real pages, deep links, saved layout, the classic view and how to add an app.
 
 ### Docs · Event Markets
 
@@ -3841,6 +3883,12 @@ URL: https://three.ws/docs/reasoning-ledger
 
 Every consequential call a three.ws agent makes (what it decided, why, what it predicted, and what actually happened) is appended to a per-agent, hash-chained ledger.
 
+### Docs: Run Receipts
+
+URL: https://three.ws/docs/run-receipts
+
+Every 3D Studio generation writes a signed receipt: for each stage, what was expected, what was observed, the verdict, and the cause when it fell short.
+
 ### Docs: The Story So Far
 
 URL: https://three.ws/docs/timeline
@@ -4386,6 +4434,12 @@ Upload a video of yourself and get it back with your 3D avatar performing your e
 URL: https://three.ws/docs/multi-agent
 
 Load two or more characters at once, each with its own brain, memory, and persona, sharing one stage. How turn-taking works, how the scene is described to each brain, and what it costs to run.
+
+### Docs · Browse every feature by goal
+
+URL: https://three.ws/docs/everything
+
+How the /everything directory groups every three.ws page into twelve goals, where the classification lives, how to pin a page to the right goal, and the what-next strip under tool pages.
 
 ### Docs · The onboarding tier
 

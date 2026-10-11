@@ -90,6 +90,18 @@ function loadSearch() {
 	document.head.appendChild(s);
 }
 
+// "What next?" strip (public/next-steps.js): goal-ordered follow-ups under tool
+// pages. Does nothing on a path without an entry; honours
+// <html data-next-steps="off">.
+function loadNextSteps() {
+	if (document.documentElement.getAttribute('data-next-steps') === 'off') return;
+	if (document.querySelector('script[src="/next-steps.js"]')) return;
+	const s = document.createElement('script');
+	s.src = '/next-steps.js';
+	s.defer = true;
+	document.head.appendChild(s);
+}
+
 // Load the shared corner-stack (public/corner-stack.js) BEFORE any widget that
 // uses it, so window.twsCornerStack exists when they mount. It is also
 // order-independent (adopts orphans), but loading it first avoids the adopt
@@ -304,6 +316,7 @@ function boot() {
 	loadCornerStack();
 	loadGlossary();
 	loadSearch();
+	loadNextSteps();
 	loadAgentBusDebug();
 	loadDiscovery();
 	loadForgeCelebrate();

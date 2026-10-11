@@ -470,6 +470,10 @@
 					"path": "reasoning-ledger"
 				},
 				{
+					"label": "Run receipts (expected vs observed)",
+					"path": "run-receipts"
+				},
+				{
 					"label": "Coin & market pages",
 					"path": "coin-pages"
 				},

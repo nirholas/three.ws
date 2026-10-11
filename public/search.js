@@ -144,6 +144,8 @@
 			.then(function (data) {
 				// Flatten sections into a single array of {path, title, description, section}
 				var pages = [];
+				var jobTitles = {};
+				(data.jobs || []).forEach(function (j) { jobTitles[j.id] = j.title; });
 				(data.sections || []).forEach(function (sec) {
 					(sec.pages || []).forEach(function (p) {
 						if (p.indexable === false) return;
@@ -152,7 +154,7 @@
 							title: p.title,
 							description: p.description || '',
 							section: sec.id,
-							sectionTitle: sec.title || sec.id,
+							sectionTitle: (p.job && jobTitles[p.job]) || sec.title || sec.id,
 						});
 					});
 				});
@@ -249,6 +251,7 @@
 		{ title: 'Deploy an agent on-chain', desc: 'Register an agent on-chain', href: '/deploy', icon: '🚀', keys: 'deploy register onchain erc8004 publish ship launch agent' },
 		{ title: 'Launch a coin', desc: 'Launch a token on pump.fun', href: '/launch', icon: '🪙', keys: 'launch coin token mint pump fun money $three' },
 		{ title: 'Embed an agent', desc: 'Get an embed snippet for your site', href: '/embed.html', icon: '🔗', keys: 'embed iframe widget snippet share script integrate' },
+		{ title: 'Browse by goal', desc: 'Every feature grouped by what you want to do', href: '/everything', icon: '🧭', keys: 'everything features goal what can i do browse explore capabilities directory catalog help start' },
 		{ title: 'Browse all pages', desc: 'The full three.ws directory, filterable', href: '/sitemap', icon: '🗺️', keys: 'sitemap site map all pages everything directory index list browse find' },
 	];
 
@@ -375,12 +378,12 @@
 	// Default destinations shown when the palette opens with no query (and no
 	// recent history yet) — the flagship surfaces, so the palette is never empty.
 	var SUGGESTED_PAGES = [
-		{ title: 'Explore agents', desc: 'Browse the agent & avatar directory', href: '/explore', icon: '🧭' },
+		{ title: 'Explore agents', desc: 'Browse the agent & avatar directory', href: '/discover', icon: '🔭' },
 		{ title: 'Marketplace', desc: 'Skills, agents and templates', href: '/marketplace', icon: '🛒' },
 		{ title: 'Dashboard', desc: 'Your agents, tokens and activity', href: '/dashboard', icon: '📊' },
 		{ title: 'Playground', desc: 'Walk the $three worlds', href: '/play', icon: '🎮' },
 		{ title: 'Docs', desc: 'Guides, SDK and API reference', href: '/docs', icon: '📖' },
-		{ title: 'All pages', desc: 'Every page on three.ws, in one directory', href: '/sitemap', icon: '🗺️' },
+		{ title: 'Browse by goal', desc: 'Every feature grouped by what you want to do', href: '/everything', icon: '🧭' },
 	];
 
 	// ── Recents ─────────────────────────────────────────────────────────────────

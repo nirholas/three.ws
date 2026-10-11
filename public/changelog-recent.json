@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-11T01:41:02.322Z",
+	"generated_at": "2026-10-11T02:11:16.227Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3964,
+	"total": 3979,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -17,6 +17,96 @@
 			"link": "/docs/event-markets-staking",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Classic Home",
+			"summary": "The original three.ws landing page: the pitch, live agent demos and the front door to every flow, kept as the classic view of the desktop.",
+			"link": "/classic",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Docs · Browse every feature by goal",
+			"summary": "How the /everything directory groups every three.ws page into twelve goals, where the classification lives, how to pin a page to the right goal, and the what-next strip under tool pages.",
+			"link": "/docs/everything",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Docs · Menu bar panel for the desktop app",
+			"summary": "A popover under the tray icon with your agent alive in 3D, its Solana wallet balance, start and stop, pending approvals that open the native review dialog, unread alerts and a one-line ask box.",
+			"link": "/docs/desktop-menu-bar-panel",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Everything three.ws Does",
+			"summary": "Every three.ws feature organised by what you want to do: make a 3D avatar, build an agent, embed it, sell skills, launch a token, trade and more. Searchable, with pins and a new-this-month feed.",
+			"link": "/everything",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Run Receipts",
+			"summary": "Every 3D Studio generation writes down what each stage was expected to do, what it actually did, and the verdict, with the cause whenever a stage fell back or missed. Signed with ed25519, public, and verifiable offline. Aggregate stage-by-stage rates here, one receipt per run at /runs/<id>.",
+			"link": "/runs",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Trenches Pulse",
+			"summary": "Live market intelligence for the Solana and Robinhood Chain trenches: every pump.fun launch and graduation as it happens, the hottest tokens by trade flow, runner and death tracking, and scored smart-money wallets. Powered by Pulse.",
+			"link": "/trenches",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Trenches Pulse",
+			"summary": "How the Trenches Pulse surface is wired: the vendored Pulse service, the allowlisted /api/trenches proxy, the /trenches page, local run steps and the Cloud Run deploy notes.",
+			"link": "/docs/trenches",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Web Desktop",
+			"summary": "How the three.ws web desktop works: the CTRL Mica theme, taskbar and Start menu, snappable windows that frame real pages, deep links, saved layout, the classic view and how to add an app.",
+			"link": "/docs/desktop",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "A registry of every place three.ws is listed",
+			"summary": "The listings registry tracks 121 surfaces across MCP directories, x402 directories, aggregators, cloud marketplaces, awesome-list pull requests and press, with a command that re-fetches every live entry so a dropped listing shows up.",
+			"link": "/docs/listings-registry",
+			"tags": [
+				"docs"
 			]
 		},
 		{
@@ -43,11 +133,72 @@
 		{
 			"date": "2026-10-11",
 			"type": "update",
+			"title": "Browse every feature by goal",
+			"summary": "A new /everything page groups all 340 product pages under twelve goals (make, animate, build an agent, embed, earn, launch, trade, on-chain, worlds, discover, developer tools, account) with search, pins, recents and a new-this-month feed. The nav leads with it, the command palette labels every result with its goal, and tool pages like Forge, Create and Widgets now end with a what-next strip.",
+			"link": "/everything",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "Every 3D generation now writes a signed run receipt",
+			"summary": "Each Studio run (avatars, rigged avatars, meshes, rigs, refinements) records stage by stage what was expected, what was observed, and a verdict: met, recovered by a named fallback, missed with its cause, or skipped. The rig is verified by reading the delivered file back, not by trusting the rigger. Receipts are ed25519-signed, linked from every result, browsable at /runs with stage-by-stage rates, and verifiable offline with one command.",
+			"link": "/runs",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "Menu bar panel for the desktop app",
+			"summary": "Click the three.ws icon in your menu bar or tray and a small panel shows your agent alive in 3D, its Solana wallet balance, a start and stop button, anything waiting on your approval, unread alerts and a box to ask the agent something. Approvals still open the native confirmation window, so what you approve is exactly what you were shown.",
+			"link": "/desktop",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "The desktop behaves like a real computer",
+			"summary": "Drag a selection box across the desktop, move icons on a snap grid, right-click for view options, and open every app from desktop icons or All Apps. Settings now covers your profile, theme, accent colour, wallpaper (including your own photo), icon size and taskbar, and the whole session (windows, icon layout, preferences) is saved in your browser, with export, import and reset.",
+			"link": "/docs/desktop",
+			"tags": [
+				"feature",
+				"desktop"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
 			"title": "The terminal 3D renderer animates live in every HTTP client",
 			"summary": "curl three.ws/tty streams an animated 3D character into your terminal frame by frame. Clients that ask for compressed responses, such as curl --compressed, scripts using fetch, and most HTTP libraries, used to get nothing for about ten seconds and then the whole animation at once. Live streams are no longer compressed, so every client sees the character move from the first frame. Streaming agent and chat responses get the same fix.",
 			"link": "/tty",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "three.ws is now a desktop",
+			"summary": "The homepage is a web desktop with a taskbar, Start menu, widgets and draggable, snappable windows that open every part of the platform, in the CTRL Windows-style Mica theme. The original homepage is kept as the classic view at /classic, one click from the taskbar.",
+			"link": "/docs/desktop",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "Trenches Pulse: live launch and smart-money intelligence",
+			"summary": "A new Trenches page shows what is happening on Solana and Robinhood Chain right now: new launches and graduations as they happen, the hottest tokens by trade flow, and scored smart-money wallets. Every number comes from a live on-chain feed, and if the data service is unreachable the page says so instead of showing made-up figures.",
+			"link": "/trenches",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1390,157 +1541,6 @@
 			"link": "/markets/robinhood/paired",
 			"tags": [
 				"launch"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "launch",
-			"title": "three.ws for Grok",
-			"summary": "One sentence gives Grok Bot a 3D studio. Text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear. Works in Grok Bot, Grok connectors and the xAI API. Free, no account, no key.",
-			"link": "/grok",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "launch",
-			"title": "three.ws x DEXTools",
-			"summary": "Every way three.ws works with DEXTools: DEXTools charts in every coin chart, any DEXTools pair rendered as a live 3D scene, a Social Boost card any project can embed, and a public count of the visits three.ws sends to DEXTools pair pages. Paste a DEXTools link to get the embed snippet.",
-			"link": "/dextools",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "update",
-			"title": "3D Studio results now hand every agent plain links to the model",
-			"summary": "Every model the free 3D Studio MCP server hands back, whether freshly generated, picked from the asset catalog or saved as a persona, now comes with four plain links, both in the result data and in its first lines of text: a viewer page, the GLB file, a rendered PNG picture and a paste-ready embed snippet. Agents that cannot show a 3D widget, like Grok Bot and other browser agents, can now open, download, share and embed the model directly. A model that is still rendering comes with a viewer link that waits for the job and opens the model the moment it is ready.",
-			"link": "/docs/mcp-studio",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "update",
-			"title": "Agent earnings are updating again",
-			"summary": "pump.fun moved the service that reports creator fees, so the Earned figures on agent pages, agent profiles, coin pages and /analytics had stopped refreshing since the end of September. Earnings now read from pump.fun's current fees service, with a second source behind it if that one stumbles, and every agent coin is back on its 30-minute refresh.",
-			"link": "/analytics",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "update",
-			"title": "Chart Companion: a 3D agent that watches the chart with you",
-			"summary": "Paste any DEXTools pair at /chart-companion and a 3D agent sits beside the live chart, reacting to every real swap as it lands: a superhero jump for a whale buy, a facepalm for a dump, a dance for a buy streak, applause for a new daily high. Each reaction comes with a line you can trace to its transaction, and it can read them aloud. Bring your own three.ws agent, embed it on your coin's site with one iframe, or add it to OBS as a transparent overlay for your stream.",
-			"link": "/chart-companion",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "update",
-			"title": "Chat and agents stay up through more AI outages",
-			"summary": "Every AI answer on three.ws, from chat to agent brains, the tutor and the fact-checker, now has five more free models to fall back on when the usual ones are busy. NVIDIA's largest open model, Nemotron 3 Ultra, now answers right behind Nemotron 3 Super, with the compact Nemotron 3.5 Lightning further down the line. A second, independent route to the same Nemotron models works with no account at all, and a Gemma 4 model is back in the mix as well. The free NVIDIA and gateway models are now checked against their providers every six hours too, so the team hears the moment one is switched off instead of finding out from a failed answer.",
-			"link": "/chat",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "update",
-			"title": "Coin charts say plainly when a coin has no market yet",
-			"summary": "A coin with no trading pool anywhere could show a price-history error on its chart when a market data source was busy. The chart now recognises the coin has no market and shows the no-price-history state, and it asks that source one question fewer per chart load.",
-			"link": "/terminal",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "update",
-			"title": "Coin Clash stays playable when community data is offline",
-			"summary": "When the community roster behind Coin Clash is unavailable, the arena no longer goes dark. Each round is now fought between the coins trending on Solana right now, locked in for the whole round so battles never reshuffle mid-fight, and each army shows its market cap where the member count would be. Enlisting, rallying and war records work exactly as before.",
-			"link": "/clash",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "update",
-			"title": "Coin pages keep their Markets table when the listing sources are busy",
-			"summary": "When both of our exchange-listing sources were rate-limited, a coin page's Markets table could show an error for coins only one of them lists. It now falls back to the coin's live DEX trading pairs, found by its contract address, with each pair's venue, chain, price, 24h volume and a link to trade it.",
-			"link": "/coins",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "update",
-			"title": "Community sentiment readings are back on coin pages and the Oracle",
-			"summary": "pump.fun moved the feed of community callouts that our sentiment pulse reads, so every reading had been failing with an unavailable error. The pulse now reads the new feed, so launch pages, the Oracle and the sentiment_pulse MCP tool score real community commentary again, up to 100 callouts per coin.",
-			"link": "/oracle",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "update",
-			"title": "DEXTools is one click away on every coin, and every visit counts toward Social Boost",
-			"summary": "DEXTools Social Boost ranks tokens by visits to their DEXTools page, and $THREE has already won three buybacks from it. Every coin on three.ws now carries a DEXTools link: it leads the trading terminal row and appears on coin and launch pages, the 3D coin view, the Oracle, agent and character pages, the live pump.fun feeds and your token dashboard. Each link opens the coin's busiest pair on DEXTools, so the visit lands on the page Social Boost actually counts. Launch pages, and the success screen right after you launch a coin, also get a Social Boost card that explains how the ranking works and sends your community there in one click. Visits are counted in daily totals per coin and per page that sent them. No visitor data is stored.",
-			"link": "/three-token",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "update",
-			"title": "Event-attested reputation now requires the platform's own signature",
-			"summary": "The event-attested tier in a Solana agent's reputation, which ranks above community feedback in the Passport grade, was granted on a label written inside the memo, so any signer could claim it. It now counts only attestations the platform's own attester minted and recorded, so a self-written label earns ordinary feedback weight and nothing more.",
-			"link": "/reputation/market",
-			"tags": [
-				"fix",
-				"security"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "update",
-			"title": "Fewer failed 3D generations when the concept image comes back blank",
-			"summary": "Text to 3D first paints a concept image, then sculpts it. When the painting service quietly returned a blank black frame instead of a picture, the studio used it anyway, and every 3D engine then failed because there was nothing in the image to sculpt. The studio now spots a blank or withheld frame and paints the concept with the next image service instead, so those prompts finish as real models.",
-			"link": "/forge",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "update",
-			"title": "Grok model menus now offer xAI's current models",
-			"summary": "Every Grok picker on three.ws (the /brain menu, agent chat, the avatar page and the embed editor) now lists xAI's current line-up: Grok 4.7, xAI's flagship, Grok 4.3 with its 1M-token context at the lowest Grok price, Grok 4.20 Fast with no thinking pass, and Grok Build for coding. Agents and embeds that saved a Grok model xAI has since retired, such as Grok 4.1 Fast, keep working and answer on the model xAI recommends in its place. People who bring their own xAI key now get Grok 4.7 by default instead of an older flagship.",
-			"link": "/brain",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "update",
-			"title": "Picking the free Hugging Face engine no longer leaves you stuck when its Spaces are down",
-			"summary": "When every free Hugging Face Space is out of GPU quota, the Forge now pauses that engine for a few minutes, greys it out in the engine picker with the reason, and moves a generation you started on it to a working engine, showing you the switch, instead of retrying the same dead Spaces with a countdown.",
-			"link": "/forge",
-			"tags": [
-				"fix"
 			]
 		}
 	]

@@ -245,6 +245,11 @@ export const NAV_GROUPS = [
 				label: 'Start here',
 				items: [
 					{
+						title: 'Browse by goal',
+						href: '/everything',
+						desc: 'Every feature grouped by what you want to do: make, animate, build, sell, launch, trade',
+					},
+					{
 						title: 'Search',
 						href: '/search',
 						desc: 'One search across avatars, agents, 3D models, worlds & coins — remix straight from the results',
@@ -308,6 +313,7 @@ export const NAV_GROUPS = [
 					{
 						title: 'Pocket Console',
 						href: '/pocket',
+						tier: 'advanced',
 						desc: 'A handheld with a live 3D agent in the screen: the D-pad walks it, and one iframe puts it on your site',
 					},
 					{ title: 'Agents Index', href: '/agents', desc: 'Browse every registered agent' },
@@ -921,6 +927,7 @@ export const NAV_GROUPS = [
 // Top-level links rendered after the dropdown groups (no submenu).
 export const NAV_LINKS = [
 	{ label: 'Text → 3D', href: '/forge', highlight: true },
+	{ label: 'Everything', href: '/everything' },
 ];
 
 // Footer-of-drawer links that have no desktop dropdown home.

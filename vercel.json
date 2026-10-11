@@ -873,6 +873,14 @@
 			"dest": "/reasoning-ledger.html"
 		},
 		{
+			"src": "/runs/([^/]+)/?",
+			"dest": "/runs.html"
+		},
+		{
+			"src": "/runs/?",
+			"dest": "/runs.html"
+		},
+		{
 			"src": "/reasoning-ledger/?",
 			"dest": "/reasoning-ledger.html"
 		},
@@ -1187,6 +1195,14 @@
 		{
 			"src": "/pulse/?",
 			"dest": "/pulse.html"
+		},
+		{
+			"src": "/trenches/?",
+			"dest": "/trenches.html"
+		},
+		{
+			"src": "/everything/?",
+			"dest": "/everything.html"
 		},
 		{
 			"src": "/economy-lab/?",
@@ -6027,7 +6043,7 @@
 			"dest": "/api/sitemap/[type]?type=$1"
 		},
 		{
-			"src": "/(pages|directory|everything|all-pages)/?",
+			"src": "/(pages|directory|all-pages)/?",
 			"status": 308,
 			"headers": {
 				"Location": "/sitemap"

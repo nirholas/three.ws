@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-10-11",
+			"title": "Every 3D generation now writes a signed run receipt",
+			"link": "/runs",
+			"summary": "Each Studio run (avatars, rigged avatars, meshes, rigs, refinements) records stage by stage what was expected, what was observed, and a verdict: met, recovered by a named fallback, missed with its cause, or skipped. The rig is verified by reading the delivered file back, not by trusting the rigger. Receipts are ed25519-signed, linked from every result, browsable at /runs with stage-by-stage rates, and verifiable offline with one command.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"title": "Browse every feature by goal",
+			"link": "/everything",
+			"summary": "A new /everything page groups all 340 product pages under twelve goals (make, animate, build an agent, embed, earn, launch, trade, on-chain, worlds, discover, developer tools, account) with search, pins, recents and a new-this-month feed. The nav leads with it, the command palette labels every result with its goal, and tool pages like Forge, Create and Widgets now end with a what-next strip.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
 			"title": "The desktop behaves like a real computer",
 			"link": "/docs/desktop",
 			"summary": "Drag a selection box across the desktop, move icons on a snap grid, right-click for view options, and open every app from desktop icons or All Apps. Settings now covers your profile, theme, accent colour, wallpaper (including your own photo), icon size and taskbar, and the whole session (windows, icon layout, preferences) is saved in your browser, with export, import and reset.",
@@ -18,6 +36,15 @@
 			"summary": "The homepage is a web desktop with a taskbar, Start menu, widgets and draggable, snappable windows that open every part of the platform, in the CTRL Windows-style Mica theme. The original homepage is kept as the classic view at /classic, one click from the taskbar.",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"title": "A registry of every place three.ws is listed",
+			"link": "/docs/listings-registry",
+			"summary": "The listings registry tracks 121 surfaces across MCP directories, x402 directories, aggregators, cloud marketplaces, awesome-list pull requests and press, with a command that re-fetches every live entry so a dropped listing shows up.",
+			"tags": [
+				"docs"
 			]
 		},
 		{
@@ -29974,6 +30001,24 @@
 				"feature"
 			],
 			"link": "/event-markets"
+		},
+		{
+			"date": "2026-10-11",
+			"title": "Trenches Pulse: live launch and smart-money intelligence",
+			"summary": "A new Trenches page shows what is happening on Solana and Robinhood Chain right now: new launches and graduations as they happen, the hottest tokens by trade flow, and scored smart-money wallets. Every number comes from a live on-chain feed, and if the data service is unreachable the page says so instead of showing made-up figures.",
+			"tags": [
+				"feature"
+			],
+			"link": "/trenches"
+		},
+		{
+			"date": "2026-10-11",
+			"title": "Menu bar panel for the desktop app",
+			"summary": "Click the three.ws icon in your menu bar or tray and a small panel shows your agent alive in 3D, its Solana wallet balance, a start and stop button, anything waiting on your approval, unread alerts and a box to ask the agent something. Approvals still open the native confirmation window, so what you approve is exactly what you were shown.",
+			"tags": [
+				"feature"
+			],
+			"link": "/desktop"
 		}
 	]
 }
