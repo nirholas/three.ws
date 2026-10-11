@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T02:11:16.206Z",
+	"generated_at": "2026-10-11T05:36:54.847Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -171,6 +171,16 @@
 		{
 			"date": "2026-10-11",
 			"type": "update",
+			"title": "The prompt director works again, found by its own run receipts",
+			"summary": "The first receipts showed the director's brief falling back on every Studio run. The replies were arriving in 5 to 10 seconds but ran past the 1000-character prompt cap or ended on the closing constraint the director is told to end on, and both were discarded as clipped. The director now writes to a word budget the models actually follow, the guard accepts the mandated ending, both forge clients share one guard, and a receipt now names the exact reason a brief fell back (too long with its length, unfinished, no reply) instead of a generic timeout. Receipts also stop saying every stage met when a stage was skipped.",
+			"link": "/runs",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
 			"title": "The terminal 3D renderer animates live in every HTTP client",
 			"summary": "curl three.ws/tty streams an animated 3D character into your terminal frame by frame. Clients that ask for compressed responses, such as curl --compressed, scripts using fetch, and most HTTP libraries, used to get nothing for about ten seconds and then the whole animation at once. Live streams are no longer compressed, so every client sees the character move from the first frame. Streaming agent and chat responses get the same fix.",
 			"link": "/tty",
@@ -196,6 +206,17 @@
 			"link": "/trenches",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "Walk into three.ws: the homepage boots, unlocks, and lets you enter the desktop as your avatar",
+			"summary": "The homepage now starts like a real computer. A boot screen runs live checks (your GPU, the site catalog, your account, the avatar body, the $THREE feed, your gem ledger) and a lock screen greets you with the $THREE price and your balances. Press Walk in and you arrive on a campus as your avatar: walk to your desk and sit down to open the desktop on the monitor, pick up the phone for Pocket, put on the headset for VR, enter the three.ws Exchange (a live ticker board and Trenches inside), the Launchpad, the Forge, the Gallery, Agent Plaza and the Marketplace, or dig for gems in the mine, where every gem is rolled server-side and kept on your account. Settings gets an Arrival section to choose where you start, the taskbar gets a World button, and the desktop wears the classic three.ws violet grid.",
+			"link": "/",
+			"tags": [
+				"feature",
+				"desktop"
 			]
 		},
 		{

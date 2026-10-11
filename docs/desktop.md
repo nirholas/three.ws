@@ -1,8 +1,75 @@
 # three.ws Desktop
 
-`/` is a web desktop. Every window frames a real three.ws page, so nothing is
-mocked and every existing surface works unchanged. The previous homepage is
-kept at `/classic`.
+`/` is a web desktop with a 3D campus in front of it. The page boots like a
+computer, locks with a greeting, and then the visitor walks to their desk as
+their avatar and sits down; the desktop opens on the monitor. Every window
+frames a real three.ws page, so nothing is mocked and every existing surface
+works unchanged. The previous homepage is kept at `/classic`.
+
+## Arriving
+
+1. **Boot.** A live log of real checks, each line timed as it settles: Graphics
+   (the GPU name, from WebGL), Site catalog (the page count from
+   `public/nav-data.js`), Account (`/api/auth/me`, skipped when signed out),
+   Fonts, Avatar (the default body and the clip manifest), the $THREE feed
+   (`/api/three-token/stats`), the Gem ledger (`/api/world/gems`) and the
+   Desktop itself. A check that fails is marked and the lock screen says which
+   one is offline; nothing is faked and there is no timed progress bar. The
+   checks run concurrently, so the boot takes as long as the slowest request.
+2. **Lock screen.** A greeting for the hour (with your name once you set one in
+   Settings or sign in), the $THREE price and 24h change, your gem balance and
+   your account, and two ways in: **Walk in** (the campus) or **Desktop**. The
+   first gesture also unlocks the startup chime, a short synthesised chord
+   (Settings, Arrival, Startup chime turns it off).
+3. **The campus.** You spawn at the gate facing your workstation. Walk up to
+   the desk and the prompt says Sit down; hold E and the camera settles into the
+   chair while the desktop fades in on the monitor. The taskbar's World button
+   (also in the Start menu footer and the desktop right-click menu) stands you
+   back up where you were.
+
+Controls: WASD or the arrow keys to walk, Shift to run, drag to orbit, wheel to
+zoom, C cycles the camera (Follow, Cinematic, and the rest of the shared camera
+modes), E interacts, Esc puts the phone down. On a phone the campus shows a
+touch stick and an on-screen interact button. The strip along the bottom lists
+every place; tap one to teleport to its doorstep.
+
+## The campus
+
+| Place | What it is | What E does |
+| --- | --- | --- |
+| Your workstation | The home office: desk, monitor, phone, VR headset | Sit down opens the desktop on the monitor. Step round to the phone to pick up Pocket (the handheld agent console, framed as `/pocket?chrome=off`). Step round to the headset to enter the world in WebXR when the browser offers an immersive session; the button is hidden otherwise. |
+| three.ws Exchange | The trading floor, with a ticker board scrolling $THREE and the top market coins | Opens Trenches (live Solana launches, runners and smart money) |
+| Launchpad | The launch tower | Opens the pump.fun Launchpad |
+| The Mine | A quarry with five glowing veins | Hold E at a vein for four seconds to dig. The server rolls the gem (quartz, amethyst, sapphire, emerald, ruby, diamond, rarest last) and enforces the cadence; the gem panel in the HUD keeps the running balance and points. |
+| The Forge | Text to 3D | Opens Forge |
+| Gallery | Every public avatar | Opens Gallery |
+| Agent Plaza | The agent directory | Opens Discover |
+| Marketplace | Agent skills | Opens Marketplace |
+
+The ticker board reads `/api/three-token/stats` and `/api/coin/markets` and
+refreshes every minute; when a feed is down the board says so instead of
+showing stale numbers. Places, keep-out radii, the veins and the desk-object
+trigger distances live in `src/desktop/world/places.js`, which is pure data
+and unit tested, so a place can never point at an app the desktop does not
+have.
+
+Walking into a place opens its app as a window and sits you at the desk; the
+World button brings you back to that place's doorstep, not the gate. Your
+avatar is the same default body and clip library the rest of the site uses
+(`/avatars/default.glb`, `/animations/manifest.json`).
+
+### Gems
+
+`GET /api/world/gems` returns the caller's balance (`gems` by id, `points`,
+`total`, `recent`, the gem `table` and `dig_seconds`). `POST /api/world/gems`
+with `{ node: "vein-a" }` completes a dig and returns the gem. Visitors mine
+under the stable anonymous browser id the walk pages use (`twx_walk_anon`,
+sent as `anonId`); a signed-in dig that carries that id adopts the browser's
+gems onto the account, so nothing mined before signing in is lost. The server
+refuses a dig that comes sooner than the dig time allows (`429 dig_too_soon`,
+with `retry_in_sec`), stops at 300 digs a day (`429 daily_cap`) and rejects an
+unknown vein (`400 invalid_node`). Table and rules: `api/_lib/world-gems.js`;
+storage: migration `20261015000000_world_gems.sql`.
 
 ## What is in it
 
@@ -26,15 +93,19 @@ kept at `/classic`.
 - **Rubber band.** Drag on the empty desktop to draw a selection box; Ctrl or Shift adds to the current selection.
 - **Right-click.** The desktop menu sets icon size, sorts by name, auto-arranges, refreshes, and opens All Apps and Personalize. Icon menus open or remove the selection.
 - **All Apps.** A native app listing every app and page from the site navigation, with Open and Add to desktop for each.
-- **Settings.** Profile (name, avatar colour), Personalization (dark, light or match system, six accents, five wallpapers or your own photo), Desktop and taskbar (icon size, taskbar alignment, 24-hour clock), and Session and storage.
+- **Settings.** Profile (name, avatar colour), Arrival (start in the campus or on the desktop, startup chime, a Walk the campus button), Personalization (dark, light or match system, seven accents, six wallpapers or your own photo; the default `three.ws` wallpaper is the classic site's violet glow over a hairline grid), Desktop and taskbar (icon size, taskbar alignment, 24-hour clock), and Session and storage.
 - **Session.** Open windows and their geometry, icon layout, preferences, recent apps and the custom wallpaper are saved in this browser (`tws:desktop`, `tws:icons`, `tws:prefs`, `tws:recent` in localStorage; the wallpaper image in IndexedDB database `tws-desktop`) and restored on reload. Settings can export the session to a JSON file, import one (only known `tws:` keys are accepted, files over 2 MB are refused), close all windows, or reset everything. Nothing is sent to a server.
 
 ## URLs and preferences
 
 | What | How |
 | --- | --- |
-| Open an app on load | `/?app=forge` or `/#app=forge` |
-| Force the desktop | `/?view=desktop` (also remembers the choice) |
+| Open an app on load | `/?app=forge` or `/#app=forge` (skips the campus, lands on the desktop) |
+| Walk in as your avatar | `/?world=1` or `/#world` (ignores the Arrival preference) |
+| Straight to the desktop this once | `/?world=0` |
+| Force the desktop | `/?view=desktop` (also remembers the classic-vs-desktop choice) |
+| Skip the boot screen | `/?boot=0` (tests and embeds) |
+| Where to start every time | Settings, Arrival, Start in (`startIn` in `tws:prefs`). Without WebGL the desktop opens directly and the World button is hidden. |
 | Classic site | `/classic`, or the taskbar button. Remembered in `tws:view` |
 | Session | Window layout is saved in `tws:desktop` and restored on reload |
 
@@ -53,10 +124,18 @@ until the two agree. A new skeleton or page needs no other wiring.
 
 ## Verify
 
-`npm run dev`, then `node scripts/desktop-smoke.mjs http://localhost:3000` boots
-the desktop in a real browser, opens the Start menu and an app, and reports
-console errors and failed requests. `npx vitest run tests/desktop-layout.test.js
-tests/desktop-page.test.js`.
+`npm run dev`, then `node scripts/desktop-world-smoke.mjs http://localhost:3000`
+drives the whole arrival in a real browser: it reads every boot line, the lock
+greeting and chips, walks in, runs to the desk and sits down, checks the
+desktop, teleports to the Exchange and opens Trenches, picks up the phone,
+opens the gem panel, cycles the camera and checks the phone layout, then
+prints every console error and every failed or 5xx request. The gem endpoint
+needs a database, so run the API locally (`PORT=3018 node --env-file=.env.local
+server/index.mjs`) and start Vite with `DEV_API_PROXY=http://localhost:3018`.
+`node scripts/desktop-smoke.mjs http://localhost:3000` is the shorter
+desktop-only drive. Unit tests: `npx vitest run tests/desktop-boot.test.js
+tests/world-places.test.js tests/world-ticker.test.js
+tests/desktop-layout.test.js tests/desktop-page.test.js`.
 
 ## Provenance
 

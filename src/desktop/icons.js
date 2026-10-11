@@ -31,6 +31,12 @@ const P = {
 	widgets: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M17 13.5v7M13.5 17h7"/>',
 	power: '<path d="M12 3v8M6.3 6.8a8 8 0 1 0 11.4 0"/>',
 	chevron: '<path d="m9 6 6 6-6 6"/>',
+	world: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 4.2 6 4.2 9s-1.4 6-4.2 9c-2.8-3-4.2-6-4.2-9S9.2 6 12 3z"/>',
+	gem: '<path d="M7 3h10l4 6-9 12L3 9z"/><path d="M3 9h18M7 3l5 18L17 3M9.5 9l2.5-6 2.5 6"/>',
+	camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+	vr: '<path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-4l-2-2.5-1 .01L10 17H5a2 2 0 0 1-2-2z"/><circle cx="8.5" cy="11.5" r="1.5"/><circle cx="15.5" cy="11.5" r="1.5"/>',
+	phone: '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 17.5h2"/>',
+	rocket: '<path d="M12 3c3 2.5 4.5 6 4.5 10L12 16l-4.5-3C7.5 9 9 5.5 12 3z"/><path d="M7.5 13 5 17l3.5-.5M16.5 13 19 17l-3.5-.5M12 16v5"/><circle cx="12" cy="9.5" r="1.5"/>',
 	close: '<path d="m6 6 12 12M18 6 6 18"/>',
 };
 

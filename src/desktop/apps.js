@@ -138,6 +138,30 @@ export const APPS = [
 		keywords: ['dashboard', 'account', 'keys', 'billing'],
 	},
 	{
+		id: 'launcher',
+		title: 'Launchpad',
+		href: '/launcher',
+		hue: 24,
+		icon: 'rocket',
+		size: { w: 1080, h: 740 },
+		dock: false,
+		desktop: true,
+		desc: 'Launch a coin on pump.fun from an agent or a prompt',
+		keywords: ['launch', 'pump', 'token', 'coin', 'mint', 'solana'],
+	},
+	{
+		id: 'pocket',
+		title: 'Pocket',
+		href: '/pocket',
+		hue: 262,
+		icon: 'phone',
+		size: { w: 420, h: 820 },
+		dock: false,
+		desktop: true,
+		desc: 'A handheld agent console in a phone-sized window',
+		keywords: ['phone', 'handheld', 'cartridge', 'embed', 'mobile'],
+	},
+	{
 		id: 'tour',
 		title: 'Tour',
 		href: '/tour',
@@ -197,6 +221,7 @@ export function appById(id) {
 }
 
 export const WALLPAPERS = [
+	{ id: 'three', label: 'three.ws' },
 	{ id: 'aurora', label: 'Aurora' },
 	{ id: 'midnight', label: 'Midnight' },
 	{ id: 'solana', label: 'Solana' },

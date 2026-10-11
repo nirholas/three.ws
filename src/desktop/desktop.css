@@ -62,6 +62,21 @@ body {
 	background-size: cover;
 	transition: background 0.6s;
 }
+.os[data-wall='three'] .os-wall {
+	background:
+		radial-gradient(55% 45% at 50% 108%, rgba(139, 92, 246, 0.42), transparent 70%),
+		radial-gradient(40% 35% at 85% -5%, rgba(196, 181, 253, 0.14), transparent 70%),
+		linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 100% 64px,
+		linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 64px 100%,
+		#050505;
+}
+[data-theme='light'] .os[data-wall='three'] .os-wall {
+	background:
+		radial-gradient(55% 45% at 50% 108%, rgba(139, 92, 246, 0.28), transparent 70%),
+		linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px) 0 0 / 100% 64px,
+		linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px) 0 0 / 64px 100%,
+		#f4f2fb;
+}
 .os[data-wall='aurora'] .os-wall {
 	background: radial-gradient(60% 55% at 22% 18%, #7a3fa8aa, transparent 70%),
 		radial-gradient(55% 60% at 82% 78%, #1f6fbfaa, transparent 70%), var(--mica);
@@ -717,6 +732,13 @@ body {
 	height: 34px;
 	border-radius: var(--siz-radius2);
 }
+.sm-foot-actions {
+	display: flex;
+	gap: 4px;
+}
+.sm-world {
+	color: var(--accent);
+}
 
 .widgets {
 	left: 8px;
@@ -927,8 +949,10 @@ body {
 }
 .native h2 {
 	margin: 0 0 6px;
+	font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
 	font-size: 22px;
 	font-weight: 600;
+	letter-spacing: -0.01em;
 }
 .native h3 {
 	margin: 20px 0 8px;
@@ -1012,6 +1036,22 @@ body {
 }
 .step small {
 	color: var(--text2);
+}
+.step-wide {
+	width: 100%;
+	text-align: left;
+	border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+	background: color-mix(in srgb, var(--accent) 12%, var(--card));
+}
+.step-wide:hover {
+	background: color-mix(in srgb, var(--accent) 22%, var(--card));
+}
+.step-wide > svg {
+	flex: none;
+	color: var(--accent);
+}
+.welcome-walk {
+	margin: 0 0 14px;
 }
 
 /* ---------- Small screens ---------- */

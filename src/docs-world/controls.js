@@ -29,8 +29,11 @@ export function createControls(canvas, { onTap, onInteract, onCycleCamera } = {}
 		const t = e.target;
 		return t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
 	}
+	// A host that hands the keyboard to something else (the desktop once the
+	// player sits down) flips `enabled` off; held keys are released at once.
+	let enabled = true;
 	addEventListener('keydown', (e) => {
-		if (isTypingTarget(e)) return;
+		if (!enabled || isTypingTarget(e)) return;
 		const k = e.key.toLowerCase();
 		keys.add(k);
 		if (k === 'e' || k === 'enter') onInteract?.();
@@ -49,6 +52,7 @@ export function createControls(canvas, { onTap, onInteract, onCycleCamera } = {}
 	let orbitPointer = null;
 
 	canvas.addEventListener('pointerdown', (e) => {
+		if (!enabled) return;
 		// Touch in the joystick zone belongs to the joystick.
 		if (e.pointerType === 'touch' && inJoystickZone(e)) {
 			joystick.active = true;
@@ -124,6 +128,18 @@ export function createControls(canvas, { onTap, onInteract, onCycleCamera } = {}
 	return {
 		orbit,
 		joystick,
+		get enabled() {
+			return enabled;
+		},
+		set enabled(v) {
+			enabled = !!v;
+			if (!enabled) {
+				keys.clear();
+				joystick.active = false;
+				joystick.x = 0;
+				joystick.y = 0;
+			}
+		},
 		/** Screen-space movement vector, |v| <= 1. x: right, z: forward. */
 		readMove() {
 			let x = 0;

@@ -187,11 +187,13 @@ export const ICON_SIZES = {
 	medium: { w: 92, h: 100, tile: 44 },
 	large: { w: 112, h: 120, tile: 56 },
 };
-export const ACCENTS = ['#3b91d8', '#ad6eca', '#e5484d', '#f08a24', '#2fb67c', '#d6409f'];
+export const ACCENTS = ['#8b5cf6', '#3b91d8', '#ad6eca', '#e5484d', '#f08a24', '#2fb67c', '#d6409f'];
+/** How the visitor arrives at `/`: as an avatar walking to the desk, or straight at the desktop. */
+export const START_MODES = ['world', 'desktop'];
 export const MODES = ['dark', 'light', 'auto'];
 export const PREFS_VERSION = 1;
 export const DEFAULT_PREFS = {
-	wall: 'aurora',
+	wall: 'three',
 	accent: ACCENTS[0],
 	mode: 'dark',
 	iconSize: 'medium',
@@ -199,6 +201,8 @@ export const DEFAULT_PREFS = {
 	taskbarAlign: 'center',
 	name: '',
 	avatarHue: 262,
+	startIn: 'world',
+	sound: true,
 };
 
 /** Normalise a rectangle given two corner points (any drag direction). */
@@ -353,6 +357,8 @@ export function sanitizePrefs(raw, wallpaperIds) {
 		taskbarAlign: d.taskbarAlign === 'left' ? 'left' : 'center',
 		name,
 		avatarHue: hue,
+		startIn: START_MODES.includes(d.startIn) ? d.startIn : DEFAULT_PREFS.startIn,
+		sound: d.sound !== false,
 	};
 }
 

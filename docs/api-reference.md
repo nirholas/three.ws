@@ -10081,6 +10081,93 @@ Webhook events: `invoice.created`, `invoice.paid`, `invoice.underpaid`,
 `invoice.expired`, `invoice.cancelled`. Full reference and examples:
 [Agent Commerce](./agent-commerce.md).
 
+## Desktop Campus API: gem mining
+
+The homepage (`/`) boots into a 3D campus in front of the web desktop (see
+[Web Desktop](./desktop.md)). Its mine is backed by one endpoint. Everything
+that matters is decided on the server: the gem is rolled there with crypto
+randomness from a fixed table, and a dig is only accepted when the miner's
+previous dig is old enough.
+
+### Read your gem balance
+
+```
+GET /api/world/gems
+GET /api/world/gems?anonId=anon_<uuid>      # visitors: the browser's walk id
+```
+
+Signed-in callers (session cookie or bearer key) read the account's ledger.
+Visitors pass the stable anonymous browser id the walk pages keep in
+`localStorage` as `twx_walk_anon` (8 to 64 characters of `A-Za-z0-9_-`). A
+visitor without an id gets an empty ledger with `miner: null`.
+
+**Response**
+
+```json
+{
+	"ok": true,
+	"miner": "browser",
+	"gems": { "quartz": 3, "amethyst": 1, "sapphire": 0, "emerald": 0, "ruby": 0, "diamond": 0 },
+	"points": 6,
+	"total": 4,
+	"recent": [{ "gem": "amethyst", "node": "vein-b", "amount": 1, "mined_at": "2026-10-11T05:20:11.000Z" }],
+	"table": [
+		{ "id": "quartz", "label": "Quartz", "weight": 520, "points": 1, "hex": 15132400 },
+		{ "id": "amethyst", "label": "Amethyst", "weight": 260, "points": 3, "hex": 12891645 },
+		{ "id": "sapphire", "label": "Sapphire", "weight": 130, "points": 8, "hex": 6333946 },
+		{ "id": "emerald", "label": "Emerald", "weight": 60, "points": 20, "hex": 3462041 },
+		{ "id": "ruby", "label": "Ruby", "weight": 24, "points": 50, "hex": 16286065 },
+		{ "id": "diamond", "label": "Diamond", "weight": 6, "points": 200, "hex": 16777215 }
+	],
+	"dig_seconds": 4
+}
+```
+
+`miner` is `account`, `browser` or `null`. `gems` always lists every gem id.
+`table` is ordered common to rare; `weight` is the drop weight out of 1000,
+`hex` the gem's colour as a number, and `recent` the last 12 digs, newest
+first.
+
+### Complete a dig
+
+```
+POST /api/world/gems
+Content-Type: application/json
+
+{ "node": "vein-a", "anonId": "anon_<uuid>" }
+```
+
+`node` is one of `vein-a` to `vein-e`. A signed-in dig that also carries the
+browser's `anonId` adopts that browser's anonymous gems onto the account
+first, so gems mined before signing in are kept.
+
+**Response**
+
+```json
+{
+	"ok": true,
+	"miner": "browser",
+	"mined": { "id": "amethyst", "label": "Amethyst", "points": 3, "hex": 12891645, "node": "vein-a" },
+	"gems": { "quartz": 3, "amethyst": 2, "sapphire": 0, "emerald": 0, "ruby": 0, "diamond": 0 },
+	"points": 9,
+	"total": 5,
+	"recent": [{ "gem": "amethyst", "node": "vein-a", "amount": 1, "mined_at": "2026-10-11T05:21:03.000Z" }]
+}
+```
+
+| Status | `error` | Meaning |
+| --- | --- | --- |
+| 400 | `invalid_node` | `node` is not a known vein |
+| 400 | `no_miner` | Not signed in and no valid `anonId`, so there is nowhere to keep the gem |
+| 429 | `dig_too_soon` | The previous dig is younger than the dig time; `retry_in_sec` says how long to wait |
+| 429 | `daily_cap` | 300 digs already today (UTC) for this miner |
+
+Rate limited per IP like the other public endpoints. The client holds E at a
+vein for `dig_seconds` of real frame time before posting; the server enforces
+the same cadence, so a client that posts early is refused.
+
+---
+
 ## Pagination
 
 Paginated list endpoints use `limit`/`offset` query parameters unless noted otherwise (each endpoint's own parameter table is authoritative; some small per-user lists, like `/api/agents` and `/api/widgets`, return everything with no pagination).

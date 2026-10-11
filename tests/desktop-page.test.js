@@ -15,6 +15,7 @@ describe('desktop page', () => {
 	it('lists every windowed app as a crawlable link', () => {
 		for (const app of APPS) expect(html, app.title).toContain(`href="${app.href}"`);
 		expect(html).toContain('href="/classic"');
+		expect(html).toContain('href="/?world=1"');
 	});
 
 	it('only registers apps with same-origin paths and unique ids', () => {

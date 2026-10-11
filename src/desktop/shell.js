@@ -362,6 +362,11 @@ export async function createShell(root, opts = {}) {
 	const tray = h('div', 'os-tray');
 	const btnTheme = h('button', 'os-tb', '');
 	btnTheme.type = 'button';
+	const btnWorld = h('button', 'os-tb', icon('world', 20));
+	btnWorld.type = 'button';
+	btnWorld.title = 'Walk the campus';
+	btnWorld.setAttribute('aria-label', 'Leave the desk and walk the three.ws campus as your avatar');
+	btnWorld.hidden = true;
 	const btnClassic = h('button', 'os-tb hide-sm', icon('classic', 20));
 	btnClassic.type = 'button';
 	btnClassic.title = 'Classic view';
@@ -378,7 +383,7 @@ export async function createShell(root, opts = {}) {
 	clock.type = 'button';
 	clock.setAttribute('aria-haspopup', 'dialog');
 	clock.setAttribute('aria-expanded', 'false');
-	tray.append(btnTheme, btnClassic, chip, clock);
+	tray.append(btnTheme, btnWorld, btnClassic, chip, clock);
 	right.append(tray);
 
 	const isLight = () => document.documentElement.getAttribute('data-theme') === 'light';
@@ -393,6 +398,15 @@ export async function createShell(root, opts = {}) {
 	syncTheme();
 
 	btnClassic.addEventListener('click', goClassic);
+	// The 3D campus is optional (no WebGL, or the visitor opted out): the
+	// entry wires `onWorld` once the world exists, and every "walk" control
+	// stays hidden until then.
+	let onWorld = null;
+	btnWorld.addEventListener('click', () => onWorld?.());
+	function goWorld() {
+		if (onWorld) onWorld();
+		else toast('The 3D campus is not available in this browser.');
+	}
 	function goClassic() {
 		save();
 		store.set(KEY.view, 'classic');
@@ -424,6 +438,7 @@ export async function createShell(root, opts = {}) {
 		});
 	let userName = '';
 	let startUserEl = null;
+	let startWorldEl = null;
 	const displayName = () => userName || prefs.name || 'Guest';
 	function paintUser() {
 		if (!startUserEl) return;
@@ -491,12 +506,24 @@ export async function createShell(root, opts = {}) {
 		startUserEl = user;
 		paintUser();
 		user.addEventListener('click', () => launchId('settings', { section: 'profile' }));
+		const walk = h('button', 'sm-pwr sm-world', icon('world', 20));
+		walk.type = 'button';
+		walk.title = 'Walk the campus';
+		walk.setAttribute('aria-label', 'Leave the desk and walk the three.ws campus as your avatar');
+		walk.hidden = !onWorld;
+		walk.addEventListener('click', () => {
+			closePops();
+			goWorld();
+		});
+		startWorldEl = walk;
 		const pwr = h('button', 'sm-pwr', icon('classic', 20));
 		pwr.type = 'button';
 		pwr.title = 'Classic view';
 		pwr.setAttribute('aria-label', 'Switch to the classic website');
 		pwr.addEventListener('click', goClassic);
-		foot.append(user, pwr);
+		const actions = h('div', 'sm-foot-actions');
+		actions.append(walk, pwr);
+		foot.append(user, actions);
 		el.append(search, body, foot);
 
 		let selectable = [];
@@ -722,6 +749,7 @@ export async function createShell(root, opts = {}) {
 			['Personalize', 'gear', () => launchId('settings', { section: 'personalize' })],
 			['Open Start', 'logo', () => toggleStart()],
 			'-',
+			['Walk the campus', 'world', goWorld],
 			['Switch to classic view', 'classic', goClassic],
 			['Close all windows', 'close', () => wm.closeAll()],
 		]);
@@ -779,6 +807,7 @@ export async function createShell(root, opts = {}) {
 
 	// ---------- native apps ----------
 	const WALL_PREVIEW = {
+		three: 'radial-gradient(70% 60% at 50% 110%,#8b5cf6aa,transparent 70%),#050505',
 		aurora: 'linear-gradient(215deg,#7a3fa8,#1f6fbf)',
 		midnight: 'linear-gradient(180deg,#1d2b5a,#05060d)',
 		solana: 'linear-gradient(135deg,#14f195,#9945ff)',
@@ -1032,6 +1061,12 @@ export async function createShell(root, opts = {}) {
 				setRow('Alignment', 'Centre the Start button or keep it on the left.', seg([['center', 'Centre'], ['left', 'Left']], prefs.taskbarAlign, (v) => setPrefs({ taskbarAlign: v }))),
 				setRow('24-hour clock', 'Show the time as 14:30 instead of 2:30 PM.', toggle(prefs.clock24, (v) => setPrefs({ clock24: v }), '24-hour clock')),
 			);
+			pane.append(h('h3', '', 'Arrival'));
+			pane.append(
+				setRow('Start in', 'Walk to your desk as your avatar, or land on the desktop at once. A shared link with ?app= always opens the desktop.', seg([['world', 'The campus'], ['desktop', 'The desktop']], prefs.startIn, (v) => setPrefs({ startIn: v }))),
+				setRow('Startup chime', 'A short synthesised chime when you unlock. Nothing is downloaded.', toggle(prefs.sound, (v) => setPrefs({ sound: v }), 'Startup chime')),
+				setRow('Walk the campus', 'Leave the desk and explore the exchange, the launchpad and the mine as your avatar.', btn('Walk', goWorld)),
+			);
 			pane.append(h('h3', '', 'View'));
 			pane.append(setRow('Classic website', 'The original three.ws homepage. Your choice is remembered until you switch back.', btn('Open classic', goClassic)));
 		}
@@ -1132,12 +1167,13 @@ export async function createShell(root, opts = {}) {
 		body.append(wrap);
 		if (app.id === 'settings') return renderSettings(wrap);
 		if (app.id === 'apps') return renderApps(wrap);
-		wrap.innerHTML = '<h2>Welcome to three.ws</h2><p>The 3D agent layer of the internet, now as a desktop. Every window is a real three.ws page: drag, resize, snap to an edge, or minimize to the taskbar.</p>';
+		wrap.innerHTML = '<h2>Welcome to three.ws</h2><p>The 3D agent layer of the internet. Give your AI a body: make a living 3D agent from a selfie, forge models from a prompt, launch a coin, trade the trenches, and embed any of it on any site with one tag. This desktop is your workstation; every window is a real three.ws page.</p>';
 		const steps = h('div', 'steps');
 		[
 			['create', 'Make your agent', 'Start from a selfie, a prompt or a model.'],
 			['forge', 'Forge a 3D model', 'Type a prompt and get a textured GLB.'],
-			['discover', 'Meet other agents', 'Browse every registered agent.'],
+			['trenches', 'Trade the trenches', 'Live Solana launches, runners and smart money.'],
+			['launcher', 'Launch a coin', 'Put a token on pump.fun from an agent or a prompt.'],
 		].forEach(([id, t, s]) => {
 			const a = appById(id);
 			const b = h('button', 'step', `${tile(a, 'sm', 17)}<div><b>${t}</b><small>${s}</small></div>`);
@@ -1146,6 +1182,13 @@ export async function createShell(root, opts = {}) {
 			steps.append(b);
 		});
 		wrap.append(steps);
+		const walkRow = h('p', 'welcome-walk', '');
+		const walkBtn = h('button', 'step step-wide', `${icon('world', 22)}<div><b>Walk the campus</b><small>Stand up from the desk and explore the exchange, the launchpad and the gem mine as your avatar. Sit back down at the monitor to return here.</small></div>`);
+		walkBtn.type = 'button';
+		walkBtn.hidden = !onWorld;
+		walkBtn.addEventListener('click', goWorld);
+		walkRow.append(walkBtn);
+		wrap.append(walkRow);
 		wrap.append(h('p', '', 'Drag on the desktop to select icons, right-click for options, and open Settings to make it yours. Press Ctrl+K to search everything.'));
 	}
 
@@ -1178,5 +1221,24 @@ export async function createShell(root, opts = {}) {
 		toast,
 		store,
 		KEY,
+		get prefs() {
+			return prefs;
+		},
+		setPrefs,
+		onPrefs(fn) {
+			prefsListeners.add(fn);
+			return () => prefsListeners.delete(fn);
+		},
+		displayName,
+		/** Register the 3D campus. Every "walk" control appears once this is set. */
+		set onWorld(fn) {
+			onWorld = typeof fn === 'function' ? fn : null;
+			btnWorld.hidden = !onWorld;
+			if (startWorldEl) startWorldEl.hidden = !onWorld;
+			root.querySelectorAll('.welcome-walk .step').forEach((b) => (b.hidden = !onWorld));
+		},
+		get onWorld() {
+			return onWorld;
+		},
 	};
 }

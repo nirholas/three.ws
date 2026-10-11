@@ -135,6 +135,14 @@
 			<description>Drag a selection box across the desktop, move icons on a snap grid, right-click for view options, and open every app from desktop icons or All Apps. Settings now covers your profile, theme, accent colour, wallpaper (including your own photo), icon size and taskbar, and the whole session (windows, icon layout, preferences) is saved in your browser, with export, import and reset.</description>
 		</item>
 		<item>
+			<title>The prompt director works again, found by its own run receipts</title>
+			<link>https://three.ws/runs</link>
+			<guid isPermaLink="false">2026-10-11:The prompt director works again, found by its own run receipts</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The first receipts showed the director's brief falling back on every Studio run. The replies were arriving in 5 to 10 seconds but ran past the 1000-character prompt cap or ended on the closing constraint the director is told to end on, and both were discarded as clipped. The director now writes to a word budget the models actually follow, the guard accepts the mandated ending, both forge clients share one guard, and a receipt now names the exact reason a brief fell back (too long with its length, unfinished, no reply) instead of a generic timeout. Receipts also stop saying every stage met when a stage was skipped.</description>
+		</item>
+		<item>
 			<title>The terminal 3D renderer animates live in every HTTP client</title>
 			<link>https://three.ws/tty</link>
 			<guid isPermaLink="false">2026-10-11:The terminal 3D renderer animates live in every HTTP client</guid>
@@ -157,6 +165,14 @@
 			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>A new Trenches page shows what is happening on Solana and Robinhood Chain right now: new launches and graduations as they happen, the hottest tokens by trade flow, and scored smart-money wallets. Every number comes from a live on-chain feed, and if the data service is unreachable the page says so instead of showing made-up figures.</description>
+		</item>
+		<item>
+			<title>Walk into three.ws: the homepage boots, unlocks, and lets you enter the desktop as your avatar</title>
+			<link>https://three.ws/</link>
+			<guid isPermaLink="false">2026-10-11:Walk into three.ws: the homepage boots, unlocks, and lets you enter the desktop as your avatar</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The homepage now starts like a real computer. A boot screen runs live checks (your GPU, the site catalog, your account, the avatar body, the $THREE feed, your gem ledger) and a lock screen greets you with the $THREE price and your balances. Press Walk in and you arrive on a campus as your avatar: walk to your desk and sit down to open the desktop on the monitor, pick up the phone for Pocket, put on the headset for VR, enter the three.ws Exchange (a live ticker board and Trenches inside), the Launchpad, the Forge, the Gallery, Agent Plaza and the Marketplace, or dig for gems in the mine, where every gem is rolled server-side and kept on your account. Settings gets an Arrival section to choose where you start, the taskbar gets a World button, and the desktop wears the classic three.ws violet grid.</description>
 		</item>
 		<item>
 			<title>Agent Commerce</title>
