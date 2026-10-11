@@ -572,6 +572,14 @@
 					"added": "2026-06-27"
 				},
 				{
+					"path": "/partners/benefits",
+					"title": "Partner Benefits",
+					"description": "What each three.ws partnership brings to builders and the community: OpenAI, NVIDIA, IBM, Google Cloud, AWS, Alibaba Cloud, Quicknode and HackerNoon.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
+				},
+				{
 					"path": "/openai",
 					"title": "three.ws is an OpenAI Select Partner",
 					"description": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network. Connect the free three.ws 3D Studio MCP server to ChatGPT and turn a prompt into an interactive, riggable, AR-ready 3D model inline in the conversation.",
@@ -5344,6 +5352,14 @@
 					"description": "three.ws/partners is the public map of the cloud, AI, hardware, infrastructure, and media programmes three.ws takes part in. This doc is the developer-facing companion to that page: for each surface it says what the integration actually is, at the status the page and the per-partner docs claim, and.",
 					"priority": 0.7,
 					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/partner-benefits",
+					"title": "Docs: Partner benefits",
+					"description": "How the public partner benefits page is built and the rules for what it may say: designations quoted exactly, no amounts or IDs, positive and factual.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
 				},
 				{
 					"path": "/docs/agent-identities",

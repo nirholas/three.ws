@@ -55,6 +55,14 @@
 			<description>A popover under the tray icon with your agent alive in 3D, its Solana wallet balance, start and stop, pending approvals that open the native review dialog, unread alerts and a one-line ask box.</description>
 		</item>
 		<item>
+			<title>Docs: Partner benefits</title>
+			<link>https://three.ws/docs/partner-benefits</link>
+			<guid isPermaLink="false">2026-10-11:Docs: Partner benefits</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the public partner benefits page is built and the rules for what it may say: designations quoted exactly, no amounts or IDs, positive and factual.</description>
+		</item>
+		<item>
 			<title>Everything three.ws Does</title>
 			<link>https://three.ws/everything</link>
 			<guid isPermaLink="false">2026-10-11:Everything three.ws Does</guid>
@@ -69,6 +77,14 @@
 			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Every way to run three.ws: the web desktop, Android, Solana Seeker, iPhone and iPad, and the Windows and Linux desktop app.</description>
+		</item>
+		<item>
+			<title>Partner Benefits</title>
+			<link>https://three.ws/partners/benefits</link>
+			<guid isPermaLink="false">2026-10-11:Partner Benefits</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What each three.ws partnership brings to builders and the community: OpenAI, NVIDIA, IBM, Google Cloud, AWS, Alibaba Cloud, Quicknode and HackerNoon.</description>
 		</item>
 		<item>
 			<title>Run Receipts</title>

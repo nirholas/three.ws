@@ -405,6 +405,12 @@ URL: https://three.ws/partners
 
 three.ws partner ecosystem: OpenAI, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale.
 
+### Partner Benefits
+
+URL: https://three.ws/partners/benefits
+
+What each three.ws partnership brings to builders and the community: OpenAI, NVIDIA, IBM, Google Cloud, AWS, Alibaba Cloud, Quicknode and HackerNoon.
+
 ### three.ws is an OpenAI Select Partner
 
 URL: https://three.ws/openai
@@ -4122,6 +4128,12 @@ Everything a journalist, analyst, conference organiser, or partner needs to writ
 URL: https://three.ws/docs/partners
 
 three.ws/partners is the public map of the cloud, AI, hardware, infrastructure, and media programmes three.ws takes part in. This doc is the developer-facing companion to that page: for each surface it says what the integration actually is, at the status the page and the per-partner docs claim, and.
+
+### Docs: Partner benefits
+
+URL: https://three.ws/docs/partner-benefits
+
+How the public partner benefits page is built and the rules for what it may say: designations quoted exactly, no amounts or IDs, positive and factual.
 
 ### Docs: Agent Identity Studio
 

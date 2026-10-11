@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T09:50:28.599Z",
+	"generated_at": "2026-10-11T19:46:09.696Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -69,6 +69,16 @@
 		{
 			"date": "2026-10-11",
 			"type": "launch",
+			"title": "Docs: Partner benefits",
+			"summary": "How the public partner benefits page is built and the rules for what it may say: designations quoted exactly, no amounts or IDs, positive and factual.",
+			"link": "/docs/partner-benefits",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
 			"title": "Everything three.ws Does",
 			"summary": "Every three.ws feature organised by what you want to do: make a 3D avatar, build an agent, embed it, sell skills, launch a token, trade and more. Searchable, with pins and a new-this-month feed.",
 			"link": "/everything",
@@ -82,6 +92,16 @@
 			"title": "Get the three.ws apps",
 			"summary": "Every way to run three.ws: the web desktop, Android, Solana Seeker, iPhone and iPad, and the Windows and Linux desktop app.",
 			"link": "/apps",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Partner Benefits",
+			"summary": "What each three.ws partnership brings to builders and the community: OpenAI, NVIDIA, IBM, Google Cloud, AWS, Alibaba Cloud, Quicknode and HackerNoon.",
+			"link": "/partners/benefits",
 			"tags": [
 				"launch"
 			]

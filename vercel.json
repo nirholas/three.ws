@@ -3164,6 +3164,10 @@
 			"dest": "/partners.html"
 		},
 		{
+			"src": "/partners/benefits/?",
+			"dest": "/partner-benefits.html"
+		},
+		{
 			"src": "/sperax",
 			"dest": "/sperax.html"
 		},

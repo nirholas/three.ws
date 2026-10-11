@@ -761,6 +761,7 @@ const appConfig = {
 				'embodiment-embed': resolve(__dirname, 'pages/embodiment/embed.html'),
 				integrations: resolve(__dirname, 'pages/integrations.html'),
 				partners: resolve(__dirname, 'pages/partners.html'),
+				'partner-benefits': resolve(__dirname, 'pages/partner-benefits.html'),
 				sperax: resolve(__dirname, 'pages/sperax.html'),
 				widget: resolve(__dirname, 'pages/widget.html'),
 				launchpad: resolve(__dirname, 'pages/launchpad.html'),

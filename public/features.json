@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T09:50:28.566Z",
+	"generated_at": "2026-10-11T19:46:09.682Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -851,6 +851,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.8,
+					"job": "explore"
+				},
+				{
+					"path": "/partners/benefits",
+					"title": "Partner Benefits",
+					"description": "What each three.ws partnership brings to builders and the community: OpenAI, NVIDIA, IBM, Google Cloud, AWS, Alibaba Cloud, Quicknode and HackerNoon.",
+					"added": "2026-10-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.7,
 					"job": "explore"
 				},
 				{
@@ -8189,6 +8201,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.7,
+					"job": null
+				},
+				{
+					"path": "/docs/partner-benefits",
+					"title": "Docs: Partner benefits",
+					"description": "How the public partner benefits page is built and the rules for what it may say: designations quoted exactly, no amounts or IDs, positive and factual.",
+					"added": "2026-10-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
 					"job": null
 				},
 				{
