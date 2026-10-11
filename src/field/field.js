@@ -98,7 +98,7 @@ export function mountField(root) {
 			<a class="fd-brand" href="/" aria-label="three.ws, back to the whole map"><b>three.ws</b><span class="fd-crumb" aria-live="polite">Field</span></a>
 			<nav class="fd-actions" aria-label="Other ways in">
 				<a class="fd-btn fd-ghost" href="/?world=1" title="Walk the 3D campus as your avatar">Walk in</a>
-				<a class="fd-btn fd-ghost fd-hide-sm" href="/?view=desktop" title="The windowed desktop">Desktop</a>
+				<a class="fd-btn fd-ghost fd-hide-sm" href="/" title="The windowed desktop">Desktop</a>
 				<span class="fd-acct"></span>
 			</nav>
 		</header>

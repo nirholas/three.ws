@@ -1,0 +1,366 @@
+// The desktop assistant: a panel that slides in from the right edge, like the
+// assistant pane of a modern OS. It streams real replies from /api/chat, can
+// open any desktop app it suggests ([[open:app]] tags), and can hand the
+// conversation to any public three.ws agent so the visitor talks to that
+// agent's own brain. The shell calls toggleAssistant({ root, anchor, launchId, toast }).
+// See README.md.
+
+import './assistant.css';
+import { icon } from '../icons.js';
+import { ALL_APPS } from '../apps.js';
+import { parseSse } from '../world/cast.js';
+import { SUGGESTIONS, hidePartialTag, parseActions, renderMarkdown, systemPrompt, trimHistory } from './logic.js';
+
+const STORE = 'tws-assistant:v1';
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const APPS = ALL_APPS.filter((a) => a.id && a.title && !a.hidden);
+const KNOWN = new Set(APPS.map((a) => a.id));
+const appTitle = (id) => APPS.find((a) => a.id === id)?.title || id;
+
+function loadState() {
+	try {
+		const s = JSON.parse(localStorage.getItem(STORE) || 'null');
+		if (s && Array.isArray(s.messages)) return { messages: trimHistory(s.messages), agent: s.agent?.id ? s.agent : null };
+	} catch {
+		/* storage blocked or corrupt */
+	}
+	return { messages: [], agent: null };
+}
+function saveState(s) {
+	try {
+		localStorage.setItem(STORE, JSON.stringify({ messages: trimHistory(s.messages.filter((m) => !m.failed)), agent: s.agent }));
+	} catch {
+		/* storage blocked: the chat lasts for this visit */
+	}
+}
+
+/** Stream one reply. `onText(textSoFar)` fires as chunks land. */
+async function streamChat({ message, history, agent, signal, onText }) {
+	const r = await fetch('/api/chat', {
+		method: 'POST',
+		credentials: 'same-origin',
+		headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
+		signal,
+		body: JSON.stringify({
+			message,
+			history: trimHistory(history),
+			...(agent ? { agentId: agent.id } : {}),
+			system_prompt: systemPrompt(APPS, { agent }),
+			context: { modelName: agent?.name || 'three.ws assistant', currentEnvironment: 'three.ws desktop' },
+		}),
+	});
+	if (r.status === 429) throw new Error('Too many messages in a short time. Wait a minute, then try again.');
+	if (!r.ok) {
+		let detail = '';
+		try {
+			const j = await r.json();
+			detail = j.error_description || j.message || '';
+		} catch {
+			/* no JSON body */
+		}
+		if (r.status === 401) detail = agent ? `Sign in to talk to ${agent.name}.` : 'Sign in to keep chatting.';
+		throw new Error(detail || `The assistant could not answer (${r.status}).`);
+	}
+	if (!(r.headers.get('content-type') || '').includes('text/event-stream')) {
+		const j = await r.json();
+		const t = String(j.reply || j.text || '').trim();
+		onText(t);
+		return t;
+	}
+	const reader = r.body.getReader();
+	const dec = new TextDecoder();
+	let buf = '';
+	let text = '';
+	for (;;) {
+		const { value, done } = await reader.read();
+		if (done) break;
+		buf += dec.decode(value, { stream: true });
+		const parsed = parseSse(buf);
+		buf = parsed.rest;
+		for (const ev of parsed.events) {
+			if (ev.type === 'chunk' && ev.text) {
+				text += ev.text;
+				onText(text);
+			} else if (ev.type === 'done' && ev.reply && !text) {
+				text = String(ev.reply);
+				onText(text);
+			} else if (ev.type === 'error') throw new Error(ev.message || 'The assistant could not answer.');
+		}
+	}
+	return text.trim();
+}
+
+let panel = null;
+
+export function toggleAssistant(ctx) {
+	if (panel) {
+		panel.close();
+		return false;
+	}
+	panel = open(ctx);
+	return true;
+}
+
+/** Close the assistant if it is open. */
+export function closeAssistant() {
+	panel?.close();
+}
+
+function open(ctx) {
+	const state = loadState();
+	let busy = null;
+	const el = document.createElement('aside');
+	el.className = 'asx';
+	el.setAttribute('role', 'dialog');
+	el.setAttribute('aria-label', 'Assistant');
+	el.innerHTML =
+		`<header class="asx-head"><button type="button" class="asx-who" aria-haspopup="dialog" title="Choose who you are talking to"></button>` +
+		`<span class="asx-tools"><button type="button" class="asx-ib" data-new title="New chat" aria-label="New chat">${icon('edit', 17)}</button>` +
+		`<button type="button" class="asx-ib" data-close title="Close" aria-label="Close assistant">${icon('close', 17)}</button></span></header>` +
+		`<div class="asx-pick" hidden><div class="asx-search">${icon('search', 15)}<input type="search" placeholder="Search public agents" aria-label="Search public agents" autocomplete="off"></div><ul role="listbox" aria-label="Agents"></ul><small aria-live="polite"></small></div>` +
+		`<div class="asx-log" role="log" aria-live="polite"></div>` +
+		`<form class="asx-form"><textarea rows="1" maxlength="4000" placeholder="Ask anything" aria-label="Message"></textarea>` +
+		`<button type="submit" class="asx-send" aria-label="Send">${icon('next', 17)}</button></form>` +
+		`<p class="asx-foot">Replies are generated by AI and can be wrong. Never share a seed phrase or private key.</p>`;
+	(ctx.root || document.body).append(el);
+
+	const log = el.querySelector('.asx-log');
+	const form = el.querySelector('form');
+	const input = form.querySelector('textarea');
+	const send = form.querySelector('.asx-send');
+	const who = el.querySelector('.asx-who');
+	const pick = el.querySelector('.asx-pick');
+
+	// ---------- who you're talking to ----------
+	const avatar = (a) =>
+		a?.avatar_thumbnail ? `<img src="${esc(a.avatar_thumbnail)}" alt="" referrerpolicy="no-referrer">` : a ? `<i>${esc(a.name.slice(0, 1).toUpperCase())}</i>` : `<i class="asx-logo">${icon('sparkle', 15)}</i>`;
+	const paintWho = () => {
+		who.innerHTML = `${avatar(state.agent)}<span><b>${esc(state.agent?.name || 'Assistant')}</b><small>${state.agent ? 'three.ws agent' : 'three.ws'}</small></span>${icon('chevron', 12)}`;
+		input.placeholder = state.agent ? `Message ${state.agent.name}` : 'Ask anything about three.ws';
+	};
+	el.addEventListener(
+		'error',
+		(e) => {
+			if (e.target instanceof HTMLImageElement) {
+				const i = document.createElement('i');
+				i.textContent = '?';
+				e.target.replaceWith(i);
+			}
+		},
+		true,
+	);
+
+	let searchSeq = 0;
+	let searchTimer = 0;
+	const pickInput = pick.querySelector('input');
+	const pickList = pick.querySelector('ul');
+	const pickNote = pick.querySelector('small');
+	const choose = (agent) => {
+		if ((agent?.id || null) !== (state.agent?.id || null)) {
+			state.agent = agent;
+			state.messages = [];
+			saveState(state);
+			paintLog();
+		}
+		paintWho();
+		togglePick(false);
+		input.focus();
+	};
+	const search = async () => {
+		const my = ++searchSeq;
+		const q = pickInput.value.trim();
+		pickNote.textContent = 'Loading agents...';
+		try {
+			const r = await fetch(`/api/agents/public?${new URLSearchParams({ sort: 'popular', limit: '20', ...(q ? { q } : {}) })}`, { credentials: 'same-origin' });
+			if (!r.ok) throw new Error(r.status === 429 ? 'Too many searches. Try again in a moment.' : `Agents are unavailable (${r.status}).`);
+			const j = await r.json();
+			if (my !== searchSeq) return;
+			const agents = (j.agents || []).filter((a) => a.id && a.name);
+			pickNote.textContent = agents.length ? '' : q ? `No public agent matches "${q}".` : 'No public agents yet.';
+			pickList.innerHTML =
+				`<li><button type="button" role="option" data-id="" aria-selected="${!state.agent}">${avatar(null)}<span><b>three.ws assistant</b><small>Knows the platform and opens apps for you</small></span></button></li>` +
+				agents.map((a, i) => `<li><button type="button" role="option" data-i="${i}" aria-selected="${state.agent?.id === a.id}">${avatar(a)}<span><b>${esc(a.name)}</b><small>${esc(a.description || 'A three.ws agent')}</small></span></button></li>`).join('');
+			pickList.querySelector('[data-id=""]').addEventListener('click', () => choose(null));
+			pickList.querySelectorAll('[data-i]').forEach((b) => {
+				const a = agents[b.dataset.i];
+				b.addEventListener('click', () => choose({ id: a.id, name: a.name, avatar_thumbnail: a.avatar_thumbnail || null }));
+			});
+		} catch (e) {
+			if (my === searchSeq) pickNote.textContent = e.message;
+		}
+	};
+	const togglePick = (on = pick.hidden) => {
+		pick.hidden = !on;
+		who.setAttribute('aria-expanded', String(on));
+		if (on) {
+			search();
+			pickInput.focus();
+		}
+	};
+	who.addEventListener('click', () => togglePick());
+	pickInput.addEventListener('input', () => {
+		clearTimeout(searchTimer);
+		searchTimer = setTimeout(search, 250);
+	});
+
+	// ---------- the conversation ----------
+	const bubble = (m) => {
+		const div = document.createElement('div');
+		div.className = `asx-msg ${m.role === 'user' ? 'me' : 'ai'}`;
+		fill(div, m);
+		return div;
+	};
+	const fill = (div, m, streaming = false) => {
+		if (m.role === 'user') {
+			div.textContent = m.content;
+			return;
+		}
+		const { text, actions } = parseActions(streaming ? hidePartialTag(m.content) : m.content, KNOWN);
+		div.innerHTML = renderMarkdown(text) || (streaming ? '<span class="asx-dots" aria-label="Thinking"><i></i><i></i><i></i></span>' : '');
+		if (m.error) div.insertAdjacentHTML('beforeend', `<p class="asx-err">${esc(m.error)}</p>`);
+		if (!streaming && actions.length) {
+			const row = document.createElement('div');
+			row.className = 'asx-acts';
+			for (const id of actions) {
+				const b = document.createElement('button');
+				b.type = 'button';
+				b.innerHTML = `${icon(APPS.find((a) => a.id === id)?.icon || 'external', 14)}Open ${esc(appTitle(id))}`;
+				b.addEventListener('click', () => ctx.launchId(id));
+				row.append(b);
+			}
+			div.append(row);
+		}
+		div.classList.toggle('typing', streaming);
+	};
+	const paintLog = () => {
+		log.replaceChildren();
+		if (!state.messages.length) {
+			const hi = document.createElement('div');
+			hi.className = 'asx-hello';
+			hi.innerHTML = state.agent
+				? `${avatar(state.agent)}<b>Talk with ${esc(state.agent.name)}</b><span>Replies come from this agent's own brain on three.ws.</span>`
+				: `<i class="asx-logo big">${icon('sparkle', 26)}</i><b>How can I help?</b><span>Ask about three.ws, or have me open the right app for you.</span>` +
+					`<div class="asx-sugs">${SUGGESTIONS.map((s, i) => `<button type="button" data-s="${i}">${esc(s.label)}</button>`).join('')}</div>`;
+			hi.querySelectorAll('[data-s]').forEach((b) => b.addEventListener('click', () => ask(SUGGESTIONS[b.dataset.s].prompt)));
+			log.append(hi);
+			return;
+		}
+		for (const m of state.messages) log.append(bubble(m));
+		log.scrollTop = log.scrollHeight;
+	};
+
+	const setBusy = (ctrl) => {
+		busy = ctrl;
+		send.innerHTML = ctrl ? icon('pause', 17) : icon('next', 17);
+		send.setAttribute('aria-label', ctrl ? 'Stop' : 'Send');
+		send.classList.toggle('stop', !!ctrl);
+	};
+	async function ask(text) {
+		const message = String(text || '').trim();
+		if (!message || busy) return;
+		const history = state.messages.filter((m) => !m.failed);
+		state.messages.push({ role: 'user', content: message });
+		const reply = { role: 'assistant', content: '' };
+		state.messages.push(reply);
+		paintLog();
+		const div = log.lastElementChild;
+		fill(div, reply, true);
+		log.scrollTop = log.scrollHeight;
+		const ctrl = new AbortController();
+		setBusy(ctrl);
+		try {
+			reply.content = await streamChat({
+				message,
+				history,
+				agent: state.agent,
+				signal: ctrl.signal,
+				onText: (t) => {
+					reply.content = t;
+					fill(div, reply, true);
+					const near = log.scrollHeight - log.scrollTop - log.clientHeight < 80;
+					if (near) log.scrollTop = log.scrollHeight;
+				},
+			});
+			if (!reply.content) reply.error = 'No reply came back. Try asking again.';
+		} catch (e) {
+			if (e.name === 'AbortError') {
+				if (!reply.content) reply.error = 'Stopped.';
+			} else reply.error = e.message || 'The assistant could not answer.';
+		} finally {
+			setBusy(null);
+			fill(div, reply);
+			// Failed turns stay on screen but never go back to the model.
+			if (!reply.content) {
+				reply.failed = true;
+				state.messages[state.messages.length - 2].failed = true;
+			}
+			saveState(state);
+			log.scrollTop = log.scrollHeight;
+		}
+	}
+
+	form.addEventListener('submit', (e) => {
+		e.preventDefault();
+		if (busy) return busy.abort();
+		const t = input.value;
+		input.value = '';
+		grow();
+		ask(t);
+	});
+	const grow = () => {
+		input.style.height = 'auto';
+		input.style.height = `${Math.min(input.scrollHeight, 160)}px`;
+		send.disabled = !busy && !input.value.trim();
+	};
+	input.addEventListener('input', grow);
+	input.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+			e.preventDefault();
+			form.requestSubmit();
+		}
+	});
+	el.querySelector('[data-new]').addEventListener('click', () => {
+		busy?.abort();
+		state.messages = [];
+		saveState(state);
+		paintLog();
+		input.focus();
+	});
+	el.querySelector('[data-close]').addEventListener('click', () => close());
+	const onKey = (e) => {
+		if (e.key !== 'Escape') return;
+		if (!pick.hidden) return togglePick(false);
+		close();
+		ctx.anchor?.focus?.();
+	};
+	el.addEventListener('keydown', onKey);
+	// Keep the stored conversation in step with another tab.
+	const onStorage = (e) => {
+		if (e.key !== STORE || busy) return;
+		const s = loadState();
+		state.messages = s.messages;
+		state.agent = s.agent;
+		paintWho();
+		paintLog();
+	};
+	addEventListener('storage', onStorage);
+
+	paintWho();
+	paintLog();
+	grow();
+	ctx.anchor?.setAttribute?.('aria-expanded', 'true');
+	requestAnimationFrame(() => el.classList.add('in'));
+	setTimeout(() => input.focus({ preventScroll: true }), 60);
+
+	function close() {
+		if (panel?.el !== el) return;
+		panel = null;
+		busy?.abort();
+		clearTimeout(searchTimer);
+		removeEventListener('storage', onStorage);
+		ctx.anchor?.setAttribute?.('aria-expanded', 'false');
+		el.classList.remove('in');
+		setTimeout(() => el.remove(), matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 220);
+	}
+	return { el, close };
+}

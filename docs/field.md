@@ -1,6 +1,6 @@
 # The Field
 
-`/` is the Field: one zoomable map of the whole platform, drawn from live data.
+`/?view=field` is the Field: one zoomable map of the whole platform, drawn from live data.
 At the centre is the core, every public agent placed as a star on a golden-angle
 spiral (newest in the middle). Around it sit the districts, one per product
 surface. Wallet moves from Pulse fly across the map as comets and land in the
@@ -8,9 +8,9 @@ district they belong to. Nothing on the map is decorative: every number, face
 and trail comes from a real endpoint, and when a feed is down its district says
 so and offers a retry.
 
-The windowed desktop and the 3D campus are still one click away:
-`/?view=desktop` and `/?world=1` (see [desktop.md](desktop.md)). The previous
-homepage stays at `/classic`.
+The homepage `/` is the web desktop (see [desktop.md](desktop.md) and
+[desktop-widgets.md](desktop-widgets.md)); its 3D campus is at `/?world=1` and
+the previous homepage stays at `/classic`.
 
 ## Moving around
 
@@ -86,5 +86,5 @@ and desktop sizes that no two tags overlap at the home view.
 
 [src/field/](../src/field/README.md): `logic.js` (pure layout, camera, search
 and formatting, unit tested), `data.js` (the feeds), `field.js` (DOM, canvas,
-input, surfaces), `field.css`, and `entry.js` (picks the Field or the legacy
-desktop for `pages/desktop.html`).
+input, surfaces), `field.css`, and `entry.js` (loads the desktop for `pages/desktop.html`, or the Field
+when the URL carries `?view=field`).
