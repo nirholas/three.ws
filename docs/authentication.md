@@ -9,6 +9,7 @@ three.ws supports four authentication methods. Which one you need depends on how
 | **Sign-In With Solana (SIWS)** | Users with a Solana wallet (Phantom, Backpack, Solflare, Seeker). Solana is the home chain; this is the default wallet sign-in. |
 | **Sign-In With Ethereum (SIWE)** | Users with an EVM browser wallet (MetaMask, Coinbase Wallet, etc.) |
 | **Privy** | Users without a wallet: email code sign-in, plus Privy-managed wallet login |
+| **Sign in with X** | Users who already connected an X (Twitter) account, or want a passwordless account from one |
 | **API keys** | Server-to-server and programmatic access |
 
 Authentication controls who can edit or publish an agent, which agents a user owns (for on-chain operations), rate limiting and usage tracking, and access to the dashboard and API.
@@ -247,7 +248,7 @@ Every auth endpoint accepts an optional `tosAccepted: true` body field. Send it 
 - `POST /api/auth/register` **requires** `tosAccepted: true`; account creation without it fails with `400 tos_required`. Registration UIs must show a real agreement control.
 - Wallet and Privy verifies (`/api/auth/siwe/verify`, `/api/auth/siws/verify`, `/api/auth/privy/verify`) and `POST /api/auth/login` treat it as an affirmation: acceptance is recorded on every sign-in, so users converge onto the current Terms version over time.
 
-An already-signed-in user can also record acceptance directly with `POST /api/legal/tos-ack { version?, context? }`, which mirrors the risk-acknowledgment endpoint (`/api/legal/risk-ack`).
+An already-signed-in user can also record acceptance directly with `POST /api/legal/tos-ack { version?, context? }`. That endpoint only covers the Terms of Service; the real-funds agreements (Risk Disclosure + Agent Wallet Agreement, required before any custodial money-moving action) are a separate, heavier signing flow at `POST /api/legal/risk-ack`. See [risk acknowledgment](./risk-acknowledgment.md).
 
 ---
 
@@ -320,6 +321,32 @@ A Privy identity attached to an account that was closed through `DELETE /api/aut
 ### Linking additional wallets
 
 Once a user is signed in via Privy, they can connect a browser wallet and link it to their account via `POST /api/auth/wallets`. See the [Multi-wallet section](#multi-wallet-support) below.
+
+---
+
+## Sign in with X
+
+`GET /api/auth/x/login?next=<path>` starts an OAuth 2.0 PKCE round trip with X
+(the same client the Connect-X posting flow in [the Herald](herald.md) and
+Town already use) and redirects back through `GET /api/auth/x/callback`. It
+only appears on [/login](https://three.ws/login) when `GET /api/config`
+reports `xLoginEnabled: true`, which requires `X_OAUTH_CLIENT_ID` and
+`X_OAUTH_CLIENT_SECRET`; unconfigured, the endpoint answers `501
+not_configured`.
+
+X's OAuth2 profile never reliably carries a verified email, so there is no
+email-matching step like Google's. Three outcomes, in order:
+
+1. **Already linked** (`user_identities` has this X id) → signs straight in.
+2. **Already connected for posting** (`social_connections` has this X id from
+   the Connect-X flow, but never linked for login) → links it and signs in,
+   rather than creating a duplicate account.
+3. **Neither** → creates a new passwordless account on the same
+   `@wallet.local` placeholder email pattern SIWS and SIWE already use.
+
+A failed or declined attempt redirects back to `/login` with an error code
+(`x_unavailable`, `rate_limited`, and the standard OAuth failure codes) rather
+than a bare error page.
 
 ---
 
@@ -463,6 +490,14 @@ const res = await fetch('/api/api-keys', {
 const { data } = await res.json();
 // data.token = "sk_live_xxxxx" — store this; it won't be shown again
 ```
+
+A request can send `preset: "connector"` instead of `scope`. The connector
+preset is the key shape for an AI agent that holds a credential unattended
+(a bot secret, a schedule, a CI job): it can read, generate, and edit agent
+data, but carries a marker that caps it below every spend scope for as long
+as the key lives, even if the stored scope string is later edited to add one.
+A bearer caller only receives the preset's scopes it already holds itself; a
+caller holding none of them gets `403 insufficient_scope`.
 
 ### Using a key
 
