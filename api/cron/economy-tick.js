@@ -52,7 +52,14 @@ const TARGETS = [
 	{ label: 'x402-autonomous', path: '/api/cron/x402-autonomous-loop', method: 'GET' },
 	// Fresh-wallet workers: brand-new payer wallets buying real work every minute.
 	{ label: 'fresh-workers', path: '/api/cron/x402-fresh-workers', method: 'GET' },
-	{ label: 'ring-leak-scan', path: '/api/cron/x402-ring-leak-scan', method: 'GET' },
+	// ring-leak-scan is deliberately NOT a target: it has its own */10 Cloud
+	// Scheduler job and a lease that doubles as its cadence (LEASE_SECONDS in
+	// x402-ring-leak-scan.js), and firing it from this every-minute tick as well
+	// meant nothing ever stopped a second run while the first was mid-scan -
+	// production carried about eight overlapping full registry scans at all times,
+	// burning the Solana RPC quota every other read depends on (order 400,
+	// 2026-10-11). Same failure class as three-holders-snapshot above. One
+	// scheduler owns that scan.
 	{ label: 'wallets-leak-scan', path: '/api/cron/wallets-leak-scan', method: 'GET' },
 	{ label: 'distribute-payments', path: '/api/cron/run-distribute-payments', method: 'GET' },
 	{ label: 'payment-session-sweep', path: '/api/cron/payment-session-sweep', method: 'GET' },

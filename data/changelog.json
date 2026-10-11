@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-10-11",
+			"title": "The on-chain leak scanner now paces itself instead of racing the Solana RPC quota",
+			"summary": "The background job that watches every platform-controlled wallet for a leak (money that should never leave the closed-loop agent economy) used to start nearly its entire wallet registry on every run, competing with the rest of the platform for the same paid RPC lanes. It now checks the wallets that hold money and any wallet with recent activity on every single run, and works through the rest of the registry in small, capped batches instead of trying to cover thousands of wallets at once. No change to what it catches: every wallet still gets checked on a steady rotation, just spread out so it stops crowding out other Solana reads.",
+			"tags": ["improvement", "infra"]
+		},
+		{
+			"date": "2026-10-11",
 			"title": "Share a finished Forge creation on X and it plays inline",
 			"summary": "A link to a finished Forge creation now carries an X player card instead of a flat image: the post expands into the real 3D model, posed with its own poster frame and ready to orbit, through the same safe embed runtime the agent-profile embeds use (no audio or video element, HTTPS assets only). A creation that is still generating keeps the plain image card until it finishes, so a link never promises a model that isn't ready yet.",
 			"tags": ["feature"],

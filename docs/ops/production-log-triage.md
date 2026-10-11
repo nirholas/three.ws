@@ -885,6 +885,22 @@ ws error: Unexpected server response: 301
   curl -s "<endpoint>" -X POST -H 'Content-Type: application/json' \
     -d '{"jsonrpc":"2.0","id":1,"method":"getBalance","params":["WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW"]}'
   ```
+- **Self-inflicted demand: the x402 ring leak scanner.** On 2026-10-09 the
+  scanner (`api/cron/x402-ring-leak-scan.js`) was firing from BOTH its own
+  `*/10` Cloud Scheduler job AND the every-minute `economy-tick.js` dispatcher,
+  with nothing stopping a second run while the first was still scanning the
+  2,006-wallet registry: production carried about eight overlapping full scans
+  at all times. A lease fixed the overlap, but the lease window alone was
+  generous enough to still start nearly the whole registry every run. Order
+  400 (2026-10-11) added a hard per-run cap on cold (no known activity)
+  wallets (`ROTATION_BATCH_SIZE`) plus a ledger-active priority tier, so a run
+  now costs a bounded, small RPC call count instead of scaling with registry
+  size. If `rpc_lanes` degrades again, confirm the scanner isn't the cause
+  before assuming a plan needs topping up: `GET /api/cron/x402-ring-leak-scan`
+  (cron-authed) returns `wallets` (should be in the low hundreds, not
+  thousands) and `partial`/`remaining` (a `partial: true` with `remaining`
+  growing run over run means the registry has outgrown the batch cap, not
+  that a plan is exhausted).
 - **Resolve (owner, money):** top up or upgrade the exhausted plans (Helius,
   QuickNode, Alchemy). Nothing else clears a quota; the cooldowns simply expire
   and re-trip while traffic exceeds the free tiers.

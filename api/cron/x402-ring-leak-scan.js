@@ -6,8 +6,9 @@
 // alarms within minutes if money leaves anyway — a compromised key, a bug, or a
 // path the assertions don't cover.
 //
-// Every 10 min, for every role wallet and the next budget's worth of the
-// registry (walked round-robin across runs, see RUN_BUDGET_MS):
+// Every ~9 min, for every role wallet, every wallet the ring's own ledger shows
+// moved funds recently, and a capped slice of the rest of the registry (walked
+// round-robin across runs, see LEASE_SECONDS, ROTATION_BATCH_SIZE):
 //   1. getSignaturesForAddress(limit 100, until=<persisted cursor>) — only
 //      signatures newer than the last scan. Cursor persisted per wallet so RPC
 //      stays bounded and each tx is classified exactly once.
@@ -61,13 +62,41 @@ const CANONICAL_USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 // burning the RPC quota every other Solana read depends on. So a run now holds a
 // lease that doubles as the native cadence, stops starting wallets inside a
 // budget well under maxDuration, and the registry is walked round-robin from
-// where the last run stopped. The role wallets, which hold the money, are read
-// on every run.
+// where the last run stopped.
+//
+// Even leased and budgeted, a single run's budget (200 s) was generous enough to
+// start nearly every one of the 2,006 wallets every time (each no-activity wallet
+// costs one cheap getSignaturesForAddress call), so the platform's own RPC demand
+// only dropped from "~8 overlapping full scans" to "~1 full scan every 9 min" -
+// still every wallet, every lease. ROTATION_BATCH_SIZE below is a hard cap on how
+// many COLD (no known activity) wallets a run will start, independent of the time
+// budget, so a run's RPC cost no longer scales with registry size: a full
+// rotation of the cold registry now takes several runs instead of finishing
+// inside one. Two things are scanned on every run regardless of rotation
+// position: the role wallets (they hold the money) and any wallet the platform's
+// own ledger (x402_ring_ledger: settle/sweep/fund rows, see pool.js and
+// fresh-workers/run.js) shows moved funds since the last lease window - so a leak
+// on an active wallet is caught on the very next run, not after a full rotation.
+// `checked_at` is stamped on every wallet scanned, zero new signatures or not, so
+// rotation coverage is queryable (x402_ring_scan_cursor) without re-walking the
+// chain. Guarantee preserved: every registry wallet is checked at least once per
+// rotation (now bounded by ROTATION_BATCH_SIZE instead of the full registry
+// fitting one budget), and any wallet with ledger activity is checked on the very
+// next run regardless of where the rotation currently is.
 const LEASE_KEY = 'cron:x402-ring-leak-scan:lease';
 const LEASE_SECONDS = 9 * 60;
 const OFFSET_KEY = 'cron:x402-ring-leak-scan:offset';
 const RUN_BUDGET_MS = 200_000;
 const SCAN_CONCURRENCY = 4;
+// Hard cap on cold (non-priority) wallets a single run will START, regardless of
+// remaining budget. At the observed ~0.4 s/wallet/worker on degraded RPC lanes,
+// 300 wallets at SCAN_CONCURRENCY=4 lands a run around 30 s, well under the 60 s
+// p50 target, and rotates the full ~2,000-wallet cold registry in under 7 runs
+// (about an hour at the 9-minute lease cadence).
+const ROTATION_BATCH_SIZE = 300;
+// How far back to look in x402_ring_ledger for "moved funds since the last run".
+// Twice the lease so a lease that is skipped or delayed never leaves a gap.
+const LEDGER_ACTIVE_LOOKBACK_MS = 2 * LEASE_SECONDS * 1000;
 
 // ── Pure classification (exported for tests) ──────────────────────────────────
 
@@ -256,6 +285,9 @@ async function ensureSchema() {
 		`);
 	} catch { /* migration owns it */ }
 	try {
+		await withDbRetry(() => sql`ALTER TABLE x402_ring_scan_cursor ADD COLUMN IF NOT EXISTS checked_at timestamptz`);
+	} catch { /* migration owns it */ }
+	try {
 		await withDbRetry(() => sql`
 			CREATE TABLE IF NOT EXISTS x402_ring_fee_observed (
 				day          date PRIMARY KEY,
@@ -281,19 +313,67 @@ async function saveCursor(wallet, { lastSignature, lastSlot, scannedDelta, leaks
 	try {
 		await withDbRetry(() => sql`
 			INSERT INTO x402_ring_scan_cursor
-				(wallet, last_signature, last_slot, scanned_total, leaks_total, last_run_id, updated_at)
-			VALUES (${wallet}, ${lastSignature}, ${lastSlot}, ${scannedDelta}, ${leaksDelta}, ${runId}, now())
+				(wallet, last_signature, last_slot, scanned_total, leaks_total, last_run_id, checked_at, updated_at)
+			VALUES (${wallet}, ${lastSignature}, ${lastSlot}, ${scannedDelta}, ${leaksDelta}, ${runId}, now(), now())
 			ON CONFLICT (wallet) DO UPDATE SET
 				last_signature = COALESCE(EXCLUDED.last_signature, x402_ring_scan_cursor.last_signature),
 				last_slot      = COALESCE(EXCLUDED.last_slot, x402_ring_scan_cursor.last_slot),
 				scanned_total  = x402_ring_scan_cursor.scanned_total + ${scannedDelta},
 				leaks_total    = x402_ring_scan_cursor.leaks_total + ${leaksDelta},
 				last_run_id    = EXCLUDED.last_run_id,
+				checked_at     = now(),
 				updated_at     = now()
 		`);
 	} catch (err) {
 		console.warn('[ring-leak-scan] cursor upsert failed', { wallet, message: err?.message });
 	}
+}
+
+/**
+ * Stamp `checked_at` for a wallet whose scan found zero new signatures, so
+ * rotation coverage is visible (x402_ring_scan_cursor) without a cursor row
+ * ever existing otherwise - a never-active wallet (most of the 2,000-wallet
+ * payer pool) would carry no row at all, which looks identical to "never
+ * checked" as "checked, found nothing".
+ */
+async function touchCursor(wallet, runId) {
+	try {
+		await withDbRetry(() => sql`
+			INSERT INTO x402_ring_scan_cursor (wallet, scanned_total, leaks_total, last_run_id, checked_at, updated_at)
+			VALUES (${wallet}, 0, 0, ${runId}, now(), now())
+			ON CONFLICT (wallet) DO UPDATE SET
+				last_run_id = EXCLUDED.last_run_id,
+				checked_at  = now(),
+				updated_at  = now()
+		`);
+	} catch (err) {
+		console.warn('[ring-leak-scan] cursor touch failed', { wallet, message: err?.message });
+	}
+}
+
+/**
+ * Wallets the platform's own ledger shows moved funds (settle, sweep or fund)
+ * since `sinceMs`. The closest real "had activity" signal available without
+ * walking the chain: x402_ring_ledger is written by ring-pool-fund.js and
+ * fresh-workers/run.js on every sweep and top-up. Not exhaustive (a
+ * fresh-worker's own throwaway payer wallet is never a member of this
+ * registry, so its activity cannot appear here), which is why the rotation in
+ * scanPlan stays the coverage backstop rather than a nice-to-have.
+ * @param {number} sinceMs
+ * @returns {Promise<string[]>}
+ */
+async function ledgerActiveWallets(sinceMs) {
+	try {
+		const sinceSec = sinceMs / 1000;
+		const rows = await withDbRetry(() => sql`
+			SELECT DISTINCT wallet FROM (
+				SELECT from_wallet AS wallet FROM x402_ring_ledger WHERE ts > to_timestamp(${sinceSec})
+				UNION
+				SELECT to_wallet AS wallet FROM x402_ring_ledger WHERE ts > to_timestamp(${sinceSec})
+			) t WHERE wallet IS NOT NULL
+		`);
+		return rows.map((r) => r?.wallet).filter(Boolean);
+	} catch { return []; }
 }
 
 async function accrueObservedFee(dayToLamports) {
@@ -361,20 +441,24 @@ async function ringScanWallets() {
 }
 
 /**
- * Order one run's work: every role wallet, then the registry rotated to start at
- * `offset` so successive budget-bounded runs cover all of it in turn. Pure.
- * @param {string[]} roles
- * @param {string[]} registry
+ * Order one run's work: every priority wallet (role wallets plus any wallet the
+ * ledger shows active), then a batch-capped slice of the remaining registry
+ * rotated to start at `offset` so successive runs cover all of it in turn. Pure.
+ * @param {string[]} roles priority wallets: scanned every run, never rotated
+ * @param {string[]} registry the full enabled registry
  * @param {number} offset
- * @returns {{ roles: string[], rotation: string[], start: number }}
+ * @param {number} [batchSize] cap on rotation slice length; Infinity = unbounded
+ * @returns {{ roles: string[], rotation: string[], start: number, total: number }}
  */
-export function scanPlan(roles, registry, offset) {
+export function scanPlan(roles, registry, offset, batchSize = Infinity) {
 	const roleList = [...new Set((roles || []).filter(Boolean))];
 	const roleSet = new Set(roleList);
 	const rest = [...new Set((registry || []).filter(Boolean))].filter((w) => !roleSet.has(w));
 	const n = Number.isFinite(Number(offset)) ? Math.trunc(Number(offset)) : 0;
 	const start = rest.length ? ((n % rest.length) + rest.length) % rest.length : 0;
-	return { roles: roleList, rotation: [...rest.slice(start), ...rest.slice(0, start)], start };
+	const rotated = [...rest.slice(start), ...rest.slice(0, start)];
+	const cap = Number.isFinite(batchSize) && batchSize > 0 ? batchSize : rotated.length;
+	return { roles: roleList, rotation: rotated.slice(0, cap), start, total: rest.length };
 }
 
 /**
@@ -420,7 +504,10 @@ export async function scanWallet(conn, PublicKey, wallet, { allowed, usdcMint, r
 		summary.error = err?.message || 'sig_fetch_failed';
 		return summary;
 	}
-	if (sigInfos.length === 0) return summary;
+	if (sigInfos.length === 0) {
+		await touchCursor(wallet, runId);
+		return summary;
+	}
 	summary.truncated = sigInfos.length >= SIG_SCAN_LIMIT && !!cursor?.last_signature;
 
 	// getSignaturesForAddress returns newest→oldest.
@@ -599,13 +686,15 @@ export default wrapCron(async (req, res) => {
 		network: 'mainnet', commitment: 'confirmed',
 	});
 
-	const [allowed, wallets, offset] = await Promise.all([
+	const [allowed, wallets, offset, ledgerActive] = await Promise.all([
 		ringAllowedAddresses(),
 		ringScanWallets(),
 		cacheGet(OFFSET_KEY).catch(() => 0),
+		ledgerActiveWallets(nowMs - LEDGER_ACTIVE_LOOKBACK_MS),
 	]);
 	const usdcMint = env.X402_ASSET_MINT_SOLANA;
-	const plan = scanPlan(wallets.roles, wallets.registry, Number(offset) || 0);
+	const priority = [...wallets.roles, ...ledgerActive];
+	const plan = scanPlan(priority, wallets.registry, Number(offset) || 0, ROTATION_BATCH_SIZE);
 
 	if (plan.roles.length + plan.rotation.length === 0) {
 		return json(res, 200, { ok: true, run_id: runId, skipped: true, reason: 'no_ring_wallets_configured' });
@@ -619,8 +708,12 @@ export default wrapCron(async (req, res) => {
 		budgetMs: Math.max(0, RUN_BUDGET_MS - (Date.now() - startedAt)),
 		concurrency: SCAN_CONCURRENCY,
 	});
-	if (plan.rotation.length) {
-		await cacheSet(OFFSET_KEY, (plan.start + rotationRun.started) % plan.rotation.length, 7 * 24 * 3600).catch(() => {});
+	// Advance past the whole rotation SLICE that was offered this run (not just the
+	// wallets actually started), modulo the full cold-registry size (plan.total),
+	// never the batch-capped plan.rotation.length - otherwise a 300-wallet cap on a
+	// 2,000-wallet registry would wrap the offset back to 0 every run.
+	if (plan.total) {
+		await cacheSet(OFFSET_KEY, (plan.start + plan.rotation.length) % plan.total, 7 * 24 * 3600).catch(() => {});
 	}
 
 	const results = [...roleRun.results, ...rotationRun.results];
@@ -634,12 +727,19 @@ export default wrapCron(async (req, res) => {
 	await accrueObservedFee(feeByDay);
 	const feeCheck = await crossCheckFees(runId, nowMs);
 
+	// partial/remaining: the budget (not the batch cap) cut the run short - some
+	// wallet this run was supposed to start never got started. Cursors are already
+	// persisted for every wallet that DID finish, so a partial run loses no state.
+	const remaining = plan.rotation.length - rotationRun.started;
+	const partial = remaining > 0;
+
 	return json(res, 200, {
 		ok: true,
 		run_id: runId,
 		wallets: plan.roles.length + plan.rotation.length,
 		scanned_wallets: results.length,
-		deferred_wallets: plan.rotation.length - rotationRun.started,
+		partial,
+		remaining,
 		allowed_set_size: allowed.size,
 		leaks,
 		delegations,

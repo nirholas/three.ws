@@ -40,7 +40,7 @@ describe('scanPlan', () => {
 	it('treats a missing or garbage offset as the start', () => {
 		expect(scanPlan([], ['R1', 'R2'], undefined).rotation).toEqual(['R1', 'R2']);
 		expect(scanPlan([], ['R1', 'R2'], 'nope').rotation).toEqual(['R1', 'R2']);
-		expect(scanPlan([], [], 5)).toEqual({ roles: [], rotation: [], start: 0 });
+		expect(scanPlan([], [], 5)).toEqual({ roles: [], rotation: [], start: 0, total: 0 });
 	});
 });
 

@@ -47,6 +47,14 @@
 			<description>A new public endpoint, /api/x/mention-bot/status, answers whether the @-mention reply bot is live, in dry run, or paused, how many handles it has replied on, how many replies it sent in the last 24 hours, and its median reply time. No mention text or author identity is included. The /grok page now shows this as a live section, and /api/healthz carries the same signal as a platform subsystem, so an operator sees a wedged reply queue or a rising error rate within the hour it starts, instead of the bot quietly going silent with no signature anywhere.</description>
 		</item>
 		<item>
+			<title>The on-chain leak scanner now paces itself instead of racing the Solana RPC quota</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-11:The on-chain leak scanner now paces itself instead of racing the Solana RPC quota</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The background job that watches every platform-controlled wallet for a leak (money that should never leave the closed-loop agent economy) used to start nearly its entire wallet registry on every run, competing with the rest of the platform for the same paid RPC lanes. It now checks the wallets that hold money and any wallet with recent activity on every single run, and works through the rest of the registry in small, capped batches instead of trying to cover thousands of wallets at once. No change to what it catches: every wallet still gets checked on a steady rotation, just spread out so it stops crowding out other Solana reads.</description>
+		</item>
+		<item>
 			<title>Docs · Grok Bot recipes</title>
 			<link>https://three.ws/docs/tutorials/grok-bot-recipes</link>
 			<guid isPermaLink="false">2026-10-10:Docs · Grok Bot recipes</guid>

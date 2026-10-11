@@ -19,6 +19,7 @@ import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
+import { acquireLock } from '../_lib/cache.js';
 import { SOLANA_SIGNERS, resolveSignerPubkey } from '../_lib/solana-signers.js';
 import { ringAllowedAddresses } from '../_lib/x402/ring-allowlist.js';
 import { classifyWalletDebits } from './x402-ring-leak-scan.js';
@@ -27,6 +28,13 @@ import { requireCron } from '../_lib/cron-auth.js';
 
 const SIG_LIMIT = 100;
 const CANONICAL_USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+// Same shape as x402-ring-leak-scan.js's lease: this scan is small (a dozen or
+// so controlled wallets) but is fired both by its own */15 Cloud Scheduler job
+// and by every economy-tick invocation, so nothing stopped two scans from
+// running at once. The lease is well under either cadence, so it never blocks
+// a legitimate call, only a genuine overlap.
+const LEASE_KEY = 'cron:wallets-leak-scan:lease';
+const LEASE_SECONDS = 60;
 
 async function ensureSchema() {
 	await sql`
@@ -201,6 +209,9 @@ function signerEnvFor(name) {
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
+	if (!(await acquireLock(LEASE_KEY, LEASE_SECONDS))) {
+		return json(res, 200, { ok: true, skipped: true, reason: 'lease_held' });
+	}
 	await ensureSchema();
 
 	const runId = randomUUID();

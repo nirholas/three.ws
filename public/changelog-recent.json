@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-11T08:54:58.088Z",
+	"generated_at": "2026-10-11T09:24:58.269Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3856,
+	"total": 3857,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -59,6 +59,17 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "The on-chain leak scanner now paces itself instead of racing the Solana RPC quota",
+			"summary": "The background job that watches every platform-controlled wallet for a leak (money that should never leave the closed-loop agent economy) used to start nearly its entire wallet registry on every run, competing with the rest of the platform for the same paid RPC lanes. It now checks the wallets that hold money and any wallet with recent activity on every single run, and works through the rest of the registry in small, capped batches instead of trying to cover thousands of wallets at once. No change to what it catches: every wallet still gets checked on a steady rotation, just spread out so it stops crowding out other Solana reads.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"infra"
 			]
 		},
 		{
@@ -1546,17 +1557,6 @@
 			"tags": [
 				"improvement",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-18",
-			"type": "update",
-			"title": "Paid x402 endpoints are answering again",
-			"summary": "For several hours on September 18, nearly every paid endpoint on three.ws, the x402 discovery document at /.well-known/x402, the payment facilitator and the MCP server answered with a server error instead of a price. A routine update to the library behind wallet sign-in changed what it needs at startup, and our code tripped over it the moment it loaded, before any request could be served. Agents and marketplace validators that probed us saw a broken seller. The sign-in code now supplies what the library expects, returning buyers can sign back in to what they already paid for exactly as before, and the deploy checks now refuse to ship when the tested dependencies differ from the ones the live site will run, which is how this got past us.",
-			"link": "/docs/x402",
-			"tags": [
-				"fix",
-				"infra"
 			]
 		}
 	]

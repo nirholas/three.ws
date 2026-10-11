@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T08:54:58.064Z",
+	"generated_at": "2026-10-11T09:24:58.246Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -56,6 +56,17 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "The on-chain leak scanner now paces itself instead of racing the Solana RPC quota",
+			"summary": "The background job that watches every platform-controlled wallet for a leak (money that should never leave the closed-loop agent economy) used to start nearly its entire wallet registry on every run, competing with the rest of the platform for the same paid RPC lanes. It now checks the wallets that hold money and any wallet with recent activity on every single run, and works through the rest of the registry in small, capped batches instead of trying to cover thousands of wallets at once. No change to what it catches: every wallet still gets checked on a steady rotation, just spread out so it stops crowding out other Solana reads.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"infra"
 			]
 		},
 		{
