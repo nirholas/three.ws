@@ -4919,6 +4919,12 @@ URL: https://three.ws/awesome
 
 A curated, link-checked list of everything you need to give an AI agent a body: text-to-3D models, capture and Gaussian splatting, avatars, rigging, motion generation, lipsync and voice, web renderers, asset pipelines, and the agent frameworks that drive them. Searchable and filterable, and published as an awesome list on GitHub.
 
+### Tutorial · Six Grok Bot recipes, proven not imagined
+
+URL: https://three.ws/tutorials/grok-bot-recipes
+
+Six working Grok Bot workflows run against live production: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief.
+
 ## Blog
 
 Long-form announcements, launches, and writing from three.ws.

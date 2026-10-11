@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T10:13:45.228Z",
+	"generated_at": "2026-10-11T11:56:17.975Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -8188,6 +8188,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": true
+				},
+				{
+					"path": "/tutorials/grok-bot-recipes",
+					"title": "Tutorial · Six Grok Bot recipes, proven not imagined",
+					"description": "Six working Grok Bot workflows run against live production: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
 				}
 			]
 		},

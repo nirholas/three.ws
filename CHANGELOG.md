@@ -16,6 +16,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 ## 2026-10-10
 
 - **Docs · Grok Bot recipes** (`/docs/tutorials/grok-bot-recipes`): Six Grok Bot recipes run against production, not imagined: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief. Every output in the doc came from a real run.
+- **Tutorial · Six Grok Bot recipes, proven not imagined** (`/tutorials/grok-bot-recipes`): Six working Grok Bot workflows run against live production: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief.
 
 ## 2026-10-09
 

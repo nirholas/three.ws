@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-11T10:13:45.276Z",
+	"generated_at": "2026-10-11T11:56:18.006Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3857,
+	"total": 3858,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -78,6 +78,16 @@
 			"title": "Docs · Grok Bot recipes",
 			"summary": "Six Grok Bot recipes run against production, not imagined: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief. Every output in the doc came from a real run.",
 			"link": "/docs/tutorials/grok-bot-recipes",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
+			"title": "Tutorial · Six Grok Bot recipes, proven not imagined",
+			"summary": "Six working Grok Bot workflows run against live production: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief.",
+			"link": "/tutorials/grok-bot-recipes",
 			"tags": [
 				"launch"
 			]
@@ -1546,17 +1556,6 @@
 			"tags": [
 				"fix",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-09-18",
-			"type": "update",
-			"title": "Paid endpoints now describe themselves the way marketplaces expect",
-			"summary": "When an agent or a marketplace asks one of our paid endpoints what it costs, the answer also explains how to call it and what comes back. Around sixty endpoints were sending that explanation in an older layout, or in one that did not match its own rules, which is enough for a marketplace to skip the listing without saying why. Every paid endpoint now sends it in the current standard layout, checked against its own rules. We also added a tool that tests our endpoints with the same checklist a marketplace validator uses, so a listing problem shows up on our side first.",
-			"link": "/docs/x402-dev-tools",
-			"tags": [
-				"improvement",
-				"fix"
 			]
 		}
 	]

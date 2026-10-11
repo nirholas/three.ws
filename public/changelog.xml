@@ -63,6 +63,14 @@
 			<description>Six Grok Bot recipes run against production, not imagined: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief. Every output in the doc came from a real run.</description>
 		</item>
 		<item>
+			<title>Tutorial · Six Grok Bot recipes, proven not imagined</title>
+			<link>https://three.ws/tutorials/grok-bot-recipes</link>
+			<guid isPermaLink="false">2026-10-10:Tutorial · Six Grok Bot recipes, proven not imagined</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Six working Grok Bot workflows run against live production: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief.</description>
+		</item>
+		<item>
 			<title>Docs · Grok Bot connector reference</title>
 			<link>https://three.ws/docs/grok-bot</link>
 			<guid isPermaLink="false">2026-10-09:Docs · Grok Bot connector reference</guid>
