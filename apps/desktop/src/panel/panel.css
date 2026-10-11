@@ -28,12 +28,14 @@
 	}
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; background: transparent; color: var(--text); font: 13px/1.4 var(--font); -webkit-font-smoothing: antialiased; overflow: hidden; user-select: none; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 13px/1.4 var(--font); -webkit-font-smoothing: antialiased; overflow: hidden; user-select: none; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 button, select, input { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
-.panel { display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 14px; background: color-mix(in srgb, var(--bg) 82%, transparent); }
+.panel { display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 14px; background: var(--bg); }
+:root[data-vibrancy], :root[data-vibrancy] body { background: transparent; }
+:root[data-vibrancy] .panel, :root[data-vibrancy] .signin { background: color-mix(in srgb, var(--bg) 82%, transparent); }
 .panel[hidden], [hidden] { display: none !important; }
 
 /* header */
@@ -130,7 +132,7 @@ button, select, input { font: inherit; color: inherit; }
 .primary { background: var(--blue); color: #fff; padding: 9px 22px; border-radius: 10px; }
 
 /* signed out */
-.signin { display: grid; place-content: center; justify-items: center; gap: 10px; height: 100%; padding: 28px; text-align: center; background: color-mix(in srgb, var(--bg) 82%, transparent); }
+.signin { display: grid; place-content: center; justify-items: center; gap: 10px; height: 100%; padding: 28px; text-align: center; background: var(--bg); }
 .signin h1 { margin: 0; font-size: 18px; }
 .signin p { margin: 0; color: var(--muted); max-width: 250px; }
 .signin-mark { width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, var(--blue), #7c3aed); }

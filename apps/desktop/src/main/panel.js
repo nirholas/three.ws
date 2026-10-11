@@ -150,7 +150,8 @@ export function createPanel({ srcDir, session, api, runtime, companion, getUnrea
 			},
 		});
 		if (process.platform === 'darwin') win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-		win.loadFile(join(srcDir, 'panel', 'index.html'));
+		// Only macOS has a transparent, vibrant window; elsewhere the page paints its own opaque background.
+		win.loadFile(join(srcDir, 'panel', 'index.html'), process.platform === 'darwin' ? { query: { vibrancy: '1' } } : undefined);
 		win.on('blur', () => {
 			if (win.webContents.isDevToolsOpened()) return;
 			if (win.isVisible()) {

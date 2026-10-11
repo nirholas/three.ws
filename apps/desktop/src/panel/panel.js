@@ -5,6 +5,8 @@
 
 import { formatSol, shortAddress, ago, agentPower } from './model.js';
 
+if (new URLSearchParams(location.search).has('vibrancy')) document.documentElement.dataset.vibrancy = '';
+
 const $ = (id) => document.getElementById(id);
 const el = (tag, props = {}, ...kids) => {
 	const node = Object.assign(document.createElement(tag), props);
