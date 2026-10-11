@@ -10,11 +10,13 @@
 //
 // The same version is served from three independent CDNs; any one of them is
 // the whole library, so the first that loads wins and the rest are never hit.
+// Google's own ajax.googleapis.com mirror is not in the chain: it never
+// published 4.4.0, so that rung would only ever 404.
 
-const VERSION = '4.3.1';
+const VERSION = '4.4.0';
 const SOURCES = [
-	`https://ajax.googleapis.com/ajax/libs/model-viewer/${VERSION}/model-viewer.min.js`,
 	`https://cdn.jsdelivr.net/npm/@google/model-viewer@${VERSION}/dist/model-viewer.min.js`,
+	`https://cdnjs.cloudflare.com/ajax/libs/model-viewer/${VERSION}/model-viewer.min.js`,
 	`https://unpkg.com/@google/model-viewer@${VERSION}/dist/model-viewer.min.js`,
 ];
 // A script that neither loads nor errors (a black-holed CDN) is treated as

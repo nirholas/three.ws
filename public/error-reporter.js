@@ -80,7 +80,7 @@
 	const IGNORED_RESOURCE_SOURCES =
 		/\/_vercel\/(insights|speed-insights)\/|\/ingest\/|\.i\.posthog\.com\//;
 	// Exceptions thrown *inside* third-party CDN libraries we load but don't
-	// control. model-viewer (served from ajax.googleapis.com) throws internally
+	// control. model-viewer (served from jsdelivr, cdnjs or unpkg) throws internally
 	// when the browser can't give it a WebGL context — context budget exhausted,
 	// GPU blocklist, headless. It degrades to its poster on its own; the throw is
 	// neither our bug nor fixable from here, so it only adds noise. Vercel's
@@ -88,7 +88,7 @@
 	// "history.pushState is undefined" inside wallet browsers) — analytics
 	// degrading on an exotic UA is not actionable.
 	const IGNORED_THIRD_PARTY_CODE =
-		/ajax\.googleapis\.com\/ajax\/libs\/model-viewer\/|\/_vercel\/(insights|speed-insights)\/script|\/ingest\/static\/|\.i\.posthog\.com\//;
+		/\/(?:ajax\/libs\/model-viewer\/|npm\/@google\/model-viewer@|@google\/model-viewer@)|\/_vercel\/(insights|speed-insights)\/script|\/ingest\/static\/|\.i\.posthog\.com\//;
 	// WalletConnect's sign-client (loaded from esm.sh) raises an unhandled rejection
 	// — "No matching key. session topic doesn't exist: <hex>" — when a relay event
 	// arrives for a session the client has already torn down (the user disconnected,

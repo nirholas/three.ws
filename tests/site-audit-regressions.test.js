@@ -19,7 +19,7 @@ describe('production page-audit regressions', () => {
 		expect(js).toContain("from '../shared/model-viewer-loader.js'");
 		expect(js).not.toContain('ajax.googleapis.com/ajax/libs/model-viewer/');
 		const loader = source('src/shared/model-viewer-loader.js');
-		expect(loader).toContain("const VERSION = '4.3.1';");
+		expect(loader).toContain("const VERSION = '4.4.0';");
 	});
 
 	it('marks only the intentional voice error preview as audit documentation', () => {

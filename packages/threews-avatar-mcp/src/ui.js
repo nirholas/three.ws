@@ -22,13 +22,13 @@ export const UI_MIME_TYPE = 'text/html;profile=mcp-app';
 // supported by the spec.
 export const UI_CSP = {
 	connectDomains: [
-		'https://ajax.googleapis.com',
+		'https://cdn.jsdelivr.net',
 		'https://*.r2.dev',
 		'https://three.ws',
 		'https://*.three.ws',
 	],
 	resourceDomains: [
-		'https://ajax.googleapis.com',
+		'https://cdn.jsdelivr.net',
 		'https://*.r2.dev',
 		'https://three.ws',
 		'https://*.three.ws',

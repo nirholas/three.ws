@@ -42,7 +42,7 @@
 	<!-- The hero/showcase 3D viewers lazy-load model-viewer (4.0.0) from this CDN
 	     on first interaction; warm the connection so the TLS/DNS handshake is paid
 	     before the element bundle is requested. -->
-	<link rel="preconnect" href="https://ajax.googleapis.com" crossorigin />
+	<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 	<link rel="stylesheet" href="/fonts/fonts.css" />
 	<link rel="stylesheet" href="/tokens.css" />
 	<link rel="stylesheet" href="/buttons.css" />
@@ -1386,7 +1386,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 	var viewersLive = false;
 	var pendingViewerCards = [];
 
-	const MV_SRC = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js';
+	const MV_SRC = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js';
 	function ensureModelViewer() {
 		if (customElements.get('model-viewer')) return;
 		// Reuse the library if the hero/mini-forge already injected it, but match
@@ -2353,8 +2353,8 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 		await new Promise((resolve, reject) => {
 			const s = document.createElement('script');
 			s.type = 'module';
-			s.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js';
-			s.integrity = 'sha384-cprcVQt7wbUl0xngF3PGP6yBB7n4/t+4AoAMG9biiMCGFiWOdzUH10Ie2COTqFNW';
+			s.src = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js';
+			s.integrity = 'sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p';
 			s.crossOrigin = 'anonymous';
 			s.onload = resolve;
 			s.onerror = reject;

@@ -65,7 +65,9 @@ const glbName = basename(glb);
 // model-viewer does not wire a decoder for on its own, so the shared shim is
 // injected ahead of the model-viewer module exactly as every page does it.
 const MESHOPT_SHIM = resolve(root, 'public/model-viewer-meshopt.js');
-const MV_TAG = '<script type="module" src="https://ajax.googleapis.com';
+// Any CDN shape of the pinned build: the pin's host has moved before (Google's
+// mirror to jsdelivr), and a literal host here silently stopped the shim.
+const MV_TAG = /<script type="module" src="[^"]*model-viewer[^"]*\.min\.js"><\/script>/;
 const server = createServer((req, res) => {
 	// '/model/' with the slash: '/model-viewer-meshopt.js' also starts with
 	// '/model', and serving it the GLB's bytes made the shim fail to parse and
@@ -80,10 +82,9 @@ const server = createServer((req, res) => {
 		res.end(readFileSync(MESHOPT_SHIM));
 		return;
 	}
-	const html = readFileSync(HARNESS, 'utf8').replace(
-		MV_TAG,
-		`<script src="/model-viewer-meshopt.js"></script>${MV_TAG}`,
-	);
+	const harness = readFileSync(HARNESS, 'utf8');
+	if (!MV_TAG.test(harness)) throw new Error(`${HARNESS} has no model-viewer <script> to inject the meshopt shim ahead of`);
+	const html = harness.replace(MV_TAG, (tag) => `<script src="/model-viewer-meshopt.js"></script>${tag}`);
 	res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
 	res.end(html);
 });
