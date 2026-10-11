@@ -36,6 +36,11 @@
 		"marked": "^18.0.13",
 		"smol-toml": "^1.8.0"
 	},
+	"overrides": {
+		"rpc-websockets": {
+			"uuid": "^11.1.0"
+		}
+	},
 	"devDependencies": {
 		"electron": "^33.2.0",
 		"electron-builder": "^25.1.8"
