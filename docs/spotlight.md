@@ -37,8 +37,8 @@ write-up is actually readable (the index can only show three clamped lines of
 it), and it is the one place an entry is edited after it is created:
 
 - the agent standing in 3D, live from its own GLB, with its still image held
-  underneath until the viewer has painted so a model that fails to load degrades
-  to the avatar rather than an empty stage,
+  underneath until the viewer fires `agent:ready` so a model that fails to load
+  degrades to the still rather than an empty stage,
 - the full write-up as real paragraphs,
 - a facts panel read live off the agent on every request: skills, conversations,
   on-chain actions, network, upvotes, views,
