@@ -1,0 +1,14 @@
+{
+  "name": "awesome-generative-3d",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Curated, machine-readable directory of generative 3D tools, models, APIs and pipelines.",
+  "license": "CC0-1.0",
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/validate.mjs",
+    "build": "node scripts/build-readme.mjs",
+    "check": "node scripts/validate.mjs && node scripts/build-readme.mjs"
+  },
+  "engines": { "node": ">=18" }
+}
