@@ -1,0 +1,46 @@
+{
+	"for_user_id": "1700000000000000001",
+	"tweet_create_events": [
+		{
+			"id_str": "1800000000000000901",
+			"created_at": "Sun Oct 11 18:30:00 +0000 2026",
+			"text": "@trythreews make a red vintage scooter",
+			"lang": "en",
+			"in_reply_to_status_id_str": null,
+			"in_reply_to_user_id_str": null,
+			"user": {
+				"id_str": "1700000000000000900",
+				"screen_name": "fixture_webhook_author",
+				"name": "Fixture Webhook Author",
+				"profile_image_url_https": "https://pbs.twimg.com/profile_images/fixture.jpg",
+				"verified": false
+			},
+			"entities": {
+				"user_mentions": [
+					{ "id_str": "1700000000000000001", "screen_name": "trythreews", "indices": [0, 11] }
+				],
+				"urls": []
+			},
+			"extended_entities": { "media": [] },
+			"is_quote_status": false
+		},
+		{
+			"id_str": "1800000000000000902",
+			"created_at": "Sun Oct 11 18:31:00 +0000 2026",
+			"text": "anyway, back to my day",
+			"lang": "en",
+			"in_reply_to_status_id_str": "1800000000000000800",
+			"in_reply_to_user_id_str": "1700000000000000800",
+			"user": {
+				"id_str": "1700000000000000901",
+				"screen_name": "fixture_unaddressed_author",
+				"name": "Fixture Unaddressed Author",
+				"profile_image_url_https": "https://pbs.twimg.com/profile_images/fixture2.jpg",
+				"verified": false
+			},
+			"entities": { "user_mentions": [], "urls": [] },
+			"extended_entities": { "media": [] },
+			"is_quote_status": false
+		}
+	]
+}
