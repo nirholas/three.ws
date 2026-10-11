@@ -1,5 +1,7 @@
 # x-grok 39: mention settings in the agent's X panel
 
+Evolve status (2026-10-11): everything is shipped and verified except the DB write path, which needs an owner action. The "Answer mentions" panel (`pages/agent-edit.html`, Social tab, `src/agent-edit.js`), the extended `GET`/`PUT /api/x/agents` fields, and the new owner-only `GET /api/x/mention-decisions` endpoint are complete and committed. `tests/x-mention-decisions-endpoint.test.js` (6/6) and `tests/agent-mention-policy-migration.test.js` (6/6, PGlite against the real migration SQL) pass. A full local browser pass against the real dev database verified every state (no connection, missing scope, connected, empty/populated decisions with reply text and media thumbnail, loading, error) and keyboard access to every control, zero console errors from this feature. The one thing not done: `api/_lib/migrations/20261011220000_agent_mention_policy.sql` is not applied to the shared database (`npm run db:migrate` is owner-gated for this session), so a live save currently 500s with Postgres `42703 undefined_column`. See OWNER-ACTIONS row 35. Leaving this file in place until that migration lands and the save path is reverified live.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate. Run after 060.
 
 ## Operating clause (binding)

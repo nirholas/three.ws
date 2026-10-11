@@ -2340,7 +2340,7 @@ async function ensureSocialTab() {
   socialTabMounted = true;
 
   $('x-username').value = agentData.x_username || '';
-  await Promise.all([loadXStatus(), loadXTriggers()]);
+  await Promise.all([loadXStatus(), loadXTriggers(), loadMentionPolicy()]);
 
   const params = new URLSearchParams(location.search);
   const xParam = params.get('x');
@@ -2605,6 +2605,165 @@ $('x-post-btn').addEventListener('click', async () => {
     status.className = 'form-status err';
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Answer mentions (agent_x_policies.mention_replies_*, x_mention_events)
+// ─────────────────────────────────────────────────────────────────────────────
+
+let mentionIntentDefs = [];
+
+async function loadMentionPolicy() {
+  const statusEl = $('mention-access-status');
+  try {
+    const r = await apiFetch(`${API_BASE}/x/agents?agent_id=${agentId}`, { credentials: 'include' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const state = await r.json();
+    mentionIntentDefs = state.mention_intents || [];
+    renderMentionAccess(state);
+    renderMentionSettings(state.policy || {}, mentionIntentDefs);
+  } catch (err) {
+    statusEl.textContent = `Could not load mention settings: ${err.message}`;
+  }
+  await loadMentionDecisions();
+}
+
+function renderMentionAccess(state) {
+  const statusEl = $('mention-access-status');
+  const connectLink = $('mention-connect-link');
+  const reconnectLink = $('mention-reconnect-link');
+  const fields = $('mention-settings-fields');
+  connectLink.hidden = true;
+  reconnectLink.hidden = true;
+
+  if (state.configured === false) {
+    statusEl.textContent = 'X connections are not enabled on this deployment. Ask an operator to configure X OAuth.';
+    fields.hidden = true;
+    return;
+  }
+
+  const conn = state.connection;
+  if (!conn) {
+    statusEl.textContent = "Not connected. Connect this agent's own X account so it can read and reply to its mentions.";
+    connectLink.href = state.connect_url;
+    connectLink.hidden = false;
+    fields.hidden = false;
+    return;
+  }
+
+  if (!conn.can_answer_mentions) {
+    statusEl.innerHTML = `Connected as <strong>@${escapeHtml(conn.username)}</strong>, but missing permission to read or reply to mentions (${escapeHtml((conn.missing_mention_scopes || []).join(', '))}). Reconnect to grant it.`;
+    reconnectLink.href = state.connect_url;
+    reconnectLink.hidden = false;
+    fields.hidden = false;
+    return;
+  }
+
+  statusEl.innerHTML = `Connected as <strong>@${escapeHtml(conn.username)}</strong>. Ready to answer mentions.`;
+  fields.hidden = false;
+}
+
+function renderMentionSettings(policy, intents) {
+  $('mention-enabled').checked = !!policy.mention_replies_enabled;
+  $('mention-dry-run').checked = policy.mention_replies_dry_run !== false;
+  $('mention-daily-cap').value = policy.mention_replies_daily_cap ?? 10;
+  const allowed = new Set(policy.mention_replies_allowed_intents || []);
+  const container = $('mention-intents');
+  container.innerHTML = intents.map((k) => `
+    <label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.764rem;color:rgba(255,255,255,0.7)" title="${escapeHtml(k.summary)}">
+      <input type="checkbox" class="mention-intent-cb" value="${escapeHtml(k.id)}" ${allowed.has(k.id) ? 'checked' : ''}>
+      ${escapeHtml(k.label)}
+    </label>
+  `).join('');
+}
+
+$('mention-save-btn').addEventListener('click', async () => {
+  const status = $('mention-save-status');
+  const allowedIntents = Array.from(document.querySelectorAll('.mention-intent-cb:checked')).map((el) => el.value);
+  const body = {
+    mention_replies_enabled: $('mention-enabled').checked,
+    mention_replies_dry_run: $('mention-dry-run').checked,
+    mention_replies_daily_cap: Number($('mention-daily-cap').value) || 0,
+    mention_replies_allowed_intents: allowedIntents,
+  };
+  status.textContent = 'Saving…';
+  status.className = 'form-status';
+  try {
+    const r = await apiFetch(`${API_BASE}/x/agents?agent_id=${agentId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(body),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    renderMentionSettings(j.policy || body, mentionIntentDefs);
+    status.textContent = 'Saved.';
+    status.className = 'form-status ok';
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  }
+});
+
+function decisionLabel(d) {
+  return {
+    reply: 'Replied',
+    skip: 'Skipped',
+    rate_limited: 'Rate limited',
+    unsafe: 'Blocked (unsafe)',
+    budget: 'Over budget',
+    error: 'Error',
+    pending: 'Pending',
+    paused: 'Paused',
+  }[d] || d || 'Pending';
+}
+
+async function loadMentionDecisions() {
+  const container = $('mention-decisions-list');
+  container.innerHTML = '<div class="muted">Loading…</div>';
+  try {
+    const r = await apiFetch(`${API_BASE}/x/mention-decisions?agent_id=${agentId}&limit=20`, { credentials: 'include' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    renderMentionDecisions(j.decisions || []);
+  } catch (err) {
+    container.innerHTML = `<div class="muted">Could not load decisions: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderMentionDecisions(rows) {
+  const container = $('mention-decisions-list');
+  if (!rows.length) {
+    container.innerHTML = '<div class="muted">No mentions recorded yet. Once someone tags this agent on X, its decisions will show up here.</div>';
+    return;
+  }
+  container.innerHTML = rows.map((d) => {
+    const badgeClass = d.decision || 'pending';
+    const when = d.decided_at || d.created_at;
+    const whenLabel = when ? new Date(when).toLocaleString() : '';
+    const reply = d.reply_text
+      ? `<div class="decision-item-reply">${d.dry_run ? 'Would reply: ' : ''}${escapeHtml(d.reply_text)}</div>`
+      : '';
+    const media = d.reply_media_url
+      ? `<img class="decision-item-media" src="${escapeHtml(d.reply_media_url)}" alt="Reply media preview" loading="lazy">`
+      : '';
+    return `
+      <div class="trigger-item">
+        <div class="trigger-item-head">
+          <span class="decision-badge ${escapeHtml(badgeClass)}">${escapeHtml(decisionLabel(d.decision))}</span>
+          <div class="trigger-item-kind">@${escapeHtml(d.author_username || 'unknown')}</div>
+          <div class="decision-item-meta">${escapeHtml(whenLabel)}</div>
+        </div>
+        <div class="trigger-item-body" style="display:block">
+          ${d.mention_text ? `<div class="muted" style="padding:0">${escapeHtml(d.mention_text)}</div>` : ''}
+          ${d.reason ? `<div class="decision-item-meta">${escapeHtml(d.reason)}</div>` : ''}
+          ${reply}
+          ${media}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Analytics tab

@@ -6,7 +6,9 @@
 //                                             body: { enabled?, allowed_kinds?, review_before_post?,
 //                                                     max_posts_per_day?, min_interval_min?,
 //                                                     tone_guidance?, banned_terms?, max_hashtags?,
-//                                                     allow_links? }
+//                                                     allow_links?, mention_replies_enabled?,
+//                                                     mention_replies_dry_run?, mention_replies_daily_cap?,
+//                                                     mention_replies_allowed_intents? }
 // POST   /api/x/agents?agent_id=<uuid>      ask the agent to post, through its policy
 //                                             body: { kind, text? | thread_parts?, reply_to_tweet_id?,
 //                                                     scheduled_at? }

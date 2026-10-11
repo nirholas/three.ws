@@ -1081,6 +1081,14 @@
 				padding: 0.3rem 0.5rem;
 				width: auto;
 			}
+			.decision-item-reply { font-size: 0.764rem; color: rgba(255, 255, 255, 0.6); margin-top: 0.382rem; }
+			.decision-item-media { max-width: 64px; max-height: 64px; border-radius: 6px; object-fit: cover; margin-top: 0.382rem; display: block; }
+			.decision-badge { font-size: 0.618rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; }
+			.decision-badge.reply { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+			.decision-badge.skip, .decision-badge.paused, .decision-badge.pending { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.55); }
+			.decision-badge.rate_limited, .decision-badge.budget { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+			.decision-badge.unsafe, .decision-badge.error { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+			.decision-item-meta { font-size: 0.764rem; color: rgba(255, 255, 255, 0.4); }
 
 			/* Analytics */
 			.bar-chart {
@@ -1682,6 +1690,58 @@
 							<div class="form-actions">
 								<button class="btn-primary" id="x-post-btn" data-i18n="agent_edit.post_to_x">Post to X</button>
 								<span class="form-status" id="x-post-status" role="status" aria-live="polite"></span>
+							</div>
+						</div>
+
+						<div class="form-group" id="mention-replies-group">
+							<label class="form-label" data-i18n="agent_edit.answer_mentions">Answer mentions</label>
+							<p class="hint" data-i18n="agent_edit.answer_mentions_hint">When someone tags this agent on X, it can read the mention and reply in its own voice. Dry run records what it would say without posting anything.</p>
+
+							<div class="card" id="mention-access-card">
+								<div class="card-row">
+									<div>
+										<div class="card-title" data-i18n="agent_edit.mention_access">Mention access</div>
+										<div class="card-sub" id="mention-access-status" role="status" aria-live="polite">Loading…</div>
+									</div>
+									<div class="card-actions">
+										<a class="btn-primary" id="mention-connect-link" href="#" hidden data-i18n="agent_edit.connect_x">Connect X</a>
+										<a class="btn-ghost" id="mention-reconnect-link" href="#" hidden data-i18n="agent_edit.reconnect_x">Reconnect X</a>
+									</div>
+								</div>
+							</div>
+
+							<div id="mention-settings-fields" hidden>
+								<div class="form-actions" style="margin-top:0.75rem">
+									<label style="display:inline-flex;align-items:center;gap:0.5rem;font-size:0.764rem;color:rgba(255,255,255,0.75)">
+										<input type="checkbox" id="mention-enabled" />
+										<span data-i18n="agent_edit.enable_mention_replies">Answer mentions</span>
+									</label>
+									<label style="display:inline-flex;align-items:center;gap:0.5rem;font-size:0.764rem;color:rgba(255,255,255,0.75)" title="Record what the agent would reply without posting it.">
+										<input type="checkbox" id="mention-dry-run" />
+										<span data-i18n="agent_edit.dry_run">Dry run</span>
+									</label>
+								</div>
+
+								<div class="form-group" style="margin-top:0.75rem">
+									<label class="form-label" for="mention-daily-cap" data-i18n="agent_edit.daily_cap">Daily cap</label>
+									<input class="form-input" id="mention-daily-cap" type="number" min="0" max="50" style="max-width:140px" />
+								</div>
+
+								<div class="form-group">
+									<label class="form-label" data-i18n="agent_edit.allowed_intents">What it may do when it replies</label>
+									<div id="mention-intents" class="form-actions"></div>
+								</div>
+
+								<div class="form-actions">
+									<button class="btn-primary" id="mention-save-btn" data-i18n="agent_edit.save_policy">Save policy</button>
+									<span class="form-status" id="mention-save-status" role="status" aria-live="polite"></span>
+								</div>
+							</div>
+
+							<div class="form-group" style="margin-top:1rem">
+								<label class="form-label" data-i18n="agent_edit.recent_mention_decisions">Recent mention decisions</label>
+								<p class="hint" data-i18n="agent_edit.recent_mention_decisions_hint">The last 20 mentions this agent read and what it decided to do.</p>
+								<div id="mention-decisions-list" class="trigger-list"><div class="muted">Loading…</div></div>
 							</div>
 						</div>
 					</section>

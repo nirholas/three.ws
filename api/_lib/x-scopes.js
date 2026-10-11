@@ -38,6 +38,9 @@ export const X_SEED_REQUIRED_SCOPES = Object.freeze(['tweet.read', 'users.read']
 /** Writing a post: what publishTweet calls. */
 export const X_POST_REQUIRED_SCOPES = Object.freeze(['tweet.write']);
 
+/** Reading mentions and replying to them: what the agent mention-reply policy needs. */
+export const X_MENTION_REQUIRED_SCOPES = Object.freeze(['tweet.read', 'users.read', 'tweet.write']);
+
 /**
  * Resolve a scope-set name from untrusted input (a query param) to the set
  * itself. An unknown or missing name resolves to the full set, so a typo can

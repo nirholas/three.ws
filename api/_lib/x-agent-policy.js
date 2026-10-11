@@ -21,7 +21,7 @@ import { sql } from './db.js';
 import { env } from './env.js';
 import { isUuid } from './validate.js';
 import { MAX_TWEET_LEN, XPostError, publishTweet, resolveXConnection } from './x-post.js';
-import { X_POST_REQUIRED_SCOPES, missingScopes } from './x-scopes.js';
+import { X_MENTION_REQUIRED_SCOPES, X_POST_REQUIRED_SCOPES, missingScopes } from './x-scopes.js';
 
 /** What an agent may post about. Order is the order the settings page lists them. */
 export const POST_KINDS = Object.freeze([
@@ -32,6 +32,20 @@ export const POST_KINDS = Object.freeze([
 	{ id: 'updates', label: 'Updates', summary: 'General posts in the agent\'s voice.' },
 ]);
 export const POST_KIND_IDS = Object.freeze(POST_KINDS.map((k) => k.id));
+
+/**
+ * What a mention reply may do, beyond the plain conversational reply. Order
+ * is the order the settings page lists them. `help`, `launch` and `ignore`
+ * are not here: the parser always allows the first two with no 3D or 3D-only
+ * side effects to gate, and `ignore` never produces a reply.
+ */
+export const MENTION_INTENTS = Object.freeze([
+	{ id: 'chat', label: 'Conversation', summary: 'Reply to a mention in the agent\'s own voice.' },
+	{ id: 'make', label: 'Make a 3D model', summary: 'Generate the 3D model a mention asked for.' },
+	{ id: 'image3d', label: 'Image to 3D', summary: 'Turn an attached image into a 3D model.' },
+	{ id: 'avatar', label: 'Make an avatar', summary: 'Generate a rigged avatar a mention asked for.' },
+]);
+export const MENTION_INTENT_IDS = Object.freeze(MENTION_INTENTS.map((k) => k.id));
 
 /** The policy an agent has before its owner configures one: nothing may post. */
 export const DEFAULT_POLICY = Object.freeze({
@@ -44,6 +58,10 @@ export const DEFAULT_POLICY = Object.freeze({
 	banned_terms: Object.freeze([]),
 	max_hashtags: 1,
 	allow_links: true,
+	mention_replies_enabled: false,
+	mention_replies_dry_run: true,
+	mention_replies_daily_cap: 10,
+	mention_replies_allowed_intents: Object.freeze([]),
 });
 
 const LIMITS = Object.freeze({
@@ -53,6 +71,7 @@ const LIMITS = Object.freeze({
 	tone_guidance: 1000,
 	banned_terms: 50,
 	banned_term_len: 60,
+	mention_replies_daily_cap: [0, 50],
 });
 
 // Ceiling on the review queue per agent: a run that loops must not be able to
@@ -118,6 +137,23 @@ export function normalizePolicyPatch(patch) {
 		}
 		out.banned_terms = terms;
 	}
+	if ('mention_replies_enabled' in patch) {
+		if (typeof patch.mention_replies_enabled !== 'boolean') throw invalid('mention_replies_enabled must be a boolean');
+		out.mention_replies_enabled = patch.mention_replies_enabled;
+	}
+	if ('mention_replies_dry_run' in patch) {
+		if (typeof patch.mention_replies_dry_run !== 'boolean') throw invalid('mention_replies_dry_run must be a boolean');
+		out.mention_replies_dry_run = patch.mention_replies_dry_run;
+	}
+	if ('mention_replies_daily_cap' in patch) {
+		out.mention_replies_daily_cap = intInRange(patch.mention_replies_daily_cap, LIMITS.mention_replies_daily_cap, 'mention_replies_daily_cap');
+	}
+	if ('mention_replies_allowed_intents' in patch) {
+		if (!Array.isArray(patch.mention_replies_allowed_intents)) throw invalid('mention_replies_allowed_intents must be an array');
+		const unknown = patch.mention_replies_allowed_intents.filter((k) => !MENTION_INTENT_IDS.includes(k));
+		if (unknown.length) throw invalid(`unknown intent: ${unknown.join(', ')}. Use: ${MENTION_INTENT_IDS.join(', ')}`);
+		out.mention_replies_allowed_intents = MENTION_INTENT_IDS.filter((k) => patch.mention_replies_allowed_intents.includes(k));
+	}
 	return out;
 }
 
@@ -158,7 +194,16 @@ export function toParts({ text = null, threadParts = null }) {
 }
 
 function rowToPolicy(row) {
-	if (!row) return { ...DEFAULT_POLICY, allowed_kinds: [], banned_terms: [], configured: false, updated_at: null };
+	if (!row) {
+		return {
+			...DEFAULT_POLICY,
+			allowed_kinds: [],
+			banned_terms: [],
+			mention_replies_allowed_intents: [],
+			configured: false,
+			updated_at: null,
+		};
+	}
 	return {
 		enabled: row.enabled,
 		allowed_kinds: row.allowed_kinds || [],
@@ -169,6 +214,10 @@ function rowToPolicy(row) {
 		banned_terms: row.banned_terms || [],
 		max_hashtags: row.max_hashtags,
 		allow_links: row.allow_links,
+		mention_replies_enabled: row.mention_replies_enabled ?? DEFAULT_POLICY.mention_replies_enabled,
+		mention_replies_dry_run: row.mention_replies_dry_run ?? DEFAULT_POLICY.mention_replies_dry_run,
+		mention_replies_daily_cap: row.mention_replies_daily_cap ?? DEFAULT_POLICY.mention_replies_daily_cap,
+		mention_replies_allowed_intents: row.mention_replies_allowed_intents || [],
 		configured: true,
 		updated_at: row.updated_at,
 	};
@@ -199,11 +248,14 @@ export async function saveAgentPolicy({ userId, agentId, patch }) {
 	const [row] = await sql`
 		insert into agent_x_policies
 			(agent_id, user_id, enabled, allowed_kinds, review_before_post, max_posts_per_day,
-			 min_interval_min, tone_guidance, banned_terms, max_hashtags, allow_links)
+			 min_interval_min, tone_guidance, banned_terms, max_hashtags, allow_links,
+			 mention_replies_enabled, mention_replies_dry_run, mention_replies_daily_cap,
+			 mention_replies_allowed_intents)
 		values
 			(${agentId}, ${userId}, ${next.enabled}, ${next.allowed_kinds}, ${next.review_before_post},
 			 ${next.max_posts_per_day}, ${next.min_interval_min}, ${next.tone_guidance}, ${next.banned_terms},
-			 ${next.max_hashtags}, ${next.allow_links})
+			 ${next.max_hashtags}, ${next.allow_links}, ${next.mention_replies_enabled},
+			 ${next.mention_replies_dry_run}, ${next.mention_replies_daily_cap}, ${next.mention_replies_allowed_intents})
 		on conflict (agent_id) do update set
 			user_id = excluded.user_id,
 			enabled = excluded.enabled,
@@ -215,6 +267,10 @@ export async function saveAgentPolicy({ userId, agentId, patch }) {
 			banned_terms = excluded.banned_terms,
 			max_hashtags = excluded.max_hashtags,
 			allow_links = excluded.allow_links,
+			mention_replies_enabled = excluded.mention_replies_enabled,
+			mention_replies_dry_run = excluded.mention_replies_dry_run,
+			mention_replies_daily_cap = excluded.mention_replies_daily_cap,
+			mention_replies_allowed_intents = excluded.mention_replies_allowed_intents,
 			updated_at = now()
 		returning *
 	`;
@@ -254,10 +310,13 @@ async function cadenceState(agentId, policy) {
 
 function connectionSummary(conn) {
 	if (!conn) return null;
+	const missingMentionScopes = missingScopes(conn.scopes, X_MENTION_REQUIRED_SCOPES);
 	return {
 		account: conn.source,
 		username: conn.username,
 		can_post: missingScopes(conn.scopes, X_POST_REQUIRED_SCOPES).length === 0,
+		can_answer_mentions: missingMentionScopes.length === 0,
+		missing_mention_scopes: missingMentionScopes,
 		connected_at: conn.connected_at,
 		last_posted_at: conn.last_posted_at,
 	};
@@ -287,6 +346,7 @@ export async function getAgentXState({ userId, agentId }) {
 		cadence: await cadenceState(agentId, policy),
 		pending_reviews: pending,
 		kinds: POST_KINDS,
+		mention_intents: MENTION_INTENTS,
 	};
 }
 
