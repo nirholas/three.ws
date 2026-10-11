@@ -1,6 +1,6 @@
 {
 	"generatedBy": "scripts/capture-doc-media.mjs",
-	"generatedAt": "2026-10-11T11:41:37.886Z",
+	"generatedAt": "2026-10-11T12:41:02.400Z",
 	"shots": {
 		"activity-hero": {
 			"id": "activity-hero",
@@ -47,9 +47,9 @@
 			"viewport": "wide",
 			"animated": false,
 			"authenticated": false,
-			"capturedAt": "2026-10-11T11:41:22.577Z",
+			"capturedAt": "2026-10-11T12:41:02.329Z",
 			"capturedFrom": "https://three.ws",
-			"commit": "307cd2213",
+			"commit": "015ab1705",
 			"sha256": "3a1f060d02f858d24dea90d34c4cf3246706c2aab61a133c33ea164ff97e808f",
 			"bytes": 73908,
 			"width": 1800,
