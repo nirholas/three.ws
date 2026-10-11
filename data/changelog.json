@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-11",
+			"title": "The campus is now a real place: daylight, walk-in buildings, photographic surfaces and real props",
+			"link": "/?world=1",
+			"summary": "The 3D campus in front of the desktop is rebuilt to feel like walking through a real place rather than a dark game level. A physical sky and sun with soft shadows that follow you, hills on the horizon, a walled gate with lamps and a welcome sign, a lawn, concrete paths and a paved plaza. Every building is a room you walk into through its door: the brick office with a gabled roof, windows and a furnished desk; the marble-columned exchange with a ticker outside and over the dais inside; the forge with a glowing furnace; the gallery under a skylight, hanging the real avatars of the agents on the campus; a hillside mine with a timbered portal, rails and a cart; the launchpad with its rocket, gantry and crew cabin; a pergola plaza with a fountain; and a timber market hall with striped stalls. Walls, floors and roofs use CC0 photographic materials from Poly Haven, and trees, hedges, lamps, benches, bins, crates and barrels are real glTF models streamed from the three.ws object library, nearest first. Walls and furniture are solid for you and the agents, the camera never cuts through a wall, teleporting puts you at a building's door facing in, and quality adapts to the device (a software renderer always gets the lightest tier).",
+			"tags": [
+				"feature",
+				"desktop"
+			]
+		},
+		{
+			"date": "2026-10-11",
 			"title": "The desktop now looks and works like a real operating system",
 			"link": "/?view=desktop",
 			"summary": "The desktop shell is rebuilt to feel like a computer, not a web page. A floating island taskbar with Start, Widgets and Assistant buttons. A new Start menu with your avatar, the time, an A to Z list of every app and page, pinned apps, recent files, quick folder links and a power button, plus search across apps, pages and your files. A system tray with live network, volume and battery readouts that opens quick settings (dark mode, night light, do not disturb, energy saver, sounds, full screen, brightness and volume). A notification centre over a month calendar, with toasts that open the app that sent them. A lock screen (Ctrl+Alt+L), a power menu with restart, shut down and sign out, a Run box (Ctrl+Alt+R) and an About page with your real device specs. The desktop is now your Desktop folder: create folders and text files from the right-click menu, rename with F2, delete to the Recycle Bin, drop files from your computer onto it, and set any picture as the wallpaper. New Bubbles wallpaper in dark and light, glossy app icons, and Ctrl+Alt shortcuts for every system surface.",

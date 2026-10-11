@@ -64,6 +64,50 @@ World button brings you back to that place's doorstep, not the gate. Your
 avatar is the same default body and clip library the rest of the site uses
 (`/avatars/default.glb`, `/animations/manifest.json`).
 
+### The grounds
+
+The campus is a real place in daylight, not a dark floor with props on it.
+The sky is a physical sky model lit by one sun (soft shadows that follow you),
+the horizon is a ring of hills in haze, and a walled gate with lamps and a
+welcome sign opens onto a concrete path that crosses a lawn to a paved plaza
+round the office; paths lead from the plaza to every other door. Every
+building is a room you walk into through an open door: the office (brick,
+gabled roof, windows on three sides, a real desk with monitor, keyboard,
+mouse, phone and headset), the exchange (marble columns, a porch, a ticker
+board outside and a second one over the dais inside), the forge (brick, a
+furnace that glows and flickers, an anvil and a workbench), the gallery
+(skylight, seven framed pictures that hang the real avatars of the agents on
+the campus) and the mine (a hillside cave with timbered portal, rails and a
+cart around the five veins). The launchpad is a concrete pad with the rocket,
+its gantry and a crew cabin; the plaza is a pergola with a fountain; the
+market is a timber hall with striped stalls. The chase camera never clips
+through a wall: it pulls in along the line to your avatar when a wall or the
+hillside gets between you (`keepCameraInRoom` in `world/index.js`).
+
+Surfaces are photographic. `public/campus/textures` holds colour, normal and
+ARM (ambient occlusion, roughness, metal) maps for grass, paving, brick,
+concrete, wood floor, roof tiles and rock, all CC0 from Poly Haven, downscaled
+by `node scripts/build-campus-textures.mjs` and listed in
+`public/campus/manifest.json` (which the world reads at runtime). Trees,
+hedges, benches, lamps, bins, planters, crates, barrels and the rest are real
+glTF models streamed from the three.ws object library (CC0 Poly Haven GLBs on
+the R2 CDN); `world/props.js` is the placement list, with a byte budget per
+tier (58 MB on desktop, 16 MB on a phone) and models loaded nearest-first from
+your spawn so the gate is dressed before the far side of the campus.
+
+Walls, columns, the desk, the furnace, the stalls and every prop are solids
+your avatar and the agents slide around (`src/shared/solids.js`, unit tested
+in `tests/solids.test.js`). The rooms, their doors, windows and roofs are pure
+data in `world/rooms.js` (`tests/world-rooms.test.js` proves every door is
+walkable, every arrival point stands outside the building at its door with
+open air behind the camera, and no window sits on a wall the door is in).
+
+Quality follows the device. `detectQualityTier` picks high (2048 px soft
+shadows, normal maps, 8x anisotropy), medium or mobile (no shadows, no normal
+maps), and a software rasteriser (SwiftShader, llvmpipe, Microsoft Basic
+Render) always gets mobile so a headless browser or a VM stays responsive.
+`?quality=high|medium|mobile` on the URL overrides the choice for testing.
+
 ### The agents
 
 The campus is populated by real registered agents, not extras. On entry the

@@ -5,7 +5,7 @@
 // visitor starts here or on the desktop; the taskbar's World button brings
 // them back.
 
-import { MeshBasicMaterial, Vector3 } from 'three';
+import { MeshBasicMaterial, Raycaster, Vector3 } from 'three';
 import { createPlayer } from '../../docs-world/player.js';
 import { createControls } from '../../docs-world/controls.js';
 import { createCameraModeController, CAMERA_MODE_LABELS } from '../../game/camera-modes.js';
@@ -20,7 +20,8 @@ import { enterVR, vrSupported } from './xr.js';
 import { createAgents } from './agents.js';
 import { APPROACH_DISTANCE } from './cast.js';
 import { createTalkPanel } from './talk.js';
-import { CAMPUS_RADIUS, PLACES, SPAWN, nearestInteractable, placeById, standPointFor } from './places.js';
+import { CAMPUS_RADIUS, PLACES, SPAWN, nearestInteractable, placeById } from './places.js';
+import { arrivalPointFor } from './rooms.js';
 import './world.css';
 
 const TICKER_REFRESH_MS = 60_000;
@@ -118,7 +119,7 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 	const agents = createAgents({
 		scene,
 		tagsEl: $('.wd-tags'),
-		solids: campus.solids,
+		solids: campus.strollSolids,
 		isTouch,
 		reducedMotion,
 		visitorName: () => shell.displayName(),
@@ -126,6 +127,7 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 	});
 	let castErrorShown = false;
 	agents.onState(({ state, error }) => {
+		if (state === 'ready') campus.hangArt(agents.thumbs());
 		if (state === 'error' && !castErrorShown) {
 			castErrorShown = true;
 			toast(`The agents could not come out: ${error}. The campus is still open.`, '#f87171');
@@ -171,6 +173,23 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 	}
 	syncCamera();
 	camBtn.addEventListener('click', () => cameraCtl.cycle(camera));
+
+	// Walls, roofs and the hill never come between the camera and the avatar:
+	// when one does, the camera moves up to it, so rooms stay readable inside.
+	const occluderRay = new Raycaster();
+	const eye = new Vector3();
+	const toCamera = new Vector3();
+	function keepCameraInRoom() {
+		eye.set(player.position.x, player.position.y + 1.4, player.position.z);
+		toCamera.subVectors(camera.position, eye);
+		const dist = toCamera.length();
+		if (dist < 0.5) return;
+		occluderRay.set(eye, toCamera.divideScalar(dist));
+		occluderRay.far = dist;
+		const hit = occluderRay.intersectObjects(campus.occluders, false)[0];
+		if (!hit) return;
+		camera.position.copy(eye).addScaledVector(toCamera, Math.max(0.4, hit.distance - 0.35));
+	}
 
 	let busy = false; // a transition is running: ignore interactions
 	let nearest = null;
@@ -259,9 +278,9 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 		b.addEventListener('click', () => goTo(p));
 		nav.append(b);
 	}
-	/** Put the player just outside a place, facing it. */
+	/** Put the player at a place's door (or on its approach), facing in. */
 	function goTo(p) {
-		const s = standPointFor(p);
+		const s = arrivalPointFor(p);
 		player.root.position.set(s.x, 0, s.z);
 		player.root.rotation.y = s.yaw;
 		controls.orbit.yaw = s.yaw;
@@ -335,7 +354,7 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 		talk.close();
 		controls.enabled = false;
 		await fadeTo(true, `Entering ${place.title}`);
-		const s = standPointFor(place);
+		const s = arrivalPointFor(place);
 		player.root.position.set(s.x, 0, s.z);
 		player.root.rotation.y = s.yaw;
 		leaveTo({ app: place.app, place: place.id });
@@ -476,7 +495,7 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 		const yaw = xr ? Math.atan2(-camera.matrixWorld.elements[8], -camera.matrixWorld.elements[10]) + Math.PI : controls.orbit.yaw;
 		player.update(dt, move, yaw, controls.run, campus.solids);
 		if (!sitting) agents.update(dt, player.position, camera);
-		campus.tick(dt);
+		campus.tick(dt, player.position);
 		ticker.tick(dt);
 		if (Math.hypot(player.position.x, player.position.z - 8) < 14) {
 			screen.draw({ wall: shell.prefs.wall, name: shell.displayName(), prompt: nearest?.id === 'monitor' ? 'Press E to sit down' : '', clock24: shell.prefs.clock24, accent: shell.prefs.accent });
@@ -498,6 +517,7 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 		} else {
 			cameraCtl.tick(dt);
 			cameraCtl.apply(camera, player.position, player.height, controls.orbit, 0.35);
+			if (!cameraCtl.isFirstPerson()) keepCameraInRoom();
 		}
 		renderer.render(scene, camera);
 	}

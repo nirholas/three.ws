@@ -18,6 +18,7 @@ import {
 import { AnimationManager } from '../animation-manager.js';
 import { gltfLoader } from '../loaders/gltf.js';
 import { log } from '../shared/log.js';
+import { resolveSolids } from '../shared/solids.js';
 import { WORLD_RADIUS, RING_RADIUS } from './world.js';
 
 // The same default body /walk, /walk-embed and the embed preview use. It must
@@ -168,7 +169,7 @@ export function createPlayer(
 	 * @param {{x:number, z:number}} move input vector in camera space, |v| <= 1
 	 * @param {number} camYaw camera yaw so input is screen-relative
 	 * @param {boolean} run
-	 * @param {Array<{group: import('three').Group, keepout?: number}>} pavilions keep-out volumes
+	 * @param {Array<{group: import('three').Group, keepout?: number} | {obb: {x:number, z:number, yaw:number, hw:number, hd:number}}>} pavilions solids (see src/shared/solids.js)
 	 */
 	function update(dt, move, camYaw, run, pavilions) {
 		running = run;
@@ -200,21 +201,11 @@ export function createPlayer(
 			root.position.z *= bound / dist;
 		}
 
-		// Keep-out: push out radially so portals and props stay walk-aroundable.
-		// A volume may carry its own `keepout` radius; the world default applies otherwise.
-		if (pavilions) {
-			for (const p of pavilions) {
-				const dx = root.position.x - p.group.position.x;
-				const dz = root.position.z - p.group.position.z;
-				const d = Math.hypot(dx, dz);
-				const r = p.keepout ?? keepout;
-				if (d > 0.001 && d < r) {
-					const push = r / d;
-					root.position.x = p.group.position.x + dx * push;
-					root.position.z = p.group.position.z + dz * push;
-				}
-			}
-		}
+		// Keep-out: cylinders (portals, props) push out radially, oriented boxes
+		// (walls, counters) push out through their nearest face, so rooms are
+		// solid and doorways are walkable. A cylinder may carry its own
+		// `keepout` radius; the world default applies otherwise.
+		resolveSolids(root.position, pavilions, { keepout });
 
 		// Face travel direction.
 		const speed = Math.hypot(velocity.x, velocity.z);

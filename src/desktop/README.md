@@ -18,7 +18,11 @@ The web desktop served at `/` (page: `pages/desktop.html`). See
 | `icons.js` | Stroke glyphs |
 | `theme.css`, `desktop.css`, `styles.css` | CTRL tokens; shell and window styles; Snap layouts, Snap assist, peek and the Fluent, Aqua and Classic skins |
 | `world/index.js` | The campus controller: mounts the 3D world over the desktop, input, proximity prompts, sit-down and walk-in transitions, the phone, the VR headset, mining, the frame loop |
-| `world/campus.js` | The scene: ground, office desk, exchange, launchpad, mine, forge, gallery, plaza, market, lighting |
+| `world/campus.js` | The scene: sky, sun and shadows, the grounds (lawn, gate, paths, plaza, hills), every building as a walk-in room with photographic surfaces, the furnished office, the exchange, the launchpad, the cave mine, the forge, the gallery, the plaza, the market, quality tiers |
+| `world/rooms.js` | Pure room data: footprint, walls, doors, windows, roofs, columns, door and arrival points, wall solids (unit tested) |
+| `world/props.js` | Pure prop placement: trees, hedges, lamps, benches, bins, crates and the rest from the three.ws object library, per-tier byte budget, prop solids (unit tested) |
+| `world/prop-loader.js` | Streams the placed GLBs nearest-first from the spawn, shares geometry between instances, hands each prop its hit id |
+| `world/surfaces.js` | PBR surface materials (colour, normal, ARM) from `public/campus/manifest.json`, tiled in metres |
 | `world/places.js` | Pure campus map: places, keep-outs, veins, desk objects, trigger radii, stand points (unit tested) |
 | `world/cast.js` | Pure rules for the agents on the campus: who qualifies (real name, public GLB), where they stand, prompt distances, the SSE parser, the embed snippet and the grounding prompt (unit tested) |
 | `world/agents.js` | Spawns the cast from `/api/agents/public?avatar=1`, each in its own body: wander, notice and face the visitor, the greeter's wave and hello, name tags and speech bubbles, the streaming `/api/chat` client |
