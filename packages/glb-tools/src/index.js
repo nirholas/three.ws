@@ -102,6 +102,20 @@ export function bake(avatarId, appearance, opts) {
 	return defaultClient().bake(avatarId, appearance, opts);
 }
 
+// buildLodChain is Node.js-only (gltf-transform's NodeIO, meshoptimizer's WASM
+// simplifier) and the one real dependency this otherwise zero-dependency
+// package carries. It's dynamically imported here so a browser bundle that
+// only calls inspect()/theme()/bake() never pulls gltf-transform into its
+// graph; a Node-only caller can also import '@three-ws/glb-tools/lod' directly.
+/**
+ * Build a real multi-level LOD chain for a GLB (Node.js only). See
+ * README.md#buildlodchain for the levels/MSFT_lod contract.
+ */
+export async function buildLodChain(glb, options) {
+	const { buildLodChain: impl } = await import('./lod.js');
+	return impl(glb, options);
+}
+
 // ── Response shaping ─────────────────────────────────────────────────────────
 
 // The inspect endpoint already returns camelCase JSON (it ships the isomorphic

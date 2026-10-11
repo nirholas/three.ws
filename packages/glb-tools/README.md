@@ -17,6 +17,7 @@
   <a href="#install">Install</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#api">API</a> ·
+  <a href="#buildlodchainglb-options--promiselodchainresult">LOD chains</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#pricing">Pricing</a> ·
   <a href="https://three.ws">three.ws</a>
@@ -64,9 +65,14 @@ functions instead of MCP tools.
 npm install @three-ws/glb-tools
 ```
 
-Zero runtime dependencies. Works in Node 18+, modern browsers, and CI runners
-(uses `fetch`). To *generate* the GLBs you inspect, add
-[`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge).
+`inspect`, `theme`, `bake`, and the default import have zero runtime
+dependencies: they work in Node 18+, modern browsers, and CI runners (uses
+`fetch`). The one exception is [`buildLodChain()`](#buildlodchainglb-options--promiselodchainresult),
+a Node.js-only local computation (no network call) that pulls in
+`@gltf-transform/*`, `meshoptimizer`, and `draco3dgltf` to actually decimate
+geometry; it's dynamically imported so calling only `inspect`/`theme`/`bake`
+never adds that weight to a browser bundle. To *generate* the GLBs you
+inspect, add [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge).
 
 ## Quick start
 
@@ -107,13 +113,32 @@ const baked = await bake('avatar_8f3a…', {
 console.log(baked.bakedStorageKey, baked.sizeBytes);
 ```
 
+Build a real, engine-ready LOD chain from a local GLB (Node.js only, no
+network call):
+
+```js
+import { buildLodChain } from '@three-ws/glb-tools';
+import { readFile, writeFile } from 'node:fs/promises';
+
+const source = await readFile('character.glb');
+const { source: stats, levels, combined } = await buildLodChain(source);
+
+console.log(stats.triangleCount);                         // → 4672
+levels.forEach((l) => console.log(l.name, l.triangleCount)); // LOD0 4672, LOD1 2336, LOD2 700
+
+await writeFile('character.lod.glb', combined);            // one file, MSFT_lod-tagged
+await writeFile('character.lod0.glb', levels[0].glb);      // discrete per-level files for
+await writeFile('character.lod1.glb', levels[1].glb);      // engines (Unity/Unreal/Godot
+await writeFile('character.lod2.glb', levels[2].glb);      // importers) that want them separate
+```
+
 ## API
 
-Public exports: `inspect`, `theme`, `bake`, `createGlbTools`, `ThreeWsError`,
-`PaymentRequiredError`, and `DEFAULT_BASE_URL`. The three headline functions
-use a shared zero-config client; `createGlbTools({ baseUrl, fetch, apiKey,
-headers })` builds your own when you need a payment-aware fetch, an owner
-token, or a custom origin reused across calls.
+Public exports: `inspect`, `theme`, `bake`, `buildLodChain`, `createGlbTools`,
+`ThreeWsError`, `PaymentRequiredError`, and `DEFAULT_BASE_URL`. The three
+headline functions use a shared zero-config client; `createGlbTools({
+baseUrl, fetch, apiKey, headers })` builds your own when you need a
+payment-aware fetch, an owner token, or a custom origin reused across calls.
 
 ### `inspect(url, options?) → Promise<InspectReport>`
 
@@ -202,6 +227,49 @@ appearanceHash, sizeBytes, cleared, bakeError }` (the endpoint's snake_case
 avatar fields, shaped to camelCase). An **empty / cleared** appearance clears
 the cached baked GLB (the base model is served again) and resolves with
 `bakedStorageKey: null` and `cleared: true`.
+
+### `buildLodChain(glb, options?) → Promise<LodChainResult>`
+
+Decimate a GLB into a real multi-level LOD chain, entirely locally (no
+network call, no x402 charge). Runs gltf-transform's `simplify()`
+(meshoptimizer's `MeshoptSimplifier` under the hood) at each requested ratio,
+then wires the result two ways: a single **combined** GLB that carries every
+level plus the archived [`MSFT_lod`](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Archived/MSFT_lod)
+extension (for engines that switch LOD at runtime from one file), and a
+standalone GLB per level (for engines/importers that want discrete LOD files
+on disk). A viewer that doesn't understand `MSFT_lod` renders the combined
+file's `LOD0` only: the alternate levels are real nodes in the document but
+excluded from the default scene's graph, so they're addressable, never
+double-rendered.
+
+**Input**: `glb` is a `Uint8Array` or `ArrayBuffer` containing a real GLB
+(any valid glTF 2.0 binary; Draco- and meshopt-compressed inputs decode
+transparently).
+
+**Options**
+
+| Option | Type | Default | Notes |
+|---|---|---|---|
+| `levels` | `Array<number \| { name?, ratio, error?, screenCoverage? }>` | 3 levels: `1`, `0.5`, `0.15` | 2-6 entries, highest detail first, strictly decreasing `ratio` in `(0, 1]`. A bare number is shorthand for `{ ratio }`. |
+
+**Returns** `LodChainResult`
+
+| Field | Type | Notes |
+|---|---|---|
+| `source.triangleCount` / `source.vertexCount` | `number` | The input mesh's own geometry, before any simplification. |
+| `levels[]` | `LodLevelResult[]` | One entry per requested level, highest detail first. |
+| `combined` | `Uint8Array` | Every level merged into one `MSFT_lod`-tagged GLB. |
+
+Each `LodLevelResult` carries `name`, `ratio`, `error`, `screenCoverage`
+(the switch threshold written to `MSFT_screencoverage`, or `null` when
+omitted), `triangleCount`, `vertexCount`, and `glb` (a standalone GLB for
+that level alone). `buildLodChain()` throws if the source has no triangle
+geometry, or if a level comes out *less* decimated than the level before it
+(raise that level's `error` tolerance or lower its `ratio`).
+
+Only this one function needs the dependencies above: import it from the
+package root (dynamically loaded) or from `@three-ws/glb-tools/lod` directly
+in a Node-only module that wants a static import.
 
 ## How it works
 

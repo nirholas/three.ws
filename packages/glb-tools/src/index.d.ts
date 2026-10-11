@@ -164,3 +164,10 @@ export declare function createGlbTools(options?: GlbToolsClientOptions): GlbTool
 export declare function inspect(url: string, opts?: InspectOptions): Promise<InspectReport>;
 export declare function theme(mint: string, opts?: ThemeOptions): Promise<ThemedMesh>;
 export declare function bake(avatarId: string, appearance: Appearance | null, opts?: BakeOptions): Promise<BakeResult>;
+
+export type { LodLevelInput, LodLevelResult, LodChainResult } from './lod.js';
+/** Node.js-only. See './lod.js' for the full contract and README.md#buildlodchain. */
+export declare function buildLodChain(
+	glb: Uint8Array | ArrayBuffer,
+	options?: { levels?: import('./lod.js').LodLevelInput[] },
+): Promise<import('./lod.js').LodChainResult>;

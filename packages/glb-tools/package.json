@@ -12,6 +12,11 @@
       "import": "./src/index.js",
       "default": "./src/index.js"
     },
+    "./lod": {
+      "types": "./src/lod.d.ts",
+      "import": "./src/lod.js",
+      "default": "./src/lod.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -48,7 +53,13 @@
   "engines": {
     "node": ">=18"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@gltf-transform/core": "^4.4.0",
+    "@gltf-transform/extensions": "^4.4.0",
+    "@gltf-transform/functions": "^4.5.0",
+    "draco3dgltf": "^1.5.7",
+    "meshoptimizer": "^1.2.0"
+  },
   "publishConfig": {
     "access": "public"
   }
