@@ -36,18 +36,25 @@ Every route below is relative to `https://three.ws/api/agents/<agent-id>`. The a
 
 Two credential types are accepted, resolved in this order:
 
-1. **Session cookie.** The browser session issued by the normal sign-in flow.
-2. **Bearer token.** `Authorization: Bearer <token>`, where the token is either an API key (`sk_live_…` or `sk_test_…`) or an OAuth access token.
+1. **Session cookie.** The browser session issued by the normal sign-in flow. A cookie session carries every scope, since it is the account holder acting directly.
+2. **Bearer token.** `Authorization: Bearer <token>`, where the token is either an API key (`sk_live_…` or `sk_test_…`) or an OAuth access token. A bearer principal holds only the scopes it was granted.
 
-The resolved user id is then compared against `agent_identities.user_id`. The three gate outcomes are identical across surfaces:
+The resolved user id is then compared against `agent_identities.user_id`. The four gate outcomes are identical across surfaces:
 
 | Status | `error` | Meaning |
 |---|---|---|
 | `401` | `unauthorized` | No session and no valid bearer token |
 | `404` | `not_found` | No such agent, or it is soft-deleted |
 | `403` | `forbidden` | Authenticated, but not the agent's owner |
+| `403` | `insufficient_scope` | Authenticated and owns the agent, but the bearer lacks `wallet:write` for a write |
 
 Recovery differs: it computes the caller's relationship to the agent (owner, guardian, beneficiary) and authorizes per action. See [Recovery](#recovery-guardians-threshold-and-inheritance).
+
+### Bearer scope: `wallet:write`
+
+Every write on every surface in this document (capabilities, orders, intents, autopilot, recovery, and the Solana guard) runs through the shared gate in [`api/_lib/spend-scope.js`](../api/_lib/spend-scope.js): `GET`, `HEAD`, and `OPTIONS` pass for any bearer, but any other method requires the bearer's stored scope string to include `wallet:write`. A session cookie is exempt, since it already carries full authority. This closes the gap where a key minted for generation or agent data, or an OAuth app the user approved only for reading avatars, could otherwise arm an intent, place an order, revoke another holder's capability, or vote on a recovery request.
+
+A connector key (the preset for an unattended AI agent, marked in its stored scope string) can never hold `wallet:write`, by construction, no matter what its scope string is later edited to say. A refusal is `403 insufficient_scope` with an `error_description` that names the scope and points at [/dashboard](https://three.ws/dashboard) to do it from a browser session instead. See [API key scopes](mcp.md#api-key-scopes) for how a key is minted with `wallet:write` in the first place.
 
 ### CSRF
 
