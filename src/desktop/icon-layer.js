@@ -18,7 +18,7 @@ import {
 const PAD = 8;
 const DRAG_PX = 5;
 
-export function createIconLayer({ host, resolve, isKnown, defaults, load, save, launch, menu, size }) {
+export function createIconLayer({ host, resolve, isKnown, defaults, load, save, launch, menu, size, itemMenu, onDelete, onRename }) {
 	let items = [];
 	let selected = new Set();
 	let anchor = null;
@@ -228,11 +228,18 @@ export function createIconLayer({ host, resolve, isKnown, defaults, load, save, 
 		const id = el.dataset.id;
 		if (!selected.has(id)) select([id], false);
 		const many = selected.size > 1;
-		menu(e.clientX, e.clientY, [
-			[many ? `Open ${selected.size} apps` : 'Open', 'external', () => [...selected].forEach(openIcon)],
-			'-',
-			[many ? 'Remove from desktop' : 'Remove from desktop', 'close', () => remove([...selected])],
-		]);
+		const ids = [...selected];
+		// The host can supply its own menu (files on the desktop open, rename and go to the trash).
+		const own = itemMenu?.(ids, () => ids.forEach(openIcon));
+		menu(
+			e.clientX,
+			e.clientY,
+			own || [
+				[many ? `Open ${selected.size} apps` : 'Open', 'external', () => ids.forEach(openIcon)],
+				'-',
+				['Remove from desktop', 'close', () => remove(ids)],
+			],
+		);
 	});
 	host.addEventListener('keydown', (e) => {
 		const el = e.target.closest('.os-icon');
@@ -242,7 +249,11 @@ export function createIconLayer({ host, resolve, isKnown, defaults, load, save, 
 			e.preventDefault();
 			[...(selected.size ? selected : new Set([id]))].forEach(openIcon);
 		} else if (e.key === 'Delete') {
-			remove(selected.size ? [...selected] : [id]);
+			const ids = selected.size ? [...selected] : [id];
+			if (!onDelete?.(ids)) remove(ids);
+		} else if (e.key === 'F2' && onRename) {
+			e.preventDefault();
+			onRename(id);
 		} else if (e.key === ' ') {
 			e.preventDefault();
 			select([id], false);
@@ -329,8 +340,27 @@ export function createIconLayer({ host, resolve, isKnown, defaults, load, save, 
 			return true;
 		},
 		remove,
+		/** Keep an icon's spot when what it points at is renamed. */
+		rename(from, to) {
+			const it = items.find((i) => i.id === from);
+			if (!it || items.some((i) => i.id === to)) return false;
+			els.get(from)?.remove();
+			els.delete(from);
+			selected.delete(from);
+			it.id = to;
+			render();
+			persist();
+			return true;
+		},
 		has: (id) => items.some((i) => i.id === id),
-		refresh() {
+		/** Redraw; `ids` rebuilds those icons from a fresh resolve (a file changed type or name). */
+		refresh(ids) {
+			(ids || []).forEach((id) => {
+				const el = els.get(id);
+				if (!el) return;
+				el.remove();
+				els.delete(id);
+			});
 			render();
 		},
 		selectAll() {

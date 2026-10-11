@@ -740,55 +740,6 @@ body {
 	color: var(--accent);
 }
 
-.widgets {
-	left: 8px;
-	bottom: calc(var(--task-h) + 10px);
-	width: min(420px, calc(100vw - 16px));
-	max-height: calc(100vh - var(--task-h) - 24px);
-	overflow-y: auto;
-	padding: 14px;
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	transform-origin: bottom left;
-	scrollbar-width: thin;
-}
-.wg-card {
-	border-radius: 10px;
-	background: var(--card);
-	border: 1px solid var(--hr);
-	padding: 14px;
-}
-.wg-card h3 {
-	margin: 0 0 4px;
-	font-size: 13px;
-	font-weight: 600;
-}
-.wg-card p {
-	margin: 0;
-	color: var(--text2);
-	font-size: 12.5px;
-}
-.wg-agent {
-	display: grid;
-	grid-template-columns: 130px 1fr;
-	gap: 12px;
-	align-items: center;
-}
-.wg-agent agent-3d {
-	width: 130px;
-	height: 170px;
-	display: block;
-	border-radius: 8px;
-	overflow: hidden;
-	background: var(--bg30);
-}
-.wg-actions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 6px;
-	margin-top: 10px;
-}
 .os-btn {
 	display: inline-flex;
 	align-items: center;
@@ -815,31 +766,7 @@ body {
 .os-btn.primary:hover {
 	filter: brightness(1.1);
 }
-.wg-quick {
-	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: 6px;
-}
-.wg-quick button {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 6px;
-	padding: 10px 4px;
-	border-radius: var(--siz-radius2);
-	font-size: 12px;
-}
-.wg-quick button:hover {
-	background: var(--hover-b);
-}
 
-.calendar {
-	right: 8px;
-	bottom: calc(var(--task-h) + 10px);
-	width: 300px;
-	padding: 14px;
-	transform-origin: bottom right;
-}
 .cal-head {
 	display: flex;
 	align-items: center;

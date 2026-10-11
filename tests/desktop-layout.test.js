@@ -390,6 +390,16 @@ describe('preferences and session export', () => {
 		expect(sanitizePrefs({ style: 'toString' }, walls).style).toBe('fluent');
 		expect(sanitizePrefs({ style: 'vista' }, walls).style).toBe('fluent');
 	});
+	it('clamps the quick settings and keeps the switches boolean', () => {
+		const p = sanitizePrefs({ brightness: 5, volume: 140, nightLight: 'yes', dnd: true, saver: 1 }, walls);
+		expect(p.brightness).toBe(30);
+		expect(p.volume).toBe(100);
+		expect(p.nightLight).toBe(false);
+		expect(p.dnd).toBe(true);
+		expect(p.saver).toBe(false);
+		expect(sanitizePrefs({ brightness: 'dim', volume: Number.NaN }, walls)).toMatchObject({ brightness: 100, volume: 70 });
+		expect(sanitizePrefs({ volume: 33.6 }, walls).volume).toBe(34);
+	});
 	it('survives bad JSON', () => {
 		expect(sanitizePrefs('{oops', walls)).toEqual(DEFAULT_PREFS);
 		expect(sanitizePrefs(null, walls)).toEqual(DEFAULT_PREFS);

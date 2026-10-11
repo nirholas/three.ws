@@ -273,13 +273,14 @@ export const MODES = ['dark', 'light', 'auto'];
  * labelled taskbar. `menuH` and `dockH` are the bars the work area avoids.
  */
 export const STYLES = {
-	fluent: { label: 'Fluent', menuH: 0, dockH: 48 },
+	// Fluent's taskbar is a floating island: 48px tall with a 7px margin all round.
+	fluent: { label: 'Fluent', menuH: 0, dockH: 62 },
 	aqua: { label: 'Aqua', menuH: 28, dockH: 84 },
 	classic: { label: 'Classic', menuH: 0, dockH: 40 },
 };
 export const PREFS_VERSION = 1;
 export const DEFAULT_PREFS = {
-	wall: 'three',
+	wall: 'bubbles',
 	accent: ACCENTS[0],
 	mode: 'dark',
 	iconSize: 'medium',
@@ -290,7 +291,14 @@ export const DEFAULT_PREFS = {
 	startIn: 'world',
 	sound: true,
 	style: 'fluent',
+	brightness: 100,
+	volume: 70,
+	nightLight: false,
+	dnd: false,
+	saver: false,
 };
+
+const pct = (v, lo, fallback) => (Number.isFinite(v) ? Math.round(Math.min(100, Math.max(lo, v))) : fallback);
 
 /** Normalise a rectangle given two corner points (any drag direction). */
 export function marqueeRect(ax, ay, bx, by) {
@@ -447,6 +455,11 @@ export function sanitizePrefs(raw, wallpaperIds) {
 		startIn: START_MODES.includes(d.startIn) ? d.startIn : DEFAULT_PREFS.startIn,
 		sound: d.sound !== false,
 		style: Object.hasOwn(STYLES, d.style) ? d.style : DEFAULT_PREFS.style,
+		brightness: pct(d.brightness, 30, DEFAULT_PREFS.brightness),
+		volume: pct(d.volume, 0, DEFAULT_PREFS.volume),
+		nightLight: d.nightLight === true,
+		dnd: d.dnd === true,
+		saver: d.saver === true,
 	};
 }
 
