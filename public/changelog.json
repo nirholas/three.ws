@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T08:54:58.064Z",
+	"generated_at": "2026-10-11T10:13:45.244Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -56,6 +56,17 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "The on-chain leak alarm now scans smarter instead of scanning everything",
+			"summary": "The background monitor that watches every platform-controlled Solana wallet for a leak now checks the handful of wallets that hold real balances every run, any wallet the platform's own payment ledger shows just moved money, and the rest of the registry in a rotation, instead of walking the full wallet list on every single pass. That cuts the monitor's own Solana RPC usage sharply, which means faster balance reads and snappier agent pages across the platform, and it no longer runs two overlapping schedules at once. A wallet-identity bug found along the way is fixed too: on-chain transactions were being matched by the wrong field shape, which silently kept both the leak detector and its fee-accounting cross-check from recording anything real. Both now work correctly.",
+			"link": null,
+			"tags": [
+				"infra",
+				"fix"
 			]
 		},
 		{

@@ -4,16 +4,16 @@
 // over them took 600 to 900 s against a 300 s maxDuration, and the economy tick
 // re-fired the route every minute with nothing stopping a second run, so about
 // eight full scans overlapped at all times and burned the Solana RPC quota.
-// These pin the three guards that replaced that: a lease that skips a re-fire,
-// a budget that stops STARTING wallets, and a round-robin walk of the registry.
+// These pin the two guards that replaced that: a lease that skips a re-fire and
+// a budget that stops STARTING wallets. scanPlan's three-tier wallet selection
+// (role / ledger-active / checked_at rotation) and runScan's tiered budgeting
+// are covered in tests/x402-ring-leak-scan-budget.test.js.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const lockHeld = { value: false };
 vi.mock('../api/_lib/cache.js', () => ({
 	acquireLock: vi.fn(async () => !lockHeld.value),
-	cacheGet: vi.fn(async () => 0),
-	cacheSet: vi.fn(async () => {}),
 }));
 vi.mock('../api/_lib/db.js', () => ({
 	sql: vi.fn(async () => []),
@@ -23,26 +23,7 @@ vi.mock('../api/_lib/db.js', () => ({
 }));
 vi.mock('../api/_lib/alerts.js', () => ({ sendOpsAlert: vi.fn(async () => {}) }));
 
-const { scanPlan, scanWithinBudget, default: handler } = await import('../api/cron/x402-ring-leak-scan.js');
-
-describe('scanPlan', () => {
-	it('puts every role wallet first and never repeats one in the rotation', () => {
-		const plan = scanPlan(['ROLE_A', null, 'ROLE_B'], ['R1', 'ROLE_A', 'R2', 'R3'], 0);
-		expect(plan.roles).toEqual(['ROLE_A', 'ROLE_B']);
-		expect(plan.rotation).toEqual(['R1', 'R2', 'R3']);
-	});
-
-	it('starts the registry where the last run stopped and wraps around', () => {
-		expect(scanPlan([], ['R1', 'R2', 'R3', 'R4'], 2).rotation).toEqual(['R3', 'R4', 'R1', 'R2']);
-		expect(scanPlan([], ['R1', 'R2', 'R3'], 7).start).toBe(1);
-	});
-
-	it('treats a missing or garbage offset as the start', () => {
-		expect(scanPlan([], ['R1', 'R2'], undefined).rotation).toEqual(['R1', 'R2']);
-		expect(scanPlan([], ['R1', 'R2'], 'nope').rotation).toEqual(['R1', 'R2']);
-		expect(scanPlan([], [], 5)).toEqual({ roles: [], rotation: [], start: 0 });
-	});
-});
+const { scanWithinBudget, default: handler } = await import('../api/cron/x402-ring-leak-scan.js');
 
 describe('scanWithinBudget', () => {
 	it('stops starting wallets at the budget and reports how far it got', async () => {

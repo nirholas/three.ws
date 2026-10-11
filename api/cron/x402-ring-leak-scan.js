@@ -6,8 +6,9 @@
 // alarms within minutes if money leaves anyway — a compromised key, a bug, or a
 // path the assertions don't cover.
 //
-// Every 10 min, for every role wallet and the next budget's worth of the
-// registry (walked round-robin across runs, see RUN_BUDGET_MS):
+// Every 10 min, for every role wallet, every registry wallet the platform's own
+// ledger shows had activity, and the next budget's worth of the rest of the
+// registry oldest-checked-first (see scanPlan / runScan / RUN_BUDGET_MS):
 //   1. getSignaturesForAddress(limit 100, until=<persisted cursor>) — only
 //      signatures newer than the last scan. Cursor persisted per wallet so RPC
 //      stays bounded and each tx is classified exactly once.
@@ -38,7 +39,7 @@ import { env } from '../_lib/env.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { withDbRetry } from '../_lib/db-retry.js';
 import { sql } from '../_lib/db.js';
-import { acquireLock, cacheGet, cacheSet } from '../_lib/cache.js';
+import { acquireLock } from '../_lib/cache.js';
 import { ringAllowedAddresses, ringRoleWallets } from '../_lib/x402/ring-allowlist.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
@@ -55,17 +56,26 @@ const CANONICAL_USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 // Run shape. The registry holds every fresh-worker payer ever provisioned (2,006
 // enabled on 2026-10-09), and a wallet costs a cursor read plus an RPC call, so a
 // full pass took 600-900 s against a 300 s maxDuration. The economy tick also
-// fires this route every minute on top of its own */10 schedule, and nothing
-// stopped a second run while the first was still going: production carried about
-// eight overlapping full scans at all times, each re-reading the same wallets and
-// burning the RPC quota every other Solana read depends on. So a run now holds a
-// lease that doubles as the native cadence, stops starting wallets inside a
-// budget well under maxDuration, and the registry is walked round-robin from
-// where the last run stopped. The role wallets, which hold the money, are read
-// on every run.
+// used to fire this route every minute on top of its own */10 schedule (removed
+// from api/cron/economy-tick.js TARGETS 2026-10-11, see the comment there), and
+// nothing stopped a second run while the first was still going: production
+// carried about eight overlapping full scans at all times, each re-reading the
+// same wallets and burning the RPC quota every other Solana read depends on.
+//
+// A run now holds a lease that doubles as the native cadence (acquireLock,
+// never released: the TTL IS the cadence) and runs three tiers in order, each
+// bounded by whatever is left of the budget (runScan): role wallets (the few
+// that hold real balances), ledger-active registry wallets (the platform's own
+// ledger (x402_ring_pool.last_used_at) shows claimed a payer since its last
+// check, so a wallet with real activity is never more than one lease behind),
+// then the rest of the registry oldest-checked_at-first. checked_at is stamped
+// on EVERY attempted wallet, zero signatures or not (touchCursor), which is
+// what makes the oldest-first order self-rotating: no cache offset to lose, no
+// wallet skipped forever. Leak-detection guarantee this preserves: every
+// enabled wallet is checked at least once per full rotation, and any wallet
+// with ledger activity is checked on the very next run.
 const LEASE_KEY = 'cron:x402-ring-leak-scan:lease';
 const LEASE_SECONDS = 9 * 60;
-const OFFSET_KEY = 'cron:x402-ring-leak-scan:offset';
 const RUN_BUDGET_MS = 200_000;
 const SCAN_CONCURRENCY = 4;
 
@@ -74,14 +84,28 @@ const SCAN_CONCURRENCY = 4;
 /**
  * Normalize a parsed message's accountKeys to an array of pubkey strings.
  * jsonParsed encodes them as { pubkey, signer, writable }; legacy shapes as raw
- * strings. Returns [] when unreadable.
+ * strings. Found 2026-10-11: @solana/web3.js's own Connection.getParsedTransactions
+ * returns that `pubkey` field as a live PublicKey instance, not a string, so a
+ * naive `k.pubkey` is truthy but is not comparable to a wallet string with `===`
+ * or `indexOf`. That silently zeroed out every wallet-identity match against
+ * real mainnet responses: classifyWalletDebits's `walletIdx` was always -1 (so
+ * it returned zero events for every real transaction) and the fee cross-check's
+ * `fee.ours` was always false (so x402_ring_fee_observed never got a row). Must
+ * resolve both plain strings and anything with a toBase58()/toString(). Returns
+ * [] when unreadable.
  * @param {any} message
  * @returns {string[]}
  */
+function pubkeyToString(v) {
+	if (typeof v === 'string') return v;
+	if (v && typeof v.toBase58 === 'function') return v.toBase58();
+	return v?.toString?.() || '';
+}
+
 export function accountKeyStrings(message) {
 	const keys = message?.accountKeys;
 	if (!Array.isArray(keys)) return [];
-	return keys.map((k) => (typeof k === 'string' ? k : (k?.pubkey || k?.toString?.() || '')));
+	return keys.map((k) => (typeof k === 'string' ? k : pubkeyToString(k?.pubkey ?? k)));
 }
 
 /** Flatten top-level + inner instructions into one list of parsed instructions. */
@@ -251,9 +275,14 @@ async function ensureSchema() {
 				scanned_total   bigint NOT NULL DEFAULT 0,
 				leaks_total     bigint NOT NULL DEFAULT 0,
 				last_run_id     uuid,
-				updated_at      timestamptz NOT NULL DEFAULT now()
+				updated_at      timestamptz NOT NULL DEFAULT now(),
+				checked_at      timestamptz
 			)
 		`);
+		// Fresh table above already has the column; existing deployments get it
+		// here too, idempotently, mirroring the migration
+		// (api/_lib/migrations/20261011230000_x402_ring_scan_checked_at.sql).
+		await withDbRetry(() => sql`ALTER TABLE x402_ring_scan_cursor ADD COLUMN IF NOT EXISTS checked_at timestamptz`);
 	} catch { /* migration owns it */ }
 	try {
 		await withDbRetry(() => sql`
@@ -281,18 +310,40 @@ async function saveCursor(wallet, { lastSignature, lastSlot, scannedDelta, leaks
 	try {
 		await withDbRetry(() => sql`
 			INSERT INTO x402_ring_scan_cursor
-				(wallet, last_signature, last_slot, scanned_total, leaks_total, last_run_id, updated_at)
-			VALUES (${wallet}, ${lastSignature}, ${lastSlot}, ${scannedDelta}, ${leaksDelta}, ${runId}, now())
+				(wallet, last_signature, last_slot, scanned_total, leaks_total, last_run_id, updated_at, checked_at)
+			VALUES (${wallet}, ${lastSignature}, ${lastSlot}, ${scannedDelta}, ${leaksDelta}, ${runId}, now(), now())
 			ON CONFLICT (wallet) DO UPDATE SET
 				last_signature = COALESCE(EXCLUDED.last_signature, x402_ring_scan_cursor.last_signature),
 				last_slot      = COALESCE(EXCLUDED.last_slot, x402_ring_scan_cursor.last_slot),
 				scanned_total  = x402_ring_scan_cursor.scanned_total + ${scannedDelta},
 				leaks_total    = x402_ring_scan_cursor.leaks_total + ${leaksDelta},
 				last_run_id    = EXCLUDED.last_run_id,
-				updated_at     = now()
+				updated_at     = now(),
+				checked_at     = now()
 		`);
 	} catch (err) {
 		console.warn('[ring-leak-scan] cursor upsert failed', { wallet, message: err?.message });
+	}
+}
+
+/**
+ * Stamp checked_at for a wallet with zero new signatures this run, without
+ * touching last_signature/scanned_total/leaks_total. Without this, a
+ * never-active wallet never advances checked_at and sorts to the front of the
+ * oldest-checked_at-first rotation on every single run, starving every wallet
+ * that actually has cursor activity.
+ */
+async function touchCursor(wallet, runId) {
+	try {
+		await withDbRetry(() => sql`
+			INSERT INTO x402_ring_scan_cursor (wallet, last_run_id, updated_at, checked_at)
+			VALUES (${wallet}, ${runId}, now(), now())
+			ON CONFLICT (wallet) DO UPDATE SET
+				last_run_id = EXCLUDED.last_run_id,
+				checked_at  = now()
+		`);
+	} catch (err) {
+		console.warn('[ring-leak-scan] cursor touch failed', { wallet, message: err?.message });
 	}
 }
 
@@ -349,32 +400,64 @@ function dayOf(blockTime, nowMs) {
 
 // ── Wallets to scan ───────────────────────────────────────────────────────────
 
-/** The ring wallets to scan: the role wallets that hold the money, and the registry. */
+/**
+ * The ring wallets to scan, in three tiers:
+ *   roles        : the few role wallets that hold real balances (ringRoleWallets()).
+ *   ledgerActive : registry wallets the platform's OWN ledger shows moved money
+ *                  since their last scan: x402_ring_pool.last_used_at (set by
+ *                  claimNextPayer() every time the ring tick claims a payer, see
+ *                  api/_lib/x402/pool.js) newer than x402_ring_scan_cursor.checked_at.
+ *                  This is the closest real "wallet had activity" signal in the
+ *                  schema; a wallet claimed by the pool is the only way a
+ *                  registry wallet other than a role wallet moves funds today.
+ *   rotation     : every other enabled registry wallet, oldest checked_at first
+ *                  (NULLS FIRST, so a brand-new wallet is scanned before a
+ *                  22-year-future checked_at could ever starve it). One query,
+ *                  since the ORDER BY already gives both the ledger-active join
+ *                  key and the rotation order.
+ */
 async function ringScanWallets() {
 	const roles = Object.values(await ringRoleWallets()).filter(Boolean);
-	let registry = [];
+	const registry = [];
+	const ledgerActive = [];
 	try {
-		const rows = await withDbRetry(() => sql`SELECT pubkey FROM x402_ring_wallets WHERE enabled = true ORDER BY pubkey`);
-		registry = rows.map((r) => r?.pubkey).filter(Boolean);
+		const rows = await withDbRetry(() => sql`
+			SELECT w.pubkey AS pubkey, p.last_used_at AS last_used_at, c.checked_at AS checked_at
+			FROM x402_ring_wallets w
+			LEFT JOIN x402_ring_pool p ON p.pubkey = w.pubkey
+			LEFT JOIN x402_ring_scan_cursor c ON c.wallet = w.pubkey
+			WHERE w.enabled = true
+			ORDER BY c.checked_at ASC NULLS FIRST, w.pubkey
+		`);
+		for (const r of rows) {
+			if (!r?.pubkey) continue;
+			registry.push(r.pubkey);
+			if (r.last_used_at && (!r.checked_at || new Date(r.last_used_at) > new Date(r.checked_at))) {
+				ledgerActive.push(r.pubkey);
+			}
+		}
 	} catch { /* role wallets alone still get scanned */ }
-	return { roles, registry };
+	return { roles, ledgerActive, registry };
 }
 
 /**
- * Order one run's work: every role wallet, then the registry rotated to start at
- * `offset` so successive budget-bounded runs cover all of it in turn. Pure.
+ * Order one run's work: role wallets, then ledger-active registry wallets (the
+ * ones the platform's own ledger shows moved money since their last check),
+ * then the rest of the registry (already oldest-checked_at-first from the query
+ * above). Each tier is deduped against the ones before it so a wallet is never
+ * scanned twice in the same run. Pure.
  * @param {string[]} roles
- * @param {string[]} registry
- * @param {number} offset
- * @returns {{ roles: string[], rotation: string[], start: number }}
+ * @param {string[]} ledgerActive
+ * @param {string[]} registry  oldest-checked_at-first, includes ledgerActive members
+ * @returns {{ roles: string[], ledgerActive: string[], rotation: string[] }}
  */
-export function scanPlan(roles, registry, offset) {
+export function scanPlan(roles, ledgerActive, registry) {
 	const roleList = [...new Set((roles || []).filter(Boolean))];
 	const roleSet = new Set(roleList);
-	const rest = [...new Set((registry || []).filter(Boolean))].filter((w) => !roleSet.has(w));
-	const n = Number.isFinite(Number(offset)) ? Math.trunc(Number(offset)) : 0;
-	const start = rest.length ? ((n % rest.length) + rest.length) % rest.length : 0;
-	return { roles: roleList, rotation: [...rest.slice(start), ...rest.slice(0, start)], start };
+	const ledgerList = [...new Set((ledgerActive || []).filter(Boolean))].filter((w) => !roleSet.has(w));
+	const ledgerSet = new Set(ledgerList);
+	const rotation = [...new Set((registry || []).filter(Boolean))].filter((w) => !roleSet.has(w) && !ledgerSet.has(w));
+	return { roles: roleList, ledgerActive: ledgerList, rotation };
 }
 
 /**
@@ -405,6 +488,36 @@ export async function scanWithinBudget(queue, scanOne, { budgetMs, concurrency, 
 	return { results, started: next };
 }
 
+/**
+ * Run a full scanPlan() through scanOne, tier by tier (roles, then
+ * ledger-active, then rotation), each getting whatever is left of `budgetMs`
+ * after the tiers before it. `partial` is true the moment any tier stops short
+ * of its queue, which is the signal a caller needs to know cursors were saved
+ * for a prefix only. Pure apart from `scanOne`/`now`, so it is testable with a
+ * fake clock exactly like scanWithinBudget above.
+ * @param {{ roles: string[], ledgerActive: string[], rotation: string[] }} plan
+ * @param {(wallet: string) => Promise<any>} scanOne
+ * @param {{ budgetMs?: number, concurrency?: number, now?: () => number }} [opts]
+ */
+export async function runScan(plan, scanOne, { budgetMs = RUN_BUDGET_MS, concurrency = SCAN_CONCURRENCY, now = Date.now } = {}) {
+	const startedAt = now();
+	const remaining = () => Math.max(0, budgetMs - (now() - startedAt));
+
+	const roleRun = await scanWithinBudget(plan.roles, scanOne, { budgetMs: remaining(), concurrency, now });
+	const ledgerRun = await scanWithinBudget(plan.ledgerActive, scanOne, { budgetMs: remaining(), concurrency, now });
+	const rotationRun = await scanWithinBudget(plan.rotation, scanOne, { budgetMs: remaining(), concurrency, now });
+
+	const partial = roleRun.started < plan.roles.length
+		|| ledgerRun.started < plan.ledgerActive.length
+		|| rotationRun.started < plan.rotation.length;
+
+	return {
+		results: [...roleRun.results, ...ledgerRun.results, ...rotationRun.results],
+		partial,
+		counts: { roles: roleRun.started, ledgerActive: ledgerRun.started, rotation: rotationRun.started },
+	};
+}
+
 // ── Per-wallet scan ───────────────────────────────────────────────────────────
 
 export async function scanWallet(conn, PublicKey, wallet, { allowed, usdcMint, runId, feeByDay }) {
@@ -420,7 +533,10 @@ export async function scanWallet(conn, PublicKey, wallet, { allowed, usdcMint, r
 		summary.error = err?.message || 'sig_fetch_failed';
 		return summary;
 	}
-	if (sigInfos.length === 0) return summary;
+	if (sigInfos.length === 0) {
+		await touchCursor(wallet, runId);
+		return summary;
+	}
 	summary.truncated = sigInfos.length >= SIG_SCAN_LIMIT && !!cursor?.last_signature;
 
 	// getSignaturesForAddress returns newest→oldest.
@@ -599,31 +715,22 @@ export default wrapCron(async (req, res) => {
 		network: 'mainnet', commitment: 'confirmed',
 	});
 
-	const [allowed, wallets, offset] = await Promise.all([
+	const [allowed, wallets] = await Promise.all([
 		ringAllowedAddresses(),
 		ringScanWallets(),
-		cacheGet(OFFSET_KEY).catch(() => 0),
 	]);
 	const usdcMint = env.X402_ASSET_MINT_SOLANA;
-	const plan = scanPlan(wallets.roles, wallets.registry, Number(offset) || 0);
+	const plan = scanPlan(wallets.roles, wallets.ledgerActive, wallets.registry);
+	const totalPlanned = plan.roles.length + plan.ledgerActive.length + plan.rotation.length;
 
-	if (plan.roles.length + plan.rotation.length === 0) {
+	if (totalPlanned === 0) {
 		return json(res, 200, { ok: true, run_id: runId, skipped: true, reason: 'no_ring_wallets_configured' });
 	}
 
 	const feeByDay = new Map();
 	const scanOne = (wallet) => scanWallet(conn, PublicKey, wallet, { allowed, usdcMint, runId, feeByDay });
-	const startedAt = Date.now();
-	const roleRun = await scanWithinBudget(plan.roles, scanOne, { budgetMs: RUN_BUDGET_MS, concurrency: SCAN_CONCURRENCY });
-	const rotationRun = await scanWithinBudget(plan.rotation, scanOne, {
-		budgetMs: Math.max(0, RUN_BUDGET_MS - (Date.now() - startedAt)),
-		concurrency: SCAN_CONCURRENCY,
-	});
-	if (plan.rotation.length) {
-		await cacheSet(OFFSET_KEY, (plan.start + rotationRun.started) % plan.rotation.length, 7 * 24 * 3600).catch(() => {});
-	}
+	const { results, partial, counts } = await runScan(plan, scanOne, { budgetMs: RUN_BUDGET_MS, concurrency: SCAN_CONCURRENCY });
 
-	const results = [...roleRun.results, ...rotationRun.results];
 	let leaks = 0;
 	let delegations = 0;
 	for (const s of results) {
@@ -631,15 +738,23 @@ export default wrapCron(async (req, res) => {
 		delegations += s.delegations || 0;
 	}
 
+	// Fed by whatever the budget let us scan: a partial run still accrues the
+	// fees it actually observed instead of waiting for a full pass that may
+	// never finish before the next lease.
 	await accrueObservedFee(feeByDay);
 	const feeCheck = await crossCheckFees(runId, nowMs);
 
 	return json(res, 200, {
 		ok: true,
 		run_id: runId,
-		wallets: plan.roles.length + plan.rotation.length,
+		wallets: totalPlanned,
 		scanned_wallets: results.length,
-		deferred_wallets: plan.rotation.length - rotationRun.started,
+		partial,
+		deferred_wallets: totalPlanned - results.length,
+		role_wallets: plan.roles.length,
+		ledger_active_wallets: plan.ledgerActive.length,
+		rotation_wallets: plan.rotation.length,
+		counts,
 		allowed_set_size: allowed.size,
 		leaks,
 		delegations,

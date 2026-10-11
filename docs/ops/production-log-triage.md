@@ -888,6 +888,27 @@ ws error: Unexpected server response: 301
 - **Resolve (owner, money):** top up or upgrade the exhausted plans (Helius,
   QuickNode, Alchemy). Nothing else clears a quota; the cooldowns simply expire
   and re-trip while traffic exceeds the free tiers.
+- **Check for a scanner burning the quota before topping up.** Measured
+  2026-10-08: `/api/cron/x402-ring-leak-scan`
+  ([api/cron/x402-ring-leak-scan.js](../../api/cron/x402-ring-leak-scan.js))
+  walked its full 2,006-wallet registry sequentially on every run, with no
+  budget and no single-flight lock, fired both by its own Cloud Scheduler
+  `*/10` job and by `economy-tick.js` every 2 minutes. Result: about 8
+  overlapping full scans at all times, roughly 46,000 `getSignaturesForAddress`
+  calls an hour from one read-only monitor, run latency p50 765s against a
+  300s declared budget, and 504s on about 7% of runs. Recognize it with
+  `gcloud logging read 'resource.type="cloud_run_revision"
+  resource.labels.service_name="three-ws-api"
+  httpRequest.requestUrl:"x402-ring-leak-scan"' --freshness=3h --limit=500
+  --format='value(timestamp,httpRequest.status,httpRequest.latency,httpRequest.userAgent)'
+  --project aerial-vehicle-466722-p5`: many overlapping entries with
+  `userAgent` `threews-economy-tick/1.0` alongside `Google-Cloud-Scheduler`,
+  and latencies in the hundreds of seconds. Fixed 2026-10-11: the handler now
+  holds a lease (`acquireLock`), runs under a 200s wall-clock budget, scans
+  role wallets plus ledger-active wallets plus an oldest-checked_at-first
+  rotation instead of the whole registry every time, and was removed from
+  `economy-tick.js`'s `TARGETS`. A healthy run now shows p50 under 60s with no
+  `threews-economy-tick/1.0` caller in the log query above.
 - **Do NOT "fix" it by promoting the reserve.** `SOLANA_RPC_LAST_RESORT_URLS`
   exists to keep a metered endpoint in reserve; naming that same URL in
   `SOLANA_RPC_URL` or `QUICKNODE_RPC_URL` makes it the primary (the chain

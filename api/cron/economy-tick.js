@@ -52,7 +52,14 @@ const TARGETS = [
 	{ label: 'x402-autonomous', path: '/api/cron/x402-autonomous-loop', method: 'GET' },
 	// Fresh-wallet workers: brand-new payer wallets buying real work every minute.
 	{ label: 'fresh-workers', path: '/api/cron/x402-fresh-workers', method: 'GET' },
-	{ label: 'ring-leak-scan', path: '/api/cron/x402-ring-leak-scan', method: 'GET' },
+	// ring-leak-scan is deliberately NOT a target (removed 2026-10-11): it has its
+	// own */10 Cloud Scheduler job, and firing it from this every-minute tick as
+	// well left zero gap between runs: with a 2,006-wallet registry and no lock
+	// at the time, production ran about eight overlapping full scans at once,
+	// burning the Solana RPC quota every other read depends on (see order
+	// prompts/finish/400-auto-ring-leak-scan-rpc-burn.md). The scanner now also
+	// holds its own lease (acquireLock) so a second caller is cheap, but there is
+	// still no reason to fire it 6x more often than its own schedule.
 	{ label: 'wallets-leak-scan', path: '/api/cron/wallets-leak-scan', method: 'GET' },
 	{ label: 'distribute-payments', path: '/api/cron/run-distribute-payments', method: 'GET' },
 	{ label: 'payment-session-sweep', path: '/api/cron/payment-session-sweep', method: 'GET' },
