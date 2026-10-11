@@ -15917,6 +15917,42 @@
 					"url": "https://three.ws/avatars/michelle.glb"
 				}
 			]
+		},
+		{
+			"id": "openai-partner-benefits",
+			"status": "draft",
+			"kind": "post",
+			"lane": "partners",
+			"pattern": "mechanism",
+			"source": {
+				"path": "docs/announcements/openai-partner-benefits.md"
+			},
+			"posts": [
+				{
+					"text": "Our OpenAI Select Partner program year is open: a dedicated API organization and a ChatGPT workspace with Codex credits, for the full program year. They go to testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents: three.ws/openai",
+					"textFrom": "docs/announcements/openai-partner-benefits.post.txt",
+					"media": [
+						{
+							"path": "public/partners/openai/social-card-announcement.png",
+							"alt": "three.ws, OpenAI Select Partner, OpenAI Partner Network."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "OpenAI Select Partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/openai",
+							"contains": "Select Partner"
+						}
+					]
+				}
+			],
+			"tier": 2,
+			"notBefore": "2026-10-12T17:00:00Z"
 		}
 	]
 }
