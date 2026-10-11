@@ -76,7 +76,7 @@ const { default: studioHandler } = await import('../api/mcp-studio.js');
 const { default: wkHandler } = await import('../api/wk.js');
 const { mintAccessToken } = await import('../api/_lib/auth.js');
 const { POLICY } = await import('@three-ws/mcp-policy');
-const { spendScopeFor } = await import('../api/_mcp/policy.js');
+const { movesValue: movesValueOnPolicy } = await import('../api/_mcp/policy.js');
 const { dispatch: coreDispatch } = await import('../api/_mcp/dispatch.js');
 const { toolCatalogFor } = await import('../api/_mcp-studio/dispatch.js');
 const { GROK_ACCOUNT_TOOLS, movesValue } = await import('../api/_mcp-studio/account-tools.js');
@@ -166,7 +166,7 @@ async function listNames(headers = {}, opts = {}) {
 
 function expectNoValueMoving(tools) {
 	for (const t of tools) {
-		for (const server of SERVER_IDS) expect(spendScopeFor(server, t.name), `${t.name} on ${server}`).toBeNull();
+		for (const server of SERVER_IDS) expect(movesValueOnPolicy(server, t.name), `${t.name} on ${server}`).toBe(false);
 		for (const server of SERVER_IDS) expect(POLICY[server]?.[t.name]?.tier, `${t.name} tier on ${server}`).not.toBe('financial');
 		expect(t.pricing, `${t.name} price`).toBeUndefined();
 		expect(PRICED_ON_CORE.has(t.name), `${t.name} is priced on /api/mcp`).toBe(false);

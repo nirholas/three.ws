@@ -140,8 +140,19 @@ export async function enablementFor(req, auth) {
 // funds. Every other financial tool spends, pays, launches or withdraws.
 const NON_SPENDING_CONFIRMS = new Set(['confirm_delete', 'confirm_run']);
 
+// A handful of tools are money-adjacent without being POLICY's "financial"
+// tier: they read or mint a virtual card's live data (quote, raw data, a
+// connect link that can provision one), or stand up a wallet/paid endpoint.
+// None carries a confirmFlag for the tier check above to catch, so they are
+// named here instead. A key issued for an unattended agent may never call them.
+const EXTRA_VALUE_TOOLS = Object.freeze({
+	'three.ws': new Set(['agent_card_quote', 'agent_card_data', 'agent_card_connect_link']),
+	'threews-agent': new Set(['provision_wallet', 'monetize_endpoint']),
+});
+
 /** True when a tool moves value, so a key issued for an unattended agent may never call it. */
 export function movesValue(serverId, name) {
+	if (EXTRA_VALUE_TOOLS[serverId]?.has(name)) return true;
 	const row = POLICY[serverId]?.[name];
 	if (!row) return false;
 	const entry = normalizeEntry(name, row);
