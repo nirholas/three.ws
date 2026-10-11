@@ -183,6 +183,10 @@
     <!-- The physics grade, beside the authenticity badge: one says the asset is
          genuine, the other says a solver can actually use it. -->
     <sim-readiness id="sim-badge" align="end" hidden></sim-readiness>
+    <!-- The real-time-engine fitness grade: draw calls, materials, texel
+         density, LOD budget, collider. A different question than physics
+         readiness, so its own badge rather than folding into sim-readiness. -->
+    <engine-qa id="engine-qa-badge" align="end" hidden></engine-qa>
   </header>
 
   <div class="stage">
@@ -670,6 +674,38 @@
       .then(function (ready) { if (ready) offer(); });
   })();
 
+  // Engine QA. Same "offer, not automatic" reasoning as simulation readiness
+  // above: the base grade is cheap, but the LOD-chain upgrade is real
+  // decimation work, so it stays behind its own explicit click too.
+  (function checkEngineQa() {
+    var el = document.getElementById('engine-qa-badge');
+    if (!el || !src) return;
+    function run(withLods) {
+      var qs = '?url=' + encodeURIComponent(src) + (withLods ? '&lods=1' : '');
+      fetch('/api/3d/engine-qa' + qs, { headers: { accept: 'application/json' } })
+        .then(function (r) {
+          return r.json().then(function (body) { return { ok: r.ok, status: r.status, body: body }; });
+        })
+        .then(function (res) {
+          if (!res.ok) throw new Error((res.body && res.body.error) || ('HTTP ' + res.status));
+          el.showReport(res.body.report, {
+            gradedAt: res.body.ts,
+            sourceUrl: res.body.url,
+            stlUrl: '/api/3d/engine-qa?format=stl&url=' + encodeURIComponent(src),
+            upgradeLabel: 'Build & grade LOD chain',
+            onUpgrade: function () { run(true); },
+          });
+        })
+        .catch(function (err) {
+          el.failed(err && err.message ? err.message : 'The engine QA grade could not be fetched.', { onRetry: function () { run(withLods); } });
+        });
+    }
+    function offer() { el.ungraded({ onGrade: function () { run(false); } }); }
+    var deadline = new Promise(function (resolve) { setTimeout(function () { resolve(false); }, 10000); });
+    Promise.race([customElements.whenDefined('engine-qa').then(function () { return true; }), deadline])
+      .then(function (ready) { if (ready) offer(); });
+  })();
+
   // If model-viewer itself never upgrades (script blocked), don't spin forever.
   setTimeout(function () {
     if (loading && !loading.classList.contains('hidden') && !customElements.get('model-viewer')) {
@@ -691,6 +727,8 @@
 </script>
 	<!-- The <sim-readiness> element, shared verbatim with /m/:id. -->
 	<script type="module" src="/sim-readiness-panel.js"></script>
+	<!-- The <engine-qa> element, shared verbatim with Rig Doctor. -->
+	<script type="module" src="/engine-qa-panel.js"></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>

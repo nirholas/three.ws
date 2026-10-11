@@ -7,11 +7,17 @@
 //      the user watches their own rig perform, and offer the canonicalized GLB
 //      as a download when the bone names needed rewriting.
 //
-// The privacy claim in the copy is load-bearing, so it constrains the code: the
-// only network requests this page makes are for the animation clip library and
-// the sample rigs, both of which are three.ws assets. The user's file is read
-// with FileReader and never posted anywhere. PoseStage consumes a blob: URL
-// created from the in-memory buffer, which never leaves the tab.
+// The privacy claim in the copy is load-bearing, so it constrains the code: by
+// default the only network requests this page makes are for the animation clip
+// library and the sample rigs, both of which are three.ws assets. The user's
+// file is read with FileReader and never posted anywhere. PoseStage consumes a
+// blob: URL created from the in-memory buffer, which never leaves the tab.
+// The Engine QA panel grades draw calls, materials, and texel density the same
+// way (src/engine-qa-client.js, zero network). Its LOD-budget and collider
+// checks are the one deliberate exception: they need the server's real LOD
+// builder and manifold analyzer, so they report "not measured" until the
+// visitor clicks the panel's own "Check LOD & collider fitness" action, which
+// uploads the file for that single grade (requestFullEngineQa below).
 //
 // The stage is imported lazily. Three.js plus the GLTF/DRACO/meshopt loaders are
 // the heaviest thing on the page, and a visitor who reads the explainer and
@@ -19,6 +25,7 @@
 
 import { analyzeGlb, manifestFromReport, formatBytes, CANONICAL_TOTAL, CONVENTION_COUNT } from './rig-report.js';
 import { canonicalizeGLBBones } from './glb-canonicalize.js';
+import { gradeEngineQaClient } from './engine-qa-client.js';
 
 // Clips offered under the preview, chosen so each one exercises a different
 // limb group: idle reads the torso, wave the arms, walk the legs. A rig whose
@@ -229,12 +236,89 @@ function diagnose(buffer, fileName) {
 	renderRenames(report);
 	renderUnmapped(report);
 	renderOutputs(report);
+	renderEngineQa(buffer);
 
 	const results = $('rd-results');
 	results.hidden = false;
 	results.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
 
 	mountStage(report);
+}
+
+// Grades the three checks that are pure math over bytes already in memory
+// (src/engine-qa-client.js, zero network). The LOD budget and collider checks
+// come back as an explicit "not measured" with an opt-in upload action; see
+// requestFullEngineQa.
+function renderEngineQa(buffer) {
+	const el = $('rd-engine-qa');
+	if (!el) return;
+	const seq = state.seq;
+	el.loading();
+	gradeEngineQaClient(buffer)
+		.then((report) => {
+			if (state.seq !== seq) return;
+			el.showReport(report, { onUpgrade: () => requestFullEngineQa(buffer, seq) });
+		})
+		.catch((err) => {
+			if (state.seq !== seq) return;
+			el.failed(err?.message || 'That file could not be graded.', { onRetry: () => renderEngineQa(buffer) });
+		});
+}
+
+// The one explicit, opt-in exception to this page's zero-network guarantee:
+// clicking the panel's own action uploads the already-in-memory buffer so the
+// server can build a real LOD chain and run the manifold analyzer, then
+// re-renders the same panel with the full report plus an STL download.
+function requestFullEngineQa(buffer, seq) {
+	const el = $('rd-engine-qa');
+	if (!el) return;
+	fetch('/api/3d/engine-qa?lods=1', {
+		method: 'POST',
+		headers: { 'content-type': 'model/gltf-binary' },
+		body: buffer,
+	})
+		.then((r) => r.json().then((body) => ({ ok: r.ok, status: r.status, body })))
+		.then((res) => {
+			if (state.seq !== seq) return;
+			if (!res.ok) throw new Error((res.body && res.body.error) || `HTTP ${res.status}`);
+			el.showReport(res.body.report, { gradedAt: res.body.ts, onDownloadStl: () => downloadStl(buffer, seq) });
+		})
+		.catch((err) => {
+			if (state.seq !== seq) return;
+			el.failed(err?.message || 'The full engine QA grade could not be fetched.', { onRetry: () => requestFullEngineQa(buffer, seq) });
+		});
+}
+
+// Same upload-on-explicit-click exception as requestFullEngineQa: the STL
+// export needs the server's manifold/watertight pipeline, so a second
+// opt-in request trades the already-granted file for the printable mesh.
+function downloadStl(buffer, seq) {
+	return fetch('/api/3d/engine-qa?format=stl', {
+		method: 'POST',
+		headers: { 'content-type': 'model/gltf-binary' },
+		body: buffer,
+	})
+		.then(async (r) => {
+			if (state.seq !== seq) return;
+			if (!r.ok) {
+				const body = await r.json().catch(() => null);
+				throw new Error((body && body.error) || `HTTP ${r.status}`);
+			}
+			const blob = await r.blob();
+			const url = URL.createObjectURL(blob);
+			const fileName = (state.report?.fileName || 'model').replace(/\.glb$/i, '') + '.stl';
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = fileName;
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			setTimeout(() => URL.revokeObjectURL(url), 0);
+		})
+		.catch((err) => {
+			const el = $('rd-engine-qa');
+			if (el && state.seq === seq) el.failed(err?.message || 'The STL export failed.', { onRetry: () => downloadStl(buffer, seq) });
+		});
 }
 
 function showError(fileName, message, headline = 'That file could not be read as a GLB.') {

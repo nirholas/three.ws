@@ -46,7 +46,7 @@
 		<link rel="stylesheet" href="/rig-doctor.css" />
 		<script defer src="/footer-newsletter.js"></script>
 
-		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Rig Doctor","description":"Diagnose and repair a GLB avatar skeleton in the browser. Names the rig convention, scores limb coverage against the three.ws canonical skeleton, rewrites non-standard bone names, and previews the result.","url":"https://three.ws/rig-doctor","applicationCategory":"DeveloperApplication","operatingSystem":"Any","browserRequirements":"Requires WebGL2","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is my model uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"No. Rig Doctor reads the file with the browser FileReader API and analyses it on your machine. No bytes are sent to any server, which is why it works with the network disconnected."}},{"@type":"Question","name":"Why does my avatar load but never move?","acceptedAnswer":{"@type":"Answer","text":"Animation clips address bones by name. If your rig names its joints something the canonical skeleton does not recognise, the clip plays against nothing and the character stands in its bind pose. Rig Doctor tells you exactly which joints failed to map and can rename them for you."}},{"@type":"Question","name":"What does the repaired file change?","acceptedAnswer":{"@type":"Answer","text":"Only the names of nodes referenced from skins[].joints[], plus an armature orientation fold when one is present. Geometry, materials, textures, and the binary chunk are copied through byte for byte."}}]}]}</script>
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Rig Doctor","description":"Diagnose and repair a GLB avatar skeleton in the browser. Names the rig convention, scores limb coverage against the three.ws canonical skeleton, rewrites non-standard bone names, and previews the result.","url":"https://three.ws/rig-doctor","applicationCategory":"DeveloperApplication","operatingSystem":"Any","browserRequirements":"Requires WebGL2","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is my model uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"No, not by default. Rig Doctor reads the file with the browser FileReader API and analyses it on your machine, which is why the rig diagnosis works with the network disconnected. The one exception is opt-in: the Engine QA panel's LOD-budget and collider checks need server-side work, so they stay as 'not measured' until you click 'Check LOD & collider fitness', which uploads the file for that single check only."}},{"@type":"Question","name":"Why does my avatar load but never move?","acceptedAnswer":{"@type":"Answer","text":"Animation clips address bones by name. If your rig names its joints something the canonical skeleton does not recognise, the clip plays against nothing and the character stands in its bind pose. Rig Doctor tells you exactly which joints failed to map and can rename them for you."}},{"@type":"Question","name":"What does the repaired file change?","acceptedAnswer":{"@type":"Answer","text":"Only the names of nodes referenced from skins[].joints[], plus an armature orientation fold when one is present. Geometry, materials, textures, and the binary chunk are copied through byte for byte."}}]}]}</script>
 	</head>
 	<body>
 		<header><div id="nav-container"></div></header>
@@ -186,6 +186,15 @@
 							<dl class="rd-stats" id="rd-stats"></dl>
 						</div>
 
+						<div class="rd-panel">
+							<div class="rd-panel-head">
+								<h3 class="rd-panel-title" data-i18n="rig-doctor.panel_engineqa_title">Engine QA</h3>
+								<span class="rd-panel-note" data-i18n="rig-doctor.engineqa_note">Measured in your browser</span>
+							</div>
+							<engine-qa id="rd-engine-qa" align="start"></engine-qa>
+							<p class="rd-panel-foot" data-i18n="rig-doctor.engineqa_foot">Draw calls, materials, and texel density are measured right here, from the bytes already in your browser. The LOD budget and collider checks need a real LOD build and the server's manifold analyzer, so they stay behind one explicit click that uploads this file for that single check.</p>
+						</div>
+
 						<div class="rd-panel" id="rd-renames-panel" hidden>
 							<div class="rd-panel-head">
 								<h3 class="rd-panel-title" data-i18n="rig-doctor.panel_renames_title">Bone rewrites</h3>
@@ -321,6 +330,8 @@
 		</footer>
 
 		<script src="/nav.js" defer></script>
+		<!-- The <engine-qa> element, shared verbatim with /viewer. -->
+		<script type="module" src="/engine-qa-panel.js"></script>
 		<script type="module" src="/src/rig-doctor-page.js"></script>
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>

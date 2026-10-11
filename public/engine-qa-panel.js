@@ -390,13 +390,23 @@ class EngineQaCard extends HTMLElement {
 			core.push(['Texel density', `${c.texelDensity.value} px/m`, this._verdictCls(c.texelDensity.verdict)]);
 		}
 
-		const needsUpgrade = r.partial === true && c.triangleBudget.verdict === 'skip' && c.collider.verdict === 'skip';
+		// The two checks that skip for structurally different reasons: Rig Doctor
+		// skips both at once (the file never left the tab, so neither a LOD build
+		// nor the manifold analyzer ran). A URL-graded model (viewer.html) already
+		// has a real collider verdict; only the LOD chain is opt-in there, because
+		// building one is real decimation work worth its own click. Either way, a
+		// single `onUpgrade` callback re-grades whatever is still missing, so one
+		// button covers one or both, labeled by whichever the host supplies.
+		const canUpgrade = typeof this._meta.onUpgrade === 'function';
+		const lodSkip = c.triangleBudget.verdict === 'skip';
+		const colliderSkip = c.collider.verdict === 'skip';
+
 		let lodHtml = '';
 		if (Array.isArray(c.triangleBudget.value)) {
 			lodHtml = `<h3>LOD triangle budget</h3>${c.triangleBudget.value
 				.map((l) => `<div class="lod-row"><span>${l.name}</span><span class="${this._verdictCls(l.verdict)}">${l.triangleCount.toLocaleString()} / ${l.budget.toLocaleString()}</span></div>`)
 				.join('')}${c.triangleBudget.monotonicDecrease === false ? '<p class="note">Levels are not strictly decreasing.</p>' : ''}`;
-		} else if (c.triangleBudget.verdict === 'skip' && !needsUpgrade) {
+		} else if (lodSkip && !canUpgrade) {
 			lodHtml = `<h3>LOD triangle budget</h3><p class="note">${c.triangleBudget.reason || 'No LOD chain supplied.'}</p>`;
 		}
 
@@ -408,12 +418,14 @@ class EngineQaCard extends HTMLElement {
 				['Shells', String(cv.shells), ''],
 				['Triangles', `${cv.triangleCount.toLocaleString()} / ${cv.budget.toLocaleString()}`, this._verdictCls(c.collider.verdict)],
 			])}${c.collider.reason ? `<p class="note">${c.collider.reason}</p>` : ''}`;
-		} else if (c.collider.verdict === 'skip' && !needsUpgrade) {
+		} else if (colliderSkip && !canUpgrade) {
 			colliderHtml = `<h3>Collider fitness</h3><p class="note">${c.collider.reason || 'Not measured.'}</p>`;
 		}
 
-		const upgradeHtml = needsUpgrade && typeof this._meta.onUpgrade === 'function'
-			? `<h3>LOD budget &amp; collider fitness</h3><p class="note">Not measured yet: this needs a real LOD build and the server's manifold analyzer.</p><button type="button" class="action" data-upgrade>Check LOD &amp; collider fitness (uploads this file)</button>`
+		const upgradeHtml = (lodSkip || colliderSkip) && canUpgrade
+			? `<h3>${lodSkip && colliderSkip ? 'LOD budget &amp; collider fitness' : lodSkip ? 'LOD triangle budget' : 'Collider fitness'}</h3>
+				<p class="note">${lodSkip && colliderSkip ? 'Not measured yet: this needs a real LOD build and the server’s manifold analyzer.' : lodSkip ? 'No LOD chain graded yet: this needs a real LOD build.' : 'Not measured yet: this needs the server’s manifold analyzer.'}</p>
+				<button type="button" class="action" data-upgrade>${this._meta.upgradeLabel || 'Check LOD & collider fitness'}</button>`
 			: '';
 
 		const stlHtml = r.checks.collider?.value?.watertight
