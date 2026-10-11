@@ -221,6 +221,7 @@
 		"x:archive:analyze": "node scripts/x-archive-analyze.mjs",
 		"x:volume": "node scripts/x-volume-study.mjs",
 		"audit:deploy": "node scripts/audit-deploy-artifacts.mjs",
+		"audit:agent-operability": "node scripts/audit-agent-operability.mjs",
 		"guard:esbuild": "node scripts/guard-esbuild-bundles.mjs",
 		"guard:esbuild:all": "node scripts/guard-esbuild-bundles.mjs --all",
 		"verify:solana": "node scripts/verify-solana-parity.mjs",

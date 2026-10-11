@@ -148,6 +148,7 @@ viewports. They are pre-event, pre-release and incident tools.
 | Guard | What it checks | Exit | Runtime | Verdict |
 |---|---|---|---|---|
 | `audit:console` | Console errors, page errors and failed requests on every route in `data/pages.json`, desktop and mobile | capped | >600s (reached 591 of 796 route-viewport pairs in 600s) | **manual (pre-release).** |
+| `audit:agent-operability` | Drives `/create`, `/forge`, `/connect`, an agent profile chat, and `/launch` with `getByRole`/`getByLabel` locators only, the way a computer-use agent or screen reader drives a page | 0 | needs a live `BASE_URL` plus `audit:web:login` for the avatar-limited and `/launch` steps | **manual (x-grok, pre-release).** |
 | `audit:web` / `audit:web:login` | The full authed page sweep: console, network, layout | capped | >600s | **manual.** See [page-audit.md](page-audit.md). `audit:web:login` mints the session `audit:web` replays, so it is the same sweep plus a login. |
 | `audit:a11y` | Playwright accessibility pass over the top pages | killed at cap | >578s (44 tests, one worker, several minutes each) | **manual.** It is also a second `playwright test` run, which fights the shared dev server on :3000. |
 | `audit:overlays` | That no floating widget covers another, across routes and viewports | capped | >240s | **manual.** |

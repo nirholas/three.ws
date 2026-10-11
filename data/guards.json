@@ -41,6 +41,22 @@
 	],
 	"guards": [
 		{
+			"id": "audit-agent-operability",
+			"script": "scripts/audit-agent-operability.mjs",
+			"npm": "audit:agent-operability",
+			"title": "Computer-use operability sweep",
+			"protects": "The primary task on /create, /forge, /connect, an agent profile chat, and /launch stays reachable with accessibility-tree locators alone (getByRole/getByLabel), the way a screen reader or a computer-use agent drives it.",
+			"why": "Grok Bot and any other computer-use agent never clicks a CSS selector or a raw coordinate; it enumerates roles and labels. A control that only works via hover reveal or a mouse-specific gesture is invisible to that kind of agent even though every human-facing test passes, so this drives the real surfaces the same restricted way and records any step that needed something else.",
+			"stages": [
+				"manual"
+			],
+			"needs": "browser",
+			"proof": {
+				"kind": "live",
+				"reason": "Drives five real pages with Playwright role/label locators against a running server, including a signed-in session for avatar-limited steps. A static fixture cannot prove an accessibility-tree locator resolves against live markup."
+			}
+		},
+		{
 			"id": "audit-console",
 			"script": "scripts/audit-console.mjs",
 			"npm": "audit:console",
