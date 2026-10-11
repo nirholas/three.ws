@@ -1,6 +1,6 @@
 {
 	"generatedBy": "scripts/capture-doc-media.mjs",
-	"generatedAt": "2026-09-08T17:25:34.474Z",
+	"generatedAt": "2026-10-11T11:46:44.784Z",
 	"shots": {
 		"animation-studio": {
 			"id": "animation-studio",
@@ -108,11 +108,12 @@
 			"route": "/create/prompt",
 			"viewport": "desktop",
 			"animated": false,
-			"capturedAt": "2026-07-31T18:41:39.162Z",
+			"authenticated": false,
+			"capturedAt": "2026-10-11T11:46:44.584Z",
 			"capturedFrom": "https://three.ws",
-			"commit": "b06fc2cf2",
-			"sha256": "dc7ca39591668c40dcaa1c160fab69178498b98bdccc63f267fb13989fc016bd",
-			"bytes": 75596,
+			"commit": "307cd2213",
+			"sha256": "52fb159dd4c1d9865f7067f74988a4d896d98beac2381226cf19e9dcf59c4fb6",
+			"bytes": 65900,
 			"width": 1800,
 			"height": 1125
 		},
