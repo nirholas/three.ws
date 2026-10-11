@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-11T20:28:28.875Z",
+	"generated_at": "2026-10-11T22:27:09.298Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4033,
+	"total": 4034,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -350,6 +350,16 @@
 			"tags": [
 				"feature",
 				"desktop"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "Restyle Studio can now edit a single part of a model, not just the whole thing",
+			"summary": "Models with named part nodes, whether from the new \"Editable parts\" Forge engine (PartCrafter, MIT) or from the existing part-segment tool, now show a Parts panel in Restyle Studio. Select a part and every material tool, presets, AI restyle, manual sliders, scopes to that part alone instead of the whole model. Swap a part in from a local file, or hit Regenerate to send it through the new HoloPart worker (MIT), which completes whatever geometry was hidden or cut off at the segmentation seam, then reassembles the result back into the same model under the same part name. Part node names never change across either path, so a model edited this way stays compatible with every other part-aware tool on the platform.",
+			"link": "/restyle",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1532,17 +1542,6 @@
 			"link": "/docs/grok",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "update",
-			"title": "Agent MCP: price an x402 payment with pay_quote before pay_and_call spends it",
-			"summary": "The Agent MCP server now has a pay_quote tool. It asks a paid x402 endpoint what it charges without paying, and shows who gets paid, how much, in which token and on which chain, which wallet pays, the per-call limit, and anything that would stop the payment. pay_and_call needs the quote_id it returns plus an explicit confirm_payment, so an assistant always shows you the price before your agent wallet pays. One approval pays one call. Before this, turning pay_and_call on still left it refusing every call, because the quote step it requires did not exist.",
-			"link": null,
-			"tags": [
-				"feature",
-				"fix"
 			]
 		}
 	]

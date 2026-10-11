@@ -38,6 +38,7 @@ Each backend declares which paths it serves, whether it needs a bring-your-own-k
 - **TripoSG (self-host)**, the sketch-only scribble worker. Untextured geometry from a drawing. It also serves photos as the last automatic failover rung: when every textured photo lane has failed mid-job, the job continues on TripoSG's photo pipeline and returns the shape without textures rather than failing.
 - **Pixal3D (self-host)**, the fidelity lane, labeled **"Match my photo"** in the UI. Built on [TencentARC Pixal3D](https://github.com/TencentARC/Pixal3D) (MIT), pixel-aligned image-to-3D on [Microsoft TRELLIS.2](https://github.com/microsoft/TRELLIS.2)'s backbone. Where the other photo lanes read one view and generate a plausible result, Pixal3D fuses every photo you give it (1 to 4), so the result matches your photos rather than guessing. Never a named default or a failover target (a down Pixal3D must not silently drop the 2nd/3rd photo on a lane that only reads the first view) and only selectable explicitly. With exactly one photo, the optional `fill_other_sides` flag first synthesizes the other three angles with [MV-Adapter](https://github.com/huanngzh/MV-Adapter) (Apache-2.0) before reconstructing.
 - **AniGen (self-host)**, the rig-on-generation lane, labeled **"Rig on generate"** in the UI. Built on [VAST-AI-Research/AniGen](https://github.com/VAST-AI-Research/AniGen) (MIT). Every other image lane hands back a bare mesh; AniGen predicts the mesh, its joint skeleton and its per-vertex skin weights together, so the GLB it returns is already animatable, no separate rerig call. Single reference image; never a named default or a failover target, only selectable explicitly. The catalog's `rigged:true` flag and the poll response's `rigged`/`joint_count` fields mark the result as pre-rigged.
+- **PartCrafter (self-host)**, the editable-parts lane, labeled **"Editable parts"** in the UI. Built on [PartCrafter](https://github.com/wgsxm/PartCrafter) (MIT). Every other image lane hands back one undivided mesh; PartCrafter decodes a reference photo straight into N individually named part meshes in a single diffusion-transformer pass, so the result opens directly in Restyle Studio's part picker: select a part, recolor, swap or regenerate it, and reassemble into one model without touching the rest. Single reference image; never a named default or a failover target, only selectable explicitly. The poll response's `parts`/`part_count`/`parts_manifest_url` fields carry the per-part manifest.
 - **TRELLIS** on Replicate, a paid platform lane. Selectable explicitly and used as the last-resort fallback only on deployments with no free engine configured.
 - **Meshy 6**, **Tripo v3.1**, **Rodin (Hyper3D)**, BYOK geometry-first engines with quad topology and a real poly target. You supply your own key.
 - **Stable Fast 3D** (Stability, BYOK) and **Replicate (your account)** (BYOK), single-image reconstruction lanes.
@@ -249,6 +250,34 @@ curl -sX POST https://three.ws/api/forge-remesh \
 A job that fails because of the file itself (an ASCII FBX, a corrupt one)
 reports `status: "failed"` with an `error` that says what to re-export.
 
+## Editable parts: swap, recolor or complete one part
+
+A model with named part nodes (from the `partcrafter` backend above, or from
+`/api/forge-segment`) opens in Restyle Studio with a **Parts** panel listing
+every part. Selecting one scopes every material tool (presets, AI restyle,
+manual sliders) to that part alone, and two actions replace its geometry
+outright while keeping the rest of the model and the part's node name
+untouched:
+
+- **Swap part**: upload a replacement GLB/GLTF from your machine.
+- **Regenerate part**: send the part's current geometry to
+  `/api/forge-holopart`, which completes whatever geometry is hidden or was
+  cut off at the segmentation seam, and swaps the result back in.
+
+```bash
+curl -sX POST https://three.ws/api/forge-holopart \
+  -H 'content-type: application/json' \
+  -d '{"mesh_url":"https://.../part_02.glb"}'
+# → 202 { "job_id": "...", "status": "queued", "eta_seconds": ... }
+
+curl -s 'https://three.ws/api/forge-holopart?job=<job_id>'
+# → { "job_id": "...", "status": "done", "result_url": "https://.../part_02-complete.glb", ... }
+```
+
+`mesh_url` must already carry at least two named part geometries (the shape
+`/api/forge-segment` and the `partcrafter` backend both produce); FBX is
+rejected the same way stylize and segment reject it.
+
 ## Mesh tools: repair, smooth, decimate
 
 The **Optimize** panel under a finished model, and the **Edit mesh** section
@@ -370,6 +399,16 @@ needs no separate `/api/forge-rig` call:
 curl -X POST 'https://three.ws/api/forge' \
   -H 'content-type: application/json' \
   -d '{"image_urls":["https://…/front.jpg"],"backend":"anigen","tier":"standard"}'
+```
+
+Pin the PartCrafter editable-parts lane with `backend`; the done response
+carries `parts`, `part_count` and `parts_manifest_url` alongside `glb_url`,
+and Restyle Studio's part picker reads that manifest directly:
+
+```bash
+curl -X POST 'https://three.ws/api/forge' \
+  -H 'content-type: application/json' \
+  -d '{"image_urls":["https://…/front.jpg"],"backend":"partcrafter","tier":"standard"}'
 ```
 
 A minimal poll-until-done loop in JavaScript:

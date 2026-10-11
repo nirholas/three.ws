@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-11",
+			"title": "Restyle Studio can now edit a single part of a model, not just the whole thing",
+			"link": "/restyle",
+			"summary": "Models with named part nodes, whether from the new \"Editable parts\" Forge engine (PartCrafter, MIT) or from the existing part-segment tool, now show a Parts panel in Restyle Studio. Select a part and every material tool, presets, AI restyle, manual sliders, scopes to that part alone instead of the whole model. Swap a part in from a local file, or hit Regenerate to send it through the new HoloPart worker (MIT), which completes whatever geometry was hidden or cut off at the segmentation seam, then reassembles the result back into the same model under the same part name. Part node names never change across either path, so a model edited this way stays compatible with every other part-aware tool on the platform.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
 			"title": "Rig Doctor now diagnoses non-humanoid rigs too, not just naming mismatches",
 			"link": "/rig-doctor",
 			"summary": "Rig Doctor's canonical-joint coverage score has nothing to say about a creature, prop, or vehicle rig: it has no Mixamo-shaped skeleton to map and always reads as \"will not animate\" by design. A new Skin weights stat answers the question that actually applies to a rig like that: how many joints influence the single heaviest-weighted vertex, and how many of the mesh's vertices came back with no joint influence at all. Zero unweighted vertices means the skin is sound even though the clip library will never retarget onto it; a nonzero count means part of the mesh will not move under any skeleton.",

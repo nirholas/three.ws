@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T20:28:28.852Z",
+	"generated_at": "2026-10-11T22:27:09.265Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -347,6 +347,16 @@
 			"tags": [
 				"feature",
 				"desktop"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "Restyle Studio can now edit a single part of a model, not just the whole thing",
+			"summary": "Models with named part nodes, whether from the new \"Editable parts\" Forge engine (PartCrafter, MIT) or from the existing part-segment tool, now show a Parts panel in Restyle Studio. Select a part and every material tool, presets, AI restyle, manual sliders, scopes to that part alone instead of the whole model. Swap a part in from a local file, or hit Regenerate to send it through the new HoloPart worker (MIT), which completes whatever geometry was hidden or cut off at the segmentation seam, then reassembles the result back into the same model under the same part name. Part node names never change across either path, so a model edited this way stays compatible with every other part-aware tool on the platform.",
+			"link": "/restyle",
+			"tags": [
+				"feature"
 			]
 		},
 		{

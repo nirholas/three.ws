@@ -279,6 +279,14 @@
 			<description>The campus is now populated by the ten most talked-to public agents on three.ws, each wearing its own avatar from its public record (five on a phone). The most popular one stands beside the gate path, turns to you as you walk in, waves and says hello through its own brain. Every agent idles, wanders a step, faces you when you come near and carries a name tag; walk up (or tap the tag) and press E to open a conversation that streams the agent's real reply, shows it as a speech bubble and can read it aloud. The panel opens the agent's profile as a window and hands you the one-tag embed that puts that exact agent, body and brain, on any web page. GET /api/agents/public now returns avatar_model_url for public and unlisted avatars.</description>
 		</item>
 		<item>
+			<title>Restyle Studio can now edit a single part of a model, not just the whole thing</title>
+			<link>https://three.ws/restyle</link>
+			<guid isPermaLink="false">2026-10-11:Restyle Studio can now edit a single part of a model, not just the whole thing</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Models with named part nodes, whether from the new &quot;Editable parts&quot; Forge engine (PartCrafter, MIT) or from the existing part-segment tool, now show a Parts panel in Restyle Studio. Select a part and every material tool, presets, AI restyle, manual sliders, scopes to that part alone instead of the whole model. Swap a part in from a local file, or hit Regenerate to send it through the new HoloPart worker (MIT), which completes whatever geometry was hidden or cut off at the segmentation seam, then reassembles the result back into the same model under the same part name. Part node names never change across either path, so a model edited this way stays compatible with every other part-aware tool on the platform.</description>
+		</item>
+		<item>
 			<title>Rig Doctor now diagnoses non-humanoid rigs too, not just naming mismatches</title>
 			<link>https://three.ws/rig-doctor</link>
 			<guid isPermaLink="false">2026-10-11:Rig Doctor now diagnoses non-humanoid rigs too, not just naming mismatches</guid>
