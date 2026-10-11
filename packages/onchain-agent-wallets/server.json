@@ -17,12 +17,12 @@
 		"url": "https://github.com/nirholas/onchain-agent-wallets",
 		"source": "github"
 	},
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "@three-ws/onchain-agent-wallets",
-			"version": "0.1.0",
+			"version": "0.1.1",
 			"runtimeHint": "npx",
 			"transport": {
 				"type": "stdio"
