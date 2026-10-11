@@ -31,6 +31,11 @@ released. Sign once at [/legal/agreements](https://three.ws/legal/agreements);
 see [risk acknowledgment](./risk-acknowledgment.md). A worker settling a
 delivered job to collect its own payout is not gated.
 
+A bearer token calling `POST /api/labor/post` or `POST /api/labor/award` must
+also carry the `wallet:write` scope: these two legs move or commit the
+caller's funds, and a key scoped only to `agents:write` or similar gets
+`403 insufficient_scope`. A cookie session always carries every scope.
+
 The escrow secret lives only on the server (`LABOR_ESCROW_SECRET_BASE58`). The
 escrow wallet pays its own SOL fees on release and self-tops-up from the platform
 treasury / `LABOR_ESCROW_GAS_SECRET` when low (see `api/_lib/labor-escrow.js`).
