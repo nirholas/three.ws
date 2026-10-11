@@ -11,10 +11,22 @@
 		"official": {
 			"notice": "The only official three.ws website is https://three.ws. A site on any other domain that presents itself as three.ws is not affiliated with us.",
 			"links": [
-				{ "label": "Website", "url": "https://three.ws" },
-				{ "label": "X", "url": "https://x.com/trythreews" },
-				{ "label": "Telegram", "url": "https://t.me/three_ws" },
-				{ "label": "GitHub", "url": "https://github.com/nirholas/three.ws" }
+				{
+					"label": "Website",
+					"url": "https://three.ws"
+				},
+				{
+					"label": "X",
+					"url": "https://x.com/trythreews"
+				},
+				{
+					"label": "Telegram",
+					"url": "https://t.me/three_ws"
+				},
+				{
+					"label": "GitHub",
+					"url": "https://github.com/nirholas/three.ws"
+				}
 			],
 			"token": {
 				"symbol": "$THREE",
@@ -27,19 +39,64 @@
 		"llms": [
 			{
 				"title": "Start here",
-				"paths": ["/", "/what-is", "/create", "/forge", "/image-to-3d", "/create-agent", "/agents", "/marketplace", "/spotlight"]
+				"paths": [
+					"/",
+					"/what-is",
+					"/create",
+					"/forge",
+					"/image-to-3d",
+					"/create-agent",
+					"/agents",
+					"/marketplace",
+					"/spotlight"
+				]
 			},
 			{
 				"title": "Developers",
-				"paths": ["/connect", "/grok", "/mcp-tools", "/docs/start-here", "/docs/mcp", "/docs/cli", "/docs/api-reference", "/avatar-sdk", "/3d", "/crypto-api", "/docs/x402", "/x402", "/docs/skills", "/prompts"]
+				"paths": [
+					"/connect",
+					"/grok",
+					"/mcp-tools",
+					"/docs/start-here",
+					"/docs/mcp",
+					"/docs/cli",
+					"/docs/api-reference",
+					"/avatar-sdk",
+					"/3d",
+					"/crypto-api",
+					"/docs/x402",
+					"/x402",
+					"/docs/skills",
+					"/prompts"
+				]
 			},
 			{
 				"title": "Economy and $THREE",
-				"paths": ["/three-token", "/three", "/three-launchpad", "/launch", "/launches", "/pay", "/credits", "/pricing", "/economy", "/analytics"]
+				"paths": [
+					"/three-token",
+					"/three",
+					"/three-launchpad",
+					"/launch",
+					"/launches",
+					"/pay",
+					"/credits",
+					"/pricing",
+					"/economy",
+					"/analytics"
+				]
 			},
 			{
 				"title": "Learn",
-				"paths": ["/docs", "/tutorials", "/examples", "/awesome", "/changelog", "/blog", "/status", "/experiments"]
+				"paths": [
+					"/docs",
+					"/tutorials",
+					"/examples",
+					"/awesome",
+					"/changelog",
+					"/blog",
+					"/status",
+					"/experiments"
+				]
 			}
 		]
 	},
@@ -6331,6 +6388,14 @@
 					"changefreq": "weekly",
 					"added": "2026-09-07",
 					"showcase": true
+				},
+				{
+					"path": "/tutorials/grok-bot-recipes",
+					"title": "Tutorial · Six Grok Bot recipes, proven not imagined",
+					"description": "Six working Grok Bot workflows run against live production: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-10-10"
 				}
 			]
 		},
