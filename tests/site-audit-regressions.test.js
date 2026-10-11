@@ -12,10 +12,11 @@ describe('production page-audit regressions', () => {
 		expect(html).toContain('"three/addons/": "https://esm.sh/three@0.184.0/examples/jsm/"');
 	});
 
-	it('loads the Meshopt-ready model-viewer release in the deploy preview', () => {
+	it('loads model-viewer through the resilient shared loader in the deploy preview', () => {
 		const js = source('src/erc8004/register-ui.js');
-		expect(js).toContain('/model-viewer/4.3.1/model-viewer.min.js');
-		expect(js).not.toContain('/model-viewer/4.0.0/model-viewer.min.js');
+		expect(js).toContain("import { ensureModelViewerOrFallback } from '../shared/model-viewer-loader.js'");
+		expect(js).toContain('ensureModelViewerOrFallback(rail)');
+		expect(js).not.toContain('ajax.googleapis.com/ajax/libs/model-viewer');
 	});
 
 	it('marks only the intentional voice error preview as audit documentation', () => {

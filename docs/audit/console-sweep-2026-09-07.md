@@ -844,10 +844,10 @@ Call log:
 ### `/spatial-mcp` (labs)
 - **desktop**
   - console: $l: fetch for "https://three.ws/cdn/forge/anon/eddcea57-a278-474a-a632-99ca99861755.glb" responded with 502: 
-    at https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js:17:507206
+    at https://cdn.jsdelivr.net/npm/@google/model-viewer@4.3.1/dist/model-viewer.min.js:17:507206
 - **mobile**
   - console: $l: fetch for "https://three.ws/cdn/forge/anon/eddcea57-a278-474a-a632-99ca99861755.glb" responded with 502: 
-    at https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js:17:507206
+    at https://cdn.jsdelivr.net/npm/@google/model-viewer@4.3.1/dist/model-viewer.min.js:17:507206
 
 ### `/ibm/hello` (crypto)
 - **desktop**

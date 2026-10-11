@@ -11,7 +11,7 @@
 // The same version is served from three independent CDNs; any one of them is
 // the whole library, so the first that loads wins and the rest are never hit.
 
-const VERSION = '4.0.0';
+const VERSION = '4.3.1';
 const SOURCES = [
 	`https://ajax.googleapis.com/ajax/libs/model-viewer/${VERSION}/model-viewer.min.js`,
 	`https://cdn.jsdelivr.net/npm/@google/model-viewer@${VERSION}/dist/model-viewer.min.js`,

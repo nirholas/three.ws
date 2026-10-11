@@ -18,7 +18,7 @@
 
 const ORIGIN = 'https://three.ws';
 const MODEL_VIEWER_CDN =
-	'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+	'https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js';
 // Major-version CDN channel (specs/EMBED_SPEC.md): follows minor/patch
 // releases automatically without pinning exact bytes like a demo snippet
 // would ("latest" is explicitly demo-only per that spec).

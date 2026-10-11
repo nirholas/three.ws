@@ -1388,7 +1388,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 	var viewersLive = false;
 	var pendingViewerCards = [];
 
-	const MV_SRC = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+	const MV_SRC = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js';
 	function ensureModelViewer() {
 		if (customElements.get('model-viewer')) return;
 		// Reuse the library if the hero/mini-forge already injected it, but match
@@ -2355,8 +2355,8 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 		await new Promise((resolve, reject) => {
 			const s = document.createElement('script');
 			s.type = 'module';
-			s.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
-			s.integrity = 'sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw';
+			s.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js';
+			s.integrity = 'sha384-cprcVQt7wbUl0xngF3PGP6yBB7n4/t+4AoAMG9biiMCGFiWOdzUH10Ie2COTqFNW';
 			s.crossOrigin = 'anonymous';
 			s.onload = resolve;
 			s.onerror = reject;

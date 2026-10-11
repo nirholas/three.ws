@@ -81,7 +81,7 @@ export function renderModelViewerHtml({ src, name, poster, background, height, w
 	return [
 		'<!doctype html>',
 		'<html><head><meta charset="utf-8"><title>' + esc(name || 'Avatar') + '</title>',
-		'<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>',
+		'<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js"></script>',
 		'<style>html,body{margin:0;height:100%;background:' + attr(bg) + '}',
 		'model-viewer{width:' + attr(w) + ';height:' + attr(h) + ';--progress-bar-color:#6a5cff}',
 		'a.ar{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;font-family:ui-sans-serif,system-ui,sans-serif;' +

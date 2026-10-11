@@ -29,6 +29,7 @@ import { DEFAULT_AVATARS, getDefaultAvatar } from './default-avatars.js';
 import { REGISTRY_DEPLOYMENTS } from './abi.js';
 import { renderBatchTab } from './batch-tab.js';
 import { renderQRToCanvas } from './qr.js';
+import { ensureModelViewerOrFallback } from '../shared/model-viewer-loader.js';
 import {
 	CHAIN_META,
 	switchChain,
@@ -38,7 +39,6 @@ import {
 	supportedChainIds,
 } from './chain-meta.js';
 import {
-	getReadRegistry,
 	listAgentsByOwner,
 	listRegisteredEvents,
 	getAgentOnchain,
@@ -1014,7 +1014,7 @@ export class RegisterUI {
 			`;
 			this._lastPreviewThumbKey = thumbKey;
 			if (thumb.kind === 'glb') {
-				this._ensureModelViewer();
+				ensureModelViewerOrFallback(rail);
 				// Some GLBs (meshopt-compressed) exceed what the CDN model-viewer
 				// build can decode. Swap a failed 3D preview for a designed
 				// placeholder instead of leaving a silently empty viewer.
@@ -1091,23 +1091,6 @@ export class RegisterUI {
 		// — so the user always sees something during early form editing.
 		if (f.glbUrl) return f.glbUrl;
 		return null;
-	}
-
-	_ensureModelViewer() {
-		if (customElements.get('model-viewer')) return Promise.resolve();
-		if (this._mvLoading) return this._mvLoading;
-		this._mvLoading = new Promise((resolve, reject) => {
-			const s = document.createElement('script');
-			s.type = 'module';
-			// 4.0.0 shipped a meshopt loader path that could parse a compressed GLB
-			// before its decoder was attached, producing a hard console exception in
-			// the live preview. 4.3.1 awaits the bundled decoder before loading.
-			s.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js';
-			s.onload = () => resolve();
-			s.onerror = () => reject(new Error('model-viewer failed to load'));
-			document.head.appendChild(s);
-		});
-		return this._mvLoading;
 	}
 
 	_hasAvatar() {

@@ -13,7 +13,7 @@
 
 const ORIGIN = 'https://three.ws';
 const MODEL_VIEWER_CDN =
-	'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+	'https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js';
 
 export const EMBED_SIZES = [
 	{ id: 'wide', label: '16 : 9', w: 640, h: 360, ratio: '16 / 9' },
