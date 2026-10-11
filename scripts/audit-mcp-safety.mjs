@@ -86,6 +86,14 @@ const EXEMPTIONS = new Map([
 		'Read-through cache fill (category 1). gradeForCaller() answers from getGrade() when the content hash is already known; on a miss it grades the mesh it just fetched and calls putGrade() to warm sim_readiness_grades. putGrade() wraps its insert in try/catch and returns null on failure, so the caller receives the same grade whether or not the write lands.',
 	],
 	[
+		'sentiment_scout:db-write',
+		'Read-through cache fill (category 1). runSentimentScout() always returns the board it just computed; recordScoutReads() is an upsert into sentiment_scout_reads that keeps the first sighting for the track record and overwrites the rest, and every row write is wrapped in .catch(() => null), so a failed write never changes what the caller gets back.',
+	],
+	[
+		'preview_agent_mint:funds-transfer',
+		'Builder, not sender (category 2). Both preview_agent_mint and mint_onchain_agent call the shared runMint(args, { preview }); the call-closure scan follows runMint into sendAgentMint (the real broadcast) without seeing that it sits behind `if (preview) return {...}` and is unreachable when preview is true. The preview branch calls buildAgentMint() to assemble the mint instructions and solBalance() to read the wallet, then returns; it never reaches sendAgentMint. The sibling that does broadcast, mint_onchain_agent, is annotated readOnlyHint:false + destructiveHint:true.',
+	],
+	[
 		'prepare_agent_mint:funds-transfer',
 		'Builder, not sender (category 2). buildAgentMint() calls umi transferSol() to APPEND the mainnet deploy-fee instruction to the mint builder; the handler signs only with the new asset keypair, serializes to txs_base64 with the caller wallet as a noop fee payer, and returns. It never broadcasts. The sibling that does broadcast, mint_onchain_agent, is annotated readOnlyHint:false + destructiveHint:true.',
 	],
