@@ -213,6 +213,103 @@ function jointNodeIndices(json) {
 	return set;
 }
 
+// Slice the BIN chunk out of a GLB ArrayBuffer, the same chunk-1 offset math
+// glb-canonicalize.js's canonicalizeGLBBones uses: 20 bytes of header + the
+// (already 4-byte-padded) JSON chunk length lands exactly on chunk 1's own
+// 8-byte length/type header. Returns null for a file with no BIN chunk at all
+// (a skinless, texture-free, or data-URI-only GLB).
+function readGlbBin(buffer, jsonBytes) {
+	const c1Offset = 20 + jsonBytes;
+	if (c1Offset + 8 > buffer.byteLength) return null;
+	const view = new DataView(buffer);
+	const c1Len = view.getUint32(c1Offset, true);
+	return new Uint8Array(buffer, c1Offset + 8, c1Len);
+}
+
+const ACCESSOR_COMPONENT_BYTES = { 5120: 1, 5121: 1, 5122: 2, 5123: 2, 5125: 4, 5126: 4 };
+// Divisors for KHR-normalized integer accessors (glTF 2.0 §3.6.2.3): an
+// UNSIGNED_BYTE weight of 255 means 1.0, an UNSIGNED_SHORT weight of 65535
+// means 1.0. JOINTS_0 is never normalized (its ints are bone indices).
+const ACCESSOR_NORMALIZE_MAX = { 5120: 127, 5121: 255, 5122: 32767, 5123: 65535 };
+
+// Read one VEC4 accessor (JOINTS_0/WEIGHTS_0 and any JOINTS_n/WEIGHTS_n set
+// above 0) into `count` rows of 4 numbers. Returns null for anything this
+// reader cannot safely walk (no bufferView, an unsupported componentType, or
+// a sparse accessor). Skin-weight attributes are not sparse in practice, and
+// a report that skipped the rare case is safer than one that misreads it.
+function readVec4Accessor(json, bin, accessorIndex) {
+	const accessor = json.accessors?.[accessorIndex];
+	if (!accessor || accessor.sparse || typeof accessor.bufferView !== 'number') return null;
+	const view = json.bufferViews?.[accessor.bufferView];
+	const compBytes = ACCESSOR_COMPONENT_BYTES[accessor.componentType];
+	if (!view || !bin || !compBytes) return null;
+	const stride = view.byteStride || compBytes * 4;
+	const base = (view.byteOffset || 0) + (accessor.byteOffset || 0);
+	if (base + stride * Math.max(0, accessor.count - 1) + compBytes * 4 > bin.byteLength) return null;
+	const dv = new DataView(bin.buffer, bin.byteOffset + base);
+	const normMax = accessor.normalized ? ACCESSOR_NORMALIZE_MAX[accessor.componentType] : null;
+	const rows = [];
+	for (let i = 0; i < accessor.count; i++) {
+		const row = [];
+		for (let c = 0; c < 4; c++) {
+			const o = i * stride + c * compBytes;
+			let v;
+			switch (accessor.componentType) {
+				case 5120: v = dv.getInt8(o); break;
+				case 5121: v = dv.getUint8(o); break;
+				case 5122: v = dv.getInt16(o, true); break;
+				case 5123: v = dv.getUint16(o, true); break;
+				case 5125: v = dv.getUint32(o, true); break;
+				default: v = dv.getFloat32(o, true); break;
+			}
+			row.push(normMax ? v / normMax : v);
+		}
+		rows.push(row);
+	}
+	return rows;
+}
+
+// Per-vertex skin-weight health, the question canonical joint coverage can't
+// answer: a non-humanoid rig (UniRig/SkinTokens, AniGen) has no canonical
+// names to map at all, so its drivability hinges entirely on whether every
+// vertex actually got a weight. Walks every JOINTS_n/WEIGHTS_n set a skinned
+// primitive declares (glTF allows more than one set for >4 influences per
+// vertex) and reports the heaviest influence count seen and how many
+// vertices came back with no weight on any joint, a sign the predictor's
+// skinning step missed geometry the mesh step produced.
+function analyzeSkinWeights(json, bin) {
+	const skinnedMeshIdx = new Set();
+	for (const node of json.nodes || []) {
+		if (node.skin != null && node.mesh != null) skinnedMeshIdx.add(node.mesh);
+	}
+	let maxInfluences = 0;
+	let unweightedVertices = 0;
+	let totalVertices = 0;
+	for (const meshIdx of skinnedMeshIdx) {
+		for (const prim of json.meshes?.[meshIdx]?.primitives || []) {
+			const sets = Object.keys(prim.attributes || {})
+				.map((k) => /^JOINTS_(\d+)$/.exec(k)?.[1])
+				.filter((n) => n != null)
+				.map(Number)
+				.sort((a, b) => a - b);
+			if (!sets.length) continue;
+			const weightRows = sets.map((n) => readVec4Accessor(json, bin, prim.attributes[`WEIGHTS_${n}`]));
+			if (weightRows.some((rows) => !rows)) continue;
+			const vertexCount = weightRows[0].length;
+			for (let v = 0; v < vertexCount; v++) {
+				let influences = 0;
+				for (const rows of weightRows) {
+					for (const w of rows[v]) if (w > 1e-6) influences++;
+				}
+				totalVertices++;
+				if (influences === 0) unweightedVertices++;
+				if (influences > maxInfluences) maxInfluences = influences;
+			}
+		}
+	}
+	return { maxInfluences, unweightedVertices, totalVertices };
+}
+
 export function detectConvention(ctx) {
 	for (const c of CONVENTIONS) {
 		let hit = false;
@@ -314,6 +411,7 @@ export function analyzeGlb(buffer, opts = {}) {
 	const { json, jsonBytes, binBytes } = readGlbJson(buffer);
 	const nodes = json.nodes || [];
 	const jointIdx = jointNodeIndices(json);
+	const skinWeights = analyzeSkinWeights(json, readGlbBin(buffer, jsonBytes));
 
 	// Skinned = at least one mesh primitive is bound to a skin. This is the
 	// glTF-level equivalent of three.js's `node.isSkinnedMesh` check, which the
@@ -402,6 +500,9 @@ export function analyzeGlb(buffer, opts = {}) {
 			collisions,
 			renames,
 			groups,
+			maxInfluences: skinWeights.maxInfluences,
+			unweightedVertices: skinWeights.unweightedVertices,
+			skinnedVertices: skinWeights.totalVertices,
 		},
 	};
 	report.verdict = buildVerdict(report, drivable);
@@ -428,14 +529,26 @@ function buildVerdict(report, drivable) {
 	}
 
 	if (!drivable) {
+		// A non-humanoid rig (a creature, a prop, anything UniRig/SkinTokens or
+		// AniGen rigged) never maps canonical joints and lands here by design;
+		// its own drivability question isn't "does the clip library retarget"
+		// but "did the skinning step actually weight every vertex it rigged".
+		const failNotes = [
+			`Detected convention: ${s.convention.label} (${s.convention.evidence}).`,
+			s.unmapped.length ? `${s.unmapped.length} joint names were not recognised, including ${s.unmapped.slice(0, 3).join(', ')}.` : 'The skeleton has very few joints.',
+		];
+		if (s.skinnedVertices > 0) {
+			failNotes.push(
+				s.unweightedVertices > 0
+					? `${s.unweightedVertices} of ${s.skinnedVertices} skinned vertices have no joint influence at all (max ${s.maxInfluences} influences elsewhere).`
+					: `Every one of ${s.skinnedVertices} skinned vertices has a joint influence (up to ${s.maxInfluences} at once), so the skin itself is sound even though no canonical bone mapped.`,
+			);
+		}
 		return {
 			level: 'fail',
 			headline: `Only ${s.mapped} of this rig's joints map to the canonical skeleton, under the ${MIN_CANONICAL_BONES} needed to drive a clip.`,
 			detail: 'three.ws falls back to the default rig for models like this rather than leaving them in a T-pose, so your own mesh will not be the one moving.',
-			notes: [
-				`Detected convention: ${s.convention.label} (${s.convention.evidence}).`,
-				s.unmapped.length ? `${s.unmapped.length} joint names were not recognised, including ${s.unmapped.slice(0, 3).join(', ')}.` : 'The skeleton has very few joints.',
-			],
+			notes: failNotes,
 			fixes: [
 				'Rename the joints to the canonical set below, or let the auto-rigger rebuild the skeleton (POST /api/forge?action=rig).',
 				'If this is a common rig convention we should already know, the unmapped names below are exactly what belongs in src/glb-canonicalize.js.',

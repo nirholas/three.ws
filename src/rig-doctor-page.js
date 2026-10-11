@@ -372,12 +372,27 @@ function renderStats(report) {
 		['Convention', report.skeleton.convention.label, report.skeleton.convention.evidence],
 		['Triangles', report.geometry.triangles.toLocaleString(), `${report.geometry.vertices.toLocaleString()} vertices across ${report.geometry.primitives} primitives`],
 		['Joints', String(report.skeleton.jointCount), `${report.skeleton.mapped} recognised, ${report.skeleton.unmapped.length} not`],
+	];
+	// Skin-weight health has no canonical-bone requirement, so it is the one
+	// drivability signal a non-humanoid rig (UniRig/SkinTokens, AniGen) still
+	// gets: a creature or prop maps zero canonical joints by design, but its
+	// vertices should still all carry a joint influence.
+	if (report.skeleton.skinnedVertices > 0) {
+		rows.push([
+			'Skin weights',
+			`${report.skeleton.maxInfluences} max influences`,
+			report.skeleton.unweightedVertices > 0
+				? `${report.skeleton.unweightedVertices} of ${report.skeleton.skinnedVertices} vertices have no joint influence at all`
+				: `All ${report.skeleton.skinnedVertices} skinned vertices have at least one joint influence`,
+		]);
+	}
+	rows.push(
 		['Materials', String(report.counts.materials), `${report.counts.textures} textures, ${formatBytes(report.textureBytes)}`],
 		['Blendshapes', String(report.morphs.total), report.morphs.lipSync ? `${report.morphs.visemeCount} visemes, lip-sync ready` : 'No visemes, so no lip-sync'],
 		['Embedded clips', String(report.animations.length), report.animations.length ? report.animations.map((a) => a.name).slice(0, 4).join(', ') : 'None; the library supplies the motion'],
 		['Extensions', report.extensions.length ? String(report.extensions.length) : 'none', report.extensions.length ? report.extensions.join(', ') : 'Plain glTF 2.0'],
 		['File', formatBytes(report.bytes), `${formatBytes(report.jsonBytes)} JSON, ${formatBytes(report.binBytes)} binary`],
-	];
+	);
 	for (const [term, value, tip] of rows) {
 		const wrap = document.createElement('div');
 		wrap.className = 'rd-stat';

@@ -47,6 +47,10 @@ One of two things is true:
 - **No skinned mesh.** There is no skin binding a mesh to a skeleton, so no clip can deform anything. The model renders as a static prop and every animation affordance is hidden. Fix it by re-exporting with skinning enabled, or by running the mesh through the auto-rigger (`POST /api/forge?action=rig` with a `glb_url`).
 - **Under the joint floor.** Fewer than **8** joints mapped to the canonical set. Below that threshold a retargeted clip moves a limb or two on an otherwise frozen statue, which reads worse than not animating at all, so the platform substitutes the default rig instead.
 
+### Non-humanoid rigs
+
+A quadruped, a creature, or a prop rigged by [`workers/rig-nonhuman`](https://github.com/nirholas/three.ws/tree/main/workers/rig-nonhuman) (UniRig + SkinTokens) or the [AniGen](./forge.md) Forge lane has no Mixamo-shaped skeleton to score against, so it always lands in **Will not animate** here: zero canonical joints is the correct, expected result for a mesh the clip library was never going to retarget onto in the first place. Canonical coverage cannot tell you whether a rig like that is actually sound, so the **Skin weights** stat answers the real question instead: how many joints influence the single heaviest-weighted vertex (**max influences**), and how many of the mesh's skinned vertices came back with no joint influence at all (**unweighted vertices**). A model with zero unweighted vertices is fully deformable by its own predicted skeleton even though it will never drive a three.ws clip; a nonzero count means the skinning step missed geometry and that part of the mesh will not move under any skeleton, humanoid or not.
+
 ---
 
 ## Coverage: which limbs will move
@@ -187,6 +191,8 @@ console.log(report.verdict.headline);     // one sentence you can print
 console.log(report.skeleton.convention);  // { id: 'mixamo', label: 'Mixamo', … }
 console.log(report.skeleton.mapped);      // 52
 console.log(report.skeleton.unmapped);    // joint names with no canonical form
+console.log(report.skeleton.maxInfluences);      // heaviest per-vertex joint count, e.g. 4
+console.log(report.skeleton.unweightedVertices); // skinned vertices with no joint influence at all
 
 for (const g of report.skeleton.groups) {
   if (!g.driven) console.log(`${g.label} frozen, missing ${g.missingKey.join(', ')}`);

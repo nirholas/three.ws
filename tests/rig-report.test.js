@@ -158,6 +158,31 @@ describe('analyzeGlb verdicts', () => {
 		expect(r.verdict.headline).toMatch(/canonical skeleton/i);
 	});
 
+	it('reports per-vertex skin-weight health for a non-humanoid rig, same verdict as before', () => {
+		// fox.glb has no canonical bone names at all (UniRig/SkinTokens/AniGen
+		// output looks the same way), so canonical coverage can never answer
+		// "is this skin sound" for it; maxInfluences/unweightedVertices can.
+		const r = report('fox');
+		expect(r.skeleton.skinnedVertices).toBeGreaterThan(0);
+		expect(r.skeleton.maxInfluences).toBeGreaterThan(0);
+		expect(r.skeleton.maxInfluences).toBeLessThanOrEqual(8);
+		expect(r.skeleton.unweightedVertices).toBeGreaterThanOrEqual(0);
+		expect(r.skeleton.unweightedVertices).toBeLessThanOrEqual(r.skeleton.skinnedVertices);
+		// The new fields are informational: they must not change the verdict
+		// this rig already got.
+		expect(r.verdict.drivable).toBe(false);
+		expect(r.verdict.level).toBe('fail');
+		expect(r.verdict.notes.some((n) => /skinned vertices?/i.test(n))).toBe(true);
+	});
+
+	it('reports zero skin-weight stats for an unskinned model rather than throwing', () => {
+		const r = report('mannequin');
+		expect(r.skeleton.skinned).toBe(false);
+		expect(r.skeleton.maxInfluences).toBe(0);
+		expect(r.skeleton.unweightedVertices).toBe(0);
+		expect(r.skeleton.skinnedVertices).toBe(0);
+	});
+
 	it('warns on a halfbody rig and names exactly which groups stay frozen', () => {
 		const r = report('realistic-halfbody');
 		expect(r.verdict.level).toBe('warn');
