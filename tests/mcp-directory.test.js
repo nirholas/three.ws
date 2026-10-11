@@ -11,7 +11,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const directory = JSON.parse(readFileSync(resolve(ROOT, 'public/.well-known/mcp.json'), 'utf8'));
 const vercel = JSON.parse(readFileSync(resolve(ROOT, 'vercel.json'), 'utf8'));
 
-const CLIENTS = ['claude', 'chatgpt', 'cursor', 'vscode', 'grok-bot', 'ibm-bob'];
+const CLIENTS = ['claude', 'claude-code', 'chatgpt', 'cursor', 'vscode', 'grok-bot', 'ibm-bob'];
 const AUTH_MODES = ['none', 'oauth2.1', 'api-key'];
 
 // A path is served when a route in vercel.json rewrites it, or, as for every
