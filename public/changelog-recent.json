@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T20:20:26.258Z",
+	"generated_at": "2026-10-11T20:28:39.141Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -223,7 +223,7 @@
 			"date": "2026-10-11",
 			"type": "update",
 			"title": "A daily partner spotlight on X: one partner, one feature built on it, filmed live every day",
-			"summary": "@trythreews now features one partner from the partners page every day, with a thread on something three.ws built on that partner's technology. Each spotlight is filmed working against production that morning, so the reel is proof rather than a promo, and it rotates between a card, a GIF, the reel and generated art for its head. Every sentence comes from a partner registry with evidence behind it, the program name is stated exactly as the partner grants it, and nobody is tagged. The spotlight owns the prime-time slot, and three days are kept in stock so a bad run never leaves the slot empty.",
+			"summary": "@trythreews now features one partner from the partners page every day, with a thread on something three.ws built on that partner's technology. Each spotlight is filmed working against production that morning, so the reel is proof rather than a promo, and it rotates between a card, a GIF, the reel and generated art for its head. Every sentence comes from a partner registry with evidence behind it, the program name is stated exactly as the partner grants it, and nobody is tagged. The spotlight owns the prime-time slot, and three days are kept in stock so a bad run never leaves the slot empty. Once a week the series also publishes a partner deep-dive as an X Article: every feature built on that partner, filmed that day, with the runs, the evidence behind each sentence, the real requests and responses, and inline frames from the reels.",
 			"link": "/partners",
 			"tags": [
 				"feature",
