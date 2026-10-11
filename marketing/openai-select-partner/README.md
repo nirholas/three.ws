@@ -7,6 +7,7 @@ OpenAI Partner Network, plus the rules that govern how the badge may be used.
 | --- | --- | --- |
 | [`partnership-and-gpt-briefing.md`](partnership-and-gpt-briefing.md) | Full briefing on the partnership and the live custom GPT: tier facts and dates, the GPT's builder config and QA history, the Actions and MCP contracts, compliance posture, brand rules, live verification, open items | Reference |
 | [`press-release.md`](press-release.md) | Draft press release, written against OpenAI's partner template | **Needs OpenAI approval before publishing** (see below) |
+| [`press-launch-plan.md`](press-launch-plan.md) | Wire release and Business Insider pickup sequence, with the approval-request email in [`openai-approval-request.md`](openai-approval-request.md) | Ready, held on OpenAI approval |
 | [`social-copy.md`](social-copy.md) | Approved-messaging LinkedIn / X copy, ready to post | Ready |
 | [`badge-usage.md`](badge-usage.md) | Where the badge assets live and how they may be used | Ready |
 | [`cards/social-card.html`](cards/social-card.html) | Layout source for the two announcement graphics; renders with `npm run build:openai-cards` | Ready |
