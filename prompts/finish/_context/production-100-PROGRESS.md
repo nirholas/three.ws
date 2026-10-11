@@ -1016,6 +1016,50 @@ shows the same 6 pre-existing failures as before this change (unrelated:
 `mcp-schema.test.js`, `x-content.test.js` queue staleness) plus 3 new passing
 tests, no new failures.
 
+## 2026-10-11: order 403 (cron time-budget enforcement) closed
+
+Commit `1ef950e60` on `evolve`. `wrapCron()` in `api/_lib/http.js` now races
+every cron handler against a real time budget (`maxDurationMs`, wired from
+each of the 14 cron files that already declared `export const maxDuration`,
+defaulting to the new `DEFAULT_CRON_MAX_DURATION_MS` constant of 120000ms
+for the rest) and answers a clean `503 { reason: 'cron_timeout' }` instead
+of hanging until Cloud Run's blind 900s ingress kill, the gap this measured
+against `/api/cron/x402-ring-leak-scan` before order 400's own lease/budget
+fix landed. A `timedOut` guard stops the handler's own late settlement
+(it keeps running in the background; Node has no generic preemption) from
+clobbering the timeout heartbeat or touching the already-sent response.
+`api/_lib/render-glb.js`'s `renderOnce()` got the same treatment for its
+three previously-unbounded Puppeteer stages (`getBrowser` 30s, `setContent`
+20s, `screenshot` 15s, the last enforced manually since puppeteer-core
+ignores an unrecognized `timeout` key on screenshot options).
+
+Verification: `tests/http-cron-timeout.test.js` (4 new tests) proves the
+race, the 503 body, the heartbeat, the ops-alert dedup signature
+(`cron:timeout:<name>`), the unaffected-when-inside-budget path, and the
+default-budget fallback (verified behaviorally via a `setTimeout` spy
+rather than parsing esbuild-minified source, since `120_000` compiles to
+`12e4`). The timeout case was shown to hang indefinitely against the
+pre-fix `wrapCron` using a path-scoped `git stash push -u` isolating just
+`api/_lib/http.js`, then restored and the fix re-applied before committing.
+`tests/http-db-unavailable-boundary.test.js` got one added case proving
+`wrapCron`'s existing `db_unavailable` degradation (200, not 503, no
+`[api] unhandled` log) is unchanged now that a race wraps the handler.
+`npx vitest run tests/http-cron-timeout.test.js tests/http-db-unavailable-boundary.test.js`
+passes 10/10. A real `http.createServer` hosting `wrapCron` with an 800ms
+budget and a never-resolving handler answered `503 cron_timeout` at 0.809s
+against a real `curl` round trip (not Cloud Run's 900s, not instantly);
+the proof server and its temp script were removed afterward. `npm run
+test:core` shows the same pre-existing `x-content.test.js` queue-staleness
+failure noted in the 2026-10-11 ring-leak-scan entry above, no new
+failures, plus the new passing tests. `npm run check:rules` is clean on
+every touched file; `npm run build:pages` rebuilt the changelog clean.
+
+New docs section: "HTTP timeout with no cron context" in
+`docs/ops/production-log-triage.md`. OWNER-ACTIONS row 37 names the ship
+command (`npm run deploy:gcp:full`, already covered by row 1's general
+deploy cadence) and the post-deploy log query to confirm the fix landed.
+No owner decision was otherwise needed; this is a pure code fix.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
