@@ -1,0 +1,12 @@
+# This worker's own FastAPI/GCS layer. torch/torchvision, PartCrafter's own
+# requirements.txt install in their own Dockerfile layers BEFORE this file
+# (PartCrafter ships no pip-installable package; it is imported straight from
+# its vendored checkout on PYTHONPATH).
+trimesh>=4.4.0,<5
+
+fastapi>=0.115,<1
+uvicorn[standard]>=0.32,<1
+pydantic>=2.0.0
+httpx>=0.27.0
+
+google-cloud-storage==2.18.0

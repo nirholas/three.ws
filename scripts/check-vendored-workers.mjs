@@ -79,13 +79,50 @@ for (const file of VENDORED) {
 	}
 }
 
-if (failures.length) {
-	console.error('[check-vendored-workers] vendored worker files have drifted:\n');
-	for (const failure of failures) console.error(`  ${failure}\n`);
-	console.error('Fix the canonical copy, mirror it to every worker, and rerun.');
+// gltf_meshopt.py shells out to a `gltfpack` binary on PATH (see its
+// GLTFPACK_BIN constant). A worker that vendors the module but never stages
+// the binary in its Dockerfile passes the build-time unit test (which mocks
+// nothing, but also never feeds it meshopt-compressed input) and then fails
+// every real meshopt-compressed request at runtime with "the gltfpack
+// decoder is not installed". Catch that gap here instead of in production.
+const missingGltfpack = [];
+for (const dir of dirs) {
+	const modulePath = join(WORKERS_DIR, dir, 'gltf_meshopt.py');
+	try {
+		statSync(modulePath);
+	} catch {
+		continue;
+	}
+	const dockerfilePath = join(WORKERS_DIR, dir, 'Dockerfile');
+	let dockerfile;
+	try {
+		dockerfile = readFileSync(dockerfilePath, 'utf8');
+	} catch {
+		missingGltfpack.push(`${dir}: vendors gltf_meshopt.py but has no Dockerfile at ${dockerfilePath}`);
+		continue;
+	}
+	if (!dockerfile.includes('COPY --from=gltfpack')) {
+		missingGltfpack.push(
+			`${dir}: vendors gltf_meshopt.py but ${dockerfilePath} never stages the gltfpack binary ` +
+				`(no "COPY --from=gltfpack" line; see workers/segment/Dockerfile for the pattern)`,
+		);
+	}
+}
+
+if (failures.length || missingGltfpack.length) {
+	if (failures.length) {
+		console.error('[check-vendored-workers] vendored worker files have drifted:\n');
+		for (const failure of failures) console.error(`  ${failure}\n`);
+		console.error('Fix the canonical copy, mirror it to every worker, and rerun.');
+	}
+	if (missingGltfpack.length) {
+		console.error('[check-vendored-workers] gltf_meshopt.py is vendored without its gltfpack binary:\n');
+		for (const failure of missingGltfpack) console.error(`  ${failure}\n`);
+	}
 	process.exit(1);
 }
 
 console.log(
-	`[check-vendored-workers] OK: ${checked} vendored file copies across ${dirs.length} workers are byte-identical`,
+	`[check-vendored-workers] OK: ${checked} vendored file copies across ${dirs.length} workers are byte-identical, ` +
+		'and every worker that vendors gltf_meshopt.py stages the gltfpack binary',
 );

@@ -2,6 +2,21 @@
 # VAST-AI-Research, both MIT, LICENSE files read 2026-10-09. Neither ships a
 # pip-installable package; both are subprocess CLIs (see pipeline.py), so
 # this image vendors both checkouts at a pinned commit.
+#
+# gltfpack (zeux/meshoptimizer, MIT) is pinned by release tag and checksum,
+# the same pin workers/segment ships: gltf_meshopt.py shells out to it to
+# decode EXT_meshopt_compression before trimesh reads a caller's mesh.
+FROM python:3.11-slim AS gltfpack
+ARG GLTFPACK_VERSION=v1.2
+ARG GLTFPACK_SHA256=ebc236f5f6c08c7e5c5750476a187d24805d44d8c680449c4b7369c333f817b1
+RUN apt-get update && apt-get install -y --no-install-recommends curl unzip ca-certificates \
+    && curl -fsSL -o /tmp/gltfpack.zip \
+        https://github.com/zeux/meshoptimizer/releases/download/${GLTFPACK_VERSION}/gltfpack-ubuntu.zip \
+    && echo "${GLTFPACK_SHA256}  /tmp/gltfpack.zip" | sha256sum -c - \
+    && unzip -j /tmp/gltfpack.zip gltfpack -d /usr/local/bin \
+    && chmod +x /usr/local/bin/gltfpack \
+    && /usr/local/bin/gltfpack -v
+
 FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -19,6 +34,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && ln -sf /usr/bin/python3.11 /usr/bin/python3 \
     && ln -sf /usr/bin/python3.11 /usr/bin/python \
     && python3 -m pip install --upgrade pip setuptools wheel
+
+COPY --from=gltfpack /usr/local/bin/gltfpack /usr/local/bin/gltfpack
 
 # torch first, as its own cached layer, matching SkinTokens' documented
 # install (the newer and more exacting of the two dependency sets; UniRig
