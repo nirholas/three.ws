@@ -12,13 +12,13 @@ Surface: [/vaults](https://three.ws/vaults). Code: `api/vaults/*` (routes), `api
 | --- | --- | --- | --- |
 | `/api/vaults` | GET | **public** | Discovery feed of open vaults, ranked verified-first. Cached 15s (30s at the edge). |
 | `/api/vaults?mine=1` | GET | signed in | Your backed-vault positions. `401` without a session or API key. Never cached. |
-| `/api/vaults` | POST | signed in, owns the agent | Opens a vault. Reputation-gated. **Creates a custodial wallet.** |
+| `/api/vaults` | POST | signed in, owns the agent, API key needs `wallet:write` | Opens a vault. Reputation-gated. **Creates a custodial wallet.** |
 | `/api/vaults/:id` | GET | **public**, role-aware | Public picture always; adds `my_position` for the caller; adds `accrued_fee_atomics` for the owner. |
-| `/api/vaults/:id` | PATCH | **vault owner only** | `pause`, `resume`, `close`, `terms`. `403` for anyone else. |
-| `/api/vaults/deposit` | POST | signed in, owns the funding agent | **Spends** USDC out of your agent's wallet. |
-| `/api/vaults/redeem` | POST | signed in, holds shares | **Pays out** USDC from the vault to your funding wallet. |
-| `/api/vaults/trade` | POST | **vault owner only** | **Spends pooled backer capital** through a real swap. |
-| `/api/vaults/claim-fees` | POST | **vault owner only** | **Transfers** accrued fees to an agent wallet you own. |
+| `/api/vaults/:id` | PATCH | **vault owner only**; `resume`/`terms` need `wallet:write` | `pause`, `resume`, `close`, `terms`. `403` for anyone else. |
+| `/api/vaults/deposit` | POST | signed in, owns the funding agent, API key needs `wallet:write` | **Spends** USDC out of your agent's wallet. |
+| `/api/vaults/redeem` | POST | signed in, holds shares, API key needs `wallet:write` | **Pays out** USDC from the vault to your funding wallet. |
+| `/api/vaults/trade` | POST | **vault owner only**, API key needs `wallet:write` | **Spends pooled backer capital** through a real swap. |
+| `/api/vaults/claim-fees` | POST | **vault owner only**, API key needs `wallet:write` | **Transfers** accrued fees to an agent wallet you own. |
 | `/api/vaults/ledger` | GET | **public** | The full audit trail of one vault, newest first. Cached 8s (15s at the edge). |
 
 Two GETs are worth calling out because the pattern is easy to get wrong: `/api/vaults` and `/api/vaults/:id` are genuinely public (no cookie needed, and they set a public cache header), but `/api/vaults?mine=1` is a **read that requires auth** and returns `401 unauthorized` otherwise. There is no public endpoint that reveals which user backed which vault: the backer roster on `/api/vaults/:id` returns stake size plus an `is_me` flag, never a user id.
@@ -29,6 +29,8 @@ Every write accepts either form of credential:
 
 - **Session cookie**, as the browser does it. A one-time CSRF token is then required in `X-CSRF-Token`; get one from `GET /api/csrf-token`. A missing or stale token is `403 csrf_missing` / `403 csrf_invalid`.
 - **API key** (`Authorization: Bearer sk_live_...`), for scripts and servers. Bearer callers are CSRF-exempt because the token is itself the proof of intent. See [authentication.md](authentication.md) for minting one.
+
+A session carries full authority, but an API key only spends if it was minted with the `wallet:write` scope. Opening a vault, depositing, redeeming, owner-trading, and claiming fees all call the shared [`api/_lib/spend-scope.js`](../api/_lib/spend-scope.js) gate, so a key without it gets `403 insufficient_scope` naming the missing scope. `PATCH /api/vaults/:id` splits by action: `pause` and `close` only stop trading and are open to any key, while `resume` (restarts trading with backers' funds) and `terms` (raises budgets or the fee) need `wallet:write` too. A connector key (the preset for an unattended AI agent) can never hold `wallet:write`. See [API key scopes](mcp.md#api-key-scopes).
 
 Every write is also rate limited per user at 30 per minute, and the limiter fails closed: if the shared limiter backend is unreachable in production the write is refused rather than silently uncapped.
 
