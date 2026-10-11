@@ -1026,6 +1026,17 @@
 			.view-slot.dragging {
 				opacity: 0.4;
 			}
+			/* Past the selected engine's image cap (Pixal3D: 4), Match my photo
+			   never reads a 5th/6th view, so the slot is visibly inert rather than
+			   silently ignored. src/forge.js toggles data-disabled per engine. */
+			.view-slot[data-disabled='true'] {
+				opacity: 0.35;
+				cursor: not-allowed;
+				border-style: dotted;
+			}
+			.view-slot[data-disabled='true']:hover {
+				border-color: var(--stroke-strong);
+			}
 			/* Inner regions toggled by the slot's data-state. */
 			.vs-empty,
 			.vs-uploading,
@@ -1142,6 +1153,31 @@
 				font-size: var(--text-xs);
 				margin: var(--space-sm) 0 0;
 				text-align: center;
+			}
+
+			/* Match my photo (Pixal3D): shown only while that engine is selected
+			   (src/forge.js updatePixal3dPanel). */
+			.pixal3d-panel {
+				margin-top: var(--space-sm);
+				padding: var(--space-sm);
+				border: 1px solid var(--stroke);
+				border-radius: var(--radius-md);
+				background: var(--surface-1);
+			}
+			.pixal3d-panel-title {
+				margin: 0 0 var(--space-xs);
+				font-size: var(--text-xs);
+				color: var(--ink-dim);
+			}
+			.pixal3d-fill-row {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				font-size: var(--text-xs);
+				cursor: pointer;
+			}
+			.pixal3d-fill-row input:disabled {
+				cursor: not-allowed;
 			}
 
 			/* Live multi-view counter: turns the anonymous empty boxes into a
@@ -3894,6 +3930,20 @@
 						(<kbd class="gen-kbd">⌘V</kbd> / <kbd class="gen-kbd">Ctrl+V</kbd>), drag a thumbnail to reorder.
 						PNG/JPG/WebP, up to 8&nbsp;MB each.
 					</p>
+					<!-- Match my photo (Pixal3D): only shown while that engine is selected.
+					     Front/Back/Left/Right are the same first four slots every engine
+					     uses, so no separate upload UI, just the cap (handled in JS via
+					     activeMaxImages()) and this single opt-in for a one-photo job. -->
+					<section class="pixal3d-panel is-hidden" id="pixal3d-panel" aria-labelledby="pixal3d-panel-title">
+						<p class="pixal3d-panel-title" id="pixal3d-panel-title">
+							<strong>Match my photo</strong> fuses your 1-4 photos pixel-aligned instead of
+							guessing the unseen sides. Label them Front/Back/Left/Right by drop order.
+						</p>
+						<label class="pixal3d-fill-row" for="pixal3d-fill-sides">
+							<input type="checkbox" id="pixal3d-fill-sides" />
+							Only one photo? Let the worker synthesize the other three sides.
+						</label>
+					</section>
 					<!-- Your GPU: opt-in local generation through Modly (src/forge-modly.js).
 					     Nothing contacts localhost until Connect is pressed. -->
 					<section class="modly-panel" id="modly-panel" data-state="idle" aria-labelledby="modly-title">

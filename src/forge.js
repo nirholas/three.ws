@@ -128,6 +128,8 @@ const els = {
 	viewsCounter: document.getElementById('views-counter'),
 	viewsCounterText: document.getElementById('views-counter-text'),
 	viewsPips: document.getElementById('views-pips'),
+	pixal3dPanel: document.getElementById('pixal3d-panel'),
+	pixal3dFillSides: document.getElementById('pixal3d-fill-sides'),
 	sketchReqTag: document.getElementById('sketch-req-tag'),
 	generateAnyway: document.getElementById('generate-anyway'),
 	refineLocally: document.getElementById('refine-locally'),
@@ -291,6 +293,10 @@ const ENGINE_LABELS = {
 	replicate_byok: 'Replicate',
 	hunyuan3d: 'Hunyuan3D',
 	triposg: 'TripoSG',
+	// Pixal3D fuses every reference photo pixel-aligned instead of hallucinating
+	// unseen sides from one view: "Match my photo" is what that buys the user,
+	// not the vendor name.
+	pixal3d: 'Match my photo',
 };
 
 // Where to mint a key per BYOK provider, keyed by the backend's `byok` name.
@@ -313,6 +319,32 @@ const slots = VIEW_LABELS.map(() => ({
 	objectUrl: null,
 	errorMsg: '',
 }));
+
+// Most engines fuse up to MAX_VIEWS (6). Pixal3D's "Match my photo" lane caps
+// at 4 (its worker only knows front/back/left/right, slots 0-3, the same
+// four labels this grid already uses first) and the catalog is the only
+// source of that number, never a hardcoded second constant here.
+function activeMaxImages() {
+	const b = catalog?.backends?.find((x) => x.id === selectedEngine.backend);
+	const declared = Number(b?.max_images) > 0 ? Number(b.max_images) : MAX_VIEWS;
+	// Never exceed the slot grid itself: a backend can only tighten the cap,
+	// not widen it past the array nextFreeAfter/firstFreeSlot scan.
+	return Math.min(declared, MAX_VIEWS);
+}
+
+function slotEnabled(i) {
+	return i < activeMaxImages();
+}
+
+// Drop every slot beyond the active engine's cap so a switch from a 6-view
+// engine to Pixal3D never silently ships a 400 for photos the user can still
+// see sitting in the grid.
+function pruneSlotsOverCap() {
+	const cap = activeMaxImages();
+	for (let i = cap; i < slots.length; i++) {
+		if (slots[i].state !== 'empty') clearSlot(i);
+	}
+}
 
 // File picker target: the slot index the picker was opened for, or null to fill
 // from the first free slot.
@@ -942,6 +974,11 @@ function selectEngine(btn, silent) {
 	// re-evaluate the lock whenever the engine changes under High. Reuses the cached
 	// access verdict — no extra round-trip, no loading flash.
 	if (selectedTier === 'high') reflectHighAccess('high', { silent: true });
+	// A switch to a tighter-capped engine (Pixal3D: 4) drops any photos sitting
+	// in the slots it can't use, then every slot repaints against the new cap:
+	// enabled/disabled state, the pips denominator, and the fill-sides toggle.
+	pruneSlotsOverCap();
+	for (let i = 0; i < slots.length; i++) renderSlot(i);
 }
 
 // Show the key field only for BYOK engines, with provider-specific hint + link.
@@ -1275,14 +1312,15 @@ function buildSlots() {
 			openPicker(i);
 		});
 
-		// Click empty/error → browse for this slot.
+		// Click empty/error → browse for this slot (never a slot past the active
+		// engine's cap, Pixal3D only reads the first four).
 		slot.addEventListener('click', () => {
-			if (slots[i].state === 'empty' || slots[i].state === 'error') openPicker(i);
+			if (slotEnabled(i) && (slots[i].state === 'empty' || slots[i].state === 'error')) openPicker(i);
 		});
 		slot.addEventListener('keydown', (e) => {
 			if (e.key === 'Enter' || e.key === ' ') {
 				e.preventDefault();
-				if (slots[i].state === 'empty' || slots[i].state === 'error') openPicker(i);
+				if (slotEnabled(i) && (slots[i].state === 'empty' || slots[i].state === 'error')) openPicker(i);
 			}
 		});
 
@@ -1310,6 +1348,7 @@ function buildSlots() {
 		slot.addEventListener('drop', (e) => {
 			e.preventDefault();
 			slot.classList.remove('drop-target');
+			if (!slotEnabled(i)) return;
 			const from = e.dataTransfer.getData('application/x-forge-slot');
 			if (from !== '') {
 				swapSlots(Number(from), i);
@@ -1338,29 +1377,39 @@ function buildViewsPips() {
 }
 
 // Live "N of 6 views" readout + pips. Teaches that more views sharpen the mesh,
-// so users don't stop at a single photo thinking it's enough.
+// so users don't stop at a single photo thinking it's enough. The denominator
+// tracks the selected engine's own cap (4 for Pixal3D, 6 otherwise); the pips
+// grid is built once at MAX_VIEWS size, so pips past the active cap just hide.
 function updateViewsCounter() {
 	if (!els.viewsCounter || !els.viewsCounterText) return;
+	const cap = activeMaxImages();
 	const n = slots.filter((s) => s.state === 'uploaded').length;
 	const pips = els.viewsPips ? els.viewsPips.children : [];
-	for (let i = 0; i < pips.length; i++) pips[i].dataset.filled = String(i < n);
+	for (let i = 0; i < pips.length; i++) {
+		pips[i].dataset.filled = String(i < n);
+		pips[i].style.display = i < cap ? '' : 'none';
+	}
 	let tail;
 	if (n === 0) tail = ' — add a photo to begin';
-	else if (n < MAX_VIEWS) tail = ' · <span class="vc-quality">more views = sharper</span>';
+	else if (n < cap) tail = ' · <span class="vc-quality">more views = sharper</span>';
 	else tail = ' · <span class="vc-quality">full coverage</span>';
-	els.viewsCounterText.innerHTML = `<strong>${n}</strong> of ${MAX_VIEWS} views${tail}`;
+	els.viewsCounterText.innerHTML = `<strong>${n}</strong> of ${cap} views${tail}`;
 }
 
 function renderSlot(i) {
 	const el = slotEl(i);
 	if (!el) return;
 	const s = slots[i];
+	const enabled = slotEnabled(i);
 	el.dataset.state = s.state;
+	el.dataset.disabled = String(!enabled);
+	el.tabIndex = enabled ? 0 : -1;
 	el.draggable = s.state === 'uploaded';
 	// Slot changes flip the input mode (prompt-only ↔ photo), which changes
 	// which engines may serve — keep the selector honest in the same frame.
 	updateEngineAvailability();
 	updateViewsCounter();
+	updatePixal3dPanel();
 
 	const img = el.querySelector('.vs-thumb');
 	if (s.objectUrl) {
@@ -1373,12 +1422,34 @@ function renderSlot(i) {
 	el.querySelector('.vs-error-msg').textContent = s.errorMsg || 'Upload failed';
 
 	const labels = {
-		empty: `${VIEW_LABELS[i]} view, empty — add a photo`,
+		empty: enabled
+			? `${VIEW_LABELS[i]} view, empty, add a photo`
+			: `${VIEW_LABELS[i]} view, not used by ${ENGINE_LABELS.pixal3d}`,
 		uploading: `${VIEW_LABELS[i]} view, uploading`,
 		uploaded: `${VIEW_LABELS[i]} view, uploaded — drag to reorder`,
 		error: `${VIEW_LABELS[i]} view, upload failed`,
 	};
 	el.setAttribute('aria-label', labels[s.state] || VIEW_LABELS[i]);
+}
+
+// Shows/hides the "fill in the other sides" opt-in beneath the drop zone.
+// Only Pixal3D offers it, and only while at most one photo is uploaded. The
+// worker's MV-Adapter rung synthesizes the other three sides from a single
+// reference, so it has nothing to do once a second photo narrows the job to
+// plain multi-view fusion.
+function updatePixal3dPanel() {
+	if (!els.pixal3dPanel) return;
+	const isPixal3d = selectedEngine.backend === 'pixal3d';
+	els.pixal3dPanel.classList.toggle('is-hidden', !isPixal3d);
+	if (!els.pixal3dFillSides) return;
+	if (!isPixal3d) {
+		els.pixal3dFillSides.checked = false;
+		return;
+	}
+	const uploadedCount = slots.filter((s) => s.state === 'uploaded').length;
+	const eligible = uploadedCount <= 1;
+	els.pixal3dFillSides.disabled = !eligible;
+	if (!eligible) els.pixal3dFillSides.checked = false;
 }
 
 function clearSlot(i) {
@@ -1398,11 +1469,13 @@ function swapSlots(a, b) {
 }
 
 function firstFreeSlot() {
-	return slots.findIndex((s) => s.state === 'empty' || s.state === 'error');
+	const cap = activeMaxImages();
+	return slots.findIndex((s, i) => i < cap && (s.state === 'empty' || s.state === 'error'));
 }
 
 function nextFreeAfter(i) {
-	for (let j = i + 1; j < slots.length; j++) {
+	const cap = activeMaxImages();
+	for (let j = i + 1; j < cap; j++) {
 		if (slots[j].state === 'empty' || slots[j].state === 'error') return j;
 	}
 	return -1;
@@ -1415,13 +1488,14 @@ function openPicker(index) {
 }
 
 // Distribute dropped/picked files into slots, starting at `startIndex` (or the
-// first free slot when null), filling free slots up to MAX_VIEWS.
+// first free slot when null), filling free slots up to the active engine's cap.
 function handleFiles(startIndex, fileList) {
 	const files = Array.from(fileList).filter((f) => f && f.type && f.type.startsWith('image/'));
 	if (!files.length) return;
-	let idx = startIndex == null ? firstFreeSlot() : startIndex;
+	const cap = activeMaxImages();
+	let idx = startIndex == null || startIndex >= cap ? firstFreeSlot() : startIndex;
 	for (const file of files) {
-		if (idx < 0 || idx >= MAX_VIEWS) idx = firstFreeSlot();
+		if (idx < 0 || idx >= cap) idx = firstFreeSlot();
 		if (idx < 0) break; // all slots taken
 		uploadToSlot(idx, file);
 		idx = nextFreeAfter(idx);
@@ -1690,6 +1764,21 @@ async function startJob({ prompt, imageUrls, skipValidation, payment, seed, prog
 			// only — the director rewrites a prompt, and an image submission has
 			// none to rewrite.
 			: { prompt, aspect_ratio: aspectRatio, director: true, ...base };
+	// Match my photo (Pixal3D): tag each uploaded view with the slot it actually
+	// sits in (Front/Back/Left/Right → front/back/left/right), so a user who
+	// drag-reordered or skipped a slot still gets the label they placed the
+	// photo under, not a blind 0/1/2/3 guess. One photo + the opt-in asks the
+	// worker to synthesize the other three sides instead (MV-Adapter).
+	if (selectedEngine.backend === 'pixal3d' && Array.isArray(imageUrls) && imageUrls.length) {
+		const pixal3dLabels = catalog?.backends?.find((b) => b.id === 'pixal3d')?.view_labels;
+		if (Array.isArray(pixal3dLabels)) {
+			const uploadedSlotIndexes = slots
+				.map((s, i) => (s.state === 'uploaded' && s.url ? i : -1))
+				.filter((i) => i >= 0);
+			body.view_labels = uploadedSlotIndexes.map((i) => pixal3dLabels[i] ?? null);
+		}
+		if (imageUrls.length === 1 && els.pixal3dFillSides?.checked) body.fill_other_sides = true;
+	}
 	// What this maker said they are building for, remembered from an earlier
 	// model. Absent until they answer once; the server ignores an unknown value.
 	const destination = storedForgeDestination();

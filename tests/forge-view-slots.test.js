@@ -59,13 +59,25 @@ describe('/forge reference-view slots', () => {
 		expect(clientViewLabels().length).toBeLessThanOrEqual(serverMaxViews());
 	});
 
-	it('scans for the next free slot within the array, not a separate constant', () => {
+	it('scans for the next free slot within activeMaxImages(), which is clamped to the array itself', () => {
 		const fn = clientSrc.slice(clientSrc.indexOf('function nextFreeAfter'));
 		const body = fn.slice(0, fn.indexOf('\n}') + 2);
-		// The loop bound is the array itself: filling the LAST slot must return
-		// -1 ("no free slot"), never read one past the end.
-		expect(body).toContain('j < slots.length');
+		// The loop bound is activeMaxImages() (a per-engine cap, e.g. Pixal3D's 4),
+		// never a separate hardcoded constant that could drift from the array.
+		expect(body).toContain('activeMaxImages()');
+		expect(body).toContain('j < cap');
 		expect(body).not.toContain('j < MAX_VIEWS');
+		expect(body).not.toContain('j < slots.length');
+	});
+
+	it('activeMaxImages() can only tighten the cap, never widen it past the slot array', () => {
+		const fn = clientSrc.slice(clientSrc.indexOf('function activeMaxImages'));
+		const body = fn.slice(0, fn.indexOf('\n}') + 2);
+		// A backend's advertised max_images can shrink the usable range but must
+		// never exceed MAX_VIEWS, or nextFreeAfter/firstFreeSlot would read past
+		// the end of slots[] exactly like the bug this file is named for.
+		expect(body).toContain('Math.min(');
+		expect(body).toContain('MAX_VIEWS');
 	});
 
 	it('nextFreeAfter semantics: returns -1 past the end rather than throwing', () => {
