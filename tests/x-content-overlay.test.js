@@ -202,16 +202,24 @@ describe('buildBundle', () => {
 	it('bundles the body, cover, and inline images of an Article', () => {
 		const root = mkdtempSync(join(tmpdir(), 'x-overlay-checkout-'));
 		write(root, 'public/x-media/long/cover.png', Buffer.from('cover'));
-		write(root, 'public/x-media/long/inline.png', Buffer.from('inline'));
-		write(root, 'data/x-content/articles/long.md', '## Why\n\nBecause.\n\n![Hero](../../../public/x-media/long/inline.png)\n\nThe end.');
+		const shots = [1, 2, 3, 4].map((n) => `public/x-media/long/inline-${n}.png`);
+		for (const shot of shots) write(root, shot, Buffer.from(shot));
+		// An Article deep enough for the queue's depth gate: eight sections of
+		// prose, real tables and code, four captures, the partners and Try it.
+		const prose = Array.from({ length: 320 }, (_, index) => `word${index % 40}`).join(' ');
+		const table = ['| Bone | Canonical |', '|---|---|', ...Array.from({ length: 60 }, (_, index) => `| mixamorig:Spine${index} | spine${index} |`)].join('\n');
+		const code = ['```js', ...Array.from({ length: 30 }, (_, index) => `const bone${index} = canonicalize('mixamorig:Spine${index}');`), '```'].join('\n');
+		const sections = ['How a skeleton is read', 'Where names come from', 'The canonical set', 'Retargeting the clips', 'What the doctor reports', 'How it was checked', 'The partners behind the rig library', 'Try it'];
+		const body = sections.map((heading, index) => `## ${heading}\n\n${prose}\n\n${index === 2 ? `${table}\n\n` : ''}${index === 3 ? `${code}\n\n` : ''}${index < 4 ? `![Capture ${index + 1}](../../../${shots[index]})\n\n` : ''}${heading === 'Try it' ? '[Rig Doctor](https://three.ws/rig-doctor)' : ''}`).join('\n\n');
+		write(root, 'data/x-content/articles/long.md', body);
 		const item = {
 			id: 'long', status: 'approved', kind: 'article', tier: 1, lane: 'article', pattern: 'longform', notBefore: '2026-09-01T00:00:00Z',
-			article: { title: 'How rigs get named', body: 'data/x-content/articles/long.md', cover: { path: 'public/x-media/long/cover.png' } },
+			article: { title: 'How Rig Doctor reads a skeleton from any exporter and maps its bones onto one canonical set', body: 'data/x-content/articles/long.md', cover: { path: 'public/x-media/long/cover.png' } },
 			posts: [{ text: 'The long version of how Rig Doctor reads a skeleton.' }],
 		};
 		writeQueue(root, [item]);
 		writeReview(root, item);
-		expect(buildBundle(root, 'long').files.map((file) => file.path)).toEqual(['data/x-content/articles/long.md', 'public/x-media/long/cover.png', 'public/x-media/long/inline.png']);
+		expect(buildBundle(root, 'long').files.map((file) => file.path)).toEqual(['data/x-content/articles/long.md', 'public/x-media/long/cover.png', ...shots]);
 	});
 });
 
