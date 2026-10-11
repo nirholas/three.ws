@@ -1,0 +1,14 @@
+# Pulse
+
+> Open-source market intelligence for the Solana and Robinhood Chain trenches. Records every launch, runner and death, scores wallets and KOLs, classifies tech versus meme, writes a daily Telegram newsletter, serves a dashboard and an MCP server, and keeps a Postgres archive for training trading bots.
+
+## Docs
+- [Getting started](https://nirholas.github.io/pulse/docs/getting-started.html): install and first run
+- [API reference](https://nirholas.github.io/pulse/docs/api.html): every JSON route
+- [MCP server](https://nirholas.github.io/pulse/docs/mcp.html): tools for agents
+- [Data model](https://nirholas.github.io/pulse/docs/data-model.html): every archive table
+- [How it works](https://nirholas.github.io/pulse/docs/how-it-works.html): lifecycle statuses, classification, wallet scoring
+
+## Source
+- [GitHub](https://github.com/nirholas/pulse)
+- [npm](https://www.npmjs.com/package/pulse-trenches)

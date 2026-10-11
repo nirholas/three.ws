@@ -1,0 +1,21 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.nirholas/pulse",
+  "title": "Pulse",
+  "description": "Read-only market intelligence for the Solana and Robinhood Chain trenches: runners, launches, wallets, daily reports.",
+  "repository": { "url": "https://github.com/nirholas/pulse", "source": "github" },
+  "version": "0.1.1",
+  "websiteUrl": "https://nirholas.github.io/pulse/",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "pulse-trenches",
+      "version": "0.1.1",
+      "runtimeHint": "npx",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        { "name": "PULSE_URL", "description": "Base URL of a running Pulse API", "default": "http://localhost:8787", "isRequired": false }
+      ]
+    }
+  ]
+}
