@@ -1,5 +1,15 @@
 # best3d 03: Rig non-humanoids: SkinTokens, UniRig and AniGen
 
+## Evolve status (2026-10-11)
+
+Built, tested and committed; NOT closed. Two Definition of done lines need an owner GPU deploy that this session cannot run (gate 2, deploy). What remains and who owns it:
+
+1. Deploy `workers/rig-nonhuman` and set `RIG_NONHUMAN_URL` wherever `workers/rig`'s classifier reads it from: exact commands in row 40 of [`_context/production-100-OWNER-ACTIONS.md`](_context/production-100-OWNER-ACTIONS.md).
+2. Deploy `workers/model-anigen` and set `MODEL_ANIGEN_URL` on `three-ws-api`: exact commands in row 41 of the same file.
+3. Once both are live, run one real quadruped GLB through each lane, confirm it plays a clip in the viewer, then delete this order file and log the result in [`_context/best3d-PROGRESS.md`](_context/best3d-PROGRESS.md).
+
+Everything else in the Definition of done is verified in this session; see the progress log for command output.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate.
 
 ## Operating clause (binding)
