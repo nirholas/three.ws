@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-11T01:08:21.068Z",
+	"generated_at": "2026-10-11T08:10:44.766Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3853,
+	"total": 3854,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -28,6 +28,17 @@
 			"tags": [
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "The @-mention reply bot now reports its own status, and /grok shows it live",
+			"summary": "A new public endpoint, /api/x/mention-bot/status, answers whether the @-mention reply bot is live, in dry run, or paused, how many handles it has replied on, how many replies it sent in the last 24 hours, and its median reply time. No mention text or author identity is included. The /grok page now shows this as a live section, and /api/healthz carries the same signal as a platform subsystem, so an operator sees a wedged reply queue or a rising error rate within the hour it starts, instead of the bot quietly going silent with no signature anywhere.",
+			"link": "/grok",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -1547,17 +1558,6 @@
 			"link": "/genesis",
 			"tags": [
 				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-18",
-			"type": "update",
-			"title": "The $THREE page now has a live DEXTools chart and the Social Boost wins",
-			"summary": "The $THREE page shows a live candle chart of the three / SOL pair, drawn by DEXTools. Below the platform's own buybacks there is a new section for the community's: the three DEXTools Social Boost prizes $THREE has won so far, $11,382 of buybacks in total, each with a link to its receipt on DEXTools. Social Boost ranks tokens by visits to their DEXTools page, so the section also links straight there. Every visit counts toward the next win.",
-			"link": "/three-token",
-			"tags": [
-				"feature",
 				"improvement"
 			]
 		}

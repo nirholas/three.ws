@@ -40,6 +40,7 @@ import { gatherForgeHealth } from './forge-health-sensor.js';
 import { gatherObjectStorageHealth } from './object-storage-health.js';
 import { gatherIndexLagHealth } from './index-lag.js';
 import { gatherHomeHealth } from './home-health.js';
+import { gatherMentionBotHealth } from '../x-mention-health.js';
 import { describeSolvency } from '../sniper-solvency.js';
 import { treasuryWalletOrNull, rewardsWalletOrNull } from '../token/config.js';
 
@@ -639,6 +640,9 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 		// no XMTP delivery), and until it was hosted it had no health surface at
 		// all: the listing was flagged offline by OKX before anyone here noticed.
 		probeDb ? checkOkxChatBot() : Promise.resolve({ name: 'okx_chat_bot', label: 'OKX marketplace chat bot (agent #2632)', status: 'unknown', detail: 'probe skipped' }),
+		// X @-mention reply bot. Reads x_mention_events only (webhook + any future
+		// poller both write through it), so it shares the probeDb gate.
+		probeDb ? gatherMentionBotHealth() : Promise.resolve({ name: 'x_mention_bot', label: 'X mention bot', status: 'unknown', detail: 'mention bot read skipped' }),
 	];
 	const subsystems = await Promise.all(checks);
 

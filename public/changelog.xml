@@ -23,6 +23,14 @@
 			<description>The Sentiment Scout reads X for posts quoting a coin's exact contract address, as evidence a holder can open and check. When our own X search credentials are unavailable or rate limited, it now fails over to xAI's x_search tool, a second route to the same posts, metered by its own daily cap so an outage on one path never silently costs more than planned on the other. No change for anyone reading the Scout: the evidence looks the same either way.</description>
 		</item>
 		<item>
+			<title>The @-mention reply bot now reports its own status, and /grok shows it live</title>
+			<link>https://three.ws/grok</link>
+			<guid isPermaLink="false">2026-10-11:The @-mention reply bot now reports its own status, and /grok shows it live</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new public endpoint, /api/x/mention-bot/status, answers whether the @-mention reply bot is live, in dry run, or paused, how many handles it has replied on, how many replies it sent in the last 24 hours, and its median reply time. No mention text or author identity is included. The /grok page now shows this as a live section, and /api/healthz carries the same signal as a platform subsystem, so an operator sees a wedged reply queue or a rising error rate within the hour it starts, instead of the bot quietly going silent with no signature anywhere.</description>
+		</item>
+		<item>
 			<title>Docs · Grok Bot recipes</title>
 			<link>https://three.ws/docs/tutorials/grok-bot-recipes</link>
 			<guid isPermaLink="false">2026-10-10:Docs · Grok Bot recipes</guid>

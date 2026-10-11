@@ -524,6 +524,72 @@ async function loadSkill() {
 	}
 }
 
+// ── @-mention reply bot status ────────────────────────────────────────────
+
+const BOT_MODE_LABEL = { live: 'Live', dry_run: 'Dry run', paused: 'Paused', unknown: 'Starting up' };
+
+function botStat(label, value) {
+	const card = document.createElement('div');
+	card.className = 'gk-bot-stat';
+	const l = document.createElement('p');
+	l.className = 'gk-bot-label';
+	l.textContent = label;
+	const v = document.createElement('p');
+	v.className = 'gk-bot-value';
+	v.textContent = value;
+	card.append(l, v);
+	return card;
+}
+
+function formatReplyTime(seconds) {
+	if (seconds == null) return 'n/a';
+	if (seconds < 60) return `${seconds}s`;
+	return `${Math.round(seconds / 60)}m`;
+}
+
+async function loadMentionBotStatus() {
+	const grid = $('gk-bot');
+	const note = $('gk-bot-note');
+	grid.setAttribute('aria-busy', 'true');
+	note.hidden = true;
+	try {
+		const res = await fetch('/api/x/mention-bot/status', { headers: { accept: 'application/json' } });
+		if (!res.ok) throw new Error(`status answered ${res.status}`);
+		const data = await res.json();
+		const mode = document.createElement('div');
+		mode.className = 'gk-bot-stat';
+		const l = document.createElement('p');
+		l.className = 'gk-bot-label';
+		l.textContent = 'Mode';
+		const v = document.createElement('p');
+		v.className = 'gk-bot-value gk-bot-mode';
+		v.dataset.tone = data.status;
+		v.textContent = BOT_MODE_LABEL[data.mode] || data.mode;
+		mode.append(l, v);
+		grid.replaceChildren(
+			mode,
+			botStat('Handles served', String(data.handlesServed ?? 0)),
+			botStat('Replies, last 24h', String(data.repliesLast24h ?? 0)),
+			botStat('Median reply time', formatReplyTime(data.medianReplySeconds)),
+		);
+		note.hidden = false;
+		note.removeAttribute('data-tone');
+		note.textContent = 'Aggregate counts only, no private data: no mention text, no author identities.';
+	} catch (err) {
+		grid.replaceChildren();
+		note.hidden = false;
+		note.dataset.tone = 'error';
+		note.textContent = `Could not load bot status (${err?.message || 'network error'}). `;
+		const retry = document.createElement('button');
+		retry.type = 'button';
+		retry.textContent = 'Try again';
+		retry.addEventListener('click', loadMentionBotStatus, { once: true });
+		note.append(retry);
+	} finally {
+		grid.setAttribute('aria-busy', 'false');
+	}
+}
+
 wireCopy();
 wireTabs();
 mountConnector();
@@ -531,3 +597,4 @@ loadStrip();
 startDemo();
 loadSkill();
 loadTools();
+loadMentionBotStatus();

@@ -9259,6 +9259,48 @@ Details: [docs/home-privacy.md](./home-privacy.md).
 
 ---
 
+## X Mention Bot API
+
+Agents on three.ws can reply to their own @-mentions on X through the same connector tools Grok uses (see [docs/grok.md](./grok.md)). This is the one public, unauthenticated read: an aggregate status for the bot as a whole, with no private data.
+
+### Bot status
+
+```
+GET /api/x/mention-bot/status
+```
+
+No session required. Rate limited like every other public read (`/api/x/mention-bot/status` shares the platform's public-IP limiter). Cached 60 seconds, so a page load never pays for its own aggregate query twice.
+
+**Response**
+
+```json
+{
+	"status": "ok",
+	"mode": "dry_run",
+	"handlesServed": 2,
+	"repliesLast24h": 25,
+	"medianReplySeconds": 42,
+	"checkedAt": "2026-10-11T08:04:31.903Z",
+	"note": "aggregate counts only, no private data"
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `status` | `ok`, `degraded`, `paused`, or `unknown`. Mirrors the `x_mention_bot` entry in [`/api/healthz`](#platform-stats-api)'s `subsystems` block. |
+| `mode` | `live` (replies actually post), `dry_run` (replies are composed and recorded but never sent), or `paused` (an operator switched the bot off; mentions are still recorded, nothing is decided or sent). |
+| `handlesServed` | Distinct agent/company handles the bot has ever recorded a mention for. |
+| `repliesLast24h` | Replies decided in the last 24 hours, across every handle. |
+| `medianReplySeconds` | Median time from a mention being recorded to its reply being decided, over the last 24 hours. `null` when there is no reply to measure yet. |
+
+No mention text, author identity, or send-budget data is ever included in this response; that detail is admin-only, through the operator console at `/api/x/ops/*` (list, status, pause, resume, block, unblock, send).
+
+```bash
+curl https://three.ws/api/x/mention-bot/status
+```
+
+---
+
 ## Pagination
 
 Paginated list endpoints use `limit`/`offset` query parameters unless noted otherwise (each endpoint's own parameter table is authoritative; some small per-user lists, like `/api/agents` and `/api/widgets`, return everything with no pagination).

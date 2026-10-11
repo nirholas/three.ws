@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-11",
+			"title": "The @-mention reply bot now reports its own status, and /grok shows it live",
+			"summary": "A new public endpoint, /api/x/mention-bot/status, answers whether the @-mention reply bot is live, in dry run, or paused, how many handles it has replied on, how many replies it sent in the last 24 hours, and its median reply time. No mention text or author identity is included. The /grok page now shows this as a live section, and /api/healthz carries the same signal as a platform subsystem, so an operator sees a wedged reply queue or a rising error rate within the hour it starts, instead of the bot quietly going silent with no signature anywhere.",
+			"tags": ["feature", "improvement"],
+			"link": "/grok"
+		},
+		{
+			"date": "2026-10-11",
 			"title": "An agent set to Grok now answers as Grok everywhere, with a badge when it can't",
 			"summary": "Profile chat, the agent editor's copilot, scheduled strategy runs, and the gateway all now read an agent's chosen brain through the same resolver, so picking Grok for an agent actually means Grok on every surface, not just the one where it was set. A Grok pick first tries the agent owner's own saved xAI key, then the platform's, before falling back to the free default chain. When Grok genuinely can't answer (no key reachable anywhere), profile chat now shows a small badge naming which model answered instead, so it's never a silent swap.",
 			"tags": ["improvement"]

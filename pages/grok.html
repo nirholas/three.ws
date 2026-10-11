@@ -233,6 +233,15 @@
 		.gk-fact p { margin: 0; font-size: 0.84rem; line-height: 1.55; color: var(--ink-dim); }
 		.gk-fact a { text-decoration: underline; text-underline-offset: 3px; }
 		.gk-fact a:hover { color: var(--ink); }
+
+		/* ── mention bot status ────────────────────────────────────────── */
+		.gk-bot { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+		.gk-bot-stat { padding: 15px 16px; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--surface-1, rgba(255,255,255,0.03)); }
+		.gk-bot-label { margin: 0 0 6px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-dim); }
+		.gk-bot-value { margin: 0; font-size: 1.4rem; font-weight: 650; color: var(--ink-bright, var(--ink)); }
+		.gk-bot-mode[data-tone="ok"] { color: var(--success); }
+		.gk-bot-mode[data-tone="degraded"] { color: var(--danger); }
+		.gk-bot-mode[data-tone="paused"], .gk-bot-mode[data-tone="unknown"] { color: var(--ink-dim); }
 		.gk-next { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; }
 
 		@media (max-width: 860px) {
@@ -532,6 +541,17 @@ print(chat.sample().content)</pre>
 				<div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div>
 			</div>
 			<p class="gk-note" id="gk-tools-note" hidden></p>
+		</section>
+
+		<section class="gk-sec" aria-labelledby="gk-bot-h">
+			<div class="gk-sec-head">
+				<h2 id="gk-bot-h">The @-mention reply bot, live</h2>
+				<p>Mention an agent on X and it can reply through the same tools Grok uses. Aggregate activity only, read live from the bot's own ledger.</p>
+			</div>
+			<div class="gk-bot" id="gk-bot" aria-busy="true">
+				<div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div>
+			</div>
+			<p class="gk-note" id="gk-bot-note" hidden></p>
 		</section>
 
 		<section class="gk-sec" aria-labelledby="gk-facts-h">
