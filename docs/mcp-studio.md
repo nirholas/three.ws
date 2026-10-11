@@ -201,11 +201,11 @@ actually did, and the verdict (`met`, `recovered`, `missed`, `skipped`,
 
 ```json
 "receipt": {
-  "id": "rr_88WfvqBfKtWPnaiT6S8NDb",
+  "id": "rr_81qbfUbiZNqSTD6rVmjCoA",
   "outcome": "delivered",
   "summary": "Delivered as expected. 1 carried by a fallback (Brief).",
-  "issues": [{ "stage": "brief", "verdict": "recovered", "expected": "…", "observed": "The prompt was used as written.", "cause": "The director model did not return a usable brief in time." }],
-  "url": "https://three.ws/runs/rr_88WfvqBfKtWPnaiT6S8NDb"
+  "issues": [{ "stage": "brief", "verdict": "recovered", "expected": "…", "observed": "The fixed full-body brief was appended to the prompt as written.", "cause": "The director reply stopped mid-sentence, so it was treated as clipped and set aside. The fixed brief keeps the framing." }],
+  "url": "https://three.ws/runs/rr_81qbfUbiZNqSTD6rVmjCoA"
 }
 ```
 

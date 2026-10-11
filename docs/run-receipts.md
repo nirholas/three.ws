@@ -22,16 +22,16 @@ A generation pipeline that answers "here is your model" and nothing else hides e
 | `met` | The stage did what it was expected to do. |
 | `recovered` | The stage did not do the expected thing, but a named fallback carried the run (a different tier, the prompt used as written, an automatic regeneration). |
 | `missed` | The stage did not do what was expected, and the receipt says why (`cause`). |
-| `skipped` | The stage did not apply to this run (a reference image skips the brief; draft tiers skip the vision check). |
-| `pending` | The stage was still running when the tool answered. `check_job` completes the receipt. |
+| `skipped` | The stage did not run (a reference image skips the brief; draft and standard tiers skip the vision check; `rig_mesh` never checks the subject). A skip is never counted as a pass: the summary of a run with a skipped stage reads "Every stage that ran met its contract" and names the skipped stages. |
+| `pending` | The stage was still running when the tool answered. Only `check_job` completes the receipt; the server stores a hash of the job handle, not the handle, so it cannot collect the job itself. A receipt still pending an hour later is shown as never collected. |
 
 ## Stages
 
 | Stage | Expected | How it is observed |
 | --- | --- | --- |
 | Input | A prompt or reference image that passes the content-safety check. | The safety check and image guard. A refused prompt is not stored. |
-| Subject check | (`forge_avatar` only) A prompt that reads as a character, since rigging assumes a humanoid. | The same humanoid classifier the tool already gates on. |
-| Brief | A director-written 3D specification. | Whether the director answered in time, or a known-mark brief applied. |
+| Subject check | A humanoid subject, since rigging builds a two-legged skeleton. | `forge_avatar`: the same humanoid classifier the tool already gates on. `rig_mesh`: always `skipped`, with the cause stated, because a caller-supplied mesh is rigged as given and nothing checks that it depicts a body. A lamp still receives a full humanoid skeleton, and the receipt says so instead of letting a met Rig stage imply otherwise. |
+| Brief | A director-written 3D specification. | Whether the director's brief was used, or the exact reason it was set aside (too long, with its length; unfinished; carried a link; added nothing; no reply), or a known-mark brief applied. |
 | Mesh | A textured mesh from the requested tier. | The engine and tier that actually ran, from the terminal job frame. |
 | Geometry check | A valid GLB with real, textured geometry. | The deterministic geometry score the forge computes on every file (triangles, vertices, textures). |
 | Visual check | A render that reads as a clean, complete subject. | The vision QA gate's verdict, score and defects, where the tier runs it. |
@@ -51,23 +51,27 @@ The outcome is derived from the stages. A tool can only state a worse outcome th
 
 ## The receipt object
 
+A real one, from a proof run on 2026-10-11 (stages trimmed to three of eight):
+
 ```json
 {
   "type": "three-run-receipt/v1",
-  "id": "rr_88WfvqBfKtWPnaiT6S8NDb",
-  "tool": "forge_free",
-  "started_at": "2026-10-11T17:02:11.418Z",
-  "finished_at": "2026-10-11T17:13:40.902Z",
-  "duration_ms": 689484,
-  "input": { "prompt": "a weathered brass ship lantern with a glass chimney", "reference_image": false },
+  "id": "rr_81qbfUbiZNqSTD6rVmjCoA",
+  "tool": "forge_avatar",
+  "plan": { "rig": true, "tier": "high" },
+  "started_at": "2026-10-11T02:31:35.330Z",
+  "finished_at": "2026-10-11T02:32:52.928Z",
+  "duration_ms": 77598,
+  "input": { "prompt": "a friendly cartoon astronaut in a white suit with an orange visor", "reference_image": false },
   "stages": [
-    { "id": "input", "label": "Input", "expected": "A request that passes the content-safety check.", "observed": "Received a text prompt; it passed the safety check.", "verdict": "met" },
-    { "id": "brief", "label": "Brief", "expected": "A director-written brief that turns the idea into a single-subject 3D specification.", "observed": "The prompt was used as written.", "verdict": "recovered", "cause": "The director model did not return a usable brief in time." }
+    { "id": "brief", "label": "Brief", "ms": 7738, "expected": "A director-written brief that frames the whole figure head to toe in a neutral A-pose.", "observed": "The fixed full-body brief was appended to the prompt as written.", "verdict": "recovered", "cause": "The director reply stopped mid-sentence, so it was treated as clipped and set aside. The fixed brief keeps the framing." },
+    { "id": "mesh", "label": "Mesh", "ms": 47093, "expected": "A textured 3D mesh from the high-detail tier.", "observed": "A mesh from the high-detail tier on TRELLIS (free).", "verdict": "met", "metrics": { "tier": "high", "engine": "TRELLIS (free)" } },
+    { "id": "rig", "label": "Rig", "ms": 22654, "expected": "A skinned humanoid skeleton the animation library can drive: torso, arms and legs mapped.", "observed": "52 joints (Mixamo), 52 mapped to the canonical skeleton; torso, arms and legs all driven.", "verdict": "met", "metrics": { "joints": 52, "mapped": 52, "skinned": true, "convention": "Mixamo" } }
   ],
   "outcome": "delivered",
   "summary": "Delivered as expected. 1 carried by a fallback (Brief).",
-  "issues": [ { "stage": "brief", "verdict": "recovered", "expected": "…", "observed": "…", "cause": "…" } ],
-  "output": { "glb_url": "https://three.ws/cdn/forge/…glb", "viewer_url": "https://three.ws/viewer?src=…" }
+  "issues": [ { "stage": "brief", "label": "Brief", "verdict": "recovered", "expected": "…", "observed": "…", "cause": "The director reply stopped mid-sentence, so it was treated as clipped and set aside. The fixed brief keeps the framing." } ],
+  "output": { "glb_url": "https://three.ws/cdn/forge/anon/9d23314f-a385-432d-bd4c-41513c5119f6.glb", "viewer_url": "https://three.ws/viewer?src=…" }
 }
 ```
 
@@ -84,8 +88,8 @@ The signature covers `three-run-receipt/v1` + `\n` + the canonical JSON of the r
 The server verifies every receipt it serves, but you do not have to trust it:
 
 ```bash
-node scripts/run-receipt-verify.mjs rr_88WfvqBfKtWPnaiT6S8NDb
-node scripts/run-receipt-verify.mjs https://three.ws/runs/rr_88WfvqBfKtWPnaiT6S8NDb --signer <pinned key>
+node scripts/run-receipt-verify.mjs rr_81qbfUbiZNqSTD6rVmjCoA
+node scripts/run-receipt-verify.mjs https://three.ws/runs/rr_81qbfUbiZNqSTD6rVmjCoA --signer <pinned key>
 node scripts/run-receipt-verify.mjs ./downloaded-receipt.json --json
 ```
 

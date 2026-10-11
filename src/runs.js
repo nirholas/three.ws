@@ -307,6 +307,29 @@ function verificationPanel(data) {
 	);
 }
 
+// Only check_job completes a pending receipt, and the server keeps a hash of the
+// job handle, never the handle, so it cannot collect the job on the caller's
+// behalf. Studio jobs finish in minutes; a receipt still pending an hour later
+// was never collected, and offering Refresh forever would imply otherwise.
+const UNCOLLECTED_AFTER_MS = 60 * 60 * 1000;
+
+function pendingNote(r, id) {
+	const started = Date.parse(r.started_at);
+	if (Number.isFinite(started) && Date.now() - started > UNCOLLECTED_AFTER_MS) {
+		return el(
+			'div',
+			{ class: 'rr-pending' },
+			el('p', { text: 'Never collected. A stage was still running when the tool answered, and nobody called check_job for the job afterwards, so this receipt cannot say how that stage ended. Every other stage is final.' }),
+		);
+	}
+	return el(
+		'div',
+		{ class: 'rr-pending' },
+		el('p', { text: 'A stage was still running when the tool answered. This receipt completes when the caller collects the job with check_job.' }),
+		el('button', { class: 'rr-btn', type: 'button', text: 'Refresh', onclick: () => renderReceipt(id) }),
+	);
+}
+
 async function renderReceipt(id) {
 	root.replaceChildren(el('div', { class: 'rr-skel', 'aria-busy': 'true', 'aria-label': 'Loading receipt' }, el('div', { class: 'rr-skel-head rr-shimmer' }), [0, 1, 2, 3, 4].map(() => el('div', { class: 'rr-skel-row rr-shimmer' }))));
 	let data;
@@ -342,9 +365,7 @@ async function renderReceipt(id) {
 		r.output?.glb_url
 			? el('div', { class: 'rr-actions' }, el('a', { class: 'rr-btn rr-btn--primary', href: r.output.viewer_url || `/viewer?src=${encodeURIComponent(r.output.glb_url)}`, text: 'Open the model' }), el('a', { class: 'rr-btn', href: r.output.glb_url, text: 'Download GLB' }))
 			: null,
-		r.outcome === 'pending'
-			? el('div', { class: 'rr-pending' }, el('p', { text: 'A stage was still running when the tool answered. This receipt completes when the job is collected (check_job, or the viewer link from the result).' }), el('button', { class: 'rr-btn', type: 'button', text: 'Refresh', onclick: () => renderReceipt(id) }))
-			: null,
+		r.outcome === 'pending' ? pendingNote(r, id) : null,
 	);
 
 	const issues = (r.issues || []).length
@@ -362,12 +383,15 @@ async function renderReceipt(id) {
 			)
 		: null;
 
+	// replaceChildren stringifies null into a "null" text node; a clean run has no issues card.
 	root.replaceChildren(
-		el('p', { class: 'rr-back' }, el('a', { href: '/runs', text: '← All runs' })),
-		head,
-		issues,
-		el('section', { class: 'rr-card' }, el('h3', { class: 'rr-h3', text: 'Every stage' }), el('ol', { class: 'rr-steps' }, r.stages.map(stageCard))),
-		verificationPanel(data),
+		...[
+			el('p', { class: 'rr-back' }, el('a', { href: '/runs', text: '← All runs' })),
+			head,
+			issues,
+			el('section', { class: 'rr-card' }, el('h3', { class: 'rr-h3', text: 'Every stage' }), el('ol', { class: 'rr-steps' }, r.stages.map(stageCard))),
+			verificationPanel(data),
+		].filter(Boolean),
 	);
 }
 
