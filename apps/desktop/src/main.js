@@ -33,6 +33,8 @@ import { createNotifier } from './main/notifier.js';
 import { createUpdater } from './main/updater.js';
 import { createCompanion } from './main/companion.js';
 import { createLocalRuntimeService } from './main/local-runtime.js';
+import { createPanel } from './main/panel.js';
+import { trayTitle, trayTooltip } from './panel/model.js';
 import { detectEditors, connectEditor, disconnectEditor, mcpServers } from './main/editors.js';
 
 const SRC = dirname(fileURLToPath(import.meta.url));
@@ -74,6 +76,8 @@ let notifier;
 let updater;
 let companion;
 let localRuntime;
+let panel;
+let trayMenu = null;
 let store;
 
 function sendToConsole(channel, payload) {
@@ -147,18 +151,24 @@ function trayIcon() {
 	return img;
 }
 
+function updateTrayTitle(snapshot) {
+	if (!state.tray) return;
+	const view = { signedIn: snapshot.signedIn, name: snapshot.user?.name, pendingApprovals: snapshot.pending.length, unread: snapshot.unread };
+	state.tray.setToolTip(trayTooltip(view));
+	if (process.platform === 'darwin') state.tray.setTitle(trayTitle(view));
+}
+
 function refreshTray() {
 	if (!state.tray) return;
 	const s = session.status();
 	const c = companion.status();
 	const u = updater.state();
 	const who = s.signedIn ? (s.user?.name || 'Signed in') : 'Not signed in';
-	state.tray.setToolTip(`three.ws Desktop: ${who}${state.unread ? `, ${state.unread} unread` : ''}`);
-	if (process.platform === 'darwin') state.tray.setTitle(state.unread ? String(state.unread) : '');
+	panel?.touch();
 
 	const template = [
 		{ label: `three.ws Desktop · ${who}`, enabled: false },
-		{ type: 'separator' },
+		{ label: 'Show panel', click: () => panel.show() },
 		{ label: 'Open console', accelerator: 'CommandOrControl+Shift+Space', click: () => openConsole() },
 		...(s.signedIn ? [
 			{ label: state.unread ? `Notifications (${state.unread} unread)` : 'Notifications', click: () => openConsole('notifications') },
@@ -190,7 +200,10 @@ function refreshTray() {
 		{ type: 'separator' },
 		{ label: 'Quit three.ws', role: 'quit' },
 	];
-	state.tray.setContextMenu(Menu.buildFromTemplate(template));
+	trayMenu = Menu.buildFromTemplate(template);
+	// Linux indicators often deliver no click events, so the menu stays attached
+	// there. Elsewhere a left click opens the panel and a right click the menu.
+	if (process.platform === 'linux') state.tray.setContextMenu(trayMenu);
 }
 
 function setCompanionMode(enabled) {
@@ -434,8 +447,10 @@ function boot() {
 		openBrowser: (url) => shell.openExternal(url),
 		onChange: (status) => {
 			sendToConsole('session:changed', status);
-			if (status.signedIn) notifier?.start();
-			else notifier?.stop();
+			if (status.signedIn) {
+				notifier?.start();
+				panel?.sync();
+			} else notifier?.stop();
 			refreshTray();
 		},
 	});
@@ -468,10 +483,29 @@ function boot() {
 		onFace: (face) => companion.setFace(face),
 	});
 
+	panel = createPanel({
+		srcDir: SRC,
+		session,
+		api,
+		runtime: localRuntime.runtime,
+		companion,
+		getUnread: () => state.unread,
+		readSettings,
+		writeSettings,
+		openConsole,
+		setCompanionMode,
+		openExternal,
+		onChange: updateTrayTitle,
+	});
+	panel.setReview((id) => localRuntime.decideThroughDialog(id));
+
 	registerIpc();
+	panel.register();
 
 	state.tray = new Tray(trayIcon());
-	state.tray.on('click', () => (process.platform === 'darwin' ? state.tray.popUpContextMenu() : openConsole()));
+	state.tray.on('click', () => panel.toggle());
+	state.tray.on('right-click', () => trayMenu && state.tray.popUpContextMenu(trayMenu));
+	panel.attachTray(state.tray);
 	refreshTray();
 
 	if (readSettings().companionMode) companion.enable();
@@ -502,6 +536,7 @@ if (!app.requestSingleInstanceLock()) {
 	// Closing the console leaves the app in the tray; Quit lives in the tray menu.
 	app.on('window-all-closed', () => {});
 	app.on('before-quit', () => {
+		panel?.stop();
 		companion?.stop();
 		notifier?.stop();
 		localRuntime?.runtime.stop();

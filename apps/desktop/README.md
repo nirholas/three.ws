@@ -40,6 +40,9 @@ and says it out loud.
   [three.ws/companion](https://three.ws/companion). This app is a body, not a
   second set of rules.
 - **Pauses from the tray**, and can start at login.
+- **Menu bar panel.** Click the tray icon for a popover with your agent in 3D,
+  its wallet balance, start and stop, pending approvals and a one-line ask box.
+  See [docs/desktop-menu-bar-panel.md](../../docs/desktop-menu-bar-panel.md).
 
 ## Install and run
 
