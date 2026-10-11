@@ -10,7 +10,7 @@ so you can open one, run it, and open the next without consulting anything. Ever
 |---|---|---|
 | `001` to `014` | Runnable right now, no gate. Highest value first. Start at `001`. | 14 |
 | `015` to `022` | The `parity-` campaign, added 2026-09-30. Runnable, no gate except where an order names one step. Run 015 before 017 (017 ranks 015's data); 919 ships them. | 8 |
-| `023` to `066` | The `x-grok-` campaign, added 2026-10-08: Grok Bot as an MCP client, xAI as a provider, and the X mention bot (dry run). Runnable; lane C ships nothing live. Run 023 first, 045 before 049, 046 to 049 before 050. | 44 |
+| `023` to `066` | The `x-grok-` campaign, added 2026-10-08: Grok Bot as an MCP client, xAI as a provider, and the X mention bot (dry run). Most of lane C has shipped; its automated reply path still needs the `evolve`/`main` reconciliation in `production-100-OWNER-ACTIONS.md` row 34. Run 023 first, 045 before 049, 046 to 049 before 050. | 6 |
 | `100` to `248` | The route-audit swarm, ordered by measured defect class. Parallel-safe. | 149 |
 | `300` to `313` | The unbuilt Home campaign, in numeric order (04 gates 05 and 06, 11 gates 20). | 14 |
 | `400` to `499` | Written by the evolve scout lane ([docs/ops/evolve.md](../docs/ops/evolve.md)), each from a dated measurement. Runnable, no gate. | varies |

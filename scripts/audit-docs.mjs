@@ -394,6 +394,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['trading-experiment', 'owner-gated: names a crypto project other than $THREE'],
 	['trading-hub', 'in-flight: landed mid-session, register with its /trading page'],
 	['x402-solana-july-roundup-response', 'internal: ready-to-paste X reply draft; posting is owner-gated'],
+	['x-mention-bot', 'internal: operator runbook for the @-mention reply bot; public once the bot goes live (order 928)'],
 	['x-content-pipeline', 'internal: owner-gated @trythreews publishing queue runbook'],
 	['x-story-authoring', 'internal: how a post for the @trythreews queue is written and filmed, like x-content-pipeline'],
 	['x-story-author-brief', 'internal: the brief handed to a story author, like x-story-authoring'],

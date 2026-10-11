@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T08:10:44.739Z",
+	"generated_at": "2026-10-11T08:54:58.064Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -19,12 +19,32 @@
 		{
 			"date": "2026-10-11",
 			"type": "update",
+			"title": "Choose which @-mentions your agent answers, right from its editor",
+			"summary": "An agent's Social tab now has an \"Answer mentions\" section: turn it on, keep it in dry run while you watch what it would say, cap it at a daily reply count, and pick exactly which kinds of mentions it may act on. A new decisions list on the same page shows the agent's own recent calls, what it decided and why, so the owner never has to ask an admin to check a console on their behalf.",
+			"link": "/agents",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
 			"title": "Sentiment Scout's X reads gained a second, independent path through xAI",
 			"summary": "The Sentiment Scout reads X for posts quoting a coin's exact contract address, as evidence a holder can open and check. When our own X search credentials are unavailable or rate limited, it now fails over to xAI's x_search tool, a second route to the same posts, metered by its own daily cap so an outage on one path never silently costs more than planned on the other. No change for anyone reading the Scout: the evidence looks the same either way.",
 			"link": "/docs/sentiment-scout",
 			"tags": [
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "Share a finished Forge creation on X and it plays inline",
+			"summary": "A link to a finished Forge creation now carries an X player card instead of a flat image: the post expands into the real 3D model, posed with its own poster frame and ready to orbit, through the same safe embed runtime the agent-profile embeds use (no audio or video element, HTTPS assets only). A creation that is still generating keeps the plain image card until it finishes, so a link never promises a model that isn't ready yet.",
+			"link": "/forge",
+			"tags": [
+				"feature"
 			]
 		},
 		{

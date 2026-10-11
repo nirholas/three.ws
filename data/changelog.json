@@ -3,6 +3,20 @@
 	"entries": [
 		{
 			"date": "2026-10-11",
+			"title": "Share a finished Forge creation on X and it plays inline",
+			"summary": "A link to a finished Forge creation now carries an X player card instead of a flat image: the post expands into the real 3D model, posed with its own poster frame and ready to orbit, through the same safe embed runtime the agent-profile embeds use (no audio or video element, HTTPS assets only). A creation that is still generating keeps the plain image card until it finishes, so a link never promises a model that isn't ready yet.",
+			"tags": ["feature"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-10-11",
+			"title": "Choose which @-mentions your agent answers, right from its editor",
+			"summary": "An agent's Social tab now has an \"Answer mentions\" section: turn it on, keep it in dry run while you watch what it would say, cap it at a daily reply count, and pick exactly which kinds of mentions it may act on. A new decisions list on the same page shows the agent's own recent calls, what it decided and why, so the owner never has to ask an admin to check a console on their behalf.",
+			"tags": ["feature"],
+			"link": "/agents"
+		},
+		{
+			"date": "2026-10-11",
 			"title": "The @-mention reply bot now reports its own status, and /grok shows it live",
 			"summary": "A new public endpoint, /api/x/mention-bot/status, answers whether the @-mention reply bot is live, in dry run, or paused, how many handles it has replied on, how many replies it sent in the last 24 hours, and its median reply time. No mention text or author identity is included. The /grok page now shows this as a live section, and /api/healthz carries the same signal as a platform subsystem, so an operator sees a wedged reply queue or a rising error rate within the hour it starts, instead of the bot quietly going silent with no signature anywhere.",
 			"tags": ["feature", "improvement"],

@@ -15,12 +15,28 @@
 			<description>Profile chat, the agent editor's copilot, scheduled strategy runs, and the gateway all now read an agent's chosen brain through the same resolver, so picking Grok for an agent actually means Grok on every surface, not just the one where it was set. A Grok pick first tries the agent owner's own saved xAI key, then the platform's, before falling back to the free default chain. When Grok genuinely can't answer (no key reachable anywhere), profile chat now shows a small badge naming which model answered instead, so it's never a silent swap.</description>
 		</item>
 		<item>
+			<title>Choose which @-mentions your agent answers, right from its editor</title>
+			<link>https://three.ws/agents</link>
+			<guid isPermaLink="false">2026-10-11:Choose which @-mentions your agent answers, right from its editor</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>An agent's Social tab now has an &quot;Answer mentions&quot; section: turn it on, keep it in dry run while you watch what it would say, cap it at a daily reply count, and pick exactly which kinds of mentions it may act on. A new decisions list on the same page shows the agent's own recent calls, what it decided and why, so the owner never has to ask an admin to check a console on their behalf.</description>
+		</item>
+		<item>
 			<title>Sentiment Scout's X reads gained a second, independent path through xAI</title>
 			<link>https://three.ws/docs/sentiment-scout</link>
 			<guid isPermaLink="false">2026-10-11:Sentiment Scout's X reads gained a second, independent path through xAI</guid>
 			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The Sentiment Scout reads X for posts quoting a coin's exact contract address, as evidence a holder can open and check. When our own X search credentials are unavailable or rate limited, it now fails over to xAI's x_search tool, a second route to the same posts, metered by its own daily cap so an outage on one path never silently costs more than planned on the other. No change for anyone reading the Scout: the evidence looks the same either way.</description>
+		</item>
+		<item>
+			<title>Share a finished Forge creation on X and it plays inline</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-11:Share a finished Forge creation on X and it plays inline</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A link to a finished Forge creation now carries an X player card instead of a flat image: the post expands into the real 3D model, posed with its own poster frame and ready to orbit, through the same safe embed runtime the agent-profile embeds use (no audio or video element, HTTPS assets only). A creation that is still generating keeps the plain image card until it finishes, so a link never promises a model that isn't ready yet.</description>
 		</item>
 		<item>
 			<title>The @-mention reply bot now reports its own status, and /grok shows it live</title>
