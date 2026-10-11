@@ -1,0 +1,10 @@
+[
+  {"id":"protocol-specs","title":"Protocol Specifications","blurb":"The open standards agents use to talk to tools, to each other and to people: A2A, MCP, ANP, Agent Client Protocol, AG-UI and their neighbors."},
+  {"id":"agent-payments","title":"Agent Payments and Commerce","blurb":"Protocols that let agents pay, get paid and complete purchases on behalf of users."},
+  {"id":"discovery-registries","title":"Discovery, Identity and Registries","blurb":"Agent cards, schemas, directories, identity and trust layers that let one agent find and verify another."},
+  {"id":"mcp-gateways","title":"MCP Gateways and Proxies","blurb":"Gateways, aggregators and transport bridges that put many MCP servers behind one governed endpoint."},
+  {"id":"orchestration","title":"Orchestration Frameworks","blurb":"Frameworks and platforms for composing multiple agents into working systems."},
+  {"id":"sdks","title":"Protocol SDKs","blurb":"Official and widely used client and server libraries for A2A and MCP in many languages."},
+  {"id":"developer-tools","title":"Developer Tools and Bridges","blurb":"Inspectors, conformance suites, samples and bridges for building and testing interoperable agents."},
+  {"id":"directories-lists","title":"Directories and Curated Lists","blurb":"Places to browse and discover servers, agents and protocol resources."}
+]
