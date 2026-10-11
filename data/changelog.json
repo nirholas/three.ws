@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-11",
+			"title": "The homepage is now the Field: one live map of every agent, launch and wallet move",
+			"link": "/",
+			"summary": "The front page no longer opens a web desktop. It opens the Field, a zoomable map of the whole platform built from live data. Every public agent is a star in the core, newest at the centre, and turns into its avatar as you zoom in; around it sit ten districts (Create, Forge, Gallery, Launchpad, Trenches, Pulse, Marketplace, Chat, Agent Studio, Console). From afar each shows one live readout; zoom in and it opens into a card with real content: the newest avatars, coins agents launched, the $THREE price, market cap, holders and contract address, the latest agent wallet moves, the skills agents carry most. New wallet moves from Pulse fly across the map as comets and land in their district. Search finds any place, agent or page; opening one loads the real page in place, with its own shareable /?go= link, and Back or Esc returns you to the map. It works with mouse, touch, pinch and keyboard, in light and dark, and lays itself out for phones. The windowed desktop is still at /?view=desktop and the 3D campus at /?world=1.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-11",
 			"title": "The web desktop gets Snap layouts, taskbar peek and three shell styles: Fluent, Aqua and Classic",
 			"link": "/?view=desktop",
 			"summary": "Hover a window's maximize button (or press Alt+Z) to tile it into one of six layouts, then let Snap assist fill the empty zones with your other windows. Corners snap to quarters, Ctrl+Alt+Arrows snap from the keyboard, minimize flies the window into its taskbar button, and hovering a running app shows its window card with Aero Peek. Settings, Personalization, Style switches the whole shell to Aqua (menu bar, magnifying dock, traffic lights) or Classic (bevelled 9x chrome with a labelled taskbar).",

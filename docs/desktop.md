@@ -1,6 +1,9 @@
 # three.ws Desktop
 
-`/` is a web desktop with a 3D campus in front of it. The page boots like a
+> `/` now opens the [Field](field.md), a live map of the platform. This
+> desktop and its campus are at `/?view=desktop` and `/?world=1`.
+
+`/?view=desktop` is a web desktop with a 3D campus in front of it. The page boots like a
 computer, locks with a greeting, and then the visitor walks to their desk as
 their avatar and sits down; the desktop opens on the monitor. Every window
 frames a real three.ws page, so nothing is mocked and every existing surface

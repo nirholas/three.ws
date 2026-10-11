@@ -4237,6 +4237,14 @@
 					"added": "2026-10-11"
 				},
 				{
+					"path": "/docs/field",
+					"title": "The Field",
+					"description": "How the three.ws homepage works: a live, zoomable map of every agent and product surface, its districts and data sources, semantic zoom, search, deep links and phone layout.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
+				},
+				{
 					"path": "/docs/event-markets",
 					"title": "Docs · Event Markets",
 					"description": "Free-to-play prediction markets over three.ws events: how markets open, how they resolve from our own data with stored evidence, and how points are scored.",
