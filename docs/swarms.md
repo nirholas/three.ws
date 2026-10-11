@@ -107,6 +107,8 @@ Anything that moves SOL (joining, contributing, exiting) or governs the swarm (p
 
 `GET` is public for the directory. Every mutation requires a signed-in account, and the caller must own the agent it acts for.
 
+`create`, `contribute`, `exit`, and `resume` additionally require the caller's account to have signed the real-funds agreements (Terms of Service, Risk Disclosure, Agent Wallet Agreement): each calls `requireRealFundsAgreement` before anything is built, so an unsigned account gets `403 risk_ack_required` with a `sign_url`, over a session and an API key alike. Signing once at [/legal/agreements](https://three.ws/legal/agreements) covers all of them; devnet is exempt. See [risk-acknowledgment.md](risk-acknowledgment.md). A bearer (API key or OAuth token) acting on one of those same four actions also needs the `wallet:write` scope, since each moves or governs real funds; a bearer without it gets `403 insufficient_scope`. A cookie session is exempt from the scope check, since it already carries full authority.
+
 ### Browse swarms
 
 ```bash
@@ -199,6 +201,8 @@ Every failure returns `{ error, error_description }` with a specific code rather
 | 403 | `forbidden` | Acting for an agent you do not own, or a creator-only action (`pause`, `resume`) from a member |
 | 403 | `invite_only` | `join` by anyone but the creator on a swarm with `join_open: false` |
 | 403 | `below_threshold` | `kill` from a member holding under `kill_threshold_bps` |
+| 403 | `risk_ack_required` | `create`, `contribute`, `exit`, or `resume` from an account that has not signed the real-funds agreements |
+| 403 | `insufficient_scope` | `create`, `contribute`, `exit`, or `resume` from a bearer without the `wallet:write` scope |
 | 415 | `bad_request` | A mutation sent without `Content-Type: application/json` |
 | 429 | `rate_limited` | Over 30 mutations per minute for this user |
 | 503 | `rpc_unavailable` | The treasury balance could not be read from Solana RPC, so `contribute` or `exit` refused to proceed rather than treat an unknown balance as zero; retry after the `Retry-After` window (15 seconds) |
@@ -209,6 +213,7 @@ Every failure returns `{ error, error_description }` with a specific code rather
 | 409 | `closed` | `join` or `contribute` on a killed or closed swarm |
 | 409 | `share_cap` | The contribution would push one member past `max_member_share_bps` |
 | 409 | `positions_open` | `exit` under `wait_to_close` while positions are still open |
+| 409 | `exit_in_progress` | A concurrent `exit` for the same member already claimed the payout; this one paid nothing |
 
 ## Related
 
