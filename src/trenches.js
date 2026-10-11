@@ -7,6 +7,7 @@ const WSOL = 'So11111111111111111111111111111111111111112';
 const $ = (id) => document.getElementById(id);
 const shell = $('tr-shell');
 let timer = null;
+let failures = 0;
 
 const fmt = (n, d = 0) => (n == null || !Number.isFinite(+n) ? '-' : (+n).toLocaleString('en-US', { maximumFractionDigits: d }));
 const short = (a) => (a && a.length > 12 ? `${a.slice(0, 4)}...${a.slice(-4)}` : a || '-');
@@ -117,17 +118,22 @@ function wallets(rows) {
 
 async function refresh() {
 	try {
-		const [ov, health, la, wa, tk] = await Promise.all([get('overview'), get('health'), get('launches', { limit: 20 }), get('wallets'), get('tokens', { limit: 200, sort: 'new' })]);
+		// Probe health alone first: while Pulse is down a cycle costs one
+		// request instead of five.
+		const health = await get('health');
+		const [ov, la, wa, tk] = await Promise.all([get('overview'), get('launches', { limit: 20 }), get('wallets'), get('tokens', { limit: 200, sort: 'new' })]);
 		const names = new Map(tk.rows.map((t) => [t.address, t]));
 		const hotRows = (ov.hot || []).filter((r) => r.mint !== WSOL);
 		counters(ov, health, hotRows);
 		hot(hotRows, names);
 		launches(la.rows);
 		wallets(wa.rows);
+		failures = 0;
 		$('tr-offline').hidden = true;
 		shell.dataset.state = 'ready';
 		$('tr-updated').textContent = `Updated ${new Date().toLocaleTimeString()}`;
 	} catch (e) {
+		failures += 1;
 		shell.dataset.state = e.offline ? 'offline' : 'error';
 		$('tr-offline').hidden = false;
 		$('tr-offline-msg').textContent = e.offline ? `Pulse is not reachable right now (${e.message}). Nothing is shown rather than made-up numbers. Retrying automatically.` : 'Something went wrong loading live data. Retrying automatically.';
@@ -136,7 +142,10 @@ async function refresh() {
 
 function schedule() {
 	clearTimeout(timer);
-	if (!document.hidden) timer = setTimeout(async () => { await refresh(); schedule(); }, POLL_MS);
+	// Back off while the upstream is failing (15s, 30s, 60s, then every 2 min)
+	// so an offline Pulse is not hammered; the Retry button still fetches now.
+	const delay = POLL_MS * 2 ** Math.min(failures, 3);
+	if (!document.hidden) timer = setTimeout(async () => { await refresh(); schedule(); }, delay);
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { refresh(); } schedule(); });
 $('tr-retry').addEventListener('click', refresh);
