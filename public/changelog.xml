@@ -23,6 +23,14 @@
 			<description>The original three.ws landing page: the pitch, live agent demos and the front door to every flow, kept as the classic view of the desktop.</description>
 		</item>
 		<item>
+			<title>Desktop Widgets and Assistant</title>
+			<link>https://three.ws/docs/desktop-widgets</link>
+			<guid isPermaLink="false">2026-10-11:Desktop Widgets and Assistant</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The live widgets on the three.ws desktop and widgets board ($THREE, weather, Pulse, launches, new agents, headlines, system) and the assistant that answers about the platform, opens apps and lets you talk to any public agent.</description>
+		</item>
+		<item>
 			<title>Docs · App pages</title>
 			<link>https://three.ws/docs/apps</link>
 			<guid isPermaLink="false">2026-10-11:Docs · App pages</guid>
@@ -199,6 +207,14 @@
 			<description>Each Studio run (avatars, rigged avatars, meshes, rigs, refinements) records stage by stage what was expected, what was observed, and a verdict: met, recovered by a named fallback, missed with its cause, or skipped. The rig is verified by reading the delivered file back, not by trusting the rigger. Receipts are ed25519-signed, linked from every result, browsable at /runs with stage-by-stage rates, and verifiable offline with one command.</description>
 		</item>
 		<item>
+			<title>Live widgets and an assistant on the desktop, and the desktop is back at /</title>
+			<link>https://three.ws/docs/desktop-widgets</link>
+			<guid isPermaLink="false">2026-10-11:Live widgets and an assistant on the desktop, and the desktop is back at /</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The homepage is the web desktop again, and the Field moves to /?view=field. The desktop gains eleven live widgets: the $THREE price with a 24 hour chart, weather where you are, clock, calendar, the newest agents, Pulse wallet moves, coins launched through three.ws, platform stats, headlines from the news desk, your device's battery, network and storage, and sticky notes. Pin them to the desktop in small, medium or large, drag them on a snap grid, or keep them on the widgets board beside a news column. The new assistant pane answers questions about three.ws, opens the right app from its reply, and lets you switch to any public agent and talk to it instead. Nothing is sample data: a source that is down says so and offers a retry.</description>
+		</item>
+		<item>
 			<title>Menu bar panel for the desktop app</title>
 			<link>https://three.ws/desktop</link>
 			<guid isPermaLink="false">2026-10-11:Menu bar panel for the desktop app</guid>
@@ -221,6 +237,14 @@
 			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Drag a selection box across the desktop, move icons on a snap grid, right-click for view options, and open every app from desktop icons or All Apps. Settings now covers your profile, theme, accent colour, wallpaper (including your own photo), icon size and taskbar, and the whole session (windows, icon layout, preferences) is saved in your browser, with export, import and reset.</description>
+		</item>
+		<item>
+			<title>The desktop now looks and works like a real operating system</title>
+			<link>https://three.ws/?view=desktop</link>
+			<guid isPermaLink="false">2026-10-11:The desktop now looks and works like a real operating system</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The desktop shell is rebuilt to feel like a computer, not a web page. A floating island taskbar with Start, Widgets and Assistant buttons. A new Start menu with your avatar, the time, an A to Z list of every app and page, pinned apps, recent files, quick folder links and a power button, plus search across apps, pages and your files. A system tray with live network, volume and battery readouts that opens quick settings (dark mode, night light, do not disturb, energy saver, sounds, full screen, brightness and volume). A notification centre over a month calendar, with toasts that open the app that sent them. A lock screen (Ctrl+Alt+L), a power menu with restart, shut down and sign out, a Run box (Ctrl+Alt+R) and an About page with your real device specs. The desktop is now your Desktop folder: create folders and text files from the right-click menu, rename with F2, delete to the Recycle Bin, drop files from your computer onto it, and set any picture as the wallpaper. New Bubbles wallpaper in dark and light, glossy app icons, and Ctrl+Alt shortcuts for every system surface.</description>
 		</item>
 		<item>
 			<title>The homepage is now the Field: one live map of every agent, launch and wallet move</title>
@@ -253,6 +277,14 @@
 			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Hover a window's maximize button (or press Alt+Z) to tile it into one of six layouts, then let Snap assist fill the empty zones with your other windows. Corners snap to quarters, Ctrl+Alt+Arrows snap from the keyboard, minimize flies the window into its taskbar button, and hovering a running app shows its window card with Aero Peek. Settings, Personalization, Style switches the whole shell to Aqua (menu bar, magnifying dock, traffic lights) or Classic (bevelled 9x chrome with a labelled taskbar).</description>
+		</item>
+		<item>
+			<title>The web desktop is now a real OS: a file system and eleven apps that run in your browser</title>
+			<link>https://three.ws/?view=desktop</link>
+			<guid isPermaLink="false">2026-10-11:The web desktop is now a real OS: a file system and eleven apps that run in your browser</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The desktop gains a persistent virtual file system (Home with Desktop, Documents, Pictures, Music, Videos and Downloads, a Recycle Bin, quota readout) and eleven native apps built on it: Files with list, detail and tile views and drag-free cut, copy, paste and rename; Notepad with tabs and autosave; Photos; Calculator with standard, scientific, programmer and unit-converter modes; Clock with world clocks, alarms, timer and stopwatch; Weather from live Open-Meteo forecasts for your location or any city; Camera that takes real photos and videos into Pictures and Videos; Paint with layers of tools, undo and export; Terminal with a real command set that opens apps and switches theme; Task Manager with live memory, frame rate and per-window usage; and a Media Player with playlists. Everything is stored in your browser and nothing is faked: metrics a browser cannot report say so.</description>
 		</item>
 		<item>
 			<title>three.ws is now a desktop</title>

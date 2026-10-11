@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T06:55:55.574Z",
+	"generated_at": "2026-10-11T07:59:53.836Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,16 @@
 			"title": "Classic Home",
 			"summary": "The original three.ws landing page: the pitch, live agent demos and the front door to every flow, kept as the classic view of the desktop.",
 			"link": "/classic",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Desktop Widgets and Assistant",
+			"summary": "The live widgets on the three.ws desktop and widgets board ($THREE, weather, Pulse, launches, new agents, headlines, system) and the assistant that answers about the platform, opens apps and lets you talk to any public agent.",
+			"link": "/docs/desktop-widgets",
 			"tags": [
 				"launch"
 			]
@@ -250,6 +260,17 @@
 		{
 			"date": "2026-10-11",
 			"type": "update",
+			"title": "Live widgets and an assistant on the desktop, and the desktop is back at /",
+			"summary": "The homepage is the web desktop again, and the Field moves to /?view=field. The desktop gains eleven live widgets: the $THREE price with a 24 hour chart, weather where you are, clock, calendar, the newest agents, Pulse wallet moves, coins launched through three.ws, platform stats, headlines from the news desk, your device's battery, network and storage, and sticky notes. Pin them to the desktop in small, medium or large, drag them on a snap grid, or keep them on the widgets board beside a news column. The new assistant pane answers questions about three.ws, opens the right app from its reply, and lets you switch to any public agent and talk to it instead. Nothing is sample data: a source that is down says so and offers a retry.",
+			"link": "/docs/desktop-widgets",
+			"tags": [
+				"feature",
+				"desktop"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
 			"title": "Menu bar panel for the desktop app",
 			"summary": "Click the three.ws icon in your menu bar or tray and a small panel shows your agent alive in 3D, its Solana wallet balance, a start and stop button, anything waiting on your approval, unread alerts and a box to ask the agent something. Approvals still open the native confirmation window, so what you approve is exactly what you were shown.",
 			"link": "/desktop",
@@ -274,6 +295,17 @@
 			"title": "The desktop behaves like a real computer",
 			"summary": "Drag a selection box across the desktop, move icons on a snap grid, right-click for view options, and open every app from desktop icons or All Apps. Settings now covers your profile, theme, accent colour, wallpaper (including your own photo), icon size and taskbar, and the whole session (windows, icon layout, preferences) is saved in your browser, with export, import and reset.",
 			"link": "/docs/desktop",
+			"tags": [
+				"feature",
+				"desktop"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "The desktop now looks and works like a real operating system",
+			"summary": "The desktop shell is rebuilt to feel like a computer, not a web page. A floating island taskbar with Start, Widgets and Assistant buttons. A new Start menu with your avatar, the time, an A to Z list of every app and page, pinned apps, recent files, quick folder links and a power button, plus search across apps, pages and your files. A system tray with live network, volume and battery readouts that opens quick settings (dark mode, night light, do not disturb, energy saver, sounds, full screen, brightness and volume). A notification centre over a month calendar, with toasts that open the app that sent them. A lock screen (Ctrl+Alt+L), a power menu with restart, shut down and sign out, a Run box (Ctrl+Alt+R) and an About page with your real device specs. The desktop is now your Desktop folder: create folders and text files from the right-click menu, rename with F2, delete to the Recycle Bin, drop files from your computer onto it, and set any picture as the wallpaper. New Bubbles wallpaper in dark and light, glossy app icons, and Ctrl+Alt shortcuts for every system surface.",
+			"link": "/?view=desktop",
 			"tags": [
 				"feature",
 				"desktop"
@@ -314,6 +346,17 @@
 			"type": "update",
 			"title": "The web desktop gets Snap layouts, taskbar peek and three shell styles: Fluent, Aqua and Classic",
 			"summary": "Hover a window's maximize button (or press Alt+Z) to tile it into one of six layouts, then let Snap assist fill the empty zones with your other windows. Corners snap to quarters, Ctrl+Alt+Arrows snap from the keyboard, minimize flies the window into its taskbar button, and hovering a running app shows its window card with Aero Peek. Settings, Personalization, Style switches the whole shell to Aqua (menu bar, magnifying dock, traffic lights) or Classic (bevelled 9x chrome with a labelled taskbar).",
+			"link": "/?view=desktop",
+			"tags": [
+				"feature",
+				"desktop"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "The web desktop is now a real OS: a file system and eleven apps that run in your browser",
+			"summary": "The desktop gains a persistent virtual file system (Home with Desktop, Documents, Pictures, Music, Videos and Downloads, a Recycle Bin, quota readout) and eleven native apps built on it: Files with list, detail and tile views and drag-free cut, copy, paste and rename; Notepad with tabs and autosave; Photos; Calculator with standard, scientific, programmer and unit-converter modes; Clock with world clocks, alarms, timer and stopwatch; Weather from live Open-Meteo forecasts for your location or any city; Camera that takes real photos and videos into Pictures and Videos; Paint with layers of tools, undo and export; Terminal with a real command set that opens apps and switches theme; Task Manager with live memory, frame rate and per-window usage; and a Media Player with playlists. Everything is stored in your browser and nothing is faked: metrics a browser cannot report say so.",
 			"link": "/?view=desktop",
 			"tags": [
 				"feature",

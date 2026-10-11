@@ -3163,6 +3163,12 @@ URL: https://three.ws/docs/field
 
 How the three.ws homepage works: a live, zoomable map of every agent and product surface, its districts and data sources, semantic zoom, search, deep links and phone layout.
 
+### Desktop Widgets and Assistant
+
+URL: https://three.ws/docs/desktop-widgets
+
+The live widgets on the three.ws desktop and widgets board ($THREE, weather, Pulse, launches, new agents, headlines, system) and the assistant that answers about the platform, opens apps and lets you talk to any public agent.
+
 ### Docs · Event Markets
 
 URL: https://three.ws/docs/event-markets

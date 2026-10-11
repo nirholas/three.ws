@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T06:55:55.560Z",
+	"generated_at": "2026-10-11T07:59:53.821Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -6263,6 +6263,18 @@
 					"path": "/docs/field",
 					"title": "The Field",
 					"description": "How the three.ws homepage works: a live, zoomable map of every agent and product surface, its districts and data sources, semantic zoom, search, deep links and phone layout.",
+					"added": "2026-10-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/desktop-widgets",
+					"title": "Desktop Widgets and Assistant",
+					"description": "The live widgets on the three.ws desktop and widgets board ($THREE, weather, Pulse, launches, new agents, headlines, system) and the assistant that answers about the platform, opens apps and lets you talk to any public agent.",
 					"added": "2026-10-11",
 					"auth": null,
 					"indexable": true,
