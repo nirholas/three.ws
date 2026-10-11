@@ -34,6 +34,7 @@ export function fbxUnsupportedMessage(lane, goal) {
 
 export const STYLIZE_FBX_MESSAGE = fbxUnsupportedMessage('stylize', 'restyle an FBX');
 export const SEGMENT_FBX_MESSAGE = fbxUnsupportedMessage('segment', 'split an FBX into parts');
+export const HOLOPART_FBX_MESSAGE = fbxUnsupportedMessage('holopart', 'complete hidden parts of an FBX');
 
 /** True when the URL's path names an FBX file, whatever the query string carries. */
 export function isFbxMeshUrl(url) {

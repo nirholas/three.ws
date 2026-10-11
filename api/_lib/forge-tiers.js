@@ -401,6 +401,40 @@ export const BACKENDS = Object.freeze({
 		free: true,
 		blurb: 'Image to already-rigged 3D on our own AniGen worker: mesh, skeleton and skin weights predicted together in one pass, no vendor cost, no separate rigging step.',
 	}),
+	partcrafter: Object.freeze({
+		id: 'partcrafter',
+		label: 'PartCrafter (self-host)',
+		vendor: 'wgsxm PartCrafter · self-host',
+		paths: Object.freeze(['image']),
+		byok: false,
+		provider: 'gcp',
+		// Our own PartCrafter worker (workers/model-partcrafter on Cloud Run,
+		// MIT, NeurIPS 2025). The only image lane that hands back a part-
+		// separated GLB: N named part nodes (part_01, part_02, ...) decoded in
+		// one diffusion-transformer pass, ready for Restyle Studio's per-part
+		// edit flow with no separate segmentation call needed. Opt-in only,
+		// like pixal3d and anigen: never a named free default or a failover
+		// target, so a plain request never lands here by chance, the caller
+		// asks for editable parts explicitly. Single reference image; extra
+		// images are accepted but only the first is used.
+		requiresEnv: Object.freeze(['MODEL_PARTCRAFTER_URL', 'GCP_RECONSTRUCTION_KEY']),
+		polyControl: false,
+		userImages: true,
+		// Discoverable capability flags the catalog/UI read directly, rather
+		// than hardcoding a "partcrafter" check outside this registry.
+		editableParts: true,
+		minParts: 2,
+		maxParts: 16,
+		defaultParts: 4,
+		baseEta: 110,
+		// Cold-start budget for our own scale-to-zero worker: checkpoint copy +
+		// pipeline load (PartCrafter diffusion transformer + RMBG-1.4) before
+		// the first inference.
+		coldStartSeconds: 100,
+		credits: null,
+		free: true,
+		blurb: 'Image to editable 3D parts on our own PartCrafter worker: 2 to 16 named part meshes decoded in one pass, no vendor cost. Recolor, swap, or regenerate any one part in Restyle Studio without touching the rest.',
+	}),
 	triposg: Object.freeze({
 		id: 'triposg',
 		label: 'TripoSG',
@@ -873,7 +907,7 @@ export function backendIsConfigured(backendId) {
 // to the standing single-view reconstruct chain instead of silently dropping
 // the caller's second and third photos on a lane that only reads the first.
 export const MODLY_LANES = Object.freeze(['modly', 'modly_hunyuan']);
-const SELF_HOST_IMAGE_LANES = Object.freeze(['trellis2', 'trellis_selfhost', 'pixal3d', 'anigen', ...MODLY_LANES]);
+const SELF_HOST_IMAGE_LANES = Object.freeze(['trellis2', 'trellis_selfhost', 'pixal3d', 'anigen', 'partcrafter', ...MODLY_LANES]);
 
 export function isSelfHostImageLane(backendId) {
 	return SELF_HOST_IMAGE_LANES.includes(backendId);
@@ -884,6 +918,7 @@ export function selfHostLaneName(backendId) {
 	if (MODLY_LANES.includes(backendId)) return BACKENDS[backendId].label;
 	if (backendId === 'pixal3d') return 'Pixal3D';
 	if (backendId === 'anigen') return 'AniGen';
+	if (backendId === 'partcrafter') return 'PartCrafter';
 	return 'Self-hosted TRELLIS';
 }
 
@@ -993,6 +1028,10 @@ export function buildCatalog() {
 			// (skeleton + skin weights predicted alongside the mesh), so the UI can
 			// skip offering a separate rigging step for the result.
 			rigged: Boolean(b.rigged),
+			// True only for the lane that hands back a part-separated GLB (named
+			// nodes per part, decoded in one pass), so the UI can offer Restyle
+			// Studio's part picker without a separate segmentation call.
+			editable_parts: Boolean(b.editableParts),
 			estimates: b.paths.reduce((acc, p) => {
 				acc[p] = TIER_IDS.map((tierId) => ({
 					tier: tierId,

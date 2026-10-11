@@ -2220,6 +2220,17 @@ async function startJobWithBody(req, res, body) {
 							images: views,
 							seed: opts.seed ?? undefined,
 						},
+					} : backendId === 'partcrafter' ? {
+						mode: 'partcrafter',
+						sourceUrl: referenceImageUrl,
+						params: {
+							// The worker reads only the first view; it decodes N named
+							// part nodes in a single pass, ready for Restyle Studio's
+							// per-part edit flow with no separate segmentation call.
+							images: views,
+							num_parts: opts.numParts ?? undefined,
+							seed: opts.seed ?? undefined,
+						},
 					} : {
 						mode: 'trellis',
 						sourceUrl: referenceImageUrl,
@@ -3242,6 +3253,12 @@ async function pollJob(req, res, jobId) {
 			// client so it can skip offering a separate rerig step.
 			rigged: result.rigged || undefined,
 			joint_count: result.jointCount ?? undefined,
+			// PartCrafter / HoloPart / segment all hand back the same named-part
+			// manifest shape, so Restyle Studio's part picker reads it the same
+			// way regardless of which worker produced the mesh.
+			parts: result.parts ?? undefined,
+			part_count: result.partCount ?? undefined,
+			parts_manifest_url: result.manifestUrl ?? undefined,
 			...metaFields,
 		});
 	}

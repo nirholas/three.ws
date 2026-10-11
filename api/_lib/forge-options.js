@@ -14,6 +14,8 @@
 //     the worker infers the front view when every label is omitted.
 //   • fill_other_sides : ask Pixal3D to synthesize the other three sides from a
 //     single uploaded photo (MV-Adapter) instead of requiring 2-4 views.
+//   • num_parts        : PartCrafter's requested part count (2-16); absent keeps
+//     the backend's own default.
 //   • derive_pbr       : the ONE exception to "off by default": the material
 //     completion pass (glb-pbr-derive.js) runs on every delivered mesh, because
 //     an albedo-only material is a defect rather than a preference. Send
@@ -24,7 +26,7 @@
 // message rather than silently doing something the caller didn't ask for. A value
 // that is simply absent is never an error — it just keeps the current default.
 
-import { TRELLIS2_RESOLUTIONS, PIXAL3D_VIEW_LABELS } from './forge-tiers.js';
+import { TRELLIS2_RESOLUTIONS, PIXAL3D_VIEW_LABELS, BACKENDS } from './forge-tiers.js';
 
 // glb is the universal default. The two compressed variants run a post-generation
 // pass (see glb-compress.js) that shrinks the delivered file without changing the
@@ -56,6 +58,7 @@ function compressionFor(format) {
  *   resolution: 512 | 1024 | 1536 | null,   // TRELLIS.2 / Pixal3D voxel resolution
  *   viewLabels: Array<'front'|'back'|'left'|'right'|null> | null,  // per-image tag
  *   fillOtherSides: boolean,     // synthesize the other sides from one photo
+ *   numParts: number | null,     // PartCrafter's requested part count (2-16)
  *   derivePbr: boolean,          // material completion pass, true unless opted out
  *   hasOptions: boolean,         // true iff any non-default option was supplied
  *   errors: Array<{ field: string, message: string }>,
@@ -160,6 +163,23 @@ export function normalizeForgeOptions(body) {
 		}
 	}
 
+	// num_parts: PartCrafter's part count. Absent keeps the backend's own
+	// default (BACKENDS.partcrafter.defaultParts); an out-of-range value is
+	// rejected rather than silently clamped, same reasoning as resolution above.
+	let numParts = null;
+	if (b.num_parts !== undefined && b.num_parts !== null && b.num_parts !== '') {
+		const n = Number(b.num_parts);
+		const { minParts, maxParts } = BACKENDS.partcrafter;
+		if (!Number.isFinite(n) || !Number.isInteger(n) || n < minParts || n > maxParts) {
+			errors.push({
+				field: 'num_parts',
+				message: `num_parts must be an integer between ${minParts} and ${maxParts}.`,
+			});
+		} else {
+			numParts = n;
+		}
+	}
+
 	// fill_other_sides: opt-IN. Asks Pixal3D to synthesize the other three sides
 	// from a single uploaded photo instead of requiring 2-4 views.
 	let fillOtherSides = false;
@@ -191,6 +211,7 @@ export function normalizeForgeOptions(body) {
 		resolution !== null ||
 		viewLabels !== null ||
 		fillOtherSides ||
+		numParts !== null ||
 		!derivePbr;
 
 	return {
@@ -202,6 +223,7 @@ export function normalizeForgeOptions(body) {
 		resolution,
 		viewLabels,
 		fillOtherSides,
+		numParts,
 		derivePbr,
 		hasOptions,
 		errors,
@@ -237,6 +259,7 @@ export function summarizeForgeOptions(opts) {
 		resolution: opts.resolution ?? null,
 		view_labels: opts.viewLabels ?? null,
 		fill_other_sides: Boolean(opts.fillOtherSides),
+		num_parts: opts.numParts ?? null,
 		derive_pbr: opts.derivePbr !== false,
 	};
 }

@@ -125,6 +125,17 @@ function serviceUrlForMode(mode) {
 			// separate rerig step. Same /infer + /tasks/:id task shape; conditions
 			// on the first reference image only.
 			return readEnv('MODEL_ANIGEN_URL');
+		case 'partcrafter':
+			// Self-hosted PartCrafter worker (workers/model-partcrafter): the
+			// editable-parts image lane. One reference view decoded into N named
+			// part nodes in a single pass. Same /infer + /tasks/:id task shape.
+			return readEnv('MODEL_PARTCRAFTER_URL');
+		case 'holopart':
+			// Self-hosted HoloPart worker (workers/model-holopart): completes the
+			// occluded geometry of an already part-segmented mesh (e.g. the
+			// output of `segment`), preserving part node names. Same
+			// /infer + /tasks/:id task shape.
+			return readEnv('MODEL_HOLOPART_URL');
 		case 'modly':
 		case 'modly_hunyuan':
 			// Self-hosted Modly worker (workers/modly): one service, two models.
@@ -267,6 +278,36 @@ function buildWorkerRequest(request) {
 			? params.images
 			: [sourceUrl].filter(Boolean);
 		const body = { images: photos };
+		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
+		return {
+			path: '/infer',
+			resultKey: 'result_gcs_url',
+			body,
+		};
+	}
+
+	if (mode === 'partcrafter') {
+		// Self-hosted PartCrafter (workers/model-partcrafter): one reference
+		// view in, a part-separated GLB (N named part nodes) out. The worker
+		// reads only the first image; extra views are accepted but ignored.
+		const photos = Array.isArray(params?.images) && params.images.length
+			? params.images
+			: [sourceUrl].filter(Boolean);
+		const body = { images: photos, num_parts: Math.round(Number(params?.num_parts) || 4) };
+		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
+		return {
+			path: '/infer',
+			resultKey: 'result_gcs_url',
+			body,
+		};
+	}
+
+	if (mode === 'holopart') {
+		// Self-hosted HoloPart (workers/model-holopart): an already part-
+		// segmented mesh in (one named geometry per part, e.g. workers/segment's
+		// own output), a mesh with every part's occluded geometry completed out.
+		// Part node names are preserved verbatim by the worker.
+		const body = { mesh_url: sourceUrl };
 		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
 		return {
 			path: '/infer',
@@ -562,6 +603,12 @@ const MODE_ETA = {
 	pixal3d: 100,
 	// Mesh + skeleton prediction + skin-weight transfer in one pass.
 	anigen: 90,
+	// N parts decoded in one diffusion-transformer pass; scales mildly with
+	// the requested part count, which estimateEtaSeconds does not model here.
+	partcrafter: 110,
+	// Per-part point-cloud conditioning + diffusion decode for every part in
+	// an already-segmented mesh.
+	holopart: 100,
 	// TripoSG's 20 to 50 flow steps plus repair and decimate on the L4.
 	modly: 60,
 	// Hunyuan3D 2 Mini Turbo is a few-step distilled sampler.
@@ -672,7 +719,7 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 			// on the primary view only (report 1 so a multi-view request is never
 			// silently claimed as fused); other modes are single-source.
 			const viewsUsed =
-				mode === 'hunyuan' || mode === 'trellis2' || mode === 'modly' || mode === 'modly_hunyuan' || mode === 'anigen'
+				mode === 'hunyuan' || mode === 'trellis2' || mode === 'modly' || mode === 'modly_hunyuan' || mode === 'anigen' || mode === 'partcrafter'
 					? 1
 					: (mode === 'reconstruct' || mode === 'trellis' || mode === 'pixal3d') && Array.isArray(workerReq.body.images)
 						? workerReq.body.images.length
@@ -783,8 +830,11 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 					result.faceCount = data.face_count;
 				}
 				// Surface the parts manifest so callers can render a selectable
-				// part list without a second fetch.
-				if (mode === 'segment') {
+				// part list without a second fetch. PartCrafter and HoloPart share
+				// the same `parts`/`part_count` shape as segment (id, name, region,
+				// face_count, vertex_count, bbox, centroid, volume, color), so
+				// Restyle Studio's part picker reads all three sources identically.
+				if (mode === 'segment' || mode === 'partcrafter' || mode === 'holopart') {
 					if (data.manifest_url) result.manifestUrl = data.manifest_url;
 					if (Array.isArray(data.parts)) result.parts = data.parts;
 					if (typeof data.part_count === 'number') result.partCount = data.part_count;
