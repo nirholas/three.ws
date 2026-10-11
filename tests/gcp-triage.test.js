@@ -50,6 +50,15 @@ describe('gcp-triage classify', () => {
 		expect(classify(line, [])).toBeNull();
 	});
 
+	it('classifies a truncated body as the MCP stream timeout only on clink-fun', () => {
+		const line = 'Truncated response body. Usually implies that the request timed out or the application exited before the response was finished.';
+		const onClink = classify(line, ['clink-fun']);
+		expect(onClink?.id).toBe('clink-mcp-stream-timeout');
+		expect(onClink?.class).toBe('self-healing');
+		expect(classify(line, ['three-ws-api'])).toBeNull();
+		expect(classify(line, [])).toBeNull();
+	});
+
 	it('classifies a bare SIGKILL as the trellis OOM only on model-trellis', () => {
 		const line = 'Container terminated on signal 9.';
 		const onTrellis = classify(line, ['model-trellis']);

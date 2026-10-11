@@ -1166,6 +1166,29 @@ ERROR  502 POST /api/pump/launch-agent
 
 ---
 
+## 🟢 `Truncated response body. Usually implies that the request timed out...` (clink-fun ONLY): `clink-mcp-stream-timeout`
+
+- **Source:** Cloud Run itself (`run.googleapis.com/varlog/system`), on the
+  `clink-fun` service (serves https://paired.exchange). Its image
+  (`clink/web`) builds from its own repository, not this one.
+- **What it means:** `/mcp` is an MCP streamable-HTTP endpoint. A client holds
+  the connection open until Cloud Run's 300 s request timeout closes the
+  response, and Cloud Run logs every response it closes that way. Measured
+  2026-10-11: 4 of 4 sampled lines joined by `trace` to a `GET /mcp` request
+  that ran 300.99 to 301.00 s, status 200, user agent `rokmcp-collector/0.2`.
+  MCP clients reconnect on their own, so this is not a dropped session.
+- **Resolve:** 🟢 nothing required. To confirm a line, join it to its request:
+  `gcloud logging read 'trace="<trace from the warning>" httpRequest:*' --freshness=24h --format='value(httpRequest.requestUrl,httpRequest.latency)'`.
+  Investigate only if a trace lands on a route that is not `/mcp`.
+- **Scope note:** classified **only** for `clink-fun`. The same line from any
+  other service stays `investigate`, because there it can mean a handler that
+  never finished its response.
+- **Monitor signature:** `clink-mcp-stream-timeout` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), `self-healing`
+  (service-scoped via its `services` field).
+
+---
+
 ## The owner runbook — every fix as an exact command
 
 Everything red/yellow above, condensed to the actions only the owner can take,

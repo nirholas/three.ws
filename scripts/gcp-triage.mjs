@@ -134,6 +134,17 @@ const KNOWN_SIGNATURES = [
 		action: `cryptocurrency.cv's /api/news/stream is a Server-Sent Events feed that stays open until Cloud Run's 300 s request timeout closes it; Cloud Run then logs the cut body. Every sampled line on 2026-10-08 (12 of 12) traced to that route at 300.99-301.00 s, and EventSource clients reconnect on their own. Investigate only if a trace lands on a non-streaming route: gcloud logging read 'trace="<trace>" httpRequest:*' --freshness=24h. ${RUNBOOK} §ccv-sse-stream-timeout.`,
 	},
 	{
+		// clink-fun's source lives in its own repository (image
+		// us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/clink/web), not this
+		// one; this entry only documents what the fleet-wide log sweep already
+		// observes about it, scoped so it never masks the same line elsewhere.
+		id: 'clink-mcp-stream-timeout',
+		match: /Truncated response body\. Usually implies that the request timed out/i,
+		services: ['clink-fun'],
+		class: 'self-healing',
+		action: `clink-fun serves an MCP streamable-HTTP endpoint at https://paired.exchange/mcp that stays open until Cloud Run's 300 s request timeout closes it; Cloud Run then logs the cut body. Every sampled trace on 2026-10-11 (4 of 4) was GET /mcp at 300.99-301.00 s, status 200, and MCP clients reconnect on their own. Investigate only if a trace lands on a non-streaming route: gcloud logging read 'trace="<trace>" httpRequest:*' --freshness=24h. ${RUNBOOK} §clink-mcp-stream-timeout.`,
+	},
+	{
 		id: 'helius-backoff',
 		match: /helius quota|rate.?limited|refresh deferred \(transient upstream\)/i,
 		class: 'self-healing',
