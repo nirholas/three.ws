@@ -203,6 +203,8 @@ describe('the weekly Article', () => {
 		expect(blocks['facts-studio']).toMatch(/the run read tools = 15/);
 		expect(blocks['facts-ar']).not.toMatch(/the run counted/);
 		expect(blocks['request-studio']).toContain("curl -s 'https://three.ws/api/tools'");
+		const logged = articleBlocks(openai, [{ ...runs[0], proof: { ...runs[0].proof, steps: [{ index: 1, kind: 'goto', target: 'https://three.ws/openai', detail: 'loaded | ok', ok: true, ms: 812 }, { index: 2, kind: 'hold', target: '2500', ok: true, ms: 2500 }] } }]);
+		expect(logged['log-studio']).toBe('| Step | Did | On | Result | ms |\n|---|---|---|---|---|\n| 1 | goto | three.ws/openai | passed: loaded \\| ok | 812 |');
 		const brief = buildArticleBrief({ partner: openai, runs, figures, blocks, partnersSection: ['OpenAI: Select'], tryIt: [openai.page] });
 		expect(brief.features[1].measured).toEqual({});
 		expect(brief.blocks.runs).toMatch(/^table:/);

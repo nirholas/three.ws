@@ -19,11 +19,11 @@
 
 export const EDITOR_MODEL = 'claude-opus-5';
 
-async function viaVertex({ system, parts }) {
+async function viaVertex({ system, parts, maxTokens = 6000 }) {
 	const { vertexClaudeConfigured, vertexAnthropicMessages } = await import('../vertex-claude.js');
 	if (!vertexClaudeConfigured()) return null;
 	const content = parts.map((part) => (part.type === 'image' ? { type: 'image', source: { type: 'base64', media_type: part.mime, data: part.data } } : { type: 'text', text: part.text }));
-	const response = await vertexAnthropicMessages({ model: EDITOR_MODEL, max_tokens: 6000, system, messages: [{ role: 'user', content }] });
+	const response = await vertexAnthropicMessages({ model: EDITOR_MODEL, max_tokens: maxTokens, system, messages: [{ role: 'user', content }] });
 	if (!response.ok) throw new Error(`Vertex ${response.status}: ${(await response.text()).slice(0, 200)}`);
 	const body = await response.json();
 	return { model: `vertex:${EDITOR_MODEL}`, text: body.content.filter((block) => block.type === 'text').map((block) => block.text).join('') };
