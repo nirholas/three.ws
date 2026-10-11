@@ -95,6 +95,21 @@ describe('the ladder reaches every rung in order', () => {
 		await expect(textToImage('a fox', { budgetMs: 20_000 })).rejects.toThrow(/non-image/);
 		expect(persisted.calls).toBe(0);
 	});
+
+	// 2026-10-11 production incident: every keyed rung was down and keyless
+	// Pollinations answered 402 (its own throttle, nothing to do with the
+	// platform's Replicate account). Because pollinationsImage() left `err.code`
+	// unset on a 402 (unlike the HF rung just above it, which already tags both
+	// 429 AND 402 as `rate_limited`), api/forge.js's isPaidCreditFailure() read
+	// the bare `providerStatus === 402` and misclassified a free-lane throttle as
+	// "our paid lane is out of credit", which put the REAL Replicate/TRELLIS lane
+	// into cooldown over an error that never touched it.
+	it('tags a Pollinations 402 as rate_limited, not an unclassified error a caller could mistake for a paid-credit failure', async () => {
+		lane.pollinations = () => json(402, { error: 'quota' });
+		const err = await textToImage('a fox', { budgetMs: 20_000 }).catch((e) => e);
+		expect(err).toBeInstanceOf(Error);
+		expect(err.code).toBe('rate_limited');
+	});
 });
 
 // On 2026-10-08 NIM FLUX filtered a rocket-booster prompt: HTTP 200, a solid

@@ -338,7 +338,11 @@ async function pollinationsImage(prompt, aspectRatio, seed, { timeoutMs = POLLIN
 	if (!res.ok) {
 		const err = new Error(`pollinations returned ${res.status}`);
 		err.providerStatus = res.status;
-		if (res.status === 429) err.code = 'rate_limited';
+		// 402 here is Pollinations' own free-tier throttle, not a platform billing
+		// state: tag it rate_limited (as the HF rung above already does for both
+		// 429 and 402) so a caller never mistakes a dead free lane for the
+		// platform's own paid Replicate/TRELLIS account running out of credit.
+		if (res.status === 429 || res.status === 402) err.code = 'rate_limited';
 		throw err;
 	}
 	const bytes = Buffer.from(await res.arrayBuffer());
