@@ -1,0 +1,178 @@
+import { Panel } from './Panel';
+import { escapeHtml } from '@/utils/sanitize';
+
+interface MacroSignalData {
+  timestamp: string;
+  verdict: string;
+  bullishCount: number;
+  totalCount: number;
+  signals: {
+    liquidity: { status: string; value: number | null; sparkline: number[] };
+    flowStructure: { status: string; btcReturn5: number | null; qqqReturn5: number | null };
+    macroRegime: { status: string; qqqRoc20: number | null; xlpRoc20: number | null };
+    technicalTrend: { status: string; btcPrice: number | null; sma50: number | null; sma200: number | null; vwap30d: number | null; mayerMultiple: number | null; sparkline: number[] };
+    hashRate: { status: string; change30d: number | null };
+    miningCost: { status: string };
+    fearGreed: { status: string; value: number | null; history: Array<{ value: number; date: string }> };
+  };
+  meta: { qqqSparkline: number[] };
+}
+
+function sparklineSvg(data: number[], width = 80, height = 24, color = '#4fc3f7'): string {
+  if (!data || data.length < 2) return '';
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const points = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y = height - ((v - min) / range) * (height - 2) - 1;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" class="signal-sparkline"><polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+function donutGaugeSvg(value: number | null, size = 48): string {
+  if (value === null) return '<span class="signal-value unknown">N/A</span>';
+  const v = Math.max(0, Math.min(100, value));
+  const r = (size - 6) / 2;
+  const circumference = 2 * Math.PI * r;
+  const offset = circumference - (v / 100) * circumference;
+  let color = '#f44336';
+  if (v >= 75) color = '#4caf50';
+  else if (v >= 50) color = '#ff9800';
+  else if (v >= 25) color = '#ff5722';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="fg-donut">
+    <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="5"/>
+    <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="5" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round" transform="rotate(-90 ${size / 2} ${size / 2})"/>
+    <text x="${size / 2}" y="${size / 2 + 4}" text-anchor="middle" fill="${color}" font-size="12" font-weight="bold">${v}</text>
+  </svg>`;
+}
+
+function statusBadgeClass(status: string): string {
+  const s = status.toUpperCase();
+  if (['BULLISH', 'RISK-ON', 'GROWING', 'PROFITABLE', 'ALIGNED', 'NORMAL', 'EXTREME GREED', 'GREED'].includes(s)) return 'badge-bullish';
+  if (['BEARISH', 'DEFENSIVE', 'DECLINING', 'SQUEEZE', 'PASSIVE GAP', 'EXTREME FEAR', 'FEAR'].includes(s)) return 'badge-bearish';
+  return 'badge-neutral';
+}
+
+function formatNum(v: number | null, suffix = '%'): string {
+  if (v === null) return 'N/A';
+  const sign = v > 0 ? '+' : '';
+  return `${sign}${v.toFixed(1)}${suffix}`;
+}
+
+export class MacroSignalsPanel extends Panel {
+  private data: MacroSignalData | null = null;
+  private loading = true;
+  private error: string | null = null;
+  private refreshInterval: ReturnType<typeof setInterval> | null = null;
+  private abortController: AbortController | null = null;
+
+  constructor() {
+    super({ id: 'macro-signals', title: 'Market Radar', showCount: false });
+    void this.fetchData();
+    this.refreshInterval = setInterval(() => this.fetchData(), 3 * 60000);
+  }
+
+  public destroy(): void {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+      this.refreshInterval = null;
+    }
+    this.abortController?.abort();
+    this.abortController = null;
+    super.destroy();
+  }
+
+  private async fetchData(): Promise<void> {
+    this.abortController?.abort();
+    this.abortController = new AbortController();
+    const { signal } = this.abortController;
+
+    try {
+      const res = await fetch('/api/macro-signals', { signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      this.data = await res.json();
+      this.error = null;
+    } catch (err) {
+      if (signal.aborted) return;
+      this.error = err instanceof Error ? err.message : 'Failed to fetch';
+    } finally {
+      this.loading = false;
+      this.renderPanel();
+    }
+  }
+
+  private renderPanel(): void {
+    if (this.loading) {
+      this.showLoading('Computing signals...');
+      return;
+    }
+
+    if (this.error || !this.data) {
+      this.showError(this.error || 'No data');
+      return;
+    }
+
+    const d = this.data;
+    const s = d.signals;
+
+    const verdictClass = d.verdict === 'BUY' ? 'verdict-buy' : d.verdict === 'CASH' ? 'verdict-cash' : 'verdict-unknown';
+
+    const html = `
+      <div class="macro-signals-container">
+        <div class="macro-verdict ${verdictClass}">
+          <span class="verdict-label">Overall</span>
+          <span class="verdict-value">${escapeHtml(d.verdict)}</span>
+          <span class="verdict-detail">${d.bullishCount}/${d.totalCount} bullish</span>
+        </div>
+        <div class="signals-grid">
+          ${this.renderSignalCard('Liquidity', s.liquidity.status, formatNum(s.liquidity.value), sparklineSvg(s.liquidity.sparkline, 60, 20, '#4fc3f7'), 'JPY 30d ROC', 'https://www.tradingview.com/symbols/JPYUSD/')}
+          ${this.renderSignalCard('Flow', s.flowStructure.status, `BTC ${formatNum(s.flowStructure.btcReturn5)} / QQQ ${formatNum(s.flowStructure.qqqReturn5)}`, '', '5d returns', null)}
+          ${this.renderSignalCard('Regime', s.macroRegime.status, `QQQ ${formatNum(s.macroRegime.qqqRoc20)} / XLP ${formatNum(s.macroRegime.xlpRoc20)}`, sparklineSvg(d.meta.qqqSparkline, 60, 20, '#ab47bc'), '20d ROC', 'https://www.tradingview.com/symbols/QQQ/')}
+          ${this.renderSignalCard('BTC Trend', s.technicalTrend.status, `$${s.technicalTrend.btcPrice?.toLocaleString() ?? 'N/A'}`, sparklineSvg(s.technicalTrend.sparkline, 60, 20, '#ff9800'), `SMA50: $${s.technicalTrend.sma50?.toLocaleString() ?? '-'} | VWAP: $${s.technicalTrend.vwap30d?.toLocaleString() ?? '-'} | Mayer: ${s.technicalTrend.mayerMultiple ?? '-'}`, 'https://www.tradingview.com/symbols/BTCUSD/')}
+          ${this.renderSignalCard('Hash Rate', s.hashRate.status, formatNum(s.hashRate.change30d), '', '30d change', 'https://mempool.space/mining')}
+          ${this.renderSignalCard('Mining', s.miningCost.status, '', '', 'Hashprice model', null)}
+          ${this.renderFearGreedCard(s.fearGreed)}
+        </div>
+      </div>
+    `;
+
+    this.setContent(html);
+  }
+
+  private renderSignalCard(name: string, status: string, value: string, sparkline: string, detail: string, link: string | null): string {
+    const badgeClass = statusBadgeClass(status);
+    return `
+      <div class="signal-card${link ? ' signal-card-linked' : ''}">
+        <div class="signal-header">
+          ${link ? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener" class="signal-name signal-card-link">${escapeHtml(name)}</a>` : `<span class="signal-name">${escapeHtml(name)}</span>`}
+          <span class="signal-badge ${badgeClass}">${escapeHtml(status)}</span>
+        </div>
+        <div class="signal-body">
+          ${sparkline ? `<div class="signal-sparkline-wrap">${sparkline}</div>` : ''}
+          ${value ? `<span class="signal-value">${value}</span>` : ''}
+        </div>
+        ${detail ? `<div class="signal-detail">${escapeHtml(detail)}</div>` : ''}
+      </div>
+    `;
+  }
+
+  private renderFearGreedCard(fg: MacroSignalData['signals']['fearGreed']): string {
+    const badgeClass = statusBadgeClass(fg.status);
+    return `
+      <div class="signal-card signal-card-fg">
+        <div class="signal-header">
+          <span class="signal-name">Fear & Greed</span>
+          <span class="signal-badge ${badgeClass}">${escapeHtml(fg.status)}</span>
+        </div>
+        <div class="signal-body signal-body-fg">
+          ${donutGaugeSvg(fg.value)}
+        </div>
+        <div class="signal-detail">
+          <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener">alternative.me</a>
+        </div>
+      </div>
+    `;
+  }
+}

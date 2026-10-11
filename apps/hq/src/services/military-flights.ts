@@ -1,0 +1,576 @@
+import type { TrackedFlight, FlightCluster, AircraftCategory, FleetOperator } from '@/types';
+import { createCircuitBreaker } from '@/utils';
+import {
+  identifyByCallsign,
+  identifyByAircraftType,
+  isKnownMilitaryHex,
+  getNearbyHotspot,
+  MILITARY_HOTSPOTS,
+} from '@/config/military';
+import {
+  getAircraftDetailsBatch,
+  analyzeAircraftDetails,
+  checkWingbitsStatus,
+} from './wingbits';
+import { isFeatureAvailable } from './runtime-config';
+
+// OpenSky Network API - use Railway relay (Vercel is blocked by OpenSky)
+// Convert WebSocket URL to HTTP URL for the same Railway server
+const wsRelayUrl = import.meta.env.VITE_WS_RELAY_URL || '';
+const OPENSKY_BASE_URL = wsRelayUrl
+  ? wsRelayUrl.replace('wss://', 'https://').replace('ws://', 'http://').replace(/\/$/, '') + '/opensky'
+  : '/api/opensky'; // Fallback to Vercel proxy for dev
+
+// Cache configuration
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes - match refresh interval
+let flightCache: { data: TrackedFlight[]; timestamp: number } | null = null;
+
+// Track flight history for trails
+const flightHistory = new Map<string, { positions: [number, number][]; lastUpdate: number }>();
+const HISTORY_MAX_POINTS = 20;
+const HISTORY_CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+// Circuit breaker for API calls
+const breaker = createCircuitBreaker<{ flights: TrackedFlight[]; clusters: FlightCluster[] }>({
+  name: 'Flight Tracking',
+  maxFailures: 3,
+  cooldownMs: 5 * 60 * 1000, // 5 minute cooldown
+  cacheTtlMs: 5 * 60 * 1000, // 5 minute cache
+});
+
+// OpenSky API returns arrays in this order:
+// [0] icao24, [1] callsign, [2] origin_country, [3] time_position, [4] last_contact,
+// [5] longitude, [6] latitude, [7] baro_altitude, [8] on_ground, [9] velocity,
+// [10] true_track, [11] vertical_rate, [12] sensors, [13] geo_altitude, [14] squawk,
+// [15] spi, [16] position_source
+type OpenSkyStateArray = [
+  string,       // 0: icao24
+  string | null,// 1: callsign
+  string,       // 2: origin_country
+  number | null,// 3: time_position
+  number,       // 4: last_contact
+  number | null,// 5: longitude
+  number | null,// 6: latitude
+  number | null,// 7: baro_altitude (meters)
+  boolean,      // 8: on_ground
+  number | null,// 9: velocity (m/s)
+  number | null,// 10: true_track (degrees)
+  number | null,// 11: vertical_rate (m/s)
+  number[] | null, // 12: sensors
+  number | null,// 13: geo_altitude
+  string | null,// 14: squawk
+  boolean,      // 15: spi
+  number        // 16: position_source
+];
+
+interface OpenSkyResponse {
+  time: number;
+  states: OpenSkyStateArray[] | null;
+}
+
+/**
+ * Determine aircraft type based on callsign, type code, or hex
+ */
+function determineAircraftInfo(
+  callsign: string,
+  icao24: string,
+  originCountry?: string,
+  typeCode?: string
+): { type: AircraftCategory; operator: FleetOperator; country: string; confidence: 'high' | 'medium' | 'low' } {
+  // Check callsign first (highest confidence)
+  const callsignMatch = identifyByCallsign(callsign, originCountry);
+  if (callsignMatch) {
+    return {
+      type: callsignMatch.aircraftType || 'unknown',
+      operator: callsignMatch.operator,
+      country: getCountryFromOperator(callsignMatch.operator),
+      confidence: 'high',
+    };
+  }
+
+  // Check hex code range
+  const hexMatch = isKnownMilitaryHex(icao24);
+  if (hexMatch) {
+    return {
+      type: 'unknown',
+      operator: hexMatch.operator,
+      country: hexMatch.country,
+      confidence: 'medium',
+    };
+  }
+
+  // Check typecode as fallback
+  if (typeCode) {
+    const typeMatch = identifyByAircraftType(typeCode);
+    if (typeMatch) {
+      return {
+        type: typeMatch.type,
+        operator: 'other',
+        country: 'Unknown',
+        confidence: 'low',
+      };
+    }
+  }
+
+  // Default for unknown military
+  return {
+    type: 'unknown',
+    operator: 'other',
+    country: 'Unknown',
+    confidence: 'low',
+  };
+}
+
+function getCountryFromOperator(operator: FleetOperator): string {
+  const countryMap: Record<FleetOperator, string> = {
+    usaf: 'USA',
+    usn: 'USA',
+    usmc: 'USA',
+    usa: 'USA',
+    raf: 'UK',
+    rn: 'UK',
+    faf: 'France',
+    gaf: 'Germany',
+    plaaf: 'China',
+    plan: 'China',
+    vks: 'Russia',
+    iaf: 'Israel',
+    nato: 'NATO',
+    other: 'Unknown',
+  };
+  return countryMap[operator];
+}
+
+/**
+ * Check if a flight looks like a military aircraft
+ */
+function isMilitaryFlight(state: OpenSkyStateArray): boolean {
+  const callsign = (state[1] || '').trim();
+  const icao24 = state[0];
+  const originCountry = state[2];
+
+  // Check for known military callsigns (covers all patterns from config)
+  if (callsign && identifyByCallsign(callsign, originCountry)) {
+    return true;
+  }
+
+  // Check for military hex code ranges (expanded list)
+  if (isKnownMilitaryHex(icao24)) {
+    return true;
+  }
+
+  // Extended list of countries with recognizable military patterns
+  const militaryCountries = [
+    'United States', 'United Kingdom', 'France', 'Germany', 'Israel',
+    'Turkey', 'Saudi Arabia', 'United Arab Emirates', 'Qatar', 'Kuwait',
+    'Japan', 'South Korea', 'Australia', 'Canada', 'Italy', 'Spain',
+    'Netherlands', 'Poland', 'Greece', 'Norway', 'Sweden', 'India',
+    'Pakistan', 'Egypt', 'Singapore', 'Taiwan'
+  ];
+
+  if (militaryCountries.includes(originCountry)) {
+    // Check for expanded military callsign patterns
+    const militaryPattern = /^(RCH|REACH|DUKE|KING|GOLD|NAVY|ARMY|MARINE|NATO|RAF|GAF|FAF|IAF|THK|TUR|RSAF|UAF|JPN|JASDF|ROKAF|KAF|RAAF|CANFORCE|CFC|AME|PLF|HAF|EGY|PAF|FORTE|HAWK|REAPER|COBRA|RIVET|OLIVE|SNTRY|DRAGN|BONE|DEATH|DOOM|TRIDENT|ASCOT|CNV|HMX|DUSTOFF|EVAC|MOOSE|HERKY)/i.test(callsign);
+    if (callsign && militaryPattern) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Parse OpenSky response into MilitaryFlight objects
+ */
+function parseOpenSkyResponse(data: OpenSkyResponse): TrackedFlight[] {
+  if (!data.states) return [];
+
+  const flights: TrackedFlight[] = [];
+  const now = new Date();
+
+  for (const state of data.states) {
+    if (!isMilitaryFlight(state)) continue;
+
+    const icao24 = state[0];
+    const callsign = (state[1] || '').trim();
+    const lat = state[6];
+    const lon = state[5];
+
+    if (lat === null || lon === null) continue;
+
+    const info = determineAircraftInfo(callsign, icao24, state[2]);
+
+    // Update flight history for trails
+    const historyKey = icao24;
+    let history = flightHistory.get(historyKey);
+    if (!history) {
+      history = { positions: [], lastUpdate: Date.now() };
+      flightHistory.set(historyKey, history);
+    }
+
+    // Add position to history
+    history.positions.push([lat, lon]);
+    if (history.positions.length > HISTORY_MAX_POINTS) {
+      history.positions.shift();
+    }
+    history.lastUpdate = Date.now();
+
+    // Check if near interesting hotspot
+    const nearbyHotspot = getNearbyHotspot(lat, lon);
+    const isInteresting = nearbyHotspot?.priority === 'high' ||
+      info.type === 'bomber' ||
+      info.type === 'reconnaissance' ||
+      info.type === 'awacs';
+
+    const baroAlt = state[7];
+    const velocity = state[9];
+    const track = state[10];
+    const vertRate = state[11];
+
+    const flight: TrackedFlight = {
+      id: `opensky-${icao24}`,
+      callsign: callsign || `UNKN-${icao24.substring(0, 4).toUpperCase()}`,
+      hexCode: icao24.toUpperCase(),
+      aircraftType: info.type,
+      operator: info.operator,
+      operatorCountry: info.country,
+      lat,
+      lon,
+      altitude: baroAlt ? Math.round(baroAlt * 3.28084) : 0, // Convert m to ft
+      heading: track || 0,
+      speed: velocity ? Math.round(velocity * 1.94384) : 0, // Convert m/s to knots
+      verticalRate: vertRate ? Math.round(vertRate * 196.85) : undefined, // Convert m/s to ft/min
+      onGround: state[8],
+      squawk: state[14] || undefined,
+      lastSeen: now,
+      track: history.positions.length > 1 ? [...history.positions] : undefined,
+      confidence: info.confidence,
+      isInteresting,
+      note: nearbyHotspot ? `Near ${nearbyHotspot.name}` : undefined,
+    };
+
+    flights.push(flight);
+  }
+
+  return flights;
+}
+
+/**
+ * Fetch flights for a single hotspot region
+ */
+async function fetchHotspotRegion(hotspot: typeof MILITARY_HOTSPOTS[number]): Promise<TrackedFlight[]> {
+  try {
+    const lamin = hotspot.lat - hotspot.radius;
+    const lamax = hotspot.lat + hotspot.radius;
+    const lomin = hotspot.lon - hotspot.radius;
+    const lomax = hotspot.lon + hotspot.radius;
+
+    const response = await fetch(
+      `${OPENSKY_BASE_URL}?lamin=${lamin}&lamax=${lamax}&lomin=${lomin}&lomax=${lomax}`,
+      { headers: { 'Accept': 'application/json' } }
+    );
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        console.warn(`[Flight Tracking] Rate limited for ${hotspot.name}`);
+      }
+      return [];
+    }
+
+    const data: OpenSkyResponse = await response.json();
+    return parseOpenSkyResponse(data);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetch military flights from OpenSky Network
+ * Uses regional queries to reduce API usage and bandwidth
+ */
+async function fetchFromOpenSky(): Promise<TrackedFlight[]> {
+  const allFlights: TrackedFlight[] = [];
+  const seenHexCodes = new Set<string>();
+
+  // Execute in batches to avoid rate limiting
+  // Note: Requests are started when the batch executes, not when defined
+  const batchSize = 3;
+  for (let i = 0; i < MILITARY_HOTSPOTS.length; i += batchSize) {
+    const batch = MILITARY_HOTSPOTS.slice(i, i + batchSize);
+
+    // Start requests for this batch only
+    const results = await Promise.all(batch.map(hotspot => fetchHotspotRegion(hotspot)));
+
+    for (const flights of results) {
+      for (const flight of flights) {
+        if (!seenHexCodes.has(flight.hexCode)) {
+          seenHexCodes.add(flight.hexCode);
+          allFlights.push(flight);
+        }
+      }
+    }
+
+    // Small delay between batches to be respectful of rate limits
+    if (i + batchSize < MILITARY_HOTSPOTS.length) {
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  }
+
+    console.log(`[Flight Tracking] Found ${allFlights.length} tracked aircraft from ${MILITARY_HOTSPOTS.length} regions`);
+  return allFlights;
+}
+
+
+/**
+ * Enrich flights with Wingbits aircraft details
+ * Updates confidence and adds owner/operator info
+ */
+async function enrichFlightsWithWingbits(flights: TrackedFlight[]): Promise<TrackedFlight[]> {
+  // Check if Wingbits is configured
+  const isConfigured = await checkWingbitsStatus();
+  if (!isConfigured) {
+    console.log('[Flight Tracking] Wingbits not configured, skipping enrichment');
+    return flights;
+  }
+
+  // Get hex codes for all flights
+  const hexCodes = flights.map(f => f.hexCode.toLowerCase());
+
+  // Batch fetch aircraft details
+  const detailsMap = await getAircraftDetailsBatch(hexCodes);
+
+  if (detailsMap.size === 0) {
+    return flights;
+  }
+
+  console.log(`[Flight Tracking] Enriching ${detailsMap.size} of ${flights.length} aircraft with Wingbits data`);
+
+  // Enrich each flight
+  return flights.map(flight => {
+    const details = detailsMap.get(flight.hexCode.toLowerCase());
+    if (!details) return flight;
+
+    const analysis = analyzeAircraftDetails(details);
+
+    // Update flight with enrichment data
+    const enrichedFlight = { ...flight };
+
+    // Add enrichment info
+    enrichedFlight.enriched = {
+      manufacturer: analysis.manufacturer || undefined,
+      owner: analysis.owner || undefined,
+      operatorName: analysis.operator || undefined,
+      typeCode: analysis.typecode || undefined,
+      builtYear: analysis.builtYear || undefined,
+      confirmedTracked: analysis.isMilitary,
+      fleetBranch: analysis.militaryBranch || undefined,
+    };
+
+    // Add registration if not already set
+    if (!enrichedFlight.registration && analysis.registration) {
+      enrichedFlight.registration = analysis.registration;
+    }
+
+    // Add model if available
+    if (!enrichedFlight.aircraftModel && analysis.model) {
+      enrichedFlight.aircraftModel = analysis.model;
+    }
+
+    // Use typecode to refine type if still unknown
+    const wingbitsTypeCode = analysis.typecode || details.typecode;
+    if (wingbitsTypeCode && enrichedFlight.aircraftType === 'unknown') {
+      const typeMatch = identifyByAircraftType(wingbitsTypeCode);
+      if (typeMatch) {
+        enrichedFlight.aircraftType = typeMatch.type;
+        if (enrichedFlight.confidence === 'low') {
+          enrichedFlight.confidence = 'medium';
+        }
+      }
+    }
+
+    // Upgrade confidence if Wingbits confirms military
+    if (analysis.isMilitary) {
+      if (analysis.confidence === 'confirmed') {
+        enrichedFlight.confidence = 'high';
+      } else if (analysis.confidence === 'likely' && enrichedFlight.confidence === 'low') {
+        enrichedFlight.confidence = 'medium';
+      }
+
+      // Mark as interesting if confirmed military with known branch
+      if (analysis.militaryBranch) {
+        enrichedFlight.isInteresting = true;
+        if (!enrichedFlight.note) {
+          enrichedFlight.note = `${analysis.militaryBranch}${analysis.owner ? ` - ${analysis.owner}` : ''}`;
+        }
+      }
+    }
+
+    return enrichedFlight;
+  });
+}
+
+/**
+ * Cluster nearby flights for map display
+ */
+function clusterFlights(flights: TrackedFlight[]): FlightCluster[] {
+  const clusters: FlightCluster[] = [];
+  const processed = new Set<string>();
+
+  // Check each hotspot for clusters
+  for (const hotspot of MILITARY_HOTSPOTS) {
+    const nearbyFlights = flights.filter((f) => {
+      if (processed.has(f.id)) return false;
+      const distance = Math.sqrt(Math.pow(f.lat - hotspot.lat, 2) + Math.pow(f.lon - hotspot.lon, 2));
+      return distance <= hotspot.radius;
+    });
+
+    if (nearbyFlights.length >= 2) {
+      // Mark as processed
+      nearbyFlights.forEach((f) => processed.add(f.id));
+
+      // Calculate cluster center
+      const avgLat = nearbyFlights.reduce((sum, f) => sum + f.lat, 0) / nearbyFlights.length;
+      const avgLon = nearbyFlights.reduce((sum, f) => sum + f.lon, 0) / nearbyFlights.length;
+
+      // Determine dominant operator
+      const operatorCounts = new Map<FleetOperator, number>();
+      for (const f of nearbyFlights) {
+        operatorCounts.set(f.operator, (operatorCounts.get(f.operator) || 0) + 1);
+      }
+      let dominantOperator: FleetOperator | undefined;
+      let maxCount = 0;
+      for (const [op, count] of operatorCounts) {
+        if (count > maxCount) {
+          maxCount = count;
+          dominantOperator = op;
+        }
+      }
+
+      // Determine activity type
+      const hasTransport = nearbyFlights.some((f) => f.aircraftType === 'transport' || f.aircraftType === 'tanker');
+      const hasFighters = nearbyFlights.some((f) => f.aircraftType === 'fighter');
+      const hasRecon = nearbyFlights.some((f) => f.aircraftType === 'reconnaissance' || f.aircraftType === 'awacs');
+
+      let activityType: 'exercise' | 'patrol' | 'transport' | 'unknown' = 'unknown';
+      if (hasFighters && hasRecon) activityType = 'exercise';
+      else if (hasFighters || hasRecon) activityType = 'patrol';
+      else if (hasTransport) activityType = 'transport';
+
+      clusters.push({
+        id: `cluster-${hotspot.name.toLowerCase().replace(/\s+/g, '-')}`,
+        name: hotspot.name,
+        lat: avgLat,
+        lon: avgLon,
+        flightCount: nearbyFlights.length,
+        flights: nearbyFlights,
+        dominantOperator,
+        activityType,
+      });
+    }
+  }
+
+  return clusters;
+}
+
+/**
+ * Clean up old flight history entries
+ */
+function cleanupFlightHistory(): void {
+  const cutoff = Date.now() - HISTORY_CLEANUP_INTERVAL;
+  for (const [key, history] of flightHistory) {
+    if (history.lastUpdate < cutoff) {
+      flightHistory.delete(key);
+    }
+  }
+}
+
+// Set up periodic cleanup with proper lifecycle management
+let cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
+
+export function startFlightHistoryCleanup(): void {
+  if (cleanupIntervalId !== null) return;
+  cleanupIntervalId = setInterval(cleanupFlightHistory, HISTORY_CLEANUP_INTERVAL);
+}
+
+export function stopFlightHistoryCleanup(): void {
+  if (cleanupIntervalId !== null) {
+    clearInterval(cleanupIntervalId);
+    cleanupIntervalId = null;
+  }
+}
+
+if (typeof window !== 'undefined') {
+  startFlightHistoryCleanup();
+}
+
+/**
+ * Main function to fetch military flights
+ */
+export async function fetchTrackedFlights(): Promise<{
+  flights: TrackedFlight[];
+  clusters: FlightCluster[];
+}> {
+  if (!isFeatureAvailable('openskyRelay')) {
+    return { flights: [], clusters: [] };
+  }
+
+  return breaker.execute(async () => {
+    // Check cache
+    if (flightCache && Date.now() - flightCache.timestamp < CACHE_TTL) {
+      const clusters = clusterFlights(flightCache.data);
+      return { flights: flightCache.data, clusters };
+    }
+
+    // Fetch from OpenSky (regional queries for efficiency)
+    let flights = await fetchFromOpenSky();
+
+    if (flights.length === 0) {
+      throw new Error('No flights returned - upstream may be down');
+    }
+
+    // Enrich with Wingbits aircraft details (owner, operator, type)
+    flights = await enrichFlightsWithWingbits(flights);
+
+    // Update cache
+    flightCache = { data: flights, timestamp: Date.now() };
+
+    // Generate clusters
+    const clusters = clusterFlights(flights);
+
+    console.log(`[Flight Tracking] Total: ${flights.length} flights, ${clusters.length} clusters`);
+    return { flights, clusters };
+  }, { flights: [], clusters: [] });
+}
+
+/**
+ * Get status of military flights tracking
+ */
+export function getTrackedFlightsStatus(): string {
+  return breaker.getStatus();
+}
+
+/**
+ * Get flight by hex code
+ */
+export function getFlightByHex(hexCode: string): TrackedFlight | undefined {
+  if (!flightCache) return undefined;
+  return flightCache.data.find((f) => f.hexCode === hexCode.toUpperCase());
+}
+
+/**
+ * Get flights by operator
+ */
+export function getFlightsByOperator(operator: FleetOperator): TrackedFlight[] {
+  if (!flightCache) return [];
+  return flightCache.data.filter((f) => f.operator === operator);
+}
+
+/**
+ * Get interesting flights (near hotspots, special types)
+ */
+export function getInterestingFlights(): TrackedFlight[] {
+  if (!flightCache) return [];
+  return flightCache.data.filter((f) => f.isInteresting);
+}
+
+

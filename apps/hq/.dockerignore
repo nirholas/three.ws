@@ -1,0 +1,16 @@
+.git
+node_modules
+dist
+e2e
+tests
+src-tauri/target
+src-tauri/gen
+*.png
+browser.md
+browser_errors.md
+feeds.md
+PORTING_PROMPTS.md
+repo-research.ipynb
+.env
+.env.*
+!.env.example

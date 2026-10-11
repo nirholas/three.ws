@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https: http://localhost:5173 ws: wss: blob: data:; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; worker-src 'self' blob:; font-src 'self' data: https:; media-src 'self' data: blob: https:; frame-src 'self' https://*.tradingview.com; upgrade-insecure-requests;" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <title>HQ Intel - DeFi Analytics</title>
+    <meta name="title" content="HQ Intel - DeFi Analytics" />
+    <meta name="description" content="Real-time DeFi and crypto market intelligence - news, trending topics, protocol analytics, yields, and market data." />
+    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="HQ Intel - DeFi Analytics" />
+    <meta property="og:description" content="Real-time DeFi and crypto market intelligence." />
+    <meta property="og:image" content="https://three.ws/favico/og-image.png" />
+    <meta property="og:site_name" content="HQ" />
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="/favico/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favico/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favico/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favico/apple-touch-icon.png" />
+  </head>
+  <body>
+    <div id="intel-root"></div>
+    <script type="module" src="/src/intel.ts"></script>
+  </body>
+</html>

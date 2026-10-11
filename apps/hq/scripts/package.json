@@ -1,0 +1,15 @@
+{
+  "name": "ais-relay",
+  "version": "1.0.0",
+  "description": "WebSocket relay for aisstream.io vessel tracking",
+  "main": "ais-relay.cjs",
+  "scripts": {
+    "start": "node ais-relay.cjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
