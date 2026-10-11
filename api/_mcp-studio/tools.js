@@ -447,9 +447,10 @@ async function handleForgeFree(args, _auth, req, ctx = {}) {
 		run.add(briefStage({ kind: 'mesh', knownMark: true }));
 	} else {
 		const t0 = Date.now();
-		const directed = await directPrompt(meshDirectorFor(meshSubjectClass(prompt)), prompt);
+		let fallback = null;
+		const directed = await directPrompt(meshDirectorFor(meshSubjectClass(prompt)), prompt, { onFallback: (f) => (fallback = f) });
 		if (directed) effective = directed;
-		run.add(briefStage({ kind: 'mesh', directed: Boolean(directed), ms: Date.now() - t0 }));
+		run.add(briefStage({ kind: 'mesh', directed: Boolean(directed), fallback, ms: Date.now() - t0 }));
 	}
 	return finishMesh(run, {
 		base,
@@ -518,9 +519,10 @@ async function handleTextToAvatar(args, _auth, req, ctx = {}) {
 	if (prompt && !imageUrl) {
 		const subject = classifySubject(prompt) === 'animal' ? 'animal' : 'person';
 		const t0 = Date.now();
-		const directed = await directPrompt(avatarDirectorFor(subject), prompt);
+		let fallback = null;
+		const directed = await directPrompt(avatarDirectorFor(subject), prompt, { onFallback: (f) => (fallback = f) });
 		effective = directed || avatarFallbackBrief(prompt, subject);
-		run.add(briefStage({ kind: 'avatar', directed: Boolean(directed), ms: Date.now() - t0 }));
+		run.add(briefStage({ kind: 'avatar', directed: Boolean(directed), fallback, ms: Date.now() - t0 }));
 	} else {
 		run.add(briefStage({ kind: 'avatar', hasImage: true }));
 	}
@@ -556,9 +558,10 @@ async function handleMeshForge(args, _auth, req, ctx = {}) {
 			run.add(briefStage({ kind: 'mesh', knownMark: true }));
 		} else {
 			const t0 = Date.now();
-			const directed = await directPrompt(meshDirectorFor(meshSubjectClass(prompt)), prompt);
+			let fallback = null;
+			const directed = await directPrompt(meshDirectorFor(meshSubjectClass(prompt)), prompt, { onFallback: (f) => (fallback = f) });
 			if (directed) effective = directed;
-			run.add(briefStage({ kind: 'mesh', directed: Boolean(directed), ms: Date.now() - t0 }));
+			run.add(briefStage({ kind: 'mesh', directed: Boolean(directed), fallback, ms: Date.now() - t0 }));
 		}
 	} else {
 		run.add(briefStage({ kind: 'mesh', hasImage: true }));
@@ -656,9 +659,10 @@ async function handleForgeAvatar(args, _auth, req, ctx = {}) {
 	if (prompt && !imageUrl) {
 		const subject = classifySubject(prompt) === 'animal' ? 'animal' : 'person';
 		const t0 = Date.now();
-		const directed = await directPrompt(avatarDirectorFor(subject), prompt);
+		let fallback = null;
+		const directed = await directPrompt(avatarDirectorFor(subject), prompt, { onFallback: (f) => (fallback = f) });
 		effective = directed || avatarFallbackBrief(prompt, subject);
-		run.add(briefStage({ kind: 'avatar', directed: Boolean(directed), ms: Date.now() - t0 }));
+		run.add(briefStage({ kind: 'avatar', directed: Boolean(directed), fallback, ms: Date.now() - t0 }));
 	} else {
 		run.add(briefStage({ kind: 'avatar', hasImage: true }));
 	}

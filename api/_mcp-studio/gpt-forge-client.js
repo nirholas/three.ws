@@ -18,6 +18,7 @@
 import { selfOrigin } from '../_lib/self-origin.js';
 import { watsonxConfig, watsonxChatComplete } from '../_lib/watsonx.js';
 import { llmComplete } from '../_lib/llm.js';
+import { isUsableDirectorRewrite, finishDirectorReply } from './forge-client.js';
 import { TICKET_HEADER, newTicket, ticketHandle } from '../_lib/forge-submit-ticket.js';
 
 const DEFAULT_TIMEOUT_MS = 180_000;
@@ -361,45 +362,11 @@ const DIRECTOR_MAX_TOKENS = 400;
 const DIRECTOR_TIMEOUT_MS = 15_000;
 const DIRECTOR_WATSONX_SHARE_MS = 6_000;
 
-// Longest brief we forward. The director's own specs land near 800 characters;
-// beyond this the model has stopped writing a prompt and started writing prose.
-const DIRECTOR_MAX_CHARS = 1000;
+// The rewrite guard is shared with forge-client.js so the two clients cannot
+// drift apart again (this copy once had the URL check and the other did not).
+export { isUsableDirectorRewrite };
 
-// The director's system prompts ask for a complete spec, and a complete spec is
-// a finished sentence: every well-formed one observed in production closes on a
-// period after its negatives clause ("...no second subject."). A generation that
-// ran out of tokens cannot, which makes terminal punctuation the one signal that
-// separates a whole brief from a clipped one without guessing at grammar. Both
-// production truncations fail it, as does any fragment ending on a separator or
-// a dangling connective, with no per-word list to keep current.
-const ENDS_COMPLETE = /[.!?]["'\u201d\u2019)\]]*$/;
-
-// Decide whether a director rewrite is safe to forward in place of the user's
-// own words. The director is a quality lever that must never cost a caller their
-// intent, so anything that fails this check falls back to the raw prompt rather
-// than shipping a fragment. Erring toward rejection is cheap: the fallback is
-// the caller's own wording, which is always a valid brief. Pure: same inputs to
-// same verdict.
-export function isUsableDirectorRewrite(refined, rawPrompt) {
-	if (typeof refined !== 'string') return false;
-	const text = refined.trim();
-	if (text.length < 3 || text.length > DIRECTOR_MAX_CHARS) return false;
-	if (!ENDS_COMPLETE.test(text)) return false;
-	// A brief describes an object; it never carries a link. A URL or a markdown
-	// link means the reply is a provider notice ("raise the key budget at
-	// https://...") or chatter, and reconstructing a mesh from it is how 22
-	// production generations came out of a billing message.
-	if (/https?:\/\/|\]\(|\bwww\./i.test(text)) return false;
-	// The director's contract is to ENRICH a rough idea into a denser spec. A
-	// result no longer than what the caller typed has added nothing, and is more
-	// likely a clipped opening clause than a genuine tightening, so the user's
-	// own wording is the better brief.
-	const raw = String(rawPrompt ?? '').trim();
-	if (raw && text.length <= raw.length) return false;
-	return true;
-}
-
-export async function directPrompt(instruction, rawPrompt) {
+export async function directPrompt(instruction, rawPrompt, { onFallback } = {}) {
 	const user = `Idea: ${rawPrompt}`;
 	let text = null;
 
@@ -446,18 +413,11 @@ export async function directPrompt(instruction, rawPrompt) {
 			});
 			text = result?.text || null;
 		} catch {
-			return null;
+			text = null;
 		}
 	}
 
-	if (!text) return null;
-	// First line only, then strip wrapping quotes; the reverse order leaves a
-	// dangling quote when the model adds commentary lines after a quoted prompt.
-	const firstLine = text.trim().split('\n')[0].trim();
-	const refined = firstLine.replace(/^["'“”]+|["'“”]+$/g, '').trim();
-	// Returning null here is the documented fail-soft path: the caller forwards
-	// the caller's original prompt unchanged, which is always a valid brief.
-	return isUsableDirectorRewrite(refined, rawPrompt) ? refined : null;
+	return finishDirectorReply(text, rawPrompt, onFallback);
 }
 
 function sleep(ms) {

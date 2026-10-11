@@ -98,8 +98,23 @@ describe('run receipt core', () => {
 		expect(done.outcome).toBe('delivered');
 		expect(done.issues).toEqual([]);
 		expect(done.duration_ms).toBe(3000);
-		expect(done.summary).toMatch(/every stage met its contract/);
+		expect(done.summary).toBe('Delivered as expected. Every stage met its contract.');
 		expect(done.stages.find((s) => s.id === 'mesh').observed).toMatch(/high-detail tier on Hunyuan3D/);
+	});
+
+	// A skipped stage is not an issue, but it is not a pass either. The 2026-10-11
+	// rig_mesh proof run on a lantern read "every stage met its contract" while the
+	// humanoid check had never run, which is exactly the overclaim receipts exist
+	// to prevent.
+	it('never says every stage met when a stage was not checked', () => {
+		const r = startReceipt({ tool: 'rig_mesh', prompt: null, now: 1000 });
+		addStage(r, inputStage({ allowed: true, hasImage: false, hasPrompt: true }));
+		addStage(r, subjectGateStage({ givenMesh: true }));
+		addStage(r, deliveryStage({ frame: { glb_url: 'https://x/a.glb', durable: true } }));
+		const done = finishReceipt(r, { glbUrl: 'https://x/a.glb', now: 2000 });
+		expect(done.outcome).toBe('delivered');
+		expect(done.summary).not.toMatch(/every stage met/i);
+		expect(done.summary).toBe('Delivered as expected. Every stage that ran met its contract. 1 skipped (Subject check).');
 	});
 
 	it('names a quiet tier downgrade as recovered, with the cause', () => {
@@ -116,6 +131,17 @@ describe('run receipt core', () => {
 		expect(s.cause).toMatch(/fixed brief/);
 		expect(briefStage({ kind: 'avatar', hasImage: true }).verdict).toBe('skipped');
 		expect(briefStage({ kind: 'mesh', knownMark: true }).verdict).toBe('met');
+	});
+
+	it('states exactly why the director brief fell back, never a generic timeout', () => {
+		const long = briefStage({ kind: 'mesh', directed: false, fallback: { reason: 'too_long', chars: 1245 } });
+		expect(long.verdict).toBe('recovered');
+		expect(long.cause).toMatch(/1245 characters/);
+		expect(long.cause).toMatch(/1000/);
+		expect(long.cause).not.toMatch(/in time/);
+		expect(briefStage({ kind: 'mesh', directed: false, fallback: { reason: 'unfinished' } }).cause).toMatch(/mid-sentence|unfinished/);
+		expect(briefStage({ kind: 'avatar', directed: false, fallback: { reason: 'no_reply' } }).cause).toMatch(/no reply/i);
+		expect(briefStage({ kind: 'avatar', directed: false, fallback: { reason: 'too_long', chars: 1100 } }).cause).toMatch(/fixed brief/);
 	});
 
 	it('turns away a non-humanoid avatar before spending GPU time, and says so', () => {

@@ -86,6 +86,17 @@ export function meshSubjectClass(prompt) {
 	return classifySubject(prompt);
 }
 
+// The forge accepts a prompt of at most 1000 characters (api/gpt-forge.js), and
+// the director guard drops anything longer. Unbudgeted, the chain's specs ran
+// 1032 to 1620 characters on 2026-10-11, so every brief was thrown away and the
+// raw idea went to paint instead; the signed run receipts showed it as a
+// "recovered" brief on every run. The budget is stated in words because the
+// chain's models measurably ignore a character count (an "under 600 characters"
+// ask still came back at 1071 to 1421) while holding a word count; 90 words of
+// spec prose run about 600 characters, leaving headroom under the cap.
+export const BRIEF_BUDGET_WORDS = 90;
+const BRIEF_BUDGET_DIRECTIVE = `Keep the whole prompt under ${BRIEF_BUDGET_WORDS} words. `;
+
 // Build the MESH_DIRECTOR system prompt for a given subject class — one
 // isolated subject, its construction, per-part PBR materials, one held art
 // style, subject-specific realism cues, and fine surface detail, ending in
@@ -111,7 +122,9 @@ export function meshDirectorFor(subject = 'object') {
 		'Always end with these composition constraints so the ' +
 		'reference image reconstructs cleanly: full subject in frame, centered, isolated on a plain neutral ' +
 		'background, one camera angle, even studio lighting, no cropping, no motion blur, no text or watermark, no ' +
-		'collage or multi-view grid, no second subject. Output ONLY the rewritten prompt as a single line — no ' +
+		'collage or multi-view grid, no second subject. ' +
+		BRIEF_BUDGET_DIRECTIVE +
+		'Output ONLY the rewritten prompt as a single line: no ' +
 		'preamble, no quotes.'
 	);
 }
@@ -178,6 +191,7 @@ export function avatarDirectorFor(subject = 'person') {
 		'constraints: full body in frame head-to-toe, centered, isolated on a plain neutral background, no props ' +
 		'gripped or crossing the silhouette, one camera angle facing the character, even studio lighting, no ' +
 		'cropping, no motion blur, no text or watermark, no collage or multi-view grid, no second character. ' +
+		BRIEF_BUDGET_DIRECTIVE +
 		'Output ONLY the rewritten prompt as a single line — no preamble, no quotes.'
 	);
 }

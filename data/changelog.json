@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-11",
+			"title": "The prompt director works again, found by its own run receipts",
+			"link": "/runs",
+			"summary": "The first receipts showed the director's brief falling back on every Studio run. The replies were arriving in 5 to 10 seconds but ran past the 1000-character prompt cap or ended on the closing constraint the director is told to end on, and both were discarded as clipped. The director now writes to a word budget the models actually follow, the guard accepts the mandated ending, both forge clients share one guard, and a receipt now names the exact reason a brief fell back (too long with its length, unfinished, no reply) instead of a generic timeout. Receipts also stop saying every stage met when a stage was skipped.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-11",
 			"title": "Every 3D generation now writes a signed run receipt",
 			"link": "/runs",
 			"summary": "Each Studio run (avatars, rigged avatars, meshes, rigs, refinements) records stage by stage what was expected, what was observed, and a verdict: met, recovered by a named fallback, missed with its cause, or skipped. The rig is verified by reading the delivered file back, not by trusting the rigger. Receipts are ed25519-signed, linked from every result, browsable at /runs with stage-by-stage rates, and verifiable offline with one command.",

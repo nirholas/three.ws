@@ -167,19 +167,25 @@ export function finishReceipt(receipt, { outcome, glbUrl, viewerUrl, now = Date.
 		finished_at: final === 'pending' ? null : new Date(now).toISOString(),
 		duration_ms: final === 'pending' || !Number.isFinite(started) ? null : Math.max(0, now - started),
 		outcome: final,
-		summary: summarize(final, issues),
+		summary: summarize(final, issues, receipt.stages),
 		issues,
 		output: glbUrl ? { glb_url: glbUrl, ...(viewerUrl ? { viewer_url: viewerUrl } : {}) } : null,
 	};
 }
 
-function summarize(outcome, issues) {
+function summarize(outcome, issues, stages = []) {
 	const missed = issues.filter((i) => i.verdict === 'missed');
 	const recovered = issues.filter((i) => i.verdict === 'recovered');
+	// A skipped stage is not an issue, but it is not a pass either: "every stage
+	// met" over a stage that never ran is the overclaim receipts exist to stop.
+	const skipped = stages.filter((s) => s.verdict === 'skipped');
 	const parts = [OUTCOME_LABELS[outcome] || outcome];
 	if (missed.length) parts.push(`${missed.length} stage${missed.length === 1 ? '' : 's'} missed (${missed.map((i) => i.label).join(', ')})`);
 	if (recovered.length) parts.push(`${recovered.length} carried by a fallback (${recovered.map((i) => i.label).join(', ')})`);
-	if (!missed.length && !recovered.length && outcome === 'delivered') parts.push('every stage met its contract');
+	if (!missed.length && !recovered.length && outcome === 'delivered') {
+		parts.push(skipped.length ? 'Every stage that ran met its contract' : 'Every stage met its contract');
+	}
+	if (skipped.length) parts.push(`${skipped.length} skipped (${skipped.map((s) => s.label).join(', ')})`);
 	return `${parts.join('. ')}.`;
 }
 
@@ -252,7 +258,28 @@ export function subjectGateStage({ hasImage, givenMesh, nonHumanoid, override })
  * fixed one as the fallback) or 'mesh' (an optional enrichment; the raw prompt
  * is a valid brief on its own).
  */
-export function briefStage({ kind, hasImage, directed, knownMark = false, ms }) {
+// Why the director's brief was not used, in words a reader can check against
+// the stage time. `fallback` is what directPrompt reported via onFallback.
+function directorFallbackCause(fallback) {
+	switch (fallback?.reason) {
+		case 'too_long':
+			return `The director's brief ran to ${fallback.chars ? `${fallback.chars} characters` : 'over 1000 characters'}; the forge accepts at most 1000, so it was set aside.`;
+		case 'unfinished':
+			return 'The director reply stopped mid-sentence, so it was treated as clipped and set aside.';
+		case 'link':
+			return 'The director reply carried a link, which marks a provider notice rather than a brief, so it was set aside.';
+		case 'not_enriched':
+			return 'The director reply added nothing to the prompt, so the original wording was kept.';
+		case 'empty':
+			return 'The director returned an empty reply.';
+		case 'no_reply':
+			return 'No reply from the director models within the time allowed.';
+		default:
+			return 'The director did not return a usable brief.';
+	}
+}
+
+export function briefStage({ kind, hasImage, directed, knownMark = false, fallback = null, ms }) {
 	if (hasImage) {
 		return { id: 'brief', label: 'Brief', expected: 'A brief for the reference picture.', observed: 'A reference image was supplied, so it was used directly.', verdict: 'skipped', ms };
 	}
@@ -266,6 +293,7 @@ export function briefStage({ kind, hasImage, directed, knownMark = false, ms }) 
 			ms,
 		};
 	}
+	const cause = directorFallbackCause(fallback);
 	if (kind === 'avatar') {
 		const expected = 'A director-written brief that frames the whole figure head to toe in a neutral A-pose.';
 		return directed
@@ -276,7 +304,7 @@ export function briefStage({ kind, hasImage, directed, knownMark = false, ms }) 
 					expected,
 					observed: 'The fixed full-body brief was appended to the prompt as written.',
 					verdict: 'recovered',
-					cause: 'The director model did not return a usable brief in time; the fixed brief keeps the framing.',
+					cause: `${cause} The fixed brief keeps the framing.`,
 					ms,
 				};
 	}
@@ -289,7 +317,7 @@ export function briefStage({ kind, hasImage, directed, knownMark = false, ms }) 
 				expected,
 				observed: 'The prompt was used as written.',
 				verdict: 'recovered',
-				cause: 'The director model did not return a usable brief in time.',
+				cause,
 				ms,
 			};
 }

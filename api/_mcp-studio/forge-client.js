@@ -240,41 +240,82 @@ export async function rig(base, glbUrl, { timeoutEnv } = {}) {
 const DIRECTOR_MAX_TOKENS = 400;
 const DIRECTOR_TIMEOUT_MS = 20_000;
 
-// Longest brief we forward. The director's own specs land near 800 characters;
-// beyond this the model has stopped writing a prompt and started writing prose.
+// Longest brief we forward, and the longest prompt the forge itself accepts
+// (api/gpt-forge.js rejects anything over 1000). The director prompts ask for
+// under 800 (BRIEF_BUDGET_CHARS) so a spec has room to spare.
 const DIRECTOR_MAX_CHARS = 1000;
 
 // The director's system prompts ask for a complete spec, and a complete spec is
-// a finished sentence: every well-formed one observed in production closes on a
-// period after its negatives clause ("...no second subject."). A generation that
-// ran out of tokens cannot, which makes terminal punctuation the one signal that
-// separates a whole brief from a clipped one without guessing at grammar. Both
-// production truncations fail it ("A small," and "A classic wooden rocking chair
-// with gracefully curved"), as does any fragment ending on a separator or a
-// dangling connective, with no per-word list to keep current.
+// a finished sentence. A generation that ran out of tokens cannot finish one,
+// which makes the ending the one signal that separates a whole brief from a
+// clipped one without guessing at grammar. Both production truncations fail it
+// ("A small," and "A classic wooden rocking chair with gracefully curved"), as
+// does any fragment ending on a separator or a dangling connective.
 const ENDS_COMPLETE = /[.!?]["'\u201d\u2019)\]]*$/;
 
+// The prompts also mandate the LAST words of the brief: the composition list
+// closing on "no second subject" (mesh) or "no second character" (avatar). The
+// chain copies that list verbatim and often stops without a period, and treating
+// those as clipped threw away every brief on 2026-10-11 (run receipts showed the
+// brief "recovered" on each studio run). A clip lands mid-word or mid-list, never
+// exactly on the mandated last phrase, so that phrase is as whole an ending as a
+// period. "no second" alone is still a clip.
+const ENDS_ON_CLOSING_CONSTRAINT = /(?:\bno second (?:subject|character)s?|\bone (?:subject|character) only)$/i;
+
 // Decide whether a director rewrite is safe to forward in place of the user's
-// own words. The director is a quality lever that must never cost a caller their
-// intent, so anything that fails this check falls back to the raw prompt rather
-// than shipping a fragment. Erring toward rejection is cheap: the fallback is
-// the caller's own wording, which is always a valid brief. Pure: same inputs to
-// same verdict.
-export function isUsableDirectorRewrite(refined, rawPrompt) {
-	if (typeof refined !== 'string') return false;
+// own words, and if not, name why: the run receipt states the reason, so a
+// fallback is never filed under a guess. The director is a quality lever that
+// must never cost a caller their intent, so anything named here falls back to
+// the raw prompt rather than shipping a fragment. Erring toward rejection is
+// cheap: the fallback is the caller's own wording, which is always a valid
+// brief. Pure: same inputs to same verdict. gpt-forge-client.js re-exports this.
+// Returns null when usable, else 'empty' | 'too_long' | 'unfinished' | 'link' |
+// 'not_enriched'.
+export function directorRewriteProblem(refined, rawPrompt) {
+	if (typeof refined !== 'string') return 'empty';
 	const text = refined.trim();
-	if (text.length < 3 || text.length > DIRECTOR_MAX_CHARS) return false;
-	if (!ENDS_COMPLETE.test(text)) return false;
+	if (text.length < 3) return 'empty';
+	if (text.length > DIRECTOR_MAX_CHARS) return 'too_long';
+	if (!ENDS_COMPLETE.test(text) && !ENDS_ON_CLOSING_CONSTRAINT.test(text)) return 'unfinished';
+	// A brief describes an object; it never carries a link. A URL or a markdown
+	// link means the reply is a provider notice ("raise the key budget at
+	// https://...") or chatter, and reconstructing a mesh from it is how 22
+	// production generations came out of a billing message.
+	if (/https?:\/\/|\]\(|\bwww\./i.test(text)) return 'link';
 	// The director's contract is to ENRICH a rough idea into a denser spec. A
 	// result no longer than what the caller typed has added nothing, and is far
 	// more likely a clipped opening clause than a genuine tightening, so the
 	// user's own wording is the better brief.
 	const raw = String(rawPrompt ?? '').trim();
-	if (raw && text.length <= raw.length) return false;
-	return true;
+	if (raw && text.length <= raw.length) return 'not_enriched';
+	return null;
 }
 
-export async function directPrompt(instruction, rawPrompt) {
+export function isUsableDirectorRewrite(refined, rawPrompt) {
+	return directorRewriteProblem(refined, rawPrompt) === null;
+}
+
+// Shared tail of both clients' directPrompt: clean the model reply, judge it,
+// and tell the caller why it was dropped. `onFallback` receives
+// { reason, chars? } where reason is 'no_reply' or a directorRewriteProblem code.
+export function finishDirectorReply(text, rawPrompt, onFallback) {
+	if (!text) {
+		onFallback?.({ reason: 'no_reply' });
+		return null;
+	}
+	// First line only, then strip wrapping quotes; the reverse order leaves a
+	// dangling quote when the model adds commentary lines after a quoted prompt.
+	const firstLine = text.trim().split('\n')[0].trim();
+	const refined = firstLine.replace(/^["'“”]+|["'“”]+$/g, '').trim();
+	const reason = directorRewriteProblem(refined, rawPrompt);
+	if (reason === null) return refined;
+	// Returning null here is the documented fail-soft path: the caller forwards
+	// the caller's original prompt unchanged, which is always a valid brief.
+	onFallback?.(reason === 'too_long' ? { reason, chars: refined.length } : { reason });
+	return null;
+}
+
+export async function directPrompt(instruction, rawPrompt, { onFallback } = {}) {
 	const user = `Idea: ${rawPrompt}`;
 	let text = null;
 
@@ -316,18 +357,11 @@ export async function directPrompt(instruction, rawPrompt) {
 			});
 			text = result?.text || null;
 		} catch {
-			return null;
+			text = null;
 		}
 	}
 
-	if (!text) return null;
-	// First line only, then strip wrapping quotes; the reverse order leaves a
-	// dangling quote when the model adds commentary lines after a quoted prompt.
-	const firstLine = text.trim().split('\n')[0].trim();
-	const refined = firstLine.replace(/^["'“”]+|["'“”]+$/g, '').trim();
-	// Returning null here is the documented fail-soft path: the caller forwards
-	// the caller's original prompt unchanged, which is always a valid brief.
-	return isUsableDirectorRewrite(refined, rawPrompt) ? refined : null;
+	return finishDirectorReply(text, rawPrompt, onFallback);
 }
 
 function sleep(ms) {
