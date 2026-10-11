@@ -192,7 +192,7 @@
 	border-radius: 50%;
 	background: var(--accent);
 	opacity: 0.85;
-	transition: transform var(--duration-instant) linear;
+	transition: transform var(--duration-instant) var(--ease-standard);
 }
 @media (pointer: coarse) {
 	.pt-stick { display: grid; }

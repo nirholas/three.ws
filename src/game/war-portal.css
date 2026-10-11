@@ -53,7 +53,7 @@
 	font: 400 14px/1.5 Inter, system-ui, sans-serif;
 	transform: translateY(18px);
 	opacity: 0;
-	transition: transform var(--duration-base) cubic-bezier(0.2, 0.8, 0.3, 1), opacity var(--duration-base) var(--ease-standard);
+	transition: transform var(--duration-base) var(--ease-standard), opacity var(--duration-base) var(--ease-standard);
 	pointer-events: auto;
 }
 

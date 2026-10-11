@@ -609,7 +609,7 @@
 	opacity: 0;
 	visibility: hidden;
 	pointer-events: none;
-	transition: opacity var(--duration-base) var(--ease-standard), visibility 0s linear var(--duration-base);
+	transition: opacity var(--duration-base) var(--ease-standard), visibility var(--duration-instant) var(--ease-standard) var(--duration-base);
 }
 
 .rd-spinner {

@@ -293,7 +293,7 @@ html, body {
 	overflow: hidden;
 	transform: translateX(24px);
 	opacity: 0;
-	transition: transform var(--duration-base) cubic-bezier(0.2, 0.7, 0.2, 1), opacity var(--duration-base) var(--ease-standard);
+	transition: transform var(--duration-base) var(--ease-standard), opacity var(--duration-base) var(--ease-standard);
 }
 .agora-passport.open { transform: none; opacity: 1; }
 

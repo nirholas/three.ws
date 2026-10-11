@@ -23,8 +23,8 @@ body {
 	opacity: 0;
 	transform: translateY(28px);
 	transition:
-		opacity var(--duration-slow) cubic-bezier(0.16, 1, 0.3, 1),
-		transform var(--duration-slow) cubic-bezier(0.16, 1, 0.3, 1);
+		opacity var(--duration-slow) var(--ease-standard),
+		transform var(--duration-slow) var(--ease-standard);
 }
 .sdk-reveal.revealed {
 	opacity: 1;

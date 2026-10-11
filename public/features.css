@@ -80,8 +80,8 @@
 	opacity: 0;
 	transform: translateY(24px);
 	transition:
-		opacity var(--duration-slow) cubic-bezier(0.16, 1, 0.3, 1),
-		transform var(--duration-slow) cubic-bezier(0.16, 1, 0.3, 1);
+		opacity var(--duration-slow) var(--ease-standard),
+		transform var(--duration-slow) var(--ease-standard);
 }
 
 .scroll-reveal.revealed {
@@ -308,7 +308,7 @@
 .btn-arrow {
 	display: inline-block;
 	margin-left: 0.5em;
-	transition: transform var(--duration-base) cubic-bezier(0.22, 1, 0.36, 1);
+	transition: transform var(--duration-base) var(--ease-standard);
 }
 
 .btn-primary:hover .btn-arrow {

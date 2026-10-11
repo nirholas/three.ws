@@ -428,7 +428,7 @@
 	width: 0;
 	background: #3ddc84;
 	transform-origin: left center;
-	transition: width var(--duration-instant) linear;
+	transition: width var(--duration-instant) var(--ease-standard);
 }
 
 .hs-asleep {

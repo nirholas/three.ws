@@ -11167,7 +11167,7 @@ a.pill--devnet:hover {
 	color: var(--ink, var(--ink));
 	opacity: 0;
 	transform: translateY(12px) scale(0.98);
-	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) cubic-bezier(0.22, 1, 0.36, 1);
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
 .tws-disc-card.is-in {
 	opacity: 1;

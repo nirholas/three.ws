@@ -131,7 +131,7 @@
 	border-radius: 50%;
 	background: rgb(var(--pr-fg));
 	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-	transition: transform var(--duration-base) cubic-bezier(0.2, 0.9, 0.3, 1);
+	transition: transform var(--duration-base) var(--ease-standard);
 }
 
 .billing-toggle.annual .toggle-thumb {
@@ -833,7 +833,7 @@
 }
 
 /* CTAs — press + focus */
-.pricing-cta { transition: background var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)), border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)), transform var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)), box-shadow var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)); }
+.pricing-cta { transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
 .pricing-cta:active {
 	transform: translateY(0) scale(0.98);
 }
@@ -870,8 +870,8 @@
 	opacity: 0;
 	transform: translateY(18px);
 	transition:
-		opacity var(--duration-slow, var(--duration-slow)) var(--ease-emphasized, cubic-bezier(0.22, 1, 0.36, 1)),
-		transform var(--duration-slow, var(--duration-slow)) var(--ease-emphasized, cubic-bezier(0.22, 1, 0.36, 1));
+		opacity var(--duration-slow) var(--ease-emphasized, var(--ease-standard)),
+		transform var(--duration-slow) var(--ease-emphasized, var(--ease-standard));
 	will-change: opacity, transform;
 }
 .reveal-section.is-revealed {
@@ -1374,7 +1374,7 @@
 	border-radius: 50%;
 	color: rgba(var(--pr-fg), 0.7);
 	cursor: pointer;
-	transition: background var(--duration-fast, var(--duration-fast)) var(--ease-standard), color var(--duration-fast, var(--duration-fast)) var(--ease-standard);
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .pc-close:hover, .pc-close:focus-visible {
@@ -1407,7 +1407,7 @@
 	color: var(--pr-panel-ink);
 	text-align: left;
 	cursor: pointer;
-	transition: border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard), background var(--duration-fast, var(--duration-fast)) var(--ease-standard), transform var(--duration-fast, var(--duration-fast)) var(--ease-standard);
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .pc-asset:hover { border-color: rgba(var(--pr-fg), 0.35); transform: translateY(-1px); }
@@ -1495,7 +1495,7 @@
 	padding: 8px;
 	line-height: 0;
 	flex-shrink: 0;
-	transition: opacity var(--duration-fast, var(--duration-fast)) var(--ease-standard);
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
 .pc-pay-actions {
@@ -1531,7 +1531,7 @@
 	color: var(--pr-panel-ink);
 	font-size: 13px;
 	font-family: inherit;
-	transition: border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard);
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 
 .pc-sig-row input:focus-visible {

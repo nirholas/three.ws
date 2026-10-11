@@ -161,7 +161,7 @@
 	background: var(--surface-1, rgba(255, 255, 255, 0.03));
 	border: 1px solid var(--stroke);
 	overflow: hidden;
-	transition: border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .bdy-chip:hover { border-color: var(--stroke-strong, rgba(255, 255, 255, 0.2)); background: var(--surface-2); }
 .bdy-chip--featured { background: var(--surface-2, rgba(255, 255, 255, 0.05)); }
@@ -458,7 +458,7 @@
 	box-shadow: var(--shadow-2, 0 8px 32px rgba(0, 0, 0, 0.5));
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity var(--duration-base, var(--duration-base)) var(--ease-out), transform var(--duration-base) var(--ease-out);
+	transition: opacity var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out);
 }
 .bdy-toast.show,
 .mny-toast.show,
@@ -834,7 +834,7 @@
 .tb-risk-l { font-size: var(--text-2xs, 0.6875rem); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-faint, #666); }
 .tb-risk-label { font-size: var(--text-md, 0.8125rem); font-weight: var(--weight-semibold, 600); color: var(--ink-bright, #fff); }
 .tb-risk-track { height: 8px; border-radius: 999px; background: var(--surface-2, rgba(255,255,255,0.06)); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.3); }
-.tb-risk-fill { height: 100%; border-radius: 999px; transition: width var(--duration-slow) var(--ease-out, cubic-bezier(0.16,1,0.3,1)), background var(--duration-slow) var(--ease-standard); }
+.tb-risk-fill { height: 100%; border-radius: 999px; transition: width var(--duration-slow) var(--ease-out, var(--ease-standard)), background var(--duration-slow) var(--ease-standard); }
 .tb-risk-calm .tb-risk-fill { background: linear-gradient(90deg, #34d399, #10b981); }
 .tb-risk-calm .tb-risk-label { color: #34d399; }
 .tb-risk-balanced .tb-risk-fill { background: linear-gradient(90deg, #38bdf8, #6366f1); }

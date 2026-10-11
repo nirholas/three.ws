@@ -712,7 +712,7 @@
 	align-items: center;
 	justify-content: center;
 	min-width: 0;
-	transition: width var(--duration-base) cubic-bezier(0.4, 0, 0.2, 1);
+	transition: width var(--duration-base) var(--ease-standard);
 }
 .ps-split-fish {
 	background: color-mix(in srgb, var(--ps-fish) 32%, transparent);

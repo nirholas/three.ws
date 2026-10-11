@@ -121,7 +121,7 @@ body[data-mode='overlay'] {
 	font: 600 13px/1 var(--cc-font);
 	text-decoration: none;
 	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .cc-btn:hover, .cc-select:hover { border-color: var(--cc-accent); }
 .cc-btn:active { transform: translateY(1px); }
@@ -144,7 +144,7 @@ body[data-mode='overlay'] {
 	background: var(--cc-card);
 	color: var(--cc-fg);
 	font: 14px var(--cc-mono);
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .cc-input:hover { border-color: var(--cc-accent); }
 .cc-input[aria-invalid='true'] { border-color: var(--cc-down); }
@@ -208,7 +208,7 @@ body[data-mode='overlay'] {
 	height: 100%;
 	border: 0;
 	opacity: 0;
-	transition: opacity 0.35s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 }
 .cc-chart.is-ready .cc-chart-frame { opacity: 1; }
 .cc-chart.is-ready .cc-chart-skel { display: none; }
@@ -245,7 +245,7 @@ body[data-mode='overlay'] {
 		var(--cc-card);
 }
 .cc-stage-slot { position: absolute; inset: 0; }
-.cc-stage-slot agent-3d { display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 0.5s ease; }
+.cc-stage-slot agent-3d { display: block; width: 100%; height: 100%; opacity: 0; transition: opacity var(--duration-slow) var(--ease-standard); }
 .cc-stage.is-ready .cc-stage-slot agent-3d { opacity: 1; }
 .cc-stage-loading, .cc-stage-error {
 	position: absolute;
@@ -286,7 +286,7 @@ body[data-mode='overlay'] {
 	opacity: 0;
 	transform: translateY(-6px) scale(0.97);
 	transform-origin: 50% 100%;
-	transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 	pointer-events: none;
 	will-change: transform, opacity;
 }

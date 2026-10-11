@@ -321,7 +321,7 @@
 	width: 0%;
 	border-radius: 999px;
 	background: linear-gradient(90deg, var(--dio-glow), color-mix(in srgb, var(--dio-glow) 40%, #fff));
-	transition: width var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1);
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 
 .dio-objects {

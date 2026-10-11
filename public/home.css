@@ -286,7 +286,7 @@
 		.hero-stage-inner {
 			position: absolute; inset: 0;
 			transform-style: preserve-3d;
-			transition: transform var(--duration-slow) cubic-bezier(.2,.7,.3,1);
+			transition: transform var(--duration-slow) var(--ease-standard);
 			will-change: transform;
 		}
 		.hero-stage-fallback {
@@ -907,7 +907,7 @@
 			overflow: hidden; background: var(--surface-0); border: 1px solid var(--hairline);
 			transform-style: preserve-3d;
 			transform: rotateX(0) rotateY(0) translateZ(0);
-			transition: transform var(--duration-slow) cubic-bezier(.22,.68,0,.98), box-shadow var(--duration-slow), border-color var(--duration-base);
+			transition: transform var(--duration-slow) var(--ease-standard), box-shadow var(--duration-slow), border-color var(--duration-base);
 			cursor: pointer; text-decoration: none; display: block;
 		}
 		.showcase-agent-card:hover {
@@ -967,7 +967,7 @@
 			overflow: hidden; border: 1px solid var(--hairline);
 			display: flex; flex-direction: column; align-items: center; justify-content: center;
 			text-align: center; text-decoration: none; background: var(--surface-0);
-			transition: transform var(--duration-slow) cubic-bezier(.22,.68,0,.98), border-color var(--duration-base), background var(--duration-base);
+			transition: transform var(--duration-slow) var(--ease-standard), border-color var(--duration-base), background var(--duration-base);
 			cursor: pointer; gap: 10px; padding: 24px;
 		}
 		.showcase-cta-card:hover {
@@ -1249,14 +1249,14 @@
 		.hero-stage agent-3d::part(loading) { display: none !important; }
 		.hero-stage agent-3d {
 			position: absolute; inset: 0; display: block; width: 100%; height: 100%;
-			opacity: 0; transition: opacity var(--duration-slow) cubic-bezier(.2,.7,.3,1);
+			opacity: 0; transition: opacity var(--duration-slow) var(--ease-standard);
 		}
 		.hero-stage agent-3d.loaded { opacity: 1; }
 
 		/* ── REVEAL ANIMATIONS ──────────────────────────────────── */
 		.reveal {
 			opacity: 0; transform: translateY(32px);
-			transition: opacity var(--duration-slow) cubic-bezier(.2,.7,.3,1), transform var(--duration-slow) cubic-bezier(.2,.7,.3,1);
+			transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard);
 		}
 		.reveal.vis { opacity: 1; transform: translateY(0); }
 		.reveal-d1 { transition-delay: 0.08s; }
@@ -1265,7 +1265,7 @@
 		/* ── HERO TEXT ENTRANCE ──────────────────────────────────── */
 		.hero-text > * {
 			opacity: 0; transform: translateY(24px);
-			transition: opacity var(--duration-slow) cubic-bezier(.2,.7,.3,1), transform var(--duration-slow) cubic-bezier(.2,.7,.3,1);
+			transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard);
 		}
 		.hero-text.entered > * { opacity: 1; transform: translateY(0); }
 		.hero-text > *:nth-child(1) { transition-delay: 0.05s; }
@@ -1287,7 +1287,7 @@
 		.copy-btn:focus-visible {
 			outline: 2px solid rgba(255,255,255,0.5); outline-offset: 2px;
 		}
-		.door-screenshot img[src] { transition: transform var(--duration-slow) cubic-bezier(.2,.7,.3,1); }
+		.door-screenshot img[src] { transition: transform var(--duration-slow) var(--ease-standard); }
 		.door:hover .door-screenshot img { transform: scale(1.03); }
 
 		@keyframes stat-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
@@ -1394,7 +1394,7 @@
 			overflow: hidden;
 			transform-style: preserve-3d;
 			transform: rotateX(0deg) rotateY(0deg);
-			transition: transform var(--duration-slow) cubic-bezier(0.23, 1, 0.32, 1);
+			transition: transform var(--duration-slow) var(--ease-standard);
 			will-change: transform;
 		}
 		.stack-card {
@@ -1494,8 +1494,8 @@
 			transform: translateY(30px);
 			transition:
 				background var(--duration-base) var(--ease-standard),
-				opacity var(--duration-slow) cubic-bezier(0.23, 1, 0.32, 1),
-				transform var(--duration-slow) cubic-bezier(0.23, 1, 0.32, 1);
+				opacity var(--duration-slow) var(--ease-standard),
+				transform var(--duration-slow) var(--ease-standard);
 		}
 		.stack-3d.vis .stack-card {
 			opacity: 1;
@@ -1711,7 +1711,7 @@
 		.vclose-agent {
 			position: absolute; inset: 0; width: 100%; height: 100%;
 			display: block; z-index: 1;
-			opacity: 0; transition: opacity var(--duration-slow) cubic-bezier(.2,.7,.3,1);
+			opacity: 0; transition: opacity var(--duration-slow) var(--ease-standard);
 		}
 		.vclose-agent.loaded { opacity: 1; }
 		.vclose-grid {
@@ -2066,7 +2066,7 @@
 		.door-agent agent-3d {
 			width: 100%; height: 100%; display: block;
 			pointer-events: none;
-			transition: transform var(--duration-slow) cubic-bezier(.2,.7,.3,1);
+			transition: transform var(--duration-slow) var(--ease-standard);
 		}
 		.door:hover .door-agent agent-3d { transform: scale(1.03); }
 		.door-earn-overlay {
@@ -2088,7 +2088,7 @@
 		}
 		.door-earn-viz {
 			position: absolute; inset: 0; overflow: hidden;
-			transition: transform var(--duration-slow) cubic-bezier(.2,.7,.3,1);
+			transition: transform var(--duration-slow) var(--ease-standard);
 		}
 		.door:hover .door-earn-viz { transform: scale(1.03); }
 		.door-earn-spark { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -2101,7 +2101,7 @@
 		}
 		.door-earn-viz.is-live .door-earn-area { opacity: 1; }
 		.door-earn-viz.is-live .door-earn-line {
-			transition: stroke-dashoffset var(--duration-slow) cubic-bezier(.4,0,.2,1);
+			transition: stroke-dashoffset var(--duration-slow) var(--ease-standard);
 			stroke-dashoffset: 0;
 		}
 		@media (prefers-reduced-motion: reduce) {
@@ -2168,7 +2168,7 @@
 		.body-drop-title em { font-style: normal; color: var(--text-3); font-weight: 500; }
 		#drop-sit-line {
 			text-shadow: var(--drop-shadow, none);
-			transition: text-shadow var(--duration-instant) linear;
+			transition: text-shadow var(--duration-instant) var(--ease-standard);
 		}
 		.body-drop-sub {
 			font-size: 17px; color: var(--text-2);
@@ -2406,7 +2406,7 @@
 		.x402-amount{font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--success);display:none}
 		.x402-amount.show{display:block}
 		.mint-demo{perspective:600px}
-		.mint-card{position:relative;padding:16px;background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:10px;transition:transform var(--duration-slow) cubic-bezier(.2,.7,.3,1),box-shadow var(--duration-base),border-color var(--duration-base)}
+		.mint-card{position:relative;padding:16px;background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:10px;transition:transform var(--duration-slow) var(--ease-standard),box-shadow var(--duration-base),border-color var(--duration-base)}
 		.mint-card.minted{border-color:rgba(255,255,255,.2);box-shadow:0 0 20px -4px rgba(255,255,255,.08)}
 		.mint-card-inner{display:flex;align-items:center;justify-content:space-between;gap:10px}
 		.mint-card-info{display:flex;flex-direction:column;gap:2px}
@@ -2432,9 +2432,9 @@
 		.mint-progress svg{width:100%;height:100%;transform:rotate(-90deg)}
 		.mint-progress.active:not(.done) svg{animation:mint-spin .9s linear infinite}
 		@keyframes mint-spin{from{transform:rotate(-90deg)}to{transform:rotate(270deg)}}
-		.mint-progress circle{fill:none;stroke-width:3;stroke:var(--text-2);stroke-linecap:round;stroke-dasharray:78.5;stroke-dashoffset:78.5;transition:stroke-dashoffset var(--duration-slow) cubic-bezier(.2,.7,.3,1)}
+		.mint-progress circle{fill:none;stroke-width:3;stroke:var(--text-2);stroke-linecap:round;stroke-dasharray:78.5;stroke-dashoffset:78.5;transition:stroke-dashoffset var(--duration-slow) var(--ease-standard)}
 		.mint-progress.active:not(.done) circle{stroke-dashoffset:55}
-		.mint-progress.done circle{stroke-dashoffset:0;stroke:var(--success);transition:stroke-dashoffset var(--duration-slow) cubic-bezier(.2,.7,.3,1)}
+		.mint-progress.done circle{stroke-dashoffset:0;stroke:var(--success);transition:stroke-dashoffset var(--duration-slow) var(--ease-standard)}
 		.skill-demo{display:flex;flex-direction:column;gap:8px}
 		.skill-result{background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:7px;padding:10px 14px;font-family:var(--font-mono);font-size:11px;color:var(--text-2);line-height:1.6;max-height:100px;overflow-y:auto;transition:border-color var(--duration-base)}
 		.skill-result.fresh{border-color:rgba(255,255,255,.2)}
@@ -2629,7 +2629,7 @@
 		.har-dot:hover { background: rgba(255,255,255,.5); }
 		.har-dot[data-active="1"] { background: rgba(255,255,255,.9); transform: scale(1.35); }
 		.har-autobar { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: linear-gradient(90deg, rgba(139,92,246,.9), rgba(255,255,255,.9)); z-index: 2; }
-		.har-autobar[data-run="1"] { width: 100%; transition: width var(--har-auto-ms, var(--duration-slow)) linear; }
+		.har-autobar[data-run="1"] { width: 100%; transition: width var(--har-auto-ms, var(--duration-slow)) var(--ease-standard); }
 		@media (prefers-reduced-motion: reduce) { .har-autobar { display: none; } }
 		.har-poster-fade { opacity: 0; transition: opacity var(--duration-slow) var(--ease-standard); }
 		.har-poster-fade[data-shown="1"] { opacity: 1; }

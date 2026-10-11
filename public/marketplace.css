@@ -4333,7 +4333,7 @@ body.market-page > header {
 	width: 0%;
 	background: #ffffff;
 	border-radius: var(--radius-sm);
-	transition: width var(--duration-base) linear;
+	transition: width var(--duration-base) var(--ease-standard);
 }
 .modal-load-label {
 	font-size: 11px;
@@ -5043,8 +5043,8 @@ body.market-page > header {
 .market-nav a,
 .cat-row {
 	transition:
-		background var(--duration-instant, var(--duration-instant)) var(--ease-standard, var(--ease-standard)),
-		color var(--duration-instant, var(--duration-instant)) var(--ease-standard, var(--ease-standard));
+		background var(--duration-instant) var(--ease-standard),
+		color var(--duration-instant) var(--ease-standard);
 }
 
 /* Reduced motion — this sheet mixes literal durations, so kill explicitly. */

@@ -308,7 +308,7 @@
 				border: 2px solid var(--dr-live);
 				opacity: calc(0.25 + var(--dr-mic, 0) * 0.75);
 				transform: scale(calc(1 + var(--dr-mic, 0) * 0.09));
-				transition: transform var(--duration-instant) linear, opacity var(--duration-instant) linear;
+				transition: transform var(--duration-instant) var(--ease-standard), opacity var(--duration-instant) var(--ease-standard);
 				pointer-events: none;
 			}
 			.dr[data-state='idle'] .dr-talk::before,

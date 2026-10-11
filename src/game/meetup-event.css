@@ -49,7 +49,7 @@
 	color: #fff; padding: 18px 40px; border-radius: 16px;
 	box-shadow: 0 0 50px rgba(255, 206, 92, 0.4);
 	opacity: 0;
-	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) cubic-bezier(0.22, 1.2, 0.36, 1);
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 	max-width: min(88vw, 560px);
 }
 #cc-meetup-banner.cc-meetup-banner--show { opacity: 1; transform: translateX(-50%) scale(1); }
@@ -66,7 +66,7 @@
 	border-left: 1px solid var(--cc-edge);
 	box-shadow: var(--cc-shadow);
 	transform: translateX(102%);
-	transition: transform var(--duration-base) cubic-bezier(0.22, 1, 0.36, 1);
+	transition: transform var(--duration-base) var(--ease-standard);
 }
 #cc-meetup-panel.cc-meetup-panel--open { transform: translateX(0); }
 .cc-meetup-panel-head {

@@ -1667,7 +1667,7 @@
 					color-mix(in srgb, var(--accent) 70%, transparent),
 					var(--accent)
 				);
-				transition: width var(--duration-slow) cubic-bezier(0.33, 1, 0.68, 1), background var(--duration-slow) var(--ease-standard);
+				transition: width var(--duration-slow) var(--ease-standard), background var(--duration-slow) var(--ease-standard);
 			}
 			/* Moving sheen reads as live work without implying a known finish. */
 			.gen-progress-fill::after {
@@ -3275,7 +3275,7 @@
 				margin-top: var(--space-2xs);
 			}
 			.forge-roll .roll-die {
-				transition: transform var(--duration-base, var(--duration-base)) var(--ease-emphasized, var(--ease-standard));
+				transition: transform var(--duration-base) var(--ease-emphasized, var(--ease-standard));
 			}
 			.forge-roll:hover .roll-die {
 				transform: rotate(24deg);

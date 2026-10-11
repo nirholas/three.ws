@@ -150,7 +150,7 @@
 		.share-head .sh-l { font: 600 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--faint); }
 		.share-head .sh-v { font: 700 12px/1 var(--mono); color: var(--up); font-variant-numeric: tabular-nums; }
 		.share-track { height: 6px; border-radius: 99px; background: rgba(255,255,255,0.07); overflow: hidden; }
-		.share-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--up), var(--cyan)); transition: width var(--duration-slow) var(--ease, cubic-bezier(.22,1,.36,1)); }
+		.share-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--up), var(--cyan)); transition: width var(--duration-slow) var(--ease, var(--ease-standard)); }
 
 		.notable-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 		.nlabel { font: 600 10px/1 var(--mono); padding: 4px 7px; border-radius: 6px; white-space: nowrap; }
@@ -166,7 +166,7 @@
 		.dist-head b { font: 600 10.5px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
 		.dist-head span { font: 600 11px/1 var(--mono); color: var(--muted); }
 		.dist-bar { display: flex; height: 9px; border-radius: 99px; overflow: hidden; background: rgba(255,255,255,0.05); }
-		.dist-seg { height: 100%; transition: width var(--duration-slow) var(--ease, cubic-bezier(.22,1,.36,1)); min-width: 0; }
+		.dist-seg { height: 100%; transition: width var(--duration-slow) var(--ease, var(--ease-standard)); min-width: 0; }
 		.dist-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; }
 		.dist-key { display: inline-flex; align-items: center; gap: 6px; font: 600 11px/1 var(--mono); color: var(--muted); background: none; border: none; padding: 2px 0; cursor: pointer; }
 		.dist-key:hover { color: var(--ink); }

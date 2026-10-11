@@ -522,7 +522,7 @@ a.vlt-btn {
 	pointer-events: none;
 	transition:
 		transform var(--duration-base) var(--ease-standard),
-		visibility 0s linear var(--duration-base);
+		visibility var(--duration-instant) var(--ease-standard) var(--duration-base);
 	overflow-y: auto;
 }
 .vlt-drawer[data-open='true'] {
@@ -531,7 +531,7 @@ a.vlt-btn {
 	pointer-events: auto;
 	transition:
 		transform var(--duration-base) var(--ease-standard),
-		visibility 0s linear 0s;
+		visibility var(--duration-instant) var(--ease-standard) var(--duration-instant);
 }
 .vlt-drawer-head {
 	display: flex;

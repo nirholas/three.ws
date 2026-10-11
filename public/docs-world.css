@@ -646,7 +646,7 @@ body {
 	overflow: hidden;
 	transform: translateY(-8px) scale(0.985);
 	transition:
-		transform var(--duration-fast) cubic-bezier(0.2, 0.8, 0.3, 1),
+		transform var(--duration-fast) var(--ease-standard),
 		opacity var(--duration-fast) var(--ease-standard);
 }
 .dw-search.open .dw-search-card {

@@ -284,8 +284,8 @@
 			}
 			.donut-svg { flex-shrink: 0; }
 			.donut-svg circle {
-				transition: stroke-dashoffset var(--duration-slow) cubic-bezier(0.4,0,0.2,1),
-				            stroke-dasharray var(--duration-slow) cubic-bezier(0.4,0,0.2,1);
+				transition: stroke-dashoffset var(--duration-slow) var(--ease-standard),
+				            stroke-dasharray var(--duration-slow) var(--ease-standard);
 			}
 			.chart-legend {
 				flex: 1;
@@ -348,7 +348,7 @@
 				height: 100%;
 				border-radius: 99px;
 				background: var(--accent);
-				transition: width var(--duration-slow) cubic-bezier(0.4,0,0.2,1), background var(--duration-base);
+				transition: width var(--duration-slow) var(--ease-standard), background var(--duration-base);
 			}
 			.sum-bar-fill.overage { background: var(--red); }
 			.sum-bar-fill.perfect { background: var(--green); }

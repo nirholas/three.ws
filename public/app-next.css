@@ -395,7 +395,7 @@ body.app-next-body {
 	/* Shifts left into the empty stage when the chat thread docks on the right
 	   (see --nxt-stage-shift). 0 by default so the avatar stays centered. */
 	transform: translateX(var(--nxt-stage-shift, 0));
-	transition: transform var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1);
+	transition: transform var(--duration-slow) var(--ease-standard);
 }
 
 .nxt-viewer canvas {
@@ -415,7 +415,7 @@ body.app-next-body {
 	height: 32vmin;
 	/* Tracks the avatar's --nxt-stage-shift so the glow stays under the feet. */
 	transform: translate(calc(-50% + var(--nxt-stage-shift, 0)), 18%);
-	transition: transform var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1);
+	transition: transform var(--duration-slow) var(--ease-standard);
 	background:
 		/* Inner soft light pool */
 		radial-gradient(

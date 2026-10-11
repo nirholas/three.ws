@@ -56,7 +56,7 @@
 	font-weight: 600;
 	text-decoration: none;
 	cursor: pointer;
-	transition: background var(--duration-fast, 120ms) var(--ease-standard, ease), transform var(--duration-fast, 120ms) var(--ease-standard, ease), border-color var(--duration-fast, 120ms);
+	transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast);
 }
 .am-btn:hover { background: var(--btn-secondary-bg-hover, var(--surface-3)); border-color: var(--stroke-strong, var(--color-border-strong)); }
 .am-btn:active { transform: translateY(1px); background: var(--btn-secondary-bg-active, var(--surface-3)); }
@@ -101,7 +101,7 @@ textarea.am-input { padding: 10px 12px; min-height: 80px; resize: vertical; }
 	overflow: hidden;
 	text-decoration: none;
 	color: inherit;
-	transition: transform var(--duration-base, 180ms) var(--ease-out, ease), border-color var(--duration-base, 180ms), box-shadow var(--duration-base, 180ms);
+	transition: transform var(--duration-base) var(--ease-out), border-color var(--duration-base), box-shadow var(--duration-base);
 	animation: am-in var(--duration-slow, 260ms) var(--ease-out, ease) both;
 }
 .am-card:hover { transform: translateY(-2px); border-color: var(--stroke-strong, var(--color-border-strong)); box-shadow: var(--shadow-2); }
@@ -192,7 +192,7 @@ textarea.am-input { padding: 10px 12px; min-height: 80px; resize: vertical; }
 
 /* Tabs */
 .am-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--hairline, var(--color-hairline)); margin-bottom: var(--space-4, 16px); overflow-x: auto; }
-.am-tab { appearance: none; background: none; border: 0; border-bottom: 2px solid transparent; padding: 10px 14px; color: var(--ink-dim, var(--color-text-dim)); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: color var(--duration-fast, 120ms); }
+.am-tab { appearance: none; background: none; border: 0; border-bottom: 2px solid transparent; padding: 10px 14px; color: var(--ink-dim, var(--color-text-dim)); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: color var(--duration-fast); }
 .am-tab:hover { color: var(--ink-bright, var(--color-text-bright)); }
 .am-tab[aria-selected="true"] { color: var(--ink-bright, var(--color-text-bright)); border-bottom-color: var(--accent, #7c5cff); }
 .am-count { font-size: 11px; margin-left: 4px; padding: 1px 6px; border-radius: 999px; background: var(--surface-2, var(--color-surface-2)); }

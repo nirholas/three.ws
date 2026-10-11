@@ -44,7 +44,7 @@
 	text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
 	pointer-events: none;
 	opacity: 0;
-	transition: transform var(--duration-slow) cubic-bezier(0.1, 0.7, 0.2, 1), opacity var(--duration-slow) var(--ease-standard);
+	transition: transform var(--duration-slow) var(--ease-standard), opacity var(--duration-slow) var(--ease-standard);
 }
 .wh-feel-money.is-up { color: #8effa6; }
 .wh-feel-money.is-down { color: #ff9b9b; }

@@ -187,13 +187,13 @@
 			}
 			#sm-score-bar::before {
 				content: ''; position: absolute; inset: 0; width: var(--sm-fill, 0%);
-				background: var(--danger); border-radius: inherit; transition: width var(--duration-fast) linear, background var(--duration-base) var(--ease-standard);
+				background: var(--danger); border-radius: inherit; transition: width var(--duration-fast) var(--ease-standard), background var(--duration-base) var(--ease-standard);
 			}
 			#sm-score-bar[data-state='close']::before { background: var(--warn); }
 			#sm-score-bar[data-state='good']::before { background: #34d399; }
 			#sm-score-bar::after {
 				content: ''; position: absolute; inset: 0; width: var(--sm-hold, 0%);
-				background: rgba(255,255,255,.35); border-radius: inherit; transition: width var(--duration-instant) linear;
+				background: rgba(255,255,255,.35); border-radius: inherit; transition: width var(--duration-instant) var(--ease-standard);
 			}
 			#sm-hint {
 				min-height: 42px; border: 1px dashed var(--stroke); border-radius: 12px;
@@ -212,7 +212,7 @@
 			.sm-finger-bar { position: relative; height: 7px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--stroke); overflow: hidden; }
 			.sm-finger-bar::before {
 				content: ''; position: absolute; inset: 0; width: var(--sm-fill, 0%);
-				background: var(--danger); border-radius: inherit; transition: width var(--duration-fast) linear, background var(--duration-base) var(--ease-standard);
+				background: var(--danger); border-radius: inherit; transition: width var(--duration-fast) var(--ease-standard), background var(--duration-base) var(--ease-standard);
 			}
 			.sm-finger[data-state='close'] .sm-finger-bar::before { background: var(--warn); }
 			.sm-finger[data-state='good'] .sm-finger-bar::before { background: #34d399; }

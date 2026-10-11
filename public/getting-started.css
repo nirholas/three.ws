@@ -167,7 +167,7 @@
 	width: 0;
 	background: rgba(255, 255, 255, 0.5);
 	border-radius: 0 2px 2px 0;
-	transition: width var(--duration-slow) cubic-bezier(0.16, 1, 0.3, 1);
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 .twg-panel.is-complete .twg-bar-fill { background: var(--success, #4ade80); }
 

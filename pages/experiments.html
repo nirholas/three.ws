@@ -52,7 +52,7 @@
 		.ex-filter button {
 			appearance: none; border: 0; background: none; color: var(--ink-dim); font: inherit; font-size: 0.84rem; font-weight: 600;
 			padding: 6px 12px; min-height: 32px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
-			transition: background var(--duration-fast, 140ms) var(--ease-standard, ease), color var(--duration-fast, 140ms) var(--ease-standard, ease), transform 80ms;
+			transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), transform var(--duration-instant);
 		}
 		.ex-filter button:hover { color: var(--ink-bright, var(--ink)); background: var(--surface-2); }
 		.ex-filter button:active { transform: translateY(1px); }
@@ -63,7 +63,7 @@
 		.ex-list { display: grid; gap: 12px; }
 		.ex-card {
 			padding: 20px 20px 18px; border-radius: var(--radius-md, 10px); background: var(--surface-1); border: 1px solid var(--stroke);
-			transition: border-color var(--duration-fast, 140ms) var(--ease-standard, ease), background var(--duration-fast, 140ms) var(--ease-standard, ease);
+			transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			animation: ex-in 240ms var(--ease-standard, ease) both;
 		}
 		.ex-card:hover { border-color: var(--stroke-strong); background: var(--surface-2); }
@@ -95,7 +95,7 @@
 		.ex-empty button { appearance: none; background: none; border: 0; font: inherit; padding: 0; cursor: pointer; }
 		.ex-empty button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 		.ex-error { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border-radius: var(--radius-md, 10px); border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent); background: color-mix(in srgb, var(--danger) 9%, transparent); line-height: 1.5; font-size: 0.9rem; }
-		.ex-error button { appearance: none; border: 1px solid var(--stroke-strong); background: var(--surface-2); color: var(--ink-bright, var(--ink)); font: inherit; font-size: 0.85rem; font-weight: 600; padding: 7px 14px; border-radius: 8px; cursor: pointer; transition: background var(--duration-fast, 140ms), transform 80ms; }
+		.ex-error button { appearance: none; border: 1px solid var(--stroke-strong); background: var(--surface-2); color: var(--ink-bright, var(--ink)); font: inherit; font-size: 0.85rem; font-weight: 600; padding: 7px 14px; border-radius: 8px; cursor: pointer; transition: background var(--duration-fast), transform var(--duration-instant); }
 		.ex-error button:hover { background: var(--surface-3); }
 		.ex-error button:active { transform: translateY(1px); }
 		.ex-error button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

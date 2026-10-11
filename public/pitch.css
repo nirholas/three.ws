@@ -170,7 +170,7 @@ a { color: inherit; }
 	width: 0%;
 	background: var(--deck-grad);
 	box-shadow: 0 0 12px rgba(124, 139, 255, 0.5);
-	transition: width var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1);
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 
 /* ── Stage / slides ──────────────────────────────────────────────────────── */
@@ -188,7 +188,7 @@ a { color: inherit; }
 	opacity: 0;
 	visibility: hidden;
 	transform: translateY(18px) scale(0.992);
-	transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear var(--duration-slow);
+	transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard), visibility var(--duration-instant) var(--ease-standard) var(--duration-slow);
 	overflow-y: auto;
 	overscroll-behavior: contain;
 }
@@ -196,7 +196,7 @@ a { color: inherit; }
 	opacity: 1;
 	visibility: visible;
 	transform: none;
-	transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1), visibility 0s;
+	transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard), visibility var(--duration-instant);
 }
 /* Direction-aware exit: when going back, previous slides exit downward. */
 .slide.is-prev { transform: translateY(-18px) scale(0.992); }

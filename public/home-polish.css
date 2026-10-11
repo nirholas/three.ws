@@ -141,9 +141,9 @@
 	background: rgba(255, 255, 255, 0.012);
 	overflow: hidden;
 	transition:
-		border-color var(--duration-slow) cubic-bezier(0.2, 0.9, 0.3, 1),
-		transform var(--duration-slow) cubic-bezier(0.2, 0.9, 0.3, 1),
-		background var(--duration-slow) cubic-bezier(0.2, 0.9, 0.3, 1);
+		border-color var(--duration-slow) var(--ease-standard),
+		transform var(--duration-slow) var(--ease-standard),
+		background var(--duration-slow) var(--ease-standard);
 }
 
 .h-pillar::before {
@@ -533,7 +533,7 @@
 }
 
 .h-traction-stat {
-	transition: transform var(--duration-slow) cubic-bezier(0.2, 0.9, 0.3, 1);
+	transition: transform var(--duration-slow) var(--ease-standard);
 }
 
 .h-traction-stat:hover {

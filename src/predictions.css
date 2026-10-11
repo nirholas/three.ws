@@ -44,7 +44,7 @@
 	display: inline-flex; align-items: center; justify-content: center; gap: 6px;
 	padding: 9px 14px; border-radius: 10px; font: 600 14px/1.2 inherit; text-decoration: none; cursor: pointer;
 	border: 1px solid var(--stroke); background: var(--surface-1); color: var(--ink);
-	transition: border-color .15s ease, background .15s ease, transform .15s ease, opacity .15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .pm-btn:hover { border-color: var(--stroke-strong); transform: translateY(-1px); }
 .pm-btn:active { transform: translateY(0); }
@@ -61,7 +61,7 @@
 .pm-field input, .pm-field select, .pm-search {
 	width: 100%; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--stroke);
 	background: var(--surface-1); color: var(--ink); font: 14px/1.3 inherit;
-	transition: border-color .15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .pm-field input:hover, .pm-field select:hover, .pm-search:hover { border-color: var(--stroke-strong); }
 .pm-field input:focus, .pm-field select:focus, .pm-search:focus { outline: none; border-color: var(--pm-line); box-shadow: 0 0 0 3px var(--pm-area); }
@@ -86,7 +86,7 @@
 .pm-cats::-webkit-scrollbar { display: none; }
 .pm-cat {
 	flex: none; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--stroke); background: transparent;
-	color: var(--ink-dim); font: 13px/1.2 inherit; cursor: pointer; transition: color .15s, border-color .15s, background .15s;
+	color: var(--ink-dim); font: 13px/1.2 inherit; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 }
 .pm-cat:hover { color: var(--ink); border-color: var(--stroke-strong); }
 .pm-cat.is-active { background: var(--surface-2, var(--surface-1)); color: var(--ink); border-color: var(--stroke-strong); }
@@ -99,7 +99,7 @@
 .pm-card {
 	display: flex; flex-direction: column; gap: 12px; padding: 16px; text-align: left; cursor: pointer;
 	border: 1px solid var(--stroke); border-radius: var(--pm-radius); background: var(--surface-1); color: var(--ink);
-	font: inherit; transition: border-color .15s ease, transform .15s ease, background .15s ease;
+	font: inherit; transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 	animation: pm-in .25s ease both;
 }
 .pm-card:hover { border-color: var(--stroke-strong); transform: translateY(-2px); }
@@ -114,7 +114,7 @@
 .pm-out { display: grid; grid-template-columns: minmax(0, 1fr) 52px; gap: 8px; align-items: center; font-size: 13px; }
 .pm-out-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pm-bar { grid-column: 1 / -1; height: 4px; border-radius: 4px; background: var(--pm-grid); overflow: hidden; margin-top: -3px; }
-.pm-bar i { display: block; height: 100%; border-radius: 4px; background: var(--pm-line); transition: width .3s ease; }
+.pm-bar i { display: block; height: 100%; border-radius: 4px; background: var(--pm-line); transition: width var(--duration-base) var(--ease-standard); }
 .pm-card-foot { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-dim); border-top: 1px solid var(--stroke); padding-top: 10px; margin-top: auto; }
 
 /* states */
@@ -131,12 +131,12 @@
 .pm-more { display: flex; justify-content: center; margin-top: 20px; }
 
 /* detail drawer */
-.pm-drawer-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, .5); z-index: 60; opacity: 0; transition: opacity .2s ease; }
+.pm-drawer-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, .5); z-index: 60; opacity: 0; transition: opacity var(--duration-base) var(--ease-standard); }
 .pm-drawer-backdrop.is-open { opacity: 1; }
 .pm-drawer {
 	position: fixed; top: 0; right: 0; bottom: 0; width: min(980px, 100vw); z-index: 61; overflow-y: auto;
 	background: var(--bg, #0a0a0a); border-left: 1px solid var(--stroke);
-	transform: translateX(100%); transition: transform .25s ease; will-change: transform;
+	transform: translateX(100%); transition: transform var(--duration-base) var(--ease-standard); will-change: transform;
 	padding: 0 clamp(16px, 3vw, 28px) 40px;
 }
 .pm-drawer.is-open { transform: none; }
@@ -155,7 +155,7 @@
 .pm-mrow {
 	display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px 64px; gap: 8px; align-items: center;
 	padding: 10px 12px; border: 0; border-bottom: 1px solid var(--stroke); background: transparent; color: var(--ink);
-	font: 13px/1.3 inherit; text-align: left; cursor: pointer; transition: background .15s ease;
+	font: 13px/1.3 inherit; text-align: left; cursor: pointer; transition: background var(--duration-fast) var(--ease-standard);
 }
 .pm-mrow:last-child { border-bottom: 0; }
 .pm-mrow:hover { background: var(--surface-1); }
@@ -171,7 +171,7 @@
 .pm-tabs { display: flex; gap: 4px; }
 .pm-tab {
 	padding: 4px 9px; border-radius: 7px; border: 1px solid transparent; background: transparent; color: var(--ink-dim);
-	font: 12px/1.2 var(--font-mono); cursor: pointer; transition: color .15s, border-color .15s;
+	font: 12px/1.2 var(--font-mono); cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast);
 }
 .pm-tab:hover { color: var(--ink); }
 .pm-tab.is-active { color: var(--ink); border-color: var(--stroke-strong); }
@@ -203,7 +203,7 @@
 .pm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .pm-table th, .pm-table td { padding: 8px 10px; border-bottom: 1px solid var(--stroke); text-align: left; vertical-align: middle; }
 .pm-table th { font-size: 11px; font-weight: 600; color: var(--ink-dim); text-transform: uppercase; letter-spacing: .05em; }
-.pm-table tbody tr { transition: background .15s ease; }
+.pm-table tbody tr { transition: background var(--duration-fast) var(--ease-standard); }
 .pm-table tbody tr:hover { background: var(--surface-1); }
 .pm-table--compact th, .pm-table--compact td { padding: 5px 8px; }
 .pm-table-scroll { overflow-x: auto; border: 1px solid var(--stroke); border-radius: 12px; }
@@ -220,7 +220,7 @@
 .pm-side {
 	display: flex; justify-content: space-between; gap: 6px; padding: 10px 12px; border-radius: 10px;
 	border: 1px solid var(--stroke); background: transparent; color: var(--ink); font: 600 13px/1.2 inherit; cursor: pointer;
-	transition: border-color .15s, background .15s; min-width: 0;
+	transition: border-color var(--duration-fast), background var(--duration-fast); min-width: 0;
 }
 .pm-side span { color: var(--ink-dim); font-weight: 500; font-variant-numeric: tabular-nums; }
 .pm-side:hover { border-color: var(--stroke-strong); }

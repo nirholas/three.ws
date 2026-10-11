@@ -125,7 +125,7 @@
 		.ci-card {
 			background: var(--ci-panel); border: 1px solid var(--ci-border); border-radius: 14px;
 			padding: 15px; cursor: pointer; position: relative; overflow: hidden;
-			transition: transform var(--duration-fast) cubic-bezier(.2,.8,.2,1), border-color var(--duration-fast), box-shadow var(--duration-fast);
+			transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast), box-shadow var(--duration-fast);
 			animation: ciFadeIn .4s ease both;
 		}
 		@keyframes ciFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -153,7 +153,7 @@
 		.ring { --pct: 0; --col: var(--ci-neutral); width: 52px; height: 52px; flex-shrink: 0; position: relative; }
 		.ring svg { transform: rotate(-90deg); display: block; }
 		.ring .track { stroke: rgba(255,255,255,0.08); }
-		.ring .val { stroke: var(--col); stroke-linecap: round; transition: stroke-dashoffset var(--duration-slow) cubic-bezier(.2,.8,.2,1); }
+		.ring .val { stroke: var(--col); stroke-linecap: round; transition: stroke-dashoffset var(--duration-slow) var(--ease-standard); }
 		.ring .label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 		.ring .label .n { font-family: var(--font-mono, monospace); font-size: 14px; font-weight: 700; line-height: 1; }
 		.ring .label .t { font-size: 7px; letter-spacing: 0.08em; color: var(--ci-faint); text-transform: uppercase; margin-top: 1px; }
@@ -223,7 +223,7 @@
 			   sprawling, and stays edge-to-edge-safe on narrow viewports. */
 			width: clamp(360px, 34vw, 560px); max-width: 94vw;
 			background: var(--ci-panel); border-left: 1px solid var(--ci-border); z-index: 91;
-			transform: translateX(100%); transition: transform var(--duration-base) cubic-bezier(.2,.8,.2,1);
+			transform: translateX(100%); transition: transform var(--duration-base) var(--ease-standard);
 			overflow-y: auto; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
 		}
 		.ci-drawer.is-open { transform: none; }

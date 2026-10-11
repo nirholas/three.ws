@@ -59,7 +59,7 @@
 			.st-stage { position: relative; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: radial-gradient(ellipse at 50% 15%, color-mix(in srgb, var(--ink, #e8e8e8) 8%, transparent), transparent 70%); }
 			.st-stage canvas { display: block; width: 100%; height: 100%; }
 			.st-bar { height: 3px; border-radius: 2px; background: color-mix(in srgb, var(--ink, #e8e8e8) 10%, transparent); margin: 10px 0 12px; overflow: hidden; }
-			.st-bar i { display: block; height: 100%; width: 0; border-radius: 2px; background: var(--accent, #6ea8ff); transition: width var(--duration-fast) linear; }
+			.st-bar i { display: block; height: 100%; width: 0; border-radius: 2px; background: var(--accent, #6ea8ff); transition: width var(--duration-fast) var(--ease-standard); }
 			.st-panel[data-state='done'] .st-bar i { background: var(--success, #34d399); }
 			.st-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0 0 12px; }
 			.st-metrics div { display: flex; flex-direction: column; gap: 3px; }

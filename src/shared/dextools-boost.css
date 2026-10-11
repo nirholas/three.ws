@@ -39,7 +39,7 @@
 	color: inherit;
 	opacity: 0.8;
 	text-decoration: none;
-	transition: opacity 150ms ease, border-color 150ms ease;
+	transition: opacity var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .dtb-pill:hover { opacity: 1; border-color: color-mix(in srgb, currentColor 45%, transparent); }
 .dtb-pill:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; opacity: 1; }

@@ -69,7 +69,7 @@
 			.shapes { display: flex; flex-direction: column; gap: 6px; }
 			.shape-row { display: grid; grid-template-columns: 96px 1fr; gap: 8px; align-items: center; font-size: 11.5px; color: #8a8d98; font-family: ui-monospace, monospace; }
 			.meter { height: 7px; border-radius: 4px; background: rgba(118,224,161,0.12); overflow: hidden; }
-			.meter > span { display: block; height: 100%; width: 0%; background: linear-gradient(90deg,#3aa873,#76e0a1); border-radius: 4px; transition: width var(--duration-instant) linear; }
+			.meter > span { display: block; height: 100%; width: 0%; background: linear-gradient(90deg,#3aa873,#76e0a1); border-radius: 4px; transition: width var(--duration-instant) var(--ease-standard); }
 			.a2f-error { background: rgba(255, 120, 86, 0.08); border: 1px solid rgba(255, 120, 86, 0.3); color: #ffc6ad; border-radius: 9px; padding: 11px 13px; font-size: 13px; line-height: 1.5; display: flex; align-items: center; gap: 10px; justify-content: space-between; }
 			.a2f-error[hidden] { display: none; }
 			.a2f-error span { flex: 1; }

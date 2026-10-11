@@ -38,7 +38,7 @@
 }
 .dv-table tbody tr[data-href] {
 	cursor: pointer;
-	transition: background var(--duration-fast, 120ms);
+	transition: background var(--duration-fast);
 }
 .dv-table tbody tr[data-href]:hover,
 .dv-table tbody tr[data-href]:focus-within {
@@ -60,8 +60,8 @@
 	text-decoration: none;
 	border-bottom: 1px solid transparent;
 	transition:
-		color var(--duration-fast, 120ms),
-		border-color var(--duration-fast, 120ms);
+		color var(--duration-fast),
+		border-color var(--duration-fast);
 }
 .dv-link:hover,
 .dv-link:focus-visible {

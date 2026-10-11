@@ -130,7 +130,7 @@ body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height
 .rl-meter-top { display: flex; justify-content: space-between; font-size: 0.74rem; color: var(--ink-dim); margin-bottom: 4px; }
 .rl-meter-top b { color: var(--ink); font-variant-numeric: tabular-nums; }
 .rl-meter-track { height: 5px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
-.rl-meter-fill { height: 100%; border-radius: 999px; background: var(--accent); transition: width var(--duration-slow) cubic-bezier(0.4, 0, 0.2, 1); }
+.rl-meter-fill { height: 100%; border-radius: 999px; background: var(--accent); transition: width var(--duration-slow) var(--ease-standard); }
 .rl-meter-fill.is-low { background: var(--warn); }
 .rl-meter-fill.is-none { background: var(--danger); }
 

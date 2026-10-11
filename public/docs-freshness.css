@@ -209,7 +209,7 @@ body {
 .df-bar span {
 	display: block;
 	height: 100%;
-	transition: width var(--duration-slow) cubic-bezier(0.4, 0, 0.2, 1);
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 .df-bar .k-stale {
 	background: var(--df-stale);

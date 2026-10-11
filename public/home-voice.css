@@ -281,7 +281,7 @@
 	background: var(--success);
 	transform-origin: left center;
 	transform: scaleX(0);
-	transition: transform var(--duration-instant) linear;
+	transition: transform var(--duration-instant) var(--ease-standard);
 }
 
 /* ── transcript ───────────────────────────────────────────────────────────── */

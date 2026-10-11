@@ -193,7 +193,7 @@
 		.pil .lab { display: flex; justify-content: space-between; font: 600 9.5px/1 var(--mono); color: var(--faint); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
 		.pil .lab b { color: var(--ink); }
 		.pil .track { height: 5px; border-radius: 3px; background: rgba(255,255,255,0.07); overflow: hidden; }
-		.pil .fill { height: 100%; border-radius: 3px; transition: width var(--duration-slow) cubic-bezier(.22,1,.36,1); }
+		.pil .fill { height: 100%; border-radius: 3px; transition: width var(--duration-slow) var(--ease-standard); }
 		.pil.ped .fill { background: var(--p-ped); } .pil.str .fill { background: var(--p-str); }
 		.pil.nar .fill { background: var(--p-nar); } .pil.mom .fill { background: var(--p-mom); }
 		.coin-meta { display: flex; gap: 7px; flex-wrap: wrap; }
@@ -305,7 +305,7 @@
 		.cal-row.empty { opacity: .4; }
 		.cal-band { font: 700 12px/1 var(--mono); color: var(--ink); } .cal-band small { display: block; color: var(--faint); font-weight: 600; font-size: 9.5px; margin-top: 3px; }
 		.cal-track { position: relative; height: 14px; border-radius: 7px; background: rgba(255,255,255,0.05); overflow: hidden; }
-		.cal-real { position: absolute; inset: 0 auto 0 0; height: 100%; border-radius: 7px; background: linear-gradient(90deg, var(--down), var(--up)); transition: width var(--duration-slow) cubic-bezier(.2,.7,.2,1); }
+		.cal-real { position: absolute; inset: 0 auto 0 0; height: 100%; border-radius: 7px; background: linear-gradient(90deg, var(--down), var(--up)); transition: width var(--duration-slow) var(--ease-standard); }
 		.cal-pred { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); opacity: .85; }
 		.cal-pred::after { content: ''; position: absolute; top: -3px; left: -2px; width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
 		.cal-val { text-align: right; font: 700 13px/1.25 var(--mono); }
@@ -409,7 +409,7 @@
 		.str-row { display: grid; grid-template-columns: 92px 1fr 44px; gap: 8px; align-items: center; }
 		.str-lbl { font: 600 10.5px/1 var(--mono); color: var(--faint); text-transform: uppercase; letter-spacing: .04em; }
 		.str-track { height: 5px; border-radius: 3px; background: rgba(255,255,255,0.07); overflow: hidden; }
-		.str-fill { height: 100%; border-radius: 3px; transition: width var(--duration-slow) cubic-bezier(.22,1,.36,1); }
+		.str-fill { height: 100%; border-radius: 3px; transition: width var(--duration-slow) var(--ease-standard); }
 		.str-val { font: 700 11px/1 var(--mono); text-align: right; }
 
 		/* live market intel */
@@ -436,13 +436,13 @@
 		.mkt-curve-top b { color: var(--ink); }
 		.mkt-curve-track { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.07); overflow: hidden; }
 		.mkt-curve-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--muted), var(--up));
-			transition: width var(--duration-slow) cubic-bezier(.22,1,.36,1); }
+			transition: width var(--duration-slow) var(--ease-standard); }
 		.mkt-curve-sub { margin-top: 6px; font: 600 10.5px/1 var(--mono); color: var(--faint); }
 		.mkt-act { margin: 14px 0 4px; }
 		.mkt-act-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;
 			font: 600 11px/1 var(--mono); color: var(--muted); }
 		.mkt-act-track { height: 7px; border-radius: 4px; overflow: hidden; background: var(--down); display: flex; }
-		.mkt-act-buy { height: 100%; background: var(--up); transition: width var(--duration-slow) cubic-bezier(.22,1,.36,1); }
+		.mkt-act-buy { height: 100%; background: var(--up); transition: width var(--duration-slow) var(--ease-standard); }
 		.mkt-act-legend { display: flex; justify-content: space-between; margin-top: 6px; font: 600 10.5px/1 var(--mono); }
 		.mkt-pairs { display: flex; flex-direction: column; gap: 6px; }
 		.mkt-pair { display: flex; align-items: center; gap: 10px; padding: 8px 11px; border-radius: 9px;

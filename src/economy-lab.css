@@ -461,7 +461,7 @@
 	height: 15px;
 	border-radius: 50%;
 	background: var(--el-bg);
-	transition: transform var(--duration-base) cubic-bezier(0.3, 1.4, 0.5, 1);
+	transition: transform var(--duration-base) var(--ease-standard);
 }
 .el-switch input:checked + .el-switch-track { background: var(--el-accent); }
 .el-switch input:checked + .el-switch-track .el-switch-thumb { transform: translateX(17px); }

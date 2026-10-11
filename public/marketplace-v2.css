@@ -785,8 +785,8 @@ body.market-page > #footer-container {
 /* Chat preview send — transition the hover lift it already had, add press. */
 .market-preview-send {
 	transition:
-		transform var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
-		opacity var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
+		transform var(--duration-fast) var(--ease-standard),
+		opacity var(--duration-fast) var(--ease-standard);
 }
 .market-preview-send:active:not(:disabled) { transform: translateY(0) scale(0.97); }
 .market-author-btn:active { color: rgba(255, 255, 255, 0.7); }
@@ -795,15 +795,15 @@ body.market-page > #footer-container {
 .creator-modal {
 	transform: translateY(10px) scale(0.98);
 	transition:
-		transform var(--duration-base, var(--duration-base)) var(--ease-emphasized, cubic-bezier(0.22, 1, 0.36, 1)),
-		opacity var(--duration-base, var(--duration-base)) var(--ease-standard, var(--ease-standard));
+		transform var(--duration-base) var(--ease-emphasized, var(--ease-standard)),
+		opacity var(--duration-base) var(--ease-standard);
 }
 .creator-modal-overlay.show .creator-modal { transform: translateY(0) scale(1); }
 .creator-modal-close {
 	transition:
-		background var(--duration-instant, var(--duration-instant)) var(--ease-standard, var(--ease-standard)),
-		border-color var(--duration-instant, var(--duration-instant)) var(--ease-standard, var(--ease-standard)),
-		color var(--duration-instant, var(--duration-instant)) var(--ease-standard, var(--ease-standard));
+		background var(--duration-instant) var(--ease-standard),
+		border-color var(--duration-instant) var(--ease-standard),
+		color var(--duration-instant) var(--ease-standard);
 }
 .creator-modal-close:hover { background: rgba(255, 255, 255, 0.1); border-color: #2a2a2a; }
 .creator-modal-close:active { background: rgba(255, 255, 255, 0.16); }
@@ -923,8 +923,8 @@ body.market-sidebar-open .market-sidebar-backdrop {
    (the backdrop is display-toggled, so it animates in via keyframe). */
 .market-sidebar-toggle {
 	transition:
-		background var(--duration-instant, var(--duration-instant)) var(--ease-standard, var(--ease-standard)),
-		border-color var(--duration-instant, var(--duration-instant)) var(--ease-standard, var(--ease-standard));
+		background var(--duration-instant) var(--ease-standard),
+		border-color var(--duration-instant) var(--ease-standard);
 }
 .market-sidebar-toggle:hover { background: #181818; border-color: #3a3a3a; }
 .market-sidebar-toggle:active { background: #222; }

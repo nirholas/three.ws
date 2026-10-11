@@ -57,7 +57,7 @@
 				backdrop-filter: blur(12px);
 				flex: none;
 				z-index: 60;
-				transition: transform var(--duration-slow) cubic-bezier(0.4,0,0.2,1), opacity var(--duration-slow);
+				transition: transform var(--duration-slow) var(--ease-standard), opacity var(--duration-slow);
 			}
 			/* In zen mode the whole header slides up out of view. */
 			body.asc-zen .asc-header {
@@ -939,7 +939,7 @@
 				display: flex;
 				flex-direction: column;
 				gap: 0.3rem;
-				transition: transform var(--duration-base) cubic-bezier(0.4,0,0.2,1), opacity var(--duration-base);
+				transition: transform var(--duration-base) var(--ease-standard), opacity var(--duration-base);
 			}
 			body.asc-zen .asc-task-bar { transform: translateX(-50%) translateY(160%); opacity: 0; pointer-events: none; }
 			body.asc-zen.asc-peek-bottom .asc-task-bar { transform: translateX(-50%); opacity: 1; pointer-events: auto; }
@@ -1551,7 +1551,7 @@
 			.ast-gauge { position: relative; width: 132px; height: 132px; align-self: center; }
 			.ast-gauge svg { width: 100%; height: 100%; display: block; }
 			.ast-gauge-bg { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 9; }
-			.ast-gauge-arc { fill: none; stroke: #f4f4f5; stroke-width: 9; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 60px 60px; transition: stroke-dasharray var(--duration-slow) cubic-bezier(0.4,0,0.2,1), stroke var(--duration-base); }
+			.ast-gauge-arc { fill: none; stroke: #f4f4f5; stroke-width: 9; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 60px 60px; transition: stroke-dasharray var(--duration-slow) var(--ease-standard), stroke var(--duration-base); }
 			.ast-gauge[data-tone="warn"] .ast-gauge-arc { stroke: var(--warn); }
 			.ast-gauge[data-tone="critical"] .ast-gauge-arc { stroke: var(--danger); }
 			.ast-gauge[data-tone="unknown"] .ast-gauge-arc { stroke: rgba(255,255,255,0.18); }
@@ -1684,7 +1684,7 @@
 				background: linear-gradient(0deg, rgba(6,9,18,0.94) 0%, rgba(6,9,18,0.72) 60%, rgba(6,9,18,0) 100%);
 				transform: translateY(110%);
 				opacity: 0;
-				transition: transform var(--duration-slow) cubic-bezier(0.16,1,0.3,1), opacity var(--duration-slow) var(--ease-standard);
+				transition: transform var(--duration-slow) var(--ease-standard), opacity var(--duration-slow) var(--ease-standard);
 				pointer-events: none;
 				z-index: 6;
 			}

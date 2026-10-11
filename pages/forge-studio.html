@@ -1514,7 +1514,7 @@
 					color-mix(in srgb, var(--accent) 70%, transparent),
 					var(--accent)
 				);
-				transition: width var(--duration-slow) cubic-bezier(0.33, 1, 0.68, 1), background var(--duration-slow) var(--ease-standard);
+				transition: width var(--duration-slow) var(--ease-standard), background var(--duration-slow) var(--ease-standard);
 			}
 			/* Moving sheen reads as live work without implying a known finish. */
 			.gen-progress-fill::after {
@@ -3055,7 +3055,7 @@
 				width: 8%;
 				border-radius: 4px;
 				background: var(--accent);
-				transition: width var(--duration-slow) cubic-bezier(0.4, 0, 0.2, 1);
+				transition: width var(--duration-slow) var(--ease-standard);
 			}
 			#studio-avatar .elapsed { color: var(--muted); font-size: 12px; margin-top: 14px; font-variant-numeric: tabular-nums; }
 			#studio-avatar .done-wrap { align-items: center; text-align: center; padding-top: 8px; }

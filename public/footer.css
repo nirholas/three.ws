@@ -402,7 +402,7 @@
 	color: rgba(255, 255, 255, 0.72);
 	text-decoration: underline;
 	text-underline-offset: 2px;
-	transition: color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 .h-footer-official a:hover { color: rgba(255, 255, 255, 0.95); }
 .h-footer-official a:focus-visible { outline: 2px solid var(--accent, #60a5fa); outline-offset: 2px; border-radius: 2px; }

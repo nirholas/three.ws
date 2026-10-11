@@ -20,7 +20,7 @@
 	width: min(78vw, 78vh, 460px);
 	aspect-ratio: 1;
 	transform: scale(0.86);
-	transition: transform var(--duration-fast) cubic-bezier(0.2, 0.9, 0.25, 1);
+	transition: transform var(--duration-fast) var(--ease-standard);
 }
 .wh-radial.is-open .wh-radial-stage { transform: scale(1); }
 
