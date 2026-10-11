@@ -31,33 +31,17 @@ import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { loadMesh } from './print/mesh-io.js';
 import { analyzeMesh } from './print/analyze.js';
+import {
+	ENGINE_QA_VERSION,
+	ENGINE_QA_THRESHOLDS,
+	worstVerdict,
+	verdictFromBand,
+	gradeTriangleBudget,
+} from './engine-qa-core.js';
+
+export { ENGINE_QA_VERSION, ENGINE_QA_THRESHOLDS };
 
 const MODE_TRIANGLES = 4;
-
-export const ENGINE_QA_VERSION = 'threews.engine.qa.v1';
-
-// Pass/fail thresholds in one place, per the work order: every number a
-// report cites traces back to this object, never a literal buried in a check.
-export const ENGINE_QA_THRESHOLDS = Object.freeze({
-	// One real-time frame budget on mid-tier mobile hardware. Above `warn`,
-	// batching/atlasing stops being optional.
-	drawCalls: Object.freeze({ good: 20, warn: 60 }),
-	// Distinct materials: each one is a potential draw-call split and a texture
-	// set a mobile GPU has to keep resident.
-	materialCount: Object.freeze({ good: 8, warn: 20 }),
-	// Triangle ceiling per LOD level. A level whose own `name` isn't one of
-	// these keys falls back to LOD0's ceiling (the most permissive) rather
-	// than failing on an unrecognized label.
-	triangleBudget: Object.freeze({ LOD0: 100_000, LOD1: 40_000, LOD2: 12_000 }),
-	// Game-ready texel density window (texels per meter of surface). Below the
-	// floor, textures visibly smear up close; above the ceiling, the asset is
-	// paying for resolution the eye can't resolve at normal viewing distance.
-	texelDensity: Object.freeze({ minPxPerMeter: 128, maxPxPerMeter: 2048 }),
-	// A mesh collider heavier than this belongs on a convex-hull or primitive
-	// proxy instead: not because physics engines refuse it, but because the
-	// broad-phase cost stops being worth the precision.
-	colliderTriangleBudget: 5_000,
-});
 
 let ioPromise = null;
 
@@ -189,53 +173,6 @@ function firstTexture(material) {
 		material.getOcclusionTexture() ??
 		null
 	);
-}
-
-function worstVerdict(verdicts) {
-	const real = verdicts.filter((v) => v !== 'skip');
-	if (real.includes('fail')) return 'fail';
-	if (real.includes('warn')) return 'warn';
-	if (real.length === 0) return 'skip';
-	return 'pass';
-}
-
-function verdictFromBand(value, { good, warn }) {
-	if (value <= good) return 'pass';
-	if (value <= warn) return 'warn';
-	return 'fail';
-}
-
-/**
- * Grade each LOD level's triangle count against ENGINE_QA_THRESHOLDS.triangleBudget
- * and confirm the chain is monotonically decreasing (highest to lowest detail).
- *
- * @param {Array<{ name: string, triangleCount: number }>|null} lods
- */
-function gradeTriangleBudget(lods) {
-	if (!Array.isArray(lods) || lods.length === 0) {
-		return { value: null, verdict: 'skip', reason: 'no LOD chain supplied' };
-	}
-
-	const perLevel = lods.map((level) => {
-		const budget = ENGINE_QA_THRESHOLDS.triangleBudget[level.name] ?? ENGINE_QA_THRESHOLDS.triangleBudget.LOD0;
-		return {
-			name: level.name,
-			triangleCount: level.triangleCount,
-			budget,
-			verdict: level.triangleCount <= budget ? 'pass' : 'fail',
-		};
-	});
-
-	let monotonicDecrease = true;
-	for (let i = 1; i < lods.length; i++) {
-		if (lods[i].triangleCount > lods[i - 1].triangleCount) monotonicDecrease = false;
-	}
-
-	return {
-		value: perLevel,
-		monotonicDecrease,
-		verdict: worstVerdict([...perLevel.map((l) => l.verdict), monotonicDecrease ? 'pass' : 'fail']),
-	};
 }
 
 /**
