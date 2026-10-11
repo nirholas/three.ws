@@ -90,10 +90,14 @@ storage: migration `20261015000000_world_gems.sql`.
 ## Working like a computer
 
 - **Icons.** Every app has a desktop icon on a snap grid. Click selects, Ctrl or Shift extends the selection, double-click (or Enter) opens, and a tap opens on touch. Drag to move one icon or a whole selection; drops land on the nearest free cell. Arrow keys move focus, Ctrl+Arrow nudges, Ctrl+A selects all, Delete removes an icon from the desktop.
+- **Styles.** Settings, Personalization, Style switches the whole shell, not just colours. **Fluent** (default): Mica windows, a centred taskbar and Snap layouts. **Aqua**: a menu bar across the top that names the window in front (click it for Minimize, Zoom, Snap layouts, Reload, Quit), a floating dock that magnifies under the pointer, and traffic-light window controls on the left. **Classic**: bevelled 9x chrome, navy title bars and a taskbar with a labelled button per window. Saved as `style` in `tws:prefs`. On a phone every style keeps a single bottom bar, so Aqua falls back to the Fluent taskbar there.
+- **Snap.** Drag a window to the top edge to maximize, a side to fill that half, or a corner for a quarter. Hover the maximize button (or press Alt+Z) for the Snap layouts flyout: halves, two-thirds and a third, thirds, a main window with a stack, quarters, and a centred focus layout. Layouts narrower than a usable window are hidden on small screens. After a window lands in a layout, Snap assist offers the other open windows for each empty zone; pick one per zone, or press Esc or click the backdrop to stop. Ctrl+Alt+Left and Right snap the focused window to a half, Ctrl+Alt+Up maximizes, Ctrl+Alt+Down restores and then minimizes.
+- **Motion.** Minimize flies the window into its taskbar button and restore flies it back; snapping, maximizing and restoring morph between the two frames. Every motion is skipped when the system asks for reduced motion.
+- **Peek.** Hover a running app in the taskbar for its window card (title, page, state, close). Hover the card and every other window fades out so the one you are pointing at shows through. The taskbar marks running apps with a short pill and the window in front with a long accent pill; pinned apps that are not running show none.
 - **Rubber band.** Drag on the empty desktop to draw a selection box; Ctrl or Shift adds to the current selection.
 - **Right-click.** The desktop menu sets icon size, sorts by name, auto-arranges, refreshes, and opens All Apps and Personalize. Icon menus open or remove the selection.
 - **All Apps.** A native app listing every app and page from the site navigation, with Open and Add to desktop for each.
-- **Settings.** Profile (name, avatar colour), Arrival (start in the campus or on the desktop, startup chime, a Walk the campus button), Personalization (dark, light or match system, seven accents, six wallpapers or your own photo; the default `three.ws` wallpaper is the classic site's violet glow over a hairline grid), Desktop and taskbar (icon size, taskbar alignment, 24-hour clock), and Session and storage.
+- **Settings.** Profile (name, avatar colour), Arrival (start in the campus or on the desktop, startup chime, a Walk the campus button), Personalization (style, dark, light or match system, seven accents, six wallpapers or your own photo; the default `three.ws` wallpaper is the classic site's violet glow over a hairline grid), Desktop and taskbar (icon size, taskbar alignment, 24-hour clock), and Session and storage.
 - **Session.** Open windows and their geometry, icon layout, preferences, recent apps and the custom wallpaper are saved in this browser (`tws:desktop`, `tws:icons`, `tws:prefs`, `tws:recent` in localStorage; the wallpaper image in IndexedDB database `tws-desktop`) and restored on reload. Settings can export the session to a JSON file, import one (only known `tws:` keys are accepted, files over 2 MB are refused), close all windows, or reset everything. Nothing is sent to a server.
 
 ## URLs and preferences
@@ -142,3 +146,9 @@ tests/desktop-layout.test.js tests/desktop-page.test.js`.
 The visual design language and token values are ported from CTRL
 (`nirholas/CTRL`), whose theme descends from the open-source Win12 project. The
 DOM and JavaScript here are written for three.ws and share no code with it.
+
+The three shell styles follow the long-standing conventions of Windows 11
+(Snap layouts, Snap assist, taskbar peek), macOS (menu bar, magnifying dock,
+traffic-light controls) and Windows 9x (bevelled chrome). The open-source web
+desktops collected on GitHub were studied for interaction detail only; the
+code and CSS are original to three.ws.

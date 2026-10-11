@@ -22,20 +22,95 @@ export function clampRect(rect, area) {
 	return { x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) };
 }
 
+/** How far from a corner (along either edge) a drag snaps to a quarter instead of a half. */
+export const SNAP_CORNER = 96;
+
 /** Which snap zone, if any, the pointer is in while dragging a window. */
 export function snapZone(px, py, area) {
-	if (py <= area.y + SNAP_EDGE) return 'max';
-	if (px <= area.x + SNAP_EDGE) return 'left';
-	if (px >= area.x + area.w - SNAP_EDGE) return 'right';
+	const atL = px <= area.x + SNAP_EDGE;
+	const atR = px >= area.x + area.w - SNAP_EDGE;
+	const atT = py <= area.y + SNAP_EDGE;
+	const nearT = py <= area.y + SNAP_CORNER;
+	const nearB = py >= area.y + area.h - SNAP_CORNER;
+	const nearL = px <= area.x + SNAP_CORNER;
+	const nearR = px >= area.x + area.w - SNAP_CORNER;
+	if (atL && nearT) return 'tl';
+	if (atL && nearB) return 'bl';
+	if (atR && nearT) return 'tr';
+	if (atR && nearB) return 'br';
+	if (atT && nearL) return 'tl';
+	if (atT && nearR) return 'tr';
+	if (atT) return 'max';
+	if (atL) return 'left';
+	if (atR) return 'right';
 	return null;
 }
 
+/** Edge and corner snap targets as fractions of the work area: [x, y, w, h]. */
+const SNAP_FRACTIONS = {
+	max: [0, 0, 1, 1],
+	left: [0, 0, 0.5, 1],
+	right: [0.5, 0, 0.5, 1],
+	tl: [0, 0, 0.5, 0.5],
+	tr: [0.5, 0, 0.5, 0.5],
+	bl: [0, 0.5, 0.5, 0.5],
+	br: [0.5, 0.5, 0.5, 0.5],
+};
+
 export function snapRect(zone, area) {
-	if (zone === 'max') return { x: area.x, y: area.y, w: area.w, h: area.h };
-	const half = Math.floor(area.w / 2);
-	if (zone === 'left') return { x: area.x, y: area.y, w: half, h: area.h };
-	if (zone === 'right') return { x: area.x + half, y: area.y, w: area.w - half, h: area.h };
-	return null;
+	const f = SNAP_FRACTIONS[zone];
+	return f ? fractionRect(f, area) : null;
+}
+
+/**
+ * A fractional [x, y, w, h] cell resolved to pixels. Both edges are rounded
+ * from the area origin, so neighbouring cells share an edge exactly and a
+ * layout always tiles the work area with no gap or overlap.
+ */
+export function fractionRect([fx, fy, fw, fh], area) {
+	const x0 = Math.round(area.x + fx * area.w);
+	const y0 = Math.round(area.y + fy * area.h);
+	const x1 = Math.round(area.x + (fx + fw) * area.w);
+	const y1 = Math.round(area.y + (fy + fh) * area.h);
+	return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
+
+/**
+ * The Snap layouts flyout (hover the maximize button). Each layout is a set of
+ * zones; picking a zone places the window there and offers the other open
+ * windows for the zones that are left (Snap assist).
+ */
+export const SNAP_LAYOUTS = [
+	{ id: 'halves', label: 'Two columns', zones: [[0, 0, 0.5, 1], [0.5, 0, 0.5, 1]] },
+	{ id: 'wide-left', label: 'Wide and narrow', zones: [[0, 0, 2 / 3, 1], [2 / 3, 0, 1 / 3, 1]] },
+	{ id: 'thirds', label: 'Three columns', zones: [[0, 0, 1 / 3, 1], [1 / 3, 0, 1 / 3, 1], [2 / 3, 0, 1 / 3, 1]] },
+	{ id: 'main-stack', label: 'Main and stack', zones: [[0, 0, 0.5, 1], [0.5, 0, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]] },
+	{ id: 'quarters', label: 'Four quarters', zones: [[0, 0, 0.5, 0.5], [0.5, 0, 0.5, 0.5], [0, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]] },
+	{ id: 'focus', label: 'Centre focus', zones: [[0, 0, 0.25, 1], [0.25, 0, 0.5, 1], [0.75, 0, 0.25, 1]] },
+];
+
+/** Pixel rect for zone `zone` of layout `layoutId`, or null if either is unknown. */
+export function layoutZoneRect(layoutId, zone, area) {
+	const l = SNAP_LAYOUTS.find((x) => x.id === layoutId);
+	const f = l?.zones[zone];
+	return f ? fractionRect(f, area) : null;
+}
+
+/** Layouts that need more width than the screen has are not offered. */
+export function snapLayoutsFor(area) {
+	return SNAP_LAYOUTS.filter((l) => l.zones.every(([, , fw]) => fw * area.w >= MIN_W));
+}
+
+/**
+ * Dock magnification: the scale of an item whose centre is `dist` px from the
+ * pointer. A cosine falloff gives the smooth bulge of a real dock (peak `max`
+ * at the pointer, 1 at `range` and beyond). Mirrors the curve the macOS web
+ * recreations use, without a spring library.
+ */
+export function dockScale(dist, max = 1.6, range = 150) {
+	const d = Math.abs(dist);
+	if (!Number.isFinite(d) || d >= range) return 1;
+	return 1 + (max - 1) * (Math.cos((Math.PI * d) / range) + 1) / 2;
 }
 
 /** Staggered placement for the nth open window so new ones never sit exactly on top. */
@@ -191,6 +266,17 @@ export const ACCENTS = ['#8b5cf6', '#3b91d8', '#ad6eca', '#e5484d', '#f08a24', '
 /** How the visitor arrives at `/`: as an avatar walking to the desk, or straight at the desktop. */
 export const START_MODES = ['world', 'desktop'];
 export const MODES = ['dark', 'light', 'auto'];
+/**
+ * Desktop styles, each a whole shell skin: Fluent is the Windows 11
+ * Mica shell, Aqua puts a menu bar on top and a magnifying dock at the bottom
+ * with traffic-light window controls, Classic is bevelled 9x chrome with a
+ * labelled taskbar. `menuH` and `dockH` are the bars the work area avoids.
+ */
+export const STYLES = {
+	fluent: { label: 'Fluent', menuH: 0, dockH: 48 },
+	aqua: { label: 'Aqua', menuH: 28, dockH: 84 },
+	classic: { label: 'Classic', menuH: 0, dockH: 40 },
+};
 export const PREFS_VERSION = 1;
 export const DEFAULT_PREFS = {
 	wall: 'three',
@@ -203,6 +289,7 @@ export const DEFAULT_PREFS = {
 	avatarHue: 262,
 	startIn: 'world',
 	sound: true,
+	style: 'fluent',
 };
 
 /** Normalise a rectangle given two corner points (any drag direction). */
@@ -359,6 +446,7 @@ export function sanitizePrefs(raw, wallpaperIds) {
 		avatarHue: hue,
 		startIn: START_MODES.includes(d.startIn) ? d.startIn : DEFAULT_PREFS.startIn,
 		sound: d.sound !== false,
+		style: Object.hasOwn(STYLES, d.style) ? d.style : DEFAULT_PREFS.style,
 	};
 }
 

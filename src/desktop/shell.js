@@ -12,7 +12,9 @@ import {
 	EXPORT_KEYS,
 	ICON_SIZES,
 	STATE_VERSION,
+	STYLES,
 	cleanTitle,
+	dockScale,
 	formatBytes,
 	initialsOf,
 	isInternalPath,
@@ -25,7 +27,6 @@ import {
 	storageBytes,
 } from './layout.js';
 
-const TASK_H = 48;
 const NAV_DATA = '/nav-data.js';
 const KEY = {
 	state: 'tws:desktop',
@@ -204,6 +205,14 @@ export async function createShell(root, opts = {}) {
 	const effectiveTheme = () => (prefs.mode === 'auto' ? (dark.matches ? 'dark' : 'light') : prefs.mode);
 	let tickClock = null;
 	let deskIcons = null;
+	// The bars the work area avoids for the current style. On a phone Aqua
+	// falls back to the Fluent taskbar (no menu bar, no magnifying dock).
+	const bars = () => {
+		const st = STYLES[prefs.style] || STYLES.fluent;
+		const small = innerWidth <= 720;
+		return small ? { menuH: 0, dockH: prefs.style === 'aqua' ? STYLES.fluent.dockH : st.dockH } : { menuH: st.menuH, dockH: st.dockH };
+	};
+	let shownStyle = null;
 
 	async function applyWall() {
 		if (prefs.wall === CUSTOM_WALL) {
@@ -222,10 +231,24 @@ export async function createShell(root, opts = {}) {
 		delete wall.dataset.custom;
 		root.dataset.wall = prefs.wall;
 	}
+	function applyStyle() {
+		const { menuH, dockH } = bars();
+		root.dataset.style = prefs.style;
+		root.style.setProperty('--menu-h', `${menuH}px`);
+		root.style.setProperty('--task-h', `${dockH}px`);
+		if (shownStyle === prefs.style) return;
+		const first = shownStyle === null;
+		shownStyle = prefs.style;
+		if (first) return;
+		wm.relayout();
+		deskIcons?.reseat();
+		renderTask();
+	}
 	function applyPrefs() {
 		root.style.setProperty('--accent', prefs.accent);
 		root.style.setProperty('--theme-2', prefs.accent);
 		task.classList.toggle('left', prefs.taskbarAlign === 'left');
+		applyStyle();
 		const theme = effectiveTheme();
 		document.documentElement.setAttribute('data-theme', theme);
 		store.set(THEME_KEY, theme);
@@ -276,9 +299,14 @@ export async function createShell(root, opts = {}) {
 	let saveTimer = 0;
 	const wm = createWM({
 		layer,
-		getMetrics: () => ({ vw: innerWidth, vh: innerHeight, menuH: 0, dockH: TASK_H, mobile: innerWidth <= 720 }),
+		getMetrics: () => ({ vw: innerWidth, vh: innerHeight, ...bars(), mobile: innerWidth <= 720 }),
 		renderNative: (app, body) => renderNative(app, body),
 		notify: toast,
+		getTaskRect: (id) => {
+			const b = mid.querySelector(`.os-tb.run[data-app="${CSS.escape(id)}"]`);
+			const r = b?.getBoundingClientRect();
+			return r && r.width ? r : null;
+		},
 		onChange: ({ windows, focus }) => {
 			running = windows;
 			focusId = focus;
@@ -323,7 +351,25 @@ export async function createShell(root, opts = {}) {
 	btnSearch.title = 'Search';
 
 	const left = h('div', 'os-task-left');
-	left.append(btnWidgets);
+	// Aqua's menu bar names the app in front, as macOS does. Hidden in other styles.
+	const menuTitle = h('button', 'os-menu-app');
+	menuTitle.type = 'button';
+	menuTitle.addEventListener('click', (e) => {
+		const id = focusId;
+		const r = menuTitle.getBoundingClientRect();
+		e.stopPropagation();
+		if (!id) return toggleStart();
+		const w = running.find((x) => x.id === id);
+		menu(r.left, r.bottom + 4, [
+			['Minimize', 'minimize', () => wm.minimize(id)],
+			[w && w.maximized ? 'Restore' : 'Zoom', 'maximize', () => wm.toggleMax(id)],
+			['Snap layouts', 'grid', () => wm.snapLayouts(id)],
+			['Reload', 'reload', () => wm.reload(id)],
+			'-',
+			[`Quit ${w ? w.title : ''}`.trim(), 'close', () => wm.close(id)],
+		]);
+	});
+	left.append(btnWidgets, menuTitle);
 	const mid = h('div', 'os-task-mid');
 	const right = h('div', 'os-task-right');
 	task.append(left, mid, right);
@@ -335,13 +381,28 @@ export async function createShell(root, opts = {}) {
 		running.forEach((w) => {
 			if (!list.some((a) => a.id === w.id)) list.push(w.app);
 		});
+		const front = running.find((x) => x.id === focusId && !x.minimized);
+		menuTitle.textContent = front ? front.title : 'three.ws';
+		menuTitle.title = front ? `${front.title} window menu` : 'three.ws';
 		list.forEach((app) => {
 			const w = byId.get(app.id);
 			const b = h('button', `os-tb run${w ? ' open' : ''}${w && !w.minimized && focusId === app.id ? ' on' : ''}`, tile(app, 'xs', 15));
+			if (w) {
+				// Classic shows a labelled button per window; the other styles hide the label.
+				const label = h('span', 'tb-label');
+				label.textContent = w.title;
+				b.append(label);
+				b.addEventListener('pointerenter', (e) => e.pointerType !== 'touch' && peekSoon(app.id, b));
+				b.addEventListener('pointerleave', peekLeave);
+				b.addEventListener('focus', () => peekSoon(app.id, b));
+				b.addEventListener('blur', peekLeave);
+			}
 			b.type = 'button';
+			b.dataset.app = app.id;
 			b.title = w ? w.title : app.title;
 			b.setAttribute('aria-label', w ? `${w.title}, ${w.minimized ? 'minimized' : 'open'}` : `Open ${app.title}`);
 			b.addEventListener('click', () => {
+				peekHide(true);
 				if (!w) return launch(app);
 				if (w.minimized) wm.focus(app.id);
 				else if (focusId === app.id) wm.minimize(app.id);
@@ -356,7 +417,113 @@ export async function createShell(root, opts = {}) {
 			});
 			mid.append(b);
 		});
+		if (peek.id && !byId.has(peek.id)) peekHide(true);
 	}
+
+	// ---------- taskbar peek ----------
+	// Hover a running app for its window card (title, page, close), as on
+	// Windows 11. Hovering the card is Aero Peek: every other
+	// window fades so the one you are pointing at shows through.
+	const peek = { el: null, id: null, showT: 0, hideT: 0 };
+	function peekSoon(id, btn) {
+		clearTimeout(peek.hideT);
+		clearTimeout(peek.showT);
+		if (pop) return;
+		peek.showT = setTimeout(() => peekShow(id, btn), peek.el ? 60 : 400);
+	}
+	function peekLeave() {
+		clearTimeout(peek.showT);
+		clearTimeout(peek.hideT);
+		peek.hideT = setTimeout(() => peekHide(), 220);
+	}
+	function peekHide(now = false) {
+		clearTimeout(peek.showT);
+		clearTimeout(peek.hideT);
+		layer.classList.remove('is-peek');
+		layer.querySelectorAll('.win.is-peeked').forEach((el) => el.classList.remove('is-peeked'));
+		if (!peek.el) return;
+		const el = peek.el;
+		peek.el = null;
+		peek.id = null;
+		if (now) el.remove();
+		else {
+			el.classList.add('is-leaving');
+			el.addEventListener('animationend', () => el.remove(), { once: true });
+		}
+	}
+	function peekShow(id, btn) {
+		const w = running.find((x) => x.id === id);
+		if (!w || !btn.isConnected) return peekHide(true);
+		const had = !!peek.el;
+		peek.el?.remove();
+		const el = h('div', `os-peek${had ? ' is-moving' : ''}`);
+		el.setAttribute('role', 'tooltip');
+		const where = w.app.native ? 'three.ws app' : w.path || w.app.href;
+		el.innerHTML =
+			`<div class="pk-head">${tile(w.app, 'xs', 14)}<b></b><button type="button" class="pk-x" aria-label="Close window" title="Close">${icon('close', 14)}</button></div>` +
+			`<div class="pk-body" style="--hue:${w.app.hue}">${tile(w.app, '', 24)}<small></small><span class="pk-state"></span></div>`;
+		el.querySelector('b').textContent = w.title;
+		el.querySelector('small').textContent = where;
+		el.querySelector('.pk-state').textContent = w.minimized ? 'Minimized' : w.maximized ? 'Maximized' : focusId === id ? 'In front' : 'Open';
+		el.querySelector('.pk-x').addEventListener('click', (e) => {
+			e.stopPropagation();
+			peekHide(true);
+			wm.close(id);
+		});
+		el.addEventListener('click', () => {
+			peekHide(true);
+			wm.focus(id);
+		});
+		el.addEventListener('pointerenter', () => {
+			clearTimeout(peek.hideT);
+			if (w.minimized) return;
+			layer.classList.add('is-peek');
+			layer.querySelector(`.win[data-app="${CSS.escape(id)}"]`)?.classList.add('is-peeked');
+		});
+		el.addEventListener('pointerleave', () => {
+			layer.classList.remove('is-peek');
+			layer.querySelectorAll('.win.is-peeked').forEach((x) => x.classList.remove('is-peeked'));
+			peekLeave();
+		});
+		root.append(el);
+		const b = btn.getBoundingClientRect();
+		const r = el.getBoundingClientRect();
+		const x = Math.max(8, Math.min(b.left + b.width / 2 - r.width / 2, innerWidth - r.width - 8));
+		el.style.left = `${x}px`;
+		if (prefs.style === 'aqua' || b.top > innerHeight / 2) el.style.bottom = `${innerHeight - b.top + 8}px`;
+		else el.style.top = `${b.bottom + 8}px`;
+		peek.el = el;
+		peek.id = id;
+	}
+
+	// ---------- dock magnification (Aqua) ----------
+	// Every dock item scales with its distance from the pointer (dockScale in
+	// layout.js), then eases back when the pointer leaves the dock.
+	let dockRaf = 0;
+	let dockX = null;
+	function paintDock() {
+		dockRaf = 0;
+		const items = mid.querySelectorAll('.os-tb');
+		items.forEach((b) => {
+			let s = 1;
+			if (dockX != null) {
+				const r = b.getBoundingClientRect();
+				s = dockScale(dockX - (r.left + r.width / 2), 1.55, 140);
+			}
+			b.style.setProperty('--mag', s.toFixed(3));
+		});
+	}
+	const dockOn = () => prefs.style === 'aqua' && innerWidth > 720 && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+	mid.addEventListener('pointermove', (e) => {
+		if (e.pointerType === 'touch' || !dockOn()) return;
+		dockX = e.clientX;
+		if (!dockRaf) dockRaf = requestAnimationFrame(paintDock);
+	});
+	mid.addEventListener('pointerleave', () => {
+		if (dockX == null) return;
+		dockX = null;
+		if (!dockRaf) dockRaf = requestAnimationFrame(paintDock);
+	});
 
 	// tray
 	const tray = h('div', 'os-tray');
@@ -463,6 +630,7 @@ export async function createShell(root, opts = {}) {
 		const same = pop && pop.kind === kind;
 		closePops();
 		if (same) return false;
+		peekHide(true);
 		root.append(el);
 		trigger?.setAttribute('aria-expanded', 'true');
 		pop = { kind, el, trigger, onClose };
@@ -728,7 +896,8 @@ export async function createShell(root, opts = {}) {
 		root.append(el);
 		const r = el.getBoundingClientRect();
 		el.style.left = `${Math.max(4, Math.min(x, innerWidth - r.width - 4))}px`;
-		el.style.top = `${Math.max(4, Math.min(y, innerHeight - r.height - TASK_H - 4))}px`;
+		const { menuH, dockH } = bars();
+		el.style.top = `${Math.max(menuH + 4, Math.min(y, innerHeight - r.height - dockH - 4))}px`;
 		el.style.bottom = 'auto';
 		pop = { kind: 'ctx', el, trigger: null };
 		el.querySelector('button')?.focus();
@@ -796,10 +965,19 @@ export async function createShell(root, opts = {}) {
 		} else if (e.altKey && e.key.toLowerCase() === 'w' && wm.focused()) {
 			e.preventDefault();
 			wm.close(wm.focused());
+		} else if (e.altKey && !mod && e.key.toLowerCase() === 'z' && wm.focused()) {
+			e.preventDefault();
+			wm.snapLayouts(wm.focused());
+		} else if (e.ctrlKey && e.altKey && wm.focused()) {
+			const dir = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' }[e.key];
+			if (!dir) return;
+			e.preventDefault();
+			wm.snapKey(wm.focused(), dir);
 		}
 	});
 	let resizeT = 0;
 	addEventListener('resize', () => {
+		applyStyle();
 		wm.relayout();
 		clearTimeout(resizeT);
 		resizeT = setTimeout(() => deskIcons.reseat(), 120);
@@ -988,6 +1166,29 @@ export async function createShell(root, opts = {}) {
 
 		function paintPersonalize() {
 			pane.append(h('h2', '', 'Personalization'));
+			pane.append(h('h3', '', 'Style'));
+			pane.append(h('p', '', 'The whole shell, not just the colours: windows, taskbar, menus and motion.'));
+			const styles = h('div', 'styles');
+			const STYLE_NOTES = {
+				fluent: 'Mica windows, a centred taskbar and Snap layouts.',
+				aqua: 'A menu bar on top, a magnifying dock and traffic-light controls.',
+				classic: 'Bevelled 9x chrome with a labelled taskbar.',
+			};
+			Object.entries(STYLES).forEach(([id, st]) => {
+				const b = h(
+					'button',
+					'style-opt',
+					`<i class="style-prev" data-prev="${id}" aria-hidden="true"><s class="sp-win"><s class="sp-bar"></s></s><s class="sp-task"></s></i><b>${esc(st.label)}</b><small>${esc(STYLE_NOTES[id])}</small>`,
+				);
+				b.type = 'button';
+				b.setAttribute('aria-pressed', String(prefs.style === id));
+				b.addEventListener('click', () => {
+					setPrefs({ style: id });
+					styles.querySelectorAll('.style-opt').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+				});
+				styles.append(b);
+			});
+			pane.append(styles);
 			pane.append(h('h3', '', 'Theme'));
 			pane.append(seg([['dark', 'Dark'], ['light', 'Light'], ['auto', 'Match system']], prefs.mode, (v) => setPrefs({ mode: v })));
 			pane.append(h('h3', '', 'Accent colour'));

@@ -4,6 +4,11 @@ import {
 	clampRect,
 	snapZone,
 	snapRect,
+	fractionRect,
+	layoutZoneRect,
+	snapLayoutsFor,
+	dockScale,
+	SNAP_LAYOUTS,
 	cascadeRect,
 	resizeRect,
 	isInternalPath,
@@ -55,6 +60,55 @@ describe('desktop layout geometry', () => {
 		expect(r.x).toBe(l.x + l.w);
 		expect(snapRect('max', area)).toEqual({ x: 0, y: 30, w: 1440, h: 786 });
 		expect(snapRect(null, area)).toBeNull();
+	});
+
+	it('snaps to quarters at the corners, from either edge', () => {
+		expect(snapZone(2, 40, area)).toBe('tl');
+		expect(snapZone(40, 31, area)).toBe('tl');
+		expect(snapZone(1438, 40, area)).toBe('tr');
+		expect(snapZone(1400, 31, area)).toBe('tr');
+		expect(snapZone(2, 800, area)).toBe('bl');
+		expect(snapZone(1438, 800, area)).toBe('br');
+		const q = ['tl', 'tr', 'bl', 'br'].map((z) => snapRect(z, area));
+		expect(q.reduce((n, r) => n + r.w * r.h, 0)).toBe(area.w * area.h);
+		expect(q[1].x).toBe(q[0].x + q[0].w);
+		expect(q[2].y).toBe(q[0].y + q[0].h);
+	});
+
+	it('resolves every snap layout zone so the zones tile the work area exactly', () => {
+		const odd = workArea(1367, 901, 30, 84);
+		for (const l of SNAP_LAYOUTS) {
+			const rects = l.zones.map((_, i) => layoutZoneRect(l.id, i, odd));
+			const sum = rects.reduce((n, r) => n + r.w * r.h, 0);
+			expect(sum, l.id).toBe(odd.w * odd.h);
+			rects.forEach((r) => {
+				expect(r.x).toBeGreaterThanOrEqual(odd.x);
+				expect(r.y).toBeGreaterThanOrEqual(odd.y);
+				expect(r.x + r.w).toBeLessThanOrEqual(odd.x + odd.w);
+				expect(r.y + r.h).toBeLessThanOrEqual(odd.y + odd.h);
+			});
+		}
+		expect(layoutZoneRect('halves', 5, odd)).toBeNull();
+		expect(layoutZoneRect('nope', 0, odd)).toBeNull();
+		expect(fractionRect([0, 0, 1, 1], odd)).toEqual(odd);
+	});
+
+	it('only offers snap layouts whose narrowest zone still fits a window', () => {
+		expect(snapLayoutsFor(area).map((l) => l.id)).toContain('thirds');
+		const narrow = snapLayoutsFor(workArea(900, 700, 0, 48)).map((l) => l.id);
+		expect(narrow).toContain('halves');
+		expect(narrow).not.toContain('thirds');
+		expect(narrow).not.toContain('focus');
+	});
+
+	it('magnifies dock items with a smooth falloff', () => {
+		expect(dockScale(0)).toBeCloseTo(1.6);
+		expect(dockScale(150)).toBe(1);
+		expect(dockScale(400)).toBe(1);
+		expect(dockScale(NaN)).toBe(1);
+		expect(dockScale(-40)).toBe(dockScale(40));
+		expect(dockScale(30)).toBeGreaterThan(dockScale(60));
+		expect(dockScale(0, 2)).toBeCloseTo(2);
 	});
 
 	it('cascades new windows to different positions that stay on screen', () => {
@@ -329,6 +383,12 @@ describe('preferences and session export', () => {
 		expect(p.name.length).toBeLessThanOrEqual(40);
 		expect(p.name).not.toMatch(/[<>]/);
 		expect(p.avatarHue).toBe(330);
+	});
+	it('accepts only known desktop styles', () => {
+		expect(sanitizePrefs({ style: 'aqua' }, walls).style).toBe('aqua');
+		expect(sanitizePrefs({ style: 'classic' }, walls).style).toBe('classic');
+		expect(sanitizePrefs({ style: 'toString' }, walls).style).toBe('fluent');
+		expect(sanitizePrefs({ style: 'vista' }, walls).style).toBe('fluent');
 	});
 	it('survives bad JSON', () => {
 		expect(sanitizePrefs('{oops', walls)).toEqual(DEFAULT_PREFS);

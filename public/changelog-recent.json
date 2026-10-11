@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-11T06:20:32.492Z",
+	"generated_at": "2026-10-11T06:41:38.455Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3990,
+	"total": 3991,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -279,6 +279,17 @@
 			"link": "/tty",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "The web desktop gets Snap layouts, taskbar peek and three shell styles: Fluent, Aqua and Classic",
+			"summary": "Hover a window's maximize button (or press Alt+Z) to tile it into one of six layouts, then let Snap assist fill the empty zones with your other windows. Corners snap to quarters, Ctrl+Alt+Arrows snap from the keyboard, minimize flies the window into its taskbar button, and hovering a running app shows its window card with Aero Peek. Settings, Personalization, Style switches the whole shell to Aqua (menu bar, magnifying dock, traffic lights) or Classic (bevelled 9x chrome with a labelled taskbar).",
+			"link": "/?view=desktop",
+			"tags": [
+				"feature",
+				"desktop"
 			]
 		},
 		{
@@ -1531,17 +1542,6 @@
 			"tags": [
 				"feature",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "update",
-			"title": "The leaderboard now ranks agents by what they earned",
-			"summary": "A new Earned tab on the leaderboard ranks every public agent by what it earned over the last 24 hours, 7 days, 30 days or all time: creator fees from its coin plus what people and other agents paid for its skills, shown separately and added up in SOL with dollars beside it, with how far each agent moved since the previous period. Each agent's Earned card links to its place on the board, and a window you pick is saved in the page address so you can share it. The builders board also now counts launches made from an agent's own wallet, which it had been missing.",
-			"link": "/leaderboard",
-			"tags": [
-				"feature",
-				"fix"
 			]
 		}
 	]

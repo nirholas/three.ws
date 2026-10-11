@@ -5,6 +5,7 @@
 
 import './theme.css';
 import './desktop.css';
+import './styles.css';
 import './boot.css';
 import { createShell } from './shell.js';
 import { APPS } from './apps.js';

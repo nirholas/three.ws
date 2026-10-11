@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T06:20:32.470Z",
+	"generated_at": "2026-10-11T06:41:38.424Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -276,6 +276,17 @@
 			"link": "/tty",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "The web desktop gets Snap layouts, taskbar peek and three shell styles: Fluent, Aqua and Classic",
+			"summary": "Hover a window's maximize button (or press Alt+Z) to tile it into one of six layouts, then let Snap assist fill the empty zones with your other windows. Corners snap to quarters, Ctrl+Alt+Arrows snap from the keyboard, minimize flies the window into its taskbar button, and hovering a running app shows its window card with Aero Peek. Settings, Personalization, Style switches the whole shell to Aqua (menu bar, magnifying dock, traffic lights) or Classic (bevelled 9x chrome with a labelled taskbar).",
+			"link": "/?view=desktop",
+			"tags": [
+				"feature",
+				"desktop"
 			]
 		},
 		{

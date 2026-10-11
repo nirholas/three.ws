@@ -223,6 +223,14 @@
 			<description>curl three.ws/tty streams an animated 3D character into your terminal frame by frame. Clients that ask for compressed responses, such as curl --compressed, scripts using fetch, and most HTTP libraries, used to get nothing for about ten seconds and then the whole animation at once. Live streams are no longer compressed, so every client sees the character move from the first frame. Streaming agent and chat responses get the same fix.</description>
 		</item>
 		<item>
+			<title>The web desktop gets Snap layouts, taskbar peek and three shell styles: Fluent, Aqua and Classic</title>
+			<link>https://three.ws/?view=desktop</link>
+			<guid isPermaLink="false">2026-10-11:The web desktop gets Snap layouts, taskbar peek and three shell styles: Fluent, Aqua and Classic</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Hover a window's maximize button (or press Alt+Z) to tile it into one of six layouts, then let Snap assist fill the empty zones with your other windows. Corners snap to quarters, Ctrl+Alt+Arrows snap from the keyboard, minimize flies the window into its taskbar button, and hovering a running app shows its window card with Aero Peek. Settings, Personalization, Style switches the whole shell to Aqua (menu bar, magnifying dock, traffic lights) or Classic (bevelled 9x chrome with a labelled taskbar).</description>
+		</item>
+		<item>
 			<title>three.ws is now a desktop</title>
 			<link>https://three.ws/docs/desktop</link>
 			<guid isPermaLink="false">2026-10-11:three.ws is now a desktop</guid>

@@ -8,7 +8,9 @@ import {
 	cascadeRect,
 	cleanTitle,
 	isInternalPath,
+	layoutZoneRect,
 	resizeRect,
+	snapLayoutsFor,
 	snapRect,
 	snapZone,
 	workArea,
@@ -17,7 +19,12 @@ import { icon } from './icons.js';
 
 const HANDLES = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
 
-export function createWM({ layer, getMetrics, renderNative, onChange, notify }) {
+// Motion: Fluent's standard curves. Accelerate out of view, decelerate in.
+const EASE_OUT = 'cubic-bezier(0.1, 0.9, 0.2, 1)';
+const EASE_IN = 'cubic-bezier(0.7, 0, 1, 0.5)';
+const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+export function createWM({ layer, getMetrics, renderNative, onChange, notify, getTaskRect }) {
 	const wins = new Map(); // app id -> window record
 	let zTop = 10;
 	let opened = 0;
@@ -27,6 +34,57 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify }) 
 	snapGhost.className = 'win-snap';
 	snapGhost.hidden = true;
 	layer.append(snapGhost);
+
+	/**
+	 * FLIP a window from where it was drawn (`before`, a DOMRect) to where it
+	 * is now, so maximize, restore and every snap glide instead of jumping.
+	 */
+	function morph(w, before) {
+		if (!before || reducedMotion() || !w.el.animate) return;
+		const after = w.el.getBoundingClientRect();
+		if (!after.width || !after.height) return;
+		const dx = before.left - after.left;
+		const dy = before.top - after.top;
+		const sx = before.width / after.width;
+		const sy = before.height / after.height;
+		if (Math.abs(dx) + Math.abs(dy) < 1 && Math.abs(sx - 1) + Math.abs(sy - 1) < 0.01) return;
+		w.el.animate(
+			[
+				{ transformOrigin: '0 0', transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
+				{ transformOrigin: '0 0', transform: 'none' },
+			],
+			{ duration: 240, easing: EASE_OUT },
+		);
+	}
+
+	/**
+	 * Fly a window into (or out of) its taskbar button: the Windows 11 minimize
+	 * motion. Resolves when the motion ends or is skipped.
+	 */
+	function flyTask(w, out) {
+		w.anim?.cancel();
+		const t = getTaskRect?.(w.app.id);
+		if (!t || reducedMotion() || !w.el.animate) return Promise.resolve(true);
+		const r = w.el.getBoundingClientRect();
+		if (!r.width) return Promise.resolve(true);
+		const dx = t.left + t.width / 2 - (r.left + r.width / 2);
+		const dy = t.top + t.height / 2 - (r.top + r.height / 2);
+		const s = Math.max(0.06, Math.min(0.3, (t.width * 3) / r.width));
+		const hidden = { transform: `translate(${dx}px, ${dy}px) scale(${s})`, opacity: 0 };
+		const shown = { transform: 'none', opacity: 1 };
+		const a = w.el.animate(out ? [shown, hidden] : [hidden, shown], {
+			duration: out ? 220 : 280,
+			easing: out ? EASE_IN : EASE_OUT,
+		});
+		w.anim = a;
+		return a.finished.then(
+			() => {
+				if (w.anim === a) w.anim = null;
+				return true;
+			},
+			() => false,
+		);
+	}
 
 	const isMobile = () => getMetrics().mobile;
 	const area = () => {
@@ -93,11 +151,15 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify }) 
 		const w = wins.get(id);
 		if (!w || w.min) return;
 		w.min = true;
-		w.el.classList.add('is-min');
 		w.el.setAttribute('aria-hidden', 'true');
 		w.el.inert = true;
 		if (focusedId === id) pickNextFocus();
 		emit();
+		// The window stays drawn while it flies into its taskbar button; a
+		// restore during the flight cancels it (and `finished` resolves false).
+		flyTask(w, true).then((done) => {
+			if (done && w.min) w.el.classList.add('is-min');
+		});
 	}
 
 	function restore(id) {
@@ -107,17 +169,51 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify }) 
 		w.el.classList.remove('is-min');
 		w.el.removeAttribute('aria-hidden');
 		w.el.inert = false;
+		flyTask(w, false);
+	}
+
+	function syncMaxBtn(w) {
+		w.maxBtn.setAttribute('aria-label', w.max ? 'Restore window' : 'Maximize window');
+		w.maxBtn.title = w.max ? 'Restore' : 'Maximize';
+		w.maxBtn.innerHTML = icon(w.max ? 'restore' : 'maximize', 13);
 	}
 
 	function toggleMax(id) {
 		const w = wins.get(id);
 		if (!w) return;
+		const before = w.el.getBoundingClientRect();
 		w.max = !w.max;
 		applyRect(w);
-		w.maxBtn.setAttribute('aria-label', w.max ? 'Restore window' : 'Maximize window');
-		w.maxBtn.title = w.max ? 'Restore' : 'Maximize';
-		w.maxBtn.innerHTML = icon(w.max ? 'restore' : 'maximize', 13);
+		syncMaxBtn(w);
+		morph(w, before);
 		emit();
+	}
+
+	/** Place a window at a rect (or maximize it), restoring it first if needed. */
+	function place(id, rect, max = false) {
+		const w = wins.get(id);
+		if (!w) return;
+		if (w.min) restore(id);
+		const before = w.el.getBoundingClientRect();
+		w.max = max;
+		if (rect) w.rect = clampRect(rect, area());
+		applyRect(w);
+		syncMaxBtn(w);
+		morph(w, before);
+		focus(id);
+	}
+
+	/** Snap the focused window from the keyboard: left, right, up (maximize), down (restore, then minimize). */
+	function snapKey(id, dir) {
+		const w = wins.get(id);
+		if (!w || isMobile()) return;
+		const a = area();
+		if (dir === 'up') return place(id, null, true);
+		if (dir === 'down') {
+			if (w.max) return place(id, w.rect, false);
+			return minimize(id);
+		}
+		place(id, snapRect(dir, a));
 	}
 
 	function close(id) {
@@ -126,7 +222,7 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify }) 
 		w.el.classList.add('is-closing');
 		wins.delete(id);
 		const done = () => w.el.remove();
-		if (matchMedia('(prefers-reduced-motion: reduce)').matches) done();
+		if (reducedMotion()) done();
 		else {
 			w.el.addEventListener('animationend', done, { once: true });
 			setTimeout(done, 260);
@@ -281,7 +377,21 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify }) 
 		const id = w.app.id;
 		bar.querySelector('.win-close').addEventListener('click', () => close(id));
 		bar.querySelector('.win-min').addEventListener('click', () => minimize(id));
-		w.maxBtn.addEventListener('click', () => toggleMax(id));
+		w.maxBtn.addEventListener('click', () => {
+			hideFlyout(true);
+			toggleMax(id);
+		});
+		// Hovering maximize offers the snap layouts, as on Windows 11.
+		w.maxBtn.addEventListener('pointerenter', (e) => {
+			if (e.pointerType === 'touch' || isMobile()) return;
+			clearTimeout(fly.hideT);
+			clearTimeout(fly.showT);
+			fly.showT = setTimeout(() => showFlyout(id), 420);
+		});
+		w.maxBtn.addEventListener('pointerleave', () => {
+			clearTimeout(fly.showT);
+			hideFlyout();
+		});
 		bar.addEventListener('dblclick', (e) => {
 			if (!e.target.closest('.win-ctl, .win-tools')) toggleMax(id);
 		});
@@ -337,12 +447,15 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify }) 
 			layer.classList.remove('is-dragging');
 			w.el.classList.remove('is-moving');
 			snapGhost.hidden = true;
+			const before = zone ? w.el.getBoundingClientRect() : null;
 			if (zone === 'max') {
 				w.max = true;
 			} else if (zone) {
 				w.rect = snapRect(zone, a);
 			}
 			applyRect(w);
+			syncMaxBtn(w);
+			morph(w, before);
 			emit();
 		};
 		w.bar.addEventListener('pointermove', move);
@@ -375,6 +488,170 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify }) 
 		grip.addEventListener('pointercancel', up);
 	}
 
+	// ---------- Snap layouts flyout and Snap assist ----------
+	const fly = { el: null, id: null, showT: 0, hideT: 0 };
+
+	function hideFlyout(now = false) {
+		clearTimeout(fly.hideT);
+		const go = () => {
+			fly.el?.remove();
+			fly.el = null;
+			fly.id = null;
+		};
+		if (now) go();
+		else fly.hideT = setTimeout(go, 260);
+	}
+
+	/** The layouts flyout under a window's maximize button (also Alt+Z for the focused window). */
+	function showFlyout(id, viaKeyboard = false) {
+		const w = wins.get(id);
+		if (!w || isMobile()) return;
+		hideFlyout(true);
+		hideAssist();
+		const a = area();
+		const el = document.createElement('div');
+		el.className = 'snap-fly';
+		el.setAttribute('role', 'menu');
+		el.setAttribute('aria-label', 'Snap layouts');
+		snapLayoutsFor(a).forEach((l) => {
+			const box = document.createElement('div');
+			box.className = 'snap-lay';
+			box.setAttribute('role', 'group');
+			box.setAttribute('aria-label', l.label);
+			l.zones.forEach(([fx, fy, fw, fh], i) => {
+				const z = document.createElement('button');
+				z.type = 'button';
+				z.className = 'snap-zone';
+				z.setAttribute('role', 'menuitem');
+				z.setAttribute('aria-label', `${l.label}, zone ${i + 1} of ${l.zones.length}`);
+				z.style.cssText = `left:${fx * 100}%;top:${fy * 100}%;width:${fw * 100}%;height:${fh * 100}%`;
+				z.addEventListener('click', () => {
+					hideFlyout(true);
+					place(id, layoutZoneRect(l.id, i, a));
+					showAssist(l.id, i, id);
+				});
+				box.append(z);
+			});
+			el.append(box);
+		});
+		el.addEventListener('pointerenter', () => clearTimeout(fly.hideT));
+		el.addEventListener('pointerleave', () => hideFlyout());
+		el.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape') {
+				e.stopPropagation();
+				hideFlyout(true);
+				w.maxBtn.focus();
+				return;
+			}
+			const all = [...el.querySelectorAll('.snap-zone')];
+			const k = all.indexOf(document.activeElement);
+			const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+			if (step && k >= 0) {
+				e.preventDefault();
+				all[(k + step + all.length) % all.length].focus();
+			}
+		});
+		layer.append(el);
+		const b = w.maxBtn.getBoundingClientRect();
+		const host = layer.getBoundingClientRect();
+		const r = el.getBoundingClientRect();
+		const left = Math.max(8, Math.min(b.left + b.width / 2 - r.width / 2 - host.left, host.width - r.width - 8));
+		const below = b.bottom - host.top + 6;
+		const top = below + r.height > host.height - 8 ? Math.max(8, b.top - host.top - r.height - 6) : below;
+		el.style.left = `${left}px`;
+		el.style.top = `${top}px`;
+		fly.el = el;
+		fly.id = id;
+		if (viaKeyboard) el.querySelector('.snap-zone')?.focus();
+	}
+
+	const assist = { el: null };
+
+	function hideAssist() {
+		assist.el?.remove();
+		assist.el = null;
+	}
+
+	/**
+	 * After a window lands in a layout zone, offer the other open windows for
+	 * the zones that are still empty, one zone at a time, until the layout is
+	 * full or the visitor dismisses it (Esc or a click on the backdrop).
+	 */
+	function showAssist(layoutId, usedZone, placedId) {
+		hideAssist();
+		const a = area();
+		const layout = snapLayoutsFor(a).find((l) => l.id === layoutId);
+		if (!layout) return;
+		let free = layout.zones.map((_, i) => i).filter((i) => i !== usedZone);
+		const placed = new Set([placedId]);
+		const candidates = () =>
+			[...wins.values()].filter((o) => !placed.has(o.app.id)).sort((x, y) => y.lastFocus - x.lastFocus);
+		if (!free.length || !candidates().length) return;
+
+		const el = document.createElement('div');
+		el.className = 'snap-assist';
+		el.setAttribute('role', 'dialog');
+		el.setAttribute('aria-label', 'Snap assist: choose a window for the empty space');
+		el.addEventListener('pointerdown', (e) => {
+			if (e.target === el) hideAssist();
+		});
+		el.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape') {
+				e.stopPropagation();
+				hideAssist();
+			}
+		});
+		el.style.zIndex = String(++zTop + 1);
+		let active = free[0];
+
+		function paint() {
+			el.replaceChildren();
+			const left = candidates();
+			if (!free.length || !left.length) return hideAssist();
+			if (!free.includes(active)) active = free[0];
+			free.forEach((zi) => {
+				const r = layoutZoneRect(layoutId, zi, a);
+				const zone = document.createElement('div');
+				zone.className = `snap-slot${zi === active ? ' is-active' : ''}`;
+				Object.assign(zone.style, { left: `${r.x}px`, top: `${r.y - a.y}px`, width: `${r.w}px`, height: `${r.h}px` });
+				if (zi !== active) {
+					zone.addEventListener('pointerdown', (e) => {
+						e.stopPropagation();
+						active = zi;
+						paint();
+					});
+					el.append(zone);
+					return;
+				}
+				const list = document.createElement('div');
+				list.className = 'snap-cands';
+				left.forEach((o) => {
+					const c = document.createElement('button');
+					c.type = 'button';
+					c.className = 'snap-cand';
+					c.innerHTML = `<span class="app-tile sm" style="--hue:${o.app.hue}">${icon(o.app.icon, 17)}</span><span class="snap-cand-t"></span>`;
+					c.querySelector('.snap-cand-t').textContent = o.title;
+					c.title = `Snap ${o.title} here`;
+					c.addEventListener('click', () => {
+						placed.add(o.app.id);
+						place(o.app.id, r);
+						free = free.filter((x) => x !== zi);
+						el.style.zIndex = String(++zTop + 1);
+						paint();
+					});
+					list.append(c);
+				});
+				zone.append(list);
+				el.append(zone);
+			});
+			el.querySelector('.snap-cand')?.focus({ preventScroll: true });
+		}
+		el.style.top = `${a.y}px`;
+		layer.append(el);
+		assist.el = el;
+		paint();
+	}
+
 	function open(app, opts = {}) {
 		const existing = wins.get(app.id);
 		if (existing) {
@@ -398,7 +675,15 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify }) 
 			w.el.classList.add('is-min');
 			w.el.inert = true;
 		}
-		if (!opts.quiet) w.el.classList.add('is-opening');
+		if (!opts.quiet) {
+			// Drop the class once the opening plays, or it replays on every restore from minimize.
+			w.el.classList.add('is-opening');
+			w.el.addEventListener('animationend', function done(e) {
+				if (e.target !== w.el) return;
+				w.el.classList.remove('is-opening');
+				w.el.removeEventListener('animationend', done);
+			});
+		}
 		w.suppressFrameFocus = !!opts.quiet;
 		if (!opts.min && !opts.quiet) focus(app.id);
 		else emit();
@@ -406,6 +691,8 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify }) 
 	}
 
 	function relayout() {
+		hideFlyout(true);
+		hideAssist();
 		const a = area();
 		wins.forEach((w) => {
 			if (!w.max) w.rect = clampRect(w.rect, a);
@@ -458,6 +745,9 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify }) 
 		focus,
 		toggleMax,
 		cycle,
+		place,
+		snapKey,
+		snapLayouts: (id) => showFlyout(id, true),
 		relayout,
 		snapshot,
 		reload: (id) => wins.has(id) && reloadFrame(wins.get(id)),
