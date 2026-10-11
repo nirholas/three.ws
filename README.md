@@ -10069,7 +10069,7 @@ GET  /.well-known/oauth-authorization-server →  RFC 8414 discovery
 GET  /.well-known/oauth-protected-resource  →  RFC 9728 resource discovery
 ```
 
-Token scopes: `avatars:read`, `avatars:write`, `agents:read`, `agents:write`, `mcp`.
+Registerable token scopes: `avatars:read`, `avatars:write`, `avatars:delete`, `profile`, `offline_access`, `memory:read`, `memory:write`, `agents:read`, `agents:write`, `feedback:read`, `home:read`, `home:act`, `wallet:read`, `wallet:write`, `services:write`. The wallet/services scopes gate the agent-wallet MCP server; `wallet:write` additionally requires a separate consent-screen checkbox, so an app cannot spend from a user's wallet just by asking for it. Source of truth: [api/_lib/oauth-scopes.js](api/_lib/oauth-scopes.js).
 
 Access tokens are short-lived JWTs (1 hour). Refresh tokens are opaque strings stored hashed in Postgres.
 
@@ -10080,7 +10080,7 @@ Access tokens are short-lived JWTs (1 hour). Refresh tokens are opaque strings s
 [`api/mcp.js`](api/mcp.js) is a thin HTTP entrypoint (POST / GET-SSE / DELETE) that implements the [Model Context Protocol](https://modelcontextprotocol.io) 2025-06-18 specification over JSON-RPC 2.0. The protocol logic is split across [`api/_mcp/`](api/_mcp/): `auth.js` (Bearer/OAuth + x402 paywall), `dispatch.js` (JSON-RPC routing), `catalog.js` (dynamic tool catalog), `payments.js` (x402 paid-tool settlement), `render.js`, and `embed-policy.js`. Tools are registered per category under [`api/_mcp/tools/`](api/_mcp/tools/) (14 category modules: `avatars.js`, `models.js`, `solana.js`, `pumpfun.js`, `animations.js`, `agents.js`, `garments.js`, `memory.js`, `oracle.js`, `trader.js`, `embed.js`, `sign.js`, `crypto-data.js`, `tokenize.js`). External AI systems (including Claude Desktop, other agents, or custom integrations) can drive avatars programmatically through this surface.
 
 **Endpoint:** `POST /api/mcp` (tools), `GET /api/mcp` (SSE), `DELETE /api/mcp` (session terminate)
-**Auth:** OAuth 2.1 Bearer token with `mcp` scope; some tools additionally require x402 USDC payment
+**Auth:** OAuth 2.1 Bearer token carrying whichever scope a given tool requires (see Token scopes above); tools with no scope requirement accept any authenticated bearer, and some tools additionally require x402 USDC payment
 **Registry:** Listed on the [official MCP Registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) as `io.github.nirholas/three.ws`, alongside the other three.ws servers published under the `io.github.nirholas` namespace (`threews-3d-studio`, `threews-avatar`, `threews-pumpfun`, `threews-x402-bazaar`, `three-token-mcp`, and more). Also discoverable on [Smithery](https://smithery.ai/search?q=three.ws), [Glama](https://glama.ai/mcp/servers?query=three.ws), and [PulseMCP](https://www.pulsemcp.com/servers?q=three.ws).
 **x402scan:** [view on x402scan](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07) — paid MCP tool calls and revenue
 
