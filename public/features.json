@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T06:11:43.262Z",
+	"generated_at": "2026-10-11T06:55:55.560Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -6251,6 +6251,18 @@
 					"path": "/docs/desktop",
 					"title": "Web Desktop",
 					"description": "How the three.ws web desktop works: the CTRL Mica theme, taskbar and Start menu, snappable windows that frame real pages, deep links, saved layout, the classic view and how to add an app.",
+					"added": "2026-10-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/field",
+					"title": "The Field",
+					"description": "How the three.ws homepage works: a live, zoomable map of every agent and product surface, its districts and data sources, semantic zoom, search, deep links and phone layout.",
 					"added": "2026-10-11",
 					"auth": null,
 					"indexable": true,

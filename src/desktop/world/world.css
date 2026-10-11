@@ -519,14 +519,388 @@
 	letter-spacing: 0.02em;
 }
 
+/* ---- the agents: name tags and speech bubbles projected over their heads ---- */
+.wd-tags {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	pointer-events: none;
+}
+.wd-tag {
+	position: absolute;
+	left: 0;
+	top: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: #fff;
+	pointer-events: auto;
+	cursor: pointer;
+	will-change: transform;
+	transition: opacity 0.2s;
+}
+.wd-tag[hidden] {
+	display: none;
+}
+.wd-tag.is-far {
+	opacity: 0.55;
+}
+.wd-tag b {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border: 1px solid var(--wd-line);
+	border-radius: 999px;
+	background: var(--wd-glass);
+	font: 600 12px/1.2 'Space Grotesk', 'Inter', sans-serif;
+	letter-spacing: 0.01em;
+	white-space: nowrap;
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+.wd-tag:hover b,
+.wd-tag:focus-visible b {
+	border-color: rgba(196, 181, 253, 0.6);
+	background: rgba(196, 181, 253, 0.14);
+}
+.wd-tag:active b {
+	transform: scale(0.97);
+}
+.wd-tag:focus-visible {
+	outline: none;
+}
+.wd-tag.is-near b {
+	border-color: rgba(196, 181, 253, 0.5);
+	box-shadow: 0 0 18px rgba(196, 181, 253, 0.25);
+}
+.wd-tag-reg {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: #4ade80;
+	box-shadow: 0 0 8px #4ade80;
+}
+.wd-bubble {
+	order: -1;
+	max-width: min(260px, 60vw);
+	padding: 8px 12px;
+	border: 1px solid rgba(196, 181, 253, 0.4);
+	border-radius: 14px 14px 14px 4px;
+	background: rgba(14, 12, 24, 0.92);
+	color: #fff;
+	font: 400 13px/1.4 'Inter', system-ui, sans-serif;
+	text-align: left;
+	animation: wd-rise 0.2s ease-out;
+}
+.wd-bubble[hidden] {
+	display: none;
+}
+
+/* ---- the conversation panel ---- */
+.wd-talk {
+	position: absolute;
+	top: 64px;
+	right: 16px;
+	display: flex;
+	flex-direction: column;
+	width: min(360px, calc(100vw - 32px));
+	max-height: calc(100vh - 160px);
+	border: 1px solid var(--wd-line);
+	border-radius: 16px;
+	background: rgba(10, 10, 12, 0.92);
+	backdrop-filter: blur(18px);
+	-webkit-backdrop-filter: blur(18px);
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+	animation: wd-rise 0.2s ease-out;
+}
+.wd-talk[hidden] {
+	display: none;
+}
+.wd-talk header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 10px 10px 10px 12px;
+	border-bottom: 1px solid var(--wd-line);
+}
+.wd-talk-who {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+.wd-talk-who > div {
+	min-width: 0;
+}
+.wd-talk-thumb {
+	flex: none;
+	width: 36px;
+	height: 36px;
+	border-radius: 10px;
+	background: #1a1826 center/cover no-repeat;
+	border: 1px solid var(--wd-line);
+}
+.wd-talk-thumb.is-blank {
+	background-image: linear-gradient(135deg, #2a2440, #16141f);
+}
+.wd-talk-name {
+	display: block;
+	overflow: hidden;
+	font: 600 14px/1.2 'Space Grotesk', 'Inter', sans-serif;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.wd-talk-meta {
+	display: block;
+	overflow: hidden;
+	color: rgba(255, 255, 255, 0.55);
+	font-size: 12px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.wd-talk-head-actions {
+	display: flex;
+	gap: 2px;
+}
+.wd-talk-voice.is-on {
+	color: var(--wd-violet);
+	background: rgba(196, 181, 253, 0.12);
+}
+.wd-talk-voice svg {
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+}
+.wd-talk-about {
+	margin: 0;
+	padding: 10px 14px;
+	color: rgba(255, 255, 255, 0.72);
+	font-size: 13px;
+	line-height: 1.45;
+	border-bottom: 1px solid var(--wd-line);
+	display: -webkit-box;
+	-webkit-line-clamp: 4;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.wd-talk-log {
+	flex: 1 1 auto;
+	min-height: 48px;
+	max-height: 38vh;
+	margin: 0;
+	padding: 10px 12px;
+	overflow-y: auto;
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	scroll-behavior: smooth;
+}
+.wd-talk-log li {
+	max-width: 88%;
+	padding: 8px 12px;
+	border-radius: 14px;
+	font-size: 13px;
+	line-height: 1.45;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+.wd-talk-you {
+	align-self: flex-end;
+	background: rgba(196, 181, 253, 0.16);
+	border: 1px solid rgba(196, 181, 253, 0.35);
+	border-bottom-right-radius: 4px;
+}
+.wd-talk-them {
+	align-self: flex-start;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid var(--wd-line);
+	border-bottom-left-radius: 4px;
+}
+.wd-talk-them.is-thinking {
+	min-width: 52px;
+	min-height: 32px;
+	background:
+		radial-gradient(circle, rgba(255, 255, 255, 0.7) 2.5px, transparent 3px) 14px 50% / 10px 10px no-repeat,
+		radial-gradient(circle, rgba(255, 255, 255, 0.7) 2.5px, transparent 3px) 26px 50% / 10px 10px no-repeat,
+		radial-gradient(circle, rgba(255, 255, 255, 0.7) 2.5px, transparent 3px) 38px 50% / 10px 10px no-repeat,
+		rgba(255, 255, 255, 0.06);
+	animation: wd-think 1s steps(3) infinite;
+}
+@keyframes wd-think {
+	to {
+		background-position: 14px -40%, 26px -40%, 38px -40%, 0 0;
+	}
+}
+.wd-talk-note {
+	align-self: stretch;
+	max-width: none;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	color: rgba(255, 255, 255, 0.75);
+	font-size: 12px;
+}
+.wd-talk-note.is-error {
+	border: 1px solid rgba(248, 113, 113, 0.35);
+	background: rgba(248, 113, 113, 0.08);
+}
+.wd-talk-form {
+	display: flex;
+	gap: 6px;
+	padding: 8px 10px;
+	border-top: 1px solid var(--wd-line);
+}
+.wd-talk-input {
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 38px;
+	padding: 0 12px;
+	border: 1px solid var(--wd-line);
+	border-radius: 10px;
+	background: rgba(255, 255, 255, 0.05);
+	color: #fff;
+	font: 14px 'Inter', system-ui, sans-serif;
+	transition: border-color 0.15s, background 0.15s;
+}
+.wd-talk-input::placeholder {
+	color: rgba(255, 255, 255, 0.4);
+}
+.wd-talk-input:hover {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+.wd-talk-input:focus-visible {
+	outline: none;
+	border-color: var(--wd-violet);
+	background: rgba(196, 181, 253, 0.06);
+}
+.wd-talk-send {
+	display: inline-grid;
+	place-items: center;
+	width: 38px;
+	height: 38px;
+	border: 1px solid rgba(196, 181, 253, 0.5);
+	border-radius: 10px;
+	background: rgba(196, 181, 253, 0.16);
+	color: #fff;
+	cursor: pointer;
+	transition: background 0.15s, transform 0.15s, opacity 0.15s;
+}
+.wd-talk-send svg {
+	width: 16px;
+	height: 16px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+}
+.wd-talk-send:hover {
+	background: rgba(196, 181, 253, 0.28);
+}
+.wd-talk-send:active {
+	transform: scale(0.95);
+}
+.wd-talk-send:disabled {
+	opacity: 0.45;
+	cursor: progress;
+}
+.wd-talk-foot {
+	display: flex;
+	gap: 6px;
+	padding: 0 10px 10px;
+}
+.wd-talk-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 32px;
+	padding: 0 11px;
+	border: 1px solid var(--wd-line);
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.04);
+	color: #fff;
+	font: 500 12px/1 'Inter', system-ui, sans-serif;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.wd-talk-btn svg {
+	width: 14px;
+	height: 14px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+}
+.wd-talk-btn:hover {
+	background: rgba(255, 255, 255, 0.09);
+	border-color: rgba(255, 255, 255, 0.18);
+}
+.wd-talk-btn:active {
+	transform: scale(0.97);
+}
+.wd-talk-embed[aria-expanded='true'] {
+	border-color: rgba(196, 181, 253, 0.5);
+	background: rgba(196, 181, 253, 0.12);
+}
+.wd-talk-snippet {
+	padding: 0 10px 10px;
+	animation: wd-rise 0.2s ease-out;
+}
+.wd-talk-snippet[hidden] {
+	display: none;
+}
+.wd-talk-snippet p {
+	margin: 0 0 8px;
+	padding: 0 4px;
+	color: rgba(255, 255, 255, 0.65);
+	font-size: 12px;
+	line-height: 1.45;
+}
+.wd-talk-snippet pre {
+	margin: 0 0 8px;
+	padding: 10px 12px;
+	border: 1px solid var(--wd-line);
+	border-radius: 10px;
+	background: #09090c;
+	color: #d6d3e7;
+	font: 11.5px/1.5 'JetBrains Mono', ui-monospace, monospace;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	user-select: all;
+}
+.wd-talk-snippet pre:focus-visible {
+	outline: 2px solid var(--wd-violet);
+	outline-offset: 1px;
+}
+.wd-talk-send:focus-visible,
+.wd-talk-btn:focus-visible,
+.wd-talk-voice:focus-visible,
+.wd-talk-close:focus-visible {
+	outline: 2px solid var(--wd-violet);
+	outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.wd-fade {
 		transition: none;
 	}
 	.wd-prompt,
 	.wd-gempanel,
+	.wd-talk,
+	.wd-talk-snippet,
+	.wd-bubble,
 	.wd-phone,
 	.wd-phone-frame {
+		animation: none;
+	}
+	.wd-talk-them.is-thinking {
 		animation: none;
 	}
 }
@@ -544,5 +918,26 @@
 	}
 	.wd-digbtn {
 		bottom: 150px;
+	}
+	.wd-talk {
+		top: auto;
+		right: 8px;
+		left: 8px;
+		bottom: 8px;
+		width: auto;
+		max-height: 72vh;
+		padding-bottom: env(safe-area-inset-bottom);
+	}
+	.wd-talk-log {
+		max-height: 30vh;
+	}
+	.wd-talk-about {
+		-webkit-line-clamp: 2;
+	}
+	.wd-talk-foot {
+		flex-wrap: wrap;
+	}
+	.wd-bubble {
+		max-width: 70vw;
 	}
 }

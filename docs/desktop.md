@@ -24,11 +24,14 @@ works unchanged. The previous homepage is kept at `/classic`.
    your account, and two ways in: **Walk in** (the campus) or **Desktop**. The
    first gesture also unlocks the startup chime, a short synthesised chord
    (Settings, Arrival, Startup chime turns it off).
-3. **The campus.** You spawn at the gate facing your workstation. Walk up to
-   the desk and the prompt says Sit down; hold E and the camera settles into the
-   chair while the desktop fades in on the monitor. The taskbar's World button
-   (also in the Start menu footer and the desktop right-click menu) stands you
-   back up where you were.
+3. **The campus.** You spawn at the gate facing your workstation, and the
+   first thing you meet is a real agent: the most talked-to public agent on the
+   platform stands beside the gate path, turns to you as you walk in, waves and
+   says hello through its own brain (`POST /api/chat` with its id, so its
+   published persona answers). Walk up to the desk and the prompt says Sit
+   down; hold E and the camera settles into the chair while the desktop fades
+   in on the monitor. The taskbar's World button (also in the Start menu footer
+   and the desktop right-click menu) stands you back up where you were.
 
 Controls: WASD or the arrow keys to walk, Shift to run, drag to orbit, wheel to
 zoom, C cycles the camera (Follow, Cinematic, and the rest of the shared camera
@@ -60,6 +63,40 @@ Walking into a place opens its app as a window and sits you at the desk; the
 World button brings you back to that place's doorstep, not the gate. Your
 avatar is the same default body and clip library the rest of the site uses
 (`/avatars/default.glb`, `/animations/manifest.json`).
+
+### The agents
+
+The campus is populated by real registered agents, not extras. On entry the
+world reads `GET /api/agents/public?avatar=1&sort=popular` and seats the ten
+most talked-to public agents that have a real name and a publicly readable
+avatar GLB (five on a phone): the greeter beside the gate path, a gathering in
+front of Agent Plaza, two along the path and one at the doorstep of each other
+building. Each wears its own body from `avatar_model_url`, idles and wanders a
+step or two, turns to face you and nods when you come near, and carries a
+floating name tag (tap it to walk over). Nothing about them is invented: the
+name, description, skills, conversation count and on-chain badge all come from
+the agent's public record, and an agent still wearing an onboarding placeholder
+name or bio is never introduced by it.
+
+Within reach the prompt reads Talk to <name>; press E (or tap the tag again)
+and the conversation panel opens. Messages go to `POST /api/chat` with the
+agent's id and a grounding system prompt built from its public record, so the
+agent answers as itself; replies stream in as they are generated, appear above
+the agent's head as a speech bubble, and can be read aloud through
+`POST /api/tts/speak` (the speaker toggle in the panel header, remembered in
+`localStorage`). The footer opens the agent's profile as a desktop window, and
+"Put this agent on your site" shows the one-tag embed (`<agent-3d
+agent-id="…" chat voice>`) that puts that exact agent, body and brain, on any
+web page: the 3D agent layer of the internet, demonstrated in place. Rate
+limits (429) and a signed-out chat gate (401) are rendered as a note with a
+Try again button; a failed TTS call is a toast and the text stays. Esc closes
+the panel, sitting down or entering a building closes it too.
+
+Which agents qualify, where they stand, the prompt distances, the SSE parser,
+the embed snippet and the grounding prompt live in
+`src/desktop/world/cast.js` (pure rules, unit tested in
+`tests/world-cast.test.js`); `agents.js` spawns and animates the bodies;
+`talk.js` is the panel.
 
 ### Gems
 
@@ -132,16 +169,23 @@ until the two agree. A new skeleton or page needs no other wiring.
 ## Verify
 
 `npm run dev`, then `node scripts/desktop-world-smoke.mjs http://localhost:3000`
-drives the whole arrival in a real browser: it reads every boot line, the lock
-greeting and chips, walks in, runs to the desk and sits down, checks the
-desktop, teleports to the Exchange and opens Trenches, picks up the phone,
-opens the gem panel, cycles the camera and checks the phone layout, then
-prints every console error and every failed or 5xx request. The gem endpoint
-needs a database, so run the API locally (`PORT=3018 node --env-file=.env.local
-server/index.mjs`) and start Vite with `DEV_API_PROXY=http://localhost:3018`.
-`node scripts/desktop-smoke.mjs http://localhost:3000` is the shorter
+drives the whole arrival in a real browser (it opens `/?world=1`, which asks
+for the campus whichever entry answers at `/`): it reads every boot line, the
+lock greeting and chips, walks in, lists the agents on the campus, walks up to
+one, waits for the greeter's hello, talks to the agent and prints its reply
+and the embed snippet, runs to the desk and sits down, checks the desktop,
+teleports to the Exchange and opens Trenches, picks up the phone, opens the
+gem panel, cycles the camera and checks the phone layout, then prints every
+console error and every failed or 5xx request. With the default Vite proxy
+(`/api` to production) every step runs against live data. To run against a
+local API (`PORT=3018 node --env-file=.env.local server/index.mjs`, Vite with
+`DEV_API_PROXY=http://localhost:3018`) the gem endpoint needs a database, the
+agents need `S3_PUBLIC_DOMAIN` set so `avatar_model_url` is populated, and
+anonymous chat needs one of `GROQ_API_KEY`, `OPENROUTER_API_KEY` or
+`NVIDIA_API_KEY`; without a key the panel shows the sign-in note instead of a
+reply. `node scripts/desktop-smoke.mjs http://localhost:3000` is the shorter
 desktop-only drive. Unit tests: `npx vitest run tests/desktop-boot.test.js
-tests/world-places.test.js tests/world-ticker.test.js
+tests/world-places.test.js tests/world-cast.test.js tests/world-ticker.test.js
 tests/desktop-layout.test.js tests/desktop-page.test.js`.
 
 ## Provenance

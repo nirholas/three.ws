@@ -3157,6 +3157,12 @@ URL: https://three.ws/docs/desktop
 
 How the three.ws web desktop works: the CTRL Mica theme, taskbar and Start menu, snappable windows that frame real pages, deep links, saved layout, the classic view and how to add an app.
 
+### The Field
+
+URL: https://three.ws/docs/field
+
+How the three.ws homepage works: a live, zoomable map of every agent and product surface, its districts and data sources, semantic zoom, search, deep links and phone layout.
+
 ### Docs · Event Markets
 
 URL: https://three.ws/docs/event-markets

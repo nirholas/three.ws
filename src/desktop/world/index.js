@@ -1,6 +1,7 @@
 // The world controller: mounts the campus over the desktop, wires input,
 // proximity prompts, the sit-down and walk-in transitions, the phone, the VR
-// headset and gem mining, and runs the frame loop. main.js decides whether the
+// headset, gem mining and the agents who live on the campus (agents.js,
+// talk.js), and runs the frame loop. main.js decides whether the
 // visitor starts here or on the desktop; the taskbar's World button brings
 // them back.
 
@@ -16,6 +17,9 @@ import { createDesktopScreen } from './screen.js';
 import { createTickerBoard, loadTickerItems } from './ticker.js';
 import { createMiner, GEM_BY_ID } from './mine.js';
 import { enterVR, vrSupported } from './xr.js';
+import { createAgents } from './agents.js';
+import { APPROACH_DISTANCE } from './cast.js';
+import { createTalkPanel } from './talk.js';
 import { CAMPUS_RADIUS, PLACES, SPAWN, nearestInteractable, placeById, standPointFor } from './places.js';
 import './world.css';
 
@@ -67,6 +71,7 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 			<button type="button" class="wd-digbtn" hidden>Hold to dig</button>
 			<nav class="wd-places" aria-label="Places"></nav>
 			<div class="wd-stick" hidden><i></i></div>
+			<div class="wd-tags"></div>
 			<div class="wd-toasts" aria-live="polite"></div>
 			<section class="wd-gempanel" hidden role="dialog" aria-label="Your gems">
 				<header><b>Your gems</b><button type="button" class="wd-x" aria-label="Close">${icon('close', 16)}</button></header>
@@ -109,6 +114,55 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 	const { renderer, scene, camera } = campus;
 	const player = createPlayer(scene, renderer, { spawn: SPAWN, yaw: SPAWN.yaw, bound: CAMPUS_RADIUS, keepout: 0 });
 
+	// ---- the agents who live here ----
+	const agents = createAgents({
+		scene,
+		tagsEl: $('.wd-tags'),
+		solids: campus.solids,
+		isTouch,
+		reducedMotion,
+		visitorName: () => shell.displayName(),
+		onGreeting: (m) => { if (!talk.isOpen) toast(`${m.name} says hello`, '#c4b5fd'); },
+	});
+	let castErrorShown = false;
+	agents.onState(({ state, error }) => {
+		if (state === 'error' && !castErrorShown) {
+			castErrorShown = true;
+			toast(`The agents could not come out: ${error}. The campus is still open.`, '#f87171');
+		}
+	});
+	const talk = createTalkPanel({
+		host: $('.wd-hud'),
+		shell,
+		agents,
+		onOpen: () => { controls.enabled = false; gemPanel.hidden = true; },
+		onClose: () => { if (!busy && phone.hidden) controls.enabled = true; },
+	});
+	// A name tag is a button: tap it to walk over, or to start talking when already there.
+	$('.wd-tags').addEventListener('click', (e) => {
+		const tag = e.target.closest('.wd-tag');
+		if (!tag || busy) return;
+		const m = agents.byId(tag.dataset.agent);
+		if (!m) return;
+		if (nearest?.type === 'agent' && nearest.id === m.member.id) return interact();
+		goToAgent(m);
+	});
+	/** Step up to an agent from the side the player is on, close enough to talk, facing them. */
+	function goToAgent(m) {
+		const ax = m.rig.position.x;
+		const az = m.rig.position.z;
+		const p = player.position;
+		let a = Math.atan2(p.x - ax, p.z - az);
+		if (!Number.isFinite(a) || Math.hypot(p.x - ax, p.z - az) < 0.01) a = m.spot.yaw;
+		const x = ax + Math.sin(a) * APPROACH_DISTANCE;
+		const z = az + Math.cos(a) * APPROACH_DISTANCE;
+		const yaw = a + Math.PI;
+		player.root.position.set(x, 0, z);
+		player.root.rotation.y = yaw;
+		controls.orbit.yaw = yaw;
+		camera.position.set(x - Math.sin(yaw) * 6, 3.2, z - Math.cos(yaw) * 6);
+	}
+
 	const cameraCtl = createCameraModeController({ storageKey: 'tws:world-camera', onChange: syncCamera });
 	const camBtn = $('.wd-cam');
 	function syncCamera() {
@@ -131,6 +185,11 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 			// A tap only acts on what the player could also reach by walking up:
 			// far-away taps walk the player there instead.
 			if (nearest && nearest.id === hit.id) return interact();
+			if (hit.type === 'agent') {
+				const m = agents.byId(hit.id);
+				if (m) goToAgent(m);
+				return;
+			}
 			const target = hit.type === 'place' ? placeById(hit.id) : hit.type === 'vein' ? campus.veinPositions.find((v) => v.id === hit.id) : placeById('office');
 			if (target) goTo(target.type === 'vein' || hit.type === 'vein' ? { x: target.x, z: target.z, keepout: 0.75 } : target);
 		},
@@ -243,14 +302,23 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 			if (nearest.id === 'headset') return wearHeadset();
 		}
 		if (nearest.type === 'place') return enterPlace(placeById(nearest.id));
+		if (nearest.type === 'agent') return talkTo(nearest.id);
 		// Veins are hold-to-dig; a press alone just nudges.
 		if (nearest.type === 'vein' && !digHeld) toast('Hold E to dig', '#c4b5fd');
+	}
+
+	/** Open the conversation panel on the agent in reach; the agent holds still and faces the visitor. */
+	function talkTo(id) {
+		const m = agents.byId(id);
+		if (!m) return;
+		talk.open(m.member, { place: m.place });
 	}
 
 	let sitting = null; // { t, from, to, look }
 	async function sitDown() {
 		if (busy) return;
 		busy = true;
+		talk.close();
 		controls.enabled = false;
 		gemPanel.hidden = true;
 		// Dolly from where the camera is into the screen; the frame loop drives it.
@@ -264,6 +332,7 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 	async function enterPlace(place) {
 		if (!place || busy) return;
 		busy = true;
+		talk.close();
 		controls.enabled = false;
 		await fadeTo(true, `Entering ${place.title}`);
 		const s = standPointFor(place);
@@ -340,7 +409,7 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 	// ---- proximity ----
 	function updateNearest() {
 		const p = player.position;
-		const n = nearestInteractable(p.x, p.z, { veinPositions: campus.veinPositions });
+		const n = nearestInteractable(p.x, p.z, { veinPositions: campus.veinPositions, agents: agents.positions() });
 		const changed = (n && n.id) !== (nearest && nearest.id);
 		nearest = n;
 		if (changed) {
@@ -406,6 +475,7 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 		const move = xr ? xrMove() || { x: 0, z: 0 } : controls.readMove();
 		const yaw = xr ? Math.atan2(-camera.matrixWorld.elements[8], -camera.matrixWorld.elements[10]) + Math.PI : controls.orbit.yaw;
 		player.update(dt, move, yaw, controls.run, campus.solids);
+		if (!sitting) agents.update(dt, player.position, camera);
 		campus.tick(dt);
 		ticker.tick(dt);
 		if (Math.hypot(player.position.x, player.position.z - 8) < 14) {
@@ -463,6 +533,7 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 			refreshTicker();
 			miner.refresh();
 			scheduleTicker();
+			agents.load();
 		}
 		startLoop();
 		fade.classList.add('is-on');
@@ -474,6 +545,8 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 		stopLoop();
 		clearInterval(tickerTimer);
 		xrSession?.end().catch(() => {});
+		talk.dispose();
+		agents.dispose();
 		campus.dispose();
 		screen.dispose();
 		ticker.dispose();

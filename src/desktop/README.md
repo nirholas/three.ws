@@ -17,8 +17,11 @@ The web desktop served at `/` (page: `pages/desktop.html`). See
 | `world/index.js` | The campus controller: mounts the 3D world over the desktop, input, proximity prompts, sit-down and walk-in transitions, the phone, the VR headset, mining, the frame loop |
 | `world/campus.js` | The scene: ground, office desk, exchange, launchpad, mine, forge, gallery, plaza, market, lighting |
 | `world/places.js` | Pure campus map: places, keep-outs, veins, desk objects, trigger radii, stand points (unit tested) |
+| `world/cast.js` | Pure rules for the agents on the campus: who qualifies (real name, public GLB), where they stand, prompt distances, the SSE parser, the embed snippet and the grounding prompt (unit tested) |
+| `world/agents.js` | Spawns the cast from `/api/agents/public?avatar=1`, each in its own body: wander, notice and face the visitor, the greeter's wave and hello, name tags and speech bubbles, the streaming `/api/chat` client |
+| `world/talk.js` | The conversation panel: streamed replies, read-aloud through `/api/tts/speak`, the profile window and the one-tag `<agent-3d>` embed |
 | `world/screen.js` | The desk monitor that shows the live desktop and the sit-down camera move |
 | `world/ticker.js` | The exchange ticker board fed by `/api/three-token/stats` and `/api/coin/markets` (unit tested) |
 | `world/mine.js` | Gem mining client over `/api/world/gems` (server-rolled gems, anonymous id that adopts onto the account) |
 | `world/xr.js` | WebXR session entry for the headset |
-| `world/world.css` | HUD, prompts, phone overlay, gem panel, touch controls |
+| `world/world.css` | HUD, prompts, phone overlay, gem panel, touch controls, agent name tags and the talk panel |

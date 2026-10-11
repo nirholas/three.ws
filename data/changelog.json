@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-11",
+			"title": "Real agents live on the campus: a greeter meets you at the gate and every agent you walk up to talks back",
+			"link": "/?world=1",
+			"summary": "The campus is now populated by the ten most talked-to public agents on three.ws, each wearing its own avatar from its public record (five on a phone). The most popular one stands beside the gate path, turns to you as you walk in, waves and says hello through its own brain. Every agent idles, wanders a step, faces you when you come near and carries a name tag; walk up (or tap the tag) and press E to open a conversation that streams the agent's real reply, shows it as a speech bubble and can read it aloud. The panel opens the agent's profile as a window and hands you the one-tag embed that puts that exact agent, body and brain, on any web page. GET /api/agents/public now returns avatar_model_url for public and unlisted avatars.",
+			"tags": [
+				"feature",
+				"desktop"
+			]
+		},
+		{
+			"date": "2026-10-11",
 			"title": "The homepage is now the Field: one live map of every agent, launch and wallet move",
 			"link": "/",
 			"summary": "The front page no longer opens a web desktop. It opens the Field, a zoomable map of the whole platform built from live data. Every public agent is a star in the core, newest at the centre, and turns into its avatar as you zoom in; around it sit ten districts (Create, Forge, Gallery, Launchpad, Trenches, Pulse, Marketplace, Chat, Agent Studio, Console). From afar each shows one live readout; zoom in and it opens into a card with real content: the newest avatars, coins agents launched, the $THREE price, market cap, holders and contract address, the latest agent wallet moves, the skills agents carry most. New wallet moves from Pulse fly across the map as comets and land in their district. Search finds any place, agent or page; opening one loads the real page in place, with its own shareable /?go= link, and Back or Esc returns you to the map. It works with mouse, touch, pinch and keyboard, in light and dark, and lays itself out for phones. The windowed desktop is still at /?view=desktop and the 3D campus at /?world=1.",

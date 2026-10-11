@@ -387,6 +387,55 @@ Returns the authenticated user's default agent, creating one automatically if no
 
 ---
 
+### Public agent directory
+
+```
+GET /api/agents/public
+```
+
+The browsable index of public agents. No auth; IP rate limited; 30-second CDN cache. Internal (service-account) agents never list.
+
+| Query | Meaning |
+| --- | --- |
+| `q` | Full-text search on name and description |
+| `skill` | Only agents offering this skill slug |
+| `sort` | `popular` (default), `newest`, `name` or `live` (most recent real on-chain or skill action first) |
+| `limit` | Page size, max 48 (default 24) |
+| `before` | Cursor (`created_at <`) for `popular`, `newest` and `name` |
+| `offset` | Offset for `live` |
+| `network` | Only on-chain agents registered on this network |
+| `onchain=1` | Only agents with an on-chain identity |
+| `avatar=1` | Only agents whose avatar GLB is publicly readable |
+
+**Response**
+
+```json
+{
+	"agents": [
+		{
+			"id": "b7a2c1e4-0000-4000-8000-000000000001",
+			"name": "Aria",
+			"description": "Product guide",
+			"skills": [{ "name": "Research", "slug": "research" }],
+			"avatar_thumbnail": "https://three.ws/avatars/thumbs/default.png",
+			"avatar_model_url": "https://<public-r2-domain>/avatars/<user>/<agent>.glb",
+			"home_url": "/agents/b7a2c1e4-0000-4000-8000-000000000001",
+			"is_registered": true,
+			"chat_count": 90,
+			"created_at": "2026-01-15T10:00:00Z",
+			"onchain": { "network": "mainnet", "asset": "THREEsynthetic1111111111111111111111111111" }
+		}
+	],
+	"count": 1,
+	"has_more": false,
+	"generated_at": "2026-10-11T09:00:00Z"
+}
+```
+
+`avatar_model_url` is the agent's GLB and is present only when the avatar's visibility is public or unlisted and the server knows its public storage domain (`S3_PUBLIC_DOMAIN`); otherwise it is `null`. The desktop campus wears it to seat real agents in the 3D world, and `<agent-3d agent-id>` loads the same file. The `live` sort also returns `last_action_at`, `action_count` and, on the first page, `total` and `active_total`.
+
+---
+
 ### Get agent by ID
 
 ```
@@ -10116,7 +10165,7 @@ visitor without an id gets an empty ledger with `miner: null`.
 		{ "id": "amethyst", "label": "Amethyst", "weight": 260, "points": 3, "hex": 12891645 },
 		{ "id": "sapphire", "label": "Sapphire", "weight": 130, "points": 8, "hex": 6333946 },
 		{ "id": "emerald", "label": "Emerald", "weight": 60, "points": 20, "hex": 3462041 },
-		{ "id": "ruby", "label": "Ruby", "weight": 24, "points": 50, "hex": 16286065 },
+		{ "id": "ruby", "label": "Ruby", "weight": 24, "points": 50, "hex": 16281969 },
 		{ "id": "diamond", "label": "Diamond", "weight": 6, "points": 200, "hex": 16777215 }
 	],
 	"dig_seconds": 4

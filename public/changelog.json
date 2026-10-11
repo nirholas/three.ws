@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T06:41:38.424Z",
+	"generated_at": "2026-10-11T06:55:55.574Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -82,6 +82,16 @@
 			"title": "Run Receipts",
 			"summary": "Every 3D Studio generation writes down what each stage was expected to do, what it actually did, and the verdict, with the cause whenever a stage fell back or missed. Signed with ed25519, public, and verifiable offline. Aggregate stage-by-stage rates here, one receipt per run at /runs/<id>.",
 			"link": "/runs",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "The Field",
+			"summary": "How the three.ws homepage works: a live, zoomable map of every agent and product surface, its districts and data sources, semantic zoom, search, deep links and phone layout.",
+			"link": "/docs/field",
 			"tags": [
 				"launch"
 			]
@@ -250,12 +260,33 @@
 		{
 			"date": "2026-10-11",
 			"type": "update",
+			"title": "Real agents live on the campus: a greeter meets you at the gate and every agent you walk up to talks back",
+			"summary": "The campus is now populated by the ten most talked-to public agents on three.ws, each wearing its own avatar from its public record (five on a phone). The most popular one stands beside the gate path, turns to you as you walk in, waves and says hello through its own brain. Every agent idles, wanders a step, faces you when you come near and carries a name tag; walk up (or tap the tag) and press E to open a conversation that streams the agent's real reply, shows it as a speech bubble and can read it aloud. The panel opens the agent's profile as a window and hands you the one-tag embed that puts that exact agent, body and brain, on any web page. GET /api/agents/public now returns avatar_model_url for public and unlisted avatars.",
+			"link": "/?world=1",
+			"tags": [
+				"feature",
+				"desktop"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
 			"title": "The desktop behaves like a real computer",
 			"summary": "Drag a selection box across the desktop, move icons on a snap grid, right-click for view options, and open every app from desktop icons or All Apps. Settings now covers your profile, theme, accent colour, wallpaper (including your own photo), icon size and taskbar, and the whole session (windows, icon layout, preferences) is saved in your browser, with export, import and reset.",
 			"link": "/docs/desktop",
 			"tags": [
 				"feature",
 				"desktop"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "The homepage is now the Field: one live map of every agent, launch and wallet move",
+			"summary": "The front page no longer opens a web desktop. It opens the Field, a zoomable map of the whole platform built from live data. Every public agent is a star in the core, newest at the centre, and turns into its avatar as you zoom in; around it sit ten districts (Create, Forge, Gallery, Launchpad, Trenches, Pulse, Marketplace, Chat, Agent Studio, Console). From afar each shows one live readout; zoom in and it opens into a card with real content: the newest avatars, coins agents launched, the $THREE price, market cap, holders and contract address, the latest agent wallet moves, the skills agents carry most. New wallet moves from Pulse fly across the map as comets and land in their district. Search finds any place, agent or page; opening one loads the real page in place, with its own shareable /?go= link, and Back or Esc returns you to the map. It works with mouse, touch, pinch and keyboard, in light and dark, and lays itself out for phones. The windowed desktop is still at /?view=desktop and the 3D campus at /?world=1.",
+			"link": "/",
+			"tags": [
+				"feature"
 			]
 		},
 		{

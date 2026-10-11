@@ -2,6 +2,8 @@
 // is spawned. Pure data so tests can check that every destination is a real
 // desktop app or page and that nothing overlaps.
 
+import { nearestAgent } from './cast.js';
+
 /** Walkable radius of the campus, in metres. */
 export const CAMPUS_RADIUS = 46;
 
@@ -144,10 +146,12 @@ export function dist2(ax, az, bx, bz) {
 
 /**
  * The nearest interactable to the player: a desk object when inside the
- * office, otherwise the nearest place within its trigger distance.
- * @returns {{ type: 'object'|'place'|'vein', id: string, title: string, sub: string, d: number } | null}
+ * office, then a mine vein, then an agent within reach (cast.js), otherwise
+ * the nearest place within its trigger distance.
+ * @param {{ veinPositions?: Array<{id:string,x:number,z:number}>, agents?: Array<{id:string,name:string,sub:string,x:number,z:number}> }} [o]
+ * @returns {{ type: 'object'|'place'|'vein'|'agent', id: string, title: string, sub: string, d: number, x?: number, z?: number } | null}
  */
-export function nearestInteractable(px, pz, { veinPositions = [] } = {}) {
+export function nearestInteractable(px, pz, { veinPositions = [], agents = [] } = {}) {
 	let best = null;
 	const office = placeById('office');
 	for (const o of DESK_OBJECTS) {
@@ -159,6 +163,8 @@ export function nearestInteractable(px, pz, { veinPositions = [] } = {}) {
 		const d = Math.sqrt(dist2(px, pz, v.x, v.z));
 		if (d < OBJECT_TRIGGER + 0.4 && (!best || d < best.d)) best = { type: 'vein', id: v.id, title: 'Dig here', sub: 'Hold E to mine', d };
 	}
+	if (best) return best;
+	best = nearestAgent(px, pz, agents);
 	if (best) return best;
 	for (const p of PLACES) {
 		if (p.kind === 'office' || p.kind === 'mine') continue;

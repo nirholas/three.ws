@@ -471,18 +471,8 @@ function buildPlaza(place) {
 	base.position.y = 0.2;
 	base.userData.hit = { type: 'place', id: place.id };
 	g.add(base);
-	const figures = [];
-	for (let i = 0; i < 7; i++) {
-		const a = (i / 7) * Math.PI * 2;
-		const fig = new Mesh(new CylinderGeometry(0.22, 0.26, 1.5, 10), std({ color: 0x1f1f26, emissive: hueColor(place.hue + i * 30, 0.5), emissiveIntensity: 0.4 }));
-		fig.position.set(Math.cos(a) * 2.4, 1.15, Math.sin(a) * 2.4);
-		const head = new Mesh(new OctahedronGeometry(0.22, 1), std({ color: 0xeeeef4 }));
-		head.position.set(Math.cos(a) * 2.4, 2.15, Math.sin(a) * 2.4);
-		fig.userData.hit = base.userData.hit;
-		head.userData.hit = base.userData.hit;
-		g.add(fig, head);
-		figures.push(head);
-	}
+	// The plaza is a stage, not a diorama: the real agents (agents.js) stand
+	// around it, so nothing abstract is built here to stand in for them.
 	const beacon = new Mesh(new CylinderGeometry(0.1, 0.1, 4.5, 8), glow(col, 1.2));
 	beacon.position.y = 2.6;
 	g.add(beacon);
@@ -491,7 +481,7 @@ function buildPlaza(place) {
 	g.add(sign);
 	g.position.set(place.x, 0, place.z);
 	g.rotation.y = facing(place);
-	return { group: g, figures };
+	return { group: g };
 }
 
 function buildMarket(place) {
@@ -581,7 +571,7 @@ export function createCampus(canvas, { screenMaterial, tickerMaterial, reducedMo
 		tip.position.set(sx, 5.55, 33);
 		scene.add(pylon, tip);
 	}
-	const gateSign = makeLabelSprite('Welcome to three.ws', 'Walk to your desk, or explore', '#c4b5fd', 1.1);
+	const gateSign = makeLabelSprite('Welcome to three.ws', 'The 3D agent layer of the internet', '#c4b5fd', 1.1);
 	gateSign.position.set(0, 6.4, 33);
 	scene.add(gateSign);
 
@@ -606,7 +596,8 @@ export function createCampus(canvas, { screenMaterial, tickerMaterial, reducedMo
 	solids.push({ group: { position: new Vector3(m.x - 5.2, 0, m.z - 3) }, keepout: 2.6 }, { group: { position: new Vector3(m.x + 5.2, 0, m.z - 3) }, keepout: 2.6 });
 	for (const v of mine.veins) solids.push({ group: { position: new Vector3(v.x, 0, v.z) }, keepout: 0.75 });
 
-	// Highlight: the nearest interactable gets a soft ring under it.
+	// Highlight: the nearest interactable gets a soft ring under it (an agent's
+	// ring follows the agent, so the caller passes its current x/z).
 	const halo = new Mesh(new RingGeometry(0.9, 1.1, 40), new MeshBasicMaterial({ color: VIOLET, transparent: true, opacity: 0.7, toneMapped: false }));
 	halo.rotation.x = -Math.PI / 2;
 	halo.position.y = 0.03;
@@ -636,6 +627,8 @@ export function createCampus(canvas, { screenMaterial, tickerMaterial, reducedMo
 			x = p.x;
 			z = p.z;
 			r = p.keepout + 0.6;
+		} else if (target.type === 'agent') {
+			r = 0.75;
 		}
 		halo.position.x = x;
 		halo.position.z = z;
@@ -670,7 +663,6 @@ export function createCampus(canvas, { screenMaterial, tickerMaterial, reducedMo
 			v.light.intensity = 0.4 + k;
 		}
 		for (const f of gallery.frames) f.rotation.y += dt * 0.25;
-		for (const h of plaza.figures) h.rotation.y += dt * 0.6;
 		halo.material.opacity = 0.55 + Math.sin(t * 4) * 0.2;
 	}
 
