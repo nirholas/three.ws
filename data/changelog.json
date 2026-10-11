@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-11",
+			"title": "3D viewers no longer flood the browser console, and /trenches stops hammering an offline feed",
+			"link": "/marketplace",
+			"summary": "Every page with a 3D model viewer moved to model-viewer 4.4.0, the first release that both decodes our compressed avatars and drops the debug lines 4.3 printed for every model on the page. The trenches dashboard now checks the feed once and backs off while it is offline instead of sending five requests every 15 seconds, and desktop app windows no longer trigger a fullscreen-attribute warning.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-10-11",
 			"title": "A page for every three.ws app: Android, Solana Seeker, iPhone, desktop and the web desktop",
 			"link": "/apps",
 			"summary": "The new Apps hub lists every way to run three.ws, each with its own page: the web desktop, the Android app (APK download), Solana Seeker (live on the dApp Store, Seed Vault sign-in and Genesis Token verification), iPhone and iPad (what runs today and what the native build adds once Apple enrollment clears), and the Windows and Linux desktop app, whose download button reads the live release feed and picks the right file for your system.",

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T06:11:43.277Z",
+	"generated_at": "2026-10-11T06:20:32.470Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -164,6 +164,16 @@
 			"link": "/docs/desktop",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "3D viewers no longer flood the browser console, and /trenches stops hammering an offline feed",
+			"summary": "Every page with a 3D model viewer moved to model-viewer 4.4.0, the first release that both decodes our compressed avatars and drops the debug lines 4.3 printed for every model on the page. The trenches dashboard now checks the feed once and backs off while it is offline instead of sending five requests every 15 seconds, and desktop app windows no longer trigger a fullscreen-attribute warning.",
+			"link": "/marketplace",
+			"tags": [
+				"fix"
 			]
 		},
 		{

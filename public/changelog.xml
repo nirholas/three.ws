@@ -135,6 +135,14 @@
 			<description>How the three.ws web desktop works: the CTRL Mica theme, taskbar and Start menu, snappable windows that frame real pages, deep links, saved layout, the classic view and how to add an app.</description>
 		</item>
 		<item>
+			<title>3D viewers no longer flood the browser console, and /trenches stops hammering an offline feed</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-10-11:3D viewers no longer flood the browser console, and /trenches stops hammering an offline feed</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every page with a 3D model viewer moved to model-viewer 4.4.0, the first release that both decodes our compressed avatars and drops the debug lines 4.3 printed for every model on the page. The trenches dashboard now checks the feed once and backs off while it is offline instead of sending five requests every 15 seconds, and desktop app windows no longer trigger a fullscreen-attribute warning.</description>
+		</item>
+		<item>
 			<title>A page for every three.ws app: Android, Solana Seeker, iPhone, desktop and the web desktop</title>
 			<link>https://three.ws/apps</link>
 			<guid isPermaLink="false">2026-10-11:A page for every three.ws app: Android, Solana Seeker, iPhone, desktop and the web desktop</guid>
