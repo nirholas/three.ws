@@ -363,12 +363,13 @@ An ElevenLabs config also carries `agentId`, the agent the voice belongs to. `Ru
 
 ### Speech-to-Text
 
-| Provider | Notes |
-|---------|-------|
-| `browser` (default) | Uses `window.SpeechRecognition` or `window.webkitSpeechRecognition`. Chrome/Edge only. Silently fails if unavailable. |
-| `none` | STT disabled. |
+| Provider | Class | Notes |
+|---------|-------|-------|
+| `browser` (default) | `BrowserSTT` | Uses `window.SpeechRecognition` or `window.webkitSpeechRecognition`. Chrome/Edge only. Silently fails if unavailable. |
+| `whisper` | `WhisperSTT` (`runtime/whisper-stt.js`) | On-device recognition via transformers.js: Moonshine for English (~63 MB), Whisper-base for other languages (~77 MB, 99 languages). Runs in every browser with WebAssembly, Firefox and Safari included, where `window.SpeechRecognition` is missing or ships audio to a vendor. Models are fetched once from the Hugging Face CDN and cached in the browser Cache API. Falls back to `BrowserSTT` when on-device recognition isn't supported (`onDeviceSupported()`), and falls back further to the server-side `/api/asr` (NVIDIA Riva) lane if the on-device pass fails. |
+| `none` | n/a | STT disabled. |
 
-STT starts listening when `runtime.listen()` is called, which the UI typically triggers on mic button press. Interim results fire `voice:transcript` events with `final: false`; the final transcript fires with `final: true` and the runtime feeds it into `send()`.
+STT starts listening when `runtime.listen()` is called, which the UI typically triggers on mic button press. Interim results fire `voice:transcript` events with `final: false`; the final transcript fires with `final: true` and the runtime feeds it into `send()`. `<agent-3d>` shows the mic button whenever a browser recognizer exists OR the manifest sets `voice.stt.provider` to `"whisper"`, so Firefox and Safari visitors (no `window.SpeechRecognition`) still get push-to-talk on an agent configured for on-device STT.
 
 ---
 
