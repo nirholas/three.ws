@@ -553,8 +553,38 @@ describe('queue', () => {
 			article: { title: 'How rigs get named', body: 'data/x-content/articles/demo.md', cover: { path: 'public/x-media/t/a.png' } },
 			posts: [{ text: 'The long version of how Rig Doctor reads a skeleton.' }],
 		};
-		expect(validateItem(item, dir)).toEqual([]);
-		expect(validateItem({ ...item, article: { ...item.article, cover: undefined } }, dir).join('\n')).toMatch(/cover/);
+		const draft = { ...item, status: 'draft' };
+		expect(validateItem(draft, dir)).toEqual([]);
+		expect(validateItem({ ...draft, article: { ...item.article, cover: undefined } }, dir).join('\n')).toMatch(/cover/);
+	});
+
+	it('holds an Article for review to the depth the X Article limits allow', () => {
+		const dir = sandbox();
+		const short = '## Why\n\nBecause.\n\n![Hero](../../../public/x-media/t/b.png)\n\nThe end.';
+		writeFileSync(join(dir, 'data/x-content/articles/demo.md'), short);
+		const item = {
+			id: 'demo', status: 'review', kind: 'article', tier: 1, lane: 'article', pattern: 'longform', notBefore: '2026-09-17T14:00:00Z',
+			article: { title: 'How rigs get named', body: 'data/x-content/articles/demo.md', cover: { path: 'public/x-media/t/a.png' } },
+			posts: [{ text: 'The long version of how Rig Doctor reads a skeleton.' }],
+		};
+		const problems = validateItem(item, dir).join('\n');
+		for (const pattern of [/title is \d+ characters/, /body is \d+ words/, /\d+ sections/, /code blocks and tables total/, /inline images/, /The partners behind/, /"Try it"/]) expect(problems).toMatch(pattern);
+
+		mkdirSync(join(dir, 'pages'), { recursive: true });
+		writeFileSync(join(dir, 'pages/partners.html'), '<h3 class="partner-name">Acme Cloud</h3><h3 class="partner-name">Globex</h3>');
+		const sentence = 'Each stage reads the file, names what it found and hands the result to the next stage in plain words. ';
+		const section = (title) => `## ${title}\n\n${sentence.repeat(26)}\n\n`;
+		const code = '```js\n' + 'const stage = run(input);\n'.repeat(120) + '```\n\n';
+		const image = (name) => `![Frame](../../../public/x-media/t/${name}.png)\n\n`;
+		const full = (partners) => ['One', 'Two', 'Three', 'Four', 'Five', 'Six'].map(section).join('') + code + image('a') + image('b') + image('a') + image('b')
+			+ `## The partners behind the work\n\n${partners}\n\n## Try it\n\nOpen three.ws/rig-doctor.\n`;
+		const longTitle = 'How a skeleton gets its name in 41 steps, and what each step tells you about every humanoid rig';
+		const deep = { ...item, article: { ...item.article, title: longTitle } };
+		writeFileSync(join(dir, 'data/x-content/articles/demo.md'), full('Thanks to Acme Cloud for the compute.'));
+		expect(validateItem(deep, dir).join('\n')).toMatch(/does not cover Globex/);
+		writeFileSync(join(dir, 'data/x-content/articles/demo.md'), full('Thanks to Acme Cloud for the compute and Globex for the review.'));
+		const left = validateItem(deep, dir).filter((problem) => /article (title|body)|code blocks|inline images|partners|Try it/.test(problem));
+		expect(left).toEqual([]);
 	});
 });
 

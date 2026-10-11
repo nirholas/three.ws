@@ -11606,7 +11606,7 @@
 		},
 		{
 			"id": "proof-reels-article",
-			"status": "approved",
+			"status": "review",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
@@ -11614,7 +11614,7 @@
 			"notBefore": "2026-10-09T19:04:26.396Z",
 			"covers": [],
 			"article": {
-				"title": "How our feature reels are filmed: a scripted test run against the live site",
+				"title": "Nine cylinders to five in 15.9 seconds: how each three.ws feature reel is filmed as a live test run",
 				"body": "data/x-content/articles/proof-reels-article.md",
 				"cover": {
 					"path": "public/x-media/proof-reels-article/cover.png",
@@ -11623,92 +11623,12 @@
 			},
 			"claims": [
 				{
-					"says": "If any step fails, there is no video and the feature is not announced",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/reel.js",
-							"contains": "if (run.passed && film) {"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/reel.js",
-							"contains": "the last run failed"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/queue.js",
-							"contains": "problems.push(...proofProblems(item, root, now)"
-						}
-					]
-				},
-				{
-					"says": "The page clock is stepped one frame at a time",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/reel.js",
-							"contains": "await this.page.clock.runFor(this.frameMs);"
-						}
-					]
-				},
-				{
-					"says": "1/30 of a second each",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/reel.js",
-							"contains": "export const DEFAULT_FPS = 30;"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/reel.js",
-							"contains": "this.frameMs = 1000 / fps;"
-						}
-					]
-				},
-				{
 					"says": "on a machine with no GPU",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "api/_lib/x-content/reel.js",
 							"contains": "WebGL is rendered in software, because the machines that make reels have no"
-						}
-					]
-				},
-				{
-					"says": "what it refuses to film",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/reel.js",
-							"contains": "does not fit the bar in this format; shorten it"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/verify.js",
-							"contains": "the browser draws emoji as empty boxes on this machine, so reels would show the product broken"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/reel.js",
-							"contains": "export const MIN_MOTION = 0.15;"
-						}
-					]
-				},
-				{
-					"says": "Each one is a scripted test run against the live site, filmed while it runs",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/reel.js",
-							"contains": "Proof reels: a post's video is a filmed, passing end-to-end run of the"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/reel.js",
-							"contains": "const response = await take.page.goto(step.goto, { waitUntil: 'domcontentloaded', timeout: 60_000 });"
 						}
 					]
 				},
@@ -11729,36 +11649,6 @@
 							"type": "file",
 							"path": "api/_lib/x-content/queue.js",
 							"contains": "problems.push(...proofProblems(item, root, now)"
-						}
-					]
-				},
-				{
-					"says": "A step can goto a page, click a control by its visible text, type into a field, press a key, drag across the scene, expect a text to appear, or read a fact off the screen with a pattern",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/reel.js",
-							"contains": "export const STEP_KINDS = ['goto', 'click', 'hover', 'type', 'press', 'expect', 'read', 'drag', 'scroll', 'wait', 'hold', 'caption'];"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/reel.js",
-							"contains": "const match = new RegExp(step.match, 'i').exec(scope);"
-						}
-					]
-				},
-				{
-					"says": "These are five of the steps behind the Machine Atlas reel",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "data/x-content/queue.json",
-							"contains": "\"selector\": \"#ma-p-cylinders-out\""
-						},
-						{
-							"type": "file",
-							"path": "data/x-content/queue.json",
-							"contains": "\"expect\": \"16.5 L\""
 						}
 					]
 				},
@@ -11824,21 +11714,6 @@
 							"type": "file",
 							"path": "api/_lib/x-content/reel.js",
 							"contains": "await this.page.clock.runFor(this.frameMs);"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/reel.js",
-							"contains": "export const DEFAULT_FPS = 30;"
-						}
-					]
-				},
-				{
-					"says": "Every frame of a reel is a distinct frame at 1/30 s of page time",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/reel.js",
-							"matches": "Every frame of the reel\\n// is a real, distinct frame at exactly 1/fps of page time"
 						},
 						{
 							"type": "file",
@@ -11938,7 +11813,7 @@
 						{
 							"type": "file",
 							"path": "api/_lib/x-content/reel.js",
-							"contains": "// Anything that waits on the world runs on the real clock and is not filmed."
+							"contains": "// Waiting is not filmed. While a step waits on the network the clock runs in"
 						}
 					]
 				},
@@ -11963,17 +11838,7 @@
 						{
 							"type": "file",
 							"path": "api/_lib/x-content/reel.js",
-							"contains": "const CUT_BADGE_FRAMES = 45;"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/reel.js",
-							"contains": "await this.bar.set({ badge: `cut ${formatCut(seconds)}` });"
-						},
-						{
-							"type": "file",
-							"path": "data/x-content/proofs/drive-copilot.json",
-							"contains": "\"seconds\": 6.3"
+							"contains": "export function formatCut(seconds) {"
 						}
 					]
 				},
@@ -12048,7 +11913,7 @@
 						{
 							"type": "file",
 							"path": "api/_lib/x-content/verify.js",
-							"contains": "const run = await runScenario(item.scenario, { film: false });"
+							"contains": "const run = await runScenario(item.scenario, { film: false, root });"
 						}
 					]
 				},
@@ -12078,21 +11943,6 @@
 					]
 				},
 				{
-					"says": "it is given four frames from the reel, the captions in order, and the record of the run, and asked whether each caption is true of the frame under it",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/reel.js",
-							"contains": "export function reelFrames({ root, path, count = 4 }) {"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/editor.js",
-							"contains": "whether each caption is true of the frame it sits under"
-						}
-					]
-				},
-				{
 					"says": "The camera saves a picture of the page at the moment the step failed",
 					"evidence": [
 						{
@@ -12113,7 +11963,7 @@
 						{
 							"type": "file",
 							"path": "api/_lib/x-content/reel.js",
-							"contains": "if (proof.video && proof.video.motion < MIN_MOTION) {"
+							"contains": "of the reel's frames change; film an action, or post a still instead"
 						}
 					]
 				},
@@ -12123,62 +11973,532 @@
 						{
 							"type": "file",
 							"path": "api/_lib/x-content/verify.js",
+							"contains": "Draws an emoji and counts the pixels that carry colour."
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/verify.js",
 							"contains": "export async function emojiRendersInColor(page, text = '\\u{1F44B}') {"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/verify.js",
-							"contains": "canvas.width = canvas.height = 64;"
 						}
 					]
 				},
 				{
-					"says": "So it refuses, and says which font to install",
+					"says": "waited for the page to say 16.5 L",
 					"evidence": [
 						{
 							"type": "file",
-							"path": "api/_lib/x-content/verify.js",
-							"contains": "the browser draws emoji as empty boxes on this machine, so reels would show the product broken; ${EMOJI_FONT_FIX}"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/x-content/verify.js",
-							"contains": "export const EMOJI_FONT_FIX = 'install the COLRv1 build of Noto Color Emoji"
+							"path": "data/x-content/proofs/machine-atlas.json",
+							"contains": "\"target\": \"16.5 L\""
 						}
 					]
 				},
 				{
-					"says": "Some features did not pass when we used them. They are not in this feed",
+					"says": "477 frames, 15.9 seconds",
 					"evidence": [
 						{
 							"type": "file",
-							"path": "docs/ops/x-story-findings-2026-09-30.md",
-							"contains": "Features that could not be announced because they do not work"
+							"path": "data/x-content/proofs/machine-atlas.json",
+							"contains": "\"frames\": 477,"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/machine-atlas.json",
+							"contains": "\"durationSec\": 15.9,"
 						}
 					]
 				},
 				{
-					"says": "reels are made where posts are reviewed, not in production, which reads the record and does not film",
+					"says": "the chat endpoint answered 200, in 6.8 seconds",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/drive-copilot.json",
+							"contains": "\"status\": 200,"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/drive-copilot.json",
+							"contains": "\"seconds\": 6.8"
+						}
+					]
+				},
+				{
+					"says": "the same frame takes about 250 ms",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "api/_lib/x-content/reel.js",
-							"contains": "A browser and ffmpeg are needed, so reels are made where posts are reviewed"
+							"contains": "the same frame takes about 250 ms"
+						}
+					]
+				},
+				{
+					"says": "its record says 1280 by 720 at 30 frames a second",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/machine-atlas.json",
+							"contains": "\"width\": 1280,"
 						},
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/machine-atlas.json",
+							"contains": "\"height\": 720,"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/machine-atlas.json",
+							"contains": "\"fps\": 30,"
+						}
+					]
+				},
+				{
+					"says": "two cuts, 3.9 seconds and 6.3 seconds",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/drive-copilot.json",
+							"contains": "\"seconds\": 3.9"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/drive-copilot.json",
+							"contains": "\"seconds\": 6.3"
+						}
+					]
+				},
+				{
+					"says": "the reel is 13.4 seconds long",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/drive-copilot.json",
+							"contains": "\"durationSec\": 13.4,"
+						}
+					]
+				},
+				{
+					"says": "Typing the question took the machine 48.1 seconds and became 96 frames, 3.2 seconds of reel",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/drive-copilot.json",
+							"matches": "\"kind\": \"type\",[\\s\\S]{0,220}\"ms\": 48143,\\s*\"frames\": 96"
+						}
+					]
+				},
+				{
+					"says": "Steps 2, 7 and 11 wait for the page's own words, Ready, Parked and Speaking, to appear",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/drive-copilot.json",
+							"matches": "\"index\": 2,\\s*\"kind\": \"expect\",\\s*\"target\": \"Ready\""
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/drive-copilot.json",
+							"matches": "\"index\": 7,\\s*\"kind\": \"expect\",\\s*\"target\": \"Parked\""
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/drive-copilot.json",
+							"matches": "\"index\": 11,\\s*\"kind\": \"expect\",\\s*\"target\": \"Speaking\""
+						}
+					]
+				},
+				{
+					"says": "H.264 high profile, yuv420p, a constant frame rate",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "H.264 high, yuv420p, constant frame rate,"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "'-profile:v', 'high'"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "'-pix_fmt', 'yuv420p'"
+						}
+					]
+				},
+				{
+					"says": "the file's index placed at the front so the clip starts playing before it has finished downloading",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "moov atom first so it plays before it has finished downloading"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "'-movflags', '+faststart'"
+						}
+					]
+				},
+				{
+					"says": "FFmpeg and the x264 encoder turn the frames into H.264",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "'-c:v', 'libx264'"
+						}
+					]
+				},
+				{
+					"says": "Playwright, released under the Apache 2.0 licence",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "node_modules/playwright/package.json",
+							"contains": "\"license\": \"Apache-2.0\""
+						}
+					]
+				},
+				{
+					"says": "shipped through the ffmpeg-static package",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "package.json",
+							"contains": "\"ffmpeg-static\""
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "node_modules/ffmpeg-static/ffmpeg"
+						}
+					]
+				},
+				{
+					"says": "The pointer lives in a closed shadow root hung off the page's root element",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "The pointer lives in a closed shadow root hung off <html>, not <body>"
+						}
+					]
+				},
+				{
+					"says": "exact names are tried before partial ones",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "Exact names are tried before partial ones."
+						}
+					]
+				},
+				{
+					"says": "A control that is about to appear is waited for on the page's own clock, which is filmed",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "A control that is about to appear is waited for on the page's clock, which"
+						}
+					]
+				},
+				{
+					"says": "A scenario that uploads a file records its SHA-256",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "for (const upload of proof.uploads || []) {"
+						},
+						{
+							"type": "file",
+							"path": "docs/x-content-pipeline.md",
+							"contains": "also records\n  the file's SHA-256 in `uploads`"
+						}
+					]
+				},
+				{
+					"says": "each caption is set in the real bar, beside the longest stamp and the longest badge it could share the line with",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "the same bar the camera films. The stamp and the cut badge share the bar's"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "export const WIDEST_STAMP = 'live on three.ws @ 000000000, 2026-12-31';"
+						}
+					]
+				},
+				{
+					"says": "Three formats are built in",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "landscape: { width: 1024, height: 576, bar: 80, scale: 1.25 },"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "square: { width: 720, height: 720, bar: 104, scale: 1.5 },"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "portrait: { width: 540, height: 675, bar: 108, scale: 2 },"
+						}
+					]
+				},
+				{
+					"says": "WebGL runs on ANGLE with the SwiftShader software device",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "const BROWSER_ARGS = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--disable-gpu-compositing', '--disable-gpu-rasterization'];"
+						}
+					]
+				},
+				{
+					"says": "it is given four frames from the reel spread through its length, the captions in order, and the record of the run",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "export function reelFrames({ root, path, count = 4 }) {"
+						},
+						{
+							"type": "file",
+							"path": "docs/x-content-pipeline.md",
+							"contains": "For a reel the editor is given four frames from it, its captions, and the record of the run"
+						}
+					]
+				},
+				{
+					"says": "three.ws is a member of NVIDIA Inception",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing"
+						}
+					]
+				},
+				{
+					"says": "text to 3D, photo to avatar, auto-rigging and motion capture, plus the free hosted NIM lane behind the forge",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Every 3D generation lane already runs on NVIDIA silicon: text to 3D, photo to avatar, auto-rigging, and motion capture, plus the free hosted NIM lane behind the forge."
+						}
+					]
+				},
+				{
+					"says": "Google Cloud powers three.ws inference, storage and real-time serving",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Google Cloud powers three.ws inference, storage, and real-time serving at global scale."
+						}
+					]
+				},
+				{
+					"says": "Vertex AI brings Gemini models to agents alongside the three.ws identity layer",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Vertex AI integration lets agents leverage Gemini models alongside the three.ws identity and payment layer."
+						}
+					]
+				},
+				{
+					"says": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network."
+						}
+					]
+				},
+				{
+					"says": "eleven keyless 3D tools, including a look at the finished model from several angles",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "gives ChatGPT eleven keyless 3D tools: text to model, rigged avatars, conversational refinement, a look at the finished model from several angles"
+						}
+					]
+				},
+				{
+					"says": "three.ws lists IBM in the Strategic tier of its partner map",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Strategic"
+						}
+					]
+				},
+				{
+					"says": "Agent identity on three.ws integrates with IBM watsonx and IBM Granite",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws 3D agent identity and x402 payment rails integrate with IBM watsonx and IBM Granite."
+						}
+					]
+				},
+				{
+					"says": "three.ws is deployed on AWS infrastructure with Marketplace availability",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Deployed on AWS infrastructure with Marketplace availability."
+						}
+					]
+				},
+				{
+					"says": "with support for VPC deployment and IAM-integrated access control",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "with support for VPC deployment and IAM-integrated access control"
+						}
+					]
+				},
+				{
+					"says": "Alibaba Cloud extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Alibaba Cloud extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment."
+						}
+					]
+				},
+				{
+					"says": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits."
+						}
+					]
+				},
+				{
+					"says": "globally distributed RPC endpoints add capacity and redundancy to the chain access behind live Solana market data",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets, x402 settlement verification, and live Solana market data."
+						}
+					]
+				},
+				{
+					"says": "a builder-focused publishing partnership with HackerNoon",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "A builder-focused publishing partnership: feature articles, tutorials, and developer guides for people shipping with AI, published to HackerNoon's developer audience."
+						}
+					]
+				},
+				{
+					"says": "It is a scripted test run against the live site, filmed as it runs. If any step of the run fails, no video is made, and the feature is not announced.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "if (run.passed && film) {"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "the last run failed"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/queue.js",
+							"contains": "problems.push(...proofProblems(item, root, now)"
+						}
+					]
+				},
+				{
+					"says": "Each frame of a reel is a distinct frame at 1/30 s of page time",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"matches": "Every frame of the reel\\n// is a real, distinct frame at exactly 1/fps of page time"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "export const DEFAULT_FPS = 30;"
+						}
+					]
+				},
+				{
+					"says": "A step can goto a page, click a control by its visible text, hover, upload a file, type into a field, press a key, drag across the scene, scroll, wait, hold still, expect a text to appear, or read a fact off the screen with a pattern",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "export const STEP_KINDS = ['goto', 'click', 'hover', 'upload', 'type', 'press', 'expect', 'read', 'drag', 'scroll', 'wait', 'hold', 'caption'];"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "const match = new RegExp(step.match, 'i').exec(scope);"
+						}
+					]
+				},
+				{
+					"says": "Any step can also carry a caption",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "`caption` last, because any step may carry a caption as well as its action."
+						}
+					]
+				},
+				{
+					"says": "One list of steps does four jobs at once",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "// closes it. One list of steps is, at once:"
+						}
+					]
+				},
+				{
+					"says": "reels are made where posts are reviewed, and production reads the record without filming",
+					"evidence": [
 						{
 							"type": "file",
 							"path": "api/_lib/x-content/reel.js",
 							"contains": "and never in production. Production checks the record (proofProblems)."
-						}
-					]
-				},
-				{
-					"says": "The engine above is at three.ws/assembly",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/assembly",
-							"contains": "Radial Nine"
 						}
 					]
 				}
@@ -12216,7 +12536,7 @@
 			],
 			"posts": [
 				{
-					"text": "The feature videos in this feed are scripted test runs against the live site, filmed as they run. If any step fails, there is no video and the feature is not announced. The page clock is stepped one frame at a time, 1/30 of a second each, so a heavy 3D page films smoothly on a machine with no GPU. Here is how the camera works, and what it refuses to film."
+					"text": "One run opened the engine page, dragged a slider until nine cylinders became five, and was filmed at 30 frames a second: 477 frames, 15.9 seconds, stamped with the production commit. The write-up follows that run from steps to camera to proof record, with the partners and open tools behind it: three.ws/assembly"
 				}
 			],
 			"mentions": {},
@@ -12698,7 +13018,7 @@
 		},
 		{
 			"id": "wardrobe-article",
-			"status": "approved",
+			"status": "review",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
@@ -14132,7 +14452,7 @@
 		},
 		{
 			"id": "keeper-article",
-			"status": "approved",
+			"status": "review",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",

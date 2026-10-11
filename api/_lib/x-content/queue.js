@@ -20,6 +20,58 @@ export const STATUSES = ['draft', 'review', 'approved', 'paused', 'posted'];
 export const KINDS = ['post', 'article'];
 export const MAX_ARTICLE_TITLE = 100;
 
+// An Article is the long form, so it has to use the room X gives it (owner,
+// 2026-10-11): a title that fills the title limit with the headline number in
+// it, a body deep enough to explain the mechanism, code and tables that use
+// the share X allows, four or more real images, and the partners section.
+export const MIN_ARTICLE_TITLE = 80;
+export const MIN_ARTICLE_WORDS = 2400;
+export const MIN_ARTICLE_SECTIONS = 8;
+export const MIN_ARTICLE_IMAGES = 4;
+export const MIN_MARKDOWN_ENTITY = 3000;
+
+// The partner names three.ws/partners lists, read from the page so the gate
+// stays true when a programme is added.
+export function partnerNames(root) {
+	try {
+		const html = readFileSync(resolve(root, 'pages/partners.html'), 'utf8');
+		return [...html.matchAll(/class="partner-name"[^>]*>([^<]+)</g)].map((match) => match[1].trim()).filter(Boolean);
+	} catch {
+		return [];
+	}
+}
+
+function articleDepthProblems(root, title, blocks, converted) {
+	const problems = [];
+	if (title.length < MIN_ARTICLE_TITLE) {
+		problems.push(`article title is ${title.length} characters; use the title limit, ${MIN_ARTICLE_TITLE} to ${MAX_ARTICLE_TITLE}, and carry the headline number`);
+	}
+	const prose = blocks.filter((block) => block.type !== 'atomic').map((block) => block.text).join('\n');
+	const words = prose.split(/\s+/).filter(Boolean).length;
+	if (words < MIN_ARTICLE_WORDS) problems.push(`article body is ${words} words; an Article explains in depth, ${MIN_ARTICLE_WORDS} or more`);
+	const sections = blocks.filter((block) => block.type === 'header-two');
+	if (sections.length < MIN_ARTICLE_SECTIONS) problems.push(`article body has ${sections.length} sections; use ${MIN_ARTICLE_SECTIONS} or more, each named for what the reader learns`);
+	if (converted.markdownWeight < MIN_MARKDOWN_ENTITY) {
+		problems.push(`code blocks and tables total ${converted.markdownWeight} characters; X allows ${MARKDOWN_ENTITY_BUDGET}, so use at least ${MIN_MARKDOWN_ENTITY} on runnable code and real tables`);
+	}
+	if (converted.images.length < MIN_ARTICLE_IMAGES) problems.push(`article has ${converted.images.length} inline images; use ${MIN_ARTICLE_IMAGES} or more real captures`);
+
+	const headings = sections.map((block) => block.text);
+	const partners = headings.findIndex((heading) => /^the partners behind\b/i.test(heading));
+	if (partners < 0) {
+		problems.push('article needs a "The partners behind ..." section with thanks to each partner, stated as three.ws/partners states it');
+	} else {
+		const start = blocks.findIndex((block) => block.type === 'header-two' && block.text === headings[partners]);
+		const end = blocks.findIndex((block, index) => index > start && block.type === 'header-two');
+		const section = blocks.slice(start, end < 0 ? undefined : end).map((block) => block.text).join('\n');
+		for (const name of partnerNames(root)) {
+			if (!section.includes(name)) problems.push(`partners section does not cover ${name}; every partner on three.ws/partners gets a paragraph`);
+		}
+	}
+	if (!headings.some((heading) => /^try it\b/i.test(heading))) problems.push('article needs a "Try it" section that links the live pages');
+	return problems;
+}
+
 export function loadQueue(root, path = QUEUE_PATH) {
 	return JSON.parse(readFileSync(resolve(root, path), 'utf8'));
 }
@@ -136,6 +188,7 @@ function articleProblems(item, root) {
 	if (converted.markdownWeight > MARKDOWN_ENTITY_BUDGET) {
 		problems.push(`code blocks and tables total ${converted.markdownWeight} characters; X allows ${MARKDOWN_ENTITY_BUDGET} per Article`);
 	}
+	if (['review', 'approved'].includes(item.status)) problems.push(...articleDepthProblems(root, title, blocks, converted));
 	for (const warning of converted.warnings) problems.push(`article body: ${warning}`);
 	for (const image of converted.images) {
 		if (mediaType(image.path)?.kind !== 'image') problems.push(`article image ${image.path} must be a still image`);

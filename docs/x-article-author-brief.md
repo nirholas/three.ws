@@ -45,6 +45,20 @@ For each article, all under its own id:
 Optionally a `scenario`, filmed with `prove`, when the article's subject is a feature a reel can
 show: the reel then rides on the quote post.
 
+## Use all of the room X gives an Article
+
+The quality gate (`articleProblems` in `api/_lib/x-content/queue.js`) refuses to review or approve an
+Article that leaves X's limits unused. Every Article needs:
+
+- A title of 80 to 100 characters (X allows 100) that carries the headline number.
+- 2,400 or more words across 8 or more `##` sections, each named for what the reader learns, that
+  explain the job in depth: the plain-words version first, then the mechanism.
+- 3,000 or more characters of real code and tables (X allows 10,000 in code blocks and tables).
+- 4 or more inline images, each a real capture of the thing described.
+- A `## The partners behind ...` section that thanks every partner listed on three.ws/partners, each
+  with its designation stated exactly as that page states it, and what their programme made possible.
+- A `## Try it` section linking the live pages.
+
 ## Boundaries
 
 - Only create the files above, plus the reel and proof `prove` writes. Do not edit
