@@ -102,7 +102,7 @@ describe('GET /api/x/mention-decisions', () => {
 				decision: 'reply',
 				reason: 'intent allowed',
 				reply_text: 'Done, here is your dragon.',
-				reply_media_url: 'https://cdn.three.ws/forge/dragon.png',
+				reply_media_url: 'https://three.ws/cdn/forge/dragon.png',
 				reply_link: null,
 				dry_run: true,
 				created_at: '2026-10-11T00:00:00.000Z',
