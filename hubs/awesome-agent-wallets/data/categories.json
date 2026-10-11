@@ -1,0 +1,10 @@
+[
+  { "id": "solana", "title": "Solana", "blurb": "Agent wallets, signing backends, smart accounts, multisigs and MCP servers built for Solana, the first home of this list." },
+  { "id": "embedded-wallets", "title": "Embedded Wallets and Wallet Infrastructure", "blurb": "Wallet-as-a-service and embedded wallet SDKs that give apps and agents programmatic wallets with login, policies and multi-chain support." },
+  { "id": "custody", "title": "MPC, TEE and Custody", "blurb": "Threshold signing libraries, trusted execution environments and custody SDKs that keep agent keys out of any single machine." },
+  { "id": "smart-accounts", "title": "Smart Accounts and Session Keys", "blurb": "ERC-4337 and ERC-7579 accounts, modules and delegation frameworks for scoped, revocable agent permissions on EVM chains." },
+  { "id": "policy", "title": "Spend Limits and Policy Engines", "blurb": "Wallets and toolkits where spend caps, allowlists, approvals and role-based rules decide what an agent can sign." },
+  { "id": "wallet-mcp", "title": "Wallet MCP Servers, Skills and Payments", "blurb": "MCP servers, agent skills and payment protocols that let model clients hold wallets, sign and pay." },
+  { "id": "toolkits", "title": "Agent Toolkits", "blurb": "Toolkits that bundle wallets with onchain actions for agent frameworks." },
+  { "id": "standards", "title": "Standards and Libraries", "blurb": "Wallet standards, ERCs and core libraries the rest of the ecosystem builds on." }
+]
