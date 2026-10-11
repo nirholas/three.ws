@@ -222,8 +222,9 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify }) 
 			// drops its own site header (public/nav.js).
 			frame.name = `tws-os:${app.id}`;
 			frame.title = app.title;
+			// `fullscreen` in the permissions policy replaces the legacy
+			// `allowfullscreen` attribute; setting both makes Chrome warn.
 			frame.allow = 'clipboard-read; clipboard-write; fullscreen; microphone; camera; xr-spatial-tracking; web-share';
-			frame.setAttribute('allowfullscreen', '');
 			frame.addEventListener('load', () => onFrameLoad(w, skeleton));
 			frame.src = w.path;
 			w.frame = frame;
