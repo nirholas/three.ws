@@ -111,7 +111,9 @@ function boostOne(repo) {
 	rmSync(dir, { recursive: true, force: true });
 	mkdirSync(join(WORK, 'clones'), { recursive: true });
 	const meta = ghJson(['api', `repos/${OWNER}/${repo.name}`]);
-	git(WORK, 'clone', '--quiet', '--depth', '1', `https://github.com/${OWNER}/${repo.name}.git`, dir);
+	// The kit only reads and writes root files and .github/, so a blobless sparse clone keeps multi-GB repos off the disk.
+	git(WORK, 'clone', '--quiet', '--depth', '1', '--filter=blob:none', '--sparse', `https://github.com/${OWNER}/${repo.name}.git`, dir);
+	git(dir, 'sparse-checkout', 'set', '.github');
 
 	const files = new Set(git(dir, 'ls-files').split('\n').filter(Boolean));
 	const readmeName = [...files].find((p) => /^readme(\.md)?$/i.test(p));
