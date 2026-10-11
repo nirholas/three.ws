@@ -87,4 +87,4 @@ export default wrapCron(async (req, res) => {
 
 	summary.elapsedMs = Date.now() - startedAt;
 	return json(res, 200, summary);
-});
+}, { maxDurationMs: maxDuration * 1000 });

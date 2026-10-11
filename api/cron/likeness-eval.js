@@ -126,4 +126,4 @@ export default wrapCron(async (req, res) => {
 	// Always 200: a low score is a reported finding, not a failed invocation. A
 	// non-2xx would make Cloud Scheduler retry an expensive render sweep.
 	json(res, 200, { ok: true, ...summary, distribution });
-});
+}, { maxDurationMs: maxDuration * 1000 });

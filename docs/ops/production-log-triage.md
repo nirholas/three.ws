@@ -941,6 +941,54 @@ ws error: Unexpected server response: 301
   [api/_lib/crypto-token-holders.js](../../api/_lib/crypto-token-holders.js)
   is the composition logic if it does.
 
+## 🟡 HTTP timeout with no cron context
+
+```
+The request has been terminated because it has reached the maximum request
+timeout
+```
+
+- **Source (pre-2026-10-11):** nothing. `maxDuration` exports on
+  `api/cron/*.js` handlers were a real Vercel-enforced per-function budget;
+  nothing replaced that enforcement after the 2026-07-07 Cloud Run migration,
+  so a hang anywhere inside a cron handler ran unbounded until Cloud Run's own
+  900s ingress timeout (`--timeout 900` in
+  [server/cloudbuild.yaml](../../server/cloudbuild.yaml)) killed the
+  connection. That log line carries no cron name, no elapsed time, and no
+  heartbeat write, which is why `/api/cron/x402-ring-leak-scan` (see the
+  `rpc_lanes` entry above) looked like a blank wall until it was traced by
+  hand.
+- **Fixed 2026-10-11:** `wrapCron()` in
+  [api/_lib/http.js](../../api/_lib/http.js) now races every cron handler
+  against its own time budget (`maxDurationMs`, wired from each file's
+  `export const maxDuration * 1000`, falling back to
+  `DEFAULT_CRON_MAX_DURATION_MS` (120000ms) when a handler declares none). On
+  timeout it answers a clean `503 { ok: false, reason: 'cron_timeout', cron:
+  '<name>', budget_ms: <n> }`, writes the heartbeat
+  (`cron:heartbeat:<name>`) as `{ ok: false, timed_out: true }` so uptime
+  tooling sees the tick as failed rather than stalled, and fires a single
+  `sendOpsAlert` deduplicated by signature `cron:timeout:<name>`. Node has no
+  generic way to preempt arbitrary in-flight async work, so the handler itself
+  keeps running in the background; a late settlement after the timeout has
+  already answered is a no-op (it can never overwrite the `timed_out`
+  heartbeat or touch the already-sent response).
+- **Read it:** `gcloud logging read 'resource.type="cloud_run_revision"
+  resource.labels.service_name="three-ws-api"
+  textPayload:"exceeded its"' --freshness=24h --project
+  aerial-vehicle-466722-p5` surfaces the new `[cron] <name> exceeded its
+  <n>ms budget, answering 503 before Cloud Run's own timeout kills the
+  connection` warn line with the cron name attached. A dashboard or alert
+  firing on the ops-alert signature `cron:timeout:<name>` names the exact
+  handler; a bare "maximum request timeout" with no matching `cron:timeout:*`
+  alert is now a sign the hang is outside `wrapCron` entirely (a non-cron API
+  route, or `server/index.mjs` itself), not inside a cron tick.
+- **Resolve:** treat a recurring `cron:timeout:<name>` the same as any other
+  cron bug: find why that handler's own work (a slow RPC lane, an unbounded
+  DB scan, a Puppeteer render) is exceeding its declared `maxDuration`, not
+  by raising the budget first. Raising `maxDuration` only widens the window
+  before Cloud Run's 900s kill reappears if the underlying work keeps
+  growing.
+
 ---
 
 ## 🟡 `[solana-rpc] https://<host> 403`, cooling 30m, failing over

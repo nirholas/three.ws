@@ -24,4 +24,4 @@ export default wrapCron(async (req, res) => {
 	const summary = await runMarketplaceSweep();
 	if (summary.errors.length) console.warn('[marketplace-escrow-sweep] errors', JSON.stringify(summary.errors).slice(0, 2000));
 	return json(res, 200, { ok: true, ms: Date.now() - t0, ...summary });
-});
+}, { maxDurationMs: maxDuration * 1000 });

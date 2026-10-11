@@ -124,4 +124,4 @@ export default wrapCron(async (req, res) => {
 		failed,
 		results,
 	});
-});
+}, { maxDurationMs: maxDuration * 1000 });

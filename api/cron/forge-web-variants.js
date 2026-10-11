@@ -107,4 +107,4 @@ export default wrapCron(async (req, res) => {
 	}
 
 	return json(res, 200, { ok: true, processed: rows.length, built, skipped, failed, remaining });
-});
+}, { maxDurationMs: maxDuration * 1000 });

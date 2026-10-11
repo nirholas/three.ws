@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-10-11T11:56:18.006Z",
+	"generated_at": "2026-10-11T13:17:18.385Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3858,
+	"total": 3859,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "A stuck background job now fails fast instead of hanging for 15 minutes",
+			"summary": "Every scheduled background job (cron) on the platform now answers cleanly and quickly if something inside it gets stuck, instead of silently hanging until the server's own 15-minute connection limit cuts it off with no explanation. Each job now gets a real time budget matching what it already declared, the status board records the failed run immediately, and an alert fires with the job's name attached so it can be diagnosed in seconds instead of traced by hand from a blank timeout. Image rendering for 3D creations got the same treatment: a stuck browser launch, page load, or screenshot now times out on its own instead of tying up the render queue.",
+			"link": null,
+			"tags": [
+				"infra"
+			]
+		},
 		{
 			"date": "2026-10-11",
 			"type": "update",
@@ -1545,17 +1555,6 @@
 			"tags": [
 				"feature",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-18",
-			"type": "update",
-			"title": "Granite Guardian now answers on three.ws, not just in the docs",
-			"summary": "The governance check that screens what an agent is asked to do, and vetoes it when the request is a jailbreak, harmful, or fraudulent, runs on IBM Granite Guardian. It was built to call IBM's hosted watsonx.ai service, so on our live site it answered with a not-configured error, and the new agent identity check quietly skipped itself for the same reason. IBM publishes Granite Guardian's weights openly, so we now run the model ourselves on a dedicated GPU as a second lane: watsonx still leads wherever it is set up, and our own copy answers whenever it is not. Every verdict now says which model and which lane produced it. The identity check also compares a new agent against existing ones using the site's regular embedding service when Granite embeddings are unavailable; it lists the look-alikes it finds but only scores them on Granite, because that is what its thresholds were tuned on.",
-			"link": "/docs/ibm",
-			"tags": [
-				"fix",
-				"infra"
 			]
 		}
 	]

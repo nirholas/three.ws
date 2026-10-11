@@ -51,4 +51,4 @@ export default wrapCron(async (req, res) => {
 		clusters: clusters.size,
 		ms: Date.now() - started,
 	});
-});
+}, { maxDurationMs: maxDuration * 1000 });

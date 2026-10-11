@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>A stuck background job now fails fast instead of hanging for 15 minutes</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-11:A stuck background job now fails fast instead of hanging for 15 minutes</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>Every scheduled background job (cron) on the platform now answers cleanly and quickly if something inside it gets stuck, instead of silently hanging until the server's own 15-minute connection limit cuts it off with no explanation. Each job now gets a real time budget matching what it already declared, the status board records the failed run immediately, and an alert fires with the job's name attached so it can be diagnosed in seconds instead of traced by hand from a blank timeout. Image rendering for 3D creations got the same treatment: a stuck browser launch, page load, or screenshot now times out on its own instead of tying up the render queue.</description>
+		</item>
+		<item>
 			<title>An agent set to Grok now answers as Grok everywhere, with a badge when it can't</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-11:An agent set to Grok now answers as Grok everywhere, with a badge when it can't</guid>

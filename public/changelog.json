@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-10-11T11:56:17.985Z",
+	"generated_at": "2026-10-11T13:17:18.358Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "A stuck background job now fails fast instead of hanging for 15 minutes",
+			"summary": "Every scheduled background job (cron) on the platform now answers cleanly and quickly if something inside it gets stuck, instead of silently hanging until the server's own 15-minute connection limit cuts it off with no explanation. Each job now gets a real time budget matching what it already declared, the status board records the failed run immediately, and an alert fires with the job's name attached so it can be diagnosed in seconds instead of traced by hand from a blank timeout. Image rendering for 3D creations got the same treatment: a stuck browser launch, page load, or screenshot now times out on its own instead of tying up the render queue.",
+			"link": null,
+			"tags": [
+				"infra"
+			]
+		},
 		{
 			"date": "2026-10-11",
 			"type": "update",

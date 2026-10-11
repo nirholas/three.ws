@@ -10,7 +10,15 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { wrap, serverError } from '../api/_lib/http.js';
+import { wrap, serverError, wrapCron } from '../api/_lib/http.js';
+
+vi.mock('../api/_lib/alerts.js', () => ({
+	sendOpsAlert: async () => {},
+}));
+vi.mock('../api/_lib/cache.js', () => ({
+	cacheGet: async () => null,
+	cacheSet: async () => {},
+}));
 
 // Minimal ServerResponse stand-in: case-insensitive header store + end capture.
 function fakeRes() {
@@ -90,6 +98,20 @@ describe('wrap() under a DB outage', () => {
 		expect(res.statusCode).toBe(500);
 		const unhandled = errSpy.mock.calls.some((c) => String(c[0]).includes('[api] unhandled'));
 		expect(unhandled).toBe(true);
+	});
+
+	it('wrapCron() keeps the same db_unavailable degradation now that a time budget races the handler', async () => {
+		const handler = wrapCron(async () => { throw dbDownError(); }, { maxDurationMs: 30_000 });
+		const res = fakeRes();
+		await handler({ method: 'GET', url: '/api/cron/smart-money-rollup', headers: {} }, res);
+
+		// Still the pre-existing db_unavailable degradation (200, not the budget's
+		// 503 cron_timeout, and not wrap()'s generic 500): the race around the
+		// handler must never reclassify this path.
+		expect(res.statusCode).toBe(200);
+		expect(JSON.parse(res.body)).toMatchObject({ ok: false, reason: 'db_unavailable' });
+		const unhandled = errSpy.mock.calls.some((c) => String(c[0]).includes('[api] unhandled'));
+		expect(unhandled).toBe(false);
 	});
 });
 

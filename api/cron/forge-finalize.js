@@ -478,4 +478,4 @@ export default wrapCron(async (req, res) => {
 		...out,
 		elapsed_ms: Date.now() - t0,
 	});
-});
+}, { maxDurationMs: maxDuration * 1000 });

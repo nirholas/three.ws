@@ -766,7 +766,19 @@ export function wrap(handler) {
 // then reclaims space and the next tick resumes (see isStoragePressured). This is the
 // proactive complement to the reactive catch below — it stops crons that swallow
 // their own write errors (the pump-intel firehose) from storming the logs at the cap.
-export function wrapCron(handler, { requireWriteCapacity = false } = {}) {
+//
+// `maxDurationMs` gives the cron a real time budget. Before the 2026-07-07 Cloud Run
+// migration, the `maxDuration` a handler exported was Vercel-enforced; nothing ever
+// replaced that enforcement, so a hang anywhere inside a handler ran unbounded until
+// Cloud Run's own 900s ingress timeout killed the connection with no cron name, no
+// elapsed time, and no heartbeat write. Defaults to 120000 (the most common declared
+// `maxDuration` value) when the caller does not pass one.
+// The most common declared `maxDuration` value across api/cron/*.js today, and
+// what a cron gets for free when it declares none of its own.
+export const DEFAULT_CRON_MAX_DURATION_MS = 120_000;
+
+export function wrapCron(handler, { requireWriteCapacity = false, maxDurationMs } = {}) {
+	const budgetMs = maxDurationMs ?? DEFAULT_CRON_MAX_DURATION_MS;
 	return wrap(async (req, res, ...rest) => {
 		// Derive cron name from the request URL for heartbeat tracking.
 		const cronName = (req.url || '').replace(/^\/api\/cron\//, '').split('?')[0] || 'unknown';
@@ -786,31 +798,69 @@ export function wrapCron(handler, { requireWriteCapacity = false } = {}) {
 				return;
 			}
 		}
-		try {
-			await handler(req, res, ...rest);
-			// Write heartbeat after the handler returns, fire-and-forget, never blocks.
-			// A handler that reports its own failure as a 5xx (instead of throwing)
-			// failed too; recording it as healthy hid a broken cron on the ops board.
-			const failed = res.statusCode >= 500;
-			const beat = failed
-				? { ok: false, t: t0, ms: Date.now() - t0, err: `answered HTTP ${res.statusCode}` }
-				: { ok: true, t: t0, ms: Date.now() - t0 };
+
+		const writeHeartbeat = (beat) => {
 			import('./cache.js').then(({ cacheSet }) => {
 				cacheSet(`cron:heartbeat:${cronName}`, beat, 7 * 24 * 60 * 60).catch(() => {});
 			}).catch(() => {});
-		} catch (err) {
-			import('./cache.js').then(({ cacheSet }) => {
-				cacheSet(`cron:heartbeat:${cronName}`, { ok: false, t: t0, ms: Date.now() - t0, err: err?.message?.slice(0, 200) }, 7 * 24 * 60 * 60).catch(() => {});
-			}).catch(() => {});
-			if (isDbUnavailableError(err) || isDbCapacityError(err)) {
-				const full = isDbCapacityError(err);
-				console.warn(`[cron] db ${full ? 'at storage cap' : 'unavailable'} — skipping tick:`, err.message);
-				if (!res.headersSent && !res.writableEnded) {
-					json(res, 200, { ok: false, reason: full ? 'db_full' : 'db_unavailable' });
+		};
+
+		// True once the budget timer below has already answered the request and
+		// recorded the tick as timed out. Guards the handler's own (late) heartbeat
+		// write from clobbering that record if it eventually finishes on its own.
+		let timedOut = false;
+
+		const runHandler = (async () => {
+			try {
+				await handler(req, res, ...rest);
+				// A handler that reports its own failure as a 5xx (instead of throwing)
+				// failed too; recording it as healthy hid a broken cron on the ops board.
+				if (timedOut) return;
+				const failed = res.statusCode >= 500;
+				writeHeartbeat(failed
+					? { ok: false, t: t0, ms: Date.now() - t0, err: `answered HTTP ${res.statusCode}` }
+					: { ok: true, t: t0, ms: Date.now() - t0 });
+			} catch (err) {
+				if (!timedOut) {
+					writeHeartbeat({ ok: false, t: t0, ms: Date.now() - t0, err: err?.message?.slice(0, 200) });
 				}
-				return;
+				if (isDbUnavailableError(err) || isDbCapacityError(err)) {
+					const full = isDbCapacityError(err);
+					console.warn(`[cron] db ${full ? 'at storage cap' : 'unavailable'}, skipping tick:`, err.message);
+					if (!res.headersSent && !res.writableEnded) {
+						json(res, 200, { ok: false, reason: full ? 'db_full' : 'db_unavailable' });
+					}
+					return;
+				}
+				throw err;
 			}
-			throw err;
+		})();
+
+		let timer;
+		const budget = new Promise((resolve) => {
+			timer = setTimeout(() => {
+				timedOut = true;
+				if (!res.headersSent && !res.writableEnded) {
+					writeHeartbeat({ ok: false, t: t0, ms: Date.now() - t0, timed_out: true });
+					console.warn(`[cron] ${cronName} exceeded its ${budgetMs}ms budget, answering 503 before Cloud Run's own timeout kills the connection`);
+					sendOpsAlert(`cron timeout: ${cronName}`, `exceeded its ${budgetMs}ms budget`, { signature: `cron:timeout:${cronName}` });
+					json(res, 503, { ok: false, reason: 'cron_timeout', cron: cronName, budget_ms: budgetMs });
+				}
+				resolve();
+			}, budgetMs);
+			if (typeof timer.unref === 'function') timer.unref();
+		});
+
+		try {
+			await Promise.race([runHandler, budget]);
+		} finally {
+			clearTimeout(timer);
+			// Node cannot preempt arbitrary async work without an AbortSignal threaded
+			// through every I/O call inside the handler, so the handler itself is never
+			// cancelled when the budget wins the race. Swallow whatever it eventually
+			// does (resolve or reject) so it can never try to write to the response this
+			// request already ended, or crash the process with an unhandled rejection.
+			runHandler.catch(() => {});
 		}
 	});
 }

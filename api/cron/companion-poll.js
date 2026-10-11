@@ -22,4 +22,4 @@ export default wrapCron(async (req, res) => {
 	const started = Date.now();
 	const summary = await pollDue({ limit: BATCH_LIMIT, budgetMs: TIME_BUDGET_MS });
 	return json(res, 200, { ok: true, ...summary, ms: Date.now() - started });
-});
+}, { maxDurationMs: maxDuration * 1000 });

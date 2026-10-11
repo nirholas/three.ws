@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-10-11",
+			"title": "A stuck background job now fails fast instead of hanging for 15 minutes",
+			"summary": "Every scheduled background job (cron) on the platform now answers cleanly and quickly if something inside it gets stuck, instead of silently hanging until the server's own 15-minute connection limit cuts it off with no explanation. Each job now gets a real time budget matching what it already declared, the status board records the failed run immediately, and an alert fires with the job's name attached so it can be diagnosed in seconds instead of traced by hand from a blank timeout. Image rendering for 3D creations got the same treatment: a stuck browser launch, page load, or screenshot now times out on its own instead of tying up the render queue.",
+			"tags": ["infra"]
+		},
+		{
+			"date": "2026-10-11",
 			"title": "The on-chain leak alarm now scans smarter instead of scanning everything",
 			"summary": "The background monitor that watches every platform-controlled Solana wallet for a leak now checks the handful of wallets that hold real balances every run, any wallet the platform's own payment ledger shows just moved money, and the rest of the registry in a rotation, instead of walking the full wallet list on every single pass. That cuts the monitor's own Solana RPC usage sharply, which means faster balance reads and snappier agent pages across the platform, and it no longer runs two overlapping schedules at once. A wallet-identity bug found along the way is fixed too: on-chain transactions were being matched by the wrong field shape, which silently kept both the leak detector and its fee-accounting cross-check from recording anything real. Both now work correctly.",
 			"tags": ["infra", "fix"]

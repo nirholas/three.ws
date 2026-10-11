@@ -177,4 +177,4 @@ export default wrapCron(async (req, res) => {
 	}
 
 	return json(res, 200, { ok: broken.length === 0, tips, pays, took_ms: Date.now() - t0 });
-});
+}, { maxDurationMs: maxDuration * 1000 });

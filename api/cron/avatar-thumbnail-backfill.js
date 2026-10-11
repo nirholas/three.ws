@@ -124,4 +124,4 @@ export default wrapCron(async (req, res) => {
 			...(r.status === 'done' ? { url: r.url, bytes: r.bytes, ms: r.ms } : { error: r.error }),
 		})),
 	});
-});
+}, { maxDurationMs: maxDuration * 1000 });

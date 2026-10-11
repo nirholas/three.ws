@@ -96,4 +96,4 @@ export default wrapCron(async (req, res) => {
 			? `Batch limit (${BATCH_LIMIT}) reached. More sessions may remain; the next tick continues.`
 			: null,
 	});
-});
+}, { maxDurationMs: maxDuration * 1000 });

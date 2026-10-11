@@ -51,4 +51,4 @@ export default wrapCron(async (req, res) => {
 		...result,
 		coverage: cov,
 	});
-});
+}, { maxDurationMs: maxDuration * 1000 });

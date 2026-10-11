@@ -418,10 +418,28 @@ export async function renderGlbToPngBrowser({ glbUrl, width = 1200, height = 630
 	}
 }
 
+// Bounds how long a single render stage may wait before failing with a named
+// error instead of hanging until Cloud Run's own request timeout kills the
+// connection. The underlying puppeteer call is never cancelled (chromium keeps
+// running in the background), so this only bounds how long THIS caller waits
+// for it; a future "maximum request timeout" investigation gets a stage name
+// and an elapsed budget instead of a blank multi-minute gap.
+function withStageTimeout(promise, ms, stage) {
+	let timer;
+	const timeout = new Promise((_, reject) => {
+		timer = setTimeout(() => reject(new Error(`render timed out at ${stage}`)), ms);
+		if (typeof timer.unref === 'function') timer.unref();
+	});
+	return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 // One page lifecycle on the shared browser: boot page, load the inline viewer,
 // wait for the first clean frame, screenshot.
 async function renderOnce({ glbBase64, width, height, background, backdrop, poseClip, onPose }) {
-	const browser = await getBrowser();
+	// getBrowser()'s cold-launch path (chromium binary download on a fresh
+	// container) had no cap before this; a stalled download hung the whole
+	// request until Cloud Run's own timeout.
+	const browser = await withStageTimeout(getBrowser(), 30_000, 'getBrowser');
 	const page = await browser.newPage();
 	try {
 		await page.setViewport({ width, height, deviceScaleFactor: 1 });
@@ -432,7 +450,11 @@ async function renderOnce({ glbBase64, width, height, background, backdrop, pose
 		const html = viewerHtml({ glbBase64, width, height, background, backdrop, poseClip, threeBase });
 		// data: URL avoids needing a network fetch for the bootstrap page itself.
 		// importmap dependencies (three, GLTFLoader) still come from the CDN.
-		await page.setContent(html, { waitUntil: 'domcontentloaded' });
+		await withStageTimeout(
+			page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 20_000 }),
+			20_000,
+			'setContent',
+		);
 		await page.waitForFunction(
 			'window.__renderDone === true || window.__renderError !== null',
 			{ timeout: 15_000 },
@@ -444,11 +466,18 @@ async function renderOnce({ glbBase64, width, height, background, backdrop, pose
 		const poseResult = (await page.evaluate(() => window.__poseResult)) || { posed: false, mode: 'bind' };
 		if (poseResult.mode === 'pose-error') console.warn('[render] chromium lane could not pose the model:', poseResult.error);
 		onPose?.({ posed: Boolean(poseResult.posed), mode: poseResult.mode });
-		return await page.screenshot({
-			type: 'png',
-			omitBackground: background === 'transparent',
-			clip: { x: 0, y: 0, width, height },
-		});
+		// page.screenshot() has no native timeout option (not part of puppeteer's
+		// ScreenshotOptions), so the budget here is enforced entirely by the race.
+		return await withStageTimeout(
+			page.screenshot({
+				type: 'png',
+				omitBackground: background === 'transparent',
+				clip: { x: 0, y: 0, width, height },
+				timeout: 15_000,
+			}),
+			15_000,
+			'screenshot',
+		);
 	} finally {
 		await page.close().catch(() => {});
 	}
