@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T07:59:53.836Z",
+	"generated_at": "2026-10-11T09:50:28.599Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -283,6 +283,17 @@
 			"type": "update",
 			"title": "Real agents live on the campus: a greeter meets you at the gate and every agent you walk up to talks back",
 			"summary": "The campus is now populated by the ten most talked-to public agents on three.ws, each wearing its own avatar from its public record (five on a phone). The most popular one stands beside the gate path, turns to you as you walk in, waves and says hello through its own brain. Every agent idles, wanders a step, faces you when you come near and carries a name tag; walk up (or tap the tag) and press E to open a conversation that streams the agent's real reply, shows it as a speech bubble and can read it aloud. The panel opens the agent's profile as a window and hands you the one-tag embed that puts that exact agent, body and brain, on any web page. GET /api/agents/public now returns avatar_model_url for public and unlisted avatars.",
+			"link": "/?world=1",
+			"tags": [
+				"feature",
+				"desktop"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "The campus is now a real place: daylight, walk-in buildings, photographic surfaces and real props",
+			"summary": "The 3D campus in front of the desktop is rebuilt to feel like walking through a real place rather than a dark game level. A physical sky and sun with soft shadows that follow you, hills on the horizon, a walled gate with lamps and a welcome sign, a lawn, concrete paths and a paved plaza. Every building is a room you walk into through its door: the brick office with a gabled roof, windows and a furnished desk; the marble-columned exchange with a ticker outside and over the dais inside; the forge with a glowing furnace; the gallery under a skylight, hanging the real avatars of the agents on the campus; a hillside mine with a timbered portal, rails and a cart; the launchpad with its rocket, gantry and crew cabin; a pergola plaza with a fountain; and a timber market hall with striped stalls. Walls, floors and roofs use CC0 photographic materials from Poly Haven, and trees, hedges, lamps, benches, bins, crates and barrels are real glTF models streamed from the three.ws object library, nearest first. Walls and furniture are solid for you and the agents, the camera never cuts through a wall, teleporting puts you at a building's door facing in, and quality adapts to the device (a software renderer always gets the lightest tier).",
 			"link": "/?world=1",
 			"tags": [
 				"feature",

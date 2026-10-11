@@ -11,6 +11,7 @@
 import { Box3, Group, Vector3 } from 'three';
 import { buildAvatar, CLIP_IDLE, CLIP_WALK, getAllEmoteDefs, loadManifest, newAnim, releaseAvatar } from '../../game/avatar-rig.js';
 import { log } from '../../shared/log.js';
+import { insideSolids } from '../../shared/solids.js';
 import { CAST_MAX, GREET_RANGE, arrivalMessage, castSpots, groundingPrompt, parseSse, pickCast, pickGreeter } from './cast.js';
 import { PLACES, placeById } from './places.js';
 
@@ -170,8 +171,7 @@ export function createAgents({ scene, tagsEl, solids, isTouch, reducedMotion, vi
 
 	// ---- behaviour ----
 	function blocked(x, z) {
-		for (const s of solids) if (Math.hypot(x - s.group.position.x, z - s.group.position.z) < s.keepout + 0.6) return true;
-		return false;
+		return insideSolids(x, z, solids, 0.6);
 	}
 	function pickStroll(m) {
 		for (let i = 0; i < 6; i++) {
@@ -365,6 +365,10 @@ export function createAgents({ scene, tagsEl, solids, isTouch, reducedMotion, vi
 	function byId(id) {
 		return members.find((m) => m.member.id === id) || null;
 	}
+	/** Public avatar portraits of the agents on campus, for the gallery walls. */
+	function thumbs() {
+		return members.filter((m) => m.ready && m.member.thumb).map((m) => ({ id: m.member.id, name: m.member.name, url: m.member.thumb }));
+	}
 	function hold(id, on) {
 		const m = byId(id);
 		if (m) m.held = on;
@@ -385,6 +389,7 @@ export function createAgents({ scene, tagsEl, solids, isTouch, reducedMotion, vi
 		load,
 		update,
 		positions,
+		thumbs,
 		byId,
 		hold,
 		say: (id, text) => say(byId(id), text),

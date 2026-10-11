@@ -76,9 +76,26 @@ export function detectQualityTier(env = {}) {
 	const lowMem = (nav.deviceMemory ?? 8) < 4;
 	const lowCores = (nav.hardwareConcurrency ?? 8) < 4;
 	const coarse = !!(win.matchMedia && win.matchMedia('(any-pointer: coarse)').matches);
+	if (env.gl && isSoftwareRenderer(env.gl)) return 'mobile';
 	if (isMobile && (lowMem || lowCores)) return 'mobile';
 	if (coarse || lowMem || lowCores) return 'medium';
 	return 'high';
+}
+
+/**
+ * True when WebGL is being rasterised on the CPU (SwiftShader, llvmpipe,
+ * Mesa software paths): shadows and normal maps cost seconds a frame there,
+ * so such a session gets the lightest tier whatever the host's specs say.
+ * @param {WebGLRenderingContext|WebGL2RenderingContext} gl
+ */
+export function isSoftwareRenderer(gl) {
+	try {
+		const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+		const name = String(dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+		return /SwiftShader|llvmpipe|softpipe|Software|Microsoft Basic Render/i.test(name);
+	} catch {
+		return false;
+	}
 }
 
 /**

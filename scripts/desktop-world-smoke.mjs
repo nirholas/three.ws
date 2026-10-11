@@ -15,7 +15,8 @@ page.on('console', (m) => m.type() === 'error' && !/Failed to load resource/.tes
 page.on('pageerror', (e) => problems.push(`pageerror: ${e.message}`));
 page.on('requestfailed', (r) => !/ERR_ABORTED/.test(r.failure()?.errorText || '') && problems.push(`failed: ${r.url()}`));
 page.on('response', (r) => r.status() >= 500 && problems.push(`http ${r.status()}: ${r.url()}`));
-const shot = (n) => shots && page.screenshot({ path: `${shots}/${n}.png` });
+// 120 s: right after entry the props and textures are still uploading, and a SwiftShader frame can take seconds.
+const shot = (n) => shots && page.screenshot({ path: `${shots}/${n}.png`, timeout: 120_000 });
 const text = (sel) => page.locator(sel).first().textContent().then((t) => (t || '').trim());
 
 // `?world=1` asks for the campus arrival whichever entry answers at `/`.
@@ -68,11 +69,13 @@ if (tags.length) {
 	await page.waitForTimeout(500);
 }
 
-// Run to the desk (22 m at run speed) and watch the prompt arm.
-await page.mouse.click(720, 450);
+// Run in through the door to the desk and watch the prompt arm. Keys go to the world once no
+// field has focus; a click would be a tap, and a tap on the nearest agent opens its talk panel.
+await page.evaluate(() => document.activeElement?.blur());
 await page.keyboard.down('Shift');
 await page.keyboard.down('w');
-await page.waitForFunction(() => /sit down/i.test(document.querySelector('.wd-prompt')?.textContent || ''), null, { timeout: 15_000 }).catch(() => {});
+// 90 s: near the monitor the live desktop cast drops a SwiftShader loop to ~1 fps, and the frame clamp makes the run slow-motion.
+await page.waitForFunction(() => /sit down/i.test(document.querySelector('.wd-prompt')?.textContent || ''), null, { timeout: 90_000 }).catch(() => {});
 await page.keyboard.up('w');
 await page.keyboard.up('Shift');
 await page.waitForTimeout(400);
@@ -111,19 +114,20 @@ console.log('returned near:', await text('.wd-where'));
 await page.click('.wd-place:has-text("workstation")').catch(() => {});
 await page.waitForTimeout(600);
 await page.keyboard.down('w');
-await page.waitForFunction(() => /sit down/i.test(document.querySelector('.wd-prompt')?.textContent || ''), null, { timeout: 6000 }).catch(() => {});
+await page.waitForFunction(() => /sit down/i.test(document.querySelector('.wd-prompt')?.textContent || ''), null, { timeout: 90_000 }).catch(() => {});
 console.log('prompt back at desk:', await text('.wd-prompt'));
-// Slide round the desk's keep-out disc to the phone side.
-await page.keyboard.down('d');
-await page.waitForFunction(() => /phone/i.test(document.querySelector('.wd-prompt')?.textContent || ''), null, { timeout: 6000 }).catch(() => {});
-await page.keyboard.up('d');
+// Slide left round the desk's keep-out disc to the phone side (you face the desk from the door; the headset is on your right).
+await page.keyboard.down('a');
+await page.waitForFunction(() => /phone/i.test(document.querySelector('.wd-prompt')?.textContent || ''), null, { timeout: 60_000 }).catch(() => {});
+await page.keyboard.up('a');
 await page.keyboard.up('w');
 console.log('prompt near phone:', await text('.wd-prompt'));
 if (/phone/i.test(await text('.wd-prompt'))) {
 	await page.keyboard.press('e');
-	await page.waitForSelector('.wd-phone.is-open, .wd-phone:not([hidden])', { timeout: 8000 });
-	await page.waitForTimeout(2500);
-	console.log('phone iframe:', await page.locator('.wd-phone iframe').getAttribute('src'));
+	await page.waitForSelector('.wd-phone:not([hidden])', { timeout: 8000 });
+	// The pocket boots its own scene inside the iframe; under SwiftShader that stalls the page for ~25 s, so give it a minute.
+	await page.waitForFunction(() => document.querySelector('.wd-phone iframe')?.contentDocument?.readyState === 'complete', null, { timeout: 60_000 });
+	console.log('phone iframe:', await page.evaluate(() => document.querySelector('.wd-phone iframe')?.src));
 	await shot('7-phone');
 	await page.keyboard.press('Escape');
 	await page.waitForTimeout(500);

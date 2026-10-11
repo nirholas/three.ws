@@ -1,0 +1,96 @@
+{
+	"license": "CC0",
+	"source": "https://polyhaven.com",
+	"sets": {
+		"leafy_grass": {
+			"role": "ground",
+			"metresPerTile": 3,
+			"bytes": 356842,
+			"diff": "/campus/textures/leafy_grass_diff.jpg",
+			"nor": "/campus/textures/leafy_grass_nor.jpg",
+			"arm": "/campus/textures/leafy_grass_arm.jpg",
+			"page": "https://polyhaven.com/a/leafy_grass"
+		},
+		"patterned_paving": {
+			"role": "plaza",
+			"metresPerTile": 3,
+			"bytes": 180868,
+			"diff": "/campus/textures/patterned_paving_diff.jpg",
+			"nor": "/campus/textures/patterned_paving_nor.jpg",
+			"arm": "/campus/textures/patterned_paving_arm.jpg",
+			"page": "https://polyhaven.com/a/patterned_paving"
+		},
+		"concrete_pavement_03": {
+			"role": "path",
+			"metresPerTile": 2.5,
+			"bytes": 139748,
+			"diff": "/campus/textures/concrete_pavement_03_diff.jpg",
+			"nor": "/campus/textures/concrete_pavement_03_nor.jpg",
+			"arm": "/campus/textures/concrete_pavement_03_arm.jpg",
+			"page": "https://polyhaven.com/a/concrete_pavement_03"
+		},
+		"plastered_wall_04": {
+			"role": "wall",
+			"metresPerTile": 3,
+			"bytes": 11125,
+			"diff": "/campus/textures/plastered_wall_04_diff.jpg",
+			"nor": "/campus/textures/plastered_wall_04_nor.jpg",
+			"arm": "/campus/textures/plastered_wall_04_arm.jpg",
+			"page": "https://polyhaven.com/a/plastered_wall_04"
+		},
+		"brick_wall_10": {
+			"role": "brick",
+			"metresPerTile": 2.5,
+			"bytes": 203392,
+			"diff": "/campus/textures/brick_wall_10_diff.jpg",
+			"nor": "/campus/textures/brick_wall_10_nor.jpg",
+			"arm": "/campus/textures/brick_wall_10_arm.jpg",
+			"page": "https://polyhaven.com/a/brick_wall_10"
+		},
+		"wood_floor": {
+			"role": "floor-wood",
+			"metresPerTile": 2.5,
+			"bytes": 115069,
+			"diff": "/campus/textures/wood_floor_diff.jpg",
+			"nor": "/campus/textures/wood_floor_nor.jpg",
+			"arm": "/campus/textures/wood_floor_arm.jpg",
+			"page": "https://polyhaven.com/a/wood_floor"
+		},
+		"marble_01": {
+			"role": "floor-marble",
+			"metresPerTile": 3,
+			"bytes": 44508,
+			"diff": "/campus/textures/marble_01_diff.jpg",
+			"nor": "/campus/textures/marble_01_nor.jpg",
+			"arm": "/campus/textures/marble_01_arm.jpg",
+			"page": "https://polyhaven.com/a/marble_01"
+		},
+		"concrete_floor_01": {
+			"role": "floor-concrete",
+			"metresPerTile": 3,
+			"bytes": 181536,
+			"diff": "/campus/textures/concrete_floor_01_diff.jpg",
+			"nor": "/campus/textures/concrete_floor_01_nor.jpg",
+			"arm": "/campus/textures/concrete_floor_01_arm.jpg",
+			"page": "https://polyhaven.com/a/concrete_floor_01"
+		},
+		"rock_wall_03": {
+			"role": "rock",
+			"metresPerTile": 4,
+			"bytes": 242674,
+			"diff": "/campus/textures/rock_wall_03_diff.jpg",
+			"nor": "/campus/textures/rock_wall_03_nor.jpg",
+			"arm": "/campus/textures/rock_wall_03_arm.jpg",
+			"page": "https://polyhaven.com/a/rock_wall_03"
+		},
+		"grey_roof_01": {
+			"role": "roof",
+			"metresPerTile": 2.5,
+			"bytes": 199067,
+			"diff": "/campus/textures/grey_roof_01_diff.jpg",
+			"nor": "/campus/textures/grey_roof_01_nor.jpg",
+			"arm": "/campus/textures/grey_roof_01_arm.jpg",
+			"page": "https://polyhaven.com/a/grey_roof_01"
+		}
+	}
+}
