@@ -1,0 +1,13 @@
+# This worker's own FastAPI/GCS layer. torch/torchvision, spconv,
+# torch_scatter/torch_cluster, and flash-attn install in their own Dockerfile
+# layers BEFORE this file, per UniRig's and SkinTokens' own install docs
+# (neither ships a pip-installable package; both are subprocess CLIs).
+numpy==1.26.4
+trimesh>=4.4.0,<5
+
+fastapi>=0.115,<1
+uvicorn[standard]>=0.32,<1
+pydantic>=2.0.0
+httpx>=0.27.0
+
+google-cloud-storage==2.18.0

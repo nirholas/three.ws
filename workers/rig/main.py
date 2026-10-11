@@ -8,6 +8,15 @@ original GLB bytes so materials/PBR textures are preserved exactly;
 blendshapes.py transfers the ICT-FaceKit (MIT) ARKit-52 expression set onto
 the head so emotions and lipsync work out of the box.
 
+Non-humanoid branch: mesh_classify.py runs a deterministic geometric check
+(tall + bilaterally symmetric, or not) before the GPU is touched. A humanoid
+mesh stays on the Make-It-Animatable path above. Everything else (quadrupeds,
+creatures, props) is forwarded, by GCS url, to the VAST-AI-Research
+SkinTokens/UniRig worker (workers/rig-nonhuman, MIT) and its task is polled
+to completion under this same task_id, so callers see one API contract no
+matter which engine rigged their mesh. If RIG_NONHUMAN_URL is unset, every
+mesh takes the humanoid path unchanged (the pre-existing behavior).
+
 API contract (identical to the retired unirig worker, so the platform's
 GCP_UNIRIG_URL wiring is a config-only cutover):
   POST /rig   { mesh_gcs_url: str, template?: str, blendshapes?: bool, job_id?: str }
@@ -34,6 +43,9 @@ Environment variables:
   ARKIT_TEMPLATE    baked template npz (default /app/assets/arkit_template.npz)
   MAX_CONCURRENT    parallel rigging jobs (default 1)
   TASK_TIMEOUT_S    per-task hard timeout in seconds (default 420)
+  RIG_NONHUMAN_URL      base url of the SkinTokens/UniRig worker (unset = disabled)
+  RIG_NONHUMAN_API_KEY  bearer secret for RIG_NONHUMAN_URL (Secret Manager)
+  RIG_NONHUMAN_TIMEOUT_S  hard timeout for the forwarded job (default 900)
 """
 
 from __future__ import annotations
@@ -59,6 +71,7 @@ import engine_mia
 import rig_glb
 from blendshapes import head_mask_from_weights, load_template, transfer_blendshapes
 from gltf_meshopt import decode_if_meshopt
+from mesh_classify import HUMANOID, classify_mesh
 from worker_security import (
     UnsafeUrlError,
     fetch_remote_bytes_async,
@@ -79,6 +92,10 @@ MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
 TASK_TIMEOUT_S = float(os.environ.get("TASK_TIMEOUT_S", "420"))
 # Tasks older than this are pruned from the in-memory store.
 TASK_TTL_S = 3600.0
+RIG_NONHUMAN_URL = os.environ.get("RIG_NONHUMAN_URL", "").rstrip("/")
+RIG_NONHUMAN_API_KEY = os.environ.get("RIG_NONHUMAN_API_KEY", "")
+RIG_NONHUMAN_TIMEOUT_S = float(os.environ.get("RIG_NONHUMAN_TIMEOUT_S", "900"))
+_NONHUMAN_POLL_INTERVAL_S = 2.0
 
 _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
@@ -150,44 +167,89 @@ def _rig_sync(mesh_bytes: bytes, want_blendshapes: bool) -> bytes:
     )
 
 
+async def _forward_to_nonhuman(mesh_gcs_url: str, job_id: str) -> str:
+    """Forward a non-humanoid mesh to the SkinTokens/UniRig worker and block
+    until it finishes, polling the SAME /rig + /tasks/:id contract this
+    worker exposes, so the caller sees one API regardless of which engine
+    rigged their mesh."""
+    headers = {"Authorization": f"Bearer {RIG_NONHUMAN_API_KEY}"}
+    async with httpx.AsyncClient(timeout=60, follow_redirects=False) as client:
+        resp = await client.post(
+            f"{RIG_NONHUMAN_URL}/rig",
+            json={"mesh_gcs_url": mesh_gcs_url, "job_id": job_id},
+            headers=headers,
+        )
+        resp.raise_for_status()
+        sub_task_id = resp.json()["task_id"]
+
+        deadline = time.time() + RIG_NONHUMAN_TIMEOUT_S
+        while time.time() < deadline:
+            await asyncio.sleep(_NONHUMAN_POLL_INTERVAL_S)
+            poll = await client.get(
+                f"{RIG_NONHUMAN_URL}/tasks/{sub_task_id}", headers=headers
+            )
+            poll.raise_for_status()
+            state = poll.json()
+            if state["status"] == "done":
+                return state["rigged_gcs_url"]
+            if state["status"] == "failed":
+                raise RuntimeError(
+                    state.get("error") or "non-humanoid rigging failed"
+                )
+        raise RuntimeError(
+            f"non-humanoid rigging timed out after {RIG_NONHUMAN_TIMEOUT_S:.0f}s"
+        )
+
+
 async def _run_task(task_id: str, mesh_gcs_url: str, want_blendshapes: bool) -> None:
     async with _sem:
         _tasks[task_id]["status"] = "running"
         loop = asyncio.get_event_loop()
         t0 = time.time()
         try:
-            async def _work() -> str:
-                async with httpx.AsyncClient(timeout=60, follow_redirects=False) as client:
-                    try:
-                        mesh_bytes = await fetch_remote_bytes_async(client, mesh_gcs_url)
-                    except UnsafeUrlError as exc:
-                        raise RuntimeError(f"refused to fetch mesh url: {exc}") from exc
+            async with httpx.AsyncClient(timeout=60, follow_redirects=False) as client:
+                try:
+                    mesh_bytes = await fetch_remote_bytes_async(client, mesh_gcs_url)
+                except UnsafeUrlError as exc:
+                    raise RuntimeError(f"refused to fetch mesh url: {exc}") from exc
 
-                # A meshopt-compressed GLB is transcoded before anything reads
-                # it: neither trimesh nor pygltflib can decode that extension,
-                # and it is the format most three.ws avatars ship as.
-                mesh_bytes, _ = decode_if_meshopt(mesh_bytes, ".glb")
+            # A meshopt-compressed GLB is transcoded before anything reads
+            # it: neither trimesh nor pygltflib can decode that extension,
+            # and it is the format most three.ws avatars ship as.
+            mesh_bytes, _ = decode_if_meshopt(mesh_bytes, ".glb")
+            rig_glb.validate_input_mesh(mesh_bytes)
+            classification = classify_mesh(rig_glb.load_mesh_vertices(mesh_bytes))
 
-                rigged = await loop.run_in_executor(
-                    None, _rig_sync, mesh_bytes, want_blendshapes
-                )
+            if classification != HUMANOID and RIG_NONHUMAN_URL:
+                timeout_s = RIG_NONHUMAN_TIMEOUT_S
+                work = _forward_to_nonhuman(mesh_gcs_url, task_id)
+            else:
+                timeout_s = TASK_TIMEOUT_S
 
-                blob_name = f"rigged-meshes/{task_id}.glb"
-                blob = _bucket.blob(blob_name)
-                # upload_from_string defaults to DEFAULT_RETRY_IF_GENERATION_SPECIFIED,
-                # which retries NOTHING when no generation precondition is set, so a
-                # transient RemoteDisconnected on the resumable-upload handshake threw
-                # away a finished rig. The blob name is a fresh uuid per task, so
-                # re-sending can only overwrite this task's own object.
-                await loop.run_in_executor(
-                    None,
-                    lambda: blob.upload_from_string(
-                        rigged, content_type="model/gltf-binary", retry=DEFAULT_RETRY
-                    ),
-                )
-                return f"https://storage.googleapis.com/{GCS_BUCKET}/{blob_name}"
+                async def _humanoid_work() -> str:
+                    rigged = await loop.run_in_executor(
+                        None, _rig_sync, mesh_bytes, want_blendshapes
+                    )
+                    blob_name = f"rigged-meshes/{task_id}.glb"
+                    blob = _bucket.blob(blob_name)
+                    # upload_from_string defaults to
+                    # DEFAULT_RETRY_IF_GENERATION_SPECIFIED, which retries
+                    # NOTHING when no generation precondition is set, so a
+                    # transient RemoteDisconnected on the resumable-upload
+                    # handshake threw away a finished rig. The blob name is a
+                    # fresh uuid per task, so re-sending can only overwrite
+                    # this task's own object.
+                    await loop.run_in_executor(
+                        None,
+                        lambda: blob.upload_from_string(
+                            rigged, content_type="model/gltf-binary", retry=DEFAULT_RETRY
+                        ),
+                    )
+                    return f"https://storage.googleapis.com/{GCS_BUCKET}/{blob_name}"
 
-            gcs_url = await asyncio.wait_for(_work(), timeout=TASK_TIMEOUT_S)
+                work = _humanoid_work()
+
+            gcs_url = await asyncio.wait_for(work, timeout=timeout_s)
             elapsed = time.time() - t0
             _tasks[task_id].update({
                 "status": "done",
@@ -198,7 +260,7 @@ async def _run_task(task_id: str, mesh_gcs_url: str, want_blendshapes: bool) -> 
         except asyncio.TimeoutError:
             _tasks[task_id].update({
                 "status": "failed",
-                "error": f"rigging timed out after {TASK_TIMEOUT_S:.0f}s",
+                "error": f"rigging timed out after {timeout_s:.0f}s",
                 "elapsed_ms": int((time.time() - t0) * 1000),
             })
             log.error("[%s] rigging timed out", task_id)
@@ -265,4 +327,5 @@ async def health() -> dict:
         "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
         "model_loaded": engine_mia.is_ready(),
         "queued": sum(1 for t in _tasks.values() if t.get("status") in ("queued", "running")),
+        "nonhuman_worker_configured": bool(RIG_NONHUMAN_URL),
     }

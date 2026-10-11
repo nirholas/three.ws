@@ -33,6 +33,19 @@ its historical name.
    powers emotions and lipsync (`src/voice/arkit-blendshapes.js`,
    the embodiment stage) on generated avatars.
 
+### Non-humanoid meshes
+
+Make-It-Animatable is trained on bipedal humanoids. Before dispatching to it,
+`main.py` runs `mesh_classify.classify_mesh` (a cheap geometric heuristic:
+height/footprint aspect ratio plus bilateral mirror symmetry, no model) on
+the input mesh. A mesh it calls non-humanoid is forwarded to
+[`workers/rig-nonhuman`](../rig-nonhuman/) (UniRig + SkinTokens) when
+`RIG_NONHUMAN_URL` is configured; this worker then polls that service's
+`/tasks/:id` on the caller's behalf and surfaces the same `task_id`/poll
+contract regardless of which engine actually rigged the mesh. If
+`RIG_NONHUMAN_URL` is unset (the default), every mesh stays on this
+humanoid-only path, matching behavior before this branch existed.
+
 ## API
 
 Identical to the previous rig worker so `api/_providers/gcp.js` needs no code
@@ -149,6 +162,9 @@ licenses, no Hunyuan territory carve-outs, in the rigging path.
 | `MAX_CONCURRENT` | `1` | parallel rig jobs per instance |
 | `TASK_TIMEOUT_S` | `420` | per-task hard timeout |
 | `WEIGHTS_ROOT` | `/weights/make-it-animatable` | staged assets, read by `entrypoint.sh` |
+| `RIG_NONHUMAN_URL` | (unset) | `workers/rig-nonhuman` service URL; non-humanoid meshes forward here when set, stay on this worker when unset |
+| `RIG_NONHUMAN_API_KEY` | (secret) | bearer secret for the non-humanoid worker, if different from `API_KEY` |
+| `RIG_NONHUMAN_TIMEOUT_S` | `900` | hard timeout for a forwarded (non-humanoid) task |
 
 `entrypoint.sh` copies the checkpoints and Mixamo templates from `WEIGHTS_ROOT`
 (the FUSE-mounted weights bucket) onto local disk before serving, rather than

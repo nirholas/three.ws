@@ -306,6 +306,14 @@ def validate_input_mesh(mesh_bytes: bytes) -> None:
         )
 
 
+def load_mesh_vertices(mesh_bytes: bytes) -> np.ndarray:
+    """Load a validated GLB's vertex positions, for mesh classification ahead
+    of the humanoid/non-humanoid routing decision. Parses the same way
+    validate_input_mesh does, so anything that passed validation loads here."""
+    mesh = trimesh.load(io.BytesIO(mesh_bytes), file_type="glb", force="mesh")
+    return np.asarray(mesh.vertices, dtype=np.float64)
+
+
 def build_rigged_glb(mesh_bytes, mesh, joints, parents, weights,
                      blendshape_data=None, joint_names=None):
     """Author a fully rigged GLB from the raw mesh and the model's predictions.
