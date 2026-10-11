@@ -199,6 +199,14 @@
 			<description>Sixteen routes that accept an API key could arm something that spends or redirect where money lands, for any key at all. They now require the wallet:write scope: the treasury autopilot, the auto-launcher, the market maker, live Oracle watches, the pump buyback and distribute policy, signal subscriptions, recurring agent charges, team tasks that hire paid agents, agent orders and spending mandates, an agent's wallet address, a skill listing's proceeds split, animation payout addresses, a Launchpad page's payout wallet or pricing, and opening or re-terming a vault. Pausing, cancelling and closing stay open to any key, and editing an agent no longer lets a narrow key raise its spend limits or change its payment fallbacks.</description>
 		</item>
 		<item>
+			<title>Auto-rigging now covers non-humanoid meshes, not just Mixamo-shaped ones</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-11:Auto-rigging now covers non-humanoid meshes, not just Mixamo-shaped ones</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The auto-rigging worker behind the Forge's &quot;Animate it&quot; step used to assume a roughly humanoid mesh (a head, a torso, two arms, two legs); anything else, a creature, a prop, a vehicle, came back unrigged. A new fallback worker built on UniRig and SkinTokens (both MIT) now catches those cases: a lightweight shape heuristic in the rigging worker decides whether a mesh is humanoid-shaped, and anything that isn't routes to the new worker for a skeleton and skin weights built for its actual topology instead of forcing a Mixamo bone set onto it.</description>
+		</item>
+		<item>
 			<title>Avatar builds that hit a full library now say so, and the news knowledge base stops losing stories</title>
 			<link>https://three.ws/news</link>
 			<guid isPermaLink="false">2026-10-11:Avatar builds that hit a full library now say so, and the news knowledge base stops losing stories</guid>
@@ -229,6 +237,14 @@
 			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Each Studio run (avatars, rigged avatars, meshes, rigs, refinements) records stage by stage what was expected, what was observed, and a verdict: met, recovered by a named fallback, missed with its cause, or skipped. The rig is verified by reading the delivered file back, not by trusting the rigger. Receipts are ed25519-signed, linked from every result, browsable at /runs with stage-by-stage rates, and verifiable offline with one command.</description>
+		</item>
+		<item>
+			<title>Forge adds a lane that hands back an already-rigged model</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-11:Forge adds a lane that hands back an already-rigged model</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new Forge engine, &quot;Rig on generate&quot;, predicts a model's mesh, joint skeleton and skin weights together in one pass instead of handing back a bare mesh that still needs a separate rigging step. Built on VAST-AI-Research's AniGen (MIT), running on our own self-hosted worker. Pick it from the engine grid, give it a single reference image, and the finished creation arrives already animatable, with the poll response marking it rigged and reporting its joint count so the UI never offers a redundant rerig call. It is opt-in: generating without picking it behaves exactly as before.</description>
 		</item>
 		<item>
 			<title>Forge gets a fidelity lane: match your photo instead of guessing it</title>

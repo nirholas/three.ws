@@ -37,6 +37,7 @@ Each backend declares which paths it serves, whether it needs a bring-your-own-k
 - **TRELLIS (self-host)** and **Hunyuan3D (self-host)**, our own scale-to-zero Cloud Run GPU workers, and the named defaults: TRELLIS at Draft and Standard, Hunyuan3D at High. Zero vendor cost, so free-first routing prefers them first. Self-host TRELLIS is a native single-hop image-to-3D lane; Hunyuan3D leads on people and organic subjects.
 - **TripoSG (self-host)**, the sketch-only scribble worker. Untextured geometry from a drawing. It also serves photos as the last automatic failover rung: when every textured photo lane has failed mid-job, the job continues on TripoSG's photo pipeline and returns the shape without textures rather than failing.
 - **Pixal3D (self-host)**, the fidelity lane, labeled **"Match my photo"** in the UI. Built on [TencentARC Pixal3D](https://github.com/TencentARC/Pixal3D) (MIT), pixel-aligned image-to-3D on [Microsoft TRELLIS.2](https://github.com/microsoft/TRELLIS.2)'s backbone. Where the other photo lanes read one view and generate a plausible result, Pixal3D fuses every photo you give it (1 to 4), so the result matches your photos rather than guessing. Never a named default or a failover target (a down Pixal3D must not silently drop the 2nd/3rd photo on a lane that only reads the first view) and only selectable explicitly. With exactly one photo, the optional `fill_other_sides` flag first synthesizes the other three angles with [MV-Adapter](https://github.com/huanngzh/MV-Adapter) (Apache-2.0) before reconstructing.
+- **AniGen (self-host)**, the rig-on-generation lane, labeled **"Rig on generate"** in the UI. Built on [VAST-AI-Research/AniGen](https://github.com/VAST-AI-Research/AniGen) (MIT). Every other image lane hands back a bare mesh; AniGen predicts the mesh, its joint skeleton and its per-vertex skin weights together, so the GLB it returns is already animatable, no separate rerig call. Single reference image; never a named default or a failover target, only selectable explicitly. The catalog's `rigged:true` flag and the poll response's `rigged`/`joint_count` fields mark the result as pre-rigged.
 - **TRELLIS** on Replicate, a paid platform lane. Selectable explicitly and used as the last-resort fallback only on deployments with no free engine configured.
 - **Meshy 6**, **Tripo v3.1**, **Rodin (Hyper3D)**, BYOK geometry-first engines with quad topology and a real poly target. You supply your own key.
 - **Stable Fast 3D** (Stability, BYOK) and **Replicate (your account)** (BYOK), single-image reconstruction lanes.
@@ -359,6 +360,16 @@ reconstructing from the single view alone:
 curl -X POST 'https://three.ws/api/forge' \
   -H 'content-type: application/json' \
   -d '{"image_urls":["https://…/front.jpg"],"fill_other_sides":true,"backend":"pixal3d","tier":"standard"}'
+```
+
+Pin the AniGen rig-on-generation lane with `backend`; the done response
+carries `rigged: true` and `joint_count` alongside `glb_url`, so the result
+needs no separate `/api/forge-rig` call:
+
+```bash
+curl -X POST 'https://three.ws/api/forge' \
+  -H 'content-type: application/json' \
+  -d '{"image_urls":["https://…/front.jpg"],"backend":"anigen","tier":"standard"}'
 ```
 
 A minimal poll-until-done loop in JavaScript:
