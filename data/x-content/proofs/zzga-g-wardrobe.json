@@ -1,0 +1,64 @@
+{
+	"id": "zzga-g-wardrobe",
+	"scenarioHash": "34570dc030f177f38049e1310a6ff7e9d8e9f06acef31466072bf61327940dc8",
+	"ranAt": "2026-10-11T20:10:46.684Z",
+	"target": {
+		"commit": "66a5e93bd",
+		"revision": "three-ws-api-00494-wh5"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/wardrobe",
+			"detail": "loaded https://three.ws/wardrobe",
+			"ok": true,
+			"ms": 7501,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "scroll",
+			"target": "Search pieces",
+			"detail": "scrolled 486 px",
+			"ok": true,
+			"ms": 901,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "pieces",
+			"detail": "pieces = \"59\"",
+			"ok": true,
+			"ms": 6,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "hold",
+			"target": "1600",
+			"detail": "1600 ms",
+			"ok": true,
+			"ms": 304,
+			"frames": 0
+		},
+		{
+			"index": 5,
+			"kind": "click",
+			"target": "Outerwear",
+			"ok": false,
+			"detail": "the caption \"Every piece is a rigged 3D garment, not a texture\" does not fit the bar in this format; shorten it",
+			"ms": 262,
+			"frames": 0
+		}
+	],
+	"facts": {
+		"pieces": "59"
+	},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": null
+}

@@ -1,0 +1,60 @@
+{
+	"id": "zzga-g-forge-gen",
+	"scenarioHash": "fef46afb178d5f2ff53d47720d2df86914d11b28f360f9f85099bb8251ee46f6",
+	"ranAt": "2026-10-11T20:18:25.784Z",
+	"target": {
+		"commit": "66a5e93bd",
+		"revision": "three-ws-api-00494-wh5"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/forge",
+			"detail": "loaded https://three.ws/forge",
+			"ok": true,
+			"ms": 7184,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "type",
+			"target": "a glazed ceramic teapot, oxblood red, studio lighting",
+			"detail": "typed 53 characters",
+			"ok": true,
+			"ms": 1377,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "click",
+			"target": "Generate ↵",
+			"detail": "clicked; GET /api/forge answered 200 in 2.5 s",
+			"ok": true,
+			"ms": 2922,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "expect",
+			"target": "zzzzq",
+			"ok": false,
+			"detail": "locator.waitFor: Timeout 240000ms exceeded.",
+			"ms": 240785,
+			"frames": 0
+		}
+	],
+	"facts": {},
+	"saw": [],
+	"responses": [
+		{
+			"method": "GET",
+			"path": "/api/forge",
+			"status": 200,
+			"seconds": 2.5
+		}
+	],
+	"cuts": [],
+	"video": null
+}
