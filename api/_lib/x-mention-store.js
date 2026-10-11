@@ -191,3 +191,65 @@ export async function recentDecisions(account, { limit = 50, decision = null, dr
 		limit ${n}
 	`;
 }
+
+/**
+ * Cross-account mention listing for the operator console (/x/ops): every
+ * account the bot watches, filterable by account, intent, decision and
+ * dry-run status. Unlike recentDecisions (one agent's own settings panel),
+ * no account is required: an operator reviews the whole bot, not one agent.
+ *
+ * @param {{ accountKind?: string|null, accountRef?: string|null, intent?: string|null, decision?: string|null, dryRun?: boolean|null, authorId?: string|null, limit?: number, offset?: number }} [opts]
+ */
+export async function adminListMentions({
+	accountKind = null,
+	accountRef = null,
+	intent = null,
+	decision = null,
+	dryRun = null,
+	authorId = null,
+	limit = 50,
+	offset = 0,
+} = {}) {
+	if (accountKind != null && !ACCOUNT_KINDS.includes(accountKind)) throw new MentionStoreError(`unknown account kind: ${accountKind}`, 'bad_account');
+	if (decision != null && !DECISIONS.includes(decision)) throw new MentionStoreError(`unknown decision: ${decision}`, 'bad_decision');
+	const n = Math.max(1, Math.min(200, Math.round(Number(limit) || 50)));
+	const off = Math.max(0, Math.round(Number(offset) || 0));
+	const ref = accountRef != null ? String(accountRef) : null;
+	const author = authorId != null ? String(authorId) : null;
+	return sql`
+		select * from x_mention_events
+		where (${accountKind}::text is null or account_kind = ${accountKind})
+		  and (${ref}::text is null or account_ref = ${ref})
+		  and (${intent}::text is null or intent = ${intent})
+		  and (${decision}::text is null or decision = ${decision})
+		  and (${dryRun}::boolean is null or dry_run = ${dryRun})
+		  and (${author}::text is null or author_id = ${author})
+		order by created_at desc, tweet_id desc
+		limit ${n} offset ${off}
+	`;
+}
+
+/** Count of mentions matching the same filters adminListMentions uses, for pagination. */
+export async function adminCountMentions({
+	accountKind = null,
+	accountRef = null,
+	intent = null,
+	decision = null,
+	dryRun = null,
+	authorId = null,
+} = {}) {
+	if (accountKind != null && !ACCOUNT_KINDS.includes(accountKind)) throw new MentionStoreError(`unknown account kind: ${accountKind}`, 'bad_account');
+	if (decision != null && !DECISIONS.includes(decision)) throw new MentionStoreError(`unknown decision: ${decision}`, 'bad_decision');
+	const ref = accountRef != null ? String(accountRef) : null;
+	const author = authorId != null ? String(authorId) : null;
+	const [row] = await sql`
+		select count(*)::int as n from x_mention_events
+		where (${accountKind}::text is null or account_kind = ${accountKind})
+		  and (${ref}::text is null or account_ref = ${ref})
+		  and (${intent}::text is null or intent = ${intent})
+		  and (${decision}::text is null or decision = ${decision})
+		  and (${dryRun}::boolean is null or dry_run = ${dryRun})
+		  and (${author}::text is null or author_id = ${author})
+	`;
+	return row?.n ?? 0;
+}

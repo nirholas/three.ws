@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>X mention bot console · three.ws</title>
+		<meta name="description" content="Internal operator console for the X mention-reply bot: review dry-run replies, pause the bot, blocklist an author, or send one reply live." />
+		<meta name="robots" content="noindex, nofollow" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/x-ops.css" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="xo-shell" id="xo-app">
+			<div class="xo-head">
+				<div>
+					<p class="xo-kicker"><span class="xo-dot" id="xo-status-dot" aria-hidden="true"></span> X mention bot</p>
+					<h1 class="xo-title">Operator console</h1>
+				</div>
+				<div class="xo-head-meta">
+					<span id="xo-status-text" aria-live="polite">loading…</span>
+					<button type="button" class="xo-btn" id="xo-toggle-pause">Pause bot</button>
+					<span id="xo-updated" aria-live="polite"></span>
+					<button type="button" class="xo-btn" id="xo-refresh">Refresh</button>
+				</div>
+			</div>
+
+			<div class="xo-body">
+				<nav class="xo-rail" id="xo-rail" aria-label="Mention filters">
+					<p class="xo-rail-head">Lanes</p>
+				</nav>
+
+				<section class="xo-panel" aria-label="Mention events">
+					<div class="xo-panel-head">
+						<h2 class="xo-panel-title" id="xo-lane-title">All mentions</h2>
+						<div class="xo-filters">
+							<select class="xo-select" id="xo-filter-account" aria-label="Account">
+								<option value="">Every account</option>
+								<option value="company">Company (@trythreews)</option>
+								<option value="agent">Agent accounts</option>
+							</select>
+							<select class="xo-select" id="xo-filter-intent" aria-label="Intent">
+								<option value="">Every intent</option>
+							</select>
+							<input class="xo-input" id="xo-filter-author" type="text" placeholder="author id" aria-label="Author id" autocomplete="off" />
+						</div>
+					</div>
+					<div class="xo-scroll">
+						<table class="xo-table">
+							<thead>
+								<tr>
+									<th scope="col">When</th>
+									<th scope="col">Account</th>
+									<th scope="col">Author</th>
+									<th scope="col">Intent</th>
+									<th scope="col">Decision</th>
+									<th scope="col">Reply</th>
+								</tr>
+							</thead>
+							<tbody id="xo-rows"></tbody>
+						</table>
+					</div>
+					<div class="xo-panel-foot">
+						<button type="button" class="xo-btn" id="xo-load-more">Load more</button>
+					</div>
+				</section>
+			</div>
+		</main>
+
+		<div class="xo-drawer-scrim" id="xo-scrim" data-open="false"></div>
+		<aside class="xo-drawer" id="xo-drawer" data-open="false" aria-hidden="true" aria-label="Mention detail">
+			<div class="xo-drawer-head">
+				<h2 class="xo-drawer-title" id="xo-drawer-title">Mention</h2>
+				<button type="button" class="xo-btn" id="xo-close" style="margin-left:auto">Close</button>
+			</div>
+			<div class="xo-drawer-body" id="xo-drawer-body"></div>
+		</aside>
+
+		<script type="module" src="/src/x-ops.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

@@ -2342,6 +2342,10 @@
 			"dest": "/materialize-ops.html"
 		},
 		{
+			"src": "/x/ops/?",
+			"dest": "/x-ops.html"
+		},
+		{
 			"src": "/materialize/insert/([0-9a-f]{24})/?",
 			"dest": "/print-insert.html"
 		},
@@ -3759,6 +3763,10 @@
 		{
 			"src": "/api/print/ops/(queue|order|adapters|transition|submit|tracking|cancel|refund)",
 			"dest": "/api/print/ops/[action]?action=$1"
+		},
+		{
+			"src": "/api/x/ops/(list|status|pause|resume|block|unblock|send)",
+			"dest": "/api/x/ops/[action]?action=$1"
 		},
 		{
 			"src": "/api/print/webhook/([a-z][a-z0-9-]{1,31})",

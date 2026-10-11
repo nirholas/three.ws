@@ -688,6 +688,7 @@ const appConfig = {
 				'smart-home-satellite': resolve(__dirname, 'pages/smart-home-satellite.html'),
 				'materialize-order': resolve(__dirname, 'pages/materialize-order.html'),
 				'materialize-ops': resolve(__dirname, 'pages/materialize-ops.html'),
+				'x-ops': resolve(__dirname, 'pages/x-ops.html'),
 				'drop-collection': resolve(__dirname, 'pages/drop-collection.html'),
 				pocket: resolve(__dirname, 'pages/pocket.html'),
 				spotlight: resolve(__dirname, 'pages/spotlight.html'),
