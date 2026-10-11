@@ -219,6 +219,13 @@ const KNOWN_SIGNATURES = [
 		class: 'self-healing',
 		action: `The okx-a2a XMTP daemon child died and the supervisor is restarting it with capped backoff (workers/okx-chat-bot/supervisor.js). One or two of these around a revision change is normal. Investigate only if the restart count climbs continuously, which means the daemon is failing at startup rather than dying in service: read the forwarded "daemon" lines just before the exit for the real error, most often a corrupt restored state tree (delete the GCS snapshot object and re-login) or a missing AI-provider credential.`,
 	},
+	{
+		id: 'sperax-facilitator-invalid-permit2-spender',
+		match: /invalid_permit2_spender/i,
+		services: ['sperax-x402-facilitator'],
+		class: 'owner',
+		action: `sperax-x402-facilitator is a third-party-operated Cloud Run service in this project (gcloud run services describe shows creator/lastModifier nich@sperax.io, image built outside three-ws-build@); its source is not in this repository, so this cannot be fixed at the root here. The WARNING means a caller presented a Permit2 spender address the facilitator does not recognize for the asset/network pair, i.e. a client-side integration mismatch rather than a crash, and the facilitator itself answers the caller with the verify-failed result (no retry needed on our side). If x402 settle volume through this facilitator drops, forward the sample payload to nich@sperax.io; otherwise no action.`,
+	},
 ];
 
 // Known signatures for request-log (5xx) groups. `test` sees the http group:
@@ -315,6 +322,70 @@ const KNOWN_HTTP_SIGNATURES = [
 		test: (g) => g.status === 503 && (g.path === '/api/galaxy' || g.path.startsWith('/api/galaxy/')),
 		class: 'owner',
 		action: `/api/galaxy returns its designed 503 watsonx_unavailable: the Agent Galaxy positions stars with IBM Granite embeddings on watsonx.ai, and WATSONX_API_KEY / WATSONX_PROJECT_ID exist nowhere (Cloud Run env, .env, Secret Manager — swept 2026-07-29). The /galaxy page already renders a designed "IBM Granite isn't connected" state, so there is no broken user path and nothing to fix in code. Owner provisions watsonx credentials at cloud.ibm.com, then: gcloud run services update three-ws-api --region us-central1 --update-env-vars WATSONX_API_KEY=<key>,WATSONX_PROJECT_ID=<id>. Harmless noise until then. ${RUNBOOK} §watsonx-unconfigured.`,
+	},
+	{
+		id: 'r2-downstream-5xx',
+		// Every one of these routes reads or writes through api/_lib/r2.js, or
+		// (print/quote, 3d/inspect) fetches a caller-supplied model URL that is
+		// overwhelmingly an R2 .r2.dev link in practice (forge/gpt-forge persist
+		// the generated GLB there). A single Cloudflare R2 flap (healthz
+		// object_storage down/degraded, tracked in production-100-OWNER-
+		// ACTIONS.md row 36) fans out into 5xx on all of them at once; match the
+		// whole family instead of re-diagnosing each route from scratch every
+		// sweep (2026-10-11 triage-lane sweep: forge, gpt-forge, cdn/forge/*.glb,
+		// avatars/*/glb, avatars/upload, api/glb, api/3d/inspect,
+		// api/print/quote, cdn/objects/library/manifest.json all fired together
+		// with zero matching app-level error log lines, i.e. each is a
+		// handler-returned 5xx, not a crash).
+		test: (g) => g.service === 'three-ws-api' && g.status >= 500 && (
+			g.path === '/api/forge' || g.path === '/api/gpt-forge' ||
+			g.path === '/api/glb' || g.path === '/api/avatars/upload' ||
+			g.path === '/api/3d/inspect' || g.path === '/api/print/quote' ||
+			/^\/cdn\/forge\//.test(g.path) || /^\/api\/avatars\/<uuid>\/glb$/.test(g.path) ||
+			g.path === '/cdn/objects/library/manifest.json'
+		),
+		class: 'owner',
+		action: `Check healthz object_storage first (curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[] | select(.name=="object_storage")'): "down" or "degraded" means this is the known Cloudflare R2 flap, not a new bug (production-100-OWNER-ACTIONS.md row 36 tracks the owner-side Cloudflare dashboard check). If object_storage reads ok, read the specific route's handler instead; api/forge.js, api/gpt-forge.js, api/objects/library.js and api/avatars/[id].js import from api/_lib/r2.js directly, while api/print/quote.js and api/3d/inspect.js are generic caller-URL fetch tools (502 fetch_failed) that happen to be fetching R2-hosted models in the sample traffic, so confirm the sample URL's host before blaming R2 on those two. ${RUNBOOK} §r2-downstream.`,
+	},
+	{
+		id: 'pulse-not-deployed-503',
+		test: (g) => g.service === 'three-ws-api' && g.status === 503 && g.path === '/api/trenches',
+		class: 'owner',
+		action: `/api/trenches is a read-only proxy to the services/pulse market-intelligence service over PULSE_URL. That service has never been deployed (gcloud run services list has no "pulse" entry, PULSE_URL is unset), so every request answers the designed 503 pulse_offline "Pulse is not configured on this deployment". Nothing to fix in code; the deploy is owner-gated (new Cloud Run service, Cloud SQL DATABASE_URL, dedicated SOLANA_WS_URLS) and documented end to end in docs/trenches.md's "Deploy (owner-gated)" section. ${RUNBOOK} §pulse-not-deployed.`,
+	},
+	{
+		id: 'wallet-rollup-503',
+		test: (g) => g.service === 'three-ws-api' && g.status === 503 && g.path === '/api/health',
+		class: 'owner',
+		action: `/api/health rolls up database, rpc, worker and wallet probes and answers 503 on the worst one (api/_lib/health-probes.js). Read the body (curl -s https://three.ws/api/health) to see which probe is "down": if it is "wallet" with three_token_rail down, that is THREE_TREASURY_WALLET/THREE_REWARDS_WALLET staying unset by design (production-100-OWNER-ACTIONS.md row 23, a wallet-naming decision only the owner can make: the rewards candidate is also the buyback signer). If it is "rpc", that is the paid Solana RPC lane exhaustion (row 24). Nothing to fix in code unless a probe other than wallet/rpc is the one reporting down. ${RUNBOOK} §wallet-rollup.`,
+	},
+	{
+		id: 'three-ws-ai-providers-unavailable-5xx',
+		// Mirrors ccv-ai-providers-unavailable-503 for three-ws-api's own AI
+		// routes: same two owner-gated causes (the GCP billing hold on
+		// aerial-vehicle-466722-p5 blocking Vertex Gemini/Imagen, row 20; the
+		// dead OpenAI key, row 6) feed the provider chain behind /api/vision
+		// and /api/tts/synthesize.
+		test: (g) => g.service === 'three-ws-api' && g.status >= 500 &&
+			(g.path === '/api/vision' || g.path === '/api/tts/synthesize'),
+		class: 'owner',
+		action: `/api/vision and /api/tts/synthesize each walk a provider chain (NVIDIA, then Vertex Gemini, then OpenAI) and answer an honest 502/503 when every rung fails. The GCP billing hold "Lightning dunning decision is deny" on aerial-vehicle-466722-p5 blocks the Vertex/Gemini rung (production-100-OWNER-ACTIONS.md row 20) and the OpenAI key is dead (row 6); together that leaves only the NVIDIA rung, which the forge_generation health sensor shows intermittently failing on free-tier NVCF capacity. Nothing to fix in code: restoring either billing-held provider clears this family, same as the identical cryptocurrency-cv pattern (ccv-ai-providers-unavailable-503). ${RUNBOOK} §three-ws-ai-providers-unavailable.`,
+	},
+	{
+		id: 'agent-networth-rpc-unavailable-503',
+		// api/agents/solana-wallet.js's handleNetWorth explicitly documents this:
+		// "every RPC path is down right now ... Return 503 + Retry-After (not
+		// 502)" when getBalances' hold-last-state fallback has no snapshot to
+		// serve yet. Same root cause as holders-rpc-exhausted-503, different route.
+		test: (g) => g.service === 'three-ws-api' && g.status === 503 && /^\/api\/agents\/<uuid>\/solana\/networth$/.test(g.path),
+		class: 'self-healing',
+		action: `The agent net-worth "look" endpoint exhausted every Solana RPC path for a wallet it has never read successfully, so it answered a designed 503 rpc_unavailable with Retry-After rather than a fake baseline (api/agents/solana-wallet.js handleNetWorth, comment above the catch block). Check healthz rpc_lanes/helius: fires in the same bursts as holders-rpc-exhausted-503 while every paid Solana RPC lane cools down (production-100-OWNER-ACTIONS.md row 24). Investigate only if it persists after rpc_lanes reads ok. ${RUNBOOK} §solana-rpc.`,
+	},
+	{
+		id: 'ccv-whales-500',
+		test: (g) => g.service === 'cryptocurrency-cv' && g.status >= 500 && g.path === '/api/whales',
+		class: 'owner',
+		action: `cryptocurrency-cv's source lives in its own repository (nirholas/cryptocurrency.cv), not this one, so a crash here cannot be fixed from this checkout. Root-cause with npm run logs -- -s cryptocurrency-cv --errors --app --since 6h and, if the cause matches the already-tracked AI-provider billing hold (${RUNBOOK} §ccv-ai-providers-unavailable), no further action; otherwise file it against the cryptocurrency.cv repo. ${RUNBOOK} §cryptocurrency-cv-separate-repo.`,
 	},
 ];
 

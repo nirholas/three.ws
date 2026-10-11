@@ -1237,6 +1237,150 @@ ERROR  502 POST /api/pump/launch-agent
 
 ---
 
+## 🔴 5xx fan-out across `/api/forge`, `/api/gpt-forge`, `/api/glb`, avatars, `/api/3d/inspect`, `/api/print/quote`: `r2-downstream-5xx` (§r2-downstream)
+
+- **Source:** every route that reads or writes through
+  [api/_lib/r2.js](../../api/_lib/r2.js) (`api/forge.js`, `api/gpt-forge.js`,
+  `api/objects/library.js`, `api/avatars/[id].js`), plus two generic
+  caller-supplied-URL fetch tools (`api/print/quote.js`, `api/3d/inspect.js`,
+  502 `fetch_failed`) that happen to be fetching R2-hosted GLBs in practice
+  because forge/gpt-forge persist generated models there.
+- **What it means:** Cloudflare R2 flapping (healthz `object_storage`
+  `down`/`degraded`, tracked at
+  [production-100-OWNER-ACTIONS.md](../../prompts/finish/_context/production-100-OWNER-ACTIONS.md)
+  row 36) fans out into 5xx on this whole family at once with zero matching
+  app-level crash logs, because each handler returns a clean upstream-failure
+  status rather than throwing. Triage-lane sweep 2026-10-11 saw all nine
+  routes fire together inside the same window.
+- **Resolve:** check healthz first:
+  `curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[] | select(.name=="object_storage")'`.
+  `down`/`degraded` confirms this family and the fix is the owner-side
+  Cloudflare dashboard check in row 36. If `object_storage` reads `ok`,
+  stop treating this as one signature and read the specific route's handler:
+  the four R2-direct routes point at a real credential/bucket problem, the two
+  fetch-tool routes point at whatever host the sample URL actually names
+  (confirm it is really `.r2.dev` before blaming R2).
+- **Monitor signature:** `r2-downstream-5xx` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `owner`.
+
+---
+
+## 🟢 HTTP 503 `/api/trenches`: `pulse-not-deployed-503` (§pulse-not-deployed)
+
+- **Source:** [api/trenches.js](../../api/trenches.js), a read-only proxy to
+  the `services/pulse` market-intelligence service over `PULSE_URL`.
+- **What it means:** `pulse` has never been deployed (`gcloud run services
+  list` has no `pulse` entry, `PULSE_URL` is unset), so every request answers
+  the designed 503 `pulse_offline` ("Pulse is not configured on this
+  deployment"). Nothing in code is broken.
+- **Resolve (owner, deploy):** stand up the `pulse` Cloud Run service (its own
+  Cloud SQL `DATABASE_URL`, dedicated `SOLANA_WS_URLS`) per the "Deploy
+  (owner-gated)" section of [docs/trenches.md](../trenches.md). Until then,
+  🟢 nothing required.
+- **Monitor signature:** `pulse-not-deployed-503` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `owner`.
+
+---
+
+## 🟡 HTTP 503 `/api/health`: `wallet-rollup-503` (§wallet-rollup)
+
+- **Source:** [api/health.js](../../api/health.js) via
+  [api/_lib/health-probes.js](../../api/_lib/health-probes.js)'s
+  `gatherHealth()`, which folds exactly four probes (`database`, `rpc`,
+  `worker`, `wallet`) and answers 503 on the worst one.
+- **What it means:** read the body
+  (`curl -s https://three.ws/api/health`) to see which probe is `down`. If it
+  is `wallet` with `three_token_rail` down, that is
+  `THREE_TREASURY_WALLET`/`THREE_REWARDS_WALLET` staying unset by design (row
+  23: a wallet-naming decision only the owner can make, because the rewards
+  candidate wallet is also the buyback signer). If it is `rpc`, that is the
+  paid Solana RPC lane exhaustion (row 24, see "Every paid Solana RPC lane
+  exhausted at once" above).
+- **Resolve:** nothing to fix in code unless a probe other than
+  `wallet`/`rpc` is the one reporting `down`; those two are both pre-existing
+  owner decisions.
+- **Monitor signature:** `wallet-rollup-503` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `owner`.
+
+---
+
+## 🔴 5xx on `/api/vision`, `/api/tts/synthesize`: `three-ws-ai-providers-unavailable-5xx` (§three-ws-ai-providers-unavailable)
+
+- **Source:** `/api/vision` and `/api/tts/synthesize` each walk a provider
+  chain (NVIDIA, then Vertex Gemini, then OpenAI) and answer an honest
+  502/503 when every rung fails. Mirrors `ccv-ai-providers-unavailable-503`
+  above, for this repository's own AI routes.
+- **What it means:** the GCP billing hold ("Lightning dunning decision is
+  deny") on `aerial-vehicle-466722-p5` blocks the Vertex/Gemini rung (row 20)
+  and the OpenAI key is dead (row 6), leaving only the NVIDIA rung, which the
+  `forge_generation` health sensor shows intermittently failing on free-tier
+  NVCF capacity.
+- **Resolve (owner, billing/credential):** restoring either billing-held
+  provider clears this family. Nothing to fix in code: same pattern as
+  `ccv-ai-providers-unavailable-503`, just a different repository's routes.
+- **Monitor signature:** `three-ws-ai-providers-unavailable-5xx` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `owner`.
+
+---
+
+## 🟢 HTTP 503 `/api/agents/<id>/solana/networth`: `agent-networth-rpc-unavailable-503` (§solana-rpc)
+
+- **Source:** `handleNetWorth()` in
+  [api/agents/solana-wallet.js](../../api/agents/solana-wallet.js). Its
+  hold-last-state contract serves a stale last-known-good snapshot when a
+  live balance read fails; this 503 fires only when there is no snapshot to
+  fall back to yet, meaning every RPC path is down for a wallet this endpoint
+  has never read successfully.
+- **What it means:** same root cause as `holders-rpc-exhausted-503` above
+  (see "Every paid Solana RPC lane exhausted at once"), a different route
+  hitting the same quota exhaustion (row 24). The handler returns 503 with
+  `Retry-After: 15` rather than inventing a balance.
+- **Resolve:** check healthz `rpc_lanes`/`helius` first; this fires in the
+  same bursts as `holders-rpc-exhausted-503` while every paid Solana RPC lane
+  cools down. Investigate only if it persists after `rpc_lanes` reads `ok`.
+- **Monitor signature:** `agent-networth-rpc-unavailable-503` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), `self-healing`.
+
+---
+
+## 🟡 HTTP 5xx `cryptocurrency-cv` `/api/whales`: `ccv-whales-500` (§cryptocurrency-cv-separate-repo)
+
+- **Source:** `cryptocurrency-cv`'s `/api/whales`. Its source lives in its own
+  repository (`nirholas/cryptocurrency.cv`), not this one, so a crash there
+  cannot be fixed from this checkout regardless of root cause.
+- **What it means:** root-cause with
+  `npm run logs -- -s cryptocurrency-cv --errors --app --since 6h`. If the
+  cause matches the already-tracked AI-provider billing hold (see
+  §ccv-ai-providers-unavailable above), no further action here; otherwise
+  file it against the `cryptocurrency.cv` repository.
+- **Resolve:** out of scope for this repository by design. Scoped to
+  `status >= 500` only; a 429 on the same route falls back to the default
+  `self-healing` classification, not this signature.
+- **Monitor signature:** `ccv-whales-500` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `owner`.
+
+---
+
+## 🟢 WARNING `invalid_permit2_spender` on `sperax-x402-facilitator`: `sperax-facilitator-invalid-permit2-spender`
+
+- **Source:** `sperax-x402-facilitator`, a third-party-operated Cloud Run
+  service in this GCP project. `gcloud run services describe
+  sperax-x402-facilitator` shows `creator`/`lastModifier` `nich@sperax.io` and
+  an image built outside `three-ws-build@`; its source is not in this
+  repository.
+- **What it means:** a caller presented a Permit2 spender address the
+  facilitator does not recognize for the asset/network pair, a client-side
+  integration mismatch. The facilitator answers the caller with the
+  verify-failed result itself; this is not a crash and needs no retry on our
+  side.
+- **Resolve:** 🟢 nothing required here. If x402 settle volume through this
+  facilitator drops, forward the sample payload to `nich@sperax.io`.
+- **Monitor signature:** `sperax-facilitator-invalid-permit2-spender` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `owner`,
+  scoped to `sperax-x402-facilitator`.
+
+---
+
 ## The owner runbook — every fix as an exact command
 
 Everything red/yellow above, condensed to the actions only the owner can take,
