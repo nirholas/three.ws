@@ -1,7 +1,8 @@
-// Order 044, task 1: profile chat (api/chat.js) and the web copilot
-// (api/agents/copilot.js) resolve an agent's chosen brain through the same
-// function other surfaces use (api/_lib/agent-model.js), never silently on
-// the platform default.
+// Order 044, task 1: profile chat (api/chat.js) resolves an agent's chosen
+// brain through the same function other surfaces use (api/_lib/agent-model.js),
+// never silently on the platform default. The web copilot's own brain
+// resolution (api/agents/copilot.js, via resolveAgentBrain) is covered in
+// tests/agent-brain.test.js.
 
 import { describe, it, expect, vi } from 'vitest';
 
@@ -28,7 +29,6 @@ vi.mock('../api/_lib/auth.js', () => ({
 vi.mock('../api/_lib/db.js', () => ({ sql: vi.fn(async () => []) }));
 
 const { agentBrainDefaultFor } = await import('../api/chat.js');
-const { copilotModel } = await import('../api/agents/copilot.js');
 
 const GROK_MODEL = 'grok-4.7';
 
@@ -73,25 +73,5 @@ describe('agentBrainDefaultFor (api/chat.js)', () => {
 			anonymous: false, requestedProvider: undefined, requestedModel: undefined,
 			agentMeta: { runtime: { model: 'some-retired-id-nobody-knows' } },
 		})).toBeNull();
-	});
-});
-
-describe('copilotModel (api/agents/copilot.js)', () => {
-	it('honors an explicit grok override', () => {
-		const choice = copilotModel(GROK_MODEL, {});
-		expect(choice.model).toBe(GROK_MODEL);
-		expect(choice.source).toBe('message');
-	});
-
-	it('falls through to the agent default when no override is given', () => {
-		const choice = copilotModel(undefined, { runtime: { model: GROK_MODEL } });
-		expect(choice.model).toBe(GROK_MODEL);
-		expect(choice.source).toBe('agent');
-	});
-
-	it('falls through to the platform chain when the agent default has no tool calling', () => {
-		const choice = copilotModel(undefined, { runtime: { model: 'deepseek-r1' } });
-		expect(choice.model).toBeNull();
-		expect(choice.source).toBe('platform');
 	});
 });
