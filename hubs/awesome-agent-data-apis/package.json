@@ -1,0 +1,13 @@
+{
+  "name": "awesome-agent-data-apis",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Curated, machine-readable directory of paid and machine-readable data APIs for agents.",
+  "license": "CC0-1.0",
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/validate.mjs",
+    "build": "node scripts/build-readme.mjs",
+    "check": "node scripts/validate.mjs && node scripts/build-readme.mjs"
+  }
+}

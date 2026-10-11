@@ -1,0 +1,12 @@
+[
+  {"id": "payment-protocols", "title": "Payment Protocols and Facilitators", "blurb": "Open standards and settlement services that let an agent pay for an API call over HTTP 402."},
+  {"id": "service-discovery", "title": "Paid API Discovery and Marketplaces", "blurb": "Bazaars, indexes and explorers where agents find pay-per-call services."},
+  {"id": "solana-data", "title": "Solana Data and Infrastructure", "blurb": "RPC, indexed data, DEX and token APIs built for Solana, the home chain of this list."},
+  {"id": "onchain-data", "title": "Multichain Onchain Data", "blurb": "Indexers, analytics and wallet APIs spanning many chains, many with MCP servers."},
+  {"id": "market-data", "title": "Market Data and Oracles", "blurb": "Prices, DeFi metrics and oracle feeds that agents read for decisions."},
+  {"id": "prediction-markets", "title": "Prediction Market APIs", "blurb": "Public APIs for market odds, order books and forecasts."},
+  {"id": "web-data", "title": "Web Data for Agents", "blurb": "Search, crawl and scrape APIs designed for LLM and agent consumption."},
+  {"id": "mcp-registries", "title": "MCP Registries and Hosting", "blurb": "Directories and hosts for MCP servers that expose data and tools to agents."},
+  {"id": "metering-monetization", "title": "Usage Metering and API Monetization", "blurb": "Gateways, billing and metering tools for charging agent traffic."},
+  {"id": "agent-toolkits", "title": "Agent Toolkits", "blurb": "SDKs that give agents wallets and data access to pay for and consume these services."}
+]
