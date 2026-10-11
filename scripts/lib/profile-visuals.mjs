@@ -13,6 +13,8 @@
 // or invented. Each visual renders once per theme and the README picks one
 // with <picture> and prefers-color-scheme.
 
+import { BULK_LINES } from './profile-activity.mjs';
+
 const FONT = `-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif`;
 
 // Categorical slots follow the section order in build-github-profile.mjs, so a
@@ -190,7 +192,7 @@ function planet(repos, groups, t) {
 }
 
 /** Odometer stat strip: each digit rolls into place on its own spline. */
-function odometer(stats, t) {
+function odometer(stats, t, title = 'Profile at a glance') {
 	const W = 900;
 	const H = 128;
 	const tw = W / stats.length;
@@ -227,7 +229,7 @@ function odometer(stats, t) {
 		body.push(`<text x="${r1(mid)}" y="${base + 26}" fill="${t.muted}" font-size="11.5" text-anchor="middle">${esc(s.caption)}</text>`);
 	});
 	out.push(`</defs>`);
-	return svg(W, H, 'Profile at a glance', stats.map((s) => `${s.label}: ${fmt(s.value)} (${s.caption})`).join('. '), [...out, ...body].join('\n'));
+	return svg(W, H, title, stats.map((s) => `${s.label}: ${fmt(s.value)} (${s.caption})`).join('. '), [...out, ...body].join('\n'));
 }
 
 /** Isometric city: each section is a district, each repo a tower whose height is log stars. */
@@ -537,6 +539,11 @@ function punchcard(repos, t) {
 		const d = new Date(r.createdAt);
 		cells[(d.getUTCDay() + 6) % 7][d.getUTCHours()] += 1;
 	}
+	return punchGrid(cells, t, { title: 'When repositories are born', sub: (peak, v) => `Creation time of every repository by weekday and hour (UTC). Busiest slot: ${peak}, ${v} repos.`, desc: 'Punchcard of repository creation by weekday and hour, UTC.' });
+}
+
+/** Weekday by hour dot grid. Dot area is the count; the busiest slot is named in the caption. */
+function punchGrid(cells, t, { title, sub, desc }) {
 	const max = Math.max(1, ...cells.flat());
 	const W = 900;
 	const x0 = 74;
@@ -561,15 +568,177 @@ function punchcard(repos, t) {
 	for (let h = 0; h < 24; h += 3) out.push(`<text x="${r1(x0 + cw * (h + 0.5))}" y="${y0 - 22}" fill="${t.muted}" font-size="11" text-anchor="middle">${String(h).padStart(2, '0')}:00</text>`);
 	const style = `.p{transform-box:fill-box;transform-origin:center;animation:pop .7s cubic-bezier(.3,1.6,.5,1) both}@keyframes pop{from{transform:scale(0)}}`;
 	const peak = `${days[best.di]} ${String(best.h).padStart(2, '0')}:00 UTC`;
+	return svg(W, H, title, `${desc} Busiest slot: ${peak} with ${fmt(best.v)}.`, `${heading(t, 24, 36, title, sub(peak, fmt(best.v)))}
+${out.join('\n')}`, style);
+}
+
+
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** 10650561 becomes "10.7M", 48565 becomes "48.6k", small numbers stay whole. */
+const compact = (n) => (n >= 1e6 ? `${r1(n / 1e6)}M` : n >= 1e3 ? `${r1(n / 1e3)}k` : String(Math.round(n)));
+
+/** Twelve months of days as a calendar heatmap, one cell per day, colored by commit count. */
+function activityCalendar(a, t) {
+	const days = a.series;
+	const lead = (new Date(`${days[0].date}T00:00:00Z`).getUTCDay() + 6) % 7;
+	const cols = Math.ceil((lead + days.length) / 7);
+	const W = 900;
+	const x0 = 46;
+	const y0 = 84;
+	const step = (W - 24 - x0) / cols;
+	const size = step - 3;
+	const counts = days.map((d) => d.count).filter(Boolean).sort((p, q) => p - q);
+	const cut = [0.25, 0.5, 0.75].map((q) => counts[Math.floor(counts.length * q)] || 1);
+	const level = (n) => (n === 0 ? 0 : n <= cut[0] ? 1 : n <= cut[1] ? 2 : n <= cut[2] ? 3 : 4);
+	const opacity = [0, 0.3, 0.52, 0.76, 1];
+	const cells = [];
+	const labels = [];
+	let lastMonth = -1;
+	days.forEach((d, i) => {
+		const idx = lead + i;
+		const c = Math.floor(idx / 7);
+		const r = idx % 7;
+		const x = r1(x0 + c * step);
+		const y = r1(y0 + r * step);
+		const lv = level(d.count);
+		const fill = lv ? `fill="${t.seq}" fill-opacity="${opacity[lv]}"` : `fill="${t.grid}" fill-opacity="0.45"`;
+		cells.push(`<rect class="c" style="animation-delay:${r2(c * 0.025)}s" x="${x}" y="${y}" width="${r1(size)}" height="${r1(size)}" rx="2.5" ${fill}><title>${d.date}: ${fmt(d.count)} commits</title></rect>`);
+		const m = Number(d.date.slice(5, 7)) - 1;
+		if (r === 0 && m !== lastMonth && c < cols - 1) {
+			lastMonth = m;
+			labels.push(`<text x="${x}" y="${y0 - 10}" fill="${t.muted}" font-size="11">${MONTH_NAMES[m]}</text>`);
+		}
+	});
+	['Mon', 'Wed', 'Fri'].forEach((n, k) => labels.push(`<text x="${x0 - 8}" y="${r1(y0 + k * 2 * step + size * 0.75)}" fill="${t.muted}" font-size="10.5" text-anchor="end">${n}</text>`));
+	const H = Math.ceil(y0 + 7 * step + 38);
+	const ly = H - 14;
+	const lx = W - 24 - 34;
+	const legend = [0, 1, 2, 3, 4].map((lv, k) => `<rect x="${lx - 14 * 5 + k * 14}" y="${ly - 10}" width="11" height="11" rx="2.5" ${lv ? `fill="${t.seq}" fill-opacity="${opacity[lv]}"` : `fill="${t.grid}" fill-opacity="0.45"`}/>`).join('');
+	const style = `.c{animation:fade .5s ease-out both}@keyframes fade{from{opacity:0}}`;
+	const l = a.last365;
 	return svg(
 		W,
 		H,
-		'When repositories are born',
-		`Punchcard of repository creation by weekday and hour, UTC. Busiest slot: ${peak} with ${best.v}.`,
-		`${heading(t, 24, 36, 'When repositories are born', `Creation time of every repository by weekday and hour (UTC). Busiest slot: ${peak}, ${best.v} repos.`)}
-${out.join('\n')}`,
+		'Twelve months of commits',
+		`Calendar of daily commit counts for the last 365 days: ${fmt(l.commits)} commits on ${l.activeDays} active days. Longest streak ${a.totals.longestStreak} days.`,
+		`${heading(t, 24, 36, 'Twelve months of commits', `${fmt(l.commits)} commits on ${l.activeDays} of the last 365 days, private repositories included as counts. Longest streak: ${a.totals.longestStreak} days.`)}
+${labels.join('\n')}
+${cells.join('\n')}
+<text x="${lx - 14 * 5 - 8}" y="${ly - 1}" fill="${t.muted}" font-size="10.5" text-anchor="end">Less</text>${legend}<text x="${lx + 4}" y="${ly - 1}" fill="${t.muted}" font-size="10.5">More</text>`,
 		style,
 	);
+}
+
+/** Lines added above the axis and removed below it, by month, for two years. */
+function activityLines(a, t) {
+	const first = a.months.findIndex((m) => m.commits > 0);
+	const months = a.months.slice(Math.min(Math.max(first, 0), a.months.length - 12));
+	const W = 900;
+	const H = 330;
+	const x0 = 62;
+	const x1 = W - 24;
+	const mid = 196;
+	const up = 100;
+	const down = 70;
+	const peak = Math.max(1, ...months.map((m) => m.added));
+	const peakDown = Math.max(1, ...months.map((m) => m.removed));
+	const unit = Math.min(up / peak, down / peakDown);
+	const bw = (x1 - x0) / months.length;
+	const bars = [];
+	const ticks = [];
+	const nice = [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5, 2e5, 5e5, 1e6, 2e6, 5e6].find((v) => up / unit / v <= 4) || 1e7;
+	for (let v = nice; v * unit <= up; v += nice) ticks.push(`<line x1="${x0}" y1="${r1(mid - v * unit)}" x2="${x1}" y2="${r1(mid - v * unit)}" stroke="${t.grid}" stroke-opacity="0.5"/><text x="${x0 - 8}" y="${r1(mid - v * unit + 4)}" fill="${t.muted}" font-size="11" text-anchor="end">${compact(v)}</text>`);
+	months.forEach((m, i) => {
+		const x = r1(x0 + i * bw + bw * 0.14);
+		const w = r1(bw * 0.72);
+		const hu = r1(m.added * unit);
+		const hd = r1(m.removed * unit);
+		const delay = r2(i * 0.05);
+		const name = `${MONTH_NAMES[Number(m.key.slice(5)) - 1]} ${m.key.slice(2, 4)}`;
+		if (hu > 0) bars.push(`<rect class="b" style="animation-delay:${delay}s;transform-origin:${r1(x + w / 2)}px ${mid}px" x="${x}" y="${r1(mid - hu)}" width="${w}" height="${hu}" rx="2" fill="${t.series[2]}"><title>${name}: ${fmt(m.added)} added, ${fmt(m.removed)} removed, ${fmt(m.commits)} commits</title></rect>`);
+		if (hd > 0) bars.push(`<rect class="b" style="animation-delay:${delay}s;transform-origin:${r1(x + w / 2)}px ${mid}px" x="${x}" y="${mid}" width="${w}" height="${hd}" rx="2" fill="${t.series[1]}"/>`);
+		if (i % 3 === 0 || i === months.length - 1) ticks.push(`<text x="${r1(x + w / 2)}" y="${mid + down + 24}" fill="${t.muted}" font-size="11" text-anchor="middle">${name}</text>`);
+	});
+	const l = a.last365;
+	const style = `.b{transform-box:view-box;animation:grow .8s cubic-bezier(.2,.9,.3,1) both}@keyframes grow{from{transform:scaleY(0)}}`;
+	return svg(
+		W,
+		H,
+		'Lines of code pushed',
+		`Lines added and removed per month, from the first month with public commits. Last 12 months: ${fmt(l.added)} added, ${fmt(l.removed)} removed.`,
+		`${heading(t, 24, 36, 'Lines of code pushed', `Last 12 months: ${compact(l.added)} added, ${compact(l.removed)} removed. Public repositories, commits over ${compact(BULK_LINES)} lines left out.`)}
+${ticks.join('\n')}
+<line x1="${x0}" y1="${mid}" x2="${x1}" y2="${mid}" stroke="${t.muted}"/>
+${bars.join('\n')}
+<rect x="${x1 - 150}" y="62" width="10" height="10" rx="2" fill="${t.series[2]}"/><text x="${x1 - 134}" y="71" fill="${t.sub}" font-size="11.5">added</text>
+<rect x="${x1 - 76}" y="62" width="10" height="10" rx="2" fill="${t.series[1]}"/><text x="${x1 - 60}" y="71" fill="${t.sub}" font-size="11.5">removed</text>`,
+		style,
+	);
+}
+
+/** Hours of the day with a push, per day, for the last 90 days. */
+function activityHours(a, t) {
+	const days = a.series.slice(-90);
+	const W = 900;
+	const H = 300;
+	const x0 = 54;
+	const x1 = W - 24;
+	const y0 = 238;
+	const y1 = 84;
+	const bw = (x1 - x0) / days.length;
+	const Y = (h) => y0 - ((y0 - y1) * h) / 24;
+	const active = days.filter((d) => d.hours > 0);
+	const avg = active.length ? active.reduce((n, d) => n + d.hours, 0) / active.length : 0;
+	const grid = [0, 6, 12, 18, 24].map((h) => `<line x1="${x0}" y1="${r1(Y(h))}" x2="${x1}" y2="${r1(Y(h))}" stroke="${t.grid}" stroke-opacity="${h ? 0.55 : 1}"/><text x="${x0 - 8}" y="${r1(Y(h) + 4)}" fill="${t.muted}" font-size="11" text-anchor="end">${h}h</text>`);
+	const bars = [];
+	days.forEach((d, i) => {
+		const x = r1(x0 + i * bw + bw * 0.12);
+		const w = r1(bw * 0.76);
+		if (d.hours > 0) bars.push(`<rect class="b" style="animation-delay:${r2(i * 0.012)}s;transform-origin:${r1(x + w / 2)}px ${y0}px" x="${x}" y="${r1(Y(d.hours))}" width="${w}" height="${r1(y0 - Y(d.hours))}" rx="1.5" fill="${t.seq}"><title>${d.date}: pushes in ${d.hours} different hours, ${fmt(d.count)} commits</title></rect>`);
+		else bars.push(`<rect x="${x}" y="${y0 - 2}" width="${w}" height="2" rx="1" fill="${t.grid}"/>`);
+		if (i % 15 === 0) grid.push(`<text x="${r1(x + w / 2)}" y="${y0 + 18}" fill="${t.muted}" font-size="11" text-anchor="middle">${MONTH_NAMES[Number(d.date.slice(5, 7)) - 1]} ${Number(d.date.slice(8))}</text>`);
+	});
+	const style = `.b{transform-box:view-box;animation:grow .7s cubic-bezier(.2,.9,.3,1) both}@keyframes grow{from{transform:scaleY(0)}}`;
+	return svg(
+		W,
+		H,
+		'Hours per day',
+		`Distinct hours of the day with a push, for each of the last 90 days. Average ${r1(avg)} on days with pushes; ${active.length} of 90 days active.`,
+		`${heading(t, 24, 36, 'Hours per day', `Distinct hours of the day with a push, last 90 days. Average ${r1(avg)}h on the ${active.length} days with pushes (public repositories, UTC).`)}
+${grid.join('\n')}
+${bars.join('\n')}
+<line x1="${x0}" y1="${r1(Y(avg))}" x2="${x1}" y2="${r1(Y(avg))}" stroke="${t.text}" stroke-dasharray="5 4" stroke-opacity="0.7"/><text x="${x1}" y="${r1(Y(avg) - 6)}" fill="${t.text}" font-size="11.5" text-anchor="end">avg ${r1(avg)}h</text>`,
+		style,
+	);
+}
+
+/**
+ * Render the coding-activity visuals for both themes from a summarizeActivity() result.
+ * Returns { 'activity-volume-dark.svg': svg, ... }.
+ */
+export function renderActivityVisuals(a) {
+	const l = a.last365;
+	const volume = [
+		{ label: 'Commits, 12 months', value: l.commits, caption: 'every repo, private as counts' },
+		{ label: 'Lines added', value: l.added, caption: 'public repos, last 12 months' },
+		{ label: 'Lines removed', value: l.removed, caption: 'public repos, last 12 months' },
+	];
+	const habit = [
+		{ label: 'Hours with a push', value: l.hours, caption: `${r1(a.averages.hoursPerActiveDay)} per active day` },
+		{ label: 'Active days', value: l.activeDays, caption: 'of the last 365' },
+		{ label: 'Longest streak', value: a.totals.longestStreak, caption: 'days in a row, all time' },
+	];
+	const files = {};
+	for (const [name, t] of Object.entries(THEMES)) {
+		files[`activity-volume-${name}.svg`] = odometer(volume, t, 'Code pushed in the last 12 months');
+		files[`activity-habit-${name}.svg`] = odometer(habit, t, 'How often I build');
+		files[`activity-calendar-${name}.svg`] = activityCalendar(a, t);
+		files[`activity-lines-${name}.svg`] = activityLines(a, t);
+		files[`activity-hours-${name}.svg`] = activityHours(a, t);
+		files[`activity-rhythm-${name}.svg`] = punchGrid(a.rhythm, t, { title: 'When the code lands', sub: (peak, v) => `Commits by weekday and hour (UTC) across public repositories. Busiest slot: ${peak}, ${v} commits.`, desc: 'Punchcard of commits by weekday and hour, UTC.' });
+	}
+	return files;
 }
 
 /**

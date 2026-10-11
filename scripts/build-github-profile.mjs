@@ -19,7 +19,8 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { renderVisuals } from './lib/profile-visuals.mjs';
+import { collectActivity, summarizeActivity } from './lib/profile-activity.mjs';
+import { renderActivityVisuals, renderVisuals } from './lib/profile-visuals.mjs';
 import { OWNER, plain } from './lib/repo-growth-kit.mjs';
 
 const args = process.argv.slice(2);
@@ -65,7 +66,44 @@ function load() {
 		.sort((a, b) => b.stargazerCount - a.stargazerCount || a.name.localeCompare(b.name));
 }
 
-export function buildProfile(allRepos, { includeGated = false } = {}) {
+
+const hours = (h) => `${Math.round(h).toLocaleString('en-US')}`;
+const lines = (n) => n.toLocaleString('en-US');
+const longDate = (d) => new Date(`${d}T00:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+
+/** The "how I build" README section: charts, then the records and a table of where the lines went. */
+function activitySection(a, pic) {
+	const rows = a.topRepos.map((r) => `| [${r.name}](https://github.com/${OWNER}/${r.name}) | ${lines(r.commits)} | ${lines(r.added)} | ${lines(r.removed)} |`);
+	return `
+## How I build
+
+Pulled from the GitHub API on ${longDate(a.fetchedAt.slice(0, 10))}. Commit counts and streaks include private repositories as counts only. Lines and hours come from public repositories, with any commit over 20,000 changed lines left out as a bulk import. Hours are not a stopwatch: a day counts each clock hour (UTC) in which at least one commit landed, so it cannot pass 24.
+
+${pic('activity-volume', 'Commits, lines added and lines removed over the last 12 months')}
+
+${pic('activity-habit', 'Hours with a push, active days and longest streak')}
+
+${pic('activity-calendar', 'Calendar of daily commit counts for the last 365 days')}
+
+${pic('activity-lines', 'Lines added and removed per month')}
+
+${pic('activity-hours', 'Hours of the day with a push for each of the last 90 days')}
+
+${pic('activity-rhythm', 'Punchcard of commits by weekday and hour')}
+
+- Busiest day: ${longDate(a.totals.busiest.date)} with ${lines(a.totals.busiest.count)} commits.
+- Biggest day for lines: ${longDate(a.records.biggestDay.date)} with ${lines(a.records.biggestDay.lines)} lines changed.
+- Most hours with a push in one day: ${a.records.longestDay.hours} on ${longDate(a.records.longestDay.date)}.
+- Last 30 days: ${lines(a.last30.commits)} commits, ${lines(a.last30.added)} lines added and ${lines(a.last30.removed)} removed, pushes in ${lines(a.last30.hours)} separate hours on ${a.last30.activeDays} active days.
+- Current streak: ${a.totals.currentStreak} days. Longest: ${a.totals.longestStreak} days, ending ${longDate(a.totals.longestStreakEnd)}.
+
+| Where the lines went | Commits | Added | Removed |
+|---|---:|---:|---:|
+${rows.join('\n')}
+`;
+}
+
+export function buildProfile(allRepos, { includeGated = false, activityData = null, now = new Date() } = {}) {
 	const repos = includeGated ? allRepos : allRepos.filter((r) => !GATED.test(r.name) && !GATED.test(r.description || ''));
 	const totalStars = repos.reduce((n, r) => n + r.stargazerCount, 0);
 	const featured = repos.slice(0, 6);
@@ -76,6 +114,8 @@ export function buildProfile(allRepos, { includeGated = false } = {}) {
 		return { title, blurb, items, slot };
 	}).filter((g) => g.items.length);
 	const assets = renderVisuals(repos, groups);
+	const activity = activityData ? summarizeActivity(activityData, { now, allow: new Set(repos.map((r) => r.name)) }) : null;
+	if (activity) Object.assign(assets, renderActivityVisuals(activity));
 	const pic = (name, alt) =>
 		`<picture><source media="(prefers-color-scheme: dark)" srcset="./assets/${name}-dark.svg"/><source media="(prefers-color-scheme: light)" srcset="./assets/${name}-light.svg"/><img alt="${alt}" src="./assets/${name}-light.svg" width="100%"/></picture>`;
 	const anchor = (t) => t.toLowerCase().replace(/[^a-z0-9 -]/g, '').trim().replace(/\s+/g, '-');
@@ -94,6 +134,12 @@ export function buildProfile(allRepos, { includeGated = false } = {}) {
 
 <p align="center">${pic('planet', `A rotating 3D planet with one point per repository, sized by stars and colored by section`)}</p>
 
+## About
+
+I studied Marketing and Computer Science at the University of Washington and finished with a double bachelor's. I have done security research for Apple, AT&T, Microsoft, Google, the U.S. Department of Defense and the State of California. Before building open source full time I wrote full-stack software for some of the largest companies and brands, and I write and contribute at Entrepreneur Magazine.
+
+Today I ship in public: AI agents, MCP servers, 3D, on-chain tooling and the developer tools around them, all documented so a person or a coding agent can pick them up cold.
+
 ## Start here
 
 ${featured.map(line).join('\n')}
@@ -107,11 +153,10 @@ Every chart below is rendered from the live GitHub listing each time the catalog
 ${pic('city', 'An isometric city with one tower per repository, height by stars, one district per section')}
 
 ${pic('growth', 'Cumulative repositories over time, stacked by section')}
-
 ${pic('languages', 'A spinning 3D donut of primary languages')}
 
 ${pic('punchcard', 'Punchcard of when repositories were created, by weekday and hour')}
-
+${activity ? activitySection(activity, pic) : ''}
 ## Find your way
 
 Use the repository topics on the left of any repo, or jump to a section below. Every repo ships a README, an [AGENTS.md](https://agents.md) and an [llms.txt](https://llmstxt.org) so a coding agent can pick it up cold. The full machine-readable list is [repos.json](./repos.json).
@@ -201,7 +246,15 @@ authors:
 
 if (import.meta.url === `file://${process.argv[1]}`) {
 	const all = load();
-	const out = buildProfile(all, { includeGated: flag('include-gated') });
+	const activityData = flag('no-activity')
+		? null
+		: await collectActivity({
+				owner: OWNER,
+				repos: JSON.parse(gh(['repo', 'list', OWNER, '--limit', '1000', '--json', 'name,isPrivate,isFork'])).filter((r) => !r.isPrivate && !r.isFork && r.name !== OWNER).map((r) => r.name),
+				cacheFile: join(process.env.TMPDIR || '/tmp', 'profile-activity-cache.json'),
+				log: console.log,
+			});
+	const out = buildProfile(all, { includeGated: flag('include-gated'), activityData });
 	rmSync(OUT, { recursive: true, force: true });
 	mkdirSync(OUT, { recursive: true });
 	writeFileSync(join(OUT, 'README.md'), out.readme);

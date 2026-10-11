@@ -57,6 +57,32 @@ The README carries animated charts rendered by `scripts/lib/profile-visuals.mjs`
 | `languages` | Extruded donut of primary languages that spins in 3D |
 | `punchcard` | Repo creation by weekday and hour (UTC) |
 
+The same run adds an **About** section (the owner's background, first person) and a **How I build** section of coding analytics, rendered by `scripts/lib/profile-visuals.mjs` from numbers computed in `scripts/lib/profile-activity.mjs`:
+
+| Asset | What it shows |
+|---|---|
+| `activity-volume` | Odometer: commits, lines added and lines removed over the last 12 months |
+| `activity-habit` | Odometer: hours with a push, active days, longest streak |
+| `activity-calendar` | A year of daily commit counts as a calendar heatmap |
+| `activity-lines` | Lines added above the axis and removed below it, by month |
+| `activity-hours` | Hours of the day with a push, for each of the last 90 days, with the average |
+| `activity-rhythm` | Commits by weekday and hour (UTC) |
+
+Where the numbers come from, and what they leave out:
+
+- **Commits, active days and streaks** come from the GraphQL contribution calendar, so private repositories count (as counts only; no private name or content is ever read or printed).
+- **Lines and hours** come from each public, non-fork repo's default-branch history filtered to the owner (`history(author:)`, paged by an `until` date because cursor paging 502s deep into large repos). Private repos do not contribute.
+- **Bulk commits** over `BULK_LINES` (20,000) changed lines are left out of line totals as imports or generated output. A commit GitHub cannot diff comes back as a null node and is skipped.
+- **Hours are not a stopwatch.** A day counts each UTC clock hour in which a commit landed, so it can never exceed 24 and a single push never counts as more than its hour.
+- The README only ever names repos that survive the same gating as the catalog; gated repos still count toward totals.
+
+```bash
+node scripts/build-github-profile.mjs --out /tmp/profile                  # includes activity (cached 6h in $TMPDIR)
+node scripts/build-github-profile.mjs --out /tmp/profile --no-activity    # catalog only, no history crawl
+```
+
+A cold run reads about 430 repos and takes a few minutes; the API quota cost is a few hundred GraphQL points.
+
 GitHub shows README images through `<img>`, so there is no script or web font. The 3D is real anyway: a ring drawn in a group rotated by `animateTransform` and squashed by `scale(1, k)` is the exact projection of a ring spinning about a vertical axis, and dots and labels ride inside a counter-rotated group so they stay round and upright. The donut wall is the same rotating ring stacked every 1.5px. Section colors follow the fixed category order, so a section keeps its color in every chart.
 
 ## What GitHub's API cannot do
