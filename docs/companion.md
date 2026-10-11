@@ -287,21 +287,23 @@ did not matter.
 
 ## The API
 
-Everything the page does, you can do. Session cookie or bridge token.
+Everything the page does, you can do, but the two lanes carry different credentials.
 
-| Endpoint | Method | What it does |
-|---|---|---|
-| `/api/companion/ingest` | POST | Hand it a message (bridge token). Returns the triage verdict. |
-| `/api/companion/stream` | GET | Live deliveries as Server-Sent Events. |
-| `/api/companion/events` | GET | The feed, with scores and reasons. |
-| `/api/companion/events/:id` | PATCH | Mark delivered or dismissed. |
-| `/api/companion/events/:id/reply` | POST | Answer through the connection it arrived on. |
-| `/api/companion/sources` | GET, POST | List or connect a source (verified before saving). |
-| `/api/companion/sources/:id` | PATCH, DELETE, POST | Rename, pause, disconnect, or check now. |
-| `/api/companion/contacts` | GET, POST | The people who get a face. |
-| `/api/companion/contacts/:id` | DELETE | Forget one. |
-| `/api/companion/settings` | GET, PATCH, POST | Threshold, quiet hours, default body and voice; POST rotates the bridge token. |
-| `/api/companion/poll` | POST | Poll every connected source now. |
+| Endpoint | Method | What it does | Auth |
+|---|---|---|---|
+| `/api/companion/ingest` | POST | Hand it a message (bridge token). Returns the triage verdict. | Bridge token only |
+| `/api/companion/stream` | GET | Live deliveries as Server-Sent Events. | Session cookie or bridge token |
+| `/api/companion/events` | GET | The feed, with scores and reasons. | Session cookie, or an API key/OAuth bearer with the `profile` scope |
+| `/api/companion/events/:id` | PATCH | Mark delivered or dismissed. | Session cookie, or a `profile`-scoped bearer |
+| `/api/companion/events/:id/reply` | POST | Answer through the connection it arrived on. | Session cookie, or a `profile`-scoped bearer |
+| `/api/companion/sources` | GET, POST | List or connect a source (verified before saving). | Session cookie, or a `profile`-scoped bearer |
+| `/api/companion/sources/:id` | PATCH, DELETE, POST | Rename, pause, disconnect, or check now. | Session cookie, or a `profile`-scoped bearer |
+| `/api/companion/contacts` | GET, POST | The people who get a face. | Session cookie, or a `profile`-scoped bearer |
+| `/api/companion/contacts/:id` | DELETE | Forget one. | Session cookie, or a `profile`-scoped bearer |
+| `/api/companion/settings` | GET, PATCH, POST | Threshold, quiet hours, default body and voice; POST rotates the bridge token. | Session cookie, or a `profile`-scoped bearer |
+| `/api/companion/poll` | POST | Poll every connected source now. | Session cookie, or a `profile`-scoped bearer |
+
+The **bridge token** (`cmp_…`) is the device credential: it posts messages (`/ingest`) and reads the live delivery stream (`/stream`), nothing else. Every other route is account-scoped, so a script driving them without a browser session needs an API key minted with the `profile` scope rather than the bridge token. A bearer without it gets `403 insufficient_scope`. See [API key scopes](mcp.md#api-key-scopes) to mint one.
 
 A delivery on the stream carries everything a body needs to perform it:
 
