@@ -1,0 +1,52 @@
+[
+  {
+    "id": "agent-frameworks",
+    "title": "Agent Frameworks and Kits",
+    "blurb": "Frameworks, SDKs and platforms for building AI agents that act on Solana."
+  },
+  {
+    "id": "mcp-servers",
+    "title": "MCP Servers",
+    "blurb": "Model Context Protocol servers that give agents Solana docs, data and wallet tools."
+  },
+  {
+    "id": "skills",
+    "title": "Skills",
+    "blurb": "Agent Skills and skill collections that teach coding agents Solana protocols and workflows."
+  },
+  {
+    "id": "wallets",
+    "title": "Agent Wallets and Signing",
+    "blurb": "Wallets, signers and smart account infrastructure agents can use with policy controls."
+  },
+  {
+    "id": "payments",
+    "title": "Payments",
+    "blurb": "x402, MPP and related rails for agents that pay for and get paid for services."
+  },
+  {
+    "id": "identity",
+    "title": "Identity and Registries",
+    "blurb": "Onchain identity, reputation and discovery for agents."
+  },
+  {
+    "id": "data-rpc",
+    "title": "Data, RPC and Transaction Tooling",
+    "blurb": "RPC, streaming, market data and transaction landing tools agents depend on."
+  },
+  {
+    "id": "launch-infra",
+    "title": "Launch and Protocol Infrastructure",
+    "blurb": "Launch tooling, DEX SDKs and compute networks agents build on."
+  },
+  {
+    "id": "dev-tooling",
+    "title": "Developer Tooling",
+    "blurb": "SDKs and local environments for building and testing Solana agent code."
+  },
+  {
+    "id": "resources",
+    "title": "Resources",
+    "blurb": "Curated lists and learning material for Solana AI builders."
+  }
+]
