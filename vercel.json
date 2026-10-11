@@ -6180,6 +6180,30 @@
 			"dest": "/api/create-share"
 		},
 		{
+			"src": "/apps/?",
+			"dest": "/apps.html"
+		},
+		{
+			"src": "/apps/web/?",
+			"dest": "/apps-web.html"
+		},
+		{
+			"src": "/apps/android/?",
+			"dest": "/apps-android.html"
+		},
+		{
+			"src": "/apps/seeker/?",
+			"dest": "/apps-seeker.html"
+		},
+		{
+			"src": "/apps/ios/?",
+			"dest": "/apps-ios.html"
+		},
+		{
+			"src": "/apps/desktop/?",
+			"dest": "/apps-desktop.html"
+		},
+		{
 			"src": "/seeker",
 			"dest": "/seeker.html"
 		},

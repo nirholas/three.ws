@@ -1122,6 +1122,54 @@
 					"added": "2026-05-25"
 				},
 				{
+					"path": "/apps",
+					"title": "Get the three.ws apps",
+					"description": "Every way to run three.ws: the web desktop, Android, Solana Seeker, iPhone and iPad, and the Windows and Linux desktop app.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
+				},
+				{
+					"path": "/apps/web",
+					"title": "three.ws web desktop",
+					"description": "The whole platform as a desktop in your browser: taskbar, windows and a 3D campus you walk through as your avatar. Installable as an app.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
+				},
+				{
+					"path": "/apps/android",
+					"title": "three.ws for Android",
+					"description": "Download the native Android app: full-screen, Mobile Wallet Adapter signing, selfie to avatar and AR.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
+				},
+				{
+					"path": "/apps/seeker",
+					"title": "three.ws on Solana Seeker",
+					"description": "Live on the Solana dApp Store: Seed Vault sign-in, Seeker Genesis Token verification, agents and the marketplace.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
+				},
+				{
+					"path": "/apps/ios",
+					"title": "three.ws for iPhone and iPad",
+					"description": "The App Store build is finished and pending Apple enrollment; what runs on iPhone today and what the native app adds.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
+				},
+				{
+					"path": "/apps/desktop",
+					"title": "three.ws Desktop",
+					"description": "Agent console and a 3D companion for Windows and Linux, with local agents, native spend approvals and a live download feed.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
+				},
+				{
 					"path": "/seeker",
 					"title": "three.ws for Seeker",
 					"description": "The home screen of the three.ws app on Solana Seeker: one-tap Seed Vault sign-in, selfie to avatar, your agents, the marketplace, and Seeker Genesis Token verification.",
@@ -4269,6 +4317,14 @@
 					"title": "Docs · Agent Monitor",
 					"description": "What each panel on /monitor reads and how often, every control on the board, how a failed panel degrades alone, and how to add a panel of your own.",
 					"added": "2026-08-01"
+				},
+				{
+					"path": "/docs/apps",
+					"title": "Docs · App pages",
+					"description": "The /apps hub and the per-platform pages for Android, Solana Seeker, iPhone and iPad, desktop and the web desktop: what each states, where its data comes from, and how to keep them true.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
 				},
 				{
 					"path": "/docs/seeker-app",

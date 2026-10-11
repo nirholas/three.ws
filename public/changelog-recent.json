@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-11T05:36:54.872Z",
+	"generated_at": "2026-10-11T06:11:43.301Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3981,
+	"total": 3989,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -25,6 +25,16 @@
 			"title": "Classic Home",
 			"summary": "The original three.ws landing page: the pitch, live agent demos and the front door to every flow, kept as the classic view of the desktop.",
 			"link": "/classic",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Docs · App pages",
+			"summary": "The /apps hub and the per-platform pages for Android, Solana Seeker, iPhone and iPad, desktop and the web desktop: what each states, where its data comes from, and how to keep them true.",
+			"link": "/docs/apps",
 			"tags": [
 				"launch"
 			]
@@ -62,9 +72,69 @@
 		{
 			"date": "2026-10-11",
 			"type": "launch",
+			"title": "Get the three.ws apps",
+			"summary": "Every way to run three.ws: the web desktop, Android, Solana Seeker, iPhone and iPad, and the Windows and Linux desktop app.",
+			"link": "/apps",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
 			"title": "Run Receipts",
 			"summary": "Every 3D Studio generation writes down what each stage was expected to do, what it actually did, and the verdict, with the cause whenever a stage fell back or missed. Signed with ed25519, public, and verifiable offline. Aggregate stage-by-stage rates here, one receipt per run at /runs/<id>.",
 			"link": "/runs",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "three.ws Desktop",
+			"summary": "Agent console and a 3D companion for Windows and Linux, with local agents, native spend approvals and a live download feed.",
+			"link": "/apps/desktop",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "three.ws for Android",
+			"summary": "Download the native Android app: full-screen, Mobile Wallet Adapter signing, selfie to avatar and AR.",
+			"link": "/apps/android",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "three.ws for iPhone and iPad",
+			"summary": "The App Store build is finished and pending Apple enrollment; what runs on iPhone today and what the native app adds.",
+			"link": "/apps/ios",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "three.ws on Solana Seeker",
+			"summary": "Live on the Solana dApp Store: Seed Vault sign-in, Seeker Genesis Token verification, agents and the marketplace.",
+			"link": "/apps/seeker",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "three.ws web desktop",
+			"summary": "The whole platform as a desktop in your browser: taskbar, windows and a 3D campus you walk through as your avatar. Installable as an app.",
+			"link": "/apps/web",
 			"tags": [
 				"launch"
 			]
@@ -97,6 +167,16 @@
 			"link": "/docs/desktop",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "A page for every three.ws app: Android, Solana Seeker, iPhone, desktop and the web desktop",
+			"summary": "The new Apps hub lists every way to run three.ws, each with its own page: the web desktop, the Android app (APK download), Solana Seeker (live on the dApp Store, Seed Vault sign-in and Genesis Token verification), iPhone and iPad (what runs today and what the native build adds once Apple enrollment clears), and the Windows and Linux desktop app, whose download button reads the live release feed and picks the right file for your system.",
+			"link": "/apps",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1462,86 +1542,6 @@
 			"link": "/grok",
 			"tags": [
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "update",
-			"title": "three.ws Forge for desktop",
-			"summary": "A free desktop 3D studio for Windows, Linux and Apple silicon Macs, built on the open-source Modly app by Lightning Pixel. Turn a photo into a 3D model on your own graphics card or on the three.ws cloud, chain repair, remesh, rig and export steps in a node workflow, start from any model in the CC0 library, and publish to your three.ws account in one click after signing in with your browser. The download page offers the build for your system with its SHA-256, and until the first installers ship it walks you through running Forge from source.",
-			"link": "/forge-desktop",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "update",
-			"title": "three.ws nodes for the Modly desktop app",
-			"summary": "Modly users can now add three.ws to their workflow editor. Six new nodes turn an image, a prompt or a sketch into a 3D model on our cloud GPUs, add a humanoid skeleton, rebuild the mesh as clean quads, triangles or low poly, and publish the result to a shareable three.ws page. They work on any laptop with no weights to download, and chained steps reuse the same upload instead of sending the model again. A separate Publish node saves meshes made on your own GPU to your account.",
-			"link": "/modly",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "update",
-			"title": "Use three.ws from Grok Bot",
-			"summary": "The Connect page now has a Grok Bot tab with the exact connector settings: Streamable HTTP transport, a one-click copy of the server URL for whichever server you pick, and the right sign-in for it (none for the free servers, OAuth for the rest). Open /connect?client=grok to land on it with the Grok server already selected.",
-			"link": "/connect?client=grok",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "launch",
-			"title": "Chart Companion",
-			"summary": "Paste any DEXTools pair and a 3D agent watches the live chart with you, reacting to every real swap: cheering whale buys, flinching at dumps, calling streaks and new highs, each reaction linked to its transaction. Turn on its voice, bring your own three.ws agent, embed it with one iframe, or add it to OBS as a transparent stream overlay.",
-			"link": "/chart-companion",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "launch",
-			"title": "Docs · Chart Companion",
-			"summary": "How to watch a DEXTools chart with a 3D agent that reacts to every real swap: the URL parameters, streaming it as a transparent OBS overlay, embedding it with one iframe, bringing your own agent, and exactly how whale, streak and new-high reactions are decided.",
-			"link": "/docs/chart-companion",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "launch",
-			"title": "Docs · DEXTools integration",
-			"summary": "How three.ws and DEXTools connect: the /dextools hub, the embed builder that turns any DEXTools pair link into a 3D scene or Social Boost card snippet, the framable Boost on DEXTools card, and the counted redirect and public totals behind every visit three.ws sends to a DEXTools pair page.",
-			"link": "/docs/dextools",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "launch",
-			"title": "Docs · three.ws for Grok",
-			"summary": "Connect Grok Bot, Grok connectors or the xAI API to the free three.ws remote MCP server at /api/mcp-grok: text and image to 3D, rigged avatars, and a named 3D persona that lip-syncs its replies, with no account, payment or API key.",
-			"link": "/docs/grok",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "launch",
-			"title": "Launch a Paired Coin",
-			"summary": "Have your 3D AI agent launch a coin on Robinhood Chain paired with up to five assets at once (tokenized stocks, WETH, stablecoins, chain coins) from its own wallet: a live cost quote with each pool's opening value, an atomic opening buy, spend-policy checks, and the same launch as an API call and MCP tools.",
-			"link": "/launch/paired",
-			"tags": [
-				"launch"
 			]
 		}
 	]

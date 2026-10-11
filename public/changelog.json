@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T05:36:54.847Z",
+	"generated_at": "2026-10-11T06:11:43.277Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,16 @@
 			"title": "Classic Home",
 			"summary": "The original three.ws landing page: the pitch, live agent demos and the front door to every flow, kept as the classic view of the desktop.",
 			"link": "/classic",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Docs · App pages",
+			"summary": "The /apps hub and the per-platform pages for Android, Solana Seeker, iPhone and iPad, desktop and the web desktop: what each states, where its data comes from, and how to keep them true.",
+			"link": "/docs/apps",
 			"tags": [
 				"launch"
 			]
@@ -59,9 +69,69 @@
 		{
 			"date": "2026-10-11",
 			"type": "launch",
+			"title": "Get the three.ws apps",
+			"summary": "Every way to run three.ws: the web desktop, Android, Solana Seeker, iPhone and iPad, and the Windows and Linux desktop app.",
+			"link": "/apps",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
 			"title": "Run Receipts",
 			"summary": "Every 3D Studio generation writes down what each stage was expected to do, what it actually did, and the verdict, with the cause whenever a stage fell back or missed. Signed with ed25519, public, and verifiable offline. Aggregate stage-by-stage rates here, one receipt per run at /runs/<id>.",
 			"link": "/runs",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "three.ws Desktop",
+			"summary": "Agent console and a 3D companion for Windows and Linux, with local agents, native spend approvals and a live download feed.",
+			"link": "/apps/desktop",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "three.ws for Android",
+			"summary": "Download the native Android app: full-screen, Mobile Wallet Adapter signing, selfie to avatar and AR.",
+			"link": "/apps/android",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "three.ws for iPhone and iPad",
+			"summary": "The App Store build is finished and pending Apple enrollment; what runs on iPhone today and what the native app adds.",
+			"link": "/apps/ios",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "three.ws on Solana Seeker",
+			"summary": "Live on the Solana dApp Store: Seed Vault sign-in, Seeker Genesis Token verification, agents and the marketplace.",
+			"link": "/apps/seeker",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "three.ws web desktop",
+			"summary": "The whole platform as a desktop in your browser: taskbar, windows and a 3D campus you walk through as your avatar. Installable as an app.",
+			"link": "/apps/web",
 			"tags": [
 				"launch"
 			]
@@ -94,6 +164,16 @@
 			"link": "/docs/desktop",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "A page for every three.ws app: Android, Solana Seeker, iPhone, desktop and the web desktop",
+			"summary": "The new Apps hub lists every way to run three.ws, each with its own page: the web desktop, the Android app (APK download), Solana Seeker (live on the dApp Store, Seed Vault sign-in and Genesis Token verification), iPhone and iPad (what runs today and what the native build adds once Apple enrollment clears), and the Windows and Linux desktop app, whose download button reads the live release feed and picks the right file for your system.",
+			"link": "/apps",
+			"tags": [
+				"feature"
 			]
 		},
 		{

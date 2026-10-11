@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-11",
+			"title": "A page for every three.ws app: Android, Solana Seeker, iPhone, desktop and the web desktop",
+			"link": "/apps",
+			"summary": "The new Apps hub lists every way to run three.ws, each with its own page: the web desktop, the Android app (APK download), Solana Seeker (live on the dApp Store, Seed Vault sign-in and Genesis Token verification), iPhone and iPad (what runs today and what the native build adds once Apple enrollment clears), and the Windows and Linux desktop app, whose download button reads the live release feed and picks the right file for your system.",
+			"tags": ["feature"]
+		},
+		{
+			"date": "2026-10-11",
 			"title": "Walk into three.ws: the homepage boots, unlocks, and lets you enter the desktop as your avatar",
 			"link": "/",
 			"summary": "The homepage now starts like a real computer. A boot screen runs live checks (your GPU, the site catalog, your account, the avatar body, the $THREE feed, your gem ledger) and a lock screen greets you with the $THREE price and your balances. Press Walk in and you arrive on a campus as your avatar: walk to your desk and sit down to open the desktop on the monitor, pick up the phone for Pocket, put on the headset for VR, enter the three.ws Exchange (a live ticker board and Trenches inside), the Launchpad, the Forge, the Gallery, Agent Plaza and the Marketplace, or dig for gems in the mine, where every gem is rolled server-side and kept on your account. Settings gets an Arrival section to choose where you start, the taskbar gets a World button, and the desktop wears the classic three.ws violet grid.",

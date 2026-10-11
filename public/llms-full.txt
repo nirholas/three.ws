@@ -819,6 +819,42 @@ URL: https://three.ws/create/selfie
 
 One selfie. About a minute. A rigged 3D avatar that works everywhere.
 
+### Get the three.ws apps
+
+URL: https://three.ws/apps
+
+Every way to run three.ws: the web desktop, Android, Solana Seeker, iPhone and iPad, and the Windows and Linux desktop app.
+
+### three.ws web desktop
+
+URL: https://three.ws/apps/web
+
+The whole platform as a desktop in your browser: taskbar, windows and a 3D campus you walk through as your avatar. Installable as an app.
+
+### three.ws for Android
+
+URL: https://three.ws/apps/android
+
+Download the native Android app: full-screen, Mobile Wallet Adapter signing, selfie to avatar and AR.
+
+### three.ws on Solana Seeker
+
+URL: https://three.ws/apps/seeker
+
+Live on the Solana dApp Store: Seed Vault sign-in, Seeker Genesis Token verification, agents and the marketplace.
+
+### three.ws for iPhone and iPad
+
+URL: https://three.ws/apps/ios
+
+The App Store build is finished and pending Apple enrollment; what runs on iPhone today and what the native app adds.
+
+### three.ws Desktop
+
+URL: https://three.ws/apps/desktop
+
+Agent console and a 3D companion for Windows and Linux, with local agents, native spend approvals and a live download feed.
+
 ### three.ws for Seeker
 
 URL: https://three.ws/seeker
@@ -3198,6 +3234,12 @@ The autonomous agent-to-agent activity loop: a pool of real platform agents tipp
 URL: https://three.ws/docs/monitor
 
 What each panel on /monitor reads and how often, every control on the board, how a failed panel degrades alone, and how to add a panel of your own.
+
+### Docs · App pages
+
+URL: https://three.ws/docs/apps
+
+The /apps hub and the per-platform pages for Android, Solana Seeker, iPhone and iPad, desktop and the web desktop: what each states, where its data comes from, and how to keep them true.
 
 ### three.ws on Solana Seeker
 

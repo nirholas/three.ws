@@ -81,6 +81,12 @@ export const NAV_GROUPS = [
 						badge: 'New',
 						desc: 'Your messages, calendar and phone, delivered in person by a 3D character',
 					},
+					{
+						title: 'Get the apps',
+						href: '/apps',
+						tier: 'advanced',
+						desc: 'Android, Solana Seeker, iPhone, desktop and the web desktop',
+					},
 				],
 			},
 			{

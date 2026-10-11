@@ -23,6 +23,14 @@
 			<description>The original three.ws landing page: the pitch, live agent demos and the front door to every flow, kept as the classic view of the desktop.</description>
 		</item>
 		<item>
+			<title>Docs · App pages</title>
+			<link>https://three.ws/docs/apps</link>
+			<guid isPermaLink="false">2026-10-11:Docs · App pages</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The /apps hub and the per-platform pages for Android, Solana Seeker, iPhone and iPad, desktop and the web desktop: what each states, where its data comes from, and how to keep them true.</description>
+		</item>
+		<item>
 			<title>Docs · Browse every feature by goal</title>
 			<link>https://three.ws/docs/everything</link>
 			<guid isPermaLink="false">2026-10-11:Docs · Browse every feature by goal</guid>
@@ -47,12 +55,60 @@
 			<description>Every three.ws feature organised by what you want to do: make a 3D avatar, build an agent, embed it, sell skills, launch a token, trade and more. Searchable, with pins and a new-this-month feed.</description>
 		</item>
 		<item>
+			<title>Get the three.ws apps</title>
+			<link>https://three.ws/apps</link>
+			<guid isPermaLink="false">2026-10-11:Get the three.ws apps</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every way to run three.ws: the web desktop, Android, Solana Seeker, iPhone and iPad, and the Windows and Linux desktop app.</description>
+		</item>
+		<item>
 			<title>Run Receipts</title>
 			<link>https://three.ws/runs</link>
 			<guid isPermaLink="false">2026-10-11:Run Receipts</guid>
 			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Every 3D Studio generation writes down what each stage was expected to do, what it actually did, and the verdict, with the cause whenever a stage fell back or missed. Signed with ed25519, public, and verifiable offline. Aggregate stage-by-stage rates here, one receipt per run at /runs/&lt;id&gt;.</description>
+		</item>
+		<item>
+			<title>three.ws Desktop</title>
+			<link>https://three.ws/apps/desktop</link>
+			<guid isPermaLink="false">2026-10-11:three.ws Desktop</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Agent console and a 3D companion for Windows and Linux, with local agents, native spend approvals and a live download feed.</description>
+		</item>
+		<item>
+			<title>three.ws for Android</title>
+			<link>https://three.ws/apps/android</link>
+			<guid isPermaLink="false">2026-10-11:three.ws for Android</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Download the native Android app: full-screen, Mobile Wallet Adapter signing, selfie to avatar and AR.</description>
+		</item>
+		<item>
+			<title>three.ws for iPhone and iPad</title>
+			<link>https://three.ws/apps/ios</link>
+			<guid isPermaLink="false">2026-10-11:three.ws for iPhone and iPad</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The App Store build is finished and pending Apple enrollment; what runs on iPhone today and what the native app adds.</description>
+		</item>
+		<item>
+			<title>three.ws on Solana Seeker</title>
+			<link>https://three.ws/apps/seeker</link>
+			<guid isPermaLink="false">2026-10-11:three.ws on Solana Seeker</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Live on the Solana dApp Store: Seed Vault sign-in, Seeker Genesis Token verification, agents and the marketplace.</description>
+		</item>
+		<item>
+			<title>three.ws web desktop</title>
+			<link>https://three.ws/apps/web</link>
+			<guid isPermaLink="false">2026-10-11:three.ws web desktop</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The whole platform as a desktop in your browser: taskbar, windows and a 3D campus you walk through as your avatar. Installable as an app.</description>
 		</item>
 		<item>
 			<title>Trenches Pulse</title>
@@ -77,6 +133,14 @@
 			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>How the three.ws web desktop works: the CTRL Mica theme, taskbar and Start menu, snappable windows that frame real pages, deep links, saved layout, the classic view and how to add an app.</description>
+		</item>
+		<item>
+			<title>A page for every three.ws app: Android, Solana Seeker, iPhone, desktop and the web desktop</title>
+			<link>https://three.ws/apps</link>
+			<guid isPermaLink="false">2026-10-11:A page for every three.ws app: Android, Solana Seeker, iPhone, desktop and the web desktop</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The new Apps hub lists every way to run three.ws, each with its own page: the web desktop, the Android app (APK download), Solana Seeker (live on the dApp Store, Seed Vault sign-in and Genesis Token verification), iPhone and iPad (what runs today and what the native build adds once Apple enrollment clears), and the Windows and Linux desktop app, whose download button reads the live release feed and picks the right file for your system.</description>
 		</item>
 		<item>
 			<title>A registry of every place three.ws is listed</title>
