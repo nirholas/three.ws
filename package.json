@@ -212,6 +212,7 @@
 		"x:content:check": "node scripts/x-content.mjs check",
 		"x:content:plan": "node scripts/x-content.mjs plan",
 		"x:outcomes": "node scripts/x-outcomes.mjs",
+		"x:partners": "node scripts/x-partners.mjs",
 		"x:bundle": "node scripts/x-bundle.mjs",
 		"changelog:push": "node scripts/changelog-telegram.mjs",
 		"changelog:push:x": "node scripts/changelog-x.mjs",

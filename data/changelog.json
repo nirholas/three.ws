@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-11",
+			"title": "A daily partner spotlight on X: one partner, one feature built on it, filmed live every day",
+			"link": "/partners",
+			"summary": "@trythreews now features one partner from the partners page every day, with a thread on something three.ws built on that partner's technology. Each spotlight is filmed working against production that morning, so the reel is proof rather than a promo, and it rotates between a card, a GIF, the reel and generated art for its head. Every sentence comes from a partner registry with evidence behind it, the program name is stated exactly as the partner grants it, and nobody is tagged. The spotlight owns the prime-time slot, and three days are kept in stock so a bad run never leaves the slot empty.",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-11",
 			"title": "The campus is now a real place: daylight, walk-in buildings, photographic surfaces and real props",
 			"link": "/?world=1",
 			"summary": "The 3D campus in front of the desktop is rebuilt to feel like walking through a real place rather than a dark game level. A physical sky and sun with soft shadows that follow you, hills on the horizon, a walled gate with lamps and a welcome sign, a lawn, concrete paths and a paved plaza. Every building is a room you walk into through its door: the brick office with a gabled roof, windows and a furnished desk; the marble-columned exchange with a ticker outside and over the dais inside; the forge with a glowing furnace; the gallery under a skylight, hanging the real avatars of the agents on the campus; a hillside mine with a timbered portal, rails and a cart; the launchpad with its rocket, gantry and crew cabin; a pergola plaza with a fountain; and a timber market hall with striped stalls. Walls, floors and roofs use CC0 photographic materials from Poly Haven, and trees, hedges, lamps, benches, bins, crates and barrels are real glTF models streamed from the three.ws object library, nearest first. Walls and furniture are solid for you and the agents, the camera never cuts through a wall, teleporting puts you at a building's door facing in, and quality adapts to the device (a software renderer always gets the lightest tier).",

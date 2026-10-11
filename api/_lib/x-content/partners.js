@@ -150,9 +150,9 @@ const LANE_GUIDE = {
 
 const HEAD_GUIDE = {
 	reel: 'The head post carries the filmed reel itself.',
-	gif: 'The head post carries a short looping GIF cut from the reel; the full reel rides on reply 1.',
-	card: 'The head post carries a card: your headline (two short lines, under 60 characters, split with \\n) and body (one sentence, under 160 characters) beside a frame of the reel. The full reel rides on reply 1. Any number on the card must also appear in the thread.',
-	art: 'The head post carries AI-generated key art, labelled as such, from your art prompt (what the image shows, in one paragraph: subject, composition, light; never text, logos or brand marks), with your headline and body. The full reel rides on reply 1.',
+	gif: 'The head post carries a short looping GIF cut from the reel; the full reel rides on reply 1. Never mention this in the copy.',
+	card: 'The head post carries a card: your headline (two short lines, under 60 characters, split with \\n) and body (one sentence, under 160 characters) beside a frame of the reel. The full reel rides on reply 1. Any number on the card must also appear in the thread. Never mention the card or the reel in the copy.',
+	art: 'The head post carries AI-generated key art, labelled as such, from your art prompt (what the image shows, in one paragraph: subject, composition, light; never text, logos or brand marks), with your headline and body. The full reel rides on reply 1. Never mention the art or the reel in the copy.',
 };
 
 export function buildBrief({ partner, feature, head, pattern, day, proof = null, docs = {}, otherPartners = [] }) {
@@ -191,7 +191,7 @@ What the thread is:
 - The head names the partner in plain words, says what three.ws built, and links the feature surface (the brief's feature.surface, written without https://). Open with the strongest true statement; the first 280 characters must stand on their own.
 - One reply states the relationship using the designation exactly as the brief gives it, word for word, with the same capitals, and links the partner page (the brief's partner.page, without https://). Thank the partner warmly and specifically for what their technology makes possible.
 - The other replies go deeper: the mechanism, one concrete path a user takes, what an agent can do with it, and what is new. Each reply carries one idea.
-- Quote at least {FACTS} of the brief's feature.facts word for word, exactly as written, because each is checked against its evidence. Every number, ordinal and absolute word (first, only, every, never, all, free, zero, instant) must appear inside a quoted fact, inside the designation, or inside a measured value from feature.measured. If you cannot support a number, leave it out.
+- Use at least {FACTS} of the brief's feature.facts word for word, exactly as written, because each is checked against its evidence. Weave each one into your own sentence as plain prose: never put a fact in quotation marks, and never present it as a quote. Every number, ordinal and absolute word (first, only, every, never, all, free, zero, instant) must appear inside a quoted fact, inside the designation, or inside a measured value from feature.measured. If you cannot support a number, leave it out.
 - Positive framing only. Nothing about what is missing, late, broken, or limited.
 
 Hard rules, each enforced by a machine after you answer:
@@ -205,6 +205,8 @@ Hard rules, each enforced by a machine after you answer:
 - No hype or filler: game-changer, revolutionary, seamless, powerful, robust, innovative, cutting-edge, world-class, leverage, empower, unleash, elevate, harness, journey, supercharge, delve, very, really, simply, literally, actually, basically, truly, incredibly, amazing, awesome, groundbreaking.
 - No crypto slang, no engagement asks, nothing that reads as investment advice or a price promise.
 - Names written exactly: three.ws, $THREE, X (never Twitter), GitHub, JavaScript, TypeScript, OpenAI, NVIDIA, Solana, glTF, GLB, API, MCP, AI.
+
+- The brief's head field says what media sits where. It is for you, never for the reader: do not mention the reel, the card, the GIF, the image, or which post carries what.
 
 Respond with a single JSON object and nothing else:
 {"post":"the head post","thread":["reply 1","reply 2","reply 3"],"headline":"card or art headline, two short lines split with \\n","body":"one sentence for the card","prompt":"art prompt, only when the head is art, else empty","why":"two sentences for the editor: what the thread leads on and why it is the strongest true thing about this feature"}`;
@@ -297,6 +299,10 @@ export function seriesFindings(partner, feature, draft, { partners = [] } = {}) 
 	if (draft.thread.length > MAX_REPLIES) findings.push(`the thread has ${draft.thread.length} replies; keep it to ${MAX_REPLIES}`);
 	const quoted = (feature.facts || []).filter((fact) => lower(corpus).includes(lower(fact.says)));
 	if (quoted.length < MIN_FACTS_QUOTED) findings.push(`the thread quotes ${quoted.length} of the feature facts word for word; quote at least ${MIN_FACTS_QUOTED}`);
+	for (const fact of quoted) {
+		if (new RegExp(`["\u201c\u2018]\\s*${fact.says.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i').test(corpus)) findings.push(`"${fact.says}" is set in quotation marks; write it as your own plain sentence`);
+	}
+	if (/\b(?:rides on|this reply|reply \d|the (?:card|gif) (?:above|below))\b/i.test(corpus)) findings.push('the copy talks about where the media sits; say what the feature does instead');
 	const allowed = lower([feature.summary, ...(feature.facts || []).map((fact) => fact.says)].join('\n'));
 	for (const other of partners.filter((row) => row.id !== partner.id)) {
 		const named = new RegExp(`\\b${other.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');

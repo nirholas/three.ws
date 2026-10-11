@@ -114,6 +114,13 @@ describe('series lint', () => {
 		expect(findings).toMatch(/NVIDIA is another partner/);
 	});
 
+	it('refuses a fact set in quotation marks, and copy about where the media sits', () => {
+		const draft = { ...GOOD, thread: [...GOOD.thread, 'In its own words, "runs inside ChatGPT". The full reel rides on this reply.'] };
+		const findings = seriesFindings(openai, openai.features[0], draft, { partners: [openai] }).join('\n');
+		expect(findings).toMatch(/"runs inside ChatGPT" is set in quotation marks/);
+		expect(findings).toMatch(/where the media sits/);
+	});
+
 	it('holds every number to a fact the registry can prove', () => {
 		const draft = { ...GOOD, thread: [...GOOD.thread, 'It answers in 2 seconds and served 40,000 models last month.'] };
 		const findings = draftFindings({ partner: openai, feature: openai.features[0], head: 'reel', draft, partners: [openai] }).join('\n');

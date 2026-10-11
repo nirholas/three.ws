@@ -67,7 +67,7 @@
 		"joint customers",
 		"co-sell"
 	],
-	"guidance": "three.ws is an AWS Partner, listed on the Software Path. Say that and nothing grander: it is a partner designation, not an endorsement, certification or tier. The AWS Marketplace integration is built and deployed, and the subscription it will open is a free front door that links an AWS account to a three.ws account and issues an x402 key. Usage is paid per call in USDC over x402, never on an AWS invoice. Never say three.ws is listed, available or live on AWS Marketplace, and never say the platform runs on or is hosted on AWS: production runs on Google Cloud and the Marketplace integration is the AWS leg. If the listing status comes up, use the product page's own words and keep it to one clause.",
+	"guidance": "three.ws is an AWS Partner, listed on the Software Path. Say that and nothing grander: it is a partner designation, not an endorsement, certification or tier. The AWS Marketplace integration is built and deployed, and the subscription it will open is a free front door that links an AWS account to a three.ws account and issues an x402 key. Usage is paid per call over x402, never on an AWS invoice. Never say three.ws is listed, available or live on AWS Marketplace, and never say the platform runs on or is hosted on AWS: production runs on Google Cloud and the Marketplace integration is the AWS leg. If the listing status comes up, use the product page's own words and keep it to one clause.",
 	"docs": [
 		"docs/partners.md",
 		"docs/aws-marketplace.md",
@@ -87,7 +87,7 @@
 				"/api/aws-marketplace/register"
 			],
 			"lane": "developer",
-			"summary": "three.ws built the AWS Marketplace SaaS integration and a product page that explains it. Subscribing is a free front door: it links an AWS account to a three.ws account and issues an x402 access key that calls every /api/x402/* endpoint. Usage is then paid per call in USDC over x402, so AWS Marketplace does not meter or bill it. Registration and entitlement calls reach the AWS Marketplace APIs in us-east-1. The same x402 endpoints work today with no AWS account at all. It is for teams that want to start from the AWS side.",
+			"summary": "three.ws built the AWS Marketplace SaaS integration and a product page that explains it. Subscribing is a free front door: it links an AWS account to a three.ws account and issues an x402 access key that calls every /api/x402/* endpoint. Usage is then paid per call over x402, so AWS Marketplace does not meter or bill it. Registration and entitlement calls reach the AWS Marketplace APIs in us-east-1. The same x402 endpoints work today with no AWS account at all. It is for teams that want to start from the AWS side.",
 			"docs": [
 				"docs/aws-marketplace.md",
 				"docs/aws-marketplace-listing-kit.md"
@@ -119,7 +119,7 @@
 						"hold": 3000
 					},
 					{
-						"scroll": "Pay per call in USDC",
+						"scroll": "AWS Marketplace does not meter or bill it",
 						"ms": 1200,
 						"caption": "Usage is paid per call over x402"
 					},
@@ -180,12 +180,12 @@
 					]
 				},
 				{
-					"says": "usage is paid per call in USDC over x402",
+					"says": "usage is paid per call over x402",
 					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/aws",
-							"contains": "Usage is paid per call in USDC over x402 (HTTP 402)"
+							"contains": "over x402 (HTTP 402)"
 						}
 					]
 				},
