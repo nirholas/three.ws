@@ -136,6 +136,29 @@ describe('normalizeForgeOptions: view_labels & fill_other_sides', () => {
 	});
 });
 
+describe('normalizeForgeOptions: num_parts (PartCrafter)', () => {
+	it('accepts an in-range integer and defaults to null when omitted', () => {
+		expect(normalizeForgeOptions({ num_parts: 6 }).numParts).toBe(6);
+		expect(normalizeForgeOptions({}).numParts).toBeNull();
+	});
+
+	it('rejects a value below PartCrafter minParts', () => {
+		const o = normalizeForgeOptions({ num_parts: 1 });
+		expect(o.numParts).toBeNull();
+		expect(o.errors[0].field).toBe('num_parts');
+	});
+
+	it('rejects a value above PartCrafter maxParts', () => {
+		const o = normalizeForgeOptions({ num_parts: 17 });
+		expect(o.numParts).toBeNull();
+		expect(o.errors[0].field).toBe('num_parts');
+	});
+
+	it('rejects a non-integer num_parts', () => {
+		expect(normalizeForgeOptions({ num_parts: 4.5 }).errors[0].field).toBe('num_parts');
+	});
+});
+
 describe('summarizeForgeOptions', () => {
 	it('echoes the resolved options for the response', () => {
 		const o = normalizeForgeOptions({ seed: 9, output_format: 'glb-draco', texture_size: 1024 });
@@ -147,10 +170,16 @@ describe('summarizeForgeOptions', () => {
 			resolution: null,
 			view_labels: null,
 			fill_other_sides: false,
+			num_parts: null,
 			// Material completion is on unless the caller opts out, and the echo
 			// says so, so a client can tell why its delivered file carries maps.
 			derive_pbr: true,
 		});
+	});
+
+	it('echoes num_parts when supplied', () => {
+		const o = normalizeForgeOptions({ num_parts: 8 });
+		expect(summarizeForgeOptions(o).num_parts).toBe(8);
 	});
 
 	it('echoes view_labels and fill_other_sides when supplied', () => {
