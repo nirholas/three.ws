@@ -297,6 +297,9 @@ const ENGINE_LABELS = {
 	// unseen sides from one view: "Match my photo" is what that buys the user,
 	// not the vendor name.
 	pixal3d: 'Match my photo',
+	// AniGen hands back a GLB that already carries a skeleton and skin weights:
+	// the result is drivable immediately, no separate rigging call needed.
+	anigen: 'Rig on generate',
 };
 
 // Where to mint a key per BYOK provider, keyed by the backend's `byok` name.
@@ -2218,6 +2221,7 @@ function setViewsBadge(meta) {
 	if (meta?.tier) parts.push(meta.tier);
 	if (meta?.path === 'geometry') parts.push('geometry-first');
 	if (meta?.path === 'sketch') parts.push('sketch→3D');
+	if (meta?.rigged) parts.push('already rigged');
 	if (parts.length === 0) {
 		els.resultViews.classList.add('is-hidden');
 		els.resultViews.textContent = '';
@@ -3005,6 +3009,7 @@ async function run(cfg) {
 				path: done.path ?? job.path,
 				quality: done.quality ?? job.quality,
 				quality_gate: done.quality_gate ?? job.quality_gate,
+				rigged: done.rigged ?? job.rigged,
 			},
 			{ autoSaved: !!done.creation_id },
 		);
@@ -3619,6 +3624,7 @@ async function resumeInflight() {
 				path: done.path ?? inflight.path,
 				quality: done.quality,
 				quality_gate: done.quality_gate,
+				rigged: done.rigged,
 			},
 			{ autoSaved: !!done.creation_id },
 		);

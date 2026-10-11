@@ -118,6 +118,13 @@ function serviceUrlForMode(mode) {
 			// every one of its 1-4 reference views instead of reading the first.
 			// Same /infer + /tasks/:id task shape.
 			return readEnv('MODEL_PIXAL3D_URL');
+		case 'anigen':
+			// Self-hosted VAST-AI-Research AniGen worker (workers/model-anigen):
+			// the only image lane that hands back an already-rigged GLB (mesh +
+			// skeleton + skin weights in one pass), so a caller can skip the
+			// separate rerig step. Same /infer + /tasks/:id task shape; conditions
+			// on the first reference image only.
+			return readEnv('MODEL_ANIGEN_URL');
 		case 'modly':
 		case 'modly_hunyuan':
 			// Self-hosted Modly worker (workers/modly): one service, two models.
@@ -245,6 +252,22 @@ function buildWorkerRequest(request) {
 		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
 		if (Number.isFinite(Number(params?.texture_size))) body.texture_size = Math.round(Number(params.texture_size));
 		if (Number.isFinite(Number(params?.decimation_target))) body.decimation_target = Math.round(Number(params.decimation_target));
+		return {
+			path: '/infer',
+			resultKey: 'result_gcs_url',
+			body,
+		};
+	}
+
+	if (mode === 'anigen') {
+		// Self-hosted AniGen (workers/model-anigen): one reference view in, a
+		// rigged GLB (mesh + skeleton + skin weights) out. The worker reads only
+		// the first image; extra views are accepted but ignored.
+		const photos = Array.isArray(params?.images) && params.images.length
+			? params.images
+			: [sourceUrl].filter(Boolean);
+		const body = { images: photos };
+		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
 		return {
 			path: '/infer',
 			resultKey: 'result_gcs_url',
@@ -537,6 +560,8 @@ const MODE_ETA = {
 	// multi-view fusion path (2-4 images) and the optional MV-Adapter
 	// "fill the other sides" rung both run meaningfully heavier.
 	pixal3d: 100,
+	// Mesh + skeleton prediction + skin-weight transfer in one pass.
+	anigen: 90,
 	// TripoSG's 20 to 50 flow steps plus repair and decimate on the L4.
 	modly: 60,
 	// Hunyuan3D 2 Mini Turbo is a few-step distilled sampler.
@@ -647,7 +672,7 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 			// on the primary view only (report 1 so a multi-view request is never
 			// silently claimed as fused); other modes are single-source.
 			const viewsUsed =
-				mode === 'hunyuan' || mode === 'trellis2' || mode === 'modly' || mode === 'modly_hunyuan'
+				mode === 'hunyuan' || mode === 'trellis2' || mode === 'modly' || mode === 'modly_hunyuan' || mode === 'anigen'
 					? 1
 					: (mode === 'reconstruct' || mode === 'trellis' || mode === 'pixal3d') && Array.isArray(workerReq.body.images)
 						? workerReq.body.images.length
@@ -736,6 +761,12 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 					if (typeof data.sky_points_removed === 'number') result.skyPointsRemoved = data.sky_points_removed;
 				} else {
 					result.resultGlbUrl = url;
+				}
+				// AniGen's GLB already carries a skeleton and skin weights. Tell the
+				// caller so the UI can skip offering a separate rerig step.
+				if (mode === 'anigen') {
+					result.rigged = true;
+					if (typeof data.joint_count === 'number') result.jointCount = data.joint_count;
 				}
 				// Surface remesh telemetry so callers can show topology stats.
 				if (mode === 'remesh') {

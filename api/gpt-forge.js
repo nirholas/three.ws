@@ -2095,6 +2095,16 @@ async function startJob(req, res) {
 							resolution: opts.resolution ?? undefined,
 							tier: tier.id,
 						},
+					} : backendId === 'anigen' ? {
+						mode: 'anigen',
+						sourceUrl: referenceImageUrl,
+						params: {
+							// The worker reads only the first view; it predicts mesh, joint
+							// skeleton and skin weights together, so the result needs no
+							// separate rerig call.
+							images: views,
+							seed: opts.seed ?? undefined,
+						},
 					} : {
 						mode: 'trellis',
 						sourceUrl: referenceImageUrl,
@@ -3106,6 +3116,10 @@ async function pollJob(req, res, jobId) {
 			quality: durable?.quality || null,
 			quality_gate: qualityGate || undefined,
 			compression: durable?.compression || null,
+			// AniGen's GLB already carries a skeleton and skin weights. Tell the
+			// client so it can skip offering a separate rerig step.
+			rigged: result.rigged || undefined,
+			joint_count: result.jointCount ?? undefined,
 			...metaFields,
 		};
 		await rememberDoneFrame(jobId, doneFrame);

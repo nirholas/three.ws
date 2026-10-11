@@ -373,6 +373,34 @@ export const BACKENDS = Object.freeze({
 		free: true,
 		blurb: '"Match my photo": 1 to 4 reference images fused pixel-aligned into one PBR mesh on our own Pixal3D worker, no vendor cost. Label views front/back/left/right, or let the worker fill in the other sides from a single photo.',
 	}),
+	anigen: Object.freeze({
+		id: 'anigen',
+		label: 'AniGen (self-host)',
+		vendor: 'VAST-AI-Research AniGen · self-host',
+		paths: Object.freeze(['image']),
+		byok: false,
+		provider: 'gcp',
+		// Our own AniGen worker (workers/model-anigen on Cloud Run, MIT). The only
+		// image lane that hands back an already-rigged GLB: mesh, joint skeleton
+		// and skin weights predicted together in one pass, so no separate rerig
+		// call is needed. Opt-in only, like pixal3d: never a named free default or
+		// a fallback target, so a plain request never lands here by chance, the
+		// caller asks for a pre-rigged result explicitly. Single reference image;
+		// extra images are accepted but only the first is used.
+		requiresEnv: Object.freeze(['MODEL_ANIGEN_URL', 'GCP_RECONSTRUCTION_KEY']),
+		polyControl: false,
+		userImages: true,
+		// Discoverable capability flag the catalog/UI read directly, rather than
+		// hardcoding an "anigen" check outside this registry.
+		rigged: true,
+		baseEta: 90,
+		// Cold-start budget for our own scale-to-zero worker: checkpoint copy +
+		// pipeline load before the first inference.
+		coldStartSeconds: 90,
+		credits: null,
+		free: true,
+		blurb: 'Image to already-rigged 3D on our own AniGen worker: mesh, skeleton and skin weights predicted together in one pass, no vendor cost, no separate rigging step.',
+	}),
 	triposg: Object.freeze({
 		id: 'triposg',
 		label: 'TripoSG',
@@ -845,7 +873,7 @@ export function backendIsConfigured(backendId) {
 // to the standing single-view reconstruct chain instead of silently dropping
 // the caller's second and third photos on a lane that only reads the first.
 export const MODLY_LANES = Object.freeze(['modly', 'modly_hunyuan']);
-const SELF_HOST_IMAGE_LANES = Object.freeze(['trellis2', 'trellis_selfhost', 'pixal3d', ...MODLY_LANES]);
+const SELF_HOST_IMAGE_LANES = Object.freeze(['trellis2', 'trellis_selfhost', 'pixal3d', 'anigen', ...MODLY_LANES]);
 
 export function isSelfHostImageLane(backendId) {
 	return SELF_HOST_IMAGE_LANES.includes(backendId);
@@ -855,6 +883,7 @@ export function isSelfHostImageLane(backendId) {
 export function selfHostLaneName(backendId) {
 	if (MODLY_LANES.includes(backendId)) return BACKENDS[backendId].label;
 	if (backendId === 'pixal3d') return 'Pixal3D';
+	if (backendId === 'anigen') return 'AniGen';
 	return 'Self-hosted TRELLIS';
 }
 
@@ -960,6 +989,10 @@ export function buildCatalog() {
 			multi_view: Boolean(b.multiView),
 			view_labels: b.multiView ? PIXAL3D_VIEW_LABELS : undefined,
 			fill_other_sides: Boolean(b.fillOtherSides),
+			// True only for the lane(s) that hand back an already-rigged GLB
+			// (skeleton + skin weights predicted alongside the mesh), so the UI can
+			// skip offering a separate rigging step for the result.
+			rigged: Boolean(b.rigged),
 			estimates: b.paths.reduce((acc, p) => {
 				acc[p] = TIER_IDS.map((tierId) => ({
 					tier: tierId,
