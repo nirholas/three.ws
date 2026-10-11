@@ -1,11 +1,19 @@
-// X (Twitter) OAuth 2.0 PKCE flow. Dispatches on ?action=connect|callback.
+// X (Twitter) OAuth 2.0 PKCE flow. Dispatches on ?action=connect|callback|login.
 // Env required: X_OAUTH_CLIENT_ID, X_OAUTH_CLIENT_SECRET
-// If unset, /connect returns 501 not_configured.
+// If unset, /connect and /login return 501 not_configured.
 //
 // /connect takes an optional ?scope=read|full (default full, see
 // api/_lib/x-scopes.js). The memory-seeding card asks for `read` so an owner who
 // only wants their agent to sound like them never has to grant permission to
 // post as them; the posting surfaces ask for `full`.
+//
+// /login is a separate, session-free round trip through the same client:
+// "Sign in with X" on /login (api/config.js xLoginEnabled). An X account
+// already linked (user_identities, api/_lib/identities.js) signs straight in;
+// an X account already connected for posting (social_connections, this file's
+// own connect flow) links and signs in rather than creating a duplicate; a
+// genuinely new X account gets a passwordless three.ws account, since X's
+// OAuth2 profile never carries a verified email to match against one.
 //
 // PKCE state ({code_verifier, user_id, agent_id}) is carried in a short-lived,
 // HMAC-signed httpOnly cookie keyed by the OAuth `state` param. No external
@@ -14,7 +22,7 @@
 
 import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from 'node:crypto';
 import { sql } from '../../_lib/db.js';
-import { getSessionUser } from '../../_lib/auth.js';
+import { getSessionUser, createSession, sessionCookie } from '../../_lib/auth.js';
 import {
 	sha256Base64Url,
 	randomToken,
@@ -24,8 +32,13 @@ import {
 import { cors, method, wrap, error, redirect, rateLimited, wantsHtmlNavigation } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
+import { logAudit } from '../../_lib/audit.js';
+import { seedDefaultAgent } from '../../_lib/seed-default-agent.js';
+import { safeNext } from '../../../src/safe-next.js';
 import { revokeAllSeedConsentsForUser } from '../../_lib/x-seed-consent.js';
 import { resolveScopeSet } from '../../_lib/x-scopes.js';
+import { findUserByIdentity, touchIdentity, linkIdentity, IdentityError } from '../../_lib/identities.js';
+import { findUserByXId } from '../../_lib/x-identity.js';
 
 import { fetchUpstream } from '../../_lib/upstream-fetch.js';
 import { isUuid } from '../../_lib/validate.js';
@@ -41,7 +54,10 @@ function b64urlDecode(s) {
 	return Buffer.from(s, 'base64url').toString('utf8');
 }
 
-async function signState({ state, codeVerifier, userId, agentId, scopeSet, returnTo, target }) {
+async function signState({
+	state, codeVerifier, userId = null, agentId = null, scopeSet, returnTo = null, target = 'owner',
+	purpose = 'connect', next = null,
+}) {
 	const payload = {
 		s: state,
 		v: codeVerifier,
@@ -50,6 +66,8 @@ async function signState({ state, codeVerifier, userId, agentId, scopeSet, retur
 		k: scopeSet,
 		r: returnTo || null,
 		t: target === 'agent' ? 'agent' : 'owner',
+		p: purpose === 'login' ? 'login' : 'connect',
+		n: typeof next === 'string' ? next : null,
 		e: Math.floor(Date.now() / 1000) + STATE_TTL_SEC,
 	};
 	const body = b64urlEncode(JSON.stringify(payload));
@@ -80,6 +98,8 @@ async function verifyState(token, expectedState) {
 		scopeSet: resolveScopeSet(payload.k).name,
 		returnTo: resolveReturnTo(payload.r),
 		target: payload.t === 'agent' ? 'agent' : 'owner',
+		purpose: payload.p === 'login' ? 'login' : 'connect',
+		next: payload.n || null,
 	};
 }
 
@@ -140,6 +160,15 @@ const RETURN_SURFACES = new Set(['/fee-bridge', '/settings/connections']);
 
 function resolveReturnTo(value) {
 	return typeof value === 'string' && RETURN_SURFACES.has(value) ? value : null;
+}
+
+// Where a failed or successful "sign in with X" lands, mirroring
+// api/auth/google/[action].js's loginUrl so /login's error-message map and
+// ?next= handling work identically for both providers.
+function loginUrl(code, next) {
+	const q = new URLSearchParams({ error: code });
+	if (next) q.set('next', next);
+	return `/login?${q.toString()}`;
 }
 
 function connectReturnUrl({ scopeSet, agentId, outcome, returnTo = null, target = 'owner' }) {
@@ -239,39 +268,10 @@ async function handleConnect(req, res) {
 
 // ── GET /api/auth/x/callback ──────────────────────────────────────────────────
 
-async function handleCallback(req, res) {
-	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
-	if (!method(req, res, ['GET'])) return;
-
-	if (!env.X_OAUTH_CLIENT_ID || !env.X_OAUTH_CLIENT_SECRET) {
-		return error(res, 501, 'not_configured', 'X OAuth is not configured');
-	}
-
-	const url = new URL(req.url, env.APP_ORIGIN);
-	const code = url.searchParams.get('code');
-	const state = url.searchParams.get('state');
-
-	if (!state) return error(res, 400, 'validation_error', 'missing state');
-
-	const cookieToken = readStateCookie(req);
-	const stateData = await verifyState(cookieToken, state);
-	// Burn the cookie regardless of validity so a leaked/replayed token can't be reused.
-	res.setHeader('set-cookie', stateCookie('', { clear: true }));
-	if (!stateData) return error(res, 400, 'invalid_state', 'OAuth state expired or invalid');
-
-	const { codeVerifier, userId, agentId: stateAgentId, scopeSet, returnTo, target } = stateData;
-	// Return to the surface that started the connect, the same one a refusal at
-	// /connect lands on.
-	const backTo = (outcome) =>
-		connectReturnUrl({ scopeSet, agentId: stateAgentId, outcome, returnTo, target });
-	const successRedirect = backTo('connected');
-	const errorRedirect = backTo('error');
-	const deniedRedirect = backTo('denied');
-
-	if (url.searchParams.get('error')) return redirect(res, deniedRedirect);
-	if (!code) return error(res, 400, 'validation_error', 'missing code');
-
-	// Exchange code for tokens
+// Swap an authorization code for tokens, then fetch the profile they unlock.
+// Shared by the connect callback (writes a posting connection) and the login
+// callback (signs the browser in), since both are the same X OAuth2 client.
+async function exchangeXCode({ code, codeVerifier }) {
 	const creds = Buffer.from(`${env.X_OAUTH_CLIENT_ID}:${env.X_OAUTH_CLIENT_SECRET}`).toString(
 		'base64',
 	);
@@ -292,7 +292,7 @@ async function handleCallback(req, res) {
 
 	if (!tokenRes.ok) {
 		console.error('[x-oauth] token exchange failed', await tokenRes.text());
-		return redirect(res, errorRedirect);
+		return { ok: false };
 	}
 
 	const tokens = await tokenRes.json().catch(() => ({}));
@@ -304,28 +304,75 @@ async function handleCallback(req, res) {
 	const grantedScopes = typeof tokens.scope === 'string' ? tokens.scope : '';
 	if (!access_token) {
 		console.error('[x-oauth] token response carried no access_token');
-		return redirect(res, errorRedirect);
+		return { ok: false };
 	}
 	const expiresAt = new Date(Date.now() + (expires_in ?? 7200) * 1000).toISOString();
 
-	// Fetch X profile
-	const profileRes = await fetchUpstream('https://api.twitter.com/2/users/me?user.fields=name,username,description,public_metrics', { headers: { authorization: `Bearer ${access_token}` } }, { name: 'x-api', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
+	const profileRes = await fetchUpstream('https://api.twitter.com/2/users/me?user.fields=name,username,description,profile_image_url,public_metrics', { headers: { authorization: `Bearer ${access_token}` } }, { name: 'x-api', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
 	if (!profileRes.ok) {
 		console.error('[x-oauth] profile fetch failed', await profileRes.text());
-		return redirect(res, errorRedirect);
+		return { ok: false };
 	}
 	const { data: profile } = await profileRes.json().catch(() => ({}));
 	// X answers 200 with an `errors` array (and no `data`) for a suspended or
 	// otherwise unreadable account. Treat a profile without an id as a failed
-	// connect and send the user back to the UI, not into a NULL provider_uid
-	// insert that 500s on the not-null constraint.
+	// exchange rather than a NULL provider_uid insert that 500s on the
+	// not-null constraint.
 	if (!profile?.id) {
 		console.error('[x-oauth] profile response missing data.id');
-		return redirect(res, errorRedirect);
+		return { ok: false };
 	}
 
-	const encAccess = encryptToken(access_token);
-	const encRefresh = refresh_token ? encryptToken(refresh_token) : null;
+	return { ok: true, profile, accessToken: access_token, refreshToken: refresh_token || null, expiresAt, grantedScopes };
+}
+
+async function handleCallback(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	if (!env.X_OAUTH_CLIENT_ID || !env.X_OAUTH_CLIENT_SECRET) {
+		return error(res, 501, 'not_configured', 'X OAuth is not configured');
+	}
+
+	const url = new URL(req.url, env.APP_ORIGIN);
+	const code = url.searchParams.get('code');
+	const state = url.searchParams.get('state');
+
+	if (!state) return error(res, 400, 'validation_error', 'missing state');
+
+	const cookieToken = readStateCookie(req);
+	const stateData = await verifyState(cookieToken, state);
+	// Burn the cookie regardless of validity so a leaked/replayed token can't be reused.
+	res.setHeader('set-cookie', stateCookie('', { clear: true }));
+	if (!stateData) return error(res, 400, 'invalid_state', 'OAuth state expired or invalid');
+
+	const { codeVerifier, userId, agentId: stateAgentId, scopeSet, returnTo, target, purpose, next } = stateData;
+
+	if (purpose === 'login') {
+		if (url.searchParams.get('error')) return redirect(res, loginUrl('x_cancelled', next));
+		if (!code) return redirect(res, loginUrl('x_failed', next));
+		const result = await exchangeXCode({ code, codeVerifier });
+		if (!result.ok) return redirect(res, loginUrl('x_failed', next));
+		return completeXLogin(req, res, { profile: result.profile, next });
+	}
+
+	// Return to the surface that started the connect, the same one a refusal at
+	// /connect lands on.
+	const backTo = (outcome) =>
+		connectReturnUrl({ scopeSet, agentId: stateAgentId, outcome, returnTo, target });
+	const successRedirect = backTo('connected');
+	const errorRedirect = backTo('error');
+	const deniedRedirect = backTo('denied');
+
+	if (url.searchParams.get('error')) return redirect(res, deniedRedirect);
+	if (!code) return error(res, 400, 'validation_error', 'missing code');
+
+	const result = await exchangeXCode({ code, codeVerifier });
+	if (!result.ok) return redirect(res, errorRedirect);
+	const { profile, accessToken, refreshToken, expiresAt, grantedScopes } = result;
+
+	const encAccess = encryptToken(accessToken);
+	const encRefresh = refreshToken ? encryptToken(refreshToken) : null;
 
 	if (target === 'agent') {
 		// Ownership was checked at /connect; re-check here because the agent can
@@ -387,11 +434,126 @@ async function handleCallback(req, res) {
 	return redirect(res, successRedirect);
 }
 
+// ── GET /api/auth/x/login (sign in with X) ────────────────────────────────────
+
+// No session required: this is how a brand-new visitor reaches an account at
+// all. Asks for the `read` scope set only, since signing in needs nothing
+// more than the profile api/_lib/identities.js's findUserByIdentity keys on.
+async function handleLoginStart(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const url = new URL(req.url, env.APP_ORIGIN);
+	const next = safeNext(url.searchParams.get('next'), '/dashboard');
+
+	if (!env.X_OAUTH_CLIENT_ID || !env.X_OAUTH_CLIENT_SECRET) {
+		if (wantsHtmlNavigation(req)) return redirect(res, loginUrl('x_unavailable', next));
+		return error(res, 501, 'not_configured', 'X sign-in is not configured');
+	}
+
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) {
+		if (wantsHtmlNavigation(req)) return redirect(res, loginUrl('rate_limited', next));
+		return rateLimited(res, rl);
+	}
+
+	const codeVerifier = randomToken(32);
+	const codeChallenge = await sha256Base64Url(codeVerifier);
+	const state = randomToken(16);
+	const scopeSet = resolveScopeSet('read');
+
+	const signed = await signState({ state, codeVerifier, scopeSet: scopeSet.name, purpose: 'login', next });
+	res.setHeader('set-cookie', stateCookie(signed));
+
+	const authUrl = new URL('https://twitter.com/i/oauth2/authorize');
+	authUrl.searchParams.set('response_type', 'code');
+	authUrl.searchParams.set('client_id', env.X_OAUTH_CLIENT_ID);
+	authUrl.searchParams.set('redirect_uri', `${env.APP_ORIGIN}/api/auth/x/callback`);
+	authUrl.searchParams.set('scope', scopeSet.value);
+	authUrl.searchParams.set('state', state);
+	authUrl.searchParams.set('code_challenge', codeChallenge);
+	authUrl.searchParams.set('code_challenge_method', 'S256');
+
+	return redirect(res, authUrl.toString());
+}
+
+function xClaims(profile) {
+	return {
+		subject: profile.id,
+		// X's OAuth2 profile never carries a verified email, so this identity
+		// can never be matched to an existing account by email the way Google's
+		// can: it is either already linked, already connected for posting
+		// (social_connections, checked in completeXLogin), or brand new.
+		email: null,
+		email_verified: false,
+		display_name: typeof profile.name === 'string' ? profile.name.slice(0, 120) : null,
+		avatar_url: typeof profile.profile_image_url === 'string' && /^https:\/\//.test(profile.profile_image_url)
+			? profile.profile_image_url
+			: null,
+	};
+}
+
+async function signInX(req, res, userId, { isNew = false } = {}) {
+	const token = await createSession({ userId, userAgent: req.headers['user-agent'], ip: clientIp(req) });
+	res.setHeader('set-cookie', sessionCookie(token));
+	logAudit({ userId, action: isNew ? 'register:x' : 'login:x', req });
+	if (isNew) queueMicrotask(() => seedDefaultAgent(userId));
+}
+
+async function completeXLogin(req, res, { profile, next }) {
+	const safeNextPath = safeNext(next, '/dashboard');
+	const claims = xClaims(profile);
+
+	const linked = await findUserByIdentity('x', claims.subject);
+	if (linked) {
+		if (linked.deleted_at) return redirect(res, loginUrl('account_deleted'));
+		await touchIdentity(linked.identity_id);
+		await signInX(req, res, linked.id);
+		return redirect(res, safeNextPath);
+	}
+
+	// Not linked yet. An owner who already connected this X account to post as
+	// themselves (social_connections, proven by the same OAuth2 client) signs
+	// straight into that account instead of getting a second one.
+	const already = await findUserByXId(claims.subject);
+	if (already) {
+		try {
+			await linkIdentity({ userId: already.user_id, provider: 'x', claims });
+		} catch (err) {
+			if (!(err instanceof IdentityError)) throw err;
+		}
+		await signInX(req, res, already.user_id);
+		return redirect(res, safeNextPath);
+	}
+
+	// Genuinely new. X does not vouch for an email address, so there is no
+	// confirm-by-email step like Google's: the account is born passwordless,
+	// the same way a wallet-only signup is, with a synthetic, non-deliverable
+	// placeholder email (api/auth/siws/[action].js uses the same @wallet.local
+	// convention) that keeps the column's NOT NULL UNIQUE constraint happy.
+	let placeholderEmail = `x-${claims.subject}@wallet.local`;
+	const [squatted] = await sql`
+		select 1 from users where email = ${placeholderEmail} and password_hash is not null limit 1
+	`;
+	if (squatted) placeholderEmail = `x-${claims.subject}.${randomToken(8).toLowerCase()}@wallet.local`;
+
+	const [user] = await sql`
+		insert into users (email, display_name)
+		values (${placeholderEmail}, ${claims.display_name || `X user ${claims.subject}`})
+		on conflict (email) do update set email = excluded.email
+		returning id, (xmax = 0) as inserted
+	`;
+	await linkIdentity({ userId: user.id, provider: 'x', claims });
+	await signInX(req, res, user.id, { isNew: user.inserted });
+	return redirect(res, safeNextPath);
+}
+
 // ── dispatch ──────────────────────────────────────────────────────────────────
 
 export default wrap(async (req, res) => {
 	const action = req.query?.action ?? new URL(req.url, 'http://x').pathname.split('/').filter(Boolean).pop();
 	if (action === 'connect') return handleConnect(req, res);
 	if (action === 'callback') return handleCallback(req, res);
+	if (action === 'login') return handleLoginStart(req, res);
 	return error(res, 404, 'not_found', 'unknown action');
 });

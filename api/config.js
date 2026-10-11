@@ -36,10 +36,16 @@ export default wrap(async (req, res) => {
 			process.env.SAML_IDP_METADATA_URL,
 	);
 
+	// "Sign in with X" (api/auth/x/[action].js login action), true once the same
+	// OAuth2 client the Connect-X flow already uses is configured. Drives the
+	// X button on /login.
+	const xLoginEnabled = Boolean(process.env.X_OAUTH_CLIENT_ID && process.env.X_OAUTH_CLIENT_SECRET);
+
 	return json(res, 200, {
 		walletConnectProjectId: process.env.VITE_WALLETCONNECT_PROJECT_ID || '',
 		privyAppId: process.env.VITE_PRIVY_APP_ID || process.env.PRIVY_APP_ID || '',
 		samlEnabled,
+		xLoginEnabled,
 		// Web Push: the client needs the VAPID public key to subscribe. Empty
 		// string when push isn't configured, which the client reads as "hide the
 		// enable-push affordance".

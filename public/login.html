@@ -620,6 +620,14 @@
 					<span id="sso-btn-label" data-i18n="login.single_sign_on_sso">Single sign-on (SSO)</span>
 				</button>
 
+				<!-- Sign in with X. Revealed by the script below only when the X OAuth2
+				     client is configured (GET /api/config → xLoginEnabled). Same client
+				     api/auth/x/[action].js already uses to connect X for posting. -->
+				<button type="button" id="x-login-btn" class="privy-chain-btn sso-btn" hidden>
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.9 2H22l-7.6 8.7L23.3 22H16.9l-5-6.5-5.7 6.5H3l8.1-9.3L2.1 2h6.6l4.5 6 5.7-6Zm-1.2 18.2h1.7L7.4 3.7H5.6l12.1 16.5Z"/></svg>
+					<span id="x-login-btn-label" data-i18n="login.sign_in_with_x">Sign in with X</span>
+				</button>
+
 				<div class="or-divider" id="privy-or-divider">or</div>
 
 				<label for="email" data-i18n="login.email_or_username">Email or username</label>
@@ -807,9 +815,19 @@
 					account_deleted: 'This account has been deleted.',
 					rate_limited: 'Too many attempts. Please try again in a moment.',
 				};
+				const X_MESSAGES = {
+					x_unavailable: 'Sign in with X is not available right now.',
+					x_cancelled: 'X sign-in was cancelled.',
+					x_failed: 'Something went wrong completing X sign-in. Please try again.',
+					account_deleted: 'This account has been deleted.',
+					rate_limited: 'Too many attempts. Please try again in a moment.',
+				};
 				const errCode = params.get('error');
 				if (errEl && errCode && SSO_MESSAGES[errCode]) {
 					errEl.textContent = SSO_MESSAGES[errCode];
+					errEl.style.display = 'block';
+				} else if (errEl && errCode && X_MESSAGES[errCode]) {
+					errEl.textContent = X_MESSAGES[errCode];
 					errEl.style.display = 'block';
 				} else if (errEl && params.get('signed_out')) {
 					errEl.textContent = 'You have been signed out.';
@@ -817,23 +835,33 @@
 					errEl.style.display = 'block';
 				}
 
-				const ssoBtn = document.getElementById('sso-btn');
-				if (!ssoBtn) return;
 				let cfg;
 				try {
 					cfg = await (await fetch('/api/config')).json();
 				} catch {
-					return; // config unreachable — leave SSO hidden
+					cfg = null; // config unreachable: leave SSO and X sign-in hidden
 				}
-				if (!cfg?.samlEnabled) return;
-				if (cfg.samlLabel) {
-					document.getElementById('sso-btn-label').textContent = cfg.samlLabel;
+
+				const ssoBtn = document.getElementById('sso-btn');
+				if (ssoBtn && cfg?.samlEnabled) {
+					if (cfg.samlLabel) {
+						document.getElementById('sso-btn-label').textContent = cfg.samlLabel;
+					}
+					ssoBtn.hidden = false;
+					ssoBtn.addEventListener('click', () => {
+						const next = window.__loginNext || params.get('next') || '/dashboard';
+						window.location.href = '/api/auth/saml/login?next=' + encodeURIComponent(next);
+					});
 				}
-				ssoBtn.hidden = false;
-				ssoBtn.addEventListener('click', () => {
-					const next = window.__loginNext || params.get('next') || '/dashboard';
-					window.location.href = '/api/auth/saml/login?next=' + encodeURIComponent(next);
-				});
+
+				const xBtn = document.getElementById('x-login-btn');
+				if (xBtn && cfg?.xLoginEnabled) {
+					xBtn.hidden = false;
+					xBtn.addEventListener('click', () => {
+						const next = window.__loginNext || params.get('next') || '/dashboard';
+						window.location.href = '/api/auth/x/login?next=' + encodeURIComponent(next);
+					});
+				}
 			})();
 		</script>
 		<script>

@@ -41,6 +41,7 @@ export const INTENTS = Object.freeze(['login', 'link', 'reauth']);
 /** The identity providers an account can link. Same shape for every future one. */
 export const PROVIDERS = Object.freeze([
 	{ id: 'google', label: 'Google', start: '/api/auth/google/start' },
+	{ id: 'x', label: 'X', start: '/api/auth/x/login' },
 ]);
 
 export class IdentityError extends Error {
