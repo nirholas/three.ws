@@ -299,15 +299,21 @@ def _prepare_photo(src: str) -> Image.Image:
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
         Image.open(io.BytesIO(data)).convert("RGBA").save(tmp, format="PNG")
         tmp_path = tmp.name
-    try:
-        prepared = prepare_image(tmp_path, bg_color=np.array([1.0, 1.0, 1.0]), rmbg_net=_rmbg_net)
-    finally:
-        os.unlink(tmp_path)
     # Upstream's load_image reports an unusable input by RETURNING a string
     # ("invalid image: pure black image", ...) which prepare_image then calls
-    # .permute on, so a blank or fully transparent upload used to surface as an
-    # AttributeError and an opaque internal error (11 of them in the three days
-    # to 2026-10-09). Name the input as the problem instead.
+    # .permute on itself, so the AttributeError is raised INSIDE prepare_image
+    # before it ever returns: an isinstance check on `prepared` below can never
+    # see the string, it has to be caught here. (11 of these surfaced as an
+    # opaque internal error in the three days to 2026-10-09, then 2 more after
+    # the isinstance-only guard below shipped and didn't catch it.)
+    try:
+        prepared = prepare_image(tmp_path, bg_color=np.array([1.0, 1.0, 1.0]), rmbg_net=_rmbg_net)
+    except AttributeError:
+        raise InputImageError(
+            "image has no visible subject (blank, black, or fully transparent)"
+        ) from None
+    finally:
+        os.unlink(tmp_path)
     if not isinstance(prepared, Image.Image):
         raise InputImageError(
             "image has no visible subject (blank, black, or fully transparent)"
