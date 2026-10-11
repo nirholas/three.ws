@@ -6561,6 +6561,10 @@
 		},
 		{
 			"src": "/",
+			"dest": "/desktop.html"
+		},
+		{
+			"src": "/classic/?",
 			"dest": "/home.html"
 		},
 		{

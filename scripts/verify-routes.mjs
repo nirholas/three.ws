@@ -128,7 +128,7 @@ const API_ROOT = resolve(ROOT, 'api');
 // Does the filesystem serve `path`? (path is dist-relative, leading slash stripped)
 function fileServes(path) {
 	const clean = path.replace(/^\//, '').split('?')[0];
-	if (clean === '') return served.has('home.html') || served.has('index.html');
+	if (clean === '') return served.has('desktop.html') || served.has('index.html');
 	if (served.has(clean)) return true;
 	// NOTE: no bare-`.html` extension resolution here. This project pins routing
 	// with a legacy `routes` array in vercel.json, which opts out of Vercel's

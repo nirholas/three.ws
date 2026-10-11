@@ -3930,5 +3930,16 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 	</script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
+	<!-- Classic view -> desktop. The choice is remembered (tws:view) and honoured by the "/" route. -->
+	<a id="to-desktop" href="/?view=desktop" aria-label="Switch to the three.ws desktop">
+		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+		Try the desktop
+	</a>
+	<style>
+		#to-desktop{position:fixed;left:16px;bottom:16px;z-index:60;display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:19px;font:500 13px/1 Inter,system-ui,sans-serif;color:#fff;text-decoration:none;background:linear-gradient(90deg,#ad6eca,#3b91d8);box-shadow:0 6px 24px rgba(0,0,0,.35);transition:transform .15s,filter .15s}
+		#to-desktop:hover{filter:brightness(1.1);transform:translateY(-1px)}
+		#to-desktop:active{transform:scale(.97)}
+		#to-desktop:focus-visible{outline:2px solid #fff;outline-offset:3px}
+	</style>
 </body>
 </html>

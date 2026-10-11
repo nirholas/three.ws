@@ -139,7 +139,7 @@ function resolveFile(p, router) {
 		`pages/${flat}.html`,
 		`public/${flat}.html`,
 	];
-	if (p === '/') candidates.unshift('pages/home.html', 'public/index.html');
+	if (p === '/') candidates.unshift('pages/desktop.html', 'public/index.html');
 	for (const c of candidates) {
 		const f = path.join(ROOT, c);
 		if (existsSync(f)) return f;

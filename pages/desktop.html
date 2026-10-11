@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<script>/* View preference: visitors who chose the classic site land there. ?view=desktop overrides and re-selects the desktop. */(function(){try{var q=new URLSearchParams(location.search).get('view');if(q==='desktop'){localStorage.setItem('tws:view','desktop');}else if(localStorage.getItem('tws:view')==='classic'){location.replace('/classic'+location.search+location.hash);}}catch(e){}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+	<title>three.ws: The 3D Agent Layer of the Internet</title>
+	<meta name="description" content="three.ws is a web desktop for 3D AI agents. Make an agent from a selfie, forge 3D models from a prompt, and open every part of the platform as a window. Embed your agent anywhere with one HTML tag." />
+	<link rel="canonical" href="https://three.ws/" />
+	<link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
+	<meta name="theme-color" content="#101010" />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:url" content="https://three.ws/" />
+	<meta property="og:title" content="three.ws: The 3D Agent Layer of the Internet" />
+	<meta property="og:description" content="A web desktop for 3D AI agents. Make one from a selfie, embed it anywhere." />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Home&amp;d=The+3D+agent+layer+of+the+internet&amp;p=%2F" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:title" content="three.ws: The 3D Agent Layer of the Internet" />
+	<meta name="twitter:description" content="A web desktop for 3D AI agents. Make one from a selfie, embed it anywhere." />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://three.ws/#organization","name":"three.ws","url":"https://three.ws","logo":"https://three.ws/og-image.png","description":"three.ws is the AI-agent layer for the open web: build, embed, monetize, and trade autonomous agents with real 3D avatars, on-chain identity (ERC-8004), pay-per-call (x402), and pump.fun token launches.","sameAs":["https://x.com/trythreews","https://github.com/nirholas/three.ws","https://www.coingecko.com/en/coins/three-ws","https://www.npmjs.com/package/three.ws","https://registry.modelcontextprotocol.io/?q=threews","https://coinmarketcap.com/community/profile/three_ws","https://hackernoon.com/u/three-ws","https://t.me/three_ws"]},{"@type":"WebSite","@id":"https://three.ws/#website","name":"three.ws","url":"https://three.ws","description":"Give your AI a body.","publisher":{"@id":"https://three.ws/#organization"},"potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://three.ws/discover?q={search_term_string}"},"query-input":"required name=search_term_string"}}]}</script>
+</head>
+<body>
+	<div id="os" aria-label="three.ws desktop">
+		<h1>three.ws: The 3D Agent Layer of the Internet</h1>
+		<p>Make a living 3D AI agent from a selfie, forge 3D models from a prompt, and embed your agent on any site.</p>
+		<ul>
+			<li><a href="/create">Create</a>: Make an agent, avatar, 3D model or token world</li>
+			<li><a href="/forge">Forge</a>: Type a prompt, get a textured 3D model</li>
+			<li><a href="/discover">Discover</a>: Browse every registered agent on Solana and EVM</li>
+			<li><a href="/chat">Chat</a>: Talk to an agent</li>
+			<li><a href="/marketplace">Marketplace</a>: Buy and sell agent skills</li>
+			<li><a href="/agent-studio">Agent Studio</a>: Author brains, skills and personality</li>
+			<li><a href="/mine">My Creations</a>: Everything you have made, newest first</li>
+			<li><a href="/gallery">Gallery</a>: Every public 3D avatar</li>
+			<li><a href="/pulse">Pulse</a>: Live feed of agent wallet activity</li>
+			<li><a href="/trenches">Trenches</a>: Live Solana launches, runners and smart money</li>
+			<li><a href="/dashboard">Console</a>: Your agents, wallets and usage</li>
+			<li><a href="/tour">Tour</a>: A guided walk through the platform</li>
+		</ul>
+		<p><a href="/classic">Classic website</a></p>
+		<noscript><p>The desktop needs JavaScript. The links above work without it.</p></noscript>
+	</div>
+	<script type="module" src="/src/desktop/main.js"></script>
+</body>
+</html>

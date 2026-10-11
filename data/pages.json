@@ -52,10 +52,18 @@
 				{
 					"path": "/",
 					"title": "Home",
-					"description": "Landing page. 3D AI agents that think on IBM watsonx.ai (Granite): the pitch, live agent demos, and the front door to every flow.",
+					"description": "The three.ws web desktop: a taskbar, Start menu and windows that open every part of the platform, from making a 3D agent to the marketplace.",
 					"priority": 1,
 					"changefreq": "weekly",
 					"added": "2026-04-16"
+				},
+				{
+					"path": "/classic",
+					"title": "Classic Home",
+					"description": "The original three.ws landing page: the pitch, live agent demos and the front door to every flow, kept as the classic view of the desktop.",
+					"priority": 0.5,
+					"changefreq": "weekly",
+					"added": "2026-10-11"
 				},
 				{
 					"path": "/discover",
@@ -3669,6 +3677,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-10-10"
+				},
+				{
+					"path": "/docs/desktop",
+					"title": "Web Desktop",
+					"description": "How the three.ws web desktop works: the CTRL Mica theme, taskbar and Start menu, snappable windows that frame real pages, deep links, saved layout, the classic view and how to add an app.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
 				},
 				{
 					"path": "/docs/how-forge-works",

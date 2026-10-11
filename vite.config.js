@@ -691,6 +691,7 @@ const appConfig = {
 				preflight: resolve(__dirname, 'pages/preflight.html'),
 				'app-next': resolve(__dirname, 'pages/app-next.html'),
 				home: resolve(__dirname, 'pages/home.html'),
+				desktop: resolve(__dirname, 'pages/desktop.html'),
 				'what-is': resolve(__dirname, 'pages/what-is.html'),
 				atlas: resolve(__dirname, 'pages/atlas.html'),
 				tour: resolve(__dirname, 'pages/tour.html'),
@@ -2089,7 +2090,9 @@ const appConfig = {
 					'/demo/avatar-os/': resolve(root, 'public/demo/avatar-os/index.html'),
 					'/demo/coin': resolve(root, 'public/demo/coin/index.html'),
 					'/demo/coin/': resolve(root, 'public/demo/coin/index.html'),
-					'/': resolve(root, 'pages/home.html'),
+					'/': resolve(root, 'pages/desktop.html'),
+					'/classic': resolve(root, 'pages/home.html'),
+					'/classic/': resolve(root, 'pages/home.html'),
 					'/home': resolve(root, 'pages/home.html'),
 					'/what-is': resolve(root, 'pages/what-is.html'),
 					'/what-is/': resolve(root, 'pages/what-is.html'),
@@ -2996,6 +2999,7 @@ const appConfig = {
 						'agent-token-page.html',
 						'nav.html',
 						'footer.html',
+						'desktop.html',
 					]);
 					const filename = (ctx.filename || ctx.path || '')
 						.replace(/\\/g, '/')
@@ -3222,6 +3226,7 @@ const appConfig = {
 						// inline script; fragments must never get it.
 						'nav.html',
 						'footer.html',
+						'desktop.html',
 					]);
 					const filename = (ctx.filename || ctx.path || '')
 						.replace(/\\/g, '/')
