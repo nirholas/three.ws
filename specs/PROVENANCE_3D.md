@@ -2,13 +2,13 @@
 
 **Version `threews.provenance.3d.v2`** · Open specification · License: CC0 / public domain
 
-> Pure core: `api/_lib/provenance-3d.js`. Free verify: `GET /api/provenance` and the `verify_provenance` MCP tool. Paid anchor: `anchor_provenance` MCP tool. Guide: [`docs/provenance.md`](https://github.com/nirholas/three.ws/blob/main/docs/provenance.md).
+> Pure core: `api/_lib/provenance-3d.js`. Automatic free issuance: `api/_lib/auto-provenance.js`. Free verify: `GET /api/provenance` and the `verify_provenance` MCP tool. Paid anchor: `anchor_provenance` MCP tool. Guide: [`docs/provenance.md`](https://github.com/nirholas/three.ws/blob/main/docs/provenance.md).
 
 ## The problem
 
-As AI-generated 3D floods the web, **authenticity** becomes the scarce thing. A content credential answers: who created this model, from what prompt, by which model, when, and its full lineage — and proves the bytes weren't altered since. This is C2PA-style provenance for 3D: anti-deepfake by construction. Verification is public and free; the credential hash is anchored on Solana so anyone can confirm it independently.
+As AI-generated 3D floods the web, **authenticity** becomes the scarce thing. A content credential answers: who created this model, from what prompt, by which model, when, and its full lineage, and proves the bytes weren't altered since. This is C2PA-style provenance for 3D: anti-deepfake by construction. Every GLB the platform generates or sells gets one of these credentials automatically, for free, with no action required; verification is public and free too. A credential can optionally also be anchored on Solana so anyone can confirm the hash independently on-chain.
 
-The **verify path carries zero payment, wallet, or coin surface**, so it drops into crypto-free app stores. Only the **anchor** (the on-chain write) is a paid/Claude-track action.
+The **default and verify paths both carry zero payment, wallet, or coin surface**, so they drop into crypto-free app stores. Only the **anchor** (the on-chain write) is a paid/Claude-track action.
 
 ## The credential
 
@@ -56,6 +56,23 @@ The credential is stored and transmitted inside a signed envelope:
 ### Canonicalization
 
 The signed bytes are the credential serialized with **recursively sorted keys** (`canonicalize` in the pure core), so signing and verifying produce identical bytes regardless of key order. The signature is ed25519 over those bytes; `credentialHash` is the sha256 of those bytes.
+
+## Automatic issuance (free, on by default)
+
+Every GLB that leaves the platform gets a credential without anyone calling `anchor_provenance` or `verify_provenance` first. Signing is local (ed25519 against `ATTEST_AGENT_SECRET_KEY`) and storage is R2; there is no on-chain write and no spend, so this runs automatically with no gate to clear.
+
+Issuance core: `autoCredentialForBytes({ buffer, assetId, creator, prompt, model, provider, lineage })` in `api/_lib/auto-provenance.js`. It is fire-and-forget everywhere it is called: a signing or storage failure never blocks or slows the asset it's credentialing.
+
+Wired at two chokepoints that between them cover every GLB the platform hands out:
+
+1. **Forge generation:** `materializeCreation` in `api/_lib/forge-store.js`, the single completion path every generation lane funnels through (free NIM, Forge Pro, rigged avatars, self-host TRELLIS/Hunyuan, async GCP workers, NVIDIA NIM). A credential is issued the moment a creation's bytes are final, before the response reaches the caller.
+2. **Paid asset downloads:** `GET /api/x402/asset-download`, via `ensureAssetCredential`. The first download of a `paid_assets` row hashes the GLB, issues the credential, and caches the hash on the row (`paid_assets.glb_sha256`) so a repeat buyer's re-download never re-hashes the file. The response carries `glbSha256` and `verifyUrl` once the credential exists.
+
+Idempotency: a credential is keyed by content hash (`provenance/<glbSha256>.json`), and issuance checks for an existing object first. A credential is evidence; evidence that already exists is never reissued, auto or not.
+
+**Owner opt-out:** set `PROVENANCE_AUTO_DISABLE=true` to turn off automatic issuance platform-wide. Nothing else changes: `verify_provenance`, `GET /api/provenance`, and the paid `anchor_provenance` upgrade all keep working exactly as before, they simply stop receiving new automatic entries. There is no per-asset or per-user opt-out; this is an owner-level switch only.
+
+Tests: `tests/auto-provenance.test.js` (signing, storage, idempotency, disabled flag, missing key, store-failure resilience, URL-fetch variant).
 
 ## Anchoring (paid, Claude/web3 track)
 

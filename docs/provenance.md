@@ -1,11 +1,23 @@
 # Verifiable 3D provenance — content credentials for AI-generated models
 
-Every model three.ws generates can carry a **signed content credential** — creator, prompt, model/provider, lineage, timestamp, and the GLB's content hash — with that hash **anchored on Solana**. Anyone can verify a model's authenticity and detect tampering **for free**, no account and no crypto. Anchoring (the on-chain write) is the paid, Claude-track action.
+Every model three.ws generates, and every GLB sold through the paid asset bazaar, carries a **signed content credential by default** (creator, prompt, model/provider, lineage, timestamp, and the GLB's content hash) with no action required and no spend. Anyone can verify a model's authenticity and detect tampering **for free**, no account and no crypto. A credential can also, separately, be **anchored on Solana** so its hash is independently checkable on-chain; that on-chain write stays the paid, Claude-track action, and is never required to get a `verified` result.
 
 - **Spec:** [`specs/PROVENANCE_3D.md`](https://github.com/nirholas/three.ws/blob/main/specs/PROVENANCE_3D.md) (CC0)
 - **Pure core:** [`api/_lib/provenance-3d.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/provenance-3d.js)
+- **Automatic free issuance:** [`api/_lib/auto-provenance.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/auto-provenance.js), wired into every forge generation lane and every first paid-asset download
 - **Free verify:** `GET /api/provenance?src=<glbUrl>` and the `verify_provenance` MCP tool
 - **Paid anchor:** the `anchor_provenance` MCP tool
+
+## Signed by default
+
+Generate a model through Forge (any lane) or buy one through the asset bazaar and the credential already exists by the time you have the file, nobody has to call a tool first. Signing is local (ed25519) and storage is a small JSON object in R2; there's no on-chain write and no spend on this path, so it's safe to run on every single asset. A paid asset-download response includes the hash and a ready-to-share verify link directly:
+
+```jsonc
+{ "ok": true, "slug": "pole-dancer-rumba", "downloadUrl": "…",
+  "glbSha256": "e3b0c4…", "verifyUrl": "https://three.ws/api/provenance?hash=e3b0c4…" }
+```
+
+The owner can turn this off platform-wide with `PROVENANCE_AUTO_DISABLE=true`; there's no per-asset opt-out, and turning it off never touches `verify_provenance`, `GET /api/provenance`, or `anchor_provenance`, which keep working on whatever was already issued.
 
 > **v2 credentials also carry a signed physics grade.** Alongside authorship, a credential can assert what a rigid-body solver would make of the mesh: watertight or not, real meters or a generator's unit box, its exact volume and inertia tensor. An unsigned grade is a claim anyone can forge; this one is not. See [Simulation readiness](./sim-readiness.md). Credentials signed under v1, before the field existed, keep verifying byte for byte, permanently.
 
@@ -50,7 +62,7 @@ Agents get the same verdict from the `verify_provenance` tool on the [3D Studio 
 - `tampered` — a credential exists but the bytes changed (even one byte) or the credential was altered.
 - `unknown` — no credential is on record for this model.
 
-The 3D viewer (`/viewer?src=…`) shows the result as a badge: **✓ Verified · three.ws** (links to the anchor), **⚠ Tampered**, or **Unverified**.
+The 3D viewer (`/viewer?src=…`) and every model page (`/m/:id`) show the result as a badge: **✓ Verified · three.ws** (links to the anchor), **⚠ Tampered**, or **Unverified**.
 
 ## Anchor a credential (paid, Claude track)
 
