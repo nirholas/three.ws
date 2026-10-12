@@ -10,6 +10,7 @@
 
 import { Color } from 'three';
 import { loadSpark, detectSplatFormat, mountSplatScene, SPLAT_EXTENSIONS_LABEL } from './splat-stage.js';
+import { initHotspotTimeline } from './splat-hotspots.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 
@@ -21,9 +22,11 @@ let _scene = null; // handle from mountSplatScene
 let _token = 0; // guards a slow load finishing after a newer one started
 let _downloadUrl = null; // blob URL backing the download button
 let _lastRender = null; // { buffer, fileType, fileName, label, flip }, for recenter
+let _hotspots = null; // handle from initHotspotTimeline, wired in init()
 
 function teardown() {
 	_token++;
+	_hotspots?.onSceneChanged(null);
 	if (!_scene) return;
 	_scene.dispose();
 	_scene = null;
@@ -145,6 +148,7 @@ async function renderBuffer(buffer, { label, fileType, fileName, flip = true }) 
 	if (token !== _token) { scene.dispose(); return false; }
 
 	_scene = scene;
+	_hotspots?.onSceneChanged(scene);
 	setLive(scene.count ? `${label} \u00b7 ${scene.count.toLocaleString()} splats` : label);
 	return true;
 }
@@ -306,6 +310,8 @@ async function loadSample(kind) {
 // ── Wiring ───────────────────────────────────────────────────────────────────
 function init() {
 	if (!STAGE()) return;
+
+	_hotspots = initHotspotTimeline();
 
 	$('#sp-load-url').addEventListener('click', () => {
 		const url = $('#sp-url').value.trim();

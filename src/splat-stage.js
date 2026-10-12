@@ -5,11 +5,36 @@
 // element and a buffer of splat bytes, get back an orbiting scene and a handle
 // that tears itself down completely.
 //
-// It runs on Spark (`@sparkjsdev/spark`, MIT, World Labs). Spark renders splats
-// as ordinary objects inside a normal three.js scene, which is what lets us
-// frame the camera on the actual scene and, later, put splats and meshes in one
-// stage. It also reads the compressed containers real captures ship as: .spz is
-// about a tenth of the equivalent PLY and .sog about a fifteenth to a twentieth.
+// It runs on Spark (`@sparkjsdev/spark`, MIT, World Labs), 2.3.x. Spark renders
+// splats as ordinary objects inside a normal three.js scene, which is what lets
+// us frame the camera on the actual scene and, later, put splats and meshes in
+// one stage. It also reads the compressed containers real captures ship as:
+// .spz is about a tenth of the equivalent PLY and .sog about a fifteenth to a
+// twentieth.
+//
+// Spark 2.3 added an LoD tree this module uses: `mesh.createLodSplats()` builds
+// a coarser-at-distance splat set entirely from the mesh's own decoded buffer,
+// off the main thread in Spark's worker pool, no network involved. It is built
+// here automatically once a scene clears `LOD_AUTO_THRESHOLD` splats, the same
+// idea as mesh LOD chains (`packages/glb-tools`) applied per-splat.
+//
+// Spark 2.3 also ships a GPU-memory pager (`SplatPager`/`PagedSplats`, the
+// `paged` SplatMesh option), deliberately NOT wired up here: it is a streaming
+// primitive for a chunked remote source (Spark's own RAD container, or a
+// `-lod-N.<ext>` layout fetched over HTTP) and has no code path that pages an
+// already-in-memory buffer of any format this viewer reads (.ply/.spz/.splat/
+// .ksplat/.sog), confirmed by reading `PagedSplats.fetchDecodeChunk` in the
+// installed package: its `fileBytes` branch is a no-op for every format but
+// Spark's own RAD. Passing `paged: true` against a one-shot in-memory buffer
+// does not throw, but it builds an empty, data-source-less pager that the
+// renderer's LOD-drive loop then tries to fetch chunks from every frame,
+// logging "No url or fileBytes provided" forever while paging nothing. Setting
+// `mesh.paged` at all, even to that empty pager, is also what pulls the mesh
+// into the renderer's LOD bookkeeping in the first place, so the fix is not to
+// configure the pager correctly (there is no correct in-memory configuration)
+// but to never set `paged` and let `createLodSplats()` populate
+// `packedSplats.lodSplats` instead, which is the other, independent input the
+// same bookkeeping already checks for.
 //
 // Three behaviours here look like a broken page if you skip them, which is the
 // reason this module exists instead of the same code twice:
@@ -30,6 +55,11 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 const FOV = 55;
 const FIRST_PAINT_TIMEOUT_MS = 8000;
 const DEFAULT_BACKGROUND = 0x0f0e16;
+const DEFAULT_LOD = true;
+// Below this many splats, building the LoD tree is pure overhead: the full
+// set already renders at full speed, so there is nothing for a coarser tier
+// to save.
+const LOD_AUTO_THRESHOLD = 50_000;
 
 /** Every container Spark can decode, in the order a file picker should list them. */
 export const SPLAT_EXTENSIONS = ['.ply', '.spz', '.splat', '.ksplat', '.sog'];
@@ -95,10 +125,16 @@ function frameCamera(camera, controls, mesh) {
  *                                           Pass false for splats authored Y-up,
  *                                           such as procedurally generated samples.
  * @param {number}   [options.background]    clear colour behind the scene
+ * @param {boolean}  [options.lod=true]      once the scene clears {@link LOD_AUTO_THRESHOLD}
+ *                                           splats, build Spark's per-splat LoD tree so
+ *                                           distant geometry renders fewer, coarser
+ *                                           splats instead of the full-detail set
+ * @param {number}   [options.maxSplats]     hard cap on resident splats; omit for
+ *                                           Spark's own default
  * @param {Function} [options.onSorting]     called once decoding is done and the
  *                                           first sort is pending, with the splat count
  * @param {Function} [options.onContextLost] called if the browser drops the GL context
- * @returns {Promise<{count:number, recenter:Function, dispose:Function}>}
+ * @returns {Promise<{count:number, recenter:Function, dispose:Function, camera:PerspectiveCamera, controls:OrbitControls, canvas:HTMLCanvasElement, scene:Scene, mesh:object}>}
  * @throws if the bytes are not a splat scene this build can decode
  */
 export async function mountSplatScene(host, buffer, {
@@ -106,6 +142,8 @@ export async function mountSplatScene(host, buffer, {
 	fileName,
 	flip = true,
 	background = DEFAULT_BACKGROUND,
+	lod = DEFAULT_LOD,
+	maxSplats,
 	onSorting,
 	onContextLost,
 } = {}) {
@@ -135,6 +173,11 @@ export async function mountSplatScene(host, buffer, {
 	let frame = 0;
 	let mesh = null;
 	let disposed = false;
+	// Set when a scene clears LOD_AUTO_THRESHOLD and createLodSplats() is fired
+	// off below. dispose() waits on it: Spark's worker pool rejects any in-flight
+	// job the moment the renderer that owns it is disposed, and that job can
+	// still be running if the user navigates away seconds after a big scene loads.
+	let lodPromise = null;
 	const resize = () => {
 		renderer.setSize(width(), height());
 		camera.aspect = width() / height();
@@ -146,24 +189,47 @@ export async function mountSplatScene(host, buffer, {
 		disposed = true;
 		if (frame) cancelAnimationFrame(frame);
 		window.removeEventListener('resize', resize);
-		// Order matters: drop the splat data, then the Spark renderer holding GPU
-		// buffers for it, then the controls' listeners, then the context itself.
-		try { mesh?.dispose?.(); } catch { /* already torn down */ }
-		try { spark.dispose?.(); } catch { /* already torn down */ }
-		try { controls.dispose?.(); } catch { /* already torn down */ }
-		// renderer.dispose() frees the three.js caches and leaves the WebGL context
-		// alive. Without an explicit release every scene swap leaks a live context,
-		// and a browser grants a page only a handful before it starts reclaiming
-		// the oldest out from under a running scene.
-		try {
-			renderer.forceContextLoss?.();
-			renderer.dispose?.();
-		} catch { /* context already lost */ }
 		host.innerHTML = '';
+		Promise.resolve(lodPromise).finally(() => {
+			// Order matters: drop the splat data, then the Spark renderer holding GPU
+			// buffers for it, then the controls' listeners, then the context itself.
+			try { mesh?.dispose?.(); } catch { /* already torn down */ }
+			// SparkRenderer drives an active LoD tree with its own per-frame worker
+			// calls, independent of our one-shot createLodSplats() promise above. Its
+			// dispose() terminates the shared worker pool and rejects every call still
+			// in flight (SplatWorker.dispose, read from the installed package), with no
+			// handler of its own, so the rejection lands here as unhandled on the next
+			// microtask regardless of how long we wait. Catching it in a dispose-scoped
+			// window is the correct fix, not a longer delay: no timeout is provably
+			// long enough, since a new per-frame call can be dispatched on literally
+			// the last rendered frame before this runs.
+			let quietUntil = true;
+			const quietRejection = (e) => { if (quietUntil) e.preventDefault(); };
+			window.addEventListener('unhandledrejection', quietRejection);
+			setTimeout(() => {
+				quietUntil = false;
+				window.removeEventListener('unhandledrejection', quietRejection);
+			}, 50);
+			try { spark.dispose?.(); } catch { /* already torn down */ }
+			try { controls.dispose?.(); } catch { /* already torn down */ }
+			// renderer.dispose() frees the three.js caches and leaves the WebGL context
+			// alive. Without an explicit release every scene swap leaks a live context,
+			// and a browser grants a page only a handful before it starts reclaiming
+			// the oldest out from under a running scene.
+			try {
+				renderer.forceContextLoss?.();
+				renderer.dispose?.();
+			} catch { /* context already lost */ }
+		});
 	}
 
 	try {
-		mesh = new SPARK.SplatMesh({ fileBytes: buffer, fileType, fileName });
+		mesh = new SPARK.SplatMesh({
+			fileBytes: buffer,
+			fileType,
+			fileName,
+			...(Number.isFinite(maxSplats) && maxSplats > 0 ? { maxSplats: Math.floor(maxSplats) } : {}),
+		});
 		if (flip) mesh.quaternion.set(1, 0, 0, 0);
 		await mesh.initialized;
 	} catch (err) {
@@ -172,14 +238,28 @@ export async function mountSplatScene(host, buffer, {
 	}
 	if (disposed) throw new Error('splat stage was disposed while decoding');
 
+	const count = mesh.packedSplats?.numSplats ?? mesh.splats?.numSplats ?? 0;
+	if (lod && count >= LOD_AUTO_THRESHOLD) {
+		// Fire-and-forget: this runs in Spark's worker pool and must not delay
+		// first paint. SparkRenderer re-reads `packedSplats.lodSplats` every
+		// frame, so the scene starts at full detail and switches itself over
+		// the moment the tree lands, with no visible seam to wait for here.
+		lodPromise = mesh.createLodSplats().catch((err) => console.error('[splat] LoD tree build failed', err));
+	}
+
 	scene.add(mesh);
 	const home = frameCamera(camera, controls, mesh);
 	window.addEventListener('resize', resize);
 	resize();
 
+	// Set by splat-hotspots.js while a camera-path keyframe sequence plays back:
+	// runs once per rendered frame, ahead of controls.update()/render, so camera
+	// playback and the one render loop this stage owns never fall out of sync.
+	let onFrame = null;
 	const tick = () => {
 		if (disposed) return;
 		frame = requestAnimationFrame(tick);
+		onFrame?.();
 		controls.update();
 		renderer.render(scene, camera);
 	};
@@ -192,7 +272,6 @@ export async function mountSplatScene(host, buffer, {
 		onContextLost?.();
 	}, { once: true });
 
-	const count = mesh.packedSplats?.numSplats ?? 0;
 	onSorting?.(count);
 	await Promise.race([firstPaint, new Promise((r) => setTimeout(r, FIRST_PAINT_TIMEOUT_MS))]);
 
@@ -204,6 +283,16 @@ export async function mountSplatScene(host, buffer, {
 			camera.position.copy(home.position);
 			controls.target.copy(home.center);
 			controls.update();
+		},
+		camera,
+		controls,
+		canvas: renderer.domElement,
+		renderer,
+		scene,
+		mesh,
+		/** Install (or clear, with `null`) a per-frame hook for camera playback. */
+		setOnFrame(fn) {
+			onFrame = typeof fn === 'function' ? fn : null;
 		},
 	};
 }

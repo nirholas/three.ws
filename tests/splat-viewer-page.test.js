@@ -31,16 +31,19 @@ import { applyCatalog } from '../src/i18n.js';
 const ROOT = resolve(import.meta.dirname, '..');
 const PAGE = readFileSync(resolve(ROOT, 'pages/splat.html'), 'utf8');
 const MODULE = readFileSync(resolve(ROOT, 'src/splat-viewer.js'), 'utf8');
+const HOTSPOTS = readFileSync(resolve(ROOT, 'src/splat-hotspots.js'), 'utf8');
 
 /** Ids the page markup defines. */
 function pageIds() {
 	return new Set([...PAGE.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
 }
 
-/** Ids the module looks up through its `$('#…')` helper. */
-function moduleIds() {
-	return [...MODULE.matchAll(/\$\(`?#([a-z0-9-]+)/gi)].map((m) => m[1]);
+/** Ids a module source looks up through its `$('#…')` helper. */
+function idsIn(source) {
+	return [...source.matchAll(/\$\(`?#([a-z0-9-]+)/gi)].map((m) => m[1]);
 }
+
+const moduleIds = () => idsIn(MODULE);
 
 const catalog = (locale) => (key) => {
 	const [ns, ...rest] = key.split('.');
@@ -60,6 +63,12 @@ describe('splat viewer page and module agree', () => {
 		const defined = pageIds();
 		const missing = [...new Set(moduleIds())].filter((id) => !defined.has(id));
 		expect(missing, `pages/splat.html is missing ids used by src/splat-viewer.js: ${missing.join(', ')}`).toEqual([]);
+	});
+
+	it('defines every element id the hotspot/timeline module writes to', () => {
+		const defined = pageIds();
+		const missing = [...new Set(idsIn(HOTSPOTS))].filter((id) => !defined.has(id));
+		expect(missing, `pages/splat.html is missing ids used by src/splat-hotspots.js: ${missing.join(', ')}`).toEqual([]);
 	});
 
 	it('gives the HUD label its own node, separate from the HUD controls', () => {
