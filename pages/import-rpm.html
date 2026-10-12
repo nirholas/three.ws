@@ -392,10 +392,10 @@
 			<div class="warn-banner">
 				<span class="warn-banner-icon">⚠</span>
 				<span data-i18n-html="import_rpm.paste_any_live_glb_url_we_fetch">
-					<strong>Paste any live GLB URL</strong> — we fetch it on our servers,
+					<strong>Paste any live GLB or VRM URL</strong>, we fetch it on our servers,
 					so CORS-restricted CDNs (CloudFront, Arweave, your own storage) all
 					work. If the original host is gone, or you already have the file on
-					disk, use the <em>Upload GLB</em> tab instead.
+					disk, use the <em>Upload</em> tab instead.
 				</span>
 			</div>
 
@@ -405,13 +405,13 @@
 						Paste URL
 					</button>
 					<button class="tab-btn" data-tab="file" role="tab" aria-selected="false" id="tab-file" data-i18n="import_rpm.upload_glb">
-						Upload GLB
+						Upload File
 					</button>
 				</div>
 
 				<!-- URL tab -->
 				<div class="tab-panel active" id="panel-url">
-					<label for="rpm-url" data-i18n="import_rpm.avatar_glb_url_or_cdn_link">Avatar GLB URL or CDN link</label>
+					<label for="rpm-url" data-i18n="import_rpm.avatar_glb_url_or_cdn_link">Avatar GLB/VRM URL or CDN link</label>
 					<input
 						type="url"
 						id="rpm-url"
@@ -420,7 +420,7 @@
 						spellcheck="false"
 					/>
 					<p class="field-hint" data-i18n="import_rpm.accepts_any_glb_url_cloudfront_arweave_or">
-						Accepts any GLB URL — CloudFront, Arweave, or your own storage.
+						Accepts any GLB or VRM URL: CloudFront, Arweave, or your own storage.
 						The file is fetched server-side so CORS is not an issue.
 					</p>
 
@@ -439,18 +439,18 @@
 
 				<!-- File upload tab -->
 				<div class="tab-panel" id="panel-file">
-					<label data-i18n="import_rpm.glb_file">GLB file</label>
+					<label data-i18n="import_rpm.glb_file">GLB or VRM file</label>
 					<div class="drop-zone" id="drop-zone">
 						<input
 							type="file"
 							id="glb-file"
-							accept=".glb,model/gltf-binary,application/octet-stream"
-							aria-label="Choose a GLB file"
+							accept=".glb,.vrm,model/gltf-binary,application/octet-stream"
+							aria-label="Choose a GLB or VRM file"
 						/>
 						<div class="drop-zone-icon">📦</div>
-						<div class="drop-zone-title" id="drop-title">Drag &amp; drop your GLB here</div>
-						<div class="drop-zone-title-touch">Tap to choose your GLB file</div>
-						<div class="drop-zone-sub">or click to browse · .glb · max 100 MB</div>
+						<div class="drop-zone-title" id="drop-title">Drag &amp; drop your GLB or VRM here</div>
+						<div class="drop-zone-title-touch">Tap to choose your GLB or VRM file</div>
+						<div class="drop-zone-sub">or click to browse · .glb or .vrm · max 100 MB</div>
 					</div>
 
 					<label for="file-name" style="margin-top: 18px" data-i18n="import_rpm.avatar_name_optional_2">Avatar name (optional)</label>
@@ -488,7 +488,7 @@
 			</div>
 
 			<div class="info-section">
-				<h3 data-i18n="import_rpm.how_to_find_your_avatar_s_glb">How to find your avatar's GLB URL</h3>
+				<h3 data-i18n="import_rpm.how_to_find_your_avatar_s_glb">How to find your avatar's GLB or VRM URL</h3>
 				<ul class="info-steps">
 					<li data-step="1" data-i18n-html="import_rpm.if_your_avatar_was_hosted_at_a">
 						If your avatar was hosted at a CDN (e.g.
@@ -496,13 +496,13 @@
 						directly — the file is fetched server-side so CORS is not an issue.
 					</li>
 					<li data-step="2" data-i18n-html="import_rpm.if_your_app_fetched_the_glb_on">
-						If your app fetched the GLB on load, open your browser's
-						DevTools → Network tab, filter by <code>.glb</code>, and copy
-						the request URL from there.
+						If your app fetched the model on load, open your browser's
+						DevTools → Network tab, filter by <code>.glb</code> or <code>.vrm</code>,
+						and copy the request URL from there.
 					</li>
 					<li data-step="3" data-i18n-html="import_rpm.if_you_already_have_the_file_on">
 						If you already have the file on disk, use the
-						<em>Upload GLB</em> tab above.
+						<em>Upload</em> tab above.
 					</li>
 				</ul>
 			</div>
@@ -533,8 +533,8 @@
 			let selectedFile = null;
 
 			function setFile(f) {
-				if (!f || !f.name.endsWith('.glb')) {
-					showStatus('file-status', 'err', 'Please choose a .glb file.');
+				if (!f || !/\.(glb|vrm)$/i.test(f.name)) {
+					showStatus('file-status', 'err', 'Please choose a .glb or .vrm file.');
 					return;
 				}
 				if (f.size > 100 * 1024 * 1024) {
@@ -577,7 +577,7 @@
 				}
 				const name = document.getElementById('rpm-name').value.trim() || deriveName(rawUrl);
 				clearStatus('url-status');
-				await runImport(rawUrl, name, 'url-status', { source: 'rpm_import', source_url: rawUrl });
+				await runImport(rawUrl, name, 'url-status', { source: 'readyplayer', import_method: 'url', source_url: rawUrl });
 			});
 
 			// ── Upload from file ───────────────────────────────────────────
@@ -586,9 +586,9 @@
 					showStatus('file-status', 'err', 'Please choose a GLB file first.');
 					return;
 				}
-				const name = document.getElementById('file-name').value.trim() || selectedFile.name.replace(/\.glb$/i, '');
+				const name = document.getElementById('file-name').value.trim() || selectedFile.name.replace(/\.(glb|vrm)$/i, '');
 				clearStatus('file-status');
-				await runImport(selectedFile, name, 'file-status', { source: 'rpm_import' });
+				await runImport(selectedFile, name, 'file-status', { source: 'readyplayer', import_method: 'file' });
 			});
 
 			// ── Core import flow ───────────────────────────────────────────
@@ -603,7 +603,7 @@
 						name,
 						visibility: 'public',
 						tags: ['rpm', 'imported'],
-						source: meta.source || 'rpm_import',
+						source: meta.source || 'readyplayer',
 						source_meta: meta,
 					}, {
 						signal: abortCtrl.signal,
@@ -691,7 +691,7 @@
 			function deriveName(url) {
 				try {
 					const path = new URL(url).pathname;
-					const seg = path.split('/').pop()?.replace(/\.glb$/i, '') || '';
+					const seg = path.split('/').pop()?.replace(/\.(glb|vrm)$/i, '') || '';
 					return seg.length > 2 ? seg : 'Imported Avatar';
 				} catch {
 					return 'Imported Avatar';
