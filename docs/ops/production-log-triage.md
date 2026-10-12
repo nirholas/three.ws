@@ -1237,14 +1237,17 @@ ERROR  502 POST /api/pump/launch-agent
 
 ---
 
-## 🔴 5xx fan-out across `/api/forge`, `/api/gpt-forge`, `/api/glb`, avatars, `/api/3d/inspect`, `/api/print/quote`: `r2-downstream-5xx` (§r2-downstream)
+## 🔴 5xx fan-out across `/api/forge`, `/api/gpt-forge`, `/api/glb`, avatars, `/api/3d/inspect`, `/api/print/quote`, `/cdn/*`: `r2-downstream-5xx` (§r2-downstream)
 
 - **Source:** every route that reads or writes through
   [api/_lib/r2.js](../../api/_lib/r2.js) (`api/forge.js`, `api/gpt-forge.js`,
-  `api/objects/library.js`, `api/avatars/[id].js`), plus two generic
-  caller-supplied-URL fetch tools (`api/print/quote.js`, `api/3d/inspect.js`,
-  502 `fetch_failed`) that happen to be fetching R2-hosted GLBs in practice
-  because forge/gpt-forge persist generated models there.
+  `api/objects/library.js`, `api/avatars/[id].js`), the entire `/cdn/*`
+  namespace (routed by `vercel.json`'s single `/cdn/(.+)` catch-all to
+  [api/cdn-object.js](../../api/cdn-object.js), which always reads R2; no
+  subpath is an exception), plus two generic caller-supplied-URL fetch tools
+  (`api/print/quote.js`, `api/3d/inspect.js`, 502 `fetch_failed`) that happen
+  to be fetching R2-hosted GLBs in practice because forge/gpt-forge persist
+  generated models there.
 - **What it means:** Cloudflare R2 flapping (healthz `object_storage`
   `down`/`degraded`, tracked at
   [production-100-OWNER-ACTIONS.md](../../prompts/finish/_context/production-100-OWNER-ACTIONS.md)

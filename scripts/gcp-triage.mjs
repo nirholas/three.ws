@@ -336,13 +336,18 @@ const KNOWN_HTTP_SIGNATURES = [
 		// avatars/*/glb, avatars/upload, api/glb, api/3d/inspect,
 		// api/print/quote, cdn/objects/library/manifest.json all fired together
 		// with zero matching app-level error log lines, i.e. each is a
-		// handler-returned 5xx, not a crash).
+		// handler-returned 5xx, not a crash). ANY /cdn/<key> path (not just
+		// /cdn/forge/* and the one objects/library manifest listed above) maps
+		// through vercel.json's single `/cdn/(.+)` -> api/cdn-object.js catch-all,
+		// which always reads R2 (api/cdn-object.js's own header comment): widen
+		// the match to the whole /cdn/ namespace instead of enumerating every
+		// subpath one at a time (2026-10-12: /cdn/avatars/mixamo/glb/*.glb hit
+		// the same R2 flap and was missing from the list).
 		test: (g) => g.service === 'three-ws-api' && g.status >= 500 && (
 			g.path === '/api/forge' || g.path === '/api/gpt-forge' ||
 			g.path === '/api/glb' || g.path === '/api/avatars/upload' ||
 			g.path === '/api/3d/inspect' || g.path === '/api/print/quote' ||
-			/^\/cdn\/forge\//.test(g.path) || /^\/api\/avatars\/<uuid>\/glb$/.test(g.path) ||
-			g.path === '/cdn/objects/library/manifest.json'
+			/^\/cdn\//.test(g.path) || /^\/api\/avatars\/[^/]+\/glb$/.test(g.path)
 		),
 		class: 'owner',
 		action: `Check healthz object_storage first (curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[] | select(.name=="object_storage")'): "down" or "degraded" means this is the known Cloudflare R2 flap, not a new bug (production-100-OWNER-ACTIONS.md row 36 tracks the owner-side Cloudflare dashboard check). If object_storage reads ok, read the specific route's handler instead; api/forge.js, api/gpt-forge.js, api/objects/library.js and api/avatars/[id].js import from api/_lib/r2.js directly, while api/print/quote.js and api/3d/inspect.js are generic caller-URL fetch tools (502 fetch_failed) that happen to be fetching R2-hosted models in the sample traffic, so confirm the sample URL's host before blaming R2 on those two. ${RUNBOOK} §r2-downstream.`,
