@@ -849,6 +849,7 @@ function buildEngineButtons() {
 		btn.dataset.path = path;
 		btn.dataset.backend = b.id;
 		btn.dataset.byok = b.byok || '';
+		btn.dataset.housekey = String(Boolean(b.house_key_available));
 		btn.dataset.poly = String(Boolean(b.poly_control));
 		// Text-only engines (the free NVIDIA TRELLIS preview) can't take photos;
 		// updateEngineAvailability() disables them while reference views are set.
@@ -856,10 +857,14 @@ function buildEngineButtons() {
 		// BYOK engines carry a small key glyph so the picker shows at a glance
 		// which lanes run on the user's own API key vs the free/included ones.
 		const short = ENGINE_LABELS[b.id] || b.label;
-		btn.innerHTML = `<span class="eng-label">${short}</span> ${b.free ? ENGINE_FREE_PILL : ''}${b.byok ? ENGINE_KEY_SVG : ''}`;
-		const keyNote = b.byok ? ` · uses your own ${KEY_HINTS[b.byok]?.label || b.byok} key` : '';
+		btn.innerHTML = `<span class="eng-label">${short}</span> ${b.free ? ENGINE_FREE_PILL : ''}${b.byok && !b.house_key_available ? ENGINE_KEY_SVG : ''}`;
+		const keyNote = b.house_key_available
+			? ' · included, or bring your own key'
+			: b.byok
+				? ` · uses your own ${KEY_HINTS[b.byok]?.label || b.byok} key`
+				: '';
 		const freeNote = b.free ? ' · free, no API key' : '';
-		btn.title = `${b.label} — ${b.blurb}${freeNote}${keyNote}`;
+		btn.title = `${b.label}: ${b.blurb}${freeNote}${keyNote}`;
 		// aria-label survives the dynamic title rewrites in updateEngineAvailability.
 		btn.setAttribute('aria-label', `${short}${freeNote}${keyNote}`);
 		btn.setAttribute('aria-pressed', String(b.id === selectedEngine.backend));
@@ -963,6 +968,7 @@ function selectEngine(btn, silent) {
 		path: btn.dataset.path,
 		backend: btn.dataset.backend,
 		byok: btn.dataset.byok || null,
+		houseKeyAvailable: btn.dataset.housekey === 'true',
 		polyControl: btn.dataset.poly === 'true',
 		modly: btn.dataset.modly === '1',
 		modelId: btn.dataset.modelId || null,
@@ -987,7 +993,10 @@ function selectEngine(btn, silent) {
 	for (let i = 0; i < slots.length; i++) renderSlot(i);
 }
 
-// Show the key field only for BYOK engines, with provider-specific hint + link.
+// Show the key field for BYOK engines, with provider-specific hint + link. A
+// house-key lane (Tripo, when the platform key is configured) shows the same
+// field but as an optional override, since the job runs on platform credits
+// when it's left blank.
 function updateByokRow() {
 	if (!els.byokRow) return;
 	const byok = selectedEngine.byok;
@@ -995,6 +1004,12 @@ function updateByokRow() {
 	if (!byok) return;
 	const hint = KEY_HINTS[byok];
 	const name = hint?.label || byok;
+	if (selectedEngine.houseKeyAvailable) {
+		els.byokLabel.textContent = `${name} key (optional)`;
+		els.providerKey.placeholder = `Your own ${name} API key, to use it instead of the included lane`;
+		els.byokHint.innerHTML = `This engine is included, billed to your platform credits. Paste your own ${name} key here to use it instead${hint ? ` (<a href="${hint.url}" target="_blank" rel="noopener">get a key</a>)` : ''}.`;
+		return;
+	}
 	els.byokLabel.textContent = `${name} key`;
 	els.providerKey.placeholder = `Your ${name} API key (kept in this browser)`;
 	els.byokHint.innerHTML = hint
@@ -1027,11 +1042,17 @@ let _highAccess = null; // last resolved forge.high access payload (for the gate
 
 // The only combination the server actually $THREE-gates: High tier on a PLATFORM-keyed
 // backend. BYOK engines run on the caller's own vendor key, so the server exempts BYOK
-// High (key-gated, not hold-gated) — and so must the client, or a non-holder with their
-// own Meshy/Tripo/Rodin key would be wrongly blocked from High. Draft/Standard are never
-// gated. Every client gate check keys on this, so the lock can never engage outside it.
+// High (key-gated, not hold-gated), and so must the client, or a non-holder with their
+// own Meshy/Tripo/Rodin key would be wrongly blocked from High. The one exception is a
+// house-key lane (Tripo, when TRIPO_API_KEY is set): the server bills that the same as
+// any other platform lane even though the backend is flagged `byok`, because the key
+// running the job is ours, not the caller's, so the client gate must match (a caller
+// who typed their own key still stays exempt; see updateByokRow's providerKey check
+// below). Draft/Standard are never gated. Every client gate check keys on this.
 function highTierNeedsPass() {
-	return selectedTier === 'high' && !selectedEngine.byok && !selectedEngine.modly;
+	if (selectedTier !== 'high' || selectedEngine.modly) return false;
+	if (!selectedEngine.byok) return true;
+	return Boolean(selectedEngine.houseKeyAvailable) && !providerKey;
 }
 
 function accessHost() {
@@ -1213,7 +1234,8 @@ async function updatePerkLine() {
 // caller's own provider key. `_highAccess.eligible` reflects a resolved $THREE
 // hold, so a holder sees High as already unlocked.
 function costSegment(backend, tierMeta) {
-	if (backend.byok) return 'billed to your own key';
+	const houseLane = backend.house_key_available && !providerKey;
+	if (backend.byok && !houseLane) return 'billed to your own key';
 	if (tierMeta.id === 'high') {
 		return _highAccess?.eligible
 			? '<span class="est-free">Free</span> · you hold $THREE'
@@ -3930,6 +3952,12 @@ els.engine?.addEventListener('click', (e) => {
 els.providerKey?.addEventListener('input', () => {
 	providerKey = els.providerKey.value.trim();
 	els.providerKey.removeAttribute('aria-invalid');
+	// Typing/clearing a key on a house-key lane (Tripo) flips whether High is
+	// $THREE-gated for this request, so re-run the same check a tier/engine
+	// switch triggers.
+	if (selectedEngine.houseKeyAvailable && selectedTier === 'high') {
+		reflectHighAccess('high', { silent: true });
+	}
 });
 
 els.cancel.addEventListener('click', () => {

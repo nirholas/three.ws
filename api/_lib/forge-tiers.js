@@ -198,6 +198,10 @@ export const BACKENDS = Object.freeze({
 		byok: 'tripo',
 		provider: 'tripo',
 		requiresEnv: Object.freeze([]),
+		// When set, TRIPO_API_KEY turns Tripo into a house lane: the default
+		// geometry engine on the High tier, billed through our own credits
+		// like the other house lanes, with a user's own key still preferred.
+		houseKeyEnv: 'TRIPO_API_KEY',
 		polyControl: true,
 		baseEta: 70,
 		// Tripo bills credits per task type; texture/quad add-ons cost extra.
@@ -704,12 +708,28 @@ export function freeLaneCandidates(p, tierId, userImages, subjectClass = null, c
 	return out;
 }
 
+// A house-key lane (a BACKENDS entry with `houseKeyEnv` set) becomes the
+// default for its path on the High tier only, when its env var is actually
+// set and no free lane claimed the slot above it. Draft/standard are
+// untouched, so the free-for-us policy there never changes. Today this
+// applies only to Tripo on the geometry path (the only path with no free
+// lane at all, per FREE_DEFAULT_FOR_TIERS/FREE_FALLBACK_FOR_PATH above), and
+// is a no-op everywhere TRIPO_API_KEY is unset.
+function houseDefaultForPath(p, tierId) {
+	if (tierId !== 'high') return null;
+	for (const b of Object.values(BACKENDS)) {
+		if (b.houseKeyEnv && b.paths.includes(p) && process.env[b.houseKeyEnv]) return b.id;
+	}
+	return null;
+}
+
 // Resolve the default backend for a (path, tier) when the caller didn't name one.
 // Free-for-us policy: the first configured free lane in the candidate ordering,
-// and only the paid standing default when NO free lane is live on this deployment.
+// then a configured house-key lane for this path/tier, and only the paid
+// standing default when neither is live on this deployment.
 function defaultBackendFor(p, tierId, userImages, subjectClass = null, country = null) {
 	const candidates = freeLaneCandidates(p, tierId, userImages, subjectClass, country);
-	return candidates[0] || DEFAULT_BACKEND_FOR_PATH[p];
+	return candidates[0] || houseDefaultForPath(p, tierId) || DEFAULT_BACKEND_FOR_PATH[p];
 }
 
 // Health-aware default resolver. Given a `health` map of laneId → 'ok' | 'down' |
@@ -728,7 +748,7 @@ function defaultBackendFor(p, tierId, userImages, subjectClass = null, country =
 // would, so callers with no telemetry are unaffected.
 export function defaultBackendForHealthAware(p, tierId, userImages, health, subjectClass = null, country = null) {
 	const candidates = freeLaneCandidates(p, tierId, userImages, subjectClass, country);
-	if (!candidates.length) return DEFAULT_BACKEND_FOR_PATH[p];
+	if (!candidates.length) return houseDefaultForPath(p, tierId) || DEFAULT_BACKEND_FOR_PATH[p];
 	const statusOf = (id) => health?.[id];
 	const preferred = candidates.find((id) => {
 		const s = statusOf(id);
@@ -737,9 +757,9 @@ export function defaultBackendForHealthAware(p, tierId, userImages, health, subj
 	if (preferred) return preferred;
 	const usable = candidates.find((id) => statusOf(id) !== 'down');
 	if (usable) return usable;
-	// Every free lane is confirmed down — fall to the paid default rather than
-	// dead-ending on a lane we know will fail.
-	return DEFAULT_BACKEND_FOR_PATH[p];
+	// Every free lane is confirmed down. Fall to a configured house-key lane,
+	// then the paid default, rather than dead-ending on a lane we know will fail.
+	return houseDefaultForPath(p, tierId) || DEFAULT_BACKEND_FOR_PATH[p];
 }
 
 // `userImages: true` = the request carries caller-supplied reference images, so
@@ -1025,6 +1045,11 @@ export function buildCatalog() {
 			// hosted TRELLIS preview) — the UI must not offer it for photo input.
 			user_images: b.userImages !== false,
 			configured: backendIsConfigured(b.id),
+			// True when this BYOK backend also has a platform house key configured
+			// (currently only Tripo, via TRIPO_API_KEY): the picker can offer it as
+			// an explicit choice billed through platform credits, with no key
+			// prompt, while a caller who supplies their own key still uses it.
+			house_key_available: Boolean(b.houseKeyEnv && process.env[b.houseKeyEnv]),
 			blurb: b.blurb,
 			// Voxel resolutions the lane accepts as the `resolution` request option.
 			resolutions: b.id === 'trellis2' ? TRELLIS2_RESOLUTIONS : b.id === 'pixal3d' ? PIXAL3D_RESOLUTIONS : undefined,

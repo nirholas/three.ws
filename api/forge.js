@@ -94,7 +94,7 @@ import {
 	HF_LANE_COOLDOWN_SECONDS,
 } from './_lib/forge-lane-health.js';
 import { isInlineImageRef } from './_lib/image-persist.js';
-import { resolveProviderKey } from './_lib/forge-provider-key.js';
+import { resolveProviderKey, resolveProviderKeyWithSource } from './_lib/forge-provider-key.js';
 import { validateForgeImage } from './_lib/forge-image-validate.js';
 import { encodeJobToken, decodeJobToken } from './_lib/forge-job-token.js';
 import {
@@ -1252,9 +1252,12 @@ async function startJobWithBody(req, res, body) {
 	}
 	if (path === 'geometry' && !backendExplicit) {
 		const defaultByok = BACKENDS[backendId]?.byok;
-		if (defaultByok && !(await resolveProviderKey(req, body, defaultByok))) {
-			path = 'image';
-			backendId = resolveBackendId({ path, tier, userImages: isImageMode, subjectClass, country });
+		if (defaultByok) {
+			const { key } = await resolveProviderKeyWithSource(req, body, defaultByok);
+			if (!key) {
+				path = 'image';
+				backendId = resolveBackendId({ path, tier, userImages: isImageMode, subjectClass, country });
+			}
 		}
 	}
 
@@ -1287,6 +1290,20 @@ async function startJobWithBody(req, res, body) {
 	}
 
 	const coldStartFor = laneColdStart;
+
+	// House-key billing/gate awareness, resolved once, for Tripo only (the one
+	// backend with a house-key lane right now): the SAME priority order (inline,
+	// then user session, then house env var) the BYOK dispatch below uses, so the
+	// $THREE gate and the actual dispatch always agree on who is paying. An
+	// inline or user key here always wins; this only flips true when the request
+	// falls through to the platform's own key, in which case the resolved key is
+	// cached here so the dispatch below doesn't re-run the session/DB lookup.
+	let usingTripoHouseKey = false;
+	let resolvedTripoKey = null;
+	if (BACKENDS[backendId]?.byok === 'tripo' && BACKENDS[backendId]?.houseKeyEnv) {
+		resolvedTripoKey = await resolveProviderKeyWithSource(req, body, 'tripo');
+		usingTripoHouseKey = resolvedTripoKey.source === 'house';
+	}
 
 	// Content-addressed result cache (see _lib/forge-cache.js): a text→3D request
 	// on a platform-keyed lane (never BYOK: that spends the caller's own account,
@@ -1341,7 +1358,7 @@ async function startJobWithBody(req, res, body) {
 	// never gated, and internal cron seed jobs bypass it entirely.
 	// requireFeatureAccess writes the 402 (three_hold_required) itself and returns
 	// { ok:false }; on a holder it writes nothing and lets the job proceed.
-	if (tier.id === 'high' && BACKENDS[backendId]?.byok === false && !isInternalSeedRequest(req)) {
+	if (tier.id === 'high' && (BACKENDS[backendId]?.byok === false || usingTripoHouseKey) && !isInternalSeedRequest(req)) {
 		// Consumption lever: a non-holder may present a settled $THREE payment
 		// (payment_id + the client nonce it was bound to) to satisfy the gate per
 		// generation instead of holding. Validate it read-only here; the single-use
@@ -1745,13 +1762,18 @@ async function startJobWithBody(req, res, body) {
 		// A native 3D model emits mesh geometry directly: from the prompt
 		// (text→geometry) or a single photo (image→3D): with no synthesized
 		// intermediate view, so detail isn't capped by one image. These backends
-		// have no platform key; the caller supplies their own. Dispatch is a
-		// registry lookup on the backend's `byok` name (Replicate BYOK is handled
-		// on the image-intermediate path below: it speaks a different interface).
+		// have no platform key, except Tripo when TRIPO_API_KEY is set (the house
+		// lane, resolved above into resolvedTripoKey/usingTripoHouseKey so this
+		// reuses it instead of re-querying). Dispatch is a registry lookup on the
+		// backend's `byok` name (Replicate BYOK is handled on the image-intermediate
+		// path below: it speaks a different interface).
 		const byokProvider = BACKENDS[backendId].byok;
 		const byokFactory = BYOK_PROVIDER_FACTORIES[byokProvider];
 		if (byokFactory) {
-			const key = await resolveProviderKey(req, body, byokProvider);
+			const key =
+				byokProvider === 'tripo' && resolvedTripoKey
+					? resolvedTripoKey.key
+					: await resolveProviderKey(req, body, byokProvider);
 			if (!key) return needsKey(res, backendId);
 
 			let gp;
@@ -2748,10 +2770,12 @@ async function startJobWithBody(req, res, body) {
 				message: err.message || 'The provider rejected this API key.',
 			});
 		}
-		if (err?.code === 'insufficient_credits' && BACKENDS[backendId]?.byok) {
+		if (err?.code === 'insufficient_credits' && BACKENDS[backendId]?.byok && !usingTripoHouseKey) {
 			// BYOK lane: the message names the CALLER'S own provider account, which
-			// they can act on: surface it. The platform's own paid lane falls through
-			// to the sanitized "temporarily unavailable" state below.
+			// they can act on: surface it. The house-key Tripo lane and the platform's
+			// own paid lane both fall through to the sanitized "temporarily
+			// unavailable" state below, since it's the PLATFORM's account that's out
+			// of credits, not the caller's: naming it here would be misleading.
 			return json(res, 402, {
 				error: 'insufficient_credits',
 				message: err.message || 'The provider account is out of credits.',
