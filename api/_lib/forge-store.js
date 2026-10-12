@@ -300,6 +300,53 @@ export async function findByJob({ replicateJobId, clientKey }) {
 	}
 }
 
+// clientKey-agnostic sibling of findByJob, for the one caller that cannot
+// supply a clientKey: a provider webhook, which calls the server directly
+// with no cookie/session context. Returns client_key on the row so the
+// webhook handler can feed it straight into materializeCreation/markFailed,
+// which stay scoped exactly as before: this never widens their privacy
+// boundary, it only lets the webhook learn the scope it needs to use.
+export async function findByJobAnyClient({ replicateJobId }) {
+	if (!forgeStoreEnabled() || !replicateJobId) return null;
+	try {
+		const rows = await sql`
+			select id, status, glb_url, glb_key, prompt, preview_image_url,
+				views_requested, views_used, multiview, backend, tier, path, model_category,
+				user_id, created_at, destination, internal, client_key
+			from forge_creations
+			where replicate_job_id = ${replicateJobId}
+			limit 1
+		`;
+		return rows[0] ?? null;
+	} catch (err) {
+		if (isDbUnavailableError(err)) console.warn('[forge-store] findByJobAnyClient skipped (db unavailable):', err?.message);
+		else console.error('[forge-store] findByJobAnyClient failed:', err?.message);
+		return null;
+	}
+}
+
+// Idempotency claim for an inbound generation-provider webhook (Tripo), mirror
+// of claimWebhookDelivery in print/fulfillment-queries.js: the insert IS the
+// concurrency lock, so a retried delivery is a 200 no-op rather than a second
+// materialize/markFailed call.
+export async function claimForgeWebhookDelivery({ provider, deliveryId, jobId }) {
+	const rows = await sql`
+		insert into forge_webhook_deliveries (provider, delivery_id, job_id)
+		values (${provider}, ${deliveryId}, ${jobId ?? null})
+		on conflict (provider, delivery_id) do nothing
+		returning delivery_id
+	`;
+	return { fresh: rows.length > 0 };
+}
+
+export async function markForgeWebhookApplied({ provider, deliveryId }) {
+	await sql`
+		update forge_webhook_deliveries
+		set applied = true
+		where provider = ${provider} and delivery_id = ${deliveryId}
+	`;
+}
+
 // Provider asset URLs are frequently short-lived (HuggingFace Spaces serve the
 // mesh from an ephemeral gradio /tmp path; CDNs hiccup). Pull the bytes with a
 // few quick retries so a transient network error or 5xx/429 — the dominant cause
