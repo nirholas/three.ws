@@ -8,7 +8,7 @@ import './desktop.css';
 import './styles.css';
 import './boot.css';
 import { createShell } from './shell.js';
-import { APPS } from './apps.js';
+import { APPS, ALL_APPS } from './apps.js';
 import { deepLinkApp, initialsOf, sanitizePrefs } from './layout.js';
 import { runBootSteps, entryMode, showBoot, gpuName } from './boot-logic.js';
 import { createBootScreen, playChime } from './boot.js';
@@ -195,15 +195,36 @@ async function main() {
 	};
 
 	let world = null;
+	let grid = null;
 	let lastPlace = null;
+	const wantsGrid = webgl && new URLSearchParams(location.search).get('world') === 'grid';
+	/** The Grid loads on first use: it brings its own scene, so the desktop boot stays light. */
+	async function enterGrid() {
+		if (!grid) {
+			const { createGrid } = await import('./grid/index.js');
+			grid = createGrid({
+				apps: APPS.filter((a) => a.dock),
+				directory: ALL_APPS.filter((a) => a.desktop && a.id !== 'welcome'),
+				reducedMotion,
+				onLeave({ app, to }) {
+					if (to === 'campus' && world) return world.enter();
+					if (app && shell.hasApp(app)) shell.launchId(app);
+					else landOnDesktop();
+				},
+			});
+		}
+		grid.enter();
+	}
 	if (webgl) {
 		const { createWorld } = await import('./world/index.js');
 		world = createWorld({
 			shell,
 			apps: APPS.filter((a) => a.dock),
 			reducedMotion,
-			onDesktop({ app, place }) {
+			onGrid: true,
+			onDesktop({ app, place, grid: toGrid }) {
 				document.documentElement.classList.remove('in-world');
+				if (toGrid) return enterGrid();
 				lastPlace = place || null;
 				if (app && shell.hasApp(app)) shell.launchId(app);
 				else landOnDesktop();
@@ -214,7 +235,10 @@ async function main() {
 
 	// The world mounts under the boot screen (its fade is already black), so
 	// the boot dissolves straight into the campus with no desktop flash.
-	if (choice === 'world' && world) await Promise.all([world.enter(), boot?.dismiss()]);
+	if (wantsGrid) {
+		await boot?.dismiss();
+		await enterGrid();
+	} else if (choice === 'world' && world) await Promise.all([world.enter(), boot?.dismiss()]);
 	else {
 		if (boot) await boot.dismiss();
 		landOnDesktop();
