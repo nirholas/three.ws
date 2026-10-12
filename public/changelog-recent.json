@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-12T22:34:26.899Z",
+	"generated_at": "2026-10-12T23:40:53.561Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4047,
+	"total": 4048,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -156,6 +156,17 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Tripo house lane: v3 API, house key, signed webhooks, and engine-version attribution",
+			"summary": "The Tripo integration moved off the legacy v2 API onto v3 (openapi.tripo3d.com/v3): dedicated endpoints per capability, a unified input field, and a unified error envelope. Setting TRIPO_API_KEY turns Tripo from a bring-your-own-key engine into a High-tier house default billed to $THREE credits, with the BYOK path and the engine list unchanged when the variable is unset. A finished job can complete by poll or by Tripo's own signed webhook (api/forge/webhook/tripo.js), which verifies Tripo-Webhook-Signature and claims Tripo-Webhook-Delivery so a retried delivery cannot double-complete a job; polling stays the fallback. Every Tripo result, BYOK or house key, now names the exact model version it ran on in the submit, poll, and gallery responses and in the exported GLB's own metadata, and a new npm run forge:tripo reports the lane's own completion rate and median latency by day.",
+			"link": "/docs/forge",
+			"tags": [
+				"feature",
+				"infra"
 			]
 		},
 		{
@@ -1537,16 +1548,6 @@
 			"title": "Docs · three.ws Forge for desktop",
 			"summary": "How to install and use three.ws Forge, the desktop 3D studio: run it from source or an installer, generate on your own GPU or the three.ws cloud, build node workflows, import CC0 models, sign in and publish to three.ws, and fix common setup problems.",
 			"link": "/docs/forge-desktop",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "launch",
-			"title": "Docs · Workbench",
-			"summary": "How the Workbench runs a photo through an editable workflow of real GPU nodes, edits the result in the viewport, exports GLB, OBJ, STL or PLY, and how scripts call the same pipeline.",
-			"link": "/docs/workbench",
 			"tags": [
 				"launch"
 			]

@@ -13,6 +13,16 @@
 		},
 		{
 			"date": "2026-10-12",
+			"title": "Tripo house lane: v3 API, house key, signed webhooks, and engine-version attribution",
+			"link": "/docs/forge",
+			"summary": "The Tripo integration moved off the legacy v2 API onto v3 (openapi.tripo3d.com/v3): dedicated endpoints per capability, a unified input field, and a unified error envelope. Setting TRIPO_API_KEY turns Tripo from a bring-your-own-key engine into a High-tier house default billed to $THREE credits, with the BYOK path and the engine list unchanged when the variable is unset. A finished job can complete by poll or by Tripo's own signed webhook (api/forge/webhook/tripo.js), which verifies Tripo-Webhook-Signature and claims Tripo-Webhook-Delivery so a retried delivery cannot double-complete a job; polling stays the fallback. Every Tripo result, BYOK or house key, now names the exact model version it ran on in the submit, poll, and gallery responses and in the exported GLB's own metadata, and a new npm run forge:tripo reports the lane's own completion rate and median latency by day.",
+			"tags": [
+				"feature",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-10-12",
 			"title": "Companion presence: sustained mood, emoji-driven expression, an LLM gesture tool, active-listening nods, and real multi-language lip-sync",
 			"link": "/docs/agent-system",
 			"summary": "Agent avatars carry more of what makes a companion feel present. setMood(valence, arousal) sets a sustained resting bias (a soft smile or a worried brow that drifts in over about a second) on top of the existing per-utterance emotion blend, and a reply that is nothing but emoji (no English sentiment words at all) now drives a real expression change instead of staying neutral, because the built-in sentiment scorer reads emoji as direct valence/arousal signal. The LLM brain gets a general-purpose `gesture` tool covering all 19 body-language slots (nod, shake, shrug, bow, point, think, and the rest), so it can react physically mid-turn instead of only through a skill or an emotion threshold. While a real VAD/STT signal says the user is talking, the avatar nods on a fixed cadence to show it is listening, and stops the moment they stop. ElevenLabs text-to-speech now drives lip-sync from the provider's real per-character timestamps (any language the voice speaks), falling back to the energy-based analyser only if that call fails, so mouth shapes track what is actually being said instead of approximating it from amplitude alone.",

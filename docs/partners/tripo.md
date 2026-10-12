@@ -23,8 +23,8 @@ low-poly, splats, segmentation).
 | Latest round | Series B/B+, about RMB 3B (about USD 446M), 2026-09-01, led by Matrix Partners China with game publishers as strategic investors | Press (36kr, DealStreetAsia), not a filing |
 | Earlier 2026 rounds | USD 50M Series A (March), about USD 200M A+/A++ (June), USD 150M A3 (July) | Press |
 | Users | 6.5M creators, about 90K developers, about 100M models | Tripo's own figures, not independently verified |
-| API | v3 at `openapi.tripo3d.ai/v3`, with a published v2-to-v3 migration guide | [developers.tripo3d.ai](https://developers.tripo3d.ai) |
-| API pricing | 1 credit = USD 0.01. Text to 3D 10 (untextured) or 20 (textured); image or multiview 20 or 30; HD texture +10; quad +5; auto-rig 25; retarget 10 per clip; rig check free | developers.tripo3d.ai, checked 2026-10-09 |
+| API | v3 at `openapi.tripo3d.com/v3`, with a published v2-to-v3 migration guide | [developers.tripo3d.com](https://developers.tripo3d.com) |
+| API pricing | 1 credit = USD 0.01. Text to 3D 10 (untextured) or 20 (textured); image or multiview 20 or 30; HD texture +10; quad +5; auto-rig 25; retarget 10 per clip; rig check free | developers.tripo3d.com, checked 2026-10-09 |
 | Enterprise route | "custom volumes, dedicated support, or SLA guarantees" via **business@tripo3d.ai** | Tripo's official pricing page |
 | Affiliate program | 30% recurring for 12 months on Tripo's own terms page; a third-party affiliate network lists different terms | Confirm on the call |
 
@@ -48,7 +48,8 @@ Verified in this repository and in production on 2026-10-09.
 
 | Surface | Where | What it does |
 |---|---|---|
-| Tripo v3.1 API lane, bring-your-own-key | [`api/_providers/tripo.js`](../../api/_providers/tripo.js), tier entry in [`api/_lib/forge-tiers.js`](../../api/_lib/forge-tiers.js) | Text and image to 3D on model `v3.1-20260211`, over the **legacy v2** endpoint `api.tripo3d.ai/v2/openapi`. Only runs when the user pastes their own key; the key link in the Forge points at `platform.tripo3d.ai/api-keys` |
+| Tripo v3.1 API lane, bring-your-own-key or house key | [`api/_providers/tripo.js`](../../api/_providers/tripo.js), tier entry in [`api/_lib/forge-tiers.js`](../../api/_lib/forge-tiers.js) | Text and image to 3D on model `v3.1-20260211`, on the **v3** endpoint `openapi.tripo3d.com/v3`. Runs on a pasted user key, or on `TRIPO_API_KEY` when the platform sets one (a High-tier default and an explicit "Tripo" engine choice, billed to $THREE credits); the BYOK key link in the Forge points at `platform.tripo3d.ai/api-keys` |
+| Signed webhook receiver | [`api/forge/webhook/tripo.js`](../../api/forge/webhook/tripo.js) | Verifies `Tripo-Webhook-Signature`, claims `Tripo-Webhook-Delivery` for idempotency, and completes a job the same way polling does; registering the endpoint URL in Tripo's dashboard and setting `TRIPO_WEBHOOK_SECRET` are the owner's last step |
 | TripoSG, self-hosted | [`workers/model-triposg`](../../workers/model-triposg/) | The sketch-to-3D lane, and the last automatic failover rung for photo jobs ([forge failover](../forge.md)) |
 | TripoSR, self-hosted and hosted | [`workers/model-triposr`](../../workers/model-triposr/) (the fast lane in the avatar pipeline controller), plus a rung in the free Hugging Face Spaces chain ([`api/_providers/huggingface.js`](../../api/_providers/huggingface.js)) | The fast path, at about 3 seconds of GPU time per mesh, and part of the free photo-to-3D failover chain |
 
@@ -137,12 +138,31 @@ engineering item we ship for it is kept whichever way the deal goes.
 
 ## Engineering, ready to run
 
-The integration work is a work order, so it can be built before the deal is signed and
-switched on by one environment variable when it is:
-[`084-partners-01-tripo-v3-house-lane.md`](../../prompts/finish/084-partners-01-tripo-v3-house-lane.md).
-It keeps the BYOK path exactly as it is today and adds the house key behind `TRIPO_API_KEY`,
-which does not exist on the production service yet (checked 2026-10-09). Putting a
-platform-paid key there is the owner's decision, because it onboards a paid API.
+The integration work is a work order,
+[`084-partners-01-tripo-v3-house-lane.md`](../../prompts/finish/084-partners-01-tripo-v3-house-lane.md),
+and most of it is built and tested, not just planned:
+
+- **v3 migration**: done. The provider speaks the v3 REST API end to end (dedicated
+  endpoints per capability, the unified `input`/task-id model, the unified error envelope).
+- **House key**: done. `TRIPO_API_KEY` makes Tripo a High-tier default and an explicit
+  engine choice, billed to $THREE credits like the other house lanes; with the variable
+  unset, behavior is unchanged. It does not exist on the production service yet (checked
+  2026-10-09), so flipping it on is the owner's decision: it onboards a paid API.
+- **Signed webhooks**: done. Polling stays the fallback.
+- **Auto-rig**: done. `rig({spec:'mixamo'})` output canonicalizes through
+  `glb-canonicalize.js`'s existing Mixamo mapping and drives the universal retargeter,
+  the same as any other humanoid rig.
+- **Low-poly/quad game-ready preset and Smart Segmentation**: the provider methods exist
+  (`decimate()`, `segment()` in `api/_providers/tripo.js`) but are not dispatched from any
+  endpoint. Both capabilities already run on self-hosted GCP workers in production
+  (`workers/remesh` for game-ready, with FBX export and PBR re-bake Tripo's endpoint does
+  not do; `workers/segment` + PartCrafter/HoloPart for parts, order `070-best3d-04`), which
+  the owner's standing GCP-first directive prefers over an equivalent paid third-party lane.
+  Wiring Tripo here would add a strictly narrower alternative, not new capability; revisit
+  if the partnership itself makes Tripo's version the one worth shipping.
+- **Splat**: no live Tripo endpoint exists to wire (checked again 2026-10-12). The splat
+  stage (`docs/splat.md`) has no Tripo-backed path; this is the "early access" item in the
+  proposal above, not something we can build today.
 
 ---
 

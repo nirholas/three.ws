@@ -119,6 +119,14 @@
 			<description>A shared contract (specs/ENGINE_BRIDGE.md) and three real, independent implementations: a Unity UPM package that imports with glTFast, a Godot addon that imports with Godot's own native GLTFDocument, and an Unreal plugin that imports through Unreal's Interchange glTF pipeline. Each one calls only the public Forge API (POST /api/forge to submit, GET /api/forge?job=&lt;id&gt; to poll, a plain HTTPS GET to download), the same free-first routing and anonymous x-forge-client auth every other Forge caller gets, with the same four import settings (generate_colliders, import_materials, scale, destination) mapped onto each engine's own equivalent. A dropdown and a Generate button in each editor: type a prompt, get a mesh dropped into your scene.</description>
 		</item>
 		<item>
+			<title>Tripo house lane: v3 API, house key, signed webhooks, and engine-version attribution</title>
+			<link>https://three.ws/docs/forge</link>
+			<guid isPermaLink="false">2026-10-12:Tripo house lane: v3 API, house key, signed webhooks, and engine-version attribution</guid>
+			<pubDate>Mon, 12 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Tripo integration moved off the legacy v2 API onto v3 (openapi.tripo3d.com/v3): dedicated endpoints per capability, a unified input field, and a unified error envelope. Setting TRIPO_API_KEY turns Tripo from a bring-your-own-key engine into a High-tier house default billed to $THREE credits, with the BYOK path and the engine list unchanged when the variable is unset. A finished job can complete by poll or by Tripo's own signed webhook (api/forge/webhook/tripo.js), which verifies Tripo-Webhook-Signature and claims Tripo-Webhook-Delivery so a retried delivery cannot double-complete a job; polling stays the fallback. Every Tripo result, BYOK or house key, now names the exact model version it ran on in the submit, poll, and gallery responses and in the exported GLB's own metadata, and a new npm run forge:tripo reports the lane's own completion rate and median latency by day.</description>
+		</item>
+		<item>
 			<title>Classic Home</title>
 			<link>https://three.ws/classic</link>
 			<guid isPermaLink="false">2026-10-11:Classic Home</guid>

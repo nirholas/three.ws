@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-12T22:34:26.876Z",
+	"generated_at": "2026-10-12T23:40:53.539Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -153,6 +153,17 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Tripo house lane: v3 API, house key, signed webhooks, and engine-version attribution",
+			"summary": "The Tripo integration moved off the legacy v2 API onto v3 (openapi.tripo3d.com/v3): dedicated endpoints per capability, a unified input field, and a unified error envelope. Setting TRIPO_API_KEY turns Tripo from a bring-your-own-key engine into a High-tier house default billed to $THREE credits, with the BYOK path and the engine list unchanged when the variable is unset. A finished job can complete by poll or by Tripo's own signed webhook (api/forge/webhook/tripo.js), which verifies Tripo-Webhook-Signature and claims Tripo-Webhook-Delivery so a retried delivery cannot double-complete a job; polling stays the fallback. Every Tripo result, BYOK or house key, now names the exact model version it ran on in the submit, poll, and gallery responses and in the exported GLB's own metadata, and a new npm run forge:tripo reports the lane's own completion rate and median latency by day.",
+			"link": "/docs/forge",
+			"tags": [
+				"feature",
+				"infra"
 			]
 		},
 		{

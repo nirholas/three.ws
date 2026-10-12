@@ -43,6 +43,35 @@ Each backend declares which paths it serves, whether it needs a bring-your-own-k
 - **Meshy 6**, **Tripo v3.1**, **Rodin (Hyper3D)**, BYOK geometry-first engines with quad topology and a real poly target. You supply your own key.
 - **Stable Fast 3D** (Stability, BYOK) and **Replicate (your account)** (BYOK), single-image reconstruction lanes.
 
+### The Tripo house lane
+
+Tripo v3.1 runs two ways. Paste your own key and it is a BYOK engine like Meshy or Rodin,
+billed to nothing of ours. Set `TRIPO_API_KEY` on the deployment and the same lane becomes
+a High-tier default and an explicit "Tripo" engine choice, billed to $THREE credits like
+the other house lanes; leave the variable unset and routing and the engine list are exactly
+what they were before it existed. The provider speaks Tripo's v3 REST API
+(`openapi.tripo3d.com/v3`): dedicated endpoints per capability, a unified `input` field, and
+the unified `{code, message, suggestion, request_id}` error envelope.
+
+A finished job can complete two ways. The client polls `GET /api/forge?job=<id>` the same
+as any other async lane, or Tripo's own signed webhook (`api/forge/webhook/tripo.js`)
+delivers the result first; the receiver verifies `Tripo-Webhook-Signature`, claims
+`Tripo-Webhook-Delivery` so a retried delivery cannot double-complete a job, and finishes
+it the same way a poll would. Polling always still works, so a missing or misconfigured
+webhook degrades to the slower path, never a stuck job.
+
+Every Tripo result, BYOK or house key, names the exact model version it ran on
+(`TRIPO_MODEL_VERSION`, or the provider's current default) in the submit, poll, and gallery
+responses, and in the exported GLB's own `asset.extras.engine`/`engineVersion` metadata, so
+a model you download still says which engine and version made it after the gallery entry is
+gone. `npm run forge:tripo` reports the house lane's own health, completion rate and median
+latency by day, scoped to `backend = 'tripo'`, separately from `npm run forge:funnel`'s
+all-backend numbers.
+
+See [the Tripo partner note](./partners/tripo.md) for the partnership context and what is
+and is not wired yet (low-poly/quad game-ready preset and Smart Segmentation are built on
+self-hosted GCP workers instead; no live Tripo splat endpoint exists to wire).
+
 ### Free-first routing with live health
 
 Routing (`resolveBackendIdWithHealth`) walks an ordered list of every free lane that could serve the request on this deployment, most preferred first: the tier's named free engine, then the per-path fallback chain (our own GPU workers, then the free external Spaces, then the free NVIDIA lane as the final health-gated safety net). Draft and Standard name our self-host TRELLIS worker; High names our self-host Hunyuan3D worker. The free NVIDIA NIM lane is never a named default: reconstructing straight from a truncated prompt with no photoreal reference is the realism hole this ordering closes, so it trails as the final health-gated fallthrough (and stays explicitly selectable). A subject classifier reorders the two self-host PBR lanes for hard-surface versus organic prompts. Every entry is env-gated, so the list degrades cleanly on partial deployments.
