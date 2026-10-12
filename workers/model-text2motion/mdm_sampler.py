@@ -93,7 +93,7 @@ class MdmSampler:
         # branch (which doesn't need it) is ever reached.
         dummy_data = SimpleNamespace(dataset=SimpleNamespace())
         model, diffusion = create_model_and_diffusion(args, dummy_data)
-        state = torch.load(os.path.join(self.model_dir, "model.pt"), map_location="cpu")
+        state = torch.load(os.path.join(self.model_dir, "model.pt"), map_location="cpu", weights_only=True)
         load_model_wo_clip(model, state)
         # NOT `model.to(device).eval()`: torch's Module.to() returns
         # `self._apply(convert)` (verified against torch 2.3.1's own source),
