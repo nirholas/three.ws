@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-12T02:45:02.754Z",
+	"generated_at": "2026-10-12T02:46:57.101Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -45,6 +45,16 @@
 			"tags": [
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Dissolve: turn any 3D model into a GPU particle storm",
+			"summary": "A new page that dissolves any GLB into up to a million GPU particles, morphs one shape into another, and lets you bend the storm with a black hole, a vortex, shockwaves and a collapse. Turn on the microphone and bass drives the storm. Pick a look, record a clip, save a PNG or share the exact pair as a link.",
+			"link": "/dissolve",
+			"tags": [
+				"feature"
 			]
 		},
 		{

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-12T02:45:02.734Z",
+	"generated_at": "2026-10-12T02:46:57.087Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -8567,6 +8567,18 @@
 					"path": "/docs/sonar",
 					"title": "Docs · Sonar",
 					"description": "The developer reference for acoustic gesture control: the Doppler sensor and its Reading, the three detectors ported from Sonar and SoundWave, why running more than one at a time needs a mode, and what the technique needs from the room.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/dissolve",
+					"title": "Docs · Dissolve",
+					"description": "How Dissolve turns a GLB into a GPU particle storm: surface sampling, Morton-paired morphing, the force tools, share links and the microphone privacy model.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

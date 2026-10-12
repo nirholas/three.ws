@@ -39,6 +39,14 @@
 			<description>A reader asked how three.ws renders 3D. The answer is now a full draft Article: one rigged character followed through making, packing, loading, lighting and animating, with runnable embed code, decoder and boot-phase tables, the free Rig Doctor, validator and viewer tools, every partner by exact designation, and the roadmap. Every claim is tied to evidence in the repo. A new playbook describes how to turn any basic question into a long reply thread plus an Article.</description>
 		</item>
 		<item>
+			<title>Dissolve: turn any 3D model into a GPU particle storm</title>
+			<link>https://three.ws/dissolve</link>
+			<guid isPermaLink="false">2026-10-12:Dissolve: turn any 3D model into a GPU particle storm</guid>
+			<pubDate>Mon, 12 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new page that dissolves any GLB into up to a million GPU particles, morphs one shape into another, and lets you bend the storm with a black hole, a vortex, shockwaves and a collapse. Turn on the microphone and bass drives the storm. Pick a look, record a clip, save a PNG or share the exact pair as a link.</description>
+		</item>
+		<item>
 			<title>The Grid: walk a neon room where every app is a live surface</title>
 			<link>https://three.ws/?world=grid</link>
 			<guid isPermaLink="false">2026-10-12:The Grid: walk a neon room where every app is a live surface</guid>

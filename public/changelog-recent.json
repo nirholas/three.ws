@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-12T02:45:02.782Z",
+	"generated_at": "2026-10-12T02:46:57.125Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4006,
+	"total": 4007,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -48,6 +48,16 @@
 			"tags": [
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Dissolve: turn any 3D model into a GPU particle storm",
+			"summary": "A new page that dissolves any GLB into up to a million GPU particles, morphs one shape into another, and lets you bend the storm with a black hole, a vortex, shockwaves and a collapse. Turn on the microphone and bass drives the storm. Pick a look, record a clip, save a PNG or share the exact pair as a link.",
+			"link": "/dissolve",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1537,16 +1547,6 @@
 			"tags": [
 				"improvement",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "update",
-			"title": "Fix, smooth and slim any model in your browser, then send it straight to your 3D printer",
-			"summary": "Every finished model now has mesh tools: repair welds cracks and fixes inside-out faces, smoothing softens blocky surfaces without tearing textures, and decimate cuts the triangle count to a number you choose, with undo and a before and after count. Nothing is uploaded. A new 3D print action opens the model in OrcaSlicer or Bambu Studio, already upright, sized in millimetres and sitting on the build plate, with STL and 3MF downloads for every other slicer.",
-			"link": "/forge",
-			"tags": [
-				"feature"
 			]
 		}
 	]

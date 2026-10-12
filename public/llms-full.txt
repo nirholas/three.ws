@@ -4315,6 +4315,12 @@ URL: https://three.ws/docs/sonar
 
 The developer reference for acoustic gesture control: the Doppler sensor and its Reading, the three detectors ported from Sonar and SoundWave, why running more than one at a time needs a mode, and what the technique needs from the room.
 
+### Docs · Dissolve
+
+URL: https://three.ws/docs/dissolve
+
+How Dissolve turns a GLB into a GPU particle storm: surface sampling, Morton-paired morphing, the force tools, share links and the microphone privacy model.
+
 ### Docs · Architecture overview
 
 URL: https://three.ws/docs/architecture
