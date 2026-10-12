@@ -15,6 +15,7 @@ The web desktop served at `/` (page: `pages/desktop.html`). See
 | `layout.js` | Pure geometry (snap zones, Snap layouts, dock magnification curve), shell styles and their bar sizes, search ranking, state and preference validation (unit tested) |
 | `apps.js` | App registry and wallpapers |
 | `os/` | The OS layer: virtual file system (`fs.js`), app registry, app host and the native apps in `os/apps/` (see [os/README.md](os/README.md)) |
+| `grid/` | The Grid: a neon wireframe room of live app surfaces. `index.js` is the scene and controller, `panels.js` the canvas painters, `logic.js` the pure layout, proximity and tier rules (unit tested), `grid.css` the HUD |
 | `icons.js` | Stroke glyphs |
 | `theme.css`, `desktop.css`, `styles.css` | CTRL tokens; shell and window styles; Snap layouts, Snap assist, peek and the Fluent, Aqua and Classic skins |
 | `world/index.js` | The campus controller: mounts the 3D world over the desktop, input, proximity prompts, sit-down and walk-in transitions, the phone, the VR headset, mining, the frame loop |
