@@ -31,6 +31,7 @@ import {
 } from '../packages/viewer-presets/src/materials.js';
 import { optimizeAndValidateGlb } from './avatar-studio-optimize.js';
 import { seedLineage, appendVersion, summarizeLineage } from '../mcp-server/src/tools/_lineage.js';
+import { verifyPreserved } from '../api/_lib/preserve-contract.js';
 
 // A small, always-present local sample so the page is never an empty void — the
 // platform's default humanoid, served from /avatars.
@@ -675,6 +676,19 @@ async function regenerateSelectedPart() {
 		const result = await pollHoloPart(startData.job_id, token);
 		if (!result || token !== state.regenRunToken) return; // superseded
 
+		// Completing hidden geometry must never cost the model its skeleton or
+		// clips (work order 078: "keep the rig"): HoloPart only fills in
+		// occluded surfaces, it has no business touching the armature a clip
+		// addresses by joint name. Checked for real against the whole-model
+		// bytes HoloPart actually received and actually returned, before any
+		// part is pulled out of the result and swapped into the live scene.
+		setNote(el['parts-note'], `Verifying "${entry.name}" kept the rig intact…`, 'busy');
+		const [beforeBytes, afterBytes] = await Promise.all([
+			fetch(state.sourceGlbUrl).then((r) => r.arrayBuffer()),
+			fetch(result.result_url).then((r) => r.arrayBuffer()),
+		]);
+		await verifyPreserved(beforeBytes, afterBytes, ['skeleton', 'clips'], { label: 'HoloPart regenerate' });
+
 		const gltf = await makeLoader().loadAsync(result.result_url);
 		let regenerated = null;
 		gltf.scene.traverse((n) => {
@@ -684,7 +698,13 @@ async function regenerateSelectedPart() {
 			throw new Error(`HoloPart's result has no part named "${entry.name}".`);
 		}
 		swapSelectedPart(regenerated, 'HoloPart');
-		setNote(el['parts-note'], `"${entry.name}" regenerated via HoloPart and reassembled into the model.`, 'done');
+		setNote(el['parts-note'], `Saving "${entry.name}" as a new version…`, 'busy');
+		await persistCurrentSceneAsVersion({
+			instruction: `Regenerated "${entry.name}" via HoloPart`,
+			refKind: 'part-edit',
+			onStatus: (s) => setNote(el['parts-note'], s, 'busy'),
+		});
+		setNote(el['parts-note'], `"${entry.name}" regenerated via HoloPart, reassembled, and saved as a new version.`, 'done');
 	} catch (err) {
 		if (token !== state.regenRunToken) return;
 		setNote(el['parts-note'], `Regenerate failed: ${err?.message || err}`, 'error');
@@ -860,6 +880,34 @@ async function aiRestyle() {
 }
 
 // ── versions (real lineage) ───────────────────────────────────────────────────
+
+// Export the live scene exactly as it stands, validate + persist it as a real
+// GLB, and append it to the real lineage. Shared by the manual "Save version"
+// button and any edit (e.g. a part regenerate) that needs to record a durable
+// lineage entry on its own rather than wait for a manual save.
+async function persistCurrentSceneAsVersion({ instruction, refKind, onStatus }) {
+	const exporter = new GLTFExporter();
+	const glb = await new Promise((res, rej) => {
+		exporter.parse(state.root, (result) => res(result), (err) => rej(err), { binary: true });
+	});
+	const rawBlob = new Blob([glb], { type: 'model/gltf-binary' });
+	const { blob } = await optimizeAndValidateGlb(rawBlob, { onStatus });
+	const url = await uploadGlbBytes(blob);
+	if (!state.realLineage) state.realLineage = seedLineage({ glbUrl: url, prompt: null });
+	else {
+		state.realLineage = appendVersion(state.realLineage, {
+			glbUrl: url,
+			instruction,
+			refKind,
+			parentIndex: state.activeIndex,
+		});
+		state.activeIndex = state.realLineage.length - 1;
+	}
+	state.sourceGlbUrl = url;
+	renderLineageStrip();
+	return url;
+}
+
 async function saveVersion() {
 	if (!state.root) return;
 	if (state.sourceUrlPending) {
@@ -869,27 +917,11 @@ async function saveVersion() {
 	el['save-version'].disabled = true;
 	setNote(el['lineage-note'], 'Saving version…', 'busy');
 	try {
-		const exporter = new GLTFExporter();
-		const glb = await new Promise((res, rej) => {
-			exporter.parse(state.root, (result) => res(result), (err) => rej(err), { binary: true });
-		});
-		const rawBlob = new Blob([glb], { type: 'model/gltf-binary' });
-		const { blob } = await optimizeAndValidateGlb(rawBlob, {
+		await persistCurrentSceneAsVersion({
+			instruction: state.lineage[state.lineage.length - 1] || 'Manual edit',
+			refKind: 'material-edit',
 			onStatus: (s) => setNote(el['lineage-note'], s, 'busy'),
 		});
-		const url = await uploadGlbBytes(blob);
-		if (!state.realLineage) state.realLineage = seedLineage({ glbUrl: url, prompt: null });
-		else {
-			state.realLineage = appendVersion(state.realLineage, {
-				glbUrl: url,
-				instruction: state.lineage[state.lineage.length - 1] || 'Manual edit',
-				refKind: 'material-edit',
-				parentIndex: state.activeIndex,
-			});
-			state.activeIndex = state.realLineage.length - 1;
-		}
-		state.sourceGlbUrl = url;
-		renderLineageStrip();
 		setNote(el['lineage-note'], 'Version saved.', 'done');
 	} catch (err) {
 		setNote(el['lineage-note'], `Save failed: ${err?.message || err}`, 'error');
@@ -907,10 +939,18 @@ function renderLineageStrip() {
 	}
 	const summary = summarizeLineage(state.realLineage, state.activeIndex);
 	host.innerHTML = summary
-		.map(
-			(v, i) =>
-				`<button type="button" class="rs-step${v.active ? ' is-current' : ' is-versioned'}" data-index="${v.index}" title="${escapeHtml(v.glbUrl)}">${escapeHtml(v.label)}</button>${i < summary.length - 1 ? '<span class="rs-arrow">→</span>' : ''}`,
-		)
+		.map((v, i) => {
+			const parent = Number.isInteger(v.parentIndex) ? state.realLineage.find((p) => p.index === v.parentIndex) : null;
+			// A "Diff" link only makes sense once a version has a parent to
+			// compare against (the origin version never does): it opens Model
+			// Diff pre-loaded with exactly this edit's before/after pair, so the
+			// preserve contract this edit declared is checkable by eye, not just
+			// trusted from the API response.
+			const diffLink = parent
+				? `<a class="rs-step-diff" href="/diff?a=${encodeURIComponent(parent.glbUrl)}&b=${encodeURIComponent(v.glbUrl)}" target="_blank" rel="noopener" title="Compare this version against its parent in Model Diff">Diff</a>`
+				: '';
+			return `<button type="button" class="rs-step${v.active ? ' is-current' : ' is-versioned'}" data-index="${v.index}" title="${escapeHtml(v.glbUrl)}">${escapeHtml(v.label)}</button>${diffLink}${i < summary.length - 1 ? '<span class="rs-arrow">→</span>' : ''}`;
+		})
 		.join('');
 	host.querySelectorAll('.rs-step[data-index]').forEach((btn) => {
 		btn.addEventListener('click', () => {

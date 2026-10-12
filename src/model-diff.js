@@ -103,7 +103,14 @@ function signed(value, isBytes) {
 }
 
 function fieldText(change) {
-	const opaque = { geometry: 'vertex data changed', pixels: 'image data changed', inverseBindMatrices: 'bind pose changed' };
+	const opaque = {
+		geometry: 'vertex data changed',
+		pixels: 'image data changed',
+		inverseBindMatrices: 'bind pose changed',
+		topology: 'vertex positions or index buffer changed',
+		uv: 'UV coordinates changed',
+		skinWeights: 'vertex joint/weight bindings changed',
+	};
 	if (opaque[change.field]) return `${opaque[change.field]}${change.note ? ` (${change.note})` : ''}`;
 	const show = (value) => {
 		if (value === null || value === undefined) return 'none';
