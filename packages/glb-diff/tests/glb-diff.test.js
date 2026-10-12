@@ -49,6 +49,9 @@ function buildModel(overrides = {}) {
 		meshName = 'Body',
 		nodeName = 'Root',
 		positions = [0, 0, 0, 1, 0, 0, 0, 1, 0],
+		uv = [0, 0, 1, 0, 0, 1],
+		jointIndices = [0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+		jointWeights = [0.5, 0.5, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
 		materialName = 'Skin',
 		baseColor = [1, 1, 1, 1],
 		joints = ['Hips', 'Spine'],
@@ -65,9 +68,30 @@ function buildModel(overrides = {}) {
 		.setType('VEC3')
 		.setArray(new Float32Array(positions))
 		.setBuffer(buffer);
+	const texcoord = doc
+		.createAccessor()
+		.setType('VEC2')
+		.setArray(new Float32Array(uv))
+		.setBuffer(buffer);
+	const jointsAccessor = doc
+		.createAccessor()
+		.setType('VEC4')
+		.setArray(new Uint16Array(jointIndices))
+		.setBuffer(buffer);
+	const weightsAccessor = doc
+		.createAccessor()
+		.setType('VEC4')
+		.setArray(new Float32Array(jointWeights))
+		.setBuffer(buffer);
 
 	const material = doc.createMaterial(materialName).setBaseColorFactor(baseColor);
-	const prim = doc.createPrimitive().setAttribute('POSITION', position).setMaterial(material);
+	const prim = doc
+		.createPrimitive()
+		.setAttribute('POSITION', position)
+		.setAttribute('TEXCOORD_0', texcoord)
+		.setAttribute('JOINTS_0', jointsAccessor)
+		.setAttribute('WEIGHTS_0', weightsAccessor)
+		.setMaterial(material);
 	const mesh = doc.createMesh(meshName).addPrimitive(prim);
 
 	const root = doc.createNode(nodeName).setMesh(mesh);
@@ -211,6 +235,42 @@ describe('diff', () => {
 		expect(joints.a).toEqual(['Spine']);
 		expect(changes.highlights[0].severity).toBe('breaking');
 		expect(changes.highlights[0].text).toContain('Spine');
+	});
+
+	it('tells a UV repaint apart from a topology or skin edit', () => {
+		// Only TEXCOORD_0 moves: positions and skin weights hold still.
+		const changes = diffDescriptions(describeBuilt({}, 'a'), describeBuilt({ uv: [1, 1, 0, 1, 1, 0] }, 'b'));
+		const mesh = changes.sections.meshes.modified.find((m) => m.name === 'Body');
+		const fields = mesh.changes.map((c) => c.field);
+		expect(fields).toContain('uv');
+		expect(fields).not.toContain('topology');
+		expect(fields).not.toContain('skinWeights');
+	});
+
+	it('tells a topology edit apart from a UV or skin edit', () => {
+		// Only POSITION moves: UVs and skin weights hold still.
+		const changes = diffDescriptions(
+			describeBuilt({}, 'a'),
+			describeBuilt({ positions: [0, 0, 0, 1, 0, 0, 0, 2, 0] }, 'b'),
+		);
+		const mesh = changes.sections.meshes.modified.find((m) => m.name === 'Body');
+		const fields = mesh.changes.map((c) => c.field);
+		expect(fields).toContain('topology');
+		expect(fields).not.toContain('uv');
+		expect(fields).not.toContain('skinWeights');
+	});
+
+	it('tells a re-skin apart from a topology or UV edit', () => {
+		// Only WEIGHTS_0 moves: positions and UVs hold still.
+		const changes = diffDescriptions(
+			describeBuilt({}, 'a'),
+			describeBuilt({ jointWeights: [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0] }, 'b'),
+		);
+		const mesh = changes.sections.meshes.modified.find((m) => m.name === 'Body');
+		const fields = mesh.changes.map((c) => c.field);
+		expect(fields).toContain('skinWeights');
+		expect(fields).not.toContain('topology');
+		expect(fields).not.toContain('uv');
 	});
 
 	it('calls a recoloured material a minor change', () => {

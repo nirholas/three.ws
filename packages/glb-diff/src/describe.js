@@ -19,7 +19,11 @@
 import { hashBytes, hashNumbers, hashString, hashValue } from './hash.js';
 import { isGLB, readDocument } from './document.js';
 
-export const DESCRIPTION_VERSION = 1;
+// Bumped to 2: primitives and meshes now also carry topologyHash, uvHash and
+// skinWeightHash (the preserve-contract sub-hashes), on top of the combined
+// geometryHash. A cache keyed on version 1 should re-describe rather than
+// trust a stored description that predates those fields.
+export const DESCRIPTION_VERSION = 2;
 
 // glTF primitive modes that produce triangles, and how many vertices each
 // triangle consumes. Anything else (points, lines) contributes zero triangles.
@@ -41,6 +45,29 @@ const PRIMITIVE_MODE_NAMES = {
 // re-skinned", which is a change a positions-only hash would miss entirely and
 // which breaks animation in exactly the way this tool exists to catch.
 const HASHED_SEMANTICS = ['POSITION', 'NORMAL', 'TANGENT', 'TEXCOORD_0', 'TEXCOORD_1', 'COLOR_0', 'JOINTS_0', 'WEIGHTS_0'];
+
+// The three sub-hashes a "preserve" contract checks independently of the
+// combined geometryHash above: an edit that keeps topology can still repaint
+// UVs, and an edit that keeps UVs can still rebind skin weights, so a single
+// combined hash cannot tell those apart. TOPOLOGY_SEMANTICS deliberately
+// excludes NORMAL/TANGENT/COLOR_0: those are appearance attributes that a
+// re-bake legitimately regenerates without the mesh's connectivity changing.
+const TOPOLOGY_SEMANTICS = ['POSITION'];
+const UV_SEMANTICS = ['TEXCOORD_0', 'TEXCOORD_1'];
+const SKIN_WEIGHT_SEMANTICS = ['JOINTS_0', 'WEIGHTS_0'];
+
+// Hash a fixed subset of a primitive's attribute semantics, seeded by `label`
+// so "no semantics present" still differs between topology/uv/skin and isn't
+// mistaken for "identical to a primitive that never had attributes at all".
+function hashSemantics(prim, semantics, label) {
+	let h = hashString(`sub:${label}`);
+	for (const semantic of semantics) {
+		const attr = prim.getAttribute(semantic);
+		if (!attr) continue;
+		h = hashString(h + hashNumbers(attr.getArray(), { seed: semantic, quantize: !semantic.startsWith('JOINTS') }));
+	}
+	return h;
+}
 
 function nameOf(prop, fallback) {
 	const n = prop && typeof prop.getName === 'function' ? prop.getName() : '';
@@ -100,6 +127,14 @@ function describePrimitive(prim, materialNames) {
 	}
 	if (indices) geometry = hashString(geometry + hashNumbers(indices.getArray(), { quantize: false, seed: 'INDICES' }));
 
+	// Topology also includes the index buffer: two meshes with identical
+	// vertex positions but a rewound/retriangulated index buffer do not share
+	// connectivity, even though POSITION alone would hash the same.
+	let topology = hashSemantics(prim, TOPOLOGY_SEMANTICS, 'topology');
+	if (indices) topology = hashString(topology + hashNumbers(indices.getArray(), { quantize: false, seed: 'INDICES' }));
+	const uv = hashSemantics(prim, UV_SEMANTICS, 'uv');
+	const skinWeights = hashSemantics(prim, SKIN_WEIGHT_SEMANTICS, 'skin');
+
 	const targets = prim.listTargets().length;
 
 	return {
@@ -112,6 +147,9 @@ function describePrimitive(prim, materialNames) {
 		indexed: Boolean(indices),
 		morphTargets: targets,
 		geometryHash: geometry,
+		topologyHash: topology,
+		uvHash: uv,
+		skinWeightHash: skinWeights,
 	};
 }
 
@@ -142,6 +180,9 @@ function describeMesh(mesh, index, materialNames) {
 	const vertices = primitives.reduce((sum, p) => sum + p.vertices, 0);
 	const triangles = primitives.reduce((sum, p) => sum + p.triangles, 0);
 	const geometryHash = hashString(primitives.map((p) => p.geometryHash).join('|'));
+	const topologyHash = hashString(primitives.map((p) => p.topologyHash).join('|'));
+	const uvHash = hashString(primitives.map((p) => p.uvHash).join('|'));
+	const skinWeightHash = hashString(primitives.map((p) => p.skinWeightHash).join('|'));
 
 	return {
 		type: 'mesh',
@@ -153,6 +194,9 @@ function describeMesh(mesh, index, materialNames) {
 		triangles,
 		bounds,
 		geometryHash,
+		topologyHash,
+		uvHash,
+		skinWeightHash,
 		key: id.key,
 		fingerprint: hashString(`${geometryHash}|${primitives.map((p) => p.material || '').join(',')}`),
 	};

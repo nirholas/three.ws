@@ -10,7 +10,10 @@ import { canonicalize } from './hash.js';
 import { jaccard, matchEntries, ratio } from './match.js';
 import { maxSeverity } from './severity.js';
 
-export const CHANGESET_VERSION = 1;
+// Bumped to 2 alongside DESCRIPTION_VERSION: mesh diffs now also carry
+// 'topology', 'uv' and 'skinWeights' fields, independent of the combined
+// 'geometry' field, so a preserve contract can tell them apart.
+export const CHANGESET_VERSION = 2;
 
 function equalish(a, b) {
 	if (a === b) return true;
@@ -154,6 +157,13 @@ function diffMeshes(a, b) {
 		field(changes, 'triangles', x.triangles, y.triangles, 'major');
 		field(changes, 'primitives', x.primitives.length, y.primitives.length, 'major');
 		field(changes, 'bounds', x.bounds, y.bounds, 'minor');
+		// Independent sub-hashes of the combined 'geometry' field above, so a
+		// preserve contract (packages/glb-diff consumers that must keep topology,
+		// UVs or skin weights across an edit) can tell which of the three moved
+		// instead of only knowing that geometryHash differs.
+		field(changes, 'topology', x.topologyHash, y.topologyHash, 'major', 'vertex positions or index buffer changed');
+		field(changes, 'uv', x.uvHash, y.uvHash, 'minor', 'UV coordinates changed');
+		field(changes, 'skinWeights', x.skinWeightHash, y.skinWeightHash, 'major', 'vertex joint/weight bindings changed');
 		field(
 			changes,
 			'materials',
