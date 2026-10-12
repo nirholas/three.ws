@@ -1674,5 +1674,10 @@ export function libraryReadyClip(workerClip) {
 	const rebased = needsRebase(workerClip) ? rebaseToCanonicalRest(workerClip).clip : workerClip;
 	const flattened = flattenRootDrift(despikeFootFlicks(rebased).clip).clip;
 	const clip = lockRootToContacts(flattened).clip;
-	return { ...clip, userData: { ...(clip.userData || {}), basis: CLIP_BASIS } };
+	// This is the exact shape the client's AnimationClip.parse() reads (it's
+	// handed straight through as /api/forge-motion's `clip` field), and parse()
+	// passes userData to JSON.parse() unchanged, the same contract
+	// AnimationClip.toJSON() honors and every static library clip on disk already
+	// uses. An object here parses as the string "[object Object]" and throws.
+	return { ...clip, userData: JSON.stringify({ ...(clip.userData || {}), basis: CLIP_BASIS }) };
 }

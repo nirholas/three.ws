@@ -43,8 +43,10 @@ import {
 	forwardKinematicsFrame,
 	ROOT_LOCK,
 	LEGACY_CLIP_BASIS,
+	libraryReadyClip,
 } from '../api/_lib/motion-seed.js';
 import { CANONICAL_REST, CANONICAL_REST_WORLD, CANONICAL_PARENT } from '../src/animation-canonical-rest.js';
+import { AnimationClip } from 'three';
 
 const BODY_BONES = [
 	'Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head',
@@ -799,5 +801,27 @@ describe('source rest shape', () => {
 		expect(CLIP_BASIS).toBe('canonical-rest-v2');
 		expect(needsRebase({ userData: { basis: CLIP_BASIS } })).toBe(false);
 		expect(needsRebase({ userData: { basis: LEGACY_CLIP_BASIS } })).toBe(true);
+	});
+});
+
+describe('libraryReadyClip', () => {
+	// AnimationClip.toJSON() always writes userData as a JSON string, and
+	// AnimationClip.parse() hands that string straight to JSON.parse(). A clip
+	// served with an object-shaped userData instead crashes the client's parse
+	// with "[object Object]" is not valid JSON, so the generated clip never
+	// gets to preview. /api/forge-motion hands its GET response's `clip` field
+	// straight to AnimationClip.parse() on the client, so this is the exact
+	// contract libraryReadyClip's output has to satisfy.
+	it('produces a clip AnimationClip.parse() can read without throwing', () => {
+		const raw = buildClip();
+		const ready = libraryReadyClip(raw);
+		expect(() => AnimationClip.parse(ready)).not.toThrow();
+	});
+
+	it('stamps the current basis onto userData, round-trippable through parse', () => {
+		const ready = libraryReadyClip(buildClip());
+		expect(typeof ready.userData).toBe('string');
+		const parsed = AnimationClip.parse(ready);
+		expect(parsed.userData.basis).toBe(CLIP_BASIS);
 	});
 });

@@ -157,7 +157,11 @@ describe('GET /api/forge-motion?job=', () => {
 		const res = makeRes();
 		await handler(makeReq({ method: 'GET', url: `/api/forge-motion?job=${'a'.repeat(24)}` }), res);
 		const body = JSON.parse(res.body);
-		expect(body.clip.userData.basis).toBe('canonical-rest-v2');
+		// userData has to be a JSON string here, not an object: the client runs
+		// this clip straight through three.js's AnimationClip.parse(), which
+		// hands userData to JSON.parse() unchanged.
+		expect(typeof body.clip.userData).toBe('string');
+		expect(JSON.parse(body.clip.userData).basis).toBe('canonical-rest-v2');
 		const { forwardKinematicsFrame } = await import('../../api/_lib/motion-seed.js');
 		const w = forwardKinematicsFrame(body.clip, 0);
 		// Head over the neck and arms hanging, not thrown back and raised.
