@@ -41,6 +41,28 @@ import { watsonxConfig, watsonxChatComplete } from './watsonx.js';
 import { llmComplete } from './llm.js';
 import { materialVariants, materialPreset, MATERIAL_PRESET_NAMES } from '@three-ws/viewer-presets';
 import { seedLineage, appendVersion, branchFrom, buildLineageChain } from '../../mcp-server/src/tools/_lineage.js';
+import { verifyPreserved, PreserveViolationError, PRESERVE_KINDS } from './preserve-contract.js';
+
+// A material restyle or colorway variant only ever calls a Material setter
+// (applyFactorsToDoc above), never touches a Mesh/Primitive/Skin/Animation
+// property, so it declares the full preserve contract: every edit here must
+// come back with topology, UVs, skeleton, skin and clips bit-for-bit
+// unchanged, or the edit is a bug, not a successful restyle.
+const RETEXTURE_PRESERVE_KINDS = PRESERVE_KINDS;
+
+// Wraps verifyPreserved so a violation surfaces through the SAME error path
+// every other Material Studio failure uses (api/material-studio.js only knows
+// how to translate MaterialStudioError into an HTTP response).
+async function assertPreserved(beforeBytes, afterBytes, kinds, label) {
+	try {
+		await verifyPreserved(beforeBytes, afterBytes, kinds, { label });
+	} catch (err) {
+		if (err instanceof PreserveViolationError) {
+			throw new MaterialStudioError(err.message, { status: err.status, code: err.code });
+		}
+		throw err;
+	}
+}
 
 const MAX_SOURCE_GLB_BYTES = 64 * 1024 * 1024;
 const MAX_VARIANT_COUNT = 12;
@@ -470,6 +492,11 @@ export async function restyleMaterialFromInstruction({
 	const doc = await loadDocument(sourceBytes);
 	const materialsEdited = await applyFactorsToDoc(doc, factors, materialIndex);
 	const outBytes = await writeAndValidate(doc);
+	// A restyle only ever calls Material setters, so it declares the full
+	// preserve contract. Verified BEFORE persisting: an edit that somehow moved
+	// geometry/skin/clip data is a bug, and a bug must never reach a URL the
+	// caller can treat as a successful restyle.
+	await assertPreserved(sourceBytes, outBytes, RETEXTURE_PRESERVE_KINDS, 'material-studio restyle');
 	const persisted = await validateAndPersistGlb(Buffer.from(outBytes), { keyPrefix: 'material-studio/restyle' });
 
 	const baseLineage = resolveBaseLineage(safeUrl, parentLineage);
@@ -490,6 +517,7 @@ export async function restyleMaterialFromInstruction({
 		bytes: persisted.bytes,
 		lineage,
 		activeIndex: lineage.length - 1,
+		preserve: { kinds: RETEXTURE_PRESERVE_KINDS, verified: true },
 	};
 }
 
@@ -550,6 +578,9 @@ export async function generateSeededVariants({
 		};
 		await applyFactorsToDoc(doc, factors, materialIndex);
 		const outBytes = await writeAndValidate(doc);
+		// Every variant branches off the SAME untouched sourceBytes, so each one
+		// is checked against that shared source, not against the previous variant.
+		await assertPreserved(sourceBytes, outBytes, RETEXTURE_PRESERVE_KINDS, `material-studio variant "${variant.label}"`);
 		const persisted = await validateAndPersistGlb(Buffer.from(outBytes), {
 			keyPrefix: 'material-studio/variants',
 		});
@@ -575,5 +606,6 @@ export async function generateSeededVariants({
 		variants: results,
 		lineage,
 		activeIndex: sharedParentIndex,
+		preserve: { kinds: RETEXTURE_PRESERVE_KINDS, verified: true },
 	};
 }

@@ -137,6 +137,48 @@ describe('restyleMaterialFromInstruction', () => {
 		expect(result.activeIndex).toBe(1);
 	});
 
+	it('retextures a rigged, animated GLB and proves skeleton/skin/UVs/clips are unchanged (work order 078)', async () => {
+		// fox.glb is a rigged, three-clip avatar (1 skin, animations Survey/Walk/Run),
+		// so a real restyle through it is the actual Definition-of-Done proof, not a
+		// synthetic triangle: this is the SAME fixture every other test in this file
+		// restyles, confirmed here against the real glb-diff engine instead of a mock.
+		const { restyleMaterialFromInstruction } = await import('../../api/_lib/material-studio-store.js');
+		const { describeModel, diffDescriptions } = await import('@three-ws/glb-diff');
+
+		const result = await restyleMaterialFromInstruction({ glbUrl: FIXTURE_URL, instruction: 'make it chrome' });
+
+		expect(result.preserve).toEqual({
+			kinds: ['topology', 'uv', 'skeleton', 'skin', 'clips'],
+			verified: true,
+		});
+
+		// Independent proof, outside material-studio-store's own verifyPreserved
+		// call: diff the real fixture bytes against the real persisted output and
+		// confirm topology/uv/skinWeights never show up as changed mesh fields, the
+		// skin resource (joints, bind pose) is untouched, and no animation changed.
+		// result.bytes is the byte COUNT (validateAndPersistGlb's return shape);
+		// the actual persisted bytes are what the mocked putObject captured.
+		const before = await describeModel(fixtureBytes);
+		const after = await describeModel(uploadedObjects[0].body);
+		const changes = diffDescriptions(before, after);
+
+		const meshFields = changes.sections.meshes.modified.flatMap((m) => m.changes.map((c) => c.field));
+		expect(meshFields).not.toContain('topology');
+		expect(meshFields).not.toContain('uv');
+		expect(meshFields).not.toContain('skinWeights');
+		expect(changes.sections.skins.modified).toHaveLength(0);
+		expect(changes.sections.skins.removed).toHaveLength(0);
+		expect(changes.sections.animations.modified).toHaveLength(0);
+		expect(changes.sections.animations.removed).toHaveLength(0);
+
+		// And the restyle still did something real: the material actually changed.
+		// (meshFields may still list 'geometry'/normals: re-serializing through
+		// glTF-Transform can legitimately re-bake NORMAL/TANGENT precision, which
+		// describe.js's TOPOLOGY_SEMANTICS deliberately excludes for exactly this
+		// reason. topology/uv/skinWeights are the fields that must never appear.)
+		expect(changes.sections.materials.modified.length).toBeGreaterThan(0);
+	});
+
 	it('extends a caller-supplied parent_lineage instead of starting fresh', async () => {
 		const { restyleMaterialFromInstruction } = await import('../../api/_lib/material-studio-store.js');
 		const parentLineage = [
@@ -262,6 +304,7 @@ describe('generateSeededVariants', () => {
 		expect(a.variants.map((v) => v.config.color)).toEqual(b.variants.map((v) => v.config.color));
 		expect(a.variants.map((v) => v.seed)).toEqual(b.variants.map((v) => v.seed));
 		for (const v of a.variants) expect(v.glbUrl).toMatch(persistedGlbUrl('material-studio/variants'));
+		expect(a.preserve).toEqual({ kinds: ['topology', 'uv', 'skeleton', 'skin', 'clips'], verified: true });
 	});
 
 	it('fans every variant off the SAME shared parent rather than chaining them', async () => {

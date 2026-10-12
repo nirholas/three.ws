@@ -88,14 +88,15 @@ const discovery = wrap(async (req, res) => {
 				query: '?action=restyle',
 				body: '{ glb_url, instruction, material_index?, parent_lineage?, parent_index? }',
 				returns:
-					'{ glbUrl, sourceGlbUrl, instruction, factors, materialsEdited, lineage, activeIndex }',
+					'{ glbUrl, sourceGlbUrl, instruction, factors, materialsEdited, lineage, activeIndex, preserve }',
 			},
 			variants: {
 				method: 'POST',
 				query: '?action=variants',
 				body: '{ glb_url, preset?, seed?, count?, material_index?, parent_lineage?, parent_index? }',
 				presets: MATERIAL_PRESET_NAMES,
-				returns: '{ variants: [{ glbUrl, label, seed, config, lineageIndex }], lineage, activeIndex }',
+				returns:
+					'{ variants: [{ glbUrl, label, seed, config, lineageIndex }], lineage, activeIndex, preserve }',
 			},
 		},
 		lineage:
@@ -103,6 +104,11 @@ const discovery = wrap(async (req, res) => {
 			'(the same shape refine_model uses). Pass the returned `lineage` array back in as ' +
 			'`parent_lineage` on the next call to extend one thread; add `parent_index` to branch off ' +
 			'an earlier version instead of the latest.',
+		preserve:
+			'Every restyle/variants response includes `preserve: { kinds, verified }`: the output GLB ' +
+			'was diffed against its source with @three-ws/glb-diff and confirmed topology, UVs, ' +
+			'skeleton, skin and clips are unchanged. A response is only ever sent when verified is true; ' +
+			'a violation throws before the output is persisted.',
 		web: 'https://three.ws/restyle',
 	});
 });
