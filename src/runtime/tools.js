@@ -2,6 +2,13 @@
 // See specs/AGENT_MANIFEST.md § Built-in tools.
 
 import { log } from '../shared/log.js';
+import { SLOTS } from './animation-slots.js';
+
+// Gestures are the subset of the slot vocabulary (animation-slots.js) an agent
+// can request by name as a deliberate body-language choice. 'idle' is the rest
+// state, not a performable gesture, so it is excluded from the tool's enum.
+const GESTURE_NAMES = SLOTS.filter((s) => s !== 'idle');
+
 export const BUILTIN_TOOLS = [
 	{
 		name: 'wave',
@@ -37,6 +44,23 @@ export const BUILTIN_TOOLS = [
 				name: { type: 'string' },
 				loop: { type: 'boolean', default: false },
 				fade_ms: { type: 'integer', default: 200 },
+			},
+			required: ['name'],
+		},
+	},
+	{
+		name: 'gesture',
+		description:
+			'Perform a body-language gesture. Use this to react physically while speaking or ' +
+			'listening: nod to agree or acknowledge, shake the head to disagree, wave to greet or ' +
+			'say goodbye, shrug when unsure, bow to thank or apologize, point to direct attention, ' +
+			'celebrate good news, show concern for bad news, think while working something out, ' +
+			'inspect something closely, present a result, or signal patience, curiosity, or fidgety ' +
+			'restlessness. The gesture plays once and the body returns to its resting pose.',
+		input_schema: {
+			type: 'object',
+			properties: {
+				name: { type: 'string', enum: GESTURE_NAMES, description: 'Which gesture to perform.' },
 			},
 			required: ['name'],
 		},
@@ -151,6 +175,17 @@ export const BUILTIN_HANDLERS = {
 			if (resolved !== name)
 				log.warn(`[play_clip] slot "${name}" → "${resolved}" not found in library`);
 			return { ok: false, error: `No clip named "${resolved}"` };
+		}
+		return { ok: true, name, resolved };
+	},
+
+	async gesture(args, ctx) {
+		const { name } = args;
+		const resolved = ctx.viewer.resolveAnimationSlot?.(name) ?? name;
+		const played = ctx.viewer.playClipByName?.(resolved, { loop: false, fade_ms: 200 });
+		if (!played) {
+			log.warn(`[gesture] slot "${name}" → "${resolved}" not found in library`);
+			return { ok: false, error: `No clip for gesture "${name}"` };
 		}
 		return { ok: true, name, resolved };
 	},

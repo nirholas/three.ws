@@ -30,6 +30,8 @@ export const ACTION_TYPES = {
 	PRESENCE: 'presence', // agent came online / went idle
 	PROTOCOL_ERROR: 'protocol-error', // emitted by the rate limiter on cascade detection
 	INTERRUPTED: 'interrupted', // user spoke while agent was mid-TTS
+	LISTEN_START: 'listen-start', // user started speaking (VAD/STT signal)
+	LISTEN_END: 'listen-end', // user stopped speaking
 	PERMISSIONS_REDEEM_START: 'permissions.redeem.start',
 	PERMISSIONS_REDEEM_SUCCESS: 'permissions.redeem.success',
 	PERMISSIONS_REDEEM_ERROR: 'permissions.redeem.error',

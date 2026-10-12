@@ -3,6 +3,7 @@
 // data-channel messages with transcript payloads.
 
 import { Room, RoomEvent, Track } from 'livekit-client';
+import { ACTION_TYPES } from '../agent-protocol.js';
 
 export class LiveKitVoice {
 	/**
@@ -66,12 +67,12 @@ export class LiveKitVoice {
 			// User speech boundaries (VAD from agent server)
 			if (msg.type === 'speech_started') {
 				this._userSpeaking = true;
-				this._protocol.emit({ type: 'listen-start', payload: {} });
+				this._protocol.emit({ type: ACTION_TYPES.LISTEN_START, payload: {} });
 			}
 			if (msg.type === 'speech_ended') {
 				this._userSpeaking = false;
 				this._protocol.emit({
-					type: 'listen-end',
+					type: ACTION_TYPES.LISTEN_END,
 					payload: { text: msg.transcript || '' },
 				});
 			}
@@ -83,10 +84,10 @@ export class LiveKitVoice {
 			const active = speakers.some((p) => p.identity === localId);
 			if (active && !this._userSpeaking) {
 				this._userSpeaking = true;
-				this._protocol.emit({ type: 'listen-start', payload: {} });
+				this._protocol.emit({ type: ACTION_TYPES.LISTEN_START, payload: {} });
 			} else if (!active && this._userSpeaking) {
 				this._userSpeaking = false;
-				this._protocol.emit({ type: 'listen-end', payload: { text: '' } });
+				this._protocol.emit({ type: ACTION_TYPES.LISTEN_END, payload: { text: '' } });
 			}
 		});
 

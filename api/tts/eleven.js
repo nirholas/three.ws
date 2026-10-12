@@ -28,8 +28,15 @@
  *     stability?, similarity_boost?, style?,  // clamped to 0..1
  *     use_speaker_boost?                       // boolean
  *   }
+ *   withTimestamps?: boolean                  // see below
  * }
- * Response: audio/mpeg (chunked)
+ * Response: audio/mpeg (chunked), or when `withTimestamps` is true:
+ *   application/json { audio_base64, alignment, normalized_alignment }, character-level
+ *   timing from ElevenLabs' `/with-timestamps` endpoint, in whatever language/script the
+ *   text was written in. The client (src/runtime/speech.js) builds a real per-character
+ *   viseme sequence from `alignment` instead of estimating visemes from audio energy.
+ *   Same billing and cache lanes as the audio path; the only difference is upstream URL,
+ *   accept header, and what gets cached (the JSON body instead of raw MP3 bytes).
  *
  * Auth: a session or bearer token, except on the agent_byok lane — an agent whose
  * owner bound their own key speaks to anonymous visitors too (rate limited per IP),
@@ -53,13 +60,15 @@ import {
 	normalizeVoiceSettings,
 } from '../_lib/elevenlabs.js';
 
-// Fire-and-forget R2 cache write — a miss on failure is acceptable.
-function cacheAudio(key, buffer) {
+// Fire-and-forget R2 cache write. A miss on failure is acceptable. Caches
+// exactly the bytes served to the client, so a cache hit is byte-identical
+// whether that's raw MP3 or the with-timestamps JSON envelope.
+function cacheAudio(key, buffer, contentType) {
 	if (!buffer.length) return;
 	putObject({
 		key,
 		body: buffer,
-		contentType: 'audio/mpeg',
+		contentType,
 		metadata: { 'created-at': new Date().toISOString() },
 	}).catch((e) => console.warn('[tts/eleven] R2 cache write failed:', e.message));
 }
@@ -73,6 +82,7 @@ export default wrap(async (req, res) => {
 	const text = String(body.text || '').trim();
 	const modelId = String(body.modelId || DEFAULT_TTS_MODEL).trim();
 	const agentId = String(body.agentId || '').trim();
+	const withTimestamps = body.withTimestamps === true;
 
 	if (!voiceId) return error(res, 400, 'validation_error', 'voiceId is required');
 	if (!text) return error(res, 400, 'validation_error', 'text is required');
@@ -145,15 +155,16 @@ export default wrap(async (req, res) => {
 	// Checked BEFORE any metering: a cached clip costs nothing upstream, so it
 	// never consumes the free budget and never charges credits.
 	const cacheHash = await sha256(
-		`${voiceId}\x00${text}\x00${modelId}\x00${settings.stability}\x00${settings.similarity_boost}\x00${settings.style}\x00${settings.use_speaker_boost}`,
+		`${voiceId}\x00${text}\x00${modelId}\x00${settings.stability}\x00${settings.similarity_boost}\x00${settings.style}\x00${settings.use_speaker_boost}\x00${withTimestamps ? 'ts' : 'audio'}`,
 	);
-	const cacheKey = `tts/cache/${cacheHash}.mp3`;
+	const responseContentType = withTimestamps ? 'application/json' : 'audio/mpeg';
+	const cacheKey = `tts/cache/${cacheHash}.${withTimestamps ? 'json' : 'mp3'}`;
 
 	const cached = await headObject(cacheKey).catch(() => null);
 	if (cached) {
 		try {
 			const buf = await getObjectBuffer(cacheKey);
-			res.setHeader('content-type', 'audio/mpeg');
+			res.setHeader('content-type', responseContentType);
 			res.setHeader('content-length', String(buf.length));
 			res.setHeader('x-tts-cache', 'hit');
 			res.setHeader('x-tts-billing', 'cached');
@@ -220,29 +231,31 @@ export default wrap(async (req, res) => {
 	};
 
 	// ── Synthesize via ElevenLabs ─────────────────────────────────────────────
+	// The with-timestamps endpoint returns one JSON object (audio + alignment),
+	// not a streamable MP3, so it has no /stream segment and takes a json accept.
+	const upstreamPath = withTimestamps
+		? `/text-to-speech/${encodeURIComponent(voiceId)}/with-timestamps`
+		: `/text-to-speech/${encodeURIComponent(voiceId)}/stream`;
 	let elResp;
 	try {
-		elResp = await fetch(
-			`${ELEVEN_BASE}/text-to-speech/${encodeURIComponent(voiceId)}/stream`,
-			{
-				method: 'POST',
-				headers: {
-					'content-type': 'application/json',
-					accept: 'audio/mpeg',
-					'xi-api-key': apiKey,
-				},
-				body: JSON.stringify({
-					text,
-					model_id: modelId,
-					voice_settings: settings,
-				}),
-				// Bound a hung connection (ElevenLabs accepting but never responding)
-				// under Vercel's 30s kill, so a stall returns a clean 502 + char refund
-				// instead of a 504 with characters charged but no audio delivered. Set
-				// well above a real clip's synth+stream time so it never cuts valid audio.
-				signal: AbortSignal.timeout(28000),
+		elResp = await fetch(`${ELEVEN_BASE}${upstreamPath}`, {
+			method: 'POST',
+			headers: {
+				'content-type': 'application/json',
+				accept: withTimestamps ? 'application/json' : 'audio/mpeg',
+				'xi-api-key': apiKey,
 			},
-		);
+			body: JSON.stringify({
+				text,
+				model_id: modelId,
+				voice_settings: settings,
+			}),
+			// Bound a hung connection (ElevenLabs accepting but never responding)
+			// under Vercel's 30s kill, so a stall returns a clean 502 + char refund
+			// instead of a 504 with characters charged but no audio delivered. Set
+			// well above a real clip's synth+stream time so it never cuts valid audio.
+			signal: AbortSignal.timeout(28000),
+		});
 	} catch (fetchErr) {
 		console.error('[tts/eleven] ElevenLabs fetch failed', fetchErr);
 		await refundMetering();
@@ -269,21 +282,35 @@ export default wrap(async (req, res) => {
 		);
 	}
 
-	// Stream the clip to the client for low TTFB while teeing the chunks into a
-	// buffer, so the complete audio can be cached once it has fully arrived.
-	res.setHeader('content-type', 'audio/mpeg');
+	res.setHeader('content-type', responseContentType);
 	res.setHeader('x-tts-cache', 'miss');
 	res.setHeader('x-tts-billing', billing);
 	if (creditCharge?.chargedUsd > 0)
 		res.setHeader('x-tts-charged-usd', creditCharge.chargedUsd.toFixed(6));
 	res.setHeader('cache-control', 'private, max-age=86400');
 
+	if (withTimestamps) {
+		// One JSON object, not a stream: buffer it whole, forward it, cache it.
+		let jsonBuffer;
+		try {
+			jsonBuffer = Buffer.from(await elResp.arrayBuffer());
+		} catch (readErr) {
+			console.error('[tts/eleven] with-timestamps read failed', readErr);
+			await refundMetering();
+			return error(res, 502, 'upstream_error', 'ElevenLabs with-timestamps response unreadable');
+		}
+		res.setHeader('content-length', String(jsonBuffer.length));
+		res.end(jsonBuffer);
+		cacheAudio(cacheKey, jsonBuffer, responseContentType);
+		return;
+	}
+
 	if (!elResp.body) {
 		// No readable stream (unexpected) — fall back to a single buffered write.
 		const audioBuffer = Buffer.from(await elResp.arrayBuffer());
 		res.setHeader('content-length', String(audioBuffer.length));
 		res.end(audioBuffer);
-		cacheAudio(cacheKey, audioBuffer);
+		cacheAudio(cacheKey, audioBuffer, responseContentType);
 		return;
 	}
 
@@ -323,5 +350,5 @@ export default wrap(async (req, res) => {
 	if (!res.writableEnded && !res.destroyed) res.end();
 	// Cache only a complete clip — a truncated one would poison the deterministic
 	// cache key and be served as a permanent "hit" for this utterance.
-	if (completed) cacheAudio(cacheKey, Buffer.concat(chunks));
+	if (completed) cacheAudio(cacheKey, Buffer.concat(chunks), responseContentType);
 });

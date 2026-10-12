@@ -178,6 +178,55 @@ export function playVisemeSequence(root, sequence, elapsedMs = () => 0) {
 	};
 }
 
+// Characters that carry no viseme of their own: true silence in the sequence,
+// not just "unmapped". Mirrors the word/punctuation gaps _tokenize() inserts.
+const SILENT_CHARS = new Set([' ', '\t', '\n', '.', ',', '!', '?', ';', ':', '"', "'", '-', '　']);
+
+// Any letter CHAR_TO_VISEME doesn't cover (most non-Latin scripts: CJK, Cyrillic,
+// Arabic, Devanagari…) still gets a real per-character timestamp from ElevenLabs;
+// it just can't pick a specific phoneme shape from a single codepoint. A generic
+// open-mouth viseme keeps the timing real rather than falling silent on every
+// language the heuristic alphabet-based lookup wasn't written for.
+const DEFAULT_LETTER_VISEME = 'viseme_aa';
+
+/**
+ * Build a timed viseme sequence from ElevenLabs' character-level alignment
+ * (`/with-timestamps`): `{ characters, character_start_times_seconds,
+ * character_end_times_seconds }`. Real per-character timing in whatever
+ * language the text was written in, unlike {@link startLipsync}'s English-letter
+ * duration estimate. Used by the ElevenLabs TTS lane (runtime/speech.js) with
+ * the energy-based {@link LipSyncAnalyser} path as its fallback.
+ *
+ * @param {{characters?: string[], character_start_times_seconds?: number[], character_end_times_seconds?: number[]}} alignment
+ * @returns {Array<{viseme:string,startMs:number,endMs:number}>}
+ */
+export function alignmentToSequence(alignment) {
+	const chars = alignment?.characters;
+	const starts = alignment?.character_start_times_seconds;
+	const ends = alignment?.character_end_times_seconds;
+	if (!Array.isArray(chars) || !Array.isArray(starts) || !Array.isArray(ends)) return [];
+
+	const sequence = [];
+	for (let i = 0; i < chars.length; i++) {
+		const raw = chars[i];
+		if (!raw) continue;
+		const ch = raw.toLowerCase();
+		if (SILENT_CHARS.has(ch)) continue;
+
+		const viseme = CHAR_TO_VISEME[ch] || (/\S/.test(ch) ? DEFAULT_LETTER_VISEME : null);
+		if (!viseme) continue;
+
+		const startMs = (starts[i] ?? 0) * 1000;
+		const endRaw = ends[i] ?? starts[i + 1] ?? starts[i] ?? 0;
+		// A zero-length entry (two characters sharing one timestamp) would never
+		// activate in activeVisemeAt()'s half-open interval check, so floor it to
+		// a visible minimum instead of letting the viseme silently vanish.
+		const endMs = Math.max(startMs + 20, endRaw * 1000);
+		sequence.push({ viseme, startMs, endMs });
+	}
+	return sequence;
+}
+
 /**
  * Drive jaw/mouth morph targets in sync with speech text via a phoneme heuristic.
  * Supports the ARKit viseme_* morph targets that three.ws avatars ship with (and

@@ -303,27 +303,33 @@ export class Runtime extends EventTarget {
 	async listen({ onInterim, onFinal, onStatus } = {}) {
 		if (!this.stt) throw new Error('STT not configured');
 		this.dispatchEvent(new CustomEvent('voice:listen-start', {}));
-		const text = await this.stt.listen({
-			// Recognizers that do real work before text exists (an on-device model
-			// downloading, an utterance decoding) report it, so the UI can say so.
-			onStatus: (status) => {
-				this.dispatchEvent(new CustomEvent('voice:stt-status', { detail: status }));
-				onStatus?.(status);
-			},
-			onInterim: (t) => {
-				this.dispatchEvent(
-					new CustomEvent('voice:transcript', { detail: { text: t, final: false } }),
-				);
-				onInterim?.(t);
-			},
-			onFinal: (t) => {
-				this.dispatchEvent(
-					new CustomEvent('voice:transcript', { detail: { text: t, final: true } }),
-				);
-				onFinal?.(t);
-			},
-		});
-		return text;
+		try {
+			const text = await this.stt.listen({
+				// Recognizers that do real work before text exists (an on-device model
+				// downloading, an utterance decoding) report it, so the UI can say so.
+				onStatus: (status) => {
+					this.dispatchEvent(new CustomEvent('voice:stt-status', { detail: status }));
+					onStatus?.(status);
+				},
+				onInterim: (t) => {
+					this.dispatchEvent(
+						new CustomEvent('voice:transcript', { detail: { text: t, final: false } }),
+					);
+					onInterim?.(t);
+				},
+				onFinal: (t) => {
+					this.dispatchEvent(
+						new CustomEvent('voice:transcript', { detail: { text: t, final: true } }),
+					);
+					onFinal?.(t);
+				},
+			});
+			return text;
+		} finally {
+			// Always fires, success, error or cancellation, so a caller driving the
+			// avatar's attentive posture off listen-start never gets stuck in it.
+			this.dispatchEvent(new CustomEvent('voice:listen-end', {}));
+		}
 	}
 
 	clearConversation() {

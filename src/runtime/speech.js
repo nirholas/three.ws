@@ -5,8 +5,9 @@ export { NeuralTTS } from './neural-tts.js';
 export { WhisperSTT } from './whisper-stt.js';
 import { NeuralTTS } from './neural-tts.js';
 import { WhisperSTT, onDeviceSupported } from './whisper-stt.js';
-import { startLipsync } from './lipsync.js';
+import { startLipsync, alignmentToSequence, playVisemeSequence } from './lipsync.js';
 import { ACTION_TYPES } from '../agent-protocol.js';
+import { log } from '../shared/log.js';
 
 export class BrowserTTS {
 	constructor({ voiceId = 'default', rate = 1, pitch = 1, lang = 'en-US' } = {}) {
@@ -235,10 +236,140 @@ export class ElevenLabsTTS {
 		this._positionalAudio = pa;
 	}
 
+	/**
+	 * Speak `text` aloud. Tries real per-character viseme timing first
+	 * ({@link _speakWithTimestamps}, ElevenLabs' `/with-timestamps`) whenever
+	 * there's an avatar `scene` to animate, since that's the only reason to pay
+	 * for the slower non-streaming round trip. Any failure there (network,
+	 * malformed response, playback error before a frame plays) falls back to
+	 * the original low-latency streaming path with energy-based lipsync
+	 * ({@link _speakStreaming}), so a transient ElevenLabs hiccup never silences
+	 * the agent.
+	 */
 	async speak(text, { onStart, onEnd, scene } = {}) {
 		this.cancel();
 		if (!text) return;
 
+		if (scene) {
+			try {
+				return await this._speakWithTimestamps(text, { onStart, onEnd, scene });
+			} catch (err) {
+				if (err?.name === 'AbortError') return;
+				log.warn(
+					'[ElevenLabsTTS] with-timestamps failed, falling back to energy-based lipsync:',
+					err?.message || err,
+				);
+				this.cancel();
+			}
+		}
+		return this._speakStreaming(text, { onStart, onEnd, scene });
+	}
+
+	/**
+	 * Real multi-language viseme timing: ElevenLabs' `/with-timestamps` endpoint
+	 * returns the full clip as `audio_base64` plus character-level `alignment`
+	 * (start/end seconds per character, in whatever script the text used). No
+	 * MediaSource streaming: the response is one JSON object, not chunked MP3,
+	 * so first-audio latency is higher than {@link _speakStreaming}; the real
+	 * timing is the point.
+	 */
+	async _speakWithTimestamps(text, { onStart, onEnd, scene }) {
+		this._abort = new AbortController();
+		this._speaking = true;
+
+		const url =
+			this.proxyURL ||
+			`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(this.voiceId)}/with-timestamps`;
+		const headers = { 'content-type': 'application/json', accept: 'application/json' };
+		if (!this.proxyURL && this.apiKey) headers['xi-api-key'] = this.apiKey;
+
+		const rateNorm = Math.min(1.5, Math.max(0.5, this.rate));
+		const styleVal =
+			this.style != null
+				? Math.min(1, Math.max(0, Number(this.style)))
+				: Math.min(1, Math.max(0, (rateNorm - 0.5) / 1.0));
+
+		const bodyObj = {
+			text,
+			model_id: this.modelId,
+			voice_settings: {
+				stability: this.stability,
+				similarity_boost: this.similarityBoost,
+				style: styleVal,
+				use_speaker_boost: this.useSpeakerBoost,
+			},
+			voiceId: this.voiceId,
+			modelId: this.modelId,
+			...(this.agentId ? { agentId: this.agentId } : {}),
+		};
+		// Only the proxy understands this flag; the direct ElevenLabs API reads
+		// the /with-timestamps URL path instead.
+		if (this.proxyURL) bodyObj.withTimestamps = true;
+
+		const resp = await fetch(url, {
+			method: 'POST',
+			headers,
+			body: JSON.stringify(bodyObj),
+			signal: this._abort.signal,
+		});
+		if (!resp.ok) throw new Error(`ElevenLabs with-timestamps HTTP ${resp.status}`);
+		const data = await resp.json();
+		if (!data?.audio_base64) throw new Error('ElevenLabs with-timestamps returned no audio');
+
+		const binary = atob(data.audio_base64);
+		const bytes = new Uint8Array(binary.length);
+		for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+		const blob = new Blob([bytes], { type: 'audio/mpeg' });
+
+		const sequence = alignmentToSequence(data.alignment || data.normalized_alignment);
+
+		const audioURL = URL.createObjectURL(blob);
+		this._mediaSourceURL = audioURL;
+		const audio = new Audio(audioURL);
+		this._audio = audio;
+		// No analyser hookup here: a stale analyser from an earlier energy-path
+		// speak() on this same instance would otherwise leak into AgentAvatar's
+		// connectLipSync() and fight this sequence's direct morph writes for the
+		// same viseme targets every frame.
+		this._analyserNode = null;
+		this._connectPositionalAudio(audio);
+
+		return new Promise((resolve, reject) => {
+			this._onEnd = () => {
+				this._speaking = false;
+				this._lipsync?.stop();
+				this._lipsync = null;
+				this._cleanupAudio();
+				this.onEnd?.();
+				onEnd?.();
+				this._onEnd = null;
+				resolve();
+			};
+			audio.addEventListener(
+				'playing',
+				() => {
+					if (sequence.length) {
+						this._lipsync = playVisemeSequence(scene, sequence, () => audio.currentTime * 1000);
+					}
+					this.onStart?.();
+					onStart?.();
+				},
+				{ once: true },
+			);
+			audio.addEventListener('ended', () => this._onEnd?.(), { once: true });
+			audio.addEventListener(
+				'error',
+				() => {
+					if (this._onEnd) this._onEnd();
+				},
+				{ once: true },
+			);
+			audio.play().catch(reject);
+		});
+	}
+
+	/** Original streaming path: low first-audio latency, energy-based lipsync via LipSyncAnalyser. */
+	async _speakStreaming(text, { onStart, onEnd, scene }) {
 		this._abort = new AbortController();
 		this._speaking = true;
 
@@ -363,6 +494,12 @@ export class ElevenLabsTTS {
 		try {
 			if (!this._audioCtx || this._audioCtx.state === 'closed') {
 				this._audioCtx = new AC();
+			}
+			// Recreated independently of the context: a prior _speakWithTimestamps()
+			// call on this same instance nulls _analyserNode (see that method) while
+			// leaving _audioCtx open, so this must not assume "context exists" implies
+			// "analyser exists".
+			if (!this._analyserNode) {
 				this._analyserNode = this._audioCtx.createAnalyser();
 				this._analyserNode.fftSize = 256;
 				this._analyserNode.smoothingTimeConstant = 0.7;

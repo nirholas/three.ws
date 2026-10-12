@@ -2194,6 +2194,7 @@ class Agent3DElement extends HTMLElement {
 				'voice:speech-end',
 				'voice:transcript',
 				'voice:listen-start',
+				'voice:listen-end',
 				'voice:stt-status',
 				'memory:write',
 			]) {
@@ -2225,6 +2226,16 @@ class Agent3DElement extends HTMLElement {
 							this._clearThoughtBubble();
 						}
 						if (this._chatEl) this._renderMessage(detail);
+					}
+					if (ev === 'voice:listen-start') {
+						// The mic opened for this turn (generic STT loop in runtime/index.js).
+						// Route through the protocol bus so AgentAvatar's _onListenStart
+						// drives the same attentive gaze + backchannel nod cadence the
+						// LiveKit realtime voice path already triggers from its own VAD.
+						protocol.emit({ type: ACTION_TYPES.LISTEN_START, payload: {} });
+					}
+					if (ev === 'voice:listen-end') {
+						protocol.emit({ type: ACTION_TYPES.LISTEN_END, payload: {} });
 					}
 					if (ev === 'brain:stream') {
 						if (this._thoughtBubbleEl && this.getAttribute('avatar-chat') !== 'off') {

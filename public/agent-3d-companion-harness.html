@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>agent-3d companion presence test harness</title>
+<!--
+	Playwright-only fixture for tests/e2e/agent-3d-companion-presence.spec.js.
+	Imports /src/element.js directly so the spec exercises today's source instead
+	of the published https://three.ws/agent-3d/latest/agent-3d.js bundle that
+	every real page loads. Mirrors public/agent-3d-ar-harness.html's convention.
+	Loads a real production avatar asset (public/avatars/default.glb) already
+	checked into the repo, so mood/gesture/viseme morph targets and the
+	humanoid skeleton the baked clip library retargets onto are real, not
+	synthetic geometry.
+-->
+<style>html,body{margin:0;height:100%}agent-3d{display:block;width:480px;height:480px}</style>
+</head>
+<body>
+<agent-3d id="a3d" eager src="/avatars/default.glb"></agent-3d>
+<script type="module" src="/src/element.js"></script>
+</body>
+</html>

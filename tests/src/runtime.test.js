@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Runtime } from '../../src/runtime/index.js';
 import { NullProvider } from '../../src/runtime/providers.js';
-import { BUILTIN_HANDLERS } from '../../src/runtime/tools.js';
+import { BUILTIN_HANDLERS, BUILTIN_TOOLS } from '../../src/runtime/tools.js';
 
 // Disable voice in all Runtime instances — avoids BrowserTTS/BrowserSTT in tests
 const NO_VOICE = { tts: { provider: 'none' }, stt: { provider: 'none' } };
@@ -358,6 +358,41 @@ describe('Runtime — busy guard', () => {
 	});
 });
 
+// ── Runtime.listen() ──────────────────────────────────────────────────────────
+
+describe('Runtime, listen() voice:listen-start/listen-end symmetry', () => {
+	it('fires listen-start then listen-end around a successful transcript', async () => {
+		const rt = makeRuntime(mockProvider([textResp('ok')]));
+		rt.stt = { listen: vi.fn().mockResolvedValue('hello') };
+		const events = [];
+		rt.addEventListener('voice:listen-start', () => events.push('start'));
+		rt.addEventListener('voice:listen-end', () => events.push('end'));
+
+		const text = await rt.listen();
+		expect(text).toBe('hello');
+		expect(events).toEqual(['start', 'end']);
+	});
+
+	it('still fires listen-end when the STT call rejects (try/finally, not just the happy path)', async () => {
+		const rt = makeRuntime(mockProvider([textResp('ok')]));
+		rt.stt = { listen: vi.fn().mockRejectedValue(new Error('mic denied')) };
+		const events = [];
+		rt.addEventListener('voice:listen-start', () => events.push('start'));
+		rt.addEventListener('voice:listen-end', () => events.push('end'));
+
+		await expect(rt.listen()).rejects.toThrow('mic denied');
+		expect(events).toEqual(['start', 'end']);
+	});
+
+	it('throws without dispatching anything when no STT is configured', async () => {
+		const rt = makeRuntime(mockProvider([textResp('ok')]));
+		rt.stt = null;
+		const events = collect(rt, 'voice:listen-start');
+		await expect(rt.listen()).rejects.toThrow('STT not configured');
+		expect(events).toEqual([]);
+	});
+});
+
 // ── BUILTIN_HANDLERS ──────────────────────────────────────────────────────────
 
 describe('BUILTIN_HANDLERS.speak', () => {
@@ -418,5 +453,42 @@ describe('BUILTIN_HANDLERS.setExpression', () => {
 		const ctx = { viewer: { setExpression: vi.fn() } };
 		await BUILTIN_HANDLERS.setExpression({ preset: 'sad' }, ctx);
 		expect(ctx.viewer.setExpression).toHaveBeenCalledWith('sad', 1);
+	});
+});
+
+describe('gesture tool, LLM-composable body language', () => {
+	it('enumerates every animation slot except the rest state "idle"', () => {
+		const tool = BUILTIN_TOOLS.find((t) => t.name === 'gesture');
+		const names = tool.input_schema.properties.name.enum;
+		expect(names).toContain('nod');
+		expect(names).toContain('wave');
+		expect(names).not.toContain('idle');
+	});
+
+	it('resolves the slot name through resolveAnimationSlot before playing it', async () => {
+		const ctx = {
+			viewer: {
+				resolveAnimationSlot: vi.fn().mockReturnValue('Armature|Nod'),
+				playClipByName: vi.fn().mockReturnValue(true),
+			},
+		};
+		const result = await BUILTIN_HANDLERS.gesture({ name: 'nod' }, ctx);
+		expect(ctx.viewer.resolveAnimationSlot).toHaveBeenCalledWith('nod');
+		expect(ctx.viewer.playClipByName).toHaveBeenCalledWith('Armature|Nod', {
+			loop: false,
+			fade_ms: 200,
+		});
+		expect(result).toEqual({ ok: true, name: 'nod', resolved: 'Armature|Nod' });
+	});
+
+	it('reports failure instead of throwing when the resolved clip is missing from the library', async () => {
+		const ctx = {
+			viewer: {
+				resolveAnimationSlot: vi.fn().mockReturnValue('nod'),
+				playClipByName: vi.fn().mockReturnValue(false),
+			},
+		};
+		const result = await BUILTIN_HANDLERS.gesture({ name: 'nod' }, ctx);
+		expect(result).toEqual({ ok: false, error: 'No clip for gesture "nod"' });
 	});
 });
