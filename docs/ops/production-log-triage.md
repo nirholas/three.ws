@@ -1323,6 +1323,38 @@ ERROR  502 POST /api/pump/launch-agent
 
 ---
 
+## 🔴 HTTP 502 `/api/3d/generate`: `forge-image-ladder-exhausted-502` (§forge-image-ladder-exhausted)
+
+- **Source:** `/api/3d/generate` self-calls `/api/forge`, whose reference-image
+  step ([api/_lib/forge-reference-image.js](../../api/_lib/forge-reference-image.js))
+  tries Vertex, then falls through to the text-to-image ladder
+  ([api/_mcp3d/text-to-image.js](../../api/_mcp3d/text-to-image.js)): NIM FLUX,
+  HF fal-ai, HF nscale, keyless Pollinations, Replicate. A 502 means every rung
+  the request reached failed.
+- **What it means:** root-caused on 2026-10-12. Vertex 403s on the GCP billing
+  dunning hold (row 20); HF fal-ai and HF nscale both 402 "no remaining
+  credits" (a separate credit pool from the LLM lanes' `HF_TOKEN` usage in
+  row 6, needs its own funding, see OWNER-ACTIONS). Before the 2026-10-12 fix
+  ("stop the Vertex billing hold and HF credit exhaustion from re-paying their
+  own timeout on every image request"), none of those three dead lanes had a
+  circuit breaker, so every request re-paid their full timeouts before ever
+  reaching Pollinations, often blowing the shared ladder budget before
+  Pollinations ran at all, which is what turned an owner-gated billing/credit
+  issue into a request-killing 502 storm instead of a quiet fallback to the
+  free lane.
+- **Resolve (owner, billing/credential):** fund the Vertex billing hold (row
+  20) and/or top up the HF Inference Providers credit balance (fal-ai,
+  nscale). Either one clears most of this family; both together clear it.
+  Nothing further to fix in code unless a *new* rung fails, or Pollinations
+  itself starts failing with no paid Replicate token configured as a backstop:
+  check `npm run logs -- -s three-ws-api --app --since 1h --grep "falling
+  back"` for which rung is actually down before assuming it is the same two
+  causes above.
+- **Monitor signature:** `forge-image-ladder-exhausted-502` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `owner`.
+
+---
+
 ## 🟢 HTTP 503 `/api/agents/<id>/solana/networth`: `agent-networth-rpc-unavailable-503` (§solana-rpc)
 
 - **Source:** `handleNetWorth()` in

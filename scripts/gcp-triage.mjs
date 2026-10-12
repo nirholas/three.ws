@@ -372,6 +372,33 @@ const KNOWN_HTTP_SIGNATURES = [
 		action: `/api/vision and /api/tts/synthesize each walk a provider chain (NVIDIA, then Vertex Gemini, then OpenAI) and answer an honest 502/503 when every rung fails. The GCP billing hold "Lightning dunning decision is deny" on aerial-vehicle-466722-p5 blocks the Vertex/Gemini rung (production-100-OWNER-ACTIONS.md row 20) and the OpenAI key is dead (row 6); together that leaves only the NVIDIA rung, which the forge_generation health sensor shows intermittently failing on free-tier NVCF capacity. Nothing to fix in code: restoring either billing-held provider clears this family, same as the identical cryptocurrency-cv pattern (ccv-ai-providers-unavailable-503). ${RUNBOOK} §three-ws-ai-providers-unavailable.`,
 	},
 	{
+		id: 'forge-image-ladder-exhausted-502',
+		// 2026-10-12 triage-lane sweep: /api/3d/generate self-calls /api/forge,
+		// whose reference-image step (api/_lib/forge-reference-image.js) tries
+		// Vertex, then falls through to the text-to-image.js ladder (NIM FLUX,
+		// HF fal-ai, HF nscale, keyless Pollinations, Replicate). Root-caused one
+		// occurrence end to end: Vertex 403 (the GCP billing dunning hold, row
+		// 20), NIM FLUX content-filtered on that prompt, HF fal-ai and HF nscale
+		// both 402 "no remaining credits" (production-100-OWNER-ACTIONS.md: fold
+		// into row 6 or add a dedicated row; the LLM lanes' HF_TOKEN credit is a
+		// separate pool from this image lane's). Before the 2026-10-12 fix
+		// (commit "stop the Vertex billing hold and HF credit exhaustion from
+		// re-paying their own timeout on every image request"), none of those
+		// three dead lanes had a circuit breaker, so EVERY request re-paid their
+		// full timeouts before ever reaching Pollinations, often blowing the
+		// shared ladder budget before Pollinations ran at all and surfacing a 502
+		// instead of a served image. That amplification is fixed: a 401/402/403
+		// now parks the lane for AUTH_COOLDOWN_SECONDS (5 min), so a request
+		// should reach Pollinations fast. A 502 after the fix means Pollinations
+		// itself failed (its own free-tier throttle) or NIM was also down with no
+		// fallback left, which would be rare, not the storm this was. Nothing
+		// further to fix in code unless Pollinations itself is now the one
+		// failing; that is a new, different signature.
+		test: (g) => g.service === 'three-ws-api' && g.status >= 500 && g.path === '/api/3d/generate',
+		class: 'owner',
+		action: `/api/3d/generate's provider chain (Vertex → NIM FLUX → HF fal-ai → HF nscale → Pollinations → Replicate) answers 502 generation_failed when every rung fails. Check which rung: curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[] | select(.name=="ai_providers" or .name=="object_storage")', and grep the app logs for "falling back"/"falling through" in the same window (npm run logs -- -s three-ws-api --app --since 1h --grep "falling back"). Vertex billing (row 20) and HF image-provider credits are owner-gated funding; nothing to fix in code unless a NEW rung (not Vertex/NIM/HF/Pollinations) is the one failing, or Pollinations itself is down with no paid Replicate token configured as a backstop. ${RUNBOOK} §forge-image-ladder-exhausted.`,
+	},
+	{
 		id: 'agent-networth-rpc-unavailable-503',
 		// api/agents/solana-wallet.js's handleNetWorth explicitly documents this:
 		// "every RPC path is down right now ... Return 503 + Retry-After (not
