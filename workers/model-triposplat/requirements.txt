@@ -1,0 +1,20 @@
+# -- TripoSplat (VAST-AI-Research, MIT) ---------------------------------------
+# `triposplat`/`model` are NOT pip-installable (two files, no setup.py or
+# pyproject.toml); the Dockerfile clones the repo to /opt/triposplat and puts
+# it on PYTHONPATH instead (same pattern as the sibling model-triposr worker's
+# `tsr` package). These four are the upstream README's own "Environment
+# Setup" step, verbatim, minus torch/torchvision (installed separately below,
+# pinned to this image's CUDA base).
+numpy
+safetensors
+pillow
+tqdm
+
+# -- Server ---------------------------------------------------------------------
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic>=2.0.0
+httpx>=0.27.0
+
+# -- GCP ---------------------------------------------------------------------
+google-cloud-storage==2.18.0
