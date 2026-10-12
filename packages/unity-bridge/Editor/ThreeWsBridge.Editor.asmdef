@@ -1,0 +1,20 @@
+{
+	"name": "ThreeWs.ForgeBridge.Editor",
+	"rootNamespace": "ThreeWs.ForgeBridge.Editor",
+	"references": [
+		"ThreeWs.ForgeBridge.Runtime",
+		"Unity.glTFast",
+		"Newtonsoft.Json"
+	],
+	"includePlatforms": [
+		"Editor"
+	],
+	"excludePlatforms": [],
+	"allowUnsafeCode": false,
+	"overrideReferences": false,
+	"precompiledReferences": [],
+	"autoReferenced": true,
+	"defineConstraints": [],
+	"versionDefines": [],
+	"noEngineReferences": false
+}

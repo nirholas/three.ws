@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-12T00:08:55.039Z",
+	"generated_at": "2026-10-12T01:09:39.541Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4036,
+	"total": 4038,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -15,6 +15,16 @@
 			"title": "Docs · Staked Event Markets",
 			"summary": "Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.",
 			"link": "/docs/event-markets-staking",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "launch",
+			"title": "Docs · Engine bridges",
+			"summary": "One Forge API contract, three real editor integrations: a Unity UPM package, a Godot addon, and an Unreal plugin, each generating a mesh from a prompt and importing it with the engine's own native glTF pipeline.",
+			"link": "/docs/engine-bridges",
 			"tags": [
 				"launch"
 			]
@@ -37,6 +47,17 @@
 			"link": "/docs/engine-qa",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Three new engine bridges: Unity, Godot, and Unreal, one prompt to a mesh in your editor",
+			"summary": "A shared contract (specs/ENGINE_BRIDGE.md) and three real, independent implementations: a Unity UPM package that imports with glTFast, a Godot addon that imports with Godot's own native GLTFDocument, and an Unreal plugin that imports through Unreal's Interchange glTF pipeline. Each one calls only the public Forge API (POST /api/forge to submit, GET /api/forge?job=<id> to poll, a plain HTTPS GET to download), the same free-first routing and anonymous x-forge-client auth every other Forge caller gets, with the same four import settings (generate_colliders, import_materials, scale, destination) mapped onto each engine's own equivalent. A dropdown and a Generate button in each editor: type a prompt, get a mesh dropped into your scene.",
+			"link": "/docs/engine-bridges",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
@@ -1520,27 +1541,6 @@
 			"link": null,
 			"tags": [
 				"docs"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "update",
-			"title": "A full setup guide for Grok Bot",
-			"summary": "There is now one page that covers connecting Grok Bot to three.ws end to end: the exact connector settings, which sign-in to pick, how scheduled runs collect long renders and retry without generating twice, the rate limits, the rule that an agent can never spend, and a fix for every connection problem.",
-			"link": "/docs/grok-bot",
-			"tags": [
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "update",
-			"title": "A new default engine for photo to 3D, with regional safeguards",
-			"summary": "Photo to 3D in the Forge now starts with TRELLIS.2, an open-source model that makes textured assets with full material detail and keeps transparency for glass and leaves. You can pick a detail level of 512, 1024 or 1536 when you generate. We also made sure that requests from the European Union, the United Kingdom and South Korea never use models whose license does not cover those regions, and that a request with no location signal takes the safe path too. The engine switches on as soon as its GPU worker is deployed, and until then the existing engines keep serving every request.",
-			"link": "/forge",
-			"tags": [
-				"feature",
-				"improvement"
 			]
 		}
 	]

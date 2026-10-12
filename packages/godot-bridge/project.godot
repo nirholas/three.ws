@@ -1,0 +1,16 @@
+; Engine configuration file.
+; This is a minimal project: it exists so the addon and the runnable example
+; below have a real project context, and so the headless smoke test
+; (test/smoke_test.gd) has a project.godot to run against.
+
+config_version=5
+
+[application]
+
+config/name="three.ws Forge Bridge example"
+run/main_scene="res://example/main.tscn"
+config/features=PackedStringArray("4.3", "Forward Plus")
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/three_ws_bridge/plugin.cfg")

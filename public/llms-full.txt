@@ -4561,6 +4561,12 @@ URL: https://three.ws/docs/engine-qa
 
 A free real-time-engine fitness grade for any 3D model: draw calls, material count, texel density, a per-level LOD triangle budget, and whether the mesh is cheap and closed enough to use as its own physics collider.
 
+### Docs · Engine bridges
+
+URL: https://three.ws/docs/engine-bridges
+
+One Forge API contract, three real editor integrations: a Unity UPM package, a Godot addon, and an Unreal plugin, each generating a mesh from a prompt and importing it with the engine's own native glTF pipeline.
+
 ### Docs · The remix economy
 
 URL: https://three.ws/docs/remix

@@ -1,0 +1,36 @@
+{
+	"name": "com.three-ws.forge-bridge",
+	"version": "0.1.0",
+	"displayName": "three.ws Forge Bridge",
+	"description": "Generate textured 3D models from a text prompt or reference photos with the free three.ws Forge pipeline, straight into the Unity Editor. Imports the result with glTFast, Unity's own glTF importer. No mock server: every call goes to the live public API documented in specs/ENGINE_BRIDGE.md.",
+	"unity": "2021.3",
+	"license": "Apache-2.0",
+	"author": {
+		"name": "three.ws",
+		"url": "https://three.ws"
+	},
+	"keywords": [
+		"3d",
+		"ai",
+		"forge",
+		"gltf",
+		"gltfast",
+		"three.ws"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/nirholas/three.ws.git",
+		"directory": "packages/unity-bridge"
+	},
+	"dependencies": {
+		"com.unity.cloud.gltfast": "5.1.0",
+		"com.unity.nuget.newtonsoft-json": "3.2.1"
+	},
+	"samples": [
+		{
+			"displayName": "Generate From Prompt",
+			"description": "A runnable example: a MonoBehaviour that performs a real text-to-3D generation and drops the imported mesh in front of the camera at runtime when Space is pressed.",
+			"path": "Samples~/GenerateFromPrompt"
+		}
+	]
+}

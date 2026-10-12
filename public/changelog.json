@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-12T00:08:55.012Z",
+	"generated_at": "2026-10-12T01:09:39.498Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Docs · Staked Event Markets",
 			"summary": "Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.",
 			"link": "/docs/event-markets-staking",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "launch",
+			"title": "Docs · Engine bridges",
+			"summary": "One Forge API contract, three real editor integrations: a Unity UPM package, a Godot addon, and an Unreal plugin, each generating a mesh from a prompt and importing it with the engine's own native glTF pipeline.",
+			"link": "/docs/engine-bridges",
 			"tags": [
 				"launch"
 			]
@@ -34,6 +44,17 @@
 			"link": "/docs/engine-qa",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Three new engine bridges: Unity, Godot, and Unreal, one prompt to a mesh in your editor",
+			"summary": "A shared contract (specs/ENGINE_BRIDGE.md) and three real, independent implementations: a Unity UPM package that imports with glTFast, a Godot addon that imports with Godot's own native GLTFDocument, and an Unreal plugin that imports through Unreal's Interchange glTF pipeline. Each one calls only the public Forge API (POST /api/forge to submit, GET /api/forge?job=<id> to poll, a plain HTTPS GET to download), the same free-first routing and anonymous x-forge-client auth every other Forge caller gets, with the same four import settings (generate_colliders, import_materials, scale, destination) mapped onto each engine's own equivalent. A dropdown and a Generate button in each editor: type a prompt, get a mesh dropped into your scene.",
+			"link": "/docs/engine-bridges",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-12",
+			"title": "Three new engine bridges: Unity, Godot, and Unreal, one prompt to a mesh in your editor",
+			"link": "/docs/engine-bridges",
+			"summary": "A shared contract (specs/ENGINE_BRIDGE.md) and three real, independent implementations: a Unity UPM package that imports with glTFast, a Godot addon that imports with Godot's own native GLTFDocument, and an Unreal plugin that imports through Unreal's Interchange glTF pipeline. Each one calls only the public Forge API (POST /api/forge to submit, GET /api/forge?job=<id> to poll, a plain HTTPS GET to download), the same free-first routing and anonymous x-forge-client auth every other Forge caller gets, with the same four import settings (generate_colliders, import_materials, scale, destination) mapped onto each engine's own equivalent. A dropdown and a Generate button in each editor: type a prompt, get a mesh dropped into your scene.",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-12",
 			"title": "Engine QA: a free real-time-engine fitness grade, plus real LOD chains",
 			"link": "/docs/engine-qa",
 			"summary": "A new free grade answers the question a game engine's import step asks that neither glTF validation nor simulation readiness does: draw calls, material count, texel density against the mesh's real-world size, a per-level triangle budget for a LOD chain, and whether the mesh is cheap and closed enough to use as its own physics collider. GET/POST /api/3d/engine-qa grades any public GLB (format=stl exports a watertight mesh for printing); the same browser-only checks run with zero network cost in Rig Doctor, and the full grade with a one-click upgrade in the GLB viewer, through a shared <engine-qa> panel component. The underlying LOD builder (packages/glb-tools's buildLodChain, real meshoptimizer decimation tagged with MSFT_lod) is now also available on generation: send { \"lods\": true } to POST /api/forge and the finished creation gets a combined LOD-chain variant alongside its delivered mesh, the same opt-in, fire-and-forget pattern as the existing web-delivery variant.",

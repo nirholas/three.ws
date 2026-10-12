@@ -5896,6 +5896,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/engine-bridges",
+					"title": "Docs · Engine bridges",
+					"description": "One Forge API contract, three real editor integrations: a Unity UPM package, a Godot addon, and an Unreal plugin, each generating a mesh from a prompt and importing it with the engine's own native glTF pipeline.",
+					"added": "2026-10-12",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/remix",
 					"title": "Docs · The remix economy",
 					"description": "Every model carries its provenance, and creators can opt a finished model into the remix bazaar: when someone builds on it, a creator-set royalty routes back automatically. How lineage and royalties are enforced.",

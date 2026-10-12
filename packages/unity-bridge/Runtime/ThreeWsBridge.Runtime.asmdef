@@ -1,0 +1,17 @@
+{
+	"name": "ThreeWs.ForgeBridge.Runtime",
+	"rootNamespace": "ThreeWs.ForgeBridge",
+	"references": [
+		"Unity.glTFast",
+		"Newtonsoft.Json"
+	],
+	"includePlatforms": [],
+	"excludePlatforms": [],
+	"allowUnsafeCode": false,
+	"overrideReferences": false,
+	"precompiledReferences": [],
+	"autoReferenced": true,
+	"defineConstraints": [],
+	"versionDefines": [],
+	"noEngineReferences": false
+}

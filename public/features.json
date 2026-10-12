@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-12T00:08:54.995Z",
+	"generated_at": "2026-10-12T01:09:39.462Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -9059,6 +9059,18 @@
 					"path": "/docs/engine-qa",
 					"title": "Docs · Engine QA",
 					"description": "A free real-time-engine fitness grade for any 3D model: draw calls, material count, texel density, a per-level LOD triangle budget, and whether the mesh is cheap and closed enough to use as its own physics collider.",
+					"added": "2026-10-12",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/engine-bridges",
+					"title": "Docs · Engine bridges",
+					"description": "One Forge API contract, three real editor integrations: a Unity UPM package, a Godot addon, and an Unreal plugin, each generating a mesh from a prompt and importing it with the engine's own native glTF pipeline.",
 					"added": "2026-10-12",
 					"auth": null,
 					"indexable": true,
