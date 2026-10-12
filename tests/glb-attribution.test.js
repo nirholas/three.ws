@@ -69,6 +69,21 @@ describe('stampGlbAttribution', () => {
 		expect(out.json.asset.extras.pipeline).toBe('TRELLIS reconstructor');
 	});
 
+	it('stamps an explicit engine and model version, authoritative over the sniffed generator', () => {
+		const glb = buildGlb({ asset: { version: '2.0', generator: 'some upstream string' } });
+		const out = parseGlb(stampGlbAttribution(glb, { engine: 'Tripo', engineVersion: 'v3.1-20260211' }));
+		expect(out.json.asset.extras.engine).toBe('Tripo');
+		expect(out.json.asset.extras.engineVersion).toBe('v3.1-20260211');
+		expect(out.json.asset.extras.pipeline).toBe('some upstream string');
+	});
+
+	it('omits engine/engineVersion from extras when not given', () => {
+		const glb = buildGlb({ asset: { version: '2.0' } });
+		const out = parseGlb(stampGlbAttribution(glb, { prompt: 'x' }));
+		expect(out.json.asset.extras.engine).toBeUndefined();
+		expect(out.json.asset.extras.engineVersion).toBeUndefined();
+	});
+
 	it('keeps the BIN chunk byte-for-byte and updates lengths/alignment', () => {
 		const bin = new Uint8Array([1, 2, 3, 4, 5, 6, 7]); // 7 bytes → padded chunk
 		const glb = buildGlb({ asset: { version: '2.0' } }, bin);

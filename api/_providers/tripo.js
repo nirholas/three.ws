@@ -42,6 +42,11 @@ function modelVersion() {
 	return DEFAULT_MODEL_VERSION;
 }
 
+// Exported so forge.js and the exported-file attribution stamp can name the
+// exact version a job ran on, without a second source of truth: this is the
+// same value threaded into every request body below.
+export const tripoModelVersion = modelVersion;
+
 function mapStatus(s) {
 	switch (String(s || '').toLowerCase()) {
 		case 'queued':

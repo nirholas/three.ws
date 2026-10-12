@@ -33,6 +33,7 @@ import { gradeSimReadiness } from './sim-readiness.js';
 import { putGrade } from './sim-readiness-store.js';
 import { dispatchWebhooks } from './webhook-dispatch.js';
 import { autoCredentialForBytes } from './auto-provenance.js';
+import { tripoModelVersion } from '../_providers/tripo.js';
 import { validForgeDestination } from '../../src/shared/forge-destinations.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
@@ -1296,6 +1297,10 @@ export async function listCreations({ clientKey, limit = 24 }) {
 			backend: r.backend ?? null,
 			tier: r.tier ?? null,
 			path: r.path ?? null,
+			// Not a stored column: Tripo's model version is a deployment-wide
+			// setting, read live the same way pollJob does, so the gallery card
+			// names exactly what produced the mesh without a schema change.
+			engine_version: r.backend === 'tripo' ? tripoModelVersion() : null,
 			model_category: r.model_category ?? 'other',
 			created_at: r.created_at,
 		}));

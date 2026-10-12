@@ -60,6 +60,7 @@ import { textToImage, synthesizeTurnaroundViews } from './_mcp3d/text-to-image.j
 import { createRegenProvider } from './_providers/replicate.js';
 import { createRegenProvider as createGcpProvider } from './_providers/gcp.js';
 import { BYOK_PROVIDER_FACTORIES } from './_providers/byok-registry.js';
+import { tripoModelVersion } from './_providers/tripo.js';
 import {
 	PATHS,
 	DEFAULT_PATH,
@@ -1862,6 +1863,7 @@ async function startJobWithBody(req, res, body) {
 					path,
 					tier: tier.id,
 					backend: backendId,
+					engine_version: byokProvider === 'tripo' ? tripoModelVersion() : undefined,
 					prompt: prompt || null,
 					preview_image_url: previewImageUrl,
 					reference_image_urls: isImageMode ? [imageUrls[0]] : [],
@@ -1904,6 +1906,7 @@ async function startJobWithBody(req, res, body) {
 				path,
 				tier: tier.id,
 				backend: backendId,
+				engine_version: byokProvider === 'tripo' ? tripoModelVersion() : undefined,
 				prompt: prompt || null,
 				preview_image_url: previewImageUrl,
 				reference_image_urls: isImageMode ? [imageUrls[0]] : [],
@@ -3164,6 +3167,10 @@ async function pollJob(req, res, jobId) {
 				backend: meta.backend ?? null,
 				tier: meta.tier ?? null,
 				path: meta.path ?? null,
+				// Tripo's model version is a deployment-wide setting (TRIPO_MODEL_VERSION
+				// or the provider's default), read live rather than stored per row: it
+				// cannot drift between submit and poll within the same job's lifetime.
+				engine_version: meta.backend === 'tripo' ? tripoModelVersion() : null,
 				// The reference view this job reconstructs from. The submit response
 				// already carries it, but a client that never saw that response -
 				// a coalesced job, a resumed job after a reload, a poll-time failover

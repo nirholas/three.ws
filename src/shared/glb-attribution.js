@@ -16,11 +16,11 @@ export const FORGE_GENERATOR = 'three.ws Forge — text/image → 3D (https://th
 
 /**
  * @param {ArrayBuffer} buffer  A complete .glb file.
- * @param {{ prompt?: string, source?: string }} [meta]
+ * @param {{ prompt?: string, source?: string, engine?: string, engineVersion?: string }} [meta]
  * @returns {ArrayBuffer} A new .glb with attribution stamped into asset.*.
  * @throws {Error} If the buffer is not a well-formed glTF 2.0 binary.
  */
-export function stampGlbAttribution(buffer, { prompt, source = 'https://three.ws/forge' } = {}) {
+export function stampGlbAttribution(buffer, { prompt, source = 'https://three.ws/forge', engine, engineVersion } = {}) {
 	const dv = new DataView(buffer);
 	if (buffer.byteLength < 20 || dv.getUint32(0, true) !== GLB_MAGIC) {
 		throw new Error('not a GLB container');
@@ -42,6 +42,11 @@ export function stampGlbAttribution(buffer, { prompt, source = 'https://three.ws
 	json.asset.generator = FORGE_GENERATOR;
 	extras.source = source;
 	if (prompt) extras.prompt = String(prompt).slice(0, 500);
+	// Deterministic, platform-reported engine name/version: authoritative over
+	// extras.pipeline above, which only carries whatever string the upstream
+	// engine's own GLB happened to self-report.
+	if (engine) extras.engine = engine;
+	if (engineVersion) extras.engineVersion = engineVersion;
 	json.asset.extras = extras;
 
 	// Re-encode and pad to the 4-byte boundary the spec requires (0x20 for JSON).

@@ -2436,6 +2436,11 @@ function showResult(glbUrl, label, meta, { autoSaved = false, downloadUrl = null
 	}
 	linkResultTools(glbUrl);
 	els.download.href = downloadUrl || glbUrl;
+	// Carried to the download click handler below so the exported file's
+	// metadata can name the exact engine (and, for Tripo, model version) that
+	// produced it, deterministically rather than sniffed from the upstream GLB.
+	els.download.dataset.engine = meta?.backend || '';
+	els.download.dataset.engineVersion = meta?.engine_version || '';
 	els.download.setAttribute(
 		'download',
 		`${
@@ -2589,7 +2594,7 @@ async function loadGallery() {
 				.filter(Boolean)
 				.join(' ');
 			prov.title =
-				`${c.path === 'geometry' ? 'Geometry-first' : c.path === 'sketch' ? 'Sketch→3D' : 'Image path'} · ${c.backend || ''} · ${c.tier || ''}`.trim();
+				`${c.path === 'geometry' ? 'Geometry-first' : c.path === 'sketch' ? 'Sketch→3D' : 'Image path'} · ${c.backend || ''}${c.engine_version ? ` ${c.engine_version}` : ''} · ${c.tier || ''}`.trim();
 			card.appendChild(prov);
 		}
 
@@ -4097,6 +4102,8 @@ els.download.addEventListener('click', async (e) => {
 		if (!res.ok) throw new Error(`fetch ${res.status}`);
 		const stamped = stampGlbAttribution(await res.arrayBuffer(), {
 			prompt: els.resultLabel?.textContent || '',
+			engine: ENGINE_LABELS[els.download.dataset.engine] || els.download.dataset.engine || undefined,
+			engineVersion: els.download.dataset.engineVersion || undefined,
 		});
 		const blobUrl = URL.createObjectURL(new Blob([stamped], { type: 'model/gltf-binary' }));
 		const a = document.createElement('a');
