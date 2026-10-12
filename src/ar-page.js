@@ -1,15 +1,13 @@
 /**
  * /avatars/:id/ar and /agents/:id/ar: the dedicated AR experience page
  *
- * Fetches the entity (an avatar directly, or an agent's bound body), loads it
- * into a full-screen model-viewer with AR enabled.
- * If the avatar has a pre-generated usdz_url, sets it as ios-src immediately.
- * Otherwise converts the GLB to USDZ in-browser and sets a temporary object URL
- * so Quick Look works in the current session.
+ * Fetches the entity (an avatar directly, or an agent's bound body) and loads
+ * it into a full-screen <agent-3d ar>. The element owns AR end to end: it
+ * uses the avatar's pre-generated usdz_url (ios-src) when present, otherwise
+ * generates one in-browser on demand, and reports progress via the
+ * agent:ar-status / agent:ar-ready events wired in renderPage() below.
  */
 
-import { glbBlobToUsdzBlob } from './usdz-pipeline.js';
-import { glbBlobToAnimatedUsdzBlob, DEFAULT_AR_ANIMATION } from './usdz-animated.js';
 import { log } from './shared/log.js';
 import { mountViewSwitcher } from './view-switcher.js';
 
@@ -27,8 +25,6 @@ const entityId = fromPath || fromQuery || '';
 let avatarId = mode === 'avatar' ? entityId : '';
 
 const $ = (id) => document.getElementById(id);
-
-let usdzObjectUrl = null;
 
 async function init() {
 	if (!entityId) {
@@ -66,14 +62,7 @@ async function init() {
 	}
 
 	renderPage(avatar, glbUrl);
-
-	if (avatar.usdz_url) {
-		applyUsdzSrc(avatar.usdz_url);
-		setArReady();
-	} else {
-		// Auto-generate USDZ so AR works in this session
-		generateUsdz(glbUrl);
-	}
+	setStatus('Preparing AR preview…');
 }
 
 async function fetchAvatar(id) {
@@ -141,10 +130,16 @@ function renderPage(avatar, glbUrl) {
 	});
 
 	$('ar-share-btn').addEventListener('click', () => shareAvatar(avatar));
-}
 
-function applyUsdzSrc(src) {
-	$('ar-viewer').setAttribute('ios-src', src);
+	// <agent-3d ar> owns USDZ generation (on-device, animated-first with a
+	// static fallback) and AR-mode detection; it reports progress through
+	// these events instead of us driving the pipeline by hand.
+	viewer.addEventListener('agent:ar-status', (e) => setStatus(e.detail?.message));
+	viewer.addEventListener('agent:ar-ready', () => {
+		setArReady();
+		setStatus('AR preview ready');
+		setTimeout(() => setStatus(null), 2000);
+	});
 }
 
 function setArReady() {
@@ -159,52 +154,6 @@ function setStatus(msg) {
 	if (!msg) { el.hidden = true; return; }
 	txt.textContent = msg;
 	el.hidden = false;
-}
-
-// Prefer a living, animated avatar in AR; fall back to the proven static bake
-// if the avatar can't be animated (no rig, clip won't retarget, fetch fails).
-// Either way the user gets a correct avatar — animation is upside, never a gate.
-async function buildArUsdz(glbBlob) {
-	try {
-		setStatus('Bringing your avatar to life…');
-		const animResp = await fetch(DEFAULT_AR_ANIMATION);
-		if (!animResp.ok) throw new Error(`animation fetch ${animResp.status}`);
-		const animationGlbBlob = await animResp.blob();
-		return await glbBlobToAnimatedUsdzBlob(glbBlob, { animationGlbBlob });
-	} catch (err) {
-		log.warn('[ar-page] animated USDZ unavailable, using static:', err?.message);
-		setStatus('Generating AR preview…');
-		return glbBlobToUsdzBlob(glbBlob);
-	}
-}
-
-async function generateUsdz(glbUrl) {
-	const btn = $('ar-launch-btn');
-	setStatus('Preparing AR preview…');
-	btn.disabled = true;
-	btn.setAttribute('aria-busy', 'true');
-
-	try {
-		setStatus('Downloading model…');
-		const r = await fetch(glbUrl);
-		if (!r.ok) throw new Error(`GLB fetch ${r.status}`);
-		const glbBlob = await r.blob();
-
-		const usdzBlob = await buildArUsdz(glbBlob);
-
-		if (usdzObjectUrl) URL.revokeObjectURL(usdzObjectUrl);
-		usdzObjectUrl = URL.createObjectURL(usdzBlob);
-		applyUsdzSrc(usdzObjectUrl);
-
-		setArReady();
-		setStatus('AR preview ready');
-		setTimeout(() => setStatus(null), 2000);
-	} catch (err) {
-		$('ar-status').classList.add('is-error');
-		setStatus(`Couldn't generate AR preview: ${err.message}`);
-		btn.disabled = false;
-		btn.removeAttribute('aria-busy');
-	}
 }
 
 /**
@@ -313,9 +262,5 @@ document.addEventListener('DOMContentLoaded', () => {
 	init().catch((err) => {
 		log.error('[ar-page] init error', err);
 		showError('Something went wrong loading this avatar.', { retry: true });
-	});
-
-	window.addEventListener('beforeunload', () => {
-		if (usdzObjectUrl) URL.revokeObjectURL(usdzObjectUrl);
 	});
 });

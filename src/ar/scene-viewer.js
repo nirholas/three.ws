@@ -9,10 +9,13 @@ export function canUseSceneViewer() {
 	return isAndroid();
 }
 
-export function openSceneViewer(glbURL, { title = '', link = '' } = {}) {
+export function openSceneViewer(glbURL, { title = '', link = '', placement = 'floor' } = {}) {
 	const params = new URLSearchParams({ file: glbURL, mode: 'ar_preferred' });
 	if (title) params.set('title', title);
 	if (link) params.set('link', link);
+	// Scene Viewer defaults to floor placement; this is its documented switch
+	// for wall-mountable models (art, screens, anything meant to hang).
+	if (placement === 'wall') params.set('enable_vertical_placement', 'true');
 
 	// S.browser_fallback_url ensures the user lands back on the page if ARCore
 	// is missing rather than ending up on an error screen.

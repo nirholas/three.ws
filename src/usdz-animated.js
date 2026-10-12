@@ -26,8 +26,10 @@ import {
 	_bakedLocalPositions,
 	_coerceMaterialsToStandard,
 	_ensureNormals,
+	glbBlobToUsdzBlob,
 } from './usdz-pipeline.js';
 import { retargetClipToObject } from './animation-retarget.js';
+import { log } from './shared/log.js';
 
 // Default idle that ships in public/animations — a slow breathing loop that
 // reads as "alive" the instant the avatar lands in AR.
@@ -302,4 +304,30 @@ export async function glbBlobToAnimatedUsdzBlob(glbBlob, opts = {}) {
 	);
 
 	return new Blob([_packUsdz(files)], { type: 'model/vnd.usdz+zip' });
+}
+
+/**
+ * Best-effort USDZ for iOS Quick Look: prefer a living, animated avatar;
+ * fall back to the proven static bake if the avatar can't be animated (no
+ * rig, clip won't retarget, fetch fails). Either way the caller gets a
+ * correct USDZ: animation is upside, never a gate. Shared by `<agent-3d>`'s
+ * own AR wiring and anything else that needs on-device USDZ from a GLB.
+ *
+ * @param {Blob} glbBlob
+ * @param {object} [opts]
+ * @param {(message: string) => void} [opts.onStatus] progress text for a host UI
+ * @returns {Promise<Blob>}
+ */
+export async function buildBestEffortArUsdz(glbBlob, { onStatus } = {}) {
+	try {
+		onStatus?.('Bringing your avatar to life…');
+		const animResp = await fetch(DEFAULT_AR_ANIMATION);
+		if (!animResp.ok) throw new Error(`animation fetch ${animResp.status}`);
+		const animationGlbBlob = await animResp.blob();
+		return await glbBlobToAnimatedUsdzBlob(glbBlob, { animationGlbBlob });
+	} catch (err) {
+		log.warn('[usdz-animated] animated USDZ unavailable, using static:', err?.message);
+		onStatus?.('Generating AR preview…');
+		return glbBlobToUsdzBlob(glbBlob);
+	}
 }

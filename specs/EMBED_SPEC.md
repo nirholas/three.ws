@@ -68,6 +68,10 @@ name-plate) is **opt-in**:
 | `camera-controls` | boolean                    | off         | orbit, pan, zoom                  |
 | `auto-rotate`     | boolean                    | off         | slow Y-axis rotation              |
 | `ar`              | boolean                    | off         | WebXR / Scene Viewer / Quick Look |
+| `ar-modes`        | space-separated list       | `webxr scene-viewer quick-look` | which AR launch paths `activateAR()` is allowed to try, in order |
+| `ar-placement`    | `floor` \| `wall`          | `floor`     | surface the AR session should anchor to (Scene Viewer honors both; WebXR and Quick Look are floor-only) |
+| `ios-src`         | URL to a `.usdz`           | none        | pre-authored USDZ for Quick Look; when omitted, the element generates a best-effort USDZ from the GLB on device |
+| `variant-name`    | string                     | none        | selects a `KHR_materials_variants` material variant baked into the GLB; unset or unknown restores the default materials |
 | `shadows`         | boolean                    | on          | contact + soft shadows            |
 | `exposure`        | number                     | 1.0         | tone-map exposure                 |
 | `background`      | CSS color or `transparent` | transparent | canvas clear color                |
@@ -242,6 +246,15 @@ element.removeAttribute('avatar-chat');        // re-enable
 	<!-- AR button (inherits <model-viewer> pattern) -->
 	<button slot="ar-button">View in your space</button>
 
+	<!-- Hotspots: any element works. data-position places it in 3D (world
+	     space, "x y z"); data-camera-orbit "theta phi radius" (optional,
+	     degrees/degrees/world units) flies the camera there on click, paired
+	     with an optional data-camera-target "x y z". A hotspot with no
+	     data-camera-orbit is a plain label that just tracks its 3D position. -->
+	<button slot="hotspot" data-position="0 1.2 0.3" data-camera-orbit="20 75 2" data-camera-target="0 1.2 0">
+		Chest rig
+	</button>
+
 	<!-- Custom chat UI override -->
 	<div slot="chat">
 		<!-- host their own chat; hook events below -->
@@ -269,6 +282,10 @@ All events bubble and compose (`composed: true`).
 | `memory:write`        | `{ key, type }`           | memory updated                                |
 | `chain:resolved`      | `{ chain, agentId, cid }` | on-chain lookup succeeded                     |
 | `chain:tx`            | `{ hash, kind }`          | registration / update tx submitted            |
+| `agent:ar-status`     | `{ message }`             | progress text while an on-device USDZ generates for Quick Look |
+| `agent:ar-ready`      | `{ canActivateAR }`       | AR target configured; `activateAR()` is safe to call (may still be `canActivateAR: false` on a device with no usable AR mode) |
+| `agent:variants-ready`| `{ names }`               | the GLB's `KHR_materials_variants` list parsed (names only; fires once per load) |
+| `agent:variant-changed`| `{ name, requested, ok }`| `variant-name` applied; `ok` is `false` when `requested` did not match a known variant (default materials were restored) |
 
 ## JS API
 
@@ -284,6 +301,14 @@ el.clearConversation();
 await el.wave({ style: 'enthusiastic' });
 await el.lookAt('user');
 await el.play('clip-name');
+
+// AR, mirrors <model-viewer>'s own names
+el.canActivateAR;              // true once a usable AR mode (WebXR / Scene Viewer / Quick Look) is ready
+await el.activateAR();         // launches whichever mode ar-modes and the device both allow
+
+// KHR_materials_variants
+el.availableVariants;          // names baked into the loaded GLB, or []
+el.variantName = 'Red';        // switch live; set to null to restore the default materials
 
 // Skills
 await el.installSkill('ipfs://bafy.../dance/');
@@ -455,6 +480,10 @@ All bundle responses ship `access-control-allow-origin: *` and `cross-origin-res
 - Bundle version: tracks `package.json` `version` of the main repo. Pinning a `<MAJOR>.<MINOR>.<PATCH>` URL is the only forever-stable option — moving channels can ship security fixes that may include behavior changes within their semver range.
 
 ## Changelog
+
+### 2026-10-12 (AR/variant/hotspot contract, not an `<agent-3d>` version bump)
+
+- Added `ar-modes`, `ar-placement`, `ios-src`, and `variant-name` attributes, `canActivateAR` / `activateAR()` / `availableVariants` / `variantName` JS API, `agent:ar-status` / `agent:ar-ready` / `agent:variants-ready` / `agent:variant-changed` events, and the `slot="hotspot"` (`data-position`, `data-normal`, `data-camera-orbit`, `data-camera-target`) camera-fly-to pattern. `pages/ar.html` (`/avatars/:id/ar`, `/agents/:id/ar`) now runs entirely on `<agent-3d ar>`; it no longer loads a third-party viewer CDN.
 
 ### 2026-07-08 (embed v1 sibling runtime, not an `<agent-3d>` version bump)
 

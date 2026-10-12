@@ -32,12 +32,10 @@
 		<meta name="twitter:description" content="Type a prompt, get a real 3D model, and place it in your room: free text-to-3D with one-tap AR on any phone." data-i18n-attr="content:ar.meta_twitter_description" />
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=AR+Forge&amp;d=Type+a+prompt%2C+get+a+real+3D+model%2C+and+place+it+in+your+room%3A+free+text-to-3D+with+one-tap+AR+on+any+phone+%28WebXR%2C+Scene+Viewer%2C+Quick+Look%29+and+a+QR+handoff.&amp;p=%2Far" />
 
-		<script
-			type="module"
-			src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js"
-			integrity="sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p"
-			crossorigin="anonymous"
-		></script>
+		<!-- Absolute, and it has to stay absolute: dist/agent-3d/ is written by
+		     `npm run publish:lib` after the frontend build, so a root-relative
+		     module src fails the build (see pages/home.html for the same note). -->
+		<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 		<script type="module" src="/src/ar-page.js"></script>
 
 		<style>
@@ -220,15 +218,14 @@
 			}
 
 			/* ── Model viewer ────────────────────────────── */
-			model-viewer {
+			agent-3d#ar-viewer {
 				position: absolute;
 				inset: 0;
 				width: 100%;
 				height: 100%;
-				--poster-color: transparent;
 				background: transparent;
 			}
-			model-viewer::part(default-ar-button) {
+			agent-3d#ar-viewer::part(ar-button) {
 				display: none; /* we use our own button */
 			}
 
@@ -496,29 +493,12 @@
 				color: var(--on-accent);
 			}
 		</style>
-		<script src="/model-viewer-meshopt.js"></script>
 	</head>
 	<body>
 		<div class="ar-bg" aria-hidden="true"></div>
 
 		<div id="ar-shell">
-			<model-viewer
-				id="ar-viewer"
-				alt="Avatar"
-				camera-controls
-				auto-rotate
-				rotation-per-second="12deg"
-				interaction-prompt="none"
-				exposure="1.1"
-				shadow-intensity="0.8"
-				shadow-softness="0.9"
-				environment-image="neutral"
-				tone-mapping="aces"
-				ar
-				ar-modes="webxr scene-viewer quick-look"
-				ar-scale="auto"
-				reveal="auto"
-			></model-viewer>
+			<agent-3d id="ar-viewer" eager ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor"></agent-3d>
 
 			<header class="ar-topbar">
 				<a class="ar-back" id="ar-back-link" href="/marketplace">

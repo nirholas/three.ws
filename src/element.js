@@ -1,8 +1,10 @@
 // <agent-3d> — the web component that ships the whole framework in one tag.
 // See specs/EMBED_SPEC.md
 
-import { Box3, Color } from 'three';
+import { Box3, Color, Vector3 } from 'three';
 import { Viewer } from './viewer.js';
+import { createVariantController } from './khr-variants.js';
+import { buildBestEffortArUsdz } from './usdz-animated.js';
 import { Runtime, skillAccessFromAgentDetail } from './runtime/index.js';
 import { SkillPaymentModal, PaymentChip } from './payment-modal.js';
 import { SceneController } from './runtime/scene.js';
@@ -481,6 +483,21 @@ const BASE_STYLE = `
 		transition: opacity 0.4s;
 		pointer-events: none;
 	}
+	/* Hotspot layer: see the <slot name="hotspot"> comment in _renderShell.
+	   The layer itself never blocks orbit-drag/click-through; only a slotted
+	   hotspot element (positioned by _updateHotspots) takes pointer events. */
+	.hotspot-layer {
+		position: absolute;
+		inset: 0;
+		overflow: hidden;
+		pointer-events: none;
+	}
+	.hotspot-layer ::slotted([slot="hotspot"]) {
+		position: absolute;
+		left: 0;
+		top: 0;
+		pointer-events: auto;
+	}
 	/* Loading state — an invisible status region while the GLB streams in. The
 	   poster image (when supplied) fills the frame; otherwise the host sees
 	   transparent until the avatar paints. No silhouette placeholder. Kept as a
@@ -729,6 +746,12 @@ class Agent3DElement extends HTMLElement {
 			'wallet',
 			'sign-language',
 			'sonar',
+			'poster',
+			'ar',
+			'ar-modes',
+			'ar-placement',
+			'ios-src',
+			'variant-name',
 		];
 	}
 
@@ -745,6 +768,15 @@ class Agent3DElement extends HTMLElement {
 		this._manifest = null;
 		this._mounted = false;
 		this._booting = false;
+		// Bumped on every teardown/reboot so a stale _wirePostLoadMedia() run
+		// (variant parsing, USDZ generation) from a previous boot can tell it
+		// has been superseded and stop touching this element.
+		this._bootToken = 0;
+		this._variantController = null;
+		this._generatedUsdzUrl = null;
+		this._bodyUrl = null;
+		this._hotspotLayerEl = null;
+		this._hotspotSlotEl = null;
 		this._listening = false;
 		this._pillActive = false;
 		this._mqNarrow = null;
@@ -884,6 +916,8 @@ class Agent3DElement extends HTMLElement {
 		this._loadingEl = null;
 		this._stageEl = null;
 		this._posterEl = null;
+		this._hotspotLayerEl = null;
+		this._hotspotSlotEl = null;
 		this._nameplateEl = null;
 		this._chatEl = null;
 		this._inputEl = null;
@@ -965,6 +999,11 @@ class Agent3DElement extends HTMLElement {
 			this._applyLayout();
 		if (name === 'background') this._applyBackground();
 		if (name === 'name-plate') this._applyNamePlate();
+		if (name === 'poster' && this._posterEl) {
+			this._posterEl.style.backgroundImage = newVal ? `url(${newVal})` : '';
+		}
+		if (name === 'variant-name') this._applyVariantName();
+		if (['ar', 'ar-modes', 'ar-placement', 'ios-src'].includes(name)) this._refreshAR();
 		if (name === 'tracked-mint') {
 			this._detachTradeReactions?.();
 			this._detachTradeReactions = newVal
@@ -1033,6 +1072,23 @@ class Agent3DElement extends HTMLElement {
 		if (this.getAttribute('poster')) {
 			poster.style.backgroundImage = `url(${this.getAttribute('poster')})`;
 		}
+		// Hotspot layer: a <slot name="hotspot"> over the stage. Each assigned
+		// light-DOM child self-describes a world position (data-position, and
+		// optionally data-normal) that gets projected to screen space every
+		// frame, and an optional saved camera view (data-camera-orbit /
+		// data-camera-target) that fires on click. Inserted before the poster
+		// so the (DOM-order-stacked) poster still covers hotspots while loading.
+		const hotspotLayer = document.createElement('div');
+		hotspotLayer.className = 'hotspot-layer';
+		hotspotLayer.part = 'hotspot-layer';
+		const hotspotSlot = document.createElement('slot');
+		hotspotSlot.name = 'hotspot';
+		hotspotLayer.appendChild(hotspotSlot);
+		hotspotLayer.addEventListener('click', (e) => this._onHotspotClick(e));
+		this.shadowRoot.appendChild(hotspotLayer);
+		this._hotspotLayerEl = hotspotLayer;
+		this._hotspotSlotEl = hotspotSlot;
+
 		this.shadowRoot.appendChild(poster);
 		this._posterEl = poster;
 
@@ -1778,6 +1834,7 @@ class Agent3DElement extends HTMLElement {
 
 	async _boot() {
 		if (this._booting || this._mounted) return;
+		this._bootToken++;
 		this._renderShell();
 		this._booting = true;
 		try {
@@ -1863,6 +1920,7 @@ class Agent3DElement extends HTMLElement {
 			this._viewer = viewer;
 			viewer._afterAnimateHooks = viewer._afterAnimateHooks || [];
 			viewer._afterAnimateHooks.push(() => this._updateBubblePosition());
+			viewer._afterAnimateHooks.push(() => this._updateHotspots());
 			// Apply the embed surface attributes (`background`, `name-plate`) now
 			// that the viewer exists. They are also re-applied on attribute change.
 			// A bare avatar carries no name-plate unless the embedder asks for one.
@@ -1900,12 +1958,15 @@ class Agent3DElement extends HTMLElement {
 			// gateway (ipfs.io rate-limits browsers routinely) used to leave a
 			// third-party embed with a name and no avatar and no way to recover.
 			const bodyCandidates = uriCandidates(manifest.body?.uri);
+			let loadedCandidate = null;
+			let loadedGltf = null;
 			if (bodyCandidates.length) {
 				let bodyErr;
 				let loaded = false;
 				for (const candidate of bodyCandidates) {
 					try {
-						await viewer.load(candidate, '', new Map());
+						loadedGltf = await viewer.load(candidate, '', new Map());
+						loadedCandidate = candidate;
 						loaded = true;
 						break;
 					} catch (err) {
@@ -1952,6 +2013,12 @@ class Agent3DElement extends HTMLElement {
 					};
 					requestAnimationFrame(_nudge);
 				}
+			}
+			if (loadedGltf && loadedCandidate) {
+				this._bodyUrl = loadedCandidate;
+				// Fire-and-forget: variant parsing and AR/USDZ generation are
+				// progressive enhancements that must never hold up agent:ready.
+				this._wirePostLoadMedia(loadedCandidate, loadedGltf, this._bootToken);
 			}
 			this._scene = new SceneController(viewer);
 			// Initial playback. Chat avatars idle-loop (then walk on stream); bare
@@ -2566,6 +2633,154 @@ class Agent3DElement extends HTMLElement {
 		this._thoughtBubbleEl.dataset.tailDir = bubbleBottom < headRelY ? 'up' : 'down';
 	}
 
+	// --- Hotspots (slot="hotspot", data-position/data-normal, data-camera-orbit/data-camera-target) ---
+
+	_parseVec3(value) {
+		if (!value) return null;
+		const parts = value.trim().split(/\s+/).map(Number);
+		if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return null;
+		return new Vector3(parts[0], parts[1], parts[2]);
+	}
+
+	_updateHotspots() {
+		const slot = this._hotspotSlotEl;
+		if (!slot || !this._viewer) return;
+		const elements = slot.assignedElements ? slot.assignedElements() : [];
+		for (const el of elements) {
+			const worldPos = this._parseVec3(el.dataset.position);
+			const screen = worldPos && this._viewer.projectToScreen(worldPos);
+			if (!screen) {
+				el.hidden = true;
+				continue;
+			}
+			el.hidden = screen.behindCamera;
+			el.style.transform = `translate(-50%, -50%) translate(${screen.x}px, ${screen.y}px)`;
+		}
+	}
+
+	// Saved-camera-view hotspots fly the orbit camera there on click/tap; a
+	// hotspot with no data-camera-orbit is a plain label/marker and does nothing.
+	_onHotspotClick(e) {
+		const target = e.target.closest?.('[data-camera-orbit]');
+		if (!target || !this._viewer) return;
+		const orbit = this._parseVec3(target.dataset.cameraOrbit);
+		if (!orbit) return;
+		const camTarget = this._parseVec3(target.dataset.cameraTarget) || new Vector3(0, 0, 0);
+		this._viewer.setCameraOrbit(orbit.x, orbit.y, orbit.z, camTarget);
+	}
+
+	// --- KHR_materials_variants ---
+
+	async _applyVariantName() {
+		if (!this._variantController) return;
+		const name = this.getAttribute('variant-name') || null;
+		const ok = await this._variantController.select(name);
+		this._viewer?.invalidate?.();
+		this._emit(
+			'agent:variant-changed',
+			{ name: this._variantController.current, requested: name, ok },
+			{ bubbles: true, composed: true },
+		);
+	}
+
+	async _setupVariants(bytes, gltf, token) {
+		let controller = null;
+		try {
+			controller = await createVariantController(bytes, gltf);
+		} catch (err) {
+			log.warn('[agent-3d] KHR_materials_variants parsing failed', err);
+		}
+		if (token !== this._bootToken) return;
+		this._variantController = controller;
+		if (!controller) return;
+		this._emit(
+			'agent:variants-ready',
+			{ names: controller.names.slice() },
+			{ bubbles: true, composed: true },
+		);
+		if (this.hasAttribute('variant-name')) await this._applyVariantName();
+	}
+
+	// --- AR (ar, ar-modes, ar-placement, ios-src) ---
+
+	async _fetchBodyBytes(url) {
+		const res = await fetch(url);
+		if (!res.ok) throw new Error(`glb fetch ${res.status}`);
+		return res.arrayBuffer();
+	}
+
+	async _setupAR(glbUrl, bytes, token) {
+		if (!this._viewer) return;
+		if (!this.hasAttribute('ar')) {
+			await this._viewer.setARTarget(null, null);
+			return;
+		}
+		const modes = (this.getAttribute('ar-modes') || 'webxr scene-viewer quick-look')
+			.trim()
+			.split(/\s+/)
+			.filter(Boolean);
+		const placement = this.getAttribute('ar-placement') === 'wall' ? 'wall' : 'floor';
+
+		let usdzUrl = this.getAttribute('ios-src') || null;
+		if (!usdzUrl && modes.includes('quick-look')) {
+			try {
+				const usdzBlob = await buildBestEffortArUsdz(new Blob([bytes]), {
+					onStatus: (message) => {
+						if (token !== this._bootToken) return;
+						this._emit('agent:ar-status', { message }, { bubbles: true, composed: true });
+					},
+				});
+				if (token !== this._bootToken) return;
+				usdzUrl = URL.createObjectURL(usdzBlob);
+				if (this._generatedUsdzUrl) URL.revokeObjectURL(this._generatedUsdzUrl);
+				this._generatedUsdzUrl = usdzUrl;
+			} catch (err) {
+				// Quick Look just stays unavailable; Scene Viewer / WebXR still work.
+				log.warn('[agent-3d] on-device USDZ generation failed', err);
+			}
+		}
+		if (token !== this._bootToken) return;
+		await this._viewer.setARTarget(glbUrl, usdzUrl, { modes, placement });
+		if (token !== this._bootToken) return;
+		this._emit(
+			'agent:ar-ready',
+			{ canActivateAR: this._viewer.canActivateAR },
+			{ bubbles: true, composed: true },
+		);
+	}
+
+	async _refreshAR() {
+		if (!this._mounted || !this._viewer) return;
+		if (!this.hasAttribute('ar')) {
+			await this._viewer.setARTarget(null, null);
+			return;
+		}
+		if (!this._bodyUrl) return;
+		const token = this._bootToken;
+		try {
+			const bytes = await this._fetchBodyBytes(this._bodyUrl);
+			if (token !== this._bootToken) return;
+			await this._setupAR(this._bodyUrl, bytes, token);
+		} catch (err) {
+			log.warn('[agent-3d] AR attribute refresh failed', err);
+		}
+	}
+
+	async _wirePostLoadMedia(glbUrl, gltf, token) {
+		let bytes;
+		try {
+			bytes = await this._fetchBodyBytes(glbUrl);
+		} catch (err) {
+			log.warn('[agent-3d] could not re-fetch body bytes for variants/AR', err);
+			return;
+		}
+		if (token !== this._bootToken) return;
+		await Promise.allSettled([
+			this._setupVariants(bytes, gltf, token),
+			this._setupAR(glbUrl, bytes, token),
+		]);
+	}
+
 	_appendStreamChunkToChat(chunk) {
 		if (!this._chatEl || !chunk) return;
 		if (!this._streamingMsgEl) {
@@ -3061,6 +3276,14 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	_teardown() {
+		// Invalidate any in-flight _wirePostLoadMedia() run from this boot.
+		this._bootToken++;
+		this._variantController = null;
+		this._bodyUrl = null;
+		if (this._generatedUsdzUrl) {
+			URL.revokeObjectURL(this._generatedUsdzUrl);
+			this._generatedUsdzUrl = null;
+		}
 		// A torn-down element must not leave a microphone open or a tone playing.
 		this.stopSonar();
 		_untrackLiveViewer(this);
@@ -3145,6 +3368,31 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	// --- Public JS API ---
+
+	/** True once an AR launch path (Quick Look, Scene Viewer, or WebXR) is ready on this device. Mirrors `<model-viewer>`. */
+	get canActivateAR() {
+		return !!this._viewer?.canActivateAR;
+	}
+
+	/** Launch AR via whichever path `canActivateAR` found. Mirrors `<model-viewer>`'s `activateAR()`. */
+	async activateAR() {
+		if (!this._mounted) await this._waitForReady();
+		return (await this._viewer?.activateAR?.()) ?? false;
+	}
+
+	/** Variant names declared by the loaded GLB's KHR_materials_variants data, or `[]` if it has none. */
+	get availableVariants() {
+		return this._variantController?.names.slice() ?? [];
+	}
+
+	get variantName() {
+		return this.getAttribute('variant-name') || null;
+	}
+
+	set variantName(name) {
+		if (name) this.setAttribute('variant-name', name);
+		else this.removeAttribute('variant-name');
+	}
 
 	say(text, opts = {}) {
 		if (this._pendingSay) {

@@ -916,6 +916,23 @@ export class Viewer {
 		};
 	}
 
+	/**
+	 * Project a world-space point to CSS pixels on the canvas, for hotspot
+	 * placement. `behindCamera` is true once the point is behind the near
+	 * plane (NDC z > 1), the one case translate(x,y) alone renders wrong
+	 * (a point behind the camera projects to a flipped position in front).
+	 */
+	projectToScreen(worldPos) {
+		if (!this.activeCamera || !this.renderer) return null;
+		const pos = worldPos.clone().project(this.activeCamera);
+		const canvas = this.renderer.domElement;
+		return {
+			x: (pos.x * 0.5 + 0.5) * canvas.clientWidth,
+			y: (-pos.y * 0.5 + 0.5) * canvas.clientHeight,
+			behindCamera: pos.z > 1,
+		};
+	}
+
 	render(deltaTime = 0) {
 		// Additive bloom bleeds bright highlights into neighbouring pixels —
 		// including the alpha-0 background. Over a transparent canvas that halo
@@ -1108,35 +1125,58 @@ export class Viewer {
 	 * Update the AR button visibility and target URLs after a model loads.
 	 * @param {string|null} glbUrl  — absolute or relative URL to the GLB (for Android/WebXR)
 	 * @param {string|null} usdzUrl — absolute or relative URL to a USDZ (for iOS Quick Look)
+	 * @param {{modes?: string[], placement?: 'floor'|'wall'}} [opts]
+	 *   `modes` allow-lists which AR launch paths may be used (mirrors
+	 *   `<model-viewer>`'s `ar-modes` tokens: "webxr", "scene-viewer",
+	 *   "quick-look"); omitted or empty means all three. `placement` only
+	 *   reaches Scene Viewer today (WebXR hit-testing here is floor-only).
 	 */
-	async setARTarget(glbUrl, usdzUrl = null) {
+	async setARTarget(glbUrl, usdzUrl = null, { modes, placement } = {}) {
 		this._arGlbUrl = glbUrl;
 		this._arUsdzUrl = usdzUrl;
+		this._arModes = modes && modes.length ? modes : ['webxr', 'scene-viewer', 'quick-look'];
+		this._arPlacement = placement === 'wall' ? 'wall' : 'floor';
 
 		if (!this._arBtn) return;
 
 		const hasGlb = !!glbUrl;
 		const hasUsdz = !!usdzUrl;
 
-		const iosOk = hasUsdz && canUseQuickLook();
-		const androidOk = hasGlb && canUseSceneViewer();
-		const webxrOk = hasGlb && (await WebXRSession.isSupported());
+		const iosOk = hasUsdz && this._arModes.includes('quick-look') && canUseQuickLook();
+		const androidOk = hasGlb && this._arModes.includes('scene-viewer') && canUseSceneViewer();
+		const webxrOk =
+			hasGlb && this._arModes.includes('webxr') && (await WebXRSession.isSupported());
 
 		this._arBtn.hidden = !(iosOk || androidOk || webxrOk);
 	}
 
-	async _launchAR() {
-		if (canUseQuickLook() && this._arUsdzUrl) {
+	/** True once `setARTarget()` has found at least one usable AR launch path on this device. */
+	get canActivateAR() {
+		return !!this._arBtn && !this._arBtn.hidden;
+	}
+
+	/**
+	 * Launch AR on whichever path this device and the `ar-modes` allow-list
+	 * both support: on-device USDZ via iOS Quick Look, a Scene Viewer intent
+	 * on Android, or a WebXR immersive-ar session otherwise. A second call
+	 * while a WebXR session is live ends it instead (the button doubles as
+	 * an exit control). Returns whether a launch path ran.
+	 */
+	async activateAR() {
+		const modes = this._arModes || ['webxr', 'scene-viewer', 'quick-look'];
+		if (modes.includes('quick-look') && canUseQuickLook() && this._arUsdzUrl) {
 			openQuickLook(this._arUsdzUrl);
-		} else if (canUseSceneViewer() && this._arGlbUrl) {
-			openSceneViewer(this._arGlbUrl);
-		} else if (this._arGlbUrl) {
-			// Desktop WebXR
+			return true;
+		} else if (modes.includes('scene-viewer') && canUseSceneViewer() && this._arGlbUrl) {
+			openSceneViewer(this._arGlbUrl, { placement: this._arPlacement });
+			return true;
+		} else if (modes.includes('webxr') && this._arGlbUrl) {
+			// Desktop/Android WebXR
 			if (this._xrSession) {
 				await this._xrSession.end();
 				this._xrSession = null;
 				this._arBtn.classList.remove('ar-btn--active');
-				return;
+				return true;
 			}
 			this._xrSession = new WebXRSession(this, {
 				onEnd: () => {
@@ -1146,7 +1186,25 @@ export class Viewer {
 			});
 			await this._xrSession.start();
 			this._arBtn.classList.add('ar-btn--active');
+			return true;
 		}
+		return false;
+	}
+
+	/**
+	 * Tween the camera to a saved orbit, used by hotspot click-to-fly-to-view.
+	 * @param {number} thetaDeg  azimuthal angle in degrees
+	 * @param {number} phiDeg    polar angle in degrees (0 = straight down +Y)
+	 * @param {number} radius    distance from `target`
+	 * @param {Vector3} [target]
+	 */
+	setCameraOrbit(thetaDeg, phiDeg, radius, target = new Vector3(0, 0, 0)) {
+		if (!this.controls || !this.activeCamera) return false;
+		const theta = (thetaDeg * Math.PI) / 180;
+		const phi = (phiDeg * Math.PI) / 180;
+		const offset = new Vector3().setFromSphericalCoords(radius, phi, theta);
+		this._tweenCamera(target.clone().add(offset), target.clone(), 700);
+		return true;
 	}
 
 	resize() {
@@ -2023,11 +2081,14 @@ export class Viewer {
 			'</svg>' +
 			'<span class="ar-btn__label">AR</span>';
 		arBtn.hidden = true;
-		arBtn.addEventListener('click', () => this._launchAR());
+		arBtn.part = 'ar-button';
+		arBtn.addEventListener('click', () => this.activateAR());
 		this.el.appendChild(arBtn);
 		this._arBtn = arBtn;
 		this._arGlbUrl = null;
 		this._arUsdzUrl = null;
+		this._arModes = ['webxr', 'scene-viewer', 'quick-look'];
+		this._arPlacement = 'floor';
 		this._xrSession = null;
 
 		if (isMobile) {

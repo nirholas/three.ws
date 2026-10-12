@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-12T01:09:39.541Z",
+	"generated_at": "2026-10-12T02:18:07.365Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4038,
+	"total": 4039,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -37,6 +37,16 @@
 			"link": "/docs/engine-qa",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "<agent-3d> gets model-viewer's AR contract: ar-modes, variants, hotspots, and /ar drops the third-party CDN",
+			"summary": "<agent-3d> now matches the AR/viewer contract the market expects from model-viewer (Apache-2.0): ar-modes picks which launch paths to try (WebXR, Scene Viewer, Quick Look), ar-placement anchors floor or wall, ios-src supplies a pre-baked USDZ or the element generates a best-effort one on device, variant-name switches a GLB's real KHR_materials_variants materials live, and any element with slot=\"hotspot\" tracks a 3D position and flies the camera to a saved orbit on click. /avatars/:id/ar and /agents/:id/ar (pages/ar.html) now run entirely on <agent-3d ar>; the page no longer loads a third-party viewer from a CDN.",
+			"link": "/avatars",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1531,16 +1541,6 @@
 			"link": "/workbench",
 			"tags": [
 				"launch"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "update",
-			"title": "A build plan for the next 27 platform upgrades",
-			"summary": "We surveyed the strongest open-source crypto and agent projects, compared them with three.ws, and wrote the plan for closing every gap: agents that learn skills from experience, a payer command line, on-chain spending budgets, more trading venues, safer chat trading and more.",
-			"link": null,
-			"tags": [
-				"docs"
 			]
 		}
 	]

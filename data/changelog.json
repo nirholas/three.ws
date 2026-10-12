@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-12",
+			"title": "<agent-3d> gets model-viewer's AR contract: ar-modes, variants, hotspots, and /ar drops the third-party CDN",
+			"link": "/avatars",
+			"summary": "<agent-3d> now matches the AR/viewer contract the market expects from model-viewer (Apache-2.0): ar-modes picks which launch paths to try (WebXR, Scene Viewer, Quick Look), ar-placement anchors floor or wall, ios-src supplies a pre-baked USDZ or the element generates a best-effort one on device, variant-name switches a GLB's real KHR_materials_variants materials live, and any element with slot=\"hotspot\" tracks a 3D position and flies the camera to a saved orbit on click. /avatars/:id/ar and /agents/:id/ar (pages/ar.html) now run entirely on <agent-3d ar>; the page no longer loads a third-party viewer from a CDN.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-12",
 			"title": "Three new engine bridges: Unity, Godot, and Unreal, one prompt to a mesh in your editor",
 			"link": "/docs/engine-bridges",
 			"summary": "A shared contract (specs/ENGINE_BRIDGE.md) and three real, independent implementations: a Unity UPM package that imports with glTFast, a Godot addon that imports with Godot's own native GLTFDocument, and an Unreal plugin that imports through Unreal's Interchange glTF pipeline. Each one calls only the public Forge API (POST /api/forge to submit, GET /api/forge?job=<id> to poll, a plain HTTPS GET to download), the same free-first routing and anonymous x-forge-client auth every other Forge caller gets, with the same four import settings (generate_colliders, import_materials, scale, destination) mapped onto each engine's own equivalent. A dropdown and a Generate button in each editor: type a prompt, get a mesh dropped into your scene.",
