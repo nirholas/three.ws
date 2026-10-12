@@ -32,7 +32,18 @@
  */
 
 import { log } from '../shared/log.js';
+import { loadModule } from '../shared/load-module.js';
 import { VoiceActivityDetector, VAD_ASSET_PATH, VAD_SAMPLE_RATE, float32ToWav } from '../voice/vad.js';
+
+// Loaded from the CDN, never bundled: transformers.js drags in onnxruntime-web's
+// WebGPU runtime, tens of MB. A bare `import('@huggingface/transformers')` is
+// statically analyzable, so Vite/Rollup bundles it anyway wherever the build
+// doesn't split dynamic imports into their own chunk (the single-file CDN embed
+// in vite.config.js's libConfig sets inlineDynamicImports for exactly that
+// reason), blowing that embed from ~600KB to 70+MB and tripping Cloud Run's
+// response-size limit. loadModule()'s import() specifier is a runtime string,
+// which no bundler can resolve at build time, so this stays lazy everywhere.
+const TRANSFORMERS_CDN_URL = 'https://esm.sh/@huggingface/transformers@4.3.1';
 
 export const ON_DEVICE_MODELS = Object.freeze({
 	english: 'onnx-community/moonshine-base-ONNX',
@@ -130,7 +141,7 @@ function loadTranscriber(model, onProgress) {
 		for (const listener of entry.listeners) listener(event);
 	};
 	entry.promise = (async () => {
-		transformersModule ||= import('@huggingface/transformers');
+		transformersModule ||= loadModule(TRANSFORMERS_CDN_URL);
 		const { pipeline, env } = await transformersModule;
 		// Models come from the Hugging Face CDN only. Without this the library first
 		// probes /models/<id>/ on the current origin, which on a host page that
