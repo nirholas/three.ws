@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-12T02:18:07.365Z",
+	"generated_at": "2026-10-12T05:36:16.742Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4039,
+	"total": 4040,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -57,6 +57,17 @@
 			"link": "/docs/engine-qa",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Real VRM avatars: spring bones, expressions, and .vrma clips via @pixiv/three-vrm",
+			"summary": "The hand-rolled VRM loader is gone. vrm-boot.js now registers the real VRMLoaderPlugin (@pixiv/three-vrm) on the three.ws GLTFLoader, so VRM 0.x and 1.0 avatars get genuine MToon materials, spring-bone physics, node constraints, look-at, and all 18 expression presets, driven live by vrm.update(delta) in AnimationManager and mapped onto the ARKit-52 face-capture driver. VRMAnimationLoaderPlugin loads .vrma clips into the same retargeting pipeline that drives non-VRM humanoids, so a single clip plays on either. The Ready Player Me import page (/import-rpm) now accepts .vrm files alongside .glb, and a long-standing bug that 400'd every import at the final save step (it sent an invalid source value) is fixed. docs/avatar-engines.md upgrades three-vrm from interop to live.",
+			"link": "/docs/avatar-engines",
+			"tags": [
+				"feature",
+				"fix"
 			]
 		},
 		{
@@ -1529,16 +1540,6 @@
 			"title": "Tutorial · Grok Bot recipes",
 			"summary": "Six jobs to hand Grok Bot, each with the exact sentence, the tools it calls in order, and the real output of running that sequence against production: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image as a 3D model, a weekly agent report and a $THREE market brief.",
 			"link": "/tutorials/grok-bot-recipes",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "launch",
-			"title": "Workbench",
-			"summary": "A desktop-style image-to-3D workspace in the browser. Drop a photo, run it through a visual workflow of real GPU nodes (background removal, mesh generation, remeshing, auto-rigging, AI material restyle), then smooth, decimate and export GLB, OBJ, STL or PLY. Build and save your own workflows in a node editor. Free, no signup.",
-			"link": "/workbench",
 			"tags": [
 				"launch"
 			]

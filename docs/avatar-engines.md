@@ -62,7 +62,7 @@ Mesh and glTF output can be animated by the skinned-mesh pipeline. Gaussian and 
 
 Each entry also carries an `integrationNote`, one sentence naming the specific three.ws surface or bone-mapping involved, so `reference` never reads as a shrug.
 
-The current distribution is 2 `live`, 3 `interop`, 3 `splat`, and 16 `reference`. That last number is the point of the atlas: most of the highest-fidelity work in this field is research code under a non-commercial license, and three.ws deliberately does **not** wire any of it into the paid generation backend. Only commercial-use mesh engines deep-link into the live pipeline. Non-commercial research engines are surfaced with their repository and paper for self-hosted and academic use, and that is the whole extent of the relationship.
+The current distribution is 3 `live`, 2 `interop`, 3 `splat`, and 16 `reference`. That last number is the point of the atlas: most of the highest-fidelity work in this field is research code under a non-commercial license, and three.ws deliberately does **not** wire any of it into the paid generation backend. Only commercial-use mesh engines deep-link into the live pipeline. Non-commercial research engines are surfaced with their repository and paper for self-hosted and academic use, and that is the whole extent of the relationship.
 
 ## The registry
 
@@ -114,7 +114,7 @@ Every field below is reproduced from [`src/avatar-engines-data.js`](../src/avata
 | Mixamo | Adobe | 2008 | gltf | Free for use (Adobe terms) | Yes | live | Cloud service |
 | Ready Player Me (retired) | Ready Player Me (Netflix) | 2020 | gltf | Commercial SDK (service discontinued) | No | reference | Cloud API (offline) |
 | VRM / UniVRM | VRM Consortium · pixiv | 2018 | gltf | MIT | Yes | interop | Client |
-| three-vrm | pixiv | 2020 | gltf | MIT | Yes | interop | Client (Three.js) |
+| three-vrm | pixiv | 2020 | gltf | MIT | Yes | live | Client (Three.js) |
 | Avaturn | Avaturn | 2022 | gltf | Commercial SDK | Yes | interop | Cloud API |
 
 ## Using the page

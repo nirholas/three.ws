@@ -1421,6 +1421,58 @@ describe('canonicalizeGLBBones (full GLB rewrite)', () => {
 		const jLen = dv.getUint32(12, true);
 		expect(20 + jLen).toBe(buffer.byteLength);
 	});
+
+	// best3d order 075 task 4: the import landing accepts a .vrm export and
+	// repairs its rig through this same function before upload. VRM files are
+	// ordinary GLB containers with a VRoid-style skeleton plus VRM-specific
+	// extension JSON (VRMC_vrm's humanBones point at node *indices*, not
+	// names). canonicalizeGLBBones must rename the joints the Mixamo clip
+	// library needs without touching node order or any extension block, since
+	// a shifted index would break @pixiv/three-vrm's humanoid resolution.
+	it('renames VRoid joints in a VRM 1.0 GLB without disturbing the VRMC_vrm/VRMC_springBone extension blocks', () => {
+		const nodes = [
+			{ name: 'J_Bip_C_Hips', children: [1] },
+			{ name: 'J_Bip_C_Spine', children: [2] },
+			{ name: 'J_Bip_L_UpperArm' },
+			{ name: 'J_Sec_Hair1_01' }, // VRM spring-bone joint, not a humanoid bone
+		];
+		const vrmExtension = {
+			specVersion: '1.0',
+			humanoid: {
+				humanBones: {
+					hips: { node: 0 },
+					spine: { node: 1 },
+					leftUpperArm: { node: 2 },
+				},
+			},
+		};
+		const springBoneExtension = {
+			specVersion: '1.0',
+			colliderGroups: [],
+			springs: [{ name: 'hair', joints: [{ node: 3, stiffness: 0.5, gravityPower: 0.5, gravityDir: [0, -1, 0], dragForce: 0.3, hitRadius: 0.02 }] }],
+		};
+		const ab = buildGLB({
+			nodes,
+			skins: [{ joints: [0, 1, 2, 3] }],
+			extensionsUsed: ['VRMC_vrm', 'VRMC_springBone'],
+			extensions: { VRMC_vrm: vrmExtension, VRMC_springBone: springBoneExtension },
+		});
+
+		const { buffer, renamed } = canonicalizeGLBBones(ab);
+		expect(renamed).toBe(3); // the three humanoid joints; the spring-bone-only node is untouched
+
+		const json = readGLBJson(buffer);
+		expect(json.nodes[0].name).toBe('Hips');
+		expect(json.nodes[1].name).toBe('Spine');
+		expect(json.nodes[2].name).toBe('LeftArm');
+		expect(json.nodes[3].name).toBe('J_Sec_Hair1_01');
+
+		// The VRM extensions reference nodes by index, never by name, so the
+		// rename must leave both blocks byte-for-byte identical.
+		expect(json.extensionsUsed).toEqual(['VRMC_vrm', 'VRMC_springBone']);
+		expect(json.extensions.VRMC_vrm).toEqual(vrmExtension);
+		expect(json.extensions.VRMC_springBone).toEqual(springBoneExtension);
+	});
 });
 
 describe('canonicalizeArmatureOrientation', () => {

@@ -611,8 +611,8 @@ export const ENGINES = Object.freeze([
 		license: 'MIT',
 		commercial: true,
 		compute: 'Client (Three.js)',
-		integration: 'interop',
-		integrationNote: 'The Three.js VRM loader, same renderer family as the three.ws viewer, so VRM heads/bodies render with no extra runtime.',
+		integration: 'live',
+		integrationNote: 'vrm-boot.js registers the real VRMLoaderPlugin on the three.ws GLTFLoader: VRM 0.x and 1.0 avatars get genuine spring-bone physics, node constraints, look-at, and the 18 expression presets, driven live by vrm.update(delta) in AnimationManager.',
 		blurb: 'The official Three.js loader for VRM avatars: spring-bone physics, expressions, and look-at, in the browser.',
 		links: {
 			repo: 'https://github.com/pixiv/three-vrm',

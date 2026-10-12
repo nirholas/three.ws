@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-12T02:18:07.341Z",
+	"generated_at": "2026-10-12T05:36:16.720Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -54,6 +54,17 @@
 			"link": "/docs/engine-qa",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Real VRM avatars: spring bones, expressions, and .vrma clips via @pixiv/three-vrm",
+			"summary": "The hand-rolled VRM loader is gone. vrm-boot.js now registers the real VRMLoaderPlugin (@pixiv/three-vrm) on the three.ws GLTFLoader, so VRM 0.x and 1.0 avatars get genuine MToon materials, spring-bone physics, node constraints, look-at, and all 18 expression presets, driven live by vrm.update(delta) in AnimationManager and mapped onto the ARKit-52 face-capture driver. VRMAnimationLoaderPlugin loads .vrma clips into the same retargeting pipeline that drives non-VRM humanoids, so a single clip plays on either. The Ready Player Me import page (/import-rpm) now accepts .vrm files alongside .glb, and a long-standing bug that 400'd every import at the final save step (it sent an invalid source value) is fixed. docs/avatar-engines.md upgrades three-vrm from interop to live.",
+			"link": "/docs/avatar-engines",
+			"tags": [
+				"feature",
+				"fix"
 			]
 		},
 		{

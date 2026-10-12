@@ -47,6 +47,14 @@
 			<description>A new free grade answers the question a game engine's import step asks that neither glTF validation nor simulation readiness does: draw calls, material count, texel density against the mesh's real-world size, a per-level triangle budget for a LOD chain, and whether the mesh is cheap and closed enough to use as its own physics collider. GET/POST /api/3d/engine-qa grades any public GLB (format=stl exports a watertight mesh for printing); the same browser-only checks run with zero network cost in Rig Doctor, and the full grade with a one-click upgrade in the GLB viewer, through a shared &lt;engine-qa&gt; panel component. The underlying LOD builder (packages/glb-tools's buildLodChain, real meshoptimizer decimation tagged with MSFT_lod) is now also available on generation: send { &quot;lods&quot;: true } to POST /api/forge and the finished creation gets a combined LOD-chain variant alongside its delivered mesh, the same opt-in, fire-and-forget pattern as the existing web-delivery variant.</description>
 		</item>
 		<item>
+			<title>Real VRM avatars: spring bones, expressions, and .vrma clips via @pixiv/three-vrm</title>
+			<link>https://three.ws/docs/avatar-engines</link>
+			<guid isPermaLink="false">2026-10-12:Real VRM avatars: spring bones, expressions, and .vrma clips via @pixiv/three-vrm</guid>
+			<pubDate>Mon, 12 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The hand-rolled VRM loader is gone. vrm-boot.js now registers the real VRMLoaderPlugin (@pixiv/three-vrm) on the three.ws GLTFLoader, so VRM 0.x and 1.0 avatars get genuine MToon materials, spring-bone physics, node constraints, look-at, and all 18 expression presets, driven live by vrm.update(delta) in AnimationManager and mapped onto the ARKit-52 face-capture driver. VRMAnimationLoaderPlugin loads .vrma clips into the same retargeting pipeline that drives non-VRM humanoids, so a single clip plays on either. The Ready Player Me import page (/import-rpm) now accepts .vrm files alongside .glb, and a long-standing bug that 400'd every import at the final save step (it sent an invalid source value) is fixed. docs/avatar-engines.md upgrades three-vrm from interop to live.</description>
+		</item>
+		<item>
 			<title>Three new engine bridges: Unity, Godot, and Unreal, one prompt to a mesh in your editor</title>
 			<link>https://three.ws/docs/engine-bridges</link>
 			<guid isPermaLink="false">2026-10-12:Three new engine bridges: Unity, Godot, and Unreal, one prompt to a mesh in your editor</guid>
