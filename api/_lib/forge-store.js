@@ -558,6 +558,50 @@ export function buildWebVariant({ buffer, creationId, keyPrefix }) {
 		});
 }
 
+// The opt-in LOD chain variant: a real MSFT_lod GLB (packages/glb-tools's
+// buildLodChain, meshoptimizer decimation) a real-time engine can switch levels
+// from at runtime, built alongside the base mesh when the caller asks for it
+// (forge-options.js's `lods` flag). Same reasoning as buildWebVariant above:
+// a SECOND object (glb_url stays exactly the requested output_format), built
+// fire-and-forget after the row is already 'done' so a slow or failed build
+// never delays delivery of the mesh itself. lod_levels carries the per-level
+// triangle/vertex counts so a reader never has to fetch and parse the GLB just
+// to show the chain's shape.
+export function buildLodVariant({ buffer, creationId, keyPrefix }) {
+	if (!buffer?.length) return Promise.resolve(null);
+	const key = `${keyPrefix}.lod.glb`;
+	return Promise.resolve()
+		.then(() => import('../../packages/glb-tools/src/lod.js'))
+		.then(({ buildLodChain }) => buildLodChain(buffer))
+		.then(async (chain) => {
+			const levels = chain.levels.map((l) => ({
+				name: l.name,
+				ratio: l.ratio,
+				triangleCount: l.triangleCount,
+				vertexCount: l.vertexCount,
+			}));
+			await putObject({
+				key,
+				body: chain.combined,
+				contentType: 'model/gltf-binary',
+				metadata: { source: 'forge-lod-variant' },
+			});
+			await sql`
+				update forge_creations
+				set lod_glb_key = ${key},
+					lod_glb_url = ${publicUrl(key)},
+					lod_levels = ${JSON.stringify(levels)},
+					updated_at = now()
+				where id = ${creationId}
+			`;
+			return { key, url: publicUrl(key), levels };
+		})
+		.catch((err) => {
+			console.warn('[forge-store] LOD chain variant failed:', err?.message);
+			return null;
+		});
+}
+
 // Copy a finished generation into durable storage and flip the row to 'done'.
 // Copies the mesh (required) and the reference image (best-effort). Returns the
 // durable { id, glbUrl, previewImageUrl, quality, compression } or null on any
@@ -584,7 +628,11 @@ export function buildWebVariant({ buffer, creationId, keyPrefix }) {
 //              glTF's default fully-metallic material renders them as rough
 //              metal). Best-effort like the rest of the chain; pass false to
 //              deliver the lane's own materials untouched.
-export async function materializeCreation({ replicateJobId, clientKey, glbUrl, quality = false, compress = null, cleanup = true, derivePbr = true }) {
+//   lods     - build and store a real MSFT_lod chain (buildLodVariant above).
+//              Off by default: it is real decimation work, worth its own opt-in
+//              exactly like forge-options.js documents. Fire-and-forget, same
+//              as the web-delivery variant it sits beside.
+export async function materializeCreation({ replicateJobId, clientKey, glbUrl, quality = false, compress = null, cleanup = true, derivePbr = true, lods = false }) {
 	if (!forgeStoreEnabled() || !replicateJobId || !glbUrl) return null;
 	const existing = await findByJob({ replicateJobId, clientKey });
 	if (!existing) return null;
@@ -670,6 +718,8 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 		// …and a phone-sized delivery variant. See buildWebVariant for why this is
 		// a second object and why it runs after the row is already 'done'.
 		buildWebVariant({ buffer: glb.buffer, creationId: existing.id, keyPrefix });
+		// …and, when the caller opted in, a real LOD chain. See buildLodVariant.
+		if (lods) buildLodVariant({ buffer: glb.buffer, creationId: existing.id, keyPrefix });
 		// A finished, signed-in creation is a qualifying streak action + the
 		// trigger for the "first creation" badge. Fire-and-forget — never blocks
 		// delivery of the model itself.

@@ -20,6 +20,10 @@
 //     completion pass (glb-pbr-derive.js) runs on every delivered mesh, because
 //     an albedo-only material is a defect rather than a preference. Send
 //     `derive_pbr: false` to receive the lane's own materials untouched.
+//   • lods              : opt-IN. Build a real MSFT_lod chain (packages/glb-tools
+//     buildLodChain) alongside the base mesh and store it as a separate variant,
+//     same real-decimation work the Engine QA panel's "Build & grade LOD chain"
+//     upgrade already triggers on demand (see public/engine-qa-panel.js).
 //
 // normalizeForgeOptions() validates and clamps; an explicitly-present but invalid
 // value is reported in `errors` so the endpoint can answer 400 with an actionable
@@ -60,6 +64,7 @@ function compressionFor(format) {
  *   fillOtherSides: boolean,     // synthesize the other sides from one photo
  *   numParts: number | null,     // PartCrafter's requested part count (2-16)
  *   derivePbr: boolean,          // material completion pass, true unless opted out
+ *   lods: boolean,               // build and store a real MSFT_lod chain, opt-in
  *   hasOptions: boolean,         // true iff any non-default option was supplied
  *   errors: Array<{ field: string, message: string }>,
  * }}
@@ -203,6 +208,17 @@ export function normalizeForgeOptions(body) {
 		}
 	}
 
+	// lods: opt-IN. Builds a real LOD chain in addition to the base mesh; off by
+	// default because it is real decimation work, same reasoning as fill_other_sides.
+	let lods = false;
+	if (b.lods !== undefined && b.lods !== null) {
+		if (typeof b.lods !== 'boolean') {
+			errors.push({ field: 'lods', message: 'lods must be true or false.' });
+		} else {
+			lods = b.lods;
+		}
+	}
+
 	const hasOptions =
 		seed !== null ||
 		outputFormat !== 'glb' ||
@@ -212,7 +228,8 @@ export function normalizeForgeOptions(body) {
 		viewLabels !== null ||
 		fillOtherSides ||
 		numParts !== null ||
-		!derivePbr;
+		!derivePbr ||
+		lods;
 
 	return {
 		seed,
@@ -225,6 +242,7 @@ export function normalizeForgeOptions(body) {
 		fillOtherSides,
 		numParts,
 		derivePbr,
+		lods,
 		hasOptions,
 		errors,
 	};
@@ -261,5 +279,6 @@ export function summarizeForgeOptions(opts) {
 		fill_other_sides: Boolean(opts.fillOtherSides),
 		num_parts: opts.numParts ?? null,
 		derive_pbr: opts.derivePbr !== false,
+		lods: Boolean(opts.lods),
 	};
 }

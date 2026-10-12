@@ -159,6 +159,21 @@ describe('normalizeForgeOptions: num_parts (PartCrafter)', () => {
 	});
 });
 
+describe('normalizeForgeOptions: lods (LOD chain)', () => {
+	it('accepts lods as a boolean and defaults to false', () => {
+		expect(normalizeForgeOptions({ lods: true }).lods).toBe(true);
+		expect(normalizeForgeOptions({}).lods).toBe(false);
+	});
+
+	it('rejects a non-boolean lods', () => {
+		expect(normalizeForgeOptions({ lods: 'yes' }).errors[0].field).toBe('lods');
+	});
+
+	it('flips hasOptions when lods is requested', () => {
+		expect(normalizeForgeOptions({ lods: true }).hasOptions).toBe(true);
+	});
+});
+
 describe('summarizeForgeOptions', () => {
 	it('echoes the resolved options for the response', () => {
 		const o = normalizeForgeOptions({ seed: 9, output_format: 'glb-draco', texture_size: 1024 });
@@ -174,7 +189,13 @@ describe('summarizeForgeOptions', () => {
 			// Material completion is on unless the caller opts out, and the echo
 			// says so, so a client can tell why its delivered file carries maps.
 			derive_pbr: true,
+			lods: false,
 		});
+	});
+
+	it('echoes lods when requested', () => {
+		const o = normalizeForgeOptions({ lods: true });
+		expect(summarizeForgeOptions(o).lods).toBe(true);
 	});
 
 	it('echoes num_parts when supplied', () => {

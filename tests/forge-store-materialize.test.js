@@ -69,7 +69,7 @@ vi.mock('../api/_lib/forge-events.js', () => ({
 	recordGenerationEvent: vi.fn(async () => {}),
 }));
 
-const { materializeCreation } = await import('../api/_lib/forge-store.js');
+const { materializeCreation, buildLodVariant } = await import('../api/_lib/forge-store.js');
 
 function stubFetch(buf) {
 	global.fetch = vi.fn(async () => ({
@@ -176,5 +176,37 @@ describe('materializeCreation — quality + compression (additive, opt-in)', () 
 		expect(out).not.toBeNull();
 		expect(out.quality.valid).toBe(false);
 		expect(out.quality.flag).toBe('invalid');
+	});
+});
+
+describe('buildLodVariant: real MSFT_lod chain (prompt-071 "LOD and Engine QA" work order)', () => {
+	// Opt-in, fire-and-forget variant builder materializeCreation calls when the
+	// caller sends { lods: true } (api/_lib/forge-options.js). Tested directly
+	// against the real bundled GLB, through the real buildLodChain pipeline
+	// (packages/glb-tools), with only the storage/db boundary stubbed, matching
+	// this file's existing conventions for the other variant/pipeline passes.
+	it('builds a real, strictly-decreasing LOD chain and stores it as a third object', async () => {
+		const out = await buildLodVariant({ buffer: FOX_GLB, creationId: existingRow.id, keyPrefix: `forge/client-1/${existingRow.id}` });
+		expect(out).not.toBeNull();
+		expect(out.key).toBe(`forge/client-1/${existingRow.id}.lod.glb`);
+		expect(out.url).toBe(`https://cdn.example.com/forge/client-1/${existingRow.id}.lod.glb`);
+		expect(out.levels.length).toBeGreaterThanOrEqual(2);
+		for (let i = 1; i < out.levels.length; i++) {
+			expect(out.levels[i].triangleCount).toBeLessThanOrEqual(out.levels[i - 1].triangleCount);
+		}
+
+		const written = putObjectMock.mock.calls.find((c) => c[0].key.endsWith('.lod.glb'));
+		expect(written).toBeTruthy();
+		expect(written[0].body.length).toBeGreaterThan(0);
+
+		const update = sqlMock.mock.calls.map((c) => c[0].join(' ')).find((text) => text.includes('lod_glb_key'));
+		expect(update).toBeTruthy();
+	}, 20_000);
+
+	it('returns null without writing anything for an empty buffer', async () => {
+		putObjectMock.mockClear();
+		const out = await buildLodVariant({ buffer: Buffer.alloc(0), creationId: existingRow.id, keyPrefix: 'forge/client-1/empty' });
+		expect(out).toBeNull();
+		expect(putObjectMock).not.toHaveBeenCalled();
 	});
 });
