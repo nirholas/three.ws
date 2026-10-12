@@ -1235,6 +1235,147 @@
 				border-color: rgba(248, 113, 113, 0.6);
 				color: var(--danger);
 			}
+			.al-edit-row {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				flex-wrap: wrap;
+				font-size: 11.5px;
+				color: var(--text-3);
+			}
+			.al-edit-field {
+				display: flex;
+				align-items: center;
+				gap: 5px;
+			}
+			.al-trim-input,
+			.al-blend-input {
+				appearance: none;
+				width: 56px;
+				border: 1px solid var(--border);
+				background: rgba(255, 255, 255, 0.04);
+				color: var(--text);
+				font: inherit;
+				font-size: 11.5px;
+				font-family: ui-monospace, monospace;
+				padding: 4px 6px;
+				border-radius: 6px;
+			}
+			.al-trim-input:focus-visible,
+			.al-blend-input:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 1px;
+			}
+			.al-loop {
+				appearance: none;
+				margin-left: auto;
+				border: 1px solid var(--border);
+				background: rgba(255, 255, 255, 0.04);
+				color: var(--text-3);
+				font: inherit;
+				font-size: 11.5px;
+				padding: 5px 10px;
+				border-radius: 7px;
+				cursor: pointer;
+				transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+			}
+			.al-loop:hover {
+				background: rgba(255, 255, 255, 0.09);
+			}
+			.al-loop:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			.al-loop.is-on {
+				background: rgba(34, 211, 238, 0.16);
+				border-color: rgba(34, 211, 238, 0.4);
+				color: var(--text);
+			}
+			.al-save {
+				appearance: none;
+				flex: 0 0 auto;
+				border: 1px solid rgba(34, 211, 238, 0.45);
+				background: rgba(34, 211, 238, 0.12);
+				color: var(--text);
+				font: inherit;
+				font-size: 12px;
+				font-weight: 600;
+				padding: 7px 12px;
+				border-radius: 8px;
+				cursor: pointer;
+				transition: background var(--duration-fast) var(--ease-standard);
+			}
+			.al-save:hover {
+				background: rgba(34, 211, 238, 0.22);
+			}
+			.al-save:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			.al-save:disabled {
+				opacity: 0.6;
+				cursor: not-allowed;
+			}
+			.al-save-form {
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+			}
+			.al-save-label {
+				display: flex;
+				flex-direction: column;
+				gap: 5px;
+				font-size: 12px;
+				color: var(--text-3);
+			}
+			.al-save-name,
+			.al-save-vis {
+				border: 1px solid var(--border);
+				background: rgba(255, 255, 255, 0.04);
+				color: var(--text);
+				font: inherit;
+				font-size: 13px;
+				padding: 8px 10px;
+				border-radius: 8px;
+			}
+			.al-save-name:focus-visible,
+			.al-save-vis:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 1px;
+			}
+			.al-save-actions {
+				display: flex;
+				justify-content: flex-end;
+				gap: 8px;
+			}
+			.al-save-cancel,
+			.al-save-submit {
+				appearance: none;
+				border: 1px solid var(--border);
+				background: rgba(255, 255, 255, 0.04);
+				color: var(--text);
+				font: inherit;
+				font-size: 12.5px;
+				padding: 7px 14px;
+				border-radius: 8px;
+				cursor: pointer;
+			}
+			.al-save-submit {
+				border-color: rgba(34, 211, 238, 0.45);
+				background: rgba(34, 211, 238, 0.16);
+				font-weight: 600;
+			}
+			.al-save-cancel:hover {
+				background: rgba(255, 255, 255, 0.09);
+			}
+			.al-save-submit:hover {
+				background: rgba(34, 211, 238, 0.26);
+			}
+			.al-save-cancel:focus-visible,
+			.al-save-submit:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
 
 			/* ── Timeline ───────────────────────────────────────── */
 			#pose-timeline {

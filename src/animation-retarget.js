@@ -925,3 +925,112 @@ export function parseClipJSON(json, name) {
 	if (name) clip.name = name;
 	return clip;
 }
+
+/**
+ * Cut a clip down to [startTime, endTime] (seconds, clamped to the clip's own
+ * duration) and re-zero its times so the trimmed clip starts at 0. Used by
+ * Animation Studio's trim handles before export/save so a generated or preset
+ * clip can be shortened to the useful part without re-authoring it as
+ * keyframes.
+ *
+ * Boundary samples are taken through each track's own interpolant (quaternion
+ * tracks slerp, vector tracks lerp) rather than nearest-keyframe, so a cut that
+ * lands between two keyframes still starts and ends on the exact pose the
+ * player would have shown there.
+ *
+ * @param {AnimationClip} clip
+ * @param {number} startTime
+ * @param {number} endTime
+ * @returns {AnimationClip}
+ */
+export function trimClip(clip, startTime, endTime) {
+	const duration = clip.duration;
+	const start = Math.max(0, Math.min(startTime, duration));
+	const end = Math.max(start + 1 / 1000, Math.min(endTime, duration));
+	if (start <= 1e-6 && end >= duration - 1e-6) return clip.clone();
+
+	const out = clip.clone();
+	for (let i = 0; i < out.tracks.length; i++) {
+		const srcTrack = clip.tracks[i];
+		const track = out.tracks[i];
+		const itemSize = track.values.length / track.times.length;
+		const interpolant = srcTrack.createInterpolant();
+
+		const newTimes = [start];
+		const newValues = Array.from(interpolant.evaluate(start));
+		for (let t = 0; t < srcTrack.times.length; t++) {
+			const time = srcTrack.times[t];
+			if (time > start && time < end) {
+				newTimes.push(time);
+				const i0 = t * itemSize;
+				for (let c = 0; c < itemSize; c++) newValues.push(srcTrack.values[i0 + c]);
+			}
+		}
+		newTimes.push(end);
+		newValues.push(...interpolant.evaluate(end));
+
+		const ctor = track.constructor;
+		out.tracks[i] = new ctor(
+			track.name,
+			newTimes.map((t) => t - start),
+			newValues,
+		);
+	}
+	out.duration = end - start;
+	out.resetDuration();
+	return out;
+}
+
+// Quaternion track names end in `.quaternion`; every other track this platform
+// authors (`.position`, `.scale`) blends with plain per-component lerp.
+const QUATERNION_TRACK_RE = /\.quaternion$/;
+
+/**
+ * Crossfade the tail of a clip into its own first pose so it loops without a
+ * pop. Standard game-animation "loop blend": over the last `blendSeconds` of
+ * the clip, each track's samples are interpolated (slerp for quaternion
+ * tracks, lerp otherwise) toward the value the clip started with, weighted by
+ * how far into the blend window the sample sits, so the last frame equals the
+ * first frame exactly, and the approach is gradual rather than a jump cut.
+ *
+ * @param {AnimationClip} clip
+ * @param {number} blendSeconds
+ * @returns {AnimationClip}
+ */
+export function blendClipLoop(clip, blendSeconds) {
+	const maxBlend = clip.duration / 2;
+	const blend = Math.max(0, Math.min(blendSeconds, maxBlend));
+	if (blend <= 1e-6) return clip.clone();
+
+	const out = clip.clone();
+	const blendStart = clip.duration - blend;
+	const q1 = new Quaternion();
+	const q2 = new Quaternion();
+
+	for (let i = 0; i < out.tracks.length; i++) {
+		const srcTrack = clip.tracks[i];
+		const track = out.tracks[i];
+		const isQuat = QUATERNION_TRACK_RE.test(track.name);
+		const itemSize = track.values.length / track.times.length;
+		const startValues = Array.from(srcTrack.createInterpolant().evaluate(0));
+
+		for (let t = 0; t < track.times.length; t++) {
+			const time = track.times[t];
+			if (time < blendStart) continue;
+			const weight = Math.min(1, (time - blendStart) / blend);
+			const i0 = t * itemSize;
+			if (isQuat) {
+				q1.fromArray(track.values, i0);
+				q2.fromArray(startValues, 0);
+				q1.slerp(q2, weight).toArray(track.values, i0);
+			} else {
+				for (let c = 0; c < itemSize; c++) {
+					const a = track.values[i0 + c];
+					const b = startValues[c];
+					track.values[i0 + c] = a + (b - a) * weight;
+				}
+			}
+		}
+	}
+	return out;
+}

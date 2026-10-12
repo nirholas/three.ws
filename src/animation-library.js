@@ -12,7 +12,7 @@
 // the constructor, and signals the host when a preview takes over the figure so
 // the keyframe timeline can yield.
 
-import { AnimationMixer, LoopOnce, LoopRepeat } from 'three';
+import { AnimationClip, AnimationMixer, LoopOnce, LoopRepeat } from 'three';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 
 import { curate } from './animation-presets.js';
@@ -21,9 +21,14 @@ import {
 	retargetClipToRig,
 	scaleClipSpeed,
 	parseClipJSON,
+	trimClip,
+	blendClipLoop,
 	MIN_COVERAGE,
 } from './animation-retarget.js';
+import { Modal } from './shared/modal.js';
 import { log } from './shared/log.js';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const MANIFEST_URL = '/animations/manifest.json';
 // A rig needs a real share of the canonical skeleton before presets read as
@@ -58,6 +63,7 @@ export class AnimationLibrary {
 	 * @param {{
 	 *   host: HTMLElement,
 	 *   getRig: () => object|null,
+	 *   getAvatarId?: () => string|null,
 	 *   onPreviewStart?: () => void,
 	 *   onPreviewStop?: () => void,
 	 *   setStatus?: (msg: string, kind?: string) => void,
@@ -66,6 +72,7 @@ export class AnimationLibrary {
 	constructor(opts) {
 		this.host = opts.host;
 		this.getRig = opts.getRig;
+		this.getAvatarId = opts.getAvatarId || (() => null);
 		this.onPreviewStart = opts.onPreviewStart || (() => {});
 		this.onPreviewStop = opts.onPreviewStop || (() => {});
 		this.setStatus = opts.setStatus || (() => {});
@@ -88,6 +95,17 @@ export class AnimationLibrary {
 		this._paused = false;
 		this._scrubbing = false;
 		this._state = 'loading';
+
+		// Trim/blend/loop edits, applied to the active clip before preview,
+		// export, and save. `_baseClip` is the untrimmed canonical clip the
+		// active def resolved to; edits are recomputed from it, never baked in
+		// place, so adjusting a slider always starts from the original motion.
+		this._baseClip = null;
+		this._trimStart = 0;
+		this._trimEnd = null;
+		this._blendMs = 0;
+		this._loopOn = true;
+		this._editDebounce = null;
 
 		// Resolves once mount() has finished loading the manifest (success or
 		// failure) — openByName() awaits this so a ?anim=<preset> deep-link works
@@ -545,7 +563,9 @@ export class AnimationLibrary {
 			this.setStatus(`Couldn’t load “${def.label || def.name}”: ${err.message}`, 'error');
 			return;
 		}
-		this._playClip(clip, def);
+		this._baseClip = clip;
+		this._resetEdits(clip.duration, def.loop !== false);
+		this._playClip(this._computeEditedClip(clip), { ...def, loop: this._loopOn });
 	}
 
 	/**
@@ -651,7 +671,9 @@ export class AnimationLibrary {
 				loop: true,
 				generated: true,
 			};
-			this._playClip(clip, def);
+			this._baseClip = clip;
+			this._resetEdits(clip.duration, true);
+			this._playClip(this._computeEditedClip(clip), { ...def, loop: this._loopOn });
 		} catch (err) {
 			if (token !== this._genToken) return;
 			this._stopGenTimer();
@@ -735,7 +757,9 @@ export class AnimationLibrary {
 			loop: false,
 			spelled: true,
 		};
-		return this._playClip(clip, def);
+		this._baseClip = clip;
+		this._resetEdits(clip.duration, false);
+		return this._playClip(this._computeEditedClip(clip), { ...def, loop: this._loopOn });
 	}
 
 	_stopGenTimer() {
@@ -778,6 +802,175 @@ export class AnimationLibrary {
 		this._speed = Math.min(2.5, Math.max(0.25, v));
 		if (this._action) this._action.timeScale = this._speed;
 		this._updateTransport();
+	}
+
+	// ── Trim / blend / loop edits ────────────────────────────────────────────
+	/** Reset the trim/blend/loop controls for a newly-loaded clip. */
+	_resetEdits(duration, loopDefault) {
+		this._trimStart = 0;
+		this._trimEnd = duration;
+		this._blendMs = 0;
+		this._loopOn = loopDefault !== false;
+		const { trimStartInput, trimEndInput, blendInput, loopBtn } = this._refs;
+		if (trimStartInput) {
+			trimStartInput.max = duration.toFixed(2);
+			trimStartInput.value = '0';
+		}
+		if (trimEndInput) {
+			trimEndInput.max = duration.toFixed(2);
+			trimEndInput.value = duration.toFixed(2);
+		}
+		if (blendInput) blendInput.value = '0';
+		if (loopBtn) {
+			loopBtn.setAttribute('aria-pressed', String(this._loopOn));
+			loopBtn.classList.toggle('is-on', this._loopOn);
+		}
+	}
+
+	/** Apply the current trim range and loop-blend to `base`, never mutating it. */
+	_computeEditedClip(base) {
+		const duration = base.duration;
+		const start = Math.max(0, Math.min(this._trimStart, duration));
+		const end = Math.max(start + 1 / 60, Math.min(this._trimEnd ?? duration, duration));
+		const trimmed =
+			start > 1e-3 || end < duration - 1e-3 ? trimClip(base, start, end) : base;
+		const edited =
+			this._loopOn && this._blendMs > 0 ? blendClipLoop(trimmed, this._blendMs / 1000) : trimmed;
+		if (edited !== base) edited.name = base.name;
+		return edited;
+	}
+
+	/** Re-derive and replay the edited clip after a trim/blend/loop control changes. */
+	_onEditsChanged() {
+		if (!this._baseClip || !this._activeDef) return;
+		const wasPaused = this._paused;
+		const edited = this._computeEditedClip(this._baseClip);
+		const played = this._playClip(edited, { ...this._activeDef, loop: this._loopOn });
+		if (played && wasPaused) {
+			this._action.paused = true;
+			this._paused = true;
+			this._updatePlayIcon();
+		}
+	}
+
+	_debounceEdits() {
+		clearTimeout(this._editDebounce);
+		this._editDebounce = setTimeout(() => this._onEditsChanged(), 180);
+	}
+
+	_onTrimInput() {
+		const { trimStartInput, trimEndInput } = this._refs;
+		const duration = this._baseClip?.duration || 0;
+		let start = Math.max(0, parseFloat(trimStartInput.value) || 0);
+		let end = parseFloat(trimEndInput.value);
+		if (!Number.isFinite(end)) end = duration;
+		if (end <= start) end = Math.min(duration, start + 0.1);
+		start = Math.min(start, duration);
+		this._trimStart = start;
+		this._trimEnd = end;
+		this._debounceEdits();
+	}
+
+	// ── Save to library ──────────────────────────────────────────────────────
+	/**
+	 * Save the active clip (with current trim/blend/loop edits applied) to the
+	 * signed-in user's animation library. Saves the canonical, pre-retarget
+	 * clip, the same basis AnimationManager plays everywhere, so it plays on
+	 * any future rig, not just the one currently loaded.
+	 */
+	async _saveToLibrary(btn) {
+		if (!this._baseClip || !this._activeDef) return;
+
+		const defaultName = this._activeDef.label || this._activeDef.name || 'My animation';
+		const nameInput = el('input', {
+			type: 'text',
+			class: 'al-save-name',
+			value: defaultName,
+			maxlength: '120',
+			required: 'true',
+			autocomplete: 'off',
+			'aria-label': 'Animation name',
+		});
+		const visSelect = el('select', { class: 'al-save-vis', 'aria-label': 'Visibility' }, [
+			el('option', { value: 'private' }, ['Private (only you)']),
+			el('option', { value: 'unlisted' }, ['Unlisted (anyone with the link)']),
+			el('option', { value: 'public' }, ['Public (listed in the library)']),
+		]);
+		const cancelBtn = el('button', { type: 'button', class: 'al-save-cancel' }, ['Cancel']);
+		const submitBtn = el('button', { type: 'submit', class: 'al-save-submit' }, ['Save']);
+		const form = el('form', { class: 'al-save-form' }, [
+			el('label', { class: 'al-save-label' }, ['Name', nameInput]),
+			el('label', { class: 'al-save-label' }, ['Visibility', visSelect]),
+			el('div', { class: 'al-save-actions' }, [cancelBtn, submitBtn]),
+		]);
+
+		let resolved = false;
+		const choice = await new Promise((resolve) => {
+			const settle = (v) => {
+				if (resolved) return;
+				resolved = true;
+				resolve(v);
+			};
+			const modal = new Modal({
+				title: 'Save to your animation library',
+				body: form,
+				dismissible: true,
+				onClose: () => settle(null),
+			});
+			cancelBtn.addEventListener('click', () => modal.close());
+			form.addEventListener('submit', (e) => {
+				e.preventDefault();
+				settle({ name: nameInput.value.trim(), visibility: visSelect.value });
+				modal.close();
+			});
+			modal.open(btn);
+			nameInput.focus();
+			nameInput.select();
+		});
+		if (!choice || !choice.name) return;
+
+		const original = btn.textContent;
+		btn.disabled = true;
+		btn.textContent = 'Saving…';
+		try {
+			const clip = this._computeEditedClip(this._baseClip);
+			const avatarId = this.getAvatarId();
+			const res = await fetch('/api/animations/clips', {
+				method: 'POST',
+				credentials: 'include',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({
+					name: choice.name,
+					visibility: choice.visibility,
+					kind: this._loopOn ? 'loop' : 'animation',
+					loop: this._loopOn,
+					avatar_id: avatarId && UUID_RE.test(avatarId) ? avatarId : undefined,
+					clip: AnimationClip.toJSON(clip),
+				}),
+			});
+			if (res.status === 401) {
+				btn.disabled = false;
+				btn.textContent = original;
+				this.setStatus('Sign in to save animations to your library.', 'error');
+				window.location.assign(
+					`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`,
+				);
+				return;
+			}
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+			btn.textContent = 'Saved ✓';
+			this.setStatus(`Saved “${choice.name}” to your animation library.`);
+		} catch (err) {
+			log.warn('[AnimationLibrary] save failed:', err);
+			btn.textContent = 'Failed';
+			this.setStatus(`Save failed: ${err.message}`, 'error');
+		} finally {
+			setTimeout(() => {
+				btn.disabled = false;
+				btn.textContent = original;
+			}, 2400);
+		}
 	}
 
 	// ── Transport bar (now-playing + speed + loop + stop + export) ────────────
@@ -838,11 +1031,86 @@ export class AnimationLibrary {
 		);
 		exportBtn.addEventListener('click', () => this._exportGLB(exportBtn));
 
+		const saveBtn = el(
+			'button',
+			{
+				class: 'al-save',
+				type: 'button',
+				title: 'Save this clip to your animation library',
+			},
+			['💾 Save to library'],
+		);
+		saveBtn.addEventListener('click', () => this._saveToLibrary(saveBtn));
+
+		// Trim / blend / loop: cut the clip to a range and crossfade the loop seam,
+		// the same editing affordances a Theatre.js-style timeline offers, applied
+		// to the resolved clip (preset, generated, or spelled) before preview,
+		// export, and save all see it.
+		const trimStartInput = el('input', {
+			type: 'number',
+			class: 'al-trim-input',
+			min: '0',
+			step: '0.1',
+			value: '0',
+			'aria-label': 'Trim start, in seconds',
+			title: 'Trim start (s)',
+		});
+		const trimEndInput = el('input', {
+			type: 'number',
+			class: 'al-trim-input',
+			min: '0',
+			step: '0.1',
+			value: '0',
+			'aria-label': 'Trim end, in seconds',
+			title: 'Trim end (s)',
+		});
+		trimStartInput.addEventListener('input', () => this._onTrimInput());
+		trimEndInput.addEventListener('input', () => this._onTrimInput());
+
+		const blendInput = el('input', {
+			type: 'number',
+			class: 'al-blend-input',
+			min: '0',
+			max: '2000',
+			step: '50',
+			value: '0',
+			'aria-label': 'Loop blend, in milliseconds',
+			title: 'Crossfade the loop seam (ms)',
+		});
+		blendInput.addEventListener('input', () => {
+			this._blendMs = Math.max(0, Math.min(2000, parseFloat(blendInput.value) || 0));
+			this._debounceEdits();
+		});
+
+		const loopBtn = el(
+			'button',
+			{
+				class: 'al-loop is-on',
+				type: 'button',
+				'aria-pressed': 'true',
+				title: 'Toggle looping',
+			},
+			['🔁 Loop'],
+		);
+		loopBtn.addEventListener('click', () => {
+			this._loopOn = !this._loopOn;
+			loopBtn.setAttribute('aria-pressed', String(this._loopOn));
+			loopBtn.classList.toggle('is-on', this._loopOn);
+			this._onEditsChanged();
+		});
+
+		const editRow = el('div', { class: 'al-edit-row' }, [
+			el('label', { class: 'al-edit-field' }, ['Trim', trimStartInput, 'to', trimEndInput, 's']),
+			el('label', { class: 'al-edit-field' }, ['Blend', blendInput, 'ms']),
+			loopBtn,
+		]);
+
 		const root = el('div', { class: 'al-transport', style: 'display:none' }, [
 			el('div', { class: 'al-now' }, [el('span', { class: 'al-now-dot' }), label]),
 			el('div', { class: 'al-scrub-row' }, [play, scrub, timeLabel]),
 			el('div', { class: 'al-speed-row' }, [el('label', {}, ['Speed']), speed, speedVal]),
-			el('div', { class: 'al-transport-actions' }, [stop, exportBtn]),
+			editRow,
+			el('div', { class: 'al-transport-actions' }, [stop, saveBtn, exportBtn]),
 		]);
 
 		this._refs = {
@@ -854,6 +1122,11 @@ export class AnimationLibrary {
 			transportScrub: scrub,
 			transportTime: timeLabel,
 			exportBtn,
+			saveBtn,
+			trimStartInput,
+			trimEndInput,
+			blendInput,
+			loopBtn,
 		};
 		return { root };
 	}
@@ -869,7 +1142,7 @@ export class AnimationLibrary {
 
 	async _exportGLB(btn) {
 		const rig = this.getRig();
-		if (!rig || !this._activeDef) return;
+		if (!rig || !this._activeDef || !this._baseClip) return;
 		const original = btn.textContent;
 		const done = (txt, cls) => {
 			btn.classList.remove('is-busy', 'is-ok', 'is-err');
@@ -883,7 +1156,7 @@ export class AnimationLibrary {
 		btn.classList.add('is-busy');
 		btn.textContent = 'Baking…';
 		try {
-			const base = await this._loadClip(this._activeDef);
+			const base = this._computeEditedClip(this._baseClip);
 			const { clip } = retargetClipToRig(base, rig);
 			if (!clip) throw new Error('retarget failed');
 			const exportClip = scaleClipSpeed(clip, this._speed);

@@ -40,6 +40,8 @@ import {
 	retargetClip,
 	retargetClipToObject,
 	scaleClipSpeed,
+	trimClip,
+	blendClipLoop,
 	MIN_COVERAGE,
 } from '../src/animation-retarget.js';
 import { CANONICAL_REST, CANONICAL_REST_WORLD } from '../src/animation-canonical-rest.js';
@@ -95,6 +97,18 @@ function makeCanonicalClip() {
 	// Hips at world Y = 1.0 (authoring rig height).
 	const pos = new VectorKeyframeTrack('Hips.position', [0, 1], [0, 1, 0, 0, 1.1, 0]);
 	return new AnimationClip('test', 1, [q, spine, arm, pos]);
+}
+
+// A 3-keyframe clip with distinct values at every sample (makeCanonicalClip's
+// identity-at-both-ends shape can't tell slerp/lerp apart), for trim/blend math.
+function makeMovingClip() {
+	const q = new QuaternionKeyframeTrack(
+		'Hips.quaternion',
+		[0, 1, 2],
+		[0, 0, 0, 1, 0, 0.7071067811865476, 0, 0.7071067811865476, 0, 1, 0, 0],
+	);
+	const pos = new VectorKeyframeTrack('Hips.position', [0, 1, 2], [0, 1, 0, 0, 1, 1, 0, 1, 2]);
+	return new AnimationClip('moving', 2, [q, pos]);
 }
 
 const CANONICAL_RIG = ['Hips', 'Spine', 'LeftArm', 'RightArm', 'Head'];
@@ -484,6 +498,89 @@ describe('scaleClipSpeed', () => {
 		const origDur = clip.duration;
 		scaleClipSpeed(clip, 2);
 		expect(clip.duration).toBe(origDur);
+	});
+});
+
+describe('trimClip', () => {
+	it('returns a clone, unchanged, when the range covers the whole clip', () => {
+		const clip = makeMovingClip();
+		const out = trimClip(clip, 0, clip.duration);
+		expect(out).not.toBe(clip);
+		expect(out.duration).toBeCloseTo(clip.duration, 5);
+		expect(Array.from(out.tracks[0].values)).toEqual(Array.from(clip.tracks[0].values));
+	});
+
+	it('shortens duration and shifts kept keyframes to start at 0', () => {
+		const clip = makeMovingClip(); // duration 2, keyframes at 0/1/2
+		const out = trimClip(clip, 1, 2);
+		expect(out.duration).toBeCloseTo(1, 5);
+		const posTrack = out.tracks.find((t) => t.name === 'Hips.position');
+		expect(Array.from(posTrack.times)).toEqual([0, 1]);
+		// Original values at t=1 and t=2 were [0,1,1] and [0,1,2].
+		expect(Array.from(posTrack.values)).toEqual([0, 1, 1, 0, 1, 2]);
+	});
+
+	it('interpolates a boundary that falls between keyframes', () => {
+		const clip = makeMovingClip();
+		const out = trimClip(clip, 0.5, 1.5);
+		const posTrack = out.tracks.find((t) => t.name === 'Hips.position');
+		// Lerp of [0,1,0]→[0,1,1] at 0.5 is [0,1,0.5]; the start boundary sample.
+		expect(posTrack.values[0]).toBeCloseTo(0, 5);
+		expect(posTrack.values[1]).toBeCloseTo(1, 5);
+		expect(posTrack.values[2]).toBeCloseTo(0.5, 5);
+	});
+
+	it('does not mutate the source clip', () => {
+		const clip = makeMovingClip();
+		const beforeDur = clip.duration;
+		const beforeValues = Array.from(clip.tracks[0].values);
+		trimClip(clip, 1, 2);
+		expect(clip.duration).toBe(beforeDur);
+		expect(Array.from(clip.tracks[0].values)).toEqual(beforeValues);
+	});
+});
+
+describe('blendClipLoop', () => {
+	it('returns a clone, unchanged, when blendSeconds is 0', () => {
+		const clip = makeMovingClip();
+		const out = blendClipLoop(clip, 0);
+		expect(out).not.toBe(clip);
+		expect(Array.from(out.tracks[0].values)).toEqual(Array.from(clip.tracks[0].values));
+	});
+
+	it('slerps the quaternion tail toward the clip start as the seam approaches', () => {
+		const clip = makeMovingClip(); // duration 2, blend of 1s starts at t=1
+		const out = blendClipLoop(clip, 1);
+		const quatTrack = out.tracks.find((t) => t.name === 'Hips.quaternion');
+		// At the blend start (t=1, weight 0) the value is untouched.
+		expect(quatTrack.values[4]).toBeCloseTo(0, 5);
+		expect(quatTrack.values[5]).toBeCloseTo(0.7071067811865476, 5);
+		// At the seam (t=2, weight 1) it fully matches the clip's own start pose.
+		expect(quatTrack.values[8]).toBeCloseTo(0, 5);
+		expect(quatTrack.values[9]).toBeCloseTo(0, 5);
+		expect(quatTrack.values[10]).toBeCloseTo(0, 5);
+		expect(quatTrack.values[11]).toBeCloseTo(1, 5);
+	});
+
+	it('lerps a vector track toward its start value at the seam', () => {
+		const clip = makeMovingClip();
+		const out = blendClipLoop(clip, 1);
+		const posTrack = out.tracks.find((t) => t.name === 'Hips.position');
+		expect(Array.from(posTrack.values.slice(6, 9))).toEqual([0, 1, 0]); // t=2 → start value
+	});
+
+	it('clamps the blend window to half the clip length', () => {
+		const clip = makeMovingClip(); // duration 2 → max blend 1s
+		const out = blendClipLoop(clip, 10);
+		const posTrack = out.tracks.find((t) => t.name === 'Hips.position');
+		expect(Array.from(posTrack.values.slice(6, 9))).toEqual([0, 1, 0]);
+	});
+
+	it('does not mutate the source clip', () => {
+		const clip = makeMovingClip();
+		const beforeValues = Array.from(clip.tracks[0].values);
+		blendClipLoop(clip, 1);
+		expect(Array.from(clip.tracks[0].values)).toEqual(beforeValues);
 	});
 });
 

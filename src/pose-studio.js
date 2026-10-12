@@ -1286,6 +1286,7 @@ function boot() {
 		const animLibrary = new AnimationLibrary({
 			host: animLibraryHost,
 			getRig: () => state.rig,
+			getAvatarId: () => state.avatar?.id || null,
 			setStatus,
 			onPreviewStart: () => {
 				timeline?.pause?.();
