@@ -5,9 +5,9 @@
 
 import { mountViewport } from './viewport.js';
 import { mountGraphEditor } from './graph-editor.js';
-import { runWorkflow } from './runner.js';
+import { generateBody, runWorkflow } from './runner.js';
 import { countScene, decimateScene, smoothScene } from './mesh-tools.js';
-import { CLIENT_ID, fetchCatalog, fetchHealth, uploadImage } from './api.js';
+import { CLIENT_ID, fetchCatalog, fetchHealth, pollBatchGroup, submitBatch, uploadImage } from './api.js';
 import {
 	NODE_TYPES,
 	PALETTE,
@@ -83,6 +83,16 @@ let current = { url: null, name: 'model' };
 let editDepth = 0;
 let hasModel = false;
 let run = null;
+
+// Batch queue drawer: one group of fan-out prompt submissions (api/forge-batch.js),
+// polled on an interval until every item is terminal. Transient (not persisted):
+// the server already holds each group for an hour, so a reload just loses the
+// drawer's view of it, not the jobs themselves.
+const BATCH_MAX_ITEMS = 8;
+let batchId = null;
+let batchItems = [];
+let batchPollTimer = null;
+let batchSubmitting = false;
 
 const activeFlow = () => flows.find((f) => f.id === activeId) || flows[0];
 const editingFlow = () => flows.find((f) => f.id === editingId) || activeFlow();
@@ -247,7 +257,10 @@ function paramControl(node, p) {
 				onchange: (e) => {
 					const raw = e.target.value.trim();
 					if (raw === '') return set('');
-					const n = Math.min(p.max, Math.max(p.min, Math.round(Number(raw))));
+					const step = Number(p.step) || 1;
+					const decimals = (String(step).split('.')[1] || '').length;
+					const snapped = Math.round(Number(raw) / step) * step;
+					const n = Number(Math.min(p.max, Math.max(p.min, snapped)).toFixed(decimals));
 					e.target.value = String(n);
 					set(n);
 				},
@@ -811,6 +824,7 @@ function toggleHistory(force) {
 	panel.dataset.open = String(open);
 	$('wb-history-btn').setAttribute('aria-pressed', String(open));
 	if (open) {
+		toggleBatch(false);
 		renderHistory();
 		panel.querySelector('button')?.focus({ preventScroll: true });
 	}
@@ -819,6 +833,7 @@ function toggleHistory(force) {
 async function openRemote(url, name) {
 	if (run) return;
 	toggleHistory(false);
+	toggleBatch(false);
 	setBusy(true, { title: 'Loading model', text: name });
 	try {
 		await vp.loadGLB(url);
@@ -829,6 +844,117 @@ async function openRemote(url, name) {
 		toast(`That model could not be loaded: ${err.message}`, { tone: 'err' });
 	} finally {
 		setBusy(false);
+	}
+}
+
+// ── batch queue ──────────────────────────────────────────────
+
+function toggleBatch(force) {
+	const panel = $('wb-batch');
+	const open = force ?? panel.dataset.open !== 'true';
+	panel.dataset.open = String(open);
+	$('wb-batch-btn').setAttribute('aria-pressed', String(open));
+	if (open) {
+		toggleHistory(false);
+		renderBatchList();
+	}
+}
+
+const BATCH_STATE_TEXT = {
+	queued: 'In line for a GPU',
+	running: 'Running',
+	done: 'Ready',
+	failed: 'Failed',
+};
+
+function renderBatchList() {
+	const list = $('wb-batch-list');
+	const submitBtn = $('wb-batch-submit');
+	submitBtn.disabled = batchSubmitting;
+	submitBtn.textContent = batchSubmitting ? 'Submitting…' : 'Submit';
+	if (!batchItems.length) {
+		list.replaceChildren(
+			h('li', { class: 'wb-history-empty', text: 'Queue a few prompts at once. Each one runs as its own job and lands here when ready.' }),
+		);
+		return;
+	}
+	list.replaceChildren(
+		...batchItems.map((item) => {
+			const state = item.ok === false ? 'failed' : item.status || 'queued';
+			const row = h(
+				'li',
+				{ class: 'wb-batch-item', dataset: { state } },
+				h('span', {}, h('strong', { text: item.name }), h('small', { text: item.ok === false ? item.message || 'Failed' : BATCH_STATE_TEXT[state] || state })),
+			);
+			if (item.ok !== false && item.status === 'done' && item.glb_url) {
+				row.append(h('button', { class: 'wb-btn', type: 'button', text: 'Open', onclick: () => openRemote(item.glb_url, item.name) }));
+			}
+			return row;
+		}),
+	);
+}
+
+function stopBatchPolling() {
+	if (batchPollTimer) clearInterval(batchPollTimer);
+	batchPollTimer = null;
+}
+
+function startBatchPolling() {
+	stopBatchPolling();
+	batchPollTimer = setInterval(async () => {
+		if (!batchId) return stopBatchPolling();
+		try {
+			const group = await pollBatchGroup(batchId);
+			batchItems = group.items.map((item, i) => ({ ...batchItems[i], ...item }));
+			renderBatchList();
+			if (group.status === 'done' || group.status === 'partial') {
+				stopBatchPolling();
+				const ok = batchItems.filter((i) => i.ok !== false && i.status === 'done').length;
+				toast(`Batch finished: ${ok}/${batchItems.length} ready.`, { tone: group.status === 'done' ? 'ok' : 'warn' });
+			}
+		} catch {
+			// A transient poll failure keeps the last known status; the next tick retries.
+		}
+	}, 3000);
+}
+
+async function submitBatchFromPanel() {
+	if (batchSubmitting) return;
+	const prompts = $('wb-batch-prompts').value
+		.split('\n')
+		.map((s) => s.trim())
+		.filter(Boolean);
+	if (!prompts.length) {
+		toast('Add at least one prompt, one per line.', { tone: 'warn' });
+		return;
+	}
+	if (prompts.length > BATCH_MAX_ITEMS) {
+		toast(`A batch holds at most ${BATCH_MAX_ITEMS} prompts; only the first ${BATCH_MAX_ITEMS} were queued.`, { tone: 'warn' });
+		prompts.length = BATCH_MAX_ITEMS;
+	}
+
+	const node = generateNode(activeFlow());
+	const items = prompts.map((prompt) => generateBody(node.params, { prompt }));
+
+	stopBatchPolling();
+	batchId = null;
+	batchSubmitting = true;
+	batchItems = prompts.map((prompt) => ({ name: prompt.slice(0, 48), status: 'queued' }));
+	renderBatchList();
+
+	try {
+		const group = await submitBatch(items);
+		batchId = group.batch_id;
+		batchItems = group.items.map((item, i) => ({ name: batchItems[i].name, ...item }));
+		renderBatchList();
+		$('wb-batch-prompts').value = '';
+		startBatchPolling();
+	} catch (err) {
+		batchItems = [];
+		toast(`The batch could not start: ${err.message}`, { tone: 'err' });
+	} finally {
+		batchSubmitting = false;
+		renderBatchList();
 	}
 }
 
@@ -1045,6 +1171,8 @@ function wireViewport() {
 	$('wb-spin').addEventListener('click', () => setSpin(!vp.autoRotate));
 	$('wb-history-btn').addEventListener('click', () => toggleHistory());
 	$('wb-history-clear').addEventListener('click', clearHistory);
+	$('wb-batch-btn').addEventListener('click', () => toggleBatch());
+	$('wb-batch-submit').addEventListener('click', submitBatchFromPanel);
 	$('wb-frame').addEventListener('click', () => vp.frame());
 	$('wb-shot').addEventListener('click', screenshot);
 
@@ -1503,6 +1631,7 @@ function wireKeyboard() {
 		if (e.key === 'Escape') {
 			closeMenus();
 			toggleHistory(false);
+			toggleBatch(false);
 			return;
 		}
 		if (typing || app.dataset.view !== 'generate' || !vp) return;
@@ -1525,6 +1654,7 @@ function wireKeyboard() {
 			e: () => setEnv(!vp.environmentOn),
 			t: () => setSpin(!vp.autoRotate),
 			h: () => toggleHistory(),
+			b: () => toggleBatch(),
 			p: screenshot,
 			1: () => setMode('shaded'),
 			2: () => setMode('wireframe'),

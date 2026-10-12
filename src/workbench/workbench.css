@@ -633,6 +633,40 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 .wb-history li small { color: var(--wb-ink-dim); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wb-history-empty { padding: 18px 14px; color: var(--wb-ink-dim); font-size: 11.5px; line-height: 1.5; }
 
+/* batch queue drawer */
+.wb-batch { width: 300px; }
+.wb-batch-hint { margin: 0; padding: 8px 12px 0; color: var(--wb-ink-dim); font-size: 10.5px; line-height: 1.4; }
+.wb-batch textarea#wb-batch-prompts {
+	margin: 8px 12px;
+	resize: vertical;
+	min-height: 64px;
+	max-height: 160px;
+	border: 1px solid var(--wb-line-soft);
+	border-radius: 6px;
+	background: var(--wb-field);
+	color: inherit;
+	font: inherit;
+	font-size: 11.5px;
+	padding: 7px 9px;
+}
+.wb-batch textarea#wb-batch-prompts:focus-visible { outline: 2px solid var(--wb-accent); outline-offset: -1px; }
+.wb-batch ul#wb-batch-list { list-style: none; margin: 0; padding: 0 6px 6px; overflow-y: auto; display: grid; gap: 4px; }
+.wb-batch-item {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 8px;
+	border-radius: 6px;
+	background: var(--wb-field);
+	font-size: 11.5px;
+}
+.wb-batch-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wb-batch-item small { display: block; color: var(--wb-ink-dim); font-size: 10px; }
+.wb-batch-item[data-state='failed'] small { color: var(--wb-err); }
+.wb-batch-item[data-state='done'] small { color: var(--wb-ok); }
+.wb-batch-item button { flex-shrink: 0; }
+
 /* toasts */
 .wb-toasts { position: fixed; right: 16px; bottom: 16px; z-index: 50; display: grid; gap: 8px; max-width: min(360px, calc(100vw - 32px)); }
 .wb-toast {

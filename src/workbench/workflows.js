@@ -68,6 +68,21 @@ export const NODE_TYPES = {
 			},
 			{ key: 'target_polycount', label: 'Face budget', type: 'number', default: '', min: 100, max: 500000, step: 1000, placeholder: 'Auto' },
 			{
+				key: 'pose',
+				label: 'Rest pose',
+				type: 'select',
+				default: '',
+				hint: 'Only lanes without a reference image can honor this; others report pose_applied: false',
+				options: [
+					['', 'Auto'],
+					['t', 'T-pose'],
+					['a', 'A-pose'],
+				],
+			},
+			{ key: 'bbox_x', label: 'Width (m)', type: 'number', default: '', min: 0.01, max: 50, step: 0.1, placeholder: 'Auto' },
+			{ key: 'bbox_y', label: 'Height (m)', type: 'number', default: '', min: 0.01, max: 50, step: 0.1, placeholder: 'Auto' },
+			{ key: 'bbox_z', label: 'Depth (m)', type: 'number', default: '', min: 0.01, max: 50, step: 0.1, placeholder: 'Auto' },
+			{
 				key: 'texture_size',
 				label: 'Texture',
 				type: 'select',

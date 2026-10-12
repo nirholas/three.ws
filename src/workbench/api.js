@@ -250,3 +250,25 @@ export async function restyle(glbUrl, instruction, { signal } = {}) {
 	if (!res.ok || !data.glbUrl) throw toError(res, data, 'The material restyle failed.');
 	return data;
 }
+
+/**
+ * Submit up to 8 /api/forge bodies as one group (api/forge-batch.js).
+ * @returns {Promise<{batch_id:string, status:string, items:object[]}>}
+ */
+export async function submitBatch(items, { signal } = {}) {
+	const { res, data } = await request('/api/forge-batch', {
+		method: 'POST',
+		signal,
+		headers: baseHeaders({ 'content-type': 'application/json' }),
+		body: JSON.stringify({ items }),
+	});
+	if (!res.ok || !data.batch_id) throw toError(res, data, `The batch could not start (${res.status}).`);
+	return data;
+}
+
+/** One status check on a batch group started with submitBatch(). */
+export async function pollBatchGroup(batchId, { signal } = {}) {
+	const { res, data } = await request(`/api/forge-batch?batch=${encodeURIComponent(batchId)}`, { signal, headers: baseHeaders() });
+	if (!res.ok) throw toError(res, data, `The batch could not be checked (${res.status}).`);
+	return data;
+}

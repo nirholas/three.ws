@@ -16,7 +16,7 @@ const STATUS_TEXT = {
 	processing: 'Running',
 };
 
-function generateBody(params, source) {
+export function generateBody(params, source) {
 	const body = { path: 'image', tier: params.tier || 'standard' };
 	if (params.backend && params.backend !== 'auto') body.backend = params.backend;
 	if (source.url) body.image_urls = [source.url];
@@ -29,6 +29,11 @@ function generateBody(params, source) {
 	if (params.target_polycount !== '' && params.target_polycount != null) body.target_polycount = Number(params.target_polycount);
 	if (params.output_format && params.output_format !== 'glb') body.output_format = params.output_format;
 	if (params.seed !== '' && params.seed != null) body.seed = Number(params.seed);
+	if (params.pose) body.pose = params.pose;
+	const bx = Number(params.bbox_x), by = Number(params.bbox_y), bz = Number(params.bbox_z);
+	if (params.bbox_x !== '' && params.bbox_y !== '' && params.bbox_z !== '' && bx > 0 && by > 0 && bz > 0) {
+		body.bbox = [bx, by, bz];
+	}
 	return body;
 }
 

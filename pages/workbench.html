@@ -184,6 +184,9 @@
 					<button class="wb-strip-btn" type="button" id="wb-history-btn" data-tip="History (H)" aria-label="Generation history" aria-pressed="false" aria-controls="wb-history">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
 					</button>
+					<button class="wb-strip-btn" type="button" id="wb-batch-btn" data-tip="Batch (B)" aria-label="Batch queue" aria-pressed="false" aria-controls="wb-batch">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg>
+					</button>
 					<hr />
 					<button class="wb-strip-btn" type="button" id="wb-frame" data-tip="Frame model (F)" aria-label="Frame the model">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="2.5"/></svg>
@@ -199,6 +202,16 @@
 						<button class="wb-btn is-danger" id="wb-history-clear" type="button">Clear</button>
 					</header>
 					<ul id="wb-history-list"></ul>
+				</section>
+
+				<section class="wb-history wb-batch" id="wb-batch" aria-label="Batch queue">
+					<header>
+						<strong>Batch</strong>
+						<button class="wb-btn" id="wb-batch-submit" type="button">Submit</button>
+					</header>
+					<p class="wb-batch-hint">One idea per line, up to 8. Uses the Generate Mesh node's current engine, quality and controls for every item.</p>
+					<textarea id="wb-batch-prompts" rows="4" placeholder="a red leather armchair&#10;a cracked clay pot&#10;a sci-fi helmet"></textarea>
+					<ul id="wb-batch-list"></ul>
 				</section>
 
 				<div class="wb-empty" id="wb-empty">
