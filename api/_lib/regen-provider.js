@@ -82,7 +82,11 @@ function createMeshyRegenAdapter(key) {
 	};
 }
 
-// Wraps createTripoProvider to speak the regen submit/status interface.
+// Wraps createTripoProvider to speak the regen submit/status interface. Used
+// both as a BYOK provider (user's own key, mode 'reconstruct') and, when
+// TRIPO_API_KEY is set, as a platform provider for 'rerig' (see
+// PLATFORM_PROVIDER_ORDER / loadPlatformProvider below): the house-key auto-
+// rig lane that drives maybeAutoRigAvatar().
 function createTripoRegenAdapter(key) {
 	let _tripo;
 	async function tripo() {
@@ -95,13 +99,31 @@ function createTripoRegenAdapter(key) {
 
 	return {
 		supportsMode(mode) {
-			return mode === 'reconstruct';
+			return mode === 'reconstruct' || mode === 'rerig';
 		},
 		supportsMultiview() {
 			return false;
 		},
 
 		async submit({ mode, params, sourceUrl }) {
+			if (mode === 'rerig') {
+				if (!sourceUrl) {
+					throw Object.assign(new Error('tripo rerig: no source model URL provided'), {
+						code: 'invalid_request',
+						status: 400,
+					});
+				}
+				const provider = await tripo();
+				// spec:'mixamo' asks Tripo for Mixamo-named bones, which this repo's
+				// glb-canonicalize.js already knows how to map onto the canonical
+				// skeleton, so no new bone-naming code is needed to play idle/walk on it.
+				const result = await provider.rig({ input: sourceUrl, spec: 'mixamo' });
+				return {
+					extJobId: result.taskId,
+					eta: 90,
+					backend: 'tripo',
+				};
+			}
 			if (mode !== 'reconstruct') {
 				throw Object.assign(
 					new Error(`tripo BYOK regen does not support mode "${mode}"`),
@@ -161,8 +183,11 @@ export function getRegenProviderByName(name, key) {
 const _platformProviderCache = new Map();
 
 // Canonical platform provider names in paid → free precedence. Used both to
-// resolve the single primary and to enumerate failover candidates.
-const PLATFORM_PROVIDER_ORDER = Object.freeze(['replicate', 'gcp', 'huggingface']);
+// resolve the single primary and to enumerate failover candidates. 'tripo'
+// sits last: it is an additional house-key lane (billed through our own
+// credits, see forge-tiers.js), not a replacement for the self-hosted/free
+// options above it, and it only ever contributes 'rerig' candidates.
+const PLATFORM_PROVIDER_ORDER = Object.freeze(['replicate', 'gcp', 'huggingface', 'tripo']);
 
 function canonicalProviderName(name) {
 	const n = (name || '').trim().toLowerCase();
@@ -181,6 +206,8 @@ function platformProviderConfigured(name) {
 			return Boolean(process.env.GCP_RECONSTRUCTION_URL && process.env.GCP_RECONSTRUCTION_KEY);
 		case 'huggingface':
 			return Boolean(process.env.HF_TOKEN);
+		case 'tripo':
+			return Boolean(process.env.TRIPO_API_KEY);
 		default:
 			return false;
 	}
@@ -215,6 +242,8 @@ async function loadPlatformProvider(rawName) {
 		instance = (await import('../_providers/huggingface.js')).createRegenProvider();
 	} else if (name === 'gcp') {
 		instance = (await import('../_providers/gcp.js')).createRegenProvider();
+	} else if (name === 'tripo') {
+		instance = createTripoRegenAdapter(process.env.TRIPO_API_KEY);
 	} else {
 		throw Object.assign(new Error(`unknown AVATAR_REGEN_PROVIDER: ${name}`), {
 			code: 'regen_provider_unknown',
@@ -317,13 +346,19 @@ export async function getRegenProviderForJob(jobProvider, req) {
 
 	// BYOK providers: re-resolve the user's stored key at poll time. The key
 	// is never stored on the job row itself (it's a secret); the user's session
-	// is the authority.
+	// is the authority. Tripo doubles as a platform-level 'rerig' lane (house
+	// key, see PLATFORM_PROVIDER_ORDER above): jobs submitted that way have no
+	// corresponding user session key, so fall back to TRIPO_API_KEY rather than
+	// reporting a false "no instance" for an in-flight house-key job.
 	if (BYOK_REGEN_PROVIDERS.includes(jobProvider)) {
 		try {
 			const { resolveProviderKey } = await import('./forge-provider-key.js');
 			const key = await resolveProviderKey(req, null, jobProvider);
-			if (!key) return { name: jobProvider, instance: null };
-			return getRegenProviderByName(jobProvider, key);
+			if (key) return getRegenProviderByName(jobProvider, key);
+			if (jobProvider === 'tripo' && platformProviderConfigured('tripo')) {
+				return loadPlatformProvider('tripo');
+			}
+			return { name: jobProvider, instance: null };
 		} catch {
 			return { name: jobProvider, instance: null };
 		}
