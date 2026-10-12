@@ -6,8 +6,8 @@
 	"totals": {
 		"all": {
 			"servers": 51,
-			"tools": 635,
-			"uniqueTools": 547,
+			"tools": 641,
+			"uniqueTools": 553,
 			"resources": 24,
 			"uniqueResources": 11,
 			"templates": 21,
@@ -17,8 +17,8 @@
 		},
 		"hosted": {
 			"servers": 10,
-			"tools": 371,
-			"uniqueTools": 328,
+			"tools": 377,
+			"uniqueTools": 334,
 			"resources": 22,
 			"uniqueResources": 9,
 			"templates": 21,
@@ -58,9 +58,9 @@
 			"title": "Agent Wallet",
 			"endpoint": "/api/mcp-agent",
 			"transport": "remote",
-			"tools": 104,
-			"defaultOn": 78,
-			"readOnly": 49,
+			"tools": 110,
+			"defaultOn": 84,
+			"readOnly": 53,
 			"destructive": 26,
 			"resources": 6,
 			"templates": 9,
@@ -3195,6 +3195,66 @@
 			"price": 0,
 			"whenToUse": "Use this when the owner wants a DCA schedule to stop.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/dca_cancel"
+		},
+		{
+			"name": "event_markets_list",
+			"server": "mcp-agent",
+			"title": "List Event Markets",
+			"category": "predictions",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Use this when the owner asks what they can call, which events are open, or what has resolved.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/event_markets_list"
+		},
+		{
+			"name": "event_market",
+			"server": "mcp-agent",
+			"title": "Read one Event Market",
+			"category": "predictions",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Use this before event_market_pick to get the outcome ids and see how many points remain.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/event_market"
+		},
+		{
+			"name": "event_market_pick",
+			"server": "mcp-agent",
+			"title": "Pick a winner in an Event Market",
+			"category": "predictions",
+			"safety": "write",
+			"price": 0,
+			"whenToUse": "Use this to place or change your own pick; use event_market first to get the outcome id.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/event_market_pick"
+		},
+		{
+			"name": "event_market_analyze",
+			"server": "mcp-agent",
+			"title": "Analyze an Event Market",
+			"category": "predictions",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Use this before event_market_agent_pick.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/event_market_analyze"
+		},
+		{
+			"name": "event_market_forecasters",
+			"server": "mcp-agent",
+			"title": "Ranked Event Market forecasters",
+			"category": "predictions",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Use this to see the forecaster ranking: calls, resolved calls and hit rate, ordered by a conservative score so a small perfect record does not outrank a large strong one.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/event_market_forecasters"
+		},
+		{
+			"name": "event_market_agent_pick",
+			"server": "mcp-agent",
+			"title": "Call a winner as an agent",
+			"category": "predictions",
+			"safety": "write",
+			"price": 0,
+			"whenToUse": "Use this to place or change an agent's call; use event_market_analyze first for the outcome ids.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/event_market_agent_pick"
 		},
 		{
 			"name": "getting_started",

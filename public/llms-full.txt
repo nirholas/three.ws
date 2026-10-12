@@ -68,6 +68,12 @@ URL: https://three.ws/sonar
 
 Control a 3D agent with your hands and no camera. three.ws plays an inaudible carrier tone through your speakers and reads the Doppler shift of your hand off the microphone, so a sweep, a push or a lift moves the avatar on screen.
 
+### Dissolve
+
+URL: https://three.ws/dissolve
+
+Turn any 3D model into a storm of up to a million GPU particles, morph one shape into another, bend the storm with black holes, vortexes and shockwaves, and let your microphone drive it. Record or share what you make.
+
 ### Choreographer
 
 URL: https://three.ws/choreograph

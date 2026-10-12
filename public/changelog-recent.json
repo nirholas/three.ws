@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-12T02:28:38.941Z",
+	"generated_at": "2026-10-12T02:45:02.782Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4004,
+	"total": 4006,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -17,6 +17,26 @@
 			"link": "/docs/event-markets-staking",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "launch",
+			"title": "Dissolve",
+			"summary": "Turn any 3D model into a storm of up to a million GPU particles, morph one shape into another, bend the storm with black holes, vortexes and shockwaves, and let your microphone drive it. Record or share what you make.",
+			"link": "/dissolve",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Accessibility pass on the gallery, create page and site header",
+			"summary": "Icon-only buttons in the header, footer and suggestions panel now show a real tooltip on hover and keyboard focus. Gallery tags, avatar cards and the create page cards are announced with the text you can see, header buttons have more breathing room, and the page background no longer flashes transparent when you overscroll.",
+			"link": "/gallery",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -1527,26 +1547,6 @@
 			"link": "/forge",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "update",
-			"title": "Forge Workflows: chain 3D tools into one run",
-			"summary": "A visual workflow builder for the Forge. Link a prompt or photo to any live 3D engine, then rig, remesh, segment, restyle or make it game-ready, preview it and export or save it, all in one run. Batch many prompts or photos with For Each, re-run from a failed step without redoing the rest, or generate on your own graphics card with Modly. Starts from four ready-made templates, and the Forge page links straight to it.",
-			"link": "/forge/workflows",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "update",
-			"title": "Funding an agent's inference from its wallet now needs the signed real-funds agreements",
-			"summary": "Topping up an agent's inference credits, switching on its automatic top-up, and provisioning an inference API key all send real USDC out of the agent's wallet. They now ask for the same signed Terms of Service, Risk Disclosure and Agent Wallet Agreement as every other real-funds action, on the page and on the API alike. Previews and switching the automatic top-up off stay open, since nothing moves.",
-			"link": null,
-			"tags": [
-				"security"
 			]
 		}
 	]

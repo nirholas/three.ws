@@ -15,6 +15,22 @@
 			<description>Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.</description>
 		</item>
 		<item>
+			<title>Dissolve</title>
+			<link>https://three.ws/dissolve</link>
+			<guid isPermaLink="false">2026-10-12:Dissolve</guid>
+			<pubDate>Mon, 12 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Turn any 3D model into a storm of up to a million GPU particles, morph one shape into another, bend the storm with black holes, vortexes and shockwaves, and let your microphone drive it. Record or share what you make.</description>
+		</item>
+		<item>
+			<title>Accessibility pass on the gallery, create page and site header</title>
+			<link>https://three.ws/gallery</link>
+			<guid isPermaLink="false">2026-10-12:Accessibility pass on the gallery, create page and site header</guid>
+			<pubDate>Mon, 12 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Icon-only buttons in the header, footer and suggestions panel now show a real tooltip on hover and keyboard focus. Gallery tags, avatar cards and the create page cards are announced with the text you can see, header buttons have more breathing room, and the page background no longer flashes transparent when you overscroll.</description>
+		</item>
+		<item>
 			<title>An in-depth X Article on how three.ws renders 3D, and a playbook for answering basic questions at length</title>
 			<link>https://three.ws/viewer</link>
 			<guid isPermaLink="false">2026-10-12:An in-depth X Article on how three.ws renders 3D, and a playbook for answering basic questions at length</guid>

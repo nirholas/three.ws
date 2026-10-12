@@ -992,6 +992,25 @@
 				"removed": 0,
 				"total": 635
 			}
+		},
+		{
+			"date": "2026-10-12",
+			"added": {
+				"mcp-agent": [
+					"event_market",
+					"event_market_agent_pick",
+					"event_market_analyze",
+					"event_market_forecasters",
+					"event_market_pick",
+					"event_markets_list"
+				]
+			},
+			"removed": {},
+			"counts": {
+				"added": 6,
+				"removed": 0,
+				"total": 641
+			}
 		}
 	]
 }

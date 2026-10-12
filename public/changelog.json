@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-12T02:28:38.916Z",
+	"generated_at": "2026-10-12T02:45:02.754Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,26 @@
 			"link": "/docs/event-markets-staking",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "launch",
+			"title": "Dissolve",
+			"summary": "Turn any 3D model into a storm of up to a million GPU particles, morph one shape into another, bend the storm with black holes, vortexes and shockwaves, and let your microphone drive it. Record or share what you make.",
+			"link": "/dissolve",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Accessibility pass on the gallery, create page and site header",
+			"summary": "Icon-only buttons in the header, footer and suggestions panel now show a real tooltip on hover and keyboard focus. Gallery tags, avatar cards and the create page cards are announced with the text you can see, header buttons have more breathing room, and the page background no longer flashes transparent when you overscroll.",
+			"link": "/gallery",
+			"tags": [
+				"improvement"
 			]
 		},
 		{

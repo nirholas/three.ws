@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-12T02:28:38.891Z",
+	"generated_at": "2026-10-12T02:45:02.734Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -192,6 +192,18 @@
 					"showcase": false,
 					"priority": 0.7,
 					"job": "animate"
+				},
+				{
+					"path": "/dissolve",
+					"title": "Dissolve",
+					"description": "Turn any 3D model into a storm of up to a million GPU particles, morph one shape into another, bend the storm with black holes, vortexes and shockwaves, and let your microphone drive it. Record or share what you make.",
+					"added": "2026-10-12",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.7,
+					"job": "explore"
 				},
 				{
 					"path": "/choreograph",
