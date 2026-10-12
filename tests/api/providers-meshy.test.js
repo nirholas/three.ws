@@ -50,6 +50,34 @@ describe('meshy provider: text→geometry submit', () => {
 		expect(out).toEqual({ kind: 'text-to-3d', taskId: 'task-abc' });
 	});
 
+	it('honors an explicit targetPolycount override over the tier default', async () => {
+		const bodies = [];
+		globalThis.fetch = vi.fn(async (url, opts) => {
+			bodies.push(JSON.parse(opts.body));
+			return { ok: true, status: 200, json: async () => ({ result: 't' }) };
+		});
+
+		const provider = createMeshyProvider('msy_test');
+		await provider.textToGeometry({ prompt: 'x', tier: TIER, targetPolycount: 80_000 });
+		await provider.imageTo3d({ imageUrl: 'https://cdn.example.com/r.png', tier: TIER, targetPolycount: 80_000 });
+
+		expect(bodies[0].target_polycount).toBe(80_000);
+		expect(bodies[1].target_polycount).toBe(80_000);
+	});
+
+	it('still clamps an overridden targetPolycount into the accepted window', async () => {
+		const bodies = [];
+		globalThis.fetch = vi.fn(async (url, opts) => {
+			bodies.push(JSON.parse(opts.body));
+			return { ok: true, status: 200, json: async () => ({ result: 't' }) };
+		});
+
+		const provider = createMeshyProvider('msy_test');
+		await provider.textToGeometry({ prompt: 'x', tier: TIER, targetPolycount: 5_000_000 });
+
+		expect(bodies[0].target_polycount).toBe(300_000);
+	});
+
 	it('clamps a tier poly budget into Meshy\'s accepted 100-300,000 window', async () => {
 		const bodies = [];
 		globalThis.fetch = vi.fn(async (url, opts) => {

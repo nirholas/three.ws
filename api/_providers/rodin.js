@@ -121,21 +121,24 @@ export function createRodinProvider(apiKey) {
 	}
 
 	return {
-		// Native geometry-first: text → untextured quad mesh, no intermediate image.
-		async textToGeometry({ prompt, tier }) {
+		// Native geometry-first: text → untextured quad mesh, no intermediate
+		// image. targetPolycount overrides the tier default when the caller sent
+		// an explicit target_polycount/target_faces (forge-options.js).
+		async textToGeometry({ prompt, tier, targetPolycount }) {
 			const form = new FormData();
 			form.set('tier', 'Gen-2');
 			form.set('prompt', String(prompt).slice(0, 1024));
 			form.set('mesh_mode', 'Quad');
 			form.set('material', 'None');
 			form.set('quality', qualityForTier(tier));
-			form.set('quality_override', String(clampPoly(tier.polycount)));
+			form.set('quality_override', String(clampPoly(targetPolycount ?? tier.polycount)));
 			form.set('geometry_file_format', 'glb');
 			return submit(form);
 		},
 
-		// Single image → native geometry + PBR textures, poly target from the tier.
-		async imageTo3d({ imageUrl, prompt, tier }) {
+		// Single image → native geometry + PBR textures, poly target from the
+		// tier unless the caller overrides it explicitly.
+		async imageTo3d({ imageUrl, prompt, tier, targetPolycount }) {
 			let imgRes;
 			try {
 				// The reference image URL is caller-supplied: every hop is SSRF-checked.
@@ -160,7 +163,7 @@ export function createRodinProvider(apiKey) {
 			form.set('mesh_mode', 'Quad');
 			form.set('material', tier.pbr ? 'PBR' : 'Shaded');
 			form.set('quality', qualityForTier(tier));
-			form.set('quality_override', String(clampPoly(tier.polycount)));
+			form.set('quality_override', String(clampPoly(targetPolycount ?? tier.polycount)));
 			form.set('geometry_file_format', 'glb');
 			return submit(form);
 		},

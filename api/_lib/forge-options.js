@@ -8,6 +8,16 @@
 //   • output_format    — glb (default) or a compressed variant (draco / meshopt)
 //   • texture_size     — bake textures at a specific resolution
 //   • target_polycount — explicit geometry budget on poly-aware backends
+//     (target_faces is an accepted alias, same field, same validation)
+//   • bbox             : [x, y, z] in meters; the delivered mesh is uniformly
+//     scaled to fit inside this box (aspect ratio preserved), centered on X/Z
+//     and floored at Y=0. Lane-agnostic: it is a post-generation fit applied
+//     to the final GLB, so every backend honors it regardless of polyControl.
+//   • pose             : 't' | 'a' | 'none', requested rest pose for a
+//     humanoid/character subject. Only lanes without a caller-supplied
+//     reference image can honor this (BACKENDS[*].poseControl); a lane whose
+//     pose is already fixed by the caller's own photo reports pose_applied:
+//     false in the response rather than silently ignoring the field.
 //   • resolution      : TRELLIS.2 / Pixal3D voxel resolution (512, 1024 or 1536)
 //   • view_labels      : per-image front/back/left/right tag for a multi-image
 //     request (Pixal3D's "Match my photo" lane). Null entries are allowed:
@@ -41,7 +51,10 @@ export const TEXTURE_SIZES = Object.freeze([512, 1024, 2048, 4096]);
 
 const POLYCOUNT_MIN = 100;
 const POLYCOUNT_MAX = 500_000;
-const SEED_MAX = 4_294_967_295; // uint32 — the range every provider's RNG accepts
+const SEED_MAX = 4_294_967_295; // uint32 - the range every provider's RNG accepts
+const BBOX_MIN = 0.01; // meters - below this a "fit" is numerically meaningless
+const BBOX_MAX = 50; // meters - above this a caller almost certainly meant cm/mm
+export const POSE_VALUES = Object.freeze(['t', 'a', 'none']);
 
 function compressionFor(format) {
 	if (format === 'glb-draco') return 'draco';
@@ -65,6 +78,8 @@ function compressionFor(format) {
  *   numParts: number | null,     // PartCrafter's requested part count (2-16)
  *   derivePbr: boolean,          // material completion pass, true unless opted out
  *   lods: boolean,               // build and store a real MSFT_lod chain, opt-in
+ *   bbox: [number, number, number] | null,  // [x, y, z] meters, post-gen fit
+ *   pose: 't' | 'a' | null,      // requested rest pose, text-conditioned lanes only
  *   hasOptions: boolean,         // true iff any non-default option was supplied
  *   errors: Array<{ field: string, message: string }>,
  * }}
@@ -110,10 +125,13 @@ export function normalizeForgeOptions(body) {
 			});
 	}
 
-	// target_polycount — explicit geometry budget (poly-aware backends only). A
-	// `quality` alias maps coarse → fine for callers that prefer a word over a number.
+	// target_polycount: explicit geometry budget (poly-aware backends only).
+	// target_faces is an accepted alias for the same field (same validation,
+	// same clamp); target_polycount wins if a caller sends both. A `quality`
+	// alias maps coarse → fine for callers that prefer a word over a number.
 	let targetPolycount = null;
-	let rawPoly = b.target_polycount;
+	const polyField = b.target_polycount !== undefined && b.target_polycount !== null ? 'target_polycount' : 'target_faces';
+	let rawPoly = b.target_polycount ?? b.target_faces;
 	if ((rawPoly === undefined || rawPoly === null) && typeof b.quality === 'string') {
 		const map = { low: 5_000, draft: 5_000, medium: 30_000, standard: 50_000, high: 150_000, ultra: 300_000 };
 		const q = b.quality.toLowerCase().trim();
@@ -124,8 +142,8 @@ export function normalizeForgeOptions(body) {
 		const n = Number(rawPoly);
 		if (!Number.isFinite(n) || !Number.isInteger(n) || n < POLYCOUNT_MIN || n > POLYCOUNT_MAX) {
 			errors.push({
-				field: 'target_polycount',
-				message: `target_polycount must be an integer between ${POLYCOUNT_MIN} and ${POLYCOUNT_MAX}.`,
+				field: polyField,
+				message: `${polyField} must be an integer between ${POLYCOUNT_MIN} and ${POLYCOUNT_MAX}.`,
 			});
 		} else {
 			targetPolycount = n;
@@ -219,6 +237,40 @@ export function normalizeForgeOptions(body) {
 		}
 	}
 
+	// bbox: [x, y, z] in meters. The delivered mesh is uniformly scaled to fit
+	// inside this box (aspect ratio preserved, never stretched per-axis), then
+	// centered on X/Z and floored at Y=0 (glb-bbox-fit.js). Lane-agnostic: it is
+	// a post-generation step on the final GLB, so unlike target_polycount/pose
+	// there is no backend that cannot honor it.
+	let bbox = null;
+	if (b.bbox !== undefined && b.bbox !== null) {
+		if (!Array.isArray(b.bbox) || b.bbox.length !== 3) {
+			errors.push({ field: 'bbox', message: 'bbox must be an array of 3 numbers [x, y, z] in meters.' });
+		} else {
+			const nums = b.bbox.map(Number);
+			const bad = nums.some((n) => !Number.isFinite(n) || n < BBOX_MIN || n > BBOX_MAX);
+			if (bad) {
+				errors.push({
+					field: 'bbox',
+					message: `Each bbox dimension must be a number between ${BBOX_MIN} and ${BBOX_MAX} meters.`,
+				});
+			} else {
+				bbox = nums;
+			}
+		}
+	}
+
+	// pose: requested rest pose for a humanoid/character subject. Only lanes
+	// without a caller-supplied reference image can honor it (poseControl in
+	// forge-tiers.js's BACKENDS); forge.js reports pose_applied so a caller
+	// knows whether the request actually reached the generator as a directive.
+	let pose = null;
+	if (b.pose !== undefined && b.pose !== null && b.pose !== '') {
+		const p = String(b.pose).toLowerCase().trim();
+		if (POSE_VALUES.includes(p)) pose = p === 'none' ? null : p;
+		else errors.push({ field: 'pose', message: `pose must be one of: ${POSE_VALUES.join(', ')}.` });
+	}
+
 	const hasOptions =
 		seed !== null ||
 		outputFormat !== 'glb' ||
@@ -229,7 +281,9 @@ export function normalizeForgeOptions(body) {
 		fillOtherSides ||
 		numParts !== null ||
 		!derivePbr ||
-		lods;
+		lods ||
+		bbox !== null ||
+		pose !== null;
 
 	return {
 		seed,
@@ -243,6 +297,8 @@ export function normalizeForgeOptions(body) {
 		numParts,
 		derivePbr,
 		lods,
+		bbox,
+		pose,
 		hasOptions,
 		errors,
 	};
@@ -264,21 +320,38 @@ export function providerReconstructParams(opts, { polyControl = false } = {}) {
 	return out;
 }
 
+// Re-usable pose directive text, appended to a text-conditioned generation
+// prompt AFTER any art-director rewrite so it survives verbatim into the
+// reference image / text-to-3d call. Kept here (not forge.js) so the wording
+// stays next to the field's validation and the one place it is documented.
+export function poseDirective(pose) {
+	if (pose === 't') return 'standing in a neutral T-pose, arms held straight out to the sides, palms down';
+	if (pose === 'a') return 'standing in a neutral A-pose, arms relaxed at a slight angle from the body';
+	return null;
+}
+
 // Compact, response-safe echo of what the caller actually got — included in the
 // generation response so a client can confirm the seed used (for reproducibility)
 // and which format/resolution was applied.
-export function summarizeForgeOptions(opts) {
+// `poseApplied` is resolved by forge.js (it knows the chosen backend's
+// poseControl flag; this module validates the field but has no backend
+// context), null when the caller did not request a pose at all.
+export function summarizeForgeOptions(opts, { poseApplied = null } = {}) {
 	if (!opts) return {};
 	return {
 		seed: opts.seed,
 		output_format: opts.outputFormat,
 		texture_size: opts.textureSize,
 		target_polycount: opts.targetPolycount,
+		target_faces: opts.targetPolycount,
 		resolution: opts.resolution ?? null,
 		view_labels: opts.viewLabels ?? null,
 		fill_other_sides: Boolean(opts.fillOtherSides),
 		num_parts: opts.numParts ?? null,
 		derive_pbr: opts.derivePbr !== false,
 		lods: Boolean(opts.lods),
+		bbox: opts.bbox ?? null,
+		pose: opts.pose ?? null,
+		...(opts.pose !== null ? { pose_applied: Boolean(poseApplied) } : {}),
 	};
 }

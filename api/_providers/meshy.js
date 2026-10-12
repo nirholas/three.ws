@@ -117,26 +117,30 @@ export function createMeshyProvider(apiKey) {
 
 	return {
 		// Native geometry-first: text → untextured mesh, no intermediate image.
-		async textToGeometry({ prompt, tier }) {
+		// targetPolycount overrides the tier default when the caller sent an
+		// explicit target_polycount/target_faces (forge-options.js); absent, the
+		// tier's own budget applies exactly as before.
+		async textToGeometry({ prompt, tier, targetPolycount }) {
 			const taskId = await postTask(ENDPOINT['text-to-3d'], {
 				mode: 'preview',
 				prompt: String(prompt).slice(0, 600),
 				ai_model: 'meshy-6',
 				topology: 'triangle',
-				target_polycount: clampPoly(tier.polycount),
+				target_polycount: clampPoly(targetPolycount ?? tier.polycount),
 				should_remesh: true,
 				target_formats: ['glb'],
 			});
 			return { kind: 'text-to-3d', taskId };
 		},
 
-		// Single image → native geometry + textures, poly target from the tier.
-		async imageTo3d({ imageUrl, prompt, tier }) {
+		// Single image → native geometry + textures, poly target from the tier
+		// unless the caller overrides it explicitly.
+		async imageTo3d({ imageUrl, prompt, tier, targetPolycount }) {
 			const body = {
 				image_url: imageUrl,
 				ai_model: 'meshy-6',
 				topology: 'triangle',
-				target_polycount: clampPoly(tier.polycount),
+				target_polycount: clampPoly(targetPolycount ?? tier.polycount),
 				should_remesh: true,
 				should_texture: true,
 				enable_pbr: Boolean(tier.pbr),

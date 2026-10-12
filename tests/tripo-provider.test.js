@@ -80,6 +80,40 @@ describe('createTripoProvider.imageTo3d — input routing', () => {
 		expect(taskBody.file).toEqual({ type: 'png', url: 'https://cdn.example.com/selfie.png' });
 	});
 
+	it('honors an explicit targetPolycount override over the tier default face_limit', async () => {
+		fetchMock.mockResolvedValueOnce(jsonResponse(200, { code: 0, data: { task_id: 'task-override' } }));
+
+		const provider = createTripoProvider(KEY);
+		await provider.textToGeometry({ prompt: 'a brass telescope', tier: { polycount: 30000 }, targetPolycount: 90_000 });
+
+		const taskBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+		expect(taskBody.face_limit).toBe(90_000);
+	});
+
+	it('falls back to the tier polycount when no override is supplied', async () => {
+		fetchMock.mockResolvedValueOnce(jsonResponse(200, { code: 0, data: { task_id: 'task-default' } }));
+
+		const provider = createTripoProvider(KEY);
+		await provider.textToGeometry({ prompt: 'a brass telescope', tier: { polycount: 30000 } });
+
+		const taskBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+		expect(taskBody.face_limit).toBe(30000);
+	});
+
+	it('honors targetPolycount on the image_to_model path too', async () => {
+		fetchMock.mockResolvedValueOnce(jsonResponse(200, { code: 0, data: { task_id: 'task-img-override' } }));
+
+		const provider = createTripoProvider(KEY);
+		await provider.imageTo3d({
+			imageUrl: 'https://cdn.example.com/selfie.png',
+			tier: { polycount: 30000, pbr: true },
+			targetPolycount: 60_000,
+		});
+
+		const taskBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+		expect(taskBody.face_limit).toBe(60_000);
+	});
+
 	it('maps an upload auth failure to invalid_key (401) and never submits a task', async () => {
 		fetchMock.mockResolvedValueOnce(jsonResponse(401, { code: 1001, message: 'bad key' }));
 

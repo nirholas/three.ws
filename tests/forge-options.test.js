@@ -3,8 +3,10 @@ import {
 	normalizeForgeOptions,
 	providerReconstructParams,
 	summarizeForgeOptions,
+	poseDirective,
 	OUTPUT_FORMATS,
 	TEXTURE_SIZES,
+	POSE_VALUES,
 } from '../api/_lib/forge-options.js';
 
 describe('normalizeForgeOptions — backward compatibility', () => {
@@ -104,6 +106,68 @@ describe('normalizeForgeOptions — texture size & polycount', () => {
 			target_polycount: 40_000,
 		});
 	});
+
+	it('accepts target_faces as an alias for target_polycount', () => {
+		expect(normalizeForgeOptions({ target_faces: 40_000 }).targetPolycount).toBe(40_000);
+		expect(normalizeForgeOptions({ target_faces: 5 }).errors[0].field).toBe('target_faces');
+		expect(normalizeForgeOptions({ target_faces: 9_000_000 }).errors[0].field).toBe('target_faces');
+	});
+
+	it('prefers target_polycount when both target_polycount and target_faces are sent', () => {
+		const o = normalizeForgeOptions({ target_polycount: 10_000, target_faces: 90_000 });
+		expect(o.targetPolycount).toBe(10_000);
+	});
+});
+
+describe('normalizeForgeOptions: bbox', () => {
+	it('accepts a valid [x, y, z] bbox in meters', () => {
+		const o = normalizeForgeOptions({ bbox: [1, 2, 0.5] });
+		expect(o.bbox).toEqual([1, 2, 0.5]);
+		expect(o.hasOptions).toBe(true);
+	});
+
+	it('defaults bbox to null when omitted', () => {
+		expect(normalizeForgeOptions({}).bbox).toBeNull();
+	});
+
+	it('rejects a bbox that is not a 3-element array', () => {
+		expect(normalizeForgeOptions({ bbox: [1, 2] }).errors[0].field).toBe('bbox');
+		expect(normalizeForgeOptions({ bbox: 'big' }).errors[0].field).toBe('bbox');
+	});
+
+	it('rejects a bbox dimension outside the sane meter range', () => {
+		expect(normalizeForgeOptions({ bbox: [0, 1, 1] }).errors[0].field).toBe('bbox');
+		expect(normalizeForgeOptions({ bbox: [1, 1, 999] }).errors[0].field).toBe('bbox');
+		expect(normalizeForgeOptions({ bbox: [1, 'x', 1] }).errors[0].field).toBe('bbox');
+	});
+});
+
+describe('normalizeForgeOptions: pose', () => {
+	it('accepts t and a, and treats none as no directive', () => {
+		expect(normalizeForgeOptions({ pose: 't' }).pose).toBe('t');
+		expect(normalizeForgeOptions({ pose: 'a' }).pose).toBe('a');
+		expect(normalizeForgeOptions({ pose: 'none' }).pose).toBeNull();
+		expect(normalizeForgeOptions({ pose: 'none' }).hasOptions).toBe(false);
+	});
+
+	it('is case-insensitive and defaults to null when omitted', () => {
+		expect(normalizeForgeOptions({ pose: 'T' }).pose).toBe('t');
+		expect(normalizeForgeOptions({}).pose).toBeNull();
+	});
+
+	it('rejects an unknown pose value', () => {
+		expect(normalizeForgeOptions({ pose: 'sitting' }).errors[0].field).toBe('pose');
+	});
+
+	it('all advertised pose values validate or clear to null', () => {
+		for (const p of POSE_VALUES) expect(normalizeForgeOptions({ pose: p }).errors).toEqual([]);
+	});
+
+	it('poseDirective returns pose-specific text for t/a and null otherwise', () => {
+		expect(poseDirective('t')).toMatch(/T-pose/);
+		expect(poseDirective('a')).toMatch(/A-pose/);
+		expect(poseDirective(null)).toBeNull();
+	});
 });
 
 describe('normalizeForgeOptions: view_labels & fill_other_sides', () => {
@@ -182,6 +246,7 @@ describe('summarizeForgeOptions', () => {
 			output_format: 'glb-draco',
 			texture_size: 1024,
 			target_polycount: null,
+			target_faces: null,
 			resolution: null,
 			view_labels: null,
 			fill_other_sides: false,
@@ -190,7 +255,32 @@ describe('summarizeForgeOptions', () => {
 			// says so, so a client can tell why its delivered file carries maps.
 			derive_pbr: true,
 			lods: false,
+			bbox: null,
+			pose: null,
 		});
+	});
+
+	it('echoes target_faces as the same resolved value as target_polycount', () => {
+		const o = normalizeForgeOptions({ target_faces: 40_000 });
+		const s = summarizeForgeOptions(o);
+		expect(s.target_polycount).toBe(40_000);
+		expect(s.target_faces).toBe(40_000);
+	});
+
+	it('echoes bbox when supplied', () => {
+		const o = normalizeForgeOptions({ bbox: [1, 2, 1] });
+		expect(summarizeForgeOptions(o).bbox).toEqual([1, 2, 1]);
+	});
+
+	it('echoes pose and pose_applied only when pose was requested', () => {
+		const requested = normalizeForgeOptions({ pose: 't' });
+		expect(summarizeForgeOptions(requested, { poseApplied: true })).toMatchObject({ pose: 't', pose_applied: true });
+		expect(summarizeForgeOptions(requested, { poseApplied: false })).toMatchObject({ pose: 't', pose_applied: false });
+
+		const notRequested = normalizeForgeOptions({});
+		const s = summarizeForgeOptions(notRequested, { poseApplied: true });
+		expect(s.pose).toBeNull();
+		expect(s).not.toHaveProperty('pose_applied');
 	});
 
 	it('echoes lods when requested', () => {

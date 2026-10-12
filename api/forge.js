@@ -85,6 +85,7 @@ import {
 	isSelfHostImageLane,
 	selfHostLaneName,
 	nextSelfHostImageLane,
+	poseControlFor,
 } from './_lib/forge-tiers.js';
 import {
 	laneHealthSnapshot,
@@ -138,7 +139,7 @@ import {
 import { markProviderCooldown, providersInCooldown } from './_lib/provider-health.js';
 import { acquireLock, releaseLock, cacheGet, cacheSet } from './_lib/cache.js';
 import { sanitizeJobError } from './_lib/provider-job-error.js';
-import { normalizeForgeOptions, providerReconstructParams, summarizeForgeOptions } from './_lib/forge-options.js';
+import { normalizeForgeOptions, providerReconstructParams, summarizeForgeOptions, poseDirective } from './_lib/forge-options.js';
 import { bindJobToOptions, optionsForJob } from './_lib/forge-job-options.js';
 import {
 	forgeResultCacheKey,
@@ -603,10 +604,17 @@ async function qualityGateFinalize({ tierId, prompt, path, backend, referenceIma
 // itself unavailable (so the caller can fall through to the next lane). Prompt
 // is required: NVCF is text-only; photo submissions never reach here.
 async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opts = null, cacheKey = null }) {
+	// NVCF emits the mesh directly from text, no FLUX-synthesized reference
+	// image exists for this lane, so a pose directive (if honorable at all,
+	// see forge-tiers.js poseControlFor) has to be appended here rather than
+	// relying on the image-intermediate injection in startJobWithBody.
+	const poseText = opts?.pose && poseControlFor('nvidia') ? poseDirective(opts.pose) : null;
+	const poseApplied = Boolean(poseText);
+	const withPose = (p) => (poseText ? `${p}, ${poseText}` : p);
 	let submitted;
 	try {
 		const nv = await loadNvidiaProvider();
-		submitted = await nv.textTo3d({ prompt, tier, seed: opts?.seed ?? undefined });
+		submitted = await nv.textTo3d({ prompt: withPose(prompt), tier, seed: opts?.seed ?? undefined });
 	} catch (err) {
 		// A timed-out / unreachable / throttled / 5xx NIM lane is degraded, cool it
 		// down so the next request skips the submit-timeout gamble and fails over
@@ -673,7 +681,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 		if (shouldRetryForQuality(durable?.quality)) {
 			try {
 				const nv = await loadNvidiaProvider();
-				const retry = await nv.textTo3d({ prompt, tier, seed: opts?.seed ?? undefined });
+				const retry = await nv.textTo3d({ prompt: withPose(prompt), tier, seed: opts?.seed ?? undefined });
 				if (!retry.taskId && retry.resultGlbUrl) {
 					const retryJob = randomUUID().replace(/-/g, '');
 					await createCreation({
@@ -727,7 +735,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 			regenerate: async ({ prompt: retryPrompt } = {}) => {
 				const useP = retryPrompt || prompt;
 				const nvr = await loadNvidiaProvider();
-				const r = await nvr.textTo3d({ prompt: useP, tier, seed: opts?.seed ?? undefined });
+				const r = await nvr.textTo3d({ prompt: withPose(useP), tier, seed: opts?.seed ?? undefined });
 				if (r.taskId || !r.resultGlbUrl) return null;
 				const rj = randomUUID().replace(/-/g, '');
 				await createCreation({
@@ -770,7 +778,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 			quality_retried: retried,
 			quality_gate: qualityGate || undefined,
 			compression: durable?.compression || null,
-			options: opts?.hasOptions ? summarizeForgeOptions(opts) : undefined,
+			options: opts?.hasOptions ? summarizeForgeOptions(opts, { poseApplied }) : undefined,
 			...provenance,
 		});
 		return true;
@@ -805,7 +813,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 		job_id: token,
 		creation_id: creationId,
 		status: 'queued',
-		options: opts?.hasOptions ? summarizeForgeOptions(opts) : undefined,
+		options: opts?.hasOptions ? summarizeForgeOptions(opts, { poseApplied }) : undefined,
 		...provenance,
 	});
 	return true;
@@ -868,6 +876,11 @@ async function runHfImageLane({
 	directedPrompt = null,
 	opts = null,
 	cacheKey = null,
+	// Whether a requested pose was already baked into the reference image this
+	// lane is reconstructing from (decided once in startJobWithBody, before any
+	// lane failover reassigned the backend); false on the image→3D path and on
+	// a pose-incapable backend (forge-tiers.js poseControlFor).
+	poseApplied = false,
 }) {
 	// The Spaces chain runs Hunyuan3D, so the lane is closed to the EU, the UK,
 	// South Korea and unknown countries. false means "could not serve" and every
@@ -1096,7 +1109,7 @@ async function runHfImageLane({
 		quality_retried: retried,
 		quality_gate: qualityGate || undefined,
 		compression: durable?.compression || null,
-		options: opts?.hasOptions ? summarizeForgeOptions(opts) : undefined,
+		options: opts?.hasOptions ? summarizeForgeOptions(opts, { poseApplied }) : undefined,
 		mode,
 		path,
 		tier: tier.id,
@@ -1144,6 +1157,13 @@ async function startJobWithBody(req, res, body) {
 	// before. An explicitly-present but invalid value is a 400 with an actionable
 	// message; an absent field is never an error.
 	const opts = normalizeForgeOptions(body);
+	// True once a `pose` request actually reached a prompt that drives
+	// generation (native text-to-geometry, or the synthesized reference image
+	// for text→3D). Stays false for every image-mode request (the caller's own
+	// photo already fixes the pose) and for a backend whose poseControl is
+	// false (forge-tiers.js); summarizeForgeOptions echoes it as pose_applied
+	// so a caller who asked for a pose can tell whether it actually took.
+	let poseApplied = false;
 	// Optional client-supplied trace id for the pre-submit progress channel. The
 	// director pass and the reference-view synthesis both finish long before this
 	// request can answer, so each records a crumb the page reads with a cheap poll
@@ -1294,7 +1314,13 @@ async function startJobWithBody(req, res, body) {
 				backend: cached.backend || backendId,
 				prompt: prompt || null,
 				quality: cached.quality || null,
-				options: opts.hasOptions ? summarizeForgeOptions(opts) : undefined,
+				// Cache lookup runs before any lane failover, so `backendId` here is
+				// still the originally requested lane; a hit only exists because a
+				// prior run with this exact (pose included) cache key already
+				// generated it under that same lane.
+				options: opts.hasOptions
+					? summarizeForgeOptions(opts, { poseApplied: Boolean(opts.pose) && poseControlFor(backendId) })
+					: undefined,
 			});
 		}
 	}
@@ -1733,15 +1759,24 @@ async function startJobWithBody(req, res, body) {
 			let previewImageUrl = null;
 			if (isImageMode) {
 				// The native image→3D endpoints reconstruct from a single primary
-				// view; multi-view fusion stays on the image/TRELLIS path.
+				// view; multi-view fusion stays on the image/TRELLIS path. The
+				// caller's own photo already fixes the subject's pose, so `pose` is
+				// never applied here regardless of this backend's poseControl.
 				previewImageUrl = imageUrls[0];
 				submitted = await gp.imageTo3d({
 					imageUrl: previewImageUrl,
 					prompt: prompt || undefined,
 					tier,
+					targetPolycount: opts.targetPolycount ?? undefined,
 				});
 			} else if (typeof gp.textToGeometry === 'function') {
-				submitted = await gp.textToGeometry({ prompt, tier });
+				const poseText = opts.pose && poseControlFor(backendId) ? poseDirective(opts.pose) : null;
+				if (poseText) poseApplied = true;
+				submitted = await gp.textToGeometry({
+					prompt: poseText ? `${prompt}, ${poseText}` : prompt,
+					tier,
+					targetPolycount: opts.targetPolycount ?? undefined,
+				});
 			} else {
 				// Image-only backend (e.g. Stable Fast 3D) asked to run text→3D.
 				return json(res, 422, {
@@ -1793,7 +1828,7 @@ async function startJobWithBody(req, res, body) {
 					durable: Boolean(durable),
 					quality: durable?.quality || null,
 					compression: durable?.compression || null,
-					options: opts.hasOptions ? summarizeForgeOptions(opts) : undefined,
+					options: opts.hasOptions ? summarizeForgeOptions(opts, { poseApplied }) : undefined,
 					mode: isImageMode ? 'image_to_3d' : 'text_to_3d',
 					path,
 					tier: tier.id,
@@ -2044,6 +2079,17 @@ async function startJobWithBody(req, res, body) {
 						() => null,
 					);
 					if (directed) promptForReference = directed;
+				}
+			}
+			// Pose directive, appended AFTER the director rewrite so it survives
+			// verbatim into the reference image. Baked into the synthesized image's
+			// pixels, so it applies no matter which image-conditioned backend this
+			// request ultimately lands on (including a later lane failover).
+			if (opts.pose && poseControlFor(backendId)) {
+				const poseText = poseDirective(opts.pose);
+				if (poseText) {
+					promptForReference = `${promptForReference}, ${poseText}`;
+					poseApplied = true;
 				}
 			}
 			// Report the rewrite only when it actually changed the brief, an
@@ -2341,7 +2387,7 @@ async function startJobWithBody(req, res, body) {
 					text_to_image_model: isImageMode ? null : textToImageModel,
 					cold_start: cold,
 					cold_start_seconds: cold ? coldStartSecondsFor(backendId) : undefined,
-					options: opts.hasOptions ? summarizeForgeOptions(opts) : undefined,
+					options: opts.hasOptions ? summarizeForgeOptions(opts, { poseApplied }) : undefined,
 					eta_seconds: estimateEtaSeconds({ backendId, tier, cold }),
 					estimated_credits: estimateCredits({ backendId, path, tier }),
 				});
@@ -2387,6 +2433,7 @@ async function startJobWithBody(req, res, body) {
 					directedPrompt,
 					opts,
 					cacheKey,
+					poseApplied,
 				})
 			)
 				return;
@@ -2434,6 +2481,7 @@ async function startJobWithBody(req, res, body) {
 					directedPrompt,
 					opts,
 					cacheKey,
+					poseApplied,
 				})
 			)
 				return;
@@ -2598,6 +2646,7 @@ async function startJobWithBody(req, res, body) {
 						directedPrompt,
 						opts,
 						cacheKey,
+						poseApplied,
 					})
 				) {
 					return;
@@ -2680,7 +2729,7 @@ async function startJobWithBody(req, res, body) {
 			text_to_image_model: textToImageModel,
 			cold_start: cold,
 			cold_start_seconds: cold ? coldStartSecondsFor(backendId) : undefined,
-			options: opts.hasOptions ? summarizeForgeOptions(opts) : undefined,
+			options: opts.hasOptions ? summarizeForgeOptions(opts, { poseApplied }) : undefined,
 			eta_seconds: estimateEtaSeconds({ backendId, tier, cold }),
 			estimated_credits: estimateCredits({ backendId, path, tier }),
 		});

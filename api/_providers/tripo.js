@@ -203,19 +203,21 @@ export function createTripoProvider(apiKey) {
 	}
 
 	return {
-		async textToGeometry({ prompt, tier }) {
+		// targetFaces overrides the tier's poly budget when the caller sent an
+		// explicit target_polycount/target_faces (forge-options.js).
+		async textToGeometry({ prompt, tier, targetPolycount: targetFaces }) {
 			const taskId = await createTask({
 				type: 'text_to_model',
 				prompt: String(prompt).slice(0, 1024),
 				model_version: modelVersion(),
-				face_limit: clampFaces(tier.polycount),
+				face_limit: clampFaces(targetFaces ?? tier.polycount),
 				texture: false,
 				pbr: false,
 			});
 			return { kind: 'task', taskId };
 		},
 
-		async imageTo3d({ imageUrl, tier }) {
+		async imageTo3d({ imageUrl, tier, targetPolycount: targetFaces }) {
 			// Data URI (selfie) → upload first and reference the token; a real
 			// http(s) URL passes straight through as `file.url`.
 			const parsed = parseImageDataUri(imageUrl);
@@ -226,7 +228,7 @@ export function createTripoProvider(apiKey) {
 				type: 'image_to_model',
 				file,
 				model_version: modelVersion(),
-				face_limit: clampFaces(tier.polycount),
+				face_limit: clampFaces(targetFaces ?? tier.polycount),
 				texture: true,
 				pbr: Boolean(tier.pbr),
 			});

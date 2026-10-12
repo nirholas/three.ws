@@ -393,6 +393,12 @@ export const BACKENDS = Object.freeze({
 		// Discoverable capability flag the catalog/UI read directly, rather than
 		// hardcoding an "anigen" check outside this registry.
 		rigged: true,
+		// The rigging pass normalizes every output to AniGen's own trained rest
+		// pose before it predicts the skeleton: a `pose` directive on the input
+		// image has nothing left to influence by the time skinning runs, unlike
+		// a plain mesh backend where the delivered geometry is just whatever the
+		// reference image showed. The only backend where this is false.
+		poseControl: false,
 		baseEta: 90,
 		// Cold-start budget for our own scale-to-zero worker: checkpoint copy +
 		// pipeline load before the first inference.
@@ -1008,6 +1014,12 @@ export function buildCatalog() {
 			paths: b.paths,
 			byok: b.byok || null,
 			poly_control: b.polyControl,
+			// True unless this specific backend re-normalizes its output pose
+			// downstream of the prompt/reference image (see poseControlFor above).
+			// A caller-supplied photo (image mode) still fixes the pose regardless
+			// of this flag; that per-request outcome is echoed as pose_applied on
+			// the generation response, not here.
+			pose_control: b.poseControl !== false,
 			free: Boolean(b.free),
 			// False when the backend generates from text prompts only (NVIDIA's
 			// hosted TRELLIS preview) — the UI must not offer it for photo input.
@@ -1056,6 +1068,18 @@ export function buildCatalog() {
 			configured: outputIsConfigured(o.id),
 		})),
 	};
+}
+
+// Whether a `pose` request (api/_lib/forge-options.js) has any chance of
+// reaching the delivered mesh on this backend. True for every backend except
+// one (anigen): pose is a prompt-time directive (baked into the native
+// text-to-geometry prompt or the synthesized reference image), so it can only
+// be defeated by a backend that re-normalizes its output pose downstream of
+// that image, not by the backend's input modality. Request-time factors
+// (isImageMode: a caller-supplied photo already fixes the pose) are decided
+// in forge.js, which is why this alone is not the full pose_applied answer.
+export function poseControlFor(backendId) {
+	return BACKENDS[backendId]?.poseControl !== false;
 }
 
 // Translate a resolved (path, tier) into the mesh-budget params the poly-aware
