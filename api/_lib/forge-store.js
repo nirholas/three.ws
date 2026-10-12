@@ -23,6 +23,7 @@ import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 import { recordGenerationEvent } from './forge-events.js';
 import { scoreGlbQuality } from './glb-quality.js';
 import { stripFloorSlab } from './glb-floor-slab.js';
+import { fitBbox } from './glb-bbox-fit.js';
 import { compressGlb, deliveryCompressionOptions } from './glb-compress.js';
 import { classifyModelCategory } from './forge-classify.js';
 import { cleanupGlb } from './glb-cleanup.js';
@@ -322,11 +323,12 @@ const COPY_TIMEOUT_MS = 120_000;
 // (normal + packed occlusion/roughness/metallic + the class's measured
 // extension layer); on by default, pass false to deliver the lane's own
 // materials untouched.
-async function scoreAndCompress(buf, { computeQuality, compress, cleanup = false, derivePbr = false, prompt = '', tier = '', materialClass = '' }) {
+async function scoreAndCompress(buf, { computeQuality, compress, cleanup = false, derivePbr = false, bbox = null, prompt = '', tier = '', materialClass = '' }) {
 	let quality = null;
 	let compression = null;
 	let cleaned = null;
 	let pbr = null;
+	let fit = null;
 	let outBuf = buf;
 	// Cleanup FIRST: a welded, de-duplicated, decimated mesh both renders better
 	// and compresses better than the raw soup, so the codec below operates on the
@@ -363,7 +365,23 @@ async function scoreAndCompress(buf, { computeQuality, compress, cleanup = false
 			console.warn('[forge-store] floor slab strip failed, delivering as-is:', err?.message);
 		}
 	}
-	// Material completion SECOND: it reads the albedo the lane baked and writes
+	// Bbox fit SECOND, still before material completion: it rescales and
+	// recenters the whole mesh (glb-bbox-fit.js), which must happen after the
+	// floor-slab strip settles the final geometry (fitting around a slab that is
+	// about to be cut would waste the fit) and before PBR derivation measures or
+	// bakes anything resolution-dependent on the final scale.
+	if (bbox) {
+		try {
+			const r = await fitBbox(outBuf, bbox);
+			if (r.fitted) {
+				outBuf = r.buffer;
+				fit = { bbox, scale: r.scale };
+			}
+		} catch (err) {
+			console.warn('[forge-store] bbox fit failed, delivering at native scale:', err?.message);
+		}
+	}
+	// Material completion THIRD: it reads the albedo the lane baked and writes
 	// derived maps onto the geometry cleanup just settled, so it has to run after
 	// cleanup and before the codec pass (a Draco/meshopt-encoded buffer would
 	// have to be decoded again to touch its materials) and before quality
@@ -412,7 +430,7 @@ async function scoreAndCompress(buf, { computeQuality, compress, cleanup = false
 			compression = { mode: compress, skipped: true, reason: 'compression_failed' };
 		}
 	}
-	return { buf: outBuf, quality, compression, cleaned, pbr };
+	return { buf: outBuf, quality, compression, cleaned, pbr, fit };
 }
 
 // An upstream Content-Type ends up as the object's stored type, which the CDN
@@ -426,7 +444,7 @@ function mediaTypeOr(header, fallback) {
 	return STORABLE_TYPE_RE.test(type) ? type : fallback;
 }
 
-async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, computeQuality = false, compress = null, cleanup = false, derivePbr = false, prompt = '', tier = '', materialClass = '', forceContentType = null, untrustedSource = false }) {
+async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, computeQuality = false, compress = null, cleanup = false, derivePbr = false, bbox = null, prompt = '', tier = '', materialClass = '', forceContentType = null, untrustedSource = false }) {
 	// fetchUpstream retries network errors and 408/425/429/5xx with jittered
 	// backoff and gives up immediately on 404/410 (the ephemeral asset has
 	// already expired; no retry can recover it), rejecting with an error that
@@ -451,19 +469,21 @@ async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, com
 	let compression = null;
 	let cleaned = null;
 	let pbr = null;
-	if (computeQuality || compress || cleanup || derivePbr) {
-		const scored = await scoreAndCompress(buf, { computeQuality, compress, cleanup, derivePbr, prompt, tier, materialClass });
+	let fit = null;
+	if (computeQuality || compress || cleanup || derivePbr || bbox) {
+		const scored = await scoreAndCompress(buf, { computeQuality, compress, cleanup, derivePbr, bbox, prompt, tier, materialClass });
 		buf = scored.buf;
 		quality = scored.quality;
 		compression = scored.compression;
 		cleaned = scored.cleaned;
 		pbr = scored.pbr;
+		fit = scored.fit;
 	}
 	await putObject({ key, body: buf, contentType, metadata: { source: 'forge' } });
 	// `buffer` is the bytes actually stored, post-cleanup and post-compression, so
 	// a caller that hashes or grades them is describing the asset users receive
 	// rather than the provider's original, and does it without a second fetch.
-	return { bytes: buf.length, publicUrl: publicUrl(key), quality, compression, cleaned, pbr, buffer: buf };
+	return { bytes: buf.length, publicUrl: publicUrl(key), quality, compression, cleaned, pbr, fit, buffer: buf };
 }
 
 function imageExtFor(url) {
@@ -633,7 +653,7 @@ export function buildLodVariant({ buffer, creationId, keyPrefix }) {
 //              Off by default: it is real decimation work, worth its own opt-in
 //              exactly like forge-options.js documents. Fire-and-forget, same
 //              as the web-delivery variant it sits beside.
-export async function materializeCreation({ replicateJobId, clientKey, glbUrl, quality = false, compress = null, cleanup = true, derivePbr = true, lods = false }) {
+export async function materializeCreation({ replicateJobId, clientKey, glbUrl, quality = false, compress = null, cleanup = true, derivePbr = true, bbox = null, lods = false }) {
 	if (!forgeStoreEnabled() || !replicateJobId || !glbUrl) return null;
 	const existing = await findByJob({ replicateJobId, clientKey });
 	if (!existing) return null;
@@ -647,6 +667,7 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 			compression: null,
 			cleaned: null,
 			pbr: null,
+			fit: null,
 		};
 	}
 
@@ -661,6 +682,7 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 			compress,
 			cleanup,
 			derivePbr,
+			bbox,
 			// The row carries the words the material classifier reads and the tier
 			// that sets the derived maps' resolution, so no caller has to thread
 			// either through the poll path.
@@ -769,6 +791,7 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 			compression: glb.compression ?? null,
 			cleaned: glb.cleaned ?? null,
 			pbr: glb.pbr ?? null,
+			fit: glb.fit ?? null,
 		};
 	} catch (err) {
 		// A 404/410 means the provider's ephemeral asset (e.g. a HuggingFace Space's

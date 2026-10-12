@@ -1,15 +1,17 @@
-// Job → output-options binding for the /forge generation pipeline.
+// Job -> output-options binding for the /forge generation pipeline.
 //
 // normalizeForgeOptions() (forge-options.js) parses a request's optional output
-// controls (seed, output_format/compression, texture_size, target_polycount) in
-// the SAME serverless invocation that submits the job. An asynchronous lane
-// (Replicate/TRELLIS, Hunyuan3D, sketch, BYOK) completes in a LATER, separate
-// invocation of pollJob(), which only has the job handle — not the original
-// request body. This module remembers the request-affecting subset (the
-// post-generation compression choice, and whether the caller opted OUT of the
-// PBR material completion pass) against the job handle for the lifetime of a
+// controls (seed, output_format/compression, texture_size, target_polycount,
+// lods, bbox) in the SAME serverless invocation that submits the job. An
+// asynchronous lane (Replicate/TRELLIS, Hunyuan3D, sketch, BYOK) completes in a
+// LATER, separate invocation of pollJob(), which only has the job handle, not
+// the original request body. This module remembers the request-affecting
+// subset (the post-generation compression choice, whether the caller opted OUT
+// of the PBR material completion pass, whether an LOD variant was requested,
+// and the requested delivery bbox) against the job handle for the lifetime of a
 // single poll cycle, so a completed async job still gets the caller's requested
-// output_format and material handling applied at materialize time.
+// output_format, material handling, LOD build, and bbox fit applied at
+// materialize time.
 //
 // Mirrors the bindJobToCacheKey/cacheKeyForJob idiom in forge-cache.js exactly:
 // best-effort, short-TTL, fail-open without Redis (a cache/store outage just
@@ -37,10 +39,17 @@ export async function bindJobToOptions(jobHandle, opts, { redis } = {}) {
 	// derivePbr is opt-OUT, so only an explicit false is worth remembering: an
 	// unbound job takes the default-on path at materialize time either way.
 	const derivePbr = opts.derivePbr === false ? false : null;
-	if (!compression && derivePbr === null) return; // default behavior needs no binding
+	// lods is opt-IN, mirroring compression: only an explicit true is worth
+	// remembering.
+	const lods = opts.lods === true ? true : null;
+	// bbox is opt-IN: a caller-supplied [x, y, z] fit box (forge-options.js).
+	const bbox = Array.isArray(opts.bbox) ? opts.bbox : null;
+	if (!compression && derivePbr === null && lods === null && !bbox) return; // default behavior needs no binding
 	const value = {
 		...(compression ? { compression } : {}),
 		...(derivePbr === false ? { derivePbr: false } : {}),
+		...(lods === true ? { lods: true } : {}),
+		...(bbox ? { bbox } : {}),
 	};
 	try {
 		await r.set(`${PREFIX}${jobHandle}`, JSON.stringify(value), { ex: TTL_S });
@@ -63,7 +72,9 @@ export async function optionsForJob(jobHandle, { redis } = {}) {
 		if (!value || typeof value !== 'object') return null;
 		const hasCompression = typeof value.compression === 'string';
 		const hasDerivePbr = value.derivePbr === false;
-		return hasCompression || hasDerivePbr ? value : null;
+		const hasLods = value.lods === true;
+		const hasBbox = Array.isArray(value.bbox);
+		return hasCompression || hasDerivePbr || hasLods || hasBbox ? value : null;
 	} catch {
 		return null;
 	}
