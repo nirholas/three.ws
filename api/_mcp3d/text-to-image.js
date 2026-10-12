@@ -21,7 +21,7 @@
 // free on the NVIDIA NIM catalog as base64 JPEG (no poll; returns inline).
 // Replicate backstop: black-forest-labs/flux-schnell — same family, $0.003/run.
 
-import { markProviderCooldown, providersInCooldown } from '../_lib/provider-health.js';
+import { markProviderCooldown, providersInCooldown, AUTH_COOLDOWN_SECONDS } from '../_lib/provider-health.js';
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
 import { reserveProviderRateSlot, SCALE_LIMITS } from '../_lib/forge-scale.js';
 import { persistImageBase64, persistImageBytes, looksLikeImageBytes } from '../_lib/image-persist.js';
@@ -80,6 +80,23 @@ async function pollReplicatePrediction(getUrl, token, { timeoutMs = REPLICATE_PO
 // promptly. Best-effort via the shared cache: a miss just means "not cooling".
 const NIM_FLUX_COOLDOWN_KEY = 'forge-nim-flux';
 const NIM_FLUX_COOLDOWN_SECONDS = 60;
+
+// Same breaker, but for the Vertex image lane and the two HF-routed providers,
+// keyed on an auth/billing fault (401/402/403) rather than a transient one: a
+// dunning hold or an exhausted credit balance will not clear itself in 60s, so
+// marking it 'health'-length just burns the full request timeout again on the
+// very next call. AUTH_COOLDOWN_SECONDS (5 min) matches the same breaker
+// already used for Vertex in forge-quality-gate.js and for every LLM lane in
+// chat.js/concierge.js. VERTEX_IMAGE_COOLDOWN_KEY is exported so
+// forge-reference-image.js's own, separate Vertex-reference attempt shares the
+// same breaker: one 403 should silence Vertex for both call sites, not just
+// this one.
+export const VERTEX_IMAGE_COOLDOWN_KEY = 'forge-vertex-image';
+const HF_IMAGE_COOLDOWN_PREFIX = 'forge-hf-image-';
+function isAuthFault(err) {
+	const status = err?.providerStatus;
+	return status === 401 || status === 402 || status === 403;
+}
 
 // Whether a thrown nimFluxImage error means the lane itself is degraded (timeout,
 // unreachable, throttle, or 5xx) — worth a cooldown — as opposed to a 4xx client
@@ -595,6 +612,12 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 		try {
 			const { generateImage, isConfigured } = await import('./vertex-imagen.js');
 			if (!isConfigured()) return null;
+			// A lane parked on a billing/auth fault beats nothing only when it is the
+			// only lane left; with a fallback behind it, skip the known-dead call
+			// instead of re-paying its full timeout on every request.
+			if (laneRemains && (await providersInCooldown([VERTEX_IMAGE_COOLDOWN_KEY])).has(VERTEX_IMAGE_COOLDOWN_KEY)) {
+				return null;
+			}
 			if (!canTry()) {
 				if (!laneRemains) throw budgetExhausted(budget);
 				return null;
@@ -605,6 +628,9 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 				),
 			);
 		} catch (err) {
+			if (isAuthFault(err)) {
+				markProviderCooldown(VERTEX_IMAGE_COOLDOWN_KEY, AUTH_COOLDOWN_SECONDS, 'auth').catch(() => {});
+			}
 			if (!laneRemains) throw err;
 			console.warn(`vertex imagen failed, falling back: ${err?.message}`);
 			return null;
@@ -657,8 +683,15 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 
 	// ── Hugging Face routed providers (fal-ai, then nscale) ──────────────────
 	if (hasHf) {
+		const hfCooling = await providersInCooldown(
+			HF_IMAGE_PROVIDERS.map((provider) => `${HF_IMAGE_COOLDOWN_PREFIX}${provider.id}`),
+		);
 		for (const provider of HF_IMAGE_PROVIDERS) {
 			if (!canTry()) break;
+			// An out-of-credit or revoked-key provider parked in cooldown: the other
+			// HF rung (and everything downstream) is independent, so skip only this
+			// one rung instead of re-paying its timeout every request.
+			if (hfCooling.has(`${HF_IMAGE_COOLDOWN_PREFIX}${provider.id}`)) continue;
 			try {
 				return logImageProvider(
 					await hfRoutedImage(provider, prompt, aspectRatio, hasSeed ? seed : undefined, {
@@ -666,6 +699,9 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 					}),
 				);
 			} catch (err) {
+				if (isAuthFault(err)) {
+					markProviderCooldown(`${HF_IMAGE_COOLDOWN_PREFIX}${provider.id}`, AUTH_COOLDOWN_SECONDS, 'auth').catch(() => {});
+				}
 				console.warn(`hf ${provider.id} failed, falling back: ${err?.message}`);
 			}
 		}

@@ -59,9 +59,10 @@ import { getGcpAccessToken } from './gcp-auth.js';
 import { persistImageBase64 } from './image-persist.js';
 import { subjectNegativePrompt } from '../forge-enhance.js';
 import { isProviderRefusal } from './ai-image-lanes.js';
-import { textToImage, ladderBudgetMs, laneTimeoutMs } from '../_mcp3d/text-to-image.js';
+import { textToImage, ladderBudgetMs, laneTimeoutMs, VERTEX_IMAGE_COOLDOWN_KEY } from '../_mcp3d/text-to-image.js';
 import { parseJsonLoose } from './vision.js';
 import { getRedis } from './redis.js';
+import { markProviderCooldown, providersInCooldown, AUTH_COOLDOWN_SECONDS } from './provider-health.js';
 
 // Reference-set cache: the SAME enhanced prompt (already director-rewritten,
 // so two users typing differently-worded ideas that converge on one directed
@@ -376,7 +377,15 @@ export async function generateReferenceImage(
 		return { ...cached, lane: 'vertex-reference-cached' };
 	}
 
-	if (vertexImageEnabled()) {
+	// A project-wide billing hold or safety block fails this lane identically on
+	// every call until ops fixes it. Share the breaker with text-to-image.js's
+	// own Vertex rung (VERTEX_IMAGE_COOLDOWN_KEY): either call site marking it
+	// silences both for AUTH_COOLDOWN_SECONDS, instead of this step paying the
+	// full Vertex timeout only to fall through to a textToImage() that pays it
+	// again for the exact same failure.
+	const vertexCooling =
+		vertexImageEnabled() && (await providersInCooldown([VERTEX_IMAGE_COOLDOWN_KEY])).has(VERTEX_IMAGE_COOLDOWN_KEY);
+	if (vertexImageEnabled() && !vertexCooling) {
 		try {
 			const instruction = buildReferenceInstruction(prompt, negatives);
 			const leaderMs = laneTimeoutMs(VERTEX_REQUEST_CEILING_MS, { budgetMs: budget, remainingMs: remaining(), laneRemains: true });
@@ -426,6 +435,10 @@ export async function generateReferenceImage(
 			// Any Vertex failure (unconfigured token, safety block, throttle, tier
 			// change) degrades to the existing chain - the reference image still gets
 			// made, just on the prior path. Warn, don't error.
+			const status = err?.providerStatus;
+			if (status === 401 || status === 402 || status === 403) {
+				markProviderCooldown(VERTEX_IMAGE_COOLDOWN_KEY, AUTH_COOLDOWN_SECONDS, 'auth').catch(() => {});
+			}
 			console.warn(`[forge-reference-image] vertex lane failed, falling through: ${err?.message}`);
 		}
 	}
