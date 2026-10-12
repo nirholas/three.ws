@@ -2,6 +2,12 @@ FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
 
 # devel base: MDM's dependency stack (and optional CUDA ops) build cleanly with
 # nvcc present. TORCH_CUDA_ARCH_LIST targets the Cloud Run L4 (cc 8.9).
+# PYTHONPATH only covers MDM: mdm_sampler.py relies on it being set at import
+# time. momask_sampler.py manages its own sys.path at runtime instead (see its
+# module docstring) specifically so momask-codes' repo dir is never a static,
+# always-first PYTHONPATH entry: both repos ship an unrelated top-level
+# `utils` package, and whichever was first on a static path would permanently
+# shadow the other's in a long-lived container serving both backends.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -36,6 +42,25 @@ RUN git clone --depth 1 https://github.com/GuyTevet/motion-diffusion-model.git /
     && pip install scipy tqdm smplx \
     && pip install git+https://github.com/openai/CLIP.git
 
+# MoMask (EricGuo5513/momask-codes, MIT) is the stronger baseline (published
+# FID 0.045 on HumanML3D vs. MDM-era T2M-GPT's 0.141): a residual-VQ tokenizer
+# plus a masked + residual transformer, selected per request via
+# `model: "momask"` (see momask_sampler.py). Not put on a static PYTHONPATH
+# (see the ENV block above): momask_sampler.py inserts /opt/momask itself at
+# load time. Every transitive import momask_sampler.py's `_load()` reaches
+# (models.vq.model, models.vq.residual_vq, models.vq.quantizer,
+# models.mask_transformer.transformer/tools, utils.get_opt,
+# utils.motion_process, utils.paramUtil, common.skeleton, common.quaternion,
+# utils.word_vectorizer) was walked against momask-codes' own source; the only
+# dependency beyond what MDM's layer above already installs (torch, CLIP,
+# scipy) is einops. momask's own requirements.txt additionally lists chumpy,
+# matplotlib, scikit-learn, trimesh, gdown, vector-quantize-pytorch: those
+# back its training/visualization/eval scripts and its OWN (unused, commented-
+# out) VectorQuantize import, none are reachable from the inference path
+# this worker calls.
+RUN git clone --depth 1 https://github.com/EricGuo5513/momask-codes.git /opt/momask \
+    && pip install einops
+
 # MDM auxiliary data (glove, evaluators) and the trained checkpoint are mounted
 # at runtime from the weights bucket (MOTION_MODEL_DIR=/weights/mdm). The real
 # SMPL body model (`body_models/smpl/SMPL_NEUTRAL.pkl`) is NOT staged: it is
@@ -57,7 +82,9 @@ RUN pip install -r /app/requirements.txt
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
 COPY smpl_to_clip.py /app/smpl_to_clip.py
+COPY motion_decode.py /app/motion_decode.py
 COPY mdm_sampler.py /app/mdm_sampler.py
+COPY momask_sampler.py /app/momask_sampler.py
 COPY main.py /app/main.py
 
 EXPOSE 8080

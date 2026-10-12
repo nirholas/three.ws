@@ -63,7 +63,7 @@ steps:
       - --allow-unauthenticated
       - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
       - --add-volume-mount=volume=weights,mount-path=/weights
-      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},MOTION_MODEL_DIR=/weights/mdm,MAX_CONCURRENT=2
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},MOTION_MODEL_DIR=/weights/mdm,MOMASK_MODEL_DIR=/weights/momask,MAX_CONCURRENT=2
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
   # The dormant failback copy. Same image, same flags, min 0 so it holds no GPU
@@ -92,7 +92,7 @@ steps:
       - --allow-unauthenticated
       - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
       - --add-volume-mount=volume=weights,mount-path=/weights
-      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},MOTION_MODEL_DIR=/weights/mdm,MAX_CONCURRENT=2
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},MOTION_MODEL_DIR=/weights/mdm,MOMASK_MODEL_DIR=/weights/momask,MAX_CONCURRENT=2
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
 images:

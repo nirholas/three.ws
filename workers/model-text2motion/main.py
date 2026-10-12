@@ -1,31 +1,39 @@
-"""Text-to-motion service — prompt → retargetable three.js animation clip.
+"""Text-to-motion service: prompt to retargetable three.js animation clip.
 
-Wraps a text-to-motion diffusion model (MDM — Motion Diffusion Model,
-GuyTevet/motion-diffusion-model, MIT) on GPU. Given a natural-language prompt
-("waving confidently", "a slow tai-chi sweep") it samples SMPL-skeleton motion,
-then converts it to a canonical three.js AnimationClip JSON (Wolf3D bone names —
-see smpl_to_clip.py) that the platform retargets onto any rigged avatar with the
+Wraps a text-to-motion model on GPU, selectable per request between two MIT-
+licensed backends. Given a natural-language prompt ("waving confidently", "a
+slow tai-chi sweep") it samples SMPL-skeleton motion, then converts it to a
+canonical three.js AnimationClip JSON (Wolf3D bone names, see
+smpl_to_clip.py) that the platform retargets onto any rigged avatar with the
 same engine the curated animation library uses. Output is uploaded to GCS and
 the URL returned, mirroring the model-* worker contract exactly.
 
-Licensing
-  - MDM (GuyTevet/motion-diffusion-model) — MIT, commercial-OK. Chosen over
-    MoMask / T2M-GPT specifically because MIT is unambiguously commercial-safe;
-    if a higher-quality model with a commercial license is adopted later, only
-    `_generate_motion()` changes — the contract and the clip conversion do not.
+Models
+  - MDM (GuyTevet/motion-diffusion-model), MIT. The default: diffusion
+    sampling, one network, no residual-token stage, so it is the cheaper
+    backend to keep warm.
+  - MoMask (EricGuo5513/momask-codes), MIT. The stronger baseline on
+    HumanML3D (published FID 0.045 vs. T2M-GPT's 0.141): a residual-VQ token
+    vocabulary plus a masked transformer and a residual transformer. Selected
+    per request via `model: "momask"`; see momask_sampler.py.
+  Both are trained on HumanML3D and decode to the same 22-joint position
+  representation (`motion_decode.py`'s shared, pure-NumPy position→rotation
+  IK is backend-agnostic), so swapping models touches only `_load_model()` /
+  `_generate_motion()`; the contract and the clip conversion do not change.
 
 API contract (identical shape to the other model-* workers):
-  POST /infer   { prompt: str, duration_seconds?: float=4, fps?: int=30, job_id?: str }
+  POST /infer   { prompt: str, duration_seconds?: float=4, fps?: int=30, model?: str="mdm", job_id?: str }
                 → 202 { task_id, status: "queued" }
   GET  /tasks/:id → { task_id, status, result_url?, frames?, fps?, error? }
   GET  /health    → { ok }
 
 Environment:
-  API_KEY            — bearer secret (required)
-  GCS_BUCKET         — output bucket (required)
-  MAX_CONCURRENT     — default 2
-  MOTION_MODEL_DIR   — directory of MDM checkpoints (mounted from GCS)
-  MAX_DURATION_SEC   — hard cap on requested clip length (default 10)
+  API_KEY            bearer secret (required)
+  GCS_BUCKET         output bucket (required)
+  MAX_CONCURRENT     default 2
+  MOTION_MODEL_DIR   directory of MDM checkpoints (mounted from GCS)
+  MOMASK_MODEL_DIR   directory of MoMask checkpoints (mounted from GCS)
+  MAX_DURATION_SEC   hard cap on requested clip length (default 10)
 """
 
 from __future__ import annotations
@@ -54,44 +62,59 @@ API_KEY = os.environ["API_KEY"]
 GCS_BUCKET = os.environ["GCS_BUCKET"]
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "2"))
 MOTION_MODEL_DIR = os.environ.get("MOTION_MODEL_DIR", "/weights/mdm")
+MOMASK_MODEL_DIR = os.environ.get("MOMASK_MODEL_DIR", "/weights/momask")
 MAX_DURATION_SEC = float(os.environ.get("MAX_DURATION_SEC", "10"))
 DEFAULT_FPS = 30
 
+# Canonical backend names. The default is warmed at container start; the rest
+# load lazily on first use (same pattern as workers/rembg's multi-model
+# selector, see rembg_policy.canonical_model).
+CANONICAL_MODELS = ("mdm", "momask")
+DEFAULT_MODEL = "mdm"
+
 _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
-_ready: Optional[asyncio.Event] = None
-_load_error: Optional[str] = None
 _tasks: dict[str, dict] = {}
-_model = None  # lazily-loaded MDM sampler
+_models: dict[str, object] = {}  # lazily-loaded samplers, keyed by canonical name
+_model_locks: dict[str, asyncio.Lock] = {name: asyncio.Lock() for name in CANONICAL_MODELS}
+_load_errors: dict[str, str] = {}
 
 
-async def _load_model_bg() -> None:
-    global _load_error
+def canonical_model(name: Optional[str]) -> str:
+    """Resolve a caller-supplied model name, falling back to the default.
+
+    An unknown name falls back rather than 400s, because a generation request
+    with a stale model name still has an obviously right thing to do.
+    """
+    resolved = (name or "").strip().lower()
+    return resolved if resolved in CANONICAL_MODELS else DEFAULT_MODEL
+
+
+async def _load_model_bg(name: str) -> None:
     loop = asyncio.get_event_loop()
     try:
-        await loop.run_in_executor(None, _load_model)
-        _ready.set()
-        log.info("text2motion ready — max_concurrent=%d", MAX_CONCURRENT)
+        await loop.run_in_executor(None, _load_model, name)
+        log.info("%s ready, max_concurrent=%d", name, MAX_CONCURRENT)
     except Exception as exc:  # noqa: BLE001
-        _load_error = safe_error(exc, context="MDM checkpoint load")
-        log.error("MDM model load FAILED: %s", exc)
+        _load_errors[name] = safe_error(exc, context=f"{name} checkpoint load")
+        log.error("%s model load FAILED: %s", name, exc)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _bucket, _sem, _ready
+    global _bucket, _sem
     _bucket = storage.Client().bucket(GCS_BUCKET)
     _sem = asyncio.Semaphore(MAX_CONCURRENT)
-    _ready = asyncio.Event()
-    # Load the checkpoint in the BACKGROUND and yield immediately — uvicorn
-    # runs the ASGI lifespan before binding the socket, and the full load
-    # (MDM transformer + CUDA transfer from the GCS FUSE-mounted weights dir)
-    # can run past Cloud Run's startup TCP-probe window on a cold instance.
-    # Backgrounding opens the port at once; requests that arrive before the
-    # load completes wait on `_ready` in `_run_inference`. Same pattern as
-    # model-trellis / model-triposg.
-    asyncio.create_task(_load_model_bg())
-    log.info("text2motion starting, model loading in background (max_concurrent=%d)", MAX_CONCURRENT)
+    # Load the DEFAULT checkpoint in the BACKGROUND and yield immediately:
+    # uvicorn runs the ASGI lifespan before binding the socket, and the full
+    # load (transformer weights + CUDA transfer from the GCS FUSE-mounted
+    # weights dir) can run past Cloud Run's startup TCP-probe window on a cold
+    # instance. Backgrounding opens the port at once; requests that arrive
+    # before the load completes wait on `_ensure_loaded` in `_run_inference`.
+    # Same pattern as model-trellis / model-triposg. Non-default backends
+    # (momask) load on first request instead of at startup, matching rembg.
+    asyncio.create_task(_load_model_bg(DEFAULT_MODEL))
+    log.info("text2motion starting, %s loading in background (max_concurrent=%d)", DEFAULT_MODEL, MAX_CONCURRENT)
     yield
 
 
@@ -105,25 +128,49 @@ def _require_api_key(authorization: str) -> None:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
 
 
-def _load_model() -> None:
-    """Load the MDM sampler once per container.
+def _load_model(name: str) -> None:
+    """Load one backend's sampler once per container.
 
     Kept import-local so the FastAPI app + the pure conversion path import
-    cleanly in environments without torch/MDM installed (tests, CI). On the GPU
-    runtime this loads the checkpoint from MOTION_MODEL_DIR.
+    cleanly in environments without torch/the model repos installed (tests,
+    CI). On the GPU runtime this loads the checkpoint from the backend's
+    model dir.
     """
-    global _model
-    from mdm_sampler import MdmSampler  # provided in the GPU image (see Dockerfile)
+    if name == "momask":
+        from momask_sampler import MomaskSampler  # provided in the GPU image (see Dockerfile)
 
-    _model = MdmSampler(model_dir=MOTION_MODEL_DIR, device="cuda")
-    log.info("MDM checkpoint loaded from %s", MOTION_MODEL_DIR)
+        _models[name] = MomaskSampler(model_dir=MOMASK_MODEL_DIR, device="cuda")
+        log.info("MoMask checkpoints loaded from %s", MOMASK_MODEL_DIR)
+    else:
+        from mdm_sampler import MdmSampler  # provided in the GPU image (see Dockerfile)
+
+        _models[name] = MdmSampler(model_dir=MOTION_MODEL_DIR, device="cuda")
+        log.info("MDM checkpoint loaded from %s", MOTION_MODEL_DIR)
 
 
-def _generate_motion(prompt: str, n_frames: int):
-    """Sample SMPL motion for `prompt`. Returns (poses (T,24,3), trans (T,3))."""
-    if _model is None:
-        raise RuntimeError("motion model not loaded")
-    poses, trans = _model.sample(prompt=prompt, n_frames=n_frames)
+async def _ensure_loaded(name: str) -> None:
+    """Block until `name`'s sampler is loaded, loading it now if nobody has."""
+    if name in _models:
+        return
+    async with _model_locks[name]:
+        if name in _models:  # a concurrent caller may have finished while we waited
+            return
+        if name in _load_errors:
+            raise RuntimeError(_load_errors[name])
+        loop = asyncio.get_event_loop()
+        try:
+            await loop.run_in_executor(None, _load_model, name)
+        except Exception as exc:  # noqa: BLE001
+            _load_errors[name] = safe_error(exc, context=f"{name} checkpoint load")
+            raise
+
+
+def _generate_motion(name: str, prompt: str, n_frames: int):
+    """Sample SMPL motion for `prompt` on backend `name`. Returns (poses, trans)."""
+    model = _models.get(name)
+    if model is None:
+        raise RuntimeError(f"{name} model not loaded")
+    poses, trans = model.sample(prompt=prompt, n_frames=n_frames)
     return poses, trans
 
 
@@ -131,17 +178,19 @@ class InferRequest(BaseModel):
     prompt: str = Field(..., min_length=3, max_length=1000)
     duration_seconds: float = Field(default=4.0, gt=0)
     fps: int = Field(default=DEFAULT_FPS, ge=8, le=60)
+    model: Optional[str] = None
     job_id: Optional[str] = None
 
 
 @app.post("/infer", status_code=202)
 async def infer(body: InferRequest, background_tasks: BackgroundTasks, authorization: str = Header(...)) -> dict:
     _require_api_key(authorization)
+    model_name = canonical_model(body.model)
     task_id = body.job_id or str(uuid.uuid4())
-    _tasks[task_id] = {"task_id": task_id, "status": "queued", "model": "mdm"}
+    _tasks[task_id] = {"task_id": task_id, "status": "queued", "model": model_name}
     duration = min(body.duration_seconds, MAX_DURATION_SEC)
     n_frames = max(2, int(round(duration * body.fps)))
-    background_tasks.add_task(_run_inference, task_id, body.prompt, n_frames, body.fps)
+    background_tasks.add_task(_run_inference, task_id, model_name, body.prompt, n_frames, body.fps)
     return {"task_id": task_id, "status": "queued"}
 
 
@@ -166,7 +215,8 @@ async def root() -> dict:
     """
     return {
         "service": "model-text2motion",
-        "model": "mdm",
+        "model": DEFAULT_MODEL,
+        "models_available": list(CANONICAL_MODELS),
         "health": "/health",
         "endpoints": ["POST /infer", "GET /tasks/{id}", "GET /health"],
     }
@@ -174,30 +224,35 @@ async def root() -> dict:
 
 @app.get("/health")
 async def health() -> dict:
+    loaded = sorted(_models)
     return {
         "ok": True,
-        "model_loaded": _model is not None,
-        "status": "ready" if _model is not None else ("failed" if _load_error else "loading"),
-        "load_error": _load_error,
+        "model_loaded": DEFAULT_MODEL in _models,
+        "models_loaded": loaded,
+        "models_available": list(CANONICAL_MODELS),
+        "default_model": DEFAULT_MODEL,
+        "status": "ready" if DEFAULT_MODEL in _models else ("failed" if DEFAULT_MODEL in _load_errors else "loading"),
+        "load_error": _load_errors.get(DEFAULT_MODEL),
+        "load_errors": dict(_load_errors),
     }
 
 
-async def _run_inference(task_id: str, prompt: str, n_frames: int, fps: int) -> None:
-    assert _sem is not None and _bucket is not None and _ready is not None
+async def _run_inference(task_id: str, model_name: str, prompt: str, n_frames: int, fps: int) -> None:
+    assert _sem is not None and _bucket is not None
     async with _sem:
         _tasks[task_id]["status"] = "running"
         started = time.time()
         loop = asyncio.get_event_loop()
         try:
             try:
-                await asyncio.wait_for(_ready.wait(), timeout=600)
+                await asyncio.wait_for(_ensure_loaded(model_name), timeout=600)
             except asyncio.TimeoutError:
-                raise RuntimeError(_load_error or "model load timed out")
-            poses, trans = await loop.run_in_executor(None, _generate_motion, prompt, n_frames)
+                raise RuntimeError(_load_errors.get(model_name) or f"{model_name} load timed out")
+            poses, trans = await loop.run_in_executor(None, _generate_motion, model_name, prompt, n_frames)
             clip = smpl_motion_to_clip(poses, trans, fps=fps, name=_safe_name(prompt))
             payload = json.dumps(clip).encode("utf-8")
 
-            blob_name = f"motion-clips/mdm/{task_id}.json"
+            blob_name = f"motion-clips/{model_name}/{task_id}.json"
             blob = _bucket.blob(blob_name)
             await loop.run_in_executor(
                 None,
@@ -213,7 +268,7 @@ async def _run_inference(task_id: str, prompt: str, n_frames: int, fps: int) -> 
                     "elapsed_ms": int((time.time() - started) * 1000),
                 }
             )
-            log.info("task %s done — %d frames in %dms", task_id, n_frames, int((time.time() - started) * 1000))
+            log.info("task %s done, %d frames in %dms", task_id, n_frames, int((time.time() - started) * 1000))
         except Exception as exc:  # surface an opaque, correlated error to the caller
             msg = safe_error(exc, context=f"text2motion task {task_id}")
             _tasks[task_id].update({"status": "failed", "error": msg})
