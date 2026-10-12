@@ -9,6 +9,7 @@
 // vault-transfer.js. This module is purely the system of record.
 
 import { sql } from './db.js';
+import { runLocked } from './locked-sql.js';
 
 // Columns safe to expose publicly (NEVER the encrypted_secret). Spread into a
 // SELECT to guarantee the vault keypair ciphertext can't leak through a read.
@@ -239,11 +240,8 @@ export async function claimVaultBuyBudget({
 	// A non-positive budget means "no ceiling configured" (same reading as
 	// tradeExceedsDailyBudget), so the claim only has to clear idempotency.
 	const budget = String(dailyBudgetAtomics ?? 0);
-	const rows = await sql`
-		WITH locked AS (
-			SELECT pg_advisory_xact_lock(hashtextextended(${String(vaultId)}, 0))
-		),
-		spent AS (
+	const rows = await runLocked([vaultId], sql`
+		WITH spent AS (
 			SELECT COALESCE(SUM((meta->>'usdc_in')::numeric), 0) AS s
 			FROM vault_events
 			WHERE vault_id = ${vaultId} AND type = 'trade' AND status IN ('ok', 'pending')
@@ -254,12 +252,12 @@ export async function claimVaultBuyBudget({
 			(vault_id, type, user_id, atomics_delta, status, reason, idempotency_key, meta)
 		SELECT ${vaultId}, 'trade', ${userId ?? null}, ${`-${amount}`}, 'pending', ${reason ?? null},
 		       ${idempotencyKey ?? null}, ${JSON.stringify(meta ?? {})}::jsonb
-		FROM spent, locked
+		FROM spent
 		WHERE ${budget}::numeric <= 0
 		   OR spent.s + ${amount}::numeric <= ${budget}::numeric
 		ON CONFLICT (vault_id, idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING
 		RETURNING id, (SELECT s FROM spent)::text AS spent_before
-	`;
+	`);
 	if (rows.length) {
 		return { ok: true, claimId: Number(rows[0].id), spentBefore: rows[0].spent_before ?? '0' };
 	}

@@ -219,6 +219,23 @@ Post-registration takedowns operate at the gateway and discovery layer: the on-c
 
 ---
 
+## Dependency advisories (2026-10-12 audit)
+
+`npm audit fix` (no `--force`) was applied on 2026-10-12. It cleared the one critical advisory (`handlebars`, reachable only through dev and build tooling) and moved `npm audit --omit=dev` from 132 to 117 findings: 0 critical, 70 high, 22 moderate, 25 low. The remaining findings have no fix that stays inside the current semver ranges; `npm audit fix --force` would downgrade or replace direct dependencies (`@pump-fun/pump-sdk`, `@bonfida/spl-name-service`, `agent0-sdk`, `@solana/pay`) and is deliberately not run.
+
+High advisories left open, with reachability:
+
+| Package | Advisory | Pulled in by | Reachable from server code |
+| --- | --- | --- | --- |
+| `bigint-buffer` | `toBigIntLE()` buffer overflow | `@solana/spl-token` via `@solana/buffer-layout-utils` | Yes, in-process Solana token decoding. Inputs are RPC account data, not user-supplied buffers sized by the caller. Fix needs an upstream `spl-token` major. |
+| `toml` | uncontrolled recursion, prototype pollution | `@coral-xyz/anchor` (Anchor IDL tooling) | Parsing is of `Anchor.toml`-style config at tooling time. No server handler parses caller-supplied TOML. |
+| `@libp2p/kad-dht`, `@libp2p/peer-store`, `node-forge` | DHT disk exhaustion, PeerRecord spoofing, RSA PKCS#1 v1.5 | `helia` via `agent0-sdk` | `api/agents/8004/*` imports only the constants `DEFAULT_SUBGRAPH_URLS` and `DEFAULT_REGISTRIES` from `agent0-sdk`. No libp2p node is started, so the DHT and peer-store code paths do not run. |
+| `adm-zip`, `braces` | ZIP memory allocation, glob stack exhaustion | `hardhat` via `@ethereum-attestation-service/eas-sdk` | Contract-toolchain code. Not imported by `api/` or `server/`. |
+| `lodash.set` | prototype pollution | `@bnb-chain/greenfield-js-sdk` | BNB Greenfield client paths only. Callers pass fixed object paths, never user-supplied keys. |
+| `nanoid` < 3.3.8 / 2.x | predictable output for non-integer sizes | `@colyseus/core` (multiplayer worker) | Colyseus calls it with its own integer sizes. `api/` uses the patched root `nanoid@3`. |
+
+Rules for this list: re-run `npm audit --omit=dev` after each dependency bump, move a row out of this table when a non-breaking fix lands, and never import one of these packages into a request handler that parses untrusted input without first checking the advisory.
+
 ## Skill security
 
 ### Trust modes

@@ -99,6 +99,8 @@ export class SkillRegistry {
 		trust = 'owned-only',
 		ownerAddress,
 		mainThreadOrigins,
+		trustedAuthors = [],
+		trustedOrigins = [],
 	} = {}) {
 		this.fetchFn = fetchFn;
 		this.trust = trust;
@@ -108,6 +110,10 @@ export class SkillRegistry {
 				.map(originOf)
 				.filter(Boolean),
 		);
+		// `whitelist` trust: a bundle installs only when its manifest author or its
+		// serving origin is listed here. Empty lists admit nothing.
+		this.trustedAuthors = new Set(trustedAuthors.map((a) => String(a).toLowerCase()));
+		this.trustedOrigins = new Set(trustedOrigins.map(originOf).filter(Boolean));
 		this.skills = new Map();
 	}
 
@@ -135,7 +141,7 @@ export class SkillRegistry {
 		if (this.skills.has(uri)) return this.skills.get(uri);
 
 		const manifest = await this._fetchJSON(`${uri}manifest.json`);
-		this._enforceTrust(manifest);
+		this._enforceTrust(manifest, uri);
 
 		const isTrusted = this.mayRunOnMainThread(manifest, uri);
 		if (manifest.sandboxPolicy === 'trusted-main-thread' && !isTrusted) {
@@ -260,7 +266,7 @@ export class SkillRegistry {
 		return res.text();
 	}
 
-	_enforceTrust(manifest) {
+	_enforceTrust(manifest, uri = '') {
 		if (this.trust === 'any') return;
 		if (this.trust === 'owned-only') {
 			const author = (manifest.author || '').toLowerCase();
@@ -271,7 +277,16 @@ export class SkillRegistry {
 			}
 		}
 		if (this.trust === 'whitelist') {
-			// Whitelist check would consult a configured allowlist; left as hook.
+			const author = String(manifest.author || '').toLowerCase();
+			const origin = originOf(uri);
+			const allowed =
+				(author && this.trustedAuthors.has(author)) ||
+				(origin && this.trustedOrigins.has(origin));
+			if (!allowed) {
+				throw new Error(
+					`Skill "${manifest.name}" is not on the whitelist (author ${author || 'unknown'}, origin ${origin || 'unknown'})`,
+				);
+			}
 		}
 	}
 }

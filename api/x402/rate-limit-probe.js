@@ -124,8 +124,20 @@ function dailySpendKey() {
 // that answer a 402 challenge, so this costs the product nothing.
 const PROBEABLE_PREFIXES = ['/api/x402', '/api/mcp', '/api/ibm-mcp'];
 
+// The path half may only hold unreserved characters: the WHATWG URL parser that
+// fetch() uses collapses "%2e%2e", ".%2E" and tab-split ".<TAB>." into real ".."
+// segments, so a substring check for ".." on the raw string is not enough.
+const SAFE_ENDPOINT = /^\/api\/[A-Za-z0-9._~*\/-]*(\?[A-Za-z0-9._~=&%-]*)?$/;
+
 function isProbeableEndpoint(endpoint) {
-	if (endpoint.includes('..')) return false;
+	if (!SAFE_ENDPOINT.test(endpoint) || endpoint.includes('..')) return false;
+	let resolved;
+	try {
+		resolved = new URL(endpoint, 'http://probe.invalid');
+	} catch {
+		return false;
+	}
+	if (resolved.pathname !== endpoint.split('?')[0]) return false;
 	return PROBEABLE_PREFIXES.some(
 		(prefix) =>
 			endpoint === prefix ||

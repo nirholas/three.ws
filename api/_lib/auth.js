@@ -334,7 +334,9 @@ export async function authenticateBearer(token, { audience, ip } = {}) {
 		if (row === undefined) {
 			const rows = await sql`
 				select id, user_id, scope, preset, expires_at, revoked_at, ip_allowlist, overlap_until
-				from api_keys where token_hash = ${hash} limit 1
+				from api_keys where token_hash = ${hash}
+				  and exists (select 1 from users u where u.id = api_keys.user_id and u.deleted_at is null)
+				limit 1
 			`;
 			row = rows[0] ?? null;
 			rememberKeyRow(hash, row);

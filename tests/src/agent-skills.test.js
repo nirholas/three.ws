@@ -111,14 +111,30 @@ describe('SkillRegistry.install – trust modes', () => {
 		expect(skill.name).toBe('test-skill');
 	});
 
-	it('whitelist mode is a no-op and does not reject skills (enforcement is a hook)', async () => {
+	it('whitelist mode fails closed with no allowlist configured', async () => {
 		const registry = new SkillRegistry({
 			fetchFn: makeFetch(fixtureRoutes()),
 			trust: 'whitelist',
 		});
-		// No whitelist config → currently installs without error
-		const skill = await registry.install({ uri: 'https://example.com/skill/' });
-		expect(skill.name).toBe('test-skill');
+		await expect(registry.install({ uri: 'https://example.com/skill/' })).rejects.toThrow(
+			/not on the whitelist/,
+		);
+	});
+
+	it('whitelist mode admits a listed author or a listed origin only', async () => {
+		const byAuthor = new SkillRegistry({
+			fetchFn: makeFetch(fixtureRoutes(fixtureManifest({ author: '0xOwner' }))),
+			trust: 'whitelist',
+			trustedAuthors: ['0xowner'],
+		});
+		expect((await byAuthor.install({ uri: 'https://example.com/skill/' })).name).toBe('test-skill');
+		const byOrigin = new SkillRegistry({
+			fetchFn: makeFetch(fixtureRoutes(fixtureManifest({ author: '0xstranger' }))),
+			trust: 'whitelist',
+			trustedOrigins: ['https://example.com'],
+		});
+		expect((await byOrigin.install({ uri: 'https://example.com/skill/' })).name).toBe('test-skill');
+		await expect(byOrigin.install({ uri: 'https://evil.example/skill/' })).rejects.toThrow(/whitelist/);
 	});
 });
 

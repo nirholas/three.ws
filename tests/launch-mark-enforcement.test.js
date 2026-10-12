@@ -29,12 +29,17 @@ vi.mock('../api/_lib/auth.js', () => ({
 
 // ── SQL ──────────────────────────────────────────────────────────────────────
 const sqlState = { queue: [], calls: [] };
+// Advisory-lock statements (api/_lib/locked-sql.js) answer [] without drawing
+// from the queued results, which stay one-per-business-query.
+const sqlMock = vi.fn(async (strings, ...values) => {
+	if (String(strings?.[0] ?? '').includes('pg_advisory_xact_lock')) return [];
+	sqlState.calls.push({ query: strings.join('?'), values });
+	if (sqlState.queue.length === 0) return [];
+	return sqlState.queue.shift();
+});
+sqlMock.transaction = (queries) => Promise.all(queries);
 vi.mock('../api/_lib/db.js', () => ({
-	sql: vi.fn(async (strings, ...values) => {
-		sqlState.calls.push({ query: strings.join('?'), values });
-		if (sqlState.queue.length === 0) return [];
-		return sqlState.queue.shift();
-	}),
+	sql: sqlMock,
 	isDbUnavailableError: () => false,
 	isDbCapacityError: () => false,
 }));
