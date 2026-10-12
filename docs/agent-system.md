@@ -46,6 +46,8 @@ Every event detail has the shape `{ type, payload, timestamp, agentId, sourceSki
 | `load-end` | `{ uri, error? }` | Avatar (concern or celebration) |
 | `validate` | `{ errors, warnings }` | Avatar, identity |
 | `presence` | `{ state }` | Agent home UI |
+| `listen-start` | `{}` | Avatar (attentive gaze, arms the backchannel nod cadence) |
+| `listen-end` | `{ text }` | Avatar (releases attentive gaze, stops nodding) |
 
 The identity module records the following event types to the backend (fire-and-forget via `POST /api/agent-actions`): `speak`, `remember`, `sign`, `skill-done`, `validate`, `load-end`.
 
@@ -123,6 +125,14 @@ Triggers the wave gesture animation on the avatar. Use for greetings, farewells,
 | Arg | Type | Default | Description |
 |-----|------|---------|-------------|
 | `duration_ms` | integer | 1500 | Gesture duration in milliseconds (500–5000) |
+
+### `gesture`
+
+The general-purpose body-language tool: any of the 19 slots in `runtime/animation-slots.js` (`nod`, `shake`, `wave`, `shrug`, `bow`, `point`, `celebrate`, `concern`, `think`, `inspect`, `present`, `sign`, `curiosity`, `patience`, `fidget`, `dance`, `manipulate`, `conjure`, every slot except the resting `idle`), by name, resolved through the agent's animation override map (`meta.edits.animations`) before falling back to the default clip. The LLM picks this when it wants to react physically mid-turn rather than only when a skill or the emotion-threshold triggers fire one for it. Plays once; the body returns to its resting pose.
+
+| Arg | Type | Required | Description |
+|-----|------|----------|-------------|
+| `name` | string (enum) | Yes | Which gesture to perform |
 
 ### `lookAt`
 
@@ -202,6 +212,7 @@ Six named emotions, each a float in [0, 1]:
 | `patience` | 0.035/s | ~20 seconds |
 | `curiosity` | 0.12/s | ~8 seconds |
 | `empathy` | 0.055/s | ~13 seconds |
+| `uncertain` | 0.1/s | ~7 seconds |
 | `neutral` | computed | 1 − sum(others) |
 
 Every frame, each emotion decays linearly by its rate × delta-time. `neutral` is always `max(0, 1 − sum)`. Stimuli are added with `_injectStimulus(emotion, weight)`, which clamps the result to 1.
@@ -224,7 +235,15 @@ Events on the protocol bus automatically inject stimuli:
 | `validate` (errors > 0) | `concern += 0.4 + errors × 0.1` |
 | `validate` (clean) | `celebration += 0.85` |
 
-The vocabulary-based sentiment analysis runs entirely in-browser with no external API. It scans text for keyword buckets (`concern: ['error', 'failed', ...]`, `celebration: ['success', 'complete', ...]`) and computes a valence (−1..1) and arousal (0..1) score.
+The vocabulary-based sentiment analysis runs entirely in-browser with no external API. It scans text for keyword buckets (`concern: ['error', 'failed', ...]`, `celebration: ['success', 'complete', ...]`) and computes a valence (−1..1) and arousal (0..1) score. Emoji in the text contribute to the same valence/arousal totals independent of any English keywords (an `EMOJI_SENTIMENT` map in `agent-avatar.js`, matched as substrings so an emoji glued to punctuation with no word boundary still registers), so a reply that is nothing but "🎉" or "😢" still drives a visible expression change.
+
+### Sustained mood
+
+Beyond the per-utterance stimulus blend above, an agent can carry a **sustained mood**: a resting valence/arousal bias that persists until explicitly changed, set with `el.setMood(valence, arousal, { reducedMotion? })` (`-1..1`, `0..1`). `AgentAvatar._applyMoodLayer()` lerps the applied mood toward the target over about a second (so a mood change drifts in rather than snapping) and layers it on top of the transient emotion targets every frame: positive valence adds a soft resting smile and cheek squint, negative valence adds a frown and worried inner brow, arousal above the ~0.4 baseline widens the eyes (alert), below it droops the lids (relaxed). Mood also nudges the idle head tilt and gaze. A mood set before the empathy layer attaches is queued (`_pendingMood`) and applied on boot, so it is safe to call from a manifest's init step.
+
+### Active listening
+
+While a real VAD/STT signal says the user is talking (`listen-start` on the protocol bus, never a fabricated timer), the avatar holds a slightly raised, attentive gaze and nods on a fixed ~2.8s cadence to backchannel that it is tracking the user, the same way a person nods along in conversation. A one-shot gesture or a performing routine already in flight always takes priority; the nod timer simply holds at zero until the avatar is free again. `listen-end` releases the gaze bias and stops the cadence immediately. `LiveKitVoice` emits both events from the voice server's VAD signal; any other STT integration can emit them the same way to get the same behavior.
 
 ### Morph target control
 
@@ -363,6 +382,8 @@ For the full skill bundle format, see [SKILL_SPEC.md](../specs/SKILL_SPEC.md).
 `BrowserTTS` picks a voice by name or falls back to the first voice matching the configured language prefix. `ElevenLabsTTS` maps the `rate` config (0.5–1.5) to ElevenLabs' `style` field because the API has no direct playback-rate control.
 
 An ElevenLabs config also carries `agentId`, the agent the voice belongs to. `Runtime` fills it in from its own agent id (an explicit manifest or `voiceConfig` value still wins) and `ElevenLabsTTS` forwards it to the proxy, because `/api/tts/eleven` only serves a voice cloned on the owner's own ElevenLabs key when the request names its agent; that is what lets a bound voice speak to embed visitors and signed-out listeners, not just the signed-in owner. `agentVoiceConfig(agent)` in `runtime/speech.js` turns a public agent record (`voice_provider`, `voice_id`, `voice_model`, `voice_settings`) into that config, and returns `null` when no ElevenLabs voice is bound so a caller can render a "no voice configured" state instead of guessing.
+
+**Lip-sync accuracy:** when a scene is passed to `speak()`, `ElevenLabsTTS` calls ElevenLabs' `/v1/text-to-speech/{voiceId}/with-timestamps` endpoint instead of the plain streaming endpoint. That returns real per-character timestamps (`alignment`) alongside the audio, which `alignmentToSequence()` (`runtime/lipsync.js`) turns into a `{viseme, startMs, endMs}` sequence driven straight onto the mouth morphs via `playVisemeSequence()`, correct for any language the voice speaks (a character with no mapped viseme still carries its real timing, falling back to a generic open-mouth shape rather than dropping the beat). If the timestamped call fails for any reason (network, an older proxy), `speak()` falls back to the original streaming endpoint with the energy-based `LipSyncAnalyser` path (amplitude-driven, language-agnostic but less precise), so the mouth is never left silent.
 
 ### Speech-to-Text
 

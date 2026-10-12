@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-12T10:51:38.414Z",
+	"generated_at": "2026-10-12T20:40:00.148Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4045,
+	"total": 4046,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -58,6 +58,17 @@
 			"tags": [
 				"feature",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Companion presence: sustained mood, emoji-driven expression, an LLM gesture tool, active-listening nods, and real multi-language lip-sync",
+			"summary": "Agent avatars carry more of what makes a companion feel present. setMood(valence, arousal) sets a sustained resting bias (a soft smile or a worried brow that drifts in over about a second) on top of the existing per-utterance emotion blend, and a reply that is nothing but emoji (no English sentiment words at all) now drives a real expression change instead of staying neutral, because the built-in sentiment scorer reads emoji as direct valence/arousal signal. The LLM brain gets a general-purpose `gesture` tool covering all 19 body-language slots (nod, shake, shrug, bow, point, think, and the rest), so it can react physically mid-turn instead of only through a skill or an emotion threshold. While a real VAD/STT signal says the user is talking, the avatar nods on a fixed cadence to show it is listening, and stops the moment they stop. ElevenLabs text-to-speech now drives lip-sync from the provider's real per-character timestamps (any language the voice speaks), falling back to the energy-based analyser only if that call fails, so mouth shapes track what is actually being said instead of approximating it from amplitude alone.",
+			"link": "/docs/agent-system",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -1535,16 +1546,6 @@
 			"title": "Forge Workflows: Chain 3D Tools into One Run",
 			"summary": "A visual workflow builder for the Forge. Link a prompt or a photo to any live 3D engine, then remesh, rig, segment, restyle or make it game-ready, preview it inline, export the GLB and save it to your library, all in one run. Batch many prompts with ForEach, re-run from a failed step without redoing the rest, or generate on your own GPU with Modly. Starts from four templates.",
 			"link": "/forge/workflows",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "launch",
-			"title": "grok-skill.md",
-			"summary": "The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.",
-			"link": "/grok-skill.md",
 			"tags": [
 				"launch"
 			]

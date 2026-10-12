@@ -47,6 +47,14 @@
 			<description>The Animation Studio's prompt-to-clip flow (type a prompt, generate motion on the self-hosted GPU worker, preview it retargeted onto the loaded avatar) now has an editing and persistence half. The transport grows trim start/end inputs, a loop-blend duration field, and a loop toggle, all recomputed through a non-destructive edit path so the live preview, the GLB export, and the saved clip always agree on the current edit. A Save to library button collects a name and visibility and posts the canonical, pre-retarget clip to the shared clip library, so it plays back correctly on any future rig, not just the avatar it was previewed on. A separate bug that crashed every generated clip's playback the moment it reached the browser (AnimationClip.parse() expected userData as a JSON string, the server was sending an object) is also fixed.</description>
 		</item>
 		<item>
+			<title>Companion presence: sustained mood, emoji-driven expression, an LLM gesture tool, active-listening nods, and real multi-language lip-sync</title>
+			<link>https://three.ws/docs/agent-system</link>
+			<guid isPermaLink="false">2026-10-12:Companion presence: sustained mood, emoji-driven expression, an LLM gesture tool, active-listening nods, and real multi-language lip-sync</guid>
+			<pubDate>Mon, 12 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Agent avatars carry more of what makes a companion feel present. setMood(valence, arousal) sets a sustained resting bias (a soft smile or a worried brow that drifts in over about a second) on top of the existing per-utterance emotion blend, and a reply that is nothing but emoji (no English sentiment words at all) now drives a real expression change instead of staying neutral, because the built-in sentiment scorer reads emoji as direct valence/arousal signal. The LLM brain gets a general-purpose `gesture` tool covering all 19 body-language slots (nod, shake, shrug, bow, point, think, and the rest), so it can react physically mid-turn instead of only through a skill or an emotion threshold. While a real VAD/STT signal says the user is talking, the avatar nods on a fixed cadence to show it is listening, and stops the moment they stop. ElevenLabs text-to-speech now drives lip-sync from the provider's real per-character timestamps (any language the voice speaks), falling back to the energy-based analyser only if that call fails, so mouth shapes track what is actually being said instead of approximating it from amplitude alone.</description>
+		</item>
+		<item>
 			<title>Engine QA: a free real-time-engine fitness grade, plus real LOD chains</title>
 			<link>https://three.ws/docs/engine-qa</link>
 			<guid isPermaLink="false">2026-10-12:Engine QA: a free real-time-engine fitness grade, plus real LOD chains</guid>
