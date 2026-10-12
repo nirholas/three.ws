@@ -26,6 +26,8 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from '../viewer/internal.js';
+import { installVrmPlugin, prepareVrmModel } from './vrm-loader.js';
+import './vrm-boot.js'; // side effect: registers the real @pixiv/three-vrm plugin
 import { log } from '../shared/log.js';
 
 // Same lerp constant RemotePlayer uses, so objects glide between server updates
@@ -210,6 +212,7 @@ function propCrystal() {
 
 // ── GLB template cache (shared geometry/materials across instances) ──────────
 const _gltf = new GLTFLoader();
+installVrmPlugin(_gltf); // world props can be .vrm uploads too (P3.3/P3.4)
 // three.ws GLBs may carry EXT_meshopt_compression — decoder required before load
 const _meshoptReady = getMeshoptDecoder().then((d) => _gltf.setMeshoptDecoder(d));
 const _glbCache = new Map(); // url → { template, waiters:[] }
@@ -220,6 +223,7 @@ function loadTemplate(url) {
 	rec = { template: null, failed: false, waiters: [], failures: [] };
 	_glbCache.set(url, rec);
 	_meshoptReady.then(() => _gltf.load(url, (gltf) => {
+		prepareVrmModel(gltf);
 		const root = gltf.scene;
 		root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
 		rec.template = root;

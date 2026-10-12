@@ -12,7 +12,8 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { AnimationManager } from '../animation-manager.js';
-import { loadManifest, getLocomotionDefs, CLIP_IDLE, dracoLoader, meshoptReady } from './avatar-rig.js';
+import { installVrmPlugin, prepareVrmModel } from './vrm-loader.js';
+import { loadManifest, getLocomotionDefs, CLIP_IDLE, dracoLoader, meshoptReady } from './avatar-rig.js'; // also registers the real VRM plugin (side effect)
 import { log } from '../shared/log.js';
 import { applyCinematicDefaults, loadEnvironment } from '../shared/cinematic-render.js';
 
@@ -55,6 +56,7 @@ function hasVisiblePixels() {
 // default avatar) preview instead of throwing.
 const _loader = new GLTFLoader();
 _loader.setDRACOLoader(dracoLoader);
+installVrmPlugin(_loader);
 meshoptReady.then((decoder) => { if (decoder) _loader.setMeshoptDecoder(decoder); });
 const _cache = new Map(); // url -> Promise<string|null> (PNG data URL)
 let _renderer = null;
@@ -126,6 +128,7 @@ async function _snapshot(url) {
 	if (!ensureRenderer()) return null;
 	await meshoptReady; // ensure the decoder is wired before the first parse
 	const gltf = await _loader.loadAsync(url);
+	prepareVrmModel(gltf);
 	const model = gltf.scene;
 	model.traverse((n) => { if (n.isMesh) n.frustumCulled = false; });
 	_scene.add(model);

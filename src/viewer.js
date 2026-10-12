@@ -57,6 +57,8 @@ import { computeFramingExtent, computeFramingWidth } from './viewer/framing.js';
 import { estimateFacingYaw, forwardFromYaw, horizontalExtentAt } from './viewer/facing.js';
 import { LightProbeGrid } from './light-probe-grid.js';
 import { AnimationManager } from './animation-manager.js';
+import { installVrmPlugin, prepareVrmModel } from './game/vrm-loader.js';
+import './game/vrm-boot.js'; // side effect: registers the real @pixiv/three-vrm plugin
 import { applyAvatarMaterialRealism, looksLikeAvatarMesh } from './shared/avatar-material-realism.js';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import {
@@ -1277,11 +1279,13 @@ export class Viewer {
 					.setDRACOLoader(dracoLoader)
 					.setKTX2Loader(ktx2Loader.detectSupport(this.renderer))
 					.setMeshoptDecoder(meshoptDecoder);
+				installVrmPlugin(loader);
 
 				loader.load(
 					url,
 					(gltf) => {
 						if (window.VIEWER) window.VIEWER.json = gltf;
+						prepareVrmModel(gltf);
 
 						const scene = gltf.scene || gltf.scenes[0];
 						const clips = gltf.animations || [];

@@ -152,6 +152,8 @@ export class AnimationManager {
 		this._canonicalToNode = null;
 		/** @type {boolean} Whether the attached model's rig can play the canonical clip library. */
 		this._canonicalClipsSupported = false;
+		/** @type {object|null} The attached model's VRM instance (vrm-loader.js), if any. */
+		this._vrm = null;
 		/** @type {{ avatarId?: string, avatarUrl?: string }} Context for the fallen-pose guard's reports. */
 		this._avatarContext = {};
 		/** @type {Set<string>} `${avatarUrl}|${clip}` keys whose fallen-pose has already been reported (debounce). */
@@ -236,6 +238,10 @@ export class AnimationManager {
 		// clip's ground lands on the model's actual ground.
 		this._hipGroundLocalY = hipGroundLocalY(model);
 		this._canonicalClipsSupported = _modelSupportsCanonicalClips(model);
+		// A VRM's spring bones, look-at and expressionManager all live on the vrm
+		// instance stashed by src/game/vrm-loader.js's prepareVrmModel(), not on
+		// any node the mixer touches, so they need their own per-frame tick below.
+		this._vrm = model?.userData?.vrm || null;
 
 		for (const [name, clip] of this.clips) {
 			const bound = this._retarget(clip);
@@ -405,6 +411,7 @@ export class AnimationManager {
 		this._hipTargetLocalY = 0;
 		this._hipGroundLocalY = 0;
 		this._canonicalClipsSupported = false;
+		this._vrm = null;
 		this.actions.clear();
 		this.currentAction = null;
 		this.currentName = null;
@@ -582,6 +589,54 @@ export class AnimationManager {
 		} catch (err) {
 			log.warn(`[AnimationManager] injectClip "${name}" parse error:`, err.message);
 		}
+	}
+
+	/**
+	 * Load a .vrma (VRM Animation) file and register it like any other clip.
+	 * A VRM Animation stores humanoid bone motion keyed by VRM's own canonical
+	 * bone taxonomy ('hips', 'leftUpperArm', ...) -- exactly the vocabulary
+	 * glb-canonicalize.js's canonicalizeBoneName() already resolves -- so this
+	 * reads the parsed VRMAnimation's humanoidTracks directly into a plain
+	 * AnimationClip and retargets it through the same canonical-bone pipeline
+	 * as every other entry in the library: it plays on a VRM avatar and on a
+	 * non-VRM humanoid alike. Both GLTFLoader and @pixiv/three-vrm-animation are
+	 * bare-specifier dynamic imports (not a local relative import) so pages
+	 * that never touch a .vrma file don't pay for them, and so this file stays
+	 * safe to bundle into the headless-chromium pose render page (see
+	 * api/_lib/pose-runtime.js, which rejects relative dynamic imports because a
+	 * data: URL module has no base to resolve them against).
+	 * @param {string} name
+	 * @param {string} url
+	 * @param {{ loop?: boolean }} [opts]
+	 * @returns {Promise<THREE.AnimationClip>}
+	 */
+	async loadVrmaAnimation(name, url, opts = {}) {
+		if (this.clips.has(name)) return this.clips.get(name);
+		const [{ GLTFLoader }, { VRMAnimationLoaderPlugin }] = await Promise.all([
+			import('three/addons/loaders/GLTFLoader.js'),
+			import('@pixiv/three-vrm-animation'),
+		]);
+		const loader = new GLTFLoader();
+		loader.register((parser) => new VRMAnimationLoaderPlugin(parser));
+		const gltf = await loader.loadAsync(url);
+		const vrmAnimation = gltf.userData?.vrmAnimations?.[0];
+		if (!vrmAnimation) throw new Error(`${url} has no VRM animation data`);
+
+		const tracks = [];
+		for (const [boneName, track] of vrmAnimation.humanoidTracks.rotation.entries()) {
+			const next = track.clone();
+			next.name = `${boneName}.quaternion`;
+			tracks.push(next);
+		}
+		for (const [boneName, track] of vrmAnimation.humanoidTracks.translation.entries()) {
+			const next = track.clone();
+			next.name = `${boneName}.position`;
+			tracks.push(next);
+		}
+		if (!tracks.length) throw new Error(`${url} has no humanoid bone tracks`);
+
+		const clip = new AnimationClip(name, vrmAnimation.duration, tracks);
+		return this._registerParsedClip(name, clip, opts);
 	}
 
 	/** @private Shared finalization for both load paths. */
@@ -952,6 +1007,9 @@ export class AnimationManager {
 	 */
 	update(delta) {
 		this.mixer?.update(delta);
+		// Spring-bone physics, look-at and expression blending: the reference
+		// implementation's own per-frame step, independent of the mixer above.
+		this._vrm?.update(delta);
 	}
 
 	/** @returns {string[]} */

@@ -21,6 +21,7 @@
 import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 import { Matrix4, Euler, MathUtils } from 'three';
 import { resolveMorphTargets, setCanonicalMorph, MORPH_ALIASES, ARKIT_52 } from './runtime/arkit52.js';
+import { applyArkitWeightsToVrm } from './game/vrm-expressions.js';
 
 import { modelUrl, visionWasmBase } from './shared/mediapipe-assets.js';
 // Runtime + model locations come from the shared resolver: our vendored copy
@@ -138,6 +139,11 @@ export class FaceMocap {
 
 	attach(avatarRoot, headBone) {
 		this._morphResolved = resolveMorphTargets(avatarRoot);
+		// A VRM's face is driven through expressionManager presets, not raw morph
+		// targets named after ARKit shapes (VRM authors name theirs "Joy", "A",
+		// "Blink"...), so resolveMorphTargets() above finds little to nothing on
+		// one. vrm-expressions.js bridges the two; see _applyBlendshapes/playback.
+		this._vrm            = avatarRoot?.userData?.vrm || null;
 		this._headBone      = headBone ?? null;
 		this._headRest      = null;
 		// Reset filters so a fresh avatar doesn't inherit stale smoothing state
@@ -274,11 +280,14 @@ export class FaceMocap {
 			const f = frames[i];
 
 			// Apply blendshapes from the recorded frame (no smoothing — already smooth)
-			if (this._morphResolved) {
+			if (this._morphResolved || this._vrm) {
+				const canonicalWeights = {};
 				for (const [name, score] of Object.entries(f.shapes)) {
 					const canonical = MORPH_ALIASES[name] ?? name;
-					setCanonicalMorph(this._morphResolved, canonical, score);
+					canonicalWeights[canonical] = score;
+					if (this._morphResolved) setCanonicalMorph(this._morphResolved, canonical, score);
 				}
+				if (this._vrm) applyArkitWeightsToVrm(this._vrm, canonicalWeights);
 			}
 			// Head matrix → bone rotation (no filter; recording is post-smoothed)
 			if (this._headBone && f.mat) {
@@ -333,8 +342,8 @@ export class FaceMocap {
 	// ── Private ──────────────────────────────────────────────────────────────
 
 	_applyBlendshapes(categories, tSec) {
-		if (!this._morphResolved) return {};
 		const out = {};
+		const canonicalWeights = {};
 		for (const { categoryName, score } of categories) {
 			// Calibration subtraction — clamp negative deltas at zero so a resting
 			// face never drives morphs.
@@ -347,8 +356,10 @@ export class FaceMocap {
 			out[categoryName] = smoothed;
 
 			const canonical = MORPH_ALIASES[categoryName] ?? categoryName;
-			setCanonicalMorph(this._morphResolved, canonical, smoothed);
+			canonicalWeights[canonical] = smoothed;
+			if (this._morphResolved) setCanonicalMorph(this._morphResolved, canonical, smoothed);
 		}
+		if (this._vrm) applyArkitWeightsToVrm(this._vrm, canonicalWeights);
 		return out;
 	}
 

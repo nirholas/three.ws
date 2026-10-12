@@ -21,10 +21,11 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { AnimationManager } from '../animation-manager.js';
+import { installVrmPlugin, prepareVrmModel } from './vrm-loader.js';
 import {
 	AVATAR_DEFAULT, loadManifest, getLocomotionDefs, CLIP_IDLE,
 	resolveAvatarUrl, dracoLoader, meshoptReady,
-} from './avatar-rig.js';
+} from './avatar-rig.js'; // also registers the real VRM plugin (side effect)
 import { getRequestedAvatar } from './play-handoff.js';
 import { log } from '../shared/log.js';
 import { applyCinematicDefaults, loadEnvironment } from '../shared/cinematic-render.js';
@@ -79,12 +80,14 @@ function boot() {
 	// the default on any resolve/load failure so a broken pick never wedges the loader.
 	const loader = new GLTFLoader();
 	loader.setDRACOLoader(dracoLoader);
+	installVrmPlugin(loader);
 	meshoptReady
 		.then((decoder) => { if (decoder) loader.setMeshoptDecoder(decoder); })
 		.then(() => resolveAvatarUrl(getRequestedAvatar()))
 		.then((chosen) => loader.loadAsync(chosen).catch(() => loader.loadAsync(AVATAR_DEFAULT)))
 		.then(async (gltf) => {
 		if (!alive) return;
+		prepareVrmModel(gltf);
 		model = gltf.scene;
 		model.traverse((n) => { if (n.isMesh) { n.frustumCulled = false; n.castShadow = false; } });
 		scene.add(model);

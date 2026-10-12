@@ -18,6 +18,7 @@ import { AnimationManager } from '../animation-manager.js';
 import { getMeshoptDecoder } from '../viewer/internal.js';
 import { GUEST_SENTINEL, resolveGuestAvatar } from './play-handoff.js';
 import { installVrmPlugin, prepareVrmModel } from './vrm-loader.js';
+import './vrm-boot.js'; // side effect: registers the real @pixiv/three-vrm plugin
 import { log } from '../shared/log.js';
 
 export const AVATAR_DEFAULT = '/avatars/default.glb';

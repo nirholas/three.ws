@@ -16,29 +16,28 @@
 //      holes under a standard material.
 //
 // This module fixes all three on the plain-glTF path, so VRM avatars and props
-// work today with no new dependency, and the skeleton is picked up by
-// src/glb-canonicalize.js, which already maps both VRM 0.x (`J_Bip_C_Hips`) and
-// VRM 1.0 (`upperChest`) bone naming onto the canonical rig: so the pre-baked
-// idle/walk/emote clips retarget onto a VRM the same as any other humanoid.
+// still work with zero dependencies if the reference implementation is ever
+// unavailable, and the skeleton is picked up by src/glb-canonicalize.js, which
+// already maps both VRM 0.x (`J_Bip_C_Hips`) and VRM 1.0 (`upperChest`) bone
+// naming onto the canonical rig: so the pre-baked idle/walk/emote clips
+// retarget onto a VRM the same as any other humanoid.
 //
 // ── The @pixiv/three-vrm seam ────────────────────────────────────────────────
-// What the plain path does NOT reproduce is MToon's toon shading + outlines,
-// spring-bone physics (hair/skirt secondary motion), the humanoid normalization
-// rig, blend-shape expression presets and look-at. Those need the reference
-// implementation. `setVrmPluginFactory()` is the single integration point for it:
-// call it once at boot with a factory that returns a GLTFLoader plugin, and every
+// The plain path does NOT reproduce MToon's toon shading + outlines, spring-bone
+// physics (hair/skirt secondary motion), the humanoid normalization rig,
+// blend-shape expression presets or look-at. Those need the reference
+// implementation, pixiv/three-vrm (MIT). `setVrmPluginFactory()` is the single
+// integration point for it: src/game/vrm-boot.js calls it once, as a side
+// effect, with a factory that returns a GLTFLoader plugin, and every
 // avatar/prop load in the app routes through it automatically: no call site
-// changes. To light it up:
+// changes beyond importing vrm-boot.js once per entry point.
 //
-//     npm install @pixiv/three-vrm
-//
-//     // src/game/boot-avatar.js (or any boot path), once:
-//     import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
-//     import { setVrmPluginFactory } from './vrm-loader.js';
-//     setVrmPluginFactory((parser) => new VRMLoaderPlugin(parser), { VRMUtils });
-//
-// Until that call happens the plain path above runs, which is a real, working
-// VRM load, not a stub: nothing here fakes support it doesn't have.
+// When the plugin is installed, `prepareVrmModel` stashes the parsed VRM
+// instance at `scene.userData.vrm` (in addition to `gltf.userData.vrm`, which
+// GLTFLoader already sets), so code that only holds the scene graph (anything
+// downstream of `src/animation-manager.js`'s `attach()`) can still reach
+// `vrm.update(delta)`, `vrm.expressionManager` and `vrm.lookAt` without
+// threading the original `gltf` result through every call site.
 
 import { Box3, Vector3, DoubleSide } from 'three';
 import { log } from '../shared/log.js';
@@ -154,6 +153,9 @@ export function prepareVrmModel(gltf) {
 		} catch (e) {
 			log.warn('[vrm-loader] VRMUtils pass failed', e?.message || e);
 		}
+		// AnimationManager.attach() only ever sees the scene graph, not this gltf
+		// result, so it cannot otherwise reach vrm.update()/expressionManager.
+		scene.userData.vrm = vrm;
 	} else if (version === 0) {
 		// Plain-glTF path: VRM 0.x faces -Z, everything else in this app faces +Z.
 		// Rotating the scene root (rather than the hips) keeps the skeleton's local
