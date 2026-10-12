@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-12T05:36:16.720Z",
+	"generated_at": "2026-10-12T08:21:28.566Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -49,6 +49,17 @@
 		{
 			"date": "2026-10-12",
 			"type": "update",
+			"title": "Animation Studio: trim, loop-blend, and save any generated clip to your library",
+			"summary": "The Animation Studio's prompt-to-clip flow (type a prompt, generate motion on the self-hosted GPU worker, preview it retargeted onto the loaded avatar) now has an editing and persistence half. The transport grows trim start/end inputs, a loop-blend duration field, and a loop toggle, all recomputed through a non-destructive edit path so the live preview, the GLB export, and the saved clip always agree on the current edit. A Save to library button collects a name and visibility and posts the canonical, pre-retarget clip to the shared clip library, so it plays back correctly on any future rig, not just the avatar it was previewed on. A separate bug that crashed every generated clip's playback the moment it reached the browser (AnimationClip.parse() expected userData as a JSON string, the server was sending an object) is also fixed.",
+			"link": "/pose",
+			"tags": [
+				"feature",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
 			"title": "Engine QA: a free real-time-engine fitness grade, plus real LOD chains",
 			"summary": "A new free grade answers the question a game engine's import step asks that neither glTF validation nor simulation readiness does: draw calls, material count, texel density against the mesh's real-world size, a per-level triangle budget for a LOD chain, and whether the mesh is cheap and closed enough to use as its own physics collider. GET/POST /api/3d/engine-qa grades any public GLB (format=stl exports a watertight mesh for printing); the same browser-only checks run with zero network cost in Rig Doctor, and the full grade with a one-click upgrade in the GLB viewer, through a shared <engine-qa> panel component. The underlying LOD builder (packages/glb-tools's buildLodChain, real meshoptimizer decimation tagged with MSFT_lod) is now also available on generation: send { \"lods\": true } to POST /api/forge and the finished creation gets a combined LOD-chain variant alongside its delivered mesh, the same opt-in, fire-and-forget pattern as the existing web-delivery variant.",
 			"link": "/docs/engine-qa",
@@ -65,6 +76,17 @@
 			"tags": [
 				"feature",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Text-to-motion gets a second GPU backend: MoMask, selectable per request",
+			"summary": "The self-hosted text-to-motion worker behind the Animation Studio and POST /api/forge-motion now runs two independent generation backends on the same GPU lane: MDM (Motion Diffusion Model, MIT), the existing default, and MoMask (EricGuo5513/momask-codes, MIT), a residual-VQ tokenizer plus masked and residual transformer that publishes a lower HumanML3D FID (0.045 vs. T2M-GPT's 0.141). Pass model: \"momask\" to /infer or /api/forge-motion to route a prompt through it instead; omit it and MDM keeps answering as before. Both backends converge on the same (T,22,3) HumanML3D position format and the same shared decode math, so a MoMask clip previews, retargets, and exports exactly like an MDM one. The two projects ship conflicting top-level `utils` packages; the worker resolves that at load time so either backend can be warmed in the same container without the other's modules leaking in. MoMask's checkpoints are staged to production storage and the worker is wired to load them; the first on-GPU deploy and a real in-house benchmark against MDM are tracked as the next step.",
+			"link": "/pose",
+			"tags": [
+				"feature",
+				"infra"
 			]
 		},
 		{
