@@ -112,6 +112,8 @@ The report distinguishes two kinds of geometry edit, because they mean different
 - *same vertex and triangle count, different vertex data*: usually a re-bake, a re-skin, or a transform applied in place
 - *vertex data rewritten*: a decimation, a remesh, or a different asset entirely
 
+Underneath the combined geometry hash, three fields move independently so a caller can tell exactly which kind of edit happened: `topology` (vertex positions or the index buffer), `uv` (`TEXCOORD_0`/`TEXCOORD_1`), and `skinWeights` (`JOINTS_0`/`WEIGHTS_0`, the per-vertex skin binding, as distinct from the skeleton resource below). A material restyle that only calls glTF Material setters should never move any of the three; an edit that promises it won't can check that promise with `api/_lib/preserve-contract.js`, which runs this same diff and refuses to report success if a declared field changed. [Restyle Studio](./restyle.md) and its part-edit tools (regenerate/swap via HoloPart) are the first two callers.
+
 ### Skeletons
 
 Joint lists are compared by name. A removed joint is `breaking` and the report names it. A changed inverse-bind matrix set is `major` and says why: the bind pose moved, so existing clips will deform differently even though every joint is still present.

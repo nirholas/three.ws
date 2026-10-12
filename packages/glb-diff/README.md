@@ -88,6 +88,23 @@ build; a deleted bone that every animation clip targets should.
 `DESCRIPTION_VERSION` and `CHANGESET_VERSION` are exported so a cache or a stored
 report can tell whether it was produced by a compatible version.
 
+## Mesh fields
+
+A mesh diff's `changes` array can report these fields on top of the combined
+`geometry` hash, each independent of the others so an edit can be checked
+against exactly the kind of change it is not supposed to make:
+
+| Field | What moved |
+| --- | --- |
+| `topology` | Vertex positions (`POSITION`) or the index buffer. Connectivity changed. |
+| `uv` | `TEXCOORD_0`/`TEXCOORD_1`. The mesh's shape is identical; its texture mapping is not. |
+| `skinWeights` | `JOINTS_0`/`WEIGHTS_0`. The per-vertex skin binding changed, independent of the skeleton itself. |
+
+`api/_lib/preserve-contract.js` builds on exactly these fields, plus the
+`skins` and `animations` sections, to let an edit operation declare which of
+topology/UVs/skeleton/skin/clips it keeps and verify that promise against the
+real diff instead of trusting its own say-so.
+
 ## Related
 
 - [`@three-ws/render`](../render): rasterize a GLB to PNG with no GPU, for a

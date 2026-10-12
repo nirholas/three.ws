@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-12",
+			"title": "Restyle and part edits now prove they kept the rig, not just claim it",
+			"link": "/restyle",
+			"summary": "Material Studio's AI restyle and seeded colorway variants, plus Restyle Studio's HoloPart \"Regenerate part\" tool, are now checked against their own source bytes with @three-ws/glb-diff before anything is persisted: a restyle declares it keeps topology, UVs, skeleton, skin, and clips, a part regenerate declares the narrower skeleton-and-clips promise since the part's own shape is meant to change, and the operation throws instead of returning a URL if the real diff shows otherwise. A successful restyle response now carries preserve: { kinds, verified: true } as evidence. Model Diff's underlying engine (packages/glb-diff) grew three independent mesh sub-hashes, topology, uv, and skinWeights, so a caller can tell which kind of change happened instead of one opaque geometry hash, and every lineage step in Restyle Studio that has a parent now shows a \"Diff\" link that opens Model Diff pre-loaded with that exact before/after pair. Regenerating a part also now mints its own durable lineage version automatically, closing a gap where part edits were not recorded.",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-12",
 			"title": "Text-to-motion gets a second GPU backend: MoMask, selectable per request",
 			"link": "/pose",
 			"summary": "The self-hosted text-to-motion worker behind the Animation Studio and POST /api/forge-motion now runs two independent generation backends on the same GPU lane: MDM (Motion Diffusion Model, MIT), the existing default, and MoMask (EricGuo5513/momask-codes, MIT), a residual-VQ tokenizer plus masked and residual transformer that publishes a lower HumanML3D FID (0.045 vs. T2M-GPT's 0.141). Pass model: \"momask\" to /infer or /api/forge-motion to route a prompt through it instead; omit it and MDM keeps answering as before. Both backends converge on the same (T,22,3) HumanML3D position format and the same shared decode math, so a MoMask clip previews, retargets, and exports exactly like an MDM one. The two projects ship conflicting top-level `utils` packages; the worker resolves that at load time so either backend can be warmed in the same container without the other's modules leaking in. MoMask's checkpoints are staged to production storage and the worker is wired to load them; the first on-GPU deploy and a real in-house benchmark against MDM are tracked as the next step.",

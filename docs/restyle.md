@@ -70,7 +70,8 @@ A restyle response carries the applied factors plus the version lineage:
   },
   "materialsEdited": 4,
   "lineage": [ { "index": 0, "glbUrl": "…" }, { "index": 1, "glbUrl": "…" } ],
-  "activeIndex": 1
+  "activeIndex": 1,
+  "preserve": { "kinds": ["topology", "uv", "skeleton", "skin", "clips"], "verified": true }
 }
 ```
 
@@ -83,7 +84,7 @@ Pass the returned `lineage` array back as `parent_lineage` on the next call to e
 - **Texture generation is best-effort.** Past the free daily quota the image lane returns a payment-required signal; the studio surfaces that as a note and keeps the flat PBR restyle it already applied. It never fakes a texture.
 - **Bounded, not gated.** The web endpoint is free but rate-limited per IP (separate limits for uploads and restyle/variants). Instructions are capped at 300 characters and uploads at 64 MB.
 - **Reset vs. revert.** Reset restores the original material values in the current tab. Reverting to an earlier durable GLB is a separate action: click its entry in the Versions strip. Reverting also re-anchors the source: the next AI restyle, Save version, or "Save all as versions" reads that version's bytes and branches from it, rather than from the newest checkpoint.
-- **No mesh changes.** Geometry, UVs, and rigging are never modified, so a restyle can never break animation or distort a shape.
+- **No mesh changes, verified, not just promised.** Every restyle and variant is checked server-side with `@three-ws/glb-diff` against its own source before it is ever persisted (`api/_lib/preserve-contract.js`): topology, UVs, skeleton, skin, and clips must all come back unchanged, or the operation throws instead of handing back a URL. The response carries `preserve: { kinds, verified: true }` as proof. A "Regenerate part" edit runs the same check, scoped to `skeleton` and `clips` (the part itself legitimately changes shape); each lineage step with a parent exposes a "Diff" link that opens [Model Diff](./model-diff.md) pre-loaded with that exact before/after pair.
 
 ## Related
 

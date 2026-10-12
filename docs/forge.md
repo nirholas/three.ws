@@ -278,6 +278,17 @@ curl -s 'https://three.ws/api/forge-holopart?job=<job_id>'
 `/api/forge-segment` and the `partcrafter` backend both produce); FBX is
 rejected the same way stylize and segment reject it.
 
+**Regenerate part keeps the rig.** Before the regenerated part is swapped
+into the live model, Restyle Studio diffs the whole-model bytes HoloPart
+received against the whole-model bytes it returned with
+`@three-ws/glb-diff` (`api/_lib/preserve-contract.js`, declaring
+`['skeleton', 'clips']`), and refuses the swap if the armature or any
+animation clip changed. A successful regenerate is also minted as a new
+durable version in the real lineage automatically (no separate "Save
+version" click needed), and the lineage strip's "Diff" link opens
+[Model Diff](./model-diff.md) pre-loaded with exactly that before/after
+pair.
+
 ## Mesh tools: repair, smooth, decimate
 
 The **Optimize** panel under a finished model, and the **Edit mesh** section

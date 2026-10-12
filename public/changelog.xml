@@ -63,6 +63,14 @@
 			<description>The hand-rolled VRM loader is gone. vrm-boot.js now registers the real VRMLoaderPlugin (@pixiv/three-vrm) on the three.ws GLTFLoader, so VRM 0.x and 1.0 avatars get genuine MToon materials, spring-bone physics, node constraints, look-at, and all 18 expression presets, driven live by vrm.update(delta) in AnimationManager and mapped onto the ARKit-52 face-capture driver. VRMAnimationLoaderPlugin loads .vrma clips into the same retargeting pipeline that drives non-VRM humanoids, so a single clip plays on either. The Ready Player Me import page (/import-rpm) now accepts .vrm files alongside .glb, and a long-standing bug that 400'd every import at the final save step (it sent an invalid source value) is fixed. docs/avatar-engines.md upgrades three-vrm from interop to live.</description>
 		</item>
 		<item>
+			<title>Restyle and part edits now prove they kept the rig, not just claim it</title>
+			<link>https://three.ws/restyle</link>
+			<guid isPermaLink="false">2026-10-12:Restyle and part edits now prove they kept the rig, not just claim it</guid>
+			<pubDate>Mon, 12 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Material Studio's AI restyle and seeded colorway variants, plus Restyle Studio's HoloPart &quot;Regenerate part&quot; tool, are now checked against their own source bytes with @three-ws/glb-diff before anything is persisted: a restyle declares it keeps topology, UVs, skeleton, skin, and clips, a part regenerate declares the narrower skeleton-and-clips promise since the part's own shape is meant to change, and the operation throws instead of returning a URL if the real diff shows otherwise. A successful restyle response now carries preserve: { kinds, verified: true } as evidence. Model Diff's underlying engine (packages/glb-diff) grew three independent mesh sub-hashes, topology, uv, and skinWeights, so a caller can tell which kind of change happened instead of one opaque geometry hash, and every lineage step in Restyle Studio that has a parent now shows a &quot;Diff&quot; link that opens Model Diff pre-loaded with that exact before/after pair. Regenerating a part also now mints its own durable lineage version automatically, closing a gap where part edits were not recorded.</description>
+		</item>
+		<item>
 			<title>Text-to-motion gets a second GPU backend: MoMask, selectable per request</title>
 			<link>https://three.ws/pose</link>
 			<guid isPermaLink="false">2026-10-12:Text-to-motion gets a second GPU backend: MoMask, selectable per request</guid>
