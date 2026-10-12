@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T20:28:39.120Z",
+	"generated_at": "2026-10-12T01:14:53.330Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,17 @@
 			"link": "/docs/event-markets-staking",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "An in-depth X Article on how three.ws renders 3D, and a playbook for answering basic questions at length",
+			"summary": "A reader asked how three.ws renders 3D. The answer is now a full draft Article: one rigged character followed through making, packing, loading, lighting and animating, with runnable embed code, decoder and boot-phase tables, the free Rig Doctor, validator and viewer tools, every partner by exact designation, and the roadmap. Every claim is tied to evidence in the repo. A new playbook describes how to turn any basic question into a long reply thread plus an Article.",
+			"link": "/viewer",
+			"tags": [
+				"feature",
+				"docs"
 			]
 		},
 		{

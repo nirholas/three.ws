@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-11T20:28:39.141Z",
+	"generated_at": "2026-10-12T01:14:53.356Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4002,
+	"total": 4003,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -17,6 +17,17 @@
 			"link": "/docs/event-markets-staking",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "An in-depth X Article on how three.ws renders 3D, and a playbook for answering basic questions at length",
+			"summary": "A reader asked how three.ws renders 3D. The answer is now a full draft Article: one rigged character followed through making, packing, loading, lighting and animating, with runnable embed code, decoder and boot-phase tables, the free Rig Doctor, validator and viewer tools, every partner by exact designation, and the roadmap. Every claim is tied to evidence in the repo. A new playbook describes how to turn any basic question into a long reply thread plus an Article.",
+			"link": "/viewer",
+			"tags": [
+				"feature",
+				"docs"
 			]
 		},
 		{
@@ -1534,16 +1545,6 @@
 			"title": "Generate 3D models on your own graphics card in the Forge",
 			"summary": "The From photos tab now has a Use your GPU panel. Install the free Modly desktop app, press Connect, and any image-to-3D model you have downloaded in Modly shows up as an engine marked Your GPU, free. Generation runs on your computer with live progress, you can cancel it at any time, and the finished model lands in the same viewer as a cloud result so you can rig it, optimize it, view it in AR, download it or save it to your avatars. Nothing on your computer is contacted until you press Connect.",
 			"link": "/forge",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "update",
-			"title": "One command sets up Grok Bot",
-			"summary": "Run npx three-ws setup --client grok-bot to get the exact connector fields for Grok Bot, the server URL copied to your clipboard, and a live check that the public URL answers. Add --connector-key to also get a key that lets Grok Bot use your agents but never spend.",
-			"link": "/docs/cli",
 			"tags": [
 				"feature"
 			]

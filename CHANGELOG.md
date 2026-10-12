@@ -8,6 +8,10 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 - **Docs · Staked Event Markets** (`/docs/event-markets-staking`): Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.
 
+## 2026-10-12
+
+- **An in-depth X Article on how three.ws renders 3D, and a playbook for answering basic questions at length**: A reader asked how three.ws renders 3D. The answer is now a full draft Article: one rigged character followed through making, packing, loading, lighting and animating, with runnable embed code, decoder and boot-phase tables, the free Rig Doctor, validator and viewer tools, every partner by exact designation, and the roadmap. Every claim is tied to evidence in the repo. A new playbook describes how to turn any basic question into a long reply thread plus an Article. (`/viewer`) `[feature, docs]`
+
 ## 2026-10-11
 
 - **Classic Home** (`/classic`): The original three.ws landing page: the pitch, live agent demos and the front door to every flow, kept as the classic view of the desktop.
