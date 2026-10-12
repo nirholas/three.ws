@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-12T09:45:15.975Z",
+	"generated_at": "2026-10-12T10:51:38.414Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4044,
+	"total": 4045,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -101,6 +101,17 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Scene Studio: an Agent tab that edits your open scene by prompt, plus a TSL node material editor",
+			"summary": "Scene Studio's sidebar grows two tabs. Agent is a chat panel that reads the open scene and drives it with the same real editor.execute(Command) calls the toolbar and menus use (free, keyless, rate-limited model via POST /api/scene/agent): add a primitive or a Forge-generated object, move/rotate/scale a named object, recolor a material. Every mutating prompt pushes a numbered version (a scene snapshot plus a viewport screenshot); clicking an earlier version restores it as one more undoable edit, so a bad restore is one Ctrl+Z away like any other mistake. Nodes is a dropdown-wired TSL (Three.js Shading Language) material graph editor for the selected object: build a graph from UV, time, color, texture, and math nodes as a reorderable card list, no canvas or wires to route, and apply it to swap in a real node material through the same undo-able command path. Fixed along the way: restoring a version used to append the snapshot's objects on top of the current scene instead of replacing them (SetSceneCommand, the vendored editor's own scene-import command, only ever adds); and the site-wide corner-stack widget could sit on top of the Agent tab's version-restore buttons and eat the click, now suppressed while the studio is open.",
+			"link": "/scene",
+			"tags": [
+				"feature",
+				"fix"
 			]
 		},
 		{
@@ -1534,16 +1545,6 @@
 			"title": "grok-skill.md",
 			"summary": "The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.",
 			"link": "/grok-skill.md",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "launch",
-			"title": "Modly: 3D on Your Own GPU",
-			"summary": "Connect the free, open-source Modly app on your computer and turn an image or a prompt into a 3D model on your own graphics card. Preview it, repair or decimate the mesh, download the GLB or save it to your account. Also the hub for the Forge GPU lane, the three.ws Forge desktop app and the Modly extensions.",
-			"link": "/modly",
 			"tags": [
 				"launch"
 			]

@@ -20,12 +20,22 @@ The editor is ported from the upstream `editor/index.html` with a small set of l
 
 ### The three.ws layer
 
-Four sibling modules sit on top of the vendored editor without touching `vendor/**`. They are the difference between a mirror of the upstream demo and a surface that belongs to this platform:
+Six sibling modules sit on top of the vendored editor without touching `vendor/**`. They are the difference between a mirror of the upstream demo and a surface that belongs to this platform:
 
 - **A quick-action bar** (top right, clear of the sidebar): **Import from Forge** takes a GLB URL from a [Forge](./forge.md) or Forge Max result and adds it through the same undo-able path as a drag-and-drop import; **Export** writes a Web GLB or an AR bundle (`.usdz` for iOS Quick Look) in one click; **Share** uploads the scene and opens the platform's "Embed this model" panel with an iframe, web-component, and `<agent-3d>` snippet.
 - **An empty state.** A brand-new scene holds nothing but the default camera, which renders as a bare grid. The overlay on that grid says what a starting point looks like (drag a `.glb` in, pick a primitive from **Add**, or import a model you already generated) and retires itself the moment the scene has content, including a scene restored from autosave.
 - **Designed failures.** A dead link, a private URL, a blocked cross-origin fetch, or a failed upload each surface in the platform's toast with the likely cause named and a fallback to try, rather than in a native `alert()` box.
 - **Accessible icon-only controls.** The vendored translate/rotate/scale gizmo buttons and the animation timeline's play/pause/stop transport are icon-only `<button>`s with no accessible name. The studio gives all six names read from the editor's own string table, so they stay translated, and mirrors the active gizmo mode into `aria-pressed` so it is both announced and reachable by keyboard.
+
+### Agent tab
+
+A fifth sibling module, the **Agent** tab in the sidebar, lets you drive the open scene by typing instead of clicking. It is a small chat panel next to the vendored Scene/Project/Settings tabs. Type a prompt ("add a red cube to the left of the chair", "make the sphere metallic"), and a free, keyless model (the same free-first provider chain the rest of the platform's chat surfaces use, see [docs/free-llm-providers.md](./free-llm-providers.md)) reads the scene and calls real editing tools: add a primitive or a Forge-generated object, move/rotate/scale a named object, or recolor a material. Every tool call runs as a genuine `editor.execute(Command)`, the exact call the toolbar and menus make, so it shows up in the hierarchy, undoes with Edit > Undo, and persists through the same autosave as a manual edit.
+
+Every prompt that changes the scene pushes a numbered **version**: a snapshot of the scene plus a screenshot of the viewport at that moment, so you can see what changed without hunting through the hierarchy. Click an earlier version's thumbnail to restore it; that restore is itself one more undoable edit; a mis-restore is one Ctrl+Z away, same as any other mistake in the editor.
+
+### Nodes tab (TSL material graph)
+
+The sixth sibling module is the **Nodes** tab: a node-based material editor for [TSL](https://github.com/mrdoob/three.js/wiki/Three.js-Shading-Language) (Three.js Shading Language), the node system that backs three.js's `WebGPURenderer` and WebGPU-capable `MeshStandardNodeMaterial`. Build a graph for the selected object's material from UV, time, color, texture, and math nodes; each node is a card with dropdown inputs referencing other nodes by label, so there is no canvas to pan or wires to route, just a reorderable list that stays readable at any zoom level. Applying the graph swaps the object's material for a node material wired to the graph's output, through the same undo-able command path as every other material edit.
 
 ### Handoff from Animation Studio
 
@@ -69,4 +79,5 @@ A typical round trip from another studio:
 - [Animation Studio](./animation-studio.md): builds the animated GLBs Scene Studio records to video.
 - [Restyle Studio](./restyle.md): re-skin the models before or after composing them.
 - [3D asset pipeline](./3d-asset-pipeline.md): how GLB, glTF, and clip formats relate across the platform.
+- [Free LLM providers](./free-llm-providers.md): the free-first provider chain the Agent tab reasons with.
 - [src/scene-studio/README.md](../src/scene-studio/README.md): the module layout, the exported wrapper API, and how re-vendoring a three.js upgrade stays mechanical.

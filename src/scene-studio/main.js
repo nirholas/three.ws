@@ -10,6 +10,14 @@ import './studio.css';
 // theme, but the studio chrome (vendor css + studio.css) only ships dark.
 document.documentElement.setAttribute('data-theme', 'dark');
 
+// Scene Studio is a full-screen app, the same category as a modal per
+// public/corner-stack.js's own doc comment ("a dialog that covers the screen
+// should add tws-modal-open to <body>"): without this the shared corner-stack
+// widgets (onboarding cards, the Walk Companion) float at a higher z-index
+// than the sidebar and can sit on top of its buttons, including the Agent
+// tab's version-restore controls.
+document.body.classList.add('tws-modal-open');
+
 import * as THREE from 'three';
 
 import { Editor } from './vendor/js/Editor.js';
@@ -30,6 +38,8 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { addGltfBufferToScene as sharedAddGltfBufferToScene } from './loader.js';
 import { mountStudioActions } from './actions.js';
 import { mountEmptyState } from './empty-state.js';
+import { createAgentPanel } from './agent-tab.js';
+import { createTslEditorPanel } from './tsl-editor.js';
 import { enhanceAnimationA11y, enhanceToolbarA11y } from './toolbar-a11y.js';
 import { toast, toastError } from '../shared/toast.js';
 import { sanitizeRemoteScene } from './remote-scene.js';
@@ -60,6 +70,14 @@ container.appendChild(player.dom);
 
 const sidebar = new Sidebar(editor);
 container.appendChild(sidebar.dom);
+
+// Agent tab (drives the open scene through tool calls, see agent-tab.js) and
+// Nodes tab (TSL material graph editor, see tsl-editor.js), both sibling
+// additions to the vendored Scene/Project/Settings tabs, never touching
+// vendor/** (Sidebar.addTab is the vendored editor's own extension point).
+sidebar.addTab('agent', 'Agent', createAgentPanel(editor));
+sidebar.addTab('nodes', 'Nodes', createTslEditorPanel(editor));
+sidebar.select('scene'); // addTab() auto-selects the tab it just added; keep Scene the default
 
 const menubar = new Menubar(editor);
 container.appendChild(menubar.dom);

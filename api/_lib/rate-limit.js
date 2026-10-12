@@ -2354,6 +2354,14 @@ export const limits = {
 	// minute per account; the limit comes from the plan config, so each plan
 	// gets its own bucket name and the memo in getLimiter keys on the limit too.
 	devPlanBurst: (planId, key, { limit }) => getLimiter(`devplan:burst:${planId}`, { limit, window: '1 m' }).limit(key),
+	// Scene Studio Agent tab (api/scene/agent.js): free, anonymous, tool-calling
+	// round the browser drives one turn at a time. Same shape as concierge: a
+	// per-IP lane plus a global ceiling on the free-tier draw, both critical so a
+	// Redis outage fails closed rather than handing out unbounded free inference.
+	sceneAgentIp: (ip) =>
+		getLimiter('scene:agent:ip', { limit: 20, window: '1 m', critical: true }).limit(ip),
+	sceneAgentGlobal: () =>
+		getLimiter('scene:agent:global', { limit: 600, window: '1 m', critical: true }).limit('global'),
 };
 
 // Fixed-window counters for limits.planApi. One small record per principal, so

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-12",
+			"title": "Scene Studio: an Agent tab that edits your open scene by prompt, plus a TSL node material editor",
+			"link": "/scene",
+			"summary": "Scene Studio's sidebar grows two tabs. Agent is a chat panel that reads the open scene and drives it with the same real editor.execute(Command) calls the toolbar and menus use (free, keyless, rate-limited model via POST /api/scene/agent): add a primitive or a Forge-generated object, move/rotate/scale a named object, recolor a material. Every mutating prompt pushes a numbered version (a scene snapshot plus a viewport screenshot); clicking an earlier version restores it as one more undoable edit, so a bad restore is one Ctrl+Z away like any other mistake. Nodes is a dropdown-wired TSL (Three.js Shading Language) material graph editor for the selected object: build a graph from UV, time, color, texture, and math nodes as a reorderable card list, no canvas or wires to route, and apply it to swap in a real node material through the same undo-able command path. Fixed along the way: restoring a version used to append the snapshot's objects on top of the current scene instead of replacing them (SetSceneCommand, the vendored editor's own scene-import command, only ever adds); and the site-wide corner-stack widget could sit on top of the Agent tab's version-restore buttons and eat the click, now suppressed while the studio is open.",
+			"tags": [
+				"feature",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-12",
 			"title": "Every generated and purchased model now ships with a signed provenance credential, free, by default",
 			"link": "/docs/provenance",
 			"summary": "Content credentials (specs/PROVENANCE_3D.md) used to be an on-demand, Claude-track action: you had to call anchor_provenance to get one. Now every GLB the Forge produces, across every generation lane (free NIM, Forge Pro, rigged avatars, self-host TRELLIS/Hunyuan, async GCP workers), gets an ed25519-signed content credential the moment it's materialized, and every first download of a paid asset from the x402 asset bazaar gets one too, with the hash and a verify link returned right in the download response. Signing and storage are free and local, no Solana write and no spend, so there's nothing to gate; the separate paid anchor_provenance upgrade, which additionally commits the hash on-chain, is untouched and still available. A credential is keyed by content hash, so it's issued exactly once per file no matter how many times a lane or endpoint touches it. Model pages now show the same verified / tampered / unverified badge the 3D viewer already had, and a third party can check any model for free with GET /api/provenance. The owner can turn automatic issuance off platform-wide with PROVENANCE_AUTO_DISABLE=true; nothing else about verification changes if they do.",

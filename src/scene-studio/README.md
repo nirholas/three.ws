@@ -34,6 +34,11 @@ src/scene-studio/
 ├── loader.js        Shared GLB loader: Draco/KTX2/Meshopt-wired GLTFLoader that
 │                    adds a parsed GLB through the undo-able AddObjectCommand path
 ├── actions.js       Layered action bar: Import from Forge, Export presets, Share
+├── agent-tab.js     Agent sidebar tab: chat panel that drives the open scene
+│                    through real editor.execute(Command) tool calls, with a
+│                    screenshot + undoable version per mutating prompt
+├── tsl-editor.js    Nodes sidebar tab: dropdown-wired TSL material graph editor
+│                    for the selected object
 ├── empty-state.js   First-run overlay over the empty grid, retires on first object
 ├── remote-scene.js  Strips scripts and history from a scene opened by #file= link
 ├── toolbar-a11y.js  Accessible names for the icon-only controls: the transform
@@ -107,7 +112,7 @@ affordances the stock File and Export menus do not offer on their own:
 
 ## Exports
 
-The wrappers export seven functions; `main.js` is entry-only and exports nothing.
+The wrappers export nine functions; `main.js` is entry-only and exports nothing.
 
 | Module | Export | What it does |
 | --- | --- | --- |
@@ -119,6 +124,8 @@ The wrappers export seven functions; `main.js` is entry-only and exports nothing
 | `empty-state.js` | `mountEmptyState(editor, container)` | Mounts the first-run overlay and keeps it in sync with the scene graph. Returns the overlay element. |
 | `toolbar-a11y.js` | `enhanceToolbarA11y(editor, toolbarDom)` | Labels the vendored translate/rotate/scale buttons and mirrors their `selected` class into `aria-pressed`. Returns the labelled buttons. |
 | `toolbar-a11y.js` | `enhanceAnimationA11y(editor, animationDom)` | Labels the vendored animation timeline's play/pause/stop transport, which ships as three identical unnamed icon buttons. Matches each one on the SVG shape the vendor draws, not on child order, so a control added to that panel can never inherit the wrong label. Returns the labelled buttons. |
+| `agent-tab.js` | `createAgentPanel(editor)` | Builds the Agent sidebar tab: a chat panel that posts each turn to [api/scene/agent.js](../../api/scene/agent.js), executes the model's tool calls as real `editor.execute(Command)`s, and pushes a scene+screenshot version per mutating prompt. Returns a `UIElement` ready for `sidebar.addTab('agent', 'Agent', panel)`. |
+| `tsl-editor.js` | `createTslEditorPanel(editor)` | Builds the Nodes sidebar tab: a dropdown-wired TSL material graph editor for the selected object's material. Returns a `UIElement` ready for `sidebar.addTab('nodes', 'Nodes', panel)`. |
 
 ## Example
 
