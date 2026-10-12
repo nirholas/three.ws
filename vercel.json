@@ -5241,6 +5241,10 @@
 			"dest": "/sonar.html"
 		},
 		{
+			"src": "/dissolve/?",
+			"dest": "/dissolve.html"
+		},
+		{
 			"src": "/choreograph/?",
 			"dest": "/choreograph.html"
 		},

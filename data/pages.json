@@ -107,6 +107,14 @@
 					"added": "2026-09-10"
 				},
 				{
+					"path": "/dissolve",
+					"title": "Dissolve",
+					"description": "Turn any 3D model into a storm of up to a million GPU particles, morph one shape into another, bend the storm with black holes, vortexes and shockwaves, and let your microphone drive it. Record or share what you make.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-10-12"
+				},
+				{
 					"path": "/choreograph",
 					"title": "Choreographer",
 					"description": "Compose agent gestures into a timed routine on a real timeline, preview the whole performance on a live 3D avatar, then save it to your agent and play it by name from any embed.",

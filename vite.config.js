@@ -1085,6 +1085,7 @@ const appConfig = {
 				animations: resolve(__dirname, 'pages/animations.html'),
 				gestures: resolve(__dirname, 'pages/gestures.html'),
 				sonar: resolve(__dirname, 'pages/sonar.html'),
+				dissolve: resolve(__dirname, 'pages/dissolve.html'),
 				choreograph: resolve(__dirname, 'pages/choreograph.html'),
 				'character-library': resolve(__dirname, 'pages/character-library.html'),
 				'sign-language': resolve(__dirname, 'pages/sign-language.html'),
