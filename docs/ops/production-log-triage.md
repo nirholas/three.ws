@@ -1237,34 +1237,47 @@ ERROR  502 POST /api/pump/launch-agent
 
 ---
 
-## 🔴 5xx fan-out across `/api/forge`, `/api/gpt-forge`, `/api/glb`, avatars, `/api/3d/inspect`, `/api/print/quote`, `/cdn/*`: `r2-downstream-5xx` (§r2-downstream)
+## 🔴 5xx fan-out across `/api/forge`, `/api/gpt-forge`, `/api/glb`, avatars, `/api/3d/inspect`, `/api/print/quote`, `/cdn/*`, `/api/render/*`, `/api/animations/clips/<id>`: `r2-downstream-5xx` (§r2-downstream)
 
 - **Source:** every route that reads or writes through
   [api/_lib/r2.js](../../api/_lib/r2.js) (`api/forge.js`, `api/gpt-forge.js`,
   `api/objects/library.js`, `api/avatars/[id].js`), the entire `/cdn/*`
   namespace (routed by `vercel.json`'s single `/cdn/(.+)` catch-all to
   [api/cdn-object.js](../../api/cdn-object.js), which always reads R2; no
-  subpath is an exception), plus two generic caller-supplied-URL fetch tools
+  subpath is an exception), two generic caller-supplied-URL fetch tools
   (`api/print/quote.js`, `api/3d/inspect.js`, 502 `fetch_failed`) that happen
   to be fetching R2-hosted GLBs in practice because forge/gpt-forge persist
-  generated models there.
+  generated models there, and (added 2026-10-12) the avatar-render family that
+  fetches an avatar's own `model_url` through `fetchModel`/`getObjectBuffer`
+  instead of `api/_lib/r2.js`: `api/render/animate.js` (502 `render_failed`),
+  `api/render/glb.js` and `api/render/avatar-clip.js` (502, same lib), and
+  GET `api/animations/[id].js` (`/api/animations/clips/<id>`, 502
+  `storage_error` from `getObjectBuffer`).
 - **What it means:** Cloudflare R2 flapping (healthz `object_storage`
   `down`/`degraded`, tracked at
   [production-100-OWNER-ACTIONS.md](../../prompts/finish/_context/production-100-OWNER-ACTIONS.md)
   row 36) fans out into 5xx on this whole family at once with zero matching
   app-level crash logs, because each handler returns a clean upstream-failure
   status rather than throwing. Triage-lane sweep 2026-10-11 saw all nine
-  routes fire together inside the same window.
+  original routes fire together inside the same window; the 2026-10-12 sweep
+  reproduced it live for `/api/render/animate` by curling the failing
+  avatar's own `model_url` (`https://pub-<account>.r2.dev/u/<owner>/<slug>.glb`)
+  directly and getting the same `403` Cloudflare answers for every other
+  route in this family.
 - **Resolve:** check healthz first:
   `curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[] | select(.name=="object_storage")'`.
   `down`/`degraded` confirms this family and the fix is the owner-side
   Cloudflare dashboard check in row 36. If `object_storage` reads `ok`,
   stop treating this as one signature and read the specific route's handler:
-  the four R2-direct routes point at a real credential/bucket problem, the two
-  fetch-tool routes point at whatever host the sample URL actually names
-  (confirm it is really `.r2.dev` before blaming R2).
+  the R2-direct routes point at a real credential/bucket problem, the
+  fetch-tool and avatar-render routes point at whatever host the sample URL
+  actually names (confirm it is really `.r2.dev` before blaming R2).
 - **Monitor signature:** `r2-downstream-5xx` in
   [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `owner`.
+  Regression-covered in
+  [tests/gcp-triage.test.js](../../tests/gcp-triage.test.js) ("classifies an
+  animated-render R2 fetch failure..." / "...a clip-detail R2 fetch
+  failure...").
 
 ---
 

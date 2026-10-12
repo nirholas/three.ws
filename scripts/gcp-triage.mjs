@@ -342,15 +342,24 @@ const KNOWN_HTTP_SIGNATURES = [
 		// which always reads R2 (api/cdn-object.js's own header comment): widen
 		// the match to the whole /cdn/ namespace instead of enumerating every
 		// subpath one at a time (2026-10-12: /cdn/avatars/mixamo/glb/*.glb hit
-		// the same R2 flap and was missing from the list).
+		// the same R2 flap and was missing from the list). Also 2026-10-12
+		// triage-lane sweep: /api/render/animate, /api/render/glb,
+		// /api/render/avatar-clip and GET /api/animations/clips/<id> each fetch
+		// an avatar's own model_url (a pub-*.r2.dev URL) through fetchModel /
+		// getObjectBuffer rather than api/_lib/r2.js, but it is the identical
+		// Cloudflare R2 flap: curl of one failing avatar's pub-*.r2.dev model_url
+		// reproduced the exact 403 healthz already reports for object_storage.
 		test: (g) => g.service === 'three-ws-api' && g.status >= 500 && (
 			g.path === '/api/forge' || g.path === '/api/gpt-forge' ||
 			g.path === '/api/glb' || g.path === '/api/avatars/upload' ||
 			g.path === '/api/3d/inspect' || g.path === '/api/print/quote' ||
-			/^\/cdn\//.test(g.path) || /^\/api\/avatars\/[^/]+\/glb$/.test(g.path)
+			g.path === '/api/render/animate' || g.path === '/api/render/glb' ||
+			g.path === '/api/render/avatar-clip' ||
+			/^\/cdn\//.test(g.path) || /^\/api\/avatars\/[^/]+\/glb$/.test(g.path) ||
+			/^\/api\/animations\/clips\/[^/]+$/.test(g.path)
 		),
 		class: 'owner',
-		action: `Check healthz object_storage first (curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[] | select(.name=="object_storage")'): "down" or "degraded" means this is the known Cloudflare R2 flap, not a new bug (production-100-OWNER-ACTIONS.md row 36 tracks the owner-side Cloudflare dashboard check). If object_storage reads ok, read the specific route's handler instead; api/forge.js, api/gpt-forge.js, api/objects/library.js and api/avatars/[id].js import from api/_lib/r2.js directly, while api/print/quote.js and api/3d/inspect.js are generic caller-URL fetch tools (502 fetch_failed) that happen to be fetching R2-hosted models in the sample traffic, so confirm the sample URL's host before blaming R2 on those two. ${RUNBOOK} §r2-downstream.`,
+		action: `Check healthz object_storage first (curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[] | select(.name=="object_storage")'): "down" or "degraded" means this is the known Cloudflare R2 flap, not a new bug (production-100-OWNER-ACTIONS.md row 36 tracks the owner-side Cloudflare dashboard check). If object_storage reads ok, read the specific route's handler instead; api/forge.js, api/gpt-forge.js, api/objects/library.js and api/avatars/[id].js import from api/_lib/r2.js directly, while api/print/quote.js, api/3d/inspect.js, api/render/animate.js, api/render/glb.js, api/render/avatar-clip.js and api/animations/[id].js fetch a caller- or avatar-supplied URL directly (502 render_failed / storage_error) that happens to be R2-hosted in the sample traffic, so confirm the sample URL's host before blaming R2 on those. ${RUNBOOK} §r2-downstream.`,
 	},
 	{
 		id: 'pulse-not-deployed-503',

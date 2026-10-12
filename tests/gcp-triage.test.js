@@ -120,6 +120,28 @@ describe('gcp-triage HTTP classification', () => {
 		expect(finding.signature).toBe('holders-rpc-exhausted-503');
 		expect(finding.class).toBe('self-healing');
 	});
+
+	// 2026-10-12 triage-lane sweep: confirmed live against production that
+	// /api/render/animate?avatar=<id> and GET /api/animations/clips/<id> both
+	// 502 with the exact same root cause as the rest of the r2-downstream-5xx
+	// family (curl of the avatar's own pub-*.r2.dev model_url returned 403,
+	// matching healthz object_storage "down"). Both routes fetch an R2-hosted
+	// GLB outside api/_lib/r2.js (fetchModel / getObjectBuffer), so neither
+	// matched the existing path list and both fell through to `investigate`
+	// every sweep even though nothing in the handler is broken.
+	it('classifies an animated-render R2 fetch failure as the r2-downstream family', () => {
+		const [finding] = buildFindings([request({ status: 502, path: '/api/render/animate' })]);
+		expect(finding.signature).toBe('r2-downstream-5xx');
+		expect(finding.class).toBe('owner');
+	});
+
+	it('classifies a clip-detail R2 fetch failure as the r2-downstream family', () => {
+		const [finding] = buildFindings([
+			request({ status: 502, path: '/api/animations/clips/345b05d0-f81e-4f6c-9df8-c3f73572716c' }),
+		]);
+		expect(finding.signature).toBe('r2-downstream-5xx');
+		expect(finding.class).toBe('owner');
+	});
 });
 
 describe('gcp-triage page failure summary', () => {
