@@ -211,6 +211,7 @@
 			.sp-timeline-time { font-size: 11.5px; color: var(--text-3, #8a8a8a); min-width: 92px; text-align: right; font-variant-numeric: tabular-nums; }
 			#sp-timeline-play { flex: 0 0 auto; }
 			#sp-export-status { margin-top: 10px; }
+			#sp-gen-status { margin-top: 10px; }
 			.sp-note--error { color: #fca5a5; }
 			.sp-export-link { color: var(--accent-violet); text-decoration: underline; font-size: 12.5px; }
 			#sp-hotspot-add:disabled, #sp-export-video:disabled, #sp-timeline-play:disabled { opacity: 0.4; cursor: default; }
@@ -302,6 +303,20 @@
 							</button>
 							<input id="sp-file" type="file" accept=".ply,.spz,.splat,.ksplat,.sog" hidden />
 							<p class="sp-hint" data-i18n="splat.files_stay_on_your_device_decoding_runs">Files stay on your device — decoding runs entirely in your browser.</p>
+						</div>
+
+						<div class="sp-card">
+							<h2 data-i18n="splat.generate_from_a_photo">Generate from a photo</h2>
+							<div class="sp-field">
+								<label class="sp-sr-only" for="sp-gen-url" data-i18n="splat.photo_url">Photo URL</label>
+								<input class="sp-input" id="sp-gen-url" type="url" placeholder="https://…/photo.jpg" autocomplete="off" />
+								<button class="sp-btn sp-btn--primary" id="sp-gen-start" type="button">
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18 M3 12h18"/></svg>
+									<span data-i18n="splat.generate">Generate</span>
+								</button>
+							</div>
+							<p class="sp-hint" data-i18n="splat.one_reference_photo_becomes_a_gaussian_splat">One reference photo becomes a Gaussian splat, no mesh, no rig, straight from TripoSplat.</p>
+							<div class="sp-note" id="sp-gen-status" role="status" aria-live="polite" hidden></div>
 						</div>
 
 						<div class="sp-card">

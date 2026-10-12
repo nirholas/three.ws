@@ -307,6 +307,65 @@ async function loadSample(kind) {
 	setDownload(ok ? URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' })) : null, name);
 }
 
+// ── Generate from a photo (TripoSplat) ──────────────────────────────────────
+// TripoSplat decodes a single reference image straight to a Gaussian splat on
+// a self-hosted GPU worker (workers/model-triposplat). The job is async, so
+// this submits then polls api/forge-triposplat.js until the result is ready,
+// then hands the resulting .splat URL to the same loadFromUrl path a pasted
+// URL takes.
+const GEN_POLL_MS = 2500;
+const GEN_POLL_TIMEOUT_MS = 5 * 60 * 1000;
+
+function setGenStatus(text, isError = false) {
+	const node = $('#sp-gen-status');
+	if (!node) return;
+	if (!text) { node.hidden = true; node.textContent = ''; node.classList.remove('sp-note--error'); return; }
+	node.hidden = false;
+	node.textContent = text;
+	node.classList.toggle('sp-note--error', isError);
+}
+
+async function pollTriposplatJob(jobId) {
+	const deadline = Date.now() + GEN_POLL_TIMEOUT_MS;
+	while (Date.now() < deadline) {
+		const res = await fetch(`/api/forge-triposplat?job=${encodeURIComponent(jobId)}`);
+		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		const data = await res.json();
+		if (data.status === 'done' && data.result_url) return data;
+		if (data.status === 'failed' || data.error) throw new Error(data.error || 'Generation failed.');
+		setGenStatus(`Generating splat from your photo… (${data.status || 'queued'})`);
+		await new Promise((resolve) => setTimeout(resolve, GEN_POLL_MS));
+	}
+	throw new Error('Timed out waiting for the splat to generate.');
+}
+
+async function generateFromPhoto(imageUrl) {
+	const btn = $('#sp-gen-start');
+	const input = $('#sp-gen-url');
+	if (btn) btn.disabled = true;
+	if (input) input.disabled = true;
+	setGenStatus('Starting…');
+	try {
+		const res = await fetch('/api/forge-triposplat', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ image_url: imageUrl }),
+		});
+		const data = await res.json().catch(() => null);
+		if (!res.ok || !data?.job_id) throw new Error(data?.message || `HTTP ${res.status}`);
+		setGenStatus('Generating splat from your photo… this can take a minute.');
+		const result = await pollTriposplatJob(data.job_id);
+		setGenStatus('');
+		await loadFromUrl(result.result_url, 'Generated from photo');
+	} catch (err) {
+		setGenStatus(`Couldn’t generate a splat: ${err.message}`, true);
+		console.error('[splat] triposplat generation failed', err);
+	} finally {
+		if (btn) btn.disabled = false;
+		if (input) input.disabled = false;
+	}
+}
+
 // ── Wiring ───────────────────────────────────────────────────────────────────
 function init() {
 	if (!STAGE()) return;
@@ -330,6 +389,14 @@ function init() {
 		const file = e.target.files?.[0];
 		if (file) loadFromFile(file);
 		e.target.value = '';
+	});
+
+	$('#sp-gen-start').addEventListener('click', () => {
+		const url = $('#sp-gen-url').value.trim();
+		if (url) generateFromPhoto(url);
+	});
+	$('#sp-gen-url').addEventListener('keydown', (e) => {
+		if (e.key === 'Enter') { const url = e.target.value.trim(); if (url) generateFromPhoto(url); }
 	});
 
 	for (const btn of document.querySelectorAll('.sp-sample')) {

@@ -43,6 +43,10 @@
 //   video2motion → GCP_VIDEO2MOTION_URL     (workers/model-video2motion, MediaPipe)
 //                  Video of a person → AnimationClip JSON + person-mask video +
 //                  normalized video + per-frame screen anchors (body swap).
+//   triposplat   → MODEL_TRIPOSPLAT_URL     (workers/model-triposplat, VAST-AI-Research)
+//                  Single image → 3D Gaussian splat, no intermediate mesh.
+//                  Standard /infer + /tasks/:id task shape; the result is a
+//                  .splat file, loaded straight into the Splat Viewer.
 //
 // All workers share the same bearer secret (GCP_RECONSTRUCTION_KEY).
 // Each worker exposes the same task shape:
@@ -157,6 +161,11 @@ function serviceUrlForMode(mode) {
 			// /infer + /tasks/:id task shape; result is an AnimationClip JSON plus
 			// mask/video/meta sidecar URLs.
 			return readEnv('GCP_VIDEO2MOTION_URL');
+		case 'triposplat':
+			// Self-hosted TripoSplat worker (workers/model-triposplat): single
+			// image → 3D Gaussian splat. Standard /infer + /tasks/:id task shape;
+			// the result is a .splat file, not a GLB mesh.
+			return readEnv('MODEL_TRIPOSPLAT_URL');
 		case 'rerig':
 			// Rigging: the standalone rig worker only (workers/rig, Cloud Run
 			// `model-rig`: /rig + /tasks/:id, `mesh_gcs_url` request schema).
@@ -502,6 +511,22 @@ function buildWorkerRequest(request) {
 		};
 	}
 
+	if (mode === 'triposplat') {
+		// Self-hosted TripoSplat (workers/model-triposplat): one reference image
+		// in, a Gaussian splat out. `num_gaussians` trades file size/detail for
+		// decode time; the worker clamps it server-side, so this is pure opt-in.
+		const body = { images: [sourceUrl] };
+		if (Number.isFinite(Number(params?.num_gaussians))) {
+			body.num_gaussians = Math.round(Number(params.num_gaussians));
+		}
+		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
+		return {
+			path: '/infer',
+			resultKey: 'result_gcs_url',
+			body,
+		};
+	}
+
 	if (mode === 'rerig') {
 		// The standalone rig worker behind GCP_UNIRIG_URL (workers/rig, the
 		// Make-It-Animatable service; the env name predates it) takes
@@ -631,6 +656,9 @@ const MODE_ETA = {
 	// CPU pose+segmentation over every frame: scales with clip length; a 30 s
 	// clip lands around this.
 	video2motion: 120,
+	// One flow-matching denoise pass plus a VAE decode to Gaussians; the
+	// decode step dominates at the default 131072-gaussian count.
+	triposplat: 45,
 };
 
 // `reconstructUrl` overrides where `reconstruct` jobs go. The forge Hunyuan3D
@@ -806,6 +834,12 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 					// partial reconstruction look like the whole clip.
 					if (typeof data.frames_truncated === 'boolean') result.framesTruncated = data.frames_truncated;
 					if (typeof data.sky_points_removed === 'number') result.skyPointsRemoved = data.sky_points_removed;
+				} else if (mode === 'triposplat') {
+					// The result is a .splat file, not a GLB mesh: it loads straight
+					// into the Splat Viewer's mountSplatScene rather than a mesh viewer.
+					result.resultSplatUrl = url;
+					if (typeof data.num_gaussians === 'number') result.numGaussians = data.num_gaussians;
+					if (typeof data.bytes === 'number') result.bytes = data.bytes;
 				} else {
 					result.resultGlbUrl = url;
 				}
