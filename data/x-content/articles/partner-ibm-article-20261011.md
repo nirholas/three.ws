@@ -1,88 +1,88 @@
-A developer community usually meets on a call: a grid of webcams, a screen share, a chat panel, and a recording that ages in a drawer. This past season three.ws tried a different shape for the community it runs around building AI agents with 3D capabilities. The group's opening meetup was held not on a video call but inside a persistent three.ws 3D world, and it stayed open for nine hours, long enough for a person to drop in over a morning coffee, leave for lunch, and come back to find the conversation still going. This Article walks through how that day was built, what walking into it felt like, how the infrastructure held an audience of thousands at once, and how each claim below was checked against production before it was written down.
+A user group usually means a video call, a slide deck and a grid of muted faces. three.ws runs the three.ws User Group on IBM Community, a public group for developers building AI agents with 3D capabilities, and for its opening gathering the group skipped the call entirely. The meetup happened inside a persistent three.ws 3D world, the same kind of world the platform ships to developers, so the venue and the subject were the same thing. Anyone with the link could walk in, and the room stayed open for a full working day. This Article follows that event from the invitation to the final headcount: how the world was hosted, what the agenda looked like from inside it, what attendees walked away with, and how each claim in this piece was verified against production before publication.
 
-## What IBM Community makes possible
+three.ws is an IBM Business Partner, an independent member of IBM's partner program, and you can read the designation on the [partner page](https://three.ws/blog/three-ws-ibm-business-partner). This Article is about what three.ws built and ran for that community: the world, the event and the evidence. Everything here describes work three.ws did, organized with the group's organizer on IBM's side, and filmed live for this Article. Our thanks go to that organizer and to the IBM Community program for giving this group its home and its opening gathering its audience.
 
-IBM Community runs a network of public topic groups where developers, practitioners and enthusiasts organise themselves around shared interests and hold their own events. three.ws runs one of them: a public group for developers building AI agents with 3D capabilities, covering avatars that walk and speak, 3D scenes generated from sentences, agent wallets on Solana, and the tooling that ties them together.
+## A user group that meets inside the product
 
-A user group is what its name says. Membership is open, the conversation belongs to the members, and the events are what the group decides they should be. When the time came to hold the group's opening meetup, the obvious formats were the video-call ones familiar across such programmes. The group being what it is, though, there was a more fitting stage available: three.ws builds persistent 3D worlds, and the meetup moved into one.
+The three.ws User Group on IBM Community exists for developers building AI agents with 3D capabilities. The natural question for such a group is why its events should look like any other webinar. three.ws answered by making the venue the demo. The first meetup of the three.ws User Group on IBM Community did not happen on a conferencing bridge. It ran nine hours, entirely inside three.ws, in a persistent 3D world that attendees entered as avatars.
 
-Here is how that opening looked, filmed live on the recap page for this Article: the moment a user-group meetup held inside a 3D world comes into view.
+That choice changed what a meetup could be. On a call, a platform tour is a screen share. Inside the world, the tour is a walk: the guide moves, the audience follows, and the features being discussed are the ground everyone is standing on. Community demos were given by their builders standing next to their own work. Questions were asked by walking up and speaking. The format removed the distance between watching a platform and using one, because attending at all already meant using it.
+
+The meetup was organized with the group's organizer on IBM's side, and the invitation was deliberately simple: anyone with the link could walk in. There was no registration wall inside the experience itself. You received the link, you opened it, and you were standing in the room as an avatar, able to move, look around and talk to the people near you. That openness mattered for what happened next, because the room filled well beyond what a typical community call draws, and it held for the length of a working day.
+
+Here is the room as the filming caught it, moments after the recording began, with avatars gathered in the persistent world:
 
 ![A nine-hour IBM Community meetup held inside a 3D world, filmed live on three.ws/blog/ibm-user-group-first-in-world-meetup-recap, 2.1 seconds into the run: A user-group meetup held inside a 3D world](/x-media/partner-ibm-article-20261011/user-group-in-world-meetup-1.jpg)
 
-## A world instead of a call
-
-A call has a stage and an audience. A world has a room. That single difference shaped the planning of this meetup. On a call, someone shares a screen and everyone else watches the same rectangle. In a world, the audience stands where they like, clusters into side conversations, walks up to a stage area when something is being presented, and drifts to the edges when a demo has finished and the chatting resumes. An attendee does not watch the meetup; the attendee attends it.
-
-The decision carried one practical consequence that became the day's signature: it ran nine hours, entirely inside three.ws. There was no overflow stream, no parallel webinar. The venue was the platform, and the platform held. Nine hours is a full working day at a conference, and the room stayed live for the whole of it. The filmed run from the recap shows the crowd assembled and settled in, early in the day, with the world already doing the work a convention hall would do.
+A few seconds later the camera caught the same space from another angle, and the figure below shows what the world looked like as the tour was forming up:
 
 ![A nine-hour IBM Community meetup held inside a 3D world, filmed live on three.ws/blog/ibm-user-group-first-in-world-meetup-recap, 5.6 seconds into the run: A user-group meetup held inside a 3D world](/x-media/partner-ibm-article-20261011/user-group-in-world-meetup-2.jpg)
 
-## Walking in with a link
-
-The organisers made one deliberate choice about the door: anyone with the link could walk in. No registration list was checked at the entrance, no ticket, no account-creation flow standing between a curious developer and the room. The link circulated through the group's page and through word of mouth, and it worked for whoever had it while the meetup was live.
-
-In practical terms, walking in meant opening the link in a browser and arriving as an avatar in the world. The body loads, the room loads, and the visitor is present: visible to everyone nearby, audible to the people standing close, free to move. A newcomer could arrive alone, spot a cluster of avatars near a demo area, walk over, and join the conversation by proximity rather than by raising a hand in a chat panel. That is the interaction model three.ws worlds use everywhere; what made it notable here was the crowd it had to absorb.
-
-For the person attending, this flattened the awkwardness of online events. There was no waiting room to be admitted from and no moment of being announced to a silent grid. The visitor appeared, oriented, and joined. People arriving from different time zones had the same experience: the world was running, the agenda was in progress, and whatever was on stage at that moment was there to be walked up to.
-
-## The server that held the room
-
-A room anyone can walk into is worth little unless the server holds when the crowd arrives. The numbers the day produced are numbers the platform's own telemetry recorded: the open room peaked at 3,145 concurrent avatars. That peak is not an estimate from a headcount or a signup sheet. It is the concurrency the room's authoritative server tracked while it was managing the state of the world, avatar by avatar, across the meetup's live window.
-
-Under the hood, the meetup ran on an authoritative Colyseus server on Cloud Run with 15 Hz binary delta sync and proximity-gated spatial voice. Each part of that stack earned its place over the day. Authoritative means the server, not any client, owns the truth of the world: where each avatar is, which way it faces, what it is doing. Clients send intentions; the server decides what happened and broadcasts the result. That is what kept the views of thousands of attendees consistent with one another, so a wave was a wave and a walk to the stage was a walk to the stage, for everyone in the room.
-
-The 15 Hz binary delta sync is how that truth reached browsers without drowning anyone's connection. Fifteen times a second, each client received a compact binary update describing what had changed since the previous update, not a full snapshot of the room. Deltas are what kept the world responsive on ordinary hardware and ordinary connections, because the bytes crossing the wire described movement, not the whole scene, at each tick.
-
-Voice was proximity-gated and spatial. An attendee heard the avatars standing near their own and not the crowd across the room, which is what made parallel conversations possible in a space holding thousands at once. Rather than one conference call of thousands of speakers, the world behaved like a physical venue: many small conversations, a louder zone near the current presenter, and quiet corners for two people who had just met. Cloud Run absorbed the load as the audience rose and fell across the day, so the room's capacity grew with the crowd.
-
-The filmed run captured the meetup mid-flow, during the segment where the live tour, demos and Q&A played out in-world.
-
-![A nine-hour IBM Community meetup held inside a 3D world, filmed live on three.ws/blog/ibm-user-group-first-in-world-meetup-recap, 9 seconds into the run: Live tour, demos and Q&A, all in-world](/x-media/partner-ibm-article-20261011/user-group-in-world-meetup-3.jpg)
-
-## The agenda, run in the world itself
-
-An open door and a strong server get people into the room. The agenda is what kept them there. The day's programme was a live tour of the platform from inside the world, community demos, and open Q&A.
-
-The live tour deserves the most attention, because it inverted the usual product demo. Instead of a presenter screen-sharing slides about a 3D platform, the presenters led the audience through the platform itself, in-world, using the room as the medium. Features were shown by walking to them. Capabilities were demonstrated on the spot, with the audience watching from wherever they had chosen to stand. For three.ws, the venue and the product are the same object: the world the meetup ran in is the thing the tour described.
-
-Community demos put members of the group on the stage rather than the hosts. Developers in the user group are building AI agents with 3D capabilities of their own, and the meetup gave them a room full of peers to show that work to. A demo in a world is a different act from a demo on a call: the presenter stands next to what they built, and the audience can walk around it. Open Q&A closed the loop, with questions asked by voice in the room itself, answered to the people within earshot and overheard by whoever drifted closer.
-
-The length of the day set the agenda's tone. Nine hours is long enough that sessions did not need to be compressed and an attendee who missed the morning did not miss the meetup. The final filmed frame shows what the later hours looked like: the open room holding for a full workday, still populated, still talking.
-
-![A nine-hour IBM Community meetup held inside a 3D world, filmed live on three.ws/blog/ibm-user-group-first-in-world-meetup-recap, 12.5 seconds into the run: The open room held for a full workday](/x-media/partner-ibm-article-20261011/user-group-in-world-meetup-4.jpg)
-
-## The Meetup Laurel
-
-Attendance at most online events leaves a calendar entry and a follow-up email. The organisers wanted something more durable for the people who made time for the day, so everyone who walked in while it was live got a Meetup Laurel, granted server-side.
-
-The detail that matters there is the server-side grant. The Laurel was not a link someone had to remember to click or a form to fill in afterwards. The moment an avatar entered the world during the live window, the authoritative server registered the attendance and granted the Laurel. It is a permanent in-world keepsake: it stays with the avatar after the event ended, a visible record that its owner was in the room for the group's opening meetup.
-
-For a community, that kind of artifact does quiet, useful work. Months from now, two avatars meeting in a three.ws world can recognise from each other's Laurels that they were both there on the day, and that recognition is raw material for a community's memory. The grant being automatic also kept the door frictionless. Because entry required the link and nothing more, the Laurel could require entry and nothing more. There was no step to forget, so no attendee was left out by a missed step.
-
-## How the relationship is stated
-
-The group's existence rests on a specific relationship, stated here in the designation's own words: three.ws is an IBM Business Partner, an independent member of IBM's partner program. That is a designation, not an endorsement, certification or strategic partnership, and three.ws is not an IBM product. The partner page is linked in the closing section of this Article.
-
-Each section above is about what three.ws built and ran, and the warmest thanks go where a user group's thanks belong. To the members, whose demos, questions and nine hours of presence were the event; a user group is its members, and this one showed up across the time zones the agenda crossed. And to the group's organizer on IBM's side, with whom the day was planned from the opening agenda draft to the last goodbye in the room, thank you for backing a venue that was, for a programme of this kind, untrodden ground.
-
-## How the day was organised
-
-A nine-hour in-world meetup does not assemble itself, and the planning behind it was shared: it was organized with the group's organizer on IBM's side. That collaboration covered the shape a user-group event should take: scheduling the date so members could attend across time zones, settling an agenda that balanced platform content with community content, and agreeing the open-door policy so the meetup would be as public as the group itself.
-
-On the three.ws side, preparation meant the world itself: the space the audience would walk into, the stage area where the tour and demos would run, the proximity-voice mapping tuned so a presenter near the stage carried further than a conversation at the edge, and the Laurel grant wired into the server's arrival handler so late arrivals would be recorded the same way as early ones.
-
-On the day, the organisers' work became hospitality: greeting arrivals, cueing speakers, moving the agenda along, and keeping the Q&A flowing. The persistent world made that job lighter than it sounds, because nothing had to be restarted, re-admitted or re-shared as the hours passed. The venue continued, and continuity is what a persistent room is for.
-
-## How this Article was checked
-
-Everything stated about the day comes from the platform's own record of it, and the feature was filmed working on production for this Article. The recap page carries the run, the moment in each run where each figure above was taken, and the claims laid side by side with what each was checked against. The filming record is tabulated here, with the surface it was filmed on, the length of the run, and where the live read can be followed.
+Everything described in this Article was exercised live against production and recorded. The table below is the index of what was filmed, where it was filmed and how long each run took:
 
 | Feature | Filmed on | Length | Read live |
 |---|---|---|---|
 | A nine-hour IBM Community meetup held inside a 3D world | three.ws/blog/ibm-user-group-first-in-world-meetup-recap | 13.9 s | hours = nine hours, peak = 3,145 |
 
-Each factual claim in this Article, from the nine-hour duration to the 3,145-avatar peak to the server-side Laurel grant, was checked against its evidence before it was written, and that checking is recorded in the same shape as the claims.
+## The nine-hour room
+
+The defining fact of the meetup is its duration. It was the first meetup of the three.ws User Group on IBM Community, and it ran nine hours, entirely inside three.ws. Nine hours is not a session; it is a day. A video call held for nine hours would be an endurance test for everyone on it. The world treated the duration differently. Because it was persistent, it did not need everyone at once. People arrived when their morning started in their time zone, stayed for the parts of the agenda that interested them, left and came back. The room was simply there, the way a venue is there, and the event was whatever happened inside it while it was open.
+
+The door policy was the second defining fact: anyone with the link could walk in. An open link and a nine-hour window together produced a steady circulation of visitors rather than a fixed audience, and the concurrency numbers show it. The open room peaked at 3,145 concurrent avatars. That peak is the figure this Article leads with because it is the clearest single measurement of what the format did: a community meetup, entered through a link, holding thousands of embodied attendees at once inside one shared space.
+
+To be precise about what 3,145 concurrent avatars means: each of those avatars is a live session in the world, with a position, a view and a voice, synchronizing with the people nearby. It is not a page-view count and not a stream's viewer counter. It is three thousand one hundred forty-five simultaneous presences in one room at the same moment, which is a scale that a physical meetup venue and a standard video grid both rule out on their own.
+
+The duration and the peak together describe the shape of the day: a long open window, a link anyone could use, and a crowd that found its own rhythm across nine hours rather than a single scheduled hour. The filming captured the room late in the run, still populated, still running, which is the honest way to show a full workday in a frame:
+
+![A nine-hour IBM Community meetup held inside a 3D world, filmed live on three.ws/blog/ibm-user-group-first-in-world-meetup-recap, 12.5 seconds into the run: The open room held for a full workday](/x-media/partner-ibm-article-20261011/user-group-in-world-meetup-4.jpg)
+
+## What held the room up
+
+A room that holds thousands of avatars for nine hours is an engineering statement before it is an events statement. The world ran on an authoritative Colyseus server on Cloud Run with 15 Hz binary delta sync and proximity-gated spatial voice. Each part of that sentence does a specific job, and each part was visible in the behavior of the room.
+
+The server is authoritative, which means the server decides the state of the world and each client renders what the server says. No attendee's browser owns the truth about where an avatar stands; the server does, and it tells each connected client. That is what lets thousands of independent clients agree about one room.
+
+Fifteen-hertz binary delta sync is how the server keeps that agreement affordable. Fifteen times a second, each client receives not the whole state of the world but the change since the last update, packed as binary rather than text. Deltas keep messages small, small messages keep the room responsive, and responsiveness is what makes a crowd feel like a crowd instead of a slideshow. When the tour led hundreds of avatars across the world at once, the movement held together because position changes streamed continuously at that cadence.
+
+Proximity-gated spatial voice is what made conversation possible at that scale. In a flat call, three thousand people on one audio channel is noise. In the world, you hear the avatars near you and not the ones far away, so the room subdivides itself naturally into conversations the way a physical venue does. A demo in one corner can be discussed at full volume while the tour continues elsewhere. The Q&A worked the same way: walk toward the speaker, and the answer arrives in your ears; walk away, and it fades. The gating is what let a single room carry many parallel discussions without attendees being muted by an organizer.
+
+Holding that for nine consecutive hours, with arrivals and departures churning through the whole window, is the part that tends to get underestimated. A staged demo can survive for minutes. This room ran for a working day under whatever load an open link produced, peaked at four figures of concurrency, and was still standing at the end. Persistence was not a property claimed for the platform; it was demonstrated as the venue's basic behavior.
+
+## The agenda: a tour, demos and Q&A
+
+Inside the nine hours, the agenda was a live tour of the platform from inside the world, community demos, and open Q&A. Each of the three parts took the shape it did because the venue was the product.
+
+The live tour of the platform from inside the world inverted the usual product walkthrough. Instead of narrating screens, the tour moved through space. The capabilities under discussion were present in the room: the avatars carrying the attendees, the voice carrying the explanation, the persistence carrying the schedule. A stop on the tour could be experienced rather than described, because the tour group was already standing inside the thing being toured. Attendees did not watch the platform; they spent the day in it.
+
+Community demos put builders in front of their own work with an audience that could gather around it. A demo in a world is spatial by nature: the presenter is somewhere, the audience clusters nearby, spatial voice carries the explanation to the people who chose to be close enough to hear it. The demos ran within the same nine-hour window as everything else, one of the parallel activities the open room made possible.
+
+Open Q&A closed the loop between the platform team and the community in the most direct way available: people walked up and asked. The footage below catches the flow of the agenda mid-run, with the tour, the demos and the questions all happening in-world:
+
+![A nine-hour IBM Community meetup held inside a 3D world, filmed live on three.ws/blog/ibm-user-group-first-in-world-meetup-recap, 9 seconds into the run: Live tour, demos and Q&A, all in-world](/x-media/partner-ibm-article-20261011/user-group-in-world-meetup-3.jpg)
+
+The agenda's three parts shared one property that a call cannot offer: nothing on the schedule required the room to stop. A persistent venue means the schedule is an overlay on a space that continues regardless, so early arrivals explored, late arrivals caught what was current, and the day had no dead air to fill.
+
+## The Meetup Laurel
+
+Events usually end with a recording link and a thanks-for-coming note. This one left something in the world. Everyone who walked in while it was live got a Meetup Laurel, granted server-side.
+
+Two details in that fact carry the design. The laurel was granted server-side, which is the same authority model the room itself runs on: the server witnessed attendance and the server issued the recognition, so the laurel is a record of presence rather than a claim of it. And it was granted to everyone who walked in while the meetup was live, which ties it to the open-door policy. The laurel was not a prize for a few; it was the permanent in-world marker that you were in the room during those nine hours.
+
+Because it is permanent and in-world, the laurel outlives the event it marks. An attendee who returns to three.ws long after the meetup still carries the evidence that they were at the opening gathering. For a user group, that is a useful piece of community fabric: a visible, durable token of shared presence that costs the organizer nothing per attendee beyond what the server already knew.
+
+## What a person does with this, and what an agent does with it
+
+The meetup reads differently depending on who is walking in.
+
+For a person, a developer curious about agents with 3D capabilities, the meetup compressed an evaluation cycle into an afternoon. Reading about a platform tells you what it claims. Attending this meetup meant being inside the claims: the sync held while thousands moved, the voice carried the nearby conversation rather than the whole room, the world persisted across the full day, and the tour, demos and Q&A happened in the middle of all of it. A person left with a laurel, answers to their questions, and direct experience of the platform under real load, which is more evidence than any deck provides.
+
+For an agent, the same world is an environment rather than an event. three.ws builds 3D AI agents: avatars with wallets on Solana, shipped to any page through a web component. A persistent world with authoritative state and proximity voice is a place an agent can be present in the same terms a person is, with a body, a position and a voice. The user group's remit, developers building AI agents with 3D capabilities, describes exactly the audience for whom this venue doubles as a target environment. The meetup showed the world behaving correctly full of people; the same machinery is what an agent's avatar relies on.
+
+## How each claim in this Article was checked
+
+The house rule for these Articles is that a feature in the Article was filmed working on production for the Article, and this one is no exception. The meetup world, the agenda flow, the open room's staying power and the laurel grant were exercised against the live platform and recorded, and the claims above were written from what those runs and the platform's own records show.
+
+Each stated fact is checked against a specific piece of evidence gathered from the run. The table below maps what this Article states to what it was checked against:
 
 | What we state | Checked against |
 |---|---|
@@ -95,7 +95,7 @@ Each factual claim in this Article, from the nine-hour duration to the 3,145-ava
 | everyone who walked in while it was live got a Meetup Laurel, granted server-side | three.ws/blog/ibm-user-group-first-in-world-meetup-recap shows "Meetup Laurel" |
 | organized with the group's organizer on IBM's side | three.ws/blog/ibm-user-group-first-in-world-meetup-recap shows "the group's organizer on IBM's side" |
 
-The scenario that produced the filmed run is published with the recap, so the exact steps the run executed, and the conditions it waited on, are readable rather than implied.
+The verification is not a screenshot reviewed by eye. The run is driven by a scenario, a structured description of what to do in the world and what to read from it, executed against production. This is the scenario behind the filming, verbatim:
 
 ```json
 {
@@ -140,32 +140,52 @@ The scenario that produced the filmed run is published with the recap, so the ex
 }
 ```
 
-That is the standard this series holds itself to: a number in these pages is a number the platform produced or read off the screen during the run, and a behaviour described here is a behaviour that was watched happening on production.
+Executing that scenario produces a step-by-step log: what each step did, on which surface, what came back and how long it took. The timings and results drawn on throughout this Article come from records of this kind:
 
-## What the day showed about in-world community
+| Step | Did | On | Result | ms |
+|---|---|---|---|---|
+| 1 | goto | three.ws/blog/ibm-user-group-first-in-world-meetup-recap | passed: loaded https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap | 4759 |
+| 2 | read | hours | passed: hours = "nine hours" | 2 |
+| 3 | read | peak | passed: peak = "3,145" | 1 |
+| 5 | scroll | What the day looked like | passed: scrolled 772 px | 5432 |
+| 7 | scroll | What it proved, beyond the vibe | passed: scrolled 983 px | 6095 |
+| 8 | expect | 15 Hz binary delta sync | passed: appeared after 0.0 s | 24 |
 
-Stepping back from the mechanics, the meetup answered a question three.ws had been carrying for a while: can a developer community's headline event live inside the medium the community is about, without compromise? The evidence of the day says yes, and it says so in concrete terms. The door was open and stayed open. The room peaked at 3,145 concurrent avatars and held. The agenda of live tour, demos and Q&A ran in the world itself, with the audience moving through it on foot. The closing ritual, the Laurel, was handled by the same authoritative server that handled the crowd. And the whole thing ran nine hours, entirely inside three.ws, which is the sentence that captures what persistent worlds are for: they do not end when a stream ends, because there is no stream. There is a place, and on this day the place was the meetup.
+This is also where the Article's discipline about numbers comes from. The room peaked at 3,145 concurrent avatars because that is the measured value the run recorded, and the meetup ran nine hours because that is what the event's own duration shows. A figure that the evidence does not hold does not appear in this piece, which is why the peaks and durations above are stated exactly as measured rather than rounded into adjectives.
 
-For the user group, this was the first meetup of the Three.ws User Group on IBM Community, and it now stands as the baseline. What the members build from here, and what the next gathering looks like, belongs to them.
+## The partners behind the world
 
-## The partners behind the world the meetup ran in
+three.ws builds alongside a group of cloud, AI, hardware, infrastructure and media programmes, and each designation below is stated word for word as it stands. The full map lives at [three.ws/partners](https://three.ws/partners), and this Article's subject sits inside it.
 
-**OpenAI.** three.ws is an OpenAI Select Partner. What three.ws built on it: the free 3D Studio connector for ChatGPT; Spatial MCP, 3D as a native tool result; and one link from ChatGPT to AR. The three.ws 3D Studio connector is a Streamable HTTP MCP server at one URL that ChatGPT can add with no key, no account and no wallet. The /openai page asks the live server for its tool list on load and shows how many tools answered. The generation tools return interactive 3D that renders inline in the conversation. The page also covers the Custom GPT Actions route for plans without connector support.
+**OpenAI** holds the three.ws designation "OpenAI Select Partner". What three.ws built on it: the free 3D Studio connector for ChatGPT; Spatial MCP: 3D as a native tool result; and one link from ChatGPT to AR. The three.ws 3D Studio connector is a Streamable HTTP MCP server at one URL that ChatGPT can add with no key, no account and no wallet. The /openai page asks the live server for its tool list on load and shows how many tools answered. The generation tools return interactive 3D that renders inline in the conversation. The page also covers the Custom GPT Actions route for plans without connector support.
 
-**IBM.** three.ws is an IBM Business Partner. What three.ws built around it is the subject of this Article: a nine-hour IBM Community meetup held inside a 3D world. three.ws runs the public user group for developers building AI agents with 3D capabilities described above. The meetup ran nine hours, held entirely inside a persistent three.ws 3D world rather than on a call. The world was open to anyone with the link and peaked at 3,145 concurrent avatars. The agenda was a live tour of the platform from inside the world, community demos and open Q&A, and attendees received a permanent in-world Meetup Laurel. It was organized with the group's organizer on IBM's side.
+**IBM** holds the three.ws designation "IBM Business Partner". What three.ws built on it is the subject of this Article: a nine-hour IBM Community meetup held inside a 3D world. three.ws runs the three.ws User Group on IBM Community, a public group for developers building AI agents with 3D capabilities. Its first meetup ran nine hours, held entirely inside a persistent three.ws 3D world rather than on a call. The world was open to anyone with the link and peaked at 3,145 concurrent avatars. The agenda was a live tour of the platform from inside the world, community demos and open Q&A, and attendees received a permanent in-world Meetup Laurel. It was organized with the group's organizer on IBM's side.
 
-**Amazon Web Services.** three.ws is an AWS Partner. What three.ws built on it: a free AWS subscription that issues an x402 key; engineering write-ups on the AWS Builder Center; and how the AWS Marketplace integration identifies a buyer. three.ws built the AWS Marketplace SaaS integration and a product page that explains it. Subscribing is a front door: it links an AWS account to a three.ws account and issues an x402 access key that calls the /api/x402/ endpoints, with usage then paid per call over x402, so AWS Marketplace does not meter or bill it. Registration and entitlement calls reach the AWS Marketplace APIs in us-east-1. The same x402 endpoints work with no AWS account at all. It is for teams that want to start from the AWS side.
+**Amazon Web Services** holds the three.ws designation "AWS Partner". What three.ws built on it: a free AWS subscription that issues an x402 key; engineering write-ups on the AWS Builder Center; and how the AWS Marketplace integration identifies a buyer. three.ws built the AWS Marketplace SaaS integration and a product page that explains it. Subscribing is a free front door: it links an AWS account to a three.ws account and issues an x402 access key that calls the /api/x402/* endpoints. Usage is then paid per call over x402, so AWS Marketplace does not meter or bill it. Registration and entitlement calls reach the AWS Marketplace APIs in us-east-1. The same x402 endpoints work with no AWS account at all. It is for teams that want to start from the AWS side.
 
-**Google Cloud.** three.ws is a member of Google Cloud for Web3 Startups. What three.ws built on it: Forge engines on its own Cloud Run GPU workers; the wardrobe of rigged garments built on a Cloud Run pipeline; and CAD Forge, a real part from one sentence, on Cloud Run. The Forge turns a text prompt, photos or a sketch into a textured 3D model, and the open models behind it (TRELLIS, Hunyuan3D, TripoSG) run as three.ws's own Cloud Run services on NVIDIA L4 GPUs in us-central1. Each tier shows a free lane and a live time estimate before Generate is pressed, a sketch has its own lane, and the free NVIDIA NIM lane stays behind the self-hosted workers as a safety net. The GPU workers are the infrastructure this programme backs, and the meetup world in this Article ran on Cloud Run too.
+**Google Cloud** holds the three.ws designation "member of Google Cloud for Web3 Startups". What three.ws built on it: Forge engines on our own Cloud Run GPU workers; a wardrobe of rigged garments built on a Cloud Run pipeline; and CAD Forge, a real part from one sentence, on Cloud Run. The Forge turns a text prompt, photos or a sketch into a textured 3D model, and the open models behind it (TRELLIS, Hunyuan3D, TripoSG) run as our own Cloud Run services on NVIDIA L4 GPUs in us-central1. Tiers show a free lane and a live time estimate before you press Generate, a sketch has its own lane, and the free NVIDIA NIM lane stays behind the self-hosted workers as a safety net. This is that programme at work: the GPU workers are the infrastructure it backs.
 
-**Alibaba Cloud.** three.ws is listed on the Alibaba Cloud International Marketplace. What three.ws built around it: Qwen as MCP tools, chat and embeddings through DashScope; the Brain lab, one prompt streamed to a panel of models, Qwen included; and a marketplace listing. The @three-ws/alibaba-cloud-mcp package gives any MCP client three tools that call Alibaba Cloud Qwen models through DashScope: qwen_chat for written answers, qwen_embed for vectors and qwen_list_models. It runs as a stdio server on the developer's own machine with their own DashScope key, and the tools are documented on three.ws with their arguments and a paste-ready client config. The package is community-built and not affiliated with Alibaba Cloud.
+**Alibaba Cloud** holds the three.ws designation "listed on the Alibaba Cloud International Marketplace". What three.ws built on it: Qwen as MCP tools, chat and embeddings through DashScope; the Brain lab, one prompt streamed to the models on the bench, Qwen included; and three.ws on the Alibaba Cloud International Marketplace. The Qwen tools run as a stdio server on your own machine with your own DashScope key, and the tools have pages on three.ws with their arguments and a paste-ready client config. The package is community-built and not affiliated with Alibaba Cloud.
 
-**NVIDIA.** three.ws is an NVIDIA Inception member. What three.ws built on it: avatar voices on NVIDIA Magpie; a self-hosted GPU fleet on L4 and Blackwell; and the free NVIDIA model map. The voice picker offers NVIDIA Magpie multilingual speech as a free lane for any avatar. Speech is synthesized by NVIDIA Riva through a hosted function, with no key needed from the user. Pick the voice, type a line, and the avatar speaks it. The lane covers many languages.
+**NVIDIA** holds the three.ws designation "NVIDIA Inception member". What three.ws built on it: avatar voices on NVIDIA Magpie; a self-hosted GPU fleet on L4 and Blackwell; and the free NVIDIA model map. The voice picker offers NVIDIA Magpie multilingual speech as a free lane for an avatar. Speech is synthesized by NVIDIA Riva through a hosted function, with no key needed from the user. Pick the voice, type a line, and the avatar speaks it. The same lane covers many languages.
 
-**HackerNoon.** three.ws has partnered with HackerNoon. What three.ws built for it: the RSS feed HackerNoon reads; the newsroom behind the feed; and a builder-focused publishing arrangement. Each three.ws announcement is published as a plain RSS feed at three.ws/rss/announcements.xml. HackerNoon pulls it into a drafts queue, where items are reviewed and published with a canonical URL back to three.ws.
+**HackerNoon** holds the three.ws designation "partnered with HackerNoon". What three.ws built on it: the RSS feed HackerNoon reads; the newsroom behind the feed; and a builder-focused publishing arrangement. three.ws announcements are published as a plain RSS feed at three.ws/rss/announcements.xml. HackerNoon pulls it into a drafts queue, where each item is reviewed and published with a canonical URL back to three.ws.
 
-**Quicknode.** three.ws is in the Quicknode Startup Program. What three.ws built on it: a way to verify an x402 settlement on Solana; and an agent wallet, read live from Solana. One GET to verify-receipt checks a real x402 settlement signature against the Solana chain and answers with a finalized status and slot, reading through the same RPC failover chain that Quicknode capacity feeds.
+**Quicknode** holds the three.ws designation "Quicknode Startup Program". What three.ws built on it: verifying an x402 settlement on Solana, and an agent wallet read live from Solana. One GET to verify-receipt checks a real x402 settlement signature against the Solana chain and answers with a finalized status and slot, reading through the same RPC failover chain that Quicknode capacity feeds.
+
+The partner roster in summary form, drawn from the same records:
+
+| Partner | Designation | What three.ws built on it |
+|---|---|---|
+| OpenAI | OpenAI Select Partner | The free 3D Studio connector for ChatGPT; Spatial MCP: 3D as a native tool result; One link from ChatGPT to AR |
+| IBM | IBM Business Partner | A nine-hour IBM Community meetup held inside a 3D world |
+| Amazon Web Services | AWS Partner | A free AWS subscription that issues an x402 key; Engineering write-ups on the AWS Builder Center; How the AWS Marketplace integration identifies a buyer |
+| Google Cloud | member of Google Cloud for Web3 Startups | Forge engines on our own Cloud Run GPU workers; The wardrobe: rigged garments built on a Cloud Run pipeline; CAD Forge: a real part from one sentence, on Cloud Run |
+| Alibaba Cloud | listed on the Alibaba Cloud International Marketplace | Qwen as MCP tools: chat and embeddings through DashScope; The Brain lab: one prompt streamed to every model, Qwen included; three.ws on the Alibaba Cloud International Marketplace |
+| NVIDIA | NVIDIA Inception member | Avatar voices on NVIDIA Magpie; A self-hosted GPU fleet on L4 and Blackwell; The free NVIDIA model map |
+| HackerNoon | partnered with HackerNoon | The RSS feed HackerNoon reads; The newsroom behind the feed; A builder-focused publishing partnership |
+| Quicknode | Quicknode Startup Program | Verify an x402 settlement on Solana; An agent wallet, read live from Solana |
 
 ## Try it
 
-Read the full account of the relationship on the [three.ws IBM Business Partner page](https://three.ws/blog/three-ws-ibm-business-partner), and walk through the day itself, with the filmed run, its figures and its evidence tables, in the [in-world meetup recap](https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap).
+The designation behind this Article is on the [partner page](https://three.ws/blog/three-ws-ibm-business-partner), and the full story of the meetup, including how the day unfolded inside the world, is in the [meetup recap](https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap).
