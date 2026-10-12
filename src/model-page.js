@@ -115,6 +115,7 @@ async function boot() {
 	renderSuggested();
 	loadGeometry();
 	loadSimReadiness();
+	loadProvenanceBadge();
 	loadComments();
 	loadEdition();
 	if (shell) shell.setAttribute('aria-busy', 'false');
@@ -271,6 +272,7 @@ function renderInfo() {
 		</div>
 		<div class="mp-geo" id="mp-geo"><span>Reading geometry…</span></div>
 		<div class="mp-sim" id="mp-sim"></div>
+		<div class="mp-provenance" id="mp-provenance"></div>
 		<section class="mp-tools" aria-label="Model tools">
 			<details class="mp-tool" id="mp-mesh-tools">
 				<summary>Edit mesh <span>repair, smooth, decimate in your browser</span></summary>
@@ -670,6 +672,39 @@ async function loadSimReadiness() {
 		el.showReport(c.simReadiness, { gradedAt: c.simReadinessGradedAt, cached: true });
 	} else {
 		el.ungraded({ onGrade: grade });
+	}
+}
+
+// ── provenance badge (the free content-credential verify check) ────────────
+
+// Every model this platform generates now carries a free, signed content
+// credential by default (work order 079): api/_lib/forge-store.js issues one
+// at the moment the mesh is materialized. This mirrors /viewer's badge
+// (public/viewer.html checkProvenance) so the result reads identically
+// whether a model is opened standalone or from its gallery page. Silent
+// (badge stays empty) if the check can't run, a model page is not worth
+// breaking over an authenticity badge.
+async function loadProvenanceBadge() {
+	const host = $('mp-provenance');
+	const c = state.creation;
+	if (!host || !c?.glb_url) return;
+	try {
+		const r = await fetch(`/api/provenance?src=${encodeURIComponent(c.glb_url)}`, {
+			headers: { accept: 'application/json' },
+		});
+		if (!r.ok) return;
+		const d = await r.json();
+		if (!d?.status) return;
+		const label =
+			d.status === 'verified' ? `✓ ${d.badge || 'Verified · three.ws'}`
+			: d.status === 'tampered' ? '⚠ Tampered'
+			: 'Unverified';
+		const tag = d.anchor?.explorerUrl ? 'a' : 'span';
+		const href = d.anchor?.explorerUrl ? ` href="${esc(d.anchor.explorerUrl)}" target="_blank" rel="noopener"` : '';
+		const title = d.reason ? ` title="${esc(d.reason)}"` : '';
+		host.innerHTML = `<${tag} class="mp-provenance-badge ${esc(d.status)}"${href}${title}>${esc(label)}</${tag}>`;
+	} catch (err) {
+		log.warn('provenance check failed', err);
 	}
 }
 

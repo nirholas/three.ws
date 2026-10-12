@@ -1909,7 +1909,8 @@ CREATE TABLE IF NOT EXISTS paid_assets (
     creator_payto_base   text,
     creator_payto_solana text,
     creator_payto_bsc    text,
-    created_at           timestamptz NOT NULL DEFAULT now()
+    created_at           timestamptz NOT NULL DEFAULT now(),
+    glb_sha256           text
 );
 CREATE INDEX IF NOT EXISTS paid_assets_slug_idx ON paid_assets (slug);
 

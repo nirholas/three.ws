@@ -14,10 +14,12 @@ import { buildBazaarSchema, paymentRequirements, send402 } from '../_lib/x402-sp
 import { priceFor } from '../_lib/x402-prices.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { sql } from '../_lib/db.js';
-import { presignGet } from '../_lib/r2.js';
+import { presignGet, getObjectBuffer } from '../_lib/r2.js';
 import { cors, error } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import assetDownloadListing from '../_lib/service-catalog/services/asset-download.js';
+import { autoCredentialForBytes } from '../_lib/auto-provenance.js';
+import { sha256Hex } from '../_lib/provenance-3d.js';
 
 const ROUTE = '/api/x402/asset-download';
 
@@ -53,6 +55,8 @@ const OUTPUT_EXAMPLE = {
 	expiresAt: '2026-05-21T18:48:09.000Z',
 	downloadUrl:
 		'https://three-ws-public.r2.dev/assets/pole-dancer-rumba.glb?X-Amz-Algorithm=...',
+	glbSha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b85',
+	verifyUrl: 'https://three.ws/api/provenance?hash=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b85',
 };
 
 const OUTPUT_SCHEMA = {
@@ -68,6 +72,12 @@ const OUTPUT_SCHEMA = {
 		sizeBytes: { type: 'integer', minimum: 0 },
 		expiresAt: { type: 'string', format: 'date-time' },
 		downloadUrl: { type: 'string', format: 'uri' },
+		// Present for GLB assets once their free, signed content credential
+		// exists (work order 079): glbSha256 is the content hash the
+		// credential is signed over; verifyUrl checks it for free, with no
+		// account, wallet, or payment, against GET /api/provenance.
+		glbSha256: { type: 'string', pattern: '^[0-9a-f]{64}$' },
+		verifyUrl: { type: 'string', format: 'uri' },
 	},
 };
 
@@ -94,12 +104,42 @@ async function loadAsset(slug) {
 	const rows = await sql`
 		SELECT id, slug, title, description, mime_type, size_bytes, r2_key,
 		       price_atomics, creator_payto_base, creator_payto_solana,
-		       creator_payto_bsc
+		       creator_payto_bsc, glb_sha256
 		  FROM paid_assets
 		 WHERE slug = ${slug}
 		 LIMIT 1
 	`;
 	return rows[0] || null;
+}
+
+// Every paid download carries a free, signed content credential by default
+// (work order 079). The hash is cached on the row after the first download so
+// a repeat buyer's re-download never re-fetches and re-hashes the full GLB
+// just to answer "is this credentialed", only the first ever download pays
+// that cost. Issuing the credential itself stays fire-and-forget (never
+// delays the response the buyer is waiting on); the hash is awaited because
+// it is needed for the verifyUrl in THIS response.
+async function ensureAssetCredential(asset) {
+	if (asset.glb_sha256) return asset.glb_sha256;
+	if (asset.mime_type !== 'model/gltf-binary') return null; // credentials are GLB-specific
+	try {
+		const buffer = await getObjectBuffer(asset.r2_key);
+		if (!buffer?.length) return null;
+		const glbSha256 = sha256Hex(buffer);
+		autoCredentialForBytes({
+			buffer,
+			assetId: asset.id,
+			creator: null,
+			prompt: null,
+			model: asset.title,
+			provider: 'paid_assets',
+		}).catch(() => {});
+		sql`UPDATE paid_assets SET glb_sha256 = ${glbSha256} WHERE id = ${asset.id}`.catch(() => {});
+		return glbSha256;
+	} catch (err) {
+		console.warn('[asset-download] could not hash asset for a credential:', err?.message);
+		return null;
+	}
 }
 
 // Build the SIWX statement. EIP-4361 restricts the statement to a single line
@@ -218,10 +258,10 @@ export default async function handler(req, res) {
 			expirationSeconds: 300,
 		},
 		async handler() {
-			const url = await presignGet({
-				key: asset.r2_key,
-				expiresIn: PRESIGN_TTL_SECONDS,
-			});
+			const [url, glbSha256] = await Promise.all([
+				presignGet({ key: asset.r2_key, expiresIn: PRESIGN_TTL_SECONDS }),
+				ensureAssetCredential(asset),
+			]);
 			return {
 				ok: true,
 				slug: asset.slug,
@@ -231,6 +271,9 @@ export default async function handler(req, res) {
 				sizeBytes: Number(asset.size_bytes),
 				expiresAt: new Date(Date.now() + PRESIGN_TTL_SECONDS * 1000).toISOString(),
 				downloadUrl: url,
+				...(glbSha256
+					? { glbSha256, verifyUrl: `${env.APP_ORIGIN}/api/provenance?hash=${glbSha256}` }
+					: {}),
 			};
 		},
 	});

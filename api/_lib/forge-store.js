@@ -31,6 +31,7 @@ import { fetchUpstream, fetchUpstreamPublic } from './upstream-fetch.js';
 import { gradeSimReadiness } from './sim-readiness.js';
 import { putGrade } from './sim-readiness-store.js';
 import { dispatchWebhooks } from './webhook-dispatch.js';
+import { autoCredentialForBytes } from './auto-provenance.js';
 import { validForgeDestination } from '../../src/shared/forge-destinations.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
@@ -715,6 +716,17 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 		});
 		// Every delivered mesh gets a physics grade, cached by content hash.
 		gradeDeliveredMesh({ buffer: glb.buffer, creationId: existing.id, sourceUrl: glb.publicUrl });
+		// ...and a free, signed content credential by default (work order 079), no
+		// explicit anchor_provenance call required. Fire-and-forget like the grade
+		// above: a signing/storage hiccup here must never delay delivery.
+		autoCredentialForBytes({
+			buffer: glb.buffer,
+			assetId: existing.id,
+			creator: existing.user_id || existing.client_key || null,
+			prompt: existing.prompt || null,
+			model: existing.backend || null,
+			provider: existing.path || null,
+		}).catch(() => {});
 		// …and a phone-sized delivery variant. See buildWebVariant for why this is
 		// a second object and why it runs after the row is already 'done'.
 		buildWebVariant({ buffer: glb.buffer, creationId: existing.id, keyPrefix });
