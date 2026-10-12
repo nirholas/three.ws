@@ -1009,6 +1009,23 @@ export const limits = {
 			limit: Math.max(FREE_HOURLY_BASE, Math.round(FREE_HOURLY_BASE * (Number(multiplier) || 1))),
 			window: '1 h',
 		}).limit(key),
+	// Batch submit (api/forge-batch.js): one call fans out to N /forge
+	// submissions internally, so it needs its own, much tighter ceiling than
+	// mcp3dGenerateFreeTiered guards per-item spend already (each fanned-out
+	// item still passes through the free lane's own per-IP limiter). This
+	// bucket just caps how many BATCH calls a principal can open per hour; the
+	// same $THREE tier multiplier that raises the free lane also raises this.
+	forgeBatchSubmit: (key, multiplier = 1) =>
+		getLimiter('forge:batch:submit', {
+			limit: Math.max(10, Math.round(10 * (Number(multiplier) || 1))),
+			window: '1 h',
+		}).limit(key),
+	// Batch group polling (GET /api/forge-batch?batch=) fans out to N
+	// /forge?job= status checks per call, same high-frequency shape as
+	// mcp3dStatus, so it gets the same per-instance (`local`) treatment: a
+	// distributed Redis command per poll buys no real protection here.
+	forgeBatchStatus: (key) =>
+		getLimiter('forge:batch:status', { limit: 120, window: '1 m', local: true }).limit(key),
 	// Material Studio (api/material-studio.js): non-destructive material edits,
 	// AI restyle (one watsonx call + one gltf-transform mutation pass — cheap,
 	// no GPU job), and seeded variant fan-out. Free, hosted, and non-critical
