@@ -225,8 +225,8 @@
 		pill.setAttribute(
 			'aria-label',
 			complete
-				? 'Getting started: all core steps complete. Open checklist.'
-				: 'Getting started: ' + done + ' of ' + total + ' steps done. Open checklist.'
+				? 'Getting started ✓ Done: all core steps complete. Open checklist.'
+				: 'Getting started ' + done + '/' + total + ': ' + done + ' of ' + total + ' steps done. Open checklist.'
 		);
 	}
 

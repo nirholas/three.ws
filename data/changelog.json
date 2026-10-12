@@ -30154,6 +30154,15 @@
 				"feature"
 			],
 			"link": "/desktop"
+		},
+		{
+			"date": "2026-10-12",
+			"title": "Accessibility pass on the gallery, create page and site header",
+			"summary": "Icon-only buttons in the header, footer and suggestions panel now show a real tooltip on hover and keyboard focus. Gallery tags, avatar cards and the create page cards are announced with the text you can see, header buttons have more breathing room, and the page background no longer flashes transparent when you overscroll.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/gallery"
 		}
 	]
 }

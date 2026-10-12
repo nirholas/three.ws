@@ -85,7 +85,7 @@
 .nav-mi[aria-current="page"] .nav-mi-t { color: var(--nv-text); }
 .nav-mi[aria-current="page"] { background: var(--nv-surface-1); }
 .nav-drawer a[aria-current="page"] { color: var(--nv-text); background: var(--nv-surface-1); }
-.nav-end { display: flex; align-items: center; gap: 4px; }
+.nav-end { display: flex; align-items: center; gap: 8px; }
 .nav-end a {
 	display: inline-flex; align-items: center;
 	padding: 7px 12px; font-size: var(--text-ui); font-weight: 450; color: var(--nv-text-2);
@@ -810,3 +810,19 @@ html:not(.tws-lite) .nav-tier-toggle .nav-tier-less { display: inline; }
 .nav-drawer button.dr-tier:active {
 	border-color: var(--nv-hairline-strong); background: var(--nv-surface-1); color: var(--nv-text);
 }
+
+/* Tooltip for icon-only buttons: a real role="tooltip" node linked by
+   aria-describedby, shown on hover and keyboard focus. */
+.ui-tip {
+	position: absolute; top: calc(100% + 8px); right: 0;
+	padding: 5px 9px; border-radius: 6px; white-space: nowrap;
+	font-size: 12px; font-weight: 500; line-height: 1.3;
+	color: #f2f0ff; background: #16161f; border: 1px solid rgba(255,255,255,0.14);
+	box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+	opacity: 0; transform: translateY(-2px); pointer-events: none;
+	transition: opacity var(--duration-fast, 120ms), transform var(--duration-fast, 120ms);
+	z-index: 1000;
+}
+button:hover > .ui-tip, button:focus-visible > .ui-tip { opacity: 1; transform: none; }
+.nav-theme-btn, .nav-toggle { position: relative; }
+@media (prefers-reduced-motion: reduce) { .ui-tip { transition: none; } }

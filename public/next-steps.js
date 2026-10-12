@@ -162,6 +162,9 @@
 			'#tws-next-steps .tn-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px}' +
 			'#tws-next-steps .tn-lead{margin:0;font-size:15px;font-weight:600}' +
 			'#tws-next-steps .tn-x{width:32px;height:32px;font-size:18px;line-height:1;color:inherit;opacity:.6;background:none;border:0;border-radius:8px;cursor:pointer}' +
+			'#tws-next-steps .tn-x{position:relative}' +
+			'#tws-next-steps .tn-x>.ui-tip{position:absolute;bottom:calc(100% + 6px);right:0;padding:4px 8px;border-radius:6px;font-size:12px;white-space:nowrap;color:#f2f0ff;background:#16161f;opacity:0;pointer-events:none;transition:opacity .12s}' +
+			'#tws-next-steps .tn-x:hover>.ui-tip,#tws-next-steps .tn-x:focus-visible>.ui-tip{opacity:1}' +
 			'#tws-next-steps .tn-x:hover{opacity:1;background:rgba(128,128,160,.18)}' +
 			'#tws-next-steps .tn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}' +
 			'#tws-next-steps .tn-card{display:block;padding:12px 14px;color:inherit;text-decoration:none;border:1px solid rgba(128,128,160,.28);border-radius:12px;transition:background .15s,border-color .15s,transform .1s}' +
@@ -189,7 +192,14 @@
 		close.type = 'button';
 		close.className = 'tn-x';
 		close.setAttribute('aria-label', 'Dismiss suggestions');
-		close.textContent = '×';
+		close.setAttribute('aria-describedby', 'tn-x-tip');
+		close.innerHTML = '<span aria-hidden="true">×</span>';
+		var tip = document.createElement('span');
+		tip.className = 'ui-tip';
+		tip.id = 'tn-x-tip';
+		tip.setAttribute('role', 'tooltip');
+		tip.textContent = 'Dismiss suggestions';
+		close.appendChild(tip);
 		close.addEventListener('click', function () {
 			remember();
 			wrap.remove();
