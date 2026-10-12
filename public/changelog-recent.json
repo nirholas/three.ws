@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-11T22:27:09.298Z",
+	"generated_at": "2026-10-12T00:08:55.039Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4034,
+	"total": 4036,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -17,6 +17,26 @@
 			"link": "/docs/event-markets-staking",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "launch",
+			"title": "Docs · Engine QA",
+			"summary": "A free real-time-engine fitness grade for any 3D model: draw calls, material count, texel density, a per-level LOD triangle budget, and whether the mesh is cheap and closed enough to use as its own physics collider.",
+			"link": "/docs/engine-qa",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Engine QA: a free real-time-engine fitness grade, plus real LOD chains",
+			"summary": "A new free grade answers the question a game engine's import step asks that neither glTF validation nor simulation readiness does: draw calls, material count, texel density against the mesh's real-world size, a per-level triangle budget for a LOD chain, and whether the mesh is cheap and closed enough to use as its own physics collider. GET/POST /api/3d/engine-qa grades any public GLB (format=stl exports a watertight mesh for printing); the same browser-only checks run with zero network cost in Rig Doctor, and the full grade with a one-click upgrade in the GLB viewer, through a shared <engine-qa> panel component. The underlying LOD builder (packages/glb-tools's buildLodChain, real meshoptimizer decimation tagged with MSFT_lod) is now also available on generation: send { \"lods\": true } to POST /api/forge and the finished creation gets a combined LOD-chain variant alongside its delivered mesh, the same opt-in, fire-and-forget pattern as the existing web-delivery variant.",
+			"link": "/docs/engine-qa",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1521,27 +1541,6 @@
 			"tags": [
 				"feature",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "update",
-			"title": "A paid call that fails after payment now tells you to retry, not to pay again",
-			"summary": "If a paid x402 call fails after your payment has already settled, the response now says so: paid, retry safe, the settlement transaction, and how many retries are left. Repeat the exact same request with the same payment and the server re-runs the work without charging you again, instead of answering that the payment was already used. Paid POST routes also now tell apart two different request bodies sent under one payment identifier. The MCP docs gained a Use cases section that spells out every guided prompt as the ordered tool calls it makes, with the steps that spend money marked, and a test keeps it in step with the real tools.",
-			"link": "/docs/x402",
-			"tags": [
-				"improvement",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "update",
-			"title": "A skill file you can hand to Grok",
-			"summary": "three.ws/grok-skill.md teaches Grok and Grok Bot what three.ws does and how to use it: the one sentence that adds the free 3D connector, copy-paste commands for calling it over plain HTTPS when no connector is set up, the links every result carries, the free limits, and the rule that nothing is ever paid for without your yes.",
-			"link": "/docs/grok",
-			"tags": [
-				"feature"
 			]
 		}
 	]

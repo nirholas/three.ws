@@ -5888,6 +5888,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/engine-qa",
+					"title": "Docs · Engine QA",
+					"description": "A free real-time-engine fitness grade for any 3D model: draw calls, material count, texel density, a per-level LOD triangle budget, and whether the mesh is cheap and closed enough to use as its own physics collider.",
+					"added": "2026-10-12",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/remix",
 					"title": "Docs · The remix economy",
 					"description": "Every model carries its provenance, and creators can opt a finished model into the remix bazaar: when someone builds on it, a creator-set royalty routes back automatically. How lineage and royalties are enforced.",

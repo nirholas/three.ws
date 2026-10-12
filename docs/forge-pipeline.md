@@ -226,6 +226,17 @@ Meshes that predate the variant are drained by [api/cron/forge-web-variants.js](
 
 **Texture dimensions come from the encoder, not from a header parse.** `@gltf-transform`'s own `textureCompress({ resize })` derives its target from a minimal PNG header reader, and three of the six meshes above carry a PNG it reads as 65536x4292542531, which made the whole pass throw `Expected positive integer for width but received 0` and lost the geometry win with it. `recompressTextures()` reads dimensions from sharp, which is the thing about to decode the bytes, and isolates every texture in its own try/catch so one unreadable skin costs that skin and nothing else.
 
+### The LOD variant: opt-in, because decimation is real work
+
+Send `"lods": true` on the generation request (`api/_lib/forge-options.js`) and `materializeCreation` builds a third object alongside `glb_url` and `web_glb_url`: a single combined GLB tagged with the archived `MSFT_lod` extension, carrying LOD0 (the delivered mesh, untouched), LOD1 and LOD2 (decimated with `meshoptimizer`'s simplifier through `packages/glb-tools`' `buildLodChain`). A real-time engine that understands `MSFT_lod` switches levels from this one file at runtime; one that does not simply renders LOD0, because the lower-detail levels are merged in as orphan nodes outside the scene's child graph.
+
+It is off by default for the same reason the delivery variant is not: building three decimated meshes costs real CPU (meshoptimizer's simplifier, run three times), and most callers never render in an engine that benefits from a LOD chain. The same real pipeline backs the Engine QA panel's own "Build & grade LOD chain" / "Check LOD & collider fitness" upgrade action (`public/engine-qa-panel.js`, `GET/POST /api/3d/engine-qa?lods=1`, see [engine-qa.md](engine-qa.md)), so a caller who only wants to grade fitness, not keep the chain, can do that on demand without ever setting `lods` on the generation itself.
+
+Two rules, mirroring the delivery variant:
+
+1. **It is a second object, never a replacement.** `lod_glb_url` (migration `20261015020000_forge_lod_variant.sql`, with `lod_glb_key` and `lod_levels`) is the combined `MSFT_lod` GLB. `glb_url` stays exactly the caller's requested `output_format`, untouched.
+2. **Null means "no chain was requested, or the build failed."** `buildLodVariant()` in `api/_lib/forge-store.js` is fire-and-forget, built after the row is already `done`, exactly like `buildWebVariant`: the person waiting on their generation never waits on it, and a build failure (logged, never thrown) simply leaves `lod_glb_url` null. `lod_levels` is a JSON array of `{ name, ratio, triangleCount, vertexCount }` per level, so a reader can show the chain's shape without fetching and parsing the GLB.
+
 ## 7. GPU workers
 
 Workers are Python FastAPI services on Cloud Run (scale-to-zero L4 GPUs unless noted), documented worker-by-worker in `workers/README.md`. All share one contract: `POST /infer` returns `{task_id}`, `GET /tasks/:id` returns progress and finally a `result_gcs_url`, authenticated by the shared bearer `GCP_RECONSTRUCTION_KEY`. `api/_providers/gcp.js` maps modes to worker URLs.

@@ -8,6 +8,11 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 - **Docs · Staked Event Markets** (`/docs/event-markets-staking`): Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.
 
+## 2026-10-12
+
+- **Docs · Engine QA** (`/docs/engine-qa`): A free real-time-engine fitness grade for any 3D model: draw calls, material count, texel density, a per-level LOD triangle budget, and whether the mesh is cheap and closed enough to use as its own physics collider.
+- **Engine QA: a free real-time-engine fitness grade, plus real LOD chains**: A new free grade answers the question a game engine's import step asks that neither glTF validation nor simulation readiness does: draw calls, material count, texel density against the mesh's real-world size, a per-level triangle budget for a LOD chain, and whether the mesh is cheap and closed enough to use as its own physics collider. GET/POST /api/3d/engine-qa grades any public GLB (format=stl exports a watertight mesh for printing); the same browser-only checks run with zero network cost in Rig Doctor, and the full grade with a one-click upgrade in the GLB viewer, through a shared <engine-qa> panel component. The underlying LOD builder (packages/glb-tools's buildLodChain, real meshoptimizer decimation tagged with MSFT_lod) is now also available on generation: send { "lods": true } to POST /api/forge and the finished creation gets a combined LOD-chain variant alongside its delivered mesh, the same opt-in, fire-and-forget pattern as the existing web-delivery variant. (`/docs/engine-qa`) `[feature]`
+
 ## 2026-10-11
 
 - **Classic Home** (`/classic`): The original three.ws landing page: the pitch, live agent demos and the front door to every flow, kept as the classic view of the desktop.

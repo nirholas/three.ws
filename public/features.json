@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-11T22:27:09.244Z",
+	"generated_at": "2026-10-12T00:08:54.995Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -9048,6 +9048,18 @@
 					"title": "Docs · Simulation readiness",
 					"description": "A free physics grade for any 3D model: whether a rigid-body solver can use it as-is, whether its size is real meters or a generator's unit box, and its exact volume, centre of mass and inertia tensor.",
 					"added": "2026-09-03",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/engine-qa",
+					"title": "Docs · Engine QA",
+					"description": "A free real-time-engine fitness grade for any 3D model: draw calls, material count, texel density, a per-level LOD triangle budget, and whether the mesh is cheap and closed enough to use as its own physics collider.",
+					"added": "2026-10-12",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

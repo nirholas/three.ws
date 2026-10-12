@@ -4555,6 +4555,12 @@ URL: https://three.ws/docs/sim-readiness
 
 A free physics grade for any 3D model: whether a rigid-body solver can use it as-is, whether its size is real meters or a generator's unit box, and its exact volume, centre of mass and inertia tensor.
 
+### Docs · Engine QA
+
+URL: https://three.ws/docs/engine-qa
+
+A free real-time-engine fitness grade for any 3D model: draw calls, material count, texel density, a per-level LOD triangle budget, and whether the mesh is cheap and closed enough to use as its own physics collider.
+
 ### Docs · The remix economy
 
 URL: https://three.ws/docs/remix
