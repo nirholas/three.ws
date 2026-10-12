@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-12T01:14:53.330Z",
+	"generated_at": "2026-10-12T02:28:38.916Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -25,6 +25,16 @@
 			"tags": [
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "The Grid: walk a neon room where every app is a live surface",
+			"summary": "A new place beside the campus. Step into a wireframe room with a live board of new agents, launches, wallet moves and the $THREE quote, a directory wall, a Pulse wall and one kiosk per app. Walk up and press E to open the app on the desktop. Your byte tier, from Byte to Yottabyte, follows the gems you mine in the campus. Open it from the Grid button in the campus HUD.",
+			"link": "/?world=grid",
+			"tags": [
+				"feature"
 			]
 		},
 		{

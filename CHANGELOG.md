@@ -11,6 +11,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 ## 2026-10-12
 
 - **An in-depth X Article on how three.ws renders 3D, and a playbook for answering basic questions at length**: A reader asked how three.ws renders 3D. The answer is now a full draft Article: one rigged character followed through making, packing, loading, lighting and animating, with runnable embed code, decoder and boot-phase tables, the free Rig Doctor, validator and viewer tools, every partner by exact designation, and the roadmap. Every claim is tied to evidence in the repo. A new playbook describes how to turn any basic question into a long reply thread plus an Article. (`/viewer`) `[feature, docs]`
+- **The Grid: walk a neon room where every app is a live surface**: A new place beside the campus. Step into a wireframe room with a live board of new agents, launches, wallet moves and the $THREE quote, a directory wall, a Pulse wall and one kiosk per app. Walk up and press E to open the app on the desktop. Your byte tier, from Byte to Yottabyte, follows the gems you mine in the campus. Open it from the Grid button in the campus HUD. (`/?world=grid`) `[feature]`
 
 ## 2026-10-11
 
