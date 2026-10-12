@@ -863,6 +863,10 @@
 					"path": "sonar"
 				},
 				{
+					"label": "Dissolve (particle storms)",
+					"path": "dissolve"
+				},
+				{
 					"label": "Avatar inspector",
 					"path": "avatar-inspector"
 				},

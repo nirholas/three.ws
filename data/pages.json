@@ -5583,6 +5583,13 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/dissolve",
+					"title": "Docs · Dissolve",
+					"description": "How Dissolve turns a GLB into a GPU particle storm: surface sampling, Morton-paired morphing, the force tools, share links and the microphone privacy model.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/architecture",
 					"title": "Docs · Architecture overview",
 					"description": "The engineering map of three.ws: how a request flows from the browser through the route table to a handler, where 3D generation runs, how state is stored, and which layer to extend when you want to add something.",
