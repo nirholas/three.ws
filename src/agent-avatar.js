@@ -50,6 +50,12 @@ const MOOD_GESTURE_THRESHOLD = {
 	calmArousal: 0.25, // below this = "subdued"
 };
 
+// Active-listening backchannel: how often the avatar nods while the user is
+// speaking (a real VAD/STT signal via setUserSpeaking(), never a fabricated
+// loading timer). TalkingHead/airi-style companions use the same cadence of
+// small acknowledgment gestures to read as "tracking you" rather than idle.
+const LISTENING_NOD_INTERVAL_S = 2.8;
+
 // Emotion decay rates (units per second — larger = fades faster)
 const DECAY = {
 	concern: 0.08, // half-life ~12s — lingers, builds empathy
@@ -155,6 +161,41 @@ const VOCAB = {
 	],
 };
 
+// Emoji carry explicit emotional signal independent of any surrounding
+// English words, and are often glued directly to punctuation with no word
+// boundary (e.g. "done!🎉"), so they are scored as direct valence/arousal
+// deltas rather than through VOCAB's whitespace-token matching.
+const EMOJI_SENTIMENT = {
+	'🎉': { valence: 0.9, arousal: 0.6 },
+	'🥳': { valence: 0.9, arousal: 0.7 },
+	'😀': { valence: 0.7, arousal: 0.3 },
+	'😃': { valence: 0.7, arousal: 0.4 },
+	'😄': { valence: 0.8, arousal: 0.4 },
+	'😁': { valence: 0.7, arousal: 0.4 },
+	'😊': { valence: 0.6, arousal: 0.2 },
+	'🙂': { valence: 0.4, arousal: 0.1 },
+	'👍': { valence: 0.6, arousal: 0.2 },
+	'❤️': { valence: 0.7, arousal: 0.3 },
+	'✅': { valence: 0.6, arousal: 0.2 },
+	'🔥': { valence: 0.6, arousal: 0.6 },
+	'✨': { valence: 0.5, arousal: 0.3 },
+	'🙏': { valence: 0.3, arousal: 0.1 },
+	'😢': { valence: -0.6, arousal: 0.2 },
+	'😭': { valence: -0.7, arousal: 0.4 },
+	'😞': { valence: -0.5, arousal: 0.1 },
+	'😕': { valence: -0.4, arousal: 0.1 },
+	'😟': { valence: -0.5, arousal: 0.2 },
+	'😠': { valence: -0.6, arousal: 0.6 },
+	'😡': { valence: -0.8, arousal: 0.8 },
+	'😬': { valence: -0.3, arousal: 0.4 },
+	'⚠️': { valence: -0.5, arousal: 0.4 },
+	'❌': { valence: -0.6, arousal: 0.3 },
+	'🚨': { valence: -0.5, arousal: 0.7 },
+	'🤔': { valence: 0, arousal: 0.6 },
+	'😮': { valence: 0.1, arousal: 0.6 },
+	'😲': { valence: 0.1, arousal: 0.7 },
+};
+
 export class AgentAvatar {
 	/**
 	 * @param {import('./viewer.js').Viewer}                   viewer
@@ -198,6 +239,7 @@ export class AgentAvatar {
 
 		// Gaze bias state
 		this._userSpeaking = false;
+		this._listeningNodTimer = 0;
 		this._agentThinking = false;
 		this._agentThinkTimer = 0;
 		this._thinkGazeYaw = 0.1; // randomised on each THINK event
@@ -299,6 +341,8 @@ export class AgentAvatar {
 		this._sub(ACTION_TYPES.LOAD_END, this._onLoadEnd.bind(this));
 		this._sub(ACTION_TYPES.VALIDATE, this._onValidate.bind(this));
 		this._sub(ACTION_TYPES.INTERRUPTED, this._onInterrupted.bind(this));
+		this._sub(ACTION_TYPES.LISTEN_START, this._onListenStart.bind(this));
+		this._sub(ACTION_TYPES.LISTEN_END, this._onListenEnd.bind(this));
 
 		// First-encounter curiosity burst
 		if (this._firstEncounter) {
@@ -929,6 +973,27 @@ export class AgentAvatar {
 		this._setMorphTarget('mouthOpen', 0.3);
 	}
 
+	/**
+	 * The user started talking (real VAD from livekit-voice.js's agent-server
+	 * speech_started/ActiveSpeakersChanged, or the generic STT loop's mic-open
+	 * signal relayed through element.js). Switches the gaze bias in
+	 * _applyMoodLayer/_applyHeadTransform to attentive eye contact and arms the
+	 * backchannel nod cadence in _tickEmotion.
+	 */
+	_onListenStart(_action) {
+		this.setUserSpeaking(true);
+		this.fireAnimationEvent('listen');
+		this._listeningNodTimer = 0;
+		this._injectStimulus('curiosity', 0.15);
+	}
+
+	/** The user stopped talking: release the attentive gaze bias and the nod cadence. */
+	_onListenEnd(_action) {
+		this.setUserSpeaking(false);
+		this.fireAnimationEvent('listen-end');
+		this._listeningNodTimer = 0;
+	}
+
 	// ── Empathy Layer — The Novel Part ────────────────────────────────────────
 
 	/**
@@ -979,6 +1044,21 @@ export class AgentAvatar {
 		// Stage 2b: Advance a performing routine. Runs after the one-shot timer so
 		// a step whose gesture just expired is replaced on the same frame.
 		this._routinePlayer?.update(dt);
+
+		// Stage 2c: Active-listening backchannel. While a real listen-start signal
+		// is active (_onListenStart, never a fabricated loading timer) the avatar
+		// nods periodically to show it is tracking the user, same as the nod
+		// _onLoadEnd already plays on a finished load. A routine or another
+		// one-shot in flight always wins; the timer just holds at 0 until clear.
+		if (this._userSpeaking && !this._isPlayingOneShot && !this._routinePlayer) {
+			this._listeningNodTimer += dt;
+			if (this._listeningNodTimer >= LISTENING_NOD_INTERVAL_S) {
+				this._listeningNodTimer = 0;
+				this._playSlot('nod', 0.6);
+			}
+		} else if (!this._userSpeaking) {
+			this._listeningNodTimer = 0;
+		}
 
 		// Stage 3: Emotion-threshold gesture triggers (routed through slot map).
 		// A routine outranks them: an owner who composed a performance did not ask
@@ -1493,6 +1573,15 @@ export class AgentAvatar {
 		const exclamations = (text.match(/!/g) || []).length;
 		const questions = (text.match(/\?/g) || []).length;
 		arousal += Math.min(exclamations * 0.2 + questions * 0.1, 0.5);
+
+		// Emoji sentiment, scored as substrings so punctuation-adjacent emoji
+		// (no word boundary) still register.
+		for (const [emoji, delta] of Object.entries(EMOJI_SENTIMENT)) {
+			if (text.includes(emoji)) {
+				valence += delta.valence;
+				arousal += delta.arousal;
+			}
+		}
 
 		return {
 			valence: Math.max(-1, Math.min(1, valence)),
