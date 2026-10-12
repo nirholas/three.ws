@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-12T20:40:00.126Z",
+	"generated_at": "2026-10-12T22:34:26.876Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -87,6 +87,17 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Forge generation controls (target faces, bbox fit, rest pose) and a batch endpoint for fanning out N generations",
+			"summary": "POST /api/forge and /api/x402/forge take three new, off-by-default controls: target_faces (alias of target_polycount) pins an explicit geometry budget on poly-aware backends; bbox: [x, y, z] uniformly rescales the delivered mesh to fit a box in meters, lane-agnostic since it runs as a post-generation GLB fit; pose: \"t\" | \"a\" requests a rest pose on backends without a caller-supplied reference image, with pose_applied echoed back so a photo-conditioned lane never silently ignores it. A new POST /api/forge-batch fans one call out to up to 8 independent /api/forge submissions, concurrency-capped by the caller's $THREE holder tier, and GET /api/forge-batch?batch=<id> polls the group: one item's failure never fails the batch, and group state is best-effort Redis so a job already returned stays pollable at /api/forge?job= even if the group expires. The Workbench's Generate Mesh node now exposes rest pose and width/height/depth bbox fields alongside the existing face budget, and a new Batch drawer (toolbar icon, or press B) queues up to 8 prompts at once against the new endpoint and opens any finished item straight into the viewport.",
+			"link": "/docs/forge",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{

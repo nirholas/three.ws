@@ -439,6 +439,94 @@ while (job.status !== 'done' && job.status !== 'failed') {
 console.log(job.glb_url); // downloadable, textured GLB
 ```
 
+## Generation controls
+
+`POST /api/forge` and `POST /api/x402/forge` accept a handful of optional,
+additive controls beyond `prompt`/`image_urls`/`tier`/`backend`. Every one is
+off by default: a request that omits all of them behaves exactly as it did
+before these existed.
+
+| Field | Type | What it does |
+|---|---|---|
+| `target_polycount` (alias `target_faces`) | integer | Explicit geometry budget on poly-aware backends. Only honored by backends with `polyControl: true` in the engine catalog (`GET /api/forge?catalog=1`); others ignore it and the response says so. |
+| `bbox` | `[x, y, z]` meters | The delivered mesh is uniformly rescaled to fit inside this box (aspect ratio preserved), centered on X/Z and floored at Y=0. Lane-agnostic: applied as a post-generation fit to the final GLB, so every backend honors it. |
+| `pose` | `"t"` \| `"a"` | Requested rest pose for a humanoid/character subject. Only backends without a caller-supplied reference image can honor this (`poseControl: true`); a photo-conditioned lane reports `pose_applied: false` rather than silently ignoring the field. |
+| `output_format` | `"glb"` \| `"glb-meshopt"` \| `"glb-draco"` | Compress the delivered GLB. |
+| `texture_size` | integer (px) | Bake textures at a specific resolution instead of the tier default. |
+| `seed` | integer | Reproducibility: the same seed, prompt and params reproduce the same mesh on backends that support it. |
+
+```bash
+# Target a 20k-triangle mesh, fit it into a 1.8m-tall box, and request a T-pose.
+curl -X POST 'https://three.ws/api/forge' \
+  -H 'content-type: application/json' \
+  -d '{
+    "prompt": "a low-poly adventurer",
+    "tier": "standard",
+    "target_faces": 20000,
+    "bbox": [1.0, 1.8, 0.6],
+    "pose": "t"
+  }'
+```
+
+The done response's `options` object echoes what was actually requested
+and, for `pose`, whether the chosen backend could honor it:
+
+```json
+{ "status": "done", "glb_url": "https://…/model.glb",
+  "options": {
+    "target_polycount": 20000, "target_faces": 20000,
+    "bbox": [1.0, 1.8, 0.6], "pose": "t", "pose_applied": true
+  } }
+```
+
+An invalid value (e.g. `pose: "sitting"`, or a non-positive `bbox` entry)
+answers `400` naming the field rather than silently dropping it.
+
+## Batch generation
+
+**`POST /api/forge-batch`** fans one call out to up to 8 independent
+`/api/forge` submissions and tracks them as a group, for building a set of
+variations or a small asset pack without a client-side submit loop. Each
+item is a full `/api/forge` body (any mix of prompts, images, tiers,
+engines or the generation controls above); every item still runs through
+`/api/forge`'s own gating and billing unchanged, so a batch never bypasses
+the per-item tier rules.
+
+```bash
+curl -X POST 'https://three.ws/api/forge-batch' \
+  -H 'content-type: application/json' \
+  -d '{
+    "items": [
+      { "prompt": "a wooden crate", "tier": "draft" },
+      { "prompt": "a steel crate, battle-damaged", "tier": "draft" },
+      { "prompt": "a crystal crate, glowing", "tier": "draft" }
+    ]
+  }'
+# → 200 { "batch_id": "...", "status": "queued",
+#         "items": [{ "index": 0, "ok": true, "job_id": "...", "status": "queued" }, ...] }
+```
+
+Poll the group on the same batch id; each item carries its own status and,
+once ready, its own `glb_url`:
+
+```bash
+curl 'https://three.ws/api/forge-batch?batch=<BATCH_ID>'
+# → 200 { "batch_id": "...", "status": "done"|"partial"|"running"|"queued",
+#         "items": [{ "index": 0, "ok": true, "status": "done", "glb_url": "..." }, ...] }
+```
+
+Group `status` is `"done"` only once every item succeeded; `"partial"` once
+every item is terminal but at least one failed. One item's failure never
+fails the batch: the response always carries every other item's own result,
+with a structured `error`/`message` on the failed one. A batch group lives
+for an hour; an expired or unknown `batch_id` answers `404 batch_not_found`
+with a reminder that any job id already returned can still be polled
+individually at `/api/forge?job=`.
+
+The [Workbench](https://three.ws/workbench) exposes this as the **Batch**
+drawer (toolbar icon, or press `B`): one prompt per line, up to 8, queued
+with the Generate node's current engine, quality and controls.
+
 ## States and limits
 
 - **Loading**: a real elapsed counter driven by the catalog ETA for the resolved path, tier, and engine. Cold self-host GPU workers add an honest spin-up estimate rather than a stalled bar.

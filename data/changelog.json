@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-12",
+			"title": "Forge generation controls (target faces, bbox fit, rest pose) and a batch endpoint for fanning out N generations",
+			"link": "/docs/forge",
+			"summary": "POST /api/forge and /api/x402/forge take three new, off-by-default controls: target_faces (alias of target_polycount) pins an explicit geometry budget on poly-aware backends; bbox: [x, y, z] uniformly rescales the delivered mesh to fit a box in meters, lane-agnostic since it runs as a post-generation GLB fit; pose: \"t\" | \"a\" requests a rest pose on backends without a caller-supplied reference image, with pose_applied echoed back so a photo-conditioned lane never silently ignores it. A new POST /api/forge-batch fans one call out to up to 8 independent /api/forge submissions, concurrency-capped by the caller's $THREE holder tier, and GET /api/forge-batch?batch=<id> polls the group: one item's failure never fails the batch, and group state is best-effort Redis so a job already returned stays pollable at /api/forge?job= even if the group expires. The Workbench's Generate Mesh node now exposes rest pose and width/height/depth bbox fields alongside the existing face budget, and a new Batch drawer (toolbar icon, or press B) queues up to 8 prompts at once against the new endpoint and opens any finished item straight into the viewport.",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-12",
 			"title": "Companion presence: sustained mood, emoji-driven expression, an LLM gesture tool, active-listening nods, and real multi-language lip-sync",
 			"link": "/docs/agent-system",
 			"summary": "Agent avatars carry more of what makes a companion feel present. setMood(valence, arousal) sets a sustained resting bias (a soft smile or a worried brow that drifts in over about a second) on top of the existing per-utterance emotion blend, and a reply that is nothing but emoji (no English sentiment words at all) now drives a real expression change instead of staying neutral, because the built-in sentiment scorer reads emoji as direct valence/arousal signal. The LLM brain gets a general-purpose `gesture` tool covering all 19 body-language slots (nod, shake, shrug, bow, point, think, and the rest), so it can react physically mid-turn instead of only through a skill or an emotion threshold. While a real VAD/STT signal says the user is talking, the avatar nods on a fixed cadence to show it is listening, and stops the moment they stop. ElevenLabs text-to-speech now drives lip-sync from the provider's real per-character timestamps (any language the voice speaks), falling back to the energy-based analyser only if that call fails, so mouth shapes track what is actually being said instead of approximating it from amplitude alone.",
