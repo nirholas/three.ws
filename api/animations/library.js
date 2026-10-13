@@ -1,11 +1,15 @@
-// GET /api/animations/library — the full Mixamo-sourced motion library.
+// GET /api/animations/library: the openly-licensed bulk motion library.
 //
-// The bulk library (2,800+ clips baked by scripts/mixamo-all.mjs, growing as the
-// generative text→motion seeding lands) is far too large for the deploy bundle
-// (~3 GB of clip JSON), so the baked clips live on the R2 CDN and this endpoint
-// proxies the library manifest object with an edge cache. Each manifest entry
-// carries an absolute CDN `url` the browser fetches directly (R2 CORS allows GET
-// from web origins — scripts/set-r2-cors.mjs).
+// The bulk library (219 CC0 1.0 Universal clips from Quaternius's Universal
+// Animation Library 2 and Mesh2Motion's human animation packs, built by
+// scripts/cc0-animation-library.mjs and growing as the generative text->motion
+// seeding lands) is far too large for the deploy bundle, so the staged clips
+// live on the R2 CDN and this endpoint proxies the library manifest object
+// with an edge cache. Each manifest entry carries an absolute CDN `url` the
+// browser fetches directly (R2 CORS allows GET from web origins,
+// scripts/set-r2-cors.mjs). scripts/mixamo-all.mjs's retired upload phase and
+// isPublishable() below are what keep any Mixamo-derived clip off this public
+// endpoint; see the Licensing section in docs/animations.md.
 //
 // Returns { clips: [], total: 0 } until the library has been uploaded, so
 // consumers (the /animations gallery, embed viewer, pose studio deep-links)
