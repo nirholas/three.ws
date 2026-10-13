@@ -290,7 +290,29 @@ function refreshAfterCatalogPage() {
 	applyFilters({ preserveShown: true });
 }
 
+// The curated ("Studio") tier manifest carries no credit/license fields
+// (public/animations/manifest.json), but its full provenance is documented
+// by hand in public/animations/LICENSES.md. Classify by name prefix so the
+// gallery shows the same credit the license doc already states, without
+// touching the manifest generator. av-offabean-dance is deliberately NOT
+// matched by the av- rule below: LICENSES.md flags its mocap source as
+// unresolved, so it stays uncredited rather than mislabeled as Avaturn.
+function studioClipCredit(name) {
+	if (name === 'av-offabean-dance') return null;
+	if (/^av-/.test(name) || name === 'facepalm') {
+		return { credit: 'Avaturn', license: 'Avaturn platform terms' };
+	}
+	if (/^farm-/.test(name) || name === 'digging') {
+		return { credit: 'Mixamo (Adobe)', license: 'Adobe Mixamo Terms of Use' };
+	}
+	if (/^soldier-/.test(name) || /^xbot-/.test(name) || name === 'michelle-samba-dance') {
+		return { credit: 'three.js examples', license: 'MIT' };
+	}
+	return { credit: 'Mixamo (Adobe)', license: 'Adobe Mixamo Terms of Use' };
+}
+
 function normalizeLibraryClip(clip) {
+	const fallback = clip.source || clip.license ? null : studioClipCredit(clip.name);
 	return {
 		id: clip.name,
 		source: 'library',
@@ -303,8 +325,8 @@ function normalizeLibraryClip(clip) {
 		url: clip.url, // site-relative clip JSON — playable by the live preview
 		thumbnail_url: `/animations/thumbs/${encodeURIComponent(clip.name)}.webp`,
 		price: null,
-		credit: clip.source || null,
-		license: clip.license || null,
+		credit: clip.source || fallback?.credit || null,
+		license: clip.license || fallback?.license || null,
 	};
 }
 

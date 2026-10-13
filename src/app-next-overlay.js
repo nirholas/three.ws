@@ -241,8 +241,18 @@ function wireObjectActions() {
 			`<span>${escHtml(a.label)}</span>`;
 		frag.appendChild(el);
 	}
+	// Every prop in the /objects library comes from Poly Haven (CC0); credit
+	// it right in the viewer chrome, not just on the catalog page.
+	const credit = document.createElement('a');
+	credit.className = 'nxt-action nxt-action--ghost nxt-action--credit';
+	credit.href = 'https://polyhaven.com';
+	credit.target = '_blank';
+	credit.rel = 'noopener';
+	credit.title = 'This object is sourced from Poly Haven, a CC0 asset library';
+	credit.innerHTML = `<span>Poly Haven</span>`;
+	frag.appendChild(credit);
 	// Insert the object actions before the primary (Save/Sign-in) button so the
-	// bar reads: Backdrop · Upload · Restyle · AR · Download · Save.
+	// bar reads: Backdrop · Upload · Restyle · AR · Download · Poly Haven · Save.
 	const primary = document.getElementById('nxt-primary');
 	if (primary) bar.insertBefore(frag, primary);
 	else bar.appendChild(frag);

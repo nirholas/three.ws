@@ -49,6 +49,9 @@
 			.ch-hero-dot { width: 7px; height: 7px; border-radius: 50%; background: #38d39f; box-shadow: 0 0 0 3px rgba(56,211,159,.18); }
 			.ch-hero h1 { font-size: clamp(30px, 5vw, 52px); line-height: 1.04; margin: 18px 0 12px; letter-spacing: -.02em; }
 			.ch-hero p { max-width: 62ch; color: var(--ink-dim); font-size: clamp(15px, 1.4vw, 17px); line-height: 1.6; margin: 0; }
+			.ch-hero-credit { margin-top: 10px !important; font-size: 13px !important; }
+			.ch-hero-credit a { color: var(--accent, #6c8cff); font-weight: 600; }
+			.ch-hero-credit a:focus-visible { outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #6c8cff); outline-offset: var(--focus-ring-offset, 2px); }
 			.ch-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 22px; }
 			.ch-hero-stats { color: var(--ink-dim); font-size: 13px; font-family: var(--font-mono); }
 
@@ -224,6 +227,10 @@
 					A curated library of CC0 3D objects and props: furniture, lighting, electronics, containers, decor.
 					Every one is public domain: free to use commercially, no attribution required. Preview any object live
 					in your browser, or download the GLB and use it anywhere.
+				</p>
+				<p class="ch-hero-credit" data-i18n-html="objects.sourced_from_polyhaven">
+					Sourced from <a href="https://polyhaven.com" target="_blank" rel="noopener">Poly Haven</a>, a
+					nonprofit CC0 asset library funded entirely by its community.
 				</p>
 				<div class="ch-hero-actions">
 					<a href="/character-library" class="ch-hbtn ch-hbtn--primary" data-i18n="objects.character_library">Character Library</a>

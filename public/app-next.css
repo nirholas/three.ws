@@ -531,6 +531,23 @@ body.app-next-body {
 	background: rgba(255, 255, 255, 0.06);
 }
 
+/* Attribution, not an action: smaller and dimmer than Restyle/AR/Download so
+   it reads as a credit, not another button to press. */
+.nxt-action--credit {
+	font-size: 11.5px;
+	opacity: 0.72;
+	padding: 9px 10px;
+}
+
+.nxt-action--credit:hover {
+	opacity: 1;
+}
+
+.nxt-action:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #6c8cff);
+	outline-offset: 2px;
+}
+
 .nxt-action--primary {
 	background: var(--nxt-ink);
 	color: var(--bg-0);

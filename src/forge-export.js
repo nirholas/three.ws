@@ -143,6 +143,14 @@ if (download && resultPanel) {
 		.export-item .status:has(.export-again), .export-item .status.is-error { min-width: 9em; }
 		.export-item .export-again { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 		.export-item .export-again:hover, .export-item .export-again:focus-visible { opacity: 1; text-decoration-thickness: 2px; }
+		.export-menu-footer {
+			margin-top: 0.3rem; padding: 0.5rem 0.6rem 0.3rem;
+			border-top: 1px solid var(--border, rgba(255,255,255,0.1));
+			font-size: 0.72rem; line-height: 1.4; opacity: 0.7;
+		}
+		.export-menu-footer a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+		.export-menu-footer a:hover, .export-menu-footer a:focus-visible { opacity: 1; }
+		.export-menu-footer a:focus-visible { outline: 2px solid var(--accent, #7c6cff); outline-offset: 1px; }
 		.export-spinner {
 			display: inline-block; width: 0.85em; height: 0.85em; vertical-align: -0.1em;
 			border: 2px solid currentColor; border-right-color: transparent;
@@ -202,6 +210,15 @@ if (download && resultPanel) {
 	const slicerItems = mountSlicerMenuItems(menu, {
 		isLocalEdit: () => (download.getAttribute('href') || '').startsWith('blob:'),
 	});
+
+	// How this file was made: the mesh pipeline behind every export, credited
+	// right where a technical visitor would look for it.
+	const footer = document.createElement('div');
+	footer.className = 'export-menu-footer';
+	footer.innerHTML =
+		'How this file was made: meshes are decoded and optimized with ' +
+		'<a href="/open-source#area-formats" rel="noopener">meshoptimizer and glTF-Transform</a>.';
+	menu.appendChild(footer);
 
 	// ---- menu behavior -------------------------------------------------------
 
