@@ -2,6 +2,21 @@
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate.
 
+**Evolve status (2026-10-13):** every task is built and verified; the order stays open because the
+last steps are owner-gated third-party actions. `home-assistant-integration/` now validates clean
+against the real hassfest and HACS checks (`manifest.json`'s documentation link fixed, version
+bumped to `1.0.1`, `hacs.json`'s minimum Home Assistant version corrected to `2024.12.0`), ships
+real local brand icons at `custom_components/three_ws/brand/`, and `scripts/export-hacs-repo.mjs`
+builds the exact standalone-repository tree. All five Definition of Done lines are verified with
+real command output (hassfest, the real upstream HACS validators, a full real end-to-end container
+install with 18 real entities and a confirmed auto-reconnect, `npm test`, `npm run audit:docs`).
+What remains is creating `github.com/nirholas/three-ws-home-assistant`, cutting its `v1.0.1`
+release, and opening the `hacs/default` and `home-assistant/brands` pull requests, all logged as
+row 58 in [_context/production-100-OWNER-ACTIONS.md](_context/production-100-OWNER-ACTIONS.md)
+with the exact submission text in
+[marketing/growth/submissions/home-assistant.md](../../marketing/growth/submissions/home-assistant.md).
+Full detail in [_context/partners-PROGRESS.md](_context/partners-PROGRESS.md)'s 2026-10-13 entry.
+
 ## Operating clause (binding)
 
 - Read CLAUDE.md first, then [_context/partners-00-CONTEXT.md](_context/partners-00-CONTEXT.md). CLAUDE.md overrides everything, including this file.

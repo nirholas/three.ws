@@ -652,3 +652,71 @@ stays in place (not deleted) until those account signups and submissions land. C
 `9c36dd51f` (Framer code component), `a722c6017` (Webflow Code Component), `bc5369b04` (docs,
 STRUCTURE.md, changelog, pages index, submission text), this entry's commit (owner-actions row
 and the order file's Evolve status paragraph).
+
+## 2026-10-13: order 095 built and verified end to end; standalone-repo creation and two pull requests remain, order file stays open
+
+Order 095 asked for the Home Assistant integration to be made ready for the HACS default store.
+Step 0 found a working integration with wrong manifest metadata (a 404ing documentation link, a
+too-low `hacs.json` minimum HA version) and no brand icon, and no standalone repository yet.
+
+- **Local validation (task 1)**: ran the real `ghcr.io/home-assistant/hassfest` Docker image
+  against a built export tree: `Integrations: 1, Invalid integrations: 0`. HACS's own
+  `hacs/action` is architecturally incapable of validating a repository that does not exist yet
+  (confirmed by reading `hacs.async_register_repository` in its real source), so its individual
+  local-file validators (`hacsjson.py`, `integration_manifest.py`, `brands.py`, `information.py`,
+  with the real `voluptuous` schema objects pulled from `hacs/integration`) were run directly
+  against the exported tree instead: all pass. The GitHub-settings-dependent checks
+  (`description`, `topics`, `issues`, `archived`, `license`) stay deferred to that repository's
+  own future CI.
+- **Manifest and metadata (task 2)**: `manifest.json`'s `documentation` fixed from a 404 to the
+  live `/docs/home-relay`, `version` bumped to `1.0.1`. `hacs.json`'s `homeassistant` corrected
+  from `2024.6.0` to `2024.12.0`: `relay_client.py` uses `aiohttp.ClientWSTimeout`, absent before
+  aiohttp 3.11, first bundled in HA 2024.12.0 (verified against HA's real
+  `package_constraints.txt` across releases 2024.6.0 through 2025.1.0). `codeowners` and
+  `issue_tracker` were already correct. No config-flow translations needed beyond what already
+  ships; the flow's existing `strings.json`/`translations/en.json` cover every field.
+- **Brand icon (task 3)**: real 256x256/512x512 PNGs (light and dark) rendered via `sharp` from
+  the existing `public/pwa-icon.svg` cube mark, shipped at
+  `custom_components/three_ws/brand/{icon,icon@2x,dark_icon,dark_icon@2x}.png` (HA 2026.3.0's
+  local brand images feature, which also satisfies HACS's own `brands.py` check). The
+  `home-assistant/brands` PR text (for the same four files, copied unchanged) is in the
+  submission doc.
+- **Standalone-repo export (task 4)**: new `scripts/export-hacs-repo.mjs` builds the integration,
+  README, `info.md`, LICENSE, `hacs.json`, and `.github/workflows/{hassfest,hacs}.yml` into
+  `dist/hacs-export/`. This monorepo runs no GitHub Actions of its own, so those two workflow
+  files exist only inside the exported tree.
+- **Submission text (task 5)**: `marketing/growth/submissions/home-assistant.md`, for owner order
+  938: the `hacs/default` PR (exact alphabetical insertion point in the `integration` file,
+  between `nimroddolev/chime_tts` and `nishithdev/wled-taskmap`) and the `home-assistant/brands`
+  PR, both with title/description text, plus the full verification packet.
+- **Docs (task 6)**: `home-assistant-integration/README.md` gained the minimum-HA-version line
+  and a fix to a real pre-existing inaccuracy found during end-to-end testing (the connectivity
+  sensor's entity ID is device-name-prefixed, not the fixed name the README claimed).
+  `docs/home-relay.md` now notes the integration is ready for the HACS default store once the
+  standalone repository is live. `data/changelog.json` entry added, `npm run build:pages` run.
+- **Real end-to-end install (Definition of Done line 2)**: no cloud-backed Neon database or
+  published standalone repository exists in this workspace, so this ran a real
+  `ghcr.io/home-assistant/home-assistant:stable` container (HA 2026.9.4), onboarded via its own
+  REST API, paired through the integration's real `config_flow.py` against a real
+  `services/home-relay` server (`createRelay`) and a real `mintInstallToken`-signed install
+  token, justified by the integration's own documented self-hosted `platform_url` option. Result:
+  `{"type": "create_entry", "result": {"state": "loaded"}}`, the integration dialled in on its
+  own, opened a session, and answered a real `get_states` call with 18 real entities. After the
+  relay was restarted, the integration's own backoff reconnected it without intervention, and
+  `binary_sensor.evolve_test_home_three_ws_connection` read `state: "on"` with no `last_error`.
+- **`npm test`**: 43 failed files / 2355 passed (79 failed tests, 35373 passed, 244 skipped),
+  one file and one test better than the documented pre-existing baseline (44/2354, 80/35372);
+  none of the failures reference home-assistant, hacs, or export-hacs-repo.
+- **`npm run audit:docs`**: 21 findings, unchanged from the documented baseline.
+- **`npm run check:rules`** against every touched path across all commits: `OK: no hard-rule
+  violations in the added lines`.
+
+Two steps are owner-gated (CLAUDE.md gate 2: a step needing a new third-party repository and
+pull requests from a personal GitHub account) and cannot be done inside this session: creating
+`github.com/nirholas/three-ws-home-assistant` from the exported tree, cutting its `v1.0.1`
+release, and opening the `hacs/default` and `home-assistant/brands` pull requests. Logged as row
+58 in [_context/production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md). The order
+file stays in place (not deleted) until that repository and both pull requests land. Commits:
+`90590dee5` (manifest/hacs.json fixes, brand icons, README/docs fixes, changelog),
+`0c6ac3614` (export script, submission packet), this entry's commit (owner-actions row and the
+order file's Evolve status paragraph).
