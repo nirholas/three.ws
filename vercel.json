@@ -6086,6 +6086,14 @@
 			"dest": "/.well-known/solana/actions.json"
 		},
 		{
+			"src": "/\\.well-known/(agent-)?skills/(.*)",
+			"headers": {
+				"cache-control": "max-age=3600, public",
+				"access-control-allow-origin": "*"
+			},
+			"dest": "/.well-known/$1skills/$2"
+		},
+		{
 			"src": "/\\.well-known/(.*)",
 			"headers": {
 				"cache-control": "max-age=3600, public"
