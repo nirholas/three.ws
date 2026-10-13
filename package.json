@@ -135,7 +135,9 @@
 		"packages/tty-avatar",
 		"packages/home-bridge",
 		"packages/home-mcp",
-		"packages/blender-mcp"
+		"packages/blender-mcp",
+		"packages/ai-sdk",
+		"packages/langchain"
 	],
 	"main": "src/app.js",
 	"browserslist": [

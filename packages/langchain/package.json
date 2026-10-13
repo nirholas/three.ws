@@ -1,0 +1,54 @@
+{
+	"name": "@three-ws/langchain",
+	"version": "0.1.0",
+	"description": "LangChain JS tool() definitions for three.ws: forge, rig, render, and animate 3D models, and chat with a three.ws agent, from any LangChain agent.",
+	"type": "module",
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"files": [
+		"src",
+		"README.md",
+		"LICENSE"
+	],
+	"scripts": {
+		"test": "node --test \"test/**/*.test.js\""
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"keywords": [
+		"langchain",
+		"langchainjs",
+		"tool-calling",
+		"three.ws",
+		"3d",
+		"glb",
+		"gltf",
+		"ai-agent",
+		"model-context-protocol",
+		"x402"
+	],
+	"license": "Apache-2.0",
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"homepage": "https://three.ws/",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/langchain"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"peerDependencies": {
+		"@langchain/core": ">=0.3.0",
+		"zod": "^3.25.76 || ^4"
+	},
+	"devDependencies": {
+		"@langchain/core": "^1.2.17"
+	},
+	"engines": {
+		"node": ">=20"
+	}
+}
