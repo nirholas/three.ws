@@ -17,6 +17,7 @@ one narrow product per submission and preserve each directory's current format.
 | [`e2b-awesome-ai-agents.md`](./e2b-awesome-ai-agents.md) | e2b-dev/awesome-ai-agents | 3D Studio (free) hosted MCP endpoint | Google Form |
 | [`awesome-text-to-3d.md`](./awesome-text-to-3d.md) | yyeboah/Awesome-Text-to-3D | Forge (`/forge`, `@three-ws/forge`) | PR |
 | [`awesome-generative-ai.md`](./awesome-generative-ai.md) | steven2358/awesome-generative-ai (Discoveries) | AR Forge (`/ar`) | PR |
+| [`adobe-mixamo-permission.md`](./adobe-mixamo-permission.md) | Adobe / Mixamo support | Redistribution permission for retargeted Mixamo motion clips | Contact form (owner order 938) |
 
 Each pack records the verified contribution path, section, paste-ready entry, PR or form
 answers, evidence table, the target's rules, and the owner's single action. Researched and

@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-10-13",
+			"title": "The public animation library is now openly licensed, every clip CC0 or self-generated",
+			"link": "/docs/animations",
+			"summary": "GET /api/animations/library used to serve a bulk motion library baked from Mixamo, redistributable by anyone through scripts/mirror-animation-library.mjs even though Mixamo's own terms permit using its animations inside a project but not redistributing the raw files. The library is rebuilt from two CC0 1.0 Universal sources instead (Quaternius's Universal Animation Library 2 and Mesh2Motion's human animation packs), retargeted through the existing pipeline with every clip carrying a source and license field end to end from scripts/cc0-library.config.json through the published manifest. The /animations gallery shows each clip's pack and license next to its category chip, and the endpoint itself now refuses to publish any entry missing a license or naming Mixamo as its source, so a raw Mixamo clip can never reach the public endpoint or its mirror again. scripts/mixamo-all.mjs keeps its download and local-build phases for offline retargeting research, but its upload phase is permanently disabled.",
+			"tags": [
+				"improvement",
+				"docs"
+			]
+		},
+		{
 			"date": "2026-10-12",
 			"title": "Forge generation controls (target faces, bbox fit, rest pose) and a batch endpoint for fanning out N generations",
 			"link": "/docs/forge",
