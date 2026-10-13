@@ -581,6 +581,7 @@
 		"@coinbase/x402": "^2.1.0",
 		"@coral-xyz/anchor": "^0.32.1",
 		"@dimforge/rapier3d-compat": "^0.19.3",
+		"@discord/embedded-app-sdk": "^2.5.0",
 		"@elevenlabs/elevenlabs-js": "^2.68.0",
 		"@ellipsis-labs/rise": "^0.5.26",
 		"@ethereum-attestation-service/eas-sdk": "^2.10.0",

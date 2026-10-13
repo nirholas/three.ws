@@ -2379,6 +2379,18 @@ export const limits = {
 		getLimiter('scene:agent:ip', { limit: 20, window: '1 m', critical: true }).limit(ip),
 	sceneAgentGlobal: () =>
 		getLimiter('scene:agent:global', { limit: 600, window: '1 m', critical: true }).limit('global'),
+	// Discord Activity room (api/discord-activity/room.js): every participant's
+	// client polls GET on an interval to stay in sync, so that bucket is generous
+	// and `local` (a stale read costs nothing of value). Writes (propose/vote/join)
+	// are real row inserts per Discord account, so they get a tighter shared bucket.
+	discordActivityReadIp: (ip) =>
+		getLimiter('discord-activity:read:ip', { limit: 240, window: '1 m', local: true }).limit(ip),
+	discordActivityWriteIp: (ip) =>
+		getLimiter('discord-activity:write:ip', { limit: 30, window: '1 m' }).limit(ip),
+	// OAuth code exchange (api/discord-activity/token.js): one call per Activity
+	// launch per person, tightly capped per IP against a stolen/replayed code loop.
+	discordActivityTokenIp: (ip) =>
+		getLimiter('discord-activity:token:ip', { limit: 10, window: '5 m', critical: true }).limit(ip),
 };
 
 // Fixed-window counters for limits.planApi. One small record per principal, so
