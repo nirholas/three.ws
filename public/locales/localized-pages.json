@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 320,
+	"count": 321,
 	"paths": [
 		"/",
 		"/3d",
@@ -206,6 +206,7 @@
 		"/nvidia",
 		"/objects",
 		"/onchain",
+		"/open-source",
 		"/openai",
 		"/oracle",
 		"/oracle-lab",

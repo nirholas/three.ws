@@ -4297,6 +4297,12 @@ URL: https://three.ws/docs/animations
 
 The motion clips (idle, wave, dance, and about 3,000 more) that bring three.ws avatars to life: how the registry is organised, how clips load at runtime, how they retarget onto any humanoid rig, and how to preview every one in the browser.
 
+### Docs · Adding an open source credit
+
+URL: https://three.ws/docs/open-source-credits
+
+How the /open-source dataset is generated from package.json, worker model licenses, and asset sources, how the guard test keeps it from rotting, and where to add a new npm dependency, worker model, or asset source.
+
 ### Docs · Choreography
 
 URL: https://three.ws/docs/choreography
@@ -5394,6 +5400,12 @@ How the /pocket handheld works: the D-pad and gamepad controls, the three cartri
 URL: https://three.ws/awesome
 
 A curated, link-checked list of everything you need to give an AI agent a body: text-to-3D models, capture and Gaussian splatting, avatars, rigging, motion generation, lipsync and voice, web renderers, asset pipelines, and the agent frameworks that drive them. Searchable and filterable, and published as an awesome list on GitHub.
+
+### Open source credits
+
+URL: https://three.ws/open-source
+
+Every open-source project, GPU model, and asset source three.ws is built on, grouped by what it powers: rendering, formats and compression, generation models, motion, voice, assets, and infrastructure. Generated from package.json on every build.
 
 ### Tutorial · Six Grok Bot recipes, proven not imagined
 

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-12T23:40:53.524Z",
+	"generated_at": "2026-10-13T01:19:47.993Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -95,6 +95,7 @@
 					"/tutorials",
 					"/examples",
 					"/awesome",
+					"/open-source",
 					"/changelog",
 					"/blog",
 					"/status",
@@ -8540,6 +8541,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/open-source-credits",
+					"title": "Docs · Adding an open source credit",
+					"description": "How the /open-source dataset is generated from package.json, worker model licenses, and asset sources, how the guard test keeps it from rotting, and where to add a new npm dependency, worker model, or asset source.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
 					"path": "/docs/choreography",
 					"title": "Docs · Choreography",
 					"description": "The developer reference for agent gesture routines: the routine format, the storage and manifest fields, the URL wire format that makes a link a routine, and every way to play one from an embed or your own renderer.",
@@ -10733,6 +10746,18 @@
 					"tags": [],
 					"showcase": true,
 					"priority": 0.8,
+					"job": null
+				},
+				{
+					"path": "/open-source",
+					"title": "Open source credits",
+					"description": "Every open-source project, GPU model, and asset source three.ws is built on, grouped by what it powers: rendering, formats and compression, generation models, motion, voice, assets, and infrastructure. Generated from package.json on every build.",
+					"added": "2026-10-13",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
 					"job": null
 				},
 				{

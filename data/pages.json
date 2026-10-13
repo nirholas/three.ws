@@ -5583,6 +5583,13 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/open-source-credits",
+					"title": "Docs · Adding an open source credit",
+					"description": "How the /open-source dataset is generated from package.json, worker model licenses, and asset sources, how the guard test keeps it from rotting, and where to add a new npm dependency, worker model, or asset source.",
+					"priority": 0.5,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/choreography",
 					"title": "Docs · Choreography",
 					"description": "The developer reference for agent gesture routines: the routine format, the storage and manifest fields, the URL wire format that makes a link a routine, and every way to play one from an embed or your own renderer.",
