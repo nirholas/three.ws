@@ -526,3 +526,72 @@ rendered, a disallowed action actually blocked). Logged as row 55 in
 stays in place (not deleted) until that registration, env update, migration, and live
 verification land. Commits: `05fdde784` (feature, docs, changelog, tests, owner-actions row),
 this entry's commit (re-verification log only, no code changes).
+
+## 2026-10-13: order 093 built and verified end to end; npm publish and three registry/issue submissions remain, order file stays open
+
+Order 093 asked for the agent-framework tool packages and registry entries the prospects list
+depends on. Step 0 found `packages/ai-sdk/` and `packages/langchain/` already shipped in an
+earlier segment of this same session (`e388d1458`), the ten published Agent Skills already
+em-dash-clean (`a9925cd4a`), and the skills index already live (`0871315f4`); this session's
+work closed the remaining gaps: a Google ADK sample, the Postman collection, and the docs/
+STRUCTURE.md wiring those needed.
+
+- **AI SDK and LangChain packages (tasks 1, 2)**: re-verified rather than re-built. Both
+  packages' `npm test` (Node's own `node --test`) run live against production: ai-sdk 5/5
+  passing (render, agentChat, forge, rig, animate, including a real x402 `PaymentRequired`
+  challenge on the paid animate tool); langchain the same 5 tools under their `three_ws_*`
+  names, 5/5 passing. `npm pack --dry-run` is clean for both (5 files each, LICENSE +
+  README + package.json + src/client.js + src/index.js). `packages/langchain/INTEGRATION_ISSUE.md`
+  already carries the LangChain integration-issue text.
+- **Google ADK (task 3)**: `examples/google-adk/` (package.json, index.mjs, README.md) connects
+  an ADK agent to `https://three.ws/api/mcp-studio` via `MCPToolset`. `node index.mjs --check`
+  discovers the live 15-tool catalog and runs a real `rig_mesh` call against production
+  (returned a real viewer/GLB/embed/IRL/AR/run-receipt link set), proving the wiring without a
+  Gemini credential; a full `LlmAgent` conversation runs when `GOOGLE_API_KEY` or Vertex
+  credentials are present (neither exists in this sandbox, so that path is gated, not faked).
+  `docs/google-adk.md` follows the `docs/grok.md` template and is linked from `docs/mcp.md`'s
+  per-server guides and `data/pages.json` (which regenerated the changelog and page-index
+  derived files via `npm run build:pages`).
+- **Skills index (task 4)**: `/.well-known/skills/index.json` (20 entries) already shipped in
+  `0871315f4`; re-validated this session by loading and counting it.
+- **OpenRouter attribution (task 5)**: re-verified rather than re-built. All 19 files under
+  `api/` that call `openrouter.ai/api` import the shared `openrouter-attribution` helper, zero
+  exceptions.
+- **Postman collection (task 6)**: new. `scripts/build-postman-collection.mjs` converts
+  `public/.well-known/openapi.yaml` through `openapi-to-postmanv2` and checks in
+  `public/.well-known/postman-collection.json`. The converter injects random ids and fabricated
+  example values on every run regardless of `schemaFaker`; a `clean()` pass strips the ids,
+  drops the fabricated response examples (no fake data, per CLAUDE.md), and canonicalizes
+  free-form request-body placeholders. Verified deterministic across three independent
+  regenerations (byte-identical) and loads cleanly through the official `postman-collection`
+  SDK (`new Collection(data)`, 3 top-level items). Converting the spec surfaced nine
+  pre-existing em-dashes in `public/.well-known/openapi.yaml` itself (a hard-rule violation
+  this change now touches); fixed in the same commit. `build:postman-collection` /
+  `check:postman-collection` are wired into `npm run gate`.
+- **Registry entries (task 7)**: the six files for Hermes, Kilo, OpenHands, OpenCode, Dify and
+  cursor.directory already existed in `marketing/growth/submissions/agent-registries/` from an
+  earlier segment of this session; confirmed present, one per registry.
+- **`npm pack --dry-run` (task 8)**: clean for both packages (re-verified above).
+- **Docs (task 9)**: `docs/google-adk.md` (new), `docs/mcp.md` and `docs/api-reference.md`
+  updated, `STRUCTURE.md` rows for the Google ADK example, the Postman collection, and (a gap
+  from the earlier `e388d1458` commit) the `@three-ws/ai-sdk`/`@three-ws/langchain` npm
+  workspace entries, `data/pages.json` entry for `/docs/google-adk`, changelog regenerated via
+  `npm run build:pages`.
+- **`npm test`**: 44 failed files / 2354 passed (80 failed tests, 35372 passed, 244 skipped),
+  the same pre-existing, environment-dependent baseline (OAuth, MCP wallet, idempotency-key,
+  ops-mcp-clients) orders 089-092 each independently measured in this shared worktree; none of
+  the failing files reference ai-sdk, langchain, google-adk, or the Postman collection.
+- **`npm run audit:docs`**: 21 findings, the same pre-existing baseline; none reference the new
+  doc page, example, or collection.
+- **`npm run check:rules`** against every touched path across both commits: `OK: no hard-rule
+  violations in the added lines`.
+
+Two steps are owner-gated (CLAUDE.md gate 2: publish, and contact a third party) and cannot be
+done inside this session: `npm publish --access public` for `@three-ws/ai-sdk` and
+`@three-ws/langchain`, opening the LangChain integration issue
+(`packages/langchain/INTEGRATION_ISSUE.md`), and submitting the six registry entries per each
+file's own "Owner steps" section. Logged as row 56 in
+[_context/production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md). The order file
+stays in place (not deleted) until those publishes and submissions land. Commits: `746c27934`
+(Google ADK example and docs), `5b7ebbf19` (Postman collection, openapi.yaml em-dash fix),
+this entry's commit (owner-actions row and the order file's Evolve status paragraph).
