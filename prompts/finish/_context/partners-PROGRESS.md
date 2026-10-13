@@ -487,3 +487,42 @@ webhook test deliveries) before submitting it to the App Store. Logged as row 54
 stays in place (not deleted) until that registration and live verification land. Commits:
 `7b52431a9` (feature, docs, changelog, tests), `b7b55dbf3` (owner-actions row and the order
 file's Evolve status paragraph).
+
+## 2026-10-13: order 092 re-verified (VRoid Hub import), stays open on an owner action
+
+Re-ran this session's close-out checklist against the feature landed in `05fdde784`
+(OAuth2 connect/callback/status/disconnect with PKCE, the real `CharacterModelLicenseSerializer`
+evaluator, the `/import/vroid` picker, and the import pipeline into the existing VRM
+load/canonicalize path). Every Definition of done line that does not require the owner's
+action was verified fresh, not assumed:
+
+- **Coming-soon state, no error**: `node scripts/read-service-env.mjs '^VROID' --names`
+  still returns zero matches on `three-ws-api`; `api/vroid/models.js` checks
+  `vroidConfigured()` and answers `200` with the designed coming-soon payload rather than an
+  error, and `pages/import-vroid.html` renders "VRoid Hub import is coming soon" for that
+  response.
+- **License gating unit test**: `npx vitest run tests/vroid-license.test.js`, 9/9 passing;
+  the evaluator defaults closed so an action the creator didn't permit is never offered.
+- **`npm test`**: 43 failed files / 2355 passed (79 failed tests, 35373 passed, 244 skipped).
+  None of the failing files or tests mention vroid; the full failing set is pre-existing
+  OAuth/idempotency/ops-mcp infrastructure this order never touched (same category of
+  baseline noise logged on orders 089-091 in this shared worktree).
+- **`npm run audit:docs`**: 21 findings, the same pre-existing set as orders 089-091; none
+  reference `docs/vroid-hub-import.md`, `/import/vroid`, or `/docs/vroid-hub-import`.
+- **Docs/page/structure/changelog**: `data/pages.json` carries `/import/vroid` and
+  `/docs/vroid-hub-import`; `STRUCTURE.md` has the VRoid Hub import row; `CHANGELOG.md` and
+  `data/changelog.json` carry the 2026-10-13 entry; `marketing/growth/submissions/vroid-hub-app.md`
+  has the app registration answers for owner order 939.
+- **`npm run check:rules`** against the files this re-verification pass touched: `OK: no
+  hard-rule violations`.
+
+The remaining step is owner-gated and cannot be done inside this session: register the
+VRoid Hub application at `hub.vroid.com/oauth/applications` (confirmed live, pixiv-account
+sign-in required), set `VROID_HUB_CLIENT_ID`/`VROID_HUB_CLIENT_SECRET` on Cloud Run with
+`--update-env-vars`, run the pending `20261015070000_vroid_hub_source.sql` migration, and
+verify a real import on a live VRoid Hub account (idle/walk playing, creator credit
+rendered, a disallowed action actually blocked). Logged as row 55 in
+[_context/production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md). The order file
+stays in place (not deleted) until that registration, env update, migration, and live
+verification land. Commits: `05fdde784` (feature, docs, changelog, tests, owner-actions row),
+this entry's commit (re-verification log only, no code changes).
