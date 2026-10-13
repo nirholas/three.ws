@@ -801,11 +801,15 @@ export function createMarketplaceGallery({ scene, getLocalPosition }) {
 		});
 	}
 
+	function panelFallbackHTML(listing, accent) {
+		return `<div class="mwg-panel-fallback" style="background:linear-gradient(160deg,${accent},#0c0c0e)">${escapeHtml((listing.name || '?').charAt(0).toUpperCase())}</div>`;
+	}
+
 	function showPanel(listing) {
 		const accent = TYPE_ACCENT[listing.type] || '#fafafa';
 		const media = listing.image
 			? `<img src="${escapeAttr(listing.image)}" alt="" loading="lazy" />`
-			: `<div class="mwg-panel-fallback" style="background:linear-gradient(160deg,${accent},#0c0c0e)">${escapeHtml((listing.name || '?').charAt(0).toUpperCase())}</div>`;
+			: panelFallbackHTML(listing, accent);
 
 		// Trust signals — ratings + adoption counts pulled straight from the same
 		// listing rows the grid uses, so a number never disagrees across surfaces.
@@ -860,6 +864,19 @@ export function createMarketplaceGallery({ scene, getLocalPosition }) {
 				</div>
 				<p class="mwg-panel-hint">Press <kbd>E</kbd> to open</p>
 			</div>`;
+
+		// An R2 asset can 403/502 behind a URL that still looked valid when the
+		// listing loaded. A broken <img> would otherwise sit there as the
+		// browser's own broken-image glyph; swap in the same designed fallback
+		// the no-image case uses instead.
+		const panelImg = panel.querySelector('.mwg-panel-media img');
+		panelImg?.addEventListener(
+			'error',
+			() => {
+				panelImg.outerHTML = panelFallbackHTML(listing, accent);
+			},
+			{ once: true },
+		);
 
 		// Plain left-click routes through the shared nav guard; modified clicks
 		// (⌘/ctrl/middle → new tab) fall through to the native anchor.

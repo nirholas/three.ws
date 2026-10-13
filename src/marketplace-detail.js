@@ -52,6 +52,47 @@ function fmtNumber(n) {
 
 // ── Detail header avatar ────────────────────────────────────────────────
 
+// Loads a thumbnail into an element's background only once the image has
+// actually decoded. Object storage (R2) can 403/502 behind a URL that still
+// looks valid, and a raw `background-image: url(...)` on a dead asset just
+// renders a blank box with no signal to the user, so this probes with a
+// detached Image() first and leaves the initial-letter fallback in place on
+// failure instead of swapping to it.
+function loadThumbnailBackground(el, url) {
+	const fallback = el.querySelector('.d-avatar-fallback');
+	const probe = new Image();
+	probe.onload = () => {
+		el.classList.add('has-img');
+		el.style.backgroundImage = `url('${url}')`;
+		if (fallback) fallback.style.display = 'none';
+	};
+	probe.onerror = () => {
+		// Object storage is unreachable for this asset: keep showing the
+		// initial-letter fallback rather than a blank image box.
+	};
+	probe.src = url;
+}
+
+// Same probe-before-swap treatment for a grid of small thumbnail cards (the
+// creator modal's agents/avatars grids): each `.thumb` renders its
+// fallback letter up front, and only gets a background image once that
+// image has actually decoded.
+function wireThumbGrid(container) {
+	container.querySelectorAll('.thumb[data-thumb-url]').forEach((el) => {
+		const url = el.dataset.thumbUrl;
+		if (!url) return;
+		const probe = new Image();
+		probe.onload = () => {
+			el.style.backgroundImage = `url('${url}')`;
+			el.querySelector('.thumb-fallback-text')?.remove();
+		};
+		probe.onerror = () => {
+			// Leave the fallback letter/glyph showing.
+		};
+		probe.src = url;
+	});
+}
+
 export function renderDetailAvatar(a) {
 	const el = $('d-avatar');
 	if (!el) return;
@@ -60,6 +101,10 @@ export function renderDetailAvatar(a) {
 	const fallback = el.querySelector('.d-avatar-fallback');
 	const existingMv = el.querySelector('model-viewer');
 	if (existingMv) existingMv.remove();
+	if (fallback) {
+		fallback.textContent = initial(a.name);
+		fallback.style.display = 'flex';
+	}
 
 	if (a.avatar_glb_url) {
 		el.classList.add('has-3d');
@@ -76,15 +121,18 @@ export function renderDetailAvatar(a) {
 		mv.setAttribute('shadow-intensity', '0.4');
 		mv.setAttribute('tone-mapping', 'aces');
 		mv.setAttribute('loading', 'eager');
+		mv.addEventListener(
+			'error',
+			() => {
+				mv.remove();
+				el.classList.remove('has-3d');
+				if (a.thumbnail_url) loadThumbnailBackground(el, a.thumbnail_url);
+			},
+			{ once: true },
+		);
 		el.appendChild(mv);
-		if (fallback) fallback.style.display = 'none';
 	} else if (a.thumbnail_url) {
-		el.classList.add('has-img');
-		el.style.backgroundImage = `url('${a.thumbnail_url}')`;
-		if (fallback) fallback.style.display = 'none';
-	} else if (fallback) {
-		fallback.textContent = initial(a.name);
-		fallback.style.display = 'flex';
+		loadThumbnailBackground(el, a.thumbnail_url);
 	}
 }
 
@@ -494,9 +542,10 @@ function renderCreatorModal(payload, deps) {
 		agentsGrid.innerHTML = '<div class="market-empty">No published agents yet.</div>';
 	} else {
 		agentsGrid.innerHTML = agents.map((a) => {
-			const thumb = a.thumbnail_url
-				? `<div class="thumb" style="background-image:url('${escapeHtml(a.thumbnail_url)}')"></div>`
-				: `<div class="thumb">${escapeHtml(initial(a.name))}</div>`;
+			// Fallback letter renders immediately; wireThumbGrid() below swaps in
+			// the background image only once it has actually decoded, so a dead
+			// R2 asset shows the letter instead of a blank box.
+			const thumb = `<div class="thumb" data-thumb-url="${a.thumbnail_url ? escapeHtml(a.thumbnail_url) : ''}"><span class="thumb-fallback-text">${escapeHtml(initial(a.name))}</span></div>`;
 			// Non-link badge: the whole card is clickable (navigates to the agent),
 			// so a nested explorer anchor would double-fire. The explorer link lives
 			// on the agent detail page this card opens.
@@ -513,6 +562,7 @@ function renderCreatorModal(payload, deps) {
 			</div>`;
 		}).join('');
 		wireWalletChips(agentsGrid);
+		wireThumbGrid(agentsGrid);
 		agentsGrid.querySelectorAll('[data-agent-id]').forEach((card) => {
 			card.addEventListener('click', () => {
 				closeCreatorModal();
@@ -527,9 +577,7 @@ function renderCreatorModal(payload, deps) {
 		avatarsGrid.innerHTML = '<div class="market-empty">No public avatars yet.</div>';
 	} else {
 		avatarsGrid.innerHTML = avatars.map((avt) => {
-			const thumb = avt.thumbnail_url
-				? `<div class="thumb" style="background-image:url('${escapeHtml(avt.thumbnail_url)}')"></div>`
-				: `<div class="thumb">◉</div>`;
+			const thumb = `<div class="thumb" data-thumb-url="${avt.thumbnail_url ? escapeHtml(avt.thumbnail_url) : ''}"><span class="thumb-fallback-text">◉</span></div>`;
 			const wallet = walletChipHTML(avt, { isOwner: false, showPending: false, link: false });
 			return `<div class="creator-mini-card" data-avatar-id="${escapeHtml(avt.id)}">
 				${thumb}
@@ -539,6 +587,7 @@ function renderCreatorModal(payload, deps) {
 			</div>`;
 		}).join('');
 		wireWalletChips(avatarsGrid);
+		wireThumbGrid(avatarsGrid);
 		avatarsGrid.querySelectorAll('[data-avatar-id]').forEach((card) => {
 			card.addEventListener('click', () => {
 				const avt = avatars.find((x) => x.id === card.dataset.avatarId);
