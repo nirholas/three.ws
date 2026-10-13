@@ -1129,6 +1129,50 @@ No owner decision was needed beyond what OWNER-ACTIONS row 36 already
 tracks (enabling R2 in the Cloudflare dashboard); everything in this order
 was agent-doable and ships independent of when that happens.
 
+## 2026-10-13: order 403 (forge nvidia lane cooldown gap) closed
+
+Commit `7fa4b0653` on `evolve`. Step 0 re-derivation found the live
+`forge_generation` symptom had already moved on from the order's measured
+15/15-failures-on-nvidia window: healthz now read `"no generation has
+STARTED in 114m"`, a different (shared-dependency-shaped) symptom, not the
+nvidia-specific one the order measured. Per the order's own "Never
+blocked" guidance, the underlying code gap is a structural fact
+independent of the current failure rate, so the fix proceeded anyway.
+
+`NIM_TRELLIS_COOLDOWN_KEY` is now `export const` in `api/forge.js` (line
+178); `api/cron/forge-finalize.js` imports it and the already-exported
+`nimCooldownSeconds` from `../forge.js` instead of redeclaring the string.
+Added `decideNvidiaStall` (pure, exported, next to `decideFailedSweep`:
+defer/resubmit/terminal on ageMinutes vs. the attended budget and hard
+TTL, with an `alreadyResubmitted` guard) with its own test-first coverage
+in `tests/forge-finalize.test.js` (5 new tests, confirmed failing with
+"decideNvidiaStall is not a function" before the function existed, passing
+after). Wired one stall-resubmit into the nvidia poll branch for a
+still-running/queued/null-status poll past the attended window: under a
+new `nvcf:stall-lock:` key (distinct from the existing `nvcf:resub:` lock
+so the two paths can never double-fire), it calls `nvidia.textTo3d()` once
+and writes both the shared `nvcf:alias:` key (so the next tick and any
+live attended poller pick up the new task id transparently) and a
+`nvcf:stall-resub:` flag so it never fires twice for the same row. Added
+`markProviderCooldown(NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds())` at
+both give-up points for `backend === 'nvidia'`: the `nvcf_expired`
+fallthrough (lock held by a prior recovery, or the resubmit itself
+throwing) and immediately before the final bare-TTL `markFailed`, scoped
+so self-host envelope timeouts (which already call `markLaneUnhealthy`)
+are untouched.
+
+Verification: `npx vitest run tests/forge-finalize.test.js` passes 15/15
+(10 pre-existing `decideFailedSweep`/`decodeWorkerEnvelope` tests plus 5
+new `decideNvidiaStall` tests). A direct dynamic import of
+`api/cron/forge-finalize.js` confirmed the new `../forge.js` import
+introduces no circular-import failure (module loads clean, both new and
+existing exports present). `npm run check:rules -- --paths api/forge.js
+api/cron/forge-finalize.js tests/forge-finalize.test.js` exits 0.
+
+No owner decision was needed; this is a pure code fix with no deploy step
+in its own definition of done. The live healthz number will not change
+until the next deploy carries this commit (deploys are owner-gated).
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
