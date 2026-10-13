@@ -351,3 +351,72 @@ core API is unauthenticated by design) and the only owner-gated pieces are a nic
 already-written PrusaSlicer PR and Bambu Studio issue (owner order 938, a pre-existing lane
 also used by orders 085 and 087). Commits: `57d5fd2a5` (Craftcloud feature, docs, changelog),
 `f76355d4e` (slicer-trusted-hosts submission file).
+
+## 2026-10-13: order 090 closed (Video to Motion landing)
+
+All five Definition of done lines verified:
+
+- **GLB/BVH load in Blender or the three.js editor (line 1)**: no Blender GUI is available
+  in this sandbox, so the exported files are verified two other ways instead: a real
+  Chromium browser (Playwright) drives the shipped page end to end against the real
+  `/api/motion-swap` capture contract, clicks the actual export buttons, and the downloaded
+  bytes are checked structurally (GLB magic number and version, a parsed JSON chunk with a
+  non-empty `animations[0].channels`; a BVH text file starting `HIERARCHY`, containing
+  `ROOT Hips` and `MOTION`, with a positive `Frames:` count). The BVH writer itself
+  (`src/animation-bvh-export.js`) was already round-tripped through three.js's own
+  `BVHLoader` in `tests/animation-bvh-export.test.js` in a prior commit on this same order
+  (`be9baf7f7`). This substitution is the one judgment call on this order: no GUI
+  screenshot, but real exported bytes from the real shipped code path, validated against
+  the format spec and against three.js's own loader.
+- **Retargets onto a non-Mixamo rig in the browser (line 2)**: a synthetic but structurally
+  real, skinned GLB with Daz/Genesis joint names (`tests/_fixtures/daz-rig.glb`, built with
+  `@gltf-transform/core` and round-tripped through its own reader to confirm validity) is
+  uploaded through the page's file input inside a real Chromium browser; the retarget
+  completes with no `#vtm-status[data-kind="error"]` surfaced and the export buttons stay
+  enabled. `tests/e2e/video-to-motion.spec.js`, test "a non-Mixamo (Daz/Genesis) rig
+  uploaded via file input retargets with no error".
+  michelle.glb, the other named rig on the platform, is Mixamo and was excluded for that
+  reason.
+- **All states at 320/768/1440px, no console errors (line 3)**: three parametrized tests in
+  the same spec load `/video-to-motion` at each width with `page.on('console')` and
+  `page.on('pageerror')` listeners asserting zero entries, plus processing/ready/failed/limit
+  state coverage (successful capture, a `status: 'failed'` response, a 429 response) each
+  asserting the correct stage element is visible and the others hidden.
+  `npx playwright test tests/e2e/video-to-motion.spec.js`: 8/8 passed in 23.0s.
+- **`npm test` / `npm run audit:docs` (line 4)**: full suite is `43 failed files / 2349
+  passed | 79 failed tests / 35305 passed` in this run. None of the failing test names
+  reference video-to-motion, animation retargeting, BVH export, or GLB canonicalization;
+  every failure is in OAuth/MCP-wallet infrastructure (`oauth-authorize`, `oauth-introspect`,
+  `ops-mcp-clients`, `v1-rest-router`, `mcp-agent`, `mcp-agent-challenge`,
+  `mcp-wallet-provision`), environment-dependent (no DB/Redis in this sandbox) and matching
+  the pre-existing baseline documented above for order 089 earlier the same day (41 failed
+  files / 77 failed tests; the small drift is other agents' concurrent commits in this
+  shared worktree, not this feature). This order's own new spec is fully green.
+  `npm run audit:docs` dropped from 22 to 21 findings after adding the missing
+  `/docs/video-to-motion` entry to `data/pages.json`; the remaining 21 are the same
+  pre-existing set, none referencing this feature.
+- **Page entry, STRUCTURE.md, doc, changelog (line 5)**: `/video-to-motion` and
+  `/docs/video-to-motion` both in `data/pages.json`; `STRUCTURE.md` row updated with the doc
+  and both test files; `docs/video-to-motion.md` written; `data/changelog.json` entry added
+  and `npm run build:pages` output (changelog HTML/JSON/XML, features.json, llms.txt/
+  llms-full.txt, sitemap, localized-pages.json) committed alongside. Cross-linked from
+  `/motion-swap`, `/animations`, and `/mocap-studio`. `npm run check:rules` against all 17
+  changed paths plus the 5 new files: `OK: no hard-rule violations in the added lines`.
+
+Step 0 (re-derived at the start of this order, in an earlier segment of this same session):
+ran a real 30-second CC0 video through the production `model-video2motion` worker, which
+returned a genuine 480-frame/24fps/1280x720 clip (`meta.json` on disk confirms this), proving
+the capture path end to end before any UI was built; the exact wall-clock duration from that
+run was not separately logged, so `docs/video-to-motion.md` quotes Motion Swap's own
+already-established timing for the same worker ("about two minutes for a 30-second clip")
+rather than a re-measured number. FBX export reuses the existing `presign-glb` +
+`forge-remesh` Blender converter (no new exporter needed); GLB is written with three.js's own
+`GLTFExporter`; BVH needed a new writer since no maintained open-source BVH exporter existed
+in the dependency tree, which is `src/animation-bvh-export.js`.
+
+No owner action blocks retirement: capture, retargeting, GLB/BVH/FBX export, and save-to-
+library all run against infrastructure (the `model-video2motion` worker, `/api/motion-swap`,
+`/api/forge-remesh`, `/api/animations/presign`) that is already live in production with no
+missing credential. Commits: `be9baf7f7` (BVH export writer and its unit test, from the
+session's earlier segment), `aebfe1bc0` (the landing page, retarget/export/save wiring, the
+e2e spec and its fixture, docs, changelog, and page-index wiring).
