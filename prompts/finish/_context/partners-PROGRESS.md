@@ -300,3 +300,54 @@ pending migration, and verify the Activity in a real Discord client with two acc
 file stays in place (not deleted) until that registration and live verification land.
 Commits: `8e7ab13c7` (feature), `172173cac` (prospects.md update), `653b44cbe`
 (owner-actions row and the order file's Evolve status paragraph).
+
+## 2026-10-13: order 089 closed (Craftcloud "Get it printed", slicer trusted-host patches)
+
+All five Definition of done lines verified, no owner action blocks any of them:
+
+- **Live Craftcloud prices on a real model (line 1)**: `POST /api/print/craftcloud-quote`
+  run against a real Khronos sample GLB through the real handler (no mock), saved response
+  at modelId `f9ba172956fa8134f89b33bb321863f2cd4d24a4`, 2 vendors, 60 quotes. A Playwright
+  screenshot of the actual `src/craftcloud-print.js` panel, served by the project's own Vite
+  dev server with `DEV_API_PROXY` pointed at a local `server/index.mjs`, shows the populated
+  price table and the Craftcloud-upload-page handoff. Both are evidence files outside the
+  repo (`/tmp/craftcloud-quote-response.json`, `/tmp/ccp-screenshot.png`), not committed per
+  the no-scratch-files rule.
+- **Buyer handoff (line 2)**: Craftcloud's public v5 API has no endpoint that hands a
+  server-created cart back to a browser for checkout (`checkoutUrl` is always `null`) and
+  `/v5/referral` 401s without an authenticated account, so the panel links to Craftcloud's
+  own upload page instead of a fake continue-to-checkout button, with the voucher applied
+  automatically once the owner has an account. This gap is the adapter path the DoD line
+  anticipates, not a missing feature.
+- **Adapter contract and unit tests (line 3)**: `api/_lib/print/adapters/craftcloud.js`
+  registered in `index.js` ahead of `manual` (quoting and cart creation never spend).
+  `npx vitest run tests/print-adapter-contract.test.js`: 62/62 passed, including the new
+  craftcloud-specific describe block.
+  `57d5fd2a5`.
+- **PrusaSlicer patch (line 4)**: `Downloader.cpp`'s hardcoded host list replaced with a
+  `trusted_download_hosts()` helper reading an `AppConfig`-backed `download_url_extra_hosts`
+  override, plus `three.ws` added to the built-in four. Full from-source build against
+  upstream `master` (689/689 targets, zero errors) and `ctest` (7/7 suites, 0 failed, 43.22s)
+  verified locally this session. Bambu Studio has no equivalent extension point
+  (`GUI_App.cpp:1105-1151`, a fixed `TrustEntry[]` array with no config key), so that half is
+  issue text, not a patch. Both texts, plus the diff and the build/test evidence, are in
+  `marketing/growth/submissions/slicer-trusted-hosts.md` for owner order 938. `f76355d4e`.
+- **`npm test` / `npm run audit:docs` / docs and changelog (line 5)**: full suite has 41
+  failed files / 77 failed tests, pre-existing and unrelated, confirmed by stashing this
+  order's changes and re-running the three failing files named in the sample
+  (`oauth-introspect`, `ops-mcp-clients`, `v1-rest-router`) against the untouched baseline:
+  same failures, same reasons (environment-dependent, no DB/Redis in this sandbox). This
+  order's own test file (`tests/print-adapter-contract.test.js`) is 62/62 green.
+  `npm run audit:docs`: 21 findings, the same pre-existing set; none reference the new
+  Craftcloud doc sections or endpoint. `docs/forge.md` and `docs/materialize.md` cross-link
+  the new flow against Materialize; `data/changelog.json` entry added and `npm run
+  build:pages` run (which also fixed an invalid `"integrations"` tag from a prior commit
+  that was blocking the build script for everyone). `npm run check:rules` against every
+  touched path on both commits: `OK: no hard-rule violations in the added lines`.
+
+No owner action blocks retirement: the feature needs no credential to run today (Craftcloud's
+core API is unauthenticated by design) and the only owner-gated pieces are a nice-to-have
+(the referral voucher, which degrades to `voucherApplied: false` without one) and filing the
+already-written PrusaSlicer PR and Bambu Studio issue (owner order 938, a pre-existing lane
+also used by orders 085 and 087). Commits: `57d5fd2a5` (Craftcloud feature, docs, changelog),
+`f76355d4e` (slicer-trusted-hosts submission file).
