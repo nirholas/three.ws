@@ -645,6 +645,12 @@ URL: https://three.ws/motion-swap
 
 Upload a video of yourself and get it back with your 3D avatar performing your motion instead of you. Server-side pose tracking and person masking, browser-side compositing and export: stay off camera without staying off video.
 
+### Video to Motion: Turn Any Video into an Animation File
+
+URL: https://three.ws/video-to-motion
+
+Upload a video of a person and download the motion as a GLB, BVH, or FBX animation file. Preview it on a default avatar or your own rig, trim it, and save it to your animation library.
+
 ### Forge · NIM: Self-Hosted Image to 3D
 
 URL: https://three.ws/forge-nim
@@ -4507,6 +4513,12 @@ Every address minted through three.ws carries the platform's brand mark in the a
 URL: https://three.ws/docs/motion-swap
 
 Upload a video of yourself and get it back with your 3D avatar performing your exact motion instead of you. Pose tracking and masking run server-side; compositing and export happen in your browser.
+
+### Docs · Video to Motion
+
+URL: https://three.ws/docs/video-to-motion
+
+Upload a video of a person and download the motion itself as a GLB, BVH, or FBX animation file, instead of a composited video. Preview on any rigged avatar, trim it, and save it to your animation library.
 
 ### Docs · Multi-agent scenes
 

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-13T07:01:56.347Z",
+	"generated_at": "2026-10-13T16:58:17.417Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4057,
+	"total": 4059,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -55,6 +55,16 @@
 			"title": "Open source credits",
 			"summary": "Every open-source project, GPU model, and asset source three.ws is built on, grouped by what it powers: rendering, formats and compression, generation models, motion, voice, assets, and infrastructure. Generated from package.json on every build.",
 			"link": "/open-source",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "launch",
+			"title": "Video to Motion: Turn Any Video into an Animation File",
+			"summary": "Upload a video of a person and download the motion as a GLB, BVH, or FBX animation file. Preview it on a default avatar or your own rig, trim it, and save it to your animation library.",
+			"link": "/video-to-motion",
 			"tags": [
 				"launch"
 			]
@@ -112,6 +122,17 @@
 			"link": "/docs/animations",
 			"tags": [
 				"improvement",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
+			"title": "Video to Motion: download any video's motion as a GLB, BVH, or FBX",
+			"summary": "A new page for creators who want the animation file itself, not a composited video: upload a video, preview the captured motion on a stock avatar or any rigged GLB you drop in, trim the in and out points, and download a GLB (clip baked onto the previewed avatar), a BVH (the platform's own canonical-skeleton proportions, the standard shape to re-retarget in a DCC tool), or an FBX (server-side Blender conversion that preserves the rig). Reuses the production model-video2motion worker that already powers /motion-swap for capture; signed-in users can save the clip straight to an agent's animation library. New writer: src/animation-bvh-export.js, round-tripped through three.js's own BVHLoader in tests/animation-bvh-export.test.js. Cross-linked from /motion-swap, /animations, and /mocap-studio. Docs: /docs/video-to-motion.",
+			"link": "/video-to-motion",
+			"tags": [
+				"feature",
 				"docs"
 			]
 		},
@@ -1535,27 +1556,6 @@
 			"link": "/strategies",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Talk to your squad in one sentence",
-			"summary": "Squad chat turns a plain sentence like \"research $THREE and buy 0.05 SOL if it looks safe\" into a plan of steps for your specialist team or any of your agents. Research and entry checks run live with their evidence, and anything that signs, moves funds, launches a coin or goes over your cap stops as an approval card with the full details. Approve and the squad picks the run back up and finishes with receipts. Paper mode is the default and never signs. Say \"remember my default trade size is 0.1 SOL\" and the squad keeps it. Coin names and descriptions are treated as data, so a coin written to trick AI agents cannot change the plan. You can type or dictate, and the squad's 3D avatars react as they work.",
-			"link": "/team-chat",
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "The 3D agent demos show their agent again",
-			"summary": "Every page in the agent interaction lab had stopped drawing its 3D character, so the demos showed only text and buttons. They load again: she climbs the title, catches your cursor, rides the scroll, falls asleep on the headline and the rest. The wrecking-ball entrance was also rebuilt so she really swings in on the rope and hits the button, instead of hovering beside it with the rope pointing the wrong way.",
-			"link": "/demos/agents",
-			"tags": [
-				"fix"
 			]
 		}
 	]

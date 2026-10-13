@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-13",
+			"title": "Video to Motion: download any video's motion as a GLB, BVH, or FBX",
+			"link": "/video-to-motion",
+			"summary": "A new page for creators who want the animation file itself, not a composited video: upload a video, preview the captured motion on a stock avatar or any rigged GLB you drop in, trim the in and out points, and download a GLB (clip baked onto the previewed avatar), a BVH (the platform's own canonical-skeleton proportions, the standard shape to re-retarget in a DCC tool), or an FBX (server-side Blender conversion that preserves the rig). Reuses the production model-video2motion worker that already powers /motion-swap for capture; signed-in users can save the clip straight to an agent's animation library. New writer: src/animation-bvh-export.js, round-tripped through three.js's own BVHLoader in tests/animation-bvh-export.test.js. Cross-linked from /motion-swap, /animations, and /mocap-studio. Docs: /docs/video-to-motion.",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
 			"title": "Get it printed: live Craftcloud prices for any Forge model, buyer pays direct",
 			"link": "/docs/forge#get-it-printed-live-prices-from-craftcloud",
 			"summary": "A new \"Get it printed\" action on model pages and in the Forge export menu uploads the model straight to Craftcloud (All3DP) and shows live, real prices across whichever of its roughly 186 print shops can run the job, cheapest first with shipping attached. This is not Materialize: three.ws never takes payment here. Craftcloud's public v5 API has no endpoint that hands a server-created cart back to a browser for checkout, so the panel links out to Craftcloud's own upload page instead of faking a continue-to-checkout button, where pasting the same STL reproduces the prices in an authenticated, checkout-capable session. Backed by a new fulfillment adapter, api/_lib/print/adapters/craftcloud.js, registered ahead of the manual adapter since quoting never spends. Docs: /docs/forge#get-it-printed-live-prices-from-craftcloud and /docs/materialize.",

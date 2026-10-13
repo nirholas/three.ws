@@ -47,6 +47,14 @@
 			<description>Every open-source project, GPU model, and asset source three.ws is built on, grouped by what it powers: rendering, formats and compression, generation models, motion, voice, assets, and infrastructure. Generated from package.json on every build.</description>
 		</item>
 		<item>
+			<title>Video to Motion: Turn Any Video into an Animation File</title>
+			<link>https://three.ws/video-to-motion</link>
+			<guid isPermaLink="false">2026-10-13:Video to Motion: Turn Any Video into an Animation File</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Upload a video of a person and download the motion as a GLB, BVH, or FBX animation file. Preview it on a default avatar or your own rig, trim it, and save it to your animation library.</description>
+		</item>
+		<item>
 			<title>A Discord Activity brings a shared Forge room into any voice channel</title>
 			<link>https://three.ws/docs/discord-activity</link>
 			<guid isPermaLink="false">2026-10-13:A Discord Activity brings a shared Forge room into any voice channel</guid>
@@ -85,6 +93,14 @@
 			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>GET /api/animations/library used to serve a bulk motion library baked from Mixamo, redistributable by anyone through scripts/mirror-animation-library.mjs even though Mixamo's own terms permit using its animations inside a project but not redistributing the raw files. The library is rebuilt from two CC0 1.0 Universal sources instead (Quaternius's Universal Animation Library 2 and Mesh2Motion's human animation packs), retargeted through the existing pipeline with every clip carrying a source and license field end to end from scripts/cc0-library.config.json through the published manifest. The /animations gallery shows each clip's pack and license next to its category chip, and the endpoint itself now refuses to publish any entry missing a license or naming Mixamo as its source, so a raw Mixamo clip can never reach the public endpoint or its mirror again. scripts/mixamo-all.mjs keeps its download and local-build phases for offline retargeting research, but its upload phase is permanently disabled.</description>
+		</item>
+		<item>
+			<title>Video to Motion: download any video's motion as a GLB, BVH, or FBX</title>
+			<link>https://three.ws/video-to-motion</link>
+			<guid isPermaLink="false">2026-10-13:Video to Motion: download any video's motion as a GLB, BVH, or FBX</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new page for creators who want the animation file itself, not a composited video: upload a video, preview the captured motion on a stock avatar or any rigged GLB you drop in, trim the in and out points, and download a GLB (clip baked onto the previewed avatar), a BVH (the platform's own canonical-skeleton proportions, the standard shape to re-retarget in a DCC tool), or an FBX (server-side Blender conversion that preserves the rig). Reuses the production model-video2motion worker that already powers /motion-swap for capture; signed-in users can save the clip straight to an agent's animation library. New writer: src/animation-bvh-export.js, round-tripped through three.js's own BVHLoader in tests/animation-bvh-export.test.js. Cross-linked from /motion-swap, /animations, and /mocap-studio. Docs: /docs/video-to-motion.</description>
 		</item>
 		<item>
 			<title>Docs · Engine bridges</title>

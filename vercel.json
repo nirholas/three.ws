@@ -3158,6 +3158,14 @@
 			"dest": "/motion-swap.html"
 		},
 		{
+			"src": "/video-to-motion",
+			"dest": "/video-to-motion.html"
+		},
+		{
+			"src": "/video-to-motion/",
+			"dest": "/video-to-motion.html"
+		},
+		{
 			"src": "/integrations",
 			"dest": "/integrations.html"
 		},

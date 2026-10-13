@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-13T07:01:56.324Z",
+	"generated_at": "2026-10-13T16:58:17.389Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -58,6 +58,16 @@
 		},
 		{
 			"date": "2026-10-13",
+			"type": "launch",
+			"title": "Video to Motion: Turn Any Video into an Animation File",
+			"summary": "Upload a video of a person and download the motion as a GLB, BVH, or FBX animation file. Preview it on a default avatar or your own rig, trim it, and save it to your animation library.",
+			"link": "/video-to-motion",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
 			"type": "update",
 			"title": "A Discord Activity brings a shared Forge room into any voice channel",
 			"summary": "Open the new Activity from a Discord voice channel and everyone in the call shares one Forge room: one prompt, one in-progress generation, one finished model with a shared vote count, and an agent that reacts in text to what just happened. Auth maps a verified Discord identity (re-checked against Discord's own /users/@me, never trusted from the client) to a room-scoped session; generation and voting reuse the real /api/forge pipeline and forge_votes table rather than a separate throwaway pipeline. No coin, wallet, or purchase path. Docs: /docs/discord-activity. Submission packet for Developer Portal setup and Discovery copy: marketing/growth/submissions/discord-activity.md.",
@@ -109,6 +119,17 @@
 			"link": "/docs/animations",
 			"tags": [
 				"improvement",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
+			"title": "Video to Motion: download any video's motion as a GLB, BVH, or FBX",
+			"summary": "A new page for creators who want the animation file itself, not a composited video: upload a video, preview the captured motion on a stock avatar or any rigged GLB you drop in, trim the in and out points, and download a GLB (clip baked onto the previewed avatar), a BVH (the platform's own canonical-skeleton proportions, the standard shape to re-retarget in a DCC tool), or an FBX (server-side Blender conversion that preserves the rig). Reuses the production model-video2motion worker that already powers /motion-swap for capture; signed-in users can save the clip straight to an agent's animation library. New writer: src/animation-bvh-export.js, round-tripped through three.js's own BVHLoader in tests/animation-bvh-export.test.js. Cross-linked from /motion-swap, /animations, and /mocap-studio. Docs: /docs/video-to-motion.",
+			"link": "/video-to-motion",
+			"tags": [
+				"feature",
 				"docs"
 			]
 		},

@@ -911,6 +911,14 @@
 					"added": "2026-07-19"
 				},
 				{
+					"path": "/video-to-motion",
+					"title": "Video to Motion: Turn Any Video into an Animation File",
+					"description": "Upload a video of a person and download the motion as a GLB, BVH, or FBX animation file. Preview it on a default avatar or your own rig, trim it, and save it to your animation library.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-13"
+				},
+				{
 					"path": "/forge-nim",
 					"title": "Forge · NIM: Self-Hosted Image to 3D",
 					"description": "Drive a self-hosted TRELLIS NIM (nvcr.io/nim/microsoft/trellis) directly: drop a photo, hit /v1/infer, and get the textured GLB back synchronously as base64: rendered live and downloadable.",
@@ -5828,6 +5836,13 @@
 					"path": "/docs/motion-swap",
 					"title": "Docs · Motion Swap",
 					"description": "Upload a video of yourself and get it back with your 3D avatar performing your exact motion instead of you. Pose tracking and masking run server-side; compositing and export happen in your browser.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/video-to-motion",
+					"title": "Docs · Video to Motion",
+					"description": "Upload a video of a person and download the motion itself as a GLB, BVH, or FBX animation file, instead of a composited video. Preview on any rigged avatar, trim it, and save it to your animation library.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},

@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 434,
+	"count": 435,
 	"paths": [
 		"/",
 		"/3d",
@@ -422,6 +422,7 @@
 		"/vault",
 		"/vaults",
 		"/viability",
+		"/video-to-motion",
 		"/viewer",
 		"/voice",
 		"/walk-leaderboard",
