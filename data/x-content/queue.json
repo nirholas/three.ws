@@ -79,7 +79,9 @@
 			"SMPL",
 			"chibi",
 			"Quaternius",
-			"ambientCG"
+			"ambientCG",
+			"Webflow",
+			"Khronos"
 		],
 		"maximumLength": 1000
 	},
@@ -9523,7 +9525,7 @@
 				"/docs/web-component"
 			],
 			"article": {
-				"title": "One HTML tag puts a live 3D avatar on any page, already idling when it appears",
+				"title": "One script tag and one element: a live 3D avatar on any page, 8 at a time, idling as it appears",
 				"body": "data/x-content/articles/embed-article.md",
 				"cover": {
 					"path": "public/x-media/embed-article/cover.png",
@@ -9532,12 +9534,22 @@
 			},
 			"posts": [
 				{
-					"text": "A live 3D avatar on any web page takes one script line and one <agent-3d> tag pointed at a body. The element stays hidden until the idle has rendered, so the avatar appears standing naturally, on Mixamo, VRM and other rigs alike. The write-up walks through each step between the tag and that frame, and what reduced motion does to it."
+					"text": "Two lines of HTML put a live 3D avatar on a web page. The element holds its frame back until the idle has rendered, so the avatar appears standing naturally on Mixamo, VRM and other rigs alike. The write-up follows one snippet from the tag to that frame, then covers pinned versions with integrity hashes, reduced motion and a budget of 8 live avatars per page."
 				}
 			],
 			"claims": [
 				{
-					"says": "One HTML tag puts a live 3D avatar on any page",
+					"says": "One script tag and one element",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/tutorials/embed-in-30-seconds.md",
+							"contains": "One script tag, one `<agent-3d>` tag, one working 3D agent."
+						}
+					]
+				},
+				{
+					"says": "a live 3D avatar on any page",
 					"evidence": [
 						{
 							"type": "page",
@@ -9552,77 +9564,32 @@
 					]
 				},
 				{
-					"says": "already idling when it appears",
+					"says": "8 at a time",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "We cap the number of *live* viewers instead."
+						},
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"matches": "return 8;\\n}\\)\\(\\);\\nconst _liveViewers = new Set\\(\\);"
+						}
+					]
+				},
+				{
+					"says": "idling as it appears",
 					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/docs/web-component",
 							"contains": "The body is already on screen holding its first clip"
-						},
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "this._scene.playClipByName('idle', { loop: true, fade_ms: 0 });"
 						}
 					]
 				},
 				{
-					"says": "one script line and one <agent-3d> tag pointed at a body",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "docs/tutorials/embed-in-30-seconds.md",
-							"contains": "One script tag, one `<agent-3d>` tag, one working 3D agent."
-						},
-						{
-							"type": "file",
-							"path": "docs/web-component.md",
-							"contains": "| `body` | Bare GLB URL (ad-hoc agent) |"
-						}
-					]
-				},
-				{
-					"says": "The element stays hidden until the idle has rendered",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/docs/web-component",
-							"contains": "the element keeps its canvas hidden until that pose has rendered, so a bind-pose T-pose is never shown"
-						},
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "The stage stays hidden until the body holds its first pose"
-						}
-					]
-				},
-				{
-					"says": "on Mixamo, VRM and other rigs alike",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "//   • Mixamo:          `mixamorig:LeftArm`"
-						},
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "//   • VRM / VRoid:     `J_Bip_C_Hips`, `J_Bip_L_UpperArm`"
-						}
-					]
-				},
-				{
-					"says": "what reduced motion does to it",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "Reduced-motion path: settle into a single clean idle pose and freeze it, so"
-						}
-					]
-				},
-				{
-					"says": "There is no API key and no build step",
+					"says": "There was no API key and no build step anywhere in that run",
 					"evidence": [
 						{
 							"type": "file",
@@ -9637,22 +9604,507 @@
 					]
 				},
 				{
-					"says": "The 1 in the script path tracks the 1.x line of the element",
+					"says": "reported its boot as five phases in order: manifest, body, memory, skills, brain",
 					"evidence": [
 						{
-							"type": "page",
-							"url": "https://three.ws/agent-3d/versions.json",
-							"contains": ">=1.0.0 <2.0.0"
-						},
-						{
 							"type": "file",
-							"path": "scripts/publish-lib.mjs",
-							"contains": "channels[String(major)] = { tracks: `>=${major}.0.0 <${major + 1}.0.0`, build: 'current' };"
+							"path": "docs/web-component.md",
+							"contains": "`phase` is one of `\"manifest\"`, `\"body\"`, `\"memory\"`, `\"skills\"`, `\"brain\"`"
 						}
 					]
 				},
 				{
-					"says": "boots it once it comes within 300 pixels of the viewport",
+					"says": "the avatar on screen was already standing in a relaxed idle pose",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/web-component",
+							"contains": "The body is already on screen holding its first clip"
+						}
+					]
+				},
+				{
+					"says": "which for most humanoid rigs is a T-pose",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "which is its bind pose (a T-pose)"
+						}
+					]
+				},
+				{
+					"says": "The element holds the frame back until a natural idle has rendered",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/web-component",
+							"contains": "the element keeps its canvas hidden until that pose has rendered, so a bind-pose T-pose is never shown"
+						}
+					]
+				},
+				{
+					"says": "pinned versions with integrity hashes",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/agent-3d/versions.json",
+							"contains": "\"integrity\""
+						}
+					]
+				},
+				{
+					"says": "The body attribute takes the address of a GLB file",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "| `body` | Bare GLB URL (ad-hoc agent) |"
+						}
+					]
+				},
+				{
+					"says": "the order of precedence runs from src down to body",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "priority is `src` > `agent-id` > `manifest` > `body`"
+						}
+					]
+				},
+				{
+					"says": "The features beyond the silent viewer are opt-in",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "Every feature is opt-in"
+						}
+					]
+				},
+				{
+					"says": "a bare body tag makes no calls beyond the GLB itself",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "no external calls beyond the GLB itself"
+						}
+					]
+				},
+				{
+					"says": "a phase and a pct from 0 to 1",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "Incremental boot progress."
+						}
+					]
+				},
+				{
+					"says": "All events bubble and are composed",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "All events bubble and are `composed: true`"
+						}
+					]
+				},
+				{
+					"says": "so they cross the element's shadow DOM boundary and can be caught on any ancestor",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "meaning they cross shadow DOM boundaries and are catchable on any ancestor element"
+						}
+					]
+				},
+				{
+					"says": "The reference describes agent:ready as the event to swap out your own placeholder image on",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "This is the event to swap out your own placeholder image on."
+						}
+					]
+				},
+				{
+					"says": "the stage carries a settling class that keeps it invisible and switches its fade off",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": ".stage.is-settling { opacity: 0; transition: none; }"
+						}
+					]
+				},
+				{
+					"says": "A crossfade would blend the clip in from the bind pose, and the arms would visibly swing down",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "clip in from the bind pose and every avatar would open on a T-pose with its"
+						}
+					]
+				},
+				{
+					"says": "The element starts the idle with no fade instead",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "The clip snaps in instead (fade 0)"
+						}
+					]
+				},
+				{
+					"says": "Two frames pass",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "revealed two frames later"
+						}
+					]
+				},
+				{
+					"says": "One frame poses the body and a second composites it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "the first frame ticks the mixer and paints the"
+						}
+					]
+				},
+				{
+					"says": "is revealed all the same on whatever pose the file gave it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "revealed all the same, on whatever pose the viewer gave it."
+						}
+					]
+				},
+				{
+					"says": "each bone name in the loaded rig is mapped onto one canonical set",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "canonical"
+						}
+					]
+				},
+				{
+					"says": "The mapping recognises the naming conventions of the common avatar tools",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • Mixamo:"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • VRM / VRoid:"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • Unreal mannequin:"
+						}
+					]
+				},
+				{
+					"says": "Of the 53 tracks in each clip of the library, 30 drive a finger joint",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "of the 53 tracks in every clip in /public/animations/clips address a finger"
+						}
+					]
+				},
+				{
+					"says": "Michelle is a Mixamo character whose bones carry the mixamorig: prefix",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "public/avatars/michelle.glb",
+							"contains": "mixamorig:Hips"
+						}
+					]
+				},
+				{
+					"says": "The idle runs 15.8 seconds and repeats",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/animations/manifest.json",
+							"contains": "\"duration\": 15.8"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/animations/manifest.json",
+							"contains": "\"loop\": true"
+						}
+					]
+				},
+				{
+					"says": "A clip retargets when at least half of its tracks find a matching bone on the rig",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "export const MIN_COVERAGE = 0.5;"
+						}
+					]
+				},
+				{
+					"says": "the retarget builds no animation at all",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "and gets NO action built at all."
+						}
+					]
+				},
+				{
+					"says": "The element does not invent a skeleton the file does not have",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "A rig that cannot take the clip is"
+						}
+					]
+				},
+				{
+					"says": "A new naming convention is handled by adding its mapping to the canonicalizer",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "CLAUDE.md",
+							"contains": "Add its bone-name mapping to `glb-canonicalize.js`"
+						}
+					]
+				},
+				{
+					"says": "Each release is uploaded to a write-once archive",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "to a write-once archive"
+						}
+					]
+				},
+				{
+					"says": "its integrity hashes are recorded in a ledger",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "data/agent-3d-releases.json"
+						}
+					]
+				},
+				{
+					"says": "each deploy serves the archived bytes after checking them against that ledger",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "after checking the bytes against the recorded hash"
+						}
+					]
+				},
+				{
+					"says": "An exact version is cut once",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "Each version is cut exactly once"
+						}
+					]
+				},
+				{
+					"says": "an unchanged manifest answers a conditional request with a 304 and no body",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "an unchanged manifest answers 304 with no body"
+						}
+					]
+				},
+				{
+					"says": "The element also ships as agent-3d.umd.cjs for pages without ES modules",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "UMD (no ES modules)"
+						},
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "agent-3d.umd.cjs"
+						}
+					]
+				},
+				{
+					"says": "The reference includes integration snippets for React, Vue and Svelte",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "### Vanilla JS (ESM)"
+						},
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "on:agent:ready={onReady}"
+						}
+					]
+				},
+				{
+					"says": "WordPress, Webflow, Framer, Notion embeds and Shopify",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "React, Vue, Svelte, Angular, plain HTML, WordPress, Webflow, Framer, Notion embeds, and Shopify"
+						}
+					]
+				},
+				{
+					"says": "A plain tag with a body is a bare avatar: a transparent canvas and the character, with no chat box, no input, no debug controls and no name plate",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "Default is BARE: a plain <agent-3d> (or one given"
+						},
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "chat, no input, no debug GUI, no name-plate."
+						}
+					]
+				},
+				{
+					"says": "a bare avatar settles into a single clean idle pose and freezes there",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "Reduced-motion path: settle into a single clean idle pose and freeze it, so"
+						}
+					]
+				},
+				{
+					"says": "which also lets the render loop stop drawing and costs no continuous GPU or CPU time",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "render loop can idle (no continuous GPU/CPU cost)."
+						}
+					]
+				},
+				{
+					"says": "captures taken seconds apart came out byte for byte identical",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "am.freeze();"
+						}
+					]
+				},
+				{
+					"says": "The element watches the setting live, so switching it in the operating system takes effect without a reload",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "so a runtime flip of the OS setting re-applies playback:"
+						}
+					]
+				},
+				{
+					"says": "playClip resolves a clip name from the public animation manifest and retargets it onto whatever skeleton the page loaded",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "retargeted onto whatever skeleton the loaded GLB carries"
+						}
+					]
+				},
+				{
+					"says": "one-shot clips play once and settle back into the idle without a snap at the boundary",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "one-shot clips play once and settle back into idle without a snap at the boundary"
+						}
+					]
+				},
+				{
+					"says": "so ambient autoplay stays suppressed for visitors who asked for stillness",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "ambient autoplay stays suppressed"
+						}
+					]
+				},
+				{
+					"says": "Browsers cap how many WebGL contexts can be alive at once, around 16 in Chrome",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "Browsers cap the number of simultaneous WebGL contexts (~16 in Chrome)."
+						}
+					]
+				},
+				{
+					"says": "the oldest context is silently lost when a page asks for more",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "Oldest context will"
+						}
+					]
+				},
+				{
+					"says": "An avatar that loses its context freezes or goes blank",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "that avatar freezes or turns blank"
+						}
+					]
+				},
+				{
+					"says": "when it comes within 300 pixels of the viewport",
 					"evidence": [
 						{
 							"type": "file",
@@ -9677,257 +10129,7 @@
 					]
 				},
 				{
-					"says": "loads the idle and walk clips",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "_am.ensureLoaded('idle'), _am.ensureLoaded('walk')"
-						}
-					]
-				},
-				{
-					"says": "Clip addresses are rebased onto the origin the script came from",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "Rebase each onto the bundle's own origin"
-						}
-					]
-				},
-				{
-					"says": "The canvas sits at opacity 0 while that happens",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": ".stage.is-settling { opacity: 0; transition: none; }"
-						},
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "Held while a freshly loaded body has no pose yet."
-						}
-					]
-				},
-				{
-					"says": "It snaps the idle in and waits two frames",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "The clip snaps in instead (fade 0), and the stage is"
-						},
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "revealed two frames later"
-						}
-					]
-				},
-				{
-					"says": "The agent:ready event fires once the element has booted, with the body already on screen holding its idle",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/docs/web-component",
-							"contains": "The body is already on screen holding its first clip"
-						}
-					]
-				},
-				{
-					"says": "That is the event to swap out your own placeholder image on",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "docs/web-component.md",
-							"contains": "This is the event to swap out your own placeholder image on."
-						}
-					]
-				},
-				{
-					"says": "The mapping covers Mixamo, Blender and Rigify, VRM and VRoid, Unreal, Daz and Genesis, MakeHuman, Roblox and Second Life",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "//   • Mixamo:"
-						},
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "//   • Blender:"
-						},
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "//   • Rigify:"
-						},
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "//   • VRM / VRoid:"
-						},
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "//   • Unreal mannequin:"
-						},
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "//   • Daz / Genesis:"
-						},
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "//   • MakeHuman:"
-						},
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "//   • Roblox R15/R6:"
-						},
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "//   • Second Life:"
-						}
-					]
-				},
-				{
-					"says": "30 of the 53 tracks in every clip in the library drive a finger joint",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "of the 53 tracks in every clip in /public/animations/clips address a finger"
-						}
-					]
-				},
-				{
-					"says": "a Mixamo character whose bones carry the mixamorig: prefix",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "public/avatars/michelle.glb",
-							"contains": "mixamorig:Hips"
-						}
-					]
-				},
-				{
-					"says": "the retarget builds no animation at all",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "and gets NO action built at all."
-						}
-					]
-				},
-				{
-					"says": "is shown in whatever pose the viewer gave it",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "A rig that cannot take the clip is"
-						},
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "revealed all the same, on whatever pose the viewer gave it."
-						}
-					]
-				},
-				{
-					"says": "will appear in its own rest pose",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "revealed all the same, on whatever pose the viewer gave it."
-						}
-					]
-				},
-				{
-					"says": "A plain tag with a body is a bare avatar",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "Default is BARE: a plain <agent-3d> (or one given"
-						},
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "chat, no input, no debug GUI, no name-plate."
-						}
-					]
-				},
-				{
-					"says": "a bare avatar settles into a single idle pose and freezes there, which also lets the render loop stop drawing",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "Reduced-motion path: settle into a single clean idle pose and freeze it, so"
-						},
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "render loop can idle (no continuous GPU/CPU cost)."
-						}
-					]
-				},
-				{
-					"says": "captures taken seconds apart came out byte for byte identical",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "am.freeze();"
-						}
-					]
-				},
-				{
-					"says": "switching it in the operating system takes effect without a reload",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "so a runtime flip of the OS setting re-applies playback:"
-						}
-					]
-				},
-				{
-					"says": "playClip(name, { userInitiated: true }) is the call for an animation behind a button",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/docs/web-component",
-							"contains": "Play even when the visitor has prefers-reduced-motion set"
-						},
-						{
-							"type": "file",
-							"path": "docs/web-component.md",
-							"contains": "| `opts.userInitiated` | boolean | Play even when the visitor has `prefers-reduced-motion` set."
-						}
-					]
-				},
-				{
-					"says": "around 16 in Chrome",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/element.js",
-							"contains": "Browsers cap the number of simultaneous WebGL contexts (~16 in Chrome)."
-						}
-					]
-				},
-				{
-					"says": "By default eight avatars are live at a time",
+					"says": "By default 8 avatars are live at a time",
 					"evidence": [
 						{
 							"type": "file",
@@ -9942,7 +10144,7 @@
 					]
 				},
 				{
-					"says": "it boots again when it scrolls back into view",
+					"says": "it boots again by itself when it scrolls back into view",
 					"evidence": [
 						{
 							"type": "file",
@@ -9952,7 +10154,7 @@
 					]
 				},
 				{
-					"says": "Whatever the reader is looking at is never the one evicted",
+					"says": "The avatar a reader is looking at is not the one released",
 					"evidence": [
 						{
 							"type": "file",
@@ -9962,17 +10164,382 @@
 					]
 				},
 				{
-					"says": "switched on with a chat attribute or by binding a published agent with agent-id",
+					"says": "A page that knows its own budget can change it before the script loads",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/element.js",
-							"contains": "the explicit `chat` attribute"
+							"contains": "window.AGENT3D_MAX_LIVE_VIEWERS"
+						}
+					]
+				},
+				{
+					"says": "wraps several <agent-3d> elements in one WebGL context, each keeping its own brain, memory and voice",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "Each agent keeps its own brain, memory, and voice pipeline"
+						}
+					]
+				},
+				{
+					"says": "the host page's CSS does not leak into its shadow DOM beyond a small set of custom properties",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "The host page's stylesheet cannot leak into the shadow DOM beyond these properties."
+						}
+					]
+				},
+				{
+					"says": "The background attribute chooses between transparent, dark and light",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "| `background` | `transparent` \\| `dark` \\| `light` |"
+						}
+					]
+				},
+				{
+					"says": "frames the head and shoulders for a profile card",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "`portrait` frames the head and shoulders"
+						}
+					]
+				},
+				{
+					"says": "the methods are safe to call before the ready event",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "All methods are safe to call before `agent:ready`"
+						}
+					]
+				},
+				{
+					"says": "triggers the lip-sync and talking gesture on the avatar without sending text to a model",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "Triggers a speak animation on the avatar (lip-sync / talking gesture) without sending the text to the LLM."
+						}
+					]
+				},
+				{
+					"says": "The element also accepts messages from a parent page when it is placed in an iframe",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "## postMessage bridge (iframe embeds)"
+						}
+					]
+				},
+				{
+					"says": "Content placed inside the tag is rendered as a fallback when JavaScript is disabled or the script fails to load",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "Content placed inside `<agent-3d>` is rendered as a fallback when JavaScript is disabled or the script fails to load."
+						}
+					]
+				},
+				{
+					"says": "a poster slot is shown during load and fades out when the model is ready",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "| `poster` | Shown during load; fades out when the model is ready. |"
+						}
+					]
+				},
+				{
+					"says": "an error slot replaces the default error overlay when loading fails",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "| `error` | Shown if loading fails. Replaces the default error overlay. |"
+						}
+					]
+				},
+				{
+					"says": "The element is also written for strict policies",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "`<agent-3d>` is compatible with strict Content Security Policies:"
+						}
+					]
+				},
+				{
+					"says": "An element placed in a sandboxed iframe needs allow-scripts, so that the element can run, and allow-same-origin, so that the browser can create a WebGL context",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "`allow-same-origin` is required for WebGL context creation."
+						}
+					]
+				},
+				{
+					"says": "the MIT-licensed 3D library, at release 0.184 in this build",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "STRUCTURE.md",
+							"contains": "r184 editor, MIT"
+						},
+						{
+							"type": "file",
+							"path": "package.json",
+							"contains": "\"three\": \"^0.184.0\""
+						}
+					]
+				},
+				{
+					"says": "The platform also integrates the Khronos glTF-Validator for checking them",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/js-api.md",
+							"contains": "Integrates the [Khronos glTF-Validator]"
+						}
+					]
+				},
+				{
+					"says": "The element itself is a Custom Element with a Shadow DOM",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "class Agent3DElement extends HTMLElement"
 						},
 						{
 							"type": "file",
 							"path": "src/element.js",
-							"contains": "binding to a published agent identity (`agent-id` / `manifest`)"
+							"contains": "this.attachShadow({ mode: 'open' });"
+						}
+					]
+				},
+				{
+					"says": "its lazy boot uses the IntersectionObserver API",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "**IntersectionObserver** starts watching the element."
+						}
+					]
+				},
+				{
+					"says": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network"
+						}
+					]
+				},
+				{
+					"says": "The free three.ws 3D Studio connector gives ChatGPT eleven keyless 3D tools",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "The free three.ws 3D Studio connector gives ChatGPT eleven keyless 3D tools"
+						}
+					]
+				},
+				{
+					"says": "IBM is listed as a Strategic partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "IBM Strategic"
+						}
+					]
+				},
+				{
+					"says": "3D agent identity integrates with IBM watsonx and IBM Granite",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "integrate with IBM watsonx and IBM Granite"
+						}
+					]
+				},
+				{
+					"says": "AWS is listed as a Cloud partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Amazon Web Services Cloud"
+						}
+					]
+				},
+				{
+					"says": "three.ws is deployed on AWS infrastructure with Marketplace availability",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Deployed on AWS infrastructure with Marketplace availability"
+						}
+					]
+				},
+				{
+					"says": "Google Cloud is listed as a Cloud partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Google Cloud Cloud"
+						}
+					]
+				},
+				{
+					"says": "Google Cloud powers three.ws inference, storage, and real-time serving, and Vertex AI integration lets agents use Gemini models",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Google Cloud powers three.ws inference, storage, and real-time serving at global scale. Vertex AI integration lets agents leverage Gemini models"
+						}
+					]
+				},
+				{
+					"says": "The release archive behind the pinned embed files is a Google Cloud Storage bucket",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "gs://three-ws-lib-releases/agent-3d/<version>/"
+						}
+					]
+				},
+				{
+					"says": "Alibaba Cloud is listed as a Cloud partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Alibaba Cloud Cloud"
+						}
+					]
+				},
+				{
+					"says": "It extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment"
+						}
+					]
+				},
+				{
+					"says": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing"
+						}
+					]
+				},
+				{
+					"says": "Every 3D generation lane already runs on NVIDIA silicon",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Every 3D generation lane already runs on NVIDIA silicon"
+						}
+					]
+				},
+				{
+					"says": "HackerNoon is listed as a Media partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "HackerNoon Media"
+						}
+					]
+				},
+				{
+					"says": "a builder-focused publishing partnership of feature articles, tutorials, and developer guides for people shipping with AI",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "A builder-focused publishing partnership: feature articles, tutorials, and developer guides for people shipping with AI"
+						}
+					]
+				},
+				{
+					"says": "Quicknode is listed as an Infrastructure partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Quicknode Infrastructure"
+						}
+					]
+				},
+				{
+					"says": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits"
+						}
+					]
+				},
+				{
+					"says": "Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets"
+						}
+					]
+				},
+				{
+					"says": "whether your own GLB will animate",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/rig-doctor",
+							"contains": "Will your avatar actually move?"
+						}
+					]
+				},
+				{
+					"says": "with nothing uploaded",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/rig-doctor",
+							"contains": "Nothing is uploaded"
 						}
 					]
 				}
@@ -9980,8 +10547,8 @@
 			"probes": [
 				{
 					"type": "api",
-					"name": "the runtime the snippet loads is served from the 1.x channel",
-					"url": "https://three.ws/agent-3d/1/agent-3d.js",
+					"name": "the pinned runtime the snippet loads is served",
+					"url": "https://three.ws/agent-3d/1.5.2/agent-3d.js",
 					"expect": {
 						"status": 200,
 						"contains": "is-settling"
@@ -9993,6 +10560,15 @@
 					"url": "https://three.ws/avatars/default.glb",
 					"expect": {
 						"status": 200
+					}
+				},
+				{
+					"type": "api",
+					"name": "the release manifest marks 1.5.2 immutable",
+					"url": "https://three.ws/agent-3d/versions.json",
+					"expect": {
+						"status": 200,
+						"contains": "\"immutable\": true"
 					}
 				},
 				{
@@ -10827,7 +11403,7 @@
 		},
 		{
 			"id": "mcp-article",
-			"status": "review",
+			"status": "approved",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
@@ -10837,16 +11413,16 @@
 				"/docs/mcp-studio"
 			],
 			"article": {
-				"title": "Fifteen free 3D tools for Claude Code and any MCP client, from one address",
+				"title": "Fifteen free 3D tools for Claude Code and any MCP client, one address, no account, no key needed",
 				"body": "data/x-content/articles/mcp-article.md",
 				"cover": {
 					"path": "public/x-media/mcp-article/cover.png",
-					"alt": "A vintage film camera rendered in the browser 3D viewer against a dark background, seen from the front three-quarter angle with its three-lens turret, speed dial and textured olive body; it is the CC0 catalog model the look_at_model tool rendered in the session the article walks through, one of the fifteen free tools on the server"
+					"alt": "An orange low-poly robot with a domed head and two round dark eyes, rendered on a dark background by the three.ws render endpoint; it is the model the look_at_model tool inspected in the session the article walks through, one of the fifteen free tools on the server"
 				}
 			},
 			"posts": [
 				{
-					"text": "Add one address to Claude Code or any MCP client and the assistant gets fifteen free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, a search of the free asset catalog, a persistent agent body that speaks, and look_at_model, which renders a model so the assistant can check its own work. The write-up includes a real session against the server."
+					"text": "Add one address to Claude Code or any MCP client and the assistant gets fifteen free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, a search of the free asset catalog, a persistent agent body that speaks, and look_at_model, which renders a model so the assistant can check its own work. The write-up follows one real session against the server, frame by frame, then covers retries, progress and quotas: https://three.ws/docs/mcp-studio"
 				}
 			],
 			"claims": [
@@ -10887,66 +11463,6 @@
 							"type": "file",
 							"path": "docs/mcp-studio.md",
 							"contains": "`tools/list` returns exactly **fifteen** tools"
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "All fifteen are free and keyless."
-						}
-					]
-				},
-				{
-					"says": "with no account or key",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "| **Auth** | None"
-						},
-						{
-							"type": "file",
-							"path": "docs/prompts.md",
-							"contains": "No account, no key"
-						}
-					]
-				},
-				{
-					"says": "a search of the free asset catalog",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "### Ready-made assets (`search_catalog`, `get_catalog_item`, `get_item_source`)"
-						},
-						{
-							"type": "file",
-							"path": "api/_mcp/tools/library.js",
-							"contains": "Search every ready-made asset three.ws publishes in one call"
-						}
-					]
-				},
-				{
-					"says": "a persistent agent body that speaks",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/persona-tools.js",
-							"contains": "Save a rigged model as a living, persistent agent body"
-						},
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/persona-tools.js",
-							"contains": "Speak a reply through a persona: lip-sync + emotion + gesture"
-						}
-					]
-				},
-				{
-					"says": "renders a model so the assistant can check its own work",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "generated a 3D asset had no way to check its own work, because a .glb is"
 						}
 					]
 				},
@@ -10961,37 +11477,37 @@
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "All fifteen are free and keyless."
+							"matches": "no account, no\\s+payment, no API key"
 						}
 					]
 				},
 				{
-					"says": "search a catalog of ready-made assets",
+					"says": "with no account or key",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "### Ready-made assets (`search_catalog`, `get_catalog_item`, `get_item_source`)"
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "Before generating anything, check whether three.ws already publishes it."
+							"contains": "| **Auth** | None"
 						}
 					]
 				},
 				{
-					"says": "give the assistant a persistent body that speaks",
+					"says": "connect with no credentials at all",
 					"evidence": [
 						{
 							"type": "file",
-							"path": "api/_mcp-studio/persona-tools.js",
-							"contains": "Save a rigged model as a living, persistent agent body"
-						},
+							"path": "docs/mcp-studio.md",
+							"contains": "| **Auth** | None"
+						}
+					]
+				},
+				{
+					"says": "captured against production",
+					"evidence": [
 						{
 							"type": "file",
-							"path": "api/_mcp-studio/persona-tools.js",
-							"contains": "Speak a reply through a persona: lip-sync + emotion + gesture"
+							"path": "docs/mcp-studio.md",
+							"contains": "| **URL** | `https://three.ws/api/mcp-studio` |"
 						}
 					]
 				},
@@ -11002,236 +11518,106 @@
 							"type": "file",
 							"path": ".agents/skills/connect-three-ws-mcp/SKILL.md",
 							"contains": "`.mcp.json` is read at startup"
-						},
+						}
+					]
+				},
+				{
+					"says": "because the file is read when a session starts",
+					"evidence": [
 						{
 							"type": "file",
 							"path": ".agents/skills/connect-three-ws-mcp/SKILL.md",
-							"contains": "Project scope, in `.mcp.json` at the repo root (Claude Code auto-discovers it):"
+							"contains": "`.mcp.json` is read at startup"
 						}
 					]
 				},
 				{
-					"says": "the address goes in as a custom connector with authentication set to None",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "docs/prompts.md",
-							"contains": "or add that URL as a custom connector in the Claude apps with authentication set to None"
-						}
-					]
-				},
-				{
-					"says": "Any other client only needs to know that the server speaks MCP over Streamable HTTP, protocol version 2025-06-18, and answers every request synchronously over POST",
+					"says": "The server answers every request synchronously over POST",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "| **Transport** | Streamable HTTP (JSON-RPC over `POST`) |"
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "| **Protocol** | MCP `2025-06-18` |"
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "answers every request synchronously over `POST`."
+							"contains": "the server\nanswers every request synchronously over"
 						}
 					]
 				},
 				{
-					"says": "forge_free turns a text prompt into a textured GLB",
+					"says": "so there is no stream to hold open",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "| `forge_free` | Generate a 3D model from text | `prompt`, `tier?`, `idempotency_key?` | GLB model |"
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "reliably textured"
+							"contains": "`GET` is intentionally not offered (no server-initiated stream)"
 						}
 					]
 				},
 				{
-					"says": "It takes a draft, standard or high tier, and standard is what you get when you leave the tier out",
+					"says": "a ChatGPT-focused address with a reviewed subset of nine 3D tools and the model viewer",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "`forge_free` takes an optional `tier` of `draft`, `standard`, or `high`."
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "**`standard` is the default**, and it is what you get when you omit the"
+							"contains": "| `https://three.ws/api/mcp-chatgpt` | the nine 3D tools and the model viewer |"
 						}
 					]
 				},
 				{
-					"says": "text_to_avatar and mesh_forge generate an avatar or an art-directed mesh from text or from a reference image",
+					"says": "a Grok address that answers every call within forty seconds",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "| `text_to_avatar` | Generate a 3D avatar | `prompt?` / `image_url?` | GLB avatar |"
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "| `mesh_forge` | Generate a 3D mesh (art-directed) | `prompt?` / `image_url?` | GLB mesh |"
+							"contains": "all fifteen tools, every call answered within 40 s"
 						}
 					]
 				},
 				{
-					"says": "rig_mesh adds a skeleton to a model you already have, so it can be animated",
+					"says": "share one generation quota",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "| `rig_mesh` | Rig a 3D model for animation | `glb_url` | rigged GLB |"
+							"matches": "share one\\s+generation quota"
 						}
 					]
 				},
 				{
-					"says": "forge_avatar generates a rigged, animation-ready avatar in one call",
+					"says": "serves all fifteen",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "| `forge_avatar` | Generate a rigged, animation-ready avatar |"
+							"contains": "all fifteen tools (the 3D tools, the asset catalog, the persona tools)"
 						}
 					]
 				},
 				{
-					"says": "returns the refined model with its version lineage",
+					"says": "a few lines",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "refined GLB + version lineage"
+							"contains": "curl -s https://three.ws/api/mcp-studio"
 						}
 					]
 				},
 				{
-					"says": "check_job collects a generation that outlived the tool call that started it",
+					"says": "The handshake reported the server as three-ws-3d-studio-free, version 1.0.0",
 					"evidence": [
 						{
 							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "| `check_job` | Check a pending 3D generation | `job_id` | GLB model, or an updated pending state |"
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "### Pending generations (`check_job`)"
+							"path": "api/_mcp-studio/dispatch.js",
+							"contains": "const SERVER_INFO = { name: 'three-ws-3d-studio-free', version: '1.0.0' };"
 						}
 					]
 				},
 				{
-					"says": "get_job reports the same job as a status a script can branch on, with progress and the seconds that remain",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "**`get_job(job_id)`** is the machine-readable twin of `check_job`"
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "reshaped so a client branches on `status` alone"
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "| `get_job` | Get the status of a 3D job | `job_id` | `status`, `progress`, `eta_seconds`"
-						}
-					]
-				},
-				{
-					"says": "search the platform's free asset catalog of CC0 props, rigged characters and motion clips, read one item in full, and return paste-ready code that renders it on any site",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "the CC0 prop library, the ready-made rigged characters and the motion-clip library."
-						},
-						{
-							"type": "file",
-							"path": "api/_mcp/tools/library.js",
-							"contains": "Read one three.ws catalog item in full by its id"
-						},
-						{
-							"type": "file",
-							"path": "api/_mcp/tools/library.js",
-							"contains": "Returns working code that renders one three.ws catalog item on any site"
-						}
-					]
-				},
-				{
-					"says": "save a rigged model as a persistent agent body, reload it by id in a later session, and speak a reply through it with lip-sync, emotion and gesture",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/persona-tools.js",
-							"contains": "Save a rigged model as a living, persistent agent body"
-						},
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/persona-tools.js",
-							"contains": "Reload a persona by id (continuity across sessions)"
-						},
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/persona-tools.js",
-							"contains": "Speak a reply through a persona: lip-sync + emotion + gesture"
-						}
-					]
-				},
-				{
-					"says": "We used the official MCP TypeScript SDK to connect with no credentials at all",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "package.json",
-							"contains": "\"@modelcontextprotocol/sdk\""
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "| **Auth** | None"
-						}
-					]
-				},
-				{
-					"says": "a CC0 film camera from the platform's free asset catalog",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/api/catalog?id=object:vintage_video_camera",
-							"contains": "\"license\":\"CC0\""
-						}
-					]
-				},
-				{
-					"says": "The server marks five of the fifteen tools read-only: look_at_model, the three catalog tools and get_agent_persona",
+					"says": "Five of the fifteen are marked read-only",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "api/_mcp-studio/tools.js",
 							"contains": "readOnlyHint: true, // renders a picture; changes nothing"
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "three read-only tools search the same catalog as the main server's tools of the"
-						},
-						{
-							"type": "file",
-							"path": "api/_mcp/tools/library.js",
-							"contains": "annotations: READ_ANNOTATIONS,"
 						},
 						{
 							"type": "file",
@@ -11240,243 +11626,323 @@
 						},
 						{
 							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "`get_agent_persona` is a pure read (`readOnlyHint:true`,"
+							"path": "api/_mcp/tools/library.js",
+							"contains": "readOnlyHint: true"
 						}
 					]
 				},
 				{
-					"says": "look_at_model changes nothing on the server",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "readOnlyHint: true, // renders a picture; changes nothing"
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "`look_at_model` is genuinely read-only and idempotent,"
-						}
-					]
-				},
-				{
-					"says": "the four plain links that come with any model result (viewer, GLB, poster PNG and embed HTML)",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "carries a model also carries four plain, absolute links under fixed snake_case"
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "- **Inspection**: `look_at_model`, for the model it rendered."
-						},
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "const links = assetLinks({ base, glbUrl, kind: 'model' });"
-						}
-					]
-				},
-				{
-					"says": "Rendered this model from 4 angle(s): three-quarter, front, side, back",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "`Rendered this model from ${turntable.frames.length} angle(s): ${shown}."
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "default three-quarter, front, side, back"
-						}
-					]
-				},
-				{
-					"says": "Geometry: 18,682 triangles",
+					"says": "the expressive robot from the platform's shared animation library",
 					"evidence": [
 						{
 							"type": "page",
-							"url": "https://three.ws/api/3d/inspect?url=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fvintage_video_camera.glb",
-							"contains": "\"triangles\":18682"
+							"url": "https://three.ws/animations/manifest.json",
+							"contains": "\"name\": \"idle\""
 						}
 					]
 				},
 				{
-					"says": "Before this tool, an assistant that generated a model could hand you a link and had no way to check its own work",
+					"says": "generate again with a prompt that names the specific fault",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "api/_mcp-studio/tools.js",
-							"contains": "generated a 3D asset had no way to check its own work, because a .glb is"
+							"matches": "generate\\s+'\\s*\\+\\s*'again with a prompt that names the specific fault"
 						}
 					]
 				},
 				{
-					"says": "is the subject complete and recognisable, is the far side finished, is anything melted, fused or missing",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "is the subject complete and recognisable, "
-						},
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "is the far side finished, is anything melted, fused, or missing?"
-						}
-					]
-				},
-				{
-					"says": "The text that comes back ends by telling the model to generate again with a prompt that names the specific fault",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "again with a prompt that names the specific fault."
-						}
-					]
-				},
-				{
-					"says": "which turns one-shot generation into a loop",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "one-shot generation into a loop."
-						}
-					]
-				},
-				{
-					"says": "By default it renders four views at 512 pixels",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "Frames are capped at 512 px and four views by default"
-						}
-					]
-				},
-				{
-					"says": "A caller can ask for up to six angles and frames up to 1024 pixels",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "maxItems: 6,"
-						},
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "maximum: 1024,"
-						}
-					]
-				},
-				{
-					"says": "It works on any public GLB over https, not only on models made by the platform",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "Works on any public https .glb, not only ones made here."
-						}
-					]
-				},
-				{
-					"says": "its structured result carries a link that opens the same model in the browser viewer",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "const links = assetLinks({ base, glbUrl, kind: 'model' });"
-						},
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/asset-links.js",
-							"contains": "viewer_url: `${origin}/viewer?src=${encodeURIComponent(glb)}&title=${encodeURIComponent(label)}`,"
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "| `viewer_url` | `https://three.ws/viewer?src=<glb>&title=<title>`, the interactive viewer |"
-						}
-					]
-				},
-				{
-					"says": "four generations a minute and 30 an hour",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/rate-limit.js",
-							"contains": "getLimiter('studio:gen:burst', { limit: 4, window: '1 m' })"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/rate-limit.js",
-							"contains": "getLimiter('studio:gen:hourly', { limit: 30, window: '1 h' })"
-						}
-					]
-				},
-				{
-					"says": "look_at_model rides the same quota, because it renders frames on the server",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/dispatch.js",
-							"contains": "look_at_model renders frames server-side, so"
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "but it renders frames server-side, so it rides the same per-IP generation"
-						}
-					]
-				},
-				{
-					"says": "check_job and the catalog tools never count against it",
+					"says": "up to six angles, adding top and bottom, and frames from 128 up to 1024 pixels",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "It still never counts against the generation quota."
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "The catalog tools never"
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "count against the generation quota."
+							"contains": "`views?` (up to 6 of `front`, `three-quarter`, `side`, `back`, `top`, `bottom`; default three-quarter, front, side, back), `size?` (128 to 1024 px, default 512)"
 						}
 					]
 				},
 				{
-					"says": "the call returns a pending job, and check_job collects it later rather than letting it be lost",
+					"says": "four views at 512 pixels",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "it returns a success result"
+							"contains": "`size?` (128 to 1024 px, default 512)"
 						}
 					]
 				},
 				{
-					"says": "runs on a self-hosted GPU worker that scales to zero",
+					"says": "It works on any public GLB over https",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "glb_url"
+						}
+					]
+				},
+				{
+					"says": "every result that carries a model also carries four absolute links under fixed names",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "That worker is"
+							"contains": "every result that\ncarries a model also carries four plain, absolute links under fixed snake_case\nnames"
+						}
+					]
+				},
+				{
+					"says": "with the script pinned to version 4.4.0 and carrying a sha384 integrity attribute",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "model-viewer@4.4.0/dist/model-viewer.min.js"
+						}
+					]
+				},
+				{
+					"says": "The same four lines open the text content",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "The same four lines open the text content"
+						}
+					]
+				},
+				{
+					"says": "the job keeps running on the server",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "the job keeps running server-side"
+						}
+					]
+				},
+				{
+					"says": "so the assistant knows how long to wait rather than retrying blind",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "so the assistant knows how\nlong to wait rather than retrying blind"
+						}
+					]
+				},
+				{
+					"says": "check_job returns the ordinary success envelope when the job is done",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "returns the ordinary success envelope"
+						}
+					]
+				},
+				{
+					"says": "Neither collector counts against the generation quota",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "`get_job` never\nstarts work and does not consume generation quota"
 						},
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "scale-to-zero"
+							"contains": "It does not consume generation quota"
+						}
+					]
+				},
+				{
+					"says": "a script can branch on a single status field",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "reshaped so a client branches on `status` alone"
+						}
+					]
+				},
+				{
+					"says": "Every generation tool accepts an optional idempotency_key",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "**`idempotency_key`** is an optional argument on `forge_free`, `text_to_avatar`,\n`mesh_forge`, `rig_mesh`, `forge_avatar` and `refine_model`"
+						}
+					]
+				},
+				{
+					"says": "within a day gets the original job back instead of a new generation",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "within 24 hours gets the original\njob back instead of a new generation"
+						}
+					]
+				},
+				{
+					"says": "A failure is never remembered",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "A failure is never remembered"
+						}
+					]
+				},
+				{
+					"says": "A different request under the same key is refused",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "A different request under the same key** is refused"
+						}
+					]
+				},
+				{
+					"says": "a notification each time the job moves",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"matches": "`notifications/progress` event each time the job reports\\s+movement"
+						}
+					]
+				},
+				{
+					"says": "A client that sends no token gets the ordinary single JSON response, unchanged",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "get the ordinary\nsingle JSON response, unchanged"
+						}
+					]
+				},
+				{
+					"says": "look_at_model rides the generation quota",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "it renders frames server-side, so it rides the same per-IP generation\nquota"
+						}
+					]
+				},
+				{
+					"says": "are never throttled by it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "are never\nthrottled by it"
+						}
+					]
+				},
+				{
+					"says": "A capped call returns HTTP 429 with a JSON-RPC error",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "A capped call returns HTTP 429 with a JSON-RPC error"
+						}
+					]
+				},
+				{
+					"says": "which is free, anonymous and needs no account",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"matches": "free, anonymous, no\\s+account"
+						}
+					]
+				},
+				{
+					"says": "its own burst and hourly budget",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"matches": "gets its own burst and\\s+hourly budget"
+						}
+					]
+				},
+				{
+					"says": "Keep it private, because whoever holds the URL spends that installation's budget",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "Keep the URL private: whoever holds it spends that\ninstallation's budget."
+						}
+					]
+				},
+				{
+					"says": "a protocol client that connects there is sent through sign-in first",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"matches": "protocol client that connects there is sent through three\\.ws\\s+sign-in first"
+						}
+					]
+				},
+				{
+					"says": "the catalog tools never count against it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "The catalog tools never\ncount against the generation quota."
+						}
+					]
+				},
+				{
+					"says": "the server's own instructions tell the assistant to search it before generating anything",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "Before generating anything, check whether three.ws already publishes it."
+						}
+					]
+				},
+				{
+					"says": "The result also carries a Spatial MCP artifact",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "Every result also includes a `spatial` field, the open Spatial MCP artifact"
+						}
+					]
+				},
+				{
+					"says": "The studio server was built for the ChatGPT app directory",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"matches": "Built for the\\s+OpenAI ChatGPT App Directory"
+						}
+					]
+				},
+				{
+					"says": "that worker shuts down when idle",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"matches": "That worker is\\s+scale-to-zero"
 						}
 					]
 				},
@@ -11486,47 +11952,202 @@
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "the call degrades to standard rather than"
+							"matches": "degrades to\\s+standard rather than\\s+failing the conversation"
 						}
 					]
 				},
 				{
-					"says": "The platform's main MCP server lists the same three, but a full MCP client that connects there is sent through sign-in first",
+					"says": "four generations a minute and thirty an hour for each IP address",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "The main server at `https://three.ws/api/mcp` lists the same three tools, but a"
+							"contains": "**Burst:** 4 generations / minute / IP"
 						},
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "protocol client that connects there is sent through three.ws sign-in first,"
+							"contains": "**Hourly:** 30 generations / hour / IP"
 						}
 					]
 				},
 				{
-					"says": "With no account, the free server is where a client reaches the catalog",
+					"says": "twenty persona writes a minute",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "They are here because this is the server an MCP client can use with no account."
-						},
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/catalog-tools.js",
-							"contains": "This keyless server is where a client with no account reaches the"
+							"contains": "**Persona writes:** 20 / minute / IP"
 						}
 					]
 				},
 				{
-					"says": "the server's own instructions tell the assistant to search it before generating anything",
+					"says": "three hundred requests a minute",
 					"evidence": [
 						{
 							"type": "file",
-							"path": "api/_mcp-studio/dispatch.js",
-							"contains": "Before generating a prop, character or animation, search_catalog(q) checks"
+							"path": "docs/mcp-studio.md",
+							"contains": "**Transport:** 300 requests / minute / IP"
+						}
+					]
+				},
+				{
+					"says": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network"
+						}
+					]
+				},
+				{
+					"says": "IBM is listed as a Strategic partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "IBM Strategic"
+						}
+					]
+				},
+				{
+					"says": "3D agent identity integrates with IBM watsonx and IBM Granite",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "integrate with IBM watsonx and IBM Granite"
+						}
+					]
+				},
+				{
+					"says": "AWS is listed as a Cloud partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Amazon Web Services Cloud"
+						}
+					]
+				},
+				{
+					"says": "three.ws is deployed on AWS infrastructure with Marketplace availability",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Deployed on AWS infrastructure with Marketplace availability"
+						}
+					]
+				},
+				{
+					"says": "Google Cloud is listed as a Cloud partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Google Cloud Cloud"
+						}
+					]
+				},
+				{
+					"says": "Google Cloud powers three.ws inference, storage, and real-time serving, and Vertex AI integration lets agents use Gemini models",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Google Cloud powers three.ws inference, storage, and real-time serving at global scale. Vertex AI integration lets agents leverage Gemini models"
+						}
+					]
+				},
+				{
+					"says": "Alibaba Cloud is listed as a Cloud partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Alibaba Cloud Cloud"
+						}
+					]
+				},
+				{
+					"says": "It extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment"
+						}
+					]
+				},
+				{
+					"says": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing"
+						}
+					]
+				},
+				{
+					"says": "Every 3D generation lane already runs on NVIDIA silicon",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Every 3D generation lane already runs on NVIDIA silicon"
+						}
+					]
+				},
+				{
+					"says": "HackerNoon is listed as a Media partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "HackerNoon Media"
+						}
+					]
+				},
+				{
+					"says": "a builder-focused publishing partnership of feature articles, tutorials, and developer guides for people shipping with AI",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "A builder-focused publishing partnership: feature articles, tutorials, and developer guides for people shipping with AI"
+						}
+					]
+				},
+				{
+					"says": "Quicknode is listed as an Infrastructure partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Quicknode Infrastructure"
+						}
+					]
+				},
+				{
+					"says": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits"
+						}
+					]
+				},
+				{
+					"says": "Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets"
 						}
 					]
 				}
@@ -11576,19 +12197,19 @@
 				},
 				{
 					"type": "api",
-					"name": "the camera the article inspected still reads 18,682 triangles",
-					"url": "https://three.ws/api/3d/inspect?url=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fvintage_video_camera.glb",
+					"name": "the robot the article inspected still reads 3237 triangles",
+					"url": "https://three.ws/api/3d/inspect?url=https%3A%2F%2Fthree.ws%2Fanimations%2Frobotexpressive.glb",
 					"expect": {
 						"json": {
 							"path": "stats.triangles",
-							"equals": 18682
+							"equals": 3237
 						}
 					}
 				},
 				{
 					"type": "api",
-					"name": "the camera model is still served",
-					"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/vintage_video_camera.glb",
+					"name": "the robot model is still served",
+					"url": "https://three.ws/animations/robotexpressive.glb",
 					"expect": {
 						"status": 200
 					}

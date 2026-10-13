@@ -1,12 +1,12 @@
 {
 	"id": "mcp-article",
-	"contentHash": "274e174344b45f0ad3efa61b7fe2f3be94c7bcf569a6faec30e0673e30bc6037",
-	"reviewedAt": "2026-10-09T17:16:56.619Z",
+	"contentHash": "ab62c6389b8783bf2a68629d5f6ba73cb1c8aea9845a5037be2d869b37254ba7",
+	"reviewedAt": "2026-10-13T06:39:20.322Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
-		"Fifteen free 3D tools for Claude Code and any MCP client, from one address",
-		"Add one address to Claude Code or any MCP client and the assistant gets fifteen free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, a search of the free asset catalog, a persistent agent body that speaks, and look_at_model, which renders a model so the assistant can check its own work. The write-up includes a real session against the server."
+		"Fifteen free 3D tools for Claude Code and any MCP client, one address, no account, no key needed",
+		"Add one address to Claude Code or any MCP client and the assistant gets fifteen free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, a search of the free asset catalog, a persistent agent body that speaks, and look_at_model, which renders a model so the assistant can check its own work. The write-up follows one real session against the server, frame by frame, then covers retries, progress and quotas: https://three.ws/docs/mcp-studio"
 	],
 	"lint": [],
 	"verification": {
@@ -48,62 +48,6 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "What the fifteen tools do",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "with no account or key",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "with no account or key",
-				"kind": "evidence:file",
-				"target": "docs/prompts.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a search of the free asset catalog",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a search of the free asset catalog",
-				"kind": "evidence:file",
-				"target": "api/_mcp/tools/library.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a persistent agent body that speaks",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/persona-tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a persistent agent body that speaks",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/persona-tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "renders a model so the assistant can check its own work",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
 				"claim": "runs an MCP server that needs no account and no API key",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
@@ -118,30 +62,23 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "search a catalog of ready-made assets",
+				"claim": "with no account or key",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "search a catalog of ready-made assets",
+				"claim": "connect with no credentials at all",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "give the assistant a persistent body that speaks",
+				"claim": "captured against production",
 				"kind": "evidence:file",
-				"target": "api/_mcp-studio/persona-tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "give the assistant a persistent body that speaks",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/persona-tools.js",
+				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
@@ -153,441 +90,308 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "the tools are there the next time a session starts",
+				"claim": "because the file is read when a session starts",
 				"kind": "evidence:file",
 				"target": ".agents/skills/connect-three-ws-mcp/SKILL.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "the address goes in as a custom connector with authentication set to None",
-				"kind": "evidence:file",
-				"target": "docs/prompts.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "Any other client only needs to know that the server speaks MCP over Streamable HTTP, protocol version 2025-06-18, and answers every request synchronously over POST",
+				"claim": "The server answers every request synchronously over POST",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "Any other client only needs to know that the server speaks MCP over Streamable HTTP, protocol version 2025-06-18, and answers every request synchronously over POST",
+				"claim": "so there is no stream to hold open",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "Any other client only needs to know that the server speaks MCP over Streamable HTTP, protocol version 2025-06-18, and answers every request synchronously over POST",
+				"claim": "a ChatGPT-focused address with a reviewed subset of nine 3D tools and the model viewer",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "forge_free turns a text prompt into a textured GLB",
+				"claim": "a Grok address that answers every call within forty seconds",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "forge_free turns a text prompt into a textured GLB",
+				"claim": "share one generation quota",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "It takes a draft, standard or high tier, and standard is what you get when you leave the tier out",
+				"claim": "serves all fifteen",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "It takes a draft, standard or high tier, and standard is what you get when you leave the tier out",
+				"claim": "a few lines",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "text_to_avatar and mesh_forge generate an avatar or an art-directed mesh from text or from a reference image",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "text_to_avatar and mesh_forge generate an avatar or an art-directed mesh from text or from a reference image",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "rig_mesh adds a skeleton to a model you already have, so it can be animated",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "forge_avatar generates a rigged, animation-ready avatar in one call",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "returns the refined model with its version lineage",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "check_job collects a generation that outlived the tool call that started it",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "check_job collects a generation that outlived the tool call that started it",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "get_job reports the same job as a status a script can branch on, with progress and the seconds that remain",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "get_job reports the same job as a status a script can branch on, with progress and the seconds that remain",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "get_job reports the same job as a status a script can branch on, with progress and the seconds that remain",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "search the platform's free asset catalog of CC0 props, rigged characters and motion clips, read one item in full, and return paste-ready code that renders it on any site",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "search the platform's free asset catalog of CC0 props, rigged characters and motion clips, read one item in full, and return paste-ready code that renders it on any site",
-				"kind": "evidence:file",
-				"target": "api/_mcp/tools/library.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "search the platform's free asset catalog of CC0 props, rigged characters and motion clips, read one item in full, and return paste-ready code that renders it on any site",
-				"kind": "evidence:file",
-				"target": "api/_mcp/tools/library.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "save a rigged model as a persistent agent body, reload it by id in a later session, and speak a reply through it with lip-sync, emotion and gesture",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/persona-tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "save a rigged model as a persistent agent body, reload it by id in a later session, and speak a reply through it with lip-sync, emotion and gesture",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/persona-tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "save a rigged model as a persistent agent body, reload it by id in a later session, and speak a reply through it with lip-sync, emotion and gesture",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/persona-tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "We used the official MCP TypeScript SDK to connect with no credentials at all",
-				"kind": "evidence:file",
-				"target": "package.json",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "We used the official MCP TypeScript SDK to connect with no credentials at all",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a CC0 film camera from the platform's free asset catalog",
-				"kind": "evidence:page",
-				"target": "https://three.ws/api/catalog?id=object:vintage_video_camera",
-				"ok": true,
-				"detail": "live page shows \"\"license\":\"CC0\"\""
-			},
-			{
-				"claim": "The server marks five of the fifteen tools read-only: look_at_model, the three catalog tools and get_agent_persona",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The server marks five of the fifteen tools read-only: look_at_model, the three catalog tools and get_agent_persona",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The server marks five of the fifteen tools read-only: look_at_model, the three catalog tools and get_agent_persona",
-				"kind": "evidence:file",
-				"target": "api/_mcp/tools/library.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The server marks five of the fifteen tools read-only: look_at_model, the three catalog tools and get_agent_persona",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/persona-tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The server marks five of the fifteen tools read-only: look_at_model, the three catalog tools and get_agent_persona",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "look_at_model changes nothing on the server",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "look_at_model changes nothing on the server",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "the four plain links that come with any model result (viewer, GLB, poster PNG and embed HTML)",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "the four plain links that come with any model result (viewer, GLB, poster PNG and embed HTML)",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "the four plain links that come with any model result (viewer, GLB, poster PNG and embed HTML)",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "Rendered this model from 4 angle(s): three-quarter, front, side, back",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "Rendered this model from 4 angle(s): three-quarter, front, side, back",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "Geometry: 18,682 triangles",
-				"kind": "evidence:page",
-				"target": "https://three.ws/api/3d/inspect?url=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fvintage_video_camera.glb",
-				"ok": true,
-				"detail": "live page shows \"\"triangles\":18682\""
-			},
-			{
-				"claim": "Before this tool, an assistant that generated a model could hand you a link and had no way to check its own work",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "is the subject complete and recognisable, is the far side finished, is anything melted, fused or missing",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "is the subject complete and recognisable, is the far side finished, is anything melted, fused or missing",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The text that comes back ends by telling the model to generate again with a prompt that names the specific fault",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "which turns one-shot generation into a loop",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "By default it renders four views at 512 pixels",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "A caller can ask for up to six angles and frames up to 1024 pixels",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "A caller can ask for up to six angles and frames up to 1024 pixels",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "It works on any public GLB over https, not only on models made by the platform",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "its structured result carries a link that opens the same model in the browser viewer",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "its structured result carries a link that opens the same model in the browser viewer",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/asset-links.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "its structured result carries a link that opens the same model in the browser viewer",
-				"kind": "evidence:file",
-				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "four generations a minute and 30 an hour",
-				"kind": "evidence:file",
-				"target": "api/_lib/rate-limit.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "four generations a minute and 30 an hour",
-				"kind": "evidence:file",
-				"target": "api/_lib/rate-limit.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "look_at_model rides the same quota, because it renders frames on the server",
+				"claim": "The handshake reported the server as three-ws-3d-studio-free, version 1.0.0",
 				"kind": "evidence:file",
 				"target": "api/_mcp-studio/dispatch.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "look_at_model rides the same quota, because it renders frames on the server",
+				"claim": "Five of the fifteen are marked read-only",
+				"kind": "evidence:file",
+				"target": "api/_mcp-studio/tools.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Five of the fifteen are marked read-only",
+				"kind": "evidence:file",
+				"target": "api/_mcp-studio/persona-tools.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Five of the fifteen are marked read-only",
+				"kind": "evidence:file",
+				"target": "api/_mcp/tools/library.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the expressive robot from the platform's shared animation library",
+				"kind": "evidence:page",
+				"target": "https://three.ws/animations/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"name\": \"idle\"\""
+			},
+			{
+				"claim": "generate again with a prompt that names the specific fault",
+				"kind": "evidence:file",
+				"target": "api/_mcp-studio/tools.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "up to six angles, adding top and bottom, and frames from 128 up to 1024 pixels",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "check_job and the catalog tools never count against it",
+				"claim": "four views at 512 pixels",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "check_job and the catalog tools never count against it",
+				"claim": "It works on any public GLB over https",
+				"kind": "evidence:file",
+				"target": "api/_mcp-studio/tools.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "every result that carries a model also carries four absolute links under fixed names",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "check_job and the catalog tools never count against it",
+				"claim": "with the script pinned to version 4.4.0 and carrying a sha384 integrity attribute",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "the call returns a pending job, and check_job collects it later rather than letting it be lost",
+				"claim": "The same four lines open the text content",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "runs on a self-hosted GPU worker that scales to zero",
+				"claim": "the job keeps running on the server",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "runs on a self-hosted GPU worker that scales to zero",
+				"claim": "so the assistant knows how long to wait rather than retrying blind",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "check_job returns the ordinary success envelope when the job is done",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Neither collector counts against the generation quota",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Neither collector counts against the generation quota",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a script can branch on a single status field",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Every generation tool accepts an optional idempotency_key",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "within a day gets the original job back instead of a new generation",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A failure is never remembered",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A different request under the same key is refused",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a notification each time the job moves",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A client that sends no token gets the ordinary single JSON response, unchanged",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "look_at_model rides the generation quota",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "are never throttled by it",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A capped call returns HTTP 429 with a JSON-RPC error",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "which is free, anonymous and needs no account",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "its own burst and hourly budget",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Keep it private, because whoever holds the URL spends that installation's budget",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a protocol client that connects there is sent through sign-in first",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the catalog tools never count against it",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the server's own instructions tell the assistant to search it before generating anything",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The result also carries a Spatial MCP artifact",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The studio server was built for the ChatGPT app directory",
+				"kind": "evidence:file",
+				"target": "docs/mcp-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "that worker shuts down when idle",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
@@ -601,39 +405,144 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The platform's main MCP server lists the same three, but a full MCP client that connects there is sent through sign-in first",
+				"claim": "four generations a minute and thirty an hour for each IP address",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The platform's main MCP server lists the same three, but a full MCP client that connects there is sent through sign-in first",
+				"claim": "four generations a minute and thirty an hour for each IP address",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "With no account, the free server is where a client reaches the catalog",
+				"claim": "twenty persona writes a minute",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "With no account, the free server is where a client reaches the catalog",
+				"claim": "three hundred requests a minute",
 				"kind": "evidence:file",
-				"target": "api/_mcp-studio/catalog-tools.js",
+				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "the server's own instructions tell the assistant to search it before generating anything",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/dispatch.js",
+				"claim": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
 				"ok": true,
-				"detail": "file supports the claim"
+				"detail": "live page shows \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network\""
+			},
+			{
+				"claim": "IBM is listed as a Strategic partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"IBM Strategic\""
+			},
+			{
+				"claim": "3D agent identity integrates with IBM watsonx and IBM Granite",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"integrate with IBM watsonx and IBM Granite\""
+			},
+			{
+				"claim": "AWS is listed as a Cloud partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Amazon Web Services Cloud\""
+			},
+			{
+				"claim": "three.ws is deployed on AWS infrastructure with Marketplace availability",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Deployed on AWS infrastructure with Marketplace availability\""
+			},
+			{
+				"claim": "Google Cloud is listed as a Cloud partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Google Cloud Cloud\""
+			},
+			{
+				"claim": "Google Cloud powers three.ws inference, storage, and real-time serving, and Vertex AI integration lets agents use Gemini models",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Google Cloud powers three.ws inference, storage, and real-time serving at global scale. Vertex AI integration lets agents leverage Gemini models\""
+			},
+			{
+				"claim": "Alibaba Cloud is listed as a Cloud partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Alibaba Cloud Cloud\""
+			},
+			{
+				"claim": "It extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment\""
+			},
+			{
+				"claim": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing\""
+			},
+			{
+				"claim": "Every 3D generation lane already runs on NVIDIA silicon",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Every 3D generation lane already runs on NVIDIA silicon\""
+			},
+			{
+				"claim": "HackerNoon is listed as a Media partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"HackerNoon Media\""
+			},
+			{
+				"claim": "a builder-focused publishing partnership of feature articles, tutorials, and developer guides for people shipping with AI",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"A builder-focused publishing partnership: feature articles, tutorials, and developer guides for people shipping with AI\""
+			},
+			{
+				"claim": "Quicknode is listed as an Infrastructure partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Quicknode Infrastructure\""
+			},
+			{
+				"claim": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"three.ws is a member of the Quicknode Startup Program with approved infrastructure credits\""
+			},
+			{
+				"claim": "Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets\""
 			},
 			{
 				"kind": "probe:api",
@@ -649,13 +558,13 @@
 			},
 			{
 				"kind": "probe:api",
-				"target": "the camera the article inspected still reads 18,682 triangles",
+				"target": "the robot the article inspected still reads 3237 triangles",
 				"ok": true,
 				"detail": "HTTP 200, expectations met"
 			},
 			{
 				"kind": "probe:api",
-				"target": "the camera model is still served",
+				"target": "the robot model is still served",
 				"ok": true,
 				"detail": "HTTP 200, expectations met"
 			},
@@ -667,25 +576,49 @@
 			},
 			{
 				"kind": "link",
-				"target": "https://three.ws",
-				"ok": true,
-				"detail": "HTTP 200 via https://three.ws/"
-			},
-			{
-				"kind": "link",
-				"target": "https://three.ws/objects",
-				"ok": true,
-				"detail": "HTTP 200"
-			},
-			{
-				"kind": "link",
 				"target": "https://three.ws/docs/mcp-studio",
 				"ok": true,
 				"detail": "HTTP 200"
 			},
 			{
 				"kind": "link",
+				"target": "https://three.ws",
+				"ok": true,
+				"detail": "HTTP 200 via https://three.ws/"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/animations/robotexpressive.glb",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/animations/robotexpressive.glb",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
 				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fanimations%2Frobotexpressive.glb",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/docs/web-component",
 				"ok": true,
 				"detail": "HTTP 200"
 			}
@@ -695,7 +628,7 @@
 		"verdict": "publish",
 		"scores": {
 			"accuracy": 5,
-			"clarity": 4,
+			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
@@ -705,20 +638,27 @@
 			{
 				"severity": "minor",
 				"area": "clarity",
-				"quote": "text or an image to a textured model, rigged avatars, rigging, refinement, a search of the free asset catalog, a persistent agent body that speaks",
-				"problem": "The head post compresses fifteen tools into one long comma list, so the individual capabilities blur together slightly for a first-time reader.",
-				"fix": "Optional: split the list with semicolons, e.g. \"text or an image to a textured model; rigged avatars; rigging; refinement; a search of the free asset catalog; a persistent agent body that speaks; and look_at_model, which renders a model so the assistant can check its own work.\""
+				"quote": "a search of the free asset catalog",
+				"problem": "The phrasing 'a search of' is slightly awkward next to the parallel verb phrases in the list; a reader skimming the first line parses it fine but it is the least smooth item in the enumeration.",
+				"fix": "Optionally change to 'search of a free asset catalog' or leave as is; not blocking."
+			},
+			{
+				"severity": "minor",
+				"area": "accuracy",
+				"quote": "The same four lines open the text content",
+				"problem": "This literal HTML/field wording is verified but opaque to a casual reader; the sentence works only because of surrounding context.",
+				"fix": "Could add '(viewer_url, glb_url, poster_png_url, embed_html)' inline, but the surrounding table already covers it, so this is polish only."
 			}
 		],
 		"rewrite": {
 			"posts": [
-				"Add one address to Claude Code or any MCP client and the assistant gets fifteen free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, a search of the free asset catalog, a persistent agent body that speaks, and look_at_model, which renders a model so the assistant can check its own work. The write-up includes a real session against the server."
+				"Add one address to Claude Code or any MCP client and the assistant gets fifteen free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, a search of the free asset catalog, a persistent agent body that speaks, and look_at_model, which renders a model so the assistant can check its own work. The write-up follows one real session against the server, frame by frame, then covers retries, progress and quotas: https://three.ws/docs/mcp-studio"
 			],
 			"altText": [
-				"A vintage film camera rendered in the browser 3D viewer against a dark background, seen from the front three-quarter angle with its three-lens turret, speed dial and textured olive body; it is the CC0 catalog model the look_at_model tool rendered in the session the article walks through, one of the fifteen free tools on the server"
+				"An orange low-poly robot with a domed head and two round dark eyes, rendered on a dark background by the three.ws render endpoint; it is the model the look_at_model tool inspected in the session the article walks through, one of the fifteen free tools on the server"
 			]
 		},
-		"summary": "Every claim in the post and article matches a passing verification, including the live probes of the keyless server and the 18,682-triangle camera reading, and the cover image matches the described session. Voice, professionalism, and the alt text all conform to the contract; the only nit is a slightly dense comma list in the summary, which is not worth holding the post.",
+		"summary": "Every claim in the post and article verified against the docs, code, live partners page, and live API probes, and the head post keeps the same link and obeys the voice contract. The Article meets depth and shape (97-character title with the headline number, 8+ sections, one real run followed through every stage, partners with exact designations, code and tables well over limits, 4 inline images, Try it section), and the cover matches the copy with solid alt text. Ship as is.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
@@ -729,45 +669,70 @@
 			"claims: claim \"fifteen free tools for 3D work\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"What the fifteen tools do\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"runs an MCP server that needs no account and no API key\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"search a catalog of ready-made assets\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"give the assistant a persistent body that speaks\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"connect with no credentials at all\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"captured against production\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"the tools are there the next time a session starts\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the address goes in as a custom connector with authentication set to None\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Any other client only needs to know that the server speaks MCP over Streamable HTTP, protocol version 2025-06-18, and answers every request synchronously over POST\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"forge_free turns a text prompt into a textured GLB\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"It takes a draft, standard or high tier, and standard is what you get when you leave the tier out\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"text_to_avatar and mesh_forge generate an avatar or an art-directed mesh from text or from a reference image\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"rig_mesh adds a skeleton to a model you already have, so it can be animated\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"forge_avatar generates a rigged, animation-ready avatar in one call\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"returns the refined model with its version lineage\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"check_job collects a generation that outlived the tool call that started it\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"get_job reports the same job as a status a script can branch on, with progress and the seconds that remain\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"search the platform's free asset catalog of CC0 props, rigged characters and motion clips, read one item in full, and return paste-ready code that renders it on any site\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"save a rigged model as a persistent agent body, reload it by id in a later session, and speak a reply through it with lip-sync, emotion and gesture\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"We used the official MCP TypeScript SDK to connect with no credentials at all\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a CC0 film camera from the platform's free asset catalog\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The server marks five of the fifteen tools read-only: look_at_model, the three catalog tools and get_agent_persona\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"look_at_model changes nothing on the server\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the four plain links that come with any model result (viewer, GLB, poster PNG and embed HTML)\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Rendered this model from 4 angle(s): three-quarter, front, side, back\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Geometry: 18,682 triangles\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Before this tool, an assistant that generated a model could hand you a link and had no way to check its own work\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"is the subject complete and recognisable, is the far side finished, is anything melted, fused or missing\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The text that comes back ends by telling the model to generate again with a prompt that names the specific fault\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"which turns one-shot generation into a loop\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"By default it renders four views at 512 pixels\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A caller can ask for up to six angles and frames up to 1024 pixels\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"It works on any public GLB over https, not only on models made by the platform\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"its structured result carries a link that opens the same model in the browser viewer\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"four generations a minute and 30 an hour\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"look_at_model rides the same quota, because it renders frames on the server\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"check_job and the catalog tools never count against it\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the call returns a pending job, and check_job collects it later rather than letting it be lost\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"runs on a self-hosted GPU worker that scales to zero\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"because the file is read when a session starts\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The server answers every request synchronously over POST\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"so there is no stream to hold open\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a ChatGPT-focused address with a reviewed subset of nine 3D tools and the model viewer\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a Grok address that answers every call within forty seconds\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"share one generation quota\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"serves all fifteen\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a few lines\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The handshake reported the server as three-ws-3d-studio-free, version 1.0.0\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Five of the fifteen are marked read-only\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the expressive robot from the platform's shared animation library\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"generate again with a prompt that names the specific fault\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"up to six angles, adding top and bottom, and frames from 128 up to 1024 pixels\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"four views at 512 pixels\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It works on any public GLB over https\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"every result that carries a model also carries four absolute links under fixed names\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"with the script pinned to version 4.4.0 and carrying a sha384 integrity attribute\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The same four lines open the text content\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the job keeps running on the server\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"so the assistant knows how long to wait rather than retrying blind\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"check_job returns the ordinary success envelope when the job is done\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Neither collector counts against the generation quota\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a script can branch on a single status field\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Every generation tool accepts an optional idempotency_key\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"within a day gets the original job back instead of a new generation\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A failure is never remembered\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A different request under the same key is refused\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a notification each time the job moves\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A client that sends no token gets the ordinary single JSON response, unchanged\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"look_at_model rides the generation quota\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"are never throttled by it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A capped call returns HTTP 429 with a JSON-RPC error\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"which is free, anonymous and needs no account\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"its own burst and hourly budget\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Keep it private, because whoever holds the URL spends that installation's budget\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a protocol client that connects there is sent through sign-in first\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the catalog tools never count against it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the server's own instructions tell the assistant to search it before generating anything\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The result also carries a Spatial MCP artifact\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The studio server was built for the ChatGPT app directory\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"that worker shuts down when idle\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"the call degrades to standard rather than failing the conversation\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The platform's main MCP server lists the same three, but a full MCP client that connects there is sent through sign-in first\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"With no account, the free server is where a client reaches the catalog\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the server's own instructions tell the assistant to search it before generating anything\" does not appear in the copy; claims must quote the post"
+			"claims: claim \"four generations a minute and thirty an hour for each IP address\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"twenty persona writes a minute\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three hundred requests a minute\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"IBM is listed as a Strategic partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"3D agent identity integrates with IBM watsonx and IBM Granite\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"AWS is listed as a Cloud partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is deployed on AWS infrastructure with Marketplace availability\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Google Cloud is listed as a Cloud partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Google Cloud powers three.ws inference, storage, and real-time serving, and Vertex AI integration lets agents use Gemini models\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Alibaba Cloud is listed as a Cloud partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Every 3D generation lane already runs on NVIDIA silicon\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"HackerNoon is listed as a Media partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a builder-focused publishing partnership of feature articles, tutorials, and developer guides for people shipping with AI\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Quicknode is listed as an Infrastructure partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of the Quicknode Startup Program with approved infrastructure credits\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets\" does not appear in the copy; claims must quote the post"
 		]
 	},
 	"editorError": null
