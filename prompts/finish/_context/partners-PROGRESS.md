@@ -95,3 +95,13 @@ upload phase permanently disabled, per-clip credit in the `/animations` gallery)
   populate the live (currently empty) endpoint. This is a production-publish action under
   CLAUDE.md's gate 2, so the order file stays on disk with a dated Evolve status paragraph
   instead of being retired; retire it once the owner runs that command.
+
+Re-run 2026-10-13: re-verified against the live state (`GET /api/animations/library?facets=1`
+still `total: 0`, `scripts/mixamo-all.mjs`'s upload phase still disabled, 21/21
+`tests/animations-library-endpoint.test.js` still passing, `audit:docs` still 21 pre-existing
+findings), nothing had drifted. Found and fixed one stale doc comment:
+`api/animations/library.js`'s top-of-file header still described the library as
+"Mixamo-sourced motion library...baked by scripts/mixamo-all.mjs" from before the CC0
+rebuild, which could mislead a future reader into thinking Mixamo redistribution was still
+live (`39b98edfb`). Owner-action row 50 and the permission-letter draft are unchanged; still
+waiting on the owner to run the upload command.
