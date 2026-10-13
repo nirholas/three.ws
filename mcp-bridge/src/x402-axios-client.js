@@ -18,6 +18,7 @@
 //   - session:   cumulative atomic spent this process would exceed
 //                MCP_BRIDGE_MAX_TOTAL_ATOMIC (default 1_000_000 = $1.00)
 //   - payee:     selected `payTo` not in MCP_BRIDGE_ALLOWED_PAYTO (when set)
+//   - optional:  MCP_BRIDGE_PREPAY_CHECK=1 adds a fail-open listing check after the cap (src/prepay-check.js)
 // The session accumulator only increments when a payment is actually created.
 //
 // Channel storage: `FileClientChannelStorage` persists voucher + cumulative
@@ -36,6 +37,7 @@ import { ExactSvmScheme } from '@x402/svm/exact/client';
 import { getEvmSigner, getSvmSigner } from './signers.js';
 import { getChannelsDirectory } from './storage.js';
 import { maxPriceAtomic } from './url-guard.js';
+import { buildPrepayCheckHook } from './prepay-check.js';
 
 const DEFAULT_DEPOSIT_MULTIPLIER = 5;
 const DEFAULT_MAX_DEPOSIT_ATOMIC = 5_000_000n; // $5.00 USDC cap on a single deposit
@@ -144,6 +146,9 @@ export async function buildBuyerAxios() {
 
 	const client = new x402Client();
 	client.onBeforePaymentCreation(buildSpendingCapHook());
+	// Opt-in (MCP_BRIDGE_PREPAY_CHECK=1); registered after the cap so an over-cap payment never reaches it.
+	const prepayCheck = buildPrepayCheckHook();
+	if (prepayCheck) client.onBeforePaymentCreation(prepayCheck);
 
 	const evmSigner = getEvmSigner();
 	if (evmSigner) {
