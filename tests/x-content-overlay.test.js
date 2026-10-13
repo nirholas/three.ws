@@ -617,3 +617,22 @@ describe('where bundles live in the bucket', () => {
 		expect(() => sealedKey(INDEX_KEY, {})).toThrow(/X_CONTENT_BUNDLE_SECRET is not set/);
 	});
 });
+
+describe('bundle storage selection', () => {
+	const secretEnv = { X_CONTENT_BUNDLE_SECRET: 'a'.repeat(64) };
+
+	it('uses Google Cloud Storage when a bundle bucket is named', async () => {
+		const { bundleStorage } = await import('../api/_lib/x-content/overlay.js');
+		expect(bundleStorage({ ...secretEnv, X_CONTENT_BUNDLE_BUCKET: 'bundles' }).label).toBe('Google Cloud Storage');
+	});
+
+	it('keeps object storage (R2) when no bucket is named', async () => {
+		const { bundleStorage } = await import('../api/_lib/x-content/overlay.js');
+		expect(bundleStorage(secretEnv).label).toBe('object storage');
+	});
+
+	it('refuses a GCS store without a bucket', async () => {
+		const { gcsStorage } = await import('../api/_lib/x-content/overlay.js');
+		expect(() => gcsStorage(secretEnv)).toThrow(/X_CONTENT_BUNDLE_BUCKET/);
+	});
+});
