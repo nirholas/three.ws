@@ -735,7 +735,7 @@ genuinely invested in the user's progress.
 
 ## Every runnable example in the repo
 
-The repo ships 49 examples: 12 web component demos, 11 end-to-end projects, and 26 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
+The repo ships 50 examples: 12 web component demos, 12 end-to-end projects, and 26 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
 
 ### Example projects
 
@@ -750,6 +750,7 @@ The repo ships 49 examples: 12 web component demos, 11 end-to-end projects, and 
 | [`examples/monicas-apartment`](../examples/monicas-apartment) | A single, self-contained HTML file that rebuilds the iconic Monica Geller apartment set from Friends as a walkable first-person 3D scene: purple walls, the purple front door with the yellow peephole frame, teal kitchen cabinets, the mismatched dining chairs, | `npm run dev, then open /examples/monicas-apartment/index.html` |
 | [`examples/paid-mcp-server`](../examples/paid-mcp-server) | A complete, runnable MCP server whose tools charge per call in USDC on Solana over x402. It ships two tools on purpose: | `cd examples/paid-mcp-server && npm install && npm run start` |
 | [`examples/pump-fun-agent`](../examples/pump-fun-agent) | An example agent manifest that composes all four production pump.fun skills into one 3D trading agent: swap, coin creation, creator-fee collection, and token payments. | Reference files, nothing to execute |
+| [`examples/google-adk`](../examples/google-adk) | A Google Agent Development Kit agent that calls the free three.ws MCP server through MCPToolset. Zero three.ws credentials: the server is https://three.ws/api/mcp-studio, the free studio surface (no account, no key). | `node examples/google-adk/index.mjs` |
 | [`examples/three-concierge`](../examples/three-concierge) | The reference agent for manifest spec agent-manifest/0.2. Trinity welcomes users to three.ws, explains the platform, and launches and trades $three on pump.fun through the real pump.fun skills in pump-fun-skills/. | Reference files, nothing to execute |
 | [`examples/wallet-sign-in`](../examples/wallet-sign-in) | A single-page, no-build demo of the two wallet authentication rails three.ws runs itself: Sign-In with Solana (SIWS) and Sign-In with Ethereum (SIWE). | `npm run dev, then open /examples/wallet-sign-in/index.html` |
 

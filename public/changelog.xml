@@ -15,6 +15,14 @@
 			<description>Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.</description>
 		</item>
 		<item>
+			<title>Docs · three.ws with Google ADK</title>
+			<link>https://three.ws/docs/google-adk</link>
+			<guid isPermaLink="false">2026-10-13:Docs · three.ws with Google ADK</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Connect a Google Agent Development Kit agent to the free three.ws 3D studio over MCPToolset: discover the tool catalog, forge and rig models, and run a full LlmAgent conversation. No account, payment or API key for the studio tools.</description>
+		</item>
+		<item>
 			<title>Docs: Discord Activity (Forge Room)</title>
 			<link>https://three.ws/docs/discord-activity</link>
 			<guid isPermaLink="false">2026-10-13:Docs: Discord Activity (Forge Room)</guid>

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-13T18:47:35.231Z",
+	"generated_at": "2026-10-13T20:28:35.677Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -6805,6 +6805,18 @@
 					"title": "Docs · three.ws for Grok",
 					"description": "Connect Grok Bot, Grok connectors or the xAI API to the free three.ws remote MCP server at /api/mcp-grok: text and image to 3D, rigged avatars, and a named 3D persona that lip-syncs its replies, with no account, payment or API key.",
 					"added": "2026-10-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/google-adk",
+					"title": "Docs · three.ws with Google ADK",
+					"description": "Connect a Google Agent Development Kit agent to the free three.ws 3D studio over MCPToolset: discover the tool catalog, forge and rig models, and run a full LlmAgent conversation. No account, payment or API key for the studio tools.",
+					"added": "2026-10-13",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

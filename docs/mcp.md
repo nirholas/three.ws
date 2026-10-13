@@ -177,6 +177,7 @@ Deep dives — every tool, argument, env var, and example:
 - **Runs against your machine:** [Blender MCP](./blender-mcp.md) drives the Blender installed on your own computer, headless: inspect, convert, render and script 3D files, plus text-to-3D straight into a scene.
 - **Install-and-run:** each npm server ships its usage guide (tools, arguments, env vars, examples) in its package README on [npmjs.com/org/three-ws](https://www.npmjs.com/org/three-ws). The [MCP Tools Catalog](./mcp-tools.md) maps every tool to its server and price.
 - **Solana Memo Media:** [full guide](./mcp-solana-memo-media.md) for validating and rendering data URI images embedded in SPL Memo instructions.
+- **Agent framework packages:** [Vercel AI SDK tools](../packages/ai-sdk/README.md) (`@three-ws/ai-sdk`), [LangChain JS tools](../packages/langchain/README.md) (`@three-ws/langchain`), and [Google ADK](./google-adk.md) via `MCPToolset` against the free studio server.
 
 ---
 

@@ -7,6 +7,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 ## 2026-10-13
 
 - **Docs · Staked Event Markets** (`/docs/event-markets-staking`): Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.
+- **Docs · three.ws with Google ADK** (`/docs/google-adk`): Connect a Google Agent Development Kit agent to the free three.ws 3D studio over MCPToolset: discover the tool catalog, forge and rig models, and run a full LlmAgent conversation. No account, payment or API key for the studio tools.
 - **Docs: Discord Activity (Forge Room)** (`/docs/discord-activity`): How the three.ws Discord Activity works: the OAuth2 auth flow, Discord's /.proxy/ URL mapping and CSP, the shared event-sourced room state, and why it ships with no purchases.
 - **Docs: LiveKit and Pipecat avatar integrations** (`/docs/voice-framework-integrations`): How to drive a three.ws <agent-3d> avatar's lipsync and gestures from a LiveKit Agents or Pipecat voice pipeline, with the livekit-plugins-threews and pipecat-threews packages, runnable local examples, and the data-channel message contract both share.
 - **Docs: Shopify app (Photo to 3D product media)** (`/docs/shopify-app`): How the three.ws Shopify app works: OAuth and embedded session tokens, the photo-to-GLB-to-productCreateMedia pipeline, usage-based Billing API integration, and the mandatory privacy webhooks.

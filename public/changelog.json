@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-13T18:47:35.245Z",
+	"generated_at": "2026-10-13T20:28:35.691Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Docs · Staked Event Markets",
 			"summary": "Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.",
 			"link": "/docs/event-markets-staking",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "launch",
+			"title": "Docs · three.ws with Google ADK",
+			"summary": "Connect a Google Agent Development Kit agent to the free three.ws 3D studio over MCPToolset: discover the tool catalog, forge and rig models, and run a full LlmAgent conversation. No account, payment or API key for the studio tools.",
+			"link": "/docs/google-adk",
 			"tags": [
 				"launch"
 			]

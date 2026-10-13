@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-13T18:47:35.266Z",
+	"generated_at": "2026-10-13T20:28:35.712Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4064,
+	"total": 4065,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -15,6 +15,16 @@
 			"title": "Docs · Staked Event Markets",
 			"summary": "Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.",
 			"link": "/docs/event-markets-staking",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "launch",
+			"title": "Docs · three.ws with Google ADK",
+			"summary": "Connect a Google Agent Development Kit agent to the free three.ws 3D studio over MCPToolset: discover the tool catalog, forge and rig models, and run a full LlmAgent conversation. No account, payment or API key for the studio tools.",
+			"link": "/docs/google-adk",
 			"tags": [
 				"launch"
 			]
@@ -1545,16 +1555,6 @@
 			"tags": [
 				"improvement",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Run your agents on your own desktop",
-			"summary": "The three.ws desktop app can now run agents, strategies, limit orders and automations on your machine. Signing keys stay in your operating system keychain, paper strategies keep working with no account or cloud connection, and every live trade waits for your approval in a native window that shows the exact recipient, amount, asset and chain. A tray menu lists each agent with pause, kill and review, and the mascot shows when an agent is working, waiting for you or in trouble.",
-			"link": "/docs/desktop-local-runtime",
-			"tags": [
-				"feature"
 			]
 		}
 	]

@@ -1,0 +1,18 @@
+{
+	"name": "@three-ws/example-google-adk",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"description": "A Google Agent Development Kit (ADK) agent that calls the free three.ws MCP server through MCPToolset.",
+	"scripts": {
+		"start": "node index.mjs",
+		"check": "node index.mjs --check"
+	},
+	"dependencies": {
+		"@google/adk": "^2.3.0",
+		"@modelcontextprotocol/sdk": "^1.0.0"
+	},
+	"engines": {
+		"node": ">=20"
+	}
+}
