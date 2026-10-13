@@ -1,5 +1,21 @@
 # partners 02: Move the public animation library off Mixamo clips
 
+**Evolve status (2026-10-13):** everything in this order is built, tested, and committed
+except one owner-gated production action. The bulk library is rebuilt from two CC0 1.0
+Universal sources (Quaternius's Universal Animation Library 2, Mesh2Motion's human animation
+packs), 219 clips retargeted through the existing pipeline with 0 failures and every manifest
+entry carrying `source`/`license`; `api/animations/library.js` now refuses to publish any entry
+missing a license or naming Mixamo; `scripts/mixamo-all.mjs`'s upload phase is permanently
+disabled; the gallery shows per-clip credit; docs, changelog, and the never-send Adobe
+permission draft are all landed (see `production-100-PROGRESS.md`'s equivalent campaign log,
+`partners-PROGRESS.md`, for the full breakdown and commit SHAs). What remains: running
+`node scripts/cc0-animation-library.mjs --upload` against production (owner-action row 50 in
+`_context/production-100-OWNER-ACTIONS.md`) to actually populate the currently-empty
+(`total: 0`) live endpoint, since that is a production-publish action under CLAUDE.md's gate 2,
+not something this session may do unattended. Sending the Adobe letter is owner order 938,
+tracked in the same row. Once the owner runs the upload command, this order's Definition of
+done is fully satisfied and the file can be retired.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate.
 
 ## Operating clause (binding)
