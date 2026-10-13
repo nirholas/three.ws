@@ -557,6 +557,22 @@ describe('resolveRoot', () => {
 
 		expect(warn).toHaveBeenCalledWith('[x-content] overlay unavailable, using the image queue', expect.stringMatching(/does not hash/));
 	});
+
+	it('reads a named Cloud Storage bucket even when R2 is not configured', async () => {
+		quiet();
+		for (const name of ['S3_ENDPOINT', 'S3_BUCKET', 'S3_PUBLIC_DOMAIN', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY', 'GCP_SERVICE_ACCOUNT_JSON']) vi.stubEnv(name, '');
+		const asked = [];
+		vi.stubGlobal('fetch', async (url) => {
+			asked.push(String(url));
+			if (String(url).includes('metadata.google.internal')) return new Response(JSON.stringify({ access_token: 'token', expires_in: 3600 }), { status: 200 });
+			return new Response('not found', { status: 404 });
+		});
+		const imageRoot = image();
+		const result = await resolveRoot({ imageRoot, env: { ...env, X_CONTENT_BUNDLE_BUCKET: 'bundles' }, dir: scratch() });
+		vi.unstubAllGlobals();
+		expect(result.reason).toMatch(/no bundle index/);
+		expect(asked.some((url) => url.startsWith('https://storage.googleapis.com/storage/v1/b/bundles/'))).toBe(true);
+	});
 });
 
 describe('a tick against the overlay', () => {

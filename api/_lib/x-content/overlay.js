@@ -555,7 +555,9 @@ export async function resolveRoot({ imageRoot, env = process.env, storage = null
 	if (env.X_CONTENT_REMOTE_QUEUE !== 'true') return image('X_CONTENT_REMOTE_QUEUE is not true');
 	try {
 		secretFrom(env);
-		if (!storage && !(await import('../r2.js')).objectStorageConfigured()) return unavailable('object storage is not configured');
+		// A named bucket is Cloud Storage, which needs no R2 credentials at all.
+		const gcs = Boolean(String(env.X_CONTENT_BUNDLE_BUCKET || '').trim());
+		if (!storage && !gcs && !(await import('../r2.js')).objectStorageConfigured()) return unavailable('object storage is not configured');
 		const store = storage || bundleStorage(env);
 		const index = await readIndex({ storage: store, env });
 		if (!index) return image('there is no bundle index in storage');
