@@ -81,7 +81,21 @@
 			"Quaternius",
 			"ambientCG",
 			"Webflow",
-			"Khronos"
+			"Khronos",
+			"Holo",
+			"Chaikin",
+			"clearcoat",
+			"equirectangular",
+			"softboxes",
+			"PMREM",
+			"GLSL",
+			"Delaunator",
+			"Agafonkin",
+			"Mapbox",
+			"Constrainautor",
+			"Gunnink",
+			"Lorensen",
+			"meshoptimizer"
 		],
 		"maximumLength": 1000
 	},
@@ -114,6 +128,9 @@
 			},
 			"probes": [
 				{
+					"type": "scenario"
+				},
+				{
 					"type": "api",
 					"name": "the voice catalog the voice picker reads still answers",
 					"url": "https://three.ws/api/tts/voices",
@@ -130,8 +147,16 @@
 					"text": "Agent Genesis turns a sentence or a selfie into a working 3D agent. The body is rigged before you see it, so it walks and emotes on arrival, and it comes with its own custodial Solana wallet, a custodial EVM wallet, a persona written from your description, and a voice you pick.\n\nText mode paints a full-body reference image, reconstructs it into a textured mesh on our own Hunyuan3D GPU worker, then auto-rigs it with a humanoid skeleton. A selfie takes the face pipeline instead.",
 					"media": [
 						{
-							"path": "public/announce/img/genesis-hero.webp",
-							"alt": "The three.ws Genesis page: describe an agent, upload a selfie, or remix a public avatar, with example prompts, an optional name and persona, and a voice picker."
+							"path": "public/x-media/genesis/reel.mp4",
+							"probe": {
+								"durationSec": 12.9,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
 						}
 					]
 				},
@@ -271,7 +296,44 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/genesis",
+						"settle": 7000,
+						"caption": "Instant Agent Genesis"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"click": "A cosmic oracle in flowing star-speckled robes",
+						"caption": "Describe the look in plain words"
+					},
+					{
+						"hold": 2400
+					},
+					{
+						"click": "📸 Selfie",
+						"caption": "Or let a selfie become the body"
+					},
+					{
+						"hold": 2400
+					},
+					{
+						"click": "🧬 Remix",
+						"caption": "Or fork a public avatar to own"
+					},
+					{
+						"expect": "Fork a public avatar"
+					},
+					{
+						"hold": 4200
+					}
+				]
+			}
 		},
 		{
 			"id": "rig-doctor",
@@ -9190,7 +9252,7 @@
 		},
 		{
 			"id": "restyle-presets",
-			"status": "paused",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -9207,6 +9269,14 @@
 					{
 						"goto": "https://three.ws/restyle",
 						"settle": 9000
+					},
+					{
+						"upload": "public/vehicles/trench-car.glb",
+						"into": "Upload GLB",
+						"caption": "Any .glb, here a car from a file"
+					},
+					{
+						"hold": 2600
 					},
 					{
 						"scroll": 220,
@@ -9285,10 +9355,10 @@
 				},
 				{
 					"type": "api",
-					"name": "the restyle page is up and still loads its sample avatar by default",
+					"name": "the restyle page is up and still takes a dropped .glb",
 					"url": "https://three.ws/restyle",
 					"expect": {
-						"contains": "sample avatar loads by default"
+						"contains": "drop a .glb to load"
 					}
 				}
 			],
@@ -9299,7 +9369,7 @@
 						{
 							"path": "public/x-media/restyle-presets/reel.mp4",
 							"probe": {
-								"durationSec": 15.6,
+								"durationSec": 18.9,
 								"width": 1280,
 								"height": 720,
 								"fps": 30,
@@ -9314,7 +9384,7 @@
 					"text": "For a finish that is not on the list, describe it in plain words, like worn copper or glossy ceramic, and IBM Granite proposes the PBR values. They are applied live and saved as a new version, never over the one before it.\n\nThen fine-tune how metallic and how rough it is with sliders and export a validated GLB."
 				},
 				{
-					"text": "The reel uses the platform's sample avatar, which loads by default when you bring no model. Drop in a .glb, or paste a public link to one, and every finish works the same way on it."
+					"text": "The reel loads a car model from a .glb file. Drop in your own, or paste a public link to one, and every finish works the same way on it."
 				}
 			],
 			"claims": [
@@ -9475,7 +9545,7 @@
 					]
 				},
 				{
-					"says": "Drop in a .glb, or paste a public link to one",
+					"says": "Drop in your own, or paste a public link to one",
 					"evidence": [
 						{
 							"type": "page",
@@ -9498,20 +9568,9 @@
 							"contains": "applyMaterialPreset(THREE, state.root, name);"
 						}
 					]
-				},
-				{
-					"says": "the platform's sample avatar, which loads by default",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/restyle",
-							"contains": "The platform's sample avatar loads by default"
-						}
-					]
 				}
 			],
-			"mentions": {},
-			"note": "Held 2026-10-01: the reel shows /restyle's sample avatar in a bind-pose T-pose throughout, which the operating rules say never to ship. Fix the page to load a sample that idles, then film again and approve."
+			"mentions": {}
 		},
 		{
 			"id": "embed-article",
@@ -10609,16 +10668,16 @@
 				"/holo"
 			],
 			"article": {
-				"title": "How a holographic sticker is cut, lit and peeled in the browser, with no image files",
+				"title": "A foil sticker from five typed letters: 640 pixels, 48 stamps, 16 contour cases and a shader peel",
 				"body": "data/x-content/articles/holo-material-article.md",
 				"cover": {
 					"path": "public/x-media/holo-material-article/cover.png",
-					"alt": "A die-cut holographic foil sticker of three slanted bars floating on black, tilted toward the viewer, its rim shifting from green to violet and its top corner curling up where it peels, rendered live on the three.ws Holo Sticker page"
+					"alt": "A die-cut holographic foil sticker of three slanted bars floating on black, its backing shading from violet to teal, its top corner curling up where it peels, rendered live on the three.ws Holo Sticker page"
 				}
 			},
 			"claims": [
 				{
-					"says": "with no image files",
+					"says": "no images, no model files",
 					"evidence": [
 						{
 							"type": "page",
@@ -10628,127 +10687,7 @@
 					]
 				},
 				{
-					"says": "no image behind it",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/holo",
-							"contains": "The die-cut outline, the iridescent foil, the light it reflects, and the peeling corner are all computed in your browser: no images, no model files"
-						}
-					]
-				},
-				{
-					"says": "the mark is drawn into a 640 pixel canvas",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "const RASTER = 640; // offscreen raster resolution, px"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "markDraw(markCanvas.getContext('2d'), RASTER);"
-						}
-					]
-				},
-				{
-					"says": "grown by a 28 pixel disc the way a cutter adds a margin",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "const baseCanvas = dilate(markCanvas, RASTER * 0.044);"
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/holo",
-							"contains": "dilated by a disc the way a cutter adds a margin"
-						}
-					]
-				},
-				{
-					"says": "traced back into outlines with marching squares",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/holo",
-							"contains": "traced back into vector outlines with marching squares, holes included"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "function traceContours(canvas) {"
-						}
-					]
-				},
-				{
-					"says": "lit by a thin film 120 to 480 nanometres thick",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "iridescenceThicknessRange: [120, 480],"
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/holo",
-							"contains": "The foil is a physical material with thin-film iridescence"
-						}
-					]
-				},
-				{
-					"says": "from the cut to the vertex-shader peel",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "material.onBeforeCompile = (shader) => {"
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/holo",
-							"contains": "the peel is a vertex-shader cylinder roll"
-						}
-					]
-				},
-				{
-					"says": "Type a word of up to 16 characters into the sticker page and it comes back as a die-cut foil sticker",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "pages/holo.html",
-							"contains": "Text to die-cut (up to 16 characters)"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "customInput.value.trim().slice(0, 16)"
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/holo",
-							"contains": "type your own text and get it cut into a sticker of its own"
-						}
-					]
-				},
-				{
-					"says": "holes inside the letters",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/holo",
-							"contains": "holes included"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "if (e.depth % 2 !== 0) continue;"
-						}
-					]
-				},
-				{
-					"says": "No image or model file is downloaded to draw it",
+					"says": "The page fetches no picture and no 3D model to make any of it",
 					"evidence": [
 						{
 							"type": "page",
@@ -10758,22 +10697,7 @@
 					]
 				},
 				{
-					"says": "the code that does all of it is one file of under 800 lines",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"matches": "^(?<![\\s\\S])(?!(?:[^\\n]*\\n){800})"
-						},
-						{
-							"type": "file",
-							"path": "pages/holo.html",
-							"contains": "<script type=\"module\" src=\"/src/holo.js\"></script>"
-						}
-					]
-				},
-				{
-					"says": "Everything starts as white pixels on a 640 by 640 canvas that stays off screen",
+					"says": "640 pixels",
 					"evidence": [
 						{
 							"type": "file",
@@ -10788,13 +10712,158 @@
 					]
 				},
 				{
-					"says": "Text is set at weight 900, starting at 36% of the canvas height and shrunk until it fits inside a 10% margin",
+					"says": "640 pixel canvas",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const RASTER = 640; // offscreen raster resolution, px"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const markCanvas = makeCanvas(RASTER);"
+						}
+					]
+				},
+				{
+					"says": "48 stamps",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const steps = 48;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "ctx.drawImage(markCanvas, Math.cos(a) * radius, Math.sin(a) * radius);"
+						}
+					]
+				},
+				{
+					"says": "16 contour cases",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const SEGS = ["
+						}
+					]
+				},
+				{
+					"says": "16 marching squares cases",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const SEGS = ["
+						}
+					]
+				},
+				{
+					"says": "a table of 16 cases",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const SEGS = ["
+						}
+					]
+				},
+				{
+					"says": "one of 16 cases",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const SEGS = ["
+						}
+					]
+				},
+				{
+					"says": "five typed letters",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "customInput.value.trim().slice(0, 16)"
+						}
+					]
+				},
+				{
+					"says": "a shader peel",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "material.onBeforeCompile = (shader) => {"
+						}
+					]
+				},
+				{
+					"says": "A word of 16 characters, the most the text box accepts",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "customInput.value.trim().slice(0, 16)"
+						}
+					]
+				},
+				{
+					"says": "cuts it at 16 characters",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "customInput.value.trim().slice(0, 16)"
+						}
+					]
+				},
+				{
+					"says": "up to 16 characters",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "Text to die-cut (up to 16 characters)"
+						}
+					]
+				},
+				{
+					"says": "Type a word of up to 16 characters",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "customInput.value.trim().slice(0, 16)"
+						}
+					]
+				},
+				{
+					"says": "weight 900",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
 							"contains": "const font = (px) => `900 ${px}px Inter"
-						},
+						}
+					]
+				},
+				{
+					"says": "36% of the canvas height",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "let fontSize = size * 0.36;"
+						}
+					]
+				},
+				{
+					"says": "a font size of about 230 pixels",
+					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
@@ -10803,27 +10872,37 @@
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": "const pad = size * 0.1;"
+							"contains": "const RASTER = 640; // offscreen raster resolution, px"
 						}
 					]
 				},
 				{
-					"says": "The default mark is three slanted bars, and each slant is 45 degrees so the notches between the bars come out crisp",
+					"says": "a 10% margin on each side, 512 pixels",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const pad = size * 0.1;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "if (w > size - pad * 2) fontSize *= (size - pad * 2) / w;"
+						}
+					]
+				},
+				{
+					"says": "all slants at 45 degrees",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
 							"contains": "slants are 45 degrees so the die-cut notches between bars come out crisp."
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "mark: 'chevrons',"
 						}
 					]
 				},
 				{
-					"says": "it stamps the mark 48 times around a circle of radius 28 pixels, which is 4.4% of the canvas, and once more in the centre",
+					"says": "stamps the mark 48 times around a circle with a radius of 28 pixels, which is 4.4% of the canvas, and once more in the centre",
 					"evidence": [
 						{
 							"type": "file",
@@ -10843,7 +10922,27 @@
 					]
 				},
 				{
-					"says": "shapes that sit closer than twice that radius merge into one backing",
+					"says": "a radius of 28 pixels",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const baseCanvas = dilate(markCanvas, RASTER * 0.044);"
+						}
+					]
+				},
+				{
+					"says": "4.4% of the canvas",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const baseCanvas = dilate(markCanvas, RASTER * 0.044);"
+						}
+					]
+				},
+				{
+					"says": "Two letters closer than twice that radius merge into one backing",
 					"evidence": [
 						{
 							"type": "file",
@@ -10853,13 +10952,28 @@
 					]
 				},
 				{
-					"says": "counts a pixel as inside when it is over half opaque, and walks the image in 2 by 2 cells",
+					"says": "dilated by a disc the way a cutter adds a margin",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "dilated by a disc the way a cutter adds a margin"
+						}
+					]
+				},
+				{
+					"says": "more than half opaque",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
 							"contains": "if (data[(y * size + x) * 4 + 3] > 127) grid[(y + pad) * W + (x + pad)] = 1;"
-						},
+						}
+					]
+				},
+				{
+					"says": "cells of 2 by 2 pixels",
+					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
@@ -10868,17 +10982,32 @@
 					]
 				},
 				{
-					"says": "Each cell is one of 16 cases",
+					"says": "one number from 0 to 15",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"matches": "const SEGS = \\[\\n\\t\\tnull, \\[\\[L, B\\]\\], \\[\\[B, R\\]\\], \\[\\[L, R\\]\\],\\n\\t\\t\\[\\[T, R\\]\\], \\[\\[T, R\\], \\[L, B\\]\\], \\[\\[T, B\\]\\], \\[\\[T, L\\]\\],\\n\\t\\t\\[\\[T, L\\]\\], \\[\\[T, B\\]\\], \\[\\[T, L\\], \\[B, R\\]\\], \\[\\[T, R\\]\\],\\n\\t\\t\\[\\[L, R\\]\\], \\[\\[B, R\\]\\], \\[\\[L, B\\]\\], null,\\n\\t\\];"
+							"contains": "const idx = at(x, y) * 8 + at(x + 1, y) * 4 + at(x + 1, y + 1) * 2 + at(x, y + 1);"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const SEGS = ["
 						}
 					]
 				},
 				{
-					"says": "The code fixes one pairing, so each edge midpoint touches exactly two segments and stitching a loop together cannot fork",
+					"says": "Case 0 and case 15",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const SEGS = ["
+						}
+					]
+				},
+				{
+					"says": "The code fixes one pairing for both saddle cases, so each edge midpoint ends up touching exactly two segments and stitching a loop together cannot fork",
 					"evidence": [
 						{
 							"type": "file",
@@ -10893,7 +11022,27 @@
 					]
 				},
 				{
-					"says": "smoothed with three rounds of corner cutting, which replaces each edge with points at a quarter and three quarters of its length, and points closer than 1.4 pixels are dropped",
+					"says": "padded by 2 pixels on each side before tracing",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const pad = 2;"
+						}
+					]
+				},
+				{
+					"says": "more than 8 points",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "if (loop.length > 8 && cur === start.a) {"
+						}
+					]
+				},
+				{
+					"says": "three rounds of Chaikin corner cutting",
 					"evidence": [
 						{
 							"type": "file",
@@ -10903,8 +11052,63 @@
 						{
 							"type": "file",
 							"path": "src/holo.js",
+							"contains": "// Chaikin corner cutting on a closed loop, then drop near-duplicate points."
+						}
+					]
+				},
+				{
+					"says": "Three passes of corner cutting",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "smoothLoop(c, 3)"
+						}
+					]
+				},
+				{
+					"says": "After three rounds",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "smoothLoop(c, 3)"
+						}
+					]
+				},
+				{
+					"says": "one at a quarter of the way along it and one at three quarters",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
 							"contains": "out.push([ax * 0.75 + bx * 0.25, ay * 0.75 + by * 0.25]);"
 						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "out.push([ax * 0.25 + bx * 0.75, ay * 0.25 + by * 0.75]);"
+						}
+					]
+				},
+				{
+					"says": "Smoothing multiplies the number of points by 8",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "out.push([ax * 0.75 + bx * 0.25, ay * 0.75 + by * 0.25]);"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "smoothLoop(c, 3)"
+						}
+					]
+				},
+				{
+					"says": "closer than 1.4 pixels",
+					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
@@ -10913,23 +11117,33 @@
 					]
 				},
 				{
-					"says": "Loops under 30 square pixels are thrown away as specks",
+					"says": "scales the base to 3.1 world units wide",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": ".filter((e) => e.area > 30)"
+							"contains": "const WORLD_W = 3.1; // sticker width in world units"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const scale = WORLD_W / (maxX - minX);"
 						}
 					]
 				},
 				{
-					"says": "The loops are sorted by area, and each one counts how many larger loops contain it. An even count is an outline. An odd count is a hole in the outline around it",
+					"says": "an area under 30 square pixels",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": ".sort((a, b) => b.area - a.area);"
-						},
+							"contains": "filter((e) => e.area > 30)"
+						}
+					]
+				},
+				{
+					"says": "A count of 0 means the loop is an outer outline. A count of 1 means it sits inside one outline, so it is a hole in that outline. A count of 2 means it is an island inside a hole",
+					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
@@ -10943,107 +11157,92 @@
 					]
 				},
 				{
-					"says": "Both sets of outlines are scaled so the cut is 3.1 units wide, with the same transform, so the mark lands exactly on its backing",
+					"says": "Even counts are outlines and odd counts are holes",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": "const WORLD_W = 3.1; // sticker width in world units"
+							"contains": "if (e.depth % 2 !== 0) continue;"
 						},
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": "// transform maps canvas px to world XY (shared by base and mark so they align)."
+							"contains": "(h) => h.depth === e.depth + 1 && pointInPoly(h.pts[0], e.pts)"
 						}
 					]
 				},
 				{
-					"says": "the backing 0.028 units thick with a 0.016 bevel, the mark 0.05 thick with a 0.02 bevel, raised just above it",
+					"says": "about 0.04 world units",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": "const BASE_DEPTH = 0.028;"
+							"contains": "const FACE_EDGE = PEEL_RADIUS_MIN * 0.24;"
 						},
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": "bevelSize: 0.016,"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "const MARK_DEPTH = 0.05;"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "bevelSize: 0.02,"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "if (mark) mark.translate(0, 0, BASE_DEPTH + 0.002);"
+							"contains": "const PEEL_RADIUS_MIN = 0.17;"
 						}
 					]
 				},
 				{
-					"says": "A last pass bows the whole sheet with three sine waves, the tallest 0.038 units high, and tilts the normals to match",
+					"says": "a third of that spacing",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo-geometry.js",
+							"contains": "Interior points on an equilateral lattice of pitch `spacing`, kept at least\n// a third of a pitch clear of the rim"
+						}
+					]
+				},
+				{
+					"says": "a constrained Delaunay triangulation over the rim points and the lattice together",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo-geometry.js",
+							"contains": "const del = new Delaunator(coords);"
+						},
+						{
+							"type": "file",
+							"path": "src/holo-geometry.js",
+							"contains": "con.constrainAll(edges);"
+						}
+					]
+				},
+				{
+					"says": "the tightest peel radius, 0.17 world units, times 0.24",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": "0.038 * Math.sin(x * 1.9 + 0.7) +"
+							"contains": "const PEEL_RADIUS_MIN = 0.17;"
 						},
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": "0.03 * Math.sin(y * 2.3 - 0.4) +"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "0.014 * Math.sin((x + y) * 3.1);"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "nor.setXYZ(i, n.x, n.y, n.z);"
+							"contains": "const FACE_EDGE = PEEL_RADIUS_MIN * 0.24;"
 						}
 					]
 				},
 				{
-					"says": "that slight bow is what smears the reflections into gradients across each face",
+					"says": "a 256 by 256 grain texture, scaled up to repeat 2.2 times",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": "A real sticker sheet bows a little, and that bow is what smears the"
-						}
-					]
-				},
-				{
-					"says": "Both surfaces use a physical material that is fully metallic, with a clear coat on top",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "const baseMaterial = injectPeel(new THREE.MeshPhysicalMaterial({"
+							"contains": "const size = 256;"
 						},
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": "metalness: 1,"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "clearcoat: 1,"
+							"contains": "tex.repeat.set(2.2, 2.2);"
 						}
 					]
 				},
 				{
-					"says": "The backing's film has an index of 1.32 and a thickness range of 120 to 480 nanometres",
+					"says": "The base layer uses a film of 120 to 480 nanometres with an index of refraction of 1.32",
 					"evidence": [
 						{
 							"type": "file",
@@ -11058,7 +11257,7 @@
 					]
 				},
 				{
-					"says": "The raised mark uses 1.28 and 140 to 860",
+					"says": "140 to 860 nanometres with an index of 1.28",
 					"evidence": [
 						{
 							"type": "file",
@@ -11073,27 +11272,77 @@
 					]
 				},
 				{
-					"says": "A 256 pixel noise texture roughens both surfaces slightly",
+					"says": "a physical material with thin-film iridescence",
 					"evidence": [
 						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "const size = 256;"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "const v = 150 + Math.floor(Math.random() * 105);"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "roughnessMap: grain,"
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "The foil is a physical material with thin-film iridescence"
 						}
 					]
 				},
 				{
-					"says": "That light is painted when the page loads, into a 1024 by 512 canvas",
+					"says": "fully metallic, with a clearcoat on top",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "metalness: 1,"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "clearcoat: 1,"
+						}
+					]
+				},
+				{
+					"says": "Four foils share these two materials",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const FOILS = {"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "gold: {"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "neon: {"
+						}
+					]
+				},
+				{
+					"says": "six for Rainbow holo, four for each of the other three",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "blobs: ['#ff4fd8', '#8a5cff', '#39d98a', '#31c4ff', '#ffd166', '#ff5c7a'],"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "blobs: ['#cfd6de', '#9fb0c0', '#eef3f8', '#7d8b9a'],"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "blobs: ['#ffd166', '#ff9f43', '#fff3c4', '#b98a2f'],"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "blobs: ['#ff2fd6', '#00e5ff', '#7c4dff', '#00ffa3'],"
+						}
+					]
+				},
+				{
+					"says": "1024 pixels wide and 512 tall",
 					"evidence": [
 						{
 							"type": "file",
@@ -11108,18 +11357,53 @@
 					]
 				},
 				{
-					"says": "soft colour blobs at eight fixed positions, blended additively so overlaps run toward white the way stage lights do, plus three white bands",
+					"says": "1024 by 512 canvas",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"matches": "const BLOB_SEATS = \\[\\n\\t\\[[^\\n]*\\], \\[[^\\n]*\\], \\[[^\\n]*\\], \\[[^\\n]*\\],\\n\\t\\[[^\\n]*\\], \\[[^\\n]*\\], \\[[^\\n]*\\], \\[[^\\n]*\\],\\n\\];"
+							"contains": "c.width = 1024;"
 						},
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": "ctx.globalCompositeOperation = 'lighter';"
+							"contains": "c.height = 512;"
+						}
+					]
+				},
+				{
+					"says": "Eight soft radial blobs of colour",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const BLOB_SEATS = ["
 						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "[0.12, 0.3, 0.34], [0.44, 0.62, 0.3], [0.71, 0.24, 0.36], [0.9, 0.66, 0.3],"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "[0.28, 0.78, 0.26], [0.6, 0.4, 0.24], [0.05, 0.62, 0.22], [0.82, 0.4, 0.2],"
+						}
+					]
+				},
+				{
+					"says": "blended additively",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "ctx.globalCompositeOperation = 'lighter';"
+						}
+					]
+				},
+				{
+					"says": "three soft white bands",
+					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
@@ -11128,37 +11412,7 @@
 					]
 				},
 				{
-					"says": "The canvas is then blurred ahead of time at several strengths, so rough surfaces reflect a softer version of it",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "envCache.set(name, pmrem.fromEquirectangular(equirect).texture);"
-						}
-					]
-				},
-				{
-					"says": "The rainbow and neon foils run iridescence at full strength, gold at 0.35 and chrome at 0.18",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"matches": "label: 'Rainbow holo',[\\s\\S]*?iridescence: 1,[\\s\\S]*?label: 'Chrome',[\\s\\S]*?iridescence: 0\\.18,[\\s\\S]*?label: 'Gold foil',[\\s\\S]*?iridescence: 0\\.35,[\\s\\S]*?label: 'Neon',[\\s\\S]*?iridescence: 1,"
-						}
-					]
-				},
-				{
-					"says": "Switching foil swaps the light and the numbers and leaves the geometry alone",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"matches": "state\\.foil = btn\\.dataset\\.foil;\\n\\t\\trenderFoilChips\\(\\);\\n\\t\\tapplyFoil\\(state\\.foil\\);"
-						}
-					]
-				},
-				{
-					"says": "The blobs sit in fixed places, so a reload gives you the same sticker",
+					"says": "The seats are fixed, not random",
 					"evidence": [
 						{
 							"type": "file",
@@ -11168,63 +11422,73 @@
 					]
 				},
 				{
-					"says": "Before the material compiles, the page injects a few lines into its vertex shader",
+					"says": "filtered once per foil through three.js PMREMGenerator",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "if (!envCache.has(name)) {"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "pmrem.fromEquirectangular(equirect).texture"
+						}
+					]
+				},
+				{
+					"says": "A key light of intensity 1.7",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const key = new THREE.DirectionalLight(0xffffff, 1.7);"
+						}
+					]
+				},
+				{
+					"says": "ACES Filmic at an exposure of 1.3",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "renderer.toneMapping = THREE.ACESFilmicToneMapping;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "renderer.toneMappingExposure = 1.3;"
+						}
+					]
+				},
+				{
+					"says": "34 degree field of view from 7.4 units away",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "new THREE.PerspectiveCamera(34, 1, 0.1, 40);"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "camera.position.set(0, 0, 7.4);"
+						}
+					]
+				},
+				{
+					"says": "injected into the material with onBeforeCompile",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
 							"contains": "material.onBeforeCompile = (shader) => {"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "shader.vertexShader = shader.vertexShader"
 						}
 					]
 				},
 				{
-					"says": "A fold line runs at 45 degrees across one corner, and each vertex past it is wrapped around a virtual cylinder",
+					"says": "from 0.17 world units at a flat sticker up to 0.35 at full peel",
 					"evidence": [
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "uFoldN: { value: new THREE.Vector2(Math.SQRT1_2, Math.SQRT1_2) },"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "float tP = dot(transformed.xy, uFoldN) - uFoldT;"
-						}
-					]
-				},
-				{
-					"says": "the angle is the vertex's distance past the fold divided by the radius, capped at 1.22 half turns, about 220 degrees, after which the sticker carries on straight",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "float phi = min(tP / uRadius, uMaxPhi);"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "uMaxPhi: { value: Math.PI * 1.22 },"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "float rest = max(tP - uRadius * uMaxPhi, 0.0);"
-						}
-					]
-				},
-				{
-					"says": "The radius grows as you peel, from 0.17 units at rest by another 0.18 at full peel",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "peelUniforms.uRadius.value = PEEL_RADIUS_MIN + amount * PEEL_RADIUS_GAIN;"
-						},
 						{
 							"type": "file",
 							"path": "src/holo.js",
@@ -11234,102 +11498,107 @@
 							"type": "file",
 							"path": "src/holo.js",
 							"contains": "const PEEL_RADIUS_GAIN = 0.18;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "peelUniforms.uRadius.value = PEEL_RADIUS_MIN + amount * PEEL_RADIUS_GAIN;"
 						}
 					]
 				},
 				{
-					"says": "The normals are rotated through the same angle, so the light on the curled lip is computed for the surface as it is bent",
+					"says": "1.22 times pi, about 220 degrees",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": "objectNormal.z = nn * s + objectNormal.z * c;"
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/holo",
-							"contains": "so the light on the curled lip is real"
+							"contains": "uMaxPhi: { value: Math.PI * 1.22 },"
 						}
 					]
 				},
 				{
-					"says": "The corner rests at 30% and breathes by 2.8% either way",
+					"says": "the default is 30%",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
 							"contains": "peel: 0.3,"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "const breathe = reducedMotion ? 0 : Math.sin(t * 0.8) * 0.028;"
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/holo",
-							"contains": "Corner peel 30%"
 						}
 					]
 				},
 				{
-					"says": "unless your system asks for reduced motion, in which case both stop",
+					"says": "A slow breathing term of 0.028",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": "const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;"
-						},
-						{
-							"type": "file",
-							"path": "src/holo.js",
-							"contains": "const wobble = reducedMotion ? 0 : 1;"
+							"contains": "const breathe = reducedMotion ? 0 : Math.sin(t * 0.8) * 0.028;"
 						}
 					]
 				},
 				{
-					"says": "Tilt follows the pointer through a spring, a drag gives full control, and the stage takes focus so the arrow keys tilt it too",
+					"says": "moves 9% of the remaining distance",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
 							"contains": "current.x += (target.x - current.x) * 0.09;"
+						}
+					]
+				},
+				{
+					"says": "up to 0.42 radians sideways and 0.34 up and down",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "target.y = nx * 0.42;"
 						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "target.x = ny * 0.34;"
+						}
+					]
+				},
+				{
+					"says": "2.4 times the pointer movement",
+					"evidence": [
 						{
 							"type": "file",
 							"path": "src/holo.js",
 							"contains": "target.y = dragBase.ry + (nx - dragBase.nx) * 2.4;"
+						}
+					]
+				},
+				{
+					"says": "steps of 0.12 radians, clamped to 1.1 radians",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const step = 0.12;"
 						},
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": "ArrowLeft: () => (target.y -= step),"
-						},
-						{
-							"type": "file",
-							"path": "pages/holo.html",
-							"contains": "data-hint=\"on\" tabindex=\"0\" role=\"img\""
+							"contains": "target.x = THREE.MathUtils.clamp(target.x, -1.1, 1.1);"
 						}
 					]
 				},
 				{
-					"says": "One line of text, up to 16 characters",
+					"says": "capped at 2",
 					"evidence": [
 						{
 							"type": "file",
-							"path": "pages/holo.html",
-							"contains": "maxlength=\"16\""
+							"path": "src/holo.js",
+							"contains": "renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));"
 						}
 					]
 				},
 				{
-					"says": "Download PNG saves the frame you are looking at",
+					"says": "saves the canvas as holo-sticker.png",
 					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/holo",
-							"contains": "Download PNG"
-						},
 						{
 							"type": "file",
 							"path": "src/holo.js",
@@ -11338,27 +11607,332 @@
 					]
 				},
 				{
-					"says": "Without it the page says so instead of drawing",
+					"says": "the peel to 30%",
 					"evidence": [
 						{
 							"type": "file",
-							"path": "pages/holo.html",
-							"contains": "This page needs WebGL and your browser did not provide a context."
-						},
-						{
-							"type": "file",
 							"path": "src/holo.js",
-							"contains": "stage.dataset.state = 'error';"
+							"contains": "state.peel = 0.3;"
 						}
 					]
 				},
 				{
-					"says": "The sticker is at three.ws/holo",
+					"says": "reduced motion preference",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "window.matchMedia('(prefers-reduced-motion: reduce)').matches"
+						}
+					]
+				},
+				{
+					"says": "one file of under 800 lines",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"matches": "^(?<![\\s\\S])(?!(?:[^\\n]*\\n){800})"
+						},
+						{
+							"type": "file",
+							"path": "pages/holo.html",
+							"contains": "<script type=\"module\" src=\"/src/holo.js\"></script>"
+						}
+					]
+				},
+				{
+					"says": "Three.js",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "import * as THREE from 'three';"
+						}
+					]
+				},
+				{
+					"says": "It is released under the MIT licence and developed in the open on GitHub.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "node_modules/three/package.json",
+							"contains": "\"license\": \"MIT\""
+						}
+					]
+				},
+				{
+					"says": "released under the ISC licence",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "node_modules/delaunator/package.json",
+							"contains": "\"license\": \"ISC\""
+						},
+						{
+							"type": "file",
+							"path": "node_modules/@kninnug/constrainautor/package.json",
+							"contains": "\"license\": \"ISC\""
+						}
+					]
+				},
+				{
+					"says": "by Marco Gunnink",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo-geometry.js",
+							"contains": "import Constrainautor from '@kninnug/constrainautor';"
+						},
+						{
+							"type": "file",
+							"path": "node_modules/@kninnug/constrainautor/package.json",
+							"contains": "\"author\": \"Marco Gunnink\""
+						}
+					]
+				},
+				{
+					"says": "Delaunay triangulation for the flat faces",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo-geometry.js",
+							"contains": "const del = new Delaunator(coords);"
+						}
+					]
+				},
+				{
+					"says": "Chaikin corner cutting",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "// Chaikin corner cutting on a closed loop, then drop near-duplicate points."
+						}
+					]
+				},
+				{
+					"says": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network",
 					"evidence": [
 						{
 							"type": "page",
-							"url": "https://three.ws/holo",
-							"contains": "Holo Sticker"
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network."
+						}
+					]
+				},
+				{
+					"says": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building"
+						}
+					]
+				},
+				{
+					"says": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is a member of the Quicknode Startup Program with approved"
+						}
+					]
+				},
+				{
+					"says": "three.ws is listed as a strategic partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "IBM"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Strategic"
+						}
+					]
+				},
+				{
+					"says": "Qwen models are lanes in the platform's model router",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Qwen model integration"
+						}
+					]
+				},
+				{
+					"says": "It starts at 36% of the canvas height, which is a font size of about 230 pixels",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "let fontSize = size * 0.36;"
+						}
+					]
+				},
+				{
+					"says": "with a spacing of about 0.04 world units",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const FACE_EDGE = PEEL_RADIUS_MIN * 0.24;"
+						}
+					]
+				},
+				{
+					"says": "it is the tightest peel radius, 0.17 world units, times 0.24",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const PEEL_RADIUS_MIN = 0.17;"
+						}
+					]
+				},
+				{
+					"says": "A key light of intensity 1.7",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "new THREE.DirectionalLight(0xffffff, 1.7)"
+						}
+					]
+				},
+				{
+					"says": "the tone mapper is ACES Filmic at an exposure of 1.3",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "renderer.toneMappingExposure = 1.3;"
+						}
+					]
+				},
+				{
+					"says": "a 34 degree field of view from 7.4 units away",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "new THREE.PerspectiveCamera(34, 1, 0.1, 40)"
+						}
+					]
+				},
+				{
+					"says": "each frame it moves 9% of the remaining distance toward the target angle",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "current.x += (target.x - current.x) * 0.09;"
+						}
+					]
+				},
+				{
+					"says": "by up to 0.42 radians sideways and 0.34 up and down",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "target.y = nx * 0.42;"
+						}
+					]
+				},
+				{
+					"says": "dragging gives full control at 2.4 times the pointer movement",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "dragBase.ny) * 2.4;"
+						}
+					]
+				},
+				{
+					"says": "The arrow keys tilt the sticker in steps of 0.12 radians, clamped to 1.1 radians",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const step = 0.12;"
+						}
+					]
+				},
+				{
+					"says": "so 48 stamps plus one in the centre on a 640 pixel canvas produce the grown shape",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const steps = 48;"
+						}
+					]
+				},
+				{
+					"says": "sorts the rest by area so each loop can be compared with the loops above it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": ".sort((a, b) => b.area - a.area);"
+						}
+					]
+				},
+				{
+					"says": "repeat 2.2 times",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "tex.repeat.set(2.2, 2.2);"
+						}
+					]
+				},
+				{
+					"says": "the clearcoat roughness is 0.12 on the base and 0.18 on the lettering",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "clearcoatRoughness: 0.12,"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "clearcoatRoughness: 0.18,"
+						}
+					]
+				},
+				{
+					"says": "the environment light is scaled by 1.9 on the base and 2.2 on the lettering",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "envMapIntensity: 1.9,"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "envMapIntensity: 2.2,"
+						}
+					]
+				},
+				{
+					"says": "clamped to 1.1 radians",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "THREE.MathUtils.clamp(target.x, -1.1, 1.1);"
 						}
 					]
 				}
@@ -11396,7 +11970,7 @@
 			],
 			"posts": [
 				{
-					"text": "A die-cut foil sticker with no image behind it: the mark is drawn into a 640 pixel canvas, grown by a 28 pixel disc the way a cutter adds a margin, traced back into outlines with marching squares, and lit by a thin film 120 to 480 nanometres thick. Each step, with the code's own numbers, from the cut to the vertex-shader peel."
+					"text": "A foil sticker from five typed letters, with no image or model file behind it: a 640 pixel canvas, 48 stamps for the die-cut margin, 16 marching squares cases, a Delaunay mesh and a shader peel. The walkthrough follows one word from keystroke to curl, with the code."
 				}
 			],
 			"mentions": {}
@@ -13180,11 +13754,11 @@
 				"/avatar-artifact"
 			],
 			"article": {
-				"title": "One animation library, any humanoid skeleton: how three.ws retargets motion",
+				"title": "One dance, 52 joints, any humanoid skeleton: how three.ws retargets motion to rigs from other tools",
 				"body": "data/x-content/articles/any-skeleton-article.md",
 				"cover": {
 					"path": "public/x-media/any-skeleton-article/cover.png",
-					"alt": "A generated 3D circus ringmaster in a red tailcoat, top hat and tall boots standing at rest with his hands open in front of him, lit in red and violet on a dark stage under a starfield. He is idling on the shared animation library in the three.ws Avatar Artifact viewer."
+					"alt": "A man in a pink tailcoat, a green felt hat and a plum bow tie, caught mid-dance against a dark background with his fists raised at his chest."
 				}
 			},
 			"probes": [
@@ -13223,100 +13797,10 @@
 			],
 			"posts": [
 				{
-					"text": "Our animation clips were made once, on one reference skeleton, and they play on Mixamo, VRoid, Unreal and Daz avatars built later by other tools. The write-up covers how bone names are matched, why a matching name is not enough, and where the retargeter stops on purpose: three.ws/avatar-artifact"
+					"text": "One 9.87 second dance clip, authored once on a 52-joint skeleton, now plays in step on Mixamo, Ready Player Me and other avatars it was not made for. The write-up shows how bone names are matched, why a matching name is not enough, and where the retargeter refuses: three.ws/rig-doctor"
 				}
 			],
 			"claims": [
-				{
-					"says": "made once, against one reference skeleton",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/rig-doctor",
-							"contains": "Every clip in the three.ws library is authored against one canonical skeleton"
-						},
-						{
-							"type": "file",
-							"path": "src/animation-manager.js",
-							"contains": "Mixamo FBX → retargeted to canonical Avaturn skeleton → JSON"
-						}
-					]
-				},
-				{
-					"says": "made once, on one reference skeleton",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/rig-doctor",
-							"contains": "Every clip in the three.ws library is authored against one canonical skeleton"
-						}
-					]
-				},
-				{
-					"says": "a Mixamo character, a VRoid model, an Unreal mannequin",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "//   • Mixamo:          `mixamorig:LeftArm`"
-						},
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "//   • VRM / VRoid:     `J_Bip_C_Hips`"
-						},
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "//   • Unreal mannequin: `pelvis`"
-						},
-						{
-							"type": "file",
-							"path": "tests/glb-canonicalize.test.js",
-							"contains": "Unreal mannequin: %s → %s"
-						}
-					]
-				},
-				{
-					"says": "Mixamo, VRoid, Unreal and Daz avatars",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/glb-canonicalize.js",
-							"contains": "//   • Daz / Genesis:   `hip`, `abdomen`, `lShldr`"
-						},
-						{
-							"type": "file",
-							"path": "tests/glb-canonicalize.test.js",
-							"contains": "Daz / Genesis: %s → %s"
-						}
-					]
-				},
-				{
-					"says": "a body our text-to-3D lane rigged a minute ago",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/create/prompt",
-							"contains": "Type a description → rigged 3D avatar in about a minute"
-						},
-						{
-							"type": "file",
-							"path": "tests/glb-canonicalize.test.js",
-							"contains": "Every bone must map onto the canonical set so\n\t// a freshly rigged avatar can drive the full clip library with 100%\n\t// coverage"
-						}
-					]
-				},
-				{
-					"says": "No clip is re-authored per avatar",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "docs/avatar-artifact.md",
-							"contains": "motion lives in the [shared clip library](./animations.md) and is retargeted onto whatever skeleton the rig uses"
-						}
-					]
-				},
 				{
 					"says": "Every clip in the three.ws library is authored against one canonical skeleton: Hips, LeftForeArm, RightUpLeg, 52 joints in total",
 					"evidence": [
@@ -13629,12 +14113,212 @@
 					]
 				},
 				{
-					"says": "it retargets the idle onto whatever skeleton the file carries",
+					"says": "Boxer Dance",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/animations/manifest.json",
+							"contains": "\"label\": \"Boxer Dance\""
+						}
+					]
+				},
+				{
+					"says": "9.87 seconds long",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/animations/manifest.json",
+							"contains": "\"name\": \"av-boxer-dance\", \"url\": \"/animations/clips/av-boxer-dance.json\", \"label\": \"Boxer Dance\", \"icon\": \"🥊\", \"loop\": true, \"duration\": 9.866667"
+						}
+					]
+				},
+				{
+					"says": "it was made once, not for any one avatar",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "docs/avatar-artifact.md",
-							"contains": "it attaches an `AnimationManager`, loads the `idle` clip and retargets it"
+							"contains": "motion lives in the [shared clip library](./animations.md) and is retargeted onto whatever skeleton the rig uses"
+						}
+					]
+				},
+				{
+					"says": "Nothing is uploaded",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/rig-doctor",
+							"contains": "Nothing is uploaded."
+						}
+					]
+				},
+				{
+					"says": "more than twenty naming schemes",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"matches": "Handled name variants:(?:[\\s\\S]*?\\n//   • ){21}"
+						}
+					]
+				},
+				{
+					"says": "retargets to the Avaturn rig, writes a JSON clip to public/animations/clips and updates the manifest",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/animations.md",
+							"contains": "retargets to the Avaturn rig, writes a JSON clip to `public/animations/clips/`, and updates `manifest.json`"
+						}
+					]
+				},
+				{
+					"says": "about 3,000 clips",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/animations.md",
+							"contains": "about 3,000 more"
+						}
+					]
+				},
+				{
+					"says": "It asks for a slot such as celebrate or bow",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/animations.md",
+							"contains": "| `celebrate` | `celebrate` |"
+						},
+						{
+							"type": "file",
+							"path": "docs/animations.md",
+							"contains": "| `bow` | `bow` |"
+						}
+					]
+				},
+				{
+					"says": "a slot resolves to a clip name in the manifest",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/animations.md",
+							"contains": "any clip name in the manifest is valid"
+						}
+					]
+				},
+				{
+					"says": "An owner can point a slot at any clip in the manifest",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/animations.md",
+							"contains": "any clip name in the manifest is valid"
+						}
+					]
+				},
+				{
+					"says": "Make-It-Animatable (MIT, CVPR 2025) predicts joint positions and skinning weights",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "(MIT, CVPR 2025) infers joint positions, skinning weights, and pose"
+						}
+					]
+				},
+				{
+					"says": "The Quaternius Base character in the avatar library is published under CC0",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "public/avatars/extra/characters.json",
+							"contains": "\"license\": \"CC0\""
+						},
+						{
+							"type": "file",
+							"path": "public/avatars/extra/characters.json",
+							"contains": "\"label\": \"Quaternius Base\""
+						}
+					]
+				},
+				{
+					"says": "Three.js, which draws every frame in the pictures above, is MIT licensed",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "node_modules/three/package.json",
+							"contains": "\"license\": \"MIT\""
+						}
+					]
+				},
+				{
+					"says": "runs Make-It-Animatable on an NVIDIA L4",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://model-rig-lp642k3kpa-uc.a.run.app/health",
+							"contains": "\"model\":\"make-it-animatable\""
+						},
+						{
+							"type": "page",
+							"url": "https://model-rig-lp642k3kpa-uc.a.run.app/health",
+							"contains": "\"gpu_name\":\"NVIDIA L4\""
+						}
+					]
+				},
+				{
+					"says": "No account and no key",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| **Auth** | None"
+						}
+					]
+				},
+				{
+					"says": "it returns a rigged, animation-ready GLB in one call",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "Generate a rigged, animation-ready 3D avatar (GLB) from a single text prompt or a reference image, "
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| `forge_avatar` | Generate a rigged, animation-ready avatar |"
+						}
+					]
+				},
+				{
+					"says": "it plays, and the body idles while both arms stay stuck out sideways in the authored bind pose",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-arm-relax.js",
+							"contains": "the clip plays and the body idles while both arms stay stuck out sideways at the\n// authored bind pose"
+						}
+					]
+				},
+				{
+					"says": "It is gated hard, and runs only when neither canonical upper-arm bone name-mapped",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-arm-relax.js",
+							"contains": "It is gated hard: it runs ONLY when neither canonical\n// upper-arm bone name-mapped"
+						}
+					]
+				},
+				{
+					"says": "it looks for a bone whose direction to its child points sideways, not steeply up the way a collarbone does",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-arm-relax.js",
+							"contains": "A clavicle points up-and-out (larger\n// |y|) and is excluded by the vertical cap"
 						}
 					]
 				}
@@ -13654,7 +14338,7 @@
 				"/wardrobe"
 			],
 			"article": {
-				"title": "How we rig a 3D garment: put it on a body, rig the pair, then take the body away",
+				"title": "A shirt has no skeleton: how our garment forge rigs a piece in 7 stages, then lifts the body out",
 				"body": "data/x-content/articles/wardrobe-article.md",
 				"cover": {
 					"path": "public/x-media/wardrobe-article/cover.png",
@@ -13699,20 +14383,10 @@
 			],
 			"posts": [
 				{
-					"text": "A shirt has no skeleton, so our garment forge rigs each piece while a reference body is wearing it, then removes the body and keeps the weights the cloth picked up from the joints underneath. The write-up covers the seven stages, the gates a piece has to pass, and what binding to a skeleton does not fix yet: three.ws/wardrobe"
+					"text": "A shirt has no skeleton, so our garment forge rigs each piece while a reference body is wearing it, then removes the body and keeps the weights the cloth picked up from the joints underneath. The write-up follows one real shirt through the seven stages and the gates a piece passes before it is published: three.ws/wardrobe"
 				}
 			],
 			"claims": [
-				{
-					"says": "Rig one on its own and the auto-rigger fits a whole skeleton inside the cloth, which tears the shirt apart as soon as it moves",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "workers/garment-forge/README.md",
-							"contains": "Rigging a shirt alone would fit a full\n   skeleton inside the shirt and shred it on first animation."
-						}
-					]
-				},
 				{
 					"says": "rigs each piece while a reference body is wearing it",
 					"evidence": [
@@ -13739,51 +14413,6 @@
 					]
 				},
 				{
-					"says": "removes the body and keeps the weights the cloth picked up from the joints underneath",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "workers/garment-forge/README.md",
-							"contains": "the garment's vertices pick up weights from the\n   joints they actually sit on."
-						}
-					]
-				},
-				{
-					"says": "top, bottom, footwear, outerwear, hair, headwear, glasses or accessory",
-					"evidence": [
-						{
-							"type": "module",
-							"path": "src/garment-taxonomy.js",
-							"export": "GARMENT_SLOTS",
-							"equals": [
-								"top",
-								"bottom",
-								"footwear",
-								"outerwear",
-								"hair",
-								"headwear",
-								"glasses",
-								"accessory"
-							]
-						}
-					]
-				},
-				{
-					"says": "The forge walks it through seven stages in order, and the wardrobe page shows each one as it runs: image, mesh, compose, rig, extract, validate, publish",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/wardrobe-page.js",
-							"contains": "const STAGES = ['image', 'mesh', 'compose', 'rig', 'extract', 'validate', 'publish'];"
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/wardrobe",
-							"contains": "Watch every real stage below."
-						}
-					]
-				},
-				{
 					"says": "the seven stages",
 					"evidence": [
 						{
@@ -13800,26 +14429,6 @@
 							"type": "page",
 							"url": "https://three.ws/wardrobe",
 							"contains": "the forge will build, rig, validate, and publish it in about seven minutes"
-						}
-					]
-				},
-				{
-					"says": "The image stage paints a ghost-mannequin product photo: the garment as if worn, in an A-pose, from the front, on a plain background",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "workers/garment-forge/README.md",
-							"contains": "The photo is posed to match the reference body: worn shape,\n   A-pose, front view, plain background."
-						}
-					]
-				},
-				{
-					"says": "The mesh stage rebuilds that photo as a textured 3D model on our image-to-3D lanes, falling through to the next engine when one is down",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "workers/garment-forge/README.md",
-							"contains": "image→3D failover chain, first healthy rung wins:"
 						}
 					]
 				},
@@ -13845,126 +14454,6 @@
 							"type": "file",
 							"path": "tests/glb-canonicalize.test.js",
 							"contains": "rig worker skeleton (workers/rig, Make-It-Animatable output)"
-						}
-					]
-				},
-				{
-					"says": "The rigger sees an ordinary clothed person, so the skeleton lands at body scale, and each vertex of the sleeve takes its weights from the arm bones it actually sits on",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "workers/garment-forge/README.md",
-							"contains": "the\n   rigger sees a normally proportioned clothed humanoid, so the skeleton\n   lands at body scale and the garment's vertices pick up weights from the\n   joints they actually sit on."
-						}
-					]
-				},
-				{
-					"says": "The file is rebuilt from scratch with only the garment's geometry, skin and textures, and the joint names are rewritten to the canonical skeleton, so mixamorig:LeftArm becomes LeftArm",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "workers/garment-forge/README.md",
-							"contains": "The binary buffer is rebuilt from scratch (only the\n   garment's geometry, skin matrices, and textures survive), and joint names\n   are canonicalized (`mixamorig:LeftArm` → `LeftArm`)."
-						}
-					]
-				},
-				{
-					"says": "The same generated shirt was skinned both ways, put on the reference body and walked through the canonical walk clip",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "workers/garment-forge/README.md",
-							"contains": "the same generated shirt was skinned by (A) the rig-worker composite lane this\nworker uses and (B) a local proximity weight-transfer"
-						}
-					]
-				},
-				{
-					"says": "Rigged as a pair, the cloth stayed a mean 2.87 cm from the body across the gait. Copying weights from the nearest body vertex left it 5.88 cm away. The pair-rigging lane is the one in production",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "workers/garment-forge/README.md",
-							"contains": "| A rig-worker (production) | **2.87 cm** | **6.36 cm** | 16.12 cm |\n| B proximity transfer | 5.88 cm | 13.06 cm | 21.02 cm |"
-						},
-						{
-							"type": "file",
-							"path": "workers/garment-forge/README.md",
-							"contains": "A won decisively and is the only production lane."
-						}
-					]
-				},
-				{
-					"says": "A generator once answered a prompt for long straight hair with a mesh about 1.4 m deep whose width was still perfect",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "workers/garment-forge/README.md",
-							"contains": "a generator asked for \"long straight hair\" can return a mesh\n   1.4 m deep whose width is still a perfect 0.30"
-						}
-					]
-				},
-				{
-					"says": "a mesh outside it fails the job with the measurement instead of reaching the catalog",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "workers/garment-forge/README.md",
-							"contains": "so the job fails with the\n   measurement instead of publishing it."
-						}
-					]
-				},
-				{
-					"says": "The share of the garment's skin weight that lands on bones a body really has is measured before publishing. Under 60% and the job fails",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "workers/garment-forge/README.md",
-							"contains": "This worker measures that same\nnumber before publishing and fails the job loudly rather than emitting a bad\nasset."
-						},
-						{
-							"type": "file",
-							"path": "src/garment-taxonomy.js",
-							"contains": "export const MIN_BIND_COVERAGE = 0.6;"
-						}
-					]
-				},
-				{
-					"says": "A region counts when it carries at least 10% of the garment's skin weight, and the result is clamped to what the slot may plausibly hide: a shirt cannot hide the legs, and hair can hide nothing at all",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "workers/garment-forge/README.md",
-							"contains": "any REGION_BONES region carrying ≥ 10% of the\n   garment's skin weight, then clamped to the slot's plausible region set"
-						},
-						{
-							"type": "file",
-							"path": "docs/avatar-wardrobe.md",
-							"contains": "a shirt cannot\n   hide the legs, and headwear/hair can hide nothing at all"
-						}
-					]
-				},
-				{
-					"says": "The manifest pins the file's sha256 and a licence from an approved set",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "docs/avatar-wardrobe.md",
-							"contains": "Every manifest pins its GLB's `sha256`"
-						},
-						{
-							"type": "file",
-							"path": "docs/avatar-wardrobe.md",
-							"contains": "a licence outside the approved\ncommercial set (CC0, CC-BY, MIT, Apache-2.0, BSD) drops the entry"
-						}
-					]
-				},
-				{
-					"says": "The pieces in the catalog today are all generated and licensed CC0",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/wardrobe",
-							"contains": "v1 · CC0-1.0 · generated"
 						}
 					]
 				},
@@ -14004,26 +14493,6 @@
 					]
 				},
 				{
-					"says": "The client refuses a piece that binds under 60% of its skin weight, or that is larger than 0.75 times the avatar's height on any axis, and it checks the file's hash before attaching anything",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/garment-taxonomy.js",
-							"contains": "export const MIN_BIND_COVERAGE = 0.6;"
-						},
-						{
-							"type": "file",
-							"path": "src/garment-taxonomy.js",
-							"contains": "export const MAX_GARMENT_EXTENT_RATIO = 0.75;"
-						},
-						{
-							"type": "file",
-							"path": "docs/avatar-wardrobe.md",
-							"contains": "both\nthe client and the baker verify the bytes before attaching"
-						}
-					]
-				},
-				{
 					"says": "Rigid pieces such as glasses are parented to a single joint instead of deformed",
 					"evidence": [
 						{
@@ -14049,27 +14518,817 @@
 					]
 				},
 				{
-					"says": "you open one of your avatars in the editor and dress it from the Wardrobe tab",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/wardrobe",
-							"contains": "then open your avatar's editor and wear it"
-						},
-						{
-							"type": "file",
-							"path": "docs/avatar-wardrobe.md",
-							"contains": "Open any avatar in the editor (`/avatar-edit?id=…`), Wardrobe tab."
-						}
-					]
-				},
-				{
 					"says": "Browsing the catalog and turning any piece around in 3D needs nothing",
 					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/wardrobe",
 							"contains": "Browse the catalog, inspect a piece in 3D"
+						}
+					]
+				},
+				{
+					"says": "A finished piece takes about seven minutes",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/wardrobe",
+							"contains": "in about seven minutes"
+						}
+					]
+				},
+				{
+					"says": "What came back is a 2.7 MB shirt of 40,000 triangles",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+							"contains": "\"sizeBytes\": 2799620"
+						},
+						{
+							"type": "page",
+							"url": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+							"contains": "\"triangleCount\": 40000"
+						}
+					]
+				},
+				{
+					"says": "rigged to the three.ws canonical skeleton, with a manifest that pins its checksum and licence, published to a public catalog under CC0-1.0",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+							"contains": "\"skeleton\": \"three.ws-canonical-v1\""
+						},
+						{
+							"type": "page",
+							"url": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+							"contains": "\"sha256\": \"6c9b0f297d743b4ce454909e3388f5d4726e610a6ec6062e535840b76bc1d25c\""
+						},
+						{
+							"type": "page",
+							"url": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+							"contains": "\"license\": \"CC0-1.0\""
+						}
+					]
+				},
+				{
+					"says": "where any humanoid avatar can put it on",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "whatever humanoid is loaded"
+						}
+					]
+				},
+				{
+					"says": "Rig one alone and the auto-rigger fits a whole person inside the cloth, which tears the shirt apart as soon as it moves",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "Rigging a shirt alone would fit a full\n   skeleton inside the shirt and shred it on first animation."
+						}
+					]
+				},
+				{
+					"says": "The wardrobe knows eight: top, bottom, footwear, outerwear, hair, headwear, glasses and accessory",
+					"evidence": [
+						{
+							"type": "module",
+							"path": "src/garment-taxonomy.js",
+							"export": "GARMENT_SLOTS",
+							"equals": [
+								"top",
+								"bottom",
+								"footwear",
+								"outerwear",
+								"hair",
+								"headwear",
+								"glasses",
+								"accessory"
+							]
+						}
+					]
+				},
+				{
+					"says": "The forge walks a prompt through seven stages in order, and the wardrobe page shows each one as it runs: image, mesh, compose, rig, extract, validate, publish",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/wardrobe-page.js",
+							"contains": "const STAGES = ['image', 'mesh', 'compose', 'rig', 'extract', 'validate', 'publish'];"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/wardrobe",
+							"contains": "Watch every real stage below."
+						}
+					]
+				},
+				{
+					"says": "The shirt below went through all seven",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/wardrobe-page.js",
+							"contains": "const STAGES = ['image', 'mesh', 'compose', 'rig', 'extract', 'validate', 'publish'];"
+						}
+					]
+				},
+				{
+					"says": "The prompt becomes a ghost-mannequin product photo, a garment shown as if worn, without the person: the worn shape, in an A-pose, from the front, on a plain background",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "The photo is posed to match the reference body: worn shape,\n   A-pose, front view, plain background."
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "the prompt\n   becomes a ghost-mannequin product photo"
+						}
+					]
+				},
+				{
+					"says": "The picture is drawn by a Gemini image model on Vertex AI, at 2K resolution",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "(`gemini-2.5-flash-image`"
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "the resolution is held at 2K"
+						}
+					]
+				},
+				{
+					"says": "the stage rolls again, up to three attempts by default",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "up to `VERTEX_IMAGE_ATTEMPTS` times (default 3)"
+						}
+					]
+				},
+				{
+					"says": "the job reports the block reason and the slot at once, with an instruction to rephrase",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "so the job fails\n     immediately with the block reason, the slot, and an instruction to\n     rephrase."
+						}
+					]
+				},
+				{
+					"says": "The mesh stage sends the photograph through the image-to-3D chain, and the first healthy rung wins",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "image→3D failover chain, first healthy rung wins:"
+						}
+					]
+				},
+				{
+					"says": "The warm primary is Hunyuan3D 2.1 on a Cloud Run service with an RTX GPU, which paints a full PBR material set. Behind it sits the same engine on an L4 GPU service, and behind that TRELLIS, a different model behind the same API contract",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "`model-hunyuan3d-21-rtx` (warm primary, full PBR: albedo +\n   metallicRoughness + normal) → `model-hunyuan3d-21` (L4 fallback, same\n   image) → `model-trellis` (different model, same API contract)."
+						}
+					]
+				},
+				{
+					"says": "The oxford shirt's manifest records which engine built it: hunyuan3d-2.1",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+							"contains": "\"model\": \"hunyuan3d-2.1\""
+						}
+					]
+				},
+				{
+					"says": "an A-pose figure 1.667 m tall with 52 joints",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "A-pose, 1.667 m, 52 mixamorig joints, front +Z"
+						}
+					]
+				},
+				{
+					"says": "Each slot has a measured box on that body",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "Slot boxes are\n   measured against that body in `garment_glb.SLOT_BOXES`."
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/garment_glb.py",
+							"contains": "\"top\":       {\"center\": (0.0, 1.14, 0.03),  \"size\": (0.90, 0.56, 0.45)"
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/garment_glb.py",
+							"contains": "\"outerwear\": {\"center\": (0.0, 1.05, 0.03),  \"size\": (1.00, 0.80, 0.50)"
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/garment_glb.py",
+							"contains": "\"bottom\":    {\"center\": (0.0, 0.50, 0.02),  \"size\": (0.50, 0.90, 0.35)"
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/garment_glb.py",
+							"contains": "\"footwear\":  {\"center\": (0.0, 0.09, 0.07),  \"size\": (0.60, 0.18, 0.30)"
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/garment_glb.py",
+							"contains": "\"hair\":      {\"center\": (0.0, 1.58, 0.03),  \"size\": (0.30, 0.25, 0.30)"
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/garment_glb.py",
+							"contains": "\"headwear\":  {\"center\": (0.0, 1.60, 0.03),  \"size\": (0.30, 0.22, 0.30)"
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/garment_glb.py",
+							"contains": "\"glasses\":   {\"center\": (0.0, 1.547, 0.11), \"size\": (0.18, 0.08, 0.12)"
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/garment_glb.py",
+							"contains": "\"accessory\": {\"center\": (0.0, 1.20, 0.05),  \"size\": (0.35, 0.35, 0.25)"
+						}
+					]
+				},
+				{
+					"says": "Then the forge rigs the composite, body and garment together, on the same auto-rigging worker that rigs our avatars",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "the *composite* (body + garment) goes\n   to the deployed `model-rig` worker (Make-It-Animatable)."
+						},
+						{
+							"type": "file",
+							"path": "tests/glb-canonicalize.test.js",
+							"contains": "rig worker skeleton (workers/rig, Make-It-Animatable output)"
+						}
+					]
+				},
+				{
+					"says": "The worker runs Make-It-Animatable, an open model released under the MIT licence and published at CVPR 2025",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "(MIT, CVPR 2025)"
+						}
+					]
+				},
+				{
+					"says": "The file is rebuilt from scratch with only the garment's geometry, skin matrices and textures, and the joint names are rewritten to the canonical skeleton, so mixamorig:LeftArm becomes LeftArm",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "The binary buffer is rebuilt from scratch (only the\n   garment's geometry, skin matrices, and textures survive), and joint names\n   are canonicalized (`mixamorig:LeftArm` → `LeftArm`)."
+						}
+					]
+				},
+				{
+					"says": "its envelope allows anything from a pixie cut to a waist-length fall up to 0.80 m tall, and the top of the mesh is anchored to the crown",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/garment_glb.py",
+							"contains": "from a pixie to waist-length (0.80 m tall), and the"
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "Hair additionally anchors its TOP to\n   the crown"
+						}
+					]
+				},
+				{
+					"says": "We checked the finished shirt in the Rig Doctor, the page that diagnoses a GLB in your browser without uploading it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/rig-doctor",
+							"contains": "Runs entirely in your browser"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/rig-doctor",
+							"contains": "Nothing is uploaded."
+						}
+					]
+				},
+				{
+					"says": "The same generated shirt was skinned by each, attached to the parametric base body and driven through the canonical walk clip",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "the same generated shirt was skinned by (A) the rig-worker composite lane this\nworker uses and (B) a local proximity weight-transfer"
+						}
+					]
+				},
+				{
+					"says": "Rigging the pair kept the cloth about half as far from the body at the mean, and it is the only lane the forge uses in production",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "| A rig-worker (production) | **2.87 cm** | **6.36 cm** | 16.12 cm |\n| B proximity transfer | 5.88 cm | 13.06 cm | 21.02 cm |"
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "A won decisively and is the only production lane."
+						}
+					]
+				},
+				{
+					"says": "The validate stage is where a piece earns its place in the catalog",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "6. **Validate + publish**"
+						}
+					]
+				},
+				{
+					"says": "A region counts as covered when it carries 10% or more of the weight",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "any REGION_BONES region carrying ≥ 10% of the\n   garment's skin weight"
+						}
+					]
+				},
+				{
+					"says": "a shirt cannot hide the legs, and hair can hide nothing at all, because the scalp region resolves to the head bone and hiding it would take the face with it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "a shirt cannot\n   hide the legs, and headwear/hair can hide nothing at all, because the\n   `scalp` region resolves to the Head bone and culling it would take the\n   avatar's face with it"
+						}
+					]
+				},
+				{
+					"says": "The approved licences are CC0, CC-BY, MIT, Apache-2.0 and BSD, and the pieces in the catalog today are generated and licensed CC0",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "(CC0, CC-BY, MIT, Apache-2.0, BSD)"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/wardrobe",
+							"contains": "v1 · CC0-1.0 · generated"
+						}
+					]
+				},
+				{
+					"says": "A piece that passes lands in its own versioned directory, and its manifest is appended to one public catalog file",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "`garments/<slot>/<id>/v<version>/` and the manifest is appended to"
+						}
+					]
+				},
+				{
+					"says": "The catalog is a single public JSON file, and it needs no key",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "One public JSON array of Garment Manifest v1 documents"
+						}
+					]
+				},
+				{
+					"says": "The wardrobe page lists the whole catalog, and each piece has a 3D button that turns it in a live viewer",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/wardrobe-page.js",
+							"contains": "title=\"View in 3D\">3D</button>"
+						}
+					]
+				},
+				{
+					"says": "the record of a job in storage is also its work queue",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "A job's record in GCS (`garment-jobs/<id>.json`) is not just status for\npollers, it is the work queue."
+						}
+					]
+				},
+				{
+					"says": "An instance owns a job only once it holds a concurrency slot and wins an atomic, generation-matched write on the record",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "an\ninstance only owns a job once it holds a concurrency slot AND wins an atomic\ngeneration-matched write on the record"
+						}
+					]
+				},
+				{
+					"says": "Everything the pipeline needs is stored at submit, so any instance can drive a job it did not receive",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "Everything the pipeline needs (prompt, slot, tier, yaw) is persisted\nat submit, so any instance can drive a job it never saw submitted."
+						}
+					]
+				},
+				{
+					"says": "A freed slot drains the backlog straight away, a sweep every 10 minutes claims any orphan, and a job read requeues one whose owner went quiet",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "1. **A freed slot drains the backlog.**"
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "Called every 10 minutes by"
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "requeues a job whose owner\n   went silent"
+						}
+					]
+				},
+				{
+					"says": "A job is declared failed only after three attempts, so a replaced instance costs an attempt, not the piece",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "only declares\n   terminal failure once `JOB_MAX_ATTEMPTS` (default 3) is spent, so a\n   reclaimed instance costs an attempt rather than the job."
+						}
+					]
+				},
+				{
+					"says": "A submit takes one attempt, because it starts a GPU job and is not safely repeatable; a read takes three",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "The proxy gives a submit one attempt with a 60 s deadline (it starts a GPU job,\nso it is not safely repeatable) and a job read three attempts at 10 s each"
+						}
+					]
+				},
+				{
+					"says": "the page saves the job id in the browser, so a visitor who closes the tab at minute three finds the job still running on return",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "`/wardrobe` saves\nthe job id in `localStorage` under `twx_wardrobe_job` and resumes polling on\nthe next visit."
+						}
+					]
+				},
+				{
+					"says": "the browser binds it to the avatar's skeleton by name",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "rewrites the garment's skin indices from garment-bone-order into\n   avatar-bone-order by canonical name"
+						}
+					]
+				},
+				{
+					"says": "a helper joint the avatar lacks falls back to its nearest mapped parent",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "helper/twist joints the avatar\n   lacks falling back to their nearest mapped ancestor"
+						}
+					]
+				},
+				{
+					"says": "It refuses a piece that binds under 60% of its skin weight, or that is larger than 0.75 times the avatar's height on any axis, and it verifies the file's sha256 before attaching, so a truncated download is refused",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/garment-taxonomy.js",
+							"contains": "export const MIN_BIND_COVERAGE = 0.6;"
+						},
+						{
+							"type": "file",
+							"path": "src/garment-taxonomy.js",
+							"contains": "export const MAX_GARMENT_EXTENT_RATIO = 0.75;"
+						},
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "both\nthe client and the baker verify the bytes before attaching, so a swapped or\ntruncated download is refused, never worn."
+						}
+					]
+				},
+				{
+					"says": "A catalog audit binds each live piece onto four different humanoid rigs, checks each file's hash, and measures how far the cloth strays across the walk gait, with a ceiling for each slot",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "the real `attachGarment()` bind on FOUR different humanoid rigs"
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "with per-slot p95 ceilings"
+						}
+					]
+				},
+				{
+					"says": "The baseline run covered 23 entries, all binding at full coverage on all four rigs",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "Baseline 2026-07-27: 23 entries, all binding at 1.00 coverage on all four\nrigs, 0 hard failures."
+						}
+					]
+				},
+				{
+					"says": "Make-It-Animatable, released under the MIT licence and published at CVPR 2025, predicts the skeleton and skinning weights for the composite",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "(MIT, CVPR 2025)"
+						}
+					]
+				},
+				{
+					"says": "The reference body is released under CC0 and derives from MakeHuman data",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "CC0 (MakeHuman/MPFB2-derived)"
+						}
+					]
+				},
+				{
+					"says": "Hunyuan3D 2.1 and TRELLIS are the image-to-3D engines in the failover chain, and Gemini on Vertex AI paints the reference photograph",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "`model-hunyuan3d-21` (L4 fallback, same\n   image) → `model-trellis`"
+						}
+					]
+				},
+				{
+					"says": "Because a manifest pins its file's hash, anyone can repeat the wearer's integrity check from a terminal",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "Every manifest pins its GLB's `sha256`"
+						}
+					]
+				},
+				{
+					"says": "It prints hash matches and 2799620 for both byte counts",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+							"contains": "\"sizeBytes\": 2799620"
+						}
+					]
+				},
+				{
+					"says": "In the browser the same check is verifyModelBytes(bytes, manifest) from the catalog loader, followed by attachGarment(avatarRoot, garmentRoot, { slot: manifest.slot }), which returns ok, the measured coverage, a reason when it refuses, and a detach function that takes the piece off again",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/garment-catalog.js",
+							"contains": "export async function verifyModelBytes(bytes, manifest)"
+						},
+						{
+							"type": "file",
+							"path": "src/avatar-garment.js",
+							"contains": "@returns {{ ok: boolean, slot: string, meshes: object[], coverage: number,\n *             unresolved: string[], reason?: string, detach: () => void }}"
+						}
+					]
+				},
+				{
+					"says": "using the morph sliders the parametric base already carries",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-studio.md",
+							"contains": "baked with **306 identity morph sliders**"
+						}
+					]
+				},
+				{
+					"says": "the wardrobe page runs the same seven stages you read about here",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/wardrobe-page.js",
+							"contains": "const STAGES = ['image', 'mesh', 'compose', 'rig', 'extract', 'validate', 'publish'];"
+						}
+					]
+				},
+				{
+					"says": "The mesh arrives at about 40,000 triangles, which is the budget the forge targets",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://storage.googleapis.com/three-ws-garments/garments/catalog.json",
+							"contains": "\"triangleCount\": 40000"
+						},
+						{
+							"type": "page",
+							"url": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+							"contains": "\"triangleCount\": 40000"
+						}
+					]
+				},
+				{
+					"says": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "OpenAI Select Partner in the OpenAI Partner Network"
+						}
+					]
+				},
+				{
+					"says": "IBM is listed in the Strategic tier of the partner map",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Strategic partners"
+						}
+					]
+				},
+				{
+					"says": "three.ws agent identity integrates with IBM watsonx and IBM Granite",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "integrate with IBM watsonx and IBM Granite"
+						}
+					]
+				},
+				{
+					"says": "three.ws is deployed on AWS infrastructure with Marketplace availability",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Deployed on AWS infrastructure with Marketplace availability."
+						}
+					]
+				},
+				{
+					"says": "Google Cloud powers three.ws inference, storage and real-time serving",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Google Cloud powers three.ws inference, storage, and real-time serving at global scale."
+						}
+					]
+				},
+				{
+					"says": "Alibaba Cloud extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Alibaba Cloud extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment."
+						}
+					]
+				},
+				{
+					"says": "with low-latency inference close to users in Asia",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "low-latency inference close to users in Asia."
+						}
+					]
+				},
+				{
+					"says": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing."
+						}
+					]
+				},
+				{
+					"says": "a builder-focused publishing partnership with HackerNoon",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "A builder-focused publishing partnership"
+						}
+					]
+				},
+				{
+					"says": "feature articles, tutorials and developer guides for people shipping with AI, published to HackerNoon's developer audience",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "feature articles, tutorials, and developer guides for people shipping with AI, published to HackerNoon's developer audience."
+						}
+					]
+				},
+				{
+					"says": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "member of the Quicknode Startup Program with approved infrastructure credits."
+						}
+					]
+				},
+				{
+					"says": "The occludes list names the six body regions this shirt covers: torso, upperArms, lowerArms, hips, upperLegs and neck",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+							"contains": "\"torso\","
+						},
+						{
+							"type": "page",
+							"url": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+							"contains": "\"upperArms\","
+						},
+						{
+							"type": "page",
+							"url": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+							"contains": "\"lowerArms\","
+						},
+						{
+							"type": "page",
+							"url": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+							"contains": "\"hips\","
+						},
+						{
+							"type": "page",
+							"url": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+							"contains": "\"upperLegs\","
+						},
+						{
+							"type": "page",
+							"url": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+							"contains": "\"neck\""
 						}
 					]
 				}
@@ -14092,30 +15351,30 @@
 				"workers/model-triposg"
 			],
 			"article": {
-				"title": "How a sentence becomes a textured 3D model, and where the job goes when a GPU fails",
+				"title": "A picture became a textured 3D model in 2 minutes 17 seconds, and a signed receipt shows how",
 				"body": "data/x-content/articles/forge-article.md",
 				"cover": {
 					"path": "public/x-media/forge-article/cover.png",
-					"alt": "A 3D model generated on the Forge from a text prompt, shown in its viewer on a dark background: a Greek hoplite in a polished bronze cuirass and crested helmet, with a red tunic, bronze greaves, sandals and a round shield held at his side"
+					"alt": "The delivered 3D model in the three.ws viewer on a dark background: a noir detective in a long black coat, fedora and white gloves, rebuilt from a single picture by the Forge, seen from the side with his hands outstretched"
 				}
 			},
 			"probes": [
 				{
 					"type": "api",
-					"name": "the self-hosted TRELLIS lane reports healthy",
-					"url": "https://three.ws/api/forge?health=1",
+					"name": "the self-hosted TRELLIS worker is loaded and ready on its L4",
+					"url": "https://model-trellis-lp642k3kpa-uc.a.run.app/health",
 					"expect": {
 						"status": 200,
-						"contains": "The TRELLIS (self-host) worker is reachable."
+						"contains": "\"ready\":true"
 					}
 				},
 				{
 					"type": "api",
-					"name": "the Hunyuan3D worker is loaded and ready on its Blackwell GPU",
-					"url": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
+					"name": "the run receipt for the featured job verifies",
+					"url": "https://three.ws/api/runs?id=rr_9Wc3cwxCbevEWfbbY2F3BN",
 					"expect": {
 						"status": 200,
-						"contains": "\"ready\":true"
+						"contains": "signed by the pinned three.ws key"
 					}
 				},
 				{
@@ -14129,67 +15388,77 @@
 			],
 			"posts": [
 				{
-					"text": "A text prompt on the Forge runs through two chains: one paints a reference picture, the other rebuilds it as a textured 3D model on our own NVIDIA GPUs on Cloud Run. When a worker fails mid-job, the job moves to the next engine under the same id. The write-up covers the lanes, the rescue order and the limits: three.ws/forge"
+					"text": "One picture into the Forge, no account: 2 minutes 17 seconds later, a textured 3D model built on our own NVIDIA L4, plus a signed receipt for every stage. The write-up covers the engine ladder, the mid-job rescue and the free lane: three.ws/forge"
 				}
 			],
 			"claims": [
 				{
-					"says": "one paints a reference picture, the other rebuilds it as a textured 3D model",
+					"says": "2 minutes 17 seconds",
 					"evidence": [
 						{
 							"type": "page",
-							"url": "https://three.ws/forge",
-							"contains": "renders a preview image, then builds 3D"
+							"url": "https://three.ws/api/runs?id=rr_9Wc3cwxCbevEWfbbY2F3BN",
+							"contains": "\"duration_ms\":137433"
 						},
 						{
-							"type": "file",
-							"path": "api/_lib/forge-reference-image.js",
-							"contains": "The text→3D pipeline is: user prompt → prompt director rewrite → a reference\n// IMAGE is generated → TRELLIS/Hunyuan3D reconstructs a textured GLB from that\n// image."
+							"type": "page",
+							"url": "https://three.ws/api/runs?id=rr_9Wc3cwxCbevEWfbbY2F3BN",
+							"contains": "\"ms\":137423"
 						}
 					]
 				},
 				{
-					"says": "on our own NVIDIA GPUs on Cloud Run",
+					"says": "137,433 ms",
 					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/api/runs?id=rr_9Wc3cwxCbevEWfbbY2F3BN",
+							"contains": "\"duration_ms\":137433"
+						}
+					]
+				},
+				{
+					"says": "137,423 ms",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/api/runs?id=rr_9Wc3cwxCbevEWfbbY2F3BN",
+							"contains": "\"ms\":137423"
+						}
+					]
+				},
+				{
+					"says": "The mesh in our run was built on an NVIDIA L4",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/api/runs?id=rr_9Wc3cwxCbevEWfbbY2F3BN",
+							"contains": "\"engine\":\"TRELLIS (self-host)\""
+						},
 						{
 							"type": "page",
 							"url": "https://model-trellis-lp642k3kpa-uc.a.run.app/health",
 							"contains": "\"gpu_name\":\"NVIDIA L4\""
 						},
 						{
-							"type": "page",
-							"url": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
-							"contains": "\"gpu_name\":\"NVIDIA RTX PRO 6000 Blackwell Server Edition\""
-						}
-					]
-				},
-				{
-					"says": "When a worker fails mid-job, the job moves to the next engine under the same id",
-					"evidence": [
-						{
 							"type": "file",
-							"path": "api/forge.js",
-							"contains": "// configured lane: the client keeps polling this id and sees\n\t\t// status:\"running\" with a new backend instead of a dead end."
+							"path": "workers/model-trellis/README.md",
+							"contains": "It runs on one NVIDIA L4 (24 GB) on Cloud Run"
 						}
 					]
 				},
 				{
-					"says": "when an engine fails partway through a job, the job moves to the next engine under the same job id and the progress bar keeps going",
+					"says": "no account",
 					"evidence": [
 						{
 							"type": "page",
-							"url": "https://three.ws/blog/inside-the-forge",
-							"contains": "You keep watching the same progress bar; you never find out it happened."
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/forge-failover.js",
-							"contains": "The client\n//      keeps polling the SAME job id and simply sees status:\"running\" with a\n//      new `backend`"
+							"url": "https://three.ws/forge",
+							"contains": "Free · no sign-up · yours to download"
 						}
 					]
 				},
 				{
-					"says": "a Draft or Standard model costs nothing and needs no account",
+					"says": "a Draft or Standard model is free and needs no account",
 					"evidence": [
 						{
 							"type": "page",
@@ -14199,7 +15468,7 @@
 						{
 							"type": "page",
 							"url": "https://three.ws/blog/inside-the-forge",
-							"contains": "Draft and standard usually cost us nothing to produce, because they run on free lanes and our own GPUs."
+							"contains": "draft and standard usually cost us nothing to produce, because they run on free lanes and our own GPUs."
 						}
 					]
 				},
@@ -14234,117 +15503,32 @@
 					]
 				},
 				{
-					"says": "falls through to FLUX on NVIDIA's hosted inference, then to further providers, ending in a keyless rung, so no single provider's failure is ever the terminal error",
+					"says": "no single provider's failure is ever the terminal error for the picture",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "api/_mcp3d/text-to-image.js",
 							"contains": "keyed rungs: no single provider's failure is ever the terminal error."
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/forge-reference-image.js",
-							"contains": "if the Vertex lane is unconfigured or fails\n// for any reason, it falls through to the existing reference-image provider"
 						}
 					]
 				},
 				{
-					"says": "Photos skip this step: your photo is the reference. A sketch skips it too",
+					"says": "The default engine at every tier is TRELLIS on our own NVIDIA L4 worker",
 					"evidence": [
 						{
 							"type": "page",
-							"url": "https://three.ws/blog/inside-the-forge",
-							"contains": "If you uploaded photos instead, this step is skipped: your photos are the reference. Sketches skip it too and drive the geometry directly."
-						}
-					]
-				},
-				{
-					"says": "Draft and Standard go to TRELLIS on our own worker. High goes to Hunyuan3D 2.1 on our own worker",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/forge-tiers.js",
-							"contains": "\tdraft: Object.freeze({ image: 'trellis_selfhost' }),\n\tstandard: Object.freeze({ image: 'trellis_selfhost' }),"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/forge-tiers.js",
-							"contains": "\thigh: Object.freeze({ image: 'hunyuan3d' }),"
+							"url": "https://three.ws/api/forge?catalog",
+							"contains": "\"default_backend_for_tier\""
 						},
 						{
 							"type": "page",
-							"url": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
-							"contains": "\"model\":\"hunyuan3d-2.1\""
+							"url": "https://model-trellis-lp642k3kpa-uc.a.run.app/health",
+							"contains": "\"gpu_name\":\"NVIDIA L4\""
 						}
 					]
 				},
 				{
-					"says": "paints a full PBR material set (colour, roughness and normal maps) rather than one baked colour map",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
-							"contains": "Hunyuan3D 2.1 runs a shape DiT for geometry, then a separate PBR paint pass"
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
-							"contains": "Hunyuan3D 2.0 gives you a mesh with a single baked diffuse texture."
-						}
-					]
-				},
-				{
-					"says": "a prompt that clearly reads as a hard-surface object (a robot, a vehicle, a piece of furniture) swaps TRELLIS ahead of Hunyuan3D",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/forge-tiers.js",
-							"contains": "Only an unambiguously hard-surface subject reorders the lanes."
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/forge-tiers.js",
-							"contains": "const HARDSURFACE_SUBJECT_RE = /\\b(robot|mech|mecha|drone|vehicle|"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/forge-tiers.js",
-							"contains": "is crisp on hard-surface / mechanical / geometric subjects"
-						}
-					]
-				},
-				{
-					"says": "Hugging Face Spaces for photos, and NVIDIA's hosted TRELLIS for text, which keeps a text prompt answerable even when every one of our GPU workers is cold",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/forge-tiers.js",
-							"contains": "returns a model when every GPU worker (and HuggingFace) is cold or down"
-						}
-					]
-				},
-				{
-					"says": "Engines that need your own API key run only when you pick them",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/forge.js",
-							"contains": "BYOK lanes are excluded (never auto-selected)."
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/forge",
-							"contains": "your own key"
-						},
-						{
-							"type": "file",
-							"path": "src/forge.js",
-							"contains": "// Flip the engine picker to a backend by id"
-						}
-					]
-				},
-				{
-					"says": "It takes the first lane in its order that is healthy or simply unknown; if none is clean, it takes the first that is not confirmed down",
+					"says": "It takes the first lane in its order that is healthy or whose state is unknown; if none is clean, it takes the first that is not confirmed down",
 					"evidence": [
 						{
 							"type": "file",
@@ -14359,22 +15543,92 @@
 					]
 				},
 				{
-					"says": "about 12,000 at Draft, about 30,000 at Standard, and up to 200,000 at High",
+					"says": "Hugging Face Spaces for photos, and NVIDIA's hosted TRELLIS for text, which keeps a text prompt answerable even when every one of our GPU workers is cold",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-tiers.js",
+							"contains": "returns a model when every GPU worker (and HuggingFace) is cold or down"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-tiers.js",
+							"contains": "and the free lane that answers a text prompt when our own GPU workers are cold"
+						}
+					]
+				},
+				{
+					"says": "Engines that need your own API key run only when you pick them",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/forge.js",
+							"contains": "BYOK lanes are excluded (never auto-selected)."
+						}
+					]
+				},
+				{
+					"says": "Standard, usually about a minute",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/forge.js",
+							"contains": "if (est?.eta_seconds) parts.push(`usually ~${est.eta_seconds}s`);"
+						}
+					]
+				},
+				{
+					"says": "Its community licence does not cover the European Union, the United Kingdom or South Korea",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-territory.js",
+							"contains": "community licences (Territory clause) do not grant any rights in the European Union,\n * the United Kingdom or South Korea"
+						}
+					]
+				},
+				{
+					"says": "the router resolves the country on the server and keeps every Tencent lane out of those regions",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-territory.js",
+							"contains": "The country is resolved server side from the edge geo header"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-territory.js",
+							"contains": "must never be\n * routed to a lane that runs a Tencent model."
+						}
+					]
+				},
+				{
+					"says": "It runs on our own worker on an RTX PRO 6000 Blackwell",
 					"evidence": [
 						{
 							"type": "page",
-							"url": "https://three.ws/blog/inside-the-forge",
-							"contains": "Draft: about 12,000 polygons, fast."
+							"url": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
+							"contains": "\"gpu_name\":\"NVIDIA RTX PRO 6000 Blackwell Server Edition\""
 						},
 						{
 							"type": "page",
-							"url": "https://three.ws/blog/inside-the-forge",
-							"contains": "Standard (the default): about 30,000 polygons"
+							"url": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
+							"contains": "\"model\":\"hunyuan3d-2.1\""
+						}
+					]
+				},
+				{
+					"says": "then paints colour, roughness and normal maps with a second, rather than a single baked colour map",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "Hunyuan3D 2.1 runs a shape DiT for geometry, then a separate PBR paint pass"
 						},
 						{
 							"type": "page",
-							"url": "https://three.ws/blog/inside-the-forge",
-							"contains": "High: up to 200,000 polygons"
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "Hunyuan3D 2.0 gives you a mesh with a single baked diffuse texture."
 						}
 					]
 				},
@@ -14404,12 +15658,22 @@
 					]
 				},
 				{
-					"says": "our TRELLIS worker, then our Hunyuan3D worker, then a hosted TRELLIS lane where one is configured, then TripoSG",
+					"says": "you keep watching the same progress bar",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/inside-the-forge",
+							"contains": "You keep watching the same progress bar; you never find out it happened."
+						}
+					]
+				},
+				{
+					"says": "our own GPU workers first, then free external lanes, then the paid platform default, then the geometry-only TripoSG lane as the final rung",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "api/_lib/forge-failover.js",
-							"contains": "const ASYNC_REDISPATCH_ORDER = ['trellis_selfhost', 'hunyuan3d', 'trellis', 'triposg'];"
+							"contains": "// Ordering policy mirrors forge-tiers.js exactly: our own GPU workers first\n// (zero vendor cost), then free external lanes, then the paid platform default,\n// then the geometry-only TripoSG lane as the final rung."
 						}
 					]
 				},
@@ -14439,17 +15703,27 @@
 					]
 				},
 				{
-					"says": "a worker outage from 18 to 28 September that took Hunyuan3D and TRELLIS down together: without it, roughly 400 photo jobs a day ended in a hard failure while the TripoSG worker sat healthy",
+					"says": "90 seconds",
 					"evidence": [
 						{
 							"type": "file",
-							"path": "api/_lib/forge-failover.js",
-							"contains": "// 2026-09-18..28 worker outage, which took Hunyuan3D and TRELLIS self-host\n// down together, ended roughly 400 photo jobs a day in a hard failure while\n// the TripoSG worker sat healthy."
+							"path": "api/_lib/forge-lane-health.js",
+							"contains": "const LANE_COOLDOWN_SECONDS = 90;"
 						}
 					]
 				},
 				{
-					"says": "The response names the lanes that can serve a fresh retry",
+					"says": "4 seconds",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-health.js",
+							"contains": "const PROBE_TIMEOUT_MS = 4_000;"
+						}
+					]
+				},
+				{
+					"says": "The response still names the way forward",
 					"evidence": [
 						{
 							"type": "file",
@@ -14459,18 +15733,43 @@
 					]
 				},
 				{
-					"says": "TRELLIS runs on an L4. Hunyuan3D 2.1 runs on an RTX PRO 6000 Blackwell, held warm with one instance, because a cold start means loading 14 GiB of weights before any work begins",
+					"says": "It lists the lanes that can serve a fresh retry",
 					"evidence": [
 						{
-							"type": "page",
-							"url": "https://model-trellis-lp642k3kpa-uc.a.run.app/health",
-							"contains": "\"gpu_name\":\"NVIDIA L4\""
+							"type": "file",
+							"path": "api/forge.js",
+							"contains": "...(suggestions.length ? { retryable: true, retry_backends: suggestions } : {}),"
+						}
+					]
+				},
+				{
+					"says": "Hugging Face Spaces block for the whole generation, and NVIDIA's hosted lane takes text only, so neither can pick up a job from a status poll",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-failover.js",
+							"contains": "HuggingFace Spaces cannot be auto-redispatched from a poll (its\n// provider blocks through the whole generation)"
 						},
 						{
-							"type": "page",
-							"url": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
-							"contains": "\"gpu_name\":\"NVIDIA RTX PRO 6000 Blackwell Server Edition\""
-						},
+							"type": "file",
+							"path": "api/_lib/forge-failover.js",
+							"contains": "NVIDIA is excluded\n// (text-only, and a poll-time redispatch always reconstructs from a stored\n// reference image)."
+						}
+					]
+				},
+				{
+					"says": "a job that started from several photos continues from one of them, and says so by reporting how many views it used",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/forge.js",
+							"contains": "multi-view original degrades visibly (views_used: 1), never silently."
+						}
+					]
+				},
+				{
+					"says": "held warm with one instance, because a cold start means loading 14 GiB of weights before any work begins",
+					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
@@ -14494,7 +15793,7 @@
 					]
 				},
 				{
-					"says": "The health check reads the second field, so a worker that is up but still loading is reported degraded, not healthy",
+					"says": "The Forge's health check reads the second field, so a worker that is up but still loading is reported degraded, not healthy",
 					"evidence": [
 						{
 							"type": "file",
@@ -14514,7 +15813,7 @@
 					]
 				},
 				{
-					"says": "18 GiB staged plus 14 GiB loaded is a 32 GiB peak against the L4 tier's 32 GiB ceiling, and the container was killed on every cold start",
+					"says": "18 GiB staged plus 14 GiB loaded is a 32 GiB peak, and the RTX PRO 6000 tier's floor of 80 GiB clears it with room to spare",
 					"evidence": [
 						{
 							"type": "page",
@@ -14524,28 +15823,23 @@
 						{
 							"type": "page",
 							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
-							"contains": "Every single cold start ended the same way:"
-						}
-					]
-				},
-				{
-					"says": "The RTX PRO 6000 tier's floor of 80 GiB clears it",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
 							"contains": "The platform minimums for nvidia-rtx-pro-6000 on Cloud Run are 20 CPU and 80 GiB, which clears a 32 GiB peak with room to spare"
 						}
 					]
 				},
 				{
-					"says": "Blackwell needs its GPU code built with NVIDIA's 12.8 toolkit. The worker image compiles its extensions for both GPU generations, so which card runs it is a deploy flag rather than a rebuild",
+					"says": "Blackwell needs its GPU code built with NVIDIA's 12.8 toolkit",
 					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
 							"contains": "Blackwell is sm_120 and needs cu128 wheels; no flag substitutes for the rebuild."
-						},
+						}
+					]
+				},
+				{
+					"says": "The worker image compiles its extensions for both GPU generations, so which card runs it is a deploy flag rather than a rebuild",
+					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
@@ -14559,37 +15853,212 @@
 					]
 				},
 				{
-					"says": "Hugging Face Spaces block for the whole generation and NVIDIA's hosted lane takes text only, so neither can pick up a job that failed on a poll; both appear only in the retry suggestions",
+					"says": "signed with an ed25519 key",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/api/runs?id=rr_9Wc3cwxCbevEWfbbY2F3BN",
+							"contains": "\"signature\":\"ZdA9LUKCgoqVy46wLE3govuSaHXtgjrCtr1wi91HpQrfGrtFxKFcoMmnsx1aRxQywBggxgUU6Eu9tWYZGE82nnA\""
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/api/runs?id=rr_9Wc3cwxCbevEWfbbY2F3BN",
+							"contains": "ed25519 signature over the tagged canonical bytes"
+						}
+					]
+				},
+				{
+					"says": "/api/runs?stats=1&days=7",
 					"evidence": [
 						{
 							"type": "file",
-							"path": "api/_lib/forge-failover.js",
-							"contains": "HuggingFace Spaces cannot be auto-redispatched from a poll (its\n// provider blocks through the whole generation), so it appears only in the\n// retry_backends suggestions"
+							"path": "api/runs.js",
+							"contains": "// GET /api/runs?stats=1&days=7 aggregate outcomes and stage verdicts across every receipt in the window"
+						}
+					]
+				},
+				{
+					"says": "with no prompt, file or id in it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/runs.js",
+							"contains": "the stats view is counts only, with no prompt, file\n// or id in it."
+						}
+					]
+				},
+				{
+					"says": "published at CVPR 2025 and released under the MIT licence",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "hubs/awesome-generative-3d/README.md",
+							"contains": "generates Gaussians, radiance fields and meshes from text or images (CVPR 2025)."
 						},
 						{
 							"type": "file",
-							"path": "api/_lib/forge-failover.js",
-							"contains": "NVIDIA is excluded\n// (text-only, and a poll-time redispatch always reconstructs from a stored\n// reference image)."
+							"path": "workers/model-trellis/README.md",
+							"contains": "MIT license"
 						}
 					]
 				},
 				{
-					"says": "a job that started from several photos continues from one of them, and says so",
+					"says": "released under the Tencent Hunyuan Non-Commercial licence",
 					"evidence": [
 						{
 							"type": "file",
-							"path": "api/forge.js",
-							"contains": "multi-view original degrades visibly (views_used: 1), never silently."
+							"path": "workers/model-hunyuan3d/README.md",
+							"contains": "TENCENT HUNYUAN NON-COMMERCIAL LICENSE"
 						}
 					]
 				},
 				{
-					"says": "Each check waits 4 seconds",
+					"says": "TripoSG, the geometry-only rung at the end of the rescue chain, comes from VAST AI Research under the MIT licence",
 					"evidence": [
 						{
 							"type": "file",
-							"path": "api/_lib/forge-health.js",
-							"contains": "const PROBE_TIMEOUT_MS = 4_000;"
+							"path": "workers/model-triposg/README.md",
+							"contains": "[TripoSG](https://github.com/VAST-AI-Research/TripoSG)\n(VAST-AI, MIT)"
+						}
+					]
+				},
+				{
+					"says": "returns only generated files",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/model-hunyuan3d/README.md",
+							"contains": "No weights or model code are redistributed by the platform;\nonly generated GLBs are returned to callers."
+						}
+					]
+				},
+				{
+					"says": "our worker runs the TRELLIS-image-large checkpoint",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://model-trellis-lp642k3kpa-uc.a.run.app/health",
+							"contains": "\"model\":\"trellis-image-large\""
+						}
+					]
+				},
+				{
+					"says": "one Cloud Run service serves the site and every API handler",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "server/index.mjs",
+							"contains": "/api"
+						}
+					]
+				},
+				{
+					"says": "NVIDIA Inception",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/nvidia",
+							"contains": "NVIDIA Inception member"
+						}
+					]
+				},
+				{
+					"says": "a member of NVIDIA Inception",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/nvidia",
+							"contains": "independent member of the NVIDIA Inception program"
+						}
+					]
+				},
+				{
+					"says": "a member of Google Cloud for Web3 Startups",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-google-cloud-partnership",
+							"contains": "Google Cloud for Web3 Startups"
+						},
+						{
+							"type": "file",
+							"path": "docs/listings.md",
+							"contains": "| **Google Cloud** for Web3 Startups | Member |"
+						}
+					]
+				},
+				{
+					"says": "an OpenAI Select Partner in the OpenAI Partner Network",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network"
+						}
+					]
+				},
+				{
+					"says": "an IBM Business Partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-ibm-business-partner",
+							"contains": "independent IBM Business Partner"
+						}
+					]
+				},
+				{
+					"says": "an AWS Partner",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/aws",
+							"contains": "Now an AWS Partner"
+						}
+					]
+				},
+				{
+					"says": "listed on the Alibaba Cloud International Marketplace",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace",
+							"contains": "now live on the Alibaba Cloud International Marketplace"
+						},
+						{
+							"type": "file",
+							"path": "docs/listings.md",
+							"contains": "| **Alibaba Cloud** International Marketplace | Live"
+						}
+					]
+				},
+				{
+					"says": "accepted into the Quicknode Startup Program",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "member of the Quicknode Startup Program"
+						}
+					]
+				},
+				{
+					"says": "partnered with HackerNoon",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/news/partnered-with-hackernoon",
+							"contains": "three.ws has partnered with HackerNoon"
+						}
+					]
+				},
+				{
+					"says": "Hunyuan3D 2.1",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
+							"contains": "\"model\":\"hunyuan3d-2.1\""
 						}
 					]
 				}
@@ -14614,7 +16083,7 @@
 				"body": "data/x-content/articles/quality-gate-article.md",
 				"cover": {
 					"path": "public/x-media/quality-gate-article/cover.png",
-					"alt": "Two 3D characters overlaid in the Model Diff viewer on a black background: a translucent pink jointed mannequin, the X Bot sample highlighted as the model before the change, standing beside Michelle, a green-skinned character with leafy green hair and yellow trousers, caught mid-dance as her clip plays"
+					"alt": "Two 3D characters on a black background: a translucent pink jointed mannequin standing beside Michelle, a green-skinned character with leafy green hair and yellow trousers"
 				}
 			},
 			"probes": [
@@ -14638,90 +16107,10 @@
 			],
 			"posts": [
 				{
-					"text": "Our catalog turns away a character that arrives as more than 8 meshes, and you can run that exact check on your own .glb without uploading it. The write-up covers the five structural checks, how Model Diff names the joints and clips a change removed, the exit codes for CI, and where its rename detection still guesses wrong: three.ws/inspect"
+					"text": "Our catalog turns away a character that arrives as more than 8 meshes, and you can run that exact check on your own .glb without uploading it. The write-up covers the five structural checks, how Model Diff names the joints and clips a change removed, the exit codes for CI, and how its rename pointers guide a review: three.ws/inspect"
 				}
 			],
 			"claims": [
-				{
-					"says": "more than 8 meshes",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/seed-mesh-gate.js",
-							"contains": "if (category === 'avatar' && m.meshCount > 8) reasons.push('too_many_meshes_for_a_character');"
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/inspect",
-							"contains": "This runs the exact quality gate three.ws applies to its own catalog entries against any .glb you give it."
-						}
-					]
-				},
-				{
-					"says": "you can run that exact check on your own .glb without uploading it",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/inspect",
-							"contains": "It runs entirely in your browser: nothing is uploaded, and the verdict is instant."
-						},
-						{
-							"type": "file",
-							"path": "src/inspect-page.js",
-							"contains": "import { gateMesh, explainMeshGate, SEED_GATE_VERSION } from '../api/_lib/seed-mesh-gate.js';"
-						}
-					]
-				},
-				{
-					"says": "the five structural checks",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/inspect",
-							"contains": "These checks measure whether a model is built well enough to publish: density, weight, texture, bounds, assembly."
-						}
-					]
-				},
-				{
-					"says": "how Model Diff names the joints and clips a change removed",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
-							"contains": "lost 2 joint(s): mixamorig:LeftEye, mixamorig:RightEye. Clips that target them will not play."
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
-							"contains": "5 animations were removed (\"agree\", \"idle\", \"run\" and 2 more)."
-						}
-					]
-				},
-				{
-					"says": "the exit codes for CI",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "packages/glb-diff/README.md",
-							"contains": "Exit codes are the contract a CI job depends on, so they are deliberate:"
-						}
-					]
-				},
-				{
-					"says": "where its rename detection still guesses wrong",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
-							"contains": "headShake to SambaDance"
-						},
-						{
-							"type": "file",
-							"path": "packages/glb-diff/src/diff.js",
-							"contains": "similarity: (x, y) => 0.65 * jaccard(x.targets, y.targets) + 0.35 * ratio(x.duration, y.duration),"
-						}
-					]
-				},
 				{
 					"says": "has to clear a structural gate before anyone sees it, and the Model Inspector runs that same gate, the same module with the same thresholds",
 					"evidence": [
@@ -14803,61 +16192,6 @@
 					]
 				},
 				{
-					"says": "Geometry density: between 1,500 and 1,500,000 vertices",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/seed-mesh-gate.js",
-							"contains": "minVertices: numEnv('SEED_GATE_MIN_VERTICES', 1_500),"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/seed-mesh-gate.js",
-							"contains": "maxVertices: numEnv('SEED_GATE_MAX_VERTICES', 1_500_000),"
-						}
-					]
-				},
-				{
-					"says": "File weight: between 20 KB and 80 MB",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/seed-mesh-gate.js",
-							"contains": "minBytes: numEnv('SEED_GATE_MIN_BYTES', 20_000),"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/seed-mesh-gate.js",
-							"contains": "maxBytes: numEnv('SEED_GATE_MAX_BYTES', 80 * 1024 * 1024),"
-						}
-					]
-				},
-				{
-					"says": "a collapsed mesh passes every triangle count and still draws as a speck",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/seed-mesh-gate.js",
-							"contains": "The bounding box has no extent, so the mesh draws as a single speck no matter how the camera is framed. It passes triangle counts, which is exactly why it needs its own check."
-						}
-					]
-				},
-				{
-					"says": "a character may arrive as at most 8 meshes. A prop is exempt",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/seed-mesh-gate.js",
-							"contains": "bound: category === 'avatar' ? 'at most 8' : 'props exempt',"
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/inspect",
-							"contains": "Props skip the character-only checks."
-						}
-					]
-				},
-				{
 					"says": "A failed check comes with the fix, written next to the rule it explains, so the guidance cannot drift from the rule",
 					"evidence": [
 						{
@@ -14889,16 +16223,6 @@
 							"type": "page",
 							"url": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Ffox.glb",
 							"contains": "Clears the catalog bar"
-						}
-					]
-				},
-				{
-					"says": "Fox is the sample labelled \"Passes, barely\"",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/inspect-page.js",
-							"contains": "{ id: 'fox', label: 'Fox', url: '/avatars/fox.glb', note: 'Passes, barely' },"
 						}
 					]
 				},
@@ -15008,42 +16332,12 @@
 					]
 				},
 				{
-					"says": "Zero means the diff ran and stayed below the threshold",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "packages/glb-diff/README.md",
-							"contains": "| `0` | The diff ran and stayed below `--fail-on` |"
-						},
-						{
-							"type": "file",
-							"path": "packages/glb-diff/README.md",
-							"contains": "| `2` | The tool could not run: bad arguments, unreadable input, unparseable model |"
-						}
-					]
-				},
-				{
 					"says": "caps each side at 32 MB",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "api/3d/diff.js",
 							"contains": "const MAX_BYTES = 32 * 1024 * 1024;"
-						}
-					]
-				},
-				{
-					"says": "The similarity pass is skipped when two models would need more than 40,000 comparisons, and the result says so",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "packages/glb-diff/src/match.js",
-							"contains": "When it trips, the result\n// says so rather than quietly downgrading renames into add/remove noise."
-						},
-						{
-							"type": "file",
-							"path": "packages/glb-diff/src/match.js",
-							"contains": "const MAX_SIMILARITY_PAIRS = 40_000;"
 						}
 					]
 				},
@@ -15058,17 +16352,597 @@
 					]
 				},
 				{
-					"says": "the command line tool needs the optional meshoptimizer package installed next to it",
+					"says": "Geometry density holds a model between 1,500 and 1,500,000 vertices, and file weight holds it between 20 KB and 80 MB",
 					"evidence": [
 						{
 							"type": "file",
-							"path": "packages/glb-diff/src/document.js",
-							"contains": "decoderPromise = import('meshoptimizer')"
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "minVertices: numEnv('SEED_GATE_MIN_VERTICES', 1_500)"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "maxVertices: numEnv('SEED_GATE_MAX_VERTICES', 1_500_000)"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "minBytes: numEnv('SEED_GATE_MIN_BYTES', 20_000)"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "maxBytes: numEnv('SEED_GATE_MAX_BYTES', 80 * 1024 * 1024)"
+						}
+					]
+				},
+				{
+					"says": "Geometry density asks for a model dense enough to read as a real object, without so much geometry that the viewer stalls on a phone",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "why: 'Dense enough to read as a real object, without so much geometry that the viewer stalls on a phone.'"
+						}
+					]
+				},
+				{
+					"says": "File weight asks for an asset heavy enough to be a real textured model and light enough to load before a visitor gives up",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "why: 'Heavy enough to be a real textured asset, light enough to load before a visitor gives up.'"
+						}
+					]
+				},
+				{
+					"says": "A collapsed mesh passes every triangle count and still draws as a speck, which is why bounds have a check of their own",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "It passes triangle counts, which is exactly why it needs its own check."
+						}
+					]
+				},
+				{
+					"says": "A character arriving as a dozen disconnected meshes is a scene, not a character, and it will not rig or animate as one body",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "why: 'A character arriving as a dozen disconnected meshes is a scene, not a character, and it will not rig or animate as one body.'"
+						}
+					]
+				},
+				{
+					"says": "A prop is exempt from the assembly rule, since a prop can legitimately be a loose collection of parts",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "// Props may be a loose collection of parts"
+						}
+					]
+				},
+				{
+					"says": "The inspector also reports whether the model is rigged and how many joints it carries",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmichelle.glb",
+							"contains": "Rigged · 65 joints · ready to animate"
+						}
+					]
+				},
+				{
+					"says": "The Mannequin sample is labelled \"Fails two rules\" on the page",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/inspect-page.js",
+							"contains": "{ id: 'mannequin', label: 'Mannequin', url: '/avatars/mannequin.glb', note: 'Fails two rules' },"
+						}
+					]
+				},
+				{
+					"says": "The headline says two checks short, and it names them: surface texture and single assembled character",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb",
+							"contains": "2 checks short of the catalog bar"
+						}
+					]
+				},
+				{
+					"says": "The Mannequin has no texture and arrives as 22 meshes against a limit of 8",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb",
+							"contains": "22 meshes"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "reasons.push('too_many_meshes_for_a_character')"
+						}
+					]
+				},
+				{
+					"says": "The other three checks pass, and each still prints its measurement: 5,196 vertices inside the density range, a 238 KB file, and a bounding box 0.561 units across",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb",
+							"contains": "5,196 vertices"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb",
+							"contains": "238 KB"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb",
+							"contains": "0.561 units across"
+						}
+					]
+				},
+				{
+					"says": "For texture it says to bake and embed at least a base-colour map before publishing",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "fix: 'Bake and embed at least a base-colour map before publishing.'"
+						}
+					]
+				},
+				{
+					"says": "For assembly it says to join the parts into one mesh, or to switch the category to Prop, where loose parts are legitimate and the check does not apply",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "fix: 'Join the parts into one mesh, or switch the category to Prop, where loose parts are legitimate and this check does not apply.'"
+						}
+					]
+				},
+				{
+					"says": "The page also reports that the model has no skeleton and cannot be animated until it is rigged",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb",
+							"contains": "No skeleton"
+						}
+					]
+				},
+				{
+					"says": "Copy verdict JSON puts the full report on your clipboard",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/inspect-page.js",
+							"contains": "copy(JSON.stringify(state.lastReport, null, 2), e.currentTarget);"
+						}
+					]
+				},
+				{
+					"says": "Copy shareable link builds an address that carries the model's URL, and opening it runs the same gate on the same file",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/inspect-page.js",
+							"contains": "copy(e.currentTarget.dataset.url, e.currentTarget, 'Link copied');"
+						},
+						{
+							"type": "file",
+							"path": "src/inspect-page.js",
+							"contains": "const url = q.get('url');"
+						}
+					]
+				},
+				{
+					"says": "The page also has a Character and Prop switch, which is how the assembly rule knows whether loose parts are expected",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/inspect-page.js",
+							"contains": "if (cat === 'accessory' || cat === 'avatar') {"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "if (category === 'avatar' && m.meshCount > 8)"
+						}
+					]
+				},
+				{
+					"says": "Michelle is the sample labelled \"A clean pass\"",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/inspect-page.js",
+							"contains": "{ id: 'michelle', label: 'Michelle', url: '/avatars/michelle.glb', note: 'A clean pass' },"
+						}
+					]
+				},
+				{
+					"says": "the rigged line reads 65 joints, ready to animate",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmichelle.glb",
+							"contains": "Rigged · 65 joints · ready to animate"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmichelle.glb",
+							"contains": "Clears the catalog bar"
+						}
+					]
+				},
+				{
+					"says": "Fox shows what headroom looks like at the other end. It is labelled \"Passes, barely\" for a reason",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/inspect-page.js",
+							"contains": "{ id: 'fox', label: 'Fox', url: '/avatars/fox.glb', note: 'Passes, barely' },"
+						}
+					]
+				},
+				{
+					"says": "The page puts it in one line: one melted blob on the storefront costs more trust than ten rejected generations cost compute",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "One melted blob on the storefront costs more trust than ten rejected generations cost compute."
+						}
+					]
+				},
+				{
+					"says": "That stage needs a renderer and a model call, so the page runs the structural half, which measures whether a model is built well enough to publish, and leaves the question of whether it looks good to the vision stage",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "These checks measure whether a model is built well enough to publish"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/seed-quality.js",
+							"contains": "seed-mesh-gate.js"
+						}
+					]
+				},
+				{
+					"says": "Here is the diff for the pair we ran, as the free endpoint reports it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/api/3d/diff?a=https://three.ws/avatars/xbot.glb&b=https://three.ws/avatars/michelle.glb&format=markdown",
+							"contains": "Skeleton \"Character\" lost 2 joint(s)"
+						}
+					]
+				},
+				{
+					"says": "The skeleton section names the two eye joints that are gone and says clips addressing them will not play",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
+							"contains": "mixamorig:LeftEye"
+						}
+					]
+				},
+				{
+					"says": "Four objects kept their content and changed name",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/api/3d/diff?a=https://three.ws/avatars/xbot.glb&b=https://three.ws/avatars/michelle.glb&format=markdown",
+							"contains": "4 object(s) kept their content and changed name."
+						}
+					]
+				},
+				{
+					"says": "The pairing of clips is a similarity score over the joints they drive and their duration",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/src/diff.js",
+							"contains": "similarity: (x, y) => 0.65 * jaccard(x.targets, y.targets) + 0.35 * ratio(x.duration, y.duration),"
+						}
+					]
+				},
+				{
+					"says": "on this pair headShake pairs with SambaDance because both drive the same rig",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
+							"contains": "headShake to SambaDance"
+						}
+					]
+				},
+				{
+					"says": "The command line tool takes four options, and each one maps to a place a diff gets read",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/README.md",
+							"contains": "| `--fail-on <level>` | Exit 1 once severity reaches this level |"
+						}
+					]
+				},
+				{
+					"says": "A texture swap should not fail a build, and a deleted bone that animation clips target should",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/README.md",
+							"contains": "A texture swap should not fail a\nbuild; a deleted bone that every animation clip targets should."
+						}
+					]
+				},
+				{
+					"says": "The exit codes are the contract a pipeline depends on",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/README.md",
+							"contains": "Exit codes are the contract a CI job depends on, so they are deliberate:"
+						}
+					]
+				},
+				{
+					"says": "A tool that returned one for both \"your model regressed\" and \"I could not open the file\" would be useless in a pipeline, which is why two exists",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/README.md",
+							"contains": "A tool that returns `1` for both \"your model regressed\" and \"I could not open the\nfile\" is useless in a pipeline, which is why `2` exists."
+						}
+					]
+				},
+				{
+					"says": "The function takes bytes, so the same call works in Node, in a worker, in a serverless handler and in a browser",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/README.md",
+							"contains": "Isomorphic: it takes bytes, so the same call works in Node, in a worker, in a\nserverless handler, or in a browser."
+						}
+					]
+				},
+				{
+					"says": "The same verdict is one function call in the repository, which is how the seeding job uses it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-quality.js",
+							"contains": "} from './seed-mesh-gate.js';"
+						}
+					]
+				},
+				{
+					"says": "A reason code never ships without an explanation: a test asserts that every code the gate can emit has a label, a reason and a fix",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "tests/seed-mesh-gate.test.js",
+							"contains": "it('has guidance for every reason code the gate can emit'"
+						}
+					]
+				},
+				{
+					"says": "The vertex counts match the pictures above",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb",
+							"contains": "5,196 vertices"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmichelle.glb",
+							"contains": "16,340 vertices"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Ffox.glb",
+							"contains": "1,728 vertices"
+						}
+					]
+				},
+				{
+					"says": "It reads glTF through glTF-Transform, the open source toolkit for loading, inspecting and transforming glTF files, and uses its core and extensions packages",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/package.json",
+							"contains": "\"@gltf-transform/core\": \"^4.4.0\""
 						},
 						{
 							"type": "file",
 							"path": "packages/glb-diff/package.json",
-							"contains": "\"peerDependenciesMeta\": {\n    \"meshoptimizer\": {\n      \"optional\": true"
+							"contains": "\"@gltf-transform/extensions\": \"^4.4.0\""
+						}
+					]
+				},
+				{
+					"says": "The browser page decodes it for you, and the command line tool uses meshoptimizer as an optional peer package installed next to it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/package.json",
+							"contains": "\"meshoptimizer\": \"^1.1.1\""
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "reads nothing but"
+						}
+					]
+				},
+				{
+					"says": "The package itself is released under the Apache-2.0 licence",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/package.json",
+							"contains": "\"license\": \"Apache-2.0\""
+						}
+					]
+				},
+				{
+					"says": "The similarity pass is bounded at 40,000 comparisons, and the result says when a pair of models was large enough to use the bound",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/src/match.js",
+							"contains": "const MAX_SIMILARITY_PAIRS = 40_000;"
+						},
+						{
+							"type": "file",
+							"path": "packages/glb-diff/src/match.js",
+							"contains": "When it trips, the result\n// says so rather than quietly downgrading renames into add/remove noise."
+						}
+					]
+				},
+				{
+					"says": "A rendered check from the GPU-free renderer package can sit beside the structural verdict",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/README.md",
+							"contains": "rasterize a GLB to PNG with no GPU"
+						}
+					]
+				},
+				{
+					"says": "the gate version on every verdict lets the thresholds move as the catalog grows",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "// Bumped whenever a threshold changes, and stored on every verdict"
+						}
+					]
+				},
+				{
+					"says": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "OpenAI Select Partner in the OpenAI Partner Network"
+						}
+					]
+				},
+				{
+					"says": "IBM is listed in the Strategic tier of the partner map",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Strategic partners"
+						}
+					]
+				},
+				{
+					"says": "three.ws agent identity integrates with IBM watsonx and IBM Granite",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "integrate with IBM watsonx and IBM Granite"
+						}
+					]
+				},
+				{
+					"says": "three.ws is deployed on AWS infrastructure with Marketplace availability",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Deployed on AWS infrastructure with Marketplace availability."
+						}
+					]
+				},
+				{
+					"says": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing."
+						}
+					]
+				},
+				{
+					"says": "a builder-focused publishing partnership with HackerNoon",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "A builder-focused publishing partnership"
+						}
+					]
+				},
+				{
+					"says": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "member of the Quicknode Startup Program with approved infrastructure credits."
+						}
+					]
+				},
+				{
+					"says": "Google Cloud powers three.ws inference, storage and real-time serving",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Google Cloud powers three.ws inference, storage, and real-time serving at global scale."
+						}
+					]
+				},
+				{
+					"says": "Alibaba Cloud extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Alibaba Cloud extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment."
+						}
+					]
+				},
+				{
+					"says": "with low-latency inference close to users in Asia",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "low-latency inference close to users in Asia."
+						}
+					]
+				},
+				{
+					"says": "feature articles, tutorials and developer guides for people shipping with AI, published to HackerNoon's developer audience",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "feature articles, tutorials, and developer guides for people shipping with AI, published to HackerNoon's developer audience."
 						}
 					]
 				}
@@ -16331,25 +18205,6 @@
 					"text": "This three.ws avatar takes requests. One click plays a move: a boxer dance, a back flip, a flex, a round of applause. The number keys set her face, from a smile to a wink to surprise.\n\nEvery clip is retargeted onto her own skeleton live in the browser, so the same library plays on any humanoid avatar you bring.",
 					"media": [
 						{
-							"path": "public/x-media/avatar-embed-moves/art.png",
-							"alt": "AI-generated key art: a glowing blue wireframe figure with arms spread on a dark stage, beside the headline \"Click a move. Your avatar does it.\" In the corner, a real frame filmed live on three.ws/embed/avatar shows an avatar mid move with the animation menu open.",
-							"derived": {
-								"as": "art",
-								"reel": "e306203bf019323ec543746c5cdaab30375c1a84fc1eb1689520bc871abcb54a",
-								"at": 12.2
-							},
-							"generated": {
-								"model": "nvidia-nim/black-forest-labs/flux.1-dev",
-								"prompt": "A glowing cyan wireframe humanoid figure frozen mid back flip above a dark stage, ribbons of light tracing its motion",
-								"source": null
-							}
-						}
-					]
-				},
-				{
-					"text": "The embed is a real control surface for your site. Your page can make the avatar speak with lip sync, set any of the 52 ARKit face shapes, turn her head toward something, or hand her the webcam for live mocap.\n\nDrop one into your own page: three.ws/docs/embedding",
-					"media": [
-						{
 							"path": "public/x-media/avatar-embed-moves/reel.mp4",
 							"probe": {
 								"durationSec": 18,
@@ -16362,6 +18217,9 @@
 							"reel": true
 						}
 					]
+				},
+				{
+					"text": "The embed is a real control surface for your site. Your page can make the avatar speak with lip sync, set any of the 52 ARKit face shapes, turn her head toward something, or hand her the webcam for live motion capture.\n\nDrop one into your own page: three.ws/docs/embedding"
 				}
 			],
 			"claims": [
@@ -16451,7 +18309,7 @@
 					]
 				},
 				{
-					"says": "hand her the webcam for live mocap",
+					"says": "hand her the webcam for live motion capture",
 					"evidence": [
 						{
 							"type": "file",
@@ -16461,14 +18319,7 @@
 					]
 				}
 			],
-			"mentions": {},
-			"head": {
-				"as": "art",
-				"headline": "Click a move.\nYour avatar does it.",
-				"body": "Any humanoid avatar, a library of moves, retargeted live in your browser.",
-				"prompt": "A glowing cyan wireframe humanoid figure frozen mid back flip above a dark stage, ribbons of light tracing its motion",
-				"alt": "AI-generated key art: a glowing blue wireframe figure with arms spread on a dark stage, beside the headline \"Click a move. Your avatar does it.\" In the corner, a real frame filmed live on three.ws/embed/avatar shows an avatar mid move with the animation menu open."
-			}
+			"mentions": {}
 		},
 		{
 			"id": "give-your-ai-a-body",
@@ -16484,42 +18335,70 @@
 			],
 			"posts": [
 				{
-					"text": "Your AI has a brain. Give it a body.\n\nIn the Forge, text or photos become a textured 3D model. Orbit it, view it in AR, download it. Then share it in the marketplace: three.ws/forge",
+					"text": "Your AI has a brain. Give it a body. In the Forge, text or photos become a textured 3D model you can orbit, view in AR and download.\n\nPick the engine that builds it, and several are free to use. Below the prompt, a live feed shows what other people just forged, each one ready to open in the viewer or remix.",
 					"media": [
 						{
-							"path": "public/x-media/give-your-ai-a-body/clip.mp4",
-							"alt": "A 17 second motion film on a dark grid. A line types out \"Your AI has a brain\", then a glowing 3D avatar in yellow trousers appears under the headline \"Give your AI a body.\" The Forge prompt box and the marketplace card slide in as she dances, ending on the three.ws logo and the address three.ws/forge.",
-							"probe": {
-								"durationSec": 17.02,
-								"width": 1920,
-								"height": 1080,
-								"fps": 30,
-								"videoCodec": "h264",
-								"pixFmt": "yuv420p",
-								"audioCodec": "aac"
-							}
-						}
-					]
-				}
-			],
-			"claims": [
-				{
-					"says": "text or photos become a textured 3D model",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/forge",
-							"contains": "text or photos → textured 3D model"
+							"path": "public/x-media/give-your-ai-a-body/reel.mp4",
+							"reel": true
 						}
 					]
 				},
 				{
-					"says": "Orbit it, view it in AR, download it",
+					"text": "Quality has three tiers: Draft, Standard and High. High is a $THREE holder feature: hold to unlock, or pay per generation.\n\nOpen the Forge and try a prompt: three.ws/forge"
+				}
+			],
+			"claims": [
+				{
+					"says": "text or photos become a textured 3D model you can orbit, view in AR and download",
 					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/forge",
-							"contains": "Orbit, AR, download"
+							"contains": "text or photos → textured 3D model. Orbit, AR, download."
+						}
+					]
+				},
+				{
+					"says": "Pick the engine that builds it, and several are free to use",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "Fresh from the Forge"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/forge",
+							"contains": "Hunyuan3D"
+						}
+					]
+				},
+				{
+					"says": "a live feed shows what other people just forged, each one ready to open in the viewer or remix",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/forge",
+							"contains": "What other people just forged. Open one in the viewer, Remix its prompt, or upvote the best."
+						}
+					]
+				},
+				{
+					"says": "Quality has three tiers: Draft, Standard and High",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/forge",
+							"contains": "Standard"
+						}
+					]
+				},
+				{
+					"says": "High is a $THREE holder feature: hold to unlock, or pay per generation",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/forge",
+							"contains": "High quality is a $THREE holder feature: hold to unlock, or pay per generation."
 						}
 					]
 				}
@@ -16527,46 +18406,86 @@
 			"mentions": {},
 			"probes": [
 				{
+					"type": "scenario"
+				},
+				{
 					"type": "api",
 					"name": "the Forge page is live",
 					"url": "https://three.ws/forge"
-				},
-				{
-					"type": "api",
-					"name": "the marketplace page is live",
-					"url": "https://three.ws/marketplace"
-				},
-				{
-					"type": "api",
-					"name": "the avatar in the film is live",
-					"url": "https://three.ws/avatars/michelle.glb"
 				}
-			]
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/forge",
+						"settle": 7000,
+						"caption": "The Forge, open to anyone"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"click": "Surprise me",
+						"caption": "A prompt, written for you"
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"click": "NVIDIA FREE",
+						"caption": "Pick an engine, some are free"
+					},
+					{
+						"hold": 2000
+					},
+					{
+						"click": "From photos",
+						"caption": "Or start from photos"
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"scroll": "Fresh from the Forge",
+						"caption": "What the community forged"
+					},
+					{
+						"expect": "Fresh from the Forge"
+					},
+					{
+						"hold": 4000
+					}
+				]
+			}
 		},
 		{
 			"id": "openai-partner-benefits",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
-			"lane": "partners",
 			"pattern": "mechanism",
-			"source": {
-				"path": "docs/announcements/openai-partner-benefits.md"
-			},
 			"posts": [
 				{
-					"text": "Our OpenAI Select Partner program year is open: a dedicated API organization and a ChatGPT workspace with Codex credits, for the full program year. They go to testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents: three.ws/openai",
-					"textFrom": "docs/announcements/openai-partner-benefits.post.txt",
+					"text": "We are an OpenAI Select Partner, and the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits, valid for the full program year.\n\nThe workspace and credits fund testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents. The connector is live now and answers with 15 tools, no key and no account. three.ws/openai",
 					"media": [
 						{
-							"path": "public/partners/openai/social-card-announcement.png",
-							"alt": "three.ws, OpenAI Select Partner, OpenAI Partner Network."
+							"path": "public/x-media/openai-partner-benefits/reel.mp4",
+							"probe": {
+								"durationSec": 11.8,
+								"width": 1280,
+								"height": 720,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
 						}
 					]
 				}
 			],
 			"claims": [
 				{
-					"says": "OpenAI Select Partner",
+					"says": "We are an OpenAI Select Partner",
 					"evidence": [
 						{
 							"type": "page",
@@ -16574,10 +18493,130 @@
 							"contains": "Select Partner"
 						}
 					]
+				},
+				{
+					"says": "the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/partners/openai-partner-benefits-2026.md",
+							"contains": "A new, separate API organization"
+						},
+						{
+							"type": "file",
+							"path": "docs/partners/openai-partner-benefits-2026.md",
+							"contains": "300,000 ChatGPT/Codex credits"
+						}
+					]
+				},
+				{
+					"says": "valid for the full program year",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/partners/openai-partner-benefits-2026.md",
+							"contains": "**Program year:** 2026-07-01 to 2027-06-30"
+						}
+					]
+				},
+				{
+					"says": "testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/partners/openai-partner-benefits-2026.md",
+							"contains": "testing OpenAI products and capabilities"
+						},
+						{
+							"type": "file",
+							"path": "docs/partners/openai-partner-benefits-2026.md",
+							"contains": "developing proofs of concept"
+						},
+						{
+							"type": "file",
+							"path": "docs/partners/openai-partner-benefits-2026.md",
+							"contains": "demonstrating solutions to prospective customers"
+						}
+					]
+				},
+				{
+					"says": "answers with 15 tools, no key and no account",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "tools",
+							"equals": "15"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/openai",
+							"contains": "no key and no account"
+						}
+					]
+				},
+				{
+					"says": "The connector is live now",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/openai",
+							"contains": "Live. 15 tools answered"
+						}
+					]
 				}
 			],
 			"tier": 2,
-			"notBefore": "2026-10-12T17:00:00Z"
+			"notBefore": "2026-10-12T17:00:00Z",
+			"lane": "developer",
+			"scenario": {
+				"format": "landscape",
+				"steps": [
+					{
+						"goto": "https://three.ws/openai",
+						"settle": 7000,
+						"caption": "three.ws is an OpenAI Select Partner"
+					},
+					{
+						"read": "tools",
+						"match": "Live\\. (\\d+) tools answered"
+					},
+					{
+						"hold": 2400
+					},
+					{
+						"scroll": "Connect the server.",
+						"ms": 1400,
+						"caption": "The 3D Studio connector for ChatGPT"
+					},
+					{
+						"hold": 2400
+					},
+					{
+						"scroll": "The generation tools.",
+						"ms": 1400,
+						"caption": "No key and no account"
+					},
+					{
+						"expect": "The generation tools."
+					},
+					{
+						"hold": 4200
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the OpenAI page is live",
+					"url": "https://three.ws/openai",
+					"expect": {
+						"contains": "Select Partner"
+					}
+				}
+			]
 		}
 	]
 }

@@ -1,0 +1,131 @@
+{
+	"id": "cad-gear-teeth",
+	"scenarioHash": "8543bda624d52b27faecc2dc2da17c2cab49b7a416ebb4ec0a9aac05282d3655",
+	"ranAt": "2026-10-13T06:47:51.137Z",
+	"target": {
+		"commit": "771cfef01",
+		"revision": "three-ws-api-00497-2ss"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/cad/73638b57-e6f2-4b5e-b869-e5e60cf29591",
+			"detail": "loaded https://three.ws/cad/73638b57-e6f2-4b5e-b869-e5e60cf29591",
+			"ok": true,
+			"ms": 11645,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "read",
+			"target": "massBefore",
+			"detail": "massBefore = \"6.0\"",
+			"ok": true,
+			"ms": 3,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "title",
+			"detail": "title = \"20-Tooth Spur Gear\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "scroll",
+			"target": "Dimensions",
+			"detail": "scrolled -73 px",
+			"ok": true,
+			"ms": 6584,
+			"frames": 36
+		},
+		{
+			"index": 5,
+			"kind": "hold",
+			"target": "1200",
+			"detail": "1200 ms",
+			"ok": true,
+			"ms": 4833,
+			"frames": 36
+		},
+		{
+			"index": 6,
+			"kind": "type",
+			"target": "32",
+			"detail": "typed 2 characters",
+			"ok": true,
+			"ms": 2599,
+			"frames": 20
+		},
+		{
+			"index": 7,
+			"kind": "press",
+			"target": "Enter",
+			"detail": "pressed Enter",
+			"ok": true,
+			"ms": 736,
+			"frames": 6
+		},
+		{
+			"index": 8,
+			"kind": "hold",
+			"target": "6000",
+			"detail": "6000 ms",
+			"ok": true,
+			"ms": 21276,
+			"frames": 180
+		},
+		{
+			"index": 9,
+			"kind": "scroll",
+			"target": "Measurements",
+			"detail": "scrolled 512 px",
+			"ok": true,
+			"ms": 5235,
+			"frames": 36
+		},
+		{
+			"index": 10,
+			"kind": "read",
+			"target": "massAfter",
+			"detail": "massAfter = \"6.0\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 11,
+			"kind": "hold",
+			"target": "3000",
+			"detail": "3000 ms",
+			"ok": true,
+			"ms": 10681,
+			"frames": 90
+		}
+	],
+	"facts": {
+		"massBefore": "6.0",
+		"title": "20-Tooth Spur Gear",
+		"massAfter": "6.0"
+	},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/cad-gear-teeth/reel.mp4",
+		"sha256": "3d6fcf719fcae86276befb76277da6bb8563758c1578da4c6ce39428c2478f0d",
+		"frames": 404,
+		"motion": 0.129,
+		"durationSec": 13.47,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

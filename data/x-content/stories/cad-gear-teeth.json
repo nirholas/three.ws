@@ -1,0 +1,91 @@
+{
+	"id": "cad-gear-teeth",
+	"status": "draft",
+	"kind": "post",
+	"tier": 3,
+	"lane": "developer",
+	"pattern": "walkthrough",
+	"notBefore": "2026-10-14T00:00:00Z",
+	"covers": [
+		"/cad",
+		"api/cad"
+	],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{
+				"goto": "https://three.ws/cad/73638b57-e6f2-4b5e-b869-e5e60cf29591",
+				"settle": 8000,
+				"caption": "A 20-tooth gear, built by the kernel"
+			},
+			{
+				"read": "massBefore",
+				"match": "PLA\\s+([\\d.]+) g"
+			},
+			{
+				"read": "title",
+				"match": "(\\d+-Tooth Spur Gear)"
+			},
+			{
+				"scroll": "Dimensions",
+				"ms": 1200,
+				"caption": "Every key size is a slider"
+			},
+			{
+				"hold": 1200
+			},
+			{
+				"type": "32",
+				"into": "Tooth count value",
+				"caption": "Tooth count to 32"
+			},
+			{
+				"press": "Enter"
+			},
+			{
+				"hold": 6000
+			},
+			{
+				"scroll": "Measurements",
+				"ms": 1200,
+				"caption": "The kernel rebuilds the part"
+			},
+			{
+				"read": "massAfter",
+				"match": "PLA\\s+([\\d.]+) g"
+			},
+			{
+				"hold": 3000
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		}
+	],
+	"posts": [
+		{
+			"text": "placeholder head",
+			"media": [
+				{
+					"path": "public/x-media/cad-gear-teeth/reel.mp4",
+					"probe": {
+						"durationSec": 13.47,
+						"width": 1080,
+						"height": 1080,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "placeholder reply"
+		}
+	],
+	"claims": [],
+	"mentions": {}
+}

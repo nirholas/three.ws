@@ -1,0 +1,159 @@
+{
+	"id": "render-lab-sheet",
+	"status": "draft",
+	"kind": "post",
+	"tier": 3,
+	"lane": "developer",
+	"pattern": "mechanism",
+	"notBefore": "2026-10-14T00:00:00Z",
+	"covers": [
+		"/render-lab",
+		"api/avatar/render"
+	],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{
+				"goto": "https://three.ws/render-lab?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209",
+				"settle": 9000,
+				"caption": "One URL in. A rendered avatar out."
+			},
+			{
+				"expect": "512px"
+			},
+			{
+				"scroll": "Render Lab",
+				"ms": 10
+			},
+			{
+				"hold": 2200
+			},
+			{
+				"scroll": "What this model can do",
+				"ms": 1100,
+				"caption": "It reads the skeleton before it renders"
+			},
+			{
+				"read": "bones",
+				"match": "bones\\s*(\\d+)"
+			},
+			{
+				"hold": 2400
+			},
+			{
+				"click": "Contact sheet",
+				"caption": "One composer, every framing"
+			},
+			{
+				"hold": 1800
+			},
+			{
+				"click": "Poses",
+				"caption": "Every pose, rendered live by the API"
+			},
+			{
+				"expect": "24 live renders at 256px"
+			},
+			{
+				"read": "tiles",
+				"match": "(\\d+) live renders at 256px"
+			},
+			{
+				"hold": 2200
+			},
+			{
+				"scroll": 330,
+				"ms": 1800
+			},
+			{
+				"hold": 3200
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		},
+		{
+			"type": "api",
+			"url": "https://three.ws/api/avatar/capabilities?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209",
+			"expect": {
+				"status": 200,
+				"json": {
+					"path": "rig.boneCount",
+					"equals": 65
+				}
+			}
+		}
+	],
+	"posts": [
+		{
+			"text": "Render Lab reads the skeleton before it renders anything. Open it with an avatar and it reports the rig it found, here a skeleton with 65 bones, then lays out the poses that rig can take. The contact sheet under it is 24 live renders at 256px, each one a real call to the render API, with no account and no key.",
+			"media": [
+				{
+					"path": "public/x-media/render-lab-sheet/reel.mp4",
+					"probe": {
+						"durationSec": 16.3,
+						"width": 1080,
+						"height": 1080,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "Click any tile and it loads into the composer with its pose and framing set, ready to copy as a call. Try it on your own avatar at three.ws/render-lab."
+		}
+	],
+	"claims": [
+		{
+			"says": "65 bones",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "bones",
+					"equals": 65
+				}
+			]
+		},
+		{
+			"says": "24 live renders at 256px",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "tiles",
+					"equals": 24
+				},
+				{
+					"type": "file",
+					"path": "pages/render-lab.html",
+					"matches": "Compose a real render against the live API"
+				}
+			]
+		},
+		{
+			"says": "each one a real call to the render API",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "pages/render-lab.html",
+					"matches": "Compose a real render against the live API"
+				}
+			]
+		},
+		{
+			"says": "with no account and no key",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "pages/render-lab.html",
+					"matches": "No account, no SDK, no key\\."
+				}
+			]
+		}
+	],
+	"mentions": {}
+}

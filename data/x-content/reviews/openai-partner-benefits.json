@@ -1,0 +1,141 @@
+{
+	"id": "openai-partner-benefits",
+	"contentHash": "5514c6387901f78eb93a23b254e31450ea53b7ca7d114bc3c165a113420c7368",
+	"reviewedAt": "2026-10-13T06:45:27.337Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"We are an OpenAI Select Partner, and the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits, valid for the full program year.\n\nThe workspace and credits fund testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents. The connector is live now and answers with 15 tools, no key and no account. three.ws/openai"
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "We are an OpenAI Select Partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/openai",
+				"ok": true,
+				"detail": "live page shows \"Select Partner\""
+			},
+			{
+				"claim": "the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits",
+				"kind": "evidence:file",
+				"target": "docs/partners/openai-partner-benefits-2026.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits",
+				"kind": "evidence:file",
+				"target": "docs/partners/openai-partner-benefits-2026.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "valid for the full program year",
+				"kind": "evidence:file",
+				"target": "docs/partners/openai-partner-benefits-2026.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents",
+				"kind": "evidence:file",
+				"target": "docs/partners/openai-partner-benefits-2026.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents",
+				"kind": "evidence:file",
+				"target": "docs/partners/openai-partner-benefits-2026.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents",
+				"kind": "evidence:file",
+				"target": "docs/partners/openai-partner-benefits-2026.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "answers with 15 tools, no key and no account",
+				"kind": "evidence:proof",
+				"target": "tools",
+				"ok": true,
+				"detail": "the run read tools = \"15\""
+			},
+			{
+				"claim": "answers with 15 tools, no key and no account",
+				"kind": "evidence:page",
+				"target": "https://three.ws/openai",
+				"ok": true,
+				"detail": "live page shows \"no key and no account\""
+			},
+			{
+				"claim": "The connector is live now",
+				"kind": "evidence:page",
+				"target": "https://three.ws/openai",
+				"ok": true,
+				"detail": "live page shows \"Live. 15 tools answered\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "8 steps passed against the live product, every claimed fact still holds (tools 15)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the OpenAI page is live",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/openai",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 4,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "specificity",
+				"quote": "a ChatGPT workspace with Codex credits",
+				"problem": "The file verifies 300,000 ChatGPT/Codex credits, a concrete number stronger than the bare phrase, and the first 280 characters are all a reader sees before Show more.",
+				"fix": "Replace \"a ChatGPT workspace with Codex credits, valid for the full program year\" with \"a ChatGPT workspace with 300,000 Codex credits, valid for the full program year\"."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"We are an OpenAI Select Partner, and the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits, valid for the full program year.\n\nThe workspace and credits fund testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents. The connector is live now and answers with 15 tools, no key and no account. three.ws/openai"
+			],
+			"altText": [
+				"A reel of three.ws/openai on the live product: the Select Partner badge and \"3D, natively, inside ChatGPT,\" then \"Live. 15 tools answered in 196 ms, no key and no account\" with the mcp-studio URL, then generation tools forged free, text_to_avatar, and mesh_forge listed as free."
+			]
+		},
+		"summary": "Every claim is verified against the live page, the benefits file, and the filmed run, and the reel's frames and captions match the copy with no contradictions. The only nit is that the verified 300,000 credit figure would make the already strong first line sharper; the post ships as is.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

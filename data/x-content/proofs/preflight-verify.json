@@ -1,0 +1,44 @@
+{
+	"id": "preflight-verify",
+	"scenarioHash": "6abcf1a25d8c031ae76400ee90c0ed2ec27e5146ab7bfb585307fc01a4d6c315",
+	"ranAt": "2026-10-13T05:59:59.810Z",
+	"target": {
+		"commit": "771cfef01",
+		"revision": "three-ws-api-00497-2ss"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/preflight",
+			"detail": "loaded https://three.ws/preflight",
+			"ok": true,
+			"ms": 6256,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 303,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "click",
+			"target": "Check",
+			"ok": false,
+			"detail": "no request to /.well-known/x402-preflight answered within 60 s",
+			"ms": 61035,
+			"frames": 0
+		}
+	],
+	"facts": {},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": null
+}

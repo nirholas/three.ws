@@ -1,0 +1,104 @@
+{
+	"id": "openai-partner-benefits",
+	"scenarioHash": "d81ea83a0886d361cc8cd8508b4cf46c0815ed4d6238942ec9e86b12fed22b66",
+	"ranAt": "2026-10-13T06:31:48.500Z",
+	"target": {
+		"commit": "771cfef01",
+		"revision": "three-ws-api-00497-2ss"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/openai",
+			"detail": "loaded https://three.ws/openai",
+			"ok": true,
+			"ms": 8024,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "read",
+			"target": "tools",
+			"detail": "tools = \"15\"",
+			"ok": true,
+			"ms": 3,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "hold",
+			"target": "2400",
+			"detail": "2400 ms",
+			"ok": true,
+			"ms": 11553,
+			"frames": 72
+		},
+		{
+			"index": 4,
+			"kind": "scroll",
+			"target": "Connect the server.",
+			"detail": "scrolled 1573 px",
+			"ok": true,
+			"ms": 5890,
+			"frames": 42
+		},
+		{
+			"index": 5,
+			"kind": "hold",
+			"target": "2400",
+			"detail": "2400 ms",
+			"ok": true,
+			"ms": 7497,
+			"frames": 72
+		},
+		{
+			"index": 6,
+			"kind": "scroll",
+			"target": "The generation tools.",
+			"detail": "scrolled 748 px",
+			"ok": true,
+			"ms": 4998,
+			"frames": 42
+		},
+		{
+			"index": 7,
+			"kind": "expect",
+			"target": "The generation tools.",
+			"detail": "appeared after 0.0 s",
+			"ok": true,
+			"ms": 23,
+			"frames": 0
+		},
+		{
+			"index": 8,
+			"kind": "hold",
+			"target": "4200",
+			"detail": "4200 ms",
+			"ok": true,
+			"ms": 13632,
+			"frames": 126
+		}
+	],
+	"facts": {
+		"tools": "15"
+	},
+	"saw": [
+		"The generation tools."
+	],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/openai-partner-benefits/reel.mp4",
+		"sha256": "c22ae6f6c6c64167f07f54b123ff47caee168d96407bd00bf0a2a1171dce27fb",
+		"frames": 354,
+		"motion": 0.445,
+		"durationSec": 11.8,
+		"width": 1280,
+		"height": 720,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

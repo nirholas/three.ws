@@ -1,0 +1,195 @@
+{
+	"id": "concierge-ask",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "developer",
+	"pattern": "walkthrough",
+	"notBefore": "2026-10-14T00:00:00Z",
+	"covers": [
+		"/concierge",
+		"concierge-sdk"
+	],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{
+				"goto": "https://three.ws/concierge",
+				"settle": 6000,
+				"caption": "A support chat with a 3D face"
+			},
+			{
+				"click": "Open site assistant",
+				"caption": "It lives in the corner of the page"
+			},
+			{
+				"hold": 3000
+			},
+			{
+				"type": "How do I install you on my site?",
+				"into": "Ask anything",
+				"caption": "Ask it about the page you are on"
+			},
+			{
+				"press": "Enter",
+				"awaits": "/api/concierge",
+				"caption": "The answer streams in, grounded in the page"
+			},
+			{
+				"hold": 9000
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		}
+	],
+	"posts": [
+		{
+			"text": "A support chat with a face is one script tag away. Concierge puts a rigged 3D avatar in the corner of your page. A visitor asks, the answer streams in, and the avatar starts speaking the first sentence while the rest is still arriving.\n\nIn the reel it is asked how to install itself, and it answers from the page it is sitting on.",
+			"media": [
+				{
+					"path": "public/x-media/concierge-ask/reel.mp4",
+					"probe": {
+						"durationSec": 15.57,
+						"width": 1080,
+						"height": 1080,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "When a visitor asks, the widget reads the live page (title, headings, nav and content) plus any facts you curate, and the answer streams back from a free-first inference chain, with failover across providers. Whatever your page says today is what it knows today.\n\nthree.ws/concierge"
+		},
+		{
+			"text": "No account, no crawler setup, no per-seat pricing. The widget is open source, and you can add it as a script tag, a web component or an npm package.\n\nVoice comes built in: push-to-talk speech input and browser-native speech output."
+		}
+	],
+	"claims": [
+		{
+			"says": "one script tag",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/concierge",
+					"contains": "One tag gives your site a support chat"
+				}
+			]
+		},
+		{
+			"says": "rigged 3D avatar",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/concierge",
+					"contains": "Skeleton-rigged, blinking, idling"
+				}
+			]
+		},
+		{
+			"says": "the avatar starts speaking the first sentence while the rest is still arriving",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/concierge",
+					"contains": "the avatar starts speaking the first sentence while the rest is still arriving"
+				}
+			]
+		},
+		{
+			"says": "the answer streams in",
+			"evidence": [
+				{
+					"type": "proof",
+					"responded": "/api/concierge"
+				}
+			]
+		},
+		{
+			"says": "it answers from the page it is sitting on",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/concierge",
+					"contains": "At ask-time it reads the live page"
+				}
+			]
+		},
+		{
+			"says": "the widget reads the live page (title, headings, nav and content) plus any facts you curate",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/concierge",
+					"contains": "At ask-time it reads the live page (title, headings, nav, content) plus your curated knowledge"
+				}
+			]
+		},
+		{
+			"says": "streams back from a free-first inference chain, with failover across providers",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/concierge",
+					"contains": "free-first inference chain, with automatic failover across providers"
+				}
+			]
+		},
+		{
+			"says": "Whatever your page says today is what it knows today",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/concierge",
+					"contains": "Whatever your page says today is what the concierge knows today"
+				}
+			]
+		},
+		{
+			"says": "No account, no crawler setup, no per-seat pricing",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/concierge",
+					"contains": "No account, no crawler setup, no per-seat pricing"
+				}
+			]
+		},
+		{
+			"says": "The widget is open source",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/concierge",
+					"contains": "The widget is open source"
+				}
+			]
+		},
+		{
+			"says": "a script tag, a web component or an npm package",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/concierge",
+					"contains": "Pick your flavor"
+				}
+			]
+		},
+		{
+			"says": "push-to-talk speech input and browser-native speech output",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/concierge",
+					"contains": "Push-to-talk speech input and browser-native speech output"
+				}
+			]
+		}
+	],
+	"mentions": {}
+}

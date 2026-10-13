@@ -1,0 +1,142 @@
+{
+	"id": "render-lab-call",
+	"status": "draft",
+	"kind": "post",
+	"tier": 3,
+	"lane": "developer",
+	"pattern": "clip",
+	"notBefore": "2026-10-14T00:00:00Z",
+	"covers": [
+		"/render-lab",
+		"api/avatar/capabilities"
+	],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{
+				"goto": "https://three.ws/render-lab?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209&scene=full-body&pose=wave",
+				"settle": 9000,
+				"caption": "Frame it, pose it, in the browser"
+			},
+			{
+				"expect": "512px"
+			},
+			{
+				"scroll": "Render Lab",
+				"ms": 10
+			},
+			{
+				"hold": 1500
+			},
+			{
+				"scroll": "Copy link",
+				"ms": 1400
+			},
+			{
+				"click": "curl",
+				"caption": "The same render as a curl call"
+			},
+			{
+				"read": "endpoint",
+				"match": "(/api/avatar/render\\?avatar=)"
+			},
+			{
+				"hold": 1200
+			},
+			{
+				"click": "Web component",
+				"caption": "Or a live <agent-3d> tag"
+			},
+			{
+				"hold": 1400
+			},
+			{
+				"click": "MCP",
+				"caption": "Or a tool call for any MCP client"
+			},
+			{
+				"expect": "render_avatar_image"
+			},
+			{
+				"hold": 1600
+			},
+			{
+				"scroll": -420,
+				"ms": 1600
+			},
+			{
+				"hold": 2200
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		},
+		{
+			"type": "api",
+			"url": "https://three.ws/api/render/avatar-clip",
+			"expect": {
+				"status": 200,
+				"json": {
+					"path": "poses.0.id",
+					"equals": "tpose"
+				}
+			}
+		}
+	],
+	"posts": [
+		{
+			"text": "Render Lab turns a framed, posed avatar into the call that makes it. Pick the avatar, scene and pose in the browser, and the code panel writes the same render as a curl command, a live web component or an MCP tool call. Every control on the page maps to one parameter of GET /api/avatar/render, so what you see is what the call returns.",
+			"media": [
+				{
+					"path": "public/x-media/render-lab-call/reel.mp4",
+					"probe": {
+						"durationSec": 13.2,
+						"width": 1080,
+						"height": 1080,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "The MCP version calls render_avatar_image with the avatar, scene, size and pose, for Claude, Cursor or any MCP client. Try it at three.ws/render-lab."
+		}
+	],
+	"claims": [
+		{
+			"says": "Every control on the page maps to one parameter of GET /api/avatar/render",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "pages/render-lab.html",
+					"matches": "Every control here maps to\\s+one parameter of <a href=\"/docs/media-api\">GET /api/avatar/render</a>"
+				}
+			]
+		},
+		{
+			"says": "so what you see is what the call returns",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "pages/render-lab.html",
+					"matches": "Compose a real render against the live API, then copy the exact call\\."
+				}
+			]
+		},
+		{
+			"says": "render_avatar_image",
+			"evidence": [
+				{
+					"type": "proof",
+					"saw": "render_avatar_image"
+				}
+			]
+		}
+	],
+	"mentions": {}
+}

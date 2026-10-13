@@ -1,7 +1,7 @@
 {
 	"id": "genesis",
-	"contentHash": "6150f70f782b68e097347283bc1961d7680f5fc047d1ff5fd6306548814cb4b1",
-	"reviewedAt": "2026-10-10T04:15:20.109Z",
+	"contentHash": "c8b5d381127da2edbc07b2d0d8efcdf0a22c4552521f55e7f5610fe380618fd3",
+	"reviewedAt": "2026-10-13T06:37:57.595Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -111,6 +111,12 @@
 				"detail": "live page shows \"Fork a public avatar to own\""
 			},
 			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "9 steps passed against the live product"
+			},
+			{
 				"kind": "probe:api",
 				"target": "the voice catalog the voice picker reads still answers",
 				"ok": true,
@@ -132,19 +138,25 @@
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 5
+			"visual": 4
 		},
-		"issues": [],
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "The body is rigged before you see it, so it walks and emotes on arrival",
+				"problem": "The reel's four frames only show the three entry modes (Describe, Selfie, Remix) and the describe field; no frame shows a generated, rigged agent walking or emoting, so the post's strongest mechanism claim has no visual backing.",
+				"fix": "Optional: extend the scenario to capture the finished agent animating, and append that shot to the reel before it ends, so the film shows the arrival state the copy describes."
+			}
+		],
 		"rewrite": {
 			"posts": [
 				"Agent Genesis turns a sentence or a selfie into a working 3D agent. The body is rigged before you see it, so it walks and emotes on arrival, and it comes with its own custodial Solana wallet, a custodial EVM wallet, a persona written from your description, and a voice you pick.\n\nText mode paints a full-body reference image, reconstructs it into a textured mesh on our own Hunyuan3D GPU worker, then auto-rigs it with a humanoid skeleton. A selfie takes the face pipeline instead.",
 				"Genesis needs a sign-in, because it writes the agent and its wallet to your account. Remix forks a public avatar into an agent you own.\n\nthree.ws/genesis"
 			],
-			"altText": [
-				"The three.ws Genesis page: describe an agent, upload a selfie, or remix a public avatar, with example prompts, an optional name and persona, and a voice picker."
-			]
+			"altText": []
 		},
-		"summary": "Every claim in the two posts passes verification against the live /genesis page and docs/genesis.md, the prose follows the mechanism-lead pattern with no voice violations, and the hero screenshot matches the live UI with accurate alt text. Nothing needs to change; this ships as written.",
+		"summary": "Every claim is verified against the live page and docs, the voice contract is followed exactly, and both posts sit well under the character wall. Only nitpick is that the reel shows the entry screens but never the rigged agent arrival the copy headlines; not blocking, ship as is.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
