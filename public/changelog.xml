@@ -47,6 +47,14 @@
 			<description>A shared Forge room that runs embedded inside a Discord voice channel: everyone in the call prompts, watches the same 3D model generate, and votes together.</description>
 		</item>
 		<item>
+			<title>Import your VRoid Hub avatar</title>
+			<link>https://three.ws/import/vroid</link>
+			<guid isPermaLink="false">2026-10-13:Import your VRoid Hub avatar</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Bring a VRM avatar from VRoid Hub into three.ws with its creator's license honored: only the actions the creator allowed are ever offered.</description>
+		</item>
+		<item>
 			<title>Open source credits</title>
 			<link>https://three.ws/open-source</link>
 			<guid isPermaLink="false">2026-10-13:Open source credits</guid>
@@ -101,6 +109,14 @@
 			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>A new &quot;Get it printed&quot; action on model pages and in the Forge export menu uploads the model straight to Craftcloud (All3DP) and shows live, real prices across whichever of its roughly 186 print shops can run the job, cheapest first with shipping attached. This is not Materialize: three.ws never takes payment here. Craftcloud's public v5 API has no endpoint that hands a server-created cart back to a browser for checkout, so the panel links out to Craftcloud's own upload page instead of faking a continue-to-checkout button, where pasting the same STL reproduces the prices in an authenticated, checkout-capable session. Backed by a new fulfillment adapter, api/_lib/print/adapters/craftcloud.js, registered ahead of the manual adapter since quoting never spends. Docs: /docs/forge#get-it-printed-live-prices-from-craftcloud and /docs/materialize.</description>
+		</item>
+		<item>
+			<title>Import a VRoid Hub avatar with its creator's license honored</title>
+			<link>https://three.ws/docs/vroid-hub-import</link>
+			<guid isPermaLink="false">2026-10-13:Import a VRoid Hub avatar with its creator's license honored</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new picker at /import/vroid lists every character you own or hearted on VRoid Hub, each scored against the real, live license conditions its creator set (public agent, export, modify, monetize), so three.ws only ever offers an action the creator actually permitted. Built end to end against VRoid Hub's live documented API (OAuth2 with mandatory PKCE, the two-step download-license flow), including encrypted token storage alongside three.ws's other social connections, through to a real import that lands the avatar in the editor with idle/walk already retargeted. VRoid Hub app registration and the OAuth client credentials are an owner action tracked in prompts/finish/_context/production-100-OWNER-ACTIONS.md; everything else is wired and tested. Docs: /docs/vroid-hub-import.</description>
 		</item>
 		<item>
 			<title>Open source credits: every dependency, model, and asset source three.ws runs on, in one place</title>

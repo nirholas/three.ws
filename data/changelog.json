@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-13",
+			"title": "Import a VRoid Hub avatar with its creator's license honored",
+			"link": "/docs/vroid-hub-import",
+			"summary": "A new picker at /import/vroid lists every character you own or hearted on VRoid Hub, each scored against the real, live license conditions its creator set (public agent, export, modify, monetize), so three.ws only ever offers an action the creator actually permitted. Built end to end against VRoid Hub's live documented API (OAuth2 with mandatory PKCE, the two-step download-license flow), including encrypted token storage alongside three.ws's other social connections, through to a real import that lands the avatar in the editor with idle/walk already retargeted. VRoid Hub app registration and the OAuth client credentials are an owner action tracked in prompts/finish/_context/production-100-OWNER-ACTIONS.md; everything else is wired and tested. Docs: /docs/vroid-hub-import.",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
 			"title": "A Shopify app turns product photos into 3D product media",
 			"link": "/docs/shopify-app",
 			"summary": "A new embedded Shopify app, built end to end but not yet installable (Partner account, env vars, and App Store submission are owner actions): pick a product photo in the admin, generate a real GLB through three.ws's own /api/forge pipeline, preview it in-page, and attach it with productCreateMedia so the storefront shows a 3D viewer on desktop and AR Quick Look on iPhone from the one upload (Shopify derives the USDZ automatically). Bulk mode generates across a whole catalog with real per-item status. Billing runs through Shopify's own usage-based Billing API, priced from Forge's own per-call cost, in test mode until the app has Public distribution. The three mandatory privacy webhooks plus app/uninstalled are HMAC-verified and delivery-deduplicated. Docs: /docs/shopify-app. Submission packet for Partner Dashboard setup and App Store listing copy: marketing/growth/submissions/shopify-app.md.",

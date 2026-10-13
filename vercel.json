@@ -3808,6 +3808,22 @@
 			"dest": "/api/auth/github/[action]?action=disconnect"
 		},
 		{
+			"src": "/api/auth/vroid/connect",
+			"dest": "/api/auth/vroid/[action]?action=connect"
+		},
+		{
+			"src": "/api/auth/vroid/callback",
+			"dest": "/api/auth/vroid/[action]?action=callback"
+		},
+		{
+			"src": "/api/auth/vroid/status",
+			"dest": "/api/auth/vroid/[action]?action=status"
+		},
+		{
+			"src": "/api/auth/vroid/disconnect",
+			"dest": "/api/auth/vroid/[action]?action=disconnect"
+		},
+		{
 			"src": "/api/auth/x/connect",
 			"dest": "/api/auth/x/[action]?action=connect"
 		},
@@ -6208,6 +6224,14 @@
 		{
 			"src": "/import/rpm/",
 			"dest": "/import-rpm.html"
+		},
+		{
+			"src": "/import/vroid",
+			"dest": "/import-vroid.html"
+		},
+		{
+			"src": "/import/vroid/",
+			"dest": "/import-vroid.html"
 		},
 		{
 			"src": "/create/video/?",

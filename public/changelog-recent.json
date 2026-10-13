@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-13T17:59:16.355Z",
+	"generated_at": "2026-10-13T18:47:35.266Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4062,
+	"total": 4064,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -55,6 +55,16 @@
 			"title": "Forge Room (Discord Activity)",
 			"summary": "A shared Forge room that runs embedded inside a Discord voice channel: everyone in the call prompts, watches the same 3D model generate, and votes together.",
 			"link": "/discord-activity",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "launch",
+			"title": "Import your VRoid Hub avatar",
+			"summary": "Bring a VRM avatar from VRoid Hub into three.ws with its creator's license honored: only the actions the creator allowed are ever offered.",
+			"link": "/import/vroid",
 			"tags": [
 				"launch"
 			]
@@ -129,6 +139,17 @@
 			"title": "Get it printed: live Craftcloud prices for any Forge model, buyer pays direct",
 			"summary": "A new \"Get it printed\" action on model pages and in the Forge export menu uploads the model straight to Craftcloud (All3DP) and shows live, real prices across whichever of its roughly 186 print shops can run the job, cheapest first with shipping attached. This is not Materialize: three.ws never takes payment here. Craftcloud's public v5 API has no endpoint that hands a server-created cart back to a browser for checkout, so the panel links out to Craftcloud's own upload page instead of faking a continue-to-checkout button, where pasting the same STL reproduces the prices in an authenticated, checkout-capable session. Backed by a new fulfillment adapter, api/_lib/print/adapters/craftcloud.js, registered ahead of the manual adapter since quoting never spends. Docs: /docs/forge#get-it-printed-live-prices-from-craftcloud and /docs/materialize.",
 			"link": "/docs/forge#get-it-printed-live-prices-from-craftcloud",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
+			"title": "Import a VRoid Hub avatar with its creator's license honored",
+			"summary": "A new picker at /import/vroid lists every character you own or hearted on VRoid Hub, each scored against the real, live license conditions its creator set (public agent, export, modify, monetize), so three.ws only ever offers an action the creator actually permitted. Built end to end against VRoid Hub's live documented API (OAuth2 with mandatory PKCE, the two-step download-license flow), including encrypted token storage alongside three.ws's other social connections, through to a real import that lands the avatar in the editor with idle/walk already retargeted. VRoid Hub app registration and the OAuth client credentials are an owner action tracked in prompts/finish/_context/production-100-OWNER-ACTIONS.md; everything else is wired and tested. Docs: /docs/vroid-hub-import.",
+			"link": "/docs/vroid-hub-import",
 			"tags": [
 				"feature",
 				"docs"
@@ -1534,28 +1555,6 @@
 			"link": "/docs/desktop-local-runtime",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Set up your AI client with one command, and check it with doctor",
-			"summary": "Run npx three-ws --claude (or --cursor, --codex, --vscode, --windsurf) and the CLI signs you in, connects three.ws and verifies it, with no prompts. Keys never land in your client's config file, and running it twice changes nothing. New installers at three.ws/cli/install and three.ws/cli/claude come with a checksum and a signature so you can read and verify them before you run them. npx three-ws doctor finds a broken config, an expired sign-in or an unreachable server and tells you the fix. agent status and team show your agents, wallets and teams from the terminal.",
-			"link": "/docs/cli",
-			"tags": [
-				"feature",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Sign in with Google, connect several AI clients at once, and grant permissions by group",
-			"summary": "You can now sign in to three.ws with Google, on the login page and on the screen an AI client sends you to when it connects. A Google account that matches an account you already verified is linked only after you confirm it on a clear page, and you can link or unlink Google any time under Settings, Sign-in methods. Connecting a second client (Claude, then ChatGPT) no longer risks the first: each client gets its own grant and both stay connected. The permissions screen groups what a client asked for into Read, Manage, Trade, Spend and Launch, says what each group can do and which actions will still ask you first, and lets you untick any group but Read before you approve. Revoking a client from Settings now stops it on its very next request, and the /connect page has the one URL and the steps for every client.",
-			"link": "/connect",
-			"tags": [
-				"feature",
-				"security"
 			]
 		}
 	]

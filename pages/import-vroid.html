@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<title>Import your VRoid Hub avatar · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta
+			name="description"
+			content="Bring a VRoid Hub character into three.ws. We only ever offer what the creator's license allows, and credit stays visible wherever the avatar appears."
+		/>
+		<meta name="robots" content="noindex" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="canonical" href="https://three.ws/import/vroid">
+		<style>
+			*, *::before, *::after { box-sizing: border-box; }
+			:root {
+				--bg: #0d0d0d;
+				--panel: #151515;
+				--panel-2: #1c1c1c;
+				--border: rgba(255,255,255,0.07);
+				--border-2: rgba(255,255,255,0.13);
+				--text: #e9ecef;
+				--text-2: rgba(255,255,255,0.65);
+				--text-3: rgba(255,255,255,0.38);
+				--accent: #ffffff;
+				--accent-dim: rgba(255,255,255,0.10);
+				--ok: #4ade80;
+				--err: #f87171;
+				--err-dim: rgba(248,113,113,0.10);
+				--radius: 12px;
+			}
+			html, body {
+				margin: 0; padding: 0;
+				background: var(--bg);
+				color: var(--text);
+				font-family: system-ui, -apple-system, sans-serif;
+				font-size: 15px;
+				line-height: 1.55;
+				min-height: 100vh;
+			}
+			a { color: var(--accent); }
+			.page { max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }
+			.back-link {
+				display: inline-flex; align-items: center; gap: 6px;
+				color: var(--text-3); text-decoration: none; font-size: 13px;
+				margin-bottom: 32px; letter-spacing: 0.01em;
+			}
+			.back-link:hover { color: var(--text-2); }
+			h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 6px; }
+			.lede { color: var(--text-2); margin: 0 0 28px; font-size: 14px; line-height: 1.6; }
+
+			/* ── State panels ─────────────────────────────────────────────── */
+			.state-panel {
+				background: var(--panel);
+				border: 1px solid var(--border-2);
+				border-radius: var(--radius);
+				padding: 36px 24px;
+				text-align: center;
+			}
+			.state-icon { font-size: 36px; margin-bottom: 14px; }
+			.state-panel h2 { font-size: 18px; margin: 0 0 8px; }
+			.state-panel p { color: var(--text-2); font-size: 14px; margin: 0 0 20px; max-width: 480px; margin-inline: auto; }
+			.cta-btn {
+				display: inline-block;
+				padding: 12px 24px;
+				background: var(--accent);
+				color: #0f0f0f;
+				font-weight: 700;
+				font-size: 14px;
+				border: none;
+				border-radius: 8px;
+				text-decoration: none;
+				cursor: pointer;
+				transition: opacity 0.15s, transform 0.1s;
+			}
+			.cta-btn:hover { opacity: 0.9; }
+			.cta-btn:active { transform: scale(0.99); }
+			.cta-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+			/* ── Model grid ───────────────────────────────────────────────── */
+			.section-head {
+				display: flex; align-items: baseline; justify-content: space-between;
+				margin: 32px 0 14px;
+			}
+			.section-head h2 { font-size: 15px; font-weight: 600; color: var(--text-2); margin: 0; }
+			.section-head .count { font-size: 12px; color: var(--text-3); }
+			.model-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+				gap: 14px;
+			}
+			.model-card {
+				background: var(--panel);
+				border: 1px solid var(--border-2);
+				border-radius: var(--radius);
+				overflow: hidden;
+				display: flex;
+				flex-direction: column;
+			}
+			.model-thumb {
+				aspect-ratio: 1;
+				background: var(--panel-2);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: var(--text-3);
+				font-size: 28px;
+				overflow: hidden;
+			}
+			.model-thumb img { width: 100%; height: 100%; object-fit: cover; }
+			.model-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+			.model-name { font-size: 14px; font-weight: 600; margin: 0; }
+			.model-creator { font-size: 12px; color: var(--text-3); margin: 0; }
+			.license-badges { display: flex; flex-wrap: wrap; gap: 5px; }
+			.badge {
+				font-size: 10.5px;
+				font-weight: 600;
+				letter-spacing: 0.02em;
+				padding: 3px 7px;
+				border-radius: 999px;
+				white-space: nowrap;
+			}
+			.badge.allow { background: rgba(74,222,128,0.12); color: var(--ok); }
+			.badge.deny { background: rgba(255,255,255,0.05); color: var(--text-3); }
+			.model-import-btn {
+				margin-top: auto;
+				width: 100%;
+				padding: 10px 12px;
+				background: var(--accent);
+				color: #0f0f0f;
+				font-weight: 700;
+				font-size: 13px;
+				border: none;
+				border-radius: 7px;
+				cursor: pointer;
+				transition: opacity 0.15s;
+			}
+			.model-import-btn:hover:not(:disabled) { opacity: 0.9; }
+			.model-import-btn:disabled { opacity: 0.5; cursor: wait; }
+			.license-link { font-size: 11px; color: var(--text-3); text-decoration: underline; }
+			.empty-note {
+				grid-column: 1 / -1;
+				text-align: center;
+				padding: 24px;
+				color: var(--text-3);
+				font-size: 13px;
+			}
+
+			.status-msg {
+				display: none;
+				padding: 14px 16px;
+				border-radius: 10px;
+				font-size: 13px;
+				line-height: 1.5;
+				margin: 20px 0;
+			}
+			.status-msg.err { display: block; background: var(--err-dim); border: 1px solid rgba(248,113,113,0.2); color: var(--err); }
+
+			/* ── Success card ─────────────────────────────────────────────── */
+			.success-card {
+				display: none;
+				background: var(--panel);
+				border: 1px solid var(--border-2);
+				border-radius: var(--radius);
+				padding: 32px 24px;
+				text-align: center;
+				margin-bottom: 24px;
+			}
+			.success-card.visible { display: block; }
+			.success-icon { font-size: 40px; margin-bottom: 12px; }
+			.success-card h2 { font-size: 20px; margin: 0 0 8px; letter-spacing: -0.01em; }
+			.success-card p { color: var(--text-2); font-size: 14px; margin: 0 0 20px; }
+
+			[hidden] { display: none !important; }
+		</style>
+	</head>
+	<body>
+		<main class="page">
+			<a class="back-link" href="/create">← Back to Create</a>
+
+			<h1>Import your VRoid Hub avatar</h1>
+			<p class="lede">
+				Connect VRoid Hub and bring in a character you made or hearted.
+				three.ws only ever offers what the creator's license allows, and
+				their credit stays visible wherever the avatar appears.
+			</p>
+
+			<div class="success-card" id="success-card">
+				<div class="success-icon">🎉</div>
+				<h2>Avatar imported!</h2>
+				<p id="success-name">Your avatar is ready on three.ws.</p>
+				<a class="cta-btn" id="success-link" href="/gallery">Open in editor</a>
+			</div>
+
+			<div class="status-msg" id="page-status"></div>
+
+			<!-- Not configured on this deployment -->
+			<div class="state-panel" id="state-not-configured" hidden>
+				<div class="state-icon">🚧</div>
+				<h2>VRoid Hub import is coming soon</h2>
+				<p>
+					We're finishing VRoid Hub's app approval. Once that lands, you'll be
+					able to connect your account and import a character right from here.
+				</p>
+				<a class="cta-btn" href="/import/rpm">Import a GLB/VRM URL instead</a>
+			</div>
+
+			<!-- Configured but not connected -->
+			<div class="state-panel" id="state-disconnected" hidden>
+				<div class="state-icon">🔗</div>
+				<h2>Connect your VRoid Hub account</h2>
+				<p>
+					We'll ask VRoid Hub to confirm it's you, then list your own and
+					hearted characters here. We never see your VRoid Hub password.
+				</p>
+				<button class="cta-btn" id="connect-btn" type="button">Connect VRoid Hub</button>
+			</div>
+
+			<!-- Connected: model lists -->
+			<div id="state-connected" hidden>
+				<div class="section-head">
+					<h2>Your characters</h2>
+					<span class="count" id="own-count"></span>
+				</div>
+				<div class="model-grid" id="own-grid"></div>
+
+				<div class="section-head">
+					<h2>Hearted characters</h2>
+					<span class="count" id="hearted-count"></span>
+				</div>
+				<div class="model-grid" id="hearted-grid"></div>
+			</div>
+
+			<!-- Loading skeleton -->
+			<div class="state-panel" id="state-loading">
+				<div class="state-icon">⏳</div>
+				<h2>Loading your VRoid Hub library…</h2>
+				<p>This only takes a moment.</p>
+			</div>
+		</main>
+
+		<script type="module">
+			import { consumeCsrfToken } from '/src/api.js';
+
+			const params = new URLSearchParams(location.search);
+			const connectFlag = params.get('vroid');
+
+			const els = {
+				loading: document.getElementById('state-loading'),
+				notConfigured: document.getElementById('state-not-configured'),
+				disconnected: document.getElementById('state-disconnected'),
+				connected: document.getElementById('state-connected'),
+				ownGrid: document.getElementById('own-grid'),
+				heartedGrid: document.getElementById('hearted-grid'),
+				ownCount: document.getElementById('own-count'),
+				heartedCount: document.getElementById('hearted-count'),
+				pageStatus: document.getElementById('page-status'),
+				connectBtn: document.getElementById('connect-btn'),
+				successCard: document.getElementById('success-card'),
+				successName: document.getElementById('success-name'),
+				successLink: document.getElementById('success-link'),
+			};
+
+			function showOnly(panel) {
+				[els.loading, els.notConfigured, els.disconnected, els.connected].forEach((p) => {
+					p.hidden = p !== panel;
+				});
+			}
+
+			function showStatus(msg) {
+				els.pageStatus.className = 'status-msg err';
+				els.pageStatus.textContent = msg;
+			}
+
+			if (connectFlag === 'denied') showStatus('VRoid Hub connection was cancelled.');
+			else if (connectFlag === 'expired') showStatus('That connection attempt expired, try again.');
+			else if (connectFlag === 'error') showStatus("Couldn't connect your VRoid Hub account, try again.");
+
+			els.connectBtn.addEventListener('click', () => {
+				location.href = '/api/auth/vroid/connect';
+			});
+
+			function badge(label, allowed) {
+				const span = document.createElement('span');
+				span.className = `badge ${allowed ? 'allow' : 'deny'}`;
+				span.textContent = `${allowed ? '✓' : '✕'} ${label}`;
+				return span;
+			}
+
+			function renderModel(model) {
+				const card = document.createElement('div');
+				card.className = 'model-card';
+
+				const thumb = document.createElement('div');
+				thumb.className = 'model-thumb';
+				if (model.thumbnail_url) {
+					const img = document.createElement('img');
+					img.src = model.thumbnail_url;
+					img.alt = model.name || 'VRoid Hub character';
+					img.loading = 'lazy';
+					thumb.appendChild(img);
+				} else {
+					thumb.textContent = '🧑';
+				}
+				card.appendChild(thumb);
+
+				const body = document.createElement('div');
+				body.className = 'model-body';
+
+				const name = document.createElement('p');
+				name.className = 'model-name';
+				name.textContent = model.name || 'Untitled character';
+				body.appendChild(name);
+
+				if (model.creator_name) {
+					const creator = document.createElement('p');
+					creator.className = 'model-creator';
+					creator.textContent = `by ${model.creator_name}`;
+					body.appendChild(creator);
+				}
+
+				const badges = document.createElement('div');
+				badges.className = 'license-badges';
+				badges.appendChild(badge('Public agent', model.actions?.public_agent));
+				badges.appendChild(badge('Export', model.actions?.export));
+				badges.appendChild(badge('Modify', model.actions?.modify));
+				badges.appendChild(badge('Monetize', model.actions?.monetize_personal || model.actions?.monetize_corporate));
+				body.appendChild(badges);
+
+				const licenseLink = document.createElement('a');
+				licenseLink.className = 'license-link';
+				licenseLink.href = model.license_url;
+				licenseLink.target = '_blank';
+				licenseLink.rel = 'noopener noreferrer';
+				licenseLink.textContent = 'What do these terms mean?';
+				body.appendChild(licenseLink);
+
+				const importBtn = document.createElement('button');
+				importBtn.className = 'model-import-btn';
+				importBtn.type = 'button';
+				importBtn.textContent = 'Import to three.ws';
+				importBtn.addEventListener('click', () => runImport(model, importBtn));
+				body.appendChild(importBtn);
+
+				card.appendChild(body);
+				return card;
+			}
+
+			function renderGrid(grid, countEl, models, emptyText) {
+				grid.innerHTML = '';
+				countEl.textContent = models.length ? `${models.length}` : '';
+				if (!models.length) {
+					const empty = document.createElement('div');
+					empty.className = 'empty-note';
+					empty.textContent = emptyText;
+					grid.appendChild(empty);
+					return;
+				}
+				models.forEach((m) => grid.appendChild(renderModel(m)));
+			}
+
+			async function runImport(model, btn) {
+				btn.disabled = true;
+				btn.textContent = 'Importing…';
+				try {
+					const token = await consumeCsrfToken();
+					const headers = { 'content-type': 'application/json' };
+					if (token) headers['x-csrf-token'] = token;
+					const resp = await fetch('/api/vroid/import', {
+						method: 'POST',
+						credentials: 'include',
+						headers,
+						body: JSON.stringify({ character_model_id: model.id }),
+					});
+					const data = await resp.json().catch(() => ({}));
+					if (!resp.ok) throw new Error(data?.error?.message || data?.error_description || `Import failed (${resp.status})`);
+
+					document.getElementById('state-connected').hidden = true;
+					els.successCard.classList.add('visible');
+					els.successName.textContent = data.avatar?.name
+						? `"${data.avatar.name}" is ready on three.ws.`
+						: 'Your avatar is ready on three.ws.';
+					els.successLink.href = data.edit_url || (data.avatar?.id ? `/avatars/${encodeURIComponent(data.avatar.id)}/edit` : '/gallery');
+					window.scrollTo({ top: 0, behavior: 'smooth' });
+				} catch (err) {
+					console.error('[import-vroid]', err);
+					btn.disabled = false;
+					btn.textContent = 'Import to three.ws';
+					showStatus(err.message || 'Import failed. Please try again.');
+				}
+			}
+
+			async function loadModels() {
+				try {
+					const resp = await fetch('/api/vroid/models', { credentials: 'include' });
+					if (resp.status === 401) {
+						const returnTo = encodeURIComponent(location.pathname + location.search);
+						location.href = `/login?return=${returnTo}`;
+						return;
+					}
+					if (resp.status === 501) {
+						showOnly(els.notConfigured);
+						return;
+					}
+					if (resp.status === 409) {
+						showOnly(els.disconnected);
+						return;
+					}
+					const data = await resp.json().catch(() => ({}));
+					if (!resp.ok) throw new Error(data?.error?.message || `Couldn't load your VRoid Hub library (${resp.status})`);
+
+					showOnly(els.connected);
+					renderGrid(els.ownGrid, els.ownCount, data.own || [], "You haven't posted any characters to VRoid Hub yet.");
+					renderGrid(els.heartedGrid, els.heartedCount, data.hearted || [], "You haven't hearted any downloadable characters yet.");
+				} catch (err) {
+					console.error('[import-vroid]', err);
+					showOnly(els.disconnected);
+					showStatus(err.message || "Couldn't load your VRoid Hub library.");
+				}
+			}
+
+			loadModels();
+		</script>
+		<script src="/brand.js" defer></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

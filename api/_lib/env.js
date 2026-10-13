@@ -1517,6 +1517,16 @@ export const env = {
 		return opt('GITHUB_OAUTH_CLIENT_SECRET');
 	},
 
+	// VRoid Hub OAuth (developer.vroid.com): "import your VRoid Hub avatar"
+	// (/import/vroid). When unset, /api/auth/vroid/connect returns 501 and the
+	// picker page shows its coming-soon state. Approval is owner order 939.
+	get VROID_HUB_CLIENT_ID() {
+		return opt('VROID_HUB_CLIENT_ID');
+	},
+	get VROID_HUB_CLIENT_SECRET() {
+		return opt('VROID_HUB_CLIENT_SECRET');
+	},
+
 	// Admin key for three.ws chat brand config endpoint. Optional — when unset
 	// the POST /api/chat/config endpoint returns 503.
 	get CHAT_ADMIN_KEY() {

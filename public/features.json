@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-13T17:59:16.310Z",
+	"generated_at": "2026-10-13T18:47:35.231Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1790,6 +1790,18 @@
 					"title": "Import an avatar URL",
 					"description": "Import any GLB or glTF avatar into three.ws and give it an agent brain.",
 					"added": "2026-05-25",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": "make"
+				},
+				{
+					"path": "/import/vroid",
+					"title": "Import your VRoid Hub avatar",
+					"description": "Bring a VRM avatar from VRoid Hub into three.ws with its creator's license honored: only the actions the creator allowed are ever offered.",
+					"added": "2026-10-13",
 					"auth": null,
 					"indexable": false,
 					"tags": [],
@@ -8988,6 +9000,18 @@
 					"path": "/docs/video-to-motion",
 					"title": "Docs · Video to Motion",
 					"description": "Upload a video of a person and download the motion itself as a GLB, BVH, or FBX animation file, instead of a composited video. Preview on any rigged avatar, trim it, and save it to your animation library.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/vroid-hub-import",
+					"title": "Docs · Import your VRoid Hub avatar",
+					"description": "How the VRoid Hub avatar import works: OAuth connection, the license badges on each character, and what happens to the file during import.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

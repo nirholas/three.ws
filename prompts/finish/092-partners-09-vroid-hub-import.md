@@ -1,5 +1,7 @@
 # partners 09: Import an avatar from VRoid Hub
 
+**Evolve status (2026-10-13):** Built and unit-tested end to end against VRoid Hub's live, documented API shapes: OAuth2 connect/callback/status/disconnect with mandatory PKCE (`api/auth/vroid/[action].js`), the real `CharacterModelLicenseSerializer` license evaluator (`api/_lib/vroid/license.js`, 9/9 tests in `tests/vroid-license.test.js`), the listing and import endpoints (`api/vroid/models.js`, `api/vroid/import.js`), the picker page at `/import/vroid` (`pages/import-vroid.html`), encrypted token storage, and the migration that widens `avatars.source` for `'vroid_hub'` (written, not applied). Docs, `STRUCTURE.md`, `data/pages.json`, the changelog, and `marketing/growth/submissions/vroid-hub-app.md` all landed. What remains is a genuine owner action with no workaround in this session: register the application at `hub.vroid.com/oauth/applications` (confirmed live, pixiv-account sign-in required), set `VROID_HUB_CLIENT_ID`/`VROID_HUB_CLIENT_SECRET` on Cloud Run, run the migration, and verify live against a real VRoid Hub account. Full steps and the live-verification checklist: `marketing/growth/submissions/vroid-hub-app.md`. Tracked as row 55 of `prompts/finish/_context/production-100-OWNER-ACTIONS.md`. This file stays open until that owner action lands and the live verification in Step 4 of the submission doc is done.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate.
 
 ## Operating clause (binding)
