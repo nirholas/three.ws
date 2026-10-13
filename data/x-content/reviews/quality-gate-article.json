@@ -1,9 +1,11 @@
 {
 	"id": "quality-gate-article",
 	"contentHash": "d8c35a3c0e4138553037fee42f4c8f0731bf5eab9f8e4bde56b3679fa9318857",
-	"reviewedAt": "2026-10-13T06:41:45.633Z",
-	"passed": true,
-	"blockers": [],
+	"reviewedAt": "2026-10-13T18:21:52.937Z",
+	"passed": false,
+	"blockers": [
+		"editor verdict is revise"
+	],
 	"texts": [
 		"Two checks before a 3D model ships: the catalog gate, and a diff that names what broke",
 		"Our catalog turns away a character that arrives as more than 8 meshes, and you can run that exact check on your own .glb without uploading it. The write-up covers the five structural checks, how Model Diff names the joints and clips a change removed, the exit codes for CI, and how its rename pointers guide a review: three.ws/inspect"
@@ -747,25 +749,58 @@
 		]
 	},
 	"editor": {
-		"verdict": "publish",
+		"verdict": "revise",
 		"scores": {
-			"accuracy": 5,
+			"accuracy": 4,
 			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 5
+			"visual": 4
 		},
-		"issues": [],
+		"issues": [
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "Geometry density 16,340 vertices, file weight 830 KB, surface texture 4 textures, and a single assembled character at 1 mesh",
+				"problem": "The Michelle image alt text states numbers (830 KB, 4 textures, 1 mesh) that appear in no passing verification result. Only 16,340 vertices and the 65-joint rigged line were verified live.",
+				"fix": "Fetch https://three.ws/inspect?url=...michelle.glb live, confirm each number in the alt text against the rendered page, and either keep the numbers that match or rewrite the alt to: \"The Michelle sample on the Model Inspector: Clears the catalog bar. Geometry density 16,340 vertices, and the page reports it rigged with 65 joints, ready to animate.\""
+			},
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "one texture and one mesh, and is reported rigged with 24 joints",
+				"problem": "The Fox image alt text asserts texture count, mesh count and a 24-joint rig, none of which were verified. The passing checks for Fox cover only \"1,728 vertices\" and \"Clears the catalog bar\".",
+				"fix": "Verify against the live Fox inspector URL; if unconfirmed, rewrite to: \"The Fox sample on the Model Inspector: it clears the catalog bar with 1,728 vertices against a density floor of 1,500.\""
+			},
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "five clips are gone (agree, idle, run, sneak_pose and walk)",
+				"problem": "The live diff page was only verified to say \"5 animations were removed (\\\"agree\\\", \\\"idle\\\", \\\"run\\\" and 2 more)\". Naming the two unlisted clips as sneak_pose and walk goes beyond the verified record.",
+				"fix": "Open the live diff pair page, expand the animation section, and confirm the two remaining clip names before publishing; otherwise rewrite the alt to: \"...and 5 animations were removed (agree, idle, run and 2 more), each with its duration.\""
+			},
+			{
+				"severity": "minor",
+				"area": "specificity",
+				"quote": "Two checks before a 3D model ships: the catalog gate, and a diff that names what broke",
+				"problem": "The house standard asks the title to carry the headline number. \"Two checks\" is abstract; the article's strongest numbers (22 meshes against a limit of 8, 2 joints lost, 5 clips gone) are not in the title. Length is in range at roughly 87 characters.",
+				"fix": "Consider: \"22 meshes against a limit of 8: the catalog gate that rejects the Mannequin, and the diff that names the 2 joints a change removed\" (adjusted to stay 80 to 100 characters)."
+			}
+		],
 		"rewrite": {
 			"posts": [
 				"Our catalog turns away a character that arrives as more than 8 meshes, and you can run that exact check on your own .glb without uploading it. The write-up covers the five structural checks, how Model Diff names the joints and clips a change removed, the exit codes for CI, and how its rename pointers guide a review: three.ws/inspect"
 			],
 			"altText": [
-				"Two 3D characters on a black background: a translucent pink jointed mannequin standing beside Michelle, a green-skinned character with leafy green hair and yellow trousers"
+				"Two 3D characters on a black background: a translucent pink jointed mannequin standing beside Michelle, a green-skinned character with leafy green hair and yellow trousers",
+				"The Mannequin sample on the Model Inspector: Below the bar, 2 checks short. Surface texture reads none against at least 1, and Single assembled character reads 22 meshes against at most 8. Geometry density, file weight and bounds pass, and the page says there is no skeleton and the model cannot be animated until it is rigged.",
+				"The Michelle sample on the Model Inspector: Clears the catalog bar. Geometry density 16,340 vertices, and the page reports it rigged with 65 joints, ready to animate.",
+				"The Fox sample on the Model Inspector: it clears the catalog bar with 1,728 vertices against a density floor of 1,500.",
+				"Model Diff comparing the X Bot sample with Michelle: one skeleton lost the joints mixamorig:LeftEye and mixamorig:RightEye, and 5 animations were removed (agree, idle, run and 2 more), each with its duration."
 			]
 		},
-		"summary": "Every factual claim in the article and head post is backed by a passing page or file check, and the structure meets the Article standard: title with a headline number at roughly 87 characters, more than 8 sections, four inline images, a partners section stating each designation exactly, and a Try it section. The voice contract is respected throughout with no hashtags, emoji, dashes, or hype openers, and the cover image matches its alt text, so this ships unchanged.",
+		"summary": "The article is accurate, well-structured and fully sourced: all 60-plus verified claims pass, it meets the keeper shape (real runs, plain-language stages, credited open work, exact partner designations, Try it section), and the head post is in voice. Revise only because three inline-image alt texts state numbers (Michelle 830 KB and 4 textures, Fox 24 joints, clip names sneak_pose and walk) that were never verified against the live pages; confirm each against the live URLs or use the trimmed alt texts in the rewrite.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

@@ -1,0 +1,132 @@
+{
+	"id": "parts-studio",
+	"contentHash": "c908a54f5fc785944b4c586cbf9c451002aa65356adf71552c4094991d804006",
+	"reviewedAt": "2026-10-13T18:57:58.621Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"Parts Studio is live on three.ws. Paste a link to a 3D model and it splits the mesh into named parts, cutting at disconnected shells and concave creases, so each piece can be isolated, hidden or exported on its own.\n\nThe mannequin in the reel came back as 24 parts, found from the geometry alone.",
+		"Agents get the same tool: segment_model over MCP, and a plain REST endpoint at /api/forge-segment. The segmentation worker runs on Google Cloud Run.\n\nPaste a link and try it: three.ws/segment"
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "Paste a link to a 3D model",
+				"kind": "evidence:page",
+				"target": "https://three.ws/segment",
+				"ok": true,
+				"detail": "live page shows \"Paste a GLB/OBJ/STL/PLY URL\""
+			},
+			{
+				"claim": "splits the mesh into named parts",
+				"kind": "evidence:page",
+				"target": "https://three.ws/segment",
+				"ok": true,
+				"detail": "live page shows \"named, recolourable\""
+			},
+			{
+				"claim": "cutting at disconnected shells and concave creases",
+				"kind": "evidence:page",
+				"target": "https://three.ws/segment",
+				"ok": true,
+				"detail": "live page shows \"disconnected shells plus the minima rule\""
+			},
+			{
+				"claim": "each piece can be isolated, hidden or exported on its own",
+				"kind": "evidence:page",
+				"target": "https://three.ws/segment",
+				"ok": true,
+				"detail": "live page shows \"export it on its own\""
+			},
+			{
+				"claim": "24 parts",
+				"kind": "evidence:proof",
+				"target": "parts",
+				"ok": true,
+				"detail": "the run read parts = \"24\""
+			},
+			{
+				"claim": "found from the geometry alone",
+				"kind": "evidence:page",
+				"target": "https://three.ws/segment",
+				"ok": true,
+				"detail": "live page shows \"Geometry-based segmentation\""
+			},
+			{
+				"claim": "segment_model over MCP",
+				"kind": "evidence:page",
+				"target": "https://three.ws/segment",
+				"ok": true,
+				"detail": "live page shows \"segment_model\""
+			},
+			{
+				"claim": "a plain REST endpoint at /api/forge-segment",
+				"kind": "evidence:proof",
+				"target": "/api/forge-segment",
+				"ok": true,
+				"detail": "POST /api/forge-segment answered 202 in 0.1 s"
+			},
+			{
+				"claim": "The segmentation worker runs on Google Cloud Run",
+				"kind": "evidence:file",
+				"target": "api/forge-segment.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "11 steps passed against the live product, every claimed fact still holds (parts 24)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the mannequin model the reel segments is still served",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws",
+				"ok": true,
+				"detail": "HTTP 200 via https://three.ws/"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/segment",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"Parts Studio is live on three.ws. Paste a link to a 3D model and it splits the mesh into named parts, cutting at disconnected shells and concave creases, so each piece can be isolated, hidden or exported on its own.\n\nThe mannequin in the reel came back as 24 parts, found from the geometry alone.",
+				"Agents get the same tool: segment_model over MCP, and a plain REST endpoint at /api/forge-segment. The segmentation worker runs on Google Cloud Run.\n\nPaste a link and try it: three.ws/segment"
+			],
+			"altText": []
+		},
+		"summary": "Every claim checks out against the live page, the code file, and the filmed run, which read 24 parts off the screen and got a 202 from /api/forge-segment. The reel frames match the copy exactly (24 parts, mannequin, isolate/hide/export controls) and the voice contract is fully obeyed. Ship it.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

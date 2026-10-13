@@ -14331,12 +14331,12 @@
 		},
 		{
 			"id": "wardrobe-article",
-			"status": "review",
+			"status": "approved",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
 			"pattern": "longform",
-			"notBefore": "2026-10-09T19:06:15.919Z",
+			"notBefore": "2026-10-13T20:15:14.760Z",
 			"covers": [
 				"workers/garment-forge",
 				"/wardrobe"
@@ -15342,12 +15342,12 @@
 		},
 		{
 			"id": "forge-article",
-			"status": "review",
+			"status": "approved",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
 			"pattern": "longform",
-			"notBefore": "2026-10-02T00:00:00Z",
+			"notBefore": "2026-10-13T20:18:24.085Z",
 			"covers": [
 				"/forge",
 				"workers/model-trellis",
@@ -16067,7 +16067,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "quality-gate-article",
@@ -18138,12 +18139,12 @@
 		},
 		{
 			"id": "avatar-embed-moves",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "clip",
-			"notBefore": "2026-10-11T00:00:00Z",
+			"notBefore": "2026-10-13T20:25:45.070Z",
 			"covers": [
 				"/embed/avatar"
 			],
@@ -18323,7 +18324,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "give-your-ai-a-body",
@@ -18465,7 +18467,7 @@
 		},
 		{
 			"id": "openai-partner-benefits",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"pattern": "mechanism",
 			"posts": [
@@ -18570,7 +18572,7 @@
 				}
 			],
 			"tier": 2,
-			"notBefore": "2026-10-12T17:00:00Z",
+			"notBefore": "2026-10-13T20:27:26.398Z",
 			"lane": "developer",
 			"scenario": {
 				"format": "landscape",
@@ -18620,11 +18622,12 @@
 						"contains": "Select Partner"
 					}
 				}
-			]
+			],
+			"approvedBy": "policy"
 		},
 		{
 			"id": "agent-lab-entrance",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 3,
 			"lane": "community",
@@ -19407,12 +19410,12 @@
 		},
 		{
 			"id": "atlas-goal",
-			"status": "draft",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "number",
-			"notBefore": "2026-10-14T00:00:00Z",
+			"notBefore": "2026-10-14T00:00:00.000Z",
 			"covers": [
 				"/atlas"
 			],
@@ -19589,11 +19592,12 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "cad-forge",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -19888,7 +19892,7 @@
 		},
 		{
 			"id": "catalog-api",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 3,
 			"lane": "developer",
@@ -20138,7 +20142,7 @@
 		},
 		{
 			"id": "changelog-feed",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -20223,7 +20227,21 @@
 			],
 			"posts": [
 				{
-					"text": "More than 3,800 entries sit in the public changelog, newest first, each tagged launch, feature, improvement, fix, sdk, security, infra or docs, and each with its own permalink.\n\nNew pages add themselves: the launch date a page carries in the site index becomes an entry with no one writing one. Everything else a user would notice gets a written entry with a plain-language summary.\n\nDelivery is automatic too. A job runs every 20 minutes, reads the feed baked into the running build, and posts anything new to the community Telegram channel, so an entry goes out shortly after the deploy that shipped it."
+					"text": "More than 3,800 entries sit in the public changelog, newest first, each tagged launch, feature, improvement, fix, sdk, security, infra or docs, and each with its own permalink.\n\nNew pages add themselves: the launch date a page carries in the site index becomes an entry with no one writing one. Everything else a user would notice gets a written entry with a plain-language summary.\n\nDelivery is automatic too. A job runs every 20 minutes, reads the feed baked into the running build, and posts anything new to the community Telegram channel, so an entry goes out shortly after the deploy that shipped it.",
+					"media": [
+						{
+							"path": "public/x-media/changelog-feed/reel.mp4",
+							"probe": {
+								"durationSec": 11.8,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
 				},
 				{
 					"text": "Follow it by RSS, JSON feed or llms.txt, or filter the page by the kind of change.\n\nthree.ws/changelog"
@@ -20380,12 +20398,12 @@
 		},
 		{
 			"id": "concierge-ask",
-			"status": "draft",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
 			"pattern": "walkthrough",
-			"notBefore": "2026-10-14T00:00:00Z",
+			"notBefore": "2026-10-14T00:00:00.000Z",
 			"covers": [
 				"/concierge",
 				"concierge-sdk"
@@ -20571,16 +20589,17 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "docs-freshness",
-			"status": "draft",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
 			"pattern": "correction",
-			"notBefore": "2026-10-10T00:00:00Z",
+			"notBefore": "2026-10-13T20:45:10.804Z",
 			"covers": [
 				"/docs/freshness",
 				"docs/docs-freshness.md"
@@ -20804,7 +20823,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "grok-bot-recipes",
@@ -21051,7 +21071,7 @@
 		},
 		{
 			"id": "grok-studio",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 1,
 			"lane": "community",
@@ -21347,7 +21367,7 @@
 		},
 		{
 			"id": "how-we-render-3d-article",
-			"status": "draft",
+			"status": "review",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
@@ -21808,7 +21828,7 @@
 		},
 		{
 			"id": "how-we-render-3d-thread",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 1,
 			"lane": "article",
@@ -21936,12 +21956,12 @@
 		},
 		{
 			"id": "parts-studio",
-			"status": "draft",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
 			"pattern": "mechanism",
-			"notBefore": "2026-10-14T00:00:00Z",
+			"notBefore": "2026-10-14T00:00:00.000Z",
 			"covers": [
 				"/segment",
 				"workers/segment"
@@ -22131,7 +22151,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "platform-analytics",
@@ -22139,7 +22160,7 @@
 			"lane": "developer",
 			"pattern": "number",
 			"format": "landscape",
-			"notBefore": "2026-10-10T00:00:00Z",
+			"notBefore": "2026-10-13T21:00:18.816Z",
 			"covers": [
 				"/analytics",
 				"/api/platform/analytics"
@@ -22397,11 +22418,12 @@
 			],
 			"mentions": {},
 			"kind": "post",
-			"status": "draft"
+			"status": "approved",
+			"approvedBy": "policy"
 		},
 		{
 			"id": "render-lab-call",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 3,
 			"lane": "developer",

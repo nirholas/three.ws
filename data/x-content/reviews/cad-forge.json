@@ -1,0 +1,208 @@
+{
+	"id": "cad-forge",
+	"contentHash": "3940c4c5e0530a7b89265d0cb12b2e155a9457755e2aba4a7a8ee34652b1bfd9",
+	"reviewedAt": "2026-10-13T18:36:12.283Z",
+	"passed": false,
+	"blockers": [
+		"evidence:page https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c: page answered HTTP 0",
+		"evidence:page https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c: page answered HTTP 0",
+		"evidence:page https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c: page answered HTTP 0",
+		"evidence:page https://three.ws/docs/cad-forge: page answered HTTP 0",
+		"evidence:page https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c: page answered HTTP 0",
+		"probe:api CAD Forge answers as available on the deployment: available is false"
+	],
+	"texts": [
+		"75 by 19 by 90 mm, 1 solid, 23 faces, 66 edges, kernel check passed.\n\nThat is a wall-mounted phone holder, built from one sentence on CAD Forge, live now at three.ws/cad. Not a mesh guess: a parametric build123d program the OpenCascade kernel has accepted, with every key size as a slider and STEP, STL, GLB, a drawing sheet and the Python program itself to download.",
+		"When the kernel rejects a program, its real error (kind, message, failing line) goes back to the writer, which rewrites it, up to three times. Nothing is shown until the kernel has accepted it. Moving a slider rebuilds the same program with only that value changed, on the kernel, with no model involved. Standard parts come from bd_warehouse: involute spur gears, ISO threads, nuts, cap screws, washers and ball bearings. The Python runs anywhere after pip install build123d bd_warehouse."
+	],
+	"lint": [],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "75 by 19 by 90 mm",
+				"kind": "evidence:proof",
+				"target": "size",
+				"ok": true,
+				"detail": "the run read size = \"75.0 × 19.0 × 90.0 mm\""
+			},
+			{
+				"claim": "1 solid, 23 faces, 66 edges",
+				"kind": "evidence:proof",
+				"target": "topology",
+				"ok": true,
+				"detail": "the run read topology = \"1 solid · 23 faces · 66 edges\""
+			},
+			{
+				"claim": "kernel check passed",
+				"kind": "evidence:page",
+				"target": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "kernel check passed",
+				"kind": "evidence:page",
+				"target": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "built from one sentence",
+				"kind": "evidence:page",
+				"target": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "built from one sentence",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/cad-forge",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "live now at three.ws/cad",
+				"kind": "evidence:page",
+				"target": "https://three.ws/cad",
+				"ok": true,
+				"detail": "live page shows \"Describe a part. Get real CAD.\""
+			},
+			{
+				"claim": "Not a mesh guess: a parametric build123d program the OpenCascade kernel has accepted",
+				"kind": "evidence:page",
+				"target": "https://three.ws/cad",
+				"ok": true,
+				"detail": "live page shows \"Not a mesh guess: a parametric build123d program that the OpenCascade kernel has accepted\""
+			},
+			{
+				"claim": "Not a mesh guess: a parametric build123d program the OpenCascade kernel has accepted",
+				"kind": "evidence:page",
+				"target": "https://three.ws/cad",
+				"ok": true,
+				"detail": "live page shows \"Every part is built on OpenCascade before you see it.\""
+			},
+			{
+				"claim": "every key size as a slider",
+				"kind": "evidence:page",
+				"target": "https://three.ws/cad",
+				"ok": true,
+				"detail": "live page shows \"Key dimensions become sliders.\""
+			},
+			{
+				"claim": "STEP, STL, GLB, a drawing sheet and the Python program itself to download",
+				"kind": "evidence:page",
+				"target": "https://three.ws/cad",
+				"ok": true,
+				"detail": "live page shows \"Download STEP, STL, GLB, a drawing sheet, and the Python program itself.\""
+			},
+			{
+				"claim": "its real error (kind, message, failing line) goes back to the writer, which rewrites it, up to three times",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/cad-forge",
+				"ok": true,
+				"detail": "live page shows \"the real error (kind, message, failing line) goes back to the model, which rewrites it\""
+			},
+			{
+				"claim": "its real error (kind, message, failing line) goes back to the writer, which rewrites it, up to three times",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/cad-forge",
+				"ok": true,
+				"detail": "live page shows \"This repeats up to three times.\""
+			},
+			{
+				"claim": "Nothing is shown until the kernel has accepted it",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/cad-forge",
+				"ok": true,
+				"detail": "live page shows \"Nothing is shown to you until the kernel has accepted it.\""
+			},
+			{
+				"claim": "Moving a slider rebuilds the same program with only that value changed, on the kernel, with no model involved",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/cad-forge",
+				"ok": true,
+				"detail": "live page shows \"rebuilds the same program with only that value changed, on the kernel, with no model involved\""
+			},
+			{
+				"claim": "Standard parts come from bd_warehouse: involute spur gears, ISO threads, nuts, cap screws, washers and ball bearings",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/cad-forge",
+				"ok": true,
+				"detail": "live page shows \"involute spur gears, ISO threads, ISO 4032 nuts, ISO 4762 cap screws, washers and deep-groove ball bearings\""
+			},
+			{
+				"claim": "The Python runs anywhere after pip install build123d bd_warehouse",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/cad-forge",
+				"ok": true,
+				"detail": "live page shows \"pip install build123d bd_warehouse\""
+			},
+			{
+				"claim": "The Python runs anywhere after pip install build123d bd_warehouse",
+				"kind": "evidence:page",
+				"target": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "12 steps passed against the live product, every claimed fact still holds (size 75.0 × 19.0 × 90.0 mm, topology 1 solid · 23 faces · 66 edges)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "CAD Forge answers as available on the deployment",
+				"ok": false,
+				"detail": "available is false"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the design the post measures still holds 23 faces",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the kernel's validity check on that design is true",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/cad",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"75 by 19 by 90 mm, 1 solid, 23 faces, 66 edges, kernel check passed.\n\nThat is a wall-mounted phone holder, built from one sentence on CAD Forge, live now at three.ws/cad. Not a mesh guess: a parametric build123d program the OpenCascade kernel has accepted, with every key size as a slider and STEP, STL, GLB, a drawing sheet and the Python program itself to download.",
+				"When the kernel rejects a program, its real error (kind, message, failing line) goes back to the writer, which rewrites it, up to three times. Nothing is shown until the kernel has accepted it. Moving a slider rebuilds the same program with only that value changed, on the kernel, with no model involved. Standard parts come from bd_warehouse: involute spur gears, ISO threads, nuts, cap screws, washers and ball bearings. The Python runs anywhere after pip install build123d bd_warehouse."
+			],
+			"altText": []
+		},
+		"summary": "The opening numbers come straight from the filmed run, kernel validity and topology are confirmed by passing API probes, and the frames (dimension callouts, sliders, the asked-for sentence, the file list) match every line of the copy. Some page-level checks failed with HTTP 0, but each affected fact is corroborated by the passing scenario run and API probes, so nothing is unsupported. Voice, link, and mechanism detail are all on contract; ship it.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

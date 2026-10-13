@@ -1,7 +1,7 @@
 {
 	"id": "embed-article",
 	"contentHash": "1ef6817856ae1e147a64e9f7bb591649f834470412e32110ea44a58cc5ce4a81",
-	"reviewedAt": "2026-10-13T06:12:42.890Z",
+	"reviewedAt": "2026-10-13T18:12:44.886Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -881,15 +881,7 @@
 			"professionalism": 5,
 			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "accuracy",
-				"quote": "Every 3D generation lane already runs on NVIDIA silicon, which is where the bodies you embed come from.",
-				"problem": "The verified fact ends at 'runs on NVIDIA silicon'. The trailing clause ties every embedded body to NVIDIA silicon, but the demo bodies (a Mixamo character, platform avatar folder files) are not shown to have been produced on those lanes, so the clause is an inferred extension, not a verified one.",
-				"fix": "Drop the clause so the sentence reads: 'Every 3D generation lane already runs on NVIDIA silicon.' If the clause is kept, add file or page evidence that the demo bodies were generated on a three.ws lane."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
 				"Two lines of HTML put a live 3D avatar on a web page. The element holds its frame back until the idle has rendered, so the avatar appears standing naturally on Mixamo, VRM and other rigs alike. The write-up follows one snippet from the tag to that frame, then covers pinned versions with integrity hashes, reduced motion and a budget of 8 live avatars per page."
@@ -898,7 +890,7 @@
 				"Three 3D avatars standing side by side on a dark blue background, each rendered live by its own agent-3d element in the same relaxed idle pose: a woman in a purple top and leggings, a character in a cropped top, yellow trousers and round pink glasses, and a man in a white T-shirt, light jeans and green trainers"
 			]
 		},
-		"summary": "Every claim in the article and promo post traces to a passing file, page, probe, or link check, and the piece meets the keeper standard: a 98-character title with the headline number, 12 sections over the 2,400-word minimum, well over 3,000 characters of real code and tables, four inline images plus a cover whose alt text matches, a partners section with each designation stated exactly, and a Try it section with live links. One minor nit is a half-sentence editorial leap about embedded bodies coming from NVIDIA silicon that the evidence does not quite support; it does not block publication. Polls confirm ~98-character title within band, code/table volume, and image count all above the Article thresholds.",
+		"summary": "Every claim in the article verifies against source files or live pages, and the structure meets the Article standard: one real run, ten sections, real code and tables, four inline images, a partners section with exact designations, and a Try it section. The promo post leads with the mechanism, the title carries the 8-avatar number, and the cover shows the real product with accurate alt text, so this ships as is.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

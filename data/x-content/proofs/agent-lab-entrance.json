@@ -1,0 +1,93 @@
+{
+	"id": "agent-lab-entrance",
+	"scenarioHash": "7ab832f04ddf50bde9e6effacff7992459e05e1ad90c14a35ec3d448401f064b",
+	"ranAt": "2026-10-13T18:27:26.405Z",
+	"target": {
+		"commit": "771cfef01",
+		"revision": "three-ws-api-00497-2ss"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/demos/agents/wrecking-ball.html",
+			"detail": "loaded https://three.ws/demos/agents/wrecking-ball.html",
+			"ok": true,
+			"ms": 9984,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "expect",
+			"target": "Make an entrance",
+			"detail": "appeared after 0.1 s",
+			"ok": true,
+			"ms": 98,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "hold",
+			"target": "1600",
+			"detail": "1600 ms",
+			"ok": true,
+			"ms": 7221,
+			"frames": 48
+		},
+		{
+			"index": 4,
+			"kind": "click",
+			"target": "Swing again",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 3153,
+			"frames": 21
+		},
+		{
+			"index": 5,
+			"kind": "hold",
+			"target": "3800",
+			"detail": "3800 ms",
+			"ok": true,
+			"ms": 17216,
+			"frames": 114
+		},
+		{
+			"index": 6,
+			"kind": "click",
+			"target": "Hit this one",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 3286,
+			"frames": 21
+		},
+		{
+			"index": 7,
+			"kind": "hold",
+			"target": "4200",
+			"detail": "4200 ms",
+			"ok": true,
+			"ms": 18909,
+			"frames": 126
+		}
+	],
+	"facts": {},
+	"saw": [
+		"Make an entrance"
+	],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/agent-lab-entrance/reel.mp4",
+		"sha256": "38434fb32e33fc652479fc34c570074298deb90de95dfe148fc383030598f2f5",
+		"frames": 330,
+		"motion": 1,
+		"durationSec": 11,
+		"width": 1280,
+		"height": 720,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

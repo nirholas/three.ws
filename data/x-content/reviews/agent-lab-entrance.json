@@ -1,0 +1,110 @@
+{
+	"id": "agent-lab-entrance",
+	"contentHash": "521f6923fc5b0fbdf4a9442cb6cb4c365437d968d9cb1f0df80d9e4a2b97d71b",
+	"reviewedAt": "2026-10-13T18:30:34.229Z",
+	"passed": false,
+	"blockers": [
+		"spelling mocap: did you mean mcap, mobcap, MCAP?",
+		"editor verdict is revise"
+	],
+	"texts": [
+		"Websites have mascots. three.ws pages have agents that physically show up.\n\nThis one swings in from off screen on a rope, hits the button, watches it wobble back into place, and then just hangs there. A real 3D character rendered over the page in WebGL, not a video.",
+		"It is one of a set of interaction prototypes for 3D agents on ordinary web pages: entrances, pick-ups, face mocap and more.\n\nPlay with all of them: three.ws/demos/agents"
+	],
+	"lint": [],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "swings in from off screen on a rope, hits the button, watches it wobble back into place, and then just hangs there",
+				"kind": "evidence:file",
+				"target": "public/demos/agents/wrecking-ball.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A real 3D character rendered over the page in WebGL",
+				"kind": "evidence:file",
+				"target": "public/demos/agents/_lib.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "entrances, pick-ups, face mocap and more",
+				"kind": "evidence:file",
+				"target": "public/demos/agents/index.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "entrances, pick-ups, face mocap and more",
+				"kind": "evidence:file",
+				"target": "public/demos/agents/index.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "7 steps passed against the live product"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws",
+				"ok": true,
+				"detail": "HTTP 200 via https://three.ws/"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/demos/agents",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "spelling",
+				"target": "mocap",
+				"ok": false,
+				"detail": "did you mean mcap, mobcap, MCAP?"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 4,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 4,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "professionalism",
+				"quote": "face mocap",
+				"problem": "The spelling check failed on \"mocap\". It is common industry shorthand, but the live page itself describes this demo as \"Webcam drives the avatar's face in real time via ARKit blendshapes\", so use words drawn straight from the product to keep the post clean for a partner audience.",
+				"fix": "Replace \"face mocap\" with \"webcam facial capture via ARKit blendshapes\", which matches the verified index.html text word for word."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Websites have mascots. three.ws pages have agents that physically show up.\n\nThis one swings in from off screen on a rope, hits the button, watches it wobble back into place, and then just hangs there. A real 3D character rendered over the page in WebGL, not a video.",
+				"It is one of a set of interaction prototypes for 3D agents on ordinary web pages: entrances, pick-ups, webcam facial capture via ARKit blendshapes, and more.\n\nPlay with all of them: three.ws/demos/agents"
+			],
+			"altText": []
+		},
+		"summary": "The reel and copy match the live demo and all three claims verified; the only flaw is the unverified spelling \"mocap\", which the demo page itself describes with clean wording. Swap in the product's own phrasing and this ships.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"entrances, pick-ups, face mocap and more\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
+}

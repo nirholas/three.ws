@@ -1,0 +1,188 @@
+{
+	"id": "how-we-render-3d-thread",
+	"contentHash": "8ee373e95496484c7878878f701957d2b54ef5725320afa5c76d85cb1d353da2",
+	"reviewedAt": "2026-10-13T18:56:22.396Z",
+	"passed": false,
+	"blockers": [
+		"reply 3: public/x-media/how-we-render-3d-article/holo-live.png is 760px wide; X renders it soft below 1200px",
+		"reply 5: public/x-media/how-we-render-3d-article/rig-doctor.png is 840px wide; X renders it soft below 1200px",
+		"spelling meshopt: did you mean mesh, meshy, meson?",
+		"spelling viseme: did you mean vise, vised, vises?",
+		"editor (visual): The Holo Sticker screenshot is 760px wide, so X renders it soft in the timeline, below the 1200px bar for a post attached to partner-visible copy.",
+		"editor (visual): The Rig Doctor screenshot is 840px wide, so it will render soft in the timeline.",
+		"editor verdict is revise"
+	],
+	"texts": [
+		"A glTF file, Three.js and WebGL on the viewer's own GPU. No plugin, no video stream, no server drawing frames. Here is the full path of one rigged character, from a sentence to a lit, animated model in a browser tab, in six stages.",
+		"To start, make. The Forge turns text or an image into a mesh with open models running on our own Cloud Run GPUs: TRELLIS, Hunyuan3D and TripoSG. Draft is about 12,000 polygons, Standard about 30,000 with 2K textures, High up to 200,000 polygons with full PBR.",
+		"Next, pack and load. The file is compressed for the wire, then the browser decodes it with Draco, KTX2 and meshopt through GLTFLoader, using same-origin decoders loaded on demand. The free validator checks the result against the Khronos suite, in your browser.",
+		"Then light. Lighting from a PMREM environment map, a three-point rig and Khronos PBR-Neutral tone mapping, so colours stay true to the material. Holo Sticker turns the same lit model into a shareable card.",
+		"Then motion. A canonicalizer maps the bone names of Mixamo, VRM, Unreal, Rigify, Daz and more to one set, so a single clip library drives any humanoid. Faces move through ARKit morph targets with nine-viseme lip sync. Pose Studio lets you keyframe your own.",
+		"Last, embed. One script tag and one element put the character on any website. Rig Doctor, free and in your browser, tells you before you start whether your own avatar will animate.",
+		"The long version has the embed code, the decoder and boot-phase tables, all partners by exact designation, how changes ship, and what is next: three.ws/viewer"
+	],
+	"lint": [
+		{
+			"where": "reply 2",
+			"rule": "media",
+			"severity": "major",
+			"message": "public/x-media/how-we-render-3d-article/validator.png is 2.31:1; X crops a single image outside 3:4 to 2:1 in the timeline"
+		},
+		{
+			"where": "reply 3",
+			"rule": "media",
+			"severity": "blocking",
+			"message": "public/x-media/how-we-render-3d-article/holo-live.png is 760px wide; X renders it soft below 1200px"
+		},
+		{
+			"where": "reply 5",
+			"rule": "media",
+			"severity": "blocking",
+			"message": "public/x-media/how-we-render-3d-article/rig-doctor.png is 840px wide; X renders it soft below 1200px"
+		}
+	],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "about 12,000 polygons",
+				"kind": "evidence:file",
+				"target": "docs/how-forge-works.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Standard about 30,000 with 2K textures",
+				"kind": "evidence:file",
+				"target": "docs/how-forge-works.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "up to 200,000 polygons",
+				"kind": "evidence:file",
+				"target": "docs/how-forge-works.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the viewer page is up",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "Rig Doctor is up",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the Holo page is up",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/viewer",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "spelling",
+				"target": "meshopt",
+				"ok": false,
+				"detail": "did you mean mesh, meshy, meson?"
+			},
+			{
+				"kind": "spelling",
+				"target": "viseme",
+				"ok": false,
+				"detail": "did you mean vise, vised, vises?"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 4,
+			"clarity": 4,
+			"specificity": 4,
+			"voice": 5,
+			"professionalism": 4,
+			"visual": 2
+		},
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "visual",
+				"quote": "public/x-media/how-we-render-3d-article/holo-live.png",
+				"problem": "The Holo Sticker screenshot is 760px wide, so X renders it soft in the timeline, below the 1200px bar for a post attached to partner-visible copy.",
+				"fix": "Recapture the Holo Sticker page at a viewport at least 1200px wide and re-export."
+			},
+			{
+				"severity": "blocking",
+				"area": "visual",
+				"quote": "public/x-media/how-we-render-3d-article/rig-doctor.png",
+				"problem": "The Rig Doctor screenshot is 840px wide, so it will render soft in the timeline.",
+				"fix": "Recapture the Rig Doctor page at a viewport at least 1200px wide and re-export."
+			},
+			{
+				"severity": "major",
+				"area": "visual",
+				"quote": "public/x-media/how-we-render-3d-article/validator.png",
+				"problem": "The validator image is 2.31:1; X crops single images outside 3:4 to 2:1, so the bottom row (sample models, status counters) risks being clipped in the timeline.",
+				"fix": "Recapture or crop horizontally to stay within 2:1, keeping the drop zone and sample row visible."
+			},
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "TRELLIS, Hunyuan3D and TripoSG",
+				"problem": "The model names on Cloud Run GPUs are not among the verified claims; only the three polygon figures passed verification. The same is true of 'a canonicalizer maps the bone names of Mixamo, VRM, Unreal, Rigify, Daz', 'nine-viseme lip sync', 'PMREM environment map' and 'Khronos PBR-Neutral tone mapping'.",
+				"fix": "Either add file or run evidence for each named mechanism and rerun verification, or remove the unverified specifics as in the rewrite."
+			},
+			{
+				"severity": "minor",
+				"area": "professionalism",
+				"quote": "meshopt",
+				"problem": "Flagged by the spelling pass. It is the correct name of the meshoptimizer decoder extension, so the flag is a false positive, but an unverifiable proper noun in copy is a risk.",
+				"fix": "Whitelist 'meshopt' and 'viseme' in the spelling dictionary, or drop the term as in the rewrite."
+			},
+			{
+				"severity": "minor",
+				"area": "clarity",
+				"quote": "Pose Studio lets you keyframe your own.",
+				"problem": "The screenshot and alt text call the surface 'Animation Studio', not 'Pose Studio'. A reader following the link will not find a page by the name used in the copy.",
+				"fix": "Rename to 'Animation Studio' to match the live page, or recapture if the product name has changed."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"A glTF file, rendered on the viewer's own GPU. No plugin, no video stream, no server drawing frames. Here is the full path of one rigged character, from a sentence to a lit, animated model in a browser tab, in six stages.",
+				"To start, make. The Forge turns text or an image into a mesh. Draft is about 12,000 polygons, Standard about 30,000 with 2K textures, High up to 200,000 polygons with full PBR.",
+				"Next, pack and load. The file is compressed for the wire, then decoded in the browser through GLTFLoader. The free validator checks the result, in your browser.",
+				"Then light. The model sits under studio lighting in the viewer, and Holo Sticker turns the same lit model into a shareable card. Both are live now.",
+				"Then motion. Animation clips drive the rig, and the studio lets you pose a mannequin, keyframe your own sequence and export an animated GLB.",
+				"Last, embed. One script tag and one element put the character on any website. Rig Doctor, free and in your browser, tells you before you start whether your own avatar will animate.",
+				"The long version has the embed code, the decoder and boot-phase tables, all partners by exact designation, how changes ship, and what is next: three.ws/viewer"
+			],
+			"altText": [
+				"The lighthouse keeper, a rigged three.ws character in a long yellow oilskin coat, navy knitted cap and black rubber boots, standing in the live glTF viewer under studio lighting",
+				"The three.ws glTF validator page with a drop zone for a .glb or .gltf file and sample models, running entirely in the browser",
+				"The three.ws Holo Sticker controls with mark, foil and peel options beside a live rendered holographic sticker",
+				"The three.ws Animation Studio with a posable mannequin, bone list, pose presets and a keyframe timeline",
+				"Rig Doctor: a page that diagnoses whether a GLB will animate, with a drop zone and sample rigs"
+			]
+		},
+		"summary": "The copy is in voice and its checked facts (the three Forge polygon figures, live pages, the link) all pass, but several named mechanisms carry no verification evidence and two of five images render soft in the timeline, with a third likely cropped. Fix by recapturing the media at 1200px or wider, keeping the validator crop within 2:1, and either adding evidence for the named models and animation claims or shipping the trimmed rewrite, with 'Pose Studio' corrected to match the live 'Animation Studio' page.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

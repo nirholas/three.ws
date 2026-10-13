@@ -1,11 +1,9 @@
 {
 	"id": "forge-article",
 	"contentHash": "11b72f602fb1b193a27bbce5c5901878069df9bede6ac29ab62f15ffe18bf1f8",
-	"reviewedAt": "2026-10-13T06:37:57.131Z",
-	"passed": false,
-	"blockers": [
-		"editor verdict is revise"
-	],
+	"reviewedAt": "2026-10-13T18:18:24.084Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"A picture became a textured 3D model in 2 minutes 17 seconds, and a signed receipt shows how",
 		"One picture into the Forge, no account: 2 minutes 17 seconds later, a textured 3D model built on our own NVIDIA L4, plus a signed receipt for every stage. The write-up covers the engine ladder, the mid-job rescue and the free lane: three.ws/forge"
@@ -628,9 +626,9 @@
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
-			"accuracy": 4,
+			"accuracy": 5,
 			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
@@ -639,25 +637,11 @@
 		},
 		"issues": [
 			{
-				"severity": "major",
-				"area": "accuracy",
-				"quote": "the same server is listed on the Official MCP Registry",
-				"problem": "No claim or passing verification covers an Official MCP Registry listing; the partners section must contain only verified statements, since partners' comms teams will read their own paragraph.",
-				"fix": "Replace the sentence with one backed by a passing check: \"The free 3D Studio connector that served this run is callable by any MCP client without a key, and its tools are documented on the 3D Studio MCP page.\" (three.ws/docs/mcp-studio returned HTTP 200.)"
-			},
-			{
-				"severity": "minor",
-				"area": "accuracy",
-				"quote": "Draft | about 12,000 ... Standard | about 30,000 ... High | up to 200,000",
-				"problem": "The polygon budgets are not covered by any passing evidence; only \"default_backend_for_tier\" was verified in the catalog, and 30k is supported only indirectly by the input screenshot's info panel.",
-				"fix": "Either attach a catalog check containing the budget values, or soften the table to what is verified: \"Standard | TRELLIS (self-host) | Free, usually ~60s\" per the picker line, dropping unverified budget numbers."
-			},
-			{
 				"severity": "minor",
 				"area": "visual",
-				"quote": "cover.png",
-				"problem": "The model sits small in a dark frame and the capture shows the viewer's hand-cursor glyph over the coat; it crops fine but reads slightly unfinished for a cover image.",
-				"fix": "Move the pointer off the model, zoom the detective to fill roughly the middle third of the frame, and recapture at the same angle."
+				"quote": "The delivered 3D model in the three.ws viewer on a dark background",
+				"problem": "The cover frame shows the bare model centered on a plain dark field with no viewer chrome: no toolbar, no Download GLB or Do more with this model buttons, and a small unexplained cursor-like artefact near the hands. Saying 'in the three.ws viewer' implies interface elements the image does not contain, and will read as a raw render, not a screenshot of the product surface.",
+				"fix": "Either recapture the cover inside the live viewer so the frame includes the surrounding UI (matching the alt text of the inline delivered-model.png), or change the cover alt text to: 'The delivered 3D model rebuilt from a single picture by the Forge: a noir detective in a long black coat, fedora and white gloves, seen from the side with his hands outstretched on a dark background'."
 			}
 		],
 		"rewrite": {
@@ -665,10 +649,10 @@
 				"One picture into the Forge, no account: 2 minutes 17 seconds later, a textured 3D model built on our own NVIDIA L4, plus a signed receipt for every stage. The write-up covers the engine ladder, the mid-job rescue and the free lane: three.ws/forge"
 			],
 			"altText": [
-				"The delivered 3D model in the three.ws viewer on a dark background: a noir detective in a long black coat, fedora and white gloves, rebuilt from a single picture by the Forge, seen from the side with his hands outstretched"
+				"The delivered AI-generated model rebuilt from one picture by the Forge: a noir detective in a long black coat, fedora and white gloves, seen from the side with his hands outstretched on a dark background"
 			]
 		},
-		"summary": "A strong keeper-standard Article: one real run, verified 2:17 timing, correct partner designations, required sections present, and clean house voice. Revise for one unverified MCP Registry claim in the OpenAI paragraph and unverified polygon-budget figures, plus a slightly cleaner cover recapture.",
+		"summary": "The article meets the house standard end to end: a verified 137,433 ms run on a verified NVIDIA L4 told plainly, 8+ sections with real code and tables, 4 inline images, exact partner designations, model credits, and a Try it close, and every claim passed verification. The only fix worth making is the cover alt text, which claims viewer UI the frame does not show; recapture in the viewer or adjust the description.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

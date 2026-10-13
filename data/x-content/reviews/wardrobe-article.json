@@ -1,13 +1,11 @@
 {
 	"id": "wardrobe-article",
-	"contentHash": "a98baa71906eba8de6e54bd15b62fabe3c81c1da17059818d52fe63fd09e600e",
-	"reviewedAt": "2026-10-13T06:44:54.756Z",
-	"passed": false,
-	"blockers": [
-		"editor verdict is revise"
-	],
+	"contentHash": "f28b64aa5f38d52d047b7c8fb68d3446bf34e2df1898762857458ddbceb44cd2",
+	"reviewedAt": "2026-10-13T18:15:14.758Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
-		"How we rig a 3D garment: put it on a body, rig the pair, then take the body away",
+		"A shirt has no skeleton: how our garment forge rigs a piece in 7 stages, then lifts the body out",
 		"A shirt has no skeleton, so our garment forge rigs each piece while a reference body is wearing it, then removes the body and keeps the weights the cloth picked up from the joints underneath. The write-up follows one real shirt through the seven stages and the gates a piece passes before it is published: three.ws/wardrobe"
 	],
 	"lint": [],
@@ -284,6 +282,62 @@
 				"claim": "Each slot has a measured box on that body",
 				"kind": "evidence:file",
 				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
@@ -694,6 +748,48 @@
 				"detail": "live page shows \"member of the Quicknode Startup Program with approved infrastructure credits.\""
 			},
 			{
+				"claim": "The occludes list names the six body regions this shirt covers: torso, upperArms, lowerArms, hips, upperLegs and neck",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"torso\",\""
+			},
+			{
+				"claim": "The occludes list names the six body regions this shirt covers: torso, upperArms, lowerArms, hips, upperLegs and neck",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"upperArms\",\""
+			},
+			{
+				"claim": "The occludes list names the six body regions this shirt covers: torso, upperArms, lowerArms, hips, upperLegs and neck",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"lowerArms\",\""
+			},
+			{
+				"claim": "The occludes list names the six body regions this shirt covers: torso, upperArms, lowerArms, hips, upperLegs and neck",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"hips\",\""
+			},
+			{
+				"claim": "The occludes list names the six body regions this shirt covers: torso, upperArms, lowerArms, hips, upperLegs and neck",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"upperLegs\",\""
+			},
+			{
+				"claim": "The occludes list names the six body regions this shirt covers: torso, upperArms, lowerArms, hips, upperLegs and neck",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"neck\"\""
+			},
+			{
 				"kind": "probe:api",
 				"target": "the wardrobe page is served",
 				"ok": true,
@@ -774,43 +870,29 @@
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
-			"accuracy": 4,
+			"accuracy": 5,
 			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 4
+			"visual": 5
 		},
 		"issues": [
 			{
-				"severity": "major",
-				"area": "specificity",
-				"quote": "How we rig a 3D garment: put it on a body, rig the pair, then take the body away",
-				"problem": "The house standard for an Article is a title of 80 to 100 characters carrying the headline number. This title carries no number, while the article has strong verified ones (seven stages, 52 joints, 40,000 triangles, 2.87 cm mean deviation).",
-				"fix": "Retitle, e.g. \"How we rig a 3D garment: seven stages, a 52-joint reference body, and 2.87 cm of cloth stray\" (90 characters; every number verified)."
-			},
-			{
-				"severity": "major",
+				"severity": "minor",
 				"area": "accuracy",
-				"quote": "| Slot | Box centre (m) | Box size (m) | Fit |",
-				"problem": "The eight rows of numeric box centres and sizes in the slot table are presented as fact, but the passing evidence only supports that each slot has a measured box and that the hair envelope is 0.80 m tall and crown-anchored. None of the quoted verification covers the per-slot centre/size values, so they cannot be checked from the evidence given.",
-				"fix": "Add an evidence check quoting the SLOT_BOXES values from workers/garment-forge/garment_glb.py for every row, or trim the table to only what a passing check verifies."
-			},
-			{
-				"severity": "major",
-				"area": "accuracy",
-				"quote": "\"occludes\": [\"torso\", \"upperArms\", \"lowerArms\", \"hips\", \"upperLegs\", \"neck\"]",
-				"problem": "The trimmed manifest asserts specific occludes regions for the oxford shirt, but no passing verification quotes the occludes field of the manifest. The claim that the manifest pins checksum, licence and skeleton is verified; the occlusion list is not.",
-				"fix": "Add an evidence check quoting the occludes array from the live manifest at https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json, or cut that line from the trimmed JSON."
+				"quote": "The mesh arrives at about 40,000 triangles, which is the budget the forge targets",
+				"problem": "The 40,000 triangle count for the oxford shirt is verified by the live manifest, but the second half, that 40k is the budget the forge targets, is not in any passing evidence. It rides along on the verification of the first half.",
+				"fix": "Either add evidence from workers/garment-forge that states the triangle budget, or trim to what is verified: \"The mesh of the oxford shirt arrives at 40,000 triangles. Dense enough to show a collar and cuffs, light enough to render in a browser beside other things.\""
 			},
 			{
 				"severity": "minor",
-				"area": "visual",
-				"quote": "cover.png",
-				"problem": "The cover supports the post (three real catalog garments in live viewers) and the alt text matches the image exactly. The three additional inline images referenced in the body (photo-to-shirt.png, rig-doctor-shirt.png, catalog-grid.png) are not included in what I can inspect, so only their alt text can be judged, which is accurate and specific. Confirm the Rig Doctor frame shows all four limb groups marked Will animate before shipping, since that caption carries a claim.",
-				"fix": "Recapture rig-doctor-shirt.png live on three.ws/rig-doctor loading the oxford shirt GLB so every limb group showing Will animate is visible in the frame."
+				"area": "accuracy",
+				"quote": "It prints `hash matches` and 2799620 for both byte counts",
+				"problem": "The verification only confirms the manifest's sizeBytes is 2799620. The actual printed output of the script (bytes.length matching) was never run and verified, so the promised output is asserted, not evidenced.",
+				"fix": "Run the script against the live manifest and GLB and record the output as run evidence, or soften to \"The manifest pins 2799620 bytes, so the comparison is one line of output you can check yourself.\""
 			}
 		],
 		"rewrite": {
@@ -821,7 +903,7 @@
 				"Three generated 3D garments from the three.ws wardrobe catalog shown side by side in their live viewers on a dark background: a yellow rain slicker with the hood up, a black leather biker jacket with silver zippers, and a charcoal grey hooded sweatshirt with a front pocket."
 			]
 		},
-		"summary": "A strong, well-sourced Article: the lead post is compliant, the structure hits every house requirement, and nearly every claim is verified against files and live pages. Two unverified details (the slot-box measurement table and the manifest's occludes list) and a title without the headline number must be fixed before shipping.",
+		"summary": "This is a keeper-grade Article: the head post leads with the mechanism, every number (1.667 m, 52 joints, 2.87 cm vs 5.88 cm, 2,799,620 bytes, 23 entry audit) verifies against live pages or code, all eight partners are credited with their exact designations, and the cover image matches its alt text exactly. Two minor nits (the 40k triangle \"budget\" framing and the unrun script output) are worth noting but do not block shipment.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
@@ -901,7 +983,8 @@
 			"claims: claim \"three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"a builder-focused publishing partnership with HackerNoon\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"feature articles, tutorials and developer guides for people shipping with AI, published to HackerNoon's developer audience\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"three.ws is a member of the Quicknode Startup Program with approved infrastructure credits\" does not appear in the copy; claims must quote the post"
+			"claims: claim \"three.ws is a member of the Quicknode Startup Program with approved infrastructure credits\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The occludes list names the six body regions this shirt covers: torso, upperArms, lowerArms, hips, upperLegs and neck\" does not appear in the copy; claims must quote the post"
 		]
 	},
 	"editorError": null

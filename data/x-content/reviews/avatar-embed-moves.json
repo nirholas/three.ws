@@ -1,7 +1,7 @@
 {
 	"id": "avatar-embed-moves",
 	"contentHash": "d2401483883df6686aba2b2ddc129209723f1ea350e62fe7e4625588f4011f69",
-	"reviewedAt": "2026-10-13T06:39:58.467Z",
+	"reviewedAt": "2026-10-13T18:25:45.055Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -119,23 +119,17 @@
 			"professionalism": 5,
 			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "specificity",
-				"quote": "a round of applause",
-				"problem": "The manifest label is \"Brag & Clap\", which the reel also shows; the paraphrase is fair but the real label is more checkable and matches what viewers see on screen.",
-				"fix": "Optional: write \"a brag and clap\" or list the on-screen labels (Boxer Dance, Back Flip, Arm Flex, Brag & Clap) so the post and the reel read identically."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
 				"This three.ws avatar takes requests. One click plays a move: a boxer dance, a back flip, a flex, a round of applause. The number keys set her face, from a smile to a wink to surprise.\n\nEvery clip is retargeted onto her own skeleton live in the browser, so the same library plays on any humanoid avatar you bring.",
 				"The embed is a real control surface for your site. Your page can make the avatar speak with lip sync, set any of the 52 ARKit face shapes, turn her head toward something, or hand her the webcam for live motion capture.\n\nDrop one into your own page: three.ws/docs/embedding"
 			],
-			"altText": []
+			"altText": [
+				"A three.ws avatar in a white top and yellow pants standing in a live embed, with an Animations panel open listing moves such as Back Flip, Arm Flex, and Boxer Dance, and number keys 1 through 6 labelled smile, wink, surprised, sad, angry, disgust along the bottom."
+			]
 		},
-		"summary": "Every claim is verified against source files and the filmed run, and the reel frames confirm the animation labels and face keys the copy names. Voice is clean (no hashtags, emoji, dashes, or hype), one link placed in the second post per contract. Ship it; the only polish note is optionally matching \"a round of applause\" to the on-screen \"Brag & Clap\" label.",
+		"summary": "Every claim is backed by a passing file check or the filmed 13-step run, and the reel frames match the copy: the animations panel shows Boxer Dance, Back Flip, Arm Flex, and Brag & Clap, and the keys show smile, wink, and surprised. Voice is clean, the single link resolves, and no fix is needed.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

@@ -1,0 +1,111 @@
+{
+	"id": "atlas-goal",
+	"contentHash": "1374057781721f009508e7a1ea20e10104965232d4a407a8a5355b6caf50287e",
+	"reviewedAt": "2026-10-13T18:32:10.858Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"More than 900 pages are live, and Atlas at three.ws/atlas puts all of them in one searchable place, grouped into 10 sections. Type what you want to do instead of a page name. Searching \"animation\" returns more than 20 matching pages, and a goal card beside them lays out the steps in order.",
+		"Fifteen goals cover the common starts: make a 3D avatar, put one on your website, create an AI agent, animate or pose it, make it talk. Each names the pages to open, in order."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "More than 900 pages",
+				"kind": "evidence:proof",
+				"target": "pages",
+				"ok": true,
+				"detail": "the run read pages = \"946\", at least 900"
+			},
+			{
+				"claim": "grouped into 10 sections",
+				"kind": "evidence:proof",
+				"target": "pages across 10 sections",
+				"ok": true,
+				"detail": "the run waited for and saw \"pages across 10 sections\""
+			},
+			{
+				"claim": "more than 20 matching pages",
+				"kind": "evidence:proof",
+				"target": "matches",
+				"ok": true,
+				"detail": "the run read matches = \"22\", at least 20"
+			},
+			{
+				"claim": "a goal card beside them lays out the steps in order",
+				"kind": "evidence:page",
+				"target": "https://three.ws/atlas",
+				"ok": true,
+				"detail": "live page shows \"Each of these answers with the ordered steps, not just a link\""
+			},
+			{
+				"claim": "Fifteen goals",
+				"kind": "evidence:proof",
+				"target": "15 shortcuts",
+				"ok": true,
+				"detail": "the run waited for and saw \"15 shortcuts\""
+			},
+			{
+				"claim": "Each names the pages to open, in order.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/atlas",
+				"ok": true,
+				"detail": "live page shows \"Each of these answers with the ordered steps, not just a link\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "15 steps passed against the live product, every claimed fact still holds (pages 946, matches 22)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "https://three.ws/atlas-index.json",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "https://three.ws/atlas-index.json",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/atlas",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"More than 900 pages are live, and Atlas at three.ws/atlas puts all of them in one searchable place, grouped into 10 sections. Type what you want to do instead of a page name. Searching \"animation\" returns more than 20 matching pages, and a goal card beside them lays out the steps in order.",
+				"Fifteen goals cover the common starts: make a 3D avatar, put one on your website, create an AI agent, animate or pose it, make it talk. Each names the pages to open, in order."
+			],
+			"altText": []
+		},
+		"summary": "Every number in the post was read off the live product during the filmed run (946 pages, 10 sections, 22 animation matches, 15 goal shortcuts), and the reel frames show exactly what the copy describes. The voice contract is met with no banned structures, the link resolves, and the post stands on its own for a reader who cannot see the reel.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}
