@@ -1,0 +1,114 @@
+{
+	"id": "partner-ibm-user-group-in-world-meetup-20261012",
+	"scenarioHash": "91370943e91c17b43dcd0fd083288e2722eebebe5e7d17300da59e9389c60656",
+	"ranAt": "2026-10-11T20:12:12.967Z",
+	"target": {
+		"commit": "66a5e93bd",
+		"revision": "three-ws-api-00494-wh5"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap",
+			"detail": "loaded https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap",
+			"ok": true,
+			"ms": 4885,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "read",
+			"target": "hours",
+			"detail": "hours = \"nine hours\"",
+			"ok": true,
+			"ms": 3,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "peak",
+			"detail": "peak = \"3,145\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "hold",
+			"target": "2500",
+			"detail": "2500 ms",
+			"ok": true,
+			"ms": 14093,
+			"frames": 75
+		},
+		{
+			"index": 5,
+			"kind": "scroll",
+			"target": "What the day looked like",
+			"detail": "scrolled 772 px",
+			"ok": true,
+			"ms": 7414,
+			"frames": 36
+		},
+		{
+			"index": 6,
+			"kind": "hold",
+			"target": "3500",
+			"detail": "3500 ms",
+			"ok": true,
+			"ms": 19757,
+			"frames": 105
+		},
+		{
+			"index": 7,
+			"kind": "scroll",
+			"target": "What it proved, beyond the vibe",
+			"detail": "scrolled 983 px",
+			"ok": true,
+			"ms": 9410,
+			"frames": 36
+		},
+		{
+			"index": 8,
+			"kind": "expect",
+			"target": "15 Hz binary delta sync",
+			"detail": "appeared after 0.0 s",
+			"ok": true,
+			"ms": 27,
+			"frames": 0
+		},
+		{
+			"index": 9,
+			"kind": "hold",
+			"target": "5500",
+			"detail": "5500 ms",
+			"ok": true,
+			"ms": 34025,
+			"frames": 165
+		}
+	],
+	"facts": {
+		"hours": "nine hours",
+		"peak": "3,145"
+	},
+	"saw": [
+		"15 Hz binary delta sync"
+	],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/partner-ibm-user-group-in-world-meetup-20261012/reel.mp4",
+		"sha256": "731ad4cc7a62b7256f5cb415f08dc9c020d393cfede6656b9c951819d681021b",
+		"frames": 417,
+		"motion": 0.178,
+		"durationSec": 13.9,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

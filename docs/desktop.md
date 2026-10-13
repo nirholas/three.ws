@@ -155,6 +155,15 @@ with `retry_in_sec`), stops at 300 digs a day (`429 daily_cap`) and rejects an
 unknown vein (`400 invalid_node`). Table and rules: `api/_lib/world-gems.js`;
 storage: migration `20261015000000_world_gems.sql`.
 
+## The Grid
+
+A second place to walk: a neon wireframe room where the platform's apps are things you walk up to, built in [src/desktop/grid/](../src/desktop/grid). Enter it from the campus HUD's Grid button, or open `/?world=grid`.
+
+- **Surfaces.** A live board on the back wall (new agents from `/api/agents/public`, launches from `/api/pump/launches`, wallet moves from `/api/pulse`, the `$THREE` quote from `/api/three-token/stats`, totals from `/api/stats`), a Directory wall listing every desktop app, a Pulse wall, and one standing kiosk per dock app. Nothing is hardcoded: a feed that has not landed draws a skeleton, a failed feed says so and retries every 30 seconds.
+- **Use.** WASD to walk, Shift to run, drag to look, `C` for the camera. Step up to a surface and press `E` (or tap it) to open that app on the desktop. The Campus and Desktop buttons leave the room.
+- **Byte tier.** The bar at the bottom is your tier on the byte ladder (Byte to Yottabyte), read from the gems you mined in the campus (`/api/world/gems`). The ladder lives in `logic.js` (`TIERS`).
+- **Rules.** Pure layout, proximity and tier maths are in `grid/logic.js` and covered by `tests/desktop-grid.test.js`. Kiosks are solid. The scene loads on first use, so the desktop boot stays light.
+
 ## What is in it
 
 - **Theme.** The CTRL design system (Windows-12 lineage): Mica gradients, glass

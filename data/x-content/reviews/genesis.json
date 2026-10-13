@@ -1,7 +1,7 @@
 {
 	"id": "genesis",
-	"contentHash": "6150f70f782b68e097347283bc1961d7680f5fc047d1ff5fd6306548814cb4b1",
-	"reviewedAt": "2026-10-10T04:15:20.109Z",
+	"contentHash": "c8b5d381127da2edbc07b2d0d8efcdf0a22c4552521f55e7f5610fe380618fd3",
+	"reviewedAt": "2026-10-13T18:10:59.630Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -111,6 +111,12 @@
 				"detail": "live page shows \"Fork a public avatar to own\""
 			},
 			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "9 steps passed against the live product"
+			},
+			{
 				"kind": "probe:api",
 				"target": "the voice catalog the voice picker reads still answers",
 				"ok": true,
@@ -132,19 +138,25 @@
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 5
+			"visual": 4
 		},
-		"issues": [],
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "Reel frame at 8.4 s / 11.6 s",
+				"problem": "The remix grid shows two adjacent tiles both named \"Boss Vernington\" with blank thumbnails; it is real product output and does not contradict the copy, but duplicated blank cards read as a rough edge in an otherwise clean reel.",
+				"fix": "Optional: on the next capture, pick a moment where the avatar grid has finished loading; not a reason to hold this post."
+			}
+		],
 		"rewrite": {
 			"posts": [
 				"Agent Genesis turns a sentence or a selfie into a working 3D agent. The body is rigged before you see it, so it walks and emotes on arrival, and it comes with its own custodial Solana wallet, a custodial EVM wallet, a persona written from your description, and a voice you pick.\n\nText mode paints a full-body reference image, reconstructs it into a textured mesh on our own Hunyuan3D GPU worker, then auto-rigs it with a humanoid skeleton. A selfie takes the face pipeline instead.",
 				"Genesis needs a sign-in, because it writes the agent and its wallet to your account. Remix forks a public avatar into an agent you own.\n\nthree.ws/genesis"
 			],
-			"altText": [
-				"The three.ws Genesis page: describe an agent, upload a selfie, or remix a public avatar, with example prompts, an optional name and persona, and a voice picker."
-			]
+			"altText": []
 		},
-		"summary": "Every claim in the two posts passes verification against the live /genesis page and docs/genesis.md, the prose follows the mechanism-lead pattern with no voice violations, and the hero screenshot matches the live UI with accurate alt text. Nothing needs to change; this ships as written.",
+		"summary": "Every claim passes against the live page or docs, the reel's captions match the frames and the three modes the copy names, and the voice contract is kept. The only blemish is duplicated blank avatar tiles in the remix grid, a cosmetic point not worth holding the post for.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

@@ -172,6 +172,53 @@ export function r2Storage(env = process.env) {
 	};
 }
 
+// The same store on Google Cloud Storage, for when Cloudflare R2 is not
+// available. Selected by X_CONTENT_BUNDLE_BUCKET; the Cloud Run service account
+// and the partner job authenticate with their own identity, so no key is stored.
+const GCS_API = 'https://storage.googleapis.com';
+
+export function gcsStorage(env = process.env) {
+	const bucket = String(env.X_CONTENT_BUNDLE_BUCKET || '').trim();
+	if (!bucket) throw new OverlayError('unconfigured', 'X_CONTENT_BUNDLE_BUCKET is not set');
+	const call = async (method, url, { body, contentType } = {}) => {
+		const { getGcpAccessToken } = await import('../gcp-auth.js');
+		const headers = { authorization: `Bearer ${await getGcpAccessToken()}` };
+		if (contentType) headers['content-type'] = contentType;
+		return fetch(url, { method, headers, body, signal: AbortSignal.timeout(60_000) });
+	};
+	const mediaUrl = (key) => `${GCS_API}/storage/v1/b/${bucket}/o/${encodeURIComponent(sealedKey(key, env))}`;
+	const failed = async (res, what) => new Error(`${what}: Google Cloud Storage answered ${res.status} ${(await res.text()).slice(0, 200)}`);
+	return {
+		label: 'Google Cloud Storage',
+		async put(key, buffer, contentType) {
+			const url = `${GCS_API}/upload/storage/v1/b/${bucket}/o?uploadType=media&name=${encodeURIComponent(sealedKey(key, env))}`;
+			const res = await call('POST', url, { body: buffer, contentType: contentType || 'application/octet-stream' });
+			if (!res.ok) throw await failed(res, `put ${key}`);
+		},
+		async get(key) {
+			const res = await call('GET', `${mediaUrl(key)}?alt=media`);
+			if (res.status === 404) return null;
+			if (!res.ok) throw await failed(res, `get ${key}`);
+			return Buffer.from(await res.arrayBuffer());
+		},
+		async has(key) {
+			const res = await call('GET', `${mediaUrl(key)}?fields=name`);
+			if (res.status === 404) return false;
+			if (!res.ok) throw await failed(res, `has ${key}`);
+			return true;
+		},
+		async remove(key) {
+			const res = await call('DELETE', mediaUrl(key));
+			if (!res.ok && res.status !== 404) throw await failed(res, `remove ${key}`);
+		},
+	};
+}
+
+// The store the overlay really uses: GCS when a bucket is named, R2 otherwise.
+export function bundleStorage(env = process.env) {
+	return String(env.X_CONTENT_BUNDLE_BUCKET || '').trim() ? gcsStorage(env) : r2Storage(env);
+}
+
 // `has` is optional on a store: one that only has put, get, and remove answers
 // by reading the object.
 const stored = async (storage, key) => (storage.has ? storage.has(key) : (await storage.get(key)) !== null);
@@ -244,7 +291,7 @@ async function removeFiles(storage, id, files, keep = new Set()) {
 // `replaceIndex` starts a new index when the stored one cannot be verified,
 // which is what an operator needs after rotating the secret.
 export async function publishBundles({ root, ids, storage = null, env = process.env, now = Date.now(), replaceIndex = false }) {
-	storage ||= r2Storage(env);
+	storage ||= bundleStorage(env);
 	secretFrom(env);
 	const built = [];
 	const failures = [];
@@ -294,7 +341,7 @@ export async function publishBundles({ root, ids, storage = null, env = process.
 // Drops a bundle and its files. The last bundle takes the index with it, so an
 // empty bucket reads as "no index" rather than as an index of nothing.
 export async function removeBundle({ id, storage = null, env = process.env, now = Date.now() }) {
-	storage ||= r2Storage(env);
+	storage ||= bundleStorage(env);
 	const index = await readIndex({ storage, env });
 	const bundle = index?.bundles.find((row) => row.id === id);
 	if (!bundle) return { removed: false, remaining: index?.bundles.length || 0 };
@@ -306,7 +353,7 @@ export async function removeBundle({ id, storage = null, env = process.env, now 
 }
 
 export async function readIndex({ storage = null, env = process.env }) {
-	storage ||= r2Storage(env);
+	storage ||= bundleStorage(env);
 	secretFrom(env);
 	const bytes = await storage.get(INDEX_KEY);
 	if (!bytes) return null;
@@ -325,7 +372,7 @@ export async function readIndex({ storage = null, env = process.env }) {
 
 // Downloads every file the index names and checks it against its recorded hash.
 export async function verifyBundles({ storage = null, env = process.env }) {
-	storage ||= r2Storage(env);
+	storage ||= bundleStorage(env);
 	const index = await readIndex({ storage, env });
 	if (!index) return { index: null, bundles: 0, files: 0, problems: [] };
 	const problems = fileConflicts(index.bundles);
@@ -457,7 +504,7 @@ export function mergeQueue(imageQueue, bundles) {
 // files in the overlay, `reused` how many of them an earlier tick had already
 // downloaded.
 export async function materialize({ imageRoot, storage = null, env = process.env, dir = DEFAULT_OVERLAY_DIR, now = Date.now(), index = null }) {
-	storage ||= r2Storage(env);
+	storage ||= bundleStorage(env);
 	const image = resolve(imageRoot);
 	const root = resolve(dir);
 	const verified = index ? verifyIndex(index, env) : await readIndex({ storage, env });
@@ -508,8 +555,10 @@ export async function resolveRoot({ imageRoot, env = process.env, storage = null
 	if (env.X_CONTENT_REMOTE_QUEUE !== 'true') return image('X_CONTENT_REMOTE_QUEUE is not true');
 	try {
 		secretFrom(env);
-		if (!storage && !(await import('../r2.js')).objectStorageConfigured()) return unavailable('object storage is not configured');
-		const store = storage || r2Storage(env);
+		// A named bucket is Cloud Storage, which needs no R2 credentials at all.
+		const gcs = Boolean(String(env.X_CONTENT_BUNDLE_BUCKET || '').trim());
+		if (!storage && !gcs && !(await import('../r2.js')).objectStorageConfigured()) return unavailable('object storage is not configured');
+		const store = storage || bundleStorage(env);
 		const index = await readIndex({ storage: store, env });
 		if (!index) return image('there is no bundle index in storage');
 		const { root, ...overlay } = await materialize({ imageRoot, storage: store, env, dir, now, index });

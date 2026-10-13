@@ -119,12 +119,28 @@
 			<description>Two new packages, livekit-plugins-threews and pipecat-threews, republish a running voice agent's TTS and user-turn frames as the same transcript/gesture/speech_started/speech_ended message shape over the room's data channel, which &lt;agent-3d voice=&quot;livekit&quot;&gt; already renders client-side: no server-side video rendering, no change to the browser code at all. The LiveKit package is an AvatarSession plugin dropped into an AgentSession; the Pipecat package is a FrameProcessor placed after the TTS service. Each ships a runnable local example against a real open-source livekit-server with a real local TTS, verified end to end with real browser automation driving the actual avatar lipsync and gesture cues off a live bot in both frameworks. Docs: /docs/voice-framework-integrations.</description>
 		</item>
 		<item>
+			<title>Avatar downloads fail over when object storage is not entitled</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-13:Avatar downloads fail over when object storage is not entitled</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the Cloudflare R2 account stopped serving objects, avatar model downloads answered a bare error instead of trying the bucket public domain. That fault is now recognised as a storage outage, so the failover runs.</description>
+		</item>
+		<item>
 			<title>Embed a live 3D agent in WordPress, Framer, or Webflow</title>
 			<link>https://three.ws/docs/wordpress-embed</link>
 			<guid isPermaLink="false">2026-10-13:Embed a live 3D agent in WordPress, Framer, or Webflow</guid>
 			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Three native embeds for &lt;agent-3d&gt;, one per site builder's own extension point instead of a generic iframe: a WordPress Gutenberg block and [three_ws_agent] shortcode (server-rendered so the editor preview always matches the front end), a Framer code component with property controls, and a Webflow Code Component, all exposing On-chain URI, Agent ID, Model URL, Background, Framing, Poster and Autoplay. A shared build step pins all three to the same version and SRI hash from the agent-3d release ledger, so they can never drift apart. The WordPress plugin passed the official Plugin Check tool against a real local WordPress install with no errors; Framer and Webflow were each verified in a real-React test harness that boots a live WebGL canvas against the production CDN release, and the Webflow component additionally compiles through the real Webflow CLI. WordPress.org, Framer Marketplace, and Webflow Apps submissions are owner actions. Docs: /docs/wordpress-embed, /docs/embedding.</description>
+		</item>
+		<item>
+			<title>Free voice is back: the Edge lane speaks again</title>
+			<link>https://three.ws/voice</link>
+			<guid isPermaLink="false">2026-10-13:Free voice is back: the Edge lane speaks again</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Microsoft changed the handshake on its free Read Aloud service, so the default Edge voice lane answered every request with an error. The lane now speaks the current protocol, so the /voice page and every agent that uses the free voice can talk again.</description>
 		</item>
 		<item>
 			<title>Get it printed: live Craftcloud prices for any Forge model, buyer pays direct</title>
@@ -175,6 +191,14 @@
 			<description>A new page for creators who want the animation file itself, not a composited video: upload a video, preview the captured motion on a stock avatar or any rigged GLB you drop in, trim the in and out points, and download a GLB (clip baked onto the previewed avatar), a BVH (the platform's own canonical-skeleton proportions, the standard shape to re-retarget in a DCC tool), or an FBX (server-side Blender conversion that preserves the rig). Reuses the production model-video2motion worker that already powers /motion-swap for capture; signed-in users can save the clip straight to an agent's animation library. New writer: src/animation-bvh-export.js, round-tripped through three.js's own BVHLoader in tests/animation-bvh-export.test.js. Cross-linked from /motion-swap, /animations, and /mocap-studio. Docs: /docs/video-to-motion.</description>
 		</item>
 		<item>
+			<title>Dissolve</title>
+			<link>https://three.ws/dissolve</link>
+			<guid isPermaLink="false">2026-10-12:Dissolve</guid>
+			<pubDate>Mon, 12 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Turn any 3D model into a storm of up to a million GPU particles, morph one shape into another, bend the storm with black holes, vortexes and shockwaves, and let your microphone drive it. Record or share what you make.</description>
+		</item>
+		<item>
 			<title>Docs · Engine bridges</title>
 			<link>https://three.ws/docs/engine-bridges</link>
 			<guid isPermaLink="false">2026-10-12:Docs · Engine bridges</guid>
@@ -199,6 +223,22 @@
 			<description>&lt;agent-3d&gt; now matches the AR/viewer contract the market expects from model-viewer (Apache-2.0): ar-modes picks which launch paths to try (WebXR, Scene Viewer, Quick Look), ar-placement anchors floor or wall, ios-src supplies a pre-baked USDZ or the element generates a best-effort one on device, variant-name switches a GLB's real KHR_materials_variants materials live, and any element with slot=&quot;hotspot&quot; tracks a 3D position and flies the camera to a saved orbit on click. /avatars/:id/ar and /agents/:id/ar (pages/ar.html) now run entirely on &lt;agent-3d ar&gt;; the page no longer loads a third-party viewer from a CDN.</description>
 		</item>
 		<item>
+			<title>Accessibility pass on the gallery, create page and site header</title>
+			<link>https://three.ws/gallery</link>
+			<guid isPermaLink="false">2026-10-12:Accessibility pass on the gallery, create page and site header</guid>
+			<pubDate>Mon, 12 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Icon-only buttons in the header, footer and suggestions panel now show a real tooltip on hover and keyboard focus. Gallery tags, avatar cards and the create page cards are announced with the text you can see, header buttons have more breathing room, and the page background no longer flashes transparent when you overscroll.</description>
+		</item>
+		<item>
+			<title>An in-depth X Article on how three.ws renders 3D, and a playbook for answering basic questions at length</title>
+			<link>https://three.ws/viewer</link>
+			<guid isPermaLink="false">2026-10-12:An in-depth X Article on how three.ws renders 3D, and a playbook for answering basic questions at length</guid>
+			<pubDate>Mon, 12 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A reader asked how three.ws renders 3D. The answer is now a full draft Article: one rigged character followed through making, packing, loading, lighting and animating, with runnable embed code, decoder and boot-phase tables, the free Rig Doctor, validator and viewer tools, every partner by exact designation, and the roadmap. Every claim is tied to evidence in the repo. A new playbook describes how to turn any basic question into a long reply thread plus an Article.</description>
+		</item>
+		<item>
 			<title>Animation Studio: trim, loop-blend, and save any generated clip to your library</title>
 			<link>https://three.ws/pose</link>
 			<guid isPermaLink="false">2026-10-12:Animation Studio: trim, loop-blend, and save any generated clip to your library</guid>
@@ -213,6 +253,14 @@
 			<pubDate>Mon, 12 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Agent avatars carry more of what makes a companion feel present. setMood(valence, arousal) sets a sustained resting bias (a soft smile or a worried brow that drifts in over about a second) on top of the existing per-utterance emotion blend, and a reply that is nothing but emoji (no English sentiment words at all) now drives a real expression change instead of staying neutral, because the built-in sentiment scorer reads emoji as direct valence/arousal signal. The LLM brain gets a general-purpose `gesture` tool covering all 19 body-language slots (nod, shake, shrug, bow, point, think, and the rest), so it can react physically mid-turn instead of only through a skill or an emotion threshold. While a real VAD/STT signal says the user is talking, the avatar nods on a fixed cadence to show it is listening, and stops the moment they stop. ElevenLabs text-to-speech now drives lip-sync from the provider's real per-character timestamps (any language the voice speaks), falling back to the energy-based analyser only if that call fails, so mouth shapes track what is actually being said instead of approximating it from amplitude alone.</description>
+		</item>
+		<item>
+			<title>Dissolve: turn any 3D model into a GPU particle storm</title>
+			<link>https://three.ws/dissolve</link>
+			<guid isPermaLink="false">2026-10-12:Dissolve: turn any 3D model into a GPU particle storm</guid>
+			<pubDate>Mon, 12 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new page that dissolves any GLB into up to a million GPU particles, morphs one shape into another, and lets you bend the storm with a black hole, a vortex, shockwaves and a collapse. Turn on the microphone and bass drives the storm. Pick a look, record a clip, save a PNG or share the exact pair as a link.</description>
 		</item>
 		<item>
 			<title>Engine QA: a free real-time-engine fitness grade, plus real LOD chains</title>
@@ -271,6 +319,14 @@
 			<description>The self-hosted text-to-motion worker behind the Animation Studio and POST /api/forge-motion now runs two independent generation backends on the same GPU lane: MDM (Motion Diffusion Model, MIT), the existing default, and MoMask (EricGuo5513/momask-codes, MIT), a residual-VQ tokenizer plus masked and residual transformer that publishes a lower HumanML3D FID (0.045 vs. T2M-GPT's 0.141). Pass model: &quot;momask&quot; to /infer or /api/forge-motion to route a prompt through it instead; omit it and MDM keeps answering as before. Both backends converge on the same (T,22,3) HumanML3D position format and the same shared decode math, so a MoMask clip previews, retargets, and exports exactly like an MDM one. The two projects ship conflicting top-level `utils` packages; the worker resolves that at load time so either backend can be warmed in the same container without the other's modules leaking in. MoMask's checkpoints are staged to production storage and the worker is wired to load them; the first on-GPU deploy and a real in-house benchmark against MDM are tracked as the next step.</description>
 		</item>
 		<item>
+			<title>The Grid: walk a neon room where every app is a live surface</title>
+			<link>https://three.ws/?world=grid</link>
+			<guid isPermaLink="false">2026-10-12:The Grid: walk a neon room where every app is a live surface</guid>
+			<pubDate>Mon, 12 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new place beside the campus. Step into a wireframe room with a live board of new agents, launches, wallet moves and the $THREE quote, a directory wall, a Pulse wall and one kiosk per app. Walk up and press E to open the app on the desktop. Your byte tier, from Byte to Yottabyte, follows the gems you mine in the campus. Open it from the Grid button in the campus HUD.</description>
+		</item>
+		<item>
 			<title>Three new engine bridges: Unity, Godot, and Unreal, one prompt to a mesh in your editor</title>
 			<link>https://three.ws/docs/engine-bridges</link>
 			<guid isPermaLink="false">2026-10-12:Three new engine bridges: Unity, Godot, and Unreal, one prompt to a mesh in your editor</guid>
@@ -327,6 +383,14 @@
 			<description>A popover under the tray icon with your agent alive in 3D, its Solana wallet balance, start and stop, pending approvals that open the native review dialog, unread alerts and a one-line ask box.</description>
 		</item>
 		<item>
+			<title>Docs: Partner benefits</title>
+			<link>https://three.ws/docs/partner-benefits</link>
+			<guid isPermaLink="false">2026-10-11:Docs: Partner benefits</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the public partner benefits page is built and the rules for what it may say: designations quoted exactly, no amounts or IDs, positive and factual.</description>
+		</item>
+		<item>
 			<title>Everything three.ws Does</title>
 			<link>https://three.ws/everything</link>
 			<guid isPermaLink="false">2026-10-11:Everything three.ws Does</guid>
@@ -341,6 +405,14 @@
 			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Every way to run three.ws: the web desktop, Android, Solana Seeker, iPhone and iPad, and the Windows and Linux desktop app.</description>
+		</item>
+		<item>
+			<title>Partner Benefits</title>
+			<link>https://three.ws/partners/benefits</link>
+			<guid isPermaLink="false">2026-10-11:Partner Benefits</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What each three.ws partnership brings to builders and the community: OpenAI, NVIDIA, IBM, Google Cloud, AWS, Alibaba Cloud, Quicknode and HackerNoon.</description>
 		</item>
 		<item>
 			<title>Run Receipts</title>
@@ -429,6 +501,14 @@
 			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Every page with a 3D model viewer moved to model-viewer 4.4.0, the first release that both decodes our compressed avatars and drops the debug lines 4.3 printed for every model on the page. The trenches dashboard now checks the feed once and backs off while it is offline instead of sending five requests every 15 seconds, and desktop app windows no longer trigger a fullscreen-attribute warning.</description>
+		</item>
+		<item>
+			<title>A daily partner spotlight on X: one partner, one feature built on it, filmed live every day</title>
+			<link>https://three.ws/partners</link>
+			<guid isPermaLink="false">2026-10-11:A daily partner spotlight on X: one partner, one feature built on it, filmed live every day</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>@trythreews now features one partner from the partners page every day, with a thread on something three.ws built on that partner's technology. Each spotlight is filmed working against production that morning, so the reel is proof rather than a promo, and it rotates between a card, a GIF, the reel and generated art for its head. Every sentence comes from a partner registry with evidence behind it, the program name is stated exactly as the partner grants it, and nobody is tagged. The spotlight owns the prime-time slot, and three days are kept in stock so a bad run never leaves the slot empty. Once a week the series also publishes a partner deep-dive as an X Article: every feature built on that partner, filmed that day, with the runs, the evidence behind each sentence, the real requests and responses, and inline frames from the reels.</description>
 		</item>
 		<item>
 			<title>A page for every three.ws app: Android, Solana Seeker, iPhone, desktop and the web desktop</title>

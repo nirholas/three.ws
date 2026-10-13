@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-13T22:30:49.283Z",
+	"generated_at": "2026-10-13T23:51:19.561Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -153,12 +153,32 @@
 		{
 			"date": "2026-10-13",
 			"type": "update",
+			"title": "Avatar downloads fail over when object storage is not entitled",
+			"summary": "When the Cloudflare R2 account stopped serving objects, avatar model downloads answered a bare error instead of trying the bucket public domain. That fault is now recognised as a storage outage, so the failover runs.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
 			"title": "Embed a live 3D agent in WordPress, Framer, or Webflow",
 			"summary": "Three native embeds for <agent-3d>, one per site builder's own extension point instead of a generic iframe: a WordPress Gutenberg block and [three_ws_agent] shortcode (server-rendered so the editor preview always matches the front end), a Framer code component with property controls, and a Webflow Code Component, all exposing On-chain URI, Agent ID, Model URL, Background, Framing, Poster and Autoplay. A shared build step pins all three to the same version and SRI hash from the agent-3d release ledger, so they can never drift apart. The WordPress plugin passed the official Plugin Check tool against a real local WordPress install with no errors; Framer and Webflow were each verified in a real-React test harness that boots a live WebGL canvas against the production CDN release, and the Webflow component additionally compiles through the real Webflow CLI. WordPress.org, Framer Marketplace, and Webflow Apps submissions are owner actions. Docs: /docs/wordpress-embed, /docs/embedding.",
 			"link": "/docs/wordpress-embed",
 			"tags": [
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
+			"title": "Free voice is back: the Edge lane speaks again",
+			"summary": "Microsoft changed the handshake on its free Read Aloud service, so the default Edge voice lane answered every request with an error. The lane now speaks the current protocol, so the /voice page and every agent that uses the free voice can talk again.",
+			"link": "/voice",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -230,6 +250,16 @@
 		{
 			"date": "2026-10-12",
 			"type": "launch",
+			"title": "Dissolve",
+			"summary": "Turn any 3D model into a storm of up to a million GPU particles, morph one shape into another, bend the storm with black holes, vortexes and shockwaves, and let your microphone drive it. Record or share what you make.",
+			"link": "/dissolve",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "launch",
 			"title": "Docs · Engine bridges",
 			"summary": "One Forge API contract, three real editor integrations: a Unity UPM package, a Godot addon, and an Unreal plugin, each generating a mesh from a prompt and importing it with the engine's own native glTF pipeline.",
 			"link": "/docs/engine-bridges",
@@ -260,6 +290,27 @@
 		{
 			"date": "2026-10-12",
 			"type": "update",
+			"title": "Accessibility pass on the gallery, create page and site header",
+			"summary": "Icon-only buttons in the header, footer and suggestions panel now show a real tooltip on hover and keyboard focus. Gallery tags, avatar cards and the create page cards are announced with the text you can see, header buttons have more breathing room, and the page background no longer flashes transparent when you overscroll.",
+			"link": "/gallery",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "An in-depth X Article on how three.ws renders 3D, and a playbook for answering basic questions at length",
+			"summary": "A reader asked how three.ws renders 3D. The answer is now a full draft Article: one rigged character followed through making, packing, loading, lighting and animating, with runnable embed code, decoder and boot-phase tables, the free Rig Doctor, validator and viewer tools, every partner by exact designation, and the roadmap. Every claim is tied to evidence in the repo. A new playbook describes how to turn any basic question into a long reply thread plus an Article.",
+			"link": "/viewer",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
 			"title": "Animation Studio: trim, loop-blend, and save any generated clip to your library",
 			"summary": "The Animation Studio's prompt-to-clip flow (type a prompt, generate motion on the self-hosted GPU worker, preview it retargeted onto the loaded avatar) now has an editing and persistence half. The transport grows trim start/end inputs, a loop-blend duration field, and a loop toggle, all recomputed through a non-destructive edit path so the live preview, the GLB export, and the saved clip always agree on the current edit. A Save to library button collects a name and visibility and posts the canonical, pre-retarget clip to the shared clip library, so it plays back correctly on any future rig, not just the avatar it was previewed on. A separate bug that crashed every generated clip's playback the moment it reached the browser (AnimationClip.parse() expected userData as a JSON string, the server was sending an object) is also fixed.",
 			"link": "/pose",
@@ -277,6 +328,16 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Dissolve: turn any 3D model into a GPU particle storm",
+			"summary": "A new page that dissolves any GLB into up to a million GPU particles, morphs one shape into another, and lets you bend the storm with a black hole, a vortex, shockwaves and a collapse. Turn on the microphone and bass drives the storm. Pick a look, record a clip, save a PNG or share the exact pair as a link.",
+			"link": "/dissolve",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -358,6 +419,16 @@
 		{
 			"date": "2026-10-12",
 			"type": "update",
+			"title": "The Grid: walk a neon room where every app is a live surface",
+			"summary": "A new place beside the campus. Step into a wireframe room with a live board of new agents, launches, wallet moves and the $THREE quote, a directory wall, a Pulse wall and one kiosk per app. Walk up and press E to open the app on the desktop. Your byte tier, from Byte to Yottabyte, follows the gems you mine in the campus. Open it from the Grid button in the campus HUD.",
+			"link": "/?world=grid",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
 			"title": "Three new engine bridges: Unity, Godot, and Unreal, one prompt to a mesh in your editor",
 			"summary": "A shared contract (specs/ENGINE_BRIDGE.md) and three real, independent implementations: a Unity UPM package that imports with glTFast, a Godot addon that imports with Godot's own native GLTFDocument, and an Unreal plugin that imports through Unreal's Interchange glTF pipeline. Each one calls only the public Forge API (POST /api/forge to submit, GET /api/forge?job=<id> to poll, a plain HTTPS GET to download), the same free-first routing and anonymous x-forge-client auth every other Forge caller gets, with the same four import settings (generate_colliders, import_materials, scale, destination) mapped onto each engine's own equivalent. A dropdown and a Generate button in each editor: type a prompt, get a mesh dropped into your scene.",
 			"link": "/docs/engine-bridges",
@@ -430,6 +501,16 @@
 		{
 			"date": "2026-10-11",
 			"type": "launch",
+			"title": "Docs: Partner benefits",
+			"summary": "How the public partner benefits page is built and the rules for what it may say: designations quoted exactly, no amounts or IDs, positive and factual.",
+			"link": "/docs/partner-benefits",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
 			"title": "Everything three.ws Does",
 			"summary": "Every three.ws feature organised by what you want to do: make a 3D avatar, build an agent, embed it, sell skills, launch a token, trade and more. Searchable, with pins and a new-this-month feed.",
 			"link": "/everything",
@@ -443,6 +524,16 @@
 			"title": "Get the three.ws apps",
 			"summary": "Every way to run three.ws: the web desktop, Android, Solana Seeker, iPhone and iPad, and the Windows and Linux desktop app.",
 			"link": "/apps",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "launch",
+			"title": "Partner Benefits",
+			"summary": "What each three.ws partnership brings to builders and the community: OpenAI, NVIDIA, IBM, Google Cloud, AWS, Alibaba Cloud, Quicknode and HackerNoon.",
+			"link": "/partners/benefits",
 			"tags": [
 				"launch"
 			]
@@ -555,6 +646,17 @@
 			"link": "/marketplace",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-11",
+			"type": "update",
+			"title": "A daily partner spotlight on X: one partner, one feature built on it, filmed live every day",
+			"summary": "@trythreews now features one partner from the partners page every day, with a thread on something three.ws built on that partner's technology. Each spotlight is filmed working against production that morning, so the reel is proof rather than a promo, and it rotates between a card, a GIF, the reel and generated art for its head. Every sentence comes from a partner registry with evidence behind it, the program name is stated exactly as the partner grants it, and nobody is tagged. The spotlight owns the prime-time slot, and three days are kept in stock so a bad run never leaves the slot empty. Once a week the series also publishes a partner deep-dive as an X Article: every feature built on that partner, filmed that day, with the runs, the evidence behind each sentence, the real requests and responses, and inline frames from the reels.",
+			"link": "/partners",
+			"tags": [
+				"feature",
+				"docs"
 			]
 		},
 		{

@@ -1,6 +1,68 @@
 // Sandbox worker — executes skill handlers in an isolated Web Worker scope.
 // No DOM, no window, no document. Only ctx.* and native worker APIs.
 
+// ── Ambient authority lockdown ────────────────────────────────────────────────
+// The worker is a blob: worker, so it inherits the embedding page's origin. Left
+// alone, an untrusted handler could `fetch('/api/...')` and ride the user's
+// session cookie, read the origin's IndexedDB, or spawn a nested Worker that
+// starts with fresh, unrestricted globals. Strip those capabilities before any
+// skill code is imported. Network access stays (ctx.fetch / ctx.loadJSON), but
+// credential-less: cookies and HTTP auth are never attached.
+const DENIED_GLOBALS = [
+	'XMLHttpRequest',
+	'WebSocket',
+	'WebTransport',
+	'EventSource',
+	'importScripts',
+	'Worker',
+	'SharedWorker',
+	'indexedDB',
+	'IDBFactory',
+	'caches',
+	'CacheStorage',
+	'BroadcastChannel',
+	'localStorage',
+	'sessionStorage',
+	'FileSystemDirectoryHandle',
+];
+
+function _lockdown(scope) {
+	const rawFetch = typeof scope.fetch === 'function' ? scope.fetch.bind(scope) : null;
+	const chain = [];
+	for (let o = scope; o && o !== Object.prototype; o = Object.getPrototypeOf(o)) chain.push(o);
+	const strip = (name, replacement) => {
+		for (const o of chain) {
+			if (!Object.prototype.hasOwnProperty.call(o, name)) continue;
+			try {
+				delete o[name];
+			} catch {}
+			if (Object.prototype.hasOwnProperty.call(o, name)) {
+				try {
+					Object.defineProperty(o, name, { value: undefined, configurable: false, writable: false });
+				} catch {}
+			}
+		}
+		if (replacement) {
+			Object.defineProperty(scope, name, {
+				value: replacement,
+				configurable: false,
+				writable: false,
+				enumerable: true,
+			});
+		}
+	};
+	for (const name of DENIED_GLOBALS) strip(name);
+	if (rawFetch) {
+		const credentialless = (input, init) => {
+			const opts = { ...(init || {}), credentials: 'omit' };
+			const req = typeof Request === 'function' && input instanceof Request ? new Request(input, opts) : null;
+			return req ? rawFetch(req) : rawFetch(input, opts);
+		};
+		strip('fetch', credentialless);
+	}
+}
+_lockdown(self);
+
 /** @type {Map<string, object>} skillURI → module exports */
 const _skillHandlers = new Map();
 

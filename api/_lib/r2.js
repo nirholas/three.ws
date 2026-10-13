@@ -87,7 +87,7 @@ export function objectStorageConfigured() {
 // above), so `Unauthorized` from S3 is always the credential and never the
 // object: classifying it as infrastructure blames nothing that deserves blame.
 export const STORAGE_ERROR_PATTERN =
-	'missing required env var: s3_|invalidaccesskeyid|signaturedoesnotmatch|does not match the signature|unauthorized|nosuchbucket|access denied|econnrefused|enotfound|socket hang up|econnreset';
+	'missing required env var: s3_|invalidaccesskeyid|signaturedoesnotmatch|does not match the signature|unauthorized|nosuchbucket|notentitled|enable r2 through|access denied|econnrefused|enotfound|socket hang up|econnreset';
 
 const STORAGE_ERROR_RE = new RegExp(STORAGE_ERROR_PATTERN, 'i');
 

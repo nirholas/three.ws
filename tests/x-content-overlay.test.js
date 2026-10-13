@@ -202,16 +202,24 @@ describe('buildBundle', () => {
 	it('bundles the body, cover, and inline images of an Article', () => {
 		const root = mkdtempSync(join(tmpdir(), 'x-overlay-checkout-'));
 		write(root, 'public/x-media/long/cover.png', Buffer.from('cover'));
-		write(root, 'public/x-media/long/inline.png', Buffer.from('inline'));
-		write(root, 'data/x-content/articles/long.md', '## Why\n\nBecause.\n\n![Hero](../../../public/x-media/long/inline.png)\n\nThe end.');
+		const shots = [1, 2, 3, 4].map((n) => `public/x-media/long/inline-${n}.png`);
+		for (const shot of shots) write(root, shot, Buffer.from(shot));
+		// An Article deep enough for the queue's depth gate: eight sections of
+		// prose, real tables and code, four captures, the partners and Try it.
+		const prose = Array.from({ length: 320 }, (_, index) => `word${index % 40}`).join(' ');
+		const table = ['| Bone | Canonical |', '|---|---|', ...Array.from({ length: 60 }, (_, index) => `| mixamorig:Spine${index} | spine${index} |`)].join('\n');
+		const code = ['```js', ...Array.from({ length: 30 }, (_, index) => `const bone${index} = canonicalize('mixamorig:Spine${index}');`), '```'].join('\n');
+		const sections = ['How a skeleton is read', 'Where names come from', 'The canonical set', 'Retargeting the clips', 'What the doctor reports', 'How it was checked', 'The partners behind the rig library', 'Try it'];
+		const body = sections.map((heading, index) => `## ${heading}\n\n${prose}\n\n${index === 2 ? `${table}\n\n` : ''}${index === 3 ? `${code}\n\n` : ''}${index < 4 ? `![Capture ${index + 1}](../../../${shots[index]})\n\n` : ''}${heading === 'Try it' ? '[Rig Doctor](https://three.ws/rig-doctor)' : ''}`).join('\n\n');
+		write(root, 'data/x-content/articles/long.md', body);
 		const item = {
 			id: 'long', status: 'approved', kind: 'article', tier: 1, lane: 'article', pattern: 'longform', notBefore: '2026-09-01T00:00:00Z',
-			article: { title: 'How rigs get named', body: 'data/x-content/articles/long.md', cover: { path: 'public/x-media/long/cover.png' } },
+			article: { title: 'How Rig Doctor reads a skeleton from any exporter and maps its bones onto one canonical set', body: 'data/x-content/articles/long.md', cover: { path: 'public/x-media/long/cover.png' } },
 			posts: [{ text: 'The long version of how Rig Doctor reads a skeleton.' }],
 		};
 		writeQueue(root, [item]);
 		writeReview(root, item);
-		expect(buildBundle(root, 'long').files.map((file) => file.path)).toEqual(['data/x-content/articles/long.md', 'public/x-media/long/cover.png', 'public/x-media/long/inline.png']);
+		expect(buildBundle(root, 'long').files.map((file) => file.path)).toEqual(['data/x-content/articles/long.md', 'public/x-media/long/cover.png', ...shots]);
 	});
 });
 
@@ -549,6 +557,22 @@ describe('resolveRoot', () => {
 
 		expect(warn).toHaveBeenCalledWith('[x-content] overlay unavailable, using the image queue', expect.stringMatching(/does not hash/));
 	});
+
+	it('reads a named Cloud Storage bucket even when R2 is not configured', async () => {
+		quiet();
+		for (const name of ['S3_ENDPOINT', 'S3_BUCKET', 'S3_PUBLIC_DOMAIN', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY', 'GCP_SERVICE_ACCOUNT_JSON']) vi.stubEnv(name, '');
+		const asked = [];
+		vi.stubGlobal('fetch', async (url) => {
+			asked.push(String(url));
+			if (String(url).includes('metadata.google.internal')) return new Response(JSON.stringify({ access_token: 'token', expires_in: 3600 }), { status: 200 });
+			return new Response('not found', { status: 404 });
+		});
+		const imageRoot = image();
+		const result = await resolveRoot({ imageRoot, env: { ...env, X_CONTENT_BUNDLE_BUCKET: 'bundles' }, dir: scratch() });
+		vi.unstubAllGlobals();
+		expect(result.reason).toMatch(/no bundle index/);
+		expect(asked.some((url) => url.startsWith('https://storage.googleapis.com/storage/v1/b/bundles/'))).toBe(true);
+	});
 });
 
 describe('a tick against the overlay', () => {
@@ -607,5 +631,24 @@ describe('where bundles live in the bucket', () => {
 		const { sealedKey } = await import('../api/_lib/x-content/overlay.js');
 		expect(() => sealedKey('avatars/someone.glb', env)).toThrow(/not a bundle key/);
 		expect(() => sealedKey(INDEX_KEY, {})).toThrow(/X_CONTENT_BUNDLE_SECRET is not set/);
+	});
+});
+
+describe('bundle storage selection', () => {
+	const secretEnv = { X_CONTENT_BUNDLE_SECRET: 'a'.repeat(64) };
+
+	it('uses Google Cloud Storage when a bundle bucket is named', async () => {
+		const { bundleStorage } = await import('../api/_lib/x-content/overlay.js');
+		expect(bundleStorage({ ...secretEnv, X_CONTENT_BUNDLE_BUCKET: 'bundles' }).label).toBe('Google Cloud Storage');
+	});
+
+	it('keeps object storage (R2) when no bucket is named', async () => {
+		const { bundleStorage } = await import('../api/_lib/x-content/overlay.js');
+		expect(bundleStorage(secretEnv).label).toBe('object storage');
+	});
+
+	it('refuses a GCS store without a bucket', async () => {
+		const { gcsStorage } = await import('../api/_lib/x-content/overlay.js');
+		expect(() => gcsStorage(secretEnv)).toThrow(/X_CONTENT_BUNDLE_BUCKET/);
 	});
 });

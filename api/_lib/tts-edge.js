@@ -11,8 +11,9 @@
 // router (api/_lib/voice-providers.js) so the protocol quirks below live in
 // exactly one place.
 
-import { createHash, randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import WebSocket from 'ws';
+import { sec_ms_gec_v2 } from './tts-edge-gec.js';
 
 const TRUSTED_CLIENT_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
 // speech.platform.bing.com is the host the readaloud protocol actually lives
@@ -22,10 +23,14 @@ const TRUSTED_CLIENT_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
 const WSS_BASE = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=${TRUSTED_CLIENT_TOKEN}`;
 const VOICE_LIST_URL = `https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken=${TRUSTED_CLIENT_TOKEN}`;
 const AUDIO_FORMAT = 'audio-24khz-48kbitrate-mono-mp3';
-// Must track the Edg/ version in WS_HEADERS' User-Agent below. The endpoint
-// 403s GEC versions it considers stale, so bump this alongside edge-tts
-// releases (their constants.py carries the current known-good value).
+// Must track the Edg/ major in edgeWsHeaders()' User-Agent below. The endpoint 403s
+// GEC versions it considers stale, so bump this alongside edge-tts releases
+// (their constants.py carries the current known-good value).
 const CHROMIUM_FULL_VERSION = '143.0.3650.75';
+const CHROMIUM_MAJOR_VERSION = CHROMIUM_FULL_VERSION.split('.')[0];
+// "2-" is the current Sec-MS-GEC scheme. The old "1-" scheme (plain SHA-256 of
+// the ticks) is answered with HTTP 403 by speech.platform.bing.com.
+export const SEC_MS_GEC_VERSION = `2-${CHROMIUM_FULL_VERSION}`;
 
 // e.g. "en-US-AriaNeural", "zh-CN-XiaoxiaoNeural"
 export const EDGE_VOICE_RE = /^[a-zA-Z]{2,8}-[a-zA-Z]{2,8}-[a-zA-Z]{5,50}$/;
@@ -33,33 +38,52 @@ export const EDGE_RATE_RE = /^[+-]\d+%$/;
 export const EDGE_PITCH_RE = /^[+-]\d+Hz$/;
 export const EDGE_DEFAULT_VOICE = 'en-US-AriaNeural';
 
-// Sec-MS-GEC DRM token, required by the readaloud endpoint since late 2024.
-// SHA-256 of the current Windows file time (100ns ticks since 1601-01-01,
-// rounded DOWN to the nearest 5 minutes) concatenated with the client token,
-// same scheme the edge-tts reference implementation ships. Handshakes without
-// it are intermittently rejected with a non-101 response ("Unexpected server
-// response: 200").
-function secMsGecToken() {
-	const WIN_EPOCH_SECONDS = 11_644_473_600; // 1601-01-01 → 1970-01-01
-	let seconds = Math.floor(Date.now() / 1000) + WIN_EPOCH_SECONDS;
-	seconds -= seconds % 300;
-	// seconds → 100ns ticks would overflow Number; appending seven zeros is the
-	// same multiplication by 10^7 done in string space.
-	return createHash('sha256')
-		.update(`${seconds}0000000${TRUSTED_CLIENT_TOKEN}`)
-		.digest('hex')
-		.toUpperCase();
+// Seconds to add to the local clock so Sec-MS-GEC lands in Microsoft's 5 minute
+// window even on a host whose clock drifts. Learned from the Date header of a
+// rejected handshake, as edge-tts does.
+let clockSkewSeconds = 0;
+
+/**
+ * Sec-MS-GEC token for a unix time (defaults to now, skew corrected). See
+ * api/_lib/tts-edge-gec.js.
+ * @param {number} [unixSeconds]
+ */
+export function generateSecMsGec(unixSeconds = Date.now() / 1000 + clockSkewSeconds) {
+	return sec_ms_gec_v2(TRUSTED_CLIENT_TOKEN, unixSeconds);
 }
 
-const WS_HEADERS = {
-	Pragma: 'no-cache',
-	'Cache-Control': 'no-cache',
-	Origin: 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
+/** Fold a server `Date` header into the clock-skew correction. */
+export function adjustClockSkew(dateHeader) {
+	const server = Date.parse(String(dateHeader || ''));
+	if (Number.isFinite(server)) clockSkewSeconds = server / 1000 - Date.now() / 1000;
+}
+
+/** Full websocket URL for one synthesis connection. */
+export function buildEdgeWsUrl(connId, unixSeconds) {
+	return (
+		`${WSS_BASE}&Sec-MS-GEC=${generateSecMsGec(unixSeconds)}` +
+		`&Sec-MS-GEC-Version=${SEC_MS_GEC_VERSION}&ConnectionId=${connId}`
+	);
+}
+
+const BASE_HEADERS = {
 	'Accept-Encoding': 'gzip, deflate, br, zstd',
 	'Accept-Language': 'en-US,en;q=0.9',
 	'User-Agent':
-		'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0',
+		`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) ` +
+		`Chrome/${CHROMIUM_MAJOR_VERSION}.0.0.0 Safari/537.36 Edg/${CHROMIUM_MAJOR_VERSION}.0.0.0`,
 };
+
+/** Handshake headers, with a fresh random MUID cookie like the reference client. */
+export function edgeWsHeaders() {
+	return {
+		Pragma: 'no-cache',
+		'Cache-Control': 'no-cache',
+		Origin: 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
+		...BASE_HEADERS,
+		Cookie: `muid=${randomBytes(16).toString('hex').toUpperCase()};`,
+	};
+}
 
 function isoTimestamp() {
 	return new Date().toISOString().replace(/\.\d+/, '.000');
@@ -86,10 +110,13 @@ function buildSsml(voice, text, rate, pitch) {
 export function synthesizeEdgeOnce(voice, text, rate = '+0%', pitch = '+0Hz') {
 	return new Promise((resolve, reject) => {
 		const connId = mkId();
-		const url =
-			`${WSS_BASE}&Sec-MS-GEC=${secMsGecToken()}` +
-			`&Sec-MS-GEC-Version=1-${CHROMIUM_FULL_VERSION}&ConnectionId=${connId}`;
-		const ws = new WebSocket(url, { headers: WS_HEADERS });
+		const ws = new WebSocket(buildEdgeWsUrl(connId), { headers: edgeWsHeaders() });
+		ws.on('unexpected-response', (_req, res) => {
+			adjustClockSkew(res.headers.date);
+			res.resume();
+			clearTimeout(timeout);
+			reject(new Error(`Unexpected server response: ${res.statusCode}`));
+		});
 
 		const chunks = [];
 		let finished = false;
@@ -223,8 +250,8 @@ export async function listEdgeVoices({ force = false } = {}) {
 	let resp;
 	try {
 		resp = await fetch(
-			`${VOICE_LIST_URL}&Sec-MS-GEC=${secMsGecToken()}&Sec-MS-GEC-Version=1-${CHROMIUM_FULL_VERSION}`,
-			{ headers: WS_HEADERS, signal: AbortSignal.timeout(10_000) },
+			`${VOICE_LIST_URL}&Sec-MS-GEC=${generateSecMsGec()}&Sec-MS-GEC-Version=${SEC_MS_GEC_VERSION}`,
+			{ headers: { ...edgeWsHeaders(), Authority: 'speech.platform.bing.com', Accept: '*/*' }, signal: AbortSignal.timeout(10_000) },
 		);
 	} catch (e) {
 		throw Object.assign(new Error('Could not reach the Edge voice list'), { status: 502, cause: e });

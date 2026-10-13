@@ -1,101 +1,26 @@
 {
 	"id": "any-skeleton-article",
-	"contentHash": "73bc79be1907627aabf54f54c24d06d6ebbcda35dabf5bee98fc943c3c16914b",
-	"reviewedAt": "2026-10-09T17:14:46.920Z",
-	"passed": true,
-	"blockers": [],
-	"texts": [
-		"One animation library, any humanoid skeleton: how three.ws retargets motion",
-		"Our animation clips were made once, on one reference skeleton, and they play on Mixamo, VRoid, Unreal and Daz avatars built later by other tools. The write-up covers how bone names are matched, why a matching name is not enough, and where the retargeter stops on purpose: three.ws/avatar-artifact"
+	"contentHash": "2e0c45cf3bc8bf0d0c7864058eb89e60b4d8038fc679c3cad35545209f0a53cc",
+	"reviewedAt": "2026-10-13T06:47:38.266Z",
+	"passed": false,
+	"blockers": [
+		"editor verdict is revise"
 	],
-	"lint": [],
+	"texts": [
+		"One dance, 52 joints, any humanoid skeleton: how three.ws retargets motion to rigs from other tools",
+		"One 9.87 second dance clip, authored once on a 52-joint skeleton, now plays in step on Mixamo-prefixed, unprefixed and other avatars it was not made for. The write-up shows how bone names are matched, why a matching name is not enough, and where the retargeter refuses: three.ws/rig-doctor"
+	],
+	"lint": [
+		{
+			"where": "article body",
+			"rule": "register",
+			"severity": "major",
+			"message": "\"leverage\" is filler; replace it with the fact it stands in for"
+		}
+	],
 	"verification": {
 		"ok": true,
 		"checks": [
-			{
-				"claim": "made once, against one reference skeleton",
-				"kind": "evidence:page",
-				"target": "https://three.ws/rig-doctor",
-				"ok": true,
-				"detail": "live page shows \"Every clip in the three.ws library is authored against one canonical skeleton\""
-			},
-			{
-				"claim": "made once, against one reference skeleton",
-				"kind": "evidence:file",
-				"target": "src/animation-manager.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "made once, on one reference skeleton",
-				"kind": "evidence:page",
-				"target": "https://three.ws/rig-doctor",
-				"ok": true,
-				"detail": "live page shows \"Every clip in the three.ws library is authored against one canonical skeleton\""
-			},
-			{
-				"claim": "a Mixamo character, a VRoid model, an Unreal mannequin",
-				"kind": "evidence:file",
-				"target": "src/glb-canonicalize.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a Mixamo character, a VRoid model, an Unreal mannequin",
-				"kind": "evidence:file",
-				"target": "src/glb-canonicalize.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a Mixamo character, a VRoid model, an Unreal mannequin",
-				"kind": "evidence:file",
-				"target": "src/glb-canonicalize.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a Mixamo character, a VRoid model, an Unreal mannequin",
-				"kind": "evidence:file",
-				"target": "tests/glb-canonicalize.test.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "Mixamo, VRoid, Unreal and Daz avatars",
-				"kind": "evidence:file",
-				"target": "src/glb-canonicalize.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "Mixamo, VRoid, Unreal and Daz avatars",
-				"kind": "evidence:file",
-				"target": "tests/glb-canonicalize.test.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a body our text-to-3D lane rigged a minute ago",
-				"kind": "evidence:page",
-				"target": "https://three.ws/create/prompt",
-				"ok": true,
-				"detail": "live page shows \"Type a description → rigged 3D avatar in about a minute\""
-			},
-			{
-				"claim": "a body our text-to-3D lane rigged a minute ago",
-				"kind": "evidence:file",
-				"target": "tests/glb-canonicalize.test.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "No clip is re-authored per avatar",
-				"kind": "evidence:file",
-				"target": "docs/avatar-artifact.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
 			{
 				"claim": "Every clip in the three.ws library is authored against one canonical skeleton: Hips, LeftForeArm, RightUpLeg, 52 joints in total",
 				"kind": "evidence:page",
@@ -363,11 +288,249 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "it retargets the idle onto whatever skeleton the file carries",
+				"claim": "Boxer Dance",
+				"kind": "evidence:page",
+				"target": "https://three.ws/animations/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"label\": \"Boxer Dance\"\""
+			},
+			{
+				"claim": "9.87 seconds long",
+				"kind": "evidence:page",
+				"target": "https://three.ws/animations/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"name\": \"av-boxer-dance\", \"url\": \"/animations/clips/av-boxer-dance.json\", \"label\": \"Boxer Dance\", \"icon\": \"🥊\", \"loop\": true, \"duration\": 9.866667\""
+			},
+			{
+				"claim": "it was made once, not for any one avatar",
 				"kind": "evidence:file",
 				"target": "docs/avatar-artifact.md",
 				"ok": true,
 				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Nothing is uploaded",
+				"kind": "evidence:page",
+				"target": "https://three.ws/rig-doctor",
+				"ok": true,
+				"detail": "live page shows \"Nothing is uploaded.\""
+			},
+			{
+				"claim": "more than twenty naming schemes",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "retargets to the Avaturn rig, writes a JSON clip to public/animations/clips and updates the manifest",
+				"kind": "evidence:file",
+				"target": "docs/animations.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "It asks for a slot such as celebrate or bow",
+				"kind": "evidence:file",
+				"target": "docs/animations.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "It asks for a slot such as celebrate or bow",
+				"kind": "evidence:file",
+				"target": "docs/animations.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a slot resolves to a clip name in the manifest",
+				"kind": "evidence:file",
+				"target": "docs/animations.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "An owner can point a slot at any clip in the manifest",
+				"kind": "evidence:file",
+				"target": "docs/animations.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Make-It-Animatable (MIT, CVPR 2025) predicts joint positions and skinning weights",
+				"kind": "evidence:file",
+				"target": "workers/rig/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The Quaternius Base character in the avatar library is published under CC0",
+				"kind": "evidence:file",
+				"target": "public/avatars/extra/characters.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The Quaternius Base character in the avatar library is published under CC0",
+				"kind": "evidence:file",
+				"target": "public/avatars/extra/characters.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Three.js, which draws every frame in the pictures above, is MIT licensed",
+				"kind": "evidence:file",
+				"target": "node_modules/three/package.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "runs Make-It-Animatable on an NVIDIA L4",
+				"kind": "evidence:page",
+				"target": "https://model-rig-lp642k3kpa-uc.a.run.app/health",
+				"ok": true,
+				"detail": "live page shows \"\"model\":\"make-it-animatable\"\""
+			},
+			{
+				"claim": "runs Make-It-Animatable on an NVIDIA L4",
+				"kind": "evidence:page",
+				"target": "https://model-rig-lp642k3kpa-uc.a.run.app/health",
+				"ok": true,
+				"detail": "live page shows \"\"gpu_name\":\"NVIDIA L4\"\""
+			},
+			{
+				"claim": "it plays, and the body idles while both arms stay stuck out sideways in the authored bind pose",
+				"kind": "evidence:file",
+				"target": "src/animation-arm-relax.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "It is gated hard, and runs only when neither canonical upper-arm bone name-mapped",
+				"kind": "evidence:file",
+				"target": "src/animation-arm-relax.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "it looks for a bone whose direction to its child points sideways, not steeply up the way a collarbone does",
+				"kind": "evidence:file",
+				"target": "src/animation-arm-relax.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network.\""
+			},
+			{
+				"claim": "The 3D Studio connector gives ChatGPT eleven keyless 3D tools.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"3D Studio connector gives ChatGPT eleven keyless 3D tools\""
+			},
+			{
+				"claim": "The partners page lists IBM as a Strategic partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Strategic\""
+			},
+			{
+				"claim": "three.ws 3D agent identity integrates with IBM watsonx and IBM Granite.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"integrate with IBM watsonx\""
+			},
+			{
+				"claim": "The partners page lists Amazon Web Services under Cloud",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Amazon Web Services\""
+			},
+			{
+				"claim": "three.ws is deployed on AWS infrastructure with Marketplace availability.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Marketplace availability\""
+			},
+			{
+				"claim": "The partners page lists Google Cloud under Cloud",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Google Cloud\""
+			},
+			{
+				"claim": "its Vertex AI integration lets agents leverage Gemini models alongside the three.ws identity layer.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Vertex AI integration lets agents leverage Gemini models\""
+			},
+			{
+				"claim": "The partners page lists Alibaba Cloud under Cloud",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Alibaba Cloud\""
+			},
+			{
+				"claim": "it extends three.ws into APAC markets with Qwen model integration.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"extends three.ws into APAC markets with Qwen model integration\""
+			},
+			{
+				"claim": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building\""
+			},
+			{
+				"claim": "Every 3D generation lane already runs on NVIDIA silicon.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Every 3D generation lane already runs on NVIDIA silicon\""
+			},
+			{
+				"claim": "The partners page lists HackerNoon under Media",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"HackerNoon\""
+			},
+			{
+				"claim": "a builder-focused publishing partnership, with articles published to HackerNoon's developer audience.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"A builder-focused publishing partnership\""
+			},
+			{
+				"claim": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"three.ws is a member of the Quicknode Startup Program with approved\""
+			},
+			{
+				"claim": "Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Quicknode's globally distributed RPC endpoints add\""
 			},
 			{
 				"kind": "probe:browser",
@@ -395,13 +558,25 @@
 			},
 			{
 				"kind": "link",
-				"target": "https://three.ws/avatar-artifact",
+				"target": "https://three.ws/rig-doctor",
 				"ok": true,
 				"detail": "HTTP 200"
 			},
 			{
 				"kind": "link",
-				"target": "https://three.ws/rig-doctor",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/create/prompt",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/avatar-artifact",
 				"ok": true,
 				"detail": "HTTP 200"
 			},
@@ -413,40 +588,73 @@
 			},
 			{
 				"kind": "link",
-				"target": "https://three.ws/docs/first-contribution",
+				"target": "https://three.ws/animations",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/create/prompt",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/docs/web-component",
 				"ok": true,
 				"detail": "HTTP 200"
 			}
 		]
 	},
 	"editor": {
-		"verdict": "publish",
+		"verdict": "revise",
 		"scores": {
-			"accuracy": 5,
-			"clarity": 4,
+			"accuracy": 4,
+			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
-			"professionalism": 5,
-			"visual": 4
+			"professionalism": 4,
+			"visual": 5
 		},
 		"issues": [
 			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "| michelle.glb | `mixamorig:` prefix | 65 | 52 | 53 of 53 |",
+				"problem": "The results table asserts specific joint and track counts for six avatar files (65, 67, 52, 38, 36, 24 joints; 36 canonical; 37 of 53 tracks), and the article claims \"I ran every line of this against the current source\" and \"Run it as node coverage.mjs ... and it prints the same rows as the table.\" No verification entry covers these per-file numbers, the avatar filenames (michelle.glb, dancing-twerk.glb, studio.glb, cz.glb, realistic-halfbody.glb, fox.glb), or the statements that the leftover joints are \"fingertip, toe and head-top end bones, which no clip animates.\" The run evidence only probes the Rig Doctor against a Mixamo sample, not this table.",
+				"fix": "Run the coverage script in the article against the six files in the repo's avatars folder and record the output as verification, or have the article state the numbers it actually prints. If the files cannot be run, cut the per-file counts to what is verified (52 canonical joints, 53 retargetable tracks, the Mixamo-prefix stripping) and describe the fox and half-body outcomes qualitatively with evidence."
+			},
+			{
+				"severity": "major",
+				"area": "professionalism",
+				"quote": "its Vertex AI integration lets agents leverage Gemini models",
+				"problem": "\"Leverage\" is filler register, already flagged by the mechanical check; the partners page wording exists, so use plain language or the exact page phrasing.",
+				"fix": "Replace with \"its Vertex AI integration lets agents use Gemini models alongside the three.ws identity layer.\""
+			},
+			{
+				"severity": "minor",
+				"area": "accuracy",
+				"quote": "The leftovers are the fingertip end bones and the toe and head-top end bones, which no clip animates.",
+				"problem": "Specific claim about which joints Rig Doctor lists as unrecognized for michelle.glb has no evidence entry.",
+				"fix": "Capture the Rig Doctor output for michelle.glb and quote the unrecognized list, or soften to \"the leftover end bones, which no clip animates\" only if the evidence shows it."
+			},
+			{
 				"severity": "minor",
 				"area": "visual",
-				"quote": "they play on Mixamo, VRoid, Unreal and Daz avatars built later by other tools",
-				"problem": "The cover image shows a single ringmaster avatar, so it does not visually demonstrate the four-rig claim, though nothing in it contradicts the copy and the alt text describes it accurately.",
-				"fix": "Optional: if available, swap the cover for the article's side-by-side four-avatar frame (/x-media/any-skeleton-article/one-idle-four-bodies.png) so the visual shows the multi-skeleton claim directly. Not required to ship."
+				"quote": "A man in a pink tailcoat, a green felt hat and a plum bow tie, caught mid-dance against a dark background with his fists raised at his chest.",
+				"problem": "The article lead promises four dancers in step, but the cover shows one avatar; the inline four-rig images carry that claim, so the cover undersells the headline and centers on vast empty black space that will crop with heavy dead margins in the timeline.",
+				"fix": "Use the four-rigs-one-dance-a.png frame as the cover so the image matches the title's \"one dance ... any humanoid skeleton\" claim, or recapture the single-avatar shot framed tighter."
 			}
 		],
 		"rewrite": {
 			"posts": [
-				"Our animation clips were made once, on one reference skeleton, and they play on Mixamo, VRoid, Unreal and Daz avatars built later by other tools. The write-up covers how bone names are matched, why a matching name is not enough, and where the retargeter stops on purpose: three.ws/avatar-artifact"
+				"One 9.87 second dance clip, authored once on a 52-joint skeleton, now plays in step on Mixamo-prefixed, unprefixed and other avatars it was not made for. The write-up shows how bone names are matched, why a matching name is not enough, and where the retargeter refuses: three.ws/rig-doctor"
 			],
 			"altText": [
-				"A generated 3D circus ringmaster in a red tailcoat, top hat and tall boots standing at rest with his hands open in front of him, lit in red and violet on a dark stage under a starfield. He is idling on the shared animation library in the three.ws Avatar Artifact viewer."
+				"A man in a pink tailcoat, a green felt hat and a plum bow tie, caught mid-dance against a dark background with his fists raised at his chest."
 			]
 		},
-		"summary": "Every claim in the post is verified against the live rig-doctor page and the retargeter source, and the voice contract is fully obeyed. The only note is that the cover shows one avatar rather than the four-rig comparison, which is acceptable for a cover and accurately described by the alt text. Ship it.",
+		"summary": "Every code-level and partner claim in the article verifies cleanly, and the structure meets the keeper Article standard. Before publishing, verify the results table's per-avatar joint and track counts against a real run (or remove the uncheckable numbers), fix the \"leverage\" register slip, and consider the four-dancer frame as the cover so the visual matches the headline claim.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
@@ -454,10 +662,6 @@
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
 		"rewriteFindings": [
-			"claims: claim \"made once, against one reference skeleton\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a Mixamo character, a VRoid model, an Unreal mannequin\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a body our text-to-3D lane rigged a minute ago\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"No clip is re-authored per avatar\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Every clip in the three.ws library is authored against one canonical skeleton: Hips, LeftForeArm, RightUpLeg, 52 joints in total\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"A track that names LeftForeArm drives nothing on a rig that calls that joint lowerarm_l\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"It strips vendor prefixes and namespaces, collapses separators and case, then looks what is left up in alias tables\" does not appear in the copy; claims must quote the post",
@@ -482,7 +686,38 @@
 			"claims: claim \"it plays one held frame of the standing idle through the retargeter, then checks that both upper arms end at least 30 degrees below horizontal\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"for a thumbnail or a social card\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"the model renders as authored and is reported, rather than replaced with something worse\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"it retargets the idle onto whatever skeleton the file carries\" does not appear in the copy; claims must quote the post"
+			"claims: claim \"Boxer Dance\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"9.87 seconds long\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"it was made once, not for any one avatar\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Nothing is uploaded\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"more than twenty naming schemes\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"retargets to the Avaturn rig, writes a JSON clip to public/animations/clips and updates the manifest\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It asks for a slot such as celebrate or bow\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a slot resolves to a clip name in the manifest\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"An owner can point a slot at any clip in the manifest\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Make-It-Animatable (MIT, CVPR 2025) predicts joint positions and skinning weights\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The Quaternius Base character in the avatar library is published under CC0\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Three.js, which draws every frame in the pictures above, is MIT licensed\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"runs Make-It-Animatable on an NVIDIA L4\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"it plays, and the body idles while both arms stay stuck out sideways in the authored bind pose\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It is gated hard, and runs only when neither canonical upper-arm bone name-mapped\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"it looks for a bone whose direction to its child points sideways, not steeply up the way a collarbone does\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network.\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The 3D Studio connector gives ChatGPT eleven keyless 3D tools.\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The partners page lists IBM as a Strategic partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws 3D agent identity integrates with IBM watsonx and IBM Granite.\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The partners page lists Amazon Web Services under Cloud\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is deployed on AWS infrastructure with Marketplace availability.\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The partners page lists Google Cloud under Cloud\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"its Vertex AI integration lets agents leverage Gemini models alongside the three.ws identity layer.\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The partners page lists Alibaba Cloud under Cloud\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"it extends three.ws into APAC markets with Qwen model integration.\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing.\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Every 3D generation lane already runs on NVIDIA silicon.\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The partners page lists HackerNoon under Media\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a builder-focused publishing partnership, with articles published to HackerNoon's developer audience.\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of the Quicknode Startup Program with approved infrastructure credits.\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets.\" does not appear in the copy; claims must quote the post"
 		]
 	},
 	"editorError": null

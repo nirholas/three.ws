@@ -1,0 +1,204 @@
+{
+	"id": "grok-studio",
+	"contentHash": "bc509cfae05882de656e46cc700dcddd471d1421abea9456f855d91df7bb4768",
+	"reviewedAt": "2026-10-13T18:49:59.346Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"Grok Bot can make 3D now. One sentence adds the free studio at three.ws/grok as a custom MCP server, with no account and no key, and from then on text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear.\n\nGrok Bot runs on its own cloud computer, so a render that takes minutes on a cold GPU never hangs a task: every call answers within 40 seconds with the model or a job id, and Grok collects it with check_job. Limits follow your MCP session, not xAI's IP address, so one busy user never spends yours.\n\nThe 15 tools behind it are read live from the server's tools/list. Every 3D generation lane runs on @nvidia silicon; we are a member of NVIDIA Inception.",
+		"Three jobs on the page name the tools Grok calls in order: an asset pack from the CC0 catalog, a model with a page-ready embed, and a talking persona that lip-syncs a greeting. Six tested recipes and a skill file you can upload to Grok Skills sit beside them."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "One sentence adds the free studio",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"that is one sentence away\""
+			},
+			{
+				"claim": "with no account and no key",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"Free, no account, no key.\""
+			},
+			{
+				"claim": "text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear\""
+			},
+			{
+				"claim": "Grok Bot runs on its own cloud computer",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"Grok Bot runs on its own cloud computer\""
+			},
+			{
+				"claim": "a render that takes minutes on a cold GPU never hangs a task",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"Never hangs a task\""
+			},
+			{
+				"claim": "a render that takes minutes on a cold GPU never hangs a task",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"A render can take minutes on a cold GPU.\""
+			},
+			{
+				"claim": "every call answers within 40 seconds with the model or a job id, and Grok collects it with check_job",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"Every call answers within 40 seconds, with the model or a job id, and Grok collects it with check_job.\""
+			},
+			{
+				"claim": "Limits follow your MCP session, not xAI's IP address, so one busy user never spends yours",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"Limits follow your MCP session, not xAI's IP address, so one busy user never spends yours.\""
+			},
+			{
+				"claim": "15 tools",
+				"kind": "evidence:proof",
+				"target": "tools",
+				"ok": true,
+				"detail": "the run read tools = \"15\""
+			},
+			{
+				"claim": "read live from the server's tools/list",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"Read live from the server's tools/list\""
+			},
+			{
+				"claim": "Every 3D generation lane runs on @nvidia silicon",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Every 3D generation lane already runs on NVIDIA silicon\""
+			},
+			{
+				"claim": "we are a member of NVIDIA Inception",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"three.ws is a member of NVIDIA Inception\""
+			},
+			{
+				"claim": "Three jobs on the page name the tools Grok calls in order",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"Each one names the tools Grok calls, in order.\""
+			},
+			{
+				"claim": "an asset pack from the CC0 catalog",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"Ten ready-made props for a game jam.\""
+			},
+			{
+				"claim": "an asset pack from the CC0 catalog",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"Thousands of ready-made CC0 props\""
+			},
+			{
+				"claim": "a model with a page-ready embed",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"A textured model with a link and a page-ready embed.\""
+			},
+			{
+				"claim": "a talking persona that lip-syncs a greeting",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"A rigged character that lip-syncs a greeting.\""
+			},
+			{
+				"claim": "Six tested recipes",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"Six tested recipes\""
+			},
+			{
+				"claim": "a skill file you can upload to Grok Skills",
+				"kind": "evidence:page",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "live page shows \"Upload it to Grok Skills\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "12 steps passed against the live product, every claimed fact still holds (tools 15)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the free Grok server still lists the 15 tools the post counts",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/grok",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "mention",
+				"target": "@nvidia",
+				"ok": true,
+				"detail": "NVIDIA (business verified)"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"Grok Bot can make 3D now. One sentence adds the free studio at three.ws/grok as a custom MCP server, with no account and no key, and from then on text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear.\n\nGrok Bot runs on its own cloud computer, so a render that takes minutes on a cold GPU never hangs a task: every call answers within 40 seconds with the model or a job id, and Grok collects it with check_job. Limits follow your MCP session, not xAI's IP address, so one busy user never spends yours.\n\nThe 15 tools behind it are read live from the server's tools/list. Every 3D generation lane runs on @nvidia silicon; we are a member of NVIDIA Inception.",
+				"Three jobs on the page name the tools Grok calls in order: an asset pack from the CC0 catalog, a model with a page-ready embed, and a talking persona that lip-syncs a greeting. Six tested recipes and a skill file you can upload to Grok Skills sit beside them."
+			],
+			"altText": [
+				"A reel of the three.ws/grok page on the live product: the one-sentence MCP setup for Grok Bot, models generated on the free studio, the 15-tool list read live from the server's tools/list, three jobs that each name the tools Grok calls in order, and the same connector URL shown for Grok Bot and the xAI API."
+			]
+		},
+		"summary": "Every claim is verified verbatim against the live /grok and /partners pages, the 15-tool count is proven by the run and a live API probe, and each reel caption matches the frame it sits under. Voice, tagging (NVIDIA only, as a verified account the feature runs on), and the single link all conform to the house contract; ship as is.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

@@ -26,6 +26,7 @@
 
 import { PublicKey } from '@solana/web3.js';
 import { sql } from './db.js';
+import { runLocked } from './locked-sql.js';
 import { solUsdPrice } from './avatar-wallet.js';
 import { logAudit } from './audit.js';
 // The destination whitelist: cooldown-gated allowlist for every outbound category.
@@ -1318,17 +1319,14 @@ export async function reserveSpendUsd({
 		return runAnomaly(reservationId, null);
 	}
 
-	// Atomic cap reserve: the advisory xact lock serializes concurrent spends per
+	// Atomic cap reserve (lock taken as a separate statement, see locked-sql.js): the advisory xact lock serializes concurrent spends per
 	// agent, and the INSERT…SELECT only materializes the pending row when BOTH the
 	// rolling 24h wallet total and the rolling 24h total to this counterparty stay
 	// within their ceilings — check + reserve are one statement, so two requests can
 	// never both pass on the same stale total. A null ceiling drops out of the
 	// predicate, so this one statement serves a wallet that sets either cap or both.
-	const rows = await sql`
-		WITH locked AS (
-			SELECT pg_advisory_xact_lock(hashtextextended(${String(agentId)}, 0))
-		),
-		spent AS (
+	const rows = await runLocked([agentId], sql`
+		WITH spent AS (
 			SELECT COALESCE(SUM(usd), 0)::float8 AS s
 			FROM agent_custody_events
 			WHERE agent_id = ${agentId}
@@ -1353,11 +1351,11 @@ export async function reserveSpendUsd({
 			(agent_id, user_id, event_type, category, network, asset, usd, destination, status, meta)
 		SELECT ${agentId}, ${userId ?? null}, 'spend', ${category}, ${network}, ${asset},
 		       ${usdValue}, ${destination ?? null}, 'pending', ${metaJson}::jsonb
-		FROM spent, cp, locked
+		FROM spent, cp
 		WHERE (${lim.daily_usd}::float8 IS NULL OR spent.s + ${usdValue}::float8 <= ${lim.daily_usd}::float8 + 1e-9)
 		  AND (${cpCap}::float8 IS NULL OR cp.s + ${usdValue}::float8 <= ${cpCap}::float8 + 1e-9)
 		RETURNING id, (SELECT s FROM spent) AS spent_before, (SELECT s FROM cp) AS cp_spent_before
-	`;
+	`);
 
 	if (!rows.length) {
 		// Re-read the totals for an accurate error message (outside the lock is fine)

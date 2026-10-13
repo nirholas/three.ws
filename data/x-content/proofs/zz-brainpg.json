@@ -1,0 +1,69 @@
+{
+	"id": "zz-brainpg",
+	"scenarioHash": "904b14625e5ca50c6862c10983cbf723da24018980d5d188ae76e412d5602647",
+	"ranAt": "2026-10-11T20:07:38.338Z",
+	"target": {
+		"commit": "66a5e93bd",
+		"revision": "three-ws-api-00494-wh5"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/brain",
+			"detail": "loaded https://three.ws/brain",
+			"ok": true,
+			"ms": 5838,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "click",
+			"target": "Playground",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 389,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "type",
+			"target": "In one sentence, what is a polygon mesh?",
+			"detail": "typed 40 characters",
+			"ok": true,
+			"ms": 940,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "click",
+			"target": "Send",
+			"detail": "clicked; POST /api/brain/chat answered 200 in 0.1 s",
+			"ok": true,
+			"ms": 367,
+			"frames": 0
+		},
+		{
+			"index": 5,
+			"kind": "expect",
+			"target": "zzzz",
+			"ok": false,
+			"detail": "locator.waitFor: Timeout 25000ms exceeded.",
+			"ms": 25173,
+			"frames": 0
+		}
+	],
+	"facts": {},
+	"saw": [],
+	"responses": [
+		{
+			"method": "POST",
+			"path": "/api/brain/chat",
+			"status": 200,
+			"seconds": 0.1
+		}
+	],
+	"cuts": [],
+	"video": null
+}

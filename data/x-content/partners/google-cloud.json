@@ -1,0 +1,555 @@
+{
+	"id": "google-cloud",
+	"name": "Google Cloud",
+	"order": 4,
+	"designation": "member of Google Cloud for Web3 Startups",
+	"designationEvidence": [
+		{
+			"type": "page",
+			"url": "https://three.ws/blog/three-ws-google-cloud-partnership",
+			"contains": "Google Cloud for Web3 Startups"
+		},
+		{
+			"type": "file",
+			"path": "docs/listings.md",
+			"contains": "| **Google Cloud** for Web3 Startups | Member |"
+		}
+	],
+	"page": "https://three.ws/blog/three-ws-google-cloud-partnership",
+	"handle": "googlecloud",
+	"mark": null,
+	"forbidden": [
+		"endorsed by Google",
+		"Google endorses",
+		"Google-endorsed",
+		"certified by Google",
+		"Google-certified",
+		"Google recommends",
+		"Google-recommended",
+		"official Google Cloud partner",
+		"Google Cloud Partner",
+		"Google Cloud Premier",
+		"Google Cloud Partner Advantage",
+		"Google Cloud Ready",
+		"Google Cloud Marketplace",
+		"available on Google Cloud",
+		"listed on Google Cloud",
+		"live on Google Cloud",
+		"powered by Google",
+		"powered by Gemini",
+		"built with Gemini",
+		"built on Gemini",
+		"Gemini brain",
+		"Gemini-powered",
+		"runs entirely on Google Cloud",
+		"everything runs on Google Cloud",
+		"hosted entirely on Google",
+		"Google invoice",
+		"Google credits",
+		"credits from Google",
+		"$200k",
+		"200,000",
+		"Google funded",
+		"funded by Google",
+		"backed by Google",
+		"Google invested",
+		"investment from Google",
+		"joint customers",
+		"co-sell",
+		"Google Cloud customers"
+	],
+	"guidance": "three.ws is a member of Google Cloud for Web3 Startups. Say that and nothing grander: it is a programme membership, not an endorsement, certification, partner tier or investment. Google Cloud Marketplace is not a listing; never say three.ws is listed, available or live there. What is true and checkable is the engineering: the open 3D model workers run as Cloud Run GPU services (NVIDIA L4), the garment builder is a CPU Cloud Run service whose reference photos come from Vertex AI, and CAD Forge builds on a Cloud Run gen2 service with its own sandbox. Name those pieces plainly and tie each to a fact. Do not say the whole platform runs on Google Cloud, do not say Gemini is an agent brain (that is announced, not shipped), and do not mention credits, grants or amounts. Never claim the Forge generates a model live in the film: the reel shows the engine lanes and tiers, not a finished generation.",
+	"docs": [
+		"docs/partners.md",
+		"docs/listings.md",
+		"docs/ops/gcp-model-workers.md",
+		"docs/forge.md",
+		"docs/cad-forge.md",
+		"docs/avatar-wardrobe.md"
+	],
+	"features": [
+		{
+			"id": "forge-engines",
+			"title": "Forge engines on our own Cloud Run GPU workers",
+			"surface": "https://three.ws/forge",
+			"covers": [
+				"/forge",
+				"workers/model-trellis",
+				"workers/model-hunyuan3d",
+				"workers/model-triposg",
+				"api/_lib/model-workers"
+			],
+			"lane": "developer",
+			"summary": "The Forge turns a text prompt, photos or a sketch into a textured 3D model, and the open models behind it (TRELLIS, Hunyuan3D, TripoSG) run as our own Cloud Run services on NVIDIA L4 GPUs in us-central1. Each tier shows a free lane and a live time estimate before you press Generate, a sketch has its own lane, and the free NVIDIA NIM lane stays behind the self-hosted workers as a safety net. This is the Google Cloud for Web3 Startups programme at work: the GPU workers are the infrastructure it backs.",
+			"docs": [
+				"docs/ops/gcp-model-workers.md",
+				"docs/forge.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/forge",
+						"settle": 6000,
+						"caption": "Four free lanes, no key, in text mode"
+					},
+					{
+						"read": "standard",
+						"match": "(Standard · Free · usually ~\\d+s)"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"click": {
+							"selector": "button[data-tier=\"draft\"]"
+						},
+						"caption": "Each tier shows its live estimate"
+					},
+					{
+						"hold": 1600
+					},
+					{
+						"read": "draft",
+						"match": "(Draft · Free · usually ~\\d+s)"
+					},
+					{
+						"click": "TRELLIS",
+						"caption": "Our own TRELLIS worker, selected"
+					},
+					{
+						"hold": 1600
+					},
+					{
+						"click": "NVIDIA",
+						"caption": "The free NIM lane: the safety net"
+					},
+					{
+						"hold": 1600
+					},
+					{
+						"click": "From a sketch",
+						"caption": "A sketch gets its own free lane"
+					},
+					{
+						"hold": 1200
+					},
+					{
+						"read": "sketch",
+						"match": "((?:Draft|Standard) · Free · usually ~\\d+s · up to [\\d,]+ polygons)"
+					},
+					{
+						"hold": 2400
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "the Forge turns text or photos into a textured 3D model",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/forge",
+							"contains": "textured 3D model"
+						}
+					]
+				},
+				{
+					"says": "each open model worker runs as its own Cloud Run service on an NVIDIA L4 GPU in us-central1",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/ops/gcp-model-workers.md",
+							"contains": "Each model runs as its own Cloud Run service (NVIDIA L4 GPU, `us-central1`),"
+						}
+					]
+				},
+				{
+					"says": "TRELLIS is the named default at the Draft and Standard tiers and Hunyuan3D at High",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/forge.md",
+							"contains": "TRELLIS at Draft and Standard, Hunyuan3D at High"
+						}
+					]
+				},
+				{
+					"says": "the self-hosted workers carry zero vendor cost, so free-first routing prefers them first",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/forge.md",
+							"contains": "Zero vendor cost, so free-first routing prefers them first"
+						}
+					]
+				},
+				{
+					"says": "the Standard tier is free and shows its live time estimate",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "standard",
+							"contains": "Free"
+						}
+					]
+				},
+				{
+					"says": "the Draft tier is free and shows its live time estimate",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "draft",
+							"contains": "Free"
+						}
+					]
+				},
+				{
+					"says": "a sketch has its own free lane",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "sketch",
+							"contains": "Free"
+						}
+					]
+				},
+				{
+					"says": "the sketch lane is served by a dedicated TripoSG worker on Cloud Run",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/ops/gcp-model-workers.md",
+							"contains": "Serves the sketch lane"
+						}
+					]
+				},
+				{
+					"says": "the free NVIDIA NIM lane serves a text prompt when the self-host workers and Spaces are cold or down",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/forge.md",
+							"contains": "it serves a text prompt when every self-host worker and Space is cold or down"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "wardrobe",
+			"title": "The wardrobe: rigged garments built on a Cloud Run pipeline",
+			"surface": "https://three.ws/wardrobe",
+			"covers": [
+				"/wardrobe",
+				"workers/garment-forge",
+				"api/_lib/forge-reference-image.js"
+			],
+			"lane": "community",
+			"summary": "The wardrobe is an open catalog of rigged 3D garments that bind to any humanoid avatar at runtime. New pieces come from garment-forge, a CPU-only Cloud Run service that chains the GPU workers: the reference photo for each piece is made on Google Vertex AI, then the mesh is built, placed on the body, rigged, validated and published. Browse the catalog, open a piece in 3D and turn it around.",
+			"docs": [
+				"workers/garment-forge/README.md",
+				"docs/avatar-wardrobe.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/wardrobe",
+						"settle": 6000
+					},
+					{
+						"scroll": "Search pieces",
+						"ms": 900,
+						"caption": "An open catalog of clothes for 3D avatars"
+					},
+					{
+						"read": "pieces",
+						"match": "(\\d+) of \\d+ pieces"
+					},
+					{
+						"hold": 1600
+					},
+					{
+						"click": "Outerwear",
+						"caption": "Every piece is a rigged 3D garment"
+					},
+					{
+						"hold": 1600
+					},
+					{
+						"click": "3D",
+						"caption": "Open one before you wear it"
+					},
+					{
+						"hold": 1500
+					},
+					{
+						"drag": [
+							[
+								0.16,
+								0.62
+							],
+							[
+								0.42,
+								0.62
+							]
+						],
+						"ms": 2600,
+						"caption": "It is a real mesh. Turn it around."
+					},
+					{
+						"hold": 2400
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "the open catalog lists at least 50 pieces",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "pieces",
+							"min": 50
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/wardrobe",
+							"contains": " pieces"
+						}
+					]
+				},
+				{
+					"says": "every piece is a real, rigged 3D garment that binds to any humanoid avatar at runtime",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/wardrobe",
+							"contains": "Every piece here is a real, rigged 3D garment that binds to any humanoid avatar at runtime"
+						}
+					]
+				},
+				{
+					"says": "a described garment is built, rigged, validated and published in about seven minutes",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/wardrobe",
+							"contains": "build, rig, validate, and publish it in about seven minutes"
+						}
+					]
+				},
+				{
+					"says": "finished pieces are public and instantly wearable by anyone",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/wardrobe",
+							"contains": "Finished pieces are public and instantly wearable by anyone."
+						}
+					]
+				},
+				{
+					"says": "the garment builder is a CPU-only Cloud Run service",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "and deploys the `garment-forge` Cloud Run service: CPU only (4 vCPU, 16 GiB),"
+						}
+					]
+				},
+				{
+					"says": "the reference photo for each garment is made on Google Vertex AI with gemini-2.5-flash-image",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "image lane (`gemini-2.5-flash-image`, the model that replaced the retiring"
+						}
+					]
+				},
+				{
+					"says": "the reference photo is posed to match the reference body: worn shape, A-pose, front view, plain background",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "The photo is posed to match the reference body: worn shape,"
+						}
+					]
+				},
+				{
+					"says": "the builder gives its runtime service account the Vertex AI user role",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "roles/aiplatform.user"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "cad-forge",
+			"title": "CAD Forge: a real part from one sentence, on Cloud Run",
+			"surface": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+			"covers": [
+				"/cad",
+				"api/cad",
+				"workers/cad-forge",
+				"docs/cad-forge.md"
+			],
+			"lane": "developer",
+			"summary": "CAD Forge writes a build123d program from a sentence and builds it into a real B-rep part on the OpenCascade kernel, then returns STEP, STL, GLB, a drawing sheet and the kernel measurements. The builder is a CPU-only Cloud Run gen2 service, and every build runs in its own throwaway sandbox process under a service account that holds no IAM roles. The film opens a built part, reads its true size and topology from the kernel, and shows the drawing sheet, sliders and files.",
+			"docs": [
+				"docs/cad-forge.md",
+				"workers/cad-forge/README.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+						"settle": 7000,
+						"caption": "One sentence in. Real CAD out."
+					},
+					{
+						"read": "size",
+						"match": "([\\d.]+ × [\\d.]+ × [\\d.]+ mm)"
+					},
+					{
+						"read": "topology",
+						"match": "(\\d+ solid · \\d+ faces · \\d+ edges)"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"drag": [
+							[
+								0.3,
+								0.45
+							],
+							[
+								0.62,
+								0.45
+							]
+						],
+						"ms": 2200,
+						"caption": "Callouts read the kernel's extents"
+					},
+					{
+						"hold": 1200
+					},
+					{
+						"click": "Drawing",
+						"caption": "A drawing sheet comes with it"
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"scroll": "Dimensions",
+						"ms": 900,
+						"caption": "Every key size is a slider"
+					},
+					{
+						"hold": 1500
+					},
+					{
+						"scroll": "Files",
+						"ms": 900,
+						"caption": "STEP, STL, GLB, drawing, Python"
+					},
+					{
+						"hold": 2600
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "CAD Forge builds a program into a real B-rep part on the OpenCascade kernel",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/cad-forge/README.md",
+							"contains": "into a real B-rep part on the OpenCascade kernel"
+						}
+					]
+				},
+				{
+					"says": "the builder is a CPU-only FastAPI service on Cloud Run gen2",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/cad-forge/README.md",
+							"contains": "CPU only. FastAPI on Cloud Run (gen2)."
+						}
+					]
+				},
+				{
+					"says": "the example part measures 75.0 × 19.0 × 90.0 mm",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "size",
+							"equals": "75.0 × 19.0 × 90.0 mm"
+						}
+					]
+				},
+				{
+					"says": "the kernel reports the example part as 1 solid with 23 faces and 66 edges",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "topology",
+							"equals": "1 solid · 23 faces · 66 edges"
+						}
+					]
+				},
+				{
+					"says": "every build runs in its own sandbox process, used once and then discarded",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/cad-forge/README.md",
+							"contains": "Every build runs in its own `sandbox_child.py` process, which is used once and then discarded."
+						}
+					]
+				},
+				{
+					"says": "the service runs as a service account with no IAM roles",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/cad-forge/README.md",
+							"contains": "a service account with no IAM roles"
+						}
+					]
+				},
+				{
+					"says": "a build returns STEP, STL and GLB files plus a four-view drawing sheet",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/cad-forge/README.md",
+							"contains": "STEP, STL, GLB (metres, true scale, Y-up), an isometric hidden-line thumbnail and a four-view drawing sheet as SVG"
+						}
+					]
+				},
+				{
+					"says": "the sandbox is tested with real socket, exec and fork escape attempts as a step of the image build",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/cad-forge/README.md",
+							"contains": "real builds, plus real socket, exec, fork and parent-environment escape attempts"
+						}
+					]
+				}
+			]
+		}
+	]
+}

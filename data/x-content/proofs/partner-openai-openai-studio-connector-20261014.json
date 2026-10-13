@@ -1,0 +1,122 @@
+{
+	"id": "partner-openai-openai-studio-connector-20261014",
+	"scenarioHash": "c661a62006fd958a0811380a8875362b1b780a65fabe212432e850107c45b8f2",
+	"ranAt": "2026-10-13T19:08:51.904Z",
+	"target": {
+		"commit": "7d172d48e",
+		"revision": "three-ws-api-00499-fgc"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/openai",
+			"detail": "loaded https://three.ws/openai",
+			"ok": true,
+			"ms": 6868,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "hold",
+			"target": "1500",
+			"detail": "1500 ms",
+			"ok": true,
+			"ms": 5394,
+			"frames": 45
+		},
+		{
+			"index": 3,
+			"kind": "scroll",
+			"target": "Connect the server.",
+			"detail": "scrolled 1355 px",
+			"ok": true,
+			"ms": 3919,
+			"frames": 30
+		},
+		{
+			"index": 4,
+			"kind": "expect",
+			"target": "tools answered",
+			"detail": "appeared after 0.0 s",
+			"ok": true,
+			"ms": 24,
+			"frames": 0
+		},
+		{
+			"index": 5,
+			"kind": "read",
+			"target": "live",
+			"detail": "live = \"15\"",
+			"ok": true,
+			"ms": 1,
+			"frames": 0
+		},
+		{
+			"index": 6,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 7524,
+			"frames": 66
+		},
+		{
+			"index": 7,
+			"kind": "scroll",
+			"target": "The generation tools.",
+			"detail": "scrolled 861 px",
+			"ok": true,
+			"ms": 4304,
+			"frames": 36
+		},
+		{
+			"index": 8,
+			"kind": "hold",
+			"target": "2500",
+			"detail": "2500 ms",
+			"ok": true,
+			"ms": 8868,
+			"frames": 75
+		},
+		{
+			"index": 9,
+			"kind": "scroll",
+			"target": "500",
+			"detail": "scrolled 500 px",
+			"ok": true,
+			"ms": 4498,
+			"frames": 36
+		},
+		{
+			"index": 10,
+			"kind": "hold",
+			"target": "3500",
+			"detail": "3500 ms",
+			"ok": true,
+			"ms": 12299,
+			"frames": 105
+		}
+	],
+	"facts": {
+		"live": "15"
+	},
+	"saw": [
+		"tools answered"
+	],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/partner-openai-openai-studio-connector-20261014/reel.mp4",
+		"sha256": "5797cbfbd85e14974507cf197b5190fb44fbc829f065dfb280a20b2a6a7d51da",
+		"frames": 393,
+		"motion": 0.268,
+		"durationSec": 13.1,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

@@ -1,0 +1,225 @@
+{
+	"id": "catalog-api",
+	"contentHash": "2c8c5019f72f5aa0279cf3cd197c77a863b64271e31686cfd16ba5a92b8a19ff",
+	"reviewedAt": "2026-10-13T18:38:04.267Z",
+	"passed": false,
+	"blockers": [
+		"evidence:proof relaxed: no step of the run expected \"relaxed\"",
+		"probe:scenario the filmed scenario: step 10 (read license): the page shows nothing matching /\"license\":\\s*\"(CC0)\"/",
+		"probe:api https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2: total is 0; needs at least 3900",
+		"probe:api https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2: items.0.license is undefined",
+		"editor (accuracy): The live API probe against https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2 returned total 0 and items.0.license undefined, directly contradicting the headline number, even though the filmed run read 3961 and the reel frames show \\\"total\\\":3961 and \\\"license\\\":\\\"CC0\\\". A core numeric claim with a failing live verification cannot ship; the probe and the run disagree and this must be resolved before any number goes out.",
+		"editor verdict is revise"
+	],
+	"texts": [
+		"More than 3,900 free 3D assets now answer one GET on three.ws/docs/api-reference, served from Cloud Run on @GoogleCloud. Objects, characters and motion clips sit behind a single search with no authentication, no API key and no payment. Every word of the query has to match; when nothing matches all of them the search retries on any of them and marks the answer relaxed: true, so a phrase never dead-ends silently.",
+		"Each hit carries a direct GLB URL, its license and its byte size. Pages run 1 to 50 results with next_offset for the next page, open CORS, cached at the edge for 5 minutes. The same join backs the free MCP catalog tools and the assets CLI, so all three surfaces answer identically."
+	],
+	"lint": [],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "More than 3,900 free 3D assets",
+				"kind": "evidence:proof",
+				"target": "total",
+				"ok": true,
+				"detail": "the run read total = \"3961\", at least 3900"
+			},
+			{
+				"claim": "More than 3,900 free 3D assets",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/api-reference",
+				"ok": true,
+				"detail": "live page shows \"total is the whole catalog; matched is how many the query hit\""
+			},
+			{
+				"claim": "answer one GET",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/api-reference",
+				"ok": true,
+				"detail": "live page shows \"GET /api/catalog?q=wooden+chair&kind=object&limit=12&offset=0\""
+			},
+			{
+				"claim": "Objects, characters and motion clips sit behind a single search",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/api-reference",
+				"ok": true,
+				"detail": "live page shows \"One search across every ready-made asset three.ws publishes: the CC0 object/prop library, the ready-made character library, and the motion-clip library.\""
+			},
+			{
+				"claim": "Objects, characters and motion clips sit behind a single search",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/api-reference",
+				"ok": true,
+				"detail": "live page shows \"GET /api/catalog?q=wooden+chair&kind=object&limit=12&offset=0\""
+			},
+			{
+				"claim": "no authentication, no API key and no payment",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/api-reference",
+				"ok": true,
+				"detail": "live page shows \"No authentication, no API key, no payment. Open CORS, cached at the edge for 5 minutes.\""
+			},
+			{
+				"claim": "open CORS, cached at the edge for 5 minutes",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/api-reference",
+				"ok": true,
+				"detail": "live page shows \"Open CORS, cached at the edge for 5 minutes.\""
+			},
+			{
+				"claim": "Every word of the query has to match; when nothing matches all of them the search retries on any of them and marks the answer relaxed: true, so a phrase never dead-ends silently.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/api-reference",
+				"ok": true,
+				"detail": "live page shows \"Every word of q must match somewhere, which keeps a two-word query precise. If nothing matches all of them, the search retries on any of them and sets relaxed: true, so a phrase never dead-ends silently.\""
+			},
+			{
+				"claim": "Every word of the query has to match; when nothing matches all of them the search retries on any of them and marks the answer relaxed: true, so a phrase never dead-ends silently.",
+				"kind": "evidence:proof",
+				"target": "relaxed",
+				"ok": false,
+				"detail": "no step of the run expected \"relaxed\""
+			},
+			{
+				"claim": "Each hit carries a direct GLB URL, its license and its byte size",
+				"kind": "evidence:proof",
+				"target": "license",
+				"ok": true,
+				"detail": "the run read license = \"CC0\""
+			},
+			{
+				"claim": "Each hit carries a direct GLB URL, its license and its byte size",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/api-reference",
+				"ok": true,
+				"detail": "live page shows \"\"license\": \"CC0\"\""
+			},
+			{
+				"claim": "Each hit carries a direct GLB URL, its license and its byte size",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/api-reference",
+				"ok": true,
+				"detail": "live page shows \"\"format\": \"glb\"\""
+			},
+			{
+				"claim": "Pages run 1 to 50 results with next_offset for the next page",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/api-reference",
+				"ok": true,
+				"detail": "live page shows \"1 to 50 (default 12)\""
+			},
+			{
+				"claim": "Pages run 1 to 50 results with next_offset for the next page",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/api-reference",
+				"ok": true,
+				"detail": "live page shows \"use next_offset from the previous response\""
+			},
+			{
+				"claim": "The same join backs the free MCP catalog tools and the assets CLI, so all three surfaces answer identically",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/api-reference",
+				"ok": true,
+				"detail": "live page shows \"so all three surfaces answer identically\""
+			},
+			{
+				"claim": "served from Cloud Run on @GoogleCloud",
+				"kind": "evidence:file",
+				"target": "docs/ops/gcp-production.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": false,
+				"detail": "step 10 (read license): the page shows nothing matching /\"license\":\\s*\"(CC0)\"/"
+			},
+			{
+				"kind": "probe:api",
+				"target": "https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2",
+				"ok": false,
+				"detail": "total is 0; needs at least 3900"
+			},
+			{
+				"kind": "probe:api",
+				"target": "https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2",
+				"ok": false,
+				"detail": "items.0.license is undefined"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/docs/api-reference",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "mention",
+				"target": "@googlecloud",
+				"ok": true,
+				"detail": "Google Cloud (business verified)"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 2,
+			"clarity": 4,
+			"specificity": 4,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 4
+		},
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "More than 3,900 free 3D assets",
+				"problem": "The live API probe against https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2 returned total 0 and items.0.license undefined, directly contradicting the headline number, even though the filmed run read 3961 and the reel frames show \\\"total\\\":3961 and \\\"license\\\":\\\"CC0\\\". A core numeric claim with a failing live verification cannot ship; the probe and the run disagree and this must be resolved before any number goes out.",
+				"fix": "Re-run the proof and the probe against production and reconcile them. If the public endpoint reliably answers total 3961, the claim may stand with a fresh passing run; until then, publish without the number."
+			},
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "when nothing matches all of them the search retries on any of them and marks the answer relaxed: true",
+				"problem": "The run never saw \\\"relaxed\\\" (proof check failed); only the docs page text supports this. The reel's live JSON at 14 s shows \\\"relaxed\\\":false, which does not contradict the copy (the query matched), but the mechanism description rests on docs text alone.",
+				"fix": "Keep the sentence, since the live docs page states it word for word, but have the proof scenario include a query that triggers a relaxed response so the claim is seen, not just quoted."
+			},
+			{
+				"severity": "minor",
+				"area": "clarity",
+				"quote": "served from Cloud Run on @GoogleCloud",
+				"problem": "A first-time reader may not connect the catalog API to Cloud Run; it reads as an appended credential rather than information about the feature.",
+				"fix": "The mention check passes and the tag is genuine, so it can stay; folding it into a shorter clause ('one open GET, served from Cloud Run on @GoogleCloud') makes it read as part of the mechanism."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"One GET on three.ws/docs/api-reference searches every free ready-made asset three.ws publishes: the CC0 object/prop library, the ready-made character library, and the motion-clip library. No authentication, no API key, no payment. Every word of the query must match; if nothing matches all of them the search retries on any of them and sets relaxed: true, so a phrase never dead-ends silently. Served from Cloud Run on @GoogleCloud.",
+				"Each hit carries a direct GLB URL, its license and its byte size. Pages run 1 to 50 results with next_offset for the next page, open CORS, cached at the edge for 5 minutes. The same join backs the free MCP catalog tools and the assets CLI, so all three surfaces answer identically."
+			],
+			"altText": [
+				""
+			]
+		},
+		"summary": "The headline 3,900-asset figure is contradicted by a live API probe that returned total 0, which blocks the number even though the filmed run read 3961. The rewrite drops the count and keeps only claims that passed against the live docs page; re-run the proof and probe, and if they agree on 3961 the number can return in the first line.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"head: 2 links (three.ws/docs/api-reference, three.ws); one post links one surface, and X reads a bare three.ws as a link",
+			"claims: claim \"More than 3,900 free 3D assets\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"answer one GET\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Objects, characters and motion clips sit behind a single search\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"no authentication, no API key and no payment\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Every word of the query has to match; when nothing matches all of them the search retries on any of them and marks the answer relaxed: true, so a phrase never dead-ends silently.\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
+}

@@ -32,7 +32,7 @@ import http from 'node:http';
 import { chromium } from 'playwright';
 import { pickTask } from './tasks/index.js';
 import { generateNarration, runTaskSteps } from './task-runner.js';
-import { applyEvents } from './control.js';
+import { applyEvents, isNavAllowed } from './control.js';
 
 const BASE_URL   = (process.env.BASE_URL || 'https://three.ws').replace(/\/$/, '');
 const WANTED_URL = process.env.WANTED_URL || `${BASE_URL}/api/agent/watch-wanted`;
@@ -175,7 +175,9 @@ async function fetchWanted() {
 
 function resolveUrl(homeUrl, agentId) {
 	const u = homeUrl || `/agent/${agentId}`;
-	if (/^https?:\/\//.test(u)) return u;
+	// homeUrl is agent-owner supplied: refuse loopback, private and metadata
+	// hosts so the casting browser cannot be pointed at internal services.
+	if (/^https?:\/\//.test(u)) return isNavAllowed(u) ? u : `${BASE_URL}/agent/${agentId}`;
 	return `${BASE_URL}${u.startsWith('/') ? '' : '/'}${u}`;
 }
 

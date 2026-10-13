@@ -6,6 +6,7 @@
  */
 
 html:has(body.gallery-page) {
+	background: #050505;
 	height: auto;
 	overflow: auto;
 }
@@ -602,7 +603,7 @@ body.gallery-page {
 .gallery-card-actions {
 	display: inline-flex;
 	flex-wrap: wrap;
-	gap: 6px;
+	gap: 8px;
 }
 .gallery-card-btn {
 	font-size: 12px;
@@ -1111,7 +1112,7 @@ body.gallery-page {
 .gallery-cats {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.4rem;
+	gap: 0.5rem;
 }
 
 /* ── Equip modal — accessory-to-avatar picker ────────────────── */

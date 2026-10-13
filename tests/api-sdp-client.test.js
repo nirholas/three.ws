@@ -83,6 +83,22 @@ describe('path allowlist', () => {
 		}
 	});
 
+	it('rejects encoded dot segments and URL-structure characters the upstream URL parser would act on', () => {
+		for (const p of [
+			'v1/wallets/%2e%2e/%2e%2e/admin',
+			'v1/wallets/.%2E/admin',
+			'v1/wallets/%2E./admin',
+			'v1/wallets/./x',
+			'v1/wallets/.\t./admin',
+			'v1/wallets%3fx=1',
+			'v1/wallets?x=1',
+			'v1/wallets#x',
+			'v1/wallets\\..\\admin',
+		]) {
+			expect(isSdpAllowedPath(p), p).toBe(false);
+		}
+	});
+
 	it('leading slashes are normalized', () => {
 		expect(isSdpAllowedPath('/v1/wallets')).toBe(true);
 	});

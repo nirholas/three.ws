@@ -1,89 +1,19 @@
 {
 	"id": "quality-gate-article",
-	"contentHash": "2f98cb70150ab228b36694f99c7f2b22e3d1934a78c2abb6b6609f4bf4c66ce9",
-	"reviewedAt": "2026-10-09T17:08:15.263Z",
+	"contentHash": "d8c35a3c0e4138553037fee42f4c8f0731bf5eab9f8e4bde56b3679fa9318857",
+	"reviewedAt": "2026-10-13T18:21:52.937Z",
 	"passed": false,
 	"blockers": [
-		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"Request had insufficient authentication scopes.\",; \"status\": \"PERMISSION_DENIED\",; \"details\": [; {; \"@type\": \"type.googleapis.com/goog; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; editor returned no JSON object"
+		"editor verdict is revise"
 	],
 	"texts": [
 		"Two checks before a 3D model ships: the catalog gate, and a diff that names what broke",
-		"Our catalog turns away a character that arrives as more than 8 meshes, and you can run that exact check on your own .glb without uploading it. The write-up covers the five structural checks, how Model Diff names the joints and clips a change removed, the exit codes for CI, and where its rename detection still guesses wrong: three.ws/inspect"
+		"Our catalog turns away a character that arrives as more than 8 meshes, and you can run that exact check on your own .glb without uploading it. The write-up covers the five structural checks, how Model Diff names the joints and clips a change removed, the exit codes for CI, and how its rename pointers guide a review: three.ws/inspect"
 	],
 	"lint": [],
 	"verification": {
 		"ok": true,
 		"checks": [
-			{
-				"claim": "more than 8 meshes",
-				"kind": "evidence:file",
-				"target": "api/_lib/seed-mesh-gate.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "more than 8 meshes",
-				"kind": "evidence:page",
-				"target": "https://three.ws/inspect",
-				"ok": true,
-				"detail": "live page shows \"This runs the exact quality gate three.ws applies to its own catalog entries against any .glb you give it.\""
-			},
-			{
-				"claim": "you can run that exact check on your own .glb without uploading it",
-				"kind": "evidence:page",
-				"target": "https://three.ws/inspect",
-				"ok": true,
-				"detail": "live page shows \"It runs entirely in your browser: nothing is uploaded, and the verdict is instant.\""
-			},
-			{
-				"claim": "you can run that exact check on your own .glb without uploading it",
-				"kind": "evidence:file",
-				"target": "src/inspect-page.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "the five structural checks",
-				"kind": "evidence:page",
-				"target": "https://three.ws/inspect",
-				"ok": true,
-				"detail": "live page shows \"These checks measure whether a model is built well enough to publish: density, weight, texture, bounds, assembly.\""
-			},
-			{
-				"claim": "how Model Diff names the joints and clips a change removed",
-				"kind": "evidence:page",
-				"target": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
-				"ok": true,
-				"detail": "live page shows \"lost 2 joint(s): mixamorig:LeftEye, mixamorig:RightEye. Clips that target them will not play.\""
-			},
-			{
-				"claim": "how Model Diff names the joints and clips a change removed",
-				"kind": "evidence:page",
-				"target": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
-				"ok": true,
-				"detail": "live page shows \"5 animations were removed (\"agree\", \"idle\", \"run\" and 2 more).\""
-			},
-			{
-				"claim": "the exit codes for CI",
-				"kind": "evidence:file",
-				"target": "packages/glb-diff/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "where its rename detection still guesses wrong",
-				"kind": "evidence:page",
-				"target": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
-				"ok": true,
-				"detail": "live page shows \"headShake to SambaDance\""
-			},
-			{
-				"claim": "where its rename detection still guesses wrong",
-				"kind": "evidence:file",
-				"target": "packages/glb-diff/src/diff.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
 			{
 				"claim": "has to clear a structural gate before anyone sees it, and the Model Inspector runs that same gate, the same module with the same thresholds",
 				"kind": "evidence:page",
@@ -155,55 +85,6 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "Geometry density: between 1,500 and 1,500,000 vertices",
-				"kind": "evidence:file",
-				"target": "api/_lib/seed-mesh-gate.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "Geometry density: between 1,500 and 1,500,000 vertices",
-				"kind": "evidence:file",
-				"target": "api/_lib/seed-mesh-gate.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "File weight: between 20 KB and 80 MB",
-				"kind": "evidence:file",
-				"target": "api/_lib/seed-mesh-gate.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "File weight: between 20 KB and 80 MB",
-				"kind": "evidence:file",
-				"target": "api/_lib/seed-mesh-gate.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a collapsed mesh passes every triangle count and still draws as a speck",
-				"kind": "evidence:file",
-				"target": "api/_lib/seed-mesh-gate.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a character may arrive as at most 8 meshes. A prop is exempt",
-				"kind": "evidence:file",
-				"target": "api/_lib/seed-mesh-gate.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a character may arrive as at most 8 meshes. A prop is exempt",
-				"kind": "evidence:page",
-				"target": "https://three.ws/inspect",
-				"ok": true,
-				"detail": "live page shows \"Props skip the character-only checks.\""
-			},
-			{
 				"claim": "A failed check comes with the fix, written next to the rule it explains, so the guidance cannot drift from the rule",
 				"kind": "evidence:file",
 				"target": "api/_lib/seed-mesh-gate.js",
@@ -230,13 +111,6 @@
 				"target": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Ffox.glb",
 				"ok": true,
 				"detail": "live page shows \"Clears the catalog bar\""
-			},
-			{
-				"claim": "Fox is the sample labelled \"Passes, barely\"",
-				"kind": "evidence:file",
-				"target": "src/inspect-page.js",
-				"ok": true,
-				"detail": "file supports the claim"
 			},
 			{
 				"claim": "The gate is the first of two stages. On the catalog path a vision model then renders the mesh",
@@ -330,37 +204,9 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "Zero means the diff ran and stayed below the threshold",
-				"kind": "evidence:file",
-				"target": "packages/glb-diff/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "Zero means the diff ran and stayed below the threshold",
-				"kind": "evidence:file",
-				"target": "packages/glb-diff/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
 				"claim": "caps each side at 32 MB",
 				"kind": "evidence:file",
 				"target": "api/3d/diff.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The similarity pass is skipped when two models would need more than 40,000 comparisons, and the result says so",
-				"kind": "evidence:file",
-				"target": "packages/glb-diff/src/match.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The similarity pass is skipped when two models would need more than 40,000 comparisons, and the result says so",
-				"kind": "evidence:file",
-				"target": "packages/glb-diff/src/match.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
@@ -372,18 +218,473 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "the command line tool needs the optional meshoptimizer package installed next to it",
+				"claim": "Geometry density holds a model between 1,500 and 1,500,000 vertices, and file weight holds it between 20 KB and 80 MB",
 				"kind": "evidence:file",
-				"target": "packages/glb-diff/src/document.js",
+				"target": "api/_lib/seed-mesh-gate.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "the command line tool needs the optional meshoptimizer package installed next to it",
+				"claim": "Geometry density holds a model between 1,500 and 1,500,000 vertices, and file weight holds it between 20 KB and 80 MB",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Geometry density holds a model between 1,500 and 1,500,000 vertices, and file weight holds it between 20 KB and 80 MB",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Geometry density holds a model between 1,500 and 1,500,000 vertices, and file weight holds it between 20 KB and 80 MB",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Geometry density asks for a model dense enough to read as a real object, without so much geometry that the viewer stalls on a phone",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "File weight asks for an asset heavy enough to be a real textured model and light enough to load before a visitor gives up",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A collapsed mesh passes every triangle count and still draws as a speck, which is why bounds have a check of their own",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A character arriving as a dozen disconnected meshes is a scene, not a character, and it will not rig or animate as one body",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A prop is exempt from the assembly rule, since a prop can legitimately be a loose collection of parts",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The inspector also reports whether the model is rigged and how many joints it carries",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmichelle.glb",
+				"ok": true,
+				"detail": "live page shows \"Rigged · 65 joints · ready to animate\""
+			},
+			{
+				"claim": "The Mannequin sample is labelled \"Fails two rules\" on the page",
+				"kind": "evidence:file",
+				"target": "src/inspect-page.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The headline says two checks short, and it names them: surface texture and single assembled character",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb",
+				"ok": true,
+				"detail": "live page shows \"2 checks short of the catalog bar\""
+			},
+			{
+				"claim": "The Mannequin has no texture and arrives as 22 meshes against a limit of 8",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb",
+				"ok": true,
+				"detail": "live page shows \"22 meshes\""
+			},
+			{
+				"claim": "The Mannequin has no texture and arrives as 22 meshes against a limit of 8",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The other three checks pass, and each still prints its measurement: 5,196 vertices inside the density range, a 238 KB file, and a bounding box 0.561 units across",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb",
+				"ok": true,
+				"detail": "live page shows \"5,196 vertices\""
+			},
+			{
+				"claim": "The other three checks pass, and each still prints its measurement: 5,196 vertices inside the density range, a 238 KB file, and a bounding box 0.561 units across",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb",
+				"ok": true,
+				"detail": "live page shows \"238 KB\""
+			},
+			{
+				"claim": "The other three checks pass, and each still prints its measurement: 5,196 vertices inside the density range, a 238 KB file, and a bounding box 0.561 units across",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb",
+				"ok": true,
+				"detail": "live page shows \"0.561 units across\""
+			},
+			{
+				"claim": "For texture it says to bake and embed at least a base-colour map before publishing",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "For assembly it says to join the parts into one mesh, or to switch the category to Prop, where loose parts are legitimate and the check does not apply",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The page also reports that the model has no skeleton and cannot be animated until it is rigged",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb",
+				"ok": true,
+				"detail": "live page shows \"No skeleton\""
+			},
+			{
+				"claim": "Copy verdict JSON puts the full report on your clipboard",
+				"kind": "evidence:file",
+				"target": "src/inspect-page.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Copy shareable link builds an address that carries the model's URL, and opening it runs the same gate on the same file",
+				"kind": "evidence:file",
+				"target": "src/inspect-page.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Copy shareable link builds an address that carries the model's URL, and opening it runs the same gate on the same file",
+				"kind": "evidence:file",
+				"target": "src/inspect-page.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The page also has a Character and Prop switch, which is how the assembly rule knows whether loose parts are expected",
+				"kind": "evidence:file",
+				"target": "src/inspect-page.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The page also has a Character and Prop switch, which is how the assembly rule knows whether loose parts are expected",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Michelle is the sample labelled \"A clean pass\"",
+				"kind": "evidence:file",
+				"target": "src/inspect-page.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the rigged line reads 65 joints, ready to animate",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmichelle.glb",
+				"ok": true,
+				"detail": "live page shows \"Rigged · 65 joints · ready to animate\""
+			},
+			{
+				"claim": "the rigged line reads 65 joints, ready to animate",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmichelle.glb",
+				"ok": true,
+				"detail": "live page shows \"Clears the catalog bar\""
+			},
+			{
+				"claim": "Fox shows what headroom looks like at the other end. It is labelled \"Passes, barely\" for a reason",
+				"kind": "evidence:file",
+				"target": "src/inspect-page.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The page puts it in one line: one melted blob on the storefront costs more trust than ten rejected generations cost compute",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect",
+				"ok": true,
+				"detail": "live page shows \"One melted blob on the storefront costs more trust than ten rejected generations cost compute.\""
+			},
+			{
+				"claim": "That stage needs a renderer and a model call, so the page runs the structural half, which measures whether a model is built well enough to publish, and leaves the question of whether it looks good to the vision stage",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect",
+				"ok": true,
+				"detail": "live page shows \"These checks measure whether a model is built well enough to publish\""
+			},
+			{
+				"claim": "That stage needs a renderer and a model call, so the page runs the structural half, which measures whether a model is built well enough to publish, and leaves the question of whether it looks good to the vision stage",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-quality.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Here is the diff for the pair we ran, as the free endpoint reports it",
+				"kind": "evidence:page",
+				"target": "https://three.ws/api/3d/diff?a=https://three.ws/avatars/xbot.glb&b=https://three.ws/avatars/michelle.glb&format=markdown",
+				"ok": true,
+				"detail": "live page shows \"Skeleton \"Character\" lost 2 joint(s)\""
+			},
+			{
+				"claim": "The skeleton section names the two eye joints that are gone and says clips addressing them will not play",
+				"kind": "evidence:page",
+				"target": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
+				"ok": true,
+				"detail": "live page shows \"mixamorig:LeftEye\""
+			},
+			{
+				"claim": "Four objects kept their content and changed name",
+				"kind": "evidence:page",
+				"target": "https://three.ws/api/3d/diff?a=https://three.ws/avatars/xbot.glb&b=https://three.ws/avatars/michelle.glb&format=markdown",
+				"ok": true,
+				"detail": "live page shows \"4 object(s) kept their content and changed name.\""
+			},
+			{
+				"claim": "The pairing of clips is a similarity score over the joints they drive and their duration",
+				"kind": "evidence:file",
+				"target": "packages/glb-diff/src/diff.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "on this pair headShake pairs with SambaDance because both drive the same rig",
+				"kind": "evidence:page",
+				"target": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
+				"ok": true,
+				"detail": "live page shows \"headShake to SambaDance\""
+			},
+			{
+				"claim": "The command line tool takes four options, and each one maps to a place a diff gets read",
+				"kind": "evidence:file",
+				"target": "packages/glb-diff/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A texture swap should not fail a build, and a deleted bone that animation clips target should",
+				"kind": "evidence:file",
+				"target": "packages/glb-diff/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The exit codes are the contract a pipeline depends on",
+				"kind": "evidence:file",
+				"target": "packages/glb-diff/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A tool that returned one for both \"your model regressed\" and \"I could not open the file\" would be useless in a pipeline, which is why two exists",
+				"kind": "evidence:file",
+				"target": "packages/glb-diff/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The function takes bytes, so the same call works in Node, in a worker, in a serverless handler and in a browser",
+				"kind": "evidence:file",
+				"target": "packages/glb-diff/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The same verdict is one function call in the repository, which is how the seeding job uses it",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-quality.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A reason code never ships without an explanation: a test asserts that every code the gate can emit has a label, a reason and a fix",
+				"kind": "evidence:file",
+				"target": "tests/seed-mesh-gate.test.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The vertex counts match the pictures above",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb",
+				"ok": true,
+				"detail": "live page shows \"5,196 vertices\""
+			},
+			{
+				"claim": "The vertex counts match the pictures above",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmichelle.glb",
+				"ok": true,
+				"detail": "live page shows \"16,340 vertices\""
+			},
+			{
+				"claim": "The vertex counts match the pictures above",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Ffox.glb",
+				"ok": true,
+				"detail": "live page shows \"1,728 vertices\""
+			},
+			{
+				"claim": "It reads glTF through glTF-Transform, the open source toolkit for loading, inspecting and transforming glTF files, and uses its core and extensions packages",
 				"kind": "evidence:file",
 				"target": "packages/glb-diff/package.json",
 				"ok": true,
 				"detail": "file supports the claim"
+			},
+			{
+				"claim": "It reads glTF through glTF-Transform, the open source toolkit for loading, inspecting and transforming glTF files, and uses its core and extensions packages",
+				"kind": "evidence:file",
+				"target": "packages/glb-diff/package.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The browser page decodes it for you, and the command line tool uses meshoptimizer as an optional peer package installed next to it",
+				"kind": "evidence:file",
+				"target": "packages/glb-diff/package.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The browser page decodes it for you, and the command line tool uses meshoptimizer as an optional peer package installed next to it",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The package itself is released under the Apache-2.0 licence",
+				"kind": "evidence:file",
+				"target": "packages/glb-diff/package.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The similarity pass is bounded at 40,000 comparisons, and the result says when a pair of models was large enough to use the bound",
+				"kind": "evidence:file",
+				"target": "packages/glb-diff/src/match.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The similarity pass is bounded at 40,000 comparisons, and the result says when a pair of models was large enough to use the bound",
+				"kind": "evidence:file",
+				"target": "packages/glb-diff/src/match.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A rendered check from the GPU-free renderer package can sit beside the structural verdict",
+				"kind": "evidence:file",
+				"target": "packages/glb-diff/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the gate version on every verdict lets the thresholds move as the catalog grows",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"OpenAI Select Partner in the OpenAI Partner Network\""
+			},
+			{
+				"claim": "IBM is listed in the Strategic tier of the partner map",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Strategic partners\""
+			},
+			{
+				"claim": "three.ws agent identity integrates with IBM watsonx and IBM Granite",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"integrate with IBM watsonx and IBM Granite\""
+			},
+			{
+				"claim": "three.ws is deployed on AWS infrastructure with Marketplace availability",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Deployed on AWS infrastructure with Marketplace availability.\""
+			},
+			{
+				"claim": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing.\""
+			},
+			{
+				"claim": "a builder-focused publishing partnership with HackerNoon",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"A builder-focused publishing partnership\""
+			},
+			{
+				"claim": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"member of the Quicknode Startup Program with approved infrastructure credits.\""
+			},
+			{
+				"claim": "Google Cloud powers three.ws inference, storage and real-time serving",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Google Cloud powers three.ws inference, storage, and real-time serving at global scale.\""
+			},
+			{
+				"claim": "Alibaba Cloud extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Alibaba Cloud extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment.\""
+			},
+			{
+				"claim": "with low-latency inference close to users in Asia",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"low-latency inference close to users in Asia.\""
+			},
+			{
+				"claim": "feature articles, tutorials and developer guides for people shipping with AI, published to HackerNoon's developer audience",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"feature articles, tutorials, and developer guides for people shipping with AI, published to HackerNoon's developer audience.\""
 			},
 			{
 				"kind": "probe:api",
@@ -405,7 +706,31 @@
 			},
 			{
 				"kind": "link",
+				"target": "https://three.ws",
+				"ok": true,
+				"detail": "HTTP 200 via https://three.ws/"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
 				"target": "https://three.ws/diff",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
 				"ok": true,
 				"detail": "HTTP 200"
 			},
@@ -414,9 +739,147 @@
 				"target": "https://www.npmjs.com/package/@three-ws/glb-diff",
 				"ok": true,
 				"detail": "HTTP 200 via the npm registry"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/api/3d/diff?a=https://three.ws/avatars/xbot.glb&b=https://three.ws/avatars/michelle.glb&format=markdown",
+				"ok": true,
+				"detail": "HTTP 200"
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  editor returned no JSON object"
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 4,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 4
+		},
+		"issues": [
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "Geometry density 16,340 vertices, file weight 830 KB, surface texture 4 textures, and a single assembled character at 1 mesh",
+				"problem": "The Michelle image alt text states numbers (830 KB, 4 textures, 1 mesh) that appear in no passing verification result. Only 16,340 vertices and the 65-joint rigged line were verified live.",
+				"fix": "Fetch https://three.ws/inspect?url=...michelle.glb live, confirm each number in the alt text against the rendered page, and either keep the numbers that match or rewrite the alt to: \"The Michelle sample on the Model Inspector: Clears the catalog bar. Geometry density 16,340 vertices, and the page reports it rigged with 65 joints, ready to animate.\""
+			},
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "one texture and one mesh, and is reported rigged with 24 joints",
+				"problem": "The Fox image alt text asserts texture count, mesh count and a 24-joint rig, none of which were verified. The passing checks for Fox cover only \"1,728 vertices\" and \"Clears the catalog bar\".",
+				"fix": "Verify against the live Fox inspector URL; if unconfirmed, rewrite to: \"The Fox sample on the Model Inspector: it clears the catalog bar with 1,728 vertices against a density floor of 1,500.\""
+			},
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "five clips are gone (agree, idle, run, sneak_pose and walk)",
+				"problem": "The live diff page was only verified to say \"5 animations were removed (\\\"agree\\\", \\\"idle\\\", \\\"run\\\" and 2 more)\". Naming the two unlisted clips as sneak_pose and walk goes beyond the verified record.",
+				"fix": "Open the live diff pair page, expand the animation section, and confirm the two remaining clip names before publishing; otherwise rewrite the alt to: \"...and 5 animations were removed (agree, idle, run and 2 more), each with its duration.\""
+			},
+			{
+				"severity": "minor",
+				"area": "specificity",
+				"quote": "Two checks before a 3D model ships: the catalog gate, and a diff that names what broke",
+				"problem": "The house standard asks the title to carry the headline number. \"Two checks\" is abstract; the article's strongest numbers (22 meshes against a limit of 8, 2 joints lost, 5 clips gone) are not in the title. Length is in range at roughly 87 characters.",
+				"fix": "Consider: \"22 meshes against a limit of 8: the catalog gate that rejects the Mannequin, and the diff that names the 2 joints a change removed\" (adjusted to stay 80 to 100 characters)."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Our catalog turns away a character that arrives as more than 8 meshes, and you can run that exact check on your own .glb without uploading it. The write-up covers the five structural checks, how Model Diff names the joints and clips a change removed, the exit codes for CI, and how its rename pointers guide a review: three.ws/inspect"
+			],
+			"altText": [
+				"Two 3D characters on a black background: a translucent pink jointed mannequin standing beside Michelle, a green-skinned character with leafy green hair and yellow trousers",
+				"The Mannequin sample on the Model Inspector: Below the bar, 2 checks short. Surface texture reads none against at least 1, and Single assembled character reads 22 meshes against at most 8. Geometry density, file weight and bounds pass, and the page says there is no skeleton and the model cannot be animated until it is rigged.",
+				"The Michelle sample on the Model Inspector: Clears the catalog bar. Geometry density 16,340 vertices, and the page reports it rigged with 65 joints, ready to animate.",
+				"The Fox sample on the Model Inspector: it clears the catalog bar with 1,728 vertices against a density floor of 1,500.",
+				"Model Diff comparing the X Bot sample with Michelle: one skeleton lost the joints mixamorig:LeftEye and mixamorig:RightEye, and 5 animations were removed (agree, idle, run and 2 more), each with its duration."
+			]
+		},
+		"summary": "The article is accurate, well-structured and fully sourced: all 60-plus verified claims pass, it meets the keeper shape (real runs, plain-language stages, credited open work, exact partner designations, Try it section), and the head post is in voice. Revise only because three inline-image alt texts state numbers (Michelle 830 KB and 4 textures, Fox 24 joints, clip names sneak_pose and walk) that were never verified against the live pages; confirm each against the live URLs or use the trimmed alt texts in the rewrite.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"has to clear a structural gate before anyone sees it, and the Model Inspector runs that same gate, the same module with the same thresholds\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The seeding job that fills the catalog imports it, and so does the inspector page\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A threshold change lands in both places at once because there is only one place\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the gate reads nothing but the glTF JSON chunk\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A build check walks the real bundler graph from the page and fails the moment a Node built-in becomes reachable\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Every verdict carries a gate version, because an accept rate is only comparable within one version of the rules\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A failed check comes with the fix, written next to the rule it explains, so the guidance cannot drift from the rule\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The texture rule is deliberately stricter than the interactive Forge\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It clears the density floor of 1,500 with 1,728 vertices\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The gate is the first of two stages. On the catalog path a vision model then renders the mesh\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"pairs objects across the two the way git pairs renamed files: by name first, then by a hash of the content, then by similarity\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Vertex data is compared at a quantum of 1e-4 units, so the float drift of a re-export does not register while a genuine edit does\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Every change set carries one severity: none, cosmetic, minor, major or breaking\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A texture swap is minor because everything still loads and plays\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"That is the failure that renders fine and never moves\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The skeleton section names the two eye joints that are gone and says clips addressing them will not play. The animation section lists the five clips that no longer exist\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The page, a command line tool and a free HTTP endpoint all run the same published package\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"caps each side at 32 MB\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Most avatars on the platform ship with compressed geometry\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Geometry density holds a model between 1,500 and 1,500,000 vertices, and file weight holds it between 20 KB and 80 MB\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Geometry density asks for a model dense enough to read as a real object, without so much geometry that the viewer stalls on a phone\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"File weight asks for an asset heavy enough to be a real textured model and light enough to load before a visitor gives up\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A collapsed mesh passes every triangle count and still draws as a speck, which is why bounds have a check of their own\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A character arriving as a dozen disconnected meshes is a scene, not a character, and it will not rig or animate as one body\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A prop is exempt from the assembly rule, since a prop can legitimately be a loose collection of parts\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The inspector also reports whether the model is rigged and how many joints it carries\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The Mannequin sample is labelled \"Fails two rules\" on the page\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The headline says two checks short, and it names them: surface texture and single assembled character\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The Mannequin has no texture and arrives as 22 meshes against a limit of 8\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The other three checks pass, and each still prints its measurement: 5,196 vertices inside the density range, a 238 KB file, and a bounding box 0.561 units across\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"For texture it says to bake and embed at least a base-colour map before publishing\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"For assembly it says to join the parts into one mesh, or to switch the category to Prop, where loose parts are legitimate and the check does not apply\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The page also reports that the model has no skeleton and cannot be animated until it is rigged\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Copy verdict JSON puts the full report on your clipboard\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Copy shareable link builds an address that carries the model's URL, and opening it runs the same gate on the same file\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The page also has a Character and Prop switch, which is how the assembly rule knows whether loose parts are expected\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Michelle is the sample labelled \"A clean pass\"\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the rigged line reads 65 joints, ready to animate\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Fox shows what headroom looks like at the other end. It is labelled \"Passes, barely\" for a reason\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The page puts it in one line: one melted blob on the storefront costs more trust than ten rejected generations cost compute\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"That stage needs a renderer and a model call, so the page runs the structural half, which measures whether a model is built well enough to publish, and leaves the question of whether it looks good to the vision stage\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Here is the diff for the pair we ran, as the free endpoint reports it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The skeleton section names the two eye joints that are gone and says clips addressing them will not play\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Four objects kept their content and changed name\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The pairing of clips is a similarity score over the joints they drive and their duration\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"on this pair headShake pairs with SambaDance because both drive the same rig\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The command line tool takes four options, and each one maps to a place a diff gets read\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A texture swap should not fail a build, and a deleted bone that animation clips target should\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The exit codes are the contract a pipeline depends on\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A tool that returned one for both \"your model regressed\" and \"I could not open the file\" would be useless in a pipeline, which is why two exists\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The function takes bytes, so the same call works in Node, in a worker, in a serverless handler and in a browser\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The same verdict is one function call in the repository, which is how the seeding job uses it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A reason code never ships without an explanation: a test asserts that every code the gate can emit has a label, a reason and a fix\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The vertex counts match the pictures above\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It reads glTF through glTF-Transform, the open source toolkit for loading, inspecting and transforming glTF files, and uses its core and extensions packages\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The browser page decodes it for you, and the command line tool uses meshoptimizer as an optional peer package installed next to it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The package itself is released under the Apache-2.0 licence\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The similarity pass is bounded at 40,000 comparisons, and the result says when a pair of models was large enough to use the bound\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A rendered check from the GPU-free renderer package can sit beside the structural verdict\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the gate version on every verdict lets the thresholds move as the catalog grows\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"IBM is listed in the Strategic tier of the partner map\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws agent identity integrates with IBM watsonx and IBM Granite\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is deployed on AWS infrastructure with Marketplace availability\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a builder-focused publishing partnership with HackerNoon\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of the Quicknode Startup Program with approved infrastructure credits\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Google Cloud powers three.ws inference, storage and real-time serving\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Alibaba Cloud extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"with low-latency inference close to users in Asia\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"feature articles, tutorials and developer guides for people shipping with AI, published to HackerNoon's developer audience\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
 }

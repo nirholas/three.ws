@@ -129,6 +129,14 @@
 					"added": "2026-09-10"
 				},
 				{
+					"path": "/dissolve",
+					"title": "Dissolve",
+					"description": "Turn any 3D model into a storm of up to a million GPU particles, morph one shape into another, bend the storm with black holes, vortexes and shockwaves, and let your microphone drive it. Record or share what you make.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-10-12"
+				},
+				{
 					"path": "/choreograph",
 					"title": "Choreographer",
 					"description": "Compose agent gestures into a timed routine on a real timeline, preview the whole performance on a live 3D avatar, then save it to your agent and play it by name from any embed.",
@@ -610,6 +618,14 @@
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-06-27"
+				},
+				{
+					"path": "/partners/benefits",
+					"title": "Partner Benefits",
+					"description": "What each three.ws partnership brings to builders and the community: OpenAI, NVIDIA, IBM, Google Cloud, AWS, Alibaba Cloud, Quicknode and HackerNoon.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
 				},
 				{
 					"path": "/openai",
@@ -5425,6 +5441,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/partner-benefits",
+					"title": "Docs: Partner benefits",
+					"description": "How the public partner benefits page is built and the rules for what it may say: designations quoted exactly, no amounts or IDs, positive and factual.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-11"
+				},
+				{
 					"path": "/docs/agent-identities",
 					"title": "Docs: Agent Identity Studio",
 					"description": "Every AI agent deserves a face. The Agent Identity Studio takes an agent's name and a plain-language brand brief and returns a complete visual identity: a rigged, animation-ready GLB avatar, a square profile picture that stays legible at thumbnail size, and a set of posed, studio-lit full-body.",
@@ -5641,6 +5665,13 @@
 					"path": "/docs/sonar",
 					"title": "Docs · Sonar",
 					"description": "The developer reference for acoustic gesture control: the Doppler sensor and its Reading, the three detectors ported from Sonar and SoundWave, why running more than one at a time needs a mode, and what the technique needs from the room.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/dissolve",
+					"title": "Docs · Dissolve",
+					"description": "How Dissolve turns a GLB into a GPU particle storm: surface sampling, Morton-paired morphing, the force tools, share links and the microphone privacy model.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Dissolve · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta name="description" content="Turn any 3D model into a living storm of up to a million GPU particles, morph one avatar into another, then bend the storm with a black hole, a vortex, shockwaves and your voice." />
+		<meta name="theme-color" content="#04060b" />
+		<link rel="canonical" href="https://three.ws/dissolve" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Dissolve · three.ws" />
+		<meta property="og:description" content="Any 3D model becomes a million-particle storm you can morph, pull into a black hole and shatter with a shockwave. Runs entirely on your GPU." />
+		<meta property="og:url" content="https://three.ws/dissolve" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Dissolve&amp;d=Turn+any+3D+model+into+a+storm+of+up+to+a+million+GPU+particles%2C+morph+one+shape+into+another%2C+bend+the+storm+with+black+holes%2C+vortexes+and+shockwaves%2C+and&amp;p=%2Fdissolve" />
+		<meta property="og:image:alt" content="Dissolve on three.ws" />
+		<meta property="og:locale" content="en_US" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Dissolve · three.ws" />
+		<meta name="twitter:description" content="Any 3D model becomes a million-particle storm. Morph it, bend it, shatter it, all on your GPU." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Dissolve&amp;d=Turn+any+3D+model+into+a+storm+of+up+to+a+million+GPU+particles%2C+morph+one+shape+into+another%2C+bend+the+storm+with+black+holes%2C+vortexes+and+shockwaves%2C+and&amp;p=%2Fdissolve" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/dissolve.css" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Dissolve","description":"Turn any 3D model into a GPU particle storm, morph one model into another and bend it with forces.","url":"https://three.ws/dissolve","applicationCategory":"MultimediaApplication","operatingSystem":"Any","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	</head>
+	<body class="ds-body">
+		<header><div id="nav-container"></div></header>
+
+		<main class="ds-stage" id="dsStage">
+			<canvas class="ds-canvas" id="dsCanvas" role="img" aria-label="A 3D model dissolved into a storm of glowing particles"></canvas>
+
+			<div class="ds-hero" id="dsHero">
+				<div class="ds-chip"><span class="ds-chip-dot" aria-hidden="true"></span><span id="dsCount">GPU particles</span></div>
+				<h1>Dissolve</h1>
+				<p>Every model is a storm waiting to happen. Drag to pull it into a black hole.</p>
+			</div>
+
+			<div class="ds-loading" id="dsLoading" role="status" aria-live="polite" hidden>
+				<div class="ds-loading-card">
+					<div class="ds-loading-label" id="dsLoadingLabel">Loading</div>
+					<div class="ds-bar" aria-hidden="true"><div class="ds-bar-fill" id="dsBarFill"></div></div>
+				</div>
+			</div>
+
+			<div class="ds-fallback" id="dsFallback" hidden>
+				<h2 id="dsFallbackTitle">This browser cannot run Dissolve</h2>
+				<p id="dsFallbackBody"></p>
+				<a class="ds-btn ds-btn--primary" href="/viewer">Open the standard 3D viewer</a>
+			</div>
+
+			<div class="ds-rec" id="dsRec" hidden><span class="ds-rec-dot" aria-hidden="true"></span><span id="dsRecTime">0:00</span></div>
+
+			<button type="button" class="ds-dock-toggle" id="dsDockToggle" aria-expanded="true" aria-controls="dsDock">Controls</button>
+
+			<aside class="ds-dock" id="dsDock" aria-label="Dissolve controls">
+				<section class="ds-sec" aria-labelledby="dsSecShapes">
+					<h2 id="dsSecShapes">Shapes</h2>
+					<div class="ds-slot">
+						<span class="ds-slot-tag" aria-hidden="true">A</span>
+						<div class="ds-chips" id="dsShelfA" role="radiogroup" aria-label="Shape A"></div>
+					</div>
+					<div class="ds-slot">
+						<span class="ds-slot-tag ds-slot-tag--b" aria-hidden="true">B</span>
+						<div class="ds-chips" id="dsShelfB" role="radiogroup" aria-label="Shape B"></div>
+					</div>
+					<div class="ds-row">
+						<button type="button" class="ds-btn" id="dsPickA">Your GLB into A</button>
+						<button type="button" class="ds-btn" id="dsPickB">Your GLB into B</button>
+						<input type="file" id="dsFile" accept=".glb,.gltf,model/gltf-binary" hidden />
+					</div>
+					<form class="ds-url" id="dsUrlForm" autocomplete="off">
+						<label class="ds-sr" for="dsUrl">GLB link</label>
+						<input id="dsUrl" type="url" inputmode="url" placeholder="https://… .glb" spellcheck="false" />
+						<button type="submit" class="ds-btn" data-slot="A">To A</button>
+						<button type="submit" class="ds-btn" data-slot="B">To B</button>
+					</form>
+				</section>
+
+				<section class="ds-sec" aria-labelledby="dsSecMorph">
+					<h2 id="dsSecMorph">Morph</h2>
+					<div class="ds-row">
+						<button type="button" class="ds-btn ds-btn--primary" id="dsMorph">Morph to B</button>
+						<button type="button" class="ds-btn" id="dsSwap" title="Swap A and B (S)">Swap</button>
+						<button type="button" class="ds-btn ds-toggle" id="dsLoop" aria-pressed="false">Loop</button>
+					</div>
+					<label class="ds-range"><span>A</span>
+						<input type="range" id="dsMix" min="0" max="1000" value="0" aria-label="Blend between shape A and shape B" />
+						<span>B</span></label>
+				</section>
+
+				<section class="ds-sec" aria-labelledby="dsSecTools">
+					<h2 id="dsSecTools">Forces</h2>
+					<div class="ds-tools" id="dsTools" role="radiogroup" aria-label="Pointer tool">
+						<button type="button" role="radio" class="ds-tool" data-tool="orbit" aria-checked="false"><kbd>1</kbd>Orbit</button>
+						<button type="button" role="radio" class="ds-tool" data-tool="gravity" aria-checked="true"><kbd>2</kbd>Black hole</button>
+						<button type="button" role="radio" class="ds-tool" data-tool="vortex" aria-checked="false"><kbd>3</kbd>Vortex</button>
+						<button type="button" role="radio" class="ds-tool" data-tool="burst" aria-checked="false"><kbd>4</kbd>Shockwave</button>
+					</div>
+					<p class="ds-hint" id="dsToolHint"></p>
+					<div class="ds-row">
+						<button type="button" class="ds-btn ds-toggle" id="dsCollapse" aria-pressed="false" title="Let go and fall to the floor (C)">Collapse</button>
+						<button type="button" class="ds-btn" id="dsDetonate" title="Blow the shape apart (B)">Detonate</button>
+					</div>
+				</section>
+
+				<section class="ds-sec" aria-labelledby="dsSecLook">
+					<h2 id="dsSecLook">Look</h2>
+					<div class="ds-chips" id="dsPresets" role="radiogroup" aria-label="Look preset"></div>
+					<label class="ds-slider"><span>Size</span><input type="range" id="dsSize" min="0.3" max="2.6" step="0.01" /></label>
+					<label class="ds-slider"><span>Glow</span><input type="range" id="dsGlow" min="0" max="2.5" step="0.01" /></label>
+					<label class="ds-slider"><span>Chaos</span><input type="range" id="dsChaos" min="0" max="2" step="0.01" /></label>
+					<div class="ds-row">
+						<button type="button" class="ds-btn ds-toggle" id="dsOrbit" aria-pressed="true">Auto-orbit</button>
+						<button type="button" class="ds-btn ds-toggle" id="dsMic" aria-pressed="false" title="React to sound (M)">Mic</button>
+					</div>
+				</section>
+
+				<section class="ds-sec" aria-labelledby="dsSecShare">
+					<h2 id="dsSecShare">Capture</h2>
+					<div class="ds-row">
+						<button type="button" class="ds-btn" id="dsShot" title="Save a PNG (P)">Snapshot</button>
+						<button type="button" class="ds-btn" id="dsRecord" title="Record a clip (R)">Record</button>
+						<button type="button" class="ds-btn" id="dsShare">Copy link</button>
+					</div>
+					<label class="ds-select"><span>Particles</span>
+						<select id="dsQuality" aria-label="Particle count"></select>
+					</label>
+				</section>
+				<p class="ds-keys">Space morph · 1-4 tools · S swap · C collapse · B detonate · M mic · P snapshot · R record · H hide controls</p>
+			</aside>
+
+			<div class="ds-toast" id="dsToast" role="status" aria-live="polite" hidden></div>
+		</main>
+
+		<script src="/nav.js" defer></script>
+		<script type="module" src="/src/dissolve/page.js"></script>
+	</body>
+</html>

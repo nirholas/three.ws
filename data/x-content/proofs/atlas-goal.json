@@ -1,0 +1,170 @@
+{
+	"id": "atlas-goal",
+	"scenarioHash": "d3dad7b70c62a53a1f4c77ee8848a06e26f50052ac55a68f3080a8788992ab1f",
+	"ranAt": "2026-10-13T06:30:46.237Z",
+	"target": {
+		"commit": "771cfef01",
+		"revision": "three-ws-api-00497-2ss"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/atlas",
+			"detail": "loaded https://three.ws/atlas",
+			"ok": true,
+			"ms": 8661,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "expect",
+			"target": "pages across 10 sections",
+			"detail": "appeared after 0.4 s",
+			"ok": true,
+			"ms": 449,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "pages",
+			"detail": "pages = \"946\"",
+			"ok": true,
+			"ms": 36,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "scroll",
+			"target": "500",
+			"detail": "scrolled 500 px",
+			"ok": true,
+			"ms": 20087,
+			"frames": 42
+		},
+		{
+			"index": 5,
+			"kind": "expect",
+			"target": "15 shortcuts",
+			"detail": "appeared after 0.1 s",
+			"ok": true,
+			"ms": 106,
+			"frames": 0
+		},
+		{
+			"index": 6,
+			"kind": "scroll",
+			"target": "-500",
+			"detail": "scrolled -500 px",
+			"ok": true,
+			"ms": 5038,
+			"frames": 27
+		},
+		{
+			"index": 7,
+			"kind": "type",
+			"target": "animation",
+			"detail": "typed 9 characters",
+			"ok": true,
+			"ms": 6668,
+			"frames": 34
+		},
+		{
+			"index": 8,
+			"kind": "expect",
+			"target": "pages match",
+			"detail": "appeared after 0.0 s",
+			"ok": true,
+			"ms": 45,
+			"frames": 0
+		},
+		{
+			"index": 9,
+			"kind": "read",
+			"target": "matches",
+			"detail": "matches = \"22\"",
+			"ok": true,
+			"ms": 3,
+			"frames": 0
+		},
+		{
+			"index": 10,
+			"kind": "hold",
+			"target": "1200",
+			"detail": "1200 ms",
+			"ok": true,
+			"ms": 5681,
+			"frames": 36
+		},
+		{
+			"index": 11,
+			"kind": "scroll",
+			"target": "Animate or pose an avatar",
+			"detail": "scrolled 391 px",
+			"ok": true,
+			"ms": 5385,
+			"frames": 36
+		},
+		{
+			"index": 12,
+			"kind": "hold",
+			"target": "1500",
+			"detail": "1500 ms",
+			"ok": true,
+			"ms": 5580,
+			"frames": 45
+		},
+		{
+			"index": 13,
+			"kind": "scroll",
+			"target": "Animation Studio",
+			"detail": "scrolled 228 px",
+			"ok": true,
+			"ms": 5936,
+			"frames": 42
+		},
+		{
+			"index": 14,
+			"kind": "scroll",
+			"target": "420",
+			"detail": "scrolled 420 px",
+			"ok": true,
+			"ms": 7001,
+			"frames": 48
+		},
+		{
+			"index": 15,
+			"kind": "hold",
+			"target": "2400",
+			"detail": "2400 ms",
+			"ok": true,
+			"ms": 9608,
+			"frames": 72
+		}
+	],
+	"facts": {
+		"pages": "946",
+		"matches": "22"
+	},
+	"saw": [
+		"pages across 10 sections",
+		"15 shortcuts",
+		"pages match"
+	],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/atlas-goal/reel.mp4",
+		"sha256": "5665cd2de95803fb88e7fd4cf6e54bb560943c19dfd9a2aef8f3c9182b8465ea",
+		"frames": 382,
+		"motion": 0.572,
+		"durationSec": 12.73,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

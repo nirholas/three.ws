@@ -1,10 +1,10 @@
 {
 	"id": "changelog-feed",
 	"scenarioHash": "793b7d9b04bc8166810cdaf2e94e703732a4c06ce35f17ecf07341fb9052c9ee",
-	"ranAt": "2026-10-09T17:12:44.751Z",
+	"ranAt": "2026-10-13T18:38:04.268Z",
 	"target": {
-		"commit": "ec8d1d270",
-		"revision": "three-ws-api-00482-fzq"
+		"commit": "7d172d48e",
+		"revision": "three-ws-api-00499-fgc"
 	},
 	"passed": true,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/changelog",
 			"detail": "loaded https://three.ws/changelog",
 			"ok": true,
-			"ms": 7205,
+			"ms": 7058,
 			"frames": 0
 		},
 		{
@@ -23,16 +23,16 @@
 			"target": "2000",
 			"detail": "2000 ms",
 			"ok": true,
-			"ms": 14572,
+			"ms": 9956,
 			"frames": 60
 		},
 		{
 			"index": 3,
 			"kind": "read",
 			"target": "total",
-			"detail": "total = \"3864\"",
+			"detail": "total = \"4007\"",
 			"ok": true,
-			"ms": 5,
+			"ms": 2,
 			"frames": 0
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "docs",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 5806,
+			"ms": 3589,
 			"frames": 21
 		},
 		{
@@ -50,7 +50,7 @@
 			"target": "1600",
 			"detail": "1600 ms",
 			"ok": true,
-			"ms": 12431,
+			"ms": 7690,
 			"frames": 48
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "700",
 			"detail": "scrolled 700 px",
 			"ok": true,
-			"ms": 16584,
+			"ms": 9222,
 			"frames": 54
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "1500",
 			"detail": "1500 ms",
 			"ok": true,
-			"ms": 12906,
+			"ms": 6901,
 			"frames": 45
 		},
 		{
@@ -77,7 +77,7 @@
 			"target": "-1400",
 			"detail": "scrolled -1400 px",
 			"ok": true,
-			"ms": 13198,
+			"ms": 7954,
 			"frames": 48
 		},
 		{
@@ -86,21 +86,21 @@
 			"target": "2600",
 			"detail": "2600 ms",
 			"ok": true,
-			"ms": 18330,
+			"ms": 11813,
 			"frames": 78
 		}
 	],
 	"facts": {
-		"total": "3864"
+		"total": "4007"
 	},
 	"saw": [],
 	"responses": [],
 	"cuts": [],
 	"video": {
 		"path": "public/x-media/changelog-feed/reel.mp4",
-		"sha256": "336b36ee4bedc2c3c0690ef4c8abd6460097f9dda5bf2906e177373dcbcf60a7",
+		"sha256": "0f2aa2ac8cd6321b3b201708a08e374f887eb5f2347c66b86a14134acd9430dc",
 		"frames": 354,
-		"motion": 0.286,
+		"motion": 0.289,
 		"durationSec": 11.8,
 		"width": 1080,
 		"height": 1080,

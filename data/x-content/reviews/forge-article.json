@@ -1,99 +1,86 @@
 {
 	"id": "forge-article",
-	"contentHash": "12279cb509f8d695672307a5096fabc5dc341b95f913978c3de06001b8821ecc",
-	"reviewedAt": "2026-10-09T17:07:43.709Z",
-	"passed": false,
-	"blockers": [
-		"evidence:file api/_lib/forge-tiers.js: file does not contain \"\tdraft: Object.freeze({ image: 'trellis_selfhost' }),\n\tstandard: Object.freeze({ image: 'trellis_selfhost' }),\"",
-		"evidence:file api/_lib/forge-tiers.js: file does not contain \"\thigh: Object.freeze({ image: 'hunyuan3d' }),\"",
-		"evidence:file api/_lib/forge-failover.js: file does not contain \"const ASYNC_REDISPATCH_ORDER = ['trellis_selfhost', 'hunyuan3d', 'trellis', 'triposg'];\"",
-		"editor (accuracy): The verification for this claim failed: api/_lib/forge-failover.js does not contain the quoted ASYNC_REDISPATCH_ORDER line. The article must not state a rescue order the code does not confirm.",
-		"editor (accuracy): Both file verifications failed: forge-tiers.js does not contain the quoted tier-routing lines. The tier routing as written is unverified against the live code.",
-		"editor verdict is revise"
-	],
+	"contentHash": "11b72f602fb1b193a27bbce5c5901878069df9bede6ac29ab62f15ffe18bf1f8",
+	"reviewedAt": "2026-10-13T18:18:24.084Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
-		"How a sentence becomes a textured 3D model, and where the job goes when a GPU fails",
-		"A text prompt on the Forge runs through two chains: one paints a reference picture, the other rebuilds it as a textured 3D model on our own NVIDIA GPUs on Cloud Run. When a worker fails mid-job, the job moves to the next engine under the same id. The write-up covers the lanes, the rescue order and the limits: three.ws/forge"
+		"A picture became a textured 3D model in 2 minutes 17 seconds, and a signed receipt shows how",
+		"One picture into the Forge, no account: 2 minutes 17 seconds later, a textured 3D model built on our own NVIDIA L4, plus a signed receipt for every stage. The write-up covers the engine ladder, the mid-job rescue and the free lane: three.ws/forge"
 	],
-	"lint": [
-		{
-			"where": "article body",
-			"rule": "register",
-			"severity": "major",
-			"message": "\"simply\" is filler; replace it with the fact it stands in for"
-		},
-		{
-			"where": "article body",
-			"rule": "register",
-			"severity": "major",
-			"message": "\"actually\" is filler; replace it with the fact it stands in for"
-		}
-	],
+	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
-				"claim": "one paints a reference picture, the other rebuilds it as a textured 3D model",
+				"claim": "2 minutes 17 seconds",
 				"kind": "evidence:page",
-				"target": "https://three.ws/forge",
+				"target": "https://three.ws/api/runs?id=rr_9Wc3cwxCbevEWfbbY2F3BN",
 				"ok": true,
-				"detail": "live page shows \"renders a preview image, then builds 3D\""
+				"detail": "live page shows \"\"duration_ms\":137433\""
 			},
 			{
-				"claim": "one paints a reference picture, the other rebuilds it as a textured 3D model",
-				"kind": "evidence:file",
-				"target": "api/_lib/forge-reference-image.js",
+				"claim": "2 minutes 17 seconds",
+				"kind": "evidence:page",
+				"target": "https://three.ws/api/runs?id=rr_9Wc3cwxCbevEWfbbY2F3BN",
 				"ok": true,
-				"detail": "file supports the claim"
+				"detail": "live page shows \"\"ms\":137423\""
 			},
 			{
-				"claim": "on our own NVIDIA GPUs on Cloud Run",
+				"claim": "137,433 ms",
+				"kind": "evidence:page",
+				"target": "https://three.ws/api/runs?id=rr_9Wc3cwxCbevEWfbbY2F3BN",
+				"ok": true,
+				"detail": "live page shows \"\"duration_ms\":137433\""
+			},
+			{
+				"claim": "137,423 ms",
+				"kind": "evidence:page",
+				"target": "https://three.ws/api/runs?id=rr_9Wc3cwxCbevEWfbbY2F3BN",
+				"ok": true,
+				"detail": "live page shows \"\"ms\":137423\""
+			},
+			{
+				"claim": "The mesh in our run was built on an NVIDIA L4",
+				"kind": "evidence:page",
+				"target": "https://three.ws/api/runs?id=rr_9Wc3cwxCbevEWfbbY2F3BN",
+				"ok": true,
+				"detail": "live page shows \"\"engine\":\"TRELLIS (self-host)\"\""
+			},
+			{
+				"claim": "The mesh in our run was built on an NVIDIA L4",
 				"kind": "evidence:page",
 				"target": "https://model-trellis-lp642k3kpa-uc.a.run.app/health",
 				"ok": true,
 				"detail": "live page shows \"\"gpu_name\":\"NVIDIA L4\"\""
 			},
 			{
-				"claim": "on our own NVIDIA GPUs on Cloud Run",
-				"kind": "evidence:page",
-				"target": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
-				"ok": true,
-				"detail": "live page shows \"\"gpu_name\":\"NVIDIA RTX PRO 6000 Blackwell Server Edition\"\""
-			},
-			{
-				"claim": "When a worker fails mid-job, the job moves to the next engine under the same id",
+				"claim": "The mesh in our run was built on an NVIDIA L4",
 				"kind": "evidence:file",
-				"target": "api/forge.js",
+				"target": "workers/model-trellis/README.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "when an engine fails partway through a job, the job moves to the next engine under the same job id and the progress bar keeps going",
-				"kind": "evidence:page",
-				"target": "https://three.ws/blog/inside-the-forge",
-				"ok": true,
-				"detail": "live page shows \"You keep watching the same progress bar; you never find out it happened.\""
-			},
-			{
-				"claim": "when an engine fails partway through a job, the job moves to the next engine under the same job id and the progress bar keeps going",
-				"kind": "evidence:file",
-				"target": "api/_lib/forge-failover.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a Draft or Standard model costs nothing and needs no account",
+				"claim": "no account",
 				"kind": "evidence:page",
 				"target": "https://three.ws/forge",
 				"ok": true,
 				"detail": "live page shows \"Free · no sign-up · yours to download\""
 			},
 			{
-				"claim": "a Draft or Standard model costs nothing and needs no account",
+				"claim": "a Draft or Standard model is free and needs no account",
+				"kind": "evidence:page",
+				"target": "https://three.ws/forge",
+				"ok": true,
+				"detail": "live page shows \"Free · no sign-up · yours to download\""
+			},
+			{
+				"claim": "a Draft or Standard model is free and needs no account",
 				"kind": "evidence:page",
 				"target": "https://three.ws/blog/inside-the-forge",
 				"ok": true,
-				"detail": "live page shows \"Draft and standard usually cost us nothing to produce, because they run on free lanes and our own GPUs.\""
+				"detail": "live page shows \"draft and standard usually cost us nothing to produce, because they run on free lanes and our own GPUs.\""
 			},
 			{
 				"claim": "The realism of the final mesh is set almost entirely by the realism of that one reference image",
@@ -117,77 +104,42 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "falls through to FLUX on NVIDIA's hosted inference, then to further providers, ending in a keyless rung, so no single provider's failure is ever the terminal error",
+				"claim": "no single provider's failure is ever the terminal error for the picture",
 				"kind": "evidence:file",
 				"target": "api/_mcp3d/text-to-image.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "falls through to FLUX on NVIDIA's hosted inference, then to further providers, ending in a keyless rung, so no single provider's failure is ever the terminal error",
-				"kind": "evidence:file",
-				"target": "api/_lib/forge-reference-image.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "Photos skip this step: your photo is the reference. A sketch skips it too",
+				"claim": "The default engine at every tier is TRELLIS on our own NVIDIA L4 worker",
 				"kind": "evidence:page",
-				"target": "https://three.ws/blog/inside-the-forge",
+				"target": "https://three.ws/api/forge?catalog",
 				"ok": true,
-				"detail": "live page shows \"If you uploaded photos instead, this step is skipped: your photos are the reference. Sketches skip it too and drive the geometry directly.\""
+				"detail": "live page shows \"\"default_backend_for_tier\"\""
 			},
 			{
-				"claim": "Draft and Standard go to TRELLIS on our own worker. High goes to Hunyuan3D 2.1 on our own worker",
-				"kind": "evidence:file",
-				"target": "api/_lib/forge-tiers.js",
-				"ok": false,
-				"detail": "file does not contain \"\tdraft: Object.freeze({ image: 'trellis_selfhost' }),\n\tstandard: Object.freeze({ image: 'trellis_selfhost' }),\""
-			},
-			{
-				"claim": "Draft and Standard go to TRELLIS on our own worker. High goes to Hunyuan3D 2.1 on our own worker",
-				"kind": "evidence:file",
-				"target": "api/_lib/forge-tiers.js",
-				"ok": false,
-				"detail": "file does not contain \"\thigh: Object.freeze({ image: 'hunyuan3d' }),\""
-			},
-			{
-				"claim": "Draft and Standard go to TRELLIS on our own worker. High goes to Hunyuan3D 2.1 on our own worker",
+				"claim": "The default engine at every tier is TRELLIS on our own NVIDIA L4 worker",
 				"kind": "evidence:page",
-				"target": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
+				"target": "https://model-trellis-lp642k3kpa-uc.a.run.app/health",
 				"ok": true,
-				"detail": "live page shows \"\"model\":\"hunyuan3d-2.1\"\""
+				"detail": "live page shows \"\"gpu_name\":\"NVIDIA L4\"\""
 			},
 			{
-				"claim": "paints a full PBR material set (colour, roughness and normal maps) rather than one baked colour map",
-				"kind": "evidence:page",
-				"target": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
-				"ok": true,
-				"detail": "live page shows \"Hunyuan3D 2.1 runs a shape DiT for geometry, then a separate PBR paint pass\""
-			},
-			{
-				"claim": "paints a full PBR material set (colour, roughness and normal maps) rather than one baked colour map",
-				"kind": "evidence:page",
-				"target": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
-				"ok": true,
-				"detail": "live page shows \"Hunyuan3D 2.0 gives you a mesh with a single baked diffuse texture.\""
-			},
-			{
-				"claim": "a prompt that clearly reads as a hard-surface object (a robot, a vehicle, a piece of furniture) swaps TRELLIS ahead of Hunyuan3D",
+				"claim": "It takes the first lane in its order that is healthy or whose state is unknown; if none is clean, it takes the first that is not confirmed down",
 				"kind": "evidence:file",
 				"target": "api/_lib/forge-tiers.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "a prompt that clearly reads as a hard-surface object (a robot, a vehicle, a piece of furniture) swaps TRELLIS ahead of Hunyuan3D",
+				"claim": "It takes the first lane in its order that is healthy or whose state is unknown; if none is clean, it takes the first that is not confirmed down",
 				"kind": "evidence:file",
 				"target": "api/_lib/forge-tiers.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "a prompt that clearly reads as a hard-surface object (a robot, a vehicle, a piece of furniture) swaps TRELLIS ahead of Hunyuan3D",
+				"claim": "Hugging Face Spaces for photos, and NVIDIA's hosted TRELLIS for text, which keeps a text prompt answerable even when every one of our GPU workers is cold",
 				"kind": "evidence:file",
 				"target": "api/_lib/forge-tiers.js",
 				"ok": true,
@@ -208,53 +160,60 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "Engines that need your own API key run only when you pick them",
-				"kind": "evidence:page",
-				"target": "https://three.ws/forge",
-				"ok": true,
-				"detail": "live page shows \"your own key\""
-			},
-			{
-				"claim": "Engines that need your own API key run only when you pick them",
+				"claim": "Standard, usually about a minute",
 				"kind": "evidence:file",
 				"target": "src/forge.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "It takes the first lane in its order that is healthy or simply unknown; if none is clean, it takes the first that is not confirmed down",
+				"claim": "Its community licence does not cover the European Union, the United Kingdom or South Korea",
 				"kind": "evidence:file",
-				"target": "api/_lib/forge-tiers.js",
+				"target": "api/_lib/forge-territory.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "It takes the first lane in its order that is healthy or simply unknown; if none is clean, it takes the first that is not confirmed down",
+				"claim": "the router resolves the country on the server and keeps every Tencent lane out of those regions",
 				"kind": "evidence:file",
-				"target": "api/_lib/forge-tiers.js",
+				"target": "api/_lib/forge-territory.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "about 12,000 at Draft, about 30,000 at Standard, and up to 200,000 at High",
-				"kind": "evidence:page",
-				"target": "https://three.ws/blog/inside-the-forge",
+				"claim": "the router resolves the country on the server and keeps every Tencent lane out of those regions",
+				"kind": "evidence:file",
+				"target": "api/_lib/forge-territory.js",
 				"ok": true,
-				"detail": "live page shows \"Draft: about 12,000 polygons, fast.\""
+				"detail": "file supports the claim"
 			},
 			{
-				"claim": "about 12,000 at Draft, about 30,000 at Standard, and up to 200,000 at High",
+				"claim": "It runs on our own worker on an RTX PRO 6000 Blackwell",
 				"kind": "evidence:page",
-				"target": "https://three.ws/blog/inside-the-forge",
+				"target": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
 				"ok": true,
-				"detail": "live page shows \"Standard (the default): about 30,000 polygons\""
+				"detail": "live page shows \"\"gpu_name\":\"NVIDIA RTX PRO 6000 Blackwell Server Edition\"\""
 			},
 			{
-				"claim": "about 12,000 at Draft, about 30,000 at Standard, and up to 200,000 at High",
+				"claim": "It runs on our own worker on an RTX PRO 6000 Blackwell",
 				"kind": "evidence:page",
-				"target": "https://three.ws/blog/inside-the-forge",
+				"target": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
 				"ok": true,
-				"detail": "live page shows \"High: up to 200,000 polygons\""
+				"detail": "live page shows \"\"model\":\"hunyuan3d-2.1\"\""
+			},
+			{
+				"claim": "then paints colour, roughness and normal maps with a second, rather than a single baked colour map",
+				"kind": "evidence:page",
+				"target": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+				"ok": true,
+				"detail": "live page shows \"Hunyuan3D 2.1 runs a shape DiT for geometry, then a separate PBR paint pass\""
+			},
+			{
+				"claim": "then paints colour, roughness and normal maps with a second, rather than a single baked colour map",
+				"kind": "evidence:page",
+				"target": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+				"ok": true,
+				"detail": "live page shows \"Hunyuan3D 2.0 gives you a mesh with a single baked diffuse texture.\""
 			},
 			{
 				"claim": "The poll handler marks the failed lane unhealthy for 90 seconds",
@@ -278,11 +237,18 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "our TRELLIS worker, then our Hunyuan3D worker, then a hosted TRELLIS lane where one is configured, then TripoSG",
+				"claim": "you keep watching the same progress bar",
+				"kind": "evidence:page",
+				"target": "https://three.ws/blog/inside-the-forge",
+				"ok": true,
+				"detail": "live page shows \"You keep watching the same progress bar; you never find out it happened.\""
+			},
+			{
+				"claim": "our own GPU workers first, then free external lanes, then the paid platform default, then the geometry-only TripoSG lane as the final rung",
 				"kind": "evidence:file",
 				"target": "api/_lib/forge-failover.js",
-				"ok": false,
-				"detail": "file does not contain \"const ASYNC_REDISPATCH_ORDER = ['trellis_selfhost', 'hunyuan3d', 'trellis', 'triposg'];\""
+				"ok": true,
+				"detail": "file supports the claim"
 			},
 			{
 				"claim": "A job gets its first lane plus up to three backups",
@@ -306,42 +272,63 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "a worker outage from 18 to 28 September that took Hunyuan3D and TRELLIS down together: without it, roughly 400 photo jobs a day ended in a hard failure while the TripoSG worker sat healthy",
+				"claim": "90 seconds",
 				"kind": "evidence:file",
-				"target": "api/_lib/forge-failover.js",
+				"target": "api/_lib/forge-lane-health.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The response names the lanes that can serve a fresh retry",
+				"claim": "4 seconds",
+				"kind": "evidence:file",
+				"target": "api/_lib/forge-health.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The response still names the way forward",
 				"kind": "evidence:file",
 				"target": "api/forge.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "TRELLIS runs on an L4. Hunyuan3D 2.1 runs on an RTX PRO 6000 Blackwell, held warm with one instance, because a cold start means loading 14 GiB of weights before any work begins",
-				"kind": "evidence:page",
-				"target": "https://model-trellis-lp642k3kpa-uc.a.run.app/health",
+				"claim": "It lists the lanes that can serve a fresh retry",
+				"kind": "evidence:file",
+				"target": "api/forge.js",
 				"ok": true,
-				"detail": "live page shows \"\"gpu_name\":\"NVIDIA L4\"\""
+				"detail": "file supports the claim"
 			},
 			{
-				"claim": "TRELLIS runs on an L4. Hunyuan3D 2.1 runs on an RTX PRO 6000 Blackwell, held warm with one instance, because a cold start means loading 14 GiB of weights before any work begins",
-				"kind": "evidence:page",
-				"target": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
+				"claim": "Hugging Face Spaces block for the whole generation, and NVIDIA's hosted lane takes text only, so neither can pick up a job from a status poll",
+				"kind": "evidence:file",
+				"target": "api/_lib/forge-failover.js",
 				"ok": true,
-				"detail": "live page shows \"\"gpu_name\":\"NVIDIA RTX PRO 6000 Blackwell Server Edition\"\""
+				"detail": "file supports the claim"
 			},
 			{
-				"claim": "TRELLIS runs on an L4. Hunyuan3D 2.1 runs on an RTX PRO 6000 Blackwell, held warm with one instance, because a cold start means loading 14 GiB of weights before any work begins",
+				"claim": "Hugging Face Spaces block for the whole generation, and NVIDIA's hosted lane takes text only, so neither can pick up a job from a status poll",
+				"kind": "evidence:file",
+				"target": "api/_lib/forge-failover.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a job that started from several photos continues from one of them, and says so by reporting how many views it used",
+				"kind": "evidence:file",
+				"target": "api/forge.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "held warm with one instance, because a cold start means loading 14 GiB of weights before any work begins",
 				"kind": "evidence:page",
 				"target": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
 				"ok": true,
 				"detail": "live page shows \"Our RTX service runs with min instances and max instances both set to 1, held warm.\""
 			},
 			{
-				"claim": "TRELLIS runs on an L4. Hunyuan3D 2.1 runs on an RTX PRO 6000 Blackwell, held warm with one instance, because a cold start means loading 14 GiB of weights before any work begins",
+				"claim": "held warm with one instance, because a cold start means loading 14 GiB of weights before any work begins",
 				"kind": "evidence:page",
 				"target": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
 				"ok": true,
@@ -355,7 +342,7 @@
 				"detail": "live page shows \"every image-to-3D worker speaks the same wire contract.\""
 			},
 			{
-				"claim": "The health check reads the second field, so a worker that is up but still loading is reported degraded, not healthy",
+				"claim": "The Forge's health check reads the second field, so a worker that is up but still loading is reported degraded, not healthy",
 				"kind": "evidence:file",
 				"target": "api/_lib/forge-health.js",
 				"ok": true,
@@ -369,84 +356,210 @@
 				"detail": "live page shows \"Task state lives in object storage, not in the instance.\""
 			},
 			{
-				"claim": "18 GiB staged plus 14 GiB loaded is a 32 GiB peak against the L4 tier's 32 GiB ceiling, and the container was killed on every cold start",
+				"claim": "18 GiB staged plus 14 GiB loaded is a 32 GiB peak, and the RTX PRO 6000 tier's floor of 80 GiB clears it with room to spare",
 				"kind": "evidence:page",
 				"target": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
 				"ok": true,
 				"detail": "live page shows \"So the peak is not 14 GiB and it is not 18 GiB. It is both at once, against the L4 tier's ceiling of 32 GiB:\""
 			},
 			{
-				"claim": "18 GiB staged plus 14 GiB loaded is a 32 GiB peak against the L4 tier's 32 GiB ceiling, and the container was killed on every cold start",
-				"kind": "evidence:page",
-				"target": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
-				"ok": true,
-				"detail": "live page shows \"Every single cold start ended the same way:\""
-			},
-			{
-				"claim": "The RTX PRO 6000 tier's floor of 80 GiB clears it",
+				"claim": "18 GiB staged plus 14 GiB loaded is a 32 GiB peak, and the RTX PRO 6000 tier's floor of 80 GiB clears it with room to spare",
 				"kind": "evidence:page",
 				"target": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
 				"ok": true,
 				"detail": "live page shows \"The platform minimums for nvidia-rtx-pro-6000 on Cloud Run are 20 CPU and 80 GiB, which clears a 32 GiB peak with room to spare\""
 			},
 			{
-				"claim": "Blackwell needs its GPU code built with NVIDIA's 12.8 toolkit. The worker image compiles its extensions for both GPU generations, so which card runs it is a deploy flag rather than a rebuild",
+				"claim": "Blackwell needs its GPU code built with NVIDIA's 12.8 toolkit",
 				"kind": "evidence:page",
 				"target": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
 				"ok": true,
 				"detail": "live page shows \"Blackwell is sm_120 and needs cu128 wheels; no flag substitutes for the rebuild.\""
 			},
 			{
-				"claim": "Blackwell needs its GPU code built with NVIDIA's 12.8 toolkit. The worker image compiles its extensions for both GPU generations, so which card runs it is a deploy flag rather than a rebuild",
+				"claim": "The worker image compiles its extensions for both GPU generations, so which card runs it is a deploy flag rather than a rebuild",
 				"kind": "evidence:page",
 				"target": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
 				"ok": true,
 				"detail": "live page shows \"We compile the custom CUDA extensions for both architectures, not just the one we deploy to:\""
 			},
 			{
-				"claim": "Blackwell needs its GPU code built with NVIDIA's 12.8 toolkit. The worker image compiles its extensions for both GPU generations, so which card runs it is a deploy flag rather than a rebuild",
+				"claim": "The worker image compiles its extensions for both GPU generations, so which card runs it is a deploy flag rather than a rebuild",
 				"kind": "evidence:page",
 				"target": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
 				"ok": true,
 				"detail": "live page shows \"That turns \"which card is available in this region today\" from a rebuild into a deploy flag\""
 			},
 			{
-				"claim": "Hugging Face Spaces block for the whole generation and NVIDIA's hosted lane takes text only, so neither can pick up a job that failed on a poll; both appear only in the retry suggestions",
+				"claim": "signed with an ed25519 key",
+				"kind": "evidence:page",
+				"target": "https://three.ws/api/runs?id=rr_9Wc3cwxCbevEWfbbY2F3BN",
+				"ok": true,
+				"detail": "live page shows \"\"signature\":\"ZdA9LUKCgoqVy46wLE3govuSaHXtgjrCtr1wi91HpQrfGrtFxKFcoMmnsx1aRxQywBggxgUU6Eu9tWYZGE82nnA\"\""
+			},
+			{
+				"claim": "signed with an ed25519 key",
+				"kind": "evidence:page",
+				"target": "https://three.ws/api/runs?id=rr_9Wc3cwxCbevEWfbbY2F3BN",
+				"ok": true,
+				"detail": "live page shows \"ed25519 signature over the tagged canonical bytes\""
+			},
+			{
+				"claim": "/api/runs?stats=1&days=7",
 				"kind": "evidence:file",
-				"target": "api/_lib/forge-failover.js",
+				"target": "api/runs.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "Hugging Face Spaces block for the whole generation and NVIDIA's hosted lane takes text only, so neither can pick up a job that failed on a poll; both appear only in the retry suggestions",
+				"claim": "with no prompt, file or id in it",
 				"kind": "evidence:file",
-				"target": "api/_lib/forge-failover.js",
+				"target": "api/runs.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "a job that started from several photos continues from one of them, and says so",
+				"claim": "published at CVPR 2025 and released under the MIT licence",
 				"kind": "evidence:file",
-				"target": "api/forge.js",
+				"target": "hubs/awesome-generative-3d/README.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "Each check waits 4 seconds",
+				"claim": "published at CVPR 2025 and released under the MIT licence",
 				"kind": "evidence:file",
-				"target": "api/_lib/forge-health.js",
+				"target": "workers/model-trellis/README.md",
 				"ok": true,
 				"detail": "file supports the claim"
+			},
+			{
+				"claim": "released under the Tencent Hunyuan Non-Commercial licence",
+				"kind": "evidence:file",
+				"target": "workers/model-hunyuan3d/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "TripoSG, the geometry-only rung at the end of the rescue chain, comes from VAST AI Research under the MIT licence",
+				"kind": "evidence:file",
+				"target": "workers/model-triposg/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "returns only generated files",
+				"kind": "evidence:file",
+				"target": "workers/model-hunyuan3d/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "our worker runs the TRELLIS-image-large checkpoint",
+				"kind": "evidence:page",
+				"target": "https://model-trellis-lp642k3kpa-uc.a.run.app/health",
+				"ok": true,
+				"detail": "live page shows \"\"model\":\"trellis-image-large\"\""
+			},
+			{
+				"claim": "one Cloud Run service serves the site and every API handler",
+				"kind": "evidence:file",
+				"target": "server/index.mjs",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "NVIDIA Inception",
+				"kind": "evidence:page",
+				"target": "https://three.ws/nvidia",
+				"ok": true,
+				"detail": "live page shows \"NVIDIA Inception member\""
+			},
+			{
+				"claim": "a member of NVIDIA Inception",
+				"kind": "evidence:page",
+				"target": "https://three.ws/nvidia",
+				"ok": true,
+				"detail": "live page shows \"independent member of the NVIDIA Inception program\""
+			},
+			{
+				"claim": "a member of Google Cloud for Web3 Startups",
+				"kind": "evidence:page",
+				"target": "https://three.ws/blog/three-ws-google-cloud-partnership",
+				"ok": true,
+				"detail": "live page shows \"Google Cloud for Web3 Startups\""
+			},
+			{
+				"claim": "a member of Google Cloud for Web3 Startups",
+				"kind": "evidence:file",
+				"target": "docs/listings.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "an OpenAI Select Partner in the OpenAI Partner Network",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network\""
+			},
+			{
+				"claim": "an IBM Business Partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/blog/three-ws-ibm-business-partner",
+				"ok": true,
+				"detail": "live page shows \"independent IBM Business Partner\""
+			},
+			{
+				"claim": "an AWS Partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/aws",
+				"ok": true,
+				"detail": "live page shows \"Now an AWS Partner\""
+			},
+			{
+				"claim": "listed on the Alibaba Cloud International Marketplace",
+				"kind": "evidence:page",
+				"target": "https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace",
+				"ok": true,
+				"detail": "live page shows \"now live on the Alibaba Cloud International Marketplace\""
+			},
+			{
+				"claim": "listed on the Alibaba Cloud International Marketplace",
+				"kind": "evidence:file",
+				"target": "docs/listings.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "accepted into the Quicknode Startup Program",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"member of the Quicknode Startup Program\""
+			},
+			{
+				"claim": "partnered with HackerNoon",
+				"kind": "evidence:page",
+				"target": "https://three.ws/news/partnered-with-hackernoon",
+				"ok": true,
+				"detail": "live page shows \"three.ws has partnered with HackerNoon\""
+			},
+			{
+				"claim": "Hunyuan3D 2.1",
+				"kind": "evidence:page",
+				"target": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
+				"ok": true,
+				"detail": "live page shows \"\"model\":\"hunyuan3d-2.1\"\""
 			},
 			{
 				"kind": "probe:api",
-				"target": "the self-hosted TRELLIS lane reports healthy",
+				"target": "the self-hosted TRELLIS worker is loaded and ready on its L4",
 				"ok": true,
 				"detail": "HTTP 200, expectations met"
 			},
 			{
 				"kind": "probe:api",
-				"target": "the Hunyuan3D worker is loaded and ready on its Blackwell GPU",
+				"target": "the run receipt for the featured job verifies",
 				"ok": true,
 				"detail": "HTTP 200, expectations met"
 			},
@@ -464,7 +577,43 @@
 			},
 			{
 				"kind": "link",
+				"target": "https://three.ws",
+				"ok": true,
+				"detail": "HTTP 200 via https://three.ws/"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/viewer?src=https%3A%2F%2Fstorage.googleapis.com%2Fthree-ws-avatar-reconstructions%2Fraw-meshes%2Ftrellis%2Fc58a25a1-7e8e-48bf-80d0-3403a68cf19a.glb&title=3D%20model",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/runs/rr_9Wc3cwxCbevEWfbbY2F3BN",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
 				"target": "https://three.ws/api/forge?health=1",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/docs/mcp-studio",
 				"ok": true,
 				"detail": "HTTP 200"
 			},
@@ -477,61 +626,33 @@
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
-			"accuracy": 3,
-			"clarity": 4,
-			"specificity": 4,
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 5
+			"visual": 4
 		},
 		"issues": [
 			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "The order for that rescue is our TRELLIS worker, then our Hunyuan3D worker, then a hosted TRELLIS lane where one is configured, then TripoSG.",
-				"problem": "The verification for this claim failed: api/_lib/forge-failover.js does not contain the quoted ASYNC_REDISPATCH_ORDER line. The article must not state a rescue order the code does not confirm.",
-				"fix": "Re-read the current forge-failover.js and quote the order it actually defines, or remove the enumerated order from the article body."
-			},
-			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "Draft and Standard go to TRELLIS on our own worker. High goes to Hunyuan3D 2.1 on our own worker",
-				"problem": "Both file verifications failed: forge-tiers.js does not contain the quoted tier-routing lines. The tier routing as written is unverified against the live code.",
-				"fix": "Re-read forge-tiers.js and restate the routing exactly as the code defines it, or cut the sentence."
-			},
-			{
-				"severity": "major",
-				"area": "voice",
-				"quote": "healthy or simply unknown",
-				"problem": "Mechanical check flags 'simply' as filler in the article body.",
-				"fix": "Replace with 'healthy or unknown'."
-			},
-			{
-				"severity": "major",
-				"area": "voice",
-				"quote": "the model has actually loaded",
-				"problem": "Mechanical check flags 'actually' as filler in the article body.",
-				"fix": "Replace with 'the model has loaded'."
-			},
-			{
 				"severity": "minor",
-				"area": "accuracy",
-				"quote": "The write-up covers the lanes, the rescue order and the limits",
-				"problem": "Given the rescue-order verification failure, the post endorsing 'the rescue order' as article content inherits the risk until the article is corrected.",
-				"fix": "Once the article is fixed this stands; otherwise trim to 'the lanes and the limits'."
+				"area": "visual",
+				"quote": "The delivered 3D model in the three.ws viewer on a dark background",
+				"problem": "The cover frame shows the bare model centered on a plain dark field with no viewer chrome: no toolbar, no Download GLB or Do more with this model buttons, and a small unexplained cursor-like artefact near the hands. Saying 'in the three.ws viewer' implies interface elements the image does not contain, and will read as a raw render, not a screenshot of the product surface.",
+				"fix": "Either recapture the cover inside the live viewer so the frame includes the surrounding UI (matching the alt text of the inline delivered-model.png), or change the cover alt text to: 'The delivered 3D model rebuilt from a single picture by the Forge: a noir detective in a long black coat, fedora and white gloves, seen from the side with his hands outstretched on a dark background'."
 			}
 		],
 		"rewrite": {
 			"posts": [
-				"A text prompt on the Forge runs through two chains: one paints a reference picture, the other rebuilds it as a textured 3D model on our own NVIDIA GPUs on Cloud Run. When a worker fails mid-job, the job moves to the next engine under the same id. The write-up covers the lanes, the rescue order and the limits: three.ws/forge"
+				"One picture into the Forge, no account: 2 minutes 17 seconds later, a textured 3D model built on our own NVIDIA L4, plus a signed receipt for every stage. The write-up covers the engine ladder, the mid-job rescue and the free lane: three.ws/forge"
 			],
 			"altText": [
-				"A 3D model generated on the Forge from a text prompt, shown in its viewer on a dark background: a Greek hoplite in a polished bronze cuirass and crested helmet, with a red tunic, bronze greaves, sandals and a round shield held at his side"
+				"The delivered AI-generated model rebuilt from one picture by the Forge: a noir detective in a long black coat, fedora and white gloves, seen from the side with his hands outstretched on a dark background"
 			]
 		},
-		"summary": "The X post itself is accurate, in-voice, and well supported, and the cover image matches its alt text. The article it links contains two claims whose code verification failed (the tier routing and the redispatch order), which must be re-verified against the current files or removed before this ships.",
+		"summary": "The article meets the house standard end to end: a verified 137,433 ms run on a verified NVIDIA L4 told plainly, 8+ sections with real code and tables, 4 inline images, exact partner designations, model credits, and a Try it close, and every claim passed verification. The only fix worth making is the cover alt text, which claims viewer UI the frame does not show; recapture in the viewer or adjust the description.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
@@ -539,37 +660,61 @@
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
 		"rewriteFindings": [
-			"claims: claim \"when an engine fails partway through a job, the job moves to the next engine under the same job id and the progress bar keeps going\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a Draft or Standard model costs nothing and needs no account\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"137,433 ms\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"137,423 ms\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The mesh in our run was built on an NVIDIA L4\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a Draft or Standard model is free and needs no account\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"The realism of the final mesh is set almost entirely by the realism of that one reference image\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"painted as one centered subject on a plain seamless background, under soft even light, with real-world materials\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"A Gemini image model on Vertex AI leads, because it draws the most photoreal reference\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"falls through to FLUX on NVIDIA's hosted inference, then to further providers, ending in a keyless rung, so no single provider's failure is ever the terminal error\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Photos skip this step: your photo is the reference. A sketch skips it too\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Draft and Standard go to TRELLIS on our own worker. High goes to Hunyuan3D 2.1 on our own worker\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"paints a full PBR material set (colour, roughness and normal maps) rather than one baked colour map\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a prompt that clearly reads as a hard-surface object (a robot, a vehicle, a piece of furniture) swaps TRELLIS ahead of Hunyuan3D\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"no single provider's failure is ever the terminal error for the picture\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The default engine at every tier is TRELLIS on our own NVIDIA L4 worker\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It takes the first lane in its order that is healthy or whose state is unknown; if none is clean, it takes the first that is not confirmed down\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Hugging Face Spaces for photos, and NVIDIA's hosted TRELLIS for text, which keeps a text prompt answerable even when every one of our GPU workers is cold\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Engines that need your own API key run only when you pick them\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"It takes the first lane in its order that is healthy or simply unknown; if none is clean, it takes the first that is not confirmed down\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"about 12,000 at Draft, about 30,000 at Standard, and up to 200,000 at High\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Standard, usually about a minute\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Its community licence does not cover the European Union, the United Kingdom or South Korea\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the router resolves the country on the server and keeps every Tencent lane out of those regions\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It runs on our own worker on an RTX PRO 6000 Blackwell\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"then paints colour, roughness and normal maps with a second, rather than a single baked colour map\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"The poll handler marks the failed lane unhealthy for 90 seconds\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"recovers the original prompt and the stored reference picture from the job's record, resubmits them to the next lane, and binds the old job id to the new one\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"our TRELLIS worker, then our Hunyuan3D worker, then a hosted TRELLIS lane where one is configured, then TripoSG\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"you keep watching the same progress bar\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"our own GPU workers first, then free external lanes, then the paid platform default, then the geometry-only TripoSG lane as the final rung\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"A job gets its first lane plus up to three backups\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"TripoSG closes the chain because it returns an untextured mesh, so it runs only once every textured lane has failed or is marked down\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a worker outage from 18 to 28 September that took Hunyuan3D and TRELLIS down together: without it, roughly 400 photo jobs a day ended in a hard failure while the TripoSG worker sat healthy\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The response names the lanes that can serve a fresh retry\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"TRELLIS runs on an L4. Hunyuan3D 2.1 runs on an RTX PRO 6000 Blackwell, held warm with one instance, because a cold start means loading 14 GiB of weights before any work begins\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"90 seconds\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"4 seconds\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The response still names the way forward\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It lists the lanes that can serve a fresh retry\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Hugging Face Spaces block for the whole generation, and NVIDIA's hosted lane takes text only, so neither can pick up a job from a status poll\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a job that started from several photos continues from one of them, and says so by reporting how many views it used\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"held warm with one instance, because a cold start means loading 14 GiB of weights before any work begins\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Every worker speaks the same contract\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The health check reads the second field, so a worker that is up but still loading is reported degraded, not healthy\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The Forge's health check reads the second field, so a worker that is up but still loading is reported degraded, not healthy\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Task state lives in object storage rather than in the instance\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"18 GiB staged plus 14 GiB loaded is a 32 GiB peak against the L4 tier's 32 GiB ceiling, and the container was killed on every cold start\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The RTX PRO 6000 tier's floor of 80 GiB clears it\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Blackwell needs its GPU code built with NVIDIA's 12.8 toolkit. The worker image compiles its extensions for both GPU generations, so which card runs it is a deploy flag rather than a rebuild\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Hugging Face Spaces block for the whole generation and NVIDIA's hosted lane takes text only, so neither can pick up a job that failed on a poll; both appear only in the retry suggestions\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a job that started from several photos continues from one of them, and says so\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Each check waits 4 seconds\" does not appear in the copy; claims must quote the post"
+			"claims: claim \"18 GiB staged plus 14 GiB loaded is a 32 GiB peak, and the RTX PRO 6000 tier's floor of 80 GiB clears it with room to spare\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Blackwell needs its GPU code built with NVIDIA's 12.8 toolkit\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The worker image compiles its extensions for both GPU generations, so which card runs it is a deploy flag rather than a rebuild\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"signed with an ed25519 key\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"/api/runs?stats=1&days=7\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"with no prompt, file or id in it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"published at CVPR 2025 and released under the MIT licence\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"released under the Tencent Hunyuan Non-Commercial licence\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"TripoSG, the geometry-only rung at the end of the rescue chain, comes from VAST AI Research under the MIT licence\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"returns only generated files\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"our worker runs the TRELLIS-image-large checkpoint\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"one Cloud Run service serves the site and every API handler\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"NVIDIA Inception\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a member of NVIDIA Inception\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a member of Google Cloud for Web3 Startups\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"an OpenAI Select Partner in the OpenAI Partner Network\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"an IBM Business Partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"an AWS Partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"listed on the Alibaba Cloud International Marketplace\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"accepted into the Quicknode Startup Program\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"partnered with HackerNoon\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Hunyuan3D 2.1\" does not appear in the copy; claims must quote the post"
 		]
 	},
 	"editorError": null

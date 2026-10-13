@@ -1,0 +1,3 @@
+three.ws is an OpenAI Select Partner, and the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits, valid for the full program year.
+
+They go to testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents. The connector is live now: the reel reads 15 tools answering with no key and no account. three.ws/openai

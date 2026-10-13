@@ -1,0 +1,111 @@
+{
+	"id": "genesis",
+	"scenarioHash": "a9c5e90a7f2a1c3ef44967f1514c721ec32467f495b683ed5ef1bd3f57633b45",
+	"ranAt": "2026-10-13T06:33:23.647Z",
+	"target": {
+		"commit": "771cfef01",
+		"revision": "three-ws-api-00497-2ss"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/genesis",
+			"detail": "loaded https://three.ws/genesis",
+			"ok": true,
+			"ms": 8805,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 11716,
+			"frames": 54
+		},
+		{
+			"index": 3,
+			"kind": "click",
+			"target": "A cosmic oracle in flowing star-speckled robes",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 5303,
+			"frames": 21
+		},
+		{
+			"index": 4,
+			"kind": "hold",
+			"target": "2400",
+			"detail": "2400 ms",
+			"ok": true,
+			"ms": 12073,
+			"frames": 72
+		},
+		{
+			"index": 5,
+			"kind": "click",
+			"target": "📸 Selfie",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 3995,
+			"frames": 21
+		},
+		{
+			"index": 6,
+			"kind": "hold",
+			"target": "2400",
+			"detail": "2400 ms",
+			"ok": true,
+			"ms": 12545,
+			"frames": 72
+		},
+		{
+			"index": 7,
+			"kind": "click",
+			"target": "🧬 Remix",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 4734,
+			"frames": 21
+		},
+		{
+			"index": 8,
+			"kind": "expect",
+			"target": "Fork a public avatar",
+			"detail": "appeared after 0.0 s",
+			"ok": true,
+			"ms": 37,
+			"frames": 0
+		},
+		{
+			"index": 9,
+			"kind": "hold",
+			"target": "4200",
+			"detail": "4200 ms",
+			"ok": true,
+			"ms": 22694,
+			"frames": 126
+		}
+	],
+	"facts": {},
+	"saw": [
+		"Fork a public avatar"
+	],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/genesis/reel.mp4",
+		"sha256": "f54dafe485cbc7e1d288c70659f5b4832d4966edb579e57b891d5c084c808988",
+		"frames": 387,
+		"motion": 0.308,
+		"durationSec": 12.9,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

@@ -1,0 +1,129 @@
+{
+	"id": "give-your-ai-a-body",
+	"scenarioHash": "d1102f92c1fe935cc3f273e4d4c3f8deb8a754e8c73b7530309ec7503ce85017",
+	"ranAt": "2026-10-13T05:59:27.323Z",
+	"target": {
+		"commit": "771cfef01",
+		"revision": "three-ws-api-00497-2ss"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/forge",
+			"detail": "loaded https://three.ws/forge",
+			"ok": true,
+			"ms": 9058,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 12776,
+			"frames": 54
+		},
+		{
+			"index": 3,
+			"kind": "click",
+			"target": "Surprise me",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 5682,
+			"frames": 21
+		},
+		{
+			"index": 4,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 13867,
+			"frames": 66
+		},
+		{
+			"index": 5,
+			"kind": "click",
+			"target": "NVIDIA FREE",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 4423,
+			"frames": 21
+		},
+		{
+			"index": 6,
+			"kind": "hold",
+			"target": "2000",
+			"detail": "2000 ms",
+			"ok": true,
+			"ms": 17047,
+			"frames": 60
+		},
+		{
+			"index": 7,
+			"kind": "click",
+			"target": "From photos",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 7722,
+			"frames": 21
+		},
+		{
+			"index": 8,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 21910,
+			"frames": 66
+		},
+		{
+			"index": 9,
+			"kind": "scroll",
+			"target": "Fresh from the Forge",
+			"detail": "scrolled 1943 px",
+			"ok": true,
+			"ms": 12360,
+			"frames": 30
+		},
+		{
+			"index": 10,
+			"kind": "expect",
+			"target": "Fresh from the Forge",
+			"detail": "appeared after 0.1 s",
+			"ok": true,
+			"ms": 101,
+			"frames": 0
+		},
+		{
+			"index": 11,
+			"kind": "hold",
+			"target": "4000",
+			"detail": "4000 ms",
+			"ok": true,
+			"ms": 38488,
+			"frames": 120
+		}
+	],
+	"facts": {},
+	"saw": [
+		"Fresh from the Forge"
+	],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/give-your-ai-a-body/reel.mp4",
+		"sha256": "74fa05fdc472c34b77802f384a39d6645115234daa2b8ede53f5ff632bbcd07d",
+		"frames": 459,
+		"motion": 0.21,
+		"durationSec": 15.3,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

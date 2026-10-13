@@ -55,6 +55,12 @@ export function sdpBase() {
 export function isSdpAllowedPath(path) {
 	const clean = String(path || '').replace(/^\/+/, '');
 	if (!clean || clean.includes('..')) return false;
+	// The path is concatenated into the upstream URL, and the URL parser there
+	// collapses "%2e%2e" / ".%2E" / tab-split dots into real traversal segments
+	// and treats "?", "#" and "\\" as structure. The route surface is plain
+	// lowercase path segments, so refuse everything else before it gets that far.
+	if (!/^[A-Za-z0-9_\-.]+(\/[A-Za-z0-9_\-.]+)*\/?$/.test(clean)) return false;
+	if (clean.split('/').some((seg) => seg === '.')) return false;
 	if (SDP_TOP_LEVEL.includes(clean)) return true;
 	if (clean === 'health/ready') return true;
 	if (clean.startsWith('v1/')) {

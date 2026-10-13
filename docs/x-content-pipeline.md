@@ -125,7 +125,7 @@ X Articles require the posting account to be on X Premium.
 - `textFrom` is optional. When set, `check` fails if the inline text differs from that announcement-pack file, so the copy that was reviewed is the copy that ships.
 - An `article` item carries `"article": { "title", "body", "cover": { "path" } }`, and its optional `posts` quote the published Article. The body is copy like any post: its prose (headings, paragraphs, lists and quotes; code blocks and tables are literal samples and exempt) goes through the same language lint and claims ledger, so a number in the fourth section needs evidence like one in the title, its links are resolved at review, and its words are spell-checked. Replacing an inline image makes the review stale, the same as editing the Markdown. An Article in `review` or `approved` must also use the room X allows (owner, 2026-10-11): a title of 80 to 100 characters, 2,400 or more words in 8 or more sections, 3,000 or more characters of code and tables, 4 or more inline images, a "The partners behind ..." section covering every partner on `pages/partners.html`, and a "Try it" section. Drafts are exempt so work in progress can be saved.
 
-Cadence lives at the top of the file: `slots` (each `{ tier, at }` in UTC, or a kind slot `{ kind, at, everyDays, from }`, below), `windowMinutes` (how far a slot's opening may be jittered), `minimumMinutesApart`, `dailyCap`, and `quietHoursUtc` (a `["HH:MM", "HH:MM"]` pair, which may wrap midnight). `quality` sets the similarity limits, the maximum same-lane and same-pattern runs, and `maximumLength`: the longest a post may be, in weighted characters. @trythreews is on X Premium, so the queue sets it above the standard 280; a value under 280 is ignored. `approval` is the policy described below.
+Cadence lives at the top of the file: `slots` (each `{ tier, at }` in UTC, a series slot `{ tier, series, at }`, or a kind slot `{ kind, at, everyDays, from }`, below), `windowMinutes` (how far a slot's opening may be jittered), `minimumMinutesApart`, `dailyCap`, and `quietHoursUtc` (a `["HH:MM", "HH:MM"]` pair, which may wrap midnight). `quality` sets the similarity limits, the maximum same-lane and same-pattern runs, and `maximumLength`: the longest a post may be, in weighted characters. @trythreews is on X Premium, so the queue sets it above the standard 280; a value under 280 is ignored. `approval` is the policy described below.
 
 **What the cap counts:** `dailyCap` limits scheduled posts in the last 24 hours, and a scheduled post is one the scheduler placed in a slot. A post an operator sends by hand (`run --id`) carries no slot and does not count toward it, because counting those let four owner-requested posts on one afternoon hold every slot shut the following morning. Hand-sent posts do still count toward `minimumMinutesApart`, which measures from the last post of any kind, so the schedule never fires minutes after a manual post. To fill an open slot by hand and keep the schedule's bookkeeping right, run a scheduler tick (`npm run x:content -- run`, no `--id`): it takes the same lock as the cron, picks the post the cron would, and records the slot so the cron sees it as used.
 
@@ -141,6 +141,8 @@ Cadence lives at the top of the file: `slots` (each `{ tier, at }` in UTC, or a 
 - With no Article ready, the slot stays empty and alerts. It does not fall back to a post, because that would make a fourth post that day.
 
 Drop the slot from `slots` and Articles go back to being ordinary tier 1 items.
+
+**The daily partner spotlight owns the T1 slot** (owner, 2026-10-11): `{ "tier": 1, "series": "partners", "at": "15:30" }`. A series slot spends its series' best ready post first, ranked across every tier, and posts of a series that owns a slot are kept for it, so the series goes out once a day and never twice. When the series has nothing ready the slot is the ordinary T1 slot, so the prime-time flagship never goes empty. It is a daily slot and counts toward `dailyCap`. The series itself (registry, rotation, filming, lint) is in [x-partner-series.md](x-partner-series.md).
 
 **Three a day is a quota** (owner, 2026-09-30), so a slot is never left empty while an approved post
 could fill it. When the usual order finds nothing, the slot takes, in turn:
@@ -244,7 +246,7 @@ npm run x:outcomes -- --compare   # the pipeline's posts against the hand-writte
 `approval` in the queue file:
 
 ```json
-"approval": { "mode": "auto", "tiers": [2, 3], "vetoHours": 2, "articles": true }
+"approval": { "mode": "auto", "tiers": [2, 3], "vetoHours": 2, "articles": true, "series": ["partners"] }
 ```
 
 `mode` is `owner` (every post waits for `approve`) or `auto`. Under `auto` a post is released
@@ -253,7 +255,7 @@ says which one stopped it:
 
 | Condition | Why |
 |---|---|
-| Its tier is listed | Tier 1 carries a partner's name or $THREE, so it stays with the owner unless the queue lists it. |
+| Its tier is listed, or its series is | Tier 1 carries a partner's name or $THREE, so it stays with the owner unless the queue lists it. A series in `series` (the partner spotlight) is released whatever its tier, because its copy is held to the registry and the series lint in [x-partner-series.md](x-partner-series.md). |
 | It was filmed, and the proof covers it | A post never proven against the product is never released by policy. |
 | It tags no one | A tag puts a partner's name next to ours. A person decides that. |
 | The review passed on the editor's own verdict | An `editorOverride` is a person's judgment, so it needs a person. |
@@ -400,6 +402,6 @@ Queue edits reach production with the next deploy, because the cron reads the qu
 
 ## Tests
 
-[tests/x-content-reel.test.js](../tests/x-content-reel.test.js) covers scenario validation, the proof binding, proof as evidence, post length, and what the editor is given for a reel. [tests/x-content-approval.test.js](../tests/x-content-approval.test.js) covers the approval policy and story coverage. [tests/x-content-outcomes.test.js](../tests/x-content-outcomes.test.js) covers the learning loop, and [tests/x-content-overlay.test.js](../tests/x-content-overlay.test.js) the bundles.
+[tests/x-content-reel.test.js](../tests/x-content-reel.test.js) covers scenario validation, the proof binding, proof as evidence, post length, and what the editor is given for a reel. [tests/x-content-approval.test.js](../tests/x-content-approval.test.js) covers the approval policy and story coverage. [tests/x-content-partners.test.js](../tests/x-content-partners.test.js) covers the partner spotlight: the registry check, the rotation, the series lint, claims built from the registry and the run, and the drafting loop. [tests/x-content-outcomes.test.js](../tests/x-content-outcomes.test.js) covers the learning loop, and [tests/x-content-overlay.test.js](../tests/x-content-overlay.test.js) the bundles.
 
 [tests/x-content.test.js](../tests/x-content.test.js) covers the tiered slots, fill-down, priority scoring, holds and the fall-through that publishes the next post when one fails, stock counting, quote-tweet ids and their publish wiring, hand-sent posts counting toward spacing but not the cap, the video speed-up filter chain and its caption ordering, the voice and editorial lint, the claims ledger, media quality, review records binding approval to exact content, the editor verdict rules, the media rules, the Markdown to Article offsets, the scheduler's spacing, cap, embargo, and resume rules, and the publisher's thread chaining, crash resume, and Article draft, publish, and quote sequence.

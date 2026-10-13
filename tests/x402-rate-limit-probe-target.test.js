@@ -64,6 +64,23 @@ describe('rate-limit-probe target gating', () => {
 		expect(fetchSpy).not.toHaveBeenCalled();
 	});
 
+	it('rejects encoded and whitespace-obfuscated dot segments that the URL parser collapses', async () => {
+		for (const endpoint of [
+			'/api/x402/%2e%2e/creations',
+			'/api/x402/.%2E/creations',
+			'/api/x402/%2E./creations',
+			'/api/x402/.\t./creations',
+			'/api/x402/%2e%2e%2fcreations',
+			'/api/x402/foo%00',
+		]) {
+			await expect(call({ endpoint }), endpoint).rejects.toMatchObject({
+				status: 400,
+				code: 'endpoint_not_metered',
+			});
+		}
+		expect(fetchSpy).not.toHaveBeenCalled();
+	});
+
 	it('rejects a prefix look-alike', async () => {
 		await expect(call({ endpoint: '/api/x402evil' })).rejects.toMatchObject({
 			status: 400,

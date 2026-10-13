@@ -79,7 +79,11 @@ function isPrivateIPv4(ip) {
 		inV4Cidr(n, '169.254.0.0', 16) || // link-local incl. 169.254.169.254 metadata
 		inV4Cidr(n, '172.16.0.0', 12) || // RFC1918
 		inV4Cidr(n, '192.168.0.0', 16) || // RFC1918
-		inV4Cidr(n, '100.64.0.0', 10) // CGNAT (RFC6598)
+		inV4Cidr(n, '100.64.0.0', 10) || // CGNAT (RFC6598)
+		inV4Cidr(n, '192.0.0.0', 24) || // IETF protocol assignments
+		inV4Cidr(n, '198.18.0.0', 15) || // benchmarking (RFC2544)
+		inV4Cidr(n, '224.0.0.0', 4) || // multicast
+		inV4Cidr(n, '240.0.0.0', 4) // reserved + broadcast
 	);
 }
 
@@ -146,6 +150,18 @@ function isPrivateIPv6(addr) {
 		const v4 = `${h[6] >>> 8}.${h[6] & 0xff}.${h[7] >>> 8}.${h[7] & 0xff}`;
 		return isPrivateIPv4(v4);
 	}
+
+	// ff00::/8 multicast.
+	if ((h[0] & 0xff00) === 0xff00) return true;
+
+	// Tunnelled IPv4: NAT64 (64:ff9b::/96) and 6to4 (2002::/16) carry an IPv4
+	// address that a translator or relay will happily dial, so a private v4 in
+	// either wrapper is as unsafe as the bare address.
+	const embeds = (a, b) => `${a >>> 8}.${a & 0xff}.${b >>> 8}.${b & 0xff}`;
+	if (h[0] === 0x64 && h[1] === 0xff9b && h.slice(2, 6).every((x) => x === 0)) {
+		return isPrivateIPv4(embeds(h[6], h[7]));
+	}
+	if (h[0] === 0x2002) return isPrivateIPv4(embeds(h[1], h[2]));
 
 	return false;
 }

@@ -3182,6 +3182,10 @@
 			"dest": "/partners.html"
 		},
 		{
+			"src": "/partners/benefits/?",
+			"dest": "/partner-benefits.html"
+		},
+		{
 			"src": "/sperax",
 			"dest": "/sperax.html"
 		},
@@ -5289,6 +5293,10 @@
 		{
 			"src": "/sonar/?",
 			"dest": "/sonar.html"
+		},
+		{
+			"src": "/dissolve/?",
+			"dest": "/dissolve.html"
 		},
 		{
 			"src": "/choreograph/?",

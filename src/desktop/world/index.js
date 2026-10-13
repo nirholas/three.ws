@@ -49,7 +49,7 @@ async function settled(el) {
  *   onDesktop: (o: { app?: string|null, place?: string|null }) => void,
  * }} o
  */
-export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
+export function createWorld({ shell, apps, reducedMotion = false, onDesktop, onGrid }) {
 	const el = h('div', 'wd');
 	el.hidden = true;
 	el.innerHTML = `
@@ -61,6 +61,7 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 					<button type="button" class="wd-tool wd-gems" aria-haspopup="dialog" aria-expanded="false" title="Your gems">${icon('gem', 18)}<span class="wd-gems-pts">0</span></button>
 					<button type="button" class="wd-tool wd-cam" title="Camera (C)">${icon('camera', 18)}<span class="wd-cam-label"></span></button>
 					<button type="button" class="wd-tool wd-vr" hidden title="Enter VR">${icon('vr', 18)}<span>VR</span></button>
+					${onGrid ? `<button type="button" class="wd-tool wd-grid" title="Step into the Grid">${icon('grid', 18)}<span>Grid</span></button>` : ''}
 					<button type="button" class="wd-tool wd-desk" title="Go straight to the desktop">${icon('desktop', 18)}<span>Desktop</span></button>
 				</div>
 			</div>
@@ -312,6 +313,7 @@ export function createWorld({ shell, apps, reducedMotion = false, onDesktop }) {
 	});
 	$('.wd-vr').addEventListener('click', () => wearHeadset());
 	$('.wd-desk').addEventListener('click', () => sitDown());
+	$('.wd-grid')?.addEventListener('click', () => { talk.close(); leaveTo({ grid: true }); });
 
 	async function interact() {
 		if (busy || !nearest) return;

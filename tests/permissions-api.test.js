@@ -20,8 +20,16 @@ import { AbiCoder, Interface } from 'ethers';
 import { DELEGATION_MANAGER_ABI } from '../src/erc7710/abi.js';
 
 const sqlMock = vi.fn();
+// The spend reservation takes its advisory lock as its own statement inside
+// sql.transaction (api/_lib/locked-sql.js); the lock statement answers [] without
+// drawing from the queued results, which stay one-per-business-query.
+const sqlTagged = (...a) => {
+	if (String(a[0]?.[0] ?? '').includes('pg_advisory_xact_lock')) return Promise.resolve([]);
+	return sqlMock(...a);
+};
+sqlTagged.transaction = (queries) => Promise.all(queries);
 vi.mock('../api/_lib/db.js', () => ({
-	sql: (...a) => sqlMock(...a),
+	sql: sqlTagged,
 	isDbUnavailableError: () => false,
 	isDbCapacityError: () => false,
 }));

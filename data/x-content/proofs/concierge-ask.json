@@ -1,0 +1,89 @@
+{
+	"id": "concierge-ask",
+	"scenarioHash": "1edae7ac8457a5b0c7713cf3edc477a1ea2a5051fba79642f264152602eae25e",
+	"ranAt": "2026-10-13T06:13:51.043Z",
+	"target": {
+		"commit": "771cfef01",
+		"revision": "three-ws-api-00497-2ss"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/concierge",
+			"detail": "loaded https://three.ws/concierge",
+			"ok": true,
+			"ms": 7119,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "click",
+			"target": "Open site assistant",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 9678,
+			"frames": 21
+		},
+		{
+			"index": 3,
+			"kind": "hold",
+			"target": "3000",
+			"detail": "3000 ms",
+			"ok": true,
+			"ms": 25597,
+			"frames": 90
+		},
+		{
+			"index": 4,
+			"kind": "type",
+			"target": "How do I install you on my site?",
+			"detail": "typed 32 characters",
+			"ok": true,
+			"ms": 18090,
+			"frames": 80
+		},
+		{
+			"index": 5,
+			"kind": "press",
+			"target": "Enter",
+			"detail": "pressed Enter; POST /api/concierge answered 200 in 3 s",
+			"ok": true,
+			"ms": 3120,
+			"frames": 6
+		},
+		{
+			"index": 6,
+			"kind": "hold",
+			"target": "9000",
+			"detail": "9000 ms",
+			"ok": true,
+			"ms": 63027,
+			"frames": 270
+		}
+	],
+	"facts": {},
+	"saw": [],
+	"responses": [
+		{
+			"method": "POST",
+			"path": "/api/concierge",
+			"status": 200,
+			"seconds": 3
+		}
+	],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/concierge-ask/reel.mp4",
+		"sha256": "69ce1b26c64e1db8d8419a2a375545f8e12c4ba8a1839bae88ea25867ca1f6b1",
+		"frames": 467,
+		"motion": 1,
+		"durationSec": 15.57,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

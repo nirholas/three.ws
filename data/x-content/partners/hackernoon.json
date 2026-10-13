@@ -1,0 +1,317 @@
+{
+	"id": "hackernoon",
+	"name": "HackerNoon",
+	"order": 7,
+	"designation": "partnered with HackerNoon",
+	"designationEvidence": [
+		{
+			"type": "page",
+			"url": "https://three.ws/news/partnered-with-hackernoon",
+			"contains": "three.ws has partnered with HackerNoon"
+		}
+	],
+	"page": "https://three.ws/news/partnered-with-hackernoon",
+	"handle": "hackernoon",
+	"mark": null,
+	"forbidden": [
+		"endorsed by HackerNoon",
+		"HackerNoon endorses",
+		"HackerNoon recommends",
+		"HackerNoon-verified",
+		"HackerNoon-approved",
+		"HackerNoon staff",
+		"HackerNoon editors",
+		"paid placement",
+		"sponsored content",
+		"sponsored by HackerNoon",
+		"exclusive partner",
+		"official publisher",
+		"featured on the HackerNoon homepage",
+		"top story",
+		"trending on HackerNoon",
+		"Proof of Usefulness",
+		"HackerNoon audience",
+		"millions of readers"
+	],
+	"guidance": "three.ws has partnered with HackerNoon, an independent tech publication, as a media home for its updates, technical write-ups and announcements. Say that and nothing grander: it is a publishing partnership, not an endorsement, a sponsorship or an editorial seal. HackerNoon pulls the three.ws RSS feed into a drafts queue; items are reviewed and then published with canonical URLs back to three.ws, so never say a post is auto-published or guaranteed to run. Talk about what a builder gets: a public feed anyone can subscribe to, and tutorials, deep-dives and integration guides.",
+	"docs": [
+		"docs/syndication.md",
+		"docs/partners.md",
+		"docs/listings.md"
+	],
+	"features": [
+		{
+			"id": "hn-syndication-pipeline",
+			"title": "The RSS feed HackerNoon reads",
+			"surface": "https://three.ws/news/partnered-with-hackernoon",
+			"covers": [],
+			"lane": "community",
+			"summary": "Every three.ws announcement is published as a plain RSS 2.0 feed at three.ws/rss/announcements.xml. HackerNoon pulls it into a drafts queue, where each item is reviewed and published with a canonical URL back to three.ws.",
+			"docs": [
+				"docs/syndication.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/news/partnered-with-hackernoon",
+						"settle": 4000,
+						"caption": "The announcement that opened the channel"
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"scroll": "How it works",
+						"ms": 1400,
+						"caption": "HackerNoon reads our RSS feed on its own"
+					},
+					{
+						"hold": 3000
+					},
+					{
+						"click": "three.ws/rss/announcements.xml",
+						"caption": "The feed is plain RSS 2.0, open to anyone"
+					},
+					{
+						"expect": "<channel>",
+						"within": 15000
+					},
+					{
+						"hold": 4200
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "three.ws has partnered with HackerNoon, making HackerNoon the canonical media home for three.ws updates, technical write-ups, and product announcements.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/news/partnered-with-hackernoon",
+							"contains": "canonical media home for three.ws updates"
+						}
+					]
+				},
+				{
+					"says": "HackerNoon pulls every new post automatically from the three.ws RSS feed at three.ws/rss/announcements.xml.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/news/partnered-with-hackernoon",
+							"contains": "HackerNoon pulls every new post automatically from the three.ws RSS feed"
+						}
+					]
+				},
+				{
+					"says": "Each item lands in the three.ws HackerNoon drafts queue, is reviewed, then published, with canonical URLs pointing back to three.ws so search attribution stays with the source.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/news/partnered-with-hackernoon",
+							"contains": "canonical URLs pointing back to"
+						}
+					]
+				},
+				{
+					"says": "The feed is a plain RSS 2.0 document with a channel element, open to anyone to read.",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "<channel>"
+						}
+					]
+				},
+				{
+					"says": "The curated feed source is a single JSON file, so the team controls exactly what HackerNoon and any RSS reader sees.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/rss/items.json",
+							"contains": "control exactly what HackerNoon"
+						}
+					]
+				},
+				{
+					"says": "The partnership gives three.ws a direct publishing channel into the HackerNoon audience without relying on social-media algorithms.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/news/partnered-with-hackernoon",
+							"contains": "without relying on social-media algorithms"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "hn-newsroom",
+			"title": "The newsroom behind the feed",
+			"surface": "https://three.ws/news",
+			"covers": [],
+			"lane": "community",
+			"summary": "The three.ws newsroom lists every announcement, each with its own permalink, and one click opens the same items as the RSS feed HackerNoon reads.",
+			"docs": [
+				"docs/syndication.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/news",
+						"settle": 4000,
+						"caption": "Every announcement lives in the newsroom"
+					},
+					{
+						"hold": 2000
+					},
+					{
+						"click": "Subscribe via RSS →",
+						"caption": "The same items, as the feed HackerNoon reads"
+					},
+					{
+						"expect": "<channel>",
+						"within": 15000
+					},
+					{
+						"hold": 2000
+					},
+					{
+						"scroll": 600,
+						"ms": 1600,
+						"caption": "Each item links to its own permalink"
+					},
+					{
+						"hold": 4000
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "Every three.ws announcement lives in the newsroom at three.ws/news, and each one has its own permalink.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/news",
+							"contains": "Subscribe via RSS"
+						}
+					]
+				},
+				{
+					"says": "The newsroom links straight to the RSS feed, and the feed is a standard RSS 2.0 channel.",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "<channel>"
+						}
+					]
+				},
+				{
+					"says": "The same items the newsroom shows are the ones HackerNoon pulls from the feed.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/news/partnered-with-hackernoon",
+							"contains": "HackerNoon pulls every new post automatically"
+						}
+					]
+				},
+				{
+					"says": "The three.ws news index is at three.ws/news.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/news/partnered-with-hackernoon",
+							"contains": "three.ws/news"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "hn-builder-blog",
+			"title": "A builder-focused publishing partnership",
+			"surface": "https://three.ws/blog/three-ws-hackernoon-partnership",
+			"covers": [],
+			"lane": "developer",
+			"summary": "three.ws and HackerNoon are launching a builder-focused initiative of feature articles, tutorials and developer guides for people shipping with AI, with a three.ws author page on HackerNoon.",
+			"docs": [
+				"docs/partners.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/blog/three-ws-hackernoon-partnership",
+						"settle": 4000,
+						"caption": "A builder-focused publishing partnership"
+					},
+					{
+						"hold": 2400
+					},
+					{
+						"scroll": "What we're publishing",
+						"ms": 1400,
+						"caption": "Tutorials, deep-dives, integration guides"
+					},
+					{
+						"hold": 3200
+					},
+					{
+						"scroll": "Follow on HackerNoon",
+						"ms": 1400,
+						"caption": "three.ws has its own author page"
+					},
+					{
+						"expect": "hackernoon.com/u/three-ws"
+					},
+					{
+						"hold": 4000
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "three.ws is partnering with HackerNoon to launch a builder-focused initiative with feature articles, tutorials, and developer guides for those shipping with AI.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-hackernoon-partnership",
+							"contains": "builder-focused content initiative"
+						}
+					]
+				},
+				{
+					"says": "The series covers feature-focused articles, hands-on tutorials, in-depth guides, and developer resources.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-hackernoon-partnership",
+							"contains": "hands-on tutorials"
+						}
+					]
+				},
+				{
+					"says": "three.ws has its own author page on HackerNoon at hackernoon.com/u/three-ws.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-hackernoon-partnership",
+							"contains": "hackernoon.com/u/three-ws"
+						}
+					]
+				},
+				{
+					"says": "The articles are written for builders actively shipping with AI, as well as enthusiasts following the space.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-hackernoon-partnership",
+							"contains": "actively shipping with AI"
+						}
+					]
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,201 @@
+{
+	"id": "changelog-feed",
+	"contentHash": "a44f8787cd65d302509ea0faeb3e1cb96a6d4f92f8d792f73a23c6acbc76f1e0",
+	"reviewedAt": "2026-10-13T19:13:14.827Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"More than 3,800 entries sit in the public changelog, newest first, each tagged launch, feature, improvement, fix, sdk, security, infra or docs, and each with its own permalink.\n\nNew pages add themselves: the launch date a page carries in the site index becomes an entry with no one writing one. Everything else a user would notice gets a written entry with a plain-language summary.\n\nDelivery is automatic too. A job runs every 20 minutes, reads the feed baked into the running build, and posts anything new to the community Telegram channel, so an entry goes out shortly after the deploy that shipped it.",
+		"Follow it by RSS, JSON feed or llms.txt, or filter the page by the kind of change.\n\nthree.ws/changelog"
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "More than 3,800 entries",
+				"kind": "evidence:proof",
+				"target": "total",
+				"ok": true,
+				"detail": "the run read total = \"4007\", at least 3800"
+			},
+			{
+				"claim": "newest first",
+				"kind": "evidence:page",
+				"target": "https://three.ws/changelog",
+				"ok": true,
+				"detail": "live page shows \"newest first\""
+			},
+			{
+				"claim": "each tagged launch, feature, improvement, fix, sdk, security, infra or docs",
+				"kind": "evidence:file",
+				"target": "public/changelog/index.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "each tagged launch, feature, improvement, fix, sdk, security, infra or docs",
+				"kind": "evidence:file",
+				"target": ".claude/skills/changelog-and-docs/SKILL.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "each with its own permalink",
+				"kind": "evidence:file",
+				"target": "public/changelog/index.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the launch date a page carries in the site index becomes an entry with no one writing one",
+				"kind": "evidence:file",
+				"target": "scripts/build-page-index.mjs",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the launch date a page carries in the site index becomes an entry with no one writing one",
+				"kind": "evidence:file",
+				"target": ".claude/skills/changelog-and-docs/SKILL.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Everything else a user would notice gets a written entry with a plain-language summary",
+				"kind": "evidence:file",
+				"target": ".claude/skills/changelog-and-docs/SKILL.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A job runs every 20 minutes",
+				"kind": "evidence:file",
+				"target": "vercel.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A job runs every 20 minutes",
+				"kind": "evidence:file",
+				"target": "api/cron/changelog-push.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "reads the feed baked into the running build, and posts anything new to the community Telegram channel",
+				"kind": "evidence:file",
+				"target": "api/cron/changelog-push.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "reads the feed baked into the running build, and posts anything new to the community Telegram channel",
+				"kind": "evidence:file",
+				"target": "api/cron/changelog-push.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "reads the feed baked into the running build, and posts anything new to the community Telegram channel",
+				"kind": "evidence:file",
+				"target": "api/cron/changelog-push.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "an entry goes out shortly after the deploy that shipped it",
+				"kind": "evidence:file",
+				"target": "api/cron/changelog-push.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Follow it by RSS, JSON feed or llms.txt",
+				"kind": "evidence:page",
+				"target": "https://three.ws/changelog",
+				"ok": true,
+				"detail": "live page shows \"RSS\""
+			},
+			{
+				"claim": "Follow it by RSS, JSON feed or llms.txt",
+				"kind": "evidence:page",
+				"target": "https://three.ws/changelog",
+				"ok": true,
+				"detail": "live page shows \"JSON feed\""
+			},
+			{
+				"claim": "Follow it by RSS, JSON feed or llms.txt",
+				"kind": "evidence:page",
+				"target": "https://three.ws/changelog",
+				"ok": true,
+				"detail": "live page shows \"llms.txt\""
+			},
+			{
+				"claim": "filter the page by the kind of change",
+				"kind": "evidence:file",
+				"target": "public/changelog/index.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "9 steps passed against the live product, every claimed fact still holds (total 4007)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the public JSON feed still holds more than the 3,800 entries the post counts",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "an entry permalink answers",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the RSS feed answers",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/changelog",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 4,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"More than 3,800 entries sit in the public changelog, newest first, each tagged launch, feature, improvement, fix, sdk, security, infra or docs, and each with its own permalink.\n\nNew pages add themselves: the launch date a page carries in the site index becomes an entry with no one writing one. Everything else a user would notice gets a written entry with a plain-language summary.\n\nDelivery is automatic too. A job runs every 20 minutes, reads the feed baked into the running build, and posts anything new to the community Telegram channel, so an entry goes out shortly after the deploy that shipped it.",
+				"Follow it by RSS, JSON feed or llms.txt, or filter the page by the kind of change.\n\nthree.ws/changelog"
+			],
+			"altText": []
+		},
+		"summary": "Every claim passed verification against the live product and repo files, and the filmed reel shows exactly the tagged entries, filters, permalinks, and feeds the post describes. The voice matches the contract with a number lead, no hype, one link, and the post stands alone for readers who cannot see the reel.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

@@ -116,7 +116,7 @@ export function languageProblems(text, { body = false } = {}) {
 		problems.push({ rule: 'structure', severity: 'blocking', message: 'one-word-sentence drumbeat reads as ad copy' });
 	}
 	const links = urlsIn(text);
-	if (links.length > 1 && !body) problems.push({ rule: 'links', severity: 'blocking', message: `${links.length} links; one post links one surface` });
+	if (links.length > 1 && !body) problems.push({ rule: 'links', severity: 'blocking', message: `${links.length} links (${links.join(', ')}); one post links one surface, and X reads a bare three.ws as a link` });
 	const mentions = prose.match(/(?<![\w@])@\w{1,15}/g) || [];
 	if (mentions.length > 2) problems.push({ rule: 'mentions', severity: 'major', message: `${mentions.length} mentions; more than two reads as tag-baiting` });
 	return problems;

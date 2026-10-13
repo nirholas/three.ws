@@ -18,6 +18,7 @@ import { ethers, Wallet, Contract, Interface, isAddress } from 'ethers';
 import { evmFallbackProvider } from '../_lib/evm/rpc.js';
 
 import { sql } from '../_lib/db.js';
+import { runLocked } from '../_lib/locked-sql.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error, rateLimited, reportServerError } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
@@ -851,11 +852,8 @@ async function handleRedeem(req, res) {
 	// hash after submit, or deleted if the submit never lands. 'failed' rows are
 	// excluded from the period sum so a released reservation frees its budget.
 	const reserveMeta = JSON.stringify({ delegation_id: id, chain_id: chainId, amount: requestAmount.toString() });
-	const reserveRows = await sql`
-		WITH locked AS (
-			SELECT pg_advisory_xact_lock(hashtextextended(${String(id)}, 0))
-		),
-		spent AS (
+	const reserveRows = await runLocked([id], sql`
+		WITH spent AS (
 			SELECT trunc(COALESCE(SUM((meta->>'amount')::numeric), 0)) AS s
 			FROM usage_events
 			WHERE kind = 'permissions.redeem'
@@ -866,10 +864,10 @@ async function handleRedeem(req, res) {
 		INSERT INTO usage_events (user_id, api_key_id, agent_id, kind, status, meta)
 		SELECT ${bearer.userId}, ${bearer.apiKeyId ?? null}, ${row.agent_id},
 		       'permissions.redeem', 'pending', ${reserveMeta}::jsonb
-		FROM spent, locked
+		FROM spent
 		WHERE spent.s + ${requestAmount.toString()}::numeric <= ${maxAmount.toString()}::numeric
 		RETURNING id, (SELECT trunc(s)::text FROM spent) AS spent_before
-	`;
+	`);
 	if (!reserveRows.length) {
 		// Re-read for an accurate error body (outside the lock is fine).
 		const [h] = await sql`

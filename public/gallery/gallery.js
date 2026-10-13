@@ -436,7 +436,7 @@ function renderPopular() {
 			const label = active ? `Clear the ${s.query} search` : `Search for ${s.query}`;
 			return `<button type="button" class="gallery-tag gallery-pop${active ? ' is-active' : ''}" data-pop="${escapeAttr(
 				s.query,
-			)}" aria-pressed="${active}" aria-label="${escapeAttr(label)}">${thumb}<span>${escapeHtml(
+			)}" aria-pressed="${active}" title="${escapeAttr(label)}">${thumb}<span>${escapeHtml(
 				s.query,
 			)}</span>${count}</button>`;
 		})
@@ -519,7 +519,7 @@ function renderCard(a) {
 	const rigBadge = window.twsRig?.rigBadgeHTML ? window.twsRig.rigBadgeHTML(a) : '';
 
 	card.innerHTML = `
-		<a class="gallery-card-thumb" href="${escapeAttr(detailUrl)}" aria-label="Open ${escapeAttr(a.name || 'Avatar')}">
+		<a class="gallery-card-thumb" href="${escapeAttr(detailUrl)}" aria-label="Open ${escapeAttr(a.name || 'Avatar')} in 3D${rigBadge ? ', rigged' : ''}">
 			${thumbContent}
 			<span class="gallery-card-3dpill">3D</span>
 			${rigBadge ? `<span class="gallery-card-rig">${rigBadge}</span>` : ''}

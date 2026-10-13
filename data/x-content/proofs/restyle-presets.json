@@ -1,10 +1,10 @@
 {
 	"id": "restyle-presets",
-	"scenarioHash": "58886054056ed9828577fbf500bb2d78341c37706a4a357d120622fbb563a5de",
-	"ranAt": "2026-10-01T07:01:36.070Z",
+	"scenarioHash": "389ce88c7346042116e0fef378210fc43cc4cbc9d4a00a8383989ffca00d2aed",
+	"ranAt": "2026-10-13T06:15:32.734Z",
 	"target": {
-		"commit": "636265f41",
-		"revision": "three-ws-api-00470-2lr"
+		"commit": "771cfef01",
+		"revision": "three-ws-api-00497-2ss"
 	},
 	"passed": true,
 	"steps": [
@@ -14,101 +14,119 @@
 			"target": "https://three.ws/restyle",
 			"detail": "loaded https://three.ws/restyle",
 			"ok": true,
-			"ms": 13045,
+			"ms": 14861,
 			"frames": 0
 		},
 		{
 			"index": 2,
-			"kind": "scroll",
-			"target": "220",
-			"detail": "scrolled 220 px",
+			"kind": "upload",
+			"target": "public/vehicles/trench-car.glb",
+			"detail": "uploaded public/vehicles/trench-car.glb",
 			"ok": true,
-			"ms": 7227,
-			"frames": 27
+			"ms": 15375,
+			"frames": 21
 		},
 		{
 			"index": 3,
 			"kind": "hold",
-			"target": "1400",
-			"detail": "1400 ms",
+			"target": "2600",
+			"detail": "2600 ms",
 			"ok": true,
-			"ms": 10588,
-			"frames": 42
+			"ms": 61045,
+			"frames": 78
 		},
 		{
 			"index": 4,
+			"kind": "scroll",
+			"target": "220",
+			"detail": "scrolled 220 px",
+			"ok": true,
+			"ms": 22299,
+			"frames": 27
+		},
+		{
+			"index": 5,
+			"kind": "hold",
+			"target": "1400",
+			"detail": "1400 ms",
+			"ok": true,
+			"ms": 33405,
+			"frames": 42
+		},
+		{
+			"index": 6,
 			"kind": "click",
 			"target": "Gold",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 5643,
+			"ms": 13603,
 			"frames": 21
 		},
 		{
-			"index": 5,
+			"index": 7,
 			"kind": "read",
 			"target": "history",
 			"detail": "history = \"Gold\"",
 			"ok": true,
-			"ms": 7,
+			"ms": 8,
 			"frames": 0
 		},
 		{
-			"index": 6,
+			"index": 8,
 			"kind": "hold",
 			"target": "1000",
 			"detail": "1000 ms",
 			"ok": true,
-			"ms": 7241,
+			"ms": 11006,
 			"frames": 30
 		},
 		{
-			"index": 7,
+			"index": 9,
 			"kind": "drag",
 			"target": "0.18,0.6,0.42,0.6",
 			"detail": "dragged over 60 frames",
 			"ok": true,
-			"ms": 20452,
+			"ms": 31687,
 			"frames": 78
-		},
-		{
-			"index": 8,
-			"kind": "click",
-			"target": "Chrome",
-			"detail": "clicked",
-			"ok": true,
-			"ms": 5314,
-			"frames": 21
-		},
-		{
-			"index": 9,
-			"kind": "hold",
-			"target": "1400",
-			"detail": "1400 ms",
-			"ok": true,
-			"ms": 10903,
-			"frames": 42
 		},
 		{
 			"index": 10,
 			"kind": "click",
-			"target": "Holographic",
+			"target": "Chrome",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 5047,
+			"ms": 8180,
 			"frames": 21
 		},
 		{
 			"index": 11,
+			"kind": "hold",
+			"target": "1400",
+			"detail": "1400 ms",
+			"ok": true,
+			"ms": 15819,
+			"frames": 42
+		},
+		{
+			"index": 12,
+			"kind": "click",
+			"target": "Holographic",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 7734,
+			"frames": 21
+		},
+		{
+			"index": 13,
 			"kind": "scroll",
 			"target": "-484",
 			"detail": "scrolled -484 px",
 			"ok": true,
-			"ms": 5895,
+			"ms": 9203,
 			"frames": 24
 		},
 		{
-			"index": 12,
+			"index": 14,
 			"kind": "read",
 			"target": "last",
 			"detail": "last = \"Holographic\"",
@@ -117,21 +135,21 @@
 			"frames": 0
 		},
 		{
-			"index": 13,
+			"index": 15,
 			"kind": "drag",
 			"target": "0.42,0.6,0.2,0.6",
 			"detail": "dragged over 60 frames",
 			"ok": true,
-			"ms": 20853,
+			"ms": 34590,
 			"frames": 78
 		},
 		{
-			"index": 14,
+			"index": 16,
 			"kind": "hold",
 			"target": "2800",
 			"detail": "2800 ms",
 			"ok": true,
-			"ms": 19818,
+			"ms": 31275,
 			"frames": 84
 		}
 	],
@@ -141,13 +159,19 @@
 	},
 	"saw": [],
 	"responses": [],
+	"uploads": [
+		{
+			"path": "public/vehicles/trench-car.glb",
+			"sha256": "3eb16cbca6e46f3f167e8e5bd8b5e030530130005ccc4737c53186a4f5ed9881"
+		}
+	],
 	"cuts": [],
 	"video": {
 		"path": "public/x-media/restyle-presets/reel.mp4",
-		"sha256": "3b3efa99d5261582a0e4b414f8ced3d8b6a4e87e1eb72d03f5430b2ca0992055",
-		"frames": 468,
-		"motion": 0.837,
-		"durationSec": 15.6,
+		"sha256": "941104d884cab2369a0ae65faa4caaf24be0a9086a9ee8f76ead070073f2c761",
+		"frames": 567,
+		"motion": 0.866,
+		"durationSec": 18.9,
 		"width": 1280,
 		"height": 720,
 		"fps": 30,

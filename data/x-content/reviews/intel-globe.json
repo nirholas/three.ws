@@ -1,0 +1,323 @@
+{
+	"id": "intel-globe",
+	"contentHash": "9eccbb259d7ca4a62135ef8861cb22715cf2ebf25ce97b1db315fc28e9fe3be7",
+	"reviewedAt": "2026-10-13T05:58:55.068Z",
+	"passed": false,
+	"blockers": [
+		"probe:scenario the filmed scenario: pointsMonth is now \"1,466\", under the floor of 5000 the post claims; prove it again",
+		"probe:api the 30 day window still holds more than the 5,000 points the post states: totalEvents is 1466; needs at least 5000",
+		"editor (accuracy): The fresh probe against production reads the 30 day window at 1,466 points, under the 5,000 floor the post claims, and the scenario re-run failed with \"prove it again.\" The film's 5,767 was true when filmed but the live product no longer supports the number, and the copy's directional claim (30 days holds far more than 7) is also contradicted by the current probe (1,466 in 30 days versus more than 1,000 in 7). The live product is the source of truth, so the claim must go or be re-proven.",
+		"editor verdict is revise"
+	],
+	"texts": [
+		"Every point on three.ws/globe is open data, and it links back to its source. Conflict, force posture and sanctions are classified from a global news event stream and held in a rolling window, so the time control is real: switching from 7 days to 30 took the map from more than 1,000 points to more than 5,000.\n\nEleven layers on one globe: conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, over military bases, nuclear sites and maritime choke points. None of it needs a key.",
+		"Natural events come from the US Geological Survey and NASA, severe weather from the Global Disaster Alert and Coordination System, internet outages from Georgia Tech, and economic stress from World Bank indicators. Ask for more time than the rolling window holds and the layer tells you how much it actually covered, rather than padding the rest.",
+		"Press F to flatten the globe into a map, Space to pause the spin. The whole payload is one GET to /api/globe/intel, documented in the globe reference."
+	],
+	"lint": [
+		{
+			"where": "reply 1",
+			"rule": "register",
+			"severity": "major",
+			"message": "\"actually\" is filler; replace it with the fact it stands in for"
+		}
+	],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "is open data",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"Eleven layers of open data on one globe\""
+			},
+			{
+				"claim": "it links back to its source",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"every point links to its source\""
+			},
+			{
+				"claim": "held in a rolling window",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"kept in a rolling window on three.ws\""
+			},
+			{
+				"claim": "the time control is real",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"so the time control is real rather than decorative\""
+			},
+			{
+				"claim": "switching from 7 days to 30",
+				"kind": "evidence:proof",
+				"target": "range",
+				"ok": true,
+				"detail": "the run read range = \"Last 7 days\""
+			},
+			{
+				"claim": "switching from 7 days to 30",
+				"kind": "evidence:proof",
+				"target": "/api/globe/intel",
+				"ok": true,
+				"detail": "GET /api/globe/intel answered 200 in 15.7 s"
+			},
+			{
+				"claim": "switching from 7 days to 30",
+				"kind": "evidence:proof",
+				"target": "Last 30 days",
+				"ok": true,
+				"detail": "the run waited for and saw \"Last 30 days\""
+			},
+			{
+				"claim": "more than 1,000 points",
+				"kind": "evidence:proof",
+				"target": "points",
+				"ok": true,
+				"detail": "the run read points = \"1,112\", at least 1000"
+			},
+			{
+				"claim": "more than 5,000",
+				"kind": "evidence:proof",
+				"target": "pointsMonth",
+				"ok": true,
+				"detail": "the run read pointsMonth = \"5,767\", at least 5000"
+			},
+			{
+				"claim": "economic stress from World Bank indicators",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"economic stress from World Bank indicators\""
+			},
+			{
+				"claim": "Eleven layers on one globe",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"Eleven layers of open data on one globe\""
+			},
+			{
+				"claim": "the layer tells you how much it actually covered",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"Every layer states the window it actually covered\""
+			},
+			{
+				"claim": "the layer tells you how much it actually covered",
+				"kind": "evidence:file",
+				"target": "src/globe-intel-core.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Press F to flatten the globe into a map",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"Press F to flatten\""
+			},
+			{
+				"claim": "Space to pause the spin",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"Space to pause the spin\""
+			},
+			{
+				"claim": "The whole payload is one GET to /api/globe/intel",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"The full payload is one call: /api/globe/intel\""
+			},
+			{
+				"claim": "The whole payload is one GET to /api/globe/intel",
+				"kind": "evidence:proof",
+				"target": "/api/globe/intel",
+				"ok": true,
+				"detail": "GET /api/globe/intel answered 200 in 15.7 s"
+			},
+			{
+				"claim": "documented in the globe reference",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"documented in the globe reference\""
+			},
+			{
+				"claim": "Every point on",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"every point links to its source\""
+			},
+			{
+				"claim": "classified from a global news event stream",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"classified from the GDELT event stream by CAMEO code\""
+			},
+			{
+				"claim": "conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, over military bases, nuclear sites and maritime choke points",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"Armed conflict, force posture and sanctions\""
+			},
+			{
+				"claim": "conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, over military bases, nuclear sites and maritime choke points",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"Severe weather\""
+			},
+			{
+				"claim": "conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, over military bases, nuclear sites and maritime choke points",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"Internet outages\""
+			},
+			{
+				"claim": "conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, over military bases, nuclear sites and maritime choke points",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"Economic stress\""
+			},
+			{
+				"claim": "conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, over military bases, nuclear sites and maritime choke points",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"Military bases, nuclear sites and maritime chokepoints are reference geography\""
+			},
+			{
+				"claim": "None of it needs a key",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"No credential is needed to read any of it\""
+			},
+			{
+				"claim": "Natural events come from the US Geological Survey and NASA",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"Natural events come from the USGS earthquake feed and NASA EONET\""
+			},
+			{
+				"claim": "severe weather from the Global Disaster Alert and Coordination System",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"severe weather from GDACS\""
+			},
+			{
+				"claim": "severe weather from the Global Disaster Alert and Coordination System",
+				"kind": "evidence:file",
+				"target": "api/_lib/globe-sources.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "internet outages from Georgia Tech",
+				"kind": "evidence:page",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "live page shows \"connectivity loss from Georgia Tech's IODA project\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": false,
+				"detail": "pointsMonth is now \"1,466\", under the floor of 5000 the post claims; prove it again"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the 7 day window still holds more than the 1,000 points the post states",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the 30 day window still holds more than the 5,000 points the post states",
+				"ok": false,
+				"detail": "totalEvents is 1466; needs at least 5000"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the payload still requests eleven layers",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/globe",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 3,
+			"clarity": 4,
+			"specificity": 4,
+			"voice": 4,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "switching from 7 days to 30 took the map from more than 1,000 points to more than 5,000",
+				"problem": "The fresh probe against production reads the 30 day window at 1,466 points, under the 5,000 floor the post claims, and the scenario re-run failed with \"prove it again.\" The film's 5,767 was true when filmed but the live product no longer supports the number, and the copy's directional claim (30 days holds far more than 7) is also contradicted by the current probe (1,466 in 30 days versus more than 1,000 in 7). The live product is the source of truth, so the claim must go or be re-proven.",
+				"fix": "Drop the 1,000 to 5,000 sentence. Keep only what the passing checks support: the 7 day window holds more than 1,000 points and the time control is real rather than decorative. Re-prove the 30 day count before ever citing it again."
+			},
+			{
+				"severity": "major",
+				"area": "voice",
+				"quote": "the layer tells you how much it actually covered",
+				"problem": "Mechanical finding: \"actually\" is filler; the live page already states the fact plainly (\"Every layer states the window it actually covered\" describes the feature; the post should state what it does without the qualifier).",
+				"fix": "Replace with \"the layer tells you the window it covered, rather than padding the rest.\""
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Every point on three.ws/globe is open data and links back to its source. Conflict, force posture and sanctions are classified from the GDELT event stream by CAMEO code and kept in a rolling window on three.ws, so the time control is real rather than decorative: the 7 day window alone holds more than 1,000 points.\n\nEleven layers on one globe: conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, over military bases, nuclear sites and maritime choke points. None of it needs a key.",
+				"Natural events come from the US Geological Survey and NASA, severe weather from the Global Disaster Alert and Coordination System, internet outages from Georgia Tech, and economic stress from World Bank indicators. Ask for more time than the rolling window holds and the layer tells you the window it covered, rather than padding the rest.",
+				"Press F to flatten the globe into a map, Space to pause the spin. The whole payload is one GET to /api/globe/intel, documented in the globe reference."
+			],
+			"altText": []
+		},
+		"summary": "Every sourced claim checks out, but the headline comparison \"more than 1,000 points to more than 5,000\" fails a fresh production probe: the 30 day window now returns 1,466 points, so the film is stale on that number and the claim must be dropped or re-proven. Also fixed the filler \"actually\" flagged mechanically; otherwise the thread is accurate, well sourced, and in voice.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"head: 2 links; one post links one surface",
+			"head: more than one all-caps word reads as shouting",
+			"claims: claim \"it links back to its source\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"held in a rolling window\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"switching from 7 days to 30\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"more than 5,000\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the layer tells you how much it actually covered\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"classified from a global news event stream\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
+}

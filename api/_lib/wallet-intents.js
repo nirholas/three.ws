@@ -24,6 +24,7 @@
 
 import { PublicKey } from '@solana/web3.js';
 import { sql } from './db.js';
+import { runLocked } from './locked-sql.js';
 import { confirmOrThrow } from './solana/confirm.js';
 import { solUsdPrice, sendSol, explorerTxUrl } from './avatar-wallet.js';
 import { solanaConnection } from './agent-pumpfun.js';
@@ -884,11 +885,8 @@ async function gatedSpend({ ctx, intent, discriminator, category, usd, lamports,
 	const intentDailyUsd = lim.daily_usd ?? null;
 	const intentTotalUsd = lim.total_usd ?? null;
 	const sinceIso = new Date(now.getTime() - 24 * 3600 * 1000).toISOString();
-	const claim = await sql`
-		WITH locked AS (
-			SELECT pg_advisory_xact_lock(hashtextextended(${String(agentId)}, 0))
-		),
-		wallet_day AS (
+	const claim = await runLocked([agentId], sql`
+		WITH wallet_day AS (
 			SELECT COALESCE(SUM(usd), 0)::float8 AS s
 			FROM agent_custody_events
 			WHERE agent_id = ${agentId} AND network = ${network} AND event_type = 'spend'
@@ -915,13 +913,13 @@ async function gatedSpend({ ctx, intent, discriminator, category, usd, lamports,
 		SELECT ${agentId}, ${userId ?? ownerId ?? null}, 'spend', ${category}, ${network}, 'SOL',
 		       ${lamports != null ? String(lamports) : null}, ${usd ?? null}, 'pending', ${idemKey},
 		       ${JSON.stringify({ ...rowMeta, intent_id: intent.id, intent_title: intent.title, trigger: intent.trigger?.type, action: intent.action?.type, ...(ctx.approval ? { approval_id: ctx.approval.id } : {}) })}::jsonb
-		FROM wallet_day, rule_day, rule_life, locked
+		FROM wallet_day, rule_day, rule_life
 		WHERE NOT EXISTS (SELECT 1 FROM agent_custody_events WHERE agent_id = ${agentId} AND idempotency_key = ${idemKey})
 		  AND (${dailyUsd}::float8 IS NULL OR wallet_day.s + ${usd}::float8 <= ${dailyUsd}::float8 + 1e-9)
 		  AND (${intentDailyUsd}::float8 IS NULL OR rule_day.s + ${usd}::float8 <= ${intentDailyUsd}::float8 + 1e-9)
 		  AND (${intentTotalUsd}::float8 IS NULL OR rule_life.s + ${usd}::float8 <= ${intentTotalUsd}::float8 + 1e-9)
 		RETURNING id
-	`;
+	`);
 	if (!claim.length) return await claimRejection({ agentId, intentId: intent.id, idemKey, usd, network, dailyUsd, intentDailyUsd, intentTotalUsd, sinceIso });
 	const eventId = claim[0].id;
 

@@ -677,3 +677,13 @@ data/x-archive/cache/
 
 # Cargo build output for any Rust program under contracts/ (event-markets-stake, knock-escrow, ...)
 contracts/*/target/
+
+# Private key / certificate material (public keys such as public/cli/signing-key.pem are tracked on purpose)
+*.p12
+*.pfx
+*.p8
+*service-account*.json
+*-sa-key.json
+*.private.pem
+*private-key*.pem
+ui-lint-report/

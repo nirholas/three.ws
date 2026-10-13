@@ -1,0 +1,539 @@
+{
+	"id": "how-we-render-3d-article",
+	"contentHash": "acc20371957be49f8bb03c72c50dc49b9d3426b177e93746fcb8933caf7b536e",
+	"reviewedAt": "2026-10-13T18:54:00.786Z",
+	"passed": false,
+	"blockers": [
+		"spelling meshopt: did you mean mesh, meshy, meson?",
+		"spelling visemes: did you mean vises, vise's, visages?",
+		"spelling viseme: did you mean vise, vised, vises?",
+		"spelling canonicaliser: did you mean canonicalise, canonicalised, canonicalises?",
+		"editor (accuracy): These are promises about the future and marketplace states with no evidence and no verification result. A promise about a listing, submission or review with no evidence is a blocking issue.",
+		"editor (accuracy): No claim in the verification set covers the Alibaba Cloud listing or Qwen router lanes, so these factual statements are unverified.",
+		"editor (accuracy): No verification result covers Quicknode. Unverified partnership claim.",
+		"editor (accuracy): No verification result covers HackerNoon. Unverified partnership claim.",
+		"editor verdict is revise"
+	],
+	"texts": [
+		"How a three.ws model is rendered, from a sentence to a lit, rigged character in your browser tab",
+		"A glTF file, Three.js and WebGL on the viewer's own GPU: no plugin, no video, no server drawing frames. That is how three.ws renders 3D, and the Article follows one rigged character through making, packing, loading, lighting and animating, with the embed code, the free checking tools, our partners and the roadmap."
+	],
+	"lint": [],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "A 3D model has to come from somewhere. On three.ws it comes from the Forge, which turns a sentence or a photo into a textured mesh",
+				"kind": "evidence:file",
+				"target": "docs/how-forge-works.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "RTX PRO 6000",
+				"kind": "evidence:file",
+				"target": "pages/nvidia/index.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Hunyuan3D 2.1",
+				"kind": "evidence:file",
+				"target": "docs/forge-pipeline.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "about 12,000 polygons",
+				"kind": "evidence:file",
+				"target": "docs/how-forge-works.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Standard about 30,000 with 2K textures",
+				"kind": "evidence:file",
+				"target": "docs/how-forge-works.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "2K textures",
+				"kind": "evidence:file",
+				"target": "docs/how-forge-works.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "up to 200,000 polygons",
+				"kind": "evidence:file",
+				"target": "docs/how-forge-works.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "reports progress and finally hands back a storage URL",
+				"kind": "evidence:file",
+				"target": "docs/forge-pipeline.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Raw output lands in Google Cloud Storage and is mirrored to Cloudflare R2",
+				"kind": "evidence:file",
+				"target": "docs/forge-pipeline.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Make-It-Animatable, an open model released under the MIT licence and published at CVPR 2025",
+				"kind": "evidence:file",
+				"target": "workers/rig/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "most three.ws GLB files are meshopt-compressed",
+				"kind": "evidence:file",
+				"target": "docs/page-performance.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The script's own documentation puts a typical saving at 90 percent of the file size",
+				"kind": "evidence:file",
+				"target": "docs/3d-asset-pipeline.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "runs lossless passes (deduplicate, prune, weld, resample) through glTF-Transform and re-encodes textures as WebP",
+				"kind": "evidence:file",
+				"target": "docs/3d-asset-pipeline.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the decoders are loaded lazily",
+				"kind": "evidence:file",
+				"target": "src/viewer/internal.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The renderer itself is a WebGL renderer on the Three.js 0.184 line",
+				"kind": "evidence:file",
+				"target": "src/viewer.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The renderer itself is a WebGL renderer on the Three.js 0.184 line",
+				"kind": "evidence:file",
+				"target": "package.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "(2.0 by default, 1.5 in embeds, 1.0 on low-power phones)",
+				"kind": "evidence:file",
+				"target": "src/viewer.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "BVH-accelerated raycasting",
+				"kind": "evidence:file",
+				"target": "src/viewer.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the Khronos PBR Neutral tone mapper",
+				"kind": "evidence:file",
+				"target": "src/viewer.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Draco and Basis transcoder binaries are served from the same origin as the site",
+				"kind": "evidence:file",
+				"target": "scripts/copy-three-decoders.mjs",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the official Khronos glTF 2.0 validator in WebAssembly",
+				"kind": "evidence:file",
+				"target": "src/validator.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "built once with Three.js's PMREM generator",
+				"kind": "evidence:file",
+				"target": "src/viewer.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a render pass, a normal and depth pass, ambient occlusion, depth of field, bloom and a colour grade",
+				"kind": "evidence:file",
+				"target": "src/viewer/cinematic.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the die-cut outline vectorised from a canvas by a marching-squares tracer",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a vertex-shader cylinder roll injected into the material",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "recognises roughly two dozen of these naming families",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Thirty of the 53 tracks in each clip address a finger",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "It is a pure module, so the same code runs in the browser and in Node",
+				"kind": "evidence:file",
+				"target": "src/animation-retarget.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "nine visemes",
+				"kind": "evidence:file",
+				"target": "src/lip-sync-analyser.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "25 observed attributes",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "four layout modes: inline, floating, section and fullscreen",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "within 300 pixels of the viewport",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the element keeps at most eight viewers live",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "It scores 52 canonical joints against 16 recognised rig conventions",
+				"kind": "evidence:file",
+				"target": "pages/rig-doctor.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a nine-hour meetup inside a persistent three.ws 3D world that reached 3,145 avatars at its peak",
+				"kind": "evidence:file",
+				"target": "docs/ibm-community-governed-agents-post.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network",
+				"kind": "evidence:file",
+				"target": "data/x-content/partners/openai.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "three.ws is a member of NVIDIA Inception",
+				"kind": "evidence:file",
+				"target": "data/x-content/partners/nvidia.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "three.ws is a member of Google Cloud for Web3 Startups",
+				"kind": "evidence:file",
+				"target": "data/x-content/partners/google-cloud.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "three.ws is an IBM Business Partner",
+				"kind": "evidence:file",
+				"target": "data/x-content/partners/ibm.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "three.ws is an AWS Partner",
+				"kind": "evidence:file",
+				"target": "data/x-content/partners/aws.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the viewer page is up",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "Rig Doctor is up",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the Holo page is up",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws",
+				"ok": true,
+				"detail": "HTTP 200 via https://three.ws/"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/docs/web-component",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/animations",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa9694760-e134-4c5c-b334-59129a2d42c9.glb",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/forge",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/rig-doctor",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/validation",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/pose",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/docs/web-component",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/openai",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "spelling",
+				"target": "meshopt",
+				"ok": false,
+				"detail": "did you mean mesh, meshy, meson?"
+			},
+			{
+				"kind": "spelling",
+				"target": "visemes",
+				"ok": false,
+				"detail": "did you mean vises, vise's, visages?"
+			},
+			{
+				"kind": "spelling",
+				"target": "viseme",
+				"ok": false,
+				"detail": "did you mean vise, vised, vises?"
+			},
+			{
+				"kind": "spelling",
+				"target": "canonicaliser",
+				"ok": false,
+				"detail": "did you mean canonicalise, canonicalised, canonicalises?"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 3,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 4,
+			"professionalism": 4,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "The AWS Marketplace listing is built and waiting on product creation, the NVIDIA catalog submissions are in review, an OpenAI Cookbook contribution is submitted, and a Microsoft Azure Marketplace listing is on the roadmap.",
+				"problem": "These are promises about the future and marketplace states with no evidence and no verification result. A promise about a listing, submission or review with no evidence is a blocking issue.",
+				"fix": "Delete the entire \"What is next\" section, or cut it to the one item that could be evidenced by a file in the repository (none is supplied). The article ends cleanly on the partners section followed by \"Try it\"."
+			},
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "three.ws is listed on the Alibaba Cloud International Marketplace, and Qwen models are lanes in the platform's model router.",
+				"problem": "No claim in the verification set covers the Alibaba Cloud listing or Qwen router lanes, so these factual statements are unverified.",
+				"fix": "Remove the Alibaba Cloud paragraph, or supply a passing verification (a partner JSON file or live page check) and restore the exact designation it states."
+			},
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "three.ws is accepted into the Quicknode Startup Program, and Quicknode's RPC endpoints are a rung in the Solana failover chain.",
+				"problem": "No verification result covers Quicknode. Unverified partnership claim.",
+				"fix": "Remove the Quicknode paragraph, or supply a passing partner-file check and state the designation exactly as the file states it."
+			},
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "three.ws has partnered with HackerNoon, whose import picks up our announcements for its developer audience.",
+				"problem": "No verification result covers HackerNoon. Unverified partnership claim.",
+				"fix": "Remove the HackerNoon paragraph, or supply a passing partner-file check."
+			},
+			{
+				"severity": "major",
+				"area": "specificity",
+				"quote": "How a three.ws model is rendered, from a sentence to a lit, rigged character in your browser tab",
+				"problem": "The Article standard requires the title to carry the headline number; this title carries none, despite the article having strong verified numbers (52 bones, 53 tracks, 90 percent size saving).",
+				"fix": "Retitle to: \"How three.ws renders 3D: one sentence to a 52-bone rigged character, drawn live in your browser tab\" (92 characters, both numbers verified)."
+			},
+			{
+				"severity": "minor",
+				"area": "professionalism",
+				"quote": "the canonicaliser to more skeleton conventions",
+				"problem": "The codebase names the module glb-canonicalize (American spelling) while the article mixes \"canonicaliser\" with \"canonicalize.js\". Flagged by the spelling check. Pick one spelling; the file's own spelling is the safer choice for a developer audience.",
+				"fix": "Change \"canonicaliser\" to \"canonicalizer\" so it matches the module name `src/glb-canonicalize.js`."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"A glTF file, Three.js and WebGL on the viewer's own GPU: no plugin, no video, no server drawing frames. That is how three.ws renders 3D, and the Article follows one rigged character through making, packing, loading, lighting and animating, with the embed code, the free checking tools, our partners and the roadmap."
+			],
+			"altText": [
+				"The lighthouse keeper, a rigged three.ws character in a long yellow oilskin coat, navy knitted cap and black rubber boots, standing in the live glTF viewer under studio lighting"
+			]
+		},
+		"summary": "The article is deep, well-shaped and almost entirely verified, but the \"What is next\" section makes unsupported forward-looking claims and three partner paragraphs (Alibaba Cloud, Quicknode, HackerNoon) have no verification at all; all four must be cut or evidenced before this ships. The promo post and visuals are fine as they are, and the title needs a verified headline number to meet the Article standard.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"A 3D model has to come from somewhere. On three.ws it comes from the Forge, which turns a sentence or a photo into a textured mesh\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"RTX PRO 6000\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Hunyuan3D 2.1\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"about 12,000 polygons\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Standard about 30,000 with 2K textures\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"2K textures\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"up to 200,000 polygons\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"reports progress and finally hands back a storage URL\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Raw output lands in Google Cloud Storage and is mirrored to Cloudflare R2\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Make-It-Animatable, an open model released under the MIT licence and published at CVPR 2025\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"most three.ws GLB files are meshopt-compressed\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The script's own documentation puts a typical saving at 90 percent of the file size\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"runs lossless passes (deduplicate, prune, weld, resample) through glTF-Transform and re-encodes textures as WebP\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the decoders are loaded lazily\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The renderer itself is a WebGL renderer on the Three.js 0.184 line\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"(2.0 by default, 1.5 in embeds, 1.0 on low-power phones)\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"BVH-accelerated raycasting\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the Khronos PBR Neutral tone mapper\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Draco and Basis transcoder binaries are served from the same origin as the site\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the official Khronos glTF 2.0 validator in WebAssembly\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"built once with Three.js's PMREM generator\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a render pass, a normal and depth pass, ambient occlusion, depth of field, bloom and a colour grade\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the die-cut outline vectorised from a canvas by a marching-squares tracer\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a vertex-shader cylinder roll injected into the material\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"recognises roughly two dozen of these naming families\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Thirty of the 53 tracks in each clip address a finger\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It is a pure module, so the same code runs in the browser and in Node\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"nine visemes\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"25 observed attributes\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"four layout modes: inline, floating, section and fullscreen\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"within 300 pixels of the viewport\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the element keeps at most eight viewers live\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It scores 52 canonical joints against 16 recognised rig conventions\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a nine-hour meetup inside a persistent three.ws 3D world that reached 3,145 avatars at its peak\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of NVIDIA Inception\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of Google Cloud for Web3 Startups\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is an IBM Business Partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is an AWS Partner\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
+}

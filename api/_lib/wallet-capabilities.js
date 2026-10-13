@@ -34,6 +34,7 @@
 
 import { createHmac, timingSafeEqual, randomUUID } from 'node:crypto';
 import { sql } from './db.js';
+import { runLocked } from './locked-sql.js';
 import { env } from './env.js';
 // Circular by design: the shared guards import the capability gate from here, and
 // we import the custody-ledger writer + the SpendLimitError class from there. Both
@@ -596,14 +597,8 @@ export async function reserveCapabilitySpend({
 	// under the lock, so a revoke/expiry that landed first is always honored.
 	const aggCap = cap.aggregate_usd == null ? null : Number(cap.aggregate_usd);
 	const dCap = dailyUsd == null ? null : Number(dailyUsd);
-	const rows = await sql`
-		WITH lock_cap AS (
-			SELECT pg_advisory_xact_lock(hashtextextended(${'cap:' + String(capabilityId)}, 0))
-		),
-		lock_agent AS (
-			SELECT pg_advisory_xact_lock(hashtextextended(${String(agentId)}, 0))
-		),
-		live AS (
+	const rows = await runLocked(['cap:' + String(capabilityId), agentId], sql`
+		WITH live AS (
 			SELECT id FROM agent_wallet_capabilities
 			WHERE id = ${capabilityId} AND revoked_at IS NULL AND expires_at > now()
 		),
@@ -632,13 +627,13 @@ export async function reserveCapabilitySpend({
 			(agent_id, user_id, event_type, category, network, asset, usd, destination, status, capability_id, meta)
 		SELECT ${agentId}, ${userId ?? null}, 'spend', ${action}, ${network}, ${asset},
 		       ${usdValue}, ${destination ?? null}, 'pending', ${capabilityId}, ${metaJson}::jsonb
-		FROM cap_spent, day_spent, cp_spent, lock_cap, lock_agent
+		FROM cap_spent, day_spent, cp_spent
 		WHERE (SELECT count(*) FROM live) = 1
 		  AND (${aggCap}::float8 IS NULL OR cap_spent.s + ${usdValue}::float8 <= ${aggCap}::float8 + 1e-9)
 		  AND (${dCap}::float8 IS NULL OR day_spent.s + ${usdValue}::float8 <= ${dCap}::float8 + 1e-9)
 		  AND (${cpCap}::float8 IS NULL OR cp_spent.s + ${usdValue}::float8 <= ${cpCap}::float8 + 1e-9)
 		RETURNING id, (SELECT s FROM cap_spent) AS cap_before, (SELECT s FROM day_spent) AS day_before
-	`;
+	`);
 
 	if (!rows.length) {
 		// Distinguish WHY nothing inserted so the boundary message is honest: a
@@ -675,11 +670,8 @@ export async function reserveCapabilitySpend({
 // on the capability being live at insert time (so a revoke is never raced) and
 // tagged with capability_id for the audit trail + leash UI.
 async function reserveUnmetered({ cap, agentId, userId, action, network, asset, destination, usd, metaJson }) {
-	const rows = await sql`
-		WITH lock_cap AS (
-			SELECT pg_advisory_xact_lock(hashtextextended(${'cap:' + String(cap.id)}, 0))
-		),
-		live AS (
+	const rows = await runLocked(['cap:' + String(cap.id)], sql`
+		WITH live AS (
 			SELECT id FROM agent_wallet_capabilities
 			WHERE id = ${cap.id} AND revoked_at IS NULL AND expires_at > now()
 		)
@@ -687,10 +679,10 @@ async function reserveUnmetered({ cap, agentId, userId, action, network, asset, 
 			(agent_id, user_id, event_type, category, network, asset, usd, destination, status, capability_id, meta)
 		SELECT ${agentId}, ${userId ?? null}, 'spend', ${action}, ${network}, ${asset},
 		       ${usd}, ${destination ?? null}, 'pending', ${cap.id}, ${metaJson}::jsonb
-		FROM live, lock_cap
+		FROM live
 		WHERE (SELECT count(*) FROM live) = 1
 		RETURNING id
-	`;
+	`);
 	if (!rows.length) return null;
 	void sql`UPDATE agent_wallet_capabilities SET use_count = use_count + 1, last_used_at = now(), updated_at = now() WHERE id = ${cap.id}`
 		.catch(() => {});

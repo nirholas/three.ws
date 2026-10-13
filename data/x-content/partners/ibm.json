@@ -1,0 +1,215 @@
+{
+	"id": "ibm",
+	"name": "IBM",
+	"order": 2,
+	"designation": "IBM Business Partner",
+	"designationEvidence": [
+		{
+			"type": "page",
+			"url": "https://three.ws/blog/three-ws-ibm-business-partner",
+			"contains": "independent IBM Business Partner"
+		}
+	],
+	"page": "https://three.ws/blog/three-ws-ibm-business-partner",
+	"handle": "IBM",
+	"mark": null,
+	"forbidden": [
+		"endorsed by IBM",
+		"IBM endorses",
+		"IBM-endorsed",
+		"certified by IBM",
+		"IBM-certified",
+		"IBM recommends",
+		"IBM-recommended",
+		"official IBM",
+		"IBM's official",
+		"official partnership",
+		"partnership deliverable",
+		"IBM partnership work",
+		"strategic partner",
+		"strategic partnership",
+		"IBM Strategic",
+		"joint solution",
+		"co-developed with IBM",
+		"co-built with IBM",
+		"built with IBM",
+		"built by IBM",
+		"an IBM release",
+		"IBM release",
+		"IBM-built",
+		"powered by IBM",
+		"IBM-powered",
+		"powered by Granite",
+		"Granite powers",
+		"runs on IBM",
+		"IBM Cloud-hosted",
+		"IBM-hosted",
+		"watsonx Orchestrate Agent Catalog",
+		"dedicated page on the IBM domain",
+		"IBM co-sell",
+		"co-sell with IBM",
+		"IBM customers",
+		"IBM's customers",
+		"IBM Gold",
+		"IBM Platinum",
+		"IBM Premier"
+	],
+	"guidance": "three.ws is an IBM Business Partner, an independent member of IBM's partner program. That is a designation, not an endorsement, certification or strategic partnership, and three.ws is not an IBM product. The public /api/ibm tools, the Granite demo pages and the community-built npm connectors are independent developer tools built on IBM's publicly available Granite models, so never present them as IBM partnership deliverables or as the partnership itself. Stories here are about community work with IBM's user-group program, so describe what three.ws built and ran, never what IBM does, and never speak for IBM.",
+	"docs": [
+		"docs/partners.md",
+		"docs/ibm.md",
+		"docs/ibm-community.md",
+		"docs/partners/ibm-partner-plus.md",
+		"marketing/ibm-partner-plus/badge-usage.md"
+	],
+	"features": [
+		{
+			"id": "user-group-in-world-meetup",
+			"title": "A nine-hour IBM Community meetup held inside a 3D world",
+			"surface": "https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap",
+			"covers": [
+				"/blog/ibm-user-group-first-in-world-meetup-recap",
+				"/docs/ibm-community"
+			],
+			"lane": "community",
+			"summary": "three.ws runs the Three.ws User Group on IBM Community, a public group for developers building AI agents with 3D capabilities. Its first meetup ran nine hours, held entirely inside a persistent three.ws 3D world rather than on a call. The world was open to anyone with the link and peaked at 3,145 concurrent avatars. The agenda was a live tour of the platform from inside the world, community demos and open Q&A, and attendees received a permanent in-world Meetup Laurel. It was organized with the group's organizer on IBM's side.",
+			"docs": [
+				"docs/ibm-community.md",
+				"docs/ibm.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap",
+						"settle": 4000
+					},
+					{
+						"read": "hours",
+						"match": "it ran (nine hours)"
+					},
+					{
+						"read": "peak",
+						"match": "peaked at ([\\d,]+) concurrent avatars"
+					},
+					{
+						"hold": 2500,
+						"caption": "A user-group meetup held inside a 3D world"
+					},
+					{
+						"scroll": "What the day looked like",
+						"ms": 1200,
+						"caption": "Live tour, demos and Q&A, all in-world"
+					},
+					{
+						"hold": 3500
+					},
+					{
+						"scroll": "What it proved, beyond the vibe",
+						"ms": 1200,
+						"caption": "The open room held for a full workday"
+					},
+					{
+						"expect": "15 Hz binary delta sync"
+					},
+					{
+						"hold": 5500
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "the first meetup of the Three.ws User Group on IBM Community",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap",
+							"contains": "the first meetup of the Three.ws User Group on IBM Community"
+						}
+					]
+				},
+				{
+					"says": "it ran nine hours, entirely inside three.ws",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "hours",
+							"equals": "nine hours"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap",
+							"contains": "entirely inside three.ws itself"
+						}
+					]
+				},
+				{
+					"says": "anyone with the link could walk in",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap",
+							"contains": "anyone with the link could walk in"
+						}
+					]
+				},
+				{
+					"says": "the open room peaked at 3,145 concurrent avatars",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "peak",
+							"equals": "3,145"
+						}
+					]
+				},
+				{
+					"says": "a live tour of the platform from inside the world, community demos, and open Q&A",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap",
+							"contains": "a live tour of the platform from inside the world"
+						}
+					]
+				},
+				{
+					"says": "an authoritative Colyseus server on Cloud Run with 15 Hz binary delta sync and proximity-gated spatial voice",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "15 Hz binary delta sync"
+						}
+					]
+				},
+				{
+					"says": "everyone who walked in while it was live got a Meetup Laurel, granted server-side",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap",
+							"contains": "Meetup Laurel"
+						}
+					]
+				},
+				{
+					"says": "organized with the group's organizer on IBM's side",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap",
+							"contains": "the group's organizer on IBM's side"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the meetup recap page answers",
+					"url": "https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap"
+				}
+			]
+		}
+	]
+}

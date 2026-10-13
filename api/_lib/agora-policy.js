@@ -25,6 +25,7 @@
 // THREE_TOKEN_DECIMALS (api/_lib/token/config.js).
 
 import { sql } from './db.js';
+import { runLocked } from './locked-sql.js';
 import { TOKEN_DECIMALS } from './token/config.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000n;
@@ -219,11 +220,8 @@ export async function reservePostSpend({ citizenId, cluster, amountAtomic, reque
 	const amount = BigInt(amountAtomic).toString();
 	const daily = caps.dailyAtomic.toString();
 	const mint = caps.rewardMint;
-	const rows = await sql`
-		with locked as (
-			select pg_advisory_xact_lock(hashtextextended(${String(citizenId)}, 0))
-		),
-		spent as (
+	const rows = await runLocked([citizenId], sql`
+		with spent as (
 			select coalesce(sum(amount_atomic), 0) as s
 			from agora_activity
 			where citizen_id = ${citizenId}
@@ -241,10 +239,10 @@ export async function reservePostSpend({ citizenId, cluster, amountAtomic, reque
 		)
 		insert into agora_spend_reservations (citizen_id, amount_atomic, reward_mint)
 		select ${citizenId}, ${amount}::numeric, ${mint}
-		from spent, held, locked
+		from spent, held
 		where spent.s + held.s + ${amount}::numeric <= ${daily}::numeric
 		returning id, ((select s from spent) + (select s from held))::text as committed_before
-	`;
+	`);
 
 	if (!rows.length) {
 		return {

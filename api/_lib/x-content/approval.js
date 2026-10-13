@@ -26,6 +26,16 @@
 // other condition still applies, including a tag anywhere in the body. An
 // Article that does carry a scenario must still have a current proof.
 //
+// A series has its own rule too, `approval.series` (owner, 2026-10-11: one
+// partner spotlight a day, released without the owner). A partner spotlight is
+// tier 1 because it names a partner, so the tier rule would hold every one of
+// them. What stands in for the owner's eye on the partner's name is the series
+// lint (partners.js): the thread must state the designation exactly as the
+// partner's registry entry gives it, must not use any phrase that would
+// overstate the relationship, and every fact in it comes from the registry's
+// evidence. Every other condition still applies: it must be filmed, tag no one,
+// and pass on the editor's own verdict.
+//
 // A release by policy is never immediate. The post is embargoed for
 // `vetoHours`, and the release is written to the ops alerts, so there is always
 // a window in which `npm run x:content -- pause <id>` takes it back.
@@ -37,7 +47,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const HOUR = 3_600_000;
-export const DEFAULT_APPROVAL = { mode: 'owner', tiers: [2, 3], vetoHours: 24, articles: false };
+export const DEFAULT_APPROVAL = { mode: 'owner', tiers: [2, 3], vetoHours: 24, articles: false, series: [] };
 export const MIN_VETO_HOURS = 1;
 
 export function approvalPolicy(queue) {
@@ -49,6 +59,7 @@ export function approvalPolicy(queue) {
 		tiers,
 		vetoHours: Number.isFinite(veto) && veto >= MIN_VETO_HOURS ? veto : DEFAULT_APPROVAL.vetoHours,
 		articles: raw.articles === true,
+		series: Array.isArray(raw.series) ? raw.series.filter((name) => typeof name === 'string' && name) : [],
 	};
 }
 
@@ -57,7 +68,8 @@ export function policyBlockers(item, record, policy, root, now = Date.now()) {
 	if (policy.mode !== 'auto') return ['the queue leaves approval to the owner'];
 	const reasons = [];
 	const article = item.kind === 'article' && policy.articles;
-	if (!article && !policy.tiers.includes(tierOf(item))) reasons.push(`tier ${tierOf(item)} posts are approved by the owner`);
+	const listedSeries = typeof item.series === 'string' && (policy.series || []).includes(item.series);
+	if (!article && !listedSeries && !policy.tiers.includes(tierOf(item))) reasons.push(`tier ${tierOf(item)} posts are approved by the owner`);
 	if (item.scenario) reasons.push(...proofProblems(item, root, now).map((problem) => `proof: ${problem}`));
 	else if (!article) reasons.push('it was never filmed against the product');
 	const tagged = mentionsIn([...(item.posts || []).map((post) => post.text), ...(item.kind === 'article' ? [item.article?.title, articleBody(item, root)] : [])].filter(Boolean).join('\n'));

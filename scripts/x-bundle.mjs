@@ -26,7 +26,7 @@ import { fileURLToPath } from 'node:url';
 import { loadQueue } from '../api/_lib/x-content/queue.js';
 import { REVIEW_MAX_AGE_DAYS } from '../api/_lib/x-content/review.js';
 import { dbStore, memoryStore } from '../api/_lib/x-content/state.js';
-import { DEFAULT_OVERLAY_DIR, buildBundle, materialize, publishBundles, r2Storage, readIndex, removeBundle, verifyBundles } from '../api/_lib/x-content/overlay.js';
+import { DEFAULT_OVERLAY_DIR, INDEX_VERSION, buildBundle, materialize, publishBundles, bundleStorage, readIndex, removeBundle, signIndex, verifyBundles } from '../api/_lib/x-content/overlay.js';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DAY = 24 * 60 * 60_000;
@@ -59,16 +59,23 @@ function fail(message) {
 }
 
 // What api/_lib/env.js reads for the storage client, plus the signing secret.
-const BUNDLE_ENV = ['S3_ENDPOINT', 'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY', 'X_CONTENT_BUNDLE_SECRET'];
+const R2_ENV = ['S3_ENDPOINT', 'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'];
+// With X_CONTENT_BUNDLE_BUCKET the bundles live on Google Cloud Storage and the
+// R2 credentials are not needed.
+const gcsBucket = () => Boolean(String(process.env.X_CONTENT_BUNDLE_BUCKET ?? '').trim());
 
 function hydrateBundleEnv() {
 	if (!process.env.GOOGLE_CLOUD_PROJECT) process.env.GOOGLE_CLOUD_PROJECT = 'aerial-vehicle-466722-p5';
-	for (const name of BUNDLE_ENV.filter((key) => !String(process.env[key] ?? '').trim())) {
-		const read = spawnSync(process.execPath, [resolve(root, 'scripts/read-service-env.mjs'), `^${name}$`, '--raw'], { cwd: root, encoding: 'utf8' });
-		const value = read.status === 0 ? read.stdout.trim() : '';
-		if (value) process.env[name] = value;
-	}
-	const missing = BUNDLE_ENV.filter((key) => !String(process.env[key] ?? '').trim());
+	const hydrate = (names) => {
+		for (const name of names.filter((key) => !String(process.env[key] ?? '').trim())) {
+			const read = spawnSync(process.execPath, [resolve(root, 'scripts/read-service-env.mjs'), `^${name}$`, '--raw'], { cwd: root, encoding: 'utf8' });
+			const value = read.status === 0 ? read.stdout.trim() : '';
+			if (value) process.env[name] = value;
+		}
+	};
+	hydrate(['X_CONTENT_BUNDLE_BUCKET', 'X_CONTENT_BUNDLE_SECRET']);
+	if (!gcsBucket()) hydrate(R2_ENV);
+	const missing = [...(gcsBucket() ? [] : R2_ENV), 'X_CONTENT_BUNDLE_SECRET'].filter((key) => !String(process.env[key] ?? '').trim());
 	if (missing.includes('X_CONTENT_BUNDLE_SECRET')) {
 		fail('X_CONTENT_BUNDLE_SECRET is not set here or on the Cloud Run service. Generate one with `openssl rand -hex 32`, store it on the service as a Secret Manager reference, and run this again.');
 	}
@@ -112,7 +119,7 @@ async function publish() {
 	if (refused.length && named.length) fail(`Nothing was uploaded: ${refused.join(', ')} cannot be bundled.`);
 	if (!ready.length) fail('Nothing was uploaded: no item could be bundled.');
 
-	const result = await publishBundles({ root, ids: ready, storage: r2Storage(), replaceIndex: has('replace-index') });
+	const result = await publishBundles({ root, ids: ready, storage: bundleStorage(), replaceIndex: has('replace-index') });
 	console.log(`\nPublished ${result.published.join(', ')}: ${result.uploaded} file(s) uploaded, ${result.skipped} already stored.`);
 	console.log('Production reads the index at the start of its next tick when X_CONTENT_REMOTE_QUEUE is true.');
 	if (refused.length) process.exit(1);
@@ -125,7 +132,7 @@ function reviewWindow(bundle, now) {
 }
 
 async function list() {
-	const index = await readIndex({ storage: r2Storage() });
+	const index = await readIndex({ storage: bundleStorage() });
 	if (!index) {
 		console.log('No bundle index in storage.');
 		return;
@@ -139,7 +146,15 @@ async function list() {
 
 async function pull() {
 	const dir = resolve(option('dir', DEFAULT_OVERLAY_DIR));
-	const result = await materialize({ imageRoot: root, storage: r2Storage(), dir });
+	const storage = bundleStorage();
+	// A bucket that has never been published to is the normal first run: nothing
+	// is shipped yet, so the overlay is the image's queue with no bundles on it.
+	let index = null;
+	if (!(await readIndex({ storage }))) {
+		const empty = { version: INDEX_VERSION, updatedAt: new Date().toISOString(), bundles: [] };
+		index = { ...empty, signature: signIndex(empty) };
+	}
+	const result = await materialize({ imageRoot: root, storage, dir, index });
 	console.log(`bundles: ${result.bundles.join(', ') || 'none'}`);
 	if (result.superseded.length) console.log(`already posted in this checkout's queue, so left alone: ${result.superseded.join(', ')}`);
 	console.log(`files: ${result.files} (${result.reused} reused from an earlier pull)`);
@@ -149,13 +164,13 @@ async function pull() {
 async function remove() {
 	const id = positional[1];
 	if (!id) fail('Usage: remove <id>');
-	const result = await removeBundle({ id, storage: r2Storage() });
+	const result = await removeBundle({ id, storage: bundleStorage() });
 	if (!result.removed) fail(`${id} is not in the bundle index.`);
 	console.log(`Removed ${id} and its files. ${result.remaining ? `${result.remaining} bundle(s) remain.` : 'The index was the last object, so it is gone too.'}`);
 }
 
 async function verify() {
-	const result = await verifyBundles({ storage: r2Storage() });
+	const result = await verifyBundles({ storage: bundleStorage() });
 	if (!result.index) {
 		console.log('No bundle index in storage; nothing to verify.');
 		return;

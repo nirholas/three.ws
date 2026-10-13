@@ -110,6 +110,9 @@
 				margin: 0;
 				padding: 0;
 			}
+			html {
+				background: #050505;
+			}
 			body {
 				font:
 					15px/1.55 -apple-system,
@@ -1335,7 +1338,7 @@
 					<div class="picker-reassure" data-crypto-optional="compact"></div>
 				</div>
 				<div class="intent-grid" role="group" aria-label="Choose what to create">
-					<a class="intent-card" href="/create-agent" aria-label="Build an AI agent — name it, give it a body, skills, voice, and an on-chain identity" data-i18n-attr="aria-label:create.build_an_ai_agent_name_it_gi_arialabel">
+					<a class="intent-card" href="/create-agent">
 						<span class="intent-card-icon" aria-hidden="true">
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
 								<rect x="4" y="8" width="16" height="12" rx="3" />
@@ -1349,7 +1352,7 @@
 						<h2 class="intent-card-title">Build an AI agent</h2>
 						<p class="intent-card-sub">Avatar, brain, skills, voice, and an on-chain identity — the full wizard.</p>
 					</a>
-					<a class="intent-card is-current" href="#avatar-options" aria-label="You're here: make a 3D avatar, jump to the avatar options below on this page" data-i18n-attr="aria-label:create.make_a_3d_avatar_jump_to_the_arialabel">
+					<a class="intent-card is-current" href="#avatar-options" aria-current="location">
 						<span class="intent-card-tag">You're here</span>
 						<span class="intent-card-icon" aria-hidden="true">
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
@@ -1360,7 +1363,7 @@
 						<h2 class="intent-card-title">Make a 3D avatar</h2>
 						<p class="intent-card-sub">From a photo, from scratch, from a text prompt (typed or spoken), or upload a file.</p>
 					</a>
-					<a class="intent-card" href="/forge" aria-label="Generate a 3D model from a text prompt, photo, multiple photos, a drawing, or your voice" data-i18n-attr="aria-label:create.generate_a_3d_model_from_a_t_arialabel">
+					<a class="intent-card" href="/forge">
 						<span class="intent-card-icon" aria-hidden="true">
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
 								<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" />
@@ -1370,7 +1373,7 @@
 						<h2 class="intent-card-title">Generate a 3D model</h2>
 						<p class="intent-card-sub">Any object or prop — not just avatars. Type it, speak it, upload up to 4 photos for a sharper mesh, or draw it right in the browser.</p>
 					</a>
-					<a class="intent-card" href="/launchpad" aria-label="Launch a token world" data-i18n-attr="aria-label:create.launch_a_token_world_arialabel">
+					<a class="intent-card" href="/launchpad">
 						<span class="intent-card-icon" aria-hidden="true">
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
 								<circle cx="12" cy="12" r="9" />
@@ -1412,7 +1415,6 @@
 					id="card-default-editor"
 					role="button"
 					tabindex="0"
-					aria-label="Customize a base avatar in our in-browser editor (recommended)"
 				>
 					<span class="recommended-badge" aria-hidden="true" data-i18n="create.recommended">Recommended</span>
 					<div class="hero-card-body">
@@ -1499,7 +1501,6 @@
 						id="card-prompt"
 						role="button"
 						tabindex="0"
-						aria-label="Describe it to 3D: describe an avatar in words and generate it in 3D, now live"
 					>
 						<div class="card-icon-row">
 							<div class="card-icon" aria-hidden="true">
@@ -1557,7 +1558,6 @@
 						id="card-customize"
 						role="button"
 						tabindex="0"
-						aria-label="Start with a ready-made template"
 					>
 						<div class="card-icon-row">
 							<div class="card-icon" aria-hidden="true">
@@ -1609,7 +1609,6 @@
 						id="card-selfie"
 						role="button"
 						tabindex="0"
-						aria-label="Scan yourself to 3D: scan yourself into a 3D avatar"
 					>
 						<div class="card-icon-row">
 							<div class="card-icon" aria-hidden="true">
@@ -1660,7 +1659,6 @@
 						id="card-video-avatar"
 						role="button"
 						tabindex="0"
-						aria-label="Generate a talking avatar video"
 					>
 						<div class="card-icon-row">
 							<div class="card-icon" aria-hidden="true">
@@ -1711,7 +1709,6 @@
 						id="card-cosmos"
 						role="button"
 						tabindex="0"
-						aria-label="Bring your avatar to life with a Cosmos living world"
 					>
 						<div class="card-icon-row">
 							<div class="card-icon" aria-hidden="true">
@@ -1743,7 +1740,6 @@
 						id="card-upload-glb"
 						role="button"
 						tabindex="0"
-						aria-label="Upload your own GLB: upload a GLB file"
 					>
 						<div class="card-icon-row">
 							<div class="card-icon" aria-hidden="true">
@@ -1793,7 +1789,6 @@
 						id="card-agent-studio"
 						role="button"
 						tabindex="0"
-						aria-label="Try the Avatar Studio (beta)"
 					>
 						<div class="card-icon-row">
 							<div class="card-icon" aria-hidden="true">

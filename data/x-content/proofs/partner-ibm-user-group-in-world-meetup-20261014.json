@@ -1,0 +1,114 @@
+{
+	"id": "partner-ibm-user-group-in-world-meetup-20261014",
+	"scenarioHash": "91370943e91c17b43dcd0fd083288e2722eebebe5e7d17300da59e9389c60656",
+	"ranAt": "2026-10-13T19:17:41.892Z",
+	"target": {
+		"commit": "7d172d48e",
+		"revision": "three-ws-api-00499-fgc"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap",
+			"detail": "loaded https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap",
+			"ok": true,
+			"ms": 4888,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "read",
+			"target": "hours",
+			"detail": "hours = \"nine hours\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "peak",
+			"detail": "peak = \"3,145\"",
+			"ok": true,
+			"ms": 1,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "hold",
+			"target": "2500",
+			"detail": "2500 ms",
+			"ok": true,
+			"ms": 9282,
+			"frames": 75
+		},
+		{
+			"index": 5,
+			"kind": "scroll",
+			"target": "What the day looked like",
+			"detail": "scrolled 772 px",
+			"ok": true,
+			"ms": 5400,
+			"frames": 36
+		},
+		{
+			"index": 6,
+			"kind": "hold",
+			"target": "3500",
+			"detail": "3500 ms",
+			"ok": true,
+			"ms": 14803,
+			"frames": 105
+		},
+		{
+			"index": 7,
+			"kind": "scroll",
+			"target": "What it proved, beyond the vibe",
+			"detail": "scrolled 983 px",
+			"ok": true,
+			"ms": 5544,
+			"frames": 36
+		},
+		{
+			"index": 8,
+			"kind": "expect",
+			"target": "15 Hz binary delta sync",
+			"detail": "appeared after 0.0 s",
+			"ok": true,
+			"ms": 36,
+			"frames": 0
+		},
+		{
+			"index": 9,
+			"kind": "hold",
+			"target": "5500",
+			"detail": "5500 ms",
+			"ok": true,
+			"ms": 22901,
+			"frames": 165
+		}
+	],
+	"facts": {
+		"hours": "nine hours",
+		"peak": "3,145"
+	},
+	"saw": [
+		"15 Hz binary delta sync"
+	],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/partner-ibm-user-group-in-world-meetup-20261014/reel.mp4",
+		"sha256": "0b0fde3caecee7d8535e4ced9db559734924a7caead773d1eb9d798109f79839",
+		"frames": 417,
+		"motion": 0.178,
+		"durationSec": 13.9,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

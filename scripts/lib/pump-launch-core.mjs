@@ -297,7 +297,7 @@ export function ensureMaster(cfg) {
 	mkdirSync(cfg.walletDir, { recursive: true });
 	if (existsSync(cfg.masterPath)) return keypairFromFile(cfg.masterPath);
 	const master = Keypair.generate();
-	writeFileSync(cfg.masterPath, JSON.stringify(Array.from(master.secretKey)));
+	writeFileSync(cfg.masterPath, JSON.stringify(Array.from(master.secretKey)), { mode: 0o600 });
 	return master;
 }
 export function masterPubkey(cfg) {
@@ -340,7 +340,7 @@ export function generate(cfg, repos) {
 			usedSymbols.add(symbol);
 		} else {
 			kp = Keypair.generate();
-			writeFileSync(walletFile, JSON.stringify(Array.from(kp.secretKey)));
+			writeFileSync(walletFile, JSON.stringify(Array.from(kp.secretKey)), { mode: 0o600 });
 			symbol = r.symbol || makeSymbol(repoName, usedSymbols);
 		}
 		const name = (r.coinName || repoName).slice(0, 32);

@@ -1,0 +1,549 @@
+{
+	"id": "aws",
+	"name": "Amazon Web Services",
+	"order": 3,
+	"designation": "AWS Partner",
+	"designationEvidence": [
+		{
+			"type": "page",
+			"url": "https://three.ws/aws",
+			"contains": "Now an AWS Partner"
+		}
+	],
+	"page": "https://three.ws/aws",
+	"handle": "awscloud",
+	"mark": null,
+	"forbidden": [
+		"endorsed by AWS",
+		"endorsed by Amazon",
+		"AWS endorses",
+		"AWS-endorsed",
+		"certified by AWS",
+		"AWS-certified",
+		"AWS recommends",
+		"AWS-recommended",
+		"AWS Strategic Partner",
+		"strategic partnership with AWS",
+		"AWS Competency",
+		"AWS Advanced",
+		"AWS Premier",
+		"AWS Select Tier",
+		"available on AWS Marketplace",
+		"available in AWS Marketplace",
+		"listed on AWS Marketplace",
+		"listed in AWS Marketplace",
+		"live on AWS Marketplace",
+		"live in AWS Marketplace",
+		"now on AWS Marketplace",
+		"launched on AWS Marketplace",
+		"find us on AWS Marketplace",
+		"buy three.ws on AWS",
+		"buy it on AWS",
+		"subscribe on AWS Marketplace today",
+		"AWS Marketplace listing is live",
+		"AWS invoice",
+		"AWS bill",
+		"AWS billing",
+		"AWS credits",
+		"AWS commitment",
+		"EDP commitment",
+		"toward EDP",
+		"consolidated billing",
+		"billed through AWS",
+		"billed by AWS",
+		"metered by AWS",
+		"charged through AWS",
+		"drawn down",
+		"runs on AWS",
+		"hosted on AWS",
+		"powered by AWS",
+		"AWS-hosted",
+		"AWS infrastructure",
+		"AWS-powered",
+		"runs on EC2",
+		"VPC deployment",
+		"IAM-integrated",
+		"Amazon Bedrock",
+		"joint customers",
+		"co-sell"
+	],
+	"guidance": "three.ws is an AWS Partner, listed on the Software Path. Say that and nothing grander: it is a partner designation, not an endorsement, certification or tier. The AWS Marketplace integration is built and deployed, and the subscription it will open is a free front door that links an AWS account to a three.ws account and issues an x402 key. Usage is paid per call over x402, never on an AWS invoice. Never say three.ws is listed, available or live on AWS Marketplace, and never say the platform runs on or is hosted on AWS: production runs on Google Cloud and the Marketplace integration is the AWS leg. If the listing status comes up, use the product page's own words and keep it to one clause.",
+	"docs": [
+		"docs/partners.md",
+		"docs/aws-marketplace.md",
+		"docs/aws-builder-center.md",
+		"docs/aws-marketplace-listing-kit.md",
+		"docs/listings.md"
+	],
+	"features": [
+		{
+			"id": "marketplace-front-door",
+			"title": "A free AWS subscription that issues an x402 key",
+			"surface": "https://three.ws/aws",
+			"covers": [
+				"/aws",
+				"/aws-marketplace/welcome",
+				"api/aws-marketplace/",
+				"/api/aws-marketplace/register"
+			],
+			"lane": "developer",
+			"summary": "three.ws built the AWS Marketplace SaaS integration and a product page that explains it. Subscribing is a free front door: it links an AWS account to a three.ws account and issues an x402 access key that calls every /api/x402/* endpoint. Usage is then paid per call over x402, so AWS Marketplace does not meter or bill it. Registration and entitlement calls reach the AWS Marketplace APIs in us-east-1. The same x402 endpoints work today with no AWS account at all. It is for teams that want to start from the AWS side.",
+			"docs": [
+				"docs/aws-marketplace.md",
+				"docs/aws-marketplace-listing-kit.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/aws",
+						"settle": 4000
+					},
+					{
+						"read": "path",
+						"match": "(Software Path)"
+					},
+					{
+						"hold": 2200,
+						"caption": "An AWS Partner page, Software Path"
+					},
+					{
+						"scroll": "Free AWS subscription",
+						"ms": 1200,
+						"caption": "The AWS subscription is free"
+					},
+					{
+						"expect": "issues your x402 access key"
+					},
+					{
+						"hold": 3000
+					},
+					{
+						"scroll": "AWS Marketplace does not meter or bill it",
+						"ms": 1200,
+						"caption": "Usage is paid per call over x402"
+					},
+					{
+						"expect": "AWS Marketplace does not meter or bill it"
+					},
+					{
+						"hold": 3500
+					},
+					{
+						"scroll": "Marketplace APIs in us-east-1",
+						"ms": 1200,
+						"caption": "Registration calls reach us-east-1"
+					},
+					{
+						"read": "region",
+						"match": "(us-east-1)"
+					},
+					{
+						"hold": 4500
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "AWS Partner on the Software Path",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/aws",
+							"contains": "Now an AWS Partner"
+						},
+						{
+							"type": "proof",
+							"fact": "path",
+							"equals": "Software Path"
+						}
+					]
+				},
+				{
+					"says": "subscribing is free, with no pricing dimensions, no minimum, no commitment",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/aws",
+							"contains": "Subscribing is free: no pricing dimensions, no minimum, no commitment."
+						}
+					]
+				},
+				{
+					"says": "it links your AWS account to a three.ws account and issues your x402 access key",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/aws",
+							"contains": "It links your AWS account to a three.ws account and issues your x402 access key."
+						}
+					]
+				},
+				{
+					"says": "usage is paid per call over x402",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/aws",
+							"contains": "over x402 (HTTP 402)"
+						}
+					]
+				},
+				{
+					"says": "AWS Marketplace does not meter or bill the usage",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/aws",
+							"contains": "AWS Marketplace does not meter or bill it"
+						}
+					]
+				},
+				{
+					"says": "the key calls every /api/x402/* endpoint",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/aws",
+							"contains": "The key the subscription issues calls every /api/x402/* endpoint."
+						}
+					]
+				},
+				{
+					"says": "x402 works today without an AWS subscription",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/aws",
+							"contains": "You can use x402 today without an AWS subscription at all."
+						}
+					]
+				},
+				{
+					"says": "registration and entitlement calls reach the AWS Marketplace APIs in us-east-1",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "region",
+							"equals": "us-east-1"
+						}
+					]
+				},
+				{
+					"says": "three.ws subscribes under the AWS Standard Contract for Marketplace",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/aws",
+							"contains": "three.ws subscribes under the AWS Standard Contract for Marketplace."
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the AWS partner page answers",
+					"url": "https://three.ws/aws"
+				}
+			]
+		},
+		{
+			"id": "builder-center-writing",
+			"title": "Engineering write-ups on the AWS Builder Center",
+			"surface": "https://three.ws/docs/aws-builder-center",
+			"covers": [
+				"/docs/aws-builder-center"
+			],
+			"lane": "developer",
+			"summary": "three.ws publishes engineering articles on the AWS Builder Center under its official organization account. The first, published 30 May 2026, walks through metering a SaaS product through AWS Marketplace with the AWS SDK for JavaScript v3: ResolveCustomer, MeterUsage, GetEntitlements and signature-verified lifecycle webhooks. It ends on bridging an AWS customer identifier into the access check that already served an x402 paywall. A second piece, published 27 June 2026, covers agents with 3D bodies and on-chain payments. Every article links the readable source in the open repository.",
+			"docs": [
+				"docs/aws-builder-center.md",
+				"docs/aws-marketplace.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/docs/aws-builder-center",
+						"settle": 4000
+					},
+					{
+						"scroll": "Published articles",
+						"ms": 1000,
+						"caption": "Our engineering write-ups, by AWS builders"
+					},
+					{
+						"expect": "Published 30 May 2026"
+					},
+					{
+						"read": "first",
+						"match": "(How we metered a SaaS product through AWS Marketplace)"
+					},
+					{
+						"hold": 3500,
+						"caption": "Real SDK calls, with the source linked"
+					},
+					{
+						"scroll": "Published 27 June 2026",
+						"ms": 1000,
+						"caption": "A second piece on agents with 3D bodies"
+					},
+					{
+						"hold": 3500
+					},
+					{
+						"scroll": "Why we publish here",
+						"ms": 1200,
+						"caption": "Every claim points at readable source"
+					},
+					{
+						"expect": "readable source in"
+					},
+					{
+						"hold": 5000
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "published on the AWS Builder Center under the official organization account",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-builder-center",
+							"contains": "publishes there under the official organization account"
+						}
+					]
+				},
+				{
+					"says": "How we metered a SaaS product through AWS Marketplace with the AWS SDK for JavaScript v3",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-builder-center",
+							"contains": "How we metered a SaaS product through AWS Marketplace with the AWS SDK for JavaScript v3"
+						}
+					]
+				},
+				{
+					"says": "published 30 May 2026",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-builder-center",
+							"contains": "Published 30 May 2026"
+						}
+					]
+				},
+				{
+					"says": "ResolveCustomer on the fulfillment URL, MeterUsage and BatchMeterUsage for consumption, GetEntitlements for tiered feature gating",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-builder-center",
+							"contains": "ResolveCustomer on the fulfillment URL"
+						}
+					]
+				},
+				{
+					"says": "bridging an AWS customer identifier into the same access check that already served an on-chain x402 paywall",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-builder-center",
+							"contains": "into the same access check that already served an on-chain"
+						}
+					]
+				},
+				{
+					"says": "a second article on agents with 3D bodies and on-chain payments, published 27 June 2026",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-builder-center",
+							"contains": "Build Autonomous AI Agents with 3D Bodies and On-Chain Payments"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-builder-center",
+							"contains": "Published 27 June 2026"
+						}
+					]
+				},
+				{
+					"says": "every article points at readable source in the open repository",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-builder-center",
+							"contains": "Every article we publish there points at readable source"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the Builder Center index page answers",
+					"url": "https://three.ws/docs/aws-builder-center"
+				}
+			]
+		},
+		{
+			"id": "marketplace-integration-docs",
+			"title": "How the AWS Marketplace integration identifies a buyer",
+			"surface": "https://three.ws/docs/aws-marketplace",
+			"covers": [
+				"/docs/aws-marketplace",
+				"api/_lib/aws-marketplace.js",
+				"api/_lib/aws-marketplace-bridge.js",
+				"api/_lib/aws-marketplace-store.js"
+			],
+			"lane": "developer",
+			"summary": "The AWS Marketplace integration is open source and documented end to end. ResolveCustomer returns a license ARN and the buyer's AWS account id, and under Concurrent Agreements the license ARN, not the account id, is the per-grant identity. Lifecycle events arrive on Amazon EventBridge and are relayed to a webhook that revokes the x402 key when an agreement ends. When an end event cannot be matched to exactly one agreement, the webhook revokes nothing. The integration ships inert without credentials, so nothing can fabricate an entitlement. It is written for engineers who integrate Marketplace SaaS products.",
+			"docs": [
+				"docs/aws-marketplace.md",
+				"docs/aws-builder-center-marketplace-x402.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/docs/aws-marketplace",
+						"settle": 4000
+					},
+					{
+						"scroll": "Subscribing via AWS Marketplace",
+						"ms": 1000,
+						"caption": "The subscription flow, step by step"
+					},
+					{
+						"hold": 3000
+					},
+					{
+						"scroll": "How a buyer is identified",
+						"ms": 1400,
+						"caption": "Buyers are keyed by license ARN"
+					},
+					{
+						"expect": "LicenseArn"
+					},
+					{
+						"hold": 3500
+					},
+					{
+						"scroll": "Lifecycle notifications",
+						"ms": 1400,
+						"caption": "Lifecycle events arrive over EventBridge"
+					},
+					{
+						"expect": "Purchase Agreement Ended"
+					},
+					{
+						"hold": 5500
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "ResolveCustomer returns LicenseArn and CustomerAWSAccountId",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-marketplace",
+							"contains": "It returns LicenseArn and CustomerAWSAccountId"
+						}
+					]
+				},
+				{
+					"says": "one AWS account can hold several simultaneous agreements for the same product",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-marketplace",
+							"contains": "one AWS account can hold several simultaneous agreements for the same product"
+						}
+					]
+				},
+				{
+					"says": "the license ARN is the per-grant identity",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-marketplace",
+							"contains": "the license ARN is the per-grant identity"
+						}
+					]
+				},
+				{
+					"says": "lifecycle events arrive on Amazon EventBridge",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-marketplace",
+							"contains": "New listings receive lifecycle events on Amazon EventBridge"
+						}
+					]
+				},
+				{
+					"says": "Purchase Agreement Ended revokes the x402 key and marks the record cancelled",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-marketplace",
+							"contains": "Purchase Agreement Ended"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-marketplace",
+							"contains": "Revoke the x402 key and mark the record cancelled"
+						}
+					]
+				},
+				{
+					"says": "the webhook refuses to guess, and revokes nothing when an end event is ambiguous",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-marketplace",
+							"contains": "The webhook refuses to guess."
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-marketplace",
+							"contains": "revokes nothing"
+						}
+					]
+				},
+				{
+					"says": "the plaintext key is returned once, on first issue",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-marketplace",
+							"contains": "The plaintext key is returned once, on first issue"
+						}
+					]
+				},
+				{
+					"says": "nothing fabricates an entitlement AWS did not grant",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/aws-marketplace",
+							"contains": "nothing fabricates an entitlement AWS did not grant"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the Marketplace integration doc answers",
+					"url": "https://three.ws/docs/aws-marketplace"
+				}
+			]
+		}
+	]
+}

@@ -1,275 +1,266 @@
 {
 	"id": "embed-article",
-	"contentHash": "eaf1e2714ae84f0bc45e01be35057774279e897abbd1ffe6ced9d6c31cb6435f",
-	"reviewedAt": "2026-10-09T17:21:00.683Z",
-	"passed": false,
-	"blockers": [
-		"editor verdict is revise"
-	],
+	"contentHash": "1ef6817856ae1e147a64e9f7bb591649f834470412e32110ea44a58cc5ce4a81",
+	"reviewedAt": "2026-10-13T18:12:44.886Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
-		"One HTML tag puts a live 3D avatar on any page, already idling when it appears",
-		"A live 3D avatar on any web page takes one script line and one <agent-3d> tag pointed at a body. The element stays hidden until the idle has rendered, so the avatar appears standing naturally, on Mixamo, VRM and other rigs alike. The write-up walks through each step between the tag and that frame, and what reduced motion does to it."
+		"One script tag and one element: a live 3D avatar on any page, 8 at a time, idling as it appears",
+		"Two lines of HTML put a live 3D avatar on a web page. The element holds its frame back until the idle has rendered, so the avatar appears standing naturally on Mixamo, VRM and other rigs alike. The write-up follows one snippet from the tag to that frame, then covers pinned versions with integrity hashes, reduced motion and a budget of 8 live avatars per page."
 	],
 	"lint": [],
 	"verification": {
 		"ok": true,
 		"checks": [
 			{
-				"claim": "One HTML tag puts a live 3D avatar on any page",
-				"kind": "evidence:page",
-				"target": "https://three.ws/docs/web-component",
-				"ok": true,
-				"detail": "live page shows \"ships the entire three.ws stack in a single script tag\""
-			},
-			{
-				"claim": "One HTML tag puts a live 3D avatar on any page",
-				"kind": "evidence:file",
-				"target": "docs/web-component.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "already idling when it appears",
-				"kind": "evidence:page",
-				"target": "https://three.ws/docs/web-component",
-				"ok": true,
-				"detail": "live page shows \"The body is already on screen holding its first clip\""
-			},
-			{
-				"claim": "already idling when it appears",
-				"kind": "evidence:file",
-				"target": "src/element.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "one script line and one <agent-3d> tag pointed at a body",
+				"claim": "One script tag and one element",
 				"kind": "evidence:file",
 				"target": "docs/tutorials/embed-in-30-seconds.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "one script line and one <agent-3d> tag pointed at a body",
-				"kind": "evidence:file",
-				"target": "docs/web-component.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The element stays hidden until the idle has rendered",
+				"claim": "a live 3D avatar on any page",
 				"kind": "evidence:page",
 				"target": "https://three.ws/docs/web-component",
 				"ok": true,
-				"detail": "live page shows \"the element keeps its canvas hidden until that pose has rendered, so a bind-pose T-pose is never shown\""
+				"detail": "live page shows \"ships the entire three.ws stack in a single script tag\""
 			},
 			{
-				"claim": "The element stays hidden until the idle has rendered",
-				"kind": "evidence:file",
-				"target": "src/element.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "on Mixamo, VRM and other rigs alike",
-				"kind": "evidence:file",
-				"target": "src/glb-canonicalize.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "on Mixamo, VRM and other rigs alike",
-				"kind": "evidence:file",
-				"target": "src/glb-canonicalize.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "what reduced motion does to it",
-				"kind": "evidence:file",
-				"target": "src/element.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "There is no API key and no build step",
+				"claim": "a live 3D avatar on any page",
 				"kind": "evidence:file",
 				"target": "docs/web-component.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "There is no API key and no build step",
-				"kind": "evidence:file",
-				"target": "docs/web-component.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The 1 in the script path tracks the 1.x line of the element",
-				"kind": "evidence:page",
-				"target": "https://three.ws/agent-3d/versions.json",
-				"ok": true,
-				"detail": "live page shows \">=1.0.0 <2.0.0\""
-			},
-			{
-				"claim": "The 1 in the script path tracks the 1.x line of the element",
-				"kind": "evidence:file",
-				"target": "scripts/publish-lib.mjs",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "boots it once it comes within 300 pixels of the viewport",
+				"claim": "8 at a time",
 				"kind": "evidence:file",
 				"target": "src/element.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "boots it once it comes within 300 pixels of the viewport",
+				"claim": "8 at a time",
 				"kind": "evidence:file",
 				"target": "src/element.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The eager attribute skips the wait",
-				"kind": "evidence:file",
-				"target": "docs/web-component.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "loads the idle and walk clips",
-				"kind": "evidence:file",
-				"target": "src/element.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "Clip addresses are rebased onto the origin the script came from",
-				"kind": "evidence:file",
-				"target": "src/element.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The canvas sits at opacity 0 while that happens",
-				"kind": "evidence:file",
-				"target": "src/element.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The canvas sits at opacity 0 while that happens",
-				"kind": "evidence:file",
-				"target": "src/element.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "It snaps the idle in and waits two frames",
-				"kind": "evidence:file",
-				"target": "src/element.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "It snaps the idle in and waits two frames",
-				"kind": "evidence:file",
-				"target": "src/element.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The agent:ready event fires once the element has booted, with the body already on screen holding its idle",
+				"claim": "idling as it appears",
 				"kind": "evidence:page",
 				"target": "https://three.ws/docs/web-component",
 				"ok": true,
 				"detail": "live page shows \"The body is already on screen holding its first clip\""
 			},
 			{
-				"claim": "That is the event to swap out your own placeholder image on",
+				"claim": "There was no API key and no build step anywhere in that run",
 				"kind": "evidence:file",
 				"target": "docs/web-component.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The mapping covers Mixamo, Blender and Rigify, VRM and VRoid, Unreal, Daz and Genesis, MakeHuman, Roblox and Second Life",
+				"claim": "There was no API key and no build step anywhere in that run",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "reported its boot as five phases in order: manifest, body, memory, skills, brain",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the avatar on screen was already standing in a relaxed idle pose",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/web-component",
+				"ok": true,
+				"detail": "live page shows \"The body is already on screen holding its first clip\""
+			},
+			{
+				"claim": "which for most humanoid rigs is a T-pose",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The element holds the frame back until a natural idle has rendered",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/web-component",
+				"ok": true,
+				"detail": "live page shows \"the element keeps its canvas hidden until that pose has rendered, so a bind-pose T-pose is never shown\""
+			},
+			{
+				"claim": "pinned versions with integrity hashes",
+				"kind": "evidence:page",
+				"target": "https://three.ws/agent-3d/versions.json",
+				"ok": true,
+				"detail": "live page shows \"\"integrity\"\""
+			},
+			{
+				"claim": "The body attribute takes the address of a GLB file",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the order of precedence runs from src down to body",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The features beyond the silent viewer are opt-in",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a bare body tag makes no calls beyond the GLB itself",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a phase and a pct from 0 to 1",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "All events bubble and are composed",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "so they cross the element's shadow DOM boundary and can be caught on any ancestor",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The reference describes agent:ready as the event to swap out your own placeholder image on",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the stage carries a settling class that keeps it invisible and switches its fade off",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A crossfade would blend the clip in from the bind pose, and the arms would visibly swing down",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The element starts the idle with no fade instead",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Two frames pass",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "One frame poses the body and a second composites it",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "is revealed all the same on whatever pose the file gave it",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "each bone name in the loaded rig is mapped onto one canonical set",
 				"kind": "evidence:file",
 				"target": "src/glb-canonicalize.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The mapping covers Mixamo, Blender and Rigify, VRM and VRoid, Unreal, Daz and Genesis, MakeHuman, Roblox and Second Life",
+				"claim": "The mapping recognises the naming conventions of the common avatar tools",
 				"kind": "evidence:file",
 				"target": "src/glb-canonicalize.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The mapping covers Mixamo, Blender and Rigify, VRM and VRoid, Unreal, Daz and Genesis, MakeHuman, Roblox and Second Life",
+				"claim": "The mapping recognises the naming conventions of the common avatar tools",
 				"kind": "evidence:file",
 				"target": "src/glb-canonicalize.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The mapping covers Mixamo, Blender and Rigify, VRM and VRoid, Unreal, Daz and Genesis, MakeHuman, Roblox and Second Life",
+				"claim": "The mapping recognises the naming conventions of the common avatar tools",
 				"kind": "evidence:file",
 				"target": "src/glb-canonicalize.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The mapping covers Mixamo, Blender and Rigify, VRM and VRoid, Unreal, Daz and Genesis, MakeHuman, Roblox and Second Life",
+				"claim": "Of the 53 tracks in each clip of the library, 30 drive a finger joint",
 				"kind": "evidence:file",
 				"target": "src/glb-canonicalize.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The mapping covers Mixamo, Blender and Rigify, VRM and VRoid, Unreal, Daz and Genesis, MakeHuman, Roblox and Second Life",
-				"kind": "evidence:file",
-				"target": "src/glb-canonicalize.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The mapping covers Mixamo, Blender and Rigify, VRM and VRoid, Unreal, Daz and Genesis, MakeHuman, Roblox and Second Life",
-				"kind": "evidence:file",
-				"target": "src/glb-canonicalize.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The mapping covers Mixamo, Blender and Rigify, VRM and VRoid, Unreal, Daz and Genesis, MakeHuman, Roblox and Second Life",
-				"kind": "evidence:file",
-				"target": "src/glb-canonicalize.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The mapping covers Mixamo, Blender and Rigify, VRM and VRoid, Unreal, Daz and Genesis, MakeHuman, Roblox and Second Life",
-				"kind": "evidence:file",
-				"target": "src/glb-canonicalize.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "30 of the 53 tracks in every clip in the library drive a finger joint",
-				"kind": "evidence:file",
-				"target": "src/glb-canonicalize.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a Mixamo character whose bones carry the mixamorig: prefix",
+				"claim": "Michelle is a Mixamo character whose bones carry the mixamorig: prefix",
 				"kind": "evidence:file",
 				"target": "public/avatars/michelle.glb",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The idle runs 15.8 seconds and repeats",
+				"kind": "evidence:page",
+				"target": "https://three.ws/animations/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"duration\": 15.8\""
+			},
+			{
+				"claim": "The idle runs 15.8 seconds and repeats",
+				"kind": "evidence:page",
+				"target": "https://three.ws/animations/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"loop\": true\""
+			},
+			{
+				"claim": "A clip retargets when at least half of its tracks find a matching bone on the rig",
+				"kind": "evidence:file",
+				"target": "src/animation-retarget.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
@@ -281,49 +272,112 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "is shown in whatever pose the viewer gave it",
+				"claim": "The element does not invent a skeleton the file does not have",
 				"kind": "evidence:file",
 				"target": "src/element.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "is shown in whatever pose the viewer gave it",
+				"claim": "A new naming convention is handled by adding its mapping to the canonicalizer",
+				"kind": "evidence:file",
+				"target": "CLAUDE.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each release is uploaded to a write-once archive",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "its integrity hashes are recorded in a ledger",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "each deploy serves the archived bytes after checking them against that ledger",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "An exact version is cut once",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "an unchanged manifest answers a conditional request with a 304 and no body",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The element also ships as agent-3d.umd.cjs for pages without ES modules",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The element also ships as agent-3d.umd.cjs for pages without ES modules",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The reference includes integration snippets for React, Vue and Svelte",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The reference includes integration snippets for React, Vue and Svelte",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "WordPress, Webflow, Framer, Notion embeds and Shopify",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A plain tag with a body is a bare avatar: a transparent canvas and the character, with no chat box, no input, no debug controls and no name plate",
 				"kind": "evidence:file",
 				"target": "src/element.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "will appear in its own rest pose",
+				"claim": "A plain tag with a body is a bare avatar: a transparent canvas and the character, with no chat box, no input, no debug controls and no name plate",
 				"kind": "evidence:file",
 				"target": "src/element.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "A plain tag with a body is a bare avatar",
+				"claim": "a bare avatar settles into a single clean idle pose and freezes there",
 				"kind": "evidence:file",
 				"target": "src/element.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "A plain tag with a body is a bare avatar",
-				"kind": "evidence:file",
-				"target": "src/element.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a bare avatar settles into a single idle pose and freezes there, which also lets the render loop stop drawing",
-				"kind": "evidence:file",
-				"target": "src/element.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a bare avatar settles into a single idle pose and freezes there, which also lets the render loop stop drawing",
+				"claim": "which also lets the render loop stop drawing and costs no continuous GPU or CPU time",
 				"kind": "evidence:file",
 				"target": "src/element.js",
 				"ok": true,
@@ -337,84 +391,391 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "switching it in the operating system takes effect without a reload",
+				"claim": "The element watches the setting live, so switching it in the operating system takes effect without a reload",
 				"kind": "evidence:file",
 				"target": "src/element.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "playClip(name, { userInitiated: true }) is the call for an animation behind a button",
-				"kind": "evidence:page",
-				"target": "https://three.ws/docs/web-component",
-				"ok": true,
-				"detail": "live page shows \"Play even when the visitor has prefers-reduced-motion set\""
-			},
-			{
-				"claim": "playClip(name, { userInitiated: true }) is the call for an animation behind a button",
+				"claim": "playClip resolves a clip name from the public animation manifest and retargets it onto whatever skeleton the page loaded",
 				"kind": "evidence:file",
 				"target": "docs/web-component.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "around 16 in Chrome",
+				"claim": "one-shot clips play once and settle back into the idle without a snap at the boundary",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "so ambient autoplay stays suppressed for visitors who asked for stillness",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Browsers cap how many WebGL contexts can be alive at once, around 16 in Chrome",
 				"kind": "evidence:file",
 				"target": "src/element.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "By default eight avatars are live at a time",
+				"claim": "the oldest context is silently lost when a page asks for more",
 				"kind": "evidence:file",
 				"target": "src/element.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "By default eight avatars are live at a time",
+				"claim": "An avatar that loses its context freezes or goes blank",
 				"kind": "evidence:file",
 				"target": "src/element.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "it boots again when it scrolls back into view",
+				"claim": "when it comes within 300 pixels of the viewport",
 				"kind": "evidence:file",
 				"target": "src/element.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "Whatever the reader is looking at is never the one evicted",
+				"claim": "when it comes within 300 pixels of the viewport",
 				"kind": "evidence:file",
 				"target": "src/element.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "switched on with a chat attribute or by binding a published agent with agent-id",
+				"claim": "The eager attribute skips the wait",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "By default 8 avatars are live at a time",
 				"kind": "evidence:file",
 				"target": "src/element.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "switched on with a chat attribute or by binding a published agent with agent-id",
+				"claim": "By default 8 avatars are live at a time",
 				"kind": "evidence:file",
 				"target": "src/element.js",
 				"ok": true,
 				"detail": "file supports the claim"
+			},
+			{
+				"claim": "it boots again by itself when it scrolls back into view",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The avatar a reader is looking at is not the one released",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A page that knows its own budget can change it before the script loads",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "wraps several <agent-3d> elements in one WebGL context, each keeping its own brain, memory and voice",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the host page's CSS does not leak into its shadow DOM beyond a small set of custom properties",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The background attribute chooses between transparent, dark and light",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "frames the head and shoulders for a profile card",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the methods are safe to call before the ready event",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "triggers the lip-sync and talking gesture on the avatar without sending text to a model",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The element also accepts messages from a parent page when it is placed in an iframe",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Content placed inside the tag is rendered as a fallback when JavaScript is disabled or the script fails to load",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a poster slot is shown during load and fades out when the model is ready",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "an error slot replaces the default error overlay when loading fails",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The element is also written for strict policies",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "An element placed in a sandboxed iframe needs allow-scripts, so that the element can run, and allow-same-origin, so that the browser can create a WebGL context",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the MIT-licensed 3D library, at release 0.184 in this build",
+				"kind": "evidence:file",
+				"target": "STRUCTURE.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the MIT-licensed 3D library, at release 0.184 in this build",
+				"kind": "evidence:file",
+				"target": "package.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The platform also integrates the Khronos glTF-Validator for checking them",
+				"kind": "evidence:file",
+				"target": "docs/js-api.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The element itself is a Custom Element with a Shadow DOM",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The element itself is a Custom Element with a Shadow DOM",
+				"kind": "evidence:file",
+				"target": "src/element.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "its lazy boot uses the IntersectionObserver API",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network\""
+			},
+			{
+				"claim": "The free three.ws 3D Studio connector gives ChatGPT eleven keyless 3D tools",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"The free three.ws 3D Studio connector gives ChatGPT eleven keyless 3D tools\""
+			},
+			{
+				"claim": "IBM is listed as a Strategic partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"IBM Strategic\""
+			},
+			{
+				"claim": "3D agent identity integrates with IBM watsonx and IBM Granite",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"integrate with IBM watsonx and IBM Granite\""
+			},
+			{
+				"claim": "AWS is listed as a Cloud partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Amazon Web Services Cloud\""
+			},
+			{
+				"claim": "three.ws is deployed on AWS infrastructure with Marketplace availability",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Deployed on AWS infrastructure with Marketplace availability\""
+			},
+			{
+				"claim": "Google Cloud is listed as a Cloud partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Google Cloud Cloud\""
+			},
+			{
+				"claim": "Google Cloud powers three.ws inference, storage, and real-time serving, and Vertex AI integration lets agents use Gemini models",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Google Cloud powers three.ws inference, storage, and real-time serving at global scale. Vertex AI integration lets agents leverage Gemini models\""
+			},
+			{
+				"claim": "The release archive behind the pinned embed files is a Google Cloud Storage bucket",
+				"kind": "evidence:file",
+				"target": "docs/web-component.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Alibaba Cloud is listed as a Cloud partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Alibaba Cloud Cloud\""
+			},
+			{
+				"claim": "It extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment\""
+			},
+			{
+				"claim": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing\""
+			},
+			{
+				"claim": "Every 3D generation lane already runs on NVIDIA silicon",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Every 3D generation lane already runs on NVIDIA silicon\""
+			},
+			{
+				"claim": "HackerNoon is listed as a Media partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"HackerNoon Media\""
+			},
+			{
+				"claim": "a builder-focused publishing partnership of feature articles, tutorials, and developer guides for people shipping with AI",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"A builder-focused publishing partnership: feature articles, tutorials, and developer guides for people shipping with AI\""
+			},
+			{
+				"claim": "Quicknode is listed as an Infrastructure partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Quicknode Infrastructure\""
+			},
+			{
+				"claim": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"three.ws is a member of the Quicknode Startup Program with approved infrastructure credits\""
+			},
+			{
+				"claim": "Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets\""
+			},
+			{
+				"claim": "whether your own GLB will animate",
+				"kind": "evidence:page",
+				"target": "https://three.ws/rig-doctor",
+				"ok": true,
+				"detail": "live page shows \"Will your avatar actually move?\""
+			},
+			{
+				"claim": "with nothing uploaded",
+				"kind": "evidence:page",
+				"target": "https://three.ws/rig-doctor",
+				"ok": true,
+				"detail": "live page shows \"Nothing is uploaded\""
 			},
 			{
 				"kind": "probe:api",
-				"target": "the runtime the snippet loads is served from the 1.x channel",
+				"target": "the pinned runtime the snippet loads is served",
 				"ok": true,
 				"detail": "HTTP 200, expectations met"
 			},
 			{
 				"kind": "probe:api",
 				"target": "the default body in the snippet is live",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the release manifest marks 1.5.2 immutable",
 				"ok": true,
 				"detail": "HTTP 200, expectations met"
 			},
@@ -438,13 +799,31 @@
 			},
 			{
 				"kind": "link",
-				"target": "https://three.ws/character-library",
+				"target": "https://three.ws/avatars/default.glb",
 				"ok": true,
 				"detail": "HTTP 200"
 			},
 			{
 				"kind": "link",
-				"target": "https://three.ws/animations/manifest.json",
+				"target": "https://three.ws/agent-3d/versions.json",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/create/prompt",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://threejs.org",
+				"ok": true,
+				"detail": "HTTP 200 via https://threejs.org/"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/partners",
 				"ok": true,
 				"detail": "HTTP 200"
 			},
@@ -459,44 +838,59 @@
 				"target": "https://three.ws/tutorials/web-component-end-to-end",
 				"ok": true,
 				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/avatars/default.glb",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/rig-doctor",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/agent-3d/versions.json",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/create/prompt",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/docs/mcp-studio",
+				"ok": true,
+				"detail": "HTTP 200"
 			}
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
 			"accuracy": 5,
-			"clarity": 4,
+			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 3
+			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "major",
-				"area": "visual",
-				"quote": "relaxed idle pose",
-				"problem": "In the cover frame all three avatars have their heads tilted sharply upward and arms hanging in an unnatural neutral stance, which reads as a rest or bind pose rather than a relaxed idle. That undercuts the post's central statement that the avatar 'appears standing naturally' and the article's claim that all three bodies are running the same idle clip. A top-tier reader (or a screen-reader user trusting the alt text) sees a contradiction between the image and the copy.",
-				"fix": "Recapture public/x-media/embed-article/cover.png after the idle clip has played for several frames, so each avatar is clearly in a natural idle stance (head level, shoulders relaxed). If the retargeted idle genuinely leaves the heads tilted back on these rigs, drop the cover claim from the article and alt text instead of shipping an image that contradicts the post."
-			},
-			{
-				"severity": "minor",
-				"area": "clarity",
-				"quote": "pointed at a body",
-				"problem": "A reader new to three.ws may not parse 'a body' as a 3D model file on first read; the article clarifies but the X summary line itself carries the jargon.",
-				"fix": "Change to 'pointed at a GLB body file' or 'pointed at a 3D body (a GLB file)'."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
-				"A live 3D avatar on any web page takes one script line and one <agent-3d> tag pointed at a GLB body file. The element keeps its canvas hidden until the idle has rendered, so the avatar appears standing naturally instead of in a bind pose, on Mixamo, VRM and other rigs alike. The write-up walks through each step between the tag and that frame, and what reduced motion does to it."
+				"Two lines of HTML put a live 3D avatar on a web page. The element holds its frame back until the idle has rendered, so the avatar appears standing naturally on Mixamo, VRM and other rigs alike. The write-up follows one snippet from the tag to that frame, then covers pinned versions with integrity hashes, reduced motion and a budget of 8 live avatars per page."
 			],
 			"altText": [
-				"Three 3D avatars rendered live by agent-3d elements, standing side by side on a dark background in a natural idle stance: a woman in a purple top and leggings, a character in a cropped top, yellow trousers and round pink glasses, and a man in a white T-shirt, light jeans and green trainers"
+				"Three 3D avatars standing side by side on a dark blue background, each rendered live by its own agent-3d element in the same relaxed idle pose: a woman in a purple top and leggings, a character in a cropped top, yellow trousers and round pink glasses, and a man in a white T-shirt, light jeans and green trainers"
 			]
 		},
-		"summary": "Every claim in the post and article is verified against live pages and source files, and the copy obeys the voice contract. The one substantive problem is visual: the cover frame shows the three avatars with heads tilted back in what looks like a rest pose, contradicting the idle claim, so recapture before publish.",
+		"summary": "Every claim in the article verifies against source files or live pages, and the structure meets the Article standard: one real run, ten sections, real code and tables, four inline images, a partners section with exact designations, and a Try it section. The promo post leads with the mechanism, the title carries the 8-avatar number, and the cover shows the real product with accurate alt text, so this ships as is.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
@@ -504,34 +898,95 @@
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
 		"rewriteFindings": [
-			"claims: claim \"one script line and one <agent-3d> tag pointed at a body\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The element stays hidden until the idle has rendered\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"There is no API key and no build step\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The 1 in the script path tracks the 1.x line of the element\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"boots it once it comes within 300 pixels of the viewport\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The eager attribute skips the wait\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"loads the idle and walk clips\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Clip addresses are rebased onto the origin the script came from\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The canvas sits at opacity 0 while that happens\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"It snaps the idle in and waits two frames\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The agent:ready event fires once the element has booted, with the body already on screen holding its idle\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"That is the event to swap out your own placeholder image on\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The mapping covers Mixamo, Blender and Rigify, VRM and VRoid, Unreal, Daz and Genesis, MakeHuman, Roblox and Second Life\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"30 of the 53 tracks in every clip in the library drive a finger joint\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a Mixamo character whose bones carry the mixamorig: prefix\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"There was no API key and no build step anywhere in that run\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"reported its boot as five phases in order: manifest, body, memory, skills, brain\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the avatar on screen was already standing in a relaxed idle pose\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"which for most humanoid rigs is a T-pose\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The element holds the frame back until a natural idle has rendered\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The body attribute takes the address of a GLB file\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the order of precedence runs from src down to body\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The features beyond the silent viewer are opt-in\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a bare body tag makes no calls beyond the GLB itself\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a phase and a pct from 0 to 1\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"All events bubble and are composed\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"so they cross the element's shadow DOM boundary and can be caught on any ancestor\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The reference describes agent:ready as the event to swap out your own placeholder image on\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the stage carries a settling class that keeps it invisible and switches its fade off\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A crossfade would blend the clip in from the bind pose, and the arms would visibly swing down\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The element starts the idle with no fade instead\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Two frames pass\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"One frame poses the body and a second composites it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"is revealed all the same on whatever pose the file gave it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"each bone name in the loaded rig is mapped onto one canonical set\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The mapping recognises the naming conventions of the common avatar tools\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Of the 53 tracks in each clip of the library, 30 drive a finger joint\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Michelle is a Mixamo character whose bones carry the mixamorig: prefix\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The idle runs 15.8 seconds and repeats\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A clip retargets when at least half of its tracks find a matching bone on the rig\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"the retarget builds no animation at all\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"is shown in whatever pose the viewer gave it\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"will appear in its own rest pose\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A plain tag with a body is a bare avatar\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a bare avatar settles into a single idle pose and freezes there, which also lets the render loop stop drawing\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The element does not invent a skeleton the file does not have\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A new naming convention is handled by adding its mapping to the canonicalizer\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Each release is uploaded to a write-once archive\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"its integrity hashes are recorded in a ledger\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"each deploy serves the archived bytes after checking them against that ledger\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"An exact version is cut once\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"an unchanged manifest answers a conditional request with a 304 and no body\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The element also ships as agent-3d.umd.cjs for pages without ES modules\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The reference includes integration snippets for React, Vue and Svelte\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"WordPress, Webflow, Framer, Notion embeds and Shopify\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A plain tag with a body is a bare avatar: a transparent canvas and the character, with no chat box, no input, no debug controls and no name plate\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a bare avatar settles into a single clean idle pose and freezes there\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"which also lets the render loop stop drawing and costs no continuous GPU or CPU time\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"captures taken seconds apart came out byte for byte identical\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"switching it in the operating system takes effect without a reload\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"playClip(name, { userInitiated: true }) is the call for an animation behind a button\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"around 16 in Chrome\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"By default eight avatars are live at a time\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"it boots again when it scrolls back into view\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Whatever the reader is looking at is never the one evicted\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"switched on with a chat attribute or by binding a published agent with agent-id\" does not appear in the copy; claims must quote the post"
+			"claims: claim \"The element watches the setting live, so switching it in the operating system takes effect without a reload\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"playClip resolves a clip name from the public animation manifest and retargets it onto whatever skeleton the page loaded\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"one-shot clips play once and settle back into the idle without a snap at the boundary\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"so ambient autoplay stays suppressed for visitors who asked for stillness\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Browsers cap how many WebGL contexts can be alive at once, around 16 in Chrome\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the oldest context is silently lost when a page asks for more\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"An avatar that loses its context freezes or goes blank\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"when it comes within 300 pixels of the viewport\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The eager attribute skips the wait\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"By default 8 avatars are live at a time\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"it boots again by itself when it scrolls back into view\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The avatar a reader is looking at is not the one released\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A page that knows its own budget can change it before the script loads\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"wraps several <agent-3d> elements in one WebGL context, each keeping its own brain, memory and voice\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the host page's CSS does not leak into its shadow DOM beyond a small set of custom properties\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The background attribute chooses between transparent, dark and light\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"frames the head and shoulders for a profile card\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the methods are safe to call before the ready event\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"triggers the lip-sync and talking gesture on the avatar without sending text to a model\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The element also accepts messages from a parent page when it is placed in an iframe\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Content placed inside the tag is rendered as a fallback when JavaScript is disabled or the script fails to load\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a poster slot is shown during load and fades out when the model is ready\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"an error slot replaces the default error overlay when loading fails\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The element is also written for strict policies\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"An element placed in a sandboxed iframe needs allow-scripts, so that the element can run, and allow-same-origin, so that the browser can create a WebGL context\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the MIT-licensed 3D library, at release 0.184 in this build\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The platform also integrates the Khronos glTF-Validator for checking them\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The element itself is a Custom Element with a Shadow DOM\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"its lazy boot uses the IntersectionObserver API\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The free three.ws 3D Studio connector gives ChatGPT eleven keyless 3D tools\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"IBM is listed as a Strategic partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"3D agent identity integrates with IBM watsonx and IBM Granite\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"AWS is listed as a Cloud partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is deployed on AWS infrastructure with Marketplace availability\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Google Cloud is listed as a Cloud partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Google Cloud powers three.ws inference, storage, and real-time serving, and Vertex AI integration lets agents use Gemini models\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The release archive behind the pinned embed files is a Google Cloud Storage bucket\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Alibaba Cloud is listed as a Cloud partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Every 3D generation lane already runs on NVIDIA silicon\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"HackerNoon is listed as a Media partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a builder-focused publishing partnership of feature articles, tutorials, and developer guides for people shipping with AI\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Quicknode is listed as an Infrastructure partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of the Quicknode Startup Program with approved infrastructure credits\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"whether your own GLB will animate\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"with nothing uploaded\" does not appear in the copy; claims must quote the post"
 		]
 	},
 	"editorError": null

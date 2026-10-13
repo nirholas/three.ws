@@ -1,0 +1,158 @@
+{
+	"id": "concierge-ask",
+	"contentHash": "1ea75dfd26900f635fbc6f06d512687a3113b1cb7bae6505fd7e5796fe77751a",
+	"reviewedAt": "2026-10-13T18:43:36.609Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"A support chat with a face is one script tag away. Concierge puts a rigged 3D avatar in the corner of your page. A visitor asks, the answer streams in, and the avatar starts speaking the first sentence while the rest is still arriving.\n\nIn the reel it is asked how to install itself, and it answers from the page it is sitting on.",
+		"When a visitor asks, the widget reads the live page (title, headings, nav and content) plus any facts you curate, and the answer streams back from a free-first inference chain, with failover across providers. Whatever your page says today is what it knows today.\n\nthree.ws/concierge",
+		"No account, no crawler setup, no per-seat pricing. The widget is open source, and you can add it as a script tag, a web component or an npm package.\n\nVoice comes built in: push-to-talk speech input and browser-native speech output."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "one script tag",
+				"kind": "evidence:page",
+				"target": "https://three.ws/concierge",
+				"ok": true,
+				"detail": "live page shows \"One tag gives your site a support chat\""
+			},
+			{
+				"claim": "rigged 3D avatar",
+				"kind": "evidence:page",
+				"target": "https://three.ws/concierge",
+				"ok": true,
+				"detail": "live page shows \"Skeleton-rigged, blinking, idling\""
+			},
+			{
+				"claim": "the avatar starts speaking the first sentence while the rest is still arriving",
+				"kind": "evidence:page",
+				"target": "https://three.ws/concierge",
+				"ok": true,
+				"detail": "live page shows \"the avatar starts speaking the first sentence while the rest is still arriving\""
+			},
+			{
+				"claim": "the answer streams in",
+				"kind": "evidence:proof",
+				"target": "/api/concierge",
+				"ok": true,
+				"detail": "POST /api/concierge answered 200 in 3 s"
+			},
+			{
+				"claim": "it answers from the page it is sitting on",
+				"kind": "evidence:page",
+				"target": "https://three.ws/concierge",
+				"ok": true,
+				"detail": "live page shows \"At ask-time it reads the live page\""
+			},
+			{
+				"claim": "the widget reads the live page (title, headings, nav and content) plus any facts you curate",
+				"kind": "evidence:page",
+				"target": "https://three.ws/concierge",
+				"ok": true,
+				"detail": "live page shows \"At ask-time it reads the live page (title, headings, nav, content) plus your curated knowledge\""
+			},
+			{
+				"claim": "streams back from a free-first inference chain, with failover across providers",
+				"kind": "evidence:page",
+				"target": "https://three.ws/concierge",
+				"ok": true,
+				"detail": "live page shows \"free-first inference chain, with automatic failover across providers\""
+			},
+			{
+				"claim": "Whatever your page says today is what it knows today",
+				"kind": "evidence:page",
+				"target": "https://three.ws/concierge",
+				"ok": true,
+				"detail": "live page shows \"Whatever your page says today is what the concierge knows today\""
+			},
+			{
+				"claim": "No account, no crawler setup, no per-seat pricing",
+				"kind": "evidence:page",
+				"target": "https://three.ws/concierge",
+				"ok": true,
+				"detail": "live page shows \"No account, no crawler setup, no per-seat pricing\""
+			},
+			{
+				"claim": "The widget is open source",
+				"kind": "evidence:page",
+				"target": "https://three.ws/concierge",
+				"ok": true,
+				"detail": "live page shows \"The widget is open source\""
+			},
+			{
+				"claim": "a script tag, a web component or an npm package",
+				"kind": "evidence:page",
+				"target": "https://three.ws/concierge",
+				"ok": true,
+				"detail": "live page shows \"Pick your flavor\""
+			},
+			{
+				"claim": "push-to-talk speech input and browser-native speech output",
+				"kind": "evidence:page",
+				"target": "https://three.ws/concierge",
+				"ok": true,
+				"detail": "live page shows \"Push-to-talk speech input and browser-native speech output\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "6 steps passed against the live product"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/concierge",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 4
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "accuracy",
+				"quote": "a script tag, a web component or an npm package",
+				"problem": "The passing check only confirms the page text 'Pick your flavor', which does not by itself enumerate the three install options. The reel's streamed answer does show a GitHub link to concierge-sdk, which supports 'open source' and the embed story, so the risk is low, but the enumerated list rests on thin evidence.",
+				"fix": "Optional: no change required since the check passed; if the page's 'Pick your flavor' section does not literally list script tag, web component and npm package, recapture that section of three.ws/concierge as evidence."
+			},
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "Reel frame at 14 s",
+				"problem": "The final frame is visually identical to the 10.1 s frame, so the reel ends on a static beat rather than a resolving moment.",
+				"fix": "Optional: trim the reel to end as the answer finishes streaming, around 12 to 13 seconds."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"A support chat with a face is one script tag away. Concierge puts a rigged 3D avatar in the corner of your page. A visitor asks, the answer streams in, and the avatar starts speaking the first sentence while the rest is still arriving.\n\nIn the reel it is asked how to install itself, and it answers from the page it is sitting on.",
+				"When a visitor asks, the widget reads the live page (title, headings, nav and content) plus any facts you curate, and the answer streams back from a free-first inference chain, with failover across providers. Whatever your page says today is what it knows today.\n\nthree.ws/concierge",
+				"No account, no crawler setup, no per-seat pricing. The widget is open source, and you can add it as a script tag, a web component or an npm package.\n\nVoice comes built in: push-to-talk speech input and browser-native speech output."
+			],
+			"altText": []
+		},
+		"summary": "All twelve claims verify against the live concierge page or the filmed run, the reel genuinely shows the widget answering an install question with a streamed, page-grounded answer, and the copy stands alone for readers who cannot see the video. Ship it; the only nits are a thin evidence match on the install-option list and a static final reel frame.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

@@ -1,43 +1,17 @@
 {
 	"id": "wardrobe-article",
-	"contentHash": "693ba7cbae45608e4e247702ab492412af94d94f8d68ff703d44c44f9036e80a",
-	"reviewedAt": "2026-10-09T17:06:15.918Z",
+	"contentHash": "f28b64aa5f38d52d047b7c8fb68d3446bf34e2df1898762857458ddbceb44cd2",
+	"reviewedAt": "2026-10-13T18:15:14.758Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
-		"How we rig a 3D garment: put it on a body, rig the pair, then take the body away",
-		"A shirt has no skeleton, so our garment forge rigs each piece while a reference body is wearing it, then removes the body and keeps the weights the cloth picked up from the joints underneath. The write-up covers the seven stages, the gates a piece has to pass, and what binding to a skeleton does not fix yet: three.ws/wardrobe"
+		"A shirt has no skeleton: how our garment forge rigs a piece in 7 stages, then lifts the body out",
+		"A shirt has no skeleton, so our garment forge rigs each piece while a reference body is wearing it, then removes the body and keeps the weights the cloth picked up from the joints underneath. The write-up follows one real shirt through the seven stages and the gates a piece passes before it is published: three.ws/wardrobe"
 	],
-	"lint": [
-		{
-			"where": "article body",
-			"rule": "register",
-			"severity": "major",
-			"message": "\"very\" is filler; replace it with the fact it stands in for"
-		},
-		{
-			"where": "article body",
-			"rule": "register",
-			"severity": "major",
-			"message": "\"really\" is filler; replace it with the fact it stands in for"
-		},
-		{
-			"where": "article body",
-			"rule": "register",
-			"severity": "major",
-			"message": "\"actually\" is filler; replace it with the fact it stands in for"
-		}
-	],
+	"lint": [],
 	"verification": {
 		"ok": true,
 		"checks": [
-			{
-				"claim": "Rig one on its own and the auto-rigger fits a whole skeleton inside the cloth, which tears the shirt apart as soon as it moves",
-				"kind": "evidence:file",
-				"target": "workers/garment-forge/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
 			{
 				"claim": "rigs each piece while a reference body is wearing it",
 				"kind": "evidence:file",
@@ -60,34 +34,6 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "removes the body and keeps the weights the cloth picked up from the joints underneath",
-				"kind": "evidence:file",
-				"target": "workers/garment-forge/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "top, bottom, footwear, outerwear, hair, headwear, glasses or accessory",
-				"kind": "evidence:module",
-				"target": "src/garment-taxonomy.js",
-				"ok": true,
-				"detail": "GARMENT_SLOTS matches"
-			},
-			{
-				"claim": "The forge walks it through seven stages in order, and the wardrobe page shows each one as it runs: image, mesh, compose, rig, extract, validate, publish",
-				"kind": "evidence:file",
-				"target": "src/wardrobe-page.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The forge walks it through seven stages in order, and the wardrobe page shows each one as it runs: image, mesh, compose, rig, extract, validate, publish",
-				"kind": "evidence:page",
-				"target": "https://three.ws/wardrobe",
-				"ok": true,
-				"detail": "live page shows \"Watch every real stage below.\""
-			},
-			{
 				"claim": "the seven stages",
 				"kind": "evidence:file",
 				"target": "src/wardrobe-page.js",
@@ -100,20 +46,6 @@
 				"target": "https://three.ws/wardrobe",
 				"ok": true,
 				"detail": "live page shows \"the forge will build, rig, validate, and publish it in about seven minutes\""
-			},
-			{
-				"claim": "The image stage paints a ghost-mannequin product photo: the garment as if worn, in an A-pose, from the front, on a plain background",
-				"kind": "evidence:file",
-				"target": "workers/garment-forge/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The mesh stage rebuilds that photo as a textured 3D model on our image-to-3D lanes, falling through to the next engine when one is down",
-				"kind": "evidence:file",
-				"target": "workers/garment-forge/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
 			},
 			{
 				"claim": "places it in its slot's region on a canonical reference body: an A-pose figure 1.667 m tall with 52 joints",
@@ -135,104 +67,6 @@
 				"target": "tests/glb-canonicalize.test.js",
 				"ok": true,
 				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The rigger sees an ordinary clothed person, so the skeleton lands at body scale, and each vertex of the sleeve takes its weights from the arm bones it actually sits on",
-				"kind": "evidence:file",
-				"target": "workers/garment-forge/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The file is rebuilt from scratch with only the garment's geometry, skin and textures, and the joint names are rewritten to the canonical skeleton, so mixamorig:LeftArm becomes LeftArm",
-				"kind": "evidence:file",
-				"target": "workers/garment-forge/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The same generated shirt was skinned both ways, put on the reference body and walked through the canonical walk clip",
-				"kind": "evidence:file",
-				"target": "workers/garment-forge/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "Rigged as a pair, the cloth stayed a mean 2.87 cm from the body across the gait. Copying weights from the nearest body vertex left it 5.88 cm away. The pair-rigging lane is the one in production",
-				"kind": "evidence:file",
-				"target": "workers/garment-forge/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "Rigged as a pair, the cloth stayed a mean 2.87 cm from the body across the gait. Copying weights from the nearest body vertex left it 5.88 cm away. The pair-rigging lane is the one in production",
-				"kind": "evidence:file",
-				"target": "workers/garment-forge/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "A generator once answered a prompt for long straight hair with a mesh about 1.4 m deep whose width was still perfect",
-				"kind": "evidence:file",
-				"target": "workers/garment-forge/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a mesh outside it fails the job with the measurement instead of reaching the catalog",
-				"kind": "evidence:file",
-				"target": "workers/garment-forge/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The share of the garment's skin weight that lands on bones a body really has is measured before publishing. Under 60% and the job fails",
-				"kind": "evidence:file",
-				"target": "workers/garment-forge/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The share of the garment's skin weight that lands on bones a body really has is measured before publishing. Under 60% and the job fails",
-				"kind": "evidence:file",
-				"target": "src/garment-taxonomy.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "A region counts when it carries at least 10% of the garment's skin weight, and the result is clamped to what the slot may plausibly hide: a shirt cannot hide the legs, and hair can hide nothing at all",
-				"kind": "evidence:file",
-				"target": "workers/garment-forge/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "A region counts when it carries at least 10% of the garment's skin weight, and the result is clamped to what the slot may plausibly hide: a shirt cannot hide the legs, and hair can hide nothing at all",
-				"kind": "evidence:file",
-				"target": "docs/avatar-wardrobe.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The manifest pins the file's sha256 and a licence from an approved set",
-				"kind": "evidence:file",
-				"target": "docs/avatar-wardrobe.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The manifest pins the file's sha256 and a licence from an approved set",
-				"kind": "evidence:file",
-				"target": "docs/avatar-wardrobe.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The pieces in the catalog today are all generated and licensed CC0",
-				"kind": "evidence:page",
-				"target": "https://three.ws/wardrobe",
-				"ok": true,
-				"detail": "live page shows \"v1 · CC0-1.0 · generated\""
 			},
 			{
 				"claim": "A piece that passes lands in its own versioned directory, and its manifest is appended to one public catalog file",
@@ -263,27 +97,6 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The client refuses a piece that binds under 60% of its skin weight, or that is larger than 0.75 times the avatar's height on any axis, and it checks the file's hash before attaching anything",
-				"kind": "evidence:file",
-				"target": "src/garment-taxonomy.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The client refuses a piece that binds under 60% of its skin weight, or that is larger than 0.75 times the avatar's height on any axis, and it checks the file's hash before attaching anything",
-				"kind": "evidence:file",
-				"target": "src/garment-taxonomy.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The client refuses a piece that binds under 60% of its skin weight, or that is larger than 0.75 times the avatar's height on any axis, and it checks the file's hash before attaching anything",
-				"kind": "evidence:file",
-				"target": "docs/avatar-wardrobe.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
 				"claim": "Rigid pieces such as glasses are parented to a single joint instead of deformed",
 				"kind": "evidence:file",
 				"target": "docs/avatar-wardrobe.md",
@@ -305,25 +118,676 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "you open one of your avatars in the editor and dress it from the Wardrobe tab",
+				"claim": "Browsing the catalog and turning any piece around in 3D needs nothing",
 				"kind": "evidence:page",
 				"target": "https://three.ws/wardrobe",
 				"ok": true,
-				"detail": "live page shows \"then open your avatar's editor and wear it\""
+				"detail": "live page shows \"Browse the catalog, inspect a piece in 3D\""
 			},
 			{
-				"claim": "you open one of your avatars in the editor and dress it from the Wardrobe tab",
+				"claim": "A finished piece takes about seven minutes",
+				"kind": "evidence:page",
+				"target": "https://three.ws/wardrobe",
+				"ok": true,
+				"detail": "live page shows \"in about seven minutes\""
+			},
+			{
+				"claim": "What came back is a 2.7 MB shirt of 40,000 triangles",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"sizeBytes\": 2799620\""
+			},
+			{
+				"claim": "What came back is a 2.7 MB shirt of 40,000 triangles",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"triangleCount\": 40000\""
+			},
+			{
+				"claim": "rigged to the three.ws canonical skeleton, with a manifest that pins its checksum and licence, published to a public catalog under CC0-1.0",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"skeleton\": \"three.ws-canonical-v1\"\""
+			},
+			{
+				"claim": "rigged to the three.ws canonical skeleton, with a manifest that pins its checksum and licence, published to a public catalog under CC0-1.0",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"sha256\": \"6c9b0f297d743b4ce454909e3388f5d4726e610a6ec6062e535840b76bc1d25c\"\""
+			},
+			{
+				"claim": "rigged to the three.ws canonical skeleton, with a manifest that pins its checksum and licence, published to a public catalog under CC0-1.0",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"license\": \"CC0-1.0\"\""
+			},
+			{
+				"claim": "where any humanoid avatar can put it on",
 				"kind": "evidence:file",
 				"target": "docs/avatar-wardrobe.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "Browsing the catalog and turning any piece around in 3D needs nothing",
+				"claim": "Rig one alone and the auto-rigger fits a whole person inside the cloth, which tears the shirt apart as soon as it moves",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The wardrobe knows eight: top, bottom, footwear, outerwear, hair, headwear, glasses and accessory",
+				"kind": "evidence:module",
+				"target": "src/garment-taxonomy.js",
+				"ok": true,
+				"detail": "GARMENT_SLOTS matches"
+			},
+			{
+				"claim": "The forge walks a prompt through seven stages in order, and the wardrobe page shows each one as it runs: image, mesh, compose, rig, extract, validate, publish",
+				"kind": "evidence:file",
+				"target": "src/wardrobe-page.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The forge walks a prompt through seven stages in order, and the wardrobe page shows each one as it runs: image, mesh, compose, rig, extract, validate, publish",
 				"kind": "evidence:page",
 				"target": "https://three.ws/wardrobe",
 				"ok": true,
-				"detail": "live page shows \"Browse the catalog, inspect a piece in 3D\""
+				"detail": "live page shows \"Watch every real stage below.\""
+			},
+			{
+				"claim": "The shirt below went through all seven",
+				"kind": "evidence:file",
+				"target": "src/wardrobe-page.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The prompt becomes a ghost-mannequin product photo, a garment shown as if worn, without the person: the worn shape, in an A-pose, from the front, on a plain background",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The prompt becomes a ghost-mannequin product photo, a garment shown as if worn, without the person: the worn shape, in an A-pose, from the front, on a plain background",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The picture is drawn by a Gemini image model on Vertex AI, at 2K resolution",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The picture is drawn by a Gemini image model on Vertex AI, at 2K resolution",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the stage rolls again, up to three attempts by default",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the job reports the block reason and the slot at once, with an instruction to rephrase",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The mesh stage sends the photograph through the image-to-3D chain, and the first healthy rung wins",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The warm primary is Hunyuan3D 2.1 on a Cloud Run service with an RTX GPU, which paints a full PBR material set. Behind it sits the same engine on an L4 GPU service, and behind that TRELLIS, a different model behind the same API contract",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The oxford shirt's manifest records which engine built it: hunyuan3d-2.1",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"model\": \"hunyuan3d-2.1\"\""
+			},
+			{
+				"claim": "an A-pose figure 1.667 m tall with 52 joints",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each slot has a measured box on that body",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Then the forge rigs the composite, body and garment together, on the same auto-rigging worker that rigs our avatars",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Then the forge rigs the composite, body and garment together, on the same auto-rigging worker that rigs our avatars",
+				"kind": "evidence:file",
+				"target": "tests/glb-canonicalize.test.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The worker runs Make-It-Animatable, an open model released under the MIT licence and published at CVPR 2025",
+				"kind": "evidence:file",
+				"target": "workers/rig/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The file is rebuilt from scratch with only the garment's geometry, skin matrices and textures, and the joint names are rewritten to the canonical skeleton, so mixamorig:LeftArm becomes LeftArm",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "its envelope allows anything from a pixie cut to a waist-length fall up to 0.80 m tall, and the top of the mesh is anchored to the crown",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/garment_glb.py",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "its envelope allows anything from a pixie cut to a waist-length fall up to 0.80 m tall, and the top of the mesh is anchored to the crown",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "We checked the finished shirt in the Rig Doctor, the page that diagnoses a GLB in your browser without uploading it",
+				"kind": "evidence:page",
+				"target": "https://three.ws/rig-doctor",
+				"ok": true,
+				"detail": "live page shows \"Runs entirely in your browser\""
+			},
+			{
+				"claim": "We checked the finished shirt in the Rig Doctor, the page that diagnoses a GLB in your browser without uploading it",
+				"kind": "evidence:page",
+				"target": "https://three.ws/rig-doctor",
+				"ok": true,
+				"detail": "live page shows \"Nothing is uploaded.\""
+			},
+			{
+				"claim": "The same generated shirt was skinned by each, attached to the parametric base body and driven through the canonical walk clip",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Rigging the pair kept the cloth about half as far from the body at the mean, and it is the only lane the forge uses in production",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Rigging the pair kept the cloth about half as far from the body at the mean, and it is the only lane the forge uses in production",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The validate stage is where a piece earns its place in the catalog",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A region counts as covered when it carries 10% or more of the weight",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a shirt cannot hide the legs, and hair can hide nothing at all, because the scalp region resolves to the head bone and hiding it would take the face with it",
+				"kind": "evidence:file",
+				"target": "docs/avatar-wardrobe.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The approved licences are CC0, CC-BY, MIT, Apache-2.0 and BSD, and the pieces in the catalog today are generated and licensed CC0",
+				"kind": "evidence:file",
+				"target": "docs/avatar-wardrobe.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The approved licences are CC0, CC-BY, MIT, Apache-2.0 and BSD, and the pieces in the catalog today are generated and licensed CC0",
+				"kind": "evidence:page",
+				"target": "https://three.ws/wardrobe",
+				"ok": true,
+				"detail": "live page shows \"v1 · CC0-1.0 · generated\""
+			},
+			{
+				"claim": "A piece that passes lands in its own versioned directory, and its manifest is appended to one public catalog file",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The catalog is a single public JSON file, and it needs no key",
+				"kind": "evidence:file",
+				"target": "docs/avatar-wardrobe.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The wardrobe page lists the whole catalog, and each piece has a 3D button that turns it in a live viewer",
+				"kind": "evidence:file",
+				"target": "src/wardrobe-page.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the record of a job in storage is also its work queue",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "An instance owns a job only once it holds a concurrency slot and wins an atomic, generation-matched write on the record",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Everything the pipeline needs is stored at submit, so any instance can drive a job it did not receive",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A freed slot drains the backlog straight away, a sweep every 10 minutes claims any orphan, and a job read requeues one whose owner went quiet",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A freed slot drains the backlog straight away, a sweep every 10 minutes claims any orphan, and a job read requeues one whose owner went quiet",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A freed slot drains the backlog straight away, a sweep every 10 minutes claims any orphan, and a job read requeues one whose owner went quiet",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A job is declared failed only after three attempts, so a replaced instance costs an attempt, not the piece",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A submit takes one attempt, because it starts a GPU job and is not safely repeatable; a read takes three",
+				"kind": "evidence:file",
+				"target": "docs/avatar-wardrobe.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the page saves the job id in the browser, so a visitor who closes the tab at minute three finds the job still running on return",
+				"kind": "evidence:file",
+				"target": "docs/avatar-wardrobe.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the browser binds it to the avatar's skeleton by name",
+				"kind": "evidence:file",
+				"target": "docs/avatar-wardrobe.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a helper joint the avatar lacks falls back to its nearest mapped parent",
+				"kind": "evidence:file",
+				"target": "docs/avatar-wardrobe.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "It refuses a piece that binds under 60% of its skin weight, or that is larger than 0.75 times the avatar's height on any axis, and it verifies the file's sha256 before attaching, so a truncated download is refused",
+				"kind": "evidence:file",
+				"target": "src/garment-taxonomy.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "It refuses a piece that binds under 60% of its skin weight, or that is larger than 0.75 times the avatar's height on any axis, and it verifies the file's sha256 before attaching, so a truncated download is refused",
+				"kind": "evidence:file",
+				"target": "src/garment-taxonomy.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "It refuses a piece that binds under 60% of its skin weight, or that is larger than 0.75 times the avatar's height on any axis, and it verifies the file's sha256 before attaching, so a truncated download is refused",
+				"kind": "evidence:file",
+				"target": "docs/avatar-wardrobe.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A catalog audit binds each live piece onto four different humanoid rigs, checks each file's hash, and measures how far the cloth strays across the walk gait, with a ceiling for each slot",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A catalog audit binds each live piece onto four different humanoid rigs, checks each file's hash, and measures how far the cloth strays across the walk gait, with a ceiling for each slot",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The baseline run covered 23 entries, all binding at full coverage on all four rigs",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Make-It-Animatable, released under the MIT licence and published at CVPR 2025, predicts the skeleton and skinning weights for the composite",
+				"kind": "evidence:file",
+				"target": "workers/rig/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The reference body is released under CC0 and derives from MakeHuman data",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Hunyuan3D 2.1 and TRELLIS are the image-to-3D engines in the failover chain, and Gemini on Vertex AI paints the reference photograph",
+				"kind": "evidence:file",
+				"target": "workers/garment-forge/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Because a manifest pins its file's hash, anyone can repeat the wearer's integrity check from a terminal",
+				"kind": "evidence:file",
+				"target": "docs/avatar-wardrobe.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "It prints hash matches and 2799620 for both byte counts",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"sizeBytes\": 2799620\""
+			},
+			{
+				"claim": "In the browser the same check is verifyModelBytes(bytes, manifest) from the catalog loader, followed by attachGarment(avatarRoot, garmentRoot, { slot: manifest.slot }), which returns ok, the measured coverage, a reason when it refuses, and a detach function that takes the piece off again",
+				"kind": "evidence:file",
+				"target": "src/garment-catalog.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "In the browser the same check is verifyModelBytes(bytes, manifest) from the catalog loader, followed by attachGarment(avatarRoot, garmentRoot, { slot: manifest.slot }), which returns ok, the measured coverage, a reason when it refuses, and a detach function that takes the piece off again",
+				"kind": "evidence:file",
+				"target": "src/avatar-garment.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "using the morph sliders the parametric base already carries",
+				"kind": "evidence:file",
+				"target": "docs/avatar-studio.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the wardrobe page runs the same seven stages you read about here",
+				"kind": "evidence:file",
+				"target": "src/wardrobe-page.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The mesh arrives at about 40,000 triangles, which is the budget the forge targets",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/catalog.json",
+				"ok": true,
+				"detail": "live page shows \"\"triangleCount\": 40000\""
+			},
+			{
+				"claim": "The mesh arrives at about 40,000 triangles, which is the budget the forge targets",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"triangleCount\": 40000\""
+			},
+			{
+				"claim": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"OpenAI Select Partner in the OpenAI Partner Network\""
+			},
+			{
+				"claim": "IBM is listed in the Strategic tier of the partner map",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Strategic partners\""
+			},
+			{
+				"claim": "three.ws agent identity integrates with IBM watsonx and IBM Granite",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"integrate with IBM watsonx and IBM Granite\""
+			},
+			{
+				"claim": "three.ws is deployed on AWS infrastructure with Marketplace availability",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Deployed on AWS infrastructure with Marketplace availability.\""
+			},
+			{
+				"claim": "Google Cloud powers three.ws inference, storage and real-time serving",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Google Cloud powers three.ws inference, storage, and real-time serving at global scale.\""
+			},
+			{
+				"claim": "Alibaba Cloud extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Alibaba Cloud extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment.\""
+			},
+			{
+				"claim": "with low-latency inference close to users in Asia",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"low-latency inference close to users in Asia.\""
+			},
+			{
+				"claim": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing.\""
+			},
+			{
+				"claim": "a builder-focused publishing partnership with HackerNoon",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"A builder-focused publishing partnership\""
+			},
+			{
+				"claim": "feature articles, tutorials and developer guides for people shipping with AI, published to HackerNoon's developer audience",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"feature articles, tutorials, and developer guides for people shipping with AI, published to HackerNoon's developer audience.\""
+			},
+			{
+				"claim": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"member of the Quicknode Startup Program with approved infrastructure credits.\""
+			},
+			{
+				"claim": "The occludes list names the six body regions this shirt covers: torso, upperArms, lowerArms, hips, upperLegs and neck",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"torso\",\""
+			},
+			{
+				"claim": "The occludes list names the six body regions this shirt covers: torso, upperArms, lowerArms, hips, upperLegs and neck",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"upperArms\",\""
+			},
+			{
+				"claim": "The occludes list names the six body regions this shirt covers: torso, upperArms, lowerArms, hips, upperLegs and neck",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"lowerArms\",\""
+			},
+			{
+				"claim": "The occludes list names the six body regions this shirt covers: torso, upperArms, lowerArms, hips, upperLegs and neck",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"hips\",\""
+			},
+			{
+				"claim": "The occludes list names the six body regions this shirt covers: torso, upperArms, lowerArms, hips, upperLegs and neck",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"upperLegs\",\""
+			},
+			{
+				"claim": "The occludes list names the six body regions this shirt covers: torso, upperArms, lowerArms, hips, upperLegs and neck",
+				"kind": "evidence:page",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "live page shows \"\"neck\"\""
 			},
 			{
 				"kind": "probe:api",
@@ -363,6 +827,18 @@
 			},
 			{
 				"kind": "link",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
 				"target": "https://three.ws/wardrobe",
 				"ok": true,
 				"detail": "HTTP 200"
@@ -370,6 +846,24 @@
 			{
 				"kind": "link",
 				"target": "https://three.ws/docs/avatar-wardrobe",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/inspect",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/rig-doctor",
 				"ok": true,
 				"detail": "HTTP 200"
 			}
@@ -383,33 +877,33 @@
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 4
+			"visual": 5
 		},
 		"issues": [
 			{
 				"severity": "minor",
-				"area": "visual",
-				"quote": "each turned in its live 3D viewer / shown side by side in their live viewers",
-				"problem": "Both alt texts describe the garments as shown inside a live 3D viewer, but the image shows the three garments floating on a plain dark background with no viewer UI, no 3D button, no chrome. A screen-reader user is told about an interface that is not in the frame.",
-				"fix": "Adjust the cover alt text to: \"Three generated 3D garments from the three.ws wardrobe catalog on a dark background: a yellow rain slicker with the hood up, a black leather biker jacket with silver zippers, and a charcoal grey hooded sweatshirt with a front pocket.\" Same change for the in-article figure caption."
+				"area": "accuracy",
+				"quote": "The mesh arrives at about 40,000 triangles, which is the budget the forge targets",
+				"problem": "The 40,000 triangle count for the oxford shirt is verified by the live manifest, but the second half, that 40k is the budget the forge targets, is not in any passing evidence. It rides along on the verification of the first half.",
+				"fix": "Either add evidence from workers/garment-forge that states the triangle budget, or trim to what is verified: \"The mesh of the oxford shirt arrives at 40,000 triangles. Dense enough to show a collar and cuffs, light enough to render in a browser beside other things.\""
 			},
 			{
 				"severity": "minor",
-				"area": "voice",
-				"quote": "very different proportions / really has / actually sits on",
-				"problem": "The article body carries three filler intensifiers flagged by the register check. Each one stands in for a fact the article already states elsewhere, so they are polish, not accuracy, but the body's register should match the post's.",
-				"fix": "\"very different proportions\" -> \"different proportions\"; \"bones a body really has\" -> \"bones the canonical skeleton has\"; \"the arm bones it actually sits on\" -> \"the arm bones it sits on\"."
+				"area": "accuracy",
+				"quote": "It prints `hash matches` and 2799620 for both byte counts",
+				"problem": "The verification only confirms the manifest's sizeBytes is 2799620. The actual printed output of the script (bytes.length matching) was never run and verified, so the promised output is asserted, not evidenced.",
+				"fix": "Run the script against the live manifest and GLB and record the output as run evidence, or soften to \"The manifest pins 2799620 bytes, so the comparison is one line of output you can check yourself.\""
 			}
 		],
 		"rewrite": {
 			"posts": [
-				"A shirt has no skeleton, so our garment forge rigs each piece while a reference body is wearing it, then removes the body and keeps the weights the cloth picked up from the joints underneath. The write-up covers the seven stages, the gates a piece has to pass, and what binding to a skeleton does not fix yet: three.ws/wardrobe"
+				"A shirt has no skeleton, so our garment forge rigs each piece while a reference body is wearing it, then removes the body and keeps the weights the cloth picked up from the joints underneath. The write-up follows one real shirt through the seven stages and the gates a piece passes before it is published: three.ws/wardrobe"
 			],
 			"altText": [
-				"Three generated 3D garments from the three.ws wardrobe catalog on a dark background: a yellow rain slicker with the hood up, a black leather biker jacket with silver zippers, and a charcoal grey hooded sweatshirt with a front pocket."
+				"Three generated 3D garments from the three.ws wardrobe catalog shown side by side in their live viewers on a dark background: a yellow rain slicker with the hood up, a black leather biker jacket with silver zippers, and a charcoal grey hooded sweatshirt with a front pocket."
 			]
 		},
-		"summary": "The post's mechanism, seven-stage pipeline, gates, and link are all verified against the README, source, and live wardrobe page, and the voice is clean. Two polish items remain: the alt text promises a live 3D viewer the image does not show, and the article body carries three filler intensifiers the register check flags.",
+		"summary": "This is a keeper-grade Article: the head post leads with the mechanism, every number (1.667 m, 52 joints, 2.87 cm vs 5.88 cm, 2,799,620 bytes, 23 entry audit) verifies against live pages or code, all eight partners are credited with their exact designations, and the cover image matches its alt text exactly. Two minor nits (the 40k triangle \"budget\" framing and the unrun script output) are worth noting but do not block shipment.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
@@ -417,33 +911,80 @@
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
 		"rewriteFindings": [
-			"claims: claim \"Rig one on its own and the auto-rigger fits a whole skeleton inside the cloth, which tears the shirt apart as soon as it moves\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"then takes the body away and keeps the weights each patch of cloth picked up from the joint underneath it\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"top, bottom, footwear, outerwear, hair, headwear, glasses or accessory\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The forge walks it through seven stages in order, and the wardrobe page shows each one as it runs: image, mesh, compose, rig, extract, validate, publish\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"A finished piece takes about seven minutes\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The image stage paints a ghost-mannequin product photo: the garment as if worn, in an A-pose, from the front, on a plain background\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The mesh stage rebuilds that photo as a textured 3D model on our image-to-3D lanes, falling through to the next engine when one is down\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"places it in its slot's region on a canonical reference body: an A-pose figure 1.667 m tall with 52 joints\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"on the same auto-rigging worker that rigs our avatars\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The rigger sees an ordinary clothed person, so the skeleton lands at body scale, and each vertex of the sleeve takes its weights from the arm bones it actually sits on\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The file is rebuilt from scratch with only the garment's geometry, skin and textures, and the joint names are rewritten to the canonical skeleton, so mixamorig:LeftArm becomes LeftArm\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The same generated shirt was skinned both ways, put on the reference body and walked through the canonical walk clip\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Rigged as a pair, the cloth stayed a mean 2.87 cm from the body across the gait. Copying weights from the nearest body vertex left it 5.88 cm away. The pair-rigging lane is the one in production\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A generator once answered a prompt for long straight hair with a mesh about 1.4 m deep whose width was still perfect\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a mesh outside it fails the job with the measurement instead of reaching the catalog\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The share of the garment's skin weight that lands on bones a body really has is measured before publishing. Under 60% and the job fails\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A region counts when it carries at least 10% of the garment's skin weight, and the result is clamped to what the slot may plausibly hide: a shirt cannot hide the legs, and hair can hide nothing at all\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The manifest pins the file's sha256 and a licence from an approved set\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The pieces in the catalog today are all generated and licensed CC0\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"A piece that passes lands in its own versioned directory, and its manifest is appended to one public catalog file\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Each garment bone is matched to the avatar's bone through the same canonicalizer that lets our animation library drive any humanoid, and a helper joint the avatar lacks falls back to its nearest mapped parent\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"The garment keeps its own inverse bind matrices, which is what lets a piece authored in one rest pose land on an avatar resting in another\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The client refuses a piece that binds under 60% of its skin weight, or that is larger than 0.75 times the avatar's height on any axis, and it checks the file's hash before attaching anything\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Rigid pieces such as glasses are parented to a single joint instead of deformed\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"A garment keeps the shape it had on the reference body and follows the avatar's bones from there\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"you open one of your avatars in the editor and dress it from the Wardrobe tab\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Browsing the catalog and turning any piece around in 3D needs nothing\" does not appear in the copy; claims must quote the post"
+			"claims: claim \"Browsing the catalog and turning any piece around in 3D needs nothing\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A finished piece takes about seven minutes\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"What came back is a 2.7 MB shirt of 40,000 triangles\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"rigged to the three.ws canonical skeleton, with a manifest that pins its checksum and licence, published to a public catalog under CC0-1.0\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"where any humanoid avatar can put it on\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Rig one alone and the auto-rigger fits a whole person inside the cloth, which tears the shirt apart as soon as it moves\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The wardrobe knows eight: top, bottom, footwear, outerwear, hair, headwear, glasses and accessory\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The forge walks a prompt through seven stages in order, and the wardrobe page shows each one as it runs: image, mesh, compose, rig, extract, validate, publish\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The shirt below went through all seven\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The prompt becomes a ghost-mannequin product photo, a garment shown as if worn, without the person: the worn shape, in an A-pose, from the front, on a plain background\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The picture is drawn by a Gemini image model on Vertex AI, at 2K resolution\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the stage rolls again, up to three attempts by default\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the job reports the block reason and the slot at once, with an instruction to rephrase\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The mesh stage sends the photograph through the image-to-3D chain, and the first healthy rung wins\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The warm primary is Hunyuan3D 2.1 on a Cloud Run service with an RTX GPU, which paints a full PBR material set. Behind it sits the same engine on an L4 GPU service, and behind that TRELLIS, a different model behind the same API contract\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The oxford shirt's manifest records which engine built it: hunyuan3d-2.1\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"an A-pose figure 1.667 m tall with 52 joints\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Each slot has a measured box on that body\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Then the forge rigs the composite, body and garment together, on the same auto-rigging worker that rigs our avatars\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The worker runs Make-It-Animatable, an open model released under the MIT licence and published at CVPR 2025\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The file is rebuilt from scratch with only the garment's geometry, skin matrices and textures, and the joint names are rewritten to the canonical skeleton, so mixamorig:LeftArm becomes LeftArm\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"its envelope allows anything from a pixie cut to a waist-length fall up to 0.80 m tall, and the top of the mesh is anchored to the crown\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"We checked the finished shirt in the Rig Doctor, the page that diagnoses a GLB in your browser without uploading it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The same generated shirt was skinned by each, attached to the parametric base body and driven through the canonical walk clip\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Rigging the pair kept the cloth about half as far from the body at the mean, and it is the only lane the forge uses in production\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The validate stage is where a piece earns its place in the catalog\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A region counts as covered when it carries 10% or more of the weight\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a shirt cannot hide the legs, and hair can hide nothing at all, because the scalp region resolves to the head bone and hiding it would take the face with it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The approved licences are CC0, CC-BY, MIT, Apache-2.0 and BSD, and the pieces in the catalog today are generated and licensed CC0\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A piece that passes lands in its own versioned directory, and its manifest is appended to one public catalog file\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The catalog is a single public JSON file, and it needs no key\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The wardrobe page lists the whole catalog, and each piece has a 3D button that turns it in a live viewer\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the record of a job in storage is also its work queue\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"An instance owns a job only once it holds a concurrency slot and wins an atomic, generation-matched write on the record\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Everything the pipeline needs is stored at submit, so any instance can drive a job it did not receive\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A freed slot drains the backlog straight away, a sweep every 10 minutes claims any orphan, and a job read requeues one whose owner went quiet\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A job is declared failed only after three attempts, so a replaced instance costs an attempt, not the piece\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A submit takes one attempt, because it starts a GPU job and is not safely repeatable; a read takes three\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the page saves the job id in the browser, so a visitor who closes the tab at minute three finds the job still running on return\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the browser binds it to the avatar's skeleton by name\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a helper joint the avatar lacks falls back to its nearest mapped parent\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It refuses a piece that binds under 60% of its skin weight, or that is larger than 0.75 times the avatar's height on any axis, and it verifies the file's sha256 before attaching, so a truncated download is refused\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A catalog audit binds each live piece onto four different humanoid rigs, checks each file's hash, and measures how far the cloth strays across the walk gait, with a ceiling for each slot\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The baseline run covered 23 entries, all binding at full coverage on all four rigs\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Make-It-Animatable, released under the MIT licence and published at CVPR 2025, predicts the skeleton and skinning weights for the composite\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The reference body is released under CC0 and derives from MakeHuman data\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Hunyuan3D 2.1 and TRELLIS are the image-to-3D engines in the failover chain, and Gemini on Vertex AI paints the reference photograph\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Because a manifest pins its file's hash, anyone can repeat the wearer's integrity check from a terminal\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It prints hash matches and 2799620 for both byte counts\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"In the browser the same check is verifyModelBytes(bytes, manifest) from the catalog loader, followed by attachGarment(avatarRoot, garmentRoot, { slot: manifest.slot }), which returns ok, the measured coverage, a reason when it refuses, and a detach function that takes the piece off again\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"using the morph sliders the parametric base already carries\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the wardrobe page runs the same seven stages you read about here\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The mesh arrives at about 40,000 triangles, which is the budget the forge targets\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"IBM is listed in the Strategic tier of the partner map\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws agent identity integrates with IBM watsonx and IBM Granite\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is deployed on AWS infrastructure with Marketplace availability\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Google Cloud powers three.ws inference, storage and real-time serving\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Alibaba Cloud extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"with low-latency inference close to users in Asia\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a builder-focused publishing partnership with HackerNoon\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"feature articles, tutorials and developer guides for people shipping with AI, published to HackerNoon's developer audience\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of the Quicknode Startup Program with approved infrastructure credits\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The occludes list names the six body regions this shirt covers: torso, upperArms, lowerArms, hips, upperLegs and neck\" does not appear in the copy; claims must quote the post"
 		]
 	},
 	"editorError": null

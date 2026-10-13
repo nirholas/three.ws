@@ -1,0 +1,138 @@
+{
+	"id": "parts-studio",
+	"scenarioHash": "ef70d2afe653dbff071b777aaa9aa176e7e3cf5d89c14f2141baa9e64f344666",
+	"ranAt": "2026-10-13T06:45:01.055Z",
+	"target": {
+		"commit": "771cfef01",
+		"revision": "three-ws-api-00497-2ss"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/segment",
+			"detail": "loaded https://three.ws/segment",
+			"ok": true,
+			"ms": 6992,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "type",
+			"target": "https://three.ws/avatars/mannequin.glb",
+			"detail": "typed 38 characters",
+			"ok": true,
+			"ms": 12813,
+			"frames": 92
+		},
+		{
+			"index": 3,
+			"kind": "hold",
+			"target": "1200",
+			"detail": "1200 ms",
+			"ok": true,
+			"ms": 4610,
+			"frames": 36
+		},
+		{
+			"index": 4,
+			"kind": "click",
+			"target": "Segment",
+			"detail": "clicked; POST /api/forge-segment answered 202 in 0.1 s",
+			"ok": true,
+			"ms": 3175,
+			"frames": 21
+		},
+		{
+			"index": 5,
+			"kind": "expect",
+			"target": "top-1",
+			"detail": "appeared after 90 filmed frames",
+			"ok": true,
+			"ms": 14556,
+			"frames": 90
+		},
+		{
+			"index": 6,
+			"kind": "read",
+			"target": "parts",
+			"detail": "parts = \"24\"",
+			"ok": true,
+			"ms": 7,
+			"frames": 0
+		},
+		{
+			"index": 7,
+			"kind": "click",
+			"target": "Show all",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 4712,
+			"frames": 21
+		},
+		{
+			"index": 8,
+			"kind": "hold",
+			"target": "1600",
+			"detail": "1600 ms",
+			"ok": true,
+			"ms": 9894,
+			"frames": 48
+		},
+		{
+			"index": 9,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 12665,
+			"frames": 66
+		},
+		{
+			"index": 10,
+			"kind": "drag",
+			"target": "0.3,0.5,0.6,0.5",
+			"detail": "dragged over 66 frames",
+			"ok": true,
+			"ms": 17936,
+			"frames": 84
+		},
+		{
+			"index": 11,
+			"kind": "hold",
+			"target": "2800",
+			"detail": "2800 ms",
+			"ok": true,
+			"ms": 16428,
+			"frames": 84
+		}
+	],
+	"facts": {
+		"parts": "24"
+	},
+	"saw": [
+		"top-1"
+	],
+	"responses": [
+		{
+			"method": "POST",
+			"path": "/api/forge-segment",
+			"status": 202,
+			"seconds": 0.1
+		}
+	],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/parts-studio/reel.mp4",
+		"sha256": "9d7632d227794f96fb417a3b5867547fbe5659cc6e2260c9b3c8e525c66ed1f7",
+		"frames": 542,
+		"motion": 0.488,
+		"durationSec": 18.07,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

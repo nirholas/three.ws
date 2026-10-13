@@ -1,0 +1,34 @@
+# Builds the partner spotlight runner image (deploy/x-partners/Dockerfile).
+# Submit from the repo root, so the build context is the whole repo:
+#   gcloud builds submit --config deploy/x-partners/cloudbuild.yaml \
+#     --service-account=projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com .
+# scripts/create-x-partners-job.mjs prints this with the right flags.
+substitutions:
+  _REGION: us-central1
+  _REPO: cloud-run-source-deploy
+  _IMAGE: x-partners
+  _TAG: latest
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    env:
+      - DOCKER_BUILDKIT=1
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:${_TAG}
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
+      - -f
+      - deploy/x-partners/Dockerfile
+      - .
+    timeout: 1800s
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:${_TAG}
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+timeout: 2400s

@@ -1,0 +1,122 @@
+{
+	"id": "render-lab-sheet",
+	"contentHash": "e6d13688afb9b985b908272423f7dad94dd3d935f433566138e9220bbcdb80ca",
+	"reviewedAt": "2026-10-13T19:07:49.636Z",
+	"passed": false,
+	"blockers": [
+		"probe:scenario the filmed scenario: step 11 (expect 24 live renders at 256px): locator.waitFor: Timeout 45000ms exceeded.",
+		"editor (accuracy): The scenario probe that films this exact step failed: step 11 timed out (45s) waiting for the text \"24 live renders at 256px\". A claim whose verification failed cannot ship, and the visible frames only ever show the caption \"4 live renders at 256px\" (the Framing tab); no frame displays the 24 figure. The proof that read tiles=24 is not enough while the end-to-end wait for the on-screen text fails.",
+		"editor verdict is revise"
+	],
+	"texts": [
+		"Render Lab reads the skeleton before it renders anything. Open it with an avatar and it reports the rig it found, here a skeleton with 65 bones, then lays out the poses that rig can take. The contact sheet under it is 24 live renders at 256px, each one a real call to the render API, with no account and no key.",
+		"Click any tile and it loads into the composer with its pose and framing set, ready to copy as a call. Try it on your own avatar at three.ws/render-lab."
+	],
+	"lint": [],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "65 bones",
+				"kind": "evidence:proof",
+				"target": "bones",
+				"ok": true,
+				"detail": "the run read bones = \"65\""
+			},
+			{
+				"claim": "24 live renders at 256px",
+				"kind": "evidence:proof",
+				"target": "tiles",
+				"ok": true,
+				"detail": "the run read tiles = \"24\""
+			},
+			{
+				"claim": "24 live renders at 256px",
+				"kind": "evidence:file",
+				"target": "pages/render-lab.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "each one a real call to the render API",
+				"kind": "evidence:file",
+				"target": "pages/render-lab.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "with no account and no key",
+				"kind": "evidence:file",
+				"target": "pages/render-lab.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": false,
+				"detail": "step 11 (expect 24 live renders at 256px): locator.waitFor: Timeout 45000ms exceeded."
+			},
+			{
+				"kind": "probe:api",
+				"target": "https://three.ws/api/avatar/capabilities?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/render-lab",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 2,
+			"clarity": 4,
+			"specificity": 4,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 4
+		},
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "The contact sheet under it is 24 live renders at 256px",
+				"problem": "The scenario probe that films this exact step failed: step 11 timed out (45s) waiting for the text \"24 live renders at 256px\". A claim whose verification failed cannot ship, and the visible frames only ever show the caption \"4 live renders at 256px\" (the Framing tab); no frame displays the 24 figure. The proof that read tiles=24 is not enough while the end-to-end wait for the on-screen text fails.",
+				"fix": "Re-run the scenario until the probe waits for and sees \"24 live renders at 256px\" and recapture the reel, or drop the number from the copy. The rewrite below drops it and keeps the verified facts (65 bones, real API calls, no account or key)."
+			},
+			{
+				"severity": "minor",
+				"area": "clarity",
+				"quote": "with no account and no key",
+				"problem": "The live copy reads \"No account, no SDK, no key.\" and that full line is what the file check matched; stating all three is stronger and exactly supported.",
+				"fix": "Use the full verified line: \"no account, no SDK, and no key.\""
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Render Lab reads the skeleton before it renders anything. Open it with an avatar and it reports the rig it found, here a skeleton with 65 bones, then lays out every pose and framing that rig can take. Each tile in the contact sheet is a real render against the live API, with no account, no SDK, and no key.",
+				"Click any tile and it loads into the composer with its pose and framing set, ready to copy as a call. Try it on your own avatar at three.ws/render-lab."
+			],
+			"altText": []
+		},
+		"summary": "The mechanism copy and voice are strong, and the reel genuinely shows skeleton reading, framings, and poses rendered live. It cannot ship with the \"24 live renders at 256px\" figure while the filming probe times out waiting for that exact text, so the rewrite drops the number and keeps only verified facts.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"24 live renders at 256px\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"each one a real call to the render API\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"with no account and no key\" does not appear in the copy; claims must quote the post",
+			"claims: \"every\" is an absolute; declare the claim it makes, with evidence, or cut it"
+		]
+	},
+	"editorError": null
+}

@@ -17,6 +17,7 @@
 // past the daily cap.
 
 import { sql } from './db.js';
+import { runLocked } from './locked-sql.js';
 
 // SOL-outflow action types that draw down the daily cap.
 export const SOL_OUTFLOW_TYPES = ['pumpfun.buy', 'pumpfun.launch', 'pumpfun.swap.buy'];
@@ -118,15 +119,13 @@ export async function reserveSpend({ agentId, meta, mint, solAmount, type, paylo
 		status: 'reserved',
 	});
 
-	// The advisory xact lock is held for the duration of THIS statement's implicit
-	// transaction, serializing concurrent spends per agent. The INSERT…SELECT only
-	// materializes a row when the rolling 24h total plus this spend stays within
-	// the cap, so the check and the reservation are atomic.
-	const rows = await sql`
-		WITH locked AS (
-			SELECT pg_advisory_xact_lock(hashtextextended(${String(agentId)}, 0))
-		),
-		spent AS (
+	// The advisory xact lock is taken in its own statement ahead of the INSERT…SELECT
+	// in one transaction (see locked-sql.js: a lock inside the same statement does
+	// not refresh the snapshot, so the loser would not see the winner's row). The
+	// INSERT…SELECT only materializes a row when the rolling 24h total plus this
+	// spend stays within the cap, so the check and the reservation are atomic.
+	const rows = await runLocked([agentId], sql`
+		WITH spent AS (
 			SELECT COALESCE(SUM((payload->>'solAmount')::numeric), 0) AS s
 			FROM agent_actions
 			WHERE agent_id = ${agentId}
@@ -135,10 +134,10 @@ export async function reserveSpend({ agentId, meta, mint, solAmount, type, paylo
 		)
 		INSERT INTO agent_actions (agent_id, type, payload, source_skill)
 		SELECT ${agentId}, ${type}, ${reserved}::jsonb, ${'pumpfun'}
-		FROM spent, locked
+		FROM spent
 		WHERE spent.s + ${amount}::numeric <= ${policy.daily_sol_cap}::numeric
 		RETURNING id
-	`;
+	`);
 
 	if (!rows.length) {
 		return {

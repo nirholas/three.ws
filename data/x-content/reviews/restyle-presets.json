@@ -1,0 +1,219 @@
+{
+	"id": "restyle-presets",
+	"contentHash": "f54c06cfb730f6c5e543f59bf82a5e6b23431e54f8c0f01966a407e56c975a52",
+	"reviewedAt": "2026-10-13T18:07:18.408Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"18 finishes for any 3D model, one click each, right in your browser: three.ws/restyle\n\nGold, chrome, copper, glass, wood, stone, car paint, neon, holographic. Each one is a set of real PBR values (color, how metallic, how rough), so the model reflects light as you turn it instead of wearing a flat tint.\n\nYour original is never touched, and Reset puts it back.",
+		"For a finish that is not on the list, describe it in plain words, like worn copper or glossy ceramic, and IBM Granite proposes the PBR values. They are applied live and saved as a new version, never over the one before it.\n\nThen fine-tune how metallic and how rough it is with sliders and export a validated GLB.",
+		"The reel loads a car model from a .glb file. Drop in your own, or paste a public link to one, and every finish works the same way on it."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "18 finishes",
+				"kind": "evidence:module",
+				"target": "packages/viewer-presets/src/materials.js",
+				"ok": true,
+				"detail": "MATERIAL_PRESET_NAMES has 18 entries; the claim needs 18"
+			},
+			{
+				"claim": "for any 3D model",
+				"kind": "evidence:page",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "live page shows \"Re-skin any 3D model in your browser\""
+			},
+			{
+				"claim": "one click each",
+				"kind": "evidence:proof",
+				"target": "history",
+				"ok": true,
+				"detail": "the run read history = \"Gold\""
+			},
+			{
+				"claim": "one click each",
+				"kind": "evidence:file",
+				"target": "src/restyle.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "right in your browser",
+				"kind": "evidence:page",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "live page shows \"Re-skin any 3D model in your browser\""
+			},
+			{
+				"claim": "Gold, chrome, copper, glass, wood, stone, car paint, neon, holographic",
+				"kind": "evidence:page",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "live page shows \"Car paint\""
+			},
+			{
+				"claim": "Gold, chrome, copper, glass, wood, stone, car paint, neon, holographic",
+				"kind": "evidence:page",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "live page shows \"Holographic\""
+			},
+			{
+				"claim": "Gold, chrome, copper, glass, wood, stone, car paint, neon, holographic",
+				"kind": "evidence:page",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "live page shows \"Stone\""
+			},
+			{
+				"claim": "Gold, chrome, copper, glass, wood, stone, car paint, neon, holographic",
+				"kind": "evidence:page",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "live page shows \"Copper\""
+			},
+			{
+				"claim": "Each one is a set of real PBR values (color, how metallic, how rough)",
+				"kind": "evidence:page",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "live page shows \"apply a PBR material preset\""
+			},
+			{
+				"claim": "Each one is a set of real PBR values (color, how metallic, how rough)",
+				"kind": "evidence:file",
+				"target": "packages/viewer-presets/src/materials.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "so the model reflects light as you turn it",
+				"kind": "evidence:file",
+				"target": "packages/viewer-presets/src/materials.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "so the model reflects light as you turn it",
+				"kind": "evidence:page",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "live page shows \"Drag to orbit\""
+			},
+			{
+				"claim": "Your original is never touched, and Reset puts it back",
+				"kind": "evidence:page",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "live page shows \"Your original is never touched; Reset restores it instantly.\""
+			},
+			{
+				"claim": "IBM Granite proposes the PBR values",
+				"kind": "evidence:page",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "live page shows \"IBM Granite proposes real PBR values\""
+			},
+			{
+				"claim": "like worn copper or glossy ceramic",
+				"kind": "evidence:file",
+				"target": "pages/restyle.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "They are applied live and saved as a new version, never over the one before it",
+				"kind": "evidence:page",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "live page shows \"applied live and checkpointed as a new version\""
+			},
+			{
+				"claim": "They are applied live and saved as a new version, never over the one before it",
+				"kind": "evidence:page",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "live page shows \"overwriting the one before it\""
+			},
+			{
+				"claim": "fine-tune how metallic and how rough it is with sliders and export a validated GLB",
+				"kind": "evidence:page",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "live page shows \"fine-tune metalness and roughness live, then export a validated GLB\""
+			},
+			{
+				"claim": "Drop in your own, or paste a public link to one",
+				"kind": "evidence:page",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "live page shows \"drop a .glb to load\""
+			},
+			{
+				"claim": "Drop in your own, or paste a public link to one",
+				"kind": "evidence:page",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "live page shows \"Load URL\""
+			},
+			{
+				"claim": "every finish works the same way on it",
+				"kind": "evidence:file",
+				"target": "src/restyle.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "16 steps passed against the live product, every claimed fact still holds (history Gold, last Holographic)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the restyle page is up and still takes a dropped .glb",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/restyle",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"18 finishes for any 3D model, one click each, right in your browser: three.ws/restyle\n\nGold, chrome, copper, glass, wood, stone, car paint, neon, holographic. Each one is a set of real PBR values (color, how metallic, how rough), so the model reflects light as you turn it instead of wearing a flat tint.\n\nYour original is never touched, and Reset puts it back.",
+				"For a finish that is not on the list, describe it in plain words, like worn copper or glossy ceramic, and IBM Granite proposes the PBR values. They are applied live and saved as a new version, never over the one before it.\n\nThen fine-tune how metallic and how rough it is with sliders and export a validated GLB.",
+				"The reel loads a car model from a .glb file. Drop in your own, or paste a public link to one, and every finish works the same way on it."
+			],
+			"altText": []
+		},
+		"summary": "Every claim is verified against the live page, the code, and a passing filmed run; every reel caption is true of its frame and the frames show exactly what the posts say. Voice is clean, no tags, one link, ship it.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

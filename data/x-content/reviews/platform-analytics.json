@@ -1,0 +1,180 @@
+{
+	"id": "platform-analytics",
+	"contentHash": "4eef574bc4f665436a892efafdafe45e86562c69d4e96374632dd9f4d9e837eb",
+	"reviewedAt": "2026-10-13T19:00:18.811Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"The platform now publishes every total about itself on one page: more than 4,300 agents, more than 970 of them holding a wallet, and more than 47,000 finished 3D models, each figure read live from the table that records the activity.\n\nEvery number is charted per day over 30 days, 90 days or all time, or as a running total, and explained in a note underneath. The note is written by the same code that computes the number, so it can never describe a different query than the one that ran. A 3D model only counts when the job finished, a GLB was stored, and the quality gate did not reject it.\n\nThe same data is open as JSON at /api/platform/analytics, with the method note on every metric.",
+		"Open it at three.ws/analytics. Hover or tap any chart to read a single day. Totals are cached for up to five minutes, days are UTC calendar days, and the running total ends on the all-time figure, so a dashboard you build on the endpoint reads the same numbers the page shows."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "publishes every total about itself on one page",
+				"kind": "evidence:page",
+				"target": "https://three.ws/analytics",
+				"ok": true,
+				"detail": "live page shows \"Every total the platform publishes about itself, on one page.\""
+			},
+			{
+				"claim": "More than 4,300 agents",
+				"kind": "evidence:proof",
+				"target": "agents",
+				"ok": true,
+				"detail": "the run read agents = \"4,392\", at least 4300"
+			},
+			{
+				"claim": "more than 970 of them holding a wallet",
+				"kind": "evidence:proof",
+				"target": "wallets",
+				"ok": true,
+				"detail": "the run read wallets = \"977\", at least 970"
+			},
+			{
+				"claim": "More than 47,000 finished 3D models",
+				"kind": "evidence:proof",
+				"target": "models",
+				"ok": true,
+				"detail": "the run read models = \"47,672\", at least 47000"
+			},
+			{
+				"claim": "each figure read live from the table that records the activity",
+				"kind": "evidence:page",
+				"target": "https://three.ws/analytics",
+				"ok": true,
+				"detail": "live page shows \"Each figure is read live from the table that records the activity, charted per day, and explained in a note below, so you can check exactly what was counted.\""
+			},
+			{
+				"claim": "Every number is charted per day over 30 days, 90 days or all time, or as a running total",
+				"kind": "evidence:page",
+				"target": "https://three.ws/analytics",
+				"ok": true,
+				"detail": "live page shows \"One chart per metric over the selected window. Hover or tap a chart to read a single day; switch to Running total to see the all-time curve.\""
+			},
+			{
+				"claim": "Every number is charted per day over 30 days, 90 days or all time, or as a running total",
+				"kind": "evidence:proof",
+				"target": "/api/platform/analytics",
+				"ok": true,
+				"detail": "GET /api/platform/analytics answered 200 in 2.2 s"
+			},
+			{
+				"claim": "The note is written by the same code that computes the number, so it can never describe a different query than the one that ran",
+				"kind": "evidence:page",
+				"target": "https://three.ws/analytics",
+				"ok": true,
+				"detail": "live page shows \"Written by the same code that computes the numbers, so a note can never describe a different query than the one that ran.\""
+			},
+			{
+				"claim": "A 3D model only counts when the job finished, a GLB was stored, and the quality gate did not reject it",
+				"kind": "evidence:page",
+				"target": "https://three.ws/analytics",
+				"ok": true,
+				"detail": "live page shows \"Finished 3D generations (table forge_creations): status done, a GLB file stored, and not rejected by the quality gate. Failed and in-progress jobs are not counted.\""
+			},
+			{
+				"claim": "The same data is open as JSON at /api/platform/analytics, with the method note on every metric",
+				"kind": "evidence:page",
+				"target": "https://three.ws/analytics",
+				"ok": true,
+				"detail": "live page shows \"The same data is open at /api/platform/analytics.\""
+			},
+			{
+				"claim": "The same data is open as JSON at /api/platform/analytics, with the method note on every metric",
+				"kind": "evidence:page",
+				"target": "https://three.ws/api/platform/analytics",
+				"ok": true,
+				"detail": "live page shows \"\"method\":\""
+			},
+			{
+				"claim": "Hover or tap any chart to read a single day",
+				"kind": "evidence:page",
+				"target": "https://three.ws/analytics",
+				"ok": true,
+				"detail": "live page shows \"Hover or tap a chart to read a single day\""
+			},
+			{
+				"claim": "Totals are cached for up to five minutes, days are UTC calendar days",
+				"kind": "evidence:page",
+				"target": "https://three.ws/analytics",
+				"ok": true,
+				"detail": "live page shows \"Days are UTC calendar days.\""
+			},
+			{
+				"claim": "Totals are cached for up to five minutes, days are UTC calendar days",
+				"kind": "evidence:page",
+				"target": "https://three.ws/analytics",
+				"ok": true,
+				"detail": "live page shows \"Totals are cached for up to five minutes.\""
+			},
+			{
+				"claim": "The running total ends on the all-time figure",
+				"kind": "evidence:page",
+				"target": "https://three.ws/analytics",
+				"ok": true,
+				"detail": "live page shows \"so it ends on the all-time total\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "13 steps passed against the live product, every claimed fact still holds (agents 4,501, wallets 1,006, models 49,224)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "https://three.ws/api/platform/analytics",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "https://three.ws/api/platform/analytics",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "https://three.ws/api/platform/analytics",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/analytics",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"The platform now publishes every total about itself on one page: more than 4,300 agents, more than 970 of them holding a wallet, and more than 47,000 finished 3D models, each figure read live from the table that records the activity.\n\nEvery number is charted per day over 30 days, 90 days or all time, or as a running total, and explained in a note underneath. The note is written by the same code that computes the number, so it can never describe a different query than the one that ran. A 3D model only counts when the job finished, a GLB was stored, and the quality gate did not reject it.\n\nThe same data is open as JSON at /api/platform/analytics, with the method note on every metric.",
+				"Open it at three.ws/analytics. Hover or tap any chart to read a single day. Totals are cached for up to five minutes, days are UTC calendar days, and the running total ends on the all-time figure, so a dashboard you build on the endpoint reads the same numbers the page shows."
+			],
+			"altText": []
+		},
+		"summary": "Every claim traces to a passing page or proof check, and the conservative figures (more than 4,300 agents, 970 wallets, 47,000 models) are backed by numbers the filmed run read off the screen, with the later probe reading even higher. The reel frames match their captions, the voice contract is fully observed (no dashes, hashtags, or hype), and the link sits once in the reply as the contract allows.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

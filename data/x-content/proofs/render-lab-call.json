@@ -1,0 +1,168 @@
+{
+	"id": "render-lab-call",
+	"scenarioHash": "be6e26b78ed6ff71efb45091522daa077283397e9a5cfeb56b082173ad36ef28",
+	"ranAt": "2026-10-13T06:37:04.925Z",
+	"target": {
+		"commit": "771cfef01",
+		"revision": "three-ws-api-00497-2ss"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/render-lab?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209&scene=full-body&pose=wave",
+			"detail": "loaded https://three.ws/render-lab?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209&scene=full-body&pose=wave",
+			"ok": true,
+			"ms": 24223,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "expect",
+			"target": "512px",
+			"detail": "appeared after 0.1 s",
+			"ok": true,
+			"ms": 55,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "scroll",
+			"target": "Render Lab",
+			"detail": "scrolled -78 px",
+			"ok": true,
+			"ms": 1669,
+			"frames": 6
+		},
+		{
+			"index": 4,
+			"kind": "hold",
+			"target": "1500",
+			"detail": "1500 ms",
+			"ok": true,
+			"ms": 7562,
+			"frames": 45
+		},
+		{
+			"index": 5,
+			"kind": "scroll",
+			"target": "Copy link",
+			"detail": "scrolled 563 px",
+			"ok": true,
+			"ms": 6590,
+			"frames": 42
+		},
+		{
+			"index": 6,
+			"kind": "click",
+			"target": "curl",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 3555,
+			"frames": 21
+		},
+		{
+			"index": 7,
+			"kind": "read",
+			"target": "endpoint",
+			"detail": "endpoint = \"/api/avatar/render?avatar=\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 8,
+			"kind": "hold",
+			"target": "1200",
+			"detail": "1200 ms",
+			"ok": true,
+			"ms": 5379,
+			"frames": 36
+		},
+		{
+			"index": 9,
+			"kind": "click",
+			"target": "Web component",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 3464,
+			"frames": 21
+		},
+		{
+			"index": 10,
+			"kind": "hold",
+			"target": "1400",
+			"detail": "1400 ms",
+			"ok": true,
+			"ms": 6444,
+			"frames": 42
+		},
+		{
+			"index": 11,
+			"kind": "click",
+			"target": "MCP",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 3323,
+			"frames": 21
+		},
+		{
+			"index": 12,
+			"kind": "expect",
+			"target": "render_avatar_image",
+			"detail": "appeared after 0.0 s",
+			"ok": true,
+			"ms": 22,
+			"frames": 0
+		},
+		{
+			"index": 13,
+			"kind": "hold",
+			"target": "1600",
+			"detail": "1600 ms",
+			"ok": true,
+			"ms": 7159,
+			"frames": 48
+		},
+		{
+			"index": 14,
+			"kind": "scroll",
+			"target": "-420",
+			"detail": "scrolled -420 px",
+			"ok": true,
+			"ms": 7830,
+			"frames": 48
+		},
+		{
+			"index": 15,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 11111,
+			"frames": 66
+		}
+	],
+	"facts": {
+		"endpoint": "/api/avatar/render?avatar="
+	},
+	"saw": [
+		"512px",
+		"render_avatar_image"
+	],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/render-lab-call/reel.mp4",
+		"sha256": "3df49b9faad3c4589ddf25a27d303c6cfeb8d5f8d2a9d166e8097b78cc4e4d3e",
+		"frames": 396,
+		"motion": 0.397,
+		"durationSec": 13.2,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

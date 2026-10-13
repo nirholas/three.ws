@@ -12,6 +12,7 @@
 // Guardrails: per-call USD cap (AVATAR_MAX_SEND_USD), pubkey validation,
 // IP rate-limit, optional shared-secret header (AVATAR_DEMO_TOKEN).
 
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { parse } from '../_lib/validate.js';
@@ -63,7 +64,10 @@ export default wrap(async (req, res) => {
 	// Optional shared-secret gate. When set, the widget must echo it.
 	if (cfg.demoToken) {
 		const provided = req.headers['x-avatar-token'];
-		if (provided !== cfg.demoToken) {
+		// Constant-time compare over fixed-length digests so the shared secret
+		// cannot be recovered byte by byte from response timing.
+		const digest = (v) => createHash('sha256').update(String(v ?? '')).digest();
+		if (typeof provided !== 'string' || !timingSafeEqual(digest(provided), digest(cfg.demoToken))) {
 			return error(res, 401, 'unauthorized', 'missing or invalid x-avatar-token');
 		}
 	}

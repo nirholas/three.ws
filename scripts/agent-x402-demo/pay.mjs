@@ -61,7 +61,7 @@ function loadOrCreateWallet() {
 		return Keypair.fromSecretKey(bs58decode(raw.secret));
 	}
 	const kp = Keypair.generate();
-	writeFileSync(WALLET_FILE, JSON.stringify({ pubkey: kp.publicKey.toBase58(), secret: bs58encode(kp.secretKey) }, null, 2) + '\n');
+	writeFileSync(WALLET_FILE, JSON.stringify({ pubkey: kp.publicKey.toBase58(), secret: bs58encode(kp.secretKey) }, null, 2) + '\n', { mode: 0o600 });
 	return kp;
 }
 

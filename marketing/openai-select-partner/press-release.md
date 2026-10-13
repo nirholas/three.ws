@@ -4,17 +4,18 @@
 > releases about tier status. Email this release to **rachel.kim@c-openai.com**
 > for review and wait for written approval before publishing or distributing.
 >
-> **Two fields to confirm before sending:** the dateline city (the draft uses
+> **Three fields to confirm before sending:** the release date (set it on the day
+> of distribution; the July 25 date in earlier drafts is stale), the dateline city (the draft uses
 > Wilmington, Delaware, matching the governing-law jurisdiction in the
 > [terms of service](https://three.ws/legal/tos); change it if the release
-> should carry a different city) and the spokesperson's name and title on the
-> quote.
+> should carry a different city), and the spokesperson's name and title on the
+> quote. Full sequence: [`press-launch-plan.md`](press-launch-plan.md).
 
 ---
 
 ## three.ws Named an OpenAI Select Partner
 
-**Wilmington, Del. - July 25, 2026** - three.ws, the open-source platform for 3D
+**Wilmington, Del. - [Release date]** - three.ws, the open-source platform for 3D
 AI agents, today announced that it has been named an OpenAI Select Partner
 within the OpenAI Partner Network.
 
