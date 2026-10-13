@@ -1,7 +1,7 @@
 {
 	"id": "restyle-presets",
 	"contentHash": "f54c06cfb730f6c5e543f59bf82a5e6b23431e54f8c0f01966a407e56c975a52",
-	"reviewedAt": "2026-10-13T06:32:47.110Z",
+	"reviewedAt": "2026-10-13T18:07:18.408Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -206,7 +206,7 @@
 			],
 			"altText": []
 		},
-		"summary": "Every claim passes verification against the live page, module exports, and the filmed run, and the number lead carries the strongest true statement in the first line. The reel frames show the car model, Gold applied, and the Holographic click, matching the captions and copy, so this ships unchanged.",
+		"summary": "Every claim is verified against the live page, the code, and a passing filmed run; every reel caption is true of its frame and the frames show exactly what the posts say. Voice is clean, no tags, one link, ship it.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

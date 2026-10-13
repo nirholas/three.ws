@@ -95,7 +95,8 @@
 			"Constrainautor",
 			"Gunnink",
 			"Lorensen",
-			"meshoptimizer"
+			"meshoptimizer",
+			"Colyseus"
 		],
 		"maximumLength": 1000
 	},
@@ -114,12 +115,12 @@
 	"items": [
 		{
 			"id": "genesis",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "mechanism",
-			"notBefore": "2026-10-11T12:00:00Z",
+			"notBefore": "2026-10-13T20:10:59.633Z",
 			"covers": [
 				"/genesis"
 			],
@@ -333,7 +334,8 @@
 						"hold": 4200
 					}
 				]
-			}
+			},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "rig-doctor",
@@ -966,7 +968,7 @@
 		},
 		{
 			"id": "ai-3d-skills",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "creation",
@@ -1745,7 +1747,7 @@
 		},
 		{
 			"id": "awesome",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -1969,7 +1971,7 @@
 		},
 		{
 			"id": "knock",
-			"status": "paused",
+			"status": "posted",
 			"kind": "post",
 			"tier": 1,
 			"lane": "token",
@@ -2144,7 +2146,7 @@
 		},
 		{
 			"id": "galaxy",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 1,
 			"lane": "labs",
@@ -2590,7 +2592,7 @@
 		},
 		{
 			"id": "wardrobe",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -2757,7 +2759,7 @@
 		},
 		{
 			"id": "avatar-engines",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -2989,7 +2991,7 @@
 		},
 		{
 			"id": "herald-reasons",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -3312,7 +3314,7 @@
 		},
 		{
 			"id": "splat-viewer",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -3587,7 +3589,7 @@
 		},
 		{
 			"id": "agent-monitor",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -3864,7 +3866,7 @@
 		},
 		{
 			"id": "agent-spotlight",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -4174,7 +4176,7 @@
 		},
 		{
 			"id": "avatar-cli",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 3,
 			"lane": "developer",
@@ -4488,7 +4490,7 @@
 		},
 		{
 			"id": "choreograph",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -4689,7 +4691,7 @@
 		},
 		{
 			"id": "docs-world",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -4990,7 +4992,7 @@
 		},
 		{
 			"id": "drive-copilot",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -5264,7 +5266,7 @@
 		},
 		{
 			"id": "gestures",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -5482,7 +5484,7 @@
 		},
 		{
 			"id": "glance",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -5808,7 +5810,7 @@
 		},
 		{
 			"id": "glb-diff",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -6154,7 +6156,7 @@
 		},
 		{
 			"id": "machine-atlas",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "labs",
@@ -6499,7 +6501,7 @@
 		},
 		{
 			"id": "model-inspect",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -6843,7 +6845,7 @@
 		},
 		{
 			"id": "model-inspector",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -7164,7 +7166,7 @@
 		},
 		{
 			"id": "prompt-library",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -7457,7 +7459,7 @@
 		},
 		{
 			"id": "agent-symphony",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "labs",
@@ -7748,7 +7750,7 @@
 		},
 		{
 			"id": "avatar-artifact",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "labs",
@@ -8028,7 +8030,7 @@
 		},
 		{
 			"id": "community-skills",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -8292,7 +8294,7 @@
 		},
 		{
 			"id": "holo-sticker",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "labs",
@@ -8604,7 +8606,7 @@
 		},
 		{
 			"id": "voice-lab",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -9252,12 +9254,12 @@
 		},
 		{
 			"id": "restyle-presets",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "number",
-			"notBefore": "2026-10-02T00:00:00Z",
+			"notBefore": "2026-10-13T20:07:18.420Z",
 			"covers": [
 				"/restyle",
 				"/docs/restyle",
@@ -9570,16 +9572,17 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "embed-article",
-			"status": "review",
+			"status": "approved",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
 			"pattern": "longform",
-			"notBefore": "2026-10-02T00:00:00Z",
+			"notBefore": "2026-10-13T20:12:44.888Z",
 			"covers": [
 				"/docs/web-component"
 			],
@@ -10654,7 +10657,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "holo-material-article",
@@ -12805,7 +12809,7 @@
 		},
 		{
 			"id": "proof-reels-article",
-			"status": "review",
+			"status": "posted",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
@@ -16951,7 +16955,7 @@
 		},
 		{
 			"id": "keeper-article",
-			"status": "review",
+			"status": "posted",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
@@ -17880,7 +17884,7 @@
 		},
 		{
 			"id": "photo-to-3d",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -18617,6 +18621,5600 @@
 					}
 				}
 			]
+		},
+		{
+			"id": "agent-lab-entrance",
+			"status": "draft",
+			"kind": "post",
+			"tier": 3,
+			"lane": "community",
+			"pattern": "clip",
+			"notBefore": "2026-10-11T00:00:00Z",
+			"covers": [
+				"/demos/agents"
+			],
+			"scenario": {
+				"format": "landscape",
+				"steps": [
+					{
+						"goto": "https://three.ws/demos/agents/wrecking-ball.html",
+						"settle": 9000
+					},
+					{
+						"expect": "Make an entrance",
+						"within": 30000
+					},
+					{
+						"hold": 1600,
+						"caption": "A 3D agent that lives on the page itself"
+					},
+					{
+						"click": "Swing again",
+						"caption": "She swings in on a rope"
+					},
+					{
+						"hold": 3800
+					},
+					{
+						"click": "Hit this one",
+						"caption": "and knocks the button sideways"
+					},
+					{
+						"hold": 4200,
+						"caption": "Then she hangs around"
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				}
+			],
+			"posts": [
+				{
+					"text": "Websites have mascots. three.ws pages have agents that physically show up.\n\nThis one swings in from off screen on a rope, hits the button, watches it wobble back into place, and then just hangs there. A real 3D character rendered over the page in WebGL, not a video.",
+					"media": [
+						{
+							"path": "public/x-media/agent-lab-entrance/reel.mp4",
+							"probe": {
+								"durationSec": 11,
+								"width": 1280,
+								"height": 720,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "It is one of a set of interaction prototypes for 3D agents on ordinary web pages: entrances, pick-ups, face mocap and more.\n\nPlay with all of them: three.ws/demos/agents"
+				}
+			],
+			"claims": [
+				{
+					"says": "swings in from off screen on a rope, hits the button, watches it wobble back into place, and then just hangs there",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "public/demos/agents/wrecking-ball.html",
+							"contains": "She swings in from off-canvas on a rope and knocks the ghost button"
+						}
+					]
+				},
+				{
+					"says": "A real 3D character rendered over the page in WebGL",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "public/demos/agents/_lib.js",
+							"contains": "new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })"
+						}
+					]
+				},
+				{
+					"says": "entrances, pick-ups, face mocap and more",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "public/demos/agents/index.html",
+							"contains": "Pickup &amp; drop"
+						},
+						{
+							"type": "file",
+							"path": "public/demos/agents/index.html",
+							"contains": "Webcam drives the avatar's face in real time via ARKit blendshapes."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "agents-board-article",
+			"status": "draft",
+			"kind": "article",
+			"tier": 1,
+			"lane": "article",
+			"pattern": "longform",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [
+				"/monitor",
+				"/spotlight",
+				"/api/agents/public",
+				"/api/spotlight/list"
+			],
+			"article": {
+				"title": "What puts an agent at the top of our board, and why Spotlight trending counts days",
+				"body": "data/x-content/articles/agents-board-article.md",
+				"cover": {
+					"path": "public/x-media/agents-board-article/cover.png",
+					"alt": "Three public three.ws agents standing side by side in 3D, each captured live on its own Agent Spotlight entry page: a woman with white hair and glasses in a navy top, a woman in a black hoodie and headphones, and a man in a lightning-print sweater and jeans"
+				}
+			},
+			"scenario": {
+				"format": "landscape",
+				"steps": [
+					{
+						"goto": "https://three.ws/monitor",
+						"settle": 8000
+					},
+					{
+						"read": "fleet",
+						"selector": "#fleet-badge",
+						"match": "/\\s*([\\d,]+)"
+					},
+					{
+						"read": "active",
+						"selector": "#fleet-badge",
+						"match": "([\\d,]+)\\s*active"
+					},
+					{
+						"type": "writing",
+						"into": "Search agents",
+						"awaits": "/api/agents/public",
+						"caption": "Search the board: newest logged action first"
+					},
+					{
+						"hold": 1800,
+						"caption": "Matches keep the order of their latest action"
+					},
+					{
+						"click": "Simply Sage",
+						"awaits": "/api/agents/42534db3"
+					},
+					{
+						"expect": "creative writing guide",
+						"within": 30000
+					},
+					{
+						"wait": 6000
+					},
+					{
+						"hold": 2200,
+						"caption": "Pick a row and the agent's own 3D body loads beside it"
+					},
+					{
+						"goto": "https://three.ws/spotlight",
+						"settle": 7000
+					},
+					{
+						"read": "showcased",
+						"match": "(\\d+)\\s+agents showcased"
+					},
+					{
+						"read": "upvotes",
+						"match": "(\\d+)\\s+upvotes"
+					},
+					{
+						"goto": "https://three.ws/spotlight/8fecd65a-4ab9-484a-9714-691d4040e9e5",
+						"settle": 8000
+					},
+					{
+						"expect": "Machine translation solved meaning years ago",
+						"within": 30000
+					},
+					{
+						"wait": 4000
+					},
+					{
+						"hold": 2600,
+						"caption": "The Spotlight: a written pitch on a live agent"
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the live board still holds more than 2,500 agents",
+					"url": "https://three.ws/api/agents/public?sort=live&limit=1",
+					"expect": {
+						"json": {
+							"path": "total",
+							"min": 2500
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "more than 600 agents on the board have logged an action",
+					"url": "https://three.ws/api/agents/public?sort=live&limit=1",
+					"expect": {
+						"json": {
+							"path": "active_total",
+							"min": 600
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the Spotlight list answers",
+					"url": "https://three.ws/api/spotlight/list?limit=1",
+					"expect": {
+						"contains": "trending_score"
+					}
+				},
+				{
+					"type": "command",
+					"name": "the trending formula, its day clock and the SQL that mirrors it",
+					"argv": [
+						"npx",
+						"vitest",
+						"run",
+						"tests/spotlight-ranking.test.js"
+					]
+				}
+			],
+			"posts": [
+				{
+					"text": "An agent reaches the top of the public board by doing something: the board sorts more than 2,500 agents on the newest entry in each one's action log. The article covers who can write to that log, how default-named agents with no activity are kept off, and why the Agent Spotlight's trending clock counts days instead of hours.",
+					"media": [
+						{
+							"path": "public/x-media/agents-board-article/reel.mp4",
+							"probe": {
+								"durationSec": 8.3,
+								"width": 1280,
+								"height": 720,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "more than 2,500 agents",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "fleet",
+							"min": 2500
+						},
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"contains": "total = t?.total ?? null;"
+						}
+					]
+				},
+				{
+					"says": "sorts more than 2,500 agents on the newest entry in each one's action log",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "fleet",
+							"min": 2500
+						},
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"contains": "order by ac.last_action_at desc nulls last, i.created_at desc"
+						},
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"contains": "select max(created_at) as last_action_at, count(*)::int as action_count"
+						}
+					]
+				},
+				{
+					"says": "puts them in one order: the most recent action each agent logged",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"contains": "order by ac.last_action_at desc nulls last, i.created_at desc"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "Every agent ranked by its most recent real action"
+						}
+					]
+				},
+				{
+					"says": "Sign-up date, popularity and chat counts do not decide who leads",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"contains": "order by ac.last_action_at desc nulls last, i.created_at desc"
+						}
+					]
+				},
+				{
+					"says": "both need no account",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "Nothing on this page needs a session"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "Public reads, no key"
+						}
+					]
+				},
+				{
+					"says": "Each agent keeps an append-only action log",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/agent-actions.js",
+							"contains": "Append-only history of every agent action."
+						}
+					]
+				},
+				{
+					"says": "its avatar finishes loading, it speaks, a skill finishes",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/agent-protocol.js",
+							"contains": "LOAD_END: 'load-end', // model/asset loading finished"
+						},
+						{
+							"type": "file",
+							"path": "src/agent-protocol.js",
+							"contains": "SPEAK: 'speak', // agent says something"
+						},
+						{
+							"type": "file",
+							"path": "src/agent-protocol.js",
+							"contains": "SKILL_DONE: 'skill-done', // a skill finished"
+						}
+					]
+				},
+				{
+					"says": "viewing someone else's agent adds nothing to its log",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/agent-identity.js",
+							"contains": "if (!this._owned) return; // viewing someone else's agent : backend would 403"
+						}
+					]
+				},
+				{
+					"says": "the server would refuse it with a 403",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/agent-actions.js",
+							"contains": "if (agentRow.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');"
+						}
+					]
+				},
+				{
+					"says": "The board sorts on the newest row in that log, then on creation date",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"contains": "order by ac.last_action_at desc nulls last, i.created_at desc"
+						}
+					]
+				},
+				{
+					"says": "An agent with no logged action sorts after the agents that have one",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"contains": "ac.last_action_at desc nulls last"
+						}
+					]
+				},
+				{
+					"says": "Chats are shown on each row, but they do not move an agent up",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "with action count, chat count"
+						},
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"contains": "order by ac.last_action_at desc nulls last, i.created_at desc"
+						}
+					]
+				},
+				{
+					"says": "More than 600 of the agents on the board have logged at least one action",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "active",
+							"min": 600
+						},
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"contains": "count(*) filter (where exists ("
+						}
+					]
+				},
+				{
+					"says": "The board treats six names as placeholders (My First Agent, Agent, Avatar, My Avatar, Untitled Agent and New Agent) along with the names a selfie import generates",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"contains": "const PLACEHOLDER_NAMES = ['My First Agent', 'Agent', 'Avatar', 'My Avatar', 'Untitled Agent', 'New Agent'];"
+						},
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"contains": "and i.name not like 'Selfie avatar%'"
+						}
+					]
+				},
+				{
+					"says": "left off the board when it also has no logged action, no chat and no on-chain identity",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"matches": "ac\\.last_action_at is not null\\s+or ch\\.chat_count > 0\\s+or i\\.erc8004_agent_id is not null\\s+or i\\.meta->'onchain' is not null"
+						}
+					]
+				},
+				{
+					"says": "It stays in the full agent directory, where search and browsing still reach it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"contains": "kept out of the live wall (it's still reachable via search and /agents)"
+						}
+					]
+				},
+				{
+					"says": "A My First Agent that has done something keeps its row",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"matches": "and \\(\\s+ac\\.last_action_at is not null\\s+or ch\\.chat_count > 0"
+						}
+					]
+				},
+				{
+					"says": "several of them sit near the top of the board right now",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/api/agents/public?sort=live&limit=24",
+							"contains": "\"name\":\"My First Agent\""
+						}
+					]
+				},
+				{
+					"says": "a recency stamp that turns green under 15 minutes",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "a recency stamp that turns green under 15 minutes"
+						}
+					]
+				},
+				{
+					"says": "narrows the fleet on the server, by name and description",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "Server-side search on name and description"
+						},
+						{
+							"type": "proof",
+							"responded": "/api/agents/public"
+						}
+					]
+				},
+				{
+					"says": "loads that agent's own 3D avatar, live, in the panel beside it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "The selected agent's live 3D avatar, rendered in the page"
+						},
+						{
+							"type": "proof",
+							"responded": "/api/agents/42534db3"
+						}
+					]
+				},
+				{
+					"says": "The fleet panel polls every 60 seconds",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/monitor.md",
+							"contains": "| **Fleet** | `/api/agents/public?sort=live` | 60s |"
+						}
+					]
+				},
+				{
+					"says": "cached at the edge for 30 seconds",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"contains": "'Cache-Control': 'public, max-age=30, stale-while-revalidate=120'"
+						}
+					]
+				},
+				{
+					"says": "the rows that never logged an action fall to the bottom even when they have a chat",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/api/agents/public?sort=live&q=writing&limit=10",
+							"contains": "\"name\":\"Orion #23\",\"description\":\"A research analyst"
+						},
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"contains": "ac.last_action_at desc nulls last"
+						}
+					]
+				},
+				{
+					"says": "An entry is a pitch attached to a live agent, never a copy of it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "pitch attached to a live agent, never a copy of it"
+						}
+					]
+				},
+				{
+					"says": "It stores a headline, a one-liner, an optional write-up of up to 4,000 characters, a category, up to six tags and an optional demo link",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "The entry stores a headline, a one-liner, an optional write-up, a category, up to six tags and an optional demo link"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "a write-up of up to 4,000 characters"
+						}
+					]
+				},
+				{
+					"says": "read from the agent itself on each request, so renaming the agent or swapping its avatar updates the card",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "is read from agent_identities on every request"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "Rename your agent, swap its avatar, register it on-chain: the card updates with it"
+						}
+					]
+				},
+				{
+					"says": "Each agent gets one entry",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "One entry per agent."
+						}
+					]
+				},
+				{
+					"says": "carry a Curated badge, so a visitor is never told a builder said something they did not write",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "Some entries carry a Curated badge"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "so a visitor is never told a builder said something they did not write"
+						}
+					]
+				},
+				{
+					"says": "the builder's own write-up replaces ours the moment they submit one",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "replaces the curated one and the badge goes away"
+						}
+					]
+				},
+				{
+					"says": "an entry published minutes ago with no votes still scores 1.0 and lands on the first page",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/spotlight.md",
+							"contains": "still scores `1.0` and lands on the first page"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/spotlight-store.js",
+							"contains": "return (Number(voteCount) + 1) / Math.pow(ageDays + 1, GRAVITY);"
+						}
+					]
+				},
+				{
+					"says": "At this volume it would put a day-old entry at about 2% of a fresh one",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/spotlight.md",
+							"contains": "that curve puts a 24-hour-old entry at about 2% of a fresh one"
+						}
+					]
+				},
+				{
+					"says": "a day-old entry still carries a bit under half the weight of a fresh one, a week-old entry with twenty upvotes stays above a fresh empty one, and a month-old entry finally rotates off the front page",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/spotlight.md",
+							"contains": "a day-old entry still\ncarries a bit under half the weight of a fresh one, a week-old entry with twenty\nupvotes stays above a fresh empty one, and a month-old entry finally rotates off\nthe front page"
+						},
+						{
+							"type": "file",
+							"path": "tests/spotlight-ranking.test.js",
+							"contains": "it('keeps a week-old entry with real support above a fresh empty one'"
+						},
+						{
+							"type": "file",
+							"path": "tests/spotlight-ranking.test.js",
+							"contains": "it('leaves a day-old entry within reach of a fresh one'"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/spotlight-store.js",
+							"contains": "export const GRAVITY = 1.2;"
+						}
+					]
+				},
+				{
+					"says": "a test fails if the two ever disagree",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "tests/spotlight-ranking.test.js",
+							"contains": "it('computes the same expression in the ORDER BY as trendingScore does'"
+						}
+					]
+				},
+				{
+					"says": "ties break on the agent's own activity and then on its id, and the same query returns the same page each time",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/spotlight-store.js",
+							"contains": "Break the tie on the agent's"
+						},
+						{
+							"type": "file",
+							"path": "tests/spotlight-ranking.test.js",
+							"contains": "it('orders totally, so the same query cannot return a different page'"
+						}
+					]
+				},
+				{
+					"says": "Each account gets one upvote per entry, and votes are counted on read rather than kept as a running total, so a lost write cannot leave a count wrong",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "One upvote per account per entry"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "Votes are counted on read rather than stored as a running total, so a lost write can never leave a counter permanently wrong"
+						}
+					]
+				},
+				{
+					"says": "a chat with a visitor does not count toward rank at all",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/agents/public.js",
+							"contains": "order by ac.last_action_at desc nulls last, i.created_at desc"
+						}
+					]
+				},
+				{
+					"says": "It holds 15 entries, most of them curated by us, and no entry has an upvote yet",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "showcased",
+							"equals": "15"
+						},
+						{
+							"type": "proof",
+							"fact": "upvotes",
+							"equals": "0"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/api/spotlight/list?sort=new&limit=48",
+							"contains": "\"source\":\"curated\""
+						}
+					]
+				},
+				{
+					"says": "Both surfaces are open now without an account",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "Nothing on this page needs a session"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "Public reads, no key"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "atlas-goal",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "number",
+			"notBefore": "2026-10-14T00:00:00Z",
+			"covers": [
+				"/atlas"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/atlas",
+						"settle": 6000,
+						"caption": "The whole platform, on one page"
+					},
+					{
+						"expect": "pages across 10 sections"
+					},
+					{
+						"read": "pages",
+						"match": "([\\d,]+) pages across"
+					},
+					{
+						"scroll": 500,
+						"ms": 1400,
+						"caption": "Fifteen goals, each with ordered steps"
+					},
+					{
+						"expect": "15 shortcuts"
+					},
+					{
+						"scroll": -500,
+						"ms": 900
+					},
+					{
+						"type": "animation",
+						"into": "Search every page",
+						"caption": "Or search by what you want to do"
+					},
+					{
+						"expect": "pages match"
+					},
+					{
+						"read": "matches",
+						"match": "(\\d+) pages match"
+					},
+					{
+						"hold": 1200
+					},
+					{
+						"scroll": "Animate or pose an avatar",
+						"ms": 1200,
+						"caption": "A goal comes with its ordered steps"
+					},
+					{
+						"hold": 1500
+					},
+					{
+						"scroll": "Animation Studio",
+						"ms": 1400,
+						"caption": "Then every page that matches"
+					},
+					{
+						"scroll": 420,
+						"ms": 1600
+					},
+					{
+						"hold": 2400
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"url": "https://three.ws/atlas-index.json",
+					"expect": {
+						"status": 200,
+						"json": {
+							"path": "pageCount",
+							"min": 900
+						}
+					}
+				},
+				{
+					"type": "api",
+					"url": "https://three.ws/atlas-index.json",
+					"expect": {
+						"status": 200,
+						"json": {
+							"path": "intentCount",
+							"equals": 15
+						}
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "More than 900 pages are live, and Atlas at three.ws/atlas puts all of them in one searchable place, grouped into 10 sections. Type what you want to do instead of a page name. Searching \"animation\" returns more than 20 matching pages, and a goal card beside them lays out the steps in order.",
+					"media": [
+						{
+							"path": "public/x-media/atlas-goal/reel.mp4",
+							"probe": {
+								"durationSec": 12.73,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Fifteen goals cover the common starts: make a 3D avatar, put one on your website, create an AI agent, animate or pose it, make it talk. Each names the pages to open, in order."
+				}
+			],
+			"claims": [
+				{
+					"says": "More than 900 pages",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "pages",
+							"min": 900
+						}
+					]
+				},
+				{
+					"says": "grouped into 10 sections",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "pages across 10 sections"
+						}
+					]
+				},
+				{
+					"says": "more than 20 matching pages",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "matches",
+							"min": 20
+						}
+					]
+				},
+				{
+					"says": "a goal card beside them lays out the steps in order",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/atlas",
+							"contains": "Each of these answers with the ordered steps, not just a link"
+						}
+					]
+				},
+				{
+					"says": "Fifteen goals",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "15 shortcuts"
+						}
+					]
+				},
+				{
+					"says": "Each names the pages to open, in order.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/atlas",
+							"contains": "Each of these answers with the ordered steps, not just a link"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "cad-forge",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "number",
+			"notBefore": "2026-10-10T00:00:00Z",
+			"covers": [
+				"/cad",
+				"/docs/cad-forge",
+				"workers/cad-forge"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+						"settle": 7000,
+						"caption": "One sentence in. Real CAD out."
+					},
+					{
+						"read": "size",
+						"match": "([\\d.]+ × [\\d.]+ × [\\d.]+ mm)"
+					},
+					{
+						"read": "topology",
+						"match": "(\\d+ solid · \\d+ faces · \\d+ edges)"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"drag": [
+							[
+								0.3,
+								0.45
+							],
+							[
+								0.62,
+								0.45
+							]
+						],
+						"ms": 2200,
+						"caption": "Callouts read the kernel's extents"
+					},
+					{
+						"hold": 1200
+					},
+					{
+						"click": "Drawing",
+						"caption": "A drawing sheet comes with it"
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"scroll": "Dimensions",
+						"ms": 900,
+						"caption": "Every key size is a slider"
+					},
+					{
+						"hold": 1500
+					},
+					{
+						"scroll": "Files",
+						"ms": 900,
+						"caption": "STEP, STL, GLB, drawing, Python"
+					},
+					{
+						"hold": 2600
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "CAD Forge answers as available on the deployment",
+					"url": "https://three.ws/api/cad?list=recent",
+					"expect": {
+						"status": 200,
+						"json": {
+							"path": "available",
+							"equals": true
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the design the post measures still holds 23 faces",
+					"url": "https://three.ws/api/cad?id=26cf0ca4-c0a4-4454-a689-7871ca77633c",
+					"expect": {
+						"status": 200,
+						"json": {
+							"path": "design.metrics.faces",
+							"equals": 23
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the kernel's validity check on that design is true",
+					"url": "https://three.ws/api/cad?id=26cf0ca4-c0a4-4454-a689-7871ca77633c",
+					"expect": {
+						"json": {
+							"path": "design.metrics.valid",
+							"equals": true
+						}
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "75 by 19 by 90 mm, 1 solid, 23 faces, 66 edges, kernel check passed.\n\nThat is a wall-mounted phone holder, built from one sentence on CAD Forge, live now at three.ws/cad. Not a mesh guess: a parametric build123d program the OpenCascade kernel has accepted, with every key size as a slider and STEP, STL, GLB, a drawing sheet and the Python program itself to download.",
+					"media": [
+						{
+							"path": "public/x-media/cad-forge/reel.mp4",
+							"probe": {
+								"durationSec": 14.6,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "When the kernel rejects a program, its real error (kind, message, failing line) goes back to the writer, which rewrites it, up to three times. Nothing is shown until the kernel has accepted it. Moving a slider rebuilds the same program with only that value changed, on the kernel, with no model involved. Standard parts come from bd_warehouse: involute spur gears, ISO threads, nuts, cap screws, washers and ball bearings. The Python runs anywhere after pip install build123d bd_warehouse."
+				}
+			],
+			"claims": [
+				{
+					"says": "75 by 19 by 90 mm",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "size",
+							"equals": "75.0 × 19.0 × 90.0 mm"
+						}
+					]
+				},
+				{
+					"says": "1 solid, 23 faces, 66 edges",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "topology",
+							"equals": "1 solid · 23 faces · 66 edges"
+						}
+					]
+				},
+				{
+					"says": "kernel check passed",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+							"contains": "Kernel check"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+							"contains": "Valid B-rep"
+						}
+					]
+				},
+				{
+					"says": "built from one sentence",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+							"contains": "Wall-mounted phone holder with two countersunk screw holes"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/cad-forge",
+							"contains": "Describe a mechanical part in a sentence"
+						}
+					]
+				},
+				{
+					"says": "live now at three.ws/cad",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/cad",
+							"contains": "Describe a part. Get real CAD."
+						}
+					]
+				},
+				{
+					"says": "Not a mesh guess: a parametric build123d program the OpenCascade kernel has accepted",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/cad",
+							"contains": "Not a mesh guess: a parametric build123d program that the OpenCascade kernel has accepted"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/cad",
+							"contains": "Every part is built on OpenCascade before you see it."
+						}
+					]
+				},
+				{
+					"says": "every key size as a slider",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/cad",
+							"contains": "Key dimensions become sliders."
+						}
+					]
+				},
+				{
+					"says": "STEP, STL, GLB, a drawing sheet and the Python program itself to download",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/cad",
+							"contains": "Download STEP, STL, GLB, a drawing sheet, and the Python program itself."
+						}
+					]
+				},
+				{
+					"says": "its real error (kind, message, failing line) goes back to the writer, which rewrites it, up to three times",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/cad-forge",
+							"contains": "the real error (kind, message, failing line) goes back to the model, which rewrites it"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/cad-forge",
+							"contains": "This repeats up to three times."
+						}
+					]
+				},
+				{
+					"says": "Nothing is shown until the kernel has accepted it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/cad-forge",
+							"contains": "Nothing is shown to you until the kernel has accepted it."
+						}
+					]
+				},
+				{
+					"says": "Moving a slider rebuilds the same program with only that value changed, on the kernel, with no model involved",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/cad-forge",
+							"contains": "rebuilds the same program with only that value changed, on the kernel, with no model involved"
+						}
+					]
+				},
+				{
+					"says": "Standard parts come from bd_warehouse: involute spur gears, ISO threads, nuts, cap screws, washers and ball bearings",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/cad-forge",
+							"contains": "involute spur gears, ISO threads, ISO 4032 nuts, ISO 4762 cap screws, washers and deep-groove ball bearings"
+						}
+					]
+				},
+				{
+					"says": "The Python runs anywhere after pip install build123d bd_warehouse",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/cad-forge",
+							"contains": "pip install build123d bd_warehouse"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+							"contains": "Runs anywhere with pip install build123d bd_warehouse"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "catalog-api",
+			"status": "draft",
+			"kind": "post",
+			"tier": 3,
+			"lane": "developer",
+			"pattern": "number",
+			"notBefore": "2026-10-10T00:00:00Z",
+			"covers": [
+				"/docs/api-reference",
+				"/api/catalog",
+				"@three-ws/assets"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/docs/api-reference#asset-catalog-api",
+						"settle": 5000
+					},
+					{
+						"hold": 2600,
+						"caption": "No auth, no API key, no payment"
+					},
+					{
+						"scroll": 520,
+						"ms": 1800
+					},
+					{
+						"hold": 2000,
+						"caption": "One GET searches every free asset"
+					},
+					{
+						"scroll": 760,
+						"ms": 2000
+					},
+					{
+						"hold": 2200,
+						"caption": "Each hit: id, license, GLB url, bytes"
+					},
+					{
+						"goto": "https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2",
+						"settle": 2500
+					},
+					{
+						"read": "total",
+						"match": "\"total\":\\s*(\\d+)"
+					},
+					{
+						"read": "matched",
+						"match": "\"matched\":\\s*(\\d+)"
+					},
+					{
+						"read": "license",
+						"match": "\"license\":\\s*\"(CC0)\""
+					},
+					{
+						"hold": 2400,
+						"caption": "The live answer from the public API"
+					},
+					{
+						"hold": 2600,
+						"caption": "total counts the whole catalog"
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"url": "https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2",
+					"expect": {
+						"status": 200,
+						"json": {
+							"path": "total",
+							"min": 3900
+						}
+					}
+				},
+				{
+					"type": "api",
+					"url": "https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2",
+					"expect": {
+						"status": 200,
+						"json": {
+							"path": "items.0.license",
+							"equals": "CC0"
+						}
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "More than 3,900 free 3D assets now answer one GET on three.ws/docs/api-reference, served from Cloud Run on @GoogleCloud. Objects, characters and motion clips sit behind a single search with no authentication, no API key and no payment. Every word of the query has to match; when nothing matches all of them the search retries on any of them and marks the answer relaxed: true, so a phrase never dead-ends silently.",
+					"media": [
+						{
+							"path": "public/x-media/catalog-api/reel.mp4",
+							"probe": {
+								"durationSec": 15.6,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Each hit carries a direct GLB URL, its license and its byte size. Pages run 1 to 50 results with next_offset for the next page, open CORS, cached at the edge for 5 minutes. The same join backs the free MCP catalog tools and the assets CLI, so all three surfaces answer identically."
+				}
+			],
+			"claims": [
+				{
+					"says": "More than 3,900 free 3D assets",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "total",
+							"min": 3900
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/api-reference",
+							"contains": "total is the whole catalog; matched is how many the query hit"
+						}
+					]
+				},
+				{
+					"says": "answer one GET",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/api-reference",
+							"contains": "GET /api/catalog?q=wooden+chair&kind=object&limit=12&offset=0"
+						}
+					]
+				},
+				{
+					"says": "Objects, characters and motion clips sit behind a single search",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/api-reference",
+							"contains": "One search across every ready-made asset three.ws publishes: the CC0 object/prop library, the ready-made character library, and the motion-clip library."
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/api-reference",
+							"contains": "GET /api/catalog?q=wooden+chair&kind=object&limit=12&offset=0"
+						}
+					]
+				},
+				{
+					"says": "no authentication, no API key and no payment",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/api-reference",
+							"contains": "No authentication, no API key, no payment. Open CORS, cached at the edge for 5 minutes."
+						}
+					]
+				},
+				{
+					"says": "open CORS, cached at the edge for 5 minutes",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/api-reference",
+							"contains": "Open CORS, cached at the edge for 5 minutes."
+						}
+					]
+				},
+				{
+					"says": "Every word of the query has to match; when nothing matches all of them the search retries on any of them and marks the answer relaxed: true, so a phrase never dead-ends silently.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/api-reference",
+							"contains": "Every word of q must match somewhere, which keeps a two-word query precise. If nothing matches all of them, the search retries on any of them and sets relaxed: true, so a phrase never dead-ends silently."
+						},
+						{
+							"type": "proof",
+							"saw": "relaxed"
+						}
+					]
+				},
+				{
+					"says": "Each hit carries a direct GLB URL, its license and its byte size",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "license",
+							"equals": "CC0"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/api-reference",
+							"contains": "\"license\": \"CC0\""
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/api-reference",
+							"contains": "\"format\": \"glb\""
+						}
+					]
+				},
+				{
+					"says": "Pages run 1 to 50 results with next_offset for the next page",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/api-reference",
+							"contains": "1 to 50 (default 12)"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/api-reference",
+							"contains": "use next_offset from the previous response"
+						}
+					]
+				},
+				{
+					"says": "The same join backs the free MCP catalog tools and the assets CLI, so all three surfaces answer identically",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/api-reference",
+							"contains": "so all three surfaces answer identically"
+						}
+					]
+				},
+				{
+					"says": "served from Cloud Run on @GoogleCloud",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/ops/gcp-production.md",
+							"contains": "Cloud Run service \"three-ws-api\""
+						}
+					]
+				}
+			],
+			"mentions": {
+				"@GoogleCloud": "the three.ws API, including /api/catalog, runs on Cloud Run on Google Cloud"
+			}
+		},
+		{
+			"id": "changelog-feed",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "number",
+			"notBefore": "2026-10-10T00:00:00Z",
+			"covers": [
+				"/changelog",
+				"api/cron/changelog-push.js"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/changelog",
+						"settle": 6000
+					},
+					{
+						"hold": 2000,
+						"caption": "Everything shipped, newest first"
+					},
+					{
+						"read": "total",
+						"match": "of ([\\d,]+) shown"
+					},
+					{
+						"click": "docs",
+						"caption": "Filter by the kind of change"
+					},
+					{
+						"hold": 1600
+					},
+					{
+						"scroll": 700,
+						"ms": 1800,
+						"caption": "Each entry has its own permalink"
+					},
+					{
+						"hold": 1500
+					},
+					{
+						"scroll": -1400,
+						"ms": 1600,
+						"caption": "Follow it by RSS or JSON feed"
+					},
+					{
+						"hold": 2600
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the public JSON feed still holds more than the 3,800 entries the post counts",
+					"url": "https://three.ws/changelog.json",
+					"expect": {
+						"json": {
+							"path": "entries",
+							"min": 3800
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "an entry permalink answers",
+					"url": "https://three.ws/changelog/2026-10-09-six-grok-bot-recipes-each-run-for-real",
+					"expect": {
+						"status": 200
+					}
+				},
+				{
+					"type": "api",
+					"name": "the RSS feed answers",
+					"url": "https://three.ws/changelog.xml",
+					"expect": {
+						"status": 200,
+						"contains": "<rss"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "More than 3,800 entries sit in the public changelog, newest first, each tagged launch, feature, improvement, fix, sdk, security, infra or docs, and each with its own permalink.\n\nNew pages add themselves: the launch date a page carries in the site index becomes an entry with no one writing one. Everything else a user would notice gets a written entry with a plain-language summary.\n\nDelivery is automatic too. A job runs every 20 minutes, reads the feed baked into the running build, and posts anything new to the community Telegram channel, so an entry goes out shortly after the deploy that shipped it."
+				},
+				{
+					"text": "Follow it by RSS, JSON feed or llms.txt, or filter the page by the kind of change.\n\nthree.ws/changelog"
+				}
+			],
+			"claims": [
+				{
+					"says": "More than 3,800 entries",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "total",
+							"min": 3800
+						}
+					]
+				},
+				{
+					"says": "newest first",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/changelog",
+							"contains": "newest first"
+						}
+					]
+				},
+				{
+					"says": "each tagged launch, feature, improvement, fix, sdk, security, infra or docs",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "public/changelog/index.html",
+							"contains": "const FILTERS = ['all', 'launch', 'feature', 'improvement', 'fix', 'sdk', 'security', 'infra', 'docs'];"
+						},
+						{
+							"type": "file",
+							"path": "CLAUDE.md",
+							"contains": "tags from: feature, improvement, fix, sdk, infra, docs, security"
+						}
+					]
+				},
+				{
+					"says": "each with its own permalink",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "public/changelog/index.html",
+							"contains": "const detailUrl = `/changelog/${slugify(e.title, e.date)}`;"
+						}
+					]
+				},
+				{
+					"says": "the launch date a page carries in the site index becomes an entry with no one writing one",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "scripts/build-page-index.mjs",
+							"contains": "page launches (`added` dates) merged with"
+						},
+						{
+							"type": "file",
+							"path": "CLAUDE.md",
+							"contains": "the `added` date in `data/pages.json` feeds the changelog automatically"
+						}
+					]
+				},
+				{
+					"says": "Everything else a user would notice gets a written entry with a plain-language summary",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "CLAUDE.md",
+							"contains": "community-readable title + summary (plain language, no commit jargon)"
+						}
+					]
+				},
+				{
+					"says": "A job runs every 20 minutes",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "vercel.json",
+							"contains": "\"path\": \"/api/cron/changelog-push\",\n\t\t\t\"schedule\": \"*/20 * * * *\""
+						},
+						{
+							"type": "file",
+							"path": "api/cron/changelog-push.js",
+							"contains": "Runs every 20 minutes"
+						}
+					]
+				},
+				{
+					"says": "reads the feed baked into the running build, and posts anything new to the community Telegram channel",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/cron/changelog-push.js",
+							"contains": "Reads the changelog feed baked into the running"
+						},
+						{
+							"type": "file",
+							"path": "api/cron/changelog-push.js",
+							"contains": "posts anything new to the community Telegram channel"
+						},
+						{
+							"type": "file",
+							"path": "api/cron/changelog-push.js",
+							"contains": "Telegram gets every entry."
+						}
+					]
+				},
+				{
+					"says": "an entry goes out shortly after the deploy that shipped it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/cron/changelog-push.js",
+							"contains": "entries go out shortly after the"
+						}
+					]
+				},
+				{
+					"says": "Follow it by RSS, JSON feed or llms.txt",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/changelog",
+							"contains": "RSS"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/changelog",
+							"contains": "JSON feed"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/changelog",
+							"contains": "llms.txt"
+						}
+					]
+				},
+				{
+					"says": "filter the page by the kind of change",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "public/changelog/index.html",
+							"contains": "const FILTERS = ['all', 'launch', 'feature', 'improvement', 'fix', 'sdk', 'security', 'infra', 'docs'];"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "concierge-ask",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "developer",
+			"pattern": "walkthrough",
+			"notBefore": "2026-10-14T00:00:00Z",
+			"covers": [
+				"/concierge",
+				"concierge-sdk"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/concierge",
+						"settle": 6000,
+						"caption": "A support chat with a 3D face"
+					},
+					{
+						"click": "Open site assistant",
+						"caption": "It lives in the corner of the page"
+					},
+					{
+						"hold": 3000
+					},
+					{
+						"type": "How do I install you on my site?",
+						"into": "Ask anything",
+						"caption": "Ask it about the page you are on"
+					},
+					{
+						"press": "Enter",
+						"awaits": "/api/concierge",
+						"caption": "The answer streams in, grounded in the page"
+					},
+					{
+						"hold": 9000
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				}
+			],
+			"posts": [
+				{
+					"text": "A support chat with a face is one script tag away. Concierge puts a rigged 3D avatar in the corner of your page. A visitor asks, the answer streams in, and the avatar starts speaking the first sentence while the rest is still arriving.\n\nIn the reel it is asked how to install itself, and it answers from the page it is sitting on.",
+					"media": [
+						{
+							"path": "public/x-media/concierge-ask/reel.mp4",
+							"probe": {
+								"durationSec": 15.57,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "When a visitor asks, the widget reads the live page (title, headings, nav and content) plus any facts you curate, and the answer streams back from a free-first inference chain, with failover across providers. Whatever your page says today is what it knows today.\n\nthree.ws/concierge"
+				},
+				{
+					"text": "No account, no crawler setup, no per-seat pricing. The widget is open source, and you can add it as a script tag, a web component or an npm package.\n\nVoice comes built in: push-to-talk speech input and browser-native speech output."
+				}
+			],
+			"claims": [
+				{
+					"says": "one script tag",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/concierge",
+							"contains": "One tag gives your site a support chat"
+						}
+					]
+				},
+				{
+					"says": "rigged 3D avatar",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/concierge",
+							"contains": "Skeleton-rigged, blinking, idling"
+						}
+					]
+				},
+				{
+					"says": "the avatar starts speaking the first sentence while the rest is still arriving",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/concierge",
+							"contains": "the avatar starts speaking the first sentence while the rest is still arriving"
+						}
+					]
+				},
+				{
+					"says": "the answer streams in",
+					"evidence": [
+						{
+							"type": "proof",
+							"responded": "/api/concierge"
+						}
+					]
+				},
+				{
+					"says": "it answers from the page it is sitting on",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/concierge",
+							"contains": "At ask-time it reads the live page"
+						}
+					]
+				},
+				{
+					"says": "the widget reads the live page (title, headings, nav and content) plus any facts you curate",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/concierge",
+							"contains": "At ask-time it reads the live page (title, headings, nav, content) plus your curated knowledge"
+						}
+					]
+				},
+				{
+					"says": "streams back from a free-first inference chain, with failover across providers",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/concierge",
+							"contains": "free-first inference chain, with automatic failover across providers"
+						}
+					]
+				},
+				{
+					"says": "Whatever your page says today is what it knows today",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/concierge",
+							"contains": "Whatever your page says today is what the concierge knows today"
+						}
+					]
+				},
+				{
+					"says": "No account, no crawler setup, no per-seat pricing",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/concierge",
+							"contains": "No account, no crawler setup, no per-seat pricing"
+						}
+					]
+				},
+				{
+					"says": "The widget is open source",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/concierge",
+							"contains": "The widget is open source"
+						}
+					]
+				},
+				{
+					"says": "a script tag, a web component or an npm package",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/concierge",
+							"contains": "Pick your flavor"
+						}
+					]
+				},
+				{
+					"says": "push-to-talk speech input and browser-native speech output",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/concierge",
+							"contains": "Push-to-talk speech input and browser-native speech output"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "docs-freshness",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "developer",
+			"pattern": "correction",
+			"notBefore": "2026-10-10T00:00:00Z",
+			"covers": [
+				"/docs/freshness",
+				"docs/docs-freshness.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/docs/configuration",
+						"settle": 6000
+					},
+					{
+						"hold": 2000,
+						"caption": "Every docs page says if its code moved"
+					},
+					{
+						"click": "See what changed",
+						"caption": "One click lists the files that drifted"
+					},
+					{
+						"expect": "Does this documentation still describe the code?",
+						"within": 20000
+					},
+					{
+						"read": "docs",
+						"match": "(\\d+) docs bound to"
+					},
+					{
+						"read": "files",
+						"match": "bound to ([\\d,]+) source files"
+					},
+					{
+						"read": "commit",
+						"match": "Measured at ([0-9a-f]{7,}) on"
+					},
+					{
+						"hold": 1500,
+						"caption": "Measured from git history at every deploy"
+					},
+					{
+						"scroll": 520,
+						"ms": 1600
+					},
+					{
+						"hold": 1500,
+						"caption": "A read that finds it right counts too"
+					},
+					{
+						"type": "forge",
+						"into": "Filter by title",
+						"caption": "Filter by title, path or drifted file"
+					},
+					{
+						"hold": 2600
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the public freshness report still binds more than the 800 docs the post counts",
+					"url": "https://three.ws/docs-freshness.json",
+					"expect": {
+						"json": {
+							"path": "totals.docs",
+							"min": 800
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the public freshness report still tracks more than the 4,000 source files the post counts",
+					"url": "https://three.ws/docs-freshness.json",
+					"expect": {
+						"json": {
+							"path": "totals.trackedFiles",
+							"min": 4000
+						}
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Docs rot quietly. A page that was right when it was written says nothing when the code it describes moves.\n\nOur docs now measure it. Every page names the source files it is about, and at every deploy git is asked whether any of them changed after the page was last written or reviewed. The badge at the top says which: verified against the code, or lightly out of date with the count of files that moved.\n\nMore than 800 docs are bound to more than 4,000 source files, and the whole ledger is public at three.ws/docs/freshness. Reading a page and finding it already right counts as a review, so nothing is faked with a cosmetic edit.",
+					"media": [
+						{
+							"path": "public/x-media/docs-freshness/reel.mp4",
+							"probe": {
+								"durationSec": 10.77,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Open the badge and the ledger lists the commits behind every file the page documents, so whoever fixes the page knows where to look. Filter it by title, path, or the source file that drifted."
+				}
+			],
+			"claims": [
+				{
+					"says": "Every page names the source files it is about",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/freshness",
+							"contains": "Every doc names the files, npm scripts, and API routes it is about"
+						}
+					]
+				},
+				{
+					"says": "at every deploy git is asked whether any of them changed after the page was last written or reviewed",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/freshness",
+							"contains": "then ask git whether that source was committed to after the doc was last written or last reviewed"
+						},
+						{
+							"type": "file",
+							"path": "package.json",
+							"contains": "npm run build:info:snapshot && npm run docs:freshness && npm run build:lib:full"
+						}
+					]
+				},
+				{
+					"says": "The badge at the top says which: verified against the code, or lightly out of date with the count of files that moved",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/start-here",
+							"contains": "Verified against the code"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/configuration",
+							"contains": "Lightly out of date"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/configuration",
+							"contains": "files it documents changed since, so a detail here may have moved"
+						}
+					]
+				},
+				{
+					"says": "More than 800 docs are bound to more than 4,000 source files",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "docs",
+							"min": 800
+						},
+						{
+							"type": "proof",
+							"fact": "files",
+							"min": 4000
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/freshness",
+							"contains": "docs bound to"
+						}
+					]
+				},
+				{
+					"says": "the whole ledger is public at three.ws/docs/freshness",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/freshness",
+							"contains": "Does this documentation still describe the code?"
+						}
+					]
+				},
+				{
+					"says": "Reading a page and finding it already right counts as a review, so nothing is faked with a cosmetic edit",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/freshness",
+							"contains": "Reading a page and finding it already correct counts too: that check is recorded as a review, so real work never has to be faked with a cosmetic edit"
+						}
+					]
+				},
+				{
+					"says": "Open the badge and the ledger lists the commits behind every file the page documents",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/configuration",
+							"contains": "See what changed"
+						},
+						{
+							"type": "file",
+							"path": "pages/docs-freshness.html",
+							"contains": "The report is about a megabyte because it carries every drifted file and"
+						},
+						{
+							"type": "file",
+							"path": "pages/docs-freshness.html",
+							"contains": "This is the destination of the \"See what changed\" link on every drifting"
+						}
+					]
+				},
+				{
+					"says": "Filter it by title, path, or the source file that drifted",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/docs-freshness.html",
+							"contains": "placeholder=\"Filter by title, path, or a source file that drifted"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "grok-bot-recipes",
+			"status": "draft",
+			"kind": "post",
+			"tier": 3,
+			"lane": "developer",
+			"pattern": "clip",
+			"notBefore": "2026-10-10T00:00:00Z",
+			"covers": [
+				"/tutorials/grok-bot-recipes",
+				"docs/tutorials/grok-bot-recipes.md",
+				"scripts/run-grok-recipe.mjs"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/tutorials/grok-bot-recipes",
+						"settle": 6000
+					},
+					{
+						"hold": 2000,
+						"caption": "Six jobs for Grok Bot, each run for real"
+					},
+					{
+						"read": "files",
+						"match": "None of the (\\d+) source files this page documents"
+					},
+					{
+						"scroll": "Search the ready-made catalog first",
+						"ms": 1800,
+						"caption": "The exact sentence to hand Grok Bot"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"scroll": 760,
+						"ms": 1600,
+						"caption": "Every tool call timed, output kept"
+					},
+					{
+						"read": "matched",
+						"match": "(\\d+) objects matched"
+					},
+					{
+						"read": "catalog",
+						"match": "out of ([\\d,]+) catalog items"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"scroll": "Rerun a recipe",
+						"ms": 1800,
+						"caption": "One script reruns any recipe"
+					},
+					{
+						"hold": 2600
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the free Grok connector answers a tools/list without an account",
+					"url": "https://three.ws/api/mcp-grok",
+					"method": "POST",
+					"headers": {
+						"content-type": "application/json",
+						"accept": "application/json, text/event-stream"
+					},
+					"body": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}",
+					"expect": {
+						"contains": "search_catalog"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Six Grok Bot recipes, each run against production and written down as it happened.\n\nA recipe is the exact sentence to hand Grok Bot, the tools it calls in order, and the real output: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post's image as a 3D model, a weekly agent report, and a $THREE market brief. Recipes 1 to 4 use the free connector with no account.\n\nThe asset pack run searched the ready-made catalog for trees, kept only models under 10 MB, and listed four CC0 picks with license, size and viewer link, with every tool call timed. Nothing on the page is invented, and the script that captured each output reruns any recipe."
+				},
+				{
+					"text": "The sentences, the runs and the rerun script: three.ws/tutorials/grok-bot-recipes"
+				}
+			],
+			"claims": [
+				{
+					"says": "Six Grok Bot recipes",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "This page has six jobs to hand Grok Bot"
+						}
+					]
+				},
+				{
+					"says": "each run against production and written down as it happened",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "the real output we got by running that tool sequence against production on 2026-10-09"
+						}
+					]
+				},
+				{
+					"says": "A recipe is the exact sentence to hand Grok Bot, the tools it calls in order, and the real output",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "each with the exact sentence to give it, the tools it calls in order, and the real output"
+						}
+					]
+				},
+				{
+					"says": "a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post's image as a 3D model, a weekly agent report, and a $THREE market brief",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "1. Daily 3D brief on a topic"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "2. Asset pack for a game jam"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "3. Avatar from a teammate's photo"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "4. An X post's image as a 3D model"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "5. Weekly agent report"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "6. $THREE market brief"
+						}
+					]
+				},
+				{
+					"says": "Recipes 1 to 4 use the free connector with no account",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "For recipes 1 to 4 that is the free door, https://three.ws/api/mcp-grok, no account"
+						}
+					]
+				},
+				{
+					"says": "searched the ready-made catalog for trees, kept only models under 10 MB",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "search_catalog for objects matching \"tree\", keep only models under 10 MB"
+						},
+						{
+							"type": "proof",
+							"fact": "matched",
+							"min": 1
+						}
+					]
+				},
+				{
+					"says": "listed four CC0 picks with license, size and viewer link",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "The four that fit the size budget"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "list title, license, size, GLB and viewer link as a table"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "Every row also carries a viewer_url"
+						}
+					]
+				},
+				{
+					"says": "with every tool call timed",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "search_catalog 123 ms ok"
+						}
+					]
+				},
+				{
+					"says": "Nothing on the page is invented",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "Nothing here is invented. Every output block was captured by scripts/run-grok-recipe.mjs"
+						}
+					]
+				},
+				{
+					"says": "the script that captured each output reruns any recipe",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "You can rerun any of them yourself"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "node scripts/run-grok-recipe.mjs --list"
+						},
+						{
+							"type": "file",
+							"path": "scripts/run-grok-recipe.mjs",
+							"contains": "asset-pack"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "grok-studio",
+			"status": "draft",
+			"kind": "post",
+			"tier": 1,
+			"lane": "community",
+			"pattern": "mechanism",
+			"notBefore": "2026-10-10T00:00:00Z",
+			"covers": [
+				"/grok",
+				"/docs/grok",
+				"/api/mcp-grok",
+				"/grok-skill.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/grok",
+						"settle": 7000
+					},
+					{
+						"hold": 2200,
+						"caption": "One sentence gives Grok Bot a 3D studio"
+					},
+					{
+						"scroll": "Made on three.ws, just now",
+						"ms": 1000,
+						"caption": "Models made on the free studio Grok calls"
+					},
+					{
+						"hold": 2000
+					},
+					{
+						"scroll": "What Grok gets",
+						"ms": 1000,
+						"caption": "The tool list is read live from the server"
+					},
+					{
+						"read": "tools",
+						"match": "(\\d+) tools, all free"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"scroll": "Three jobs to hand Grok",
+						"ms": 1000,
+						"caption": "Each job names the tools it calls, in order"
+					},
+					{
+						"hold": 2000
+					},
+					{
+						"scroll": "Set it up anywhere Grok runs",
+						"ms": 1000,
+						"caption": "The same URL for Grok Bot and the xAI API"
+					},
+					{
+						"click": "xAI API"
+					},
+					{
+						"hold": 2600
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the free Grok server still lists the 15 tools the post counts",
+					"url": "https://three.ws/api/mcp-grok",
+					"method": "POST",
+					"body": {
+						"jsonrpc": "2.0",
+						"id": 2,
+						"method": "tools/list"
+					},
+					"expect": {
+						"json": {
+							"path": "result.tools.length",
+							"equals": 15
+						}
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Grok Bot can make 3D now. One sentence adds the free studio at three.ws/grok as a custom MCP server, with no account and no key, and from then on text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear.\n\nGrok Bot runs on its own cloud computer, so a render that takes minutes on a cold GPU never hangs a task: every call answers within 40 seconds with the model or a job id, and Grok collects it with check_job. Limits follow your MCP session, not xAI's IP address, so one busy user never spends yours.\n\nThe 15 tools behind it are read live from the server's tools/list. Every 3D generation lane runs on @nvidia silicon; we are a member of NVIDIA Inception.",
+					"media": [
+						{
+							"path": "public/x-media/grok-studio/reel.mp4",
+							"probe": {
+								"durationSec": 15.3,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Three jobs on the page name the tools Grok calls in order: an asset pack from the CC0 catalog, a model with a page-ready embed, and a talking persona that lip-syncs a greeting. Six tested recipes and a skill file you can upload to Grok Skills sit beside them."
+				}
+			],
+			"claims": [
+				{
+					"says": "One sentence adds the free studio",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "that is one sentence away"
+						}
+					]
+				},
+				{
+					"says": "with no account and no key",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "Free, no account, no key."
+						}
+					]
+				},
+				{
+					"says": "text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear"
+						}
+					]
+				},
+				{
+					"says": "Grok Bot runs on its own cloud computer",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "Grok Bot runs on its own cloud computer"
+						}
+					]
+				},
+				{
+					"says": "a render that takes minutes on a cold GPU never hangs a task",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "Never hangs a task"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "A render can take minutes on a cold GPU."
+						}
+					]
+				},
+				{
+					"says": "every call answers within 40 seconds with the model or a job id, and Grok collects it with check_job",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "Every call answers within 40 seconds, with the model or a job id, and Grok collects it with check_job."
+						}
+					]
+				},
+				{
+					"says": "Limits follow your MCP session, not xAI's IP address, so one busy user never spends yours",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "Limits follow your MCP session, not xAI's IP address, so one busy user never spends yours."
+						}
+					]
+				},
+				{
+					"says": "15 tools",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "tools",
+							"equals": "15"
+						}
+					]
+				},
+				{
+					"says": "read live from the server's tools/list",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "Read live from the server's tools/list"
+						}
+					]
+				},
+				{
+					"says": "Every 3D generation lane runs on @nvidia silicon",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Every 3D generation lane already runs on NVIDIA silicon"
+						}
+					]
+				},
+				{
+					"says": "we are a member of NVIDIA Inception",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is a member of NVIDIA Inception"
+						}
+					]
+				},
+				{
+					"says": "Three jobs on the page name the tools Grok calls in order",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "Each one names the tools Grok calls, in order."
+						}
+					]
+				},
+				{
+					"says": "an asset pack from the CC0 catalog",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "Ten ready-made props for a game jam."
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "Thousands of ready-made CC0 props"
+						}
+					]
+				},
+				{
+					"says": "a model with a page-ready embed",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "A textured model with a link and a page-ready embed."
+						}
+					]
+				},
+				{
+					"says": "a talking persona that lip-syncs a greeting",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "A rigged character that lip-syncs a greeting."
+						}
+					]
+				},
+				{
+					"says": "Six tested recipes",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "Six tested recipes"
+						}
+					]
+				},
+				{
+					"says": "a skill file you can upload to Grok Skills",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "Upload it to Grok Skills"
+						}
+					]
+				}
+			],
+			"mentions": {
+				"@nvidia": "the free 3D generation lanes behind the Grok connector run on NVIDIA GPUs, and three.ws is a member of NVIDIA Inception, as /partners states"
+			}
+		},
+		{
+			"id": "how-we-render-3d-article",
+			"status": "draft",
+			"kind": "article",
+			"tier": 1,
+			"lane": "article",
+			"pattern": "longform",
+			"notBefore": "2026-10-13T00:00:00Z",
+			"covers": [
+				"/viewer",
+				"/rig-doctor",
+				"/validation",
+				"/holo",
+				"/pose",
+				"/animations",
+				"/forge"
+			],
+			"article": {
+				"title": "How a three.ws model is rendered, from a sentence to a lit, rigged character in your browser tab",
+				"body": "data/x-content/articles/how-we-render-3d-article.md",
+				"cover": {
+					"path": "public/x-media/how-we-render-3d-article/cover.png",
+					"alt": "The lighthouse keeper, a rigged three.ws character in a long yellow oilskin coat, navy knitted cap and black rubber boots, standing in the live glTF viewer under studio lighting"
+				}
+			},
+			"probes": [
+				{
+					"type": "api",
+					"name": "the viewer page is up",
+					"url": "https://three.ws/viewer",
+					"expect": {
+						"contains": "glTF / GLB viewer"
+					}
+				},
+				{
+					"type": "api",
+					"name": "Rig Doctor is up",
+					"url": "https://three.ws/rig-doctor",
+					"expect": {
+						"contains": "Will your avatar actually move?"
+					}
+				},
+				{
+					"type": "api",
+					"name": "the Holo page is up",
+					"url": "https://three.ws/holo",
+					"expect": {
+						"contains": "Holo Sticker"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "A glTF file, Three.js and WebGL on the viewer's own GPU: no plugin, no video, no server drawing frames. That is how three.ws renders 3D, and the Article follows one rigged character through making, packing, loading, lighting and animating, with the embed code, the free checking tools, our partners and the roadmap.",
+					"media": [
+						{
+							"path": "public/x-media/how-we-render-3d-article/cover.png",
+							"alt": "The lighthouse keeper, a rigged three.ws character in a long yellow oilskin coat, navy knitted cap and black rubber boots, standing in the live glTF viewer under studio lighting"
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "A 3D model has to come from somewhere. On three.ws it comes from the Forge, which turns a sentence or a photo into a textured mesh",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/how-forge-works.md",
+							"contains": "five"
+						}
+					]
+				},
+				{
+					"says": "RTX PRO 6000",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/nvidia/index.html",
+							"contains": "nvidia-rtx-pro-6000"
+						}
+					]
+				},
+				{
+					"says": "Hunyuan3D 2.1",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/forge-pipeline.md",
+							"contains": "Tencent Hunyuan3D-2.1"
+						}
+					]
+				},
+				{
+					"says": "about 12,000 polygons",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/how-forge-works.md",
+							"contains": "12,000"
+						}
+					]
+				},
+				{
+					"says": "Standard about 30,000 with 2K textures",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/how-forge-works.md",
+							"contains": "about 30,000 polygons with 2K textures"
+						}
+					]
+				},
+				{
+					"says": "2K textures",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/how-forge-works.md",
+							"contains": "about 30,000 polygons with 2K textures"
+						}
+					]
+				},
+				{
+					"says": "up to 200,000 polygons",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/how-forge-works.md",
+							"contains": "up to 200,000 polygons with full PBR materials"
+						}
+					]
+				},
+				{
+					"says": "reports progress and finally hands back a storage URL",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/forge-pipeline.md",
+							"contains": "result_gcs_url"
+						}
+					]
+				},
+				{
+					"says": "Raw output lands in Google Cloud Storage and is mirrored to Cloudflare R2",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/forge-pipeline.md",
+							"contains": "R2"
+						}
+					]
+				},
+				{
+					"says": "Make-It-Animatable, an open model released under the MIT licence and published at CVPR 2025",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "CVPR 2025"
+						}
+					]
+				},
+				{
+					"says": "most three.ws GLB files are meshopt-compressed",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/page-performance.md",
+							"contains": "nearly every three.ws GLB is meshopt-compressed"
+						}
+					]
+				},
+				{
+					"says": "The script's own documentation puts a typical saving at 90 percent of the file size",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/3d-asset-pipeline.md",
+							"contains": "Typical result: **-90%** file size"
+						}
+					]
+				},
+				{
+					"says": "runs lossless passes (deduplicate, prune, weld, resample) through glTF-Transform and re-encodes textures as WebP",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/3d-asset-pipeline.md",
+							"contains": "Lossless geometry passes (`dedup`, `prune`, `weld`, `resample`) plus a WebP texture re-encode"
+						}
+					]
+				},
+				{
+					"says": "the decoders are loaded lazily",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/viewer/internal.js",
+							"contains": "first-paint bundle"
+						}
+					]
+				},
+				{
+					"says": "The renderer itself is a WebGL renderer on the Three.js 0.184 line",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/viewer.js",
+							"contains": "new WebGLRenderer({ antialias: !this._lowPower, alpha: true })"
+						},
+						{
+							"type": "file",
+							"path": "package.json",
+							"contains": "\"three\": \"^0.184.0\""
+						}
+					]
+				},
+				{
+					"says": "(2.0 by default, 1.5 in embeds, 1.0 on low-power phones)",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/viewer.js",
+							"contains": "viewerLooksLowPower"
+						}
+					]
+				},
+				{
+					"says": "BVH-accelerated raycasting",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/viewer.js",
+							"contains": "Mesh.prototype.raycast = acceleratedRaycast;"
+						}
+					]
+				},
+				{
+					"says": "the Khronos PBR Neutral tone mapper",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/viewer.js",
+							"contains": "Khronos PBR-Neutral"
+						}
+					]
+				},
+				{
+					"says": "Draco and Basis transcoder binaries are served from the same origin as the site",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "scripts/copy-three-decoders.mjs",
+							"contains": "public/three"
+						}
+					]
+				},
+				{
+					"says": "the official Khronos glTF 2.0 validator in WebAssembly",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/validator.js",
+							"contains": "from 'gltf-validator'"
+						}
+					]
+				},
+				{
+					"says": "built once with Three.js's PMREM generator",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/viewer.js",
+							"contains": "PMREMGenerator"
+						}
+					]
+				},
+				{
+					"says": "a render pass, a normal and depth pass, ambient occlusion, depth of field, bloom and a colour grade",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/viewer/cinematic.js",
+							"contains": "RenderPass"
+						}
+					]
+				},
+				{
+					"says": "the die-cut outline vectorised from a canvas by a marching-squares tracer",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "marching"
+						}
+					]
+				},
+				{
+					"says": "a vertex-shader cylinder roll injected into the material",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "The peel is a vertex-shader cylinder roll injected into MeshPhysicalMaterial"
+						}
+					]
+				},
+				{
+					"says": "recognises roughly two dozen of these naming families",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "Mixamo"
+						}
+					]
+				},
+				{
+					"says": "Thirty of the 53 tracks in each clip address a finger",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "of the 53 tracks in every clip in /public/animations/clips address a finger"
+						}
+					]
+				},
+				{
+					"says": "It is a pure module, so the same code runs in the browser and in Node",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "export const MIN_COVERAGE = 0.5;"
+						}
+					]
+				},
+				{
+					"says": "nine visemes",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/lip-sync-analyser.js",
+							"contains": "viseme_PP"
+						}
+					]
+				},
+				{
+					"says": "25 observed attributes",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "static get observedAttributes()"
+						}
+					]
+				},
+				{
+					"says": "four layout modes: inline, floating, section and fullscreen",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "const MODES = ['inline', 'floating', 'section', 'fullscreen'];"
+						}
+					]
+				},
+				{
+					"says": "within 300 pixels of the viewport",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "rootMargin: '300px 0px'"
+						}
+					]
+				},
+				{
+					"says": "the element keeps at most eight viewers live",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "MAX_LIVE_VIEWERS"
+						}
+					]
+				},
+				{
+					"says": "It scores 52 canonical joints against 16 recognised rig conventions",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/rig-doctor.html",
+							"contains": "52"
+						}
+					]
+				},
+				{
+					"says": "a nine-hour meetup inside a persistent three.ws 3D world that reached 3,145 avatars at its peak",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/ibm-community-governed-agents-post.md",
+							"contains": "with a peak of 3,145 avatars in the world across the day"
+						}
+					]
+				},
+				{
+					"says": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/partners/openai.json",
+							"contains": "OpenAI Select Partner"
+						}
+					]
+				},
+				{
+					"says": "three.ws is a member of NVIDIA Inception",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/partners/nvidia.json",
+							"contains": "NVIDIA Inception member"
+						}
+					]
+				},
+				{
+					"says": "three.ws is a member of Google Cloud for Web3 Startups",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/partners/google-cloud.json",
+							"contains": "member of Google Cloud for Web3 Startups"
+						}
+					]
+				},
+				{
+					"says": "three.ws is an IBM Business Partner",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/partners/ibm.json",
+							"contains": "IBM Business Partner"
+						}
+					]
+				},
+				{
+					"says": "three.ws is an AWS Partner",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/partners/aws.json",
+							"contains": "AWS Partner"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "how-we-render-3d-thread",
+			"status": "draft",
+			"kind": "post",
+			"tier": 1,
+			"lane": "article",
+			"pattern": "thread",
+			"notBefore": "2026-10-13T00:00:00Z",
+			"covers": [
+				"/viewer",
+				"/rig-doctor",
+				"/validation",
+				"/holo",
+				"/pose"
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the viewer page is up",
+					"url": "https://three.ws/viewer",
+					"expect": {
+						"contains": "glTF / GLB viewer"
+					}
+				},
+				{
+					"type": "api",
+					"name": "Rig Doctor is up",
+					"url": "https://three.ws/rig-doctor",
+					"expect": {
+						"contains": "Will your avatar actually move?"
+					}
+				},
+				{
+					"type": "api",
+					"name": "the Holo page is up",
+					"url": "https://three.ws/holo",
+					"expect": {
+						"contains": "Holo Sticker"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "A glTF file, Three.js and WebGL on the viewer's own GPU. No plugin, no video stream, no server drawing frames. Here is the full path of one rigged character, from a sentence to a lit, animated model in a browser tab, in six stages.",
+					"media": [
+						{
+							"path": "public/x-media/how-we-render-3d-article/cover.png",
+							"alt": "The lighthouse keeper, a rigged three.ws character in a long yellow oilskin coat, navy knitted cap and black rubber boots, standing in the live glTF viewer under studio lighting"
+						}
+					]
+				},
+				{
+					"text": "To start, make. The Forge turns text or an image into a mesh with open models running on our own Cloud Run GPUs: TRELLIS, Hunyuan3D and TripoSG. Draft is about 12,000 polygons, Standard about 30,000 with 2K textures, High up to 200,000 polygons with full PBR."
+				},
+				{
+					"text": "Next, pack and load. The file is compressed for the wire, then the browser decodes it with Draco, KTX2 and meshopt through GLTFLoader, using same-origin decoders loaded on demand. The free validator checks the result against the Khronos suite, in your browser.",
+					"media": [
+						{
+							"path": "public/x-media/how-we-render-3d-article/validator.png",
+							"alt": "The three.ws glTF validator page reporting the result of a Khronos validation run in the browser"
+						}
+					]
+				},
+				{
+					"text": "Then light. Lighting from a PMREM environment map, a three-point rig and Khronos PBR-Neutral tone mapping, so colours stay true to the material. Holo Sticker turns the same lit model into a shareable card.",
+					"media": [
+						{
+							"path": "public/x-media/how-we-render-3d-article/holo-live.png",
+							"alt": "The three.ws Holo Sticker page showing a lit 3D character rendered live in the browser"
+						}
+					]
+				},
+				{
+					"text": "Then motion. A canonicalizer maps the bone names of Mixamo, VRM, Unreal, Rigify, Daz and more to one set, so a single clip library drives any humanoid. Faces move through ARKit morph targets with nine-viseme lip sync. Pose Studio lets you keyframe your own.",
+					"media": [
+						{
+							"path": "public/x-media/how-we-render-3d-article/pose-studio.png",
+							"alt": "The three.ws Animation Studio with a posable mannequin, bone list, pose presets and a keyframe timeline"
+						}
+					]
+				},
+				{
+					"text": "Last, embed. One script tag and one element put the character on any website. Rig Doctor, free and in your browser, tells you before you start whether your own avatar will animate.",
+					"media": [
+						{
+							"path": "public/x-media/how-we-render-3d-article/rig-doctor.png",
+							"alt": "Rig Doctor: a page that diagnoses whether a GLB will animate, with a drop zone and sample rigs"
+						}
+					]
+				},
+				{
+					"text": "The long version has the embed code, the decoder and boot-phase tables, all partners by exact designation, how changes ship, and what is next: three.ws/viewer"
+				}
+			],
+			"claims": [
+				{
+					"says": "about 12,000 polygons",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/how-forge-works.md",
+							"contains": "12,000"
+						}
+					]
+				},
+				{
+					"says": "Standard about 30,000 with 2K textures",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/how-forge-works.md",
+							"contains": "about 30,000 polygons with 2K textures"
+						}
+					]
+				},
+				{
+					"says": "up to 200,000 polygons",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/how-forge-works.md",
+							"contains": "up to 200,000 polygons with full PBR materials"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "parts-studio",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "developer",
+			"pattern": "mechanism",
+			"notBefore": "2026-10-14T00:00:00Z",
+			"covers": [
+				"/segment",
+				"workers/segment"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/segment",
+						"settle": 6000,
+						"caption": "Paste any public 3D model link"
+					},
+					{
+						"type": "https://three.ws/avatars/mannequin.glb",
+						"into": "https://…/model.glb"
+					},
+					{
+						"hold": 1200
+					},
+					{
+						"click": "Segment",
+						"awaits": "/api/forge-segment",
+						"caption": "It splits the mesh into named parts"
+					},
+					{
+						"expect": "top-1",
+						"within": 240000,
+						"film": true
+					},
+					{
+						"read": "parts",
+						"match": "Parts\\s*(\\d+)\\s"
+					},
+					{
+						"click": "Show all",
+						"caption": "Colour-coded, ready to orbit"
+					},
+					{
+						"hold": 1600,
+						"caption": "Named parts, found by geometry alone"
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"drag": [
+							[
+								0.3,
+								0.5
+							],
+							[
+								0.6,
+								0.5
+							]
+						],
+						"ms": 2200,
+						"caption": "Each part is its own piece you can turn"
+					},
+					{
+						"hold": 2800
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the mannequin model the reel segments is still served",
+					"url": "https://three.ws/avatars/mannequin.glb",
+					"expect": {
+						"status": 200
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Parts Studio is live on three.ws. Paste a link to a 3D model and it splits the mesh into named parts, cutting at disconnected shells and concave creases, so each piece can be isolated, hidden or exported on its own.\n\nThe mannequin in the reel came back as 24 parts, found from the geometry alone.",
+					"media": [
+						{
+							"path": "public/x-media/parts-studio/reel.mp4",
+							"probe": {
+								"durationSec": 18.07,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Agents get the same tool: segment_model over MCP, and a plain REST endpoint at /api/forge-segment. The segmentation worker runs on Google Cloud Run.\n\nPaste a link and try it: three.ws/segment"
+				}
+			],
+			"claims": [
+				{
+					"says": "Paste a link to a 3D model",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/segment",
+							"contains": "Paste a GLB/OBJ/STL/PLY URL"
+						}
+					]
+				},
+				{
+					"says": "splits the mesh into named parts",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/segment",
+							"contains": "named, recolourable"
+						}
+					]
+				},
+				{
+					"says": "cutting at disconnected shells and concave creases",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/segment",
+							"contains": "disconnected shells plus the minima rule"
+						}
+					]
+				},
+				{
+					"says": "each piece can be isolated, hidden or exported on its own",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/segment",
+							"contains": "export it on its own"
+						}
+					]
+				},
+				{
+					"says": "24 parts",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "parts",
+							"equals": "24"
+						}
+					]
+				},
+				{
+					"says": "found from the geometry alone",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/segment",
+							"contains": "Geometry-based segmentation"
+						}
+					]
+				},
+				{
+					"says": "segment_model over MCP",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/segment",
+							"contains": "segment_model"
+						}
+					]
+				},
+				{
+					"says": "a plain REST endpoint at /api/forge-segment",
+					"evidence": [
+						{
+							"type": "proof",
+							"responded": "/api/forge-segment"
+						}
+					]
+				},
+				{
+					"says": "The segmentation worker runs on Google Cloud Run",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/forge-segment.js",
+							"contains": "workers/segment (GCP Cloud Run)"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "platform-analytics",
+			"tier": 3,
+			"lane": "developer",
+			"pattern": "number",
+			"format": "landscape",
+			"notBefore": "2026-10-10T00:00:00Z",
+			"covers": [
+				"/analytics",
+				"/api/platform/analytics"
+			],
+			"story": "Every total three.ws publishes about itself sits on one page and one public JSON endpoint, each figure read live from its own table with a note written by the code that computed it.",
+			"scenario": {
+				"format": "landscape",
+				"steps": [
+					{
+						"goto": "https://three.ws/analytics",
+						"settle": 8000
+					},
+					{
+						"hold": 2200,
+						"caption": "Every total the platform publishes, on one page"
+					},
+					{
+						"read": "agents",
+						"match": "Agents\\s+([\\d,]+)"
+					},
+					{
+						"read": "wallets",
+						"match": "Agents with a wallet\\s+([\\d,]+)"
+					},
+					{
+						"read": "models",
+						"match": "3D models generated\\s+([\\d,]+)"
+					},
+					{
+						"click": "All time",
+						"awaits": "/api/platform/analytics",
+						"caption": "All time, 90 days or 30 days"
+					},
+					{
+						"hold": 2000
+					},
+					{
+						"click": "Running total",
+						"caption": "Per day or as a running total"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"scroll": "One chart per metric over the selected window.",
+						"caption": "One chart per metric; hover a day to read it"
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"scroll": "How each number is calculated",
+						"caption": "Each note is written by the code that computed the number"
+					},
+					{
+						"hold": 2600
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"url": "https://three.ws/api/platform/analytics",
+					"expect": {
+						"status": 200,
+						"json": {
+							"path": "metrics.agents.total",
+							"min": 4300
+						}
+					}
+				},
+				{
+					"type": "api",
+					"url": "https://three.ws/api/platform/analytics",
+					"expect": {
+						"status": 200,
+						"json": {
+							"path": "metrics.agents_with_wallet.total",
+							"min": 970
+						}
+					}
+				},
+				{
+					"type": "api",
+					"url": "https://three.ws/api/platform/analytics",
+					"expect": {
+						"status": 200,
+						"json": {
+							"path": "metrics.models_generated.total",
+							"min": 47000
+						}
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "The platform now publishes every total about itself on one page: more than 4,300 agents, more than 970 of them holding a wallet, and more than 47,000 finished 3D models, each figure read live from the table that records the activity.\n\nEvery number is charted per day over 30 days, 90 days or all time, or as a running total, and explained in a note underneath. The note is written by the same code that computes the number, so it can never describe a different query than the one that ran. A 3D model only counts when the job finished, a GLB was stored, and the quality gate did not reject it.\n\nThe same data is open as JSON at /api/platform/analytics, with the method note on every metric.",
+					"media": [
+						{
+							"path": "public/x-media/platform-analytics/reel.mp4",
+							"probe": {
+								"durationSec": 14.2,
+								"width": 1280,
+								"height": 720,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Open it at three.ws/analytics. Hover or tap any chart to read a single day. Totals are cached for up to five minutes, days are UTC calendar days, and the running total ends on the all-time figure, so a dashboard you build on the endpoint reads the same numbers the page shows."
+				}
+			],
+			"claims": [
+				{
+					"says": "publishes every total about itself on one page",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/analytics",
+							"contains": "Every total the platform publishes about itself, on one page."
+						}
+					]
+				},
+				{
+					"says": "More than 4,300 agents",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "agents",
+							"min": 4300
+						}
+					]
+				},
+				{
+					"says": "more than 970 of them holding a wallet",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "wallets",
+							"min": 970
+						}
+					]
+				},
+				{
+					"says": "More than 47,000 finished 3D models",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "models",
+							"min": 47000
+						}
+					]
+				},
+				{
+					"says": "each figure read live from the table that records the activity",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/analytics",
+							"contains": "Each figure is read live from the table that records the activity, charted per day, and explained in a note below, so you can check exactly what was counted."
+						}
+					]
+				},
+				{
+					"says": "Every number is charted per day over 30 days, 90 days or all time, or as a running total",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/analytics",
+							"contains": "One chart per metric over the selected window. Hover or tap a chart to read a single day; switch to Running total to see the all-time curve."
+						},
+						{
+							"type": "proof",
+							"responded": "/api/platform/analytics"
+						}
+					]
+				},
+				{
+					"says": "The note is written by the same code that computes the number, so it can never describe a different query than the one that ran",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/analytics",
+							"contains": "Written by the same code that computes the numbers, so a note can never describe a different query than the one that ran."
+						}
+					]
+				},
+				{
+					"says": "A 3D model only counts when the job finished, a GLB was stored, and the quality gate did not reject it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/analytics",
+							"contains": "Finished 3D generations (table forge_creations): status done, a GLB file stored, and not rejected by the quality gate. Failed and in-progress jobs are not counted."
+						}
+					]
+				},
+				{
+					"says": "The same data is open as JSON at /api/platform/analytics, with the method note on every metric",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/analytics",
+							"contains": "The same data is open at /api/platform/analytics."
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/api/platform/analytics",
+							"contains": "\"method\":"
+						}
+					]
+				},
+				{
+					"says": "Hover or tap any chart to read a single day",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/analytics",
+							"contains": "Hover or tap a chart to read a single day"
+						}
+					]
+				},
+				{
+					"says": "Totals are cached for up to five minutes, days are UTC calendar days",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/analytics",
+							"contains": "Days are UTC calendar days."
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/analytics",
+							"contains": "Totals are cached for up to five minutes."
+						}
+					]
+				},
+				{
+					"says": "The running total ends on the all-time figure",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/analytics",
+							"contains": "so it ends on the all-time total"
+						}
+					]
+				}
+			],
+			"mentions": {},
+			"kind": "post",
+			"status": "draft"
+		},
+		{
+			"id": "render-lab-call",
+			"status": "draft",
+			"kind": "post",
+			"tier": 3,
+			"lane": "developer",
+			"pattern": "clip",
+			"notBefore": "2026-10-14T00:00:00Z",
+			"covers": [
+				"/render-lab",
+				"api/avatar/capabilities"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/render-lab?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209&scene=full-body&pose=wave",
+						"settle": 9000,
+						"caption": "Frame it, pose it, in the browser"
+					},
+					{
+						"expect": "512px"
+					},
+					{
+						"scroll": "Render Lab",
+						"ms": 10
+					},
+					{
+						"hold": 1500
+					},
+					{
+						"scroll": "Copy link",
+						"ms": 1400
+					},
+					{
+						"click": "curl",
+						"caption": "The same render as a curl call"
+					},
+					{
+						"read": "endpoint",
+						"match": "(/api/avatar/render\\?avatar=)"
+					},
+					{
+						"hold": 1200
+					},
+					{
+						"click": "Web component",
+						"caption": "Or a live <agent-3d> tag"
+					},
+					{
+						"hold": 1400
+					},
+					{
+						"click": "MCP",
+						"caption": "Or a tool call for any MCP client"
+					},
+					{
+						"expect": "render_avatar_image"
+					},
+					{
+						"hold": 1600
+					},
+					{
+						"scroll": -420,
+						"ms": 1600
+					},
+					{
+						"hold": 2200
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"url": "https://three.ws/api/render/avatar-clip",
+					"expect": {
+						"status": 200,
+						"json": {
+							"path": "poses.0.id",
+							"equals": "tpose"
+						}
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Render Lab turns a framed, posed avatar into the call that makes it. Pick the avatar, scene and pose in the browser, and the code panel writes the same render as a curl command, a live web component or an MCP tool call. Every control on the page maps to one parameter of GET /api/avatar/render, so what you see is what the call returns.",
+					"media": [
+						{
+							"path": "public/x-media/render-lab-call/reel.mp4",
+							"probe": {
+								"durationSec": 13.2,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "The MCP version calls render_avatar_image with the avatar, scene, size and pose, for Claude, Cursor or any MCP client. Try it at three.ws/render-lab."
+				}
+			],
+			"claims": [
+				{
+					"says": "Every control on the page maps to one parameter of GET /api/avatar/render",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/render-lab.html",
+							"matches": "Every control here maps to\\s+one parameter of <a href=\"/docs/media-api\">GET /api/avatar/render</a>"
+						}
+					]
+				},
+				{
+					"says": "so what you see is what the call returns",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/render-lab.html",
+							"matches": "Compose a real render against the live API, then copy the exact call\\."
+						}
+					]
+				},
+				{
+					"says": "render_avatar_image",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "render_avatar_image"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "render-lab-sheet",
+			"status": "draft",
+			"kind": "post",
+			"tier": 3,
+			"lane": "developer",
+			"pattern": "mechanism",
+			"notBefore": "2026-10-14T00:00:00Z",
+			"covers": [
+				"/render-lab",
+				"api/avatar/render"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/render-lab?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209",
+						"settle": 9000,
+						"caption": "One URL in. A rendered avatar out."
+					},
+					{
+						"expect": "512px"
+					},
+					{
+						"scroll": "Render Lab",
+						"ms": 10
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"scroll": "What this model can do",
+						"ms": 1100,
+						"caption": "It reads the skeleton before it renders"
+					},
+					{
+						"read": "bones",
+						"match": "bones\\s*(\\d+)"
+					},
+					{
+						"hold": 2400
+					},
+					{
+						"click": "Contact sheet",
+						"caption": "One composer, every framing"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"click": "Poses",
+						"caption": "Every pose, rendered live by the API"
+					},
+					{
+						"expect": "24 live renders at 256px"
+					},
+					{
+						"read": "tiles",
+						"match": "(\\d+) live renders at 256px"
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"scroll": 330,
+						"ms": 1800
+					},
+					{
+						"hold": 3200
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"url": "https://three.ws/api/avatar/capabilities?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209",
+					"expect": {
+						"status": 200,
+						"json": {
+							"path": "rig.boneCount",
+							"equals": 65
+						}
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Render Lab reads the skeleton before it renders anything. Open it with an avatar and it reports the rig it found, here a skeleton with 65 bones, then lays out the poses that rig can take. The contact sheet under it is 24 live renders at 256px, each one a real call to the render API, with no account and no key.",
+					"media": [
+						{
+							"path": "public/x-media/render-lab-sheet/reel.mp4",
+							"probe": {
+								"durationSec": 16.3,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Click any tile and it loads into the composer with its pose and framing set, ready to copy as a call. Try it on your own avatar at three.ws/render-lab."
+				}
+			],
+			"claims": [
+				{
+					"says": "65 bones",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "bones",
+							"equals": 65
+						}
+					]
+				},
+				{
+					"says": "24 live renders at 256px",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "tiles",
+							"equals": 24
+						},
+						{
+							"type": "file",
+							"path": "pages/render-lab.html",
+							"matches": "Compose a real render against the live API"
+						}
+					]
+				},
+				{
+					"says": "each one a real call to the render API",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/render-lab.html",
+							"matches": "Compose a real render against the live API"
+						}
+					]
+				},
+				{
+					"says": "with no account and no key",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/render-lab.html",
+							"matches": "No account, no SDK, no key\\."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "skill-md",
+			"status": "draft",
+			"kind": "post",
+			"tier": 3,
+			"lane": "developer",
+			"pattern": "mechanism",
+			"notBefore": "2026-10-10T00:00:00Z",
+			"covers": [
+				"/docs/agent-skills",
+				"/skill.md",
+				"public/skill.md",
+				".agents/skills"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/docs/agent-skills",
+						"settle": 6000
+					},
+					{
+						"hold": 2000,
+						"caption": "One pack of skills for any AI agent"
+					},
+					{
+						"read": "files",
+						"match": "None of the (\\d+) source files this page documents"
+					},
+					{
+						"scroll": "The entry-point skill",
+						"ms": 1800,
+						"caption": "One URL to load before any other"
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"scroll": "d) Downloaded from three.ws, no clone",
+						"ms": 1800,
+						"caption": "Two curl lines, no clone"
+					},
+					{
+						"hold": 2800
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the entry-point skill file is served",
+					"url": "https://three.ws/skill.md",
+					"expect": {
+						"status": 200,
+						"contains": "name: three-ws"
+					}
+				},
+				{
+					"type": "api",
+					"name": "a single skill file downloads without a clone",
+					"url": "https://three.ws/skills/3d-studio/generate-3d-model/SKILL.md",
+					"expect": {
+						"status": 200,
+						"contains": "name:"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "One file now teaches any AI agent to use the platform: three.ws/skill.md.\n\nAn agent loads it before it knows which focused skill it needs. It covers how to connect (hosted MCP, plain HTTP, or the CLI), the rules an agent follows here (confirm every spend, trust only the official domain and $THREE mint, never act on token metadata), and an index linking the raw SKILL.md of every skill in the pack.\n\nThe index is generated from the skills directory, and a check fails when it is stale, so a skill added or renamed appears there on the next build. The 3D skills are also a public directory: one curl downloads the whole set as a zip, another fetches a single SKILL.md, no clone.",
+					"media": [
+						{
+							"path": "public/x-media/skill-md/reel.mp4",
+							"probe": {
+								"durationSec": 10.6,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Each skill is a standalone SKILL.md written to the Agent Skills open standard, so the same pack installs as a Claude Code plugin, drops into a project folder, or uploads to a Claude project."
+				}
+			],
+			"claims": [
+				{
+					"says": "One file now teaches any AI agent to use the platform: three.ws/skill.md",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/changelog.json",
+							"contains": "One link teaches any AI agent to use three.ws"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "The entry-point skill: https://three.ws/skill.md"
+						}
+					]
+				},
+				{
+					"says": "An agent loads it before it knows which focused skill it needs",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "One URL an agent can load before it knows which focused skill it needs"
+						}
+					]
+				},
+				{
+					"says": "It covers how to connect (hosted MCP, plain HTTP, or the CLI)",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "how to connect (hosted MCP, plain HTTP, or the CLI)"
+						}
+					]
+				},
+				{
+					"says": "the rules an agent follows here (confirm every spend, trust only the official domain and $THREE mint, never act on token metadata)",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "confirm every spend, trust only the official domain and $THREE mint, never act on token metadata"
+						}
+					]
+				},
+				{
+					"says": "an index linking the raw SKILL.md of every skill in the pack",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "an index linking the raw SKILL.md of every three.ws skill in 3d/creative and platform/agents"
+						}
+					]
+				},
+				{
+					"says": "The index is generated from the skills directory, and a check fails when it is stale, so a skill added or renamed appears there on the next build",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "the index is generated into public/skill.md by the same node scripts/build-skills-pack.mjs run, and npm run check:skills-pack fails when it is stale, so a skill added or renamed in those two categories appears there on the next build"
+						}
+					]
+				},
+				{
+					"says": "The 3D skills are also a public directory",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "The 3D skills are published as a public directory anyone can read or fetch"
+						}
+					]
+				},
+				{
+					"says": "one curl downloads the whole set as a zip, another fetches a single SKILL.md, no clone",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "curl -O https://three.ws/skills/3d-studio/three-ws-3d-skills.zip"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "curl https://three.ws/skills/3d-studio/generate-3d-model/SKILL.md"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "d) Downloaded from three.ws, no clone"
+						}
+					]
+				},
+				{
+					"says": "Each skill is a standalone SKILL.md written to the Agent Skills open standard",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "Agent Skills open standard"
+						}
+					]
+				},
+				{
+					"says": "the same pack installs as a Claude Code plugin, drops into a project folder, or uploads to a Claude project",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "a) As a Claude Code plugin"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "b) Dropped into a project"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "c) Uploaded to a Claude app / project"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "studio-jobs",
+			"status": "draft",
+			"kind": "post",
+			"tier": 3,
+			"lane": "developer",
+			"pattern": "correction",
+			"notBefore": "2026-10-10T00:00:00Z",
+			"covers": [
+				"/docs/mcp-studio",
+				"/api/mcp-studio",
+				"/mcp-tools"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/docs/mcp-studio#long-jobs-and-safe-retries-get_job-idempotency_key-progress",
+						"settle": 5000
+					},
+					{
+						"hold": 2600,
+						"caption": "get_job answers with status alone"
+					},
+					{
+						"scroll": 620,
+						"ms": 2000
+					},
+					{
+						"hold": 2200,
+						"caption": "Polling never starts work or spends quota"
+					},
+					{
+						"scroll": 700,
+						"ms": 2000
+					},
+					{
+						"hold": 2200,
+						"caption": "Same key within 24 hours, same job"
+					},
+					{
+						"goto": "https://three.ws/docs/mcp-studio#any-mcp-client",
+						"settle": 3000
+					},
+					{
+						"hold": 1200,
+						"caption": "The tools/list call, run from the page"
+					},
+					{
+						"click": "Send POST"
+					},
+					{
+						"click": "Confirm POST",
+						"awaits": "/api/mcp-studio",
+						"within": 20000
+					},
+					{
+						"expect": "200 OK",
+						"within": 20000
+					},
+					{
+						"read": "status",
+						"match": "(200) OK",
+						"selector": ".dlive-chip"
+					},
+					{
+						"read": "tool",
+						"match": "\"name\":\\s*\"(get_job)\"",
+						"selector": ".dlive-out code"
+					},
+					{
+						"hold": 3000,
+						"caption": "Live answer: the tool list, get_job included"
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"url": "https://three.ws/api/mcp-studio",
+					"method": "POST",
+					"body": {
+						"jsonrpc": "2.0",
+						"id": 1,
+						"method": "tools/list"
+					},
+					"expect": {
+						"status": 200,
+						"contains": "\"get_job\""
+					}
+				},
+				{
+					"type": "api",
+					"url": "https://three.ws/api/mcp-studio",
+					"method": "POST",
+					"body": {
+						"jsonrpc": "2.0",
+						"id": 1,
+						"method": "tools/list"
+					},
+					"expect": {
+						"status": 200,
+						"contains": "\"idempotency_key\""
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "A timed-out 3D job on the free 3D Studio MCP no longer means a second generation. Pass an idempotency_key on forge_free, text_to_avatar, mesh_forge, rig_mesh, forge_avatar or refine_model, and the same key with the same arguments within 24 hours gets the original job back, pending or finished, marked replayed: true. get_job answers with status alone (queued, running, done, failed, not_found or unknown) plus progress and eta_seconds, and it never starts work or consumes generation quota.",
+					"media": "reel"
+				},
+				{
+					"text": "Send a progressToken and the call streams a notifications/progress event each time the job moves, a whole percent that only rises, then the final result. Clients that send no token get the single JSON response, unchanged. Docs, with the tools/list request you can run from the page: three.ws/docs/mcp-studio"
+				}
+			],
+			"claims": [
+				{
+					"says": "no longer means a second generation",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/mcp-studio",
+							"contains": "retry a timed-out call without starting a second generation"
+						}
+					]
+				},
+				{
+					"says": "Pass an idempotency_key on forge_free, text_to_avatar, mesh_forge, rig_mesh, forge_avatar or refine_model",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/mcp-studio",
+							"contains": "idempotency_key is an optional argument on forge_free, text_to_avatar, mesh_forge, rig_mesh, forge_avatar and refine_model."
+						},
+						{
+							"type": "proof",
+							"responded": "POST /api/mcp-studio 200"
+						}
+					]
+				},
+				{
+					"says": "the same key with the same arguments within 24 hours gets the original job back, pending or finished, marked replayed: true",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/mcp-studio",
+							"contains": "sending the same key with the same arguments within 24 hours gets the original job back instead of a new generation: a pending job comes back with its current state (or the finished model once it lands), and the result carries \"idempotency\": { \"key\": \"…\", \"replayed\": true }"
+						}
+					]
+				},
+				{
+					"says": "get_job answers with status alone (queued, running, done, failed, not_found or unknown) plus progress and eta_seconds",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/mcp-studio",
+							"contains": "reshaped so a client branches on status alone. Every field is present in every state."
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/mcp-studio",
+							"contains": "status, progress, eta_seconds, asset links when done, error and remedy when failed"
+						},
+						{
+							"type": "proof",
+							"fact": "tool",
+							"equals": "get_job"
+						}
+					]
+				},
+				{
+					"says": "it never starts work or consumes generation quota",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/mcp-studio",
+							"contains": "get_job never starts work and does not consume generation quota, so a client can poll it on a schedule."
+						}
+					]
+				},
+				{
+					"says": "Send a progressToken and the call streams a notifications/progress event each time the job moves, a whole percent that only rises, then the final result",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/mcp-studio",
+							"contains": "a notifications/progress event each time the job reports movement (progress a whole percent that only rises, total: 100, message such as Rendering, about 22s left), then the final JSON-RPC result as the last event"
+						}
+					]
+				},
+				{
+					"says": "Clients that send no token get the single JSON response, unchanged",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/mcp-studio",
+							"contains": "Clients that send no token, or do not accept an event stream, get the ordinary single JSON response, unchanged."
+						}
+					]
+				},
+				{
+					"says": "the tools/list request you can run from the page",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "Send POST"
+						},
+						{
+							"type": "proof",
+							"fact": "status",
+							"equals": "200"
+						}
+					]
+				},
+				{
+					"says": "free 3D Studio MCP",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/mcp-studio",
+							"contains": "A free, non-crypto MCP server that turns a text prompt or an image into an"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "three-split",
+			"status": "draft",
+			"kind": "post",
+			"tier": 1,
+			"lane": "token",
+			"pattern": "number",
+			"notBefore": "2026-10-10T00:00:00Z",
+			"covers": [
+				"/three-token"
+			],
+			"scenario": {
+				"format": "square",
+				"hide": [
+					"[data-verified]",
+					".tk-stats",
+					".tk-why",
+					".tk-chart",
+					".tk-grid",
+					"#tk-bb-proof",
+					"#tk-social-boost",
+					".tk-ff-sub",
+					".tk-ff-wallets",
+					".tk-ff-src",
+					".tk-ff-bb",
+					".tk-foot"
+				],
+				"steps": [
+					{
+						"goto": "https://three.ws/three-token",
+						"settle": 7000
+					},
+					{
+						"scroll": "Of every $100 paid for paid compute",
+						"ms": 1600,
+						"caption": "Every $THREE payment, split on-chain"
+					},
+					{
+						"hold": 2000
+					},
+					{
+						"read": "treasuryCompute",
+						"match": "\\$(70)\\.00\\s+Treasury"
+					},
+					{
+						"read": "rewardsCompute",
+						"match": "\\$(30)\\.00\\s+Holder rewards"
+					},
+					{
+						"scroll": "Of every $100 paid for marketplace sales",
+						"ms": 1600,
+						"caption": "The seller keeps $90 of every $100"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"read": "sellerMarket",
+						"match": "\\$(90)\\.00\\s+Seller or creator"
+					},
+					{
+						"scroll": "Of every $100 paid for spins",
+						"ms": 1600,
+						"caption": "Spins: $50 treasury, $50 to holders"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"scroll": "Of every $100 paid for copy-trading",
+						"ms": 1600,
+						"caption": "Copy fees: the trader you copy keeps $80"
+					},
+					{
+						"hold": 2400
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the public token config still splits paid compute 70/30",
+					"url": "https://three.ws/api/token/config",
+					"expect": {
+						"json": {
+							"path": "split_policies.consumption.0.bps",
+							"equals": 7000
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the public token config still pays the seller 90% of a marketplace sale",
+					"url": "https://three.ws/api/token/config",
+					"expect": {
+						"json": {
+							"path": "split_policies.marketplace_sale.0.bps",
+							"equals": 9000
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the public token config still pays the copied trader 80% of a performance fee",
+					"url": "https://three.ws/api/token/config",
+					"expect": {
+						"json": {
+							"path": "split_policies.copy_performance_fee.0.bps",
+							"equals": 8000
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the public token config still splits a scarcity mint 80/20",
+					"url": "https://three.ws/api/token/config",
+					"expect": {
+						"json": {
+							"path": "split_policies.scarcity_mint.0.bps",
+							"equals": 8000
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the public token config still splits a spin 50/50",
+					"url": "https://three.ws/api/token/config",
+					"expect": {
+						"json": {
+							"path": "split_policies.spin.0.bps",
+							"equals": 5000
+						}
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Every $100 paid in $THREE on three.ws/three-token is now split by a published policy, and the page shows the exact numbers. Paid compute: $70 to the treasury, $30 to holder rewards. A marketplace sale: the seller keeps $90, with $5 to the treasury and $5 to holder rewards. A copy-trading performance fee: the trader you copy keeps $80. The splits are read live from the public token config, the same one the payment code enforces, and nothing is burned: every share goes to a seller, the treasury, or holders."
+				},
+				{
+					"text": "Two more rows on the page. A scarcity mint, which covers limited drops, rare-name auctions and pay-to-mint, splits $80 to the treasury and $20 to holder rewards. A paid spin of the in-app wheel splits $50 and $50. The treasury and holder-rewards addresses are not published yet, and the page says so: payments that include those shares are paused until they are, so no money is ever sent to an unset address."
+				}
+			],
+			"claims": [
+				{
+					"text": "Every $100 paid in $THREE is split by a published policy",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "Every payment made in $THREE is split on-chain by a published policy, each share paid straight to its wallet."
+						}
+					]
+				},
+				{
+					"text": "Paid compute splits $70 to the treasury and $30 to holder rewards",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "treasuryCompute",
+							"equals": "70"
+						},
+						{
+							"type": "proof",
+							"fact": "rewardsCompute",
+							"equals": "30"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "Of every $100 paid for paid compute"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "$70.00 Treasury funds $THREE buybacks"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "$30.00 Holder rewards paid back to $THREE holders"
+						}
+					]
+				},
+				{
+					"text": "On a marketplace sale the seller keeps $90, the treasury gets $5 and holder rewards get $5",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "sellerMarket",
+							"equals": "90"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "Of every $100 paid for marketplace sales"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "$90.00 Seller or creator keeps the sale"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "$5.00 Treasury funds $THREE buybacks"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "$5.00 Holder rewards paid back to $THREE holders"
+						}
+					]
+				},
+				{
+					"text": "On a copy-trading performance fee the trader you copy keeps $80",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "Of every $100 paid for copy-trading performance fees"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "$80.00 Trader you copy keeps the sale"
+						}
+					]
+				},
+				{
+					"text": "The splits are read live from the public token config, the same one the payment code enforces",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "These splits are read live from the public token config, the same one the payment code enforces."
+						}
+					]
+				},
+				{
+					"text": "Nothing is burned: every share goes to a seller, the treasury, or holders",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "The platform never burns $THREE: every share goes to a seller, the treasury, or holders, and nothing is destroyed."
+						}
+					]
+				},
+				{
+					"text": "A scarcity mint (limited drops, rare-name auctions and pay-to-mint) splits $80 to the treasury and $20 to holder rewards",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "Of every $100 paid for scarcity mints"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "Limited drops, rare-name auctions and pay-to-mint"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "$80.00 Treasury funds $THREE buybacks"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "$20.00 Holder rewards paid back to $THREE holders"
+						}
+					]
+				},
+				{
+					"text": "A paid spin of the in-app wheel splits $50 to the treasury and $50 to holder rewards",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "Of every $100 paid for spins"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "Paid spins of the in-app wheel"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "$50.00 Treasury funds $THREE buybacks"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "$50.00 Holder rewards paid back to $THREE holders"
+						}
+					]
+				},
+				{
+					"text": "The treasury and holder-rewards addresses are not published yet, and payments that include those shares are paused until they are, so no money is ever sent to an unset address",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "Holder rewards pool"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "NOT YET PUBLISHED"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three-token",
+							"contains": "The address has not been published yet. Payments that include this share are paused until it is, so no money is ever sent to an unset address."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "voice-article",
+			"status": "draft",
+			"kind": "article",
+			"tier": 1,
+			"lane": "article",
+			"pattern": "longform",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [
+				"/voice",
+				"/drive",
+				"/api/tts/catalog",
+				"/api/tts/synthesize"
+			],
+			"article": {
+				"title": "Picking an agent's voice by ear, and the car page that handles its own commands",
+				"body": "data/x-content/articles/voice-article.md",
+				"cover": {
+					"path": "public/x-media/voice-article/cover.png",
+					"alt": "Michelle, a stylised 3D agent with puffed black hair, red headphones and round red sunglasses, standing at idle on the dark night palette of the three.ws Drive car screen"
+				}
+			},
+			"scenario": {
+				"format": "landscape",
+				"steps": [
+					{
+						"goto": "https://three.ws/voice",
+						"settle": 7000
+					},
+					{
+						"scroll": "Browse voices",
+						"ms": 900
+					},
+					{
+						"read": "voices",
+						"match": "(\\d+) voices across \\d+ providers"
+					},
+					{
+						"hold": 1600,
+						"caption": "Hundreds of voices in one grid, signed out"
+					},
+					{
+						"type": "Andrew",
+						"into": "Search by name, accent, or use case...",
+						"caption": "Search by name, accent or use case"
+					},
+					{
+						"wait": 1200
+					},
+					{
+						"hold": 1200
+					},
+					{
+						"click": "Use this voice",
+						"caption": "Pick one and press Speak"
+					},
+					{
+						"click": "Speak",
+						"awaits": "/api/tts/synthesize",
+						"caption": "Hear it before you choose it"
+					},
+					{
+						"expect": "KB ·"
+					},
+					{
+						"hold": 1600
+					},
+					{
+						"click": "Speak",
+						"awaits": "/api/tts/synthesize",
+						"caption": "The same line twice comes back from the cache"
+					},
+					{
+						"expect": "cached"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"goto": "https://three.ws/drive?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209",
+						"settle": 8000
+					},
+					{
+						"expect": "Ready"
+					},
+					{
+						"hold": 1500,
+						"caption": "Drive: the agent on a car screen"
+					},
+					{
+						"click": "Driving",
+						"caption": "Parked, the keyboard unlocks"
+					},
+					{
+						"expect": "Parked"
+					},
+					{
+						"click": "Type"
+					},
+					{
+						"type": "Day mode, please",
+						"into": "Ask your agent something"
+					},
+					{
+						"press": "Enter",
+						"caption": "A command is answered by the page itself"
+					},
+					{
+						"wait": 1000
+					},
+					{
+						"read": "light",
+						"selector": "#dr-light",
+						"match": "(Day|Night)"
+					},
+					{
+						"hold": 2600
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the catalog still offers more than 300 voices",
+					"url": "https://three.ws/api/tts/catalog?limit=1",
+					"expect": {
+						"json": {
+							"path": "total",
+							"min": 300
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "a free lane still speaks for a signed-out visitor",
+					"url": "https://three.ws/api/tts/catalog?limit=1",
+					"expect": {
+						"contains": "\"anonymous\":true"
+					}
+				},
+				{
+					"type": "api",
+					"name": "the Drive page is up",
+					"url": "https://three.ws/drive",
+					"expect": {
+						"contains": "three.ws Drive"
+					}
+				},
+				{
+					"type": "command",
+					"name": "the command matcher answers the phrases and refuses what it must not swallow",
+					"argv": [
+						"npx",
+						"vitest",
+						"run",
+						"tests/drive-surface.test.js"
+					]
+				}
+			],
+			"posts": [
+				{
+					"text": "Some things a driver says are control, not conversation. On Drive, \"repeat that\", \"stop talking\", \"louder\" and \"night mode\" are matched on the page before anything reaches a server, while \"stop at the next charger\" still goes to the agent. The article also covers hearing more than 300 voices in the Voice Lab before you pick one.",
+					"media": [
+						{
+							"path": "public/x-media/voice-article/reel.mp4",
+							"probe": {
+								"durationSec": 22.43,
+								"width": 1280,
+								"height": 720,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "more than 300 voices",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "voices",
+							"min": 300
+						},
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "`GET /api/tts/catalog` reports the exact `total`"
+						}
+					]
+				},
+				{
+					"says": "you can hear any of them before you choose, without signing in",
+					"evidence": [
+						{
+							"type": "proof",
+							"responded": "/api/tts/synthesize"
+						},
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "Edge, Gemini, and NVIDIA all work **signed out**"
+						}
+					]
+				},
+				{
+					"says": "are answered by the page itself before anything is sent to a server",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "so the page answers them itself, before\n// the network is touched"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "['repeat', ['repeat', 'repeat that'"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "['hush', ['stop', 'stop talking'"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "['louder', ['louder'"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "['night', ['night mode'"
+						}
+					]
+				},
+				{
+					"says": "are matched on the page before anything reaches a server, while \"stop at the next charger\" still goes to the agent",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "so the page answers them itself, before\n// the network is touched"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "\"Stop\" is a command; \"stop at the next\n// charger\" is a question for the agent"
+						}
+					]
+				},
+				{
+					"says": "three synthesis lanes that work signed out: Microsoft Edge, Google Gemini and NVIDIA Magpie",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/api/tts/catalog?limit=1",
+							"contains": "\"label\":\"Microsoft Edge\""
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/api/tts/catalog?limit=1",
+							"contains": "\"label\":\"NVIDIA Magpie\""
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/api/tts/catalog?limit=1",
+							"contains": "\"label\":\"Google Gemini\""
+						},
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "Edge, Gemini, and NVIDIA all work **signed out**"
+						}
+					]
+				},
+				{
+					"says": "The Edge list is fetched live from Microsoft and cached for six hours, so it is not a hardcoded snapshot, and it covers more than 100 locales",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "The Edge catalog is fetched live from Microsoft and cached 6 hours per instance"
+						},
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "Nothing is a hardcoded snapshot"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/api/tts/catalog?limit=1",
+							"contains": "every Microsoft neural voice · 100+ locales"
+						}
+					]
+				},
+				{
+					"says": "Gemini adds 30 prebuilt voices that take a written direction",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/api/tts/catalog?limit=1",
+							"contains": "30 voices · style-directable"
+						},
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "| Google Gemini | 30 prebuilt |"
+						}
+					]
+				},
+				{
+					"says": "Magpie adds 11 personas built for the real-time avatar lane",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "| NVIDIA Magpie | 11 personas | Free | The real-time avatar lane, 9 languages. |"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/api/tts/catalog?limit=1",
+							"contains": "the avatar real-time lane"
+						}
+					]
+				},
+				{
+					"says": "Two more lanes, OpenAI and ElevenLabs, appear in the same grid and need an account",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "The metered lanes (OpenAI, ElevenLabs), cloning, and the Voice Library return `401 unauthorized` without a session or bearer token."
+						}
+					]
+				},
+				{
+					"says": "Search matches a voice's name, id, locale and labels, and the language filter is built from the locales actually in the list",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "Search matches name, id, locale, and every label; the language filter is built from the locales actually present."
+						}
+					]
+				},
+				{
+					"says": "Preview plays a voice's own sample clip when it has one, and otherwise renders one short line through the synthesis endpoint",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "\"Preview\" plays a shared voice's own sample clip when it has one (free, no synthesis) and otherwise renders one short line through `/api/tts/synthesize`."
+						}
+					]
+				},
+				{
+					"says": "Use this voice moves the pick into the playground, where you type up to 1,000 characters, set the speed and press Speak",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "\"Use this voice\" pushes the pick into the playground."
+						},
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "up to 1,000 characters of text"
+						},
+						{
+							"type": "proof",
+							"saw": "KB ·"
+						}
+					]
+				},
+				{
+					"says": "Each clip is cached against a hash of the whole request: lane, voice, text, model, direction, speed and settings",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "Every clip is cached in R2 keyed on a hash of the full request (provider, voice, text, model, direction, speed, and settings)"
+						}
+					]
+				},
+				{
+					"says": "Ask for the same line twice and the second answer comes back from storage with no new synthesis",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "so an identical request is served from storage with no upstream call"
+						},
+						{
+							"type": "proof",
+							"saw": "cached"
+						}
+					]
+				},
+				{
+					"says": "In the capture below the line had already been spoken once, so Speak returned it from the cache",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "cached"
+						}
+					]
+				},
+				{
+					"says": "starts in Driving mode with the keyboard hidden and four controls: Hands free, Repeat, Stop and Type",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "The page starts in Driving and hides text entry"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "Four controls, no more. Hands free, Repeat, Stop, Type."
+						},
+						{
+							"type": "proof",
+							"saw": "Ready"
+						}
+					]
+				},
+				{
+					"says": "Hold Talk and speak",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/drive.html",
+							"contains": "data-placeholder=\"Hold Talk and speak.\""
+						}
+					]
+				},
+				{
+					"says": "The agent is told to reply in one or two short sentences that sound right out loud, and never to ask the driver to read anything, tap through a list or look at the screen",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/drive/index.js",
+							"contains": "Reply in one or two short sentences that sound right out loud."
+						},
+						{
+							"type": "file",
+							"path": "src/drive/index.js",
+							"contains": "Never ask them to read anything, tap through a list, or look at the screen."
+						}
+					]
+				},
+				{
+					"says": "The reply is clamped to two lines on screen and spoken in full",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "The reply is clamped to two lines and spoken in full"
+						}
+					]
+				},
+				{
+					"says": "Night is the default palette, because a bright panel at speed is glare",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "Night is the default because a bright panel at speed is glare"
+						}
+					]
+				},
+				{
+					"says": "If the browser reports a real ground speed, moving above walking pace locks the keyboard again, and the Parked switch will not unlock it while the wheels are turning",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "If the browser reports a real ground speed, moving above walking pace locks it back"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/index.js",
+							"contains": "// A live speed signal outranks the button: the driver cannot declare\n\t\t// themselves parked while the wheels are turning."
+						}
+					]
+				},
+				{
+					"says": "microphone into speech recognition on NVIDIA Riva, with the browser recognizer as the fallback lane, transcript into the chat model, the reply into speech, and the audio into lip sync on a rigged avatar",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "The loop is the platform's existing one, unchanged"
+						},
+						{
+							"type": "file",
+							"path": "docs/carplay.md",
+							"contains": "microphone into `/api/asr` (NVIDIA Riva,\nwith the browser recognizer as the fallback lane)"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "audio into the lipsync driver and onto a real rigged avatar"
+						}
+					]
+				},
+				{
+					"says": "There are eight commands, each with its own set of phrasings: repeat, stop, louder, quieter, night, day, parked and driving",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": " * @returns {'repeat'|'hush'|'louder'|'quieter'|'night'|'day'|'parked'|'driving'|null}"
+						}
+					]
+				},
+				{
+					"says": "checks each final transcript against it before the network is touched",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": " * Build the interceptor TalkController calls with every final transcript."
+						},
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "so the page answers them itself, before\n// the network is touched"
+						}
+					]
+				},
+				{
+					"says": "gives up on anything longer than 40 characters",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "if (!phrase || phrase.length > 40) return null;"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": ".replace(/^(hey |ok |okay |please |can you |could you |would you )+/g, '')"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": ".replace(/( please| now| for me)+$/g, '')"
+						}
+					]
+				},
+				{
+					"says": "That is how \"stop\" ends a reply while \"stop at the next charger\" still reaches the agent",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "The matcher deliberately compares the WHOLE utterance against a phrase set"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "\"Stop\" is a command; \"stop at the next\n// charger\" is a question for the agent"
+						}
+					]
+				},
+				{
+					"says": "\"Louder\" and \"quieter\" move the volume by 20%",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/drive/index.js",
+							"contains": "louder: () => nudgeVolume(0.2),"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/index.js",
+							"contains": "quieter: () => nudgeVolume(-0.2),"
+						}
+					]
+				},
+				{
+					"says": "A handled command never reaches the chat model",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/voice/talk-controller.js",
+							"contains": "A handled command never reaches the chat model"
+						}
+					]
+				},
+				{
+					"says": "Typed text takes the same path as speech",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/voice/talk-controller.js",
+							"contains": "Force a turn from text (e.g. typed message). Same downstream path as"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/index.js",
+							"contains": "controller.say(text).catch(onTalkError);"
+						}
+					]
+				},
+				{
+					"says": "typing \"Day mode, please\" switches the palette to day on the spot, with no request to a server",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "light",
+							"equals": "Day"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/index.js",
+							"contains": "day: () => applyLight(true),"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "['day', ['day mode', 'light mode', 'brighten the screen']]"
+						}
+					]
+				},
+				{
+					"says": "the provider is refusing this deployment's credentials, so a Gemini preview answers with an error that names the lanes still working",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/ops/x-story-findings-2026-09-30.md",
+							"contains": "Gemini voices fail synthesis with 502 or 503 (\"the provider rejected this deployment's credentials\")"
+						}
+					]
+				},
+				{
+					"says": "A lane the provider refuses is then marked unavailable for a few minutes and its voices leave the picker",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "is reported `available: false` with the reason for a few minutes, its voices drop out of the picker"
+						}
+					]
+				},
+				{
+					"says": "the grid's count moves between 327 and 357",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/ops/x-story-findings-2026-09-30.md",
+							"contains": "so the catalog moves between 357 and 327 voices"
+						}
+					]
+				},
+				{
+					"says": "A voice picked in the Voice Lab reaches an agent once it is assigned in the agent editor",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "To give the voice to an agent, open that agent in the agent editor and assign the saved voice there."
+						}
+					]
+				},
+				{
+					"says": "Drive answers on a head unit browser or a phone in a cradle today",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "on a head unit browser, on a phone in a cradle"
+						}
+					]
+				},
+				{
+					"says": "The native CarPlay version is written and waits on Apple's entitlement grant",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/carplay.md",
+							"contains": "It cannot ship until Apple grants\n`com.apple.developer.carplay-voice-based-conversation`"
+						},
+						{
+							"type": "file",
+							"path": "docs/carplay.md",
+							"contains": "Written, wired, and documented in"
+						}
+					]
+				},
+				{
+					"says": "there is no wake word, by design, because Apple's voice category does not allow one",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/carplay.md",
+							"contains": "there is **no wake word**"
+						},
+						{
+							"type": "file",
+							"path": "docs/carplay.md",
+							"contains": "**A wake word.** Apple's category forbids it"
+						}
+					]
+				},
+				{
+					"says": "under heavy load that wait has run long enough to time out",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/ops/x-story-findings-2026-09-30.md",
+							"contains": "timed out at 60 s twice under heavy load"
+						}
+					]
+				},
+				{
+					"says": "Both work without an account",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "Browsing and the free lanes work signed out"
+						},
+						{
+							"type": "file",
+							"path": "docs/carplay.md",
+							"contains": "when nobody is signed in (401, no error shown to the user)"
+						}
+					]
+				}
+			],
+			"mentions": {}
 		}
 	]
 }

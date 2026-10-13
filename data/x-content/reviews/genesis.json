@@ -1,7 +1,7 @@
 {
 	"id": "genesis",
 	"contentHash": "c8b5d381127da2edbc07b2d0d8efcdf0a22c4552521f55e7f5610fe380618fd3",
-	"reviewedAt": "2026-10-13T06:37:57.595Z",
+	"reviewedAt": "2026-10-13T18:10:59.630Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -144,9 +144,9 @@
 			{
 				"severity": "minor",
 				"area": "visual",
-				"quote": "The body is rigged before you see it, so it walks and emotes on arrival",
-				"problem": "The reel's four frames only show the three entry modes (Describe, Selfie, Remix) and the describe field; no frame shows a generated, rigged agent walking or emoting, so the post's strongest mechanism claim has no visual backing.",
-				"fix": "Optional: extend the scenario to capture the finished agent animating, and append that shot to the reel before it ends, so the film shows the arrival state the copy describes."
+				"quote": "Reel frame at 8.4 s / 11.6 s",
+				"problem": "The remix grid shows two adjacent tiles both named \"Boss Vernington\" with blank thumbnails; it is real product output and does not contradict the copy, but duplicated blank cards read as a rough edge in an otherwise clean reel.",
+				"fix": "Optional: on the next capture, pick a moment where the avatar grid has finished loading; not a reason to hold this post."
 			}
 		],
 		"rewrite": {
@@ -156,7 +156,7 @@
 			],
 			"altText": []
 		},
-		"summary": "Every claim is verified against the live page and docs, the voice contract is followed exactly, and both posts sit well under the character wall. Only nitpick is that the reel shows the entry screens but never the rigged agent arrival the copy headlines; not blocking, ship as is.",
+		"summary": "Every claim passes against the live page or docs, the reel's captions match the frames and the three modes the copy names, and the voice contract is kept. The only blemish is duplicated blank avatar tiles in the remix grid, a cosmetic point not worth holding the post for.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
