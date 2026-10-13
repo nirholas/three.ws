@@ -645,21 +645,15 @@ Also add the script tag to `pages/_document.js` or your root layout:
 />
 ```
 
-### Webflow
+### WordPress
 
-Use an **Embed** block with the iframe method — Webflow's custom code can load the web component script in Page Settings → Custom Code → `<head>`:
+Install the **three.ws Agent** plugin ([`integrations/wordpress/three-ws-agent/`](../integrations/wordpress/three-ws-agent)): a Gutenberg block (category: Embeds) with an inspector panel for On-chain URI, Agent ID, Chain ID, Model URL, Background and Framing, plus a `[three_ws_agent]` shortcode for the classic editor, widgets, and theme templates:
 
-```html
-<script type="module"
-  src="https://three.ws/agent-3d/1.5.2/agent-3d.js">
-</script>
+```
+[three_ws_agent src="agent://base/42" background="dark" framing="portrait"]
 ```
 
-Then add an HTML Embed element anywhere on the page:
-
-```html
-<agent-3d src="agent://base/42" style="width:100%;height:500px"></agent-3d>
-```
+Both render identical markup and enqueue the same SRI-pinned loader script, so there is no divergence between the block editor's preview and the published page. No build step, no npm, no WordPress.com Business plan requirement. See the plugin's [README](../integrations/wordpress/three-ws-agent/README.md) for layout and local testing with the official Plugin Check tool.
 
 ### Squarespace
 
@@ -667,7 +661,23 @@ Add the script tag via Settings → Advanced → Code Injection → Header. Plac
 
 ### Framer
 
-Framer supports custom code components — wrap `<agent-3d>` in a code component using the web component approach. Mark it as client-only since Framer also SSRs.
+Install the **three.ws Agent** code component ([`integrations/framer/`](../integrations/framer)): paste `pinned-release.ts`, `Agent3DView.tsx`, and `Agent3D.tsx` into a Framer project's code file panel, then drag the component onto the canvas. Property controls expose On-chain URI, Agent ID, Chain ID, Model URL, Background, Framing, Poster and Autoplay, no code required after setup. See the component's [README](../integrations/framer/README.md).
+
+### Webflow
+
+Install the **three.ws Agent** Code Component ([`integrations/webflow/`](../integrations/webflow)) with `webflow devlink import` into a Webflow Workspace, then drag it from the Components panel in the Designer. The same On-chain URI / Agent ID / Chain ID / Model URL / Background / Framing / Poster / Autoplay props are exposed in the Properties panel. See the component's [README](../integrations/webflow/README.md).
+
+For a quick embed with no library install, use an **Embed** block instead: load the script in Page Settings → Custom Code → `<head>`, then add an HTML Embed element anywhere on the page:
+
+```html
+<script type="module"
+  src="https://three.ws/agent-3d/1.5.2/agent-3d.js">
+</script>
+```
+
+```html
+<agent-3d src="agent://base/42" style="width:100%;height:500px"></agent-3d>
+```
 
 ### Shopify
 

@@ -6762,6 +6762,14 @@
 					"added": "2026-10-13"
 				},
 				{
+					"path": "/docs/wordpress-embed",
+					"title": "Docs: WordPress embed (three.ws Agent plugin)",
+					"description": "How the three.ws Agent WordPress plugin works: the Gutenberg block and [three_ws_agent] shortcode, the SRI-pinned release, and the real Plugin Check verification run.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-13"
+				},
+				{
 					"path": "/docs/shopify-app",
 					"title": "Docs: Shopify app (Photo to 3D product media)",
 					"description": "How the three.ws Shopify app works: OAuth and embedded session tokens, the photo-to-GLB-to-productCreateMedia pipeline, usage-based Billing API integration, and the mandatory privacy webhooks.",

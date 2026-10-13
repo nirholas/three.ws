@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-13T20:28:35.691Z",
+	"generated_at": "2026-10-13T21:44:59.034Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -52,6 +52,16 @@
 			"title": "Docs: Shopify app (Photo to 3D product media)",
 			"summary": "How the three.ws Shopify app works: OAuth and embedded session tokens, the photo-to-GLB-to-productCreateMedia pipeline, usage-based Billing API integration, and the mandatory privacy webhooks.",
 			"link": "/docs/shopify-app",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "launch",
+			"title": "Docs: WordPress embed (three.ws Agent plugin)",
+			"summary": "How the three.ws Agent WordPress plugin works: the Gutenberg block and [three_ws_agent] shortcode, the SRI-pinned release, and the real Plugin Check verification run.",
+			"link": "/docs/wordpress-embed",
 			"tags": [
 				"launch"
 			]
@@ -137,6 +147,17 @@
 			"tags": [
 				"feature",
 				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
+			"title": "Embed a live 3D agent in WordPress, Framer, or Webflow",
+			"summary": "Three native embeds for <agent-3d>, one per site builder's own extension point instead of a generic iframe: a WordPress Gutenberg block and [three_ws_agent] shortcode (server-rendered so the editor preview always matches the front end), a Framer code component with property controls, and a Webflow Code Component, all exposing On-chain URI, Agent ID, Model URL, Background, Framing, Poster and Autoplay. A shared build step pins all three to the same version and SRI hash from the agent-3d release ledger, so they can never drift apart. The WordPress plugin passed the official Plugin Check tool against a real local WordPress install with no errors; Framer and Webflow were each verified in a real-React test harness that boots a live WebGL canvas against the production CDN release, and the Webflow component additionally compiles through the real Webflow CLI. WordPress.org, Framer Marketplace, and Webflow Apps submissions are owner actions. Docs: /docs/wordpress-embed, /docs/embedding.",
+			"link": "/docs/wordpress-embed",
+			"tags": [
+				"feature",
 				"docs"
 			]
 		},

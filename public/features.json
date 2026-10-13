@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-13T20:28:35.677Z",
+	"generated_at": "2026-10-13T21:44:59.016Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -10434,6 +10434,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.7,
+					"job": null
+				},
+				{
+					"path": "/docs/wordpress-embed",
+					"title": "Docs: WordPress embed (three.ws Agent plugin)",
+					"description": "How the three.ws Agent WordPress plugin works: the Gutenberg block and [three_ws_agent] shortcode, the SRI-pinned release, and the real Plugin Check verification run.",
+					"added": "2026-10-13",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
 					"job": null
 				},
 				{

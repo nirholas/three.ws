@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-13",
+			"title": "Embed a live 3D agent in WordPress, Framer, or Webflow",
+			"link": "/docs/wordpress-embed",
+			"summary": "Three native embeds for <agent-3d>, one per site builder's own extension point instead of a generic iframe: a WordPress Gutenberg block and [three_ws_agent] shortcode (server-rendered so the editor preview always matches the front end), a Framer code component with property controls, and a Webflow Code Component, all exposing On-chain URI, Agent ID, Model URL, Background, Framing, Poster and Autoplay. A shared build step pins all three to the same version and SRI hash from the agent-3d release ledger, so they can never drift apart. The WordPress plugin passed the official Plugin Check tool against a real local WordPress install with no errors; Framer and Webflow were each verified in a real-React test harness that boots a live WebGL canvas against the production CDN release, and the Webflow component additionally compiles through the real Webflow CLI. WordPress.org, Framer Marketplace, and Webflow Apps submissions are owner actions. Docs: /docs/wordpress-embed, /docs/embedding.",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
 			"title": "Import a VRoid Hub avatar with its creator's license honored",
 			"link": "/docs/vroid-hub-import",
 			"summary": "A new picker at /import/vroid lists every character you own or hearted on VRoid Hub, each scored against the real, live license conditions its creator set (public agent, export, modify, monetize), so three.ws only ever offers an action the creator actually permitted. Built end to end against VRoid Hub's live documented API (OAuth2 with mandatory PKCE, the two-step download-license flow), including encrypted token storage alongside three.ws's other social connections, through to a real import that lands the avatar in the editor with idle/walk already retargeted. VRoid Hub app registration and the OAuth client credentials are an owner action tracked in prompts/finish/_context/production-100-OWNER-ACTIONS.md; everything else is wired and tested. Docs: /docs/vroid-hub-import.",

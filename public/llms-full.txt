@@ -5248,6 +5248,12 @@ URL: https://three.ws/docs/voice-framework-integrations
 
 How to drive a three.ws <agent-3d> avatar's lipsync and gestures from a LiveKit Agents or Pipecat voice pipeline, with the livekit-plugins-threews and pipecat-threews packages, runnable local examples, and the data-channel message contract both share.
 
+### Docs: WordPress embed (three.ws Agent plugin)
+
+URL: https://three.ws/docs/wordpress-embed
+
+How the three.ws Agent WordPress plugin works: the Gutenberg block and [three_ws_agent] shortcode, the SRI-pinned release, and the real Plugin Check verification run.
+
 ### Docs: Shopify app (Photo to 3D product media)
 
 URL: https://three.ws/docs/shopify-app

@@ -47,6 +47,14 @@
 			<description>How the three.ws Shopify app works: OAuth and embedded session tokens, the photo-to-GLB-to-productCreateMedia pipeline, usage-based Billing API integration, and the mandatory privacy webhooks.</description>
 		</item>
 		<item>
+			<title>Docs: WordPress embed (three.ws Agent plugin)</title>
+			<link>https://three.ws/docs/wordpress-embed</link>
+			<guid isPermaLink="false">2026-10-13:Docs: WordPress embed (three.ws Agent plugin)</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the three.ws Agent WordPress plugin works: the Gutenberg block and [three_ws_agent] shortcode, the SRI-pinned release, and the real Plugin Check verification run.</description>
+		</item>
+		<item>
 			<title>Forge Room (Discord Activity)</title>
 			<link>https://three.ws/discord-activity</link>
 			<guid isPermaLink="false">2026-10-13:Forge Room (Discord Activity)</guid>
@@ -109,6 +117,14 @@
 			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Two new packages, livekit-plugins-threews and pipecat-threews, republish a running voice agent's TTS and user-turn frames as the same transcript/gesture/speech_started/speech_ended message shape over the room's data channel, which &lt;agent-3d voice=&quot;livekit&quot;&gt; already renders client-side: no server-side video rendering, no change to the browser code at all. The LiveKit package is an AvatarSession plugin dropped into an AgentSession; the Pipecat package is a FrameProcessor placed after the TTS service. Each ships a runnable local example against a real open-source livekit-server with a real local TTS, verified end to end with real browser automation driving the actual avatar lipsync and gesture cues off a live bot in both frameworks. Docs: /docs/voice-framework-integrations.</description>
+		</item>
+		<item>
+			<title>Embed a live 3D agent in WordPress, Framer, or Webflow</title>
+			<link>https://three.ws/docs/wordpress-embed</link>
+			<guid isPermaLink="false">2026-10-13:Embed a live 3D agent in WordPress, Framer, or Webflow</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Three native embeds for &lt;agent-3d&gt;, one per site builder's own extension point instead of a generic iframe: a WordPress Gutenberg block and [three_ws_agent] shortcode (server-rendered so the editor preview always matches the front end), a Framer code component with property controls, and a Webflow Code Component, all exposing On-chain URI, Agent ID, Model URL, Background, Framing, Poster and Autoplay. A shared build step pins all three to the same version and SRI hash from the agent-3d release ledger, so they can never drift apart. The WordPress plugin passed the official Plugin Check tool against a real local WordPress install with no errors; Framer and Webflow were each verified in a real-React test harness that boots a live WebGL canvas against the production CDN release, and the Webflow component additionally compiles through the real Webflow CLI. WordPress.org, Framer Marketplace, and Webflow Apps submissions are owner actions. Docs: /docs/wordpress-embed, /docs/embedding.</description>
 		</item>
 		<item>
 			<title>Get it printed: live Craftcloud prices for any Forge model, buyer pays direct</title>
