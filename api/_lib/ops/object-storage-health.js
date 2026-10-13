@@ -33,6 +33,12 @@ const PROBE_TIMEOUT_MS = 3_000;
 // second is already slow enough that every gallery page feels it, so it is worth
 // surfacing before it becomes an outage.
 const SLOW_MS = 1_000;
+// A single retry, inside one invocation, with a short backoff. This absorbs a
+// one-off transient network blip so it never pages as DOWN, but it cannot and
+// must not mask a sustained outage: a bucket that is still down 200-500ms later
+// stays classified down, exactly as a bucket that has been down for days does.
+// See prompts/finish/_context/production-100-OWNER-ACTIONS.md row 36.
+const RETRY_BACKOFF_MS = 300;
 
 /**
  * Classify a probe outcome. Pure, so the thresholds and the credential-vs-latency
@@ -75,32 +81,66 @@ export function classifyObjectStorageProbe(probe) {
 }
 
 /**
- * Run the signed probe and classify it. Never throws.
+ * One signed `ListObjectsV2Command` probe. Split out (rather than inlined in
+ * gatherObjectStorageHealth) so tests can inject a synthetic probe without
+ * mocking the AWS SDK or the thing under test's public contract.
+ * @returns {Promise<void>}
+ */
+async function probeOnce() {
+	await r2.send(new ListObjectsV2Command({ Bucket: env.S3_BUCKET, MaxKeys: 1 }), {
+		abortSignal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+	});
+}
+
+/**
+ * @param {() => Promise<void>} probe
+ * @returns {Promise<{ ok: true, latencyMs: number } | { ok: false, latencyMs: number, error: unknown }>}
+ */
+async function timeProbe(probe) {
+	const started = Date.now();
+	try {
+		await probe();
+		return { ok: true, latencyMs: Date.now() - started };
+	} catch (error) {
+		return { ok: false, latencyMs: Date.now() - started, error };
+	}
+}
+
+/**
+ * Run the signed probe, retrying once after a short backoff on failure, and
+ * classify the outcome. Never throws.
+ * @param {{ probe?: () => Promise<void> }} [opts] test-only probe override
  * @returns {Promise<{ name: 'object_storage', label: string, status: string, detail: string, hint?: string, metrics?: object }>}
  */
-export async function gatherObjectStorageHealth() {
+export async function gatherObjectStorageHealth({ probe = probeOnce } = {}) {
 	const base = { name: /** @type {const} */ ('object_storage'), label: 'Object storage (Cloudflare R2)' };
 	if (!objectStorageConfigured()) {
 		const v = classifyObjectStorageProbe({ configured: false });
 		return { ...base, status: v.status, detail: v.detail };
 	}
-	const started = Date.now();
-	try {
-		await r2.send(new ListObjectsV2Command({ Bucket: env.S3_BUCKET, MaxKeys: 1 }), {
-			abortSignal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
-		});
-		const latencyMs = Date.now() - started;
-		const v = classifyObjectStorageProbe({ configured: true, ok: true, latencyMs });
-		return { ...base, status: v.status, detail: v.detail, ...(v.hint ? { hint: v.hint } : {}), metrics: { latencyMs } };
-	} catch (err) {
-		const latencyMs = Date.now() - started;
-		const v = classifyObjectStorageProbe({ configured: true, ok: false, latencyMs, error: err });
+	let result = await timeProbe(probe);
+	let retried = false;
+	if (!result.ok) {
+		await new Promise((resolve) => setTimeout(resolve, RETRY_BACKOFF_MS));
+		result = await timeProbe(probe);
+		retried = true;
+	}
+	if (result.ok) {
+		const v = classifyObjectStorageProbe({ configured: true, ok: true, latencyMs: result.latencyMs });
 		return {
 			...base,
 			status: v.status,
 			detail: v.detail,
 			...(v.hint ? { hint: v.hint } : {}),
-			metrics: { latencyMs, credentialFault: isStorageInfrastructureError(err) },
+			metrics: { latencyMs: result.latencyMs, ...(retried ? { retried: true } : {}) },
 		};
 	}
+	const v = classifyObjectStorageProbe({ configured: true, ok: false, latencyMs: result.latencyMs, error: result.error });
+	return {
+		...base,
+		status: v.status,
+		detail: v.detail,
+		...(v.hint ? { hint: v.hint } : {}),
+		metrics: { latencyMs: result.latencyMs, retried, credentialFault: isStorageInfrastructureError(result.error) },
+	};
 }
