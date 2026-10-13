@@ -16,9 +16,10 @@
 // untrusted data: it is quoted into the user turn as data, never merged into
 // the system prompt.
 
-import { llmComplete } from './llm.js';
-import { resolveAgentBrain } from './agent-brain.js';
-import { modelChain } from './agent-model.js';
+import { llmComplete, providerChain } from './llm.js';
+import { loadOwnerGrokKey } from './agent-grok-key.js';
+import { agentDefaultModel } from './agent-model.js';
+import { MODEL_CATALOG } from './chat-models.js';
 import { normalizeText, CHAT_MAX } from './x-mention-intents.js';
 import { weightedLength as xWeightedLength, findUrls } from './x-text-weight.js';
 
@@ -182,10 +183,19 @@ export function buildPublicUserTurn({ mention, context = null }) {
 	return parts.join('\n\n');
 }
 
+/**
+ * The llm.js provider chain for one agent's public reply: the owner's saved
+ * Grok key (and chosen Grok model, same three meta paths agentDefaultModel()
+ * reads) leads when set, then llm.js's own free-first platform chain as the
+ * fallback. Unlike the gateway's tool-calling chain (agent-model.js /
+ * llm-tool-chain.js), this chain's rungs carry `buildBody`, which is what
+ * llmComplete's attempt loop calls.
+ */
 async function chainFor(agent) {
-	if (!agent) return modelChain(null).chain;
-	const brain = await resolveAgentBrain({ agent, purpose: 'chat', lenient: true });
-	return brain.chain;
+	const grokKey = await loadOwnerGrokKey(agent?.user_id);
+	const defaultModel = agentDefaultModel(agent?.meta);
+	const grokModel = defaultModel && MODEL_CATALOG[defaultModel]?.provider === 'grok' ? defaultModel : null;
+	return providerChain({ grokKey, grokModel });
 }
 
 /**
