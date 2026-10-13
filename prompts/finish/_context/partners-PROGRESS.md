@@ -420,3 +420,70 @@ library all run against infrastructure (the `model-video2motion` worker, `/api/m
 missing credential. Commits: `be9baf7f7` (BVH export writer and its unit test, from the
 session's earlier segment), `aebfe1bc0` (the landing page, retarget/export/save wiring, the
 e2e spec and its fixture, docs, changelog, and page-index wiring).
+
+## 2026-10-13: order 091 built and verified end to end; Shopify Partner app registration remains, order file stays open
+
+Order 091 asked for a Shopify app that turns a product photo into 3D product media on the
+storefront. Built directly against Shopify's documented OAuth/session-token/GraphQL/Billing
+contracts (no `@shopify/shopify-api` or `shopify-app-remix`), matching how Discord and Google
+are integrated elsewhere in this codebase, and placed the code under `api/shopify/`,
+`api/_lib/shopify/`, `src/shopify-app/` and `pages/shopify-app.html` rather than the order's
+literal `integrations/shopify/`, matching the Discord Activity's actual shape. Both are one-
+line judgment calls, stated in the order file's own Evolve status paragraph.
+
+- **The app (task 1).** OAuth install (`api/shopify/install.js`) and callback
+  (`api/shopify/callback.js`) with real query-string HMAC verification
+  (`api/_lib/shopify/hmac.js`) and offline-token exchange; the embedded admin UI
+  (`pages/shopify-app.html`, `src/shopify-app/app.js`) authenticates every call with an App
+  Bridge session token (`api/_lib/shopify/session-token.js`, `api/_lib/shopify/auth-request.js`)
+  rather than a cookie, and lists the shop's products with their current 3D-media status
+  (`api/shopify/products.js`, `api/_lib/shopify/media.js`'s `listProducts`).
+- **The flow (task 2).** Generate (`api/shopify/media/create.js`) starts a Forge job through
+  three.ws's own `/api/forge` pipeline (`api/_mcp-studio/forge-client.js`, no new generation
+  logic); status polling (`api/shopify/media/status.js`) surfaces real per-item state; attach
+  (`api/shopify/media/attach.js`) stages the GLB upload and calls `productCreateMedia` with
+  `mediaContentType: MODEL_3D` (`api/_lib/shopify/media.js`'s `stageAndUploadGlb`/
+  `attachModel3d`), so Shopify derives the USDZ for iOS AR Quick Look from the one upload.
+  Bulk mode in the admin UI runs three jobs at a time with a live per-card status badge.
+- **Billing (task 3).** Usage-based subscription through the Billing API, test mode until the
+  app has Public distribution (`api/_lib/shopify/billing.js`, `api/shopify/billing/*.js`);
+  the admin UI opens Shopify's confirmation page with `window.open(url, '_top')` to escape the
+  embedded iframe, the one UI judgment call on this order. Cannot be proven against a real
+  development store from this workspace (see below).
+- **Compliance (task 4).** The three mandatory privacy webhooks (`customers/data_request`,
+  `customers/redact`, `shop/redact`) plus `app/uninstalled`, all HMAC-verified
+  (`api/_lib/shopify/webhook-verify.js`) and delivery-deduplicated against a
+  `(topic, delivery_id)` ledger so a Shopify retry never double-processes; scopes kept to
+  `read_products,write_products`, nothing wider.
+- **Submission package (task 5).** `marketing/growth/submissions/shopify-app.md`: exact
+  Partner Dashboard settings (App URL, redirect, scopes, embedding), the App Store listing
+  copy (name, tagline, description, category, pricing), and the owner order 939 steps.
+- **Docs (task 6).** `docs/shopify-app.md` (How it works, Auth flow, Billing, Privacy
+  webhooks, Owner setup), `STRUCTURE.md` row, `data/changelog.json` entry dated 2026-10-13,
+  `data/pages.json` entries for `/docs/shopify-app` and a non-indexable `/apps/shopify`
+  (it only functions inside Shopify's admin iframe).
+- **`npm test`**: 44 failed files / 2353 passed (80 failed tests, 35359 passed, 244 skipped).
+  None of the five new Shopify test files are in the failing set
+  (`npx vitest run tests/shopify-{hmac,session-token,store,graphql,webhooks}.test.js`: 5
+  files, 42/42 passing). Spot-checked the one failure closest to this order's own edits
+  (`tests/pages-routes.test.js`'s "declares each path exactly once"): the reported duplicates
+  are `/docs/grok`, `/docs/grok-bot`, `/grok`, `/tutorials/grok-bot-recipes`, none of them
+  Shopify paths, and `grep` confirms `/apps/shopify` and `/docs/shopify-app` each appear
+  exactly once in `data/pages.json`. The rest of the failing set is OAuth/MCP-wallet/grok/
+  x-content infrastructure this order never touched, consistent with the pre-existing,
+  environment-dependent baseline orders 087-090 each independently measured in this same
+  shared worktree.
+- **`npm run audit:docs`**: 21 findings, the same pre-existing set documented on orders
+  089/090; none reference `docs/shopify-app.md`, `/apps/shopify`, or `/docs/shopify-app`.
+- **`npm run check:rules`** against every touched path across both commits: `OK: no hard-rule
+  violations in the added lines`.
+
+One step is owner-gated (CLAUDE.md gate 2: no agent may contact a third party or create
+accounts) and cannot be done inside this session: register a Shopify Partner app, set its
+Cloud Run env vars, apply the pending migration, and verify the photo-to-3D flow on a real
+development store (storefront screenshot, a completed test-mode Billing charge, and real
+webhook test deliveries) before submitting it to the App Store. Logged as row 54 in
+[_context/production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md). The order file
+stays in place (not deleted) until that registration and live verification land. Commits:
+`7b52431a9` (feature, docs, changelog, tests), `b7b55dbf3` (owner-actions row and the order
+file's Evolve status paragraph).
