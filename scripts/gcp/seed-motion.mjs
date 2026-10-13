@@ -530,6 +530,7 @@ function stagedManifestEntries(state, publicDomain) {
 			url: `${publicDomain}/${R2_PREFIX}/clips/${record.name}.json`,
 			category: record.category,
 			source: 'generated',
+			license: 'three.ws (self-hosted text-to-motion, no third-party clip data)',
 		});
 	}
 	return entries.sort((a, b) => a.name.localeCompare(b.name));

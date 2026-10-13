@@ -23,6 +23,7 @@ import { dirname, resolve, basename } from 'node:path';
 import { Blob } from 'node:buffer';
 import { liftHipsUpright } from './upright-hips.mjs';
 import { recenterHips } from './recenter-hips.mjs';
+import { canonicalizeBoneName } from '../src/glb-canonicalize.js';
 
 // three's loaders + exporter touch a handful of DOM globals; stub them out for node.
 globalThis.self = globalThis;
@@ -157,6 +158,12 @@ async function loadGLB(path) {
 	return new Promise((res, rej) => loader.parse(ab, '', res, rej));
 }
 
+const glbCache = new Map();
+async function getCachedGLB(path) {
+	if (!glbCache.has(path)) glbCache.set(path, await loadGLB(path));
+	return glbCache.get(path);
+}
+
 async function loadFBX(path) {
 	const { FBXLoader } = await import('three/examples/jsm/loaders/FBXLoader.js');
 	const buf = readFileSync(path);
@@ -214,7 +221,16 @@ function retargetClip(clip, avaturnBones, { scaleHips = true } = {}) {
 		const dot = track.name.indexOf('.');
 		const boneRaw = track.name.slice(0, dot);
 		const property = track.name.slice(dot + 1);
-		const stripped = boneRaw.replace(MIXAMO_PREFIX, '');
+		let stripped = boneRaw.replace(MIXAMO_PREFIX, '');
+		// Non-Mixamo humanoid conventions (Unreal mannequin, VRM, Daz, …) don't
+		// match the canonical set under a plain prefix strip, so fall back to the
+		// same bone-name canonicalizer that lets any uploaded rig play this
+		// clip library (src/glb-canonicalize.js), so a CC0 source authored on
+		// one of those skeletons retargets exactly like a Mixamo one.
+		if (!avaturnBones.has(stripped)) {
+			const canon = canonicalizeBoneName(boneRaw);
+			if (canon && avaturnBones.has(canon)) stripped = canon;
+		}
 		if (!avaturnBones.has(stripped)) {
 			dropped.push(boneRaw);
 			continue;
@@ -328,6 +344,8 @@ async function main() {
 					icon: def.icon,
 					loop: def.loop !== false,
 					...(def.category ? { category: def.category } : {}),
+					...(def.source_name ? { source: def.source_name } : {}),
+					...(def.license ? { license: def.license } : {}),
 					...(existing.duration ? { duration: existing.duration } : {}),
 				});
 				console.log(`[animations] PREBUILT ${def.name.padEnd(12)} (source ${def.source} absent)`);
@@ -352,6 +370,8 @@ async function main() {
 				icon: def.icon,
 				loop: def.loop !== false,
 				...(def.category ? { category: def.category } : {}),
+				...(def.source_name ? { source: def.source_name } : {}),
+				...(def.license ? { license: def.license } : {}),
 				...(existing.duration ? { duration: existing.duration } : {}),
 			});
 			console.log(`[animations] CACHED ${def.name}`);
@@ -365,8 +385,14 @@ async function main() {
 			const isGlb = /\.glb$/i.test(fbxPath);
 			let sourceClip;
 			if (isGlb) {
-				const gltf = await loadGLB(fbxPath);
-				sourceClip = gltf.animations?.[0];
+				// Multi-clip CC0 packs (Quaternius, Mesh2Motion) ship dozens of
+				// named AnimationClips in one GLB, selected by `def.sourceClip`.
+				// The decoded scene is cached per path so a 50+ entry config
+				// referencing the same pack parses the GLB once, not once per clip.
+				const gltf = await getCachedGLB(fbxPath);
+				sourceClip = def.sourceClip
+					? gltf.animations?.find((a) => a.name === def.sourceClip)
+					: gltf.animations?.[0];
 			} else {
 				const fbx = await loadFBX(fbxPath);
 				sourceClip = fbx.animations?.[0];
@@ -431,6 +457,8 @@ async function main() {
 				icon: def.icon,
 				loop: def.loop !== false,
 				...(def.category ? { category: def.category } : {}),
+				...(def.source_name ? { source: def.source_name } : {}),
+				...(def.license ? { license: def.license } : {}),
 				...(json.duration ? { duration: json.duration } : {}),
 			});
 			okCount++;
