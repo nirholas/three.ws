@@ -1060,6 +1060,75 @@ command (`npm run deploy:gcp:full`, already covered by row 1's general
 deploy cadence) and the post-deploy log query to confirm the fix landed.
 No owner decision was otherwise needed; this is a pure code fix.
 
+## 2026-10-13: order 400 (R2 outage resilience, agent-doable half) closed
+
+Step 0 re-derivation confirmed the order's premise still held: `ops_alerts`
+showed the last `RESOLVED: Object storage (Cloudflare R2)` row at
+2026-10-11T06:55:05Z with every hourly tick since then `DOWN` (35+ hours at
+measurement time during this run, now 60+ hours), the public `*.r2.dev`
+domain answering a Cloudflare-branded 403, and `/cdn/<key>` (`api/cdn-object.js`)
+502ing because both of its legs are down simultaneously. Four commits on
+`evolve`, one per task:
+
+1. `ee94b259d` doc escalation: `prompts/finish/_context/production-100-OWNER-ACTIONS.md`
+   row 36 and `docs/ops/production-log-triage.md`'s `r2-downstream-5xx`
+   section both corrected from "flaps... many RESOLVED events minutes
+   apart" to the measured 35+ hour unbroken `DOWN` streak, without touching
+   row 36's owner classification.
+2. `ba53f5086` health-probe retry: `gatherObjectStorageHealth()`
+   (`api/_lib/ops/object-storage-health.js`) now retries once after a
+   200-500ms backoff before classifying `down`, scoped to absorb a single
+   transient blip inside one invocation, not to mask a sustained outage.
+   `tests/object-storage-health.test.js` proves a failure-then-success
+   classifies ok/degraded and two consecutive failures still classify down.
+3. `d152edbfe` frontend fallback: `src/marketplace-detail.js` (detail
+   avatar, creator-modal thumb grids) and `src/marketplace-gallery.js`
+   (panel media) now probe thumbnail/GLB loads with a detached `Image()`
+   or the `<model-viewer>` `error` event and keep the initial-letter
+   fallback showing on failure instead of a blank box or stuck spinner.
+4. `6c11ef944` `/cdn/` routing: `api/_lib/r2.js` exports
+   `cdnUrl()`/`cdnUrlOrNull()` (same-origin `/cdn/<key>` via `encodeR2Key()`,
+   never throws). `thumbnailUrl()` now calls `cdnUrlOrNull()` internally,
+   which fixed `pump-agent-launches.js` and `marketplace/animations.js` for
+   free. Direct call sites switched: `agent-earnings.js`, `agent-economy.js`
+   (`avatarThumb`), `marketplace/[action].js`, `persona-store.js`'s
+   persisted GLB URL, and `avatars.js`'s `model_url`/`base_model_url`/
+   `usdz_url`/`halfbody_url` plus `resolveAvatarUrl()`'s public branch
+   (previously tagged `cdn: true` while actually returning a raw r2.dev
+   URL; now true to that tag). `drop-store.js`'s `thumbnailUrl` is a
+   destructured parameter name fed from forge-job data in its caller, not
+   a local URL-construction helper, so it needed no change. A follow-up
+   grep sweep (`grep -rn "publicUrl(" api/_lib/*.js api/**/*.js`) found
+   ~40 more call sites outside the order's 6 named files/helpers (forge
+   pipeline internals, cron jobs, third-party provider integrations,
+   print/IRL/IBM/x402/erc8004 handlers); left untouched as a deliberate
+   scope boundary rather than an unbounded same-session expansion, several
+   of them persisting URLs into DB columns rather than only shaping an API
+   response.
+
+Verification: `npx vitest run tests/object-storage-health.test.js` passes
+8/8. `npx vitest run tests/r2-public-url-or-null.test.js
+tests/cdn-object-storage-failover.test.js tests/r2-public-object-fallback.test.js
+tests/r2-key-from-public-url.test.js` passes 28/28. A local full-stack
+server against the real production database confirmed
+`/api/marketplace/agents?limit=1` now returns `thumbnail_url` and
+`avatar_glb_url` both starting with `https://three.ws/cdn/`, not
+`*.r2.dev`. A Playwright check against the still-live outage confirmed the
+marketplace detail page's avatar fallback renders its initial letter
+(visible) and the model-stage label reads "Couldn't load the 3D model."
+instead of hanging. `npm run test:core` finished at 46 failed files / 85
+failed tests, 2352/35376 passed, matching the pre-existing baseline
+(confirmed via a path-scoped `git stash` comparison that the two
+investigated failures, `agent-earnings-board.test.js`'s missing
+`agent_commerce_invoices` relation and `mcp-studio-asset-links.test.js`'s
+`MAX_GLB_BYTES` mismatch, reproduce identically with none of this order's
+changes present), no new failures. `npm run check:rules` clean on every
+touched file.
+
+No owner decision was needed beyond what OWNER-ACTIONS row 36 already
+tracks (enabling R2 in the Cloudflare dashboard); everything in this order
+was agent-doable and ships independent of when that happens.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
