@@ -6699,6 +6699,14 @@
 					"added": "2026-07-30"
 				},
 				{
+					"path": "/docs/voice-framework-integrations",
+					"title": "Docs: LiveKit and Pipecat avatar integrations",
+					"description": "How to drive a three.ws <agent-3d> avatar's lipsync and gestures from a LiveKit Agents or Pipecat voice pipeline, with the livekit-plugins-threews and pipecat-threews packages, runnable local examples, and the data-channel message contract both share.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-13"
+				},
+				{
 					"path": "/docs/rig-doctor",
 					"title": "Rig Doctor reference",
 					"description": "What each Rig Doctor verdict means, how limb-group coverage is scored, what the in-browser repair changes, the eleven rig conventions it recognises, and the full 52-joint canonical skeleton.",

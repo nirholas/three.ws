@@ -3,6 +3,17 @@
 	"entries": [
 		{
 			"date": "2026-10-13",
+			"title": "A three.ws avatar now lipsyncs to any LiveKit Agents or Pipecat voice pipeline",
+			"link": "/docs/voice-framework-integrations",
+			"summary": "Two new packages, livekit-plugins-threews and pipecat-threews, republish a running voice agent's TTS and user-turn frames as the same transcript/gesture/speech_started/speech_ended message shape over the room's data channel, which <agent-3d voice=\"livekit\"> already renders client-side: no server-side video rendering, no change to the browser code at all. The LiveKit package is an AvatarSession plugin dropped into an AgentSession; the Pipecat package is a FrameProcessor placed after the TTS service. Each ships a runnable local example against a real open-source livekit-server with a real local TTS, verified end to end with real browser automation driving the actual avatar lipsync and gesture cues off a live bot in both frameworks. Docs: /docs/voice-framework-integrations.",
+			"tags": [
+				"feature",
+				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
 			"title": "Open source credits: every dependency, model, and asset source three.ws runs on, in one place",
 			"link": "/open-source",
 			"summary": "A new /open-source page lists every third-party dependency, GPU worker model, and free asset source the platform runs on, grouped by area (rendering, formats and compression, generation models, motion, voice, assets, infrastructure) with license, upstream link, and what each one powers here. The dataset is generated from package.json and each worker's own README, not hand-maintained, and a guard test fails the build if a new direct dependency lands without a credited entry. Credits now also show up where the work actually happens: /objects and the object viewer name Poly Haven, the CC0 asset library the catalog sources from; the Forge export dialog names meshoptimizer and glTF-Transform; and the animation gallery shows each clip's source and license, including a fallback for studio-tier clips that lack an explicit manifest entry. Docs: /docs/open-source-credits.",

@@ -212,6 +212,7 @@ Want the model in your hands rather than on a screen? [Materialize](./materializ
 - **Teaching another AI to use three.ws?** → [The Agent Skills pack](./agent-skills.md) — portable `SKILL.md` folders that give any Claude surface (Claude Code, the Claude apps, the Agent SDK) three.ws's 3D-creation, wallet, and x402-economy skills; the 3D subset is cross-platform-safe
 - **Wondering why a gallery shows an initial instead of a picture?** → [Avatar thumbnails](./avatar-thumbnails.md) — where an avatar's preview image comes from, the one rule every code path obeys (never publish a thumbnail URL whose object doesn't exist), the two crons that keep coverage at 100%, and how to run the backfill
 - **Adding 3D to a page, or wondering why one feels slow?** → [Page performance](./page-performance.md): the rules a three.ws page plays by, a model preview runs only while someone is looking at it, a model loads when it is wanted, anything that arrives late reserves its box first, and images are fetched at the size they are shown
+- **Running your voice agent on LiveKit or Pipecat?** → [LiveKit and Pipecat avatar integrations](./voice-framework-integrations.md): drop `livekit-plugins-threews` or `pipecat-threews` into your pipeline and a real `<agent-3d>` avatar lipsyncs and gestures to it, no server-side rendering, no cloud account required to try it against a local `livekit-server`
 
 ---
 
