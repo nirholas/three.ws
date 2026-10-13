@@ -30,14 +30,16 @@
 import { sql } from './db.js';
 import { solPriceUsd } from './sol-price.js';
 import { SOLANA_USDC_MINT } from '../payments/_config.js';
-import { publicUrl as r2PublicUrl } from './r2.js';
+import { cdnUrl } from './r2.js';
 
-// A portrait is decoration: a misconfigured public-URL resolver degrades it to
-// null instead of failing the board.
+// A portrait is decoration: a misconfigured URL resolver degrades it to null
+// instead of failing the board. Routed through /cdn/ (not a raw publicUrl())
+// so a thumbnail here gets the same signed-read-then-public-fallback
+// protection every other API-facing thumbnail now gets.
 function safeR2Url(key) {
 	if (!key) return null;
 	try {
-		return r2PublicUrl(key);
+		return cdnUrl(key);
 	} catch {
 		return null;
 	}

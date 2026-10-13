@@ -14,10 +14,10 @@ vi.mock('../api/_lib/db.js', () => {
 	const sql = vi.fn(async () => (queue.length ? queue.shift() : []));
 	return { sql, isDbUnavailableError: () => false, isDbCapacityError: () => false };
 });
-// avatarThumb pulls in r2 publicUrl — stub it so a thumbnail key resolves to a
-// deterministic URL without real R2 config.
+// avatarThumb pulls in r2 cdnUrlOrNull, so stub it to resolve a thumbnail key to
+// a deterministic URL without real R2 config.
 vi.mock('../api/_lib/r2.js', () => ({
-	publicUrl: (key) => (key ? `https://cdn.test/${key}` : null),
+	cdnUrlOrNull: (key) => (key ? `https://cdn.test/${key}` : null),
 }));
 
 import { sql } from '../api/_lib/db.js';

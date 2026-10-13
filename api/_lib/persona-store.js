@@ -27,7 +27,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { sql } from './db.js';
 import { databaseConfigured } from './env.js';
-import { putObject, copyObject, publicUrl } from './r2.js';
+import { putObject, copyObject, cdnUrl } from './r2.js';
 import { fetchUpstream } from './upstream-fetch.js';
 
 const dbConfigured = () => databaseConfigured();
@@ -132,7 +132,7 @@ export async function persistPersonaGlb(sourceUrl, personaId, buffer = null) {
 		} else {
 			return { glbUrl: sourceUrl, glbKey: null };
 		}
-		return { glbUrl: publicUrl(key), glbKey: key };
+		return { glbUrl: cdnUrl(key), glbKey: key };
 	} catch {
 		// Durable copy failed — keep the source URL rather than losing the persona.
 		return { glbUrl: sourceUrl, glbKey: null };

@@ -398,9 +398,35 @@ export function isLegacyOgThumbnailKey(thumbnailKey) {
 // not bare publicUrl(). See docs/avatar-thumbnails.md.
 export function thumbnailUrl(thumbnailKey) {
 	if (!thumbnailKey || isLegacyOgThumbnailKey(thumbnailKey)) return null;
-	return publicUrlOrNull(thumbnailKey);
+	return cdnUrlOrNull(thumbnailKey);
 }
 
-function encodeR2Key(key) {
+export function encodeR2Key(key) {
 	return key.split('/').map(encodeURIComponent).join('/');
+}
+
+// URL for an object served through the first-party /cdn/<key> proxy
+// (api/cdn-object.js) instead of the raw public *.r2.dev domain publicUrl()
+// returns. The proxy already streams the signed read and falls back to the
+// public domain on its own (see isStorageInfrastructureError's callers
+// there), so routing API responses through it gives every caller that
+// failover and the rate-limit-avoiding edge cache for free, not just the
+// handful of callers that happened to link to /cdn/ directly. publicUrl()
+// stays the low-level primitive /cdn/ itself calls internally; this is what
+// gets handed to a browser or API consumer instead.
+export function cdnUrl(key) {
+	if (isAbsoluteUrl(key)) return key;
+	return `${env.APP_ORIGIN}/cdn/${encodeR2Key(key)}`;
+}
+
+// cdnUrl() for a READ path, same null-degrades-gracefully contract as
+// publicUrlOrNull(): a missing key is a designed empty state, not a thrown
+// error that takes down the rest of a list response.
+export function cdnUrlOrNull(key) {
+	if (!key) return null;
+	try {
+		return cdnUrl(key);
+	} catch {
+		return null;
+	}
 }

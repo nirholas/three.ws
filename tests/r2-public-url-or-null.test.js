@@ -33,7 +33,7 @@ afterAll(() => {
 	else process.env.S3_PUBLIC_DOMAIN = savedPublicDomain;
 });
 
-const { publicUrlOrNull, thumbnailUrl, publicUrl } = await import('../api/_lib/r2.js');
+const { publicUrlOrNull, thumbnailUrl, publicUrl, cdnUrl, cdnUrlOrNull } = await import('../api/_lib/r2.js');
 
 // Load a second, independent instance of the module with storage unconfigured.
 async function withStorageUnset(fn) {
@@ -67,9 +67,38 @@ describe('publicUrlOrNull with object storage configured', () => {
 		expect(publicUrlOrNull('')).toBeNull();
 	});
 
-	it('still resolves thumbnails, and still drops legacy poisoned OG keys', () => {
-		expect(thumbnailUrl('u/42/thumb.png')).toBe('https://cdn.example.com/u/42/thumb.png');
+	it('still resolves thumbnails, now through the /cdn/ proxy instead of the raw bucket domain, and still drops legacy poisoned OG keys', () => {
+		expect(thumbnailUrl('u/42/thumb.png')).toBe('https://three.ws/cdn/u/42/thumb.png');
 		expect(thumbnailUrl('https://three.ws/avatar/x_og.png')).toBeNull();
+	});
+});
+
+describe('cdnUrl / cdnUrlOrNull', () => {
+	it('builds a same-origin /cdn/<key> URL instead of the raw bucket domain', () => {
+		expect(cdnUrl('u/42/avatar.glb')).toBe('https://three.ws/cdn/u/42/avatar.glb');
+		expect(cdnUrl('u/42/avatar.glb')).not.toBe(publicUrl('u/42/avatar.glb'));
+	});
+
+	it('percent-encodes each key segment, same as publicUrl', () => {
+		expect(cdnUrl('u/42/file name.png')).toBe('https://three.ws/cdn/u/42/file%20name.png');
+	});
+
+	it('passes an already-absolute storage key through untouched', () => {
+		expect(cdnUrl('https://three.ws/avatars/realistic-male.glb')).toBe('https://three.ws/avatars/realistic-male.glb');
+	});
+
+	it('cdnUrlOrNull returns null for an absent key rather than throwing', () => {
+		expect(cdnUrlOrNull(null)).toBeNull();
+		expect(cdnUrlOrNull(undefined)).toBeNull();
+		expect(cdnUrlOrNull('')).toBeNull();
+		expect(cdnUrlOrNull('u/42/avatar.glb')).toBe('https://three.ws/cdn/u/42/avatar.glb');
+	});
+
+	it('never throws when object storage is unconfigured, since /cdn/ needs no bucket domain to build the URL', async () => {
+		await withStorageUnset((r2) => {
+			expect(r2.cdnUrl('u/42/avatar.glb')).toBe('https://three.ws/cdn/u/42/avatar.glb');
+			expect(r2.thumbnailUrl('u/42/thumb.png')).toBe('https://three.ws/cdn/u/42/thumb.png');
+		});
 	});
 });
 
@@ -78,7 +107,12 @@ describe('publicUrlOrNull without object storage', () => {
 		await withStorageUnset((r2) => {
 			expect(() => r2.publicUrl('u/42/avatar.glb')).toThrow(/S3_PUBLIC_DOMAIN/);
 			expect(r2.publicUrlOrNull('u/42/avatar.glb')).toBeNull();
-			expect(r2.thumbnailUrl('u/42/thumb.png')).toBeNull();
+		});
+	});
+
+	it('thumbnailUrl still resolves without object storage configured, since /cdn/ needs no bucket domain', async () => {
+		await withStorageUnset((r2) => {
+			expect(r2.thumbnailUrl('u/42/thumb.png')).toBe('https://three.ws/cdn/u/42/thumb.png');
 		});
 	});
 

@@ -4,7 +4,7 @@
 import { createHash } from 'node:crypto';
 import { sql } from './db.js';
 import { cacheWrap } from './cache.js';
-import { publicUrl, thumbnailUrl, presignGet, deleteObject } from './r2.js';
+import { cdnUrl, thumbnailUrl, presignGet, deleteObject } from './r2.js';
 import { defaultStorageMode } from './storage-mode.js';
 import { isUuid } from './validate.js';
 
@@ -516,7 +516,7 @@ export async function listForks({ avatarId, limit = 24, cursor }) {
 			thumbnail_url: thumbnailUrl(r.thumbnail_key),
 			model_url:
 				r.visibility === 'public' || r.visibility === 'unlisted'
-					? publicUrl(r.storage_key)
+					? cdnUrl(r.storage_key)
 					: null,
 		})),
 		next_cursor: hasMore ? new Date(page[page.length - 1].created_at).toISOString() : null,
@@ -543,7 +543,7 @@ export async function listForks({ avatarId, limit = 24, cursor }) {
 export async function resolveAvatarUrl(row, { expiresIn = 600, browser = false } = {}) {
 	const key = _servedStorageKey(row);
 	if (row.visibility === 'public' || row.visibility === 'unlisted') {
-		return { url: publicUrl(key), cdn: true };
+		return { url: cdnUrl(key), cdn: true };
 	}
 	if (browser) {
 		return { url: `${SITE_ORIGIN}/api/avatars/${row.id}/glb`, cdn: false };
@@ -667,16 +667,16 @@ function decorate(row) {
 		updated_at: row.updated_at,
 		model_url:
 			row.visibility === 'public' || row.visibility === 'unlisted'
-				? publicUrl(servedStorageKey)
+				? cdnUrl(servedStorageKey)
 				: null,
 		base_model_url:
 			row.visibility === 'public' || row.visibility === 'unlisted'
-				? publicUrl(row.storage_key)
+				? cdnUrl(row.storage_key)
 				: null,
 		parent_avatar_id: row.parent_avatar_id || null,
 		thumbnail_url: thumbnailUrl(row.thumbnail_key),
-		usdz_url: row.usdz_key ? publicUrl(row.usdz_key) : null,
-		halfbody_url: row.halfbody_key ? publicUrl(row.halfbody_key) : null,
+		usdz_url: row.usdz_key ? cdnUrl(row.usdz_key) : null,
+		halfbody_url: row.halfbody_key ? cdnUrl(row.halfbody_key) : null,
 		appearance: row.appearance || null,
 		appearance_hash: row.appearance_hash || null,
 		baked: bakedFresh,

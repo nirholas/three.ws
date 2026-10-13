@@ -20,8 +20,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('../../api/_lib/db.js', () => ({ sql: async () => [] }));
 vi.mock('../../api/_lib/cache.js', () => ({ cacheWrap: (_k, fn) => fn() }));
 vi.mock('../../api/_lib/r2.js', () => ({
-	publicUrl: (key) => `https://pub-test.r2.dev/${key}`,
-	thumbnailUrl: (key) => (key ? `https://pub-test.r2.dev/${key}` : null),
+	cdnUrl: (key) => `https://three.ws/cdn/${key}`,
+	thumbnailUrl: (key) => (key ? `https://three.ws/cdn/${key}` : null),
 	presignGet: async ({ key, expiresIn }) =>
 		`https://bucket.r2.cloudflarestorage.com/${key}?X-Amz-Signature=deadbeef&X-Amz-Expires=${expiresIn}`,
 	deleteObject: async () => {},
@@ -54,7 +54,7 @@ describe('resolveAvatarUrl audience', () => {
 			const row = { ...PRIVATE, visibility };
 			for (const opts of [{ browser: true }, {}]) {
 				const r = await resolveAvatarUrl(row, opts);
-				expect(r.url).toBe('https://pub-test.r2.dev/u/o/a.glb');
+				expect(r.url).toBe('https://three.ws/cdn/u/o/a.glb');
 				expect(r.cdn).toBe(true);
 			}
 		}

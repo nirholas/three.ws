@@ -13,7 +13,7 @@
 // it can be queried, rated, and audited.
 
 import { sql } from './db.js';
-import { publicUrl as r2PublicUrl } from './r2.js';
+import { cdnUrlOrNull } from './r2.js';
 
 export function atomicsToUsdc(atomics) {
 	return Number(atomics || 0) / 1_000_000;
@@ -24,7 +24,7 @@ export function atomicsToUsdc(atomics) {
 // avatar render.
 function avatarThumb(thumbKey, visibility) {
 	const visible = visibility === 'public' || visibility === 'unlisted';
-	return thumbKey && visible ? r2PublicUrl(thumbKey) : null;
+	return thumbKey && visible ? cdnUrlOrNull(thumbKey) : null;
 }
 
 function shapeProvider(row) {
