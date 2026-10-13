@@ -15,6 +15,7 @@ import { env } from '../_lib/env.js';
 import { getRedis as _getSharedRedis } from '../_lib/redis.js';
 import { cors, error, method, wrap, readJson, json, rateLimited } from '../_lib/http.js';
 import { parse } from '../_lib/validate.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../_lib/openrouter-attribution.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getRequestUser } from '../_lib/auth.js';
 import { recordEvent, logger } from '../_lib/usage.js';
@@ -689,9 +690,7 @@ export default wrap(async (req, res) => {
 						headers: {
 							'content-type': 'application/json',
 							authorization: `Bearer ${apiKey}`,
-							...(route.provider === 'openrouter'
-								? { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws agent' }
-								: {}),
+							...(route.provider === 'openrouter' ? OPENROUTER_ATTRIBUTION_HEADERS : {}),
 						},
 						body: JSON.stringify(
 							anthropicBodyToOpenAI({ ...body, model: usedModel }, { provider: route.provider }),

@@ -25,6 +25,7 @@ import { pedigreeScore } from '../_lib/genome.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { markProviderCooldown, AUTH_COOLDOWN_SECONDS } from '../_lib/provider-health.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../_lib/openrouter-attribution.js';
 import {
 	vertexGeminiAvailable,
 	vertexGeminiModel,
@@ -893,10 +894,7 @@ const PREVIEW_PROVIDERS = {
 		url: 'https://openrouter.ai/api/v1/chat/completions',
 		defaultModel: 'google/gemma-4-31b-it:free',
 		style: 'openai',
-		extraHeaders: {
-			'HTTP-Referer': 'https://three.ws',
-			'X-Title': 'three.ws marketplace',
-		},
+		extraHeaders: OPENROUTER_ATTRIBUTION_HEADERS,
 	},
 	groq: {
 		envKey: 'GROQ_API_KEY',

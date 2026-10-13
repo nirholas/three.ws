@@ -12,6 +12,7 @@
 // upstream failure throws so the proxy reports the real cause to the caller.
 
 import { fetchUpstream } from './upstream-fetch.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from './openrouter-attribution.js';
 
 const IAM_TOKEN_URL = 'https://iam.cloud.ibm.com/identity/token';
 
@@ -251,8 +252,7 @@ async function graniteOpenRouterFallback({ messages, maxTokens, temperature }) {
 				headers: {
 					'content-type': 'application/json',
 					authorization: `Bearer ${key}`,
-					'HTTP-Referer': 'https://three.ws',
-					'X-Title': 'three.ws',
+					...OPENROUTER_ATTRIBUTION_HEADERS,
 				},
 				body: JSON.stringify({
 					model,

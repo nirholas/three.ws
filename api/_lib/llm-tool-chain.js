@@ -11,6 +11,7 @@
 
 import { env } from './env.js';
 import { DEFAULT_FREE_MODEL, MODEL_CATALOG, resolveModelId } from './chat-models.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from './openrouter-attribution.js';
 import {
 	vertexGeminiAvailable,
 	vertexGeminiModel,
@@ -54,7 +55,7 @@ export function providerChain() {
 			url: 'https://openrouter.ai/api/v1/chat/completions',
 			key,
 			model: DEFAULT_FREE_MODEL,
-			extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' },
+			extraHeaders: OPENROUTER_ATTRIBUTION_HEADERS,
 		});
 	});
 	if (env.NVIDIA_API_KEY) {
@@ -255,14 +256,14 @@ function singleLaneRung(model, meta) {
 			key: env.OPENROUTER_API_KEY,
 			model: anthropicMirrorId(model),
 			catalogModel: model,
-			extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' },
+			extraHeaders: OPENROUTER_ATTRIBUTION_HEADERS,
 		};
 	}
 	const lane = LANE_ENDPOINTS[meta.provider];
 	const key = lane?.key();
 	if (!lane || !key) return null;
 	const rung = { name: meta.provider, url: lane.url, key, model, catalogModel: model };
-	if (meta.provider === 'openrouter') rung.extraHeaders = { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' };
+	if (meta.provider === 'openrouter') rung.extraHeaders = OPENROUTER_ATTRIBUTION_HEADERS;
 	return rung;
 }
 

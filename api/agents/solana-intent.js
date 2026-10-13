@@ -23,6 +23,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.
 import { sql } from '../_lib/db.js';
 import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../_lib/openrouter-attribution.js';
 import { loadUserProviderKeys } from '../_lib/provider-keys.js';
 import { resolveSolanaRecipient } from '../../src/solana/sns.js';
 import { THREE_MINT } from '../_lib/networth-model.js';
@@ -279,8 +280,7 @@ async function callOpenRouter({ apiKey, system, messages }) {
 		headers: {
 			Authorization: `Bearer ${apiKey}`,
 			'content-type': 'application/json',
-			'HTTP-Referer': 'https://three.ws',
-			'X-Title': 'three.ws conversational wallet',
+			...OPENROUTER_ATTRIBUTION_HEADERS,
 		},
 		body: JSON.stringify({
 			model: OPENROUTER_MODEL,

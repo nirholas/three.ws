@@ -42,6 +42,7 @@ import {
 	SOL_FEE_HEADROOM_LAMPORTS,
 } from './agent-trade-guards.js';
 import { THREE_MINT } from './networth-model.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from './openrouter-attribution.js';
 import { XAI_CHAT_COMPLETIONS_URL, GROK_BUDGET_MODEL, GROK_BUDGET_EXTRA_BODY } from './chat-models.js';
 import { resolveSolanaRecipient } from '../../src/solana/sns.js';
 import { recentPumpLaunches, enrichCreatorStats } from './pump-launch-feed.js';
@@ -605,8 +606,7 @@ async function callOpenRouterCompile({ apiKey, system, messages }) {
 		headers: {
 			Authorization: `Bearer ${apiKey}`,
 			'content-type': 'application/json',
-			'HTTP-Referer': 'https://three.ws',
-			'X-Title': 'three.ws wallet intents',
+			...OPENROUTER_ATTRIBUTION_HEADERS,
 		},
 		body: JSON.stringify({
 			model: 'openai/gpt-oss-120b',

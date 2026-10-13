@@ -16,6 +16,8 @@
 // as families/capabilities, and whatever is actually alive today wins. A future
 // retirement rotates the fleet automatically rather than breaking chat.
 
+import { OPENROUTER_ATTRIBUTION_HEADERS } from './openrouter-attribution.js';
+
 const MODELS_URL = 'https://openrouter.ai/api/v1/models';
 const TTL_MS = 5 * 60 * 1000;
 // Serve a stale list rather than nothing when OpenRouter is unreachable: a
@@ -76,8 +78,7 @@ export function rankFreeModels(models) {
 
 async function fetchFreeModels(apiKey) {
 	const headers = {
-		'HTTP-Referer': 'https://three.ws',
-		'X-Title': 'three.ws chat',
+		...OPENROUTER_ATTRIBUTION_HEADERS,
 		...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
 	};
 	// The public model list needs no key; an unkeyed deployment still gets a

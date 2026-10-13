@@ -19,6 +19,7 @@ import { cors, method, readJson, error, wrap, rateLimited } from '../_lib/http.j
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { watsonxConfig, watsonxChatRequest } from '../_lib/watsonx.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../_lib/openrouter-attribution.js';
 import {
 	DEFAULT_FREE_MODEL,
 	modelThinksByDefault,
@@ -627,7 +628,7 @@ function openrouter(key = openrouterKeys()[0]) {
 		const model = createOpenAI({
 			apiKey: key,
 			baseURL: 'https://openrouter.ai/api/v1',
-			headers: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws brain' },
+			headers: OPENROUTER_ATTRIBUTION_HEADERS,
 			fetch: openrouterUsageFetch((usd) => {
 				cell.usd = usd;
 			}),

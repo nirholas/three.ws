@@ -6,6 +6,7 @@ import { presignUpload, headObject, r2, publicUrl, putObject } from '../_lib/r2.
 import { storageKeyFor, enforceQuotas, searchPublicAvatars, stripOwnerFor, assertAvatarSlotAvailable, isPlanLimitError, PLAN_LIMIT_JOB_ERROR, defaultAvatarVisibilityFor } from '../_lib/avatars.js';
 import { listAvatars } from '../_lib/avatars.js';
 import { env } from '../_lib/env.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../_lib/openrouter-attribution.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, readBody, wrap, error, rateLimited } from '../_lib/http.js';
 import { parse, presignUploadBody, slug as slugSchema, createAvatarBody } from '../_lib/validate.js';
@@ -893,7 +894,7 @@ async function classifyAvatarImage({ thumbUrl, prompt, env }) {
 			env.OPENROUTER_API_KEY,
 			'https://openrouter.ai/api/v1/chat/completions',
 			'meta-llama/llama-3.2-11b-vision-instruct',
-			{ 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws avatar auto-tag' },
+			OPENROUTER_ATTRIBUTION_HEADERS,
 		));
 	}
 	if (env.NVIDIA_API_KEY) {

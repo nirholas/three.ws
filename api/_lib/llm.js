@@ -46,6 +46,7 @@
 import { env } from './env.js';
 import { recordEvent } from './usage.js';
 import { costMicroUsd } from './llm-pricing.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from './openrouter-attribution.js';
 import { sql } from './db.js';
 import {
 	vertexClaudeEnabled,
@@ -574,7 +575,7 @@ function openrouterProvider({ name, key, model }) {
 		key,
 		url: 'https://openrouter.ai/api/v1/chat/completions',
 		model,
-		extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' },
+		extraHeaders: OPENROUTER_ATTRIBUTION_HEADERS,
 		extraBody: { usage: { include: true } },
 		extractCostUsd: (r) => (Number.isFinite(r?.usage?.cost) ? r.usage.cost : null),
 	});

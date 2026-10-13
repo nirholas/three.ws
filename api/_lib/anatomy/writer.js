@@ -17,6 +17,7 @@
 // machine before the next rung starts over.
 
 import { llmComplete } from '../llm.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../openrouter-attribution.js';
 import { recordEvent } from '../usage.js';
 
 export const ANATOMY_MODEL_DEFAULT = 'claude-opus-5';
@@ -186,7 +187,7 @@ export function writerRungs(env = process.env) {
 		for (const model of [...new Set([primary, FALLBACK_CLAUDE])]) {
 			rungs.push(
 				chat('openrouter', 'https://openrouter.ai/api/v1/chat/completions', env.OPENROUTER_API_KEY, `anthropic/${model}`, {
-					headers: { 'http-referer': 'https://three.ws', 'x-title': 'three.ws Anatomy' },
+					headers: OPENROUTER_ATTRIBUTION_HEADERS,
 				}),
 			);
 		}

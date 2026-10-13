@@ -23,6 +23,7 @@ import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { limits } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../_lib/openrouter-attribution.js';
 import { sql } from '../_lib/db.js';
 import { loadUserProviderKeys } from '../_lib/provider-keys.js';
 import { getSpendLimits, getTradeLimits } from '../_lib/agent-trade-guards.js';
@@ -423,7 +424,7 @@ async function handleCopilot(req, res, id) {
 			if (r.ok) { const j = await r.json(); const t = (j.content || []).find((b) => b.type === 'text')?.text; if (t) { reply = t.trim(); provider = 'anthropic'; } }
 		} else if (orKey) {
 			const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-				method: 'POST', headers: { Authorization: `Bearer ${orKey}`, 'content-type': 'application/json', 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws wallet copilot' },
+				method: 'POST', headers: { Authorization: `Bearer ${orKey}`, 'content-type': 'application/json', ...OPENROUTER_ATTRIBUTION_HEADERS },
 				body: JSON.stringify({ model: 'openai/gpt-oss-120b', max_tokens: 300, messages: [{ role: 'system', content: sys }, { role: 'user', content: message }] }),
 				signal: AbortSignal.timeout(15_000),
 			});

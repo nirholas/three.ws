@@ -2,6 +2,7 @@ import { env } from '../_lib/env.js';
 import { cors, error, json, method, wrap, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { isFreeModelId, isLiveFreeModel, pickDefaultFreeModel } from '../_lib/openrouter-free.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../_lib/openrouter-attribution.js';
 import { AGENT_MODEL_ID, runAgentCompletion } from '../agent/run.js';
 
 const UPGRADE_URL = `${env.APP_ORIGIN}/pricing`;
@@ -122,8 +123,7 @@ export default wrap(async (req, res) => {
 					headers: {
 						Authorization: `Bearer ${key}`,
 						'Content-Type': 'application/json',
-						'HTTP-Referer': 'https://three.ws',
-						'X-Title': 'three.ws chat',
+						...OPENROUTER_ATTRIBUTION_HEADERS,
 					},
 					body: JSON.stringify({ ...body, model: activeModel }),
 					signal: headersCtrl.signal,

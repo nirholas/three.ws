@@ -14,8 +14,9 @@
 import { env } from './env.js';
 import { getGcpAccessToken } from './gcp-auth.js';
 import { rosterModel, vertexRouteUrl } from './model-roster.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from './openrouter-attribution.js';
 
-const OPENROUTER_HEADERS = { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' };
+const OPENROUTER_HEADERS = OPENROUTER_ATTRIBUTION_HEADERS;
 
 // Keyed lanes: URL plus the env credential that unlocks them. OVH is keyless
 // (its documented anonymous tier), so its key resolves to null and is allowed.

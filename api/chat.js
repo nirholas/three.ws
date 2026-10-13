@@ -30,6 +30,7 @@ import { cors, json, method, readJson, wrap, error, rateLimited } from './_lib/h
 import { parse } from './_lib/validate.js';
 import { recordEvent } from './_lib/usage.js';
 import { trackAgentOwnerVisit } from './_lib/retention.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from './_lib/openrouter-attribution.js';
 import { costMicroUsd } from './_lib/llm-pricing.js';
 import { captureException } from './_lib/sentry.js';
 import { sql } from './_lib/db.js';
@@ -149,7 +150,7 @@ const PROVIDERS = {
 		defaultModel: DEFAULT_OPENROUTER_MODEL,
 		url: 'https://openrouter.ai/api/v1/chat/completions',
 		style: 'openai',
-		extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws agent' },
+		extraHeaders: OPENROUTER_ATTRIBUTION_HEADERS,
 	},
 	groq: {
 		envKey: 'GROQ_API_KEY',

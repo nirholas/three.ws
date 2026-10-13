@@ -38,6 +38,7 @@
 
 import { env } from './env.js';
 import { vertexClaudeEnabled, vertexMessagesUrl, vertexRequestHeaders, toVertexBody } from './vertex-claude.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from './openrouter-attribution.js';
 
 const PROBE_TIMEOUT_MS = 5_000;
 
@@ -150,7 +151,7 @@ export async function probeLlmHealth() {
 				key: env.OPENROUTER_API_KEY,
 				url: 'https://openrouter.ai/api/v1/chat/completions',
 				model: OPENROUTER_MODEL,
-				extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' },
+				extraHeaders: OPENROUTER_ATTRIBUTION_HEADERS,
 			}),
 		]);
 	}

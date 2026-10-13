@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { sql } from '../../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../../_lib/http.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../../_lib/openrouter-attribution.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 import { parse } from '../../_lib/validate.js';
 import { csvCell } from '../../_lib/csv.js';
@@ -80,7 +81,7 @@ const PROVIDERS = {
 		defaultModel: PROVIDER_MODEL_DEFAULTS.openrouter,
 		url: 'https://openrouter.ai/api/v1/chat/completions',
 		style: 'openai',
-		extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws widget' },
+		extraHeaders: OPENROUTER_ATTRIBUTION_HEADERS,
 	},
 	groq: {
 		envKey: 'GROQ_API_KEY',

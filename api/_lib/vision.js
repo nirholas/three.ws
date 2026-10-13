@@ -35,6 +35,7 @@ import {
 } from './provider-health.js';
 import { recordEvent } from './usage.js';
 import { costMicroUsd } from './llm-pricing.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from './openrouter-attribution.js';
 import { validatePublicUrl, isPrivateAddress, SsrfError } from './ssrf.js';
 import { fetchSafePublicUrl } from './ssrf-guard.js';
 import {
@@ -286,14 +287,14 @@ export class VisionUnavailableError extends Error {
 // the only shape difference from llm.js's text providers. `getHeaders` (async)
 // replaces the static key header for keyless lanes whose auth is minted per
 // request (the Vertex Gemini credits anchor).
-function openaiCompatVisionProvider({ name, key, url, model, getHeaders = null, extraBody = null }) {
+function openaiCompatVisionProvider({ name, key, url, model, getHeaders = null, extraBody = null, extraHeaders = null }) {
 	return {
 		name,
 		model,
 		url,
 		...(getHeaders
 			? { getHeaders }
-			: { headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` } }),
+			: { headers: { 'content-type': 'application/json', authorization: `Bearer ${key}`, ...(extraHeaders || {}) } }),
 		buildBody: (system, parts, maxTokens) => {
 			const messages = [];
 			if (system) messages.push({ role: 'system', content: system });
@@ -339,6 +340,7 @@ export function visionChain() {
 				url: 'https://openrouter.ai/api/v1/chat/completions',
 				model: spec.model,
 				extraBody: spec.extraBody || null,
+				extraHeaders: OPENROUTER_ATTRIBUTION_HEADERS,
 			}));
 		});
 	}

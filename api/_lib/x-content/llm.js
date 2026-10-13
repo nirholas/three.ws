@@ -17,6 +17,8 @@
 // multimodal rungs are unfunded, drafting stays fast and reliable on it while
 // review still routes to NVIDIA.
 
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../openrouter-attribution.js';
+
 export const EDITOR_MODEL = 'claude-opus-5';
 
 async function viaVertex({ system, parts }) {
@@ -102,7 +104,7 @@ export function modelRungs(request, env = process.env) {
 	return [
 		() => viaVertex(request),
 		() => viaChatCompletions(request, { url: 'https://api.groq.com/openai/v1/chat/completions', key: env.GROQ_API_KEY, model: 'openai/gpt-oss-120b', label: 'groq', textOnly: true }),
-		() => viaChatCompletions(request, { url: 'https://openrouter.ai/api/v1/chat/completions', key: env.OPENROUTER_API_KEY, model: `anthropic/${EDITOR_MODEL}`, label: 'openrouter', extraHeaders: { 'http-referer': 'https://three.ws', 'x-title': 'three.ws editorial review' } }),
+		() => viaChatCompletions(request, { url: 'https://openrouter.ai/api/v1/chat/completions', key: env.OPENROUTER_API_KEY, model: `anthropic/${EDITOR_MODEL}`, label: 'openrouter', extraHeaders: OPENROUTER_ATTRIBUTION_HEADERS }),
 		() => viaChatCompletions(request, { url: 'https://api.openai.com/v1/chat/completions', key: env.OPENAI_API_KEY, model: 'gpt-5.5-pro', label: 'openai' }),
 		() => viaChatCompletions(request, { url: 'https://integrate.api.nvidia.com/v1/chat/completions', key: env.NVIDIA_API_KEY, model: 'moonshotai/kimi-k3', label: 'nvidia', maxTokens: RUNG_MAX_TOKENS }),
 	];
