@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>
+			/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */ (function () {
+				document.documentElement.classList.add('js');
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<title data-i18n="open_source.meta_title">Open source credits · three.ws</title>
+		<meta
+			name="description"
+			content="Every open-source project, model, and asset source three.ws is built on, grouped by what it powers: rendering, formats and compression, generation models, motion, voice, assets, and infrastructure."
+			data-i18n-attr="content:open_source.meta_description"
+		/>
+		<meta
+			property="og:title"
+			content="Open source credits · three.ws"
+			data-i18n-attr="content:open_source.meta_og_title"
+		/>
+		<meta
+			property="og:description"
+			content="Every open-source project, model, and asset source three.ws is built on, grouped by what it powers."
+			data-i18n-attr="content:open_source.meta_og_description"
+		/>
+		<meta property="og:url" content="https://three.ws/open-source" />
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=learn&amp;t=Open+source&amp;d=Every+open-source+project%2C+model%2C+and+asset+source+three.ws+is+built+on.&amp;p=%2Fopen-source"
+		/>
+		<meta name="twitter:card" content="summary_large_image" />
+		<link rel="canonical" href="https://three.ws/open-source" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<style>
+			.os-wrap {
+				max-width: 1100px;
+				width: 100%;
+				min-width: 0;
+				margin: 0 auto;
+				padding: clamp(1.25rem, 4vw, 3rem) 1.25rem 4rem;
+			}
+			.os-head {
+				margin-bottom: 1.75rem;
+			}
+			.os-head h1 {
+				font-size: clamp(1.7rem, 4vw, 2.5rem);
+				margin: 0 0 0.5rem;
+				letter-spacing: -0.02em;
+			}
+			.os-head p {
+				margin: 0;
+				color: var(--ink-dim, #9aa3b2);
+				max-width: 62ch;
+				line-height: 1.55;
+			}
+			.os-jump {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.5rem;
+				margin-top: 1.1rem;
+			}
+			.os-jump a {
+				appearance: none;
+				border: 1px solid var(--stroke, #262a33);
+				background: var(--surface-2, #1c1f27);
+				color: var(--ink-dim, #9aa3b2);
+				border-radius: 999px;
+				padding: 0.3rem 0.8rem;
+				font-size: 0.82rem;
+				font-weight: 600;
+				text-decoration: none;
+				transition:
+					color var(--duration-fast),
+					border-color var(--duration-fast);
+			}
+			.os-jump a:hover {
+				color: var(--ink, #e8ebf2);
+				border-color: var(--accent, #6c8cff);
+			}
+			.os-jump a:focus-visible {
+				outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #6c8cff);
+				outline-offset: var(--focus-ring-offset, 2px);
+			}
+			.os-area {
+				margin-top: 2.25rem;
+			}
+			.os-area h2 {
+				font-size: 1.05rem;
+				letter-spacing: -0.01em;
+				margin: 0 0 0.2rem;
+				scroll-margin-top: 5rem;
+			}
+			.os-area .count {
+				font-size: 0.82rem;
+				color: var(--ink-dim, #9aa3b2);
+				font-weight: 500;
+			}
+			.os-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+				gap: 0.75rem;
+				margin-top: 0.9rem;
+			}
+			.os-card {
+				background: var(--surface-1, #14161c);
+				border: 1px solid var(--stroke, #262a33);
+				border-radius: 14px;
+				padding: 1rem 1.1rem;
+				min-width: 0;
+				display: flex;
+				flex-direction: column;
+				gap: 0.4rem;
+			}
+			.os-card .name {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+				gap: 0.5rem;
+				font-weight: 650;
+				font-size: 0.98rem;
+			}
+			.os-card .kind {
+				font-size: 0.68rem;
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+				color: var(--ink-dim, #9aa3b2);
+				font-weight: 600;
+				flex: 0 0 auto;
+			}
+			.os-card .license {
+				font-size: 0.8rem;
+				color: var(--ink-dim, #9aa3b2);
+			}
+			.os-card .powers {
+				font-size: 0.85rem;
+				line-height: 1.45;
+				color: var(--ink, #e8ebf2);
+			}
+			.os-card .links {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.9rem;
+				margin-top: 0.2rem;
+				font-size: 0.82rem;
+			}
+			.os-card .links a {
+				color: var(--accent, #6c8cff);
+				font-weight: 600;
+				text-decoration: none;
+			}
+			.os-card .links a:hover {
+				text-decoration: underline;
+			}
+			.os-card .links a:focus-visible {
+				outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #6c8cff);
+				outline-offset: var(--focus-ring-offset, 2px);
+			}
+			.state-msg {
+				text-align: center;
+				padding: 2.25rem 1.25rem;
+				background: var(--surface-1, #14161c);
+				border: 1px solid var(--stroke, #262a33);
+				border-radius: 16px;
+			}
+			.state-msg h2 {
+				text-transform: none;
+				letter-spacing: -0.01em;
+				font-size: 1.05rem;
+				color: var(--ink, #e8ebf2);
+				margin: 0 0 0.4rem;
+			}
+			.state-msg p {
+				margin: 0 auto;
+				max-width: 44ch;
+				color: var(--ink-dim, #9aa3b2);
+				font-size: 0.9rem;
+				line-height: 1.5;
+			}
+			.btn {
+				appearance: none;
+				border: 0;
+				cursor: pointer;
+				font: inherit;
+				font-weight: 600;
+				border-radius: 10px;
+				padding: 0.6rem 1.1rem;
+				margin-top: 1rem;
+				background: var(--btn-primary-bg, var(--accent, #6c8cff));
+				color: var(--btn-primary-fg, #0a0a0a);
+				transition: background var(--duration-fast);
+			}
+			.btn:hover {
+				background: var(--btn-primary-bg-hover, rgba(255, 255, 255, 0.88));
+			}
+			.btn:focus-visible {
+				outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #6c8cff);
+				outline-offset: var(--focus-ring-offset, 2px);
+			}
+			.skel {
+				background: linear-gradient(
+					90deg,
+					var(--surface-2, #1c1f27) 25%,
+					var(--surface-1, #14161c) 50%,
+					var(--surface-2, #1c1f27) 75%
+				);
+				background-size: 200% 100%;
+				animation: os-sk 1.2s infinite;
+				border-radius: 14px;
+				height: 7rem;
+			}
+			@keyframes os-sk {
+				from {
+					background-position: 200% 0;
+				}
+				to {
+					background-position: -200% 0;
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.skel {
+					animation: none;
+				}
+			}
+			.loading-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+				gap: 0.75rem;
+			}
+			[hidden] {
+				display: none !important;
+			}
+		</style>
+
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Open source credits, three.ws" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta
+			name="twitter:title"
+			content="Open source credits · three.ws"
+			data-i18n-attr="content:open_source.meta_twitter_title"
+		/>
+		<meta
+			name="twitter:description"
+			content="Every open-source project, model, and asset source three.ws is built on."
+			data-i18n-attr="content:open_source.meta_twitter_description"
+		/>
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@graph": [
+					{
+						"@type": "WebPage",
+						"name": "Open source credits",
+						"description": "Every open-source project, model, and asset source three.ws is built on, grouped by what it powers.",
+						"url": "https://three.ws/open-source",
+						"isPartOf": {
+							"@type": "WebSite",
+							"name": "three.ws",
+							"url": "https://three.ws"
+						}
+					}
+				]
+			}
+		</script>
+	</head>
+	<body>
+		<a href="#main-content" class="h-skip-link" data-i18n="open_source.skip_to_main_content"
+			>Skip to main content</a
+		>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main id="main-content" class="os-wrap">
+			<div class="os-head">
+				<h1 data-i18n="open_source.open_source">Open source</h1>
+				<p data-i18n="open_source.intro">
+					three.ws is built on the work of hundreds of open-source maintainers and
+					research labs. This page lists every direct dependency, every GPU model a
+					worker runs, and every asset source we use, grouped by what it powers here.
+					It is generated from package.json on every build, so it never drifts out of
+					date.
+				</p>
+				<nav class="os-jump" id="os-jump" aria-label="Jump to section"></nav>
+			</div>
+
+			<section id="error-state" class="state-msg" hidden>
+				<h2 data-i18n="open_source.we_could_not_load_this_list">
+					We could not load this list
+				</h2>
+				<p id="error-msg" data-i18n="open_source.the_credits_service_did_not_respond">
+					The credits service did not respond. Nothing else on three.ws is affected.
+				</p>
+				<button class="btn" id="retry-btn" type="button" data-i18n="open_source.try_again">
+					Try again
+				</button>
+			</section>
+
+			<section id="empty-state" class="state-msg" hidden>
+				<h2 data-i18n="open_source.nothing_to_show_yet">Nothing to show yet</h2>
+				<p data-i18n="open_source.the_dataset_came_back_empty">
+					The credits dataset came back empty. Check back after the next build.
+				</p>
+			</section>
+
+			<div id="loading-state">
+				<div class="loading-grid" aria-hidden="true">
+					<div class="skel"></div>
+					<div class="skel"></div>
+					<div class="skel"></div>
+					<div class="skel"></div>
+					<div class="skel"></div>
+					<div class="skel"></div>
+				</div>
+			</div>
+
+			<div id="areas-host" role="status" aria-live="polite"></div>
+		</main>
+
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/src/open-source.js"></script>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

@@ -727,6 +727,7 @@ const appConfig = {
 				'event-markets-forecasters': resolve(__dirname, 'pages/event-markets-forecasters.html'),
 				'event-market': resolve(__dirname, 'pages/event-market.html'),
 				awesome: resolve(__dirname, 'pages/awesome.html'),
+				'open-source': resolve(__dirname, 'pages/open-source.html'),
 				prompts: resolve(__dirname, 'pages/prompts.html'),
 				'render-lab': resolve(__dirname, 'pages/render-lab.html'),
 				workbench: resolve(__dirname, 'pages/workbench.html'),
@@ -1566,6 +1567,8 @@ const appConfig = {
 					'/agent-identities/': resolve(root, 'pages/agent-identities.html'),
 					'/awesome': resolve(root, 'pages/awesome.html'),
 					'/awesome/': resolve(root, 'pages/awesome.html'),
+					'/open-source': resolve(root, 'pages/open-source.html'),
+					'/open-source/': resolve(root, 'pages/open-source.html'),
 					'/prompts': resolve(root, 'pages/prompts.html'),
 					'/prompts/': resolve(root, 'pages/prompts.html'),
 					// Production routes /app to the Next viewer and leaves app.html

@@ -6482,6 +6482,14 @@
 			"dest": "/awesome.html"
 		},
 		{
+			"src": "/open-source",
+			"dest": "/open-source.html"
+		},
+		{
+			"src": "/open-source/",
+			"dest": "/open-source.html"
+		},
+		{
 			"src": "/prompts",
 			"dest": "/prompts.html"
 		},

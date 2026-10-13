@@ -56,6 +56,7 @@
 					"/tutorials",
 					"/examples",
 					"/awesome",
+					"/open-source",
 					"/changelog",
 					"/blog",
 					"/status",
@@ -6961,6 +6962,14 @@
 					"changefreq": "weekly",
 					"added": "2026-09-07",
 					"showcase": true
+				},
+				{
+					"path": "/open-source",
+					"title": "Open source credits",
+					"description": "Every open-source project, GPU model, and asset source three.ws is built on, grouped by what it powers: rendering, formats and compression, generation models, motion, voice, assets, and infrastructure. Generated from package.json on every build.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-10-13"
 				},
 				{
 					"path": "/tutorials/grok-bot-recipes",
