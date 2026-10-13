@@ -1253,7 +1253,7 @@ ERROR  502 POST /api/pump/launch-agent
   `api/render/glb.js` and `api/render/avatar-clip.js` (502, same lib), and
   GET `api/animations/[id].js` (`/api/animations/clips/<id>`, 502
   `storage_error` from `getObjectBuffer`).
-- **What it means:** Cloudflare R2 flapping (healthz `object_storage`
+- **What it means:** Cloudflare R2 unreachable (healthz `object_storage`
   `down`/`degraded`, tracked at
   [production-100-OWNER-ACTIONS.md](../../prompts/finish/_context/production-100-OWNER-ACTIONS.md)
   row 36) fans out into 5xx on this whole family at once with zero matching
@@ -1263,7 +1263,20 @@ ERROR  502 POST /api/pump/launch-agent
   reproduced it live for `/api/render/animate` by curling the failing
   avatar's own `model_url` (`https://pub-<account>.r2.dev/u/<owner>/<slug>.glb`)
   directly and getting the same `403` Cloudflare answers for every other
-  route in this family.
+  route in this family. 2026-10-13 (order 400): this was previously described
+  as a flap (many `RESOLVED` events minutes apart); re-measurement found a
+  35-plus-hour unbroken `DOWN` streak since the last resolve at
+  2026-10-11T06:55:05Z (60-plus hours and still ongoing by the time this note
+  was written), with the public `*.r2.dev` fallback domain also edge-blocked
+  (Cloudflare-branded 403) and `/cdn/*`'s own signed-read-then-public-fallback
+  therefore 502ing on both legs at once. Treat a live recurrence as a
+  sustained outage, not a flap, until row 36 says otherwise. Order 400 also
+  added one bounded retry (200-500ms backoff, inside a single
+  `gatherObjectStorageHealth()` call) so a single transient blip no longer
+  pages as `DOWN`, and routed most generated thumbnail/GLB URLs returned by
+  the API through `/cdn/` instead of a raw `*.r2.dev` URL, so a future
+  single-leg flap (only the signed path or only the public domain degraded)
+  gets `/cdn/`'s existing failover instead of no protection at all.
 - **Resolve:** check healthz first:
   `curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[] | select(.name=="object_storage")'`.
   `down`/`degraded` confirms this family and the fix is the owner-side
