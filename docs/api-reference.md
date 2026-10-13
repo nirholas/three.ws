@@ -6,7 +6,7 @@ Base URL: `https://three.ws/api`
 
 > For the in-browser JavaScript API (the `<agent-3d>` element, `Viewer`, `Runtime`, `SceneController`, skills, memory), see [js-api.md](./js-api.md) and [web-component.md](./web-component.md). For the high-level npm SDK, see [sdk.md](./sdk.md).
 
-The full machine-readable schema lives at [`https://three.ws/.well-known/openapi.yaml`](https://three.ws/.well-known/openapi.yaml). x402 paid endpoints are listed at [`/.well-known/x402.json`](https://three.ws/.well-known/x402.json) and the MCP endpoint is at [`/api/mcp`](https://three.ws/api/mcp).
+The full machine-readable schema lives at [`https://three.ws/.well-known/openapi.yaml`](https://three.ws/.well-known/openapi.yaml), with a ready-to-import Postman collection generated from the same spec at [`https://three.ws/.well-known/postman-collection.json`](https://three.ws/.well-known/postman-collection.json) (`npm run build:postman-collection` regenerates it, `npm run check:postman-collection` fails the gate when it drifts from the spec). x402 paid endpoints are listed at [`/.well-known/x402.json`](https://three.ws/.well-known/x402.json) and the MCP endpoint is at [`/api/mcp`](https://three.ws/api/mcp).
 
 ---
 

@@ -893,7 +893,7 @@ paths:
                       $ref: '#/components/schemas/Cursor'
                 - name: totals
                   in: query
-                  description: When `1`, include `total` and `total_views` in the response. Adds a second SQL roundtrip — request only on the first page.
+                  description: When `1`, include `total` and `total_views` in the response. Adds a second SQL roundtrip, so request it only on the first page.
                   schema:
                       type: string
                       enum: ['1']
@@ -1142,7 +1142,7 @@ paths:
             summary: Create a new API key
             description: >
                 The `secret` field in the response is the only time the plaintext key
-                is returned — store it immediately.
+                is returned: store it immediately.
             security:
                 - cookieAuth: []
             requestBody:
@@ -1343,7 +1343,7 @@ paths:
         get:
             operationId: oauthAuthorize
             tags: [OAuth]
-            summary: Authorization endpoint — show consent screen
+            summary: Authorization endpoint (show consent screen)
             description: >
                 If the user is not authenticated they are redirected to the login page.
                 On success, displays an HTML consent form. Requires PKCE with
@@ -1470,7 +1470,7 @@ paths:
         post:
             operationId: oauthToken
             tags: [OAuth]
-            summary: Token endpoint — exchange code or refresh token
+            summary: Token endpoint (exchange code or refresh token)
             description: >
                 Supports `authorization_code` and `refresh_token` grant types.
                 Confidential clients authenticate via HTTP Basic (preferred) or
@@ -1695,7 +1695,7 @@ paths:
                                     id: 2
                                     method: tools/list
                             toolCall:
-                                summary: tools/call — render_avatar
+                                summary: tools/call (render_avatar)
                                 value:
                                     jsonrpc: '2.0'
                                     id: 3
@@ -1723,7 +1723,7 @@ paths:
         get:
             operationId: mcpSseStream
             tags: [MCP]
-            summary: MCP SSE stream (reserved — not yet implemented)
+            summary: MCP SSE stream (reserved, not yet implemented)
             security:
                 - bearerAuth: []
             responses:
@@ -1737,7 +1737,7 @@ paths:
         delete:
             operationId: mcpTerminateSession
             tags: [MCP]
-            summary: Terminate MCP session (no-op — server is stateless)
+            summary: Terminate MCP session (no-op, server is stateless)
             security:
                 - bearerAuth: []
             responses:
@@ -1772,7 +1772,7 @@ paths:
                     $ref: '#/components/responses/Unauthorized'
 
     # --------------------------------------------------------------------------
-    # Discovery — well-known endpoints
+    # Discovery: well-known endpoints
     # --------------------------------------------------------------------------
     /.well-known/oauth-authorization-server:
         get:
@@ -1882,7 +1882,7 @@ paths:
         get:
             operationId: getAgentCard
             tags: [Discovery]
-            summary: Agent Card — A2A protocol agent description
+            summary: Agent Card (A2A protocol agent description)
             responses:
                 '200':
                     description: Agent card JSON

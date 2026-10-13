@@ -1,0 +1,1799 @@
+{
+	"item": [
+		{
+			"name": "Load the 3D model viewer interface",
+			"request": {
+				"name": "Load the 3D model viewer interface",
+				"description": {
+					"content": "Returns the main viewer page where users can drag-and-drop glTF/GLB 3D models for instant preview.\n",
+					"type": "text/plain"
+				},
+				"url": {
+					"path": [
+						""
+					],
+					"host": [
+						"{{baseUrl}}"
+					],
+					"query": [],
+					"variable": []
+				},
+				"method": "GET",
+				"auth": null
+			},
+			"response": [],
+			"event": [],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			}
+		},
+		{
+			"name": "api",
+			"item": [
+				{
+					"name": "solana/atomic",
+					"item": [
+						{
+							"name": "Read Transaction V1 status or inspect a confirmed transaction",
+							"request": {
+								"name": "Read Transaction V1 status or inspect a confirmed transaction",
+								"description": {
+									"content": "With no query parameter, returns Solana mainnet Transaction V1 activation status. With `signature`, fetches a confirmed transaction using `maxSupportedTransactionVersion: 1` and returns its exact wire footprint, normalized resource limits, confirmation metadata, and sponsor-safety assessment. This endpoint never signs, simulates, or broadcasts.\n",
+									"type": "text/plain"
+								},
+								"url": {
+									"path": [
+										"api",
+										"solana",
+										"atomic"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [
+										{
+											"disabled": false,
+											"key": "signature",
+											"value": "<string>",
+											"description": "Base58 Solana transaction signature. Omit for live V1 status."
+										}
+									],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "GET",
+								"auth": null
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						},
+						{
+							"name": "Inspect signed Solana wire bytes without broadcasting",
+							"request": {
+								"name": "Inspect signed Solana wire bytes without broadcasting",
+								"description": {},
+								"url": {
+									"path": [
+										"api",
+										"solana",
+										"atomic"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "POST",
+								"auth": null,
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"transaction\": \"<byte>\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						}
+					],
+					"event": []
+				},
+				{
+					"name": "auth",
+					"item": [
+						{
+							"name": "Register a new user account",
+							"request": {
+								"name": "Register a new user account",
+								"description": {
+									"content": "Creates a user account, hashes the password, opens a session, and sets the `sid` cookie. Rate-limited to **5 requests per IP per hour**.\n",
+									"type": "text/plain"
+								},
+								"url": {
+									"path": [
+										"api",
+										"auth",
+										"register"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "POST",
+								"auth": null,
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"<email>\",\n  \"password\": \"<string>\",\n  \"display_name\": \"<string>\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						},
+						{
+							"name": "Log in with email and password",
+							"request": {
+								"name": "Log in with email and password",
+								"description": {
+									"content": "Verifies credentials, creates a session, and sets the `sid` cookie. Rate-limited to **30 requests per IP per 10 minutes**.\n",
+									"type": "text/plain"
+								},
+								"url": {
+									"path": [
+										"api",
+										"auth",
+										"login"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "POST",
+								"auth": null,
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"<email>\",\n  \"password\": \"<string>\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						},
+						{
+							"name": "Get the currently authenticated user",
+							"request": {
+								"name": "Get the currently authenticated user",
+								"description": {},
+								"url": {
+									"path": [
+										"api",
+										"auth",
+										"me"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "GET",
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "key",
+											"value": "sid"
+										},
+										{
+											"key": "value",
+											"value": "{{apiKey}}"
+										},
+										{
+											"key": "in",
+											"value": "header"
+										}
+									]
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						},
+						{
+							"name": "Invalidate the current session",
+							"request": {
+								"name": "Invalidate the current session",
+								"description": {},
+								"url": {
+									"path": [
+										"api",
+										"auth",
+										"logout"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "POST",
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "key",
+											"value": "sid"
+										},
+										{
+											"key": "value",
+											"value": "{{apiKey}}"
+										},
+										{
+											"key": "in",
+											"value": "header"
+										}
+									]
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						}
+					],
+					"event": []
+				},
+				{
+					"name": "avatars",
+					"item": [
+						{
+							"name": "List avatars owned by the authenticated user",
+							"request": {
+								"name": "List avatars owned by the authenticated user",
+								"description": {},
+								"url": {
+									"path": [
+										"api",
+										"avatars"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [
+										{
+											"disabled": false,
+											"key": "limit",
+											"value": "50"
+										},
+										{
+											"disabled": false,
+											"key": "cursor",
+											"value": "<dateTime>",
+											"description": "Pagination cursor (ISO-8601 timestamp from previous `next_cursor`)"
+										},
+										{
+											"disabled": false,
+											"key": "visibility",
+											"value": "<string>"
+										},
+										{
+											"disabled": false,
+											"key": "include_public",
+											"value": "<string>",
+											"description": "When `true`, also returns all public avatars"
+										}
+									],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "GET",
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "key",
+											"value": "sid"
+										},
+										{
+											"key": "value",
+											"value": "{{apiKey}}"
+										},
+										{
+											"key": "in",
+											"value": "header"
+										}
+									]
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						},
+						{
+							"name": "Create an avatar record after uploading the file to R2",
+							"request": {
+								"name": "Create an avatar record after uploading the file to R2",
+								"description": {
+									"content": "Call `POST /api/avatars/presign` first to get a presigned upload URL, upload the GLB file directly to R2, then call this endpoint to register the avatar.\n",
+									"type": "text/plain"
+								},
+								"url": {
+									"path": [
+										"api",
+										"avatars"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "POST",
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "key",
+											"value": "sid"
+										},
+										{
+											"key": "value",
+											"value": "{{apiKey}}"
+										},
+										{
+											"key": "in",
+											"value": "header"
+										}
+									]
+								},
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"<string>\",\n  \"storage_key\": \"<string>\",\n  \"size_bytes\": \"<integer>\",\n  \"slug\": \"<string>\",\n  \"description\": \"<string>\",\n  \"visibility\": \"private\",\n  \"tags\": [\n    \"<string>\",\n    \"<string>\"\n  ],\n  \"source\": \"upload\",\n  \"source_meta\": {\n    \"additionalProperty\": \"<any>\"\n  },\n  \"content_type\": \"model/gltf-binary\",\n  \"checksum_sha256\": \"<string>\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						},
+						{
+							"name": "Search public avatars (no authentication required)",
+							"request": {
+								"name": "Search public avatars (no authentication required)",
+								"description": {
+									"content": "Full-text search over public avatars. Results are cached for 60 seconds.\n",
+									"type": "text/plain"
+								},
+								"url": {
+									"path": [
+										"api",
+										"avatars",
+										"public"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [
+										{
+											"disabled": false,
+											"key": "q",
+											"value": "<string>",
+											"description": "Free-text search query"
+										},
+										{
+											"disabled": false,
+											"key": "tag",
+											"value": "<string>",
+											"description": "Filter by a single tag"
+										},
+										{
+											"disabled": false,
+											"key": "limit",
+											"value": "24"
+										},
+										{
+											"disabled": false,
+											"key": "cursor",
+											"value": "<dateTime>",
+											"description": "Pagination cursor (ISO-8601 timestamp from previous `next_cursor`)"
+										},
+										{
+											"disabled": false,
+											"key": "totals",
+											"value": "<string>",
+											"description": "When `1`, include `total` and `total_views` in the response. Adds a second SQL roundtrip, so request it only on the first page."
+										}
+									],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "GET",
+								"auth": null
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						},
+						{
+							"name": "Get a presigned URL for uploading a GLB file directly to R2",
+							"request": {
+								"name": "Get a presigned URL for uploading a GLB file directly to R2",
+								"description": {
+									"content": "Rate-limited to **60 requests per user per hour**. Use the returned `upload_url` with an HTTP PUT request (include the `content-type` header). After the upload succeeds, call `POST /api/avatars` with the returned `storage_key`.\n",
+									"type": "text/plain"
+								},
+								"url": {
+									"path": [
+										"api",
+										"avatars",
+										"presign"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "POST",
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "key",
+											"value": "sid"
+										},
+										{
+											"key": "value",
+											"value": "{{apiKey}}"
+										},
+										{
+											"key": "in",
+											"value": "header"
+										}
+									]
+								},
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"size_bytes\": \"<integer>\",\n  \"content_type\": \"model/gltf-binary\",\n  \"checksum_sha256\": \"<string>\",\n  \"slug\": \"<string>\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						},
+						{
+							"name": "{id}",
+							"item": [
+								{
+									"name": "Get a single avatar by ID",
+									"request": {
+										"name": "Get a single avatar by ID",
+										"description": {
+											"content": "Returns metadata plus a time-limited (or permanent CDN) URL for the GLB file. Private avatars are only accessible to their owner. Records a `avatar_fetch` usage event.\n",
+											"type": "text/plain"
+										},
+										"url": {
+											"path": [
+												"api",
+												"avatars",
+												":id"
+											],
+											"host": [
+												"{{baseUrl}}"
+											],
+											"query": [],
+											"variable": [
+												{
+													"disabled": false,
+													"type": "any",
+													"value": "<uuid>",
+													"key": "id",
+													"description": "(Required) "
+												}
+											]
+										},
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"method": "GET",
+										"auth": {
+											"type": "noauth"
+										}
+									},
+									"response": [],
+									"event": [],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									}
+								},
+								{
+									"name": "Update avatar metadata (partial update)",
+									"request": {
+										"name": "Update avatar metadata (partial update)",
+										"description": {},
+										"url": {
+											"path": [
+												"api",
+												"avatars",
+												":id"
+											],
+											"host": [
+												"{{baseUrl}}"
+											],
+											"query": [],
+											"variable": [
+												{
+													"disabled": false,
+													"type": "any",
+													"value": "<uuid>",
+													"key": "id",
+													"description": "(Required) "
+												}
+											]
+										},
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"method": "PATCH",
+										"auth": {
+											"type": "apikey",
+											"apikey": [
+												{
+													"key": "key",
+													"value": "sid"
+												},
+												{
+													"key": "value",
+													"value": "{{apiKey}}"
+												},
+												{
+													"key": "in",
+													"value": "header"
+												}
+											]
+										},
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"<string>\",\n  \"description\": \"<string>\",\n  \"visibility\": \"<string>\",\n  \"tags\": [\n    \"<string>\",\n    \"<string>\"\n  ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										}
+									},
+									"response": [],
+									"event": [],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									}
+								},
+								{
+									"name": "Delete an avatar (soft delete + queued R2 removal)",
+									"request": {
+										"name": "Delete an avatar (soft delete + queued R2 removal)",
+										"description": {},
+										"url": {
+											"path": [
+												"api",
+												"avatars",
+												":id"
+											],
+											"host": [
+												"{{baseUrl}}"
+											],
+											"query": [],
+											"variable": [
+												{
+													"disabled": false,
+													"type": "any",
+													"value": "<uuid>",
+													"key": "id",
+													"description": "(Required) "
+												}
+											]
+										},
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"method": "DELETE",
+										"auth": {
+											"type": "apikey",
+											"apikey": [
+												{
+													"key": "key",
+													"value": "sid"
+												},
+												{
+													"key": "value",
+													"value": "{{apiKey}}"
+												},
+												{
+													"key": "in",
+													"value": "header"
+												}
+											]
+										}
+									},
+									"response": [],
+									"event": [],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									}
+								}
+							],
+							"event": []
+						}
+					],
+					"event": []
+				},
+				{
+					"name": "keys",
+					"item": [
+						{
+							"name": "List API keys for the authenticated user",
+							"request": {
+								"name": "List API keys for the authenticated user",
+								"description": {},
+								"url": {
+									"path": [
+										"api",
+										"keys"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "GET",
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "key",
+											"value": "sid"
+										},
+										{
+											"key": "value",
+											"value": "{{apiKey}}"
+										},
+										{
+											"key": "in",
+											"value": "header"
+										}
+									]
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						},
+						{
+							"name": "Create a new API key",
+							"request": {
+								"name": "Create a new API key",
+								"description": {
+									"content": "The `secret` field in the response is the only time the plaintext key is returned: store it immediately.\n",
+									"type": "text/plain"
+								},
+								"url": {
+									"path": [
+										"api",
+										"keys"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "POST",
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "key",
+											"value": "sid"
+										},
+										{
+											"key": "value",
+											"value": "{{apiKey}}"
+										},
+										{
+											"key": "in",
+											"value": "header"
+										}
+									]
+								},
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"<string>\",\n  \"scope\": \"avatars:read avatars:write\",\n  \"expires_in_days\": \"<integer>\",\n  \"environment\": \"live\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						},
+						{
+							"name": "Revoke an API key by ID",
+							"request": {
+								"name": "Revoke an API key by ID",
+								"description": {},
+								"url": {
+									"path": [
+										"api",
+										"keys",
+										":id"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": [
+										{
+											"disabled": false,
+											"type": "any",
+											"value": "<uuid>",
+											"key": "id",
+											"description": "(Required) "
+										}
+									]
+								},
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "DELETE",
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "key",
+											"value": "sid"
+										},
+										{
+											"key": "value",
+											"value": "{{apiKey}}"
+										},
+										{
+											"key": "in",
+											"value": "header"
+										}
+									]
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						}
+					],
+					"event": []
+				},
+				{
+					"name": "oauth",
+					"item": [
+						{
+							"name": "Dynamic client registration (RFC 7591)",
+							"request": {
+								"name": "Dynamic client registration (RFC 7591)",
+								"description": {
+									"content": "Registers a new OAuth client. Clients with `redirect_uris` pointing to `localhost` or with `token_endpoint_auth_method: none` are treated as **public** clients; all others are **confidential** and receive a `client_secret`.\n",
+									"type": "text/plain"
+								},
+								"url": {
+									"path": [
+										"api",
+										"oauth",
+										"register"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "POST",
+								"auth": null,
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"redirect_uris\": [\n    \"<uri>\"\n  ],\n  \"client_name\": \"<string>\",\n  \"client_uri\": \"<uri>\",\n  \"logo_uri\": \"<uri>\",\n  \"scope\": \"<string>\",\n  \"grant_types\": [\n    \"<string>\",\n    \"<string>\"\n  ],\n  \"response_types\": [\n    \"<string>\",\n    \"<string>\"\n  ],\n  \"token_endpoint_auth_method\": \"<string>\",\n  \"software_id\": \"<string>\",\n  \"software_version\": \"<string>\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						},
+						{
+							"name": "authorize",
+							"item": [
+								{
+									"name": "Authorization endpoint (show consent screen)",
+									"request": {
+										"name": "Authorization endpoint (show consent screen)",
+										"description": {
+											"content": "If the user is not authenticated they are redirected to the login page. On success, displays an HTML consent form. Requires PKCE with `code_challenge_method=S256`.\n",
+											"type": "text/plain"
+										},
+										"url": {
+											"path": [
+												"api",
+												"oauth",
+												"authorize"
+											],
+											"host": [
+												"{{baseUrl}}"
+											],
+											"query": [
+												{
+													"disabled": false,
+													"key": "response_type",
+													"value": "<string>",
+													"description": "(Required) "
+												},
+												{
+													"disabled": false,
+													"key": "client_id",
+													"value": "<string>",
+													"description": "(Required) "
+												},
+												{
+													"disabled": false,
+													"key": "redirect_uri",
+													"value": "<uri>",
+													"description": "(Required) "
+												},
+												{
+													"disabled": false,
+													"key": "scope",
+													"value": "<string>"
+												},
+												{
+													"disabled": false,
+													"key": "state",
+													"value": "<string>"
+												},
+												{
+													"disabled": false,
+													"key": "code_challenge",
+													"value": "<string>",
+													"description": "(Required) "
+												},
+												{
+													"disabled": false,
+													"key": "code_challenge_method",
+													"value": "<string>",
+													"description": "(Required) "
+												},
+												{
+													"disabled": false,
+													"key": "resource",
+													"value": "<uri>"
+												}
+											],
+											"variable": []
+										},
+										"header": [
+											{
+												"key": "Accept",
+												"value": "text/html"
+											}
+										],
+										"method": "GET",
+										"auth": null
+									},
+									"response": [],
+									"event": [],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									}
+								},
+								{
+									"name": "Submit consent form decision (allow or deny)",
+									"request": {
+										"name": "Submit consent form decision (allow or deny)",
+										"description": {},
+										"url": {
+											"path": [
+												"api",
+												"oauth",
+												"authorize"
+											],
+											"host": [
+												"{{baseUrl}}"
+											],
+											"query": [],
+											"variable": []
+										},
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/x-www-form-urlencoded"
+											}
+										],
+										"method": "POST",
+										"auth": {
+											"type": "apikey",
+											"apikey": [
+												{
+													"key": "key",
+													"value": "sid"
+												},
+												{
+													"key": "value",
+													"value": "{{apiKey}}"
+												},
+												{
+													"key": "in",
+													"value": "header"
+												}
+											]
+										},
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"disabled": false,
+													"key": "decision",
+													"value": "<string>",
+													"description": "(Required) "
+												},
+												{
+													"disabled": false,
+													"key": "client_id",
+													"value": "<string>",
+													"description": "(Required) "
+												},
+												{
+													"disabled": false,
+													"key": "redirect_uri",
+													"value": "<uri>",
+													"description": "(Required) "
+												},
+												{
+													"disabled": false,
+													"key": "code_challenge",
+													"value": "<string>",
+													"description": "(Required) "
+												},
+												{
+													"disabled": false,
+													"key": "code_challenge_method",
+													"value": "<string>",
+													"description": "(Required) "
+												},
+												{
+													"disabled": false,
+													"key": "response_type",
+													"value": "<string>"
+												},
+												{
+													"disabled": false,
+													"key": "scope",
+													"value": "<string>"
+												},
+												{
+													"disabled": false,
+													"key": "state",
+													"value": "<string>"
+												},
+												{
+													"disabled": false,
+													"key": "resource",
+													"value": "<string>"
+												}
+											]
+										}
+									},
+									"response": [],
+									"event": [],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									}
+								}
+							],
+							"event": []
+						},
+						{
+							"name": "Token endpoint (exchange code or refresh token)",
+							"request": {
+								"name": "Token endpoint (exchange code or refresh token)",
+								"description": {
+									"content": "Supports `authorization_code` and `refresh_token` grant types. Confidential clients authenticate via HTTP Basic (preferred) or `client_id` + `client_secret` form fields. Rate-limited to **120 requests per client per minute**.\n",
+									"type": "text/plain"
+								},
+								"url": {
+									"path": [
+										"api",
+										"oauth",
+										"token"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "POST",
+								"auth": null,
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"disabled": false,
+											"key": "grant_type",
+											"value": "<string>",
+											"description": "(Required) "
+										},
+										{
+											"disabled": false,
+											"key": "code",
+											"value": "<string>",
+											"description": "Required for authorization_code grant"
+										},
+										{
+											"disabled": false,
+											"key": "redirect_uri",
+											"value": "<uri>",
+											"description": "Required for authorization_code grant; must match the authorization request"
+										},
+										{
+											"disabled": false,
+											"key": "code_verifier",
+											"value": "<string>",
+											"description": "PKCE verifier; required for authorization_code grant"
+										},
+										{
+											"disabled": false,
+											"key": "refresh_token",
+											"value": "<string>",
+											"description": "Required for refresh_token grant"
+										},
+										{
+											"disabled": false,
+											"key": "scope",
+											"value": "<string>",
+											"description": "Optional subset scope for refresh_token grant"
+										},
+										{
+											"disabled": false,
+											"key": "client_id",
+											"value": "<string>"
+										},
+										{
+											"disabled": false,
+											"key": "client_secret",
+											"value": "<string>",
+											"description": "Required for confidential clients not using HTTP Basic"
+										}
+									]
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						},
+						{
+							"name": "Token revocation endpoint (RFC 7009)",
+							"request": {
+								"name": "Token revocation endpoint (RFC 7009)",
+								"description": {
+									"content": "Revokes an access token or refresh token. Always returns 200 per the RFC, even if the token is unknown or already revoked.\n",
+									"type": "text/plain"
+								},
+								"url": {
+									"path": [
+										"api",
+										"oauth",
+										"revoke"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "POST",
+								"auth": null,
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"disabled": false,
+											"key": "token",
+											"value": "<string>",
+											"description": "(Required) "
+										},
+										{
+											"disabled": false,
+											"key": "token_type_hint",
+											"value": "<string>"
+										},
+										{
+											"disabled": false,
+											"key": "client_id",
+											"value": "<string>"
+										},
+										{
+											"disabled": false,
+											"key": "client_secret",
+											"value": "<string>"
+										}
+									]
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						},
+						{
+							"name": "Token introspection endpoint (RFC 7662)",
+							"request": {
+								"name": "Token introspection endpoint (RFC 7662)",
+								"description": {
+									"content": "Returns metadata about a token. Confidential clients authenticate via HTTP Basic or `client_id`/`client_secret` form fields.\n",
+									"type": "text/plain"
+								},
+								"url": {
+									"path": [
+										"api",
+										"oauth",
+										"introspect"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "POST",
+								"auth": null,
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"disabled": false,
+											"key": "token",
+											"value": "<string>",
+											"description": "(Required) "
+										},
+										{
+											"disabled": false,
+											"key": "client_id",
+											"value": "<string>"
+										},
+										{
+											"disabled": false,
+											"key": "client_secret",
+											"value": "<string>"
+										}
+									]
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						}
+					],
+					"event": []
+				},
+				{
+					"name": "mcp",
+					"item": [
+						{
+							"name": "MCP JSON-RPC 2.0 endpoint",
+							"request": {
+								"name": "MCP JSON-RPC 2.0 endpoint",
+								"description": {
+									"content": "Stateless JSON-RPC 2.0 endpoint implementing the [Model Context Protocol](https://modelcontextprotocol.io). Accepts single or batched requests. Authenticated with an OAuth 2.1 access token **or** an API key in the `Authorization: Bearer …` header.\n\n**Supported methods:** `initialize`, `tools/list`, `tools/call`, `ping`, `notifications/initialized`, `resources/list`, `resources/templates/list`, `prompts/list`, `logging/setLevel`.\n\n**Built-in tools** (via `tools/call`): `list_my_avatars`, `get_avatar`, `search_public_avatars`, `render_avatar`, `delete_avatar`.\n\nRate limits: **600 req/min per IP**, **1 200 req/min per user**.\n",
+									"type": "text/plain"
+								},
+								"url": {
+									"path": [
+										"api",
+										"mcp"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "POST",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{bearerToken}}"
+										}
+									]
+								},
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"jsonrpc\": \"<string>\",\n  \"method\": \"<string>\",\n  \"id\": \"<string>\",\n  \"params\": {\n    \"additionalProperty\": \"<any>\"\n  }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						},
+						{
+							"name": "MCP SSE stream (reserved, not yet implemented)",
+							"request": {
+								"name": "MCP SSE stream (reserved, not yet implemented)",
+								"description": {},
+								"url": {
+									"path": [
+										"api",
+										"mcp"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{bearerToken}}"
+										}
+									]
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						},
+						{
+							"name": "Terminate MCP session (no-op, server is stateless)",
+							"request": {
+								"name": "Terminate MCP session (no-op, server is stateless)",
+								"description": {},
+								"url": {
+									"path": [
+										"api",
+										"mcp"
+									],
+									"host": [
+										"{{baseUrl}}"
+									],
+									"query": [],
+									"variable": []
+								},
+								"method": "DELETE",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{bearerToken}}"
+										}
+									]
+								}
+							},
+							"response": [],
+							"event": [],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							}
+						}
+					],
+					"event": []
+				},
+				{
+					"name": "Get usage statistics and quota limits for the current account",
+					"request": {
+						"name": "Get usage statistics and quota limits for the current account",
+						"description": {},
+						"url": {
+							"path": [
+								"api",
+								"usage",
+								"summary"
+							],
+							"host": [
+								"{{baseUrl}}"
+							],
+							"query": [],
+							"variable": []
+						},
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"method": "GET",
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{
+									"key": "key",
+									"value": "sid"
+								},
+								{
+									"key": "value",
+									"value": "{{apiKey}}"
+								},
+								{
+									"key": "in",
+									"value": "header"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					}
+				}
+			],
+			"event": []
+		},
+		{
+			"name": ".well-known",
+			"item": [
+				{
+					"name": "OAuth 2.0 Authorization Server Metadata (RFC 8414)",
+					"request": {
+						"name": "OAuth 2.0 Authorization Server Metadata (RFC 8414)",
+						"description": {
+							"content": "Cached for 300 seconds.",
+							"type": "text/plain"
+						},
+						"url": {
+							"path": [
+								".well-known",
+								"oauth-authorization-server"
+							],
+							"host": [
+								"{{baseUrl}}"
+							],
+							"query": [],
+							"variable": []
+						},
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"method": "GET",
+						"auth": null
+					},
+					"response": [],
+					"event": [],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					}
+				},
+				{
+					"name": "OAuth 2.0 Protected Resource Metadata (RFC 9728)",
+					"request": {
+						"name": "OAuth 2.0 Protected Resource Metadata (RFC 9728)",
+						"description": {
+							"content": "Cached for 300 seconds.",
+							"type": "text/plain"
+						},
+						"url": {
+							"path": [
+								".well-known",
+								"oauth-protected-resource"
+							],
+							"host": [
+								"{{baseUrl}}"
+							],
+							"query": [],
+							"variable": []
+						},
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"method": "GET",
+						"auth": null
+					},
+					"response": [],
+					"event": [],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					}
+				},
+				{
+					"name": "Agent Card (A2A protocol agent description)",
+					"request": {
+						"name": "Agent Card (A2A protocol agent description)",
+						"description": {},
+						"url": {
+							"path": [
+								".well-known",
+								"agent-card.json"
+							],
+							"host": [
+								"{{baseUrl}}"
+							],
+							"query": [],
+							"variable": []
+						},
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"method": "GET",
+						"auth": null
+					},
+					"response": [],
+					"event": [],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					}
+				},
+				{
+					"name": "Agent registration manifest",
+					"request": {
+						"name": "Agent registration manifest",
+						"description": {},
+						"url": {
+							"path": [
+								".well-known",
+								"agent-registration.json"
+							],
+							"host": [
+								"{{baseUrl}}"
+							],
+							"query": [],
+							"variable": []
+						},
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"method": "GET",
+						"auth": null
+					},
+					"response": [],
+					"event": [],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					}
+				},
+				{
+					"name": "AI plugin manifest (ChatGPT / OpenAI plugin format)",
+					"request": {
+						"name": "AI plugin manifest (ChatGPT / OpenAI plugin format)",
+						"description": {},
+						"url": {
+							"path": [
+								".well-known",
+								"ai-plugin.json"
+							],
+							"host": [
+								"{{baseUrl}}"
+							],
+							"query": [],
+							"variable": []
+						},
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"method": "GET",
+						"auth": null
+					},
+					"response": [],
+					"event": [],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					}
+				},
+				{
+					"name": "This OpenAPI specification",
+					"request": {
+						"name": "This OpenAPI specification",
+						"description": {},
+						"url": {
+							"path": [
+								".well-known",
+								"openapi.yaml"
+							],
+							"host": [
+								"{{baseUrl}}"
+							],
+							"query": [],
+							"variable": []
+						},
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/yaml"
+							}
+						],
+						"method": "GET",
+						"auth": null
+					},
+					"response": [],
+					"event": [],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					}
+				}
+			],
+			"event": []
+		}
+	],
+	"event": [],
+	"variable": [
+		{
+			"type": "string",
+			"value": "https://three.ws",
+			"key": "baseUrl"
+		}
+	],
+	"info": {
+		"name": "three.ws API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"description": {
+			"content": "AI-powered 3D avatar management platform. Supports OAuth 2.1 (with PKCE), session cookies, and API keys for authentication. Avatars are stored as glTF/GLB files on Cloudflare R2 and exposed via a Model Context Protocol (MCP) JSON-RPC server for AI tool integrations.\n\n\nContact Support:\n Email: support@three.ws",
+			"type": "text/plain"
+		}
+	}
+}
