@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-13",
+			"title": "The Home Assistant integration is ready for the HACS default store",
+			"link": "/docs/home-relay",
+			"summary": "home-assistant-integration/ now validates clean against the real hassfest and HACS checks: manifest.json's documentation link fixed (it 404'd), version bumped to 1.0.1, and hacs.json's minimum Home Assistant version corrected to 2024.12.0 (the first release bundling the aiohttp.ClientWSTimeout the integration's relay client uses, confirmed against HA's own package_constraints.txt). It now ships its own local brand icons at the sizes both HACS and home-assistant/brands require. A new scripts/export-hacs-repo.mjs builds the exact standalone-repository tree (integration, README, LICENSE, hacs.json, and the two validation workflows, which exist only in that exported tree since this monorepo runs no GitHub Actions of its own) ready to push to a new repository. Verified end to end against a real Home Assistant container through its real config flow and a real services/home-relay server: 18 real entities, a confirmed auto-reconnect after a relay restart, and a documentation fix to the connectivity sensor's entity ID along the way. Creating the standalone repository and opening the hacs/default and home-assistant/brands pull requests are owner actions; submission text is ready in marketing/growth/submissions/home-assistant.md.",
+			"tags": [
+				"improvement",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
 			"title": "Embed a live 3D agent in WordPress, Framer, or Webflow",
 			"link": "/docs/wordpress-embed",
 			"summary": "Three native embeds for <agent-3d>, one per site builder's own extension point instead of a generic iframe: a WordPress Gutenberg block and [three_ws_agent] shortcode (server-rendered so the editor preview always matches the front end), a Framer code component with property controls, and a Webflow Code Component, all exposing On-chain URI, Agent ID, Model URL, Background, Framing, Poster and Autoplay. A shared build step pins all three to the same version and SRI hash from the agent-3d release ledger, so they can never drift apart. The WordPress plugin passed the official Plugin Check tool against a real local WordPress install with no errors; Framer and Webflow were each verified in a real-React test harness that boots a live WebGL canvas against the production CDN release, and the Webflow component additionally compiles through the real Webflow CLI. WordPress.org, Framer Marketplace, and Webflow Apps submissions are owner actions. Docs: /docs/wordpress-embed, /docs/embedding.",

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-13T21:44:59.062Z",
+	"generated_at": "2026-10-13T22:30:49.305Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4067,
+	"total": 4068,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -194,6 +194,17 @@
 			"link": "/open-source",
 			"tags": [
 				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
+			"title": "The Home Assistant integration is ready for the HACS default store",
+			"summary": "home-assistant-integration/ now validates clean against the real hassfest and HACS checks: manifest.json's documentation link fixed (it 404'd), version bumped to 1.0.1, and hacs.json's minimum Home Assistant version corrected to 2024.12.0 (the first release bundling the aiohttp.ClientWSTimeout the integration's relay client uses, confirmed against HA's own package_constraints.txt). It now ships its own local brand icons at the sizes both HACS and home-assistant/brands require. A new scripts/export-hacs-repo.mjs builds the exact standalone-repository tree (integration, README, LICENSE, hacs.json, and the two validation workflows, which exist only in that exported tree since this monorepo runs no GitHub Actions of its own) ready to push to a new repository. Verified end to end against a real Home Assistant container through its real config flow and a real services/home-relay server: 18 real entities, a confirmed auto-reconnect after a relay restart, and a documentation fix to the connectivity sensor's entity ID along the way. Creating the standalone repository and opening the hacs/default and home-assistant/brands pull requests are owner actions; submission text is ready in marketing/growth/submissions/home-assistant.md.",
+			"link": "/docs/home-relay",
+			"tags": [
+				"improvement",
 				"docs"
 			]
 		},
@@ -1545,16 +1556,6 @@
 			"tags": [
 				"feature",
 				"security"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Quieter, cleaner pages: dead links fixed and console errors gone",
-			"summary": "We swept every page on three.ws with the browser developer console open and fixed what it found. Links to pages that moved now redirect to where they live today, share buttons always have a destination, 3D viewers decode compressed models on every page, the missing bow animation thumbnail is back on the choreography and gestures pages, and pages full of brand-new coins or agents without a wallet no longer fill the console with errors while they wait for data.",
-			"link": "/gestures",
-			"tags": [
-				"fix"
 			]
 		}
 	]

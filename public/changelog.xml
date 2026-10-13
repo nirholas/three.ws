@@ -151,6 +151,14 @@
 			<description>A new /open-source page lists every third-party dependency, GPU worker model, and free asset source the platform runs on, grouped by area (rendering, formats and compression, generation models, motion, voice, assets, infrastructure) with license, upstream link, and what each one powers here. The dataset is generated from package.json and each worker's own README, not hand-maintained, and a guard test fails the build if a new direct dependency lands without a credited entry. Credits now also show up where the work actually happens: /objects and the object viewer name Poly Haven, the CC0 asset library the catalog sources from; the Forge export dialog names meshoptimizer and glTF-Transform; and the animation gallery shows each clip's source and license, including a fallback for studio-tier clips that lack an explicit manifest entry. Docs: /docs/open-source-credits.</description>
 		</item>
 		<item>
+			<title>The Home Assistant integration is ready for the HACS default store</title>
+			<link>https://three.ws/docs/home-relay</link>
+			<guid isPermaLink="false">2026-10-13:The Home Assistant integration is ready for the HACS default store</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>home-assistant-integration/ now validates clean against the real hassfest and HACS checks: manifest.json's documentation link fixed (it 404'd), version bumped to 1.0.1, and hacs.json's minimum Home Assistant version corrected to 2024.12.0 (the first release bundling the aiohttp.ClientWSTimeout the integration's relay client uses, confirmed against HA's own package_constraints.txt). It now ships its own local brand icons at the sizes both HACS and home-assistant/brands require. A new scripts/export-hacs-repo.mjs builds the exact standalone-repository tree (integration, README, LICENSE, hacs.json, and the two validation workflows, which exist only in that exported tree since this monorepo runs no GitHub Actions of its own) ready to push to a new repository. Verified end to end against a real Home Assistant container through its real config flow and a real services/home-relay server: 18 real entities, a confirmed auto-reconnect after a relay restart, and a documentation fix to the connectivity sensor's entity ID along the way. Creating the standalone repository and opening the hacs/default and home-assistant/brands pull requests are owner actions; submission text is ready in marketing/growth/submissions/home-assistant.md.</description>
+		</item>
+		<item>
 			<title>The public animation library is now openly licensed, every clip CC0 or self-generated</title>
 			<link>https://three.ws/docs/animations</link>
 			<guid isPermaLink="false">2026-10-13:The public animation library is now openly licensed, every clip CC0 or self-generated</guid>

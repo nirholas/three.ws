@@ -4,10 +4,10 @@
   "codeowners": ["@nirholas"],
   "config_flow": true,
   "dependencies": ["auth", "http"],
-  "documentation": "https://three.ws/docs/home",
+  "documentation": "https://three.ws/docs/home-relay",
   "integration_type": "service",
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/nirholas/three-ws-home-assistant/issues",
   "requirements": [],
-  "version": "1.0.0"
+  "version": "1.0.1"
 }

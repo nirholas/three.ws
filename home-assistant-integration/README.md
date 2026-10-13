@@ -15,7 +15,8 @@ your house.**
 - **three.ws never receives a Home Assistant token.** This integration signs in to Home Assistant
   on your own machine, with a credential it makes for itself, that never leaves the house.
 
-Works on every install type: Home Assistant OS, Supervised, Container and Core.
+Works on every install type: Home Assistant OS, Supervised, Container and Core. Needs Home
+Assistant 2024.12.0 or newer.
 
 ---
 
@@ -47,8 +48,9 @@ That is the whole setup. The three.ws tab flips to connected on its own within a
 
 ## What it adds to Home Assistant
 
-One entity, `binary_sensor.three_ws_connection`, so you can see the state of the link from your
-own dashboard without opening three.ws:
+One entity, named **three.ws connection** on the device three.ws created for this home (so its
+entity ID is `binary_sensor.<home name>_three_ws_connection`), so you can see the state of the
+link from your own dashboard without opening three.ws:
 
 | Attribute | What |
 |---|---|
