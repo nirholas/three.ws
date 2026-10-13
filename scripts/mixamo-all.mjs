@@ -34,24 +34,18 @@
  *     clip JSONs to animation-sources/.library-clips/ (gitignored, ~3 GB
  *     for the full catalog).
  *
- *   Phase 5 — Upload  (needs S3_* creds, see below)
- *     Uploads baked clips to R2 under animations/library/clips/<name>.json
- *     and publishes animations/library/manifest.json. Served to users via
- *     GET /api/animations/library + the R2 CDN. Content-hash cached in
- *     scripts/mixamo-upload-state.json — re-run uploads only changed clips.
+ *   Phase 5 (Upload): DISABLED PERMANENTLY, see uploadLibrary() below.
+ *     Adobe's Mixamo terms permit in-project playback but not redistributing
+ *     raw clip files, which is exactly what publishing to the public bulk
+ *     library and its mirror script did. The bulk library now builds and
+ *     publishes from CC0 sources via scripts/cc0-animation-library.mjs.
  *
  * Usage:
- *   node scripts/mixamo-all.mjs              # run all phases
  *   node scripts/mixamo-all.mjs --catalog    # phase 1 only (no auth)
  *   node scripts/mixamo-all.mjs --download   # phases 1+2 (needs MIXAMO_TOKEN)
  *   node scripts/mixamo-all.mjs --integrate  # phases 1+3 (use saved sources)
- *   node scripts/mixamo-all.mjs --build      # phase 4 only
- *   node scripts/mixamo-all.mjs --upload     # phase 5 only (needs S3_* creds)
+ *   node scripts/mixamo-all.mjs --build      # phase 4 only (local retarget research)
  *   node scripts/mixamo-all.mjs --concurrency=5 --limit=50  # tuning flags
- *
- * Required for upload phase (same names the production API uses — pull with
- * `vercel env pull .env.local`): S3_ENDPOINT, S3_ACCESS_KEY_ID,
- * S3_SECRET_ACCESS_KEY, S3_BUCKET, S3_PUBLIC_DOMAIN.
  *
  * Required for download phase:
  *   MIXAMO_TOKEN in .env.local — either run node scripts/get-mixamo-token.mjs
@@ -128,15 +122,10 @@ const PROGRESS_PATH = SHARD.count > 1
 	: join(__dirname, 'mixamo-progress.json');
 const SOURCES_DIR   = join(ROOT, 'animation-sources');
 
-// Bulk library outputs — all gitignored; the library ships via R2, not git.
+// Bulk library outputs: all gitignored, the library ships via R2, not git.
+// (Upload is disabled, see uploadLibrary() below, so only the config/stage
+// paths phases 1-4 still use are kept here.)
 const LIBRARY_CONFIG_PATH   = join(__dirname, 'mixamo-library.config.json');
-const LIBRARY_STAGE_DIR     = join(ROOT, 'animation-sources/.library-clips');
-const LIBRARY_MANIFEST_PATH = join(LIBRARY_STAGE_DIR, 'manifest.json');
-// Poster thumbnails rendered by scripts/build-animation-thumbnails.mjs; each
-// uploads beside its clip and is published as the manifest entry's `thumb`.
-const LIBRARY_THUMBS_DIR    = join(ROOT, 'animation-sources/.library-thumbs');
-const UPLOAD_STATE_PATH     = join(__dirname, 'mixamo-upload-state.json');
-const LIBRARY_R2_PREFIX     = 'animations/library';
 
 mkdirSync(SOURCES_DIR, { recursive: true });
 
@@ -646,132 +635,21 @@ async function build() {
 async function uploadLibrary() {
 	console.log('\n── Phase 5: Upload library to R2 ──────────────────────────');
 
-	// Same env names the production API uses (api/_lib/env.js), with the older
-	// R2_* names from earlier scripts accepted as fallback.
-	const accountId = loadEnv('R2_ACCOUNT_ID');
-	const endpoint = loadEnv('S3_ENDPOINT') || (accountId ? `https://${accountId}.r2.cloudflarestorage.com` : null);
-	const accessKeyId = loadEnv('S3_ACCESS_KEY_ID') || loadEnv('R2_ACCESS_KEY_ID');
-	const secretAccessKey = loadEnv('S3_SECRET_ACCESS_KEY') || loadEnv('R2_SECRET_ACCESS_KEY');
-	const bucket = loadEnv('S3_BUCKET') || loadEnv('R2_BUCKET');
-	const publicDomain = (loadEnv('S3_PUBLIC_DOMAIN') || '').replace(/\/+$/, '');
-
-	if (!endpoint || !accessKeyId || !secretAccessKey || !bucket || !publicDomain) {
-		console.log('  ⚠️  Storage creds missing — skipping upload.');
-		console.log('  Needs S3_ENDPOINT, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_BUCKET, S3_PUBLIC_DOMAIN.');
-		console.log('  Pull them with: vercel env pull .env.local');
-		return;
-	}
-	if (!existsSync(LIBRARY_MANIFEST_PATH)) {
-		console.log('  ⚠️  No staged library (animation-sources/.library-clips/manifest.json) — run the build phase first.');
-		return;
-	}
-
-	const { S3Client, PutObjectCommand } = await import('@aws-sdk/client-s3');
-	const { createHash } = await import('node:crypto');
-	const client = new S3Client({
-		region: 'auto',
-		endpoint,
-		credentials: { accessKeyId, secretAccessKey },
-	});
-
-	const staged = JSON.parse(readFileSync(LIBRARY_MANIFEST_PATH, 'utf8'));
-	const state = existsSync(UPLOAD_STATE_PATH) ? JSON.parse(readFileSync(UPLOAD_STATE_PATH, 'utf8')) : {};
-	const saveState = () => writeFileSync(UPLOAD_STATE_PATH, JSON.stringify(state, null, 2));
-
-	let uploaded = 0, skipped = 0, failed = 0;
-	const clips = [];
-	const queue = [...staged];
-
-	async function worker() {
-		while (queue.length) {
-			const entry = queue.shift();
-			const file = join(LIBRARY_STAGE_DIR, `${entry.name}.json`);
-			if (!existsSync(file)) { failed++; console.warn(`  ❌ ${entry.name}: staged clip missing`); continue; }
-			const body = readFileSync(file);
-			const sha = createHash('sha1').update(body).digest('hex');
-			const key = `${LIBRARY_R2_PREFIX}/clips/${entry.name}.json`;
-
-			// Poster thumbnail (optional — clips without one simply publish no
-			// `thumb` and the gallery falls back to its icon placeholder).
-			const thumbFile = join(LIBRARY_THUMBS_DIR, `${entry.name}.webp`);
-			const thumbKey = `${LIBRARY_R2_PREFIX}/thumbs/${entry.name}.webp`;
-			let thumbUrl = null;
-			if (existsSync(thumbFile)) {
-				const thumbBody = readFileSync(thumbFile);
-				const thumbSha = createHash('sha1').update(thumbBody).digest('hex');
-				if (state[`thumb:${entry.name}`] === thumbSha) {
-					thumbUrl = `${publicDomain}/${thumbKey}`;
-				} else {
-					try {
-						await client.send(new PutObjectCommand({
-							Bucket: bucket,
-							Key: thumbKey,
-							Body: thumbBody,
-							ContentType: 'image/webp',
-							CacheControl: 'public, max-age=604800',
-						}));
-						state[`thumb:${entry.name}`] = thumbSha;
-						thumbUrl = `${publicDomain}/${thumbKey}`;
-					} catch (err) {
-						console.warn(`\n  ⚠️  thumb ${entry.name}: ${err.message}`);
-					}
-				}
-			}
-
-			const clipMeta = {
-				name: entry.name,
-				label: entry.label,
-				icon: entry.icon,
-				loop: entry.loop !== false,
-				...(entry.category ? { category: entry.category } : {}),
-				...(entry.duration ? { duration: entry.duration } : {}),
-				bytes: body.length,
-				url: `${publicDomain}/${key}`,
-				...(thumbUrl ? { thumb: thumbUrl } : {}),
-			};
-
-			if (state[entry.name] === sha) {
-				skipped++;
-				clips.push(clipMeta);
-				continue;
-			}
-			try {
-				await client.send(new PutObjectCommand({
-					Bucket: bucket,
-					Key: key,
-					Body: body,
-					ContentType: 'application/json',
-					CacheControl: 'public, max-age=86400',
-				}));
-				state[entry.name] = sha;
-				uploaded++;
-				clips.push(clipMeta);
-				if (uploaded % 25 === 0) { saveState(); process.stdout.write(`\r  ${uploaded} uploaded, ${skipped} unchanged…`); }
-			} catch (err) {
-				failed++;
-				console.warn(`\n  ❌ ${entry.name}: ${err.message}`);
-			}
-		}
-	}
-	await Promise.all(Array.from({ length: 8 }, worker));
-	saveState();
-
-	clips.sort((a, b) => a.name.localeCompare(b.name));
-	const manifest = {
-		generated_at: new Date().toISOString(),
-		total: clips.length,
-		clips,
-	};
-	await client.send(new PutObjectCommand({
-		Bucket: bucket,
-		Key: `${LIBRARY_R2_PREFIX}/manifest.json`,
-		Body: JSON.stringify(manifest),
-		ContentType: 'application/json',
-		CacheControl: 'public, max-age=300',
-	}));
-
-	console.log(`\n  ✅ Upload: ${uploaded} new/changed, ${skipped} unchanged, ${failed} failed`);
-	console.log(`  📋 ${LIBRARY_R2_PREFIX}/manifest.json → ${clips.length} clips live via /api/animations/library`);
+	// Disabled for good (prompts/finish/085-partners-02-animation-library-license.md).
+	// Adobe's Mixamo terms permit in-project playback but not redistributing the
+	// raw character/animation files, which is exactly what this phase did:
+	// publish clips/*.json + manifest.json behind a public GET endpoint
+	// (api/animations/library.js) with a dedicated third-party mirror script
+	// (scripts/mirror-animation-library.mjs). That risk is retired, not worked
+	// around, so this phase refuses to run rather than gating on a flag someone
+	// could flip back on. The bulk library is now built and published from CC0
+	// sources by scripts/cc0-animation-library.mjs --upload instead. Phases 1-4
+	// above are untouched and still useful for research/offline retargeting.
+	console.error(
+		"  ⛔ Upload disabled permanently: redistributing raw Mixamo clip files is not covered by Adobe's license.",
+	);
+	console.error('  Use `node scripts/cc0-animation-library.mjs --upload` to publish the CC0 replacement library.');
+	process.exitCode = 1;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

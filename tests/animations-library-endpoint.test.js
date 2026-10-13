@@ -43,6 +43,8 @@ const CLIP = {
 	duration: 4.4,
 	bytes: 1174283,
 	url: 'https://cdn.example/animations/library/clips/mx-hip-hop-dancing.json',
+	source: 'Quaternius Universal Animation Library 2',
+	license: 'CC0 1.0 Universal',
 };
 
 // No beforeEach reset: every test installs its own mockResolvedValue/
@@ -239,5 +241,41 @@ describe('GET /api/animations/library', () => {
 		const res = fakeRes();
 		await handler(fakeReq('GET', '/api/animations/library?name='), res);
 		expect(JSON.parse(res.body).clips.length).toBe(5);
+	});
+
+	// ── License filter (defense in depth) ───────────────────────────────────
+	// Adobe's Mixamo terms permit in-project playback but not redistributing raw
+	// clip files, which is exactly what this endpoint does. No clip missing a
+	// `license`, or whose `source` names Mixamo, may ever be served here,
+	// regardless of what an uploader staged (prompts/finish/
+	// 085-partners-02-animation-library-license.md).
+
+	it('drops a clip with no license field', async () => {
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({
+			clips: [CLIP, { ...CLIP, name: 'no-license-clip', license: undefined }],
+		})));
+		const res = fakeRes();
+		await handler(fakeReq(), res);
+		const body = JSON.parse(res.body);
+		expect(body.clips.map((c) => c.name)).toEqual(['mx-hip-hop-dancing']);
+		expect(body.total).toBe(1);
+	});
+
+	it('drops a clip whose source names Mixamo even if it carries a license', async () => {
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({
+			clips: [CLIP, { ...CLIP, name: 'mixamo-clip', source: 'Mixamo', license: 'royalty-free' }],
+		})));
+		const res = fakeRes();
+		await handler(fakeReq(), res);
+		const body = JSON.parse(res.body);
+		expect(body.clips.map((c) => c.name)).toEqual(['mx-hip-hop-dancing']);
+	});
+
+	it('keeps a properly licensed CC0 clip', async () => {
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({ clips: [CLIP] })));
+		const res = fakeRes();
+		await handler(fakeReq(), res);
+		const body = JSON.parse(res.body);
+		expect(body.clips).toEqual([CLIP]);
 	});
 });

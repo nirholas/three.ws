@@ -436,6 +436,15 @@
 				/* Raised for the 4.5:1 axe AA floor; measured against this page's real bg. */
 				color: var(--text-3, #84848e);
 			}
+			.ag-card-credit {
+				font-size: 10px;
+				color: var(--text-3, #84848e);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				min-width: 0;
+			}
+			.ag-card-credit::before { content: '· '; }
 			.ag-card-actions { display: flex; gap: 6px; margin-top: auto; padding-top: 2px; }
 			.ag-card-btn {
 				flex: 1;

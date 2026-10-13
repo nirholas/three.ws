@@ -65,6 +65,23 @@ const MAX_PAGE = 1000;
 const MAX_NAMES = 50;
 
 /**
+ * Defense in depth: no clip missing a `license`, or whose `source` names
+ * Mixamo, is ever served from this public endpoint, regardless of what the
+ * uploader staged. Adobe's Mixamo terms permit in-project playback but not
+ * redistributing the raw clip files, which is exactly what this endpoint and
+ * its mirror (scripts/mirror-animation-library.mjs) do, so a clip without
+ * provenance proving it is safe to redistribute is dropped rather than served.
+ *
+ * @param {{ license?: string, source?: string }} clip
+ * @returns {boolean}
+ */
+function isPublishable(clip) {
+	if (!clip || !clip.license) return false;
+	if (/mixamo/i.test(String(clip.source || ''))) return false;
+	return true;
+}
+
+/**
  * Parse ?name= into a deduped, bounded list of exact clip names. Accepts the
  * param repeated (?name=a&name=b) and comma-separated (?name=a,b), because both
  * spellings are natural to write and neither is ambiguous: a clip name never
@@ -98,12 +115,12 @@ async function readManifest(key) {
 	try {
 		const buf = await getPublicObjectBuffer(key);
 		const parsed = JSON.parse(buf.toString('utf8'));
-		const clips = Array.isArray(parsed)
+		const rawClips = Array.isArray(parsed)
 			? parsed
 			: Array.isArray(parsed.clips)
 				? parsed.clips
 				: [];
-		return { clips, generatedAt: parsed.generated_at || null };
+		return { clips: rawClips.filter(isPublishable), generatedAt: parsed.generated_at || null };
 	} catch (err) {
 		const code = err?.$metadata?.httpStatusCode;
 		if (err?.name !== 'NoSuchKey' && code !== 404) {
