@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pipecat-threews"
+version = "0.1.0"
+description = "Pipecat frame processor publishing three.ws 3D avatar motion data"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+authors = [{ name = "three.ws", email = "hello@three.ws" }]
+keywords = ["pipecat", "voice", "ai", "realtime", "avatar", "3d", "threews"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = [
+    "pipecat-ai>=1.0.0",
+]
+
+[project.urls]
+Documentation = "https://three.ws/docs"
+Website = "https://three.ws/"
+Source = "https://github.com/nirholas/three.ws"
+Changelog = "https://github.com/nirholas/three.ws/blob/main/integrations/pipecat/pipecat-threews/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Mirrors pipecat-ai/pipecat's own [tool.ruff] block (their pyproject.toml), the
+# config their CONTRIBUTING.md asks every community integration to pass.
+[tool.ruff]
+exclude = [".git"]
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "ASYNC", # Blocking calls and other misuse inside async functions
+    "B",     # Likely bugs and design problems
+    "D",     # Docstring rules
+    "F",     # Pyflakes
+    "I",     # Import rules
+    "RUF006", # asyncio tasks nothing holds a reference to
+    "UP",    # Modern Python
+]
+ignore = [
+    "ASYNC109",
+    "ASYNC240",
+    "ASYNC110",
+    "B024",
+    "B027",
+    "B007",
+    "B904",
+    "B905",
+    "D105",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"examples/*" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

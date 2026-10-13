@@ -1,0 +1,115 @@
+---
+title: "three.ws Avatar"
+description: "Publishes three.ws 3D avatar motion data (lip-sync transcript and gesture cues) from any Pipecat pipeline"
+---
+
+import { CommunityMaintained } from "/snippets/community-maintained.mdx";
+
+<CommunityMaintained
+  maintainer="nirholas"
+  maintainerUrl="https://github.com/nirholas"
+  repo="https://github.com/nirholas/three.ws"
+/>
+
+## Overview
+
+`ThreeWsAvatarProcessor` drives a [three.ws](https://three.ws) 3D avatar
+(the `<agent-3d>` web component) from a Pipecat pipeline. three.ws avatars
+render entirely on the visitor's own device: the 3D model, its rig, and its
+animation clip library already live in the browser. This processor never
+synthesizes video or audio of its own. Instead it taps the TTS and
+user-turn frames already flowing through your pipeline and republishes them
+as small JSON messages over the active transport's data channel (lip-sync
+transcript, best-effort gesture cues, and user speech boundaries), which the
+three.ws client already knows how to render.
+
+<CardGroup cols={2}>
+  <Card
+    title="Source Repository"
+    icon="github"
+    href="https://github.com/nirholas/three.ws/tree/main/integrations/pipecat/pipecat-threews"
+  >
+    Source code, the foundational example, and the three.ws platform this
+    integration drives
+  </Card>
+  <Card
+    title="PyPI Package"
+    icon="cube"
+    href="https://pypi.org/project/pipecat-threews/"
+  >
+    The `pipecat-threews` package on PyPI
+  </Card>
+</CardGroup>
+
+## Installation
+
+This is a community-maintained package distributed separately from
+`pipecat-ai`:
+
+```bash
+pip install pipecat-threews
+```
+
+## Prerequisites
+
+No account or API key of its own. The processor only reads frames already
+flowing through your pipeline.
+
+- **Pipecat 1.0.0 or later**: `pipecat-ai>=1.0.0`
+- **A TTS service in the pipeline, constructed with `push_start_frame=True`
+  and `push_stop_frames=True`**: the processor buffers `TTSTextFrame` text
+  between the `TTSStartedFrame`/`TTSStoppedFrame` pair and publishes on
+  `TTSStoppedFrame`. Pipecat's `TTSService` base class defaults both flags
+  to `False`, so a TTS service built without them never emits a
+  `TTSStoppedFrame` and the processor never publishes anything, silently.
+  See `examples/avatar_bot.py`'s `EspeakTTSService` for the correct
+  construction.
+- **A transport with a data channel** (LiveKit, Daily): the processor
+  publishes via `OutputTransportMessageUrgentFrame`, which only reaches
+  clients when the transport routes transport-message frames to a real
+  data channel.
+- **A three.ws `<agent-3d>` embed** (or any client reading the same JSON
+  shape) to render the avatar. See
+  [`src/runtime/livekit-voice.js`](https://github.com/nirholas/three.ws/blob/main/src/runtime/livekit-voice.js)
+  in the three.ws repository.
+
+## Configuration
+
+Constructor arguments for `ThreeWsAvatarProcessor`.
+
+<ParamField path="topic" type="str" default="threews.avatar">
+  The transport data-channel topic to publish on. Only meaningful for
+  transports (like LiveKit) whose data messages carry a topic string;
+  transports without one ignore it.
+</ParamField>
+
+## Usage
+
+Place one instance after your TTS service and before `transport.output()`,
+so it observes both the assistant's `TTSTextFrame`s and the user's
+`UserStartedSpeakingFrame` / `UserStoppedSpeakingFrame` /
+`TranscriptionFrame`s on their way out:
+
+```python
+from pipecat.pipeline.pipeline import Pipeline
+from pipecat_threews import ThreeWsAvatarProcessor
+
+pipeline = Pipeline(
+    [
+        transport.input(),
+        stt,
+        context_aggregator.user(),
+        llm,
+        tts,
+        ThreeWsAvatarProcessor(),
+        transport.output(),
+        context_aggregator.assistant(),
+    ]
+)
+```
+
+## Compatibility
+
+Tested with Pipecat v1.12.0. Check the [source
+repository](https://github.com/nirholas/three.ws/tree/main/integrations/pipecat/pipecat-threews)
+for the latest tested version and changelog.
