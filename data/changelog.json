@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-13",
+			"title": "A Shopify app turns product photos into 3D product media",
+			"link": "/docs/shopify-app",
+			"summary": "A new embedded Shopify app, built end to end but not yet installable (Partner account, env vars, and App Store submission are owner actions): pick a product photo in the admin, generate a real GLB through three.ws's own /api/forge pipeline, preview it in-page, and attach it with productCreateMedia so the storefront shows a 3D viewer on desktop and AR Quick Look on iPhone from the one upload (Shopify derives the USDZ automatically). Bulk mode generates across a whole catalog with real per-item status. Billing runs through Shopify's own usage-based Billing API, priced from Forge's own per-call cost, in test mode until the app has Public distribution. The three mandatory privacy webhooks plus app/uninstalled are HMAC-verified and delivery-deduplicated. Docs: /docs/shopify-app. Submission packet for Partner Dashboard setup and App Store listing copy: marketing/growth/submissions/shopify-app.md.",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
 			"title": "Video to Motion: download any video's motion as a GLB, BVH, or FBX",
 			"link": "/video-to-motion",
 			"summary": "A new page for creators who want the animation file itself, not a composited video: upload a video, preview the captured motion on a stock avatar or any rigged GLB you drop in, trim the in and out points, and download a GLB (clip baked onto the previewed avatar), a BVH (the platform's own canonical-skeleton proportions, the standard shape to re-retarget in a DCC tool), or an FBX (server-side Blender conversion that preserves the rig). Reuses the production model-video2motion worker that already powers /motion-swap for capture; signed-in users can save the clip straight to an agent's animation library. New writer: src/animation-bvh-export.js, round-tripped through three.js's own BVHLoader in tests/animation-bvh-export.test.js. Cross-linked from /motion-swap, /animations, and /mocap-studio. Docs: /docs/video-to-motion.",

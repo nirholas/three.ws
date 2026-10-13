@@ -250,6 +250,13 @@ Indexable: no (excluded from sitemap)
 
 A shared Forge room that runs embedded inside a Discord voice channel: everyone in the call prompts, watches the same 3D model generate, and votes together.
 
+### Photo to 3D product media (Shopify app)
+
+URL: https://three.ws/apps/shopify
+Indexable: no (excluded from sitemap)
+
+An embedded Shopify admin app that turns a product photo into a real GLB and attaches it to the product, so the storefront shows a 3D viewer on desktop and AR Quick Look on iPhone.
+
 ### Knock
 
 URL: https://three.ws/knock
@@ -5221,6 +5228,12 @@ Command reference for @three-ws/avatar-cli: init, validate, hash, and preview, w
 URL: https://three.ws/docs/voice-framework-integrations
 
 How to drive a three.ws <agent-3d> avatar's lipsync and gestures from a LiveKit Agents or Pipecat voice pipeline, with the livekit-plugins-threews and pipecat-threews packages, runnable local examples, and the data-channel message contract both share.
+
+### Docs: Shopify app (Photo to 3D product media)
+
+URL: https://three.ws/docs/shopify-app
+
+How the three.ws Shopify app works: OAuth and embedded session tokens, the photo-to-GLB-to-productCreateMedia pipeline, usage-based Billing API integration, and the mandatory privacy webhooks.
 
 ### Docs: Discord Activity (Forge Room)
 

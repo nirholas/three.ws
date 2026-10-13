@@ -3374,6 +3374,14 @@
 			"dest": "/discord-activity.html"
 		},
 		{
+			"src": "/apps/shopify",
+			"dest": "/shopify-app.html"
+		},
+		{
+			"src": "/apps/shopify/",
+			"dest": "/shopify-app.html"
+		},
+		{
 			"src": "/knock",
 			"dest": "/knock.html"
 		},

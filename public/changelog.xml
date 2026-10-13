@@ -31,6 +31,14 @@
 			<description>How to drive a three.ws &lt;agent-3d&gt; avatar's lipsync and gestures from a LiveKit Agents or Pipecat voice pipeline, with the livekit-plugins-threews and pipecat-threews packages, runnable local examples, and the data-channel message contract both share.</description>
 		</item>
 		<item>
+			<title>Docs: Shopify app (Photo to 3D product media)</title>
+			<link>https://three.ws/docs/shopify-app</link>
+			<guid isPermaLink="false">2026-10-13:Docs: Shopify app (Photo to 3D product media)</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the three.ws Shopify app works: OAuth and embedded session tokens, the photo-to-GLB-to-productCreateMedia pipeline, usage-based Billing API integration, and the mandatory privacy webhooks.</description>
+		</item>
+		<item>
 			<title>Forge Room (Discord Activity)</title>
 			<link>https://three.ws/discord-activity</link>
 			<guid isPermaLink="false">2026-10-13:Forge Room (Discord Activity)</guid>
@@ -47,6 +55,14 @@
 			<description>Every open-source project, GPU model, and asset source three.ws is built on, grouped by what it powers: rendering, formats and compression, generation models, motion, voice, assets, and infrastructure. Generated from package.json on every build.</description>
 		</item>
 		<item>
+			<title>Photo to 3D product media (Shopify app)</title>
+			<link>https://three.ws/apps/shopify</link>
+			<guid isPermaLink="false">2026-10-13:Photo to 3D product media (Shopify app)</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>An embedded Shopify admin app that turns a product photo into a real GLB and attaches it to the product, so the storefront shows a 3D viewer on desktop and AR Quick Look on iPhone.</description>
+		</item>
+		<item>
 			<title>Video to Motion: Turn Any Video into an Animation File</title>
 			<link>https://three.ws/video-to-motion</link>
 			<guid isPermaLink="false">2026-10-13:Video to Motion: Turn Any Video into an Animation File</guid>
@@ -61,6 +77,14 @@
 			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Open the new Activity from a Discord voice channel and everyone in the call shares one Forge room: one prompt, one in-progress generation, one finished model with a shared vote count, and an agent that reacts in text to what just happened. Auth maps a verified Discord identity (re-checked against Discord's own /users/@me, never trusted from the client) to a room-scoped session; generation and voting reuse the real /api/forge pipeline and forge_votes table rather than a separate throwaway pipeline. No coin, wallet, or purchase path. Docs: /docs/discord-activity. Submission packet for Developer Portal setup and Discovery copy: marketing/growth/submissions/discord-activity.md.</description>
+		</item>
+		<item>
+			<title>A Shopify app turns product photos into 3D product media</title>
+			<link>https://three.ws/docs/shopify-app</link>
+			<guid isPermaLink="false">2026-10-13:A Shopify app turns product photos into 3D product media</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new embedded Shopify app, built end to end but not yet installable (Partner account, env vars, and App Store submission are owner actions): pick a product photo in the admin, generate a real GLB through three.ws's own /api/forge pipeline, preview it in-page, and attach it with productCreateMedia so the storefront shows a 3D viewer on desktop and AR Quick Look on iPhone from the one upload (Shopify derives the USDZ automatically). Bulk mode generates across a whole catalog with real per-item status. Billing runs through Shopify's own usage-based Billing API, priced from Forge's own per-call cost, in test mode until the app has Public distribution. The three mandatory privacy webhooks plus app/uninstalled are HMAC-verified and delivery-deduplicated. Docs: /docs/shopify-app. Submission packet for Partner Dashboard setup and App Store listing copy: marketing/growth/submissions/shopify-app.md.</description>
 		</item>
 		<item>
 			<title>A three.ws avatar now lipsyncs to any LiveKit Agents or Pipecat voice pipeline</title>

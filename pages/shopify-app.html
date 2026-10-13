@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard - make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+		<title>Photo to 3D product media · three.ws for Shopify</title>
+		<meta name="description" content="Turn a product photo into a real 3D model your storefront can show in AR, generated in-app and attached to the product automatically." />
+		<meta name="robots" content="noindex" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<!-- %VITE_SHOPIFY_API_KEY% is substituted at build time by Vite's HTML env
+		     replacement (vite.config.js envPrefix default: VITE_*) from the same
+		     client id as the server's SHOPIFY_API_KEY; see docs/shopify-app.md. -->
+		<meta name="shopify-api-key" content="%VITE_SHOPIFY_API_KEY%" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js" type="module"></script>
+		<style>
+			:root {
+				--bg: #0d0d0d; --card: #181818; --line: rgba(255,255,255,0.08); --line-2: rgba(255,255,255,0.14);
+				--text: #e7e9ee; --muted: rgba(231,233,238,0.6); --dim: rgba(231,233,238,0.4);
+				--accent: #008060; --green: #22c55e; --red: #ef4444; --amber: #f59e0b;
+			}
+			* { box-sizing: border-box; }
+			html, body { margin: 0; }
+			body {
+				background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, system-ui, 'Inter', sans-serif;
+				-webkit-font-smoothing: antialiased;
+			}
+			.sa-shell { max-width: 960px; margin: 0 auto; padding: 20px 16px 60px; display: flex; flex-direction: column; gap: 18px; }
+			button { font: inherit; cursor: pointer; }
+
+			.sa-header h1 { font-size: 18px; margin: 0 0 4px; letter-spacing: -0.01em; }
+			.sa-header p { margin: 0; color: var(--muted); font-size: 13px; max-width: 60ch; }
+
+			.sa-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; border: 1px solid var(--line-2); border-radius: 12px; background: var(--card); padding: 14px 16px; }
+			.sa-banner--warn { border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.08); }
+			.sa-banner--error { border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.08); }
+			.sa-banner p { margin: 0; font-size: 13px; }
+			.sa-banner .sa-dim { color: var(--muted); }
+
+			.sa-btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 9px 16px; font-weight: 600; transition: filter .15s ease; }
+			.sa-btn:hover { filter: brightness(1.12); }
+			.sa-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+			.sa-btn:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+			.sa-btn--ghost { background: transparent; border: 1px solid var(--line-2); color: var(--text); }
+			.sa-btn--ghost:hover { border-color: var(--accent); }
+			.sa-btn--sm { padding: 6px 11px; font-size: 12.5px; }
+			.sa-btn--danger { background: var(--red); }
+
+			.sa-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+			.sa-bulkbar { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+			.sa-bulkbar label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+			.sa-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 60px 20px; text-align: center; color: var(--muted); }
+			.sa-spinner { width: 26px; height: 26px; border-radius: 50%; border: 3px solid var(--line-2); border-top-color: var(--accent); animation: sa-spin .8s linear infinite; }
+			@keyframes sa-spin { to { transform: rotate(360deg); } }
+			@media (prefers-reduced-motion: reduce) { .sa-spinner { animation: none; } }
+
+			.sa-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+			.sa-card { border: 1px solid var(--line); border-radius: 12px; background: var(--card); overflow: hidden; display: flex; flex-direction: column; }
+			.sa-card-select { display: flex; align-items: center; gap: 8px; padding: 8px 10px 0; }
+			.sa-card-media { position: relative; width: 100%; height: 160px; background: #000; display: flex; align-items: center; justify-content: center; }
+			.sa-card-media img, .sa-card-media model-viewer { width: 100%; height: 100%; object-fit: contain; }
+			.sa-card-badge { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.65); border: 1px solid var(--line-2); border-radius: 999px; padding: 2px 9px; font-size: 11px; color: var(--green); }
+			.sa-card-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+			.sa-card-title { font-size: 13px; font-weight: 600; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+			.sa-card-status { font-size: 12px; color: var(--muted); min-height: 1.3em; }
+			.sa-card-status--failed { color: var(--red); }
+			.sa-card-status--ready { color: var(--green); }
+			.sa-card-actions { display: flex; gap: 8px; margin-top: auto; }
+
+			.sa-empty { border: 1px dashed var(--line-2); border-radius: 12px; padding: 40px 20px; text-align: center; color: var(--muted); }
+			.sa-empty strong { color: var(--text); display: block; margin-bottom: 6px; }
+
+			.sa-loadmore { display: flex; justify-content: center; }
+			.sa-footer-note { font-size: 11.5px; color: var(--dim); text-align: center; }
+			.sa-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+		</style>
+	</head>
+	<body>
+		<div class="sa-shell">
+			<div class="sa-header">
+				<h1>Photo to 3D product media</h1>
+				<p>Pick a product photo and generate a real, rotatable 3D model. Attach it and Shopify shows it on the storefront with a 3D viewer on desktop and AR Quick Look on iPhone, automatically.</p>
+			</div>
+
+			<div id="sa-billing-banner" class="sa-banner sa-banner--warn" hidden>
+				<p><strong>Billing isn't active yet.</strong> <span class="sa-dim">$0.49 per product converted, capped at $100/month. Approve the usage plan to start generating.</span></p>
+				<button id="sa-billing-activate" class="sa-btn sa-btn--sm" type="button">Activate billing</button>
+			</div>
+
+			<div id="sa-error-banner" class="sa-banner sa-banner--error" role="alert" hidden>
+				<p id="sa-error-text"></p>
+				<button id="sa-error-retry" class="sa-btn sa-btn--ghost sa-btn--sm" type="button">Retry</button>
+			</div>
+
+			<div id="sa-boot" class="sa-center">
+				<div class="sa-spinner" role="status" aria-label="Loading"></div>
+				<p>Loading your products...</p>
+			</div>
+
+			<div id="sa-main" hidden style="display: flex; flex-direction: column; gap: 14px;">
+				<div class="sa-toolbar">
+					<div class="sa-bulkbar">
+						<label><input id="sa-select-all" type="checkbox" /> Select all without a 3D model</label>
+						<span id="sa-select-count"></span>
+					</div>
+					<button id="sa-bulk-generate" class="sa-btn" type="button" disabled>Generate selected</button>
+				</div>
+
+				<div id="sa-empty" class="sa-empty" hidden>
+					<strong>No products yet</strong>
+					Add a product with a photo in Shopify admin, then come back here to give it a 3D model.
+				</div>
+
+				<div id="sa-grid" class="sa-grid" role="list"></div>
+
+				<div id="sa-loadmore" class="sa-loadmore" hidden>
+					<button id="sa-loadmore-btn" class="sa-btn sa-btn--ghost" type="button">Load more products</button>
+				</div>
+			</div>
+
+			<p class="sa-footer-note">Model generation and hosting run on three.ws's own infrastructure. Shopify charges your store through its standard Billing API; three.ws never sees your payment details.</p>
+		</div>
+
+		<script type="module" src="/src/shopify-app/app.js"></script>
+	</body>
+</html>

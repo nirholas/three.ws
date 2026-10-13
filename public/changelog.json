@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-13T16:58:17.389Z",
+	"generated_at": "2026-10-13T17:59:16.332Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -39,6 +39,16 @@
 		{
 			"date": "2026-10-13",
 			"type": "launch",
+			"title": "Docs: Shopify app (Photo to 3D product media)",
+			"summary": "How the three.ws Shopify app works: OAuth and embedded session tokens, the photo-to-GLB-to-productCreateMedia pipeline, usage-based Billing API integration, and the mandatory privacy webhooks.",
+			"link": "/docs/shopify-app",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "launch",
 			"title": "Forge Room (Discord Activity)",
 			"summary": "A shared Forge room that runs embedded inside a Discord voice channel: everyone in the call prompts, watches the same 3D model generate, and votes together.",
 			"link": "/discord-activity",
@@ -59,6 +69,16 @@
 		{
 			"date": "2026-10-13",
 			"type": "launch",
+			"title": "Photo to 3D product media (Shopify app)",
+			"summary": "An embedded Shopify admin app that turns a product photo into a real GLB and attaches it to the product, so the storefront shows a 3D viewer on desktop and AR Quick Look on iPhone.",
+			"link": "/apps/shopify",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "launch",
 			"title": "Video to Motion: Turn Any Video into an Animation File",
 			"summary": "Upload a video of a person and download the motion as a GLB, BVH, or FBX animation file. Preview it on a default avatar or your own rig, trim it, and save it to your animation library.",
 			"link": "/video-to-motion",
@@ -72,6 +92,17 @@
 			"title": "A Discord Activity brings a shared Forge room into any voice channel",
 			"summary": "Open the new Activity from a Discord voice channel and everyone in the call shares one Forge room: one prompt, one in-progress generation, one finished model with a shared vote count, and an agent that reacts in text to what just happened. Auth maps a verified Discord identity (re-checked against Discord's own /users/@me, never trusted from the client) to a room-scoped session; generation and voting reuse the real /api/forge pipeline and forge_votes table rather than a separate throwaway pipeline. No coin, wallet, or purchase path. Docs: /docs/discord-activity. Submission packet for Developer Portal setup and Discovery copy: marketing/growth/submissions/discord-activity.md.",
 			"link": "/docs/discord-activity",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
+			"title": "A Shopify app turns product photos into 3D product media",
+			"summary": "A new embedded Shopify app, built end to end but not yet installable (Partner account, env vars, and App Store submission are owner actions): pick a product photo in the admin, generate a real GLB through three.ws's own /api/forge pipeline, preview it in-page, and attach it with productCreateMedia so the storefront shows a 3D viewer on desktop and AR Quick Look on iPhone from the one upload (Shopify derives the USDZ automatically). Bulk mode generates across a whole catalog with real per-item status. Billing runs through Shopify's own usage-based Billing API, priced from Forge's own per-call cost, in test mode until the app has Public distribution. The three mandatory privacy webhooks plus app/uninstalled are HMAC-verified and delivery-deduplicated. Docs: /docs/shopify-app. Submission packet for Partner Dashboard setup and App Store listing copy: marketing/growth/submissions/shopify-app.md.",
+			"link": "/docs/shopify-app",
 			"tags": [
 				"feature",
 				"docs"

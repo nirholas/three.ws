@@ -832,6 +832,7 @@ const appConfig = {
 				'herald-page': resolve(__dirname, 'pages/herald.html'),
 				companion: resolve(__dirname, 'pages/companion.html'),
 				'discord-activity': resolve(__dirname, 'pages/discord-activity.html'),
+				'shopify-app': resolve(__dirname, 'pages/shopify-app.html'),
 				knock: resolve(__dirname, 'pages/knock.html'),
 				'knock-door': resolve(__dirname, 'pages/knock-door.html'),
 				portal: resolve(__dirname, 'pages/portal.html'),

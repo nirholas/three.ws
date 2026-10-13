@@ -387,6 +387,15 @@
 					"indexable": false
 				},
 				{
+					"path": "/apps/shopify",
+					"title": "Photo to 3D product media (Shopify app)",
+					"description": "An embedded Shopify admin app that turns a product photo into a real GLB and attaches it to the product, so the storefront shows a 3D viewer on desktop and AR Quick Look on iPhone.",
+					"priority": 0.2,
+					"changefreq": "monthly",
+					"added": "2026-10-13",
+					"indexable": false
+				},
+				{
 					"path": "/knock",
 					"title": "Knock",
 					"description": "Put a price on reaching you. Anyone, a person or an agent, can pay it to get exactly one message through, and your 3D companion walks on screen and delivers it out loud with their name and what they paid. The USDC settles straight to your wallet.",
@@ -6727,6 +6736,14 @@
 					"title": "Docs: LiveKit and Pipecat avatar integrations",
 					"description": "How to drive a three.ws <agent-3d> avatar's lipsync and gestures from a LiveKit Agents or Pipecat voice pipeline, with the livekit-plugins-threews and pipecat-threews packages, runnable local examples, and the data-channel message contract both share.",
 					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-13"
+				},
+				{
+					"path": "/docs/shopify-app",
+					"title": "Docs: Shopify app (Photo to 3D product media)",
+					"description": "How the three.ws Shopify app works: OAuth and embedded session tokens, the photo-to-GLB-to-productCreateMedia pipeline, usage-based Billing API integration, and the mandatory privacy webhooks.",
+					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-10-13"
 				},
