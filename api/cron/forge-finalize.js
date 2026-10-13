@@ -52,9 +52,11 @@ import {
 	MAX_FAILOVER_HOPS,
 } from '../_lib/forge-failover.js';
 import { markLaneUnhealthy } from '../_lib/forge-lane-health.js';
+import { markProviderCooldown } from '../_lib/provider-health.js';
 import { resolveTier } from '../_lib/forge-tiers.js';
 import { acquireLock, cacheGet, cacheSet } from '../_lib/cache.js';
 import { getRedis } from '../_lib/redis.js';
+import { NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds } from '../forge.js';
 
 export const maxDuration = 60;
 
@@ -144,6 +146,32 @@ export function decideFailedSweep({
 	// Bounded chain, same cap as the attended path.
 	if (hop >= maxHops) return 'terminal';
 	return 'redispatch';
+}
+
+/**
+ * NVIDIA NIM is the only text-to-3D lane (forge-failover.js excludes it from
+ * redispatch: text-only, and a poll-time redispatch always reconstructs from a
+ * stored reference image nvidia rows never have), so a stalled poll has no
+ * alternate lane to fail over to. The only two defenses are: defer to the
+ * attended browser poll while one may still be running, then give the job one
+ * real resubmit before the hard TTL reaps it as dead.
+ *
+ * @returns {'defer'|'resubmit'|'terminal'}
+ *   - defer: an attended client may still be polling, or this job already got
+ *     its one resubmit; leave the row alone.
+ *   - resubmit: past the attended window, before the hard TTL, not yet retried.
+ *   - terminal: past the hard TTL; nothing left to try.
+ */
+export function decideNvidiaStall({
+	ageMinutes,
+	alreadyResubmitted = false,
+	attendedBudgetMinutes = ATTENDED_POLL_BUDGET_MINUTES,
+	hardTtlMinutes = HARD_TTL_MINUTES,
+} = {}) {
+	if (!Number.isFinite(ageMinutes) || ageMinutes < attendedBudgetMinutes) return 'defer';
+	if (ageMinutes >= hardTtlMinutes) return 'terminal';
+	if (alreadyResubmitted) return 'defer';
+	return 'resubmit';
 }
 
 // Unattended twin of the poll handler's automatic lane failover (api/forge.js
@@ -405,6 +433,46 @@ export default wrapCron(async (req, res) => {
 					out.still_running++;
 					continue;
 				}
+				if ((!status || status.status === 'running' || status.status === 'queued') && row.prompt) {
+					// Still running/queued, or the poll itself errored (status null): no
+					// alternate lane exists for text-only nvidia, so give the job one real
+					// resubmit before the hard TTL reaps it as dead. A distinct lock from
+					// nvcf:resub: below means this can never double-fire with the
+					// nvcf_expired recovery.
+					const stallDecision = decideNvidiaStall({
+						ageMinutes,
+						alreadyResubmitted: Boolean(
+							await cacheGet(`nvcf:stall-resub:${row.replicate_job_id}`).catch(() => null),
+						),
+					});
+					if (stallDecision === 'resubmit' && (await acquireLock(`nvcf:stall-lock:${row.replicate_job_id}`, NVCF_ALIAS_TTL_S))) {
+						try {
+							const resub = await nvidia.textTo3d({ prompt: row.prompt, tier: resolveTier(row.tier) });
+							await cacheSet(`nvcf:stall-resub:${row.replicate_job_id}`, '1', NVCF_ALIAS_TTL_S);
+							if (resub.taskId) {
+								await cacheSet(`nvcf:alias:${row.replicate_job_id}`, resub.taskId, NVCF_ALIAS_TTL_S);
+								console.warn(
+									`[forge-finalize] NVCF request stalled; resubmitted unattended job (creation ${row.id})`,
+								);
+								out.resubmitted++;
+								continue;
+							}
+							if (resub.resultGlbUrl) {
+								const durable = await materializeCreation({
+									replicateJobId: row.replicate_job_id,
+									clientKey: row.client_key,
+									glbUrl: resub.resultGlbUrl,
+								});
+								if (durable) {
+									out.done++;
+									continue;
+								}
+							}
+						} catch (err) {
+							console.warn(`[forge-finalize] NVCF stall resubmit failed: ${err?.message || err}`);
+						}
+					}
+				}
 				if (status?.code === 'nvcf_expired' && row.prompt) {
 					// The request id is dead but the inputs live on the row — the same
 					// never-dead-end recovery the attended poll runs, sharing its
@@ -437,8 +505,12 @@ export default wrapCron(async (req, res) => {
 							console.warn(`[forge-finalize] NVCF resubmit failed: ${err?.message || err}`);
 						}
 					}
-					// Lock held by a prior recovery or the resubmit failed: fall through
-					// to the TTL check so a second expiry fails honestly, not instantly.
+					// Lock held by a prior recovery or the resubmit failed: the lane is
+					// cron-observed broken with no alternate text-to-3D lane to send new
+					// submissions to, so cool the same breaker forge.js's submit path
+					// reads before every new free-text request. Fall through to the TTL
+					// check so a second expiry fails honestly, not instantly.
+					await markProviderCooldown(NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds()).catch(() => {});
 				} else if (status?.status === 'failed') {
 					await markFailed({
 						replicateJobId: row.replicate_job_id,
@@ -458,6 +530,13 @@ export default wrapCron(async (req, res) => {
 		}
 
 		if (ageMinutes > HARD_TTL_MINUTES) {
+			if (row.backend === 'nvidia') {
+				// Reaping the bare TTL on nvidia is itself a cron-observed failure of
+				// the lane: cool the submit-time breaker so new free-text requests
+				// skip straight to the paid/image-intermediate path instead of landing
+				// on the same dead end for another HARD_TTL_MINUTES.
+				await markProviderCooldown(NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds()).catch(() => {});
+			}
 			await markFailed({
 				replicateJobId: row.replicate_job_id,
 				clientKey: row.client_key,

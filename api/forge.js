@@ -175,7 +175,7 @@ import { meshDirectorFor, meshSubjectClass, resolveLogoPrompt } from './_lib/for
 // runs) lets subsequent requests skip a degraded lane and go straight to a
 // working one; it expires on its own so a recovered lane is retried promptly.
 // Best-effort via the shared cache: a miss just means "not cooling".
-const NIM_TRELLIS_COOLDOWN_KEY = 'forge-nim-trellis';
+export const NIM_TRELLIS_COOLDOWN_KEY = 'forge-nim-trellis';
 // Sideline the free NIM lane after a failure. The cooldown exists to avoid
 // re-paying the expensive submit-timeout HANG, so a socket timeout / unreachable
 // host (no HTTP status came back) earns the full window. A fast gateway 5xx (a

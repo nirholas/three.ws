@@ -4,7 +4,7 @@
 // Importing the cron module is safe: db/neon clients are created lazily.
 
 import { describe, it, expect } from 'vitest';
-import { decodeWorkerEnvelope, decideFailedSweep } from '../api/cron/forge-finalize.js';
+import { decodeWorkerEnvelope, decideFailedSweep, decideNvidiaStall } from '../api/cron/forge-finalize.js';
 
 function pack(obj) {
 	return Buffer.from(JSON.stringify(obj), 'utf8').toString('base64url');
@@ -79,5 +79,36 @@ describe('decideFailedSweep', () => {
 
 	it('treats an unknowable age as past the attended window rather than deferring forever', () => {
 		expect(decideFailedSweep({ ageMinutes: undefined, hasReferenceImage: true })).toBe('redispatch');
+	});
+});
+
+// The free NVIDIA NIM text lane has no alternate lane to fail a stuck prompt
+// over to (forge-failover.js excludes it: text-only, no stored reference image
+// to reconstruct from), so a stalled poll gets exactly one resubmit attempt
+// before the hard TTL reaps it, instead of silently burning the full 45 minutes
+// on a request that will never resolve on its own.
+describe('decideNvidiaStall', () => {
+	it('defers while an attended client may still be polling', () => {
+		expect(decideNvidiaStall({ ageMinutes: 3 })).toBe('defer');
+		expect(decideNvidiaStall({ ageMinutes: 12.9 })).toBe('defer');
+	});
+
+	it('resubmits once the attended window has passed and the hard TTL has not hit', () => {
+		expect(decideNvidiaStall({ ageMinutes: 13 })).toBe('resubmit');
+		expect(decideNvidiaStall({ ageMinutes: 30 })).toBe('resubmit');
+	});
+
+	it('never resubmits a job twice', () => {
+		expect(decideNvidiaStall({ ageMinutes: 30, alreadyResubmitted: true })).toBe('defer');
+	});
+
+	it('goes terminal at or past the hard TTL regardless of the resubmit flag', () => {
+		expect(decideNvidiaStall({ ageMinutes: 45 })).toBe('terminal');
+		expect(decideNvidiaStall({ ageMinutes: 50, alreadyResubmitted: true })).toBe('terminal');
+		expect(decideNvidiaStall({ ageMinutes: 45, alreadyResubmitted: false })).toBe('terminal');
+	});
+
+	it('treats an unknowable age as inside the attended window rather than resubmitting blind', () => {
+		expect(decideNvidiaStall({ ageMinutes: undefined })).toBe('defer');
 	});
 });
