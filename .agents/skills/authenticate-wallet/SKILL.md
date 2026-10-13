@@ -34,7 +34,7 @@ This sends a 6-digit verification code to the email and outputs a `flowId`.
 npx awal@2.10.0 auth verify <otp>
 ```
 
-Use the 6-digit code from the user's email to complete authentication. The flow ID from step 1 is saved automatically to a local file — you do not pass it as an argument. If you have the ability to access the user's email, you can read the OTP code, or you can ask your human for the code.
+Use the 6-digit code from the user's email to complete authentication. The flow ID from step 1 is saved automatically to a local file; you do not pass it as an argument. If you have the ability to access the user's email, you can read the OTP code, or you can ask your human for the code.
 
 ## Input Validation
 

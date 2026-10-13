@@ -15,10 +15,10 @@ Use the `npx awal@2.10.0 x402` commands to discover, inspect, and call paid API 
 
 ## Which payment stack (arbitration)
 
-three.ws runs two x402/payment stacks. Pick one deterministically — never settle a payment through a signing path the user didn't ask for:
+three.ws runs two x402/payment stacks. Pick one deterministically: never settle a payment through a signing path the user didn't ask for.
 
-- **This stack (awal / three.ws-native)** — the default. Use it to browse the bazaar and settle a plain x402 402 with a one-shot USDC-on-Base payment.
-- **OKX `onchainos` stack** (`okx-agent-payments-protocol`) — use *only* when the user names OKX/OnchainOS, or the 402 is one OKX handles specifically: a payment channel / voucher / session, `permit2`, `upto`/metered billing, MPP charge, or an a2a-pay `paymentId`. Hand off there and do not pay from here.
+- **This stack (awal / three.ws-native)**: the default. Use it to browse the bazaar and settle a plain x402 402 with a one-shot USDC-on-Base payment.
+- **OKX `onchainos` stack** (`okx-agent-payments-protocol`): use *only* when the user names OKX/OnchainOS, or the 402 is one OKX handles specifically: a payment channel / voucher / session, `permit2`, `upto`/metered billing, MPP charge, or an a2a-pay `paymentId`. Hand off there and do not pay from here.
 
 ## Workflow
 
@@ -40,7 +40,7 @@ npx awal@2.10.0 x402 bazaar search <query> [-k <n>] [--network <network>] [--sch
 
 | Option                  | Description                                                              |
 | ----------------------- | ------------------------------------------------------------------------ |
-| `-k, --top <n>`         | Number of results, 1–20 (default: 20)                                    |
+| `-k, --top <n>`         | Number of results, 1 to 20 (default: 20)                                 |
 | `--network <name>`      | Filter by chain (base, base-sepolia, polygon, solana, solana-devnet)     |
 | `--scheme <scheme>`     | Filter by payment scheme: `exact` or `upto`                              |
 | `--max-price <price>`   | Maximum price in USD (e.g. `0.01`)                                       |

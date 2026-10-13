@@ -12,7 +12,7 @@ metadata:
 
 # Build an x402 Payment Server
 
-Create an Express server that charges USDC for API access using the x402 payment protocol. Callers pay per-request in USDC on Base — no accounts, API keys, or subscriptions needed. Your service is automatically discoverable by other agents via the x402 Bazaar.
+Create an Express server that charges USDC for API access using the x402 payment protocol. Callers pay per-request in USDC on Base: no accounts, API keys, or subscriptions needed. Your service is automatically discoverable by other agents via the x402 Bazaar.
 
 ## How It Works
 
@@ -62,7 +62,7 @@ const facilitator = new HTTPFacilitatorClient({ url: "https://x402.org/facilitat
 const server = new x402ResourceServer(facilitator);
 server.register("eip155:8453", new ExactEvmScheme());
 
-// x402 payment middleware — protects routes below
+// x402 payment middleware: protects routes below
 app.use(
   paymentMiddleware(
     {
@@ -95,7 +95,7 @@ app.listen(3000, () => console.log("Server running on port 3000"));
 node index.js
 ```
 
-Test with curl — you should get a 402 response with payment requirements:
+Test with curl: you should get a 402 response with payment requirements:
 
 ```bash
 curl -i http://localhost:3000/api/example

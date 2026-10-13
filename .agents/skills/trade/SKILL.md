@@ -16,10 +16,10 @@ Use the `npx awal@2.10.0 trade` command to swap tokens on Base or Polygon via th
 
 ## Which swap stack (arbitration)
 
-three.ws runs two swap stacks. Pick one deterministically — never route a swap through a signing path the user didn't ask for:
+three.ws runs two swap stacks. Pick one deterministically: never route a swap through a signing path the user didn't ask for.
 
-- **This stack (awal / three.ws-native)** — the default. Use it for CDP swaps on Base/Polygon unless the user explicitly opts into OKX.
-- **OKX `onchainos` stack** (`okx-dex-swap`) — use *only* when the user names OKX, OnchainOS, an OKX-managed account, a specific DEX/DApp venue, or an OKX-specific chain (X Layer, BSC, Arbitrum, and the other 20+ OKX-routed chains). Hand off to `okx-dex-swap` and do not trade from here.
+- **This stack (awal / three.ws-native)**: the default. Use it for CDP swaps on Base/Polygon unless the user explicitly opts into OKX.
+- **OKX `onchainos` stack** (`okx-dex-swap`): use *only* when the user names OKX, OnchainOS, an OKX-managed account, a specific DEX/DApp venue, or an OKX-specific chain (X Layer, BSC, Arbitrum, and the other 20+ OKX-routed chains). Hand off to `okx-dex-swap` and do not trade from here.
 
 ## Confirm wallet is initialized and authed
 
@@ -88,7 +88,7 @@ Before constructing the command, validate all user-provided values to prevent sh
 
 Do not pass unvalidated user input into the command.
 
-Format validation is not intent confirmation. A value that passes these regexes can still be the wrong pair, wrong direction, or wrong amount — the confirmation step below is mandatory regardless.
+Format validation is not intent confirmation. A value that passes these regexes can still be the wrong pair, wrong direction, or wrong amount; the confirmation step below is mandatory regardless.
 
 ## Confirmation Required (mandatory)
 
@@ -112,7 +112,7 @@ Rules:
 ## Examples
 
 ```bash
-# Swap $1 USDC for ETH (dollar prefix — note the single quotes)
+# Swap $1 USDC for ETH (dollar prefix, note the single quotes)
 npx awal@2.10.0 trade '$1' usdc eth
 
 # Swap 0.50 USDC for ETH (decimal format)

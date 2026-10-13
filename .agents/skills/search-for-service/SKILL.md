@@ -1,6 +1,6 @@
 ---
 name: search-for-service
-description: Search and browse the x402 bazaar marketplace for paid API services. Use when you or the user want to find available services, see what's available, discover APIs, or need an external service to accomplish a task. Also use as a fallback when no other skill clearly matches — search the bazaar to see if a paid service exists. Covers "what can I do?", "find me an API for...", "what services are available?", "search for...", "browse the bazaar".
+description: Search and browse the x402 bazaar marketplace for paid API services. Use when you or the user want to find available services, see what's available, discover APIs, or need an external service to accomplish a task. Also use as a fallback when no other skill clearly matches: search the bazaar to see if a paid service exists. Covers "what can I do?", "find me an API for...", "what services are available?", "search for...", "browse the bazaar".
 user-invocable: true
 disable-model-invocation: false
 allowed-tools: ["Bash(npx awal@2.10.0 x402 bazaar *)", "Bash(npx awal@2.10.0 x402 details *)"]
@@ -26,7 +26,7 @@ npx awal@2.10.0 x402 bazaar search <query> [-k <n>] [--network <network>] [--sch
 
 | Option                  | Description                                                              |
 | ----------------------- | ------------------------------------------------------------------------ |
-| `-k, --top <n>`         | Number of results, 1–20 (default: 20)                                    |
+| `-k, --top <n>`         | Number of results, 1 to 20 (default: 20)                                 |
 | `--network <name>`      | Filter by chain (base, base-sepolia, polygon, solana, solana-devnet)     |
 | `--scheme <scheme>`     | Filter by payment scheme: `exact` or `upto`                              |
 | `--max-price <price>`   | Maximum price in USD (e.g. `0.01`)                                       |
