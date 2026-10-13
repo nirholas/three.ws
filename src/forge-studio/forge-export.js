@@ -15,6 +15,7 @@
 
 import { createLogger } from '../shared/log.js';
 import { creationIdFromGlbUrl, mountSlicerMenuItems } from '../slicer-handoff.js';
+import { mountCraftcloudMenuItem } from '../craftcloud-print.js';
 
 const log = createLogger('forge-export');
 
@@ -160,6 +161,11 @@ if (download && resultPanel) {
 	const slicerItems = mountSlicerMenuItems(menu, {
 		isLocalEdit: () => (download.getAttribute('href') || '').startsWith('blob:'),
 	});
+
+	// "Get it printed": live Craftcloud prices for this model, buyer pays
+	// Craftcloud directly. Shown once a model is ready, same gating as the
+	// slicer rows above.
+	const craftcloudItem = mountCraftcloudMenuItem(menu);
 
 	// ---- menu behavior -------------------------------------------------------
 
@@ -308,6 +314,7 @@ if (download && resultPanel) {
 	document.addEventListener('forge:model-ready', (e) => {
 		sceneCache = { url: null, scene: null };
 		slicerItems.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl));
+		craftcloudItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl), e.detail?.glbUrl || null);
 		for (const status of itemStatus.values()) {
 			status.textContent = '';
 			status.classList.remove('is-error');

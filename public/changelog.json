@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-13T01:19:48.006Z",
+	"generated_at": "2026-10-13T07:01:56.324Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -19,11 +19,75 @@
 		{
 			"date": "2026-10-13",
 			"type": "launch",
+			"title": "Docs: Discord Activity (Forge Room)",
+			"summary": "How the three.ws Discord Activity works: the OAuth2 auth flow, Discord's /.proxy/ URL mapping and CSP, the shared event-sourced room state, and why it ships with no purchases.",
+			"link": "/docs/discord-activity",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "launch",
+			"title": "Docs: LiveKit and Pipecat avatar integrations",
+			"summary": "How to drive a three.ws <agent-3d> avatar's lipsync and gestures from a LiveKit Agents or Pipecat voice pipeline, with the livekit-plugins-threews and pipecat-threews packages, runnable local examples, and the data-channel message contract both share.",
+			"link": "/docs/voice-framework-integrations",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "launch",
+			"title": "Forge Room (Discord Activity)",
+			"summary": "A shared Forge room that runs embedded inside a Discord voice channel: everyone in the call prompts, watches the same 3D model generate, and votes together.",
+			"link": "/discord-activity",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "launch",
 			"title": "Open source credits",
 			"summary": "Every open-source project, GPU model, and asset source three.ws is built on, grouped by what it powers: rendering, formats and compression, generation models, motion, voice, assets, and infrastructure. Generated from package.json on every build.",
 			"link": "/open-source",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
+			"title": "A Discord Activity brings a shared Forge room into any voice channel",
+			"summary": "Open the new Activity from a Discord voice channel and everyone in the call shares one Forge room: one prompt, one in-progress generation, one finished model with a shared vote count, and an agent that reacts in text to what just happened. Auth maps a verified Discord identity (re-checked against Discord's own /users/@me, never trusted from the client) to a room-scoped session; generation and voting reuse the real /api/forge pipeline and forge_votes table rather than a separate throwaway pipeline. No coin, wallet, or purchase path. Docs: /docs/discord-activity. Submission packet for Developer Portal setup and Discovery copy: marketing/growth/submissions/discord-activity.md.",
+			"link": "/docs/discord-activity",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
+			"title": "A three.ws avatar now lipsyncs to any LiveKit Agents or Pipecat voice pipeline",
+			"summary": "Two new packages, livekit-plugins-threews and pipecat-threews, republish a running voice agent's TTS and user-turn frames as the same transcript/gesture/speech_started/speech_ended message shape over the room's data channel, which <agent-3d voice=\"livekit\"> already renders client-side: no server-side video rendering, no change to the browser code at all. The LiveKit package is an AvatarSession plugin dropped into an AgentSession; the Pipecat package is a FrameProcessor placed after the TTS service. Each ships a runnable local example against a real open-source livekit-server with a real local TTS, verified end to end with real browser automation driving the actual avatar lipsync and gesture cues off a live bot in both frameworks. Docs: /docs/voice-framework-integrations.",
+			"link": "/docs/voice-framework-integrations",
+			"tags": [
+				"feature",
+				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
+			"title": "Get it printed: live Craftcloud prices for any Forge model, buyer pays direct",
+			"summary": "A new \"Get it printed\" action on model pages and in the Forge export menu uploads the model straight to Craftcloud (All3DP) and shows live, real prices across whichever of its roughly 186 print shops can run the job, cheapest first with shipping attached. This is not Materialize: three.ws never takes payment here. Craftcloud's public v5 API has no endpoint that hands a server-created cart back to a browser for checkout, so the panel links out to Craftcloud's own upload page instead of faking a continue-to-checkout button, where pasting the same STL reproduces the prices in an authenticated, checkout-capable session. Backed by a new fulfillment adapter, api/_lib/print/adapters/craftcloud.js, registered ahead of the manual adapter since quoting never spends. Docs: /docs/forge#get-it-printed-live-prices-from-craftcloud and /docs/materialize.",
+			"link": "/docs/forge#get-it-printed-live-prices-from-craftcloud",
+			"tags": [
+				"feature",
+				"docs"
 			]
 		},
 		{

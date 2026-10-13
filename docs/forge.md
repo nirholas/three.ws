@@ -374,6 +374,27 @@ from the format menu and import it into the slicer by hand.
 curl -sLo model.stl https://three.ws/api/slicer/<id>/120mm/model.stl
 ```
 
+## Get it printed: live prices from Craftcloud
+
+The format menu's **🖨 Get it printed** row, and the **Get it printed** action
+on a model page, are a different flow from Materialize (three.ws's own print
+pipeline, documented in [materialize.md](materialize.md)). Here, the model is
+uploaded straight to [Craftcloud](https://craftcloud3d.com) (All3DP), priced
+live across whichever of its roughly 186 print shops can run the job, and the
+buyer pays Craftcloud directly on Craftcloud's own site. three.ws never takes
+payment or touches the order.
+
+`POST /api/print/craftcloud-quote` with `{ "creationId": "<uuid>" }` or
+`{ "glbUrl": "<url>" }` converts the model to STL, uploads it to Craftcloud,
+polls its pricing engine, and returns every (shop, material) quote it got
+back, cheapest first, with shipping attached. Craftcloud's public v5 API has
+no endpoint that hands a server-created cart back to a browser for checkout,
+so the response carries `checkoutUrl: null` and an `uploadPageUrl` instead:
+the honest next step is Craftcloud's own upload page, where pasting the same
+file reproduces these prices in an authenticated session that can actually
+check out. The adapter behind this lives at
+`api/_lib/print/adapters/craftcloud.js`.
+
 ## Examples
 
 Forge's read and generate surface is plain HTTP. No key is required for the free lanes.

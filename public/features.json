@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-13T01:19:47.993Z",
+	"generated_at": "2026-10-13T07:01:56.308Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -541,6 +541,18 @@
 					"showcase": true,
 					"priority": 0.7,
 					"job": "agent"
+				},
+				{
+					"path": "/discord-activity",
+					"title": "Forge Room (Discord Activity)",
+					"description": "A shared Forge room that runs embedded inside a Discord voice channel: everyone in the call prompts, watches the same 3D model generate, and votes together.",
+					"added": "2026-10-13",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.3,
+					"job": "explore"
 				},
 				{
 					"path": "/knock",
@@ -10338,6 +10350,30 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.7,
+					"job": null
+				},
+				{
+					"path": "/docs/voice-framework-integrations",
+					"title": "Docs: LiveKit and Pipecat avatar integrations",
+					"description": "How to drive a three.ws <agent-3d> avatar's lipsync and gestures from a LiveKit Agents or Pipecat voice pipeline, with the livekit-plugins-threews and pipecat-threews packages, runnable local examples, and the data-channel message contract both share.",
+					"added": "2026-10-13",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.7,
+					"job": null
+				},
+				{
+					"path": "/docs/discord-activity",
+					"title": "Docs: Discord Activity (Forge Room)",
+					"description": "How the three.ws Discord Activity works: the OAuth2 auth flow, Discord's /.proxy/ URL mapping and CSP, the shared event-sourced room state, and why it ships with no purchases.",
+					"added": "2026-10-13",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
 					"job": null
 				},
 				{

@@ -3,12 +3,21 @@
 	"entries": [
 		{
 			"date": "2026-10-13",
+			"title": "Get it printed: live Craftcloud prices for any Forge model, buyer pays direct",
+			"link": "/docs/forge#get-it-printed-live-prices-from-craftcloud",
+			"summary": "A new \"Get it printed\" action on model pages and in the Forge export menu uploads the model straight to Craftcloud (All3DP) and shows live, real prices across whichever of its roughly 186 print shops can run the job, cheapest first with shipping attached. This is not Materialize: three.ws never takes payment here. Craftcloud's public v5 API has no endpoint that hands a server-created cart back to a browser for checkout, so the panel links out to Craftcloud's own upload page instead of faking a continue-to-checkout button, where pasting the same STL reproduces the prices in an authenticated, checkout-capable session. Backed by a new fulfillment adapter, api/_lib/print/adapters/craftcloud.js, registered ahead of the manual adapter since quoting never spends. Docs: /docs/forge#get-it-printed-live-prices-from-craftcloud and /docs/materialize.",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
 			"title": "A Discord Activity brings a shared Forge room into any voice channel",
 			"link": "/docs/discord-activity",
 			"summary": "Open the new Activity from a Discord voice channel and everyone in the call shares one Forge room: one prompt, one in-progress generation, one finished model with a shared vote count, and an agent that reacts in text to what just happened. Auth maps a verified Discord identity (re-checked against Discord's own /users/@me, never trusted from the client) to a room-scoped session; generation and voting reuse the real /api/forge pipeline and forge_votes table rather than a separate throwaway pipeline. No coin, wallet, or purchase path. Docs: /docs/discord-activity. Submission packet for Developer Portal setup and Discovery copy: marketing/growth/submissions/discord-activity.md.",
 			"tags": [
 				"feature",
-				"integrations",
 				"docs"
 			]
 		},

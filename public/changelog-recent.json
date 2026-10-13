@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-13T01:19:48.029Z",
+	"generated_at": "2026-10-13T07:01:56.347Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4051,
+	"total": 4057,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -22,11 +22,75 @@
 		{
 			"date": "2026-10-13",
 			"type": "launch",
+			"title": "Docs: Discord Activity (Forge Room)",
+			"summary": "How the three.ws Discord Activity works: the OAuth2 auth flow, Discord's /.proxy/ URL mapping and CSP, the shared event-sourced room state, and why it ships with no purchases.",
+			"link": "/docs/discord-activity",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "launch",
+			"title": "Docs: LiveKit and Pipecat avatar integrations",
+			"summary": "How to drive a three.ws <agent-3d> avatar's lipsync and gestures from a LiveKit Agents or Pipecat voice pipeline, with the livekit-plugins-threews and pipecat-threews packages, runnable local examples, and the data-channel message contract both share.",
+			"link": "/docs/voice-framework-integrations",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "launch",
+			"title": "Forge Room (Discord Activity)",
+			"summary": "A shared Forge room that runs embedded inside a Discord voice channel: everyone in the call prompts, watches the same 3D model generate, and votes together.",
+			"link": "/discord-activity",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "launch",
 			"title": "Open source credits",
 			"summary": "Every open-source project, GPU model, and asset source three.ws is built on, grouped by what it powers: rendering, formats and compression, generation models, motion, voice, assets, and infrastructure. Generated from package.json on every build.",
 			"link": "/open-source",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
+			"title": "A Discord Activity brings a shared Forge room into any voice channel",
+			"summary": "Open the new Activity from a Discord voice channel and everyone in the call shares one Forge room: one prompt, one in-progress generation, one finished model with a shared vote count, and an agent that reacts in text to what just happened. Auth maps a verified Discord identity (re-checked against Discord's own /users/@me, never trusted from the client) to a room-scoped session; generation and voting reuse the real /api/forge pipeline and forge_votes table rather than a separate throwaway pipeline. No coin, wallet, or purchase path. Docs: /docs/discord-activity. Submission packet for Developer Portal setup and Discovery copy: marketing/growth/submissions/discord-activity.md.",
+			"link": "/docs/discord-activity",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
+			"title": "A three.ws avatar now lipsyncs to any LiveKit Agents or Pipecat voice pipeline",
+			"summary": "Two new packages, livekit-plugins-threews and pipecat-threews, republish a running voice agent's TTS and user-turn frames as the same transcript/gesture/speech_started/speech_ended message shape over the room's data channel, which <agent-3d voice=\"livekit\"> already renders client-side: no server-side video rendering, no change to the browser code at all. The LiveKit package is an AvatarSession plugin dropped into an AgentSession; the Pipecat package is a FrameProcessor placed after the TTS service. Each ships a runnable local example against a real open-source livekit-server with a real local TTS, verified end to end with real browser automation driving the actual avatar lipsync and gesture cues off a live bot in both frameworks. Docs: /docs/voice-framework-integrations.",
+			"link": "/docs/voice-framework-integrations",
+			"tags": [
+				"feature",
+				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
+			"title": "Get it printed: live Craftcloud prices for any Forge model, buyer pays direct",
+			"summary": "A new \"Get it printed\" action on model pages and in the Forge export menu uploads the model straight to Craftcloud (All3DP) and shows live, real prices across whichever of its roughly 186 print shops can run the job, cheapest first with shipping attached. This is not Materialize: three.ws never takes payment here. Craftcloud's public v5 API has no endpoint that hands a server-created cart back to a browser for checkout, so the panel links out to Craftcloud's own upload page instead of faking a continue-to-checkout button, where pasting the same STL reproduces the prices in an authenticated, checkout-capable session. Backed by a new fulfillment adapter, api/_lib/print/adapters/craftcloud.js, registered ahead of the manual adapter since quoting never spends. Docs: /docs/forge#get-it-printed-live-prices-from-craftcloud and /docs/materialize.",
+			"link": "/docs/forge#get-it-printed-live-prices-from-craftcloud",
+			"tags": [
+				"feature",
+				"docs"
 			]
 		},
 		{
@@ -1492,66 +1556,6 @@
 			"link": "/demos/agents",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Token ceilings, a spend page, USDC deposits and a way out of the free tier",
-			"summary": "Every agent can now carry hourly, daily and per-run token ceilings next to its dollar caps. A ceiling is checked before the model is called; hitting one pauses the agent, tells you, and gives you Resume and Extend once. The new /spend page shows what each agent spends by day, by model and by tool, projects the month end, and alerts at 50, 80 and 100 percent of any cap. Credits can be topped up with USDC at a fixed rate alongside SOL and $THREE, the deposit page lists every accepted asset and its rate from live config, and paying in $THREE earns whatever bonus the owner has set. When the free tier runs out, the error now carries your choices: wait for the reset, top up, bring your own key, or resend the same request with paid_fallback: true to bill it to credits in one step.",
-			"link": "/spend",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Your agents can trade perpetual futures",
-			"summary": "Each agent now has a perps desk at /agents/:id/perps, also reachable from the API and from Claude or any MCP client. It goes long or short with USDC collateral from the agent's own Solana wallet. Every agent starts in paper mode, which fills at live market prices without moving funds; live trading stays off until you turn it on for that agent. Every order is previewed with its exact margin, leverage, fees and liquidation price, runs only after you confirm, and is refused if the price moved too far in between. Leverage and per-position margin caps are always on (2x and $25 to start). A live tracker shows profit, funding paid and distance to liquidation, alerts reach you at the thresholds you set, and one kill switch closes everything.",
-			"link": "/agent-perps",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "launch",
-			"title": "CAD Forge",
-			"summary": "Describe a mechanical part and get real parametric CAD checked by the OpenCascade kernel: STEP, STL, GLB and a drawing sheet, live dimension sliders, true-scale AR and one-click printing.",
-			"link": "/cad",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "launch",
-			"title": "Claim your X creations",
-			"summary": "Models and avatars the three.ws bot made for you on X wait here. Link the same X account and every one of them moves into your library.",
-			"link": "/x/claim",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "launch",
-			"title": "Docs · CAD Forge (text to parametric CAD)",
-			"summary": "How a sentence becomes a kernel-checked build123d part: the write, build and repair loop, dimension parameters, the design page, the /api/cad HTTP API, the cad_generate and cad_rebuild MCP tools, and the sandbox that runs model-written code.",
-			"link": "/docs/cad-forge",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "launch",
-			"title": "Docs · Grok Bot connector reference",
-			"summary": "Connect Grok Bot to three.ws as a custom MCP connector: exact fields for each sign-in mode, which server to pick, the links every result carries, jobs and safe retries, free limits and install tokens, why a connector key can never spend, guided prompts, and a fix for every connection failure.",
-			"link": "/docs/grok-bot",
-			"tags": [
-				"launch"
 			]
 		}
 	]

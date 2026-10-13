@@ -15,12 +15,60 @@
 			<description>Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.</description>
 		</item>
 		<item>
+			<title>Docs: Discord Activity (Forge Room)</title>
+			<link>https://three.ws/docs/discord-activity</link>
+			<guid isPermaLink="false">2026-10-13:Docs: Discord Activity (Forge Room)</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the three.ws Discord Activity works: the OAuth2 auth flow, Discord's /.proxy/ URL mapping and CSP, the shared event-sourced room state, and why it ships with no purchases.</description>
+		</item>
+		<item>
+			<title>Docs: LiveKit and Pipecat avatar integrations</title>
+			<link>https://three.ws/docs/voice-framework-integrations</link>
+			<guid isPermaLink="false">2026-10-13:Docs: LiveKit and Pipecat avatar integrations</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How to drive a three.ws &lt;agent-3d&gt; avatar's lipsync and gestures from a LiveKit Agents or Pipecat voice pipeline, with the livekit-plugins-threews and pipecat-threews packages, runnable local examples, and the data-channel message contract both share.</description>
+		</item>
+		<item>
+			<title>Forge Room (Discord Activity)</title>
+			<link>https://three.ws/discord-activity</link>
+			<guid isPermaLink="false">2026-10-13:Forge Room (Discord Activity)</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A shared Forge room that runs embedded inside a Discord voice channel: everyone in the call prompts, watches the same 3D model generate, and votes together.</description>
+		</item>
+		<item>
 			<title>Open source credits</title>
 			<link>https://three.ws/open-source</link>
 			<guid isPermaLink="false">2026-10-13:Open source credits</guid>
 			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Every open-source project, GPU model, and asset source three.ws is built on, grouped by what it powers: rendering, formats and compression, generation models, motion, voice, assets, and infrastructure. Generated from package.json on every build.</description>
+		</item>
+		<item>
+			<title>A Discord Activity brings a shared Forge room into any voice channel</title>
+			<link>https://three.ws/docs/discord-activity</link>
+			<guid isPermaLink="false">2026-10-13:A Discord Activity brings a shared Forge room into any voice channel</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Open the new Activity from a Discord voice channel and everyone in the call shares one Forge room: one prompt, one in-progress generation, one finished model with a shared vote count, and an agent that reacts in text to what just happened. Auth maps a verified Discord identity (re-checked against Discord's own /users/@me, never trusted from the client) to a room-scoped session; generation and voting reuse the real /api/forge pipeline and forge_votes table rather than a separate throwaway pipeline. No coin, wallet, or purchase path. Docs: /docs/discord-activity. Submission packet for Developer Portal setup and Discovery copy: marketing/growth/submissions/discord-activity.md.</description>
+		</item>
+		<item>
+			<title>A three.ws avatar now lipsyncs to any LiveKit Agents or Pipecat voice pipeline</title>
+			<link>https://three.ws/docs/voice-framework-integrations</link>
+			<guid isPermaLink="false">2026-10-13:A three.ws avatar now lipsyncs to any LiveKit Agents or Pipecat voice pipeline</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Two new packages, livekit-plugins-threews and pipecat-threews, republish a running voice agent's TTS and user-turn frames as the same transcript/gesture/speech_started/speech_ended message shape over the room's data channel, which &lt;agent-3d voice=&quot;livekit&quot;&gt; already renders client-side: no server-side video rendering, no change to the browser code at all. The LiveKit package is an AvatarSession plugin dropped into an AgentSession; the Pipecat package is a FrameProcessor placed after the TTS service. Each ships a runnable local example against a real open-source livekit-server with a real local TTS, verified end to end with real browser automation driving the actual avatar lipsync and gesture cues off a live bot in both frameworks. Docs: /docs/voice-framework-integrations.</description>
+		</item>
+		<item>
+			<title>Get it printed: live Craftcloud prices for any Forge model, buyer pays direct</title>
+			<link>https://three.ws/docs/forge#get-it-printed-live-prices-from-craftcloud</link>
+			<guid isPermaLink="false">2026-10-13:Get it printed: live Craftcloud prices for any Forge model, buyer pays direct</guid>
+			<pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new &quot;Get it printed&quot; action on model pages and in the Forge export menu uploads the model straight to Craftcloud (All3DP) and shows live, real prices across whichever of its roughly 186 print shops can run the job, cheapest first with shipping attached. This is not Materialize: three.ws never takes payment here. Craftcloud's public v5 API has no endpoint that hands a server-created cart back to a browser for checkout, so the panel links out to Craftcloud's own upload page instead of faking a continue-to-checkout button, where pasting the same STL reproduces the prices in an authenticated, checkout-capable session. Backed by a new fulfillment adapter, api/_lib/print/adapters/craftcloud.js, registered ahead of the manual adapter since quoting never spends. Docs: /docs/forge#get-it-printed-live-prices-from-craftcloud and /docs/materialize.</description>
 		</item>
 		<item>
 			<title>Open source credits: every dependency, model, and asset source three.ws runs on, in one place</title>

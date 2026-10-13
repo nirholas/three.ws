@@ -14,13 +14,16 @@
 // is a config change, which is the entire point of the adapter layer.
 
 import { assertAdapterShape, adapterSupportsOrder } from './contract.js';
+import craftcloud from './craftcloud.js';
 import manual from './manual.js';
 import partnerCn from './partner-cn.js';
 
 // Order matters: the first configured adapter that supports an order is the
-// default route, and `manual` is deliberately last. A contracted partner
-// should take a job it can run; a human should take everything else.
-const ALL = [partnerCn, manual].map(assertAdapterShape);
+// default route, and `manual` is deliberately last. `craftcloud` needs no
+// credential and is always configured; `partnerCn` is a contracted lane that
+// activates only once its env vars land. Either should take a job it can run
+// before a human has to.
+const ALL = [craftcloud, partnerCn, manual].map(assertAdapterShape);
 
 /** Every adapter that exists in the build, configured or not. Diagnostics. */
 export function allAdapters() {

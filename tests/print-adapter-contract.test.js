@@ -12,6 +12,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createHmac } from 'node:crypto';
 
+import craftcloud, { cheapestQuote, cheapestShippingFor, materialConfigLabel } from '../api/_lib/print/adapters/craftcloud.js';
 import manual from '../api/_lib/print/adapters/manual.js';
 import partnerCn, { PARTNER_STATE_MAP, mapState } from '../api/_lib/print/adapters/partner-cn.js';
 import {
@@ -28,7 +29,7 @@ import {
 } from '../api/_lib/print/adapters/contract.js';
 import { PRINT_STATUSES } from '../api/_lib/print-store.js';
 
-const ADAPTERS = [manual, partnerCn];
+const ADAPTERS = [manual, partnerCn, craftcloud];
 
 describe('conformance: every adapter satisfies the contract', () => {
 	for (const adapter of ADAPTERS) {
@@ -102,6 +103,10 @@ describe('capability routing is a comparison against published facts', () => {
 		const verdict = adapterSupportsOrder(partnerCn, { material_id: 'pla-draft' });
 		expect(verdict.ok).toBe(false);
 		expect(verdict.reason).toMatch(/not offered/);
+	});
+
+	it('craftcloud runs any material: its network prices the whole catalog per part', () => {
+		expect(adapterSupportsOrder(craftcloud, { material_id: 'anything-at-all' }).ok).toBe(true);
 	});
 
 	it('a part larger than the build volume is declined, not attempted', () => {
@@ -301,14 +306,102 @@ describe('partner-cn webhook verification, with only the HMAC secret', () => {
 	});
 });
 
+describe('craftcloud: unauthenticated by design, no account or key needed', () => {
+	it('is always configured: its core API takes no credential', () => {
+		expect(craftcloud.configured()).toBe(true);
+	});
+
+	it('refuses every webhook: the public v5 API has no callback endpoint', () => {
+		const verdict = craftcloud.verifyWebhook('{"id":"x"}', {});
+		expect(verdict.ok).toBe(false);
+		expect(verdict.reason).toMatch(/no webhook/);
+	});
+
+	it('parseWebhook is unreachable and says so rather than returning a fake event', () => {
+		expect(() => craftcloud.parseWebhook({})).toThrow(/receives no webhooks/);
+	});
+
+	it('refuses to submit without an STL asset to upload, before any network call', async () => {
+		await expect(craftcloud.submit({ id: 'o1' }, {})).rejects.toThrow(/no STL asset/);
+	});
+
+	it('status() reports no news rather than inventing a transition for a cart nobody paid for', async () => {
+		const out = await craftcloud.status('cart-123');
+		expect(out.status).toBeNull();
+		expect(out.note).toMatch(/cart-123/);
+	});
+
+	it('cancel() reports nothing was charged, since submit() never calls /v5/order', async () => {
+		const out = await craftcloud.cancel({ provider_order_id: 'cart-123' }, 'buyer changed their mind');
+		expect(out.ok).toBe(true);
+		expect(out.note).toMatch(/Nothing was charged/);
+		expect(out.note).toMatch(/buyer changed their mind/);
+	});
+
+	it('cheapestQuote picks the lowest priceInclVat, not list order', () => {
+		const priceResult = {
+			quotes: [
+				{ quoteId: 'a', vendorId: 'v1', priceInclVat: 42.5 },
+				{ quoteId: 'b', vendorId: 'v2', priceInclVat: 11.57 },
+				{ quoteId: 'c', vendorId: 'v3', priceInclVat: 99 },
+			],
+		};
+		expect(cheapestQuote(priceResult).quoteId).toBe('b');
+	});
+
+	it('cheapestQuote ignores quotes with no usable price', () => {
+		const priceResult = { quotes: [{ quoteId: 'a', priceInclVat: Number.NaN }, { quoteId: 'b', priceInclVat: 7 }] };
+		expect(cheapestQuote(priceResult).quoteId).toBe('b');
+	});
+
+	it('cheapestShippingFor only considers the requested vendor', () => {
+		const priceResult = {
+			shippings: [
+				{ shippingId: 's1', vendorId: 'v1', priceInclVat: 50 },
+				{ shippingId: 's2', vendorId: 'v2', priceInclVat: 5 },
+				{ shippingId: 's3', vendorId: 'v1', priceInclVat: 20 },
+			],
+		};
+		expect(cheapestShippingFor(priceResult, 'v1').shippingId).toBe('s3');
+	});
+
+	it('materialConfigLabel finds a config nested in groups -> materials -> finishGroups', () => {
+		const catalog = {
+			materialStructure: [
+				{
+					name: 'Nylons',
+					materials: [
+						{
+							name: 'SLS Nylon PA12',
+							finishGroups: [
+								{ name: 'Standard', materialConfigs: [{ id: 'cfg-1', name: 'SLS Nylon PA12 Standard (Solid White)' }] },
+							],
+						},
+					],
+				},
+			],
+		};
+		expect(materialConfigLabel(catalog, 'cfg-1')).toBe('SLS Nylon PA12 Standard (Solid White)');
+		expect(materialConfigLabel(catalog, 'cfg-missing')).toBeNull();
+	});
+
+	it('registers in the adapter registry unconditionally', async () => {
+		vi.resetModules();
+		const { listAdapters } = await import('../api/_lib/print/adapters/index.js');
+		expect(listAdapters().map((a) => a.key)).toContain('craftcloud');
+	});
+});
+
 describe('the registry hides a lane whose credentials are absent', () => {
-	it('offers only the manual lane on a deployment with no partner', async () => {
+	it('offers craftcloud and manual, but not an uncontracted partner, with no partner env set', async () => {
 		delete process.env.PRINT_PARTNER_CN_URL;
 		delete process.env.PRINT_PARTNER_CN_KEY;
 		vi.resetModules();
 		const { listAdapters, getAdapter, routeOrder } = await import('../api/_lib/print/adapters/index.js');
-		expect(listAdapters().map((a) => a.key)).toEqual(['manual']);
+		expect(listAdapters().map((a) => a.key)).toEqual(['craftcloud', 'manual']);
 		expect(getAdapter('partner-cn')).toBeNull();
-		expect(routeOrder({ material_id: 'resin-standard' }).adapter.key).toBe('manual');
+		// craftcloud is registered ahead of manual and accepts any material, so it
+		// is the default route: a human only takes a job craftcloud cannot cover.
+		expect(routeOrder({ material_id: 'resin-standard' }).adapter.key).toBe('craftcloud');
 	});
 });

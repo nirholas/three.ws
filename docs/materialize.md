@@ -16,6 +16,14 @@ for manufacturing.
 [/forge](https://three.ws/forge) ([Forge](./forge.md)), then come back. You can
 also print a `.glb` you already have.
 
+**Not sure this is what you want?** Materialize is three.ws's own print
+pipeline: you pay three.ws in USDC, we screen the order, submit it to a
+fulfillment partner, and issue a certificate. If you would rather shop live
+prices across Craftcloud's (All3DP) wider print network and pay a shop
+directly with three.ws never touching the money, that is the separate
+"Get it printed" flow described in
+[Forge: get it printed](./forge.md#get-it-printed-live-prices-from-craftcloud).
+
 ---
 
 ## The flow
@@ -446,6 +454,8 @@ documents the verdict shape and, just as importantly, what the gate cannot do.
 ## Related
 
 - [Forge](./forge.md), where the models come from
+- [Forge: get it printed](./forge.md#get-it-printed-live-prices-from-craftcloud),
+  the buyer-pays-direct alternative to this page
 - [The Forge pipeline](./forge-pipeline.md), the generation engineering guide
 - [specs/PRINT_PIPELINE.md](../specs/PRINT_PIPELINE.md), every wire contract
 - [API reference](./api-reference.md), the `/api/print/*` endpoints

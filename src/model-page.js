@@ -268,6 +268,7 @@ function renderInfo() {
 			<button class="mp-action" id="mp-embed" type="button">&lt;/&gt; Embed</button>
 			<button class="mp-action" id="mp-share" type="button">↗ Share</button>
 			<button class="mp-action" id="mp-slicer" type="button" aria-controls="mp-print-tools" title="Open this model in OrcaSlicer or Bambu Studio, or download a print-ready STL">⎙ 3D print</button>
+			<button class="mp-action" id="mp-craftcloud" type="button" aria-controls="mp-craftcloud-tools" title="Get live prices from Craftcloud's print network and buy directly from them">🖨 Get it printed</button>
 			${c.remixable ? `<button class="mp-action" id="mp-remix" type="button">Remix · $0.25</button>` : ''}
 		</div>
 		<div class="mp-geo" id="mp-geo"><span>Reading geometry…</span></div>
@@ -281,6 +282,10 @@ function renderInfo() {
 			<details class="mp-tool" id="mp-print-tools">
 				<summary>3D print <span>open in OrcaSlicer or Bambu Studio, or download STL</span></summary>
 				<div class="mp-tool-body" id="mp-slicer-host"></div>
+			</details>
+			<details class="mp-tool" id="mp-craftcloud-tools">
+				<summary>Get it printed <span>live prices from Craftcloud's print network, buy direct</span></summary>
+				<div class="mp-tool-body" id="mp-craftcloud-host"></div>
 			</details>
 		</section>
 		<p class="mp-desc">${esc(c.prompt)}</p>
@@ -305,6 +310,7 @@ function wireTools() {
 	const c = state.creation;
 	const meshTools = $('mp-mesh-tools');
 	const printTools = $('mp-print-tools');
+	const craftcloudTools = $('mp-craftcloud-tools');
 
 	meshTools?.addEventListener('toggle', async () => {
 		if (!meshTools.open || meshTools.dataset.mounted) return;
@@ -343,11 +349,32 @@ function wireTools() {
 		}
 	});
 
+	craftcloudTools?.addEventListener('toggle', async () => {
+		if (!craftcloudTools.open || craftcloudTools.dataset.mounted) return;
+		craftcloudTools.dataset.mounted = '1';
+		const host = $('mp-craftcloud-host');
+		try {
+			const { renderCraftcloudPrint } = await import('./craftcloud-print.js');
+			renderCraftcloudPrint(host, { creationId: c.id, glbUrl: c.glb_url });
+		} catch (err) {
+			log.error('craftcloud print panel failed to load', err);
+			delete craftcloudTools.dataset.mounted;
+			host.textContent = 'Craftcloud prices could not load. Close and reopen this section to try again.';
+		}
+	});
+
 	$('mp-slicer')?.addEventListener('click', () => {
 		if (!printTools) return;
 		printTools.open = true;
 		printTools.scrollIntoView({ behavior: 'smooth', block: 'center' });
 		printTools.querySelector('summary')?.focus({ preventScroll: true });
+	});
+
+	$('mp-craftcloud')?.addEventListener('click', () => {
+		if (!craftcloudTools) return;
+		craftcloudTools.open = true;
+		craftcloudTools.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		craftcloudTools.querySelector('summary')?.focus({ preventScroll: true });
 	});
 }
 

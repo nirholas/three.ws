@@ -2215,6 +2215,14 @@ export const limits = {
 	// them, and downloading the fallback file, not for bulk conversion.
 	slicerFileIp: (ip) =>
 		getLimiter('slicer:file:ip', { limit: 30, window: '5 m', local: true }).limit(ip),
+	// "Get it printed" through Craftcloud (api/print/craftcloud-quote.js). A miss
+	// uploads the STL to Craftcloud and polls its pricing engine across the whole
+	// 186-shop network, which is slower and costs more upstream calls than the
+	// in-house quote path, so the bucket is tighter. NOT local: Craftcloud's model
+	// upload is the shared resource being rationed, and a per-instance counter
+	// would multiply by however many Cloud Run instances are up.
+	craftcloudQuoteIp: (ip) =>
+		getLimiter('print:craftcloud:ip', { limit: 20, window: '5 m' }).limit(ip),
 	// Materialize checkout (api/print/orders.js and its confirm step). Both are
 	// session-gated and CSRF-gated already, so this is not the security boundary;
 	// it caps how often one IP can open orders or poll the chain for a payment.
