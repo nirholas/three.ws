@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-12T02:46:57.101Z",
+	"generated_at": "2026-10-13T19:05:27.695Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,26 @@
 			"link": "/docs/event-markets-staking",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
+			"title": "Avatar downloads fail over when object storage is not entitled",
+			"summary": "When the Cloudflare R2 account stopped serving objects, avatar model downloads answered a bare error instead of trying the bucket public domain. That fault is now recognised as a storage outage, so the failover runs.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-13",
+			"type": "update",
+			"title": "Free voice is back: the Edge lane speaks again",
+			"summary": "Microsoft changed the handshake on its free Read Aloud service, so the default Edge voice lane answered every request with an error. The lane now speaks the current protocol, so the /voice page and every agent that uses the free voice can talk again.",
+			"link": "/voice",
+			"tags": [
+				"fix"
 			]
 		},
 		{

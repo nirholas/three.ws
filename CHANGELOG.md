@@ -7,6 +7,8 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 ## 2026-10-13
 
 - **Docs · Staked Event Markets** (`/docs/event-markets-staking`): Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.
+- **Avatar downloads fail over when object storage is not entitled**: When the Cloudflare R2 account stopped serving objects, avatar model downloads answered a bare error instead of trying the bucket public domain. That fault is now recognised as a storage outage, so the failover runs. `[fix]`
+- **Free voice is back: the Edge lane speaks again**: Microsoft changed the handshake on its free Read Aloud service, so the default Edge voice lane answered every request with an error. The lane now speaks the current protocol, so the /voice page and every agent that uses the free voice can talk again. (`/voice`) `[fix]`
 
 ## 2026-10-12
 
