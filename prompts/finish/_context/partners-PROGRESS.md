@@ -105,3 +105,55 @@ findings), nothing had drifted. Found and fixed one stale doc comment:
 rebuild, which could mislead a future reader into thinking Mixamo redistribution was still
 live (`39b98edfb`). Owner-action row 50 and the permission-letter draft are unchanged; still
 waiting on the owner to run the upload command.
+
+## 2026-10-13: order 086 closed (open-source credits page and in-surface credits)
+
+Order 086 had already shipped across three commits from an earlier session on this branch:
+`ce20cbdbc` (the generated `/open-source` page: `scripts/lib/open-source-credits.mjs` builds
+a `buildCredits()` dataset from `package.json`'s direct dependencies, hand-curated
+`WORKER_MODELS` and `ASSET_SOURCES` lists, written by `scripts/build-open-source-credits.mjs`
+into `data/open-source-credits.json`, wired into `npm run prebuild`'s parallel block without
+reordering the chain; served at `GET /api/open-source-credits`; rendered on
+`pages/open-source.html` grouped by area with a jump nav, license, repo and sponsor links),
+`e847ab98f` (in-surface credits: Poly Haven named on `/objects` and the object viewer
+(`src/app-next-overlay.js`), meshoptimizer and glTF-Transform named in the Forge export
+dialog's "how this file was made" footer (`src/forge-export.js`), per-clip source/license in
+the animation gallery with a `studioClipCredit()` fallback for studio-tier clips that lack an
+explicit manifest entry (`src/animations-gallery.js`)), `0df73dc55` and `c3cd66df3` (the
+`npm run audit:docs`-pending doc, `STRUCTURE.md` row, changelog entry).
+
+This session re-derived step 0 and re-verified every Definition of done line against the
+live worktree rather than trusting the prior commits:
+
+- **Page renders clean at all three breakpoints.** Built and ran `server/index.mjs` on
+  `:3109` for the API and `vite --port 3107` with `DEV_API_PROXY=http://localhost:3109` for
+  the frontend (dev normally proxies `/api` to prod, which does not yet serve this new
+  endpoint), then drove a disposable Playwright script against `/open-source` at 320, 768
+  and 1440px: `status=200`, `cards=230`, `polyHaven=true`, `meshopt=true`,
+  `consoleErrors=0` at every width.
+- **In-surface credits confirmed in source**, not just the page: `pages/objects.html` and
+  `app-next-overlay.js` name Poly Haven; `forge-export.js`'s export menu footer links
+  `/open-source#area-formats` for meshoptimizer/glTF-Transform; Forge results already name
+  their generating engine through the existing timeline/compare UI
+  (`src/forge-timeline.js`, `src/forge-compare.js`).
+- **Guard test proven both ways, not just read.** Temporarily added a fake dependency to
+  `package.json`, reran `tests/open-source-credits.test.js`: the "includes every direct npm
+  dependency" case failed with the exact uncredited-dependency message; restored
+  `package.json` (`git diff --stat` clean) and reran: 5/5 pass again.
+- **`npm test`**: 35268 passed, 73 failed, 244 skipped across 2401 files; none of the 79
+  `FAIL` lines mention open-source/credits. The failures are the same pre-existing,
+  unrelated set other campaign entries in this log already note (oauth, mcp, idempotency,
+  forge, branding, sitemap and others).
+- **`npm run audit:docs`**: 21 findings, the same baseline order 085's entry above recorded;
+  none reference `/open-source` or `docs/open-source-credits.md`.
+- **`npm run check:rules`** against every touched path: `OK: no hard-rule violations in the
+  added lines of 0 changed file(s)` (nothing was uncommitted, so there was no new diff to
+  lint).
+- A full `npm run build` was attempted to render pages from a real production-shaped build
+  and failed on an unrelated pre-existing break (`avatar-sdk/src/agent.js` imports its own
+  unbuilt `dist/index.mjs`, not touched by this order); the resulting stray `pages/*.html`
+  SEO-injection and `public/*.json` drift from the partial prebuild run was discarded with
+  `git restore` before verification continued on the dev server instead.
+
+No code change was needed this session, only verification; this log entry and the order
+file's deletion are the sole diff of the closing commit.
