@@ -2,6 +2,8 @@
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate.
 
+**Evolve status (2026-10-13):** Every Definition of done line is built and verified (both packages, both examples, both E2E demos, lint/docs/test/audit all green; see the dated entry in [_context/partners-PROGRESS.md](_context/partners-PROGRESS.md) for the command output). This file stays in place only because three steps are owner-gated third-party actions (CLAUDE.md gate 2): publish `livekit-plugins-threews` and `pipecat-threews` to PyPI, open the plugin pull request against `livekit/agents` and the docs pull request against `pipecat-ai/pipecat`, and apply to the LiveKit Startups program. All three are logged as row 51 in [_context/production-100-OWNER-ACTIONS.md](_context/production-100-OWNER-ACTIONS.md), with exact PR titles/descriptions and verification packets in [marketing/growth/submissions/livekit-avatar-plugin.md](../../marketing/growth/submissions/livekit-avatar-plugin.md) and [marketing/growth/submissions/pipecat-integration.md](../../marketing/growth/submissions/pipecat-integration.md).
+
 ## Operating clause (binding)
 
 - Read CLAUDE.md first, then [_context/partners-00-CONTEXT.md](_context/partners-00-CONTEXT.md). CLAUDE.md overrides everything, including this file.

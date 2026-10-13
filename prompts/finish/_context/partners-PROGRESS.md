@@ -157,3 +157,72 @@ live worktree rather than trusting the prior commits:
 
 No code change was needed this session, only verification; this log entry and the order
 file's deletion are the sole diff of the closing commit.
+
+## 2026-10-13: order 087 built and verified end to end; owner steps remain, order file stays open
+
+Order 087 asked for a LiveKit Agents avatar plugin and a Pipecat avatar `FrameProcessor`,
+both republishing a running voice pipeline's TTS and user-turn frames as the same
+`transcript` / `gesture` / `speech_started` / `speech_ended` JSON message shape that
+`<agent-3d voice="livekit">` ([src/runtime/livekit-voice.js](../../../src/runtime/livekit-voice.js))
+already renders client-side. Both packages, both runnable local examples, both demo
+specs, and all supporting docs/wiring landed and were verified against the real
+Definition of done:
+
+- **LiveKit Agents plugin.** `integrations/livekit/livekit-plugins-threews/` (package
+  `livekit-plugins-threews`, module `livekit.plugins.threews`): `AvatarSession` joins the
+  room beside the agent and republishes TTS text and VAD turn-taking events over the data
+  channel. `ruff check .` and `ruff format --check .` both pass (config mirrors
+  livekit/agents's own `[tool.ruff]` block). `python -m pytest tests/ -v`: 2 passed
+  (`test_conversation_item_actually_publishes_data`,
+  `test_publish_without_room_is_a_noop`), run against a real `AgentSession`/`rtc.Room`,
+  no mocks of the plugin's own logic. End to end:
+  `tests/e2e/agent-3d-livekit-avatar.spec.js` against a real local open-source
+  `livekit-server` and a real headless browser rendering `<agent-3d voice="livekit">`:
+  1 passed, with a screenshot captured at
+  `test-results/agent-3d-livekit-avatar-*/agent-3d-livekit-avatar-final.png`.
+- **Pipecat avatar processor.** `integrations/pipecat/pipecat-threews/` (package
+  `pipecat-threews`, module `pipecat_threews`): `ThreeWsAvatarProcessor`, a
+  `FrameProcessor` placed after the TTS service, doing the same republishing for a
+  Pipecat pipeline. While writing its test for the user-turn boundary, found a genuine
+  cross-turn transcript-leakage bug: `_last_user_transcript` was set on every finalized
+  `TranscriptionFrame` but never reset, so a second turn's `speech_ended` message could
+  carry the first turn's leftover transcript text if that turn's own
+  `UserStoppedSpeakingFrame` (a `SystemFrame`, processed on Pipecat's fast inline path)
+  raced ahead of its `TranscriptionFrame` (queued on the slower regular-frame path).
+  Fixed per the bug-fixes-are-test-first rule: wrote
+  `test_user_stopped_speaking_does_not_leak_prior_turn_transcript` first, watched it fail
+  with the leaked `"first turn"` text, then added
+  `self._last_user_transcript = ""` to the `UserStartedSpeakingFrame` branch in
+  `src/pipecat_threews/avatar.py`, reran, and all 4 tests in `tests/test_avatar.py`
+  passed. `ruff check .` / `ruff format --check .` both pass (this package's config
+  additionally selects docstring rule `D`, mirroring pipecat-ai/pipecat's own config; its
+  `tests/__init__.py` needed a one-line module docstring that the LiveKit package's
+  config does not require). End to end: `tests/e2e/agent-3d-pipecat-avatar.spec.js`
+  against a real local `livekit-server`, a real local `espeak-ng` TTS service, and a real
+  headless browser: 1 passed, with a local demo video captured (gitignored, not
+  committed, path in the submission doc).
+- **`npm test`**: 35268 passed, 73 failed, 244 skipped, the same pre-existing, unrelated
+  baseline order 085 and order 086's entries above both independently measured; none of
+  the failing files reference LiveKit, Pipecat, or either new package.
+- **`npm run audit:docs`**: 21 findings, the same pre-existing baseline as above; none
+  reference the new doc page or either package.
+- **Submission files, READMEs, docs, `STRUCTURE.md` and changelog landed**: new doc page
+  [docs/voice-framework-integrations.md](../../../docs/voice-framework-integrations.md),
+  linked from `docs/start-here.md`, a new `data/pages.json` entry, a `STRUCTURE.md` row,
+  a `data/changelog.json` entry dated 2026-10-13, and the two owner-ready submission
+  packets at `marketing/growth/submissions/livekit-avatar-plugin.md` and
+  `marketing/growth/submissions/pipecat-integration.md`, with
+  `marketing/growth/opportunities.csv`'s LiveKit and Pipecat rows moved from
+  `build_required` to `submission_ready`.
+- **`npm run check:rules`** against every touched path: `OK: no hard-rule violations in
+  the added lines of 31 changed file(s)`.
+
+Three steps are owner-gated third-party actions (CLAUDE.md gate 2: publish, and contact
+a third party) and cannot be done inside this session: publish `livekit-plugins-threews`
+and `pipecat-threews` to PyPI, open the plugin pull request against `livekit/agents` and
+the docs pull request against `pipecat-ai/pipecat` (exact titles, descriptions and
+verification packets already written in the two submission files above), and apply to
+the LiveKit Startups program once the plugin PR is open. All three are logged as row 51
+in [_context/production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md). The
+order file stays in place (not deleted) until an owner runs those steps, per its own
+close-out protocol for an owner-gated last step.
