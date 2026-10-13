@@ -1,0 +1,7 @@
+{
+	"library": {
+		"id": "three-ws-agent-3d",
+		"name": "three.ws Agent",
+		"description": "Embed <agent-3d>, three.ws's live animated 3D AI agent, as a Webflow Code Component."
+	}
+}

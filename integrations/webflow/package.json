@@ -1,0 +1,28 @@
+{
+	"name": "@three-ws/webflow-agent-3d",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Webflow Code Component embedding <agent-3d>, three.ws's live animated 3D AI agent.",
+	"license": "MIT",
+	"files": [
+		"src/Agent3D.webflow.tsx",
+		"src/Agent3DView.tsx",
+		"src/pinned-release.ts"
+	],
+	"scripts": {
+		"typecheck": "tsc --noEmit -p tsconfig.json"
+	},
+	"devDependencies": {
+		"@types/react": "^18.2.0",
+		"@webflow/data-types": "^2.7.0",
+		"@webflow/react": "^2.7.0",
+		"@webflow/webflow-cli": "2.12.0",
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0",
+		"typescript": "^5.4.0"
+	},
+	"peerDependencies": {
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0"
+	}
+}
