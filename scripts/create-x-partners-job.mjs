@@ -80,7 +80,10 @@ export function jobSpec(env) {
 							serviceAccountName: RUNTIME_SA,
 							// A failed day costs nothing: three days are in stock and tomorrow's run refills them.
 							maxRetries: 0,
-							timeoutSeconds: 3600,
+							// Three spotlights plus the weekly deep dive, which films every
+							// feature of one partner, ran past an hour on 2026-10-13 and the
+							// task was killed before it shipped anything.
+							timeoutSeconds: 10800,
 							containers: [
 								{
 									image: IMAGE,

@@ -127,6 +127,14 @@ describe('series lint', () => {
 		expect(findings).toMatch(/"40,000" is an unverified number/);
 		expect(findings).not.toMatch(/"2 seconds"/);
 	});
+
+	// A drafter told only "2 links; one post links one surface" rewrote the
+	// wrong post three times running and the spotlight never reached the queue.
+	it('says which post carries two links, and what they are', () => {
+		const draft = { ...GOOD, thread: [GOOD.thread[0], `${GOOD.thread[1]} Built on three.ws.`, ...GOOD.thread.slice(2)] };
+		const findings = draftFindings({ partner: openai, feature: openai.features[0], head: 'reel', draft, partners: [openai] }).join('\n');
+		expect(findings).toMatch(/reply 2: links: 2 links \(three\.ws\/openai, three\.ws\)/);
+	});
 });
 
 describe('the item', () => {

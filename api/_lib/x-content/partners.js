@@ -320,8 +320,9 @@ export function draftFindings({ partner, feature, head, draft, proof = null, par
 	draft.thread.forEach((reply, index) => {
 		for (const problem of copyProblems(reply, { minimum: 40, maximum, requireUrl: false })) findings.push(`reply ${index + 1}: ${problem}`);
 	});
-	for (const text of [...texts, draft.headline, draft.body].filter(Boolean)) {
-		for (const finding of languageProblems(text)) if (finding.severity !== 'minor') findings.push(`${finding.rule}: ${finding.message}`);
+	const labelled = [['head', draft.post], ...draft.thread.map((reply, index) => [`reply ${index + 1}`, reply]), ['headline', draft.headline], ['body', draft.body]];
+	for (const [label, text] of labelled.filter(([, text]) => text)) {
+		for (const finding of languageProblems(text)) if (finding.severity !== 'minor') findings.push(`${label}: ${finding.rule}: ${finding.message}`);
 	}
 	const claims = claimsFor(partner, feature, texts, proof);
 	for (const finding of claimProblems({ posts: texts.map((text) => ({ text })), claims, mentions: {} })) {
