@@ -127,13 +127,59 @@ Its measured companion is `public/animations/signatures.json`: a motion-signatur
 
 ## The /animations gallery
 
-[three.ws/animations](https://three.ws/animations) is the public browse surface over every clip: the curated studio manifest, the full R2-hosted motion-capture library (`GET /api/animations/library`, ~2,900 clips; `total` on that response is the live count), and community-published clips (`GET /api/animations/clips?visibility=public`).
+[three.ws/animations](https://three.ws/animations) is the public browse surface over every clip: the curated studio manifest, the full R2-hosted motion-capture library (`GET /api/animations/library`, ~219 CC0-sourced clips as of this writing; `total` on that response is the live count, and it grows as more CC0 packs or self-hosted text-to-motion generations are added), and community-published clips (`GET /api/animations/clips?visibility=public`).
 
-- **Poster thumbnails**: a WebP still of the preview avatar posed mid-motion, rendered offline by `node scripts/build-animation-thumbnails.mjs` (which drives `scripts/thumbnail-harness.html` in headless Chromium through the site's own retarget engine). Curated thumbs are committed at `public/animations/thumbs/<name>.webp`; library thumbs upload to R2 alongside their clips via `npm run mixamo:upload`, which publishes each one as the manifest entry's `thumb` URL. Added a clip? Re-run the thumbnail script, then re-upload. **The library manifest's `thumb` field is the only source of truth for a library thumbnail.** Coverage is partial (853 of 2,874 entries carry no `thumb` as of 2026-08-16), and the gallery renders the clip's icon for those instead of guessing a CDN path: the guess 404s on every one of them, which cost a blocked cross-origin request per card.
-- **Categories** — the Mixamo catalog carries no category metadata, so `src/animation-categories.js` derives one per clip from its label (ordered keyword rules; curated clips keep their hand-assigned `animation-presets.js` category). Covered by `tests/animation-categories.test.js`, which also asserts <10% of the real library falls into the "More" catch-all.
+- **Poster thumbnails**: a WebP still of the preview avatar posed mid-motion, rendered offline by `node scripts/build-animation-thumbnails.mjs` (which drives `scripts/thumbnail-harness.html` in headless Chromium through the site's own retarget engine). Curated thumbs are committed at `public/animations/thumbs/<name>.webp`; library thumbs upload to R2 alongside their clips via `npm run cc0-library:upload`, which publishes each one as the manifest entry's `thumb` URL. Added a clip? Re-run the thumbnail script, then re-upload. **The library manifest's `thumb` field is the only source of truth for a library thumbnail.** Coverage is partial, and the gallery renders the clip's icon for those instead of guessing a CDN path: the guess 404s on every one of them, which cost a blocked cross-origin request per card.
+- **Categories**: the bulk library carries no category metadata, so `src/animation-categories.js` derives one per clip from its label (ordered keyword rules; curated clips keep their hand-assigned `animation-presets.js` category). Covered by `tests/animation-categories.test.js`, which also asserts <10% of the real library falls into the "More" catch-all.
+- **Per-clip credit**: every bulk-library card shows its source pack and license next to the category chip (`src/animations-gallery.js` `normalizeFullLibraryClip`), pulled straight from the manifest's `source`/`license` fields. See "Licensing" below.
 - **Live previews** — one shared WebGL engine (`src/animations-live-preview.js`) serves every card hover and the detail modal: a single renderer + preview avatar; the canvas moves into whichever card is previewing. Nothing 3D loads until the first hover.
 - **Deep links**: `?clip=<id>` opens a clip's detail modal directly; `q`, `cat`, `filter`, and `sort` round-trip through the URL so filtered views are shareable. Every one of them is validated against the values the controls can represent, so a hand-edited `?sort=bogus` falls back to `featured` rather than blanking the sort menu, and an arriving `?filter=once` presses the matching segmented button instead of filtering invisibly.
 - **Detail modal**: a real dialog. Focus moves into it on open, Tab wraps inside it, Escape closes it and returns focus to the card that opened it. Arrow keys step through the filtered list (except while a slider is focused, which owns its own arrows), and Space toggles playback. The transport row only appears once a clip is actually on the stage, so a preview that fails to load shows the error and its Studio link rather than controls that do nothing.
+
+## Licensing
+
+The curated 131-clip default avatar set (`public/animations/clips/`, built from
+`mx-*.fbx` Mixamo sources and the MIT/CC0 three.js example-model clips) ships
+baked into the site and is out of scope for this section: Adobe's Mixamo terms
+permit using those clips in a project, which is exactly what the default
+avatar rig does.
+
+The bulk motion library behind `GET /api/animations/library` is different: it
+is a raw-clip-file redistribution surface, which Mixamo's license does not
+cover (Adobe's own Mixamo FAQ permits in-project playback but forbids
+redistributing the character/animation files themselves). The library
+publishes CC0-only content instead:
+
+- **Sources**: Quaternius's Universal Animation Library 2 and Mesh2Motion's
+  human base/addon/mocap animation packs, both licensed CC0 1.0 Universal.
+  Fetched by `node scripts/cc0-animation-library.mjs --fetch` into
+  `animation-sources/cc0/` (see
+  [animation-sources/README.md](../animation-sources/README.md)).
+- **Provenance per clip**: `scripts/cc0-animation-library.mjs --enumerate`
+  records every clip's `source_name`, `license`, and `license_url` in the
+  committed [`scripts/cc0-library.config.json`](../scripts/cc0-library.config.json).
+  `--build` carries those fields through `build-animations.mjs` into the
+  staged manifest as `source`/`license`, and `--upload` publishes them to R2
+  unchanged, so the live manifest entry is the licensing record for that clip.
+- **Gallery credit**: `src/animations-gallery.js` reads the manifest's
+  `source`/`license` fields and renders them on every bulk-library card
+  (`.ag-card-credit`) and in the detail modal, so a viewer sees the pack and
+  license without leaving the page.
+- **Defensive filter**: `api/animations/library.js` drops any manifest entry
+  with no `license` field or whose `source` mentions Mixamo before the
+  response ever serializes, so a raw Mixamo clip cannot reach the public
+  endpoint or its mirror (`scripts/mirror-animation-library.mjs`) even if one
+  were ever staged by mistake. Covered by
+  `tests/animations-library-endpoint.test.js`.
+- **Mixamo research path**: `scripts/mixamo-all.mjs` keeps its download and
+  local `--build` phases for offline retargeting research, but its `--upload`
+  phase is permanently disabled and refuses to run. `cc0-animation-library.mjs`
+  is the only script allowed to publish to the live bulk library.
+- **Already-stored Mixamo objects**: clips uploaded to R2 before this policy
+  are left in place (deleting stored objects is not reversible); they are
+  simply absent from the manifest the endpoint serves, so they are
+  unreachable through the product even though the objects still exist in
+  storage.
 
 ## Resolved issues
 

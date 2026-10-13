@@ -8,9 +8,9 @@
  *
  *   • Curated clips  (public/animations/manifest.json)
  *       → public/animations/thumbs/<name>.webp   (committed, served statically)
- *   • Full library   (animation-sources/.library-clips/manifest.json)
+ *   • Full library   (animation-sources/.cc0-library-clips/manifest.json)
  *       → animation-sources/.library-thumbs/<name>.webp   (gitignored; uploaded
- *         to R2 by `npm run mixamo:upload`, which also writes each clip's
+ *         to R2 by `npm run cc0-library:upload`, which also writes each clip's
  *         `thumb` URL into the published library manifest)
  *
  * Resumable: existing outputs are skipped unless --force. A dev server already
@@ -45,8 +45,8 @@ const ONLY = typeof args.only === 'string' ? args.only : null;
 const CURATED_MANIFEST = join(ROOT, 'public/animations/manifest.json');
 const CURATED_CLIPS_DIR = join(ROOT, 'public/animations');
 const CURATED_OUT = join(ROOT, 'public/animations/thumbs');
-const LIBRARY_MANIFEST = join(ROOT, 'animation-sources/.library-clips/manifest.json');
-const LIBRARY_CLIPS_DIR = join(ROOT, 'animation-sources/.library-clips');
+const LIBRARY_MANIFEST = join(ROOT, 'animation-sources/.cc0-library-clips/manifest.json');
+const LIBRARY_CLIPS_DIR = join(ROOT, 'animation-sources/.cc0-library-clips');
 const LIBRARY_OUT = join(ROOT, 'animation-sources/.library-thumbs');
 
 async function serverListening(port) {
