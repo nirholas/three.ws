@@ -581,6 +581,16 @@ describe('queue', () => {
 		expect(validateItem({ ...base, textOnly: true, posts: [{ text: HEAD }] }, dir)).toEqual([]);
 	});
 
+	// A story written with the shorthand "media": "reel" threw inside adopt,
+	// after adopt had already deleted the stories before it.
+	it('reports media that is not a list instead of throwing', () => {
+		const dir = sandbox();
+		const base = { id: 'demo', status: 'draft', kind: 'post', tier: 2, lane: 'l', pattern: 'p', notBefore: '2026-09-17T14:00:00Z' };
+		const problems = () => validateItem({ ...base, posts: [{ text: HEAD, media: 'reel' }] }, dir);
+		expect(problems).not.toThrow();
+		expect(problems().join('\n')).toMatch(/head: media must be a list/);
+	});
+
 	it('validates an Article end to end', () => {
 		const dir = sandbox();
 		writeFileSync(join(dir, 'data/x-content/articles/demo.md'), '## Why\n\nBecause.\n\n![Hero](../../../public/x-media/t/b.png)\n\nThe end.');

@@ -17,4 +17,4 @@ node scripts/create-x-partners-job.mjs --run-now   # the same, then start one ru
 
 Shipping a bundle publishes to @trythreews, so applying this is an owner decision. Nothing posts on its own until production has `X_CONTENT_AUTO_PUBLISH=true`, and every released spotlight still sits behind the queue's veto window.
 
-The job runs as `three-ws@`, takes 2 CPU and 4 GiB, times out after an hour, and never retries: three days are kept in stock, so a failed run is refilled by the next one. Rebuild the image (`--apply` without `--skip-build`) after the registry or the engine changes, because the job films and drafts from the code baked into it.
+The job runs as `three-ws@`, takes 2 CPU and 4 GiB, times out after three hours, and never retries: three days are kept in stock, so a failed run is refilled by the next one. Rebuild the image (`--apply` without `--skip-build`) after the registry or the engine changes, because the job films and drafts from the code baked into it.

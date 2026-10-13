@@ -513,6 +513,7 @@ async function adopt() {
 	if (!files.length) fail(`no stories to adopt in ${STORY_DIR}${wanted.length ? ` named ${wanted.join(', ')}` : ''}`);
 	const queue = loadQueue(root);
 	let refused = 0;
+	const adopted = [];
 	for (const name of files) {
 		const path = resolve(dir, name);
 		const story = JSON.parse(readFileSync(path, 'utf8'));
@@ -528,10 +529,13 @@ async function adopt() {
 		const problems = validateItem(item, root, { quality: queue.quality || {} });
 		if (existing >= 0) queue.items[existing] = item;
 		else queue.items.push(item);
-		rmSync(path);
+		adopted.push(path);
 		console.log(`ok    ${story.id}: in the queue as a draft${problems.length ? `, with ${problems.length} problem(s) to fix: ${problems[0]}` : ''}`);
 	}
+	// The queue is written before any story is removed, so a failure part way
+	// through leaves every story where it was.
 	saveQueue(queue);
+	for (const path of adopted) rmSync(path);
 	if (refused) process.exit(1);
 }
 

@@ -153,6 +153,10 @@ function postProblems(item, root, { headMinimum, headNeedsUrl, maximum }) {
 		for (const problem of copyProblems(post.text, { minimum: index === 0 ? headMinimum : 1, maximum, requireUrl: false })) {
 			problems.push(`${label}: ${problem}`);
 		}
+		if (post.media != null && !Array.isArray(post.media)) {
+			problems.push(`${label}: media must be a list of { path, alt } entries, not ${JSON.stringify(post.media)}`);
+			return;
+		}
 		for (const problem of attachmentProblems(post.media)) problems.push(`${label}: ${problem}`);
 		for (const media of post.media || []) for (const problem of mediaProblems(media, root)) problems.push(`${label}: ${problem}`);
 	});
