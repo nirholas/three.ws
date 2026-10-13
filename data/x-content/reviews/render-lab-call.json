@@ -1,0 +1,92 @@
+{
+	"id": "render-lab-call",
+	"contentHash": "40459f8ee2e27380076cef1896182c4255fc263db1b4ffbd6bb82cb8e59e81c5",
+	"reviewedAt": "2026-10-13T19:03:44.856Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"Render Lab turns a framed, posed avatar into the call that makes it. Pick the avatar, scene and pose in the browser, and the code panel writes the same render as a curl command, a live web component or an MCP tool call. Every control on the page maps to one parameter of GET /api/avatar/render, so what you see is what the call returns.",
+		"The MCP version calls render_avatar_image with the avatar, scene, size and pose, for Claude, Cursor or any MCP client. Try it at three.ws/render-lab."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "Every control on the page maps to one parameter of GET /api/avatar/render",
+				"kind": "evidence:file",
+				"target": "pages/render-lab.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "so what you see is what the call returns",
+				"kind": "evidence:file",
+				"target": "pages/render-lab.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "render_avatar_image",
+				"kind": "evidence:proof",
+				"target": "render_avatar_image",
+				"ok": true,
+				"detail": "the run waited for and saw \"render_avatar_image\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "15 steps passed against the live product, every claimed fact still holds (endpoint /api/avatar/render?avatar=)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "https://three.ws/api/render/avatar-clip",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/render-lab",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 4
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "Or a live <agent-3d> tag",
+				"problem": "The frame this caption sits under (5.3 s) still shows the curl tab selected with the curl command visible; the cursor is only hovering the Web component tab. The caption is one beat ahead of the picture.",
+				"fix": "Recapture the reel so the 5.3 s frame shows the Web component tab selected and its snippet visible under the caption, or shift the caption cut by roughly a second so it lands after the tab switches."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Render Lab turns a framed, posed avatar into the call that makes it. Pick the avatar, scene and pose in the browser, and the code panel writes the same render as a curl command, a live web component or an MCP tool call. Every control on the page maps to one parameter of GET /api/avatar/render, so what you see is what the call returns.",
+				"The MCP version calls render_avatar_image with the avatar, scene, size and pose, for Claude, Cursor or any MCP client. Try it at three.ws/render-lab."
+			],
+			"altText": []
+		},
+		"summary": "All three claims are verified against the live page and the filmed run, the reel shows the real product doing exactly what the copy says, and the voice is clean. Only nit is a caption landing one frame before the Web component tab switches; fine to ship, recapture on the next pass.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

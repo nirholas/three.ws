@@ -96,7 +96,13 @@
 			"Gunnink",
 			"Lorensen",
 			"meshoptimizer",
-			"Colyseus"
+			"Colyseus",
+			"mocap",
+			"llms",
+			"meshopt",
+			"viseme",
+			"visemes",
+			"canonicaliser"
 		],
 		"maximumLength": 1000
 	},
@@ -19410,7 +19416,7 @@
 		},
 		{
 			"id": "atlas-goal",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -20142,12 +20148,12 @@
 		},
 		{
 			"id": "changelog-feed",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "number",
-			"notBefore": "2026-10-10T00:00:00Z",
+			"notBefore": "2026-10-13T21:13:14.832Z",
 			"covers": [
 				"/changelog",
 				"api/cron/changelog-push.js"
@@ -20278,7 +20284,7 @@
 						},
 						{
 							"type": "file",
-							"path": "CLAUDE.md",
+							"path": ".claude/skills/changelog-and-docs/SKILL.md",
 							"contains": "tags from: feature, improvement, fix, sdk, infra, docs, security"
 						}
 					]
@@ -20303,7 +20309,7 @@
 						},
 						{
 							"type": "file",
-							"path": "CLAUDE.md",
+							"path": ".claude/skills/changelog-and-docs/SKILL.md",
 							"contains": "the `added` date in `data/pages.json` feeds the changelog automatically"
 						}
 					]
@@ -20313,7 +20319,7 @@
 					"evidence": [
 						{
 							"type": "file",
-							"path": "CLAUDE.md",
+							"path": ".claude/skills/changelog-and-docs/SKILL.md",
 							"contains": "community-readable title + summary (plain language, no commit jargon)"
 						}
 					]
@@ -20394,7 +20400,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "concierge-ask",
@@ -22423,12 +22430,12 @@
 		},
 		{
 			"id": "render-lab-call",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 3,
 			"lane": "developer",
 			"pattern": "clip",
-			"notBefore": "2026-10-14T00:00:00Z",
+			"notBefore": "2026-10-14T00:00:00.000Z",
 			"covers": [
 				"/render-lab",
 				"api/avatar/capabilities"
@@ -22561,11 +22568,12 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "render-lab-sheet",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 3,
 			"lane": "developer",
@@ -23313,7 +23321,21 @@
 			],
 			"posts": [
 				{
-					"text": "Every $100 paid in $THREE on three.ws/three-token is now split by a published policy, and the page shows the exact numbers. Paid compute: $70 to the treasury, $30 to holder rewards. A marketplace sale: the seller keeps $90, with $5 to the treasury and $5 to holder rewards. A copy-trading performance fee: the trader you copy keeps $80. The splits are read live from the public token config, the same one the payment code enforces, and nothing is burned: every share goes to a seller, the treasury, or holders."
+					"text": "Every $100 paid in $THREE on three.ws/three-token is now split by a published policy, and the page shows the exact numbers. Paid compute: $70 to the treasury, $30 to holder rewards. A marketplace sale: the seller keeps $90, with $5 to the treasury and $5 to holder rewards. A copy-trading performance fee: the trader you copy keeps $80. The splits are read live from the public token config, the same one the payment code enforces, and nothing is burned: every share goes to a seller, the treasury, or holders.",
+					"media": [
+						{
+							"path": "public/x-media/three-split/reel.mp4",
+							"probe": {
+								"durationSec": 14.4,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
 				},
 				{
 					"text": "Two more rows on the page. A scarcity mint, which covers limited drops, rare-name auctions and pay-to-mint, splits $80 to the treasury and $20 to holder rewards. A paid spin of the in-app wheel splits $50 and $50. The treasury and holder-rewards addresses are not published yet, and the page says so: payments that include those shares are paused until they are, so no money is ever sent to an unset address."

@@ -1,7 +1,7 @@
 {
 	"id": "partner-openai-openai-studio-connector-20261014",
 	"scenarioHash": "c661a62006fd958a0811380a8875362b1b780a65fabe212432e850107c45b8f2",
-	"ranAt": "2026-10-13T18:58:58.592Z",
+	"ranAt": "2026-10-13T19:08:51.904Z",
 	"target": {
 		"commit": "7d172d48e",
 		"revision": "three-ws-api-00499-fgc"
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/openai",
 			"detail": "loaded https://three.ws/openai",
 			"ok": true,
-			"ms": 7055,
+			"ms": 6868,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "1500",
 			"detail": "1500 ms",
 			"ok": true,
-			"ms": 5432,
+			"ms": 5394,
 			"frames": 45
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "Connect the server.",
 			"detail": "scrolled 1355 px",
 			"ok": true,
-			"ms": 3791,
+			"ms": 3919,
 			"frames": 30
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "tools answered",
 			"detail": "appeared after 0.0 s",
 			"ok": true,
-			"ms": 22,
+			"ms": 24,
 			"frames": 0
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "2200",
 			"detail": "2200 ms",
 			"ok": true,
-			"ms": 7625,
+			"ms": 7524,
 			"frames": 66
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "The generation tools.",
 			"detail": "scrolled 861 px",
 			"ok": true,
-			"ms": 4285,
+			"ms": 4304,
 			"frames": 36
 		},
 		{
@@ -77,7 +77,7 @@
 			"target": "2500",
 			"detail": "2500 ms",
 			"ok": true,
-			"ms": 8787,
+			"ms": 8868,
 			"frames": 75
 		},
 		{
@@ -86,7 +86,7 @@
 			"target": "500",
 			"detail": "scrolled 500 px",
 			"ok": true,
-			"ms": 4346,
+			"ms": 4498,
 			"frames": 36
 		},
 		{
@@ -95,7 +95,7 @@
 			"target": "3500",
 			"detail": "3500 ms",
 			"ok": true,
-			"ms": 11484,
+			"ms": 12299,
 			"frames": 105
 		}
 	],
@@ -109,7 +109,7 @@
 	"cuts": [],
 	"video": {
 		"path": "public/x-media/partner-openai-openai-studio-connector-20261014/reel.mp4",
-		"sha256": "67adde5b3301018de81da33d795ac2cbdc053d4d6832ac9e2e252014f93476d3",
+		"sha256": "5797cbfbd85e14974507cf197b5190fb44fbc829f065dfb280a20b2a6a7d51da",
 		"frames": 393,
 		"motion": 0.268,
 		"durationSec": 13.1,

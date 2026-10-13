@@ -1,12 +1,12 @@
 {
 	"id": "voice-article",
-	"scenarioHash": "791fc7b832546be2e2d231e3e05d98ef68cfac6f22b7e7bce3526c541479a32c",
-	"ranAt": "2026-10-01T19:21:01.763Z",
+	"scenarioHash": "50b369513d20dc3892896ba407bf68497cee7419fe895af8ab0ba8d06b60fa1a",
+	"ranAt": "2026-10-13T19:10:09.220Z",
 	"target": {
-		"commit": "68c8ec4db",
-		"revision": "three-ws-api-00475-lq6"
+		"commit": "7d172d48e",
+		"revision": "three-ws-api-00499-fgc"
 	},
-	"passed": true,
+	"passed": false,
 	"steps": [
 		{
 			"index": 1,
@@ -14,16 +14,16 @@
 			"target": "https://three.ws/voice",
 			"detail": "loaded https://three.ws/voice",
 			"ok": true,
-			"ms": 9630,
+			"ms": 8703,
 			"frames": 0
 		},
 		{
 			"index": 2,
 			"kind": "scroll",
 			"target": "Browse voices",
-			"detail": "scrolled 672 px",
+			"detail": "scrolled 693 px",
 			"ok": true,
-			"ms": 3779,
+			"ms": 3346,
 			"frames": 27
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "voices",
 			"detail": "voices = \"357\"",
 			"ok": true,
-			"ms": 3,
+			"ms": 2,
 			"frames": 0
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "1600",
 			"detail": "1600 ms",
 			"ok": true,
-			"ms": 5567,
+			"ms": 4932,
 			"frames": 48
 		},
 		{
@@ -50,7 +50,7 @@
 			"target": "Andrew",
 			"detail": "typed 6 characters",
 			"ok": true,
-			"ms": 3627,
+			"ms": 3165,
 			"frames": 28
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "1200",
 			"detail": "1200 ms, not filmed",
 			"ok": true,
-			"ms": 1222,
+			"ms": 1216,
 			"frames": 0
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "1200",
 			"detail": "1200 ms",
 			"ok": true,
-			"ms": 4161,
+			"ms": 3700,
 			"frames": 36
 		},
 		{
@@ -77,216 +77,24 @@
 			"target": "Use this voice",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 2635,
+			"ms": 2332,
 			"frames": 21
 		},
 		{
 			"index": 9,
-			"kind": "type",
-			"target": "Take the next exit. There is a charger two minutes past the bridge.",
-			"detail": "typed 67 characters",
-			"ok": true,
-			"ms": 17567,
-			"frames": 150
-		},
-		{
-			"index": 10,
 			"kind": "click",
 			"target": "Speak",
-			"detail": "clicked; POST /api/tts/synthesize answered 200 in 4.6 s",
-			"ok": true,
-			"ms": 6328,
+			"ok": false,
+			"detail": "POST /api/tts/synthesize answered HTTP 502",
+			"ms": 2362,
 			"frames": 21
-		},
-		{
-			"index": 11,
-			"kind": "expect",
-			"target": "KB ·",
-			"detail": "appeared after 0.0 s",
-			"ok": true,
-			"ms": 19,
-			"frames": 0
-		},
-		{
-			"index": 12,
-			"kind": "hold",
-			"target": "1600",
-			"detail": "1600 ms",
-			"ok": true,
-			"ms": 5249,
-			"frames": 48
-		},
-		{
-			"index": 13,
-			"kind": "click",
-			"target": "Speak",
-			"detail": "clicked; POST /api/tts/synthesize answered 200 in 2 s",
-			"ok": true,
-			"ms": 3528,
-			"frames": 21
-		},
-		{
-			"index": 14,
-			"kind": "expect",
-			"target": "cached",
-			"detail": "appeared after 0.0 s",
-			"ok": true,
-			"ms": 31,
-			"frames": 0
-		},
-		{
-			"index": 15,
-			"kind": "hold",
-			"target": "1800",
-			"detail": "1800 ms",
-			"ok": true,
-			"ms": 6163,
-			"frames": 54
-		},
-		{
-			"index": 16,
-			"kind": "goto",
-			"target": "https://three.ws/drive?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209",
-			"detail": "loaded https://three.ws/drive?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209",
-			"ok": true,
-			"ms": 16297,
-			"frames": 0
-		},
-		{
-			"index": 17,
-			"kind": "expect",
-			"target": "Ready",
-			"detail": "appeared after 1.1 s",
-			"ok": true,
-			"ms": 1133,
-			"frames": 0
-		},
-		{
-			"index": 18,
-			"kind": "hold",
-			"target": "1500",
-			"detail": "1500 ms",
-			"ok": true,
-			"ms": 41330,
-			"frames": 45
-		},
-		{
-			"index": 19,
-			"kind": "click",
-			"target": "Driving",
-			"detail": "clicked",
-			"ok": true,
-			"ms": 16957,
-			"frames": 21
-		},
-		{
-			"index": 20,
-			"kind": "expect",
-			"target": "Parked",
-			"detail": "appeared after 0.0 s",
-			"ok": true,
-			"ms": 10,
-			"frames": 0
-		},
-		{
-			"index": 21,
-			"kind": "click",
-			"target": "Type",
-			"detail": "clicked",
-			"ok": true,
-			"ms": 14566,
-			"frames": 21
-		},
-		{
-			"index": 22,
-			"kind": "type",
-			"target": "Day mode, please",
-			"detail": "typed 16 characters",
-			"ok": true,
-			"ms": 32161,
-			"frames": 48
-		},
-		{
-			"index": 23,
-			"kind": "press",
-			"target": "Enter",
-			"detail": "pressed Enter",
-			"ok": true,
-			"ms": 4205,
-			"frames": 6
-		},
-		{
-			"index": 24,
-			"kind": "wait",
-			"target": "1000",
-			"detail": "1000 ms, not filmed",
-			"ok": true,
-			"ms": 1509,
-			"frames": 0
-		},
-		{
-			"index": 25,
-			"kind": "read",
-			"target": "light",
-			"detail": "light = \"Day\"",
-			"ok": true,
-			"ms": 6,
-			"frames": 0
-		},
-		{
-			"index": 26,
-			"kind": "hold",
-			"target": "2600",
-			"detail": "2600 ms",
-			"ok": true,
-			"ms": 62254,
-			"frames": 78
 		}
 	],
 	"facts": {
-		"voices": "357",
-		"light": "Day"
+		"voices": "357"
 	},
-	"saw": [
-		"KB ·",
-		"cached",
-		"Ready",
-		"Parked"
-	],
-	"responses": [
-		{
-			"method": "POST",
-			"path": "/api/tts/synthesize",
-			"status": 200,
-			"seconds": 4.6
-		},
-		{
-			"method": "POST",
-			"path": "/api/tts/synthesize",
-			"status": 200,
-			"seconds": 2
-		}
-	],
-	"cuts": [
-		{
-			"afterStep": 10,
-			"seconds": 3.5
-		},
-		{
-			"afterStep": 16,
-			"seconds": 14.8
-		}
-	],
-	"video": {
-		"path": "public/x-media/voice-article/reel.mp4",
-		"sha256": "e5e30fae1ee54d035e9ffd7174a57d86aa4ffc45c7efc5082199bc3a59cb864d",
-		"frames": 673,
-		"motion": 0.6,
-		"durationSec": 22.43,
-		"width": 1280,
-		"height": 720,
-		"fps": 30,
-		"videoCodec": "h264",
-		"pixFmt": "yuv420p"
-	}
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": null
 }

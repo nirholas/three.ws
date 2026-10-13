@@ -1,12 +1,12 @@
 {
 	"id": "three-split",
 	"scenarioHash": "ddd1471bc159444e097f2ee0bd9f31c718fd42a277b38a1efb7f4f16faf1e6b0",
-	"ranAt": "2026-10-09T17:21:45.520Z",
+	"ranAt": "2026-10-13T19:08:55.697Z",
 	"target": {
-		"commit": "ec8d1d270",
-		"revision": "three-ws-api-00482-fzq"
+		"commit": "7d172d48e",
+		"revision": "three-ws-api-00499-fgc"
 	},
-	"passed": false,
+	"passed": true,
 	"steps": [
 		{
 			"index": 1,
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/three-token",
 			"detail": "loaded https://three.ws/three-token",
 			"ok": true,
-			"ms": 22553,
+			"ms": 22451,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "Of every $100 paid for paid compute",
 			"detail": "scrolled 66 px",
 			"ok": true,
-			"ms": 7707,
+			"ms": 5928,
 			"frames": 48
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "2000",
 			"detail": "2000 ms",
 			"ok": true,
-			"ms": 8411,
+			"ms": 6351,
 			"frames": 60
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "Of every $100 paid for marketplace sales",
 			"detail": "scrolled 167 px",
 			"ok": true,
-			"ms": 6279,
+			"ms": 5881,
 			"frames": 48
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "1800",
 			"detail": "1800 ms",
 			"ok": true,
-			"ms": 6677,
+			"ms": 5576,
 			"frames": 54
 		},
 		{
@@ -77,7 +77,7 @@
 			"target": "sellerMarket",
 			"detail": "sellerMarket = \"90\"",
 			"ok": true,
-			"ms": 3,
+			"ms": 1,
 			"frames": 0
 		},
 		{
@@ -86,7 +86,7 @@
 			"target": "Of every $100 paid for spins",
 			"detail": "scrolled 336 px",
 			"ok": true,
-			"ms": 7384,
+			"ms": 5940,
 			"frames": 48
 		},
 		{
@@ -95,17 +95,26 @@
 			"target": "1800",
 			"detail": "1800 ms",
 			"ok": true,
-			"ms": 6511,
+			"ms": 5406,
 			"frames": 54
 		},
 		{
 			"index": 11,
 			"kind": "scroll",
 			"target": "Of every $100 paid for copy-trading",
-			"ok": false,
-			"detail": "page.screenshot: Target page, context or browser has been closed",
-			"ms": 3140,
-			"frames": 21
+			"detail": "scrolled 210 px",
+			"ok": true,
+			"ms": 5668,
+			"frames": 48
+		},
+		{
+			"index": 12,
+			"kind": "hold",
+			"target": "2400",
+			"detail": "2400 ms",
+			"ok": true,
+			"ms": 7232,
+			"frames": 72
 		}
 	],
 	"facts": {
@@ -116,5 +125,16 @@
 	"saw": [],
 	"responses": [],
 	"cuts": [],
-	"video": null
+	"video": {
+		"path": "public/x-media/three-split/reel.mp4",
+		"sha256": "83b34946095bdcdddf6ff517b698c36c216a0d5fb1f7488825352a40a1aaa2d6",
+		"frames": 432,
+		"motion": 0.323,
+		"durationSec": 14.4,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
 }
