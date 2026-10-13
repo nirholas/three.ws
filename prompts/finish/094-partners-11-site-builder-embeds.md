@@ -1,5 +1,17 @@
 # partners 11: WordPress, Framer and Webflow embeds for <agent-3d>
 
+**Evolve status (2026-10-13):** Built and verified end to end. All three embeds exist and are
+pinned to the same release (`npm run check:site-builder-embeds` confirms `agent-3d 1.5.2` on all
+three); the WordPress plugin passes the real Plugin Check tool in a local Docker WordPress
+("No errors found"); the Framer and Webflow components each boot a real WebGL canvas in a
+real-React Playwright harness against the live production CDN release (no Framer or Webflow
+account exists in this sandbox to test the real tool directly), and the Webflow component
+additionally compiles through the real, unmodified Webflow CLI's `devlink bundle`. Docs,
+`STRUCTURE.md`, the changelog, and the submission text are all wired. What remains is three
+owner-gated account signups and submissions (WordPress.org, Framer Marketplace, Webflow Apps),
+logged as row 57 in `prompts/finish/_context/production-100-OWNER-ACTIONS.md` and detailed in
+`marketing/growth/submissions/site-builders.md`. This file stays open until those land.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate.
 
 ## Operating clause (binding)
