@@ -226,3 +226,77 @@ the LiveKit Startups program once the plugin PR is open. All three are logged as
 in [_context/production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md). The
 order file stays in place (not deleted) until an owner runs those steps, per its own
 close-out protocol for an owner-gated last step.
+
+## 2026-10-13: order 088 built and verified end to end; Discord app registration remains, order file stays open
+
+Order 088 asked for a Discord Activity: an embedded web app that runs inside a Discord
+voice channel. Chose the group experience the order's own task 1 asked for: a shared
+Forge room where everyone in the call prompts, watches one generation, and votes
+together, with a three.ws agent that reacts in text, kept free of any coin, wallet or
+purchase feature. Built and verified against the real Definition of done:
+
+- **Activity entry point (task 2).** `src/discord-activity/app.js` uses
+  `@discord/embedded-app-sdk`'s `DiscordSDK`: `authorize()` gets a code, a new server
+  endpoint (`api/gateway/discord-activity-token.js`) exchanges it for an access token
+  (the client never holds the client secret), `authenticate()` confirms it client-side,
+  then `api/gateway/discord-activity-session.js` re-verifies the token against Discord's
+  real `/users/@me` (`api/_lib/gateway/discord-activity-auth.js`'s `fetchDiscordUser`)
+  before minting a room-scoped HMAC session token, never trusting a client-claimed
+  identity. `tests/discord-activity-auth.test.js`: 9 passed, using `vi.spyOn(globalThis,
+  'fetch')` to assert the exact request shapes sent to Discord's real token and user
+  endpoints and the error paths when Discord rejects them.
+- **Proxy and CSP (task 3).** `patchUrlMappings([{ prefix: 'cdn', target: config.cdn_host
+  }], { patchFetch: true, patchXhr: true, patchSrcAttributes: true })` in `boot()`, with
+  `api/gateway/discord-activity-config.js` serving the CDN host read from
+  `env.S3_PUBLIC_DOMAIN` at runtime so a Developer Portal change never needs a rebuild.
+  Every other call (`/api/gateway/*`, `/api/forge`) stays on the root domain, which
+  Discord auto-proxies.
+- **Shared state per Activity instance (task 4).** `api/_lib/gateway/discord-activity-store.js`
+  keys an append-only event log by the Activity's `instanceId` and folds it into one
+  snapshot (`getRoomSnapshot`); `api/gateway/discord-activity-room/[id].js` serves that
+  snapshot over GET, a POST per action (`prompt`, `creation`, `vote`), and an SSE tail
+  for live updates (the browser's native `EventSource` cannot set an `Authorization`
+  header, so that one sub-route carries the session token as a query param instead, the
+  same short-lived HMAC token over HTTPS either way). Generation and voting reuse the
+  real `/api/forge` pipeline and the real `forge_votes` table (`castVote`/`removeVote`/
+  `getPublicCreation` from `api/_lib/forge-store.js`) rather than a separate throwaway
+  pipeline. `tests/discord-activity-store.test.js`: 4 passed, against a real PGlite
+  Postgres run through the actual migration SQL, covering idempotent room/participant
+  upserts, an unknown event kind being rejected, the full prompt/creation/vote/agent_say
+  fold, and a new creation clearing the previous vote tally.
+- **Purchases (task 5).** Deliberately omitted: the room sells nothing, so there is no
+  in-app purchase flow to build. `docs/discord-activity.md` says so explicitly and names
+  the only path that would ever need one (Discord's own IAP SKU system, not three.ws's
+  own payment rails).
+- **Docs and submission (task 6).** `docs/discord-activity.md` (How it works, Auth flow,
+  Proxy and CSP, Shared state, Purchases, Owner setup), a `data/pages.json` entry for
+  `/docs/discord-activity` and a non-indexable entry for `/discord-activity` itself (it
+  only functions inside Discord's iframe), a `STRUCTURE.md` row, a `data/changelog.json`
+  entry dated 2026-10-13, and
+  [marketing/growth/submissions/discord-activity.md](../../../marketing/growth/submissions/discord-activity.md)
+  with the exact Developer Portal settings (root and `cdn` URL Mappings, OAuth2 redirect
+  and scope, Activity flags) and the Discovery listing copy (name, tagline, description,
+  category, age rating) for owner order 939.
+- **`npm test`**: 2349 passed files / 42 failed (75 failed tests, 35271 passed, 247
+  skipped), a small drift from order 087's last-measured 2401 files / 73 failed baseline.
+  Confirmed unrelated: neither new test file is in the failing set, and the failing files
+  (`tests/branding.test.js`, `tests/pages-routes.test.js`, `tests/sitemap-type.test.js`
+  and others) fail on pre-existing content this order never touched, for example a
+  duplicate `/grok` route declared somewhere else in `data/pages.json` and two forbidden
+  brand strings in unrelated docs; `git diff data/pages.json` shows only the 17 lines this
+  order added, none of them `grok`.
+- **`npm run audit:docs`**: 21 findings, the same pre-existing baseline order 085/086/087
+  each independently measured; none reference the new doc page.
+- **`npm run check:rules`** against every touched path across all three commits: `OK: no
+  hard-rule violations in the added lines`.
+
+One step is owner-gated (CLAUDE.md gate 2: no agent may contact a third party or create
+accounts) and cannot be done inside this session: register a Discord application in the
+Developer Portal, enable Activities with the URL Mappings above, set
+`DISCORD_CLIENT_ID`/`DISCORD_CLIENT_SECRET`/`DISCORD_PUBLIC_KEY` on Cloud Run, run the
+pending migration, and verify the Activity in a real Discord client with two accounts
+(screenshots) before submitting it for Discovery. Logged as row 52 in
+[_context/production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md). The order
+file stays in place (not deleted) until that registration and live verification land.
+Commits: `8e7ab13c7` (feature), `172173cac` (prospects.md update), `653b44cbe`
+(owner-actions row and the order file's Evolve status paragraph).
