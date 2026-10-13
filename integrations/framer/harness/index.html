@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>agent-3d Framer component harness</title>
+<!--
+	Playwright-only fixture for tests/e2e/agent-3d-framer-component.spec.js.
+	Mounts the real Agent3DView (the framer-free component Agent3D.tsx wraps)
+	with plain ReactDOM, served by this package's own vite.config.mjs so the
+	repo root's vhtml JSX transform never touches it. Loads the real pinned
+	agent-3d CDN release (integrations/framer/src/pinned-release.ts) and a
+	real production avatar GLB, no mocks.
+-->
+<style>html,body{margin:0}</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="module" src="./main.tsx"></script>
+</body>
+</html>
