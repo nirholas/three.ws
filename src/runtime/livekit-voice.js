@@ -64,6 +64,13 @@ export class LiveKitVoice {
 					payload: { text: msg.text, sentiment: 0 },
 				});
 			}
+			// Named body gesture (e.g. from the LiveKit avatar plugin)
+			if (msg.type === 'gesture' && msg.name) {
+				this._protocol.emit({
+					type: ACTION_TYPES.GESTURE,
+					payload: { name: msg.name },
+				});
+			}
 			// User speech boundaries (VAD from agent server)
 			if (msg.type === 'speech_started') {
 				this._userSpeaking = true;

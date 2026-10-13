@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "livekit-plugins-threews"
+dynamic = ["version"]
+description = "LiveKit Agents avatar plugin for three.ws 3D avatars"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10.0"
+authors = [{ name = "three.ws", email = "hello@three.ws" }]
+keywords = ["voice", "ai", "realtime", "audio", "video", "livekit", "webrtc", "avatar", "3d", "threews"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = [
+    "livekit-agents>=1.6.4",
+]
+
+[project.urls]
+Documentation = "https://three.ws/docs"
+Website = "https://three.ws/"
+Source = "https://github.com/nirholas/three.ws"
+
+[tool.hatch.version]
+path = "livekit/plugins/threews/version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["livekit"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/livekit"]
+
+# Mirrors livekit/agents' own [tool.ruff] block (their pyproject.toml), the
+# config their CONTRIBUTING.md asks every plugin pull request to pass.
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "RUF006", # asyncio-dangling-task
+]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+known-first-party = ["livekit"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

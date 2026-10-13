@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>agent-3d LiveKit avatar harness</title>
+<!--
+	Playwright-only fixture for tests/e2e/agent-3d-livekit-avatar.spec.js.
+	Imports /src/element.js directly so the spec exercises today's source,
+	mirrors the public/agent-3d-ar-harness.html convention. Not linked from
+	any nav.
+-->
+<style>html,body{margin:0;height:100%}agent-3d{display:block;width:480px;height:480px}</style>
+</head>
+<body>
+<agent-3d
+	id="a3d"
+	eager
+	src="/avatars/fox.glb"
+	agent-id="00000000-0000-4000-8000-000000000000"
+	voice="livekit"
+	avatar-chat="off"
+></agent-3d>
+<script type="module" src="/src/element.js"></script>
+</body>
+</html>

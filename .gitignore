@@ -259,6 +259,9 @@ snapshots/exported/
 # Python bytecode (workers/)
 __pycache__/
 *.pyc
+*.egg-info/
+.ruff_cache/
+.pytest_cache/
 
 # three.ws presence sweep — regenerate with `npm run presence`
 three-ws-presence.json
