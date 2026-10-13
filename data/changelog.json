@@ -3,6 +3,17 @@
 	"entries": [
 		{
 			"date": "2026-10-13",
+			"title": "A Discord Activity brings a shared Forge room into any voice channel",
+			"link": "/docs/discord-activity",
+			"summary": "Open the new Activity from a Discord voice channel and everyone in the call shares one Forge room: one prompt, one in-progress generation, one finished model with a shared vote count, and an agent that reacts in text to what just happened. Auth maps a verified Discord identity (re-checked against Discord's own /users/@me, never trusted from the client) to a room-scoped session; generation and voting reuse the real /api/forge pipeline and forge_votes table rather than a separate throwaway pipeline. No coin, wallet, or purchase path. Docs: /docs/discord-activity. Submission packet for Developer Portal setup and Discovery copy: marketing/growth/submissions/discord-activity.md.",
+			"tags": [
+				"feature",
+				"integrations",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-13",
 			"title": "A three.ws avatar now lipsyncs to any LiveKit Agents or Pipecat voice pipeline",
 			"link": "/docs/voice-framework-integrations",
 			"summary": "Two new packages, livekit-plugins-threews and pipecat-threews, republish a running voice agent's TTS and user-turn frames as the same transcript/gesture/speech_started/speech_ended message shape over the room's data channel, which <agent-3d voice=\"livekit\"> already renders client-side: no server-side video rendering, no change to the browser code at all. The LiveKit package is an AvatarSession plugin dropped into an AgentSession; the Pipecat package is a FrameProcessor placed after the TTS service. Each ships a runnable local example against a real open-source livekit-server with a real local TTS, verified end to end with real browser automation driving the actual avatar lipsync and gesture cues off a live bot in both frameworks. Docs: /docs/voice-framework-integrations.",

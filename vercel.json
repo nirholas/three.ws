@@ -3358,6 +3358,14 @@
 			"dest": "/companion.html"
 		},
 		{
+			"src": "/discord-activity",
+			"dest": "/discord-activity.html"
+		},
+		{
+			"src": "/discord-activity/",
+			"dest": "/discord-activity.html"
+		},
+		{
 			"src": "/knock",
 			"dest": "/knock.html"
 		},
@@ -5931,6 +5939,14 @@
 		{
 			"src": "/api/teams",
 			"dest": "/api/teams"
+		},
+		{
+			"src": "/api/gateway/discord-activity-room/([^/]+)/(stream|prompt|creation|vote)",
+			"dest": "/api/gateway/discord-activity-room/[id]"
+		},
+		{
+			"src": "/api/gateway/discord-activity-room/([^/]+)",
+			"dest": "/api/gateway/discord-activity-room/[id]"
 		},
 		{
 			"src": "/api/swarms/([^/]+)/stream",

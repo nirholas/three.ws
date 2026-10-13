@@ -1111,6 +1111,12 @@ export const limits = {
 	// caps real influence at one vote each). Non-critical: a Redis blip must
 	// never block a vote — the vote itself is idempotent.
 	forgeVote: (key) => getLimiter('forge:vote', { limit: 120, window: '10 m' }).limit(key),
+	// Discord Activity shared Forge room (api/gateway/discord-activity-room):
+	// one group of up to a voice channel's worth of people posting prompts,
+	// creations and votes into one room. Keyed per Discord user id so a bored
+	// participant can't flood the room's event log for the whole call; a real
+	// voice channel session comfortably fits inside this.
+	discordActivityWrite: (discordUserId) => getLimiter('discord:activity:write', { limit: 60, window: '10 m' }).limit(discordUserId),
 	// Free text→3D lane (api/v1/ai/text-to-3d) — each generation drives one real
 	// NVIDIA NIM TRELLIS GPU inference, so the free tier is a per-IP daily quota
 	// (10/day). Above it the endpoint returns 429 + a pointer to the paid

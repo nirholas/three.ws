@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard - make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+		<title>Forge Room · three.ws Discord Activity</title>
+		<meta name="description" content="A shared Forge room for a Discord voice channel: everyone prompts, watches the same 3D model generate, and votes together." />
+		<meta name="robots" content="noindex" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<style>
+			:root {
+				--bg: #0d0d0d; --card: #181818; --line: rgba(255,255,255,0.08); --line-2: rgba(255,255,255,0.14);
+				--text: #e7e9ee; --muted: rgba(231,233,238,0.6); --dim: rgba(231,233,238,0.4);
+				--accent: #5865f2; --green: #22c55e;
+			}
+			* { box-sizing: border-box; }
+			html, body { margin: 0; height: 100%; }
+			body {
+				background: var(--bg); color: var(--text); font: 14px/1.5 'Inter', system-ui, -apple-system, sans-serif;
+				-webkit-font-smoothing: antialiased; display: flex; flex-direction: column;
+			}
+			.da-shell { max-width: 720px; width: 100%; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 100%; }
+			.da-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; flex: 1; text-align: center; padding: 24px; }
+			.da-spinner { width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--line-2); border-top-color: var(--accent); animation: da-spin 0.8s linear infinite; }
+			@keyframes da-spin { to { transform: rotate(360deg); } }
+			@media (prefers-reduced-motion: reduce) { .da-spinner { animation: none; } }
+			.da-error-box { border: 1px solid rgba(239,68,68,.3); background: rgba(239,68,68,.08); border-radius: 12px; padding: 20px; max-width: 46ch; }
+			button { font: inherit; cursor: pointer; }
+			.da-btn {
+				background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 9px 16px;
+				font-weight: 600; transition: filter .15s ease;
+			}
+			.da-btn:hover { filter: brightness(1.1); }
+			.da-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+			.da-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+			.da-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+			.da-header h1 { font-size: 15px; margin: 0; letter-spacing: -0.01em; }
+			.da-participants { display: flex; flex-wrap: wrap; gap: 6px; }
+			.da-chip { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-size: 12px; color: var(--muted); }
+
+			.da-status { color: var(--muted); font-size: 12.5px; min-height: 1.4em; }
+
+			.da-feed { flex: 1; min-height: 120px; max-height: 32vh; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+			.da-feed-line { margin: 0; font-size: 12.5px; color: var(--muted); }
+			.da-feed-line--agent { color: #a5b4fc; font-style: italic; }
+
+			.da-creation { border: 1px solid var(--line); border-radius: 12px; background: var(--card); overflow: hidden; }
+			.da-creation img { width: 100%; max-height: 220px; object-fit: contain; background: #000; display: block; }
+			.da-creation-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+			.da-creation-prompt { margin: 0; font-size: 13px; color: var(--muted); }
+			.da-creation-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+			.da-vote-btn {
+				background: transparent; border: 1px solid var(--line-2); color: var(--text); border-radius: 8px;
+				padding: 7px 12px; display: inline-flex; align-items: center; gap: 6px; transition: border-color .15s ease, color .15s ease;
+			}
+			.da-vote-btn:hover { border-color: var(--green); }
+			.da-vote-btn[aria-pressed='true'] { border-color: var(--green); color: var(--green); }
+			.da-vote-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+			.da-open3d { background: transparent; border: 1px solid var(--line-2); color: var(--text); border-radius: 8px; padding: 7px 12px; }
+			.da-open3d:hover { border-color: var(--accent); }
+			.da-open3d:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+			.da-prompt-form { display: flex; gap: 8px; }
+			.da-prompt-form input {
+				flex: 1; background: var(--card); border: 1px solid var(--line-2); color: var(--text);
+				border-radius: 8px; padding: 10px 12px; font: inherit;
+			}
+			.da-prompt-form input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+		</style>
+	</head>
+	<body>
+		<div class="da-shell">
+			<div id="da-boot" class="da-center">
+				<div class="da-spinner" role="status" aria-label="Loading"></div>
+				<p id="da-boot-msg">Connecting to Discord...</p>
+			</div>
+
+			<div id="da-error" class="da-center" hidden>
+				<div class="da-error-box">
+					<p id="da-error-msg">Something went wrong.</p>
+				</div>
+				<button id="da-retry" class="da-btn" type="button">Try again</button>
+			</div>
+
+			<div id="da-room" hidden style="display: flex; flex-direction: column; gap: 12px; flex: 1;">
+				<div class="da-header">
+					<h1>Forge Room</h1>
+					<div id="da-participants" class="da-participants"></div>
+				</div>
+
+				<p id="da-status" class="da-status" aria-live="polite"></p>
+
+				<div id="da-creation" class="da-creation" hidden>
+					<img id="da-creation-img" alt="" />
+					<div class="da-creation-body">
+						<p id="da-creation-prompt" class="da-creation-prompt"></p>
+						<div class="da-creation-actions">
+							<button id="da-vote-up" class="da-vote-btn" type="button" aria-pressed="false">
+								<span aria-hidden="true">&#128077;</span> <span id="da-vote-count">0</span>
+							</button>
+							<button id="da-open-3d" class="da-open3d" type="button">Open in 3D &#8599;</button>
+						</div>
+					</div>
+				</div>
+
+				<div id="da-feed" class="da-feed" aria-live="polite" aria-label="Room activity"></div>
+
+				<form id="da-prompt-form" class="da-prompt-form">
+					<input id="da-prompt-input" type="text" maxlength="400" placeholder="Describe something to forge together..." autocomplete="off" />
+					<button id="da-prompt-submit" class="da-btn" type="submit">Forge</button>
+				</form>
+			</div>
+		</div>
+
+		<script type="module" src="/src/discord-activity/app.js"></script>
+	</body>
+</html>
