@@ -1,0 +1,29 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "three-ws/agent-3d",
+	"title": "three.ws Agent",
+	"category": "embed",
+	"icon": "universal-access-alt",
+	"description": "Embed a live, animated three.ws 3D AI agent.",
+	"keywords": ["3d", "avatar", "agent", "three.ws", "embed"],
+	"version": "1.0.0",
+	"textdomain": "three-ws-agent",
+	"attributes": {
+		"src": { "type": "string", "default": "" },
+		"agentId": { "type": "string", "default": "" },
+		"chainId": { "type": "string", "default": "" },
+		"modelUrl": { "type": "string", "default": "" },
+		"background": { "type": "string", "default": "transparent" },
+		"framing": { "type": "string", "default": "full" },
+		"poster": { "type": "string", "default": "" },
+		"width": { "type": "string", "default": "100%" },
+		"height": { "type": "string", "default": "480px" }
+	},
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"]
+	},
+	"editorScript": "file:./index.js",
+	"style": "file:./style.css"
+}

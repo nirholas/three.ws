@@ -99,7 +99,7 @@ export async function fetchReleaseFile(ledger, version, file, { cacheDir = null 
 
 // Where documentation lives. Tests are deliberately absent: their fixtures pin
 // wrong hashes on purpose to exercise stale-pin detection.
-export const PIN_ROOTS = ['docs', 'specs', 'blog', 'examples', '.agents/skills', 'public/skills', 'README.md', 'packages'];
+export const PIN_ROOTS = ['docs', 'specs', 'blog', 'examples', '.agents/skills', 'public/skills', 'README.md', 'packages', 'integrations'];
 const PIN_EXT = /\.(md|mdx|html?|txt)$/i;
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'test', 'tests', '.git']);
 

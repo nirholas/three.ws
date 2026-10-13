@@ -1,0 +1,10 @@
+.three-ws-agent-block-preview {
+	min-height: 120px;
+}
+
+.three-ws-agent-placeholder {
+	padding: 1em;
+	border: 1px dashed #ccc;
+	color: #555;
+	text-align: center;
+}
