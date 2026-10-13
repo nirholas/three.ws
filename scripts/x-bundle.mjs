@@ -26,7 +26,7 @@ import { fileURLToPath } from 'node:url';
 import { loadQueue } from '../api/_lib/x-content/queue.js';
 import { REVIEW_MAX_AGE_DAYS } from '../api/_lib/x-content/review.js';
 import { dbStore, memoryStore } from '../api/_lib/x-content/state.js';
-import { DEFAULT_OVERLAY_DIR, buildBundle, materialize, publishBundles, bundleStorage, readIndex, removeBundle, verifyBundles } from '../api/_lib/x-content/overlay.js';
+import { DEFAULT_OVERLAY_DIR, INDEX_VERSION, buildBundle, materialize, publishBundles, bundleStorage, readIndex, removeBundle, signIndex, verifyBundles } from '../api/_lib/x-content/overlay.js';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DAY = 24 * 60 * 60_000;
@@ -146,7 +146,15 @@ async function list() {
 
 async function pull() {
 	const dir = resolve(option('dir', DEFAULT_OVERLAY_DIR));
-	const result = await materialize({ imageRoot: root, storage: bundleStorage(), dir });
+	const storage = bundleStorage();
+	// A bucket that has never been published to is the normal first run: nothing
+	// is shipped yet, so the overlay is the image's queue with no bundles on it.
+	let index = null;
+	if (!(await readIndex({ storage }))) {
+		const empty = { version: INDEX_VERSION, updatedAt: new Date().toISOString(), bundles: [] };
+		index = { ...empty, signature: signIndex(empty) };
+	}
+	const result = await materialize({ imageRoot: root, storage, dir, index });
 	console.log(`bundles: ${result.bundles.join(', ') || 'none'}`);
 	if (result.superseded.length) console.log(`already posted in this checkout's queue, so left alone: ${result.superseded.join(', ')}`);
 	console.log(`files: ${result.files} (${result.reused} reused from an earlier pull)`);
