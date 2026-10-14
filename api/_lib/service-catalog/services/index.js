@@ -78,6 +78,8 @@ import weatherGuardForecast from './weather-guard-forecast.js';
 import weatherGuardDecision from './weather-guard-decision.js';
 import carbonNow from './carbon-now.js';
 import carbonBestWindow from './carbon-best-window.js';
+import domainsCheck from './domains-check.js';
+import domainsBulk from './domains-bulk.js';
 
 export const PAID_SERVICES = Object.freeze([
 	modelCheck,
@@ -145,4 +147,6 @@ export const PAID_SERVICES = Object.freeze([
 	weatherGuardDecision,
 	carbonNow,
 	carbonBestWindow,
+	domainsCheck,
+	domainsBulk,
 ]);
