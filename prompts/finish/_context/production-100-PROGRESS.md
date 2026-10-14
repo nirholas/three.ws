@@ -1173,6 +1173,82 @@ No owner decision was needed; this is a pure code fix with no deploy step
 in its own definition of done. The live healthz number will not change
 until the next deploy carries this commit (deploys are owner-gated).
 
+## 2026-10-14: order 404 (evolve/main divergence, 140-file merge) closed
+
+Step 0 re-derivation at start of session measured `main` 376 commits ahead /
+`evolve` 134 ahead (grown from the order's 2026-10-11 snapshot of 358). Did
+the merge as one operation, resolved all batches, fixed the live production
+bug it unblocked, and corrected the two downstream orders it named. Seven
+commits:
+
+1. `57ff3c669` the merge itself (`git merge --no-commit --no-ff main`, then
+   one commit, not a sweep). Batch A (17 `worker_security.py` vendored
+   copies, generated JSON/JS files) resolved mechanically and reverified
+   with `npm run check:vendored` (0 drift). Batch B (clean adds on one side)
+   taken as diffed. Batch C (`x-mention-store.js`, `gateway/adapters/x.js`,
+   `x-search.js`, `sentiment-scout.js`, `x402-ring-leak-scan.js`,
+   `webhook-dispatch.js`) hand-combined per the order's own analysis: both
+   sides' improvements preserved, not blind-picked. Batch D
+   (`auth.js`, `api-keys.js`, `rate-limit.js`, `idempotency.js`,
+   `spend-scope.js`, `x402-paid-endpoint.js`, `policy.js`) read hunk by
+   hunk; all were orthogonal (different functions/concerns on each side), so
+   all combined with no file left reverted to one side and no follow-up
+   needed for this batch.
+2. `7ba9f9749` fixed the live `x-mention-reply.js` `chainFor()` bug (row 34):
+   it now builds its chain from `llm.js`'s own `providerChain()` plus
+   `loadOwnerGrokKey`/`agentDefaultModel`/`MODEL_CATALOG` instead of the
+   tool-calling gateway's `resolveAgentBrain`/`modelChain` shape, which has
+   no `buildBody`. `RUN_LLM_TESTS=1 npx vitest run tests/x-mention-reply.llm.test.js`:
+   16/16 `source: 'model'`, no `TypeError`.
+3. `15c7d0a84` fixed the two genuinely new post-merge regressions (found by
+   diffing a pre-merge detached-worktree baseline run against the post-merge
+   full suite, not by assuming): `open-source-credits.json` missing two
+   entries `main` added dependencies for, and 242 `node_modules` entries
+   stale against an already-correct lockfile (`npm install --package-lock-only`
+   used mid-merge resync's metadata but not the tree; a plain `npm install`
+   fixed it with no lockfile diff).
+4. `e22e51bc5` restored `SPEND_BROWSER_URL` in `api/_lib/spend-scope.js`,
+   dangling since a shared-history refactor removed it before `evolve` ever
+   branched; `scripts/lib/skill-md-facts.mjs` (evolve-only) depended on it
+   and `npm run build:skills-pack` was throwing.
+5. `6b491c5da` fixed `pages/grok.html`'s 5 stray `"three-ws"` connector
+   labels to the consistent `"three-ws-grok"` slug `slugForEndpoint()`
+   actually produces (pre-existing bug the merge's full-suite run surfaced,
+   not merge-caused).
+6. `a7e169bc8` regenerated `data/open-source-credits.json` (see commit 3).
+7. `2919be276` corrected order 060's and `production-100-OWNER-ACTIONS.md`'s
+   2026-10-11 claim that `d77b89178` (an earlier, separate evolve/main
+   merge) had already fixed the `chainFor()` bug; it had not (checked out
+   that merge's own parent and confirmed `chainFor()` still imported
+   `resolveAgentBrain`/`modelChain` there). The real fix is commit 2 above.
+   Order 061 needed no correction, its status was already accurate.
+
+A second, pre-existing architecture gap surfaced during close-out (not
+caused by this merge, left by the earlier `d77b89178` merge on 2026-10-11):
+`api/_mcp-studio/receipts.js`'s `openRun`/`closeRun` run-receipt system is
+wired into nothing outside its own test, because `main`'s `finishMesh`/
+`finishRig` refactor that wired it into `forge_free`/`text_to_avatar`/
+`mesh_forge`/`rig_mesh`/`forge_avatar` was never combined with evolve's
+idempotency-key `job-tools.js` architecture. Filed as its own order,
+[405-wire-run-receipts-into-forge-tools.md](../405-wire-run-receipts-into-forge-tools.md),
+rather than guessed at here; order 404's own batch C guidance is to combine
+with full confidence or not at all, and this combine needs real design work
+across 5 handlers.
+
+Definition of done, verified: `git rev-list --left-right --count main...HEAD`
+→ `0  332` (evolve now a descendant of main). `check:vendored` 0 drift.
+`RUN_LLM_TESTS=1 npx vitest run tests/webhook-dispatch*.test.js
+tests/x402-ring-leak-scan-run.test.js tests/x-mention-reply.llm.test.js`:
+30/30 passed. Full `npm test`: 43 failed files / 77 failed tests, but a
+pre-merge baseline run (temporary detached worktree at the pre-merge SHA)
+showed 44 failed files / 83 failed tests before any of this session's fixes;
+diffing the two sorted FAIL lists (`comm -13`) shows zero files failing now
+that did not already fail before the merge. `check:rules --base 7ba9f9749
+--head HEAD` across all 237 changed files: 0 violations. `git status --short`
+clean except 4 files (`public/changelog-recent.json`, `public/changelog.json`,
+`public/features.json`, `public/sitemap/index.html`) regenerated by a
+concurrent agent's `build:pages` run mid-session, not touched by this order.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
