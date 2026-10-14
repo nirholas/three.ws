@@ -71,6 +71,11 @@ import walletConnect from './wallet-connect.js';
 import robinhoodPortfolio from './robinhood-portfolio.js';
 import printOrder from './print-order.js';
 import knock from './knock.js';
+// Keyless x402 suite: live public-data ports, no API key anywhere in the
+// chain (Open-Meteo/NWS, UK Carbon Intensity, RDAP, arXiv/Crossref/Semantic
+// Scholar, OpenLibrary/Gutenberg, GDELT, MBTA GTFS, OSM Overpass).
+import weatherGuardForecast from './weather-guard-forecast.js';
+import weatherGuardDecision from './weather-guard-decision.js';
 
 export const PAID_SERVICES = Object.freeze([
 	modelCheck,
@@ -134,4 +139,6 @@ export const PAID_SERVICES = Object.freeze([
 	robinhoodPortfolio,
 	printOrder,
 	knock,
+	weatherGuardForecast,
+	weatherGuardDecision,
 ]);

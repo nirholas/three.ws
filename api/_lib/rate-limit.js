@@ -1940,6 +1940,31 @@ export const limits = {
 	// a Redis outage fails closed to the paid rail rather than opening the chain.
 	factCheckFreeIp: (ip) =>
 		getLimiter('fact-check:free:ip', { limit: 3, window: '1 d', critical: true }).limit(ip),
+	// Keyless x402 services (api/x402/{weather-guard,carbon,domains,research,
+	// books,news-wire,transit,places}): each ports a live public-data API with
+	// no API key at all, so the free lane costs us nothing but the upstream's
+	// goodwill. Quotas are sized to each upstream's own tolerance, tightest
+	// for the ones that actively rate-limit or ask for restraint (GDELT's
+	// 5.1s min-gap, Overpass's shared community infra), loosest for the ones
+	// built for exactly this kind of polling (Open-Meteo, UK Carbon Intensity,
+	// MBTA's public GTFS feed). Critical: a Redis outage fails closed to the
+	// paid rail rather than opening an unmetered proxy to the upstream.
+	weatherGuardFreeIp: (ip) =>
+		getLimiter('weather-guard:free:ip', { limit: 20, window: '1 d', critical: true }).limit(ip),
+	carbonFreeIp: (ip) =>
+		getLimiter('carbon:free:ip', { limit: 20, window: '1 d', critical: true }).limit(ip),
+	domainsFreeIp: (ip) =>
+		getLimiter('domains:free:ip', { limit: 15, window: '1 d', critical: true }).limit(ip),
+	researchFreeIp: (ip) =>
+		getLimiter('research:free:ip', { limit: 10, window: '1 d', critical: true }).limit(ip),
+	booksFreeIp: (ip) =>
+		getLimiter('books:free:ip', { limit: 10, window: '1 d', critical: true }).limit(ip),
+	newsWireFreeIp: (ip) =>
+		getLimiter('news-wire:free:ip', { limit: 5, window: '1 d', critical: true }).limit(ip),
+	transitFreeIp: (ip) =>
+		getLimiter('transit:free:ip', { limit: 20, window: '1 d', critical: true }).limit(ip),
+	placesFreeIp: (ip) =>
+		getLimiter('places:free:ip', { limit: 15, window: '1 d', critical: true }).limit(ip),
 	// NVIDIA Audio2Face-3D (api/a2f) — free upstream but credit-metered, and each
 	// call streams a full speech clip through a bidirectional gRPC stream the
 	// server holds in memory while collecting the blendshape track. Meter per
