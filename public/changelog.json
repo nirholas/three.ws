@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-14T20:51:56.754Z",
+	"generated_at": "2026-10-14T21:30:35.083Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -141,6 +141,16 @@
 			"link": "/docs/native-launchpad",
 			"tags": [
 				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "The pre-push guard now catches a leaked Solana secret key, and withdrawals warn before a sweeper bot drains them",
+			"summary": "scripts/check-secrets.mjs, the hook that blocks a push carrying a credential, now decodes every 86-90 character base58 run in added content and flags it only when the first 32 bytes derive the embedded public key in the last 32 bytes via Ed25519, catching a real Solana keypair secret while leaving the repo's thousands of genuine 64-byte transaction signatures untouched. Separately, the agent wallet's Withdraw tab now reads a destination's recent on-chain history before you send: a wallet that repeatedly drains to near-zero within seconds of receiving funds, the sweeper-bot fingerprint, surfaces a blocking warning on the confirm screen and again server-side if you retry, so a sweeper bot can't just wait for the preview to go stale.",
+			"link": "/docs/agent-abilities",
+			"tags": [
 				"security"
 			]
 		},

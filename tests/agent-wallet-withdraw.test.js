@@ -129,6 +129,7 @@ vi.mock('../api/_lib/agent-trade-guards.js', () => ({
 		catch { return { valid: false, reason: 'not_pubkey' }; }
 	}),
 	enforceSpendLimit: vi.fn(async () => { if (guardState.enforceThrow) throw guardState.enforceThrow; return { ok: true }; }),
+	checkDestinationSweepRisk: vi.fn(async () => ({ checked: false, flagged: false, verdict: 'unknown', note: 'not checked in this test' })),
 	lamportsToUsd: vi.fn(async () => 100),
 	getSpendLimits: vi.fn(() => ({ daily_usd: null, per_tx_usd: null, withdraw_allowlist: [] })),
 	setSpendLimits: vi.fn(async () => ({ daily_usd: null, per_tx_usd: null, withdraw_allowlist: [] })),

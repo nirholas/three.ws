@@ -217,6 +217,9 @@ registerWalletTab({
 			intent: null,
 			result: null,
 			submitErr: null,
+			// Sweeper-bot read on the current intent's destination: null while
+			// loading/unknown, { flagged, note, ... } once the simulate call answers.
+			sweepRisk: null,
 		};
 
 		function subStrip() {
@@ -349,8 +352,15 @@ registerWalletTab({
 			} else if (wl) {
 				destBadge = '<span class="awh-dest-tag">allowlist is off</span>';
 			}
+			const sweepBanner = state.sweepRisk?.flagged
+				? `<div class="awh-err" role="alert" style="margin-bottom:var(--space-3,12px);">
+						<strong>⚠ This address looks drained by a sweeper bot.</strong>
+						<div class="why" style="text-transform:none; margin-top:4px;">${esc(state.sweepRisk.note)}</div>
+					</div>`
+				: '';
 			return `
 				<div class="awh-card">
+					${sweepBanner}
 					<div class="awh-sum">
 						<div class="r"><span>Asset</span><span class="v">${esc(it.assetName)}</span></div>
 						<div class="r"><span>Amount</span><span class="v">${it.isMax ? 'Max — ' : ''}${esc(fmtAmount(it.amount, it.decimals))} ${esc(it.assetName)}</span></div>
@@ -470,24 +480,48 @@ registerWalletTab({
 					isMax, amount: isMax ? Number(a.max) : amt, destination: state.resolvedDest,
 					idem: (crypto?.randomUUID?.() || `wd-${Date.now()}-${Math.round(Math.random() * 1e9)}`),
 				};
+				state.sweepRisk = null;
 				state.phase = 'confirm';
 				render();
 				// Best-effort: pull the spend limits so the confirm step can show the
 				// allowlist-match badge. Non-blocking — the irreversibility warning and
 				// server-side enforcement do not depend on it.
 				if (state.limits === null) loadLimits();
+				loadSweepRisk();
 			});
 		}
 
-		async function submitWithdraw() {
+		// Reads the destination's recent on-chain history (via the withdraw
+		// endpoint's `simulate` path, which moves no funds) to warn before the
+		// owner sends into a sweeper bot. Best-effort: `checked: false` or a
+		// failed call leaves state.sweepRisk unflagged: the server re-checks and
+		// blocks on submit regardless, so this is a preview, not the only gate.
+		async function loadSweepRisk() {
+			const it = state.intent;
+			if (!it) return;
+			const res = await call(base('withdraw'), {
+				method: 'POST',
+				body: { asset: it.kind, amount: it.isMax ? 'max' : it.amount, destination: it.destination, network: ctx.getNetwork(), simulate: true },
+			});
+			if (destroyed || state.intent !== it) return;
+			state.sweepRisk = (res.ok && res.data?.sweepRisk?.checked) ? res.data.sweepRisk : null;
+			if (state.phase === 'confirm') render();
+		}
+
+		async function submitWithdraw(opts = {}) {
 			const it = state.intent;
 			if (!it || state.phase === 'sending') return;
 			if (ctx.getNetwork() !== 'devnet' && !(await ensureRiskAck({ context: 'withdraw' }))) return;
+			let sweepAck = opts.sweepAck === true;
+			if (!sweepAck && state.sweepRisk?.flagged) {
+				if (!confirm(`This address looks drained by a sweeper bot.\n\n${state.sweepRisk.note}\n\nSend anyway?`)) return;
+				sweepAck = true;
+			}
 			state.phase = 'sending';
 			render();
 			const res = await call(base('withdraw'), {
 				method: 'POST',
-				body: { asset: it.kind, amount: it.isMax ? 'max' : it.amount, destination: it.destination, network: ctx.getNetwork(), idempotency_key: it.idem },
+				body: { asset: it.kind, amount: it.isMax ? 'max' : it.amount, destination: it.destination, network: ctx.getNetwork(), idempotency_key: it.idem, sweep_risk_ack: sweepAck },
 			});
 			if (res.ok || res.status === 202) {
 				state.result = res.ok ? res.data : (res.extra || {});
@@ -498,6 +532,15 @@ registerWalletTab({
 				// Refresh limits/activity next time they're opened.
 				state.limits = null;
 				return;
+			}
+			// The server re-checks the sweep risk at submit time (the simulate preview
+			// above can be stale or have failed to load); this is the one case where
+			// its 403 means "ask the owner", not "refuse the withdrawal".
+			if (!sweepAck && res.code === 'destination_sweep_risk') {
+				const note = res.detail?.sweepRisk?.note || res.message;
+				if (confirm(`This address looks drained by a sweeper bot.\n\n${note}\n\nSend anyway?`)) {
+					return submitWithdraw({ sweepAck: true });
+				}
 			}
 			state.phase = 'confirm';
 			render();
@@ -511,6 +554,7 @@ registerWalletTab({
 		function resetForm() {
 			state.phase = 'form'; state.intent = null; state.result = null;
 			state.dest = ''; state.resolvedDest = null; state.amount = ''; state.selectedAsset = 0; state.unconfirmed = false;
+			state.sweepRisk = null;
 		}
 
 		async function loadHoldings() {

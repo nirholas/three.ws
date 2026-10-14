@@ -31,6 +31,11 @@ import { solUsdPrice } from './avatar-wallet.js';
 import { logAudit } from './audit.js';
 // The destination whitelist: cooldown-gated allowlist for every outbound category.
 import { evaluateDestination } from './destination-whitelist.js';
+// Sweeper-bot heuristic for owner-typed withdraw destinations: an injected
+// connection (this platform's own failover chain) backs a read-only check, see
+// api/_lib/burned-destination.js.
+import { checkBurnedDestination } from './burned-destination.js';
+import { solanaConnection } from './agent-pumpfun.js';
 // The wallet's behavioral immune system — an additive anomaly predicate layered on
 // top of the static caps in this file. See api/_lib/anomaly-events.js +
 // api/_lib/wallet-anomaly.js. Only referenced inside function bodies, so the
@@ -757,9 +762,15 @@ export async function getCounterpartySpendUsd(
  * destination the platform itself controls or that is bound to a quote the owner
  * already confirmed (escrow, treasury, a verified provider invoice). It skips the
  * gate; the numeric caps and policy rules still apply.
+ *
+ * `sweepRiskAck: true` is set once the owner has already seen the blocking
+ * sweeper-bot confirm for THIS destination (surfaced via `destination_sweep_risk`
+ * below) and chose to proceed. Only withdraw carries this check: every other
+ * category sends to a program address or a platform-controlled wallet the owner
+ * never typed in by hand, so there is no "did I copy the right address" risk to warn on.
  * @throws {SpendLimitError}
  */
-export async function enforceDestinationAllowlist({ agentId, meta, category, destination, usdValue, network = 'mainnet', destinationTrust = null }) {
+export async function enforceDestinationAllowlist({ agentId, meta, category, destination, usdValue, network = 'mainnet', destinationTrust = null, sweepRiskAck = false }) {
 	if (destinationTrust === 'system') return null;
 	const dest = typeof destination === 'string' ? destination.trim() : '';
 	// Only the owner's withdraw is required to name a destination. A category
@@ -792,7 +803,32 @@ export async function enforceDestinationAllowlist({ agentId, meta, category, des
 			}
 		}
 	}
+	if (category === 'withdraw' && dest) {
+		const sweepRisk = await checkDestinationSweepRisk({ destination: dest, network });
+		if (sweepRisk?.flagged && !sweepRiskAck) {
+			throw new SpendLimitError(
+				'destination_sweep_risk',
+				`This address looks drained by a sweeper bot: ${sweepRisk.note}`,
+				{ category, destination: dest, sweepRisk },
+			);
+		}
+		decision.sweepRisk = sweepRisk;
+	}
 	return decision;
+}
+
+/**
+ * Heuristic sweeper-bot check for a withdraw destination: does its recent
+ * history show the "incoming SOL, drained again within seconds" pattern? A
+ * read-only warning, never a static cap, so it degrades to `checked: false`
+ * (never throws) on an RPC failure rather than blocking a legitimate withdraw.
+ * See api/_lib/burned-destination.js for the classifier.
+ */
+export async function checkDestinationSweepRisk({ destination, network = 'mainnet' }) {
+	const dest = typeof destination === 'string' ? destination.trim() : '';
+	if (!dest) return null;
+	const conn = solanaConnection(network === 'devnet' ? 'devnet' : 'mainnet');
+	return checkBurnedDestination(conn, dest);
 }
 
 // ── natural-language policy enforcement ───────────────────────────────────────
@@ -1090,6 +1126,9 @@ export async function enforceSpendLimit({
 	network = 'mainnet',
 	stepUpApproved = false,
 	destinationTrust = null,
+	// The owner already saw the sweeper-bot confirm for this exact destination
+	// and chose to proceed. See enforceDestinationAllowlist's docstring.
+	sweepRiskAck = false,
 }) {
 	// Fail closed: a caller that named neither the limits nor the meta gets the
 	// agent's REAL policy read from the row, never an empty default policy.
@@ -1110,7 +1149,7 @@ export async function enforceSpendLimit({
 	}
 
 	// 1. Destination allowlist: every outbound category, cooldown-gated.
-	await enforceDestinationAllowlist({ agentId, meta, category, destination, usdValue, network, destinationTrust });
+	await enforceDestinationAllowlist({ agentId, meta, category, destination, usdValue, network, destinationTrust, sweepRiskAck });
 
 	// 2. Natural-language policy — the owner's English rules, deterministically
 	// enforced. Resolved from the explicit `policyRules` arg or the `meta` blob —
@@ -1227,6 +1266,9 @@ export async function reserveSpendUsd({
 	// The owner answered this exact spend in the approval inbox. Lifts only a
 	// policy "ask me" verdict, as in enforceSpendLimit; every cap still runs.
 	stepUpApproved = false,
+	// The owner already saw the sweeper-bot confirm for this exact destination
+	// and chose to proceed. See enforceDestinationAllowlist's docstring.
+	sweepRiskAck = false,
 }) {
 	// Fail closed, exactly as enforceSpendLimit does: the reserve is the layer that
 	// runs before any key is touched, so it is the layer that must never default to
@@ -1249,7 +1291,7 @@ export async function reserveSpendUsd({
 	}
 
 	// Destination allowlist: same gate as enforceSpendLimit, before a row is reserved.
-	await enforceDestinationAllowlist({ agentId, meta, category, destination, usdValue, network, destinationTrust });
+	await enforceDestinationAllowlist({ agentId, meta, category, destination, usdValue, network, destinationTrust, sweepRiskAck });
 
 	// Natural-language policy — same deterministic evaluator as enforceSpendLimit,
 	// run BEFORE the row is reserved so a policy block never claims daily headroom.

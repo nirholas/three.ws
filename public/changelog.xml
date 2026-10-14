@@ -111,6 +111,14 @@
 			<description>Every pool on the native launchpad lane used to open at the same flat 1% trading fee a coin keeps forever, which is exactly what a sniper bot wants: the same price whether it buys in the pool's first block or an hour later. New pools now open at a 50% fee that decays exponentially down to the normal 1% over the first 100 slots (about 40 seconds), so a bot buying in the first block pays close to half its $THREE in fees while an organic buyer a minute later pays the standard rate. The coin creator's own bundled first buy stays exempt, since that is the creator funding their own launch, not a snipe. The schedule runs entirely on Meteora's own Dynamic Bonding Curve fee scheduler, no new contract.</description>
 		</item>
 		<item>
+			<title>The pre-push guard now catches a leaked Solana secret key, and withdrawals warn before a sweeper bot drains them</title>
+			<link>https://three.ws/docs/agent-abilities</link>
+			<guid isPermaLink="false">2026-10-14:The pre-push guard now catches a leaked Solana secret key, and withdrawals warn before a sweeper bot drains them</guid>
+			<pubDate>Wed, 14 Oct 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>scripts/check-secrets.mjs, the hook that blocks a push carrying a credential, now decodes every 86-90 character base58 run in added content and flags it only when the first 32 bytes derive the embedded public key in the last 32 bytes via Ed25519, catching a real Solana keypair secret while leaving the repo's thousands of genuine 64-byte transaction signatures untouched. Separately, the agent wallet's Withdraw tab now reads a destination's recent on-chain history before you send: a wallet that repeatedly drains to near-zero within seconds of receiving funds, the sweeper-bot fingerprint, surfaces a blocking warning on the confirm screen and again server-side if you retry, so a sweeper bot can't just wait for the preview to go stale.</description>
+		</item>
+		<item>
 			<title>three.ws Avatar MCP clamps unbounded tool arguments before they reach generated HTML</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-14:three.ws Avatar MCP clamps unbounded tool arguments before they reach generated HTML</guid>

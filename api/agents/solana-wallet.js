@@ -34,7 +34,7 @@ import {
 	validateSolanaAddress, enforceSpendLimit, SpendLimitError, lamportsToUsd,
 	getSpendLimits, setSpendLimits, listCustodyEvents, updateCustodyEvent, recordCustodyEvent,
 	getDailySpendUsd, getTradeLimits, setTradeLimits, getDailySpendLamports,
-	setPolicyRules, getPolicyRules,
+	setPolicyRules, getPolicyRules, checkDestinationSweepRisk,
 } from '../_lib/agent-trade-guards.js';
 // Natural-language spend policies — owner authors rules in English (compiler),
 // code enforces them deterministically (rules engine). Owner-only Policy surface.
@@ -594,6 +594,10 @@ async function handleWithdraw(req, res, id) {
 	const network = body.network === 'devnet' ? 'devnet' : 'mainnet';
 	const asset = typeof body.asset === 'string' && body.asset.trim() ? body.asset.trim() : 'SOL';
 	const simulate = body.simulate === true;
+	// Set once the owner has already seen the blocking sweeper-bot confirm for
+	// this exact destination (surfaced on the simulate response below) and chose
+	// to send anyway.
+	const sweepRiskAck = body.sweep_risk_ack === true;
 
 	// A wallet balance promised to marketplace bidders cannot be withdrawn out
 	// from under them: once a listing that includes the balance has an escrowed
@@ -786,7 +790,7 @@ async function handleWithdraw(req, res, id) {
 
 	// 3. Enforce the shared spend policy (allowlist + per-tx + daily ceiling).
 	try {
-		await enforceSpendLimit({ agentId: id, meta, category: 'withdraw', usdValue, destination: dest.base58, network });
+		await enforceSpendLimit({ agentId: id, meta, category: 'withdraw', usdValue, destination: dest.base58, network, sweepRiskAck });
 	} catch (e) {
 		if (e instanceof SpendLimitError) {
 			return error(res, e.status, e.code, e.message, { detail: e.detail });
@@ -831,10 +835,13 @@ async function handleWithdraw(req, res, id) {
 			console.error('[agents/solana-wallet] simulation failed', e?.message);
 			return serverError(res, 502, 'simulation_failed', e);
 		}
-		const allowlist = await allowlistRow({ agentId: id, destination: dest.base58, category: 'withdraw', ownAddress: meta.solana_address });
+		const [allowlist, sweepRisk] = await Promise.all([
+			allowlistRow({ agentId: id, destination: dest.base58, category: 'withdraw', ownAddress: meta.solana_address }),
+			checkDestinationSweepRisk({ destination: dest.base58, network }),
+		]);
 		return json(res, 200, {
 			data: {
-				allowlist, simulated: true, asset, network, destination: dest.base58,
+				allowlist, sweepRisk, simulated: true, asset, network, destination: dest.base58,
 				amount: humanAmount, lamports: lamports != null ? String(lamports) : null,
 				amount_raw: amountRaw != null ? String(amountRaw) : null,
 				usd: usdValue, note: priceNote,

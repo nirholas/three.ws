@@ -36,6 +36,13 @@ vi.mock('../api/_lib/anomaly-events.js', () => ({
 	guardOutboundAnomaly: vi.fn(async () => ({ decision: 'allow', verdict: null, anomalyId: null, froze: false })),
 }));
 
+// The sweeper-bot check is an RPC-backed heuristic with its own dedicated unit
+// tests (burned-destination.test.js) against a pure classifier; stub it here so
+// the allowlist/ceiling tests below stay off the network and deterministic.
+vi.mock('../api/_lib/burned-destination.js', () => ({
+	checkBurnedDestination: vi.fn(async () => ({ checked: false, flagged: false, verdict: 'unknown', note: 'not checked in this test' })),
+}));
+
 const guards = await import('../api/_lib/agent-trade-guards.js');
 const {
 	validateSolanaAddress, normalizeSpendLimits, enforceSpendLimit, SpendLimitError,

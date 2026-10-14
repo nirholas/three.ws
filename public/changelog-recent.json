@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-14T20:51:56.774Z",
+	"generated_at": "2026-10-14T21:30:35.104Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4092,
+	"total": 4093,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -144,6 +144,16 @@
 			"link": "/docs/native-launchpad",
 			"tags": [
 				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "The pre-push guard now catches a leaked Solana secret key, and withdrawals warn before a sweeper bot drains them",
+			"summary": "scripts/check-secrets.mjs, the hook that blocks a push carrying a credential, now decodes every 86-90 character base58 run in added content and flags it only when the first 32 bytes derive the embedded public key in the last 32 bytes via Ed25519, catching a real Solana keypair secret while leaving the repo's thousands of genuine 64-byte transaction signatures untouched. Separately, the agent wallet's Withdraw tab now reads a destination's recent on-chain history before you send: a wallet that repeatedly drains to near-zero within seconds of receiving funds, the sweeper-bot fingerprint, surfaces a blocking warning on the confirm screen and again server-side if you retry, so a sweeper bot can't just wait for the preview to go stale.",
+			"link": "/docs/agent-abilities",
+			"tags": [
 				"security"
 			]
 		},
@@ -1545,17 +1555,6 @@
 			"tags": [
 				"feature",
 				"sdk"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Agents can sign themselves up, and the platform now reports its health honestly",
-			"summary": "An autonomous agent can now create its own three.ws account by signing a short message with its key: no email, no browser. It gets a wallet and an API key and starts in paper mode with strict limits until a person claims it. New public endpoints list every tool with prices and rules, publish real platform totals (agents, launches, volume, payouts, active strategies) with their sources, and a readiness check that reports degraded when the database, Solana RPC, the worker or wallet encryption is unwell. All of it is shown on the status page.",
-			"link": "/status",
-			"tags": [
-				"feature",
-				"improvement"
 			]
 		}
 	]

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-14",
+			"title": "The pre-push guard now catches a leaked Solana secret key, and withdrawals warn before a sweeper bot drains them",
+			"summary": "scripts/check-secrets.mjs, the hook that blocks a push carrying a credential, now decodes every 86-90 character base58 run in added content and flags it only when the first 32 bytes derive the embedded public key in the last 32 bytes via Ed25519, catching a real Solana keypair secret while leaving the repo's thousands of genuine 64-byte transaction signatures untouched. Separately, the agent wallet's Withdraw tab now reads a destination's recent on-chain history before you send: a wallet that repeatedly drains to near-zero within seconds of receiving funds, the sweeper-bot fingerprint, surfaces a blocking warning on the confirm screen and again server-side if you retry, so a sweeper bot can't just wait for the preview to go stale.",
+			"tags": [
+				"security"
+			],
+			"link": "/docs/agent-abilities"
+		},
+		{
+			"date": "2026-10-14",
 			"title": "A new wallet linkage score flags a coin's creator buying their own launch",
 			"summary": "GET /api/crypto/linkage cross-checks 2-10 Solana addresses for shared control: a 0-100 same-controller score per pair, combining six real on-chain signals by noisy-OR (shared fee payer, one address funding the other, both sharing a first funder, SPL token-account control, direct transfers, a shared funder sending similar amounts in a short window), every match backed by the signature or account that triggered it. It is keyless, free, and part of the public Crypto Data API, and now wired into two places that act on money: the Trade Safety Firewall warns when an early buyer scores as the same controller as a coin's creator (wash-trading dressed up as demand), and copy-trading refuses to size an order behind a leader whose own wallet links to the creator of the coin they are 'signaling', showing the follower exactly why. The same scorer ships as the wallet_linkage tool in the hosted intel MCP server for any AI agent to call directly.",
 			"tags": [
