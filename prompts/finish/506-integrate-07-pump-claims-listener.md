@@ -2,6 +2,8 @@
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now; one gated step, named below.
 
+**Evolve status (2026-10-14):** Built and verified end to end in commit `c2b38c27c`: `services/pump-claims` (21/21 `node --test`), the `pump_fee_claims` migration (applied and verified with the real `npm run db:migrate -- --apply` / `npm run db:check` tooling against a local throwaway Postgres only, never production), a fixed live mainnet run that stored 9 real GitHub fee-PDA claims across two sessions, and a local `server/index.mjs` instance that served `GET /api/pump/first-claims` from the table (`source=table` logged) once it held those rows. Every Definition of done line below is satisfied except the production half of "migration applied; `npm run db:check` exits 0": the harness denies this unattended session from running the apply against the real production database. That step, plus the first Cloud Run deploy of the service, are tracked as owner-gated row 62 in [_context/production-100-OWNER-ACTIONS.md](_context/production-100-OWNER-ACTIONS.md). This file stays in place rather than retiring per the close-out rule below, since a line cannot pass inside this session when an owner action is the last step.
+
 ## Operating clause (binding)
 
 - Read CLAUDE.md first, then [_context/integrate-00-CONTEXT.md](_context/integrate-00-CONTEXT.md). CLAUDE.md overrides everything, including this file.
