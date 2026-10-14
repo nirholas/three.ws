@@ -607,6 +607,76 @@ landed, so no `STRUCTURE.md` row or `data/pages.json` entry was needed.
 Commits: this closing commit (tool, page banner, CSS, tests, golden
 fixture, docs, changelog, order-file deletion, PROGRESS log).
 
+## 2026-10-14: order 513-integrate-14 closed (evolve)
+
+Ported the owner's proprietary `wallet-sleuth` Solana signals into a new
+`@three-ws/wallet-linkage` package: six signals (`solana-account-control`,
+`solana-fee-payer`, `peer-first-funding`, `common-first-funder`,
+`direct-transfer`, `funding-burst`) combined by noisy-OR into a 0-100
+pairwise same-controller score with evidence, over an injected RPC client
+so it rides the platform's own failover chain rather than a hardcoded
+endpoint. Exposed as `GET /api/crypto/linkage?addresses=A,B[,...]`
+(2-10 addresses, keyless, cached with a 5-minute fresh window and a
+stale-on-outage fallback, rate limited with its own per-IP and global
+buckets), wired into the Free Crypto Data API catalog and `/api/crypto/
+openapi.json`, and as the `wallet_linkage` tool in the hosted `intel-mcp`
+server. Wired the score into the two places that act on money: the Trade
+Safety Firewall's new `creator_linkage` check warns when an early buyer
+scores "strong" or better against the coin's on-record creator, and
+copy-eligibility's new `checkLeaderCreatorLinkage` refuses to size a copy
+order when the leader being copied is secretly the creator's own alt.
+Both fail closed (clean / not linked) on any RPC or DB error so a data
+outage never blocks a trade or a copy.
+
+Live verification surfaced and fixed a real bug before this was reportable
+as done: `collect.js` read `accountKeys[].pubkey` from
+`getParsedTransaction()` as a plain string, but `@solana/web3.js`'s real
+parsed-transaction shape wraps that field in a `PublicKey` object, so the
+`solana-fee-payer` signal silently never fired against live mainnet data
+even though it passed all 12 original unit tests, whose mocks used plain
+strings for `pubkey`. Added a test reproducing the real shape (confirmed
+failing pre-fix with the exact symptom: `solana-fee-payer` missing from a
+pair that should have had it), fixed `collect.js` to read
+`pubkey.toBase58()`, confirmed the test and all 13 in the file pass
+post-fix, then confirmed against real mainnet wallets: before the fix the
+live endpoint scored a genuine fee-payer-linked pair `0/none`; after the
+fix it scored `90/confirmed`, `topSignal: solana-fee-payer`, with real
+on-chain evidence.
+
+Verified: `npx vitest run tests/wallet-linkage.test.js
+tests/smart-money.test.js` passes 28/28 (the exact command the order's
+Definition of Done names). `npx vitest run tests/copy-eligibility.test.js
+tests/copy-engine.test.js tests/trade-firewall-creator-linkage.test.js`
+passes 73/73 together with the wallet-linkage file. The Trade-firewall and
+copy-trade guards each have tests proven to fail on the pre-fix code via
+the stash-dance protocol (temporarily set aside, confirmed red for the
+stated reason, restored byte-identical, confirmed green). A full
+unscoped `npx vitest run` showed 64 failures across 39 files, none in any
+file this order touched and none topically related to wallet
+linkage, copy-trading, or the trade firewall (oauth, api-keys, branding,
+grok-bot docs, pages-routes, sitemap, tutorials-manifest, etc.); consistent
+with CLAUDE.md's "concurrent agents share this worktree" warning, so taken
+as pre-existing/concurrent and not a regression from this diff.
+`curl localhost:3107/api/crypto/linkage?addresses=<two real fee-payer-linked
+mainnet wallets>` returned the real score above (addresses not committed,
+per the order's own instruction). `/api/crypto/openapi.json` lists
+`/api/crypto/linkage` (re-verified live this session: `has /api/crypto/
+linkage: true`). The hosted `intel-mcp` server's `tools/list` over stdio
+lists `wallet_linkage` among its 7 tools (re-verified live this session).
+`docs/crypto-api.md` got the endpoint's full reference section plus its
+index row, `STRUCTURE.md` got the package row, `packages/intel-mcp/
+README.md` documents the new tool, `data/changelog.json` got a new entry,
+and `npm run build:pages` ran clean. `npm run check:rules --paths <all 24
+touched/added files>` exits 0 clean. One fix beyond the order's own scope:
+the two new `rate-limit.js` entries were committed with the surrounding
+table's indentation one tab shallow; caught and fixed before committing.
+
+Commits: `112749dfe` (wallet-linkage package, endpoint, MCP tool, rate
+limits, catalog wiring, the collect.js bug fix), `0044f262f` (trade-firewall
+creator-linkage check), `af1226c74` (copy-trade creator-linkage guard),
+`14453d052` (docs, changelog, STRUCTURE.md, build:pages artifacts), this
+closing commit (order-file deletion, PROGRESS log).
+
 ## 2026-10-14: order 512-integrate-13 stopped on a gate (evolve)
 
 Switched the native $THREE launch lane's curve from a flat 1% trading fee to
