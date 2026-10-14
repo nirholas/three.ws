@@ -22,13 +22,19 @@ export function baseUrl(env = process.env) {
 	return (env.THREEWS_BASE_URL?.trim() || DEFAULT_BASE).replace(/\/$/, '');
 }
 
+// A sane upper bound for any single tool argument that reaches HTML: long
+// enough for a real GLB url or display name, short enough that a caller
+// cannot use the tool result to balloon the rendered page or chat payload.
+const MAX_ARG_LENGTH = 2048;
+
 // Only https model URLs are safe to hand to <model-viewer src> / embeds.
 // A raw `model` arg flows verbatim into HTML and into the browser, so a
-// `javascript:` / `data:` / `blob:` / `file:` scheme is an XSS/SSRF surface.
+// `javascript:` / `data:` / `blob:` / `file:` scheme is an XSS/SSRF surface,
+// and an unbounded length is a payload-size surface even once escaped.
 // http is allowed only for localhost (dev convenience). Anything else is
 // rejected so it can never reach an attribute or a fetch.
 export function isSafeModelUrl(url) {
-	if (typeof url !== 'string' || url.trim() === '') return false;
+	if (typeof url !== 'string' || url.trim() === '' || url.length > MAX_ARG_LENGTH) return false;
 	let parsed;
 	try {
 		parsed = new URL(url);
@@ -41,6 +47,13 @@ export function isSafeModelUrl(url) {
 		return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
 	}
 	return false;
+}
+
+// Clamp any other untrusted string arg (name, camera-orbit) before it
+// reaches modelViewerHtml's output, the same way isSafeModelUrl clamps urls.
+function clampArg(value, max = 200) {
+	const s = String(value ?? '');
+	return s.length > max ? s.slice(0, max) : s;
 }
 
 function assertSafeModelUrl(url) {
@@ -193,11 +206,13 @@ export function iframeSnippet(embed, { width = '100%', height = 480 } = {}) {
 // rotatable 3D avatar inline.
 export function modelViewerHtml({ model_url, name = 'Avatar', background = 'transparent', height = 480, cameraOrbit = '0deg 80deg 2m', autoRotate = true }) {
 	assertSafeModelUrl(model_url);
+	const safeName = clampArg(name);
+	const safeCameraOrbit = clampArg(cameraOrbit, 64);
 	const bg = background === 'transparent' ? 'transparent' : background;
 	return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>${escapeHtml(name)}</title>
+<title>${escapeHtml(safeName)}</title>
 <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js"></script>
 <style>
   html,body { margin:0; height:100%; background:${bg}; }
@@ -206,7 +221,7 @@ export function modelViewerHtml({ model_url, name = 'Avatar', background = 'tran
 </head><body>
 <model-viewer
   src="${escapeHtml(model_url)}"
-  alt="${escapeHtml(name)}"
+  alt="${escapeHtml(safeName)}"
   camera-controls
   ${autoRotate ? 'auto-rotate' : ''}
   shadow-intensity="1.0"
@@ -214,7 +229,7 @@ export function modelViewerHtml({ model_url, name = 'Avatar', background = 'tran
   exposure="1.5"
   tone-mapping="aces"
   environment-image="neutral"
-  camera-orbit="${escapeHtml(cameraOrbit)}"
+  camera-orbit="${escapeHtml(safeCameraOrbit)}"
   ar ar-modes="webxr scene-viewer quick-look"
 ></model-viewer>
 </body></html>`;
