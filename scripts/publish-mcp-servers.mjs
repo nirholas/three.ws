@@ -24,12 +24,14 @@
 //   node scripts/publish-mcp-servers.mjs             # publish what's missing
 //   node scripts/publish-mcp-servers.mjs --only pumpfun-mcp,three-token-mcp
 //   node scripts/publish-mcp-servers.mjs --npm-only  # skip the registry step entirely
+//   node scripts/publish-mcp-servers.mjs --stale     # same check as publish-packages.mjs --stale
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { homedir } from 'node:os';
+import { runStaleCli } from './lib/stale-packages.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const REGISTRY = 'https://registry.modelcontextprotocol.io';
@@ -262,6 +264,13 @@ if (!process.argv[1] || import.meta.url !== pathToFileURL(process.argv[1]).href)
 		'publish-mcp-servers.mjs is a CLI, not a module: importing it would run a live publish. ' +
 			'Run `node scripts/publish-mcp-servers.mjs --dry-run` instead.',
 	);
+}
+
+// --stale reuses the same check publish-packages.mjs runs: it reports across
+// every publishable directory (library and MCP alike), so running it here
+// too is just a convenience alias, not a second implementation.
+if (args.includes('--stale')) {
+	process.exit(await runStaleCli(root));
 }
 
 let registryToken = null;

@@ -205,7 +205,25 @@ GitHub token for that account (`GITHUB_TOKEN`, or the PAT on the `origin` remote
 A token for a different account authenticates fine and is then rejected for that
 namespace.
 
-**3. Standalone GitHub mirrors** - about 80 directories in this monorepo also
+**3. Catching a published package that lagged its source** (`scripts/lib/stale-packages.mjs`,
+run from either publish script):
+
+```bash
+npm run publish:stale   # or: node scripts/publish-mcp-servers.mjs --stale
+```
+
+A publish only happens when someone runs the commands above. If source keeps moving
+after that run and nobody runs it again, npm quietly serves a stale tarball forever;
+nothing else notices. `--stale` checks every publishable directory (library packages
+and MCP servers alike): for each one it reads `npm view <name> time --json`, and if
+the local `version` is already on npm, counts commits to that directory after the
+publish timestamp that touch something other than `README.md`, `CHANGELOG.md`, or a
+test file. A package with such commits is stale; the report prints the exact bump and
+publish command for each one and the command exits `1` if anything is stale. A local
+version npm has never seen is reported separately as "never published" rather than as
+an error. It never calls `npm publish` itself.
+
+**4. Standalone GitHub mirrors** - about 80 directories in this monorepo also
 live in their own public repo at `github.com/<owner>/<name>` (a read-only
 mirror; the monorepo stays canonical). [`data/standalone-mirrors.json`](../data/standalone-mirrors.json)
 is the single source of truth for "which directory is which public repo, in

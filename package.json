@@ -371,6 +371,7 @@
 		"check:site-builder-embeds": "node scripts/check-site-builder-embeds.mjs",
 		"publish:packages": "node scripts/publish-packages.mjs",
 		"publish:packages:dry": "node scripts/publish-packages.mjs --dry-run",
+		"publish:stale": "node scripts/publish-packages.mjs --stale",
 		"publish:queue:dry": "node scripts/publish-npm-queue.mjs",
 		"publish:queue": "node scripts/publish-npm-queue.mjs --publish",
 		"publish:mcp": "node scripts/publish-mcp-servers.mjs",

@@ -29,11 +29,13 @@
 //   node scripts/publish-packages.mjs                  # publish what's missing
 //   node scripts/publish-packages.mjs --only react     # one package by key
 //   node scripts/publish-packages.mjs --new            # only never-published ones
+//   node scripts/publish-packages.mjs --stale          # report published versions whose source moved on; exits 1 if any
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runStaleCli } from './lib/stale-packages.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -136,9 +138,17 @@ function preflight(dir, pkg) {
 	return problems;
 }
 
+const args = process.argv.slice(2);
+
+// --stale skips the publish lane entirely: it reports which already-published
+// packages have source commits past their publish date, across every
+// publishable directory (library and MCP alike), and never calls `npm publish`.
+if (args.includes('--stale')) {
+	process.exit(await runStaleCli(root));
+}
+
 const PACKAGES = discoverPackages();
 
-const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const newOnly = args.includes('--new');
 const onlyIdx = args.indexOf('--only');
