@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-10-14",
+			"title": "Atomic now replays a pump.fun transaction step by step",
+			"summary": "Atomic (/atomic) decodes every Pump, PumpSwap, and PumpFees event in a transaction's logs, oldest first, and renders it as a Replay panel: a bonding-curve-position bar, a human-readable description of each step (create, buy/sell, graduation, creator-fee collection and distribution, GitHub social-fee claims, and post-graduation PumpSwap swaps), and the SOL/token amounts that moved. An event the installed SDK does not recognize still renders, labeled unrecognized, instead of silently disappearing. For a create transaction, the panel also pages through the earliest trades on that mint since launch, walking Solana's signature history backward in bounded pages since RPC has no forward cursor.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-14",
 			"title": "GitHub fee-claim feed now reads from a real-time listener, not just an on-demand RPC scan",
 			"summary": "The claims feed's GitHub-attribution path used to walk Solana RPC history fresh on every request, the same cost every time, with nothing persisted in between. services/pump-claims is a standalone process that subscribes to PumpFees program logs directly, decodes and attributes each claim as it happens, and writes it to a new pump_fee_claims table with a watchdog that resubscribes on a stalled connection and gap-fills whatever a drop missed. The claims route now reads that table first and only falls back to the RPC scan when the table has nothing for the requested window, so PUMPFUN_BOT_URL is no longer required for GitHub claims specifically (ordinary wallet claims still use it).",
 			"tags": [

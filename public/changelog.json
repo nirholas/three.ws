@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-14T04:20:35.603Z",
+	"generated_at": "2026-10-14T04:58:24.870Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -15,6 +15,16 @@
 			"tags": [
 				"infra",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "Atomic now replays a pump.fun transaction step by step",
+			"summary": "Atomic (/atomic) decodes every Pump, PumpSwap, and PumpFees event in a transaction's logs, oldest first, and renders it as a Replay panel: a bonding-curve-position bar, a human-readable description of each step (create, buy/sell, graduation, creator-fee collection and distribution, GitHub social-fee claims, and post-graduation PumpSwap swaps), and the SOL/token amounts that moved. An event the installed SDK does not recognize still renders, labeled unrecognized, instead of silently disappearing. For a create transaction, the panel also pages through the earliest trades on that mint since launch, walking Solana's signature history backward in bounded pages since RPC has no forward cursor.",
+			"link": null,
+			"tags": [
+				"feature"
 			]
 		},
 		{

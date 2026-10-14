@@ -47,6 +47,35 @@ curl https://three.ws/api/solana/atomic \
 
 The response is JSON-safe. Priority fees and other wide integers are returned as numbers when they fit safely, otherwise as decimal strings.
 
+## Replay: pump.fun lifecycle events
+
+When a confirmed transaction invoked Pump, PumpSwap, or PumpFees, Atomic decodes every typed event in its logs, oldest first, and the page renders them as a step-by-step **Replay**: a curve-position bar, a human-readable description of each step, and the SOL/token amounts that moved.
+
+The decoder covers a coin's full lifecycle:
+
+- `create`: a new bonding curve launches.
+- `trade`: a buy or sell against the bonding curve, with the post-trade curve-fill percentage.
+- `complete`: the curve graduates; liquidity migrates to PumpSwap.
+- `ammBuy` / `ammSell`: a swap against the graduated PumpSwap pool.
+- `collectCreatorFee` / `distributeCreatorFees`: creator-fee collection and its split across shareholders.
+- `socialFeePdaClaimed`: a GitHub social-fee PDA claim.
+
+An event whose 8-byte discriminator is not in the installed `@nirholas/pump-sdk`'s IDLs (a program upgrade this install predates) still renders, as `unrecognized`, with its raw program ID and bytes. The replay never silently drops a step.
+
+For a `create` transaction, the response also carries `replay`: the earliest trades on that mint since launch. Solana's `getSignaturesForAddress` has no forward cursor, only a `before` cursor walking backward from "now," so the server walks backward in capped pages (5 pages of 1,000 signatures) looking for the create signature, then returns the trades between it and the oldest page reached. A caller that gets `hasMore: true` back pages deeper with the returned `nextBefore`; the page's "Load earlier trades" button does this automatically.
+
+Try it against a real $THREE trade:
+
+```bash
+curl https://three.ws/api/solana/atomic \
+  -H 'content-type: application/json' \
+  -d '{"signature":"3mmfm7wj9CtC5QutckLKvYQZDhQcaVBrbYD8sZFwKHW7efN9E3ETz9yMeMNfYw8coodpNfYzpM6wfzr5RUf1CYo"}'
+```
+
+$THREE graduated its bonding curve some time ago, so this particular signature decodes as PumpSwap AMM events (`ammInitUserVolumeAccumulator`, `ammBuy`, `ammCloseUserVolumeAccumulator`) rather than bonding-curve `trade` events; both shapes render in the same Replay panel. AMM buy/sell events carry a `pool` address but no `mint` field in the installed IDL, so the panel's "View launch" link only appears when the transaction includes a bonding-curve event (`create`, `trade`, or `complete`), which does carry one.
+
+A transaction with no pump.fun events (most Solana transactions) shows a plain "no pump.fun events in this transaction" state instead of an empty panel.
+
 ## API
 
 ### Mainnet activation status
@@ -63,7 +92,7 @@ This reads the `txv1` feature account and the current confirmed slot through the
 curl 'https://three.ws/api/solana/atomic?signature=SOLANA_SIGNATURE'
 ```
 
-The RPC request always passes `maxSupportedTransactionVersion: 1`. Confirmed results are cached because their wire bytes and metadata are immutable.
+The RPC request always passes `maxSupportedTransactionVersion: 1`. Confirmed results are cached because their wire bytes and metadata are immutable. The response also carries `events` (every decoded pump.fun event in the transaction, see Replay above) and, for a create transaction, `replay`. `before` and `tradeLimit` query params page a create transaction's `replay.trades` deeper; a response that passed `before` is never cached.
 
 ### Raw transaction
 

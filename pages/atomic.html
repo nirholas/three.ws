@@ -108,6 +108,27 @@
 						<div class="at-actions"><a id="at-explorer" target="_blank" rel="noopener noreferrer" hidden data-i18n="atomic.explorer_link">Open in Solscan</a><button type="button" id="at-share" data-i18n="atomic.share_btn">Copy inspection link</button></div>
 					</section>
 				</div>
+
+				<section class="at-replay" id="at-replay" aria-labelledby="at-replay-title">
+					<div class="at-section-head">
+						<div><p class="at-label" data-i18n="atomic.replay_label">Pump.fun lifecycle</p><h3 id="at-replay-title" data-i18n="atomic.replay_title">Replay</h3></div>
+						<a id="at-replay-mint-link" class="at-replay-mint-link" target="_blank" rel="noopener noreferrer" hidden data-i18n="atomic.replay_view_launch">View launch &rarr;</a>
+					</div>
+					<p class="at-replay-empty" id="at-replay-empty" hidden data-i18n="atomic.replay_empty">No pump.fun events in this transaction. Atomic decodes create, trade, graduation, fee-collection, fee-distribution, and GitHub social-fee-claim events from Pump, PumpSwap, and PumpFees. This transaction did not invoke any of them.</p>
+					<div class="at-replay-curve" id="at-replay-curve" hidden>
+						<div class="at-ruler"><div id="at-replay-curve-fill"></div></div>
+						<p class="at-ruler-note" id="at-replay-curve-note"></p>
+					</div>
+					<ol class="at-replay-steps" id="at-replay-steps"></ol>
+					<div class="at-replay-skeleton" id="at-replay-skeleton" hidden aria-hidden="true"><div></div><div></div><div></div></div>
+					<div class="at-replay-error" id="at-replay-error" hidden>
+						<p id="at-replay-error-message"></p>
+						<button type="button" id="at-replay-retry" data-i18n="atomic.replay_retry">Retry replay</button>
+					</div>
+					<div class="at-replay-loadmore" id="at-replay-loadmore-wrap" hidden>
+						<button type="button" id="at-replay-loadmore" data-i18n="atomic.replay_loadmore">Load earlier trades</button>
+					</div>
+				</section>
 			</section>
 
 			<section class="at-empty" id="at-empty">

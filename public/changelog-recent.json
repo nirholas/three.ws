@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-14T04:20:35.625Z",
+	"generated_at": "2026-10-14T04:58:24.891Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4085,
+	"total": 4086,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -18,6 +18,16 @@
 			"tags": [
 				"infra",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "Atomic now replays a pump.fun transaction step by step",
+			"summary": "Atomic (/atomic) decodes every Pump, PumpSwap, and PumpFees event in a transaction's logs, oldest first, and renders it as a Replay panel: a bonding-curve-position bar, a human-readable description of each step (create, buy/sell, graduation, creator-fee collection and distribution, GitHub social-fee claims, and post-graduation PumpSwap swaps), and the SOL/token amounts that moved. An event the installed SDK does not recognize still renders, labeled unrecognized, instead of silently disappearing. For a create transaction, the panel also pages through the earliest trades on that mint since launch, walking Solana's signature history backward in bounded pages since RPC has no forward cursor.",
+			"link": null,
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1545,17 +1555,6 @@
 			"summary": "A first visit used to stack three cards in the bottom-right corner over the hero avatar. The search-shortcut hint now goes first and the \"Have you tried\" suggestion waits until it is dismissed. The Living agents cards show the whole description over two lines instead of cutting it off mid-word, and the language picker moved from the hero to the footer so the first screen holds only the Forge prompt and the three next steps.",
 			"link": "/",
 			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Coin logos, agent art and IPFS images load again",
-			"summary": "Several public IPFS gateways started refusing image and metadata requests from websites this month, which left coin logos, the 3D coin face, agent cards and on-chain agent art blank or broken across the site. Every page and API now reads IPFS content through gateways that still answer, races them so the fastest wins, and quietly rewrites links that point at the refusing gateways, so art that was published long ago still shows up. Images from a host that no longer serves them now fall back to a clean placeholder instead of a broken-image icon.",
-			"link": "/launches",
-			"tags": [
-				"fix",
 				"improvement"
 			]
 		}

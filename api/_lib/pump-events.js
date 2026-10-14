@@ -14,7 +14,8 @@
 // normalising helpers below convert the ones this codebase consumes to plain
 // strings so attribution math can use BigInt directly.
 
-import { parsePumpEventsFromLogs } from '@nirholas/pump-sdk';
+import { parsePumpEventsFromLogs, PumpIdl, PumpAmmIdl, PumpFeesIdl } from '@nirholas/pump-sdk';
+import { PUMP_PROGRAM_ID, PUMP_AMM_PROGRAM_ID, PUMP_FEE_PROGRAM_ID } from './solana/programs.js';
 
 /** Every decodable event in a transaction's logs, oldest first. Never throws. */
 export function parseEventsFromLogs(logs) {
@@ -88,4 +89,98 @@ export function parseSocialFeeClaim(logs) {
 /** True when a transaction's logs show a claim_social_fee_pda instruction (V1 or V2). */
 export function isSocialClaimLog(logs) {
 	return (logs || []).some((line) => line.includes('Program log: Instruction: ClaimSocialFeePda'));
+}
+
+// --- Full-transaction replay (/atomic's "Replay" panel) ---------------------
+//
+// parsePumpEventsFromLogs only returns events it recognises; a line whose
+// discriminator it cannot match is silently skipped. A replay that walks a
+// transaction step by step must never drop a frame just because a program
+// upgrade added an event this install's @nirholas/pump-sdk predates, so
+// decodeTransactionEvents re-walks the same invoke-stack shape the SDK reads
+// and, for every "Program data:" line under a known Pump/PumpSwap/PumpFees
+// program invocation whose 8-byte discriminator the SDK's own IDLs don't
+// list, emits it as `{ type: 'unrecognized' }` carrying the raw bytes instead
+// of disappearing.
+
+function discriminatorHex(bytes) {
+	return Buffer.from(bytes).toString('hex');
+}
+
+const KNOWN_EVENT_DISCRIMINATORS = new Set(
+	[PumpIdl, PumpAmmIdl, PumpFeesIdl].flatMap((idl) => (idl.events || []).map((e) => discriminatorHex(e.discriminator))),
+);
+
+const EVENT_PROGRAM_IDS = new Set([PUMP_PROGRAM_ID, PUMP_AMM_PROGRAM_ID, PUMP_FEE_PROGRAM_ID]);
+
+const INVOKE_RE = /^Program ([1-9A-HJ-NP-Za-km-z]{32,44}) invoke \[\d+\]$/;
+const RETURN_RE = /^Program [1-9A-HJ-NP-Za-km-z]{32,44} (success|failed)/;
+
+/** Anchor decodes pubkeys as PublicKey and numerics as BN; flatten both to JSON-safe values. */
+function normalizeEventValue(value) {
+	if (value == null) return value;
+	if (typeof value === 'boolean' || typeof value === 'number' || typeof value === 'string') return value;
+	if (typeof value.toBase58 === 'function') return value.toBase58();
+	if (typeof value.toNumber === 'function' && typeof value.toString === 'function') return value.toString();
+	if (Array.isArray(value)) return value.map(normalizeEventValue);
+	if (typeof value === 'object') {
+		const out = {};
+		for (const [key, v] of Object.entries(value)) out[key] = normalizeEventValue(v);
+		return out;
+	}
+	return value;
+}
+
+/**
+ * Every decodable Pump/PumpSwap/PumpFees event in a transaction's logs, oldest
+ * first, normalised to JSON-safe values. An event whose discriminator is not
+ * in the installed SDK's IDLs (a program upgrade this install predates)
+ * renders as `{ type: 'unrecognized', programId, discriminator, dataBase64 }`
+ * rather than being dropped. Never throws.
+ * @param {string[]} logs
+ * @returns {Array<{type:string, programId:string, data?:object, discriminator?:string, dataBase64?:string}>}
+ */
+export function decodeTransactionEvents(logs) {
+	if (!Array.isArray(logs) || logs.length === 0) return [];
+	const out = [];
+	const stack = [];
+	for (const line of logs) {
+		const invoke = line.match(INVOKE_RE);
+		if (invoke) {
+			stack.push(invoke[1]);
+			continue;
+		}
+		if (RETURN_RE.test(line)) {
+			stack.pop();
+			continue;
+		}
+		if (!line.startsWith('Program data: ')) continue;
+		const programId = stack[stack.length - 1];
+		if (!EVENT_PROGRAM_IDS.has(programId)) continue;
+
+		let data;
+		try {
+			data = Buffer.from(line.slice('Program data: '.length), 'base64');
+		} catch {
+			continue;
+		}
+		if (data.length < 8) continue;
+		const discriminator = discriminatorHex(data.subarray(0, 8));
+
+		if (!KNOWN_EVENT_DISCRIMINATORS.has(discriminator)) {
+			out.push({ type: 'unrecognized', programId, discriminator, dataBase64: data.toString('base64') });
+			continue;
+		}
+		const [decoded] = parsePumpEventsFromLogs([
+			`Program ${programId} invoke [1]`,
+			line,
+			`Program ${programId} success`,
+		]);
+		out.push(
+			decoded
+				? { type: decoded.type, programId, data: normalizeEventValue(decoded.data) }
+				: { type: 'unrecognized', programId, discriminator, dataBase64: data.toString('base64') },
+		);
+	}
+	return out;
 }

@@ -1,8 +1,189 @@
 const $ = (id) => document.getElementById(id);
-const state = { mode: 'signature', lastInspection: null };
+const state = { mode: 'signature', lastInspection: null, replayNextBefore: null };
 
 function formatNumber(value) {
 	return value == null ? 'Not set' : Number(value).toLocaleString('en-US');
+}
+
+function shortKey(key) {
+	return key ? `${key.slice(0, 4)}..${key.slice(-4)}` : 'unknown';
+}
+
+function solFromRaw(raw) {
+	if (raw == null) return null;
+	return Number(BigInt(raw)) / 1e9;
+}
+
+function tokensFromRaw(raw) {
+	if (raw == null) return null;
+	return Number(BigInt(raw)) / 1e6;
+}
+
+function fmtSol(raw) {
+	const n = solFromRaw(raw);
+	return n == null ? 'not set' : `${n.toLocaleString('en-US', { maximumFractionDigits: 4 })} SOL`;
+}
+
+function fmtTokens(raw) {
+	const n = tokensFromRaw(raw);
+	return n == null ? 'not set' : `${n.toLocaleString('en-US', { maximumFractionDigits: 2 })} tokens`;
+}
+
+/** A typed pump event (or a flattened replay trade) reduced to what the Replay panel renders. */
+function describeStep(event) {
+	const d = event.data || {};
+	switch (event.type) {
+		case 'create':
+			return {
+				kind: 'create',
+				title: 'Launch created',
+				pct: event.curveProgressPct ?? 0,
+				detail: `${d.name} (${d.symbol}) - creator ${shortKey(d.creator)}`,
+				delta: `${fmtTokens(d.tokenTotalSupply)} total supply`,
+			};
+		case 'trade':
+			return {
+				kind: 'trade',
+				title: d.isBuy ? 'Buy' : 'Sell',
+				pct: event.curveProgressPct,
+				detail: `${shortKey(d.user)} ${d.isBuy ? 'bought' : 'sold'} on the bonding curve`,
+				delta: `${fmtSol(d.solAmount)} ${d.isBuy ? 'in' : 'out'} · ${fmtTokens(d.tokenAmount)} ${d.isBuy ? 'out' : 'in'}`,
+			};
+		case 'complete':
+			return {
+				kind: 'complete',
+				title: 'Graduated',
+				pct: 100,
+				detail: `Bonding curve completed for ${shortKey(d.mint)}`,
+				delta: 'Liquidity migrated to PumpSwap',
+			};
+		case 'collectCreatorFee':
+			return { kind: 'fee', title: 'Creator fee collected', pct: null, detail: `Creator ${shortKey(d.creator)}`, delta: fmtSol(d.creatorFee) };
+		case 'distributeCreatorFees':
+			return {
+				kind: 'fee',
+				title: 'Creator fees distributed',
+				pct: null,
+				detail: `${(d.shareholders || []).length} shareholder(s)`,
+				delta: fmtSol(d.distributed),
+			};
+		case 'socialFeePdaClaimed':
+			return { kind: 'fee', title: 'GitHub social fee claimed', pct: null, detail: `GitHub user ${d.userId}`, delta: fmtSol(d.amountClaimed) };
+		case 'ammBuy':
+		case 'ammSell':
+			return {
+				kind: 'amm',
+				title: event.type === 'ammBuy' ? 'Buy (PumpSwap)' : 'Sell (PumpSwap)',
+				pct: 100,
+				detail: `${shortKey(d.user)} traded on the graduated pool`,
+				delta: `${fmtSol(d.quoteAmountIn ?? d.quoteAmountOut)} SOL side · ${fmtTokens(d.baseAmountOut ?? d.baseAmountIn)} token side`,
+			};
+		case 'ammInitUserVolumeAccumulator':
+		case 'ammCloseUserVolumeAccumulator':
+			return { kind: 'amm-minor', title: 'Volume accumulator', pct: null, detail: shortKey(d.user), delta: null };
+		case 'unrecognized':
+			return {
+				kind: 'unrecognized',
+				title: 'Unrecognized event',
+				pct: null,
+				detail: `Program ${shortKey(event.programId)} · discriminator ${event.discriminator}`,
+				delta: null,
+			};
+		default:
+			return { kind: 'other', title: event.type, pct: event.curveProgressPct ?? null, detail: 'Decoded event', delta: null };
+	}
+}
+
+/** A trade from inspection.replay.trades: flat shape, not a {type,data} event. */
+function describeReplayTrade(t) {
+	return {
+		kind: 'trade',
+		title: t.side === 'buy' ? 'Buy' : 'Sell',
+		pct: t.curveProgressPct,
+		detail: `${shortKey(t.user)} ${t.side === 'buy' ? 'bought' : 'sold'} on the bonding curve`,
+		delta: `${fmtSol(t.solAmountRaw)} ${t.side === 'buy' ? 'in' : 'out'} · ${fmtTokens(t.tokenAmountRaw)} ${t.side === 'buy' ? 'out' : 'in'}`,
+		sig: t.signature,
+	};
+}
+
+function stepToElement(d, i) {
+	const li = document.createElement('li');
+	li.className = `at-replay-step is-${d.kind}`;
+	const head = document.createElement('div');
+	head.className = 'at-replay-step-head';
+	const idx = document.createElement('span');
+	idx.className = 'at-replay-step-index';
+	idx.textContent = String(i + 1).padStart(2, '0');
+	const title = document.createElement('strong');
+	title.textContent = d.title;
+	head.append(idx, title);
+	if (d.pct != null) {
+		const pct = document.createElement('span');
+		pct.className = 'at-replay-step-pct';
+		pct.textContent = `${d.pct}%`;
+		head.append(pct);
+	}
+	li.append(head);
+	if (d.detail) {
+		const p = document.createElement('p');
+		p.className = 'at-replay-step-detail';
+		p.textContent = d.detail;
+		li.append(p);
+	}
+	if (d.delta) {
+		const p = document.createElement('p');
+		p.className = 'at-replay-step-delta';
+		p.textContent = d.delta;
+		li.append(p);
+	}
+	if (d.sig) {
+		const a = document.createElement('a');
+		a.href = `https://solscan.io/tx/${d.sig}`;
+		a.target = '_blank';
+		a.rel = 'noopener noreferrer';
+		a.className = 'at-replay-step-link';
+		a.textContent = 'View trade';
+		li.append(a);
+	}
+	return li;
+}
+
+function renderReplay(inspection) {
+	const events = inspection.events || [];
+	const replay = inspection.replay;
+	const empty = $('at-replay-empty');
+	const curveWrap = $('at-replay-curve');
+	const steps = $('at-replay-steps');
+	const errorBox = $('at-replay-error');
+	const loadmoreWrap = $('at-replay-loadmore-wrap');
+	const mintLink = $('at-replay-mint-link');
+
+	const hasReplayTrades = Boolean(replay && replay.trades && replay.trades.length);
+	empty.hidden = events.length > 0 || hasReplayTrades;
+
+	const descriptors = events.map(describeStep);
+	if (replay) descriptors.push(...replay.trades.map(describeReplayTrade));
+	steps.replaceChildren(...descriptors.map(stepToElement));
+
+	const pcts = descriptors.map((d) => d.pct).filter((p) => p != null);
+	if (pcts.length) {
+		const last = pcts[pcts.length - 1];
+		curveWrap.hidden = false;
+		$('at-replay-curve-fill').style.width = `${Math.min(100, last)}%`;
+		$('at-replay-curve-note').textContent = last >= 100 ? 'Graduated to PumpSwap.' : `${last}% of the bonding curve filled.`;
+	} else {
+		curveWrap.hidden = true;
+	}
+
+	const mintish = replay ? replay.mint : events.find((e) => e.data && e.data.mint)?.data?.mint;
+	mintLink.hidden = !mintish;
+	if (mintish) mintLink.href = `/launches/${mintish}`;
+
+	errorBox.hidden = !(replay && replay.error);
+	if (replay && replay.error) $('at-replay-error-message').textContent = replay.error;
+
+	loadmoreWrap.hidden = !(replay && replay.hasMore);
+	state.replayNextBefore = replay ? replay.nextBefore : null;
 }
 
 function show(name) {
@@ -99,6 +280,7 @@ function render(inspection) {
 	explorer.hidden = !inspection.explorerUrl;
 	if (inspection.explorerUrl) explorer.href = inspection.explorerUrl;
 	$('at-share').hidden = !inspection.signature;
+	renderReplay(inspection);
 	show('report');
 }
 
@@ -143,6 +325,53 @@ $('at-share').addEventListener('click', async () => {
 	const button = $('at-share');
 	button.textContent = 'Link copied';
 	setTimeout(() => { button.textContent = 'Copy inspection link'; }, 1_400);
+});
+
+$('at-replay-loadmore').addEventListener('click', async () => {
+	const signature = state.lastInspection?.signature;
+	if (!signature || !state.replayNextBefore) return;
+	const button = $('at-replay-loadmore');
+	button.disabled = true;
+	$('at-replay-skeleton').hidden = false;
+	try {
+		const { inspection } = await fetch('/api/solana/atomic', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', accept: 'application/json' },
+			body: JSON.stringify({ signature, before: state.replayNextBefore }),
+		}).then(responseJson);
+		const replay = state.lastInspection.replay;
+		replay.trades = [...(replay.trades || []), ...(inspection.replay?.trades || [])];
+		replay.hasMore = inspection.replay?.hasMore ?? false;
+		replay.nextBefore = inspection.replay?.nextBefore ?? null;
+		replay.error = inspection.replay?.error ?? null;
+		renderReplay(state.lastInspection);
+	} catch (err) {
+		$('at-replay-error-message').textContent = err.message;
+		$('at-replay-error').hidden = false;
+	} finally {
+		button.disabled = false;
+		$('at-replay-skeleton').hidden = true;
+	}
+});
+
+$('at-replay-retry').addEventListener('click', async () => {
+	const signature = state.lastInspection?.signature;
+	if (!signature) return;
+	$('at-replay-error').hidden = true;
+	$('at-replay-skeleton').hidden = false;
+	try {
+		const { inspection } = await fetch(`/api/solana/atomic?signature=${encodeURIComponent(signature)}`, {
+			headers: { accept: 'application/json' },
+			cache: 'no-store',
+		}).then(responseJson);
+		state.lastInspection.replay = inspection.replay;
+		renderReplay(state.lastInspection);
+	} catch (err) {
+		$('at-replay-error-message').textContent = err.message;
+		$('at-replay-error').hidden = false;
+	} finally {
+		$('at-replay-skeleton').hidden = true;
+	}
 });
 
 loadStatus();

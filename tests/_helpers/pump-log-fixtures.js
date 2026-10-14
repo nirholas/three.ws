@@ -17,6 +17,10 @@ class BorshWriter {
 		this.chunks.push(Buffer.from([v]));
 		return this;
 	}
+	bool(v) {
+		this.chunks.push(Buffer.from([v ? 1 : 0]));
+		return this;
+	}
 	u16(v) {
 		const b = Buffer.alloc(2);
 		b.writeUInt16LE(v);
@@ -66,6 +70,13 @@ function discriminatorBuffer(disc) {
 
 const DISTRIBUTE_CREATOR_FEES_DISC = 'a537817004b3ca28';
 const SOCIAL_FEE_PDA_CLAIMED_DISC = '3212c141edd2eaec';
+// Discriminators below read straight off the installed @nirholas/pump-sdk's
+// PumpIdl.events (Buffer.from(event.discriminator).toString('hex')), same as
+// the two above.
+const CREATE_EVENT_DISC = '1b72a94ddeeb6376';
+const TRADE_EVENT_DISC = 'bddb7fd34ee661ee';
+const COMPLETE_EVENT_DISC = '5f72619cd42e9808';
+const COLLECT_CREATOR_FEE_EVENT_DISC = '7a027f010ebf0caf';
 
 /**
  * @param {{mint:string, bondingCurve:string, sharingConfig:string, admin:string,
@@ -103,6 +114,85 @@ export function encodeSocialFeePdaClaimed(fields) {
 		.u64(fields.recipientBalanceBefore ?? 0)
 		.u64(fields.recipientBalanceAfter ?? 0);
 	return Buffer.concat([discriminatorBuffer(SOCIAL_FEE_PDA_CLAIMED_DISC), w.bytes()]);
+}
+
+/**
+ * @param {{name:string, symbol:string, uri:string, mint:string, bondingCurve:string,
+ *   user:string, creator:string, timestamp?:number, virtualTokenReserves:bigint|number,
+ *   virtualSolReserves:bigint|number, realTokenReserves:bigint|number,
+ *   tokenTotalSupply:bigint|number, tokenProgram:string, isMayhemMode?:boolean,
+ *   isCashbackEnabled?:boolean}} fields
+ */
+export function encodeCreateEvent(fields) {
+	const w = new BorshWriter();
+	w.string(fields.name)
+		.string(fields.symbol)
+		.string(fields.uri)
+		.pubkey(fields.mint)
+		.pubkey(fields.bondingCurve)
+		.pubkey(fields.user)
+		.pubkey(fields.creator)
+		.i64(fields.timestamp ?? 1_760_000_000)
+		.u64(fields.virtualTokenReserves)
+		.u64(fields.virtualSolReserves)
+		.u64(fields.realTokenReserves)
+		.u64(fields.tokenTotalSupply)
+		.pubkey(fields.tokenProgram)
+		.bool(fields.isMayhemMode ?? false)
+		.bool(fields.isCashbackEnabled ?? false);
+	return Buffer.concat([discriminatorBuffer(CREATE_EVENT_DISC), w.bytes()]);
+}
+
+/**
+ * @param {{mint:string, solAmount:bigint|number, tokenAmount:bigint|number, isBuy:boolean,
+ *   user:string, timestamp?:number, virtualSolReserves:bigint|number,
+ *   virtualTokenReserves:bigint|number, realSolReserves:bigint|number,
+ *   realTokenReserves:bigint|number, feeRecipient:string, feeBasisPoints?:bigint|number,
+ *   fee?:bigint|number, creator:string, creatorFeeBasisPoints?:bigint|number,
+ *   creatorFee?:bigint|number, ixName?:string}} fields
+ */
+export function encodeTradeEvent(fields) {
+	const w = new BorshWriter();
+	w.pubkey(fields.mint)
+		.u64(fields.solAmount)
+		.u64(fields.tokenAmount)
+		.bool(fields.isBuy)
+		.pubkey(fields.user)
+		.i64(fields.timestamp ?? 1_760_000_050)
+		.u64(fields.virtualSolReserves)
+		.u64(fields.virtualTokenReserves)
+		.u64(fields.realSolReserves)
+		.u64(fields.realTokenReserves)
+		.pubkey(fields.feeRecipient)
+		.u64(fields.feeBasisPoints ?? 100)
+		.u64(fields.fee ?? 0)
+		.pubkey(fields.creator)
+		.u64(fields.creatorFeeBasisPoints ?? 50)
+		.u64(fields.creatorFee ?? 0)
+		.bool(fields.trackVolume ?? false)
+		.u64(fields.totalUnclaimedTokens ?? 0)
+		.u64(fields.totalClaimedTokens ?? 0)
+		.u64(fields.currentSolVolume ?? 0)
+		.i64(fields.lastUpdateTimestamp ?? 0)
+		.string(fields.ixName ?? (fields.isBuy ? 'buy' : 'sell'))
+		.bool(fields.mayhemMode ?? false)
+		.u64(fields.cashbackFeeBasisPoints ?? 0)
+		.u64(fields.cashback ?? 0);
+	return Buffer.concat([discriminatorBuffer(TRADE_EVENT_DISC), w.bytes()]);
+}
+
+/** @param {{user:string, mint:string, bondingCurve:string, timestamp?:number}} fields */
+export function encodeCompleteEvent(fields) {
+	const w = new BorshWriter();
+	w.pubkey(fields.user).pubkey(fields.mint).pubkey(fields.bondingCurve).i64(fields.timestamp ?? 1_760_000_200);
+	return Buffer.concat([discriminatorBuffer(COMPLETE_EVENT_DISC), w.bytes()]);
+}
+
+/** @param {{creator:string, creatorFee:bigint|number, timestamp?:number}} fields */
+export function encodeCollectCreatorFeeEvent(fields) {
+	const w = new BorshWriter();
+	w.i64(fields.timestamp ?? 1_760_000_300).pubkey(fields.creator).u64(fields.creatorFee);
+	return Buffer.concat([discriminatorBuffer(COLLECT_CREATOR_FEE_EVENT_DISC), w.bytes()]);
 }
 
 function programDataLogLine(bytes) {
@@ -158,6 +248,42 @@ export function distributionLogs(distribution) {
 	]);
 }
 
+/** Logs for a create transaction (a coin launch) alone. */
+export function createEventLogs(createFields) {
+	return buildTransactionLogs([
+		{ programId: PUMP_PROGRAM_ID, instruction: 'Create', dataPayloads: [encodeCreateEvent(createFields)] },
+	]);
+}
+
+/** Logs for a buy/sell transaction on an existing bonding curve. */
+export function tradeEventLogs(tradeFields) {
+	return buildTransactionLogs([
+		{
+			programId: PUMP_PROGRAM_ID,
+			instruction: tradeFields.isBuy ? 'Buy' : 'Sell',
+			dataPayloads: [encodeTradeEvent(tradeFields)],
+		},
+	]);
+}
+
+/** Logs for the trade transaction that graduates a bonding curve, trade event then complete event. */
+export function completeEventLogs(tradeFields, completeFields) {
+	return buildTransactionLogs([
+		{
+			programId: PUMP_PROGRAM_ID,
+			instruction: tradeFields.isBuy ? 'Buy' : 'Sell',
+			dataPayloads: [encodeTradeEvent(tradeFields), encodeCompleteEvent(completeFields)],
+		},
+	]);
+}
+
+/** Logs for a creator collecting their accrued fee off a bonding curve. */
+export function collectCreatorFeeEventLogs(collectFields) {
+	return buildTransactionLogs([
+		{ programId: PUMP_PROGRAM_ID, instruction: 'CollectCreatorFee', dataPayloads: [encodeCollectCreatorFeeEvent(collectFields)] },
+	]);
+}
+
 /** A deterministic, valid 32-byte base58 pubkey from a short ASCII tag. Never a real key. */
 function synthPubkey(tag) {
 	const buf = Buffer.alloc(32);
@@ -180,4 +306,11 @@ export const SYNTH = {
 	ADMIN: synthPubkey('synth-admin'),
 	RECIPIENT: synthPubkey('synth-recipient'),
 	CLAIM_AUTHORITY: synthPubkey('synth-claim-authority'),
+	USER_A: synthPubkey('synth-user-a'),
+	USER_B: synthPubkey('synth-user-b'),
+	CREATOR_A: synthPubkey('synth-creator-a'),
+	FEE_RECIPIENT: synthPubkey('synth-fee-recipient'),
+	// SPL Token program, the real mainnet id: every pump.fun mint is a real SPL
+	// token, so this is a known-constant account, not a third-party key.
+	TOKEN_PROGRAM: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
 };
