@@ -100,7 +100,7 @@ Payment paths registered on the buyer client:
 
 - `eip155:*` → `BatchSettlementEvmScheme` (preferred when the server advertises it; voucher-based, no per-call gas)
 - `eip155:*` → `ExactEvmScheme` (used when the server advertises `scheme: "exact"`)
-- `solana:*` → `ExactSvmScheme` (USDC SPL transfer co-signed by the advertised fee payer)
+- `solana:*` and the x402 v1 Solana networks (`solana`, `solana-devnet`, `solana-testnet`) → `ExactSvmScheme` / `ExactSvmSchemeV1` (USDC SPL transfer co-signed by the advertised fee payer), registered together by `registerExactSvmScheme()`. v1 is the wire format most of the open x402 bazaar still speaks; the client always prefers v2 when a seller advertises both. The spending-cap hook reads either `amount` (v2) or `maxAmountRequired` (v1) so both are capped the same way.
 
 Batch-settlement channel state is persisted to `~/.x402-mcp-bridge/channels/client/` so client restarts do not re-deposit on the next call.
 

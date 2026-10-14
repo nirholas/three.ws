@@ -6,9 +6,14 @@
 // 402 dance and sign the Solana `exact`-scheme payment — nothing is mocked.
 //
 // The flow:
-//   1. x402Client + ExactSvmScheme(signer) registered for solana:*
+//   1. x402Client + registerExactSvmScheme(client, { signer }) registers BOTH
+//      wire formats: v2's CAIP-2 `solana:*` wildcard and v1's flat network
+//      strings (`solana`, `solana-devnet`, `solana-testnet`), the format
+//      most of the open x402 bazaar and the owner's x402-suite still speak.
 //   2. wrapFetchWithPayment(fetch, client) → a fetch that, on a 402, signs and
 //      retries with the X-PAYMENT header, then exposes the settlement response.
+//      @x402/core prefers the v2 `PAYMENT-REQUIRED` header over a v1-shaped
+//      body whenever a seller advertises both.
 
 import bs58 from 'bs58';
 
@@ -119,14 +124,14 @@ export async function getSigner(secretOverride) {
  * @returns {Promise<{ payingFetch: typeof fetch, httpClient: any, address: string }>}
  */
 export async function buildPayingFetch(secretOverride, opts = {}) {
-	const [{ x402Client, x402HTTPClient }, { ExactSvmScheme }, { wrapFetchWithPayment }] = await Promise.all([
+	const [{ x402Client, x402HTTPClient }, { registerExactSvmScheme }, { wrapFetchWithPayment }] = await Promise.all([
 		import('@x402/core/client'),
 		import('@x402/svm/exact/client'),
 		import('@x402/fetch'),
 	]);
 	const signer = await getSigner(secretOverride);
 	const client = new x402Client();
-	client.register('solana:*', new ExactSvmScheme(signer));
+	registerExactSvmScheme(client, { signer });
 	const httpClient = new x402HTTPClient(client);
 	const baseFetch = opts.preferToken ? makeTokenFilteringFetch(opts.preferToken) : globalThis.fetch;
 	const payingFetch = wrapFetchWithPayment(baseFetch, client);

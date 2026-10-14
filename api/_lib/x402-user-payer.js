@@ -9,6 +9,13 @@
 // install the platform spending cap (enforceCap → commit / rollback), and let
 // @x402/axios run the full 402 → sign → settle dance.
 //
+// registerExactSvmScheme() wires BOTH wire formats on the same client: v2's
+// CAIP-2 `solana:*` wildcard and v1's flat network strings (`solana`,
+// `solana-devnet`, `solana-testnet`), the format most of the open x402 bazaar
+// and the owner's x402-suite still speak. @x402/core's x402HTTPClient already
+// prefers the v2 `PAYMENT-REQUIRED` header over a v1-shaped JSON body when a
+// seller advertises both, so no extra selection logic is needed here.
+//
 // SAFETY: spending is OFF unless THREEWS_AGENT_PAY_ENABLED=1. This is real money
 // moving from a real user wallet; the flag exists so the capability ships dark
 // and is only enabled after a funded-wallet integration test. When disabled,
@@ -158,7 +165,7 @@ async function buildUserPayingClient({ wallet, userId, maxPerCallOverride }) {
 		{ default: axios },
 		{ x402Client, x402HTTPClient },
 		{ wrapAxiosWithPayment },
-		{ ExactSvmScheme },
+		{ registerExactSvmScheme },
 		{ createKeyPairSignerFromBytes },
 	] = await Promise.all([
 		import('axios'),
@@ -176,7 +183,7 @@ async function buildUserPayingClient({ wallet, userId, maxPerCallOverride }) {
 	const svmSigner = await createKeyPairSignerFromBytes(keypair.secretKey);
 
 	const client = new x402Client();
-	client.register('solana:*', new ExactSvmScheme(svmSigner));
+	registerExactSvmScheme(client, { signer: svmSigner });
 
 	const envPerCall = envAtomic('X402_MAX_PER_CALL_ATOMIC', DEFAULT_MAX_PER_CALL);
 	const perCall =

@@ -85,11 +85,16 @@ function normalizeOpts(input = {}) {
 // undo a strict-mode reserve without re-fetching from Redis.
 export async function enforceCap({ requirement, opts }) {
 	const settings = normalizeOpts(opts);
-	if (!requirement || !requirement.amount) {
+	// v2 requirements name the price `amount`; v1 requirements (still spoken by
+	// most of the open x402 bazaar and the owner's x402-suite) name it
+	// `maxAmountRequired`. Without this fallback every v1 payment threw here
+	// instead of being admitted and capped.
+	const amount = requirement?.amount ?? requirement?.maxAmountRequired;
+	if (!requirement || !amount) {
 		throw new Error('spending-cap: requirement.amount required');
 	}
 
-	const microUsd = await toMicroUsd(requirement.amount, requirement);
+	const microUsd = await toMicroUsd(amount, requirement);
 
 	if (settings.maxPerCall != null && microUsd > settings.maxPerCall) {
 		return {

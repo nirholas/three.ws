@@ -4,7 +4,11 @@
 //   - eip155:* → BatchSettlementEvmScheme  (cheaper per-call, channel-backed)
 //   - eip155:* → ExactEvmScheme            (used when a server doesn't advertise
 //                                           batch-settlement for the network)
-//   - solana:* → ExactSvmScheme            (USDC SPL transfers, fee-payer co-signed)
+//   - solana:* and the v1 Solana network strings (`solana`, `solana-devnet`,
+//     `solana-testnet`) → ExactSvmScheme / ExactSvmSchemeV1, both registered in
+//     one call by registerExactSvmScheme(). Most of the open x402 bazaar and
+//     the owner's x402-suite still speak v1; the core client prefers the v2
+//     `PAYMENT-REQUIRED` header over a v1 body whenever a seller offers both.
 //
 // The @x402 core client picks scheme-per-network based on what the 402
 // response advertises in `accepts[].scheme`, so registering both EVM schemes
@@ -13,8 +17,9 @@
 //
 // Spend controls: `onBeforePaymentCreation` aborts payload creation when any
 // of these is violated:
-//   - per-call:  selected accept's `amount` exceeds
-//                MCP_BRIDGE_MAX_PRICE_PER_CALL_ATOMIC (default 100_000 = $0.10)
+//   - per-call:  selected accept's `amount` (v2) or `maxAmountRequired` (v1)
+//                exceeds MCP_BRIDGE_MAX_PRICE_PER_CALL_ATOMIC (default
+//                100_000 = $0.10)
 //   - session:   cumulative atomic spent this process would exceed
 //                MCP_BRIDGE_MAX_TOTAL_ATOMIC (default 1_000_000 = $1.00)
 //   - payee:     selected `payTo` not in MCP_BRIDGE_ALLOWED_PAYTO (when set)
@@ -31,7 +36,7 @@ import { BatchSettlementEvmScheme } from '@x402/evm/batch-settlement/client';
 // @x402/evm >= 2.14 moved the Node file-backed storage to its own subpath so
 // the main client entry stays runtime-agnostic.
 import { FileClientChannelStorage } from '@x402/evm/batch-settlement/client/file-storage';
-import { ExactSvmScheme } from '@x402/svm/exact/client';
+import { registerExactSvmScheme } from '@x402/svm/exact/client';
 
 import { getEvmSigner, getSvmSigner } from './signers.js';
 import { getChannelsDirectory } from './storage.js';
@@ -88,7 +93,12 @@ export function buildSpendingCapHook() {
 	const totalCap = maxTotalAtomic();
 	const payToAllow = allowedPayTo();
 	return async ({ selectedRequirements }) => {
-		const amount = BigInt(selectedRequirements?.amount ?? '0');
+		// v2 requirements name the price `amount`; v1 requirements (still spoken
+		// by most of the open x402 bazaar and the owner's x402-suite) name it
+		// `maxAmountRequired`. Fall back so a v1 payment is capped too, instead
+		// of silently reading as 0 and bypassing both the per-call and session
+		// ceilings.
+		const amount = BigInt(selectedRequirements?.amount ?? selectedRequirements?.maxAmountRequired ?? '0');
 		const network = selectedRequirements?.network;
 		const asset = selectedRequirements?.asset;
 		const payTo = selectedRequirements?.payTo;
@@ -161,7 +171,7 @@ export async function buildBuyerAxios() {
 
 	const svmSigner = await getSvmSigner();
 	if (svmSigner) {
-		client.register('solana:*', new ExactSvmScheme(svmSigner));
+		registerExactSvmScheme(client, { signer: svmSigner });
 	}
 
 	if (!evmSigner && !svmSigner) {

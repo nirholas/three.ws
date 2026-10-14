@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-14T23:21:31.804Z",
+	"generated_at": "2026-10-14T23:56:00.129Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4095,
+	"total": 4096,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -188,6 +188,17 @@
 				"fix",
 				"security",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "x402 agent buyers now pay v1 sellers, not just v2",
+			"summary": "Every buyer path, the hosted a2a-hire/pay_and_call flow, the packages/x402-mcp stdio server, and the mcp-bridge stdio client, registered only x402's newer CAIP-2 wire format (network strings like solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp). Most of the open x402 bazaar, and every service in the owner's x402-suite, still speaks v1 (flat network strings like solana, price field maxAmountRequired), so agents paying through three.ws could not reach those sellers at all. All three buyers now call registerExactSvmScheme() instead, which registers both wire formats on the same Solana key; when a seller advertises both, v2 is always preferred. Settlement receipts already share field names (success, transaction, network, payer) across both versions, so /receipts and the session ledger need no changes. Fixing this also surfaced two real spend-cap bugs that only trigger on a v1 payment: the hosted buyer's enforceCap threw instead of admitting a capped v1 payment, and mcp-bridge's spending-cap hook silently read a v1 payment's price as zero, bypassing both the per-call and session ceilings. Both are fixed and covered by regression tests.",
+			"link": "/docs/mcp-agent",
+			"tags": [
+				"feature",
+				"security"
 			]
 		},
 		{
@@ -1545,16 +1556,6 @@
 			"tags": [
 				"feature",
 				"sdk"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Agents can find and register web domains",
-			"summary": "Search any name across popular extensions with live availability and the exact yearly price, check a single name, and register it from your credits after a quote and an explicit yes. Coin pages now suggest available domains for the project name, and a registered domain can serve your agent's public page. Registration is for one year, renews at the same price, and has no markup.",
-			"link": "/domains",
-			"tags": [
-				"feature"
 			]
 		}
 	]

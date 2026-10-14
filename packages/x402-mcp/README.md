@@ -121,6 +121,10 @@ Both spawn this server over stdio and hit the real bazaar. Neither reads a key o
 calls `pay_and_call`, so nothing is signed and nothing is spent. See
 [`examples/README.md`](./examples/README.md) for expected output.
 
+## Protocol versions
+
+`pay_and_call` speaks both x402 wire formats on the same Solana key: v2 (CAIP-2 network strings, e.g. `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`) and v1 (flat network strings, e.g. `solana`), the format most of the open x402 bazaar, and services built on the original `x402`/`x402-fetch` packages, still speak. When a seller advertises both, v2 is always preferred. Settlement receipts come back in the same shape (`success`, `transaction`, `network`, `payer`) regardless of which version paid, so nothing downstream needs to know which one was used.
+
 ## Requirements
 
 - **Node.js >= 20.**

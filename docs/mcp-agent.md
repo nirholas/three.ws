@@ -266,8 +266,15 @@ transactions:
 
 1. Resolve the signed-in user's primary agent wallet (`agent_identities`, Solana).
 2. Recover the keypair (`recoverSolanaAgentKeypair`) and build an `x402Client`
-   with `ExactSvmScheme`.
-3. Install the platform spending cap (`enforceCap → commit / rollback`).
+   with `registerExactSvmScheme`, which registers both x402 wire formats on
+   the Solana scheme: v2 (`solana:*`, CAIP-2) and v1 (`solana`,
+   `solana-devnet`, `solana-testnet`), the format most of the open x402
+   bazaar, including the owner's `x402-suite`, still speaks. When a seller
+   advertises both, v2 is always preferred; settlement receipts come back in
+   the same shape (`success`, `transaction`, `network`, `payer`) either way.
+3. Install the platform spending cap (`enforceCap → commit / rollback`),
+   which reads either `amount` (v2) or `maxAmountRequired` (v1) so both
+   protocol versions are capped the same way.
 4. `wrapAxiosWithPayment` runs the 402 → sign → retry → settle dance.
 
 Per-call/hour/day caps come from `X402_MAX_PER_CALL_ATOMIC`,
