@@ -737,3 +737,48 @@ Evolve status paragraph rather than deleting it.
 
 Commits: this closing commit (curve config, tests, e2e script, docs,
 changelog, owner-actions row, order-file annotation, PROGRESS log).
+
+## 2026-10-14: order 514-integrate-15 closed (evolve)
+
+`scripts/check-secrets.mjs` (from a prior commit this session, `d2824d4f3`) gained a base58
+Solana secret-key rule: any 86-90 character base58 run is decoded and flagged only when the
+first 32 bytes derive the embedded public key in the last 32 bytes via Ed25519, so the repo's
+thousands of real 64-byte transaction signatures never false-positive. `tests/check-secrets-
+solana.test.js` proves both sides with a runtime-generated keypair.
+
+This closing commit adds the second half: `api/_lib/burned-destination.js`, a read-only
+sweeper-bot heuristic over a destination's recent on-chain history (near-zero balance plus
+repeated quick in-then-out transfers within 60s), ported from the owner's sol-sweeper-bots
+`burned-check` CLI with a deliberate fix over its upstream bug (unsorted newest-first timestamp
+comparison misclassifies "quick out"; this module sorts chronologically first). A pure
+`classifySweepPattern` carries the heuristic so `tests/burned-destination.test.js` (7 cases)
+runs with no network access; `collectDestinationDeltas` is the async collector, taking an
+injected connection the same way `packages/wallet-linkage/src/collect.js` already does, never a
+hardcoded RPC endpoint. Wired into `api/_lib/agent-trade-guards.js` (`checkDestinationSweepRisk`,
+called from `enforceDestinationAllowlist` for `category === 'withdraw'`) and
+`api/agents/solana-wallet.js` (`handleWithdraw`, both the simulate-preview and real-submit
+paths), with a `sweepRiskAck` flag mirroring the existing `stepUpApproved` ack-and-retry pattern
+so a flagged destination blocks once and only proceeds on explicit confirm. `src/agent-wallet-
+hub/tabs/withdraw.js` previews the risk on reaching the confirm screen, shows a blocking banner,
+and falls back to a native `confirm()` + retry if the server flags it instead (stale preview).
+Two existing suites needed mock updates for the new export/dependency:
+`tests/agent-wallet-withdraw.test.js` (missing mock function) and
+`tests/agent-custody-guards.test.js` (new real network dependency, now stubbed to keep that
+suite's documented "deterministic and fast" guarantee).
+
+`docs/ops/hosting-and-credentials.md` documents the base58 rule and the incident response for a
+caught Solana secret. `docs/agent-abilities/wallet/18-withdraw.md` documents the sweeper-bot
+confirm-screen warning and the server-side check. `data/changelog.json` got a new entry and
+`npm run build:pages` ran clean (`public/features.json`, `CHANGELOG.md`,
+`public/changelog{.json,.xml,-recent.json}`, `public/sitemap/index.html` regenerated).
+
+DoD verified: `npx vitest run tests/burned-destination.test.js tests/check-secrets-
+solana.test.js tests/agent-wallet-withdraw.test.js tests/agent-custody-guards.test.js` is 49/49
+passing; `node scripts/check-secrets.mjs` over the full tree reports zero findings;
+`npm run check:rules --paths <every touched file>` exits 0 on both commits.
+
+No owner-gated action in this order: every step is code, tests, docs, and a local build.
+
+Commits: `5fa6b0109` (feature: burned-destination.js, trade-guards and solana-wallet wiring,
+withdraw.js UI, tests, changelog, build:pages output), `9d3234104` (docs), this closing commit
+(PROGRESS log, order-file removal).
