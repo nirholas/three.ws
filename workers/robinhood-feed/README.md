@@ -106,15 +106,13 @@ Documented per the mission brief — fields map 1:1 where semantics align:
 
 ```bash
 cd workers/robinhood-feed
-npm install            # symlinks hoodchain from ../../robinhood/robinhood-chain-sdk
+npm install            # installs hoodchain from npm (published from robinhood-chain-sdk)
 npm start              # listens on :8788 (mainnet, public RPC + sequencer feed)
 ```
 
-`npm install` on a `file:` dependency only symlinks the source directory: npm
-does not build it, and the SDK is TypeScript whose `dist/` is gitignored. So
-`npm start` runs `scripts/ensure-sdk.mjs` first (`prestart`), which builds the
-SDK's `dist/` when it is missing. That takes a few seconds on a fresh clone and
-is a no-op afterwards. To do it by hand: `npm run build:sdk`.
+`hoodchain` is a normal npm dependency pinned to the version published from the
+standalone `robinhood-chain-sdk` repo, the SDK's source of truth (see
+`robinhood/README.md`). No local build step is needed.
 
 Zero-config defaults hit the public Robinhood Chain endpoints. Every knob is an
 env var:

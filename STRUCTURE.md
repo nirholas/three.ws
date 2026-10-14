@@ -646,6 +646,15 @@ drift.
 Until a surface has a concrete external consumer, skipping the mirror is
 correct: each one adds a repo to keep in sync for zero functional gain.
 
+The reverse case, retiring a standalone repo that duplicates another repo or
+has been superseded by an in-repo surface, uses the same stage-then-owner-push
+split: [data/retired-repos.json](data/retired-repos.json) lists the repo, the
+reason, and where the capability lives now; `node
+scripts/stage-retired-repo-pointers.mjs` writes a one-commit pointer README
+per entry under `dist/retired-repos/<repo>/` (gitignored) and prints the
+`git push --force` + `gh repo archive` command pair for each, never running
+either.
+
 ## See also
 
 - [README.md](README.md) — product overview, quickstart, full feature list

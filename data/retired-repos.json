@@ -1,0 +1,47 @@
+{
+	"generated": "manual, written for prompts/finish/503-integrate-04-robinhood-copies-and-retired-repos.md on 2026-10-14",
+	"repos": [
+		{
+			"repo": "three-ui",
+			"reason": "Old standalone snapshot of the three.ws frontend, still presenting itself as the live source of truth and documenting a Vercel deploy that no longer reflects production.",
+			"replacedByText": "the three.ws monorepo (this repository, `src/`)",
+			"replacedByUrl": "https://three.ws"
+		},
+		{
+			"repo": "crypto-market-data",
+			"reason": "Standalone market-data dashboard superseded by the /markets page on three.ws, which reads from the same live sources natively.",
+			"replacedByText": "the /markets page on three.ws",
+			"replacedByUrl": "https://three.ws/markets"
+		},
+		{
+			"repo": "crypto-market-data-ts",
+			"reason": "TypeScript rewrite of the same market-data service, also superseded by the /markets page on three.ws.",
+			"replacedByText": "the /markets page on three.ws",
+			"replacedByUrl": "https://three.ws/markets"
+		},
+		{
+			"repo": "crypto-data-aggregator",
+			"reason": "A third independent market-data aggregator, also superseded by the /markets page on three.ws.",
+			"replacedByText": "the /markets page on three.ws",
+			"replacedByUrl": "https://three.ws/markets"
+		},
+		{
+			"repo": "memescope-monday-directory",
+			"reason": "Duplicate of memescope-monday (both are the Memescope Monday community directory); keeping two copies of the same product split stars, issues and traffic for no reason.",
+			"replacedByText": "github.com/nirholas/memescope-monday",
+			"replacedByUrl": "https://github.com/nirholas/memescope-monday"
+		},
+		{
+			"repo": "robinhood-chain-alert-bot",
+			"reason": "Duplicate of robinhood-chain-alerts (both titled hood-alerts). robinhood-chain-alerts is the repo three.ws keeps in sync with robinhood/hood-alerts in this monorepo (data/standalone-mirrors.json).",
+			"replacedByText": "github.com/nirholas/robinhood-chain-alerts (synced from robinhood/hood-alerts)",
+			"replacedByUrl": "https://github.com/nirholas/robinhood-chain-alerts"
+		},
+		{
+			"repo": "robinhood-chain-trading-bot",
+			"reason": "Duplicate of robinhood-chain-traders (both titled hood-traders). robinhood-chain-traders is the repo three.ws keeps in sync with robinhood/hood-traders in this monorepo (data/standalone-mirrors.json).",
+			"replacedByText": "github.com/nirholas/robinhood-chain-traders (synced from robinhood/hood-traders)",
+			"replacedByUrl": "https://github.com/nirholas/robinhood-chain-traders"
+		}
+	]
+}

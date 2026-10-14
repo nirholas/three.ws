@@ -5,14 +5,32 @@ Orbit L2, chain ID 4663): Robinhood Crypto only. Solana remains the home
 chain; these are additional crypto surfaces, and each subproject below has its
 own README with install and usage.
 
-> **npm publishing note (2026-08-02):** the npm releases of these packages
-> (hood-cli 0.2.1, hood-traders 0.2.1, hood-mcp / hoodkit / hood402 / hood-api /
-> hood-js / hood-connect / erc8056 0.1.1) were published from their standalone
-> GitHub repos (`nirholas/robinhood-chain-*`), which are the source of truth.
-> The copies in this directory are older snapshots kept for reference. Do NOT
-> `npm publish` from here: you would ship stale code over a newer release. Sync
-> from the standalone repo (or the published tarball) first if a release must
+> **Reference copies, not the source of truth (updated 2026-10-14):** every
+> package below is also a standalone GitHub repo (`nirholas/robinhood-chain-*`,
+> listed with `direction: "in"` in [`data/standalone-mirrors.json`](../data/standalone-mirrors.json)),
+> and those standalone repos are where each package is developed and
+> published to npm. The copies in this directory are read-only snapshots kept
+> for reference inside the monorepo; they drift from their standalone repos
+> between manual re-syncs, sometimes by hundreds of lines (see
+> [`npm run mirrors:drift`](../scripts/mirror-drift-report.mjs)). Do NOT `npm
+> publish` from here: you would ship stale code over a newer release. Sync from
+> the standalone repo (or the published tarball) first if a release must
 > happen from this tree.
+>
+> Two standalone repos duplicate another one under a different name
+> (`robinhood-chain-alert-bot` duplicates `robinhood-chain-alerts`;
+> `robinhood-chain-trading-bot` duplicates `robinhood-chain-traders`, both
+> pairs titled identically on npm, `hood-alerts` and `hood-traders`). The
+> duplicates have pointer READMEs staged under `dist/retired-repos/` for the
+> owner to push and archive; `robinhood-chain-alerts` and
+> `robinhood-chain-traders` stay the ones this directory mirrors.
+>
+> The one package production actually imports,
+> [`robinhood-chain-sdk`](robinhood-chain-sdk/) (npm name `hoodchain`), is
+> consumed by [`workers/robinhood-feed`](../workers/robinhood-feed/) as a
+> normal pinned npm dependency, not a `file:` link into this directory: the
+> worker always runs the published release, never whatever happens to be
+> checked out here.
 
 ## Developer tooling
 
