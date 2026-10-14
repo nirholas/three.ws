@@ -3,8 +3,11 @@
 // quoteBuy -> real swap buy -> state again.
 import 'dotenv/config';
 import bs58 from 'bs58';
+import BN from 'bn.js';
 import { Connection, Keypair, VersionedTransaction } from '@solana/web3.js';
+import { getBaseFeeParams, getBaseFeeNumerator, feeNumeratorToBps } from '@meteora-ag/dynamic-bonding-curve-sdk';
 import { buildCreatePoolTx, buildSwapTx, getPoolState, quoteBuy } from '../api/_lib/native-launch/dbc.js';
+import { curveBuildParams, NATIVE_LANE } from '../api/_lib/native-launch/config.js';
 
 const conn = new Connection(process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com', 'confirmed');
 const secret = process.env.NATIVE_LAUNCH_PARTNER_SECRET_BASE58 || process.env.X402_TREASURY_SECRET_BASE58;
@@ -57,6 +60,55 @@ console.log('create + first buy landed:', createSig);
 const afterCreate = await getPoolState({ network: 'devnet', mint });
 console.log('state after create + first buy:', JSON.stringify(afterCreate, null, 1));
 assert(afterCreate.quote_reserve_three > 0, 'the first buy put $THREE into the curve');
+
+// Anti-snipe check: quote the identical buy right after the pool activates, then
+// again once real slots have passed, and confirm the live config on devnet is
+// actually taxing the early quote the way api/_lib/native-launch/config.js says
+// it should (this is the same pool a sniper bot would be hitting).
+console.log('');
+console.log('anti-snipe fee check:');
+const createTxInfo = await conn.getTransaction(createSig, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+const activationSlot = createTxInfo.slot;
+const antiSnipeAmountThree = 1_000;
+
+function predictedFeeBps(slotsSinceActivation) {
+	const sp = getBaseFeeParams(curveBuildParams().fee.baseFeeParams);
+	const numerator = getBaseFeeNumerator(
+		sp.cliffFeeNumerator,
+		sp.firstFactor,
+		sp.secondFactor,
+		sp.thirdFactor,
+		sp.baseFeeMode,
+		new BN(slotsSinceActivation),
+		new BN(0),
+	);
+	return feeNumeratorToBps(numerator);
+}
+
+const slotAtQuoteA = await conn.getSlot();
+const quoteA = await quoteBuy({ network: 'devnet', mint, threeIn: antiSnipeAmountThree });
+console.log(
+	`slot ${slotAtQuoteA} (+${slotAtQuoteA - activationSlot} since activation): fee for ${antiSnipeAmountThree} $THREE = ${quoteA.trading_fee_three} $THREE (predicted base fee ${predictedFeeBps(slotAtQuoteA - activationSlot)} bps)`,
+);
+
+const waitSlots = 20; // comfortably inside the 100-slot decay window, no long sleep needed
+console.log(`waiting for ~${waitSlots} more slots to pass on devnet...`);
+let slotNow = slotAtQuoteA;
+while (slotNow < slotAtQuoteA + waitSlots) {
+	await new Promise((r) => setTimeout(r, 1000));
+	slotNow = await conn.getSlot();
+}
+const quoteB = await quoteBuy({ network: 'devnet', mint, threeIn: antiSnipeAmountThree });
+console.log(
+	`slot ${slotNow} (+${slotNow - activationSlot} since activation): fee for ${antiSnipeAmountThree} $THREE = ${quoteB.trading_fee_three} $THREE (predicted base fee ${predictedFeeBps(slotNow - activationSlot)} bps)`,
+);
+
+assert(quoteB.trading_fee_three < quoteA.trading_fee_three, 'the anti-snipe fee must decay as slots since activation increase');
+assert(
+	quoteB.trading_fee_three < quoteA.trading_fee_three * 0.9,
+	'the fee drop over the waited slots must be more than rounding noise',
+);
+console.log(`anti-snipe fee decayed: ${quoteA.trading_fee_three} -> ${quoteB.trading_fee_three} $THREE over ${slotNow - slotAtQuoteA} slots`);
 
 const quote = await quoteBuy({ network: 'devnet', mint, threeIn: 250_000 });
 console.log(`quote 250,000 $THREE -> ${quote.tokens_out} tokens, fee ${quote.trading_fee_three} $THREE`);

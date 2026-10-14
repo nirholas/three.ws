@@ -10,6 +10,9 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
 	buildCurveWithMarketCap,
 	validateConfigParameters,
+	getBaseFeeParams,
+	getBaseFeeNumerator,
+	feeNumeratorToBps,
 	TokenType,
 	TokenDecimal,
 	TokenAuthorityOption,
@@ -20,6 +23,7 @@ import {
 	ActivationType,
 } from '@meteora-ag/dynamic-bonding-curve-sdk';
 import { Keypair } from '@solana/web3.js';
+import BN from 'bn.js';
 import { NATIVE_LANE, curveBuildParams, configKeyFor, laneInfo } from '../api/_lib/native-launch/config.js';
 
 const params = () => curveBuildParams();
@@ -64,7 +68,7 @@ describe('curveBuildParams', () => {
 		expect(p.token.tokenQuoteDecimal).toBe(TokenDecimal.SIX);
 		// Immutable metadata: no one, including us, can rewrite a launched coin.
 		expect(p.token.tokenAuthorityOption).toBe(TokenAuthorityOption.Immutable);
-		expect(p.fee.baseFeeParams.baseFeeMode).toBe(BaseFeeMode.FeeSchedulerLinear);
+		expect(p.fee.baseFeeParams.baseFeeMode).toBe(BaseFeeMode.FeeSchedulerExponential);
 		// Fees accrue in the quote token so creators are paid in SOL, not in
 		// their own (possibly worthless) coin.
 		expect(p.fee.collectFeeMode).toBe(CollectFeeMode.QuoteToken);
@@ -73,10 +77,18 @@ describe('curveBuildParams', () => {
 		expect(p.activationType).toBe(ActivationType.Slot);
 	});
 
-	it('charges a flat fee for the whole curve (no decaying schedule)', () => {
+	it('opens at a punitive anti-snipe fee that decays to the steady-state fee', () => {
 		const { feeSchedulerParam: f } = params().fee.baseFeeParams;
-		expect(f.startingFeeBps).toBe(f.endingFeeBps);
-		expect(f.startingFeeBps).toBe(NATIVE_LANE.tradeFeeBps);
+		expect(f.startingFeeBps).toBe(NATIVE_LANE.antiSnipeStartFeeBps);
+		expect(f.endingFeeBps).toBe(NATIVE_LANE.antiSnipeEndFeeBps);
+		expect(f.endingFeeBps).toBe(NATIVE_LANE.tradeFeeBps);
+		expect(f.startingFeeBps).toBeGreaterThan(f.endingFeeBps);
+		expect(f.numberOfPeriod).toBe(NATIVE_LANE.antiSnipeDecayPeriods);
+		expect(f.totalDuration).toBe(NATIVE_LANE.antiSnipeDecaySlots);
+	});
+
+	it('exempts only the creator-bundled first buy from the anti-snipe rate', () => {
+		expect(params().fee.enableFirstSwapWithMinFee).toBe(true);
 	});
 
 	it('keeps a leftover dust unit so the program supply check passes', () => {
@@ -90,6 +102,52 @@ describe('curveBuildParams', () => {
 		const v = params().lockedVesting;
 		expect(v.totalLockedVestingAmount).toBe(0);
 		expect(v.cliffUnlockAmount).toBe(0);
+	});
+});
+
+describe('anti-snipe fee schedule', () => {
+	// feeAtSlot mirrors exactly what the DBC program does on-chain: resolve the
+	// scheduler's cliff/reduction factors once (getBaseFeeParams), then evaluate
+	// the fee at a given slot since pool activation (getBaseFeeNumerator). No
+	// network call, no mocking of the curve math itself.
+	const schedulerParams = () => getBaseFeeParams(params().fee.baseFeeParams);
+	const activationPoint = new BN(0);
+	function feeBpsAtSlot(slot) {
+		const sp = schedulerParams();
+		const numerator = getBaseFeeNumerator(
+			sp.cliffFeeNumerator,
+			sp.firstFactor,
+			sp.secondFactor,
+			sp.thirdFactor,
+			sp.baseFeeMode,
+			new BN(slot),
+			activationPoint,
+		);
+		return feeNumeratorToBps(numerator);
+	}
+
+	it('starts at the configured anti-snipe fee in the pool\'s first slot', () => {
+		expect(feeBpsAtSlot(0)).toBe(NATIVE_LANE.antiSnipeStartFeeBps);
+	});
+
+	it('decays monotonically slot by slot across the decay window', () => {
+		let previous = feeBpsAtSlot(0);
+		for (let slot = 1; slot <= NATIVE_LANE.antiSnipeDecaySlots; slot++) {
+			const fee = feeBpsAtSlot(slot);
+			expect(fee).toBeLessThanOrEqual(previous);
+			previous = fee;
+		}
+	});
+
+	it('reaches exactly the steady-state fee at the window\'s end, and stays there', () => {
+		expect(feeBpsAtSlot(NATIVE_LANE.antiSnipeDecaySlots)).toBe(NATIVE_LANE.antiSnipeEndFeeBps);
+		expect(feeBpsAtSlot(NATIVE_LANE.antiSnipeDecaySlots + 1000)).toBe(NATIVE_LANE.antiSnipeEndFeeBps);
+	});
+
+	it('taxes a snipe in the first few slots well above the steady-state fee', () => {
+		// A bot landing in slot 1-3 (one to a couple of blocks after activation)
+		// should still pay a meaningfully punitive fee, not something close to normal.
+		expect(feeBpsAtSlot(2)).toBeGreaterThan(NATIVE_LANE.antiSnipeEndFeeBps * 10);
 	});
 });
 

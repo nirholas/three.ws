@@ -45,7 +45,7 @@ All of it lives in one file, [`api/_lib/native-launch/config.js`](../api/_lib/na
 | Metadata authority | Immutable at launch |
 | Starting market cap | 4,000,000 $THREE |
 | Graduation market cap | 60,000,000 $THREE (about 12.3M $THREE raised on the curve) |
-| Trading fee | 1%, taken in $THREE, plus a volatility-scaled dynamic fee during spikes |
+| Trading fee | 1% steady-state, taken in $THREE, plus a volatility-scaled dynamic fee during spikes. Decays down from 50% over a pool's first 100 slots (below) |
 | Trading fee split | 50% coin creator / 50% three.ws |
 | Migration fee | 1% of the raised $THREE, split 50/50 |
 | Graduates into | A Meteora DAMM v2 pool against $THREE |
@@ -62,6 +62,14 @@ The curve deliberately mirrors the shape traders already recognise from pump.fun
 ### The quote-token-program patch
 
 The DBC program takes the quote mint's token program as an ordinary account, so a Token-2022 quote is supported on-chain. SDK 1.5.x nevertheless hardcodes the legacy SPL Token program into `token_quote_program` when it builds a pool-initialize instruction, and with a Token-2022 quote the instruction fails with `IncorrectProgramId` as soon as the program creates the quote vault. `withQuoteTokenProgram` in [`dbc.js`](../api/_lib/native-launch/dbc.js) rewrites that one account, located by its position in the program's own IDL. Swaps are unaffected: the SDK reads the token program from the config for those. Remove the patch when the SDK is fixed upstream.
+
+### Anti-snipe: a decaying fee instead of a flat one
+
+Every pool opens at a 50% trading fee (`antiSnipeStartFeeBps`), which decays exponentially down to the steady-state 1% (`antiSnipeEndFeeBps`) over the pool's first 100 slots (`antiSnipeDecaySlots`, about 40 seconds at Solana's ~400ms/slot), stepped through 25 discrete periods (`antiSnipeDecayPeriods`). A bot buying in the pool's first block pays close to half its $THREE in fees; an organic buyer a minute later pays the normal 1%. The coin's own creator is exempt: their bundled first buy (the same transaction as pool creation) always pays the lane's minimum fee via `enableFirstSwapWithMinFee`, since it is the creator funding their own launch, not a snipe.
+
+This mirrors the owner's EVM `anti-snipe-ramp` hook concept, but it is built entirely on the DBC program's own fee scheduler rather than a new contract: `fee.baseFeeParams` in [`config.js`](../api/_lib/native-launch/config.js) sets `BaseFeeMode.FeeSchedulerExponential` with a starting and ending fee, a period count, and a duration in slots. Exponential was chosen over linear because it front-loads the drop (steepest right after activation, where snipers are, instead of a constant slope), and over the SDK's `RateLimiter` mode because that mode is deprecated in this SDK version and throws for any new config.
+
+One honest difference from the EVM hook: on an EVM AMM, an anti-snipe ramp's excess fee typically accrues to the pool's liquidity providers. On this lane, all trading fees (ramped or steady-state) flow through the same 50/50 creator/three.ws split that every other trade uses, never to LPs, because DBC pools have no third-party LPs before graduation. The anti-snipe premium a sniper pays is extra revenue for the coin's creator and the platform, not a yield booster for outside liquidity.
 
 ### Why `leftover: 1`
 

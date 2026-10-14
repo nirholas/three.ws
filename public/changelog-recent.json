@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-14T19:13:50.717Z",
+	"generated_at": "2026-10-14T20:00:23.214Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4090,
+	"total": 4091,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -123,6 +123,17 @@
 			"tags": [
 				"infra",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "The native $THREE launchpad now taxes snipers, not just steady trading",
+			"summary": "Every pool on the native launchpad lane used to open at the same flat 1% trading fee a coin keeps forever, which is exactly what a sniper bot wants: the same price whether it buys in the pool's first block or an hour later. New pools now open at a 50% fee that decays exponentially down to the normal 1% over the first 100 slots (about 40 seconds), so a bot buying in the first block pays close to half its $THREE in fees while an organic buyer a minute later pays the standard rate. The coin creator's own bundled first buy stays exempt, since that is the creator funding their own launch, not a snipe. The schedule runs entirely on Meteora's own Dynamic Bonding Curve fee scheduler, no new contract.",
+			"link": "/docs/native-launchpad",
+			"tags": [
+				"feature",
+				"security"
 			]
 		},
 		{
@@ -1545,16 +1556,6 @@
 			"tags": [
 				"feature",
 				"security"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "AI agents now forecast Event Markets and build a public track record",
-			"summary": "Agents can call a market as themselves, with a confidence, a rationale and evidence links, and the market page shows what each agent thinks under an Agent badge. Every agent profile gets its calls, hit rate, a calibration chart built from resolved markets only, and its best calls. A new forecasters page ranks people and agents, with an agents-only filter, and you can follow an agent to be notified when it calls. Owners can switch on autonomous forecasting per agent within a points budget, off by default and fully visible in the activity log. Assistants get event_market_analyze over MCP.",
-			"link": "/event-markets/forecasters",
-			"tags": [
-				"feature"
 			]
 		}
 	]

@@ -18,8 +18,11 @@
 //     $THREE price on 2026-09-20. The thresholds are fixed in the on-chain
 //     config, so re-sizing them later means creating a new config and
 //     re-pinning the env key; coins already launched keep the curve they had.
-//   - 1% trading fee in $THREE, split 50/50 creator / three.ws, plus Meteora's
-//     volatility-scaled dynamic fee on top during spikes
+//   - 1% steady-state trading fee in $THREE, split 50/50 creator / three.ws, plus
+//     Meteora's volatility-scaled dynamic fee on top during spikes. A new pool opens
+//     at a 50% anti-snipe fee that decays to that 1% over the first 100 slots
+//     (~40s), so a bot buying in the pool's first blocks pays far more than someone
+//     buying a minute later; the creator's own first buy is exempt.
 //   - graduates to DAMM v2 with 100% of LP permanently locked (50 creator /
 //     50 platform): the pool can never be pulled, both sides earn LP fees
 //     forever
@@ -57,6 +60,18 @@ export const NATIVE_LANE = {
 	migrationFeePercent: 1,
 	creatorMigrationFeePercent: 50,
 	lpLockedPercent: 100,
+	// Anti-snipe decaying fee: the owner's EVM `anti-snipe-ramp` hook opens a pool at a
+	// punitive fee that decays to normal so bots sniping the first blocks pay for it.
+	// This is that mechanism on Solana, built on the DBC program's own fee scheduler
+	// instead of a new contract. activationType is Slot (below), so the window below
+	// is measured in slots, not seconds.
+	antiSnipeStartFeeBps: 5_000, // 50% for a buy landing in the pool's first slot
+	antiSnipeEndFeeBps: 100, // decays down to the steady-state 1% trade fee (tradeFeeBps)
+	antiSnipeDecayPeriods: 25, // discrete steps the fee drops through on its way down
+	// 100 slots at Solana's ~400ms/slot is about 40 seconds: long enough to tax a sniper
+	// bot's first few blocks hard, short enough that an organic buyer a block or two
+	// later already sees most of the fee gone (exponential decay front-loads the drop).
+	antiSnipeDecaySlots: 100,
 };
 
 // Params for buildCurveWithMarketCap(). Enum values are inlined as numbers so
@@ -77,19 +92,31 @@ export function curveBuildParams() {
 		},
 		fee: {
 			baseFeeParams: {
-				baseFeeMode: 0, // BaseFeeMode.FeeSchedulerLinear (flat: start == end)
+				// FeeSchedulerExponential, not RateLimiter: this SDK's own
+				// getBaseFeeParams() throws "BaseFeeMode.RateLimiter is deprecated.
+				// New configs must use FeeSchedulerLinear or FeeSchedulerExponential"
+				// for any new config, which settles the choice the task asked to
+				// measure on devnet before it gets there. Exponential over linear
+				// because it front-loads the decay (steepest drop right after
+				// activation, where the snipers are, instead of a constant slope).
+				baseFeeMode: 1, // BaseFeeMode.FeeSchedulerExponential
 				feeSchedulerParam: {
-					startingFeeBps: NATIVE_LANE.tradeFeeBps,
-					endingFeeBps: NATIVE_LANE.tradeFeeBps,
-					numberOfPeriod: 0,
-					totalDuration: 0,
+					startingFeeBps: NATIVE_LANE.antiSnipeStartFeeBps,
+					endingFeeBps: NATIVE_LANE.antiSnipeEndFeeBps,
+					numberOfPeriod: NATIVE_LANE.antiSnipeDecayPeriods,
+					totalDuration: NATIVE_LANE.antiSnipeDecaySlots,
 				},
 			},
 			dynamicFeeEnabled: true,
 			collectFeeMode: 0, // CollectFeeMode.QuoteToken (fees accrue in $THREE)
 			creatorTradingFeePercentage: NATIVE_LANE.creatorTradeFeePercent,
 			poolCreationFee: 0,
-			enableFirstSwapWithMinFee: true, // creator's own first buy pays the minimum fee
+			// The creator's own buy is bundled into the same transaction as pool
+			// creation (buildCreatePoolTx's firstBuyParam), so it is the only
+			// "snipe-shaped" buy that is actually the creator funding their own
+			// launch. This keeps it exempt from the anti-snipe rate: it always
+			// pays the lane's minimum fee, never the decaying start fee.
+			enableFirstSwapWithMinFee: true,
 		},
 		migration: {
 			migrationOption: 1, // MigrationOption.MET_DAMM_V2
@@ -157,6 +184,13 @@ export function laneInfo(network = 'mainnet') {
 		fee_split: {
 			creator_percent: NATIVE_LANE.creatorTradeFeePercent,
 			platform_percent: 100 - NATIVE_LANE.creatorTradeFeePercent,
+		},
+		anti_snipe: {
+			start_fee_bps: NATIVE_LANE.antiSnipeStartFeeBps,
+			end_fee_bps: NATIVE_LANE.antiSnipeEndFeeBps,
+			decay_periods: NATIVE_LANE.antiSnipeDecayPeriods,
+			decay_slots: NATIVE_LANE.antiSnipeDecaySlots,
+			creator_first_buy_exempt: true,
 		},
 		migration_fee_percent: NATIVE_LANE.migrationFeePercent,
 		lp_locked_percent: NATIVE_LANE.lpLockedPercent,

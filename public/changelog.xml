@@ -95,6 +95,14 @@
 			<description>scripts/sync-standalone-repos.mjs force-pushed straight to main on every run, which could silently create duplicate repos for the eleven mirrors already renamed on GitHub and bypassed the owner's push-approval rule. data/standalone-mirrors.json is now the single source of truth for which monorepo directory maps to which public repo, read by every exporter (sync, growth satellites, the awesome list, the skill-repo builder) instead of each keeping its own list. The sync script only stages a snapshot under dist/standalone-mirrors/, fixes any stale pre-Apache-2.0 README or LICENSE footer, and prints the push command for the owner; npm run sync:repos:check compares what is staged against each mirror's live tree and reports drift without writing anything.</description>
 		</item>
 		<item>
+			<title>The native $THREE launchpad now taxes snipers, not just steady trading</title>
+			<link>https://three.ws/docs/native-launchpad</link>
+			<guid isPermaLink="false">2026-10-14:The native $THREE launchpad now taxes snipers, not just steady trading</guid>
+			<pubDate>Wed, 14 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every pool on the native launchpad lane used to open at the same flat 1% trading fee a coin keeps forever, which is exactly what a sniper bot wants: the same price whether it buys in the pool's first block or an hour later. New pools now open at a 50% fee that decays exponentially down to the normal 1% over the first 100 slots (about 40 seconds), so a bot buying in the first block pays close to half its $THREE in fees while an organic buyer a minute later pays the standard rate. The coin creator's own bundled first buy stays exempt, since that is the creator funding their own launch, not a snipe. The schedule runs entirely on Meteora's own Dynamic Bonding Curve fee scheduler, no new contract.</description>
+		</item>
+		<item>
 			<title>three.ws Avatar MCP clamps unbounded tool arguments before they reach generated HTML</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-14:three.ws Avatar MCP clamps unbounded tool arguments before they reach generated HTML</guid>
