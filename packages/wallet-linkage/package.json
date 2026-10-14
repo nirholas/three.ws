@@ -1,0 +1,29 @@
+{
+	"name": "@three-ws/wallet-linkage",
+	"version": "0.1.0",
+	"description": "Solana wallet linkage signals (shared fee payer, first-funder, account control, direct transfer, funding burst) combined by noisy-OR into a 0-100 same-controller score with evidence. Ported from the owner's proprietary wallet-sleuth; chain-agnostic scorer, Solana-first signals.",
+	"type": "module",
+	"private": true,
+	"author": "nirholas <support@three.ws>",
+	"license": "SEE LICENSE IN LICENSE",
+	"homepage": "https://three.ws",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/wallet-linkage"
+	},
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"files": [
+		"src",
+		"README.md",
+		"LICENSE"
+	],
+	"dependencies": {
+		"@solana/web3.js": "^1.99.0",
+		"bs58": "^6.0.0",
+		"lru-cache": "^11.5.2"
+	}
+}

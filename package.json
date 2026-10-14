@@ -138,7 +138,8 @@
 		"packages/home-mcp",
 		"packages/blender-mcp",
 		"packages/ai-sdk",
-		"packages/langchain"
+		"packages/langchain",
+		"packages/wallet-linkage"
 	],
 	"main": "src/app.js",
 	"browserslist": [

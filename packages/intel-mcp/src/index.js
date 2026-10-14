@@ -4,6 +4,7 @@
 // Gives any AI assistant the three.ws market-intelligence surface over stdio:
 //   • smart_money_coin   — judge a coin by WHO is net-buying it (0–100 score)
 //   • wallet_intel       — one wallet's realized reputation card
+//   • wallet_linkage     : are these 2-10 wallets the same person (0-100 score)
 //   • signal_feed        — a feed's proven accuracy + recent emissions
 //   • kol_leaderboard    — ranked KOL traders by realized P&L
 //   • kol_trades         — recent KOL trades on a given mint
@@ -26,6 +27,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 
 import { def as smartMoneyCoin } from './tools/smart-money-coin.js';
 import { def as walletIntel } from './tools/wallet-intel.js';
+import { def as walletLinkage } from './tools/wallet-linkage.js';
 import { def as signalFeed } from './tools/signal-feed.js';
 import { def as kolLeaderboard } from './tools/kol-leaderboard.js';
 import { def as kolTrades } from './tools/kol-trades.js';
@@ -38,6 +40,7 @@ const { version: PKG_VERSION } = require('../package.json');
 export const TOOLS = [
 	smartMoneyCoin,
 	walletIntel,
+	walletLinkage,
 	signalFeed,
 	kolLeaderboard,
 	kolTrades,
@@ -58,7 +61,9 @@ export function buildServer() {
 				'three.ws Intel MCP — read the market the way the smart money does. smart_money_coin ' +
 				'scores a coin by WHO is net-buying it (a 0–100 reputation-weighted score, funder clusters, ' +
 				'and a sybil flag). wallet_intel pulls one wallet\'s realized track record (score, win rate, ' +
-				'labels, funder cluster). signal_feed reads a feed\'s proven accuracy and recent emissions ' +
+				'labels, funder cluster). wallet_linkage cross-checks 2-10 wallets for shared control (shared ' +
+				'fee payer, first funder, token-account ownership, direct transfers, funding bursts), each ' +
+				'pair scored 0-100 with evidence. signal_feed reads a feed\'s proven accuracy and recent emissions ' +
 				'with realized ROI. kol_leaderboard ranks tracked KOL traders by P&L; kol_trades shows their ' +
 				'recent trades on a given mint. copy_smart_wallets browses the ranked copy-trade Smart Money ' +
 				'directory. All data comes live from the public three.ws API — no API key, signer, or payment ' +

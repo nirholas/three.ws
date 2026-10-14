@@ -1607,6 +1607,12 @@ export const limits = {
 		// free nodes the whole platform shares, so it gets a tighter per-IP burst
 		// than the family's 60/min.
 		cryptoHoldersIp: (ip) => getLimiter('crypto-holders:ip', { limit: 20, window: '1 m' }).limit(ip),
+		// /api/crypto/linkage walks each address's recent history (a signatures page
+		// plus up to DEFAULT_SIGNATURE_LIMIT parsed-transaction fetches) against the
+		// shared Solana RPC lanes, so it gets its own tighter-than-the-family burst
+		// plus a global hourly ceiling, the same shape as the holders family above.
+		cryptoLinkageIp: (ip) => getLimiter('crypto-linkage:ip', { limit: 10, window: '1 m' }).limit(ip),
+		cryptoLinkageGlobal: () => getLimiter('crypto-linkage:global', { limit: 600, window: '1 h' }).limit('global'),
 	// Free Crypto Data API family (api/crypto/*). Keyless, no-account reads an agent
 	// makes mid-task (wallet portfolio, token snapshots). Some paths fan out to the
 	// keyed Helius/public-RPC upstreams, so a generous-but-bounded per-IP burst keeps

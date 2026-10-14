@@ -27,6 +27,7 @@ import airdropsEntry from './airdrops.js';
 import bondingEntry from './bonding.js';
 import holdersEntry from './holders.js';
 import launchesEntry from './launches.js';
+import linkageEntry from './linkage.js';
 import portfolioEntry from './portfolio.js';
 import securityEntry from './security.js';
 import symbolEntry from './symbol.js';
@@ -49,6 +50,7 @@ const STATIC_ENTRIES = [
 	{ mod: bondingEntry, source: 'bonding.js' },
 	{ mod: holdersEntry, source: 'holders.js' },
 	{ mod: launchesEntry, source: 'launches.js' },
+	{ mod: linkageEntry, source: 'linkage.js' },
 	{ mod: portfolioEntry, source: 'portfolio.js' },
 	{ mod: securityEntry, source: 'security.js' },
 	{ mod: symbolEntry, source: 'symbol.js' },

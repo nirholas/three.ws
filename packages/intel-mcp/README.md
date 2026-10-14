@@ -65,18 +65,21 @@ npx -y @modelcontextprotocol/inspector npx @three-ws/intel-mcp
 | -------------------- | --------- | ------------------------------------------------------------------------------------------------------------ |
 | `smart_money_coin`   | read-only | Score a coin by WHO is net-buying it — 0–100 smart-money score, reputable buyers, funder clusters, sybil flag. |
 | `wallet_intel`       | read-only | One wallet's realized reputation: score, win rate, behavioral labels, and its funder cluster.                  |
+| `wallet_linkage`     | read-only | Cross-check 2-10 Solana wallets for shared control: 0-100 same-controller score per pair, with evidence.       |
 | `signal_feed`        | read-only | A signal feed's proven accuracy (hit-rate, realized/follower ROI) and recent emissions with on-chain proof.    |
 | `kol_leaderboard`    | read-only | Rank tracked KOL traders by realized P&L over a 7d / 30d window.                                               |
 | `kol_trades`         | read-only | Recent KOL trades on a specific mint, across the tracked KOL set.                                              |
 | `copy_smart_wallets` | read-only | Browse the ranked copy-trade Smart Money directory — filter by chain, category, and sort.                      |
 
-All six tools read live data: scores, feeds, and rankings move between calls, so none are idempotent.
+All seven tools read live data: scores, feeds, and rankings move between calls, so none are idempotent.
 
 ### Input parameters
 
 **`smart_money_coin`** — `mint` (required), `network` (`mainnet` | `devnet`, default `mainnet`).
 
 **`wallet_intel`** — `wallet` (required), `network` (`mainnet` | `devnet`, default `mainnet`).
+
+**`wallet_linkage`**: `addresses` (required, array of 2-10 Solana addresses).
 
 **`signal_feed`** — `slug` (required), `network` (`mainnet` | `devnet`, default `mainnet`).
 
@@ -123,6 +126,29 @@ All six tools read live data: scores, feeds, and rankings move between calls, so
 ```
 
 `computed: false` on a coin or wallet means the smart-money graph has no on-chain history for it yet — that's an honest "not enough data", not a failure.
+
+```jsonc
+// wallet_linkage
+> { "addresses": ["FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump", "11111111111111111111111111111111"] }
+{
+  "ok": true,
+  "addresses": ["FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump", "11111111111111111111111111111111"],
+  "pairs": [
+    {
+      "a": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+      "b": "11111111111111111111111111111111",
+      "score": 0,
+      "band": "none",
+      "topSignal": null,
+      "signals": [],
+      "evidence": []
+    }
+  ],
+  "complete": true
+}
+```
+
+`complete: false` on the response means at least one address's history walk hit its time or request budget before finishing: scores are still real signals, just possibly based on partial history.
 
 ## Requirements
 

@@ -1,0 +1,28 @@
+Wallet Linkage (ported from Wallet Sleuth)
+
+Copyright (c) 2026 nirholas. All rights reserved.
+
+PROPRIETARY AND CONFIDENTIAL. SOURCE AVAILABLE, NOT OPEN SOURCE.
+
+This package ports the Solana linkage signals and noisy-OR scorer from the
+owner's proprietary `wallet-sleuth` repository into three.ws, under the
+permission the owner grants themselves as the author of both repositories.
+The original license grants and prohibitions on `wallet-sleuth` continue to
+apply to this derived code:
+
+Permission is granted to:
+  - View and read this source for evaluation purposes.
+  - Reference this source, with attribution, for evaluation purposes.
+
+Permission is NOT granted, without prior written permission from the
+copyright holder, to:
+  - Copy or redistribute this source outside the three.ws monorepo.
+  - Modify or create derivative works beyond integrating it into three.ws.
+  - Run, deploy, or host this source as a standalone product or service.
+  - Use this source in another product.
+  - Sell or sublicense this source.
+  - Remove this notice.
+
+This file exists to satisfy the wallet-sleuth license's requirement that its
+notice travel with the ported code. It does not change three.ws's own
+license for the rest of the monorepo.
