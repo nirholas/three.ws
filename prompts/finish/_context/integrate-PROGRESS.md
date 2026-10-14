@@ -884,3 +884,59 @@ Commits: `b239cb926` (weather-guard), `228dafe28` (carbon), `92cd17eb6` (domains
 (research), `0ecc3007c` (books), `48d05d9a7` (news-wire, transit, places), `ad01ea88a`
 (openapi.json free-tier-discoverability fix), `e18987975` (docs + changelog), this closing
 commit (PROGRESS log, order-file removal).
+
+## 2026-10-14: order 517-integrate-18 closed (evolve)
+
+Every buyer path (`api/_lib/x402-user-payer.js`'s hosted a2a-hire/pay_and_call flow,
+`packages/x402-mcp`'s stdio server, `mcp-bridge`'s stdio client) registered only x402's
+CAIP-2 wire format (`client.register('solana:*', new ExactSvmScheme(signer))`). Most of the
+open x402 bazaar, and every service in the owner's own x402-suite, still speaks v1 (flat
+network strings like `solana`, price field `maxAmountRequired`), so none of our buyers could
+pay those sellers at all.
+
+The installed `@x402/svm` package already ships `registerExactSvmScheme(client, { signer })`,
+a one-call helper that registers v1's three flat network strings AND v2's `solana:*` wildcard
+on the same client. All three buyer files were switched to it. Requirement-selection
+preference for v2 over v1 needed no new code: `@x402/core`'s `x402HTTPClient
+.getPaymentRequiredResponse()` already prefers the v2 `PAYMENT-REQUIRED` header over a
+v1-shaped JSON body whenever a seller sends both; a test now locks that behavior in.
+Settlement receipts were confirmed (by reading both the real `@x402/svm` v1 facilitator's
+`settle()` and the owner's x402-domains seller's hand-rolled receipt shape) to already share
+field names (`success`, `transaction`, `network`, `payer`) across both versions, so the
+"normalize v1 receipts" task needed a test proving no normalization is required, not new code.
+
+Judgment call: implementing task 2 surfaced two real spend-cap bugs that only trigger on a v1
+payment, neither named in the order's 4 tasks but both block safe v1 support if left alone.
+`api/_lib/x402-spending-cap.js`'s `enforceCap` only ever checked `requirement.amount`, so every
+v1 payment (which carries `maxAmountRequired` instead) threw `spending-cap: requirement.amount
+required` and was refused outright. `mcp-bridge/src/x402-axios-client.js`'s spend-cap hook also
+only read `selectedRequirements?.amount`, defaulting to `'0'` for a v1 payment of any size,
+silently bypassing both the per-call and session ceilings instead of refusing them. Both were
+reproduced with a failing test first (`tests/x402-spending-cap-v1-amount.test.js`,
+`mcp-bridge/tests/spending-cap-v1.test.mjs`), then fixed with a one-line fallback to
+`maxAmountRequired`, then reverified green alongside every pre-existing test in both suites.
+
+DoD verified: `packages/x402-mcp/test/x402-v1-buyer.test.mjs` feeds a captured v1 402 body
+(fields mirrored from the owner's x402-domains `payments.ts`, `payTo`/`asset` replaced with the
+$THREE mint and clearly-synthetic placeholders) into `x402Client.selectPaymentRequirements()`
+and gets back a valid v1 requirement with no `payload`/`signature` present (no signing). A
+second test proves v2 wins when a seller's response carries both the v2 header and a v1 body.
+`node --test "test/**/*.test.mjs"` in `packages/x402-mcp` is 13/13 green (10 pre-existing + 3
+new); `node --test "tests/**/*.test.mjs"` in `mcp-bridge` is 14/14 green. Docs updated in
+`packages/x402-mcp/README.md`, `mcp-bridge/README.md`, and `docs/mcp-agent.md`.
+
+A broader regression pass (`tests/a2a-hire-handler.test.js`, `tests/api/mcp-wallet-provision
+.test.js`, `tests/api/mcp-agent.test.js`, `tests/x402-spending-cap-v1-amount.test.js`,
+`tests/x402-circuit-breaker.test.js`) surfaced 4 failures in 2 files unrelated to this diff
+(scope-enforcement tests in `mcp-wallet-provision.test.js` and a `tool_disabled` test in
+`mcp-agent.test.js`). Confirmed pre-existing by stashing this diff's 3 production-file edits
+out, rerunning: same 4 failures reproduced against the unmodified baseline. Restored the stash
+and left those pre-existing failures for a separate order; not in scope here.
+
+No owner-gated action in this order: `THREEWS_AGENT_PAY_ENABLED` was never touched, no live
+payment was made, and no other-crypto-project reference landed in the diff (test fixtures use
+the $THREE mint and clearly-synthetic `THREEsynthetic...` placeholders throughout), so no
+batched owner ask was needed.
+
+Commit: `0a7085020` (buyer wiring, spend-cap fixes, tests, docs, changelog), this closing
+commit (PROGRESS log, order-file removal).
