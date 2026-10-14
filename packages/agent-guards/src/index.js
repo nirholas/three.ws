@@ -16,6 +16,13 @@
 import { createHttp, ThreeWsError } from './http.js';
 
 export { ThreeWsError, PaymentRequiredError, DEFAULT_BASE_URL } from './http.js';
+export {
+	DELEGATION_DOMAIN,
+	canonicalDelegationFields,
+	delegationMessage,
+	verifyDelegationSignature,
+	checkDelegationCap,
+} from './delegation.js';
 
 // 1 SOL = 1e9 lamports — the on-chain unit the per-trade / daily-budget caps use.
 export const LAMPORTS_PER_SOL = 1_000_000_000n;

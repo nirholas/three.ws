@@ -16,14 +16,28 @@
 // no secrets and no state, and its whole job is to be reachable from an
 // anonymous BYOK chat session. Rate-limited per IP like the other open
 // compute endpoints.
+//
+// On top of the seven layers sits an eighth, opt-in one: an owner-signed
+// spend delegation (packages/agent-guards/src/delegation.js). This same
+// endpoint accepts `{ agentId, delegation, delegationSignature }` to verify
+// and store a newly signed delegation, and folds a cap check for the active
+// delegation (if any) into every call's verdict, measured from the agent's
+// REALIZED spend ledger, never the caller's claimed notional.
 
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { solUsdPrice } from '../_lib/avatar-wallet.js';
 import { GuardChain, SpendGuard, TradeGuard, createX402Hook } from '@three-ws/agent-runtime';
+import { registerDelegation, checkDelegationSpend, DelegationError } from '../_lib/agent-spend-delegation.js';
 
 const MAX_CALLS = 20;
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
+const LAMPORTS_PER_SOL = 1_000_000_000n;
+// agent_spend_delegations.agent_id is a uuid column; this anonymous endpoint
+// takes agentId as free-form caller input, so a non-uuid value must be
+// rejected before it ever reaches a query, not surfaced as a DB error.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isUuid = (v) => typeof v === 'string' && UUID_RE.test(v);
 
 // Resolve the USD notional server-side where the call shape makes it
 // unambiguous (the GuardChain's own guidance: the guard never prices token
@@ -47,6 +61,21 @@ function solAmountOf(call) {
 		default:
 			return undefined;
 	}
+}
+
+// Lamports a call would actually debit from the agent's own wallet, for
+// checking against a signed spend delegation. Prefers the SOL-denominated
+// amount resolved above; falls back to converting a resolved USD notional at
+// the same SOL/USD price already fetched for the batch. A call whose cost
+// can't be resolved in lamports is not gated by delegation (nothing to
+// measure against), same as any other unresolved-notional blind spot.
+function debitLamportsOf(call, solUsd) {
+	const sol = solAmountOf(call);
+	if (Number.isFinite(sol) && sol > 0) return BigInt(Math.round(sol * Number(LAMPORTS_PER_SOL)));
+	if (Number.isFinite(call.valueUsd) && call.valueUsd > 0 && solUsd) {
+		return BigInt(Math.round((call.valueUsd / solUsd) * Number(LAMPORTS_PER_SOL)));
+	}
+	return undefined;
 }
 
 // One TradeGuard serves every request: it is stateless and its registries are
@@ -93,7 +122,43 @@ export default wrap(async function handler(req, res) {
 
 	const rawCalls = Array.isArray(body?.calls) ? body.calls : body?.call ? [body.call] : [];
 	const calls = rawCalls.map(sanitizeCall).filter(Boolean);
+
+	// A request may register a new owner-signed delegation, preflight calls
+	// against the agent's existing one, or both in the same round trip (sign,
+	// then immediately check the next proposed call against the cap just set).
+	let delegationRegistration;
+	if (body.delegation && typeof body.delegation === 'object') {
+		const agentIdForDelegation = typeof body.agentId === 'string' ? body.agentId.slice(0, 200) : '';
+		const signature = typeof body.delegationSignature === 'string' ? body.delegationSignature : '';
+		if (!agentIdForDelegation) {
+			return error(res, 400, 'missing_agent_id', 'Registering a delegation requires `agentId`.');
+		}
+		if (!signature) {
+			return error(res, 400, 'missing_signature', 'Registering a delegation requires `delegationSignature`.');
+		}
+		if (!isUuid(agentIdForDelegation)) {
+			return error(res, 400, 'invalid_agent_id', 'agentId must be a uuid.');
+		}
+		try {
+			const row = await registerDelegation({ agentId: agentIdForDelegation, delegation: body.delegation, signature });
+			delegationRegistration = {
+				ok: true,
+				id: row.id,
+				capLamportsPerEpoch: row.cap_lamports_per_epoch,
+				epochSeconds: row.epoch_seconds,
+				notAfter: row.not_after,
+			};
+		} catch (err) {
+			if (err instanceof DelegationError) {
+				delegationRegistration = { ok: false, code: err.code, message: err.message };
+			} else {
+				throw err;
+			}
+		}
+	}
+
 	if (calls.length === 0) {
+		if (delegationRegistration) return json(res, 200, { engine: '@three-ws/agent-runtime', verdicts: [], delegationRegistration });
 		return error(res, 400, 'no_calls', 'Provide `calls: [{ identifier, apiName, arguments }]`.');
 	}
 	if (calls.length > MAX_CALLS) {
@@ -180,8 +245,37 @@ export default wrap(async function handler(req, res) {
 			valueUsd: call.valueUsd,
 			x402: call.x402,
 		});
-		verdicts.push({ apiName: call.apiName, identifier: call.identifier, verdict });
+
+		// A signed spend delegation is an additional, owner-opted-in layer on
+		// top of the seven in the chain: it can only tighten a verdict (turn an
+		// allow into a block), never loosen one the chain already blocked. The
+		// chain's own layers/blindSpots/warnings are left intact for diagnosis.
+		let delegation;
+		if (isUuid(agentId)) {
+			const debitLamports = debitLamportsOf(call, solUsd);
+			if (debitLamports !== undefined) {
+				const result = await checkDelegationSpend({ agentId, debitLamports, network: body.network || 'mainnet' });
+				if (result.gated) {
+					delegation = {
+						allow: result.allow,
+						code: result.code,
+						reason: result.reason,
+						detail: result.detail,
+					};
+					if (!result.allow && verdict.decision !== 'block') {
+						verdict.decision = 'block';
+						verdict.blockedBy = 'spend_delegation';
+						verdict.code = result.code;
+						verdict.reason = result.reason;
+					}
+				}
+			}
+		}
+
+		verdicts.push({ apiName: call.apiName, identifier: call.identifier, verdict, delegation });
 	}
 
-	return json(res, 200, { engine: '@three-ws/agent-runtime', verdicts });
+	const payload = { engine: '@three-ws/agent-runtime', verdicts };
+	if (delegationRegistration) payload.delegationRegistration = delegationRegistration;
+	return json(res, 200, payload);
 });

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-14",
+			"title": "Agents can now carry an owner-signed, offline-verifiable spend cap",
+			"summary": "A new Delegation tab in the agent wallet hub lets an owner sign a portable spend delegation with their own linked Solana wallet (a message, never a transaction): 'this agent may move at most CAP lamports per EPOCH, until NOT_AFTER.' The signed envelope is plain text and the verification math is a zero-dependency function any outside counterparty can run themselves (packages/agent-guards, spec in its README) to confirm the authorization without trusting three.ws's say-so. three.ws enforces the same cap server-side on every call through POST /api/agent/guard, measured from the agent wallet's REALIZED spend in the custody ledger rather than the agent's own claim, so an exact-output trade that ends up costing more than advertised still can't slip past the ceiling. A replayed nonce, an expired delegation, or a signature from the wrong wallet is rejected with a specific reason.",
+			"tags": [
+				"feature",
+				"security"
+			],
+			"link": "/docs/agent-wallet-api"
+		},
+		{
+			"date": "2026-10-14",
 			"title": "The pre-push guard now catches a leaked Solana secret key, and withdrawals warn before a sweeper bot drains them",
 			"summary": "scripts/check-secrets.mjs, the hook that blocks a push carrying a credential, now decodes every 86-90 character base58 run in added content and flags it only when the first 32 bytes derive the embedded public key in the last 32 bytes via Ed25519, catching a real Solana keypair secret while leaving the repo's thousands of genuine 64-byte transaction signatures untouched. Separately, the agent wallet's Withdraw tab now reads a destination's recent on-chain history before you send: a wallet that repeatedly drains to near-zero within seconds of receiving funds, the sweeper-bot fingerprint, surfaces a blocking warning on the confirm screen and again server-side if you retry, so a sweeper bot can't just wait for the preview to go stale.",
 			"tags": [

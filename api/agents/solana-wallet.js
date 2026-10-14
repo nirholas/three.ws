@@ -42,6 +42,7 @@ import {
 	describePolicyRules, backtestPolicy, syntheticProbes, normalizePolicyRules, MAX_RULES,
 } from '../_lib/spend-policy-rules.js';
 import { compilePolicyFromText } from '../_lib/spend-policy-compiler.js';
+import { registerDelegation, getActiveDelegation, DelegationError } from '../_lib/agent-spend-delegation.js';
 // SOL-outflow spend policy enforced on agent-signed launches/buys/swaps. Exposed
 // read-only on the limits GET so the launch console can show the real ceiling.
 import { resolveSpendPolicy } from '../_lib/agent-spend-policy.js';
@@ -1341,6 +1342,59 @@ async function handlePolicy(req, res, id) {
 		console.warn('[policy] post-save backtest failed', e?.message);
 	}
 	return json(res, 200, { data: { policy: saved, readback: describePolicyRules(saved), backtest } });
+}
+
+// ── signed spend delegation ────────────────────────────────────────────────────
+// Owner-only. The owner's cap here is a SIGNATURE, not a session write: the
+// browser prompts the owner's own wallet (Wallet Standard `solana:signMessage`,
+// never a transaction) for the exact bytes `delegationMessage` builds, and this
+// endpoint stores the result after re-verifying it (api/_lib/agent-spend-delegation.js).
+// The owner session gate below is a convenience for this surface, not the real
+// security boundary: that is the Ed25519 check, so the exact same delegation
+// can also be registered through the anonymous POST /api/agent/guard.
+//
+//   GET  /delegation   the active delegation on file (or null)
+//   POST /delegation { delegation, delegationSignature }   verify + store a newly signed one
+const DELEGATION_ERROR_STATUS = {
+	invalid_delegation: 400,
+	expired_delegation: 400,
+	agent_not_found: 404,
+	wrong_signer: 403,
+	replayed_nonce: 409,
+};
+async function handleDelegation(req, res, id) {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET', 'POST'])) return;
+
+	const owned = await loadOwnedWallet(req, res, id);
+	if (owned.error) return;
+	const { auth } = owned;
+
+	const rl = await limits.walletRead(auth.userId);
+	if (!rl.success) return rateLimited(res, rl);
+
+	if (req.method === 'GET') {
+		const active = await getActiveDelegation(id);
+		return json(res, 200, { data: { delegation: active } });
+	}
+
+	// POST: the owner already signed in their wallet; this just verifies + stores.
+	if (!(await requireCsrf(req, res, auth.userId))) return;
+	let body;
+	try {
+		body = await readJson(req);
+	} catch (e) {
+		return error(res, e?.status === 415 ? 415 : 400, 'bad_request', e?.message || 'invalid request body');
+	}
+	try {
+		const row = await registerDelegation({ agentId: id, delegation: body?.delegation, signature: body?.delegationSignature });
+		return json(res, 200, { data: { delegation: row } });
+	} catch (e) {
+		if (e instanceof DelegationError) {
+			return error(res, DELEGATION_ERROR_STATUS[e.code] || 400, e.code, e.message);
+		}
+		throw e;
+	}
 }
 
 // ── vanity grind + custodial swap ──────────────────────────────────────────────
@@ -2681,6 +2735,7 @@ export default async function handler(req, res, id, action) {
 		return mod.handleGuard(req, res, id);
 	}
 	if (action === 'policy') return handlePolicy(req, res, id);
+	if (action === 'delegation') return handleDelegation(req, res, id);
 	if (action === 'tip') return handleTip(req, res, id);
 	if (action === 'royalty') return handleRoyalty(req, res, id);
 	if (action === 'stream') return handleStream(req, res, id);

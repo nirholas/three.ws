@@ -18,6 +18,7 @@
   <a href="#quick-start">Quick start</a> ·
   <a href="#api">API</a> ·
   <a href="#how-it-works">How it works</a> ·
+  <a href="#spec-signed-spend-delegation">Signed spend delegation</a> ·
   <a href="https://three.ws">three.ws</a>
 </p>
 
@@ -284,6 +285,121 @@ message — never a thrown 500. `checkTrade` surfaces these on `decision.reason`
 `{ amount_lamports, cap_lamports }`, `daily_budget` returns
 `{ spent_lamports, amount_lamports, budget_lamports }` — so a UI can render the
 exact overage without re-deriving it.
+
+## Spec: signed spend delegation
+
+Every cap above is **configuration**: the owner sets a number through the API,
+and the platform trusts whoever is authenticated as that owner to have set it.
+A signed spend delegation is the stronger, portable form of the same idea: the
+owner signs a cap with their own wallet (a message, never a transaction), and
+the signature itself is the authorization. Anyone, not just three.ws, can
+verify it offline; the platform additionally enforces it against the agent's
+*realized* spend, never a caller's claim.
+
+### Format
+
+```ts
+interface SpendDelegation {
+  agent: string;                              // the agent's id
+  owner: string;                              // owner's base58 Solana address
+  cap_lamports_per_epoch: string | number;     // max realized spend per epoch
+  epoch_seconds: string | number;              // rolling window length
+  not_after: string | number;                  // unix seconds; the delegation's hard expiry
+  nonce: string;                               // unique per (agent, nonce) forever
+}
+```
+
+### Canonical message
+
+`delegationMessage(delegation)` serializes the six fields above, in this exact
+order, one per line, under a fixed domain-separation header so a signature
+can never be replayed against a different protocol that happens to share a
+field name:
+
+```
+three.ws/agent-spend-delegation/v1
+agent: <agent>
+owner: <owner>
+cap_lamports_per_epoch: <cap_lamports_per_epoch>
+epoch_seconds: <epoch_seconds>
+not_after: <not_after>
+nonce: <nonce>
+```
+
+The owner signs exactly these bytes with their wallet's `signMessage` (the
+Wallet Standard `solana:signMessage` feature, supported by every major
+Solana wallet). The result is a base64 Ed25519 signature over the message.
+
+### Verification
+
+```js
+import { delegationMessage, verifyDelegationSignature, checkDelegationCap } from '@three-ws/agent-guards';
+
+const ok = verifyDelegationSignature(delegation, signatureBase64);
+// true only if `signatureBase64` is a valid Ed25519 signature, by the
+// keypair for `delegation.owner`, over delegationMessage(delegation).
+```
+
+`verifyDelegationSignature` has zero dependencies: it decodes the base58
+owner address itself and verifies with Node's built-in `node:crypto`, so any
+JS runtime can check a delegation offline without pulling in a Solana SDK.
+
+### Cap check
+
+```js
+const result = checkDelegationCap({
+  delegation,
+  epochSpentLamports,   // realized spend already incurred this epoch
+  debitLamports,        // the proposed action's cost
+});
+// { allow: false, code: 'DELEGATION_CAP_EXCEEDED', reason, detail } or
+// { allow: false, code: 'DELEGATION_EXPIRED', reason } or
+// { allow: true, code: 'OK', reason: null }
+```
+
+`epochSpentLamports` must come from the **realized** ledger (post-settlement
+actuals), not the sum of what the agent *intended* to spend: an exact-output
+trade that settles for more than quoted must still be caught. On the
+platform, that ledger is `agent_custody_events`; `checkDelegationCap` itself
+is venue-agnostic and takes the number as an argument.
+
+### Enforcement on three.ws
+
+`POST /api/agent/guard` both registers a delegation and enforces the active
+one against every proposed call in the same request:
+
+```js
+// Register (the owner has just signed `delegation` in their wallet):
+await fetch('https://three.ws/api/agent/guard', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ agentId, delegation, delegationSignature }),
+});
+// → { delegationRegistration: { ok: true, id, capLamportsPerEpoch, epochSeconds, notAfter } }
+
+// Preflight a call against it:
+await fetch('https://three.ws/api/agent/guard', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ agentId, calls: [{ identifier: 'solana_transfer', arguments: { token: 'SOL', amount: 0.3 } }] }),
+});
+// → { verdicts: [{ verdict, delegation: { allow, code, reason, detail } }] }
+```
+
+A nonce is unique per agent **forever** (a Postgres unique constraint, not a
+time window): once registered, resubmitting the exact same signed envelope is
+rejected as `replayed_nonce`, even long after it expires or is superseded.
+Registration also verifies `delegation.owner` really is that agent's linked
+owner wallet (not just any valid signature): a delegation can only ever be
+signed by the account that actually owns the agent.
+
+| Export | Purpose |
+|---|---|
+| `DELEGATION_DOMAIN` | The fixed first line of every delegation message (`three.ws/agent-spend-delegation/v1`). |
+| `canonicalDelegationFields(delegation)` | Validate + stringify the six required fields. Throws `TypeError` if any is missing. |
+| `delegationMessage(delegation)` | The exact UTF-8 bytes the owner signs. |
+| `verifyDelegationSignature(delegation, signature)` | `true`/`false`. Zero dependencies. |
+| `checkDelegationCap({ delegation, nowSec?, epochSpentLamports, debitLamports })` | The enforcement decision: `{ allow, code, reason, detail }`. |
 
 ## Examples
 

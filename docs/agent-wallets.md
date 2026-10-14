@@ -55,7 +55,7 @@ Two asymmetries are deliberate:
 
 Coin-launch and bonding-curve activity carries an additional SOL-denominated policy (`max_sol_per_tx`, `daily_sol_cap`, an optional `allowed_mints` allowlist). A freshly provisioned agent that has never been configured defaults to **1 SOL per transaction and 5 SOL per rolling day**, so a stolen session token cannot drain it.
 
-On top of the numeric caps sit two additive layers, each of which can only ever *narrow* a spend, never widen it: [natural-language spend rules](financial-controls.md) that an LLM authors and deterministic code enforces, and a behavioral anomaly guard that freezes the wallet when a spend doesn't look like the agent's normal behavior.
+On top of the numeric caps sit three additive layers, each of which can only ever *narrow* a spend, never widen it: [natural-language spend rules](financial-controls.md) that an LLM authors and deterministic code enforces, a behavioral anomaly guard that freezes the wallet when a spend doesn't look like the agent's normal behavior, and an owner-signed, epoch-bounded [spend delegation](agent-wallet-api.md#signed-spend-delegation-a-portable-offline-verifiable-cap) that any outside counterparty can verify offline, enforced against the wallet's realized ledger spend rather than a self-reported amount.
 
 ### The audit trail
 
@@ -63,7 +63,7 @@ Every spend writes a row to the custody event ledger — amount, USD value, dest
 
 ## Where owners manage it
 
-The **Agent Wallet Hub** lives at `/agent/:id/wallet`. Owners see all 23 sections; a visitor to a public agent page sees a read-only view: Balance, Deposit, Trust, Trade, and Pulse. Everything a visitor sees is public on-chain data, so the balance a visitor reads is the same live figure the owner reads. The transaction feed is the exception: it is owner-only server-side, so the visitor's Balance tab says so and links to the block explorer instead. A network selector switches every read and write between mainnet and devnet.
+The **Agent Wallet Hub** lives at `/agent/:id/wallet`. Owners see all 26 sections; a visitor to a public agent page sees a read-only view: Balance, Deposit, Trust, Trade, and Pulse. Everything a visitor sees is public on-chain data, so the balance a visitor reads is the same live figure the owner reads. The transaction feed is the exception: it is owner-only server-side, so the visitor's Balance tab says so and links to the block explorer instead. A network selector switches every read and write between mainnet and devnet.
 
 `/agent-wallet` is the same hub reached without naming an agent. It resolves the signed-in owner's agents: one agent opens its hub directly, several render a picker, none offers a route to create the first one, and a signed-out visitor is asked to sign in.
 
@@ -76,6 +76,7 @@ Key endpoints:
 - `GET`/`PUT /api/agents/:id/solana/limits`: read and set the spend policy
 - `POST /api/agents/:id/solana/withdraw`: sweep an asset out
 - `GET /api/agents/:id/solana/guard` — anomaly guard state and flagged activity
+- `GET`/`POST /api/agents/:id/solana/delegation`: read, or verify-and-store, an owner-signed [spend delegation](agent-wallet-api.md#signed-spend-delegation-a-portable-offline-verifiable-cap)
 
 Full request/response shapes are in the [REST API reference](api-reference.md).
 

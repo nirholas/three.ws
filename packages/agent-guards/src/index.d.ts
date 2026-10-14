@@ -240,3 +240,39 @@ export interface GuardsClient {
 
 export declare function createGuards(options?: GuardsClientOptions): GuardsClient;
 export declare function guards(agentId: string, options?: AgentBindingOptions): AgentGuards;
+
+// ── signed spend delegation ────────────────────────────────────────────────
+
+export interface SpendDelegation {
+	agent: string;
+	owner: string;
+	cap_lamports_per_epoch: string | number | bigint;
+	epoch_seconds: string | number;
+	not_after: string | number;
+	nonce: string;
+}
+
+export type DelegationCanonicalFields = Record<
+	'agent' | 'owner' | 'cap_lamports_per_epoch' | 'epoch_seconds' | 'not_after' | 'nonce',
+	string
+>;
+
+export type DelegationCheckCode = 'OK' | 'DELEGATION_EXPIRED' | 'DELEGATION_CAP_EXCEEDED';
+
+export interface DelegationCheckResult {
+	allow: boolean;
+	code: DelegationCheckCode;
+	reason: string | null;
+	detail?: { spentLamports: string; debitLamports: string; capLamportsPerEpoch: string };
+}
+
+export declare const DELEGATION_DOMAIN: string;
+export declare function canonicalDelegationFields(d: SpendDelegation): DelegationCanonicalFields;
+export declare function delegationMessage(d: SpendDelegation): string;
+export declare function verifyDelegationSignature(delegation: SpendDelegation, signature: string): boolean;
+export declare function checkDelegationCap(args: {
+	delegation: SpendDelegation;
+	nowSec?: number;
+	epochSpentLamports: bigint | number | string;
+	debitLamports: bigint | number | string;
+}): DelegationCheckResult;

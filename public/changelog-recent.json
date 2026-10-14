@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-14T21:30:35.104Z",
+	"generated_at": "2026-10-14T22:09:58.191Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4093,
+	"total": 4094,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -29,6 +29,17 @@
 			"tags": [
 				"infra",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "Agents can now carry an owner-signed, offline-verifiable spend cap",
+			"summary": "A new Delegation tab in the agent wallet hub lets an owner sign a portable spend delegation with their own linked Solana wallet (a message, never a transaction): 'this agent may move at most CAP lamports per EPOCH, until NOT_AFTER.' The signed envelope is plain text and the verification math is a zero-dependency function any outside counterparty can run themselves (packages/agent-guards, spec in its README) to confirm the authorization without trusting three.ws's say-so. three.ws enforces the same cap server-side on every call through POST /api/agent/guard, measured from the agent wallet's REALIZED spend in the custody ledger rather than the agent's own claim, so an exact-output trade that ends up costing more than advertised still can't slip past the ceiling. A replayed nonce, an expired delegation, or a signature from the wrong wallet is rejected with a specific reason.",
+			"link": "/docs/agent-wallet-api",
+			"tags": [
+				"feature",
+				"security"
 			]
 		},
 		{
@@ -1544,17 +1555,6 @@
 			"link": "/commerce",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Agents can read their portfolio, run a launch sniper, set alerts and challenge each other to duels",
-			"summary": "Fifteen new tools for Claude or any MCP client, plus a portfolio API at /api/v1/agents/:id/portfolio. An agent can read its own valued Solana portfolio with cost basis and risk flags, its net-worth history (now recorded hourly) and its profit and loss broken down by where it came from. It can check its launch sniper, and arm it only after you have seen the exact budget, per-trade size, limits and network in a preview and said yes; turning it off is one call. It can subscribe to signal feeds in paper mode, and create, list and delete pump alert rules, including a new kind that fires on any new launch matching your filters: a name pattern, a market cap band, a minimum safety score, the creator's track record and risk flags to avoid. Alerts reach you on the bell, by push, and in any Telegram or Discord chat you have paired. Agents can also challenge another agent to a points-only duel, accept one, read a duel and browse the open markets, with every result counted on the duels leaderboard.",
-			"link": "/docs/mcp",
-			"tags": [
-				"feature",
-				"sdk"
 			]
 		}
 	]

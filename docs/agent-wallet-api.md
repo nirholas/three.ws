@@ -1,6 +1,6 @@
 # Agent wallet control API
 
-Every three.ws agent owns one custodial **Solana** wallet. Seven owner-only HTTP surfaces hang off it, and this is their developer reference: exact routes, exact request and response JSON, exact error codes, and a working curl call for each.
+Every three.ws agent owns one custodial **Solana** wallet. Eight owner-only HTTP surfaces hang off it, and this is their developer reference: exact routes, exact request and response JSON, exact error codes, and a working curl call for each.
 
 This document is the API reference the surrounding docs deliberately leave out. Read those first for the "why":
 
@@ -12,7 +12,7 @@ This document is the API reference the surrounding docs deliberately leave out. 
 
 ## Orientation
 
-All seven surfaces address the same custodial Solana keypair, obey the same owner gate, and are clamped by the same spend policy. None of them can widen authority: each one either reads the wallet, or narrows and schedules what the wallet is already allowed to do.
+All eight surfaces address the same custodial Solana keypair, obey the same owner gate, and are clamped by the same spend policy. None of them can widen authority: each one either reads the wallet, or narrows and schedules what the wallet is already allowed to do.
 
 | Surface | Route root | What it controls |
 |---|---|---|
@@ -23,6 +23,7 @@ All seven surfaces address the same custodial Solana keypair, obey the same owne
 | Portfolio | `/api/agents/:id/portfolio` | FIFO cost basis, realized and unrealized P&L by source, live risk metrics |
 | Recovery | `/api/agents/:id/recovery` | Guardians, approval threshold, dead-man check-in, inheritance |
 | Solana guard | `/api/agents/:id/solana/guard` | The behavioral anomaly baseline, its sensitivity, and freeze adjudication |
+| Spend delegation | `/api/agents/:id/solana/delegation` | The owner-signed, epoch-bounded spend cap verified against realized ledger spend |
 
 The shared model, in one paragraph. A caller is resolved to a user id from either a session cookie or a bearer token. That user must own the agent, or the surface refuses (recovery is the one exception: guardians and the beneficiary get a scoped view). Every mutation is CSRF-gated for cookie callers. Anything that can move funds runs through the shared spend guards in [`api/_lib/agent-trade-guards.js`](../api/_lib/agent-trade-guards.js), so the wallet-wide policy (`per_tx_usd`, `daily_usd`, `per_counterparty_daily_usd`, `withdraw_allowlist` (the [destination whitelist](./destination-whitelist.md), edited through `/api/wallet-whitelist`), `frozen`, `require_capabilities`) is enforced at the signing boundary, not per feature. A scheduled order, an armed intent, an autopilot rule, and an autonomous agent-to-agent payment are therefore all subject to the same ceilings and the same freeze as a manual trade. That enforcement fails closed on its inputs: a caller that hands the guard neither a pre-read policy nor the agent's meta gets the agent's real policy read from its row, and a spend for an agent that no longer exists is refused rather than defaulted to an unrestricted wallet. See [autonomous agent-to-agent payments](./a2a-payments.md) for the policy fields, the kill switch, and the receipts they leave behind.
 
@@ -1206,6 +1207,49 @@ curl -s -X POST "https://three.ws/api/agents/$AGENT_ID/solana/guard" \
   -H 'content-type: application/json' \
   -d '{"action":"approve","event_id":"4417"}'
 ```
+
+## Signed spend delegation: a portable, offline-verifiable cap
+
+Source: [`api/_lib/agent-spend-delegation.js`](../api/_lib/agent-spend-delegation.js), dispatched from [`api/agents/solana-wallet.js`](../api/agents/solana-wallet.js). Canonical format, message builder, and the zero-dependency verify/cap math: [`packages/agent-guards/src/delegation.js`](../packages/agent-guards/src/delegation.js) (full spec in that package's [README](../packages/agent-guards/README.md#spec-signed-spend-delegation)). Owner-facing UI: the Delegation tab in the agent wallet hub ([`src/agent-wallet-hub/tabs/delegation.js`](../src/agent-wallet-hub/tabs/delegation.js)).
+
+A delegation is a statement the owner signs with their own linked Solana wallet, never a transaction: *"agent X may move at most CAP lamports per EPOCH_SECONDS, until NOT_AFTER."* Unlike every other control on this page, it is not three.ws-specific: the signed envelope is plain text, and `verifyDelegationSignature` is a ~100-line, dependency-free function any counterparty can run themselves to confirm the authorization without trusting three.ws's say-so. three.ws also enforces the same cap server-side, on every preflight through [`POST /api/agent/guard`](#preflight-guard-enforcement), measured from the agent wallet's REALIZED spend in `agent_custody_events` rather than the agent's own claim about what an action will cost, so an exact-output trade that ends up costing more than advertised still cannot slip past the ceiling.
+
+| Method | Route | Purpose |
+|---|---|---|
+| `GET` | `/solana/delegation` | The current delegation on file (any status), or `null` |
+| `POST` | `/solana/delegation` | Verify and store a delegation the owner already signed in their wallet |
+
+Both are owner-gated and rate-limited; `POST` is CSRF-gated. This route is a convenience layer for the owner-facing UI, not the security boundary: the real authorization check is the Ed25519 signature, which is why the lower-level preflight endpoint below can accept the same envelope anonymously.
+
+### GET /solana/delegation
+
+```json
+{ "data": { "delegation": {
+  "id": "…", "agent_id": "…", "owner_wallet": "7Xy…",
+  "cap_lamports_per_epoch": "500000000", "epoch_seconds": 86400,
+  "not_after": "2026-11-13T00:00:00.000Z", "nonce": "a1b2c3…",
+  "status": "active", "created_at": "2026-10-14T18:00:00.000Z"
+} } }
+```
+
+`delegation` is `null` when none is on file. Note that a time-expired row is still returned (its `not_after` is simply in the past) rather than disappearing: a delegation that lapsed is a fact the owner should see, not silence.
+
+### POST /solana/delegation
+
+Body: `{ "delegation": { "agent", "owner", "cap_lamports_per_epoch", "epoch_seconds", "not_after", "nonce" }, "delegationSignature": "<base58 or base64>" }`. Every delegation field is carried as a decimal string; see the package README for the exact canonical message those six fields serialize to before signing.
+
+```bash
+curl -s -X POST "https://three.ws/api/agents/$AGENT_ID/solana/delegation" \
+  -H "authorization: Bearer $THREE_WS_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"delegation":{"agent":"'"$AGENT_ID"'","owner":"7Xy…","cap_lamports_per_epoch":"500000000","epoch_seconds":"86400","not_after":"1794700800","nonce":"a1b2c3d4"},"delegationSignature":"base64sig…"}'
+```
+
+Rejections are specific, each a `DelegationError` code: `invalid_delegation` (malformed field), `expired_delegation` (`not_after` already in the past), `agent_not_found` (no owner wallet linked to this agent), `wrong_signer` (the signature does not verify against the agent's linked owner wallet), `replayed_nonce` (this exact `agent_id` + `nonce` pair was already registered, whatever its current status). A nonce is permanently retired on first use: a captured signed envelope can never be resubmitted to reset the epoch counter or re-extend an authorization past what was actually signed.
+
+### Preflight guard enforcement
+
+[`POST /api/agent/guard`](../api/agent/guard.js) is the one endpoint that actually enforces a delegation's cap. It accepts the same `{ delegation, delegationSignature }` pair inline (registering or re-registering before evaluating `calls`) and, for every proposed call, resolves the call's lamport cost and rejects with `blockedBy: "spend_delegation"` and `code: "DELEGATION_CAP_EXCEEDED"` or `"DELEGATION_EXPIRED"` when the active delegation would be breached. The delegation layer only ever *tightens* an `allow` into a `block`; if the guard's seven existing layers already blocked the call for another reason, the delegation check never runs or overrides it.
 
 ## Related
 
