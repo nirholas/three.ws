@@ -43,6 +43,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createPrivateKey, createPublicKey } from 'node:crypto';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
@@ -65,6 +66,56 @@ function isPublicPem(file) {
 	try {
 		const blocks = readFileSync(path.join(root, file), 'utf8').match(/-----BEGIN [A-Z ]+-----/g) || [];
 		return blocks.length > 0 && blocks.every((b) => b === '-----BEGIN PUBLIC KEY-----');
+	} catch {
+		return false;
+	}
+}
+
+// Most tools print a Solana secret key as base58, not the 64-byte JSON array
+// the solana-keypair rule above catches, so that form sails straight through.
+// But the repo also carries thousands of real base58 strings that decode to
+// exactly 64 bytes without being a secret at all (transaction signatures are
+// the common case), so length alone is not a signal: decoding a 64-byte
+// ed25519 secret key is a 32-byte seed followed by the 32-byte public key it
+// derives, and nothing else that happens to be 64 bytes satisfies that
+// relationship. Dependency-free (Node stdlib only), same reasoning as
+// api/_lib/oin-verify.js: PKCS#8-wrap the seed, let OpenSSL derive the public
+// key, and compare.
+const B58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+const B58_INDEX = new Map([...B58_ALPHABET].map((c, i) => [c, i]));
+const ED25519_SEED_PKCS8_PREFIX = Buffer.from('302e020100300506032b657004220420', 'hex');
+
+function base58Decode(str) {
+	const bytes = [0];
+	for (const ch of str) {
+		const val = B58_INDEX.get(ch);
+		if (val === undefined) return null;
+		let carry = val;
+		for (let j = 0; j < bytes.length; j++) {
+			carry += bytes[j] * 58;
+			bytes[j] = carry & 0xff;
+			carry >>= 8;
+		}
+		while (carry > 0) {
+			bytes.push(carry & 0xff);
+			carry >>= 8;
+		}
+	}
+	for (let k = 0; k < str.length && str[k] === '1'; k++) bytes.push(0);
+	return Buffer.from(bytes.reverse());
+}
+
+function isDerivableEd25519SecretKey(value) {
+	const bytes = base58Decode(value);
+	if (!bytes || bytes.length !== 64) return false;
+	const seed = bytes.subarray(0, 32);
+	const claimedPub = bytes.subarray(32, 64);
+	try {
+		const der = Buffer.concat([ED25519_SEED_PKCS8_PREFIX, seed]);
+		const priv = createPrivateKey({ key: der, format: 'der', type: 'pkcs8' });
+		const pubDer = createPublicKey(priv).export({ format: 'der', type: 'spki' });
+		const derivedPub = Buffer.from(pubDer).subarray(-32);
+		return derivedPub.length === 32 && derivedPub.equals(claimedPub);
 	} catch {
 		return false;
 	}
@@ -184,6 +235,15 @@ const CONTENT_RULES = [
 		id: 'solana-keypair',
 		what: 'a Solana keypair serialized as a 64-byte array',
 		find: /\[\s*(?:\d{1,3}\s*,\s*){63}\d{1,3}\s*\]/,
+	},
+	{
+		id: 'solana-keypair-base58',
+		what: 'a Solana keypair secret key, base58 encoded (the seed derives the embedded public key)',
+		// Pre-filtered to a maximal run of 86-90 base58 characters (a 64-byte
+		// value's base58 length) before the expensive decode-and-derive check
+		// ever runs, so the scan stays cheap on a tree full of unrelated base58.
+		find: /(?<![1-9A-HJ-NP-Za-km-z])[1-9A-HJ-NP-Za-km-z]{86,90}(?![1-9A-HJ-NP-Za-km-z])/,
+		except: (value) => !isDerivableEd25519SecretKey(value),
 	},
 	{
 		id: 'ethereum-private-key',
