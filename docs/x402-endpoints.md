@@ -307,6 +307,36 @@ directory.
 | `/api/x402/verify-receipt`         | free     | Recomputes a paid response's SHA-256 attestation and confirms a settlement tx on-chain. See [x402 dev tools](x402-dev-tools.md).                                       |
 | `/api/x402/inference-verify`       | free     | Audits a metered-inference receipt from a paid `llm-proxy` call: per-check verdicts for the issuer signature, the node's response signature, prompt/response hash re-derivation from raw text, on-chain settlement confirmation, and whether the issuer matches the platform's published signers. See [Run an inference node](inference-node-operator.md). |
 
+## Live public-data endpoints (the keyless x402-suite ports)
+
+Eight endpoints ported from the owner's `x402-suite` that need no API key
+anywhere in the chain: no upstream key, no three.ws key. Each has a free
+daily per-IP quota ahead of the paid x402 lane (fails closed to the paid rail
+on a Redis outage, never opens an unmetered proxy), and every upstream call
+sends a polite identifying User-Agent. Each also has a secondary, always-paid
+route that never runs a free lane. Upstream outages surface as `502`, never a
+fabricated or cached-as-live result.
+
+| Endpoint                         | Default | Free quota (per IP/day) | Returns                                                                                      |
+| --------------------------------- | ------- | ------------------------ | --------------------------------------------------------------------------------------------- |
+| `/api/x402/weather-guard-forecast` | $0.001  | 20                       | 24h hourly forecast + active severe-weather alerts for any lat/lon, live from Open-Meteo with a US National Weather Service fallback. |
+| `/api/x402/weather-guard-decision` | $0.002  | always paid              | Go/no-go weather decision for an outdoor plan window, reasoned over the same forecast.        |
+| `/api/x402/carbon-now`             | $0.001  | 20                       | Current UK grid carbon intensity (actual + forecast, generation mix by fuel).                 |
+| `/api/x402/carbon-best-window`     | $0.002  | always paid              | Lowest-carbon window to run a flexible load in the next 48h, from the UK Carbon Intensity forecast. |
+| `/api/x402/domains-check`          | $0.001  | 15                       | Live domain registration status, registrar, dates and nameservers via RDAP.                   |
+| `/api/x402/domains-bulk`           | $0.003  | always paid              | RDAP lookup across up to 20 domains in one call.                                               |
+| `/api/x402/research-search`        | $0.002  | 10                       | Academic paper search across arXiv, Crossref and Semantic Scholar.                             |
+| `/api/x402/research-paper`         | $0.003  | always paid              | Full metadata + abstract for one paper by DOI or arXiv id.                                     |
+| `/api/x402/research-bibliography`  | $0.005  | always paid              | Formatted bibliography (APA/MLA/BibTeX) for a list of papers.                                  |
+| `/api/x402/books-search`           | $0.001  | 10                       | Book search across OpenLibrary and Project Gutenberg, with cover art and ebook access.          |
+| `/api/x402/books-read`             | $0.002  | always paid              | Full public-domain text (Gutenberg) or borrow/preview link for one edition.                    |
+| `/api/x402/news-wire-query`        | $0.003  | 5                        | Global news search over the last 15 minutes to 3 months via GDELT DOC 2.0, with a volume timeline. |
+| `/api/x402/news-wire-pulse`        | $0.002  | always paid              | New articles for a saved query since a cursor, for agents polling without re-fetching. GDELT throttles this shared IP to ~1 request/5s; calls are serialized and retried, never hammered. |
+| `/api/x402/transit-plan`           | $0.002  | 20                       | Direct + one-transfer trip itineraries between two MBTA stops/stations/coordinates, with realtime prediction overlay. |
+| `/api/x402/transit-delays`         | $0.001  | always paid              | Realtime vs scheduled delay snapshot for a stop, with a per-arrival breakdown and verdict.      |
+| `/api/x402/places-search`          | $0.002  | 15                       | Points of interest near a coordinate from OpenStreetMap (Overpass), optionally filtered by category. |
+| `/api/x402/places-detail`          | $0.002  | always paid              | Full live OpenStreetMap record for one place by id. No fixture fallback: a place with no third-party review enrichment configured returns only the real OSM record, never an invented review. |
+
 ## $THREE only
 
 Any endpoint that references a coin references **$THREE**

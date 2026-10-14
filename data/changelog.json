@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-14",
+			"title": "8 keyless live-data services join the x402 paid API: weather, grid carbon, domains, research, books, news, transit, places",
+			"summary": "three.ws's x402 surface grows 17 new routes, each needing no API key anywhere in the chain (not an upstream key, not a three.ws key), ported natively onto three.ws's own Solana facilitator so they settle, receipt, and discover exactly like every other paid endpoint: Weather Guard (24h forecast + severe alerts from Open-Meteo, NWS fallback), Carbon (UK grid carbon intensity + lowest-carbon scheduling window), Domains (live RDAP registration lookups, single and bulk), Research (paper search across arXiv/Crossref/Semantic Scholar, metadata, bibliographies), Books (OpenLibrary + Project Gutenberg search and full-text reads), News Wire (global news search and polling over GDELT DOC 2.0), Transit (MBTA GTFS trip planning and realtime delay snapshots), and Places (OpenStreetMap Overpass point-of-interest search and detail). Each service's discovery route runs a free daily per-IP quota before falling through to the x402 pay-per-call lane, fails closed to the paid rail rather than opening an unmetered proxy if the quota store is unreachable, and every upstream call sends an identifying User-Agent. No fixture or mocked fallback anywhere in the set: an upstream outage answers 502, and the one route whose source suite offers a fake-data fallback when unconfigured (Places Detail's review enrichment) ships without that fallback, returning only the real OpenStreetMap record. All 17 routes appear in GET /openapi.json and GET /.well-known/x402.json with Solana listed first in every payment challenge.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/x402-endpoints"
+		},
+		{
+			"date": "2026-10-14",
 			"title": "Agents can now carry an owner-signed, offline-verifiable spend cap",
 			"summary": "A new Delegation tab in the agent wallet hub lets an owner sign a portable spend delegation with their own linked Solana wallet (a message, never a transaction): 'this agent may move at most CAP lamports per EPOCH, until NOT_AFTER.' The signed envelope is plain text and the verification math is a zero-dependency function any outside counterparty can run themselves (packages/agent-guards, spec in its README) to confirm the authorization without trusting three.ws's say-so. three.ws enforces the same cap server-side on every call through POST /api/agent/guard, measured from the agent wallet's REALIZED spend in the custody ledger rather than the agent's own claim, so an exact-output trade that ends up costing more than advertised still can't slip past the ceiling. A replayed nonce, an expired delegation, or a signature from the wrong wallet is rejected with a specific reason.",
 			"tags": [

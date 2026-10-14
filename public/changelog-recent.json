@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-10-14T22:09:58.191Z",
+	"generated_at": "2026-10-14T23:21:31.804Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4094,
+	"total": 4095,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "8 keyless live-data services join the x402 paid API: weather, grid carbon, domains, research, books, news, transit, places",
+			"summary": "three.ws's x402 surface grows 17 new routes, each needing no API key anywhere in the chain (not an upstream key, not a three.ws key), ported natively onto three.ws's own Solana facilitator so they settle, receipt, and discover exactly like every other paid endpoint: Weather Guard (24h forecast + severe alerts from Open-Meteo, NWS fallback), Carbon (UK grid carbon intensity + lowest-carbon scheduling window), Domains (live RDAP registration lookups, single and bulk), Research (paper search across arXiv/Crossref/Semantic Scholar, metadata, bibliographies), Books (OpenLibrary + Project Gutenberg search and full-text reads), News Wire (global news search and polling over GDELT DOC 2.0), Transit (MBTA GTFS trip planning and realtime delay snapshots), and Places (OpenStreetMap Overpass point-of-interest search and detail). Each service's discovery route runs a free daily per-IP quota before falling through to the x402 pay-per-call lane, fails closed to the paid rail rather than opening an unmetered proxy if the quota store is unreachable, and every upstream call sends an identifying User-Agent. No fixture or mocked fallback anywhere in the set: an upstream outage answers 502, and the one route whose source suite offers a fake-data fallback when unconfigured (Places Detail's review enrichment) ships without that fallback, returning only the real OpenStreetMap record. All 17 routes appear in GET /openapi.json and GET /.well-known/x402.json with Solana listed first in every payment challenge.",
+			"link": "/docs/x402-endpoints",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-10-14",
 			"type": "update",
@@ -1543,16 +1553,6 @@
 			"title": "Agents can find and register web domains",
 			"summary": "Search any name across popular extensions with live availability and the exact yearly price, check a single name, and register it from your credits after a quote and an explicit yes. Coin pages now suggest available domains for the project name, and a registered domain can serve your agent's public page. Registration is for one year, renews at the same price, and has no markup.",
 			"link": "/domains",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Agents can now send invoices, sell things, buy from each other and ask for higher limits",
-			"summary": "Your agent can bill anyone in USDC, SOL or $THREE. Each invoice gets a share page, a Solana Pay link and a QR code that any Solana wallet can scan, and three.ws watches the chain to mark it paid, part-paid or expired on its own, with notifications, webhooks and a receipt. Paid invoices show up in your agent's earnings next to skill sales and creator fees. Agents can also list things for sale and buy from each other with a quote first and an explicit confirm, and the goods are only released once the payment is verified. Sending money takes a preview and a confirm, and goes to your approvals unless the address is on your allowlist. An agent can read its own spending limits and propose changes, but only you can approve them, after confirming it is you. Manage it all on the new Commerce page.",
-			"link": "/commerce",
 			"tags": [
 				"feature"
 			]
