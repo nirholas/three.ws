@@ -377,6 +377,7 @@
 		"publish:mcp:dry": "node scripts/publish-mcp-servers.mjs --dry-run",
 		"sync:repos": "node scripts/sync-standalone-repos.mjs",
 		"sync:repos:check": "node scripts/sync-standalone-repos.mjs --check",
+		"mirrors:drift": "node scripts/mirror-drift-report.mjs",
 		"build:chat": "cd chat && node scripts/ensure-deps.mjs && npm run build && cd .. && mkdir -p dist/chat && cp -rf public/chat/. dist/chat/",
 		"deps:chat": "cd chat && node scripts/ensure-deps.mjs",
 		"build:avatar-studio": "npm run build --prefix character-studio",
