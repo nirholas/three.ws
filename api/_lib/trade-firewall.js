@@ -25,6 +25,10 @@ import { getPumpTradeClient, getAmmPoolState, getConnection } from './pump.js';
 import { checkPriceImpact } from './agent-trade-guards.js';
 import { getSmartMoneyForMint } from './smart-money.js';
 
+const LINKAGE_BAND_ORDER = ['none', 'weak', 'moderate', 'strong', 'confirmed'];
+const LINKAGE_WARN_BAND = 'strong'; // same-controller score >= the "strong" band (65+) trips the check
+const MAX_EARLY_BUYERS_CHECKED = 9; // + the creator = 10, @three-ws/wallet-linkage's hard cap per call
+
 const WSOL_MINT = NATIVE_MINT.toBase58();
 
 // Per-mint micro-cache for the cheap authority + curve reads only. The hot snipe
@@ -49,6 +53,7 @@ const PENALTY = Object.freeze({
 	bundle: 12, // coordinated-launch likelihood
 	price_impact: 10, // this size moves the market a lot
 	sybil_cluster: 14, // buyers dominated by one funder cluster (manufactured demand)
+	creator_linkage: 18, // an early buyer shares control with the creator (fake demand / insider exit)
 });
 
 const BLOCK_SCORE = 45; // at/under this composite → block on warnings alone
@@ -482,6 +487,79 @@ async function checkSybil(mint, network) {
 	}
 }
 
+// ── check 6: early buyers linked to the creator (wash-trading / fake demand) ──
+// Reuses the same intel the concentration check reads: the coin's creator
+// wallet (`pump_coin_intel.creator`) and its earliest non-creator buyers
+// (`pump_coin_wallets`, ordered by `first_seen_at`). Capped to the creator plus
+// the earliest `MAX_EARLY_BUYERS_CHECKED` buyers: @three-ws/wallet-linkage
+// scores at most 10 addresses per call. Missing creator/intel is a `skip`,
+// never a `warn`: a brand-new mint with no intel yet is not evidence of
+// anything, and this check must never fabricate a verdict from absent data.
+async function fetchCreatorAndEarlyBuyers(mint, network, limit = MAX_EARLY_BUYERS_CHECKED) {
+	try {
+		const rows = await sql`
+			select ci.creator, cw.wallet
+			from pump_coin_intel ci
+			join pump_coin_wallets cw on cw.mint = ci.mint
+			where ci.mint = ${mint} and ci.network = ${network} and cw.is_creator = false
+			order by cw.first_seen_at asc
+			limit ${limit}
+		`;
+		const creator = rows[0]?.creator ?? null;
+		const buyers = [...new Set(rows.map((r) => r.wallet).filter(Boolean))];
+		return { creator, buyers };
+	} catch {
+		return { creator: null, buyers: [] };
+	}
+}
+
+/**
+ * Pure decision over an `analyzeLinkage()` result: does any early buyer share
+ * control with the creator? Takes the raw `pairs` array so it is unit-testable
+ * with synthetic pairs, no DB or RPC involved. Pass `band` to tune the trip
+ * threshold (default: the "strong" band, score 65+, the same bar the package
+ * itself treats as more-likely-than-not shared control).
+ * @param {string} creator
+ * @param {Array<{a:string,b:string,score:number,band:string,topSignal:string|null,evidence:any}>} pairs
+ * @param {{ band?: string }} [opts]
+ */
+export function evaluateCreatorLinkagePairs(creator, pairs, { band = LINKAGE_WARN_BAND } = {}) {
+	const threshold = LINKAGE_BAND_ORDER.indexOf(band);
+	const hits = [];
+	for (const p of pairs || []) {
+		if (p.a !== creator && p.b !== creator) continue;
+		const wallet = p.a === creator ? p.b : p.a;
+		if (LINKAGE_BAND_ORDER.indexOf(p.band) >= threshold) {
+			hits.push({ wallet, score: p.score, band: p.band, topSignal: p.topSignal ?? null });
+		}
+	}
+	if (!hits.length) {
+		return result('creator_linkage', 'pass', 'creator_linkage_clean', { pairs_checked: (pairs || []).length });
+	}
+	hits.sort((x, y) => y.score - x.score);
+	return result('creator_linkage', 'warn', 'early_buyer_linked_to_creator', {
+		linked_wallets: hits.map((h) => h.wallet),
+		top_match: hits[0],
+	});
+}
+
+async function checkCreatorLinkage(mint, network, connection) {
+	const { creator, buyers } = await fetchCreatorAndEarlyBuyers(mint, network);
+	if (!creator) return result('creator_linkage', 'skip', 'no_intel_yet', {});
+	if (!buyers.length) return result('creator_linkage', 'skip', 'no_early_buyers_yet', {});
+
+	const addresses = [...new Set([creator, ...buyers])].slice(0, 10);
+	if (addresses.length < 2) return result('creator_linkage', 'skip', 'insufficient_addresses', {});
+
+	try {
+		const { analyzeLinkage } = await import('@three-ws/wallet-linkage');
+		const { pairs } = await analyzeLinkage(connection, addresses);
+		return evaluateCreatorLinkagePairs(creator, pairs);
+	} catch (err) {
+		return result('creator_linkage', 'skip', 'creator_linkage_unavailable', { message: short(err) });
+	}
+}
+
 // ── verdict composition ───────────────────────────────────────────────────────
 function compose(checks, simulated) {
 	let score = 100;
@@ -542,6 +620,10 @@ function compose(checks, simulated) {
 			case 'sybil_cluster_dominant':
 				score -= PENALTY.sybil_cluster;
 				reasons.push('Buying is dominated by one funder cluster — the demand looks manufactured by a single entity, not organic.');
+				break;
+			case 'early_buyer_linked_to_creator':
+				score -= PENALTY.creator_linkage;
+				reasons.push('An early buyer shares control with the creator wallet (shared fee payer or first funder): this looks like the creator buying their own launch, not organic demand.');
 				break;
 			case 'venue_read_failed':
 			case 'authority_read_failed':
@@ -652,7 +734,7 @@ export async function assessTradeSafety({
 
 	// Run the independent checks concurrently — the kernel adds a few hundred ms,
 	// not seconds, even on the hot snipe path.
-	const [authorityRes, venueRes, roundTrip, intelRes, sybilRes] = await Promise.all([
+	const [authorityRes, venueRes, roundTrip, intelRes, sybilRes, creatorLinkageRes] = await Promise.all([
 		checkMintAuthority(conn, mintPk, cacheKey),
 		checkVenue(net, mintPk, cacheKey),
 		lamports > 0n
@@ -660,11 +742,12 @@ export async function assessTradeSafety({
 			: Promise.resolve({ res: result('round_trip', 'skip', 'no_quote_amount', {}), simulated: false }),
 		checkIntel(mintPk.toBase58(), net),
 		checkSybil(mintPk.toBase58(), net),
+		checkCreatorLinkage(mintPk.toBase58(), net, conn),
 	]);
 
 	const impactRes = checkImpact(priceImpactPct);
 
-	const checks = [authorityRes, venueRes, roundTrip.res, intelRes, impactRes, sybilRes];
+	const checks = [authorityRes, venueRes, roundTrip.res, intelRes, impactRes, sybilRes, creatorLinkageRes];
 	const { verdict, score, reasons } = compose(checks, roundTrip.simulated);
 
 	return { verdict, score, simulated: roundTrip.simulated, reasons, checks };
