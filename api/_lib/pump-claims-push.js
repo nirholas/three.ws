@@ -15,7 +15,7 @@
 // audience. An unset chat id reports { skipped: 'not_configured' }.
 //
 // State (app_settings key `pump_claims_push_telegram`):
-//   { lastTs: number|null, seen: string[] }
+//   { lastTs: number|null, seen: string[], githubSeen: string[] }
 // `lastTs` is the block time of the newest claim posted; `seen` is a bounded
 // ring of recently posted transaction signatures. Both are needed because the
 // two failure modes are different:
@@ -25,6 +25,14 @@
 //      those exactly, by signature.
 //   2. `seen` is bounded, so it cannot answer for a claim older than the ring.
 //      `lastTs` bounds the query window so the ring never has to.
+//
+// `githubSeen` is a second, independent dedupe for GitHub fee-PDA claims
+// (api/_lib/pump-claims.js's `_fetchGithubClaimsFromRpc`), keyed by GitHub
+// user id plus mint rather than by signature: the same GitHub identity can
+// submit more than one claim_social_fee_pda transaction against the same coin
+// (a sweep followed by a claim, or simply claiming again later), and each has
+// its own signature, but the channel should only ever announce that pairing
+// once, the way it only announces a wallet's first claim once.
 //
 // On first run (no state) the lane seeds from the current scan WITHOUT posting,
 // so enabling this feature never dumps a backlog of history into the channel.
@@ -111,9 +119,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
  */
 export function newClaimsSince(claims, state = {}, nowMs = Date.now()) {
 	const seen = new Set(state.seen || []);
+	const githubSeen = new Set(state.githubSeen || []);
 	const oldestPostableTs = Math.floor(nowMs / 1000) - CUTOFF_MINUTES * 60;
 	return claims
 		.filter((c) => c.signature && !seen.has(c.signature))
+		.filter((c) => !c.githubUserId || !githubSeen.has(githubClaimKey(c)))
 		.filter((c) => Number.isFinite(c.ts) && c.ts >= oldestPostableTs)
 		.sort((a, b) => a.ts - b.ts);
 }
@@ -121,6 +131,18 @@ export function newClaimsSince(claims, state = {}, nowMs = Date.now()) {
 /** Appends signatures to the bounded ring, newest kept. */
 export function rememberSignatures(seen = [], signatures = []) {
 	const merged = [...seen, ...signatures];
+	return merged.slice(Math.max(0, merged.length - SEEN_LIMIT));
+}
+
+/** `githubUserId:mint` dedupe key for a GitHub fee-PDA claim. */
+export function githubClaimKey(claim) {
+	return `${claim.githubUserId}:${claim.mint || ''}`;
+}
+
+/** Appends GitHub user+mint keys to the bounded ring, newest kept. */
+export function rememberGithubClaims(githubSeen = [], claims = []) {
+	const keys = claims.filter((c) => c.githubUserId).map(githubClaimKey);
+	const merged = [...githubSeen, ...keys];
 	return merged.slice(Math.max(0, merged.length - SEEN_LIMIT));
 }
 
@@ -148,12 +170,17 @@ export function formatSol(lamports) {
 // a malformed scan result can never break out of the HTML entity structure and
 // smuggle a clickable link posted under the platform bot's identity.
 /**
- * @param {{creator:string, mint:string, signature:string, lamports:number, ts:number}} claim
+ * @param {{creator:string, mint:string, signature:string, lamports:number, ts:number,
+ *   githubUserId?:string, githubLogin?:string|null, attribution?:{label:string,headline:string,explanation:string},
+ *   held?:boolean, heldReasons?:string[]}} claim
  */
 export function formatTelegramMessage(claim) {
 	const when = Number.isFinite(claim.ts)
 		? new Date(claim.ts * 1000).toISOString().replace('T', ' ').slice(0, 16) + ' UTC'
 		: '';
+
+	if (claim.githubUserId) return formatGithubClaimMessage(claim, when);
+
 	const lines = [
 		'<b>First creator fee claim</b>',
 		'',
@@ -170,6 +197,35 @@ export function formatTelegramMessage(claim) {
 			`<a href="https://pump.fun/coin/${encodeURIComponent(claim.mint)}">pump.fun</a>`,
 		);
 	}
+	lines.push('', `${refs.join(' · ')}${when ? ` · ${escapeHtml(when)}` : ''}`);
+	return lines.join('\n');
+}
+
+/**
+ * A GitHub fee-PDA claim's message, held or attributed. A held claim never
+ * gets the celebratory framing above: it states plainly that a withdrawal
+ * happened and why it is held, instead of crediting a coin or identity the
+ * evidence does not support yet.
+ */
+function formatGithubClaimMessage(claim, when) {
+	const identity = claim.githubLogin ? `github.com/${claim.githubLogin}` : `GitHub id ${claim.githubUserId}`;
+	const lines = claim.held
+		? [
+				'<b>GitHub fee withdrawal held for review</b>',
+				'',
+				`Claimant <code>${escapeHtml(identity)}</code>`,
+				...(claim.heldReasons?.length ? [`Held: ${escapeHtml(claim.heldReasons.join('; '))}`] : []),
+			]
+		: ['<b>GitHub fee claim</b>', '', `${escapeHtml(claim.attribution?.headline || 'UNVERIFIED GITHUB FEE WITHDRAWAL')}`, '', `Claimant <code>${escapeHtml(identity)}</code>`];
+
+	if (claim.mint) lines.push(`Coin <code>${escapeHtml(claim.mint)}</code>`);
+	lines.push('', `Claimed ${escapeHtml(formatSol(claim.lamports))}`);
+	if (claim.attribution?.explanation) lines.push('', escapeHtml(claim.attribution.explanation));
+
+	const refs = [
+		`<a href="https://solscan.io/tx/${encodeURIComponent(claim.signature)}">tx ${escapeHtml(shortAddress(claim.signature))}</a>`,
+	];
+	if (claim.mint) refs.push(`<a href="https://pump.fun/coin/${encodeURIComponent(claim.mint)}">pump.fun</a>`);
 	lines.push('', `${refs.join(' · ')}${when ? ` · ${escapeHtml(when)}` : ''}`);
 	return lines.join('\n');
 }
@@ -202,7 +258,7 @@ export async function pushTelegramLane({ scan = scanFirstClaims, now = Date.now 
 	if (!botToken || !chatId) return { skipped: 'not_configured' };
 
 	const nowMs = now();
-	const state = (await getState(STATE_KEY)) || { lastTs: null, seen: [] };
+	const state = (await getState(STATE_KEY)) || { lastTs: null, seen: [], githubSeen: [] };
 	// A resumed lane re-scans from its cursor so a gap wider than one window
 	// still resolves, bounded by the cutoff so it can never replay history.
 	const windowStart = Math.floor(nowMs / 1000) - SCAN_MINUTES * 60;
@@ -219,6 +275,7 @@ export async function pushTelegramLane({ scan = scanFirstClaims, now = Date.now 
 		await setState(STATE_KEY, {
 			lastTs: claims.length ? Math.max(...claims.map((c) => c.ts)) : Math.floor(nowMs / 1000),
 			seen: rememberSignatures([], claims.map((c) => c.signature)),
+			githubSeen: rememberGithubClaims([], claims),
 		});
 		return { posted: 0, seeded: true, scanned: claims.length };
 	}
@@ -237,17 +294,18 @@ export async function pushTelegramLane({ scan = scanFirstClaims, now = Date.now 
 	}
 
 	let sent = 0;
-	let { lastTs, seen } = state;
+	let { lastTs, seen, githubSeen = [] } = state;
 	try {
 		for (const claim of batch) {
 			await sendTelegram(botToken, chatId, formatTelegramMessage(claim));
 			lastTs = Math.max(Number(lastTs) || 0, claim.ts);
 			seen = rememberSignatures(seen, [claim.signature]);
+			githubSeen = rememberGithubClaims(githubSeen, [claim]);
 			sent++;
 			// Written per claim, not per run: a tick killed mid-batch (the Cloud
 			// Run request deadline is shorter than a full paced run) resumes at
 			// the next claim rather than repeating the ones already delivered.
-			await setState(STATE_KEY, { lastTs, seen });
+			await setState(STATE_KEY, { lastTs, seen, githubSeen });
 			await sleep(TELEGRAM_PACE_MS);
 		}
 	} catch (err) {

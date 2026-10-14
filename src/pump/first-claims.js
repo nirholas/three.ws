@@ -55,3 +55,55 @@ export async function fetchFirstClaims({ sinceTs, limit = 50 }) {
 	if (!r.ok) throw new Error(`first-claims: ${r.status}`);
 	return r.json();
 }
+
+/**
+ * Pure view model for one claim card: a celebratory card for an ordinary or
+ * attributed claim, a "held for review" card for one `pump-claims.js` flagged
+ * as suspected impersonation. Consumed by the Telegram formatter
+ * (`pump-claims-push.js`) and by any future rendered feed page, so the two
+ * never drift on what a held claim looks like.
+ *
+ * @param {{creator:string, mint:string, signature:string, lamports:number, ts:number,
+ *   githubUserId?:string, githubLogin?:string|null,
+ *   attribution?:{label:string, headline:string, explanation:string},
+ *   held?:boolean, heldReasons?:string[]}} claim
+ * @returns {{
+ *   state: 'held'|'attributed'|'claimed',
+ *   title: string,
+ *   subtitle: string,
+ *   label: string|null,
+ *   explanation: string|null,
+ *   heldReasons: string[],
+ * }}
+ */
+export function buildClaimCard(claim) {
+	const isGithubClaim = Boolean(claim.githubUserId);
+	if (isGithubClaim && claim.held) {
+		return {
+			state: 'held',
+			title: 'Held for review',
+			subtitle: claim.githubLogin ? `github.com/${claim.githubLogin}` : `GitHub id ${claim.githubUserId}`,
+			label: claim.attribution?.label ?? null,
+			explanation: claim.attribution?.explanation ?? null,
+			heldReasons: claim.heldReasons || [],
+		};
+	}
+	if (isGithubClaim) {
+		return {
+			state: 'attributed',
+			title: claim.attribution?.headline || 'GitHub fee claim',
+			subtitle: claim.githubLogin ? `github.com/${claim.githubLogin}` : `GitHub id ${claim.githubUserId}`,
+			label: claim.attribution?.label ?? null,
+			explanation: claim.attribution?.explanation ?? null,
+			heldReasons: [],
+		};
+	}
+	return {
+		state: 'claimed',
+		title: 'First creator fee claim',
+		subtitle: claim.creator,
+		label: null,
+		explanation: null,
+		heldReasons: [],
+	};
+}

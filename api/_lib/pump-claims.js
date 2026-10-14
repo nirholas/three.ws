@@ -13,13 +13,28 @@
  *   1. PUMPFUN_BOT_URL (an indexer) when configured — fast, pre-aggregated.
  *   2. Direct RPC scan of the pump program's recent signatures — always works,
  *      no indexer required.
+ *
+ * A separate GitHub-fee-claim path (`_fetchGithubClaimsFromRpc`) always runs
+ * alongside whichever source above is active: it scans the PumpFees program
+ * (`PUMP_FEE_PROGRAM_ID`) for `claim_social_fee_pda` withdrawals, which an
+ * indexer built around the main pump program does not see. Each one is
+ * attributed to a coin (or left unattributed) by `pump-claims-attribution.js`
+ * and checked for impersonation before it is merged into the result.
  */
 
 import bs58 from 'bs58';
 import { getConnection } from './pump.js';
 import { filterFirstClaims } from '../../src/pump/first-claims.js';
+import { PUMP_PROGRAM_ID, PUMP_FEE_PROGRAM_ID, WSOL_MINT } from './solana/programs.js';
+import {
+	isSocialClaimLog,
+	parseSocialFeeClaim,
+	parseTransactionDistributions,
+} from './pump-events.js';
+import { evidenceForSocialFeePda, evidenceFromPdaHistory, classifyClaimAttribution, assessImpersonation } from './pump-claims-attribution.js';
+import { resolveGithubUserById, resolveCoinGithubContext, resolveSameNameTokens } from './pump-claims-github.js';
 
-const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
+const PUMP_PROGRAM = PUMP_PROGRAM_ID;
 // Anchor discriminators for the three pump.fun fee-claim instruction variants.
 const CLAIM_DISCS = new Set(['e8f5c2eeeada3a59', '7a027f010ebf0caf', 'a537817004b3ca28']);
 // Pull a wider lookback so prior claimers are visible and "first" is real.
@@ -30,6 +45,23 @@ const QUOTE_MINTS = new Set([
 	'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
 ]);
 
+// GitHub platform id in SharingConfig.shareholder.platform (claim_social_fee_pda's `platform` byte).
+const GITHUB_SOCIAL_PLATFORM = 2;
+// Per-request budget: each candidate can cost one GitHub user lookup, one coin
+// metadata fetch, and (lacking same-transaction evidence) up to HISTORY_MAX_TX
+// extra RPC calls walking the PDA's history. This is a live HTTP handler, not
+// the owner's long-running claim-monitor bot, so the per-scan candidate count
+// is bounded tightly; claim instructions are rare enough (per the RPC-fallback
+// limits below) that this still covers a normal scan window in practice.
+const GITHUB_CLAIMS_BUDGET = 8;
+// Ported from the owner's pumpfun-github-claims bot (src/claim-monitor.ts).
+const HISTORY_MAX_TX = 40;
+const HISTORY_MAX_AGE_SEC = 7 * 86400;
+
+function isSolQuote(quoteMint) {
+	return !quoteMint || quoteMint === WSOL_MINT || quoteMint === '11111111111111111111111111111111';
+}
+
 /**
  * First-time claimers in [sinceTs, now]. Newest first, capped at `limit`.
  * @param {{ sinceTs: number, limit: number }} opts
@@ -39,10 +71,13 @@ export async function scanFirstClaims({ sinceTs, limit }) {
 	const lim = Math.max(1, Math.min(50, limit));
 	const lookbackTs =
 		sinceTs - Math.max(3600, (Math.floor(Date.now() / 1000) - sinceTs) * LOOKBACK_MULT);
-	const allClaims = process.env.PUMPFUN_BOT_URL
-		? await _fetchFromBot(lookbackTs, lim * LOOKBACK_MULT)
-		: await _fetchFromRpc(lookbackTs, lim * LOOKBACK_MULT);
-	return filterFirstClaims(allClaims, sinceTs, lim);
+	const [baseClaims, githubClaims] = await Promise.all([
+		process.env.PUMPFUN_BOT_URL
+			? _fetchFromBot(lookbackTs, lim * LOOKBACK_MULT)
+			: _fetchFromRpc(lookbackTs, lim * LOOKBACK_MULT),
+		_fetchGithubClaimsFromRpc(lookbackTs),
+	]);
+	return filterFirstClaims([...baseClaims, ...githubClaims], sinceTs, lim);
 }
 
 async function _fetchFromBot(lookbackTs, maxItems) {
@@ -177,4 +212,144 @@ function _mintFromBalances(tx) {
 		if (b?.mint && !QUOTE_MINTS.has(b.mint)) return b.mint;
 	}
 	return null;
+}
+
+/**
+ * GitHub-attributed fee-PDA withdrawals since `lookbackTs`, each already
+ * labeled by `pump-claims-attribution.js` and checked for impersonation. One
+ * entry per `claim_social_fee_pda` transaction on the PumpFees program whose
+ * claimed platform is GitHub (platform id 2); a claim that resolved to no
+ * coin at all (see `classifyClaimAttribution`'s `unverified` label) is still
+ * included; it just has `mint: ''`, matching the base scanner's shape for an
+ * unresolvable coin.
+ * @param {number} lookbackTs
+ * @returns {Promise<Array>}
+ */
+async function _fetchGithubClaimsFromRpc(lookbackTs) {
+	try {
+		const connection = getConnection({ network: 'mainnet' });
+		const { PublicKey } = await import('@solana/web3.js');
+		const sigs = await connection.getSignaturesForAddress(new PublicKey(PUMP_FEE_PROGRAM_ID), {
+			limit: 200,
+		});
+		const inWindow = sigs.filter((s) => s.blockTime != null && s.blockTime >= lookbackTs && !s.err);
+		if (!inWindow.length) return [];
+
+		const out = [];
+		for (const s of inWindow) {
+			if (out.length >= GITHUB_CLAIMS_BUDGET) break;
+			const tx = await connection.getParsedTransaction(s.signature, {
+				maxSupportedTransactionVersion: 1,
+				commitment: 'confirmed',
+			});
+			const logs = tx?.meta?.logMessages;
+			if (!logs || tx?.meta?.err || !isSocialClaimLog(logs)) continue;
+			const claim = parseSocialFeeClaim(logs);
+			if (!claim || claim.socialPlatform !== GITHUB_SOCIAL_PLATFORM) continue;
+			out.push(await _attributeGithubClaim(connection, claim, s.signature, s.blockTime));
+		}
+		return out;
+	} catch {
+		return [];
+	}
+}
+
+/** Attribute and label one decoded GitHub fee-PDA claim. Never throws. */
+async function _attributeGithubClaim(connection, claim, signature, blockTime) {
+	const amountClaimedRaw = BigInt(claim.amountClaimedRaw);
+	let evidence = null;
+	let candidateMintCount = 0;
+
+	try {
+		const txLogs = await _logsForSignature(connection, signature);
+		const sameTx = evidenceForSocialFeePda(parseTransactionDistributions(txLogs), claim.socialFeePda);
+		if (sameTx.length) {
+			evidence = sameTx[0];
+			candidateMintCount = sameTx.length;
+		} else {
+			const history = await _pdaHistoryDistributions(connection, claim.socialFeePda, signature, blockTime);
+			const historyEvidence = evidenceFromPdaHistory(history, claim.socialFeePda, amountClaimedRaw, claim.quoteMint);
+			if (historyEvidence.length) {
+				evidence = historyEvidence[0];
+				candidateMintCount = 1;
+			} else {
+				candidateMintCount = new Set(history.map((d) => d.mint)).size;
+			}
+		}
+	} catch {
+		// Attribution evidence is best-effort; an RPC failure here still leaves
+		// a real, unattributed claim worth reporting rather than dropping it.
+	}
+
+	const mint = evidence?.mint || '';
+	const [githubUser, coinCtx] = await Promise.all([
+		resolveGithubUserById(claim.githubUserId).catch(() => null),
+		mint ? resolveCoinGithubContext(mint).catch(() => ({})) : Promise.resolve({}),
+	]);
+
+	const classification = classifyClaimAttribution({
+		evidence,
+		candidateMintCount,
+		githubLogin: githubUser?.login || null,
+		githubRepoOwner: coinCtx.repoOwner || null,
+		claimerWallet: claim.recipient,
+		tokenCreatorWallet: coinCtx.creatorWallet || null,
+	});
+
+	const sameNameTokens = mint && coinCtx.tokenName ? await resolveSameNameTokens(coinCtx.tokenName, mint).catch(() => []) : [];
+	const impersonation = assessImpersonation({
+		githubUser,
+		tokenInfo: coinCtx.usdMarketCap != null ? { usdMarketCap: coinCtx.usdMarketCap } : null,
+		sameNameTokens,
+		repoInfo: coinCtx.repoCreatedAt ? { createdAt: coinCtx.repoCreatedAt } : null,
+	});
+
+	return {
+		creator: claim.recipient,
+		mint,
+		signature,
+		lamports: isSolQuote(claim.quoteMint) ? Number(amountClaimedRaw) : 0,
+		ts: blockTime ?? 0,
+		source: 'github_fee_claim',
+		githubUserId: claim.githubUserId,
+		githubLogin: githubUser?.login || null,
+		quoteMint: claim.quoteMint || null,
+		amountRaw: claim.amountClaimedRaw,
+		attribution: classification,
+		held: impersonation.suspected,
+		heldReasons: impersonation.reasons,
+	};
+}
+
+async function _logsForSignature(connection, signature) {
+	const tx = await connection.getParsedTransaction(signature, {
+		maxSupportedTransactionVersion: 1,
+		commitment: 'confirmed',
+	});
+	return tx?.meta?.logMessages || [];
+}
+
+/**
+ * Every DistributeCreatorFeesEvent paid to `socialFeePda` since its previous
+ * claim, oldest work first. Walks the PDA's own signature history backward
+ * from just before `beforeSignature`, stopping at whichever bound is hit
+ * first: the previous `claim_social_fee_pda` on this PDA, `HISTORY_MAX_TX`
+ * transactions, or `HISTORY_MAX_AGE_SEC` of age.
+ */
+async function _pdaHistoryDistributions(connection, socialFeePda, beforeSignature, claimBlockTime) {
+	const { PublicKey } = await import('@solana/web3.js');
+	const sigs = await connection.getSignaturesForAddress(new PublicKey(socialFeePda), {
+		limit: HISTORY_MAX_TX,
+		before: beforeSignature,
+	});
+	const minTs = (claimBlockTime || Math.floor(Date.now() / 1000)) - HISTORY_MAX_AGE_SEC;
+	const distributions = [];
+	for (const s of sigs) {
+		if (s.err || s.blockTime == null || s.blockTime < minTs) continue;
+		const logs = await _logsForSignature(connection, s.signature);
+		if (!logs.length) continue;
+		if (isSocialClaimLog(logs)) break; // the previous claim on this PDA: stop here
+		distributions.push(...parseTransactionDistributions(logs));
+	}
+	return distributions;
 }

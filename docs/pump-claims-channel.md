@@ -3,30 +3,89 @@
 A live feed of **first-time pump.fun creator fee claims**, delivered to a
 Telegram channel (`@pumpfunclaims`), one message per claim.
 
-A claim is a real on-chain withdrawal. For GitHub social fees, it proves payment
-to a GitHub fee account, not automatically that the GitHub user created, owns, or
-endorses a particular coin. Token metadata can name lookalike accounts, and one
-fee account can pool rewards from several coins.
+Two kinds of claim feed this channel: an ordinary wallet withdrawing its own
+coin's creator fees (the original feature), and a GitHub identity withdrawing
+fees a coin delegated to it through pump.fun's fee-sharing program (the
+`claim_social_fee_pda` instruction). A GitHub withdrawal is a real on-chain
+payment to that GitHub identity's fee account, but it does not by itself prove
+which coin paid for it, or that the GitHub user created, owns, or endorses that
+coin: one fee account (a "social fee PDA") can be a shareholder on more than one
+coin's `SharingConfig`, and a scammer can paste someone else's PDA, or their own
+freshly-registered one, into a copycat coin's metadata. Attribution below
+answers "which coin, if any, paid this" from on-chain evidence, never from the
+highest-market-cap guess.
 
-Trader-facing cards use five evidence labels: **Verified GitHub Fee Claim**,
-**Creator-Wallet GitHub Fee Claim**, **Identity Mismatch**, **Unverified**, and
-**Unresolved Pooled**. A pooled event selects no primary CA or per-coin amount.
-“First-ever” refers to the shared fee account, and trade links appear only for
-verified relationships. The feed is a research lead, not an endorsement.
+## GitHub fee-claim attribution
+
+`api/_lib/pump-claims-attribution.js` classifies every GitHub
+`claim_social_fee_pda` withdrawal into exactly one of seven labels, using two
+evidence rules in order of strength, then two identity checks when neither rule
+finds evidence:
+
+1. **Transaction-attributed.** The claim transaction itself also carries a
+   `DistributeCreatorFeesEvent` that pays the exact PDA being claimed. Payout
+   and attribution are in the same atomic transaction, so this is the strongest
+   evidence a withdrawal can have.
+2. **Fee-history-attributed.** No distribution rode along with the claim, so the
+   scanner walks the PDA's own transaction history backward from the claim (up
+   to 40 transactions or 7 days, whichever comes first, stopping early at the
+   PDA's previous claim) looking for distributions in the claim's own quote
+   currency. If those distributions cover at least 90% of the amount withdrawn,
+   and one coin accounts for at least 90% of what was observed, the withdrawal
+   is attributed to that coin. Short of either threshold, nothing is attributed
+   from history.
+3. **Verified repository.** Neither rule found a paying coin, but the claiming
+   GitHub login matches the repository owner linked in the coin's metadata
+   (description, website, X/Telegram links, or metadata URI).
+4. **Identity mismatch.** A repository link exists in the coin's metadata, but
+   its owner is a different GitHub account than the one that claimed. This is
+   the strongest public signal of a lookalike coin.
+5. **Creator-wallet verified.** No repository link exists at all, but the claim
+   recipient wallet matches the coin's on-chain creator wallet.
+6. **Unresolved pooled.** No evidence rule found a payer, and the PDA has been a
+   shareholder in more than one coin recently. The withdrawal is real but cannot
+   be assigned to a single CA or amount.
+7. **Unverified.** A real withdrawal occurred, and none of the above resolved
+   it. The claim is reported; no coin is credited.
+
+**The impersonation hold** (`assessImpersonation`) is a separate, additive gate
+applied after classification. Even an attributed claim is held for review, not
+posted with its celebratory framing, when the claiming GitHub account is less
+than 30 days old AND either: a same-name coin on pump.fun is at least 1.5x
+larger by market cap than the one the claim is about, or the metadata repository
+was created less than 7 days before the claim. A new account alone is not
+suspicious, and neither is a same-name coin; the combination is the pattern a
+scam follows (register a lookalike account, push a repo, put it in a copycat
+coin's metadata, delegate fees to it, claim them), so both conditions must hold
+before a claim is held. A held claim's Telegram message and feed card
+(`buildClaimCard` in `src/pump/first-claims.js`) state plainly that a withdrawal
+happened and why it is held, instead of naming a coin or identity the evidence
+does not support yet.
 
 ## How it works
 
 ```
 pump.fun program activity
         │
-        ▼
-scanFirstClaims()            api/_lib/pump-claims.js
-   ├── PUMPFUN_BOT_URL indexer   (preferred)
-   └── direct Solana RPC scan    (fallback, see "Known limits")
+        ├── creator fee claims (Pump program)
+        │         │
+        │         ▼
+        │   scanFirstClaims()        api/_lib/pump-claims.js
+        │      ├── PUMPFUN_BOT_URL indexer   (preferred)
+        │      └── direct Solana RPC scan    (fallback, see "Known limits")
+        │
+        └── GitHub fee-PDA claims (PumpFees program, claim_social_fee_pda)
+                  │
+                  ▼
+            _fetchGithubClaimsFromRpc()   api/_lib/pump-claims.js
+               ├── direct Solana RPC scan   (always runs; no indexer dependency)
+               ├── same-tx / fee-history evidence   pump-claims-attribution.js
+               └── GitHub user + coin metadata lookups   pump-claims-github.js
         │
         ▼
 pushTelegramLane()           api/_lib/pump-claims-push.js
    ├── diff against app_settings['pump_claims_push_telegram']
+   ├── wallet claims deduped by signature, GitHub claims by user id + mint
    ├── oldest-first, 10 per tick, 3.5s apart
    └── Telegram sendMessage → TELEGRAM_PUMP_CLAIMS_CHAT_ID
         │
@@ -67,7 +126,10 @@ gcloud run services update three-ws-api \
 ## Verifying it
 
 ```bash
-# 1. Is the scan returning claims at all?
+# 1. Is the scan returning claims at all? GitHub claims carry githubUserId and
+#    attribution; wallet claims do not. An empty items array with HTTP 200 is a
+#    correct result when no first-time claim of either kind happened in the
+#    window, not a failure (GitHub fee-PDA claims are rare on mainnet).
 curl -s 'https://three.ws/api/pump/first-claims?sinceMinutes=60&limit=5'
 
 # 2. Does the bot have channel access? (replace $TOKEN)
@@ -88,16 +150,23 @@ call reports exactly what happened: `{ posted, scanned, backlog }`, or
 State lives in `app_settings` under `pump_claims_push_telegram`:
 
 ```json
-{ "lastTs": 1723661000, "seen": ["<tx signature>", "..."] }
+{ "lastTs": 1723661000, "seen": ["<tx signature>", "..."], "githubSeen": ["<githubUserId>:<mint>", "..."] }
 ```
 
 - **First run seeds without posting.** Enabling the lane records what is already
   on-chain and starts posting from the next tick, so switching it on never dumps
   a backlog into the channel.
-- **Dedupe is by transaction signature**, not by timestamp. Two claims landing in
-  the same second are common; a timestamp-only cursor would silently drop the
-  second one. `seen` is a bounded ring of 400 signatures; `lastTs` bounds the
-  scan window so the ring never has to answer for anything older.
+- **Wallet claims dedupe by transaction signature**, not by timestamp. Two
+  claims landing in the same second are common; a timestamp-only cursor would
+  silently drop the second one. `seen` is a bounded ring of 400 signatures;
+  `lastTs` bounds the scan window so the ring never has to answer for anything
+  older.
+- **GitHub claims dedupe by GitHub user id plus mint**, in a second bounded ring,
+  `githubSeen`. The same GitHub identity can submit more than one
+  `claim_social_fee_pda` transaction against the same coin (a sweep followed by
+  a claim, or claiming again later), each with its own signature; the channel
+  announces that pairing once, the same way it announces a wallet's first claim
+  once.
 - **A three-hour cutoff** bounds any catch-up. A lane that has been down for a
   day drains recent claims and drops stale ones rather than replaying history.
 - **State is written per message, not per run.** A tick killed mid-batch (the
@@ -112,11 +181,16 @@ State lives in `app_settings` under `pump_claims_push_telegram`:
   data; unescaped text could otherwise smuggle a clickable link posted under the
   platform bot's identity.
 
-## Known limits: the RPC fallback cannot serve this feed
+## Known limits: the RPC fallback cannot serve the wallet-claim feed
 
-`scanFirstClaims` prefers the `PUMPFUN_BOT_URL` indexer and falls back to a
-direct RPC scan of the pump program's recent signatures. **That fallback cannot
-produce a useful result, and the channel will stay silent without the indexer.**
+This limit is specific to **ordinary wallet claims**. The GitHub fee-claim path
+(`_fetchGithubClaimsFromRpc`) always runs a direct RPC scan, independent of
+`PUMPFUN_BOT_URL`; see "Verifying it" below for a live check of that path.
+
+`scanFirstClaims` prefers the `PUMPFUN_BOT_URL` indexer for wallet claims and
+falls back to a direct RPC scan of the pump program's recent signatures. **That
+fallback cannot produce a useful result, and the channel will stay silent for
+wallet claims without the indexer.**
 
 Measured against mainnet on 2026-08-14:
 
@@ -152,7 +226,11 @@ built yet.
 
 ## Related
 
-- [api/_lib/pump-claims.js](../api/_lib/pump-claims.js) - the shared scanner
+- [api/_lib/pump-claims.js](../api/_lib/pump-claims.js) - the shared scanner (wallet claims and GitHub fee-PDA claims)
+- [api/_lib/pump-events.js](../api/_lib/pump-events.js) - typed Pump/PumpFees event decoder (wraps `@nirholas/pump-sdk`)
+- [api/_lib/pump-claims-attribution.js](../api/_lib/pump-claims-attribution.js) - the evidence rules, the seven labels, and the impersonation hold
+- [api/_lib/pump-claims-github.js](../api/_lib/pump-claims-github.js) - GitHub identity and coin-metadata lookups used by attribution
 - [api/_lib/pump-claims-push.js](../api/_lib/pump-claims-push.js) - the delivery lane
 - [api/cron/pump-claims-push.js](../api/cron/pump-claims-push.js) - the cron entry point
+- [src/pump/first-claims.js](../src/pump/first-claims.js) - `buildClaimCard`, the shared held/attributed/claimed view model
 - [api/_lib/commit-feed-push.js](../api/_lib/commit-feed-push.js) - the sibling commit feed this lane mirrors
