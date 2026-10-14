@@ -7,6 +7,7 @@ Long-running, standalone three.ws services: processes that hold persistent conne
 | Service | What it is | Deployed as |
 | --- | --- | --- |
 | [`pump-graduations/`](pump-graduations) | pump.fun graduations indexer, detailed below | Container (`Dockerfile`) |
+| [`pump-claims/`](pump-claims) | Real-time GitHub social-fee-PDA claim listener. See its [README](pump-claims/README.md) | Container (`Dockerfile`) |
 | [`agent-screen-caster/`](agent-screen-caster) | Gives an agent a live, watchable screen from a real Playwright session. See its [README](agent-screen-caster/README.md) | Container (`Dockerfile`) |
 | [`liquidation-collector/`](liquidation-collector) | Aggregates public futures liquidation feeds into a rolling REST snapshot. See its [README](liquidation-collector/README.md) | Cloud Run (`liquidation-collector`) |
 | [`fleet-console/`](fleet-console) | Health console for an open-source fleet: probes what every repository of a GitHub owner claims and scores what it finds. HTTP dashboard, CLI, and MCP server. See its [README](fleet-console/README.md) | Not deployed, by design: run it from a terminal, a cron job, or next to an agent |

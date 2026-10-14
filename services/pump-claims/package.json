@@ -1,0 +1,24 @@
+{
+	"name": "@three-ws/pump-claims",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"description": "Real-time listener for GitHub social-fee-PDA claims on the PumpFees program. Decodes and attributes each claim to a coin, writes it to pump_fee_claims, and serves /health. Backs api/_lib/pump-claims.js's table-first read path so the claims feed no longer depends on PUMPFUN_BOT_URL.",
+	"main": "index.js",
+	"scripts": {
+		"start": "node index.js",
+		"dev": "node --watch index.js",
+		"backfill": "node backfill.js",
+		"test": "node --test"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"dependencies": {
+		"@neondatabase/serverless": "^1.1.0",
+		"@nirholas/pump-sdk": "^1.0.0",
+		"@solana/web3.js": "^1.99.0",
+		"bs58": "^6.0.0",
+		"ws": "^8.21.0"
+	}
+}

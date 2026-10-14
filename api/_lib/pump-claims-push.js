@@ -27,7 +27,7 @@
 //      `lastTs` bounds the query window so the ring never has to.
 //
 // `githubSeen` is a second, independent dedupe for GitHub fee-PDA claims
-// (api/_lib/pump-claims.js's `_fetchGithubClaimsFromRpc`), keyed by GitHub
+// (api/_lib/pump-claims.js's `fetchGithubClaimsFromRpc`), keyed by GitHub
 // user id plus mint rather than by signature: the same GitHub identity can
 // submit more than one claim_social_fee_pda transaction against the same coin
 // (a sweep followed by a claim, or simply claiming again later), and each has

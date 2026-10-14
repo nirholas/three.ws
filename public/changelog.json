@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-14T03:31:33.790Z",
+	"generated_at": "2026-10-14T04:20:35.603Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -37,6 +37,17 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "GitHub fee-claim feed now reads from a real-time listener, not just an on-demand RPC scan",
+			"summary": "The claims feed's GitHub-attribution path used to walk Solana RPC history fresh on every request, the same cost every time, with nothing persisted in between. services/pump-claims is a standalone process that subscribes to PumpFees program logs directly, decodes and attributes each claim as it happens, and writes it to a new pump_fee_claims table with a watchdog that resubscribes on a stalled connection and gap-fills whatever a drop missed. The claims route now reads that table first and only falls back to the RPC scan when the table has nothing for the requested window, so PUMPFUN_BOT_URL is no longer required for GitHub claims specifically (ordinary wallet claims still use it).",
+			"link": null,
+			"tags": [
+				"feature",
+				"infra"
 			]
 		},
 		{

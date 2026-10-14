@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-14T03:31:33.811Z",
+	"generated_at": "2026-10-14T04:20:35.625Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4084,
+	"total": 4085,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -40,6 +40,17 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "GitHub fee-claim feed now reads from a real-time listener, not just an on-demand RPC scan",
+			"summary": "The claims feed's GitHub-attribution path used to walk Solana RPC history fresh on every request, the same cost every time, with nothing persisted in between. services/pump-claims is a standalone process that subscribes to PumpFees program logs directly, decodes and attributes each claim as it happens, and writes it to a new pump_fee_claims table with a watchdog that resubscribes on a stalled connection and gap-fills whatever a drop missed. The claims route now reads that table first and only falls back to the RPC scan when the table has nothing for the requested window, so PUMPFUN_BOT_URL is no longer required for GitHub claims specifically (ordinary wallet claims still use it).",
+			"link": null,
+			"tags": [
+				"feature",
+				"infra"
 			]
 		},
 		{
@@ -1546,19 +1557,6 @@
 			"tags": [
 				"fix",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Developer plans with quotas that are enforced, self-serve upgrades, key rotation, IP allowlists and per-key analytics",
-			"summary": "Every API key now sits on a developer plan: Free, Builder, Scale or Enterprise, each with a monthly call quota, a per-minute burst ceiling, a concurrency ceiling and a webhook cap, all enforced on every /api/v1 call rather than only recorded. Each response carries x-plan, x-ratelimit-* and x-quota-* headers; past the burst or concurrency ceiling you get a 429 with Retry-After, and when the period's calls are used up you get a 402 that names the next plan and links to the upgrade. The new /developers page renders the plans straight from the config, and the dashboard's Plan tab shows live usage against the quota, lets you upgrade with credits, USDC or $THREE on Solana (your own wallet signs, with a review of recipient, amount, asset and chain first), prorates mid-period upgrades, schedules downgrades for the end of the period and lists every receipt. Revoking a key now takes effect immediately on every server. Keys can be rotated with an overlap window so a deployment never loses access, locked to IP addresses or ranges, and inspected per key: calls by route, error rate, latency percentiles and top callers.",
-			"link": "/developers",
-			"tags": [
-				"feature",
-				"sdk",
-				"security",
-				"docs"
 			]
 		}
 	]

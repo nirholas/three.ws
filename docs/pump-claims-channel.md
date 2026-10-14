@@ -76,11 +76,16 @@ pump.fun program activity
         │
         └── GitHub fee-PDA claims (PumpFees program, claim_social_fee_pda)
                   │
+                  ├── services/pump-claims         (real-time listener, see below)
+                  │      └── writes pump_fee_claims
+                  │
                   ▼
             _fetchGithubClaimsFromRpc()   api/_lib/pump-claims.js
-               ├── direct Solana RPC scan   (always runs; no indexer dependency)
-               ├── same-tx / fee-history evidence   pump-claims-attribution.js
-               └── GitHub user + coin metadata lookups   pump-claims-github.js
+               ├── pump_fee_claims table    (preferred; populated by the listener)
+               └── direct Solana RPC scan   (fallback, when the table has nothing
+                   for the requested window; same evidence rules either way)
+                  ├── same-tx / fee-history evidence   pump-claims-attribution.js
+                  └── GitHub user + coin metadata lookups   pump-claims-github.js
         │
         ▼
 pushTelegramLane()           api/_lib/pump-claims-push.js
@@ -96,13 +101,32 @@ GET /api/cron/pump-claims-push   every 5 minutes (Cloud Scheduler)
 The same scanner also backs `GET /api/pump/first-claims` and the
 `pumpfun_first_claims` MCP tool, so the channel and the API never disagree.
 
+## The real-time listener: `services/pump-claims`
+
+GitHub fee-PDA claims no longer depend on an RPC scan at read time, or on
+`PUMPFUN_BOT_URL`, which only ever covered ordinary wallet claims. A standalone
+long-lived process, [services/pump-claims](../services/pump-claims), holds a
+Solana log subscription on the PumpFees program, decodes and attributes each
+`claim_social_fee_pda` as it lands, and writes it into `pump_fee_claims`
+(migration
+[20261015080000_pump_fee_claims.sql](../api/_lib/migrations/20261015080000_pump_fee_claims.sql)).
+
+`scanFirstClaims`'s GitHub path now reads that table first and only falls back
+to the direct RPC scan described below when the table has nothing for the
+requested window (a fresh deployment before the listener's backfill has run,
+or the listener being down). Both paths run the exact same attribution rules,
+so which one answered is invisible to a caller except for a `source` field
+logged server-side. See the service's own
+[README](../services/pump-claims/README.md) for how it runs, reconnects, and
+backfills.
+
 ## Configuration
 
 | Variable | Required | Purpose |
 |---|---|---|
 | `TELEGRAM_BOT_TOKEN` | yes | Bot that posts. Create via [@BotFather](https://t.me/BotFather). |
 | `TELEGRAM_PUMP_CLAIMS_CHAT_ID` | yes | `@pumpfunclaims`, or the `-100…` numeric id. |
-| `PUMPFUN_BOT_URL` | yes in practice | pump.fun claims indexer. Without it the scan returns nothing (see below). |
+| `PUMPFUN_BOT_URL` | optional | pump.fun claims indexer for **ordinary wallet claims** only. Without it, wallet claims return nothing (see below); GitHub fee-PDA claims are unaffected, served by `services/pump-claims` and its RPC fallback regardless. |
 | `PUMPFUN_BOT_TOKEN` | optional | Bearer token for the indexer, when it requires one. |
 
 The bot **must be an administrator of the channel** with permission to post.

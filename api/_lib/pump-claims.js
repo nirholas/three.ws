@@ -14,16 +14,22 @@
  *   2. Direct RPC scan of the pump program's recent signatures — always works,
  *      no indexer required.
  *
- * A separate GitHub-fee-claim path (`_fetchGithubClaimsFromRpc`) always runs
- * alongside whichever source above is active: it scans the PumpFees program
- * (`PUMP_FEE_PROGRAM_ID`) for `claim_social_fee_pda` withdrawals, which an
- * indexer built around the main pump program does not see. Each one is
- * attributed to a coin (or left unattributed) by `pump-claims-attribution.js`
- * and checked for impersonation before it is merged into the result.
+ * A separate GitHub-fee-claim path always runs alongside whichever source
+ * above is active: it surfaces `claim_social_fee_pda` withdrawals on the
+ * PumpFees program (`PUMP_FEE_PROGRAM_ID`), which an indexer built around the
+ * main pump program does not see. Each one is attributed to a coin (or left
+ * unattributed) by `pump-claims-attribution.js` and checked for impersonation
+ * via `attributeGithubClaim`, exported so `services/pump-claims` (the
+ * real-time listener) decodes and attributes claims with the exact same
+ * logic this RPC fallback uses. The GitHub path itself prefers the listener's
+ * own `pump_fee_claims` table (real-time, no RPC budget) and falls back to
+ * `fetchGithubClaimsFromRpc` only when the table has nothing for the window
+ * (e.g. the listener isn't deployed yet, or the table is empty).
  */
 
 import bs58 from 'bs58';
 import { getConnection } from './pump.js';
+import { sql } from './db.js';
 import { filterFirstClaims } from '../../src/pump/first-claims.js';
 import { PUMP_PROGRAM_ID, PUMP_FEE_PROGRAM_ID, WSOL_MINT } from './solana/programs.js';
 import {
@@ -31,7 +37,13 @@ import {
 	parseSocialFeeClaim,
 	parseTransactionDistributions,
 } from './pump-events.js';
-import { evidenceForSocialFeePda, evidenceFromPdaHistory, classifyClaimAttribution, assessImpersonation } from './pump-claims-attribution.js';
+import {
+	evidenceForSocialFeePda,
+	evidenceFromPdaHistory,
+	classifyClaimAttribution,
+	assessImpersonation,
+	attributionInfoForLabel,
+} from './pump-claims-attribution.js';
 import { resolveGithubUserById, resolveCoinGithubContext, resolveSameNameTokens } from './pump-claims-github.js';
 
 const PUMP_PROGRAM = PUMP_PROGRAM_ID;
@@ -45,8 +57,10 @@ const QUOTE_MINTS = new Set([
 	'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
 ]);
 
-// GitHub platform id in SharingConfig.shareholder.platform (claim_social_fee_pda's `platform` byte).
-const GITHUB_SOCIAL_PLATFORM = 2;
+// GitHub platform id in SharingConfig.shareholder.platform (claim_social_fee_pda's
+// `platform` byte). Exported so services/pump-claims's live decoder filters to
+// GitHub claims with the exact same constant this RPC fallback uses.
+export const GITHUB_SOCIAL_PLATFORM = 2;
 // Per-request budget: each candidate can cost one GitHub user lookup, one coin
 // metadata fetch, and (lacking same-transaction evidence) up to HISTORY_MAX_TX
 // extra RPC calls walking the PDA's history. This is a live HTTP handler, not
@@ -75,9 +89,76 @@ export async function scanFirstClaims({ sinceTs, limit }) {
 		process.env.PUMPFUN_BOT_URL
 			? _fetchFromBot(lookbackTs, lim * LOOKBACK_MULT)
 			: _fetchFromRpc(lookbackTs, lim * LOOKBACK_MULT),
-		_fetchGithubClaimsFromRpc(lookbackTs),
+		_fetchGithubClaims(lookbackTs),
 	]);
 	return filterFirstClaims([...baseClaims, ...githubClaims], sinceTs, lim);
+}
+
+/**
+ * GitHub-attributed fee-PDA withdrawals since `lookbackTs`. Reads the
+ * `pump_fee_claims` table (populated in real time by `services/pump-claims`)
+ * first and falls back to the RPC scan whenever the table is empty for the
+ * window -- not just on a hard failure. A claim instruction is rare enough
+ * (see "Known limits" in docs/pump-claims-channel.md) that an empty table
+ * result is ambiguous: it is just as likely to mean "the listener isn't
+ * deployed yet" or "the backfill hasn't run" as "nothing happened", so the
+ * RPC scan (bounded, cheap, and the sole source before this listener
+ * existed) is always worth trying rather than trusting silence from a table
+ * that might simply not be populated yet.
+ * @param {number} lookbackTs
+ */
+async function _fetchGithubClaims(lookbackTs) {
+	const tableClaims = await _fetchGithubClaimsFromTable(lookbackTs);
+	if (tableClaims != null && tableClaims.length > 0) {
+		console.log('[pump-claims] github claims source=table count=%d', tableClaims.length);
+		return tableClaims;
+	}
+	const rpcClaims = await fetchGithubClaimsFromRpc(lookbackTs);
+	console.log('[pump-claims] github claims source=rpc count=%d', rpcClaims.length);
+	return rpcClaims;
+}
+
+/**
+ * Read GitHub fee-PDA claims out of the `pump_fee_claims` table. Returns
+ * `null` when the table itself can't be used -- no `DATABASE_URL`, the table
+ * doesn't exist yet, or the query failed. Returns an array (possibly empty)
+ * on a successful query. The caller treats both "null" and "empty array" as
+ * reasons to also try the RPC scan.
+ * @param {number} lookbackTs
+ * @returns {Promise<Array|null>}
+ */
+async function _fetchGithubClaimsFromTable(lookbackTs) {
+	try {
+		const rows = await sql`
+			select signature, mint, claimer, github_user_id, lamports, label, held, created_at
+			from pump_fee_claims
+			where created_at >= to_timestamp(${lookbackTs})
+			order by created_at desc
+			limit 200
+		`;
+		return rows.map(_rowToGithubClaim);
+	} catch {
+		return null;
+	}
+}
+
+function _rowToGithubClaim(row) {
+	const info = attributionInfoForLabel(row.label);
+	return {
+		creator: row.claimer,
+		mint: row.mint || '',
+		signature: row.signature,
+		lamports: Number(row.lamports) || 0,
+		ts: row.created_at ? Math.floor(new Date(row.created_at).getTime() / 1000) : 0,
+		source: 'github_fee_claim',
+		githubUserId: row.github_user_id,
+		githubLogin: null,
+		quoteMint: null,
+		amountRaw: String(row.lamports ?? '0'),
+		attribution: { label: row.label, headline: info.headline, explanation: info.explanation },
+		held: Boolean(row.held),
+		heldReasons: row.held ? ['held for review (see services/pump-claims listener)'] : [],
+	};
 }
 
 async function _fetchFromBot(lookbackTs, maxItems) {
@@ -222,22 +303,31 @@ function _mintFromBalances(tx) {
  * coin at all (see `classifyClaimAttribution`'s `unverified` label) is still
  * included; it just has `mint: ''`, matching the base scanner's shape for an
  * unresolvable coin.
+ *
+ * Exported so `services/pump-claims/backfill.js` can walk further back than
+ * one page by passing `before` (a signature cursor) and a larger `budget`
+ * than this live HTTP handler's default; the real-time listener itself
+ * decodes and attributes with `attributeGithubClaim` directly off its own
+ * WebSocket feed, never through this RPC-polling path.
  * @param {number} lookbackTs
+ * @param {{budget?: number, sigLimit?: number, before?: string, connection?: object}} [opts]
  * @returns {Promise<Array>}
  */
-async function _fetchGithubClaimsFromRpc(lookbackTs) {
+export async function fetchGithubClaimsFromRpc(lookbackTs, opts = {}) {
+	const { budget = GITHUB_CLAIMS_BUDGET, sigLimit = 200, before, connection: conn } = opts;
 	try {
-		const connection = getConnection({ network: 'mainnet' });
+		const connection = conn || getConnection({ network: 'mainnet' });
 		const { PublicKey } = await import('@solana/web3.js');
 		const sigs = await connection.getSignaturesForAddress(new PublicKey(PUMP_FEE_PROGRAM_ID), {
-			limit: 200,
+			limit: sigLimit,
+			...(before ? { before } : {}),
 		});
 		const inWindow = sigs.filter((s) => s.blockTime != null && s.blockTime >= lookbackTs && !s.err);
 		if (!inWindow.length) return [];
 
 		const out = [];
 		for (const s of inWindow) {
-			if (out.length >= GITHUB_CLAIMS_BUDGET) break;
+			if (out.length >= budget) break;
 			const tx = await connection.getParsedTransaction(s.signature, {
 				maxSupportedTransactionVersion: 1,
 				commitment: 'confirmed',
@@ -246,7 +336,7 @@ async function _fetchGithubClaimsFromRpc(lookbackTs) {
 			if (!logs || tx?.meta?.err || !isSocialClaimLog(logs)) continue;
 			const claim = parseSocialFeeClaim(logs);
 			if (!claim || claim.socialPlatform !== GITHUB_SOCIAL_PLATFORM) continue;
-			out.push(await _attributeGithubClaim(connection, claim, s.signature, s.blockTime));
+			out.push(await attributeGithubClaim(connection, claim, s.signature, s.blockTime));
 		}
 		return out;
 	} catch {
@@ -254,8 +344,18 @@ async function _fetchGithubClaimsFromRpc(lookbackTs) {
 	}
 }
 
-/** Attribute and label one decoded GitHub fee-PDA claim. Never throws. */
-async function _attributeGithubClaim(connection, claim, signature, blockTime) {
+/**
+ * Attribute and label one decoded GitHub fee-PDA claim. Never throws. Shared
+ * by this module's own RPC fallback (`fetchGithubClaimsFromRpc`) and by
+ * `services/pump-claims`, which calls it directly off its live WebSocket feed
+ * so the real-time listener and the RPC fallback can never disagree on how a
+ * claim is attributed.
+ * @param {import('@solana/web3.js').Connection} connection
+ * @param {{githubUserId:string, socialPlatform:number, socialFeePda:string, recipient:string, amountClaimedRaw:string, quoteMint?:string}} claim
+ * @param {string} signature
+ * @param {number} [blockTime]
+ */
+export async function attributeGithubClaim(connection, claim, signature, blockTime) {
 	const amountClaimedRaw = BigInt(claim.amountClaimedRaw);
 	let evidence = null;
 	let candidateMintCount = 0;

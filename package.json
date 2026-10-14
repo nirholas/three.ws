@@ -76,6 +76,7 @@
 		"mcp-server",
 		"multiplayer",
 		"services/liquidation-collector",
+		"services/pump-claims",
 		"packages/avatar-schema",
 		"packages/mcp-policy",
 		"packages/avatar-cli",

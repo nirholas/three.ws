@@ -128,6 +128,50 @@ export const ATTRIBUTION_LABELS = Object.freeze({
 	UNVERIFIED: 'unverified',
 });
 
+// Static headline/explanation text per label, for a caller that only has the
+// label on hand (the persisted `pump_fee_claims` row stores `label`, not the
+// full dynamic explanation `classifyClaimAttribution` builds inline). The two
+// labels whose live explanation includes dynamic detail (an owner login, a
+// candidate count) get a generic version of the same sentence here.
+const LABEL_INFO = Object.freeze({
+	[ATTRIBUTION_LABELS.TRANSACTION_ATTRIBUTED]: {
+		headline: 'TRANSACTION-ATTRIBUTED GITHUB FEE CLAIM',
+		explanation: 'This transaction distributed fees from this exact coin to the claimed GitHub fee account.',
+	},
+	[ATTRIBUTION_LABELS.FEE_HISTORY_ATTRIBUTED]: {
+		headline: 'FEE-HISTORY-ATTRIBUTED GITHUB FEE CLAIM',
+		explanation: 'This coin paid at least 90% of the fees withdrawn, in distributions to this exact GitHub fee account since its previous claim.',
+	},
+	[ATTRIBUTION_LABELS.VERIFIED_REPOSITORY]: {
+		headline: 'VERIFIED GITHUB FEE CLAIM',
+		explanation: 'The claiming GitHub identity matches the repository owner linked in the token metadata.',
+	},
+	[ATTRIBUTION_LABELS.VERIFIED_CREATOR_WALLET]: {
+		headline: 'CREATOR-WALLET GITHUB FEE CLAIM',
+		explanation: 'The claim recipient matches the token creator wallet. No repository-owner match was established.',
+	},
+	[ATTRIBUTION_LABELS.IDENTITY_MISMATCH]: {
+		headline: 'IDENTITY MISMATCH, GITHUB FEE WITHDRAWAL',
+		explanation: 'The claiming GitHub account is not the owner linked in the token metadata.',
+	},
+	[ATTRIBUTION_LABELS.UNRESOLVED_POOLED]: {
+		headline: 'UNRESOLVED POOLED GITHUB FEE WITHDRAWAL',
+		explanation: 'One shared fee account is linked to more than one coin. This withdrawal cannot be assigned to one CA.',
+	},
+	[ATTRIBUTION_LABELS.UNVERIFIED]: {
+		headline: 'UNVERIFIED GITHUB FEE WITHDRAWAL',
+		explanation: 'A real fee withdrawal occurred, but it does not prove this GitHub user created or endorses the coin.',
+	},
+});
+
+/**
+ * Headline/explanation text for a label alone, no live context required.
+ * @param {string} label one of ATTRIBUTION_LABELS
+ */
+export function attributionInfoForLabel(label) {
+	return LABEL_INFO[label] || { headline: '', explanation: '' };
+}
+
 /**
  * Classify only the relationship a claim can actually prove. A successful
  * GitHub-PDA withdrawal proves a payment to a GitHub identity; it does not by
