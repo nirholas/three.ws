@@ -39,6 +39,14 @@
 			<description>@three-ws/walk's ?walk=play&amp;avatar=&lt;id&gt; deep link and the drop-in resume path read the saved avatar preference straight out of storage and never looked at the query string, so sharing a link to a specific avatar silently loaded the stored (or default) one instead. A new deepLinkAvatarId resolver gives the query param precedence and persists it, the same way picking an avatar in the UI does.</description>
 		</item>
 		<item>
+			<title>Every pump.fun launch now carries a plain-English receipt</title>
+			<link>https://three.ws/launches</link>
+			<guid isPermaLink="false">2026-10-14:Every pump.fun launch now carries a plain-English receipt</guid>
+			<pubDate>Wed, 14 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>/launches/&lt;mint&gt; gained a Launch receipt panel composing five on-chain facts into one readable object: whether the mint or freeze authority can still act (with a plain sentence for each, not just enabled/disabled), supply and decimals, the top-10 holder share, where trading fees route (a creator wallet, a fee-sharing config, cashback, or holder rewards), the creation transaction's version and byte size, and the Trade Safety Firewall's verdict. A coin that never launched through pump.fun gets an honest 'not a pump.fun launch' instead of an error, and a source that fails marks only its own section unavailable, never an invented number. Copy the receipt as text or download it as JSON; both carry a SHA-256 content hash of the response so a saved copy can be checked against a fresh read. A shareable 1200x630 card is available via GET /api/pump/launch-og?mint=&lt;mint&gt;&amp;variant=receipt, and the composition itself is a new public endpoint, GET /api/pump/launch-receipt?mint=&lt;mint&gt;.</description>
+		</item>
+		<item>
 			<title>GitHub fee-claim channel now attributes withdrawals to a coin, or says plainly it cannot</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-14:GitHub fee-claim channel now attributes withdrawals to a coin, or says plainly it cannot</guid>

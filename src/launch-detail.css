@@ -492,6 +492,42 @@ body {
 .ld-burn-row:hover { color: var(--ink-bright); }
 .ld-burn-amt { font-family: var(--font-mono); color: var(--ink); }
 .ld-burn-time { margin-left: auto; }
+
+/* ── Launch receipt ───────────────────────────────────────────────────────── */
+
+.ld-receipt { display: flex; flex-direction: column; gap: var(--space-md); }
+.ld-receipt-rows { display: flex; flex-direction: column; gap: var(--space-sm); }
+.ld-receipt-row {
+	display: grid; grid-template-columns: 148px 1fr auto; align-items: start; gap: var(--space-sm);
+	padding-bottom: var(--space-sm); border-bottom: 1px solid var(--surface-3);
+}
+.ld-receipt-row:last-child { border-bottom: none; padding-bottom: 0; }
+.ld-receipt-k { font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-dim); padding-top: 2px; }
+.ld-receipt-v { font-size: var(--text-sm); color: var(--ink-bright); line-height: 1.5; }
+.ld-receipt-row-unavailable .ld-receipt-v { color: var(--ink-faint); }
+.ld-receipt-na { font-style: italic; }
+.ld-receipt-addr {
+	font-family: var(--font-mono); font-size: var(--text-xs); color: var(--ink-dim);
+	text-decoration: none; white-space: nowrap; transition: color var(--duration-fast);
+}
+.ld-receipt-addr:hover { color: var(--ink-bright); }
+.ld-receipt-addr:focus-visible { outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color); outline-offset: 2px; border-radius: 3px; }
+@media (max-width: 640px) {
+	.ld-receipt-row { grid-template-columns: 1fr; gap: var(--space-2xs); }
+	.ld-receipt-k { padding-top: 0; }
+}
+.ld-receipt-foot {
+	display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-sm);
+	padding-top: var(--space-sm); border-top: 1px solid var(--stroke);
+}
+.ld-receipt-hash { display: flex; align-items: baseline; gap: var(--space-xs); min-width: 0; }
+.ld-receipt-hash-k { font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-dim); white-space: nowrap; }
+.ld-receipt-hash-v {
+	font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink-dim);
+	overflow: hidden; text-overflow: ellipsis; max-width: 220px;
+}
+.ld-receipt-time { font-size: var(--text-2xs); color: var(--ink-faint); }
+.ld-receipt-actions { display: flex; gap: var(--space-sm); }
 .ld-burn-link { color: var(--ink-faint); }
 
 /* ── Agent ────────────────────────────────────────────────────────────────── */

@@ -5300,6 +5300,146 @@ async function handleCreateSocialFeePdaPrep(req, res) {
 
 const MIN_RENT_EXEMPTION_LAMPORTS = 890_880n;
 
+/**
+ * Pure fee-routing read for `mintPk`: returns the same object handleFeeInfo
+ * serves, or null when the mint has no bonding curve. Exported so other
+ * composed read surfaces (the launch receipt) can reuse this without an
+ * internal HTTP round trip. Throws on an on-chain read failure; the caller
+ * decides how to surface that.
+ */
+export async function computeFeeInfo(mintPk, network) {
+	const connection = getConnection({ network });
+	const [
+		{ PumpSdk, OnlinePumpSdk, canonicalPumpPoolPdaWithQuote, normalizeQuoteMint, creatorVaultPda, feeSharingConfigPda },
+		{ OnlinePumpAmmSdk, coinCreatorVaultAuthorityPda, coinCreatorVaultAtaPda },
+		{ AccountLayout, NATIVE_MINT, TOKEN_PROGRAM_ID },
+	] = await Promise.all([
+		import('@pump-fun/pump-sdk'),
+		import('@pump-fun/pump-swap-sdk'),
+		import('@solana/spl-token'),
+	]);
+
+	const onlineSdk = new OnlinePumpSdk(connection);
+	const offlineSdk = new PumpSdk();
+	const bondingCurve = await onlineSdk.fetchBondingCurve(mintPk).catch(() => null);
+	if (!bondingCurve) return null;
+	const isHolderReward = bondingCurve.isHolderReward === true;
+
+	const poolPda = canonicalPumpPoolPdaWithQuote(mintPk, normalizeQuoteMint(bondingCurve.quoteMint));
+	const poolInfo = await connection.getAccountInfo(poolPda);
+	let isGraduated = false;
+	let poolCoinCreator = null;
+	let isCashbackCoin = false;
+
+	if (poolInfo) {
+		isGraduated = true;
+		try {
+			const pool = await new OnlinePumpAmmSdk(connection).fetchPool(poolPda);
+			poolCoinCreator = pool.coinCreator;
+			isCashbackCoin =
+				pool.isCashbackCoin === true ||
+				(Array.isArray(pool.is_cashback_coin) && pool.is_cashback_coin[0] === true);
+		} catch {
+			/* pool not fully initialized */
+		}
+	} else {
+		isCashbackCoin =
+			bondingCurve.isCashbackCoin === true ||
+			(Array.isArray(bondingCurve.is_cashback_coin) &&
+				bondingCurve.is_cashback_coin[0] === true);
+	}
+
+	const effectiveCreator = poolCoinCreator ?? new PublicKey(bondingCurve.creator);
+
+	let hasSharingConfig = false;
+	let sharingConfig = null;
+	if (!isCashbackCoin && !isHolderReward) {
+		// When a creator migrates to a fee-sharing config, the on-chain creator
+		// field (pool.coinCreator / bondingCurve.creator) becomes the config PDA.
+		const cfgPda = feeSharingConfigPda(mintPk);
+		hasSharingConfig = effectiveCreator.equals(cfgPda);
+		if (hasSharingConfig) {
+			const cfgInfo = await connection.getAccountInfo(cfgPda);
+			if (cfgInfo) {
+				const cfg = offlineSdk.decodeSharingConfig(cfgInfo);
+				sharingConfig = {
+					address: cfgPda.toBase58(),
+					admin: cfg.admin.toBase58(),
+					admin_revoked: cfg.adminRevoked ?? false,
+					shareholders: cfg.shareholders.map((s) => ({
+						address: s.address.toBase58(),
+						bps: Number(s.shareBps),
+					})),
+				};
+			} else {
+				hasSharingConfig = false;
+			}
+		}
+	}
+
+	// Vault balance = pump native creator vault (minus rent) + AMM WSOL vault,
+	// plus the SOL creator fees v3 / PumpSwap v2 trades left on this coin's
+	// curve and pool, which a claim sweeps into the vault first.
+	// When a sharing config exists, fees accrue under the config PDA.
+	let claimableLamports = 0n;
+	let unsweptLamports = 0n;
+	if (!isCashbackCoin) {
+		const vaultCreator = hasSharingConfig ? feeSharingConfigPda(mintPk) : effectiveCreator;
+		const buckets = await readCreatorFeeBuckets(connection, [mintPk.toBase58()]);
+		for (const leg of unsweptCreatorFees(buckets.values(), vaultCreator.toBase58())) {
+			if (leg.quoteMint === SOL_QUOTE_MINT) unsweptLamports += leg.amount;
+		}
+		claimableLamports += unsweptLamports;
+		const nativeVault = creatorVaultPda(vaultCreator);
+		const nativeInfo = await connection.getAccountInfo(nativeVault);
+		if (nativeInfo) {
+			const adjusted = BigInt(nativeInfo.lamports) - MIN_RENT_EXEMPTION_LAMPORTS;
+			if (adjusted > 0n) claimableLamports += adjusted;
+		}
+		try {
+			const ammAuthority = coinCreatorVaultAuthorityPda(vaultCreator);
+			const ammAta = coinCreatorVaultAtaPda(ammAuthority, NATIVE_MINT, TOKEN_PROGRAM_ID);
+			const ammInfo = await connection.getAccountInfo(ammAta);
+			if (ammInfo) {
+				const parsed = AccountLayout.decode(
+					new Uint8Array(
+						ammInfo.data.buffer,
+						ammInfo.data.byteOffset,
+						ammInfo.data.byteLength,
+					),
+				);
+				claimableLamports += BigInt(parsed.amount.toString());
+			}
+		} catch {
+			/* no AMM vault yet */
+		}
+	}
+
+	const feeDestination = isHolderReward
+		? 'holder_rewards'
+		: isCashbackCoin
+		? 'cashback'
+		: hasSharingConfig
+			? 'sharing_config'
+			: 'creator';
+
+	return {
+		mint: mintPk.toBase58(),
+		network,
+		is_graduated: isGraduated,
+		is_cashback_coin: isCashbackCoin,
+		is_holder_reward: isHolderReward,
+		has_sharing_config: hasSharingConfig,
+		creator: effectiveCreator.toBase58(),
+		claimable_lamports: claimableLamports.toString(),
+		claimable_sol: Number(claimableLamports) / LAMPORTS_PER_SOL,
+		// The part of claimable still on the curve or pool (swept by the claim).
+		unswept_lamports: unsweptLamports.toString(),
+		fee_destination: feeDestination,
+		sharing_config: sharingConfig,
+	};
+}
+
 async function handleFeeInfo(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -5314,136 +5454,9 @@ async function handleFeeInfo(req, res) {
 	if (!mintPk) return error(res, 400, 'validation_error', 'valid mint required');
 
 	try {
-		const connection = getConnection({ network });
-		const [
-			{ PumpSdk, OnlinePumpSdk, canonicalPumpPoolPdaWithQuote, normalizeQuoteMint, creatorVaultPda, feeSharingConfigPda },
-			{ OnlinePumpAmmSdk, coinCreatorVaultAuthorityPda, coinCreatorVaultAtaPda },
-			{ AccountLayout, NATIVE_MINT, TOKEN_PROGRAM_ID },
-		] = await Promise.all([
-			import('@pump-fun/pump-sdk'),
-			import('@pump-fun/pump-swap-sdk'),
-			import('@solana/spl-token'),
-		]);
-
-		const onlineSdk = new OnlinePumpSdk(connection);
-		const offlineSdk = new PumpSdk();
-		const bondingCurve = await onlineSdk.fetchBondingCurve(mintPk).catch(() => null);
-		if (!bondingCurve) return error(res, 404, 'not_found', 'no bonding curve for this mint');
-		const isHolderReward = bondingCurve.isHolderReward === true;
-
-		const poolPda = canonicalPumpPoolPdaWithQuote(mintPk, normalizeQuoteMint(bondingCurve.quoteMint));
-		const poolInfo = await connection.getAccountInfo(poolPda);
-		let isGraduated = false;
-		let poolCoinCreator = null;
-		let isCashbackCoin = false;
-
-		if (poolInfo) {
-			isGraduated = true;
-			try {
-				const pool = await new OnlinePumpAmmSdk(connection).fetchPool(poolPda);
-				poolCoinCreator = pool.coinCreator;
-				isCashbackCoin =
-					pool.isCashbackCoin === true ||
-					(Array.isArray(pool.is_cashback_coin) && pool.is_cashback_coin[0] === true);
-			} catch {
-				/* pool not fully initialized */
-			}
-		} else {
-			isCashbackCoin =
-				bondingCurve.isCashbackCoin === true ||
-				(Array.isArray(bondingCurve.is_cashback_coin) &&
-					bondingCurve.is_cashback_coin[0] === true);
-		}
-
-		const effectiveCreator = poolCoinCreator ?? new PublicKey(bondingCurve.creator);
-
-		let hasSharingConfig = false;
-		let sharingConfig = null;
-		if (!isCashbackCoin && !isHolderReward) {
-			// When a creator migrates to a fee-sharing config, the on-chain creator
-			// field (pool.coinCreator / bondingCurve.creator) becomes the config PDA.
-			const cfgPda = feeSharingConfigPda(mintPk);
-			hasSharingConfig = effectiveCreator.equals(cfgPda);
-			if (hasSharingConfig) {
-				const cfgInfo = await connection.getAccountInfo(cfgPda);
-				if (cfgInfo) {
-					const cfg = offlineSdk.decodeSharingConfig(cfgInfo);
-					sharingConfig = {
-						address: cfgPda.toBase58(),
-						admin: cfg.admin.toBase58(),
-						admin_revoked: cfg.adminRevoked ?? false,
-						shareholders: cfg.shareholders.map((s) => ({
-							address: s.address.toBase58(),
-							bps: Number(s.shareBps),
-						})),
-					};
-				} else {
-					hasSharingConfig = false;
-				}
-			}
-		}
-
-		// Vault balance = pump native creator vault (minus rent) + AMM WSOL vault,
-		// plus the SOL creator fees v3 / PumpSwap v2 trades left on this coin's
-		// curve and pool, which a claim sweeps into the vault first.
-		// When a sharing config exists, fees accrue under the config PDA.
-		let claimableLamports = 0n;
-		let unsweptLamports = 0n;
-		if (!isCashbackCoin) {
-			const vaultCreator = hasSharingConfig ? feeSharingConfigPda(mintPk) : effectiveCreator;
-			const buckets = await readCreatorFeeBuckets(connection, [mintPk.toBase58()]);
-			for (const leg of unsweptCreatorFees(buckets.values(), vaultCreator.toBase58())) {
-				if (leg.quoteMint === SOL_QUOTE_MINT) unsweptLamports += leg.amount;
-			}
-			claimableLamports += unsweptLamports;
-			const nativeVault = creatorVaultPda(vaultCreator);
-			const nativeInfo = await connection.getAccountInfo(nativeVault);
-			if (nativeInfo) {
-				const adjusted = BigInt(nativeInfo.lamports) - MIN_RENT_EXEMPTION_LAMPORTS;
-				if (adjusted > 0n) claimableLamports += adjusted;
-			}
-			try {
-				const ammAuthority = coinCreatorVaultAuthorityPda(vaultCreator);
-				const ammAta = coinCreatorVaultAtaPda(ammAuthority, NATIVE_MINT, TOKEN_PROGRAM_ID);
-				const ammInfo = await connection.getAccountInfo(ammAta);
-				if (ammInfo) {
-					const parsed = AccountLayout.decode(
-						new Uint8Array(
-							ammInfo.data.buffer,
-							ammInfo.data.byteOffset,
-							ammInfo.data.byteLength,
-						),
-					);
-					claimableLamports += BigInt(parsed.amount.toString());
-				}
-			} catch {
-				/* no AMM vault yet */
-			}
-		}
-
-		const feeDestination = isHolderReward
-			? 'holder_rewards'
-			: isCashbackCoin
-			? 'cashback'
-			: hasSharingConfig
-				? 'sharing_config'
-				: 'creator';
-
-		return json(res, 200, {
-			mint: mintPk.toBase58(),
-			network,
-			is_graduated: isGraduated,
-			is_cashback_coin: isCashbackCoin,
-			is_holder_reward: isHolderReward,
-			has_sharing_config: hasSharingConfig,
-			creator: effectiveCreator.toBase58(),
-			claimable_lamports: claimableLamports.toString(),
-			claimable_sol: Number(claimableLamports) / LAMPORTS_PER_SOL,
-			// The part of claimable still on the curve or pool (swept by the claim).
-			unswept_lamports: unsweptLamports.toString(),
-			fee_destination: feeDestination,
-			sharing_config: sharingConfig,
-		});
+		const info = await computeFeeInfo(mintPk, network);
+		if (!info) return error(res, 404, 'not_found', 'no bonding curve for this mint');
+		return json(res, 200, info);
 	} catch (e) {
 		return error(
 			res,

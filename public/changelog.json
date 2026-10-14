@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-14T17:22:11.540Z",
+	"generated_at": "2026-10-14T18:13:33.913Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -46,6 +46,16 @@
 			"tags": [
 				"fix",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "Every pump.fun launch now carries a plain-English receipt",
+			"summary": "/launches/<mint> gained a Launch receipt panel composing five on-chain facts into one readable object: whether the mint or freeze authority can still act (with a plain sentence for each, not just enabled/disabled), supply and decimals, the top-10 holder share, where trading fees route (a creator wallet, a fee-sharing config, cashback, or holder rewards), the creation transaction's version and byte size, and the Trade Safety Firewall's verdict. A coin that never launched through pump.fun gets an honest 'not a pump.fun launch' instead of an error, and a source that fails marks only its own section unavailable, never an invented number. Copy the receipt as text or download it as JSON; both carry a SHA-256 content hash of the response so a saved copy can be checked against a fresh read. A shareable 1200x630 card is available via GET /api/pump/launch-og?mint=<mint>&variant=receipt, and the composition itself is a new public endpoint, GET /api/pump/launch-receipt?mint=<mint>.",
+			"link": "/launches",
+			"tags": [
+				"feature"
 			]
 		},
 		{

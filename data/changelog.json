@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-14",
+			"title": "Every pump.fun launch now carries a plain-English receipt",
+			"summary": "/launches/<mint> gained a Launch receipt panel composing five on-chain facts into one readable object: whether the mint or freeze authority can still act (with a plain sentence for each, not just enabled/disabled), supply and decimals, the top-10 holder share, where trading fees route (a creator wallet, a fee-sharing config, cashback, or holder rewards), the creation transaction's version and byte size, and the Trade Safety Firewall's verdict. A coin that never launched through pump.fun gets an honest 'not a pump.fun launch' instead of an error, and a source that fails marks only its own section unavailable, never an invented number. Copy the receipt as text or download it as JSON; both carry a SHA-256 content hash of the response so a saved copy can be checked against a fresh read. A shareable 1200x630 card is available via GET /api/pump/launch-og?mint=<mint>&variant=receipt, and the composition itself is a new public endpoint, GET /api/pump/launch-receipt?mint=<mint>.",
+			"tags": [
+				"feature"
+			],
+			"link": "/launches"
+		},
+		{
+			"date": "2026-10-14",
 			"title": "Atomic is now a six-tab Transaction V1 lab, not just an inspector",
 			"summary": "/atomic grew five tabs beyond the Inspector, each reachable by click, arrow-key/Home/End tab navigation, or a deep link (?tab=mask, ?tab=sponsor, ?tab=planner, ?tab=diff, ?tab=wallet). The config mask decoder reads a V1 transaction's real TransactionConfigMask u32 and its fixed-width ConfigValues byte by byte, flagging a half-set priority-fee pair or a reserved bit SIMD-0385 has not assigned yet. The sponsor cap view shows a paymaster exactly what it is agreeing to pay, reading V1's inline config instead of a Compute Budget instruction scan that sees nothing on a V1 transaction. The size and budget planner compiles a pasted instruction set with @solana/kit to an exact byte count against legacy, V0, or V1's ceiling, including an exact lamport total for a chosen priority fee. The legacy/V0/V1 diff compiles the same instructions three ways and reports the real byte deltas, honestly, including the case where V1's inline config makes it larger than legacy. The wallet V1 capability check connects the browser's injected wallet and reports the same verdict the rest of three.ws would get from findV1WalletStandardSigner before ever requesting a real V1 signature. Nothing here is estimated: every number comes from compiling and decoding real transactions, and nothing is ever signed, simulated, or broadcast.",
 			"tags": [

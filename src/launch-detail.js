@@ -66,6 +66,7 @@ const state = {
 	priceTimer: 0,
 	statsPromise: null, // shared /api/pump/token-stats read (stats + holders panels)
 	statsWindow: '1h', // selected timeframe tab in the stats panel
+	receiptPromise: null, // shared /api/pump/launch-receipt read
 };
 
 // The chart-source choice is a viewing preference, not coin-specific: persist it
@@ -1311,6 +1312,171 @@ function creatorFeesNote(fees) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// LAUNCH RECEIPT: one plain-English object pulled from five on-chain facts
+// ════════════════════════════════════════════════════════════════════════════
+//
+// Everything here already exists elsewhere on the page (authorities in Token
+// stats, holders in the Holders panel, fee routing nowhere visible until now,
+// the creation transaction never shown at all). The receipt's job is to let a
+// trader copy or download one object instead of piecing five panels together,
+// with a content hash so a saved copy can be checked against a fresh read.
+
+function loadReceipt() {
+	if (!state.receiptPromise) {
+		state.receiptPromise = fetchJson(`/api/pump/launch-receipt?mint=${encodeURIComponent(state.mint)}&network=${state.network}`, { timeout: 20000 });
+		state.receiptPromise.catch(() => { state.receiptPromise = null; });
+	}
+	return state.receiptPromise;
+}
+
+function receiptToText(r) {
+	const lines = [`Launch receipt for ${r.mint} (${r.network})`, `Generated ${new Date(r.generated_at).toLocaleString()}`, ''];
+	lines.push(r.authorities.available ? r.authorities.mint_authority.sentence : `Mint authority: unavailable (${r.authorities.reason})`);
+	lines.push(r.authorities.available ? r.authorities.freeze_authority.sentence : `Freeze authority: unavailable (${r.authorities.reason})`);
+	lines.push(r.supply.available ? `Supply: ${compact(r.supply.formatted)} (${r.supply.decimals} decimals)` : `Supply: unavailable (${r.supply.reason})`);
+	lines.push(r.holders.available ? r.holders.sentence : `Holders: unavailable (${r.holders.reason})`);
+	lines.push(r.fee_routing.available ? r.fee_routing.sentence : `Fee routing: unavailable (${r.fee_routing.reason})`);
+	lines.push(
+		r.creation.available
+			? `Creation transaction: ${r.creation.signature} (${r.creation.version_label}, ${r.creation.bytes} bytes)`
+			: `Creation transaction: unavailable (${r.creation.reason})`,
+	);
+	lines.push(r.risk.available ? `Risk flags: ${r.risk.verdict} (score ${r.risk.score})` : `Risk flags: unavailable (${r.risk.reason})`);
+	lines.push('', `Content hash (SHA-256): ${r.content_hash}`, 'Verify at https://three.ws/launches/' + r.mint);
+	return lines.join('\n');
+}
+
+function actionButton(label, onclick, cls = '') {
+	const btn = el('button', { class: `ld-btn ld-btn-ghost ${cls}`, type: 'button', text: label, onclick });
+	return btn;
+}
+
+function copyTextButton(getText, label) {
+	return actionButton(label, async (e) => {
+		const btn = e.currentTarget;
+		const old = btn.textContent;
+		try {
+			await navigator.clipboard.writeText(getText());
+			btn.textContent = 'Copied';
+			btn.classList.add('ld-copied');
+		} catch {
+			btn.textContent = 'Copy failed';
+		}
+		setTimeout(() => {
+			btn.textContent = old;
+			btn.classList.remove('ld-copied');
+		}, 1600);
+	});
+}
+
+function downloadJsonButton(getValue, filename, label) {
+	return actionButton(label, () => {
+		const blob = new Blob([JSON.stringify(getValue(), null, 2)], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const a = el('a', { href: url, download: filename });
+		document.body.appendChild(a);
+		a.click();
+		a.remove();
+		URL.revokeObjectURL(url);
+	});
+}
+
+function receiptRow(label, sentence, extra = null) {
+	return el('div', { class: 'ld-receipt-row' }, [
+		el('span', { class: 'ld-receipt-k', text: label }),
+		el('span', { class: 'ld-receipt-v', text: sentence }),
+		extra,
+	]);
+}
+
+function receiptUnavailable(label, reason) {
+	return el('div', { class: 'ld-receipt-row ld-receipt-row-unavailable' }, [
+		el('span', { class: 'ld-receipt-k', text: label }),
+		el('span', { class: 'ld-receipt-v ld-receipt-na', text: `Unavailable: ${reason}` }),
+	]);
+}
+
+function renderReceiptBody(r) {
+	const rows = [];
+
+	rows.push(
+		r.authorities.available
+			? receiptRow('Mint authority', r.authorities.mint_authority.sentence, r.authorities.mint_authority.address ? el('a', { class: 'ld-receipt-addr', href: `https://solscan.io/account/${r.authorities.mint_authority.address}`, target: '_blank', rel: 'noopener noreferrer', text: shortAddr(r.authorities.mint_authority.address, 4, 4) }) : null)
+			: receiptUnavailable('Mint authority', r.authorities.reason),
+	);
+	rows.push(
+		r.authorities.available
+			? receiptRow('Freeze authority', r.authorities.freeze_authority.sentence, r.authorities.freeze_authority.address ? el('a', { class: 'ld-receipt-addr', href: `https://solscan.io/account/${r.authorities.freeze_authority.address}`, target: '_blank', rel: 'noopener noreferrer', text: shortAddr(r.authorities.freeze_authority.address, 4, 4) }) : null)
+			: receiptUnavailable('Freeze authority', r.authorities.reason),
+	);
+	rows.push(
+		r.supply.available
+			? receiptRow('Supply', `${compact(r.supply.formatted)} tokens, ${r.supply.decimals} decimals.`)
+			: receiptUnavailable('Supply', r.supply.reason),
+	);
+	rows.push(r.holders.available ? receiptRow('Holders', r.holders.sentence) : receiptUnavailable('Holders', r.holders.reason));
+	rows.push(r.fee_routing.available ? receiptRow('Fee routing', r.fee_routing.sentence) : receiptUnavailable('Fee routing', r.fee_routing.reason));
+	rows.push(
+		r.creation.available
+			? receiptRow(
+					'Creation transaction',
+					`${r.creation.version_label}, ${compact(r.creation.bytes)} bytes (${r.creation.utilization_pct != null ? fmtPct(r.creation.utilization_pct, { dp: 0 }) : '-'} of the size limit).`,
+					el('a', { class: 'ld-receipt-addr', href: `https://solscan.io/tx/${r.creation.signature}`, target: '_blank', rel: 'noopener noreferrer', text: shortAddr(r.creation.signature, 4, 4) }),
+				)
+			: receiptUnavailable('Creation transaction', r.creation.reason),
+	);
+	rows.push(
+		r.risk.available
+			? receiptRow('Risk flags', `Trade Safety Firewall verdict: ${r.risk.verdict} (score ${r.risk.score}).`)
+			: receiptUnavailable('Risk flags', r.risk.reason),
+	);
+
+	return el('div', { class: 'ld-receipt' }, [
+		el('div', { class: 'ld-receipt-rows' }, rows),
+		el('div', { class: 'ld-receipt-foot' }, [
+			el('div', { class: 'ld-receipt-hash', title: 'SHA-256 of this receipt’s canonical JSON' }, [
+				el('span', { class: 'ld-receipt-hash-k', text: 'Content hash' }),
+				el('code', { class: 'ld-receipt-hash-v', text: r.content_hash }),
+			]),
+			el('span', { class: 'ld-receipt-time', text: `Generated ${relTime(r.generated_at)}` }),
+			el('div', { class: 'ld-receipt-actions' }, [
+				copyTextButton(() => receiptToText(r), 'Copy as text'),
+				downloadJsonButton(() => r, `three-ws-launch-receipt-${r.mint}.json`, 'Download JSON'),
+			]),
+		]),
+	]);
+}
+
+async function renderReceipt() {
+	const target = $('ld-receipt');
+	if (!target) return;
+	if (state.network !== 'mainnet') {
+		target.hidden = true;
+		return;
+	}
+	target.replaceChildren(el('div', { class: 'ld-skel', style: 'height:220px' }));
+
+	let r = null;
+	try {
+		r = await loadReceipt();
+	} catch {
+		/* rendered as the error state below */
+	}
+	if (!r) {
+		section(
+			target,
+			'Launch receipt',
+			el('div', { class: 'ld-empty ld-empty-sm' }, [
+				el('p', { text: 'The launch receipt is unavailable right now.' }),
+				el('button', { class: 'ld-btn ld-btn-ghost', type: 'button', text: 'Retry', onclick: () => renderReceipt() }),
+			]),
+		);
+		return;
+	}
+	section(target, 'Launch receipt', renderReceiptBody(r), { tag: 'live · composed' });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // AGENT BEHIND THE COIN
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -2070,6 +2236,7 @@ async function boot() {
 	renderChart();
 	renderDistribution();
 	renderEconomics();
+	renderReceipt();
 	renderAgent();
 	renderTape();
 	renderCommunity();

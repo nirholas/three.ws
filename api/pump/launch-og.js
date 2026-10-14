@@ -1,5 +1,6 @@
 /**
  * GET /api/pump/launch-og?mint=<mint>
+ * GET /api/pump/launch-og?mint=<mint>&variant=receipt
  *
  * Dynamic OG image card for the /launches/<mint> coin detail page.
  * Returns an SVG-based social card (1200×630) that renders the coin's identity
@@ -23,6 +24,12 @@
  * such as "rugged". A shared card is a statement about someone's coin, and a
  * number on it reads as investment advice when high and as FUD when low.
  *   footer     — three.ws branding
+ *
+ * `variant=receipt` swaps the activity/market-cap card for a shareable summary
+ * of /api/pump/launch-receipt: authorities, supply, top-10 holders, fee routing
+ * and the firewall verdict, so a trader can share the receipt itself rather
+ * than a screenshot of the page. Same neutral-facts rule: every field is a
+ * fact already published by the receipt endpoint, never a score computed here.
  */
 
 import { cors, method, wrap } from '../_lib/http.js';
@@ -30,6 +37,7 @@ import { sql } from '../_lib/db.js';
 import { fetchOgImage } from '../_lib/og-avatar.js';
 import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
 import { resolveURI } from '../../src/ipfs.js';
+import { buildReceipt } from './launch-receipt.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const PUMP_FRONTEND_V3 = 'https://frontend-api-v3.pump.fun';
@@ -244,6 +252,103 @@ export function renderCard(mint, d) {
 </svg>`;
 }
 
+function compactNum(n) {
+	if (!Number.isFinite(n)) return '';
+	if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)}B`;
+	if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
+	if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+	return n.toFixed(0);
+}
+
+function feeRoutingLabel(fr) {
+	if (!fr?.available) return 'Unavailable';
+	if (!fr.applicable) return 'Not pump.fun';
+	if (fr.sentence.includes('holder rewards')) return 'Holder rewards';
+	if (fr.sentence.includes('cashback')) return 'Cashback';
+	if (fr.sentence.includes('fee-sharing')) return 'Fee-sharing';
+	return 'Creator wallet';
+}
+
+export function renderReceiptCard(mint, d, r) {
+	const { name, symbol, logoBase64 } = d;
+	const displayName = trunc(name || 'Unknown coin', 30);
+	const displaySym = symbol ? `$${symbol.toUpperCase()}` : '';
+	const accent = '#818cf8';
+
+	const imgBlock = logoBase64
+		? `<image href="${logoBase64}" x="80" y="88" width="96" height="96" clip-path="url(#imgCircle)"/>`
+		: `<rect x="80" y="88" width="96" height="96" rx="48" fill="#1e2030"/>
+		   <text x="128" y="152" text-anchor="middle" fill="#6b7280" font-size="40">${x((displaySym || displayName)[0] || '?')}</text>`;
+
+	const mintEnabled = r?.authorities?.available ? r.authorities.mint_authority.enabled : null;
+	const freezeEnabled = r?.authorities?.available ? r.authorities.freeze_authority.enabled : null;
+	const supplyText = r?.supply?.available ? compactNum(r.supply.formatted) : '-';
+	const top10Text = r?.holders?.available && r.holders.top10_pct != null ? `${(r.holders.top10_pct * 100).toFixed(1)}%` : '-';
+	const feeText = feeRoutingLabel(r?.fee_routing);
+	const riskVerdict = r?.risk?.available ? r.risk.verdict : null;
+	const hashShort = r?.content_hash ? `${r.content_hash.slice(0, 16)}…` : '';
+
+	const fact = (fx, label, value, valueColor = '#e5e5e5') => `
+	<text x="${fx}" y="356" fill="rgba(229,229,229,0.4)" font-size="13" letter-spacing="1.5">${x(label)}</text>
+	<text x="${fx}" y="396" fill="${valueColor}" font-family="Inter,-apple-system,system-ui,sans-serif" font-size="26" font-weight="400">${x(value)}</text>`;
+
+	const riskColor = riskVerdict === 'block' ? '#f87171' : riskVerdict === 'warn' ? '#fbbf24' : riskVerdict ? '#4ade80' : '#9ca3af';
+
+	return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="1200" height="630" viewBox="0 0 1200 630" role="img"
+     aria-label="${x(displayName)} launch receipt">
+	<defs>
+		<clipPath id="imgCircle"><circle cx="128" cy="136" r="48"/></clipPath>
+		<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+			<stop offset="0%" stop-color="#0a0b0f"/>
+			<stop offset="100%" stop-color="#0f1119"/>
+		</linearGradient>
+	</defs>
+
+	<rect width="1200" height="630" fill="url(#bg)"/>
+	<rect x="0" y="0" width="1200" height="3" fill="${accent}" opacity="0.7"/>
+
+	<text x="80" y="40" fill="rgba(229,229,229,0.9)"
+	      font-family="Inter,-apple-system,system-ui,sans-serif"
+	      font-size="22" font-weight="600" letter-spacing="1">three.ws</text>
+	<rect x="215" y="22" width="150" height="26" rx="6" fill="rgba(99,102,241,0.2)"/>
+	<text x="228" y="40" fill="#818cf8" font-size="13" font-weight="500">LAUNCH RECEIPT</text>
+	<text x="1120" y="40" text-anchor="end" fill="rgba(229,229,229,0.3)"
+	      font-family="Inter,-apple-system,system-ui,sans-serif"
+	      font-size="18" font-weight="400">${x(shortMint(mint))}</text>
+
+	${imgBlock}
+
+	<text x="196" y="130" fill="#e5e5e5"
+	      font-family="Inter,-apple-system,system-ui,sans-serif"
+	      font-size="42" font-weight="300" letter-spacing="-1">${x(displayName)}</text>
+	<text x="196" y="166" fill="rgba(229,229,229,0.5)"
+	      font-family="Inter,-apple-system,system-ui,sans-serif"
+	      font-size="24" font-weight="400" letter-spacing="1">${x(displaySym)}</text>
+
+	<line x1="80" y1="210" x2="1120" y2="210" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+
+	${fact(80, 'MINT AUTHORITY', mintEnabled == null ? '-' : mintEnabled ? 'Enabled' : 'Disabled', mintEnabled === true ? '#fbbf24' : '#e5e5e5')}
+	${fact(288, 'FREEZE AUTHORITY', freezeEnabled == null ? '-' : freezeEnabled ? 'Enabled' : 'Disabled', freezeEnabled === true ? '#fbbf24' : '#e5e5e5')}
+	${fact(496, 'SUPPLY', supplyText)}
+	${fact(704, 'TOP 10 HOLDERS', top10Text)}
+	${fact(912, 'FEE ROUTING', trunc(feeText, 14))}
+
+	<line x1="80" y1="430" x2="1120" y2="430" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+
+	<text x="80" y="470" fill="rgba(229,229,229,0.4)" font-size="13" letter-spacing="1.5">TRADE SAFETY FIREWALL</text>
+	<text x="80" y="510" fill="${riskColor}" font-family="Inter,-apple-system,system-ui,sans-serif" font-size="32" font-weight="500">${x(riskVerdict ? riskVerdict.toUpperCase() : 'UNAVAILABLE')}</text>
+
+	<text x="1120" y="470" text-anchor="end" fill="rgba(229,229,229,0.4)" font-size="13" letter-spacing="1.5">CONTENT HASH</text>
+	<text x="1120" y="500" text-anchor="end" fill="rgba(229,229,229,0.7)" font-family="ui-monospace,monospace" font-size="18">${x(hashShort)}</text>
+
+	<text x="80" y="592" fill="rgba(229,229,229,0.2)"
+	      font-family="Inter,-apple-system,system-ui,sans-serif"
+	      font-size="18" letter-spacing="5">THREE.WS · VERIFY AT THREE.WS/LAUNCHES</text>
+</svg>`;
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	// Crawlers fetch og:image with GET, and several (Slack, iMessage) HEAD it
@@ -253,6 +358,7 @@ export default wrap(async (req, res) => {
 
 	const url = new URL(req.url, 'http://x');
 	const mint = (url.searchParams.get('mint') || '').trim();
+	const variant = url.searchParams.get('variant') === 'receipt' ? 'receipt' : 'card';
 
 	if (!MINT_RE.test(mint)) {
 		res.statusCode = 400;
@@ -272,7 +378,22 @@ export default wrap(async (req, res) => {
 		data = { name: '', symbol: '', logoBase64: null, category: '', isThreeWsLaunch: false, intel: null, outcome: null, liveMcap: null };
 	}
 
-	const svg = renderCard(mint, data);
+	let svg;
+	if (variant === 'receipt') {
+		// buildReceipt isolates each of its own sources (Promise.allSettled), so it
+		// resolves even when every upstream fact fails; this try/catch only guards
+		// against a genuinely unexpected throw, same contract as buildCardData above.
+		let receipt = null;
+		try {
+			receipt = await buildReceipt(mint, 'mainnet');
+		} catch (err) {
+			console.warn('[launch-og] receipt data failed for %s: %s', mint, err?.message || err);
+		}
+		svg = renderReceiptCard(mint, data, receipt);
+	} else {
+		svg = renderCard(mint, data);
+	}
+
 	res.statusCode = 200;
 	res.setHeader('content-type', 'image/svg+xml; charset=utf-8');
 	res.setHeader('cache-control', CACHE);

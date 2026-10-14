@@ -67,6 +67,36 @@ The same dispatcher handles the full lifecycle beyond launch: `buy-prep` /
 (`strategy-backtest`, `strategy-validate`, `strategy-close-all`) that back the
 [sniper](autonomous-x402.md).
 
+## Launch receipt
+
+`/launches/<mint>` composes five of the facts above (mint and freeze
+authority, supply, top-10 holder share, fee routing, the creation
+transaction, and the Trade Safety Firewall's verdict) into one plain-English
+receipt, so a trader can read or share one object instead of piecing five
+panels together.
+
+```
+GET /api/pump/launch-receipt?mint=<mint>&network=<mainnet|devnet>
+```
+
+Public, CORS-open, cached `public, max-age=60, s-maxage=300`
+(`api/pump/launch-receipt.js` `buildReceipt`). Each section fails
+independently: a source that cannot be read marks only its own section
+`{ "available": false, "reason": "…" }` rather than failing the whole
+response, and a mint that never launched through pump.fun gets
+`fee_routing: { "applicable": false }` instead of an error. The response
+carries a `content_hash`, a SHA-256 of its own canonical JSON, so a
+downloaded or shared copy can be checked against a fresh read.
+
+```bash
+curl -s 'https://three.ws/api/pump/launch-receipt?mint=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump'
+```
+
+The coin detail page renders this as a "Launch receipt" panel with a copy-as-text
+button and a JSON download, both reusing `content_hash` from the same
+response. `?variant=receipt` on `api/pump/launch-og.js` renders the same facts
+as a shareable 1200×630 social card.
+
 ## $THREE only
 
 The launcher is **coin-agnostic plumbing**: it accepts an arbitrary,

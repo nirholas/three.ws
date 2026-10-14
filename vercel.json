@@ -4052,6 +4052,10 @@
 			"dest": "/api/pump/token-stats.js"
 		},
 		{
+			"src": "/api/pump/launch-receipt",
+			"dest": "/api/pump/launch-receipt.js"
+		},
+		{
 			"src": "/api/pump/check-three-balance",
 			"dest": "/api/pump/check-three-balance.js"
 		},

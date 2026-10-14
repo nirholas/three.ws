@@ -244,6 +244,8 @@ async function readAuthorities(mint) {
 		return {
 			mint_authority: m.mintAuthority ? m.mintAuthority.toBase58() : null,
 			freeze_authority: m.freezeAuthority ? m.freezeAuthority.toBase58() : null,
+			decimals: m.decimals,
+			supply: m.supply.toString(),
 		};
 	} catch {
 		return null;
@@ -265,7 +267,8 @@ async function readDexScreener(mint) {
 	};
 }
 
-async function buildStats(mint) {
+/** Exported so other composed read surfaces (the launch receipt) can reuse the same fact sheet without an internal HTTP round trip. */
+export async function buildStats(mint) {
 	const now = Math.floor(Date.now() / 1000);
 	const metaRes = await pumpFetchJson(`${PUMP_FRONTEND_BASE}/coins-v2/${mint}`, { timeoutMs: 5000 });
 	const coin = metaRes.ok ? metaRes.body : null;

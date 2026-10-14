@@ -9404,6 +9404,35 @@ No auth. `GET` returns `{ network, win, leaders[], starter_caps, eligibility_bar
 | `invalid_config` | 400 | a `starter: true` subscription past a starter cap (the reason is in `error_description`) |
 | `rate_limited` | 429 | over the IP limit |
 
+### Launch receipt
+
+```
+GET /api/pump/launch-receipt?mint=<mint>&network=<mainnet|devnet>
+```
+
+No auth, CORS-open, IP rate-limited, cached `public, max-age=60, s-maxage=300`.
+Composes authorities, supply, top-10 holder share, fee routing, the creation
+transaction's version and byte size, and the Trade Safety Firewall's verdict
+into one plain-English object for a pump.fun launch, each with a `sentence`
+field in addition to its raw value. Every section fails independently: a
+source that can't be read answers `{ available: false, reason }` for that
+section alone, and a mint that never launched through pump.fun gets
+`fee_routing: { available: true, applicable: false }` rather than an error.
+`content_hash` is a SHA-256 of the response's own canonical JSON, so a saved
+or shared copy can be checked against a fresh read. Rendered on
+`/launches/<mint>` as the "Launch receipt" panel, and as a shareable card via
+`GET /api/pump/launch-og?mint=<mint>&variant=receipt`. Guide:
+[coin-launches.md](coin-launches.md#launch-receipt).
+
+```bash
+curl -s 'https://three.ws/api/pump/launch-receipt?mint=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump'
+```
+
+| Error | Status | Meaning |
+| --- | --- | --- |
+| `invalid_mint` | 400 | `mint` is not a base58 address |
+| `rate_limited` | 429 | over the IP limit |
+
 ## Home API
 
 Read and act on a Home Assistant house the account has connected. Session-authenticated from a
