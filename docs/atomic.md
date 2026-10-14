@@ -1,11 +1,12 @@
-# Atomic: Solana Transaction V1 inspector
+# Atomic: Solana Transaction V1 lab
 
-[Atomic](/atomic) is three.ws's read-only flight recorder for Solana transactions. It accepts either a confirmed mainnet signature or signed wire bytes and returns the same normalized inspection for legacy, V0, and V1 transactions.
+[Atomic](/atomic) is three.ws's read-only lab for Solana transactions: a tabbed flight recorder, size and budget planner, config mask decoder, legacy/V0/V1 diff, sponsor cap view, and wallet V1 capability check. The Inspector tab accepts either a confirmed mainnet signature or signed wire bytes and returns the same normalized inspection for legacy, V0, and V1 transactions; the other five tabs are documented below in "The lab: five more tools."
 
-It is built for two jobs:
+It is built for three jobs:
 
-- Developers can see whether a payload needs V1's 4,096-byte envelope.
+- Developers can see whether a payload needs V1's 4,096-byte envelope, and plan an exact byte budget before they build one.
 - Wallets, relayers, and fee sponsors can read the limits they are actually agreeing to before they co-sign.
+- Anyone can check whether their own wallet honestly advertises V1 signing before they rely on it.
 
 Atomic never signs, simulates, or broadcasts a transaction.
 
@@ -76,6 +77,45 @@ $THREE graduated its bonding curve some time ago, so this particular signature d
 
 A transaction with no pump.fun events (most Solana transactions) shows a plain "no pump.fun events in this transaction" state instead of an empty panel.
 
+## The lab: five more tools
+
+`/atomic` is a tabbed lab, not a single tool. The Inspector above is the first tab; the other five share its read-only guarantee (nothing is ever signed, simulated, or broadcast) and are reachable by click, by arrow-key/Home/End navigation on the tab bar, or by a deep link: `/atomic?tab=mask`, `?tab=sponsor`, `?tab=planner`, `?tab=diff`, `?tab=wallet`.
+
+### Config mask decoder
+
+Every V1 transaction carries a 4-byte `TransactionConfigMask` (a little-endian `u32`) immediately after the version byte and legacy header, followed by fixed-width `ConfigValues` for each set bit. This tab decodes those exact bytes from a pasted signature or wire transaction, independently of the higher-level `budget` field the Inspector shows, and reports:
+
+- the mask as hex, as a 32-character binary string, and as a bit popcount;
+- each of the five known bits (priority fee spans bits 0-1 as one 8-byte value; compute unit limit, loaded accounts data size, and heap size each own one bit and one 4-byte value), whether it is present, and its raw bytes and decoded value;
+- a priority-fee mask with only one of its two bits set, flagged as a partial, invalid encoding (SIMD-0385 requires both or neither);
+- any set bit above bit 4, flagged as reserved, since a future SIMD may assign it a meaning this decoder does not yet know;
+- the exact byte offset range `ConfigValues` occupies in the message.
+
+A legacy or V0 transaction has no config mask; the tab states that plainly instead of showing an empty table.
+
+### Sponsor cap view
+
+A paymaster or co-signer reads this before it agrees to pay. For the same pasted signature or wire transaction, it shows only what a sponsor needs: the resolved priority fee, compute unit limit, loaded-accounts data size limit, and heap size (reading V1's `transactionConfig` directly, never a Compute Budget instruction scan that would see nothing on a V1 transaction), plus a duplicate-static-account check. SIMD-0385 makes a duplicate entry in the static address table a sanitization failure; this view lists any duplicate it finds and states plainly when there is none.
+
+### Size and budget planner
+
+Paste a fee payer address and a JSON array of instructions (`{programId, keys: [{pubkey, isSigner, isWritable}], data}`, `data` as base64 or a byte array), pick a target version, and optionally a compute unit limit, loaded-accounts data size limit, heap size, and priority fee in micro-lamports per CU. The planner compiles that exact instruction set with `@solana/kit`, the same encoder three.ws ships to real callers, and reports:
+
+- the exact wire byte count, headroom or overage against the chosen version's ceiling, and a visual ruler;
+- inline account count, instruction count, required signer count, and message byte count;
+- the resolved resource budget, including the priority fee as an exact total in lamports (compute unit limit times the micro-lamports price, rounded up to the nearest lamport, matching the runtime's own cost accounting);
+- the duplicate-static-account check described above.
+
+"Load example instruction" fills the form with a System Program transfer using `$THREE`'s mint as a clearly-synthetic placeholder account; it is never auto-filled on page load.
+
+### Legacy vs V0 vs V1 diff
+
+Same form as the planner, minus the version picker: it compiles the identical instruction set three ways (legacy, V0, V1) and reports each version's exact byte count, ceiling, headroom, and fit side by side, plus the byte delta V1 saves (or costs) against legacy and against V0. V1 is not assumed to always win: its inline config mask and fixed-width values can make a very small transaction larger than the same payload on legacy or V0, and the diff reports whichever is actually true for the pasted instructions.
+
+### Wallet V1 capability check
+
+Connects the browser's injected Solana wallet (a plain `connect()`, with no SIWS account-linking and no three.ws login as a side effect) and reads its real [Wallet Standard](https://github.com/wallet-standard/wallet-standard) `solana:signTransaction` feature. The pass/fail verdict comes from the same `findV1WalletStandardSigner` helper three.ws calls before it ever asks a wallet for a real V1 signature, so this tab reports exactly what the rest of the platform would see, not a separate approximation. If the wallet is V1-capable, the tab also lists every transaction version its own feature set advertises, verbatim.
+
 ## API
 
 ### Mainnet activation status
@@ -104,6 +144,37 @@ Content-Type: application/json
 ```
 
 The raw path is not cached and does not send the transaction to Solana.
+
+### Size and budget plan
+
+```http
+POST /api/solana/atomic-plan
+Content-Type: application/json
+
+{
+  "feePayer": "BASE58_ADDRESS",
+  "version": 1,
+  "budgetConfig": { "computeUnitLimit": 200000, "loadedAccountsDataSizeLimit": 4096, "priorityFeeMicroLamportsPerCu": 10 },
+  "instructions": [
+    { "programId": "11111111111111111111111111111111", "keys": [{ "pubkey": "BASE58_ADDRESS", "isSigner": true, "isWritable": true }], "data": "BASE64_DATA" }
+  ]
+}
+```
+
+`version` is `"legacy"`, `0`, or `1`. `budgetConfig` and each of its fields are optional. Every reported number comes from compiling and encoding this exact instruction set with `@solana/kit`; nothing is estimated, signed, simulated, or broadcast. The handler is rate-limited the same way as `/api/solana/atomic` and caps the request body at 64 KiB and 64 instructions.
+
+### Legacy vs V0 vs V1 diff
+
+Same endpoint, with `"diff": true` in place of `version`:
+
+```http
+POST /api/solana/atomic-plan
+Content-Type: application/json
+
+{ "feePayer": "BASE58_ADDRESS", "diff": true, "budgetConfig": {}, "instructions": [ ... ] }
+```
+
+The response is `{ "diff": { "legacy", "v0", "v1", "bytesSavedVsLegacy", "bytesSavedVsV0" } }`, one plan object per version plus the byte deltas between them.
 
 ## Platform compatibility
 

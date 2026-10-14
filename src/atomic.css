@@ -84,3 +84,41 @@ body { margin: 0; background: var(--at-bg); color: var(--at-text); }
 [data-theme="light"] body { --at-bg: #f2f7f4; --at-panel: rgba(255,255,255,.86); --at-line: rgba(14,61,39,.15); --at-green: #087d45; --at-mint: #135d3b; --at-amber: #9b5a00; --at-text: #071a11; --at-muted: #546d60; }
 [data-theme="light"] .at-shell { background: radial-gradient(circle at 76% 5%, rgba(55,190,120,.13), transparent 31rem), var(--at-bg); }
 [data-theme="light"] .at-metrics div { background: #f7fbf8; }
+
+.at-nav-tabs { display: flex; flex-wrap: wrap; gap: .4rem; width: min(1160px, 100%); margin: 0 auto 1.4rem; padding: .35rem; border: 1px solid var(--at-line); border-radius: 16px; background: rgba(0,0,0,.2); }
+.at-nav-tabs button { min-height: 44px; padding: .6rem 1rem; border: 0; border-radius: 11px; color: var(--at-muted); background: transparent; cursor: pointer; font: 600 .84rem/1 inherit; white-space: nowrap; }
+.at-nav-tabs button[aria-selected="true"] { color: #062014; background: var(--at-green); }
+.at-nav-tabs button:not([aria-selected="true"]):hover { color: var(--at-text); background: rgba(101,245,170,.08); }
+.at-nav-tabs button:focus-visible, .at-tabs button:focus-visible { outline: 2px solid var(--at-green); outline-offset: 2px; }
+.at-panel { display: grid; gap: 1rem; }
+.at-panel-note { max-width: 760px; margin: 1.1rem 0 0; color: var(--at-muted); line-height: 1.6; font-size: .88rem; }
+.at-panel-note code { color: var(--at-mint); }
+
+.at-plan-form { margin-top: 1.4rem; display: grid; gap: 1.1rem; }
+.at-plan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.at-field { display: grid; gap: .5rem; }
+.at-field label { color: var(--at-mint); font-size: .82rem; }
+.at-field input, .at-field select, .at-field textarea { width: 100%; box-sizing: border-box; padding: .8rem 1rem; border: 1px solid var(--at-line); border-radius: 12px; background: rgba(0,0,0,.24); color: var(--at-text); font: .84rem/1.45 monospace; outline: none; }
+.at-field textarea { resize: vertical; }
+.at-field input:focus, .at-field select:focus, .at-field textarea:focus { border-color: var(--at-green); box-shadow: 0 0 0 3px rgba(101,245,170,.12); }
+.at-plan-form .at-input-row { grid-template-columns: auto 1fr; }
+.at-plan-form .at-input-row button[type="button"] { background: transparent; color: var(--at-green); }
+.at-plan-form .at-input-row button[type="button"]:hover { color: var(--at-mint); border-color: var(--at-mint); background: rgba(101,245,170,.08); }
+.at-plan-form > p { margin: 0; color: var(--at-muted); font-size: .76rem; }
+
+.at-mask-binary { margin: 1rem 0 .4rem; color: var(--at-mint); font: 700 1rem/1.4 monospace; letter-spacing: .08em; word-break: break-all; }
+.at-mask-table, .at-diff-table { width: 100%; margin-top: .5rem; border-collapse: collapse; overflow: hidden; border: 1px solid var(--at-line); border-radius: 16px; }
+.at-mask-table th, .at-mask-table td, .at-diff-table th, .at-diff-table td { padding: .85rem 1rem; border-top: 1px solid var(--at-line); text-align: left; font-size: .84rem; }
+.at-mask-table thead th, .at-diff-table thead th { border-top: 0; color: var(--at-muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; }
+.at-mask-table tbody td, .at-diff-table td, .at-diff-table tbody th { font-family: monospace; }
+.at-mask-table tr.at-field-present td { color: var(--at-green); }
+.at-mask-table tr.at-field-missing td { color: var(--at-muted); }
+.at-mask-table tr.at-field-invalid { outline: 1px solid rgba(255,198,109,.5); }
+.at-diff-table td.at-fits-no { color: var(--at-amber); font-weight: 700; }
+
+@media (max-width: 760px) {
+	.at-nav-tabs { width: 100%; overflow-x: auto; flex-wrap: nowrap; }
+	.at-plan-grid { grid-template-columns: 1fr; }
+	.at-plan-form .at-input-row { grid-template-columns: 1fr; }
+	.at-mask-table, .at-diff-table { display: block; overflow-x: auto; white-space: nowrap; }
+}

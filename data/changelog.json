@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-14",
+			"title": "Atomic is now a six-tab Transaction V1 lab, not just an inspector",
+			"summary": "/atomic grew five tabs beyond the Inspector, each reachable by click, arrow-key/Home/End tab navigation, or a deep link (?tab=mask, ?tab=sponsor, ?tab=planner, ?tab=diff, ?tab=wallet). The config mask decoder reads a V1 transaction's real TransactionConfigMask u32 and its fixed-width ConfigValues byte by byte, flagging a half-set priority-fee pair or a reserved bit SIMD-0385 has not assigned yet. The sponsor cap view shows a paymaster exactly what it is agreeing to pay, reading V1's inline config instead of a Compute Budget instruction scan that sees nothing on a V1 transaction. The size and budget planner compiles a pasted instruction set with @solana/kit to an exact byte count against legacy, V0, or V1's ceiling, including an exact lamport total for a chosen priority fee. The legacy/V0/V1 diff compiles the same instructions three ways and reports the real byte deltas, honestly, including the case where V1's inline config makes it larger than legacy. The wallet V1 capability check connects the browser's injected wallet and reports the same verdict the rest of three.ws would get from findV1WalletStandardSigner before ever requesting a real V1 signature. Nothing here is estimated: every number comes from compiling and decoding real transactions, and nothing is ever signed, simulated, or broadcast.",
+			"tags": [
+				"feature"
+			],
+			"link": "/atomic"
+		},
+		{
+			"date": "2026-10-14",
 			"title": "Atomic now replays a pump.fun transaction step by step",
 			"summary": "Atomic (/atomic) decodes every Pump, PumpSwap, and PumpFees event in a transaction's logs, oldest first, and renders it as a Replay panel: a bonding-curve-position bar, a human-readable description of each step (create, buy/sell, graduation, creator-fee collection and distribution, GitHub social-fee claims, and post-graduation PumpSwap swaps), and the SOL/token amounts that moved. An event the installed SDK does not recognize still renders, labeled unrecognized, instead of silently disappearing. For a create transaction, the panel also pages through the earliest trades on that mint since launch, walking Solana's signature history backward in bounded pages since RPC has no forward cursor.",
 			"tags": [

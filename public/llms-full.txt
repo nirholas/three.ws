@@ -1427,11 +1427,11 @@ URL: https://three.ws/portfolio
 
 A live portfolio view for any Solana or Ethereum wallet: total value, 24h move with honest coverage, stablecoin/major/token breakdown, top-asset allocation, and every holding priced in real time. Free, keyless, deep-linkable, no account.
 
-### Atomic - Solana V1 Inspector
+### Atomic - Solana V1 Transaction Lab
 
 URL: https://three.ws/atomic
 
-A live Solana Transaction V1 observatory and pre-sign inspector. Paste a mainnet signature or base64 wire transaction to see exact bytes, resource caps, compute use, and sponsor safety.
+A real Solana Transaction V1 lab: inspect a transaction, plan an exact byte budget, decode the raw config mask, diff legacy/v0/v1, check sponsor caps, and test wallet v1 support before you co-sign.
 
 ### Onchain Viewer
 

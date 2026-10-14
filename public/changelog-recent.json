@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-14T04:58:24.891Z",
+	"generated_at": "2026-10-14T17:22:11.561Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4086,
+	"total": 4087,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -18,6 +18,16 @@
 			"tags": [
 				"infra",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "Atomic is now a six-tab Transaction V1 lab, not just an inspector",
+			"summary": "/atomic grew five tabs beyond the Inspector, each reachable by click, arrow-key/Home/End tab navigation, or a deep link (?tab=mask, ?tab=sponsor, ?tab=planner, ?tab=diff, ?tab=wallet). The config mask decoder reads a V1 transaction's real TransactionConfigMask u32 and its fixed-width ConfigValues byte by byte, flagging a half-set priority-fee pair or a reserved bit SIMD-0385 has not assigned yet. The sponsor cap view shows a paymaster exactly what it is agreeing to pay, reading V1's inline config instead of a Compute Budget instruction scan that sees nothing on a V1 transaction. The size and budget planner compiles a pasted instruction set with @solana/kit to an exact byte count against legacy, V0, or V1's ceiling, including an exact lamport total for a chosen priority fee. The legacy/V0/V1 diff compiles the same instructions three ways and reports the real byte deltas, honestly, including the case where V1's inline config makes it larger than legacy. The wallet V1 capability check connects the browser's injected wallet and reports the same verdict the rest of three.ws would get from findV1WalletStandardSigner before ever requesting a real V1 signature. Nothing here is estimated: every number comes from compiling and decoding real transactions, and nothing is ever signed, simulated, or broadcast.",
+			"link": "/atomic",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1546,16 +1556,6 @@
 			"link": "/approvals",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Calmer homepage first visit: one corner card at a time, full agent descriptions, language in the footer",
-			"summary": "A first visit used to stack three cards in the bottom-right corner over the hero avatar. The search-shortcut hint now goes first and the \"Have you tried\" suggestion waits until it is dismissed. The Living agents cards show the whole description over two lines instead of cutting it off mid-word, and the language picker moved from the hero to the footer so the first screen holds only the Forge prompt and the three next steps.",
-			"link": "/",
-			"tags": [
-				"improvement"
 			]
 		}
 	]

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-14T04:58:24.857Z",
+	"generated_at": "2026-10-14T17:22:11.527Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2857,8 +2857,8 @@
 				},
 				{
 					"path": "/atomic",
-					"title": "Atomic - Solana V1 Inspector",
-					"description": "A live Solana Transaction V1 observatory and pre-sign inspector. Paste a mainnet signature or base64 wire transaction to see exact bytes, resource caps, compute use, and sponsor safety.",
+					"title": "Atomic - Solana V1 Transaction Lab",
+					"description": "A real Solana Transaction V1 lab: inspect a transaction, plan an exact byte budget, decode the raw config mask, diff legacy/v0/v1, check sponsor caps, and test wallet v1 support before you co-sign.",
 					"added": "2026-09-15",
 					"auth": null,
 					"indexable": true,
