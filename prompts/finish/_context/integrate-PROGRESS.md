@@ -360,3 +360,62 @@ fixture account is the $THREE mint or a synthetic placeholder.
 
 Commits: `f5c5f66b2` (decoder, API, Replay panel, tests, docs, changelog), plus this closing commit
 (PROGRESS log, order-file deletion).
+
+## 2026-10-14: order 508-integrate-09 closed (evolve)
+
+Built five real tabs on `/atomic` beyond the Inspector, replacing the "concept value" of the ~70
+templated Solana transaction-v1 repos the owner found (every one of them hashes its input and
+estimates a size instead of decoding anything; none of their code was copied). All five compute
+over `@solana/kit` and the existing `api/_lib/solana/transaction-v1.js` v1 code, nothing estimated:
+
+- **Size and budget planner**: compiles a pasted fee payer + instruction set with `@solana/kit` to
+  an exact wire byte count against the legacy/v0 1,232-byte ceiling or the v1 4,096-byte ceiling,
+  with headroom, the resolved resource budget (compute unit limit, loaded-accounts-data-size limit,
+  heap size), an exact priority-fee lamport total for a chosen micro-lamports-per-CU, and the v1
+  duplicate-static-account sanitization check.
+- **Config mask decoder**: reads a real v1 transaction's exact `TransactionConfigMask` u32 and its
+  fixed-width `ConfigValues` byte by byte (mask hex, binary string, popcount, per-field raw bytes
+  and decoded value), flags a half-set priority-fee bit pair as invalid, and flags any bit above 4
+  as reserved for a future SIMD.
+- **Legacy vs v0 vs v1 diff**: the identical instruction set compiled three ways, byte-exact, with
+  the real delta either direction (v1 is not assumed to always win: its inline config can make a
+  tiny transaction larger than legacy or v0, and the diff reports that honestly).
+- **Sponsor cap view**: for a v1 transaction, the exact fee and resource caps a paymaster or
+  co-signer is agreeing to, read from the inline `transactionConfig`, not a Compute Budget
+  instruction scan that sees nothing on a v1 transaction.
+- **Wallet v1 capability check**: calls the existing `findV1WalletStandardSigner` (same helper the
+  rest of three.ws calls before ever requesting a real v1 signature) against the browser's injected
+  wallet and reports its real Wallet Standard verdict and advertised versions.
+
+All six tabs (Inspector plus the five above) are reachable by click, by `ArrowLeft`/`ArrowRight`/
+`Home`/`End` keyboard navigation computed from the currently-selected tab, and by deep link
+(`/atomic?tab=mask`, `?tab=sponsor`, `?tab=planner`, `?tab=diff`, `?tab=wallet`). `docs/atomic.md`
+gained a "The lab: five more tools" section plus an API section per tab; `data/pages.json`'s
+`/atomic` description now names the lab instead of just the Inspector.
+
+Verified live: `npx vitest run tests/transaction-v1-lab.test.js tests/transaction-v1.test.js
+tests/atomic-page.test.js` passes, 21/21, against real compiled/decoded transactions (no mocks):
+`decodeV1ConfigMask` against a real partially-signed v1 wire transaction built with
+`buildPartiallySignedV1Transaction`, `planTransactionSize` against a real `SystemProgram.transfer`
+instruction compiled through `@solana/kit`, `diffTransactionVersions` against the same instruction
+compiled legacy/v0/v1. A Playwright script drove the real page at 375, 768, and 1440px in both
+light and dark themes: all six tabs render with zero console errors, arrow-key/Home/End navigation
+correctly wraps from the currently-selected tab, and each deep link opens its tab directly. A second
+Playwright pass exercised real form submissions (planner and diff against a local API server
+running the real handler, since Vite's dev proxy forwards undeployed endpoints to production) and
+the mask/sponsor tabs against a real mainnet signature, confirming real decoded values (not
+placeholder text) render in the report panel. `npm run check:rules -- --paths <touched files>`
+exits 0. `npm run build:chat && npm run build && npm run check:pages` passes clean: all 962
+declared pages resolve (952 static, 10 api, 0 redirect, 0 external); `/chat` needs its own
+`build:chat` sub-build step (a pre-existing repo quirk unrelated to this diff, confirmed via
+`git log` showing `vite.config.js` untouched since well before this order started).
+
+One judgment call: full 84-locale translation of the new `atomic.*` i18n keys is blocked by the
+project-wide GCP billing dunning hold (`Lightning dunning decision is deny`, both Vertex ADC and
+the Generative Language API key path return 403), already tracked as row 20 in
+`prompts/finish/_context/production-100-OWNER-ACTIONS.md` (which names this exact i18n translation
+gap). The English source strings are complete and correct; this is a pre-existing, owner-only
+billing blocker, not something left unwired by this order.
+
+Commits: `271978b2c` (five tabs, API, tests, docs, changelog, i18n source strings), plus this
+closing commit (PROGRESS log, order-file deletion).
