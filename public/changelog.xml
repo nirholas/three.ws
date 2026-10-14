@@ -28,7 +28,7 @@
 			<guid isPermaLink="false">2026-10-14:Robinhood Chain feed worker now runs the published SDK, not a stale local snapshot</guid>
 			<pubDate>Wed, 14 Oct 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
-			<description>workers/robinhood-feed depended on robinhood/robinhood-chain-sdk through a file: link, a reference copy that drifts from the standalone robinhood-chain-sdk repo it mirrors. The worker now installs hoodchain from npm like any other dependency, so it always runs the released SDK. Also fixed: six pointer READMEs staged for duplicate or superseded standalone repos (three-ui, crypto-market-data, crypto-market-data-ts, crypto-data-aggregator, memescope-monday-directory, and one of each duplicate Robinhood Chain repo pair), ready for the owner to push and archive.</description>
+			<description>workers/robinhood-feed depended on robinhood/robinhood-chain-sdk through a file: link, a reference copy that drifts from the standalone robinhood-chain-sdk repo it mirrors. The worker now installs hoodchain from npm like any other dependency, so it always runs the released SDK. Also fixed: seven pointer READMEs staged for duplicate or superseded standalone repos (three-ui, crypto-market-data, crypto-market-data-ts, crypto-data-aggregator, memescope-monday-directory, and one of each duplicate Robinhood Chain repo pair), ready for the owner to push and archive.</description>
 		</item>
 		<item>
 			<title>Standalone GitHub mirrors now stage instead of force-pushing</title>

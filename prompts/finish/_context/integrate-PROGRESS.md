@@ -182,3 +182,62 @@ so the baseline is unrelated and unchanged by this diff.
 
 Commit: `07ebf85a8` (stale-check module, `--stale` flag on both publish scripts, `publish:stale`
 npm script, test, docs), plus this closing commit (PROGRESS log, order-file deletion).
+
+## 2026-10-14: order 503-integrate-04 closed (evolve)
+
+Step 0 re-derivation held for task 1's premise but overturned task 2's: `workers/robinhood-feed`
+still depended on `hoodchain` via `"file:../../robinhood/robinhood-chain-sdk"`, so the file-link
+clean-up was real work. But the order's claim that "no code reads `PAIRED_LAUNCHPAD`" did not
+hold: `api/_lib/paired-launchpad.js`'s `launchpadAddress()` (lines 37-40) reads
+`process.env.PAIRED_LAUNCHPAD`, validates it against `/^0x[0-9a-fA-F]{40}$/`, and falls back to
+`DEFAULT_LAUNCHPAD` only when unset or invalid, exactly what
+`contracts/paired-launchpad/README.md` already said. Per the order's own rule that a step-0
+re-measurement overrides a stale premise, the README was left unchanged (task 2 needed no edit).
+
+Task 1 (the `robinhood/*` reference copies): verified it was safe to point
+`workers/robinhood-feed` at the published `hoodchain` npm package instead of the local `file:`
+link. Local `robinhood/robinhood-chain-sdk`, the npm-published package, and the GitHub `HEAD`
+tarball all report version `0.1.1`; diffing full `src/` trees turned up exactly one file differing,
+only in doc comments; the npm-published `dist/index.js` exports every symbol the worker imports
+(checked with a dynamic import after installing `viem` as a peer dependency in a scratch
+directory); and the worker's full test suite passes 20/20 against the newly installed npm
+package. Changed `workers/robinhood-feed/package.json` (`"hoodchain": "file:../../robinhood/robinhood-chain-sdk"`
+to `"hoodchain": "^0.1.1"`, removed the now-unneeded `prestart`/`presmoke:live`/`build:sdk`
+scripts), regenerated its `package-lock.json`, deleted `workers/robinhood-feed/scripts/ensure-sdk.mjs`,
+and updated both `workers/robinhood-feed/README.md` and `robinhood/README.md` to describe the new
+arrangement truthfully (the latter also documents the two Robinhood Chain duplicate pairs and
+which repo in each stays canonical, cross-referenced against `data/standalone-mirrors.json`, the
+source of truth order 500 established).
+
+Task 3 (retired-repo pointers): added `data/retired-repos.json` (7 entries: `three-ui`,
+`crypto-market-data`, `crypto-market-data-ts`, `crypto-data-aggregator`, all superseded by this
+monorepo's own `src/` or `/markets` page; `memescope-monday-directory`, a duplicate of
+`memescope-monday`; and one repo from each Robinhood Chain duplicate pair,
+`robinhood-chain-alert-bot` and `robinhood-chain-trading-bot`) and
+`scripts/stage-retired-repo-pointers.mjs` (new `npm run retire:repos`), mirroring
+`sync-standalone-repos.mjs`'s staging pattern: it writes a pointer README per entry, git-inits and
+commits a one-commit snapshot under `dist/retired-repos/<repo>/`, and prints (never runs) the
+push and `gh repo archive` commands for each. Every pointer README's embedded replacement link
+was checked live (`curl -s -o /dev/null -w '%{http_code}'`, all HTTP 200) before finalizing.
+`dist/` is gitignored, so the 7 staged trees are untracked by design; the push and archive
+commands are logged as row 61 in [production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md).
+
+Two judgment calls, both one-way decisions a re-run could revisit but neither worth re-litigating
+this session: the robinhood-chain-traders/robinhood-chain-trading-bot pair diffs closer to this
+monorepo's `hood-traders/src/` on the trading-bot side (it has `llm.ts`/`llm-strategist.ts` files
+the canonical `robinhood-chain-traders` mirror is currently missing), but the existing
+`data/standalone-mirrors.json` canonical choice from order 500 was honored rather than re-derived
+from raw sync-closeness, so `robinhood-chain-traders` stays canonical and
+`robinhood-chain-trading-bot` is the one retired; and the stale `PAIRED_LAUNCHPAD` premise above
+was trusted over the order's own text per its step-0-wins rule.
+
+Verified live: `npm test` passes in `workers/robinhood-feed` (20/20). `npm run check:rules --
+--paths <touched files>` reports zero violations. `npm run build:pages` and `npm run audit:docs`
+ran clean against the new `data/changelog.json` entry; the 24 audit findings reported are the
+same pre-existing baseline, unrelated to this diff. All 7 pointer-README replacement links return
+HTTP 200.
+
+Commits: `f72c135c3` (hoodchain npm dependency switch, worker README update, `robinhood/README.md`
+update, retired-repo staging script and manifest, `STRUCTURE.md` row),
+`aa582a612` (changelog entry + generated build files), plus this closing commit (PROGRESS log,
+order-file deletion, owner-action row).
