@@ -782,3 +782,53 @@ No owner-gated action in this order: every step is code, tests, docs, and a loca
 Commits: `5fa6b0109` (feature: burned-destination.js, trade-guards and solana-wallet wiring,
 withdraw.js UI, tests, changelog, build:pages output), `9d3234104` (docs), this closing commit
 (PROGRESS log, order-file removal).
+
+## 2026-10-14: order 515-integrate-16 closed (evolve)
+
+Built the owner-signed, epoch-bounded spend delegation: `{ agent, owner, cap_lamports_per_epoch,
+epoch_seconds, not_after, nonce }`, canonically serialized and Ed25519-signed by the owner's own
+Solana wallet via a sign-message flow (never a transaction). `packages/agent-guards/src/delegation.js`
+is the zero-dependency spec module: `DELEGATION_DOMAIN` plus six ordered fields joined with `\n`
+for the signed bytes, `verifyDelegationSignature` using only `node:crypto` (a fixed SPKI DER
+envelope around the raw 32-byte Solana pubkey) and a from-scratch base58 decoder, and
+`checkDelegationCap` for the pure epoch-cap arithmetic. Full spec section added to that package's
+README.
+
+`api/_lib/agent-spend-delegation.js` is the platform's store and enforcement: `registerDelegation`
+verifies the signature, verifies `owner` really is the agent's linked owner wallet (via
+`agent_identities.user_id` to `user_wallets`), and rejects a replayed nonce with a permanent
+`UNIQUE(agent_id, nonce)` Postgres constraint (new migration
+`api/_lib/migrations/20261014140000_agent_spend_delegations.sql`, written and tested locally,
+not yet applied to production). `checkDelegationSpend` measures epoch spend from the REALIZED
+ledger (`agent_custody_events`, via the existing `getDailySpendLamports`) rather than the agent's
+own claim, so an exact-output trade that settles for more than quoted still can't slip past the
+cap. Wired into `POST /api/agent/guard` (registers and enforces in the same preflight call, layered
+on top of `GuardChain.evaluate()`) and into `GET`/`POST /api/agents/:id/solana/delegation` on
+`api/agents/solana-wallet.js`.
+
+Owner-facing UI: a new "Delegation" tab (`src/agent-wallet-hub/tabs/delegation.js`, order 59,
+between Policy and Withdraw) shows the active delegation and lets the owner sign a new one via
+`connectLaunchWallet()` + the Wallet Standard `solana:signMessage` feature. That tab carries its
+own local copy of the message-builder (not an import of `delegation.js`, which pulls in
+`node:crypto` at module scope and has no browser build) with `tests/delegation-message-parity.test.js`
+as the tripwire keeping the two formats byte-identical.
+
+DoD verified: `packages/agent-guards/test/delegation.test.js` (8/8, `node --test`) covers a
+replayed nonce, an expired delegation, a wrong signer, and the realized-balance cap check in
+isolation; `tests/agent-guard-endpoint.test.js` (new `describe` block, lines 297+) covers the same
+four rejections end to end through the guard endpoint, including the overspend case built from a
+mocked realized-spend ledger (`dbState.custodySpentLamports`); both plus the new parity test are
+19/19 under `npx vitest run tests/delegation-message-parity.test.js tests/agent-guard-endpoint.test.js`.
+UI flow browser-verified with Playwright against a real owner session (the repo's own QA audit
+account via `scripts/page-audit.mjs --login`): active-delegation card, empty state, and the
+sign-and-activate flow correctly surfacing "No Solana wallet extension found" in a headless
+browser (actual live signing is the owner's own action, out of scope for this order). Docs
+(`docs/agent-wallet-api.md`, `docs/agent-wallets.md`) and `data/changelog.json` updated;
+`npm run build:pages` ran clean. `npm run check:rules --paths <every touched file>` exits 0.
+
+No owner-gated action in this order: live wallet signing is explicitly the owner's own action,
+not something this order performs.
+
+Commit: `92bb445c2` (feature: delegation.js spec, agent-spend-delegation.js store/enforcement,
+migration, guard.js and solana-wallet.js wiring, Delegation tab, tests, docs, changelog), this
+closing commit (PROGRESS log, order-file removal).
