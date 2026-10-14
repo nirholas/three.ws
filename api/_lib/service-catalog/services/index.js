@@ -85,6 +85,12 @@ import researchPaper from './research-paper.js';
 import researchBibliography from './research-bibliography.js';
 import booksSearch from './books-search.js';
 import booksRead from './books-read.js';
+import newsWireQuery from './news-wire-query.js';
+import newsWirePulse from './news-wire-pulse.js';
+import transitPlan from './transit-plan.js';
+import transitDelays from './transit-delays.js';
+import placesSearch from './places-search.js';
+import placesDetail from './places-detail.js';
 
 export const PAID_SERVICES = Object.freeze([
 	modelCheck,
@@ -159,4 +165,10 @@ export const PAID_SERVICES = Object.freeze([
 	researchBibliography,
 	booksSearch,
 	booksRead,
+	newsWireQuery,
+	newsWirePulse,
+	transitPlan,
+	transitDelays,
+	placesSearch,
+	placesDetail,
 ]);
