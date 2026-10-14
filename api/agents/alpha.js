@@ -362,6 +362,7 @@ async function handleRead(req, res, id) {
 			return error(res, 503, 'narrator_offline', 'The co-pilot narrator is offline right now. Your wallet and trading still work — try the read again shortly.');
 		}
 		if (e?.code === 'daily_spend_cap_exceeded') return error(res, 429, e.code, e.message);
+		console.error('[agents/alpha] read failed', mint, e?.message || e);
 		return error(res, 502, 'read_failed', 'The co-pilot could not complete this read. Try again.');
 	}
 
