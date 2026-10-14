@@ -25,6 +25,15 @@
 //     Subscribing to your own agent is refused at the endpoint; this catches any
 //     row that predates that rule, so a wash-trade loop cannot keep firing.
 //
+// A third guard runs per (leader, mint) rather than per subscription, inside the
+// coin-safety gate itself (api/_lib/copy-engine.js's evaluateSafety):
+//   • CREATOR-LINKED LEADER: if the leader's own trading wallet scores as the
+//     same controller as the coin's creator (api/_lib/copy-eligibility.js's
+//     checkLeaderCreatorLinkage, backed by @three-ws/wallet-linkage), every
+//     follower's intent on that trade is skipped with skip_reason
+//     'leader_linked_to_creator' instead of sized: copying it would just mirror
+//     the creator's own buy of their own launch.
+//
 // Idempotent via partial unique indexes:
 //   (subscription_id, leader_position_id,      direction) when leader_position_id      is not null
 //   (subscription_id, leader_oracle_action_id, direction) when leader_oracle_action_id is not null
@@ -32,7 +41,8 @@
 import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { planCopyOrder } from '../_lib/copy-engine.js';
-import { BREAKER_REASON, evaluateDrawdownBreaker, leaderDrawdownPcts } from '../_lib/copy-eligibility.js';
+import { BREAKER_REASON, evaluateDrawdownBreaker, leaderDrawdownPcts, checkLeaderCreatorLinkage } from '../_lib/copy-eligibility.js';
+import { getConnection } from '../_lib/pump.js';
 import { loadDripConfigs, newTierCache, priceRelease, releaseDueDrips } from '../_lib/copy-drip-runtime.js';
 import { requireCron } from '../_lib/cron-auth.js';
 import { pumpFetchJson, PUMP_FRONTEND_BASE } from '../_lib/pump-feed-fetch.js';
@@ -112,6 +122,28 @@ async function coinContext(mint, oracleScore) {
 	} catch { /* leave null — engine handles missing context */ }
 	_coinCache.set(mint, ctx);
 	return oracleScore != null ? { ...(ctx || {}), oracle_score: oracleScore } : ctx;
+}
+
+// Is this leader's trading wallet the coin's creator in disguise? Checked once
+// per (agent, mint) per tick, not once per copier: a leader with a thousand
+// followers must not cost a thousand linkage calls. `leaderWallet` comes off
+// the already-fetched subscription rows (denormalized at subscribe time), so
+// this adds no extra query, only the one wallet-linkage RPC scoring pass.
+const _creatorLinkCache = new Map();
+async function creatorLinkedToCreator(agentId, mint, leaderWallet, network) {
+	if (!leaderWallet) return false;
+	const key = `${network}:${agentId}:${mint}`;
+	if (_creatorLinkCache.has(key)) return _creatorLinkCache.get(key);
+	let linked = false;
+	try {
+		const connection = getConnection({ network });
+		const verdict = await checkLeaderCreatorLinkage({ leaderWallet, mint, connection });
+		linked = verdict.linked === true;
+	} catch {
+		linked = false;
+	}
+	_creatorLinkCache.set(key, linked);
+	return linked;
 }
 
 // Fetch the latest Oracle conviction score for a mint from the DB. Returns null
@@ -255,7 +287,10 @@ async function fanoutBuys(network, stats) {
 		const subs = subsByLeader.get(pos.agent_id) || [];
 		if (!subs.length) continue;
 		const score = await oracleScore(pos.mint, network);
-		const coin = await coinContext(pos.mint, score);
+		let coin = await coinContext(pos.mint, score);
+		if (await creatorLinkedToCreator(pos.agent_id, pos.mint, subs[0]?.leader_wallet, network)) {
+			coin = { ...(coin || {}), leader_linked_to_creator: true };
+		}
 		const entrySol = lamToSol(pos.entry_quote_lamports);
 
 		for (const sub of subs) {
@@ -426,7 +461,10 @@ async function fanoutOracleBuys(network, stats) {
 		const subs = subsByLeader.get(action.agent_id) || [];
 		if (!subs.length) continue;
 		// Oracle action has conviction inline — no DB lookup needed.
-		const coin = await coinContext(action.mint, action.conviction != null ? Number(action.conviction) : null);
+		let coin = await coinContext(action.mint, action.conviction != null ? Number(action.conviction) : null);
+		if (await creatorLinkedToCreator(action.agent_id, action.mint, subs[0]?.leader_wallet, network)) {
+			coin = { ...(coin || {}), leader_linked_to_creator: true };
+		}
 		const entrySol = Number(action.size_sol) || 0;
 
 		for (const sub of subs) {

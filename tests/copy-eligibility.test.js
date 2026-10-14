@@ -7,12 +7,33 @@
  * endpoint that enforces them.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// Synthetic addresses only, no real wallets. `resolveCreatorWallet` and
+// `analyzeLinkage` are mocked below so `checkLeaderCreatorLinkage` is tested as
+// pure orchestration, with no DB or RPC involved.
+const LEADER = 'Leader1111111111111111111111111111111111111';
+const CREATOR = 'Creator11111111111111111111111111111111111';
+
+const H = vi.hoisted(() => ({ creatorWallet: null, pair: null, analyzeThrows: false }));
+vi.mock('../api/_lib/cosmetics-economy.js', () => ({
+	resolveCreatorWallet: async () => ({ wallet: H.creatorWallet, source: H.creatorWallet ? 'coin_launches' : 'none' }),
+}));
+vi.mock('@three-ws/wallet-linkage', () => ({
+	analyzeLinkage: async (_connection, addresses) => {
+		if (H.analyzeThrows) throw new Error('rpc unavailable');
+		return { addresses, pairs: H.pair ? [H.pair] : [], complete: true };
+	},
+}));
+
 import {
 	BREAKER_REASON,
 	LEADER_ELIGIBILITY,
+	CREATOR_LINK_REASON,
 	evaluateDrawdownBreaker,
 	evaluateLeaderEligibility,
+	evaluateLeaderCreatorLinkPair,
+	checkLeaderCreatorLinkage,
 	summarizeCopyProfile,
 } from '../api/_lib/copy-eligibility.js';
 
@@ -155,5 +176,73 @@ describe('summarizeCopyProfile: the equity curve both defenses read', () => {
 	it('spans the real window even when rows arrive out of order', () => {
 		const p = summarizeCopyProfile([close(1, 1, hoursAgo(10)), close(1, 1, hoursAgo(100))]);
 		expect(p.span_hours).toBe(90);
+	});
+});
+
+describe('evaluateLeaderCreatorLinkPair (pure band decision)', () => {
+	it('treats a missing pair as not linked', () => {
+		expect(evaluateLeaderCreatorLinkPair(null)).toEqual({ linked: false, score: null, band: null, topSignal: null });
+	});
+	it('trips at the default "strong" band', () => {
+		expect(evaluateLeaderCreatorLinkPair({ score: 70, band: 'strong', topSignal: 'solana-fee-payer' }).linked).toBe(true);
+		expect(evaluateLeaderCreatorLinkPair({ score: 90, band: 'confirmed', topSignal: 'solana-fee-payer' }).linked).toBe(true);
+	});
+	it('does not trip below the default band', () => {
+		expect(evaluateLeaderCreatorLinkPair({ score: 30, band: 'weak', topSignal: 'direct-transfer' }).linked).toBe(false);
+		expect(evaluateLeaderCreatorLinkPair({ score: 0, band: 'none', topSignal: null }).linked).toBe(false);
+	});
+	it('honors a custom band threshold', () => {
+		const pair = { score: 30, band: 'weak', topSignal: 'direct-transfer' };
+		expect(evaluateLeaderCreatorLinkPair(pair).linked).toBe(false);
+		expect(evaluateLeaderCreatorLinkPair(pair, { band: 'weak' }).linked).toBe(true);
+	});
+});
+
+describe('checkLeaderCreatorLinkage (refuse a leader who is secretly the creator)', () => {
+	it('is not linked when the leader has no known trading wallet', async () => {
+		const r = await checkLeaderCreatorLinkage({ leaderWallet: null, mint: 'Mint111', connection: {} });
+		expect(r.linked).toBe(false);
+	});
+
+	it('is not linked when the coin has no resolvable creator', async () => {
+		H.creatorWallet = null;
+		const r = await checkLeaderCreatorLinkage({ leaderWallet: LEADER, mint: 'Mint111', connection: {} });
+		expect(r.linked).toBe(false);
+		expect(r.creator).toBeNull();
+	});
+
+	it('is not linked when the leader IS the on-record creator (nothing to detect, no RPC call needed)', async () => {
+		H.creatorWallet = LEADER;
+		const r = await checkLeaderCreatorLinkage({ leaderWallet: LEADER, mint: 'Mint111', connection: {} });
+		expect(r.linked).toBe(false);
+	});
+
+	it('refuses a leader whose wallet scores as the same controller as the creator', async () => {
+		H.creatorWallet = CREATOR;
+		H.pair = { a: LEADER, b: CREATOR, score: 92, band: 'confirmed', topSignal: 'solana-fee-payer' };
+		const r = await checkLeaderCreatorLinkage({ leaderWallet: LEADER, mint: 'Mint111', connection: {} });
+		expect(r.linked).toBe(true);
+		expect(r.creator).toBe(CREATOR);
+		expect(r.score).toBe(92);
+		expect(r.topSignal).toBe('solana-fee-payer');
+	});
+
+	it('is not linked when the score falls below the warn band', async () => {
+		H.creatorWallet = CREATOR;
+		H.pair = { a: LEADER, b: CREATOR, score: 10, band: 'weak', topSignal: 'direct-transfer' };
+		const r = await checkLeaderCreatorLinkage({ leaderWallet: LEADER, mint: 'Mint111', connection: {} });
+		expect(r.linked).toBe(false);
+	});
+
+	it('fails closed (not linked) when the linkage scorer errors, never blocking on a data outage', async () => {
+		H.creatorWallet = CREATOR;
+		H.analyzeThrows = true;
+		const r = await checkLeaderCreatorLinkage({ leaderWallet: LEADER, mint: 'Mint111', connection: {} });
+		expect(r.linked).toBe(false);
+		H.analyzeThrows = false;
+	});
+
+	it('exports a stable machine reason for the follower-facing skip', () => {
+		expect(CREATOR_LINK_REASON).toBe('leader_linked_to_creator');
 	});
 });

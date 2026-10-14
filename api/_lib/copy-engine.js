@@ -141,7 +141,7 @@ export function rawOrderSol(sub, { leaderEntrySol = 0, copierBalanceSol = null }
  * @param {object} p
  * @param {object} p.subscription   normalized subscription row.
  * @param {object} p.position       triggering agent_sniper_positions row (entry_sol, mint, direction…).
- * @param {object} [p.coin]         coin context: { market_cap_usd, dev_holding_pct, liquidity_usd, honeypot, graduated }.
+ * @param {object} [p.coin]         coin context: { market_cap_usd, dev_holding_pct, liquidity_usd, honeypot, graduated, leader_linked_to_creator }.
  * @param {number} [p.copierBalanceSol]  copier's spendable SOL (required only for pct_balance sizing).
  * @param {number} [p.spentTodaySol]     SOL already fanned out for this sub today.
  * @param {number} [p.openCopies]        copier's current pending intents on this sub.
@@ -194,6 +194,13 @@ export function evaluateSafety(sub, coin) {
 			: { ok: true };
 	}
 	if (coin.honeypot === true) return { ok: false, reason: 'honeypot', detail: 'Coin flagged as a honeypot (sells blocked).' };
+	if (coin.leader_linked_to_creator === true) {
+		return {
+			ok: false,
+			reason: 'leader_linked_to_creator',
+			detail: "This leader's wallet appears linked to this coin's creator (shared fee payer or first funder), so copying would mirror the creator's own buy, not an independent trade.",
+		};
+	}
 
 	const mcap = n(coin.market_cap_usd);
 	if (sub.mcap_floor_usd != null && mcap > 0 && mcap < sub.mcap_floor_usd) {

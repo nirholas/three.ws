@@ -20,6 +20,12 @@
  *      willing to ride. When the leader's realized equity curve breaches it the
  *      subscription auto-pauses with a recorded reason, instead of mirroring a
  *      leader into the ground. The copier resumes it deliberately or not at all.
+ *   4. CREATOR-LINKED LEADER. A "leader" whose trading wallet shares control with
+ *      a coin's creator (shared fee payer, first funder) is not a trader to copy
+ *      on that coin: a follower would just be mirroring the creator's own buy of
+ *      their own launch, dressed up as a signal. Checked per (leader, mint) in the
+ *      fanout, before any order is sized, with the reason surfaced on the skipped
+ *      copy_executions row so the follower sees exactly why.
  *
  * Drawdown is expressed as a share of capital actually deployed
  * (max peak-to-trough loss / gross entry), the same definition
@@ -28,6 +34,7 @@
  */
 
 import { sql } from './db.js';
+import { resolveCreatorWallet } from './cosmetics-economy.js';
 
 const LAMPORTS = 1e9;
 const lamToSol = (l) => (l == null ? 0 : Number(BigInt(Math.trunc(Number(l)))) / LAMPORTS);
@@ -229,4 +236,70 @@ export async function leaderDrawdownPcts(agentIds, network = 'mainnet') {
 		out.set(r.agent_id, deployed > 0 ? round2(clamp((dd / deployed) * 100, 0, 100)) : null);
 	}
 	return out;
+}
+
+const LINKAGE_BAND_ORDER = ['none', 'weak', 'moderate', 'strong', 'confirmed'];
+
+/**
+ * Human reason shown on the skipped copy_executions row when a leader's wallet
+ * links to the coin's creator. Mirrors the honeypot/mcap reasons copy-engine.js
+ * already attaches to a skip.
+ */
+export const CREATOR_LINK_REASON = 'leader_linked_to_creator';
+
+/**
+ * Decide whether a single wallet-linkage pair means "this leader is the
+ * creator" for copy-trading purposes. PURE: takes the one pair
+ * `analyzeLinkage()` returns for a 2-address call, never touches DB/RPC.
+ *
+ * @param {{score:number, band:string, topSignal?:string|null}|null} pair
+ * @param {{ band?: string }} [opts] trip threshold, default "strong" (score 65+)
+ * @returns {{ linked:boolean, score:number|null, band:string|null, topSignal:string|null }}
+ */
+export function evaluateLeaderCreatorLinkPair(pair, { band = 'strong' } = {}) {
+	if (!pair) return { linked: false, score: null, band: null, topSignal: null };
+	const threshold = LINKAGE_BAND_ORDER.indexOf(band);
+	const linked = LINKAGE_BAND_ORDER.indexOf(pair.band) >= threshold;
+	return { linked, score: pair.score ?? null, band: pair.band ?? null, topSignal: pair.topSignal ?? null };
+}
+
+/**
+ * Is this leader's trading wallet the same controller as this coin's creator?
+ * Resolves the creator (DB first, live pump.fun bonding-curve read as a last
+ * resort, via `resolveCreatorWallet`), then scores the one pair with
+ * `@three-ws/wallet-linkage`'s `analyzeLinkage`, given the caller's own
+ * injected RPC connection so this never hits a hardcoded endpoint.
+ *
+ * Fails CLOSED toward "not linked": a missing creator, a missing leader
+ * wallet, or any RPC/DB error returns `linked:false` rather than guessing.
+ * The eligibility bar above already keeps a history-less leader uncopyable,
+ * so this check only adds signal, it never has to carry the whole gate alone.
+ *
+ * @param {object} o
+ * @param {string} o.leaderWallet  the leader's own trading wallet (runtime input)
+ * @param {string} o.mint          the coin being copied
+ * @param {import('@solana/web3.js').Connection} o.connection  injected RPC
+ * @param {{ band?: string }} [o.opts]
+ * @returns {Promise<{ linked:boolean, creator:string|null, score:number|null, band:string|null, topSignal:string|null }>}
+ */
+export async function checkLeaderCreatorLinkage({ leaderWallet, mint, connection, opts = {} }) {
+	if (!leaderWallet) return { linked: false, creator: null, score: null, band: null, topSignal: null };
+
+	let creator = null;
+	try {
+		({ wallet: creator } = await resolveCreatorWallet(mint));
+	} catch {
+		return { linked: false, creator: null, score: null, band: null, topSignal: null };
+	}
+	if (!creator || creator === leaderWallet) {
+		return { linked: false, creator, score: null, band: null, topSignal: null };
+	}
+
+	try {
+		const { analyzeLinkage } = await import('@three-ws/wallet-linkage');
+		const { pairs } = await analyzeLinkage(connection, [leaderWallet, creator]);
+		return { ...evaluateLeaderCreatorLinkPair(pairs[0] ?? null, opts), creator };
+	} catch {
+		return { linked: false, creator, score: null, band: null, topSignal: null };
+	}
 }

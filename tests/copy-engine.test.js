@@ -127,6 +127,21 @@ describe('evaluateSafety / planCopyOrder safety gate', () => {
 		expect(d.action).toBe('skip');
 		expect(d.reason).toBe('honeypot');
 	});
+	it('blocks a leader wallet linked to the coin creator', () => {
+		const r = evaluateSafety(baseSub, { leader_linked_to_creator: true });
+		expect(r.ok).toBe(false);
+		expect(r.reason).toBe('leader_linked_to_creator');
+		expect(r.detail).toMatch(/creator/i);
+	});
+	it('a buy mirroring a creator-linked leader is skipped end-to-end, even with require_safety_pass off', () => {
+		const d = planCopyOrder({
+			subscription: baseSub,
+			position: buy(1),
+			coin: { market_cap_usd: 30000, leader_linked_to_creator: true },
+		});
+		expect(d.action).toBe('skip');
+		expect(d.reason).toBe('leader_linked_to_creator');
+	});
 });
 
 describe('normalizeSubscriptionInput', () => {
