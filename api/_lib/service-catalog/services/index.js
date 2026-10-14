@@ -80,6 +80,9 @@ import carbonNow from './carbon-now.js';
 import carbonBestWindow from './carbon-best-window.js';
 import domainsCheck from './domains-check.js';
 import domainsBulk from './domains-bulk.js';
+import researchSearch from './research-search.js';
+import researchPaper from './research-paper.js';
+import researchBibliography from './research-bibliography.js';
 
 export const PAID_SERVICES = Object.freeze([
 	modelCheck,
@@ -149,4 +152,7 @@ export const PAID_SERVICES = Object.freeze([
 	carbonBestWindow,
 	domainsCheck,
 	domainsBulk,
+	researchSearch,
+	researchPaper,
+	researchBibliography,
 ]);
