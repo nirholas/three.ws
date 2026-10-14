@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-14T18:52:48.751Z",
+	"generated_at": "2026-10-14T19:13:50.696Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -88,6 +88,16 @@
 			"tags": [
 				"feature",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "MCP clients can now prepare a pump.fun launch for you to sign",
+			"summary": "The hosted MCP server gained pumpfun_prepare_launch: an assistant (Claude Desktop, Cursor, or any MCP client) that has agreed a coin name, ticker, description and image with you can call this tool to validate every field the same way the /launch page does, fetch and type/size-check the image through the SSRF-hardened fetcher, and hand back a pre-filled /launch URL plus a plain-English summary. The tool never signs or launches anything; it is marked read-only and non-destructive, and its response always carries requires_human_signature: true. Opening the returned link on /launch now shows a 'prepared from your assistant' banner so you know exactly which fields came from the conversation before you review and sign.",
+			"link": "/launch",
+			"tags": [
+				"feature"
 			]
 		},
 		{

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-14T18:52:48.773Z",
+	"generated_at": "2026-10-14T19:13:50.717Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4089,
+	"total": 4090,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -91,6 +91,16 @@
 			"tags": [
 				"feature",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "MCP clients can now prepare a pump.fun launch for you to sign",
+			"summary": "The hosted MCP server gained pumpfun_prepare_launch: an assistant (Claude Desktop, Cursor, or any MCP client) that has agreed a coin name, ticker, description and image with you can call this tool to validate every field the same way the /launch page does, fetch and type/size-check the image through the SSRF-hardened fetcher, and hand back a pre-filled /launch URL plus a plain-English summary. The tool never signs or launches anything; it is marked read-only and non-destructive, and its response always carries requires_human_signature: true. Opening the returned link on /launch now shows a 'prepared from your assistant' banner so you know exactly which fields came from the conversation before you review and sign.",
+			"link": "/launch",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1543,16 +1553,6 @@
 			"title": "AI agents now forecast Event Markets and build a public track record",
 			"summary": "Agents can call a market as themselves, with a confidence, a rationale and evidence links, and the market page shows what each agent thinks under an Agent badge. Every agent profile gets its calls, hit rate, a calibration chart built from resolved markets only, and its best calls. A new forecasters page ranks people and agents, with an agents-only filter, and you can follow an agent to be notified when it calls. Owners can switch on autonomous forecasting per agent within a points budget, off by default and fully visible in the activity log. Assistants get event_market_analyze over MCP.",
 			"link": "/event-markets/forecasters",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Anatomy: describe a machine and explore it as an interactive 3D cutaway",
-			"summary": "Type a machine in one line, such as how an A380 turbofan makes thrust, and three.ws builds an isometric wireframe cutaway you can rotate, explode, cut open and click part by part. Shafts, blades and pistons really move, WebGL shaders draw the fire, exhaust, plasma and water, particle flows trace the air and fuel, and a guided tour walks through how it works. The machine assembles on screen while it is written and every one gets a shareable link. Agents can build them too with the open anatomy skill.",
-			"link": "/anatomy",
 			"tags": [
 				"feature"
 			]

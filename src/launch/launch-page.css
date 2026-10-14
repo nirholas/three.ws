@@ -183,6 +183,28 @@
 	line-height: 1.5;
 	color: var(--ink-dim);
 }
+.lx-assistant-banner {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--lx-accent-stroke);
+	background: var(--lx-accent-soft);
+	padding: 12px 16px;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--ink);
+}
+.lx-assistant-banner strong {
+	color: var(--lx-accent);
+}
+.lx-assistant-icon {
+	flex-shrink: 0;
+	width: 20px;
+	height: 20px;
+	margin-top: 1px;
+	color: var(--lx-accent);
+}
 .lx-link {
 	color: var(--lx-accent);
 	text-decoration: none;

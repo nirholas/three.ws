@@ -547,3 +547,62 @@ place with a dated Evolve status paragraph rather than deleting it.
 Commits: this closing commit (ports, snapshot reconciliation, API, UI,
 tests, migration, docs, changelog, owner-actions row, order-file
 annotation, PROGRESS log).
+
+## 2026-10-14: order 511-integrate-12 closed (evolve)
+
+Added `pumpfun_prepare_launch` to the hosted MCP's pump.fun tool set
+(`api/_mcp/tools/pumpfun.js`): any MCP client agrees a name, ticker,
+description and image with the human, calls the tool, and gets back a
+`/launch?...` URL with every field pre-filled plus a plain-English summary.
+Validation reuses the launch page's own shared, DOM-free module
+(`src/launch/launch-model.js`, already imported cross-layer elsewhere in
+`api/_mcp/tools/`, so no extraction was needed: the "page and server
+disagree" never-blocked row did not apply). The image is fetched through the
+existing SSRF-hardened `fetchModel()`; SSRF-class and oversized-image errors
+hard-reject the call, everything else (a host that blocks server fetches)
+degrades to `image_checked: false` per the order's own never-blocked table.
+The tool carries `readOnlyHint:true, destructiveHint:false` and a
+description stating plainly that nothing launches until the human signs;
+its response always carries `requires_human_signature: true`. `/launch`
+(`src/launch/launch-page.js`) now reads a `prepared` param and shows a
+"prepared from your assistant" banner above the form.
+
+Verified: `npx vitest run tests/pumpfun-mcp-tools.test.js` passes 15/15,
+including the 8 new `pumpfun_prepare_launch` cases the order's Definition of
+Done asked for (valid input, bad ticker, name too long, private-network
+image URL rejected, oversized image rejected, graceful degrade on a
+blocked-fetch host, non-image content-type rejected, optional fields
+omitted). `npx vitest run tests/api/pump-fun-mcp.test.js` (the file the
+order's own Definition of Done names) passes 19/19 unaffected: that file
+tests a different, pre-existing standalone route (`api/pump-fun-mcp.js`),
+not the file Step 0 and Task 1 target, so the new cases were added to the
+correct file instead and the named file was still run to confirm zero
+regression. `npm run audit:mcp-golden -- --update` then `npm run
+audit:mcp-golden` (no flag): fixture regenerated, now matches clean (421
+tool contracts). `npm run test:mcp`: 2 pre-existing, unrelated failures
+(`packages/ibm-x402-mcp`, one unhealthy live remote endpoint) that predate
+this diff and touch no file this order changed. `npm run audit:mcp-safety`:
+2 pre-existing, unrelated violations in `api/_mcp/tools/domains.js`
+(`domain_status`, `domain_connect_status` declaring `readOnlyHint:true`
+despite a DB write), confirmed via a `git stash` isolation test to exist
+identically with or without this diff (same violation count, 420 tools
+without it vs. 421 with it); out of scope for this order, left unfixed and
+reported here rather than silently claiming the gate passes. Port 3000 is
+the owner's dev server, so the live `tools/call` verification used `npx vite
+--port 3107` instead: the exact URL `pumpfun_prepare_launch`'s handler
+produces (same code path the vitest suite already exercises) was opened
+with Playwright against that port, confirming the banner text, and the
+name/symbol/description fields, all render pre-filled; zero console errors
+except `ERR_NAME_NOT_RESOLVED` for the test image URL, an artifact of this
+sandbox having no outbound DNS, not a code defect. A real `/api/mcp` HTTP
+round trip was not attempted: `pumpfun_prepare_launch` is unpriced but not
+on the `PUBLIC_TOOLS` allowlist (same as its sibling `pumpfun_*` tools), so
+an anonymous caller is quoted the flat x402 default price, and paying it is
+a gated spend action this session cannot take. `npm run check:rules
+--paths <all 12 touched files>` exits 0. `docs/mcp.md`'s launch-token
+use case now documents the tool with a worked example; `data/changelog.json`
+got a new entry and `npm run build:pages` ran clean. No new page or surface
+landed, so no `STRUCTURE.md` row or `data/pages.json` entry was needed.
+
+Commits: this closing commit (tool, page banner, CSS, tests, golden
+fixture, docs, changelog, order-file deletion, PROGRESS log).

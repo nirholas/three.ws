@@ -59,6 +59,7 @@ const state = {
 	agents: null,
 	agentsError: '',
 	agentQuery: '',
+	prepared: false,
 	form: {
 		agentId: null,
 		name: '',
@@ -205,6 +206,7 @@ async function loadIdentity(wantedAvatar) {
 
 function applyPrefill(params) {
 	const f = state.form;
+	state.prepared = Boolean(params.get('prepared'));
 	f.name = (params.get('name') || '').slice(0, NAME_MAX);
 	if (params.get('symbol')) {
 		f.symbol = normalizeSymbol(params.get('symbol'));
@@ -249,6 +251,14 @@ function renderShell(root) {
 	root.innerHTML = `
 	<div class="lx-grid" id="panel-create" role="tabpanel" aria-labelledby="tab-create">
 		<form class="lx-form" id="lx-form" novalidate>
+			${
+				state.prepared
+					? `<div class="lx-assistant-banner" role="note">
+				<svg class="lx-assistant-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8L12 2z" fill="currentColor"/><path d="M19 15l.9 2.6L22.5 18.5l-2.6.9L19 22l-.9-2.6-2.6-.9 2.6-.9L19 15z" fill="currentColor"/></svg>
+				<span><strong>Prepared from your assistant.</strong> The name, ticker, description and image below came from an MCP tool call, not from you typing them in. Nothing has launched: review every field, then sign to launch.</span>
+			</div>`
+					: ''
+			}
 			<section class="lx-card" aria-labelledby="h-agent">
 				<div class="lx-card-h"><h2 id="h-agent"><span class="lx-step" data-step="agent">1</span>Link a 3D agent</h2><a class="lx-link" href="/create-agent">New agent</a></div>
 				<p class="lx-card-note">The coin launches for this agent. Its page becomes the coin's website and its 3D body rides in the token metadata.</p>

@@ -71,6 +71,14 @@
 			<description>The claims feed's GitHub-attribution path used to walk Solana RPC history fresh on every request, the same cost every time, with nothing persisted in between. services/pump-claims is a standalone process that subscribes to PumpFees program logs directly, decodes and attributes each claim as it happens, and writes it to a new pump_fee_claims table with a watchdog that resubscribes on a stalled connection and gap-fills whatever a drop missed. The claims route now reads that table first and only falls back to the RPC scan when the table has nothing for the requested window, so PUMPFUN_BOT_URL is no longer required for GitHub claims specifically (ordinary wallet claims still use it).</description>
 		</item>
 		<item>
+			<title>MCP clients can now prepare a pump.fun launch for you to sign</title>
+			<link>https://three.ws/launch</link>
+			<guid isPermaLink="false">2026-10-14:MCP clients can now prepare a pump.fun launch for you to sign</guid>
+			<pubDate>Wed, 14 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The hosted MCP server gained pumpfun_prepare_launch: an assistant (Claude Desktop, Cursor, or any MCP client) that has agreed a coin name, ticker, description and image with you can call this tool to validate every field the same way the /launch page does, fetch and type/size-check the image through the SSRF-hardened fetcher, and hand back a pre-filled /launch URL plus a plain-English summary. The tool never signs or launches anything; it is marked read-only and non-destructive, and its response always carries requires_human_signature: true. Opening the returned link on /launch now shows a 'prepared from your assistant' banner so you know exactly which fields came from the conversation before you review and sign.</description>
+		</item>
+		<item>
 			<title>Robinhood Chain feed worker now runs the published SDK, not a stale local snapshot</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-14:Robinhood Chain feed worker now runs the published SDK, not a stale local snapshot</guid>

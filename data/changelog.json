@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-14",
+			"title": "MCP clients can now prepare a pump.fun launch for you to sign",
+			"summary": "The hosted MCP server gained pumpfun_prepare_launch: an assistant (Claude Desktop, Cursor, or any MCP client) that has agreed a coin name, ticker, description and image with you can call this tool to validate every field the same way the /launch page does, fetch and type/size-check the image through the SSRF-hardened fetcher, and hand back a pre-filled /launch URL plus a plain-English summary. The tool never signs or launches anything; it is marked read-only and non-destructive, and its response always carries requires_human_signature: true. Opening the returned link on /launch now shows a 'prepared from your assistant' banner so you know exactly which fields came from the conversation before you review and sign.",
+			"tags": [
+				"feature"
+			],
+			"link": "/launch"
+		},
+		{
+			"date": "2026-10-14",
 			"title": "Creator earnings now cross-check two independent pump.fun sources",
 			"summary": "A coin's earnings figure on /launches/<mint> and in the agent earnings card used to come from one source only: the creator wallet's lifetime fee index. It now also sums that specific coin's own pump.fun distribution timeline, the only feed that can say which coin actually paid a wallet, and shows both: 'this coin paid X SOL' next to the wallet-level figure, plus a plain sentence when the two sources disagree and by how much. Nothing is hidden when sources drift apart; the gap is the point. The snapshot pipeline that already indexed wallet-level fees now reconciles against the timeline for every coin on each refresh.",
 			"tags": [

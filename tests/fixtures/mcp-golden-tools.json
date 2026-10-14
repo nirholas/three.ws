@@ -1142,6 +1142,14 @@
 			"schemaHash": "d70ded99f0a8"
 		},
 		{
+			"name": "pumpfun_prepare_launch",
+			"title": "Prepare a pump.fun launch for a human to sign",
+			"descHead": "Prepare a pump.fun coin launch and return a /launch URL with every field",
+			"descHash": "47edbc95fa1e",
+			"annotations": "ref:LIVE_FEED_ANNOTATIONS",
+			"schemaHash": "663511c93b2d"
+		},
+		{
 			"name": "pumpfun_recent_claims",
 			"title": "Recent pump.fun claims",
 			"descHead": "Fetch the most recent pump.fun GitHub social-fee claim events with full ",

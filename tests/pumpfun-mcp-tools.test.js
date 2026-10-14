@@ -28,6 +28,21 @@ vi.mock('../api/_lib/pumpfun-mcp.js', () => ({
 	pumpfunBotEnabled: () => botEnabled,
 }));
 
+// pumpfun_prepare_launch fetches the coin image through the shared SSRF-hardened
+// fetcher (api/_lib/fetch-model.js). Mocked here so these tests never touch the
+// network; each test controls what it resolves/rejects with.
+const fetchModelMock = vi.fn();
+class FakeFetchModelError extends Error {
+	constructor(message, code = 'fetch_failed') {
+		super(message);
+		this.code = code;
+	}
+}
+vi.mock('../api/_lib/fetch-model.js', () => ({
+	fetchModel: (...a) => fetchModelMock(...a),
+	FetchModelError: FakeFetchModelError,
+}));
+
 const { toolDefs } = await import('../api/_mcp/tools/pumpfun.js');
 
 const byName = (name) => toolDefs.find((t) => t.name === name);
@@ -39,16 +54,18 @@ beforeEach(() => {
 	tokenIntelMock.mockReset();
 	creatorIntelMock.mockReset();
 	graduationsMock.mockReset();
+	fetchModelMock.mockReset();
 	botEnabled = true;
 });
 
 describe('pumpfun MCP tools: registration', () => {
-	it('exposes the four intel tools with live-feed annotations', () => {
+	it('exposes the five tools with the shared annotation set', () => {
 		expect(toolDefs.map((t) => t.name)).toEqual([
 			'pumpfun_recent_claims',
 			'pumpfun_token_intel',
 			'pumpfun_creator_intel',
 			'pumpfun_recent_graduations',
+			'pumpfun_prepare_launch',
 		]);
 		for (const t of toolDefs) {
 			// destructiveHint defaults to true when omitted, so every read tool
@@ -124,5 +141,111 @@ describe('pumpfun MCP tools: failure paths', () => {
 		const r = await call('pumpfun_recent_claims', {});
 		expect(r.isError).toBe(true);
 		expect(r.content[0].text).toMatch(/not configured/i);
+	});
+});
+
+describe('pumpfun_prepare_launch', () => {
+	const VALID_ARGS = {
+		name: 'Agent Nova',
+		symbol: 'nova!!',
+		description: 'A trading agent with a coin.',
+		image_url: 'https://cdn.example.com/nova.png',
+		initial_buy_sol: 0.5,
+		agent_id: 'agent-123',
+	};
+
+	it('returns a /launch URL with every field pre-filled, plus a human-signs summary', async () => {
+		fetchModelMock.mockResolvedValue({
+			bytes: new Uint8Array(1024),
+			url: VALID_ARGS.image_url,
+			contentType: 'image/png',
+			filename: 'nova.png',
+		});
+		const r = await call('pumpfun_prepare_launch', VALID_ARGS);
+		expect(r.isError).toBeUndefined();
+		const data = r.structuredContent;
+		expect(data.requires_human_signature).toBe(true);
+		expect(data.image_checked).toBe(true);
+		expect(data.name).toBe('Agent Nova');
+		// Punctuation is stripped and the ticker is uppercased, same rule the
+		// launch page's own normalizeSymbol applies.
+		expect(data.symbol).toBe('NOVA');
+
+		const url = new URL(data.launch_url);
+		expect(url.pathname).toBe('/launch');
+		expect(url.searchParams.get('name')).toBe('Agent Nova');
+		expect(url.searchParams.get('symbol')).toBe('NOVA');
+		expect(url.searchParams.get('description')).toBe(VALID_ARGS.description);
+		expect(url.searchParams.get('image')).toBe(VALID_ARGS.image_url);
+		expect(url.searchParams.get('initialBuy')).toBe('0.5');
+		expect(url.searchParams.get('avatar')).toBe('agent-123');
+		expect(url.searchParams.get('prepared')).toBeTruthy();
+
+		expect(r.content[0].text).toContain(data.launch_url);
+		expect(r.content[0].text).toMatch(/nothing is launched/i);
+	});
+
+	it('rejects a ticker that normalizes to fewer than two characters', async () => {
+		await expect(call('pumpfun_prepare_launch', { ...VALID_ARGS, symbol: '#' })).rejects.toMatchObject({
+			code: -32602,
+		});
+		expect(fetchModelMock).not.toHaveBeenCalled();
+	});
+
+	it('rejects a name over the launch page limit', async () => {
+		await expect(
+			call('pumpfun_prepare_launch', { ...VALID_ARGS, name: 'x'.repeat(100) }),
+		).rejects.toMatchObject({ code: -32602 });
+	});
+
+	it('rejects an image URL that resolves to a private address (SSRF guard)', async () => {
+		fetchModelMock.mockRejectedValue(new FakeFetchModelError('host resolves to private address: 10.0.0.5', 'private_address'));
+		await expect(call('pumpfun_prepare_launch', VALID_ARGS)).rejects.toMatchObject({
+			code: -32602,
+			message: expect.stringContaining('image_url rejected'),
+		});
+	});
+
+	it('rejects an oversized image', async () => {
+		fetchModelMock.mockRejectedValue(new FakeFetchModelError('file exceeded 4194304 bytes during download', 'file_too_large'));
+		await expect(call('pumpfun_prepare_launch', VALID_ARGS)).rejects.toMatchObject({
+			code: -32602,
+			message: expect.stringContaining('image_url rejected'),
+		});
+	});
+
+	it('degrades to image_checked: false when the image host just blocks server fetches', async () => {
+		fetchModelMock.mockRejectedValue(new FakeFetchModelError('upstream returned 403', 'upstream_error'));
+		const r = await call('pumpfun_prepare_launch', VALID_ARGS);
+		expect(r.isError).toBeUndefined();
+		expect(r.structuredContent.image_checked).toBe(false);
+		expect(r.structuredContent.launch_url).toContain('/launch');
+		expect(r.content[0].text).toMatch(/not pre-checked/i);
+	});
+
+	it('rejects a URL that answers but is not an image', async () => {
+		fetchModelMock.mockResolvedValue({
+			bytes: new Uint8Array(10),
+			url: VALID_ARGS.image_url,
+			contentType: 'text/html',
+			filename: 'index.html',
+		});
+		await expect(call('pumpfun_prepare_launch', VALID_ARGS)).rejects.toMatchObject({
+			code: -32602,
+			message: expect.stringContaining('did not return an image'),
+		});
+	});
+
+	it('omits initialBuy and avatar when not provided', async () => {
+		fetchModelMock.mockResolvedValue({ bytes: new Uint8Array(1), url: '', contentType: 'image/png', filename: 'x' });
+		const r = await call('pumpfun_prepare_launch', {
+			name: 'Agent Nova',
+			symbol: 'NOVA',
+			description: '',
+			image_url: 'https://cdn.example.com/nova.png',
+		});
+		const url = new URL(r.structuredContent.launch_url);
+		expect(url.searchParams.has('initialBuy')).toBe(false);
+		expect(url.searchParams.has('avatar')).toBe(false);
 	});
 });

@@ -1573,7 +1573,23 @@ On `mcp`:
 2. `pumpfun_recent_graduations`: what recently graduated launches have in common.
 3. `read_resource` on `three://agents/{agentId}/wallet`: enough SOL for the launch fee?
 4. Show the name, symbol, description, image, launching wallet and cost, and wait for a yes.
-5. **Spends money.** Launching from MCP is not enabled yet: the user reviews and signs the launch on [/launch](https://three.ws/launch). Then `read_resource` on `three://launches` to confirm it landed.
+5. `pumpfun_prepare_launch` with the agreed `name`, `symbol`, `description`, `image_url`, and optionally `initial_buy_sol` and `agent_id`. It validates every field the same way the launch page does, fetches and type/size-checks the image, and returns a pre-filled `/launch` URL plus a plain-English summary. It never launches anything itself: `requires_human_signature` is always `true` in the response.
+
+   ```json
+   {
+     "name": "pumpfun_prepare_launch",
+     "arguments": {
+       "name": "Agent Nova",
+       "symbol": "NOVA",
+       "description": "A trading agent with a coin.",
+       "image_url": "https://cdn.example.com/nova.png",
+       "initial_buy_sol": 0.5,
+       "agent_id": "agent-123"
+     }
+   }
+   ```
+
+6. **Spends money.** The user opens the `launch_url` from the response, reviews every pre-filled field on [/launch](https://three.ws/launch) (shown there under an "prepared from your assistant" banner), and signs the transaction in their own wallet. Then `read_resource` on `three://launches` to confirm it landed.
 
 ### Hire an agent for a task (`hire-agent`)
 
