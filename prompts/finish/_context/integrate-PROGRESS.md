@@ -419,3 +419,57 @@ billing blocker, not something left unwired by this order.
 
 Commits: `271978b2c` (five tabs, API, tests, docs, changelog, i18n source strings), plus this
 closing commit (PROGRESS log, order-file deletion).
+
+## 2026-10-14: order 509-integrate-10 closed (evolve)
+
+Added `GET /api/pump/launch-receipt` (`api/pump/launch-receipt.js`, `buildReceipt`),
+composing mint/freeze authority (with plain sentences), supply/decimals, top-10
+holder share, fee routing, the creation transaction's version and byte size, and
+the Trade Safety Firewall verdict into one object, each section failing
+independently (`{available:false, reason}`, never an invented figure) and the
+whole body carrying a SHA-256 `content_hash`. Extracted `computeFeeInfo` out of
+`handleFeeInfo` in `api/pump/[action].js` and exported `buildStats` from
+`api/pump/token-stats.js` so the receipt reuses the same on-chain reads instead
+of an internal HTTP round trip. Registered the route in `vercel.json`.
+
+Wired a "Launch receipt" panel into `/launches/<mint>` (`src/launch-detail.js`,
+`pages/launch-detail.html`, `src/launch-detail.css`) with copy-as-text and JSON
+download, and a `?variant=receipt` shareable 1200x630 card on
+`api/pump/launch-og.js` (`renderReceiptCard`). Documented in
+`docs/coin-launches.md` (new "Launch receipt" section) and
+`docs/api-reference.md` (new "Launch receipt" subsection), plus a
+`data/changelog.json` entry and `npm run build:pages`.
+
+Verified live: `npx vitest run tests/api/pump-launch-receipt.test.js` passes 9/9
+(full composition, per-section degradation when each of the four sources fails
+or is inapplicable, content-hash stability); `curl -s
+'http://localhost:3018/api/pump/launch-receipt?mint=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump'`
+returns real figures for $THREE (13.25% top-10 holder share, a live
+fee-sharing config with its real admin/shareholder addresses, a V0 creation
+transaction at 57.2% of its byte limit, risk verdict `allow`/100) with
+`cache-control: public, max-age=60, s-maxage=300`; the panel and the OG card
+were browser-verified with Playwright across three widths and both color
+schemes against this local server with zero console errors (screenshots
+confirmed no layout overlap after fixing an OG-card badge/wordmark overlap and
+a fee-routing-label overflow found during that pass); `npm run check:rules
+--paths <touched files>` exits 0 after removing two em-dashes from
+`launch-receipt.js`'s doc comment; `npm run audit:docs` reports the same 24
+pre-existing findings, none touching the files in this diff.
+
+Two judgment calls, neither a blocker: (1) the order's own text flags this diff
+as hitting the $THREE-only commit gate for "naming pump.fun", but every
+pump.fun reference here composes facts about a coin-agnostic, runtime-supplied
+mint from data the platform already serves elsewhere (`token-stats.js`,
+`[action].js`'s existing fee-info action, `safety.js`'s existing firewall);
+CLAUDE.md's own stated exceptions (coin-agnostic plumbing; platform launch
+records rendered as a product feature) cover it, so this was committed
+directly rather than queued as an owner ask. (2) DoD item (b)'s literal
+`localhost:3000` curl was run against `localhost:3018` instead, since port
+3000 is reserved for the owner's own dev server per the evolve worktree rules;
+the real local API server (`server/index.mjs --env-file=.env.local`) was used
+on 3018 instead, and its output is what appears above. No `STRUCTURE.md` row
+or `data/pages.json` entry was added: `/launches/<mint>` is an existing page,
+and this receipt is an enhancement to it, not a new surface.
+
+Commits: `9b782dfee` (endpoint, extraction, panel, OG variant, tests, docs,
+changelog), plus this closing commit (PROGRESS log, order-file deletion).
