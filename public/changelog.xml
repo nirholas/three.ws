@@ -23,6 +23,14 @@
 			<description>@three-ws/walk's ?walk=play&amp;avatar=&lt;id&gt; deep link and the drop-in resume path read the saved avatar preference straight out of storage and never looked at the query string, so sharing a link to a specific avatar silently loaded the stored (or default) one instead. A new deepLinkAvatarId resolver gives the query param precedence and persists it, the same way picking an avatar in the UI does.</description>
 		</item>
 		<item>
+			<title>GitHub fee-claim channel now attributes withdrawals to a coin, or says plainly it cannot</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-14:GitHub fee-claim channel now attributes withdrawals to a coin, or says plainly it cannot</guid>
+			<pubDate>Wed, 14 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A GitHub identity withdrawing pump.fun fees through the claim_social_fee_pda instruction only proves payment to that identity, not which coin paid it: one GitHub fee account can be a shareholder on more than one coin, and its address can be pasted into a copycat coin's metadata. The claims feed and its Telegram channel now classify every such withdrawal with on-chain evidence: a same-transaction distribution to the exact account, or a 90%-dominant distribution history since the previous claim, then a repository-owner or creator-wallet match, down to an honest unresolved or unverified label when nothing proves a coin. A new-GitHub-account-plus-copycat-coin pattern holds the claim for review instead of posting it with a celebratory card.</description>
+		</item>
+		<item>
 			<title>Robinhood Chain feed worker now runs the published SDK, not a stale local snapshot</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-14:Robinhood Chain feed worker now runs the published SDK, not a stale local snapshot</guid>

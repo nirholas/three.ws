@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-14T02:52:21.300Z",
+	"generated_at": "2026-10-14T03:31:33.790Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -26,6 +26,17 @@
 			"tags": [
 				"fix",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "GitHub fee-claim channel now attributes withdrawals to a coin, or says plainly it cannot",
+			"summary": "A GitHub identity withdrawing pump.fun fees through the claim_social_fee_pda instruction only proves payment to that identity, not which coin paid it: one GitHub fee account can be a shareholder on more than one coin, and its address can be pasted into a copycat coin's metadata. The claims feed and its Telegram channel now classify every such withdrawal with on-chain evidence: a same-transaction distribution to the exact account, or a 90%-dominant distribution history since the previous claim, then a repository-owner or creator-wallet match, down to an honest unresolved or unverified label when nothing proves a coin. A new-GitHub-account-plus-copycat-coin pattern holds the claim for review instead of posting it with a celebratory card.",
+			"link": null,
+			"tags": [
+				"feature",
+				"security"
 			]
 		},
 		{

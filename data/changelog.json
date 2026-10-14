@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-14",
+			"title": "GitHub fee-claim channel now attributes withdrawals to a coin, or says plainly it cannot",
+			"summary": "A GitHub identity withdrawing pump.fun fees through the claim_social_fee_pda instruction only proves payment to that identity, not which coin paid it: one GitHub fee account can be a shareholder on more than one coin, and its address can be pasted into a copycat coin's metadata. The claims feed and its Telegram channel now classify every such withdrawal with on-chain evidence: a same-transaction distribution to the exact account, or a 90%-dominant distribution history since the previous claim, then a repository-owner or creator-wallet match, down to an honest unresolved or unverified label when nothing proves a coin. A new-GitHub-account-plus-copycat-coin pattern holds the claim for review instead of posting it with a celebratory card.",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-10-14",
 			"title": "Robinhood Chain feed worker now runs the published SDK, not a stale local snapshot",
 			"summary": "workers/robinhood-feed depended on robinhood/robinhood-chain-sdk through a file: link, a reference copy that drifts from the standalone robinhood-chain-sdk repo it mirrors. The worker now installs hoodchain from npm like any other dependency, so it always runs the released SDK. Also fixed: seven pointer READMEs staged for duplicate or superseded standalone repos (three-ui, crypto-market-data, crypto-market-data-ts, crypto-data-aggregator, memescope-monday-directory, and one of each duplicate Robinhood Chain repo pair), ready for the owner to push and archive.",
 			"tags": [
