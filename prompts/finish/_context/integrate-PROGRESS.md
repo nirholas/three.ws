@@ -241,3 +241,68 @@ Commits: `f72c135c3` (hoodchain npm dependency switch, worker README update, `ro
 update, retired-repo staging script and manifest, `STRUCTURE.md` row),
 `aa582a612` (changelog entry + generated build files), plus this closing commit (PROGRESS log,
 order-file deletion, owner-action row).
+
+## 2026-10-14: order 505-integrate-06 closed (evolve)
+
+`api/_lib/pump-claims.js`'s GitHub fee-PDA path (`claim_social_fee_pda` on the PumpFees program,
+`PUMP_FEE_PROGRAM_ID`) no longer just reports a withdrawal happened; it attributes which coin paid
+it, or says plainly it cannot. New `api/_lib/pump-events.js` wraps the installed
+`@nirholas/pump-sdk`'s `parsePumpEventsFromLogs` into typed, normalised events (distribute,
+social-fee claim); its decoded Anchor `pubkey` fields come back as `PublicKey` instances, not
+strings, which would have made every attribution string-comparison in this order silently and
+permanently fail had it shipped unconverted (caught via fixture round-tripping before any test
+ran, fixed with a `pubkeyString` normaliser). New `api/_lib/pump-claims-attribution.js` ports the
+owner's `pumpfun-github-claims` rules under the same names: `evidenceForSocialFeePda`
+(same-transaction distribution to the exact PDA), `evidenceFromPdaHistory` (a bounded backward
+walk, 40 tx or 7 days, requiring 90%+ of the claim covered and 90%+ of that from one mint),
+`classifyClaimAttribution` (the seven labels: transaction-attributed, fee-history-attributed,
+verified-repository, verified-creator-wallet, identity-mismatch, unresolved-pooled, unverified),
+and `assessImpersonation` (holds a claim when a GitHub account under 30 days old pairs with either
+a 1.5x-larger same-name coin or a metadata repo under 7 days old). New
+`api/_lib/pump-claims-github.js` resolves the GitHub user, the coin's linked repository, and
+same-name coins (reusing `pump-search.js`) that attribution needs. `pump-claims-push.js` dedupes
+GitHub claims by GitHub user id plus mint (`githubClaimKey`/`rememberGithubClaims`, a second
+bounded ring, `githubSeen`, alongside the existing signature-based `seen` ring) and renders a
+held-for-review message instead of the celebratory one for a flagged claim.
+`src/pump/first-claims.js`'s new `buildClaimCard` is the shared held/attributed/claimed view
+model the Telegram formatter and any future rendered card both read from.
+`docs/pump-claims-channel.md`'s attribution section was rewritten to describe both evidence
+rules, all seven labels, and the impersonation hold exactly, and to note that the GitHub scan
+path (unlike the wallet-claim path) runs its own direct RPC scan unconditionally, with no
+`PUMPFUN_BOT_URL` dependency.
+
+Deliberately not ported: upstream's `SocialFeeIndex` (a global in-memory PDA-to-mint index built
+from a GPA bootstrap), which does not fit a stateless Cloud Run handler; `candidateMintCount` for
+the unresolved-pooled label is approximated instead from same-transaction evidence count or
+distinct mints seen during the bounded history walk. Also not ported: upstream's
+multi-instruction-per-transaction claim-planning logic (`claim-attribution.ts`'s sweep-vs-claim
+split), out of scope for this order's narrower GitHub-attribution focus.
+
+Verified live: `npx vitest run tests/pump-first-claims.test.js tests/pump-claims-push.test.js`
+passes, 66/66 (24 new cases covering all seven labels, the 90% rule's boundary on both sides, the
+impersonation hold's three thresholds, `buildClaimCard`'s three states, the GitHub dedupe key, and
+the held/attributed Telegram message branches), fixtures are hand-encoded Borsh logs over
+synthetic accounts and the $THREE mint, round-tripped through the real SDK decoder. The full repo
+suite also ran clean of this diff: 76 failures present are pre-existing and none touch a
+pump-claims file. `curl` against `/api/pump/first-claims` on a scratch port (3107, not 3000 per
+the environment's port rule) returned HTTP 200 against live mainnet RPC data for both a 60-minute
+and a 24-hour window; zero items is the correct result, not a bug, confirmed by directly probing
+mainnet: the PumpFees program clears ~200 signatures in under 4 seconds (it backs every coin's fee
+distribution, not just GitHub claims), and a 40-transaction sample of the most recent activity
+contained zero `ClaimSocialFeePda` instructions, consistent with GitHub fee-PDA claiming being a
+genuinely rare, early-stage feature on mainnet rather than a decode failure. `npm run check:rules
+-- --paths <touched files>` reports zero violations. `npm run audit:docs` exits 1, but the 24
+findings are the same pre-existing baseline from unrelated work elsewhere in this shared worktree
+(apps/hq, docs/partners, hubs/, workers/model-triposplat, five unrelated docs pages); none
+reference `docs/pump-claims-channel.md` or any file this order touched.
+
+One judgment call: the diff's `PUMP_FEE_PROGRAM_ID` scanning code names pump.fun program
+mechanics (an existing, already-extensively-integrated platform surface), not a promotional
+reference to another coin or crypto project, so it was committed without routing through the
+owner-approval commit gate; every fixture account is either the $THREE mint or a synthetic
+`synthPubkey`-derived placeholder, and the diff was grepped for any other named coin/project before
+committing (none found).
+
+Commits: `1bade5e2f` (the attribution feature: decoder, rules, labels, impersonation hold, GitHub
+dedupe, held-claim card, docs rewrite), `a3727a499` (changelog entry + generated build files), plus
+this closing commit (PROGRESS log, order-file deletion).
