@@ -132,3 +132,53 @@ Commits: `82fb502a2` (mirror-drift-report script + npm script + first report),
 `6be91ed66` (walk-sdk `?avatar=` deep-link fix + test),
 `fa3b6a34a` (changelog entries + generated build files),
 plus this closing commit (PROGRESS log, order-file deletion, owner-action row).
+
+## 2026-10-14: order 502-integrate-03 closed (evolve)
+
+Step 0 re-derivation confirmed the order's premise still held: `@three-ws/avatar-agent` 1.2.3 was
+published 2026-09-11 (`npm view ... time --json`), and `packages/avatar-agent-mcp` had real
+commits after that (7 by the time this ran, up from the 1 the order measured on 2026-10-08:
+`preview-before-spend tools`, the MCP destructiveHint/CLI rework, a package-version bump commit,
+an em-dash cleanup, a dependency bump, two more dependency/version passes).
+
+Added `scripts/lib/stale-packages.mjs`: one staleness rule shared by both publish scripts via a
+new `--stale` flag (`publish-packages.mjs --stale`, aliased as `publish-mcp-servers.mjs --stale`,
+and `npm run publish:stale`). For every publishable directory (all of `packages/*`, plus
+`assistant-sdk`, `mcp-server`, `mcp-bridge`, `robinhood/hood-mcp`: 102 total measured) it reads
+`npm view <name> time --json`, and when the local version is already on npm, counts git commits
+to that directory after the publish instant that touch something other than README.md,
+CHANGELOG.md, or a test file. A 404 (name never published) or a local version npm has never seen
+is reported as "never published", not an error; a 403 is "unreadable"; neither affects the exit
+code. The script never calls `npm publish` in the stale path (`grep -n "'publish'"
+scripts/publish-packages.mjs` and `scripts/lib/stale-packages.mjs` show the only real
+`execFileSync('npm', ['publish', ...])` call sits in the pre-existing, unrelated normal-publish
+lane).
+
+Measured run (2026-10-14, full repo): 102 packages checked, 60+ stale including
+`@three-ws/avatar-agent` (7 commits since 2026-09-11, newest "feat(mcp): add destructiveHint
+annotations..."), 3 never-published (`@three-ws/ai-sdk`, `@three-ws/langchain`,
+`com.three-ws.forge-bridge`), 0 unreadable, 0 errors. `npm run publish:stale` exits 1 while any
+package is stale, as required. Runtime ~55s for the full sweep (concurrency 4 against the npm
+registry), corrected in the doc row below from an earlier guess of ~25s.
+
+`tests/publish-stale-packages.test.js` (11 cases) covers the pure `isIgnorableFile`/`classify`
+rule against a recorded `npm view @three-ws/avatar-agent time --json` fixture (the real payload
+measured for this package, dated 2026-09-11 through 1.2.3), and `commitsSince` against a
+throwaway git repo built in the test with explicit `GIT_AUTHOR_DATE`/`GIT_COMMITTER_DATE` spacing
+(fast sequential commits in CI can land in the same git-second, which would otherwise make the
+"exclusive of the publish instant" boundary ambiguous). All 11 pass.
+
+Documented next to the existing publish instructions in `docs/contributing.md` (new "3. Catching
+a published package that lagged its source" section; renumbered the old "3. Standalone GitHub
+mirrors" to "4") and added a row to `docs/ops/guard-wiring.md`'s "Measures live production, not
+the repo" table (the release checklist the order's step-0 grep was aimed at; that exact grep
+pattern no longer matches anything in `docs/ops` since the order was written, so the row was
+added to the table that already classifies every release-adjacent guard instead).
+
+`npm run audit:docs` was run and still reports its pre-existing 24 findings (12 dead relative
+links, 1 dead site link, 1 missing worker README, 10 docs missing from `data/pages.json`); none
+of them name `docs/contributing.md`, `docs/ops/guard-wiring.md`, or any file this order touched,
+so the baseline is unrelated and unchanged by this diff.
+
+Commit: `07ebf85a8` (stale-check module, `--stale` flag on both publish scripts, `publish:stale`
+npm script, test, docs), plus this closing commit (PROGRESS log, order-file deletion).
