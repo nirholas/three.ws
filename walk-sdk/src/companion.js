@@ -778,6 +778,26 @@ function ensureStyles() {
 	document.head.appendChild(style);
 }
 
+/**
+ * Resolve the avatar id for a bootstrap path that never mounts the corner
+ * companion (the `?walk=play` deep link and the playground drop-in resume).
+ *
+ * `setAvatar()`/the picker persist the visitor's choice via `config.keys.avatar`,
+ * but the playground launch paths read that key directly and never looked at
+ * the query string, so `?walk=play&avatar=fox` silently loaded the stored (or
+ * default) avatar instead of `fox`. This gives `?avatar=` precedence and
+ * persists it, the same way picking an avatar in the UI would.
+ *
+ * @param {object} config resolved config (for its storage keys)
+ * @param {URLSearchParams} params the current query string
+ * @returns {string|null} the avatar id to launch with, or null for the default
+ */
+export function deepLinkAvatarId(config, params) {
+	const param = params.get('avatar');
+	if (param) lsSet(config.keys.avatar, param);
+	return param || lsGet(config.keys.avatar) || null;
+}
+
 // ── Factory + control object ──────────────────────────────────────────────────
 /**
  * Create a Walk Companion controller. Side-effect free: nothing mounts until
@@ -943,13 +963,13 @@ export function createWalkCompanion(opts = {}) {
 			}
 		},
 
-		async _tryDropIn() {
+		async _tryDropIn(avatarId = null) {
 			try {
 				const mod = await import('./playground.js');
 				if (!mod.consumeDropIn(config)) return false;
 				control._wirePlaygroundReturn();
 				mod.launchPlayground({
-					avatarId: lsGet(config.keys.avatar) || null,
+					avatarId: avatarId || lsGet(config.keys.avatar) || null,
 					dropIn: true,
 					config,
 				});
@@ -969,21 +989,19 @@ export function createWalkCompanion(opts = {}) {
 			if (walk === '0') {
 				control.disable();
 			} else if (walk === 'play') {
+				const avatarId = deepLinkAvatarId(config, params);
 				lsSet(config.keys.enabled, '1');
 				import('./playground.js')
 					.then((mod) => {
 						control._wirePlaygroundReturn();
-						mod.launchPlayground({
-							avatarId: lsGet(config.keys.avatar) || null,
-							config,
-						});
+						mod.launchPlayground({ avatarId, config });
 					})
 					.catch((err) => {
 						log.warn('playground deep-link failed:', err?.message || err);
 						control.enable();
 					});
 			} else if (walk === '1' || isEnabled()) {
-				control._tryDropIn().then((dropped) => {
+				control._tryDropIn(deepLinkAvatarId(config, params)).then((dropped) => {
 					if (!dropped) control.enable();
 				});
 			}
