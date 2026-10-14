@@ -146,10 +146,20 @@ function aggregatorPaths() {
 //
 // The projection is spread BEFORE the hand-authored paths, so any route with a
 // richer hand-written operation keeps it verbatim and this only fills the gaps.
+//
+// A service with `free: true` (a daily per-IP quota in front of the same x402
+// lane, e.g. the keyless x402-suite ports) used to be skipped here entirely,
+// so its route never appeared in this document at all. That is strictly worse
+// than the aggregator's own free-tier handling just above: a bare probe can
+// legitimately answer 200 while quota remains, so it keeps `security: []` and
+// no `x-payment-info` for the same reason given in aggregatorPaths() above
+// (x402scan's crawler classifies any x-payment-info operation as paid and
+// then requires a 402 on a bare probe), but it now gets a path entry, with
+// the free-then-paid billing lanes already spelled out in `service.description`.
 function catalogPaidPaths() {
 	const paths = {};
 	for (const service of PAID_SERVICES) {
-		if (service.free || service.status !== 'live') continue;
+		if (service.status !== 'live') continue;
 		// Same gate the hand-authored permit2 entry below applies: the Permit2-only
 		// lane is unpayable without CDP credentials, so never advertise it then.
 		if (
@@ -160,18 +170,22 @@ function catalogPaidPaths() {
 
 		const operation = {
 			operationId: `x402_${service.slug.replace(/-/g, '_')}`,
-			security: PAYMENT_ONLY_SECURITY,
-			summary: `Paid: ${service.title}`,
+			security: service.free ? [] : PAYMENT_ONLY_SECURITY,
+			summary: `${service.free ? 'Free + paid' : 'Paid'}: ${service.title}`,
 			description: service.description,
 			responses: {
 				200: { description: `${service.serviceName} result JSON` },
 				400: { description: 'Validation error' },
 				402: { description: 'Payment Required (x402)' },
 			},
-			'x-payment-info': {
-				price: { mode: 'fixed', currency: 'USD', amount: formatUsd(service.priceAtomics) },
-				protocols: X402_PROTOCOLS,
-			},
+			...(service.free
+				? {}
+				: {
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: formatUsd(service.priceAtomics) },
+							protocols: X402_PROTOCOLS,
+						},
+					}),
 		};
 
 		if (service.method === 'POST') {
