@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-14T02:12:47.530Z",
+	"generated_at": "2026-10-14T02:46:07.470Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4082,
+	"total": 4083,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -29,6 +29,17 @@
 			"tags": [
 				"fix",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "Robinhood Chain feed worker now runs the published SDK, not a stale local snapshot",
+			"summary": "workers/robinhood-feed depended on robinhood/robinhood-chain-sdk through a file: link, a reference copy that drifts from the standalone robinhood-chain-sdk repo it mirrors. The worker now installs hoodchain from npm like any other dependency, so it always runs the released SDK. Also fixed: six pointer READMEs staged for duplicate or superseded standalone repos (three-ui, crypto-market-data, crypto-market-data-ts, crypto-data-aggregator, memescope-monday-directory, and one of each duplicate Robinhood Chain repo pair), ready for the owner to push and archive.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -1545,16 +1556,6 @@
 			"title": "Event Market announcements draft themselves, and nothing posts until you approve it",
 			"summary": "When an Event Market opens, nears its lock, shifts, or resolves, a draft announcement now appears in a review queue with the market link and card. Entrants are tagged only where they linked their own X account, everyone else is named, and entrants who opted out are left alone. Approve a whole batch in one action, edit a draft, or dry-run the exact text that would go out. Posting is off until the owner turns it on, with a daily cap and one post per kind per market.",
 			"link": "/admin/event-market-announcements",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Event Markets get their own pages and share cards",
-			"summary": "Browse live, closing-soon and resolved markets, open any market to see every entrant's odds, the odds over time, the lock countdown and how it resolves, then make your call without leaving the page. Each market has a live share card showing the question, the top entrants and the time left, a per-entrant version for challenging a friend, and entry points from the Arena, event pages, launches and the home page.",
-			"link": "/event-markets",
 			"tags": [
 				"feature"
 			]

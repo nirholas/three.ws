@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-14T02:12:47.508Z",
+	"generated_at": "2026-10-14T02:46:07.448Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -26,6 +26,17 @@
 			"tags": [
 				"fix",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "Robinhood Chain feed worker now runs the published SDK, not a stale local snapshot",
+			"summary": "workers/robinhood-feed depended on robinhood/robinhood-chain-sdk through a file: link, a reference copy that drifts from the standalone robinhood-chain-sdk repo it mirrors. The worker now installs hoodchain from npm like any other dependency, so it always runs the released SDK. Also fixed: six pointer READMEs staged for duplicate or superseded standalone repos (three-ui, crypto-market-data, crypto-market-data-ts, crypto-data-aggregator, memescope-monday-directory, and one of each duplicate Robinhood Chain repo pair), ready for the owner to push and archive.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
