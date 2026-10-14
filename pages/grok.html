@@ -428,17 +428,17 @@
 				<p>Each one names the tools Grok calls, in order. Click one to copy the instruction.</p>
 			</div>
 			<div class="gk-asks">
-				<button type="button" class="gk-ask" data-ask="Use three-ws to build an asset pack for my game jam: search_catalog for ten low-poly props that fit a forest campsite, then list the viewer link and GLB for each.">
+				<button type="button" class="gk-ask" data-ask="Use three-ws-grok to build an asset pack for my game jam: search_catalog for ten low-poly props that fit a forest campsite, then list the viewer link and GLB for each.">
 					<span class="gk-ask-kind"><span>Asset pack</span><span>Copy</span></span>
 					<span class="gk-ask-text">Ten ready-made props for a game jam.</span>
 					<span class="gk-ask-text"><code>search_catalog</code>, then <code>get_catalog_item</code> per pick.</span>
 				</button>
-				<button type="button" class="gk-ask" data-ask="Use three-ws to forge_free a 3D model of a brass telescope, wait with check_job until it is done, then send me the viewer link, the GLB and the embed code.">
+				<button type="button" class="gk-ask" data-ask="Use three-ws-grok to forge_free a 3D model of a brass telescope, wait with check_job until it is done, then send me the viewer link, the GLB and the embed code.">
 					<span class="gk-ask-kind"><span>Model and embed</span><span>Copy</span></span>
 					<span class="gk-ask-text">A textured model with a link and a page-ready embed.</span>
 					<span class="gk-ask-text"><code>forge_free</code>, <code>check_job</code> until done.</span>
 				</button>
-				<button type="button" class="gk-ask" data-ask="Use three-ws to forge_avatar a friendly lighthouse keeper, then create_agent_persona from it named Keeper, and persona_say a one-line greeting with it.">
+				<button type="button" class="gk-ask" data-ask="Use three-ws-grok to forge_avatar a friendly lighthouse keeper, then create_agent_persona from it named Keeper, and persona_say a one-line greeting with it.">
 					<span class="gk-ask-kind"><span>Talking persona</span><span>Copy</span></span>
 					<span class="gk-ask-text">A rigged character that lip-syncs a greeting.</span>
 					<span class="gk-ask-text"><code>forge_avatar</code>, <code>create_agent_persona</code>, <code>persona_say</code>.</span>
@@ -490,7 +490,7 @@
     "tools": [{
       "type": "mcp",
       "server_url": "https://three.ws/api/mcp-grok",
-      "server_label": "three-ws"
+      "server_label": "three-ws-grok"
     }]
   }'</pre>
 				</div>
@@ -504,7 +504,7 @@ from xai_sdk.tools import mcp
 client = Client(api_key=os.environ["XAI_API_KEY"])
 chat = client.chat.create(
     model="grok-4.7",
-    tools=[mcp(server_url="https://three.ws/api/mcp-grok", server_label="three-ws")],
+    tools=[mcp(server_url="https://three.ws/api/mcp-grok", server_label="three-ws-grok")],
 )
 chat.append(user("Make a 3D model of a lunar lander and give me the viewer link."))
 print(chat.sample().content)</pre>
