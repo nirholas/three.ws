@@ -351,14 +351,15 @@ describe('studio wiring', () => {
 		expect(result.content[0].text).toBe('Generated a 3D model.');
 	});
 
-	// Skipped: the 404 evolve/main reconciliation merge kept tools.js's
+	// Skipped: the 2026-10-11 evolve/main reconciliation merge (d77b89178, the
+	// one order 404 later verified, not order 404's own merge) kept tools.js's
 	// job-tools.js/collectJob generation-tool architecture (evolve) over the
 	// finishMesh/finishRig refactor that wires openRun/closeRun into forge_avatar
 	// (main), since job-tools.js's exported 4-arg collectJob and a second,
 	// conflicting get_job tool registration made combining both unsafe to guess
 	// at mid-merge. The receipt core, store and rig-doctor inspection above are
 	// unaffected and fully wired; only this end-to-end dispatch() attachment is
-	// not. See prompts/finish/_context/404-auto-reconcile-evolve-main-divergence-PROGRESS.md.
+	// not. See prompts/finish/405-wire-run-receipts-into-forge-tools.md.
 	it.skip('records a full forge_avatar run: fallback brief, tier downgrade, and a rig verified from the file', async () => {
 		const rigged = riggedGlb();
 		globalThis.fetch = vi.fn(async (url, init) => {
