@@ -30,7 +30,7 @@
 		},
 		{
 			"name": "create-3d-avatar",
-			"description": "Turn a text prompt (or reference image) into a rigged, animation-ready 3D avatar (GLB). Use when you or the user want to create, generate, or make a 3D avatar, character, or humanoid figure that can be posed and animated — \"make a 3D avatar of a knight\", \"generate a character I can animate\", \"create a rigged astronaut\". Generates the mesh and adds a humanoid skeleton in one step. Returns a GLB URL plus a pose-studio link.",
+			"description": "Turn a text prompt (or reference image) into a rigged, animation-ready 3D avatar (GLB). Use when you or the user want to create, generate, or make a 3D avatar, character, or humanoid figure that can be posed and animated, for example \"make a 3D avatar of a knight\", \"generate a character I can animate\", \"create a rigged astronaut\". Generates the mesh and adds a humanoid skeleton in one step. Returns a GLB URL plus a pose-studio link.",
 			"whenToUse": "User wants a posable/animatable humanoid character. For a static object or prop, use generate-3d-model. To rig a GLB you already have, use rig-a-model.",
 			"category": "3d/creative",
 			"origin": "three.ws",
@@ -57,7 +57,7 @@
 		},
 		{
 			"name": "generate-3d-model",
-			"description": "Turn a text prompt into a downloadable, textured 3D model (GLB). Use when you or the user want to generate, create, make, or forge a 3D model, asset, object, mesh, or prop from a text description — \"make a 3D model of a robot\", \"generate a GLB of a sword\", \"I need a 3D chair\". Runs on the FREE text→3D lane (no key, no account, free). Returns a GLB URL plus a browser viewer link.",
+			"description": "Turn a text prompt into a downloadable, textured 3D model (GLB). Use when you or the user want to generate, create, make, or forge a 3D model, asset, object, mesh, or prop from a text description, for example \"make a 3D model of a robot\", \"generate a GLB of a sword\", \"I need a 3D chair\". Runs on the FREE text→3D lane (no key, no account, free). Returns a GLB URL plus a browser viewer link.",
 			"whenToUse": "User wants a 3D object/asset/prop from text. For a posable character with a skeleton, use create-3d-avatar. To rig an existing GLB, use rig-a-model.",
 			"category": "3d/creative",
 			"origin": "three.ws",
@@ -66,7 +66,7 @@
 		},
 		{
 			"name": "rig-a-model",
-			"description": "Auto-rig a static 3D GLB model into an animation-ready one. Use when you or the user have an existing GLB and want to rig it, add a skeleton, add bones, make it posable, or make it animatable — \"rig this model\", \"add a skeleton to my GLB\", \"make this character animation-ready\". Takes a GLB URL, adds a humanoid skeleton plus skin weights, and returns the rigged GLB URL and a pose-studio link.",
+			"description": "Auto-rig a static 3D GLB model into an animation-ready one. Use when you or the user have an existing GLB and want to rig it, add a skeleton, add bones, make it posable, or make it animatable, for example \"rig this model\", \"add a skeleton to my GLB\", \"make this character animation-ready\". Takes a GLB URL, adds a humanoid skeleton plus skin weights, and returns the rigged GLB URL and a pose-studio link.",
 			"whenToUse": "User already has a GLB (a URL) and wants it rigged. To generate a new model from text, use generate-3d-model; to generate an already-rigged character in one step, use create-3d-avatar.",
 			"category": "3d/creative",
 			"origin": "three.ws",
@@ -393,7 +393,7 @@
 		},
 		{
 			"name": "search-for-service",
-			"description": "Search and browse the x402 bazaar marketplace for paid API services. Use when you or the user want to find available services, see what's available, discover APIs, or need an external service to accomplish a task. Also use as a fallback when no other skill clearly matches — search the bazaar to see if a paid service exists. Covers \"what can I do?\", \"find me an API for...\", \"what services are available?\", \"search for...\", \"browse the bazaar\".",
+			"description": "Search and browse the x402 bazaar marketplace for paid API services. Use when you or the user want to find available services, see what's available, discover APIs, or need an external service to accomplish a task. Also use as a fallback when no other skill clearly matches: search the bazaar to see if a paid service exists. Covers \"what can I do?\", \"find me an API for...\", \"what services are available?\", \"search for...\", \"browse the bazaar\".",
 			"category": "wallet/payments",
 			"origin": "three.ws",
 			"crossPlatformSafe": false,

@@ -23,6 +23,10 @@
 
 import { withImpliedScopes } from './key-scopes.js';
 
+// Where a connector key or OAuth client is told to send the user to spend for
+// themselves (scripts/lib/skill-md-facts.mjs SPEND_URL).
+export const SPEND_BROWSER_URL = 'https://three.ws/dashboard';
+
 // The scope a bearer principal must hold to move, commit, or redirect funds.
 export const SPEND_SCOPE = 'wallet:write';
 export const TRADE_SCOPE = 'wallet:trade';
