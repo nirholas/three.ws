@@ -606,3 +606,64 @@ landed, so no `STRUCTURE.md` row or `data/pages.json` entry was needed.
 
 Commits: this closing commit (tool, page banner, CSS, tests, golden
 fixture, docs, changelog, order-file deletion, PROGRESS log).
+
+## 2026-10-14: order 512-integrate-13 stopped on a gate (evolve)
+
+Switched the native $THREE launch lane's curve from a flat 1% trading fee to
+a decaying anti-snipe schedule in `api/_lib/native-launch/config.js`:
+`fee.baseFeeParams` now sets `BaseFeeMode.FeeSchedulerExponential` with a
+50% starting fee (`antiSnipeStartFeeBps`) decaying to the steady-state 1%
+(`antiSnipeEndFeeBps`, equal to the existing `tradeFeeBps`) over 25 periods
+across 100 slots (`antiSnipeDecayPeriods` / `antiSnipeDecaySlots`, about 40
+seconds). `RateLimiter` was ruled out, not just compared: the SDK's own
+`getBaseFeeParams()` throws "BaseFeeMode.RateLimiter is deprecated" for any
+new config in this SDK version, which settles the measurement the task
+asked for before reaching devnet. `enableFirstSwapWithMinFee` stays on so
+only the creator's pool-creation-bundled first buy is exempt. `laneInfo()`
+now serves the schedule under a new `anti_snipe` key (additive, checked
+against every existing consumer of the spread object before adding it).
+
+Verified: `npx vitest run tests/native-launch-curve.test.js` passes 20/20,
+including four new cases asserting the fee starts at 5000 bps, decays
+monotonically slot by slot, reaches exactly 100 bps at slot 100 and stays
+there past it, and taxes slot 2 at more than 10x the steady-state fee.
+`scripts/native-launchpad-e2e-devnet.mjs` now quotes an identical 1,000
+$THREE buy at pool activation and again 21 slots later; because the public
+devnet faucet is rate-limited (confirmed: `-32603` then an explicit `429`
+"airdrop faucet has run dry", and no funded devnet key exists anywhere in
+this worktree's env or GCP Secret Manager), the run used a local
+`solana-test-validator` cloning the real DBC, Token-2022, ATA, and Metaplex
+Token Metadata programs directly off devnet (the documented fallback in
+`docs/draft-agent-mint.md`), which executes byte-identical on-chain program
+logic with unlimited local airdrops. Real output: the fee for the same
+buy dropped from 400.040459 $THREE to 156.523092 $THREE over those 21
+slots, a real signed devnet-program transaction decaying the way the
+schedule says it should. The new schedule was also confirmed directly
+against the live mainnet DBC program via the script's existing zero-cost,
+keyless `--simulate` flag: `simulation OK: config + a $THREE-quoted pool
+created by the live DBC program (144429 compute units)`.
+`scripts/native-launchpad-create-config.mjs` needed no code change: both
+its `--simulate` and real `--network` paths already share the one
+`curveBuildParams()` call that config.js's edit updated. `docs/native-
+launchpad.md` gained an "Anti-snipe: a decaying fee instead of a flat one"
+section (the schedule, why exponential over linear/RateLimiter, and the
+one honest EVM difference: the anti-snipe premium flows through the same
+creator/platform split every trade uses, never to LPs, since DBC pools
+have no third-party LPs pre-graduation) and its curve table row. `data/
+changelog.json` got a new entry and `npm run build:pages` ran clean.
+`npm run check:rules --paths <all 5 touched source/docs files>` exits 0.
+
+What cannot finish from this session: creating the mainnet curve config is
+the on-chain write this order named up front as the one gated step (about
+0.006 SOL). Confirmed before naming the owner action that this is a
+first-time activation, not a change to a live config: `gcloud run services
+describe three-ws-api --region us-central1` lists zero `NATIVE_LAUNCH_*`
+env vars in production today. See [row 64 of
+production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md) for the
+exact `node scripts/native-launchpad-create-config.mjs --network mainnet`
+command, its funding requirement, and the env-pin command that follows it.
+Leaving `512-integrate-13-anti-snipe-native-lane.md` in place with a dated
+Evolve status paragraph rather than deleting it.
+
+Commits: this closing commit (curve config, tests, e2e script, docs,
+changelog, owner-actions row, order-file annotation, PROGRESS log).

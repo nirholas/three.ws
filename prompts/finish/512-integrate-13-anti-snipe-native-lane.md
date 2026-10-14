@@ -1,5 +1,7 @@
 # integrate 13: a decaying anti-snipe fee on the native $THREE launch lane
 
+**Evolve status (2026-10-14):** every task and every Definition of done line this session can verify is done: the curve config, both test suites, the devnet e2e run, and the docs/changelog. One line remains, and it is the owner's by design: creating the mainnet curve config (`node scripts/native-launchpad-create-config.mjs --network mainnet`, about 0.006 SOL). See [row 64 of production-100-OWNER-ACTIONS.md](_context/production-100-OWNER-ACTIONS.md) for the exact command and the env pin that follows it. This file stays in place until that row is actioned; retire it then per the close-out steps below.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now; one gated step, named below.
 
 ## Operating clause (binding)
