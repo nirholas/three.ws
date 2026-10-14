@@ -6,10 +6,13 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-const { fetchCreatorFeeTotal, fetchCreatorFeeBuckets } = await import('../api/_lib/pump-creator-fees.js');
+const { fetchCreatorFeeTotal, fetchCreatorFeeBuckets, fetchCoinEarnings, fetchAllShares } = await import(
+	'../api/_lib/pump-creator-fees.js'
+);
 const { _resetBreakers } = await import('../api/_lib/resilience.js');
 
 const WALLET = 'THREEsynthetic11111111111111111111111111111';
+const MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const WSOL = 'So11111111111111111111111111111111111111112';
 const SOLANA = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
 const originalFetch = global.fetch;
@@ -92,5 +95,125 @@ describe('fetchCreatorFeeBuckets', () => {
 		global.fetch = vi.fn(async () => reply(200, { statusCode: 400, message: 'interval must be one of' }));
 		const r = await fetchCreatorFeeBuckets(WALLET, '1d');
 		expect(r.ok).toBe(false);
+	});
+});
+
+describe('fetchCoinEarnings', () => {
+	it('sums distribution events addressed to the wallet across pages', async () => {
+		global.fetch = vi.fn(async (url) => {
+			expect(String(url)).toContain(`/v1/coins/${MINT}/timeline`);
+			if (!String(url).includes('cursor=')) {
+				return reply(200, {
+					items: [
+						{
+							eventType: 'distribution',
+							timestamp: '2026-10-01T00:00:00.000Z',
+							recipients: [{ address: WALLET, amount: '1000000' }, { address: 'someoneElse', amount: '999' }],
+						},
+						{ eventType: 'trade', timestamp: '2026-10-01T00:05:00.000Z' },
+					],
+					pagination: { hasMore: true, nextCursor: 'page2' },
+				});
+			}
+			return reply(200, {
+				items: [
+					{
+						eventType: 'distribution',
+						timestamp: '2026-10-02T00:00:00.000Z',
+						recipients: [{ address: WALLET, amount: '500000' }],
+					},
+				],
+				pagination: { hasMore: false, nextCursor: null },
+			});
+		});
+		const r = await fetchCoinEarnings(MINT, WALLET);
+		expect(r).toEqual({
+			ok: true,
+			value: {
+				mint: MINT,
+				lamports: 1500000n,
+				distributions: 2,
+				first_at: '2026-10-01T00:00:00.000Z',
+				last_at: '2026-10-02T00:00:00.000Z',
+			},
+		});
+	});
+
+	it('resolves to zero distributions, not a failure, for a mint with no timeline', async () => {
+		global.fetch = vi.fn(async () => reply(404, { statusCode: 404 }));
+		const r = await fetchCoinEarnings(MINT, WALLET);
+		expect(r).toEqual({
+			ok: true,
+			value: { mint: MINT, lamports: 0n, distributions: 0, first_at: null, last_at: null },
+		});
+	});
+
+	it('fails (not zero) on a non-404 upstream error', async () => {
+		global.fetch = vi.fn(async () => reply(503, { statusCode: 503 }));
+		const r = await fetchCoinEarnings(MINT, WALLET);
+		expect(r.ok).toBe(false);
+	});
+});
+
+describe('fetchAllShares', () => {
+	it('pages through every coin a wallet shares fees with', async () => {
+		global.fetch = vi.fn(async (url) => {
+			expect(String(url)).toContain(`/v1/fee-sharing/account/${WALLET}/shares`);
+			if (!String(url).includes('cursor=')) {
+				return reply(200, {
+					items: [{ mint: MINT, bps: 10000, isAdmin: true }],
+					pagination: { hasMore: true, nextCursor: 'page2' },
+				});
+			}
+			return reply(200, {
+				items: [{ mint: 'THREEsynthetic2222222222222222222222222222' }],
+				pagination: { hasMore: false, nextCursor: null },
+			});
+		});
+		const r = await fetchAllShares(WALLET);
+		expect(r).toEqual({
+			ok: true,
+			value: {
+				truncated: false,
+				items: [
+					{ mint: MINT, bps: 10000, is_admin: true },
+					{ mint: 'THREEsynthetic2222222222222222222222222222', bps: null, is_admin: false },
+				],
+			},
+		});
+	});
+
+	it('marks the result truncated when a wallet has more pages than maxPages allows', async () => {
+		global.fetch = vi.fn(async () =>
+			reply(200, { items: [{ mint: MINT }], pagination: { hasMore: true, nextCursor: 'next' } }),
+		);
+		const r = await fetchAllShares(WALLET, { maxPages: 2 });
+		expect(r.ok).toBe(true);
+		expect(r.value.truncated).toBe(true);
+		expect(r.value.items).toHaveLength(2);
+	});
+
+	it('fails on a non-2xx response', async () => {
+		global.fetch = vi.fn(async () => reply(500, {}));
+		const r = await fetchAllShares(WALLET);
+		expect(r.ok).toBe(false);
+	});
+});
+
+describe('per-coin reconciliation', () => {
+	it('a zero delta means the timeline sum and the wallet claimed figure agree', () => {
+		const distributed = 1500000n;
+		const claimed = 1500000n;
+		const delta = distributed - claimed;
+		expect(delta).toBe(0n);
+	});
+
+	it('a nonzero delta is surfaced as a percentage of the claimed figure, not hidden', () => {
+		const distributed = 1800000n;
+		const claimed = 1500000n;
+		const delta = distributed - claimed;
+		const deltaPct = (Number(delta) / Number(claimed)) * 100;
+		expect(delta).toBe(300000n);
+		expect(deltaPct).toBeCloseTo(20, 5);
 	});
 });

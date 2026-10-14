@@ -473,3 +473,77 @@ and this receipt is an enhancement to it, not a new surface.
 
 Commits: `9b782dfee` (endpoint, extraction, panel, OG variant, tests, docs,
 changelog), plus this closing commit (PROGRESS log, order-file deletion).
+
+## 2026-10-14: order 510-integrate-11 stopped on a gate (evolve)
+
+Ported `fetchCoinEarnings` and `fetchAllShares` into `api/_lib/pump-creator-fees.js`
+behind the existing circuit breaker (no second client). `fetchCoinEarnings(mint,
+wallet)` pages `swap-api.pump.fun/v1/coins/<mint>/timeline`, sums `distribution`
+events addressed to the wallet, and resolves to a healthy zero (not a failure) on
+a 404 for a mint with no timeline yet. `fetchAllShares(wallet)` pages
+`fee-sharing/account/<wallet>/shares` and marks its result `truncated` past
+`maxPages`.
+
+`api/_lib/creator-earnings-snapshot.js`'s refresh loop now reconciles each coin's
+timeline sum against the wallet-level claimed figure from 015's existing
+`readCreatorFeeReport`, storing the delta and its percentage of the claimed
+figure (never hidden, never silently dropped) in five new
+`agent_coin_earnings` columns added by
+`api/_lib/migrations/20261015090000_agent_coin_earnings_timeline.sql`
+(`coin_earned_lamports`, `coin_distributions`, `coin_earnings_source`,
+`reconciliation_delta_lamports`, `reconciliation_pct`). The snapshot's own
+return value now surfaces `reconciled` and `shares_gaps` summaries.
+
+`api/pump/launch-detail.js`'s `creatorFeesFor()` and
+`api/_lib/agent-earnings.js`'s `getAgentEarnings()` both serve a new
+`distributed: {sol, usd, distributions}` object and a `reconciliation:
+{delta_sol, delta_pct} | null` object alongside the existing wallet-level
+fields, falling back to a live `fetchCoinEarnings` call (reconciliation
+`null`, since no cheap wallet-level baseline exists live) when no snapshot row
+exists yet for a mint. `earningsMethod()` now names both sources explicitly.
+`src/launch-detail.js` adds a "This coin paid" metric to the economics grid
+and a plain-English reconciliation sentence
+("The two sources agree." / "The two sources differ by ... SOL (...%).") to
+its existing creator-fees note; `src/shared/agent-earnings-card.js`'s coin row
+appends the same two facts to its detail line.
+
+Verified: `npx vitest run tests/pump-creator-fees.test.js` passes 14/14 (6 new
+cases for `fetchCoinEarnings` paging/404-as-zero/non-404-failure and
+`fetchAllShares` paging/truncation/failure, plus 2 pure-arithmetic
+reconciliation cases), fixtures use the $THREE mint and a synthetic wallet.
+`tests/agent-earnings-board.test.js` (10/10) required fixing a pre-existing,
+unrelated DDL gap found while adding the new columns to its hand-rolled
+fixture: an earlier commit (`7461c3ed0`) added an `agent_commerce_invoices`
+query to `agent-earnings.js` without updating this test's schema, confirmed
+by grepping failure output for the actual missing-relation error (zero
+`coin_earned_lamports` mentions, twelve `agent_commerce_invoices does not
+exist` ones) before fixing it alongside the new columns, not instead of
+diagnosing it. The migration itself was proven idempotent and syntactically
+correct via a throwaway PGlite script (applied twice without erroring,
+rejects a bad `coin_earnings_source` value), and the full
+`launch-detail.js` handler was proven to produce the exact documented JSON
+shape end to end against a PGlite database with both migrations applied and
+a seeded synthetic row. The UI was browser-verified with Playwright at
+375/768/1440 with zero console errors, using `page.route()` to inject a
+synthetic `economics.creator_fees.distributed`/`reconciliation` payload into
+the real page's real API response, since production has no migrated data to
+render yet; both throwaway scripts were deleted after use, nothing shipped.
+
+What cannot finish from this session: the migration cannot be applied to the
+real production database (hard-denied), so a live curl against production
+still returns `creator_fees.distributed: null` (same graceful degrade as
+before this order, not a new failure mode) until it lands. A real, direct
+read against production surfaced a genuine ordering risk worth flagging:
+`creatorFeesFor()` and `getAgentEarnings()`'s `coins` query both select old
+and new columns in ONE statement, so if this commit deploys before the
+migration applies, that select throws on every call and the pre-existing
+`.catch(() => null)` wrapper around `creatorFeesFor()` silently degrades
+`economics.creator_fees` to `null` for every coin, not just the new fields,
+until the migration lands. See [OWNER-ACTIONS row
+63](production-100-OWNER-ACTIONS.md) for the exact command and this same
+ordering note. Leaving `510-integrate-11-per-coin-earnings-source.md` in
+place with a dated Evolve status paragraph rather than deleting it.
+
+Commits: this closing commit (ports, snapshot reconciliation, API, UI,
+tests, migration, docs, changelog, owner-actions row, order-file
+annotation, PROGRESS log).

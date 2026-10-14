@@ -13,7 +13,12 @@
 //                   and no other agent's coin on file shares it. A coin whose
 //                   fees go to any other wallet (an owner's connected wallet, a
 //                   launch sponsor) is listed but not counted: that wallet's
-//                   total can include coins launched anywhere.
+//                   total can include coins launched anywhere. Each coin also
+//                   carries a second, independent figure summed from that
+//                   coin's own pump.fun distribution timeline
+//                   (pump-creator-fees.js's fetchCoinEarnings), surfaced per
+//                   coin as `distributed` with a `reconciliation` delta
+//                   against the wallet-level figure.
 //   service income  x402 skill sales (agent_revenue_events, USDC net of the
 //                   platform fee) and hires by other agents (agent_hires,
 //                   completed). USDC is valued 1:1 in USD.
@@ -86,6 +91,9 @@ export function earningsMethod(window) {
 		`unclaimed is the creator vault balance read on-chain, claimed is earned minus unclaimed. ` +
 		`pump.fun reports fees per creator wallet, so a wallet counts toward an agent only when it is ` +
 		`that agent's own custodial wallet; coins paying any other wallet are listed but not counted. ` +
+		`Each coin also carries a second, independent figure (distributed_sol) summed from that coin's own ` +
+		`pump.fun distribution timeline, which is the only source that can say which coin actually paid a ` +
+		`wallet; the gap between the two sources is shown as a reconciliation delta, never hidden. ` +
 		`Service income is x402 skill sales (net, USDC) plus completed hires by other agents, valued 1:1 in USD, ` +
 		`plus invoices paid on Solana mainnet, valued in USD when the payment was verified. ` +
 		`Figures cover ${range}. SOL and USD are converted at one live SOL/USD price. Devnet coins are excluded.`
@@ -300,7 +308,9 @@ export async function getAgentEarnings(agent, { window: rawWindow = 'all' } = {}
 		sql`
 			select pam.mint, pam.name, pam.symbol, pam.created_at,
 			       e.creator, e.earned_lamports::text, e.claimed_lamports::text, e.unclaimed_lamports::text,
-			       e.wallet_coin_count, e.wallet_agent_count, e.source, e.error, e.refreshed_at, e.attempted_at
+			       e.wallet_coin_count, e.wallet_agent_count, e.source, e.error, e.refreshed_at, e.attempted_at,
+			       e.coin_earned_lamports::text, e.coin_distributions, e.coin_earnings_source,
+			       e.reconciliation_delta_lamports::text, e.reconciliation_pct
 			from pump_agent_mints pam
 			left join agent_coin_earnings e on e.mint = pam.mint and e.network = pam.network
 			where pam.agent_id = ${agent.id} and pam.network = 'mainnet'
@@ -367,6 +377,10 @@ function shapeCoin(c, agentWallet, price) {
 	const reported = c.source === 'pumpfun_creator_fees' && c.earned_lamports != null;
 	const counted = reported && c.creator === agentWallet && Number(c.wallet_agent_count) === 1;
 	const earnedSol = reported ? lamportsToSol(c.earned_lamports) : null;
+	const distributedSol = c.coin_earnings_source === 'timeline' && c.coin_earned_lamports != null
+		? lamportsToSol(c.coin_earned_lamports)
+		: null;
+	const deltaSol = c.reconciliation_delta_lamports != null ? lamportsToSol(c.reconciliation_delta_lamports) : null;
 	return {
 		mint: c.mint,
 		name: c.name,
@@ -382,6 +396,15 @@ function shapeCoin(c, agentWallet, price) {
 		wallet_coin_count: c.wallet_coin_count ?? null,
 		refreshed_at: c.refreshed_at || null,
 		error: c.error || null,
+		distributed: {
+			sol: distributedSol,
+			usd: price > 0 && distributedSol != null ? round(distributedSol * price, 2) : null,
+			distributions: c.coin_distributions ?? null,
+		},
+		reconciliation: deltaSol == null ? null : {
+			delta_sol: round(deltaSol, 9),
+			delta_pct: c.reconciliation_pct == null ? null : round(Number(c.reconciliation_pct), 2),
+		},
 	};
 }
 

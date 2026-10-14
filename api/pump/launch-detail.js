@@ -35,7 +35,7 @@ import { normalizeGatewayURL } from '../../src/ipfs.js';
 import { getTraderStats } from '../_lib/trader-stats.js';
 import { getConnection } from '../_lib/pump.js';
 import { solPriceUsd } from '../_lib/sol-price.js';
-import { resolveCoinCreators, readCreatorFeeReport } from '../_lib/pump-creator-fees.js';
+import { resolveCoinCreators, readCreatorFeeReport, fetchCoinEarnings } from '../_lib/pump-creator-fees.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const lamportsToSol = (v) => (v == null ? null : Number(BigInt(v)) / 1e9);
@@ -62,18 +62,28 @@ function safeR2Url(key) {
 // circuit breaker and resolves the fee recipient on-chain.
 //
 // pump.fun indexes these fees per creator wallet: `wallet_coin_count` > 1 means
-// the figure is shared by that many coins from the same wallet.
+// the figure is shared by that many coins from the same wallet. `distributed`
+// is this coin's OWN share, summed from its own distribution timeline (the
+// only source that can say which coin actually paid the wallet); `reconciled`
+// is the gap between that per-coin sum and the wallet-level claimed figure,
+// surfaced rather than hidden.
 async function creatorFeesFor(mint, network, price) {
 	if (network !== 'mainnet') return null;
 	const toUsd = (sol) => (price > 0 && sol != null ? Math.round(sol * price * 100) / 100 : null);
 	const [snap] = await sql`
 		select creator, earned_lamports::text, claimed_lamports::text, unclaimed_lamports::text,
-		       wallet_coin_count, source, refreshed_at
+		       wallet_coin_count, source, refreshed_at,
+		       coin_earned_lamports::text, coin_distributions, coin_earnings_source,
+		       reconciliation_delta_lamports::text, reconciliation_pct
 		from agent_coin_earnings
 		where mint = ${mint} and network = 'mainnet'
 	`;
 	if (snap?.source === 'pumpfun_creator_fees' && snap.earned_lamports != null) {
 		const earned = lamportsToSol(snap.earned_lamports);
+		const distributedSol = snap.coin_earnings_source === 'timeline' && snap.coin_earned_lamports != null
+			? lamportsToSol(snap.coin_earned_lamports)
+			: null;
+		const deltaSol = snap.reconciliation_delta_lamports != null ? lamportsToSol(snap.reconciliation_delta_lamports) : null;
 		return {
 			creator: snap.creator,
 			earned_sol: earned,
@@ -83,15 +93,28 @@ async function creatorFeesFor(mint, network, price) {
 			wallet_coin_count: snap.wallet_coin_count,
 			refreshed_at: snap.refreshed_at,
 			source: 'snapshot',
+			distributed: {
+				sol: distributedSol,
+				usd: toUsd(distributedSol),
+				distributions: snap.coin_distributions ?? null,
+			},
+			reconciliation: deltaSol == null ? null : {
+				delta_sol: deltaSol,
+				delta_pct: snap.reconciliation_pct == null ? null : Number(snap.reconciliation_pct),
+			},
 		};
 	}
 	const connection = getConnection({ network: 'mainnet' });
 	const creators = await resolveCoinCreators(connection, [mint]).catch(() => null);
 	const creator = creators?.get(mint)?.creator;
 	if (!creator) return null;
-	const report = await readCreatorFeeReport(connection, creator, { mints: [mint] });
+	const [report, timeline] = await Promise.all([
+		readCreatorFeeReport(connection, creator, { mints: [mint] }),
+		fetchCoinEarnings(mint, creator),
+	]);
 	if (!report.ok) return null;
 	const earned = Number(report.earned_lamports) / 1e9;
+	const distributedSol = timeline.ok ? Number(timeline.value.lamports) / 1e9 : null;
 	return {
 		creator,
 		earned_sol: earned,
@@ -101,6 +124,12 @@ async function creatorFeesFor(mint, network, price) {
 		wallet_coin_count: null,
 		refreshed_at: new Date().toISOString(),
 		source: 'live',
+		distributed: {
+			sol: distributedSol,
+			usd: toUsd(distributedSol),
+			distributions: timeline.ok ? timeline.value.distributions : null,
+		},
+		reconciliation: null,
 	};
 }
 

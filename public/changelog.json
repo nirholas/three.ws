@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-14T18:13:33.913Z",
+	"generated_at": "2026-10-14T18:52:48.751Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -33,6 +33,16 @@
 			"title": "Atomic now replays a pump.fun transaction step by step",
 			"summary": "Atomic (/atomic) decodes every Pump, PumpSwap, and PumpFees event in a transaction's logs, oldest first, and renders it as a Replay panel: a bonding-curve-position bar, a human-readable description of each step (create, buy/sell, graduation, creator-fee collection and distribution, GitHub social-fee claims, and post-graduation PumpSwap swaps), and the SOL/token amounts that moved. An event the installed SDK does not recognize still renders, labeled unrecognized, instead of silently disappearing. For a create transaction, the panel also pages through the earliest trades on that mint since launch, walking Solana's signature history backward in bounded pages since RPC has no forward cursor.",
 			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "Creator earnings now cross-check two independent pump.fun sources",
+			"summary": "A coin's earnings figure on /launches/<mint> and in the agent earnings card used to come from one source only: the creator wallet's lifetime fee index. It now also sums that specific coin's own pump.fun distribution timeline, the only feed that can say which coin actually paid a wallet, and shows both: 'this coin paid X SOL' next to the wallet-level figure, plus a plain sentence when the two sources disagree and by how much. Nothing is hidden when sources drift apart; the gap is the point. The snapshot pipeline that already indexed wallet-level fees now reconciles against the timeline for every coin on each refresh.",
+			"link": "/launches",
 			"tags": [
 				"feature"
 			]

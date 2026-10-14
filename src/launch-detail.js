@@ -1254,6 +1254,13 @@ function renderEconomics() {
 			hasCreatorFees && creatorFees.unclaimed_sol != null
 				? metric('Unclaimed', fmtSol(Number(creatorFees.unclaimed_sol), { sign: false }))
 				: null,
+			hasCreatorFees && creatorFees.distributed?.sol != null
+				? metric(
+						'This coin paid',
+						fmtSol(Number(creatorFees.distributed.sol), { sign: false }),
+						creatorFees.distributed.usd != null ? fmtUsd(Number(creatorFees.distributed.usd), { sign: false }) : null,
+					)
+				: null,
 		]),
 	]);
 	if (hasCreatorFees) body.appendChild(creatorFeesNote(creatorFees));
@@ -1302,6 +1309,17 @@ function creatorFeesNote(fees) {
 			? `Creator fees from pump.fun, updated ${relTime(fees.refreshed_at)}.`
 			: 'Creator fees from pump.fun.',
 	);
+	if (fees.distributed?.sol != null) {
+		parts.push("\"This coin paid\" is summed straight from this coin's own pump.fun distribution timeline, independent of the wallet-level figures above.");
+	}
+	if (fees.reconciliation) {
+		const delta = Number(fees.reconciliation.delta_sol);
+		parts.push(
+			Math.abs(delta) < 1e-6
+				? 'The two sources agree.'
+				: `The two sources differ by ${fmtSol(delta, { sign: true })}${fees.reconciliation.delta_pct != null ? ` (${fees.reconciliation.delta_pct.toFixed(1)}%)` : ''}.`,
+		);
+	}
 	const agent = state.detail.agent;
 	return el('p', { class: 'ld-econ-note' }, [
 		el('span', { text: parts.join(' ') + ' ' }),

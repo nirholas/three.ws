@@ -135,6 +135,12 @@ function coinRow(c) {
 			c.status === 'other_wallet'
 				? `Fees go to ${esc(shortAddr(c.creator))}, not this agent's wallet${shared}`
 				: `Unclaimed ${esc(fmtSol(c.unclaimed_sol))}${shared}`;
+		if (c.distributed?.sol != null) {
+			detail += ` · this coin paid ${esc(fmtSol(c.distributed.sol))}`;
+			if (c.reconciliation && Math.abs(Number(c.reconciliation.delta_sol)) >= 1e-6) {
+				detail += ` (${esc(fmtSol(Math.abs(Number(c.reconciliation.delta_sol))))} ${Number(c.reconciliation.delta_sol) > 0 ? 'more' : 'less'} than the wallet-level figure)`;
+			}
+		}
 		value = `${esc(fmtSol(c.earned_sol))}${c.earned_usd != null ? `<small>${esc(fmtUsd(c.earned_usd))}</small>` : ''}`;
 	}
 	const pill = COIN_STATUS[c.status] ? `<span class="ern-pill">${COIN_STATUS[c.status]}</span>` : '';

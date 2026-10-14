@@ -54,6 +54,8 @@ const DDL = `
 		mint text, network text, agent_id uuid, creator text, earned_lamports numeric,
 		claimed_lamports numeric, unclaimed_lamports numeric, wallet_coin_count int, wallet_agent_count int,
 		source text, error text, refreshed_at timestamptz default now(), attempted_at timestamptz default now(),
+		coin_earned_lamports numeric, coin_distributions int, coin_earnings_source text,
+		reconciliation_delta_lamports numeric, reconciliation_pct float8,
 		primary key (mint, network)
 	);
 	create table creator_fee_buckets (creator text, bucket_interval text, bucket_start timestamptz, fee_lamports numeric);
@@ -64,6 +66,10 @@ const DDL = `
 	create table agent_hires (
 		id uuid primary key default gen_random_uuid(), provider_agent_id uuid, usd numeric, status text,
 		created_at timestamptz, completed_at timestamptz
+	);
+	create table agent_commerce_invoices (
+		id uuid primary key default gen_random_uuid(), agent_id uuid, status text, network text,
+		paid_usd numeric, paid_at timestamptz
 	);
 	create table launcher_claims (agent_id uuid, network text, claim_sig text, claimed_lamports numeric, mint text,
 		created_at timestamptz default now());
