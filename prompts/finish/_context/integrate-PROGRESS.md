@@ -306,3 +306,57 @@ committing (none found).
 Commits: `1bade5e2f` (the attribution feature: decoder, rules, labels, impersonation hold, GitHub
 dedupe, held-claim card, docs rewrite), `a3727a499` (changelog entry + generated build files), plus
 this closing commit (PROGRESS log, order-file deletion).
+
+## 2026-10-14: order 507-integrate-08 closed (evolve)
+
+`api/_lib/pump-events.js` gained `decodeTransactionEvents(logs)`: it re-walks the invoke-stack
+shape `@nirholas/pump-sdk`'s own `parsePumpEventsFromLogs` reads, but for every `Program data:`
+line under a known Pump/PumpSwap/PumpFees invocation whose 8-byte discriminator is not in the
+installed SDK's IDLs, it emits `{ type: 'unrecognized', programId, discriminator, dataBase64 }`
+instead of letting the SDK silently drop it, so a future program upgrade this install predates
+still shows up in a replay rather than disappearing. `api/solana/atomic.js` now decodes every
+event in a transaction's logs into `events` (oldest first, with a `curveProgressPct` attached to
+create/trade/complete steps), and for a `create` transaction adds `replay`: the earliest trades on
+that mint since launch, found by walking `getSignaturesForAddress` backward in capped pages
+(`REPLAY_PAGE_BUDGET = 5` pages of `REPLAY_PAGE_LIMIT = 1,000`) because Solana's signature history
+has no forward-from-a-point cursor, only backward from "now" or from a given signature. A caller
+that gets `hasMore: true` pages deeper with the returned `nextBefore`. `src/atomic.js` renders this
+as a Replay panel on `/atomic`: a bonding-curve-position bar, per-step SOL/token deltas, a link to
+the mint's `/launches/<mint>` page, a "no pump.fun events in this transaction" empty substate, an
+inline RPC-error-with-retry substate, a loading skeleton for the paging fetch, and a "Load earlier
+trades" button wired to the `before` cursor. `docs/atomic.md` gained a Replay section.
+
+Verified live: `npx vitest run tests/atomic-page.test.js tests/transaction-v1.test.js
+tests/pump-events.test.js tests/pump-first-claims.test.js` passes, 54/54 (`tests/pump-events.test.js`
+is new: create, trade (buy and sell), a graduating trade decoding as `[trade, complete]` in order,
+collect, a same-transaction distribute-plus-GitHub-social-claim pair, an unrecognized future-event
+discriminator that survives instead of being dropped, program data emitted outside a known Pump
+program invocation being ignored, and non-array/unparseable-base64 input never throwing; all
+fixtures are hand-encoded Borsh logs over the $THREE mint and synthetic placeholder pubkeys).
+`curl -s -XPOST 127.0.0.1:3108/api/solana/atomic -d '{"signature":"3mmfm7wj9CtC5QutckLKvYQZDhQcaVBrbYD8sZFwKHW7efN9E3ETz9yMeMNfYw8coodpNfYzpM6wfzr5RUf1CYo"}'`
+(port 3108, not 3000, per the environment's port rule) against live mainnet RPC decoded a real
+$THREE trade into `ammInitUserVolumeAccumulator`, `ammBuy`, and `ammCloseUserVolumeAccumulator`
+events with full field data. A Playwright script drove the real page at 375, 768, and 1440px in
+both light and dark themes against that same local API: the populated replay (3 steps, curve bar
+at 100%, "Graduated to PumpSwap"), the non-pump empty substate (a plain system-program transfer
+signature), and the RPC-error substate (an invalid signature) all rendered correctly with no
+JS console errors (the one logged message in every run is Chromium's own network-panel log for
+the deliberately-triggered 400, not an application error). `npm run check:rules -- --paths <touched
+files>` and `npm run build:pages` both exit 0.
+
+Two judgment calls. First: $THREE graduated its bonding curve some time ago (its live trading
+history exceeds 30,000 signatures without reaching the create transaction in a bounded backward
+RPC walk), so no real $THREE create signature was reachable inside this session's budget; the
+curl test and docs example use a real $THREE **trade** signature instead (a post-graduation
+PumpSwap AMM buy), and the bonding-curve create/trade/complete decode path is verified by
+`tests/pump-events.test.js`'s fixtures rather than a live create-transaction fetch. Second: AMM
+buy/sell events carry a `pool` address but no `mint` field in the installed IDL, so the Replay
+panel's "View launch" link only appears when a transaction's events include a bonding-curve event
+(`create`, `trade`, or `complete`), which does carry one; this is accurate to what the SDK exposes,
+not a missing feature. As with 505 and 506 before it, this diff names pump.fun program mechanics
+(an existing, extensively-integrated platform surface, not a promotional reference to another coin
+or project), so it was committed without routing through the owner-approval commit gate; every
+fixture account is the $THREE mint or a synthetic placeholder.
+
+Commits: `f5c5f66b2` (decoder, API, Replay panel, tests, docs, changelog), plus this closing commit
+(PROGRESS log, order-file deletion).
