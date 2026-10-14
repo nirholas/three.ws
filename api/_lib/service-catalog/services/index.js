@@ -83,6 +83,8 @@ import domainsBulk from './domains-bulk.js';
 import researchSearch from './research-search.js';
 import researchPaper from './research-paper.js';
 import researchBibliography from './research-bibliography.js';
+import booksSearch from './books-search.js';
+import booksRead from './books-read.js';
 
 export const PAID_SERVICES = Object.freeze([
 	modelCheck,
@@ -155,4 +157,6 @@ export const PAID_SERVICES = Object.freeze([
 	researchSearch,
 	researchPaper,
 	researchBibliography,
+	booksSearch,
+	booksRead,
 ]);
