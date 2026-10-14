@@ -30,6 +30,14 @@ import { summarizeStats, inspectRiggedGlb, engineLabel, sealReceipt, resetSignin
 import { attachReceipt } from '../api/_mcp-studio/receipts.js';
 import { dispatch } from '../api/_mcp-studio/dispatch.js';
 
+// rig_mesh takes a caller-supplied GLB URL, which tools.js checks with the real
+// SSRF guard before anything else; that guard does live DNS resolution, which a
+// test has no business depending on. Same shape as tests/3d-vision.test.js.
+vi.mock('../api/_lib/ssrf-guard.js', () => ({
+	assertSafePublicUrl: async (u) => new URL(u),
+	SsrfBlockedError: class extends Error {},
+}));
+
 // A real binary glTF: header, JSON chunk, no BIN chunk. analyzeGlb only reads
 // the JSON, which is exactly what the rig read-back fetches.
 function buildGlb(json) {
@@ -351,16 +359,7 @@ describe('studio wiring', () => {
 		expect(result.content[0].text).toBe('Generated a 3D model.');
 	});
 
-	// Skipped: the 2026-10-11 evolve/main reconciliation merge (d77b89178, the
-	// one order 404 later verified, not order 404's own merge) kept tools.js's
-	// job-tools.js/collectJob generation-tool architecture (evolve) over the
-	// finishMesh/finishRig refactor that wires openRun/closeRun into forge_avatar
-	// (main), since job-tools.js's exported 4-arg collectJob and a second,
-	// conflicting get_job tool registration made combining both unsafe to guess
-	// at mid-merge. The receipt core, store and rig-doctor inspection above are
-	// unaffected and fully wired; only this end-to-end dispatch() attachment is
-	// not. See prompts/finish/405-wire-run-receipts-into-forge-tools.md.
-	it.skip('records a full forge_avatar run: fallback brief, tier downgrade, and a rig verified from the file', async () => {
+	it('records a full forge_avatar run: fallback brief, tier downgrade, and a rig verified from the file', async () => {
 		const rigged = riggedGlb();
 		globalThis.fetch = vi.fn(async (url, init) => {
 			const u = String(url);
@@ -410,9 +409,7 @@ describe('studio wiring', () => {
 		expect(r.result.content[0].text).toMatch(/Run receipt: Delivered as expected/);
 	});
 
-	// Skipped for the same reason as the test above: forge_avatar's dispatch
-	// path does not attach a receipt in this merge's chosen architecture.
-	it.skip('records a refusal with the prompt redacted', async () => {
+	it('records a refusal with the prompt redacted', async () => {
 		globalThis.fetch = vi.fn(async () => ({ ok: false, status: 503, json: async () => ({}) }));
 		const r = await dispatch(
 			{ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'forge_avatar', arguments: { prompt: 'a wooden chair' } } },
@@ -424,5 +421,79 @@ describe('studio wiring', () => {
 		expect(r.result.structuredContent.receipt.issues[0]).toMatchObject({ stage: 'subject', verdict: 'missed' });
 		// The forge was never called: the gate fires before any GPU time.
 		expect(globalThis.fetch.mock.calls.some(([u]) => /\/api\/(gpt-)?forge/.test(String(u)))).toBe(false);
+	});
+
+	function mockDoneForge(fields) {
+		globalThis.fetch = vi.fn(async (url) => {
+			const u = String(url);
+			if (/\/api\/(gpt-)?forge/.test(u)) {
+				return { ok: true, status: 200, json: async () => ({ status: 'done', durable: true, ...fields }) };
+			}
+			// The director's LLM chain answers unusably: the fixed brief/raw prompt carries the run.
+			return { ok: false, status: 503, json: async () => ({}), text: async () => '' };
+		});
+	}
+
+	it('records a forge_free run', async () => {
+		mockDoneForge({ glb_url: 'https://three.ws/cdn/mesh.glb', job_id: 'F1', tier: 'standard', backend: 'trellis_selfhost' });
+		const r = await dispatch(
+			{ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'forge_free', arguments: { prompt: 'a rustic wooden lantern' } } },
+			auth,
+			mkReq(),
+		);
+		expect(r.result.isError).toBeFalsy();
+		const receipt = r.result.structuredContent.receipt;
+		expect(isReceiptId(receipt.id)).toBe(true);
+		expect(receipt.outcome).toBe('delivered');
+		expect(r.result.content[0].text).toMatch(/Run receipt: Delivered as expected/);
+	});
+
+	it('records a text_to_avatar run', async () => {
+		mockDoneForge({ glb_url: 'https://three.ws/cdn/avatar.glb', job_id: 'A1', tier: 'high', backend: 'hunyuan3d' });
+		const r = await dispatch(
+			{ jsonrpc: '2.0', id: 4, method: 'tools/call', params: { name: 'text_to_avatar', arguments: { prompt: 'a cheerful dwarf blacksmith' } } },
+			auth,
+			mkReq(),
+		);
+		expect(r.result.isError).toBeFalsy();
+		const receipt = r.result.structuredContent.receipt;
+		expect(isReceiptId(receipt.id)).toBe(true);
+		expect(receipt.outcome).toBe('delivered');
+	});
+
+	it('records a mesh_forge run', async () => {
+		mockDoneForge({ glb_url: 'https://three.ws/cdn/mesh.glb', job_id: 'M2', tier: 'standard', backend: 'trellis_selfhost' });
+		const r = await dispatch(
+			{ jsonrpc: '2.0', id: 5, method: 'tools/call', params: { name: 'mesh_forge', arguments: { prompt: 'a brass pocket watch' } } },
+			auth,
+			mkReq(),
+		);
+		expect(r.result.isError).toBeFalsy();
+		const receipt = r.result.structuredContent.receipt;
+		expect(isReceiptId(receipt.id)).toBe(true);
+		expect(receipt.outcome).toBe('delivered');
+	});
+
+	it('records a rig_mesh run, verified from the delivered file', async () => {
+		const rigged = riggedGlb();
+		globalThis.fetch = vi.fn(async (url) => {
+			const u = String(url);
+			if (u.endsWith('/rigged.glb')) return glbResponse(rigged);
+			if (/\/api\/(gpt-)?forge/.test(u)) {
+				return { ok: true, status: 200, json: async () => ({ status: 'done', glb_url: 'https://three.ws/cdn/rigged.glb', job_id: 'R2', durable: true }) };
+			}
+			return { ok: false, status: 503, json: async () => ({}) };
+		});
+		const r = await dispatch(
+			{ jsonrpc: '2.0', id: 6, method: 'tools/call', params: { name: 'rig_mesh', arguments: { glb_url: 'https://three.ws/cdn/unrigged.glb' } } },
+			auth,
+			mkReq(),
+		);
+		expect(r.result.isError).toBeFalsy();
+		const receipt = r.result.structuredContent.receipt;
+		expect(isReceiptId(receipt.id)).toBe(true);
+		const byStage = Object.fromEntries(receipt.issues.map((i) => [i.stage, i]));
+		expect(byStage.rig).toBeUndefined();
+		expect(receipt.outcome).toBe('delivered');
 	});
 });
