@@ -619,6 +619,17 @@
 			"powers": null
 		},
 		{
+			"id": "npm:@discord/embedded-app-sdk",
+			"kind": "npm",
+			"name": "@discord/embedded-app-sdk",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/discord/embedded-app-sdk",
+			"funding": null,
+			"version": "2.5.0",
+			"powers": null
+		},
+		{
 			"id": "npm:@electric-sql/pglite",
 			"kind": "npm",
 			"name": "@electric-sql/pglite",
@@ -1848,6 +1859,17 @@
 			"repo": "https://github.com/jens-maus/node-ical",
 			"funding": null,
 			"version": "0.27.2",
+			"powers": null
+		},
+		{
+			"id": "npm:openapi-to-postmanv2",
+			"kind": "npm",
+			"name": "openapi-to-postmanv2",
+			"area": "infrastructure",
+			"license": "Apache-2.0",
+			"repo": "https://github.com/postmanlabs/openapi-to-postman",
+			"funding": null,
+			"version": "6.4.0",
 			"powers": null
 		},
 		{
