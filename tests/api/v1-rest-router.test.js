@@ -28,6 +28,7 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 const store = new Map();
 vi.mock('../../api/_lib/cache.js', () => ({
 	cacheGet: async (k) => store.get(k) ?? null,
+	cacheGetFresh: async (k) => store.get(k) ?? null,
 	cacheSet: async (k, v) => void store.set(k, v),
 	acquireLock: async (k) => (store.has(k) ? false : (store.set(k, 1), true)),
 	releaseLock: async (k) => void store.delete(k),

@@ -22,7 +22,7 @@ vi.mock('../../api/_lib/db.js', () => ({
 		sqlCalls.push(text);
 		if (text.includes('from user_wallets')) return [];
 		if (text.includes('from mcp_client_daily')) {
-			return [{ day: new Date().toISOString().slice(0, 10), surface: 'mcp-studio', client: 'probe', client_name: 'three-ws-connector-probe', client_version: '1.0.0', auth_kind: 'anonymous', sessions: 2, calls: 4, tools: { search_catalog: 4 } }];
+			return [{ day: new Date().toISOString().slice(0, 10), surface: 'mcp-studio', client_name: 'three-ws-connector-probe', client_version: '1.0.0', auth_kind: 'anonymous', sessions: 2, calls: 4, tools: { search_catalog: 4 } }];
 		}
 		return [];
 	}),
@@ -72,7 +72,7 @@ describe('GET /api/ops/mcp-clients', () => {
 		const r = await get('/api/ops/mcp-clients?days=7');
 		expect(r.status).toBe(200);
 		expect(r.body.window_days).toBe(7);
-		expect(r.body.clients[0]).toMatchObject({ client: 'probe', sessions: 2, calls: 4 });
+		expect(r.body.clients[0]).toMatchObject({ client: 'three-ws-connector-probe', sessions: 2, calls: 4 });
 	});
 
 	it('refuses anything but GET', async () => {
