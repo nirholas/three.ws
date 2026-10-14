@@ -6,9 +6,9 @@ external developers can find what they need without reading 50 top-level
 directories.
 
 When an internal surface gains an external consumer that needs an independent
-release cadence, we promote it to its own published package (and optionally its
-own repo via `git subtree split`). See [Promotion path](#promotion-path) at the
-bottom.
+release cadence, we promote it to its own published package (and, for most
+packages, a generated standalone GitHub mirror). See
+[Promotion path](#promotion-path) at the bottom.
 
 ## three.ws surface map
 
@@ -623,21 +623,28 @@ need that the monorepo cannot serve:
 3. **External contributors blocked.** When the repo size or unrelated CI cost
    is a real friction for outside PRs.
 
-Promotion procedure (when triggered):
+Promotion procedure (when triggered): the directory keeps living in this
+monorepo (still canonical, still where pull requests go) and gains a
+**generated, read-only mirror** instead of being split out. One manifest,
+[data/standalone-mirrors.json](data/standalone-mirrors.json), is the source of
+truth for which directory maps to which public repo:
 
 ```bash
-# Cleanly split a directory's full history into a new repo
-git subtree split --prefix=packages/avatar-schema -b avatar-schema-split
-cd ../  && mkdir avatar-schema-repo && cd avatar-schema-repo
-git init && git pull ../three.ws avatar-schema-split
-git remote add origin https://github.com/nirholas/avatar-schema.git
-git push -u origin main
-# Then in three.ws: replace the workspace dir with a normal npm dep
+# 1. Add an entry: { "repo": "<github name>", "path": "packages/<dir>", "direction": "out", "exporter": "sync", "npm": "<package name or null>" }
+# 2. Stage it (snapshots the dir, rewrites package.json's repository field, fixes any stale license footer)
+npm run sync:repos -- --only <github name>
+# 3. The command above prints the push line; running it is the owner's call
+git -C dist/standalone-mirrors/<github name> push --force https://github.com/nirholas/<github name>.git HEAD:main
 ```
 
-Until the trigger fires, splitting is premature: each new repo adds release
-overhead, CI cost, and cross-repo PR coordination tax for zero functional
-gain.
+`scripts/sync-standalone-repos.mjs` never pushes and never calls the GitHub
+API itself; it only stages under `dist/standalone-mirrors/` (gitignored) and
+prints the command above. `npm run sync:repos:check` compares what is staged
+against each mirror's live tree over a codeload tarball and exits non-zero on
+drift.
+
+Until a surface has a concrete external consumer, skipping the mirror is
+correct: each one adds a repo to keep in sync for zero functional gain.
 
 ## See also
 

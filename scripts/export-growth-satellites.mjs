@@ -26,26 +26,18 @@ const OUT = resolve(valueAfter('--out') || DEFAULT_OUT);
 const OFFLINE = argv.includes('--offline');
 const ONLY = valueAfter('--target');
 
-const TARGETS = [
-	{
-		name: 'agent-starter',
-		source: 'satellites/agent-starter',
-		repository: 'https://github.com/nirholas/threews-agent-starter.git',
-		build: false,
-	},
-	{
-		name: 'glb-quality-gate',
-		source: 'satellites/glb-quality-gate',
-		repository: 'https://github.com/nirholas/glb-quality-gate.git',
-		build: true,
-	},
-	{
-		name: 'oracle-desk',
-		source: 'satellites/oracle-desk',
-		repository: 'https://github.com/nirholas/oracle-desk.git',
-		build: false,
-	},
-];
+// Repo names and paths come from the manifest (one source of truth for every
+// standalone mirror); only the build toggle is specific to this exporter.
+const BUILD = { 'glb-quality-gate': true };
+const MANIFEST = JSON.parse(readFileSync(join(REPO, 'data', 'standalone-mirrors.json'), 'utf8'));
+const TARGETS = MANIFEST.mirrors
+	.filter((m) => m.exporter === 'growth-satellites')
+	.map((m) => ({
+		name: m.path.split('/').pop(),
+		source: m.path,
+		repository: `https://github.com/nirholas/${m.repo}.git`,
+		build: Boolean(BUILD[m.path.split('/').pop()]),
+	}));
 
 function assertSafeOutput(path) {
 	const relativePath = relative(REPO, path);

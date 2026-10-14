@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-10-14
+
+- **Standalone GitHub mirrors now stage instead of force-pushing**: scripts/sync-standalone-repos.mjs force-pushed straight to main on every run, which could silently create duplicate repos for the eleven mirrors already renamed on GitHub and bypassed the owner's push-approval rule. data/standalone-mirrors.json is now the single source of truth for which monorepo directory maps to which public repo, read by every exporter (sync, growth satellites, the awesome list, the skill-repo builder) instead of each keeping its own list. The sync script only stages a snapshot under dist/standalone-mirrors/, fixes any stale pre-Apache-2.0 README or LICENSE footer, and prints the push command for the owner; npm run sync:repos:check compares what is staged against each mirror's live tree and reports drift without writing anything. (`/docs/contributing`) `[infra, docs]`
+
 ## 2026-10-13
 
 - **Docs · Staked Event Markets** (`/docs/event-markets-staking`): Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.

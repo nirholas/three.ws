@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Standalone GitHub mirrors now stage instead of force-pushing</title>
+			<link>https://three.ws/docs/contributing</link>
+			<guid isPermaLink="false">2026-10-14:Standalone GitHub mirrors now stage instead of force-pushing</guid>
+			<pubDate>Wed, 14 Oct 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>scripts/sync-standalone-repos.mjs force-pushed straight to main on every run, which could silently create duplicate repos for the eleven mirrors already renamed on GitHub and bypassed the owner's push-approval rule. data/standalone-mirrors.json is now the single source of truth for which monorepo directory maps to which public repo, read by every exporter (sync, growth satellites, the awesome list, the skill-repo builder) instead of each keeping its own list. The sync script only stages a snapshot under dist/standalone-mirrors/, fixes any stale pre-Apache-2.0 README or LICENSE footer, and prints the push command for the owner; npm run sync:repos:check compares what is staged against each mirror's live tree and reports drift without writing anything.</description>
+		</item>
+		<item>
 			<title>Docs · Staked Event Markets</title>
 			<link>https://three.ws/docs/event-markets-staking</link>
 			<guid isPermaLink="false">2026-10-13:Docs · Staked Event Markets</guid>

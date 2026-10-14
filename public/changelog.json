@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-10-13T23:51:19.561Z",
+	"generated_at": "2026-10-14T01:31:00.152Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "Standalone GitHub mirrors now stage instead of force-pushing",
+			"summary": "scripts/sync-standalone-repos.mjs force-pushed straight to main on every run, which could silently create duplicate repos for the eleven mirrors already renamed on GitHub and bypassed the owner's push-approval rule. data/standalone-mirrors.json is now the single source of truth for which monorepo directory maps to which public repo, read by every exporter (sync, growth satellites, the awesome list, the skill-repo builder) instead of each keeping its own list. The sync script only stages a snapshot under dist/standalone-mirrors/, fixes any stale pre-Apache-2.0 README or LICENSE footer, and prints the push command for the owner; npm run sync:repos:check compares what is staged against each mirror's live tree and reports drift without writing anything.",
+			"link": "/docs/contributing",
+			"tags": [
+				"infra",
+				"docs"
+			]
+		},
 		{
 			"date": "2026-10-13",
 			"type": "launch",

@@ -1,0 +1,916 @@
+{
+	"$schema": "./standalone-mirrors.schema.json",
+	"generated": "manual, re-derived from github.com/nirholas live state on 2026-10-14",
+	"mirrors": [
+		{
+			"repo": "three-ws-skills",
+			"path": ".agents/skills",
+			"direction": "out",
+			"exporter": "skill-repos",
+			"npm": null
+		},
+		{
+			"repo": "three-ws-3d-skills",
+			"path": ".agents/skills",
+			"direction": "out",
+			"exporter": "skill-repos",
+			"npm": null
+		},
+		{
+			"repo": "three-ws-agent-economy-skills",
+			"path": ".agents/skills",
+			"direction": "out",
+			"exporter": "skill-repos",
+			"npm": null
+		},
+		{
+			"repo": "agent-payments-sdk",
+			"path": "agent-payments-sdk",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/agent-payments"
+		},
+		{
+			"repo": "three-ws-assistant",
+			"path": "assistant-sdk",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/assistant"
+		},
+		{
+			"repo": "awesome-3d-agents",
+			"path": "awesome",
+			"direction": "out",
+			"exporter": "awesome",
+			"npm": null
+		},
+		{
+			"repo": null,
+			"path": "examples",
+			"direction": "out",
+			"exporter": "examples",
+			"npm": null
+		},
+		{
+			"repo": "x402-bridge",
+			"path": "mcp-bridge",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/mcp-bridge"
+		},
+		{
+			"repo": "3d-agent-mcp",
+			"path": "mcp-server",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/mcp-server"
+		},
+		{
+			"repo": "activity-mcp",
+			"path": "packages/activity-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/activity-mcp"
+		},
+		{
+			"repo": "agenc",
+			"path": "packages/agenc",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/agenc"
+		},
+		{
+			"repo": "agenc-mcp",
+			"path": "packages/agenc-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/agenc-mcp"
+		},
+		{
+			"repo": "three-ws-agent",
+			"path": "packages/agent-cli",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/agent"
+		},
+		{
+			"repo": "agent-glance",
+			"path": "packages/agent-glance",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/agent-glance"
+		},
+		{
+			"repo": "agent-guards",
+			"path": "packages/agent-guards",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/agent-guards"
+		},
+		{
+			"repo": "agent-memory",
+			"path": "packages/agent-memory",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/agent-memory"
+		},
+		{
+			"repo": "agent-runtime",
+			"path": "packages/agent-runtime",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/agent-runtime"
+		},
+		{
+			"repo": "solana-sniper-mcp",
+			"path": "packages/agent-sniper",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/agent-sniper"
+		},
+		{
+			"repo": "agent-vitals",
+			"path": "packages/agent-vitals",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/agent-vitals"
+		},
+		{
+			"repo": "agentcore-payments-mcp",
+			"path": "packages/agentcore-payments-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/agentcore-payments-mcp"
+		},
+		{
+			"repo": "three-ws-agents",
+			"path": "packages/agents-sdk",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/agents"
+		},
+		{
+			"repo": "agora-mcp",
+			"path": "packages/agora-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/agora-mcp"
+		},
+		{
+			"repo": null,
+			"path": "packages/ai-sdk",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/ai-sdk"
+		},
+		{
+			"repo": "alerts-mcp",
+			"path": "packages/alerts-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/alerts-mcp"
+		},
+		{
+			"repo": "alibaba-cloud-mcp",
+			"path": "packages/alibaba-cloud-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/alibaba-cloud-mcp"
+		},
+		{
+			"repo": "three-ws-assets",
+			"path": "packages/assets-cli",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/assets"
+		},
+		{
+			"repo": "assistant-mcp",
+			"path": "packages/assistant-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/assistant-mcp"
+		},
+		{
+			"repo": "audio-mcp",
+			"path": "packages/audio-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/audio-mcp"
+		},
+		{
+			"repo": "autopilot-mcp",
+			"path": "packages/autopilot-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/autopilot-mcp"
+		},
+		{
+			"repo": "avatar-agent-mcp",
+			"path": "packages/avatar-agent-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/avatar-agent"
+		},
+		{
+			"repo": "avatar-cli",
+			"path": "packages/avatar-cli",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/avatar-cli"
+		},
+		{
+			"repo": "avatar-schema",
+			"path": "packages/avatar-schema",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/avatar-schema"
+		},
+		{
+			"repo": "avatar-stream",
+			"path": "packages/avatar-stream",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/avatar-stream"
+		},
+		{
+			"repo": "billing-mcp",
+			"path": "packages/billing-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/billing-mcp"
+		},
+		{
+			"repo": "blender-mcp",
+			"path": "packages/blender-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/blender-mcp"
+		},
+		{
+			"repo": "brain-mcp",
+			"path": "packages/brain-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/brain-mcp"
+		},
+		{
+			"repo": null,
+			"path": "packages/brownout",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/brownout"
+		},
+		{
+			"repo": "clash-mcp",
+			"path": "packages/clash-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/clash-mcp"
+		},
+		{
+			"repo": "concierge-mcp",
+			"path": "packages/concierge-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/concierge-mcp"
+		},
+		{
+			"repo": "copy-mcp",
+			"path": "packages/copy-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/copy-mcp"
+		},
+		{
+			"repo": "create-agent",
+			"path": "packages/create-agent",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/create-agent"
+		},
+		{
+			"repo": "three-ws-forge",
+			"path": "packages/forge",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/forge"
+		},
+		{
+			"repo": "glb-diff",
+			"path": "packages/glb-diff",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/glb-diff"
+		},
+		{
+			"repo": "glb-tools",
+			"path": "packages/glb-tools",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/glb-tools"
+		},
+		{
+			"repo": "three-ws-guardian",
+			"path": "packages/guardian",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/guardian"
+		},
+		{
+			"repo": "herald-mcp",
+			"path": "packages/herald-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/herald-mcp"
+		},
+		{
+			"repo": "home-bridge",
+			"path": "packages/home-bridge",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/home-bridge"
+		},
+		{
+			"repo": "home-mcp",
+			"path": "packages/home-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/home-mcp"
+		},
+		{
+			"repo": "ibm-watsonx-mcp",
+			"path": "packages/ibm-watsonx-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/ibm-watsonx-mcp"
+		},
+		{
+			"repo": "ibm-x402-mcp",
+			"path": "packages/ibm-x402-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/ibm-x402-mcp"
+		},
+		{
+			"repo": "three-ws-intel",
+			"path": "packages/intel",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/intel"
+		},
+		{
+			"repo": "intel-mcp",
+			"path": "packages/intel-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/intel-mcp"
+		},
+		{
+			"repo": "three-ws-irl",
+			"path": "packages/irl",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/irl"
+		},
+		{
+			"repo": "knock-mcp",
+			"path": "packages/knock-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/knock-mcp"
+		},
+		{
+			"repo": "three-ws-knock",
+			"path": "packages/knock-sdk",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/knock"
+		},
+		{
+			"repo": "kol-mcp",
+			"path": "packages/kol-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/kol-mcp"
+		},
+		{
+			"repo": null,
+			"path": "packages/langchain",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/langchain"
+		},
+		{
+			"repo": "loom-mcp",
+			"path": "packages/loom-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/loom-mcp"
+		},
+		{
+			"repo": "nft-marketplace-mcp",
+			"path": "packages/marketplace-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/marketplace-mcp"
+		},
+		{
+			"repo": "mcp-policy",
+			"path": "packages/mcp-policy",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/mcp-policy"
+		},
+		{
+			"repo": "metaplex-agent-mcp",
+			"path": "packages/metaplex-agent-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/metaplex-agent-mcp"
+		},
+		{
+			"repo": "three-ws-mocap",
+			"path": "packages/mocap",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/mocap"
+		},
+		{
+			"repo": "three-ws-motion",
+			"path": "packages/motion",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/motion"
+		},
+		{
+			"repo": "three-ws-names",
+			"path": "packages/names",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/names"
+		},
+		{
+			"repo": "token-naming-mcp",
+			"path": "packages/naming-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/naming-mcp"
+		},
+		{
+			"repo": "push-notifications-mcp",
+			"path": "packages/notifications-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/notifications-mcp"
+		},
+		{
+			"repo": "onchain-agent-wallets",
+			"path": "packages/onchain-agent-wallets",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/onchain-agent-wallets"
+		},
+		{
+			"repo": "oracle-model",
+			"path": "packages/oracle-model",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/oracle-model"
+		},
+		{
+			"repo": "three-ws-portal",
+			"path": "packages/portal",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/portal"
+		},
+		{
+			"repo": "crypto-portfolio-mcp",
+			"path": "packages/portfolio-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/portfolio-mcp"
+		},
+		{
+			"repo": "three-ws-pose",
+			"path": "packages/pose",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/pose"
+		},
+		{
+			"repo": "provenance-mcp",
+			"path": "packages/provenance-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/provenance-mcp"
+		},
+		{
+			"repo": "pumpfun-mcp",
+			"path": "packages/pumpfun-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/pumpfun-mcp"
+		},
+		{
+			"repo": null,
+			"path": "packages/pumpfun-skills",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/pumpfun-skills"
+		},
+		{
+			"repo": "three-ws-react",
+			"path": "packages/react",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/react"
+		},
+		{
+			"repo": "readme-3d",
+			"path": "packages/readme-3d",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "readme-3d"
+		},
+		{
+			"repo": "three-ws-render",
+			"path": "packages/render",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/render"
+		},
+		{
+			"repo": "three-ws-reputation",
+			"path": "packages/reputation",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/reputation"
+		},
+		{
+			"repo": "three-ws-retarget",
+			"path": "packages/retarget",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/retarget"
+		},
+		{
+			"repo": "3d-scene-mcp",
+			"path": "packages/scene-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/scene-mcp"
+		},
+		{
+			"repo": "three-ws-see",
+			"path": "packages/see",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/see"
+		},
+		{
+			"repo": "three-ws-shipfeed",
+			"path": "packages/shipfeed",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/shipfeed"
+		},
+		{
+			"repo": "sign-language",
+			"path": "packages/sign-language",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/sign-language"
+		},
+		{
+			"repo": "crypto-signals-mcp",
+			"path": "packages/signals-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/signals-mcp"
+		},
+		{
+			"repo": "skill-license",
+			"path": "packages/skill-license",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/skill-license"
+		},
+		{
+			"repo": "solana-memo-media-mcp",
+			"path": "packages/solana-memo-media-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/solana-memo-media-mcp"
+		},
+		{
+			"repo": "spatial-mcp",
+			"path": "packages/spatial-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/spatial-mcp"
+		},
+		{
+			"repo": null,
+			"path": "packages/strategies",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/strategies"
+		},
+		{
+			"repo": "three-token-mcp",
+			"path": "packages/three-token-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/three-token-mcp"
+		},
+		{
+			"repo": "three-ws-cli",
+			"path": "packages/three-ws-cli",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/cli"
+		},
+		{
+			"repo": "threews-avatar-mcp",
+			"path": "packages/threews-avatar-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/avatar-mcp"
+		},
+		{
+			"repo": "tty-3d",
+			"path": "packages/tty-3d",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/tty-3d"
+		},
+		{
+			"repo": "tty-avatar",
+			"path": "packages/tty-avatar",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/tty-avatar"
+		},
+		{
+			"repo": "ai-tutor-mcp",
+			"path": "packages/tutor-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/tutor-mcp"
+		},
+		{
+			"repo": null,
+			"path": "packages/unity-bridge",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "com.three-ws.forge-bridge"
+		},
+		{
+			"repo": null,
+			"path": "packages/vanity",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/vanity"
+		},
+		{
+			"repo": "solana-vanity-mcp",
+			"path": "packages/vanity-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/vanity-mcp"
+		},
+		{
+			"repo": "viewer-presets",
+			"path": "packages/viewer-presets",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/viewer-presets"
+		},
+		{
+			"repo": "image-analysis-mcp",
+			"path": "packages/vision-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/vision-mcp"
+		},
+		{
+			"repo": "three-ws-voice",
+			"path": "packages/voice",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/voice"
+		},
+		{
+			"repo": "vscode-3d",
+			"path": "packages/vscode-3d",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "vscode-3d"
+		},
+		{
+			"repo": "vscode-x402",
+			"path": "packages/vscode-x402",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/vscode-x402"
+		},
+		{
+			"repo": "three-ws-witness",
+			"path": "packages/witness",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/witness"
+		},
+		{
+			"repo": "x402-fetch",
+			"path": "packages/x402-fetch",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/x402-fetch"
+		},
+		{
+			"repo": "x402-payments-mcp",
+			"path": "packages/x402-mcp",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/x402-mcp"
+		},
+		{
+			"repo": "x402-preflight",
+			"path": "packages/x402-preflight",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/x402-preflight"
+		},
+		{
+			"repo": "x402-server",
+			"path": "packages/x402-server",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/x402-server"
+		},
+		{
+			"repo": "robinhood-chain-erc8056",
+			"path": "robinhood/erc8056",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "erc8056"
+		},
+		{
+			"repo": "robinhood-chain-alerts",
+			"path": "robinhood/hood-alerts",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "hood-alerts"
+		},
+		{
+			"repo": "robinhood-chain-api",
+			"path": "robinhood/hood-api",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "hood-api"
+		},
+		{
+			"repo": "robinhood-chain-cli",
+			"path": "robinhood/hood-cli",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "hood-cli"
+		},
+		{
+			"repo": "robinhood-chain-connect",
+			"path": "robinhood/hood-connect",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "hood-connect"
+		},
+		{
+			"repo": "robinhood-chain-js",
+			"path": "robinhood/hood-js",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "hood-js"
+		},
+		{
+			"repo": "robinhood-chain-launcher",
+			"path": "robinhood/hood-launcher",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "hood-launcher"
+		},
+		{
+			"repo": "robinhood-chain-mcp",
+			"path": "robinhood/hood-mcp",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "hood-mcp"
+		},
+		{
+			"repo": "robinhood-chain-pay",
+			"path": "robinhood/hood-pay",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "hood-pay"
+		},
+		{
+			"repo": null,
+			"path": "robinhood/hood-status",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": null
+		},
+		{
+			"repo": "robinhood-chain-tokenlist",
+			"path": "robinhood/hood-tokenlist",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "hood-tokenlist"
+		},
+		{
+			"repo": "robinhood-chain-traders",
+			"path": "robinhood/hood-traders",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "hood-traders"
+		},
+		{
+			"repo": "robinhood-chain-x402",
+			"path": "robinhood/hood402",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "hood402"
+		},
+		{
+			"repo": "robinhood-chain-kit",
+			"path": "robinhood/hoodkit",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "hoodkit"
+		},
+		{
+			"repo": "learn-robinhood-chain",
+			"path": "robinhood/learn-robinhood-chain",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "learn-robinhood-chain"
+		},
+		{
+			"repo": "robinhood-chain-examples",
+			"path": "robinhood/robinhood-chain-examples",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "robinhood-chain-examples"
+		},
+		{
+			"repo": "robinhood-chain-sdk",
+			"path": "robinhood/robinhood-chain-sdk",
+			"direction": "in",
+			"exporter": "sync",
+			"npm": "hoodchain"
+		},
+		{
+			"repo": "threews-agent-starter",
+			"path": "satellites/agent-starter",
+			"direction": "out",
+			"exporter": "growth-satellites",
+			"npm": null
+		},
+		{
+			"repo": "glb-quality-gate",
+			"path": "satellites/glb-quality-gate",
+			"direction": "out",
+			"exporter": "growth-satellites",
+			"npm": null
+		},
+		{
+			"repo": "oracle-desk",
+			"path": "satellites/oracle-desk",
+			"direction": "out",
+			"exporter": "growth-satellites",
+			"npm": null
+		},
+		{
+			"repo": "3d-avatar-companion",
+			"path": "walk-sdk",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/walk"
+		},
+		{
+			"repo": null,
+			"path": "x402-modal-sdk",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/x402-modal"
+		},
+		{
+			"repo": null,
+			"path": "x402-payment-modal",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "@three-ws/x402-payment-modal"
+		}
+	]
+}

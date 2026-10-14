@@ -1,0 +1,50 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://three.ws/schemas/standalone-mirrors.schema.json",
+	"title": "three.ws standalone mirrors",
+	"description": "One entry per monorepo directory that has (or could have) a public, generated, read-only GitHub mirror. scripts/sync-standalone-repos.mjs and the other exporters (export-growth-satellites.mjs, build-awesome.mjs, build-standalone-skill-repos.mjs) read this manifest instead of hardcoding repo names. The monorepo stays the canonical source; mirrors are one-way snapshots.",
+	"type": "object",
+	"required": ["mirrors"],
+	"properties": {
+		"$schema": { "type": "string" },
+		"generated": { "type": "string" },
+		"mirrors": {
+			"type": "array",
+			"minItems": 1,
+			"items": { "$ref": "#/definitions/mirror" }
+		}
+	},
+	"additionalProperties": false,
+	"definitions": {
+		"mirror": {
+			"type": "object",
+			"required": ["repo", "path", "direction", "exporter", "npm"],
+			"properties": {
+				"repo": {
+					"type": ["string", "null"],
+					"description": "GitHub repo slug under github.com/nirholas (owner implied), or null when no mirror exists yet."
+				},
+				"path": {
+					"type": "string",
+					"minLength": 1,
+					"description": "Directory in this monorepo, relative to the repo root."
+				},
+				"direction": {
+					"type": "string",
+					"enum": ["out", "in"],
+					"description": "\"out\": this monorepo directory is exported to the mirror. \"in\": the mirror (or an external repo) is the source of truth and this directory is a reference copy."
+				},
+				"exporter": {
+					"type": "string",
+					"enum": ["sync", "growth-satellites", "examples", "awesome", "skill-repos"],
+					"description": "Which script produces/consumes this mirror: sync-standalone-repos.mjs, export-growth-satellites.mjs, export-satellites.mjs, build-awesome.mjs --standalone, or build-standalone-skill-repos.mjs."
+				},
+				"npm": {
+					"type": ["string", "null"],
+					"description": "Published npm package name for this path, or null when it is not an npm package."
+				}
+			},
+			"additionalProperties": false
+		}
+	}
+}

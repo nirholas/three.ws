@@ -76,6 +76,21 @@ export const REPO_SPECS = [
 	},
 ];
 
+// data/standalone-mirrors.json is the one list of "which directory is which
+// public repo"; REPO_SPECS carries the per-repo skill selection this exporter
+// alone needs, so it is checked against the manifest rather than duplicated
+// into it (the manifest schema has no room for a select() predicate).
+const manifestRepos = new Set(
+	JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'standalone-mirrors.json'), 'utf8'))
+		.mirrors.filter((m) => m.exporter === 'skill-repos')
+		.map((m) => m.repo),
+);
+for (const spec of REPO_SPECS) {
+	if (!manifestRepos.has(spec.repo)) {
+		throw new Error(`${spec.repo}: missing from data/standalone-mirrors.json (exporter: "skill-repos")`);
+	}
+}
+
 // Importable as a library (the tests read REPO_SPECS): only build when this file
 // is the entry point.
 const invokedDirectly =

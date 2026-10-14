@@ -205,48 +205,33 @@ GitHub token for that account (`GITHUB_TOKEN`, or the PAT on the `origin` remote
 A token for a different account authenticates fine and is then rejected for that
 namespace.
 
-**3. Standalone GitHub mirrors** - each package also lives in its own repo at
-`github.com/<owner>/<name>` (a read-only mirror; the monorepo stays canonical).
-Each sync force-pushes one snapshot commit whose message records the source
-monorepo SHA, and rewrites the mirror's `package.json` / `server.json`
-`repository` fields to point at the standalone repo:
+**3. Standalone GitHub mirrors** - about 80 directories in this monorepo also
+live in their own public repo at `github.com/<owner>/<name>` (a read-only
+mirror; the monorepo stays canonical). [`data/standalone-mirrors.json`](../data/standalone-mirrors.json)
+is the single source of truth for "which directory is which public repo, in
+which direction": every exporter (`sync-standalone-repos.mjs`,
+`export-growth-satellites.mjs`, `build-awesome.mjs --standalone`,
+`build-standalone-skill-repos.mjs`) reads repo names from it instead of
+hardcoding its own list. A `direction: "in"` entry (the `robinhood/*` copies)
+is a reference copy of an external repo; no exporter pushes those.
+
+`scripts/sync-standalone-repos.mjs` only **stages**; it never pushes and never
+calls the GitHub API:
 
 ```bash
-npm run sync:repos:dry     # plan only, both lanes
-npm run sync:repos         # create missing repos + push snapshots (needs gh auth as the owner)
-# scope it:
-node scripts/sync-standalone-repos.mjs --dry-run --kind lib --new
-node scripts/sync-standalone-repos.mjs --execute --only agent-sniper,copy-mcp
+npm run sync:repos           # stage every manifest "sync" entry under dist/standalone-mirrors/
+npm run sync:repos:check     # compare staged trees against the live repos; exits non-zero on drift
+node scripts/sync-standalone-repos.mjs --only tty-avatar,x402-bridge
 ```
 
-`--kind mcp` / `--kind lib` narrows to one lane, `--new` limits the run to repos
-that do not exist yet, and the dry run prints how many repos it would CREATE
-before you commit to it. Repo names come from the unscoped npm name, except that
-a single-token `@three-ws/*` name mirrors as `three-ws-<name>`: the scope carries
-the identity on npm, but `github.com/nirholas/render` says nothing about what it
-is or who ships it.
-
-Auth: `gh` must be authenticated as the target owner (default `nirholas`; override
-with `--owner`) so it can create and push under that account.
-
-**What every mirror ships.** Besides the package, each sync generates the discovery
-layer from `scripts/lib/standalone-enrich.mjs`, so no mirror is a bare code dump:
-
-| Generated file | Audience |
-|---|---|
-| `AGENTS.md`, `llms.txt`, `llms-full.txt`, `glama.json` (MCP) | AI coding agents and MCP directories |
-| `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CITATION.cff`, issue forms, PR template | Contributors and security reporters |
-| `docs/` (README rendered with OG tags, JSON-LD, sitemap, robots, 404) | Search engines and humans, served by GitHub Pages from `main:/docs` |
-
-It also sets the repository topics (from the package keywords), description,
-homepage (`https://<owner>.github.io/<repo>/`), Discussions, Pages and
-vulnerability alerts over the API. A file the package already ships is kept, so a
-package overrides any generated file by committing its own. `--settings-only`
-re-applies the repository settings without pushing. `GH_PAT` authenticates both
-`git push` and `gh` when set, and never lands in a remote URL or process args.
-A package listed in `HOLD_NEW` keeps syncing if its repo exists, but its first
-repo is not created until the owner approves (it is built around another crypto
-project).
+Each staged mirror is a fresh one-commit git repo whose message records the
+source monorepo SHA (`Sync from three.ws@<sha>`), with `package.json`'s
+`repository` field rewritten to point at the standalone repo and any stale
+"All rights reserved" README footer or LICENSE replaced with the Apache-2.0
+text this repo ships today. Nothing else in the snapshot changes: the staged
+tree is otherwise byte-for-byte the source directory. `sync:repos` finishes by
+printing the exact `git push --force` command per mirror; publishing a mirror
+is the owner's call, not this script's.
 
 ---
 

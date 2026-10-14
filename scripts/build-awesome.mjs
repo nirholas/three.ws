@@ -37,6 +37,12 @@ const outFlag = (() => {
 
 const list = JSON.parse(readFileSync(path.join(root, 'data/awesome.json'), 'utf8'));
 
+// The standalone mirror's repo name is the manifest's job, not awesome.json's,
+// so there is one list of "which directory is which public repo".
+const mirrors = JSON.parse(readFileSync(path.join(root, 'data/standalone-mirrors.json'), 'utf8')).mirrors;
+const awesomeMirror = mirrors.find((m) => m.exporter === 'awesome');
+if (awesomeMirror?.repo) list.slug = awesomeMirror.repo;
+
 const problems = [];
 const slugs = new Set();
 const urls = new Map();
