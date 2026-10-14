@@ -832,3 +832,55 @@ not something this order performs.
 Commit: `92bb445c2` (feature: delegation.js spec, agent-spend-delegation.js store/enforcement,
 migration, guard.js and solana-wallet.js wiring, Delegation tab, tests, docs, changelog), this
 closing commit (PROGRESS log, order-file removal).
+
+## 2026-10-14: order 516-integrate-17 closed (evolve)
+
+Ported all 8 keyless x402-suite services (no API key anywhere in the chain, not an upstream
+key, not a three.ws key) as native `api/x402/<slug>.js` routes settling on three.ws's own
+Solana facilitator, rather than through the aggregator lane (`api/v1/_providers.js`), because
+that lane hardcodes Base-first networks and only does single-fetch-shape failover: Weather
+Guard (Open-Meteo, NWS fallback), Carbon (UK Carbon Intensity), Domains (RDAP), Research
+(arXiv/Crossref/Semantic Scholar), Books (OpenLibrary/Gutenberg), News Wire (GDELT DOC 2.0,
+~5.1s per-IP throttle serialized in a request queue), Transit (MBTA GTFS + GTFS-Realtime),
+Places (OSM Overpass). Each service follows the same two-tier shape: one primary GET route
+runs a free daily per-IP quota (`api/_lib/rate-limit.js`, fails closed to the paid rail on a
+Redis outage) before falling through to the x402 pay-per-call lane, and one or more secondary
+routes are always paid. 17 routes total, each with a catalog descriptor in
+`api/_lib/service-catalog/services/` so they surface in bazaar/economy/openapi/x402.json.
+
+Mid-session discovery: `catalogPaidPaths()` in `api/openapi-json.js` silently skipped every
+catalog descriptor marked `free: true`, so all 8 free-lane primary routes were completely
+missing from `/openapi.json` (only the 9 paid-only secondary routes appeared) even though the
+live 402 challenge was spec-valid on every route. Fixed by including `free: true` services in
+the document with `security: []` and no `x-payment-info` (mirroring the aggregator's own
+documented treatment of free-tier endpoints just above in the same file, for the same reason:
+a bare probe can legitimately return 200 while quota remains, so advertising `x-payment-info`
+there would repeat the exact x402scan registration failure that section already documents),
+with the free-then-paid billing lanes already spelled out in each service's `description`.
+
+Judgment call: upstream x402-places's detail route enriches with Yelp reviews, falling back to
+a deterministic seeded-random fixture when no Yelp key is set. three.ws has no Yelp key and
+CLAUDE.md bans fake data, so that whole enrichment path was dropped: `places-detail` returns
+only the real, live OSM record, documented in both the catalog descriptor and the route file.
+
+DoD verified: `npx vitest run tests/openapi-aggregator.test.js tests/service-catalog.test.js
+tests/aggregator-upstream-failover.test.js` is 40/40 passing (these schema-driven tests
+exercise every `PAID_SERVICES` entry automatically, no new hardcoded cases needed per service).
+All 17 routes confirmed present in `/openapi.json` and `/.well-known/x402.json` with Solana
+listed first in every `accepts[]`/challenge. Live, real (non-fabricated) free-lane responses
+captured from every one of the 8 services' actual upstream: Open-Meteo (weather-guard-forecast),
+UK Carbon Intensity (carbon-now), RDAP (domains-check), arXiv/Crossref/Semantic Scholar
+(research-search), OpenLibrary/Gutenberg (books-search), MBTA GTFS (transit-plan: a real
+South-Station-to-Harvard Red Line itinerary), OSM Overpass (places-search: a real Starbucks
+near Boston), and GDELT (news-wire-query: a genuine 200 and a genuine 429, the latter
+confirming GDELT's documented ~1-req/5s throttle on this shared sandbox IP is real upstream
+behavior, not an app bug). `npm run check:rules --paths <every touched file>` exits 0 on all
+three commits; em-dash/en-dash grep clean on every new/changed line.
+
+No owner-gated action in this order: every step is code, tests, docs, and a local build; no
+other-crypto-project reference landed in the diff, so no batched owner ask was needed either.
+
+Commits: `b239cb926` (weather-guard), `228dafe28` (carbon), `92cd17eb6` (domains), `506cf74c7`
+(research), `0ecc3007c` (books), `48d05d9a7` (news-wire, transit, places), `ad01ea88a`
+(openapi.json free-tier-discoverability fix), `e18987975` (docs + changelog), this closing
+commit (PROGRESS log, order-file removal).
