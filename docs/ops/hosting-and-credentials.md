@@ -125,9 +125,14 @@ token, create a scoped replacement with the narrowest required package permissio
 account's token activity.
 
 The pre-push guard at `scripts/check-secrets.mjs` rejects provider token formats and R2 credential
-pairs in added content. The runtime `redactUrlSecrets` guard also masks those formats when they
-arrive inside free-form text destined for structured logs. Both are defense in depth, not a
-substitute for rotation after disclosure.
+pairs in added content. It also catches a base58-encoded Solana keypair secret key: any 86-90
+character base58 run is decoded, and flagged only when the first 32 bytes derive the embedded
+public key in the last 32 bytes via Ed25519, so the thousands of real 64-byte transaction
+signatures already in the repo never trigger a false positive. The runtime `redactUrlSecrets`
+guard also masks those formats when they arrive inside free-form text destined for structured
+logs. Both are defense in depth, not a substitute for rotation after disclosure. A caught Solana
+secret follows the same incident response above: treat the exposed keypair as compromised, move
+its funds to a freshly generated wallet, and never reuse the key.
 
 ## Production verification after any credential change
 
