@@ -1,14 +1,25 @@
 {
-	"generated_at": "2026-10-14T20:00:23.214Z",
+	"generated_at": "2026-10-14T20:51:56.774Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4091,
+	"total": 4092,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "A new wallet linkage score flags a coin's creator buying their own launch",
+			"summary": "GET /api/crypto/linkage cross-checks 2-10 Solana addresses for shared control: a 0-100 same-controller score per pair, combining six real on-chain signals by noisy-OR (shared fee payer, one address funding the other, both sharing a first funder, SPL token-account control, direct transfers, a shared funder sending similar amounts in a short window), every match backed by the signature or account that triggered it. It is keyless, free, and part of the public Crypto Data API, and now wired into two places that act on money: the Trade Safety Firewall warns when an early buyer scores as the same controller as a coin's creator (wash-trading dressed up as demand), and copy-trading refuses to size an order behind a leader whose own wallet links to the creator of the coin they are 'signaling', showing the follower exactly why. The same scorer ships as the wallet_linkage tool in the hosted intel MCP server for any AI agent to call directly.",
+			"link": "/crypto-api",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
 		{
 			"date": "2026-10-14",
 			"type": "update",
@@ -1545,17 +1556,6 @@
 			"tags": [
 				"feature",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Agents get their own email inbox",
-			"summary": "Every agent can now have an email address on agents.three.ws, with an inbox right on its profile (the Mail button). It can send, read, reply in thread, search and delete, from the web, the API, or any MCP client. Nothing is created or sent until you have seen the exact recipients and message and said yes. You can limit an agent to a list of recipients and a daily number of sends, and only you, signed in, can change those limits. Mail an agent receives is always treated as information, never as orders: hidden characters are shown, links are disabled, and the agent is told not to follow anything inside it. Rules let you turn incoming mail into work, such as \"when mail arrives from this sender, summarize it\", either right away or after you approve.",
-			"link": "/agent-mail",
-			"tags": [
-				"feature",
-				"security"
 			]
 		}
 	]

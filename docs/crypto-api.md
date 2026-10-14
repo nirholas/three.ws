@@ -48,6 +48,7 @@ is documented in its section below and machine-readable in the OpenAPI doc.
 | [`/api/crypto/bonding`](https://three.ws/api/crypto/bonding) | `GET` | Where a pump.fun token sits on its bonding curve — % to graduation, SOL in the curve, and whether it has migrated to an AMM. |
 | [`/api/crypto/holders`](https://three.ws/api/crypto/holders) | `GET` | Holder distribution for a Solana token — top wallets with % of supply, cumulative top-10 share, and a documented concentration verdict. |
 | [`/api/crypto/launches`](https://three.ws/api/crypto/launches) | `GET` | The freshest pump.fun launches, newest first — age, market cap, bonding-curve progress, dev wallet — with `minMarketCap` / `maxAgeMin` filters built for polling agents. |
+| [`/api/crypto/linkage`](https://three.ws/api/crypto/linkage) | `GET` | Whether 2-10 Solana wallets share a controller - pairwise 0-100 same-controller scores with evidence (shared fee payer, first-funder, token-account control, direct transfer, funding burst). |
 | [`/api/crypto/portfolio`](https://three.ws/api/crypto/portfolio) | `GET` | A wallet read shaped for a portfolio view - stable/major/other split, top-asset allocation, per-token 24h change, and an aggregate 24h move that states its own coverage. |
 | [`/api/crypto/security`](https://three.ws/api/crypto/security) | `GET` | Pre-trade rug check for a Solana token — authority, concentration, liquidity, mutability, and LP-custody facts composed into a deterministic riskLevel. |
 | [`/api/crypto/symbol`](https://three.ws/api/crypto/symbol) | `GET` · `POST` | Whether up to 20 candidate tickers are taken — exact and fuzzy (look-alike) collisions across live registries. |
@@ -1048,6 +1049,88 @@ curl -s "https://three.ws/api/crypto/airdrops" | jq '.registry[].name'
 # Score a wallet and list only what it already qualifies for
 curl -s "https://three.ws/api/crypto/airdrops?address=<wallet>" \
   | jq '.opportunities[] | select(.eligibility == "qualified") | .name'
+```
+
+---
+
+## `GET /api/crypto/linkage` - Wallet linkage (same-controller scoring)
+
+**Use-case.** A *sniper or copy-trade agent* vetting a coin's early buyers
+needs to know whether they are independent actors or the creator's own alts
+dressed up as organic demand, and a *copy-trade follower* needs to know a
+leader isn't secretly the creator of the coin they're "signaling". One call
+answers both: pairwise 0-100 same-controller scores, with evidence, across
+2-10 Solana addresses.
+
+### Request
+
+| Param       | Type   | Default  | Notes |
+|-------------|--------|----------|-------|
+| `addresses` | string | required | Comma-separated list of 2 to 10 Solana addresses to cross-check. |
+
+### Response
+
+```json
+{
+  "addresses": ["FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump", "11111111111111111111111111111111"],
+  "pairs": [
+    {
+      "a": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+      "b": "11111111111111111111111111111111",
+      "score": 0,
+      "band": "none",
+      "topSignal": null,
+      "signals": [],
+      "evidence": []
+    }
+  ],
+  "complete": true,
+  "ts": "2026-10-14T20:00:00.000Z"
+}
+```
+
+- **`score`/`band`** - a 0-100 noisy-OR combination of six signals (shared fee
+  payer, one address funding the other, both sharing a first funder, SPL
+  token-account control, direct transfers, a shared funder sending similar
+  amounts in a short window), bucketed into `none` / `weak` / `moderate` /
+  `strong` / `confirmed`.
+- **`topSignal`** - the single highest-weight signal that fired for the pair,
+  or `null` when no signal fired.
+- **`evidence`** - the signature or account that triggered each contributing
+  signal, so a caller can verify the claim on-chain rather than trust the score
+  blind.
+- **`complete: false`** - at least one address's history walk hit its time or
+  request budget before finishing. The score is still real, just possibly
+  based on partial history.
+
+### Sources
+
+Solana RPC only (this deployment's own failover chain, keyless): account info,
+parsed transaction history, and signature lists for each address. A known
+service/exchange wallet that funds many unrelated addresses is excluded from
+the shared-funder signals at runtime (`WALLET_LINKAGE_EXCLUDED_ACCOUNTS` /
+`WALLET_LINKAGE_EXCLUSIONS_PATH`) rather than evidence of a link.
+
+### States
+
+- **2-10 valid Solana addresses** -> `200` with scored pairs.
+- **Missing `addresses`** -> `400 missing_addresses`.
+- **Fewer than 2 or more than 10 addresses** -> `400 invalid_address_count`.
+- **An EVM address mixed in** -> `400 unsupported_chain` (Solana only; this
+  endpoint is Solana-first by design, not an EVM gap).
+- **A malformed address** -> `400 invalid_address`.
+- **Solana RPC unreachable** -> `503 upstream_unavailable` with
+  `Retry-After: 15`, or a `200` stale envelope if a cached result exists.
+- **Rate-limited** -> `429`.
+
+### Examples
+
+```bash
+# Are these two wallets the same controller?
+curl -s "https://three.ws/api/crypto/linkage?addresses=<walletA>,<walletB>"
+
+# Highest-scoring pair only
+curl -s "https://three.ws/api/crypto/linkage?addresses=<a>,<b>,<c>" | jq '.pairs | max_by(.score)'
 ```
 
 ---
