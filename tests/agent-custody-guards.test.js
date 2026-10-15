@@ -118,6 +118,15 @@ describe('normalizeSpendLimits', () => {
 		expect(normalizeSpendLimits({ per_tx_usd: 'abc' }).per_tx_usd).toBeNull();
 	});
 
+	// Order 519: a wallet that never sets an approval threshold keeps today's
+	// behavior (no human-approval gate on a2a hires); setting one is the minimal
+	// threshold check that lets api/agents/a2a-hire.js park a hire above it.
+	it('defaults approval_threshold_usd to null and coerces a numeric string', () => {
+		expect(normalizeSpendLimits(undefined).approval_threshold_usd).toBeNull();
+		expect(normalizeSpendLimits({ approval_threshold_usd: '10' }).approval_threshold_usd).toBe(10);
+		expect(normalizeSpendLimits({ approval_threshold_usd: -1 }).approval_threshold_usd).toBeNull();
+	});
+
 	it('filters invalid + de-dupes allowlist addresses', () => {
 		const a = Keypair.generate().publicKey.toBase58();
 		const n = normalizeSpendLimits({ withdraw_allowlist: [a, 'garbage', a] });

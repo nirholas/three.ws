@@ -49,9 +49,14 @@ import { recordInvocationReceipt } from '../_lib/agent-invocation-onchain.js';
 import {
 	atomicsToUsdc,
 	getOfferBySlug,
+	getHireById,
 	recordHire,
 	updateHire,
 } from '../_lib/agent-economy.js';
+import { createApprovalRequest, runApproved, TTL_MS } from '../_lib/approvals.js';
+
+// Source key this file registers its executor under (api/_lib/approvals.js EXECUTORS).
+export const APPROVAL_SOURCE = 'a2a_hire';
 
 // Pull the settlement signature out of the x402 receipt header object, whatever
 // shape the facilitator returned it in.
@@ -218,6 +223,9 @@ export default wrap(async (req, res) => {
 			if (row.status === 'completed') {
 				return json(res, 200, { ok: true, idempotent: true, hire: publicHire(row, offer) });
 			}
+			if (row.status === 'pending' && row.meta?.awaiting_approval && row.meta?.approval_id) {
+				return await respondHireApprovalStatus(res, { userId, approvalId: row.meta.approval_id, hireRow: row, offer });
+			}
 			if (row.status === 'pending') {
 				return error(res, 409, 'hire_in_progress', 'a hire with this key is already in progress');
 			}
@@ -229,6 +237,20 @@ export default wrap(async (req, res) => {
 	} catch (err) {
 		console.error('[a2a-hire] recordHire failed', err?.message || err);
 		return error(res, 500, 'hire_record_failed', 'could not record the hire');
+	}
+
+	// ── Human approval above the hiring agent's spend threshold ─────────────
+	// A threshold the owner set on this agent (approval_threshold_usd, settable
+	// via PUT on /api/agents/solana-wallet's limits endpoint, same policy object
+	// as per_tx_usd/daily_usd) is a decision to see every crossing by hand, not a
+	// cap to enforce silently. Checked here, after the hire is recorded but
+	// before any spend reservation, so a parked hire never holds funds while it
+	// waits and a retry of the same idempotencyKey re-enters at the branch above.
+	if (spendPolicy.approval_threshold_usd != null && usd > Number(spendPolicy.approval_threshold_usd) + 1e-9) {
+		return await requestHireApproval(res, {
+			hirer, offer, hireRow, usd, maxUsd, threshold: spendPolicy.approval_threshold_usd,
+			input, pushPhase, capBadge,
+		});
 	}
 
 	// ── Reserve the spend against the hiring agent's spend policy ────────────
@@ -380,6 +402,251 @@ export default wrap(async (req, res) => {
 		result: payment.result ?? null,
 	});
 });
+
+// ── Park a hire that crossed the hiring agent's approval threshold ──────────
+// Spend was never reserved for this hire (the threshold is checked before the
+// "Reserve the spend" block), so there is nothing to roll back here: the hire
+// row stays 'pending' and simply waits for executeApprovedA2aHire to run the
+// rest of the flow once the owner approves.
+async function requestHireApproval(res, { hirer, offer, hireRow, usd, maxUsd, threshold, input, pushPhase, capBadge }) {
+	pushPhase('awaiting_approval', { cap: capBadge(null, usd) });
+	const created = await createApprovalRequest({
+		userId: hirer.user_id,
+		agentId: hirer.id,
+		source: APPROVAL_SOURCE,
+		sourceRef: hireRow.id,
+		actionType: 'a2a_hire',
+		venue: 'a2a_hire',
+		payload: {
+			kind: 'a2a_hire',
+			hire_id: hireRow.id,
+			hirer_agent_id: hirer.id,
+			provider_agent_id: offer.provider.id,
+			service_slug: offer.slug,
+			usd,
+			max_usd: typeof maxUsd === 'number' ? maxUsd : null,
+			input,
+		},
+		summary: `Agent "${hirer.name || hirer.id}" wants to hire "${offer.provider.name || offer.provider.id}" for ${offer.name} ($${usd.toFixed(2)})`,
+		amount: usd,
+		amountUsd: usd,
+		asset: 'USDC',
+		chain: 'solana',
+		network: 'mainnet',
+		recipient: offer.provider.name || offer.provider.id,
+		riskNotes: [
+			`This agent's approval threshold is $${Number(threshold).toFixed(2)}.`,
+			`Service: ${offer.slug}`,
+		],
+		gateReason: `Hire price $${usd.toFixed(2)} exceeds this agent's $${Number(threshold).toFixed(2)} approval threshold.`,
+		idempotencyKey: `${APPROVAL_SOURCE}:${hireRow.id}`,
+		ttlMs: TTL_MS.transfer,
+		autoApprovable: false,
+	});
+
+	const req = created.request;
+	await updateHire(hireRow.id, { meta: { awaiting_approval: true, approval_id: req.id } });
+
+	if (created.autoApproved) {
+		const { outcome } = await runApproved(req, (claim) => executeApprovedA2aHire(claim));
+		if (outcome?.status === 'ok' && outcome.data) return json(res, 200, outcome.data);
+		return error(res, 502, 'approved_execution_failed', outcome?.note || 'the auto-approved hire did not complete');
+	}
+	return renderHireApprovalStatus(res, req, hireRow, offer);
+}
+
+// Shared by the fresh-create 202 and the idempotent-retry poll: render the
+// current state of a hire that is (or was) parked on an approval request.
+async function respondHireApprovalStatus(res, { userId, approvalId, hireRow, offer }) {
+	const [approvalRow] = await sql`
+		SELECT * FROM approval_requests WHERE id = ${approvalId} AND user_id = ${userId}
+	`;
+	if (!approvalRow) return error(res, 404, 'not_found', 'approval request not found');
+	return renderHireApprovalStatus(res, approvalRow, hireRow, offer);
+}
+
+function renderHireApprovalStatus(res, approvalRow, hireRow, offer) {
+	const status = approvalRow.status;
+	if (status === 'executed') {
+		const data = approvalRow.result?.data;
+		if (data) return json(res, 200, data);
+		return error(res, 502, 'approved_execution_missing_result', 'the hire was approved and executed, but its result was not retained');
+	}
+	if (status === 'failed') {
+		return error(res, 502, 'approved_execution_failed', approvalRow.result?.note || 'the approved hire did not complete');
+	}
+	if (status === 'denied') {
+		return error(res, 403, 'approval_denied', 'the owner denied this hire');
+	}
+	if (status === 'expired') {
+		return error(res, 410, 'approval_expired', 'this approval request expired before the owner answered; retry with a new idempotencyKey to ask again');
+	}
+	// pending, approved, executing: still waiting on the owner (or the executor).
+	return json(res, 202, {
+		ok: false,
+		hire: publicHire(hireRow, offer),
+		pending_approval: true,
+		approval: {
+			id: approvalRow.id,
+			status: approvalRow.status,
+			link: `/approvals/${approvalRow.id}`,
+			expires_at: approvalRow.expires_at,
+		},
+		message: `this hire needs the owner's approval before it runs: ${approvalRow.summary}. Call this same request again to check status.`,
+	});
+}
+
+/**
+ * Executor registered for source 'a2a_hire' (api/_lib/approvals.js EXECUTORS).
+ * Re-runs the reserve-spend → pay-over-x402 → receipt → finalize sequence from
+ * the main handler, scoped to ONLY the data stashed in row.payload, after the
+ * owner has approved. Mirrors the main handler's error handling exactly:
+ * payment_failed still releases the spend reservation, and a receipt failure
+ * still completes the hire (the payment already settled).
+ */
+export async function executeApprovedA2aHire(row) {
+	const p = row.payload || {};
+	if (p.kind !== 'a2a_hire') {
+		return { status: 'error', note: 'unknown hire action, so nothing was executed' };
+	}
+
+	const hireRow = await getHireById(p.hire_id);
+	if (!hireRow) return { status: 'error', note: 'the hire record for this approval no longer exists' };
+
+	const offer = await getOfferBySlug(p.service_slug);
+	if (!offer) return { status: 'error', note: `the service offer "${p.service_slug}" is no longer available` };
+
+	if (hireRow.status === 'completed') {
+		return {
+			status: 'ok',
+			signature: hireRow.payment_signature || undefined,
+			usd: hireRow.usd != null ? Number(hireRow.usd) : undefined,
+			note: 'hire already completed',
+			data: { ok: true, hire: publicHire(hireRow, offer), result: null },
+		};
+	}
+
+	const [hirer] = await sql`
+		SELECT id, user_id, name, meta FROM agent_identities
+		WHERE id = ${p.hirer_agent_id} AND deleted_at IS NULL
+	`;
+	if (!hirer) return { status: 'error', note: 'the hiring agent no longer exists' };
+	if (!hirer.meta?.solana_address || !hirer.meta?.encrypted_solana_secret) {
+		return { status: 'error', note: 'the hiring agent no longer has a Solana wallet provisioned' };
+	}
+
+	const usd = Number(p.usd ?? hireRow.usd ?? 0);
+	const userId = hirer.user_id;
+
+	let reservationId = null;
+	try {
+		const reservation = await reserveSpendUsd({
+			agentId: hirer.id,
+			userId,
+			meta: hirer.meta,
+			category: 'x402',
+			usdValue: usd,
+			asset: 'USDC',
+			network: 'mainnet',
+			rowMeta: { kind: 'a2a_hire', slug: offer.slug, provider_agent_id: offer.provider.id, hire_id: hireRow.id },
+		});
+		reservationId = reservation.reservationId;
+		await sql`UPDATE agent_hires SET spend_reservation_id = ${reservationId}, updated_at = now() WHERE id = ${hireRow.id}`;
+	} catch (err) {
+		await updateHire(hireRow.id, { status: 'failed', error: err?.message || 'spend policy blocked' });
+		return { status: 'error', note: err?.message || 'the hire could not be re-reserved after approval' };
+	}
+
+	let payment;
+	try {
+		payment = await payExternalX402({
+			userId,
+			agentId: hirer.id,
+			url: serviceResourceUrl(offer.slug),
+			method: offer.method === 'POST' ? 'POST' : 'GET',
+			body: offer.method === 'POST' ? (p.input ?? {}) : undefined,
+			maxUsd: usd,
+		});
+	} catch (err) {
+		await releaseSpendReservation(reservationId, 'hire_payment_failed');
+		await updateHire(hireRow.id, { status: 'failed', error: err?.message || String(err) });
+		return {
+			status: 'error',
+			note: `the hire did not complete after approval, no funds were moved: ${err?.message || err?.code || 'payment_failed'}`,
+		};
+	}
+
+	const paymentSignature = receiptSignature(payment.receipt);
+	const payerAddress = payment.payer || hirer.meta.solana_address;
+	const deliveredSummary = summarizeResult(payment.result);
+
+	await updateCustodyEvent(reservationId, {
+		status: 'confirmed',
+		signature: paymentSignature,
+		meta: { settled: true },
+	}).catch(() => {});
+
+	if (offer.provider.id) {
+		recordCustodyEvent({
+			agentId: offer.provider.id,
+			userId: null,
+			eventType: 'tip',
+			category: null,
+			network: 'mainnet',
+			asset: 'USDC',
+			usd,
+			signature: paymentSignature,
+			status: 'confirmed',
+			meta: { source: 'a2a_hire', from_agent_id: hirer.id, from: payerAddress, hire_id: hireRow.id, skill: offer.name },
+		}).catch(() => {});
+	}
+
+	let invocation = null;
+	let invocationError = null;
+	try {
+		const invokerKeypair = await recoverSolanaAgentKeypair(hirer.meta.encrypted_solana_secret, {
+			agentId: hirer.id,
+			userId,
+			reason: 'a2a_hire_invocation_receipt',
+		});
+		const targetAuthority = offer.provider.solana_address;
+		if (!targetAuthority) throw new Error('provider has no Solana authority to record against');
+		invocation = await recordInvocationReceipt({
+			invokerKeypair,
+			targetAuthority,
+			skillName: offer.name,
+			parameters: JSON.stringify({ slug: offer.slug, hire: hireRow.id, usd }).slice(0, 480),
+		});
+	} catch (err) {
+		invocationError = err?.message || String(err);
+	}
+
+	const finalized = await updateHire(hireRow.id, {
+		status: 'completed',
+		paymentSignature,
+		payerAddress,
+		invocationSignature: invocation?.signature || null,
+		invocationError,
+		resultSummary: deliveredSummary,
+		meta: {
+			receipt: payment.receipt || null,
+			invocation: invocation || null,
+			awaiting_approval: false,
+		},
+	});
+
+	return {
+		status: 'ok',
+		signature: paymentSignature || undefined,
+		usd,
+		note: 'hire executed after owner approval',
+		data: {
+			ok: true,
+			hire: publicHire(finalized || hireRow, offer, { invocation, payment }),
+			result: payment.result ?? null,
+		},
+	};
+}
 
 // Shape the hire for the client, including explorer links derived from the real
 // on-chain signatures. The embodied layer + money-cam consume `embodied`.

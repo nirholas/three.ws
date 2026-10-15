@@ -182,6 +182,32 @@ export async function verifySessionToken(token) {
 }
 
 /**
+ * Load a session by id with no token check.
+ *
+ * Used only to resume a call that already cleared authentication once: the
+ * owner approval flow stores the session id (never the bearer token) on the
+ * approval request's payload, and the executor that runs after the owner
+ * clicks Approve re-enters the governor through here instead of re-deriving a
+ * token the agent never gets to see again. Never expose this to a path that
+ * takes a caller-supplied session id without its own authorization check.
+ */
+export async function verifySessionById(sessionId) {
+	if (!isSessionId(sessionId)) throw new SpendGovernorError('invalid_token', 'Invalid session id format');
+	const [row] = await sql`
+		SELECT id, user_id, agent_id, label, budget_usdc, spent_usdc,
+		       max_per_tx_usdc, allowed_hosts, blocked_hosts,
+		       approval_threshold_usdc, per_rail_daily_usdc,
+		       network, connector_ref,
+		       status, expires_at, session_metadata
+		FROM payment_sessions
+		WHERE id = ${sessionId}
+		LIMIT 1
+	`;
+	if (!row) throw new SpendGovernorError('invalid_token', 'Session not found');
+	return row;
+}
+
+/**
  * Enforce governance policy and atomically reserve budget for a payment.
  *
  * Every advisory rule (status, expiry, allowlist, blocked hosts, per-tx
@@ -194,14 +220,17 @@ export async function verifySessionToken(token) {
  * advisory predictions of what those statements are about to decide for real.
  *
  * @param {object} opts
- * @param {string} opts.token        - Session bearer token
+ * @param {string} [opts.token]      - Session bearer token (mutually exclusive with sessionId)
+ * @param {string} [opts.sessionId]  - Session id, for resuming an approved call that has no token
  * @param {string} opts.url          - Target endpoint URL (for allowlist check)
  * @param {bigint} opts.amountAtomics - Payment amount in USDC atomics (6 decimals)
+ * @param {boolean} [opts.approvalGranted] - Skip the approval-threshold rule: the owner
+ *   already approved this exact call through the approval inbox.
  * @returns {Promise<{ session: object, reservationId: string, railReservationId: string|null, policyDigest: string, verdictCode: string, verdictSignature: string, verdictSignedAt: string }>}
  * @throws {SpendGovernorError} on any policy violation
  */
-export async function reserveSessionSpend({ token, url, amountAtomics }) {
-	const session = await verifySessionToken(token);
+export async function reserveSessionSpend({ token = null, sessionId = null, url, amountAtomics, approvalGranted = false }) {
+	const session = token ? await verifySessionToken(token) : await verifySessionById(sessionId);
 	const now = new Date();
 	const amount = BigInt(amountAtomics);
 
@@ -232,7 +261,7 @@ export async function reserveSessionSpend({ token, url, amountAtomics }) {
 		approvalThresholdAtomics: session.approval_threshold_usdc,
 	};
 
-	const verdict = evaluateCall({ url, amountAtomics: amount, policy, remainingAtomics, now });
+	const verdict = evaluateCall({ url, amountAtomics: amount, policy, remainingAtomics, now, approvalGranted });
 
 	const policyDigest = computePolicyDigest(session);
 	const requestHash = computeRequestHash({ sessionId: session.id, url, amountAtomics: amount });

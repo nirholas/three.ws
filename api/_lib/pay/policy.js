@@ -307,9 +307,13 @@ export function approvalVerdict(amountAtomics, approvalThresholdAtomics) {
  * @param {object} call.policy              { status, expiresAt, allowedHosts, blockedHosts, maxPerTxAtomics, railSpentAtomics, railDailyCapAtomics, approvalThresholdAtomics }
  * @param {bigint|string|number} call.remainingAtomics budget left before this call
  * @param {Date} [call.now]
+ * @param {boolean} [call.approvalGranted] skip the approval rule: an owner already
+ *   approved this exact call once and the governor is replaying it under that grant.
+ *   Every other rule still runs, so a grant never bypasses the allowlist, the rail
+ *   cap, or the budget, only the "ask a human" step it already satisfied.
  * @returns {{code: string, message: string, detail: object} | null}
  */
-export function evaluateCall({ url, amountAtomics, policy, remainingAtomics, now = new Date() }) {
+export function evaluateCall({ url, amountAtomics, policy, remainingAtomics, now = new Date(), approvalGranted = false }) {
 	return (
 		statusVerdict(policy.status ?? 'active') ??
 		expiryVerdict(policy.expiresAt ?? null, now) ??
@@ -318,7 +322,7 @@ export function evaluateCall({ url, amountAtomics, policy, remainingAtomics, now
 		perTxVerdict(amountAtomics, policy.maxPerTxAtomics ?? null) ??
 		railDailyVerdict(amountAtomics, policy.railSpentAtomics ?? 0, policy.railDailyCapAtomics ?? null) ??
 		budgetVerdict(amountAtomics, remainingAtomics) ??
-		approvalVerdict(amountAtomics, policy.approvalThresholdAtomics ?? null)
+		(approvalGranted ? null : approvalVerdict(amountAtomics, policy.approvalThresholdAtomics ?? null))
 	);
 }
 

@@ -277,10 +277,16 @@ A source registers an executor in the `EXECUTORS` map in
 `executor(row)` receives the stored row, executes only `row.payload`, and
 returns `{ status: 'ok'|'error'|'paused'|'skipped', signature?, note?, usd? }`.
 Registered sources include `wallet_intent` (agent transfers and swaps from
-wallet intents) and `mail_rule` (an [agent mail](./agent-mail.md) rule in
+wallet intents), `mail_rule` (an [agent mail](./agent-mail.md) rule in
 `approve` mode: approving starts a read-only, zero-budget run on the email that
 matched, and its table names the agent, the email and the instruction with
-`Spend: None`). Then call `createApprovalRequest()` where the source hits
+`Spend: None`), `payment_session_execute` (an agent payment session call
+priced above its `approval_threshold_usd`: [api/pay/execute.js](../api/pay/execute.js)
+parks the call instead of failing it, and the caller polls the same endpoint
+with `GET` until it resumes), and `a2a_hire` (an agent-to-agent hire priced
+above the hiring agent's `approval_threshold_usd`: [api/agents/a2a-hire.js](../api/agents/a2a-hire.js)
+parks the hire and the caller's retry with the same idempotency key re-polls
+it). Then call `createApprovalRequest()` where the source hits
 its step-up gate, with an idempotency key derived from the action. Engines
 that execute inline (an auto-approved request) call `runApproved(row, run)`,
 which provides the same once-only and integrity guarantees.

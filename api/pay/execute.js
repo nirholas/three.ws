@@ -53,8 +53,14 @@ import {
 	recordExecution,
 	SpendGovernorError,
 } from '../_lib/pay/spend-governor.js';
+import { computeRequestHash } from '../_lib/pay/policy.js';
+import { createApprovalRequest, runApproved, isUuid, TTL_MS } from '../_lib/approvals.js';
+import { sql } from '../_lib/db.js';
 
 const SOLANA_RPC = env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+
+// Source key this file registers its executor under (api/_lib/approvals.js EXECUTORS).
+export const APPROVAL_SOURCE = 'payment_session_execute';
 
 // ── Platform payer: Solana ───────────────────────────────────────────────────
 let _solanaKeypair = null;
@@ -243,9 +249,320 @@ function explorerUrl(txHash) {
 	return `https://solscan.io/tx/${txHash}`;
 }
 
+function hostOf(rawUrl) {
+	try { return new URL(rawUrl).hostname; } catch { return String(rawUrl || ''); }
+}
+
+// ── Settle a reserved payment: sign, submit, record ─────────────────────────
+// Everything after governance clears (build the signed payload, submit it,
+// record the execution). Pulled out of the main handler so the exact same
+// settlement path can run either synchronously (the direct call) or later,
+// from the approval executor, once the owner has approved a call that crossed
+// the session's approval threshold. Never writes to an HTTP response: it
+// returns a plain result so both callers can shape their own response.
+async function settlePayment({
+	sessionRecord, railReservationId, policyDigest, verdictCode, verdictSignature, verdictSignedAt,
+	targetUrl, method, requestBody, accept, resource, amountAtomics, amountUsd, idempotencyKey, t0,
+}) {
+	let keypair;
+	try {
+		keypair = loadSolanaKeypair();
+	} catch (err) {
+		await rollbackReservation(sessionRecord.id, amountAtomics, { railReservationId }).catch(() => {});
+		return {
+			ok: false,
+			status: err.status ?? 503,
+			code: err.code ?? 'wallet_unconfigured',
+			message: err.message || 'Platform Solana payment wallet is not configured',
+		};
+	}
+	const payerAddress = keypair.publicKey.toBase58();
+	const conn = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
+
+	let paymentPayload;
+	try {
+		paymentPayload = await buildSolanaPayload({
+			accept, amount: amountAtomics, buyer: keypair, conn, resourceUrl: resource.url || targetUrl,
+		});
+	} catch (err) {
+		await rollbackReservation(sessionRecord.id, amountAtomics, { railReservationId }).catch(() => {});
+		if (isRpcUnavailable(err)) {
+			return {
+				ok: false, status: 503, code: 'rpc_unavailable',
+				message: 'Solana RPC temporarily unavailable; payment not built, retry shortly',
+				detail: { retryable: true, retry_after: RPC_RETRY_AFTER_SECONDS },
+				headers: { 'retry-after': String(RPC_RETRY_AFTER_SECONDS) },
+			};
+		}
+		return { ok: false, status: 502, code: 'build_failed', message: `Failed to build Solana payment: ${err?.message}` };
+	}
+
+	const xPayment = Buffer.from(JSON.stringify(paymentPayload)).toString('base64');
+
+	let paid;
+	try {
+		paid = await guardedFetch(targetUrl, { method, body: requestBody, headers: { 'X-PAYMENT': xPayment } });
+	} catch (err) {
+		// Network failure AFTER signing: chain state unknown, do NOT roll back.
+		await recordExecution({
+			sessionId: sessionRecord.id, userId: sessionRecord.user_id, endpointUrl: targetUrl, method,
+			amountAtomics, network: accept.network, txHash: null, payerAddress, payeeAddress: accept.payTo,
+			status: 'failed', errorCode: 'settle_uncertain', errorMessage: err?.message,
+			durationMs: Date.now() - t0, idempotencyKey, policyDigest, verdictCode, verdictSignature, verdictSignedAt,
+		}).catch(() => {});
+		return {
+			ok: false, status: 502, code: 'settle_uncertain',
+			message: 'Payment was submitted but confirmation was not received. Do not retry immediately.',
+		};
+	}
+
+	const paidJson = safeJson(paid.text) ?? paid.text;
+	const settled = b64decodeJson(paid.headers.get('x-payment-response'));
+	const txHash = settled?.transaction || settled?.txHash || null;
+	const payer = settled?.payer || payerAddress;
+	const durationMs = Date.now() - t0;
+
+	if (paid.status === 402) {
+		await rollbackReservation(sessionRecord.id, amountAtomics, { railReservationId }).catch(() => {});
+		await recordExecution({
+			sessionId: sessionRecord.id, userId: sessionRecord.user_id, endpointUrl: targetUrl, method,
+			amountAtomics, network: accept.network, txHash: null, payerAddress: payer, payeeAddress: accept.payTo,
+			status: 'failed', errorCode: 'payment_rejected', errorMessage: 'Service rejected the payment before settlement',
+			durationMs, idempotencyKey, policyDigest, verdictCode, verdictSignature, verdictSignedAt,
+		}).catch(() => {});
+		return {
+			ok: false, status: 402, code: 'payment_rejected',
+			message: 'Service rejected the payment before settlement. Budget has been restored.',
+			detail: typeof paidJson === 'object' ? paidJson : null,
+		};
+	}
+
+	if (!paid.ok) {
+		await recordExecution({
+			sessionId: sessionRecord.id, userId: sessionRecord.user_id, endpointUrl: targetUrl, method,
+			amountAtomics, network: accept.network, txHash, payerAddress: payer, payeeAddress: accept.payTo,
+			status: 'failed', errorCode: 'upstream_error', errorMessage: `Endpoint returned HTTP ${paid.status}`,
+			responseBody: typeof paidJson === 'object' ? paidJson : null,
+			durationMs, idempotencyKey, policyDigest, verdictCode, verdictSignature, verdictSignedAt,
+		}).catch(() => {});
+		return {
+			ok: false, status: 502, code: 'upstream_error',
+			message: `Endpoint returned HTTP ${paid.status} after payment. Check wallet activity before retrying.`,
+		};
+	}
+
+	await recordExecution({
+		sessionId: sessionRecord.id, userId: sessionRecord.user_id, endpointUrl: targetUrl, method,
+		amountAtomics, network: accept.network, txHash, payerAddress: payer, payeeAddress: accept.payTo,
+		status: 'settled', responseBody: typeof paidJson === 'object' ? paidJson : null,
+		durationMs, idempotencyKey, policyDigest, verdictCode, verdictSignature, verdictSignedAt,
+	}).catch(() => {});
+
+	return {
+		ok: true,
+		body: {
+			ok: true,
+			paid: true,
+			result: paidJson,
+			payment: {
+				session_id: sessionRecord.id,
+				amount_usd: amountUsd,
+				network: accept.network,
+				payer,
+				pay_to: accept.payTo,
+				tx_hash: txHash,
+				explorer: explorerUrl(txHash),
+			},
+			session: {
+				id: sessionRecord.id,
+				spent_usd: atomicsToUsd(BigInt(sessionRecord.spent_usdc)),
+				remaining_usd: atomicsToUsd(BigInt(sessionRecord.budget_usdc) - BigInt(sessionRecord.spent_usdc)),
+			},
+			duration_ms: durationMs,
+		},
+	};
+}
+
+function sendSettlement(res, result) {
+	if (result.ok) return json(res, 200, result.body);
+	if (result.headers) for (const [k, v] of Object.entries(result.headers)) res.setHeader(k, v);
+	return error(res, result.status, result.code, result.message, result.detail);
+}
+
+// ── Resume a call the owner approved, with no session token in hand ─────────
+// The approval payload stores only the session id (never the bearer token: a
+// polling agent should not need to have kept it, and the owner approving from
+// the web UI never sees it either). approvalGranted:true lifts only the
+// approval-threshold rule inside the governor; every other rule (allowlist,
+// per-tx, rail cap, budget) still runs for real, so an approval can never
+// widen anything but the one check it answered.
+export async function runPaymentSessionApproval({ sessionId, url, method, body, idempotencyKey }) {
+	const t0 = Date.now();
+	const probeResult = await probe402(url, { method, body });
+	if (probeResult.free) {
+		return {
+			ok: true,
+			body: {
+				ok: true, paid: false,
+				note: 'Endpoint served response without a 402. No payment needed.',
+				status: probeResult.status, result: probeResult.result,
+			},
+		};
+	}
+	const { accept, resource, amountAtomics } = probeResult;
+	const amountUsd = atomicsToUsd(amountAtomics);
+	const reservation = await reserveSessionSpend({ sessionId, url, amountAtomics, approvalGranted: true });
+	return settlePayment({
+		sessionRecord: reservation.session,
+		railReservationId: reservation.railReservationId,
+		policyDigest: reservation.policyDigest,
+		verdictCode: reservation.verdictCode,
+		verdictSignature: reservation.verdictSignature,
+		verdictSignedAt: reservation.verdictSignedAt,
+		targetUrl: url, method, requestBody: body, accept, resource, amountAtomics, amountUsd, idempotencyKey, t0,
+	});
+}
+
+/**
+ * Executor registered for source 'payment_session_execute' (api/_lib/approvals.js
+ * EXECUTORS). Runs ONLY row.payload, once, after the owner approves.
+ */
+export async function executeApprovedPaymentSessionCall(row) {
+	const p = row.payload || {};
+	if (p.kind !== 'payment_session_execute') {
+		return { status: 'error', note: 'Unknown payment action, so nothing was executed.' };
+	}
+	try {
+		const result = await runPaymentSessionApproval({
+			sessionId: p.session_id, url: p.url, method: p.method, body: p.body, idempotencyKey: p.idempotency_key,
+		});
+		if (!result.ok) return { status: 'error', note: result.message || 'The payment did not go through.' };
+		return {
+			status: 'ok',
+			signature: result.body?.payment?.tx_hash || undefined,
+			usd: result.body?.payment?.amount_usd ?? undefined,
+			note: 'Payment executed after owner approval.',
+			data: result.body,
+		};
+	} catch (err) {
+		return { status: 'error', note: (err?.message || 'execution failed').slice(0, 240) };
+	}
+}
+
+/** Shared by the direct 202 response and the GET poll: render the current state of a parked call. */
+function respondFromApprovalStatus(res, approvalRow) {
+	const status = approvalRow.status;
+	if (status === 'executed') {
+		const data = approvalRow.result?.data;
+		if (data) return json(res, 200, data);
+		return error(res, 502, 'approved_execution_missing_result', 'The payment was approved and executed, but its result was not retained.');
+	}
+	if (status === 'failed') {
+		return error(res, 502, 'approved_execution_failed', approvalRow.result?.note || 'The approved payment did not go through.');
+	}
+	if (status === 'denied') {
+		return error(res, 403, 'approval_denied', 'The owner denied this payment.');
+	}
+	if (status === 'expired') {
+		return error(res, 410, 'approval_expired', 'This approval request expired before the owner answered. Call execute again to ask once more.');
+	}
+	// pending, approved, executing: still waiting on the owner (or the inline executor).
+	return json(res, 202, {
+		ok: false,
+		paid: false,
+		pending_approval: true,
+		approval: {
+			id: approvalRow.id,
+			status: approvalRow.status,
+			link: `/approvals/${approvalRow.id}`,
+			expires_at: approvalRow.expires_at,
+		},
+		message: `This payment needs the owner's approval before it settles: ${approvalRow.summary}. Poll GET /api/pay/execute?approval_id=${approvalRow.id}&session_token=<token>, or call this same request again, to check status.`,
+	});
+}
+
+/** Park a call that crossed the session's approval threshold and respond 202 with a poll URL. */
+async function respondRequiresApproval(res, { session, targetUrl, method, requestBody, idempotencyKey, amountAtomics, amountUsd, detail }) {
+	const reqHash = computeRequestHash({ sessionId: session.id, url: targetUrl, amountAtomics });
+	const label = session.label || `session ${String(session.id).slice(0, 8)}`;
+	const created = await createApprovalRequest({
+		userId: session.user_id,
+		agentId: session.agent_id || null,
+		source: APPROVAL_SOURCE,
+		sourceRef: reqHash,
+		actionType: 'payment_session_execute',
+		venue: 'payment_session_execute',
+		payload: {
+			kind: 'payment_session_execute',
+			session_id: session.id,
+			url: targetUrl,
+			method,
+			body: requestBody,
+			idempotency_key: idempotencyKey,
+		},
+		summary: `Payment session "${label}" wants to pay $${amountUsd.toFixed(2)} to ${hostOf(targetUrl)}`,
+		amount: amountUsd,
+		amountUsd,
+		asset: 'USDC',
+		chain: session.network === 'base' ? 'base' : 'solana',
+		network: 'mainnet',
+		recipient: hostOf(targetUrl),
+		riskNotes: [
+			`This session's approval threshold is $${Number(detail?.threshold_usd ?? 0).toFixed(2)}.`,
+			`Target endpoint: ${targetUrl}`,
+		],
+		gateReason: detail?.message || 'Payment exceeds the session approval threshold.',
+		idempotencyKey: `${APPROVAL_SOURCE}:${reqHash}`,
+		ttlMs: TTL_MS.transfer,
+		// A numeric threshold the owner set is a decision to see each crossing by
+		// hand; it is never covered by an auto-approve policy (VENUES marks this
+		// venue auto:false), so this branch never actually triggers today, but the
+		// inline path is kept correct in case that ever changes.
+		autoApprovable: false,
+	});
+
+	const req = created.request;
+	if (created.autoApproved) {
+		const { outcome } = await runApproved(req, (claim) => executeApprovedPaymentSessionCall(claim));
+		if (outcome?.status === 'ok' && outcome.data) return json(res, 200, outcome.data);
+		return error(res, 502, 'approved_execution_failed', outcome?.note || 'The auto-approved payment did not go through.');
+	}
+	return respondFromApprovalStatus(res, req);
+}
+
+// ── GET poll: an agent checking on a parked call with only its session token ──
+async function handlePoll(req, res) {
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	const params = new URL(req.url, 'http://x').searchParams;
+	const approvalId = params.get('approval_id') || '';
+	const sessionToken = params.get('session_token') || '';
+	if (!approvalId || !isUuid(approvalId) || !sessionToken) {
+		return error(res, 400, 'missing_params', 'approval_id (uuid) and session_token are required');
+	}
+
+	let session;
+	try {
+		session = await verifySessionToken(sessionToken);
+	} catch (err) {
+		if (err instanceof SpendGovernorError) return error(res, err.status, err.code, err.message, err.detail);
+		throw err;
+	}
+
+	const [row] = await sql`
+		SELECT * FROM approval_requests WHERE id = ${approvalId} AND source = ${APPROVAL_SOURCE}
+	`;
+	if (!row || row.payload?.session_id !== session.id) {
+		return error(res, 404, 'not_found', 'No matching approval request for this session.');
+	}
+	return respondFromApprovalStatus(res, row);
+}
+
 // ── Main handler ─────────────────────────────────────────────────────────────
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'POST,OPTIONS', origins: '*' })) return;
+	if (cors(req, res, { methods: 'POST,GET,OPTIONS', origins: '*' })) return;
+	if (req.method?.toUpperCase() === 'GET') return handlePoll(req, res);
 	if (req.method?.toUpperCase() !== 'POST') {
 		return error(res, 405, 'method_not_allowed', 'POST required');
 	}
@@ -283,10 +600,12 @@ export default wrap(async (req, res) => {
 
 	const t0 = Date.now();
 
-	// Phase 0: verify the token is valid before probing the endpoint.
-	// The atomic reservation happens later in phase 2.
+	// Phase 0: verify the token is valid before probing the endpoint. Kept (not
+	// discarded) because respondRequiresApproval needs the session's user_id and
+	// label if the approval-threshold rule ends up parking this call in phase 2.
+	let session0;
 	try {
-		await verifySessionToken(sessionToken);
+		session0 = await verifySessionToken(sessionToken);
 	} catch (err) {
 		if (err instanceof SpendGovernorError) {
 			return error(res, err.status, err.code, err.message, err.detail);
@@ -317,206 +636,37 @@ export default wrap(async (req, res) => {
 	const amountUsd = atomicsToUsd(amountAtomics);
 
 	// Phase 2: governance enforcement (check session, allowlist, budget) is atomic
-	let sessionRecord, reservationId, railReservationId, policyDigest, verdictCode, verdictSignature, verdictSignedAt;
+	let reservation;
 	try {
-		const reservation = await reserveSessionSpend({
+		reservation = await reserveSessionSpend({
 			token: sessionToken,
 			url: targetUrl,
 			amountAtomics,
 		});
-		sessionRecord = reservation.session;
-		reservationId = reservation.reservationId;
-		railReservationId = reservation.railReservationId;
-		policyDigest = reservation.policyDigest;
-		verdictCode = reservation.verdictCode;
-		verdictSignature = reservation.verdictSignature;
-		verdictSignedAt = reservation.verdictSignedAt;
 	} catch (err) {
 		if (err instanceof SpendGovernorError) {
+			if (err.code === 'requires_approval') {
+				return await respondRequiresApproval(res, {
+					session: session0, targetUrl, method, requestBody, idempotencyKey,
+					amountAtomics, amountUsd, detail: err.detail,
+				});
+			}
 			return error(res, err.status, err.code, err.message, err.detail);
 		}
 		throw err;
 	}
 
-	// Phase 3: load platform Solana payer and build the signed payment payload
-	let paymentPayload;
-	let payerAddress;
-
-	let keypair;
-	try {
-		keypair = loadSolanaKeypair();
-	} catch (err) {
-		await rollbackReservation(sessionRecord.id, amountAtomics, { railReservationId }).catch(() => {});
-		// loadSolanaKeypair separates "no key configured" from "key present but
-		// undecodable". Collapsing both into wallet_unconfigured sent an operator
-		// looking for a missing env var that was in fact already set.
-		return error(
-			res,
-			err.status ?? 503,
-			err.code ?? 'wallet_unconfigured',
-			err.message || 'Platform Solana payment wallet is not configured',
-		);
-	}
-	payerAddress = keypair.publicKey.toBase58();
-	const conn = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
-	try {
-		paymentPayload = await buildSolanaPayload({
-			accept,
-			amount: amountAtomics,
-			buyer: keypair,
-			conn,
-			resourceUrl: resource.url || targetUrl,
-		});
-	} catch (err) {
-		await rollbackReservation(sessionRecord.id, amountAtomics, { railReservationId }).catch(() => {});
-		if (isRpcUnavailable(err)) {
-			// No funds moved: the chain could not be read and nothing was cached.
-			// Typed + retryable so the agent backs off instead of treating it as a
-			// broken endpoint.
-			res.setHeader('retry-after', String(RPC_RETRY_AFTER_SECONDS));
-			return error(res, 503, 'rpc_unavailable', 'Solana RPC temporarily unavailable; payment not built, retry shortly', { retryable: true, retry_after: RPC_RETRY_AFTER_SECONDS });
-		}
-		return error(res, 502, 'build_failed', `Failed to build Solana payment: ${err?.message}`);
-	}
-
-	const xPayment = Buffer.from(JSON.stringify(paymentPayload)).toString('base64');
-
-	// Phase 4: submit payment to the endpoint
-	let paid;
-	try {
-		paid = await guardedFetch(targetUrl, {
-			method,
-			body: requestBody,
-			headers: { 'X-PAYMENT': xPayment },
-		});
-	} catch (err) {
-		// Network failure AFTER signing: chain state unknown, do NOT roll back.
-		await recordExecution({
-			sessionId: sessionRecord.id,
-			userId: sessionRecord.user_id,
-			endpointUrl: targetUrl,
-			method,
-			amountAtomics,
-			network: accept.network,
-			txHash: null,
-			payerAddress,
-			payeeAddress: accept.payTo,
-			status: 'failed',
-			errorCode: 'settle_uncertain',
-			errorMessage: err?.message,
-			durationMs: Date.now() - t0,
-			idempotencyKey,
-			policyDigest,
-			verdictCode,
-			verdictSignature,
-			verdictSignedAt,
-		}).catch(() => {});
-		return error(res, 502, 'settle_uncertain',
-			'Payment was submitted but confirmation was not received. Do not retry immediately.');
-	}
-
-	const paidJson = safeJson(paid.text) ?? paid.text;
-	const settled = b64decodeJson(paid.headers.get('x-payment-response'));
-	const txHash = settled?.transaction || settled?.txHash || null;
-	const payer = settled?.payer || payerAddress;
-	const durationMs = Date.now() - t0;
-
-	// Explicit pre-settlement rejection: no funds moved, safe to roll back
-	if (paid.status === 402) {
-		await rollbackReservation(sessionRecord.id, amountAtomics, { railReservationId }).catch(() => {});
-		await recordExecution({
-			sessionId: sessionRecord.id,
-			userId: sessionRecord.user_id,
-			endpointUrl: targetUrl,
-			method,
-			amountAtomics,
-			network: accept.network,
-			txHash: null,
-			payerAddress: payer,
-			payeeAddress: accept.payTo,
-			status: 'failed',
-			errorCode: 'payment_rejected',
-			errorMessage: 'Service rejected the payment before settlement',
-			durationMs,
-			idempotencyKey,
-			policyDigest,
-			verdictCode,
-			verdictSignature,
-			verdictSignedAt,
-		}).catch(() => {});
-		return error(res, 402, 'payment_rejected',
-			'Service rejected the payment before settlement. Budget has been restored.',
-			typeof paidJson === 'object' ? paidJson : null);
-	}
-
-	// Non-402 non-success: chain state uncertain
-	if (!paid.ok) {
-		await recordExecution({
-			sessionId: sessionRecord.id,
-			userId: sessionRecord.user_id,
-			endpointUrl: targetUrl,
-			method,
-			amountAtomics,
-			network: accept.network,
-			txHash,
-			payerAddress: payer,
-			payeeAddress: accept.payTo,
-			status: 'failed',
-			errorCode: 'upstream_error',
-			errorMessage: `Endpoint returned HTTP ${paid.status}`,
-			responseBody: typeof paidJson === 'object' ? paidJson : null,
-			durationMs,
-			idempotencyKey,
-			policyDigest,
-			verdictCode,
-			verdictSignature,
-			verdictSignedAt,
-		}).catch(() => {});
-		return error(res, 502, 'upstream_error',
-			`Endpoint returned HTTP ${paid.status} after payment. Check wallet activity before retrying.`);
-	}
-
-	// Phase 5: success, record the settled execution
-	await recordExecution({
-		sessionId: sessionRecord.id,
-		userId: sessionRecord.user_id,
-		endpointUrl: targetUrl,
-		method,
-		amountAtomics,
-		network: accept.network,
-		txHash,
-		payerAddress: payer,
-		payeeAddress: accept.payTo,
-		status: 'settled',
-		responseBody: typeof paidJson === 'object' ? paidJson : null,
-		durationMs,
-		idempotencyKey,
-		policyDigest,
-		verdictCode,
-		verdictSignature,
-		verdictSignedAt,
-	}).catch(() => {});
-
-	return json(res, 200, {
-		ok: true,
-		paid: true,
-		result: paidJson,
-		payment: {
-			session_id: sessionRecord.id,
-			amount_usd: amountUsd,
-			network: accept.network,
-			payer,
-			pay_to: accept.payTo,
-			tx_hash: txHash,
-			explorer: explorerUrl(txHash),
-		},
-		session: {
-			id: sessionRecord.id,
-			spent_usd: atomicsToUsd(BigInt(sessionRecord.spent_usdc)),
-			remaining_usd: atomicsToUsd(
-				BigInt(sessionRecord.budget_usdc) - BigInt(sessionRecord.spent_usdc),
-			),
-		},
-		duration_ms: durationMs,
+	// Phase 3-5: sign, submit, record. Shared with the post-approval resume path
+	// (runPaymentSessionApproval) so a call that got parked above and later gets
+	// approved settles through the exact same code, not a parallel copy of it.
+	const result = await settlePayment({
+		sessionRecord: reservation.session,
+		railReservationId: reservation.railReservationId,
+		policyDigest: reservation.policyDigest,
+		verdictCode: reservation.verdictCode,
+		verdictSignature: reservation.verdictSignature,
+		verdictSignedAt: reservation.verdictSignedAt,
+		targetUrl, method, requestBody, accept, resource, amountAtomics, amountUsd, idempotencyKey, t0,
 	});
+	return sendSettlement(res, result);
 });

@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-10-15T00:43:42.282Z",
+	"generated_at": "2026-10-15T02:04:13.661Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-10-15",
+			"type": "update",
+			"title": "A spend call above an agent's approval threshold now pauses for the owner instead of failing",
+			"summary": "The requires_approval verdict agent payment sessions and agent-to-agent hires can already produce now actually does something: both /api/pay/execute and /api/agents/a2a-hire create a request on the existing approval inbox the moment a call crosses the caller's approval_threshold_usd, answer with 202 and a poll link to /approvals/<id> instead of failing the call, and resume automatically the moment the owner taps Approve there, re-probing or re-running the exact same reserve-then-settle path the call would have taken inline, with no re-entry point for a double-spend. A denied request answers 403 on the next poll, an expired one answers 410, and retrying with the same idempotency key before the owner answers just re-polls instead of parking a second request. Nothing new to build on the approval page itself: it already renders any venue generically from the request's summary, amount, and risk notes, so the two new venues (payment_session_execute, a2a_hire) show up with the right Approve/Decline card for free. Covered by 21 new handler tests across create, approve, decline, expire, and the executor's own idempotent re-run.",
+			"link": "/approvals",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
 		{
 			"date": "2026-10-15",
 			"type": "update",

@@ -69,6 +69,16 @@ export const VENUES = Object.freeze({
 	// intent (api/_lib/pump-funded-launch.js). It signs the create transaction
 	// and cannot be undone, so the owner answers every one.
 	pump_launch: { label: 'Coin launches from the agent wallet', auto: false },
+	// An x402 payment session call that crossed the session's own
+	// approval_threshold_usdc (api/pay/execute.js). The threshold itself is a
+	// numeric policy the owner already set on the session; it is never
+	// auto-approved again here, so every one is answered by hand.
+	payment_session_execute: { label: 'Agent payments above your approval threshold', auto: false },
+	// An agent-to-agent hire whose price crossed the hiring agent's
+	// approval_threshold_usd (api/agents/a2a-hire.js). Same reasoning: a
+	// threshold the owner set is a decision to see each crossing, not to
+	// pre-authorize it.
+	a2a_hire: { label: 'Agent-to-agent hires above your approval threshold', auto: false },
 });
 
 // Ceiling on a single auto-approve policy. Anything bigger is a decision the
@@ -292,8 +302,10 @@ export function publicApproval(row, { now = Date.now(), withLink = true } = {}) 
 // One per source. Lazy imports keep this module free of Solana/web3 weight and
 // break the cycle with the engines that create requests.
 //
-// Contract: executor(row) -> { status: 'ok'|'error'|'paused'|'skipped', signature?, note?, usd? }.
-// It receives the stored row and must execute ONLY row.payload.
+// Contract: executor(row) -> { status: 'ok'|'error'|'paused'|'skipped', signature?, note?, usd?, data? }.
+// It receives the stored row and must execute ONLY row.payload. `data` is optional:
+// the full result of the action, for a caller that polls the approval record after
+// an async approval to retrieve more than the signature/usd/note summary.
 
 const EXECUTORS = {
 	wallet_intent: async () => (await import('./wallet-intents.js')).executeApprovedIntentAction,
@@ -306,6 +318,10 @@ const EXECUTORS = {
 	external_wallet: async () => (await import('./account-link/external-wallets.js')).executeApprovedPayoutWallet,
 	// A funded launch intent the owner confirmed (api/_lib/pump-funded-launch.js).
 	pump_funded_launch: async () => (await import('./pump-funded-launch.js')).executeApprovedFundedLaunch,
+	// An x402 session call parked by the approval threshold (api/pay/execute.js).
+	payment_session_execute: async () => (await import('../pay/execute.js')).executeApprovedPaymentSessionCall,
+	// An a2a hire parked by the approval threshold (api/agents/a2a-hire.js).
+	a2a_hire: async () => (await import('../agents/a2a-hire.js')).executeApprovedA2aHire,
 };
 
 export function hasExecutor(source) {
@@ -759,6 +775,10 @@ export async function recordApprovalOutcome(id, outcome, { userId = null, req = 
 		note: outcome?.note ? String(outcome.note).slice(0, 280) : null,
 		usd: Number.isFinite(Number(outcome?.usd)) ? Number(outcome.usd) : null,
 		...(outcome?.integrity === false ? { integrity: false } : {}),
+		// The full upstream result (an x402 resource body, a completed hire), for an
+		// executor whose caller polls for it after the owner approved asynchronously.
+		// Optional: every existing executor omits it and behaves exactly as before.
+		...(outcome?.data !== undefined ? { data: outcome.data } : {}),
 	};
 	const [row] = await sql`
 		UPDATE approval_requests

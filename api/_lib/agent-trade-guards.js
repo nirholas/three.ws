@@ -103,6 +103,11 @@ export const SPEND_LIMIT_DEFAULTS = Object.freeze({
 	// every individual payment stays under `per_tx_usd`. Null means no per-payee
 	// cap (unchanged behavior for wallets that never set one).
 	per_counterparty_daily_usd: null,
+	// Above this USD amount, an autonomous outbound payment (x402, a2a hire) does
+	// not execute inline: it is parked as an approval request and the owner must
+	// approve it before the agent's poll receives a one-time execution grant. Null
+	// means no threshold (unchanged behavior for every wallet that never sets one).
+	approval_threshold_usd: null,
 	withdraw_allowlist: [],
 	// Wallet freeze / kill switch. When true, every AUTONOMOUS outbound path
 	// (trade, snipe, x402) is rejected immediately. The owner's own withdraw is
@@ -214,6 +219,7 @@ export function normalizeSpendLimits(raw) {
 		daily_usd: numOrNull(r.daily_usd),
 		per_tx_usd: numOrNull(r.per_tx_usd),
 		per_counterparty_daily_usd: numOrNull(r.per_counterparty_daily_usd),
+		approval_threshold_usd: numOrNull(r.approval_threshold_usd),
 		withdraw_allowlist: deduped,
 		frozen: r.frozen === true,
 		require_capabilities: r.require_capabilities === true,
@@ -247,6 +253,8 @@ export async function setSpendLimits(agentId, userId, patch, { req = null } = {}
 			'per_counterparty_daily_usd' in patch
 				? patch.per_counterparty_daily_usd
 				: prev.per_counterparty_daily_usd,
+		approval_threshold_usd:
+			'approval_threshold_usd' in patch ? patch.approval_threshold_usd : prev.approval_threshold_usd,
 		// The allowlist lives in destination_whitelist_entries now, where a new
 		// address serves a cooldown (api/_lib/destination-whitelist.js). A patch can
 		// no longer write it through here, so no path can skip the cooldown by
