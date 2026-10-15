@@ -1302,6 +1302,58 @@ Left: nothing for this order. `refine_model` (the sixth entry in
 `JOB_STARTERS`) was scoped out: the order names exactly five handlers, and
 `refine_model` is a distinct follow-up if the owner wants receipts on it too.
 
+## 2026-10-15: 406 fix dead links left behind by retired work orders (shipped and verified)
+
+Measured: `npm run audit:docs` listed 9 dead relative links across
+`docs/partners/outreach-plan.md` (2), `docs/partners/prospects.md` (2),
+`docs/partners/tripo.md` (1) and `apps/hq/` (4), plus one absolute-path site
+link in `docs/research/oss-landscape-2026-10-notes/chat-memory-evals.md`.
+The three `docs/partners/*` links named orders 072, 075 and 084, all three
+retired without rewriting their inbound references, exactly the failure mode
+`prompts/README.md`'s "Runtime consumption" section warns about.
+
+Did: repointed each retired-order link at the live doc covering what
+shipped instead of the deleted path: engine bridges at
+`docs/engine-bridges.md`, three-vrm at `docs/avatar-engines.md` (which
+already marks it `live`), and the Tripo v3 house lane at
+`docs/forge.md#the-tripo-house-lane`. Corrected `prospects.md`'s row claiming
+order 075 covered VSeeFace's VRM 0.x export gap: the three-vrm order only
+shipped the import/load side (`src/game/vrm-boot.js`'s `VRMLoaderPlugin`,
+for both VRM 0.x and 1.0); `src/avatar-export.js` still only writes VRM 1.0,
+so that gap is real and untracked, now stated plainly instead of linking a
+dead file. For `apps/hq`: repointed `README.md`'s `CLAUDE.md` link at the
+app's existing `AGENTS.md` (already the de facto contributor guide), fixed
+`DOCUMENTATION.md`'s two `ROADMAP.md` links which were missing a `../` (the
+file is one level up from `docs/`), and wrote a real `apps/hq/.env.example`
+covering every env var the app's own code reads (`grep -rhoE
+"process\.env\.[A-Z_]+" api src src-tauri scripts`), since none existed for
+`deploy-cloud-run.md:52` to link. Fixed `chat-memory-evals.md`'s absolute
+local-machine path to `packages/agent-memory/README.md` with a relative one.
+Verified the three `hubs/` links (`awesome-agent-identity`,
+`awesome-agent-protocols`, `awesome-solana-agents`) are correct false
+positives: `hubs/README.md` states each hub "is built to be lifted into its
+own GitHub repo," so the relative `../../issues/new?...` link is correct for
+that future repo's own root; left alone per the order.
+
+Evidence per Definition of done line:
+- `npm run audit:docs`: the "Relative links" finding dropped from 12 to 3,
+  the 3 remaining being exactly the verified `hubs/` false positives; the
+  site-link finding dropped from 1 to 0. The separate "Public docs missing
+  from data/pages.json" category (10 findings) is untouched, pre-existing
+  and out of this order's scope.
+- Every rewritten link resolves: confirmed each target file exists on disk
+  before linking it.
+- No placeholder text in any link or its surrounding prose.
+- `npm run check:rules -- --paths <touched files>`: `OK: no hard-rule
+  violations` after fixing one em-dash this order introduced and caught
+  itself.
+- `git status`: clean after both commits.
+- Commits: `3bdf2d5e6` (the three `docs/partners/*` links plus
+  `chat-memory-evals.md`) and `35a179838` (the `apps/hq` links and the new
+  `.env.example`).
+
+Left: nothing for this order.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
