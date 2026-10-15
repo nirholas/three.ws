@@ -5937,6 +5937,10 @@
 			"dest": "/api/skills/mint"
 		},
 		{
+			"src": "/api/skills/import",
+			"dest": "/api/skills/import"
+		},
+		{
 			"src": "/api/skills/([^/]+)/install",
 			"dest": "/api/skills/[id]/install?id=$1"
 		},

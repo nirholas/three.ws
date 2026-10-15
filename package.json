@@ -139,7 +139,8 @@
 		"packages/blender-mcp",
 		"packages/ai-sdk",
 		"packages/langchain",
-		"packages/wallet-linkage"
+		"packages/wallet-linkage",
+		"packages/skill-import"
 	],
 	"main": "src/app.js",
 	"browserslist": [
@@ -655,6 +656,7 @@
 		"@tetsuo-ai/sdk": "^1.4.0",
 		"@three-ws/companion": "*",
 		"@three-ws/mcp-policy": "*",
+		"@three-ws/skill-import": "*",
 		"@three-ws/solana-agent": "file:solana-agent-sdk",
 		"@upstash/qstash": "^2.11.3",
 		"@upstash/ratelimit": "^2.0.5",

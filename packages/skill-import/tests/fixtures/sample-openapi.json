@@ -1,0 +1,49 @@
+{
+	"openapi": "3.0.3",
+	"info": {
+		"title": "Widget API",
+		"version": "1.0.0",
+		"description": "A tiny synthetic API used only by packages/skill-import's own test suite."
+	},
+	"security": [{ "apiKey": [] }],
+	"components": {
+		"securitySchemes": {
+			"apiKey": { "type": "apiKey", "in": "header", "name": "x-api-key" }
+		},
+		"schemas": {
+			"Widget": {
+				"type": "object",
+				"required": ["title"],
+				"properties": {
+					"id": { "type": "string" },
+					"title": { "type": "string", "description": "Display name" }
+				}
+			}
+		}
+	},
+	"paths": {
+		"/widgets": {
+			"post": {
+				"operationId": "createWidget",
+				"summary": "Create a widget",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/Widget" } }
+					}
+				},
+				"responses": { "201": { "description": "Created" } }
+			}
+		},
+		"/widgets/{id}": {
+			"get": {
+				"operationId": "getWidget",
+				"summary": "Fetch a widget by id",
+				"parameters": [
+					{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+				],
+				"responses": { "200": { "description": "OK" } }
+			}
+		}
+	}
+}

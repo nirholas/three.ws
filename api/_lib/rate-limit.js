@@ -2412,6 +2412,10 @@ export const limits = {
 	// runs the Guardian pass, so those are capped per owner.
 	skillImportBrowseIp: (ip) => getLimiter('skill-import:browse:ip', { limit: 120, window: '5 m', local: true }).limit(ip),
 	skillImportScanUser: (userId) => getLimiter('skill-import:scan:user', { limit: 40, window: '10 m' }).limit(userId),
+	// OpenAPI/GitHub skill import (api/skills/import.js, packages/skill-import).
+	// Each request fetches an owner-supplied upstream spec/README through the
+	// SSRF guard and runs codegen, so it is capped per owner like a scan.
+	openapiSkillImportUser: (userId) => getLimiter('openapi-skill-import:user', { limit: 20, window: '10 m' }).limit(userId),
 	// Developer plan burst ceiling (api/_lib/dev-plans/quota.js). One sliding
 	// minute per account; the limit comes from the plan config, so each plan
 	// gets its own bucket name and the memo in getLimiter keys on the limit too.
