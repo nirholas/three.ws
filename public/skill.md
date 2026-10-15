@@ -62,4 +62,5 @@ Load the skill that matches the task. Each is a standalone `SKILL.md` per the [A
 
 - https://three.ws/llms.txt: curated index of the platform for agents
 - https://three.ws/.well-known/x402.json: every paid endpoint with price and input schema
+- https://three.ws/.well-known/skill.md: SKILL-MD 1.0 document for every paid HTTP route, its price, and its payment rails
 - https://three.ws/docs: full documentation

@@ -337,6 +337,23 @@ fabricated or cached-as-live result.
 | `/api/x402/places-search`          | $0.002  | 15                       | Points of interest near a coordinate from OpenStreetMap (Overpass), optionally filtered by category. |
 | `/api/x402/places-detail`          | $0.002  | always paid              | Full live OpenStreetMap record for one place by id. No fixture fallback: a place with no third-party review enrichment configured returns only the real OSM record, never an invented review. |
 
+## Agent-readable catalog: skill.md
+
+[`https://three.ws/.well-known/skill.md`](https://three.ws/.well-known/skill.md) is
+a [SKILL-MD 1.0](https://github.com/nirholas/x402-skill-md) document generated
+straight from [`/openapi.json`](../api/openapi-json.js): every paid route on this
+page, its price, its parameters, the Solana and Base payment rails, and a sample
+402 challenge, in the single markdown file the format's validator checks. Source:
+[`api/_lib/skill-md.js`](../api/_lib/skill-md.js) (generator) and
+[`api/skill-md.js`](../api/skill-md.js) (handler); test coverage in
+[`tests/skill-md.test.js`](../tests/skill-md.test.js) runs the real upstream
+validator against the generated document on every CI run.
+
+Not to be confused with [`https://three.ws/skill.md`](../public/skill.md) (no
+`.well-known`), the [Agent Skills](agent-skills.md) connector file that points a
+model at three.ws's MCP servers and `SKILL.md` bundles instead of its paid HTTP
+catalog.
+
 ## $THREE only
 
 Any endpoint that references a coin references **$THREE**
@@ -352,3 +369,4 @@ input and do not promote any specific token.
 - [Financial controls](financial-controls.md): where settled payments are recorded.
 - [Autonomous x402 loop](autonomous-x402.md) — the scheduled buyer that drives volume through these endpoints.
 - [MCP tools](mcp-tools.md) — the same capabilities exposed as paid MCP tools.
+- [Agent Skills pack](agent-skills.md): the entry-point `skill.md` for connecting to three.ws, distinct from the `/.well-known/skill.md` catalog above.

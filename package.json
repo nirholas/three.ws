@@ -778,6 +778,7 @@
 		"vitest": "^5.0.1",
 		"workbox-build": "^7.4.0",
 		"workbox-window": "^7.4.0",
-		"world-atlas": "^2.0.2"
+		"world-atlas": "^2.0.2",
+		"x402-skill-md": "^0.1.0"
 	}
 }

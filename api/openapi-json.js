@@ -227,15 +227,11 @@ function queryParameters(inputSchema) {
 }
 
 
-export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
-	if (!method(req, res, ['GET'])) return;
-
-	const origin = env.APP_ORIGIN;
-
-	return json(
-		res,
-		200,
+// Pure document builder, factored out so api/_lib/skill-md.js (the
+// /skill.md generator) can read the exact same paid-operation catalog this
+// endpoint serves, instead of re-deriving it or faking an HTTP round trip.
+export function buildOpenApiDoc(origin = env.APP_ORIGIN) {
+	return (
 		{
 			openapi: '3.1.0',
 			info: {
@@ -1541,7 +1537,13 @@ export default wrap(async (req, res) => {
 					},
 				},
 			},
-		},
-		{ 'cache-control': 'public, max-age=300' },
+		}
 	);
+}
+
+export default wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	return json(res, 200, buildOpenApiDoc(env.APP_ORIGIN), { 'cache-control': 'public, max-age=300' });
 });

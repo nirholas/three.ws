@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>.well-known/skill.md</title>
+			<link>https://three.ws/.well-known/skill.md</link>
+			<guid isPermaLink="false">2026-10-15:.well-known/skill.md</guid>
+			<pubDate>Thu, 15 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>SKILL-MD 1.0: every paid HTTP route on three.ws with its price, parameters, and the Solana and Base payment rails it settles on, generated straight from the live OpenAPI catalog. For the Agent Skills connector file, see /skill.md instead.</description>
+		</item>
+		<item>
 			<title>Docs · Forge Workflows</title>
 			<link>https://three.ws/docs/forge-workflows</link>
 			<guid isPermaLink="false">2026-10-15:Docs · Forge Workflows</guid>
@@ -29,6 +37,14 @@
 			<pubDate>Thu, 15 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>The generated catalog of every publishable package in this monorepo mirrored to its own standalone GitHub repository with its own install command and documentation site, so each one can be found, starred, installed and cited on its own.</description>
+		</item>
+		<item>
+			<title>A generated SKILL-MD 1.0 catalog of every paid HTTP route is now live at /.well-known/skill.md</title>
+			<link>https://three.ws/.well-known/skill.md</link>
+			<guid isPermaLink="false">2026-10-15:A generated SKILL-MD 1.0 catalog of every paid HTTP route is now live at /.well-known/skill.md</guid>
+			<pubDate>Thu, 15 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Any agent can now load one markdown file, https://three.ws/.well-known/skill.md, and get a conformant SKILL-MD 1.0 document (the x402-skill-md format) listing every priced endpoint on three.ws: method, path, price, parameters, and the Solana and Base payment rails it settles on, plus a sample 402 challenge body. The document is generated straight from the same OpenAPI catalog /openapi.json serves (api/_lib/skill-md.js reads the shared buildOpenApiDoc() builder and the real buildExactRequirements() rail logic, so the catalog and the live 402 challenge can never drift apart), and is linked from /.well-known/x402.json and llms.txt. Validated in tests/skill-md.test.js against the real upstream x402-skill-md npm validator: zero errors other than the EVM rail finding (SM005), which is expected since this is a Solana-first platform and Base settles only when a facilitator is configured. Distinct from the pre-existing https://three.ws/skill.md (no .well-known), the Agent Skills connector file for installing three.ws MCP servers; both now cross-link to the other.</description>
 		</item>
 		<item>
 			<title>A spend call above an agent's approval threshold now pauses for the owner instead of failing</title>

@@ -1839,6 +1839,7 @@ export async function buildX402DiscoveryDoc() {
 				'Give autonomous agents the tools they reach for mid-task — 3D assets, crypto data, launches, and trust — machine-native over HTTP 402.',
 			website: origin,
 			docs: `${origin}/docs/start-here`,
+			skill_md: `${origin}/.well-known/skill.md`,
 			repository: 'https://github.com/nirholas/three.ws',
 			contact: `${origin}/`,
 			tags: [

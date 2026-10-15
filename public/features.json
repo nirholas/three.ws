@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-15T05:39:03.012Z",
+	"generated_at": "2026-10-15T06:13:31.723Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -11794,6 +11794,18 @@
 					"title": ".well-known/x402.json",
 					"description": "x402 service catalog: every paid pay-per-call endpoint with price, network, and input schema.",
 					"added": null,
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/.well-known/skill.md",
+					"title": ".well-known/skill.md",
+					"description": "SKILL-MD 1.0: every paid HTTP route on three.ws with its price, parameters, and the Solana and Base payment rails it settles on, generated straight from the live OpenAPI catalog. For the Agent Skills connector file, see /skill.md instead.",
+					"added": "2026-10-15",
 					"auth": null,
 					"indexable": false,
 					"tags": [],

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-15",
+			"title": "A generated SKILL-MD 1.0 catalog of every paid HTTP route is now live at /.well-known/skill.md",
+			"summary": "Any agent can now load one markdown file, https://three.ws/.well-known/skill.md, and get a conformant SKILL-MD 1.0 document (the x402-skill-md format) listing every priced endpoint on three.ws: method, path, price, parameters, and the Solana and Base payment rails it settles on, plus a sample 402 challenge body. The document is generated straight from the same OpenAPI catalog /openapi.json serves (api/_lib/skill-md.js reads the shared buildOpenApiDoc() builder and the real buildExactRequirements() rail logic, so the catalog and the live 402 challenge can never drift apart), and is linked from /.well-known/x402.json and llms.txt. Validated in tests/skill-md.test.js against the real upstream x402-skill-md npm validator: zero errors other than the EVM rail finding (SM005), which is expected since this is a Solana-first platform and Base settles only when a facilitator is configured. Distinct from the pre-existing https://three.ws/skill.md (no .well-known), the Agent Skills connector file for installing three.ws MCP servers; both now cross-link to the other.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/.well-known/skill.md"
+		},
+		{
+			"date": "2026-10-15",
 			"title": "A spend call above an agent's approval threshold now pauses for the owner instead of failing",
 			"summary": "The requires_approval verdict agent payment sessions and agent-to-agent hires can already produce now actually does something: both /api/pay/execute and /api/agents/a2a-hire create a request on the existing approval inbox the moment a call crosses the caller's approval_threshold_usd, answer with 202 and a poll link to /approvals/<id> instead of failing the call, and resume automatically the moment the owner taps Approve there, re-probing or re-running the exact same reserve-then-settle path the call would have taken inline, with no re-entry point for a double-spend. A denied request answers 403 on the next poll, an expired one answers 410, and retrying with the same idempotency key before the owner answers just re-polls instead of parking a second request. Nothing new to build on the approval page itself: it already renders any venue generically from the request's summary, amount, and risk notes, so the two new venues (payment_session_execute, a2a_hire) show up with the right Approve/Decline card for free. Covered by 21 new handler tests across create, approve, decline, expire, and the executor's own idempotent re-run.",
 			"tags": [

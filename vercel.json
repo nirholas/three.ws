@@ -633,6 +633,10 @@
 			"dest": "/api/wk?name=x402-discovery"
 		},
 		{
+			"src": "/\\.well-known/skill\\.md",
+			"dest": "/api/skill-md"
+		},
+		{
 			"src": "/\\.well-known/x402-preflight",
 			"dest": "/api/x402/preflight"
 		},

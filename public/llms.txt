@@ -42,6 +42,7 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 - [.well-known/mcp.json](https://three.ws/.well-known/mcp.json): Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does, plus setup hints per client (Claude, ChatGPT, Cursor, VS Code, Grok Bot).
 - [.well-known/agent-card.json](https://three.ws/.well-known/agent-card.json): A2A agent card: what three.ws is, what it can do, and where the paid-service catalog lives.
 - [.well-known/x402.json](https://three.ws/.well-known/x402.json): x402 service catalog: every paid pay-per-call endpoint with price, network, and input schema.
+- [.well-known/skill.md](https://three.ws/.well-known/skill.md): SKILL-MD 1.0: every paid HTTP route on three.ws with its price, parameters, and the Solana and Base payment rails it settles on, generated straight from the live OpenAPI catalog. For the Agent Skills connector file, see /skill.md instead.
 
 ## Start here
 

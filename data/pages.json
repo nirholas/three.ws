@@ -7688,6 +7688,13 @@
 					"title": ".well-known/x402.json",
 					"description": "x402 service catalog: every paid pay-per-call endpoint with price, network, and input schema.",
 					"indexable": false
+				},
+				{
+					"path": "/.well-known/skill.md",
+					"title": ".well-known/skill.md",
+					"description": "SKILL-MD 1.0: every paid HTTP route on three.ws with its price, parameters, and the Solana and Base payment rails it settles on, generated straight from the live OpenAPI catalog. For the Agent Skills connector file, see /skill.md instead.",
+					"indexable": false,
+					"added": "2026-10-15"
 				}
 			]
 		}

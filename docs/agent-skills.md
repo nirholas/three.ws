@@ -59,6 +59,13 @@ spend rule. See [three.ws for Grok](./grok.md#a-skill-file-for-grok). Its prose 
 in [`data/grok-skill-md.template.md`](../data/grok-skill-md.template.md) and the same
 build renders it to [`public/grok-skill.md`](../public/grok-skill.md).
 
+### Not the x402 paid-route catalog: `https://three.ws/.well-known/skill.md`
+
+A different, unrelated document despite the similar name: a
+[SKILL-MD 1.0](https://github.com/nirholas/x402-skill-md) catalog of every priced
+HTTP endpoint on three.ws (price, parameters, Solana/Base payment rails), generated
+from `/openapi.json`. See [x402 Paid Endpoints](x402-endpoints.md#agent-readable-catalog-skillmd).
+
 Both templates draw every shared fact from
 [`scripts/lib/skill-md-facts.mjs`](../scripts/lib/skill-md-facts.mjs): `{{FREE_MCP}}`
 and the other server URLs come from `public/.well-known/mcp.json`, the free limits

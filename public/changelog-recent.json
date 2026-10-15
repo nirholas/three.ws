@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-10-15T05:39:03.045Z",
+	"generated_at": "2026-10-15T06:13:31.758Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4101,
+	"total": 4103,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-15",
+			"type": "launch",
+			"title": ".well-known/skill.md",
+			"summary": "SKILL-MD 1.0: every paid HTTP route on three.ws with its price, parameters, and the Solana and Base payment rails it settles on, generated straight from the live OpenAPI catalog. For the Agent Skills connector file, see /skill.md instead.",
+			"link": "/.well-known/skill.md",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-10-15",
 			"type": "launch",
@@ -37,6 +47,17 @@
 			"link": "/docs/standalone-repos",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-15",
+			"type": "update",
+			"title": "A generated SKILL-MD 1.0 catalog of every paid HTTP route is now live at /.well-known/skill.md",
+			"summary": "Any agent can now load one markdown file, https://three.ws/.well-known/skill.md, and get a conformant SKILL-MD 1.0 document (the x402-skill-md format) listing every priced endpoint on three.ws: method, path, price, parameters, and the Solana and Base payment rails it settles on, plus a sample 402 challenge body. The document is generated straight from the same OpenAPI catalog /openapi.json serves (api/_lib/skill-md.js reads the shared buildOpenApiDoc() builder and the real buildExactRequirements() rail logic, so the catalog and the live 402 challenge can never drift apart), and is linked from /.well-known/x402.json and llms.txt. Validated in tests/skill-md.test.js against the real upstream x402-skill-md npm validator: zero errors other than the EVM rail finding (SM005), which is expected since this is a Solana-first platform and Base settles only when a facilitator is configured. Distinct from the pre-existing https://three.ws/skill.md (no .well-known), the Agent Skills connector file for installing three.ws MCP servers; both now cross-link to the other.",
+			"link": "/.well-known/skill.md",
+			"tags": [
+				"feature",
+				"docs"
 			]
 		},
 		{
@@ -1534,26 +1555,6 @@
 			"title": "Launch a Uniswap Pool Coin",
 			"summary": "Have your agent launch a fixed-supply coin with a Uniswap V3 pool on Base: pick the pool fee, lock the liquidity, route the fees, see every cost in a confirmation table, and follow the launch to completion. Retries are safe with an Idempotency-Key.",
 			"link": "/launch/uniswap",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Link this device",
-			"summary": "Link a phone or desktop app to your three.ws account with a one-time code from Linked devices on your account page. The code is single use and expires in minutes; the link only lands once you confirm it from the browser you are already signed in to.",
-			"link": "/link-device",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Specialist Teams: four agents, one board",
-			"summary": "Assemble a squad of four 3D agents (a Researcher, an Entry scout, a Trader and a Launcher) under one spend policy. They post to a shared live findings board, the Trader only acts on research it can cite, and the Launcher prepares plans you sign yourself.",
-			"link": "/teams",
 			"tags": [
 				"launch"
 			]

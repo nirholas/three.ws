@@ -5948,6 +5948,13 @@ Indexable: no (excluded from sitemap)
 
 x402 service catalog: every paid pay-per-call endpoint with price, network, and input schema.
 
+### .well-known/skill.md
+
+URL: https://three.ws/.well-known/skill.md
+Indexable: no (excluded from sitemap)
+
+SKILL-MD 1.0: every paid HTTP route on three.ws with its price, parameters, and the Solana and Base payment rails it settles on, generated straight from the live OpenAPI catalog. For the Agent Skills connector file, see /skill.md instead.
+
 ## News
 
 Product launches, integrations, and announcements from three.ws.
