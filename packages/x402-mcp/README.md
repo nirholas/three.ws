@@ -68,6 +68,31 @@ claude mcp add x402 --env SOLANA_SECRET_KEY=<base58> -- npx -y @three-ws/x402-mc
 | `find_services`    | read-only     | Search the live x402 bazaar (PayAI + Coinbase CDP) for paid HTTP/MCP services with prices.                |
 | `inspect_endpoint` | read-only     | Read any endpoint's 402 payment requirements (scheme, network, asset, price, pay-to) **without paying**.  |
 | `pay_and_call`     | **execution** | Pay an x402 endpoint in USDC from your Solana key and return its result. Bounded by `MAX_PAY_USD`.        |
+| `spending_report`  | read-only     | Totals of everything `pay_and_call` and the named tools below have paid, by merchant and by day.          |
+
+Plus 17 named tools, one per fixed three.ws x402 service, each cheaper for a model to call correctly than composing a raw `pay_and_call(url)`:
+
+| Tool                     | Price   | Endpoint                        |
+| ------------------------ | ------- | -------------------------------- |
+| `weather_forecast`       | $0.001  | `/api/x402/weather-guard-forecast` |
+| `weather_go_no_go`       | $0.002  | `/api/x402/weather-guard-decision` |
+| `carbon_now`             | $0.001  | `/api/x402/carbon-now`           |
+| `carbon_best_window`     | $0.002  | `/api/x402/carbon-best-window`   |
+| `domain_rdap_check`      | $0.001  | `/api/x402/domains-check`        |
+| `domain_rdap_check_bulk` | $0.005  | `/api/x402/domains-bulk`         |
+| `research_search`        | $0.002  | `/api/x402/research-search`      |
+| `research_paper`         | $0.003  | `/api/x402/research-paper`       |
+| `research_bibliography`  | $0.005  | `/api/x402/research-bibliography` |
+| `book_search`            | $0.001  | `/api/x402/books-search`         |
+| `book_read`              | $0.01   | `/api/x402/books-read`           |
+| `news_wire_search`       | $0.003  | `/api/x402/news-wire-query`      |
+| `news_wire_poll`         | $0.002  | `/api/x402/news-wire-pulse`      |
+| `transit_plan`           | $0.002  | `/api/x402/transit-plan`         |
+| `transit_delays`         | $0.001  | `/api/x402/transit-delays`       |
+| `places_search`          | $0.002  | `/api/x402/places-search`        |
+| `places_detail`          | $0.002  | `/api/x402/places-detail`        |
+
+Each takes the same arguments as its endpoint (see `src/tools.json` for the full schemas) and pays with the same `SOLANA_SECRET_KEY` / `session_token` settlement modes as `pay_and_call`, gated by the same `MAX_PAY_USD` cap and `REQUIRE_CONFIRM` flag. Prefer a named tool over `pay_and_call` whenever one exists for the endpoint you need: the fixed schema and stated price make the model far less likely to misdial the call.
 
 ### Safety
 
@@ -140,6 +165,9 @@ calls `pay_and_call`, so nothing is signed and nothing is spent. See
 | `MAX_PAY_USD`       | no           | `1`                                   |
 | `REQUIRE_CONFIRM`   | no           | `true`                                |
 | `THREE_WS_BASE`     | no           | `https://three.ws`                    |
+| `X402_MCP_LEDGER_PATH` | no         | `~/.three-ws/x402-mcp-ledger.jsonl`   |
+
+`X402_MCP_LEDGER_PATH` points at the append-only JSON-lines file every settled payment (`pay_and_call` and the named tools) is recorded to; `spending_report` reads it back.
 
 ## Links
 

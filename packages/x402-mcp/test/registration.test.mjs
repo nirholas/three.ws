@@ -10,15 +10,17 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { TOOLS, buildServer } from '../src/index.js';
+import registry from '../src/tools.json' with { type: 'json' };
 
-const READ_ONLY_TOOLS = new Set(['x402_wallet', 'find_services', 'inspect_endpoint']);
-const EXECUTION_TOOLS = new Set(['pay_and_call']);
+const NAMED_SERVICE_NAMES = registry.tools.map((entry) => entry.name);
+const READ_ONLY_TOOLS = new Set(['x402_wallet', 'find_services', 'inspect_endpoint', 'spending_report']);
+const EXECUTION_TOOLS = new Set(['pay_and_call', ...NAMED_SERVICE_NAMES]);
 
 test('exactly the expected tools are registered', () => {
-	assert.equal(TOOLS.length, 4);
+	assert.equal(TOOLS.length, 5 + NAMED_SERVICE_NAMES.length);
 	assert.deepEqual(
 		new Set(TOOLS.map((t) => t.name)),
-		new Set(['x402_wallet', 'find_services', 'inspect_endpoint', 'pay_and_call']),
+		new Set(['x402_wallet', 'find_services', 'inspect_endpoint', 'pay_and_call', 'spending_report', ...NAMED_SERVICE_NAMES]),
 	);
 });
 
@@ -36,22 +38,32 @@ test('every tool has a title, description, input schema and complete annotations
 	}
 });
 
-test('the read tools advertise readOnlyHint and openWorldHint', () => {
+test('the read tools advertise readOnlyHint', () => {
 	for (const name of READ_ONLY_TOOLS) {
 		const tool = TOOLS.find((t) => t.name === name);
 		assert.ok(tool, `${name} must exist`);
 		assert.equal(tool.annotations.readOnlyHint, true, `${name} should be read-only`);
-		assert.equal(tool.annotations.openWorldHint, true, `${name} talks to a live service`);
 	}
 });
 
-test('pay_and_call is the only destructive execution tool (spends real USDC)', () => {
+test('the live-service read tools advertise openWorldHint; the local-only ledger tool does not', () => {
+	for (const name of ['x402_wallet', 'find_services', 'inspect_endpoint']) {
+		const tool = TOOLS.find((t) => t.name === name);
+		assert.equal(tool.annotations.openWorldHint, true, `${name} talks to a live service`);
+	}
+	const spendingReport = TOOLS.find((t) => t.name === 'spending_report');
+	assert.equal(spendingReport.annotations.openWorldHint, false, 'spending_report only reads a local file');
+});
+
+test('pay_and_call and the named service tools are the only destructive execution tools (spend real USDC)', () => {
 	const destructive = TOOLS.filter((t) => t.annotations.destructiveHint === true).map((t) => t.name);
 	assert.deepEqual(new Set(destructive), EXECUTION_TOOLS);
-	const pay = TOOLS.find((t) => t.name === 'pay_and_call');
-	assert.equal(pay.annotations.readOnlyHint, false);
-	assert.equal(pay.annotations.destructiveHint, true);
-	assert.equal(pay.annotations.idempotentHint, false);
+	for (const name of EXECUTION_TOOLS) {
+		const tool = TOOLS.find((t) => t.name === name);
+		assert.equal(tool.annotations.readOnlyHint, false, `${name} should not be read-only`);
+		assert.equal(tool.annotations.destructiveHint, true, `${name} should be destructive`);
+		assert.equal(tool.annotations.idempotentHint, false, `${name} should not be idempotent`);
+	}
 });
 
 test('non-read-only tools set destructiveHint explicitly (spec default is TRUE when omitted)', () => {

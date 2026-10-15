@@ -6,6 +6,9 @@
 //   • find_services   — search the live x402 bazaar for paid services (read-only)
 //   • inspect_endpoint— read an endpoint's price/requirements without paying (read-only)
 //   • pay_and_call    — pay an x402 endpoint in USDC and return its result (execution)
+//   • spending_report: this wallet's local spend ledger, totaled by merchant/day (read-only)
+//   • one named tool per entry in tools.json (weather_forecast, domain_rdap_check, book_read, ...),
+//     each a fixed-endpoint, fixed-price wrapper around pay_and_call (execution)
 //
 // Self-custodial: payments are signed by YOUR Solana key (SOLANA_SECRET_KEY),
 // not a custodial wallet. The read tools work with no key. Real @x402/* libs do
@@ -27,11 +30,13 @@ import { def as x402Wallet } from './tools/x402-wallet.js';
 import { def as findServices } from './tools/find-services.js';
 import { def as inspectEndpoint } from './tools/inspect-endpoint.js';
 import { def as payAndCall } from './tools/pay-and-call.js';
+import { def as spendingReport } from './tools/spending-report.js';
+import { NAMED_SERVICE_TOOLS } from './tools/named-services.js';
 
 const require = createRequire(import.meta.url);
 const { version: PKG_VERSION } = require('../package.json');
 
-export const TOOLS = [x402Wallet, findServices, inspectEndpoint, payAndCall];
+export const TOOLS = [x402Wallet, findServices, inspectEndpoint, payAndCall, spendingReport, ...NAMED_SERVICE_TOOLS];
 
 /**
  * Construct a fully-registered McpServer without connecting a transport or
@@ -51,8 +56,11 @@ export function buildServer() {
 				"any endpoint's price/requirements WITHOUT paying. x402_wallet shows the signer wallet's address " +
 				'and SOL/USDC balance. pay_and_call is an EXECUTION ACTION: it pays an x402 endpoint in USDC from ' +
 				'your Solana key (SOLANA_SECRET_KEY or a per-call `secret`) and returns the result, bounded by ' +
-				'MAX_PAY_USD and gated by REQUIRE_CONFIRM. Settlement is the Solana `exact` scheme via the real ' +
-				'@x402 libraries — never a wallet you do not control.',
+				'MAX_PAY_USD and gated by REQUIRE_CONFIRM. Prefer a named tool (weather_forecast, domain_rdap_check, ' +
+				'book_read, and the rest listed in tools.json) over pay_and_call when one covers the endpoint: it ' +
+				"carries a fixed description and price ceiling. Settlement is the Solana `exact` scheme via the real " +
+				"@x402 libraries, never a wallet you do not control. spending_report reads this wallet's local " +
+				'ledger back, totaled by merchant and day.',
 		},
 	);
 

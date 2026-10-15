@@ -6,7 +6,7 @@ JSON-RPC to it, and hit live data. Neither one pays for anything.
 
 | File | What it does | Run |
 |---|---|---|
-| [`list-tools.mjs`](list-tools.mjs) | Prints all <!-- mcp-count:x402-mcp.tools -->4<!-- /mcp-count --> tools with titles, annotation hints, and full input schemas. | `node examples/list-tools.mjs` |
+| [`list-tools.mjs`](list-tools.mjs) | Prints all <!-- mcp-count:x402-mcp.tools -->22<!-- /mcp-count --> tools with titles, annotation hints, and full input schemas. | `node examples/list-tools.mjs` |
 | [`inspect-price.mjs`](inspect-price.mjs) | Searches the live x402 bazaar with `find_services`, then reads one endpoint's 402 price with `inspect_endpoint`, without paying. | `node examples/inspect-price.mjs` |
 
 Run them from the package directory:
@@ -28,9 +28,9 @@ Runs the MCP `initialize` handshake, then `tools/list`, and formats every tool.
 Expected output (abridged):
 
 ```
-server:       x402-mcp v0.2.1 (stdio)
+server:       x402-mcp v0.2.3 (stdio)
 capabilities: tools
-tools:        4
+tools:        22
 
 1. x402_wallet
    title: The agent's x402 spending wallet (address + balance)
@@ -52,10 +52,26 @@ tools:        4
 
 4. pay_and_call
    hints: destructive, open-world
+
+5. spending_report
+   title: Spending report: totals by merchant and day
+   hints: read-only
+   params:
+     - merchant (optional; string)
+     - since (optional; string)
+
+6. weather_forecast
+   hints: destructive, open-world
+
+... (16 more named tools: weather_go_no_go, carbon_now, carbon_best_window,
+    domain_rdap_check, domain_rdap_check_bulk, research_search, research_paper,
+    research_bibliography, book_search, book_read, news_wire_search,
+    news_wire_poll, transit_plan, transit_delays, places_search, places_detail)
 ```
 
-`pay_and_call` is the only tool that carries `destructiveHint`. That is the flag
-annotation-aware clients use to prompt before spending.
+`pay_and_call` and every named tool from `weather_forecast` on carry
+`destructiveHint`. That is the flag annotation-aware clients use to prompt
+before spending.
 
 ## inspect-price.mjs
 

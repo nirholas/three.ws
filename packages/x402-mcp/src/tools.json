@@ -1,0 +1,292 @@
+{
+	"_comment": "Named-tool registry for the x402 buyer MCP. Each entry becomes one MCP tool (packages/x402-mcp/src/tools/named-services.js builds them) that pays a single, fixed three.ws x402 endpoint, instead of the model composing a raw pay_and_call(url) call. Mirrored in api/_mcpagent/named-services-tools.js for the hosted agent. Source of the facts below: api/_lib/service-catalog/services/*.js (order 516).",
+	"tools": [
+		{
+			"name": "weather_forecast",
+			"title": "Weather Guard: Forecast",
+			"path": "/api/x402/weather-guard-forecast",
+			"method": "GET",
+			"priceUsd": 0.001,
+			"description": "Pay $0.001 USDC (or use the free daily per-IP quota) for the next 24 hours of hourly temperature, wind speed, precipitation probability and WMO weather conditions at any latitude/longitude, sourced live from Open-Meteo with a US National Weather Service fallback and active NWS severe-weather alerts for US coordinates.",
+			"inputSchema": {
+				"type": "object",
+				"required": ["lat", "lon"],
+				"properties": {
+					"lat": { "type": "number", "minimum": -90, "maximum": 90, "description": "Latitude." },
+					"lon": { "type": "number", "minimum": -180, "maximum": 180, "description": "Longitude." }
+				}
+			}
+		},
+		{
+			"name": "weather_go_no_go",
+			"title": "Weather Guard: Activity Decision",
+			"path": "/api/x402/weather-guard-decision",
+			"method": "GET",
+			"priceUsd": 0.002,
+			"description": "Pay $0.002 USDC per call to turn the next 6 hours of live forecast at any lat/lon into a go / caution / no-go verdict for a named activity (running, cycling, outdoor-event, drone-flight, photography), with the exact thresholds crossed and any active NWS severe-weather alert that forced a no-go.",
+			"inputSchema": {
+				"type": "object",
+				"required": ["lat", "lon", "activity"],
+				"properties": {
+					"lat": { "type": "number", "minimum": -90, "maximum": 90, "description": "Latitude." },
+					"lon": { "type": "number", "minimum": -180, "maximum": 180, "description": "Longitude." },
+					"activity": {
+						"type": "string",
+						"enum": ["running", "cycling", "outdoor-event", "drone-flight", "photography"],
+						"description": "Activity to judge the forecast against."
+					}
+				}
+			}
+		},
+		{
+			"name": "carbon_now",
+			"title": "Grid Carbon: Now",
+			"path": "/api/x402/carbon-now",
+			"method": "GET",
+			"priceUsd": 0.001,
+			"description": "Pay $0.001 USDC (or use the free daily per-IP quota) for the current UK national grid carbon intensity in gCO2/kWh with its forecast/actual/index reading and full generation mix, live from the National Grid ESO Carbon Intensity API. Pass a GB postcode outcode for the regional reading instead.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"postcode": { "type": "string", "description": "GB postcode outcode, e.g. \"SW1A\". Omit for the national reading." }
+				}
+			}
+		},
+		{
+			"name": "carbon_best_window",
+			"title": "Grid Carbon: Best Window",
+			"path": "/api/x402/carbon-best-window",
+			"method": "GET",
+			"priceUsd": 0.002,
+			"description": "Pay $0.002 USDC per call to scan the live 48h National Grid ESO carbon-intensity forecast for the lowest-carbon window of a given length (1 to 12 hours), nationally or for one GB postcode region, with the best window, up to 3 runners-up, the worst window, and a plain-language recommendation.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"hours": { "type": "integer", "minimum": 1, "maximum": 12, "default": 4, "description": "Length of the window to find, in hours." },
+					"postcode": { "type": "string", "description": "GB postcode outcode, e.g. \"SW1A\". Omit for the national forecast." }
+				}
+			}
+		},
+		{
+			"name": "domain_rdap_check",
+			"title": "Domain Check (RDAP)",
+			"path": "/api/x402/domains-check",
+			"method": "GET",
+			"priceUsd": 0.001,
+			"description": "Pay $0.001 USDC (or use the free daily per-IP quota) to query the authoritative RDAP server for a domain (IANA bootstrap registry, rdap.org fallback) and get its registration status, registrar, creation/update/expiry dates, nameservers, status flags, and DNSSEC signing state.",
+			"inputSchema": {
+				"type": "object",
+				"required": ["domain"],
+				"properties": {
+					"domain": { "type": "string", "description": "Domain name to check, e.g. \"example.com\"." }
+				}
+			}
+		},
+		{
+			"name": "domain_rdap_check_bulk",
+			"title": "Domain Check (Bulk RDAP)",
+			"path": "/api/x402/domains-bulk",
+			"method": "POST",
+			"priceUsd": 0.005,
+			"description": "Pay $0.005 USDC per call to check up to 50 domains in one request against their authoritative RDAP servers, with bounded concurrency. Returns a per-domain registration breakdown plus registered/available/unknown counts.",
+			"inputSchema": {
+				"type": "object",
+				"required": ["domains"],
+				"properties": {
+					"domains": {
+						"type": "array",
+						"items": { "type": "string" },
+						"minItems": 1,
+						"maxItems": 50,
+						"description": "Domains to check, 1 to 50 per call."
+					}
+				}
+			}
+		},
+		{
+			"name": "research_search",
+			"title": "Scholarly Search",
+			"path": "/api/x402/research-search",
+			"method": "GET",
+			"priceUsd": 0.002,
+			"description": "Pay $0.002 USDC (or use the free daily per-IP quota) to query arXiv, Crossref, and Semantic Scholar in parallel and get a merged, de-duplicated ranking of papers with authors, year, venue, DOI, arXiv id, abstract, and citation count.",
+			"inputSchema": {
+				"type": "object",
+				"required": ["q"],
+				"properties": {
+					"q": { "type": "string", "description": "Search query." },
+					"limit": { "type": "integer", "minimum": 1, "maximum": 25, "default": 10, "description": "Max papers to return." }
+				}
+			}
+		},
+		{
+			"name": "research_paper",
+			"title": "Paper Detail & Citation Graph",
+			"path": "/api/x402/research-paper",
+			"method": "GET",
+			"priceUsd": 0.003,
+			"description": "Pay $0.003 USDC per call for a single paper's full metadata (title, abstract, TL;DR, year, venue, authors, fields of study, open-access PDF link) plus a two-sided citation graph, keyed by DOI, arXiv id, or Semantic Scholar id.",
+			"inputSchema": {
+				"type": "object",
+				"required": ["id"],
+				"properties": {
+					"id": { "type": "string", "description": "A DOI, arXiv id (e.g. \"1706.03762\"), or Semantic Scholar paper id." }
+				}
+			}
+		},
+		{
+			"name": "research_bibliography",
+			"title": "Bibliography Formatter",
+			"path": "/api/x402/research-bibliography",
+			"method": "POST",
+			"priceUsd": 0.005,
+			"description": "Pay $0.005 USDC per call to get formatted BibTeX and/or APA 7 citation entries for up to 25 DOIs in one request, sourced live from Crossref.",
+			"inputSchema": {
+				"type": "object",
+				"required": ["dois"],
+				"properties": {
+					"dois": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 25, "description": "DOIs to format, 1 to 25 per call." },
+					"format": { "type": "string", "enum": ["bibtex", "apa", "both"], "default": "both", "description": "Citation format to return." }
+				}
+			}
+		},
+		{
+			"name": "book_search",
+			"title": "Book Search",
+			"path": "/api/x402/books-search",
+			"method": "GET",
+			"priceUsd": 0.001,
+			"description": "Pay $0.001 USDC (or use the free daily per-IP quota) to search OpenLibrary editions by title (and optionally author) and get each edition annotated with whether a cleaned Project Gutenberg full text can be bought with book_read, resolved live via Gutendex with a gutenberg.org fallback.",
+			"inputSchema": {
+				"type": "object",
+				"required": ["q"],
+				"properties": {
+					"q": { "type": "string", "description": "Title to search for." },
+					"author": { "type": "string", "description": "Optional author filter." },
+					"limit": { "type": "integer", "minimum": 1, "maximum": 25, "default": 5, "description": "Max editions to return." }
+				}
+			}
+		},
+		{
+			"name": "book_read",
+			"title": "Book Read",
+			"path": "/api/x402/books-read",
+			"method": "GET",
+			"priceUsd": 0.01,
+			"description": "Pay $0.01 USDC per call to receive the complete text of a public-domain Project Gutenberg book, licence boilerplate stripped and split into chapters, as markdown JSON. Find a gutenbergId with book_search first.",
+			"inputSchema": {
+				"type": "object",
+				"required": ["gutenbergId"],
+				"properties": {
+					"gutenbergId": { "type": "integer", "description": "Project Gutenberg ebook id, from book_search." }
+				}
+			}
+		},
+		{
+			"name": "news_wire_search",
+			"title": "Global News Wire Search",
+			"path": "/api/x402/news-wire-query",
+			"method": "GET",
+			"priceUsd": 0.003,
+			"description": "Pay $0.003 USDC (or use the free daily per-IP quota) to search the GDELT Project's real-time index of worldwide news media in 65+ languages. Returns matching articles plus a coverage-volume timeline. For an ongoing poll loop, switch to news_wire_poll after the first search.",
+			"inputSchema": {
+				"type": "object",
+				"required": ["q"],
+				"properties": {
+					"q": { "type": "string", "description": "Search query. Free text is quoted automatically; GDELT operators (AND, OR, sourcelang:, etc) pass through as-is." },
+					"timespan": { "type": "string", "default": "3d", "description": "GDELT lookback window, e.g. 1d, 3d, 1w, 1m." },
+					"maxRecords": { "type": "integer", "minimum": 1, "maximum": 75, "default": 25 },
+					"sourceLang": { "type": "string", "description": "Restrict to a GDELT source language code, e.g. eng." },
+					"sourceCountry": { "type": "string", "description": "Restrict to a GDELT source country code, e.g. us." },
+					"includeTimeline": { "type": "boolean", "default": true, "description": "Include the coverage-volume timeline (one extra upstream call)." }
+				}
+			}
+		},
+		{
+			"name": "news_wire_poll",
+			"title": "Global News Wire Pulse",
+			"path": "/api/x402/news-wire-pulse",
+			"method": "GET",
+			"priceUsd": 0.002,
+			"description": "Pay $0.002 USDC per call to get only the GDELT articles that have appeared for your query since a cursor you supply, plus a fresh cursor for the next poll. Start with news_wire_search to get a query working, then switch here for ongoing monitoring without re-fetching the same articles.",
+			"inputSchema": {
+				"type": "object",
+				"required": ["q", "cursor"],
+				"properties": {
+					"q": { "type": "string", "description": "Search query, same syntax as news_wire_search." },
+					"cursor": { "type": "string", "description": "GDELT timestamp (YYYYMMDDHHMMSS) or ISO-8601 timestamp to poll since." },
+					"maxRecords": { "type": "integer", "minimum": 1, "maximum": 75, "default": 50 }
+				}
+			}
+		},
+		{
+			"name": "transit_plan",
+			"title": "Transit Trip Plan",
+			"path": "/api/x402/transit-plan",
+			"method": "GET",
+			"priceUsd": 0.002,
+			"description": "Pay $0.002 USDC (or use the free daily per-IP quota) to plan a trip between two MBTA stops from the public GTFS feed. Each place accepts a feed stop id, a station name, or a \"lat,lon\" pair. Returns direct and one-transfer itineraries, with realtime predictions overlaid where the GTFS-Realtime feed has them.",
+			"inputSchema": {
+				"type": "object",
+				"required": ["from", "to"],
+				"properties": {
+					"from": { "type": "string", "description": "Origin: stop id, station name, or \"lat,lon\"." },
+					"to": { "type": "string", "description": "Destination: stop id, station name, or \"lat,lon\"." },
+					"departAfter": { "type": "string", "description": "ISO 8601 timestamp. Defaults to now." },
+					"max": { "type": "integer", "minimum": 1, "maximum": 10, "default": 3, "description": "Max itineraries to return." }
+				}
+			}
+		},
+		{
+			"name": "transit_delays",
+			"title": "Transit Delay Snapshot",
+			"path": "/api/x402/transit-delays",
+			"method": "GET",
+			"priceUsd": 0.001,
+			"description": "Pay $0.001 USDC per call to see how the MBTA's realtime feed compares to the scheduled timetable right now at a stop, optionally filtered to one route. Returns a per-arrival breakdown plus a running-well / minor-delays / significant-delays verdict. Find a stop id with transit_plan first.",
+			"inputSchema": {
+				"type": "object",
+				"required": ["stop"],
+				"properties": {
+					"stop": { "type": "string", "description": "Stop id, station name, or \"lat,lon\"." },
+					"route": { "type": "string", "description": "Optional feed route id to filter by." },
+					"limit": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 }
+				}
+			}
+		},
+		{
+			"name": "places_search",
+			"title": "Places Search",
+			"path": "/api/x402/places-search",
+			"method": "GET",
+			"priceUsd": 0.002,
+			"description": "Pay $0.002 USDC (or use the free daily per-IP quota) to search OpenStreetMap via the Overpass API for points of interest within a radius of a coordinate, optionally filtered to a category (cafe, restaurant, pharmacy, museum, etc). Returns each place's name, category, coordinates, opening hours, phone, website, address, and cuisine where tagged.",
+			"inputSchema": {
+				"type": "object",
+				"required": ["lat", "lon"],
+				"properties": {
+					"lat": { "type": "number", "minimum": -90, "maximum": 90 },
+					"lon": { "type": "number", "minimum": -180, "maximum": 180 },
+					"radius": { "type": "integer", "minimum": 1, "maximum": 5000, "default": 500, "description": "Search radius in metres." },
+					"category": { "type": "string", "description": "OSM tag value such as cafe, restaurant, pharmacy, bar, museum." },
+					"limit": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 }
+				}
+			}
+		},
+		{
+			"name": "places_detail",
+			"title": "Place Detail",
+			"path": "/api/x402/places-detail",
+			"method": "GET",
+			"priceUsd": 0.002,
+			"description": "Pay $0.002 USDC per call to fetch the full live OpenStreetMap record for one place, by the id returned from places_search (e.g. \"node-1072800838\"). Returns every OSM tag alongside the structured fields.",
+			"inputSchema": {
+				"type": "object",
+				"required": ["id"],
+				"properties": {
+					"id": { "type": "string", "description": "Place id from places_search, e.g. \"node-1072800838\", \"way-55\", \"relation-9\"." }
+				}
+			}
+		}
+	]
+}
