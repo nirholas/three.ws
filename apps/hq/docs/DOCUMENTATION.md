@@ -3473,7 +3473,7 @@ The system degrades gracefully-blocked sources are skipped while others continue
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for detailed planning. Recent intelligence enhancements:
+See [ROADMAP.md](../ROADMAP.md) for detailed planning. Recent intelligence enhancements:
 
 ### Completed
 
@@ -3526,7 +3526,7 @@ See [ROADMAP.md](ROADMAP.md) for detailed planning. Recent intelligence enhancem
 - **Additional Data Sources** - World Bank, IMF, OFAC sanctions, UNHCR refugee data, FAO food security
 - **Think Tank Feeds** - RUSI, Chatham House, ECFR, CFR, Wilson Center, CNAS, Arms Control Association
 
-The full [ROADMAP.md](ROADMAP.md) documents implementation details, API endpoints, and 30+ free data sources for future integration.
+The full [ROADMAP.md](../ROADMAP.md) documents implementation details, API endpoints, and 30+ free data sources for future integration.
 
 ---
 

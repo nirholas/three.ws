@@ -47,7 +47,7 @@ npm run test:sidecar     # API/sidecar unit tests
 - deck.gl 9 + MapLibre GL for the globe, d3 for charts.
 - Two build variants: `full` (DeFi command center) and `tech` (AI/startups).
 
-See [CLAUDE.md](CLAUDE.md) for the contributor guide and [ROADMAP.md](ROADMAP.md) for direction.
+See [AGENTS.md](AGENTS.md) for the contributor guide and [ROADMAP.md](ROADMAP.md) for direction.
 
 ## Deployment (Google Cloud Run)
 
