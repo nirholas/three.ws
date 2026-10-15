@@ -52,7 +52,7 @@ function rpcError(code, message, data) {
 	return e;
 }
 
-async function enforce(limiter, auth) {
+export async function enforce(limiter, auth) {
 	const rl = await limiter(auth.userId || auth.rateKey || 'anon');
 	if (!rl.success) {
 		throw rpcError(-32000, 'rate_limited', {
@@ -61,7 +61,7 @@ async function enforce(limiter, auth) {
 	}
 }
 
-function payLink(resource) {
+export function payLink(resource) {
 	const u = new URL(`${env.APP_ORIGIN}/pay`);
 	u.searchParams.set('resource', resource);
 	return u.toString();
@@ -80,7 +80,7 @@ function signInRequired(text) {
 // Real funds only move for an account that signed the current real-funds
 // agreements. Returns null when the caller may proceed, otherwise a designed
 // tool result. A database failure fails closed: nothing moves unverified.
-async function agreementRequired(userId, resource) {
+export async function agreementRequired(userId, resource) {
 	let signature;
 	try {
 		signature = await currentSignatureFor(userId);
@@ -117,7 +117,7 @@ async function agreementRequired(userId, resource) {
 // the null-userId x402 path gets the friendly signInRequired() message first,
 // and an authenticated-but-under-scoped token gets a clear, designed error
 // rather than a bare JSON-RPC code.
-function scopeRequired(scope) {
+export function scopeRequired(scope) {
 	return {
 		content: [
 			{
@@ -181,14 +181,14 @@ async function requestDevnetAirdrop(address) {
 	}
 }
 
-function chainLabel(network) {
+export function chainLabel(network) {
 	if (typeof network !== 'string') return 'unknown chain';
 	if (network.startsWith('solana')) return `Solana (${network})`;
 	if (network === 'eip155:8453' || network === 'base') return `Base (${network})`;
 	return network;
 }
 
-function quoteRefusal(resource, reason, text, extra = {}) {
+export function quoteRefusal(resource, reason, text, extra = {}) {
 	return {
 		content: [{ type: 'text', text: `${text} Nothing was paid.` }],
 		structuredContent: { ok: false, reason, resource, ...extra },
@@ -201,7 +201,7 @@ function quoteRefusal(resource, reason, text, extra = {}) {
 // fails and no preview id is issued for a payment that cannot happen. A signed-
 // out caller or a server with spend off is not a hard blocker: pay_and_call
 // answers both with the manual pay link, which the quote already carries.
-function payBlockers({ auth, spendEnabled, wallet, priceUsd, perCallLimit }) {
+export function payBlockers({ auth, spendEnabled, wallet, priceUsd, perCallLimit }) {
 	if (!auth.userId) {
 		return [{ code: 'auth_required', hard: false, message: 'Sign in to three.ws to pay from your agent wallet; until then use the pay link.' }];
 	}

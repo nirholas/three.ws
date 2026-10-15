@@ -118,6 +118,14 @@ const DESTRUCTIVE_TOOLS = new Set([
 	'agent_mail_create', 'agent_mail_send', 'agent_mail_reply',
 	'agent_send', 'agent_buy_confirm',
 	'swap_execute',
+	// Named commerce tools (order 521, api/_mcpagent/named-services-tools.js):
+	// each pays a fixed three.ws x402 service from the agent wallet, gated on
+	// its own <name>_quote preview (the quote tools themselves stay read-only
+	// and are not in this set).
+	'weather_forecast', 'weather_go_no_go', 'carbon_now', 'carbon_best_window',
+	'domain_rdap_check', 'domain_rdap_check_bulk', 'research_search', 'research_paper', 'research_bibliography',
+	'book_search', 'book_read', 'news_wire_search', 'news_wire_poll',
+	'transit_plan', 'transit_delays', 'places_search', 'places_detail',
 ]);
 
 // Destructive tools the policy deliberately leaves in the write tier (on by

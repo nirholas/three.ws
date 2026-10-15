@@ -61,6 +61,13 @@ const INSTRUCTIONS = [
 	'with confirm_order: true, or dca_create with confirm_dca: true. order_book shows next fire times and why',
 	'an order skipped; limit_order_list, limit_order_history and dca_list read; limit_order_cancel and',
 	'dca_cancel stop orders and never move funds.',
+	'Named commerce tools pay one fixed three.ws x402 service each, cheaper to reason about than a raw',
+	'pay_and_call(resource_url): weather_forecast, weather_go_no_go, carbon_now, carbon_best_window,',
+	'domain_rdap_check, domain_rdap_check_bulk, research_search, research_paper, research_bibliography,',
+	'book_search, book_read, news_wire_search, news_wire_poll, transit_plan, transit_delays, places_search',
+	'and places_detail. Each has a _quote twin (e.g. weather_forecast_quote) that prices it without paying;',
+	'show the user that table, wait for a clear yes, then call the paying tool with its preview_id and',
+	'confirm_payment: true.',
 ].join(' ');
 
 export const dispatch = makeDispatcher({

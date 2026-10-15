@@ -32,14 +32,32 @@ export const RESOURCE_DESCRIPTION =
 	'predictions_watch. Perpetual futures with USDC collateral on Solana, paper or live: perps_markets, ' +
 	'perps_market_data, perps_account, perps_positions, perps_order_preview, perps_action_preview, ' +
 	'perps_order_execute, perps_collateral_deposit, perps_collateral_withdraw, perps_order_cancel, ' +
-	'perps_flatten and perps_limits. Resting orders and DCA on any SPL token: order_preview, limit_order_create, ' +
+	'perps_flatten and perps_limits. Synthetic perps on HyperEVM, paper money only: papertrade_markets, ' +
+	'papertrade_quote, papertrade_account and papertrade_protocol. ' +
+	'Resting orders and DCA on any SPL token: order_preview, limit_order_create, ' +
 	'stop_order_create, trailing_order_create, ladder_order_create, oco_order_create, limit_order_list, ' +
 	'limit_order_cancel, limit_order_history, order_book, dca_preview, dca_create, dca_list and dca_cancel. ' +
 	'Solana trading: token_search, get_price, get_indicators, get_market_signals, get_news_feed, ' +
 	'arbitrage_prices, arbitrage_quote, swap_quote (every aggregator compared on net output), swap_simulate ' +
-	'and swap_execute. ' +
+	'and swap_execute. Portfolio reads: get_portfolio, get_balance_history and get_pnl. ' +
+	'Launch sniper, signal subscriptions and alert rules: sniper_status, sniper_activate_preview, ' +
+	'sniper_activate, sniper_deactivate, sniper_subscribe, alert_rule_create, alert_rule_list and ' +
+	'alert_rule_delete. Agent duels settled in USDC: duel_challenge, duel_accept, duel_details and ' +
+	'duel_markets. Agent-to-agent commerce: invoice_create, invoice_details, invoice_list, invoice_verify, ' +
+	'invoice_cancel, agent_send_preview, agent_send, offer_list, agent_sell, agent_buy, agent_buy_confirm, ' +
+	'spending_check and spending_setup. ' +
 	'Free-to-play Event Markets, points only: event_markets_list, event_market, event_market_pick, ' +
 	'event_market_analyze, event_market_forecasters and event_market_agent_pick. ' +
+	'Named commerce tools that pay a fixed three.ws x402 service from your agent wallet, each with a ' +
+	'_quote counterpart that prices it without paying: weather_forecast_quote and weather_forecast, ' +
+	'weather_go_no_go_quote and weather_go_no_go, carbon_now_quote and carbon_now, ' +
+	'carbon_best_window_quote and carbon_best_window, domain_rdap_check_quote and domain_rdap_check, ' +
+	'domain_rdap_check_bulk_quote and domain_rdap_check_bulk, research_search_quote and research_search, ' +
+	'research_paper_quote and research_paper, research_bibliography_quote and research_bibliography, ' +
+	'book_search_quote and book_search, book_read_quote and book_read, news_wire_search_quote and ' +
+	'news_wire_search, news_wire_poll_quote and news_wire_poll, transit_plan_quote and transit_plan, ' +
+	'transit_delays_quote and transit_delays, places_search_quote and places_search, and ' +
+	'places_detail_quote and places_detail. ' +
 	'Every money-moving tool needs its preview first and an explicit confirm flag. ' +
 	'Connect with a three.ws account (OAuth) or pay per call in USDC on Base or Solana mainnet, no ' +
 	'API key. Operated by three.ws.';
