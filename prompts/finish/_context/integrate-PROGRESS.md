@@ -999,3 +999,55 @@ crypto project other than $THREE landed in the diff.
 
 Commit: `655b5a491` (schema, policy, governor, execute.js wiring, simulate.js parity, UI,
 tests, docs, changelog), this closing commit (PROGRESS log, order-file removal).
+
+## 2026-10-15: order 519-integrate-20 closed (evolve)
+
+Both venues that could already produce a `requires_approval` verdict (order 518's governor
+rule on `payment_sessions.approval_threshold_usdc`, and `a2a-hire.js`'s own check against an
+agent's `approval_threshold_usd`) just rejected the call outright; neither was wired to a
+human. `api/pay/execute.js` and `api/agents/a2a-hire.js` now park the call on the existing
+generic Approval Inbox (`api/_lib/approvals.js`) the moment it crosses the threshold, answer
+202 with a poll link to `/approvals/<id>` instead of failing it, and resume the exact
+reserve-then-settle or hire path the call would have taken inline the moment the owner
+approves, with the same idempotency key re-polling instead of parking a second request. A
+denied request answers 403 on the next poll, an expired one 410. No new UI: the approval page
+already renders any venue generically from the request's `summary`/`amount`/`risk_notes`, so
+the two new venues (`payment_session_execute`, `a2a_hire`) get the right card for free.
+
+DoD verified:
+- Handler tests: `npx vitest run tests/a2a-hire-handler.test.js tests/pay-execute-approval.test.js
+  tests/agent-custody-guards.test.js` is 57/57 green, covering create, approve (both
+  executed-with-result and approved-but-not-yet-executed), decline, expire, and double-use
+  (idempotent re-poll of an already-completed or already-parked hire) for both venues.
+- Browser verification: live-ran the full flow against the real local server
+  (`server/index.mjs` on a spare port, real production DB) and a real Chromium session via
+  Playwright, for the `a2a_hire` venue specifically (the `payment_session_execute` venue shares
+  order 518's still-pending `20261015100000_payment_session_policy_upgrades.sql` migration,
+  already tracked as owner row 65; applying it is out of scope for this session). The run
+  registered a throwaway account, minted two real agent wallets, set an approval threshold,
+  signed the real-funds agreements, hired above the threshold (real 202 + `pending_approval`),
+  loaded `/approvals/<id>` in a real browser and confirmed the rendered card (summary, $0.05
+  amount, Solana chain, threshold reason, working Approve/Deny buttons), denied it, confirmed
+  the same idempotency key now re-polls to 403 `approval_denied`, and cleaned up every row it
+  created. Screenshot and script were scratch (not committed, per repo-hygiene: no throwaway
+  scripts land in `scripts/`).
+- Docs (`docs/approvals.md`'s executor-registry sentence names both new sources) and
+  `data/changelog.json` updated, `npm run build:pages` run.
+
+Judgment calls: reused the existing generic `/approvals/<id>` page instead of building a new
+page, since it already renders any venue from generic fields; verified the `a2a_hire` venue
+live in a browser rather than `payment_session_execute`, for the migration-dependency reason
+above (both venues' request/response/retry logic and generic-card rendering are otherwise
+identical, and `payment_session_execute` is covered by its own 24 handler tests); inserted one
+synthetic `agent_paid_services` row directly via SQL for the throwaway hire fixture, since
+registering a real offer needs a publicly reachable `target_url` out of scope for a local
+smoke run, and the row is never fetched before the approval gate.
+
+No new owner-gated action: no push, no deploy, no on-chain write, and no reference to a crypto
+project other than $THREE landed in the diff. The one owner action this order's code now also
+depends on (applying `20261015100000_payment_session_policy_upgrades.sql` before
+`payment_session_execute`'s approval path works in production) was already logged as owner row
+65 by order 518's close-out; not duplicated here.
+
+Commit: `9f40b6acc` (approvals wiring for both venues, handler tests, docs, changelog), this
+closing commit (PROGRESS log, order-file removal).
