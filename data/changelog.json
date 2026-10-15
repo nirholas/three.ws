@@ -3,23 +3,40 @@
 	"entries": [
 		{
 			"date": "2026-10-15",
+			"title": "Turn any public OpenAPI spec or GitHub repo into a draft agent skill",
+			"summary": "New importer at /skills/import (From an API tab) and POST /api/skills/import: point at an OpenAPI/Swagger URL or a GitHub repo and every operation becomes a tools.json entry with a generated handlers.js function calling ctx.fetch, SKILL.md prose written from the spec's own descriptions, and Swagger 2.0 upgraded to OpenAPI 3 automatically. A README-only repo becomes a declarative skill instead, prose only, no tools. Every import lands as a disabled draft, owner-scoped and labelled untrusted: enabled only ever flips via the dedicated PATCH /api/skills/import/:id route, never at creation, and nothing is installed onto any agent automatically. Generated handlers fill auth from the skill's declared secrets, never a hardcoded credential. Also available from the CLI: three-ws skills import <url> and three-ws skills drafts. New package: @three-ws/skill-import.",
+			"tags": [
+				"feature"
+			],
+			"link": "/skills/import"
+		},
+		{
+			"date": "2026-10-15",
 			"title": "Agent-to-agent hires now carry a signed fulfillment record, and it feeds reputation and pricing",
 			"summary": "Every settled a2a-hire (api/agents/a2a-hire.js) now writes exactly one signed attestation row: {hire_id, payment_signature, outcome, evidence_hash, signed_by}, outcome one of delivered, failed, or disputed, signed off-chain with the same platform attestation key api/_lib/attest-event.js uses for on-chain provenance memos. A client-side timeout is recorded as disputed, never inferred as delivered, since x402's verify-then-settle means the provider may already have been paid server-side. The resulting recency-weighted fulfillment rate (30-day half-life, minimum 5 attestations before it counts) is now a real input to the free Financial reputation score on every agent's Trust tab: the Settlement reliability pillar's detail line reports the rate alongside its sample size, for example '90% hire fulfillment over 12 hires', or how many hires are attested so far if the minimum has not been met yet. Providers can also opt a service into an optional x402 pricing discount for well-reputed hirers (agent_paid_services.reputation_discount_enabled, off by default): the hiring agent's reputation tier mints a short-lived, slug-scoped, signature-verified voucher, never a caller-supplied claim, so the paywall always fails closed to full price on anything unsigned, expired, or mis-scoped.",
-			"tags": ["feature", "security"],
+			"tags": [
+				"feature",
+				"security"
+			],
 			"link": "/agents"
 		},
 		{
 			"date": "2026-10-15",
 			"title": "Receipt Vault gains an Outbound tab: what your agents spent elsewhere, verified against the chain itself",
 			"summary": "The Receipt Vault at /receipts now has two tabs. Inbound is unchanged (what three.ws billed your wallet); the new Outbound tab answers the other question: what did your agents spend at OTHER x402 merchants while running on an Agent Payment Session. Each settled Solana execution is resolved against the settlement transaction's own token-balance change the first time anyone views it (payer, payee, mint, amount, fee, slot, time), independent of whatever the merchant's response claimed, then cached so later views are free; a 'verified' badge marks a row that matched the chain, 'pending' while resolution is still in flight, and 'unverified' if the lookup failed permanently. The tab is account-session gated (the same credential /payments uses, not a wallet signature, since Payment Sessions are account-scoped, not wallet-scoped), filters by network and merchant host, and exports to CSV alongside the existing JSON receipt downloads. New endpoint: GET /api/x402/outbound-receipts.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/receipts"
 		},
 		{
 			"date": "2026-10-15",
 			"title": "17 named commerce tools and a spending report land in the x402 MCP buyer, hosted and self-custodial",
 			"summary": "The self-custodial x402 buyer (@three-ws/x402-mcp, npx -y @three-ws/x402-mcp) and the hosted agent wallet (https://three.ws/api/mcp-agent) both gained 17 named tools, one per fixed three.ws x402 service: weather_forecast, weather_go_no_go, carbon_now, carbon_best_window, domain_rdap_check, domain_rdap_check_bulk, research_search, research_paper, research_bibliography, book_search, book_read, news_wire_search, news_wire_poll, transit_plan, transit_delays, places_search and places_detail. Each carries a fixed input schema and states its price in its description, so a model calls it correctly far more often than it composes the equivalent raw pay_and_call(url) call. On the hosted side every named tool has a matching <name>_quote read tool that prices it without paying, and the shared tool-policy runtime (@three-ws/mcp-policy) gates payment on that exact quote (one service's quote can never unlock a different service's payment). The stdio package also gained spending_report, which totals everything pay_and_call and the named tools have paid, by merchant and by day, from a local append-only ledger (X402_MCP_LEDGER_PATH).",
-			"tags": ["feature", "sdk"],
+			"tags": [
+				"feature",
+				"sdk"
+			],
 			"link": "/docs/mcp"
 		},
 		{

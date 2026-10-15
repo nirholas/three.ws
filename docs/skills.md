@@ -704,6 +704,40 @@ For IPFS publishing, the CID of the directory becomes the stable URI. Agents can
 
 ---
 
+## Importing a skill from an OpenAPI spec or a GitHub repo
+
+Writing a bundle by hand is not the only path. `@three-ws/skill-import` turns a public OpenAPI/Swagger spec URL, or a GitHub repo, directly into a draft bundle: every operation becomes a `tools.json` entry and a generated `handlers.js` function that calls it, `SKILL.md` prose is written from the spec's own descriptions, and Swagger 2.0 specs are upgraded to OpenAPI 3 automatically. A repo whose only content is a README becomes a declarative skill (prose only, no tools), the same shape as a hand-written `SKILL.md`-only bundle.
+
+```bash
+curl -s -X POST https://three.ws/api/skills/import \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
+  -H "content-type: application/json" \
+  -d '{"url": "https://petstore3.swagger.io/api/v3/openapi.json"}' | jq '.data | {id, kind, bundleUri, tools: .manifest.provides.tools}'
+```
+
+```json
+{
+  "id": "a96ddb60-...",
+  "kind": "openapi",
+  "bundleUri": "/api/skills/import/a96ddb60-.../",
+  "tools": ["updatePet", "addPet", "findPetsByStatus", "getPetById", "..."]
+}
+```
+
+The CLI wraps the same endpoint:
+
+```bash
+three-ws skills import https://petstore3.swagger.io/api/v3/openapi.json
+three-ws skills import sindresorhus/is-up   # owner/repo shorthand also works
+three-ws skills drafts                       # list your generated drafts
+```
+
+Every import lands as a **disabled draft, owner-scoped and labelled untrusted**: it is never enabled automatically and never installed onto any agent. `GET /api/skills/import` lists your drafts, `GET /api/skills/import/:id` fetches one, and the generated bundle itself is served at `bundleUri` (`manifest.json`, `SKILL.md`, `tools.json`, `handlers.js`) so you can inspect every generated tool call before trusting it. `PATCH /api/skills/import/:id` with `{ "enabled": true }` is the only way a draft's `enabled` flag ever changes; `DELETE /api/skills/import/:id` removes it. The same flow is available from the UI at [/skills/import](https://three.ws/skills/import), under the **From an API** tab: paste a spec URL or repo, review the generated tool list in the result card, then enable or delete each draft from your drafts list.
+
+Generated handlers call `ctx.fetch` with auth placeholders filled from the skill's declared secrets (an API key header, a bearer token, etc.), never a hardcoded credential, so the skill's eventual owner supplies the real secret at install time, the same as any other skill with a `secrets` declaration in its manifest.
+
+---
+
 ## Marketplace skills: install once, applied in every chat
 
 Alongside URI-addressed bundles, the platform hosts a community catalog at [/marketplace?tab=skills](https://three.ws/marketplace?tab=skills). A marketplace skill is a database-backed record with a description, category, tags, ratings, and either:

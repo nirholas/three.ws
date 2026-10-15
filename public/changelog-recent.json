@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-15T08:14:33.806Z",
+	"generated_at": "2026-10-15T09:19:08.798Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4106,
+	"total": 4107,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -110,6 +110,16 @@
 			"title": "Receipt Vault gains an Outbound tab: what your agents spent elsewhere, verified against the chain itself",
 			"summary": "The Receipt Vault at /receipts now has two tabs. Inbound is unchanged (what three.ws billed your wallet); the new Outbound tab answers the other question: what did your agents spend at OTHER x402 merchants while running on an Agent Payment Session. Each settled Solana execution is resolved against the settlement transaction's own token-balance change the first time anyone views it (payer, payee, mint, amount, fee, slot, time), independent of whatever the merchant's response claimed, then cached so later views are free; a 'verified' badge marks a row that matched the chain, 'pending' while resolution is still in flight, and 'unverified' if the lookup failed permanently. The tab is account-session gated (the same credential /payments uses, not a wallet signature, since Payment Sessions are account-scoped, not wallet-scoped), filters by network and merchant host, and exports to CSV alongside the existing JSON receipt downloads. New endpoint: GET /api/x402/outbound-receipts.",
 			"link": "/receipts",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-15",
+			"type": "update",
+			"title": "Turn any public OpenAPI spec or GitHub repo into a draft agent skill",
+			"summary": "New importer at /skills/import (From an API tab) and POST /api/skills/import: point at an OpenAPI/Swagger URL or a GitHub repo and every operation becomes a tools.json entry with a generated handlers.js function calling ctx.fetch, SKILL.md prose written from the spec's own descriptions, and Swagger 2.0 upgraded to OpenAPI 3 automatically. A README-only repo becomes a declarative skill instead, prose only, no tools. Every import lands as a disabled draft, owner-scoped and labelled untrusted: enabled only ever flips via the dedicated PATCH /api/skills/import/:id route, never at creation, and nothing is installed onto any agent automatically. Generated handlers fill auth from the skill's declared secrets, never a hardcoded credential. Also available from the CLI: three-ws skills import <url> and three-ws skills drafts. New package: @three-ws/skill-import.",
+			"link": "/skills/import",
 			"tags": [
 				"feature"
 			]
@@ -1547,16 +1557,6 @@
 			"title": "Event Markets leaderboard: season rankings and rewards",
 			"summary": "Season and all-time rankings for the best event forecasters. Right calls on long odds score the most; streaks, badges and $THREE season rewards.",
 			"link": "/event-markets/leaderboard",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Event Markets: call the winner of every three.ws event",
-			"summary": "Live, closing-soon and resolved markets for every three.ws event. Free-to-play points, crowd-set odds, and shareable cards for each call.",
-			"link": "/event-markets",
 			"tags": [
 				"launch"
 			]
