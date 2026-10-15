@@ -363,6 +363,62 @@ max 100) and `cursor` pagination. Each item:
 `status` is `settled` or `failed`; failed rows carry an `error_code` (see the
 execute error table below).
 
+### `GET /api/x402/outbound-receipts`
+
+The account-wide view across every session: what your agents spent at other,
+external x402 merchants, enriched with what the Solana chain itself says
+settled, not just what the merchant's response claimed. This is the
+counterpart to [`GET /api/x402/my-receipts`](./x402-buyer.md) (what three.ws
+billed a wallet); this endpoint answers what your agents spent elsewhere. It
+backs the Outbound tab on [the Receipt Vault](https://three.ws/receipts).
+
+Authenticates with the account session cookie or a bearer token scoped
+`wallet:write` (the same credential `GET /api/pay/session/:id/executions`
+accepts). Query params: `network` (`solana` or `base`), `host` (filter by
+merchant host), `cursor`, `limit` (default 20, max 100).
+
+```bash
+curl -s "https://three.ws/api/x402/outbound-receipts?network=solana&limit=20" \
+  -H 'authorization: Bearer sk_live_...'
+```
+
+```json
+{
+  "receipts": [
+    {
+      "id": "...",
+      "sessionId": "...",
+      "endpointUrl": "https://api.example.com/paid",
+      "endpointHost": "api.example.com",
+      "method": "GET",
+      "network": "solana",
+      "reportedAmountUsd": 0.05,
+      "txHash": "5Kd...",
+      "reportedPayer": "...",
+      "reportedPayee": "...",
+      "status": "settled",
+      "createdAt": "2026-10-15T00:01:00.000Z",
+      "resolved": {
+        "payer": "...", "payee": "...", "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "amountAtomics": "50000", "decimals": 6, "feeLamports": 5000, "slot": 123456, "blockTime": 1792048039
+      },
+      "resolveError": null,
+      "resolvePending": false
+    }
+  ],
+  "nextCursor": null,
+  "summary": { "total": 1, "totalSpendUsd": 0.05, "verified": 1, "unverified": 0, "uniqueMerchants": 1 }
+}
+```
+
+`resolved` is the first-party settlement record, read straight from the
+transaction's own token-balance change (payer, payee, mint, amount, fee, slot,
+time) the first time anyone views that row, then cached. It is Solana-only for
+now; a Base-network execution carries `resolved: null` and shows its reported
+fields. `resolveError` is set if that resolution failed permanently (a code
+like `tx_not_found`); `resolvePending` is true while a Solana row has not been
+resolved yet.
+
 ### `PATCH /api/pay/session/:id`
 
 Update the mutable fields of an **active** session: `label`, `allowed_hosts`,
@@ -563,4 +619,5 @@ curl -s $BASE/api/credits -H "$AUTH" | jq .balance_usd
 
 - [x402 Protocol](./x402.md): the challenge / verify / settle mechanics behind every paid call.
 - [x402 Buyer Client](./x402-buyer.md): paying x402 endpoints from your own wallet instead of a session.
+- [Receipt Vault](https://three.ws/receipts): the Inbound/Outbound UI over `my-receipts` and `outbound-receipts`.
 - [x402 Developer Tools](./x402-dev-tools.md): free echo / debug / receipt-verification tools for debugging a paid call.

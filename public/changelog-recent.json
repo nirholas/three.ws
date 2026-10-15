@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-15T06:54:02.716Z",
+	"generated_at": "2026-10-15T07:31:13.188Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4104,
+	"total": 4105,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -91,6 +91,16 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-10-15",
+			"type": "update",
+			"title": "Receipt Vault gains an Outbound tab: what your agents spent elsewhere, verified against the chain itself",
+			"summary": "The Receipt Vault at /receipts now has two tabs. Inbound is unchanged (what three.ws billed your wallet); the new Outbound tab answers the other question: what did your agents spend at OTHER x402 merchants while running on an Agent Payment Session. Each settled Solana execution is resolved against the settlement transaction's own token-balance change the first time anyone views it (payer, payee, mint, amount, fee, slot, time), independent of whatever the merchant's response claimed, then cached so later views are free; a 'verified' badge marks a row that matched the chain, 'pending' while resolution is still in flight, and 'unverified' if the lookup failed permanently. The tab is account-session gated (the same credential /payments uses, not a wallet signature, since Payment Sessions are account-scoped, not wallet-scoped), filters by network and merchant host, and exports to CSV alongside the existing JSON receipt downloads. New endpoint: GET /api/x402/outbound-receipts.",
+			"link": "/receipts",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1546,16 +1556,6 @@
 			"title": "Funded Coin Launches",
 			"summary": "Launch a pump.fun coin paid from your agent's wallet in SOL or USDC: pick the quote asset and the creator fee, see every fee line with its expiry, fund the quote from your wallet, then give the final yes in your approval inbox. Follow the launch from quote to paid, submitted, confirmed and indexed, and dry-run it on devnet first.",
 			"link": "/launch/intents",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Import Skills",
-			"summary": "Install SKILL.md skills from any public GitHub repository or registry manifest. Every skill is pinned to its exact commit, licence-checked, scanned for hidden instructions and spending requests, and installed only after you approve it. Check imports for updates as a diff, fork any skill, and publish your own.",
-			"link": "/skills/import",
 			"tags": [
 				"launch"
 			]

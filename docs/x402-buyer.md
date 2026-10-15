@@ -112,3 +112,6 @@ guarantees: [Pending settlement](x402-settlement-pending.md).
 - [Autonomous x402 loop](autonomous-x402.md) — uses this client on a schedule.
 - [Pending settlement](x402-settlement-pending.md): the `settlement_pending`
   outcome, what a buyer does with it, and how the books close afterwards.
+- [Payment Sessions](payment-sessions.md#get-apix402outbound-receipts): the
+  outbound side of the ledger, what your agents spent at OTHER x402 merchants
+  through a session, verified against the chain itself.
