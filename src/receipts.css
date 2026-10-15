@@ -82,6 +82,55 @@
 	text-underline-offset: 2px;
 }
 
+/* ── tab bar ──────────────────────────────────────────────────────────────── */
+.rc-tabs {
+	display: flex;
+	gap: 8px;
+	margin: 0 0 var(--space-lg, 24px);
+	border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+}
+.rc-tab {
+	appearance: none;
+	background: transparent;
+	border: none;
+	border-bottom: 2px solid transparent;
+	color: color-mix(in srgb, var(--ink, #d8d8d8) 60%, transparent);
+	cursor: pointer;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.2em;
+	font: inherit;
+	padding: 0.6em 0.2em 0.8em;
+	margin-bottom: -1px;
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
+}
+.rc-tab span:first-child {
+	font-size: 0.98rem;
+	font-weight: 650;
+}
+.rc-tab-sub {
+	font-size: 0.76rem;
+	font-weight: 400;
+	color: color-mix(in srgb, var(--ink, #d8d8d8) 50%, transparent);
+}
+.rc-tab:hover {
+	color: var(--ink, #fff);
+}
+.rc-tab:focus-visible {
+	outline: 2px solid var(--rc-accent);
+	outline-offset: 2px;
+}
+.rc-tab[aria-selected='true'] {
+	color: var(--ink, #fff);
+	border-bottom-color: var(--rc-accent);
+}
+.rc-tab[aria-selected='true'] .rc-tab-sub {
+	color: color-mix(in srgb, var(--ink, #d8d8d8) 70%, transparent);
+}
+
 /* ── sign-in card ─────────────────────────────────────────────────────────── */
 .rc-signin {
 	margin-top: var(--space-xl, 32px);
@@ -224,6 +273,10 @@
 .rc-tool:focus-visible {
 	outline: 2px solid var(--rc-accent);
 	outline-offset: 2px;
+}
+select.rc-tool {
+	appearance: none;
+	background-color: color-mix(in srgb, var(--panel, #131318) 88%, transparent);
 }
 
 /* KPI strip */

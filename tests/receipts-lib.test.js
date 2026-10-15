@@ -15,6 +15,9 @@ import {
 	summarizeReceipts,
 	formatReceiptAmount,
 	totalSpend,
+	outboundMintSymbol,
+	formatOutboundAmount,
+	outboundReceiptsToCsv,
 } from '../src/receipts-lib.js';
 
 // The API supplies the scale (server-resolved from the same env config that
@@ -200,5 +203,65 @@ describe('summarizeReceipts', () => {
 		const s = summarizeReceipts([]);
 		expect(s.total).toBe(0);
 		expect(s.firstAt).toBe(null);
+	});
+});
+
+const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+const SYNTH_MINT = 'THREEsynthetic1111111111111111111111111111';
+
+describe('outboundMintSymbol', () => {
+	it('recognises USDC and $THREE, and nothing else', () => {
+		expect(outboundMintSymbol(USDC_MINT)).toBe('USDC');
+		expect(outboundMintSymbol(THREE_MINT)).toBe('THREE');
+		expect(outboundMintSymbol(SYNTH_MINT)).toBeNull();
+	});
+});
+
+describe('formatOutboundAmount', () => {
+	it('prefers the chain-resolved amount, under its real ticker', () => {
+		const amt = formatOutboundAmount({
+			reportedAmountUsd: 1,
+			resolved: { amountAtomics: '2000000000', decimals: 6, mint: THREE_MINT },
+		});
+		expect(amt.label).toBe('2,000.00 THREE');
+		expect(amt.usd).toBe(false);
+	});
+
+	it('falls back to the reported USD amount when nothing has resolved yet', () => {
+		const amt = formatOutboundAmount({ reportedAmountUsd: 4.5, resolved: null });
+		expect(amt.label).toBe('$4.50');
+		expect(amt.usd).toBe(true);
+	});
+});
+
+describe('outboundReceiptsToCsv', () => {
+	it('emits the resolved settlement columns when present', () => {
+		const csv = outboundReceiptsToCsv([
+			{
+				id: 'exec-1',
+				createdAt: '2026-10-15T00:00:00.000Z',
+				network: 'solana',
+				endpointHost: 'merchant.test',
+				endpointUrl: 'https://merchant.test/api/paid',
+				reportedAmountUsd: 1,
+				txHash: 'sig1',
+				resolved: { payer: 'PAYER', payee: 'PAYEE', mint: USDC_MINT, amountAtomics: '1000000', decimals: 6, feeLamports: 5000, slot: 1, blockTime: 2 },
+				resolveError: null,
+			},
+		]);
+		const [header, row] = csv.split('\n');
+		expect(header).toBe(
+			'id,created_at,network,endpoint_host,endpoint_url,reported_amount_usd,tx_hash,resolved_payer,resolved_payee,resolved_mint,resolved_amount_atomics,resolved_decimals,resolved_fee_lamports,resolved_slot,resolved_block_time,resolve_error',
+		);
+		expect(row).toContain('PAYER');
+		expect(row).toContain('PAYEE');
+		expect(row).toContain(USDC_MINT);
+	});
+
+	it('handles empty input', () => {
+		expect(outboundReceiptsToCsv([])).toBe(
+			'id,created_at,network,endpoint_host,endpoint_url,reported_amount_usd,tx_hash,resolved_payer,resolved_payee,resolved_mint,resolved_amount_atomics,resolved_decimals,resolved_fee_lamports,resolved_slot,resolved_block_time,resolve_error',
+		);
 	});
 });

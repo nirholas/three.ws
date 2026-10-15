@@ -97,6 +97,19 @@
 				</p>
 			</section>
 
+			<!-- tab bar: what three.ws billed you vs what your agents spent elsewhere -->
+			<div class="rc-tabs" role="tablist" aria-label="Receipt direction">
+				<button type="button" class="rc-tab" id="rc-tab-inbound" role="tab" aria-selected="true" aria-controls="rc-panel-inbound">
+					<span data-i18n="receipts.tab_inbound">Inbound</span>
+					<span class="rc-tab-sub" data-i18n="receipts.tab_inbound_sub">What three.ws billed you</span>
+				</button>
+				<button type="button" class="rc-tab" id="rc-tab-outbound" role="tab" aria-selected="false" aria-controls="rc-panel-outbound">
+					<span data-i18n="receipts.tab_outbound">Outbound</span>
+					<span class="rc-tab-sub" data-i18n="receipts.tab_outbound_sub">What your agents spent elsewhere</span>
+				</button>
+			</div>
+
+			<div id="rc-panel-inbound" role="tabpanel" aria-labelledby="rc-tab-inbound">
 			<!-- signed-out state -->
 			<section class="rc-signin" id="rc-signin" aria-label="Connect a wallet">
 				<h2 data-i18n="receipts.signin_h">Prove your wallet, get your receipts</h2>
@@ -225,11 +238,116 @@
 					<a href="/docs/api-reference">API reference</a>.
 				</p>
 			</section>
+			</div>
+
+			<div id="rc-panel-outbound" role="tabpanel" aria-labelledby="rc-tab-outbound" hidden>
+				<!-- signed-out state: account session, not a wallet signature -->
+				<section class="rc-signin" id="ob-signin" aria-label="Sign in to view outbound spend">
+					<h2 data-i18n="receipts.ob_signin_h">Sign in to see what your agents spent</h2>
+					<p class="rc-signin-copy" data-i18n="receipts.ob_signin_copy">
+						Outbound receipts are account-scoped: they show what your Agent Payment
+						Sessions spent at other, external x402 merchants. Sign in to view them.
+					</p>
+					<div class="rc-connect-row">
+						<a href="/login?r=/receipts" class="rc-btn rc-btn-primary" id="ob-signin-link" style="text-decoration:none">
+							<span class="rc-btn-label" data-i18n="receipts.ob_signin_btn">Sign in →</span>
+						</a>
+					</div>
+					<p class="rc-signin-note" data-i18n-html="receipts.ob_signin_note">
+						Never run a Payment Session yet? Fund one from
+						<a href="/payments">the Payment Sessions dashboard</a> and hand its token
+						to an agent, or read the
+						<a href="/docs/tutorials/agent-spending-envelope">spending envelope guide</a>.
+					</p>
+				</section>
+
+				<!-- signed-in vault -->
+				<section id="ob-vault" aria-label="What your agents spent elsewhere" hidden>
+					<div class="rc-vault-head">
+						<span class="rc-wallet" id="ob-vault-label" data-i18n="receipts.ob_vault_label">Outbound spend, across every Payment Session</span>
+						<span class="rc-vault-tools">
+							<select class="rc-tool" id="ob-filter-network" title="Filter by network" data-i18n-attr="title:receipts.ob_filter_network_title">
+								<option value="" data-i18n="receipts.ob_filter_all">All networks</option>
+								<option value="solana">Solana</option>
+								<option value="base">Base</option>
+							</select>
+							<button type="button" class="rc-tool" id="ob-refresh" title="Re-fetch outbound receipts" data-i18n="receipts.refresh_btn" data-i18n-attr="title:receipts.refresh_title">
+								Refresh
+							</button>
+							<button type="button" class="rc-tool" id="ob-export" title="Export the visible outbound receipts as CSV" data-i18n="receipts.export_btn" data-i18n-attr="title:receipts.export_title">
+								Export CSV
+							</button>
+						</span>
+					</div>
+
+					<div class="rc-kpis" aria-label="Summary">
+						<div class="rc-kpi rc-kpi-hero">
+							<span class="rc-kpi-label" data-i18n="receipts.ob_kpi_spend">Total spend</span>
+							<span class="rc-kpi-val" id="ob-k-spend">·</span>
+							<span class="rc-kpi-sub" data-i18n="receipts.ob_kpi_spend_note">as reported by settlement</span>
+						</div>
+						<div class="rc-kpi">
+							<span class="rc-kpi-label" data-i18n="receipts.ob_kpi_payments">Payments</span>
+							<span class="rc-kpi-val" id="ob-k-total">·</span>
+						</div>
+						<div class="rc-kpi">
+							<span class="rc-kpi-label" data-i18n="receipts.ob_kpi_verified">Verified on-chain</span>
+							<span class="rc-kpi-val" id="ob-k-verified">·</span>
+						</div>
+						<div class="rc-kpi">
+							<span class="rc-kpi-label" data-i18n="receipts.ob_kpi_merchants">Merchants</span>
+							<span class="rc-kpi-val" id="ob-k-merchants">·</span>
+						</div>
+					</div>
+
+					<div class="rc-search-wrap">
+						<label class="rc-search-label" for="ob-search" data-i18n="receipts.ob_search_label">Filter loaded receipts</label>
+						<input
+							type="search"
+							class="rc-search"
+							id="ob-search"
+							placeholder="Filter by merchant host or tx hash"
+							data-i18n-attr="placeholder:receipts.ob_search_placeholder"
+						/>
+					</div>
+
+					<div class="rc-list" id="ob-list" aria-live="polite"></div>
+
+					<div class="rc-more-wrap" id="ob-more-wrap" hidden>
+						<p class="rc-shown" id="ob-shown"></p>
+						<button type="button" class="rc-btn rc-btn-secondary rc-more" id="ob-more">
+							<span class="rc-btn-label" data-i18n="receipts.ob_load_more">Load more</span>
+						</button>
+					</div>
+
+					<div class="rc-empty" id="ob-empty" hidden>
+						<h3 id="ob-empty-title"></h3>
+						<p id="ob-empty-body"></p>
+					</div>
+
+					<div class="rc-load-error" id="ob-load-error" role="alert" hidden>
+						<h3 data-i18n="receipts.load_error_h">Could not load your outbound receipts</h3>
+						<p id="ob-load-error-msg"></p>
+						<button type="button" class="rc-tool" id="ob-retry" data-i18n="receipts.retry_btn">Retry</button>
+					</div>
+
+					<p class="rc-fineprint rc-hint" data-i18n-html="receipts.ob_fineprint">
+						<kbd>e</kbd> export CSV. "Verified on-chain" reads the settlement
+						transaction's own token-balance change on Solana, independent of
+						whatever the merchant's response claimed; resolved once per payment
+						and cached. Base-network payments show the reported figures only.
+						The API behind this tab is
+						<code>GET /api/x402/outbound-receipts</code>, documented in the
+						<a href="/docs/api-reference">API reference</a>.
+					</p>
+				</section>
+			</div>
 		</main>
 
 		<div class="rc-toast" id="rc-toast" role="status" aria-live="polite" hidden></div>
 
 		<script type="module" src="/src/receipts.js"></script>
+		<script type="module" src="/src/receipts-outbound.js"></script>
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>

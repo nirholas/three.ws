@@ -270,7 +270,7 @@ export function formatSpendEntries(spend, unpriced = 0) {
 	};
 }
 
-function csvCell(value) {
+export function csvCell(value) {
 	const s = value == null ? '' : String(value);
 	return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
@@ -299,6 +299,72 @@ export function receiptsToCsv(rows) {
 			r.transaction,
 			r.format,
 			r.payer,
+		]
+			.map(csvCell)
+			.join(','),
+	);
+	return [header, ...lines].join('\n');
+}
+
+// Mints the Outbound tab can name without a lookup, mirroring
+// api/_lib/x402/solana-settlement.js's KNOWN_MINT_SYMBOLS. A resolved
+// settlement in any other mint still renders (amount + short mint address),
+// just without a ticker.
+const SOLANA_USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+const OUTBOUND_MINT_SYMBOLS = { [SOLANA_USDC_MINT]: 'USDC', [THREE_MINT]: 'THREE' };
+
+/** @param {string|null|undefined} mint */
+export function outboundMintSymbol(mint) {
+	return OUTBOUND_MINT_SYMBOLS[mint] || null;
+}
+
+/**
+ * Human amount for one outbound receipt: the chain-resolved settlement when
+ * one exists (ground truth), otherwise the amount the settlement response
+ * reported when the execution was recorded.
+ * @param {{ resolved?: { amountAtomics: string, decimals: number, mint: string }|null,
+ *   reportedAmountUsd: number }} receipt
+ */
+export function formatOutboundAmount(receipt) {
+	if (receipt?.resolved) {
+		const amt = formatReceiptAmount(
+			receipt.resolved.amountAtomics,
+			receipt.resolved.decimals,
+			outboundMintSymbol(receipt.resolved.mint),
+		);
+		if (amt) return amt;
+	}
+	const value = Number(receipt?.reportedAmountUsd) || 0;
+	return { value, label: amountLabel(value, null), symbol: null, usd: true };
+}
+
+/**
+ * CSV export of the loaded outbound-receipt rows. Columns are documented in
+ * docs/x402-receipts.md alongside the inbound export.
+ * @param {Array<object>} rows
+ */
+export function outboundReceiptsToCsv(rows) {
+	const header =
+		'id,created_at,network,endpoint_host,endpoint_url,reported_amount_usd,tx_hash,resolved_payer,resolved_payee,resolved_mint,resolved_amount_atomics,resolved_decimals,resolved_fee_lamports,resolved_slot,resolved_block_time,resolve_error';
+	const lines = (rows || []).map((r) =>
+		[
+			r.id,
+			r.createdAt,
+			r.network,
+			r.endpointHost,
+			r.endpointUrl,
+			r.reportedAmountUsd,
+			r.txHash,
+			r.resolved?.payer ?? '',
+			r.resolved?.payee ?? '',
+			r.resolved?.mint ?? '',
+			r.resolved?.amountAtomics ?? '',
+			r.resolved?.decimals ?? '',
+			r.resolved?.feeLamports ?? '',
+			r.resolved?.slot ?? '',
+			r.resolved?.blockTime ?? '',
+			r.resolveError ?? '',
 		]
 			.map(csvCell)
 			.join(','),
