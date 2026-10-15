@@ -36,7 +36,7 @@ const CAPABILITY_LABELS = { spend: 'Spending', sign: 'Signing', message: 'Outbou
 
 const params = new URLSearchParams(location.search);
 const state = {
-	view: ['installed', 'requests'].includes(params.get('view')) ? params.get('view') : 'browse',
+	view: ['installed', 'requests', 'api'].includes(params.get('view')) ? params.get('view') : 'browse',
 	q: params.get('q') || '',
 	registry: params.get('registry') || '',
 	category: params.get('category') || '',
@@ -47,6 +47,7 @@ const state = {
 	user: undefined,
 	agents: null,
 	installed: null,
+	apiDrafts: null,
 };
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -805,6 +806,129 @@ async function showRequests() {
 	}
 }
 
+// ── import from an API (OpenAPI spec / GitHub repo) ────────────────────────
+
+function draftToolsHtml(draft) {
+	if (draft.kind !== 'openapi' || !draft.tools?.tools?.length) {
+		return '<p class="si-muted">Declarative skill: ships its README as instructions, with no executable tools.</p>';
+	}
+	return `<ul class="si-asks">${draft.tools.tools
+		.map((t) => `<li><code>${esc(t.name)}</code> <span class="si-muted">${esc(t.description || '')}</span></li>`)
+		.join('')}</ul>`;
+}
+
+function apiResultHtml(draft) {
+	const toolCount = draft.manifest?.provides?.tools?.length || 0;
+	return `<section class="sc-panel si-api-result" data-draft="${esc(draft.id)}">
+		<h3 class="si-h3">Generated from ${esc(draft.sourceUrl)}</h3>
+		<p class="sc-note">${toolCount} tool${toolCount === 1 ? '' : 's'} generated. This draft is <strong>disabled</strong>: it will not run until you enable it below.</p>
+		${draftToolsHtml(draft)}
+		<div class="sc-ctas">
+			<button type="button" class="sc-btn sc-btn-primary" data-enable-draft="${esc(draft.id)}">Enable</button>
+			<a class="sc-btn" href="${esc(draft.bundleUri)}manifest.json" rel="noopener" target="_blank">View manifest.json</a>
+		</div>
+	</section>`;
+}
+
+async function submitApiImport(e) {
+	e.preventDefault();
+	const input = $('si-api-url');
+	const note = $('si-api-note');
+	const url = input.value.trim();
+	if (!url) {
+		note.textContent = 'Enter an OpenAPI spec URL or a GitHub repo.';
+		input.focus();
+		return;
+	}
+	if (!(await loadSession())) {
+		location.href = loginHref();
+		return;
+	}
+	const btn = $('si-api-save');
+	setBusy(btn, true, 'Fetching and generating…');
+	note.textContent = '';
+	try {
+		const { data } = await readJson(await apiFetch('/api/skills/import', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url }) }));
+		$('si-api-result').innerHTML = apiResultHtml(data);
+		input.value = '';
+		state.apiDrafts = null;
+		await loadApiDrafts();
+		announce(`Generated a ${data.kind} skill draft from ${data.sourceUrl}`);
+	} catch (err) {
+		note.textContent = err.message;
+	} finally {
+		setBusy(btn, false);
+	}
+}
+
+function apiDraftHtml(d) {
+	return `<li class="sc-item${d.enabled ? '' : ' is-disabled'}" data-id="${esc(d.id)}">
+		<div class="sc-item-main">
+			<div class="sc-item-head">
+				<h3 class="sc-item-title">${esc(d.sourceUrl)}</h3>
+				${d.enabled ? '<span class="sc-status is-on">Enabled</span>' : '<span class="sc-status">Disabled</span>'}
+			</div>
+			<p class="sc-item-meta">${esc(d.kind)} · ${d.manifest?.provides?.tools?.length || 0} tool${(d.manifest?.provides?.tools?.length || 0) === 1 ? '' : 's'} · created ${new Date(d.createdAt).toLocaleDateString()}</p>
+		</div>
+		<div class="sc-item-actions">
+			<a class="sc-btn sc-btn-sm" href="${esc(d.bundleUri)}manifest.json" rel="noopener" target="_blank">manifest.json</a>
+			<button type="button" class="sc-btn sc-btn-sm" data-${d.enabled ? 'disable' : 'enable'}-draft="${esc(d.id)}">${d.enabled ? 'Disable' : 'Enable'}</button>
+			<button type="button" class="sc-btn sc-btn-sm sc-btn-danger" data-delete-draft="${esc(d.id)}">Delete</button>
+		</div>
+	</li>`;
+}
+
+async function loadApiDrafts() {
+	const list = $('si-api-drafts');
+	list.innerHTML = `<li>${spinner('Loading your drafts…')}</li>`;
+	if (!(await loadSession())) {
+		list.innerHTML = `<li>${stateBlock({ title: 'Sign in to generate and manage skill drafts', body: 'Generating a skill saves it under your account, so you need to be signed in.', actions: `<a class="sc-btn sc-btn-primary" href="${loginHref()}">Sign in</a>` })}</li>`;
+		return;
+	}
+	try {
+		const { data } = await readJson(await apiFetch('/api/skills/import'));
+		state.apiDrafts = data;
+	} catch (err) {
+		list.innerHTML = `<li>${stateBlock({ tone: 'error', title: 'Your drafts did not load', body: esc(err.message), actions: '<button type="button" class="sc-btn sc-btn-primary" data-action="reload-api-drafts">Try again</button>' })}</li>`;
+		return;
+	}
+	list.innerHTML = state.apiDrafts.length
+		? state.apiDrafts.map(apiDraftHtml).join('')
+		: `<li>${stateBlock({ title: 'No drafts yet', body: 'Generate one above from any OpenAPI spec URL or GitHub repo.' })}</li>`;
+}
+
+async function toggleDraft(id, enabled, btn) {
+	setBusy(btn, true, enabled ? 'Enabling…' : 'Disabling…');
+	try {
+		await readJson(await apiFetch(`/api/skills/import/${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ enabled }) }));
+		state.apiDrafts = null;
+		await loadApiDrafts();
+		const result = document.querySelector(`.si-api-result[data-draft="${id}"]`);
+		if (result) result.remove();
+		announce(enabled ? 'Draft enabled' : 'Draft disabled');
+	} catch (err) {
+		setBusy(btn, false);
+		announce(err.message);
+	}
+}
+
+async function deleteApiDraft(id, btn) {
+	setBusy(btn, true, 'Deleting…');
+	try {
+		await readJson(await apiFetch(`/api/skills/import/${encodeURIComponent(id)}`, { method: 'DELETE' }));
+		state.apiDrafts = null;
+		await loadApiDrafts();
+		announce('Draft deleted');
+	} catch (err) {
+		setBusy(btn, false);
+		announce(err.message);
+	}
+}
+
+async function showApiImport() {
+	await loadApiDrafts();
+}
+
 // ── views + events ─────────────────────────────────────────────────────────
 
 function setView(view) {
@@ -818,9 +942,11 @@ function setView(view) {
 	$('si-browse').hidden = view !== 'browse';
 	$('si-installed').hidden = view !== 'installed';
 	$('si-requests').hidden = view !== 'requests';
+	$('si-api').hidden = view !== 'api';
 	syncUrl();
 	if (view === 'installed') showInstalled();
 	if (view === 'requests') showRequests();
+	if (view === 'api') showApiImport();
 }
 
 function closeDialog() {
@@ -867,9 +993,11 @@ function bind() {
 		if (state.view === 'requests') showRequests();
 	});
 
+	$('si-api-form').addEventListener('submit', submitApiImport);
+
 	$('si-tab-browse').parentElement.addEventListener('keydown', (e) => {
 		if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-		const views = ['browse', 'installed', 'requests'];
+		const views = ['browse', 'installed', 'requests', 'api'];
 		const next = views[(views.indexOf(state.view) + (e.key === 'ArrowRight' ? 1 : views.length - 1)) % views.length];
 		setView(next);
 		document.querySelector(`.sc-tab[data-view="${next}"]`).focus();
@@ -893,10 +1021,13 @@ function bind() {
 	});
 
 	document.addEventListener('click', (e) => {
-		const el = e.target.closest('[data-skill],[data-category],[data-view],[data-action],[data-scan],[data-decide-refuse],[data-update],[data-fork],[data-publish],[data-unpublish],[data-request-open],[data-remove-registry]');
+		const el = e.target.closest('[data-skill],[data-category],[data-view],[data-action],[data-scan],[data-decide-refuse],[data-update],[data-fork],[data-publish],[data-unpublish],[data-request-open],[data-remove-registry],[data-enable-draft],[data-disable-draft],[data-delete-draft]');
 		if (!el) return;
 		const d = el.dataset;
 		if (d.skill) openSkill(d.skill);
+		else if (d.enableDraft) toggleDraft(d.enableDraft, true, el);
+		else if (d.disableDraft) toggleDraft(d.disableDraft, false, el);
+		else if (d.deleteDraft) deleteApiDraft(d.deleteDraft, el);
 		else if (d.category !== undefined) {
 			state.category = state.category === d.category ? '' : d.category;
 			syncUrl();
@@ -919,6 +1050,7 @@ function bind() {
 			} else openRequest(d.requestOpen);
 		} else if (d.action === 'reload') loadBrowse();
 		else if (d.action === 'reload-installed') loadInstalled();
+		else if (d.action === 'reload-api-drafts') loadApiDrafts();
 		else if (d.action === 'add-registry') toggleAdd(true);
 		else if (d.action === 'clear-filters') {
 			state.q = '';

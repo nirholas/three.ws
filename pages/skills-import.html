@@ -66,6 +66,7 @@
 				<button type="button" class="sc-tab is-active" role="tab" id="si-tab-browse" aria-selected="true" aria-controls="si-browse" data-view="browse">Browse</button>
 				<button type="button" class="sc-tab" role="tab" id="si-tab-installed" aria-selected="false" aria-controls="si-installed" data-view="installed" tabindex="-1">Installed &amp; publishing</button>
 				<button type="button" class="sc-tab" role="tab" id="si-tab-requests" aria-selected="false" aria-controls="si-requests" data-view="requests" tabindex="-1">Scan history</button>
+				<button type="button" class="sc-tab" role="tab" id="si-tab-api" aria-selected="false" aria-controls="si-api" data-view="api" tabindex="-1">From an API</button>
 			</div>
 
 			<section id="si-browse" role="tabpanel" aria-labelledby="si-tab-browse">
@@ -127,6 +128,28 @@
 			<section id="si-requests" role="tabpanel" aria-labelledby="si-tab-requests" hidden>
 				<div id="si-requests-gate"></div>
 				<ul class="si-requests" id="si-requests-list" aria-label="Your skill scans"></ul>
+			</section>
+
+			<section id="si-api" role="tabpanel" aria-labelledby="si-tab-api" hidden>
+				<p class="sc-note">
+					Point at any public OpenAPI/Swagger spec URL, or a GitHub repo (<code>owner/repo</code> or a full URL), and
+					every operation becomes a tool with a generated handler. A repo with only a README becomes a read-only
+					skill instead. Either way the result lands as a <strong>disabled draft</strong> under your account: it is
+					never enabled automatically, and nothing runs until you choose to enable it below.
+				</p>
+				<form class="sc-panel si-api-form" id="si-api-form" novalidate>
+					<div class="sc-field">
+						<label for="si-api-url">OpenAPI spec URL or GitHub repo</label>
+						<input class="sc-input" id="si-api-url" required maxlength="500" placeholder="https://api.example.com/openapi.json or owner/repo" autocomplete="off" />
+					</div>
+					<div class="sc-ctas">
+						<button type="submit" class="sc-btn sc-btn-primary" id="si-api-save">Generate skill</button>
+					</div>
+					<p class="sc-form-note" id="si-api-note" role="status" aria-live="polite"></p>
+				</form>
+				<div id="si-api-result"></div>
+				<h2 class="sc-h2 si-section-title">Your API drafts</h2>
+				<ul class="si-api-drafts" id="si-api-drafts" aria-label="Your generated skill drafts"></ul>
 			</section>
 		</main>
 
