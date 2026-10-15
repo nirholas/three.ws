@@ -1051,3 +1051,51 @@ depends on (applying `20261015100000_payment_session_policy_upgrades.sql` before
 
 Commit: `9f40b6acc` (approvals wiring for both venues, handler tests, docs, changelog), this
 closing commit (PROGRESS log, order-file removal).
+
+## 2026-10-15: order 520-integrate-21 closed (evolve)
+
+Built the SKILL-MD 1.0 generator the order asked for: `api/_lib/skill-md.js` reads the live
+`/openapi.json` catalog (`buildOpenApiDoc()`) and the real `buildExactRequirements()` rail
+logic and emits an agent-readable markdown catalog of every paid HTTP route (method, path,
+price, parameters), the Solana and Base payment rails, and a sample 402 challenge, per the
+upstream `x402-skill-md` format. Served at `/.well-known/skill.md` (`api/skill-md.js`, routed
+in `vercel.json`), linked from the `/.well-known/x402.json` discovery doc (`service.skill_md`
+field in `api/wk.js`) and from `llms.txt` (via a new `data/pages.json` machine-section entry).
+
+Definition of Done, verified with real command output:
+- `npx vitest run tests/skill-md.test.js`: 5 passed. The suite imports the real published
+  `x402-skill-md@0.1.0` npm validator (added as a devDependency, installed for real, not
+  `--package-lock-only`) and asserts zero validator errors other than SM005 (no EVM rail)
+  while Base stays unconfigured in the test env, matching the order's exact tolerance.
+- `curl -s http://localhost:3107/.well-known/skill.md -D -` (via `PORT=3107 node
+  server/index.mjs`, since vite's dev proxy does not execute serverless handlers locally and
+  port 3000 belongs to the owner's dev server): `HTTP/1.1 200 OK`, `content-type:
+  text/markdown; charset=utf-8`, real generated body. `npm run check:pages`: 966/966 pages
+  resolve.
+- Docs updated both directions (`docs/x402-endpoints.md` new "Agent-readable catalog:
+  skill.md" section, `docs/agent-skills.md` cross-reference note), `STRUCTURE.md` row added,
+  `data/changelog.json` entry added and `npm run build:pages` run (propagated into
+  `CHANGELOG.md`, `public/changelog*.json/.xml`, `public/llms*.txt`, `public/features.json`,
+  `public/sitemap/index.html`).
+- `npm run check:rules` clean on every touched file; `npm run check:skills-pack` clean.
+
+Judgment call: the order's literal ask was to serve this at `/skill.md`, but that path is
+already live and linked as the unrelated Agent Skills (agentskills.io) connector file
+(`public/skill.md`, generated from `data/skill-md.template.md` by
+`scripts/build-skills-pack.mjs`). Serving the new document at `/.well-known/skill.md` instead
+avoids overwriting a different, actively-used file; both documents now link to each other so
+neither is an orphan. Discovered mid-session that `public/skill.md` is itself a generated
+artifact, not hand-authored; the one new line it needed went into the source template
+(`data/skill-md.template.md`), then regenerated via `node scripts/build-skills-pack.mjs`
+rather than hand-editing the generated file.
+
+Noted, not fixed (pre-existing, unrelated, out of scope): `tests/api/x402-discovery-green.test.js`
+fails on `/api/x402/transit-delays` (a bazaar.info schema mismatch on `route`). Confirmed via a
+`git stash push -u` / `apply` A/B comparison that this failure exists on the tree with none of
+this order's changes applied, so it predates and is independent of this work.
+
+No owner-gated action: no push, no deploy, no on-chain write, and no reference to a crypto
+project other than $THREE landed in the diff.
+
+Commit: `b3e416177` (generator, handler, routing, test, docs, changelog), this closing commit
+(PROGRESS log, order-file removal).
