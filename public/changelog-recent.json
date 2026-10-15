@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-15T06:13:31.758Z",
+	"generated_at": "2026-10-15T06:54:02.716Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4103,
+	"total": 4104,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -47,6 +47,17 @@
 			"link": "/docs/standalone-repos",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-15",
+			"type": "update",
+			"title": "17 named commerce tools and a spending report land in the x402 MCP buyer, hosted and self-custodial",
+			"summary": "The self-custodial x402 buyer (@three-ws/x402-mcp, npx -y @three-ws/x402-mcp) and the hosted agent wallet (https://three.ws/api/mcp-agent) both gained 17 named tools, one per fixed three.ws x402 service: weather_forecast, weather_go_no_go, carbon_now, carbon_best_window, domain_rdap_check, domain_rdap_check_bulk, research_search, research_paper, research_bibliography, book_search, book_read, news_wire_search, news_wire_poll, transit_plan, transit_delays, places_search and places_detail. Each carries a fixed input schema and states its price in its description, so a model calls it correctly far more often than it composes the equivalent raw pay_and_call(url) call. On the hosted side every named tool has a matching <name>_quote read tool that prices it without paying, and the shared tool-policy runtime (@three-ws/mcp-policy) gates payment on that exact quote (one service's quote can never unlock a different service's payment). The stdio package also gained spending_report, which totals everything pay_and_call and the named tools have paid, by merchant and by day, from a local append-only ledger (X402_MCP_LEDGER_PATH).",
+			"link": "/docs/mcp",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
@@ -1545,16 +1556,6 @@
 			"title": "Import Skills",
 			"summary": "Install SKILL.md skills from any public GitHub repository or registry manifest. Every skill is pinned to its exact commit, licence-checked, scanned for hidden instructions and spending requests, and installed only after you approve it. Check imports for updates as a diff, fork any skill, and publish your own.",
 			"link": "/skills/import",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Launch a Uniswap Pool Coin",
-			"summary": "Have your agent launch a fixed-supply coin with a Uniswap V3 pool on Base: pick the pool fee, lock the liquidity, route the fees, see every cost in a confirmation table, and follow the launch to completion. Retries are safe with an Idempotency-Key.",
-			"link": "/launch/uniswap",
 			"tags": [
 				"launch"
 			]

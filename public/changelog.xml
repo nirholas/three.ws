@@ -39,6 +39,14 @@
 			<description>The generated catalog of every publishable package in this monorepo mirrored to its own standalone GitHub repository with its own install command and documentation site, so each one can be found, starred, installed and cited on its own.</description>
 		</item>
 		<item>
+			<title>17 named commerce tools and a spending report land in the x402 MCP buyer, hosted and self-custodial</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-10-15:17 named commerce tools and a spending report land in the x402 MCP buyer, hosted and self-custodial</guid>
+			<pubDate>Thu, 15 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The self-custodial x402 buyer (@three-ws/x402-mcp, npx -y @three-ws/x402-mcp) and the hosted agent wallet (https://three.ws/api/mcp-agent) both gained 17 named tools, one per fixed three.ws x402 service: weather_forecast, weather_go_no_go, carbon_now, carbon_best_window, domain_rdap_check, domain_rdap_check_bulk, research_search, research_paper, research_bibliography, book_search, book_read, news_wire_search, news_wire_poll, transit_plan, transit_delays, places_search and places_detail. Each carries a fixed input schema and states its price in its description, so a model calls it correctly far more often than it composes the equivalent raw pay_and_call(url) call. On the hosted side every named tool has a matching &lt;name&gt;_quote read tool that prices it without paying, and the shared tool-policy runtime (@three-ws/mcp-policy) gates payment on that exact quote (one service's quote can never unlock a different service's payment). The stdio package also gained spending_report, which totals everything pay_and_call and the named tools have paid, by merchant and by day, from a local append-only ledger (X402_MCP_LEDGER_PATH).</description>
+		</item>
+		<item>
 			<title>A generated SKILL-MD 1.0 catalog of every paid HTTP route is now live at /.well-known/skill.md</title>
 			<link>https://three.ws/.well-known/skill.md</link>
 			<guid isPermaLink="false">2026-10-15:A generated SKILL-MD 1.0 catalog of every paid HTTP route is now live at /.well-known/skill.md</guid>

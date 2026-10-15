@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-15",
+			"title": "17 named commerce tools and a spending report land in the x402 MCP buyer, hosted and self-custodial",
+			"summary": "The self-custodial x402 buyer (@three-ws/x402-mcp, npx -y @three-ws/x402-mcp) and the hosted agent wallet (https://three.ws/api/mcp-agent) both gained 17 named tools, one per fixed three.ws x402 service: weather_forecast, weather_go_no_go, carbon_now, carbon_best_window, domain_rdap_check, domain_rdap_check_bulk, research_search, research_paper, research_bibliography, book_search, book_read, news_wire_search, news_wire_poll, transit_plan, transit_delays, places_search and places_detail. Each carries a fixed input schema and states its price in its description, so a model calls it correctly far more often than it composes the equivalent raw pay_and_call(url) call. On the hosted side every named tool has a matching <name>_quote read tool that prices it without paying, and the shared tool-policy runtime (@three-ws/mcp-policy) gates payment on that exact quote (one service's quote can never unlock a different service's payment). The stdio package also gained spending_report, which totals everything pay_and_call and the named tools have paid, by merchant and by day, from a local append-only ledger (X402_MCP_LEDGER_PATH).",
+			"tags": ["feature", "sdk"],
+			"link": "/docs/mcp"
+		},
+		{
+			"date": "2026-10-15",
 			"title": "A generated SKILL-MD 1.0 catalog of every paid HTTP route is now live at /.well-known/skill.md",
 			"summary": "Any agent can now load one markdown file, https://three.ws/.well-known/skill.md, and get a conformant SKILL-MD 1.0 document (the x402-skill-md format) listing every priced endpoint on three.ws: method, path, price, parameters, and the Solana and Base payment rails it settles on, plus a sample 402 challenge body. The document is generated straight from the same OpenAPI catalog /openapi.json serves (api/_lib/skill-md.js reads the shared buildOpenApiDoc() builder and the real buildExactRequirements() rail logic, so the catalog and the live 402 challenge can never drift apart), and is linked from /.well-known/x402.json and llms.txt. Validated in tests/skill-md.test.js against the real upstream x402-skill-md npm validator: zero errors other than the EVM rail finding (SM005), which is expected since this is a Solana-first platform and Base settles only when a facilitator is configured. Distinct from the pre-existing https://three.ws/skill.md (no .well-known), the Agent Skills connector file for installing three.ws MCP servers; both now cross-link to the other.",
 			"tags": [

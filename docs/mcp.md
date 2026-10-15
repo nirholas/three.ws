@@ -1377,6 +1377,45 @@ winning close actually pays across eight price moves after Papertrade's deadband
 win fee. `papertrade_account` values any wallet's open positions at the live mid. The same data is on
 `GET /api/papertrade`. Full guide: [Papertrade](./papertrade.md).
 
+### Named commerce tools: pay a fixed three.ws service
+
+Seventeen named tools, each wired to one fixed three.ws x402 endpoint, exist on two servers so the
+same tool names, prices and schemas are available whether an agent talks to the self-custodial
+stdio package or the hosted agent wallet:
+
+- **Hosted** (`https://three.ws/api/mcp-agent`): pays from the signed-in user's own three.ws agent
+  wallet, the same rail `pay_and_call` uses. Each service gets a `<name>_quote` read tool (prices it,
+  never pays) and a `<name>` financial tool, gated by the shared policy runtime on that service's own
+  `quote_id` plus `confirm_payment: true`. A quote from one service can never unlock a different
+  service's payment: every financial tool's preview tool name is unique to it.
+- **Stdio** (`npx -y @three-ws/x402-mcp`): pays with the local `SOLANA_SECRET_KEY` (or a Payment
+  Session token), the same settlement modes as that package's `pay_and_call`. See
+  [its README](../packages/x402-mcp/README.md#tools) for the full tool-to-endpoint table.
+
+| Tool | Price | What it pays for |
+|------|-------|-------------------|
+| `weather_forecast` | $0.001 | 24h hourly forecast at a lat/lon (Open-Meteo, NWS fallback) |
+| `weather_go_no_go` | $0.002 | go/caution/no-go verdict for an activity from the next 6h forecast |
+| `carbon_now` | $0.001 | current UK grid carbon intensity, national or by postcode |
+| `carbon_best_window` | $0.002 | lowest-carbon window in the next 48h |
+| `domain_rdap_check` | $0.001 | one domain's live RDAP registration status |
+| `domain_rdap_check_bulk` | $0.005 | up to 50 domains' RDAP status in one call |
+| `research_search` | $0.002 | merged arXiv + Crossref + Semantic Scholar paper search |
+| `research_paper` | $0.003 | one paper's metadata plus its two-sided citation graph |
+| `research_bibliography` | $0.005 | BibTeX / APA 7 for up to 25 DOIs |
+| `book_search` | $0.001 | OpenLibrary edition search, flagged for a Gutenberg full text |
+| `book_read` | $0.01 | a public-domain book's complete text, split into chapters |
+| `news_wire_search` | $0.003 | GDELT worldwide news search with a coverage timeline |
+| `news_wire_poll` | $0.002 | GDELT articles since a cursor, for an ongoing monitor loop |
+| `transit_plan` | $0.002 | an MBTA trip plan between two stops, with realtime overlays |
+| `transit_delays` | $0.001 | realtime vs. scheduled MBTA arrivals at one stop |
+| `places_search` | $0.002 | OpenStreetMap points of interest near a coordinate |
+| `places_detail` | $0.002 | one place's full OpenStreetMap record |
+
+`spending_report` (stdio package only, read-only) totals everything paid through that key, by
+merchant and by day, from the package's local append-only ledger
+(`X402_MCP_LEDGER_PATH`, default `~/.three-ws/x402-mcp-ledger.jsonl`).
+
 ---
 
 ## Resources
