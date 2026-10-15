@@ -747,7 +747,7 @@
 			"license": "MIT",
 			"repo": "github.com:Kamino-Finance/klend-sdk",
 			"funding": null,
-			"version": "12.0.0",
+			"version": "12.0.1",
 			"powers": null
 		},
 		{
@@ -846,7 +846,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/MeteoraAg/dynamic-bonding-curve-sdk",
 			"funding": null,
-			"version": "1.5.11",
+			"version": "1.5.13",
 			"powers": null
 		},
 		{
@@ -1539,7 +1539,7 @@
 			"license": "(MPL-2.0 OR Apache-2.0)",
 			"repo": "https://github.com/cure53/DOMPurify",
 			"funding": null,
-			"version": "3.4.15",
+			"version": "3.4.16",
 			"powers": null
 		},
 		{
@@ -1741,6 +1741,17 @@
 			"powers": null
 		},
 		{
+			"id": "npm:lintapple",
+			"kind": "npm",
+			"name": "lintapple",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": null,
+			"funding": null,
+			"version": "0.1.20",
+			"powers": null
+		},
+		{
 			"id": "npm:livekit-client",
 			"kind": "npm",
 			"name": "livekit-client",
@@ -1781,7 +1792,7 @@
 			"license": "BSD-2-Clause",
 			"repo": "https://github.com/mwilliamson/mammoth.js",
 			"funding": null,
-			"version": "1.12.3",
+			"version": "1.13.0",
 			"powers": null
 		},
 		{
@@ -2214,6 +2225,17 @@
 			"powers": "WebSocket transport for live agent and multiplayer connections."
 		},
 		{
+			"id": "npm:x402-skill-md",
+			"kind": "npm",
+			"name": "x402-skill-md",
+			"area": "infrastructure",
+			"license": "Apache-2.0",
+			"repo": "https://github.com/nirholas/x402-skill-md",
+			"funding": null,
+			"version": "0.1.0",
+			"powers": null
+		},
+		{
 			"id": "npm:yaml",
 			"kind": "npm",
 			"name": "yaml",
@@ -2458,6 +2480,17 @@
 			"name": "@three-ws/mcp-policy",
 			"area": "rendering",
 			"license": "Apache-2.0",
+			"repo": "https://github.com/nirholas/three.ws",
+			"funding": null,
+			"version": "0.1.0",
+			"powers": null
+		},
+		{
+			"id": "npm:@three-ws/skill-import",
+			"kind": "npm",
+			"name": "@three-ws/skill-import",
+			"area": "rendering",
+			"license": "MIT",
 			"repo": "https://github.com/nirholas/three.ws",
 			"funding": null,
 			"version": "0.1.0",

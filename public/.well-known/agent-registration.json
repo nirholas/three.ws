@@ -892,6 +892,193 @@
 			],
 			"scheme": "exact",
 			"priceUsdc": "0.05"
+		},
+		{
+			"url": "https://three.ws/api/x402/weather-guard-forecast",
+			"method": "GET",
+			"description": "three.ws Weather Guard forecast: $0.001 USDC per call returns a 24h hourly forecast (temperature, wind, precipitation chance, WMO conditions) plus active severe-weather alerts for any lat/lon, live from Open-Meteo with a US National Weather Service fallback.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/weather-guard-decision",
+			"method": "GET",
+			"description": "three.ws Weather Guard decision: $0.002 USDC per call turns a live forecast into a go / caution / no-go verdict for a specific outdoor activity (running, cycling, outdoor-event, drone-flight, photography), with the exact reasons behind the call.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.002"
+		},
+		{
+			"url": "https://three.ws/api/x402/carbon-now",
+			"method": "GET",
+			"description": "three.ws Grid Carbon now: $0.001 USDC per call returns the current UK electricity grid carbon intensity (gCO2/kWh) and live generation mix, nationally or for one GB postcode region.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/carbon-best-window",
+			"method": "GET",
+			"description": "three.ws Grid Carbon best window: $0.002 USDC per call scans the 48h UK grid carbon forecast and returns the lowest-carbon window to run a flexible load, plus runners-up, the worst window, and a plain-language recommendation.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.002"
+		},
+		{
+			"url": "https://three.ws/api/x402/domains-check",
+			"method": "GET",
+			"description": "three.ws Domain Check: $0.001 USDC per call returns live registration status for one domain, straight from its authoritative RDAP server (RFC 9082/9083), no WHOIS scraping, no API key.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/domains-bulk",
+			"method": "POST",
+			"description": "three.ws Domain Check Bulk: $0.005 USDC per call checks up to 50 domains in one paid RDAP sweep, for domain-portfolio audits and brand-protection scans.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.005"
+		},
+		{
+			"url": "https://three.ws/api/x402/research-search",
+			"method": "GET",
+			"description": "three.ws Scholarly Search: $0.002 USDC per call returns a ranked, de-duplicated merge of arXiv, Crossref, and Semantic Scholar hits for a query, with authors, venue, DOI, abstract, and citation count.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.002"
+		},
+		{
+			"url": "https://three.ws/api/x402/research-paper",
+			"method": "GET",
+			"description": "three.ws Paper Detail: $0.003 USDC per call returns metadata, abstract, TL;DR, and a two-sided citation graph for a DOI, arXiv id, or Semantic Scholar id.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.003"
+		},
+		{
+			"url": "https://three.ws/api/x402/research-bibliography",
+			"method": "POST",
+			"description": "three.ws Bibliography: $0.005 USDC per call returns formatted BibTeX and APA 7 entries for up to 25 DOIs in one request.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.005"
+		},
+		{
+			"url": "https://three.ws/api/x402/books-search",
+			"method": "GET",
+			"description": "three.ws Book Search: $0.001 USDC per call returns OpenLibrary editions for a title, each annotated with whether a clean Project Gutenberg full text is available to buy.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/books-read",
+			"method": "GET",
+			"description": "three.ws Book Read: $0.01 USDC per call delivers a complete public-domain Project Gutenberg book, boilerplate stripped and split into chapters, as markdown JSON.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.01"
+		},
+		{
+			"url": "https://three.ws/api/x402/news-wire-query",
+			"method": "GET",
+			"description": "three.ws Global News Wire Search: $0.003 USDC per call searches worldwide news coverage via the GDELT Project (65+ languages, updated every 15 minutes) and returns matching articles plus a coverage-volume timeline.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.003"
+		},
+		{
+			"url": "https://three.ws/api/x402/news-wire-pulse",
+			"method": "GET",
+			"description": "three.ws Global News Wire Pulse: $0.002 USDC per call returns only the GDELT articles indexed since a cursor, with a fresh cursor for the next poll, for building a live news feed without re-fetching.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.002"
+		},
+		{
+			"url": "https://three.ws/api/x402/transit-plan",
+			"method": "GET",
+			"description": "three.ws Transit Trip Plan: $0.002 USDC per call returns direct and one-transfer itineraries between two MBTA stops, with realtime predictions overlaid where the feed has them.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.002"
+		},
+		{
+			"url": "https://three.ws/api/x402/transit-delays",
+			"method": "GET",
+			"description": "three.ws Transit Delay Snapshot: $0.001 USDC per call measures live MBTA arrivals against the schedule at a stop, with a running-well/minor-delays/significant-delays verdict.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/places-search",
+			"method": "GET",
+			"description": "three.ws Places Search: $0.002 USDC per call returns real points of interest near a coordinate from OpenStreetMap, with opening hours, contact details, address, and cuisine where tagged.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.002"
+		},
+		{
+			"url": "https://three.ws/api/x402/places-detail",
+			"method": "GET",
+			"description": "three.ws Place Detail: $0.002 USDC per call returns the full live OpenStreetMap record for one place found via Places Search.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.002"
 		}
 	],
 	"registrations": [],
