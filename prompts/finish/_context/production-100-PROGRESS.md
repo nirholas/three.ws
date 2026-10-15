@@ -1354,6 +1354,66 @@ Evidence per Definition of done line:
 
 Left: nothing for this order.
 
+## 2026-10-15: 407 publish or park the 10 orphaned docs pages (shipped and verified)
+
+Measured: `npm run audit:docs` listed 10 docs served live at `/docs/<slug>`
+with no `data/pages.json` entry and no `UNPUBLISHED_DOCS` exemption, so none
+of them could be found via sitemap, llms.txt, features.json or the human
+sitemap: `forge-workflows`, `listings-registry`, `run-receipts-x-reply-and-
+thread`, `standalone-repo-playbook`, `standalone-repos`, `team-chat`,
+`ui-lint`, `x-mention-avatar`, `x-partner-series`, `x-reply-playbook`.
+
+Did: published the three that document a live, user-facing feature to
+`data/pages.json` with a real title and description drawn from the doc's own
+content, matching the "Docs · X" pattern already used for sibling pages:
+`forge-workflows` (the Forge Workflows node editor, already live at
+`/forge/workflows`), `team-chat` (squad chat, already live at `/team-chat`),
+and `standalone-repos` (the generated catalog of monorepo packages mirrored
+to their own GitHub repos; confirmed `/open-source` renders a different
+dataset, the open-source dependencies three.ws is built on, not this mirror
+catalog, so it is not a duplicate). Ran `npm run build:pages` in the same
+commit so `CHANGELOG.md`, `public/changelog.json`, `public/changelog.xml`,
+`public/llms.txt`, `public/llms-full.txt`, `public/sitemap/index.html` and
+`public/features.json` all regenerated from the new `data/pages.json` rows;
+confirmed the three new doc URLs appear in `public/sitemap/index.html` and
+`public/llms-full.txt`. No separate `data/changelog.json` entry was added:
+each new page carries an `added: "2026-10-15"` date, and `CHANGELOG.md`'s own
+header states new pages already surface automatically from that field
+(confirmed present after the rebuild), so a curated entry would have
+duplicated the same line.
+
+Parked the other seven in `UNPUBLISHED_DOCS` (`scripts/audit-docs.mjs`) with
+a one-line reason each, in the house style of the existing entries:
+`run-receipts-x-reply-and-thread` and `x-mention-avatar` (dry-run drafts,
+public once their bots or deploys go live, siblings of the existing
+`x-mention-bot` / `x-mention-image3d` entries), `x-partner-series` and
+`x-reply-playbook` (internal X content operating playbooks, siblings of
+`announcement-factory`), `ui-lint` (internal operator guide for the
+`lintapple` QA script), `standalone-repo-playbook` (internal checklist for
+whoever runs the mirror-promotion work) and `listings-registry` (the
+generated operator tracker; the reader-facing record is the already-
+published `docs/listings.md`).
+
+Evidence per Definition of done line:
+- `npm run audit:docs`: the "Public docs missing from data/pages.json"
+  section dropped from 10 findings to 0; the 3 pre-existing `hubs/`
+  relative-link findings (order 406's verified false positives) are
+  untouched.
+- Every `data/pages.json` entry added has a real title and description
+  written from the doc's own first paragraph and feature list, not a
+  placeholder.
+- Every `UNPUBLISHED_DOCS` entry added has a specific one-line reason
+  matching its neighbors' style, not a bare "internal".
+- Derived build output regenerated in the same commit via `npm run
+  build:pages`; verified the three new URLs in the regenerated
+  `public/sitemap/index.html` and `public/llms-full.txt`.
+- `npm run check:rules -- --paths data/pages.json scripts/audit-docs.mjs`:
+  `OK: no hard-rule violations`.
+- `git status`: clean after the commit.
+- Commit: `a5891de92`.
+
+Left: nothing for this order.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
