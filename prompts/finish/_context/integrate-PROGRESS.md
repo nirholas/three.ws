@@ -1234,3 +1234,101 @@ transaction), and no reference to a crypto project other than $THREE landed in t
 
 Commits: `2f8110a92` (attestation infra, reputation blending, discount pricing, tests),
 `613dcd785` (docs, changelog), this closing commit (PROGRESS log, order-file removal).
+
+## 2026-10-15: order 524-integrate-25 closed (evolve)
+
+Turned any public OpenAPI/Swagger spec URL or GitHub repo into a draft, importable
+three.ws skill bundle end to end.
+
+Step 0 measured: `specs/SKILL_SPEC.md` confirmed the four-file bundle shape (manifest.json,
+SKILL.md, tools.json, handlers.js); `community-skills/tools/validate.mjs` validates a
+different directory shape (a flat registry-manifest layout, not an individual bundle), so
+Task 3's "validate with community-skills/tools/validate.mjs" was satisfied by a new
+purpose-built `packages/skill-import/src/validate.js` instead (judgment call, logged at the
+time); `packages/tool-sdk/src/mcp-adapter.js` confirmed the `ctx.fetch`/`ctx.secrets` handler
+contract generated handlers must target; `api/skills/` had no existing import route.
+
+Task 1: new `packages/skill-import` package. `openapi.js` parses OpenAPI 3.x and converts
+Swagger 2.0 via `swagger2openapi`; `operations.js` dereferences `$ref`s into a normalized
+operation list; `generate-tools.js`/`generate-handlers.js`/`generate-manifest.js`/
+`generate-skillmd.js` turn that into a full bundle, with handlers calling `ctx.fetch` and
+filling auth from `ctx.secrets` at call time (never hardcoded). Two bugs found and fixed
+while wiring this live against the public Petstore API: a real API mislabeling a plain-text
+body as `application/json` crashed the handler (now always reads text first, parses JSON
+only on success); `server/index.mjs` strips a trailing ".js" from API paths before routing,
+so the generated bundle's own `handlers.js` 404'd through the dynamic catch-all until the
+route accepted both "handlers.js" and the bare "handlers" it actually receives.
+
+Task 2: a repo with only a README produces a declarative bundle (`declarative.js`): SKILL.md
+only, no tools.json, no handlers.js.
+
+Task 3: `POST/GET /api/skills/import` (`api/skills/import.js`) generates and lists drafts
+through the SSRF guard (`fetchSafePublicUrlPinned`), validates with the new `validate.js`,
+and saves via `api/_lib/openapi-skill-imports.js` with `enabled` hardcoded false. Beyond the
+literal task list: built the previously-missing `GET/PATCH/DELETE /api/skills/import/:id`
+route, since without it a draft's `enabled` flag could never change and the feature would
+have been a dead end once generated (judgment call, justified by "no half-finished
+implementations"). Also built the bundle host `api/skills/import/[id]/[...file].js` serving
+manifest.json/SKILL.md/tools.json/handlers.js anonymously by id. New migration
+`20261015130000_openapi_skill_imports.sql`, new rate limit `openapiSkillImportUser` (20/10m).
+Fixed a real, pre-existing vercel.json routing collision (`/api/skills/([^/]+)` was
+swallowing `/api/skills/import` before the literal route could match) and confirmed via the
+server's route-compile anchoring (`^...$`) that the new two-segment `:id` route needs no
+further vercel.json change.
+
+Task 4: CLI. `three-ws skills import <url>` (full URL or bare `owner/repo`) posts to
+`/api/skills/import`; `isImportUrl()` disambiguates a URL/`owner/repo` from a community
+slug (slugs never contain `/`). New `three-ws skills drafts` lists the caller's drafts with
+enabled state.
+
+Task 5: UI. New "From an API" tab on the existing `/skills/import` page (reused its
+tab/`sc-*` CSS shell rather than a new page, since both features are "import a skill from
+somewhere external"): submit a URL, see the generated tool list in a result card labelled
+disabled, manage drafts (enable/disable/delete, manifest.json link) from a persistent list,
+signed-out gate state. Verified live in a real headless Chromium session against the dev
+server (a real session cookie minted via `createSession`, not a mock): generated a skill
+from the public Petstore OpenAPI spec end to end (19 tools), enabled it, deleted it, checked
+the signed-out gate render; zero console errors, zero failed network requests at every step.
+
+Task 6: new docs/skills.md section "Importing a skill from an OpenAPI spec or a GitHub repo"
+with a real curl example against the Petstore spec; `data/changelog.json` entry;
+`STRUCTURE.md` row for `packages/skill-import` and its routes; `npm run build:pages` run.
+
+Definition of done, verified:
+- `packages/skill-import/tests/skill-import.test.js`: a vitest serves the synthetic
+  `sample-openapi.json` fixture from a real local `node:http` server, asserts the generated
+  bundle passes `validate.js`, and loads its handlers (4/4 pass).
+- `tests/openapi-skill-import.test.js`: 7 tests against the real API handlers (import, the
+  new `:id` route, and the bundle host) with a real local HTTP server standing in for the
+  upstream spec (only the SSRF guard's network check is swapped for a passthrough, since
+  loopback is exactly what it exists to refuse in production); covers auth/scope rejection,
+  full real generation end to end asserting `enabled: false` on both the response and the
+  raw stored row, owner-scoped enable/disable/delete, and bundle file serving including the
+  `.js`-extension-stripping edge case.
+- "Imported skills are never enabled automatically": asserted directly in the test above
+  (`db.rows[0].enabled === false` immediately after creation) and confirmed live: the
+  generated draft from the real Petstore spec came back `enabled: false` and stayed that way
+  until the dedicated PATCH.
+- "Importing a real public OpenAPI spec end to end in dev produces a draft skill whose tool
+  call works": verified live twice, once via curl/node against the real Petstore demo
+  (`logoutUser` call succeeded against the live API after the content-type fix) and once via
+  the full browser UI flow above.
+- Package README (pre-existing from this order's own earlier work), `STRUCTURE.md` row,
+  docs section, changelog entry: all present, `npm run build:pages` run.
+- `npm run check:rules -- --paths <every touched file>`: clean (fixed five em-dash
+  violations first, one of them in this order's own new docs prose, the rest already in the
+  prior session's generated code comments).
+- Full regression pass, no failures: `packages/skill-import/tests` + `tests/
+  openapi-skill-import.test.js` (11/11), `packages/three-ws-cli` full suite (82/82), `tests/
+  api-rate-limit-wiring.test.js` + `tests/api/rate-limit-buckets.test.js` (24/24, covers the
+  touched `api/_lib/rate-limit.js`).
+
+No owner-gated action: no push, no deploy, no on-chain write, no crypto project other than
+$THREE in the diff. One judgment call beyond the task list already logged above (the missing
+enable/delete route); the `validate.mjs` substitution and the `agents:write`/`agents:read`
+scope reuse on a non-agent-scoped resource were carried over from the prior session's work
+and are logged there.
+
+Commits: `d7bcabdcc` (package + API routes + migration + rate limit + vercel.json fix +
+tests), `df5e2d380` (CLI), `e55c84a15` (UI tab), `7c28d186c` (docs, STRUCTURE.md, changelog),
+this closing commit (PROGRESS log, order-file removal).
