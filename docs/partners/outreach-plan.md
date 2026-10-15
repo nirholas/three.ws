@@ -78,11 +78,11 @@ a demo far more often than to a proposal.
 | WordPress, Framer and Webflow embeds | Agent, order 094 | Owner: directory submissions (938) |
 | Home Assistant HACS package | Agent, order 095 | Owner: the HACS default pull request and its CI exception (938) |
 
-Engine bridges (Unity, Unreal, Godot) and store publishing (Fab, Unity Asset Store, itch) are
-already planned in best3d orders [072](../../prompts/finish/072-best3d-06-engine-bridges.md) and
+Engine bridges (Unity, Unreal, Godot) shipped; see [the engine bridges doc](../engine-bridges.md).
+Store publishing (Fab, Unity Asset Store, itch) is still planned in best3d order
 [935](../../prompts/finish/935-best3d-08-engine-store-publishing.md). The orphaned avatar
-campaign is [934](../../prompts/finish/934-best3d-07-orphaned-avatar-campaign.md), with the
-three-vrm work and VRM 0.x export in [075](../../prompts/finish/075-best3d-09-three-vrm.md).
+campaign is [934](../../prompts/finish/934-best3d-07-orphaned-avatar-campaign.md); the three-vrm
+work and VRM 0.x export shipped and is now live, see [the avatar engines doc](../avatar-engines.md).
 This plan does not duplicate them.
 
 ### Wave 3: commercial partners (weeks 4 to 10)

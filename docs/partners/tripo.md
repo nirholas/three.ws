@@ -136,11 +136,11 @@ engineering item we ship for it is kept whichever way the deal goes.
 
 ---
 
-## Engineering, ready to run
+## Engineering, shipped
 
-The integration work is a work order,
-[`084-partners-01-tripo-v3-house-lane.md`](../../prompts/finish/084-partners-01-tripo-v3-house-lane.md),
-and most of it is built and tested, not just planned:
+The integration work closed as work order 084; see
+[the Tripo house lane doc](../forge.md#the-tripo-house-lane) for the live, user-facing
+description of what shipped:
 
 - **v3 migration**: done. The provider speaks the v3 REST API end to end (dedicated
   endpoints per capability, the unified `input`/task-id model, the unified error envelope).
