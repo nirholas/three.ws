@@ -1163,3 +1163,74 @@ project other than $THREE landed in the diff.
 Commits: `06650c721` (stdio package: registry, named tools, spending_report, ledger),
 `9d88c7f9d` (hosted mirror, policy table, discovery/instructions fixes), `16b544a33` (docs,
 changelog), this closing commit (PROGRESS log, order-file removal).
+
+## 2026-10-15: order 523-integrate-24 closed (evolve)
+
+Every settled a2a-hire (`api/agents/a2a-hire.js`) now writes one signed fulfillment
+attestation row via the new `api/_lib/trust/hire-attestations.js` (`{hire_id,
+payment_signature, outcome: delivered|failed|disputed, evidence_hash, signed_by}`), signed
+off-chain with the platform attestation key `api/_lib/attest-event.js` already uses for
+on-chain provenance memos; a `node:crypto`/`tweetnacl` import stayed out of
+`api/_lib/a2a-hire-phases.js` (shared with client code `src/agent-screen-hire.js`,
+`src/shared/forge-frames.js`), so only its pure outcome-classification and canonical-JSON
+helpers (`isAmbiguousPaymentError`, `classifyHireOutcome`, `sortedStringify`,
+`buildHireAttestationPayload`) live there; the real hashing and signing is server-only.
+A client-side payment timeout is recorded `disputed`, never inferred `delivered`, since
+x402 verify-then-settle means the provider may already have been paid server-side.
+New migration `20261015120000_hire_fulfillment_attestations.sql` (table
+`hire_attestations`, unique on `hire_id`; `agent_paid_services.reputation_discount_enabled`
+column) applied with `node scripts/apply-migrations.mjs --apply --file <name>` so it did not
+sweep the 11 other already-pending migrations from concurrent work in this worktree.
+
+The recency-weighted fulfillment rate (`weightedFulfillmentRate`/`computeFulfillmentRate`,
+30-day half-life, minimum 5 attestations before it counts) is now an additive input to the
+free Financial reputation score's Settlement reliability pillar
+(`src/shared/agent-financial-reputation.js`, `REPUTATION_VERSION` bumped 3 to 4 so cached
+scores recompute), read in `api/_lib/trust/wallet-reputation.js`. Verified end to end: the
+pillar's `detail` string (e.g. `"90% hire fulfillment over 12 hires."`) and `facts.hire_
+fulfillment_rate`/`facts.hire_fulfillment_sample_size` flow unmodified from `computeReputation`
+through `GET /api/agents/:id/reputation` to the generic `pillarRow()` renderer in
+`src/shared/agent-reputation.js` (mounted on the agent page's Trust tab via
+`src/agent-wallet-hub/tabs/reputation.js`), confirmed by a direct `computeReputation()` call
+producing that exact detail string, no UI code changed.
+
+Task 3: `api/_lib/trust/hire-discount.js` adds an off-by-default
+`agent_paid_services.reputation_discount_enabled` flag; when set, `a2a-hire.js` mints a
+5-minute, slug-scoped, ed25519-signed discount voucher from the hirer's live reputation tier
+(`getEffectiveReputation`), and the public paywall (`api/x402/service.js`) only ever trusts
+that platform signature, never a caller-supplied claim, failing closed to full price on
+anything missing, expired, mis-scoped, or forged.
+
+Definition of done, verified:
+- `tests/a2a-hire-phases.test.js` gained an 11-case `describe('fulfillment attestation (pure
+  core)', ...)` block (32/32 tests pass in the file).
+- New `tests/hire-attestations.test.js`: `describe('verifyHireAttestation', ...)` (5 tests)
+  signs with a locally-generated ed25519 keypair injected via `ATTEST_AGENT_SECRET_KEY` and
+  verifies `verifyHireAttestation` accepts a correctly-signed payload and rejects a tampered
+  payload, a forged signature, a signer mismatch, and malformed input; `describe
+  ('weightedFulfillmentRate', ...)` (4 tests) covers the empty case, an all-delivered sample,
+  `disputed` never counting as delivered, and recency decay (9/9 tests pass in the file).
+- `tests/wallet-reputation.test.js` gained a `describe('hire fulfillment rate', ...)` block
+  (4 tests: below-minimum contributes 0 points with `facts.hire_fulfillment_rate: null`,
+  at-minimum scores it, a poor rate scores lower than a strong one at the same sample size,
+  combined with the `ESTABLISHED` fixture it never exceeds the pillar max) plus the
+  `REPUTATION_VERSION` pin updated 3 to 4 (27/27 tests pass in the file).
+- Agent page: traced above, confirmed with a direct `computeReputation()` call.
+- Docs and changelog: new "Signed fulfillment attestations" section in
+  `docs/agent-abilities/chapters/06-identity-reputation.md`, a `data/changelog.json` entry,
+  `docs/ALL.md` regenerated via `node scripts/combine-docs.mjs`, `npm run build:pages` run.
+
+Pre-existing, unrelated, out of scope (confirmed by reverting this diff's one line in
+`api/_lib/x402-user-payer.js` and re-running): `tests/api/mcp-agent.test.js` and
+`tests/api/mcp-wallet-provision.test.js` each fail 2 tests (`pay_and_call` tool listing/
+scope-enforcement) identically with or without this diff; both failures trace to commit
+`9d88c7f9d`, already logged above in the 2026-10-14 entry for order 500-integrate-01's
+neighbor work. `npm run check:docs-freshness` was already over budget by 130 across 15
+unrelated docs (none the one this order edited) before this diff; not touched.
+
+No owner-gated action: no push, no deploy, no on-chain write (the attestation and discount
+voucher are both off-chain ed25519 signatures over a platform-controlled key, never a Solana
+transaction), and no reference to a crypto project other than $THREE landed in the diff.
+
+Commits: `2f8110a92` (attestation infra, reputation blending, discount pricing, tests),
+`613dcd785` (docs, changelog), this closing commit (PROGRESS log, order-file removal).
