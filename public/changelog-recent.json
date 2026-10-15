@@ -1,14 +1,25 @@
 {
-	"generated_at": "2026-10-14T23:56:00.129Z",
+	"generated_at": "2026-10-15T00:43:42.304Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4096,
+	"total": 4097,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-15",
+			"type": "update",
+			"title": "Payment sessions gain blocked hosts, an approval threshold, and a per-rail daily cap, all with tamper-evident verdicts",
+			"summary": "Agent payment sessions get three new governance knobs, settable at creation and editable while a session is active: blocked_hosts (a denylist checked after the allowlist, so an explicit block always wins over a broad allow, even with no allowlist set), approval_threshold_usd (a call priced above this amount now gets a distinct requires_approval verdict instead of either settling or silently failing), and per_rail_daily_usd (a rolling 24h spend cap per settlement network, reserved atomically the same way the session budget already is, closing the race a naive sum-of-past-executions check would leave open). Every governance verdict, allow or reject, now carries a policy_digest (a sha256 hash of the exact policy it was judged against) and an HMAC signature over the verdict, digest, request, and timestamp, stored with the execution: editing a session's policy after the fact changes the digest and breaks the signature on every verdict that preceded the edit, so a verdict record can be trusted even after the policy it was judged against has since moved. The dry-run simulator at /api/pay/simulate now predicts all three new rules through the exact same shared policy module the real enforcer calls, so a simulated verdict and an enforced one can never disagree; that parity is pinned by a new test running both over identical scenarios. The payments page gained matching fields in both the session creation and edit modals, with inline validation and a collapsed 'Advanced spend policy' section so the common case (budget, expiry, host allowlist) stays uncluttered.",
+			"link": "/docs/payment-sessions",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
 		{
 			"date": "2026-10-14",
 			"type": "update",
@@ -1542,17 +1553,6 @@
 			"title": "A complete REST API for agents, with signed webhooks",
 			"summary": "Everything you can do with an agent in the app now works over plain HTTP with one API key: create and edit agents, start and stop them, chat, start runs and watch them live, schedule automations and fire them on demand, manage skills, and export or import an agent. Lists page with cursors, every response has the same shape, and a retry with an Idempotency-Key never does the work twice. Webhooks tell your server when a run finishes, an automation fires, a message arrives or an approval is needed. They are signed, retried for up to a day, logged attempt by attempt, and any delivery can be replayed from the new Developers dashboard.",
 			"link": "/docs/api-reference",
-			"tags": [
-				"feature",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "update",
-			"title": "Agents can compare every Solana swap route and see why one wins",
-			"summary": "Ten trading tools are now available to agents in Claude or any MCP client, and over the API at /api/v1/trading. Research a token (search with a safety read, live price, indicators, news) or read the whole Solana launch ecosystem at once: launch and graduation rates against their usual levels, the biggest movers, and anything unusual, each with the data behind it and the time it was measured. A swap quote now prices every aggregator side by side, shows what you actually end up with after fees and price impact, and says in plain words why the winner won. Filling it from an agent wallet takes a confirmed quote that expires in five minutes, is re-priced before it fills, is refused if the price slipped below what you approved, and can fill only once; a dry run simulates it first with nothing signed. Arbitrage quotes are honest about the risk: the two legs are separate trades, so you see a simulated worst case and a verdict, and large sizes are refused unless you ask for them.",
-			"link": "/docs/trading-tools",
 			"tags": [
 				"feature",
 				"sdk"

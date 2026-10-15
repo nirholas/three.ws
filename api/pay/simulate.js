@@ -34,6 +34,8 @@ import {
 	canonicalizeAllowlist,
 	normalizeHost,
 	hostMatches,
+	canonicalizePerRailDaily,
+	resolveRailDailyCapAtomics,
 } from '../_lib/pay/policy.js';
 
 // A simulation fans out one request per unique endpoint. These bounds keep a
@@ -178,6 +180,35 @@ export function parsePolicy(raw = {}) {
 		allowedHosts = allowedHosts.slice(0, MAX_ALLOWED_HOSTS);
 	}
 
+	const rawBlocked = Array.isArray(raw.blocked_hosts)
+		? raw.blocked_hosts
+		: String(raw.blocked_hosts ?? '').split(/[\s,]+/);
+	let blockedHosts = [...new Set(canonicalizeAllowlist(rawBlocked))];
+	if (blockedHosts.length > MAX_ALLOWED_HOSTS) {
+		notes.push(`blocked_hosts truncated to the ${MAX_ALLOWED_HOSTS}-entry maximum`);
+		blockedHosts = blockedHosts.slice(0, MAX_ALLOWED_HOSTS);
+	}
+
+	let approvalThresholdUsd =
+		raw.approval_threshold_usd == null || raw.approval_threshold_usd === ''
+			? null
+			: Number(raw.approval_threshold_usd);
+	if (approvalThresholdUsd !== null && (!Number.isFinite(approvalThresholdUsd) || approvalThresholdUsd < 0.000001)) {
+		approvalThresholdUsd = null;
+		notes.push('approval_threshold_usd ignored: not a positive number');
+	}
+
+	// canonicalizePerRailDaily silently drops non-positive or unrecognized-network
+	// entries; this mirrors that leniency (matching what session creation itself
+	// does) but surfaces it as a note so a caller's typo is not silent here either.
+	const rawPerRailDaily = raw.per_rail_daily_usd && typeof raw.per_rail_daily_usd === 'object'
+		? raw.per_rail_daily_usd
+		: {};
+	const perRailDailyUsd = canonicalizePerRailDaily(rawPerRailDaily);
+	if (Object.keys(rawPerRailDaily).length > 0 && Object.keys(perRailDailyUsd).length === 0) {
+		notes.push('per_rail_daily_usd ignored: no valid network/amount entries');
+	}
+
 	let expirySeconds = Number(raw.expiry_seconds ?? 3600);
 	if (!Number.isFinite(expirySeconds)) expirySeconds = 3600;
 	expirySeconds = Math.min(MAX_TTL_SECONDS, Math.max(MIN_TTL_SECONDS, Math.round(expirySeconds)));
@@ -188,6 +219,9 @@ export function parsePolicy(raw = {}) {
 		budgetUsd,
 		maxPerTxUsd,
 		allowedHosts,
+		blockedHosts,
+		approvalThresholdUsd,
+		perRailDailyUsd,
 		expirySeconds,
 		network,
 		notes,
@@ -405,6 +439,11 @@ export default wrap(async (req, res) => {
 			budgetAtomics: usdToAtomics(policy.budgetUsd),
 			maxPerTxAtomics: policy.maxPerTxUsd == null ? null : usdToAtomics(policy.maxPerTxUsd),
 			allowedHosts: policy.allowedHosts,
+			blockedHosts: policy.blockedHosts,
+			approvalThresholdAtomics: policy.approvalThresholdUsd == null ? null : usdToAtomics(policy.approvalThresholdUsd),
+			// A dry run has no live session, so the rolling rail window starts
+			// empty: railSpentAtomics defaults to 0 inside replay().
+			railDailyCapAtomics: resolveRailDailyCapAtomics(policy.network, policy.perRailDailyUsd),
 			status: 'active',
 			expiresAt,
 		},
@@ -462,6 +501,9 @@ export default wrap(async (req, res) => {
 			budget_usd: policy.budgetUsd,
 			max_per_tx_usd: policy.maxPerTxUsd,
 			allowed_hosts: policy.allowedHosts,
+			blocked_hosts: policy.blockedHosts,
+			approval_threshold_usd: policy.approvalThresholdUsd,
+			per_rail_daily_usd: policy.perRailDailyUsd,
 			expiry_seconds: policy.expirySeconds,
 			network: policy.network,
 			notes: policy.notes,
@@ -492,6 +534,13 @@ export default wrap(async (req, res) => {
 				budget_usd: suggestion.budget_usd,
 				max_per_tx_usd: suggestion.max_per_tx_usd,
 				allowed_hosts: suggestion.allowed_hosts,
+				// recommend() only infers budget/cap/hosts from the priced call list.
+				// Blocked hosts, the approval threshold, and the rail cap are opt-in
+				// safety limits with no signal in the call list to infer them from,
+				// so the create call simply carries through whatever was simulated.
+				blocked_hosts: policy.blockedHosts,
+				approval_threshold_usd: policy.approvalThresholdUsd,
+				per_rail_daily_usd: policy.perRailDailyUsd,
 				expiry_seconds: suggestion.expiry_seconds,
 				network: suggestion.network,
 			},

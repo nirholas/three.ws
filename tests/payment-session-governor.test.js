@@ -40,7 +40,7 @@ process.env.PAYMENT_SESSION_SECRET = 'test-payment-session-secret';
 // issues and applies that statement's real semantics to the store. Statements run
 // one at a time (JS is single-threaded between awaits), which is precisely the
 // serialization Postgres row locking provides for the reservation UPDATE.
-const store = { sessions: new Map(), executions: [] };
+const store = { sessions: new Map(), executions: [], railReservations: [] };
 
 function normalizeSql(strings) {
 	return strings.join(' ? ').replace(/\s+/g, ' ').trim();
@@ -102,7 +102,8 @@ function runStatement(text, values) {
 	// recordExecution
 	if (text.startsWith('INSERT INTO payment_session_executions')) {
 		const [sessionId, userId, endpointUrl, host, method, amount, network, txHash,
-			payer, payee, status, errorCode, errorMessage, responseBody, durationMs, idem] = values;
+			payer, payee, status, errorCode, errorMessage, responseBody, durationMs, idem,
+			policyDigest, verdictCode, verdictSignature, verdictSignedAt] = values;
 		if (idem != null && store.executions.some((e) => e.idempotency_key === idem)) return [];
 		store.executions.push({
 			session_id: sessionId, user_id: userId, endpoint_url: endpointUrl,
@@ -110,24 +111,72 @@ function runStatement(text, values) {
 			payer_address: payer, payee_address: payee, status, error_code: errorCode,
 			error_message: errorMessage, response_body: responseBody,
 			duration_ms: durationMs, idempotency_key: idem,
+			policy_digest: policyDigest, verdict_code: verdictCode,
+			verdict_signature: verdictSignature, verdict_signed_at: verdictSignedAt,
 		});
+		return [];
+	}
+
+	// reserveSessionSpend: advisory lock taken ahead of the rail-daily reserve
+	// (api/_lib/locked-sql.js). A no-op here: JS runs single-threaded between
+	// awaits, which already serializes the statements that follow it.
+	if (text.includes('pg_advisory_xact_lock')) return [];
+
+	// reserveSessionSpend: rail-daily pre-check (advisory read before the atomic reserve)
+	if (text.startsWith('SELECT coalesce(sum(amount_usdc), 0) AS spent')) {
+		const [id, network] = values;
+		const cutoff = Date.now() - 24 * HOUR;
+		const spent = store.railReservations
+			.filter((r) => r.session_id === id && r.network === network && r.created_at > cutoff)
+			.reduce((acc, r) => acc + BigInt(r.amount_usdc), 0n);
+		return [{ spent: spent.toString() }];
+	}
+
+	// reserveSessionSpend: the atomic rail-daily reservation (lock statement, then this,
+	// inside one sql.transaction, see api/_lib/locked-sql.js)
+	if (text.includes('INSERT INTO payment_session_rail_reservations')) {
+		const [id, network, , , amount, , capAtomics] = values;
+		const cutoff = Date.now() - 24 * HOUR;
+		const spent = store.railReservations
+			.filter((r) => r.session_id === id && r.network === network && r.created_at > cutoff)
+			.reduce((acc, r) => acc + BigInt(r.amount_usdc), 0n);
+		if (spent + BigInt(amount) > BigInt(capAtomics)) return [];
+		const resId = `rail_${store.railReservations.length}_${Date.now()}_${Math.random()}`;
+		store.railReservations.push({ id: resId, session_id: id, network, amount_usdc: amount, created_at: Date.now() });
+		return [{ id: resId }];
+	}
+
+	// reserveSessionSpend (budget-reservation failure) / rollbackReservation: release a rail reservation
+	if (text.startsWith('DELETE FROM payment_session_rail_reservations')) {
+		const [id] = values;
+		store.railReservations = store.railReservations.filter((r) => r.id !== id);
 		return [];
 	}
 
 	throw new Error(`unrouted SQL in test fake: ${text.slice(0, 90)}`);
 }
 
-vi.mock('../api/_lib/db.js', () => ({
-	sql: (strings, ...values) => Promise.resolve(runStatement(normalizeSql(strings), values)),
-	isDbUnavailableError: () => false,
-	isDbCapacityError: () => false,
-}));
+vi.mock('../api/_lib/db.js', () => {
+	const sqlFn = (strings, ...values) => Promise.resolve(runStatement(normalizeSql(strings), values));
+	// Each element of `queries` is already an invoked (and thus already-pending)
+	// sql`` call under this mock, mirroring tests/advisory-lock-snapshot.test.js's
+	// convention for exercising api/_lib/locked-sql.js's runLocked().
+	sqlFn.transaction = async (queries) => Promise.all(queries);
+	return {
+		sql: sqlFn,
+		isDbUnavailableError: () => false,
+		isDbCapacityError: () => false,
+	};
+});
 
 const {
 	usdToAtomics, atomicsToUsd, hashToken, extractSessionId, normalizeHost,
 	generateSessionToken, verifySessionToken, reserveSessionSpend,
-	rollbackReservation, recordExecution, SpendGovernorError,
+	rollbackReservation, recordExecution, signVerdict, verifyVerdictSignature,
+	SpendGovernorError,
 } = await import('../api/_lib/pay/spend-governor.js');
+const { replay, resolveRailDailyCapAtomics, computePolicyDigest, computeRequestHash, NETWORK_TO_CAIP2 } =
+	await import('../api/_lib/pay/policy.js');
 
 const SESSION_ID = '11111111-2222-4333-8444-555555555555';
 const HOUR = 3600 * 1000;
@@ -143,7 +192,10 @@ function seedSession(partial = {}) {
 		spent_usdc: String(partial.spent_usdc ?? 0),
 		max_per_tx_usdc: partial.max_per_tx_usdc ?? null,
 		allowed_hosts: partial.allowed_hosts ?? [],
-		network: 'solana',
+		blocked_hosts: partial.blocked_hosts ?? [],
+		approval_threshold_usdc: partial.approval_threshold_usdc ?? null,
+		per_rail_daily_usdc: partial.per_rail_daily_usdc ?? {},
+		network: partial.network ?? 'solana',
 		connector_ref: null,
 		status: partial.status ?? 'active',
 		expires_at: new Date(Date.now() + (partial.ttlMs ?? HOUR)).toISOString(),
@@ -162,6 +214,7 @@ async function expectGovernorError(promise, code) {
 beforeEach(() => {
 	store.sessions.clear();
 	store.executions.length = 0;
+	store.railReservations.length = 0;
 });
 
 // ── Money arithmetic ─────────────────────────────────────────────────────────
@@ -363,7 +416,7 @@ describe('per-transaction ceiling', () => {
 		await reserveSessionSpend({
 			token, url: 'https://api.example.com/x', amountAtomics: 60_000n,
 		}).catch((err) => {
-			expect(err.detail).toEqual({ amount_usd: 0.06, cap_usd: 0.05 });
+			expect(err.detail).toMatchObject({ amount_usd: 0.06, cap_usd: 0.05 });
 		});
 	});
 
@@ -396,7 +449,7 @@ describe('atomic budget reservation', () => {
 		await reserveSessionSpend({
 			token, url: 'https://a.test/x', amountAtomics: 200_000n,
 		}).catch((err) => {
-			expect(err.detail).toEqual({ need_usd: 0.2, remaining_usd: 0.1 });
+			expect(err.detail).toMatchObject({ need_usd: 0.2, remaining_usd: 0.1 });
 		});
 	});
 
@@ -541,6 +594,277 @@ describe('recordExecution', () => {
 			status: 'failed', error_code: 'settle_uncertain',
 		});
 	});
+
+	it('stores the signed verdict alongside the execution', async () => {
+		const { token, row } = seedSession({ budget_usdc: '1000000' });
+		const reservation = await reserveSessionSpend({
+			token, url: 'https://a.test/x', amountAtomics: 50_000n,
+		});
+		await recordExecution({
+			...base, sessionId: row.id, endpointUrl: 'https://a.test/x',
+			policyDigest: reservation.policyDigest,
+			verdictCode: reservation.verdictCode,
+			verdictSignature: reservation.verdictSignature,
+			verdictSignedAt: reservation.verdictSignedAt,
+		});
+		expect(store.executions[0]).toMatchObject({
+			policy_digest: reservation.policyDigest,
+			verdict_code: 'allowed',
+			verdict_signature: reservation.verdictSignature,
+			verdict_signed_at: reservation.verdictSignedAt,
+		});
+	});
+});
+
+// ── Denylist ─────────────────────────────────────────────────────────────────
+
+describe('blocked hosts', () => {
+	it('refuses a call to a host on the denylist', async () => {
+		const { token } = seedSession({ blocked_hosts: ['evil.test'] });
+		await expectGovernorError(reserveSessionSpend({
+			token, url: 'https://evil.test/x', amountAtomics: 10_000n,
+		}), 'host_blocked');
+	});
+
+	it('allows a host that is not on the denylist', async () => {
+		const { token } = seedSession({ blocked_hosts: ['evil.test'] });
+		await expect(reserveSessionSpend({
+			token, url: 'https://fine.test/x', amountAtomics: 10_000n,
+		})).resolves.toBeTruthy();
+	});
+
+	it('blocks a host even when it also matches a broad allowlist entry', async () => {
+		// An operator who denylists one bad sub-merchant under a wildcard allow
+		// expects the denylist to be the final word.
+		const { token } = seedSession({
+			allowed_hosts: ['example.com'],
+			blocked_hosts: ['bad.example.com'],
+		});
+		await expectGovernorError(reserveSessionSpend({
+			token, url: 'https://bad.example.com/x', amountAtomics: 10_000n,
+		}), 'host_blocked');
+		await expect(reserveSessionSpend({
+			token, url: 'https://good.example.com/x', amountAtomics: 10_000n,
+		})).resolves.toBeTruthy();
+	});
+});
+
+// ── Human-approval threshold ─────────────────────────────────────────────────
+
+describe('approval threshold', () => {
+	it('returns a distinct requires_approval verdict above the threshold', async () => {
+		const { token } = seedSession({ approval_threshold_usdc: '50000' }); // $0.05
+		await expectGovernorError(reserveSessionSpend({
+			token, url: 'https://a.test/x', amountAtomics: 60_000n,
+		}), 'requires_approval');
+	});
+
+	it('reports the amount and the threshold so a caller can decide', async () => {
+		const { token } = seedSession({ approval_threshold_usdc: '50000' });
+		await reserveSessionSpend({
+			token, url: 'https://a.test/x', amountAtomics: 60_000n,
+		}).catch((err) => {
+			expect(err.detail).toMatchObject({ amount_usd: 0.06, threshold_usd: 0.05 });
+		});
+	});
+
+	it('settles normally at or below the threshold', async () => {
+		const { token, row } = seedSession({ approval_threshold_usdc: '50000' });
+		const reservation = await reserveSessionSpend({
+			token, url: 'https://a.test/x', amountAtomics: 50_000n,
+		});
+		expect(reservation.verdictCode).toBe('allowed');
+		expect(store.sessions.get(row.id).spent_usdc).toBe('50000');
+	});
+
+	it('treats a null threshold as no approval requirement', async () => {
+		const { token } = seedSession({ approval_threshold_usdc: null });
+		await expect(reserveSessionSpend({
+			token, url: 'https://a.test/x', amountAtomics: 999_999n,
+		})).resolves.toBeTruthy();
+	});
+});
+
+// ── Per-rail rolling 24h cap ─────────────────────────────────────────────────
+
+describe('per-rail daily cap', () => {
+	it('refuses a payment that would push the rolling 24h rail spend over the cap', async () => {
+		const { token } = seedSession({ per_rail_daily_usdc: { [NETWORK_TO_CAIP2.solana]: 0.05 } });
+		await expectGovernorError(reserveSessionSpend({
+			token, url: 'https://a.test/x', amountAtomics: 60_000n,
+		}), 'rail_daily_exceeded');
+	});
+
+	it('allows a payment within the cap and reserves it against the window', async () => {
+		const { token } = seedSession({ per_rail_daily_usdc: { [NETWORK_TO_CAIP2.solana]: 0.05 } });
+		await expect(reserveSessionSpend({
+			token, url: 'https://a.test/x', amountAtomics: 30_000n,
+		})).resolves.toBeTruthy();
+		expect(store.railReservations.filter((r) => r.network === NETWORK_TO_CAIP2.solana)).toHaveLength(1);
+	});
+
+	it('lets a second payment through once the first is within the cap, and refuses what would overflow it', async () => {
+		const { token } = seedSession({ per_rail_daily_usdc: { [NETWORK_TO_CAIP2.solana]: 0.05 } });
+		await reserveSessionSpend({ token, url: 'https://a.test/x', amountAtomics: 30_000n });
+		await expectGovernorError(reserveSessionSpend({
+			token, url: 'https://a.test/x', amountAtomics: 30_000n, // 30k + 30k > 50k cap
+		}), 'rail_daily_exceeded');
+	});
+
+	it('lets exactly one of two concurrent payments win when only one fits the rail cap', async () => {
+		const { token } = seedSession({ budget_usdc: '1000000', per_rail_daily_usdc: { [NETWORK_TO_CAIP2.solana]: 0.05 } });
+		const pay = () => reserveSessionSpend({
+			token, url: 'https://a.test/x', amountAtomics: 40_000n,
+		}).then(() => 'ok', (err) => err.code);
+
+		const results = await Promise.all([pay(), pay()]);
+		expect(results.filter((r) => r === 'ok')).toHaveLength(1);
+		expect(results.filter((r) => r === 'rail_daily_exceeded')).toHaveLength(1);
+	});
+
+	it('releases the rail reservation on rollback, so a failed call does not eat into the next cap check', async () => {
+		const { token, row } = seedSession({ budget_usdc: '1000000', per_rail_daily_usdc: { [NETWORK_TO_CAIP2.solana]: 0.05 } });
+		const reservation = await reserveSessionSpend({
+			token, url: 'https://a.test/x', amountAtomics: 40_000n,
+		});
+		await rollbackReservation(row.id, 40_000n, { railReservationId: reservation.railReservationId });
+		expect(store.railReservations).toHaveLength(0);
+		// The rail window is clear again, so a call that would otherwise have
+		// collided with the rolled-back reservation now fits.
+		await expect(reserveSessionSpend({
+			token, url: 'https://a.test/x', amountAtomics: 40_000n,
+		})).resolves.toBeTruthy();
+	});
+
+	it('treats an empty per_rail_daily_usdc as no cap', async () => {
+		const { token } = seedSession({ per_rail_daily_usdc: {} });
+		await expect(reserveSessionSpend({
+			token, url: 'https://a.test/x', amountAtomics: 999_999n,
+		})).resolves.toBeTruthy();
+	});
+});
+
+// ── Signed verdicts ──────────────────────────────────────────────────────────
+
+describe('signed verdicts', () => {
+	it('signs an allowed verdict with a signature that verifies', async () => {
+		const { token, row } = seedSession({ budget_usdc: '1000000' });
+		const url = 'https://a.test/x';
+		const amountAtomics = 10_000n;
+		const r = await reserveSessionSpend({ token, url, amountAtomics });
+		expect(r.verdictCode).toBe('allowed');
+
+		const requestHash = computeRequestHash({ sessionId: row.id, url, amountAtomics });
+		expect(verifyVerdictSignature({
+			verdictCode: r.verdictCode,
+			policyDigest: r.policyDigest,
+			requestHash,
+			timestamp: r.verdictSignedAt,
+			signature: r.verdictSignature,
+		})).toBe(true);
+	});
+
+	it('fails verification when any signed field is altered', async () => {
+		const { token, row } = seedSession({ budget_usdc: '1000000' });
+		const url = 'https://a.test/x';
+		const amountAtomics = 10_000n;
+		const r = await reserveSessionSpend({ token, url, amountAtomics });
+		const requestHash = computeRequestHash({ sessionId: row.id, url, amountAtomics });
+
+		expect(verifyVerdictSignature({
+			verdictCode: r.verdictCode, policyDigest: 'tampered', requestHash,
+			timestamp: r.verdictSignedAt, signature: r.verdictSignature,
+		})).toBe(false);
+		expect(verifyVerdictSignature({
+			verdictCode: 'rejected', policyDigest: r.policyDigest, requestHash,
+			timestamp: r.verdictSignedAt, signature: r.verdictSignature,
+		})).toBe(false);
+	});
+
+	it('a rejection verdict is signed too, over its own policy digest', async () => {
+		const { token } = seedSession({ blocked_hosts: ['evil.test'] });
+		await reserveSessionSpend({
+			token, url: 'https://evil.test/x', amountAtomics: 10_000n,
+		}).catch((err) => {
+			expect(err.detail.policy_digest).toBeTruthy();
+			expect(err.detail.verdict_signature).toBeTruthy();
+			expect(err.detail.verdict_signed_at).toBeTruthy();
+		});
+	});
+
+	it('changes the policy digest when a governed field changes, so a tampered policy cannot reuse an old signature', async () => {
+		const { row } = seedSession({ budget_usdc: '1000000' });
+		const before = computePolicyDigest(row);
+		const tampered = { ...row, approval_threshold_usdc: '1' };
+		const after = computePolicyDigest(tampered);
+		expect(after).not.toBe(before);
+	});
+
+	it('rejects a signature computed against the original digest once the policy (and so the digest) changes', async () => {
+		const { token, row } = seedSession({ budget_usdc: '1000000' });
+		const r = await reserveSessionSpend({ token, url: 'https://a.test/x', amountAtomics: 10_000n });
+
+		// The policy actually governing this session changes after the verdict was signed.
+		const tamperedDigest = computePolicyDigest({ ...row, budget_usdc: '2000000' });
+		expect(tamperedDigest).not.toBe(r.policyDigest);
+
+		// Re-signing with the tampered digest produces a different signature than
+		// the one that was actually stored, so a verifier comparing against the
+		// tampered digest catches the edit.
+		const forgedSignature = signVerdict({
+			verdictCode: r.verdictCode,
+			policyDigest: tamperedDigest,
+			requestHash: 'whatever-request-hash',
+			timestamp: r.verdictSignedAt,
+		});
+		expect(forgedSignature).not.toBe(r.verdictSignature);
+	});
+});
+
+// ── Parity with the dry-run simulator ────────────────────────────────────────
+
+describe('parity: a simulated verdict and an enforced one never disagree', () => {
+	// api/pay/simulate.js's replay() and this governor's reserveSessionSpend()
+	// both resolve to policy.js's evaluateCall(). This test builds the same
+	// policy object both callers build from a session row and runs it through
+	// both paths, so a future change that lets them diverge fails here first.
+	const cases = [
+		{ name: 'plain allow', amountAtomics: 10_000n, expect: 'allowed' },
+		{ name: 'blocked host', amountAtomics: 10_000n, url: 'https://evil.test/x',
+			seed: { blocked_hosts: ['evil.test'] }, expect: 'host_blocked' },
+		{ name: 'per-tx ceiling', amountAtomics: 60_000n,
+			seed: { max_per_tx_usdc: '50000' }, expect: 'per_tx_exceeded' },
+		{ name: 'approval threshold', amountAtomics: 60_000n,
+			seed: { approval_threshold_usdc: '50000' }, expect: 'requires_approval' },
+		{ name: 'rail daily cap', amountAtomics: 60_000n,
+			seed: { per_rail_daily_usdc: { [NETWORK_TO_CAIP2.solana]: 0.05 } }, expect: 'rail_daily_exceeded' },
+		{ name: 'insufficient budget', amountAtomics: 2_000_000n, expect: 'insufficient_budget' },
+	];
+
+	for (const c of cases) {
+		it(`agrees on "${c.name}"`, async () => {
+			const url = c.url ?? 'https://a.test/x';
+			const { token, row } = seedSession({ budget_usdc: '1000000', ...c.seed });
+
+			const enforced = await reserveSessionSpend({ token, url, amountAtomics: c.amountAtomics })
+				.then(() => 'allowed', (err) => err.code);
+
+			const simulated = replay([{ url, amountAtomics: c.amountAtomics }], {
+				budgetAtomics: BigInt(row.budget_usdc),
+				maxPerTxAtomics: row.max_per_tx_usdc,
+				allowedHosts: row.allowed_hosts,
+				blockedHosts: row.blocked_hosts,
+				status: row.status,
+				expiresAt: row.expires_at,
+				railDailyCapAtomics: resolveRailDailyCapAtomics(row.network, row.per_rail_daily_usdc),
+				approvalThresholdAtomics: row.approval_threshold_usdc,
+			}).steps[0];
+			const simulatedCode = simulated.allowed ? 'allowed' : simulated.rejection.code;
+
+			expect(enforced).toBe(c.expect);
+			expect(simulatedCode).toBe(c.expect);
+		});
+	}
 });
 
 // ── The atomicity guarantee itself ───────────────────────────────────────────

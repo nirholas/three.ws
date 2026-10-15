@@ -427,6 +427,32 @@ describe('simulator policy parsing', () => {
 		expect(parsePolicy({ network: 'base' }).network).toBe('base');
 		expect(parsePolicy({ network: 'ethereum' }).network).toBe('solana');
 	});
+
+	it('accepts a denylist as an array or a delimited string, deduplicated', () => {
+		expect(parsePolicy({ blocked_hosts: ['Evil.com', 'https://evil.com/x'] }).blockedHosts)
+			.toEqual(['evil.com']);
+		expect(parsePolicy({ blocked_hosts: 'evil.com, bad.com' }).blockedHosts)
+			.toEqual(['evil.com', 'bad.com']);
+	});
+
+	it('accepts an approval threshold and ignores a non-positive one', () => {
+		expect(parsePolicy({ approval_threshold_usd: 0.5 }).approvalThresholdUsd).toBe(0.5);
+		expect(parsePolicy({}).approvalThresholdUsd).toBeNull();
+		const p = parsePolicy({ approval_threshold_usd: -1 });
+		expect(p.approvalThresholdUsd).toBeNull();
+		expect(p.notes.join(' ')).toMatch(/ignored/);
+	});
+
+	it('canonicalizes a per-rail daily cap to CAIP-2 keys', () => {
+		const p = parsePolicy({ per_rail_daily_usd: { solana: 5 } });
+		expect(p.perRailDailyUsd).toEqual({ 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp': 5 });
+	});
+
+	it('notes when every per-rail-daily entry is dropped as invalid', () => {
+		const p = parsePolicy({ per_rail_daily_usd: { ethereum: 5, solana: -1 } });
+		expect(p.perRailDailyUsd).toEqual({});
+		expect(p.notes.join(' ')).toMatch(/ignored/);
+	});
 });
 
 describe('simulator step construction', () => {
@@ -574,11 +600,13 @@ describe('the enforcer and the simulator share one rule set', () => {
 	const governor = read('api/_lib/pay/spend-governor.js');
 	const flat = governor.replace(/\s+/g, ' ');
 
-	it('imports its predicates from policy.js', () => {
+	it('judges every call through the one evaluateCall() policy.js exports', () => {
+		// reserveSessionSpend calls evaluateCall() exactly once rather than
+		// threading individual predicates (statusVerdict, allowlistVerdict, ...)
+		// by hand: that is what makes the enforcer and replay() in simulate.js
+		// structurally unable to diverge, instead of merely unlikely to.
 		expect(governor).toMatch(/from '\.\/policy\.js'/);
-		for (const fn of ['statusVerdict', 'expiryVerdict', 'allowlistVerdict', 'perTxVerdict']) {
-			expect(governor, `the governor no longer uses ${fn}`).toContain(fn);
-		}
+		expect(governor, 'the governor no longer calls the shared evaluateCall()').toContain('evaluateCall');
 	});
 
 	it('does not reimplement the allowlist suffix rule inline', () => {

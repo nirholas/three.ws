@@ -455,6 +455,19 @@ export const env = {
 		return opt('PAYMENT_SESSION_SECRET') || this.WALLET_CAPABILITY_SECRET;
 	},
 
+	// HMAC key that signs Spend Governor verdicts (api/_lib/pay/spend-governor.js).
+	// Every verdict (allow or reject) is signed over {verdict code, policy digest,
+	// request hash, timestamp} and stored with its execution, so a verdict cannot
+	// be edited after the fact without the signature breaking. Kept separate from
+	// PAYMENT_SESSION_SECRET: rotating the token secret (which revokes every live
+	// session) must not also invalidate the historical verdict record, and vice
+	// versa. Falls back through it (and so through WALLET_CAPABILITY_SECRET /
+	// WALLET_ENCRYPTION_KEY / JWT_SECRET) so the feature works in every
+	// environment. NEVER log this value.
+	get PAY_VERDICT_HMAC_KEY() {
+		return opt('PAY_VERDICT_HMAC_KEY') || this.PAYMENT_SESSION_SECRET;
+	},
+
 	// Long-lived Ed25519 signing seed for the provably-fair vanity grinder
 	// (api/_lib/vanity-service-key.js). Stored as a secret-box ciphertext (v2:…)
 	// or a raw 32-byte seed in hex/Base58. Signs every verifiable-grind receipt;

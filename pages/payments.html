@@ -224,6 +224,17 @@
 			.f-hint { font-size: 11.5px; color: rgba(255,255,255,0.35); margin-top: 5px; line-height: 1.45; }
 			.f-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 
+			/* Advanced policy disclosure */
+			.adv-policy { margin-bottom: 1.25rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 0.1rem 0.9rem; background: rgba(255,255,255,0.02); }
+			.adv-policy[open] { padding-bottom: 0.9rem; }
+			.adv-policy summary { list-style: none; cursor: pointer; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.06em; padding: 0.8rem 0; display: flex; align-items: center; gap: 6px; user-select: none; }
+			.adv-policy summary::-webkit-details-marker { display: none; }
+			.adv-policy summary::before { content: '›'; display: inline-block; font-size: 14px; transition: transform var(--duration-fast); }
+			.adv-policy[open] summary::before { transform: rotate(90deg); }
+			.adv-policy summary:hover { color: rgba(255,255,255,0.8); }
+			.adv-policy summary:focus-visible { outline: 2px solid rgba(124,92,255,0.6); outline-offset: 3px; border-radius: 6px; }
+			.adv-policy .f-row:last-child { margin-bottom: 0; }
+
 			/* Budget preview */
 			.budget-preview { display: flex; align-items: center; justify-content: space-between; background: rgba(47,191,113,0.07); border: 1px solid rgba(47,191,113,0.2); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 13px; }
 			.budget-preview .bp-label { color: rgba(255,255,255,0.55); }
@@ -422,6 +433,28 @@
 						<div class="f-hint" id="fHostsHint">If set, the session can only pay endpoints at these domains. Empty = any host.</div>
 					</div>
 
+					<details class="adv-policy" id="fAdvPolicy">
+						<summary data-i18n="payments.advanced_spend_policy">Advanced spend policy</summary>
+
+						<div class="f-row">
+							<label for="fBlockedHosts" data-i18n-html="payments.blocked_hosts_optional_comma_separated">Blocked hosts <span>optional, comma-separated</span></label>
+							<input type="text" id="fBlockedHosts" placeholder="untrusted.example.com" autocomplete="off" aria-describedby="fBlockedHostsHint" />
+							<div class="f-hint" id="fBlockedHostsHint">Denylist wins over the allowlist. Checked on every call even with no allowlist set.</div>
+						</div>
+
+						<div class="f-row-2">
+							<div class="f-row">
+								<label for="fApprovalThreshold" data-i18n-html="payments.requires_approval_above_optional">Requires approval above <span>optional, USD</span></label>
+								<input type="number" id="fApprovalThreshold" min="0.000001" max="1000" step="0.0001" placeholder="No threshold" />
+							</div>
+							<div class="f-row">
+								<label for="fRailDaily" data-i18n-html="payments.per_rail_daily_cap_optional">Per-rail daily cap <span>optional, USD</span></label>
+								<input type="number" id="fRailDaily" min="0.000001" max="1000" step="0.0001" placeholder="No cap" />
+							</div>
+						</div>
+						<div class="f-hint" style="margin-top:-0.4rem;margin-bottom:0.25rem">A call above the approval threshold is held for manual review instead of executing. The daily cap is a rolling 24h limit on this session's settlement network.</div>
+					</details>
+
 					<div class="budget-preview" id="budgetPreview">
 						<span class="bp-label" data-i18n="payments.credit_charge">Credit charge</span>
 						<span class="bp-val" id="previewVal">$1.0000</span>
@@ -478,6 +511,19 @@
 					<label for="editMaxTx" data-i18n="payments.max_per_tx_usd">Max per tx (USD)</label>
 					<input type="number" id="editMaxTx" min="0.000001" step="0.0001" placeholder="No limit" />
 				</div>
+				<div class="f-row">
+					<label for="editBlockedHosts" data-i18n-html="payments.blocked_hosts_comma_separated">Blocked hosts <span style="text-transform:none;letter-spacing:0;font-weight:400;font-size:11px;color:rgba(255,255,255,.3)">comma-separated</span></label>
+					<input type="text" id="editBlockedHosts" placeholder="None (leave empty)" />
+				</div>
+				<div class="f-row">
+					<label for="editApprovalThreshold" data-i18n="payments.requires_approval_above_usd">Requires approval above (USD)</label>
+					<input type="number" id="editApprovalThreshold" min="0.000001" step="0.0001" placeholder="No threshold" />
+				</div>
+				<div class="f-row">
+					<label for="editRailDaily" data-i18n="payments.per_rail_daily_cap_usd">Per-rail daily cap (USD)</label>
+					<input type="number" id="editRailDaily" min="0.000001" step="0.0001" placeholder="No cap" />
+				</div>
+				<div class="f-error" id="editError" role="alert" hidden></div>
 				<div class="modal-footer">
 					<button class="f-cancel" id="editClose" data-i18n="payments.cancel_2">Cancel</button>
 					<button class="f-primary" id="editSave" data-i18n="payments.save_changes">Save changes</button>
@@ -658,6 +704,9 @@
 				const netLabel = 'Solana';
 				const hosts = s.allowed_hosts?.length ? s.allowed_hosts.join(', ') : 'Any host';
 				const maxTx = s.max_per_tx_usd != null ? `$${s.max_per_tx_usd}` : 'No limit';
+				const blockedHosts = s.blocked_hosts?.length ? s.blocked_hosts.join(', ') : null;
+				const approvalThreshold = s.approval_threshold_usd != null ? `$${s.approval_threshold_usd}` : null;
+				const railDailyCap = Object.values(s.per_rail_daily_usd || {})[0];
 
 				return `
 					<div class="sc" data-id="${s.id}">
@@ -702,6 +751,18 @@
 								${s.expires_at ? `<div class="sc-mi">
 									<div class="k">Expires</div>
 									<div class="v muted">${fmtDate(s.expires_at)}</div>
+								</div>` : ''}
+								${blockedHosts ? `<div class="sc-mi">
+									<div class="k">Blocked hosts</div>
+									<div class="v muted" style="font-size:12px">${esc(blockedHosts)}</div>
+								</div>` : ''}
+								${approvalThreshold ? `<div class="sc-mi">
+									<div class="k">Requires approval above</div>
+									<div class="v">${approvalThreshold}</div>
+								</div>` : ''}
+								${railDailyCap != null ? `<div class="sc-mi">
+									<div class="k">Per-rail daily cap</div>
+									<div class="v">$${railDailyCap}</div>
 								</div>` : ''}
 							</div>
 
@@ -874,13 +935,21 @@
 			}
 
 			// ── Edit modal ─────────────────────────────────────────────
+			let editingNetwork = 'solana';
+
 			function openEdit(id) {
 				const s = sessions.find(x => x.id === id);
 				if (!s) return;
 				editingId = id;
+				editingNetwork = s.network || 'solana';
 				$('editLabel').value = s.label || '';
 				$('editHosts').value = (s.allowed_hosts || []).join(', ');
 				$('editMaxTx').value = s.max_per_tx_usd != null ? s.max_per_tx_usd : '';
+				$('editBlockedHosts').value = (s.blocked_hosts || []).join(', ');
+				$('editApprovalThreshold').value = s.approval_threshold_usd != null ? s.approval_threshold_usd : '';
+				const railCap = Object.values(s.per_rail_daily_usd || {})[0];
+				$('editRailDaily').value = railCap != null ? railCap : '';
+				$('editError').hidden = true;
 				$('editModal').classList.add('show');
 				setTimeout(() => $('editLabel').focus(), 50);
 			}
@@ -892,10 +961,32 @@
 				const label = $('editLabel').value.trim();
 				const hostsRaw = $('editHosts').value.trim();
 				const maxTxRaw = $('editMaxTx').value.trim();
+				const blockedHostsRaw = $('editBlockedHosts').value.trim();
+				const approvalThresholdRaw = $('editApprovalThreshold').value.trim();
+				const railDailyRaw = $('editRailDaily').value.trim();
+
+				const editErr = $('editError');
+				editErr.hidden = true;
+				if (approvalThresholdRaw && (!Number.isFinite(parseFloat(approvalThresholdRaw)) || parseFloat(approvalThresholdRaw) <= 0)) {
+					editErr.textContent = 'Approval threshold must be a positive number.';
+					editErr.hidden = false;
+					$('editApprovalThreshold').focus();
+					return;
+				}
+				if (railDailyRaw && (!Number.isFinite(parseFloat(railDailyRaw)) || parseFloat(railDailyRaw) <= 0)) {
+					editErr.textContent = 'Per-rail daily cap must be a positive number.';
+					editErr.hidden = false;
+					$('editRailDaily').focus();
+					return;
+				}
+
 				const body = {
 					label,
 					allowed_hosts: hostsRaw ? hostsRaw.split(/[\s,]+/).map(h => h.trim()).filter(Boolean) : [],
 					max_per_tx_usd: maxTxRaw ? parseFloat(maxTxRaw) : null,
+					blocked_hosts: blockedHostsRaw ? blockedHostsRaw.split(/[\s,]+/).map(h => h.trim()).filter(Boolean) : [],
+					approval_threshold_usd: approvalThresholdRaw ? parseFloat(approvalThresholdRaw) : null,
+					per_rail_daily_usd: railDailyRaw ? { [editingNetwork]: parseFloat(railDailyRaw) } : {},
 				};
 				try {
 					$('editSave').disabled = true;
@@ -1043,6 +1134,10 @@
 				$('tokenReveal').style.display = 'none';
 				$('mCreate').disabled = false;
 				$('mCreate').textContent = 'Create session →';
+				$('fBlockedHosts').value = '';
+				$('fApprovalThreshold').value = '';
+				$('fRailDaily').value = '';
+				$('fAdvPolicy').open = false;
 				$('createModal').classList.add('show');
 				setTimeout(() => $('fLabel').focus(), 50);
 			}
@@ -1063,6 +1158,23 @@
 
 				const hostsRaw = $('fHosts').value.trim();
 				const maxTxRaw = $('fMaxTx').value.trim();
+				const blockedHostsRaw = $('fBlockedHosts').value.trim();
+				const approvalThresholdRaw = $('fApprovalThreshold').value.trim();
+				const railDailyRaw = $('fRailDaily').value.trim();
+				const network = $('fNetwork').value;
+
+				if (approvalThresholdRaw && (!Number.isFinite(parseFloat(approvalThresholdRaw)) || parseFloat(approvalThresholdRaw) <= 0)) {
+					showCreateError('Approval threshold must be a positive number.');
+					$('fAdvPolicy').open = true;
+					$('fApprovalThreshold').focus();
+					return;
+				}
+				if (railDailyRaw && (!Number.isFinite(parseFloat(railDailyRaw)) || parseFloat(railDailyRaw) <= 0)) {
+					showCreateError('Per-rail daily cap must be a positive number.');
+					$('fAdvPolicy').open = true;
+					$('fRailDaily').focus();
+					return;
+				}
 
 				clearCreateError();
 				$('mCreate').disabled = true;
@@ -1077,7 +1189,10 @@
 							expiry_seconds: parseInt($('fExpiry').value, 10),
 							max_per_tx_usd: maxTxRaw ? parseFloat(maxTxRaw) : null,
 							allowed_hosts: hostsRaw ? hostsRaw.split(/[\s,]+/).map(h => h.trim()).filter(Boolean) : [],
-							network: $('fNetwork').value,
+							blocked_hosts: blockedHostsRaw ? blockedHostsRaw.split(/[\s,]+/).map(h => h.trim()).filter(Boolean) : [],
+							approval_threshold_usd: approvalThresholdRaw ? parseFloat(approvalThresholdRaw) : null,
+							per_rail_daily_usd: railDailyRaw ? { [network]: parseFloat(railDailyRaw) } : null,
+							network,
 						}),
 					});
 

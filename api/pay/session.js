@@ -106,6 +106,9 @@ export default wrap(async (req, res) => {
 				budgetUsd: body.budget_usd,
 				maxPerTxUsd: body.max_per_tx_usd ?? null,
 				allowedHosts: body.allowed_hosts ?? [],
+				blockedHosts: body.blocked_hosts ?? [],
+				approvalThresholdUsd: body.approval_threshold_usd ?? null,
+				perRailDailyUsd: body.per_rail_daily_usd ?? null,
 				network: body.network ?? 'solana',
 				expirySeconds: body.expiry_seconds ?? 3600,
 				metadata: body.metadata ?? {},
@@ -193,8 +196,16 @@ export default wrap(async (req, res) => {
 		if (typeof body.label === 'string') updates.label = body.label.trim();
 		if (Array.isArray(body.allowed_hosts)) updates.allowedHosts = body.allowed_hosts;
 		if (body.max_per_tx_usd !== undefined) updates.maxPerTxUsd = body.max_per_tx_usd;
+		if (Array.isArray(body.blocked_hosts)) updates.blockedHosts = body.blocked_hosts;
+		if (body.approval_threshold_usd !== undefined) updates.approvalThresholdUsd = body.approval_threshold_usd;
+		if (body.per_rail_daily_usd !== undefined) updates.perRailDailyUsd = body.per_rail_daily_usd;
 		if (Object.keys(updates).length === 0) {
-			return error(res, 400, 'nothing_to_update', 'Provide at least one of: label, allowed_hosts, max_per_tx_usd');
+			return error(
+				res,
+				400,
+				'nothing_to_update',
+				'Provide at least one of: label, allowed_hosts, max_per_tx_usd, blocked_hosts, approval_threshold_usd, per_rail_daily_usd',
+			);
 		}
 
 		const result = await updatePaymentSession(id, user.id, updates);

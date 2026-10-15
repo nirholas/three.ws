@@ -25,7 +25,7 @@ import {
 	atomicsToUsd,
 	normalizeHost,
 } from './spend-governor.js';
-import { SESSION_LIMITS } from './policy.js';
+import { SESSION_LIMITS, canonicalizePerRailDaily } from './policy.js';
 
 const {
 	MAX_LABEL_LEN,
@@ -78,6 +78,32 @@ function normalizeMaxPerTx(maxPerTxUsd) {
 	return n;
 }
 
+function normalizeApprovalThreshold(approvalThresholdUsd) {
+	if (approvalThresholdUsd == null) return null;
+	const n = Number(approvalThresholdUsd);
+	if (!Number.isFinite(n) || n < 0.000001) throw bad('approval_threshold_usd must be > $0.000001');
+	return n;
+}
+
+function normalizeBlockedHosts(raw) {
+	if (!raw) return [];
+	const arr = Array.isArray(raw) ? raw : String(raw).split(/[\s,]+/);
+	const hosts = arr.map(normalizeHost).filter(Boolean);
+	if (hosts.length > MAX_ALLOWED_HOSTS)
+		throw bad(`blocked_hosts may contain at most ${MAX_ALLOWED_HOSTS} entries`);
+	return [...new Set(hosts)];
+}
+
+function normalizePerRailDaily(raw) {
+	if (raw == null) return {};
+	if (typeof raw !== 'object' || Array.isArray(raw)) throw bad('per_rail_daily_usd must be an object keyed by network');
+	for (const value of Object.values(raw)) {
+		const n = Number(value);
+		if (!Number.isFinite(n) || n <= 0) throw bad('per_rail_daily_usd values must be positive numbers');
+	}
+	return canonicalizePerRailDaily(raw);
+}
+
 /**
  * Create a new payment session.
  *
@@ -88,6 +114,9 @@ function normalizeMaxPerTx(maxPerTxUsd) {
  * @param {number} opts.budgetUsd        - Total budget in USD
  * @param {number} [opts.maxPerTxUsd]    - Per-payment ceiling in USD
  * @param {string[]} [opts.allowedHosts] - If set, only pay endpoints at these hosts
+ * @param {string[]} [opts.blockedHosts] - Hosts this session must never pay, even if allowlisted
+ * @param {number} [opts.approvalThresholdUsd] - A payment above this needs human approval instead of settling
+ * @param {object} [opts.perRailDailyUsd] - Rolling 24h spend cap per settlement rail, keyed by network ('solana'/'base') or CAIP-2 id
  * @param {string} [opts.network]        - 'solana' | 'base' (default: 'solana')
  * @param {number} [opts.expirySeconds]  - Session lifetime in seconds (default: 3600)
  * @param {object} [opts.metadata]       - Arbitrary caller metadata
@@ -100,6 +129,9 @@ export async function createPaymentSession({
 	budgetUsd,
 	maxPerTxUsd,
 	allowedHosts,
+	blockedHosts,
+	approvalThresholdUsd,
+	perRailDailyUsd,
 	network = 'solana',
 	expirySeconds,
 	metadata = {},
@@ -110,6 +142,10 @@ export async function createPaymentSession({
 	const budgetAtomics = usdToAtomics(budgetN);
 	const maxPerTxAtomics = maxPerTxUsd != null ? usdToAtomics(normalizeMaxPerTx(maxPerTxUsd)) : null;
 	const hosts = normalizeAllowedHosts(allowedHosts);
+	const blocked = normalizeBlockedHosts(blockedHosts);
+	const approvalThresholdAtomics =
+		approvalThresholdUsd != null ? usdToAtomics(normalizeApprovalThreshold(approvalThresholdUsd)) : null;
+	const perRailDaily = normalizePerRailDaily(perRailDailyUsd);
 	const ttl = normalizeTtl(expirySeconds);
 	const net = network === 'base' ? 'base' : 'solana';
 	const cleanLabel = String(label ?? '').trim().slice(0, MAX_LABEL_LEN);
@@ -137,15 +173,21 @@ export async function createPaymentSession({
 	const [row] = await sql`
 		INSERT INTO payment_sessions
 			(id, user_id, agent_id, label, budget_usdc, max_per_tx_usdc,
-			 allowed_hosts, network, status, expires_at, token_hash, session_metadata)
+			 allowed_hosts, blocked_hosts, approval_threshold_usdc, per_rail_daily_usdc,
+			 network, status, expires_at, token_hash, session_metadata)
 		VALUES
 			(${sessionId}, ${userId}, ${agentId ?? null},
 			 ${cleanLabel}, ${budgetAtomics.toString()},
 			 ${maxPerTxAtomics != null ? maxPerTxAtomics.toString() : null},
-			 ${hosts}, ${net}, 'active', ${expiresAt.toISOString()},
+			 ${hosts}, ${blocked},
+			 ${approvalThresholdAtomics != null ? approvalThresholdAtomics.toString() : null},
+			 ${JSON.stringify(perRailDaily)}::jsonb,
+			 ${net}, 'active', ${expiresAt.toISOString()},
 			 ${tokenHash}, ${JSON.stringify(metadata)}::jsonb)
 		RETURNING id, user_id, agent_id, label, budget_usdc, spent_usdc,
-		          max_per_tx_usdc, allowed_hosts, network, status, expires_at,
+		          max_per_tx_usdc, allowed_hosts, blocked_hosts,
+		          approval_threshold_usdc, per_rail_daily_usdc,
+		          network, status, expires_at,
 		          session_metadata, created_at
 	`;
 
@@ -167,7 +209,9 @@ export async function createPaymentSession({
 export async function getPaymentSession(sessionId, userId) {
 	const [row] = await sql`
 		SELECT id, user_id, agent_id, label, budget_usdc, spent_usdc,
-		       max_per_tx_usdc, allowed_hosts, network, status, expires_at,
+		       max_per_tx_usdc, allowed_hosts, blocked_hosts,
+		       approval_threshold_usdc, per_rail_daily_usdc,
+		       network, status, expires_at,
 		       session_metadata, created_at, updated_at
 		FROM payment_sessions
 		WHERE id = ${sessionId}
@@ -184,7 +228,9 @@ export async function listPaymentSessions(userId, { status, limit = 20, cursor }
 	const lim = Math.min(Math.max(Math.floor(Number(limit)) || 20, 1), 100);
 	const rows = await sql`
 		SELECT id, user_id, agent_id, label, budget_usdc, spent_usdc,
-		       max_per_tx_usdc, allowed_hosts, network, status, expires_at,
+		       max_per_tx_usdc, allowed_hosts, blocked_hosts,
+		       approval_threshold_usdc, per_rail_daily_usdc,
+		       network, status, expires_at,
 		       session_metadata, created_at, updated_at
 		FROM payment_sessions
 		WHERE user_id = ${userId}
@@ -207,7 +253,11 @@ export async function listPaymentSessions(userId, { status, limit = 20, cursor }
  * Only label, allowed_hosts, and max_per_tx_usd can be changed after creation.
  * Returns the updated session row or null if not found / not owned / not active.
  */
-export async function updatePaymentSession(sessionId, userId, { label, allowedHosts, maxPerTxUsd } = {}) {
+export async function updatePaymentSession(
+	sessionId,
+	userId,
+	{ label, allowedHosts, maxPerTxUsd, blockedHosts, approvalThresholdUsd, perRailDailyUsd } = {},
+) {
 	const params = { id: sessionId, userId };
 
 	if (label !== undefined) {
@@ -219,6 +269,16 @@ export async function updatePaymentSession(sessionId, userId, { label, allowedHo
 	if (maxPerTxUsd !== undefined) {
 		params.maxPerTxAtomics = maxPerTxUsd != null ? usdToAtomics(normalizeMaxPerTx(maxPerTxUsd)).toString() : null;
 	}
+	if (blockedHosts !== undefined) {
+		params.blockedHosts = normalizeBlockedHosts(blockedHosts);
+	}
+	if (approvalThresholdUsd !== undefined) {
+		params.approvalThresholdAtomics =
+			approvalThresholdUsd != null ? usdToAtomics(normalizeApprovalThreshold(approvalThresholdUsd)).toString() : null;
+	}
+	if (perRailDailyUsd !== undefined) {
+		params.perRailDaily = normalizePerRailDaily(perRailDailyUsd);
+	}
 
 	const [row] = await sql`
 		UPDATE payment_sessions
@@ -226,10 +286,15 @@ export async function updatePaymentSession(sessionId, userId, { label, allowedHo
 			label = CASE WHEN ${params.label !== undefined}::boolean THEN ${params.label ?? null} ELSE label END,
 			allowed_hosts = CASE WHEN ${params.allowedHosts !== undefined}::boolean THEN ${params.allowedHosts ?? []} ELSE allowed_hosts END,
 			max_per_tx_usdc = CASE WHEN ${params.maxPerTxAtomics !== undefined}::boolean THEN ${params.maxPerTxAtomics ?? null}::bigint ELSE max_per_tx_usdc END,
+			blocked_hosts = CASE WHEN ${params.blockedHosts !== undefined}::boolean THEN ${params.blockedHosts ?? []} ELSE blocked_hosts END,
+			approval_threshold_usdc = CASE WHEN ${params.approvalThresholdAtomics !== undefined}::boolean THEN ${params.approvalThresholdAtomics ?? null}::bigint ELSE approval_threshold_usdc END,
+			per_rail_daily_usdc = CASE WHEN ${params.perRailDaily !== undefined}::boolean THEN ${params.perRailDaily != null ? JSON.stringify(params.perRailDaily) : '{}'}::jsonb ELSE per_rail_daily_usdc END,
 			updated_at = now()
 		WHERE id = ${sessionId} AND user_id = ${userId} AND status = 'active'
 		RETURNING id, user_id, agent_id, label, budget_usdc, spent_usdc,
-		          max_per_tx_usdc, allowed_hosts, network, status, expires_at,
+		          max_per_tx_usdc, allowed_hosts, blocked_hosts,
+		          approval_threshold_usdc, per_rail_daily_usdc,
+		          network, status, expires_at,
 		          session_metadata, created_at, updated_at
 	`;
 	return row ? formatSession(row) : null;
@@ -274,7 +339,8 @@ export async function listSessionExecutions(sessionId, userId, { limit = 20, cur
 	const rows = await sql`
 		SELECT id, endpoint_url, endpoint_host, method, amount_usdc,
 		       network, tx_hash, payer_address, payee_address,
-		       status, error_code, duration_ms, created_at
+		       status, error_code, duration_ms, created_at,
+		       policy_digest, verdict_code, verdict_signature, verdict_signed_at
 		FROM payment_session_executions
 		WHERE session_id = ${sessionId}
 		  AND user_id = ${userId}
@@ -344,6 +410,9 @@ function formatSession(row) {
 		remaining_usd: atomicsToUsd(BigInt(row.budget_usdc) - BigInt(row.spent_usdc)),
 		max_per_tx_usd: row.max_per_tx_usdc != null ? atomicsToUsd(row.max_per_tx_usdc) : null,
 		allowed_hosts: row.allowed_hosts ?? [],
+		blocked_hosts: row.blocked_hosts ?? [],
+		approval_threshold_usd: row.approval_threshold_usdc != null ? atomicsToUsd(row.approval_threshold_usdc) : null,
+		per_rail_daily_usd: row.per_rail_daily_usdc ?? {},
 		network: row.network,
 		status: row.status,
 		expires_at: row.expires_at,
@@ -368,5 +437,9 @@ function formatExecution(row) {
 		error_code: row.error_code ?? null,
 		duration_ms: row.duration_ms ?? null,
 		created_at: row.created_at,
+		policy_digest: row.policy_digest ?? null,
+		verdict_code: row.verdict_code ?? null,
+		verdict_signature: row.verdict_signature ?? null,
+		verdict_signed_at: row.verdict_signed_at ?? null,
 	};
 }

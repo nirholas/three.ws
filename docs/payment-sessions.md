@@ -252,6 +252,9 @@ curl -s https://three.ws/api/pay/session \
     "budget_usd": 1.00,
     "max_per_tx_usd": 0.01,
     "allowed_hosts": ["three.ws"],
+    "blocked_hosts": ["untrusted.example.com"],
+    "approval_threshold_usd": 0.50,
+    "per_rail_daily_usd": { "solana": 5.00 },
     "expiry_seconds": 86400
   }'
 ```
@@ -264,6 +267,9 @@ Body fields:
 | `label` | string | Optional, trimmed to 120 chars. |
 | `max_per_tx_usd` | number | Optional per-payment ceiling, must be above $0.000001. `null` means no cap. |
 | `allowed_hosts` | string[] | Optional, max 50 entries, deduplicated. Empty means any host. |
+| `blocked_hosts` | string[] | Optional, max 50 entries, deduplicated. Checked after the allowlist, so an explicit block always wins over a broad allow, even on a session with no allowlist set. |
+| `approval_threshold_usd` | number | Optional. A call priced above this amount gets a `requires_approval` verdict instead of settling. `null` means no threshold. |
+| `per_rail_daily_usd` | object | Optional, keyed by network name (`"solana"`, `"base"`) or CAIP-2 id. A rolling 24h spend cap on that settlement rail, enforced with the same atomic reserve-then-roll-back pattern as the budget. |
 | `agent_id` | string | Optional agent to associate with the session. |
 | `network` | string | `"solana"` (default) or `"base"`. Stored on the session; execution settles on Solana (see below). |
 | `expiry_seconds` | number | Default 3600. Min 60, max 7776000 (90 days). |
@@ -284,6 +290,9 @@ once**:
     "remaining_usd": 1,
     "max_per_tx_usd": 0.01,
     "allowed_hosts": ["three.ws"],
+    "blocked_hosts": [],
+    "approval_threshold_usd": null,
+    "per_rail_daily_usd": {},
     "network": "solana",
     "status": "active",
     "expires_at": "2026-07-31T00:00:00.000Z",
@@ -357,8 +366,10 @@ execute error table below).
 ### `PATCH /api/pay/session/:id`
 
 Update the mutable fields of an **active** session: `label`, `allowed_hosts`,
-`max_per_tx_usd` (pass `null` to remove the cap). Budget, network, and expiry
-cannot be changed after creation.
+`max_per_tx_usd` (pass `null` to remove the cap), `blocked_hosts`,
+`approval_threshold_usd` (pass `null` to remove the threshold), and
+`per_rail_daily_usd` (pass `{}` to remove the cap). Budget, network, and
+expiry cannot be changed after creation.
 
 ```bash
 curl -s -X PATCH https://three.ws/api/pay/session/<id> \
@@ -417,13 +428,20 @@ What happens, in order:
    asset USDC, and a `feePayer` in `extra`). Sessions created with
    `network: "base"` store that preference, but execute settles on Solana
    only; a challenge with no Solana option fails with `no_solana_accept`.
-4. **Governance.** Five checks in order: session is active, not expired, host
+4. **Governance.** Checks run in order: session is active, not expired, host
    is in the allowlist (exact hostname or a subdomain of an allowed host),
-   amount is within `max_per_tx_usd`, and remaining budget covers the amount.
-   The budget reservation is a single atomic SQL update, so concurrent calls
-   can never collectively overspend a session; when two racing calls both fit
+   host is not in the denylist (checked even with no allowlist set), amount is
+   within `max_per_tx_usd`, amount fits the rolling `per_rail_daily_usd` cap
+   for the settlement network, remaining budget covers the amount, and amount
+   is at or below `approval_threshold_usd`. The budget and rail-cap
+   reservations are atomic SQL statements, so concurrent calls can never
+   collectively overspend a session or a rail; when two racing calls both fit
    individually but not together, exactly one wins and the other gets
-   `insufficient_budget`.
+   `insufficient_budget` or `rail_daily_exceeded`. Every verdict (allow or
+   reject) carries a `policy_digest` (sha256 of the policy it was judged
+   against) and an HMAC signature over the verdict, digest, request, and
+   timestamp, stored with the execution: editing session policy after the
+   fact changes the digest and breaks the signature on that old verdict.
 5. **Sign and pay.** The platform Solana payer wallet signs a USDC transfer
    matching the accept and re-requests the endpoint with the `X-PAYMENT`
    header. The service's fee payer covers the transaction fee; your budget is
@@ -482,7 +500,10 @@ Free endpoint (no 402 challenge):
 | 401 | `invalid_token` | Token is malformed, unknown, or does not match its stored hash. | untouched |
 | 403 | `session_inactive`, `session_expired` | Session is exhausted, cancelled, or past its expiry. | untouched |
 | 403 | `allowlist_blocked` | Target host is not in the session's allowlist. `detail` carries the host and the allowlist. | untouched |
+| 403 | `host_blocked` | Target host is in the session's `blocked_hosts` denylist. `detail` carries the host. | untouched |
+| 403 | `requires_approval` | The call's price exceeds `approval_threshold_usd`. `detail` carries `amount_usd` and `threshold_usd`. A human must approve the call before it can execute. | untouched |
 | 402 | `per_tx_exceeded` | The endpoint's price exceeds `max_per_tx_usd`. `detail` carries `amount_usd` and `cap_usd`. | untouched |
+| 402 | `rail_daily_exceeded` | The call would exceed the rolling 24h `per_rail_daily_usd` cap for the session's settlement network. `detail` carries the would-spend, spent-so-far, and cap amounts. | untouched |
 | 402 | `insufficient_budget` | Remaining budget cannot cover the price. `detail` carries `need_usd` and `remaining_usd`. | untouched |
 | 402 | `payment_rejected` | The service rejected the payment before settlement. | rolled back |
 | 422 | `no_solana_accept`, `unsupported_asset`, `missing_fee_payer` | The challenge offers no payable Solana USDC option. | untouched |

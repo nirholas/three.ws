@@ -317,7 +317,7 @@ export default wrap(async (req, res) => {
 	const amountUsd = atomicsToUsd(amountAtomics);
 
 	// Phase 2: governance enforcement (check session, allowlist, budget) is atomic
-	let sessionRecord, reservationId;
+	let sessionRecord, reservationId, railReservationId, policyDigest, verdictCode, verdictSignature, verdictSignedAt;
 	try {
 		const reservation = await reserveSessionSpend({
 			token: sessionToken,
@@ -326,6 +326,11 @@ export default wrap(async (req, res) => {
 		});
 		sessionRecord = reservation.session;
 		reservationId = reservation.reservationId;
+		railReservationId = reservation.railReservationId;
+		policyDigest = reservation.policyDigest;
+		verdictCode = reservation.verdictCode;
+		verdictSignature = reservation.verdictSignature;
+		verdictSignedAt = reservation.verdictSignedAt;
 	} catch (err) {
 		if (err instanceof SpendGovernorError) {
 			return error(res, err.status, err.code, err.message, err.detail);
@@ -341,7 +346,7 @@ export default wrap(async (req, res) => {
 	try {
 		keypair = loadSolanaKeypair();
 	} catch (err) {
-		await rollbackReservation(sessionRecord.id, amountAtomics).catch(() => {});
+		await rollbackReservation(sessionRecord.id, amountAtomics, { railReservationId }).catch(() => {});
 		// loadSolanaKeypair separates "no key configured" from "key present but
 		// undecodable". Collapsing both into wallet_unconfigured sent an operator
 		// looking for a missing env var that was in fact already set.
@@ -363,7 +368,7 @@ export default wrap(async (req, res) => {
 			resourceUrl: resource.url || targetUrl,
 		});
 	} catch (err) {
-		await rollbackReservation(sessionRecord.id, amountAtomics).catch(() => {});
+		await rollbackReservation(sessionRecord.id, amountAtomics, { railReservationId }).catch(() => {});
 		if (isRpcUnavailable(err)) {
 			// No funds moved: the chain could not be read and nothing was cached.
 			// Typed + retryable so the agent backs off instead of treating it as a
@@ -401,6 +406,10 @@ export default wrap(async (req, res) => {
 			errorMessage: err?.message,
 			durationMs: Date.now() - t0,
 			idempotencyKey,
+			policyDigest,
+			verdictCode,
+			verdictSignature,
+			verdictSignedAt,
 		}).catch(() => {});
 		return error(res, 502, 'settle_uncertain',
 			'Payment was submitted but confirmation was not received. Do not retry immediately.');
@@ -414,7 +423,7 @@ export default wrap(async (req, res) => {
 
 	// Explicit pre-settlement rejection: no funds moved, safe to roll back
 	if (paid.status === 402) {
-		await rollbackReservation(sessionRecord.id, amountAtomics).catch(() => {});
+		await rollbackReservation(sessionRecord.id, amountAtomics, { railReservationId }).catch(() => {});
 		await recordExecution({
 			sessionId: sessionRecord.id,
 			userId: sessionRecord.user_id,
@@ -430,6 +439,10 @@ export default wrap(async (req, res) => {
 			errorMessage: 'Service rejected the payment before settlement',
 			durationMs,
 			idempotencyKey,
+			policyDigest,
+			verdictCode,
+			verdictSignature,
+			verdictSignedAt,
 		}).catch(() => {});
 		return error(res, 402, 'payment_rejected',
 			'Service rejected the payment before settlement. Budget has been restored.',
@@ -454,6 +467,10 @@ export default wrap(async (req, res) => {
 			responseBody: typeof paidJson === 'object' ? paidJson : null,
 			durationMs,
 			idempotencyKey,
+			policyDigest,
+			verdictCode,
+			verdictSignature,
+			verdictSignedAt,
 		}).catch(() => {});
 		return error(res, 502, 'upstream_error',
 			`Endpoint returned HTTP ${paid.status} after payment. Check wallet activity before retrying.`);
@@ -474,6 +491,10 @@ export default wrap(async (req, res) => {
 		responseBody: typeof paidJson === 'object' ? paidJson : null,
 		durationMs,
 		idempotencyKey,
+		policyDigest,
+		verdictCode,
+		verdictSignature,
+		verdictSignedAt,
 	}).catch(() => {});
 
 	return json(res, 200, {
