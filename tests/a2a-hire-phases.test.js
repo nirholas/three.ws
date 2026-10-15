@@ -14,6 +14,10 @@ import {
 	fmtUsd,
 	hireCapMath,
 	hirePhaseFrame,
+	isAmbiguousPaymentError,
+	classifyHireOutcome,
+	buildHireAttestationPayload,
+	sortedStringify,
 } from '../api/_lib/a2a-hire-phases.js';
 
 describe('hireCapMath', () => {
@@ -183,5 +187,77 @@ describe('hirePhaseFrame', () => {
 		const cap = { perCallCap: 0.1, dailyUsd: 1, dailyRemaining: 0.6 };
 		const f = hirePhaseFrame('reserved', { ...base, cap });
 		expect(f.meta.cap).toEqual(cap);
+	});
+});
+
+describe('fulfillment attestation (pure core)', () => {
+	it('recognises axios timeout/abort shapes as ambiguous', () => {
+		expect(isAmbiguousPaymentError({ code: 'ECONNABORTED', message: 'timeout of 60000ms exceeded' })).toBe(true);
+		expect(isAmbiguousPaymentError({ code: 'ETIMEDOUT' })).toBe(true);
+		expect(isAmbiguousPaymentError({ name: 'CanceledError' })).toBe(true);
+		expect(isAmbiguousPaymentError({ message: 'request timed out' })).toBe(true);
+	});
+
+	it('does not call a clean, non-timeout failure ambiguous', () => {
+		expect(isAmbiguousPaymentError({ code: 'no_wallet', message: 'no Solana wallet provisioned' })).toBe(false);
+		expect(isAmbiguousPaymentError({ code: 'spend_disabled' })).toBe(false);
+		expect(isAmbiguousPaymentError(null)).toBe(false);
+	});
+
+	it('classifies a completed hire as delivered, never from an ambiguous error', () => {
+		expect(classifyHireOutcome('recorded')).toBe('delivered');
+		expect(classifyHireOutcome('recorded', { code: 'ECONNABORTED' })).toBe('delivered');
+	});
+
+	it('classifies a clean payment failure as failed (verify-then-settle: no funds moved)', () => {
+		expect(classifyHireOutcome('failed', { code: 'no_wallet', message: 'no wallet' })).toBe('failed');
+		expect(classifyHireOutcome('failed', null)).toBe('failed');
+	});
+
+	it('never infers delivered from an ambiguous failure: records disputed instead', () => {
+		expect(classifyHireOutcome('failed', { code: 'ECONNABORTED', message: 'timeout of 60000ms exceeded' })).toBe(
+			'disputed',
+		);
+	});
+
+	it('builds the canonical attestation payload shape', () => {
+		const payload = buildHireAttestationPayload({
+			hireId: 'h1',
+			paymentSignature: 'SIG1',
+			outcome: 'delivered',
+			evidenceHash: 'deadbeef',
+			signedBy: 'PUBKEY1',
+		});
+		expect(payload).toEqual({
+			hire_id: 'h1',
+			payment_signature: 'SIG1',
+			outcome: 'delivered',
+			evidence_hash: 'deadbeef',
+			signed_by: 'PUBKEY1',
+		});
+	});
+
+	it('defaults payment_signature to null rather than undefined', () => {
+		const payload = buildHireAttestationPayload({
+			hireId: 'h1',
+			paymentSignature: null,
+			outcome: 'failed',
+			evidenceHash: 'deadbeef',
+			signedBy: 'PUBKEY1',
+		});
+		expect(payload.payment_signature).toBe(null);
+	});
+
+	it('sortedStringify is independent of key insertion order', () => {
+		const a = sortedStringify({ b: 2, a: 1, c: { y: 2, x: 1 } });
+		const b = sortedStringify({ a: 1, c: { x: 1, y: 2 }, b: 2 });
+		expect(a).toBe(b);
+	});
+
+	it('sortedStringify round-trips primitives, arrays, and null', () => {
+		expect(sortedStringify(null)).toBe('null');
+		expect(sortedStringify(42)).toBe('42');
+		expect(sortedStringify('x')).toBe('"x"');
+		expect(sortedStringify([3, 1, { b: 1, a: 2 }])).toBe('[3,1,{"a":2,"b":1}]');
 	});
 });

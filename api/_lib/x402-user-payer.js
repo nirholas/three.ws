@@ -290,7 +290,7 @@ export async function getUserWalletStatus(userId) {
 
 // Pay an external x402 endpoint from the user's wallet. Throws an Error with a
 // `.code` for the boundary (the MCP handler) to translate into a clean result.
-export async function payExternalX402({ userId, agentId, url, method = 'GET', body, maxUsd }) {
+export async function payExternalX402({ userId, agentId, url, method = 'GET', body, maxUsd, headers }) {
 	if (!resolveSpendEnabled()) {
 		throw Object.assign(new Error('autonomous spending is disabled on this server'), {
 			code: 'spend_disabled',
@@ -336,6 +336,7 @@ export async function payExternalX402({ userId, agentId, url, method = 'GET', bo
 			url: safeUrl,
 			method,
 			...(body != null ? { data: body } : {}),
+			...(headers && typeof headers === 'object' ? { headers } : {}),
 		});
 		return {
 			ok: true,

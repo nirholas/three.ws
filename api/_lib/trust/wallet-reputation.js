@@ -16,6 +16,7 @@
 
 import { sql } from '../db.js';
 import { loadAgentReputation } from './solana-bouncer.js';
+import { computeFulfillmentRate } from './hire-attestations.js';
 import { getSolvencyInputs } from './proof-of-reserves.js';
 import { threeHoldingFor } from '../coin/three-holders.js';
 import { getTokenPriceUsd } from '../token/price.js';
@@ -240,6 +241,17 @@ export async function loadReputationInputs(agentId, opts = {}) {
 	// On-chain payment / distribution / attestation record (already-real index).
 	const solRep = await soft(loadAgentReputation(agentId), null);
 
+	// Hire fulfillment: this agent's own signed delivery record as a PROVIDER
+	// on real a2a-hires (api/_lib/trust/hire-attestations.js), one indexed
+	// join, no RPC, so always included even in lite mode.
+	const fulfillment = await soft(computeFulfillmentRate(agentId), {
+		rate: null,
+		sampleSize: 0,
+		weightedSampleSize: 0,
+		meetsMinimum: false,
+		minSample: 5,
+	});
+
 	// Best-effort EVM ERC-8004 reputation registry read (skipped in lite mode).
 	const registry = lite ? { average: 0, count: 0 } : await soft(readErc8004Registry(agent), { average: 0, count: 0 });
 
@@ -286,6 +298,9 @@ export async function loadReputationInputs(agentId, opts = {}) {
 		validationCount: solRep?.attestations?.validation_count || 0,
 		feedbackCount: solRep?.attestations?.feedback_count || 0,
 		hasSkillCollection: Boolean(agent.skill_collection_mint),
+		hireFulfillmentRate: fulfillment?.rate ?? null,
+		hireFulfillmentSampleSize: fulfillment?.sampleSize || 0,
+		hireFulfillmentMinSample: fulfillment?.minSample || 5,
 	};
 
 	const evidence = buildEvidence(agent, { solRep, registry, holdsThree: threeTokens > 0 });

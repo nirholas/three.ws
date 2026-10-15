@@ -217,6 +217,7 @@ export async function listOffersWithStats({ limit = 60, providerAgentId = null }
 			s.target_method AS method,
 			s.input_schema  AS input_schema,
 			s.created_at    AS created_at,
+			s.reputation_discount_enabled AS reputation_discount_enabled,
 			ai.id           AS provider_agent_id,
 			ai.name         AS provider_name,
 			ai.is_public    AS provider_is_public,
@@ -265,6 +266,7 @@ async function listOffersBySlug(slug) {
 			s.id AS service_id, s.slug AS slug, s.name AS name, s.description AS description,
 			s.price_atomics AS price_atomics, s.network AS network, s.target_method AS method,
 			s.input_schema AS input_schema, s.created_at AS created_at,
+			s.reputation_discount_enabled AS reputation_discount_enabled,
 			ai.id AS provider_agent_id, ai.name AS provider_name, ai.is_public AS provider_is_public,
 			ai.meta->>'solana_address' AS provider_addr,
 			av.thumbnail_key AS provider_thumb_key, av.visibility AS provider_avatar_vis,
@@ -292,6 +294,7 @@ function shapeOffer(row) {
 		method: row.method,
 		input_schema: row.input_schema || null,
 		created_at: row.created_at,
+		reputation_discount_enabled: row.reputation_discount_enabled === true,
 		provider: shapeProvider(row),
 		stats: shapeStats(row),
 	};

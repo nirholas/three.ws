@@ -163,7 +163,7 @@ export async function getActiveServiceBySlug(slug) {
 	const [row] = await sql`
 		SELECT id, owner_user_id, agent_id, slug, name, description, price_atomics,
 		       target_url, target_method, input_schema, network, payout_address,
-		       bazaar_listed, created_at
+		       bazaar_listed, created_at, reputation_discount_enabled
 		FROM agent_paid_services
 		WHERE slug = ${slug} AND archived_at IS NULL
 		LIMIT 1

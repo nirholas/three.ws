@@ -54,6 +54,9 @@ import {
 	updateHire,
 } from '../_lib/agent-economy.js';
 import { createApprovalRequest, runApproved, TTL_MS } from '../_lib/approvals.js';
+import { recordHireAttestation } from '../_lib/trust/hire-attestations.js';
+import { getEffectiveReputation } from '../_lib/trust/reputation-store.js';
+import { tierDiscountBps, signDiscountVoucher, DISCOUNT_VOUCHER_HEADER } from '../_lib/trust/hire-discount.js';
 
 // Source key this file registers its executor under (api/_lib/approvals.js EXECUTORS).
 export const APPROVAL_SOURCE = 'a2a_hire';
@@ -63,6 +66,24 @@ export const APPROVAL_SOURCE = 'a2a_hire';
 function receiptSignature(receipt) {
 	if (!receipt || typeof receipt !== 'object') return null;
 	return receipt.transaction || receipt.signature || receipt.txHash || receipt.tx || null;
+}
+
+// Resolve a signed reputation-discount voucher header for this hire, or
+// undefined when the offer hasn't opted in or the hirer's tier earns no
+// discount. Never throws: a voucher failure must fall back to full price, not
+// break the hire.
+async function discountHeaders(offer, hirerAgentId) {
+	if (!offer.reputation_discount_enabled) return undefined;
+	try {
+		const rep = await getEffectiveReputation(hirerAgentId);
+		const bps = tierDiscountBps(rep?.tier);
+		if (bps <= 0) return undefined;
+		const voucher = signDiscountVoucher({ slug: offer.slug, hirerAgentId, discountBps: bps });
+		return voucher ? { [DISCOUNT_VOUCHER_HEADER]: voucher } : undefined;
+	} catch (err) {
+		console.error('[a2a-hire] discount voucher failed', err?.message || err);
+		return undefined;
+	}
 }
 
 // A short, human summary of the provider's result for the hire record + speech.
@@ -300,12 +321,16 @@ export default wrap(async (req, res) => {
 			method: offer.method === 'POST' ? 'POST' : 'GET',
 			body: offer.method === 'POST' ? (input ?? {}) : undefined,
 			maxUsd: usd,
+			headers: await discountHeaders(offer, hirerAgentId),
 		});
 	} catch (err) {
 		// The x402 endpoint settles only after the provider's work succeeds, so a
 		// throw here means NO money moved: release the hold and fail honestly.
 		await releaseSpendReservation(reservationId, 'hire_payment_failed');
 		await updateHire(hireRow.id, { status: 'failed', error: err?.message || String(err) });
+		await recordHireAttestation(hireRow, { phase: 'failed', err }).catch((e) =>
+			console.error('[a2a-hire] attestation failed', e?.message || e),
+		);
 		const code = err?.code || 'payment_failed';
 		const status = code === 'spend_disabled' ? 501 : code === 'no_wallet' || code === 'no_solana_wallet' ? 409 : 502;
 		// Verify-then-settle means no funds moved — say so on the screen, no coin.
@@ -395,6 +420,13 @@ export default wrap(async (req, res) => {
 			invocation: invocation || null,
 		},
 	});
+
+	await recordHireAttestation(finalized || hireRow, {
+		phase: 'recorded',
+		paymentSignature,
+		invocationSignature: invocation?.signature || null,
+		resultSummary: deliveredSummary,
+	}).catch((e) => console.error('[a2a-hire] attestation failed', e?.message || e));
 
 	return json(res, 200, {
 		ok: true,
@@ -566,10 +598,14 @@ export async function executeApprovedA2aHire(row) {
 			method: offer.method === 'POST' ? 'POST' : 'GET',
 			body: offer.method === 'POST' ? (p.input ?? {}) : undefined,
 			maxUsd: usd,
+			headers: await discountHeaders(offer, hirer.id),
 		});
 	} catch (err) {
 		await releaseSpendReservation(reservationId, 'hire_payment_failed');
 		await updateHire(hireRow.id, { status: 'failed', error: err?.message || String(err) });
+		await recordHireAttestation(hireRow, { phase: 'failed', err }).catch((e) =>
+			console.error('[a2a-hire] attestation failed', e?.message || e),
+		);
 		return {
 			status: 'error',
 			note: `the hire did not complete after approval, no funds were moved: ${err?.message || err?.code || 'payment_failed'}`,
@@ -634,6 +670,13 @@ export async function executeApprovedA2aHire(row) {
 			awaiting_approval: false,
 		},
 	});
+
+	await recordHireAttestation(finalized || hireRow, {
+		phase: 'recorded',
+		paymentSignature,
+		invocationSignature: invocation?.signature || null,
+		resultSummary: deliveredSummary,
+	}).catch((e) => console.error('[a2a-hire] attestation failed', e?.message || e));
 
 	return {
 		status: 'ok',

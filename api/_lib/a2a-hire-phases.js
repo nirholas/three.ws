@@ -1,5 +1,6 @@
 // Pure phase → render mapping + cap math for the live agent-to-agent hire
-// visualizer.
+// visualizer, plus the pure core of the fulfillment attestation every settled
+// hire writes (api/_lib/trust/hire-attestations.js does the signing/DB I/O).
 //
 // /api/agents/a2a-hire emits ONE screen frame per real milestone of a hire so a
 // viewer on /agent-screen watches the commerce happen end to end:
@@ -186,4 +187,65 @@ export function hirePhaseFrame(phase, ctx = {}) {
 
 	const activity = narration(phase, { skillLabel, provLabel, slug, price, cap, resultSummary, error });
 	return { activity, type: 'analysis', meta };
+}
+
+// ── Fulfillment attestation (pure core) ──────────────────────────────────────
+//
+// Every settled hire gets exactly one attestation row:
+//   { hire_id, payment_signature, outcome, evidence_hash, signed_by }
+// outcome is one of delivered | failed | disputed. The 'recorded' phase is the
+// only path to 'delivered': a thrown payment error is 'failed' UNLESS the
+// error itself is ambiguous (e.g. a client timeout that fired after the
+// provider may have already settled server-side, since x402 settle happens
+// upstream of the response reaching us), in which case it is 'disputed'.
+// Never infer 'delivered' from an ambiguous error.
+
+// A client-side timeout/abort tells us nothing about whether the x402
+// endpoint's verify-then-settle already completed server-side before the
+// response was lost, so it is the one failure shape that is genuinely
+// ambiguous rather than a clean "no funds moved".
+export function isAmbiguousPaymentError(err) {
+	if (!err) return false;
+	const code = err.code || err.cause?.code || '';
+	const name = err.name || '';
+	const msg = String(err.message || '').toLowerCase();
+	return (
+		code === 'ECONNABORTED' ||
+		code === 'ETIMEDOUT' ||
+		code === 'ERR_CANCELED' ||
+		name === 'CanceledError' ||
+		msg.includes('timeout') ||
+		msg.includes('timed out')
+	);
+}
+
+// phase is the terminal hire-visualizer phase ('recorded' for a completed
+// hire, 'failed' for a thrown payment/reservation error).
+export function classifyHireOutcome(phase, err = null) {
+	if (phase === 'recorded') return 'delivered';
+	if (isAmbiguousPaymentError(err)) return 'disputed';
+	return 'failed';
+}
+
+// Deterministic, key-order-independent JSON so the same evidence always
+// hashes the same regardless of how the caller built the object. Exported so
+// api/_lib/trust/hire-attestations.js (server-only) can sha256 it for
+// hireEvidenceHash without this shared client+server module importing
+// node:crypto.
+export function sortedStringify(value) {
+	if (value === null || typeof value !== 'object') return JSON.stringify(value);
+	if (Array.isArray(value)) return `[${value.map(sortedStringify).join(',')}]`;
+	const keys = Object.keys(value).sort();
+	return `{${keys.map((k) => `${JSON.stringify(k)}:${sortedStringify(value[k])}`).join(',')}}`;
+}
+
+// Canonical attestation payload shape, independent of signing.
+export function buildHireAttestationPayload({ hireId, paymentSignature, outcome, evidenceHash, signedBy }) {
+	return {
+		hire_id: hireId,
+		payment_signature: paymentSignature || null,
+		outcome,
+		evidence_hash: evidenceHash,
+		signed_by: signedBy,
+	};
 }

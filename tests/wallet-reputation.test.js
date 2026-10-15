@@ -88,7 +88,7 @@ describe('computeReputation — pillar maxima', () => {
 	});
 
 	it('exposes the current reputation version', () => {
-		expect(REPUTATION_VERSION).toBe(3);
+		expect(REPUTATION_VERSION).toBe(4);
 		expect(PILLARS.some((p) => p.key === 'conviction')).toBe(true);
 	});
 });
@@ -160,6 +160,65 @@ describe('costly signals dominate', () => {
 		const r = computeReputation({ ...NEW_AGENT, ageDays: 100, confirmedPayments: 2, failedPayments: 0 });
 		const rel = r.pillars.find((p) => p.key === 'reliability');
 		expect(rel.points).toBe(0);
+	});
+});
+
+describe('hire fulfillment rate', () => {
+	it('below the minimum sample, fulfillment contributes nothing even with a perfect rate', () => {
+		const r = computeReputation({
+			...NEW_AGENT,
+			ageDays: 100,
+			hireFulfillmentRate: 1,
+			hireFulfillmentSampleSize: 2,
+			hireFulfillmentMinSample: 5,
+		});
+		const rel = r.pillars.find((p) => p.key === 'reliability');
+		expect(rel.points).toBe(0);
+		expect(rel.facts.hire_fulfillment_rate).toBeNull();
+		expect(rel.facts.hire_fulfillment_sample_size).toBe(2);
+	});
+
+	it('at or above the minimum sample, a strong fulfillment rate earns reliability points', () => {
+		const r = computeReputation({
+			...NEW_AGENT,
+			ageDays: 100,
+			hireFulfillmentRate: 0.9,
+			hireFulfillmentSampleSize: 8,
+			hireFulfillmentMinSample: 5,
+		});
+		const rel = r.pillars.find((p) => p.key === 'reliability');
+		expect(rel.points).toBeGreaterThan(0);
+		expect(rel.facts.hire_fulfillment_rate).toBeCloseTo(90, 0);
+		expect(rel.facts.hire_fulfillment_sample_size).toBe(8);
+		expect(rel.detail).toMatch(/90% hire fulfillment over 8 hires/);
+	});
+
+	it('a poor fulfillment rate earns fewer reliability points than a strong one', () => {
+		const strong = computeReputation({
+			...NEW_AGENT,
+			ageDays: 100,
+			hireFulfillmentRate: 1,
+			hireFulfillmentSampleSize: 10,
+		});
+		const weak = computeReputation({
+			...NEW_AGENT,
+			ageDays: 100,
+			hireFulfillmentRate: 0.1,
+			hireFulfillmentSampleSize: 10,
+		});
+		const strongRel = strong.pillars.find((p) => p.key === 'reliability');
+		const weakRel = weak.pillars.find((p) => p.key === 'reliability');
+		expect(strongRel.points).toBeGreaterThan(weakRel.points);
+	});
+
+	it('never pushes the reliability pillar above its max even with strong payment + hire signal', () => {
+		const r = computeReputation({
+			...ESTABLISHED,
+			hireFulfillmentRate: 1,
+			hireFulfillmentSampleSize: 50,
+		});
+		const rel = r.pillars.find((p) => p.key === 'reliability');
+		expect(rel.points).toBeLessThanOrEqual(rel.max);
 	});
 });
 

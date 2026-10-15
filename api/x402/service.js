@@ -23,6 +23,7 @@ import {
 	serviceResourceUrl,
 	atomicsToUsdc,
 } from '../_lib/agent-paid-services.js';
+import { DISCOUNT_VOUCHER_HEADER, verifyDiscountVoucher, applyDiscountBps } from '../_lib/trust/hire-discount.js';
 
 function slugFromReq(req) {
 	const fromQuery = req.query?.slug;
@@ -90,10 +91,21 @@ export default async function handler(req, res) {
 	const network = row.network === 'solana' ? 'solana' : 'base';
 	const payTo = network === 'solana' ? { solana: row.payout_address } : { base: row.payout_address };
 
+	// Reputation discount: off unless this provider opted in. The voucher is
+	// never a caller-supplied claim, it's a signature from the platform
+	// attester key that only the already-authenticated a2a-hire flow can mint,
+	// so a caller cannot self-grant a discount by sending an arbitrary header.
+	let priceAtomics = row.price_atomics;
+	if (row.reputation_discount_enabled) {
+		const voucherHeader = req.headers?.[DISCOUNT_VOUCHER_HEADER];
+		const discountBps = verifyDiscountVoucher(voucherHeader, { slug });
+		if (discountBps > 0) priceAtomics = applyDiscountBps(row.price_atomics, discountBps);
+	}
+
 	const paid = paidEndpoint({
 		route: `/api/x402/service/${slug}`,
 		method,
-		priceAtomics: row.price_atomics,
+		priceAtomics,
 		networks: [network],
 		description: row.description,
 		bazaar: bazaarFor(row, resourceUrl),
@@ -147,7 +159,7 @@ export default async function handler(req, res) {
 			}
 			return {
 				service: row.name,
-				price_usdc: atomicsToUsdc(row.price_atomics),
+				price_usdc: atomicsToUsdc(priceAtomics),
 				network,
 				result: upstream.data,
 			};

@@ -54,9 +54,15 @@
 // as strong a trust signal as an external registry, and the score still sums to
 // exactly 100 so the tier thresholds and every persisted history stay comparable.
 //
+// v4 adds hire fulfillment (signed attestations on every settled
+// api/agents/a2a-hire call, api/_lib/trust/hire-attestations.js) as a SECOND,
+// additive way to earn the `reliability` pillar's points, gated by a minimum
+// sample so one lucky or unlucky hire can't swing it. It does not touch the
+// pillar's max (12) or any other pillar, so the 100-point scale is unchanged.
+//
 // loadReputationInputs / getAgentReputation (server) do the real I/O.
 
-export const REPUTATION_VERSION = 3;
+export const REPUTATION_VERSION = 4;
 
 // Factor definitions — label + max points. Order is the display order.
 export const PILLARS = [
@@ -128,6 +134,10 @@ const log2 = (n) => Math.log(n) / Math.LN2;
  * @param {number} inputs.validationCount    signed Solana validation attestations
  * @param {number} inputs.feedbackCount      signed Solana feedback attestations
  * @param {boolean} inputs.hasSkillCollection on-chain skill-license collection minted
+ * @param {?number} inputs.hireFulfillmentRate recency-weighted share of this agent's
+ *   a2a-hires (as PROVIDER) attested 'delivered', null when there isn't enough sample yet
+ * @param {number} inputs.hireFulfillmentSampleSize raw count of signed hire attestations
+ * @param {number} inputs.hireFulfillmentMinSample minimum sample before the rate counts (default 5)
  * @returns {object} { version, score, max, tier, tierLabel, accent, isNew, pillars, discounted, totals }
  */
 export function computeReputation(inputs = {}) {
@@ -185,18 +195,41 @@ export function computeReputation(inputs = {}) {
 	// Only meaningful once there's real settlement volume. A new agent honestly
 	// scores 0 here rather than an unearned full mark.
 	const settled = i.confirmedPayments + i.failedPayments;
-	let reliabilityPts = 0;
+	let paymentReliabilityPts = 0;
 	let reliabilityDetail = 'No settled payments yet — reliability is unproven.';
 	if (settled >= 5) {
 		const successRate = i.confirmedPayments / settled;
-		reliabilityPts = successRate * 10 + clamp(i.distributionSuccess * 2, 0, 2);
+		paymentReliabilityPts = successRate * 10 + clamp(i.distributionSuccess * 2, 0, 2);
 		reliabilityDetail = `${(successRate * 100).toFixed(0)}% of ${settled} settlements succeeded${
 			i.distributionSuccess > 0 ? `, ${(i.distributionSuccess * 100).toFixed(0)}% distribution success` : ''
 		}.`;
 	}
+
+	// Hire fulfillment: a SECOND, additive way into this same pillar, earned
+	// from signed attestations on this agent's own a2a-hires as PROVIDER
+	// (api/_lib/trust/hire-attestations.js), recency-weighted and gated by a
+	// minimum sample. pushPillar clamps the combined total to max 12 either
+	// way, so an agent with strong generic payment reliability already near
+	// the cap gets no extra credit, this fills in signal for agents whose
+	// real settlement history is mostly a2a-hire deliveries.
+	const hireSampleSize = i.hireFulfillmentSampleSize;
+	const hireMinSample = i.hireFulfillmentMinSample;
+	const hireMeetsMinimum = i.hireFulfillmentRate != null && hireSampleSize >= hireMinSample;
+	const fulfillmentPts = hireMeetsMinimum ? clamp(i.hireFulfillmentRate * 3, 0, 3) : 0;
+	if (hireMeetsMinimum) {
+		reliabilityDetail += ` ${(i.hireFulfillmentRate * 100).toFixed(0)}% hire fulfillment over ${hireSampleSize} hire${hireSampleSize === 1 ? '' : 's'}.`;
+	} else if (hireSampleSize > 0) {
+		reliabilityDetail += ` ${hireSampleSize} hire${hireSampleSize === 1 ? '' : 's'} attested so far (needs ${hireMinSample} before fulfillment rate counts).`;
+	}
+	const reliabilityPts = paymentReliabilityPts + fulfillmentPts;
 	pushPillar(pillars, 'reliability', reliabilityPts, {
 		detail: reliabilityDetail,
-		facts: { confirmed_payments: i.confirmedPayments, failed_payments: i.failedPayments },
+		facts: {
+			confirmed_payments: i.confirmedPayments,
+			failed_payments: i.failedPayments,
+			hire_fulfillment_rate: hireMeetsMinimum ? round1(i.hireFulfillmentRate * 100) : null,
+			hire_fulfillment_sample_size: hireSampleSize,
+		},
 	});
 
 	// ── Generosity & reciprocity (max 8) ───────────────────────────────────────
@@ -481,6 +514,11 @@ function normalizeInputs(raw) {
 		validationCount: Math.max(0, num(raw.validationCount)),
 		feedbackCount: Math.max(0, num(raw.feedbackCount)),
 		hasSkillCollection: Boolean(raw.hasSkillCollection),
+		hireFulfillmentRate: Number.isFinite(Number(raw.hireFulfillmentRate))
+			? clamp(Number(raw.hireFulfillmentRate), 0, 1)
+			: null,
+		hireFulfillmentSampleSize: Math.max(0, num(raw.hireFulfillmentSampleSize)),
+		hireFulfillmentMinSample: raw.hireFulfillmentMinSample != null ? Math.max(1, num(raw.hireFulfillmentMinSample)) : 5,
 	};
 }
 
