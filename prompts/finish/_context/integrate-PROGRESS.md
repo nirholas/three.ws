@@ -940,3 +940,62 @@ batched owner ask was needed.
 
 Commit: `0a7085020` (buyer wiring, spend-cap fixes, tests, docs, changelog), this closing
 commit (PROGRESS log, order-file removal).
+
+## 2026-10-15: order 518-integrate-19 closed (evolve)
+
+Ported the owner's `x402-agent-wallet` ideas (approval threshold, merchant denylist, per-rail
+daily caps, HMAC-signed verdicts) onto our own storage: `payment_sessions` gains
+`approval_threshold_usdc`, `blocked_hosts text[]`, `per_rail_daily_usdc jsonb` (migration
+`20261015100000_payment_session_policy_upgrades.sql`), and a new
+`payment_session_rail_reservations` table backs the rolling 24h rail cap with the same eager
+reserve-then-roll-back-on-failure pattern `spent_usdc` already uses, closing the race a naive
+sum-of-past-executions check would leave open. `api/_lib/pay/policy.js` gained
+`approvalVerdict`, `canonicalizePerRailDaily`/`NETWORK_TO_CAIP2`/`resolveRailDailyCapAtomics`,
+`signVerdict`/`verifyVerdictSignature`/`computePolicyDigest`/`computeRequestHash`, and both
+`spend-governor.js`'s `reserveSessionSpend` and `simulate.js`'s `replay` call through the one
+`evaluateCall()` these live in, which is what makes the two structurally unable to disagree
+rather than merely unlikely to. Every verdict (allow or reject) now carries a `policy_digest`
+and an HMAC signature over `{verdict, digest, request hash, timestamp}`, stored on the
+execution via `execute.js`'s four `recordExecution` call sites.
+
+DoD verified:
+- Governor/guard/parity tests: `npx vitest run tests/payment-session-governor.test.js
+  tests/solana-trade-guards.test.js tests/payment-policy-simulator.test.js
+  tests/advisory-lock-snapshot.test.js` is 162/162 green, including a new parity describe
+  block that runs 6 scenarios (plain allow, blocked host, per-tx ceiling, approval threshold,
+  rail daily cap, insufficient budget) through both `reserveSessionSpend` and `replay()` and
+  asserts identical verdict codes.
+- Signed verdicts: a new `'signed verdicts'` describe block in
+  `tests/payment-session-governor.test.js` verifies an allowed verdict's signature against its
+  stored digest with `verifyVerdictSignature`, and proves altering any signed field (verdict
+  code, digest, request hash, or timestamp) breaks verification.
+- UI: `pages/payments.html`'s create and edit modals gained Blocked hosts, Requires-approval
+  threshold, and Per-rail daily cap fields (the create modal's behind a collapsed "Advanced
+  spend policy" `<details>` so the common case stays uncluttered), with inline validation on
+  both. Browser-verified headlessly with Playwright against `npx vite --port 3107`: the create
+  payload, the edit modal's pre-fill from a session row, the edit PATCH payload, and both
+  modals' positive-number validation on the new fields all came back correct with zero console
+  errors.
+- Docs (`docs/payment-sessions.md`: new body fields, new error codes `host_blocked` /
+  `requires_approval` / `rail_daily_exceeded`, the signed-verdict note) and
+  `data/changelog.json` updated, `npm run build:pages` run.
+
+Never-blocked row: no `PAY_VERDICT_HMAC_KEY` existed in env before this order.
+`api/_lib/env.js`'s `env.PAY_VERDICT_HMAC_KEY` getter falls back through
+`PAYMENT_SESSION_SECRET` (and so through `WALLET_CAPABILITY_SECRET` /
+`WALLET_ENCRYPTION_KEY` / `JWT_SECRET`), kept as its own env var rather than reusing
+`PAYMENT_SESSION_SECRET` directly so rotating the token secret (which revokes every live
+session) does not also invalidate the historical verdict record. A dev value is in
+`.env.local` (gitignored). Owner action still needed: set `PAY_VERDICT_HMAC_KEY` on the live
+Cloud Run service (`gcloud run services update three-ws-api --region us-central1
+--update-env-vars PAY_VERDICT_HMAC_KEY=<value>`); until then production runs on the
+`PAYMENT_SESSION_SECRET` fallback, which works but means a secret rotation there also rotates
+the verdict-signing key. Not a stop-and-ask gate (the fallback keeps the feature fully
+functional), so it is not batched into an owner message; noted here for whoever runs the next
+Cloud Run env update.
+
+No other owner-gated action: no push, no deploy, no on-chain write, and no reference to a
+crypto project other than $THREE landed in the diff.
+
+Commit: `655b5a491` (schema, policy, governor, execute.js wiring, simulate.js parity, UI,
+tests, docs, changelog), this closing commit (PROGRESS log, order-file removal).
