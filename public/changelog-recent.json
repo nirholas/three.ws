@@ -1,14 +1,44 @@
 {
-	"generated_at": "2026-10-15T02:04:13.683Z",
+	"generated_at": "2026-10-15T05:39:03.045Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4098,
+	"total": 4101,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-15",
+			"type": "launch",
+			"title": "Docs · Forge Workflows",
+			"summary": "How Forge Workflows chains Forge tools into one repeatable run: the visual node editor, the four starter templates (photo to 3D, text to rigged character, batch photos to library, photo to game asset), resuming from a failed node, and how it differs from Workbench.",
+			"link": "/docs/forge-workflows",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-15",
+			"type": "launch",
+			"title": "Docs · Squad chat",
+			"summary": "How squad chat turns a plain-language request into a plan of role-tagged steps for a specialist team or a solo agent: who can see each squad, how the plan is checked against your own words before it runs, and when a step stops for your approval.",
+			"link": "/docs/team-chat",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-15",
+			"type": "launch",
+			"title": "Docs · Standalone repositories",
+			"summary": "The generated catalog of every publishable package in this monorepo mirrored to its own standalone GitHub repository with its own install command and documentation site, so each one can be found, starred, installed and cited on its own.",
+			"link": "/docs/standalone-repos",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-10-15",
 			"type": "update",
@@ -1524,36 +1554,6 @@
 			"title": "Specialist Teams: four agents, one board",
 			"summary": "Assemble a squad of four 3D agents (a Researcher, an Entry scout, a Trader and a Launcher) under one spend policy. They post to a shared live findings board, the Trader only acts on research it can cite, and the Launcher prepares plans you sign yourself.",
 			"link": "/teams",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Spend",
-			"summary": "What every agent spends by day, model and tool, the projected month end, dollar caps and token ceilings with alerts at 50, 80 and 100 percent, and resume or extend-once for a paused agent.",
-			"link": "/spend",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Squad Chat: one sentence, a plan, your approval",
-			"summary": "Chat with your specialist squad or a solo agent. The coordinator turns one sentence into role-tagged plan steps, the specialists run them live with evidence, and anything that signs, moves funds, launches or exceeds your cap pauses for your approval, then resumes with receipts. Preferences you state are remembered.",
-			"link": "/team-chat",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Tutorial · Six Grok Bot recipes, proven not imagined",
-			"summary": "Six working Grok Bot workflows run against live production: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief.",
-			"link": "/tutorials/grok-bot-recipes",
 			"tags": [
 				"launch"
 			]

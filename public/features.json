@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-15T02:04:13.647Z",
+	"generated_at": "2026-10-15T05:39:03.012Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5541,6 +5541,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/forge-workflows",
+					"title": "Docs · Forge Workflows",
+					"description": "How Forge Workflows chains Forge tools into one repeatable run: the visual node editor, the four starter templates (photo to 3D, text to rigged character, batch photos to library, photo to game asset), resuming from a failed node, and how it differs from Workbench.",
+					"added": "2026-10-15",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
 					"path": "/docs/domains",
 					"title": "Docs · Web Domains",
 					"description": "Search, price, check and register web domains from an agent or the dashboard through Google Cloud Domains, paid from credits behind a quote and an explicit confirm, with the daily registrar quota, one-year terms, auto-renew and connecting a domain to an agent's public page.",
@@ -9501,6 +9513,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/standalone-repos",
+					"title": "Docs · Standalone repositories",
+					"description": "The generated catalog of every publishable package in this monorepo mirrored to its own standalone GitHub repository with its own install command and documentation site, so each one can be found, starred, installed and cited on its own.",
+					"added": "2026-10-15",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
 					"path": "/docs/the-first-19-weeks",
 					"title": "Docs · The First 19 Weeks",
 					"description": "The founding three.ws roundup: a week-by-week record of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.",
@@ -10681,6 +10705,18 @@
 					"title": "Docs · Specialist teams",
 					"description": "How specialist teams work: the four roles and their permission ceilings, the shared findings board and its live stream, the cite-or-research rule the Trader follows, launch prep you sign yourself, and the full API.",
 					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/team-chat",
+					"title": "Docs · Squad chat",
+					"description": "How squad chat turns a plain-language request into a plan of role-tagged steps for a specialist team or a solo agent: who can see each squad, how the plan is checked against your own words before it runs, and when a step stops for your approval.",
+					"added": "2026-10-15",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

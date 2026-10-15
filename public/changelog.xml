@@ -7,6 +7,30 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Forge Workflows</title>
+			<link>https://three.ws/docs/forge-workflows</link>
+			<guid isPermaLink="false">2026-10-15:Docs · Forge Workflows</guid>
+			<pubDate>Thu, 15 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How Forge Workflows chains Forge tools into one repeatable run: the visual node editor, the four starter templates (photo to 3D, text to rigged character, batch photos to library, photo to game asset), resuming from a failed node, and how it differs from Workbench.</description>
+		</item>
+		<item>
+			<title>Docs · Squad chat</title>
+			<link>https://three.ws/docs/team-chat</link>
+			<guid isPermaLink="false">2026-10-15:Docs · Squad chat</guid>
+			<pubDate>Thu, 15 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How squad chat turns a plain-language request into a plan of role-tagged steps for a specialist team or a solo agent: who can see each squad, how the plan is checked against your own words before it runs, and when a step stops for your approval.</description>
+		</item>
+		<item>
+			<title>Docs · Standalone repositories</title>
+			<link>https://three.ws/docs/standalone-repos</link>
+			<guid isPermaLink="false">2026-10-15:Docs · Standalone repositories</guid>
+			<pubDate>Thu, 15 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The generated catalog of every publishable package in this monorepo mirrored to its own standalone GitHub repository with its own install command and documentation site, so each one can be found, starred, installed and cited on its own.</description>
+		</item>
+		<item>
 			<title>A spend call above an agent's approval threshold now pauses for the owner instead of failing</title>
 			<link>https://three.ws/approvals</link>
 			<guid isPermaLink="false">2026-10-15:A spend call above an agent's approval threshold now pauses for the owner instead of failing</guid>

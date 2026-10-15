@@ -406,6 +406,13 @@ const UNPUBLISHED_DOCS = new Map([
 	['x-archive', 'internal: marketing analytics over our own X timeline, not a reader-facing product doc'],
 	['x-accounts', 'internal: which X handle is live and what the unposted drafts do about it; account operations, not a reader-facing product doc'],
 	['x-account-appeal', 'internal: the founder account suspension appeal packet; account operations, not a reader-facing product doc'],
+	['x-mention-avatar', 'internal: operator notes for the dry-run X mention bot avatar reply, public once the bot goes live'],
+	['x-partner-series', 'internal: the daily partner spotlight format and rotation, like announcement-factory'],
+	['x-reply-playbook', 'internal: the recipe for answering a basic question with a reply thread plus an X Article, like announcement-factory'],
+	['run-receipts-x-reply-and-thread', 'internal: unposted draft reply and thread, public once the linked production deploy ships the /runs links it depends on'],
+	['ui-lint', 'internal: operator guide for the lintapple design-system QA script, not a reader-facing product doc'],
+	['standalone-repo-playbook', 'internal: the checklist for making a mirrored package discoverable by humans and LLM crawlers, written for whoever runs the mirror-promotion work'],
+	['listings-registry', 'internal: generated operator tracker of every listing surface and its status; the reader-facing record is docs/listings.md'],
 ]);
 const GENERATED_DOCS = new Set(['ALL', 'EVERYTHING', 'README']);
 

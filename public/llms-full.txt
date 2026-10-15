@@ -2800,6 +2800,12 @@ URL: https://three.ws/docs/forge-desktop
 
 How to install and use three.ws Forge, the desktop 3D studio: run it from source or an installer, generate on your own GPU or the three.ws cloud, build node workflows, import CC0 models, sign in and publish to three.ws, and fix common setup problems.
 
+### Docs · Forge Workflows
+
+URL: https://three.ws/docs/forge-workflows
+
+How Forge Workflows chains Forge tools into one repeatable run: the visual node editor, the four starter templates (photo to 3D, text to rigged character, batch photos to library, photo to game asset), resuming from a failed node, and how it differs from Workbench.
+
 ### Docs · Web Domains
 
 URL: https://three.ws/docs/domains
@@ -4780,6 +4786,12 @@ URL: https://three.ws/docs/open-source-ecosystem
 
 100 stars on GitHub, and the complete map of the three.ws open-source developer ecosystem: every npm package, MCP server, contract, worker, skill, spec, integration, and registry where the code lives, with the number behind each.
 
+### Docs · Standalone repositories
+
+URL: https://three.ws/docs/standalone-repos
+
+The generated catalog of every publishable package in this monorepo mirrored to its own standalone GitHub repository with its own install command and documentation site, so each one can be found, starred, installed and cited on its own.
+
 ### Docs · The First 19 Weeks
 
 URL: https://three.ws/docs/the-first-19-weeks
@@ -5373,6 +5385,12 @@ How copy-trading syndicates work: founding around copyable leaders, joining with
 URL: https://three.ws/docs/teams
 
 How specialist teams work: the four roles and their permission ceilings, the shared findings board and its live stream, the cite-or-research rule the Trader follows, launch prep you sign yourself, and the full API.
+
+### Docs · Squad chat
+
+URL: https://three.ws/docs/team-chat
+
+How squad chat turns a plain-language request into a plan of role-tagged steps for a specialist team or a solo agent: who can see each squad, how the plan is checked against your own words before it runs, and when a step stops for your approval.
 
 ### Docs · Trader duels
 

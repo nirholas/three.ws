@@ -1,11 +1,41 @@
 {
-	"generated_at": "2026-10-15T02:04:13.661Z",
+	"generated_at": "2026-10-15T05:39:03.024Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-10-15",
+			"type": "launch",
+			"title": "Docs · Forge Workflows",
+			"summary": "How Forge Workflows chains Forge tools into one repeatable run: the visual node editor, the four starter templates (photo to 3D, text to rigged character, batch photos to library, photo to game asset), resuming from a failed node, and how it differs from Workbench.",
+			"link": "/docs/forge-workflows",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-15",
+			"type": "launch",
+			"title": "Docs · Squad chat",
+			"summary": "How squad chat turns a plain-language request into a plan of role-tagged steps for a specialist team or a solo agent: who can see each squad, how the plan is checked against your own words before it runs, and when a step stops for your approval.",
+			"link": "/docs/team-chat",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-15",
+			"type": "launch",
+			"title": "Docs · Standalone repositories",
+			"summary": "The generated catalog of every publishable package in this monorepo mirrored to its own standalone GitHub repository with its own install command and documentation site, so each one can be found, starred, installed and cited on its own.",
+			"link": "/docs/standalone-repos",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-10-15",
 			"type": "update",
