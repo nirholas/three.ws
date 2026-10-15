@@ -68,6 +68,21 @@ const KNOWN_SIGNATURES = [
 		action: `Replicate out of credit; forge degrades to free NVIDIA NIM lane meanwhile. Owner adds credit at replicate.com/account/billing. ${RUNBOOK} §replicate.`,
 	},
 	{
+		// 2026-10-15 deep sweep: a GPU/mesh worker (remesh-service first, any
+		// worker that routes a caller-supplied URL through worker_security.py's
+		// fetch_remote_bytes can hit it) logs this exact Python traceback when
+		// the fetched model lives on R2's public .r2.dev domain during the same
+		// Cloudflare outage the HTTP-level r2-downstream-5xx family already
+		// tracks (row 36). Same root cause, different log shape: the worker
+		// catches the exception cleanly (safe_error marks the task "failed" and
+		// returns an opaque message) and only logs the traceback for operators,
+		// so this is not a crash to fix in code.
+		id: 'r2-downstream-5xx',
+		match: /HTTPStatusError: Client error '403 Forbidden' for url 'https:\/\/pub-[^']*\.r2\.dev\//,
+		class: 'owner',
+		action: `Worker-side symptom of the same Cloudflare R2 outage the HTTP r2-downstream-5xx family tracks (production-100-OWNER-ACTIONS.md row 36): a caller-supplied model URL lives on R2's public .r2.dev domain, which is edge-blocked during the flap. The worker already handles this cleanly (task marked failed, opaque error to the caller); nothing to fix in code. Confirm with: curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[] | select(.name=="object_storage")'. ${RUNBOOK} §r2-downstream.`,
+	},
+	{
 		id: 'db-storage-cap',
 		match: /db at storage cap/i,
 		class: 'env-action',
@@ -573,6 +588,17 @@ export function fingerprint(message) {
 		.slice(0, 160);
 }
 
+// A classification sample cut to a flat head slice loses the one line that
+// actually names the fault in a multi-frame stack trace: Python's traceback
+// format always puts the exception type and message last, well past 400
+// bytes of call-stack frames. Keep both ends so KNOWN_SIGNATURES regexes can
+// match on either the opening context or the trailing exception line.
+function headTail(message, budget) {
+	if (message.length <= budget) return message;
+	const half = Math.floor(budget / 2);
+	return `${message.slice(0, half)}\n...\n${message.slice(-half)}`;
+}
+
 export function classify(message, services) {
 	for (const sig of KNOWN_SIGNATURES) {
 		if (!sig.match.test(message)) continue;
@@ -631,7 +657,7 @@ export function buildFindings(entries) {
 			const fp = fingerprint(message);
 			const g = appGroups.get(fp) || {
 				kind: 'app', title: fp, count: 0, services: new Set(),
-				severity: entry.severity || 'WARNING', firstSeen: ts, lastSeen: ts, sample: message.slice(0, 400),
+				severity: entry.severity || 'WARNING', firstSeen: ts, lastSeen: ts, sample: headTail(message, 400),
 			};
 			g.count++;
 			g.services.add(service);

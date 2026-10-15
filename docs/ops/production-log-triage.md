@@ -1291,6 +1291,24 @@ ERROR  502 POST /api/pump/launch-agent
   [tests/gcp-triage.test.js](../../tests/gcp-triage.test.js) ("classifies an
   animated-render R2 fetch failure..." / "...a clip-detail R2 fetch
   failure...").
+- **Worker-side app-log variant (same outage, different shape):** a GPU/mesh
+  worker that routes a caller-supplied model URL through
+  `worker_security.py`'s `fetch_remote_bytes` (`remesh-service` confirmed
+  2026-10-15; any worker vendoring that module can hit it) logs a Python
+  traceback ending in `httpx.HTTPStatusError: Client error '403 Forbidden'
+  for url 'https://pub-<account>.r2.dev/...'` when the fetched model lives on
+  R2's public `.r2.dev` domain during the flap. The worker already catches
+  this cleanly (`safe_error` marks the task `failed` with an opaque message;
+  the traceback is logged for operators only, not an unhandled crash). This
+  also exposed a real bug in the monitor itself: `buildFindings` was cutting
+  its app-log classification sample to the first 400 bytes of the message, so
+  the one line that names the fault in a multi-frame traceback (always last)
+  never reached `classify()`, and every such hit fell through to
+  `investigate` instead of this already-tracked `owner` signature. Fixed
+  2026-10-15 with a `headTail()` helper that keeps both ends of an
+  over-budget message. Regression-covered in
+  [tests/gcp-triage.test.js](../../tests/gcp-triage.test.js) ("classifies a
+  GPU worker R2 .r2.dev 403 traceback as the r2-downstream family").
 
 ---
 

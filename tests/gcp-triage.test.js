@@ -142,6 +142,46 @@ describe('gcp-triage HTTP classification', () => {
 		expect(finding.signature).toBe('r2-downstream-5xx');
 		expect(finding.class).toBe('owner');
 	});
+
+	// 2026-10-15 deep sweep: remesh-service logged this exact traceback for a
+	// mesh fetch hitting the R2 .r2.dev public-domain 403 (the same row-36
+	// outage the HTTP-level r2-downstream-5xx family already tracks), but the
+	// Python traceback's call-stack frames push the one line that actually
+	// names the fault (httpx.HTTPStatusError ... 403 Forbidden ... r2.dev) past
+	// byte 400, which is where buildFindings used to cut the classification
+	// sample. The finding fell through to `investigate` every sweep even
+	// though nothing in the worker is broken.
+	const remeshR2Traceback = () => ({
+		resource: { labels: { service_name: 'remesh-service' } },
+		timestamp: '2026-10-15T00:00:05Z',
+		severity: 'ERROR',
+		textPayload: [
+			'Traceback (most recent call last):',
+			'  File "/app/main.py", line 741, in _process',
+			'    artifacts, meta = await loop.run_in_executor(',
+			'                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^',
+			'  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run',
+			'    result = self.fn(*self.args, **self.kwargs)',
+			'             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
+			'  File "/app/main.py", line 701, in _run_processing',
+			'    data, suffix = _fetch_mesh(mesh_url)',
+			'                   ^^^^^^^^^^^^^^^^^^^^^',
+			'  File "/app/main.py", line 142, in _fetch_mesh',
+			'    data = fetch_remote_bytes(url, timeout=60, max_bytes=MAX_MESH_BYTES)',
+			'           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
+			'  File "/app/worker_security.py", line 154, in fetch_remote_bytes',
+			'    resp.raise_for_status()',
+			'  File "/usr/local/lib/python3.11/site-packages/httpx/_models.py", line 763, in raise_for_status',
+			'    raise HTTPStatusError(message, request=request, response=self)',
+			"httpx.HTTPStatusError: Client error '403 Forbidden' for url 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/2152b20cad96/fd0a25bf-ecfe-491a-9541-e805a7dc0cb3.glb'",
+		].join('\n'),
+	});
+
+	it('classifies a GPU worker R2 .r2.dev 403 traceback as the r2-downstream family', () => {
+		const [finding] = buildFindings([remeshR2Traceback()]);
+		expect(finding.signature).toBe('r2-downstream-5xx');
+		expect(finding.class).toBe('owner');
+	});
 });
 
 describe('gcp-triage page failure summary', () => {
