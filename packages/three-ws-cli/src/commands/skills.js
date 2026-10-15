@@ -1,15 +1,22 @@
 // `three-ws skills`: browse the public community skills registry and import a
-// skill onto one of your agents as an editable prompt-only custom skill.
+// skill onto one of your agents as an editable prompt-only custom skill, or
+// turn an OpenAPI spec / GitHub repo into an executable skill draft.
 //
 //   three-ws skills list [--tag <tag>] [--author <name>]
 //   three-ws skills search <query>
 //   three-ws skills show <slug>
 //   three-ws skills import <slug> --agent <agent-id> [--disabled]
+//   three-ws skills import <url-or-owner/repo>
 //   three-ws skills installed --agent <agent-id>
+//   three-ws skills drafts
 //
-// Every subcommand takes --json. Reads are public; import and installed use
-// the stored credential (`three-ws login`) or THREE_WS_API_KEY. Server side:
-// /api/skills/community and /api/agents/:id/custom-skills (docs/skills.md).
+// Every subcommand takes --json. Reads are public; import, installed, and
+// drafts use the stored credential (`three-ws login`) or THREE_WS_API_KEY.
+// Server side: /api/skills/community, /api/agents/:id/custom-skills, and
+// /api/skills/import (docs/skills.md). A community import installs a
+// prompt-only skill directly onto one agent; a URL import generates an
+// executable bundle (manifest.json/tools.json/handlers.js) saved as a draft
+// under your account, disabled until you choose to enable it.
 
 import { requestJson, ApiError } from '../http.js';
 import { bearerFor } from '../oauth.js';
@@ -21,11 +28,20 @@ export const SKILLS_USAGE = `Usage:
   three-ws skills search <query> [--json]
   three-ws skills show <slug> [--json]
   three-ws skills import <slug> --agent <agent-id> [--disabled] [--json]
+  three-ws skills import <openapi-url-or-owner/repo> [--json]
   three-ws skills installed --agent <agent-id> [--json]
+  three-ws skills drafts [--json]
 
 Browse every skill: https://three.ws/skills/community`;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Community slugs (e.g. "risk-manager") never contain a slash; a bare
+// "owner/repo" shorthand or a full URL always does, which is how `import`
+// tells the two kinds of argument apart without a separate subcommand.
+export function isImportUrl(arg) {
+	return typeof arg === 'string' && (/^https?:\/\//i.test(arg) || /^[\w.-]+\/[\w.-]+$/.test(arg));
+}
 
 /** Split argv into positionals and --flags (a flag followed by a non-flag takes it as its value). */
 export function parseSkillsArgs(argv) {
@@ -107,6 +123,32 @@ export async function runSkills(argv, { env = systemEnv(), origin: originFlag } 
 		if (!args[0]) return { code: 2, output: SKILLS_USAGE };
 		const { skill } = await requestJson(`${origin}/api/skills/community/${encodeURIComponent(args[0])}`);
 		return done(skill, `${skill.name} (${skill.slug} v${skill.version}) by ${skill.author}\n${skill.description}\nTags: ${skill.tags.join(', ')}  ~${skill.tokens} tokens\nSource: ${skill.source_url}\n\n${skill.body}`);
+	}
+
+	if (sub === 'import' && isImportUrl(args[0])) {
+		const headers = await authHeaders(env);
+		const { data } = await requestJson(`${origin}/api/skills/import`, {
+			method: 'POST',
+			headers,
+			json: { url: args[0] },
+		});
+		const toolCount = data.manifest?.provides?.tools?.length || 0;
+		const toolLine = data.kind === 'openapi' ? `${toolCount} tool${toolCount === 1 ? '' : 's'} generated.` : 'declarative skill (no executable tools; README-only).';
+		return done(
+			data,
+			`Imported from ${data.sourceUrl}: ${toolLine}\n` +
+				`Draft id: ${data.id} (disabled; it never runs until you enable it)\n` +
+				`Bundle: ${origin}${data.bundleUri}\n` +
+				`List your drafts: three-ws skills drafts`,
+		);
+	}
+
+	if (sub === 'drafts') {
+		const headers = await authHeaders(env);
+		const { data } = await requestJson(`${origin}/api/skills/import`, { headers });
+		if (!data.length) return done(data, 'No skill drafts yet. Create one: three-ws skills import <openapi-url-or-owner/repo>');
+		const rows = data.map((d) => `${pad(d.id, 38)} ${pad(d.kind, 12)} ${pad(d.enabled ? 'enabled' : 'disabled', 10)} ${d.sourceUrl}`);
+		return done(data, [`${pad('ID', 38)} ${pad('KIND', 12)} ${pad('STATE', 10)} SOURCE`, ...rows].join('\n'));
 	}
 
 	if (sub === 'import' || sub === 'installed') {
