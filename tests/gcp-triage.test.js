@@ -115,6 +115,28 @@ describe('gcp-triage HTTP classification', () => {
 		expect(finding.class).toBe('env-action');
 	});
 
+	// 2026-10-15 deep sweep: /api/pump/trending 502'd twice with no app-level
+	// crash log. api/pump/trending.js already retries Birdeye then pump.fun's
+	// board through the shared cross-instance cache with a 10-minute stale
+	// fallback (api/_lib/pump-feed-fetch.js), so a 502 only fires when both
+	// upstreams are down AND no stale board survives anywhere: an honest
+	// outage response, not a code fault.
+	it('classifies a trending-feed double-upstream exhaustion as self-healing', () => {
+		const [finding] = buildFindings([request({ status: 502, path: '/api/pump/trending' })]);
+		expect(finding.signature).toBe('pump-trending-upstreams-502');
+		expect(finding.class).toBe('self-healing');
+	});
+
+	// 2026-10-15 deep sweep: /api/v1/ai/text-to-3d 502'd ("lane_error") pinning
+	// the NVIDIA NVCF TRELLIS backend, the same free-tier capacity flakiness
+	// already tracked for /api/vision and /api/tts/synthesize under
+	// three-ws-ai-providers-unavailable-5xx.
+	it('classifies the free text-to-3d lane exhaustion under the same AI-providers signature', () => {
+		const [finding] = buildFindings([request({ status: 502, path: '/api/v1/ai/text-to-3d' })]);
+		expect(finding.signature).toBe('three-ws-ai-providers-unavailable-5xx');
+		expect(finding.class).toBe('owner');
+	});
+
 	it('classifies a holder-distribution RPC exhaustion 503 as self-healing', () => {
 		const [finding] = buildFindings([request({ status: 503, path: '/api/crypto/holders' })]);
 		expect(finding.signature).toBe('holders-rpc-exhausted-503');

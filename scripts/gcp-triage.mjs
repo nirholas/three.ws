@@ -302,6 +302,17 @@ const KNOWN_HTTP_SIGNATURES = [
 		action: `The read-only bonding-curve route exhausted its RPC/Jupiter fallback and returned an honest no-store upstream_error. Check healthz rpc_lanes: short cooling windows recover automatically. Investigate only if the same route persists across sweeps after at least one RPC lane is healthy; then inspect api/_lib/pump-curve-view.js rather than retrying a transaction. ${RUNBOOK} §solana-rpc.`,
 	},
 	{
+		id: 'pump-trending-upstreams-502',
+		// api/pump/trending.js already retries Birdeye then pump.fun's board
+		// through a cross-instance cache with a 10-minute stale fallback
+		// (api/_lib/pump-feed-fetch.js); a 502 means both upstreams failed AND
+		// no stale board survived anywhere, a real but self-healing outage.
+		test: (g) => g.service === 'three-ws-api' && g.status === 502
+			&& (g.path === '/api/pump/trending' || g.path === '/api/v1/pump/trending'),
+		class: 'self-healing',
+		action: `Birdeye and the pump.fun board fallback both failed inside the 5s upstream timeout with no cached board (live or stale) to serve. Check healthz rpc_lanes and Birdeye's "Compute units usage limit exceeded" message (same cause as pump-price-history-upstreams-502); the 30s live cache and 10-minute stale window recover automatically once either upstream answers. Investigate only if the same route persists across multiple sweeps with both upstreams reporting healthy. ${RUNBOOK} §pump-trending-upstreams.`,
+	},
+	{
 		id: 'cc-unconfigured-503',
 		// Every /api/community/* and /api/clash route wraps the same client and
 		// answers the same designed 503 when CC_API_KEY is absent — match the
@@ -406,11 +417,14 @@ const KNOWN_HTTP_SIGNATURES = [
 		// routes: same two owner-gated causes (the GCP billing hold on
 		// aerial-vehicle-466722-p5 blocking Vertex Gemini/Imagen, row 20; the
 		// dead OpenAI key, row 6) feed the provider chain behind /api/vision
-		// and /api/tts/synthesize.
+		// and /api/tts/synthesize. /api/v1/ai/text-to-3d pins the NVIDIA NVCF
+		// TRELLIS rung of that same chain (2026-10-15 deep sweep: 3 lane_error
+		// 502s, no app-level crash log, matching the known free-tier NVCF
+		// capacity flakiness).
 		test: (g) => g.service === 'three-ws-api' && g.status >= 500 &&
-			(g.path === '/api/vision' || g.path === '/api/tts/synthesize'),
+			(g.path === '/api/vision' || g.path === '/api/tts/synthesize' || g.path === '/api/v1/ai/text-to-3d'),
 		class: 'owner',
-		action: `/api/vision and /api/tts/synthesize each walk a provider chain (NVIDIA, then Vertex Gemini, then OpenAI) and answer an honest 502/503 when every rung fails. The GCP billing hold "Lightning dunning decision is deny" on aerial-vehicle-466722-p5 blocks the Vertex/Gemini rung (production-100-OWNER-ACTIONS.md row 20) and the OpenAI key is dead (row 6); together that leaves only the NVIDIA rung, which the forge_generation health sensor shows intermittently failing on free-tier NVCF capacity. Nothing to fix in code: restoring either billing-held provider clears this family, same as the identical cryptocurrency-cv pattern (ccv-ai-providers-unavailable-503). ${RUNBOOK} §three-ws-ai-providers-unavailable.`,
+		action: `/api/vision, /api/tts/synthesize and /api/v1/ai/text-to-3d each walk a provider chain (NVIDIA, then Vertex Gemini, then OpenAI) and answer an honest 502/503 when every rung fails. The GCP billing hold "Lightning dunning decision is deny" on aerial-vehicle-466722-p5 blocks the Vertex/Gemini rung (production-100-OWNER-ACTIONS.md row 20) and the OpenAI key is dead (row 6); together that leaves only the NVIDIA rung, which the forge_generation health sensor shows intermittently failing on free-tier NVCF capacity. Nothing to fix in code: restoring either billing-held provider clears this family, same as the identical cryptocurrency-cv pattern (ccv-ai-providers-unavailable-503). ${RUNBOOK} §three-ws-ai-providers-unavailable.`,
 	},
 	{
 		id: 'forge-image-ladder-exhausted-502',

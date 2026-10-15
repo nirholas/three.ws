@@ -571,6 +571,32 @@ body: {"error":"upstream_error","error_description":"Price history is unavailabl
 
 ---
 
+## 🟢 HTTP 502 on `/api/pump/trending`, `/api/v1/pump/trending`: `pump-trending-upstreams-502` (§pump-trending-upstreams)
+
+```
+HTTP 502 GET /api/pump/trending?limit=48&rich=1
+```
+
+- **Source:** [api/pump/trending.js](../../api/pump/trending.js) reads Birdeye
+  first, then falls back to the pump.fun board through the shared,
+  cross-instance reader [api/_lib/pump-feed-fetch.js](../../api/_lib/pump-feed-fetch.js),
+  which already retries once honoring `Retry-After` and serves a stale board
+  for up to 10 minutes after both live sources fail. A 502 only fires when
+  Birdeye, pump.fun, AND the stale cache are all empty at once.
+- **What it means:** usually the same Birdeye compute-unit exhaustion as
+  `pump-price-history-upstreams-502` landing at the same moment pump.fun's
+  frontend feed is also rate-limiting the shared Cloud Run egress IP, on an
+  instance cold enough to hold no stale board yet. Self-healing: the 30s live
+  cache and 10-minute stale window recover on the next request once either
+  upstream answers.
+- **Added:** 2026-10-15 deep sweep found 2 occurrences with no app-level
+  crash log, matching this exact "both upstreams down, no stale board"
+  shape rather than a code fault.
+- **Monitor signature:** `pump-trending-upstreams-502` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `self-healing`.
+
+---
+
 ## 🟡 `429 Client Error … huggingface.co` → `LocalEntryNotFoundError` on a model worker — `hf-hub-rate-limited`
 
 ```
@@ -1366,12 +1392,15 @@ ERROR  502 POST /api/pump/launch-agent
 
 ---
 
-## 🔴 5xx on `/api/vision`, `/api/tts/synthesize`: `three-ws-ai-providers-unavailable-5xx` (§three-ws-ai-providers-unavailable)
+## 🔴 5xx on `/api/vision`, `/api/tts/synthesize`, `/api/v1/ai/text-to-3d`: `three-ws-ai-providers-unavailable-5xx` (§three-ws-ai-providers-unavailable)
 
-- **Source:** `/api/vision` and `/api/tts/synthesize` each walk a provider
-  chain (NVIDIA, then Vertex Gemini, then OpenAI) and answer an honest
-  502/503 when every rung fails. Mirrors `ccv-ai-providers-unavailable-503`
-  above, for this repository's own AI routes.
+- **Source:** `/api/vision`, `/api/tts/synthesize` and `/api/v1/ai/text-to-3d`
+  each walk a provider chain (NVIDIA, then Vertex Gemini, then OpenAI) and
+  answer an honest 502/503 when every rung fails. Mirrors
+  `ccv-ai-providers-unavailable-503` above, for this repository's own AI
+  routes. `/api/v1/ai/text-to-3d` pins the NVIDIA NVCF TRELLIS rung
+  specifically (added 2026-10-15 after a deep sweep found 3 `lane_error` 502s
+  with no app-level crash log, matching this family).
 - **What it means:** the GCP billing hold ("Lightning dunning decision is
   deny") on `aerial-vehicle-466722-p5` blocks the Vertex/Gemini rung (row 20)
   and the OpenAI key is dead (row 6), leaving only the NVIDIA rung, which the
