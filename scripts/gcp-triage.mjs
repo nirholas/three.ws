@@ -333,6 +333,18 @@ const KNOWN_HTTP_SIGNATURES = [
 		action: `The free holder-distribution route exhausted Helius and the keyless RPC fallback for a mint with no cached last-good report, so it answered an honest 503 upstream_unavailable rather than a guess. Check healthz rpc_lanes/helius: this fires in bursts while every paid Solana RPC lane is cooling down (see ${RUNBOOK} "Every paid Solana RPC lane exhausted at once"). Investigate only if it persists after rpc_lanes reads ok. ${RUNBOOK} §solana-rpc.`,
 	},
 	{
+		// 2026-10-15 deep sweep: api/crypto/bonding.js's own handler comment is
+		// explicit ("Never 500: answer 503 + Retry-After so the agent backs off
+		// and retries, per the free-API contract") for the identical
+		// getBondingStatus() upstream_down case the holders route above already
+		// tracks; a single hit with zero matching app-level error log lines is
+		// one pump.fun feed hiccup honestly reported, not a crash.
+		id: 'bonding-upstream-unavailable-503',
+		test: (g) => g.service === 'three-ws-api' && g.status === 503 && g.path === '/api/crypto/bonding',
+		class: 'self-healing',
+		action: `The free bonding-curve status route found the pump.fun feed temporarily unreachable and answered its designed 503 upstream_unavailable + Retry-After rather than a stale guess (api/crypto/bonding.js, api/_lib/pump-bonding.js). Investigate only if it persists for the same mint after the pump.fun public frontend itself is reachable again. ${RUNBOOK} §solana-rpc.`,
+	},
+	{
 		id: 'watsonx-unconfigured-503',
 		test: (g) => g.status === 503 && (g.path === '/api/galaxy' || g.path.startsWith('/api/galaxy/')),
 		class: 'owner',

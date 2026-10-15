@@ -121,6 +121,17 @@ describe('gcp-triage HTTP classification', () => {
 		expect(finding.class).toBe('self-healing');
 	});
 
+	// 2026-10-15 deep sweep: a single /api/crypto/bonding 503 with zero matching
+	// app-level error log lines fell through to `investigate` every sweep even
+	// though api/crypto/bonding.js's own handler comment documents the 503 as
+	// the designed free-API backoff contract (same upstream_down shape as
+	// holders-rpc-exhausted-503 above, different route).
+	it('classifies a bonding-curve upstream outage as self-healing', () => {
+		const [finding] = buildFindings([request({ status: 503, path: '/api/crypto/bonding' })]);
+		expect(finding.signature).toBe('bonding-upstream-unavailable-503');
+		expect(finding.class).toBe('self-healing');
+	});
+
 	// 2026-10-12 triage-lane sweep: confirmed live against production that
 	// /api/render/animate?avatar=<id> and GET /api/animations/clips/<id> both
 	// 502 with the exact same root cause as the rest of the r2-downstream-5xx

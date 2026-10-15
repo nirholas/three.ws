@@ -940,6 +940,21 @@ ws error: Unexpected server response: 301
   (self-healing). Escalate only if it persists after `rpc_lanes` reads ok;
   [api/_lib/crypto-token-holders.js](../../api/_lib/crypto-token-holders.js)
   is the composition logic if it does.
+- **Bonding-status symptom (2026-10-15 deep sweep):** `HTTP 503 GET
+  /api/crypto/bonding` answers `upstream_unavailable` when the pump.fun feed
+  is temporarily unreachable, the identical designed backoff contract
+  `getBondingStatus()` documents in its own handler comment ("Never 500:
+  answer 503 + Retry-After so the agent backs off and retries, per the
+  free-API contract"). A single hit with no matching app-level error log line
+  fell through to `investigate` every sweep before this signature was added.
+  The monitor now classifies it `bonding-upstream-unavailable-503`
+  (self-healing). Escalate only if it persists for the same mint after the
+  pump.fun public frontend itself is reachable again;
+  [api/crypto/bonding.js](../../api/crypto/bonding.js) and
+  [api/_lib/pump-bonding.js](../../api/_lib/pump-bonding.js) are the handler
+  and composition logic. Regression-covered in
+  [tests/gcp-triage.test.js](../../tests/gcp-triage.test.js) ("classifies a
+  bonding-curve upstream outage as self-healing").
 
 ## 🟡 HTTP timeout with no cron context
 
