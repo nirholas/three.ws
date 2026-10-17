@@ -41,12 +41,15 @@ digital-human introduction. A focused reply for only those two points is below.
 ## Step 1: fix the portal record now (about 5 minutes)
 
 This should have preceded the request and remains the one catalog blocker on our side. The
-email's first two asks are judged against the record, and as last authenticated the record
-read as a CUDA consumer rather than a digital-human app. Verified 2026-09-04: still
-uncorrected. NVIDIA's 2026-09-14 reply explicitly asked for this evidence in the product
-record.
+email's first two asks are judged against the record, and the authenticated snapshot supplied
+on 2026-10-17 still reads as a CUDA consumer rather than a digital-human app. NVIDIA's
+2026-09-14 reply explicitly asked for this evidence in the product record. The exact
+field-by-field edit, including the company profile and sharing control, is in
+[nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md).
 
-Go to the Inception portal, Products, then Edit on the `three.ws` row.
+Go to the Inception portal, Products, then Edit on the `three.ws` row. Ensure `Do not share
+information about this product with NVIDIA's customers or partners` is unchecked. A product
+cannot be shared into the customer-facing catalog while that opt-out is selected.
 
 **Move these from Considering to Technologies Used:**
 
@@ -62,8 +65,9 @@ Go to the Inception portal, Products, then Edit on the `three.ws` row.
 
 **Keep under Used, and add if the form offers them:** CUDA Toolkit, cuDNN, cuBLAS, CUDA Python, NVIDIA Kaolin, nvdiffrast, L4 GPUs, RTX PRO 6000 Blackwell.
 
-Save the record, reopen it to verify the changes persisted, then send the focused reply for
-the two unanswered asks below.
+Replace the stale company description and taxonomy at Profile > Company using the listing
+kit. Save both records, reopen them to verify the changes persisted, then send the focused
+reply for the two unanswered asks below.
 
 ## Step 2: the five asks, and why each one is in this email
 

@@ -6,9 +6,23 @@ Related docs: [nvidia-inception.md](./nvidia-inception.md) (membership overview)
 
 ---
 
-## Status: NVIDIA replied; portal completion is the application (2026-09-14)
+## Status: the current portal record still needs its listing edit (2026-10-17)
 
-The portal shows the product row (`three.ws | Shipping | GPU Accelerated`), but a search for `three.ws` on the public catalog returns 0 results. **Public search re-verified 2026-09-14:** still 0 results. The last authenticated portal check on 2026-09-04 showed the uncorrected record below (Used: cuBLAS, CUDA Python, CUDA Toolkit, cuDNN; Considering: DeepVariant NIM, Riva, TensorRT, Triton, Omniverse Kit, Audio2Face). That is expected, not a bug: **the portal record and the public catalog are two different systems.**
+The authenticated portal snapshot supplied on 2026-10-17 still shows the product row as
+`three.ws | Shipping | GPU Accelerated`, but the public catalog does not list three.ws. The
+record still understates the shipping NVIDIA stack:
+
+- **Currently used:** cuBLAS, CUDA Python, CUDA Toolkit, cuDNN.
+- **Considering:** DeepVariant NIM, Riva, TensorRT, Triton Inference Server, Omniverse Kit,
+  Audio2Face.
+- **Product URL:** the general homepage instead of the live product.
+- **Product copy:** includes the payment protocol but omits the shipping Riva, NIM/NVCF,
+  and Audio2Face-3D runtime.
+- **Sharing control:** the form exposes `Do not share information about this product with
+  NVIDIA's customers or partners.` This must be left unchecked. If it is selected, the
+  record is not eligible for the directory's sharing purpose.
+
+The portal record and the public catalog are two different systems:
 
 - **Portal > Profile > Products** makes the company benefits-eligible and feeds NVIDIA's internal recommendation engine. The portal's own wording is "we **may** feature it in the personalized recommendations we share with our customers."
 - **The public catalog** ([marketplace.nvidia.com/en-us/enterprise/applications](https://marketplace.nvidia.com/en-us/enterprise/applications/), filtered view for startups at [nvidia.com/en-gb/accelerated-applications/inception](https://www.nvidia.com/en-gb/accelerated-applications/inception/)) is curated and published by NVIDIA. Submissions are reviewed on a rolling basis and approval is subject to availability and fit. Nothing in the portal auto-publishes.
@@ -20,8 +34,9 @@ carry the supporting evidence, and the record must include a product logo and br
 Qualifying records are reviewed periodically. NVIDIA supplied no separate form, submission
 ID, or review date.
 
-The request has therefore been made. There are now exactly two things to do: complete the
-record NVIDIA described, then wait for periodic review and check the public catalog monthly.
+The request has therefore been made. There are now exactly two things to do: save the exact
+product and company edits below, then wait for periodic review and check the public catalog
+monthly.
 
 ### Current intake route
 
@@ -38,7 +53,48 @@ reply, is:
 
 The old 2026-09-25 no-response follow-up is cancelled: NVIDIA answered on 2026-09-14.
 
-### 1. Correct the portal record (the record understates the stack)
+### 1. Save this product record
+
+| Portal field | Value |
+|---|---|
+| Product/Service Name | **three.ws 3D AI Studio** |
+| Product/Service Webpage | **https://three.ws/forge** |
+| Product/Service Type | **Application** |
+| Development Stage | **Shipping** |
+| Runtime acceleration | **GPU Accelerated** |
+| Uses NVIDIA technologies | **Yes** |
+| Product logo | `public/brand/three-ws-mark.png` (898 x 1024 RGBA PNG) |
+| Brand color | **0B0D0C** |
+| Do not share with NVIDIA customers or partners | **Unchecked** |
+
+The product name adds the category words a curator and directory visitor need. The product
+URL opens the shipping application directly, not the web desktop. The Forge page, NVIDIA
+page, Audio2Face demo, NVIDIA model map, privacy policy, and product page all returned HTTP
+200 on 2026-10-17.
+
+### Product description, 447 characters
+
+> three.ws turns text prompts, photos, and sketches into textured, rigged, animation-ready
+> 3D avatars and models in the browser. Creators can generate, rig, pose, animate, and export
+> GLB, FBX, or USDZ with no local GPU or install. Developers can embed talking 3D agents
+> with one web component or use the same pipeline through APIs and MCP. Production
+> generation and voice workloads are accelerated by NVIDIA GPUs, CUDA, Riva, NIM, and
+> Audio2Face-3D.
+
+### Technical details, 820 characters
+
+> three.ws uses NVIDIA acceleration at runtime in two production layers. Self-hosted PyTorch
+> microservices run on NVIDIA L4 GPUs in Google Cloud Run, with an RTX PRO 6000 Blackwell
+> lane compiled for sm_120. Hunyuan3D, TRELLIS, TripoSG, TripoSR, Make-It-Animatable, and
+> UniRig provide image-to-3D, text-to-3D, sketch-to-3D, and automatic humanoid rigging.
+> Containers use NVIDIA CUDA Toolkit 12.1-12.8, cuDNN, cuBLAS, CUDA Python, Kaolin,
+> nvdiffrast, and custom CUDA kernels. NVIDIA-hosted NIM/NVCF services provide Nemotron
+> reasoning, embeddings, content safety, Riva ASR and Magpie TTS, and Audio2Face-3D facial
+> animation. CPU services handle orchestration, remeshing, segmentation, and
+> GLB/FBX/STL/USDZ conversion. TensorRT, Triton Inference Server, and Omniverse Kit are under
+> evaluation and are not claimed as shipping.
+
+### Correct the technology selections
 
 As filed, the record lists only CUDA libraries as used, and parks every NVIDIA platform product under "Considering." That reads as a CUDA consumer, not a digital-human app, and it is wrong against the shipping code. Move these to **Technologies Used**:
 
@@ -66,40 +122,45 @@ Every item NVIDIA named in its reply has one unambiguous value or source:
 | Development Stage | **Shipping** | Already shown on the product row; verify it remains saved |
 | Technologies currently used | Use the corrected list above | Owner saves in portal |
 | Technologies being considered | TensorRT, Triton Inference Server, Omniverse Kit | Owner saves in portal |
-| Product Description | Paste-ready block below | Ready |
-| Technical Details | Paste-ready block below | Ready |
+| Product Description | Paste-ready block above | Ready |
+| Technical Details | Paste-ready block above | Ready |
 | Product logo | `public/brand/three-ws-mark.png` (898×1024 RGBA PNG) | Ready |
 | Brand color | `#0B0D0C` (the canonical dark wordmark color) | Ready |
 
-### Product Description (paste into the portal)
+### 2. Align the company profile
 
-> three.ws is a browser-native platform for generating 3D avatars, worlds, and AI agents
-> from a prompt. Text, image, and sketch inputs become textured, auto-rigged GLB models in
-> seconds. The resulting agents can reason, listen, speak, lip-sync, move, and embed on any
-> website with one script tag. The free text-to-3D lane requires no signup. Runtime
-> acceleration comes from a self-hosted fleet of NVIDIA L4 GPUs and an RTX PRO 6000
-> Blackwell path, plus NVIDIA-hosted NIM and NVCF services for generation, reasoning,
-> vision, memory, safety, speech, and facial animation.
+The company profile still says three.ws is applying to Inception even though it was accepted
+in July 2026. It also leads with on-chain identity, names web3 as a target market, selects
+Cloud Services as a target industry, and selects Trustworthy AI / Cybersecurity as a
+workload. Those signals dilute the application story and conflict with the categories
+[NVIDIA says are ineligible for Inception](https://www.nvidia.com/en-us/startups/).
 
-### Technical Details (paste into the portal)
+Paste this 653-character company description:
 
-> three.ws uses NVIDIA technology at runtime in two production layers. The self-hosted 3D
-> layer runs PyTorch/CUDA workers on NVIDIA L4 GPUs in Google Cloud Run, with an RTX PRO
-> 6000 Blackwell path validated using sm_120 builds. Hunyuan3D 2.1 and TRELLIS handle
-> image-to-3D, TripoSG handles sketch-to-3D, TripoSR provides fast drafts,
-> Make-It-Animatable auto-rigs humanoids, and Motion Diffusion Model generates motion. The
-> containers use CUDA Toolkit, cuDNN, cuBLAS, CUDA Python, NVIDIA Kaolin, nvdiffrast, and
-> other compiled CUDA rasterization extensions.
->
-> The hosted layer uses NVIDIA NIM/NVCF at runtime. Microsoft TRELLIS is the default free
-> text-to-3D lane; Nemotron models handle agent reasoning and vision; NV-EmbedQA-E5-v5 and
-> NVIDIA's Mistral reranker power retrieval; and NemoGuard screens content published to
-> third-party showcases. NVIDIA Riva provides ASR and Magpie multilingual TTS.
-> Audio2Face-3D returns ARKit blendshape tracks that three.ws maps onto visitor-provided 3D
-> avatars in a browser. Live proof: https://three.ws/forge,
-> https://three.ws/demos/audio2face, and https://three.ws/docs/nvidia-models.
+> three.ws builds browser-native tools for embodied AI. Our platform turns prompts, photos,
+> and sketches into textured, rigged 3D avatars and models, then gives them real-time voice,
+> lip-sync, animation, and one-tag web embedding. Customers are creators, media and
+> entertainment teams, brands, and developers building interactive agents. Unlike closed
+> digital-human suites, three.ws is open source, browser-native, and supports generation,
+> rigging, animation, export, APIs, and MCP in one workflow. Production workloads run on
+> NVIDIA L4 and RTX PRO 6000 Blackwell GPUs with CUDA, cuDNN, and PyTorch, plus NVIDIA
+> NIM/NVCF, Riva, and Audio2Face-3D services.
 
-### 2. Ask for the catalog listing
+Use these company taxonomy selections:
+
+- **Workloads:** Agentic AI / Generative AI; Content Creation / Rendering; Conversational
+  AI; Developer Tools & Techniques; AR / VR if offered.
+- **Remove workload:** Trustworthy AI / Cybersecurity. Content safety is a supporting
+  feature, not the product category.
+- **Primary industry:** Media & Entertainment.
+- **Target industries:** Media & Entertainment; Consumer Internet if offered.
+- **Remove target industry:** Cloud Services. three.ws uses cloud infrastructure but is not
+  a cloud service provider.
+
+Do not alter the legal company name, incorporation year, business status, funding, or
+investor fields unless the underlying facts have changed.
+
+### 3. Wait for catalog review
 
 The portal has no "publish to catalog" button. The request in
 [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md) was sent on **2026-09-04**,
@@ -110,11 +171,11 @@ periodically. There is no further catalog email to send unless NVIDIA requests i
 
 ## Core fields
 
-**App name:** three.ws
+**App name:** three.ws 3D AI Studio
 
-**Company name:** three.ws
+**Company name:** three.ws LLC
 
-**Product URL:** https://three.ws
+**Product URL:** https://three.ws/forge
 
 **Tagline:** Give your AI a body.
 
@@ -238,22 +299,28 @@ Nothing else checked. TensorRT/Triton/Omniverse stay unchecked here too.
 - **Use case / workload:** Digital humans, Conversational AI, AI agents
 - **App type:** Web component / SDK embedded in a customer web application
 
-Filing note: this record is independent of the catalog email sent 2026-09-04. It is a portal form, not an email, and it can be filed the moment the main record's corrections are saved.
+Filing note: keep this record ready, but do not file it during the main listing correction.
+The existing product should complete one review with one unambiguous application story first.
+File the embed as a second product after the main listing is public or if NVIDIA asks for a
+separate digital-human record.
 
 ---
 
 ## Submission checklist
 
-1. Log in to the Inception portal and edit the existing `three.ws` product first.
-2. Verify Development Stage is **Shipping**.
-3. Replace Product Description and Technical Details with the paste-ready blocks above.
-4. Move Riva, Audio2Face, and applicable NIM services to Currently Used; retain the verified
+1. Log in to the Inception portal and edit the existing `three.ws` product.
+2. Change its name to **three.ws 3D AI Studio** and its URL to **https://three.ws/forge**.
+3. Verify Development Stage is **Shipping** and acceleration is **GPU Accelerated**.
+4. Replace Product Description and Technical Details with the character-counted blocks above.
+5. Move Riva, Audio2Face, and applicable NIM services to Currently Used; retain the verified
    CUDA stack; remove DeepVariant; leave TensorRT, Triton, and Omniverse Kit under
    Considering.
-5. Upload `public/brand/three-ws-mark.png` and set brand color to `#0B0D0C`.
-6. Select the closest categories from the Categories section, save the record, reopen it,
-   and capture completion evidence.
-7. Add `<agent-3d>` as the second and only other product record using its section above.
-8. Do not send the old no-response follow-up. NVIDIA answered on 2026-09-14.
-9. Check the public catalog monthly. A live catalog URL is the only completion evidence for
+6. Upload `public/brand/three-ws-mark.png` and set brand color to `0B0D0C`.
+7. Ensure **Do not share with NVIDIA customers or partners** is unchecked.
+8. Replace the stale company description and align its workloads and industries with the
+   company-profile section above.
+9. Save both records, reopen them, and capture completion evidence.
+10. Do not add the second product yet and do not send the old no-response follow-up. NVIDIA
+    answered on 2026-09-14.
+11. Check the public catalog monthly. A live catalog URL is the only completion evidence for
    listing; a complete portal record is eligibility, not publication.
