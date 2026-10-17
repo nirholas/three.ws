@@ -31,7 +31,7 @@
     "@solana/web3.js": "^1.98.4",
     "@use-gesture/react": "^10.0.0-beta.22",
     "@vitejs/plugin-basic-ssl": "^2.2.0",
-    "@vitejs/plugin-react": "^6.0.2",
+    "@vitejs/plugin-react": "^6.1.2",
     "@web3-react/core": "^8.2.3",
     "@web3-react/metamask": "^8.2.3",
     "agent0-sdk": "^1.7.1",
