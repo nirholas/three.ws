@@ -85,6 +85,15 @@ import { wrapFetchWithPayment } from '@three-ws/x402-fetch';
 const pay = wrapFetchWithPayment(fetch, wallet);
 ```
 
+## Optional pre-pay spot-check
+
+To check a seller's live 402 before any payment is signed, wrap the base fetch with
+[`spotCheckFetch`](https://github.com/withgrokbot/x402-spotcheck) (opt-in, separate package):
+
+```js
+const pay = wrapFetchWithPayment(spotCheckFetch(fetch), wallet);
+```
+
 ## Errors
 
 | Message | Meaning |
