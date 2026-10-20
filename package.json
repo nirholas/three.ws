@@ -643,7 +643,7 @@
 		"@scure/base": "^1.2.6",
 		"@solana-mobile/mobile-wallet-adapter-protocol-web3js": "^2.3.0",
 		"@solana-program/compute-budget": "^0.18.1",
-		"@solana-program/stake": "^0.9.1",
+		"@solana-program/stake": "^0.10.0",
 		"@solana-program/token": "^0.13.0",
 		"@solana/kit": "^8.5.0",
 		"@solana/pay": "^0.2.6",
