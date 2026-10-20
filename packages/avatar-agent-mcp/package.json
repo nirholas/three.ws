@@ -62,7 +62,7 @@
 		"@gltf-transform/core": "^4.3.0",
 		"@gltf-transform/extensions": "^4.3.0",
 		"@gltf-transform/functions": "^4.5.0",
-		"@grpc/grpc-js": "^1.14.4",
+		"@grpc/grpc-js": "^1.14.6",
 		"@grpc/proto-loader": "^0.8.1",
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@nirholas/pump-sdk": "^1.30.0",
