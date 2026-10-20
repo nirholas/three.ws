@@ -636,7 +636,7 @@
 		"@pixiv/three-vrm-animation": "^3.5.5",
 		"@privy-io/js-sdk-core": "^0.75.0",
 		"@pump-fun/agent-payments-sdk": "^3.0.3",
-		"@pump-fun/pump-sdk": "^4.0.0",
+		"@pump-fun/pump-sdk": "^4.1.0",
 		"@pump-fun/pump-swap-sdk": "^2.1.0",
 		"@pythnetwork/hermes-client": "^3.1.0",
 		"@ricky0123/vad-web": "^0.0.31",
