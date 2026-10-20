@@ -591,7 +591,7 @@
 		"@bnb-chain/mpp": "^0.2.0",
 		"@bnb-chain/reed-solomon": "^1.1.4",
 		"@bonfida/spl-name-service": "^3.0.26",
-		"@chenglou/pretext": "^0.0.7",
+		"@chenglou/pretext": "^1.0.0",
 		"@coin-communities/sdk": "^2.0.0",
 		"@coinbase/cdp-sdk": "^1.50.0",
 		"@coinbase/x402": "^2.1.0",
