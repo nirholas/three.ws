@@ -622,7 +622,7 @@
 		"@metaplex-foundation/mpl-core": "^1.10.0",
 		"@metaplex-foundation/umi": "^1.6.0",
 		"@metaplex-foundation/umi-bundle-defaults": "^1.6.0",
-		"@meteora-ag/dynamic-bonding-curve-sdk": "^1.5.10",
+		"@meteora-ag/dynamic-bonding-curve-sdk": "^2.0.0",
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@neondatabase/serverless": "^1.1.0",
 		"@neynar/nodejs-sdk": "^3.177.0",
