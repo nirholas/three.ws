@@ -8,7 +8,7 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 python-multipart==0.0.20
 httpx==0.28.1
-mcp==1.9.4
+mcp==1.30.0
 trimesh==4.5.3
 pymeshlab==2023.12.post2
 huggingface_hub==0.36.2
