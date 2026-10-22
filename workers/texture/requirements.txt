@@ -19,7 +19,7 @@ numpy==1.26.4
 # Pillow 12.3.0, not 11.x: every 11.x release carries open advisories, several of
 # them heap out-of-bounds writes reachable from a decoded image. `npm run
 # audit:deps` surfaces the next one.
-Pillow==12.3.0
+Pillow==13.0.0
 torch==2.13.0
 torchvision==0.18.1
 google-cloud-storage==2.19.0
