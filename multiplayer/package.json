@@ -18,7 +18,7 @@
 		"@colyseus/monitor": "^0.16.7",
 		"@colyseus/redis-driver": "^0.18.5",
 		"@colyseus/redis-presence": "^0.18.5",
-		"@colyseus/schema": "3.0.76",
+		"@colyseus/schema": "5.0.41",
 		"@colyseus/ws-transport": "^0.18.4",
 		"@ethereum-attestation-service/eas-sdk": "2.10.0",
 		"@pump-fun/pump-sdk": "^4.1.0",
