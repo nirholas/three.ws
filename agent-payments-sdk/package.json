@@ -63,7 +63,7 @@
     "prepublishOnly": "npm run typecheck && npm run build:prod"
   },
   "dependencies": {
-    "@bonfida/spl-name-service": "0.1.67",
+    "@bonfida/spl-name-service": "4.0.1",
     "@coral-xyz/anchor": "^0.31.1",
     "@ethereum-attestation-service/eas-sdk": "2.10.0",
     "@pump-fun/pump-sdk": "^4.1.0",

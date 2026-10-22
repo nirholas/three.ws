@@ -18,7 +18,7 @@
     "get-assets": "cd public && git clone --depth 1 --branch main https://github.com/m3-org/loot-assets.git"
   },
   "dependencies": {
-    "@bonfida/spl-name-service": "^0.1.67",
+    "@bonfida/spl-name-service": "^4.0.1",
     "@ethereum-attestation-service/eas-sdk": "2.10.0",
     "@metaplex-foundation/mpl-candy-machine": "^6.1.0",
     "@metaplex-foundation/umi": "^1.6.0",
