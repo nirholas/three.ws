@@ -13,7 +13,7 @@
 		"node": ">=22.12"
 	},
 	"dependencies": {
-		"@bonfida/spl-name-service": "^0.1.67",
+		"@bonfida/spl-name-service": "^4.0.1",
 		"@colyseus/core": "^0.16.24",
 		"@colyseus/monitor": "^0.16.7",
 		"@colyseus/redis-driver": "^0.18.5",

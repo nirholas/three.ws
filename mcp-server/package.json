@@ -55,7 +55,7 @@
 		"prepublishOnly": "node -e \"import('./src/index.js').catch(e => { if (!e.message.includes('facilitator')) throw e })\" 2>/dev/null; echo 'package check ok'"
 	},
 	"dependencies": {
-		"@bonfida/spl-name-service": "0.1.67",
+		"@bonfida/spl-name-service": "4.0.1",
 		"@coinbase/x402": "^2.1.0",
 		"@coral-xyz/anchor": "^0.32.1",
 		"@ethereum-attestation-service/eas-sdk": "2.10.0",
