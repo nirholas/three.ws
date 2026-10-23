@@ -55,6 +55,12 @@ function skeletonHtml(seed) {
 		</div>`;
 }
 
+const LANE_BADGES = {
+	wayback: ['from web archive', 'The publisher page is unavailable; this text comes from the Internet Archive snapshot of the same URL'],
+	primary: ['from SEC filing', 'Built from the SEC EDGAR filing of the company named in the headline'],
+	siblings: ['from other outlets', 'The publisher page is unavailable; this is how other outlets covered the same story'],
+};
+
 function bylineHtml(a) {
 	const parts = [];
 	parts.push(`<span class="src">${esc(a.source)}</span>`);
@@ -71,6 +77,9 @@ function bylineHtml(a) {
 		parts.push(`<span class="art-badge" title="The publisher blocks page fetches; this text comes from their own RSS feed">via publisher feed</span>`);
 	} else if (a.extraction === 'reader') {
 		parts.push(`<span class="art-badge" title="The publisher blocks direct fetches; the full text was recovered through a reader service">full text recovered</span>`);
+	} else if (LANE_BADGES[a.extraction]) {
+		const [label, hint] = LANE_BADGES[a.extraction];
+		parts.push(`<span class="art-badge" title="${esc(hint)}">${esc(label)}</span>`);
 	}
 	return `<div class="art-byline">${parts.join('')}</div>`;
 }
@@ -186,6 +195,42 @@ function marketContextHtml(mc) {
 	return parts.length ? `<p class="art-provider">Market at publication: ${parts.join(' · ')}</p>` : '';
 }
 
+const PRICED_IN_LABELS = { yes: 'Priced in', partly: 'Partly priced in', no: 'Not priced in', unclear: 'Unclear if priced in' };
+const HORIZON_LABELS = { intraday: 'Intraday', days: 'Days', weeks: 'Weeks', months: 'Months', long_term: 'Long term' };
+const DIRECTION_ARROWS = { up: '▲', down: '▼', mixed: '◆' };
+
+// The structured trading read: which assets the story moves and how directly,
+// whether the market already knows, over what horizon, and the strongest case
+// against the obvious call. The counter-argument is always shown.
+function tradingReadHtml(a) {
+	const t = a.trading;
+	if (!t || !t.counter) return '';
+	const assets = (t.assets || [])
+		.map(
+			(x) =>
+				`<span class="art-asset ${esc(x.direction)}" title="${esc(x.exposure)} exposure, ${esc(x.direction)}">${DIRECTION_ARROWS[x.direction] || '◆'} ${esc(x.symbol)} <small>${esc(x.exposure)}</small></span>`,
+		)
+		.join('');
+	return `
+		<section class="art-trading" aria-label="Trading read">
+			<h2>Trading read</h2>
+			${assets ? `<div class="art-assets">${assets}</div>` : '<p class="art-provider">No tradable asset is named in this story.</p>'}
+			<dl class="art-trading-meta">
+				<div><dt>Priced in</dt><dd>${esc(PRICED_IN_LABELS[t.priced_in] || t.priced_in)}${t.priced_in_reason ? `<span class="dim"> · ${esc(t.priced_in_reason)}</span>` : ''}</dd></div>
+				<div><dt>Horizon</dt><dd>${esc(HORIZON_LABELS[t.horizon] || t.horizon)}</dd></div>
+			</dl>
+			<div class="art-counter"><h3>The counter-argument</h3><p>${esc(t.counter)}</p></div>
+			<p class="art-provider">Analysis, not advice · generated from the article text</p>
+		</section>`;
+}
+
+// Outlets or documents a wayback / primary / siblings read was assembled from.
+function laneSourcesHtml(a) {
+	const src = (a.lane_sources || []).filter((s) => s?.url && /^https?:\/\//.test(s.url));
+	if (!src.length) return '';
+	return `<p class="art-provider">Sources: ${src.map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a>`).join(' · ')}</p>`;
+}
+
 function summaryCardHtml(a, seed) {
 	const points = (a.key_points || []).filter(Boolean);
 	return `
@@ -214,6 +259,8 @@ function render(a, seed) {
 				${tickersHtml(a)}
 				${coinsHtml(a)}
 				${summaryCardHtml(a, seed)}
+					${tradingReadHtml(a)}
+					${laneSourcesHtml(a)}
 				${contextTagsHtml(a)}
 				${
 					isPreview

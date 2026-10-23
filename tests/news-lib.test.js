@@ -300,3 +300,95 @@ describe('getNews aggregation', () => {
 		expect(hit.content_text).toContain('four billion dollars');
 	});
 });
+
+describe('getNews hosted failover rung', () => {
+	const originalFetch = global.fetch;
+	const hosted = (articles) => ({
+		articles,
+		totalCount: articles.length,
+		version: 'v1',
+	});
+	const item = (over = {}) => ({
+		title: 'Bitcoin ETF inflows reach a weekly record',
+		link: 'https://news.example.com/btc-etf-record',
+		description: '<p>Spot BTC products absorbed fresh capital.</p>',
+		imageUrl: 'https://img.example.com/etf.jpg',
+		pubDate: '2026-10-23T20:00:00.000Z',
+		source: 'Example Wire',
+		sourceKey: 'examplewire',
+		category: 'general',
+		author: 'Sam Writer',
+		...over,
+	});
+	// Native feeds all fail; the hosted API answers with `payload`.
+	const stubFetch = (payload, hostedStatus = 200) =>
+		vi.fn(async (url) => {
+			if (String(url).startsWith('https://cryptocurrency.cv/api/v1/news')) {
+				return { ok: hostedStatus === 200, status: hostedStatus, text: async () => JSON.stringify(payload) };
+			}
+			return { ok: false, status: 503, text: async () => '' };
+		});
+	let fresh;
+	beforeEach(async () => {
+		vi.resetModules();
+		fresh = await import('../api/_lib/news.js');
+	});
+	afterEach(() => {
+		global.fetch = originalFetch;
+		vi.restoreAllMocks();
+	});
+
+	it('serves mapped hosted articles when the native merge is empty', async () => {
+		global.fetch = stubFetch(hosted([item()]));
+		const res = await fresh.getNews({ category: 'general', limit: 10 });
+		expect(res.articles).toHaveLength(1);
+		const a = res.articles[0];
+		expect(a.title).toBe('Bitcoin ETF inflows reach a weekly record');
+		expect(a.source).toBe('Example Wire');
+		expect(a.source_key).toBe('cv:examplewire');
+		expect(a.image).toBe('https://img.example.com/etf.jpg');
+		expect(a.description).toBe('Spot BTC products absorbed fresh capital.');
+		expect(a.id).toBe(fresh.articleId(a.link));
+		expect(a.tickers).toContain('BTC');
+		expect(a).not.toHaveProperty('content_text');
+	});
+
+	it('applies the q filter to failover articles', async () => {
+		global.fetch = stubFetch(hosted([item(), item({ title: 'Solana validators upgrade', link: 'https://news.example.com/sol' })]));
+		const res = await fresh.getNews({ q: 'solana', limit: 10 });
+		expect(res.articles.map((a) => a.title)).toEqual(['Solana validators upgrade']);
+	});
+
+	it('treats a schema mismatch as a failed rung, never as data', async () => {
+		global.fetch = stubFetch({ error: 'maintenance' });
+		const res = await fresh.getNews({ limit: 10 });
+		expect(res.articles).toEqual([]);
+	});
+
+	it('drops hosted items without a usable title, http(s) link or date', async () => {
+		global.fetch = stubFetch(
+			hosted([
+				item({ link: 'javascript:alert(1)' }),
+				item({ title: '', link: 'https://news.example.com/a' }),
+				item({ pubDate: 'not a date', link: 'https://news.example.com/b' }),
+				item({ link: 'https://news.example.com/good' }),
+			]),
+		);
+		const res = await fresh.getNews({ limit: 10 });
+		expect(res.articles.map((a) => a.link)).toEqual(['https://news.example.com/good']);
+	});
+
+	it('treats a hosted outage as a failed rung and returns empty', async () => {
+		global.fetch = stubFetch({}, 500);
+		const res = await fresh.getNews({ limit: 10 });
+		expect(res.articles).toEqual([]);
+	});
+
+	it('never asks the hosted API for a named source', async () => {
+		global.fetch = stubFetch(hosted([item()]));
+		const res = await fresh.getNews({ source: 'coindesk' });
+		expect(res.articles).toEqual([]);
+		const hostedCalls = global.fetch.mock.calls.filter(([u]) => String(u).startsWith('https://cryptocurrency.cv'));
+		expect(hostedCalls).toHaveLength(0);
+	});
+});

@@ -12,6 +12,7 @@ import {
 	extractParagraphs,
 } from '../api/_lib/article-extract.js';
 import { enrichTickers } from '../api/_lib/news-coins.js';
+import { waybackRawUrl, filerPhrase, pickFiling, pickSiblings } from '../api/_lib/article-lanes.js';
 
 describe('paragraphsFromReaderMarkdown', () => {
 	const md = `Title: eToro Takes Strategic Stake in Extended
@@ -86,5 +87,90 @@ describe('enrichTickers', () => {
 		// EXTENDED / ZENGO / ETORO are not in TICKER_COIN_IDS — no network call.
 		expect(await enrichTickers(['EXTENDED', 'ZENGO'])).toEqual([]);
 		expect(await enrichTickers([])).toEqual([]);
+	});
+});
+
+describe('wayback lane', () => {
+	const closest = { available: true, status: '200', timestamp: '20240105123000', url: 'http://web.archive.org/web/20240105123000/https://publisher.example/story' };
+
+	it('builds the raw-capture URL from a real web.archive.org snapshot', () => {
+		expect(waybackRawUrl(closest, 'https://publisher.example/story')).toBe(
+			'https://web.archive.org/web/20240105123000id_/https://publisher.example/story',
+		);
+	});
+
+	it('refuses a snapshot that is not served from web.archive.org', () => {
+		expect(waybackRawUrl({ ...closest, url: 'http://169.254.169.254/web/20240105123000/x' }, 'https://publisher.example/story')).toBeNull();
+		expect(waybackRawUrl({ ...closest, url: 'https://web.archive.org.evil.example/web/1/x' }, 'https://publisher.example/story')).toBeNull();
+	});
+
+	it('returns null when nothing is archived or the timestamp is malformed', () => {
+		expect(waybackRawUrl(undefined, 'https://publisher.example/story')).toBeNull();
+		expect(waybackRawUrl({ ...closest, timestamp: 'x' }, 'https://publisher.example/story')).toBeNull();
+	});
+});
+
+describe('primary lane (SEC EDGAR)', () => {
+	it('takes the longest capitalised run in the headline as the filer', () => {
+		expect(filerPhrase('Acme Holdings Corp reports record quarter as shares jump')).toBe('Acme Holdings Corp');
+	});
+
+	it('does not treat a lone sentence-opening word as a filer', () => {
+		expect(filerPhrase('Markets rally as rates fall')).toBeNull();
+		expect(filerPhrase('')).toBeNull();
+	});
+
+	const hit = (id, file_type, name) => ({
+		_id: id,
+		_source: { ciks: ['0001234567'], display_names: [`${name}  (CIK 0001234567)`], form: '8-K', file_type, file_date: '2026-10-01' },
+	});
+
+	it('prefers the press-release exhibit and builds the archive URL', () => {
+		const filing = pickFiling(
+			{ hits: { hits: [hit('0001193125-26-000001:main8k.htm', '8-K', 'Acme Holdings Corp'), hit('0001193125-26-000001:ex991.htm', 'EX-99.1', 'Acme Holdings Corp')] } },
+			'Acme Holdings Corp',
+		);
+		expect(filing.url).toBe('https://www.sec.gov/Archives/edgar/data/1234567/000119312526000001/ex991.htm');
+		expect(filing).toMatchObject({ accession: '0001193125-26-000001', form: '8-K', filer: 'Acme Holdings Corp', filed: '2026-10-01' });
+	});
+
+	it('rejects a filing whose filer does not match the headline phrase', () => {
+		expect(pickFiling({ hits: { hits: [hit('0001193125-26-000002:ex991.htm', 'EX-99.1', 'Other Industries Inc')] } }, 'Acme Holdings Corp')).toBeNull();
+	});
+
+	it('skips non-HTML documents', () => {
+		expect(pickFiling({ hits: { hits: [hit('0001193125-26-000003:ex991.pdf', 'EX-99.1', 'Acme Holdings Corp')] } }, 'Acme Holdings Corp')).toBeNull();
+	});
+});
+
+describe('siblings lane', () => {
+	const mk = (title, source, host, description) => ({ title, source, link: `https://${host}/a`, description });
+	const body = 'The exchange confirmed the listing of the new token after a review by its listings committee on Tuesday.';
+	const title = 'Exchange confirms listing of THREE token after committee review';
+
+	it('keeps other publishers covering the same story, one per outlet', () => {
+		const out = pickSiblings(
+			[
+				mk('Exchange confirms THREE token listing following committee review', 'Outlet A', 'a.example', body),
+				mk('THREE token listing confirmed by exchange committee review', 'Outlet A again', 'a.example', body),
+				mk('Unrelated story about mining difficulty adjustments', 'Outlet B', 'b.example', body),
+				mk('Exchange confirms listing of THREE token after committee review', 'Same publisher', 'publisher.example', body),
+			],
+			{ title, url: 'https://publisher.example/story' },
+		);
+		expect(out.map((s) => s.source)).toEqual(['Outlet A']);
+	});
+
+	it('bounds each sibling description to the excerpt limit', () => {
+		const long = `${body} `.repeat(20);
+		const [s] = pickSiblings([mk('Exchange confirms THREE token listing following committee review', 'Outlet A', 'a.example', long)], {
+			title,
+			url: 'https://publisher.example/story',
+		});
+		expect(s.text.length).toBeLessThanOrEqual(401);
+	});
+
+	it('returns nothing for a headline too short to match on', () => {
+		expect(pickSiblings([mk('Short one', 'A', 'a.example', body)], { title: 'Short one', url: 'https://publisher.example/s' })).toEqual([]);
 	});
 });

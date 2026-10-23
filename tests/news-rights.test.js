@@ -246,3 +246,14 @@ describe('GET /api/news/story-page for a withdrawn story', () => {
 		expect(res.body).not.toContain('Some other NullTX story');
 	});
 });
+
+describe('excerpt limit applies to every extraction lane', () => {
+	it('caps a wayback, primary or siblings body to the standing excerpt budget', async () => {
+		const { excerptParagraphs, EXCERPT_MAX_CHARS, EXCERPT_MAX_PARAGRAPHS } = await import('../api/_lib/news-rights.js');
+		const long = 'A full paragraph recovered from an archive, a filing, or sibling coverage that runs well past the budget. '.repeat(8);
+		const out = excerptParagraphs([long, long, long, long]);
+		expect(out.paragraphs.length).toBeLessThanOrEqual(EXCERPT_MAX_PARAGRAPHS);
+		expect(out.paragraphs.join('').length).toBeLessThanOrEqual(EXCERPT_MAX_CHARS + 1);
+		expect(out.truncated).toBe(true);
+	});
+});

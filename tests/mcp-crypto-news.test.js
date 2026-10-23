@@ -13,7 +13,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { buildCryptoNewsTool } from '../mcp-server/src/tools/crypto-news.js';
+import { buildCryptoNewsTool, buildNewsResolveTool } from '../mcp-server/src/tools/crypto-news.js';
 import { buildCryptoNewsDigestTool } from '../mcp-server/src/tools/crypto-news-digest.js';
 import { buildCryptoNewsArchiveTool } from '../mcp-server/src/tools/crypto-news-archive.js';
 
@@ -203,5 +203,54 @@ describe('server registration', () => {
 		expect(names).toEqual(
 			expect.arrayContaining(['crypto_news', 'crypto_news_digest', 'crypto_news_archive']),
 		);
+	});
+});
+
+describe('news_resolve', () => {
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		vi.restoreAllMocks();
+	});
+
+	it('is a free, read-only, idempotent descriptor', () => {
+		const tool = buildNewsResolveTool();
+		expect(tool.name).toBe('news_resolve');
+		expect(tool.description.toLowerCase()).toContain('free');
+		expect(tool.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false, idempotentHint: true });
+	});
+
+	it('returns the bounded excerpt, the lane used and the trading read, never a full body field', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(
+			res(200, {
+				title: 'Story',
+				source: 'Publisher',
+				published_at: '2026-10-01T00:00:00Z',
+				extraction: 'wayback',
+				lane_sources: [{ label: 'Internet Archive snapshot', url: 'https://web.archive.org/web/1id_/https://p.example/s' }],
+				paragraphs: ['Lead excerpt.'],
+				excerpt_truncated: true,
+				full_text_url: 'https://p.example/s',
+				summary: 'S',
+				key_points: ['K'],
+				sentiment: 'neutral',
+				tickers: ['THREE'],
+				trading: { assets: [], priced_in: 'no', horizon: 'weeks', counter: 'C' },
+				analysis_provider: 'test',
+				content_chars: 9000,
+			}),
+		);
+		vi.stubGlobal('fetch', fetchMock);
+		const out = structured(await buildNewsResolveTool().handler({ url: 'https://p.example/s', title: 'Story' }));
+		expect(out).toMatchObject({ ok: true, extraction: 'wayback', excerpt: ['Lead excerpt.'], full_text_url: 'https://p.example/s' });
+		expect(out.trading.counter).toBe('C');
+		expect(out).not.toHaveProperty('content_chars');
+		const url = String(fetchMock.mock.calls[0][0]);
+		expect(url).toContain('/api/news/article?url=https%3A%2F%2Fp.example%2Fs');
+	});
+
+	it('passes an upstream error envelope through', async () => {
+		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(res(400, { error: 'bad_url', message: 'url must be an http(s) article link' })));
+		const out = structured(await buildNewsResolveTool().handler({ url: 'https://p.example/s' }));
+		expect(out.ok).toBe(false);
 	});
 });

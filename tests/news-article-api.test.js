@@ -62,7 +62,8 @@ vi.mock('../api/_lib/news.js', async (importOriginal) => {
 	};
 });
 
-const { default: handler } = await import('../api/news/article.js');
+const { default: handler, parseTradingRead } = await import('../api/news/article.js');
+const { llmComplete, llmConfigured } = await import('../api/_lib/llm.js');
 
 function call(url) {
 	const res = { setHeader() {}, end() {}, statusCode: 200 };
@@ -145,5 +146,79 @@ describe('knowledge-base write gate', () => {
 		expect(out.body.content_chars).toBe(0);
 		// ...but nothing enters the corpus the agents ground on.
 		expect(recordExtraction).not.toHaveBeenCalled();
+	});
+});
+
+describe('extraction lanes', () => {
+	it('hands the headline and feed publish time to the ladder and returns lane_sources', async () => {
+		findArticle.mockResolvedValue({ title: 'Feed headline', pub_date: '2026-10-01T00:00:00Z', source: 'Feed Source' });
+		extractArticle.mockResolvedValue({
+			paragraphs: PARAS,
+			extraction: 'wayback',
+			blocked_reason: null,
+			html: null,
+			lane_sources: [{ label: 'Internet Archive snapshot', url: 'https://web.archive.org/web/20240105123000id_/https://publisher.example/lane-a' }],
+		});
+		const out = await call('/api/news/article?url=https%3A%2F%2Fpublisher.example%2Flane-a');
+		expect(extractArticle.mock.calls[0][1]).toMatchObject({ title: 'Feed headline', publishedAt: '2026-10-01T00:00:00Z' });
+		expect(out.body.extraction).toBe('wayback');
+		expect(out.body.lane_sources).toHaveLength(1);
+	});
+
+	it('still serves only the bounded excerpt for a lane-recovered body', async () => {
+		const long = 'Recovered body paragraph that is deliberately long enough to exceed the quotation budget by a wide margin. '.repeat(6);
+		extractArticle.mockResolvedValue({ paragraphs: [long, long, long], extraction: 'wayback', blocked_reason: null, html: null, lane_sources: [] });
+		const out = await call('/api/news/article?url=https%3A%2F%2Fpublisher.example%2Flane-b');
+		expect(out.body.paragraphs.join('').length).toBeLessThanOrEqual(401);
+		expect(out.body.excerpt_truncated).toBe(true);
+		expect(out.body.full_text_url).toBe('https://publisher.example/lane-b');
+	});
+});
+
+describe('trading read', () => {
+	const read = {
+		assets: [{ symbol: 'three', exposure: 'direct', direction: 'up' }, { symbol: 'XYZ', exposure: 'bogus', direction: 'up' }],
+		priced_in: 'partly',
+		priced_in_reason: 'Volume rose before the announcement.',
+		horizon: 'days',
+		counter: 'Listings often sell the news once the first wave of buyers is filled.',
+	};
+
+	it('keeps a complete read, normalises symbols and drops malformed assets', () => {
+		const out = parseTradingRead(read);
+		expect(out.assets).toEqual([{ symbol: 'THREE', exposure: 'direct', direction: 'up' }]);
+		expect(out).toMatchObject({ priced_in: 'partly', horizon: 'days', counter: read.counter });
+	});
+
+	for (const missing of ['counter', 'priced_in', 'horizon']) {
+		it(`rejects the whole read when ${missing} is missing`, () => {
+			expect(parseTradingRead({ ...read, [missing]: undefined })).toBeNull();
+		});
+	}
+
+	it('rejects an out-of-vocabulary priced_in or horizon', () => {
+		expect(parseTradingRead({ ...read, priced_in: 'maybe' })).toBeNull();
+		expect(parseTradingRead({ ...read, horizon: 'forever' })).toBeNull();
+	});
+
+	it('flows from the LLM answer to the response', async () => {
+		llmConfigured.mockReturnValue(true);
+		llmComplete.mockResolvedValue({
+			provider: 'test',
+			text: JSON.stringify({ summary: 'A summary.', key_points: ['One'], sentiment: 'bullish', entities: [], topics: [], ...read }),
+		});
+		const long = 'The platform announced a listing of its native token on a major venue after months of review. '.repeat(5);
+		extractArticle.mockResolvedValue({ paragraphs: [long, long], extraction: 'page', blocked_reason: null, html: null, lane_sources: [] });
+		const out = await call('/api/news/article?url=https%3A%2F%2Fpublisher.example%2Ftrading-a');
+		llmConfigured.mockReturnValue(false);
+		expect(out.body.trading.counter).toBe(read.counter);
+		expect(out.body.trading.assets[0].symbol).toBe('THREE');
+		expect(out.body.analysis_provider).toBe('test');
+	});
+
+	it('is null on the extractive path', async () => {
+		extractArticle.mockResolvedValue({ paragraphs: PARAS, extraction: 'page', blocked_reason: null, html: null, lane_sources: [] });
+		const out = await call('/api/news/article?url=https%3A%2F%2Fpublisher.example%2Ftrading-b');
+		expect(out.body.trading).toBeNull();
 	});
 });

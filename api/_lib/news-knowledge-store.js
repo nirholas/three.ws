@@ -106,6 +106,8 @@ export async function recordExtraction(record) {
 		topics: Array.isArray(record.topics) ? record.topics.slice(0, 12) : [],
 		market_context: record.market_context || null,
 		blocked_reason: record.blocked_reason || null,
+		trading: record.trading || null,
+		lane_sources: Array.isArray(record.lane_sources) ? record.lane_sources.slice(0, 6) : [],
 	};
 	try {
 		await sql`
@@ -230,7 +232,7 @@ export async function knowledgeStats() {
 	try {
 		const rows = await sql`
 			select count(*)::int as total,
-			       count(*) filter (where extraction in ('page','reader'))::int as full_text,
+			       count(*) filter (where extraction in ('page','reader','wayback'))::int as full_text,
 			       max(fetched_at) as latest
 			from news_knowledge
 		`;

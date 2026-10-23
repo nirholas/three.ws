@@ -1,7 +1,8 @@
 // Native crypto-news aggregation — the engine behind /api/news/feed, the
 // related-news rail on /coin/:id, the Oracle's narrative pillar, pump-intel's
 // news-meme matcher, and the /markets surfaces. three.ws fetches the source
-// RSS/Atom feeds directly; no third-party news API sits in this path.
+// RSS/Atom feeds directly. The only third-party news API in this path is the
+// failover rung (news-failover.js), asked solely when the native merge is empty.
 //
 // Design, at the scale of the full publisher registry (news-sources.js):
 //
@@ -28,6 +29,7 @@ import { NEWS_SOURCES, sourcesForCategory, sourcesForLanguage, sourcePriority, i
 import { isSuppressed, excerptText } from './news-rights.js';
 import { isDisplayable } from './news-curation.js';
 import { truncateChars } from './safe-text.js';
+import { fetchHostedNews } from './news-failover.js';
 
 const FEED_TIMEOUT_MS = 7000;
 const FRESH_MS = 300_000; // refetch a source after 5 min
@@ -717,22 +719,33 @@ export async function getNews({ category, source, lang = 'en', q, limit = 30, of
 	// downstream of getNews (the /markets/news feed, the RSS mirror, related
 	// coverage, the coin rails, and the hourly archive-append cron) inherits it,
 	// so a withdrawn publisher can neither be displayed nor newly archived.
-	let articles = dedupe(all)
-		.filter((a) => !isSuppressed(a))
-		.sort((a, b) => new Date(b.pub_date || 0) - new Date(a.pub_date || 0));
-	// Editorial display gate (opt-in): crypto-relevant + above the quality
-	// floor. OFF by default so ingestion (the archive cron) and agent-signal
-	// callers keep the full firehose; the human-facing feeds pass curated:true.
-	// An explicit single-source request is exempt — the caller asked for that
-	// outlet by name, so honour it.
-	if (curated && !source) {
-		articles = articles.filter((a) => isDisplayable(a));
-	}
-	if (q) {
-		const needle = q.toLowerCase();
-		articles = articles.filter((a) =>
-			`${a.title} ${a.description || ''} ${a.tickers.join(' ')}`.toLowerCase().includes(needle),
-		);
+	// The rights filter, curation gate and query run over whichever pool
+	// answered, native or the hosted failover, so neither can route around them.
+	const refine = (pool) => {
+		let list = dedupe(pool)
+			.filter((a) => !isSuppressed(a))
+			.sort((a, b) => new Date(b.pub_date || 0) - new Date(a.pub_date || 0));
+		// Editorial display gate (opt-in): crypto-relevant + above the quality
+		// floor. OFF by default so ingestion (the archive cron) and agent-signal
+		// callers keep the full firehose; the human-facing feeds pass curated:true.
+		// An explicit single-source request is exempt: the caller asked for that
+		// outlet by name, so honour it.
+		if (curated && !source) list = list.filter((a) => isDisplayable(a));
+		if (q) {
+			const needle = q.toLowerCase();
+			list = list.filter((a) =>
+				`${a.title} ${a.description || ''} ${a.tickers.join(' ')}`.toLowerCase().includes(needle),
+			);
+		}
+		return list;
+	};
+	let articles = refine(all);
+	// Failover rung: the native merge is empty (cold start, feed-wide outage),
+	// so ask the hosted cryptocurrency.cv API rather than render an empty page.
+	// Never for a named source, which has no equivalent upstream, and never when
+	// the caller is paging past the end of a populated result.
+	if (!articles.length && !source && offset === 0 && !all.length) {
+		articles = refine(await fetchHostedNews({ category, lang }));
 	}
 	const total = articles.length;
 	const sources_ok = keys.filter((k) => sourceCache.get(k)?.ok).length;

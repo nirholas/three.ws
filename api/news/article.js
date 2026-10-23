@@ -1,7 +1,8 @@
 // GET /api/news/article?url=<article url>&title=&source=
 // ---------------------------------------------------------------------------
 // Rich article detail for the /markets/news reader. Runs the full extraction
-// ladder (publisher page → Jina Reader → publisher feed → preview, in
+// ladder (publisher page → Jina Reader → Wayback → SEC EDGAR → sibling coverage →
+// publisher feed → preview, in
 // api/_lib/article-extract.js), so a Cloudflare-blocked publisher still yields
 // the full story instead of a one-line teaser. Layers analysis on top:
 //   • paragraphs      BOUNDED lead excerpt of the publisher's body (see
@@ -11,6 +12,9 @@
 //   • key_points      3–5 takeaways (LLM, or highest-signal sentences)
 //   • entities        orgs / people / projects the story is about (LLM)
 //   • sentiment       bullish / bearish / neutral
+//   • trading         structured read: assets (exposure + direction), whether
+//                     the news is priced in, horizon, and a mandatory
+//                     counter-argument (LLM only; null on the extractive path)
 //   • tickers         detected symbols, linkable to /coin/:id
 //   • coins           live price + 7d sparkline for each mapped ticker
 //   • related         live related coverage from the native aggregator
@@ -40,6 +44,38 @@ const _cache = new Map(); // url → { value, expiresAt }
 
 // ── Analysis ─────────────────────────────────────────────────────────────────
 
+const EXPOSURES = ['direct', 'indirect', 'sector'];
+const DIRECTIONS = ['up', 'down', 'mixed'];
+const PRICED_IN = ['yes', 'partly', 'no', 'unclear'];
+const HORIZONS = ['intraday', 'days', 'weeks', 'months', 'long_term'];
+
+/**
+ * Validate the trading read an LLM returned. `priced_in`, `horizon` and
+ * `counter` are required: a read with no counter-argument is a one-sided call,
+ * so the whole read is rejected rather than shown half-formed. Assets with an
+ * unknown shape are dropped individually.
+ */
+export function parseTradingRead(raw) {
+	if (!raw || typeof raw !== 'object') return null;
+	const counter = truncateChars(raw.counter, 500);
+	if (!counter || !PRICED_IN.includes(raw.priced_in) || !HORIZONS.includes(raw.horizon)) return null;
+	const assets = (Array.isArray(raw.assets) ? raw.assets : [])
+		.map((a) => ({
+			symbol: String(a?.symbol || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12),
+			exposure: a?.exposure,
+			direction: a?.direction,
+		}))
+		.filter((a) => a.symbol && EXPOSURES.includes(a.exposure) && DIRECTIONS.includes(a.direction))
+		.slice(0, 6);
+	return {
+		assets,
+		priced_in: raw.priced_in,
+		priced_in_reason: truncateChars(raw.priced_in_reason, 300) || null,
+		horizon: raw.horizon,
+		counter,
+	};
+}
+
 // The platform LLM chain (api/_lib/llm.js) owns provider order, key discovery,
 // failover, and spend tracking. Returns null when no provider is configured or
 // every provider fails — the caller then serves the extractive analysis below.
@@ -47,10 +83,10 @@ async function llmAnalyze(content, title, source) {
 	if (!llmConfigured()) return null;
 	try {
 		const { text, provider } = await llmComplete({
-			system: 'You are a crypto news analyst. Respond only with valid JSON, no markdown fence.',
-			user: `Analyze this article. Respond as {"summary": "...2-3 sentence summary...", "key_points": ["...", "..."], "sentiment": "bullish|bearish|neutral", "entities": ["organizations, people, and projects the story is about"], "topics": ["1-3 word themes"]}.\n\nTitle: ${title}\nSource: ${source}\n\n${content.slice(0, 6000)}`,
-			maxTokens: 800,
-			timeoutMs: 15_000,
+			system: 'You are a crypto news analyst. Respond only with valid JSON, no markdown fence. Base every claim on the article text; if the story names no tradable asset, return an empty assets array.',
+			user: `Analyze this article. Respond as {"summary": "...2-3 sentence summary...", "key_points": ["...", "..."], "sentiment": "bullish|bearish|neutral", "entities": ["organizations, people, and projects the story is about"], "topics": ["1-3 word themes"], "assets": [{"symbol": "TICKER", "exposure": "${EXPOSURES.join('|')}", "direction": "${DIRECTIONS.join('|')}"}], "priced_in": "${PRICED_IN.join('|')}", "priced_in_reason": "one sentence on why", "horizon": "${HORIZONS.join('|')}", "counter": "the strongest argument against the obvious read of this news"}. "counter" is required and must be a real counter-argument, not a restatement.\n\nTitle: ${title}\nSource: ${source}\n\n${content.slice(0, 6000)}`,
+			maxTokens: 1100,
+			timeoutMs: 18_000,
 			track: { tool: 'news_article' },
 		});
 		const parsed = JSON.parse(stripJsonFence(text));
@@ -62,6 +98,7 @@ async function llmAnalyze(content, title, source) {
 			entities: list(parsed.entities, 12, 80),
 			topics: list(parsed.topics, 8, 40),
 			sentiment: ['bullish', 'bearish', 'neutral'].includes(parsed.sentiment) ? parsed.sentiment : 'neutral',
+			trading: parseTradingRead(parsed),
 			provider,
 		};
 	} catch {
@@ -103,7 +140,7 @@ function heuristicAnalyze(paragraphs, title) {
 	}
 	const lex = lexiconSentiment(`${title} ${lead}`);
 	const sentiment = lex.label.includes('positive') ? 'bullish' : lex.label.includes('negative') ? 'bearish' : 'neutral';
-	return { summary, key_points, entities: [], topics: [], sentiment, provider: 'heuristic' };
+	return { summary, key_points, entities: [], topics: [], sentiment, trading: null, provider: 'heuristic' };
 }
 
 // ── Rights boundary ──────────────────────────────────────────────────────────
@@ -174,7 +211,7 @@ export default wrap(async (req, res) => {
 	// extraction. Reuse it when it carries real body text — never re-hammer a
 	// rate-limited publisher for a story we already know in full.
 	const stored = await getExtraction(id).catch(() => null);
-	if (stored && (stored.extraction === 'page' || stored.extraction === 'reader') && stored.content_chars > 400) {
+	if (stored && ['page', 'reader', 'wayback'].includes(stored.extraction) && stored.content_chars > 400) {
 		_cache.set(target, { value: stored, expiresAt: Date.now() + CACHE_TTL_MS });
 		return json(res, 200, publicView(stored), cacheHeaders);
 	}
@@ -184,9 +221,12 @@ export default wrap(async (req, res) => {
 	// page fetch still has a fallback body, never a dead end.
 	const feedCopy = await findArticle({ link: target }).catch(() => null);
 
-	// Run the extraction ladder: page → reader → feed → preview.
-	const { paragraphs, extraction, blocked_reason, html } = await extractArticle(target, {
+	// Run the extraction ladder: page → reader → wayback → primary → siblings →
+	// feed → preview.
+	const { paragraphs, extraction, blocked_reason, html, lane_sources } = await extractArticle(target, {
 		feedContentText: feedCopy?.content_text || null,
+		title: (params.get('title') || '').trim().slice(0, 300) || feedCopy?.title || null,
+		publishedAt: feedCopy?.pub_date || null,
 	});
 
 	const title =
@@ -243,7 +283,8 @@ export default wrap(async (req, res) => {
 			(html && metaContent(html, ['og:description', 'description', 'twitter:description'])) ||
 			feedCopy?.description ||
 			null,
-		extraction, // 'page' | 'reader' | 'feed' | 'preview'
+		extraction, // 'page' | 'reader' | 'wayback' | 'primary' | 'siblings' | 'feed' | 'preview'
+		lane_sources, // where a wayback/primary/siblings read came from, [] otherwise
 		blocked_reason: extraction === 'preview' ? blocked_reason : null,
 		paragraphs,
 		content_chars: content.length,
@@ -254,6 +295,7 @@ export default wrap(async (req, res) => {
 		entities: analysis.entities,
 		topics: analysis.topics,
 		sentiment: analysis.sentiment,
+		trading: analysis.trading,
 		analysis_provider: analysis.provider,
 		market_context: feedCopy?.market_context || null,
 		related,

@@ -73,3 +73,66 @@ export function buildCryptoNewsTool() {
 		handler,
 	};
 }
+
+// ── news_resolve ───────────────────────────────────────────────────────────
+// Resolve one article URL into a bounded excerpt, our own analysis, and a
+// structured trading read, through GET /api/news/article. That endpoint walks
+// the extraction ladder (page, reader, Wayback, SEC EDGAR, sibling coverage,
+// publisher feed, preview) and enforces the standing excerpt limit, so this
+// tool never returns a publisher's full body.
+
+const RESOLVE_NAME = 'news_resolve';
+const RESOLVE_DESCRIPTION =
+	'Resolve a crypto news article URL into what an agent can act on: a bounded lead excerpt, a summary, key points, ' +
+	'detected tickers, and a structured trading read (affected assets with exposure and direction, whether the news is ' +
+	'priced in, horizon, and a counter-argument). When the publisher blocks fetches or paywalls the story, three.ws ' +
+	'recovers it from the Internet Archive, the SEC EDGAR filing of the company named in the headline, or other outlets ' +
+	'covering the same story, and says which lane it used in `extraction`. The excerpt is a quotation, not the article: ' +
+	'follow `full_text_url` for the rest. Free: no payment or API key required.';
+
+const resolveZodShape = {
+	url: z.string().url().max(2000).describe('Absolute http(s) link to the article, e.g. a `link` from crypto_news.'),
+	title: z.string().max(300).describe('Headline, if known. Improves the SEC filing and sibling-coverage lanes.').optional(),
+};
+
+const resolveJsonSchema = jsonSchemaFromZod(resolveZodShape);
+
+async function runNewsResolve({ url, title } = {}) {
+	const body = await newsApiGet('/api/news/article', { url, title }, { timeoutMs: 60_000 });
+	if (body.ok === false) return body;
+	return {
+		ok: true,
+		title: body.title,
+		source: body.source,
+		published_at: body.published_at,
+		extraction: body.extraction,
+		lane_sources: body.lane_sources?.length ? body.lane_sources : undefined,
+		blocked_reason: body.blocked_reason || undefined,
+		excerpt: body.paragraphs,
+		excerpt_truncated: body.excerpt_truncated,
+		full_text_url: body.full_text_url,
+		summary: body.summary,
+		key_points: body.key_points,
+		sentiment: body.sentiment,
+		tickers: body.tickers,
+		trading: body.trading || undefined,
+		analysis_provider: body.analysis_provider,
+	};
+}
+
+export function buildNewsResolveTool() {
+	const handler = free({ toolName: RESOLVE_NAME, inputSchema: resolveJsonSchema }, (args) => runNewsResolve(args));
+	return {
+		name: RESOLVE_NAME,
+		title: 'Resolve a news article (excerpt, analysis, trading read)',
+		description: RESOLVE_DESCRIPTION,
+		inputSchema: resolveZodShape,
+		annotations: {
+			readOnlyHint: true,
+			destructiveHint: false,
+			idempotentHint: true,
+			openWorldHint: true,
+		},
+		handler,
+	};
+}
