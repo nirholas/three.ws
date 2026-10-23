@@ -7136,6 +7136,14 @@
 					"added": "2026-09-05"
 				},
 				{
+					"path": "/docs/agent-allowance-budgets",
+					"title": "Docs · Owner-Funded Agent Budgets",
+					"description": "Keep funds in your own wallet and give an agent a capped, expiring allowance enforced by the Solana Subscriptions and Allowances program. How the budget is created, pulled, guarded and revoked, and how to prove it on devnet.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-23"
+				},
+				{
 					"path": "/awesome",
 					"title": "Awesome 3D Agents",
 					"description": "A curated, link-checked list of everything you need to give an AI agent a body: text-to-3D models, capture and Gaussian splatting, avatars, rigging, motion generation, lipsync and voice, web renderers, asset pipelines, and the agent frameworks that drive them. Searchable and filterable, and published as an awesome list on GitHub.",

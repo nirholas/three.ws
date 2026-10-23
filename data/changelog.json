@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Owner-funded agent budgets enforced on-chain",
+			"summary": "Keep funds in your own wallet and sign one transaction that gives an agent a capped, expiring allowance through the Solana Subscriptions and Allowances program. The agent can pull only what is left, the spend guards refuse a pull the program would reject before any transaction is built, and the new Budget tab shows cap, spent, remaining and expiry with one-click revoke.",
+			"tags": ["feature"],
+			"link": "/docs/agent-allowance-budgets"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Prepaid x402 balances settled on-chain in batches",
 			"summary": "Deposit USDC once and spend it per call: each paid request debits a ledger balance that can never go negative, and a failed or cancelled request is never charged. Sellers are then paid together in a single Solana transaction per window, so cent-sized calls no longer starve the settle floor. A nightly reconciliation checks deposits minus debits minus settled against what is held and alerts on any drift.",
 			"tags": [
