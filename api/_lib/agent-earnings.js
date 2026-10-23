@@ -151,6 +151,23 @@ async function creatorFeeRows(window, { agentId = null, publicOnly = false, back
 	`;
 }
 
+/**
+ * Lifetime creator-fee lamports for a set of public agents, keyed by agent id,
+ * counted by the same attribution rule as getAgentEarnings (an agent's own
+ * custodial wallet, never shared). Agents with no counted fees are absent.
+ * @param {string[]} agentIds
+ * @returns {Promise<Map<string, { lamports: bigint, refreshed_at: any }>>}
+ */
+export async function creatorFeesByAgent(agentIds) {
+	const wanted = new Set(agentIds);
+	const out = new Map();
+	if (!wanted.size) return out;
+	for (const r of await creatorFeeRows('all', { publicOnly: true })) {
+		if (wanted.has(r.agent_id)) out.set(r.agent_id, { lamports: BigInt(r.lifetime_lamports || 0), refreshed_at: r.refreshed_at });
+	}
+	return out;
+}
+
 /** Skill sales (USDC net), completed hires and paid invoices, per agent, for a window. */
 async function serviceRows(window, { agentId = null, publicOnly = false, back = 0 } = {}) {
 	const range = windowRange(window, back);
