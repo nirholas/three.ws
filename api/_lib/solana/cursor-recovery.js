@@ -24,12 +24,23 @@
  * error must still propagate, because dropping the cursor on a transient
  * failure would re-scan the whole history on every blip.
  *
+ * Three message shapes mean the same thing: the lane that answered cannot
+ * resolve the stored cursor signature. "Transaction <sig> not found" and
+ * "failed to get signatures for address: ..." come from a node that pruned
+ * the signature outright; "history not on node" (connection.js's
+ * JSONRPC_HISTORY_NOT_ON_NODE path, -32020) comes from a lane that never
+ * held it. All three get the same recovery: drop the cursor and re-scan.
+ *
  * @param {unknown} err
  * @returns {boolean}
  */
 export function isPrunedCursorError(err) {
 	const msg = (err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err || ''));
-	return /Transaction .* not found/i.test(msg) || /failed to get signatures for address/i.test(msg);
+	return (
+		/Transaction .* not found/i.test(msg) ||
+		/failed to get signatures for address/i.test(msg) ||
+		/history not on node/i.test(msg)
+	);
 }
 
 /**

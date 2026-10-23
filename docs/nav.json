@@ -266,6 +266,10 @@
 					"path": "motion-swap"
 				},
 				{
+					"label": "Video to Motion (export a motion capture as GLB/BVH/FBX)",
+					"path": "video-to-motion"
+				},
+				{
 					"label": "Procedural animation",
 					"path": "procedural-animation"
 				},

@@ -28,9 +28,11 @@ same bug on both chains, and it is silent by construction:
 - Solana resumes each agent from the newest signature it saw, handed back as
   `getSignaturesForAddress({ until })`. That parameter is resolved against the
   answering node's own history, and the whole call fails with
-  `Transaction <sig> not found` when that node does not have it. The lane router
-  answers from whichever provider is not cooling and providers disagree about
-  retention, so a cursor written by one lane is regularly unreadable by the next.
+  `Transaction <sig> not found` when that node does not have it, or with
+  `history not on node` (JSON-RPC -32020) when the lane never held it at all.
+  The lane router answers from whichever provider is not cooling and providers
+  disagree about retention, so a cursor written by one lane is regularly
+  unreadable by the next.
 - EVM resumes at `last_block + 1`. A provider that has pruned that height answers
   `History has been pruned for this block`, and no smaller window fixes it,
   because the data is gone rather than the request being too wide. A keyless node
@@ -44,9 +46,12 @@ the crons catch per agent and per chain, so they keep returning 200 while the
 directory quietly stops learning anything.
 
 Both legs now recover on their own:
-`api/_lib/solana/cursor-recovery.js` drops `until` and re-scans from the head,
-and `isPrunedHistoryRejection()` skips the EVM cursor forward to the head. Both
-are safe to replay, because every row lands through `on conflict do nothing`.
+`api/_lib/solana/cursor-recovery.js`'s `isPrunedCursorError()` recognizes all
+three Solana message shapes (`Transaction <sig> not found`,
+`failed to get signatures for address`, and `history not on node`), drops
+`until`, and re-scans from the head; `isPrunedHistoryRejection()` skips the EVM
+cursor forward to the head. Both are safe to replay, because every row lands
+through `on conflict do nothing`.
 
 Two things had to change before the EVM half could actually fire. `erc8004RpcCall`
 now reads the JSON-RPC body **before** the HTTP status, because the providers that
@@ -94,7 +99,7 @@ gcloud logging read 'resource.type="cloud_run_revision" resource.labels.service_
 
 | Class (from the grouped read above) | Meaning | Action |
 |---|---|---|
-| `failed to get signatures for address: Transaction <sig> not found` | The answering lane cannot resolve the stored cursor. | Self-healing. If a block of agents is already stuck, drain it with the recovery script below instead of waiting a full sweep cycle. |
+| `failed to get signatures for address: Transaction <sig> not found` / `solana rpc history not on node @ <host>` | The answering lane cannot resolve the stored cursor, either because it pruned the signature or because it never held it. | Self-healing. If a block of agents is already stuck, drain it with the recovery script below instead of waiting a full sweep cycle. |
 | `solana rpc 429 @ <host>` | That lane is rate-limited. | Transient. The router cools the lane and retries; see [solana-rpc-lanes.md](solana-rpc-lanes.md) if it persists. |
 | `solana rpc provider error -16401 @ <host>` | The lane gates this method behind a paid tier. | Per-method capability routing in `api/_lib/solana/connection.js`. Add the method to that lane's blocked set. |
 | `fetch failed (…) @ <host>` | Transport fault on one lane. | Transient. Persistent means the lane is dead: drop it. |

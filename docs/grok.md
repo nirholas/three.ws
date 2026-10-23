@@ -206,6 +206,34 @@ its calls in [MCP use cases](./mcp.md#use-cases), and
 caller's own `tools/list`, so a prompt never names a tool the connector cannot
 call.
 
+## A skill file for Grok
+
+[`https://three.ws/grok-skill.md`](https://three.ws/grok-skill.md) teaches
+Grok all of the above in one Markdown file: the connector URL and its settings,
+the plain HTTPS fallback, the links contract, the free limits, what needs an
+account, and the rule that a connector never spends. Upload it to Grok's Skills,
+or have Grok Bot keep it in its files:
+
+```
+Download https://three.ws/grok-skill.md to your files and follow it whenever I ask for anything 3D.
+```
+
+It works without a connector too. Grok Bot has a terminal, so the file shows the
+free server as `curl` JSON-RPC calls that run as written: list the tools, search
+the ready-made library, get paste-ready code for a match, generate a model, and
+collect a render that outlived the call:
+
+```bash
+curl -s -X POST https://three.ws/api/mcp-studio \
+  -H 'content-type: application/json' \
+  -H 'accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"search_catalog","arguments":{"q":"chair","limit":2}}}'
+```
+
+The file is the Grok edition of the general [`/skill.md`](./agent-skills.md#the-entry-point-skill-httpsthreewsskillmd).
+Both render from one set of facts, so their URLs, mint and free limits cannot
+disagree; see [Agent Skills](./agent-skills.md#the-grok-edition-httpsthreewsgrok-skillmd).
+
 ## How it behaves under Grok
 
 **No call hangs.** A model usually lands in under a minute, but a GPU that has

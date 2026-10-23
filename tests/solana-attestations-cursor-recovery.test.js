@@ -18,6 +18,7 @@ describe('isPrunedCursorError', () => {
 	it('matches the RPC message for a cursor the node no longer has', () => {
 		expect(isPrunedCursorError(PRUNED)).toBe(true);
 		expect(isPrunedCursorError(new Error('Transaction abc123 not found'))).toBe(true);
+		expect(isPrunedCursorError(new Error('solana rpc history not on node @ https://example.com'))).toBe(true);
 	});
 
 	it('does not swallow unrelated RPC failures', () => {
