@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Splat video export now records every frame of the camera path",
+			"summary": "Exporting a camera path from the Splat Viewer could hand back an empty 0 MB video on slower machines, because the recorder sampled the WebGL canvas on a timer and sometimes never caught a finished frame. The export now pushes exactly one frame per rendered frame, keeps recording for two extra frames so the encoder flushes the end of the path, and says plainly when the scene rendered too slowly to encode anything instead of offering an empty download. Covered by new tests for the 25 saved camera view cap, the camera path sampler and the export flow.",
+			"tags": [
+				"fix"
+			],
+			"link": "/splat"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Revoking a connected app now stops it everywhere",
 			"summary": "When Claude, ChatGPT or any MCP client ends its own grant, or you press Revoke in Connected apps, its access tokens stop on the next request and the token introspection endpoint reports them inactive. Other clients on your account stay connected. The consent screen tests now pin the Read, Manage, Trade, Spend and Launch groups.",
 			"tags": [
