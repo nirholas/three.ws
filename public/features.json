@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-23T21:56:11.216Z",
+	"generated_at": "2026-10-23T22:06:07.257Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1322,6 +1322,18 @@
 					"title": "Splat Viewer: Photoreal Gaussian Avatars",
 					"description": "Render Gaussian-splat and radiance-field avatars in the browser: the photoreal output of engines like GaussianAvatars and HumanGaussian. Load a .ply / .splat / .ksplat by URL or upload; decoding runs entirely client-side.",
 					"added": "2026-06-26",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.7,
+					"job": "make"
+				},
+				{
+					"path": "/x-video",
+					"title": "X Video Downloader",
+					"description": "Paste an X post link and download its video or GIF in every quality, with the post's likes, replies, reposts and views. Free, no account, no API key.",
+					"added": "2026-10-23",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-23T22:04:19.213Z",
+	"generated_at": "2026-10-23T22:06:07.297Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4132,
+	"total": 4134,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -144,6 +144,16 @@
 		{
 			"date": "2026-10-23",
 			"type": "update",
+			"title": "Hired work now has an independent evaluator, a dispute window and automatic release or refund",
+			"summary": "A bounty can name who judges the delivery: the platform checker (default), the hiring agent, or a registry agent, who signs a pass or fail attestation with a reason code and evidence link. The losing side then has a dispute window (24 hours by default, 0 to 30 days per job) to freeze the funds and send them to a second evaluator or the platform arbiter. When the window ends with no dispute a cron releases or refunds on its own, a job nobody evaluates refunds the buyer at its deadline, and a failed transfer is retried without ever paying twice. Every transition is written to a hash-chained trail shown on the job page, and both parties are notified.",
+			"link": "/labor-market",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
 			"title": "KOL tracker shows follower counts without an X API key, and the Oracle reads KOL timelines",
 			"summary": "A keyless X reader now backs the tracker when the paid API is unset or rate limited, so attached KOLs keep their follower counts. The Oracle also reads tracked timelines every 10 minutes to feed its social virality signal, and each coin's own linked X account age and followers now appear in its intel.",
 			"link": "/tracker",
@@ -208,6 +218,16 @@
 			"title": "Prepaid credit plans and free trials for paid MCP tools",
 			"summary": "Buy a credit bundle or a 24-hour or 30-day time pass at /mcp-plans and call paid MCP tools without paying each call over x402. Every account gets 3 free calls per tool. Credits are debited before a call, refunded when the tool errors, and every result reports creditsUsed and creditsRemaining. A drained plan falls back to the per-call payment-required error.",
 			"link": "/mcp-plans",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Prepaid x402 balances settled on-chain in batches",
+			"summary": "Deposit USDC once and spend it per call: each paid request debits a ledger balance that can never go negative, and a failed or cancelled request is never charged. Sellers are then paid together in a single Solana transaction per window, so cent-sized calls no longer starve the settle floor. A nightly reconciliation checks deposits minus debits minus settled against what is held and alerts on any drift.",
+			"link": "/docs/ops/x402-prepaid",
 			"tags": [
 				"feature"
 			]
@@ -1543,27 +1563,6 @@
 			"link": "/trenches",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Walk into three.ws: the homepage boots, unlocks, and lets you enter the desktop as your avatar",
-			"summary": "The homepage now starts like a real computer. A boot screen runs live checks (your GPU, the site catalog, your account, the avatar body, the $THREE feed, your gem ledger) and a lock screen greets you with the $THREE price and your balances. Press Walk in and you arrive on a campus as your avatar: walk to your desk and sit down to open the desktop on the monitor, pick up the phone for Pocket, put on the headset for VR, enter the three.ws Exchange (a live ticker board and Trenches inside), the Launchpad, the Forge, the Gallery, Agent Plaza and the Marketplace, or dig for gems in the mine, where every gem is rolled server-side and kept on your account. Settings gets an Arrival section to choose where you start, the taskbar gets a World button, and the desktop wears the classic three.ws violet grid.",
-			"link": "/",
-			"tags": [
-				"feature",
-				"desktop"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Agent Commerce",
-			"summary": "Invoice clients from your agents' wallets with Solana Pay links verified on-chain, list offers other agents can buy, see what your agents purchased, and approve the spending-limit changes they propose.",
-			"link": "/commerce",
-			"tags": [
-				"launch"
 			]
 		}
 	]

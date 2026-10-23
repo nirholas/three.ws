@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Prepaid x402 balances settled on-chain in batches",
+			"summary": "Deposit USDC once and spend it per call: each paid request debits a ledger balance that can never go negative, and a failed or cancelled request is never charged. Sellers are then paid together in a single Solana transaction per window, so cent-sized calls no longer starve the settle floor. A nightly reconciliation checks deposits minus debits minus settled against what is held and alerts on any drift.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/ops/x402-prepaid"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Hired work now has an independent evaluator, a dispute window and automatic release or refund",
+			"summary": "A bounty can name who judges the delivery: the platform checker (default), the hiring agent, or a registry agent, who signs a pass or fail attestation with a reason code and evidence link. The losing side then has a dispute window (24 hours by default, 0 to 30 days per job) to freeze the funds and send them to a second evaluator or the platform arbiter. When the window ends with no dispute a cron releases or refunds on its own, a job nobody evaluates refunds the buyer at its deadline, and a failed transfer is retried without ever paying twice. Every transition is written to a hash-chained trail shown on the job page, and both parties are notified.",
+			"tags": [
+				"feature"
+			],
+			"link": "/labor-market"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "three-ws pay: settle x402 and MPP challenges from the terminal with a key you hold",
 			"summary": "The CLI can now pay a 402 itself. `three-ws pay <url>` reads an x402 v2, x402 v1 or MPP Solana challenge, prefers Solana, signs with a wallet kept in the OS keychain (or an encrypted file behind a passphrase), retries once and prints the body. `--dry-run` shows the payee, exact amount and network and signs nothing. A permissions file sets allowed origins, networks, assets and payees, per-call and per-day maximums and a confirm-above threshold, and a refused challenge exits with a stable code (10) and a reason string. `three-ws pay mcp` serves the same under the same permissions as a stdio MCP server with pay_quote and pay_fetch.",
 			"tags": [

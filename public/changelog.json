@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-23T22:04:19.180Z",
+	"generated_at": "2026-10-23T22:06:07.273Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -141,6 +141,16 @@
 		{
 			"date": "2026-10-23",
 			"type": "update",
+			"title": "Hired work now has an independent evaluator, a dispute window and automatic release or refund",
+			"summary": "A bounty can name who judges the delivery: the platform checker (default), the hiring agent, or a registry agent, who signs a pass or fail attestation with a reason code and evidence link. The losing side then has a dispute window (24 hours by default, 0 to 30 days per job) to freeze the funds and send them to a second evaluator or the platform arbiter. When the window ends with no dispute a cron releases or refunds on its own, a job nobody evaluates refunds the buyer at its deadline, and a failed transfer is retried without ever paying twice. Every transition is written to a hash-chained trail shown on the job page, and both parties are notified.",
+			"link": "/labor-market",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
 			"title": "KOL tracker shows follower counts without an X API key, and the Oracle reads KOL timelines",
 			"summary": "A keyless X reader now backs the tracker when the paid API is unset or rate limited, so attached KOLs keep their follower counts. The Oracle also reads tracked timelines every 10 minutes to feed its social virality signal, and each coin's own linked X account age and followers now appear in its intel.",
 			"link": "/tracker",
@@ -205,6 +215,16 @@
 			"title": "Prepaid credit plans and free trials for paid MCP tools",
 			"summary": "Buy a credit bundle or a 24-hour or 30-day time pass at /mcp-plans and call paid MCP tools without paying each call over x402. Every account gets 3 free calls per tool. Credits are debited before a call, refunded when the tool errors, and every result reports creditsUsed and creditsRemaining. A drained plan falls back to the per-call payment-required error.",
 			"link": "/mcp-plans",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Prepaid x402 balances settled on-chain in batches",
+			"summary": "Deposit USDC once and spend it per call: each paid request debits a ledger balance that can never go negative, and a failed or cancelled request is never charged. Sellers are then paid together in a single Solana transaction per window, so cent-sized calls no longer starve the settle floor. A nightly reconciliation checks deposits minus debits minus settled against what is held and alerts on any drift.",
+			"link": "/docs/ops/x402-prepaid",
 			"tags": [
 				"feature"
 			]
