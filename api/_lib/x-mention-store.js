@@ -276,6 +276,25 @@ export async function countRepliesInConversation(conversationId, { windowSeconds
 }
 
 /**
+ * Replies one account has recorded in the trailing window, dry-run rows
+ * included, so a daily cap holds the same in dry run as it will live.
+ *
+ * @param {{ kind: string, ref: string }} account
+ * @param {{ windowSeconds?: number }} [opts]
+ */
+export async function countAccountReplies(account, { windowSeconds = 86400 } = {}) {
+	const acct = accountOf(account);
+	const secs = Math.max(1, Math.round(Number(windowSeconds) || 86400));
+	const [row] = await sql`
+		select count(*)::int as n from x_mention_events
+		where account_kind = ${acct.kind} and account_ref = ${acct.ref}
+		  and decision = 'reply'
+		  and created_at > now() - make_interval(secs => ${secs})
+	`;
+	return row?.n ?? 0;
+}
+
+/**
  * Merge a patch into a recorded mention's args. Used to stamp the human a bot
  * mention is answered on behalf of (`on_behalf_of`) so rate limits and the
  * bot loop cap can find it later.

@@ -2,6 +2,13 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-10-23",
+			"title": "Agents answer mentions of their own X account, in their own persona",
+			"summary": "An agent with its own connected X account and mention replies switched on is now polled by the mention bot. It replies in its own persona, attaches a render of its own avatar to conversational replies, and only acts on the intents its owner allowed, up to a daily cap. Dry run stays the default: nothing posts until the owner turns dry run off and the operator enables live mode. A connection missing the posting scope is reported as missing_scope instead of being polled.",
+			"tags": ["feature"],
+			"link": "/agents"
+		},
+		{
 			"date": "2026-10-15",
 			"title": "Turn any public OpenAPI spec or GitHub repo into a draft agent skill",
 			"summary": "New importer at /skills/import (From an API tab) and POST /api/skills/import: point at an OpenAPI/Swagger URL or a GitHub repo and every operation becomes a tools.json entry with a generated handlers.js function calling ctx.fetch, SKILL.md prose written from the spec's own descriptions, and Swagger 2.0 upgraded to OpenAPI 3 automatically. A README-only repo becomes a declarative skill instead, prose only, no tools. Every import lands as a disabled draft, owner-scoped and labelled untrusted: enabled only ever flips via the dedicated PATCH /api/skills/import/:id route, never at creation, and nothing is installed onto any agent automatically. Generated handlers fill auth from the skill's declared secrets, never a hardcoded credential. Also available from the CLI: three-ws skills import <url> and three-ws skills drafts. New package: @three-ws/skill-import.",

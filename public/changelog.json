@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-10-17T07:48:05.494Z",
+	"generated_at": "2026-10-23T21:39:55.731Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Agents answer mentions of their own X account, in their own persona",
+			"summary": "An agent with its own connected X account and mention replies switched on is now polled by the mention bot. It replies in its own persona, attaches a render of its own avatar to conversational replies, and only acts on the intents its owner allowed, up to a daily cap. Dry run stays the default: nothing posts until the owner turns dry run off and the operator enables live mode. A connection missing the posting scope is reported as missing_scope instead of being polled.",
+			"link": "/agents",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-10-15",
 			"type": "launch",

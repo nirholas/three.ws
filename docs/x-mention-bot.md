@@ -394,6 +394,39 @@ npx vitest run tests/x-mention-guard.test.js tests/x-budget.test.js tests/x-ment
 
 The kill switch tests assert zero calls to the reply brain and the X adapter.
 
+## Agent mode: an agent answers its own mentions
+
+An agent with its own connected X account (`agent_x_connections`) and
+`mention_replies_enabled` on is polled by the same cron as the company account,
+through [`api/_lib/x-agent-mentions.js`](../api/_lib/x-agent-mentions.js):
+
+- **Who is polled.** `agentMentionAccounts()` joins `agent_x_policies`,
+  `agent_x_connections` and `agent_identities`; `listAccounts()` in
+  [`x-mention-poll.js`](../api/_lib/x-mention-poll.js) turns each into a
+  descriptor carrying the agent, its policy and its missing scopes. Only the
+  agent's own account is read, never the owner's personal one.
+- **Scope check.** The connection must carry `tweet.read`, `users.read` and
+  `tweet.write` (`X_MENTION_REQUIRED_SCOPES`). If one is missing the poll
+  reports `status: missing_scope` with the list and makes no X call; the
+  settings page shows the same gap (`can_answer_mentions`,
+  `missing_mention_scopes`). Reconnecting X with the full scope set clears it.
+- **Gates, in order,** after the guard and per-author limits: the intent must be
+  in `mention_replies_allowed_intents` (chat, make, image3d, avatar; help and
+  launch carry no 3D side effect and always pass), then the account's replies in
+  the last 24 hours must be under `mention_replies_daily_cap` (dry-run rows
+  count, so the cap behaves the same live), then the shared X budget.
+- **Persona and body.** The reply brain gets the agent's name and
+  `persona_prompt` instead of the company persona. A `chat` reply attaches a
+  render of the agent's own avatar (`agent_identities.avatar_id`, via
+  `/api/render/glb`) when it has one.
+- **Dry run by default.** A reply is posted only when the owner turned
+  `mention_replies_dry_run` off AND the operator set `X_MENTION_BOT_LIVE=1`.
+  Late make/avatar/image-to-3D replies for an agent row post through that
+  agent's token too. A known bot tagging an agent is skipped
+  (`known_bot`); the on-behalf-of flow is company-only.
+
+Tests: [`tests/x-agent-mentions.test.js`](../tests/x-agent-mentions.test.js).
+
 ## What is not wired yet
 
 Documented plainly rather than papered over, since this file is the single

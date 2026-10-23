@@ -14,7 +14,9 @@
 //
 // Dry run is the default. The adapter posts only when X_MENTION_BOT_LIVE is
 // "1" AND a poster token resolver is supplied; this loop supplies none for the
-// company account, so going live is the separate owner step (order 928).
+// company account, so going live is the separate owner step (order 928). An
+// agent account (x-agent-mentions.js) goes live only when its owner also turned
+// its mention-reply dry run off.
 //
 // Mention text is untrusted data: it is parsed by the pure parser and quoted
 // to the reply brain as data. The only action it can ever cause is one reply
@@ -35,6 +37,8 @@ import { handleAvatar, finishPendingAvatars } from './x-mention-avatar.js';
 import { finishPendingMakes } from './x-mention-make.js';
 import { handleImage3d, finishPendingImage3d } from './x-mention-image3d.js';
 import { createDeliver } from './x-mention-deliver.js';
+import { xBotLive } from './gateway/adapters/x.js';
+import { agentMentionAccounts, agentPosterUrl, agentTokenResolver, intentAllowed, tokenResolverForRow } from './x-agent-mentions.js';
 
 export const LOCK_KEY = 'x_mentions_lock';
 const DEFAULT_LOCK_SECONDS = 110;
@@ -92,14 +96,14 @@ export async function overReplyLimit(authorId, account, limits, store = mentionS
 }
 
 /** The text a parsed mention is answered with, or why it is not answered. */
-async function composeAnswer({ mention, parsed, account, compose }) {
+async function composeAnswer({ mention, parsed, account, compose, agent = null }) {
 	if (parsed.intent === 'help') {
 		return { text: parsed.args?.topic === 'refused' ? REFUSED_REPLY : FIXED_HELP_REPLY, reason: parsed.reason };
 	}
 	if (UNBUILT_HANDLERS.has(parsed.intent)) {
 		return { text: FIXED_HELP_REPLY, reason: 'handler_not_built' };
 	}
-	const reply = await compose({ company: { handle: account.handle }, mention });
+	const reply = await compose(agent ? { agent, mention } : { company: { handle: account.handle }, mention });
 	return { text: reply.text, reason: reply.source === 'model' ? parsed.reason : `fallback:${reply.reason}`, provider: reply.provider, model: reply.model };
 }
 
@@ -108,9 +112,12 @@ async function composeAnswer({ mention, parsed, account, compose }) {
  * Only ever throws for a store failure on the mention row itself, which the
  * caller treats as "not fully recorded" and stops the batch there.
  */
-export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter, guard = guardMention, paused = isPaused, budget = xBudget, request = null, onBehalf = answerOnBehalf, knownBots = null, avatar = handleAvatar, image3d = handleImage3d }) {
+export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter, guard = guardMention, paused = isPaused, budget = xBudget, request = null, onBehalf = answerOnBehalf, knownBots = null, avatar = handleAvatar, image3d = handleImage3d, agentCtx = null, posterFor = agentPosterUrl }) {
 	const parsed = parseMentionIntent(mention, account);
-	const dryRun = true;
+	// The company account is always dry run here. An agent answers for real only
+	// when its owner turned dry run off AND the operator's global switch is on.
+	const dryRun = agentCtx ? agentCtx.policy.dry_run || !xBotLive(env) : true;
+	const getAccessToken = agentCtx && !dryRun ? agentTokenResolver({ agentId: agentCtx.agentId, userId: agentCtx.userId }) : null;
 	const { inserted } = await store.recordMention({ mention, parsed, dryRun });
 	if (!inserted) return { tweetId: mention.id, decision: 'duplicate', reason: null };
 
@@ -126,7 +133,7 @@ export async function handleMention({ mention, account, limits, env, store = men
 
 	try {
 		const verdict = await guard({ mention, account: mention.account, env, store });
-		if (!verdict.allow && verdict.reason === 'known_bot') {
+		if (!verdict.allow && verdict.reason === 'known_bot' && !agentCtx) {
 			// A known xAI account tagged us: answer on behalf of the human at the
 			// root of the conversation, or skip with the reason (x-mention-on-behalf.js).
 			const allowedBot = await budget.budgetGate({ intent: parsed.intent, env });
@@ -151,24 +158,39 @@ export async function handleMention({ mention, account, limits, env, store = men
 			await store.updateDecision(mention.id, { decision: 'rate_limited', reason: limited });
 			return { tweetId: mention.id, intent: parsed.intent, decision: 'rate_limited', reason: limited };
 		}
+		if (agentCtx) {
+			if (!intentAllowed(agentCtx.policy, parsed.intent)) {
+				const reason = `intent_not_allowed:${parsed.intent}`;
+				await store.updateDecision(mention.id, { decision: 'skip', reason });
+				return { tweetId: mention.id, intent: parsed.intent, decision: 'skip', reason };
+			}
+			const sentToday = await store.countAccountReplies(mention.account, { windowSeconds: DAY });
+			if (sentToday >= agentCtx.policy.daily_cap) {
+				await store.updateDecision(mention.id, { decision: 'rate_limited', reason: 'agent_daily_cap' });
+				return { tweetId: mention.id, intent: parsed.intent, decision: 'rate_limited', reason: 'agent_daily_cap' };
+			}
+		}
 		const allowed = await budget.budgetGate({ intent: parsed.intent, env });
 		if (!allowed.allow) {
 			await store.updateDecision(mention.id, { decision: 'budget', reason: allowed.reason });
 			return { tweetId: mention.id, intent: parsed.intent, decision: 'budget', reason: allowed.reason };
 		}
+		const lateDeps = getAccessToken ? { deliver: createDeliver({ env, adapterFactory, getAccessToken: () => getAccessToken }) } : undefined;
 		if (parsed.intent === 'avatar') {
-			const result = await avatar({ tweetId: mention.id, authorId: mention.userId || mention.author?.id, author: mention.author, dryRun });
+			const result = await avatar({ tweetId: mention.id, authorId: mention.userId || mention.author?.id, author: mention.author, dryRun }, lateDeps);
 			if (result.decision === 'reply') await budget.recordPosts(1);
 			return { tweetId: mention.id, intent: 'avatar', decision: result.decision, reason: result.reason, text: result.text, dry_run: dryRun };
 		}
 		if (parsed.intent === 'image3d') {
-			const result = await image3d({ tweetId: mention.id, authorId: mention.userId || mention.author?.id, args: parsed.args, dryRun });
+			const result = await image3d({ tweetId: mention.id, authorId: mention.userId || mention.author?.id, args: parsed.args, dryRun }, lateDeps);
 			if (result.decision === 'reply') await budget.recordPosts(1);
 			return { tweetId: mention.id, intent: 'image3d', decision: result.decision, reason: result.reason, text: result.text, dry_run: dryRun };
 		}
-		const answer = await composeAnswer({ mention, parsed, account, compose });
-		const adapter = adapterFactory({ mention, parsed, env, policyDryRun: true });
-		await adapter.sendText(mention.id, answer.text);
+		const answer = await composeAnswer({ mention, parsed, account, compose, agent: agentCtx?.agent || null });
+		const adapter = adapterFactory({ mention, parsed, env, policyDryRun: agentCtx ? dryRun : true, getAccessToken });
+		const poster = agentCtx && parsed.intent === 'chat' ? await posterFor(agentCtx.agent).catch(() => null) : null;
+		if (poster) await adapter.sendMedia(mention.id, { url: poster, caption: answer.text });
+		else await adapter.sendText(mention.id, answer.text);
 		await budget.recordPosts(1);
 		await store.updateDecision(mention.id, { reason: answer.reason });
 		return { tweetId: mention.id, intent: parsed.intent, decision: 'reply', reason: answer.reason, text: answer.text, dry_run: !adapter.live };
@@ -188,6 +210,7 @@ export async function pollAccount({ descriptor, env = process.env, maxMentions =
 	const fetcher = deps.fetchMentions || fetchMentions;
 	const limits = replyLimits(env);
 	const label = `${descriptor.kind}:${descriptor.ref}`;
+	if (descriptor.missingScopes?.length) return { account: label, status: 'missing_scope', missing: descriptor.missingScopes };
 
 	let sinceId;
 	try {
@@ -233,7 +256,7 @@ export async function pollAccount({ descriptor, env = process.env, maxMentions =
 	let stoppedAt = null;
 	for (const mention of batch) {
 		try {
-			decisions.push(await handleMention({ mention, account: page.account, limits, env, store, compose: deps.compose, adapterFactory: deps.adapterFactory, guard: deps.guard, paused: deps.paused, budget: deps.budget, request: resolve, onBehalf: deps.onBehalf, knownBots: deps.knownBots, avatar: deps.avatar, image3d: deps.image3d }));
+			decisions.push(await handleMention({ mention, account: page.account, limits, env, store, compose: deps.compose, adapterFactory: deps.adapterFactory, guard: deps.guard, paused: deps.paused, budget: deps.budget, request: resolve, onBehalf: deps.onBehalf, knownBots: deps.knownBots, avatar: deps.avatar, image3d: deps.image3d, agentCtx: descriptor.agentCtx || null, posterFor: deps.posterFor }));
 			lastRecorded = mention.id;
 		} catch (err) {
 			stoppedAt = mention.id;
@@ -255,16 +278,24 @@ export async function pollAccount({ descriptor, env = process.env, maxMentions =
 
 /**
  * Accounts to poll: the company account when its credentials are present,
- * then each agent account with mention replies enabled (supplied by
- * `agentAccounts`, which order 060 provides from the agent policy).
+ * then each agent account with mention replies enabled (`agentAccounts`,
+ * x-agent-mentions.js, from agent_x_policies and agent_x_connections).
  */
-export async function listAccounts({ env = process.env, agentAccounts = async () => [] } = {}) {
+export async function listAccounts({ env = process.env, agentAccounts = agentMentionAccounts } = {}) {
 	const accounts = [];
 	if (companyMentionsConfigured(env)) {
 		accounts.push({ kind: 'company', ref: env.X_COMPANY_HANDLE || 'trythreews', fetch: { kind: 'company' } });
 	}
-	for (const a of await agentAccounts()) {
-		accounts.push({ kind: 'agent', ref: String(a.agentId), fetch: { kind: 'agent', agentId: a.agentId, userId: a.userId } });
+	// A failing agent lookup must never stop the company account from being polled.
+	const agentRows = await agentAccounts().catch((err) => {
+		console.error('[x-mentions] agent account lookup failed', err?.message || err);
+		return [];
+	});
+	for (const a of agentRows) {
+		accounts.push({
+			kind: 'agent', ref: String(a.agentId), fetch: { kind: 'agent', agentId: a.agentId, userId: a.userId },
+			agentCtx: { agentId: String(a.agentId), userId: String(a.userId), agent: a.agent, policy: a.policy }, missingScopes: a.missingScopes || [],
+		});
 	}
 	return accounts;
 }
@@ -280,7 +311,7 @@ export async function runFollowUps({ env = process.env, deps = {} } = {}) {
 	if (await (deps.paused || isPaused)(env)) return { followUps: { skipped: 'kill_switch' } };
 	const gate = await budget.readGate({ env }).catch(() => ({ allow: true }));
 	if (!gate.allow) return { followUps: { skipped: 'budget', reason: gate.reason } };
-	const baseDeliver = deps.deliver || createDeliver({ env, adapterFactory: deps.adapterFactory, getAccessToken: deps.getAccessToken });
+	const baseDeliver = deps.deliver || createDeliver({ env, adapterFactory: deps.adapterFactory, getAccessToken: deps.getAccessToken || tokenResolverForRow });
 	const deliver = async (args) => {
 		const id = await baseDeliver(args);
 		if (id) await budget.recordPosts(1).catch(() => {});
