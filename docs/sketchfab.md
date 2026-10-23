@@ -91,3 +91,21 @@ State lives in the `sketchfab_uploads` table (one row per creation:
 when the brand-safety gate parked it). Code:
 [`api/cron/sketchfab-showcase.js`](https://github.com/nirholas/three.ws/blob/main/api/cron/sketchfab-showcase.js)
 and [`api/_lib/sketchfab.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/sketchfab.js).
+
+## Backfilling the AI tag on older uploads
+
+New uploads carry `createdwithai` from 2026-10-09 (commit `919e54e82`). Models the account
+published before that date do not, and Sketchfab can file them as "Human Created". The backfill
+script adds the tag to every model that lacks it and changes nothing else:
+
+```bash
+eval "$(node scripts/read-service-env.mjs '^SKETCHFAB_API_TOKEN$')"
+node scripts/sketchfab-retag.mjs            # dry run: prints exactly what would change
+node scripts/sketchfab-retag.mjs --apply    # PATCH /v3/models/{uid} for each model missing the tag
+node scripts/sketchfab-retag.mjs            # second dry run: must report 0 to change
+```
+
+Without a token, `--user <username>` runs a read-only dry run against the public listing. Sketchfab
+replaces the whole tag list on PATCH, so each request carries the model's existing tags in order
+plus `createdwithai`, and nothing else. A `429` is retried after Sketchfab's `Retry-After`.
+Tests: `tests/sketchfab-retag.test.js`.
