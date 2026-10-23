@@ -82,6 +82,17 @@ export const KEEPWARM_LANES = [
 		reason: 'same Modly worker as the modly lane; warming either keeps both resident',
 	},
 	{
+		id: 'pixal3d',
+		urlEnv: 'MODEL_PIXAL3D_URL',
+		region: 'us-central1',
+		accelerator: 'nvidia-l4',
+		safeByDefault: false,
+		// Opt-in "Match my photo" lane (workers/model-pixal3d): never a default or
+		// failover target, so its cold start only matters to callers who asked for it
+		// and the shared us-central1 L4 grant goes to the default lanes first.
+		reason: 'us-central1 L4 grant is shared with the default image lanes; an opt-in lane does not earn a warm floor by default',
+	},
+	{
 		id: 'hunyuan3d',
 		urlEnv: 'GCP_HUNYUAN3D_URL',
 		region: 'us-central1',

@@ -30,6 +30,9 @@
 //                  POST /infer → { task_id }  GET /tasks/:id → result_gcs_url.
 //                  NOT the avatar controller's /reconstruct + /jobs/:id shape.
 //
+//   triposplat   → MODEL_TRIPOSPLAT_URL     (workers/model-triposplat, MIT)
+//                  One image → 3D Gaussian splat (.splat + .ply). Standard
+//                  /infer + /tasks/:id shape; the result is a splat, not a GLB.
 //   remesh       → GCP_REMESH_URL           (workers/remesh)
 //   stylize      → GCP_STYLIZE_URL          (workers/stylize)
 //   retex        → GCP_TEXTURE_URL          (workers/texture)
@@ -136,6 +139,10 @@ function serviceUrlForMode(mode) {
 			// output of `segment`), preserving part node names. Same
 			// /infer + /tasks/:id task shape.
 			return readEnv('MODEL_HOLOPART_URL');
+		case 'triposplat':
+			// Self-hosted TripoSplat worker (workers/model-triposplat): image to
+			// Gaussian splat. Same /infer + /tasks/:id task shape.
+			return readEnv('MODEL_TRIPOSPLAT_URL');
 		case 'modly':
 		case 'modly_hunyuan':
 			// Self-hosted Modly worker (workers/modly): one service, two models.
@@ -298,6 +305,21 @@ function buildWorkerRequest(request) {
 		return {
 			path: '/infer',
 			resultKey: 'result_gcs_url',
+			body,
+		};
+	}
+
+	if (mode === 'triposplat') {
+		// Self-hosted TripoSplat (workers/model-triposplat): the worker
+		// conditions on the first reference image only.
+		const photos = Array.isArray(params?.images) && params.images.length
+			? params.images
+			: [sourceUrl].filter(Boolean);
+		const body = { images: photos };
+		if (Number.isFinite(Number(params?.num_gaussians))) body.num_gaussians = Math.round(Number(params.num_gaussians));
+		return {
+			path: '/infer',
+			resultKey: 'splat_url',
 			body,
 		};
 	}
@@ -609,6 +631,8 @@ const MODE_ETA = {
 	// Per-part point-cloud conditioning + diffusion decode for every part in
 	// an already-segmented mesh.
 	holopart: 100,
+	// Single-pass flow-matching denoise plus a decoder replay on the L4.
+	triposplat: 45,
 	// TripoSG's 20 to 50 flow steps plus repair and decimate on the L4.
 	modly: 60,
 	// Hunyuan3D 2 Mini Turbo is a few-step distilled sampler.
@@ -719,7 +743,7 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 			// on the primary view only (report 1 so a multi-view request is never
 			// silently claimed as fused); other modes are single-source.
 			const viewsUsed =
-				mode === 'hunyuan' || mode === 'trellis2' || mode === 'modly' || mode === 'modly_hunyuan' || mode === 'anigen' || mode === 'partcrafter'
+				mode === 'hunyuan' || mode === 'triposplat' || mode === 'trellis2' || mode === 'modly' || mode === 'modly_hunyuan' || mode === 'anigen' || mode === 'partcrafter'
 					? 1
 					: (mode === 'reconstruct' || mode === 'trellis' || mode === 'pixal3d') && Array.isArray(workerReq.body.images)
 						? workerReq.body.images.length
@@ -795,6 +819,12 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 					if (data.mask_url) result.maskUrl = data.mask_url;
 					if (typeof data.frames === 'number') result.frames = data.frames;
 					if (typeof data.fps === 'number') result.fps = data.fps;
+				} else if (mode === 'triposplat') {
+					// A Gaussian splat, not a mesh: the compact .splat is the
+					// primary result and the .ply rides along for download.
+					result.resultSplatUrl = url;
+					if (data.ply_url) result.plyUrl = data.ply_url;
+					if (typeof data.num_gaussians === 'number') result.numGaussians = data.num_gaussians;
 				} else if (mode === 'video2scene') {
 					// The result is a .ply point cloud, not a GLB mesh. Surface the
 					// reconstruction telemetry so the client can show point/frame counts.

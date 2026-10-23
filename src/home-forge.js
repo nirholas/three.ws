@@ -56,8 +56,6 @@ const MAX_POLL_MS = 12 * 60 * 1000;
 // keeps holding until the network has been unusable for this long.
 const POLL_MAX_BACKOFF_MS = 20_000;
 const POLL_TRANSPORT_GRACE_MS = 90_000;
-const MODEL_VIEWER_SRC =
-	'https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js';
 const HISTORY_KEY = 'forge:home:history';
 const HISTORY_MAX = 6;
 // Cumulative models forged on this device, driving the sparse milestone nudge
