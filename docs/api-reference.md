@@ -749,6 +749,69 @@ curl -s 'https://three.ws/api/leaderboard/earnings?window=all&limit=1'
 
 ---
 
+## Suggested Skills API
+
+Skills an agent drafted for itself from runs that verifiably worked. Owner-only (session, or a bearer token with `agents:read` for reads and `agents:write` for writes). Concepts and the redaction guarantee: [skill-candidates.md](skill-candidates.md).
+
+### List suggested skills
+
+```
+GET /api/agents/:id/skill-candidates?status=draft
+```
+
+`status` is optional: `draft`, `invalid`, `installed` or `dismissed`.
+
+```json
+{
+  "data": {
+    "candidates": [
+      {
+        "id": "875d3f48-3a18-43ab-97b4-b7d8969875ea",
+        "agent_id": "7f7c77ff-9007-43fb-9a72-3810d4a082bd",
+        "signal": "multi_tool_turn",
+        "goal": "Vet the token <value> before I buy",
+        "steps": [{ "tool": "token_safety", "args": { "mint": "string", "network": "string" } }],
+        "outcome": { "steps": 3, "distinct_tools": 3, "answer_chars": 252 },
+        "status": "draft",
+        "plan": { "name": "token-vet-report", "description": "..." },
+        "bundle": { "manifest": {}, "skill_md": "...", "tools": {}, "handlers_src": "..." },
+        "validation_errors": null,
+        "revisions": []
+      }
+    ]
+  }
+}
+```
+
+`steps[].args` holds shapes only; no argument value from the evidence run is stored. `GET /api/agents/:id/skill-candidates/:cid` returns one candidate in the same shape.
+
+### Act on a suggested skill
+
+```
+POST /api/agents/:id/skill-candidates/:cid
+{ "action": "accept" }
+```
+
+| `action` | Effect |
+| --- | --- |
+| `accept` | Install on this agent only. `409` unless the candidate is a valid draft; `422` if the stored bundle no longer validates. |
+| `publish` | Publish through the marketplace flow. The listing is owned by the caller. |
+| `dismiss` | Dismiss, or uninstall when installed. |
+| `redraft` | Retry an `invalid` candidate. |
+| `accept_revision`, `dismiss_revision` | Resolve a pending revision proposal; send `revision_id`. |
+
+Returns the updated candidate. Mutations need the usual CSRF token for session callers. The same body with `id` is accepted at `POST /api/agents/:id/skill-candidates`.
+
+### Installed bundle files
+
+```
+GET /api/agents/:id/skill-candidates/:cid/bundle/manifest.json
+```
+
+Also `SKILL.md`, `tools.json` and `handlers.js`. Public and anonymous (so the embed running the agent can load them), and only served for an installed candidate. This URI is what `accept` adds to the agent's `skills`.
+
+---
+
 ## Widgets API
 
 ### List widgets

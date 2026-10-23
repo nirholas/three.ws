@@ -3256,6 +3256,12 @@ URL: https://three.ws/docs/x402
 
 How three.ws implements x402 HTTP 402 paid agent skills: the challenge, verify, and settle mechanics.
 
+### Docs · x402 upto on Solana
+
+URL: https://three.ws/docs/x402-upto
+
+Pay for what the call used: the buyer authorizes a cap, the seller settles the measured charge and the rest of the deposit is refunded. Seller and buyer APIs, failure behavior, and the batch-settlement finding.
+
 ### Docs · x402 for VS Code
 
 URL: https://three.ws/docs/x402-vscode
@@ -3543,6 +3549,12 @@ Browse the public three.ws agent marketplace and skills catalog over MCP.
 URL: https://three.ws/docs/skills
 
 Write, package, and monetize agent skills.
+
+### Docs · Suggested skills
+
+URL: https://three.ws/docs/skill-candidates
+
+Agents draft a skill bundle from a run that verifiably worked, with argument values never stored. You review the bundle and evidence, then install it on that agent only, publish it, or dismiss it. Includes the API and the MCP tool.
 
 ### Docs · Importing skills
 
@@ -4089,6 +4101,12 @@ Talk to your agent from Telegram and other chat platforms: pairing, commands, ap
 URL: https://three.ws/docs/agent-mail
 
 Give an agent a real email address on agents.three.ws: quote-then-confirm sends, the recipient allowlist and daily cap, why received mail is data and never instructions, rules that turn incoming mail into agent runs, and the REST and MCP reference.
+
+### Docs: Agent self-onboarding
+
+URL: https://three.ws/docs/agent-self-onboarding
+
+An agent signs itself up with a Solana key and no email, gets an account, a wallet and an API key, and buys a paid plan with one x402 payment. Challenge format, errors, limits and the CLI.
 
 ### Docs: Agent Commerce
 
@@ -7497,6 +7515,10 @@ console.log(el.skills);
 ```
 
 ---
+
+## Skills your agent suggests
+
+An agent can draft a skill from a run that verifiably worked. The draft appears under **Suggested skills** on the agent dashboard and installs only when you click it. See [skill-candidates.md](skill-candidates.md).
 
 ## Skill manifest format
 

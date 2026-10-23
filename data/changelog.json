@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Agents suggest skills from runs that worked",
+			"summary": "After a run that verifiably worked (several tools with no error, a passed labor-escrow job, or a closed profitable trade), an agent now drafts a real skill bundle from it and lists it under Suggested skills on the agent dashboard. Argument values from the run are never stored, only their shapes. You read the bundle and the evidence run, then install it on that agent only, publish it to the marketplace, or dismiss it. Nothing installs or publishes without your click, and a draft that fails the marketplace checks can never be installed. When an installed skill is used again and the run does better, the agent proposes a revision you can accept instead of changing the skill.",
+			"tags": ["feature"],
+			"link": "/docs/skill-candidates"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "An agent can sign itself up and pay for its plan",
 			"summary": "An autonomous agent now signs up with a Solana key and no email: it signs a single-use server challenge, receives an account, a custodial wallet and an API key, and can then buy the Builder or Scale plan with one USDC x402 payment on Solana. The CLI does the whole thing with `three-ws signup --agent`. Replayed or badly signed challenges are rejected, each key gets one account, and signups are rate limited and capped per day.",
 			"tags": ["feature", "sdk"],

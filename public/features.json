@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-23T22:24:41.271Z",
+	"generated_at": "2026-10-23T22:44:01.535Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -6453,6 +6453,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/x402-upto",
+					"title": "Docs · x402 upto on Solana",
+					"description": "Pay for what the call used: the buyer authorizes a cap, the seller settles the measured charge and the rest of the deposit is refunded. Seller and buyer APIs, failure behavior, and the batch-settlement finding.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
 					"path": "/docs/x402-vscode",
 					"title": "Docs · x402 for VS Code",
 					"description": "Find, inspect, and pay x402 APIs from VS Code with $THREE or USDC on Solana, including wallet setup, token selection, safety controls, and the $THREE contract address.",
@@ -7021,6 +7033,18 @@
 					"title": "Docs · Skills",
 					"description": "Write, package, and monetize agent skills.",
 					"added": "2026-04-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/skill-candidates",
+					"title": "Docs · Suggested skills",
+					"description": "Agents draft a skill bundle from a run that verifiably worked, with argument values never stored. You review the bundle and evidence, then install it on that agent only, publish it, or dismiss it. Includes the API and the MCP tool.",
+					"added": "2026-10-23",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -8113,6 +8137,18 @@
 					"title": "Docs: Agent Mail",
 					"description": "Give an agent a real email address on agents.three.ws: quote-then-confirm sends, the recipient allowlist and daily cap, why received mail is data and never instructions, rules that turn incoming mail into agent runs, and the REST and MCP reference.",
 					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.7,
+					"job": null
+				},
+				{
+					"path": "/docs/agent-self-onboarding",
+					"title": "Docs: Agent self-onboarding",
+					"description": "An agent signs itself up with a Solana key and no email, gets an account, a wallet and an API key, and buys a paid plan with one x402 payment. Challenge format, errors, limits and the CLI.",
+					"added": "2026-10-23",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

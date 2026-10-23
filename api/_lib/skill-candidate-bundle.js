@@ -224,8 +224,6 @@ export function sanitizePlan(raw, steps) {
 				.map(([k, v]) => [k, clean(v, 160)])
 				.filter(([, v]) => v),
 		),
-		failure_handling:
-			clean(raw.failure_handling, 300) || 'If a step fails, stop, report which step failed and why, and do not guess the missing result.',
 	};
 }
 
@@ -336,7 +334,7 @@ ${inputs}
 
 ## When a step fails
 
-${plan.failure_handling}
+The skill stops at the first step that fails and returns that step's name and error. Report which step failed and why, and do not guess the missing result.
 `;
 }
 

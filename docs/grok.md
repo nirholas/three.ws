@@ -64,6 +64,7 @@ leave it on:
 | `identity_check`, `call_agent` | Screen an agent identity, or send another three.ws agent a message and get its reply. |
 | `remember`, `recall` | Your agents' long-term memory. |
 | `list_available_skills`, `import_community_skill`, `list_custom_skills`, `get_custom_skill`, `create_custom_skill`, `update_custom_skill` | Your agents' prompt-only skills. |
+| `list_skill_candidates` | Skills your agents drafted for themselves from runs that worked (read-only; you approve them on the dashboard). |
 | `list_my_avatars`, `get_avatar`, `get_embed_code`, `render_avatar_image` | Your avatars, their embed snippets and rendered images. |
 | `read_resource` | Read-only views of your account and agents (`three://me`, `three://agents`, and each agent's usage, runs, earnings and wallet state), which the `agent-report` prompt reads. Reading a balance moves nothing. |
 

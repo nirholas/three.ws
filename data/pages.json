@@ -4693,6 +4693,12 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/skill-candidates",
+					"title": "Docs · Suggested skills",
+					"description": "Agents draft a skill bundle from a run that verifiably worked, with argument values never stored. You review the bundle and evidence, then install it on that agent only, publish it, or dismiss it. Includes the API and the MCP tool.",
+					"added": "2026-10-23"
+				},
+				{
 					"path": "/docs/skill-import",
 					"title": "Docs · Importing skills",
 					"description": "Install SKILL.md skills from any public GitHub repository or registry manifest: pinned to an exact commit, licence-checked, scanned for hostile instructions, approved by the owner, and run under the spend gate when they ask to spend, sign or message. Includes the fork and publish flow, the MCP tools and the REST API.",

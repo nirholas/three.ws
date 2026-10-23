@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-23T22:37:17.865Z",
+	"generated_at": "2026-10-23T22:44:01.654Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4146,
+	"total": 4148,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -45,6 +45,16 @@
 			"title": "Docs · Owner-Funded Agent Budgets",
 			"summary": "Keep funds in your own wallet and give an agent a capped, expiring allowance enforced by the Solana Subscriptions and Allowances program. How the budget is created, pulled, guarded and revoked, and how to prove it on devnet.",
 			"link": "/docs/agent-allowance-budgets",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Docs · Suggested skills",
+			"summary": "Agents draft a skill bundle from a run that verifiably worked, with argument values never stored. You review the bundle and evidence, then install it on that agent only, publish it, or dismiss it. Includes the API and the MCP tool.",
+			"link": "/docs/skill-candidates",
 			"tags": [
 				"launch"
 			]
@@ -136,6 +146,16 @@
 			"title": "Agents can sign up to services: inbox codes and sign-in links",
 			"summary": "An agent's own address can now receive verification emails and hand back the one-time code or sign-in link. New inbox_list, inbox_read and inbox_wait_for_code tools read the code with a confidence score, only from services the owner lists under Code senders, only from authentic non-spam mail. Email bodies stay untrusted data and links are never fetched for the agent.",
 			"link": "/agent-mail",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Agents suggest skills from runs that worked",
+			"summary": "After a run that verifiably worked (several tools with no error, a passed labor-escrow job, or a closed profitable trade), an agent now drafts a real skill bundle from it and lists it under Suggested skills on the agent dashboard. Argument values from the run are never stored, only their shapes. You read the bundle and the evidence run, then install it on that agent only, publish it to the marketplace, or dismiss it. Nothing installs or publishes without your click, and a draft that fails the marketplace checks can never be installed. When an installed skill is used again and the run does better, the agent proposes a revision you can accept instead of changing the skill.",
+			"link": "/docs/skill-candidates",
 			"tags": [
 				"feature"
 			]
@@ -1536,27 +1556,6 @@
 			"title": "Rig Doctor now diagnoses non-humanoid rigs too, not just naming mismatches",
 			"summary": "Rig Doctor's canonical-joint coverage score has nothing to say about a creature, prop, or vehicle rig: it has no Mixamo-shaped skeleton to map and always reads as \"will not animate\" by design. A new Skin weights stat answers the question that actually applies to a rig like that: how many joints influence the single heaviest-weighted vertex, and how many of the mesh's vertices came back with no joint influence at all. Zero unweighted vertices means the skin is sound even though the clip library will never retarget onto it; a nonzero count means part of the mesh will not move under any skeleton.",
 			"link": "/rig-doctor",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Sentiment Scout's X reads gained a second, independent path through xAI",
-			"summary": "The Sentiment Scout reads X for posts quoting a coin's exact contract address, as evidence a holder can open and check. When our own X search credentials are unavailable or rate limited, it now fails over to xAI's x_search tool, a second route to the same posts, metered by its own daily cap so an outage on one path never silently costs more than planned on the other. No change for anyone reading the Scout: the evidence looks the same either way.",
-			"link": "/docs/sentiment-scout",
-			"tags": [
-				"improvement",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Share a finished Forge creation on X and it plays inline",
-			"summary": "A link to a finished Forge creation now carries an X player card instead of a flat image: the post expands into the real 3D model, posed with its own poster frame and ready to orbit, through the same safe embed runtime the agent-profile embeds use (no audio or video element, HTTPS assets only). A creation that is still generating keeps the plain image card until it finishes, so a link never promises a model that isn't ready yet.",
-			"link": "/forge",
 			"tags": [
 				"feature"
 			]

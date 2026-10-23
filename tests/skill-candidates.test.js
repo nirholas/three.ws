@@ -47,7 +47,6 @@ const PLAN = {
 	when_to_use: 'Use before buying a token the user has not traded before.',
 	step_notes: ['Read the basic token facts.', 'See how concentrated the holders are.', 'Simulate a round trip to catch honeypots.'],
 	param_descriptions: { mint: 'The token mint to vet.', network: 'Which network the mint is on.', limit: 'How many holders to list.', label: 'A label for the report.', probe_sol: 'Probe size in SOL.' },
-	failure_handling: 'If any step fails, stop and report which one.',
 };
 
 const completeWith = (plan) => async () => ({ text: JSON.stringify(plan), provider: 'test', model: 'test-model' });
