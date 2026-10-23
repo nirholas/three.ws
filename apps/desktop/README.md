@@ -85,6 +85,17 @@ npm run dist:win      # nsis
 npm run dist:linux    # AppImage + deb
 ```
 
+Linux output lands in `dist/` (`three.ws-Desktop-<version>-linux-x86_64.AppImage`
+and `-linux-amd64.deb`). The macOS and Windows installers build unsigned until
+the owner supplies the Apple Developer ID certificate (`CSC_LINK`,
+`CSC_KEY_PASSWORD`) and notarization key (`APPLE_API_KEY`, `APPLE_API_KEY_ID`,
+`APPLE_API_ISSUER`) and a Windows code-signing certificate. Auto-update only trusts signed releases, so those are
+the remaining owner steps; `npm run release:mac` is the one command once they exist.
+
+`npm run smoke:runtime` reaches the venue's public launch feed. If your network
+is blocked from it, the smoke prints `SKIP` for the fill checks and still
+verifies create, pause, kill and log hygiene.
+
 ## How it works
 
 ```
