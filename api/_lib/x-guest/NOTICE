@@ -1,0 +1,15 @@
+three.ws x-guest reader
+Portions adapted from XActions (https://github.com/nirholas/xactions,
+npm package "xactions" 4.0.1), Copyright (c) 2024-2026 nich (@nichxbt),
+licensed under the Apache License, Version 2.0 (see LICENSE in this directory).
+
+Adapted files:
+  parse-user.js   from src/scrapers/twitter/http/parse/user.js
+  parse-tweet.js  from src/scrapers/twitter/http/parse/tweet.js
+  errors.js       reduced from src/scrapers/twitter/http/errors.js
+  index.js        guest-token activation, GraphQL request flow and query-id
+                  discovery re-implemented from guest.js, client.js, endpoints.js
+                  and x-endpoints.generated.js
+
+Changes: the parsers import ./errors.js; the HTTP client is a compact
+reimplementation that reads only public profiles and timelines.

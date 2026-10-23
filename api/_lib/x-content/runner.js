@@ -19,7 +19,8 @@ import { loadLifts } from './priority.js';
 import { loadReview, contentHash } from './review.js';
 import { previewClient, publishItem, xClientFromEnv } from './publisher.js';
 import { itemTexts, linkChecks, probeChecks } from './verify.js';
-import { collectOutcomes, learnLifts, outcomesAreStale, outcomesStore } from './outcomes.js';
+import { OUTCOMES_WINDOW_DAYS, collectOutcomes, learnLifts, outcomesAreStale, outcomesStore } from './outcomes.js';
+import { loadSeriesOrNull } from './price-impact.js';
 
 const HOUR = 60 * 60_000;
 const DAY = 24 * HOUR;
@@ -133,11 +134,11 @@ async function loadOutcomes(outcomes) {
 
 // Runs after the publish attempt, so a slow timeline read cannot delay a post,
 // and swallows its own failure, so it cannot turn a sent post into a failed tick.
-async function refreshOutcomes({ outcomes, stored, collect, client, ledger, now }) {
+async function refreshOutcomes({ outcomes, stored, collect, client, ledger, now, loadPrices }) {
 	const sample = (rows) => learnLifts(rows, { now }).sample;
 	if (!outcomes || !outcomesAreStale(stored, now)) return { refreshed: false, sample: sample(stored?.posts) };
 	try {
-		const fresh = await collect({ client, ledger, now, previous: stored });
+		const fresh = await collect({ client, ledger, now, previous: stored, priceSeries: await loadPrices({ days: OUTCOMES_WINDOW_DAYS, now }) });
 		await outcomes.save(fresh);
 		return { refreshed: true, sample: sample(fresh.posts), readDays: fresh.readDays };
 	} catch (err) {
@@ -221,6 +222,9 @@ export async function runTick({
 	checks = preflight,
 	outcomes = env.DATABASE_URL ? outcomesStore() : null,
 	collect = collectOutcomes,
+	// The $THREE candles the rows are stamped with. A caller that swaps `collect`
+	// is not reading the real timeline, so it gets no price read either.
+	loadPrices = collect === collectOutcomes ? loadSeriesOrNull : async () => null,
 }) {
 	const queue = loadQueue(root);
 	const state = await store.load();
@@ -275,7 +279,7 @@ export async function runTick({
 	try {
 		result = await fillSlot({ queue, state, store, root, now, requestedId, client, checks, context, publishable, blocked });
 	} finally {
-		if (!requestedId) report = await refreshOutcomes({ outcomes, stored, collect, client, ledger: state, now });
+		if (!requestedId) report = await refreshOutcomes({ outcomes, stored, collect, client, ledger: state, now, loadPrices });
 	}
 	return { ...result, outcomes: report };
 }

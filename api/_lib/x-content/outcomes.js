@@ -21,6 +21,7 @@
 // Everything is pure except the store and collectOutcomes.
 
 import { urlsIn, weightedLength } from './quality.js';
+import { returnsAt } from './price-impact.js';
 
 export const OUTCOMES_KEY = 'x_content_outcomes';
 
@@ -58,6 +59,15 @@ export const LEARNED_MIN_SAMPLE = 20;
 export const CALIBRATION_TEXT_CHARS = 400;
 export const LEARNED_POINTS_PER_UNIT = 10;
 export const LEARNED_POINTS_LIMIT = 15;
+// The +24h $THREE return after a post is a much noisier signal than its likes
+// (the whole market moves it), so it is held back until this many matured posts
+// carry one, needs more posts per value, and may move the ranking only a little.
+export const PRICE_MIN_SAMPLE = 20;
+export const PRICE_MIN_VALUE_COUNT = 5;
+// Percentage points of +24h return that count as one unit of lift.
+export const PRICE_UNIT_PCT = 10;
+export const PRICE_POINTS_PER_UNIT = 4;
+export const PRICE_POINTS_LIMIT = 4;
 
 // Weighted length (quality.js) at which a post leaves each bucket. `long` is a
 // post over the standard limit, which X only allows on a Premium account.
@@ -252,6 +262,20 @@ export function attributeKeys(row) {
 	return keys;
 }
 
+// ── Price ───────────────────────────────────────────────────────────────────
+
+// Stamps each row with the +24h $THREE return after it was posted, when the
+// candles say what it was. A row less than a day old, or with no price around it,
+// is left unstamped (never zero), so it neither helps nor hurts any attribute.
+// `candles` is the chronological series from price-impact.js loadSeries.
+export function withPriceReturns(rows, candles) {
+	if (!candles?.length) return rows;
+	return rows.map((row) => {
+		const { r24h } = returnsAt(candles, Math.floor(Date.parse(row.at) / 1000));
+		return r24h === null ? row : { ...row, priceReturn24h: r24h };
+	});
+}
+
 // ── Collecting ──────────────────────────────────────────────────────────────
 
 async function readTimeline({ client, now, days, limit }) {
@@ -298,6 +322,7 @@ export async function collectOutcomes({
 	retryDelayMs = READ_RETRY_MS,
 	previous = null,
 	settleDays = OUTCOMES_SETTLE_DAYS,
+	priceSeries = null,
 }) {
 	const readDays = readDaysFor(previous, { now, days, settleDays });
 	// A read that fails part way is started again from the top: half a timeline
@@ -346,7 +371,9 @@ export async function collectOutcomes({
 	return {
 		fetchedAt: new Date(now).toISOString(),
 		readDays: Math.round(readDays * 10) / 10,
-		posts: [...fresh, ...kept].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)),
+		// Stamped after the merge so a stored row that predates the price read
+		// (or whose day had not finished) picks its return up on a later refresh.
+		posts: withPriceReturns([...fresh, ...kept], priceSeries).sort((a, b) => Date.parse(b.at) - Date.parse(a.at)),
 	};
 }
 
@@ -410,12 +437,48 @@ export function learnLifts(rows, { now = Date.now(), minAgeHours = MIN_AGE_HOURS
 		const shrunk = group.n < MIN_VALUE_COUNT ? 0 : delta * (group.n / (group.n + shrinkK));
 		lifts[key] = { delta: round(delta), n: group.n, shrunk: round(shrunk) };
 	}
-	return {
+	const learned = {
 		learnedAt: new Date(now).toISOString(),
 		sample: matured.length,
 		baseline: round(weight > 0 ? sum / weight : 0),
 		lifts,
 	};
+	const priceLifts = learnPriceLifts(matured, { now, halfLifeDays });
+	if (priceLifts) learned.priceLifts = priceLifts;
+	return learned;
+}
+
+// For every attribute value, how much better or worse the $THREE price did in
+// the 24 hours after posts carrying it than after posts without it, in
+// percentage points, weighted and shrunk the same way as the engagement lifts.
+// Null until PRICE_MIN_SAMPLE matured posts carry a measured return.
+export function learnPriceLifts(matured, { now = Date.now(), halfLifeDays = HALF_LIFE_DAYS, shrinkK = SHRINK_K } = {}) {
+	const rows = matured.filter((row) => Number.isFinite(row.priceReturn24h));
+	if (rows.length < PRICE_MIN_SAMPLE) return null;
+	let weight = 0;
+	let sum = 0;
+	const groups = new Map();
+	for (const row of rows) {
+		const w = 0.5 ** ((now - Date.parse(row.at)) / DAY / halfLifeDays);
+		weight += w;
+		sum += w * row.priceReturn24h;
+		for (const key of attributeKeys(row)) {
+			const group = groups.get(key) || { weight: 0, sum: 0, n: 0 };
+			group.weight += w;
+			group.sum += w * row.priceReturn24h;
+			group.n += 1;
+			groups.set(key, group);
+		}
+	}
+	const lifts = {};
+	for (const key of [...groups.keys()].sort()) {
+		const group = groups.get(key);
+		const rest = weight - group.weight;
+		const delta = group.weight > 0 && rest > 1e-12 ? group.sum / group.weight - (sum - group.sum) / rest : 0;
+		const shrunk = group.n < PRICE_MIN_VALUE_COUNT ? 0 : delta * (group.n / (group.n + shrinkK));
+		lifts[key] = { delta: round(delta, 2), n: group.n, shrunk: round(shrunk, 2) };
+	}
+	return { sample: rows.length, baseline: round(sum / weight, 2), lifts };
 }
 
 // ── Scoring a queued item ───────────────────────────────────────────────────
@@ -438,8 +501,19 @@ export function learnedScore(item, learned) {
 	if (worst < 0) rest.splice(rest.indexOf(worst), 1);
 	const mean = rest.length ? rest.reduce((a, b) => a + b, 0) / rest.length : 0;
 	const points = LEARNED_POINTS_PER_UNIT * (best + worst + mean);
-	return {
-		points: round(Math.max(-LEARNED_POINTS_LIMIT, Math.min(LEARNED_POINTS_LIMIT, points)), 1),
-		found: found.map(({ key, shrunk }) => ({ key, shrunk })),
-	};
+	const engagementPoints = round(Math.max(-LEARNED_POINTS_LIMIT, Math.min(LEARNED_POINTS_LIMIT, points)), 1);
+	const result = { points: engagementPoints, found: found.map(({ key, shrunk }) => ({ key, shrunk })) };
+
+	// The $THREE price after posts like this one. Averaged, never summed: the
+	// attributes overlap and the market noise does not shrink with more of them.
+	const priced = attributeKeys(describeItem(item))
+		.map((key) => learned?.priceLifts?.lifts?.[key])
+		.filter((lift) => lift && lift.n >= PRICE_MIN_VALUE_COUNT)
+		.map((lift) => lift.shrunk);
+	if (priced.length) {
+		const pricePoints = round(Math.max(-PRICE_POINTS_LIMIT, Math.min(PRICE_POINTS_LIMIT, (PRICE_POINTS_PER_UNIT * priced.reduce((a, b) => a + b, 0)) / priced.length / PRICE_UNIT_PCT)), 1);
+		result.pricePoints = pricePoints;
+		result.points = round(engagementPoints + pricePoints, 1);
+	}
+	return result;
 }

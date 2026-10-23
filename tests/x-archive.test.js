@@ -17,6 +17,7 @@ import {
 	percentile,
 	topicsOf,
 } from '../scripts/x-archive-lib.mjs';
+import { baselineReturns, impactForPosts, priceAt, returnsAt, summarize } from '../api/_lib/x-content/price-impact.js';
 
 const post = (over = {}) => ({
 	tweetId: over.tweetId || '1',
@@ -235,5 +236,80 @@ describe('analyze', () => {
 	it('leaves a dimension unmarked when one side is too small to compare', () => {
 		const report = analyze([...corpus, post({ tweetId: 'vid', hasVideo: true, likes: 90 })], { handle: 'trythreews' });
 		expect(report.formats.find((f) => f.key === 'video').significant).toBe(false);
+	});
+});
+
+// The $THREE candles a post is measured against: one 15-minute bar per entry,
+// `t` at the bar open, priced from `price(index)`.
+const bars = (count, price, { start = 1_800_000_000, skip = [] } = {}) =>
+	Array.from({ length: count }, (_, i) => ({ t: start + i * 900, o: price(i), h: price(i), l: price(i), c: price(i), v: 1 }))
+		.filter((_, i) => !skip.includes(i));
+
+describe('price impact of a post', () => {
+	const start = 1_800_000_000;
+	const rising = bars(400, (i) => 100 + i);
+	const iso = (sec) => new Date(sec * 1000).toISOString();
+
+	it('prices an instant at the last bar that had finished, never the one forming', () => {
+		// Bar 10 spans [start+9000, start+9900); at start+9899 it is still forming.
+		expect(priceAt(rising, start + 9899)).toBe(109);
+		expect(priceAt(rising, start + 9900)).toBe(110);
+	});
+
+	it('has no price before the series begins or past a gap in trading', () => {
+		expect(priceAt(rising, start + 100)).toBeNull();
+		const gap = bars(40, (i) => 100 + i, { skip: [10, 11, 12, 13, 14, 15] });
+		expect(priceAt(gap, start + 13 * 900)).toBe(109);
+		expect(priceAt(gap, start + 16 * 900 - 1)).toBeNull();
+	});
+
+	it('computes percent returns at +1h, +4h and +24h and leaves a horizon past the series unavailable', () => {
+		const at = start + 10 * 900;
+		const out = returnsAt(rising, at);
+		expect(out.priceAtPost).toBe(109);
+		expect(out.r1h).toBeCloseTo(((113 / 109) - 1) * 100, 1);
+		expect(out.r4h).toBeCloseTo(((125 / 109) - 1) * 100, 1);
+		expect(out.r24h).toBeCloseTo(((205 / 109) - 1) * 100, 1);
+		const late = returnsAt(rising, start + 390 * 900);
+		expect(late.r1h).not.toBeNull();
+		expect(late.r24h).toBeNull();
+	});
+
+	it('does not interpolate a return whose far end sits in a gap', () => {
+		const gap = bars(200, (i) => 100 + i, { skip: Array.from({ length: 12 }, (_, i) => 20 + i) });
+		const out = returnsAt(gap, start + 10 * 900);
+		expect(out.priceAtPost).toBe(109);
+		expect(out.r1h).not.toBeNull();
+		expect(out.r4h).toBeNull();
+	});
+
+	it('measures own head posts only, oldest first, with their engagement', () => {
+		const posts = [
+			post({ tweetId: 'late', postedAt: iso(start + 30 * 900), likes: 30, retweets: 3, replies: 2 }),
+			post({ tweetId: 'early', postedAt: iso(start + 10 * 900), likes: 10, retweets: 0, replies: 0, hasVideo: true }),
+			post({ tweetId: 'rt', postedAt: iso(start + 12 * 900), isRetweet: true, isOwn: false, authorHandle: 'someone' }),
+			post({ tweetId: 'reply', postedAt: iso(start + 14 * 900), isReply: true }),
+			post({ tweetId: 'old', postedAt: iso(start - 86_400) }),
+		];
+		const rows = impactForPosts(posts, rising);
+		expect(rows.map((r) => r.id)).toEqual(['old', 'early', 'late']);
+		expect(rows[0].priceAtPost).toBeNull();
+		expect(rows[0].r24h).toBeNull();
+		expect(rows[1]).toMatchObject({ engagement: 10, hasMedia: true, priceAtPost: 109 });
+		expect(rows[2].engagement).toBe(35);
+	});
+
+	it('summarizes against the baseline and counts what could not be measured', () => {
+		const rows = impactForPosts(
+			[post({ tweetId: 'a', postedAt: iso(start + 10 * 900) }), post({ tweetId: 'b', postedAt: iso(start - 86_400) })],
+			rising,
+		);
+		const summary = summarize(rows, baselineReturns(rising));
+		expect(summary.posts).toBe(2);
+		expect(summary.horizons.r24h.measured).toBe(1);
+		expect(summary.horizons.r24h.unavailable).toBe(1);
+		expect(summary.horizons.r1h.positiveShare).toBe(1);
+		expect(summary.horizons.r24h.baselineSamples).toBeGreaterThan(0);
+		expect(summarize([], []).horizons.r1h.median).toBeNull();
 	});
 });

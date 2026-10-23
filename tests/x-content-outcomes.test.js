@@ -23,6 +23,10 @@ import {
 	readDaysFor,
 	OUTCOMES_SETTLE_DAYS,
 	OUTCOMES_WINDOW_DAYS,
+	PRICE_MIN_SAMPLE,
+	PRICE_POINTS_LIMIT,
+	learnPriceLifts,
+	withPriceReturns,
 } from '../api/_lib/x-content/outcomes.js';
 import { loadLifts, scoreItem } from '../api/_lib/x-content/priority.js';
 import { runTick } from '../api/_lib/x-content/runner.js';
@@ -671,5 +675,62 @@ describe('runTick and the outcomes loop', () => {
 		await expect(runTick({ root: sandbox(), store: memoryStore(), dryRun: false, now: NOW, env: {}, client: down, checks: noChecks, outcomes, collect })).rejects.toThrow('Service Unavailable');
 		expect(collect).toHaveBeenCalledTimes(1);
 		expect((await outcomes.load()).posts).toHaveLength(5);
+	});
+});
+
+describe('the $THREE price after a post', () => {
+	const matured = (n, over) => Array.from({ length: n }, (_, i) => row({ id: `${over.media}${i}`, at: daysAgo(3 + i * 0.1), ...over }));
+	const priced = () => [...matured(10, { media: 'video', priceReturn24h: 12 }), ...matured(12, { media: 'photo', priceReturn24h: -2 })];
+
+	it('stamps the +24h return on a row, and leaves a row with no price around it alone', () => {
+		const start = Math.floor(Date.parse(daysAgo(5)) / 1000);
+		const candles = Array.from({ length: 700 }, (_, i) => ({ t: start + i * 900, o: 100 + i, h: 100 + i, l: 100 + i, c: 100 + i, v: 1 }));
+		const [inside, before, tooYoung] = withPriceReturns([
+			row({ id: 'in', at: new Date((start + 10 * 900) * 1000).toISOString() }),
+			row({ id: 'before', at: new Date((start - 86_400) * 1000).toISOString() }),
+			row({ id: 'young', at: new Date((start + 690 * 900) * 1000).toISOString() }),
+		], candles);
+		expect(inside.priceReturn24h).toBeCloseTo(((205 / 109) - 1) * 100, 1);
+		expect(before.priceReturn24h).toBeUndefined();
+		expect(tooYoung.priceReturn24h).toBeUndefined();
+		const rows = [row()];
+		expect(withPriceReturns(rows, null)).toBe(rows);
+	});
+
+	it('learns nothing from price until enough matured posts carry a return', () => {
+		expect(learnPriceLifts(matured(PRICE_MIN_SAMPLE - 1, { media: 'video', priceReturn24h: 5 }), { now: NOW })).toBeNull();
+		expect(learnLifts(matured(30, { media: 'video' }), { now: NOW }).priceLifts).toBeUndefined();
+	});
+
+	it('measures an attribute against the posts without it, in percentage points, shrunk by sample size', () => {
+		const learned = learnLifts(priced(), { now: NOW });
+		expect(learned.priceLifts.sample).toBe(22);
+		const video = learned.priceLifts.lifts['media:video'];
+		expect(video.n).toBe(10);
+		expect(video.delta).toBeGreaterThan(13);
+		expect(video.delta).toBeLessThan(15);
+		expect(video.shrunk).toBeCloseTo(video.delta * (10 / (10 + SHRINK_K)), 1);
+		expect(learned.priceLifts.lifts['media:photo'].delta).toBeLessThan(0);
+	});
+
+	it('skips a value seen on too few posts and a row whose return was never measured', () => {
+		const rows = [...priced(), ...matured(3, { media: 'gif', priceReturn24h: 80 }), ...matured(6, { media: 'none' })];
+		const { priceLifts } = learnLifts(rows, { now: NOW });
+		expect(priceLifts.lifts['media:gif'].shrunk).toBe(0);
+		expect(priceLifts.lifts['media:none']).toBeUndefined();
+		expect(priceLifts.sample).toBe(25);
+	});
+
+	it('adds a small, capped price term to a queued item score and reports it separately', () => {
+		const item = { id: 'x', kind: 'post', posts: [{ text: 'A short post.', media: [{ path: 'public/x-media/t/clip.mp4' }] }] };
+		const base = { learnedAt: new Date(NOW).toISOString(), sample: 40, baseline: 2, lifts: { 'media:video': { delta: 1, n: 10, shrunk: 0.5 } } };
+		const withPrice = (shrunk, n = 10) => ({ ...base, priceLifts: { sample: 30, baseline: 0, lifts: { 'media:video': { delta: shrunk, n, shrunk } } } });
+		const plain = learnedScore(item, base);
+		expect(plain.pricePoints).toBeUndefined();
+		const up = learnedScore(item, withPrice(5));
+		expect(up.pricePoints).toBe(2);
+		expect(up.points).toBe(Math.round((plain.points + 2) * 10) / 10);
+		expect(learnedScore(item, withPrice(-500)).pricePoints).toBe(-PRICE_POINTS_LIMIT);
+		expect(learnedScore(item, withPrice(8, 4)).pricePoints).toBeUndefined();
 	});
 });

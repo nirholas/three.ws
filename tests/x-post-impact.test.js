@@ -17,11 +17,33 @@ function quoteRes(tokensOut, realSolLamports) {
 	};
 }
 
-function oembedRes(author, text) {
+function synRes(author, text, extra = {}) {
 	return {
 		ok: true,
-		json: async () => ({ author_name: author, html: `<blockquote>${text}</blockquote>` }),
+		status: 200,
+		text: async () =>
+			JSON.stringify({
+				text,
+				created_at: '2026-10-01T12:00:00.000Z',
+				favorite_count: 42,
+				conversation_count: 7,
+				user: { name: author, screen_name: author },
+				mediaDetails: [],
+				...extra,
+			}),
 	};
+}
+
+const down = { ok: false, status: 500, text: async () => '' };
+
+// Route by URL so the post reader's three rungs and the two quote calls stay independent.
+function route({ post, quotes }) {
+	let q = 0;
+	fetchMock.mockImplementation(async (url) => {
+		const u = String(url);
+		if (u.includes('/api/pump/quote')) return quotes[q++] ?? quotes[quotes.length - 1];
+		return typeof post === 'function' ? post(u) : post;
+	});
 }
 
 // ── tests ──────────────────────────────────────────────────────────────────
@@ -29,12 +51,12 @@ function oembedRes(author, text) {
 describe('correlateXPost', () => {
 	beforeEach(() => fetchMock.mockReset());
 
-	it('computes positive deltaPct when price increases', async () => {
+	it('computes positive deltaPct when price increases and returns metrics', async () => {
 		// before: 1/10000 SOL per token; after: 1/9000 → +11.1%
-		fetchMock
-			.mockResolvedValueOnce(oembedRes('alice', 'moon soon'))
-			.mockResolvedValueOnce(quoteRes(10000, 50_000_000_000))
-			.mockResolvedValueOnce(quoteRes(9000, 55_000_000_000));
+		route({
+			post: synRes('alice', 'moon soon'),
+			quotes: [quoteRes(10000, 50_000_000_000), quoteRes(9000, 55_000_000_000)],
+		});
 
 		const r = await correlateXPost({
 			postUrl: 'https://x.com/alice/status/1894000000000000000',
@@ -43,6 +65,8 @@ describe('correlateXPost', () => {
 
 		expect(r.post?.author).toBe('alice');
 		expect(r.post?.text).toBe('moon soon');
+		expect(r.post?.metrics.likes).toBe(42);
+		expect(r.post?.metrics.replies).toBe(7);
 		expect(r.priceBefore).toBeCloseTo(1 / 10000, 8);
 		expect(r.priceAfter).toBeCloseTo(1 / 9000, 8);
 		const expectedDelta = ((1 / 9000 - 1 / 10000) / (1 / 10000)) * 100;
@@ -53,68 +77,56 @@ describe('correlateXPost', () => {
 	});
 
 	it('computes negative deltaPct when price drops', async () => {
-		// before: 1/9000; after: 1/10000 → negative delta
-		fetchMock
-			.mockResolvedValueOnce(oembedRes('bob', 'dump incoming'))
-			.mockResolvedValueOnce(quoteRes(9000, 50_000_000_000))
-			.mockResolvedValueOnce(quoteRes(10000, 45_000_000_000));
-
-		const r = await correlateXPost({
-			postUrl: 'https://x.com/bob/status/999',
-			mint: 'ValidMintAddress',
+		route({
+			post: synRes('bob', 'dump incoming'),
+			quotes: [quoteRes(9000, 50_000_000_000), quoteRes(10000, 45_000_000_000)],
 		});
+
+		const r = await correlateXPost({ postUrl: 'https://x.com/bob/status/999', mint: 'ValidMintAddress' });
 
 		expect(r.deltaPct).toBeLessThan(0);
 		expect(r.deltaVolPct).toBeLessThan(0);
 	});
 
-	it('returns post=null when oEmbed throws, still computes price delta', async () => {
-		fetchMock
-			.mockRejectedValueOnce(new Error('network error'))
-			.mockResolvedValueOnce(quoteRes(10000, 50_000_000_000))
-			.mockResolvedValueOnce(quoteRes(10000, 50_000_000_000));
-
-		const r = await correlateXPost({
-			postUrl: 'https://x.com/anon/status/1',
-			mint: 'ValidMintAddress',
+	it('returns post=null when every post rung throws, still computes price delta', async () => {
+		route({
+			post: () => Promise.reject(new Error('network error')),
+			quotes: [quoteRes(10000, 50_000_000_000), quoteRes(10000, 50_000_000_000)],
 		});
+
+		const r = await correlateXPost({ postUrl: 'https://x.com/anon/status/1', mint: 'ValidMintAddress' });
 
 		expect(r.post).toBeNull();
 		expect(r.deltaPct).toBeCloseTo(0, 5);
 		expect(r.priceBefore).not.toBeNull();
 	});
 
-	it('returns post=null when oEmbed returns non-ok, still computes prices', async () => {
-		fetchMock
-			.mockResolvedValueOnce({ ok: false })
-			.mockResolvedValueOnce(quoteRes(10000, 50_000_000_000))
-			.mockResolvedValueOnce(quoteRes(8000, 60_000_000_000));
-
-		const r = await correlateXPost({
-			postUrl: 'https://x.com/anon/status/2',
-			mint: 'ValidMintAddress',
+	it('returns post=null when every post rung is non-ok, still computes prices', async () => {
+		route({
+			post: down,
+			quotes: [quoteRes(10000, 50_000_000_000), quoteRes(8000, 60_000_000_000)],
 		});
+
+		const r = await correlateXPost({ postUrl: 'https://x.com/anon/status/2', mint: 'ValidMintAddress' });
 
 		expect(r.post).toBeNull();
 		expect(r.deltaPct).toBeGreaterThan(0);
 	});
 
 	it('throws with "unknown mint" when price fetch fails', async () => {
-		fetchMock
-			.mockResolvedValueOnce({ ok: false })
-			.mockResolvedValueOnce({ ok: false, status: 400 });
+		route({ post: down, quotes: [{ ok: false, status: 400 }] });
 
 		await expect(
 			correlateXPost({ postUrl: 'https://x.com/a/status/1', mint: 'badmint' }),
 		).rejects.toThrow(/unknown mint/);
 	});
 
-	it('extracts post id and derives ts from tweet snowflake id', async () => {
+	it('derives ts from the post created_at and keeps the post id', async () => {
 		const id = '1894000000000000000';
-		fetchMock
-			.mockResolvedValueOnce(oembedRes('carol', 'gm'))
-			.mockResolvedValueOnce(quoteRes(10000, 50_000_000_000))
-			.mockResolvedValueOnce(quoteRes(10000, 50_000_000_000));
+		route({
+			post: synRes('carol', 'gm'),
+			quotes: [quoteRes(10000, 50_000_000_000)],
+		});
 
 		const r = await correlateXPost({
 			postUrl: `https://x.com/carol/status/${id}`,
@@ -122,7 +134,6 @@ describe('correlateXPost', () => {
 		});
 
 		expect(r.post?.id).toBe(id);
-		expect(typeof r.post?.ts).toBe('number');
-		expect(r.post.ts).toBeGreaterThan(0);
+		expect(r.post.ts).toBe(Date.parse('2026-10-01T12:00:00.000Z'));
 	});
 });
