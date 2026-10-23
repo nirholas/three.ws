@@ -4304,11 +4304,20 @@ GitHub renders markdown files up to **512 KB** - beyond that the whole file disp
 You don't even need a model. [three.ws Forge](https://three.ws/forge) generates a textured GLB from a text prompt, free, no account:
 
 ```bash
-curl -s -X POST https://three.ws/api/forge -H 'content-type: application/json' \
- -d '{"prompt":"a friendly robot mascot, full body"}'   # → { glbUrl }
-curl -sL -o mascot.glb "<glbUrl>"
+# Submit a text→3D job, then poll until status is "done"
+RES=$(curl -s -X POST https://three.ws/api/forge -H 'content-type: application/json' \
+ -d '{"prompt":"a friendly robot mascot, full body"}')
+JOB=$(jq -r '.job_id // empty' <<<"$RES")
+until [ "$(jq -r .status <<<"$RES")" = done ]; do
+  [ "$(jq -r .status <<<"$RES")" = failed ] && { echo "$RES" >&2; exit 1; }
+  sleep 5; RES=$(curl -s "https://three.ws/api/forge?job=$JOB")
+done
+curl -sL -o mascot.glb "$(jq -r .glb_url <<<"$RES")"
 npx readme-3d mascot.glb --budget 150kb >> README.md
 ```
+
+Forge is a job API: `POST /api/forge` returns a `job_id` (a lane that finishes inside the request answers `done` with the `glb_url` immediately), and `GET /api/forge?job=<id>` reports `status` until it is `done` with a `glb_url`.
+Or skip the CLI: `POST https://three.ws/api/readme-3d` with `{"url": "<glb_url>"}` returns the finished block.
 
 Walkthrough: [text → 3D → README in five minutes](docs/tutorials/03-text-to-3d-avatar.md).
 

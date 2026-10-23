@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { Document, NodeIO } from '@gltf-transform/core';
 import {
   convert,
+  convertBytes,
   toMarkdown,
   checkMarkdownFile,
   parseByteSize,
@@ -62,6 +63,16 @@ test('convert() GLB end-to-end: real glTF in, GitHub STL out', async () => {
   assert.ok(result.stl.startsWith('solid cube'));
   // node scale [2,2,2] baked in, then normalized to 100 units and grounded
   assert.ok(result.stl.includes('vertex 50.00 50.00 100.00'));
+});
+
+test('convertBytes() matches convert() for the same GLB bytes', async () => {
+  const dir = await tmp();
+  const glb = join(dir, 'cube.glb');
+  await writeCubeGlb(glb);
+  const fromPath = await convert(glb, { name: 'cube' });
+  const fromBytes = await convertBytes(await readFile(glb), '.glb', { name: 'cube' });
+  assert.equal(fromBytes.stl, fromPath.stl);
+  await assert.rejects(convertBytes(new Uint8Array(4), '.xyz'), /unsupported input format/);
 });
 
 test('convert() honors a byte budget', async () => {

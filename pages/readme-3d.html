@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<title>README 3D · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="Put an interactive 3D model in any GitHub README. Paste a GLB, glTF, OBJ or STL URL and get a block GitHub renders as a rotatable 3D viewer, sized to fit GitHub's markdown limit." />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/readme-3d" />
+		<meta property="og:title" content="README 3D · three.ws" />
+		<meta property="og:description" content="Turn any 3D model into a block GitHub renders as an interactive viewer in your README." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=README+3D&amp;d=Turn+any+3D+model+into+a+block+GitHub+renders+as+an+interactive+viewer.&amp;p=%2Freadme-3d" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<link rel="canonical" href="https://three.ws/readme-3d" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+	</head>
+	<body>
+		<div id="nav-container"></div>
+
+		<main class="r3-wrap">
+			<p class="r3-crumb"><a href="/">Home</a> / <a href="/forge">Forge</a> / README 3D</p>
+			<h1 class="r3-h1">3D models in your GitHub README</h1>
+			<p class="r3-lede">
+				GitHub renders a <code>```stl</code> code fence as an interactive 3D viewer. Paste a model URL
+				and get a block you can drop into any README, issue or pull request, simplified to fit
+				GitHub's 512 KB markdown limit.
+			</p>
+
+			<section class="r3-card" aria-labelledby="r3-try">
+				<h2 class="r3-h2" id="r3-try">Try it</h2>
+				<form id="r3-form" class="r3-form" novalidate>
+					<label class="r3-field r3-field-url">
+						<span>Model URL (.glb, .gltf, .obj or .stl, public https)</span>
+						<input id="r3-url" name="url" type="url" inputmode="url" autocomplete="off" required
+							placeholder="https://three.ws/avatars/fox.glb" />
+					</label>
+					<label class="r3-field">
+						<span>Size budget</span>
+						<select id="r3-budget" name="budget">
+							<option value="60000">Small (60 KB), hero model in a busy README</option>
+							<option value="150000" selected>Medium (150 KB), detailed hero model</option>
+							<option value="300000">Large (300 KB), dedicated model page</option>
+						</select>
+					</label>
+					<button type="submit" id="r3-go" class="r3-btn r3-btn-primary">Convert</button>
+				</form>
+				<div class="r3-samples" role="group" aria-label="Example models">
+					<span class="r3-dim">Examples:</span>
+					<button type="button" class="r3-chip" data-url="https://three.ws/avatars/fox.glb">Fox</button>
+					<button type="button" class="r3-chip" data-url="https://three.ws/avatars/mannequin.glb">Mannequin</button>
+					<button type="button" class="r3-chip" data-url="https://three.ws/avatars/default.glb">Default avatar</button>
+				</div>
+
+				<div id="r3-status" class="r3-status" role="status" aria-live="polite"></div>
+
+				<div id="r3-result" class="r3-result" hidden>
+					<div class="r3-preview-col">
+						<canvas id="r3-canvas" class="r3-canvas" width="480" height="360"
+							aria-label="Preview of the simplified model. Drag to rotate."></canvas>
+						<p class="r3-dim r3-small">What GitHub will render. Drag to rotate.</p>
+					</div>
+					<div class="r3-out-col">
+						<dl class="r3-stats" id="r3-stats"></dl>
+						<div class="r3-actions">
+							<button type="button" id="r3-copy" class="r3-btn r3-btn-primary">Copy for README</button>
+							<button type="button" id="r3-download" class="r3-btn">Download .md</button>
+						</div>
+						<label class="r3-field">
+							<span>Markdown (truncated here, the copied block is complete)</span>
+							<textarea id="r3-md" readonly rows="8" spellcheck="false"></textarea>
+						</label>
+					</div>
+				</div>
+			</section>
+
+			<section class="r3-grid">
+				<article class="r3-card">
+					<h2 class="r3-h2">From anywhere on three.ws</h2>
+					<p class="r3-note">
+						Every model you make has a one-click path: <strong>Forge</strong> results (download menu,
+						<em>GitHub README 3D</em>), your <strong>avatar page</strong> (Download menu,
+						<em>README 3D</em>), the <strong>avatar dashboard</strong> (card menu), and any
+						<strong>model page</strong> (<em>Copy for GitHub README</em>).
+					</p>
+				</article>
+				<article class="r3-card">
+					<h2 class="r3-h2">From the command line</h2>
+					<pre class="r3-code"><code>npx readme-3d model.glb --budget 150kb &gt;&gt; README.md
+npx readme-3d check README.md</code></pre>
+					<p class="r3-note">The <a href="https://github.com/nirholas/readme-3d">readme-3d</a> package also takes OBJ and STL.</p>
+				</article>
+				<article class="r3-card">
+					<h2 class="r3-h2">From the API</h2>
+					<pre class="r3-code"><code>curl -X POST https://three.ws/api/readme-3d \
+  -H 'content-type: application/json' \
+  -d '{"url":"https://three.ws/avatars/fox.glb","budget":150000}'
+# → { "markdown": "```stl\n…", "facets": 1500, "fits_github": true }</code></pre>
+					<p class="r3-note">Free, no key. 12 conversions per 10 minutes per IP.</p>
+				</article>
+			</section>
+
+			<section class="r3-card">
+				<h2 class="r3-h2">Make a model first</h2>
+				<p class="r3-note">
+					No model yet? <a href="/forge">Forge</a> generates a textured GLB from a text prompt in about a minute.
+					Generate, open the download menu, pick <em>GitHub README 3D</em>, and paste.
+				</p>
+			</section>
+		</main>
+
+		<script type="module" src="/src/readme-3d.js"></script>
+		<script src="/nav.js" defer></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

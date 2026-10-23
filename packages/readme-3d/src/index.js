@@ -34,13 +34,18 @@ export function parseByteSize(value) {
   return Math.floor(parseFloat(m[1]) * mult);
 }
 
-/** Load any supported model file into a Z-up triangle soup. */
-export async function loadTriangles(path, { up } = {}) {
-  const ext = extname(path).toLowerCase();
-  if (!['.glb', '.gltf', '.stl', '.ast', '.obj'].includes(ext)) {
-    throw new Error(`unsupported input format: ${ext || path} (use .glb, .gltf, .stl, .ast, or .obj)`);
+const SUPPORTED_EXTENSIONS = ['.glb', '.gltf', '.stl', '.ast', '.obj'];
+
+function assertSupported(ext, label) {
+  if (!SUPPORTED_EXTENSIONS.includes(ext)) {
+    throw new Error(`unsupported input format: ${ext || label} (use .glb, .gltf, .stl, .ast, or .obj)`);
   }
-  const bytes = await readFile(path);
+}
+
+/** Parse model bytes of a known extension into a Z-up triangle soup. */
+export async function loadTrianglesFromBytes(bytes, ext, { up, label = 'input' } = {}) {
+  ext = ext.toLowerCase();
+  assertSupported(ext, label);
   let triangles;
   let sourceUp;
   if (ext === '.glb' || ext === '.gltf') {
@@ -49,14 +54,19 @@ export async function loadTriangles(path, { up } = {}) {
   } else if (ext === '.stl' || ext === '.ast') {
     triangles = parseStl(bytes);
     sourceUp = up ?? 'z';
-  } else if (ext === '.obj') {
-    triangles = parseObj(bytes.toString('utf8'));
-    sourceUp = up ?? 'y';
   } else {
-    throw new Error(`unsupported input format: ${ext || path} (use .glb, .gltf, .stl, .ast, or .obj)`);
+    triangles = parseObj(Buffer.from(bytes).toString('utf8'));
+    sourceUp = up ?? 'y';
   }
-  if (!triangles.length) throw new Error(`no triangles found in ${path}`);
+  if (!triangles.length) throw new Error(`no triangles found in ${label}`);
   return sourceUp === 'y' ? yUpToZUp(triangles) : triangles;
+}
+
+/** Load any supported model file into a Z-up triangle soup. */
+export async function loadTriangles(path, { up } = {}) {
+  const ext = extname(path).toLowerCase();
+  assertSupported(ext, path);
+  return loadTrianglesFromBytes(await readFile(path), ext, { up, label: path });
 }
 
 /**
@@ -72,6 +82,19 @@ export async function loadTriangles(path, { up } = {}) {
  *   up         source up-axis 'y' | 'z' (defaults per format)
  */
 export async function convert(path, opts = {}) {
+  return convertTriangles(await loadTriangles(path, { up: opts.up }), opts);
+}
+
+/**
+ * Same as convert(), for model bytes already in memory (an HTTP upload or a
+ * fetched URL). `ext` names the format: '.glb', '.gltf', '.obj' or '.stl'.
+ */
+export async function convertBytes(bytes, ext, opts = {}) {
+  return convertTriangles(await loadTrianglesFromBytes(bytes, ext, { up: opts.up }), opts);
+}
+
+/** Simplify, normalize and serialize an already-loaded Z-up triangle soup. */
+export async function convertTriangles(source, opts = {}) {
   const {
     facets = 1500,
     budget,
@@ -79,10 +102,8 @@ export async function convert(path, opts = {}) {
     precision = 2,
     normalize: doNormalize = true,
     size = 100,
-    up,
   } = opts;
 
-  const source = await loadTriangles(path, { up });
   const budgetBytes = budget ? parseByteSize(budget) : null;
 
   // ~150 bytes per facet at precision 2 is a reliable first estimate.
