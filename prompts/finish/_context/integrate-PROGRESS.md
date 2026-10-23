@@ -1336,3 +1336,7 @@ this closing commit (PROGRESS log, order-file removal).
 ## 2026-10-23: order 530 (registry cleanup), partial, owner-gated
 
 Prepared: `scripts/publish-mcp-servers.mjs --deprecate` (dry run unless `--apply`; `--dry-run` also prints the plan), a DEPRECATIONS list (claude-code-explorer-mcp, data-workbench-mcp), solana-memo-media-mcp bumped to 0.1.1 to match npm (registry still has 0.1.0), ecosystem doc count replaced by its source of truth. Remaining and owned by the owner: run the registry publish and deprecate commands (external writes). Order file left in place.
+
+## 2026-10-23: order 529 (MCP registry sentinel), done
+
+`api/cron/mcp-registry-sentinel.js` plus `api/_lib/mcp-registry-sentinel.js`, daily cron in `vercel.json`, 12 vitest cases, ops doc `docs/mcp-registry-sentinel.md`. Code landed in `218f00660` (swept into a concurrent agent's commit); this closing commit adds the doc, PROGRESS entry and order-file removal. Deploys with the next owner-approved deploy.
