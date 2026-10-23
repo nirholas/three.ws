@@ -11,6 +11,8 @@ const holder = vi.hoisted(() => ({ db: null }));
 
 vi.mock('../api/_lib/db.js', async (importActual) => {
 	const actual = await importActual();
+	// Modules build sql fragments at import time, before beforeEach runs.
+	holder.db = createPgliteSql();
 	return { ...actual, sql: (...args) => holder.db.sql(...args) };
 });
 vi.mock('../api/_lib/agent-learning/settings.js', () => ({

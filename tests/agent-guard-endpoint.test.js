@@ -70,6 +70,13 @@ vi.mock('../api/_lib/db.js', () => ({
 	},
 }));
 
+// The on-chain allowance ceiling reads the chain; its own logic is covered in
+// tests/onchain-allowance.test.js. Here only the endpoint wiring is exercised.
+const checkAgentAllowanceSpend = vi.fn();
+vi.mock('../api/_lib/onchain-allowance-store.js', () => ({
+	checkAgentAllowanceSpend: (...a) => checkAgentAllowanceSpend(...a),
+}));
+
 const { default: guardHandler } = await import('../api/agent/guard.js');
 const { delegationMessage } = await import('../packages/agent-guards/src/delegation.js');
 
@@ -435,5 +442,47 @@ describe('POST /api/agent/guard - signed spend delegation', () => {
 		expect(verdicts[0].delegation.code).toBe('DELEGATION_EXPIRED');
 		expect(verdicts[0].verdict.decision).toBe('block');
 		expect(verdicts[0].verdict.blockedBy).toBe('spend_delegation');
+	});
+});
+
+describe('POST /api/agent/guard - on-chain allowance ceiling', () => {
+	const agentId = '22222222-2222-4222-8222-222222222222';
+	const mint = 'So11111111111111111111111111111111111111112';
+	const pull = (amountRaw) => ({ calls: [{ identifier: 'allowance_pull', apiName: 'allowance_pull', arguments: { mint, amountRaw } }], agentId, network: 'devnet' });
+
+	beforeEach(() => checkAgentAllowanceSpend.mockReset());
+
+	it('blocks a pull above the remaining allowance', async () => {
+		checkAgentAllowanceSpend.mockResolvedValue({ gated: true, allow: false, code: 'allowance_exceeded', reason: 'requested 80 exceeds the remaining on-chain allowance of 60', detail: { remaining: '60', requested: '80' }, allowance: { id: 'a1' }, live: { remaining: '60' } });
+		const res = mkRes();
+		await guardHandler(mkReq({ body: pull('80') }), res);
+		const { verdicts } = parse(res);
+		expect(checkAgentAllowanceSpend).toHaveBeenCalledWith({ agentId, network: 'devnet', mint, amount: '80' });
+		expect(verdicts[0].verdict.decision).toBe('block');
+		expect(verdicts[0].verdict.blockedBy).toBe('onchain_allowance');
+		expect(verdicts[0].allowance).toMatchObject({ allow: false, code: 'allowance_exceeded', remaining: '60' });
+	});
+
+	it('leaves a pull within the allowance to the other layers', async () => {
+		checkAgentAllowanceSpend.mockResolvedValue({ gated: true, allow: true, code: 'ok', reason: 'within the on-chain allowance', allowance: { id: 'a1' }, live: { remaining: '60' } });
+		const res = mkRes();
+		await guardHandler(mkReq({ body: pull('40') }), res);
+		const { verdicts } = parse(res);
+		expect(verdicts[0].verdict.blockedBy).not.toBe('onchain_allowance');
+		expect(verdicts[0].allowance).toMatchObject({ allow: true, code: 'ok' });
+	});
+
+	it('reports a blind spot instead of failing when the chain is unreadable', async () => {
+		checkAgentAllowanceSpend.mockImplementation(async () => { throw new Error('rpc down'); });
+		const res = mkRes();
+		await guardHandler(mkReq({ body: pull('1') }), res);
+		expect(res.statusCode).toBe(200);
+		expect(JSON.stringify(parse(res).verdicts[0].verdict.blindSpots)).toContain('onchain allowance unreadable');
+	});
+
+	it('never consults the allowance for other tools', async () => {
+		const res = mkRes();
+		await guardHandler(mkReq({ body: { calls: [{ identifier: 'solana_transfer', valueUsd: 5 }], agentId } }), res);
+		expect(checkAgentAllowanceSpend).not.toHaveBeenCalled();
 	});
 });
