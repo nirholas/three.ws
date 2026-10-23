@@ -49,6 +49,19 @@ import llmProxyListing from '../_lib/service-catalog/services/llm-proxy.js';
 
 const ROUTE = '/api/x402/llm-proxy';
 
+// `upto` metering: 5 atomics per token (=$0.005 per 1k tokens), never less than
+// UPTO_MIN_CHARGE_ATOMICS, never more than the cap. The cap is 5x the flat
+// `exact` price, enough for a full 2048-token completion plus a long prompt.
+const UPTO_ATOMICS_PER_TOKEN = 5n;
+const UPTO_MIN_CHARGE_ATOMICS = 500n;
+const UPTO_CAP_ATOMICS = BigInt(priceFor('llm-proxy', '5000')) * 5n;
+
+function uptoChargeFor(tokensUsed) {
+	const tokens = BigInt(Math.max(0, Math.trunc(Number(tokensUsed) || 0)));
+	const metered = tokens * UPTO_ATOMICS_PER_TOKEN;
+	return metered < UPTO_MIN_CHARGE_ATOMICS ? UPTO_MIN_CHARGE_ATOMICS : metered;
+}
+
 // Map the caller-facing model alias to llmComplete options.
 // "fast"  → Groq leads the free chain (sub-second latency, sufficient for short prompts)
 // "smart" → same chain, Anthropic backstop moves to the preferred position via anthropicModel
@@ -180,6 +193,14 @@ export default paidEndpoint({
 	}),
 	requiredScope: 'x402:bypass',
 	accessControl: installAccessControl({ requiredScope: 'x402:bypass' }),
+
+	// Pay-for-what-you-use on Solana: the buyer authorizes up to UPTO_CAP_ATOMICS
+	// and is charged for the tokens the completion actually used (the rest of the
+	// escrowed deposit returns to them). `exact` stays advertised beside it.
+	upto: {
+		capAtomics: UPTO_CAP_ATOMICS,
+		charge: ({ result }) => uptoChargeFor(result?.tokens_used),
+	},
 
 	async handler({ req }) {
 		const chunks = [await readBody(req, 1_000_000)];

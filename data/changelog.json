@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "x402 pay-for-what-you-use on Solana (upto)",
+			"summary": "A paid route can now advertise an upto offer beside its fixed price: the buyer authorizes a cap, the seller measures the work and settles only that amount, and the rest of the escrowed deposit returns to the buyer. A handler that fails settles nothing. The LLM proxy is the first route converted (5 atomics per token, capped at 5x the flat price). Agent payers refuse a cap above their per-call limit before signing, and the unused part of the cap is released from their budget. Existing exact clients are unaffected.",
+			"tags": ["feature", "improvement"],
+			"link": "/docs/x402-upto"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "News reader recovers blocked stories and gives a structured trading read",
 			"summary": "When a publisher blocks or paywalls an article, the reader now recovers it from the Internet Archive, the SEC EDGAR filing the headline names, or other outlets covering the same story, and says which lane it used. The analysis is now a structured trading read: affected assets with exposure and direction, whether the news is priced in, the horizon, and a counter-argument. The same resolution is available to agents as the free news_resolve MCP tool. The excerpt limit applies to every lane.",
 			"tags": ["feature", "improvement"],

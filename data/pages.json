@@ -4384,6 +4384,13 @@
 					"added": "2026-04-29"
 				},
 				{
+					"path": "/docs/x402-upto",
+					"title": "Docs · x402 upto on Solana",
+					"description": "Pay for what the call used: the buyer authorizes a cap, the seller settles the measured charge and the rest of the deposit is refunded. Seller and buyer APIs, failure behavior, and the batch-settlement finding.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/x402-vscode",
 					"title": "Docs · x402 for VS Code",
 					"description": "Find, inspect, and pay x402 APIs from VS Code with $THREE or USDC on Solana, including wallet setup, token selection, safety controls, and the $THREE contract address.",
