@@ -181,6 +181,28 @@ Deep dives — every tool, argument, env var, and example:
 
 ---
 
+## Trust grades
+
+Every server in the [MCP tools catalog](./mcp-tools.md) carries a 0-100 trust score and an A to F grade, so a visitor can tell a polished, documented, published server from a stub. `npm run build:mcp-catalog` computes them from facts this repository can check mechanically (`scripts/lib/mcp-trust.mjs`) and stores the grade with its full breakdown under `servers[].trust` in `public/mcp-catalog.json`. `/mcp-tools` shows the grade beside each server in the server table; hover or focus the badge for the breakdown, and click the Trust header to sort.
+
+| Fact | Weight | Earned when |
+|---|---|---|
+| Tools | 15 | The server declares at least one tool |
+| Tool docs | 5 | Every tool has a description |
+| Safety annotations | 15 | Every tool carries `readOnlyHint`, and every non-read-only tool carries `destructiveHint` (the `audit:mcp-safety` gate checks that the values are right) |
+| Distribution | 15 | npm server: `package.json` is public with `publishConfig.access=public`. Hosted server: its handler file is mounted |
+| Registry | 10 | npm server: `server.json` matches `package.json` name and version. Hosted server: a `server.json` lists its URL as a remote |
+| README | 10 | npm server: `README.md` in the package. Hosted server: a guide in `docs/` |
+| License | 10 | A `LICENSE` file ships with the package, or at the repo root for hosted servers |
+| Tests | 5 | npm server: a test file in the package. Hosted server: a test under `tests/` references its handler |
+| Prompts | 5 | The server declares prompts |
+| Resources | 5 | The server declares resources or resource templates |
+| Glama | 5 | `glama.json` lists maintainers (the claim is repository-wide) |
+
+Grades: A is 85 and up, B 70, C 50, D 30, F below 30.
+
+The build stays offline-safe, so the rubric scores local evidence that a server is ready to publish. It does not call npm, the registry, or the hosted endpoints; whether a published version is actually live is tracked by the registry sentinel, not by this score.
+
 ## Authentication
 
 ### OAuth 2.1 (recommended for Claude Desktop / Claude Code)

@@ -169,7 +169,7 @@ describe('hourly price and open interest', () => {
 	});
 
 	it('an open interest surge of 60% in four snapshots is flagged', () => {
-		const oi = Array.from({ length: 80 }, (_, i) => ({ t: i * 900_000, v: 1_000_000 + (i % 4) * 5_000 }));
+		const oi = Array.from({ length: 80 }, (_, i) => ({ t: i * 900_000, v: 1_000_000 + ((i * 7) % 11) * 4_000 }));
 		const n = oi.length;
 		const pts = [...oi.slice(0, n - 1), { t: oi[n - 1].t, v: oi[n - 5].v * 1.6 }];
 		const r = detectSeries(spec(OPEN_INTEREST_SPEC, 'SYN-USD'), pts);

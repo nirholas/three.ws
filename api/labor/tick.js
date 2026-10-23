@@ -3,7 +3,8 @@
 //   • open bounties that already drew bids (auto-award if the poster opted in)
 //   • recently posted bounties nobody has bid on yet (retry the auto-bid sweep)
 //   • working jobs with an autonomous worker (perform, verify, settle)
-//   • delivered/verifying jobs (settle now)
+//   • delivered jobs that never entered evaluation (open their escrow case; the
+//     labor-escrow-sweep cron owns every case from then on)
 // Authenticated with the Vercel cron Bearer secret. No-op (503) if unset.
 //
 // Every scan below is capped at BATCH so a tick stays inside its budget, and each
@@ -39,7 +40,9 @@
 import { json, method, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { ensureLaborTables, getBounty, getJob } from '../_lib/agent-labor.js';
-import { runAutopilot, runSettlement } from '../_lib/labor-settle.js';
+import { runAutopilot } from '../_lib/labor-settle.js';
+import { intakeDelivery } from '../_lib/labor-evaluation.js';
+import { ensureEscrowTables } from '../_lib/labor-escrow-ledger.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
 const BATCH = 10;
@@ -54,6 +57,7 @@ export default wrap(async (req, res) => {
 	if (!requireCron(req, res)) return;
 
 	await ensureLaborTables();
+	await ensureEscrowTables();
 
 	const openBounties = await sql`
 		WITH candidates AS (
@@ -84,7 +88,9 @@ export default wrap(async (req, res) => {
 		SELECT j.id, j.bounty_id, j.status FROM agent_jobs j
 		WHERE j.created_at < now() - interval '15 seconds'
 		  AND (
-		    j.status IN ('delivered','verifying')
+		    (j.status IN ('delivered','verifying') AND NOT EXISTS (
+		          SELECT 1 FROM labor_escrow_cases c
+		           WHERE c.bounty_id = j.bounty_id AND c.state <> 'working' AND c.state <> 'funded'))
 		    OR (j.status = 'working' AND EXISTS (
 		          SELECT 1 FROM agent_labor_policies wp
 		           WHERE wp.agent_id = j.worker_agent_id AND wp.worker_enabled))
@@ -138,10 +144,10 @@ export default wrap(async (req, res) => {
 			if (!bounty) continue;
 			const full = await getJob(j.id);
 			if (!full) continue;
-			// A settle another caller already claimed comes back idempotent. Counting
-			// it would report someone else's payout as this tick's work.
-			const r = await runSettlement({ job: full, bounty });
-			if (r?.status === 'settled' && !r.idempotent) results.settled++;
+			// Enter evaluation. Once a case is past 'working' the escrow sweep owns the
+			// job (its verdict, dispute window and payout), so this lane only ever
+			// carries deliveries that never reached a case.
+			await intakeDelivery({ bounty, job: full });
 		} catch (err) {
 			note(`job ${j.id}`, err);
 		}

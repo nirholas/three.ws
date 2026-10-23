@@ -171,6 +171,10 @@ const TYPE_CATEGORY = {
 
 	withdrawal_completed: 'account',
 	withdrawal_failed: 'account',
+	// Labor-market escrow lifecycle (api/_lib/labor-evaluation.js).
+	labor_escrow_update: 'account',
+	labor_deadline_soon: 'account',
+	labor_payout_delayed: 'account',
 	payment_mismatch: 'account',
 	asset_payment_mismatch: 'account',
 	skill_payment_mismatch: 'account',
@@ -374,6 +378,9 @@ const PUSH_COPY = {
 	forge_complete:           (p) => ['Your 3D model is ready ✨', p.prompt ? `"${String(p.prompt).slice(0, 80)}" finished generating` : 'Your generation finished. Tap to view it'],
 	forge_failed:             (p) => ['Generation failed ⚠️', p.prompt ? `"${String(p.prompt).slice(0, 80)}" could not be generated. Tap to retry` : 'A generation could not be completed. Tap to retry'],
 	withdrawal_completed:     ()  => ['Withdrawal complete ✅', 'Your withdrawal has been sent'],
+	labor_escrow_update:      (p) => [p.title || 'Escrow update', p.message || 'A bounty escrow changed state'],
+	labor_deadline_soon:      (p) => [p.title || 'Deadline approaching', p.message || 'A bounty deadline is close'],
+	labor_payout_delayed:     (p) => [p.title || 'Payout delayed', p.message || 'An escrow payout is delayed and will retry'],
 	withdrawal_failed:        ()  => ['Withdrawal failed ⚠️', 'A withdrawal could not be completed — tap to review'],
 	payment_mismatch:         ()  => ['Payment mismatch ⚠️', 'Check your agent payment settings'],
 	asset_payment_mismatch:   ()  => ['Payment mismatch ⚠️', 'Check your agent payment settings'],

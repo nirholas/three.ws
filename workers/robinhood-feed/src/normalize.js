@@ -128,7 +128,7 @@ export function normalizeCurveTrade({ trade, name = null, symbol = null, ethUsd 
 }
 
 /**
- * A Uniswap v3 `Swap` on a tracked pool (NOXA pools from block one; Odyssey
+ * A Uniswap v3 `Swap` on a tracked pool (venue pools from block one; Odyssey
  * pools post-graduation). `coinIsToken0` + `quoteDecimals` come from a one-time
  * pool inspection in the orchestrator.
  */

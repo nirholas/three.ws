@@ -42,7 +42,7 @@ If every source is unreachable the tracker returns an empty array and the page s
 - **kolscan.io** supplies the live wallet universe and the fallback P&L per window. Trader names it publishes are deliberately dropped; the schema stays address-keyed.
 - **Helius** enhanced transactions back the per-mint trade feed (`/api/kol/trades`).
 - **Birdeye** backs the holdings half of the portfolio proxy (`/api/kol/wallets`); its P&L half is computed in-house from on-chain trades.
-- **The X API** supplies follower counts and avatars, only for admin-verified handles.
+- **X** supplies follower counts and avatars, only for admin-verified handles. Rung 1 is the X API v2 (needs `TWITTER_BEARER_TOKEN`). Rung 2 is the keyless guest reader in [api/_lib/x-guest/](../api/_lib/x-guest/README.md), used when the bearer is unset or rate limited, so the board shows followers with no key. Each result names its `source` (`x-api` or `x-guest`).
 
 Each integration degrades honestly: a missing key or an upstream outage yields an empty or null field (and, for `/api/kol/trades`, an explicit error when the whole provider is down), never a fabricated or zeroed row that looks like real data.
 

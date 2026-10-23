@@ -1005,6 +1005,13 @@ export const env = {
 	get X402_MAX_AMOUNT_REQUIRED() {
 		return opt('X402_MAX_AMOUNT_REQUIRED', '1000');
 	},
+	// Ceiling on new self-signed agent accounts per rolling 24 hours, across all
+	// instances (api/auth/agent-signup.js). Counted from the database, so it holds
+	// however many Cloud Run instances are up.
+	get AGENT_SIGNUP_DAILY_CAP() {
+		const n = Number.parseInt(opt('AGENT_SIGNUP_DAILY_CAP', '500'), 10);
+		return Number.isInteger(n) && n > 0 ? n : 500;
+	},
 	// USE-15 — TTL (seconds) for the payment-identifier idempotency cache.
 	// Keyed by ${route}|${paymentId}; a second hit with the same id within the
 	// window replays the cached response without re-charging. 1h default matches

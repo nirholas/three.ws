@@ -276,6 +276,8 @@ function shapeMemory(row) {
 	};
 	if ('score' in row) memory.score = row.score;
 	if ('match' in row) memory.match = row.match;
+	if ('rankScore' in row) memory.rankScore = row.rankScore;
+	if (row.outcome && typeof row.outcome === 'object') memory.outcome = row.outcome;
 	return memory;
 }
 

@@ -3,12 +3,40 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "KOL tracker shows follower counts without an X API key, and the Oracle reads KOL timelines",
+			"summary": "A keyless X reader now backs the tracker when the paid API is unset or rate limited, so attached KOLs keep their follower counts. The Oracle also reads tracked timelines every 10 minutes to feed its social virality signal, and each coin's own linked X account age and followers now appear in its intel.",
+			"tags": [
+				"feature"
+			],
+			"link": "/tracker"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Robinhood Chain launches now show every venue, the deployer's track record and a dev-sold flag",
+			"summary": "The launches board stopped watching NOXA, which shut down in July, and now finds launches on every venue seen on chain. Each row names the launchpad, shows how many earlier tokens the deployer launched and how many it sold out of, and flags launches where the dev has already sold.",
+			"tags": [
+				"feature"
+			],
+			"link": "/markets/robinhood"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Flappin UFO is back at /play/ufo with a verified leaderboard and a ghost of the top run",
 			"summary": "The arcade game returns as a native canvas game with touch and keyboard controls and levels that get longer and tighter. Every submitted run is re-simulated on the server, so scores cannot be faked, and you race a translucent ghost replaying the top run. Scores also appear on /rankings as the UFO High Score tab.",
 			"tags": [
 				"feature"
 			],
 			"link": "/play/ufo"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Agent memory now learns from trade results, and the decision trail has a verify endpoint",
+			"summary": "When a snipe closes, its realized P&L, win or loss and hold time are written back onto the memories the agent recalled when it opened the trade. Recall then ranks those memories by a bounded outcome weight (0.65 to 1.35, halving every 45 days, never zero), so lessons from winners rise while memories tied to losses sink but still come back as warnings. Every recall hit now reports its rankScore and an outcome block with the weight, wins, losses and net USD so you can see why it ranked. The hash-chained decision trail can be re-walked at GET /api/agents/:id/decision-trail/verify, which returns ok, the head hash and the zero-based index of the first broken row after any edit. The reasoning ledger page now fetches it and links to it from the verified badge.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/reasoning-ledger"
 		},
 		{
 			"date": "2026-10-23",

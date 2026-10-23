@@ -2411,6 +2411,13 @@ export const limits = {
 	// against one key hammering a signature it cannot get right.
 	agentSignupIp: (ip) => getLimiter('agent-signup:ip', { limit: 5, window: '1 h', critical: true }).limit(ip),
 	agentSignupKey: (publicKey) => getLimiter('agent-signup:key', { limit: 10, window: '1 h', critical: true }).limit(publicKey),
+	// Challenge issuance for /api/auth/agent-signup. Cheap to serve, so the lanes are
+	// looser than the signup lanes above, but still fail closed: an unthrottled
+	// challenge endpoint is a free write path into the nonce table.
+	agentChallengeIp: (ip) => getLimiter('agent-signup:challenge-ip', { limit: 30, window: '1 h', critical: true }).limit(ip),
+	agentChallengeKey: (publicKey) => getLimiter('agent-signup:challenge-key', { limit: 10, window: '1 h', critical: true }).limit(publicKey),
+	// Agent plan upgrade (api/billing/agent-upgrade.js): the 402 challenge itself.
+	agentUpgradeKey: (apiKeyId) => getLimiter('agent-upgrade:key', { limit: 60, window: '1 h' }).limit(apiKeyId),
 	// Agent commerce (api/agent-commerce/[...route].js). The public invoice page
 	// and its verify button reach the chain, so they are capped per IP; owner
 	// writes per user; an approval decision checks a password or a signature, so

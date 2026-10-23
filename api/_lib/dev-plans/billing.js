@@ -297,7 +297,7 @@ export async function applyDevPlanCheckout(checkout, { txSignature = null, ledge
 	});
 	try {
 		const [u] = await sql`select email from users where id = ${checkout.user_id} limit 1`;
-		if (u?.email) {
+		if (u?.email && !u.email.endsWith('.invalid')) {
 			const mail = receiptEmail({ plan, kind: checkout.kind, asset: checkout.asset, amountUsd, periodStart: checkout.period_start, periodEnd: checkout.period_end, txSignature });
 			await sendEmail({ to: u.email, ...mail });
 		}
@@ -305,6 +305,33 @@ export async function applyDevPlanCheckout(checkout, { txSignature = null, ledge
 		console.warn('[dev-plans] receipt email failed:', err?.message);
 	}
 	return publicReceipt(receipt);
+}
+
+/**
+ * Record a plan purchase that already settled over x402 (api/billing/agent-upgrade.js).
+ * The payment is the proof, so there is no pending checkout to confirm: the row
+ * is written as paid and the plan applied in one step. Idempotent on the
+ * settlement signature, so a replayed paid retry returns the same receipt and
+ * never extends the period twice.
+ */
+export async function recordX402DevPlanPayment({ userId, planId, payer, payTo = null, txSignature, amountAtomics, req = null }) {
+	if (!txSignature) throw fail(500, 'settlement_missing', 'the payment settled without a transaction signature');
+	const [existing] = await sql`select * from dev_plan_receipts where tx_signature = ${txSignature} and user_id = ${userId} limit 1`;
+	if (existing) return publicReceipt(existing);
+	const [taken] = await sql`select id from dev_plan_checkouts where tx_signature = ${txSignature} limit 1`;
+	if (taken) throw fail(409, 'signature_already_used', 'this payment already funded a different plan change');
+	const sub = await getDevSubscription(userId, { fresh: true });
+	const quote = quoteDevPlanChange(sub, planId, 'USDC');
+	const [row] = await sql`
+		insert into dev_plan_checkouts
+			(user_id, plan_id, kind, asset, wallet, pay_to, amount_usd, amount_atomics, price_source, period_start, period_end, status, tx_signature, expires_at)
+		values
+			(${userId}, ${quote.plan.id}, ${quote.kind}, 'USDC', ${payer || null}, ${payTo}, ${quote.amountUsd},
+			 ${amountAtomics == null ? null : String(amountAtomics)}, 'x402', ${quote.periodStart.toISOString()}, ${quote.periodEnd.toISOString()},
+			 'pending', ${txSignature}, now())
+		returning *
+	`;
+	return applyDevPlanCheckout(row, { txSignature, req });
 }
 
 /**

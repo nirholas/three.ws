@@ -8,6 +8,7 @@
 //   disputed --resolve--> released | refunded   (second evaluator or arbiter)
 //   disputed --arbiter_timeout--> refunded
 //   funded | working --deadline--> refunded
+//   any open state --moderator override--> released | refunded
 //   submitted --attest_timeout--> refunded
 //
 // released and refunded are terminal. Every non-terminal state has a time-driven
@@ -50,12 +51,16 @@ export class EscrowError extends Error {
 	}
 }
 
+// override_pass / override_fail are the platform moderator's escape hatch
+// (api/labor/release.js): they end any open case immediately.
+const OVERRIDE = { override_pass: 'released', override_fail: 'refunded' };
+
 const TRANSITIONS = {
-	funded: { award: 'working', deadline: 'refunded', cancel: 'refunded' },
-	working: { deliver: 'submitted', deadline: 'refunded' },
-	submitted: { attest: 'attested', attest_timeout: 'refunded' },
-	attested: { dispute: 'disputed', cooldown_pass: 'released', cooldown_fail: 'refunded' },
-	disputed: { resolve_pass: 'released', resolve_fail: 'refunded', arbiter_timeout: 'refunded' },
+	funded: { award: 'working', deadline: 'refunded', cancel: 'refunded', ...OVERRIDE },
+	working: { deliver: 'submitted', deadline: 'refunded', ...OVERRIDE },
+	submitted: { attest: 'attested', attest_timeout: 'refunded', ...OVERRIDE },
+	attested: { dispute: 'disputed', cooldown_pass: 'released', cooldown_fail: 'refunded', ...OVERRIDE },
+	disputed: { resolve_pass: 'released', resolve_fail: 'refunded', arbiter_timeout: 'refunded', ...OVERRIDE },
 	released: {},
 	refunded: {},
 };

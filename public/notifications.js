@@ -198,6 +198,14 @@
 					href: p.link || agentHref,
 					parts: [bold(p.agent_name || 'Your agent'), ' used its ', p.window === 'monthly' ? 'monthly' : 'daily', ' inference budget. Raise it to resume'],
 				};
+			case 'labor_escrow_update':
+			case 'labor_deadline_soon':
+			case 'labor_payout_delayed':
+				return {
+					icon: '!',
+					href: p.link || '/labor-market',
+					parts: [bold(p.title || 'Escrow update'), ' ', p.message || ''],
+				};
 			case 'withdrawal_failed':
 				return {
 					icon: '!',

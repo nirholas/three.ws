@@ -22,7 +22,7 @@
 		"api/cron/treasury-topup.js": {
 			"maxDuration": 120
 		},
-		"{api/cron/economy-reconcile,api/cron/x402-ring-leak-scan,api/cron/x402-prepaid-settle,api/cron/quality-bench,api/cron/likeness-eval,api/cron/fact-check-benchmark,api/cron/marketplace-escrow-sweep}.js": {
+		"{api/cron/economy-reconcile,api/cron/x402-ring-leak-scan,api/cron/x402-prepaid-settle,api/cron/quality-bench,api/cron/likeness-eval,api/cron/fact-check-benchmark,api/cron/marketplace-escrow-sweep,api/cron/labor-escrow-sweep}.js": {
 			"maxDuration": 300
 		},
 		"{api/strategies,api/cron/payment-session-sweep,api/cron/three-market-refresh}.js": {
@@ -7054,6 +7054,10 @@
 		{
 			"path": "/api/cron/marketplace-escrow-sweep",
 			"schedule": "*/2 * * * *"
+		},
+		{
+			"path": "/api/cron/labor-escrow-sweep",
+			"schedule": "*/5 * * * *"
 		},
 		{
 			"path": "/api/cron/three-market-refresh",

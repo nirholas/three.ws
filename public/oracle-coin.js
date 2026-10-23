@@ -762,7 +762,8 @@
 	// Every @trythreews post plotted at the $THREE price it went out at, sized by
 	// engagement and coloured by the +4h return, so the question "does posting move
 	// the coin" is answerable by looking. Built by `npm run x:archive:price` into
-	// /data/trythreews-post-impact.json; the bubbles are real links, laid over the
+	// /data/trythreews-post-impact.json, which carries its own price series so the
+	// bubbles sit on exactly the prices they were measured against; the bubbles are real links, laid over the
 	// line as HTML so they stay round at any width.
 	const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
@@ -807,15 +808,11 @@
 			if (res.ok) doc = await res.json();
 		} catch { /* handled below */ }
 		if (!doc || !Array.isArray(doc.posts) || !doc.posts.length) return failed('Post impact data did not load. Reload the page; it is rebuilt with <code>npm run x:archive:price</code>.');
-		const first = Math.floor(Date.parse(doc.posts[0].postedAt) / 1000) - 86400;
-		const to = Math.floor(Date.now() / 1000);
-		const interval = to - first <= 60 * 86400 ? '4h' : '12h';
-		const { ok, data } = await api(`/api/pump/price-history?mint=${encodeURIComponent(mint)}&interval=${interval}&from=${first}&to=${to}`, { timeout: 15000 });
-		const pts = ((data && data.data) || []).filter((p) => Number.isFinite(p.c));
-		if (!ok || pts.length < 2) return failed('Price history is unavailable right now. Try again in a moment.');
+		const pts = Array.isArray(doc.points) ? doc.points.filter((p) => Number.isFinite(p.c)) : [];
+		if (pts.length < 2) return failed('Price history is missing from the post impact data. Rebuild it with <code>npm run x:archive:price</code>.');
 		const shown = doc.posts.filter((x) => Date.parse(x.postedAt) / 1000 >= pts[0].t);
 		canvas.innerHTML = `${postsSummary(doc.summary)}<div class="oc-posts-plot">${areaChartSvg(pts)}${postsOverlay(pts, shown)}</div>`
-			+ `<div class="oc-chart-legend"><span>bubble size: engagement</span><span class="oc-lg buy"></span>+4h up<span class="oc-lg sell"></span>+4h down<span class="oc-lg na"></span>not measured<span class="oc-lg-ct">${shown.length} posts plotted</span></div>`;
+			+ `<div class="oc-chart-legend oc-post-legend"><span>bubble size: engagement</span><span class="oc-lg buy"></span>+4h up<span class="oc-lg sell"></span>+4h down<span class="oc-lg na"></span>not measured<span class="oc-lg-ct">${shown.length} posts plotted &middot; as of ${esc(doc.generatedAt.slice(0, 10))}</span></div>`;
 	}
 
 	// The chart view ids the page used before the shared switcher took over, mapped

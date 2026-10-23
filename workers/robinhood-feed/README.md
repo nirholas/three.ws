@@ -1,8 +1,9 @@
 # robinhood-feed
 
 The PumpPortal-equivalent for **Robinhood Chain** (mainnet chain ID 4663): a
-long-lived Node worker that watches NOXA + The Odyssey memecoin launchpads and
-their Uniswap v3 pools, normalizes every launch/trade/graduation into the same
+long-lived Node worker that watches The Odyssey plus every other launch venue
+observed on chain (Pons, Virtuals and more, discovered from ERC-20 mint logs)
+and their Uniswap pools, grades each deployer, normalizes every launch/trade/graduation into the same
 shape three.ws's pump.fun consumers already understand, and serves it over
 SSE + WebSocket + a REST snapshot. No mocks — every field comes from a real
 on-chain read (RPC logs + the Arbitrum sequencer feed).
@@ -53,7 +54,10 @@ so a client bug cannot read as "this coin has never traded".
 | `src/rpc.js` | `withRpcRetry`: the transient-failure classifier the bulk log reads run through. See "Public RPC behaviour" below. |
 | `src/eth-price.js` | ETH/USD spot, 4-source failover (Coinbase → Kraken → CoinGecko → DefiLlama), cached ~60s — the ETH-gas-chain analogue of three.ws's `sol-price.js`. |
 | `src/normalize.js` | **Pure** functions mapping decoded on-chain events to the pump-compatible shape. No chain reads — unit-tests directly against captured real logs (`tests/fixtures/`). |
-| `src/feed.js` | The orchestrator: composes the SDK's `watchLaunches`/`watchCurveTrades`/`watchGraduations` (NOXA + Odyssey via RPC logs), a dynamic Uniswap v3 `Swap` watcher over tracked pools (NOXA pools from block one, Odyssey pools post-graduation), and the sequencer feed as a liveness/gap watchdog. Backfills on cold start, gap-fills on a stalled watcher, dedupes cross-source. |
+| `src/feed.js` | The orchestrator: composes the SDK's `watchLaunches`/`watchCurveTrades`/`watchGraduations` (Odyssey via RPC logs), the mint-log venue watcher, a dynamic Uniswap v3 `Swap` watcher over tracked pools, the dev-sold sweep, and the sequencer feed as a liveness/gap watchdog. Backfills on cold start, gap-fills on a stalled watcher, dedupes cross-source. |
+| `src/venue-catalog.json`, `src/venues.js` | The launch venues observed on chain (51 contract and selector pairs), generated from the upstream `launch-relay` catalog by `scripts/build-venue-catalog.mjs` and verified read-only on chain. `venueForCall` maps a mint transaction's target and selector to a venue. |
+| `src/mints.js` | Venue discovery. An ERC-20 mints its supply with `Transfer(0x0, to, n)`; the contract the mint transaction called identifies the launchpad. Chunked `eth_getLogs` that bisects on the RPC's matched-log cap, ERC-721 and AMM-pair filtering. |
+| `src/reputation.js` | Deployer reputation and the dev-sold read: launch allocation from the receipt, current balance by multicall, an in-memory index of observed launches per creator, and the risk flags. |
 | `src/server.js` | HTTP + WS server: `/healthz`, `/recent`, SSE `/events`, WebSocket `/ws`. Keeps a small replay buffer so a fresh subscriber sees recent history instead of a blank feed. |
 
 Built entirely on `hoodchain` (`robinhood/robinhood-chain-sdk/`, published npm
@@ -74,22 +78,30 @@ Documented per the mission brief — fields map 1:1 where semantics align:
   the *value* carried is the trade's
   native-ETH magnitude, not SOL. A `quote_symbol` field (`'ETH'` or `'USDG'`)
   always tells you which.
-- **Launchpads**: two exist, not one — **NOXA** (instant Uniswap v3 listing,
-  one tx: deploy + pool + locked liquidity, no bonding curve) and **The
-  Odyssey** (pump.fun-style ETH bonding curve; graduates via `PoolMigrated` to
-  a locked Uniswap v3 pool). NOXA coins have no `graduation` event — they're
-  tradeable via Uniswap swaps from block one, which this worker watches
-  directly (`trade.source: 'uniswap-v3'` vs `'odyssey-curve'`).
-  `launchpad` on every launch event tells you which.
+- **Launchpads**: many. NOXA shut down on 2026-07-13 and is no longer watched.
+  **The Odyssey** (pump.fun-style ETH bonding curve; graduates via
+  `PoolMigrated` to a locked Uniswap v3 pool) is watched through the SDK. Every
+  other venue is discovered from mint logs (`src/mints.js`) and named from
+  `src/venue-catalog.json`. `launchpad` is the venue id and `venue` carries
+  `{id, label, kind, address}`.
+- **Deployer reputation and dev-sold**: every launch carries `deployer`
+  (`prior_launches`, `prior_dev_exits`, `inspected`, `window_blocks`),
+  `dev_sold`, `dev_sold_pct` and `flags` (`dev_sold`, `prior_dev_exit`,
+  `serial_exit`, `serial_deployer`). The dev allocation is the tokens the
+  launch transaction sent to its sender; `dev_sold` is a current balance of
+  zero. A `prior_dev_exit` is a heuristic (a creator who sold out of an earlier
+  launch we saw), not a proven rug, and the history covers only the backfill
+  window (`RH_BACKFILL_BLOCKS`). A launch with no creator allocation reports
+  `null`, not false. A launch re-emits when dev-sold changes, replacing the
+  earlier record in `/recent`.
 - **No off-chain metadata service**: pump.fun ships `image_uri`/description/
   socials from its own API; Robinhood Chain launchpads don't expose an
   equivalent yet, so `image_uri`/`description`/`twitter`/etc. are always `null`.
   `name`/`symbol` ARE real — resolved on-chain via the ERC-20 `name()`/
   `symbol()` calls.
 - **`initial_buy_native`/`initial_buy_usd`** on a launch event are best-effort:
-  the hoodchain SDK's high-level launch watchers don't carry NOXA's raw
-  `initialBuyAmount` log field through their decoded `Launch` type, so these
-  resolve to `null` rather than a fabricated figure when unavailable.
+  venue launches are found from the mint log and do not carry the buy amount,
+  so these resolve to `null` rather than a fabricated figure.
 - **Sequencer feed vs RPC logs**: the Arbitrum Nitro sequencer feed
   (`wss://feed.mainnet.chain.robinhood.com`) delivers every L2 transaction
   ~100–300ms before it's queryable over RPC, but decoding trade *semantics*
@@ -150,12 +162,11 @@ Both were measured live against mainnet, not inferred:
    the SDK's own 10 000-block chunking in `getRecentLaunches` is well inside the
    limit. The failures above are load, not range.
 
-The launchpads themselves idle for long stretches: at the time of writing the
-newest NOXA launch on mainnet is block 6 880 646 (2026-07-11), roughly 26.4 M
-blocks behind the head. A cold start with the default `RH_BACKFILL_BLOCKS`
-(200 000 blocks ≈ 5.5 h) therefore normally finds nothing and the replay buffer
-starts empty. That is the chain being quiet, not the worker being broken:
-`/healthz` still shows a live `feed.last_sequence` and `last_scanned_block`.
+The chain produces about 9.6 blocks a second, so the default
+`RH_BACKFILL_BLOCKS` (200 000 blocks) covers about 5.8 h; use 830 000 for 24 h.
+The backfill scans the whole window before it serves launches, because
+deployer history is built from it. `/healthz` shows `last_scanned_block`,
+`mint_cursor_block` and `indexed_deployers` while it runs.
 `npm run smoke:live` proves the decode path end to end regardless, by finding
 the newest launch that actually exists.
 
@@ -204,8 +215,10 @@ than assuming recent activity.
 Unit tests (`tests/normalize.test.js`) run the pure normalizer against **real
 on-chain logs**, captured live from Robinhood Chain mainnet during development
 and committed as fixtures (`tests/fixtures/*.json`) — an Odyssey `Traded` log,
-a NOXA `TokenLaunched` log, an Odyssey `TokenCreated` log, and a Uniswap v3
-`Swap` log on the resulting pool. No mocks: every asserted value traces back to
+a historical NOXA `TokenLaunched` log, an Odyssey `TokenCreated` log, a Uniswap v3
+`Swap` log on the resulting pool, and one real launch per discovered venue
+(`tests/fixtures/venue-launches.json`, captured by
+`node scripts/capture-venue-fixtures.mjs`). No mocks: every asserted value traces back to
 a real transaction hash. Captured with:
 
 ```js
@@ -285,10 +298,9 @@ Once deployed, set `ROBINHOOD_FEED_URL` on the three.ws API service (Cloud Run
   a misleading `-32602` (see "Public RPC behaviour"). `withRpcRetry` absorbs
   that, but under sustained load a paid provider is still the right answer:
   point `RH_RPC_URL` at it and the public RPC stays behind it as a fallback.
-- **Launchpad activity is intermittent**: the newest NOXA launch as of
-  2026-08-11 is a month old (block 6 880 646, 2026-07-11). Nothing to fix, but
-  do not read an empty `/recent` on a fresh deploy as a failure. Confirm with
-  `npm run smoke:live`.
+- **Backfill is bounded by the public RPC**: a wide `RH_BACKFILL_BLOCKS` issues
+  many `eth_getLogs` calls and the public RPC answers 429 under sustained load.
+  Point `RH_RPC_URL` at a paid provider for a 24 h window.
 
 ---
 

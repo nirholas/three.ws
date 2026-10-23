@@ -2068,7 +2068,15 @@ class Agent3DElement extends HTMLElement {
 				mainThreadOrigins: [_pageOrigin(), _scriptOrigin].filter(Boolean),
 			});
 			const skillList = manifest.skills || [];
-			for (const spec of skillList) {
+			for (const entry of skillList) {
+				// A string entry that points at a hosted bundle is a skill the owner
+				// accepted from the dashboard's Suggested skills list
+				// (/api/agents/:id/skill-candidates/:cid/bundle/). Other strings are
+				// built-in skill names, registered through AgentSkills.
+				const spec =
+					typeof entry === 'string' && /\/skill-candidates\/[^/]+\/bundle\/?$/.test(entry)
+						? { uri: entry.startsWith('/') ? `${this._apiBase()}${entry}` : entry }
+						: entry;
 				// Built-in skills (referenced by name only, no bundle URI) are
 				// registered through AgentSkills, not the remote SkillRegistry.
 				if (!spec || !spec.uri) continue;

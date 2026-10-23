@@ -150,7 +150,7 @@ function statusPage() {
 <style>body{background:#0b0d10;color:#e6e8eb;font:14px/1.6 ui-monospace,monospace;margin:0;padding:40px;max-width:720px}
 h1{font-size:18px;color:#5fd08a}a{color:#7aa2f7}code{background:#161a1f;padding:2px 6px;border-radius:4px}</style></head>
 <body><h1>robinhood-feed · Robinhood Chain firehose</h1>
-<p>Normalized launches, trades and graduations from NOXA + The Odyssey + Uniswap v3.</p>
+<p>Normalized launches, trades and graduations from every observed venue + The Odyssey + Uniswap.</p>
 <ul>
 <li><a href="/healthz">/healthz</a> — status JSON</li>
 <li><a href="/recent">/recent</a> — replay-buffer snapshot (<code>?kind=trade&amp;limit=20</code>)</li>

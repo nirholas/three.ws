@@ -1307,6 +1307,85 @@
 				clip: rect(0, 0, 0, 0);
 				border: 0;
 			}
+			.sugg-head {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 12px;
+			}
+			.sugg-head h3 {
+				margin: 0;
+				font-size: 16px;
+				overflow-wrap: anywhere;
+			}
+			.sugg-chip {
+				flex: none;
+				padding: 2px 10px;
+				border: 1px solid var(--border);
+				border-radius: 999px;
+				font-size: 12px;
+			}
+			.sugg-draft,
+			.sugg-installed {
+				border-color: var(--accent);
+			}
+			.sugg-invalid {
+				border-color: #ff6b6b;
+				color: #ff6b6b;
+			}
+			.sugg-pre {
+				margin: 8px 0;
+				padding: 10px;
+				max-height: 280px;
+				overflow: auto;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 6px;
+				font: 12px/1.5 ui-monospace, monospace;
+				white-space: pre-wrap;
+				overflow-wrap: anywhere;
+			}
+			.sugg-pre:focus-visible,
+			.sugg-card summary:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			.sugg-card summary {
+				cursor: pointer;
+				padding: 4px 0;
+			}
+			.sugg-steps {
+				margin: 6px 0;
+				padding-left: 20px;
+				overflow-wrap: anywhere;
+			}
+			.sugg-errors {
+				margin: 8px 0;
+				padding-left: 20px;
+				color: #ff6b6b;
+			}
+			.sugg-revision {
+				margin-top: 10px;
+				padding: 10px;
+				border: 1px dashed var(--border);
+				border-radius: 6px;
+			}
+			.sugg-actions {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px;
+				margin-top: 12px;
+			}
+			.sugg-error {
+				margin: 8px 0 0;
+				color: #ff6b6b;
+			}
+			.sugg-error:empty {
+				display: none;
+			}
+			.sugg-agent {
+				margin: 18px 0 8px;
+			}
 		</style>
 		<script
 			type="module"

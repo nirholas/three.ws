@@ -21,6 +21,8 @@ import {
 import { escrowConfigured, escrowAddressOrNull, fundEscrow } from '../_lib/labor-escrow.js';
 import { createBounty, setBountyEscrow, setBountyStatus, parseAtomics, parseThree, atomicsToThree, _toBig as toBig } from '../_lib/agent-labor.js';
 import { runAutopilot } from '../_lib/labor-settle.js';
+import { EscrowError, normalizeEvaluator, normalizeDisputeWindow } from '../_lib/labor-escrow-machine.js';
+import { ensureCase } from '../_lib/labor-evaluation.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -61,6 +63,30 @@ export default wrap(async (req, res) => {
 		deadlineIso = at.toISOString();
 	}
 
+	// Who judges the delivery and how long the losing side may dispute. Validated
+	// before any money moves; stored on the bounty and read when its case opens.
+	let escrowCfg;
+	try {
+		const evaluator = normalizeEvaluator(body.evaluator, { posterAgentId });
+		if (evaluator.kind === 'agent') {
+			if (!requireUuid(res, evaluator.agentId, 'evaluator.agentId')) return;
+			const [reg] = await sql`SELECT meta FROM agent_identities WHERE id = ${evaluator.agentId} AND deleted_at IS NULL`;
+			if (!reg?.meta?.solana_address) {
+				return error(res, 400, 'bad_evaluator', 'the evaluator agent does not exist or has no Solana wallet to sign with');
+			}
+			if (evaluator.agentId === posterAgentId) {
+				return error(res, 400, 'bad_evaluator', "use evaluator 'poster' to judge your own bounty");
+			}
+		}
+		escrowCfg = {
+			evaluator: evaluator.kind === 'agent' ? { kind: 'agent', agentId: evaluator.agentId } : evaluator.kind,
+			dispute_window_seconds: normalizeDisputeWindow(body.disputeWindowSeconds),
+		};
+	} catch (e) {
+		if (e instanceof EscrowError) return error(res, e.status, e.code, e.message);
+		throw e;
+	}
+
 	if (!escrowConfigured()) {
 		return error(res, 503, 'escrow_unavailable', 'the labor-market escrow wallet is not configured on this server');
 	}
@@ -89,7 +115,7 @@ export default wrap(async (req, res) => {
 		posterAgentId, posterUserId: userId, title: title.trim(), spec: spec.trim(),
 		requiredSkill: requiredSkill ? String(requiredSkill).slice(0, 80) : null,
 		rewardAtomics: reward, deadline: deadlineIso, auto: false,
-		meta: { reward_usd_at_post: usd },
+		meta: { reward_usd_at_post: usd, escrow: escrowCfg },
 	});
 
 	// Reserve the spend against the poster's spend policy BEFORE moving funds.
@@ -129,6 +155,10 @@ export default wrap(async (req, res) => {
 	const escrowAddress = escrowAddressOrNull();
 	const funded = await setBountyEscrow(bounty.id, { escrowAddress, escrowFundSig: fundSig });
 
+	// Open the escrow case now that the money is in. A failure here cannot lose the
+	// bounty: the case is opened again at award or delivery.
+	await ensureCase(funded).catch((e) => console.error('[labor/post] escrow case not opened yet', e?.message));
+
 	// Kick the autonomy engine: collect auto-bids and, if the poster auto-awards,
 	// run the job through to settlement. Bounded; failures leave a resumable state.
 	const autopilot = await runAutopilot(bounty.id).catch((e) => {
@@ -151,6 +181,7 @@ export default wrap(async (req, res) => {
 			escrow_fund_sig: final.escrow_fund_sig,
 			escrow_explorer: final.escrow_fund_sig ? `https://solscan.io/tx/${final.escrow_fund_sig}` : null,
 			bid_count: Number(final.bid_count || 0), award_rationale: final.award_rationale || null,
+			evaluator: escrowCfg.evaluator, dispute_window_seconds: escrowCfg.dispute_window_seconds,
 		},
 		autopilot: autopilot || { bids: 0, awarded: false, settled: null },
 	});

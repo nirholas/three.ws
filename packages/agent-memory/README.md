@@ -147,6 +147,7 @@ Semantic search over the agent's memories. Wraps `POST /api/memory/search`.
 Each result carries a `score` (cosine, 4-dp) and `match` of `'semantic'` or
 `'lexical'`. Results are semantic-first, then back-filled with salience-ranked
 substring hits so a query is never empty just because a provider is down.
+Hits are ordered by `rankScore`, the score times an outcome weight. When a memory was recalled into a decision (a snipe, for example) and that position later closed, the realized P&L is written back onto it; `outcome` reports `{ weight, samples, wins, losses, netPnlUsd, lastClosedAt }`. The weight is bounded to 0.65..1.35, halves every 45 days, and is never zero, so a memory tied to a loss ranks lower but is still returned as a warning.
 Recalling a memory bumps its `accessCount` and salience slightly — the
 recency/reinforcement loop the tiers rely on.
 
@@ -223,6 +224,8 @@ type Memory = {
   // recall() only:
   score?: number | null;       // cosine, or null for a lexical hit
   match?: 'semantic' | 'lexical';
+  rankScore?: number;          // order key: score (or salience) x outcome.weight
+  outcome?: { weight: number; samples: number; wins: number; losses: number; netPnlUsd: number; lastClosedAt: string | null };
 };
 ```
 

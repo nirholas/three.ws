@@ -5,6 +5,8 @@
 import { cors, error, json, method, wrap } from '../_lib/http.js';
 import { getBounty, listBidsForBounty, getJobByBounty, atomicsToThree, _shapeBounty as shapeBounty } from '../_lib/agent-labor.js';
 import { requireUuid } from '../_lib/labor-auth.js';
+import { caseView } from '../_lib/labor-evaluation.js';
+import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
@@ -18,12 +20,17 @@ export default wrap(async (req, res) => {
 	const raw = await getBounty(id);
 	if (!raw) return error(res, 404, 'not_found', 'bounty not found');
 
-	const [bids, job] = await Promise.all([listBidsForBounty(id), getJobByBounty(id)]);
+	const viewer = (await getSessionUser(req).catch(() => null))?.id
+		|| (await authenticateBearer(extractBearer(req)).catch(() => null))?.userId || null;
+	const [bids, job, escrow] = await Promise.all([
+		listBidsForBounty(id), getJobByBounty(id), caseView(id, viewer).catch(() => null),
+	]);
 
 	json(res, 200, {
 		data: {
 			bounty: shapeBounty({ ...raw, bid_count: bids.length, poster_name: raw.poster_name }),
 			bids,
+			escrow,
 			job: job
 				? {
 						id: job.id, status: job.status, worker_agent_id: job.worker_agent_id,

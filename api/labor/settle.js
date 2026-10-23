@@ -1,14 +1,14 @@
-// POST /api/labor/settle: verify a delivered job and release escrow on-chain.
-// Idempotent (job settle_key): a retry never double-pays. Callable by either
-// participant (poster or worker owner) so a stuck-but-delivered job can always be
-// resolved; the neutral verifier, not the caller, decides whether funds release.
+// POST /api/labor/settle: push a delivered job into evaluation. Idempotent, and
+// callable by either participant (poster or worker owner) so a stuck-but-delivered
+// job can always be advanced; the evaluator's verdict, not the caller, decides
+// whether funds release, and they move only when the dispute window closes.
 
 import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { authWrite, requireUuid } from '../_lib/labor-auth.js';
 import { getJob, getJobByBounty, getBounty } from '../_lib/agent-labor.js';
-import { runSettlement } from '../_lib/labor-settle.js';
+import { intakeDelivery, caseView } from '../_lib/labor-evaluation.js';
 
 // Which side of the job the caller owns: { poster, worker }.
 async function ownedSides(userId, posterAgentId, workerAgentId) {
@@ -54,7 +54,9 @@ export default wrap(async (req, res) => {
 	// to get paid is not.
 	if (sides.poster && !sides.worker && !(await requireRealFundsAgreement(req, res, { userId, context: 'labor-settle' }))) return;
 
+	// Nudge a delivered job into evaluation (idempotent). Funds move when the case
+	// reaches its verdict and its dispute window closes, not on this call.
 	const bounty = await getBounty(job.bounty_id);
-	const result = await runSettlement({ job, bounty });
-	return json(res, 200, { ok: true, job_id: job.id, settlement: result });
+	await intakeDelivery({ bounty, job });
+	return json(res, 200, { ok: true, job_id: job.id, escrow: await caseView(job.bounty_id, userId) });
 });

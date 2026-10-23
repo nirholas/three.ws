@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Flappin UFO</title>
+			<link>https://three.ws/docs/play-ufo</link>
+			<guid isPermaLink="false">2026-10-23:Docs · Flappin UFO</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How Flappin UFO runs are recorded, replayed and verified on the server, how the leaderboard ranks players, and how the ghost of the top run works.</description>
+		</item>
+		<item>
 			<title>install.md</title>
 			<link>https://three.ws/install.md</link>
 			<guid isPermaLink="false">2026-10-23:install.md</guid>
@@ -29,6 +37,14 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Put an interactive 3D model in any GitHub README. Paste a GLB, glTF, OBJ or STL URL and get a block GitHub renders as a rotatable viewer, sized to fit its markdown limit.</description>
+		</item>
+		<item>
+			<title>Agent memory now learns from trade results, and the decision trail has a verify endpoint</title>
+			<link>https://three.ws/reasoning-ledger</link>
+			<guid isPermaLink="false">2026-10-23:Agent memory now learns from trade results, and the decision trail has a verify endpoint</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When a snipe closes, its realized P&amp;L, win or loss and hold time are written back onto the memories the agent recalled when it opened the trade. Recall then ranks those memories by a bounded outcome weight (0.65 to 1.35, halving every 45 days, never zero), so lessons from winners rise while memories tied to losses sink but still come back as warnings. Every recall hit now reports its rankScore and an outcome block with the weight, wins, losses and net USD so you can see why it ranked. The hash-chained decision trail can be re-walked at GET /api/agents/:id/decision-trail/verify, which returns ok, the head hash and the zero-based index of the first broken row after any edit. The reasoning ledger page now fetches it and links to it from the verified badge.</description>
 		</item>
 		<item>
 			<title>Agents answer mentions of their own X account, in their own persona</title>
@@ -69,6 +85,14 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Forge results, avatar pages, the avatar dashboard and model pages now have a Copy as GitHub README 3D action. It simplifies the model to a size GitHub renders and puts a stl code fence on your clipboard that GitHub shows as an interactive 3D viewer in any README, issue or pull request. The same converter is a free API (POST /api/readme-3d) and has a live page at /readme-3d.</description>
+		</item>
+		<item>
+			<title>Flappin UFO is back at /play/ufo with a verified leaderboard and a ghost of the top run</title>
+			<link>https://three.ws/play/ufo</link>
+			<guid isPermaLink="false">2026-10-23:Flappin UFO is back at /play/ufo with a verified leaderboard and a ghost of the top run</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The arcade game returns as a native canvas game with touch and keyboard controls and levels that get longer and tighter. Every submitted run is re-simulated on the server, so scores cannot be faked, and you race a translucent ghost replaying the top run. Scores also appear on /rankings as the UFO High Score tab.</description>
 		</item>
 		<item>
 			<title>Leaked-wallet rescue runbook with a dry run, and live Jito tip accounts</title>
@@ -117,6 +141,14 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Buy a credit bundle or a 24-hour or 30-day time pass at /mcp-plans and call paid MCP tools without paying each call over x402. Every account gets 3 free calls per tool. Credits are debited before a call, refunded when the tool errors, and every result reports creditsUsed and creditsRemaining. A drained plan falls back to the per-call payment-required error.</description>
+		</item>
+		<item>
+			<title>Robinhood Chain launches now show every venue, the deployer's track record and a dev-sold flag</title>
+			<link>https://three.ws/markets/robinhood</link>
+			<guid isPermaLink="false">2026-10-23:Robinhood Chain launches now show every venue, the deployer's track record and a dev-sold flag</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The launches board stopped watching NOXA, which shut down in July, and now finds launches on every venue seen on chain. Each row names the launchpad, shows how many earlier tokens the deployer launched and how many it sold out of, and flags launches where the dev has already sold.</description>
 		</item>
 		<item>
 			<title>Splat Viewer: Spark 2.3 level of detail, saved camera hotspots, video export, and image to splat</title>
@@ -26967,12 +26999,12 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<description>Token-gated community warfare. Every coin community is an army: hold the coin, enlist, and rally for your faction in timed battles against other communities.</description>
 		</item>
 		<item>
-			<title>Flappin UFO: retired demo</title>
+			<title>Flappin UFO: thread the asteroids, climb the leaderboard</title>
 			<link>https://three.ws/play/ufo</link>
-			<guid isPermaLink="false">2026-06-19:Flappin UFO: retired demo</guid>
+			<guid isPermaLink="false">2026-06-19:Flappin UFO: thread the asteroids, climb the leaderboard</guid>
 			<pubDate>Fri, 19 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>The Flappin UFO arcade demo ran on an external deployment that is no longer online, so the game has been retired. The page now points visitors to the live three.ws experiences instead.</description>
+			<description>A hold-to-climb arcade game with levels that get longer and tighter. Every run is replayed and verified on the server, scores land on a real leaderboard, and you race the ghost of the top run.</description>
 		</item>
 		<item>
 			<title>Verify a Vanity Receipt</title>

@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-10-23T21:54:53.583Z",
+	"generated_at": "2026-10-23T21:56:11.262Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4123,
+	"total": 4127,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Docs · Flappin UFO",
+			"summary": "How Flappin UFO runs are recorded, replayed and verified on the server, how the leaderboard ranks players, and how the ghost of the top run works.",
+			"link": "/docs/play-ufo",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-10-23",
 			"type": "launch",
@@ -37,6 +47,17 @@
 			"link": "/readme-3d",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Agent memory now learns from trade results, and the decision trail has a verify endpoint",
+			"summary": "When a snipe closes, its realized P&L, win or loss and hold time are written back onto the memories the agent recalled when it opened the trade. Recall then ranks those memories by a bounded outcome weight (0.65 to 1.35, halving every 45 days, never zero), so lessons from winners rise while memories tied to losses sink but still come back as warnings. Every recall hit now reports its rankScore and an outcome block with the weight, wins, losses and net USD so you can see why it ranked. The hash-chained decision trail can be re-walked at GET /api/agents/:id/decision-trail/verify, which returns ok, the head hash and the zero-based index of the first broken row after any edit. The reasoning ledger page now fetches it and links to it from the verified badge.",
+			"link": "/reasoning-ledger",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -86,6 +107,16 @@
 			"title": "Copy any model as a GitHub README 3D block",
 			"summary": "Forge results, avatar pages, the avatar dashboard and model pages now have a Copy as GitHub README 3D action. It simplifies the model to a size GitHub renders and puts a stl code fence on your clipboard that GitHub shows as an interactive 3D viewer in any README, issue or pull request. The same converter is a free API (POST /api/readme-3d) and has a live page at /readme-3d.",
 			"link": "/readme-3d",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Flappin UFO is back at /play/ufo with a verified leaderboard and a ghost of the top run",
+			"summary": "The arcade game returns as a native canvas game with touch and keyboard controls and levels that get longer and tighter. Every submitted run is re-simulated on the server, so scores cannot be faked, and you race a translucent ghost replaying the top run. Scores also appear on /rankings as the UFO High Score tab.",
+			"link": "/play/ufo",
 			"tags": [
 				"feature"
 			]
@@ -147,6 +178,16 @@
 			"title": "Prepaid credit plans and free trials for paid MCP tools",
 			"summary": "Buy a credit bundle or a 24-hour or 30-day time pass at /mcp-plans and call paid MCP tools without paying each call over x402. Every account gets 3 free calls per tool. Credits are debited before a call, refunded when the tool errors, and every result reports creditsUsed and creditsRemaining. A drained plan falls back to the per-call payment-required error.",
 			"link": "/mcp-plans",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Robinhood Chain launches now show every venue, the deployer's track record and a dev-sold flag",
+			"summary": "The launches board stopped watching NOXA, which shut down in July, and now finds launches on every venue seen on chain. Each row names the launchpad, shows how many earlier tokens the deployer launched and how many it sold out of, and flags launches where the dev has already sold.",
+			"link": "/markets/robinhood",
 			"tags": [
 				"feature"
 			]
@@ -1520,46 +1561,6 @@
 			"title": "Developer plans",
 			"summary": "Free, Builder, Scale and Enterprise API plans with monthly call quotas that are enforced, not just recorded: burst and concurrency ceilings, 429 and 402 responses with a clear upgrade path, and self-serve upgrades in credits, USDC or $THREE on Solana.",
 			"link": "/developers",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Docs · Anatomy (machines as interactive cutaways)",
-			"summary": "How a one-line prompt becomes an interactive isometric cutaway: the spec format, progressive drawing while the model writes, the writer ladder, the /api/anatomy HTTP API and the open anatomy agent skill.",
-			"link": "/docs/anatomy",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Docs · Destination Whitelist",
-			"summary": "Cooldown allowlist for agent wallet payouts: step-up to add, propose-only agents, one-click cancel, instant removal.",
-			"link": "/docs/destination-whitelist",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Docs · Developer plans",
-			"summary": "Free, Builder, Scale and Enterprise API plans: monthly call quotas, burst and concurrency ceilings enforced on every v1 call with 429 and 402 responses, live usage in the dashboard, upgrades paid in credits, USDC or $THREE on Solana with proration and receipts, immediate key revocation, rotation with an overlap window, IP allowlists and per-key analytics.",
-			"link": "/docs/developer-plans",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Docs · Event Markets",
-			"summary": "Free-to-play prediction markets over three.ws events: how markets open, how they resolve from our own data with stored evidence, and how points are scored.",
-			"link": "/docs/event-markets",
 			"tags": [
 				"launch"
 			]

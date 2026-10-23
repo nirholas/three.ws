@@ -66,6 +66,7 @@ const artifactPaths = new Set([
 	'dist-lib/agent-3d.js',
 	'avatar-sdk/dist',
 	'avatar-sdk/dist/index.mjs',
+	'walk-sdk/dist',
 	// Git plumbing, not a repo path: in a linked worktree `.git` is a FILE
 	// pointing at the main checkout, so this never resolves there.
 	'.git/hooks',

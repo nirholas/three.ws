@@ -17,7 +17,7 @@ import {
 	percentile,
 	topicsOf,
 } from '../scripts/x-archive-lib.mjs';
-import { baselineReturns, impactForPosts, priceAt, returnsAt, summarize } from '../api/_lib/x-content/price-impact.js';
+import { baselineReturns, buildImpactDocument, downsample, impactForPosts, priceAt, returnsAt, summarize } from '../api/_lib/x-content/price-impact.js';
 
 const post = (over = {}) => ({
 	tweetId: over.tweetId || '1',
@@ -297,6 +297,29 @@ describe('price impact of a post', () => {
 		expect(rows[0].r24h).toBeNull();
 		expect(rows[1]).toMatchObject({ engagement: 10, hasMedia: true, priceAtPost: 109 });
 		expect(rows[2].engagement).toBe(35);
+	});
+
+	it('thins the series to one point per bucket without losing the open, close or volume', () => {
+		const thin = downsample(rising.slice(0, 32), 4 * 3600);
+		expect(thin).toHaveLength(2);
+		expect(thin[0].o).toBe(100);
+		expect(thin[0].c).toBe(115);
+		expect(thin[0].v).toBe(16);
+	});
+
+	it('builds the chart document with only the posts that have a price', () => {
+		const doc = buildImpactDocument({
+			handle: 'trythreews',
+			posts: [post({ tweetId: 'a', postedAt: iso(start + 10 * 900) }), post({ tweetId: 'b', postedAt: iso(start - 86_400) })],
+			pool: 'pool1',
+			candles: rising,
+			now: Date.parse('2026-10-01T00:00:00Z'),
+		});
+		expect(doc.posts.map((p) => p.id)).toEqual(['a']);
+		expect(doc.summary.posts).toBe(2);
+		expect(doc.series.bars).toBe(400);
+		expect(doc.generatedAt).toBe('2026-10-01T00:00:00.000Z');
+		expect(doc.points.length).toBeGreaterThan(1);
 	});
 
 	it('summarizes against the baseline and counts what could not be measured', () => {

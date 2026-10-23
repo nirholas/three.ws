@@ -120,6 +120,7 @@ vi.mock('../api/_lib/db.js', () => ({
 const { buildChain } = await import('../api/_lib/reasoning-ledger.js');
 const { default: timelineHandler } = await import('../api/ledger/[agentId].js');
 const { default: verifyHandler } = await import('../api/ledger/verify/[agentId].js');
+const { default: trailVerifyHandler } = await import('../api/agents/[id]/decision-trail-verify.js');
 
 const AGENT = '22222222-2222-2222-2222-222222222222';
 
@@ -309,5 +310,33 @@ describe('GET /api/ledger/verify/:agentId', () => {
 		const res = makeRes();
 		await verifyHandler({ method: 'POST', url: `/api/ledger/verify/${AGENT}`, headers: {} }, res);
 		expect(res.statusCode).toBe(405);
+	});
+});
+
+describe('GET /api/agents/:id/decision-trail/verify', () => {
+	const trailCall = (id) => call(trailVerifyHandler, `/api/agents/${id}/decision-trail/verify`, { id });
+
+	it('returns ok with no broken index on a clean chain', async () => {
+		await seedChain(4);
+		const res = await trailCall(AGENT);
+		expect(res.statusCode).toBe(200);
+		expect(res.body()).toMatchObject({ ok: true, status: 'verified_unanchored', first_broken_index: null });
+		expect(res.body().chain.count).toBe(4);
+		expect(res.body().chain.head_hash).toMatch(/^[0-9a-f]{64}$/);
+	});
+
+	it('fails at exactly the edited row and reports its zero-based index', async () => {
+		await seedChain(5);
+		h.store.decisions[2].rationale = 'edited after the fact';
+		const res = await trailCall(AGENT);
+		expect(res.body().ok).toBe(false);
+		expect(res.body().status).toBe('verification_failed');
+		expect(res.body().chain.broken_at).toBe(3);
+		expect(res.body().first_broken_index).toBe(2);
+	});
+
+	it('rejects a malformed agent id', async () => {
+		const res = await trailCall('nope');
+		expect(res.statusCode).toBe(400);
 	});
 });

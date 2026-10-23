@@ -123,6 +123,22 @@ export function summarize(rows, baseline = []) {
 	return summary;
 }
 
+// The series thinned to one point per `bucketSeconds` (open of the first bar, close
+// of the last, volume summed), small enough to ship to the browser with the posts
+// so the chart and the bubbles draw from the same prices.
+export function downsample(candles, bucketSeconds = 4 * 3600) {
+	const out = [];
+	for (const bar of candles) {
+		const slot = Math.floor(bar.t / bucketSeconds) * bucketSeconds;
+		const last = out[out.length - 1];
+		if (last && last.t === slot) {
+			last.c = bar.c;
+			last.v += bar.v || 0;
+		} else out.push({ t: slot, o: bar.o, c: bar.c, v: bar.v || 0 });
+	}
+	return out;
+}
+
 // The document the Posts view on /oracle-coin reads: the summary, and every post
 // that has a $THREE price at the moment it went out. Posts from before the pool
 // existed carry no price and are counted in the summary as unavailable instead.
@@ -140,6 +156,7 @@ export function buildImpactDocument({ handle, posts, pool, candles, now = Date.n
 			bars: candles.length,
 		},
 		summary: summarize(rows, baselineReturns(candles)),
+		points: downsample(candles),
 		posts: rows.filter((row) => row.priceAtPost !== null),
 	};
 }

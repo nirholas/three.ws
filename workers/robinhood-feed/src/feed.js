@@ -21,7 +21,7 @@ import { config, CHAIN_ID, redactRpcUrl } from './config.js';
 import { getMintLogs, parseMintLogs, launchesFromMints } from './mints.js';
 import { createReputation, devAllocation, devStatus, riskFlags, readBalances } from './reputation.js';
 import { hood, resolveMeta, inspectPool, blockTimeMs } from './chain.js';
-import { withRpcRetry } from './rpc.js';
+import { withRpcRetry, withRpcPatience } from './rpc.js';
 import { ethPriceUsd } from './eth-price.js';
 import {
 	normalizeLaunch, normalizeCurveTrade, normalizeUniswapSwap, normalizeGraduation,
@@ -222,13 +222,13 @@ export function startFirehose(onEvent) {
 
 	// ── mint watcher: launches on every catalogued venue ───────────────────────
 	const rpcView = {
-		getTransaction: (hash) => withRpcRetry(() => hood.public.getTransaction({ hash })),
-		readContract: (a) => hood.public.readContract(a),
+		getTransaction: (hash) => withRpcPatience(() => hood.public.getTransaction({ hash })),
+		readContract: (a) => withRpcPatience(() => hood.public.readContract(a)),
 	};
 	let mintCursor = 0n;
 	let mintPolling = false;
 	async function venueLaunchesBetween(from, to) {
-		const logs = await retryLogs(() => getMintLogs((a) => hood.public.request(a), from, to), 'mint-scan');
+		const logs = await getMintLogs((a) => withRpcRetry(() => hood.public.request(a)), from, to);
 		return launchesFromMints(rpcView, parseMintLogs(logs));
 	}
 	async function pollMints() {

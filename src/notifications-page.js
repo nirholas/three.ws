@@ -27,6 +27,7 @@ const TYPE_CATEGORY = {
 	companion_delivery: 'companion',
 	forge_complete: 'creations', forge_failed: 'creations',
 	withdrawal_completed: 'account', withdrawal_failed: 'account', payment_mismatch: 'account',
+	labor_escrow_update: 'account', labor_deadline_soon: 'account', labor_payout_delayed: 'account',
 	asset_payment_mismatch: 'account', skill_payment_mismatch: 'account', security_alert: 'account',
 	wallet_anomaly_frozen: 'account',
 	inference_topup: 'account', inference_budget_exhausted: 'account',

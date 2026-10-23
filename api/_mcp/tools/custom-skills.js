@@ -28,6 +28,7 @@ import {
 	updateSkill,
 	deleteSkill,
 } from '../../_lib/agent-custom-skills.js';
+import { listCandidates } from '../../_lib/skill-candidates.js';
 
 const READ = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 const WRITE = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false };
@@ -271,6 +272,28 @@ export const toolDefs = [
 			const removed = await deleteSkill(args.agent_id, args.skill_id);
 			const { budget } = await listSkills(args.agent_id);
 			return toolResult({ status: 'deleted', skill_id: removed.id, slug: removed.slug, name: removed.name, budget });
+		}),
+	},
+	{
+		name: 'list_skill_candidates',
+		title: 'List suggested skills',
+		annotations: READ,
+		_meta: policy('read'),
+		description:
+			'List the skills an agent suggested for itself after a run that verifiably worked (a multi-tool turn with no tool error, a passed labor-escrow job, or a closed profitable trade). Each candidate carries its goal, the ordered tool steps with argument shapes only (values are never stored), the draft bundle status (draft, invalid, installed, dismissed), validation errors for an invalid draft, and any revision proposals. Read-only: accepting, publishing or dismissing a candidate is the owner\'s click on the agent dashboard or POST /api/agents/:id/skill-candidates/:candidateId, never a tool call.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				agent_id: agentId,
+				status: { type: 'string', enum: ['draft', 'invalid', 'installed', 'dismissed'], description: 'Only candidates in this state. Omit for all.' },
+			},
+			required: ['agent_id'],
+			additionalProperties: false,
+		},
+		scope: 'agents:read',
+		handler: ownerTool(async (args, auth) => {
+			const candidates = await listCandidates({ agentId: args.agent_id, userId: auth.userId, status: args.status || null });
+			return toolResult({ count: candidates.length, candidates });
 		}),
 	},
 ];

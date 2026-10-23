@@ -23,12 +23,17 @@
 // for Solana, contract call for BSC). This module owns the cap check +
 // header dance + settlement parsing only.
 
-import { enforceCap, commit, rollbackReservation } from './x402-spending-cap.js';
+import { enforceCap, commit, releaseUnusedCap, rollbackReservation } from './x402-spending-cap.js';
 import { BUILDER_CODE } from './x402-builder-code.js';
 import { env } from './env.js';
 
-function selectRequirement(challenge, prefer) {
-	const accepts = Array.isArray(challenge?.accepts) ? challenge.accepts : [];
+function selectRequirement(challenge, prefer, preferScheme) {
+	let accepts = Array.isArray(challenge?.accepts) ? challenge.accepts : [];
+	// `preferScheme: 'upto'` takes an escrow-backed offer when one is advertised
+	// (pay the measured charge, not the cap); otherwise the list is unchanged.
+	if (preferScheme && accepts.some((a) => a.scheme === preferScheme)) {
+		accepts = accepts.filter((a) => a.scheme === preferScheme);
+	}
 	if (typeof prefer === 'function') {
 		const picked = prefer(accepts);
 		if (picked) return picked;
@@ -91,6 +96,7 @@ export async function buyerFetch(url, opts = {}) {
 		caps,
 		signPayment,
 		preferNetwork,
+		preferScheme,
 		fetchImpl = globalThis.fetch,
 	} = opts;
 
@@ -122,7 +128,7 @@ export async function buyerFetch(url, opts = {}) {
 		return { ok: false, status: 402, error: 'invalid_402_body' };
 	}
 
-	const requirement = selectRequirement(challenge, preferNetwork);
+	const requirement = selectRequirement(challenge, preferNetwork, preferScheme);
 	if (!requirement) {
 		return { ok: false, status: 402, error: 'no_acceptable_requirement' };
 	}
@@ -164,6 +170,9 @@ export async function buyerFetch(url, opts = {}) {
 			};
 		}
 		const settled = b64decode(paid.headers.get('x-payment-response'));
+		if (reservation && requirement.scheme === 'upto' && settled?.amount != null) {
+			reservation = await releaseUnusedCap(reservation, requirement, settled.amount);
+		}
 		if (reservation) {
 			await commit(reservation, {
 				network: requirement.network,

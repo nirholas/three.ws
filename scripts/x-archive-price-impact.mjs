@@ -76,6 +76,6 @@ console.log(line('r24h', '+24h'));
 
 if (!TO_STDOUT) {
 	await mkdir(path.dirname(OUT_FILE), { recursive: true });
-	await writeFile(OUT_FILE, `${JSON.stringify(doc, null, 1)}\n`);
+	await writeFile(OUT_FILE, `${JSON.stringify(doc)}\n`);
 	console.log(`wrote ${path.relative(REPO_ROOT, OUT_FILE)}`);
 }

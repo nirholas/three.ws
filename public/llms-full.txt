@@ -1660,11 +1660,11 @@ URL: https://three.ws/sniper/experiments
 
 The sniper fleet runs different rule sets side by side, including LLM-judged agents with no rules at all. The live scoreboard of which entry conditions actually make money, every fill verifiable on-chain.
 
-### Flappin UFO: retired demo
+### Flappin UFO: thread the asteroids, climb the leaderboard
 
 URL: https://three.ws/play/ufo
 
-The Flappin UFO arcade demo ran on an external deployment that is no longer online, so the game has been retired. The page now points visitors to the live three.ws experiences instead.
+A hold-to-climb arcade game with levels that get longer and tighter. Every run is replayed and verified on the server, scores land on a real leaderboard, and you race the ghost of the top run.
 
 ### Smart Money Radar: follow the wallets that win on pump.fun
 
@@ -2703,6 +2703,12 @@ Put a live 3D view of any Solana market on your own page with one iframe, keyed 
 URL: https://three.ws/docs/coin-wars
 
 How community-vs-community battles work on three.ws: the war portal in every coin world, the matchmaking key two communities meet under, the signed pairing the arena trusts, the Elo ladder recomputed from the battle ledger, and the /api/wars endpoint behind all of it.
+
+### Docs · Flappin UFO
+
+URL: https://three.ws/docs/play-ufo
+
+How Flappin UFO runs are recorded, replayed and verified on the server, how the leaderboard ranks players, and how the ghost of the top run works.
 
 ### Docs · The in-game economy
 

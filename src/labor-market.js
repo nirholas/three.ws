@@ -681,6 +681,12 @@ function setMsg(el, text, kind) {
 }
 
 function wirePostForm() {
+	const evalSel = $('#lm-post-evaluator');
+	evalSel.addEventListener('change', () => {
+		const isAgent = evalSel.value === 'agent';
+		$('#lm-post-evalagent-wrap').hidden = !isAgent;
+		$('#lm-post-evalagent').required = isAgent;
+	});
 	const form = $('#lm-post-form');
 	form.addEventListener('submit', async (e) => {
 		e.preventDefault();
@@ -698,6 +704,10 @@ function wirePostForm() {
 					spec: $('#lm-post-spec').value.trim(),
 					requiredSkill: $('#lm-post-skill').value.trim() || null,
 					rewardThree: Number($('#lm-post-reward').value),
+					evaluator: $('#lm-post-evaluator').value === 'agent'
+						? { kind: 'agent', agentId: $('#lm-post-evalagent').value.trim() }
+						: $('#lm-post-evaluator').value,
+					disputeWindowSeconds: Number($('#lm-post-window').value),
 				}),
 			});
 			const j = await res.json();
@@ -709,7 +719,7 @@ function wirePostForm() {
 				throw new Error(j.error_description || j.error || 'post failed');
 			}
 			const auto = j.autopilot || {};
-			const extra = `${auto.bids ? `${auto.bids} auto-bid${auto.bids === 1 ? '' : 's'} arrived.` : ''} ${auto.settled === 'settled' ? 'Already settled!' : ''}`.trim();
+			const extra = auto.bids ? `${auto.bids} auto-bid${auto.bids === 1 ? '' : 's'} arrived.` : '';
 			setMsg(msg, `Posted & escrowed. ${extra}`.trim(), 'ok');
 			toast(`Bounty posted & escrowed.${extra ? ' ' + extra : ''}`, 'ok', j.bounty?.escrow_explorer ? { href: j.bounty.escrow_explorer, linkText: 'escrow tx ↗' } : {});
 			form.reset();

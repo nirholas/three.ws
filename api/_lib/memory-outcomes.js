@@ -38,7 +38,7 @@ export function outcomeWeight(outcomes, now = Date.now()) {
 	let last = 0;
 	for (const o of list) {
 		const pnl = Number(o.pnl_usd);
-		const hasPnl = Number.isFinite(pnl);
+		const hasPnl = o.pnl_usd != null && Number.isFinite(pnl);
 		const closed = new Date(o.closed_at).getTime();
 		const ageDays = Number.isFinite(closed) ? Math.max(0, (now - closed) / DAY_MS) : 0;
 		const decay = Math.pow(0.5, ageDays / HALF_LIFE_DAYS);

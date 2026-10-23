@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-23T21:49:46.279Z",
+	"generated_at": "2026-10-23T21:56:11.216Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3313,14 +3313,14 @@
 				},
 				{
 					"path": "/play/ufo",
-					"title": "Flappin UFO: retired demo",
-					"description": "The Flappin UFO arcade demo ran on an external deployment that is no longer online, so the game has been retired. The page now points visitors to the live three.ws experiences instead.",
+					"title": "Flappin UFO: thread the asteroids, climb the leaderboard",
+					"description": "A hold-to-climb arcade game with levels that get longer and tighter. Every run is replayed and verified on the server, scores land on a real leaderboard, and you race the ghost of the top run.",
 					"added": "2026-06-19",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
 					"showcase": false,
-					"priority": 0.3,
+					"priority": 0.5,
 					"job": "worlds"
 				},
 				{
@@ -5346,6 +5346,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/play-ufo",
+					"title": "Docs · Flappin UFO",
+					"description": "How Flappin UFO runs are recorded, replayed and verified on the server, how the leaderboard ranks players, and how the ghost of the top run works.",
+					"added": "2026-10-23",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
 					"job": null
 				},
 				{

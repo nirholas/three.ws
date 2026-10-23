@@ -195,6 +195,25 @@ export async function rollbackReservation(reservation) {
 	await rollback({ address, microUsd, timestamp });
 }
 
+// An `upto` payment reserves its CAP up front (the worst case), but only the
+// measured charge is ever taken. Once the settlement reports what was actually
+// charged, give the unused part of the reservation back so the hourly/daily
+// windows reflect real spend. `chargedAtomics` is the settled amount.
+export async function releaseUnusedCap(reservation, requirement, chargedAtomics) {
+	if (!reservation || reservation.pendingCommit) return reservation;
+	const cap = BigInt(requirement?.amount ?? requirement?.maxAmountRequired ?? 0);
+	const charged = BigInt(chargedAtomics ?? cap);
+	if (charged >= cap) return reservation;
+	const unusedMicro = await toMicroUsd((cap - charged).toString(), requirement);
+	const chargedMicro = reservation.microUsd - unusedMicro;
+	await rollback({
+		address: reservation.address,
+		microUsd: unusedMicro,
+		timestamp: reservation.timestamp,
+	});
+	return { ...reservation, microUsd: chargedMicro };
+}
+
 // Install the cap as SDK-style lifecycle hooks on a client. Compatible with
 // any client object that exposes `onBeforePaymentCreation` and
 // `onAfterPaymentCreation` callbacks (e.g. @x402/fetch's createPaymentClient).

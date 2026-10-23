@@ -162,6 +162,11 @@ export async function applyAward({ bounty, winner, rationale, auto = false }) {
 		summary: `Awarded "${bounty.title}" to ${winner.worker_name || winner.worker_agent_id}`,
 		detail: { bounty_id: bounty.id, bid_id: winner.id, worker_agent_id: winner.worker_agent_id, score: winner.score, auto },
 	});
+	// Start the escrow case's working phase. Best-effort: delivery opens and
+	// catches the case up if this misses, so an award is never undone by it.
+	import('./labor-evaluation.js')
+		.then((m) => m.recordAward(updated || bounty, job))
+		.catch((e) => console.warn('[labor-match] escrow award not recorded yet', e?.message));
 	return { job, bounty: updated, winner, rationale };
 }
 

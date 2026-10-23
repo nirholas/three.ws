@@ -7,7 +7,7 @@
 //     (R2 imports; the bundled wallets.json is a merge target, not a data source)
 //   - trades + FIFO P&L/win-rate/volume, from wallet-pnl.js (real on-chain trades
 //     via whatever _fetchTrades source is configured — no synthetic numbers)
-//   - X follower count, from x-profile.js (real X API, only for wallets an admin
+//   - X follower count, from x-profile.js (X API v2, then the keyless guest reader; only for wallets an admin
 //     has explicitly attached a verified handle to — see import-gmgn's xHandle map)
 //
 // Precedence per wallet: our own on-chain FIFO P&L wins when we have trades for

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Normalized Robinhood Chain (4663) firehose — launches, trades and graduations from NOXA + The Odyssey + Uniswap v3, served over WS/SSE in the same shape three.ws pump.fun consumers expect.",
+  "description": "Normalized Robinhood Chain (4663) firehose \u2014 launches (with venue, deployer reputation and dev-sold flags), trades and graduations from The Odyssey, every venue observed on chain and Uniswap, served over WS/SSE in the same shape three.ws pump.fun consumers expect.",
   "author": "nirholas (https://x.com/nichxbt)",
   "license": "Apache-2.0",
   "main": "index.js",

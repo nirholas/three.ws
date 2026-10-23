@@ -88,6 +88,7 @@ import {
 // Safe to import here: self-facilitator.js pulls in env + the Solana connection
 // only, never this module, so there is no cycle.
 import { sponsorKnownBelowFloor } from './x402/self-facilitator.js';
+import { isUptoRequirement, settleUptoClaim, uptoEnabled, verifyUpto } from './x402/upto.js';
 
 export { X402Error };
 // Re-export both gas-sponsoring declarators together so callers building 402
@@ -850,7 +851,14 @@ function selectRequirement(paymentPayload, allRequirements) {
 		return reqMethod === method;
 	};
 	if (network) {
-		const candidates = allRequirements.filter((r) => r.network === network && matchesMethod(r));
+		let candidates = allRequirements.filter((r) => r.network === network && matchesMethod(r));
+		// A payload that names its scheme only matches offers of that scheme, so an
+		// `upto` authorization is never read against the sibling `exact` offer for
+		// the same network and asset (and vice versa).
+		const payloadScheme = paymentPayload?.accepted?.scheme || paymentPayload?.scheme;
+		if (payloadScheme && candidates.some((r) => r.scheme === payloadScheme)) {
+			candidates = candidates.filter((r) => r.scheme === payloadScheme);
+		}
 		if (!candidates.length)
 			throw new X402Error(
 				'unsupported_network',
@@ -1024,6 +1032,36 @@ function minimalPaymentPayloadForCdp(paymentPayload) {
 	return out;
 }
 
+// `upto` is verified in-process by the official @x402/svm upto facilitator: it
+// checks the signed channel-open transaction (deposit equals the cap, our payee,
+// our fee payer) and rejects a buyer-supplied voucher. The deposit itself is
+// broadcast by the paid endpoint BEFORE the handler runs (settleUptoDeposit);
+// the claim of the measured amount happens in settlePayment below.
+async function verifyUptoPayment({ paymentPayload, requirement }) {
+	if (!uptoEnabled()) {
+		throw new X402Error('unsupported_scheme', 'the upto scheme is not enabled on this deployment', 402);
+	}
+	let result;
+	try {
+		result = await verifyUpto({ paymentPayload, requirement });
+	} catch (err) {
+		throw new X402Error('verify_failed', `upto verify failed: ${err?.message || err}`, 502);
+	}
+	if (!result?.isValid) {
+		throw new X402Error(
+			'invalid_payment',
+			`upto payment rejected: ${result?.invalidReason || 'invalid'}${result?.invalidMessage ? ` (${result.invalidMessage})` : ''}`,
+			402,
+		);
+	}
+	return {
+		paymentPayload,
+		requirement,
+		payer: result.payer || null,
+		upto: { capRequirement: requirement, depositSettled: false },
+	};
+}
+
 export async function verifyPayment({ paymentHeader, requirements, builderCode }) {
 	const all = Array.isArray(requirements) ? requirements : [requirements];
 	// Auth-hint placeholder entries (amount="0" / extra.authRequired) are never
@@ -1042,6 +1080,9 @@ export async function verifyPayment({ paymentHeader, requirements, builderCode }
 	}
 	const paymentPayload = decodePaymentHeader(paymentHeader);
 	const requirement = selectRequirement(paymentPayload, payable);
+	if (isUptoRequirement(requirement)) {
+		return verifyUptoPayment({ paymentPayload, requirement });
+	}
 	const effectiveBuilderCode =
 		builderCode === undefined && env.X402_BUILDER_CODE_APP
 			? declareBuilderCodeExtension({ a: env.X402_BUILDER_CODE_APP })
@@ -1190,6 +1231,37 @@ export function isSettlementPending(result) {
 	);
 }
 
+// Claim the measured charge on the escrowed channel and shape the facilitator
+// SettleResponse like every other settle: success, transaction, network, payer.
+async function settleUptoClaimResponse({ verified }) {
+	const { capRequirement } = verified.upto;
+	let res;
+	try {
+		res = await settleUptoClaim({
+			paymentPayload: verified.paymentPayload,
+			requirement: capRequirement,
+			amountAtomics: verified.requirement.amount,
+		});
+	} catch (err) {
+		throw new X402Error('settle_failed', `upto claim failed: ${err?.message || err}`, err?.status || 502);
+	}
+	if (!res?.success) {
+		throw new X402Error(
+			'settle_failed',
+			`upto claim rejected: ${res?.errorReason || 'unknown'}${res?.errorMessage ? ` (${res.errorMessage})` : ''}`,
+			502,
+		);
+	}
+	return {
+		success: true,
+		transaction: res.transaction,
+		network: res.network || verified.requirement.network,
+		payer: res.payer || verified.payer || null,
+		scheme: 'upto',
+		amount: verified.requirement.amount,
+	};
+}
+
 export async function settlePayment(args) {
 	const verified = args?.verified || null;
 	const paymentPayload = verified?.paymentPayload || args?.paymentPayload;
@@ -1203,6 +1275,12 @@ export async function settlePayment(args) {
 			'settlePayment requires `verified` or `requirement`',
 			500,
 		);
+	}
+
+	// `upto`: settle the CLAIM for the measured amount (requirement.amount has
+	// already been lowered from the cap to the charge by the paid endpoint).
+	if (verified?.upto) {
+		return settleUptoClaimResponse({ verified });
 	}
 
 	const config = facilitatorFor(requirement.network);

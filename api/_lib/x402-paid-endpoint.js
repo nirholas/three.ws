@@ -54,6 +54,13 @@ import { declareBuilderCodeExtension } from './x402-builder-code.js';
 import { sponsorKnownBelowFloor, refreshSponsorFloorState } from './x402/self-facilitator.js';
 import { resolveSolanaFacilitator } from './x402/ring-config.js';
 import {
+	buildUptoRequirement,
+	normaliseCharge,
+	settleUptoClaim,
+	settleUptoDeposit,
+	uptoEnabled,
+} from './x402/upto.js';
+import {
 	PAYMENT_IDENTIFIER,
 	checkCache,
 	enforceRequired,
@@ -385,6 +392,22 @@ export function buildRequirements({ priceAtomics, networks, resourceUrl, payToOv
 //
 // `spec.requiredScope` (optional) — OAuth scope the route declares for
 // bypass-via-Bearer. Passed to the hook in routeConfig.requiredScope.
+// The `upto` accept for a route: Solana USDC to the route's payee, amount = cap.
+async function buildUptoOffer({ upto, resourceUrl, payTo }) {
+	const solTo = payTo?.solana || env.X402_PAY_TO_SOLANA;
+	if (!solTo || !env.X402_ASSET_MINT_SOLANA) return null;
+	const cap = BigInt(upto.capAtomics);
+	if (cap <= 0n) throw new Error('paidEndpoint: upto.capAtomics must be a positive integer');
+	const offer = await buildUptoRequirement({
+		capAtomics: cap,
+		network: NETWORK_SOLANA_MAINNET,
+		asset: env.X402_ASSET_MINT_SOLANA,
+		payTo: solTo,
+		resourceUrl,
+	});
+	return { ...offer, resource: resourceUrl };
+}
+
 export function paidEndpoint(spec) {
 	const {
 		route,
@@ -451,6 +474,16 @@ export function paidEndpoint(spec) {
 		// about to ship. Async; a throw is logged and the response ships
 		// un-metered rather than failing a settled payment.
 		metered,
+		// x402 v2 `upto` on Solana: ALSO advertise an escrow-backed offer whose
+		// `amount` is a CAP. The buyer deposits the cap, the handler runs, and only
+		// the measured charge is claimed (the rest of the deposit returns to the
+		// buyer). `{ capAtomics, charge? }`: `charge({ req, result, requirement,
+		// payer })` returns the atomic units to settle (<= cap; default = the
+		// cap). A handler that throws settles nothing and the deposit is refunded.
+		// Offered in addition to `exact`, never instead of it, and only when the
+		// deployment runs the upto facilitator (X402_UPTO_ENABLED). Not valid with
+		// `streaming`, whose body ships before the measurement exists.
+		upto,
 		// Optional post-settlement accrual hook (Roadmap phase 3: per-call
 		// royalties). Called fire-and-forget AFTER settlement succeeds, with
 		// { payer, network, txHash, amountAtomics, asset, resourceUrl }. Use it
@@ -506,6 +539,12 @@ export function paidEndpoint(spec) {
 	// live 402 matches what the discovery document already advertises.
 	const bazaarEntry = normalizeBazaarEntry(bazaar, { method });
 	if (typeof handler !== 'function') throw new Error('paidEndpoint: handler must be a function');
+	if (upto && streaming) {
+		throw new Error('paidEndpoint: `upto` cannot be combined with `streaming` (the body ships before the charge is measured)');
+	}
+	if (upto && !(BigInt(upto.capAtomics ?? 0) > 0n)) {
+		throw new Error('paidEndpoint: upto.capAtomics must be a positive integer of atomic units');
+	}
 	if (accessControl != null && typeof accessControl !== 'function') {
 		throw new Error('paidEndpoint: accessControl must be a function when provided');
 	}
@@ -598,6 +637,17 @@ export function paidEndpoint(spec) {
 				err.code || 'misconfigured',
 				err.message || 'paid endpoint misconfigured',
 			);
+		}
+
+		if (upto && uptoEnabled() && networks.includes('solana')) {
+			try {
+				const uptoAccept = await buildUptoOffer({ upto, resourceUrl, payTo });
+				if (uptoAccept) requirements = [...requirements, uptoAccept];
+			} catch (err) {
+				// The upto offer is additive. If it cannot be built (RPC down, key
+				// missing) the endpoint keeps selling `exact` rather than 503ing.
+				console.error(`paidEndpoint(${route}): upto offer unavailable`, err?.message || err);
+			}
 		}
 
 		// USE-21 auth-hints: append zero-amount accept entries for each declared
@@ -1226,6 +1276,66 @@ export function paidEndpoint(spec) {
 			return respondError(res, err.status || 502, err.code || 'verify_failed', err);
 		}
 
+		// `upto`: escrow the cap BEFORE the handler runs, so the seller never does
+		// work it cannot collect. A failed deposit delivers nothing and charges
+		// nothing; the buyer can sign a fresh channel and retry.
+		if (verified.upto && !paidRetry) {
+			let deposit;
+			let depositErr = null;
+			try {
+				deposit = await settleUptoDeposit({
+					paymentPayload: verified.paymentPayload,
+					requirement: verified.requirement,
+				});
+			} catch (err) {
+				depositErr = err;
+			}
+			if (depositErr || !deposit?.success) {
+				await limits.x402VerifyPenalty(ip);
+				if (ownsReservation) await releaseSlot({ route, paymentId });
+				const reason = depositErr?.message || deposit?.errorReason || 'deposit_failed';
+				recordPaymentMetric({
+					kind: 'x402',
+					status: 'failed',
+					latencyMs: Date.now() - requestStartTime,
+					reason: 'upto_deposit_failed',
+				});
+				if (depositErr) {
+					return respondError(res, 502, 'upto_deposit_failed', depositErr, { paid: false, retry_safe: true });
+				}
+				return await send402(res, { ...challenge, error: `upto deposit rejected: ${reason}` });
+			}
+			verified.upto.depositSettled = true;
+			verified.upto.depositTransaction = deposit.transaction || null;
+		}
+
+		// Cancel an escrowed `upto` channel: a zero claim returns the whole deposit
+		// to the buyer. Used when the handler failed, so a failed call costs nothing.
+		async function cancelUptoDeposit(reason) {
+			if (!verified.upto?.depositSettled || paidRetry) return;
+			try {
+				await settleUptoClaim({
+					paymentPayload: verified.paymentPayload,
+					requirement: verified.upto.capRequirement,
+					amountAtomics: '0',
+				});
+			} catch (err) {
+				console.error(`paidEndpoint(${route}): upto cancel failed (${reason})`, err?.message || err);
+				logPaymentEvent({
+					eventType: 'payment_upto_cancel_failed',
+					route,
+					resourceUrl,
+					payer: verified.payer || null,
+					network: verified.requirement?.network || null,
+					settlementStatus: 'failed',
+					durationMs: Date.now() - requestStartTime,
+					ipAddress: clientIp(req),
+					userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+					metadata: { reason, error: String(err?.message || err).slice(0, 300) },
+				});
+			}
+		}
+
 		// Settle the verified payment and build the x-payment-response header
 		// (signed receipts + SIWX grant). Invoked with the response NOT yet
 		// flushed in BOTH paths: settle-then-stream calls it before the handler
@@ -1286,7 +1396,9 @@ export function paidEndpoint(spec) {
 			// retried grant is safe. The on-chain payment is final; if Neon hiccups
 			// the buyer gets a paid failure that says to retry with the same
 			// payment, which re-runs this write without a second charge.
-			if (siwx && verified.payer) {
+			// An `upto` call that measured zero charged nothing, so it earns no session.
+			const uptoFree = verified.upto && String(verified.requirement.amount) === '0';
+			if (siwx && verified.payer && !uptoFree) {
 				try {
 					await recordSiwxPayment({
 						resourceUrl,
@@ -1615,6 +1727,7 @@ export function paidEndpoint(spec) {
 			});
 		} catch (err) {
 			if (ownsReservation) await releaseSlot({ route, paymentId });
+			await cancelUptoDeposit('handler_threw');
 			// A paid retry is past settlement: the buyer paid on the first attempt,
 			// so this failure keeps the retry lane open rather than asking for a
 			// new payment.
@@ -1641,6 +1754,7 @@ export function paidEndpoint(spec) {
 		// so payment is captured before delivery.
 		if (res.writableEnded) {
 			if (ownsReservation) await releaseSlot({ route, paymentId });
+			await cancelUptoDeposit('handler_flushed');
 			logPaymentEvent({
 				eventType: 'payment_unsettled_flush',
 				route,
@@ -1666,6 +1780,36 @@ export function paidEndpoint(spec) {
 			throw new Error(
 				`paidEndpoint(${route}): handler flushed its response before settlement — set streaming:true for routes that write their own body`,
 			);
+		}
+
+		// `upto`: price the work now that it ran. Everything downstream (the claim,
+		// receipts, spend ledgers, onSettled) reads the charge off
+		// verified.requirement.amount, so lowering it here is the single switch.
+		if (verified.upto && !paidRetry) {
+			let charge;
+			try {
+				const cap = verified.upto.capRequirement.amount;
+				const measured =
+					typeof upto.charge === 'function'
+						? await upto.charge({
+								req,
+								result,
+								requirement: verified.upto.capRequirement,
+								payer: verified.payer,
+							})
+						: cap;
+				charge = normaliseCharge(measured, cap);
+			} catch (err) {
+				await cancelUptoDeposit('charge_failed');
+				return respondError(res, err.status || 500, err.code || 'internal_error', err, {
+					paid: false,
+					retry_safe: true,
+				});
+			}
+			verified = {
+				...verified,
+				requirement: { ...verified.requirement, amount: charge.toString() },
+			};
 		}
 
 		const outcome = await settleAndBuildResponse();

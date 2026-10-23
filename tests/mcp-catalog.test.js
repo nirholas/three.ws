@@ -96,3 +96,32 @@ describe('MCP tool catalog', () => {
 		}
 	});
 });
+
+describe('MCP server trust grades', () => {
+	const weights = { tools: 15, toolDocs: 5, safety: 15, distribution: 15, registry: 10, readme: 10, license: 10, tests: 5, prompts: 5, resources: 5, glama: 5 };
+
+	it('grades every server with a full breakdown', () => {
+		expect(catalog.servers.length).toBeGreaterThan(0);
+		for (const server of catalog.servers) {
+			const { trust } = server;
+			expect(trust, server.id).toBeTruthy();
+			expect(trust.facts.map((f) => f.id), server.id).toEqual(Object.keys(weights));
+			for (const fact of trust.facts) {
+				expect(fact.weight).toBe(weights[fact.id]);
+				expect([0, fact.weight]).toContain(fact.earned);
+				expect(fact.detail.length).toBeGreaterThan(0);
+			}
+			expect(trust.score).toBe(trust.facts.reduce((sum, f) => sum + f.earned, 0));
+		}
+	});
+
+	it('weights sum to 100 and the grade follows the score thresholds', () => {
+		expect(Object.values(weights).reduce((a, b) => a + b, 0)).toBe(100);
+		const min = { A: 85, B: 70, C: 50, D: 30, F: 0 };
+		const next = { A: 101, B: 85, C: 70, D: 50, F: 30 };
+		for (const { id, trust } of catalog.servers) {
+			expect(trust.score, id).toBeGreaterThanOrEqual(min[trust.grade]);
+			expect(trust.score, id).toBeLessThan(next[trust.grade]);
+		}
+	});
+});

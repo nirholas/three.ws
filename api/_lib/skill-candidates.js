@@ -18,7 +18,7 @@ import { sql } from './db.js';
 import { isUuid } from './validate.js';
 import { insertNotification } from './notify.js';
 import { requireOwnedAgent, CustomSkillError } from './agent-custom-skills.js';
-import { validateBundle } from '../../packages/skill-import/src/validate.js';
+import { validateBundle } from '@three-ws/skill-import';
 import { completeText } from './agent-learning/llm.js';
 import { parseDraftJson } from './agent-learning/skill-drafts.js';
 import { getMemorySettings } from './agent-learning/settings.js';

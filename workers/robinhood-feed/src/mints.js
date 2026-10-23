@@ -5,6 +5,7 @@
 
 import { parseAbi } from 'viem';
 import { venueForCall } from './venues.js';
+import { rateLimitWaitMs, isTransientRpcError } from './rpc.js';
 
 export const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 const ZERO_TOPIC = `0x${'0'.repeat(64)}`;
@@ -55,11 +56,14 @@ export function launchFromMint(mint, tx) {
 /**
  * Every Transfer-from-zero log in [from, to]. A range that trips the RPC's
  * matched-log cap is split in half rather than skipped, because dropping it
- * would silently under-count exactly the busiest stretches.
+ * would silently under-count exactly the busiest stretches. A rate-limited
+ * range waits out the provider's reset window and is retried, so a wide
+ * backfill on the public RPC slows down instead of aborting.
  *
  * @param {(args: {method: string, params: unknown[]}) => Promise<any>} request viem `client.request`
  */
-export async function getMintLogs(request, from, to, { chunk = 4_000n } = {}) {
+export async function getMintLogs(request, from, to, { chunk = 4_000n, maxRateLimitWaits = 20, sleep = (ms) => new Promise((r) => setTimeout(r, ms)) } = {}) {
+	let waits = 0;
 	const out = [];
 	const queue = [[BigInt(from), BigInt(to)]];
 	while (queue.length) {
@@ -77,6 +81,13 @@ export async function getMintLogs(request, from, to, { chunk = 4_000n } = {}) {
 				params: [{ topics: [TRANSFER_TOPIC, ZERO_TOPIC], fromBlock: toHex(start), toBlock: toHex(end) }],
 			});
 		} catch (err) {
+			const waitMs = rateLimitWaitMs(err);
+			if (waitMs !== null && waits < maxRateLimitWaits) {
+				waits += 1;
+				await sleep(waitMs);
+				queue.unshift([start, end]);
+				continue;
+			}
 			if (isTooManyLogs(err) && span > 1n) {
 				const mid = start + span / 2n;
 				queue.unshift([start, mid - 1n], [mid, end]);
@@ -94,7 +105,10 @@ export async function isPoolToken(readContract, address) {
 	try {
 		await readContract({ address, abi: poolAbi, functionName: 'token0' });
 		return true;
-	} catch {
+	} catch (err) {
+		// A revert means "not a pair". A transport failure says nothing about the
+		// address, so it must not be read as an answer.
+		if (isTransientRpcError(err)) throw err;
 		return false;
 	}
 }
@@ -111,7 +125,7 @@ export async function isPoolToken(readContract, address) {
 export async function launchesFromMints(rpc, mints, { concurrency = 8 } = {}) {
 	const txs = new Map(); // hash → Promise<tx|null>
 	const txFor = (hash) => {
-		if (!txs.has(hash)) txs.set(hash, Promise.resolve(rpc.getTransaction(hash)).catch(() => null));
+		if (!txs.has(hash)) txs.set(hash, Promise.resolve(rpc.getTransaction(hash)));
 		return txs.get(hash);
 	};
 	const out = new Array(mints.length).fill(null);

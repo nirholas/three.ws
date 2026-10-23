@@ -69,7 +69,9 @@ describe('searchMemories', () => {
 			{ id: 'a', type: 'project', content: 'stop loss rule', tags: [], context: {}, salience: 0.5, tier: 'recall', embedder: 'nvidia/nv-embedqa-e5-v5@1024', embedding: [0.1, 0.2], created_at: new Date() },
 			{ id: 'b', type: 'project', content: 'unrelated', tags: [], context: {}, salience: 0.5, tier: 'recall', embedder: 'nvidia/nv-embedqa-e5-v5@1024', embedding: [0.9, 0.1], created_at: new Date() },
 		]);
-		// 3) access bump UPDATE (fire-and-forget — still consumes a queued result)
+		// 3) outcome weights (none yet)
+		queueSql([]);
+		// 4) access bump UPDATE (fire-and-forget, still consumes a queued result)
 		queueSql([]);
 
 		scoreRowsBySpace.mockResolvedValue({
@@ -95,6 +97,7 @@ describe('searchMemories', () => {
 			{ id: 'a', type: 'project', content: 'remember the watchlist', tags: [], context: {}, salience: 0.8, tier: 'recall', embedder: null, embedding: null, created_at: new Date() },
 			{ id: 'b', type: 'project', content: 'nothing', tags: [], context: {}, salience: 0.9, tier: 'recall', embedder: null, embedding: null, created_at: new Date() },
 		]);
+		queueSql([]); // outcome weights
 		// access bump
 		queueSql([]);
 

@@ -23,6 +23,16 @@ export type MemoryTier = 'working' | 'recall' | 'archival';
 export type EntityKind = 'mint' | 'ticker' | 'wallet' | 'person' | 'strategy' | 'topic';
 export type RecallMatch = 'semantic' | 'lexical';
 
+/** Realized result of the trades this memory was recalled into. `weight` is bounded to 0.65..1.35 and never zero, so a memory tied to a loss ranks lower but is still returned as a warning. */
+export interface MemoryOutcome {
+	weight: number;
+	samples: number;
+	wins: number;
+	losses: number;
+	netPnlUsd: number;
+	lastClosedAt: string | null;
+}
+
 export interface Memory {
 	id: string;
 	agentId: string | null;
@@ -46,6 +56,10 @@ export interface Memory {
 	score?: number | null;
 	/** recall() only: how the hit was found. */
 	match?: RecallMatch;
+	/** recall() only: the value hits are ordered by, `score` (or salience for a lexical hit) times `outcome.weight`. */
+	rankScore?: number;
+	/** recall() only: the realized-outcome weight and the evidence behind it. */
+	outcome?: MemoryOutcome;
 	/** The raw server payload. */
 	raw: unknown;
 }

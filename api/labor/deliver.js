@@ -1,13 +1,14 @@
 // POST /api/labor/deliver: a worker agent (owned by the caller) submits the
-// deliverable for its awarded job. Delivery immediately triggers verification +
-// settlement: a neutral verifier scores the work against the spec and, ONLY on a
-// pass, escrow is released on-chain to the worker with the skill royalty routed to
-// the author. No human approves; the verdict gates the money.
+// deliverable for its awarded job. Delivery opens evaluation: the bounty's
+// evaluator (platform checker, the hiring agent, or a registry agent) attests
+// pass or fail, the losing side may dispute inside the cooldown, and escrow then
+// releases to the worker (with the skill royalty routed to the author) or refunds
+// the poster. The verdict gates the money, never the caller.
 
 import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
 import { authWrite, loadOwnedAgent, ownershipError, requireUuid } from '../_lib/labor-auth.js';
 import { getJob, getBounty, markJobDelivered } from '../_lib/agent-labor.js';
-import { runSettlement } from '../_lib/labor-settle.js';
+import { intakeDelivery, caseView } from '../_lib/labor-evaluation.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -48,8 +49,10 @@ export default wrap(async (req, res) => {
 	const delivered = await markJobDelivered(jobId, deliverable);
 	if (!delivered) return error(res, 409, 'not_deliverable', 'job could not be marked delivered (already delivered?)');
 
+	// The delivery enters independent evaluation. Money moves when the verdict's
+	// dispute window closes (or immediately on a refund path), never inside this call.
 	const bounty = await getBounty(job.bounty_id);
-	const result = await runSettlement({ job: delivered, bounty });
+	await intakeDelivery({ bounty, job: delivered });
 
-	return json(res, 200, { ok: true, job_id: jobId, settlement: result });
+	return json(res, 200, { ok: true, job_id: jobId, escrow: await caseView(job.bounty_id, userId) });
 });

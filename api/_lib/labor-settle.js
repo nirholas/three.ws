@@ -275,12 +275,14 @@ export async function runAutopilot(bountyId) {
 				working = performed.job;
 			}
 			if (working.status === 'delivered' || working.status === 'verifying') {
-				const result = await runSettlement({ job: working, bounty }).catch((e) => {
-					console.error('[labor-autopilot] settle failed', e?.message);
+				// Delivery enters independent evaluation; the payout lands when the
+				// verdict's dispute window closes, so nothing settles inside this call.
+				const { intakeDelivery } = await import('./labor-evaluation.js');
+				const entered = await intakeDelivery({ bounty, job: working }).catch((e) => {
+					console.error('[labor-autopilot] evaluation intake failed', e?.message);
 					return null;
 				});
-				out.settled = result?.status || null;
-				out.settledNow = result?.status === 'settled' && result?.idempotent !== true;
+				out.settled = entered?.state || null;
 			}
 		}
 	} catch (e) {

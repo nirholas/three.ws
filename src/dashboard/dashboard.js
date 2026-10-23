@@ -12,6 +12,7 @@ import { safeUrl } from '../safe-url.js';
 import { resolveURI } from '../ipfs.js';
 import { withPayoutStepUp, cooldownNotice } from '../payout-step-up.js';
 import { shortAddress } from '../shared/address.js';
+import { mountSuggestedSkills } from './suggested-skills.js';
 
 function escapeHtml(s) {
 	return String(s == null ? '' : s)
@@ -288,6 +289,7 @@ async function renderAgents(root) {
 		</div>
 		<div id="agents-create-host"></div>
 		<div id="agents-list" class="cards"></div>
+		<section id="agents-suggested" aria-live="polite" style="margin-top:32px"></section>
 	`;
 
 	const list = root.querySelector('#agents-list');
@@ -328,6 +330,7 @@ async function renderAgents(root) {
 
 		for (const a of agents)
 			list.appendChild(agentCard(a, () => maybeRenderEmpty(list, createHost)));
+		mountSuggestedSkills(root.querySelector('#agents-suggested'), { agents, request: j });
 	}
 
 	loadList();

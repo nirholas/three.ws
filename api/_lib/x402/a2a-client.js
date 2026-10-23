@@ -198,6 +198,55 @@ export async function buildSolanaExactPayload({ accept, signer, resource, rpcUrl
 	};
 }
 
+// Build a Solana `upto` PaymentPayload for an `upto` accepts entry using the
+// official @x402/svm upto client scheme. It signs a payment-channel `open`
+// transaction whose deposit equals the offered cap; the seller later claims only
+// the measured amount and the rest of the deposit returns to this signer.
+//
+// The cap IS the most this call can cost, so it is checked against the agent's
+// own per-call limit BEFORE anything is signed: `maxPerCallAtomics` refuses an
+// offer whose cap exceeds it, exactly as the spending-cap layer would for an
+// `exact` price.
+export async function buildSolanaUptoPayload({ accept, signer, resource, rpcUrl, maxPerCallAtomics }) {
+	if (accept.scheme !== 'upto') {
+		throw new A2AClientError(
+			'unsupported_scheme',
+			`a2a-client: buildSolanaUptoPayload needs an upto accept, got ${accept.scheme}`,
+		);
+	}
+	if (maxPerCallAtomics != null && BigInt(accept.amount) > BigInt(maxPerCallAtomics)) {
+		throw new A2AClientError(
+			'cap_exceeds_limit',
+			`a2a-client: upto cap ${accept.amount} exceeds the per-call limit ${maxPerCallAtomics}`,
+			{ cap: String(accept.amount), limit: String(maxPerCallAtomics) },
+		);
+	}
+	if (!accept.extra?.feePayer || !accept.extra?.receiverAuthorizer) {
+		throw new A2AClientError(
+			'missing_upto_extra',
+			'a2a-client: upto accept is missing extra.feePayer or extra.receiverAuthorizer',
+			{ network: accept.network },
+		);
+	}
+	if (!signer || typeof signer.address !== 'string') {
+		throw new A2AClientError(
+			'invalid_signer',
+			'buildSolanaUptoPayload: a @solana/kit signer is required (try createSolanaSigner)',
+		);
+	}
+	const { UptoSvmScheme } = await import('@x402/svm/upto/client');
+	const scheme = new UptoSvmScheme(signer, rpcUrl ? { rpcUrl } : undefined);
+	const built = await scheme.createPaymentPayload(2, accept);
+	return {
+		x402Version: built.x402Version || 2,
+		scheme: 'upto',
+		network: accept.network,
+		resource,
+		accepted: accept,
+		payload: built.payload,
+	};
+}
+
 const CHAIN_ID_BY_NETWORK = {
 	'eip155:8453': 8453, // Base mainnet
 	'eip155:84532': 84532, // Base sepolia

@@ -237,6 +237,14 @@
 		.mc-servers th, .mc-servers td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--hairline); white-space: nowrap; }
 		.mc-servers th:first-child, .mc-servers td:first-child { text-align: left; }
 		.mc-servers thead th { font-weight: 600; color: var(--ink-dim); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; }
+		.mc-grade { display: inline-flex; align-items: center; justify-content: center; min-width: 2.6em; padding: 2px 8px; border-radius: 999px; font-weight: 700; font-size: 0.74rem; border: 1px solid currentColor; cursor: help; }
+		.mc-grade:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.mc-grade[data-grade="A"] { color: var(--mc-read); }
+		.mc-grade[data-grade="B"] { color: var(--accent); }
+		.mc-grade[data-grade="C"], .mc-grade[data-grade="D"] { color: var(--mc-write); }
+		.mc-grade[data-grade="F"] { color: var(--ink-dim); }
+		.mc-servers th button.mc-sort { text-transform: inherit; letter-spacing: inherit; font-weight: inherit; color: inherit; text-decoration: none; }
+		.mc-servers th button.mc-sort:hover { color: var(--ink); text-decoration: underline; }
 		.mc-servers td code { font-family: var(--font-mono, ui-monospace, monospace); color: var(--ink); }
 		.mc-servers tbody tr:hover { background: var(--surface-1, rgba(255,255,255,0.03)); }
 		.mc-servers button { font: inherit; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
@@ -300,7 +308,7 @@
 			<dl class="mc-stats" id="mc-stats" aria-live="polite"></dl>
 			<p class="mc-live" id="mc-live" role="status" aria-live="polite"></p>
 			<details class="mc-method" id="mc-method">
-				<summary>How these numbers are calculated</summary>
+				<summary>Per-server trust grades and how these numbers are calculated</summary>
 				<p id="mc-method-text"></p>
 				<div class="mc-table-wrap"><table class="mc-servers" id="mc-servers"></table></div>
 			</details>
@@ -489,20 +497,52 @@
 			renderServerTable();
 		}
 
+		// Trust grade: a 0-100 score from facts the build checks (see docs/mcp.md).
+		// Sorting is a view over the table only; the order resets on reload.
+		let trustSort = null;
+
+		function trustFor(id) {
+			return catalog.servers.find((s) => s.id === id)?.trust ?? null;
+		}
+
+		function trustSummary(trust) {
+			const lines = trust.facts.map((f) => `${f.earned ? '+' : '-'} ${f.label} (${f.earned}/${f.weight}): ${f.detail}`);
+			return `Trust score ${trust.score}/100\n${lines.join('\n')}`;
+		}
+
 		function renderServerTable() {
-			const rows = catalog.census.servers;
+			let rows = catalog.census.servers.slice();
+			if (trustSort) {
+				const dir = trustSort === 'desc' ? -1 : 1;
+				rows.sort((a, b) => dir * ((trustFor(a.id)?.score ?? 0) - (trustFor(b.id)?.score ?? 0)) || a.id.localeCompare(b.id));
+			}
+			const ariaSort = trustSort === 'desc' ? 'descending' : trustSort === 'asc' ? 'ascending' : 'none';
+			const arrow = trustSort === 'desc' ? ' \u2193' : trustSort === 'asc' ? ' \u2191' : '';
 			document.getElementById('mc-servers').innerHTML =
-				'<thead><tr><th scope="col">Server</th><th scope="col">Transport</th><th scope="col">Tools</th><th scope="col">On by default</th><th scope="col">Read-only</th><th scope="col">Resources</th><th scope="col">Templates</th><th scope="col">Prompts</th></tr></thead><tbody>' +
+				`<thead><tr><th scope="col">Server</th><th scope="col" aria-sort="${ariaSort}"><button type="button" class="mc-sort" id="mc-sort-trust" title="Sort servers by trust grade">Trust${arrow}</button></th><th scope="col">Transport</th><th scope="col">Tools</th><th scope="col">On by default</th><th scope="col">Read-only</th><th scope="col">Resources</th><th scope="col">Templates</th><th scope="col">Prompts</th></tr></thead><tbody>` +
 				rows
-					.map(
-						(r) =>
+					.map((r) => {
+						const trust = trustFor(r.id);
+						const summary = trust ? esc(trustSummary(trust)) : '';
+						const badge = trust
+							? `<span class="mc-grade" data-grade="${esc(trust.grade)}" tabindex="0" role="img" title="${summary}" aria-label="${summary}">${esc(trust.grade)} ${trust.score}</span>`
+							: '';
+						return (
 							`<tr><td><button type="button" data-server="${esc(r.id)}" title="Show only ${esc(r.title)} tools"><code>${esc(r.endpoint || r.id)}</code></button></td>` +
-							`<td>${r.transport === 'remote' ? 'hosted' : 'npm'}</td><td>${r.tools}</td><td>${r.defaultOn}</td><td>${r.readOnly}</td>` +
-							`<td>${r.resources}</td><td>${r.templates}</td><td>${r.prompts}</td></tr>`,
-					)
+							`<td>${badge}</td><td>${r.transport === 'remote' ? 'hosted' : 'npm'}</td><td>${r.tools}</td><td>${r.defaultOn}</td><td>${r.readOnly}</td>` +
+							`<td>${r.resources}</td><td>${r.templates}</td><td>${r.prompts}</td></tr>`
+						);
+					})
 					.join('') +
 				'</tbody>';
 		}
+
+		document.getElementById('mc-servers').addEventListener('click', (event) => {
+			if (!event.target.closest('#mc-sort-trust')) return;
+			trustSort = trustSort === 'desc' ? 'asc' : 'desc';
+			renderServerTable();
+			document.getElementById('mc-sort-trust').focus();
+		});
 
 		document.getElementById('mc-servers').addEventListener('click', (event) => {
 			const btn = event.target.closest('button[data-server]');

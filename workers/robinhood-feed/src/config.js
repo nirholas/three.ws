@@ -51,7 +51,7 @@ export const config = {
 	seenLimit: num(process.env.RH_SEEN_LIMIT, 4_000),
 	/** Replay-buffer depth per event kind (served to fresh subscribers). */
 	bufferLimit: num(process.env.RH_BUFFER_LIMIT, 40),
-	/** Cap on live Uniswap pools we watch for post-graduation / NOXA swaps. */
+	/** Cap on live Uniswap pools we watch for post-graduation swaps. */
 	maxTrackedPools: num(process.env.RH_MAX_POOLS, 400),
 	/**
 	 * If the chain head advances this many blocks past the highest block the RPC
