@@ -195,6 +195,107 @@ function renderGrid() {
 				actions: '<button type="button" class="sc-btn sc-btn-primary" data-action="clear-filters">Clear filters</button><a class="sc-btn" href="https://github.com/nirholas/three.ws/blob/main/community-skills/CONTRIBUTING.md" rel="noopener">Contribute a skill</a>',
 			});
 	announce(`${list.length} of ${state.registry.total} skills shown`);
+	renderExternal();
+}
+
+// ── external skills (operator-pinned third-party repositories) ───────────
+
+function matchesExternal(s) {
+	if (state.tag && !s.tags.includes(state.tag)) return false;
+	if (state.author && s.author !== state.author) return false;
+	if (!state.q) return true;
+	const hay = `${s.slug} ${s.name} ${s.description} ${s.tags.join(' ')} ${s.author} ${s.source}`.toLowerCase();
+	return state.q.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.includes(w));
+}
+
+function externalCardHtml(s) {
+	return `<article class="sc-card">
+		<button type="button" class="sc-card-hit" data-open="${esc(s.slug)}" aria-label="Preview ${esc(s.name)} (external, not reviewed by three.ws)"></button>
+		<header class="sc-card-head">
+			<h3 class="sc-card-title">${esc(s.name)}</h3>
+			<span class="sc-badge sc-badge-external">External</span>
+		</header>
+		<p class="sc-card-desc">${esc(s.description)}</p>
+		<p class="sc-card-source">Not reviewed by three.ws. From <a href="${esc(s.tree_url)}" rel="noopener noreferrer" target="_blank">${esc(s.source)} @ ${esc(s.ref.slice(0, 7))}</a>, ${esc(s.license)}</p>
+		<footer class="sc-card-foot">
+			<span title="Approximate prompt size">~${fmtTokens(s.tokens)} tokens</span>
+		</footer>
+	</article>`;
+}
+
+function renderExternal() {
+	const ext = state.registry?.external;
+	const section = $('sc-external');
+	if (!ext) {
+		section.hidden = true;
+		return;
+	}
+	section.hidden = false;
+	const list = ext.skills.filter(matchesExternal);
+	$('sc-external-grid').innerHTML = list.length
+		? list.map(externalCardHtml).join('')
+		: stateBlock({
+				title: ext.total ? 'No external skills match' : 'No external skills loaded',
+				body: ext.total ? 'Clear the filters to see every external skill.' : 'The listed external sources returned no valid skills right now. The reviewed registry above is unaffected.',
+			});
+	const failed = ext.sources.filter((src) => !src.loaded);
+	$('sc-external-sources').innerHTML =
+		`Sources: ${ext.sources.map((src) => `<a href="${esc(src.url)}" rel="noopener noreferrer" target="_blank">${esc(src.repo)} @ ${esc(src.ref.slice(0, 7))}</a> (${esc(src.license)})`).join(', ')}.` +
+		(failed.length ? ` ${failed.length} source${failed.length === 1 ? '' : 's'} could not be reached and ${failed.length === 1 ? 'is' : 'are'} skipped for now.` : '');
+}
+
+async function scanExternal(skill, agentId) {
+	const note = $('sc-import-note');
+	const btn = $('sc-import-go');
+	btn.disabled = true;
+	btn.textContent = 'Scanning…';
+	note.className = 'sc-import-note';
+	try {
+		const { data } = await readJson(await apiFetch('/api/skill-imports/scan', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ agent_id: agentId, registry: skill.import.registry, skill: skill.import.skill }),
+		}));
+		const req = data.request;
+		if (req.verdict === 'refused') {
+			note.classList.add('is-error');
+			note.textContent = 'The scan refused this skill, so it cannot be installed.';
+			btn.textContent = 'Scan and review';
+			btn.disabled = false;
+			return;
+		}
+		note.classList.add(req.gated ? 'is-warn' : 'is-ok');
+		note.innerHTML = `Scanned at commit ${esc(skill.ref.slice(0, 7))}: ${esc(req.verdict)}.${req.gated ? ' It asks to spend, sign or send messages and would stay under the spend gate.' : ''}
+			<span class="sc-ctas"><button type="button" class="sc-btn sc-btn-primary" data-approve="${esc(req.id)}" data-gated="${req.gated ? '1' : ''}">Approve and install</button><button type="button" class="sc-btn" data-refuse="${esc(req.id)}">Cancel</button></span>`;
+		btn.textContent = 'Scan again';
+		btn.disabled = false;
+	} catch (err) {
+		note.classList.add('is-error');
+		note.textContent = err.message;
+		btn.textContent = 'Scan and review';
+		btn.disabled = false;
+	}
+}
+
+async function decideExternal(requestId, decision, gated) {
+	const note = $('sc-import-note');
+	note.className = 'sc-import-note';
+	try {
+		const { data } = await readJson(await apiFetch(`/api/skill-imports/requests/${encodeURIComponent(requestId)}`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ decision, acknowledge_gated: Boolean(gated) }),
+		}));
+		if (decision === 'refuse') {
+			note.textContent = 'Cancelled. Nothing was installed.';
+			return;
+		}
+		note.classList.add(data.skill?.injected ? 'is-ok' : 'is-warn');
+		note.textContent = data.skill?.injected ? 'Installed. Your agent follows it from its next reply.' : 'Installed, but it is disabled or over the agent\'s token budget.';
+	} catch (err) {
+		note.classList.add(err.code === 'already_installed' ? 'is-warn' : 'is-error');
+		note.textContent = err.code === 'already_installed' ? 'This agent already has this skill.' : err.message;
+	}
 }
 
 // ── preview + import ──────────────────────────────────────────────────────
@@ -231,13 +332,15 @@ async function openPreview(slug) {
 		return;
 	}
 	if (state.openSlug !== slug) return;
-	$('sc-preview-kicker').textContent = `${skill.slug} · v${skill.version}`;
+	const external = skill.origin === 'external';
+	$('sc-preview-kicker').textContent = external ? `${skill.slug} · external, not reviewed by three.ws` : `${skill.slug} · v${skill.version}`;
 	$('sc-preview-title').textContent = skill.name;
 	$('sc-preview-desc').textContent = skill.description;
-	const files = [...skill.scripts, ...skill.references];
+	const files = [...(skill.scripts || []), ...(skill.references || [])];
 	$('sc-preview-meta').innerHTML = `
 		<span class="sc-meta">by <strong>${esc(skill.author)}</strong></span>
 		<span class="sc-meta">${esc(skill.license)}</span>
+		${external ? `<span class="sc-meta"><span class="sc-badge sc-badge-external">External</span> <a href="${esc(skill.tree_url)}" rel="noopener noreferrer" target="_blank">${esc(skill.source)} @ ${esc(skill.ref.slice(0, 7))}</a></span>` : ''}
 		<span class="sc-meta" title="Counted against the agent's prompt budget">~${fmtTokens(skill.tokens)} tokens</span>
 		${files.length ? `<span class="sc-meta">${files.map((f) => `<code>${esc(f)}</code>`).join(' ')}</span>` : ''}
 		<span class="sc-meta-actions">
@@ -275,10 +378,11 @@ async function renderImport(skill) {
 		return;
 	}
 	const preselect = agents.some((a) => a.id === state.agentId) ? state.agentId : agents[0].id;
+	const external = skill.origin === 'external';
 	box.innerHTML = `<form class="sc-import-row" data-import="${esc(skill.slug)}">
 		<label class="sr-only" for="sc-import-agent">Agent to import onto</label>
 		<select class="sc-select" id="sc-import-agent">${agents.map((a) => `<option value="${esc(a.id)}"${a.id === preselect ? ' selected' : ''}>${esc(a.name)}</option>`).join('')}</select>
-		<button type="submit" class="sc-btn sc-btn-primary" id="sc-import-go">Import to agent</button>
+		<button type="submit" class="sc-btn sc-btn-primary" id="sc-import-go">${external ? 'Scan and review' : 'Import to agent'}</button>
 	</form>
 	<p class="sc-import-note" id="sc-import-note" role="status"></p>`;
 }
@@ -700,8 +804,10 @@ function bind() {
 	});
 
 	document.addEventListener('click', (e) => {
-		const el = e.target.closest('[data-open],[data-tag],[data-view],[data-action],[data-edit],[data-delete],[data-resync],[data-manage]');
+		const el = e.target.closest('[data-open],[data-tag],[data-view],[data-action],[data-edit],[data-delete],[data-resync],[data-manage],[data-approve],[data-refuse]');
 		if (!el) return;
+		if (el.dataset.approve) return void decideExternal(el.dataset.approve, 'approve', el.dataset.gated === '1');
+		if (el.dataset.refuse) return void decideExternal(el.dataset.refuse, 'refuse', false);
 		if (el.dataset.manage) {
 			e.preventDefault();
 			closePreview();
@@ -752,7 +858,9 @@ function bind() {
 		const form = e.target.closest('[data-import]');
 		if (!form) return;
 		e.preventDefault();
-		doImport(form.dataset.import, $('sc-import-agent').value);
+		const skill = state.details.get(form.dataset.import);
+		if (skill?.origin === 'external') scanExternal(skill, $('sc-import-agent').value);
+		else doImport(form.dataset.import, $('sc-import-agent').value);
 	});
 }
 
