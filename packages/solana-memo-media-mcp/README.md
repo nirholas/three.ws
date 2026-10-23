@@ -30,6 +30,7 @@ For Cursor, Claude Desktop, or another stdio MCP client:
 | `extract_solana_memo_media` | Fetch one legacy, v0, or v1 transaction and return every supported image in its top-level and inner Memo instructions, with signer, slot, and version. |
 | `find_solana_memo_media` | Scan up to 1,000 recent signatures for an address (pageable with `before`). Only signatures whose memo summary holds a data URI are fetched, so a scan costs a handful of RPC calls. |
 | `decode_solana_memo_data_uri` | Decode one already-copied data URI locally. No network call. |
+| `read_inscription` | Rebuild and verify a multi-part inscription (`first/1`, `firsts/1`, spl404) from any one of its transaction signatures. Images inline; SVG, HTML and text as inert text. |
 | `get_solana_memo_media_status` | Show the local policy, recognized memo programs, and RPC failover hosts. No network call. |
 
 Recognized memo programs: SPL Memo v1 (`Memo1UhkJRfHyvLMcVLMbLJYfW2tfU8G8H4PqvV6v8`), SPL Memo v2 (`MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr`), and the newer program carried by version 1 transactions (`Memo4c2pN8afCj432Lb7RMVKi9PbQnnW7ewFFaV3oAH`).

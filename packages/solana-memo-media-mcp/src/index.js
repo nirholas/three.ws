@@ -7,11 +7,12 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { def as decodeDataUri } from './tools/decode-data-uri.js';
 import { def as extractTransaction } from './tools/extract-transaction.js';
 import { def as findAddressMedia } from './tools/find-address-media.js';
+import { def as readInscription } from './tools/read-inscription.js';
 import { def as status } from './tools/status.js';
 
 const require = createRequire(import.meta.url);
 const { version: PKG_VERSION } = require('../package.json');
-export const TOOLS = [decodeDataUri, extractTransaction, findAddressMedia, status];
+export const TOOLS = [decodeDataUri, extractTransaction, findAddressMedia, readInscription, status];
 
 function responseFor(result) {
 	const images = [];

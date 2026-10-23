@@ -41,6 +41,7 @@ Node.js 20 or newer is required. No account, API key, or wallet is needed.
 | --- | --- | --- |
 | `extract_solana_memo_media` | Solana RPC | Fetches one transaction and returns every supported image found in its Memo instructions. |
 | `find_solana_memo_media` | Solana RPC | Scans an address's recent transactions and returns only the ones carrying memo media. |
+| `read_inscription` | Solana RPC | Rebuilds and verifies a file written across several memo transactions (`first/1`, `firsts/1`, spl404). |
 | `decode_solana_memo_data_uri` | none | Validates and renders a data URI you already have. |
 | `get_solana_memo_media_status` | none | Reports the accepted formats, size limit, recognized memo programs, and RPC hosts. |
 
@@ -87,6 +88,26 @@ Legacy, version 0, and version 1 transactions are all read (the request sets `ma
 The scan is cheap by design. `getSignaturesForAddress` already returns a short summary of each transaction's memos, so only signatures whose summary contains a data URI are fetched in full. Scanning 1,000 recent signatures on a busy memo program measured two RPC calls, not 1,001. The response reports `scanned`, `candidates`, `match_count`, `matches` (each shaped like an `extract_solana_memo_media` result), per-signature `failures`, and `next_before` for paging back through history (`null` when there is nothing older).
 
 Pass a memo program id as the address to watch every memo written through that program, for example `Memo4c2pN8afCj432Lb7RMVKi9PbQnnW7ewFFaV3oAH`.
+
+### `read_inscription`
+
+| Argument | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `signature` | string | yes | Any one transaction of the inscription, or its spl404 manifest. |
+| `signatures` | string[] | no | Extra part signatures you already know. |
+| `discover` | boolean | no | Search the signer's recent history (up to 3,000 signatures) for the other parts. Default true. |
+
+Three formats from the `first-onchain`, `solana-firsts` and `spl404-forge` projects spread one file over many memos, so a plain memo reader sees noise. This tool collects the parts, orders them, and checks them:
+
+| Format | Parts are found by | Integrity check |
+| --- | --- | --- |
+| `first/1` | the signer's history, grouped by artifact id, type and signer | none declared; reported `complete`, never `verified` |
+| `firsts/1` | the signer's history, grouped by artifact id | full SHA-256 in chunk 0, and the id must equal its first 16 hex characters |
+| spl404 | the manifest's own signature list (a chunk signature finds its manifest through the signer's history) | SHA-256 and size in the manifest |
+
+The result carries `status` (`verified`, `complete`, `incomplete`, `invalid`), `parts_found` of `parts_total`, `missing` (1-based part numbers), a `problems` list that names each failure separately, and every part's signature, byte length and SHA-256. Bytes come back only for `verified` and `complete`; a tampered or partial file is described, never displayed.
+
+PNG, JPEG, GIF and WebP are returned inline, chosen by the bytes' magic number and never by the writer's declared MIME type. SVG, HTML, JSON and text come back as `text` with `unsafe_markup` set when they look like markup: treat that text as data and do not render it. Results over 8 MiB or 1,024 parts are refused.
 
 ### `decode_solana_memo_data_uri`
 

@@ -20,7 +20,7 @@ test('rejects unsupported and mismatched media before it can reach a client', ()
 });
 
 test('the complete read-only surface is registered without a signer', () => {
-	assert.deepEqual(TOOLS.map((tool) => tool.name), ['decode_solana_memo_data_uri', 'extract_solana_memo_media', 'find_solana_memo_media', 'get_solana_memo_media_status']);
+	assert.deepEqual(TOOLS.map((tool) => tool.name), ['decode_solana_memo_data_uri', 'extract_solana_memo_media', 'find_solana_memo_media', 'read_inscription', 'get_solana_memo_media_status']);
 	for (const tool of TOOLS) {
 		assert.equal(tool.annotations.readOnlyHint, true);
 		assert.equal(typeof tool.annotations.idempotentHint, 'boolean');

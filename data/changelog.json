@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Onchain viewer reads multi-part memo inscriptions",
+			"summary": "Paste any transaction of a first/1, firsts/1 or SPL404 inscription into /onchain and it collects the other parts, checks each part and the whole SHA-256, names missing parts, and shows the file. Images render from verified bytes; SVG and HTML are shown as text and never executed. The Solana Memo Media MCP gains a read_inscription tool that does the same.",
+			"tags": ["feature"],
+			"link": "/onchain"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "llms.txt links the docs as markdown, and install.md tells an agent how to connect",
 			"summary": "llms.txt now links each curated doc as /docs/<slug>.md, the text/markdown twin an agent can read directly. llms-full.txt carries the full text of those docs (capped at 40 KB each, with a link to the rest) after the page index. A new /install.md, generated from the MCP directory, gives one place for the setup command, per-client settings and every hosted endpoint.",
 			"tags": [

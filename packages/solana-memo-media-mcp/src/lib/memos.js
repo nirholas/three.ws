@@ -26,3 +26,6 @@ export function memoPayloads(transaction) {
 export function signatureMayCarryMedia(memoSummary) {
 	return typeof memoSummary === 'string' && memoSummary.includes('data:');
 }
+
+// Multi-part inscriptions (first/1, firsts/1, spl404 manifests and chunks).
+export * from './inscriptions.js';
