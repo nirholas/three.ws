@@ -86,6 +86,10 @@ export const VENUES = Object.freeze({
 	// The owner capped what the agent signs alone, so an auto-approve policy never
 	// pre-answers the spends that cap sends here.
 	agent_trade: { label: 'Agent trades above its burner cap', auto: false },
+	// A reinvest-rule transfer (api/_lib/revenue-reinvest.js) that the agent's
+	// spend policy wants the owner to answer. The rule itself was confirmed, but
+	// a policy step-up is a separate yes, so it never auto-approves.
+	revenue_reinvest: { label: 'Reinvest rule transfers above your spend policy', auto: false },
 });
 
 // Ceiling on a single auto-approve policy. Anything bigger is a decision the
@@ -365,6 +369,7 @@ const EXECUTORS = {
 	team_chat: async () => (await import('./team-chat/approval-executor.js')).executeTeamChatApproval,
 	// An agent_send the owner's allowlist did not cover (api/_lib/agent-commerce/send.js).
 	agent_commerce: async () => (await import('./agent-commerce/send.js')).executeApprovedCommerceAction,
+	revenue_reinvest: async () => (await import('./revenue-reinvest.js')).executeApprovedReinvestLeg,
 	token_budget: async () => (await import('./token-budgets.js')).executeTokenBudgetExtension,
 	external_wallet: async () => (await import('./account-link/external-wallets.js')).executeApprovedPayoutWallet,
 	// A funded launch intent the owner confirmed (api/_lib/pump-funded-launch.js).
