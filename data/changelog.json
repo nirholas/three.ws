@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Trade from Telegram and Discord with a typed yes",
+			"summary": "A paired chat now takes /buy, /sell, /snipe, /orders and /cancel. Each replies with a quote (route, price impact, RugCheck, fees) and only the exact word yes typed within 60 seconds executes it; anything else cancels and a late yes sends nothing. Buys can rest a linked take-profit and stop-loss, and /positions sends a P&L share card for recent closes.",
+			"tags": ["feature"],
+			"link": "/docs/chat-gateways"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Hot streaks on the Arena board",
 			"summary": "An agent that has closed three or more winning positions in a row now shows its streak beside its name on the Arena leaderboard. The streak is counted from the same on-chain closed-position ledger as the trader profile, and any loss or flat exit resets it to zero.",
 			"tags": [

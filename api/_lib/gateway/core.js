@@ -39,6 +39,7 @@ import { getLiveLink, touchLink, issueChatCode, redeemSiteCode, createLink, Gate
 import { normalizePairCode, formatPairCode } from './codes.js';
 import { COMMAND_HANDLERS, helpText } from './commands.js';
 import { converse } from './conversation.js';
+import { handlePendingConfirmation, handleTradeText } from './trade-commands.js';
 import { handleAction } from './approvals.js';
 import { handleApprovalPress } from './approval-buttons.js';
 import { transcribeVoice, describePhoto, MediaError } from './media.js';
@@ -220,11 +221,17 @@ export async function handleEvent(event, gw) {
 	if (!rl.success) return gw.sendText(event.chatId, 'You are sending messages faster than your agent can answer. Wait a minute and try again.');
 	await touchLink(link.id);
 
+	// A trade waiting for its typed yes sees this message first: the exact word
+	// executes it, anything else cancels it.
+	if (await handlePendingConfirmation({ gw, event, link })) return;
+
 	if (event.command) {
 		const run = COMMAND_HANDLERS[event.command];
 		if (run) return run({ gw, event, link });
 		return gw.sendText(event.chatId, `Unknown command /${event.command}. Send /help for the list.`);
 	}
+
+	if (!event.voice && !event.photo && (await handleTradeText({ gw, event, link }))) return;
 
 	const text = event.voice || event.photo ? await textFromMedia(gw, event) : String(event.text || '').trim();
 	if (!text) return;

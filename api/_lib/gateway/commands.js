@@ -12,6 +12,7 @@ import { listAccountAgents, pickAgent, resolveChatAgent } from './agents.js';
 import { revokeLink, resetLinkContext, setLinkDefaultAgent, setLinkVoiceReplies } from './store.js';
 import { voiceRepliesAvailable } from './voice.js';
 import { CONTROL_COMMANDS, CONTROL_COMMAND_HANDLERS } from './control-commands.js';
+import { TRADE_COMMANDS, TRADE_COMMAND_HANDLERS } from './trade-commands.js';
 import { appOrigin, agentWalletUrl, explorerTx, fmtNum, fmtUsd, short } from './format.js';
 
 export const COMMANDS = [
@@ -20,6 +21,7 @@ export const COMMANDS = [
 	{ name: 'runs', description: 'Recent agent runs and trades' },
 	{ name: 'launches', description: 'Coins your agent launched' },
 	{ name: 'agents', description: 'List your agents' },
+	...TRADE_COMMANDS,
 	...CONTROL_COMMANDS,
 	{ name: 'use', description: 'Pick the agent this chat talks to', arg: 'agent' },
 	{ name: 'new', description: 'Start a fresh conversation thread' },
@@ -44,6 +46,7 @@ export function helpText({ buttons = true, prefix = '/' } = {}) {
 		...COMMANDS.filter((c) => c.name !== 'link').map((c) => `${prefix}${c.name}${c.arg ? ` <${c.arg}>` : ''}: ${c.description}`),
 		'',
 		approval,
+		`Trade commands quote first and run only when you reply exactly "yes" within 60 seconds; any other reply cancels. A buy can carry tp=<percent> and sl=<percent> exits.`,
 		`Requests your spend policy holds for your yes arrive here${buttons ? ' with Approve and Deny buttons' : ' with a link to approve them'}. ${prefix}pause and ${prefix}kill stop agents at once; lifting a freeze is done on the web.`,
 		`Manage paired chats: ${appOrigin()}/settings/connections`,
 	].join('\n');
@@ -200,5 +203,6 @@ export const COMMAND_HANDLERS = {
 	portfolio: cmdPortfolio,
 	runs: cmdRuns,
 	launches: cmdLaunches,
+	...TRADE_COMMAND_HANDLERS,
 	...CONTROL_COMMAND_HANDLERS,
 };
