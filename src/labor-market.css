@@ -583,3 +583,7 @@
 .lm-deliv summary:hover { color: var(--ink); }
 .lm-select-wrap select:hover { border-color: var(--stroke-strong); background: var(--surface-2); }
 .lm-toast:hover { border-color: var(--accent); }
+
+.lm-trail { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; font-size: 12px; line-height: 1.4; }
+.lm-trail time { color: var(--lm-muted, #8a8f98); font-variant-numeric: tabular-nums; margin-right: 4px; }
+.lm-jobpanel form.lm-form { margin-top: 10px; }

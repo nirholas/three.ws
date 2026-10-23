@@ -412,7 +412,59 @@ async function openBounty(id, { push = true } = {}) {
 	}
 }
 
-function drawerMarkup({ bounty: b, bids, job }) {
+const ESCROW_LABEL = {
+	funded: 'Funded', working: 'Working', submitted: 'Awaiting attestation', attested: 'Attested, dispute window open',
+	disputed: 'Disputed, funds frozen', released: 'Released to worker', refunded: 'Refunded to poster',
+};
+
+function fmtWhen(iso) {
+	return iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '';
+}
+
+function escrowMarkup(e) {
+	if (!e) return '';
+	const v = e.viewer || {};
+	const who = e.evaluator.kind === 'platform' ? 'Platform checker' : e.evaluator.kind === 'poster' ? 'Hiring agent' : 'Registry agent';
+	const a = e.attestation;
+	const clock = e.state === 'attested' ? `Funds ${a?.verdict === 'pass' ? 'release' : 'refund'} ${fmtWhen(e.release_at)} unless disputed.`
+		: e.state === 'submitted' ? `Refunds the poster ${fmtWhen(e.attest_by)} if nobody attests.`
+		: e.state === 'disputed' ? `Arbiter rules by ${fmtWhen(e.arbiter_by)}, else the poster is refunded.`
+		: ['funded', 'working'].includes(e.state) ? `Job deadline ${fmtWhen(e.deadline_at)}.` : '';
+	const attBlock = a ? `<p class="lm-verdict ${a.verdict === 'pass' ? 'pass' : 'fail'}">Attestation: <strong>${esc(a.verdict)}</strong> · ${esc(a.reason_code)}${a.reason_detail ? ` · ${esc(a.reason_detail)}` : ''}${a.evidence_url ? ` · <a href="${esc(a.evidence_url)}" target="_blank" rel="noopener">evidence ↗</a>` : ''}<br><span class="lm-verifier">signed by ${esc(a.signer)}</span></p>` : '';
+	const disBlock = e.dispute ? `<p class="lm-verdict fail">Dispute by ${esc(e.dispute.by)}: ${esc(e.dispute.reason)}</p>` : '';
+	const resBlock = e.resolution ? `<p class="lm-verdict ${e.resolution.verdict === 'pass' ? 'pass' : 'fail'}">Ruling: <strong>${esc(e.resolution.verdict)}</strong>${e.resolution.reason_detail ? ` · ${esc(e.resolution.reason_detail)}` : ''}</p>` : '';
+	const trail = e.trail.length
+		? `<details class="lm-deliv"><summary>Decision trail (${e.trail.length}) · ${e.chain?.ok ? 'chain intact' : 'CHAIN BROKEN'}</summary><ol class="lm-trail">${e.trail.map((t) => `<li><time datetime="${esc(t.at)}">${esc(fmtWhen(t.at))}</time> <strong>${esc(t.event)}</strong> ${esc(t.from || 'start')} to ${esc(t.to)} <span class="lm-verifier">by ${esc(t.actor)}${t.reason ? `: ${esc(t.reason)}` : ''}</span></li>`).join('')}</ol></details>`
+		: '';
+	const attestForm = v.can_attest ? `
+		<form class="lm-form" data-attest-form>
+			<label class="lm-field"><span>Verdict</span><select name="verdict"><option value="pass">Pass: release to worker</option><option value="fail">Fail: refund poster</option></select></label>
+			<label class="lm-field"><span>Reason code (fail only)</span><select name="reasonCode"><option value="">meets_spec</option><option>off_spec</option><option>incomplete</option><option>empty_deliverable</option><option>unverifiable</option><option>other</option></select></label>
+			<label class="lm-field"><span>Detail (optional)</span><input name="reasonDetail" maxlength="280" /></label>
+			<label class="lm-field"><span>Evidence URL (optional, https)</span><input name="evidenceUrl" type="url" maxlength="500" /></label>
+			<div class="lm-form-msg" data-attest-msg role="alert"></div>
+			<button type="submit" class="lm-btn lm-btn-primary">Sign &amp; submit attestation</button>
+		</form>` : '';
+	const disputeForm = v.can_dispute ? `
+		<form class="lm-form" data-dispute-form>
+			<label class="lm-field"><span>Why do you dispute this verdict? (10+ characters)</span><textarea name="reason" rows="3" minlength="10" maxlength="500" required></textarea></label>
+			<label class="lm-field"><span>Evidence URL (optional, https)</span><input name="evidenceUrl" type="url" maxlength="500" /></label>
+			<div class="lm-form-msg" data-dispute-msg role="alert"></div>
+			<button type="submit" class="lm-btn lm-btn-sm">Open dispute and freeze funds</button>
+		</form>` : '';
+	const cancelBtn = v.can_cancel ? `<button type="button" class="lm-btn lm-btn-sm" data-escrow-cancel>Cancel and refund escrow</button>` : '';
+	const paid = ['released', 'refunded'].includes(e.state)
+		? `<p class="lm-settle-row">${e.paid_at ? `Paid out ${esc(fmtWhen(e.paid_at))}${e.settle_sig ? ` <a href="https://solscan.io/tx/${esc(e.settle_sig)}" target="_blank" rel="noopener">tx ↗</a>` : ''}` : 'Decision final. Payout is being sent and retries automatically.'}</p>` : '';
+	return `
+		<div class="lm-jobpanel" data-escrow-state="${esc(e.state)}">
+			<h4>Escrow · ${esc(ESCROW_LABEL[e.state] || e.state)}</h4>
+			<p class="lm-verifier">Evaluator: ${esc(who)} · dispute window ${e.dispute_window_seconds >= 3600 ? `${Math.round(e.dispute_window_seconds / 3600)}h` : e.dispute_window_seconds ? `${Math.round(e.dispute_window_seconds / 60)}m` : 'none'}</p>
+			${clock ? `<p class="lm-mod-note">${esc(clock)}</p>` : ''}
+			${attBlock}${disBlock}${resBlock}${paid}${attestForm}${disputeForm}${cancelBtn}${trail}
+		</div>`;
+}
+
+function drawerMarkup({ bounty: b, bids, job, escrow }) {
 	const iOwnPoster = ownsAgent(b.poster_agent_id);
 	const myWorker = state.myAgents.find((a) => a.id !== b.poster_agent_id);
 	const canBid = state.authed && b.status === 'open' && myWorker;
@@ -456,9 +508,9 @@ function drawerMarkup({ bounty: b, bids, job }) {
 			${verdict ? `<p class="lm-verdict ${verdict.pass ? 'pass' : 'fail'}">Verdict: <strong>${verdict.pass ? 'passed' : 'rejected'}</strong> · score ${Number(verdict.score).toFixed(2)} · ${esc(verdict.reason || '')} <span class="lm-verifier">(${esc(verdict.verifier || (verdict.moderator ? 'moderator' : ''))})</span></p>` : ''}
 			${job.settlement_explorer ? `<p class="lm-settle-row">Paid <strong>${fmtThree(job.worker_payout_three)} $THREE</strong>${Number(job.royalty_three) > 0 ? ` · royalty ${fmtThree(job.royalty_three)}` : ''} <a href="${esc(job.settlement_explorer)}" target="_blank" rel="noopener">settlement ↗</a>${job.invocation_explorer ? ` · <a href="${esc(job.invocation_explorer)}" target="_blank" rel="noopener">invocation ↗</a>` : ''}</p>` : ''}
 			${ownsAgent(job.worker_agent_id) && job.status === 'working' ? deliverForm(job.id) : ''}
-			${(iOwnPoster || ownsAgent(job.worker_agent_id)) && ['delivered', 'verifying'].includes(job.status) ? `<button type="button" class="lm-btn lm-btn-primary" data-settle="${esc(job.id)}">Verify &amp; settle now</button>` : ''}
 		</div>`;
 	}
+	jobHtml += escrowMarkup(escrow);
 
 	// Moderator override lane — only for admins, only while the escrow is live.
 	const canModerate = state.isModerator && b.escrow_fund_sig && !TERMINAL.has(b.status);
@@ -578,29 +630,66 @@ function wireDrawer(data) {
 		deliverForm.addEventListener('submit', async (e) => {
 			e.preventDefault();
 			const msg = $('[data-deliver-msg]', deliverForm);
-			setMsg(msg, 'Delivering & settling on-chain…', '');
+			setMsg(msg, 'Submitting delivery…', '');
 			try {
 				const j = await postJson('/api/labor/deliver', { jobId: deliverForm.dataset.job, deliverable: { output: new FormData(deliverForm).get('output') } });
-				const settled = j.settlement?.settled;
-				setMsg(msg, settled ? 'Settled — payout released.' : `Verdict: ${j.settlement?.status || 'recorded'}.`, settled ? 'ok' : '');
-				toast(settled ? 'Delivered & settled — payout released.' : `Delivered. Verdict: ${j.settlement?.status || 'recorded'}.`, settled ? 'ok' : 'warn',
-					j.settlement?.explorer ? { href: j.settlement.explorer, linkText: 'tx ↗' } : {});
+				const st = j.escrow?.state;
+				const note = st === 'attested' ? 'Delivered. Verdict recorded, dispute window is open.' : 'Delivered. Awaiting the evaluator.';
+				setMsg(msg, note, 'ok');
+				toast(note, 'ok');
 				await refresh();
 				openBounty(bountyId, { push: false });
 			} catch (err) { setMsg(msg, err.message, 'err'); }
 		});
 	}
 
-	const settleBtn = $('[data-settle]', body);
-	if (settleBtn) {
-		settleBtn.addEventListener('click', async () => {
-			settleBtn.disabled = true; settleBtn.textContent = 'Settling…';
+	const attestForm = $('[data-attest-form]', body);
+	if (attestForm) {
+		attestForm.addEventListener('submit', async (e) => {
+			e.preventDefault();
+			const msg = $('[data-attest-msg]', attestForm);
+			const fd = new FormData(attestForm);
+			setMsg(msg, 'Signing attestation…', '');
 			try {
-				const j = await postJson('/api/labor/settle', { jobId: settleBtn.dataset.settle });
-				toast(j.settled ? 'Settled — payout released.' : `Verdict: ${j.status || 'recorded'}.`, j.settled ? 'ok' : 'warn');
+				await postJson('/api/labor/escrow', {
+					action: 'attest', bountyId,
+					verdict: fd.get('verdict'), reasonCode: fd.get('reasonCode') || undefined,
+					reasonDetail: fd.get('reasonDetail') || undefined, evidenceUrl: fd.get('evidenceUrl') || undefined,
+				});
+				toast('Attestation recorded.', 'ok');
 				await refresh();
 				openBounty(bountyId, { push: false });
-			} catch (err) { settleBtn.disabled = false; settleBtn.textContent = 'Verify & settle now'; toast(err.message, 'err'); }
+			} catch (err) { setMsg(msg, err.message, 'err'); }
+		});
+	}
+
+	const disputeForm = $('[data-dispute-form]', body);
+	if (disputeForm) {
+		disputeForm.addEventListener('submit', async (e) => {
+			e.preventDefault();
+			const msg = $('[data-dispute-msg]', disputeForm);
+			const fd = new FormData(disputeForm);
+			setMsg(msg, 'Opening dispute…', '');
+			try {
+				await postJson('/api/labor/escrow', { action: 'dispute', bountyId, reason: fd.get('reason'), evidenceUrl: fd.get('evidenceUrl') || undefined });
+				toast('Dispute opened. Funds are frozen until it is ruled on.', 'ok');
+				await refresh();
+				openBounty(bountyId, { push: false });
+			} catch (err) { setMsg(msg, err.message, 'err'); }
+		});
+	}
+
+	const cancelBtn = $('[data-escrow-cancel]', body);
+	if (cancelBtn) {
+		cancelBtn.addEventListener('click', async () => {
+			if (!confirm('Cancel this bounty and refund the escrowed reward to the poster?')) return;
+			cancelBtn.disabled = true;
+			try {
+				await postJson('/api/labor/escrow', { action: 'cancel', bountyId });
+				toast('Bounty cancelled. Escrow refunded.', 'ok');
+				await refresh();
+				openBounty(bountyId, { push: false });
+			} catch (err) { cancelBtn.disabled = false; toast(err.message, 'err'); }
 		});
 	}
 
@@ -614,8 +703,8 @@ function wireDrawer(data) {
 			btn.textContent = action === 'release' ? 'Releasing…' : 'Refunding…';
 			try {
 				const j = await postJson('/api/labor/release', { bountyId, action });
-				const sig = j.settlement_sig || j.refund_sig;
-				toast(action === 'release' ? 'Released to worker.' : 'Refunded to poster.', 'ok',
+				const sig = j.settle_sig;
+				toast(action === 'release' ? 'Released to worker.' : 'Refunded to poster.', j.paid ? 'ok' : 'warn',
 					sig ? { href: `https://solscan.io/tx/${sig}`, linkText: 'tx ↗' } : {});
 				await refresh();
 				openBounty(bountyId, { push: false });

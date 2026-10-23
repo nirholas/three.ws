@@ -42,7 +42,7 @@ const h = vi.hoisted(() => {
 	return {
 		sql: vi.fn(),
 		runAutopilot: vi.fn(),
-		runSettlement: vi.fn(),
+		intakeDelivery: vi.fn(),
 		getBounty: vi.fn(),
 		getJob: vi.fn(),
 	};
@@ -60,7 +60,12 @@ vi.mock('../api/_lib/agent-labor.js', () => ({
 }));
 vi.mock('../api/_lib/labor-settle.js', () => ({
 	runAutopilot: (...a) => h.runAutopilot(...a),
-	runSettlement: (...a) => h.runSettlement(...a),
+}));
+vi.mock('../api/_lib/labor-evaluation.js', () => ({
+	intakeDelivery: (...a) => h.intakeDelivery(...a),
+}));
+vi.mock('../api/_lib/labor-escrow-ledger.js', () => ({
+	ensureEscrowTables: vi.fn(async () => true),
 }));
 
 const { default: handler } = await import('../api/labor/tick.js');
@@ -129,7 +134,7 @@ beforeEach(() => {
 	jobRows = [];
 	installSql();
 	h.runAutopilot.mockResolvedValue({ bids: 0, awarded: false, settled: null, settledNow: false });
-	h.runSettlement.mockResolvedValue({ settled: true, status: 'settled' });
+	h.intakeDelivery.mockResolvedValue({ state: 'attested' });
 	h.getBounty.mockResolvedValue({ id: 'b1', title: 'T', poster_agent_id: 'p' });
 	h.getJob.mockImplementation(async (id) => ({ id, status: 'delivered', worker_agent_id: 'w' }));
 });
@@ -210,14 +215,14 @@ describe('labor tick: counting', () => {
 		const res = await tick();
 		expect(res.statusCode).toBe(200);
 		expect(res.body).toMatchObject({
-			ok: true, scanned: 3, bids: 3, awarded: 1, settled: 2, failed: 0,
+			ok: true, scanned: 3, bids: 3, awarded: 1, settled: 1, failed: 0,
 		});
 		expect(res.body.errors).toBeUndefined();
 	});
 
-	it('does not count a settle another caller already claimed', async () => {
+	it('does not count a delivery that only opened evaluation', async () => {
 		jobRows = [{ id: 'j1', bounty_id: 'b1', status: 'verifying' }];
-		h.runSettlement.mockResolvedValue({ idempotent: true, status: 'settled' });
+		h.intakeDelivery.mockResolvedValue(null);
 
 		const res = await tick();
 		expect(res.body).toMatchObject({ ok: true, scanned: 1, settled: 0, failed: 0 });
@@ -250,6 +255,12 @@ describe('labor tick: counting', () => {
 		expect(h.runAutopilot).toHaveBeenCalledWith('b1');
 		expect(h.getBounty).not.toHaveBeenCalled();
 	});
+
+	it('only lets the tick touch deliveries whose escrow case has not advanced', async () => {
+		await tick();
+		expect(queries.jobs).toMatch(/labor_escrow_cases/);
+		expect(queries.jobs).toMatch(/c\.state <> 'working'/);
+	});
 });
 
 describe('labor tick: failure isolation', () => {
@@ -262,18 +273,18 @@ describe('labor tick: failure isolation', () => {
 
 		const res = await tick();
 		expect(res.statusCode).toBe(200);
-		expect(res.body).toMatchObject({ ok: true, scanned: 2, settled: 1, failed: 1 });
+		expect(res.body).toMatchObject({ ok: true, scanned: 2, settled: 0, failed: 1 });
 		expect(res.body.errors).toHaveLength(1);
 		expect(res.body.errors[0]).toContain('j1');
 		expect(res.body.errors[0]).toContain('connection reset');
 		expect(res.body.reason).toBe('1/2 items failed');
-		// The second job still settled: the throw did not abort the loop.
-		expect(h.runSettlement).toHaveBeenCalledTimes(1);
+		// The second job still entered evaluation: the throw did not abort the loop.
+		expect(h.intakeDelivery).toHaveBeenCalledTimes(1);
 	});
 
 	it('reports a lane where every row failed as an outage, not an idle tick', async () => {
 		jobRows = [{ id: 'j1', bounty_id: 'b1', status: 'delivered' }];
-		h.runSettlement.mockRejectedValue(new Error('escrow unreachable'));
+		h.intakeDelivery.mockRejectedValue(new Error('escrow unreachable'));
 
 		const res = await tick();
 		expect(res.statusCode).toBe(502);
@@ -282,7 +293,7 @@ describe('labor tick: failure isolation', () => {
 
 	it('caps the reported errors so a batch-wide failure cannot bloat the response', async () => {
 		jobRows = Array.from({ length: 8 }, (_, i) => ({ id: `j${i}`, bounty_id: 'b1', status: 'delivered' }));
-		h.runSettlement.mockRejectedValue(new Error('escrow unreachable'));
+		h.intakeDelivery.mockRejectedValue(new Error('escrow unreachable'));
 
 		const res = await tick();
 		expect(res.body.failed).toBe(8);

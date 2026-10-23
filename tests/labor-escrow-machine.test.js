@@ -32,6 +32,10 @@ describe('transition table', () => {
 		['disputed', 'resolve_pass', 'released'],
 		['disputed', 'resolve_fail', 'refunded'],
 		['disputed', 'arbiter_timeout', 'refunded'],
+		...['funded', 'working', 'submitted', 'attested', 'disputed'].flatMap((st) => [
+			[st, 'override_pass', 'released'],
+			[st, 'override_fail', 'refunded'],
+		]),
 	];
 	it.each(legal)('%s --%s--> %s', (from, event, to) => {
 		expect(applyEvent(from, event)).toBe(to);
@@ -48,6 +52,13 @@ describe('transition table', () => {
 				expect(err.status).toBe(409);
 				expect(err.code).toBe(TERMINAL_STATES.has(s) ? 'already_resolved' : 'illegal_transition');
 			}
+		}
+	});
+
+	it('a moderator override cannot reopen a resolved case', () => {
+		for (const st of ['released', 'refunded']) {
+			expect(() => applyEvent(st, 'override_pass')).toThrow(/already/);
+			expect(() => applyEvent(st, 'override_fail')).toThrow(/already/);
 		}
 	});
 

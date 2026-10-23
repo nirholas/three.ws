@@ -98,6 +98,17 @@ vi.mock('../api/_lib/labor-settle.js', () => ({
 	runAutopilot: vi.fn(async () => ({ bids: 0, awarded: true, settled: null, settledNow: false })),
 	runSettlement: vi.fn(async () => ({ settled: true, status: 'settled' })),
 }));
+vi.mock('../api/_lib/labor-evaluation.js', () => ({
+	intakeDelivery: vi.fn(async () => ({ state: 'attested' })),
+	caseView: vi.fn(async () => null),
+	ensureCase: vi.fn(async () => null),
+	recordAward: vi.fn(async () => null),
+	moderatorOverride: vi.fn(async () => ({ paid_at: null })),
+}));
+vi.mock('../api/_lib/labor-escrow-ledger.js', () => ({
+	ensureEscrowTables: vi.fn(async () => true),
+	getCaseByBounty: vi.fn(async () => null),
+}));
 vi.mock('../api/_lib/labor-escrow.js', () => ({
 	escrowConfigured: vi.fn(() => true),
 	escrowAddressOrNull: vi.fn(() => 'ESCROWADDR'),
