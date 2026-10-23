@@ -1,6 +1,6 @@
 ---
 name: rig-a-model
-description: Auto-rig a static 3D GLB model into an animation-ready one. Use when you or the user have an existing GLB and want to rig it, add a skeleton, add bones, make it posable, or make it animatable, "rig this model", "add a skeleton to my GLB", "make this character animation-ready". Takes a GLB URL, adds a humanoid skeleton plus skin weights, and returns the rigged GLB URL and a pose-studio link.
+description: Auto-rig a static 3D GLB model into an animation-ready one. Use when you or the user have an existing GLB and want to rig it, add a skeleton, add bones, make it posable, or make it animatable, for example "rig this model", "add a skeleton to my GLB", "make this character animation-ready". Takes a GLB URL, adds a humanoid skeleton plus skin weights, and returns the rigged GLB URL and a pose-studio link.
 when_to_use: User already has a GLB (a URL) and wants it rigged. To generate a new model from text, use generate-3d-model; to generate an already-rigged character in one step, use create-3d-avatar.
 license: MIT
 metadata:
@@ -29,18 +29,18 @@ rigged model in the browser, ready to pose.
 Rigging assumes a roughly **humanoid figure** (head, torso, two arms, two legs,
 standing). Props, furniture, and vehicles won't rig meaningfully.
 
-## Fastest path, the MCP tool
+## Fastest path: the MCP tool
 
 If the three.ws MCP server is connected, call the rig tool directly:
 
 - **Tool:** `rig_mesh`
 - **Input:** `{ "glb_url": "<https URL to the static GLB>" }`
-  - Any reachable GLB URL works, a `glbUrl` from `generate-3d-model`, a CDN
+  - Any reachable GLB URL works: a `glbUrl` from `generate-3d-model`, a CDN
     link, or a model you host yourself.
 - **Returns:** `riggedGlbUrl`, `sourceGlbUrl`, `poseStudioUrl`, `jobId`,
   `creationId`, `durationMs`.
 
-## Portable path, the hosted HTTP endpoint
+## Portable path: the hosted HTTP endpoint
 
 No MCP client needed. `rig_mesh` is exposed free on the hosted studio JSON-RPC
 endpoint at `https://three.ws/api/mcp-studio` (no key, no account):
@@ -93,19 +93,19 @@ Build the pose-studio link yourself from any rigged GLB URL:
 
 ## What to do with the result
 
-1. Give the user the **pose-studio link**, pose and preview in the browser.
+1. Give the user the **pose-studio link**: pose and preview in the browser.
 2. Give the **`riggedGlbUrl`** for download / import; it carries a humanoid
    skeleton and skin weights, so animation clips retarget onto it.
-3. The original mesh is never modified, `sourceGlbUrl` stays valid.
+3. The original mesh is never modified; `sourceGlbUrl` stays valid.
 
 ## Errors
 
-- `rate_limited` / `429`, the rigger is busy; honor `retryAfter` and retry.
-- `not_configured` / `503`, auto-rigging momentarily unavailable; retry shortly.
-- `rig_failed`, the model couldn't be rigged (usually not humanoid enough).
+- `rate_limited` / `429`: the rigger is busy; honor `retryAfter` and retry.
+- `not_configured` / `503`: auto-rigging momentarily unavailable; retry shortly.
+- `rig_failed`: the model couldn't be rigged (usually not humanoid enough).
   Tell the user why and suggest `create-3d-avatar` to generate a riggable figure.
-- `timeout`, the job outlived the poll budget; the response includes a
-  `resumeUrl`, keep polling it rather than restarting the job.
+- `timeout`: the job outlived the poll budget; the response includes a
+  `resumeUrl`; keep polling it rather than restarting the job.
 
-Never report a dead or empty link as success, only return a `riggedGlbUrl` the
+Never report a dead or empty link as success; only return a `riggedGlbUrl` the
 job actually produced.

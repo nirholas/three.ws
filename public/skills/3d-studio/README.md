@@ -7,6 +7,7 @@ https://three.ws/api/mcp-studio.
 
 | Skill | What it does |
 | --- | --- |
+| [`anatomy`](anatomy/SKILL.md) | Explain how a machine works as an interactive isometric 3D cutaway. |
 | [`create-3d-avatar`](create-3d-avatar/SKILL.md) | Turn a text prompt (or reference image) into a rigged, animation-ready 3D avatar (GLB). |
 | [`embed-three-ws-avatar`](embed-three-ws-avatar/SKILL.md) | Embed a live, animated three.ws 3D avatar in any website with the &lt;agent-3d&gt; web component. |
 | [`find-3d-assets`](find-3d-assets/SKILL.md) | Search thousands of ready-made 3D assets on three.ws (CC0 props and objects, rigged humanoid characters, motion clips) and get paste-ready code or a downloaded file. |
@@ -24,7 +25,7 @@ curl -O https://three.ws/skills/3d-studio/three-ws-3d-skills.zip
 Or read one directly, no clone required:
 
 ```bash
-curl https://three.ws/skills/3d-studio/create-3d-avatar/SKILL.md
+curl https://three.ws/skills/3d-studio/anatomy/SKILL.md
 ```
 
 Drop a folder into `.claude/skills/` for Claude Code or the Claude apps, upload
