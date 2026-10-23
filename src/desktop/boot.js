@@ -29,7 +29,7 @@ export function createBootScreen({ host = document.body, reducedMotion = false }
 				<p class="os-boot-sub">Starting your workstation.</p>
 			</div>
 			<ol class="os-boot-log" aria-label="Startup checks"></ol>
-			<div class="os-boot-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
+			<div class="os-boot-bar" role="progressbar" aria-label="Starting the desktop" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
 			<p class="os-boot-foot"><span class="os-boot-count">0 / 0</span><span class="os-boot-status">Probing</span></p>
 		</section>
 		<section class="os-lock" hidden>

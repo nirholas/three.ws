@@ -1,6 +1,11 @@
 /* Back-an-Agent Vaults — finance surface. Violet wallet-accent on glass.
    Tokens only (public/tokens.css); responsive at 320 / 768 / 1440. */
 
+/* An explicit page background: contrast is measured against the paint behind
+   the text, and the UA canvas alone (color-scheme) is invisible to checkers
+   and to forced-colors tooling. The fallback is the dark brand base. */
+body { background: var(--bg, #121212); }
+
 .vx-shell {
 	max-width: 1180px;
 	margin: 0 auto;
@@ -177,7 +182,7 @@
 @keyframes vx-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 .vx-empty { grid-column: 1 / -1; text-align: center; padding: var(--space-2xl) var(--space-md); border: 1px dashed var(--stroke); border-radius: var(--radius-lg); background: var(--surface-1); }
 .vx-empty-t { font: var(--weight-semibold) var(--text-lg) var(--font-display); color: var(--ink-bright); margin: 0 0 var(--space-xs); }
-.vx-empty-d { color: var(--ink-dim); margin: 0 auto var(--space-md); max-width: 460px; line-height: var(--leading-normal); }
+.vx-empty-d { color: var(--ink); margin: 0 auto var(--space-md); max-width: 460px; line-height: var(--leading-normal); }
 .vx-empty-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); justify-content: center; }
 
 /* ── detail ───────────────────────────────────────────────────────────────── */

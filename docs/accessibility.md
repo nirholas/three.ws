@@ -19,7 +19,7 @@ Every address-shortening helper in `src/` now calls `shortAddress`. Changing how
 
 - `npm run audit:a11y` runs axe (`wcag2a`, `wcag2aa`, `wcag21aa`) over the top pages. `/wallet`, `/agent-wallet`, `/claim-wallet` and `/vaults` are pinned into that gate in their disconnected state.
 - `npx playwright test tests/e2e/w3ag-wallet.spec.js` checks, in a real browser: address presentation, the connect picker and payment modal trap (inert background, Tab cycling both ways, Escape, focus return), step state as text, the live status region, axe on the open payment modal, the absence of any signing timeout, page language, no `meta refresh`, no bare ellipsis addresses on the four wallet pages, and axe on those pages with a wallet extension present. The extension is the only stub (`installSolanaWallet`, `installEvmWallet` in `tests/e2e/_support.js`); the product code and its fetches are real.
-- `npx vitest run tests/shared-address.test.js` pins the formatter and the trap at unit level.
+- `npx vitest run tests/shared-address.test.js` pins the formatter at unit level.
 
 ## Judged by a person, not by a tool
 

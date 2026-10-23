@@ -112,7 +112,7 @@ a.pay-chip-btn { display: inline-flex; align-items: center; justify-content: cen
 	background: rgba(255,255,255,.05); border-radius: 10px;
 }
 .skill-pay-price strong { font-size: 20px; color: #34d399; }
-.skill-pay-price .usd-eq { font-size: 13px; color: rgba(255,255,255,.45); margin-left: 6px; }
+.skill-pay-price .usd-eq { font-size: 13px; color: rgba(255,255,255,.65); margin-left: 6px; }
 .skill-pay-wallet-area { margin-bottom: 12px; }
 /* Proof-phase promo: struck list price + live spots-left counter. */
 .skill-pay-list {
@@ -168,12 +168,12 @@ a.pay-chip-btn { display: inline-flex; align-items: center; justify-content: cen
 .skill-pay-step-dot {
 	width: 18px; height: 18px; border-radius: 50%; flex: 0 0 auto;
 	display: inline-flex; align-items: center; justify-content: center;
-	font-size: 10px; line-height: 1; color: rgba(255,255,255,.45);
+	font-size: 10px; line-height: 1; color: rgba(255,255,255,.7);
 	border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.04);
 	transition: border-color .25s, background .25s, color .25s, box-shadow .25s;
 }
 .skill-pay-step-label {
-	font-size: 10.5px; color: rgba(255,255,255,.4); letter-spacing: .05em;
+	font-size: 10.5px; color: rgba(255,255,255,.65); letter-spacing: .05em;
 	text-transform: uppercase; white-space: nowrap; transition: color .25s;
 }
 .skill-pay-step.is-active .skill-pay-step-dot {
@@ -200,9 +200,9 @@ a.pay-chip-btn { display: inline-flex; align-items: center; justify-content: cen
 }
 .skill-pay-open-link {
 	display: block; text-align: center; margin-top: 14px;
-	font-size: 12px; color: rgba(255,255,255,.4); text-decoration: none;
+	font-size: 12px; color: rgba(255,255,255,.65); text-decoration: none;
 }
-.skill-pay-open-link:hover { color: rgba(255,255,255,.7); text-decoration: underline; }
+.skill-pay-open-link:hover { color: #fff; text-decoration: underline; }
 .skill-pay-open-link.is-primary {
 	padding: 11px 14px; border-radius: 10px; font-size: 14px; font-weight: 600;
 	color: #fff; background: linear-gradient(135deg, #059669, #047857);

@@ -43,7 +43,8 @@ describe('connect-wallet button state', () => {
 		expect(btn.querySelector('svg')).toBeTruthy(); // icon survives the swap
 		expect(btn.classList.contains('is-connected')).toBe(true);
 		expect(btn.dataset.address).toBe(ADDR);
-		expect(btn.getAttribute('aria-label')).toContain(ADDR);
+		// W3AG: the accessible name carries the full address in groups of four.
+	expect(btn.getAttribute('aria-label')).toContain(ADDR.match(/.{1,4}/g).join(' '));
 		expect(btn.title).toContain(ADDR);
 	});
 

@@ -8,13 +8,26 @@
 
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { installSolanaWallet, installEvmWallet, serveHarness, collectPageErrors } from './_support.js';
+import { installSolanaWallet, serveHarness, collectPageErrors } from './_support.js';
 
 // Synthetic, never a real third-party address.
 const SOLANA_ADDR = 'THREEsynthetic1111111111111111111111111111';
 const EVM_ADDR = '0x742d35Cc6634C0532925a3b844Bc454e4438f44e';
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const HARNESS = '**/w3ag-harness';
+
+// axe blends a half-faded element's ink into its background and reports the
+// resting colors as a contrast failure, so measure after finite animations end.
+async function settle(page) {
+	await page.evaluate(() =>
+		Promise.all(
+			document
+				.getAnimations()
+				.filter((a) => Number.isFinite(a.effect?.getComputedTiming().endTime))
+				.map((a) => a.finished.catch(() => {})),
+		),
+	);
+}
 
 const WALLET_PAGES = ['/wallet', '/agent-wallet', '/claim-wallet', '/vaults'];
 
@@ -67,7 +80,18 @@ test.describe('address presentation (W3AG 1.1.1, 1.1.3)', () => {
 test.describe('connect picker (W3AG 2.1.2, 2.1.1)', () => {
 	test('traps focus, makes the page inert, closes on Escape, returns focus', async ({ page }) => {
 		const errors = collectPageErrors(page);
-		await installEvmWallet(page, { address: EVM_ADDR });
+		// A browser wallet that is present but has not authorised this site yet:
+		// the button is idle and a click offers the choice of wallet.
+		await page.addInitScript(() => {
+			window.ethereum = {
+				isMetaMask: true,
+				async request({ method }) {
+					return method === 'eth_chainId' ? '0x2105' : [];
+				},
+				on() {},
+				removeListener() {},
+			};
+		});
 		await openHarness(page);
 		await page.evaluate(async () => {
 			const { createConnectWalletButton } = await import('/src/wallet/connect-button.js');
@@ -175,11 +199,12 @@ test.describe('payment modal (W3AG 2.1.2, 1.4.1, 2.2.1)', () => {
 		await installSolanaWallet(page, { address: SOLANA_ADDR });
 		await openModal(page);
 		await page.waitForFunction(() => document.querySelector('.skill-pay-overlay')?.classList.contains('is-open'));
+		await settle(page);
 		const { violations } = await new AxeBuilder({ page })
 			.withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
 			.include('.skill-pay-overlay')
 			.analyze();
-		expect(violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
+		expect(violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
 	});
 
 	test('nothing on the page runs a signing time limit (W3AG 2.2.1)', async ({ page }) => {
@@ -232,8 +257,9 @@ test.describe('wallet pages', () => {
 		for (const path of WALLET_PAGES) {
 			await page.goto(path);
 			await page.waitForLoadState('networkidle').catch(() => {});
+			await settle(page);
 			const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
-			expect(violations.map((v) => `${path} ${v.id}: ${v.help}`)).toEqual([]);
+			expect(violations.map((v) => `${path} ${v.id}: ${v.nodes.map((n) => `${n.target.join(' ')} (${n.any[0]?.message || ''})`).join(' | ')}`)).toEqual([]);
 		}
 	});
 });
