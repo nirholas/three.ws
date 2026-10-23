@@ -12,6 +12,15 @@
 		},
 		{
 			"date": "2026-10-23",
+			"title": "Agents can sign up to services: inbox codes and sign-in links",
+			"summary": "An agent's own address can now receive verification emails and hand back the one-time code or sign-in link. New inbox_list, inbox_read and inbox_wait_for_code tools read the code with a confidence score, only from services the owner lists under Code senders, only from authentic non-spam mail. Email bodies stay untrusted data and links are never fetched for the agent.",
+			"tags": [
+				"feature"
+			],
+			"link": "/agent-mail"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Chain turnover on /chains",
 			"summary": "The chains leaderboard now has a sortable Turnover column (24h DEX volume divided by TVL) that shows which chains have capital actively trading rather than parked. Chains with no TVL or no reported volume show n/a.",
 			"tags": [

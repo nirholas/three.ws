@@ -211,7 +211,7 @@ Example flow, an agent registering on a service:
 2. agent: inbox_wait_for_code { agent_id, from: "@accounts.example", kind: "code", timeout_s: 45 }
    -> { "found": true,
         "result": { "sender": { "address": "no-reply@accounts.example" },
-                    "best_code": { "value": "482913", "kind": "numeric", "confidence": 0.95,
+                    "best_code": { "value": "482913", "kind": "numeric", "confidence": 0.85,
                                    "reasons": ["near_code_phrase", "subject_mentions_code"] },
                     "best_link": null },
         "skipped": {}, "waited_s": 6.0 }
