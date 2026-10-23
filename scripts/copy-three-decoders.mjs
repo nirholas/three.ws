@@ -54,6 +54,18 @@ if (existsSync(dracoSrc)) {
 	console.warn(`[copy-three-decoders] ${dracoSrc} not found`);
 }
 
+// three r186 stopped shipping draco_encoder.js, but Scene Studio
+// (pages/scene.html) still loads it from /three/draco/ to compress exports.
+// The r184 build is vendored in the repo and restored here after the copy above.
+const dracoEncoderSrc = join(repo, 'vendor/three-draco/draco_encoder.js');
+if (existsSync(dracoEncoderSrc)) {
+	mkdirSync(dracoOut, { recursive: true });
+	cpSync(dracoEncoderSrc, join(dracoOut, 'draco_encoder.js'));
+	console.log('[copy-three-decoders] vendor/three-draco/draco_encoder.js → public/three/draco');
+} else {
+	console.warn(`[copy-three-decoders] ${dracoEncoderSrc} not found`);
+}
+
 // Retired duplicate: drop it from checkouts that still carry it.
 const legacyDraco = join(repo, 'public/scene-studio/draco');
 if (existsSync(legacyDraco)) {
