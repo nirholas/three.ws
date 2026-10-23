@@ -1430,6 +1430,37 @@ Root causes and commits, in order of the work order's priority:
 
 Left: draining the docs-freshness backlog to `maxStale` 5.
 
+## 2026-10-23: 404 close the three fresh check:claude / audit:docs gaps (already shipped, verified)
+
+Re-derived against this worktree's HEAD (`7fb396c8e`) instead of the `main`
+commit the order measured against (`84a86a5bf`): every gap it named was
+already closed by commits that landed on `evolve` before this session
+started.
+
+- `workers/model-triposplat/README.md`: present, written to the sibling-worker
+  standard (contract, env vars, deploy, tests), added in the worker's own
+  feature commit `b72233fb8`.
+- `STRUCTURE.md` GPU fleet row: lists `workers/model-triposplat/` with its
+  license, Forge lane and "built and tested, deploy owner-gated" status,
+  same commit.
+- Hub dead-link false positive: `scripts/audit-docs.mjs` already skips
+  relative `../../issues|pulls|discussions/...` links (added in `0e9c88bf5`,
+  the fix order 402 logged above). Confirmed the exclusion is scoped by link
+  shape only, and grepped the full repo for other relative (non-`https://`)
+  `issues/new`-style links outside `hubs/`: none exist, so the rule cannot
+  mask a genuine broken filesystem link elsewhere.
+- `docs/mcp-registry-sentinel.md`: already listed in `data/pages.json`
+  (same `0e9c88bf5`), decided reader-facing rather than parked in
+  `UNPUBLISHED_DOCS`.
+
+Verification: `npm run check:claude` -> `OK: every script, path, and
+typography rule in CLAUDE.md matches the repo`. `npm run audit:docs` ->
+`docs audit: clean (2116 markdown files checked)`. `npm run check:vendored`
+-> clean (worker touches nothing in the vendored set). No code or doc
+changes were needed; the order retires on verification alone.
+
+Left: nothing for this order.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
