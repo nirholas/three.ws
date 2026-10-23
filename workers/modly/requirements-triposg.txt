@@ -18,7 +18,7 @@ PyYAML==6.0.2
 jaxtyping==0.2.36
 typeguard==4.4.2
 numpy==1.26.4
-Pillow==10.4.0
+Pillow==13.0.0
 trimesh==4.5.3
 pymeshlab==2023.12.post2
 scikit-image==0.24.0
