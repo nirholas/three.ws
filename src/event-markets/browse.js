@@ -60,7 +60,7 @@ function emptyState() {
 			: 'Every three.ws event opens a market automatically, so the next one appears as soon as an event is scheduled. Browse the events to see what is coming.'),
 		h('div', { class: 'row' },
 			filtered ? h('button', { class: 'em-btn', type: 'button', onclick: () => { state.q = ''; state.source = ''; els.q.value = ''; els.source.value = ''; load(true); } }, 'Clear filters') : null,
-			h('a', { class: 'em-btn primary', href: '/events' }, 'See upcoming events')));
+			h('a', { class: 'em-btn primary', href: '/event' }, 'See upcoming events')));
 }
 
 function errorState() {
