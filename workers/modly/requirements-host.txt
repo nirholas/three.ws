@@ -25,6 +25,6 @@ pydantic==2.11.7
 # (BSD) provides the KD-tree for the colour transfer.
 xatlas==0.0.11
 scipy==1.13.1
-Pillow==10.4.0
+Pillow==13.0.0
 google-cloud-storage==2.18.0
 pytest==8.3.5
