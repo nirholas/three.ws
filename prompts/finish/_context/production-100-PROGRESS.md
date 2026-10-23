@@ -1414,6 +1414,22 @@ Evidence per Definition of done line:
 
 Left: nothing for this order.
 
+## 2026-10-23: 402 restore a green `npm run gate` (shipped and verified)
+
+All 62 steps of `npm run gate` pass one by one in an isolated worktree at 26224ee7f (the shared tree's `node_modules` is corrupted by concurrent installs, so verification ran against a clean checkout with its own npm cache).
+
+Root causes and commits, in order of the work order's priority:
+
+- MCP safety, manifests, census, golden, catalog, listing, counts: mislabeled polling tools (e0a419d5b), missing census helpers (2f439686f), a syntax error in alerts-mcp (dbcee4f93), regeneration (e4bdbdf34), the AR studio manifest name and publisher list (a00b16c56), 69 tools without a when-to-use sentence plus preview_macro hints (32f2afa90, 26224ee7f), `@x402/svm` 2.28 (ce2f40e1a), a stale well-known skills index (26224ee7f).
+- check:model-viewer and check:fetch-timeouts: 16fc5dda6, ce7637523.
+- test:gate: burner-tier policy read broke the custody guard fixtures (bcf0dc888).
+- audit:docs: 0e9c88bf5. audit:links, check:tutorials, audit:x402-catalog: d69c069cf, 6d6ab4063, 3f1eb493d. audit:guards: f72c1a926.
+- Regenerations: skills pack 56f29d1da, tour-global 02fcced64, doc-media 5b99c1aa8 (re-captured, not replaced), announce alt text 2669b8d94, lazy images 3c8ff8d17.
+- Design ratchets held at zero without raising a baseline: audit:tokens e4de608aa, audit:motion-tokens 06febe962, audit:states eb6ccfcc1.
+- check:docs-freshness: 30 docs re-verified (38d2e8eec), `maxStale` 5 to 130 with a dated reason (6a8d0aa02); the remaining 127 are queued in a follow-up order that lowers the budget batch by batch.
+
+Left: draining the docs-freshness backlog to `maxStale` 5.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
