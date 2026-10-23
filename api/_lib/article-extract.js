@@ -239,9 +239,63 @@ export async function extractArticle(url, { feedContentText = null, title = null
 		readerError = err;
 	}
 
-	// A partial direct page (2 paragraphs) still beats the feed teaser.
+	// Rung 3: Wayback. The same article as it was archived: strictly better than
+	// a partial page, so it runs for any page thinner than a full read.
+	let laneError = null;
+	try {
+		const { paragraphs: archived, snapshot, html: archivedHtml } = await fetchViaWayback(url, extractParagraphs);
+		if (archived.length >= 3 && archived.length > paragraphs.length) {
+			return {
+				paragraphs: archived,
+				extraction: 'wayback',
+				blocked_reason: null,
+				// The snapshot's own metadata (headline, image, byline) stands in
+				// when the live page was blocked.
+				html: html || archivedHtml,
+				lane_sources: [{ label: 'Internet Archive snapshot', url: snapshot }],
+			};
+		}
+	} catch (err) {
+		laneError = err;
+	}
+
+	// A partial direct page (2 paragraphs) still beats the substitutes below.
 	if (paragraphs.length >= 2) {
 		return { paragraphs, extraction: 'page', blocked_reason: null, html, lane_sources: [] };
+	}
+
+	// Rung 4: primary document: the SEC filing the headline's company made.
+	if (title) {
+		try {
+			const { paragraphs: filed, filing } = await fetchPrimaryFiling(title, publishedAt, extractParagraphs);
+			if (filed.length >= 2) {
+				return {
+					paragraphs: filed,
+					extraction: 'primary',
+					blocked_reason: null,
+					html,
+					lane_sources: [{ label: `${filing.filer} ${filing.form} filed ${filing.filed}`, url: filing.url }],
+				};
+			}
+		} catch (err) {
+			laneError = laneError || err;
+		}
+
+		// Rung 5: sibling coverage from other outlets.
+		try {
+			const { paragraphs: sibling, siblings } = await fetchSiblings(title, url);
+			if (siblings.length >= 2) {
+				return {
+					paragraphs: sibling,
+					extraction: 'siblings',
+					blocked_reason: null,
+					html,
+					lane_sources: siblings.map((s) => ({ label: s.source, url: s.link })),
+				};
+			}
+		} catch (err) {
+			laneError = laneError || err;
+		}
 	}
 
 	// Rung 6, publisher feed body, when it is more than a teaser.

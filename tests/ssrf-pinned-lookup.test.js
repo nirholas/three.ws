@@ -130,3 +130,27 @@ describe('collectCappedBody streaming byte ceiling', () => {
 		expect(err.code).toBe('max_bytes_exceeded');
 	});
 });
+
+// A host may answer with a compressed body without being asked (the Wayback
+// Machine replays an archived page's original gzip). The pinned fetch wraps raw
+// bytes in a Response, which does not decode content-encoding, so callers used
+// to read compressed garbage as text.
+describe('decodeContentEncoding', () => {
+	it('inflates gzip, deflate and brotli bodies and passes identity through', async () => {
+		const zlib = await import('node:zlib');
+		const { decodeContentEncoding } = await import('../api/_lib/ssrf-guard.js');
+		const plain = Buffer.from('<html><body><p>archived story body</p></body></html>');
+		expect(decodeContentEncoding(zlib.gzipSync(plain), 'gzip', 1_000_000).equals(plain)).toBe(true);
+		expect(decodeContentEncoding(zlib.deflateSync(plain), 'deflate', 1_000_000).equals(plain)).toBe(true);
+		expect(decodeContentEncoding(zlib.brotliCompressSync(plain), 'br', 1_000_000).equals(plain)).toBe(true);
+		expect(decodeContentEncoding(plain, undefined, 1_000_000).equals(plain)).toBe(true);
+		expect(decodeContentEncoding(plain, 'identity', 1_000_000).equals(plain)).toBe(true);
+	});
+
+	it('aborts a decompression bomb at the byte ceiling', async () => {
+		const zlib = await import('node:zlib');
+		const { decodeContentEncoding, MaxBytesExceededError } = await import('../api/_lib/ssrf-guard.js');
+		const bomb = zlib.gzipSync(Buffer.alloc(5_000_000));
+		expect(() => decodeContentEncoding(bomb, 'gzip', 100_000)).toThrow(MaxBytesExceededError);
+	});
+});

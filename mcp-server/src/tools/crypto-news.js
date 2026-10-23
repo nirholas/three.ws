@@ -88,7 +88,7 @@ const RESOLVE_DESCRIPTION =
 	'priced in, horizon, and a counter-argument). When the publisher blocks fetches or paywalls the story, three.ws ' +
 	'recovers it from the Internet Archive, the SEC EDGAR filing of the company named in the headline, or other outlets ' +
 	'covering the same story, and says which lane it used in `extraction`. The excerpt is a quotation, not the article: ' +
-	'follow `full_text_url` for the rest. Free: no payment or API key required.';
+	'follow `full_text_url` for the rest. Free: no payment or API key required. Use this when you have a crypto news URL and need its content or a trading read, including for blocked or paywalled pages.';
 
 const resolveZodShape = {
 	url: z.string().url().max(2000).describe('Absolute http(s) link to the article, e.g. a `link` from crypto_news.'),

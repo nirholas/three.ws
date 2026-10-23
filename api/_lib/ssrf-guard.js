@@ -17,6 +17,7 @@ import { promises as dns } from 'node:dns';
 import net from 'node:net';
 import https from 'node:https';
 import http from 'node:http';
+import zlib from 'node:zlib';
 import { isPrivateIPv6 as isPrivateIPv6Shared } from './ip-classify.js';
 
 // Cloud metadata services we never want a server-side fetch to reach.
@@ -176,6 +177,27 @@ export function collectCappedBody(nodeRes, req, maxBytes) {
 	});
 }
 
+// Decode a response body per its content-encoding. A host can send a
+// compressed body without being asked (the Wayback Machine replays an archived
+// page's original gzip), and `new Response(buffer, { headers })` does not decode
+// it, so callers would read compressed bytes as text. The inflated size is held
+// to the same ceiling as the wire size, so a decompression bomb aborts instead
+// of exhausting memory. Unknown encodings pass through untouched.
+const DEFAULT_DECODED_CEILING = 50 * 1024 * 1024;
+
+export function decodeContentEncoding(body, encoding, maxBytes) {
+	const limit = Number.isFinite(maxBytes) ? maxBytes : DEFAULT_DECODED_CEILING;
+	const enc = String(encoding || '').trim().toLowerCase();
+	const inflate = { gzip: zlib.gunzipSync, 'x-gzip': zlib.gunzipSync, deflate: zlib.inflateSync, br: zlib.brotliDecompressSync }[enc];
+	if (!inflate) return body;
+	try {
+		return inflate(body, { maxOutputLength: limit });
+	} catch (err) {
+		if (err?.code === 'ERR_BUFFER_TOO_LARGE') throw new MaxBytesExceededError(limit + 1, limit);
+		throw err;
+	}
+}
+
 const MAX_REDIRECTS = 5;
 
 // Convenience: assert + fetch. Uses the global fetch. Same options as fetch,
@@ -249,13 +271,17 @@ export async function fetchSafePublicUrlPinned(input, init = {}, opts = {}) {
 			};
 			const req = mod.request(reqOpts, (nodeRes) => {
 				collectCappedBody(nodeRes, req, maxBytes)
-					.then((body) =>
+					.then((raw) => {
+						const encoded = nodeRes.headers['content-encoding'];
+						const body = decodeContentEncoding(raw, encoded, maxBytes);
+						const headers = { ...nodeRes.headers };
+						if (body !== raw) {
+							delete headers['content-encoding'];
+							delete headers['content-length'];
+						}
 						// Wrap in a fetch-compatible Response so callers use the same API.
-						resolve(new Response(body, {
-							status: nodeRes.statusCode,
-							headers: nodeRes.headers,
-						})),
-					)
+						resolve(new Response(body, { status: nodeRes.statusCode, headers }));
+					})
 					.catch(reject);
 			});
 			req.on('error', reject);

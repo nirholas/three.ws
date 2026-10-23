@@ -90,13 +90,13 @@ export async function fetchViaWayback(url, extractParagraphs) {
 		['json'],
 	);
 	const raw = waybackRawUrl(JSON.parse(lookup)?.archived_snapshots?.closest, url);
-	if (!raw) return { paragraphs: [], snapshot: null };
+	if (!raw) return { paragraphs: [], snapshot: null, html: null };
 	const html = await fetchText(
 		raw,
 		{ accept: 'text/html,application/xhtml+xml', 'user-agent': LANE_USER_AGENT },
 		['text/html', 'application/xhtml+xml'],
 	);
-	return { paragraphs: extractParagraphs(html), snapshot: raw };
+	return { paragraphs: extractParagraphs(html), snapshot: raw, html };
 }
 
 // ── Primary documents: SEC EDGAR ───────────────────────────────────────────
@@ -114,6 +114,9 @@ function secSlot() {
 	secQueue = turn.catch(() => {});
 	return turn;
 }
+
+// SEC cover-page and signature furniture that leads every filing.
+const FILING_FURNITURE = /securities and exchange commission|^form (8-k|10-k|10-q|s-1)\b|check the appropriate box|commission file number|state or other jurisdiction|\(address of principal|emerging growth company|indicate by check mark|pursuant to section 13 or 15\(d\)|date of report|written communications|soliciting material|pre-commencement|rule 1[34][ade]-|pursuant to the requirements of the securities exchange act/i;
 
 const filingCache = new Map(); // accession -> paragraphs
 const FILING_CACHE_MAX = 128;
@@ -192,7 +195,7 @@ export async function fetchPrimaryFiling(title, publishedAt, extractParagraphs, 
 	if (!paragraphs) {
 		await secSlot();
 		const html = await fetchText(filing.url, { accept: 'text/html', 'user-agent': LANE_USER_AGENT }, ['text/html']);
-		paragraphs = extractParagraphs(html);
+		paragraphs = extractParagraphs(html).filter((p) => !FILING_FURNITURE.test(p) && p.length >= 80);
 		if (filingCache.size >= FILING_CACHE_MAX) filingCache.delete(filingCache.keys().next().value);
 		filingCache.set(filing.accession + filing.url, paragraphs);
 	}

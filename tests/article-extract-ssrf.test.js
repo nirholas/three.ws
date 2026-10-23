@@ -131,6 +131,7 @@ describe('wayback lane', () => {
 		expect(pinned.mock.calls[1][2]).toEqual({ maxBytes: MAX_BYTES });
 		expect(rawFetch).not.toHaveBeenCalled();
 		expect(out.paragraphs.length).toBe(1);
+		expect(out.html).toContain('archived story body');
 	});
 
 	it('does not touch the archive for a target the guard rejects', async () => {
@@ -142,7 +143,7 @@ describe('wayback lane', () => {
 	it('returns no paragraphs and no snapshot fetch when nothing is archived', async () => {
 		pinned.mockResolvedValueOnce(json({ archived_snapshots: {} }));
 		const out = await fetchViaWayback('https://publisher.example/story', extractParagraphs);
-		expect(out).toEqual({ paragraphs: [], snapshot: null });
+		expect(out).toEqual({ paragraphs: [], snapshot: null, html: null });
 		expect(pinned).toHaveBeenCalledTimes(1);
 	});
 });
