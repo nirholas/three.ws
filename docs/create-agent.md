@@ -118,6 +118,25 @@ Full reference: [packages/create-agent/README.md](https://github.com/nirholas/th
 
 ---
 
+## Start from a template in the web wizard
+
+The browser wizard at [three.ws/create-agent](https://three.ws/create-agent) has a second way to start besides the CLI above: a template gallery. The first step carries a "Start from a template" card. It opens a searchable grid of 26 ready-made Solana finance personas (whale watching, wallet safety, yield, launch vetting, tax planning and more). Pick one to preview its greeting, suggested prompts, the three.ws tools it works with and the full persona text, then press "Use this template".
+
+What the click does:
+
+- Fills the persona, greeting, category (`finance`) and skills. These replace whatever was there.
+- Fills the name and description only when they are empty, and merges the template's tags into yours (up to 8). Your own words about your own agent are never overwritten.
+- Clears any interview-generated profile, since the template persona replaces it.
+- Leaves everything editable. A status line offers "Review persona" (jumps to the Personality step) and "Undo" (restores the previous values).
+
+The gallery is keyboard operable: arrow keys, Home and End move between cards, Enter opens a preview, Escape closes the dialog and returns focus to the button that opened it. On phones the grid and the preview are separate views with a back button.
+
+The catalog is [data/agent-templates.json](../data/agent-templates.json), loaded on first open so the wizard's initial paint never pays for it. Every template carries `id`, `name`, `tagline`, `category`, `tags`, `scope`, `persona`, `greeting`, `prompts`, `tools` and `skills`. `tools` names real three.ws MCP tools, and each persona tells the model to say so plainly when a tool is not connected. Every persona states a Solana scope, carries no wallet address and names no third-party token or protocol; `tests/agent-templates.test.js` enforces all of that, plus the wizard's field limits. To add a template, append an object to the file and run that test.
+
+Code: [src/create-agent-templates.js](../src/create-agent-templates.js) (search, tag ranking, merge rules, dialog) and `wireTemplates` in [src/create-agent.js](../src/create-agent.js). Tests: [tests/create-agent-templates.test.js](../tests/create-agent-templates.test.js), [tests/e2e/create-agent-templates.spec.js](../tests/e2e/create-agent-templates.spec.js).
+
+---
+
 ## Then what
 
 - **Put it on your site.** The printed snippet is the whole integration; attribute reference in [web-component.md](web-component.md).

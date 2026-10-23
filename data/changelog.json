@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Start your agent from a persona template",
+			"summary": "The create wizard now opens with a gallery of 26 Solana finance personas: whale watching, wallet safety, yield, launch vetting, tax planning and more. Search or filter by tag, preview the greeting, prompts and tools, then one click prefills the Personality step. Everything stays editable and Undo restores what you had. Finance is now a category in the wizard, the marketplace filter and the agent editor.",
+			"tags": [
+				"feature"
+			],
+			"link": "/create-agent"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Owner-funded agent budgets enforced on-chain",
 			"summary": "Keep funds in your own wallet and sign one transaction that gives an agent a capped, expiring allowance through the Solana Subscriptions and Allowances program. The agent can pull only what is left, the spend guards refuse a pull the program would reject before any transaction is built, and the new Budget tab shows cap, spent, remaining and expiry with one-click revoke.",
 			"tags": ["feature"],
