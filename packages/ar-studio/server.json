@@ -12,7 +12,7 @@
 	"packages": [
 		{
 			"registryType": "npm",
-			"identifier": "3d-ar-studio-mcp",
+			"identifier": "3d-ar-studio",
 			"version": "0.3.2",
 			"runtimeHint": "npx",
 			"transport": {

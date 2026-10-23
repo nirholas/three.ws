@@ -84,6 +84,7 @@ const SERVERS = [
 		manifest: 'packages/marketplace-mcp/server.json',
 	},
 	{ key: 'x402-mcp', dir: 'packages/x402-mcp', manifest: 'packages/x402-mcp/server.json' },
+	{ key: 'ar-studio', dir: 'packages/ar-studio', manifest: 'packages/ar-studio/server.json' },
 	{
 		key: 'metaplex-agent-mcp',
 		dir: 'packages/metaplex-agent-mcp',
