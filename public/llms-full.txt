@@ -1331,6 +1331,13 @@ Indexable: no (excluded from sitemap)
 
 Launch a pump.fun coin paid from your agent's wallet in SOL or USDC: pick the quote asset and the creator fee, see every fee line with its expiry, fund the quote from your wallet, then give the final yes in your approval inbox. Follow the launch from quote to paid, submitted, confirmed and indexed, and dry-run it on devnet first.
 
+### Creator Payouts
+
+URL: https://three.ws/creator/payouts
+Indexable: no (excluded from sitemap)
+
+Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.
+
 ### Launch on Robinhood Chain
 
 URL: https://three.ws/launch/robinhood
@@ -5541,6 +5548,12 @@ How incoming issues and pull requests get sorted, what every label means, how to
 URL: https://three.ws/docs/launch-intents
 
 Launch a coin from a priced quote paid by the agent wallet: quote, paid, submitted, confirmed, indexed. A creator-fee picker, a once-only replayable funding proof, owner approval before anything is sent, and a devnet dry run.
+
+### Docs · Creator payouts
+
+URL: https://three.ws/docs/creator-payouts
+
+How a claimed creator fee becomes a payout: the four cron stages, the signed and step-up payout wallet with a 48 hour change cooldown, the four hold reasons, and the API.
 
 ### Docs · Rigging the pump.fun pill mascot
 

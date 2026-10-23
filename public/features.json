@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-23T23:12:45.841Z",
+	"generated_at": "2026-10-23T23:18:35.458Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2662,6 +2662,18 @@
 					"showcase": false,
 					"priority": 0.7,
 					"job": "launch"
+				},
+				{
+					"path": "/creator/payouts",
+					"title": "Creator Payouts",
+					"description": "Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.",
+					"added": "2026-10-23",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": "trade"
 				},
 				{
 					"path": "/launch/robinhood",
@@ -11017,6 +11029,18 @@
 					"title": "Docs · Funded launch intents",
 					"description": "Launch a coin from a priced quote paid by the agent wallet: quote, paid, submitted, confirmed, indexed. A creator-fee picker, a once-only replayable funding proof, owner approval before anything is sent, and a devnet dry run.",
 					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/creator-payouts",
+					"title": "Docs · Creator payouts",
+					"description": "How a claimed creator fee becomes a payout: the four cron stages, the signed and step-up payout wallet with a 48 hour change cooldown, the four hold reasons, and the API.",
+					"added": "2026-10-23",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

@@ -1,20 +1,40 @@
 {
-	"generated_at": "2026-10-23T23:12:46.037Z",
+	"generated_at": "2026-10-23T23:18:35.540Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4149,
+	"total": 4154,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
 		{
 			"date": "2026-10-23",
 			"type": "launch",
+			"title": "Creator Payouts",
+			"summary": "Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.",
+			"link": "/creator/payouts",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
 			"title": "Docs · Accessibility, W3AG levels A and AA",
 			"summary": "How three.ws holds its wallet and payment surfaces to the Web3 Accessibility Guidelines at levels A and AA on top of the WCAG 2.1 AA floor: what is met, how each claim is tested, and what is next.",
 			"link": "/docs/accessibility",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Docs · Creator payouts",
+			"summary": "How a claimed creator fee becomes a payout: the four cron stages, the signed and step-up payout wallet with a 48 hour change cooldown, the four hold reasons, and the API.",
+			"link": "/docs/creator-payouts",
 			"tags": [
 				"launch"
 			]
@@ -133,6 +153,17 @@
 		{
 			"date": "2026-10-23",
 			"type": "update",
+			"title": "Agent trades now race several landing providers and keep score of who lands",
+			"summary": "Every signed Solana trade goes out through the primary RPC, Jito and any configured staked RPC at once. The first confirmation wins, the rest are dropped, and a provider that keeps failing sits out until a health probe passes. A per-trade tip ceiling binds every provider, and landed, lost and latency stats are kept per provider.",
+			"link": null,
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
 			"title": "Agents answer mentions of their own X account, in their own persona",
 			"summary": "An agent with its own connected X account and mention replies switched on is now polled by the mention bot. It replies in its own persona, attaches a render of its own avatar to conversational replies, and only acts on the intents its owner allowed, up to a daily cap. Dry run stays the default: nothing posts until the owner turns dry run off and the operator enables live mode. A connection missing the posting scope is reported as missing_scope instead of being polled.",
 			"link": "/agents",
@@ -205,6 +236,16 @@
 		{
 			"date": "2026-10-23",
 			"type": "update",
+			"title": "Creator-fee payouts: register a wallet and see every distribution",
+			"summary": "Your share of each claimed creator fee now has a record and a destination. Register a payout wallet by signing with it and confirming with a step-up (a change waits 48 hours), then follow what is sent, pending or held and why on the new payouts page, and export every distribution as CSV. Sending stays off until payouts are switched on, and shares are recorded and held until then.",
+			"link": "/creator/payouts",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
 			"title": "Flappin UFO is back at /play/ufo with a verified leaderboard and a ghost of the top run",
 			"summary": "The arcade game returns as a native canvas game with touch and keyboard controls and levels that get longer and tighter. Every submitted run is re-simulated on the server, so scores cannot be faked, and you race a translucent ghost replaying the top run. Scores also appear on /rankings as the UFO High Score tab.",
 			"link": "/play/ufo",
@@ -220,6 +261,17 @@
 			"link": "/x-video",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Give your agent a spending cap and confirm anything bigger from your own wallet",
+			"summary": "A new Burner cap tab sets how much an agent may spend alone per spend and per day. Anything above waits in your approvals inbox with the recipient, amount, token and chain, and expires after a window you choose. Above a second line you approve by signing with your own wallet. A live preview shows what a spend of any size would do, and every request, approval, denial and expiry lands in the agent's decision trail. Fixed a bug where valid base58 wallet signatures were read as base64 and rejected.",
+			"link": null,
+			"tags": [
+				"feature",
+				"security"
 			]
 		},
 		{
@@ -1504,58 +1556,6 @@
 			"title": "Forge adds a lane that hands back an already-rigged model",
 			"summary": "A new Forge engine, \"Rig on generate\", predicts a model's mesh, joint skeleton and skin weights together in one pass instead of handing back a bare mesh that still needs a separate rigging step. Built on VAST-AI-Research's AniGen (MIT), running on our own self-hosted worker. Pick it from the engine grid, give it a single reference image, and the finished creation arrives already animatable, with the poll response marking it rigged and reporting its joint count so the UI never offers a redundant rerig call. It is opt-in: generating without picking it behaves exactly as before.",
 			"link": "/forge",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Forge gets a fidelity lane: match your photo instead of guessing it",
-			"summary": "A new Forge engine, \"Match my photo\", fuses 1 to 4 photos of the same object into one pixel-aligned 3D model instead of generating a plausible guess from a single view. Drop photos into the existing view slots and label each one Front, Back, Left or Right; the model is pixel-aligned to every photo you give it, and more photos narrow the result further. Only one photo on hand? Toggle \"fill in the other sides\" and the worker synthesizes the missing angles before reconstructing. Built on TencentARC's Pixal3D (MIT) running on Microsoft TRELLIS.2's backbone, with MV-Adapter (Apache-2.0) for the view synthesis step. Every input photo is recorded against the finished model, and single-photo requests on every other engine are unaffected.",
-			"link": "/forge",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Live widgets and an assistant on the desktop, and the desktop is back at /",
-			"summary": "The homepage is the web desktop again, and the Field moves to /?view=field. The desktop gains eleven live widgets: the $THREE price with a 24 hour chart, weather where you are, clock, calendar, the newest agents, Pulse wallet moves, coins launched through three.ws, platform stats, headlines from the news desk, your device's battery, network and storage, and sticky notes. Pin them to the desktop in small, medium or large, drag them on a snap grid, or keep them on the widgets board beside a news column. The new assistant pane answers questions about three.ws, opens the right app from its reply, and lets you switch to any public agent and talk to it instead. Nothing is sample data: a source that is down says so and offers a retry.",
-			"link": "/docs/desktop-widgets",
-			"tags": [
-				"feature",
-				"desktop"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Menu bar panel for the desktop app",
-			"summary": "Click the three.ws icon in your menu bar or tray and a small panel shows your agent alive in 3D, its Solana wallet balance, a start and stop button, anything waiting on your approval, unread alerts and a box to ask the agent something. Approvals still open the native confirmation window, so what you approve is exactly what you were shown.",
-			"link": "/desktop",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Real agents live on the campus: a greeter meets you at the gate and every agent you walk up to talks back",
-			"summary": "The campus is now populated by the ten most talked-to public agents on three.ws, each wearing its own avatar from its public record (five on a phone). The most popular one stands beside the gate path, turns to you as you walk in, waves and says hello through its own brain. Every agent idles, wanders a step, faces you when you come near and carries a name tag; walk up (or tap the tag) and press E to open a conversation that streams the agent's real reply, shows it as a speech bubble and can read it aloud. The panel opens the agent's profile as a window and hands you the one-tag embed that puts that exact agent, body and brain, on any web page. GET /api/agents/public now returns avatar_model_url for public and unlisted avatars.",
-			"link": "/?world=1",
-			"tags": [
-				"feature",
-				"desktop"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Restyle Studio can now edit a single part of a model, not just the whole thing",
-			"summary": "Models with named part nodes, whether from the new \"Editable parts\" Forge engine (PartCrafter, MIT) or from the existing part-segment tool, now show a Parts panel in Restyle Studio. Select a part and every material tool, presets, AI restyle, manual sliders, scopes to that part alone instead of the whole model. Swap a part in from a local file, or hit Regenerate to send it through the new HoloPart worker (MIT), which completes whatever geometry was hidden or cut off at the segmentation seam, then reassembles the result back into the same model under the same part name. Part node names never change across either path, so a model edited this way stays compatible with every other part-aware tool on the platform.",
-			"link": "/restyle",
 			"tags": [
 				"feature"
 			]

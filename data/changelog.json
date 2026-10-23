@@ -3,43 +3,95 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Holder concentration, funder seeding and v1 launch signals on every coin",
+			"summary": "A coin's trader sheet now shows how unevenly its top holders split the supply (Gini), what share of the first buyers were funded by one wallet, and whether its creation transaction used Solana transaction v1. The same Gini and seeded share feed the oracle's launch features.",
+			"tags": [
+				"feature"
+			],
+			"link": "/launches"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Coin intel funder map is now a 3D graph",
+			"summary": "The wallet network in the coin intel drawer renders as a GPU-instanced 3D force graph, with wallets sized by holdings and linked to their shared funder, a live-trades toggle, and reduced-motion support. Browsers without WebGL keep the 2D map.",
+			"tags": [
+				"feature"
+			],
+			"link": "/coin-intel"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Creator-fee payouts: register a wallet and see every distribution",
+			"summary": "Your share of each claimed creator fee now has a record and a destination. Register a payout wallet by signing with it and confirming with a step-up (a change waits 48 hours), then follow what is sent, pending or held and why on the new payouts page, and export every distribution as CSV. Sending stays off until payouts are switched on, and shares are recorded and held until then.",
+			"tags": [
+				"feature"
+			],
+			"link": "/creator/payouts"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Agent trades now race several landing providers and keep score of who lands",
+			"summary": "Every signed Solana trade goes out through the primary RPC, Jito and any configured staked RPC at once. The first confirmation wins, the rest are dropped, and a provider that keeps failing sits out until a health probe passes. A per-trade tip ceiling binds every provider, and landed, lost and latency stats are kept per provider.",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Give your agent a spending cap and confirm anything bigger from your own wallet",
 			"summary": "A new Burner cap tab sets how much an agent may spend alone per spend and per day. Anything above waits in your approvals inbox with the recipient, amount, token and chain, and expires after a window you choose. Above a second line you approve by signing with your own wallet. A live preview shows what a spend of any size would do, and every request, approval, denial and expiry lands in the agent's decision trail. Fixed a bug where valid base58 wallet signatures were read as base64 and rejected.",
-			"tags": ["feature", "security"]
+			"tags": [
+				"feature",
+				"security"
+			]
 		},
 		{
 			"date": "2026-10-23",
 			"title": "Wallet and payment screens now work with a keyboard and a screen reader",
 			"summary": "Addresses read as short text on screen and as the full value in groups of four to a screen reader, from one shared formatter that replaced more than a hundred copies. The connect picker, payment modal, vault dialogs and add-funds sheet trap focus, make the page behind inert, close on Escape and return focus to the button that opened them. Payment steps now say completed, current or failed in text, not only by color, and low-contrast labels in the payment modal and the vaults page were fixed. /wallet, /agent-wallet, /claim-wallet and /vaults joined the accessibility gate.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/wallet"
 		},
 		{
 			"date": "2026-10-23",
 			"title": "Agents suggest skills from runs that worked",
 			"summary": "After a run that verifiably worked (several tools with no error, a passed labor-escrow job, or a closed profitable trade), an agent now drafts a real skill bundle from it and lists it under Suggested skills on the agent dashboard. Argument values from the run are never stored, only their shapes. You read the bundle and the evidence run, then install it on that agent only, publish it to the marketplace, or dismiss it. Nothing installs or publishes without your click, and a draft that fails the marketplace checks can never be installed. When an installed skill is used again and the run does better, the agent proposes a revision you can accept instead of changing the skill.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/skill-candidates"
 		},
 		{
 			"date": "2026-10-23",
 			"title": "An agent can sign itself up and pay for its plan",
 			"summary": "An autonomous agent now signs up with a Solana key and no email: it signs a single-use server challenge, receives an account, a custodial wallet and an API key, and can then buy the Builder or Scale plan with one USDC x402 payment on Solana. The CLI does the whole thing with `three-ws signup --agent`. Replayed or badly signed challenges are rejected, each key gets one account, and signups are rate limited and capped per day.",
-			"tags": ["feature", "sdk"],
+			"tags": [
+				"feature",
+				"sdk"
+			],
 			"link": "/docs/agent-self-onboarding"
 		},
 		{
 			"date": "2026-10-23",
 			"title": "x402 pay-for-what-you-use on Solana (upto)",
 			"summary": "A paid route can now advertise an upto offer beside its fixed price: the buyer authorizes a cap, the seller measures the work and settles only that amount, and the rest of the escrowed deposit returns to the buyer. A handler that fails settles nothing. The LLM proxy is the first route converted (5 atomics per token, capped at 5x the flat price). Agent payers refuse a cap above their per-call limit before signing, and the unused part of the cap is released from their budget. Existing exact clients are unaffected.",
-			"tags": ["feature", "improvement"],
+			"tags": [
+				"feature",
+				"improvement"
+			],
 			"link": "/docs/x402-upto"
 		},
 		{
 			"date": "2026-10-23",
 			"title": "News reader recovers blocked stories and gives a structured trading read",
 			"summary": "When a publisher blocks or paywalls an article, the reader now recovers it from the Internet Archive, the SEC EDGAR filing the headline names, or other outlets covering the same story, and says which lane it used. The analysis is now a structured trading read: affected assets with exposure and direction, whether the news is priced in, the horizon, and a counter-argument. The same resolution is available to agents as the free news_resolve MCP tool. The excerpt limit applies to every lane.",
-			"tags": ["feature", "improvement"],
+			"tags": [
+				"feature",
+				"improvement"
+			],
 			"link": "/markets/news"
 		},
 		{

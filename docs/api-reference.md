@@ -4231,6 +4231,19 @@ Quote a launch, fund it from the agent wallet, confirm it in the approvals inbox
 
 Full flow, errors and configuration: [launch-intents.md](launch-intents.md).
 
+### Creator payouts
+
+Where an agent's creator-fee share is sent, and the record of every distribution.
+
+| Method and path | Auth | Purpose |
+| --- | --- | --- |
+| `GET /api/creator-payouts?info=1` | none | Stage cadences and the per-$100 flow. |
+| `GET /api/creator-payouts?agent=<id>` | owner session | Payout wallet, pending change, totals, held reasons, recent distributions. |
+| `GET /api/creator-payouts?agent=<id>&format=csv` | owner session | Every distribution as CSV. |
+| `POST /api/creator-payouts` | owner session | `challenge`, `register` (needs a step-up grant) or `cancel`. |
+
+Rules, hold reasons and configuration: [creator-payouts.md](creator-payouts.md).
+
 ### Whales
 
 Whale / large-buy detection across pump.fun — **facts only**: which wallets

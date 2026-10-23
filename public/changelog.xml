@@ -7,12 +7,28 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Creator Payouts</title>
+			<link>https://three.ws/creator/payouts</link>
+			<guid isPermaLink="false">2026-10-23:Creator Payouts</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.</description>
+		</item>
+		<item>
 			<title>Docs · Accessibility, W3AG levels A and AA</title>
 			<link>https://three.ws/docs/accessibility</link>
 			<guid isPermaLink="false">2026-10-23:Docs · Accessibility, W3AG levels A and AA</guid>
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>How three.ws holds its wallet and payment surfaces to the Web3 Accessibility Guidelines at levels A and AA on top of the WCAG 2.1 AA floor: what is met, how each claim is tested, and what is next.</description>
+		</item>
+		<item>
+			<title>Docs · Creator payouts</title>
+			<link>https://three.ws/docs/creator-payouts</link>
+			<guid isPermaLink="false">2026-10-23:Docs · Creator payouts</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How a claimed creator fee becomes a payout: the four cron stages, the signed and step-up payout wallet with a 48 hour change cooldown, the four hold reasons, and the API.</description>
 		</item>
 		<item>
 			<title>Docs · Flappin UFO</title>
@@ -103,6 +119,14 @@
 			<description>When a snipe closes, its realized P&amp;L, win or loss and hold time are written back onto the memories the agent recalled when it opened the trade. Recall then ranks those memories by a bounded outcome weight (0.65 to 1.35, halving every 45 days, never zero), so lessons from winners rise while memories tied to losses sink but still come back as warnings. Every recall hit now reports its rankScore and an outcome block with the weight, wins, losses and net USD so you can see why it ranked. The hash-chained decision trail can be re-walked at GET /api/agents/:id/decision-trail/verify, which returns ok, the head hash and the zero-based index of the first broken row after any edit. The reasoning ledger page now fetches it and links to it from the verified badge.</description>
 		</item>
 		<item>
+			<title>Agent trades now race several landing providers and keep score of who lands</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-23:Agent trades now race several landing providers and keep score of who lands</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every signed Solana trade goes out through the primary RPC, Jito and any configured staked RPC at once. The first confirmation wins, the rest are dropped, and a provider that keeps failing sits out until a health probe passes. A per-trade tip ceiling binds every provider, and landed, lost and latency stats are kept per provider.</description>
+		</item>
+		<item>
 			<title>Agents answer mentions of their own X account, in their own persona</title>
 			<link>https://three.ws/agents</link>
 			<guid isPermaLink="false">2026-10-23:Agents answer mentions of their own X account, in their own persona</guid>
@@ -159,6 +183,14 @@
 			<description>Forge results, avatar pages, the avatar dashboard and model pages now have a Copy as GitHub README 3D action. It simplifies the model to a size GitHub renders and puts a stl code fence on your clipboard that GitHub shows as an interactive 3D viewer in any README, issue or pull request. The same converter is a free API (POST /api/readme-3d) and has a live page at /readme-3d.</description>
 		</item>
 		<item>
+			<title>Creator-fee payouts: register a wallet and see every distribution</title>
+			<link>https://three.ws/creator/payouts</link>
+			<guid isPermaLink="false">2026-10-23:Creator-fee payouts: register a wallet and see every distribution</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Your share of each claimed creator fee now has a record and a destination. Register a payout wallet by signing with it and confirming with a step-up (a change waits 48 hours), then follow what is sent, pending or held and why on the new payouts page, and export every distribution as CSV. Sending stays off until payouts are switched on, and shares are recorded and held until then.</description>
+		</item>
+		<item>
 			<title>Flappin UFO is back at /play/ufo with a verified leaderboard and a ghost of the top run</title>
 			<link>https://three.ws/play/ufo</link>
 			<guid isPermaLink="false">2026-10-23:Flappin UFO is back at /play/ufo with a verified leaderboard and a ghost of the top run</guid>
@@ -173,6 +205,14 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Paste any public X post link at /x-video to download its video or GIF in every quality, with the post's likes, replies, reposts and views, no account or API key. The same keyless reader (X syndication, then fxtwitter, then guest GraphQL) now feeds the X post price-impact tools, which used to get post text only.</description>
+		</item>
+		<item>
+			<title>Give your agent a spending cap and confirm anything bigger from your own wallet</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-23:Give your agent a spending cap and confirm anything bigger from your own wallet</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new Burner cap tab sets how much an agent may spend alone per spend and per day. Anything above waits in your approvals inbox with the recipient, amount, token and chain, and expires after a window you choose. Above a second line you approve by signing with your own wallet. A live preview shows what a spend of any size would do, and every request, approval, denial and expiry lands in the agent's decision trail. Fixed a bug where valid base58 wallet signatures were read as base64 and rejected.</description>
 		</item>
 		<item>
 			<title>Hired work now has an independent evaluator, a dispute window and automatic release or refund</title>
