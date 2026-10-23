@@ -60,13 +60,12 @@ export function mapHostedArticle(raw) {
  * @returns {Promise<Array>}
  */
 export async function fetchHostedNews({ category, lang } = {}) {
-	const url = new URL(FAILOVER_NEWS_URL);
-	url.searchParams.set('limit', String(FAILOVER_LIMIT));
-	if (category && category !== 'all') url.searchParams.set('category', category);
-	if (lang && lang !== 'all') url.searchParams.set('lang', lang);
+	const params = new URLSearchParams({ limit: String(FAILOVER_LIMIT) });
+	if (category && category !== 'all') params.set('category', category);
+	if (lang && lang !== 'all') params.set('lang', lang);
 	const t0 = Date.now();
 	try {
-		const body = await fetchUpstreamJson(url.toString(), {}, {
+		const body = await fetchUpstreamJson(`${FAILOVER_NEWS_URL}?${params}`, {}, {
 			name: BREAKER_NAME,
 			timeoutMs: FAILOVER_TIMEOUT_MS,
 			attempts: 1,
