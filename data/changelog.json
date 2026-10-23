@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Market anomaly feed: scored price, TVL, depeg, funding and open interest alerts",
+			"summary": "A new scanner runs every 15 minutes over real market series (coin price, Solana TVL and stablecoin supply, stablecoin pegs, Hyperliquid funding and open interest) and records statistically scored anomalies with a medium, high or critical severity. Read them per call at /api/x402/market-anomalies ($0.001 USDC), or create a market_anomaly alert rule in alerts-mcp to be notified. Thin or flat series are skipped instead of guessed at.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/market-anomalies"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Start your agent from a persona template",
 			"summary": "The create wizard now opens with a gallery of 26 Solana finance personas: whale watching, wallet safety, yield, launch vetting, tax planning and more. Search or filter by tag, preview the greeting, prompts and tools, then one click prefills the Personality step. Everything stays editable and Undo restores what you had. Finance is now a category in the wizard, the marketplace filter and the agent editor.",
 			"tags": [
@@ -14,7 +23,9 @@
 			"date": "2026-10-23",
 			"title": "Owner-funded agent budgets enforced on-chain",
 			"summary": "Keep funds in your own wallet and sign one transaction that gives an agent a capped, expiring allowance through the Solana Subscriptions and Allowances program. The agent can pull only what is left, the spend guards refuse a pull the program would reject before any transaction is built, and the new Budget tab shows cap, spent, remaining and expiry with one-click revoke.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/agent-allowance-budgets"
 		},
 		{

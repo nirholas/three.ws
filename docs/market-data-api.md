@@ -1,6 +1,6 @@
 # Market Data API — pay-per-call crypto data over x402
 
-The same live market data behind every three.ws `/markets` page — coin prices, DeFi TVL, yields, stablecoins, gas, derivatives, exploits, and more — packaged as **17 paid endpoints agents can discover and buy autonomously**. No API key, no signup, no subscription: request an endpoint, receive an HTTP 402 challenge, pay a USDC micro-payment on Solana or Base, get the data.
+The same live market data behind every three.ws `/markets` page: coin prices, DeFi TVL, yields, stablecoins, gas, derivatives, exploits, and more: packaged as **18 paid endpoints agents can discover and buy autonomously**. No API key, no signup, no subscription: request an endpoint, receive an HTTP 402 challenge, pay a USDC micro-payment on Solana or Base, get the data.
 
 - **Free index (start here):** [`GET /api/x402/market`](https://three.ws/api/x402/market): lists every paid `market-*` endpoint with its live price, params, and a runnable example, including the `market-heatmap` and `market-mood` siblings below
 - **Discovery:** every endpoint is listed in [`/.well-known/x402.json`](https://three.ws/.well-known/x402.json), so x402scan, agentic.market, and CDP Bazaar crawlers index it automatically
@@ -31,13 +31,14 @@ The browser pages (`/coins`, `/yields`, `/gas`, …) stay free for humans, with 
 | `GET /api/x402/market-fees` | $0.001 | Protocol fees (`?type=fees`, the default) or revenue (`?type=revenue`) rankings; any other `type` is a 422 |
 | `GET /api/x402/market-dex-volumes` | $0.001 | Top 100 DEXs by 24h volume with market share |
 | `GET /api/x402/market-hacks` | $0.001 | Full DeFi exploit database, searchable, with loss stats |
+| `GET /api/x402/market-anomalies` | $0.001 | Scored anomalies from our own scanner (price shocks, Solana TVL and stablecoin supply, depegs, funding, open interest); filter by `processor`, `severity`, `subject`, `hours`, `limit`. See [market-anomalies.md](./market-anomalies.md) |
 | `GET /api/x402/market-pulse` | $0.005 | **The bundle**: global + Fear & Greed + top-10 coins + trending + gas + DeFi TVL + stablecoins + DEX volume + fees in one call |
 
 Full per-endpoint parameter docs are in the free index (`/api/x402/market`) and in each endpoint's discovery listing.
 
 ## The datapoint fabric — 1,000,000+ standalone endpoints
 
-Beyond the 17 category endpoints, **every individual datapoint is its own paid endpoint**: one URL, one value, one micro-payment. The fabric at `/api/x402/d/<family>/<id>/<metric>` makes every (family, id, metric) triple individually addressable: ~17,000 coins × 20 metrics, ~15,000 yield pools × 7, ~6,000 protocols × 6, **per-contract token market + security for any Solana mint or EVM address** (10 + 6 metrics, unbounded), plus chains, stablecoins, exchanges, categories, DEXs, fees/revenue, derivative venues, and the no-id global/gas/fear-greed families. The free catalog reports the live total as `endpoint_count_approx` (1,126,963 across 15 families at the time of writing); that field is the source of truth, not this paragraph. **$0.0005 USDC per datapoint** (override per family with `X402_PRICE_DATAPOINT_<FAMILY>`).
+Beyond the 18 category endpoints, **every individual datapoint is its own paid endpoint**: one URL, one value, one micro-payment. The fabric at `/api/x402/d/<family>/<id>/<metric>` makes every (family, id, metric) triple individually addressable: ~17,000 coins × 20 metrics, ~15,000 yield pools × 7, ~6,000 protocols × 6, **per-contract token market + security for any Solana mint or EVM address** (10 + 6 metrics, unbounded), plus chains, stablecoins, exchanges, categories, DEXs, fees/revenue, derivative venues, and the no-id global/gas/fear-greed families. The free catalog reports the live total as `endpoint_count_approx` (1,126,963 across 15 families at the time of writing); that field is the source of truth, not this paragraph. **$0.0005 USDC per datapoint** (override per family with `X402_PRICE_DATAPOINT_<FAMILY>`).
 
 ```bash
 # Free catalog: families, metrics, prices, live endpoint count

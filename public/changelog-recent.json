@@ -1,20 +1,60 @@
 {
-	"generated_at": "2026-10-23T22:06:07.297Z",
+	"generated_at": "2026-10-23T22:15:38.567Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4134,
+	"total": 4141,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
 		{
 			"date": "2026-10-23",
 			"type": "launch",
+			"title": "Docs · Accessibility, W3AG levels A and AA",
+			"summary": "How three.ws holds its wallet and payment surfaces to the Web3 Accessibility Guidelines at levels A and AA on top of the WCAG 2.1 AA floor: what is met, how each claim is tested, and what is next.",
+			"link": "/docs/accessibility",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
 			"title": "Docs · Flappin UFO",
 			"summary": "How Flappin UFO runs are recorded, replayed and verified on the server, how the leaderboard ranks players, and how the ghost of the top run works.",
 			"link": "/docs/play-ufo",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Docs · MCP registry sentinel, daily gap report",
+			"summary": "The daily cron that diffs every MCP server three.ws ships against the official registry and npm, and raises one ops alert when the set of gaps changes. What it reads and what it reports.",
+			"link": "/docs/mcp-registry-sentinel",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Docs · Owner-Funded Agent Budgets",
+			"summary": "Keep funds in your own wallet and give an agent a capped, expiring allowance enforced by the Solana Subscriptions and Allowances program. How the budget is created, pulled, guarded and revoked, and how to prove it on devnet.",
+			"link": "/docs/agent-allowance-budgets",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Docs · X post reader and free video tool",
+			"summary": "One keyless reader for public X posts, shared by the price-impact tools and the free X video page: how it fetches, what it returns and where it is used.",
+			"link": "/docs/x-video",
 			"tags": [
 				"launch"
 			]
@@ -185,6 +225,16 @@
 		{
 			"date": "2026-10-23",
 			"type": "update",
+			"title": "Market anomaly feed: scored price, TVL, depeg, funding and open interest alerts",
+			"summary": "A new scanner runs every 15 minutes over real market series (coin price, Solana TVL and stablecoin supply, stablecoin pegs, Hyperliquid funding and open interest) and records statistically scored anomalies with a medium, high or critical severity. Read them per call at /api/x402/market-anomalies ($0.001 USDC), or create a market_anomaly alert rule in alerts-mcp to be notified. Thin or flat series are skipped instead of guessed at.",
+			"link": "/docs/market-anomalies",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
 			"title": "Onchain viewer reads multi-part memo inscriptions",
 			"summary": "Paste any transaction of a first/1, firsts/1 or SPL404 inscription into /onchain and it collects the other parts, checks each part and the whole SHA-256, names missing parts, and shows the file. Images render from verified bytes; SVG and HTML are shown as text and never executed. The Solana Memo Media MCP gains a read_inscription tool that does the same.",
 			"link": "/onchain",
@@ -210,6 +260,16 @@
 			"link": "/docs/oracle",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Owner-funded agent budgets enforced on-chain",
+			"summary": "Keep funds in your own wallet and sign one transaction that gives an agent a capped, expiring allowance through the Solana Subscriptions and Allowances program. The agent can pull only what is left, the spend guards refuse a pull the program would reject before any transaction is built, and the new Budget tab shows cap, spent, remaining and expiry with one-click revoke.",
+			"link": "/docs/agent-allowance-budgets",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -258,6 +318,16 @@
 			"title": "Splat Viewer: Spark 2.3 level of detail, saved camera hotspots, video export, and image to splat",
 			"summary": "The Splat Viewer now builds a level-of-detail tree for large scenes, lets you save up to 25 camera views as hotspots, play them as a camera path and export it as a video in the browser. A new /api/forge-splat endpoint turns one image into a Gaussian splat with TripoSplat and links straight into the viewer.",
 			"link": "/splat",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Start your agent from a persona template",
+			"summary": "The create wizard now opens with a gallery of 26 Solana finance personas: whale watching, wallet safety, yield, launch vetting, tax planning and more. Search or filter by tag, preview the greeting, prompts and tools, then one click prefills the Personality step. Everything stays editable and Undo restores what you had. Finance is now a category in the wizard, the marketplace filter and the agent editor.",
+			"link": "/create-agent",
 			"tags": [
 				"feature"
 			]
@@ -1488,79 +1558,6 @@
 			"title": "The homepage is now the Field: one live map of every agent, launch and wallet move",
 			"summary": "The front page no longer opens a web desktop. It opens the Field, a zoomable map of the whole platform built from live data. Every public agent is a star in the core, newest at the centre, and turns into its avatar as you zoom in; around it sit ten districts (Create, Forge, Gallery, Launchpad, Trenches, Pulse, Marketplace, Chat, Agent Studio, Console). From afar each shows one live readout; zoom in and it opens into a card with real content: the newest avatars, coins agents launched, the $THREE price, market cap, holders and contract address, the latest agent wallet moves, the skills agents carry most. New wallet moves from Pulse fly across the map as comets and land in their district. Search finds any place, agent or page; opening one loads the real page in place, with its own shareable /?go= link, and Back or Esc returns you to the map. It works with mouse, touch, pinch and keyboard, in light and dark, and lays itself out for phones. The windowed desktop is still at /?view=desktop and the 3D campus at /?world=1.",
 			"link": "/",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "The on-chain leak alarm now scans smarter instead of scanning everything",
-			"summary": "The background monitor that watches every platform-controlled Solana wallet for a leak now checks the handful of wallets that hold real balances every run, any wallet the platform's own payment ledger shows just moved money, and the rest of the registry in a rotation, instead of walking the full wallet list on every single pass. That cuts the monitor's own Solana RPC usage sharply, which means faster balance reads and snappier agent pages across the platform, and it no longer runs two overlapping schedules at once. A wallet-identity bug found along the way is fixed too: on-chain transactions were being matched by the wrong field shape, which silently kept both the leak detector and its fee-accounting cross-check from recording anything real. Both now work correctly.",
-			"link": null,
-			"tags": [
-				"infra",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "The prompt director works again, found by its own run receipts",
-			"summary": "The first receipts showed the director's brief falling back on every Studio run. The replies were arriving in 5 to 10 seconds but ran past the 1000-character prompt cap or ended on the closing constraint the director is told to end on, and both were discarded as clipped. The director now writes to a word budget the models actually follow, the guard accepts the mandated ending, both forge clients share one guard, and a receipt now names the exact reason a brief fell back (too long with its length, unfinished, no reply) instead of a generic timeout. Receipts also stop saying every stage met when a stage was skipped.",
-			"link": "/runs",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "The terminal 3D renderer animates live in every HTTP client",
-			"summary": "curl three.ws/tty streams an animated 3D character into your terminal frame by frame. Clients that ask for compressed responses, such as curl --compressed, scripts using fetch, and most HTTP libraries, used to get nothing for about ten seconds and then the whole animation at once. Live streams are no longer compressed, so every client sees the character move from the first frame. Streaming agent and chat responses get the same fix.",
-			"link": "/tty",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "The web desktop gets Snap layouts, taskbar peek and three shell styles: Fluent, Aqua and Classic",
-			"summary": "Hover a window's maximize button (or press Alt+Z) to tile it into one of six layouts, then let Snap assist fill the empty zones with your other windows. Corners snap to quarters, Ctrl+Alt+Arrows snap from the keyboard, minimize flies the window into its taskbar button, and hovering a running app shows its window card with Aero Peek. Settings, Personalization, Style switches the whole shell to Aqua (menu bar, magnifying dock, traffic lights) or Classic (bevelled 9x chrome with a labelled taskbar).",
-			"link": "/?view=desktop",
-			"tags": [
-				"feature",
-				"desktop"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "The web desktop is now a real OS: a file system and eleven apps that run in your browser",
-			"summary": "The desktop gains a persistent virtual file system (Home with Desktop, Documents, Pictures, Music, Videos and Downloads, a Recycle Bin, quota readout) and eleven native apps built on it: Files with list, detail and tile views and drag-free cut, copy, paste and rename; Notepad with tabs and autosave; Photos; Calculator with standard, scientific, programmer and unit-converter modes; Clock with world clocks, alarms, timer and stopwatch; Weather from live Open-Meteo forecasts for your location or any city; Camera that takes real photos and videos into Pictures and Videos; Paint with layers of tools, undo and export; Terminal with a real command set that opens apps and switches theme; Task Manager with live memory, frame rate and per-window usage; and a Media Player with playlists. Everything is stored in your browser and nothing is faked: metrics a browser cannot report say so.",
-			"link": "/?view=desktop",
-			"tags": [
-				"feature",
-				"desktop"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "three.ws is now a desktop",
-			"summary": "The homepage is a web desktop with a taskbar, Start menu, widgets and draggable, snappable windows that open every part of the platform, in the CTRL Windows-style Mica theme. The original homepage is kept as the classic view at /classic, one click from the taskbar.",
-			"link": "/docs/desktop",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Trenches Pulse: live launch and smart-money intelligence",
-			"summary": "A new Trenches page shows what is happening on Solana and Robinhood Chain right now: new launches and graduations as they happen, the hottest tokens by trade flow, and scored smart-money wallets. Every number comes from a live on-chain feed, and if the data service is unreachable the page says so instead of showing made-up figures.",
-			"link": "/trenches",
 			"tags": [
 				"feature"
 			]

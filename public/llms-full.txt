@@ -4528,6 +4528,24 @@ URL: https://three.ws/docs/irl
 
 Take an agent off the screen and pin it at a real GPS coordinate: on your table, at a park bench, outside a venue. Anyone who physically walks up can see it, talk to it, and pay it.
 
+### Docs · Accessibility, W3AG levels A and AA
+
+URL: https://three.ws/docs/accessibility
+
+How three.ws holds its wallet and payment surfaces to the Web3 Accessibility Guidelines at levels A and AA on top of the WCAG 2.1 AA floor: what is met, how each claim is tested, and what is next.
+
+### Docs · MCP registry sentinel, daily gap report
+
+URL: https://three.ws/docs/mcp-registry-sentinel
+
+The daily cron that diffs every MCP server three.ws ships against the official registry and npm, and raises one ops alert when the set of gaps changes. What it reads and what it reports.
+
+### Docs · X post reader and free video tool
+
+URL: https://three.ws/docs/x-video
+
+One keyless reader for public X posts, shared by the price-impact tools and the free X video page: how it fetches, what it returns and where it is used.
+
 ### Docs · Doc freshness, keeping docs true to the code
 
 URL: https://three.ws/docs/doc-freshness
@@ -4839,6 +4857,12 @@ Upgrading to a paid tier is a single on-chain payment on Solana: no card and no 
 URL: https://three.ws/docs/market-data-api
 
 The same live market data behind every three.ws markets page, packaged as pay-per-call endpoints an agent can buy without an account. Endpoint list, response shapes, and per-call pricing.
+
+### Docs · Market anomaly feed
+
+URL: https://three.ws/docs/market-anomalies
+
+How the scanner scores real price, TVL, stablecoin, funding and open interest series with modified z-score, EWMA and rate-of-change detectors, how to read events through the paid endpoint, and how to alert on them.
 
 ### Docs · Oracle, the conviction engine
 
@@ -5529,6 +5553,12 @@ Point your agent at a real Home Assistant and it runs your actual house: lights,
 URL: https://three.ws/docs/pocket
 
 How the /pocket handheld works: the D-pad and gamepad controls, the three cartridges, the URL params that make a share link, and the one iframe that puts a live 3D agent console on any site.
+
+### Docs · Owner-Funded Agent Budgets
+
+URL: https://three.ws/docs/agent-allowance-budgets
+
+Keep funds in your own wallet and give an agent a capped, expiring allowance enforced by the Solana Subscriptions and Allowances program. How the budget is created, pulled, guarded and revoked, and how to prove it on devnet.
 
 ### Awesome 3D Agents
 

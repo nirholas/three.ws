@@ -6263,6 +6263,13 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/market-anomalies",
+					"title": "Docs · Market anomaly feed",
+					"description": "How the scanner scores real price, TVL, stablecoin, funding and open interest series with modified z-score, EWMA and rate-of-change detectors, how to read events through the paid endpoint, and how to alert on them.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/oracle",
 					"title": "Docs · Oracle, the conviction engine",
 					"description": "The complete story of Oracle: why it was built, how the scoring model works, the exact maths, the agent action loop, every platform feature that runs on it, and the paid integration other agents can call.",

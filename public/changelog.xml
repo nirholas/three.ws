@@ -7,12 +7,44 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Accessibility, W3AG levels A and AA</title>
+			<link>https://three.ws/docs/accessibility</link>
+			<guid isPermaLink="false">2026-10-23:Docs · Accessibility, W3AG levels A and AA</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How three.ws holds its wallet and payment surfaces to the Web3 Accessibility Guidelines at levels A and AA on top of the WCAG 2.1 AA floor: what is met, how each claim is tested, and what is next.</description>
+		</item>
+		<item>
 			<title>Docs · Flappin UFO</title>
 			<link>https://three.ws/docs/play-ufo</link>
 			<guid isPermaLink="false">2026-10-23:Docs · Flappin UFO</guid>
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>How Flappin UFO runs are recorded, replayed and verified on the server, how the leaderboard ranks players, and how the ghost of the top run works.</description>
+		</item>
+		<item>
+			<title>Docs · MCP registry sentinel, daily gap report</title>
+			<link>https://three.ws/docs/mcp-registry-sentinel</link>
+			<guid isPermaLink="false">2026-10-23:Docs · MCP registry sentinel, daily gap report</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The daily cron that diffs every MCP server three.ws ships against the official registry and npm, and raises one ops alert when the set of gaps changes. What it reads and what it reports.</description>
+		</item>
+		<item>
+			<title>Docs · Owner-Funded Agent Budgets</title>
+			<link>https://three.ws/docs/agent-allowance-budgets</link>
+			<guid isPermaLink="false">2026-10-23:Docs · Owner-Funded Agent Budgets</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Keep funds in your own wallet and give an agent a capped, expiring allowance enforced by the Solana Subscriptions and Allowances program. How the budget is created, pulled, guarded and revoked, and how to prove it on devnet.</description>
+		</item>
+		<item>
+			<title>Docs · X post reader and free video tool</title>
+			<link>https://three.ws/docs/x-video</link>
+			<guid isPermaLink="false">2026-10-23:Docs · X post reader and free video tool</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>One keyless reader for public X posts, shared by the price-impact tools and the free X video page: how it fetches, what it returns and where it is used.</description>
 		</item>
 		<item>
 			<title>install.md</title>
@@ -143,6 +175,14 @@
 			<description>llms.txt now links each curated doc as /docs/&lt;slug&gt;.md, the text/markdown twin an agent can read directly. llms-full.txt carries the full text of those docs (capped at 40 KB each, with a link to the rest) after the page index. A new /install.md, generated from the MCP directory, gives one place for the setup command, per-client settings and every hosted endpoint.</description>
 		</item>
 		<item>
+			<title>Market anomaly feed: scored price, TVL, depeg, funding and open interest alerts</title>
+			<link>https://three.ws/docs/market-anomalies</link>
+			<guid isPermaLink="false">2026-10-23:Market anomaly feed: scored price, TVL, depeg, funding and open interest alerts</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new scanner runs every 15 minutes over real market series (coin price, Solana TVL and stablecoin supply, stablecoin pegs, Hyperliquid funding and open interest) and records statistically scored anomalies with a medium, high or critical severity. Read them per call at /api/x402/market-anomalies ($0.001 USDC), or create a market_anomaly alert rule in alerts-mcp to be notified. Thin or flat series are skipped instead of guessed at.</description>
+		</item>
+		<item>
 			<title>Onchain viewer reads multi-part memo inscriptions</title>
 			<link>https://three.ws/onchain</link>
 			<guid isPermaLink="false">2026-10-23:Onchain viewer reads multi-part memo inscriptions</guid>
@@ -165,6 +205,14 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The cold-start wallet prior behind Oracle's pedigree pillar is loaded from the daily-seeded wallet_reputation table instead of a committed June snapshot, so it tracks the current gmgn.ai rankings. It is cached in-process with a bounded refresh, keeps the last good rows if the database blips, and serves an empty prior (and logs it) rather than inventing wallets.</description>
+		</item>
+		<item>
+			<title>Owner-funded agent budgets enforced on-chain</title>
+			<link>https://three.ws/docs/agent-allowance-budgets</link>
+			<guid isPermaLink="false">2026-10-23:Owner-funded agent budgets enforced on-chain</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Keep funds in your own wallet and sign one transaction that gives an agent a capped, expiring allowance through the Solana Subscriptions and Allowances program. The agent can pull only what is left, the spend guards refuse a pull the program would reject before any transaction is built, and the new Budget tab shows cap, spent, remaining and expiry with one-click revoke.</description>
 		</item>
 		<item>
 			<title>Prepaid credit plans and free trials for paid MCP tools</title>
@@ -205,6 +253,14 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The Splat Viewer now builds a level-of-detail tree for large scenes, lets you save up to 25 camera views as hotspots, play them as a camera path and export it as a video in the browser. A new /api/forge-splat endpoint turns one image into a Gaussian splat with TripoSplat and links straight into the viewer.</description>
+		</item>
+		<item>
+			<title>Start your agent from a persona template</title>
+			<link>https://three.ws/create-agent</link>
+			<guid isPermaLink="false">2026-10-23:Start your agent from a persona template</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The create wizard now opens with a gallery of 26 Solana finance personas: whale watching, wallet safety, yield, launch vetting, tax planning and more. Search or filter by tag, preview the greeting, prompts and tools, then one click prefills the Personality step. Everything stays editable and Undo restores what you had. Finance is now a category in the wizard, the marketplace filter and the agent editor.</description>
 		</item>
 		<item>
 			<title>three-ws pay: settle x402 and MPP challenges from the terminal with a key you hold</title>
