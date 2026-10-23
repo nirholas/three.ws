@@ -68,7 +68,7 @@
 		"bn.js": "^5.2.5",
 		"bs58": "^6.0.0",
 		"playwright": "^1.63.0",
-		"ws": "^8.21.0",
+		"ws": "^8.22.0",
 		"zod": "^3.23.8"
 	},
 	"optionalDependencies": {
@@ -77,5 +77,15 @@
 	},
 	"devDependencies": {
 		"vitest": "^5.0.1"
+	},
+	"overrides": {
+		"ws@^8": "^8.22.0",
+		"adm-zip@~0.4": "~0.6.1",
+		"cookie@~0.4": "^0.7.2",
+		"serialize-javascript@^6": "^7.0.5",
+		"tmp@~0.0": "^0.2.7",
+		"toml@^3": "^5.0.1",
+		"undici@^5": "^6.29.0",
+		"uuid@^8": "^11.1.1"
 	}
 }

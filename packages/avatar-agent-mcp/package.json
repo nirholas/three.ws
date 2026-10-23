@@ -75,5 +75,9 @@
 		"gltf-validator": "^2.0.0-dev.3.10",
 		"meshoptimizer": "^1.2.0",
 		"zod": "^3.23.8"
+	},
+	"overrides": {
+		"toml@^3": "^5.0.1",
+		"uuid@^8": "^11.1.1"
 	}
 }
