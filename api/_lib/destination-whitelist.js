@@ -242,6 +242,13 @@ export function buildOp(kind, agentId, body = {}) {
 				cs: 'cooldown_seconds' in body ? Number(body.cooldown_seconds) : undefined,
 				en: 'enforced' in body ? body.enforced === true : undefined,
 			};
+		case 'payout_wallet': {
+			// Creator-fee payout destination (api/_lib/creator-payouts.js): the grant is
+			// bound to this agent and this exact wallet.
+			const norm = normalizeDestination(body.wallet);
+			if (!norm || norm.chain !== 'solana') throw new WhitelistError(400, 'invalid_address', 'That is not a valid Solana address.');
+			return { t: 'payout_wallet', a: agentId, w: norm.key };
+		}
 		case 'set_list': {
 			const list = Array.isArray(body.withdraw_allowlist) ? body.withdraw_allowlist : [];
 			const keys = list.map((x) => {
@@ -353,7 +360,7 @@ export async function mintStepUp({ actor, agentId, op, method, proof = {} }) {
 }
 
 /** Spend a grant. One use, this session, this user, this agent, this exact operation. */
-async function consumeGrant({ grantId, actor, agentId, op }) {
+export async function consumeGrant({ grantId, actor, agentId, op }) {
 	const opHash = hashOp(op);
 	if (typeof grantId === 'string' && /^[0-9a-f-]{36}$/i.test(grantId) && actor?.sessionId) {
 		const [row] = await sql`
