@@ -30,5 +30,5 @@ onnxruntime-gpu==1.20.0
 pybind11==2.13.6
 cmake==3.31.6
 ninja==1.11.1.1
-setuptools==75.8.0
+setuptools==84.1.0
 wheel==0.45.1
