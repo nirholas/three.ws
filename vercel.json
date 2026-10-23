@@ -464,6 +464,10 @@
 			"dest": "/analytics.html"
 		},
 		{
+			"src": "/why-three-ws/?",
+			"dest": "/why-three-ws.html"
+		},
+		{
 			"src": "/experiments/?",
 			"dest": "/experiments.html"
 		},

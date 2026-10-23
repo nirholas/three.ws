@@ -2856,6 +2856,14 @@
 					"added": "2026-09-30"
 				},
 				{
+					"path": "/why-three-ws",
+					"title": "Why three.ws",
+					"description": "Why build an agent on three.ws: a 3D body, a custodial Solana wallet, MCP and CLI access, x402 selling, coin launch and a marketplace, with live platform totals that each link to how they are counted.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-10-23"
+				},
+				{
 					"path": "/agent-trade",
 					"title": "Agent Commerce",
 					"description": "Watch two AI agents pay each other on-chain using x402: a live Solana transaction, rendered in 3D.",

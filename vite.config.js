@@ -937,6 +937,7 @@ const appConfig = {
 				'agent-economy': resolve(__dirname, 'pages/agent-economy.html'),
 				'agent-economy-volume': resolve(__dirname, 'pages/agent-economy-volume.html'),
 				analytics: resolve(__dirname, 'pages/analytics.html'),
+				'why-three-ws': resolve(__dirname, 'pages/why-three-ws.html'),
 				experiments: resolve(__dirname, 'pages/experiments.html'),
 				economy: resolve(__dirname, 'pages/economy.html'),
 				'overlay-control': resolve(__dirname, 'pages/overlay-control.html'),

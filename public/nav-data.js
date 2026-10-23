@@ -401,6 +401,12 @@ export const NAV_GROUPS = [
 						desc: 'Every platform total on one page with a daily growth chart and a note on how each number is counted',
 					},
 					{
+						title: 'Why three.ws',
+						href: '/why-three-ws',
+						tier: 'advanced',
+						desc: 'What a builder gets, the build-earn-reinvest loop, and live platform proof you can check at the source',
+					},
+					{
 						title: 'Agent Economy Volume',
 						href: '/agent-economy-volume',
 						badge: 'Live',
