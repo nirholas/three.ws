@@ -47,6 +47,8 @@ import {
 } from '@solana/web3.js';
 import { pollConfirmation } from './solana/confirm.js';
 import { fetchUpstream } from './upstream-fetch.js';
+import { resolveLandingProviders } from './landing-providers.js';
+import { getLandingStats, raceLanes, rpcLane, rpcProbe } from './landing-race.js';
 
 import { tipAccountAt } from '../../packages/avatar-agent-mcp/src/lib/jito-tip-accounts.js';
 
@@ -306,13 +308,32 @@ async function fetchJitoTipFloorLamports() {
 
 // Resolve the tip for this attempt: max(mode floor, live tip-floor) scaled by the
 // mode multiplier and the attempt index, hard-capped by the mode ceiling.
-function resolveTipLamports(tipMode, tipFloorLamports, attempt) {
+function resolveTipLamports(tipMode, tipFloorLamports, attempt, maxTipLamports = null) {
 	const profile = TIP_PROFILE[tipMode];
 	if (!profile) return 0n;
 	const base = tipFloorLamports != null && tipFloorLamports > profile.floor ? tipFloorLamports : profile.floor;
 	// Escalate with both the mode multiplier and the retry index (attempt 0 = base).
 	const scaled = BigInt(Math.ceil(Number(base) * profile.multiplier * (1 + attempt * 0.5)));
-	return clampBig(scaled, profile.floor, profile.ceiling);
+	const tip = clampBig(scaled, profile.floor, profile.ceiling);
+	return maxTipLamports != null && tip > maxTipLamports ? maxTipLamports : tip;
+}
+
+// The smallest tip Jito's block engine accepts on a bundle. A per-trade tip
+// ceiling below it means the trade cannot ride a tipped lane at all.
+const MIN_BUNDLE_TIP_LAMPORTS = 1_000n;
+
+// The per-trade tip ceiling, honored by every tip-bearing provider because the tip
+// is one instruction inside the one signed tx. opts.maxTipLamports wins, then the
+// LANDING_MAX_TIP_LAMPORTS env default; null means only the mode ceiling applies.
+function resolveMaxTip(opts) {
+	const raw = opts.maxTipLamports ?? process.env.LANDING_MAX_TIP_LAMPORTS;
+	if (raw == null || raw === '') return null;
+	try {
+		const v = BigInt(raw);
+		return v >= 0n ? v : null;
+	} catch {
+		return null;
+	}
 }
 
 // Submit a signed v0 tx as a single-tx Jito bundle and poll for a real landing.
@@ -456,9 +477,30 @@ export async function submitProtected({ network, connection, payer, instructions
 	const canJito = jitoEligible(network, tipMode);
 	const tipFloor = canJito ? await fetchJitoTipFloorLamports() : null;
 
+	// Landing providers: who this trade is raced through, ordered by recent success.
+	// A provider on a failure streak sits out until a health probe passes; the probe
+	// runs off the hot path, so skipping costs the trade nothing.
+	const stats = getLandingStats(network);
+	await stats.hydrate();
+	const maxTip = resolveMaxTip(opts);
+	const optionalProviders = resolveLandingProviders(network).filter((p) => p.enabled && p.kind !== 'primary');
+	const probeIfDue = (p) => {
+		if (!stats.probeDue(p.name)) return;
+		const fn = p.kind === 'bundle' ? () => jitoRpc('getTipAccounts', []) : rpcProbe(p.endpoint);
+		void stats.probe(p.name, fn).then(() => stats.flush());
+	};
+	for (const p of optionalProviders) if (stats.isSkipped(p.name)) probeIfDue(p);
+	const jitoSkipped = canJito && stats.isSkipped('jito');
+	const rpcProviders = optionalProviders.filter((p) => p.kind === 'rpc' && !stats.isSkipped(p.name));
+	// A tip-bearing rpc provider (sender) only joins when this trade carries its tip.
+	const senderProvider = rpcProviders.find((p) => p.tip.rule === 'sender' && p.tip.account);
+	const plainRpcProviders = rpcProviders.filter((p) => p.tip.rule === 'none');
+
 	let attempts = 0;
 	let lastErr = null;
-	let fallbackReason = canJito ? null : (network === 'devnet' ? 'devnet_no_jito' : (tipMode === 'off' ? 'tip_mode_off' : null));
+	let fallbackReason = canJito
+		? (jitoSkipped ? 'jito_failure_streak' : null)
+		: (network === 'devnet' ? 'devnet_no_jito' : (tipMode === 'off' ? 'tip_mode_off' : null));
 
 	for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
 		attempts = attempt + 1;
@@ -478,41 +520,66 @@ export async function submitProtected({ network, connection, payer, instructions
 		// Decide whether THIS attempt rides the Jito bundle. The first attempt(s) try
 		// Jito; a bundle that doesn't land falls the NEXT attempt back to protected.
 		const tryJito = canJito && fallbackReason == null;
+		// Tip target for this attempt: the Jito bundle tip, else the sender tip when
+		// that provider is enabled and the mode asks for one. One tip per tx.
+		const trySender = !tryJito && !!senderProvider && tipMode !== 'off';
 		let tipLamports = 0n;
+		let tipAccount = null;
 		const budgetIxs = [
 			ComputeBudgetProgram.setComputeUnitLimit({ units: cuLimit }),
 			ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFeeMicroLamports }),
 		];
 		const txIxs = [...budgetIxs, ...userIxs];
 
-		if (tryJito) {
-			tipLamports = resolveTipLamports(tipMode, tipFloor, attempt);
+		if (tryJito || trySender) {
+			tipLamports = tryJito
+				? resolveTipLamports(tipMode, tipFloor, attempt, maxTip)
+				: resolveTipLamports(tipMode, 0n, 0, maxTip);
+			if (tipLamports < MIN_BUNDLE_TIP_LAMPORTS) {
+				// The per-trade ceiling leaves no room for a tip any provider accepts:
+				// ride the plain lanes untipped rather than overspend.
+				tipLamports = 0n;
+				if (tryJito) {
+					fallbackReason = 'tip_over_budget';
+					attempt--;
+					continue;
+				}
+			}
+		}
+		if ((tryJito || trySender) && tipLamports > 0n) {
+			const route = tryJito ? (tipMode === 'turbo' ? 'jito_turbo' : 'jito_economy') : 'helius_sender';
 			// Spend-guard the tip BEFORE it's appended. The hook counts it against the
 			// daily budget + kill switch; a veto drops us to the protected route with no
 			// tip ever leaving the wallet.
 			let tipVetoed = false;
 			if (typeof opts.onTip === 'function') {
 				try {
-					await opts.onTip(tipLamports, tipMode === 'turbo' ? 'jito_turbo' : 'jito_economy');
+					await opts.onTip(tipLamports, route);
 				} catch (e) {
 					tipVetoed = true;
 					fallbackReason = e?.code === 'spend_guard' ? 'tip_spend_guarded' : 'tip_vetoed';
+					tipLamports = 0n;
 				}
 			}
 			if (tipVetoed) {
-				// Re-loop on the same attempt index via protected route (don't consume a
-				// retry just to drop the tip).
-				attempt--;
-				continue;
+				if (tryJito) {
+					// Re-loop on the same attempt index via protected route (don't consume a
+					// retry just to drop the tip).
+					attempt--;
+					continue;
+				}
+			} else {
+				tipAccount = tryJito ? pickTipAccount(attempt) : senderProvider.tip.account;
+				txIxs.push(
+					SystemProgram.transfer({
+						fromPubkey: payer.publicKey,
+						toPubkey: new PublicKey(tipAccount),
+						lamports: tipLamports,
+					}),
+				);
 			}
-			txIxs.push(
-				SystemProgram.transfer({
-					fromPubkey: payer.publicKey,
-					toPubkey: new PublicKey(pickTipAccount(attempt)),
-					lamports: tipLamports,
-				}),
-			);
 		}
+		const senderLaneOn = trySender && tipAccount != null;
 
 		// Build, sign.
 		let blockhashCtx;
@@ -532,70 +599,61 @@ export async function submitProtected({ network, connection, payer, instructions
 		const signature = bs58Sig(tx);
 
 		try {
-			if (tryJito) {
-				// Race BOTH lanes with the SAME signed tx. Solana dedupes by signature,
-				// so at most one landing exists and the tip spend is identical to the
-				// old serial flow (the protected re-send always carried the tip too).
-				// What changes is latency: the public broadcast no longer waits out the
-				// bundle poll window, which was costing the sniper ~12s of prime launch
-				// time per attempt on a lane that lands a small minority of the time.
-				const jitoTagged = sendJitoBundle(tx, signature, connection)
-					.then((r) => ({ lane: 'jito', r }))
-					.catch((e) => {
-						// Jito unreachable / rejected: record honestly. We do NOT claim a
-						// landing — the protected lane is already racing the same tx.
-						fallbackReason = `jito_unavailable:${e?.code || 'error'}`;
-						return { lane: 'jito', r: null };
-					});
-				const protTagged = sendProtected(tx, signature, connection, blockhashCtx, confirmTimeoutMs)
-					.then((r) => ({ lane: 'protected', r }))
-					.catch((e) => {
-						lastErr = e;
-						return { lane: 'protected', r: null, err: e };
-					});
-
-				// First landing wins; if the first lane to settle didn't land, wait for
-				// the other before giving up the attempt.
-				let outcome = await Promise.race([jitoTagged, protTagged]);
-				if (!outcome.r?.landed) {
-					outcome = await (outcome.lane === 'jito' ? protTagged : jitoTagged);
-				}
-				if (outcome.r?.landed) {
-					return {
-						signature,
-						slot: outcome.r.slot,
-						// Route label reflects the lane that actually reported the landing.
-						route: outcome.lane === 'jito' ? (tipMode === 'turbo' ? 'jito_turbo' : 'jito_economy') : 'protected',
-						tipLamports: Number(tipLamports),
-						priorityFeeMicroLamports,
-						attempts,
-						landedMs: Date.now() - t0,
-						fallbackReason: outcome.lane === 'jito' ? null : (fallbackReason || 'jito_not_landed'),
-					};
-				}
-				// Neither lane landed. A hard on-chain revert is terminal: the same
-				// instructions would revert again on every retry.
-				const protSettled = await protTagged;
-				if (protSettled.err?.code === 'TX_ERR') throw protSettled.err;
-				if (fallbackReason == null) fallbackReason = 'jito_not_landed';
-				// Retry with a fresh blockhash + higher fee/tip.
-				continue;
+			const lanes = [
+				{ name: 'rpc', run: () => sendProtected(tx, signature, connection, blockhashCtx, confirmTimeoutMs) },
+			];
+			if (tryJito && tipAccount) {
+				lanes.push({
+					name: 'jito',
+					run: () =>
+						sendJitoBundle(tx, signature, connection).catch((e) => {
+							// Jito unreachable / rejected: recorded honestly. We do NOT claim a
+							// landing; the other lanes are racing the same tx.
+							fallbackReason = `jito_unavailable:${e?.code || 'error'}`;
+							throw e;
+						}),
+				});
 			}
+			const rawTx = tx.serialize();
+			for (const p of plainRpcProviders) {
+				lanes.push(rpcLane({ name: p.name, url: p.endpoint, rawTx, signature, confirmTimeoutMs }));
+			}
+			if (senderLaneOn) {
+				lanes.push(rpcLane({ name: senderProvider.name, url: senderProvider.endpoint, rawTx, signature, confirmTimeoutMs }));
+			}
+			// Send order follows recent success; every lane carries the SAME signed tx,
+			// so Solana dedupes by signature and at most one landing exists.
+			const order = stats.rank(lanes.map((l) => l.name));
+			lanes.sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
 
-			// Protected single-tx route (devnet, tip 'off', or post-fallback).
-			const prot = await sendProtected(tx, signature, connection, blockhashCtx, confirmTimeoutMs);
-			if (prot.landed) {
+			let race;
+			try {
+				race = await raceLanes({ lanes, stats });
+			} finally {
+				void stats.flush();
+			}
+			if (race.winner) {
+				const w = race.winner.name;
 				return {
 					signature,
-					slot: prot.slot,
-					route: 'protected',
-					tipLamports: 0,
+					slot: race.winner.slot,
+					// Route label reflects the lane that actually reported the landing.
+					route: w === 'jito' ? (tipMode === 'turbo' ? 'jito_turbo' : 'jito_economy') : w === 'helius_sender' ? 'helius_sender' : 'protected',
+					tipLamports: Number(tipLamports),
 					priorityFeeMicroLamports,
 					attempts,
 					landedMs: Date.now() - t0,
-					fallbackReason,
+					fallbackReason: w === 'jito' ? null : tryJito ? (fallbackReason || 'jito_not_landed') : fallbackReason,
+					landedBy: w,
+					lanes: race.lanes,
 				};
 			}
+			if (tryJito && fallbackReason == null) fallbackReason = 'jito_not_landed';
+			const primaryLoss = race.lanes.find((l) => l.name === 'rpc')?.error;
+			lastErr = Object.assign(new Error(`not landed: ${primaryLoss || 'no lane confirmed'}`), {
+				code: /^[A-Z_]+$/.test(primaryLoss || '') ? primaryLoss : 'NOT_LANDED',
+			});
+			// Nothing landed: refresh the blockhash and retry with a higher fee/tip.
 		} catch (e) {
 			lastErr = e;
 			// A hard on-chain failure (TX_ERR) is terminal — the instructions reverted,

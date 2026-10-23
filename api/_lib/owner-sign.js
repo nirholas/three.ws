@@ -8,6 +8,7 @@ import { ed25519 } from '@noble/curves/ed25519.js';
 import bs58 from 'bs58';
 import { sql } from './db.js';
 
+const BASE58_CHARS_RE = /^[1-9A-HJ-NP-Za-km-z]+$/;
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 /** Solana addresses linked to a user: user_wallets plus the legacy wallet_address. */
@@ -24,9 +25,7 @@ function decodeSignature(sig) {
 	const s = String(sig || '').trim();
 	if (!s) return null;
 	try {
-		const raw = /^[A-Za-z0-9+/_-]+=*$/.test(s) && s.length >= 86 && !BASE58_RE.test(s)
-			? Buffer.from(s, 'base64')
-			: Buffer.from(bs58.decode(s));
+		const raw = BASE58_CHARS_RE.test(s) ? Buffer.from(bs58.decode(s)) : Buffer.from(s, 'base64');
 		return raw.length === 64 ? new Uint8Array(raw) : null;
 	} catch {
 		return null;

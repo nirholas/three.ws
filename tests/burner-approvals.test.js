@@ -140,7 +140,7 @@ describe('owner-sign tier', () => {
 		await expect(A.decideApproval({
 			userId: OWNER, id: row.id, decision: 'approve', payloadHash: row.payload_hash,
 			walletSignature: { address: strangerKey.publicKey.toBase58(), signature: sign(strangerKey, message) },
-		})).rejects.toMatchObject({ status: 403, code: 'wallet_signature_invalid' });
+		})).rejects.toMatchObject({ status: 403, code: 'wallet_signature_required', extra: { reason: 'wallet_not_linked' } });
 	});
 
 	it('refuses a signature made over a different request', async () => {
@@ -159,7 +159,8 @@ describe('owner-sign tier', () => {
 			userId: OWNER, id: row.id, decision: 'approve', payloadHash: row.payload_hash,
 			walletSignature: { address: ownerKey.publicKey.toBase58(), signature: sign(ownerKey, A.signMessageFor(row)) },
 		});
-		expect(out.request.status).toBe('approved');
+		expect(out.request.status).toBe('executed');
+		expect(executor.executeApprovedIntentAction).toHaveBeenCalledTimes(1);
 	});
 
 	it('an expired owner-sign request cannot execute even with a valid signature', async () => {
@@ -180,7 +181,7 @@ describe('owner-sign tier', () => {
 		await dbState.pg.query(`update approval_requests set payload = $1::jsonb, status = 'approved' where id = $2`, [JSON.stringify(edited), row.id]);
 		const stored = (await dbState.pg.query('select * from approval_requests where id = $1', [row.id])).rows[0];
 		const { outcome } = await A.runApproved(stored, async () => { throw new Error('executor must not run'); });
-		expect(outcome.integrity).toBe(true);
+		expect(outcome.integrity).toBe(false);
 		expect(outcome.status).toBe('error');
 	});
 });
