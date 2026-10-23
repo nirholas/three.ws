@@ -235,7 +235,7 @@ export function createSqlStatsStore(run) {
 				await run(
 					`insert into landing_provider_stats
 					   (provider, network, landed, lost, outpaced, streak, latency_ms, last_error, last_landed_at, updated_at)
-					 values ($1, $2, $3, $4, $5, $6, $7, $8, case when $3 > 0 then now() end, now())
+					 values ($1, $2, $3::bigint, $4::bigint, $5::bigint, $6::integer, $7::integer, $8, case when $3::bigint > 0 then now() end, now())
 					 on conflict (provider, network) do update set
 					   landed = landing_provider_stats.landed + excluded.landed,
 					   lost = landing_provider_stats.lost + excluded.lost,
