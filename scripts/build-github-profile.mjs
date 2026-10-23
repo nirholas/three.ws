@@ -126,10 +126,11 @@ export function buildProfile(allRepos, { includeGated = false, activityData = nu
 
 <p align="center">
 <a href="https://github.com/${OWNER}?tab=followers"><img alt="Followers" src="https://img.shields.io/github/followers/${OWNER}?style=for-the-badge&logo=github&label=followers"/></a>
-<a href="https://www.star-history.com/${OWNER}"><img alt="Top Committer 2026" src="https://api.star-history.com/badge?user=${OWNER}&year=2026" height="44" align="middle"/></a>
 <a href="https://github.com/${OWNER}?tab=repositories&sort=stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/${OWNER}?affiliations=OWNER&style=for-the-badge&logo=github&label=stars"/></a>
 <a href="https://github.com/${OWNER}?tab=repositories"><img alt="Repositories" src="https://img.shields.io/badge/repositories-${repos.length}-6250d6?style=for-the-badge&logo=github"/></a>
 </p>
+
+<p align="center"><a href="https://www.star-history.com/${OWNER}"><img alt="GitHub Top Committer 2026, global rank" src="https://api.star-history.com/badge?user=${OWNER}&year=2026" height="64"/></a></p>
 
 <p align="center">${pic('stats', `${repos.length} repositories, ${totalStars} stars`)}</p>
 
