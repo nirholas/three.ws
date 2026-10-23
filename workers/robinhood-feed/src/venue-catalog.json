@@ -1,0 +1,471 @@
+{
+	"chain_id": 4663,
+	"source": "launch-relay observed venue catalog",
+	"generated_at": "2026-09-04T01:10:38.470Z",
+	"window": {
+		"fromBlock": 53610505,
+		"toBlock": 53640504
+	},
+	"tokens_scanned": 2014,
+	"venues": [
+		{
+			"id": "pons-v2",
+			"label": "Pons V2",
+			"kind": "launchpad",
+			"address": "0xe33e9e479df8802cb0866d5d05258bec4cf62948",
+			"selector": "0xf85f8e41",
+			"observed_launches": 708,
+			"launchable": false
+		},
+		{
+			"id": "pons-v2-launch-token",
+			"label": "Pons V2",
+			"kind": "launchpad",
+			"address": "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+			"selector": "0xa72101af",
+			"observed_launches": 235,
+			"launchable": true
+		},
+		{
+			"id": "rhc-b2a748f6",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xb2a748f698ae894fddfae9504807daf10f9d7a14",
+			"selector": "0xe1b77db5",
+			"observed_launches": 224,
+			"launchable": false
+		},
+		{
+			"id": "bankr-robinhood",
+			"label": "Bankr Robinhood",
+			"kind": "launchpad",
+			"address": "0x22e99278308b393ea1260859b181ad7e78f5eeed",
+			"selector": "0x882db707",
+			"observed_launches": 113,
+			"launchable": false
+		},
+		{
+			"id": "pons-v2-7ed598",
+			"label": "Pons V2",
+			"kind": "launchpad",
+			"address": "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+			"selector": "0xf35abbcf",
+			"observed_launches": 106,
+			"launchable": true
+		},
+		{
+			"id": "rhc-77dc6f63",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x77dc6f6361b7b99456fc3761ce5b7dda80d83f9d",
+			"selector": "0xf39dc3ed",
+			"observed_launches": 61,
+			"launchable": false
+		},
+		{
+			"id": "rhc-ce9c48cf",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xce9c48cfa068947f77738c81be406b53338e5b0d",
+			"selector": "0x3feab1d8",
+			"observed_launches": 35,
+			"launchable": false
+		},
+		{
+			"id": "rhc-3194e326",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x3194e32622c5d860a0572c74edda99dcfd8fc827",
+			"selector": "0x2fcb9108",
+			"observed_launches": 23,
+			"launchable": true
+		},
+		{
+			"id": "rhc-ce9c48cf-create-launch-and-buy",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xce9c48cfa068947f77738c81be406b53338e5b0d",
+			"selector": "0x901a3de8",
+			"observed_launches": 22,
+			"launchable": false
+		},
+		{
+			"id": "rhc-b2a748f6-b2a748",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xb2a748f698ae894fddfae9504807daf10f9d7a14",
+			"selector": "0xc6314368",
+			"observed_launches": 21,
+			"launchable": false
+		},
+		{
+			"id": "rhc-c783221a",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xc783221ab1db0244203458417981b4631e80b988",
+			"selector": "0x45d52c5a",
+			"observed_launches": 19,
+			"launchable": true
+		},
+		{
+			"id": "rhc-6fda94ac",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x6fda94aceedc5a97171469a8873d00fb9983bb8c",
+			"selector": "0x680c2d37",
+			"observed_launches": 15,
+			"launchable": true
+		},
+		{
+			"id": "virtuals",
+			"label": "Virtuals Protocol",
+			"kind": "bonding-curve",
+			"address": "0xd4ccbfa37e2f35611b3042e4096ad7a3459bd007",
+			"selector": "0xa2baa044",
+			"observed_launches": 15,
+			"launchable": true
+		},
+		{
+			"id": "rhc-e4cea507",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xe4cea507b19796362a5a28fa7cb705a3f1866213",
+			"selector": "0x2e3f9da8",
+			"observed_launches": 14,
+			"launchable": false
+		},
+		{
+			"id": "rhc-3ccd843d",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x3ccd843d6794d28e794268dcf65482000657b2de",
+			"selector": "0xb0da329a",
+			"observed_launches": 14,
+			"launchable": false
+		},
+		{
+			"id": "rhc-6fda94ac-launch-pair-with-meta",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x6fda94aceedc5a97171469a8873d00fb9983bb8c",
+			"selector": "0xea2c3a42",
+			"observed_launches": 14,
+			"launchable": true
+		},
+		{
+			"id": "rhc-26605f32",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x26605f322f7ff986f381bb9a6e3f5dab0beaeb09",
+			"selector": "0x8cb5772c",
+			"observed_launches": 14,
+			"launchable": false
+		},
+		{
+			"id": "rhc-d9ec2db5",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xd9ec2db5f3d1b236843925949fe5bd8a3836fccb",
+			"selector": "0x686399cb",
+			"observed_launches": 12,
+			"launchable": false
+		},
+		{
+			"id": "pons-dot-family",
+			"label": "Pons Dot Family",
+			"kind": "launchpad",
+			"address": "0xa5aab3f0c6eeadf30ef1d3eb997108e976351feb",
+			"selector": "0x686399cb",
+			"observed_launches": 12,
+			"launchable": false
+		},
+		{
+			"id": "rhc-1cbaf24d",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x1cbaf24d53fe930fce8eff149fa797d2611da149",
+			"selector": "0x7422a284",
+			"observed_launches": 8,
+			"launchable": false
+		},
+		{
+			"id": "rhc-eb7c0347",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xeb7c034704ef8dcd2d32324c1545f62fb4ad0862",
+			"selector": "0x882db707",
+			"observed_launches": 8,
+			"launchable": false
+		},
+		{
+			"id": "rhc-89c0992d",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x89c0992dcdc7bb13ef2f96d94a899c7a154211b0",
+			"selector": "0xb0da329a",
+			"observed_launches": 5,
+			"launchable": false
+		},
+		{
+			"id": "rhc-16cf6788",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x16cf6788b762ee8969744586ed16fc5705140dd7",
+			"selector": "0x4101659e",
+			"observed_launches": 4,
+			"launchable": true
+		},
+		{
+			"id": "rhc-e9f7ab7d",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xe9f7ab7de8fb8756acbb6a1cd13316a43308197b",
+			"selector": "0x1b806220",
+			"observed_launches": 4,
+			"launchable": false
+		},
+		{
+			"id": "rhc-626c3d09",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x626c3d09b65bf5d1d40e0d5f25e19fa49783b3d4",
+			"selector": "0xce61a35c",
+			"observed_launches": 4,
+			"launchable": false
+		},
+		{
+			"id": "rhc-432d20aa",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x432d20aae5605b1e94c914283d7155ebc6727351",
+			"selector": "0x6213136e",
+			"observed_launches": 4,
+			"launchable": true
+		},
+		{
+			"id": "rhc-e64ac411",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xe64ac4113848bbc1a6dde1a6d1da96720a36f297",
+			"selector": "0x5b09db59",
+			"observed_launches": 4,
+			"launchable": false
+		},
+		{
+			"id": "rhc-60e29e6a",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x60e29e6a52610ce6cf031a574715a595f55818fa",
+			"selector": "0x39bdee72",
+			"observed_launches": 3,
+			"launchable": false
+		},
+		{
+			"id": "rhc-c2a84a1a-b1290b1e",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xc2a84a1a6a2ab484bfd271fa59b7bf7e99ddcb54",
+			"selector": "0xb1290b1e",
+			"observed_launches": 3,
+			"launchable": true
+		},
+		{
+			"id": "rhc-069c70c7",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x069c70c738531519a61e7b3ccd818c8eff31c2f0",
+			"selector": "0xc163e5cc",
+			"observed_launches": 3,
+			"launchable": false
+		},
+		{
+			"id": "rhc-609f2c91",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x609f2c912175f8cd4438c1882f291fa6a4b4c735",
+			"selector": "0xb0da329a",
+			"observed_launches": 3,
+			"launchable": false
+		},
+		{
+			"id": "rhc-5bd1fbe7",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x5bd1fbe78a78fe8236fa00cf48fbeba74ae34661",
+			"selector": "0x75154d70",
+			"observed_launches": 3,
+			"launchable": false
+		},
+		{
+			"id": "rhc-0c37a24f",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x0c37a24f5d23a486fa692d1500881d698b1f77a4",
+			"selector": "0x686399cb",
+			"observed_launches": 3,
+			"launchable": false
+		},
+		{
+			"id": "rhc-c70e510e",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xc70e510e14710ea535cab7b2414860af63feab79",
+			"selector": "0xf6efccd9",
+			"observed_launches": 3,
+			"launchable": false
+		},
+		{
+			"id": "rhc-6bb933af",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x6bb933af35e32893a7ffd2d5e932f022b063a412",
+			"selector": "0xb0da329a",
+			"observed_launches": 2,
+			"launchable": false
+		},
+		{
+			"id": "rhc-1fae6f16",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x1fae6f162355cf77bf7f23cb919130962dad4ecb",
+			"selector": "0x026f2bf0",
+			"observed_launches": 2,
+			"launchable": false
+		},
+		{
+			"id": "rhc-e422bc46",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xe422bc468377c17a71955179eea2596f33ffad5c",
+			"selector": "0x70282651",
+			"observed_launches": 2,
+			"launchable": false
+		},
+		{
+			"id": "rhc-fcd61b25",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xfcd61b25bbf3abd6cf0070d6328e351cc30eec9f",
+			"selector": "0x6cb0ea4e",
+			"observed_launches": 2,
+			"launchable": false
+		},
+		{
+			"id": "rhc-798fa4e2-175f99d3",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x798fa4e26e6bb4c2326373884d89e76d0afc3b54",
+			"selector": "0x175f99d3",
+			"observed_launches": 2,
+			"launchable": false
+		},
+		{
+			"id": "rhc-4a3e797b",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x4a3e797b2e4dd1cf96b352513ea91b2f6449e74a",
+			"selector": "0xbdc35cd0",
+			"observed_launches": 2,
+			"launchable": false
+		},
+		{
+			"id": "pair",
+			"label": "PAIR V5",
+			"kind": "stock-paired-pools",
+			"address": "0x8660a7f019c7943b0b0a91b8e39aff3b6db6ae62",
+			"selector": "0x07489e0a",
+			"observed_launches": 2,
+			"launchable": true
+		},
+		{
+			"id": "rhc-f4fc0cd2",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xf4fc0cd27fc8ecf17e55ee4c3f7201897df3eb75",
+			"selector": "0x686399cb",
+			"observed_launches": 2,
+			"launchable": true
+		},
+		{
+			"id": "rhc-0bdaf008",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x0bdaf008f01ddd91753fb5db89024f085cef3016",
+			"selector": "0xb0da329a",
+			"observed_launches": 2,
+			"launchable": false
+		},
+		{
+			"id": "rhc-5bd1fbe7-a80ac0c2",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x5bd1fbe78a78fe8236fa00cf48fbeba74ae34661",
+			"selector": "0xa80ac0c2",
+			"observed_launches": 2,
+			"launchable": false
+		},
+		{
+			"id": "rhc-0937923c-533fd8dc",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x0937923cf208608ba278f4d011a5e9b85aeaa4a9",
+			"selector": "0x533fd8dc",
+			"observed_launches": 2,
+			"launchable": false
+		},
+		{
+			"id": "rhc-de0b91a1-941a0975",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xde0b91a1824aedd9a2fcda42d5db1fcd813a0101",
+			"selector": "0x941a0975",
+			"observed_launches": 2,
+			"launchable": true
+		},
+		{
+			"id": "rhc-a2e0481d-b0da329a",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xa2e0481d543811a52709ec3ad8af326ae7fad4f3",
+			"selector": "0xb0da329a",
+			"observed_launches": 2,
+			"launchable": false
+		},
+		{
+			"id": "rhc-a94aa60e",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xa94aa60e9c7f193bf678608d5837f0fd51794635",
+			"selector": "0xb5a06fd8",
+			"observed_launches": 2,
+			"launchable": true
+		},
+		{
+			"id": "rhc-6e4910ea",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0x6e4910ea5a04376032f6564da9a9e4e88b7a87c1",
+			"selector": "0x13d39311",
+			"observed_launches": 2,
+			"launchable": false
+		},
+		{
+			"id": "rhc-d0963927",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xd09639274b0e0a1a9586f7756ccfe134cc525d09",
+			"selector": "0x476d1d18",
+			"observed_launches": 2,
+			"launchable": true
+		},
+		{
+			"id": "rhc-d5f6c6ab",
+			"label": null,
+			"kind": "launchpad",
+			"address": "0xd5f6c6ab9b74ef7211b683904fe85bf1f69c3d9a",
+			"selector": "0x4e60fe83",
+			"observed_launches": 2,
+			"launchable": true
+		}
+	]
+}

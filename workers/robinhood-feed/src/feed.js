@@ -1,7 +1,8 @@
-// The firehose orchestrator. Composes the hoodchain SDK watchers (NOXA +
-// Odyssey via RPC logs), a dynamic Uniswap v3 Swap watcher over the set of
-// tracked pools (NOXA pools from block one, Odyssey pools post-graduation), and
-// the Arbitrum sequencer feed used as a sub-second block-tip + gap watchdog.
+// The firehose orchestrator. Composes the hoodchain SDK watchers (Odyssey via
+// RPC logs), a mint watcher that attributes every new token to the launch venue
+// its transaction called (venues.js), a dynamic Uniswap v3 Swap watcher over
+// the set of tracked pools (Odyssey pools post-graduation), and the Arbitrum
+// sequencer feed used as a sub-second block-tip + gap watchdog.
 // Everything is normalized to the pump-compatible shape and handed to onEvent.
 //
 // Divergence from the pump (PumpPortal) feed, by design:
@@ -17,6 +18,8 @@ import {
 } from 'hoodchain';
 import { subscribeFeed } from 'hoodchain';
 import { config, CHAIN_ID, redactRpcUrl } from './config.js';
+import { getMintLogs, parseMintLogs, launchesFromMints } from './mints.js';
+import { createReputation, devAllocation, devStatus, riskFlags, readBalances } from './reputation.js';
 import { hood, resolveMeta, inspectPool, blockTimeMs } from './chain.js';
 import { withRpcRetry } from './rpc.js';
 import { ethPriceUsd } from './eth-price.js';
@@ -87,6 +90,7 @@ export function startFirehose(onEvent) {
 	// Tracked Uniswap pools (insertion-ordered for LRU eviction).
 	const pools = new Map(); // pool(lower) → token
 	let resubTimer = null;
+	let mintTimer = null;
 	function trackPool(pool, token) {
 		if (!pool) return;
 		const key = pool.toLowerCase();
@@ -140,15 +144,111 @@ export function startFirehose(onEvent) {
 		if (active) onEvent({ kind: 'trade', data });
 	}
 
-	async function emitLaunch(launch) {
-		const key = `launch:${launch.transactionHash}:${launch.token}`;
+	// ── launch enrichment: dev allocation, dev-sold, deployer reputation ───────
+	const reputation = createReputation(
+		{ multicall: (a) => hood.public.multicall(a) },
+		{ windowBlocks: Number(config.backfillBlocks) },
+	);
+	const allocations = new Map(); // token(lower) → bigint | null (null = receipt unreadable)
+	const tracked = new Map(); // token(lower) → { data, allocation, creator } for the dev-sold sweep
+
+	const odysseyVenue = { id: 'odyssey', label: 'The Odyssey', kind: 'bonding-curve', address: null };
+	function withOdysseyVenue(l) { return l.venue ? l : { ...l, venue: odysseyVenue }; }
+
+	async function allocationFor(launch) {
+		const key = launch.token.toLowerCase();
+		if (allocations.has(key)) return allocations.get(key);
+		let alloc = null;
+		try {
+			const receipt = await withRpcRetry(() => hood.public.getTransactionReceipt({ hash: launch.transactionHash }));
+			alloc = devAllocation(receipt.logs, launch.token, launch.creator);
+		} catch { /* unreadable receipt leaves dev_sold null, never a guess */ }
+		allocations.set(key, alloc);
+		return alloc;
+	}
+
+	async function indexLaunch(launch) {
+		const allocation = await allocationFor(launch);
+		reputation.record({ creator: launch.creator, token: launch.token, blockNumber: launch.blockNumber, allocation: allocation ?? 0n });
+		return allocation;
+	}
+
+	async function emitLaunch(launch, { indexed = false } = {}) {
+		const key = `launch:${launch.transactionHash}:${launch.token.toLowerCase()}`;
 		if (!once(key)) return;
 		if (launch.pool) trackPool(launch.pool, launch.token);
-		const [meta, ethUsd, atMs] = await Promise.all([
+		const allocation = indexed ? (allocations.get(launch.token.toLowerCase()) ?? null) : await indexLaunch(launch);
+		const [meta, ethUsd, atMs, deployer, balance] = await Promise.all([
 			resolveMeta(launch.token), ethPriceUsd(), blockTimeMs(launch.blockNumber),
+			reputation.assess(launch.creator, launch.blockNumber).catch(() => null),
+			allocation && allocation > 0n
+				? readBalances({ multicall: (a) => hood.public.multicall(a) }, [{ token: launch.token, holder: launch.creator }]).then((r) => r[0]).catch(() => null)
+				: Promise.resolve(null),
 		]);
+		const dev = devStatus(allocation ?? 0n, balance);
 		bumpBlock(launch.blockNumber);
-		if (active) onEvent({ kind: 'launch', data: normalizeLaunch({ launch, name: meta.name, symbol: meta.symbol, ethUsd, atMs }) });
+		if (!active) return;
+		const data = normalizeLaunch({ launch, name: meta.name, symbol: meta.symbol, ethUsd, atMs, venue: launch.venue ?? null, dev, deployer });
+		onEvent({ kind: 'launch', data });
+		if (allocation && allocation > 0n) {
+			tracked.set(launch.token.toLowerCase(), { data, allocation, creator: launch.creator });
+			while (tracked.size > 300) tracked.delete(tracked.keys().next().value);
+		}
+	}
+
+	/** Re-read creator balances for recent launches; re-emit any whose dev has since sold out. */
+	async function sweepDevSold() {
+		if (!active || tracked.size === 0) return;
+		const cutoff = Math.floor(Date.now() / 1000) - 24 * 3600;
+		const open = [...tracked.entries()].filter(([, t]) => t.data.dev_sold !== true && t.data.timestamp >= cutoff);
+		if (!open.length) return;
+		let balances;
+		try {
+			balances = await withRpcRetry(() => readBalances(
+				{ multicall: (a) => hood.public.multicall(a) },
+				open.map(([, t]) => ({ token: t.data.mint, holder: t.creator })),
+			));
+		} catch { return; }
+		open.forEach(([key, t], i) => {
+			const dev = devStatus(t.allocation, balances[i]);
+			if (dev.dev_sold === null) return;
+			const same = dev.dev_sold === t.data.dev_sold && dev.dev_sold_pct === t.data.dev_sold_pct;
+			if (same) return;
+			const data = { ...t.data, ...dev, flags: riskFlags(dev, t.data.deployer || { prior_launches: 0, prior_dev_exits: 0 }) };
+			tracked.set(key, { ...t, data });
+			onEvent({ kind: 'launch', data });
+		});
+	}
+
+	// ── mint watcher: launches on every catalogued venue ───────────────────────
+	const rpcView = {
+		getTransaction: (hash) => withRpcRetry(() => hood.public.getTransaction({ hash })),
+		readContract: (a) => hood.public.readContract(a),
+	};
+	let mintCursor = 0n;
+	let mintPolling = false;
+	async function venueLaunchesBetween(from, to) {
+		const logs = await retryLogs(() => getMintLogs((a) => hood.public.request(a), from, to), 'mint-scan');
+		return launchesFromMints(rpcView, parseMintLogs(logs));
+	}
+	async function pollMints() {
+		if (!active || mintPolling) return;
+		mintPolling = true;
+		try {
+			const head = await withRpcRetry(() => hood.public.getBlockNumber());
+			if (mintCursor === 0n) { mintCursor = head; return; }
+			if (head <= mintCursor) return;
+			const launches = await venueLaunchesBetween(mintCursor + 1n, head);
+			for (const l of launches) {
+				if (!once(`token:${l.token.toLowerCase()}`)) continue;
+				await emitLaunch(l).catch(() => {});
+			}
+			mintCursor = head;
+		} catch (err) {
+			onEvent({ kind: 'status', data: { level: 'warn', src: 'mint-watch', message: err?.message?.split('\n')[0] } });
+		} finally {
+			mintPolling = false;
+		}
 	}
 
 	async function emitCurveTrade(trade) {
@@ -199,9 +299,9 @@ export function startFirehose(onEvent) {
 		onEvent({ kind: 'status', data: { level: 'info', src: 'gap-fill', from: Number(from), to: Number(head) } });
 		try {
 			const launches = await retryLogs(
-				() => getRecentLaunches(hood, { lookbackBlocks: head - from + 1n }), 'gap-fill',
+				() => getRecentLaunches(hood, { launchpad: 'odyssey', lookbackBlocks: head - from + 1n }), 'gap-fill',
 			);
-			await mapLimit(launches.filter((l) => l.blockNumber >= from), 8, (l) => emitLaunch(l));
+			await mapLimit(launches.filter((l) => l.blockNumber >= from), 8, (l) => emitLaunch(withOdysseyVenue(l)));
 			const logs = await retryLogs(() => hood.public.getLogs({
 				address: ODYSSEY_FACTORIES, event: odysseyTradedEvent, fromBlock: from, toBlock: head,
 			}), 'gap-fill');
@@ -222,24 +322,36 @@ export function startFirehose(onEvent) {
 	// replay buffer only ever surfaces the newest `bufferLimit`, so fully
 	// resolving metadata for the rest is wasted RPC work that would otherwise
 	// serialize cold start for minutes. Every discovered pool is still tracked
-	// (cheap, synchronous) so live Uniswap swaps on older NOXA coins are caught;
+	// (cheap, synchronous) so live Uniswap swaps on older coins are caught;
 	// only the newest slice gets the full emit (metadata + ETH price + buffer).
 	async function backfill() {
 		try {
-			const launches = await retryLogs(
-				() => getRecentLaunches(hood, { lookbackBlocks: config.backfillBlocks }), 'backfill',
-			);
-			for (const l of launches) if (l.pool) trackPool(l.pool, l.token);
+			const head = await retryLogs(() => hood.public.getBlockNumber(), 'backfill');
+			const fromBlock = head > config.backfillBlocks ? head - config.backfillBlocks : 0n;
+			if (mintCursor === 0n) mintCursor = head;
+			const [odyssey, venueLaunches] = await Promise.all([
+				retryLogs(() => getRecentLaunches(hood, { launchpad: 'odyssey', lookbackBlocks: config.backfillBlocks }), 'backfill'),
+				venueLaunchesBetween(fromBlock, head),
+			]);
+			const launches = [...odyssey.map(withOdysseyVenue), ...venueLaunches]
+				.sort((a, b) => (a.blockNumber < b.blockNumber ? -1 : a.blockNumber > b.blockNumber ? 1 : 0));
+			for (const l of launches) {
+				once(`token:${l.token.toLowerCase()}`);
+				if (l.pool) trackPool(l.pool, l.token);
+			}
+			// Index the whole window oldest-first so a deployer's earlier launches
+			// are on record before their newer ones are graded against them.
+			await mapLimit(launches, 8, (l) => indexLaunch(l));
 			const toEmit = launches.slice(-config.bufferLimit); // oldest-first input → newest last
-			await mapLimit(toEmit, 8, (l) => emitLaunch(l));
-			onEvent({ kind: 'status', data: { level: 'info', src: 'backfill', launches: launches.length, emitted: toEmit.length } });
+			await mapLimit(toEmit, 8, (l) => emitLaunch(l, { indexed: true }));
+			onEvent({ kind: 'status', data: { level: 'info', src: 'backfill', launches: launches.length, emitted: toEmit.length, deployers: reputation.size() } });
 		} catch (err) {
 			onEvent({ kind: 'status', data: { level: 'warn', src: 'backfill', message: err?.message } });
 		}
 	}
 
 	// ── wire everything up ─────────────────────────────────────────────────────
-	unwatchers.push(watchLaunches(hood, (l) => { emitLaunch(l).catch(() => {}); }, { pollingInterval: config.pollingIntervalMs, onError: (e) => onEvent({ kind: 'status', data: { level: 'warn', src: 'launch-watch', message: e?.message } }) }));
+	unwatchers.push(watchLaunches(hood, (l) => { emitLaunch(withOdysseyVenue(l)).catch(() => {}); }, { launchpad: 'odyssey', pollingInterval: config.pollingIntervalMs, onError: (e) => onEvent({ kind: 'status', data: { level: 'warn', src: 'launch-watch', message: e?.message } }) }));
 	unwatchers.push(watchCurveTrades(hood, (t) => { emitCurveTrade(t).catch(() => {}); }, { pollingInterval: config.pollingIntervalMs, onError: (e) => onEvent({ kind: 'status', data: { level: 'warn', src: 'trade-watch', message: e?.message } }) }));
 	unwatchers.push(watchGraduations(hood, (g) => { emitGraduation(g).catch(() => {}); }, { pollingInterval: config.pollingIntervalMs, onError: (e) => onEvent({ kind: 'status', data: { level: 'warn', src: 'grad-watch', message: e?.message } }) }));
 
@@ -250,7 +362,8 @@ export function startFirehose(onEvent) {
 		).then((sub) => { feedSub = sub; }).catch(() => {});
 	}
 
-	backfill();
+	backfill().finally(() => { if (active) mintTimer = setInterval(() => { pollMints(); }, config.pollingIntervalMs); });
+	const sweepTimer = setInterval(() => { sweepDevSold().catch(() => {}); }, 60_000);
 	const gapTimer = setInterval(() => { gapCheck().catch(() => {}); }, 15_000);
 
 	return {
@@ -258,6 +371,8 @@ export function startFirehose(onEvent) {
 			active = false;
 			clearTimeout(resubTimer);
 			clearInterval(gapTimer);
+			clearInterval(sweepTimer);
+			clearInterval(mintTimer);
 			for (const u of unwatchers) { try { u(); } catch { /* ignore */ } }
 			try { swapUnwatch?.(); } catch { /* ignore */ }
 			try { feedSub?.close(); } catch { /* ignore */ }

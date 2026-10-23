@@ -10,6 +10,7 @@
 import { formatUnits } from 'viem';
 import { CHAIN_ID, EXPLORER_BASE } from './config.js';
 import { quoteToUsd } from './eth-price.js';
+import { riskFlags } from './reputation.js';
 
 const CHAIN = 'robinhood-chain';
 
@@ -19,22 +20,42 @@ const tokenUrl = (addr) => `${EXPLORER_BASE}/address/${addr}`;
 const num = (v) => (Number.isFinite(v) ? v : null);
 
 /**
- * A token launch (NOXA instant list or Odyssey curve open).
+ * A token launch on any observed venue (see venues.js) or an Odyssey curve open.
  * pump `mint` → `mint` (the coin address; this is the world seed).
  *
- * `launch.initialBuyAmount` is best-effort: the hoodchain SDK's high-level
- * `watchLaunches`/`getRecentLaunches` return the decoded `Launch` shape,
- * which does not carry it (it's a NOXA-only raw log field). When absent this
- * resolves to `null`, never a fabricated value.
+ * `venue` names the launchpad the mint transaction called; `dev` and `deployer`
+ * carry the reputation reads (see reputation.js). All three are optional so a
+ * launch whose enrichment reads failed still flows, with the fields null
+ * instead of invented.
+ *
+ * `launch.initialBuyAmount` is best-effort: venue launches are found from the
+ * mint log and do not carry it. When absent it resolves to `null`, never a
+ * fabricated value.
  */
-export function normalizeLaunch({ launch, name = null, symbol = null, ethUsd = 0, atMs }) {
+export function normalizeLaunch({ launch, name = null, symbol = null, ethUsd = 0, atMs, venue = null, dev = null, deployer = null }) {
 	const initialNative = launch.initialBuyAmount != null
-		? Number(formatUnits(launch.initialBuyAmount, 18)) // NOXA reports ETH (18-dec)
+		? Number(formatUnits(launch.initialBuyAmount, 18))
+		: null;
+	const devOut = {
+		dev_sold: dev?.dev_sold ?? null,
+		dev_sold_pct: dev?.dev_sold_pct ?? null,
+	};
+	const deployerOut = deployer
+		? {
+			address: launch.creator,
+			prior_launches: deployer.prior_launches,
+			prior_dev_exits: deployer.prior_dev_exits,
+			inspected: deployer.inspected,
+			window_blocks: deployer.window_blocks ?? null,
+		}
 		: null;
 	return {
 		chain: CHAIN,
 		chain_id: CHAIN_ID,
 		launchpad: launch.launchpad,
+		venue: venue
+			? { id: venue.id, label: venue.label, kind: venue.kind, address: venue.address ?? null }
+			: null,
 		// pump-compatible identity fields
 		mint: launch.token,
 		address: launch.token,
@@ -43,11 +64,14 @@ export function normalizeLaunch({ launch, name = null, symbol = null, ethUsd = 0
 		creator: launch.creator,
 		signature: launch.transactionHash,
 		tx_signature: launch.transactionHash,
-		// EVM specifics (documented divergence — no Solana bonding_curve key)
+		// EVM specifics (documented divergence, no Solana bonding_curve key)
 		pool: launch.pool ?? null,
 		quote_symbol: 'ETH',
 		initial_buy_native: num(initialNative),
 		initial_buy_usd: initialNative != null ? quoteToUsd(initialNative, 'ETH', ethUsd) : null,
+		...devOut,
+		deployer: deployerOut,
+		flags: deployerOut || dev ? riskFlags(devOut, deployerOut || { prior_launches: 0, prior_dev_exits: 0 }) : [],
 		// pump cards read these; we have no off-chain metadata service on RH yet
 		image_uri: null,
 		description: null,

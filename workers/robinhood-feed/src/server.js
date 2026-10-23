@@ -31,7 +31,12 @@ export function createServer(firehose) {
 		const arr = buffer[kind];
 		if (!arr) return;
 		const sig = data.tx_signature || data.signature;
-		if (sig && arr.some((e) => (e.tx_signature || e.signature) === sig && e.mint === data.mint)) return;
+		const at = sig ? arr.findIndex((e) => (e.tx_signature || e.signature) === sig && e.mint === data.mint) : -1;
+		if (at !== -1) {
+			// Same event again: a launch re-emitted with fresher dev-sold flags replaces its old entry.
+			arr[at] = data;
+			return;
+		}
 		arr.unshift(data);
 		while (arr.length > config.bufferLimit) arr.pop();
 	}

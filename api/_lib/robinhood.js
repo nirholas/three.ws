@@ -3,7 +3,7 @@
 // Robinhood Chain is a permissionless Arbitrum Orbit L2 (chain ID 4663, ETH
 // gas, ~100ms blocks, mainnet live 2026-07-01). It hosts ~95 tokenized Stock
 // Tokens — plain ERC-20s with one Chainlink price feed each — plus a memecoin
-// ecosystem (NOXA, The Odyssey launchpads). No third-party aggregator offers a
+// ecosystem (The Odyssey and the launch venues observed on chain). No third-party aggregator offers a
 // clean market-data view of it: GeckoTerminal doesn't index the chain, RWA.xyz
 // is enterprise-paid, CoinGecko has no equity semantics. This module is the
 // missing layer.
@@ -14,7 +14,7 @@
 //   • holders / token stats / gas     — Blockscout Pro API
 //   • chain TVL                       — DefiLlama (/chain/robinhood-chain)
 //   • memecoin screener               — CoinGecko categories + DexScreener
-//   • launchpad activity              — on-chain eth_getLogs (NOXA / Odyssey factories)
+//   • launchpad activity             , on-chain eth_getLogs (Odyssey factories)
 //
 // Failover: Alchemy (when ROBINHOOD_ALCHEMY_KEY is set) → RPC_URL_4663 override
 // → the public sequencer RPC, as one viem fallback transport with per-request
@@ -609,8 +609,9 @@ export async function coingeckoCategory(category, { order = 'market_cap_desc', p
 
 // ── Launchpad activity (on-chain eth_getLogs) ──────────────────────────────
 // Addresses + event ABIs extracted and confirmed against live logs during the
-// Wave-1 SDK build (neither launchpad verifies source on Blockscout).
-export const NOXA_FACTORY = '0xD9eC2db5f3D1b236843925949fe5bd8a3836FCcB';
+// Wave-1 SDK build (the factory does not verify source on Blockscout). NOXA shut
+// down on 2026-07-13 and is no longer watched; every other venue arrives through
+// the robinhood-feed worker (api/_lib/robinhood-feed.js).
 export const ODYSSEY_FACTORIES = [
 	'0xEb3FeeD2716cF0eEAda05B22e67424794e1f5a80', // bonding-curve
 	'0x6Ce85c4b7cE12903E5867652C265bCcce57f935F', // reflection
@@ -622,8 +623,6 @@ export const ODYSSEY_FACTORIES = [
 // launches are read from Blockscout's decoded-log API filtered by topic instead
 // — no range guessing, always newest-first. Indexed params live in `topics`:
 // topics[1] = token, topics[2] = deployer/creator (both 32-byte left-padded).
-const NOXA_TOKEN_LAUNCHED_TOPIC =
-	'0xdb51ea9ad51ab453a65a4cb7e60c3cb378c9501bb002609f8f97778fb6c4235a';
 const ODYSSEY_TOKEN_CREATED_TOPIC =
 	'0xa52263eeb2ea349365a35c006fc978b0b85eb109fe50959959c829b329bebf9e';
 
@@ -658,13 +657,12 @@ async function launchesFromFactory(addr, topic, launchpad, type) {
 }
 
 /**
- * Recent launchpad launches from NOXA + The Odyssey factories, newest first.
+ * Recent launches from The Odyssey factories, newest first.
  * Read from Blockscout's decoded-log API (reliable + unbounded) rather than the
  * range-capped public-RPC eth_getLogs. Cached 45s per factory.
  */
 export async function recentLaunches({ limit = 40 } = {}) {
 	const jobs = [
-		launchesFromFactory(NOXA_FACTORY, NOXA_TOKEN_LAUNCHED_TOPIC, 'NOXA', 'instant'),
 		...ODYSSEY_FACTORIES.map((addr) =>
 			launchesFromFactory(addr, ODYSSEY_TOKEN_CREATED_TOPIC, 'The Odyssey', 'bonding-curve'),
 		),

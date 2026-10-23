@@ -7,8 +7,8 @@
 // — see src/game/world-env.js seedFromString), so a card click drops straight
 // into /temporary?coin=<address> unmodified.
 //
-// Sourced from the robinhood-feed firehose worker's real launch backlog (NOXA +
-// The Odyssey). `members`/`posts` are the CoinCommunities social-layer counters,
+// Sourced from the robinhood-feed firehose worker's real launch backlog (every
+// observed launch venue). `members`/`posts` are the CoinCommunities social-layer counters,
 // which start at 0 for a brand-new chain — never fabricated to look populated.
 // If the firehose worker isn't running, this returns an empty, clearly-flagged
 // list (the lobby's existing designed-empty state), not fake cards.

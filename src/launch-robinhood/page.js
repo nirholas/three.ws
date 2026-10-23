@@ -11,11 +11,12 @@
 
 import './page.css';
 import { ensureRiskAck } from '../shared/risk-ack.js';
+import { shortAddress } from '../shared/address.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (v) =>
 	String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const short = (a) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '');
+const short = (a) => shortAddress(a, 6, 4);
 const fmtEth = (v) => {
 	const n = Number(v);
 	if (!Number.isFinite(n)) return '0';

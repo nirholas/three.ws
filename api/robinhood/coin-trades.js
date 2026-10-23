@@ -10,7 +10,7 @@
 // robinhood-feed worker README for the full field-naming divergence.)
 //
 // Backed by the robinhood-feed firehose worker's /recent snapshot (real
-// NOXA + Odyssey + Uniswap v3 events, no mocks). If the worker isn't running
+// Odyssey + Uniswap v3 events, no mocks). If the worker isn't running
 // (ROBINHOOD_FEED_URL unset or unreachable), this responds with an EMPTY,
 // clearly-flagged payload rather than fabricating trades — the in-world HUD
 // renders its designed empty state instead of a fake feed.
