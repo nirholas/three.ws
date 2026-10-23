@@ -244,7 +244,7 @@ export async function reconcile({ stuckBatchMinutes = 30 } = {}) {
 			(select count(*) from x402_prepaid_entries where state = 'reserved'
 			   and created_at < now() - make_interval(secs => ${PREPAID_RESERVATION_TTL_SECONDS}::double precision))::int as stale,
 			(select count(*) from x402_prepaid_batches where status in ('pending', 'unconfirmed')
-			   and created_at < now() - make_interval(mins => ${Number(stuckBatchMinutes)}::double precision))::int as stuck
+			   and created_at < now() - make_interval(secs => ${Number(stuckBatchMinutes) * 60}::double precision))::int as stuck
 	`;
 	const drifted = await sql`
 		select a.payer, a.network, a.asset,

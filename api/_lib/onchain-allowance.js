@@ -33,7 +33,6 @@ import {
 	getTransferFixedOverlayInstructionAsync,
 	getTransferRecurringOverlayInstructionAsync,
 	getSubscriptionsErrorMessage,
-	isSubscriptionsError,
 } from '@solana/subscriptions';
 
 export const ALLOWANCE_PROGRAM_ID = SUBSCRIPTIONS_PROGRAM_ADDRESS;
@@ -415,19 +414,20 @@ export async function buildSignedPull({ network = 'mainnet', kind = 'fixed', del
 }
 
 /**
- * Translate a program rejection (simulation logs or a thrown RPC error) into the
- * program's own message, e.g. AmountExceedsLimit after a pull above the cap.
+ * Translate a program rejection (simulation error plus logs, or a thrown RPC
+ * error) into a message an owner can act on: the program's own text for its
+ * custom errors (e.g. "Transfer amount exceeds delegation limit"), and a plain
+ * explanation when the delegation account has been closed by a revoke.
  */
 export function describeProgramFailure(err) {
 	const msg = String(err?.message ?? err ?? '');
-	const custom = msg.match(/custom program error: 0x([0-9a-f]+)/i) || msg.match(/"Custom":\s*(\d+)/);
-	if (custom) {
-		const code = custom[1].length && /^[0-9a-f]+$/i.test(custom[1]) && msg.includes('0x') ? parseInt(custom[1], 16) : Number(custom[1]);
-		try {
-			if (isSubscriptionsError({ context: { code } }, code)) return getSubscriptionsErrorMessage(code);
-		} catch {
-			// fall through to the raw message
-		}
+	if (msg.includes('InvalidAccountOwner')) {
+		return 'the allowance account no longer exists on chain (revoked or closed)';
+	}
+	const hex = msg.match(/custom program error: 0x([0-9a-f]+)/i);
+	const dec = msg.match(/"Custom":\s*(\d+)/);
+	const code = hex ? parseInt(hex[1], 16) : dec ? Number(dec[1]) : null;
+	if (code != null) {
 		try {
 			return getSubscriptionsErrorMessage(code);
 		} catch {

@@ -23,7 +23,7 @@ import {
 	refundDebit,
 	reserveDebit,
 } from './prepaid-ledger.js';
-import { USDC_MINT_SOLANA } from './prepaid-chain.js';
+import { USDC_MINT_SOLANA } from './prepaid-constants.js';
 
 export const PREPAID_EXTENSION_KEY = 'prepaid';
 

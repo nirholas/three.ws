@@ -920,6 +920,14 @@
 					"added": "2026-06-26"
 				},
 				{
+					"path": "/x-video",
+					"title": "X Video Downloader",
+					"description": "Paste an X post link and download its video or GIF in every quality, with the post's likes, replies, reposts and views. Free, no account, no API key.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-23"
+				},
+				{
 					"path": "/capture",
 					"title": "Scene Capture: Video to 3D Point Cloud",
 					"description": "Turn a phone video of any space into an explorable 3D point cloud. Streaming feed-forward reconstruction (LingBot-Map Geometric Context Transformer) fuses the frames into a coloured .ply, rendered live in the browser with WebGL. Or load a point cloud you already have.",

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>X Video Downloader · three.ws</title>
+		<meta name="description" content="Paste an X post link and download its video or GIF in every quality. Free, no account, no API key. Also shows the post's likes, replies, reposts and views." />
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/x-video" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="X Video Downloader · three.ws" />
+		<meta property="og:description" content="Paste an X post link and download its video or GIF in every quality. Free, no account." />
+		<meta property="og:url" content="https://three.ws/x-video" />
+		<meta name="twitter:card" content="summary" />
+		<meta name="twitter:site" content="@trythreews" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			.xv-page { min-height: 100vh; background: var(--bg, #050505); color: var(--text, #f6f6f6); font-family: var(--font-body, 'Inter', system-ui, sans-serif); -webkit-font-smoothing: antialiased; }
+			.xv-wrap { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+			.xv-chip { display: inline-block; padding: 4px 11px; border: 1px solid var(--border, #2a2a2a); border-radius: 20px; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted, #a0a0a0); margin-bottom: 16px; }
+			.xv-wrap h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.02em; }
+			.xv-lede { color: var(--text-muted, #a0a0a0); margin: 0 0 28px; line-height: 1.55; }
+			.xv-form { display: flex; gap: 10px; flex-wrap: wrap; }
+			.xv-input { flex: 1 1 320px; min-width: 0; padding: 13px 14px; font: inherit; color: inherit; background: var(--surface, #0e0e0e); border: 1px solid var(--border, #2a2a2a); border-radius: 10px; }
+			.xv-input:hover { border-color: #444; }
+			.xv-input:focus-visible, .xv-btn:focus-visible, .xv-dl:focus-visible { outline: 2px solid var(--accent-violet, #7c5df3); outline-offset: 2px; }
+			.xv-btn { padding: 13px 22px; font: inherit; font-weight: 600; color: #fff; background: var(--accent-violet, #7c5df3); border: 0; border-radius: 10px; cursor: pointer; transition: filter 0.15s, transform 0.05s; }
+			.xv-btn:hover { filter: brightness(1.12); }
+			.xv-btn:active { transform: translateY(1px); }
+			.xv-btn[disabled] { opacity: 0.55; cursor: progress; }
+			.xv-status { margin-top: 18px; min-height: 22px; }
+			.xv-error { padding: 14px 16px; border: 1px solid #6b2a2a; background: rgba(220, 70, 70, 0.08); border-radius: 10px; line-height: 1.5; }
+			.xv-error strong { display: block; margin-bottom: 2px; }
+			.xv-card { margin-top: 24px; border: 1px solid var(--border, #2a2a2a); background: var(--surface, #0e0e0e); border-radius: 14px; overflow: hidden; }
+			.xv-author { display: flex; align-items: center; gap: 12px; padding: 16px 18px 0; }
+			.xv-avatar { width: 40px; height: 40px; border-radius: 50%; background: #222; object-fit: cover; flex: none; }
+			.xv-name { font-weight: 600; overflow-wrap: anywhere; }
+			.xv-handle { color: var(--text-muted, #a0a0a0); font-size: 13px; }
+			.xv-text { padding: 12px 18px 0; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+			.xv-metrics { display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 12px 18px 16px; margin: 0; list-style: none; color: var(--text-muted, #a0a0a0); font-size: 13px; }
+			.xv-metrics b { color: var(--text, #f6f6f6); font-variant-numeric: tabular-nums; }
+			.xv-video { display: block; width: 100%; max-height: 420px; background: #000; }
+			.xv-list { list-style: none; margin: 0; padding: 6px 18px 16px; }
+			.xv-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border, #2a2a2a); }
+			.xv-row:first-child { border-top: 0; }
+			.xv-q { font-weight: 600; min-width: 64px; }
+			.xv-meta { color: var(--text-muted, #a0a0a0); font-size: 13px; flex: 1; }
+			.xv-dl { padding: 8px 16px; color: #fff; background: var(--accent-violet, #7c5df3); border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; transition: filter 0.15s; }
+			.xv-dl:hover { filter: brightness(1.12); }
+			.xv-skel { height: 14px; border-radius: 6px; background: linear-gradient(90deg, #1a1a1a, #262626, #1a1a1a); background-size: 200% 100%; animation: xv-shimmer 1.2s linear infinite; margin: 18px; }
+			@keyframes xv-shimmer { to { background-position: -200% 0; } }
+			@media (prefers-reduced-motion: reduce) { .xv-skel { animation: none; } }
+			.xv-foot { margin-top: 32px; color: var(--text-muted, #a0a0a0); font-size: 13px; line-height: 1.6; }
+			.xv-foot a { color: inherit; }
+		</style>
+	</head>
+	<body>
+		<div class="xv-page">
+			<div id="nav-container"></div>
+			<script type="module" src="/nav.js"></script>
+
+			<main class="xv-wrap">
+				<span class="xv-chip">Free tool</span>
+				<h1>X video downloader.</h1>
+				<p class="xv-lede">Paste the link to any public X post. Get its video or GIF in every quality, plus the post's likes, replies, reposts and views. No account, no API key.</p>
+
+				<form class="xv-form" id="xv-form" novalidate>
+					<label for="xv-url" class="sr-only" style="position:absolute;left:-9999px">X post link</label>
+					<input class="xv-input" id="xv-url" name="url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://x.com/trythreews/status/1234567890" required />
+					<button class="xv-btn" id="xv-go" type="submit">Get video</button>
+				</form>
+
+				<div class="xv-status" id="xv-status" role="status" aria-live="polite"></div>
+				<div id="xv-result"></div>
+
+				<p class="xv-foot">Works on public posts only. Downloads stream through three.ws from X's own media servers; nothing is stored. Only download content you have the right to save. Developers: the same reader powers <code>POST /api/x-video/extract</code>.</p>
+			</main>
+
+			<div id="footer-container"></div>
+			<script src="/footer.js" defer></script>
+		</div>
+		<script type="module" src="/src/x-video.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

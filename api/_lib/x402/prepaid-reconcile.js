@@ -5,7 +5,6 @@
 // scripts/x402-prepaid-reconcile.mjs.
 
 import { reconcile } from './prepaid-ledger.js';
-import { depositWalletUsdcBalance } from './prepaid-chain.js';
 
 const usd = (a) => (Number(a) / 1e6).toFixed(6);
 
@@ -25,6 +24,7 @@ export async function reconcileReport({ checkChain = false } = {}) {
 
 	let chainBalance = null;
 	if (checkChain) {
+		const { depositWalletUsdcBalance } = await import('./prepaid-chain.js');
 		chainBalance = await depositWalletUsdcBalance();
 		if (chainBalance !== null && chainBalance < r.heldAtomics) problems.push('wallet_short_of_held');
 	}

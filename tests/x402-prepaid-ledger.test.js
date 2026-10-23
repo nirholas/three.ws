@@ -21,7 +21,7 @@ const ledger = await import('../api/_lib/x402/prepaid-ledger.js');
 const settle = await import('../api/_lib/x402/prepaid-settle.js');
 const { reconcileReport } = await import('../api/_lib/x402/prepaid-reconcile.js');
 const { servePrepaid } = await import('../api/_lib/x402/prepaid-route.js');
-const { PREPAID_ASSET, PREPAID_NETWORK } = await import('../api/_lib/x402/prepaid-chain.js');
+const { PREPAID_ASSET, PREPAID_NETWORK } = await import('../api/_lib/x402/prepaid-constants.js');
 
 const MIGRATION = new URL(
 	'../api/_lib/migrations/20261023160000_x402_prepaid_ledger.sql',

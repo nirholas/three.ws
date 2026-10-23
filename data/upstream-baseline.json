@@ -1,20 +1,20 @@
 {
 	"generated": "scripts/audit-upstreams.mjs",
 	"summary": {
-		"total": 248,
+		"total": 264,
 		"grades": {
 			"A": 0,
-			"B": 55,
-			"C": 107,
-			"D": 86,
+			"B": 57,
+			"C": 115,
+			"D": 92,
 			"F": 0
 		},
 		"protections": {
-			"deadline": 248,
-			"retry": 112,
-			"failover": 50,
-			"lastGood": 5,
-			"breaker": 103
+			"deadline": 264,
+			"retry": 121,
+			"failover": 51,
+			"lastGood": 6,
+			"breaker": 112
 		}
 	},
 	"sites": {
@@ -70,7 +70,6 @@
 		"api/_providers/replicate.js::api.replicate.com::fetchUpstream": "C",
 		"api/_providers/rodin.js::api.hyper3d.com::fetchUpstream": "C",
 		"api/_providers/stability.js::api.stability.ai::fetchUpstream": "C",
-		"api/_providers/tripo.js::api.tripo3d.ai::fetchUpstream": "C",
 		"api/agents/[id]/memory-seed-x.js::api.twitter.com::fetchUpstream": "C",
 		"api/agents/alpha.js::frontend-api-v3.pump.fun::pumpFetchJson": "C",
 		"api/agents/alpha.js::api.dexscreener.com::fetchUpstreamJson": "C",
@@ -112,7 +111,6 @@
 		"api/pinning/[action].js::api.pinata.cloud::fetch": "D",
 		"api/pinning/[action].js::api.web3.storage::fetch": "D",
 		"api/portfolio/[action].js::coins.llama.fi::fetchFirstOrNull": "B",
-		"api/pump-fun-mcp.js::publish.twitter.com::fetch": "D",
 		"api/pump/[action].js::api.github.com::fetch": "D",
 		"api/pump/dex-trades.js::api.geckoterminal.com::fetch": "D",
 		"api/pump/launch-og.js::frontend-api-v3.pump.fun::pumpFetchJson": "C",
@@ -192,7 +190,6 @@
 		"src/agent-skills-pumpfun-compose.js::pump-fun-sdk.modelcontextprotocol.name::fetch": "D",
 		"src/erc8004/agent-registry.js::api.pinata.cloud::fetch": "D",
 		"src/shared/wallet-networth.js::lite-api.jup.ag::fetch": "D",
-		"src/social/x-post-impact.js::publish.twitter.com::fetch": "D",
 		"api/_lib/print/ops-notify.js::api.telegram.org::fetchUpstream": "C",
 		"workers/agent-sniper/risk-officer.js::openrouter.ai::fetch": "D",
 		"api/_lib/globe-sources.js::data.gdeltproject.org::fetchUpstream": "C",
@@ -213,6 +210,23 @@
 		"api/_lib/predictions/solana-venue.js::clob.polymarket.com::fetchUpstreamJson": "C",
 		"api/_lib/predictions/solana-venue.js::api.elections.kalshi.com::fetchUpstreamJson": "C",
 		"api/_lib/tool-gateway/web.js::api.duckduckgo.com::fetchUpstreamJson": "C",
-		"src/dextools-boost-embed.js::api.dexscreener.com::fetch": "D"
+		"src/dextools-boost-embed.js::api.dexscreener.com::fetch": "D",
+		"api/_lib/cloud-domains.js::iamcredentials.googleapis.com::fetchUpstream": "C",
+		"api/_lib/gateway/discord-activity-auth.js::discord.com::fetch": "D",
+		"api/_lib/market-anomaly-sources.js::api.llama.fi::fetchUpstreamJson": "C",
+		"api/_lib/market-anomaly-sources.js::stablecoins.llama.fi::fetchUpstreamJson": "C",
+		"api/_lib/papertrade/index.js::exchange.papertrade.xyz__expr__::fetchUpstreamJson": "C",
+		"api/_lib/papertrade/index.js::rpc.hyperliquid.xyz::fetchUpstreamJson": "B",
+		"api/_lib/papertrade/index.js::api.hyperliquid.xyz::fetchUpstreamJson": "C",
+		"api/_lib/papertrade/index.js::exchange.papertrade.xyz::fetchUpstream": "C",
+		"api/_lib/pump-claims-github.js::api.github.com__expr__::fetch": "D",
+		"api/_lib/pump-claims-github.js::frontend-api-v3.pump.fun::fetch": "D",
+		"api/_lib/shopify/graphql.js::__expr__::fetch": "D",
+		"api/_lib/vroid/client.js::hub.vroid.com::fetchUpstream": "C",
+		"api/_lib/x402-services/places.js::overpass-api.de::fetch": "D",
+		"api/_providers/tripo.js::openapi.tripo3d.com::fetchUpstream": "C",
+		"api/shopify/callback.js::__expr__::fetch": "D",
+		"src/desktop/os/apps/weather-data.js::api.open-meteo.com::fetch": "D",
+		"src/runtime/whisper-stt.js::esm.sh::loadModule": "B"
 	}
 }

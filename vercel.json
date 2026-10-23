@@ -3170,6 +3170,14 @@
 			"dest": "/splat.html"
 		},
 		{
+			"src": "/x-video",
+			"dest": "/x-video.html"
+		},
+		{
+			"src": "/x-video/",
+			"dest": "/x-video.html"
+		},
+		{
 			"src": "/capture",
 			"dest": "/capture.html"
 		},
@@ -5767,6 +5775,14 @@
 		{
 			"src": "/api/auth/extension-token",
 			"dest": "/api/auth/extension-token.js"
+		},
+		{
+			"src": "/api/auth/agent-signup",
+			"dest": "/api/auth/agent-signup.js"
+		},
+		{
+			"src": "/api/billing/agent-upgrade",
+			"dest": "/api/billing/agent-upgrade.js"
 		},
 		{
 			"src": "/api/auth/handoff",

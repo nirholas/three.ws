@@ -71,3 +71,24 @@ test('withRpcRetry: a non-transient error throws immediately, no retries', async
 	);
 	assert.equal(calls, 1);
 });
+
+test('rateLimitWaitMs reads the provider reset window, caps it, and ignores other errors', async () => {
+	const { rateLimitWaitMs } = await import('../src/rpc.js');
+	assert.equal(rateLimitWaitMs(Object.assign(new Error('x'), { cause: { code: 429, message: 'Rate Limit Hit, limit will reset in 60 seconds' } })), 60_000);
+	assert.equal(rateLimitWaitMs(new Error('Rate Limit Hit')), 10_000);
+	assert.equal(rateLimitWaitMs(new Error('limit will reset in 900 seconds, rate limit')), 65_000);
+	assert.equal(rateLimitWaitMs(new Error('execution reverted')), null);
+});
+
+test('withRpcPatience waits out a rate limit window and then succeeds', async () => {
+	const { withRpcPatience } = await import('../src/rpc.js');
+	let calls = 0;
+	const waits = [];
+	const out = await withRpcPatience(async () => {
+		calls += 1;
+		if (calls <= 4) throw Object.assign(new Error('Rate Limit Hit, limit will reset in 30 seconds'), { status: 429 });
+		return 'ok';
+	}, { baseDelayMs: 1, sleep: async (ms) => { waits.push(ms); } });
+	assert.equal(out, 'ok');
+	assert.deepEqual(waits, [30_000]);
+});

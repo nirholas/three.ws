@@ -27,14 +27,17 @@ const DECIMALS = 6;
 const unit = (n) => BigInt(Math.round(n * 10 ** DECIMALS));
 const conn = new Connection(RPC, 'confirmed');
 
-if (!/devnet/i.test(RPC) && !process.env.ALLOW_NON_DEVNET_NAMED_RPC) {
-	console.error('refusing to run: DEVNET_RPC_URL must be a devnet endpoint');
-	process.exit(2);
-}
-const genesis = await conn.getGenesisHash();
-if (genesis !== 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG') {
-	console.error(`refusing to run: genesis ${genesis} is not devnet`);
-	process.exit(2);
+// DEVNET_GENESIS is the real cluster. A local validator that cloned the program
+// from devnet (LOCAL_VALIDATOR=1, http://127.0.0.1) is accepted only for fast
+// iteration; the recorded transcript for the work order is the devnet run.
+const DEVNET_GENESIS = 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG';
+const local = process.env.LOCAL_VALIDATOR === '1' && /^http:\/\/(127\.0\.0\.1|localhost)/.test(RPC);
+if (!local) {
+	const genesis = await conn.getGenesisHash();
+	if (genesis !== DEVNET_GENESIS) {
+		console.error(`refusing to run: genesis ${genesis} is not devnet`);
+		process.exit(2);
+	}
 }
 
 const transcript = [];

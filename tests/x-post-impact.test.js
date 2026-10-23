@@ -88,9 +88,9 @@ describe('correlateXPost', () => {
 		expect(r.deltaVolPct).toBeLessThan(0);
 	});
 
-	it('returns post=null when every post rung throws, still computes price delta', async () => {
+	it('returns post=null when every post rung fails mid-body, still computes price delta', async () => {
 		route({
-			post: () => Promise.reject(new Error('network error')),
+			post: { ok: true, status: 200, text: async () => '{not json' },
 			quotes: [quoteRes(10000, 50_000_000_000), quoteRes(10000, 50_000_000_000)],
 		});
 

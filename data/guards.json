@@ -1,5 +1,5 @@
 {
-	"updated": "2026-10-09",
+	"updated": "2026-10-23",
 	"summary": "Every mechanical guard that protects this repository, and the stage each one runs in. This file is the single source of truth: scripts/audit-guards.mjs proves every entry is real and every stage claim is true, docs/guards.md explains them, and /guards renders them.",
 	"stages": [
 		{
@@ -1699,6 +1699,48 @@
 			"proof": {
 				"kind": "live",
 				"reason": "The thing under test is what xAI serves today, read from its models API or its public model docs. There is no offline input whose mutation proves anything about a third party's live catalog, and the comparison never sends a prompt or spends a token. The key, when set, is only ever sent to api.x.ai."
+			}
+		},
+		{
+			"id": "check-mcp-counts",
+			"script": "scripts/check-mcp-counts.mjs",
+			"npm": "check:mcp-counts",
+			"title": "Quoted MCP counts match the census",
+			"protects": "Every tool, resource and prompt count a living doc quotes for a three.ws MCP server equals the census in public/tools.json.",
+			"why": "MCP tools are added weekly and the same number is quoted in READMEs, plugin docs and the architecture overview. Without a check each quote drifts on its own schedule, and a buyer reads 22 tools on a server that serves 40. Counts are written through a marker, so a stale number fails the gate and `--fix` rewrites it from the census.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A living doc whose marker claims a tool count the census does not have.",
+				"violation": {
+					"write": {
+						"docs/guard-proof-mcp-count.md": "# Proof fixture\n\nThe 3D server has <!-- mcp-count:mcp-3d.tools -->9999<!-- /mcp-count --> tools.\n"
+					}
+				},
+				"expect": "guard-proof-mcp-count.md"
+			}
+		},
+		{
+			"id": "check-site-builder-embeds",
+			"script": "scripts/check-site-builder-embeds.mjs",
+			"npm": "check:site-builder-embeds",
+			"title": "Site-builder pinned releases match the ledger",
+			"protects": "The WordPress, Framer and Webflow pinned-release files name the same <agent-3d> release as the release ledger.",
+			"why": "Each site-builder integration ships a pinned copy of the agent-3d version it embeds, so a customer's site never floats onto an unreviewed build. When the ledger moves and a pin does not, one integration silently serves an old component. The guard regenerates the expected bytes from the ledger and fails on any difference; `--fix` rewrites them.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A pinned-release file edited by hand so it no longer matches the ledger.",
+				"violation": {
+					"append": {
+						"integrations/webflow/src/pinned-release.ts": "\n// Hand-edited inside the guard sandbox, so the pin no longer matches the ledger.\n"
+					}
+				},
+				"expect": "does not match the ledger"
 			}
 		},
 		{

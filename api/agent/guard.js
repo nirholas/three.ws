@@ -29,6 +29,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { solUsdPrice } from '../_lib/avatar-wallet.js';
 import { GuardChain, SpendGuard, TradeGuard, createX402Hook } from '@three-ws/agent-runtime';
 import { registerDelegation, checkDelegationSpend, DelegationError } from '../_lib/agent-spend-delegation.js';
+import { checkAgentAllowanceSpend } from '../_lib/onchain-allowance-store.js';
 
 const MAX_CALLS = 20;
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
@@ -272,7 +273,38 @@ export default wrap(async function handler(req, res) {
 			}
 		}
 
-		verdicts.push({ apiName: call.apiName, identifier: call.identifier, verdict, delegation });
+		// An owner-funded on-chain allowance is a hard ceiling on pulls from the
+		// owner's wallet: the live remaining amount is read from the program's
+		// own account, so a pull the program would reject is refused here, before
+		// any transaction is built. Only `allowance_pull` calls are measured.
+		let allowance;
+		if (isUuid(agentId) && call.apiName === 'allowance_pull') {
+			const mint = call.arguments?.mint ?? call.token;
+			const amount = call.arguments?.amountRaw ?? call.arguments?.amount_raw;
+			try {
+				const result = await checkAgentAllowanceSpend({ agentId, network: body.network || 'mainnet', mint, amount });
+				if (result.gated) {
+					allowance = {
+						allow: result.allow,
+						code: result.code,
+						reason: result.reason,
+						detail: result.detail,
+						allowanceId: result.allowance?.id,
+						remaining: result.live?.remaining,
+					};
+					if (!result.allow && verdict.decision !== 'block') {
+						verdict.decision = 'block';
+						verdict.blockedBy = 'onchain_allowance';
+						verdict.code = result.code;
+						verdict.reason = result.reason;
+					}
+				}
+			} catch (e) {
+				verdict.blindSpots = [...(verdict.blindSpots || []), `onchain allowance unreadable: ${e?.message || 'rpc error'}`];
+			}
+		}
+
+		verdicts.push({ apiName: call.apiName, identifier: call.identifier, verdict, delegation, allowance });
 	}
 
 	const payload = { engine: '@three-ws/agent-runtime', verdicts };

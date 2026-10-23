@@ -2743,6 +2743,10 @@ export default async function handler(req, res, id, action) {
 	}
 	if (action === 'policy') return handlePolicy(req, res, id);
 	if (action === 'delegation') return handleDelegation(req, res, id);
+	if (action === 'allowance') {
+		const mod = await import('./solana-allowance.js');
+		return mod.handleAllowance(req, res, id);
+	}
 	if (action === 'tip') return handleTip(req, res, id);
 	if (action === 'royalty') return handleRoyalty(req, res, id);
 	if (action === 'stream') return handleStream(req, res, id);

@@ -25,12 +25,9 @@ import { ataExists } from '../solana/read-guards.js';
 import { submitProtected } from '../execution-engine.js';
 import { tokenProgramIdForMint } from '../token/token-program.js';
 import { loadSignerKeypair, SOLANA_SIGNERS } from '../solana-signers.js';
-import { NETWORK_SOLANA_MAINNET } from '../x402-spec.js';
+import { PREPAID_NETWORK, USDC_MINT_SOLANA, USDC_DECIMALS, PREPAID_ASSET } from './prepaid-constants.js';
 
-export const PREPAID_NETWORK = NETWORK_SOLANA_MAINNET;
-export const USDC_MINT_SOLANA = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
-export const USDC_DECIMALS = 6;
-export const PREPAID_ASSET = USDC_MINT_SOLANA;
+export { PREPAID_NETWORK, USDC_MINT_SOLANA, USDC_DECIMALS, PREPAID_ASSET };
 
 const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 const SETTLER_SPEC = SOLANA_SIGNERS.find((s) => s.name === 'x402-prepaid-settler');

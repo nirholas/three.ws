@@ -60,7 +60,7 @@ describe('readXPost', () => {
 		expect(p.metrics).toMatchObject({ likes: 120, replies: 9, views: null });
 		expect(p.ts).toBe(Date.parse('2026-10-01T12:00:00.000Z'));
 		const v = postVideoVariants(p);
-		expect(v.map((x) => x.quality)).toEqual(['720p', '360p'].map((q, i) => (i === 0 ? q : v[1].quality)));
+		expect(v.map((x) => x.quality)).toEqual(['720p', '320p']);
 		expect(v[0].width).toBe(1280);
 		expect(v.every((x) => x.url.endsWith('.mp4') || x.url.includes('.mp4?'))).toBe(true);
 		expect(v).toHaveLength(2);
