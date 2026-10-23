@@ -517,3 +517,7 @@
 	.apx-skel-bar, .apx-skel-stats > div, .apx-skel-card, .apx-live[data-state='live'] .apx-live-dot { animation: none; }
 	.apx-modal, .apx-modal-back, .apx-banner, .apx-alert, .apx-order, .apx-hist { animation: none; }
 }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.apx-ack:hover { color: var(--ink-bright, var(--ink)); }
+.apx-switch:hover { color: var(--ink-bright, var(--ink)); }

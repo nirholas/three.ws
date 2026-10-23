@@ -1277,3 +1277,6 @@
 .lx-lanes[open] > summary {
 	margin-bottom: 4px;
 }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.lx-lanes > summary:hover { filter: brightness(1.2); }

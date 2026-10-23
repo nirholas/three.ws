@@ -1177,3 +1177,6 @@ body {
 		transition-duration: 0.01ms !important;
 	}
 }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.fd-retry:hover { filter: brightness(1.2); text-decoration-thickness: 2px; }

@@ -263,3 +263,7 @@ dialog.tm-dialog[open] { animation: tm-in var(--tm-base) ease both; }
 	.tm-btn, .tm-card, .tm-stage agent-3d { transition: none; }
 	.tm-btn:hover, .tm-card:hover { transform: none; }
 }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.tm-check:hover { filter: brightness(1.25); }
+.tm-ev summary:hover { color: var(--tm-accent-2); }

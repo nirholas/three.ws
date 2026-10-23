@@ -277,3 +277,7 @@
 	.ac-card { border-color: #ccc; background: #fff; color: #000; }
 	.ac-wrap { padding: 0; }
 }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.ac-disclosure > summary:hover { filter: brightness(1.15); }
+.ac-row-extra summary:hover { color: var(--ink); }

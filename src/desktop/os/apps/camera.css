@@ -56,3 +56,6 @@
 .napp-camera .cam-hint { color: var(--text2); font-size: 0.78rem; text-align: right; }
 @media (max-width: 520px) { .napp-camera .cam-bar { grid-template-columns: auto 1fr; } .napp-camera .cam-strip { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; } .napp-camera .cam-seg span { display: none; } }
 @media (prefers-reduced-motion: reduce) { .napp-camera * { animation-duration: 0.01ms !important; transition: none !important; } }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.napp-camera .cam-seg button:hover { background: var(--hover); }

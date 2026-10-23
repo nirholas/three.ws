@@ -528,3 +528,7 @@
 		transition: none;
 	}
 }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.ds-dock-toggle:hover { border-color: var(--ds-accent); }
+.ds-toast-action:hover { filter: brightness(1.1); }

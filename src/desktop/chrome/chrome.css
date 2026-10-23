@@ -1293,3 +1293,6 @@ button.ls-chip:active {
 .os-tb.os-assist .ico {
 	color: var(--accent);
 }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.qs-slider input:hover { filter: brightness(1.25); }

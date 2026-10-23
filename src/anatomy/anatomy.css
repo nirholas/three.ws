@@ -783,3 +783,7 @@
 		animation: none;
 	}
 }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.anx-pname:hover { background: color-mix(in srgb, var(--anx-accent) 14%, transparent); }
+.anx-range:hover { filter: brightness(1.2); }

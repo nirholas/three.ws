@@ -2,7 +2,7 @@
 html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 body { background: var(--bg); touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 
-#ufo-canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: pointer; }
+#ufo-canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
 
 .bar {
 	position: fixed; top: 0; left: 0; right: 0; z-index: 10;

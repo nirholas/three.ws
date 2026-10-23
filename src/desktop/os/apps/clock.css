@@ -117,3 +117,6 @@
 .napp-clock .clk-laplist small { min-width: 80px; text-align: right; }
 @media (max-width: 460px) { .napp-clock .clk-hero { flex-direction: column; text-align: center; } .napp-clock .clk-swbig { font-size: 3rem; } }
 @media (prefers-reduced-motion: reduce) { .napp-clock * { animation: none !important; transition: none !important; } }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.napp-clock .clk-switch:hover { filter: brightness(1.25); }

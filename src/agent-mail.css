@@ -555,3 +555,7 @@ body.am-modal-open { overflow: hidden; }
 	.am-item--skel, .am-rule--skel, .am-event--skel, .am-skel-bar, .am-skel-split > div, .am-skel-line, .am-skel-block { animation: none; }
 	.am-item, .am-reader, .am-confirm, .am-rule, .am-event, .am-rule-form, .am-modal, .am-modal-back { animation: none; }
 }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.am-switch:hover { color: var(--ink-bright, var(--ink)); }
+.am-switch input:hover { border-color: var(--accent); }

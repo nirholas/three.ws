@@ -56,3 +56,6 @@
 .napp-paint .pt-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 .napp-paint .pt-btn:hover { filter: brightness(1.1); }
 @media (max-width: 640px) { .napp-paint .pt-ab span { display: none; } .napp-paint .pt-swatches { grid-template-columns: repeat(10, 22px); } .napp-paint .pt-sw { width: 22px; height: 22px; } }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.napp-paint .pt-color:hover { border-color: var(--text2); }

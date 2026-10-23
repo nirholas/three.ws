@@ -92,3 +92,6 @@ body { margin: 0; background: var(--ev-bg); color: var(--ev-ink); font-family: v
 .ev-chip:focus-visible, .ev-link:focus-visible, .ev-pin:focus-visible, .ev-more:focus-visible, .ev-go:focus-visible, .ev-btn:focus-visible { outline: 2px solid var(--ev-accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .ev-skel > span { animation: none; } .ev-go-arrow, .ev-chip, .ev-go { transition: none; } }
 .ev-block-after { margin-top: 32px; }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.ev-btn:hover { filter: brightness(1.1); }

@@ -1408,3 +1408,8 @@ textarea.md-input {
 		animation-duration: 3s;
 	}
 }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.md-check:hover { filter: brightness(1.15); }
+.md-details > summary:hover { color: var(--ink-bright, var(--ink)); }
+.md-range:hover { filter: brightness(1.15); }

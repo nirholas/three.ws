@@ -649,3 +649,6 @@ select.fw-input option { background: var(--bg-1); color: var(--ink-bright); }
 	.fw-toast { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 	.fw-edge.is-flowing { stroke-dasharray: none; }
 }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.fw-check:hover { color: var(--ink); }

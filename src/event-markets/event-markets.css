@@ -235,3 +235,7 @@
 [data-staking] select:focus-visible, [data-staking] input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 [data-staking] .row { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: flex-end; }
 [data-staking] .em-check { display: flex; gap: .5rem; align-items: center; margin: .4rem 0; }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.em-cal-table summary:hover { color: var(--ink); }
+.em-table summary:hover { color: var(--ink); }

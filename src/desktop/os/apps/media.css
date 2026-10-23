@@ -63,3 +63,6 @@
 	.napp-media .md-ctl { grid-template-columns: 1fr; justify-items: center; }
 	.napp-media .md-vol { width: 60px; }
 }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.napp-media input[type=range]:hover { filter: brightness(1.3); }

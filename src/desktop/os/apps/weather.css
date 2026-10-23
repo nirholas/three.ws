@@ -78,3 +78,6 @@
 	.napp-weather .wx-ico *, .napp-weather .wx-skel .sk, .napp-weather .wx-spin-ring { animation: none !important; }
 }
 @media (max-width: 520px) { .napp-weather .wx-hero { flex-direction: column-reverse; text-align: center; } }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.napp-weather .wx-seg button:hover { background: var(--hover); }

@@ -473,3 +473,9 @@
 		transform: none;
 	}
 }
+
+/* Hover feedback for the controls above that set cursor: pointer. */
+.si-ack:hover { color: var(--ink, #e8e8e8); }
+.si-excluded summary:hover { color: var(--accent); }
+.si-raw summary:hover { color: var(--ink, #e8e8e8); }
+.si-req-hit:hover { background: color-mix(in srgb, currentColor 6%, transparent); }
