@@ -7144,6 +7144,10 @@
 			"schedule": "23 * * * *"
 		},
 		{
+			"path": "/api/cron/mcp-registry-sentinel",
+			"schedule": "41 6 * * *"
+		},
+		{
 			"path": "/api/cron/relayer-balance-check",
 			"schedule": "0 */6 * * *"
 		},
