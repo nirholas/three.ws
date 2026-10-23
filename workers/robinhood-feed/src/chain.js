@@ -6,7 +6,7 @@
 import { createHoodClient, MAINNET_ADDRESSES, TESTNET_ADDRESSES } from 'hoodchain';
 import { erc20Abi, fallback, http } from 'viem';
 import { config } from './config.js';
-import { withRpcRetry } from './rpc.js';
+import { withRpcRetry, withRpcPatience } from './rpc.js';
 
 /**
  * Shared read-only client. Multicall batching is on by default in the SDK.
@@ -62,7 +62,7 @@ export async function resolveMeta(token) {
 	let name = null;
 	let symbol = null;
 	try {
-		const [n, s] = await withRpcRetry(() => hood.public.multicall({
+		const [n, s] = await withRpcPatience(() => hood.public.multicall({
 			contracts: [
 				{ address: token, abi: erc20Abi, functionName: 'name' },
 				{ address: token, abi: erc20Abi, functionName: 'symbol' },
@@ -97,7 +97,7 @@ export async function blockTimeMs(blockNumber) {
 	if (_blockTs.has(key)) return _blockTs.get(key);
 	let ms = null;
 	try {
-		const block = await withRpcRetry(() => hood.public.getBlock({ blockNumber: BigInt(blockNumber) }));
+		const block = await withRpcPatience(() => hood.public.getBlock({ blockNumber: BigInt(blockNumber) }));
 		ms = Number(block.timestamp) * 1000;
 	} catch {
 		ms = null;
