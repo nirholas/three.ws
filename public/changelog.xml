@@ -47,6 +47,14 @@
 			<description>One keyless reader for public X posts, shared by the price-impact tools and the free X video page: how it fetches, what it returns and where it is used.</description>
 		</item>
 		<item>
+			<title>Docs: Agent self-onboarding</title>
+			<link>https://three.ws/docs/agent-self-onboarding</link>
+			<guid isPermaLink="false">2026-10-23:Docs: Agent self-onboarding</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>An agent signs itself up with a Solana key and no email, gets an account, a wallet and an API key, and buys a paid plan with one x402 payment. Challenge format, errors, limits and the CLI.</description>
+		</item>
+		<item>
 			<title>install.md</title>
 			<link>https://three.ws/install.md</link>
 			<guid isPermaLink="false">2026-10-23:install.md</guid>
@@ -101,6 +109,14 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>An agent's own address can now receive verification emails and hand back the one-time code or sign-in link. New inbox_list, inbox_read and inbox_wait_for_code tools read the code with a confidence score, only from services the owner lists under Code senders, only from authentic non-spam mail. Email bodies stay untrusted data and links are never fetched for the agent.</description>
+		</item>
+		<item>
+			<title>An agent can sign itself up and pay for its plan</title>
+			<link>https://three.ws/docs/agent-self-onboarding</link>
+			<guid isPermaLink="false">2026-10-23:An agent can sign itself up and pay for its plan</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>An autonomous agent now signs up with a Solana key and no email: it signs a single-use server challenge, receives an account, a custodial wallet and an API key, and can then buy the Builder or Scale plan with one USDC x402 payment on Solana. The CLI does the whole thing with `three-ws signup --agent`. Replayed or badly signed challenges are rejected, each key gets one account, and signups are rate limited and capped per day.</description>
 		</item>
 		<item>
 			<title>AR Studio source now lives in the monorepo</title>
@@ -293,6 +309,14 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>POST /api/skills/import now accepts idl_url or program_id. Each account type becomes a read tool that decodes it by address, each instruction a preview tool that builds the unsigned instruction with a plain summary, and a destructive send tool that hands it to the wallet confirm flow. A risk panel flags token movement, SOL spend, account closure and authority changes. Nothing the skill generates can sign.</description>
+		</item>
+		<item>
+			<title>x402 pay-for-what-you-use on Solana (upto)</title>
+			<link>https://three.ws/docs/x402-upto</link>
+			<guid isPermaLink="false">2026-10-23:x402 pay-for-what-you-use on Solana (upto)</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A paid route can now advertise an upto offer beside its fixed price: the buyer authorizes a cap, the seller measures the work and settles only that amount, and the rest of the escrowed deposit returns to the buyer. A handler that fails settles nothing. The LLM proxy is the first route converted (5 atomics per token, capped at 5x the flat price). Agent payers refuse a cap above their per-call limit before signing, and the unused part of the cap is released from their budget. Existing exact clients are unaffected.</description>
 		</item>
 		<item>
 			<title>.well-known/skill.md</title>

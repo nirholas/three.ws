@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "An agent can sign itself up and pay for its plan",
+			"summary": "An autonomous agent now signs up with a Solana key and no email: it signs a single-use server challenge, receives an account, a custodial wallet and an API key, and can then buy the Builder or Scale plan with one USDC x402 payment on Solana. The CLI does the whole thing with `three-ws signup --agent`. Replayed or badly signed challenges are rejected, each key gets one account, and signups are rate limited and capped per day.",
+			"tags": ["feature", "sdk"],
+			"link": "/docs/agent-self-onboarding"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "x402 pay-for-what-you-use on Solana (upto)",
 			"summary": "A paid route can now advertise an upto offer beside its fixed price: the buyer authorizes a cap, the seller measures the work and settles only that amount, and the rest of the escrowed deposit returns to the buyer. A handler that fails settles nothing. The LLM proxy is the first route converted (5 atomics per token, capped at 5x the flat price). Agent payers refuse a cap above their per-call limit before signing, and the unused part of the cap is released from their budget. Existing exact clients are unaffected.",
 			"tags": ["feature", "improvement"],

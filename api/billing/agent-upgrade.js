@@ -24,7 +24,7 @@ import { cors, method, wrap, error, json, rateLimited } from '../_lib/http.js';
 import { extractBearer, authenticateBearer, hasScope } from '../_lib/auth.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
-import { buildBazaarSchema } from '../_lib/x402-spec.js';
+import { buildBazaarSchema, resolveResourceUrl } from '../_lib/x402-spec.js';
 import { getDevSubscription } from '../_lib/dev-plans/subscription.js';
 import { quoteDevPlanChange, recordX402DevPlanPayment } from '../_lib/dev-plans/billing.js';
 import { listDevPlans } from '../_lib/dev-plans/config.js';
@@ -76,7 +76,7 @@ function endpointFor(plan, atomics) {
 		streaming: true,
 		description: `three.ws developer plan upgrade (${plan}). Pay the quoted USDC on Solana to move the calling account to the ${plan} plan and receive a scoped API key.`,
 		bazaar: BAZAAR,
-		resourceUrlBuilder: () => `${ROUTE}?plan=${encodeURIComponent(plan)}`,
+		resourceUrlBuilder: (req) => resolveResourceUrl(req, `${ROUTE}?plan=${encodeURIComponent(plan)}`),
 		async handler({ req, res, requirement, payer, settled }) {
 			const { userId, apiKeyId } = req.agentUpgrade;
 			const receipt = await recordX402DevPlanPayment({

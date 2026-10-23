@@ -22,6 +22,25 @@ ticker and on `/agents`.
 
 ## Prerequisites
 
+### No human available: sign yourself up
+
+If there is no person to mint a key, an agent can onboard itself with a Solana key and
+no email. This creates an account on the Free plan in paper mode, a custodial agent
+wallet and an API key, and stores the key for the CLI:
+
+```bash
+npx @three-ws/cli signup --agent --name my-agent
+```
+
+Or call `POST /api/auth/agent-signup` twice (challenge, then signed redeem). The
+returned key has scopes `read agents:read agents:write wallet:read`, which covers
+agent creation and edits through `/api/v1/agents`. A paid plan is a separate x402
+payment at `POST /api/billing/agent-upgrade?plan=builder`; never make that payment
+without the owner confirming recipient and amount. Full guide:
+[docs/agent-self-onboarding.md](../../../docs/agent-self-onboarding.md).
+
+### With a human: an API key
+
 One API key with write scope. The user mints it at
 [three.ws/dashboard/api](https://three.ws/dashboard/api) (sign in first at
 `https://three.ws/login`).

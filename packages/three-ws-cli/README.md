@@ -44,6 +44,7 @@ bash packages/three-ws-cli/tests/container/run.sh
 npx @three-ws/cli setup --clients cursor,vscode --yes   # specific clients, no prompts
 npx @three-ws/cli setup --project                       # project-scoped config in this directory
 npx @three-ws/cli login --device                        # sign in over SSH
+npx @three-ws/cli signup --agent                        # an agent signs itself up: Solana key, account, wallet, API key, no email
 npx @three-ws/cli link BCDF-GHJK                        # link this terminal with a code from /dashboard/account
 npx @three-ws/cli mcp list --available                  # every server and its name
 npx @three-ws/cli tools --server three-ws-main --enable financial

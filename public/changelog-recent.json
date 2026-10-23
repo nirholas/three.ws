@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-23T22:31:41.495Z",
+	"generated_at": "2026-10-23T22:37:17.865Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4143,
+	"total": 4146,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -55,6 +55,16 @@
 			"title": "Docs · X post reader and free video tool",
 			"summary": "One keyless reader for public X posts, shared by the price-impact tools and the free X video page: how it fetches, what it returns and where it is used.",
 			"link": "/docs/x-video",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Docs: Agent self-onboarding",
+			"summary": "An agent signs itself up with a Solana key and no email, gets an account, a wallet and an API key, and buys a paid plan with one x402 payment. Challenge format, errors, limits and the CLI.",
+			"link": "/docs/agent-self-onboarding",
 			"tags": [
 				"launch"
 			]
@@ -128,6 +138,17 @@
 			"link": "/agent-mail",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "An agent can sign itself up and pay for its plan",
+			"summary": "An autonomous agent now signs up with a Solana key and no email: it signs a single-use server challenge, receives an account, a custodial wallet and an API key, and can then buy the Builder or Scale plan with one USDC x402 payment on Solana. The CLI does the whole thing with `three-ws signup --agent`. Replayed or badly signed challenges are rejected, each key gets one account, and signups are rate limited and capped per day.",
+			"link": "/docs/agent-self-onboarding",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
@@ -373,6 +394,17 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "x402 pay-for-what-you-use on Solana (upto)",
+			"summary": "A paid route can now advertise an upto offer beside its fixed price: the buyer authorizes a cap, the seller measures the work and settles only that amount, and the rest of the escrowed deposit returns to the buyer. A handler that fails settles nothing. The LLM proxy is the first route converted (5 atomics per token, capped at 5x the flat price). Agent payers refuse a cap above their per-call limit before signing, and the unused part of the cap is released from their budget. Existing exact clients are unaffected.",
+			"link": "/docs/x402-upto",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -1527,39 +1559,6 @@
 			"link": "/forge",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "The @-mention reply bot now reports its own status, and /grok shows it live",
-			"summary": "A new public endpoint, /api/x/mention-bot/status, answers whether the @-mention reply bot is live, in dry run, or paused, how many handles it has replied on, how many replies it sent in the last 24 hours, and its median reply time. No mention text or author identity is included. The /grok page now shows this as a live section, and /api/healthz carries the same signal as a platform subsystem, so an operator sees a wedged reply queue or a rising error rate within the hour it starts, instead of the bot quietly going silent with no signature anywhere.",
-			"link": "/grok",
-			"tags": [
-				"feature",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "The campus is now a real place: daylight, walk-in buildings, photographic surfaces and real props",
-			"summary": "The 3D campus in front of the desktop is rebuilt to feel like walking through a real place rather than a dark game level. A physical sky and sun with soft shadows that follow you, hills on the horizon, a walled gate with lamps and a welcome sign, a lawn, concrete paths and a paved plaza. Every building is a room you walk into through its door: the brick office with a gabled roof, windows and a furnished desk; the marble-columned exchange with a ticker outside and over the dais inside; the forge with a glowing furnace; the gallery under a skylight, hanging the real avatars of the agents on the campus; a hillside mine with a timbered portal, rails and a cart; the launchpad with its rocket, gantry and crew cabin; a pergola plaza with a fountain; and a timber market hall with striped stalls. Walls, floors and roofs use CC0 photographic materials from Poly Haven, and trees, hedges, lamps, benches, bins, crates and barrels are real glTF models streamed from the three.ws object library, nearest first. Walls and furniture are solid for you and the agents, the camera never cuts through a wall, teleporting puts you at a building's door facing in, and quality adapts to the device (a software renderer always gets the lightest tier).",
-			"link": "/?world=1",
-			"tags": [
-				"feature",
-				"desktop"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "The desktop behaves like a real computer",
-			"summary": "Drag a selection box across the desktop, move icons on a snap grid, right-click for view options, and open every app from desktop icons or All Apps. Settings now covers your profile, theme, accent colour, wallpaper (including your own photo), icon size and taskbar, and the whole session (windows, icon layout, preferences) is saved in your browser, with export, import and reset.",
-			"link": "/docs/desktop",
-			"tags": [
-				"feature",
-				"desktop"
 			]
 		}
 	]

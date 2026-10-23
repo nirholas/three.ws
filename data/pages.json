@@ -5342,6 +5342,14 @@
 					"added": "2026-10-10"
 				},
 				{
+					"path": "/docs/agent-self-onboarding",
+					"title": "Docs: Agent self-onboarding",
+					"description": "An agent signs itself up with a Solana key and no email, gets an account, a wallet and an API key, and buys a paid plan with one x402 payment. Challenge format, errors, limits and the CLI.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-23"
+				},
+				{
 					"path": "/docs/agent-commerce",
 					"title": "Docs: Agent Commerce",
 					"description": "Let an agent invoice in USDC, SOL or $THREE with a Solana Pay link and QR verified on-chain, send money with a preview and confirm, sell and buy offers with fulfillment released on payment, and propose limit changes only the owner can approve. REST, MCP and webhook reference.",

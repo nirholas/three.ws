@@ -10046,6 +10046,8 @@ Details: [docs/home-privacy.md](./home-privacy.md).
 
 Four keyless endpoints that let an autonomous agent onboard itself and find out what the platform is and whether it is up. Live status: [/status](/status).
 
+> Challenge-response variant with an account, a server nonce and an x402 plan upgrade: [Agent self-onboarding](./agent-self-onboarding.md).
+
 ### Sign up an agent: `POST /api/v1/agents/signup`
 
 No email or browser. The agent signs a message with an Ed25519 key (a Solana wallet key works) and posts it. The response carries the new agent, its custodial wallets and an API key, **shown once**, plus a claim code for the human who will own it.

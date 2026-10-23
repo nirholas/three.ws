@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-23T22:31:41.436Z",
+	"generated_at": "2026-10-23T22:37:17.829Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -52,6 +52,16 @@
 			"title": "Docs · X post reader and free video tool",
 			"summary": "One keyless reader for public X posts, shared by the price-impact tools and the free X video page: how it fetches, what it returns and where it is used.",
 			"link": "/docs/x-video",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Docs: Agent self-onboarding",
+			"summary": "An agent signs itself up with a Solana key and no email, gets an account, a wallet and an API key, and buys a paid plan with one x402 payment. Challenge format, errors, limits and the CLI.",
+			"link": "/docs/agent-self-onboarding",
 			"tags": [
 				"launch"
 			]
@@ -125,6 +135,17 @@
 			"link": "/agent-mail",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "An agent can sign itself up and pay for its plan",
+			"summary": "An autonomous agent now signs up with a Solana key and no email: it signs a single-use server challenge, receives an account, a custodial wallet and an API key, and can then buy the Builder or Scale plan with one USDC x402 payment on Solana. The CLI does the whole thing with `three-ws signup --agent`. Replayed or badly signed challenges are rejected, each key gets one account, and signups are rate limited and capped per day.",
+			"link": "/docs/agent-self-onboarding",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
@@ -370,6 +391,17 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "x402 pay-for-what-you-use on Solana (upto)",
+			"summary": "A paid route can now advertise an upto offer beside its fixed price: the buyer authorizes a cap, the seller measures the work and settles only that amount, and the rest of the escrowed deposit returns to the buyer. A handler that fails settles nothing. The LLM proxy is the first route converted (5 atomics per token, capped at 5x the flat price). Agent payers refuse a cap above their per-call limit before signing, and the unused part of the cap is released from their budget. Existing exact clients are unaffected.",
+			"link": "/docs/x402-upto",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
