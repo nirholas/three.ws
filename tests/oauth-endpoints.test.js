@@ -128,7 +128,7 @@ const sqlMock = vi.fn(async (strings, ...values) => {
 			const rows = live.filter((r) => r.client_id === clientId);
 			return {
 				client_id: clientId, name: c.name, client_uri: c.client_uri ?? null, logo_uri: null, software_id: null, software_version: null,
-				authorized_at: rows[0].created_at ?? null, last_used_at: rows.map((r) => r.last_used_at).filter(Boolean).sort().pop() ?? null,
+				authorized_at: rows[0].created_at ?? null, last_used_at: rows.map((r) => r.last_used_at ?? r.created_at).filter(Boolean).sort().pop() ?? null,
 				scopes: rows.map((r) => r.scope).join(' '),
 			};
 		});
@@ -278,8 +278,8 @@ describe('GET /oauth/authorize', () => {
 		const res = await call('authorize', { query: authorizeQuery({ scope: 'memory:write' }) });
 		expect(res.statusCode).toBe(200);
 		expect(res.getHeader('content-type')).toContain('text/html');
-		expect(res.body).toContain('See your avatars');
-		expect(res.body).toContain('See your name and email');
+		expect(res.body).toContain('<li>Read your avatars</li>');
+		expect(res.body).toContain('<li>See your name and email</li>');
 		expect(res.body).not.toContain('Save and erase');
 	});
 
@@ -629,7 +629,8 @@ describe('POST /oauth/register for a cloud connector', () => {
 
 		const consent = await call('authorize', { query: { ...authorizeQuery({ client_id: body.client_id, redirect_uri: GROK.redirect_uris[0] }) } });
 		expect(consent.statusCode).toBe(200);
-		expect(consent.body).toContain('<b>Grok Bot</b> wants to connect to your three.ws account');
+		expect(consent.body).toContain('Authorize <b>Grok Bot</b>');
+		expect(consent.body).toContain('Site: grok.com');
 	});
 
 	it.each([
@@ -666,34 +667,34 @@ describe('consent screen for a cloud connector', () => {
 		...overrides,
 	});
 
-	it('names the client, its site host and where the code goes, and says it can never spend', async () => {
-		grok();
-		const res = await call('authorize', { query: authorizeQuery() });
-		expect(res.statusCode).toBe(200);
-		expect(res.body).toContain('<b>Grok Bot</b> wants to connect');
-		expect(res.body).toContain('<dd data-fact="client-host">grok.com</dd>');
-		expect(res.body).toContain('<dd data-fact="return-host">client.example</dd>');
-		expect(res.body).toContain('three.ws has not verified this app');
-		expect(res.body).toContain('It can never spend from your wallet.');
-		expect(res.body).toContain('<li>See your avatars</li>');
-		expect(res.body).toContain('<li>See your name and email address</li>');
-	});
-
-	it('keeps the spend scope out of the list and behind an unticked box', async () => {
-		grok();
-		const res = await call('authorize', { query: authorizeQuery() });
-		const list = res.body.match(/<ul data-scopes>(.*?)<\/ul>/)[1];
-		expect(list).not.toContain('Spend USDC');
-		expect(list).toContain('See your agent wallet balance and spending caps');
-		expect(res.body).toMatch(/<input type="checkbox" id="allow-spend" name="allow_spend" value="yes">/);
-		expect(res.body).not.toMatch(/id="allow-spend"[^>]*checked/);
-	});
-
-	it('shows no spend box when the client never asked to spend', async () => {
+	it('names the client and its site host, flags a self-registered app, and says it can never spend', async () => {
 		grok({ scope: 'avatars:read profile' });
 		const res = await call('authorize', { query: authorizeQuery() });
-		expect(res.body).not.toContain('allow_spend');
-		expect(res.body).toContain('It can never spend from your wallet.');
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toContain('Authorize <b>Grok Bot</b>');
+		expect(res.body).toContain('Site: grok.com');
+		expect(res.body).toContain('This app registered itself.');
+		expect(res.body).toContain('can never spend from a wallet');
+		expect(res.body).toContain('<li>Read your avatars</li>');
+		expect(res.body).toContain('<li>See your name and email</li>');
+	});
+
+	it('offers spend as its own unlocked, ticked-by-default group that lists what still asks first', async () => {
+		grok();
+		const res = await call('authorize', { query: authorizeQuery() });
+		expect(res.body).toContain('is asking to spend from your agent wallet');
+		const spend = res.body.match(/<label class="group">(?:(?!<\/label>).)*name="grant_spend"(?:(?!<\/label>).)*<\/label>/s)[0];
+		expect(spend).toContain('<li>Send and spend USDC from your agent wallet, within your caps</li>');
+		expect(spend).toContain('Still asks you first:');
+		expect(spend).not.toContain('disabled');
+		expect(res.body).toMatch(/name="grant_read" value="on" checked disabled/);
+	});
+
+	it('shows no spend group when the client never asked to spend', async () => {
+		grok({ scope: 'avatars:read profile' });
+		const res = await call('authorize', { query: authorizeQuery() });
+		expect(res.body).not.toContain('grant_spend');
+		expect(res.body).toContain('can never spend from a wallet');
 	});
 
 	it('escapes a hostile client name everywhere it appears', async () => {
@@ -703,15 +704,15 @@ describe('consent screen for a cloud connector', () => {
 		expect(res.body).toContain('&lt;img src=x onerror=alert(1)&gt;');
 	});
 
-	it('grants wallet:read, not wallet:write, when the person leaves the box unticked', async () => {
+	it('drops wallet:write from the code when the person unticks the Spend group', async () => {
 		grok();
-		await approve({ scope: 'avatars:read profile wallet:write' });
-		expect(db.codes[0].scope.split(' ').sort()).toEqual(['avatars:read', 'profile', 'wallet:read']);
+		await approve({ scope: 'avatars:read profile wallet:write', grant_read: 'on' });
+		expect(db.codes[0].scope.split(' ').sort()).toEqual(['avatars:read', 'profile']);
 	});
 
-	it('grants wallet:write only when the person ticks the box', async () => {
+	it('grants wallet:write only when the person ticks the Spend group', async () => {
 		grok();
-		await approve({ scope: 'avatars:read profile wallet:write', allow_spend: 'yes' });
+		await approve({ scope: 'avatars:read profile wallet:write', grant_read: 'on', grant_spend: 'on' });
 		expect(db.codes[0].scope.split(' ')).toContain('wallet:write');
 	});
 });

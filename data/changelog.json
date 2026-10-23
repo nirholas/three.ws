@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Revoking a connected app now stops it everywhere",
+			"summary": "When Claude, ChatGPT or any MCP client ends its own grant, or you press Revoke in Connected apps, its access tokens stop on the next request and the token introspection endpoint reports them inactive. Other clients on your account stay connected. The consent screen tests now pin the Read, Manage, Trade, Spend and Launch groups.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/dashboard/settings#connected-apps"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Pay any paid endpoint over MPP on Solana, and sell a skill on four rails from one price",
 			"summary": "Paid endpoints can now answer with an MPP Payment challenge beside the x402 one at the same price, and the agent payer pays either from one call with its spending caps and a dry-run quote. Marketplace skills are defined once and served over x402, MPP, A2A and AP2 with the same author and platform split and the same receipt.",
 			"tags": [
@@ -24,7 +34,9 @@
 			"date": "2026-10-23",
 			"title": "Backtests now prove they are free of look-ahead and can be repeated",
 			"summary": "Every strategy backtest replays its entry gate with the future removed and reports any decision that changed, pins the exact dataset it ran on with a content hash, and marks older unpinned results as unreproducible. A new canary job checks each price and candle source against a known value every 30 minutes and tries the healthy ones first.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/strategies"
 		},
 		{
@@ -40,7 +52,9 @@
 			"date": "2026-10-23",
 			"title": "Creator-fee payouts: register a wallet and see every distribution",
 			"summary": "Your share of each claimed creator fee now has a record and a destination. Register a payout wallet by signing with it and confirming with a step-up (a change waits 48 hours), then follow what is sent, pending or held and why on the new payouts page, and export every distribution as CSV. Sending stays off until payouts are switched on, and shares are recorded and held until then.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/creator/payouts"
 		},
 		{

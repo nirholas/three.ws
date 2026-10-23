@@ -6,7 +6,7 @@ import { sql } from '../_lib/db.js';
 import {
 	getSessionUser, csrfTokenFor, verifyCsrfToken, isSameSiteOrigin,
 	mintAccessToken, issueRefreshToken, rotateRefreshToken,
-	revokeRefreshToken, verifyAccessToken, revokeClientGrant,
+	revokeRefreshToken, verifyAccessToken, revokeClientGrant, oauthGrantRevoked,
 } from '../_lib/auth.js';
 import { randomToken, sha256, sha256Base64Url, constantTimeEquals } from '../_lib/crypto.js';
 import { cors, method, wrap, error, redirect, readForm, readJson, json, rateLimited } from '../_lib/http.js';
@@ -490,6 +490,7 @@ async function handleIntrospect(req, res) {
 	try {
 		const payload = await verifyAccessToken(token, { audience: allMcpAudiences() });
 		if (payload.client_id && payload.client_id !== clientId) return json(res, 200, { active: false });
+		if (payload.client_id && await oauthGrantRevoked(payload)) return json(res, 200, { active: false });
 		return json(res, 200, { active: true, scope: payload.scope, client_id: payload.client_id, sub: payload.sub, aud: payload.aud, iss: payload.iss, exp: payload.exp, iat: payload.iat, token_type: 'Bearer' });
 	} catch {
 		const h = await sha256(token);
