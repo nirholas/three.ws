@@ -7609,6 +7609,13 @@
 					"added": "2026-05-13"
 				},
 				{
+					"path": "/install.md",
+					"title": "install.md",
+					"description": "How to install three.ws in any MCP client: one command, per-client settings, and every hosted endpoint. Generated from the MCP directory.",
+					"indexable": false,
+					"added": "2026-10-23"
+				},
+				{
 					"path": "/skill.md",
 					"title": "skill.md",
 					"description": "The three.ws Agent Skill: how an AI agent connects to three.ws, the rules it follows around money and official addresses, and an index of the focused skills for 3D generation, avatars and agents. Load it like any SKILL.md.",

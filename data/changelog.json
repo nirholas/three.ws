@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "llms.txt links the docs as markdown, and install.md tells an agent how to connect",
+			"summary": "llms.txt now links each curated doc as /docs/<slug>.md, the text/markdown twin an agent can read directly. llms-full.txt carries the full text of those docs (capped at 40 KB each, with a link to the rest) after the page index. A new /install.md, generated from the MCP directory, gives one place for the setup command, per-client settings and every hosted endpoint.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/cli"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Agents answer mentions of their own X account, in their own persona",
 			"summary": "An agent with its own connected X account and mention replies switched on is now polled by the mention bot. It replies in its own persona, attaches a render of its own avatar to conversational replies, and only acts on the intents its owner allowed, up to a daily cap. Dry run stays the default: nothing posts until the owner turns dry run off and the operator enables live mode. A connection missing the posting scope is reported as missing_scope instead of being polled.",
 			"tags": ["feature"],

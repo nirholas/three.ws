@@ -6,6 +6,7 @@
  *
  *   public/llms.txt             — AI-agent index (Jeremy Howard convention)
  *   public/llms-full.txt        — expanded, prose-friendly variant
+ *   public/install.md          : how to install three.ws in any MCP client
  *   public/sitemap/index.html   — human-readable site map at /sitemap
  *   public/features.json        — machine manifest served at /api/features.json
  *   CHANGELOG.md                — page launches (`added` dates) merged with
@@ -197,6 +198,97 @@ function curatedLlmsSections() {
 }
 
 // ────────────────────────────────────────────────────────────────────────
+// Markdown doc bodies: /docs/<slug>.md is served from docs/ (vite copies it
+// to dist/docs), so a curated /docs/<slug> page has a text/markdown twin.
+// ────────────────────────────────────────────────────────────────────────
+const DOC_BODY_CAP = 40_000;
+// Docs that name another crypto project stay out of the inlined bodies (the
+// owner gates committed text that references projects other than $THREE).
+const OTHER_PROJECT = /\b(bnb|bsc|binance|uniswap|chainlink|jupiter|raydium|dogecoin|bonk|shiba)\b/i;
+
+function docMarkdownSlug(path) {
+	const m = /^\/docs\/([a-z0-9][a-z0-9-]*)$/.exec(path);
+	return m && existsSync(resolve(root, 'docs', `${m[1]}.md`)) ? m[1] : null;
+}
+
+function curatedDocBodies() {
+	const out = [];
+	for (const section of curatedLlmsSections()) {
+		for (const p of section.pages) {
+			const slug = docMarkdownSlug(p.path);
+			if (!slug) continue;
+			const body = readFileSync(resolve(root, 'docs', `${slug}.md`), 'utf8').trim();
+			out.push({ page: p, slug, body, excluded: OTHER_PROJECT.test(body) });
+		}
+	}
+	return out;
+}
+
+function capBody(body, url) {
+	if (Buffer.byteLength(body) <= DOC_BODY_CAP) return body;
+	const cut = body.slice(0, DOC_BODY_CAP);
+	const head = cut.slice(0, cut.lastIndexOf('\n'));
+	return `${head}\n\n[Truncated at ${DOC_BODY_CAP / 1000} KB. Full text: ${url}]`;
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// install.md: one place for "how do I install three.ws in my agent",
+// generated from the hosted MCP directory (public/.well-known/mcp.json).
+// ────────────────────────────────────────────────────────────────────────
+function buildInstallMd() {
+	const dir = JSON.parse(readFileSync(resolve(publicDir, '.well-known/mcp.json'), 'utf8'));
+	const lines = [];
+	lines.push(`# Install ${site.name} in your agent`);
+	lines.push('');
+	lines.push(`> ${site.name} is a set of hosted MCP servers (Streamable HTTP, JSON-RPC 2.0). Add one URL to any MCP client, or run one command to configure several clients at once.`);
+	lines.push('');
+	lines.push('## One command');
+	lines.push('');
+	lines.push('Signs you in, writes the servers into every MCP client it finds, and verifies each with a live `tools/list`. Requires Node.js 20.12 or newer.');
+	lines.push('');
+	lines.push('```bash');
+	lines.push(dir.setup.command);
+	lines.push('```');
+	lines.push('');
+	lines.push(dir.setup.description);
+	lines.push('');
+	lines.push(`Full CLI reference: ${baseUrl}/docs/cli.md`);
+	lines.push('');
+	lines.push('## Per client');
+	lines.push('');
+	for (const [id, c] of Object.entries(dir.clients)) {
+		if (id.startsWith('$') || typeof c !== 'object' || !c.name) continue;
+		lines.push(`### ${c.name}`);
+		lines.push('');
+		lines.push(`Server: ${c.recommendedServer}. Auth: ${c.auth}.`);
+		if (c.settings?.where) lines.push(`Where: ${c.settings.where}.`);
+		if (c.command) lines.push('', '```bash', c.command, '```');
+		else if (c.settings?.config) lines.push('', '```json', JSON.stringify(c.settings.config, null, 2), '```');
+		else if (c.settings?.fields) lines.push('', ...Object.entries(c.settings.fields).map(([k, v]) => `- ${k}: ${v}`));
+		if (c.settings?.note) lines.push('', c.settings.note);
+		if (c.authUpgrade) lines.push('', `Add sign-in later for ${c.authUpgrade.adds}: ${c.authUpgrade.url}`);
+		lines.push('');
+	}
+	lines.push('## Hosted MCP servers');
+	lines.push('');
+	lines.push('| Server | Endpoint | Auth |');
+	lines.push('|---|---|---|');
+	const cell = (v) => String(v).replace(/\|/g, '/');
+	for (const sv of dir.servers) lines.push(`| ${cell(sv.name)} | ${sv.endpoint} | ${cell(sv.auth)} |`);
+	lines.push('');
+	lines.push('No account is needed for the keyless servers (3D Studio free, read-only pump.fun tools).');
+	lines.push('');
+	lines.push('## More');
+	lines.push('');
+	lines.push(`- [Connect page](${baseUrl}/connect): one-click install for Claude, Cursor and VS Code.`);
+	lines.push(`- [MCP directory](${baseUrl}/.well-known/mcp.json): every endpoint, machine-readable.`);
+	lines.push(`- [MCP guide](${baseUrl}/docs/mcp.md): tools, authentication and local testing.`);
+	lines.push(`- [llms.txt](${baseUrl}/llms.txt): curated index for AI agents.`);
+	lines.push('');
+	return lines.join('\n');
+}
+
+// ────────────────────────────────────────────────────────────────────────
 // llms.txt — concise AI index per https://llmstxt.org/
 // ────────────────────────────────────────────────────────────────────────
 function buildLlmsTxt() {
@@ -231,14 +323,15 @@ function buildLlmsTxt() {
 		lines.push(`## ${section.title}`);
 		lines.push('');
 		for (const p of section.pages) {
-			lines.push(`- [${p.title}](${baseUrl}${p.path}): ${p.description}`);
+			const slug = docMarkdownSlug(p.path);
+			lines.push(`- [${p.title}](${baseUrl}${slug ? `/docs/${slug}.md` : p.path}): ${p.description}`);
 		}
 		lines.push('');
 	}
 	const listed = allPages.filter(indexable).length;
 	lines.push('## Optional');
 	lines.push('');
-	lines.push(`- [llms-full.txt](${baseUrl}/llms-full.txt): Every public page (${listed}), grouped by section, with full descriptions.`);
+	lines.push(`- [llms-full.txt](${baseUrl}/llms-full.txt): Every public page (${listed}) with full descriptions, plus the full markdown of the curated docs.`);
 	lines.push(`- [Sitemap](${baseUrl}/sitemap): The same index for people, with search.`);
 	lines.push(`- [sitemap.xml](${baseUrl}/sitemap.xml): XML sitemap for crawlers, including every agent and avatar page.`);
 	lines.push('');
@@ -281,6 +374,21 @@ function buildLlmsFull() {
 			lines.push(p.description);
 			lines.push('');
 		}
+	}
+	const docs = curatedDocBodies();
+	const inlined = docs.filter((d) => !d.excluded);
+	lines.push('## Documentation');
+	lines.push('');
+	lines.push(`Full markdown of the curated docs. Each body is capped at ${DOC_BODY_CAP / 1000} KB; a longer doc is cut at a line boundary and ends with a link to its complete text. Docs that are not inlined here stay available at their /docs/<slug>.md link in ${baseUrl}/llms.txt.`);
+	lines.push('');
+	for (const d of inlined) {
+		const url = `${baseUrl}/docs/${d.slug}.md`;
+		lines.push(`<doc title="${d.page.title.replace(/"/g, "'")}" url="${url}">`);
+		lines.push('');
+		lines.push(capBody(d.body, url));
+		lines.push('');
+		lines.push('</doc>');
+		lines.push('');
 	}
 	return lines.join('\n');
 }
@@ -879,6 +987,7 @@ const outputs = [
 	{ file: resolve(publicDir, 'locales/localized-pages.json'), content: buildLocalizedPages() },
 	{ file: resolve(publicDir, 'llms.txt'), content: buildLlmsTxt() },
 	{ file: resolve(publicDir, 'llms-full.txt'), content: buildLlmsFull() },
+	{ file: resolve(publicDir, 'install.md'), content: buildInstallMd() },
 	{ file: resolve(publicDir, 'sitemap/index.html'), content: buildSitemapHtml() },
 	{ file: resolve(publicDir, 'features.json'), content: buildFeaturesJson() },
 	{ file: resolve(root, 'CHANGELOG.md'), content: buildChangelog() },

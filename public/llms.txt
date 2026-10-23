@@ -30,6 +30,7 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 - [prompts.txt](https://three.ws/prompts.txt): The prompt library as plain text, for piping straight into an assistant.
 - [llms.txt](https://three.ws/llms.txt): Curated AI-agent index (llmstxt.org convention): the official domain, accounts and $THREE mint, the machine-readable entry points, and the key pages, with llms-full.txt for the complete list.
 - [llms-full.txt](https://three.ws/llms-full.txt): Expanded llms.txt with full descriptions and content hints.
+- [install.md](https://three.ws/install.md): How to install three.ws in any MCP client: one command, per-client settings, and every hosted endpoint. Generated from the MCP directory.
 - [skill.md](https://three.ws/skill.md): The three.ws Agent Skill: how an AI agent connects to three.ws, the rules it follows around money and official addresses, and an index of the focused skills for 3D generation, avatars and agents. Load it like any SKILL.md.
 - [grok-skill.md](https://three.ws/grok-skill.md): The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.
 - [robots.txt](https://three.ws/robots.txt): Crawler directives.
@@ -62,16 +63,16 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 - [Connect three.ws to Claude, ChatGPT, Grok Bot, Cursor & VS Code](https://three.ws/connect): Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.
 - [three.ws for Grok Bot: a free 3D studio and a body for Grok](https://three.ws/grok): Everything Grok Bot can do with three.ws on one page: generate textured 3D models, rig avatars, find ready-made CC0 assets and run your agents through one custom MCP connector. Real models made minutes ago, the exact connector settings, three recipes to schedule and the Grok skill file. Free, no account, no key.
 - [MCP Tool Catalog](https://three.ws/mcp-tools): Every MCP tool three.ws publishes, searchable and filterable by category: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Open any tool for its schema, an example call and a try-it for the free read-only ones. Totals are computed from the live servers, with a note on how, and a release diff shows which tools were added when.
-- [Docs · Start Here](https://three.ws/docs/start-here): Plain-language introduction to three.ws for creators and non-developers: what it is, who it’s for, and where to begin.
-- [Docs · MCP](https://three.ws/docs/mcp): Expose your agent as an MCP server for Claude, ChatGPT, and other clients.
-- [Docs · three-ws CLI](https://three.ws/docs/cli): Connect Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Codex, Gemini CLI or Hermes to three.ws in one command: npx three-ws setup signs you in, writes every client's MCP config and verifies each server with a live tools/list.
-- [Docs · API Reference](https://three.ws/docs/api-reference): Full HTTP API reference.
+- [Docs · Start Here](https://three.ws/docs/start-here.md): Plain-language introduction to three.ws for creators and non-developers: what it is, who it’s for, and where to begin.
+- [Docs · MCP](https://three.ws/docs/mcp.md): Expose your agent as an MCP server for Claude, ChatGPT, and other clients.
+- [Docs · three-ws CLI](https://three.ws/docs/cli.md): Connect Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Codex, Gemini CLI or Hermes to three.ws in one command: npx three-ws setup signs you in, writes every client's MCP config and verifies each server with a live tools/list.
+- [Docs · API Reference](https://three.ws/docs/api-reference.md): Full HTTP API reference.
 - [Avatar SDK](https://three.ws/avatar-sdk): The @three-ws/avatar package: embed the platform 3D avatars in any site with a few lines of JavaScript.
 - [3D API](https://three.ws/3d): Free, keyless 3D API for AI agents: turn a text prompt into a real GLB model and validate/optimize any glTF/GLB, all from one URL with a live OpenAPI 3.1 spec. Free draft generation and inspection graduate to paid Forge Pro quality tiers and animation-ready Rigged Avatars. No key, no account.
 - [Crypto API](https://three.ws/crypto-api): One free, keyless API for on-chain and market data: DEX pairs, prices, swap quotes, TVL, Solana RPC reads, and ENS/SNS name resolution: CoinGecko, DefiLlama, Jupiter, DexScreener and Solana RPC bundled behind one bill. Live provider table rendered from the real registry, generated OpenAPI 3.1 spec, free tier then BYOK, plan, or x402 pay-per-call.
-- [Docs · x402 Protocol](https://three.ws/docs/x402): How three.ws implements x402 HTTP 402 paid agent skills: the challenge, verify, and settle mechanics.
+- [Docs · x402 Protocol](https://three.ws/docs/x402.md): How three.ws implements x402 HTTP 402 paid agent skills: the challenge, verify, and settle mechanics.
 - [x402 Catalog](https://three.ws/x402): A live catalog of pay-per-call APIs settled on-chain in USDC over the x402 protocol. Search, inspect the schema, and run any endpoint.
-- [Docs · Skills](https://three.ws/docs/skills): Write, package, and monetize agent skills.
+- [Docs · Skills](https://three.ws/docs/skills.md): Write, package, and monetize agent skills.
 - [Prompt Library](https://three.ws/prompts): Copy-paste prompts for Claude and any AI agent: generate a 3D model or a rigged avatar, embed one on a site, validate a GLB, find or sell a paid API in the agent economy. Most of them need no account, no key and no setup.
 
 ## Economy and $THREE
@@ -102,6 +103,6 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 
 ## Optional
 
-- [llms-full.txt](https://three.ws/llms-full.txt): Every public page (1019), grouped by section, with full descriptions.
+- [llms-full.txt](https://three.ws/llms-full.txt): Every public page (1019) with full descriptions, plus the full markdown of the curated docs.
 - [Sitemap](https://three.ws/sitemap): The same index for people, with search.
 - [sitemap.xml](https://three.ws/sitemap.xml): XML sitemap for crawlers, including every agent and avatar page.

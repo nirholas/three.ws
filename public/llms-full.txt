@@ -5864,6 +5864,13 @@ Indexable: no (excluded from sitemap)
 
 Expanded llms.txt with full descriptions and content hints.
 
+### install.md
+
+URL: https://three.ws/install.md
+Indexable: no (excluded from sitemap)
+
+How to install three.ws in any MCP client: one command, per-client settings, and every hosted endpoint. Generated from the MCP directory.
+
 ### skill.md
 
 URL: https://three.ws/skill.md
@@ -6630,3 +6637,1519 @@ three.ws listed in @AnthropicAI registry registry.modelcontextprotocol.io/?q=thr
 URL: https://three.ws/news/2045242891350814835
 
 three Ws - @phantom is excited about three.ws bringing on-chain 3D AI agents to the Solana ecosystem.
+
+## Documentation
+
+Full markdown of the curated docs. Each body is capped at 40 KB; a longer doc is cut at a line boundary and ends with a link to its complete text. Docs that are not inlined here stay available at their /docs/<slug>.md link in https://three.ws/llms.txt.
+
+<doc title="Docs · three-ws CLI" url="https://three.ws/docs/cli.md">
+
+# three-ws CLI
+
+`three-ws` connects any MCP client to three.ws in one command. It signs you in, writes the hosted three.ws MCP servers into every client it finds on your machine (Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, IBM Bob, Codex, Gemini CLI, Hermes), and then proves each one works with a live `tools/list` call.
+
+If you only use one client and it supports remote connectors, the [connect page](/connect) is faster: one click adds three.ws to Claude, Cursor or VS Code, with no terminal. Use the CLI when you want several clients configured at once, per-project config, an API key instead of a browser sign-in, or control over which tools each client may call.
+
+Requires Node.js 20.12 or newer.
+
+## Quick start
+
+```bash
+npx @three-ws/cli setup
+```
+
+Setup walks through three steps:
+
+1. **Sign in.** A browser opens on three.ws. Approve the permissions and the terminal picks up the token. If you are already signed in, setup asks whether to keep that account.
+2. **Pick servers and clients.** The server list is read live from [/.well-known/mcp.json](/.well-known/mcp.json), and the clients are the ones detected on this machine. Keyless servers (3D Studio free, pump.fun) are always offered because they need no account.
+3. **Write and verify.** Each client's config file is updated in place (other entries are left alone), then every server is called with `tools/list` so you see a tool count, not a guess.
+
+Restart the client afterwards so it loads the new servers.
+
+## Sign-in options
+
+| Flag | What it does | Use it when |
+|---|---|---|
+| `--oauth` (default) | Browser sign-in with PKCE. Tokens refresh automatically. | Your own machine. |
+| `--device` | Prints a code you approve in any browser, on any device. Yields an API key. | Over SSH, or on a machine with no browser. |
+| `--key [sk_live_...]` | Uses an API key from [Dashboard → API](/dashboard/api), or `THREE_WS_API_KEY`. | CI, servers, scripts. |
+| `--financial` | Also requests the scopes that let tools spend from your agent wallet, within its caps. | You want the assistant to pay for x402 services or trade. |
+
+Without `--financial`, tools that move funds are not granted, whatever the client asks for. Credentials are stored in `~/.config/three-ws/credentials.json` (or `$XDG_CONFIG_HOME/three-ws/`) with file mode 0600.
+
+## Setup options
+
+```bash
+# Only Cursor and VS Code, only the main server and the free 3D studio, no prompts
+npx @three-ws/cli setup --clients cursor,vscode --servers three-ws-main,three-ws-studio --yes
+
+# Project-scoped config: writes .mcp.json, .cursor/mcp.json, .vscode/mcp.json, .bob/mcp.json, .gemini/settings.json here
+npx @three-ws/cli setup --project
+
+# Print the config instead of writing any file
+npx @three-ws/cli setup --clients print
+```
+
+| Flag | Values |
+|---|---|
+| `--clients` | `claude-code`, `claude-desktop`, `cursor`, `windsurf`, `vscode`, `bob`, `codex`, `gemini`, `hermes`, `grok-bot`, `print` (`--client` works too) |
+| `--connector-key` | With `grok-bot`: mint a spend-free API key for Grok Bot's Bot secret |
+| `--no-copy` | With `grok-bot`: do not copy the server URL to the clipboard |
+| `--servers` | Server names from `npx @three-ws/cli mcp list --available` |
+| `--packages` | Also add stdio `@three-ws/*-mcp` packages |
+| `--project` | Write project-scoped config in the current directory |
+| `--proxy` | Route every server through the local proxy, so your tool choices apply in every client |
+| `--yes` | Never prompt; take the defaults |
+
+### Grok Bot
+
+Grok Bot is configured in xAI's cloud, so `setup` cannot write a file for it. `--clients grok-bot` runs the part the CLI can do, with no sign-in for the free studio:
+
+```bash
+npx @three-ws/cli setup --client grok-bot
+npx @three-ws/cli setup --client grok-bot --connector-key   # key for your agents, never spends
+```
+
+It prints the fields Grok Bot's custom MCP connector asks for (name `three-ws`, transport Streamable HTTP, server URL `https://three.ws/api/mcp-grok`, authentication None or API key), the one-line chat prompt that adds the same server, copies the URL to the clipboard where a clipboard tool exists, and verifies the public URL with a live `tools/list`. The command exits 1 if that verification fails. With `--connector-key` it signs in if needed (requesting `agents:write`), mints a `connector` preset key once through `POST /api/api-keys`, stores it in the credential file, and prints it for the Bot secret field. Revoke it any time on [Dashboard → API](/dashboard/api). The full Grok setup is in [three.ws for Grok](./grok.md) and the [Grok Bot guide](./grok-bot.md).
+
+### Where each client's config lives
+
+| Client | User config | `--project` config |
+|---|---|---|
+| Claude Code | `~/.claude.json` | `.mcp.json` |
+| Claude Desktop | `Claude/claude_desktop_config.json` in your app-data folder | |
+| Cursor | `~/.cursor/mcp.json` | `.cursor/mcp.json` |
+| Windsurf | `~/.codeium/windsurf/mcp_config.json` | |
+| VS Code | `Code/User/mcp.json` in your app-data folder | `.vscode/mcp.json` |
+| IBM Bob | `~/.bob/settings/mcp.json` | `.bob/mcp.json` |
+| Codex | `$CODEX_HOME/config.toml` (default `~/.codex`) | |
+| Gemini CLI | `~/.gemini/settings.json` | `.gemini/settings.json` |
+| Hermes | `$HERMES_HOME/config.yaml` (default `~/.hermes`) | |
+
+IBM Bob gets the entry shape its IDE documents, `{ "type": "streamable-http", "url": ... }`, and is detected by a `~/.bob` folder. Bob Shell reads the same files but documents the URL key as `httpURL`; if you only use the shell, rename `url` to `httpURL` in the written entry. Servers that need sign-in use Bob's built-in OAuth discovery on first connect, so the free `three-ws-studio` server is the one that works with no account at all.
+
+### Server names
+
+Every client stores a server under the same name, which is also what `--servers`, `mcp add` and `mcp remove` take. The [connect page](/connect) uses the same names, so adding a server both ways never creates a duplicate.
+
+| Name | Endpoint | Account |
+|---|---|---|
+| `three-ws-main` | `https://three.ws/api/mcp` | Sign-in |
+| `three-ws-3d` | `https://three.ws/api/mcp-3d` | Sign-in or x402 |
+| `three-ws-studio` | `https://three.ws/api/mcp-studio` | None |
+| `three-ws-grok` | `https://three.ws/api/mcp-grok` | None for the free 3D tools; a connector key or OAuth adds your agents |
+| `three-ws-agent` | `https://three.ws/api/mcp-agent` | Sign-in |
+| `three-ws-bazaar` | `https://three.ws/api/mcp-bazaar` | Sign-in or x402 |
+| `three-ws-pump-fun` | `https://three.ws/api/pump-fun-mcp` | None for reads |
+| `three-ws-ibm` | `https://three.ws/api/ibm-mcp` | Sign-in or x402 |
+
+`npx @three-ws/cli mcp list --available` prints the live list, which is the source of truth if this table and the directory ever disagree.
+
+## Grok Bot
+
+Grok Bot, xAI's computer-use agent, runs on xAI's machines and keeps its connectors there, so there is no file on your computer to write. `setup --client grok-bot` does everything else: it picks the server, gets the credential the auth mode needs, prints the exact fields Grok Bot's custom MCP connector form asks for, copies the server URL to your clipboard, and runs a live check against the public URL the way Grok Bot will call it.
+
+```bash
+# Free, no account: the 3D studio for Grok
+npx three-ws setup --client grok-bot
+
+# Free, with a quota of its own that survives reconnects (for scheduled tasks)
+npx three-ws setup --client grok-bot --auth install
+
+# Your agents, memory and skills too: mints a connector key that can never spend
+npx three-ws setup --client grok-bot --auth key
+
+# Sign in from Grok Bot instead of holding a key
+npx three-ws setup --client grok-bot --auth oauth
+```
+
+What it prints, for the free connector:
+
+```text
+Grok Bot three-ws-grok · add it in Grok Bot's Connectors (custom MCP server); nothing is written on this machine
+  Name            three-ws-grok
+  Transport       Streamable HTTP
+  Server URL      https://three.ws/api/mcp-grok
+  Authentication  None
+  Or tell it: "Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok"
+  ✔ Server URL copied to the clipboard
+
+  Live check https://three.ws/api/mcp-grok
+  ✔ public https URL a cloud agent can reach  three.ws
+  ✔ initialize + tools/list                   15 tools from three-ws-3d-studio-free 1.0.0
+```
+
+| `--auth` | What Grok Bot gets | What setup does |
+|---|---|---|
+| `none` (default) | The free studio: text to 3D, image to 3D, rigging, the asset catalog, personas | Prints the URL and runs `initialize` + `tools/list` against it |
+| `install` | The same tools, with a generation budget that lasts across every scheduled run | Mints a free [install token](/docs/mcp-studio#connector-url-for-cloud-agents-install-tokens) (no account), puts it in the URL, and reuses it on later runs so the URL stays the same |
+| `key` | Also your agents, memory and skills; a connector key reads, generates and edits but can never spend | Mints a connector key for the signed-in account (signing you in first when needed), or checks the one you pass with `--connector-key`, refuses a key that carries a spend scope, then runs `tools/list` with it |
+| `oauth` | The same as `key`, signed in once from Grok Bot and revocable any time | Prints the `?auth=oauth` URL and checks that an anonymous call is answered `401` with a protected-resource document that names the authorization server |
+
+Pass `--servers <name>` to connect a server other than `three-ws-grok`, for example `--servers three-ws-main --auth key` for the full core server. A server that needs an account only takes `key` or `oauth`, and setup says so instead of printing fields that would fail. The live check fails on any URL Grok Bot cannot reach from the internet, such as `--origin http://localhost:3000`, because Grok Bot connects from xAI's cloud. The clipboard step is best-effort (`pbcopy`, `clip`, `wl-copy`, `xclip`, `xsel`, or `clip.exe` under WSL); with none available the URL is printed as usual, and `THREE_WS_NO_CLIPBOARD=1` turns it off. `--json` prints the fields, the key's scope and every check as one document. Connector settings, the tool contract and the fix for every probe failure are in the [Grok Bot connector reference](/docs/grok-bot).
+
+## Create an agent and launch its coin
+
+```bash
+npx @three-ws/cli create "Nova" --description "A deep-space guide who explains orbital mechanics."
+npx @three-ws/cli launch --agent <agent-id> --name "Nova" --symbol NOVA
+```
+
+`create` makes the agent on your account and prints its public page and the Solana wallet three.ws minted for it. Pass `--avatar <id>` to use an avatar you already own as its 3D body; otherwise give it a body on its page. A name that imitates an existing public agent is refused with the reason, so pick a distinct one.
+
+`launch` never spends anything from the terminal. It collects the coin's name, ticker, description, optional image (`--image`, the agent's portrait by default) and optional first buy (`--initial-buy <sol>`), then opens [/launch](/launch) with all of it filled in. You review the cost there and sign the launch in your browser. The launching agent needs a 3D body, because that page picks agents by their body. Run either command with no flags to be prompted for each field, or with `--json` to get the agent record or the review URL as JSON.
+
+## Choosing which tools a client may call
+
+Every tool is labelled read, write or financial ([the catalog](/mcp-tools) shows which is which). By default read and write tools are on and financial tools are off.
+
+```bash
+# See and change the tool selection interactively
+npx @three-ws/cli tools
+
+# Turn financial tools on for the main server only
+npx @three-ws/cli tools --server three-ws-main --enable financial
+
+# Back to the default
+npx @three-ws/cli tools --server three-ws-main --reset
+```
+
+The selection is enforced whichever way you signed in. With a browser sign-in, servers that need an account run through the local proxy (`three-ws proxy`), which also keeps your token fresh: `tools/list` returns only enabled tools, and a call to a disabled one is answered by the proxy with an error explaining how to enable it, without reaching the server. With an API key, the selection travels to the server in the `X-Three-Tools` header, and clients that support a tool allowlist get one written too. `--proxy` routes every server through the proxy regardless.
+
+## All commands
+
+| Command | What it does |
+|---|---|
+| `setup` | Sign in, write servers into clients, verify with `tools/list` |
+| `--claude` / `--cursor` / `--codex` / `--vscode` / `--windsurf` | Non-interactive setup for one client; keeps secrets out of its config |
+| `doctor` | Diagnose Node, credentials, auth, client configs and server reachability |
+| `agent status` | Your agents with wallet address and balances |
+| `team` / `team status <id>` | Your teams and one team's detail |
+| `login` / `logout` | Sign in or switch accounts; `logout` also revokes the OAuth refresh token |
+| `status` / `whoami` | Account, plan, wallet balance, token expiry and every configured client |
+| `create [name]` | Create an agent with its own Solana wallet and public page |
+| `launch` | Fill in a coin for one of your agents and open three.ws/launch to review and sign it |
+| `mcp list` | Servers configured in each client (`--available` lists every server) |
+| `mcp add <server>` / `mcp remove <server>` | Add or remove one server without prompts |
+| `tools` | Choose which tool tiers or tools each server exposes |
+| `skills <list\|search\|show\|import\|installed>` | Browse and import community agent skills |
+| `proxy <url>` | A stdio bridge to a hosted server; setup writes it into client configs when `--proxy` is used |
+| `fund --amount <usdc> --agent <id>` | Move USDC from an agent wallet into credits. Prints the transfer and asks before sending |
+| `provider use three-ws` / `provider show` | Point this machine's model clients at three.ws inference, billed to your credits |
+| `usage` | Credits, burn rate, days left and recent top-ups |
+| `ask "<prompt>"` | One completion through the active provider |
+
+## One command per client
+
+Name a client and the CLI does the whole setup without prompts: sign in, write the servers, verify them with a live `tools/list`.
+
+```bash
+npx @three-ws/cli --claude      # Claude Code, plus the three.ws skill
+npx @three-ws/cli --cursor
+npx @three-ws/cli --codex
+npx @three-ws/cli --vscode
+npx @three-ws/cli --windsurf
+npx @three-ws/cli --gemini
+```
+
+`--bob` and `--hermes` work the same way. Combine flags to set up several clients at once (`npx @three-ws/cli --cursor --vscode`), and add `--project` for config in the current directory, `--device` over SSH, or `--key sk_live_...` for CI.
+
+These flags write a launcher entry (`three-ws proxy <url>`) instead of a token. The OAuth token or API key stays in `~/.config/three-ws/credentials.json` (mode 600) and never appears in a client config file, so you can commit a project config safely. Running a command twice changes nothing the second time.
+
+With `--claude` the CLI also installs the three.ws skill at `~/.claude/skills/three-ws/SKILL.md`, so you can start Claude Code with:
+
+```bash
+claude "launch my agent"
+```
+
+### Hosted installers
+
+Two shell scripts do the same from a bare machine. `install` checks your OS and Node version, runs the CLI, and prints next steps. `claude` wires Claude Code and offers to start `claude "launch my agent"`.
+
+```bash
+curl -fsSL https://three.ws/cli/install | sh
+curl -fsSL https://three.ws/cli/claude | sh
+```
+
+Pass options after `--`: `curl -fsSL https://three.ws/cli/install | sh -s -- --cursor`. Both scripts need Linux or macOS (Windows: use WSL) and Node.js 20.12 or newer. They never use `sudo`, never edit your shell profile, never install Node for you, and never write a credential to disk themselves. Environment variables: `THREE_WS_VERSION` pins a CLI version and `THREE_WS_ORIGIN` points at another deployment.
+
+### Verify before you run
+
+Piping a script into a shell trusts whatever the server sends, so every script is published with a SHA-256 checksum and an ed25519 signature. Download, read, verify, then run:
+
+```bash
+mkdir three-ws-install && cd three-ws-install
+curl -fsSLO https://three.ws/cli/install.sh
+curl -fsSLO https://three.ws/cli/install.sh.sha256
+curl -fsSLO https://three.ws/cli/install.sh.sig
+curl -fsSLO https://three.ws/cli/signing-key.pem
+
+less install.sh                       # read it
+sha256sum -c install.sh.sha256        # checksum (macOS: shasum -a 256 -c install.sh.sha256)
+
+# signature (OpenSSL 3)
+openssl pkeyutl -verify -pubin -inkey signing-key.pem -rawin -in install.sh -sigfile install.sh.sig
+
+sh install.sh
+```
+
+Without OpenSSL 3, Node checks it:
+
+```bash
+node -e "const c=require('crypto'),f=require('fs');console.log(c.verify(null,f.readFileSync('install.sh'),c.createPublicKey(f.readFileSync('signing-key.pem')),f.readFileSync('install.sh.sig')))"
+```
+
+It prints `true` for an untouched script. The signing key's fingerprint (SHA-256 of its DER public key) is `662f5682e54fec906904b39937f8858a6c269b671fc335bff4b91c6a66a3f27d`, and the same key is committed in the repository at `public/cli/signing-key.pem`. Compare the two sources before trusting a key you downloaded from the same server as the script. The same steps work for `claude.sh`.
+
+Each script defines functions and calls `main` on its last line, so a download cut short runs nothing.
+
+## Check your setup
+
+```bash
+npx @three-ws/cli doctor
+```
+
+`doctor` finds a bad config before you do. It checks the Node version, the credential file and its permissions, that three.ws is reachable, that your sign-in is still valid (expired or revoked), each client's config (unparseable file, missing three.ws entry, a secret stored in plain text, a launcher missing from `PATH`), and a live `tools/list` for every configured server. Every problem comes with the command that fixes it. It exits 1 when anything fails, and `--json` prints the findings for scripts.
+
+## Agents and teams
+
+```bash
+npx @three-ws/cli agent status    # each agent, its wallet address and SOL / USDC balance
+npx @three-ws/cli team            # your teams
+npx @three-ws/cli team status <id-or-name>
+```
+
+Both are read-only.
+
+Global flags: `--json` for machine-readable output, `--origin <url>` (or `THREE_WS_ORIGIN`) to talk to another deployment, `--no-color`.
+
+## Troubleshooting
+
+- **A server returns 401.** The token is missing or expired. Run `npx @three-ws/cli login`, or `npx @three-ws/cli status` to see what the CLI has stored. Every 401 from a three.ws MCP server includes this hint in its body.
+- **A client does not show the tools.** Restart it; most clients read their MCP config only at startup. `npx @three-ws/cli mcp list` confirms the entry was written.
+- **Signing in over SSH.** Use `npx @three-ws/cli login --device` and approve the code from any browser.
+- **Revoking access.** Every signed-in client and CLI session is listed under [Dashboard → Settings → Connected apps](/dashboard/settings).
+
+## Related
+
+- [Connect page](/connect): one-click setup for Claude, ChatGPT, Cursor, VS Code and Claude Code
+- [MCP docs](/docs/mcp): the servers, their auth, and how to test locally
+- [MCP tool catalog](/mcp-tools): every tool, its price and its safety label
+
+</doc>
+
+<doc title="Docs · x402 Protocol" url="https://three.ws/docs/x402.md">
+
+# x402 — paid agent skills
+
+x402 is how machines pay for web requests: a paid endpoint answers
+`HTTP 402 Payment Required` with a price, the caller settles a small on-chain
+payment, and the retried request goes through. This page documents three.ws's
+implementation of [x402](https://x402.org) for **agent skills**, built on top
+of Pump.fun agent payments: callers pay an agent in any SPL token to invoke a
+skill, and the agent verifies the on-chain payment before dispatching the
+call. It is written for developers wiring paid skills (server side) or paying
+for them (client side); the platform's own catalog of paid endpoints lives at
+[x402 paid endpoints](x402-endpoints.md).
+
+**Live activity:** [x402scan dashboard](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07)
+— browse paid calls, revenue, and per-skill pricing for this server.
+
+## Server side
+
+Wire any endpoint as a paid skill in three lines:
+
+```js
+import { emit402, verifyPaid, consumeIntent } from 'api/_lib/x402.js';
+
+const paid = await verifyPaid(req, {
+  agentId: agent.id,
+  skill: 'summarize',
+  payerUserId: caller.userId,                                 // the intent's payer
+  expectedAmount: '10000',                                    // raw token units
+  expectedCurrency: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
+});
+if (!paid) {
+  return emit402(res, {
+    agent, skill: 'summarize',
+    amount: '10000',
+    currency: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+  });
+}
+if (!(await consumeIntent(paid.intentId))) return res409(); // single-use lock
+try {
+  return await doTheThing();
+} catch (err) {
+  await releaseIntent(paid.intentId);  // a failed call keeps the payment
+  throw err;
+}
+```
+
+`verifyPaid` only honours an intent paid by the calling account
+(`agent_payment_intents.payer_user_id`), so an intent id seen in a log or a
+screenshot cannot spend someone else's payment.
+
+Reference implementation: `api/agents/x402/[action].js` (the consolidated
+`invoke` + `manifest` handler; dispatches on `?action=`).
+
+## 402 manifest shape
+
+```json
+{
+  "version":      "x402/0.1",
+  "kind":         "agent-skill",
+  "agent_id":     "<uuid>",
+  "skill":        "summarize",
+  "amount":       "10000",
+  "currency":     "<mint base58>",
+  "chain":        "solana",
+  "recipient":    "<payout wallet base58>",
+  "recipient_name": "<resolved receiver label, when known>",
+  "memo":         "<unix-seconds nonce string>",
+  "valid_until":  <unix>,
+  "intent_url":   "/api/agents/payments/pay-prep",
+  "verify_url":   "/api/agents/payments/pay-confirm",
+  "manifest_url": "/api/agents/x402/manifest?agent_id=<uuid>&skill=summarize",
+  "retry_with_header": "x-payment-intent"
+}
+```
+
+The 402 and the prefetch manifest resolve `recipient` with one rule
+(`resolveSkillRecipient` in `api/_lib/x402.js`): the owner's payout wallet for
+the chain, then the agent's own wallet on that chain, then the receiver stored
+in `meta.payments`. A buyer never sees two different wallets for one skill.
+
+Discovery:
+
+- `GET /.well-known/x402` — site-level resource list.
+- `GET /api/agents/x402/manifest?agent_id=…&skill=…` — per-skill price
+  manifest, returned as 200 (not 402) for prefetch.
+- The 402 response includes a `Link` header with `rel="payment-config"`
+  (pointing at `/.well-known/x402`) and `rel="payment-manifest"` (pointing at
+  `/api/agents/x402/manifest?agent_id=…&skill=…`, the route above).
+
+## Pricing
+
+`api/agents/x402/[action].js` resolves the price for `(agent, skill)` via:
+
+1. The canonical `agent_skill_prices` marketplace table — the active
+   `{ amount, currency_mint, chain }` row for `(agent_id, skill)`.
+2. Legacy `agent.meta.skill_prices[skill]` — `{ amount, currency }` per skill,
+   for agents priced before the marketplace migration.
+3. Legacy `agent.meta.payments.default_price` — fallback for unspecified skills.
+
+If none is set the server returns `409 no_payments` rather than synthesizing a
+price — an agent must list a price before its skills are payable.
+
+## Caller (browser) — automatic
+
+```js
+import { x402Fetch } from 'src/onchain/x402/client.js';
+
+const res = await x402Fetch('/api/agents/x402/invoke', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ agent_id, skill: 'echo', args: { hi: 1 } }),
+  onPaymentRequired: (manifest) => 'auto',          // or 'reject' to abort
+  onProgress: (step) => console.log(step),
+});
+```
+
+The wrapper pays via Pump.fun's `agent_accept_payment`, attaches
+`x-payment-intent: <intent_id>`, and retries the original call exactly once.
+
+## Caller (server / SDK) — manual
+
+```bash
+# 1. Discover the price.
+curl 'https://three.ws/api/agents/x402/manifest?agent_id=AGENT&skill=echo'
+
+# 2. Pay (prep + sign + confirm). Receive intent_id.
+curl -X POST https://three.ws/api/agents/payments/pay-prep -d '{...}'
+# (sign the returned tx_base64 with the caller's wallet, submit to Solana)
+curl -X POST https://three.ws/api/agents/payments/pay-confirm -d '{...}'
+
+# 3. Retry with the intent header.
+curl -X POST https://three.ws/api/agents/x402/invoke \
+  -H 'x-payment-intent: <intent_id>' \
+  -d '{"agent_id":"AGENT","skill":"echo","args":{}}'
+```
+
+## Single-shot semantics
+
+A paid intent is consumed on first successful call: the `paid` to `consumed`
+transition is the single-use lock, so two concurrent calls with one intent
+cannot both run. If the skill then fails, the intent flips back to `paid`
+(`releaseIntent`), so retrying with the same `x-payment-intent` works and the
+buyer is not charged for a call that never delivered.
+
+For idempotency (don't double-charge on network retry), pass an
+`Idempotency-Key` header — implementations are free to dedupe before
+consuming the intent. Not yet enforced server-side.
+
+## A paid call that fails never asks the buyer to pay twice
+
+The paid HTTP routes under `/api/x402/*` run the work before settling, so a
+handler that fails charges nothing. Two cases remain where the payment has
+already settled when something goes wrong: a streaming route (which settles
+first so the body can stream) whose handler throws, and a failure recording the
+wallet's Sign-In-With-X grant. For both, the response says so and the same
+payment can be reused:
+
+```json
+{
+  "error": "internal_error",
+  "paid": true,
+  "retry_safe": true,
+  "settlement": { "transaction": "5Kd...", "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d" },
+  "retries_left": 3,
+  "retry_until": "2026-10-10T03:00:00.000Z",
+  "message": "You were charged; repeat this exact request with the same payment to get your result."
+}
+```
+
+What a buyer's client should do:
+
+- `paid: true` means the settlement transaction landed. Never build a second payment for this request.
+- `retry_safe: true`: repeat the exact request with the same `X-PAYMENT` (or `PAYMENT-SIGNATURE`) header. The server skips verify and settle, re-runs the work, and answers with the original `x-payment-response` header. A body that differs from the original is a different request, so resend it unchanged.
+- `retry_safe: false`: the proof used up its retries (`X402_PAID_RETRY_MAX`, default 3) or the window closed (`X402_PAID_RETRY_WINDOW_SECONDS`, default 24 hours). The next attempt answers 409 `payment_retries_exhausted`. Contact support with `settlement.transaction`.
+- A call that completed is different: replaying its proof answers 409 `payment_replayed`, and buying the result again needs a new payment.
+
+When a request carries a `payment-identifier`, the idempotency hash covers the HTTP method, URL and request body, so two different POST bodies under one identifier never share a cached response.
+
+## Differences from x402 mainline
+
+- We bind intents to `(agent, skill, payer)` server-side: the manifest's
+  `recipient` is the payout wallet described above, and the server tracks the
+  invoice via `agent_payment_intents.payload.skill` and `payer_user_id`.
+- We use Pump.fun's `agent_accept_payment` rather than a generic SPL
+  transfer. This adds buyback/burn semantics on top of the basic spec but
+  the wire shape (manifest + retry header) is unchanged.
+- Currency is always an SPL mint pubkey. SOL-native payments aren't
+  supported yet.
+
+## Sell your agent as an API
+
+The flow above sells one skill at a time and needs a signed-in buyer. To sell
+the whole agent to anyone, including other agents with no three.ws account,
+turn on **Sell this agent as an API** on the agent wallet's Earn tab
+(`/agent-wallet?id=<agent id>`, Earn). Set a price per call in USD (the floor
+is the smallest payment the facilitator settles, $0.001) and a one-line public
+description. The agent gets a stable endpoint on the standard x402 v2 stack:
+
+    POST https://three.ws/api/x402/agents/<agent id>
+    body: { "message": "...", "history": [ { "role": "user" | "assistant", "content": "..." } ] }
+
+Who can be sold: public agents whose embed policy leaves them a brain (brain
+mode is not `none`) and that have a Solana payout address (a Solana payout
+wallet, or the agent's own custodial Solana wallet, which the Earn tab can
+create in one click). The switch refuses anything else and says why.
+
+### The buyer's flow
+
+1. **Ask for the price.** An unpaid call answers `402 Payment Required`. The
+   challenge lists Solana USDC first, with `payTo` set to the agent's own
+   payout wallet and `amount` set to the owner's price in USDC atomics
+   (6 decimals). Run it yourself against any agent that is on sale (the free
+   list below gives you one):
+
+   ```bash
+   AGENT=$(curl -s https://three.ws/api/x402/agents | node -pe 'JSON.parse(require("fs").readFileSync(0)).services[0]?.agent_id')
+   curl -si -X POST "https://three.ws/api/x402/agents/$AGENT" \
+     -H 'content-type: application/json' \
+     -d '{"message":"What can you do?"}' | grep -i '^payment-required' | cut -d' ' -f2 | tr -d '\r' | base64 -d
+   ```
+
+2. **Pay and retry.** Sign the challenge with any x402 client and repeat the
+   same request with the `X-PAYMENT` (or `PAYMENT-SIGNATURE`) header. With the
+   browser helper on three.ws:
+
+   ```js
+   const { result, payment } = await window.X402.pay({
+     endpoint: `/api/x402/agents/${agentId}`,
+     method: 'POST',
+     body: { message: 'What can you do?', history: [] },
+   });
+   console.log(result.reply, payment.transaction);
+   ```
+
+3. **Get the reply.** `200` with `{ "reply", "model", "usage", "agent_id" }`
+   and the settlement in the `X-PAYMENT-RESPONSE` header.
+
+The agent answers **before** the payment settles. If the turn fails (every
+model provider down, a provider error) you get `503 llm_unavailable` or
+`502 upstream_error` and nothing is charged. A malformed body is refused with
+`400` before the payment is even verified. Limits: `message` up to 4,000
+characters, up to 20 `history` turns, 32 KB per request.
+
+### Discovery
+
+- `GET /api/x402/agents`: free JSON list of every agent on sale, with price,
+  network, payout wallet, and the input and output schemas.
+- `/.well-known/x402.json`: each agent on sale is a resource, with the same
+  accepts the live 402 serves.
+- The [x402 catalog](https://three.ws/x402) shows them under **Agents**.
+
+### What the owner earns
+
+Every settled call writes a row to `agent_revenue_events` (skill `agent-api`)
+net of the platform fee (`PLATFORM_FEE_BPS`, default 250 = 2.5%), and the Earn tab
+shows calls, all-time and 7-day earnings, and recent payers with their
+transactions. The USDC itself settles straight into the agent's payout wallet,
+so these rows are flagged `settled_to_wallet` and never count toward a
+treasury withdrawal.
+
+Owner API: `GET` / `PUT /api/agents/:id/api-service` with
+`{ "active": true, "price_usd": 0.05, "description": "..." }` (see the
+[API reference](api-reference.md#sell-an-agent-as-an-api)).
+
+## Paid endpoint failures and retries
+
+Every paid route under `/api/x402/*` (and the other routes built on the
+shared `paidEndpoint()` helper) tells a buyer's client whether it was charged.
+The rule a client needs is one field: **if an error body says `paid: true`,
+never sign a new payment. Repeat the exact same request with the same
+`X-PAYMENT` header.**
+
+### When you are charged
+
+Most routes run the work first and settle only when it succeeded, so a
+failure there costs nothing. Routes that stream their body (downloads, SSE)
+settle first, then run. Either way, once the payment has settled the call is
+yours: if the work then fails, the error body carries
+
+| Field | Meaning |
+|---|---|
+| `paid` | `true`: the payment settled on chain. `false`: nothing was settled, you were not charged. |
+| `retry_safe` | `true`: repeating this exact request with the same `X-PAYMENT` header re-runs the work without a second charge. |
+| `settlement` | `{ transaction, network }` of the payment you made. Quote it to support. |
+| `retries_left` | How many paid retries this payment still has (default 3). |
+| `retry_until` | When the retry window closes (default 24 hours after the first failure). |
+| `message` | One sentence for a human, e.g. "You were charged; repeat this exact request with the same payment to get your result." |
+
+The `x-payment-response` header is set on these errors too, so a client that
+reads receipts from headers still gets one.
+
+A paid retry skips verify and settle entirely: the server finds the spent
+payment, re-runs the request and answers with the original
+`x-payment-response`. It must be the same request: same method, URL and body.
+A retry against a different request answers `409 payment_retry_mismatch`.
+
+### What each status means for a buyer
+
+| Status / `error` | `paid` | What the client should do |
+|---|---|---|
+| `402` | n/a | Pay. The body lists the accepted networks and amounts. |
+| any 4xx/5xx with `paid: false` | `false` | You were not charged. Fix the input if it was a 4xx, then send the request again; the same payment may be reused or a fresh one signed. |
+| any 4xx/5xx with `paid: true, retry_safe: true` | `true` | Repeat the exact request with the same `X-PAYMENT` header. Do not pay again. |
+| `502 siwx_record_failed` | `true` | The wallet re-access grant could not be saved after you paid. Repeat with the same payment; the grant is written on the retry. |
+| `502 settle_failed` | not set | Settlement did not happen. Retrying with the same payment is safe. |
+| `409 payment_replayed` | not set | This payment already bought this request and the result was delivered. Pay again to buy it a second time. |
+| `409 payment_retries_exhausted` | `true` | You paid, the work kept failing and the retries are used up. Contact support with `settlement.transaction`. |
+| `409 payment_retry_mismatch` | `true` | You sent a paid retry for a different request. Repeat the original request instead. |
+| `409` with `x-x402-idempotent: in-flight` | n/a | The same payment is being processed right now. Wait a moment and repeat; you will get the result. |
+| `409 payment_identifier_conflict` | n/a | The same payment identifier was used for a different request. Use a new identifier for a new request. |
+
+### Idempotency
+
+A response is cached per payment for the idempotency window
+(`X402_IDEMPOTENCY_TTL_SECONDS`). Repeating a successful paid request with the
+same payment returns the cached body with `x-x402-idempotent: replay`, and
+nothing runs or settles twice. Clients may also send the `payment-identifier`
+extension to name the payment explicitly. The cache key covers the method, the
+URL and, on every non-GET route, the request body, so two different POST
+bodies under one identifier never share a response: the second is answered
+`409 payment_identifier_conflict`.
+
+### A buyer loop that handles all of it
+
+```js
+async function buy(url, init, pay) {
+	let res = await fetch(url, init);
+	if (res.status !== 402) return res;
+	const payment = await pay(await res.json()); // sign once
+	const headers = { ...init.headers, 'x-payment': payment };
+	for (let attempt = 0; attempt < 4; attempt++) {
+		res = await fetch(url, { ...init, headers });
+		if (res.ok) return res;
+		const body = await res.clone().json().catch(() => ({}));
+		if (!(body.paid === true && body.retry_safe === true)) return res;
+	}
+	return res;
+}
+```
+
+The spent-payment ledger behind this is `x402_spent_payments`
+(`api/_lib/x402/spent-payments.js`); the wrapper is `paidEndpoint()` in
+`api/_lib/x402-paid-endpoint.js`.
+
+## Open-source packages
+
+The x402 toolkit is published to npm and maintained as standalone, provider-neutral
+repositories — you can use any of them without a three.ws account. USDC is the
+default settlement asset on every one; `$THREE` is a supported opt-in token.
+
+| Package | Install | What it does |
+|---|---|---|
+| [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch) | `npm i @three-ws/x402-fetch` | **Buyer.** A drop-in `fetch` wrapper that automatically pays a 402 challenge in USDC (EIP-3009 on Base) and retries. |
+| [`@three-ws/x402-server`](https://www.npmjs.com/package/@three-ws/x402-server) | `npm i @three-ws/x402-server` | **Seller.** Build 402 challenges and run the verify → dispatch → settle flow. Zero dependencies. |
+| [`@three-ws/x402-modal`](https://www.npmjs.com/package/@three-ws/x402-modal) | `npm i @three-ws/x402-modal` | **Browser modal (lightweight).** Drop-in payment modal for any paid endpoint — vanilla JS, CDN-friendly, no bundler. |
+| [`@three-ws/x402-payment-modal`](https://www.npmjs.com/package/@three-ws/x402-payment-modal) | `npm i @three-ws/x402-payment-modal` | **Browser modal + adapters.** Fuller modal with `./server` (Express/Vercel) and `./react` subpaths, SIWX, and client-side spend caps. |
+| [`@three-ws/x402-mcp`](https://www.npmjs.com/package/@three-ws/x402-mcp) | `npx @three-ws/x402-mcp` | **MCP server (buyer).** Lets any MCP client (Claude Desktop, Cursor, Claude Code) discover, inspect, and pay x402 endpoints. |
+| [`@three-ws/ibm-x402-mcp`](https://www.npmjs.com/package/@three-ws/ibm-x402-mcp) | `npx @three-ws/ibm-x402-mcp` | **MCP server (seller).** Paid access to IBM Granite models via watsonx.ai, monetized over x402. |
+| [**x402 for VS Code**](https://marketplace.visualstudio.com/items?itemName=threews.vscode-x402) | `code --install-extension threews.vscode-x402` | Inspect, pay, and scaffold x402 endpoints from the editor. Also on [Open VSX](https://open-vsx.org/extension/threews/vscode-x402). |
+
+Each package has its own repository with a full README, API reference, and examples:
+[x402-fetch](https://github.com/nirholas/x402-fetch) ·
+[x402-server](https://github.com/nirholas/x402-server) ·
+[x402-modal](https://github.com/nirholas/x402-modal) ·
+[x402-payment-modal](https://github.com/nirholas/x402-payment-modal) ·
+[x402-mcp](https://github.com/nirholas/x402-mcp) ·
+[ibm-x402-mcp](https://github.com/nirholas/ibm-x402-mcp) ·
+[vscode-x402](https://github.com/nirholas/vscode-x402).
+
+### $THREE payments from VS Code
+
+The VS Code extension pays x402 challenges with **$THREE or USDC on Solana**.
+The $THREE contract address is
+`FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`. Set
+`x402.preferToken` to `three` to select it whenever an endpoint advertises
+that exact mint. Every $THREE payment shows the token amount, network, paying
+wallet, and recipient, then requires explicit confirmation before signing.
+
+See [x402 for VS Code](x402-vscode.md) for installation, wallet setup, settings,
+and the payment flow.
+
+## Tutorials
+
+- [Pay for an x402 service](tutorials/pay-for-x402-service.md) — settle a paid request end to end with `@three-ws/x402-fetch`.
+- [Build a paid x402 endpoint](tutorials/paid-x402-endpoint.md) — stand up a seller endpoint with `@three-ws/x402-server`.
+
+## Related
+
+- [x402 paid endpoints](x402-endpoints.md) — the catalog of the platform's own paid endpoints.
+- [Financial controls](financial-controls.md): where settled payments are recorded.
+- [x402 buyer client](x402-buyer.md) — how to settle a 402 challenge in code.
+- [x402 bazaar over MCP](mcp-x402-bazaar.md) — discover and pay endpoints through the MCP bazaar.
+- [Autonomous x402](autonomous-x402.md) — agents paying for services on their own.
+
+</doc>
+
+<doc title="Docs · Skills" url="https://three.ws/docs/skills.md">
+
+# Skills System
+
+Skills are the extension mechanism for three.ws — modular, portable capability bundles that tell an agent *what it can do* and *how to do it*. A skill packages together the LLM instructions, the tool schema, and the JavaScript handler that runs when the tool is called. Because a skill is just a directory of files served from any URL, the same wave skill can be installed in every agent you build without copying any code.
+
+This document covers how to install skills, how to write them, the full context API available to handlers, the security model, and the lifecycle events that let host pages observe skill execution.
+
+---
+
+## What a skill contains
+
+Every skill is a directory (a "bundle") with up to four files:
+
+| File | Required | Purpose |
+|------|----------|---------|
+| `manifest.json` | yes | Metadata, version, dependencies, compatibility |
+| `SKILL.md` | yes | LLM instructions — injected into the system prompt |
+| `tools.json` | yes (if exposing tools) | JSON Schema tool definitions the LLM can invoke |
+| `handlers.js` | no | ES module that implements each tool |
+
+A skill without `handlers.js` is valid — it is a *declarative skill* that only injects prompt context. A "british-accent" skill that contains only `SKILL.md` ("Speak with a British accent. Use terms like 'brilliant', 'cheers'.") needs no handlers and no tools.
+
+### Full bundle layout
+
+```
+wave/
+├── manifest.json
+├── SKILL.md
+├── tools.json
+├── handlers.js
+├── clips/
+│   ├── wave-casual.glb
+│   ├── wave-enthusiastic.glb
+│   └── wave-subtle.glb
+├── morphs/
+│   └── happy.json
+├── prompts/
+│   └── greeting.txt
+├── assets/
+└── LICENSE
+```
+
+Assets (clips, morphs, prompts) are co-located in the bundle. Handlers reference them via `ctx.skillBaseURI` — the runtime resolves relative paths against the bundle's base URL automatically.
+
+---
+
+## Built-in skills
+
+These skills come pre-installed in every agent. They live in `src/agent-skills.js` and require no installation.
+
+| Skill | What it does |
+|-------|-------------|
+| `greet` | Wave and say hello on load |
+| `present-model` | Describe the loaded 3D model (name, animations, polygon count) |
+| `validate-model` | Run glTF validation and report errors and warnings |
+| `remember` | Store user-provided information to agent memory |
+| `think` | Surface internal reasoning as a thought bubble in the UI |
+| `sign-action` | Sign the current action with the connected wallet |
+| `help` | List available skills and commands |
+
+Built-in skills that are `mcpExposed: true` are also published in the platform's skills catalog (`GET /api/chat-skills`) as callable tools named `skill_<name>` (hyphens and dots converted to underscores, e.g. `present-model` becomes `skill_present_model`). The catalog is what the platform chat runtime and external tool consumers read to discover them.
+
+---
+
+## Installing a skill
+
+### From the agent manifest
+
+Reference skills by URI in the agent's `manifest.json`. The runtime fetches and installs them at startup:
+
+```json
+{
+  "skills": [
+    { "uri": "https://your-site.com/skills/wave/", "version": "0.1.0" },
+    { "uri": "ipfs://bafy.../validate-model/", "version": "^1.0.0" }
+  ]
+}
+```
+
+The URI points at any host serving the four-file bundle. The repo ships a copyable starter at `examples/skills/wave/` (the same bundle Coach Leo's manifest references); host it on your own site or pin it to IPFS and reference that URI.
+
+URIs can be HTTPS, IPFS (`ipfs://`), or Arweave (`ar://`). IPFS URIs are resolved through a gateway fallback chain (ipfs.filebase.io → 4everland.io → gateway.pinata.cloud, see `src/ipfs.js`).
+
+### Via the web component attribute
+
+Pass one or more bundle URIs, comma separated (`src/element.js` splits on commas; versions cannot be pinned through the attribute, use the manifest for that):
+
+```html
+<agent-3d
+  agent-id="my-agent"
+  skills="https://your-site.com/skills/wave/,https://your-site.com/skills/tip-jar/"
+></agent-3d>
+```
+
+### At runtime via JavaScript
+
+```js
+const el = document.querySelector('agent-3d');
+await el.installSkill('https://example.com/skills/weather/');
+
+// List what is installed (built-in + installed skill definitions)
+console.log(el.skills);
+```
+
+---
+
+## Skill manifest format
+
+`manifest.json` describes the skill, its compatibility requirements, and what it provides:
+
+```jsonc
+{
+  "spec": "skill/0.1",
+  "name": "wave",
+  "version": "0.1.0",
+  "description": "Wave at the user with context-appropriate enthusiasm.",
+  "author": "0xDeadBeef...",   // optional — wallet address or name
+  "license": "MIT",
+  "tags": ["greeting", "gesture", "mixamo-compatible"],
+
+  // Compatibility — runtime checks these before installing
+  "requires": {
+    "rig": ["mixamo", "any"],  // rigs this skill works with
+    "runtime": ">=0.1.0",
+    "tools": ["play_clip"]     // built-in tools this skill depends on
+  },
+
+  // Skill dependencies — installed recursively before this skill
+  "dependencies": {
+    "https://your-site.com/skills/gesture-base/": "^1.0.0"
+  },
+
+  // What this skill adds to the agent
+  "provides": {
+    "tools": ["wave"],
+    "triggers": ["greeting", "farewell", "introduction"]
+  },
+
+  // Content-addressed integrity (optional but recommended)
+  "integrity": {
+    "SKILL.md": "sha256-...",
+    "tools.json": "sha256-...",
+    "handlers.js": "sha256-..."
+  }
+}
+```
+
+**Field reference:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `spec` | string | yes | Always `"skill/0.1"` |
+| `name` | string | yes | Unique identifier; must match `SKILL.md` frontmatter |
+| `version` | string | yes | Semver |
+| `description` | string | yes | One-line summary |
+| `requires` | object | no | Runtime/rig/tool compatibility constraints |
+| `dependencies` | object | no | Other skill URIs to install first (recursive) |
+| `provides` | object | no | Declared tools and semantic trigger tags |
+| `integrity` | object | no | SHA-256 hashes for verification before execution |
+| `sandboxPolicy` | string | no | Set to `"trusted-main-thread"` to bypass the worker sandbox |
+| `author` | string | no | Wallet address or author name; enforced under `owned-only` trust |
+| `license` | string | no | SPDX license identifier |
+| `tags` | array | no | Used by skill discovery queries |
+
+---
+
+## SKILL.md — LLM instructions
+
+The `SKILL.md` file is injected into the agent's system prompt whenever the skill is loaded. It tells the LLM when and how to use the skill's tools. Write it as instruction, not description — it speaks directly to the model.
+
+```markdown
+---
+name: wave
+description: Wave at the user with context-appropriate enthusiasm.
+triggers:
+    - user_greeting
+    - user_farewell
+    - introduction
+cost: low
+---
+
+# Wave
+
+When the user greets you, says goodbye, or when you are introduced to
+someone, wave at them. Pick the clip based on the vibe:
+
+- **wave-casual** — default, for most greetings
+- **wave-enthusiastic** — when the user seems excited, or after a win
+- **wave-subtle** — in a professional context or mid-conversation
+
+Call `wave({ style: "casual" | "enthusiastic" | "subtle" })`.
+
+Do not wave more than once per turn. Do not wave if you just waved.
+```
+
+**Frontmatter fields:**
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `name` | string | Must match `manifest.json` |
+| `description` | string | Used in skill discovery UIs |
+| `triggers` | string[] | Semantic tags that surface this skill in the router |
+| `cost` | `low` \| `medium` \| `high` | Latency hint — controls eager vs. lazy loading |
+
+The runtime wraps the markdown body in a `<skill name="..." version="...">` XML tag before injecting it, so the LLM can attribute which skill each instruction came from.
+
+---
+
+## tools.json — tool schema
+
+`tools.json` defines the callable functions the LLM sees. The format follows the Anthropic tool-use schema (`input_schema`, not `parameters`):
+
+```json
+{
+  "tools": [
+    {
+      "name": "wave",
+      "description": "Wave at the user.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "style": {
+            "type": "string",
+            "enum": ["casual", "enthusiastic", "subtle"],
+            "default": "casual"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "minimum": 500,
+            "maximum": 5000,
+            "default": 1500
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}
+```
+
+The runtime merges tool schemas from all installed skills before each LLM call. If two skills expose a tool with the same name, the later-installed skill wins and a warning is logged.
+
+---
+
+## Writing a handler
+
+Handlers are ES modules. Export one `async` function per tool name. The function receives the validated arguments from the LLM call and a context object:
+
+```js
+// handlers.js
+export async function wave(args, ctx) {
+  const { style = 'casual', duration_ms = 1500 } = args;
+
+  // Try to play a style-specific clip shipped with the skill bundle.
+  let played = false;
+  try {
+    const clip = await ctx.loadClip(
+      new URL(`clips/wave-${style}.glb`, ctx.skillBaseURI).href
+    );
+    if (clip) {
+      await ctx.viewer.play(clip, { blend: 0.2 });
+      played = true;
+    }
+  } catch {
+    // No bundled clip — fall back to built-in animation hint.
+  }
+
+  if (!played) {
+    played = ctx.viewer.playAnimationByHint('wave', { duration_ms });
+  }
+
+  ctx.memory.note('waved', { style, played });
+  return { ok: played, style };
+}
+```
+
+**Handler signature:**
+
+```js
+async function toolName(args, ctx) {
+  // args: validated parameters from the LLM tool call
+  // ctx:  SkillContext — see full API below
+  return { ok: true, ...result };
+}
+```
+
+Return `{ ok: true, ... }` on success and `{ ok: false, error: 'message' }` on failure. The runtime surfaces errors to the LLM and to the `skill-error` protocol event.
+
+### The context API
+
+```ts
+interface SkillContext {
+  // Scene control
+  viewer: {
+    play(clip: AnimationClip, opts?: { blend?: number }): Promise<void>;
+    stop(clipName?: string): void;
+    setExpression(preset: string): void;
+    lookAt(target: Vector3 | 'user' | 'camera'): void;
+    moveTo(position: Vector3, opts?: MoveOptions): void;
+    playAnimationByHint(hint: string, opts?: { duration_ms?: number }): boolean;
+    scene: Scene;  // read-only reference to the Three.js scene
+  };
+
+  // LLM access
+  llm: {
+    complete(prompt: string, opts?: CompleteOpts): Promise<string>;
+    embed(text: string): Promise<Float32Array>;
+  };
+
+  // Memory
+  memory: {
+    read(key: string): any;
+    write(key: string, value: any): void;
+    note(type: string, data: any): void;    // appends to timeline
+    recall(query: string): Promise<MemoryEntry[]>;
+  };
+
+  // Asset loading (paths resolved relative to skillBaseURI)
+  loadClip(uri: string): Promise<AnimationClip>;
+  loadGLB(uri: string): Promise<GLTF>;
+  loadJSON(uri: string): Promise<any>;
+  skillBaseURI: string;  // base URL of this skill's bundle
+
+  // Network (CORS rules apply)
+  fetch(uri: string, opts?: RequestInit): Promise<Response>;
+
+  // Cross-skill calls
+  call(toolName: string, args: any): Promise<any>;
+
+  // User interaction
+  speak(text: string): Promise<void>;
+  listen(opts?: ListenOpts): Promise<string>;
+}
+```
+
+**Key points:**
+
+- `ctx.skillBaseURI` always ends with `/`. Use `new URL('./clips/file.glb', ctx.skillBaseURI).href` for portable asset resolution.
+- `ctx.memory.recall()` is substring search — no embeddings yet.
+- `ctx.call()` invokes another tool by name. It crosses skill boundaries — you can call a built-in like `speak` from inside a custom skill handler.
+- `ctx.viewer.scene` is a read-only reference. Use the `viewer` methods to manipulate state rather than mutating the scene graph directly.
+- Individual `ctx.*` calls time out after **30 seconds**. A timed-out handler surfaces as `{ error: "..." }` without crashing the agent.
+
+---
+
+## Skill sandboxing
+
+By default, handlers run in a Web Worker (`src/skills/sandbox-worker.js`). The worker has no DOM, no `window`, no `document`, no `localStorage`, and no `cookie` access.
+
+The worker receives handler source as text and loads it via a `blob:` URL dynamic `import()`. Each `ctx.*` call from inside the worker becomes a structured-cloneable `postMessage` round-trip to the main thread, which validates and dispatches it, then returns the result. Non-serializable objects (like `AnimationClip` or `GLTF`) are stored in a host-side handle registry and represented to the worker as opaque handle strings.
+
+**Sandboxed handlers cannot:**
+- Read `document.cookie`, `window.localStorage`, `sessionStorage`, or any DOM API
+- Access `window`, `navigator`, or `location`
+- Import external modules (no `import` statements in handler source — the blob context has no base URL for relative imports)
+- Make network requests outside `ctx.fetch` and `ctx.loadJSON` (standard CORS rules apply)
+
+**Sandboxed handlers can still do everything via `ctx.*`** — animation, memory, speech, LLM calls, cross-skill calls — through the postMessage proxy.
+
+### Trusted main-thread opt-out
+
+Owner-signed skills that require direct Three.js access, `window.*` APIs, or per-frame work can opt out of the sandbox:
+
+```jsonc
+{
+  "sandboxPolicy": "trusted-main-thread"
+}
+```
+
+When this flag is honored, `handlers.js` is loaded via a direct `import()` in the main thread. It is honored only for bundles served from the embedding page's own origin or from the origin that served the `<agent-3d>` library, and never under `any` trust. A bundle from any other origin that sets the flag still installs and runs, inside the worker sandbox.
+
+---
+
+## Trust and security
+
+The `SkillRegistry` enforces a trust policy set per agent:
+
+| Mode | Behavior |
+|------|---------|
+| `owned-only` | Only run skills where `manifest.author` matches the agent owner's wallet (default) |
+| `whitelist` | Allow skills from a configured list of publisher wallets |
+| `any` | All skills from any URL are allowed — use for kiosks and demos |
+
+Trust is configured in the agent manifest or passed to `SkillRegistry`:
+
+```js
+new SkillRegistry({ trust: 'owned-only', ownerAddress: '0xDeadBeef...' });
+```
+
+If a skill's `author` field does not match `ownerAddress` under `owned-only` policy, `install()` throws before fetching any handler code. If `integrity` hashes are present in the manifest, they are verified before any handler executes.
+
+Declarative skills (no `handlers.js`) are always safe to load regardless of trust policy.
+
+---
+
+## Skill dependencies
+
+Skills can depend on other skills. The registry installs dependencies recursively before the depending skill:
+
+```jsonc
+{
+  "name": "full-coaching-kit",
+  "version": "1.0.0",
+  "dependencies": {
+    "https://your-site.com/skills/wave/": "^0.1.0",
+    "https://your-site.com/skills/validate-model/": "^1.0.0"
+  },
+  "provides": { "tools": [] }
+}
+```
+
+The `dependencies` object maps skill URIs to version ranges. Circular dependencies are detected and rejected. If a skill URI is already installed, it is not re-fetched.
+
+---
+
+## Skill lifecycle events
+
+The agent protocol bus fires events at each stage of skill execution. Subscribe on the bus to react to skill activity:
+
+```js
+import { protocol } from './src/agent-protocol.js';
+// In the three.ws app itself the same singleton is window.VIEWER.agent_protocol.
+
+// Fires when the runtime dispatches a tool call to a skill handler
+protocol.on('perform-skill', (action) => {
+  console.log('Skill starting:', action.payload.skill, action.payload.args);
+});
+
+// Fires when the handler returns successfully
+protocol.on('skill-done', (action) => {
+  console.log('Skill done:', action.payload.skill, action.payload.result);
+});
+
+// Fires when the handler throws or times out
+protocol.on('skill-error', (action) => {
+  console.error('Skill error:', action.payload.skill, action.payload.error);
+});
+```
+
+Host pages embedding `<agent-3d>` also get DOM `CustomEvent`s re-dispatched on the element for runtime activity: `skill:tool-start` and `skill:tool-called` (plus `brain:*`, `voice:*`, and `memory:write`). Listen with `el.addEventListener('skill:tool-called', handler)` when you only need tool-call notifications.
+
+**Event payloads:**
+
+| Event | `detail` shape |
+|-------|---------------|
+| `perform-skill` | `{ skill: string, args: object, animationHint?: string }` |
+| `skill-done` | `{ skill: string, result: { ok, output?, sentiment?, data? } }` |
+| `skill-error` | `{ skill: string, error: string }` |
+
+`skill-done` results with a `sentiment` number (−1 to 1) trigger the avatar's empathy layer — positive values produce a celebration blend, negative values produce concern.
+
+---
+
+## Calling skills programmatically
+
+In the three.ws app, the built-in skills executor is exposed as `window.VIEWER.agent_skills` (an `AgentSkills` instance from `src/agent-skills.js`):
+
+```js
+const skills = window.VIEWER.agent_skills;
+
+// Execute a skill directly, bypassing the LLM
+const result = await skills.perform('greet', { name: 'Alex' });
+console.log(result); // { success: true, output: '...', sentiment: ... }
+
+// List all registered skills
+skills.list();
+
+// Get a specific skill definition
+const greetDef = skills.get('greet');
+```
+
+For external skills installed via `SkillRegistry` (`src/skills/index.js`), invoke through the registry:
+
+```js
+const registry = new SkillRegistry({ trust: 'owned-only', ownerAddress });
+await registry.install({ uri: 'https://example.com/skills/weather/' });
+
+const skill = registry.findSkillForTool('get_weather');
+const result = await skill.invoke('get_weather', { city: 'Berlin' }, ctx);
+```
+
+---
+
+## Skill loading sequence
+
+When a skill URI is installed, the runtime follows this sequence:
+
+```
+{ uri, version }
+      │
+      ▼
+fetch {uri}/manifest.json
+      │
+      ▼
+enforce trust policy (author vs. ownerAddress)
+      │
+      ▼
+verify integrity hashes (if present)
+      │
+      ▼
+check requires.rig matches agent body.rig
+      │
+      ▼
+install dependencies (recursive)
+      │
+      ▼
+parallel fetch: SKILL.md, tools.json, handlers.js
+      │
+      ▼
+merge tools into runtime tool-use schema
+      │
+      ▼
+inject SKILL.md into system prompt as <skill> fragment
+      │
+      ▼
+skill is live — LLM can now call its tools
+```
+
+---
+
+## Worked example: the `wave` skill
+
+The `wave` skill is the minimal complete example — small enough to reproduce here
+in full. Create it as a `wave/` directory anywhere you serve static files; every
+file the bundle needs is listed below. For real, installable bundles that ship
+with the repo, see [examples/skills/](../examples/skills/) (`pump-fun`,
+`solana-wallet`, and friends) and [public/skills/](../public/skills/)
+(`tip-jar`, `crypto-price`, `dca`).
+
+### `manifest.json`
+
+```json
+{
+  "spec": "skill/0.1",
+  "name": "wave",
+  "version": "0.1.0",
+  "description": "Wave at the user with context-appropriate enthusiasm.",
+  "license": "MIT",
+  "tags": ["greeting", "gesture", "mixamo-compatible"],
+  "requires": {
+    "rig": ["mixamo", "any"],
+    "runtime": ">=0.1.0",
+    "tools": []
+  },
+  "provides": {
+    "tools": ["wave"],
+    "triggers": ["greeting", "farewell", "introduction"]
+  }
+}
+```
+
+### `tools.json`
+
+```json
+{
+  "tools": [
+    {
+      "name": "wave",
+      "description": "Wave at the user.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "style": {
+            "type": "string",
+            "enum": ["casual", "enthusiastic", "subtle"],
+            "default": "casual"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "minimum": 500,
+            "maximum": 5000,
+            "default": 1500
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}
+```
+
+### `SKILL.md`
+
+```markdown
+---
+name: wave
+description: Wave at the user with context-appropriate enthusiasm.
+triggers:
+    - user_greeting
+    - user_farewell
+    - introduction
+cost: low
+---
+
+When the user greets you, says goodbye, or when you are introduced,
+wave at them. Pick the clip based on the vibe:
+
+- **wave-casual** — default, for most greetings
+- **wave-enthusiastic** — when the user seems excited, or after a win
+- **wave-subtle** — in a professional context or mid-conversation
+
+Call `wave({ style: "casual" | "enthusiastic" | "subtle" })`.
+
+Do not wave more than once per turn.
+```
+
+### `handlers.js`
+
+```js
+export async function wave(args, ctx) {
+  const { style = 'casual', duration_ms = 1500 } = args;
+
+  let played = false;
+  try {
+    const clip = await ctx.loadClip(
+      new URL(`clips/wave-${style}.glb`, ctx.skillBaseURI).href
+    );
+    if (clip) {
+      await ctx.viewer.play(clip, { blend: 0.2 });
+      played = true;
+    }
+  } catch {
+    // No bundled clip — fall back to built-in animation hint.
+  }
+
+  if (!played) {
+    played = ctx.viewer.playAnimationByHint('wave', { duration_ms });
+  }
+
+  ctx.memory.note('waved', { style, played });
+  return { ok: played, style };
+}
+```
+
+The handler tries to load a style-specific GLB clip from the bundle (e.g. `clips/wave-casual.glb`). If the clip is not found, it falls back to `playAnimationByHint('wave')`, which searches the loaded model's existing animation tracks for one tagged with the `wave` hint. This makes the skill work on any Mixamo avatar whether or not you ship animation clips.
+
+---
+
+## Worked example: Coach Leo
+
+`examples/coach-leo/` shows a complete agent manifest that references the wave skill. Key sections of [examples/coach-leo/manifest.json](../examples/coach-leo/manifest.json):
+
+```json
+{
+  "spec": "agent-manifest/0.1",
+  "name": "Coach Leo",
+  "body": {
+    "uri": "/avatars/cz.glb",
+    "rig": "mixamo",
+    "boundingBoxHeight": 1.78
+  },
+  "brain": {
+    "provider": "anthropic",
+    "model": "claude-opus-4-6",
+    "instructions": "instructions.md",
+    "temperature": 0.8,
+    "maxTokens": 2048
+  },
+  "skills": [
+    { "uri": "../skills/wave/", "version": "0.1.0" }
+  ],
+  "tools": ["wave", "lookAt", "play_clip", "setExpression", "speak", "remember"]
+}
+```
+
+The `tools` array in the agent manifest is the allowlist of built-in tools the LLM can call directly. The `skills` array references external skill bundles to install. Together they define the agent's complete capability surface.
+
+Coach Leo's `instructions.md` uses the wave skill naturally:
+
+```markdown
+When the user greets you, call `wave()` to wave at them.
+When they describe a drill, set a focused expression with
+`setExpression({ preset: "focused" })` while you explain,
+then smile afterward.
+```
+
+This is the pattern: `SKILL.md` in the skill bundle explains the tool in the abstract; the agent's `instructions.md` tells this specific persona when and why to use it.
+
+---
+
+## Publishing a skill
+
+A skill is just a directory of static files. Publish it anywhere:
+
+- **GitHub Releases** — attach a zip, reference the raw URL
+- **Vercel / Netlify / S3** — deploy the directory as a static site
+- **IPFS** — `ipfs add -r skills/wave/` and distribute the CID
+- **The platform itself**: first-party bundles live under `public/skills/<name>/` in this repo (e.g. `public/skills/tip-jar/`) and are served at `https://three.ws/skills/<name>/`
+- **npm**: publish the directory as a package and reference it via a CDN like jsDelivr
+
+**Convention:** name the manifest `manifest.json` and co-locate `handlers.js` in the same directory. Agents resolve all relative paths (`./clips/`, `./prompts/`) against the manifest's URL, so the layout must be preserved.
+
+```
+skills/wave/
+├── manifest.json      ← fetched first
+├── SKILL.md
+├── tools.json
+├── handlers.js
+└── clips/
+    ├── wave-casual.glb
+    └── wave-enthusiastic.glb
+```
+
+For IPFS publishing, the CID of the directory becomes the stable URI. Agents can pin a specific version by CID and upgrade by updating the URI.
+
+---
+
+## Importing a skill from an OpenAPI spec or a GitHub repo
+
+Writing a bundle by hand is not the only path. `@three-ws/skill-import` turns a public OpenAPI/Swagger spec URL, or a GitHub repo, directly into a draft bundle: every operation becomes a `tools.json` entry and a generated `handlers.js` function that calls it, `SKILL.md` prose is written from the spec's own descriptions, and Swagger 2.0 specs are upgraded to OpenAPI 3 automatically. A repo whose only content is a README becomes a declarative skill (prose only, no tools), the same shape as a hand-written `SKILL.md`-only bundle.
+
+```bash
+curl -s -X POST https://three.ws/api/skills/import \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
+  -H "content-type: application/json" \
+  -d '{"url": "https://petstore3.swagger.io/api/v3/openapi.json"}' | jq '.data | {id, kind, bundleUri, tools: .manifest.provides.tools}'
+```
+
+```json
+{
+  "id": "a96ddb60-...",
+  "kind": "openapi",
+  "bundleUri": "/api/skills/import/a96ddb60-.../",
+  "tools": ["updatePet", "addPet", "findPetsByStatus", "getPetById", "..."]
+}
+```
+
+The CLI wraps the same endpoint:
+
+```bash
+three-ws skills import https://petstore3.swagger.io/api/v3/openapi.json
+three-ws skills import sindresorhus/is-up   # owner/repo shorthand also works
+three-ws skills drafts                       # list your generated drafts
+```
+
+Every import lands as a **disabled draft, owner-scoped and labelled untrusted**: it is never enabled automatically and never installed onto any agent. `GET /api/skills/import` lists your drafts, `GET /api/skills/import/:id` fetches one, and the generated bundle itself is served at `bundleUri` (`manifest.json`, `SKILL.md`, `tools.json`, `handlers.js`) so you can inspect every generated tool call before trusting it. `PATCH /api/skills/import/:id` with `{ "enabled": true }` is the only way a draft's `enabled` flag ever changes; `DELETE /api/skills/import/:id` removes it. The same flow is available from the UI at [/skills/import](https://three.ws/skills/import), under the **From an API** tab: paste a spec URL or repo, review the generated tool list in the result card, then enable or delete each draft from your drafts list.
+
+Generated handlers call `ctx.fetch` with auth placeholders filled from the skill's declared secrets (an API key header, a bearer token, etc.), never a hardcoded credential, so the skill's eventual owner supplies the real secret at install time, the same as any other skill with a `secrets` declaration in its manifest.
+
+### Importing a Solana program from its Anchor IDL
+
+The same endpoint turns an Anchor IDL into a skill, the Solana counterpart of the OpenAPI path. Send `idl_url` (any public IDL JSON) or `program_id` (the importer reads the IDL the program published on chain), plus an optional `cluster` of `mainnet-beta` (default) or `devnet`.
+
+```bash
+curl -s -X POST https://three.ws/api/skills/import \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
+  -H "content-type: application/json" \
+  -d '{"idl_url": "https://raw.githubusercontent.com/nirholas/three.ws/main/contracts/idl/skill_license.json"}' \
+  | jq '.data | {id, kind, tools: [.tools.tools[].name]}'
+```
+
+Per account type you get a `read_<account>` tool that fetches and decodes an account by address. Per instruction you get two tools:
+
+- `preview_<instruction>` builds the unsigned instruction and returns its accounts, base64 and hex data, a plain summary and a risk read. It never signs and never reads a secret.
+- `send_<instruction>` returns the same payload with `status: "confirmation_required"`. It is marked `destructiveHint: true`, signs and sends nothing, and exists to hand the instruction to the wallet owner's confirm-gated flow, which executes only after an explicit yes.
+
+Accounts with a fixed address in the IDL (token program, system program) are filled in; every other account is passed by the caller, because PDA derivation needs ed25519 curve checks the sandbox does not have. The generated `SKILL.md` ends with a risk panel that flags instructions that move tokens, spend SOL, close accounts or change an authority. IDLs carry no Anchor constraints, so a flag is a prompt to read the program and a clean row is not an audit. Drafts are disabled and owner-scoped exactly like OpenAPI imports (`kind: "anchor"`). Pre-0.30 IDLs (`isMut`/`isSigner`, no discriminators) are normalized on import.
+
+---
+
+## Marketplace skills: install once, applied in every chat
+
+Alongside URI-addressed bundles, the platform hosts a community catalog at [/marketplace?tab=skills](https://three.ws/marketplace?tab=skills). A marketplace skill is a database-backed record with a description, category, tags, ratings, and either:
+
+- **content**: a markdown playbook (the equivalent of a standalone `SKILL.md`): analysis frameworks, trading checklists, integration guides. This is the common kind.
+- **schema_json**: a JSON tool-schema pack for agents that bring their own executor.
+
+Installing is free and instant (`POST /api/skills/:id/install`, sign-in required; `DELETE` uninstalls). What an install *does*:
+
+- **Knowledge skills load into your chats.** `/api/chat` reads your installed skills at request time (`api/_lib/installed-skills.js`) and injects their playbooks into the system prompt, so your agent follows them anywhere you chat signed-in on three.ws (the `/app` workspace included). Budgets keep prompts sane: newest 8 installs, 6k chars per skill, 24k total. Each reply's SSE `done` event lists the slugs that were in context as `skills_applied`.
+- **Your installed set is one API call away.** `GET /api/skills?installed=true` (authed) returns the full payload, `content` and `schema_json` included, so an external agent, MCP client, or script can hydrate itself from your library.
+
+Paid skills price per *call*, not per install: the detail page shows an x402 endpoint (`GET /api/x402/skill-call?skill=<slug>`) any wallet can pay in USDC, settling to the author. The 402 challenge names the author's own wallet as the payee, so their share moves at settlement rather than being forwarded later, and Solana is offered first whenever the author has a Solana wallet. What the author keeps, where they watch it land, and how to verify a payout on-chain: [Skill royalties](./skill-royalties.md).
+
+Publish your own from the marketplace ("Publish a Skill") or `POST /api/skills` with `{ name, slug, description, category, tags, content }` (or `schema_json`).
+
+### Browsing the catalog from code
+
+`GET /api/skills` is public and takes the same filters the marketplace UI uses, so a script can reproduce any view you can link to:
+
+| Param | Meaning |
+| --- | --- |
+| `q` | Substring match across name, description, and tags |
+| `category` | Exact category slug (`GET /api/skills/categories` lists them with counts) |
+| `tag` | Exact tag, case-insensitive, matched against the skill's `tags` array |
+| `sort` | `popular` (default), `new`, or `az` |
+| `limit` / `cursor` | Page size (max 50) and the keyset cursor returned as `next_cursor` |
+| `installed=true` | Authed only: your own installed set, with `content` and `schema_json` |
+
+```bash
+# Every free skill tagged "solana", newest first
+curl -s 'https://three.ws/api/skills?tag=solana&sort=new&limit=50' \
+  | jq '.skills[] | select(.price_per_call_usd == 0) | {name, slug, tags}'
+```
+
+Those filters are also the page URL, so [/marketplace?tab=skills&tag=solana&sort=new](https://three.ws/marketplace?tab=skills&tag=solana&sort=new) opens that exact view in a browser and can be shared as-is. The retired `/skills` path forwards there, carrying `q`, `category`, `tag`, and `sort` with it.
+
+---
+
+## Versioning
+
+- `spec: "skill/0.1"` — the skill bundle format version.
+- `version` in `manifest.json` — semver, author-controlled, used for dependency resolution.
+- Agent manifests can pin an exact version (`"0.1.0"`) or a range (`"^0.1.0"`).
+- The runtime prefers the highest-compatible published version within range.
+
+---
+
+## See also
+
+- [Architecture Overview](./architecture.md) — how skills fit into the agent runtime
+- [Agent System](./agent-system.md) — the protocol bus and built-in tool system
+- [Web Component](./web-component.md) — embedding agents and passing skill attributes
+- `specs/SKILL_SPEC.md` — the authoritative skill bundle specification
+- `specs/PERMISSIONS_SPEC.md` — ERC-7710/ERC-7715 delegation for fine-grained skill permissions
+
+</doc>
