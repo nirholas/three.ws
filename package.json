@@ -716,7 +716,7 @@
 		"meshoptimizer": "^1.2.0",
 		"mppx": "^0.13.1",
 		"multiformats": "^14.0.5",
-		"nanoid": "^3.3.11",
+		"nanoid": "^6.0.2",
 		"nipplejs": "^1.0.4",
 		"node-html-parser": "^7.1.0",
 		"node-ical": "^0.27.3",
