@@ -10,13 +10,19 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
-const sqlState = { queue: [], calls: [], handler: null };
+const sqlState = { queue: [], calls: [], handler: null, agentGone: false };
 vi.mock('../api/_lib/db.js', () => ({
 	sql: vi.fn(async (strings, ...values) => {
 		const query = strings.join('?');
 		sqlState.calls.push({ query, values });
 		const handled = sqlState.handler ? sqlState.handler(query, values) : undefined;
 		if (handled !== undefined) return handled;
+		// The burner-tier gate reads the agent's policy row when a caller names no
+		// meta (loadPolicyMeta). Serve a live agent with an empty policy by default;
+		// a test that wants the fail-closed path sets sqlState.agentGone.
+		if (/FROM agent_identities WHERE id = \? AND deleted_at IS NULL/.test(query.replace(/\s+/g, ' '))) {
+			return sqlState.agentGone ? [] : [{ user_id: 'user-1', meta: {} }];
+		}
 		return sqlState.queue.length ? sqlState.queue.shift() : [];
 	}),
 	isDbUnavailableError: () => false,
@@ -53,6 +59,7 @@ beforeEach(() => {
 	sqlState.queue = [];
 	sqlState.calls = [];
 	sqlState.handler = null;
+	sqlState.agentGone = false;
 });
 
 // The destination allowlist is table-backed: serve the settings row and the
@@ -264,6 +271,14 @@ describe('wallet freeze', () => {
 		const limits = normalizeSpendLimits({ frozen: true });
 		const r = await enforceSpendLimit({ agentId: 'a', limits, category: 'withdraw', usdValue: 10, destination: Keypair.generate().publicKey.toBase58() });
 		expect(r.ok).toBe(true);
+	});
+
+	it('fails closed when the agent row is gone and the caller supplied no meta', async () => {
+		sqlState.agentGone = true;
+		const limits = normalizeSpendLimits({});
+		await expect(
+			enforceSpendLimit({ agentId: 'a', limits, category: 'trade', usdValue: 1 }),
+		).rejects.toMatchObject({ code: 'agent_not_found' });
 	});
 
 	it('does not block any path when not frozen', async () => {
