@@ -63,12 +63,20 @@ export function saveUnit(u) {
 	ls.set('tws:weather:unit', u === 'F' ? 'F' : 'C');
 }
 
+// Bound every request so a stalled network falls through to the cached forecast
+// instead of hanging the window; the caller's own signal still cancels first.
+const REQUEST_TIMEOUT_MS = 10_000;
+function withDeadline(signal) {
+	const deadline = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+	return signal ? AbortSignal.any([signal, deadline]) : deadline;
+}
+
 /** Geocoding search. Returns [{ name, admin1, country, lat, lon, tz }]. Throws on network failure. */
 export async function searchCity(query, { signal } = {}) {
 	const q = String(query).trim();
 	if (q.length < 2) return [];
 	const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=en&format=json`;
-	const r = await fetch(url, { signal });
+	const r = await fetch(url, { signal: withDeadline(signal) });
 	if (!r.ok) throw new Error(`Search failed (HTTP ${r.status})`);
 	const j = await r.json();
 	return (j.results || []).map((x) => ({ name: x.name, admin1: x.admin1 || '', country: x.country || '', lat: x.latitude, lon: x.longitude, tz: x.timezone || '' }));
@@ -103,7 +111,7 @@ export async function fetchWeather(lat, lon, unit = 'C', { signal } = {}) {
 		wind_speed_unit: f ? 'mph' : 'kmh',
 	});
 	try {
-		const r = await fetch(`https://api.open-meteo.com/v1/forecast?${q}`, { signal });
+		const r = await fetch(`https://api.open-meteo.com/v1/forecast?${q}`, { signal: withDeadline(signal) });
 		if (!r.ok) throw new Error(`Forecast failed (HTTP ${r.status})`);
 		const data = normalise(await r.json(), unit);
 		ls.set(cacheKey(lat, lon, unit), JSON.stringify(data));

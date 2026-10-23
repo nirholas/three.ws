@@ -41,7 +41,7 @@ function cancelPage(token) {
 <script>
 const btn=document.getElementById('go'),msg=document.getElementById('msg');
 btn.addEventListener('click',async()=>{btn.disabled=true;msg.textContent='Cancelling...';
-try{const r=await fetch(location.pathname,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'cancel',token:${JSON.stringify(token).replace(/</g, '\\u003c')}})});
+try{const r=await fetch(location.pathname,{signal:AbortSignal.timeout(15000),method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'cancel',token:${JSON.stringify(token).replace(/</g, '\\u003c')}})});
 const j=await r.json().catch(()=>({}));
 if(r.ok){msg.textContent=j.already?'Already cancelled.':'Cancelled. That address cannot receive funds.';}
 else{msg.textContent=j.error_description||'Could not cancel. Sign in and cancel it from the allowlist page.';btn.disabled=false;}

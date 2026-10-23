@@ -40,6 +40,7 @@ export async function exchangeActivityCode(code) {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, grant_type: 'authorization_code', code }),
+		signal: AbortSignal.timeout(8000),
 	});
 	const data = await resp.json().catch(() => null);
 	if (!resp.ok || !data?.access_token) {
@@ -51,7 +52,7 @@ export async function exchangeActivityCode(code) {
 /** Verify an access token is real by asking Discord who it belongs to. */
 export async function fetchDiscordUser(accessToken) {
 	if (typeof accessToken !== 'string' || !accessToken) throw new DiscordActivityAuthError('bad_token', 'access_token is required', 400);
-	const resp = await fetch(DISCORD_USER_URL, { headers: { Authorization: `Bearer ${accessToken}` } });
+	const resp = await fetch(DISCORD_USER_URL, { headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(8000) });
 	const data = await resp.json().catch(() => null);
 	if (!resp.ok || !data?.id) {
 		throw new DiscordActivityAuthError('user_fetch_failed', data?.message || 'Discord rejected the access token', 502);

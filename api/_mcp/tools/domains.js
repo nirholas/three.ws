@@ -25,6 +25,8 @@ import { limits } from '../../_lib/rate-limit.js';
 
 const READ = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true };
 const WRITE = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true };
+// Polling tools: the call settles server-side state (registration outcome, host promotion), so it is not read-only, but repeating it changes nothing further.
+const SETTLE = { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true };
 const MONEY = { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true };
 
 const CONTACT = {
@@ -228,7 +230,7 @@ export const toolDefs = [
 		title: 'Poll a domain registration',
 		group: 'domains',
 		scope: 'wallet:read',
-		annotations: READ,
+		annotations: SETTLE,
 		description: 'The state of a registration you started: registering, active (with its expiry) or failed (credits refunded). Polls the registrar and settles the registration. Pass the registration id from domain_register or the domain name. Use this after domain_register to follow a registration until it is active or failed.',
 		inputSchema: {
 			type: 'object',
@@ -274,7 +276,7 @@ export const toolDefs = [
 		title: 'Check a connected domain',
 		group: 'domains',
 		scope: 'agents:read',
-		annotations: READ,
+		annotations: SETTLE,
 		description: 'Whether a connected domain is live: the certificate state, the DNS nameservers in use and the URL once HTTPS is serving. Promotes the host to live when its certificate turns active. Use this after domain_connect to check when the domain is serving over HTTPS.',
 		inputSchema: { type: 'object', properties: { domain: { type: 'string', maxLength: 253 } }, required: ['domain'], additionalProperties: false },
 		async handler(args, auth) {
