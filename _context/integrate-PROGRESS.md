@@ -21,3 +21,9 @@
 - Measured (live GeckoTerminal, 197 own posts, all priced): median +1h 1.59% (baseline -0.12%), +4h 1.61% (-0.68%), +24h -1.38% (-2.41%).
 - Verified: Posts view with 197 bubbles at 390, 768 and 1280 px; 32 price tests passing in an isolated vitest install.
 - Not verified: `npm test` and the full `tests/x-content-outcomes.test.js` in this checkout (shared `node_modules` is incomplete, see the integrate 33 entry), so prompts/finish/536 stays. Owner of the remainder: whoever runs `npm ci` once, then `npm test` and `npm run build:pages`.
+
+## 2026-10-23 integrate 36: news failover rung and stale skill guides
+
+- Built: `api/_lib/news-failover.js` (hosted `cryptocurrency.cv/api/v1/news`, 3.5s timeout, one attempt, `cryptocurrency-cv-news` breaker, schema validation, `cv:` source keys, `news:failover` provenance record at tier `fallback`), wired into `getNews` in `api/_lib/news.js` only when the native merge is empty and no named source is requested; six failover cases in `tests/news-lib.test.js`. Guides rewritten against the upstream repos: `x-twitter-automation-guide` (JavaScript, Apache-2.0, real CLI/MCP/client API), `free-crypto-news-guide` (300+ sources, repo now `nirholas/cryptocurrency.cv`), `lstm-price-prediction-guide` (real repo `nirholas/lstm-bitcoin-prediction.ipynb`). `data/skills/seed.json` regenerated.
+- Commits: 64caec3e8 (swept the rung, tests and FCN guide), ed75c5946 and 22a5a1f49 (swept the other guides and seed), 141998df4 (literal-host request so `audit:upstreams` attributes it), 8736a7912 (retired the work order).
+- Verified: `npx vitest run tests/news-lib.test.js tests/news-sources.test.js` 56 passed; `npm run audit:upstreams` no regressions and lists `cryptocurrency.cv`; `npm run check:skills-pack` and `check:skills-seed` pass.
