@@ -270,6 +270,40 @@ const res = await fetch(`/api/approvals/${id}`, {
 });
 ```
 
+## The capped burner
+
+An owner can tell an agent how much it may spend on its own and what must come
+back to them. The policy lives on the agent (`meta.burner_policy`) and is edited
+in the agent wallet hub's **Burner cap** tab, or with
+`PUT /api/agents/:id/solana/limits` and a `burner_policy` object:
+
+| Field | Meaning |
+|---|---|
+| `autoMaxUsd` | Largest single spend the agent signs alone. Empty turns the cap off. |
+| `dailyAutoMaxUsd` | Rolling 24h ceiling on what it signs alone. Once reached, later spends wait for you. |
+| `confirmAboveUsd` | Above this a tap is not enough: you sign the approval with a Solana wallet linked to your account. |
+| `expiryMinutes` | How long a confirmation request stays answerable (2 to 60, default 10). |
+
+Above the cap nothing fails. The spend becomes a pending approval carrying the
+recipient, amount, token and chain, delivered on every linked channel and the web
+inbox. The classifier ([api/_lib/burner-tier.js](../api/_lib/burner-tier.js)) is
+pure and shared: the server guard and the tab's live preview ("a $X spend would
+be: auto / needs your confirmation / needs your wallet signature") run the same
+code. An unpriced spend always asks.
+
+Above `confirmAboveUsd` the approvals page asks your wallet to sign the request
+text (`three.ws approval`, request id, recipient, amount, chain, payload hash).
+The server verifies the ed25519 signature against your linked wallets
+([api/_lib/owner-sign.js](../api/_lib/owner-sign.js)); a signature for another
+request, an unlinked wallet or a missing one runs nothing. The requirement is
+stored in the hashed payload, so it cannot be edited out of the row. An expired
+request cannot execute, even with a valid signature.
+
+Every burner-gated request, approval (with the signing wallet), denial and expiry
+is appended to the agent's tamper-evident decision trail as a `burner_gate`
+decision. Tests: [tests/burner-tier.test.js](../tests/burner-tier.test.js),
+[tests/burner-approvals.test.js](../tests/burner-approvals.test.js).
+
 ## Adding a new kind of request
 
 A source registers an executor in the `EXECUTORS` map in
