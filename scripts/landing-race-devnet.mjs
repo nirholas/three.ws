@@ -49,7 +49,7 @@ await connection.confirmTransaction({ signature: airdropSig, ...bh }, 'confirmed
 console.log(`funded ${payer.publicKey.toBase58()} on devnet`);
 
 for (let i = 0; i < runs; i++) {
-	const ix = SystemProgram.transfer({ fromPubkey: payer.publicKey, toPubkey: Keypair.generate().publicKey, lamports: 1000 + i });
+	const ix = SystemProgram.transfer({ fromPubkey: payer.publicKey, toPubkey: Keypair.generate().publicKey, lamports: 1_000_000 + i });
 	const r = await submitProtected({ network: 'devnet', connection, payer, instructions: [ix], opts: { confirmTimeoutMs: 40_000 } });
 	console.log(`run ${i + 1}: ${r.signature.slice(0, 16)}... landedBy=${r.landedBy} slot=${r.slot} ${r.landedMs}ms lanes=${r.lanes.map((l) => `${l.name}:${l.outcome}@${l.ms}ms`).join(' ')}`);
 }

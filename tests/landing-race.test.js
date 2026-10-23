@@ -23,8 +23,8 @@ import { resolveLandingProviders } from '../api/_lib/landing-providers.js';
 const servers = [];
 
 /** A Solana-speaking node. `delayMs` slows every answer, `failSend` makes sendTransaction 500. */
-function fakeNode({ delayMs = 0, failSend = false, landOnSend = true, healthy = true, chain }) {
-	const state = { sends: 0, requests: 0 };
+function fakeNode({ delayMs = 0, failSend = false, landOnSend = true, healthy = true, simUnits = 40_000, chain }) {
+	const state = { sends: 0, requests: 0, lastTx: null };
 	const server = http.createServer((req, res) => {
 		let body = '';
 		req.on('data', (c) => (body += c));
@@ -48,6 +48,7 @@ function fakeNode({ delayMs = 0, failSend = false, landOnSend = true, healthy = 
 					}
 					try {
 						const tx = VersionedTransaction.deserialize(Buffer.from(params[0], 'base64'));
+						state.lastTx = tx;
 						if (landOnSend) chain.landed.set(bs58.encode(tx.signatures[0]), 100 + chain.landed.size);
 					} catch {
 						// not a transaction: nothing to land
@@ -67,7 +68,7 @@ function fakeNode({ delayMs = 0, failSend = false, landOnSend = true, healthy = 
 				if (method === 'getLatestBlockhash')
 					return reply({ context: { slot: 99 }, value: { blockhash: '11111111111111111111111111111111', lastValidBlockHeight: 10_000 } });
 				if (method === 'simulateTransaction')
-					return reply({ context: { slot: 99 }, value: { err: null, logs: [], unitsConsumed: 40_000 } });
+					return reply({ context: { slot: 99 }, value: { err: null, logs: [], unitsConsumed: simUnits } });
 				if (method === 'getRecentPrioritizationFees') return reply([{ slot: 1, prioritizationFee: 2000 }]);
 				if (method === 'getBlockHeight') return reply(50);
 				return reply(null);
@@ -200,6 +201,12 @@ describe('stats persistence', () => {
 			{ provider: 'extra_rpc', landed: 0, lost: 1, outpaced: 1, streak: 1, latency_ms: null },
 			{ provider: 'rpc', landed: 2, lost: 0, outpaced: 0, streak: 0, latency_ms: 180 },
 		]);
+		// Overlapping flushes (the engine flushes fire-and-forget after each race) must not double count.
+		const c = new LandingStats({ network: 'devnet', store });
+		c.recordLanded('overlap', 10);
+		await Promise.all([c.flush(), c.flush(), c.flush()]);
+		const overlap = (await db.query("select landed from landing_provider_stats where provider = 'overlap'")).rows;
+		expect(overlap).toEqual([{ landed: 1 }]);
 		const b = new LandingStats({ network: 'devnet', store });
 		await b.hydrate();
 		expect(b.snapshot().find((r) => r.provider === 'rpc').landed).toBe(2);
@@ -220,6 +227,20 @@ describe('submitProtected through the landing race', () => {
 	}
 
 	beforeEach(() => resetLandingStats());
+
+	it('budgets compute for its own ComputeBudget instructions on a tiny transaction', async () => {
+		// A bare transfer simulates at ~150 CU; the two ComputeBudget instructions the
+		// engine prepends cost CU of their own, so a 15% margin alone sets a limit the
+		// transaction exceeds (ComputationalBudgetExceeded on a real validator).
+		const { primaryNode } = await engineRun({ primary: { simUnits: 150 }, extra: {} });
+		const tx = primaryNode.state.lastTx;
+		const keys = tx.message.staticAccountKeys.map((k) => k.toBase58());
+		const limitIx = tx.message.compiledInstructions.find(
+			(ix) => keys[ix.programIdIndex] === 'ComputeBudget111111111111111111111111111111' && ix.data[0] === 2,
+		);
+		const limit = Buffer.from(limitIx.data).readUInt32LE(1);
+		expect(limit).toBeGreaterThanOrEqual(150 + 3 * 150);
+	});
 
 	it('reports a single landing from the faster extra provider while the slow primary is outpaced', async () => {
 		const { result, primaryNode, extraNode } = await engineRun({

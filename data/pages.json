@@ -3834,6 +3834,14 @@
 					"added": "2026-07-18"
 				},
 				{
+					"path": "/docs/transaction-landing-race",
+					"title": "Docs · Transaction landing race",
+					"description": "How every signed Solana trade is sent through several landing providers at once: the provider table, first-confirmation-wins racing, per-provider landed and latency stats, failure-streak skipping with health probes, and the per-trade tip ceiling.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-23"
+				},
+				{
 					"path": "/docs/forge-desktop",
 					"title": "Docs · three.ws Forge for desktop",
 					"description": "How to install and use three.ws Forge, the desktop 3D studio: run it from source or an installer, generate on your own GPU or the three.ws cloud, build node workflows, import CC0 models, sign in and publish to three.ws, and fix common setup problems.",

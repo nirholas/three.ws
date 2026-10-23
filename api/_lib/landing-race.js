@@ -173,18 +173,34 @@ export class LandingStats {
 	}
 
 	/** Persist accumulated deltas. Best effort; a failed flush keeps the deltas for the next one. */
-	async flush() {
+	flush() {
+		// Serialize: a caller awaiting flush() also waits for any flush already in flight.
+		this.flushing = (this.flushing || Promise.resolve()).then(() => this.#flushNow());
+		return this.flushing;
+	}
+
+	async #flushNow() {
 		if (!this.store || this.pending.size === 0) return;
+		// Take the deltas before awaiting: flushes overlap (the engine flushes
+		// fire-and-forget after every race), and a delta left in place while an
+		// earlier flush is in flight would be written twice.
+		const taken = this.pending;
+		this.pending = new Map();
 		const batch = {};
-		for (const [name, d] of this.pending) {
+		for (const [name, d] of taken) {
 			const r = this.rows.get(name);
 			batch[name] = { ...d, streak: r?.streak ?? 0, latencyMs: r?.latencyMs ?? null, lastError: r?.lastError ?? null };
 		}
 		try {
 			await this.store.flush(this.network, batch);
-			this.pending.clear();
 		} catch {
 			// keep the deltas; the next flush retries them
+			for (const [name, d] of taken) {
+				const back = this.delta(name);
+				back.landed += d.landed;
+				back.lost += d.lost;
+				back.outpaced += d.outpaced;
+			}
 		}
 	}
 
