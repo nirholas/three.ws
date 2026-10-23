@@ -1388,3 +1388,9 @@ Remaining: (1) the live LLM trading read was not seen end to end because the pro
 ## 2026-10-23: order 528 (integrate 29, W3AG wallet and payment accessibility), done
 
 Step 0: about 127 address-shortening helpers existed across src/ and dashboard-next/; all now call src/shared/address.js (shortAddress). Only two non-address truncators remain by design (dashboard-next/components/drawer.js, reputation-ui.js). Shared trap in src/shared/focus-trap.js covers the connect picker, payment modal, vault dialogs and add-funds sheet. Most of the codemod and the new modules landed in 22a5a1f49 via another agent's sweep; the closing fixes are in 1a18750d8 and c59ba09ca (committed by a concurrent sweep with accurate subjects). Evidence: tests/e2e/w3ag-wallet.spec.js 18/18, a11y-top-pages gate green including /wallet, /agent-wallet, /claim-wallet, /vaults (the one failure, / progressbar name, fixed). Full vitest has 54 failing files from redis/env and other agents' pages work, none touching these files after the connect-button test fix.
+
+## 2026-10-23: order 540 (integrate 41, memo inscription reader), code done, live mainnet check pending
+
+Step 0 found the reader already shipped in `876f0a4fc`: `packages/solana-memo-media-mcp/src/lib/inscriptions.js` (first/1, firsts/1, spl404 reassembly with per-part and whole SHA-256, missing-part reporting, v1 and inner-memo aware), the `read_inscription` MCP tool, `/onchain` rendering (rasters from verified bytes, SVG and HTML as inert text), docs and changelog. `npm test --prefix packages/solana-memo-media-mcp` passes 29/29, including the never-rendered-live test.
+
+Remaining: no real multi-part inscription signature could be found (the three upstream repos' tarballs hold no mainnet signatures), so the live hash-match check is pending; vectors are built from the upstream format spec. Owner: supply one real signature, then run `/onchain` with it. Order file left in place.
