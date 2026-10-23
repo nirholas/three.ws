@@ -10,6 +10,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { createCache, cached } from '../_lib/mem-cache.js';
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { buildDexVolumes, normalizeChainKey } from './dex-volumes.js';
 
 const UPSTREAM = 'https://api.llama.fi/v2/chains';
 const TTL_MS = 300_000;
@@ -25,6 +26,24 @@ export async function buildChains() {
 	return cached(_cache, CACHE_KEY, loadChains);
 }
 
+// Turnover = 24h DEX volume / TVL: how hard a chain's capital is working. A
+// chain with no TVL or no reported volume gets null (unavailable), never
+// Infinity or a misleading zero.
+export function turnover(volume24h, tvl) {
+	if (!Number.isFinite(volume24h) || volume24h <= 0) return null;
+	if (!Number.isFinite(tvl) || tvl <= 0) return null;
+	return volume24h / tvl;
+}
+
+async function loadChainVolumes() {
+	try {
+		const dex = await buildDexVolumes();
+		return dex?.chain_volumes24h || {};
+	} catch {
+		return {};
+	}
+}
+
 async function loadChains() {
 	const now = Date.now();
 
@@ -32,6 +51,7 @@ async function loadChains() {
 		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
 	}, { timeoutMs: 10_000, attempts: 2 });
 	const raw = await resp.json();
+	const volumes = await loadChainVolumes();
 	if (!Array.isArray(raw)) throw new Error('unexpected upstream shape');
 
 	let totalTvl = 0;
@@ -47,11 +67,14 @@ async function loadChains() {
 
 	const chains = eligible.slice(0, 100).map((c) => {
 		const tvl = Number(c.tvl);
+		const volume24h = volumes[normalizeChainKey(c.name ?? '')] ?? null;
 		return {
 			name: typeof c.name === 'string' ? c.name : 'Unknown',
 			tvl,
 			token_symbol: typeof c.tokenSymbol === 'string' && c.tokenSymbol ? c.tokenSymbol : null,
 			share_pct: totalTvl > 0 ? (tvl / totalTvl) * 100 : 0,
+			dex_volume_24h: volume24h,
+			turnover: turnover(volume24h, tvl),
 		};
 	});
 

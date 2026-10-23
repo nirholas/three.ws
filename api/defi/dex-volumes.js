@@ -42,6 +42,33 @@ function normalizeChart(raw) {
 
 // Exported for the paid Market Data API (api/_lib/market-data/), the x402
 // market-dex-volumes endpoint sells the same DEX rankings this page renders.
+// 24h DEX volume per chain, summed from each protocol's per-chain breakdown.
+// Keyed by normalizeChainKey() so it joins against other feeds' chain names.
+export function sumChainVolumes(protocols) {
+	const out = {};
+	for (const p of protocols) {
+		const b = p?.breakdown24h;
+		if (!b || typeof b !== 'object') continue;
+		for (const [chain, perProto] of Object.entries(b)) {
+			if (!perProto || typeof perProto !== 'object') continue;
+			let sum = 0;
+			for (const v of Object.values(perProto)) {
+				const n = Number(v);
+				if (Number.isFinite(n) && n > 0) sum += n;
+			}
+			if (sum <= 0) continue;
+			const key = normalizeChainKey(chain);
+			out[key] = (out[key] || 0) + sum;
+		}
+	}
+	return out;
+}
+
+// "Arbitrum Nova" and "arbitrum_nova" are the same chain across feeds.
+export function normalizeChainKey(name) {
+	return String(name).toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 export async function buildDexVolumes() {
 	return cached(_cache, CACHE_KEY, loadDexVolumes);
 }
@@ -90,6 +117,7 @@ async function loadDexVolumes() {
 		change_7dover7d: finite(Number(raw.change_7dover7d)),
 		chart: normalizeChart(raw.totalDataChart),
 		protocols,
+		chain_volumes24h: sumChainVolumes(raw.protocols),
 		updated_at: now,
 	};
 }

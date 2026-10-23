@@ -91,6 +91,12 @@ const COLUMNS = [
 	{ key: 'rank', label: '#', left: true, hide: 'hide-sm', num: true },
 	{ key: 'name', label: 'Chain', left: true },
 	{ key: 'tvl', label: 'TVL', num: true },
+	{
+		key: 'turnover',
+		label: 'Turnover',
+		num: true,
+		tip: 'Turnover = 24h DEX volume divided by TVL. A high value means capital is trading actively; a low value means it is mostly parked. Shown as n/a when a chain reports no TVL or no DEX volume.',
+	},
 	{ key: 'share_pct', label: 'Dominance', num: true },
 	{ key: 'bar', label: 'Share', left: true, hide: 'hide-md', sortless: true },
 ];
@@ -162,7 +168,7 @@ function renderTable() {
 		const active = col.key === state.sortKey;
 		const arrow = active ? (state.sortDir === 'asc' ? '↑' : '↓') : '↕';
 		const sort = active ? (state.sortDir === 'asc' ? 'ascending' : 'descending') : 'none';
-		return `<th scope="col" tabindex="0" data-key="${col.key}" aria-sort="${sort}" class="${col.left ? 'left' : ''} ${col.hide || ''}">${esc(col.label)}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
+		return `<th scope="col" tabindex="0" data-key="${col.key}" aria-sort="${sort}"${col.tip ? ` title="${esc(col.tip)}"` : ''} class="${col.left ? 'left' : ''} ${col.hide || ''}">${esc(col.label)}${col.tip ? '<span class="tip" aria-hidden="true"> ⓘ</span>' : ''}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
 	}).join('');
 
 	const body = sortedChains()
@@ -182,6 +188,7 @@ function renderTable() {
 				<td class="rank hide-sm cv-mono">${c.__rank}</td>
 				<td class="left name-cell">${href ? `<a href="${esc(href)}">${inner}</a>` : inner}</td>
 				<td class="price">${esc(formatUsd(c.tvl))}</td>
+				<td class="pct cv-mono"${c.dex_volume_24h ? ` title="24h DEX volume ${esc(formatUsd(c.dex_volume_24h))}"` : ''}>${c.turnover == null ? 'n/a' : `${c.turnover.toFixed(c.turnover < 0.1 ? 3 : 2)}x`}</td>
 				<td class="pct cv-mono">${(c.share_pct || 0).toFixed(2)}%</td>
 				<td class="left hide-md chains-bar-cell">
 					<span class="chains-bar" aria-hidden="true">
