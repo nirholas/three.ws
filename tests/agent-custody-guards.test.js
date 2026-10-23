@@ -17,9 +17,9 @@ vi.mock('../api/_lib/db.js', () => ({
 		sqlState.calls.push({ query, values });
 		const handled = sqlState.handler ? sqlState.handler(query, values) : undefined;
 		if (handled !== undefined) return handled;
-		// The burner-tier gate reads the agent's policy row when a caller names no
 		// The burner-tier gate reads the agent policy row when a caller names no meta.
-		// Serve a live agent with an empty policy by default;
+		// Serve a live agent with an empty policy by default; a test that wants the
+		// fail-closed path sets sqlState.agentGone.
 		if (/FROM agent_identities WHERE id = \? AND deleted_at IS NULL/.test(query.replace(/\s+/g, ' '))) {
 			return sqlState.agentGone ? [] : [{ user_id: 'user-1', meta: {} }];
 		}
