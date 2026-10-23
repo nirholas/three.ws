@@ -40,7 +40,7 @@ export const VENUE_CONTRACT = Object.freeze({
 
 /**
  * Check a module against VENUE_CONTRACT. Returns the list of problems, empty
- * when the module conforms. Run at load and by tests/perps-venue-contract.test.js.
+ * when the module conforms. Run at load and by tests/perps-desk.test.js.
  */
 export function venueContractProblems(venue) {
 	const problems = [];
