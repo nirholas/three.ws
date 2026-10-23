@@ -21,13 +21,13 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/agent-abilities/ABILITIES.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/agent-abilities/FULL-ARTICLE.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
@@ -99,7 +99,7 @@
 			"note": "dated record, kept as written"
 		},
 		"docs/apps.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
@@ -123,7 +123,7 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/avatar-thumbnails.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
@@ -159,13 +159,13 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/clash.md": {
-			"commit": "53f2a200f",
+			"commit": "1396077cf",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "read against code drift; fixed where it differed"
 		},
 		"docs/coin-pages.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
@@ -182,6 +182,12 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/crawl.md": {
+			"commit": "1396077cf",
+			"kind": "verified",
+			"by": "agent",
+			"note": "read against code drift; fixed where it differed"
+		},
 		"docs/crews.md": {
 			"commit": "53f2a200f",
 			"kind": "verified",
@@ -195,7 +201,7 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/demo-routes.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
@@ -219,10 +225,16 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/economy-solver.md": {
-			"commit": "53f2a200f",
+			"commit": "1396077cf",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "read against code drift; fixed where it differed"
+		},
+		"docs/embody.md": {
+			"commit": "1396077cf",
+			"kind": "verified",
+			"by": "agent",
+			"note": "read against code drift; fixed where it differed"
 		},
 		"docs/event-readiness/01-play-first-impression.md": {
 			"commit": "53f2a200f",
@@ -253,6 +265,12 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
+		},
+		"docs/feedback.md": {
+			"commit": "1396077cf",
+			"kind": "verified",
+			"by": "agent",
+			"note": "read against code drift; fixed where it differed"
 		},
 		"docs/financial-controls.md": {
 			"commit": "53f2a200f",
@@ -333,10 +351,10 @@
 			"note": "recipe handoff re-checked against the rebuilt /launch page"
 		},
 		"docs/lipsync.md": {
-			"commit": "53f2a200f",
+			"commit": "1396077cf",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "read against code drift; fixed where it differed"
 		},
 		"docs/mcp-safety.md": {
 			"commit": "53f2a200f",
@@ -369,10 +387,10 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/object-library.md": {
-			"commit": "53f2a200f",
+			"commit": "1396077cf",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "read against code drift; fixed where it differed"
 		},
 		"docs/onboarding-tier.md": {
 			"commit": "53f2a200f",
@@ -399,7 +417,7 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/ops/gcp-credits.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
@@ -441,10 +459,16 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/oracle-trading-mcp-plan.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/oracle.md": {
+			"commit": "1396077cf",
+			"kind": "verified",
+			"by": "agent",
+			"note": "read against code drift; fixed where it differed"
 		},
 		"docs/overlay-audit.md": {
 			"commit": "53f2a200f",
@@ -465,7 +489,7 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/prompts/03-mcp-tool-policy-skill.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
@@ -483,19 +507,19 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/research/3d-landscape-2026-10.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "snapshot",
 			"by": "agent",
 			"note": "dated record, kept as written"
 		},
 		"docs/research/competitor-teardown-2026-09.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "snapshot",
 			"by": "agent",
 			"note": "dated record, kept as written"
 		},
 		"docs/risk-acknowledgment.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
@@ -531,7 +555,7 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/site-performance.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
@@ -543,7 +567,7 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/social-layer.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
@@ -585,10 +609,16 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/trading-copilot.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/trenches.md": {
+			"commit": "1396077cf",
+			"kind": "verified",
+			"by": "agent",
+			"note": "read against code drift; fixed where it differed"
 		},
 		"docs/tutorials/mine-vanity-address.md": {
 			"commit": "53f2a200f",
@@ -627,73 +657,73 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/ux-flows/01-onboarding-creation.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/02-forge-text-to-3d.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/03-3d-editing-viewer.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/04-embed-widget-studio.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/05-discovery-social.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/06-marketplace-skills.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/07-crypto-trading-analytics.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/08-coin-launch-wallets.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/09-x402-agent-commerce.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/10-chat-brain-labs.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/11-account-dashboard.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/12-home-and-content.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
@@ -711,10 +741,16 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/workbench.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/world-lines.md": {
+			"commit": "1396077cf",
+			"kind": "verified",
+			"by": "agent",
+			"note": "read against code drift; fixed where it differed"
 		},
 		"docs/x-accounts.md": {
 			"commit": "53f2a200f",
@@ -723,13 +759,13 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/x-content-pipeline.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/x-posts/claims-ledger-thread.md": {
-			"commit": "c1390cb7d",
+			"commit": "a3524e6f6",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"

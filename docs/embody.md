@@ -35,7 +35,7 @@ Response (`200`):
 ```json
 {
   "agent_id": "persona_8f2a1c9d4be6f70a1b2c",
-  "glb_url": "https://…/personas/persona_8f2a1c9d4be6f70a1b2c.glb",
+  "glb_url": "https://three.ws/cdn/personas/persona_8f2a1c9d4be6f70a1b2c.glb",
   "viewer_url": "https://three.ws/viewer?src=…",
   "profile_url": "https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4be6f70a1b2c&glb=…&name=Nova+Scout&state=idle",
   "embed_html": "<iframe src=\"https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4be6f70a1b2c&glb=…&name=Nova+Scout&state=idle\" width=\"480\" height=\"640\" …></iframe>",

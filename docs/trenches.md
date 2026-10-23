@@ -8,7 +8,7 @@ Live market intelligence for the Solana and Robinhood Chain trenches: every pump
 |---|---|---|
 | Pulse service | [services/pulse](../services/pulse) | Always-on Node process: Solana firehose over WebSocket, scheduler, Hono API, its own dashboard on one port. PGlite by default, Postgres/Timescale via `DATABASE_URL`. |
 | Proxy | [api/trenches.js](../api/trenches.js) `-> /api/trenches?view=overview\|health\|tokens\|launches\|wallets` | Allowlisted read-only proxy. Unset or failing upstream is `503 pulse_offline`, never fabricated data. Env: `PULSE_URL`. |
-| Page | [pages/trenches.html](../pages/trenches.html) + [src/trenches.js](../src/trenches.js) `-> /trenches` | Counters, hottest tokens, launch feed, wallet scores, 15 s polling that pauses on hidden tabs, designed offline state. Token text is untrusted and is written with `textContent`. |
+| Page | [pages/trenches.html](../pages/trenches.html) + [src/trenches.js](../src/trenches.js) `-> /trenches` | Counters, hottest tokens, launch feed, wallet scores, 15 s polling that pauses on hidden tabs and backs off (30 s, 60 s, then every 2 min) while Pulse is failing, probing `health` alone first so an offline upstream costs one request per cycle, designed offline state. Token text is untrusted and is written with `textContent`. |
 
 ## Run locally
 

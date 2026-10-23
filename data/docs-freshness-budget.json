@@ -1,7 +1,7 @@
 {
 	"$doc": "/docs/freshness",
 	"$comment": "Ratchet for `npm run check:docs-freshness`. maxStale is the number of docs allowed to be describing code that moved after they were written. It goes DOWN as docs are refreshed and never up without a reason recorded below, which is what stops drift from being permanently normal.",
-	"maxStale": 130,
+	"maxStale": 121,
 	"history": [
 		{
 			"date": "2026-07-31",
@@ -22,6 +22,11 @@
 			"date": "2026-10-23",
 			"maxStale": 130,
 			"reason": "Raised from 5 under work order 402 (restore a green gate): 30 docs were re-verified and committed (157 stale down to 127), but the corpus drifted well past the 2026-09-17 baseline after a month of fast shipping. 130 is the measured 127 plus 3 headroom. The remaining backlog is owned by order 403 (prompts/finish/403-auto-drain-docs-freshness.md), which ratchets this back down to 5."
+		},
+		{
+			"date": "2026-10-23",
+			"maxStale": 121,
+			"reason": "Order 403 drain, batch 1: 12 docs reviewed against code (118 stale measured plus 3 headroom)."
 		}
 	]
 }
