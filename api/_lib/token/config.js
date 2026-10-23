@@ -165,6 +165,22 @@ export const SPLIT_POLICIES = Object.freeze({
 	],
 });
 
+// Creator-fee claim policy. NOT an on-chain payment split (so it is deliberately
+// outside SPLIT_POLICIES, which every paid surface routes through the verified
+// payment path): it is how a claimed pump.fun creator fee is divided once the
+// agent wallet holds it. 'seller' is the creator's payout wallet, 'treasury' is
+// the buyback earmark recorded on launcher_claims.buyback_sol. The launcher
+// claimer reads the treasury leg as the default buyback_bps and the creator
+// payout flow reads the seller leg, so the earnings page explainer, the
+// earmark and the payout can never disagree.
+export const CREATOR_FEE_CLAIM_POLICY = Object.freeze([
+	Object.freeze({ role: 'seller', bps: 5000 }),
+	Object.freeze({ role: 'treasury', bps: 5000 }),
+]);
+
+/** Default buyback share (bps) of a claimed creator fee: the treasury leg. */
+export const CREATOR_FEE_BUYBACK_BPS = CREATOR_FEE_CLAIM_POLICY.find((l) => l.role === 'treasury').bps;
+
 function resolveRole(role, { sellerWallet } = {}) {
 	if (role === 'treasury') return treasuryWallet();
 	if (role === 'rewards') return rewardsWallet();

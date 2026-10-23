@@ -26,6 +26,7 @@ import { sql } from '../_lib/db.js';
 import { createSession, revokeSessionToken } from '../_lib/auth.js';
 import { requireCron } from '../_lib/cron-auth.js';
 import { crankSponsoredDistributions } from '../_lib/launch-sponsor.js';
+import { CREATOR_FEE_BUYBACK_BPS } from '../_lib/token/config.js';
 
 const CLAIM_THRESHOLD_SOL = 0.01;
 const ORIGIN = env.APP_ORIGIN || 'https://three.ws';
@@ -103,7 +104,7 @@ async function processMint(run, token) {
 	const claimSig = claimData.signature ?? claimData.sig ?? null;
 	const claimedLamports = Number(claimData.lamports ?? Math.round(claimableSol * 1e9));
 	const claimedSol = claimedLamports / 1e9;
-	const buybackBps = Number(buyback_bps ?? 5000);
+	const buybackBps = Number(buyback_bps ?? CREATOR_FEE_BUYBACK_BPS);
 	// Earmark only: the on-chain $THREE buy pressure for these coins is delivered by the
 	// buyback_bps binding baked into the launch (see header), not a transfer made here.
 	const buybackSol = Math.round(claimedSol * buybackBps) / 10_000;
