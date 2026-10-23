@@ -155,9 +155,7 @@ receipt.
 
 ---
 
-See also: the wire contract in [`specs/x402-mpp-bridge.md`](../specs/x402-mpp-bridge.md),
-and the [BNB Chain campaign context](../prompts/bnb-chain/00-CONTEXT.md) for the
-full verified-facts list.
+See also: the wire contract in [`specs/x402-mpp-bridge.md`](../specs/x402-mpp-bridge.md).
 
 ## Related
 

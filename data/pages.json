@@ -5863,6 +5863,30 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/accessibility",
+					"title": "Docs · Accessibility, W3AG levels A and AA",
+					"description": "How three.ws holds its wallet and payment surfaces to the Web3 Accessibility Guidelines at levels A and AA on top of the WCAG 2.1 AA floor: what is met, how each claim is tested, and what is next.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-23"
+				},
+				{
+					"path": "/docs/mcp-registry-sentinel",
+					"title": "Docs · MCP registry sentinel, daily gap report",
+					"description": "The daily cron that diffs every MCP server three.ws ships against the official registry and npm, and raises one ops alert when the set of gaps changes. What it reads and what it reports.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-23"
+				},
+				{
+					"path": "/docs/x-video",
+					"title": "Docs · X post reader and free video tool",
+					"description": "One keyless reader for public X posts, shared by the price-impact tools and the free X video page: how it fetches, what it returns and where it is used.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-23"
+				},
+				{
 					"path": "/docs/doc-freshness",
 					"title": "Docs · Doc freshness, keeping docs true to the code",
 					"description": "Every doc is bound to the code it names, and git decides whether that code moved after the page was last written or last reviewed. How the measurement works, what each status means, how to record that you checked a page, and where the check runs.",

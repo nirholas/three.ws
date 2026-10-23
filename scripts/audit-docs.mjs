@@ -207,6 +207,9 @@ const auditFile = (file) => {
 			const target = match[1];
 			if (!target || target.startsWith('#')) continue; // same-page anchor, nothing to resolve
 			if (/^([a-z][a-z0-9+.-]*:)/i.test(target)) continue; // external or mailto
+			// GitHub resolves ../../issues/new from a README to the repo's issue tracker, a
+			// platform route rather than a file. The hub READMEs are published as their own repos.
+			if (/^(\.\.\/)+(issues|pulls|discussions)(\/|\?|$)/.test(target)) continue;
 			if (target.startsWith('/')) {
 				if (target.startsWith('/api/')) continue; // API paths are verified by audit:routes
 				if (!routeExists(target)) report(file, lineNo, 'dead-route', target);
