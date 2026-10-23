@@ -24,6 +24,10 @@ call that one audited path. Every fill is firewall-gated, capped by the agent's
 spend policy, and written to `agent_custody_events` (the canonical spend ledger),
 with an `order_fills` receipt linking back to it.
 
+## Any SPL token, ladders, OCO and the order book
+
+Orders are not limited to pump.fun mints. Each fill picks a venue (Jupiter or PumpSwap) from live liquidity and runs the same audited executor. Beyond single orders the engine supports ladders (several take-profit levels in one call), OCO pairs (one fill cancels its sibling), expiry, price bands, and a per-agent order book (`api/_lib/order-book.js`) that reports the next fire time and one closed-vocabulary skip reason per order. The sweep notifies the owner when an order fires, fails, expires or starts waiting. MCP tools and the preview-then-confirm contract: [docs/mcp.md](../../docs/mcp.md) ("Orders and DCA on any SPL token"). Tests: `tests/orders-any-token.test.js`, `tests/orders-engine.test.js`, `tests/agent-orders-sweep.test.js`.
+
 ## Order lifecycle
 
 `active → firing → filled` (price/conditional, single fill) ·

@@ -1469,6 +1469,17 @@ merchant and by day, from the package's local append-only ledger
 
 ---
 
+### Orders and DCA on any SPL token
+
+The threews-agent server places resting orders and DCA schedules from the agent wallet on any Solana token, routed through Jupiter or PumpSwap by liquidity. Every create is two steps so a model can never place anything the owner did not see:
+
+1. `order_preview` (limit, stop, trailing, ladder of up to 8 limit levels, or an OCO pair) or `dca_preview` returns the live price, whether it would fire now, the venue, the firewall verdict, the spend limits, when it acts, and a signed `preview_id` (ten minutes, single use, bound to the agent).
+2. After the user says yes, call the matching create tool (`limit_order_create`, `stop_order_create`, `trailing_order_create`, `ladder_order_create`, `oco_order_create` with `confirm_order: true`, or `dca_create` with `confirm_dca: true`) with that `preview_id`.
+
+Read and manage: `limit_order_list`, `limit_order_history`, `order_book` (next fire time and the reason for every skip: price outside band, cap hit, venue unhealthy), `dca_list`, `limit_order_cancel`, `dca_cancel`. Orders can carry an expiry, a price band and an OCO group; the owner is notified when an order fires, fails or expires. `dca_list` covers both rails: Solana schedules and EVM delegation schedules share one store (`orders`, rail `evm`), and the legacy `/api/dca-strategies` routes are adapters over it. Existing `dca_strategies` rows were copied by migration `20261010210000_orders_any_token.sql` without losing a schedule.
+
+Every fill runs the audited path in `workers/agent-orders`: spend policy, kill switch, rug firewall, an idempotency key per slice, and the per-agent lock. Creating requires the `wallet:write` scope and a signed real-funds agreement.
+
 ## Resources
 
 Every hosted server publishes live, read-only views of your account as MCP resources under the `three://` scheme. Clients that render resources (Claude Desktop's attachment picker, Cursor, most agent frameworks) list them with `resources/list`; the per-agent entries are expanded for your 25 most recent agents, and the rest are available as templates from `resources/templates/list`. Every resource is JSON (`application/json`); append `?format=markdown` to the URI, or send `"accept": "text/markdown"` in the `resources/read` params, for a readable `text/markdown` rendering.

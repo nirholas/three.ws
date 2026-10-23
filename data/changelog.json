@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Limit, stop, trailing, ladder, OCO and DCA orders on any Solana token, from any MCP client",
+			"summary": "Agent orders are no longer limited to pump.fun tokens. Any SPL token can carry a limit, stop, trailing stop, ladder of take-profit levels, OCO pair or DCA schedule, filled through Jupiter or PumpSwap on the same audited path (spend policy, kill switch, rug firewall, one idempotency key per slice, per-agent lock). MCP clients get order_preview and dca_preview, which return what would be placed and when, then create tools that only accept the signed preview plus an explicit confirm flag. Each agent has an order book showing the next fire time and a plain reason for every skip, and you are notified when an order fires, fails or expires. The two DCA systems are now one store, and existing schedules were migrated intact.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/mcp"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Backtests now prove they are free of look-ahead and can be repeated",
 			"summary": "Every strategy backtest replays its entry gate with the future removed and reports any decision that changed, pins the exact dataset it ran on with a content hash, and marks older unpinned results as unreproducible. A new canary job checks each price and candle source against a known value every 30 minutes and tries the healthy ones first.",
 			"tags": ["feature"],
