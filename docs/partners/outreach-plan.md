@@ -56,7 +56,7 @@ The cheapest credibility there is, and a precondition for Waves 2 and 3.
 | Ship the open-source credits page and in-surface credits (Poly Haven on /objects, engine names in the Forge) | Agent | 086 |
 | Build the tool packages and registry entries for the agent tools (AI SDK, LangChain, ADK page, skills index, OpenRouter attribution, Postman collection) | Agent | 093 |
 | Open the pull requests and submit the forms for the agent registries | Owner | 938 |
-| Start the sponsorships the owner approves | Owner | 937 |
+| Start the sponsorships the owner approves ([tiers and total](./sponsorships.md)) | Owner | 937 |
 | Re-tag the Sketchfab models uploaded before 2026-10-09 | Owner | 940 |
 
 **Done when:** no "fix before we pitch" item on the prospects page is still open, and the

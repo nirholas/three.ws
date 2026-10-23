@@ -12,6 +12,9 @@ pipeline and the ledger at
 [`marketing/growth/opportunities.csv`](../../marketing/growth/opportunities.csv), and this page
 links to it rather than restating it.
 
+**Sponsorships.** Tiers, prices and the recommended monthly total for the open-source projects
+below are in [sponsorships.md](./sponsorships.md), read from each project's page on 2026-10-23.
+
 **How it was built.** Five research passes on 2026-10-09:
 - 3D generation and inference hosts.
 - Avatars, animation and motion capture.
