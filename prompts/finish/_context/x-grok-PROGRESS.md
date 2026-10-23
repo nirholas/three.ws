@@ -615,3 +615,14 @@ Added `agent-get-started`, `daily-3d-brief`, `asset-pack`, `avatar-from-photo` t
 - Install tokens, install-keyed budgets, helpful denials, the `/connect` panel and `docs/mcp-studio.md` were already shipped (earlier commits). Re-verified today: `tests/mcp-studio-install-token.test.js`, `tests/mcp-studio-ratelimit.test.js`, `tests/mcp-studio.test.js` 60/60 passing; `tests/mcp-schema.test.js` 20/20 passing (the held-catalog failure no longer reproduces).
 - Scripted run (`scripts/probe-mcp-install-tokens.mjs` against a local `server/index.mjs`): token A admitted 4 times, 5th refused with `generation_burst` keyed on `install`, reset time and remedy in the denial; token B from the same IP still admitted.
 - Open: full `npm test` is red in this checkout for environmental reasons only (1065 vitest files fail on `ERR_MODULE_NOT_FOUND`: `lru-cache` and `three` are missing from `node_modules`, plus a very large concurrent uncommitted tree). Owner of the line: whoever next runs `npm install` on a quiet tree, then `npm test`; then delete `prompts/finish/024-x-grok-02-cloud-agent-rate-limits.md`.
+
+## 2026-10-23: orders 023 to 931 sweep
+
+- Order 060 (agent mention replies): found already shipped in `4516247ea` (`api/_lib/x-agent-mentions.js`, wired into `x-mention-poll.js` `listAccounts`/`handleMention`, `countAccountReplies` in `x-mention-store.js`, "Agent mode" in `docs/x-mention-bot.md`). `tests/x-agent-mentions.test.js` and `tests/x-mention-poll.test.js` pass (105 of 105 across the seven suites run today). Order file retired.
+- Order 023: `npm run probe:mcp-clients` against production exits 0, 8 of 8 servers. Open line: a green full `npm test`.
+- Order 039/927: still no xAI key on the machine, `.env`, `.env.local`, the Cloud Run service or Secret Manager. Owner creates it at console.x.ai.
+- Order 926: `node scripts/x-mentions-probe.mjs` re-run today, HTTP 200 on the mentions timeline with the held OAuth 1.0a credentials (`prompts/x-grok/_generated/mentions-probe.json` refreshed). X pricing per docs.x.com (pay-per-use): post read $0.005, owned mentions read $0.001 per resource, create post $0.015 (with URL $0.200), webhook events billed per event delivered (post.create $0.005). Owner decision: whether to enable pay-per-use credits for the webhook path; polling already works.
+- Order 929: `docs/partners/grok-bot-listings.md` written, nothing submitted.
+- Order 930: draft `data/x-content/stories/grok-bot-connector.json`; the thread with a real mention reply and the site article wait on go-live (928).
+- Order 931: `docs/partners/x-player-card-submission.md`. Finding: production serves `/forge/embed` with the site-wide `frame-ancestors` (IBM only), not the route's `*`, so X could not frame the player until this is fixed.
+- Order 928: production has no `/api/x/mention-bot/status` yet (the bot is not deployed). Review sample, preflight and deploy remain the owner's go-ahead.

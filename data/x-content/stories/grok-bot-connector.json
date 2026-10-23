@@ -1,0 +1,42 @@
+{
+	"id": "grok-bot-connector",
+	"status": "draft",
+	"kind": "post",
+	"tier": 1,
+	"lane": "labs",
+	"pattern": "walkthrough",
+	"notBefore": "2026-10-24T00:00:00Z",
+	"covers": ["/grok", "/api/mcp-studio", "/api/mcp-grok"],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{ "goto": "https://three.ws/grok", "settle": 6000, "caption": "Grok Bot adds a connector by URL" },
+			{ "hold": 2400 },
+			{ "read": "transport", "match": "(Streamable HTTP)" },
+			{ "read": "endpoint", "match": "(api/mcp-grok)" },
+			{ "hold": 3600, "caption": "Streamable HTTP, no key for the free studio" }
+		]
+	},
+	"probes": [
+		{ "type": "scenario" },
+		{
+			"type": "api",
+			"name": "the studio connector answers an anonymous initialize",
+			"url": "https://three.ws/api/mcp-studio",
+			"method": "POST",
+			"headers": { "content-type": "application/json", "accept": "application/json, text/event-stream" },
+			"body": { "jsonrpc": "2.0", "id": 1, "method": "initialize", "params": { "protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": { "name": "story-probe", "version": "0" } } },
+			"expect": { "status": 200 }
+		}
+	],
+	"posts": [
+		{
+			"text": "Grok Bot can now make 3D models. Add three.ws as a connector in Grok Bot, paste one URL, and ask for a chair, a character or a prop. The studio server needs no account and no key, and every reply comes back with a viewer link you can open or embed. We run a probe against production that connects the way xAI's cloud does, so a handshake problem shows up here before it shows up in your chat."
+		},
+		{
+			"text": "Setup is under Connectors, then custom, with transport Streamable HTTP. The full connector reference, auth modes and rate limits are at three.ws/grok"
+		}
+	],
+	"claims": [],
+	"mentions": {}
+}
