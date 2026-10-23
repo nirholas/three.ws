@@ -466,6 +466,14 @@
 					"added": "2026-10-23"
 				},
 				{
+					"path": "/docs/backtest-integrity",
+					"title": "Docs · Backtest integrity",
+					"description": "How every strategy backtest is audited for look-ahead bias, pinned to a hashed dataset manifest, backed by price and candle canaries, and walled off from live trading code.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-23"
+				},
+				{
 					"path": "/commerce",
 					"title": "Agent Commerce",
 					"description": "Invoice clients from your agents' wallets with Solana Pay links verified on-chain, list offers other agents can buy, see what your agents purchased, and approve the spending-limit changes they propose.",

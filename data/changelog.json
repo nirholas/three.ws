@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Backtests now prove they are free of look-ahead and can be repeated",
+			"summary": "Every strategy backtest replays its entry gate with the future removed and reports any decision that changed, pins the exact dataset it ran on with a content hash, and marks older unpinned results as unreproducible. A new canary job checks each price and candle source against a known value every 30 minutes and tries the healthy ones first.",
+			"tags": ["feature"],
+			"link": "/strategies"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "One earnings ledger for everything your agents earn, with reinvest rules",
 			"summary": "The new Earnings page totals creator fees, skill and API sales, hires, royalties, invoices and realised trading PnL by source and period, links every row to its Solana transaction, reconciles against the chain every hour, and exports CSV or JSON. Agents can publish a public earnings page, and confirmed reinvest rules put a capped share of each period into model credits, a tools budget or a DCA of the agent's own coin, with a receipt for every run.",
 			"tags": [

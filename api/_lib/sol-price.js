@@ -15,6 +15,7 @@
 // independently, so it takes a near-total outage to exhaust the chain.
 
 import { fetchFirst } from '../../src/shared/failover-fetch.js';
+import { orderByCanary } from './data-canary-health.js';
 import { redstoneProvider } from './redstone.js';
 import { SWITCHBOARD_SOL_USD_FEED, switchboardProvider } from './switchboard.js';
 
@@ -128,7 +129,7 @@ let _at = 0;
 export async function solPriceUsd(now = Date.now()) {
 	if (now - _at < TTL_MS && _price > 0) return _price;
 	try {
-		const { value } = await fetchFirst(PROVIDERS, { timeoutMs: 3000, label: 'sol-price' });
+		const { value } = await fetchFirst(await orderByCanary(PROVIDERS), { timeoutMs: 3000, label: 'sol-price' });
 		_price = value;
 		_at = now;
 	} catch {

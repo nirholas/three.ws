@@ -20,6 +20,7 @@
 import { registerWalletTab } from '../registry.js';
 import { consumeCsrfToken } from '../../api.js';
 import { ensureRiskAck } from '../../shared/risk-ack.js';
+import { renderIntegrity } from '../../shared/backtest-integrity-view.js';
 import { formatSol, shortAddress, explorerAddressUrl } from '../util.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
@@ -385,6 +386,7 @@ registerWalletTab({
 					${b.sample_misses?.length ? `<h4 style="margin-top:10px">Worst simulated entries</h4>${b.sample_misses.map(trade).join('')}` : ''}
 				</div>` : ''}
 
+				${renderIntegrity(b)}
 				<div class="sb-caveats">${b.stake_assumed ? `Modeled at a ${b.stake_sol} SOL notional stake (set a per-trade size to model your real size). ` : `Modeled at ${b.stake_sol} SOL per trade. `}
 					<ul>${(b.caveats?.items || []).map((c) => `<li>${esc(c)}</li>`).join('')}</ul>
 				</div>
