@@ -26,6 +26,27 @@ npm run x:archive:refresh    # pull exact metrics from the X API into a new snap
 npm run x:archive:analyze    # rebuild docs/x-archive/<handle>-engagement.md
 ```
 
+A price command joins the archive to the coin:
+
+```bash
+npm run x:archive:price     # $THREE price at each post and its +1h/+4h/+24h returns
+```
+
+It pages the $THREE/SOL pool's 15-minute candles from GeckoTerminal, prices each
+own post (no reposts, no replies) at the close of the last bar that had finished
+when it went out, and measures the return at each horizon. A return with no
+price behind it (the post predates the pool, or nothing traded for over an hour
+around either end) is `null`, never interpolated. Each horizon also carries the
+same return measured at arbitrary moments (the baseline), because a coin that
+drifts down every day makes every post look bad. The result is
+`public/data/trythreews-post-impact.json`, which the **Posts** view on the
+$THREE chart at `/oracle/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`
+reads: bubbles sized by engagement, coloured by the +4h return, each linking to
+the post. The content pipeline stamps its own outcome rows the same way, so
+`learnLifts` reports a `priceLifts` section (the +24h return after posts with
+each attribute, shrunk by sample size) and `learnedScore` adds at most 4 ranking
+points for it once 20 matured posts carry a measured return.
+
 A fourth command pulls the long-form side of the account:
 
 ```bash

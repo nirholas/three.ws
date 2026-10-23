@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "See whether our X posts move $THREE: a Posts view on the coin chart",
+			"summary": "The $THREE chart has a new Posts tab that plots every @trythreews post at the price it went out at, sized by engagement and coloured by the +4h return, each bubble linking to the post. Across 197 posts the median +1h and +4h return after a post was +1.6%, against -0.1% and -0.7% at arbitrary moments; the +24h median was -1.4% against -2.4%. The content pipeline now also records the +24h price return after each post and lets it nudge ranking, lightly, once enough posts carry one.",
+			"tags": [
+				"feature"
+			],
+			"link": "/oracle/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "KOL tracker shows follower counts without an X API key, and the Oracle reads KOL timelines",
 			"summary": "A keyless X reader now backs the tracker when the paid API is unset or rate limited, so attached KOLs keep their follower counts. The Oracle also reads tracked timelines every 10 minutes to feed its social virality signal, and each coin's own linked X account age and followers now appear in its intel.",
 			"tags": [

@@ -14,3 +14,10 @@
 - Not verified, so prompts/finish/532 stays: (1) `curl /api/kol/tracker` and (2) the cron writing `oracle_narrative` rows both need the server and a database; this checkout has no `DATABASE_URL` and `node_modules` could not boot `server/index.mjs`. Owner of the remainder: whoever has the DB env, run `node server/index.mjs` with `--env-file`, hit `/api/kol/tracker`, then the cron.
 - `npm run build:pages` currently fails on another agent's changelog entry ("See whether our X posts move $THREE") which uses `tag` instead of `tags`.
 - Incident: my `npm ci` raced about 35 concurrent npm processes and left the shared `node_modules` incomplete (vitest, lru-cache missing). Run `npm ci` once when no other agent is installing.
+
+## 2026-10-23: integrate 37, $THREE post impact on the chart (not fully closed)
+
+- Built: `api/_lib/x-content/price-impact.js` (no-lookahead pricing, no interpolation, 3600s stale cap), `scripts/x-archive-price-impact.mjs` (`npm run x:archive:price`), `beforeTimestamp` paging in `api/_lib/market/ohlcv.js`, the Posts view in `public/oracle-coin.js` and `.css` ($THREE mint only), the `priceReturn24h` lift in `api/_lib/x-content/outcomes.js` and `runner.js`, tests in `tests/x-archive.test.js` and `tests/x-content-outcomes.test.js`. The code landed in sweep commits 0ad88fb38, 22a5a1f49, 2b7bb3921; docs and changelog are in the commit that touches this entry.
+- Measured (live GeckoTerminal, 197 own posts, all priced): median +1h 1.59% (baseline -0.12%), +4h 1.61% (-0.68%), +24h -1.38% (-2.41%).
+- Verified: Posts view with 197 bubbles at 390, 768 and 1280 px; 32 price tests passing in an isolated vitest install.
+- Not verified: `npm test` and the full `tests/x-content-outcomes.test.js` in this checkout (shared `node_modules` is incomplete, see the integrate 33 entry), so prompts/finish/536 stays. Owner of the remainder: whoever runs `npm ci` once, then `npm test` and `npm run build:pages`.
