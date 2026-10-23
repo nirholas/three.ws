@@ -41,9 +41,6 @@ const PASSES = 3;
 // Cross-major moves that were checked against every consumer in the committed lockfiles
 // (2026-10-23). Only these lines are ever moved across a major; anything else is residue.
 const CROSS_MAJOR = {
-	// @solana/web3.js v1 only imports jayson/lib/client/browser, identical in 5.x apart from
-	// request-id generation. 5.x drops stream-json and uuid, which clears both from every Solana tree.
-	'jayson@^4': '^5.0.0',
 	// @coral-xyz/anchor only calls toml.parse(); 5.x keeps the CommonJS entry and that signature.
 	'toml@^3': '^5.0.1',
 	// Every 8.x/9.x consumer (hardhat, jayson, jest-junit, @metamask/*, request-oauth) requires the
@@ -61,6 +58,15 @@ const CROSS_MAJOR = {
 	'adm-zip@~0.5': '~0.6.1',
 	// mocha only calls diff.createPatch(); 8.x keeps a CommonJS build with that export.
 	'diff@^7': '^8.0.3',
+};
+
+// Vulnerable lines with no fixed release on any line their consumer can load, cleared by
+// moving the one parent that pulls them in. Applied only when that parent line is installed.
+const PARENT_SWAPS = {
+	// stream-json 3.x is ESM-only and renamed streamers/StreamValues; its sole consumer is
+	// jayson 4. @solana/web3.js v1 only imports jayson/lib/client/browser, identical in 5.x apart
+	// from request-id generation, and 5.x no longer depends on stream-json (or uuid) at all.
+	'stream-json@^1': { parent: 'jayson', line: '^4', spec: '^5.0.0' },
 };
 
 const argv = process.argv.slice(2);
@@ -145,9 +151,12 @@ function plan(report, lock) {
 			const line = lineOf(version);
 			const target = semver.maxSatisfying(clean.filter((v) => semver.gte(v, version)), line);
 			const crossMajor = CROSS_MAJOR[`${name}@${line}`];
+			const swap = PARENT_SWAPS[`${name}@${line}`];
 			if (target) pins.push({ name, line, target });
 			else if (crossMajor && clean.some((v) => semver.satisfies(v, crossMajor))) pins.push({ name, line, spec: crossMajor });
-			else residue.push({ name, version, lowestFix: semver.minSatisfying(clean, `>${version}`), advisories });
+			else if (swap && [...(installed.get(swap.parent) || [])].some((v) => semver.satisfies(v, swap.line))) {
+				pins.push({ name: swap.parent, line: swap.line, spec: swap.spec });
+			} else residue.push({ name, version, lowestFix: semver.minSatisfying(clean, `>${version}`), advisories });
 		}
 	}
 	// The same line can be installed at several versions; one pin covers them.
@@ -218,11 +227,9 @@ function fixDir(dir) {
 		const changes = [];
 		const notes = [];
 		let report = audit(iso);
-		let residue = [];
+		let residue;
 		for (let pass = 0; pass < PASSES; pass++) {
-			const lock = JSON.parse(readFileSync(join(iso, 'package-lock.json'), 'utf8'));
-			const p = plan(report, lock);
-			residue = p.residue;
+			const p = plan(report, JSON.parse(readFileSync(join(iso, 'package-lock.json'), 'utf8')));
 			const { applied, skipped } = applyPins(manifest, p.pins);
 			notes.push(...skipped);
 			if (!applied.length) break;
@@ -239,6 +246,7 @@ function fixDir(dir) {
 			}
 			report = audit(iso);
 		}
+		residue = plan(report, JSON.parse(readFileSync(join(iso, 'package-lock.json'), 'utf8'))).residue;
 		const after = alertCount(report);
 		const improved = after < before;
 		if (improved && !dryRun) {
