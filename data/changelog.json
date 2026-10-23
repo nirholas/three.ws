@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Trust grades for every MCP server",
+			"summary": "/mcp-tools now grades each of the 51 MCP servers from A to F on a 0-100 score built from facts the build checks: tools declared and described, safety annotations, an installable package or mounted endpoint, a registry manifest, a README, a license, tests, prompts, resources and the Glama claim. Hover or focus a grade for the full breakdown, and click the Trust column to sort. The rubric and weights are documented.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/mcp"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Market anomaly feed: scored price, TVL, depeg, funding and open interest alerts",
 			"summary": "A new scanner runs every 15 minutes over real market series (coin price, Solana TVL and stablecoin supply, stablecoin pegs, Hyperliquid funding and open interest) and records statistically scored anomalies with a medium, high or critical severity. Read them per call at /api/x402/market-anomalies ($0.001 USDC), or create a market_anomaly alert rule in alerts-mcp to be notified. Thin or flat series are skipped instead of guessed at.",
 			"tags": [

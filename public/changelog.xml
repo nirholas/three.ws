@@ -271,6 +271,14 @@
 			<description>The CLI can now pay a 402 itself. `three-ws pay &lt;url&gt;` reads an x402 v2, x402 v1 or MPP Solana challenge, prefers Solana, signs with a wallet kept in the OS keychain (or an encrypted file behind a passphrase), retries once and prints the body. `--dry-run` shows the payee, exact amount and network and signs nothing. A permissions file sets allowed origins, networks, assets and payees, per-call and per-day maximums and a confirm-above threshold, and a refused challenge exits with a stable code (10) and a reason string. `three-ws pay mcp` serves the same under the same permissions as a stdio MCP server with pay_quote and pay_fetch.</description>
 		</item>
 		<item>
+			<title>Trust grades for every MCP server</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-10-23:Trust grades for every MCP server</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>/mcp-tools now grades each of the 51 MCP servers from A to F on a 0-100 score built from facts the build checks: tools declared and described, safety annotations, an installable package or mounted endpoint, a registry manifest, a README, a license, tests, prompts, resources and the Glama claim. Hover or focus a grade for the full breakdown, and click the Trust column to sort. The rubric and weights are documented.</description>
+		</item>
+		<item>
 			<title>Turn a Solana program's Anchor IDL into an agent skill</title>
 			<link>https://three.ws/skills/import</link>
 			<guid isPermaLink="false">2026-10-23:Turn a Solana program's Anchor IDL into an agent skill</guid>

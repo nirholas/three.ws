@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-23T22:15:38.567Z",
+	"generated_at": "2026-10-23T22:24:41.310Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4141,
+	"total": 4142,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -341,6 +341,16 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Trust grades for every MCP server",
+			"summary": "/mcp-tools now grades each of the 51 MCP servers from A to F on a 0-100 score built from facts the build checks: tools declared and described, safety annotations, an installable package or mounted endpoint, a registry manifest, a README, a license, tests, prompts, resources and the Glama claim. Hover or focus a grade for the full breakdown, and click the Trust column to sort. The rubric and weights are documented.",
+			"link": "/docs/mcp",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1550,16 +1560,6 @@
 			"tags": [
 				"feature",
 				"desktop"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "The homepage is now the Field: one live map of every agent, launch and wallet move",
-			"summary": "The front page no longer opens a web desktop. It opens the Field, a zoomable map of the whole platform built from live data. Every public agent is a star in the core, newest at the centre, and turns into its avatar as you zoom in; around it sit ten districts (Create, Forge, Gallery, Launchpad, Trenches, Pulse, Marketplace, Chat, Agent Studio, Console). From afar each shows one live readout; zoom in and it opens into a card with real content: the newest avatars, coins agents launched, the $THREE price, market cap, holders and contract address, the latest agent wallet moves, the skills agents carry most. New wallet moves from Pulse fly across the map as comets and land in their district. Search finds any place, agent or page; opening one loads the real page in place, with its own shareable /?go= link, and Back or Esc returns you to the map. It works with mouse, touch, pinch and keyboard, in light and dark, and lays itself out for phones. The windowed desktop is still at /?view=desktop and the 3D campus at /?world=1.",
-			"link": "/",
-			"tags": [
-				"feature"
 			]
 		}
 	]
