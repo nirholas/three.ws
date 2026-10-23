@@ -491,6 +491,48 @@ describe('runOrderSweep: conditional and trailing triggers', () => {
 		expect(tradeState.calls).toHaveLength(0);
 	});
 
+	it('ratchet: holds in phase 1, locks a tier at the peak, and fires TIER_LOCK on the fall back', async () => {
+		const ratchet = { initial_stop_pct: 30, tiers: [{ profit_pct: 50, lock_pct: 10 }] };
+		const base = { type: 'trail_ratchet', side: 'sell', size_sol: null, sell_pct: 100, limit_price: null, ratchet, reference_price: 100_000, peak_price: 100_000 };
+		dbState.activeOrders = [order(base)];
+		priceAt(80_000); // 20% under entry, inside the wide stop
+		await runOrderSweep(cfg);
+		expect(tradeState.calls).toHaveLength(0);
+
+		dbState.calls = [];
+		dbState.activeOrders = [order({ ...base, peak_price: 160_000 })]; // tier 1 armed earlier
+		priceAt(120_000); // above the +10% lock (110000)
+		await runOrderSweep(cfg);
+		expect(tradeState.calls).toHaveLength(0);
+		expect(call('mark_evaluated').values[1]).toBe(160_000);
+
+		dbState.calls = [];
+		priceAt(105_000); // through the lock, still above the phase 1 stop
+		await runOrderSweep(cfg);
+		expect(tradeState.calls).toHaveLength(1);
+		expect(tradeState.calls[0].input.isMax).toBe(true);
+		const fill = call('insert_fill') || call('advance');
+		expect(JSON.stringify(dbState.calls)).toContain('TIER_LOCK');
+		expect(fill).toBeTruthy();
+	});
+
+	it('ratchet: a gap straight through a lock tier exits with TIER_LOCK, a phase 1 breach with DRAWDOWN', async () => {
+		const ratchet = { initial_stop_pct: 30, tiers: [{ profit_pct: 50, lock_pct: 10 }] };
+		const base = { type: 'trail_ratchet', side: 'sell', size_sol: null, sell_pct: 100, limit_price: null, ratchet, reference_price: 100_000 };
+		dbState.activeOrders = [order({ ...base, peak_price: 200_000 })];
+		priceAt(60_000);
+		await runOrderSweep(cfg);
+		expect(tradeState.calls).toHaveLength(1);
+		expect(JSON.stringify(dbState.calls)).toContain('TIER_LOCK');
+
+		dbState.calls = []; tradeState.calls = [];
+		dbState.activeOrders = [order({ ...base, peak_price: 100_000 })];
+		priceAt(65_000);
+		await runOrderSweep(cfg);
+		expect(tradeState.calls).toHaveLength(1);
+		expect(JSON.stringify(dbState.calls)).toContain('DRAWDOWN');
+	});
+
 	it('tracks the trailing high-water mark each sweep and fires on the drawdown', async () => {
 		dbState.activeOrders = [order({ type: 'trailing', side: 'sell', size_sol: null, sell_pct: 100, trail_pct: 20, peak_price: 100_000, limit_price: null })];
 		priceAt(90_000); // only 10% off the peak

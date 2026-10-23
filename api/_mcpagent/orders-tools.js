@@ -469,7 +469,7 @@ export const orderToolDefs = [
 				agent_id: agentIdProp,
 				network: { type: 'string', enum: ['mainnet', 'devnet'], description: 'Limit to one cluster. Both when omitted.' },
 				status: { type: 'string', enum: ['open', 'closed', 'all'], default: 'open' },
-				type: { type: 'string', enum: ['limit', 'stop', 'trailing', 'dca', 'twap', 'conditional'] },
+				type: { type: 'string', enum: ['limit', 'stop', 'trailing', 'trail_ratchet', 'dca', 'twap', 'conditional'] },
 				limit: { type: 'integer', minimum: 1, maximum: 200, default: 50 },
 			},
 			required: ['agent_id'],

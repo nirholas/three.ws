@@ -12,6 +12,8 @@
  *   limit       — fill at a target price/market-cap (buy on a dip, sell on a rise)
  *   stop        — fill when a level is breached (stop-loss sell / breakout buy)
  *   trailing    — fill on a % drawdown from the high-water mark (or run-up from the low)
+ *   trail_ratchet: sell-only two-phase stop: a wide initial stop, then lock tiers that
+ *                 ratchet the floor up as profit grows (api/_lib/exit-ratchet.js)
  *   dca         — recurring buys/sells on a fixed interval, N slices
  *   twap        — slice ONE large order over time to cut price impact, N slices
  *   conditional — fill when a validated signal condition is true
@@ -22,8 +24,9 @@
 import { randomUUID } from 'node:crypto';
 import { validateSolanaAddress } from './agent-trade-guards.js';
 import { sql, sqlValues } from './db.js';
+import { normalizeRatchet } from './exit-ratchet.js';
 
-export const ORDER_TYPES = Object.freeze(['limit', 'stop', 'trailing', 'dca', 'twap', 'conditional']);
+export const ORDER_TYPES = Object.freeze(['limit', 'stop', 'trailing', 'trail_ratchet', 'dca', 'twap', 'conditional']);
 export const ORDER_SIDES = Object.freeze(['buy', 'sell']);
 export const TRIGGER_METRICS = Object.freeze(['price_sol', 'mcap_sol', 'mcap_usd']);
 // Where an order may fill. 'launchpad' = the pump bonding curve, then the
@@ -262,7 +265,7 @@ export function normalizeOrder(raw) {
 		network, venue, price_band,
 		slippage_bps, max_price_impact_pct, expires_at: expires_at || null,
 		trigger_metric,
-		limit_price: null, stop_price: null, trail_pct: null,
+		limit_price: null, stop_price: null, trail_pct: null, ratchet: null, entry_price: null,
 		schedule: null, condition: null,
 		size_sol: null, size_tokens: null, sell_pct: null,
 	};
@@ -286,6 +289,16 @@ export function normalizeOrder(raw) {
 		const v = num(raw.trail_pct);
 		if (v == null || v <= 0 || v >= 100) return err('invalid_trail', 'trail_pct must be between 0 and 100');
 		out.trail_pct = v;
+	} else if (type === 'trail_ratchet') {
+		if (side !== 'sell') return err('invalid_side', 'a ratcheting stop protects a position, so side must be "sell"');
+		const r = normalizeRatchet(raw.ratchet);
+		if (!r.ok) return err('invalid_ratchet', r.message);
+		out.ratchet = r.ratchet;
+		if (raw.entry_price != null && raw.entry_price !== '') {
+			const e = posNum(raw.entry_price);
+			if (!e) return err('invalid_price', 'entry_price must be a positive number in the trigger metric');
+			out.entry_price = e;
+		}
 	} else if (type === 'dca') {
 		const sch = parseSchedule(raw.schedule, { minInterval: 60, minSlices: 1 });
 		if (!sch.ok) return sch;
@@ -482,6 +495,11 @@ export function describeOrder(o) {
 			return o.side === 'sell'
 				? `Trailing stop: sell ${sizeLabel(o)} of ${sym} after a ${o.trail_pct}% drop from its high.`
 				: `Trailing entry: buy ${sizeLabel(o)} of ${sym} after a ${o.trail_pct}% bounce from its low.`;
+		case 'trail_ratchet': {
+			const r = o.ratchet || { tiers: [] };
+			const tiers = r.tiers.map((t) => `at +${t.profit_pct}% lock ${t.lock_pct >= 0 ? '+' : ''}${t.lock_pct}%`).join(', ');
+			return `Ratcheting stop: sell ${sizeLabel(o)} of ${sym} if it falls ${r.initial_stop_pct}% below entry; then ${tiers}, and the stop never moves down.`;
+		}
 		case 'dca': {
 			const every = humanInterval(o.schedule?.interval_seconds);
 			return `DCA: ${verb.toLowerCase()} ${sizeLabel(o)} of ${sym} every ${every}, ${o.schedule?.slices}× total${bandLabel(o.price_band)}.`;
@@ -536,7 +554,7 @@ export function shapeOrder(row) {
 		size_sol: numOrNull(row.size_sol), size_tokens: numOrNull(row.size_tokens), sell_pct: numOrNull(row.sell_pct),
 		trigger_metric: row.trigger_metric,
 		limit_price: numOrNull(row.limit_price), stop_price: numOrNull(row.stop_price),
-		trail_pct: numOrNull(row.trail_pct), peak_price: numOrNull(row.peak_price),
+		trail_pct: numOrNull(row.trail_pct), ratchet: row.ratchet || null, peak_price: numOrNull(row.peak_price),
 		reference_price: numOrNull(row.reference_price),
 		schedule: row.schedule || null, next_fire_at: row.next_fire_at, condition: row.condition || null,
 		slippage_bps: row.slippage_bps, max_price_impact_pct: numOrNull(row.max_price_impact_pct),
@@ -629,7 +647,7 @@ const orderInsertColumns = () => sql`
 	agent_id, user_id, network, mint, symbol, type, side, size_sol, size_tokens,
 	sell_pct, trigger_metric, limit_price, stop_price, trail_pct, schedule,
 	next_fire_at, condition, slippage_bps, max_price_impact_pct, expires_at, status,
-	venue, route, price_band, group_id, group_kind, group_leg`;
+	venue, route, price_band, group_id, group_kind, group_leg, ratchet, reference_price`;
 
 // One VALUES row for orderInsertColumns(). Schedule-driven orders (dca/twap)
 // get next_fire_at = now so the first slice fires on the next sweep.
@@ -646,6 +664,8 @@ function orderInsertRow(agentId, userId, o, { route = null, group = null } = {})
 		o.venue || 'auto', route,
 		sql`${o.price_band ? JSON.stringify(o.price_band) : null}::jsonb`,
 		group ? sql`${group.id}::uuid` : null, group?.kind ?? null, group?.leg ?? null,
+		sql`${o.ratchet ? JSON.stringify(o.ratchet) : null}::jsonb`,
+		o.entry_price ?? null,
 	];
 }
 

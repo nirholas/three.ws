@@ -52,6 +52,7 @@ block such as a firewall rug verdict).
 | `limit` buy / sell | metric ≤ target (dip) / ≥ target (rise) |
 | `stop` sell / buy | metric ≤ stop (stop-loss) / ≥ stop (breakout) |
 | `trailing` sell / buy | metric ≤ peak·(1−trail%) / ≥ trough·(1+trail%) |
+| `trail_ratchet` sell | the two-phase stop below: initial wide stop, then lock tiers that never loosen |
 | `dca` | `next_fire_at ≤ now`, one slice per interval, N slices |
 | `twap` | same scheduling; slices ONE total order to cut impact |
 | `conditional` | a validated `{ all\|any: [{ signal, op, value }] }` is true |
@@ -59,6 +60,26 @@ block such as a firewall rug verdict).
 `trigger_metric` ∈ `price_sol | mcap_sol | mcap_usd`. Conditional signals:
 `price_sol`, `mcap_sol`, `mcap_usd`, `price_change_pct`, `smart_money_score`,
 `dev_dump`, `graduated` — all real, code-free (see `api/_lib/orders.js`).
+
+### Ratcheting trailing stop (`trail_ratchet`)
+
+A sell-only stop with two phases, pure logic in `api/_lib/exit-ratchet.js`:
+
+1. **Phase 1, the wide stop.** The position gets room to breathe: the order sells if the trigger metric falls `ratchet.initial_stop_pct` below the entry.
+2. **Phase 2, lock tiers.** `ratchet.tiers` is `[{ profit_pct, lock_pct }]`, ascending. Once the high-water mark has shown `profit_pct` over the entry, the stop is never below `entry * (1 + lock_pct/100)`. The high-water mark only rises, so a tier stays armed after price falls back under its trigger.
+
+The entry is `entry_price` (in the trigger metric) when the order is placed, otherwise the first live reading the sweep takes. A gap down through a lock tier still exits on the first sweep that sees it, at the live fill, because the test is `value <= stop`. Create it from the Orders tab (Ratchet) or `POST /api/agents/:id/orders` with `{ type: "trail_ratchet", side: "sell", mint, sell_pct, ratchet: { initial_stop_pct: 30, tiers: [{ profit_pct: 50, lock_pct: 10 }] }, entry_price? }`.
+
+### Reason codes
+
+Every ratchet exit and every guard refusal carries a stable code, shown as a chip on the order card and in Activity, written to `agent_order_events` (`meta.reason_code` for exits, a `[CODE]` prefix on the skip detail for refusals), and recorded on the agent's decision trail as kind `order_exit` for exits:
+
+| Code | Meaning |
+|------|---------|
+| `DRAWDOWN` | price fell through the phase 1 initial stop |
+| `TIER_LOCK` | price fell back to a locked-in profit tier |
+| `DAILY_LOSS` | a fill was refused because the agent hit its daily loss limit |
+| `IMPACT` | a fill was refused because price impact exceeded the safety limit |
 
 ### Sizing a percentage sell (DCA and TWAP differ on purpose)
 
@@ -125,7 +146,7 @@ execution path touches Postgres and Solana RPC only.
 ## Tests
 
 ```bash
-npx vitest run tests/orders-engine.test.js tests/agent-orders-sweep.test.js
+npx vitest run tests/orders-engine.test.js tests/agent-orders-sweep.test.js tests/exit-ratchet.test.js
 ```
 
 `tests/orders-engine.test.js` covers the pure rule layer (`api/_lib/orders.js`:
