@@ -39,7 +39,7 @@ export const def = {
 			.optional()
 			.describe('Only return alerts fired by this rule id (matches the rule_id in each alert payload).'),
 		kind: z
-			.enum(['graduation', 'price_above', 'price_below', 'whale_buy', 'new_mint'])
+			.enum(['graduation', 'price_above', 'price_below', 'whale_buy', 'new_mint', 'market_anomaly'])
 			.optional()
 			.describe('Only return alerts of this event kind.'),
 	},

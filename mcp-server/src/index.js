@@ -49,7 +49,7 @@ import { buildAgenCGetTaskTool } from './tools/agenc-get-task.js';
 import { buildAgenCGetAgentTool } from './tools/agenc-get-agent.js';
 import { buildAixbtIntelTool } from './tools/aixbt-intel.js';
 import { buildAixbtProjectsTool } from './tools/aixbt-projects.js';
-import { buildCryptoNewsTool } from './tools/crypto-news.js';
+import { buildCryptoNewsTool, buildNewsResolveTool } from './tools/crypto-news.js';
 import { buildCryptoNewsDigestTool } from './tools/crypto-news-digest.js';
 import { buildCryptoNewsArchiveTool } from './tools/crypto-news-archive.js';
 import {
@@ -128,6 +128,7 @@ const TOOL_BUILDERS = [
 	buildAixbtIntelTool,
 	buildAixbtProjectsTool,
 	buildCryptoNewsTool,
+	buildNewsResolveTool,
 	buildCryptoNewsDigestTool,
 	buildCryptoNewsArchiveTool,
 ];

@@ -10,7 +10,7 @@
  * @typedef {Object} AlertRule
  * @property {string} id
  * @property {string} user_id
- * @property {'graduation'|'price_above'|'price_below'|'whale_buy'|'new_mint'|'market_price'|'launch_match'} kind
+ * @property {'graduation'|'price_above'|'price_below'|'whale_buy'|'new_mint'|'market_price'|'launch_match'|'market_anomaly'} kind
  * @property {string|null} [target_mint]
  * @property {string|null} [target_agent]
  * @property {string|null} [target_market]   prediction market id (market_price)
@@ -49,6 +49,13 @@ export const AGENT_TARGETED_KINDS = Object.freeze(['new_mint']);
 export const MARKET_TARGETED_KINDS = Object.freeze(['market_price']);
 /** Kinds that match new launches against a filter set instead of a target. */
 export const FILTER_KINDS = Object.freeze(['launch_match']);
+/** Kinds that match market anomaly events (api/cron/market-anomalies.js) against optional filters. */
+export const MARKET_ANOMALY_KINDS = Object.freeze(['market_anomaly']);
+/** Every market_anomaly filter key. All optional; no filters means high severity and above, any processor. */
+export const MARKET_ANOMALY_FILTER_KEYS = Object.freeze(['processors', 'min_severity', 'subject']);
+/** Default minimum severity of a market_anomaly rule with no min_severity set. */
+export const DEFAULT_ANOMALY_SEVERITY = 'high';
+const ANOMALY_SEVERITY_RANK = Object.freeze({ medium: 1, high: 2, critical: 3 });
 /** Every launch_match filter key, in display order. */
 export const LAUNCH_FILTER_KEYS = Object.freeze([
 	'name_pattern', 'min_market_cap_usd', 'max_market_cap_usd', 'min_safety_score',
@@ -112,6 +119,21 @@ export function compileNamePattern(pattern) {
 	const parts = alts.map((a) => (a.includes('*') ? `^${a.split('*').map(escape).join('.*')}$` : escape(a)));
 	const re = new RegExp(parts.join('|'), 'i');
 	return (text) => re.test(String(text || '').trim());
+}
+
+/**
+ * Does a market anomaly event satisfy a market_anomaly rule's filters?
+ * @param {AlertRule} rule
+ * @param {{ processor: string, subject: string, severity: string }} event
+ */
+export function marketAnomalyMatchesRule(rule, event) {
+	if (rule.kind !== 'market_anomaly' || !event) return false;
+	const f = rule.filters || {};
+	const floor = ANOMALY_SEVERITY_RANK[f.min_severity || DEFAULT_ANOMALY_SEVERITY] || 2;
+	if ((ANOMALY_SEVERITY_RANK[event.severity] || 0) < floor) return false;
+	if (Array.isArray(f.processors) && f.processors.length && !f.processors.includes(event.processor)) return false;
+	if (f.subject && String(event.subject).toLowerCase() !== String(f.subject).toLowerCase()) return false;
+	return true;
 }
 
 /**
@@ -370,6 +392,32 @@ export function buildLaunchMatchPayload(rule, l, matched = []) {
 }
 
 /**
+ * @param {AlertRule} rule
+ * @param {{ id: number, processor: string, subject: string, metric: string, severity: string, direction: string,
+ *   value: number|null, baseline: number|null, change_pct: number|null, score: number|null, summary: string, observed_at: any }} e
+ */
+export function buildMarketAnomalyPayload(rule, e) {
+	return {
+		kind: 'market_anomaly',
+		rule_id: rule.id,
+		event_id: `anomaly:${e.id}`,
+		anomaly_id: e.id,
+		processor: e.processor,
+		subject: e.subject,
+		metric: e.metric,
+		severity: e.severity,
+		direction: e.direction,
+		value: e.value,
+		baseline: e.baseline,
+		change_pct: e.change_pct,
+		score: e.score,
+		summary: e.summary,
+		link: '/markets',
+		at: iso(e.observed_at) || iso(Date.now()),
+	};
+}
+
+/**
  * Human-readable one-line summary used for the Telegram message and as the
  * in-app feed title.
  * @param {Record<string, any>} p alert payload
@@ -384,6 +432,8 @@ export function formatAlertSummary(p) {
 		}
 		case 'new_mint':
 			return `🆕 ${tok} just launched`;
+		case 'market_anomaly':
+			return `${p.severity === 'critical' ? '🚨' : '⚠️'} ${p.summary || `${p.subject} ${p.processor} anomaly`}`;
 		case 'launch_match': {
 			const mc = usd(p.market_cap_usd);
 			const bits = [mc ? `${mc} mcap` : null, p.safety_score != null ? `safety ${p.safety_score}` : null].filter(Boolean);
@@ -420,6 +470,8 @@ export function deriveRuleLabel(rule) {
 			return `Graduations · ${target}`;
 		case 'new_mint':
 			return `New launches · ${target}`;
+		case 'market_anomaly':
+			return `Market anomalies · ${describeAnomalyFilters(rule.filters)}`;
 		case 'launch_match':
 			return `Launches matching filters · ${describeLaunchFilters(rule.filters) || 'any'}`;
 		case 'whale_buy':
@@ -433,6 +485,14 @@ export function deriveRuleLabel(rule) {
 		default:
 			return 'Alert';
 	}
+}
+
+/** Short plain-language summary of a market_anomaly filter set. */
+export function describeAnomalyFilters(f) {
+	const out = [`${(f && f.min_severity) || DEFAULT_ANOMALY_SEVERITY}+`];
+	if (f && Array.isArray(f.processors) && f.processors.length) out.push(f.processors.join('/'));
+	if (f && f.subject) out.push(f.subject);
+	return out.join(' · ');
 }
 
 /** Short plain-language summary of a launch_match filter set. */

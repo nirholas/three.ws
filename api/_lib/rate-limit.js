@@ -738,6 +738,14 @@ export const limits = {
 	// draining `authIp`, which gates the actual publish. 20 per 10 min is many
 	// more rerolls than composing a tweet needs and still caps the fan-out.
 	xDraftIp: (ip) => getLimiter('x:draft:ip', { limit: 20, window: '10 m' }).limit(ip),
+	// README 3D (api/readme-3d.js POST): each call fetches a model and runs a
+	// mesh decimation pass, so it is CPU-heavy. 12 per 10 min covers a person
+	// tuning a budget and still bounds a script.
+	readme3dIp: (ip) => getLimiter('readme3d:ip', { limit: 12, window: '10 m' }).limit(ip),
+	// Flappin UFO run submissions (api/play/ufo-runs.js POST): each one replays the
+	// whole run through the simulation, a few ms of CPU. A person finishes a run
+	// every 30s at best; 30 per 10 min covers real play and bounds a script.
+	ufoRunIp: (ip) => getLimiter('play:ufo-run:ip', { limit: 30, window: '10 m' }).limit(ip),
 	// Copy Coach questions (api/copy/coach.js POST): anonymous, one LLM
 	// completion each. A first-timer asks a handful; 30 per 10 min is generous
 	// for a person and still bounds a script.
@@ -1057,6 +1065,10 @@ export const limits = {
 	// the Upstash quota without buying any real protection here.
 	mcp3dStatus: (key) =>
 		getLimiter('mcp3d:status', { limit: 240, window: '1 m', local: true }).limit(key),
+	// Free X post reader / video tool. Extract fans out to up to three third-party
+	// endpoints per call; download streams bytes through us, so both are per IP.
+	xVideoExtract: (ip) => getLimiter('x-video:extract', { limit: 20, window: '1 m' }).limit(ip),
+	xVideoDownload: (ip) => getLimiter('x-video:download', { limit: 20, window: '1 m' }).limit(ip),
 	// Persona wallet identity reads (balances, reputation, holdings, nameplate) —
 	// several live RPC/HTTP calls per invocation, so a tighter ceiling than plain
 	// status polling but generous enough for a chat turn to check before tipping.

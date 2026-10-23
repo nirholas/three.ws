@@ -16,6 +16,7 @@
 import { formatUsd, formatPrice, formatPercent, escapeHtml as esc } from './shared/coin-format.js';
 import { sparkline } from './shared/market-table.js';
 import { onPageReady } from './shell/page-lifecycle.js';
+import { shortAddress } from './shared/address.js';
 
 // U+2014 as an escape: the house style bans the literal glyph in source.
 const DASH = '\u2014';
@@ -51,10 +52,7 @@ async function getJson(url, signal) {
 	return body?.data ?? body;
 }
 
-function shortAddr(a, head = 6, tail = 4) {
-	if (!a) return DASH;
-	return `${a.slice(0, head)}…${a.slice(-tail)}`;
-}
+function shortAddr(a, head = 6, tail = 4) { return shortAddress(a, head, tail); }
 
 function fmtEth(n, digits = 4) {
 	if (n == null || !Number.isFinite(n)) return DASH;

@@ -12,6 +12,7 @@ import { listAgentsByOwner, fetchAgentMetadata, findAvatar3D } from './queries.j
 import { CHAIN_META, supportedChainIds, readProvider } from './chain-meta.js';
 import { resolveURI } from '../ipfs.js';
 import { walletChipHTML, wireWalletChips } from '../shared/agent-wallet-chip.js';
+import { shortAddress } from '../shared/address.js';
 
 const SOLANA_BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
@@ -41,7 +42,7 @@ const esc = (s) =>
 		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
 	);
 
-const shortAddr = (a) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '');
+const shortAddr = (a) => shortAddress(a, 6, 4);
 
 /**
  * Mount the user profile into `rootEl`.

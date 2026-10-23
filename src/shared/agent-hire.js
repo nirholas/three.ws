@@ -18,6 +18,7 @@
 // and the embodied hand-off animation that plays on a real completed hire.
 
 import { apiFetch } from '../api.js';
+import { shortAddress as shortAddr } from './address.js';
 
 // ── tiny helpers ────────────────────────────────────────────────────────────
 
@@ -34,10 +35,7 @@ export function fmtUsd(n) {
 	return `$${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export function shortAddr(a) {
-	const s = String(a || '');
-	return s.length > 12 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s;
-}
+export { shortAddr };
 
 function initials(name) {
 	const parts = String(name || 'Agent').trim().split(/\s+/).filter(Boolean);

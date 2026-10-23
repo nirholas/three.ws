@@ -1,12 +1,12 @@
 // GET /api/leaderboard/unified — the cross-surface leaderboard (prompt 06 of
 // the user-value pack).
 //
-//   ?metric = creations | remixes_received | launches | followers | walk_distance
+//   ?metric = creations | remixes_received | launches | followers | walk_distance | ufo_score
 //             (default creations)
 //   ?limit  = 1..100   (default 50)
 //   ?offset = 0..
 //
-// Five real, queried rankings — every column here is a COUNT/SUM over an
+// Six real, queried rankings, every column here is a COUNT/SUM over an
 // existing table, never a synthetic score:
 //   · creations         — finished forge models (forge_creations, status=done)
 //                          + saved worlds (dioramas), per signed-in creator.
@@ -45,7 +45,7 @@ import { launchCountsByUser } from '../_lib/launch-counts.js';
 
 export const maxDuration = 10;
 
-const METRICS = new Set(['creations', 'remixes_received', 'launches', 'followers', 'walk_distance']);
+const METRICS = new Set(['creations', 'remixes_received', 'launches', 'followers', 'walk_distance', 'ufo_score']);
 
 const METRIC_LABEL = {
 	creations: 'Creations',
@@ -53,6 +53,7 @@ const METRIC_LABEL = {
 	launches: 'Launches',
 	followers: 'Followers',
 	walk_distance: 'Walk Distance',
+	ufo_score: 'UFO High Score',
 };
 
 // Per-metric ranking query — returns { user_id, value } rows, unsorted (the
@@ -103,6 +104,14 @@ async function rankingRows(metric) {
 			select following_id as user_id, count(*)::bigint as value
 			from user_follows
 			group by following_id
+		`;
+	}
+	if (metric === 'ufo_score') {
+		return sql`
+			select user_id, max(score)::bigint as value
+			from ufo_runs
+			where user_id is not null
+			group by user_id
 		`;
 	}
 	// walk_distance

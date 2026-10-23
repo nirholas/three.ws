@@ -10,6 +10,8 @@
 // Per-kind accent colors — identical palette to the Money-Cam (src/galaxy.js)
 // so the home ticker and the 3D map read as one feature. Payments use the
 // wallet-violet family accent.
+import { shortAddress as shortAddr } from './shared/address.js';
+
 export const KIND_COLORS = {
 	tip: '#4ade80',
 	trade: '#4589ff',
@@ -34,10 +36,7 @@ export function formatUsd(v) {
 	return `$${(n / 1_000_000).toFixed(2)}M`;
 }
 
-export function shortAddr(w) {
-	if (!w || typeof w !== 'string') return '';
-	return w.length > 10 ? `${w.slice(0, 4)}…${w.slice(-4)}` : w;
-}
+export { shortAddr };
 
 // Compact relative age. `now` is injectable so tests are deterministic.
 export function relTime(iso, now = Date.now()) {

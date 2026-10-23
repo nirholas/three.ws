@@ -22,6 +22,8 @@
 // Endpoint limits mirror launchAgentSchema in api/pump/[action].js. Keep these
 // in sync with the server so the HUD rejects what the endpoint would reject,
 // instead of round-tripping a doomed request.
+import { shortAddress as truncMid } from './shared/address.js';
+
 export const LAUNCH_LIMITS = Object.freeze({ name: 32, symbol: 10, uri: 200 });
 
 // Ordered launch stages. The HUD status rail and the narration both walk this
@@ -167,10 +169,7 @@ export function formatSol(n) {
 }
 
 // Middle-truncate a Solana address / signature for compact display.
-export function truncMid(s, head = 4, tail = 4) {
-	if (typeof s !== 'string' || s.length <= head + tail + 1) return s || '';
-	return `${s.slice(0, head)}…${s.slice(-tail)}`;
-}
+export { truncMid };
 
 // ── HUD rendering (browser only — needs document/canvas/Image) ───────────────
 

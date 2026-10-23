@@ -301,6 +301,9 @@ const MAX_APPEND_RETRIES = 5;
  * @param {number} [d.confidence]   0..1
  * @param {string} [d.network]
  * @param {Date|string} [d.decidedAt]  defaults to now (captured here, not in SQL)
+ * @param {string[]} [d.recallIds]     ids of the memories recalled into this decision.
+ *   Stored beside the row (decision_recalls), never inside the hashed entry, so the
+ *   chain stays immutable while the outcome can later be written onto each memory.
  * @returns {Promise<{id:string, seq:number, entry_hash:string, deduped:boolean}>}
  */
 export async function recordDecision(d) {
@@ -326,6 +329,7 @@ export async function recordDecision(d) {
 		limit 1
 	`;
 	if (existing) {
+		await linkRecalls(existing.id, agentId, d.recallIds);
 		return { id: existing.id, seq: Number(existing.seq), entry_hash: existing.entry_hash, deduped: true };
 	}
 
@@ -354,6 +358,7 @@ export async function recordDecision(d) {
 			returning id, seq, entry_hash
 		`;
 		if (rows.length) {
+			await linkRecalls(rows[0].id, agentId, d.recallIds);
 			return { id: rows[0].id, seq: Number(rows[0].seq), entry_hash: rows[0].entry_hash, deduped: false };
 		}
 		// Lost a race for this seq (or the idempotency key just landed). Re-check the
@@ -369,6 +374,57 @@ export async function recordDecision(d) {
 		// Otherwise it was a pure seq collision — loop and claim the next seq.
 	}
 	throw new Error('recordDecision: could not claim a chain slot after retries');
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Record which memories were recalled into a decision. Best-effort and idempotent:
+ * the decision is already committed, so a link failure (or a memory deleted since
+ * recall) must never fail the trade's own bookkeeping.
+ */
+async function linkRecalls(decisionId, agentId, recallIds) {
+	const ids = [...new Set((Array.isArray(recallIds) ? recallIds : []).map(String).filter((x) => UUID_RE.test(x)))].slice(0, 50);
+	if (!ids.length) return;
+	try {
+		await sql`
+			insert into decision_recalls (decision_id, memory_id, agent_id)
+			select ${decisionId}, m.id, ${agentId}
+			from agent_memories m
+			where m.id = any(${ids}::uuid[]) and m.agent_id = ${agentId}
+			on conflict do nothing
+		`;
+	} catch (err) {
+		console.warn('[reasoning-ledger] recall link failed', err?.message);
+	}
+}
+
+/**
+ * Write a closed decision's realized outcome onto every memory that was recalled
+ * into it. Idempotent on (memory_id, decision_id), so a cron that revisits a
+ * decision never double-counts. Returns how many memories were stamped.
+ *
+ * @param {object} o
+ * @param {string} o.decisionId
+ * @param {string} o.agentId
+ * @param {number|null} [o.pnlUsd]       realized P&L in USD; null when unpriced
+ * @param {boolean|null} [o.win]
+ * @param {number|null} [o.holdSeconds]
+ * @param {Date|string} [o.closedAt]
+ * @returns {Promise<{linked:number}>}
+ */
+export async function linkOutcomeToMemories(o) {
+	const closedAt = new Date(o.closedAt ?? Date.now()).toISOString();
+	const rows = await sql`
+		insert into memory_outcomes (memory_id, decision_id, agent_id, pnl_usd, win, hold_seconds, closed_at)
+		select r.memory_id, r.decision_id, r.agent_id,
+		       ${o.pnlUsd ?? null}, ${o.win ?? null}, ${o.holdSeconds ?? null}, ${closedAt}
+		from decision_recalls r
+		where r.decision_id = ${o.decisionId} and r.agent_id = ${o.agentId}
+		on conflict do nothing
+		returning memory_id
+	`;
+	return { linked: rows.length };
 }
 
 /**

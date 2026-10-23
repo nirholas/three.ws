@@ -4775,6 +4775,7 @@
 								<option value="education" data-i18n="marketplace.education">Education</option>
 								<option value="emotions" data-i18n="marketplace.emotions">Emotions</option>
 								<option value="entertainment" data-i18n="marketplace.entertainment">Entertainment</option>
+								<option value="finance" data-i18n="marketplace.finance">Finance</option>
 								<option value="games" data-i18n="marketplace.games">Games</option>
 								<option value="general" data-i18n="marketplace.general">General</option>
 								<option value="life" data-i18n="marketplace.life">Life</option>
@@ -4934,6 +4935,27 @@
 							/>
 						</div>
 					</div>
+					<fieldset class="market-field" id="sp-rails" style="border:0;padding:0;margin:0 0 12px">
+						<legend>
+							Payment rails <span class="field-hint">(one price, every enabled rail settles the same author split)</span>
+						</legend>
+						<label style="display:flex;gap:8px;align-items:center;margin:6px 0">
+							<input type="checkbox" name="sp-rail" value="x402" checked />
+							<span>x402 <span class="field-hint">HTTP 402, USDC on Solana first</span></span>
+						</label>
+						<label style="display:flex;gap:8px;align-items:center;margin:6px 0">
+							<input type="checkbox" name="sp-rail" value="a2a" checked />
+							<span>A2A <span class="field-hint">agent-to-agent task envelope</span></span>
+						</label>
+						<label style="display:flex;gap:8px;align-items:center;margin:6px 0">
+							<input type="checkbox" name="sp-rail" value="mpp" />
+							<span>MPP <span class="field-hint">Payment authentication scheme</span></span>
+						</label>
+						<label style="display:flex;gap:8px;align-items:center;margin:6px 0">
+							<input type="checkbox" name="sp-rail" value="ap2" />
+							<span>AP2 <span class="field-hint">mandate-backed agent spend</span></span>
+						</label>
+					</fieldset>
 					<div class="market-field">
 						<label for="sp-tags"
 							 data-i18n-html="marketplace.tags_comma_separated_2">Tags <span class="field-hint">(comma-separated)</span></label

@@ -183,6 +183,7 @@
 					<button class="rk-seg-btn" data-metric="launches" role="tab" aria-selected="false" aria-controls="rk-board" tabindex="-1" data-i18n="rankings.launches">Launches</button>
 					<button class="rk-seg-btn" data-metric="followers" role="tab" aria-selected="false" aria-controls="rk-board" tabindex="-1" data-i18n="rankings.followers">Followers</button>
 					<button class="rk-seg-btn" data-metric="walk_distance" role="tab" aria-selected="false" aria-controls="rk-board" tabindex="-1" data-i18n="rankings.walk_distance">Walk Distance</button>
+					<button class="rk-seg-btn" data-metric="ufo_score" role="tab" aria-selected="false" aria-controls="rk-board" tabindex="-1" data-i18n="rankings.ufo_score">UFO High Score</button>
 				</div>
 			</section>
 
@@ -237,6 +238,7 @@
 				launches: 'Launches',
 				followers: 'Followers',
 				walk_distance: 'Distance',
+				ufo_score: 'Score',
 			};
 			const EMPTY_COPY = {
 				creations: { title: 'No creations ranked yet', msg: 'Forge a 3D model or build a world while signed in, and it’ll show up here.', cta: { href: '/forge', label: 'Start creating →' } },
@@ -244,6 +246,7 @@
 				launches: { title: 'No launches ranked yet', msg: 'Launch a coin from one of your agents to show up here.', cta: { href: '/create-agent', label: 'Launch an agent →' } },
 				followers: { title: 'No one ranked yet', msg: 'Grow your following by sharing your profile and creations.', cta: { href: '/feed', label: 'Open your feed →' } },
 				walk_distance: { title: 'No walkers ranked yet', msg: 'Sign in and take your avatar for a walk. Distance while signed in counts here.', cta: { href: '/walk', label: 'Start walking →' } },
+				ufo_score: { title: 'No pilots ranked yet', msg: 'Sign in, fly Flappin UFO, and post a score. Your best verified run counts here.', cta: { href: '/play/ufo', label: 'Play Flappin UFO →' } },
 			};
 			const PAGE = 50;
 			// Without a ceiling a stalled API leaves the board shimmering forever:
@@ -477,7 +480,14 @@
 			bindSeg(metricSeg, 'metric', () => load({ reset: true }));
 			loadMoreEl.addEventListener('click', () => load({ reset: false }));
 
-			load({ reset: true });
+			// Deep links (/rankings?metric=ufo_score) open on that board.
+			const wanted = new URLSearchParams(location.search).get('metric');
+			const wantedBtn = wanted && metricSeg.querySelector(`.rk-seg-btn[data-metric="${CSS.escape(wanted)}"]`);
+			if (wantedBtn && !wantedBtn.classList.contains('is-active')) {
+				wantedBtn.click();
+			} else {
+				load({ reset: true });
+			}
 
 		</script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->

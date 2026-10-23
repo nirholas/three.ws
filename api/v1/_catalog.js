@@ -279,7 +279,7 @@ export const CATALOG = [
 		path: '/api/v1/robinhood/coins',
 		auth: 'public',
 		summary:
-			'Robinhood Chain memecoin screener (NOXA + The Odyssey launchpads) via CoinGecko ' +
+			'Robinhood Chain memecoin screener via CoinGecko ' +
 			'categories: price, market cap, 24h/7d change, 7d sparkline. Free, keyless; 60/min per IP.',
 		params: {
 			category: 'string: "meme" | "stocks-ecosystem" | "ecosystem" (default meme)',
@@ -303,8 +303,8 @@ export const CATALOG = [
 		path: '/api/v1/robinhood/launches',
 		auth: 'public',
 		summary:
-			'Recent Robinhood Chain launchpad activity (NOXA instant + The Odyssey bonding-curve), ' +
-			'read from on-chain logs and enriched with DexScreener market data, newest first. ' +
+			'Recent Robinhood Chain launches across every venue seen on chain, with the venue, deployer track record and a dev-sold flag, ' +
+			'enriched with DexScreener market data, newest first. ' +
 			'Free, keyless; 60/min per IP.',
 		params: { limit: 'number 1-60 (default 40)' },
 	},

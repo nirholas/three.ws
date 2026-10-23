@@ -1,7 +1,7 @@
 {
 	"name": "@three-ws/skill-import",
 	"version": "0.1.0",
-	"description": "Turn an OpenAPI spec or a GitHub repository into a three.ws skill bundle (specs/SKILL_SPEC.md): tools.json schemas generated from operations, handlers.js that call ctx.fetch, a manifest.json, and a SKILL.md. Repos with no spec fall back to a declarative, handler-less bundle built from the README.",
+	"description": "Turn an OpenAPI spec, a GitHub repository or a Solana Anchor IDL into a three.ws skill bundle (specs/SKILL_SPEC.md): tools.json schemas generated from operations, handlers.js that call ctx.fetch, a manifest.json, and a SKILL.md. Repos with no spec fall back to a declarative, handler-less bundle built from the README.",
 	"keywords": [
 		"three.ws",
 		"skills",
@@ -40,6 +40,7 @@
 		"test": "vitest run tests"
 	},
 	"dependencies": {
+		"@solana/web3.js": "^1.99.0",
 		"js-yaml": "^4.1.1",
 		"swagger2openapi": "^7.0.8"
 	}

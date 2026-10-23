@@ -11,6 +11,7 @@
 import { consumeCsrfToken } from './api.js';
 import { agentAvatarGlb } from './shared/agent-3d.js';
 import { resolveDevR2Url } from './shared/dev-r2-proxy.js';
+import { shortAddress as short } from './shared/address.js';
 
 const ROOT = document.getElementById('tmRoot');
 const CONTENT = document.getElementById('tmContent');
@@ -49,7 +50,6 @@ const PAGE = 30;
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const short = (a) => (typeof a === 'string' && a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '');
 const label = (s) => String(s || '').replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
 const num = (n, digits = 4) => Number(n).toLocaleString(undefined, { maximumFractionDigits: digits });
 const sol = (n) => (n == null || !Number.isFinite(Number(n)) ? 'n/a' : `${num(n)} SOL`);

@@ -11,6 +11,8 @@
  *     it's trivial to unit test every transition table-style.
  */
 
+import { shortAddress } from './shared/address.js';
+
 /** Mirrors GreenfieldVault.SaleStatus / api/_lib/bnb/vault-contract.js's SALE_STATUS. */
 export const SALE_STATUS = ['Pending', 'Granted', 'Failed', 'Revoked'];
 
@@ -66,8 +68,8 @@ export function formatBnbAtomic(atomic) {
 
 /** 0x1234…abcd — never truncates a non-address string, never throws. */
 export function truncateAddress(addr) {
-	if (typeof addr !== 'string' || !addr.startsWith('0x') || addr.length < 10) return addr || '';
-	return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+	if (typeof addr !== 'string' || !addr.startsWith('0x')) return addr || '';
+	return shortAddress(addr, 6, 4);
 }
 
 /** Bounded-backoff poll delay in ms for a given attempt index (0-based). Caps at 8s. */

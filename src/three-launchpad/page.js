@@ -20,6 +20,7 @@ import {
 	signAndBroadcast,
 	waitForConfirmation,
 } from '../launch/launch-wallet.js';
+import { shortAddress as short } from '../shared/address.js';
 
 const params = new URLSearchParams(location.search);
 const NETWORK = params.get('network') === 'devnet' ? 'devnet' : 'mainnet';
@@ -48,7 +49,6 @@ const $ = (sel, el = root) => el.querySelector(sel);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const fmt = (n, digits = 0) => (Number.isFinite(n) ? n.toLocaleString('en-US', { maximumFractionDigits: digits }) : '');
 const compact = (n) => (Number.isFinite(n) ? Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(n) : '');
-const short = (a) => (a && a.length > 10 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '');
 const explorerTx = (sig) => `https://solscan.io/tx/${sig}${NETWORK === 'devnet' ? '?cluster=devnet' : ''}`;
 const withNetwork = (path) => `${path}${path.includes('?') ? '&' : '?'}network=${NETWORK}`;
 

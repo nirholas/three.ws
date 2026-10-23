@@ -33,10 +33,9 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // (rather than a repo-wide grep) so a NEW copy of the list added somewhere is a
 // deliberate act that also adds its path here — the reviewer's prompt to dedupe.
 const SOURCES = [
-	'api/_lib/execution-engine.js',
+	'packages/avatar-agent-mcp/src/lib/jito-tip-accounts.js',
 	'workers/oracle/executor.js',
 	'packages/agent-sniper/src/adapters/solana/executor-web3.js',
-	'packages/avatar-agent-mcp/src/lib/jito.js',
 ];
 
 /** Extract the addresses from the first `JITO_TIP_ACCOUNTS = [ … ]` literal. */

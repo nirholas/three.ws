@@ -15,6 +15,7 @@
 import { apiFetch } from '../api.js';
 import { escNotif as esc, relTime } from '../notifications.js';
 import { injectedProvider, connectLaunchWallet, restoreLaunchWallet } from './launch-wallet.js';
+import { shortAddress } from '../shared/address.js';
 
 const POLL_MS = 8_000;
 const TICK_MS = 1_000;
@@ -24,7 +25,7 @@ const TOKEN_STORE = 'twx_launch_intent_preflight';
 
 const $ = (id) => document.getElementById(id);
 const fmt = (n, max = 6) => Number(n).toLocaleString('en-US', { maximumFractionDigits: max });
-const short = (s) => (s && s.length > 14 ? `${s.slice(0, 6)}…${s.slice(-6)}` : s || '');
+const short = (s) => shortAddress(s, 6, 6);
 
 const state = {
 	route: readRoute(),

@@ -12,6 +12,8 @@
 // these flex numbers report the USDC that actually settled — the asset, never a
 // coin to hold.
 
+import { shortAddress as shortAddr } from '../shared/address.js';
+
 const ENDPOINT = '/api/cosmetics/leaderboard';
 
 let _open = null; // the live overlay controller, so a second open refocuses it
@@ -30,7 +32,6 @@ function el(tag, props = {}, kids = []) {
 }
 
 const RARITY_LABEL = { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
-const shortAddr = (a) => (a && a.length > 10 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '');
 const isWallet = (a) => typeof a === 'string' && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(a);
 const fmtUsd = (n) => '$' + (Number(n) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const accountLabel = (a) => (isWallet(a) ? shortAddr(a) : 'Guest');

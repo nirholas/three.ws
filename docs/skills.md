@@ -736,6 +736,25 @@ Every import lands as a **disabled draft, owner-scoped and labelled untrusted**:
 
 Generated handlers call `ctx.fetch` with auth placeholders filled from the skill's declared secrets (an API key header, a bearer token, etc.), never a hardcoded credential, so the skill's eventual owner supplies the real secret at install time, the same as any other skill with a `secrets` declaration in its manifest.
 
+### Importing a Solana program from its Anchor IDL
+
+The same endpoint turns an Anchor IDL into a skill, the Solana counterpart of the OpenAPI path. Send `idl_url` (any public IDL JSON) or `program_id` (the importer reads the IDL the program published on chain), plus an optional `cluster` of `mainnet-beta` (default) or `devnet`.
+
+```bash
+curl -s -X POST https://three.ws/api/skills/import \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
+  -H "content-type: application/json" \
+  -d '{"idl_url": "https://raw.githubusercontent.com/nirholas/three.ws/main/contracts/idl/skill_license.json"}' \
+  | jq '.data | {id, kind, tools: [.tools.tools[].name]}'
+```
+
+Per account type you get a `read_<account>` tool that fetches and decodes an account by address. Per instruction you get two tools:
+
+- `preview_<instruction>` builds the unsigned instruction and returns its accounts, base64 and hex data, a plain summary and a risk read. It never signs and never reads a secret.
+- `send_<instruction>` returns the same payload with `status: "confirmation_required"`. It is marked `destructiveHint: true`, signs and sends nothing, and exists to hand the instruction to the wallet owner's confirm-gated flow, which executes only after an explicit yes.
+
+Accounts with a fixed address in the IDL (token program, system program) are filled in; every other account is passed by the caller, because PDA derivation needs ed25519 curve checks the sandbox does not have. The generated `SKILL.md` ends with a risk panel that flags instructions that move tokens, spend SOL, close accounts or change an authority. IDLs carry no Anchor constraints, so a flag is a prompt to read the program and a clean row is not an audit. Drafts are disabled and owner-scoped exactly like OpenAPI imports (`kind: "anchor"`). Pre-0.30 IDLs (`isMut`/`isSigner`, no discriminators) are normalized on import.
+
 ---
 
 ## Marketplace skills: install once, applied in every chat

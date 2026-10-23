@@ -18,6 +18,7 @@
 
 import { consumeCsrfToken } from './api.js';
 import { ensureRiskAck } from './shared/risk-ack.js';
+import { shortAddress as short } from './shared/address.js';
 
 const STYLE_ID = 'ic-style';
 const AMOUNTS = [1, 5, 20];
@@ -121,10 +122,6 @@ function budgetUsd(v) {
 	return usd(v, v < 1 ? 4 : 2);
 }
 
-function short(addr) {
-	const s = String(addr || '');
-	return s.length > 12 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s;
-}
 
 function ago(iso) {
 	if (!iso) return '';

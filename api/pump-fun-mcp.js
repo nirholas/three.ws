@@ -59,6 +59,7 @@ import { getSolPriceUsd } from '../src/shared/usd-price.js';
 
 import { pinToIPFS, ipfsPinningConfigured } from './_lib/ipfs-pin.js';
 import { issueSession, trackMcp } from './_lib/mcp-clients.js';
+import { readXPost, summarizeXPost } from './_lib/x-syndication.js';
 // ── On-chain handlers ──────────────────────────────────────────────────────
 
 const TOTAL_PUMP_TOKEN_SUPPLY = 1_000_000_000; // 1B pump.fun standard
@@ -579,27 +580,11 @@ async function handleSocialXPostImpact({ postUrl, mint, windowMin = 30, network 
 	if (!pk) throw rpcError(-32602, `invalid mint: ${mint}`);
 
 	let post = null;
-	const postId = String(postUrl).match(/\/status(?:es)?\/(\d+)/)?.[1] ?? null;
 	try {
-		const oRes = await fetch(
-			`https://publish.twitter.com/oembed?url=${encodeURIComponent(postUrl)}&omit_script=true`,
-			{ signal: AbortSignal.timeout(5000) },
-		);
-		if (oRes.ok) {
-			const od = await oRes.json();
-			const ts = postId ? Number(BigInt(postId) >> 22n) + 1288834974657 : null;
-			post = {
-				id: postId,
-				ts,
-				author: od.author_name ?? null,
-				text:
-					od.html
-						?.replace(/<[^>]*>/g, ' ')
-						.replace(/\s+/g, ' ')
-						.trim() ?? null,
-			};
-		}
-	} catch {}
+		post = summarizeXPost(await readXPost(postUrl));
+	} catch {
+		// X unreachable or post gone: curve analysis continues with post=null.
+	}
 
 	const { sdk } = await getPumpSdk({ network });
 	let curve;
@@ -1351,7 +1336,9 @@ async function handleGetOracleConviction({ mint, network = 'mainnet' } = {}) {
 		// Resolve wallet labels: brain reputation wins; knownWallet() seed fills the gap.
 		let knownWallet;
 		try {
-			knownWallet = (await import('./_lib/oracle/known-wallets.js')).knownWallet;
+			const kw = await import('./_lib/oracle/known-wallets.js');
+			await kw.loadKnownWallets();
+			knownWallet = kw.knownWallet;
 		} catch {
 			knownWallet = () => null;
 		}

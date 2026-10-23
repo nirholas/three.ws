@@ -10,12 +10,11 @@
  * badge + embed snippet.
  */
 
+import { shortAddress } from '../shared/address.js';
+
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-function short(s, head = 8, tail = 8) {
-	const v = String(s || '');
-	return v.length > head + tail + 1 ? `${v.slice(0, head)}…${v.slice(-tail)}` : v;
-}
+function short(s, head = 8, tail = 8) { return shortAddress(s, head, tail); }
 
 function fmtTime(iso) {
 	if (!iso) return '—';

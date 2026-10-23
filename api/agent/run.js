@@ -33,6 +33,7 @@ import { countUserTurns } from '../_lib/agent-learning/nudge.js';
 import { agentSkillsForPrompt } from '../_lib/agent-custom-skills.js';
 import { providerChain } from '../_lib/llm-tool-chain.js';
 import { agentToolSchemas, agentToolHandlers } from '../_lib/agent-tools.js';
+import { installedCandidateTools } from '../_lib/skill-candidates.js';
 import {
 	AGENT_SYSTEM_NOTE,
 	createAgentLoop,
@@ -178,6 +179,8 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 	const learningNote = [learning?.block, skillsBlock, learning?.nudge].filter(Boolean).join('\n\n');
 	if (learningNote) messages.splice(sysIdx + 1, 0, { role: 'system', content: learningNote });
 
+	const learnedSkills = binding ? await installedCandidateTools(binding.agentId) : { schemas: [], handlers: {} };
+
 	const stream = body?.stream !== false;
 
 	let sseOpen = false;
@@ -200,8 +203,8 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 	const usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, estimated: false, cost_micro_usd: 0, lanes: [] };
 	const loop = createAgentLoop({
 		chain,
-		toolSchemas: [...agentToolSchemas(), ...(learning?.schemas || [])],
-		toolHandlers: { ...agentToolHandlers(), ...(learning?.handlers || {}) },
+		toolSchemas: [...agentToolSchemas(), ...(learning?.schemas || []), ...learnedSkills.schemas],
+		toolHandlers: { ...agentToolHandlers(), ...(learning?.handlers || {}), ...learnedSkills.handlers },
 		maxToolRounds: MAX_TOOL_ROUNDS,
 		onContent: (delta) => {
 			streamedAny = true;

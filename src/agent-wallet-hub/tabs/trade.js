@@ -27,6 +27,7 @@ import { createSafetyPanel } from '../../shared/safety-panel.js';
 import { ensureRiskAck } from '../../shared/risk-ack.js';
 import { solToUsd } from '../../shared/usd-price.js';
 import { formatSol, timeAgo, explorerTxUrl, unsignableWalletCopy } from '../util.js';
+import { shortAddress as short } from '../../shared/address.js';
 
 const QUOTE_DEBOUNCE_MS = 450;
 const BUY_HEADROOM_SOL = 0.003; // keep fee+rent headroom out of "Max"
@@ -181,9 +182,6 @@ function fmtTokens(n) {
 	if (n >= 1000) return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
 	if (n >= 1) return n.toLocaleString('en-US', { maximumFractionDigits: 4 });
 	return n.toPrecision(4).replace(/\.?0+$/, '');
-}
-function short(s, h = 4, t = 4) {
-	return !s || s.length <= h + t + 1 ? s || '' : `${s.slice(0, h)}…${s.slice(-t)}`;
 }
 function rawToUi(rawStr, decimals) {
 	try { return Number(BigInt(rawStr)) / 10 ** decimals; } catch { return 0; }

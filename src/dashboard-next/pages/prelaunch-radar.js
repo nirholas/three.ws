@@ -18,6 +18,7 @@
 import { mountShell } from '../shell.js';
 import { get, esc, relTime } from '../api.js';
 import { emptyStateHTML, errorStateHTML, ensureStateKitStyles, attachRetry } from '../../shared/state-kit.js';
+import { shortAddress as short } from '../../shared/address.js';
 
 const POLL_REFRESH_MS = 30_000;
 
@@ -336,7 +337,6 @@ function watchlistList(wl) {
 	}).join('');
 }
 
-function short(a) { return a && a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a; }
 
 // ── live SSE ─────────────────────────────────────────────────────────────────
 function setConn(state, label) {

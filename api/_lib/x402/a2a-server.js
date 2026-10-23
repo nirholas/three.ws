@@ -278,7 +278,7 @@ function builderCodeForServices(services) {
 // the body off the wire — we want `body` parsed and the framework-agnostic
 // `req` only for `req.headers` access (extension activation check).
 //
-// `handler({ taskId, payer, requirement, payload, message })` returns either:
+// `handler({ taskId, payer, requirement, settled, payload, message })` returns either:
 //   • { text, artifacts? } — wrapped in a `completed` task message + artifacts.
 //   • A string                — wrapped as the text reply with no artifacts.
 //   • undefined / null        — defaults to "Payment settled." text.
@@ -485,6 +485,11 @@ export async function handleA2ARequest({
 			taskId,
 			payer: verified.payer,
 			requirement: verified.requirement,
+			settled: {
+				transaction: settled.transaction,
+				network: settled.network,
+				payer: settled.payer || verified.payer || null,
+			},
 			payload,
 			message,
 		});

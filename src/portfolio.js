@@ -11,6 +11,7 @@ import { updateValue, enterStagger } from './ui-juice.js';
 import { formatUsd, formatPrice, formatPercent, formatSupply, timeAgo, escapeHtml } from './shared/coin-format.js';
 import { createLogger } from './shared/log.js';
 import { upstreamLogoURL } from './shared/upstream-logo.js';
+import { shortAddress } from './shared/address.js';
 
 const log = createLogger('portfolio');
 const $ = (id) => document.getElementById(id);
@@ -45,9 +46,7 @@ function detectChain(address) {
 	return null;
 }
 
-function shortAddr(a) {
-	return a.length > 13 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a;
-}
+function shortAddr(a) { return shortAddress(a, 6, 4); }
 
 function loadRecent() {
 	try {

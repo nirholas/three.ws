@@ -32,6 +32,8 @@ import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { sql } from './db.js';
 import { env } from './env.js';
 import { logAudit } from './audit.js';
+import { normalizeBurnerPolicy, burnerEnabled, classifyBurnerSpend, ownerSignMessage } from './burner-tier.js';
+import { verifyOwnerSignature } from './owner-sign.js';
 
 export const APPROVAL_STATUSES = Object.freeze(['pending', 'approved', 'executing', 'executed', 'failed', 'denied', 'expired']);
 export const DECISIONS = Object.freeze(['approve', 'deny']);
@@ -79,6 +81,10 @@ export const VENUES = Object.freeze({
 	// threshold the owner set is a decision to see each crossing, not to
 	// pre-authorize it.
 	a2a_hire: { label: 'Agent-to-agent hires above your approval threshold', auto: false },
+	// A buy the agent wanted to make above its burner cap (api/agents/agent-trade.js).
+	// The owner capped what the agent signs alone, so an auto-approve policy never
+	// pre-answers the spends that cap sends here.
+	agent_trade: { label: 'Agent trades above its burner cap', auto: false },
 });
 
 // Ceiling on a single auto-approve policy. Anything bigger is a decision the
@@ -260,6 +266,18 @@ export function effectiveStatus(row, now = Date.now()) {
 	return row.status;
 }
 
+/** True when the owner must sign this request with a linked wallet. */
+export function requiresWalletSignature(row) {
+	return row?.payload?._burner?.tier === 'owner_sign';
+}
+
+export function signMessageFor(row) {
+	return ownerSignMessage({
+		id: row.id, payloadHash: row.payload_hash, recipient: row.recipient,
+		amount: row.amount, asset: row.asset, chain: row.chain, network: row.network,
+	});
+}
+
 /** The API shape of one request. */
 export function publicApproval(row, { now = Date.now(), withLink = true } = {}) {
 	const status = effectiveStatus(row, now);
@@ -285,6 +303,8 @@ export function publicApproval(row, { now = Date.now(), withLink = true } = {}) 
 		recipient: row.recipient,
 		recipient_label: row.recipient_label || null,
 		payload_hash: row.payload_hash,
+		requires_wallet_signature: requiresWalletSignature(row),
+		sign_message: requiresWalletSignature(row) ? signMessageFor(row) : null,
 		expires_at: row.expires_at,
 		created_at: row.created_at,
 		decided_at: row.decided_at || null,
@@ -322,6 +342,8 @@ const EXECUTORS = {
 	payment_session_execute: async () => (await import('../pay/execute.js')).executeApprovedPaymentSessionCall,
 	// An a2a hire parked by the approval threshold (api/agents/a2a-hire.js).
 	a2a_hire: async () => (await import('../agents/a2a-hire.js')).executeApprovedA2aHire,
+	// A trade parked by the agent's burner cap (api/agents/agent-trade.js).
+	agent_trade: async () => (await import('../agents/agent-trade.js')).executeApprovedAgentTrade,
 };
 
 export function hasExecutor(source) {
@@ -468,6 +490,7 @@ export async function createApprovalRequest({
 	ttlMs = TTL_MS.transfer,
 	autoApprovable = true,
 	deliver = true,
+	burnerGated = false,
 }) {
 	if (!userId) throw new ApprovalError(400, 'no_owner', 'An approval request needs an owner to ask.');
 	if (!hasExecutor(source)) throw new ApprovalError(400, 'unknown_source', `No executor is registered for source "${source}".`);
@@ -482,6 +505,16 @@ export async function createApprovalRequest({
 			ORDER BY created_at DESC LIMIT 1
 		`;
 		if (open) return { request: open, created: false, autoApproved: false, policy: null };
+	}
+
+	// A spend above the agent's burner cap waits the owner's configured window,
+	// never auto-approves, and (past confirmAboveUsd) carries the signature
+	// requirement inside the hashed payload so it cannot be edited out of the row.
+	const burner = await burnerFor({ agentId, amountUsd, gated: burnerGated });
+	if (burner) {
+		ttlMs = burner.expiryMs;
+		autoApprovable = false;
+		payload = { ...payload, _burner: burner.stamp };
 	}
 
 	const hash = payloadHash(payload);
@@ -518,6 +551,30 @@ export async function createApprovalRequest({
 	logAudit({ userId, action: 'approval_requested', resourceId: row.id, meta: { source, action_type: actionType, venue, amount_usd: amountUsd, summary: row.summary } });
 	if (deliver) await deliverApproval(row).catch((e) => console.warn('[approvals] delivery failed', e?.message));
 	return { request: row, created: true, autoApproved: false, policy: null };
+}
+
+/**
+ * The burner escalation for one request, or null when the agent has no burner
+ * cap or this amount is within it. Reads the live policy off the agent row.
+ */
+async function burnerFor({ agentId, amountUsd, gated = false }) {
+	if (!agentId || amountUsd == null || amountUsd === '') return null;
+	const usd = Number(amountUsd);
+	if (!Number.isFinite(usd) || usd < 0) return null;
+	const [row] = await sql`SELECT meta FROM agent_identities WHERE id = ${agentId} AND deleted_at IS NULL`;
+	const policy = normalizeBurnerPolicy(row?.meta?.burner_policy);
+	if (!burnerEnabled(policy)) return null;
+	// `gated` means the spend guard already escalated it (e.g. the daily total
+	// crossed), so even an amount under the per-spend cap waits on the owner.
+	if (!gated && usd <= policy.autoMaxUsd + 1e-9) return null;
+	// The daily-limit crossing is decided where the spend was gated; here every
+	// amount above the per-spend cap needs the owner, and only the size picks the tier.
+	const { tier: sized } = classifyBurnerSpend({ policy, usd, autoSpentUsd: 0 });
+	const tier = sized === 'auto' ? 'confirm' : sized;
+	return {
+		expiryMs: policy.expiryMinutes * 60_000,
+		stamp: { tier, auto_max_usd: policy.autoMaxUsd, confirm_above_usd: policy.confirmAboveUsd },
+	};
 }
 
 /**
@@ -664,7 +721,7 @@ export async function getApproval(userId, id, { token = null } = {}) {
  *
  * @returns {Promise<{ request: object, idempotent: boolean }>}
  */
-export async function decideApproval({ userId, id, decision, payloadHash: shownHash = null, token = null, via = 'web', req = null }) {
+export async function decideApproval({ userId, id, decision, payloadHash: shownHash = null, token = null, via = 'web', walletSignature = null, req = null }) {
 	if (!DECISIONS.includes(decision)) throw new ApprovalError(400, 'invalid_decision', 'decision must be "approve" or "deny"');
 	const channel = DECISION_VIAS.includes(via) ? via : 'web';
 	const row = await loadRow(userId, id);
@@ -677,7 +734,7 @@ export async function decideApproval({ userId, id, decision, payloadHash: shownH
 	}
 
 	if (decision === 'deny') return deny(row, { userId, via: channel, req });
-	return approve(row, { userId, shownHash, via: channel, req });
+	return approve(row, { userId, shownHash, via: channel, walletSignature, req });
 }
 
 async function deny(row, { userId, via, req }) {
@@ -696,12 +753,35 @@ async function deny(row, { userId, via, req }) {
 	throw new ApprovalError(409, 'already_decided', `This request was already ${current.status}; it can no longer be denied.`, { status: current.status });
 }
 
-async function approve(row, { userId, shownHash, via, req }) {
+function signatureError(reason, row) {
+	const where = `Open /approvals/${row.id} in the browser and sign with your own wallet.`;
+	if (reason === 'no_linked_wallet') {
+		return new ApprovalError(403, 'wallet_signature_required', 'This amount is above your wallet-signature threshold, and no Solana wallet is linked to your account. Link your main wallet in account settings, then approve it here.', { reason });
+	}
+	if (reason === 'wallet_not_linked') {
+		return new ApprovalError(403, 'wallet_signature_required', 'That wallet is not linked to your account. Sign with the main wallet you linked.', { reason });
+	}
+	if (reason === 'bad_signature') {
+		return new ApprovalError(403, 'wallet_signature_invalid', 'The wallet signature did not match this request, so nothing was executed. Sign the message shown again.', { reason });
+	}
+	return new ApprovalError(403, 'wallet_signature_required', `This amount is above your wallet-signature threshold, so a tap is not enough. ${where}`, { reason, sign_message: signMessageFor(row) });
+}
+
+async function approve(row, { userId, shownHash, via, walletSignature = null, req }) {
 	if (typeof shownHash !== 'string' || !/^[0-9a-f]{64}$/.test(shownHash)) {
 		throw new ApprovalError(400, 'payload_hash_required', 'Approving needs the payload_hash of the action you were shown.');
 	}
 	if (shownHash !== row.payload_hash) {
 		throw new ApprovalError(409, 'payload_mismatch', 'The action on file differs from the one you approved, so nothing was executed. Reload and review it again.');
+	}
+
+	let signedBy = null;
+	if (requiresWalletSignature(row)) {
+		const check = await verifyOwnerSignature({
+			userId, message: signMessageFor(row), address: walletSignature?.address, signature: walletSignature?.signature,
+		});
+		if (!check.ok) throw signatureError(check.reason, row);
+		signedBy = check.address;
 	}
 
 	const [claimed] = await sql`
@@ -722,7 +802,7 @@ async function approve(row, { userId, shownHash, via, req }) {
 		throw new ApprovalError(409, 'not_pending', `This request is ${current.status}.`);
 	}
 
-	logAudit({ userId, action: 'approval_approved', resourceId: row.id, meta: { via, summary: row.summary, payload_hash: shownHash }, req });
+	logAudit({ userId, action: 'approval_approved', resourceId: row.id, meta: { via, summary: row.summary, payload_hash: shownHash, ...(signedBy ? { signed_by: signedBy } : {}) }, req });
 	const done = await executeApproved({ ...claimed, agent_name: row.agent_name }, { userId, req });
 	return { request: done, idempotent: false };
 }

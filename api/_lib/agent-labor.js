@@ -284,6 +284,16 @@ export async function claimSettle(id, settleKey) {
 	return row || null;
 }
 
+/** Undo a settle claim whose transfer never landed, so a retry can claim it again.
+ *  Only a job still 'verifying' with no settlement signature is touched. */
+export async function releaseSettleClaim(id) {
+	const [row] = await sql`
+		UPDATE agent_jobs SET settle_key = NULL, status = 'delivered', updated_at = now()
+		WHERE id = ${id} AND status = 'verifying' AND settle_key IS NOT NULL AND settlement_sig IS NULL
+		RETURNING *`;
+	return row || null;
+}
+
 export async function markJobSettled(id, patch) {
 	const [row] = await sql`
 		UPDATE agent_jobs SET status = 'settled',

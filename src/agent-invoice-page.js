@@ -11,6 +11,7 @@
 
 import './agent-commerce.css';
 import { esc, relTime } from './agent-commerce-format.js';
+import { shortAddress } from './shared/address.js';
 
 const API = '/api/agent-commerce';
 const POLL_MS = 10_000;
@@ -75,7 +76,7 @@ function fmtAmount(value) {
 }
 
 function shortAddr(a) {
-	return a && a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-6)}` : a || '';
+	return shortAddress(a, 6, 6);
 }
 
 function fmtDate(iso) {

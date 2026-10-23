@@ -371,6 +371,40 @@ export const MARKET_CATEGORIES = Object.freeze([
 		},
 	},
 	{
+		slug: 'market-anomalies',
+		title: 'Market Anomalies',
+		useCase:
+			'Statistically scored market anomalies from three.ws own scanner: coin price shocks, Solana TVL and stablecoin supply moves, stablecoin depegs, perp funding spikes and open interest surges.',
+		description:
+			'Live market anomaly feed for agents. Pay $0.001 USDC per call. A scanner runs every 15 minutes over real series (CoinGecko hourly prices, DeFiLlama Solana TVL and stablecoin supply, stablecoin peg board, Hyperliquid funding history and open-interest snapshots) and scores each with a modified z-score, an EWMA deviation and a rate-of-change gate. Each event carries processor, subject, severity (medium, high, critical), direction, value against baseline, percent change, score and the detectors that agreed. Filter with ?processor=, ?severity= (minimum), ?subject=, ?hours= and ?limit=. Sparse or flat series are skipped, never scored.',
+		tags: ['crypto', 'market-data', 'anomaly', 'risk'],
+		useCases: ['depeg and TVL-collapse alerts', 'funding and open-interest spike screening', 'agent risk gating'],
+		priceAtomics: LIST_PRICE,
+		inputExample: { severity: 'high', hours: '24', limit: '20' },
+		inputSchema: {
+			type: 'object',
+			properties: {
+				processor: str('Optional: price, tvl, stablecoin_supply, stablecoin_peg, funding or open_interest.'),
+				severity: str('Minimum severity: medium (default), high or critical.'),
+				subject: str('Optional exact subject, e.g. a ticker (SOL), Solana, a stablecoin symbol or a perp (SOL-USD).'),
+				hours: str('Look-back window in hours, 1-168. Default 24.'),
+				limit: str('Max events, 1-200. Default 50.'),
+			},
+		},
+		outputExample: {
+			events: [
+				{
+					id: 1842, processor: 'funding', subject: 'SOL-USD', metric: 'funding rate (8h)', severity: 'high',
+					direction: 'up', value: 0.081, baseline: 0.0042, change_pct: 0.0768, score: 6.4,
+					detectors: ['modified_z', 'ewma', 'rate_of_change'],
+					summary: 'SOL-USD funding rate (8h) at 0.0810% against a typical 0.0042%',
+					observed_at: '2026-10-23T14:00:00.000Z',
+				},
+			],
+			count: 1, hours: 24, min_severity: 'high', processors: ['price', 'tvl', 'stablecoin_supply', 'stablecoin_peg', 'funding', 'open_interest'],
+		},
+	},
+	{
 		slug: 'market-pulse',
 		title: 'Market Pulse',
 		useCase:

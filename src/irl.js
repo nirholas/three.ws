@@ -42,11 +42,11 @@ import { AnimationManager } from './animation-manager.js';
 import { WebXRSession } from './ar/webxr.js';
 import {
 	clampPinScale, createPinchState, pinchEnd, pinchMove, pinchStart, touchDist,
-} from './ar/pinch-scale.js';
+} from '../packages/ar-studio/src/studio/pinch.js';
 import { resolvePlacementCapability } from './ar/placement-capability.js';
 import { openQuickLook } from './ar/quick-look.js';
 import { withQuickLookBanner } from './ar/quicklook-banner.js';
-import { createPersistGate, placementHint } from './ar/anchor-lifecycle.js';
+import { createPersistGate, placementHint } from '../packages/ar-studio/src/studio/anchor-lifecycle.js';
 import { IrlNet } from './irl-net.js';
 import { wireShareButton } from './irl/share-frame.js';
 import { log } from './shared/log.js';

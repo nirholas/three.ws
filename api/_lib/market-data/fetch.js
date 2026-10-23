@@ -29,6 +29,8 @@ import { buildStablecoins } from '../../defi/stablecoins.js';
 import { buildFees } from '../../defi/fees.js';
 import { buildDexVolumes } from '../../defi/dex-volumes.js';
 import { queryHacks } from '../../defi/hacks.js';
+import { queryMarketAnomalies } from '../market-anomaly-store.js';
+import { PROCESSORS, SEVERITIES } from '../market-anomaly.js';
 
 const fail = (status, code, message) => {
 	throw Object.assign(new Error(message), { status, code });
@@ -212,6 +214,24 @@ export const MARKET_FETCHERS = {
 				limit: clampInt(params.get('limit'), { def: 100, min: 1, max: 200 }),
 				offset: clampInt(params.get('offset'), { def: 0, min: 0, max: Number.MAX_SAFE_INTEGER }),
 			}),
+		);
+	},
+
+	'market-anomalies': async (params) => {
+		const processor = (params.get('processor') || '').trim().toLowerCase();
+		if (processor && !PROCESSORS.includes(processor)) {
+			invalid('invalid_processor', `processor must be one of ${PROCESSORS.join(', ')}`);
+		}
+		const severity = (params.get('severity') || 'medium').trim().toLowerCase();
+		if (!SEVERITIES.includes(severity)) {
+			invalid('invalid_severity', `severity must be one of ${SEVERITIES.join(', ')}`);
+		}
+		const subject = (params.get('subject') || '').trim();
+		if (subject.length > 40) invalid('invalid_subject', 'subject must be 40 characters or fewer');
+		const hours = clampInt(params.get('hours'), { def: 24, min: 1, max: 168 });
+		const limit = clampInt(params.get('limit'), { def: 50, min: 1, max: 200 });
+		return upstream('market anomaly', () =>
+			queryMarketAnomalies({ processor, severity, subject, hours, limit }),
 		);
 	},
 

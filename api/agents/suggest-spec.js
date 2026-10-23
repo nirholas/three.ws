@@ -37,7 +37,7 @@ const OPTIONAL_SKILL_IDS = new Set(OPTIONAL_SKILLS.map((s) => s.id));
 // Mirrors CATEGORIES in src/create-agent.js / api/marketplace/[action].js.
 const CATEGORIES = [
 	'academic', 'career', 'copywriting', 'design', 'education', 'emotions',
-	'entertainment', 'games', 'general', 'life', 'marketing', 'office',
+	'entertainment', 'finance', 'games', 'general', 'life', 'marketing', 'office',
 	'programming', 'translation',
 ];
 const CATEGORY_SET = new Set(CATEGORIES);

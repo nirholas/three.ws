@@ -10,6 +10,7 @@
 // All API-sourced strings are escaped before they touch the DOM.
 
 import { updateValue, enterRow } from './ui-juice.js';
+import { shortAddress as shortAddr } from './shared/address.js';
 
 const API = '/api/launcher/me';
 const REFRESH_MS = 6000;
@@ -672,7 +673,6 @@ async function copyFundAddress(e) {
 	}
 }
 
-function shortAddr(a) { a = String(a || ''); return a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a; }
 
 // ── dirty + save ───────────────────────────────────────────────────────────────
 function pickEditable(o) { const r = {}; for (const k of EDITABLE) r[k] = o[k]; r.sources = [...(o.sources || [])].sort(); return r; }

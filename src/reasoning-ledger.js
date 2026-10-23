@@ -94,9 +94,13 @@ async function fetchLedger({ append = false } = {}) {
 	return json;
 }
 
+function verifyPath() {
+	return `/api/agents/${encodeURIComponent(state.agentId)}/decision-trail/verify`;
+}
+
 async function fetchVerify() {
 	try {
-		const res = await apiFetch(`/api/ledger/verify/${encodeURIComponent(state.agentId)}`);
+		const res = await apiFetch(verifyPath());
 		if (!res.ok) throw new Error(`verify ${res.status}`);
 		state.verify = await res.json();
 	} catch {
@@ -263,7 +267,8 @@ function verifyBadge() {
 		? `<a class="rl-anchor-link" href="${esc(v.anchor.explorer_url)}" target="_blank" rel="noopener">anchor tx ↗</a>`
 		: '';
 	const head = v.chain?.head_hash ? `<span class="rl-hash" title="${esc(v.chain.head_hash)}">head ${shortHash(v.chain.head_hash)}</span>` : '';
-	return `<button class="${cls}" id="rl-verify-btn"><span class="rl-vdot"></span>${esc(label)}</button>${anchor}${head}`;
+	const api = `<a class="rl-anchor-link" href="${esc(verifyPath())}" target="_blank" rel="noopener">verify API ↗</a>`;
+	return `<button class="${cls}" id="rl-verify-btn"><span class="rl-vdot"></span>${esc(label)}</button>${head}${anchor}${api}`;
 }
 
 // ── Render: timeline ──────────────────────────────────────────────────────────

@@ -20,6 +20,14 @@ export { generateHandlers } from './generate-handlers.js';
 export { generateManifest } from './generate-manifest.js';
 export { generateSkillMd } from './generate-skillmd.js';
 export { generateDeclarativeBundle } from './declarative.js';
+export {
+	AnchorIdlError,
+	normalizeIdl,
+	analyzeInstructionRisk,
+	generateAnchorBundle,
+	fetchOnchainIdl,
+	importFromAnchorIdl,
+} from './anchor-idl.js';
 
 function isGithubRepoUrl(url) {
 	try {

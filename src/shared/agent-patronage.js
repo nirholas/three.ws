@@ -16,11 +16,11 @@
 import { apiFetch } from '../api.js';
 import { openTipModal } from './agent-tip-modal.js';
 import { detectSolanaWallet } from '../erc8004/solana-deploy.js';
+import { shortAddress as shortAddr } from './address.js';
 
 const STYLE_ID = 'tws-patronage-styles';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const shortAddr = (a, h = 4, t = 4) => (a && a.length > h + t + 1 ? `${a.slice(0, h)}…${a.slice(-t)}` : a || '');
 const fmtUsd = (n) => {
 	const v = Number(n) || 0;
 	if (v === 0) return '$0';

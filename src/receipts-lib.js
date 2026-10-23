@@ -7,6 +7,8 @@
  * api/x402/my-receipts.js or signatures stop verifying.
  */
 
+import { shortAddress as shortenAddress } from './shared/address.js';
+
 /**
  * Build the personal-sign message the API expects.
  * EVM addresses are lowercased (matching the server's normalization);
@@ -101,11 +103,7 @@ export function explorerTxUrl(network, transaction) {
 }
 
 /** @param {string} addr */
-export function shortAddress(addr) {
-	const s = String(addr || '');
-	if (s.length <= 12) return s;
-	return `${s.slice(0, 6)}…${s.slice(-4)}`;
-}
+export function shortAddress(addr) { return shortenAddress(addr, 6, 4); }
 
 /**
  * Compact display path for a receipt's resource URL: strips the origin when

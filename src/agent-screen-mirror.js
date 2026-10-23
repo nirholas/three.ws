@@ -26,6 +26,8 @@
 // ── $THREE is the only coin the platform promotes. The mirror itself is generic,
 // coin-agnostic plumbing: it replicates whatever mint the SOURCE trade carries at
 // runtime. $THREE is simply the default mint we watch out of the box. CA below.
+import { shortAddress as truncateAddr } from './shared/address.js';
+
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -44,11 +46,7 @@ export function isValidAddress(addr) {
 }
 
 /** Short, copy-friendly label for a base58 address. */
-export function truncateAddr(addr, head = 4, tail = 4) {
-	const s = String(addr || '');
-	if (s.length <= head + tail + 1) return s;
-	return `${s.slice(0, head)}…${s.slice(-tail)}`;
-}
+export { truncateAddr };
 
 /**
  * Size a mirror BUY (in SOL) from the configured rule, then clamp to the

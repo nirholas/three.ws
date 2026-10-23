@@ -9,6 +9,7 @@
 // "not found" state; when the resolver is down we say so and offer a retry.
 
 import { apiFetch } from './api.js';
+import { shortAddress as shortCa } from './shared/address.js';
 
 const root = document.getElementById('cx-root');
 
@@ -30,7 +31,6 @@ const state = {
 function esc(s) {
 	return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
-function shortCa(m) { return m ? `${m.slice(0, 4)}…${m.slice(-4)}` : ''; }
 function fmtUsd(n) {
 	if (n == null || !Number.isFinite(Number(n))) return '—';
 	const v = Number(n);

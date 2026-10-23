@@ -23,6 +23,7 @@ import { ACTION_TYPES } from './agent-protocol.js';
 import { THREE_WS_MARK } from './solana/vanity/brand.js';
 import { mountCoinStatus } from './pump/coin-status-card.js';
 import { ensureRiskAck } from './shared/risk-ack.js';
+import { shortAddress } from './shared/address.js';
 
 const REFRESH_MS = 30_000;
 const QUOTE_DEBOUNCE_MS = 250;
@@ -911,10 +912,7 @@ function deriveSymbol(name) {
 	);
 }
 
-function shortMint(m) {
-	if (!m) return '';
-	return `${m.slice(0, 6)}…${m.slice(-4)}`;
-}
+function shortMint(m) { return shortAddress(m, 6, 4); }
 
 function formatLamports(lamports) {
 	const n = Number(lamports) / 1e9;

@@ -34,6 +34,7 @@ import {
 	provisionSolanaWallet,
 } from '../../agent-economy-hub.js';
 import { timeAgo, shortAddress, explorerTxUrl, explorerAddressUrl, copyToClipboard } from '../util.js';
+import { addressHtml } from '../../shared/address.js';
 
 const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const SEEN_KEY = (id) => `tws-earn-seen:${id}`;
@@ -557,7 +558,7 @@ registerWalletTab({
 				<div>
 					<p class="awh-api-row-h">Endpoint</p>
 					<div class="awh-api-url"><code title="${escapeHtml(snap.endpoint_url)}">POST ${escapeHtml(snap.endpoint_url)}</code><button class="awh-btn awh-api-copy" type="button" data-act="api-copy-url" aria-label="Copy endpoint URL">Copy</button></div>
-					${payTo ? `<p class="awh-api-meta" style="margin:6px 0 0">Pays to <a href="${escapeHtml(explorerAddressUrl(payTo, net))}" target="_blank" rel="noopener">${escapeHtml(shortAddress(payTo, 4, 4))} ↗</a> on Solana · listed in the <a href="/x402">x402 catalog</a></p>` : ''}
+					${payTo ? `<p class="awh-api-meta" style="margin:6px 0 0">Pays to <a href="${escapeHtml(explorerAddressUrl(payTo, net))}" target="_blank" rel="noopener">${addressHtml(payTo, { label: 'Payout wallet' })} ↗</a> on Solana · listed in the <a href="/x402">x402 catalog</a></p>` : ''}
 				</div>
 				<div>
 					<p class="awh-api-row-h"><span>Try it: the first call answers 402 with the price</span><button class="awh-btn awh-api-copy" type="button" data-act="api-copy-curl" aria-label="Copy curl command">Copy</button></p>
@@ -774,9 +775,9 @@ registerWalletTab({
 				if (r.counterparty_agent_id) {
 					cp = `<a href="/agents/${escapeHtml(r.counterparty_agent_id)}">${escapeHtml(clampName(r.counterparty || 'Agent'))}</a>`;
 				} else if (r.counterparty && looksLikeAddress(r.counterparty)) {
-					cp = `<a href="${escapeHtml(explorerAddressUrl(r.counterparty, net))}" target="_blank" rel="noopener">${escapeHtml(shortAddress(r.counterparty, 4, 4))} ↗</a>`;
+					cp = `<a href="${escapeHtml(explorerAddressUrl(r.counterparty, net))}" target="_blank" rel="noopener">${addressHtml(r.counterparty, { label: 'Counterparty' })} ↗</a>`;
 				} else if (r.counterparty) {
-					cp = escapeHtml(shortAddress(r.counterparty, 4, 4));
+					cp = addressHtml(r.counterparty, { label: 'Counterparty' });
 				}
 				const when = r.created_at ? timeAgo(unixSec(r.created_at)) : '';
 				const sig = r.signature
@@ -818,7 +819,7 @@ registerWalletTab({
 				: '';
 
 			const peerLine = peers.length
-				? `<p class="awh-earn-split" style="margin-top:0">Your agent has paid ${peers.length} counterpart${peers.length === 1 ? 'y' : 'ies'}: ${peers.slice(0, 4).map((p) => `<a class="awh-earn-link" href="${escapeHtml(explorerAddressUrl(p.address, net))}" target="_blank" rel="noopener">${escapeHtml(shortAddress(p.address, 4, 4))}</a>`).join(', ')}.</p>`
+				? `<p class="awh-earn-split" style="margin-top:0">Your agent has paid ${peers.length} counterpart${peers.length === 1 ? 'y' : 'ies'}: ${peers.slice(0, 4).map((p) => `<a class="awh-earn-link" href="${escapeHtml(explorerAddressUrl(p.address, net))}" target="_blank" rel="noopener">${addressHtml(p.address, { label: 'Counterparty' })}</a>`).join(', ')}.</p>`
 				: `<p class="awh-earn-split" style="margin-top:0">Discover agents and x402 services your avatar can hire — the network where agents pay agents.</p>`;
 			h.innerHTML = `<h2 class="awh-card-h">The agent economy</h2>
 				${customerBlock}

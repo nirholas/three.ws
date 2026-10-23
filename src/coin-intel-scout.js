@@ -11,6 +11,8 @@
 // on-chain facts it was checked against. Sources that could not be read are
 // named, never filled in.
 
+import { shortAddress as short } from './shared/address.js';
+
 const API = '/api/pump/sentiment-scout';
 const REFRESH_MS = 60_000;
 // Notes already written for a coin survive the next refresh, so a card does
@@ -54,7 +56,6 @@ const UNAVAILABLE_LABEL = {
 };
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const short = (a) => (!a ? '' : `${a.slice(0, 4)}…${a.slice(-4)}`);
 const imgSrc = (uri, seed) => {
 	if (!uri) return `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(seed || 'x')}`;
 	if (uri.startsWith('data:') || uri.startsWith('/')) return uri;

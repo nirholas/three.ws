@@ -22,6 +22,7 @@ const recordVerdict = vi.fn(async () => ({}));
 const markJobSettled = vi.fn(async () => ({}));
 const markJobFailed = vi.fn(async () => ({}));
 const setBountyStatus = vi.fn(async () => ({}));
+const releaseSettleClaim = vi.fn(async () => ({}));
 vi.mock('../api/_lib/agent-labor.js', async () => {
 	const econ = await import('../api/_lib/labor-economics.js');
 	return {
@@ -29,7 +30,7 @@ vi.mock('../api/_lib/agent-labor.js', async () => {
 		defaultRoyaltyBps: econ.defaultRoyaltyBps,
 		atomicsToThree: econ.atomicsToThree,
 		_toBig: econ.toBig,
-		claimSettle, recordVerdict, markJobSettled, markJobFailed, setBountyStatus,
+		claimSettle, recordVerdict, markJobSettled, markJobFailed, setBountyStatus, releaseSettleClaim,
 		getBounty: vi.fn(), getJobByBounty: vi.fn(),
 	};
 });
@@ -163,5 +164,20 @@ describe('runSettlement — idempotency', () => {
 		expect(result.idempotent).toBe(true);
 		expect(payFromEscrow).not.toHaveBeenCalled();
 		expect(markJobSettled).not.toHaveBeenCalled();
+	});
+});
+
+describe('runSettlement: a failed worker payout does not strand the job', () => {
+	it('releases the settle claim and rethrows, so the next sweep can pay instead of no-opping forever', async () => {
+		resolveSkillAuthorPayout.mockResolvedValue(null);
+		payFromEscrow.mockRejectedValueOnce(new Error('transaction was not confirmed'));
+
+		await expect(
+			runSettlement({ job, bounty, verdict: { pass: true, score: 1, reason: 'ok' } }),
+		).rejects.toThrow(/not confirmed/);
+
+		expect(releaseSettleClaim).toHaveBeenCalledWith('job1');
+		expect(markJobSettled).not.toHaveBeenCalled();
+		expect(setBountyStatus).not.toHaveBeenCalledWith('b1', 'settled');
 	});
 });

@@ -4,6 +4,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.
 import { cors, json, error, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse, isUuid } from '../_lib/validate.js';
+import { DEFAULT_SKILL_RAILS, SKILL_RAILS, enabledRails, normalizeRails } from '../_lib/skill-rails.js';
 
 const CATEGORY_RE = /^[a-z0-9-]{1,50}$/;
 // Tags are authored freely on publish, so browse matches them case-insensitively
@@ -42,6 +43,10 @@ const publishSchema = z.object({
 	content: z.string().trim().min(1).max(200000).optional(),
 	is_public: z.boolean().default(true),
 	price_per_call_usd: z.number().min(0).max(10).default(0),
+	rails: z
+		.array(z.enum(SKILL_RAILS))
+		.min(1, 'enable at least one payment rail')
+		.default([...DEFAULT_SKILL_RAILS]),
 });
 
 export default wrap(async (req, res) => {
@@ -73,6 +78,7 @@ function toSkill(row, { includeInstalled = false, includeSchema = false, include
 		avg_rating: Number(row.avg_rating) || 0,
 		rating_count: row.rating_count || 0,
 		price_per_call_usd: Number(row.price_per_call_usd) || 0,
+		rails: enabledRails(row),
 		author: row.author_id
 			? { id: row.author_id, display_name: row.author_display_name }
 			: null,
@@ -381,7 +387,7 @@ async function handlePublish(req, res) {
 	let row;
 	try {
 		[row] = await sql`
-			INSERT INTO marketplace_skills (author_id, name, slug, description, category, tags, schema_json, content, is_public, price_per_call_usd)
+			INSERT INTO marketplace_skills (author_id, name, slug, description, category, tags, schema_json, content, is_public, price_per_call_usd, rails)
 			VALUES (
 				${auth.userId},
 				${body.name},
@@ -392,7 +398,8 @@ async function handlePublish(req, res) {
 				${body.schema_json ? JSON.stringify(body.schema_json) : null}::jsonb,
 				${body.content ?? null},
 				${body.is_public},
-				${body.price_per_call_usd}
+				${body.price_per_call_usd},
+				${normalizeRails(body.rails)}
 			)
 			RETURNING *
 		`;

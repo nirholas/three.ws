@@ -19,7 +19,8 @@ import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-import { MIN_AGE_HOURS, attributeKeys, collectOutcomes, isMature, learnLifts, memoryOutcomesStore, outcomeOf, outcomesStore } from '../api/_lib/x-content/outcomes.js';
+import { OUTCOMES_WINDOW_DAYS, MIN_AGE_HOURS, attributeKeys, collectOutcomes, isMature, learnLifts, memoryOutcomesStore, outcomeOf, outcomesStore } from '../api/_lib/x-content/outcomes.js';
+import { loadSeriesOrNull } from '../api/_lib/x-content/price-impact.js';
 import { xClientFromEnv } from '../api/_lib/x-content/publisher.js';
 import { dbStore, memoryStore } from '../api/_lib/x-content/state.js';
 
@@ -70,7 +71,7 @@ async function refresh(outcomes) {
 	const ledger = await ledgerStore().load();
 	let fresh;
 	try {
-		fresh = await collectOutcomes({ client, ledger });
+		fresh = await collectOutcomes({ client, ledger, priceSeries: await loadSeriesOrNull({ days: OUTCOMES_WINDOW_DAYS }) });
 	} catch (err) {
 		// Nothing is saved from a read that stopped half way, so the stored record
 		// is still the last complete one.

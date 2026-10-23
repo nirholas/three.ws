@@ -10,6 +10,8 @@
 // tradeable form of a fade is not buying, so every action here is a link out:
 // the coin's intel page, its pump.fun listing, a wallet's on-chain history.
 
+import { shortAddress as shortAddr } from './shared/address.js';
+
 const stripEl = document.getElementById('frStrip');
 const boardEl = document.getElementById('frBoard');
 const viewSeg = document.getElementById('frViewSeg');
@@ -33,10 +35,6 @@ let runSeq = 0;
 
 function esc(s) {
 	return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-function shortAddr(a) {
-	const s = String(a || '');
-	return s.length > 12 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s;
 }
 function shortDate(iso) {
 	if (!iso) return 'unknown';

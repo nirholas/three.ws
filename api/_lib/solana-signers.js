@@ -177,6 +177,18 @@ export const SOLANA_SIGNERS = [
 		network: 'mainnet',
 	},
 	{
+		name: 'x402-prepaid-settler',
+		env: 'X402_PREPAID_SETTLER_SECRET_BASE58',
+		// Holds the USDC buyers deposit for prepaid x402 balances and pays the
+		// sellers out of it in one batched transfer per window. Fees plus the rent
+		// for a seller's first token account come out of its SOL.
+		minSol: 0.05,
+		holdsTokens: true,
+		holdsUserFunds: true,
+		purpose: 'x402 prepaid settler: custodies buyers\' prepaid USDC deposits and settles sellers in one batched transfer per window (api/_lib/x402/prepaid-settle.js)',
+		network: 'mainnet',
+	},
+	{
 		name: 'x402-ring-sponsor',
 		env: 'X402_FEE_PAYER_SECRET_BASE58',
 		// The self-hosted facilitator's fee payer: co-signs + burns SOL on every

@@ -416,6 +416,28 @@ html:not([data-theme='light']) {
 .oc-chart-legend .oc-lg.buy { background: var(--cv-green); margin-left: 4px; }
 .oc-chart-legend .oc-lg.sell { background: var(--cv-red); margin-left: 12px; }
 .oc-chart-legend .oc-lg-ct { margin-left: auto; color: var(--cv-text-2); text-transform: none; letter-spacing: 0; }
+
+/* Posts view: bubbles are HTML links over the SVG line so they stay circular. */
+.oc-posts-plot { position: relative; }
+.oc-posts-plot .oc-chart-svg { padding: 0; }
+.oc-post {
+	position: absolute; transform: translate(-50%, -50%); border-radius: 50%;
+	border: 1.5px solid var(--cv-surface); background: var(--cv-text-3);
+	transition: transform var(--duration-fast) var(--ease-standard), opacity var(--duration-fast);
+}
+.oc-post.up { background: var(--cv-green); }
+.oc-post.down { background: var(--cv-red); }
+.oc-post:hover { transform: translate(-50%, -50%) scale(1.18); opacity: 1 !important; z-index: 2; }
+.oc-post:active { transform: translate(-50%, -50%) scale(1.05); }
+.oc-post:focus-visible { outline: 2px solid var(--cv-accent); outline-offset: 2px; opacity: 1 !important; z-index: 3; }
+.oc-chart-legend .oc-lg.na { background: var(--cv-text-3); margin-left: 12px; }
+.oc-post-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; padding: 0.75rem 0.875rem 0; }
+.oc-post-stat { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
+.oc-post-stat-k { font-size: 0.6875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; color: var(--cv-text-3); }
+.oc-post-stat-v { font: 600 1.125rem/1.2 var(--cv-font-mono); font-variant-numeric: tabular-nums; }
+.oc-post-base { font-size: 0.6875rem; color: var(--cv-text-2); }
+@media (max-width: 480px) { .oc-post-stats { gap: 0.25rem; } .oc-post-stat-v { font-size: 0.9375rem; } }
+@media (prefers-reduced-motion: reduce) { .oc-post { transition: none; } }
 @media (prefers-reduced-motion: reduce) { .oc-chart-skel { animation: none; } .oc-chart-svg .oc-mk circle { transition: none; } }
 
 /* ── Agent transactions ──────────────────────────────────────────────────── */

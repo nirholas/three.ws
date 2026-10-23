@@ -4,6 +4,8 @@
  * Mounted beneath the pump.fun card when `creatorWallet` is set on the agent profile.
  */
 
+import { shortAddress } from './shared/address.js';
+
 const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 // Route through our same-origin proxy. The public mainnet RPC returns 403 to
 // most browser origins; the proxy forwards server-side to Helius when
@@ -108,10 +110,7 @@ function ensureStyles() {
 	_stylesInjected = true;
 }
 
-function shortMint(m) {
-	if (!m) return '—';
-	return `${m.slice(0, 4)}…${m.slice(-4)}`;
-}
+function shortMint(m) { return shortAddress(m, 4, 4, { empty: '\u2014' }); }
 
 function formatSol(lamports) {
 	const n = Number(lamports) / 1e9;

@@ -10,6 +10,7 @@ import { z } from 'zod';
 
 import { apiRequest } from '../lib/api.js';
 import { shapeRule } from '../lib/shapes.js';
+import { ANOMALY_FILTERS } from '../lib/anomaly-filters.js';
 
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const dropUndefined = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
@@ -22,7 +23,7 @@ export const def = {
 		'Create a pump.fun alert rule on the authenticated three.ws account. The pumpfun-monitor cron ' +
 		'evaluates it against the live event stream and delivers across the channels you enable, so it ' +
 		'fires across devices with no dashboard open. NOT idempotent — each call adds a new rule (max 50 ' +
-		'per account). Targeting by kind: `graduation` is global or scoped to target_mint OR target_agent; ' +
+		'per account). Targeting by kind: `market_anomaly` watches the whole market (no target) and takes optional `filters` (processors, min_severity, subject) over the scanner's price, TVL, stablecoin, funding and open-interest events; `graduation` is global or scoped to target_mint OR target_agent; ' +
 		'`price_above` / `price_below` / `whale_buy` require target_mint; `new_mint` requires target_agent. ' +
 		'`threshold` is required for the price/whale kinds — USD market cap for price_above/price_below, ' +
 		'minimum buy size in SOL for whale_buy. At least one delivery channel must be on (deliver_in_app ' +
@@ -32,7 +33,7 @@ export const def = {
 		'Use this to have three.ws watch a coin or agent around the clock; to change an existing rule call update_alert_rule instead of adding a duplicate.',
 	inputSchema: {
 		kind: z
-			.enum(['graduation', 'price_above', 'price_below', 'whale_buy', 'new_mint'])
+			.enum(['graduation', 'price_above', 'price_below', 'whale_buy', 'new_mint', 'market_anomaly'])
 			.describe('Event to watch: graduation | price_above | price_below | whale_buy | new_mint.'),
 		target_mint: z
 			.string()
@@ -49,6 +50,7 @@ export const def = {
 			.positive()
 			.optional()
 			.describe('Required for price/whale kinds: USD market cap for price_above/price_below, minimum buy size in SOL for whale_buy. Ignored for graduation/new_mint.'),
+		filters: ANOMALY_FILTERS,
 		deliver_in_app: z.boolean().default(true).describe('Deliver as an in-app notification (default true).'),
 		webhook_url: z
 			.string()
@@ -83,6 +85,7 @@ export const def = {
 			cooldown_seconds: args.cooldown_seconds,
 			enabled: args.enabled,
 			label: args.label,
+			filters: args.filters,
 		});
 		const data = await apiRequest('/api/alerts/rules', { method: 'POST', auth: true, body });
 		return { ok: true, rule: shapeRule(data?.rule) };

@@ -17,6 +17,7 @@
 
 import '../element.js'; // ensures <agent-3d> is registered
 import { log } from '../shared/log.js';
+import { shortAddress } from '../shared/address.js';
 
 // ──────────────────────────────────────────────────────────────────────────
 // Templates
@@ -606,11 +607,7 @@ function formatPrice(m) {
 	const n = Number(m.price);
 	return isFinite(n) && n > 0 ? `${n} ${m.currency || ''}`.trim() : '';
 }
-function short(addr) {
-	if (!addr) return '';
-	const s = String(addr);
-	return s.length > 12 ? `${s.slice(0, 6)}…${s.slice(-4)}` : s;
-}
+function short(addr) { return shortAddress(addr, 6, 4); }
 function extraCopyFor(state, tpl) {
 	if (tpl.id === 'token-launchpad') {
 		const t = state.token, parts = [];

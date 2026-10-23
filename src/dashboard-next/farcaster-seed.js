@@ -14,6 +14,7 @@
 
 import { get, post, del, esc, ApiError } from './api.js';
 import { toast } from '../shared/toast.js';
+import { shortAddress as shortenAddress } from '../shared/address.js';
 
 const DIM = 'var(--nxt-ink-dim)';
 const INK = 'var(--nxt-ink)';
@@ -36,8 +37,7 @@ function ethereumProvider() {
 }
 
 function shortAddress(address) {
-	const a = String(address || '');
-	return a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a;
+	return shortenAddress(address, 6, 4);
 }
 
 function formatDate(value) {

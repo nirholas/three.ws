@@ -1,10 +1,12 @@
 // Shared helpers for the paired-coin pages: /markets/robinhood/paired (hub),
 // /markets/robinhood/paired/:address (coin page) and /launch/paired (launch).
 
+import { shortAddress } from '../shared/address.js';
+
 export const esc = (v) =>
 	String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
-export const short = (a) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '');
+export const short = (a) => shortAddress(a, 6, 4);
 
 export const CLASS_LABELS = {
 	'rwa-equity': 'Stock',

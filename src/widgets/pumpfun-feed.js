@@ -16,6 +16,7 @@
 import { applyReaction, createReactionDispatcher, mountReactionToast } from './pumpfun-reactions.js';
 import { WORD_BLACKLIST } from '../profanity.js';
 import { terminalLinks, referralOffers } from '../shared/trading-terminals.js';
+import { shortAddress } from '../shared/address.js';
 
 const FEED_PATH = '/api/agents/pumpfun-feed';
 const TIER_BADGE = { mega: '🔥🔥', influencer: '🔥', notable: '⭐' };
@@ -437,11 +438,7 @@ function formatAccountAge(days) {
 	return `${Math.round(days / 365)}y ago`;
 }
 
-function shortAddr(s) {
-	const str = String(s || '');
-	if (str.length <= 12) return str;
-	return `${str.slice(0, 6)}…${str.slice(-4)}`;
-}
+function shortAddr(s) { return shortAddress(s, 6, 4); }
 
 function cap(s) {
 	const str = String(s || '');

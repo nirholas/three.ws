@@ -2,6 +2,7 @@
 
 import { safeUrl } from './safe-url.js';
 import { apiFetch } from './api.js';
+import { shortAddress } from './shared/address.js';
 
 const API = '/api/bounties';
 let currentTab = 'feed';
@@ -727,10 +728,7 @@ function guessMediaType(url) {
 	return 'link';
 }
 
-function shortAddr(id) {
-	if (!id) return 'anon';
-	return id.slice(0, 6) + '…' + id.slice(-4);
-}
+function shortAddr(id) { return shortAddress(id, 6, 4, { empty: 'anon' }); }
 
 function showErr(el, msg) {
 	el.textContent = msg;

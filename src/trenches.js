@@ -2,6 +2,8 @@
 // (services/pulse) via /api/trenches. Token names and symbols are untrusted
 // on-chain input, so everything is written with textContent.
 
+import { shortAddress } from './shared/address.js';
+
 const POLL_MS = 15000;
 const WSOL = 'So11111111111111111111111111111111111111112';
 const $ = (id) => document.getElementById(id);
@@ -10,7 +12,7 @@ let timer = null;
 let failures = 0;
 
 const fmt = (n, d = 0) => (n == null || !Number.isFinite(+n) ? '-' : (+n).toLocaleString('en-US', { maximumFractionDigits: d }));
-const short = (a) => (a && a.length > 12 ? `${a.slice(0, 4)}...${a.slice(-4)}` : a || '-');
+const short = (a) => shortAddress(a, 4, 4, { empty: '-', sep: '...' });
 const ago = (ts) => {
 	const s = Math.max(0, Math.round((Date.now() - new Date(ts).getTime()) / 1000));
 	return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ago`;

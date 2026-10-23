@@ -11,6 +11,7 @@
 
 import { proxiedImageURL } from './ipfs.js';
 import { gmgnTokenUrl } from './shared/trading-terminals.js';
+import { shortAddress as shortAddr } from './shared/address.js';
 
 const NETWORK = 'mainnet';
 const $ = (s, r = document) => r.querySelector(s);
@@ -74,7 +75,6 @@ function proxyImgAttrs(rawUrl, seed) {
 		: placeholder;
 	return `src="${esc(src)}" data-fallback-src="${esc(placeholder)}" data-fallback="keep"`;
 }
-const shortAddr = (a) => (a && a.length > 10 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '');
 const fmtSol = (n) => (n == null ? '—' : `${Number(n) < 0.01 && Number(n) > 0 ? Number(n).toFixed(4) : Number(n).toFixed(2)}◎`);
 const fmtPct = (n) => (n == null ? '—' : `${Math.round(Number(n))}%`);
 // Compact USD for market stats: $2.1M, $465K, $1.2B, $0.00.

@@ -12,6 +12,7 @@ import { requireUser, get, post, del, esc, relTime } from '../api.js';
 import { errorStateHTML, ensureStateKitStyles, attachRetry } from '../../shared/state-kit.js';
 import { gmgnAddressUrl } from '../../shared/trading-terminals.js';
 import { mountAlphaDripPanel, formatDelay } from '../../alpha-drip-panel.js';
+import { shortAddress as shortAddr } from '../../shared/address.js';
 
 const SKIP_LABEL = {
 	below_mcap_floor: 'Below your market-cap floor',
@@ -636,7 +637,6 @@ function fmtUsd(n) {
 }
 function fmtMult(n) { return n == null ? '—' : `${Number(n).toFixed(1)}×`; }
 function fmtWr(n) { return n == null ? '—' : `${Math.round(Number(n) * 100)}%`; }
-function shortAddr(a) { return a ? `${a.slice(0, 4)}…${a.slice(-4)}` : ''; }
 function explorerUrl(w) {
 	return w.chain === 'bsc'
 		? `https://bscscan.com/address/${w.address}`

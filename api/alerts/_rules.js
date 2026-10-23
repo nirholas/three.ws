@@ -3,10 +3,11 @@
 // rules/[id].js so the create and update paths can't drift apart.
 
 import { z } from 'zod';
+import { PROCESSORS, SEVERITIES } from '../_lib/market-anomaly.js';
 import { isValidSolanaAddress, isUuid } from '../_lib/validate.js';
-import { MINT_TARGETED_KINDS, AGENT_TARGETED_KINDS, MARKET_TARGETED_KINDS, THRESHOLD_KINDS, FILTER_KINDS, LAUNCH_FILTER_KEYS, LAUNCH_RISK_FLAGS, deriveRuleLabel } from '../_lib/pump-alert-eval.js';
+import { MINT_TARGETED_KINDS, AGENT_TARGETED_KINDS, MARKET_TARGETED_KINDS, THRESHOLD_KINDS, FILTER_KINDS, MARKET_ANOMALY_KINDS, LAUNCH_FILTER_KEYS, LAUNCH_RISK_FLAGS, deriveRuleLabel } from '../_lib/pump-alert-eval.js';
 
-export const RULE_KINDS = ['graduation', 'price_above', 'price_below', 'whale_buy', 'new_mint', 'market_price', 'launch_match'];
+export const RULE_KINDS = ['graduation', 'price_above', 'price_below', 'whale_buy', 'new_mint', 'market_price', 'launch_match', 'market_anomaly'];
 
 // launch_match: a new pump.fun launch scored by coin intel that passes every
 // filter set here (api/_lib/pump-alert-eval.js launchMatchesRule).
@@ -21,6 +22,16 @@ export const launchFiltersSchema = z
 		max_creator_launches: z.coerce.number().int().min(0).max(100_000).optional(),
 		exclude_risk_flags: z.array(z.enum(LAUNCH_RISK_FLAGS)).max(LAUNCH_RISK_FLAGS.length).optional(),
 		require_socials: z.boolean().optional(),
+	})
+	.strict();
+
+// market_anomaly: events from the market anomaly scanner (api/cron/market-anomalies.js).
+// Every key is optional; no filters means high severity and above from any processor.
+export const marketAnomalyFiltersSchema = z
+	.object({
+		processors: z.array(z.enum(PROCESSORS)).min(1).max(PROCESSORS.length).optional(),
+		min_severity: z.enum(SEVERITIES).optional(),
+		subject: z.string().trim().min(1).max(40).optional(),
 	})
 	.strict();
 
@@ -76,7 +87,7 @@ const baseShape = {
 	cooldown_seconds: z.coerce.number().int().min(5).max(86_400).optional(),
 	enabled: z.boolean().optional(),
 	label: z.string().trim().max(80).nullable().optional(),
-	filters: launchFiltersSchema.nullable().optional(),
+	filters: z.union([launchFiltersSchema, marketAnomalyFiltersSchema]).nullable().optional(),
 };
 
 /** Cross-field rules shared by create (strict) and update (after merge). */
@@ -131,6 +142,9 @@ function refineRule(v, ctx) {
 		if (v.target_mint || v.target_agent) {
 			ctx.addIssue({ code: 'custom', path: ['kind'], message: `${v.kind} matches every new launch; it takes filters, not a target` });
 		}
+	}
+	if (MARKET_ANOMALY_KINDS.includes(v.kind) && (v.target_mint || v.target_agent)) {
+		ctx.addIssue({ code: 'custom', path: ['kind'], message: `${v.kind} watches the whole market; it takes filters, not a target` });
 	}
 	if (THRESHOLD_KINDS.includes(v.kind) && !(Number(v.threshold) > 0)) {
 		ctx.addIssue({ code: 'custom', path: ['threshold'], message: `${v.kind} requires a positive threshold` });
@@ -219,7 +233,7 @@ export function normalizeForKind(v) {
 		out.target_side = null;
 		out.direction = null;
 	}
-	if (!FILTER_KINDS.includes(out.kind)) out.filters = null;
+	if (!FILTER_KINDS.includes(out.kind) && !MARKET_ANOMALY_KINDS.includes(out.kind)) out.filters = null;
 	else if (out.filters) out.filters = Object.fromEntries(Object.entries(out.filters).filter(([, val]) => val != null));
 	if (out.deliver_in_app === undefined) out.deliver_in_app = true;
 	if (out.cooldown_seconds === undefined) out.cooldown_seconds = 300;

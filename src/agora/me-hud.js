@@ -22,6 +22,7 @@ import { Panel, h, clear, copyChip } from './panel.js';
 import { fetchPassport } from './api.js';
 import { injectHumansCss } from './humans.css.js';
 import { getMe, join, postTask, hire, claim, complete, vouch } from './actions.js';
+import { shortAddress } from '../shared/address.js';
 
 const state = {
 	loading: true,
@@ -437,7 +438,7 @@ function toast(msg, kind = '', explorerUrl = null) {
 }
 function initial(name) { return (String(name || '?').trim()[0] || '?').toUpperCase(); }
 function cap(s) { return s ? String(s)[0].toUpperCase() + String(s).slice(1) : ''; }
-function shortAddr(a) { return a ? `${a.slice(0, 4)}…${a.slice(-4)}` : '—'; }
+function shortAddr(a) { return shortAddress(a, 4, 4, { empty: '\u2014' }); }
 function fmt(n) { return Number(n).toLocaleString('en-US', { maximumFractionDigits: 4 }); }
 function fmtAtomic(atomic) {
 	try { return (BigInt(atomic || '0') / 1_000_000n).toLocaleString('en-US'); } catch { return '0'; }

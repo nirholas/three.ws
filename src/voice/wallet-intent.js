@@ -31,6 +31,7 @@ import {
 import { getSolPriceUsd } from '../shared/usd-price.js';
 import { consumeCsrfToken } from '../api.js';
 import { log } from '../shared/log.js';
+import { shortAddress as shortMint } from '../shared/address.js';
 
 const DEFAULT_SLIPPAGE_BPS = 300; // 3% — matches the trade engine default
 const CONFIRM_TIMEOUT_MS = 30_000;
@@ -573,10 +574,6 @@ function round(n, dp) {
 	return Math.round(n * f) / f;
 }
 
-function shortMint(s) {
-	const str = String(s || '');
-	return str.length > 12 ? `${str.slice(0, 4)}…${str.slice(-4)}` : str;
-}
 
 function esc(s) {
 	return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

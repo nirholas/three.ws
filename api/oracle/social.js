@@ -30,7 +30,7 @@ const NETWORK = 'mainnet';
 const SYMBOL_RE = /\$([A-Z]{2,10})\b/g;
 
 // KOL accounts that get virality multiplier
-const KOL_ACCOUNTS = new Set([
+export const KOL_ACCOUNTS = new Set([
 	'nichxbt', 'trythreews',
 	// add more as the platform learns which accounts move prices
 ]);

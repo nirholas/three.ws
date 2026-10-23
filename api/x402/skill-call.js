@@ -24,6 +24,7 @@ import { priceFor } from '../_lib/x402-prices.js';
 import { sql } from '../_lib/db.js';
 import { cors, error, respondError } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
+import { enabledRails, railEnabled } from '../_lib/skill-rails.js';
 import { accrueSkillCallRoyalty } from '../_lib/skill-royalty.js';
 import skillCallListing from '../_lib/service-catalog/services/skill-call.js';
 
@@ -106,7 +107,7 @@ const BAZAAR = {
 // receiver via env — the call still works, the platform collects.
 async function loadSkill(slug) {
 	const rows = await sql`
-		SELECT ms.id, ms.slug, ms.name, ms.description, ms.category,
+		SELECT ms.id, ms.slug, ms.name, ms.description, ms.category, ms.rails,
 		       ms.schema_json, ms.content, ms.price_per_call_usd, ms.author_id,
 		       evm.address  AS author_payto_base,
 		       sol.address  AS author_payto_solana
@@ -196,6 +197,12 @@ export default async function handler(req, res) {
 			'skill_not_priced',
 			`skill "${slug}" is free — fetch it without payment via /api/skills/${skill.id}`,
 		);
+	}
+
+	if (!railEnabled(skill, 'x402')) {
+		return error(res, 404, 'rail_disabled', `the x402 rail is not enabled for skill "${slug}"`, {
+			enabled_rails: enabledRails(skill),
+		});
 	}
 
 	// Author payout overrides. Only set a network when the author has a wallet

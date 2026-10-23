@@ -35,7 +35,7 @@ vi.mock('three/addons/webxr/XREstimatedLight.js', () => ({
 	},
 }));
 
-const { EstimatedLighting } = await import('../src/ar/estimated-lighting.js');
+const { EstimatedLighting } = await import('../packages/ar-studio/src/studio/estimated-lighting.js');
 
 function makeScene() {
 	const added = new Set();

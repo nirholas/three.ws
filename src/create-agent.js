@@ -22,6 +22,7 @@ import { isValidGlbMagic } from './shared/glb-magic.js';
 import { track, trackFunnelStep, trackError, ANALYTICS_EVENTS } from './analytics.js';
 import { draftHasContent, isDraftFresh } from './create-agent-draft.js';
 import { VoiceSetup } from './voice/voice-setup.js';
+import { mountTemplateGallery, fillFromTemplate } from './create-agent-templates.js';
 import {
 	INTERVIEW_QUESTIONS,
 	normalizeInterview,
@@ -42,6 +43,7 @@ const CATEGORIES = [
 	'education',
 	'emotions',
 	'entertainment',
+	'finance',
 	'games',
 	'general',
 	'life',
@@ -284,6 +286,7 @@ async function boot() {
 	wireModel();
 	wirePersonality();
 	wireMagic();
+	wireTemplates();
 	wireNav();
 
 	// Resolve auth, but never wall the wizard. Signing in is only required at the
@@ -899,6 +902,95 @@ function applySpec(spec) {
 	// Publishing needs a category + persona; the generator supplies both, so
 	// default the marketplace listing on — the review step lets them opt out.
 	state.publish = Boolean(state.category && state.persona.trim());
+}
+
+// ── Template gallery ────────────────────────────────────────────────────────
+
+// Pour template-shaped fields into state + DOM. Shares the field ids and
+// counters with applySpec but leaves the avatar and voice choices alone.
+function setTemplateFields(f) {
+	state.name = f.name;
+	$('f-name').value = f.name;
+	$('name-count').textContent = `${f.name.length} / 60`;
+	$('f-name').classList.remove('is-invalid');
+	$('name-error').classList.remove('show');
+
+	state.description = f.description;
+	$('f-description').value = f.description;
+	$('desc-count').textContent = `${f.description.length} / 280`;
+
+	state.tags = [...f.tags];
+	tagRenderer();
+
+	state.skills = new Set(f.skills);
+	renderSkills();
+
+	state.category = f.category;
+	$('f-category').value = f.category;
+
+	state.greeting = f.greeting;
+	$('f-greeting').value = f.greeting;
+	$('greet-count').textContent = `${f.greeting.length} / 200`;
+
+	state.persona = f.persona;
+	$('f-persona').value = f.persona;
+	$('persona-count').textContent = `${f.persona.length} / 2000`;
+}
+
+function wireTemplates() {
+	const status = $('tpl-status');
+	const showStatus = (nodes) => {
+		status.replaceChildren(...nodes);
+		status.hidden = false;
+	};
+	const button = (label, onClick) => {
+		const b = document.createElement('button');
+		b.type = 'button';
+		b.textContent = label;
+		b.addEventListener('click', onClick);
+		return b;
+	};
+
+	mountTemplateGallery({
+		onUse(template) {
+			const before = {
+				name: state.name,
+				description: state.description,
+				tags: [...state.tags],
+				skills: new Set(state.skills),
+				category: state.category,
+				greeting: state.greeting,
+				persona: state.persona,
+				interview: state.interview,
+				publish: state.publish,
+			};
+			setTemplateFields(fillFromTemplate(template, state));
+			// A template persona replaces any interview-generated profile.
+			state.interview = { answers: {}, result: null, generated: '', busy: false };
+			syncInterviewFields();
+			renderInterviewTags([]);
+			setInterviewStatus('', '');
+			state.publish = Boolean(state.category && state.persona.trim());
+			scheduleDraftSave();
+			track('create_agent_template_used', { source: 'create_wizard', template: template.id });
+
+			const msg = document.createElement('span');
+			msg.textContent = `Applied "${template.name}". Personality, greeting, category and skills are filled in.`;
+			showStatus([
+				msg,
+				button('Review persona', () => showStep(3)),
+				button('Undo', () => {
+					setTemplateFields(before);
+					state.interview = before.interview;
+					syncInterviewFields();
+					state.publish = before.publish;
+					scheduleDraftSave();
+					showStatus([document.createTextNode('Template removed. Your previous values are back.')]);
+				}),
+			]);
+			setMsg(`Template "${template.name}" applied.`, 'ok');
+		},
+	});
 }
 
 // ── Step 2: Model ───────────────────────────────────────────────────────────

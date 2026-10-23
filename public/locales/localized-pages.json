@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 435,
+	"count": 434,
 	"paths": [
 		"/",
 		"/3d",
@@ -334,7 +334,6 @@
 		"/play/arena",
 		"/play/economy",
 		"/play/solver",
-		"/play/ufo",
 		"/play/war",
 		"/playground",
 		"/pocket",

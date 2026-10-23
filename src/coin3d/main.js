@@ -62,6 +62,7 @@ import { dextoolsUrl } from '../shared/dextools.js';
 import { dextoolsTokenUrl } from '../shared/trading-terminals.js';
 import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from '../shared/cinematic-render.js';
 import { proxiedImageURL, resolveURI } from '../ipfs.js';
+import { shortAddress } from '../shared/address.js';
 
 const MCP_ENDPOINT = '/api/pump-fun-mcp';
 // The one and only coin — featured on the no-mint landing.
@@ -407,10 +408,7 @@ function fmtPrice(n) {
 	return '$' + n.toExponential(2);
 }
 
-function shortAddr(a) {
-	if (!a || a.length < 9) return a || '—';
-	return `${a.slice(0, 4)}…${a.slice(-4)}`;
-}
+function shortAddr(a) { return shortAddress(a, 4, 4, { empty: '\u2014' }); }
 
 function timeAgo(tsSec) {
 	if (!tsSec) return '';

@@ -16,6 +16,7 @@
 import { registerWalletTab } from '../registry.js';
 import { consumeCsrfToken } from '../../api.js';
 import { shortAddress } from '../util.js';
+import { addressHtml } from '../../shared/address.js';
 
 const STYLE_ID = 'awh-guard-style';
 const STYLE = `
@@ -161,7 +162,7 @@ registerWalletTab({
 						<span class="awh-flag-sum">${escapeHtml(f.summary || 'Unusual activity')}</span>
 						<span class="awh-score ${scoreClass(f.score)}">risk ${Math.round((f.score || 0) * 100)}</span>
 					</div>
-					<div class="awh-flag-meta">${escapeHtml(f.category || 'spend')}${f.usd != null ? ` · $${Number(f.usd).toFixed(2)}` : ''}${f.destination ? ` · → ${escapeHtml(shortAddress(f.destination))}` : ''} · ${escapeHtml(ago(f.created_at))}</div>
+					<div class="awh-flag-meta">${escapeHtml(f.category || 'spend')}${f.usd != null ? ` · $${Number(f.usd).toFixed(2)}` : ''}${f.destination ? ` · → ${addressHtml(f.destination, { label: 'Destination' })}` : ''} · ${escapeHtml(ago(f.created_at))}</div>
 					${factorsHTML(f.factors)}
 					<div class="awh-flag-acts">
 						<button class="awh-btn awh-btn--primary" type="button" data-act="approve" data-id="${escapeHtml(f.id)}">✓ It was me — approve & unfreeze</button>

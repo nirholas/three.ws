@@ -7,6 +7,7 @@
 
 import { apiFetch } from '../api.js';
 import { ensureRiskAck } from './risk-ack.js';
+import { shortAddress as shortAddr } from './address.js';
 
 // ── API ──────────────────────────────────────────────────────────────────────
 
@@ -108,9 +109,7 @@ export function fmtCountdown(iso) {
 	return d < 60 ? `closes in ${d}d` : `closes ${fmtDate(iso)}`;
 }
 
-export function shortAddr(a) {
-	return a ? `${a.slice(0, 4)}…${a.slice(-4)}` : '';
-}
+export { shortAddr };
 
 export function pnlClass(n) {
 	const v = Number(n);

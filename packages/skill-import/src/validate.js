@@ -37,9 +37,12 @@ function checkSyntax(source) {
 
 /**
  * @param {{manifest: object, skillMd: string, tools?: object, handlersSrc?: string}} bundle
+ * @param {{allowAddresses?: string[]}} opts addresses the bundle may contain
+ *   verbatim because they are structural data the caller already vetted (an
+ *   Anchor IDL's own program id and fixed account addresses), not promotion
  * @returns {string[]} errors; empty means valid
  */
-export function validateBundle({ manifest, skillMd, tools, handlersSrc }) {
+export function validateBundle({ manifest, skillMd, tools, handlersSrc }, { allowAddresses = [] } = {}) {
 	const errors = [];
 
 	if (!manifest || manifest.spec !== 'skill/0.1') errors.push('manifest.spec must be "skill/0.1"');
@@ -78,7 +81,8 @@ export function validateBundle({ manifest, skillMd, tools, handlersSrc }) {
 		errors.push('declarative skill (no provides.tools) must not ship tools.json or handlers.js');
 	}
 
-	const allText = [skillMd, JSON.stringify(manifest), tools ? JSON.stringify(tools) : ''].join('\n');
+	let allText = [skillMd, JSON.stringify(manifest), tools ? JSON.stringify(tools) : ''].join('\n');
+	for (const address of allowAddresses) allText = allText.split(address).join('');
 	for (const finding of findTokenReferences(allText, { prose: true })) {
 		errors.push(`references another crypto project (${finding}); only $THREE is promoted`);
 	}
@@ -90,7 +94,7 @@ export function validateBundle({ manifest, skillMd, tools, handlersSrc }) {
 }
 
 /** Throws SkillBundleValidationError if the bundle is invalid. */
-export function assertValidBundle(bundle) {
-	const errors = validateBundle(bundle);
+export function assertValidBundle(bundle, opts) {
+	const errors = validateBundle(bundle, opts);
 	if (errors.length) throw new SkillBundleValidationError(errors);
 }

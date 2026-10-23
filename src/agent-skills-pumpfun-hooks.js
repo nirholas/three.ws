@@ -17,14 +17,13 @@
 
 import { ACTION_TYPES } from './agent-protocol.js';
 import { MEMORY_TYPES } from './agent-memory.js';
+import { shortAddress } from './shared/address.js';
 
 const TAG_LAUNCH = 'pumpfun:launch';
 const TAG_TRADE = 'pumpfun:trade';
 const TAG_PAY = 'pumpfun:payment';
 
-function shortMint(m) {
-	return m ? `${String(m).slice(0, 6)}…${String(m).slice(-4)}` : '?';
-}
+function shortMint(m) { return shortAddress(m, 6, 4, { empty: '?' }); }
 
 /**
  * @param {import('./agent-protocol.js').AgentProtocol} protocol

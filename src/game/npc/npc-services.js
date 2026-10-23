@@ -20,6 +20,7 @@
 // (src/shared/x402-loader.js).
 
 import { ensureX402 } from '../../shared/x402-loader.js';
+import { shortAddress as shortAddr } from '../../shared/address.js';
 
 // ── tiny DOM helper (self-contained; mirrors the app's el() conventions) ──────
 function el(tag, attrs, kids) {
@@ -67,10 +68,6 @@ function fmtPct(n) {
 function atomicsToUsdc(a) {
 	const n = Number(a);
 	return Number.isFinite(n) ? '$' + (n / 1e6).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—';
-}
-function shortAddr(a) {
-	const s = String(a || '');
-	return s.length > 12 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s;
 }
 
 // ── service registry ─────────────────────────────────────────────────────────

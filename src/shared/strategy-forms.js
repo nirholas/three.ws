@@ -9,11 +9,12 @@
 
 import { apiFetch } from '../api.js';
 import { mountLivePreview, mountCompileBox, mountGatedBacktest } from './strategy-settings.js';
+import { shortAddress as shortAddr } from './address.js';
 
 export const VIOLET = 'var(--wallet-accent, #c4b5fd)';
 
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-export const shortAddr = (a, h = 4, t = 4) => (a && a.length > h + t + 1 ? `${a.slice(0, h)}…${a.slice(-t)}` : a || '');
+export { shortAddr };
 export function fmtSol(n) {
 	if (n == null || !Number.isFinite(Number(n))) return '-';
 	const v = Number(n);

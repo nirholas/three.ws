@@ -220,6 +220,9 @@ export const POLICY = {
 		agent_mail_read: r('mail'),
 		agent_mail_search: r('mail'),
 		agent_mail_delete: w('mail'),
+		inbox_list: r('mail'),
+		inbox_read: r('mail'),
+		inbox_wait_for_code: r('mail'),
 	},
 
 	// /api/mcp-agent

@@ -22,6 +22,7 @@
  */
 
 import { walletChipEl } from './agent-wallet-chip.js';
+import { shortAddress as shortMint } from './address.js';
 
 const POLL_MS = 15_000;          // delta poll cadence when live + visible
 const TICKER_POLL_MS = 30_000;
@@ -210,10 +211,6 @@ function usdLabel(ev) {
 }
 
 // Short, base58-safe mint elision for when we have a mint but no resolved symbol.
-function shortMint(mint) {
-	if (!mint || mint.length <= 10) return mint || '';
-	return `${mint.slice(0, 4)}…${mint.slice(-4)}`;
-}
 
 // Where a row navigates. Coin-moving events (a trade, a snipe, a launch that
 // resolved a mint) link straight to that coin's rich detail page, so "traded

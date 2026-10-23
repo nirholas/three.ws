@@ -5,6 +5,8 @@
 // trade stream and pre-annotates every trade with wallet reputation labels.
 // The tape auto-reconnects on 'bye' (server rotates every 45 s).
 
+import { shortAddress } from './shared/address.js';
+
 const ARCH_TITLE = {
 	smart_money: 'Smart Money', kol: 'KOL', top_dev: 'Top Dev', sniper: 'Sniper',
 	dumper: 'Dumper', rugger: 'Rugger', fresh: 'Fresh', neutral: 'Neutral', unproven: 'Unproven',
@@ -12,7 +14,7 @@ const ARCH_TITLE = {
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-function shortAddr(a) { return a && a.length > 8 ? `${a.slice(0, 4)}…${a.slice(-4)}` : (a || '—'); }
+function shortAddr(a) { return shortAddress(a, 4, 4, { empty: '\u2014' }); }
 
 function fmtSol(n) {
 	if (n == null) return '—';

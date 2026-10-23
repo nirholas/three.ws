@@ -6,6 +6,7 @@ import {
 	ANALYTICS_EVENTS,
 } from './analytics.js';
 import { resolveError } from './shared/error-messages.js';
+import { shortAddress } from './shared/address.js';
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
@@ -135,9 +136,7 @@ export function wireSigninButton(buttonEl) {
 
 // ─── Internal ────────────────────────────────────────────────────────────────
 
-function _shortAddr(addr) {
-	return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
+function _shortAddr(addr) { return shortAddress(addr, 6, 4); }
 
 function _renderChip(buttonEl, user) {
 	const addr = user.wallet_address || '';

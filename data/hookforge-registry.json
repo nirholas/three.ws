@@ -1,0 +1,1354 @@
+{
+	"source": "https://github.com/nirholas/hookforge",
+	"commit": "4f3102d3ec6a004adb98f07241f4fa994711fc97",
+	"registryGenerated": "2026-09-08",
+	"count": 39,
+	"poolManagers": {
+		"1": "0x000000000004444c5dc75cB358380D2e3dE08A90",
+		"10": "0x9a13F98Cb987694C9F086b1F5eB990EeA8264Ec3",
+		"56": "0x28e2Ea090877bF75740558f6BFB36A5ffeE9e9dF",
+		"130": "0x1F98400000000000000000000000000000000004",
+		"137": "0x67366782805870060151383F4BbFF9daB53e5cD6",
+		"143": "0x188d586Ddcf52439676Ca21A244753fA19F9Ea8e",
+		"196": "0x360E68faCcca8cA495c1B759Fd9EEe466db9FB32",
+		"480": "0xb1860D529182ac3BC1F51Fa2ABd56662b7D13f33",
+		"1868": "0x360E68faCcca8cA495c1B759Fd9EEe466db9FB32",
+		"4217": "0x33620f62C5b9B2086dD6b62F4A297A9f30347029",
+		"4326": "0xaCB7e78fa05D562e0A5D3089ec896D57D057d38E",
+		"4663": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
+		"8453": "0x498581fF718922c3f8e6A244956aF099B2652b2b",
+		"42161": "0x360E68faCcca8cA495c1B759Fd9EEe466db9FB32",
+		"42220": "0x288dc841A52FCA2707c6947B3A777c5E56cd87BC",
+		"43114": "0x06380C0e0912312B5150364B9DC4542BA0DbBc85",
+		"57073": "0x360E68faCcca8cA495c1B759Fd9EEe466db9FB32",
+		"7777777": "0x0575338e4C17006aE181B47900A84404247CA30f"
+	},
+	"hooks": [
+		{
+			"slug": "agent-budget",
+			"name": "AgentBudget",
+			"contract": "AgentBudgetHook",
+			"family": "Agent-native",
+			"summary": "A spending limit the venue itself enforces: an autonomous agent may swap on this pool only within a budget its principal signed, and the pool refuses the swap that would exceed it.",
+			"tags": [
+				"agent",
+				"delegation",
+				"spending-limit",
+				"eip712",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/agent-budget",
+			"repo": "https://github.com/nirholas/agent-budget",
+			"mask": "0x0040",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "anti-snipe-ramp",
+			"name": "AntiSnipeRamp",
+			"contract": "AntiSnipeRampHook",
+			"family": "Launch",
+			"summary": "Opens a pool at a punitive fee that decays to normal over a fixed window, and pays every cent of the difference to liquidity providers rather than to the deployer.",
+			"tags": [
+				"launch",
+				"anti-snipe",
+				"dynamic-fee",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/anti-snipe-ramp",
+			"repo": "https://github.com/nirholas/anti-snipe-ramp",
+			"mask": "0x1080",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": [
+				{
+					"chain": "unichain",
+					"chainId": 130,
+					"address": "0x53D7d95607a608369cEF06018C0D7aE2505Dd080",
+					"status": "deterministic"
+				},
+				{
+					"chain": "robinhood",
+					"chainId": 4663,
+					"address": "0x20A9Ef8C1916c549eBa01Fe4e486be2adc0Bd080",
+					"status": "deterministic"
+				},
+				{
+					"chain": "base",
+					"chainId": 8453,
+					"address": "0x6A35Ea8E3bCbCB45Ca764CD097F9495FB1709080",
+					"status": "deterministic"
+				},
+				{
+					"chain": "arbitrum",
+					"chainId": 42161,
+					"address": "0xdD3d11653d22120D31D3d0FbfA7c1A763BA71080",
+					"status": "deterministic"
+				}
+			]
+		},
+		{
+			"slug": "arb-tax-decay",
+			"name": "ArbTaxDecay",
+			"contract": "ArbTaxDecayHook",
+			"family": "Order flow and MEV",
+			"summary": "Prices the staleness of a pool: the longer a pool goes untraded, the more the next swap pays.",
+			"tags": [
+				"mev",
+				"lvr",
+				"dynamic-fee",
+				"oracle-free"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/arb-tax-decay",
+			"repo": "https://github.com/nirholas/arb-tax-decay",
+			"mask": "0x1080",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": [
+				{
+					"chain": "unichain",
+					"chainId": 130,
+					"address": "0x7C74267c059d1F073bE0D38ce2593a122e399080",
+					"status": "deterministic"
+				},
+				{
+					"chain": "robinhood",
+					"chainId": 4663,
+					"address": "0x968b61840d695f6232004bdA038f28B9Af34D080",
+					"status": "deterministic"
+				},
+				{
+					"chain": "base",
+					"chainId": 8453,
+					"address": "0x497DF79D84864CF23B9e1fF5966f01dD03dF5080",
+					"status": "deterministic"
+				},
+				{
+					"chain": "arbitrum",
+					"chainId": 42161,
+					"address": "0x06135B883a7220f1a4dE96dB557014C7d4009080",
+					"status": "deterministic"
+				}
+			]
+		},
+		{
+			"slug": "block-batch-clearing",
+			"name": "BlockBatchClearing",
+			"contract": "BlockBatchClearingHook",
+			"family": "Order flow and MEV",
+			"summary": "Every swap in a block clears at one price, and orders that want opposite sides fill against each other for free.",
+			"tags": [
+				"mev",
+				"batch-auction",
+				"uniform-price",
+				"order-flow",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/block-batch-clearing",
+			"repo": null,
+			"mask": "0x2a88",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "block-reversal",
+			"name": "BlockReversal",
+			"contract": "BlockReversalHook",
+			"family": "Order flow and MEV",
+			"summary": "Charges the swap that unwinds a block's own price move, which is the only leg of a sandwich that can be identified without knowing who anybody is.",
+			"tags": [
+				"mev",
+				"anti-sandwich",
+				"dynamic-fee",
+				"oracle-free",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/block-reversal",
+			"repo": null,
+			"mask": "0x1080",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "circuit-breaker",
+			"name": "CircuitBreaker",
+			"contract": "CircuitBreakerHook",
+			"family": "Risk",
+			"summary": "Halts swapping for a cooldown after the price moves further than a pool is willing to move in one window, and lets liquidity leave the whole time.",
+			"tags": [
+				"risk",
+				"circuit-breaker",
+				"oracle-free",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/circuit-breaker",
+			"repo": "https://github.com/nirholas/circuit-breaker",
+			"mask": "0x10c0",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": [
+				{
+					"chain": "unichain",
+					"chainId": 130,
+					"address": "0x0c21ED115396E51B78CD658DA833369AeE3750c0",
+					"status": "deterministic"
+				},
+				{
+					"chain": "robinhood",
+					"chainId": 4663,
+					"address": "0xD80eef4823D8Fa3219604629703f96DaAa4090C0",
+					"status": "deterministic"
+				},
+				{
+					"chain": "base",
+					"chainId": 8453,
+					"address": "0x799a653385E6d50770b1e6E7bc1994674C7e10C0",
+					"status": "deterministic"
+				},
+				{
+					"chain": "arbitrum",
+					"chainId": 42161,
+					"address": "0x7b353a0b80170F165dc07C9F9b8903Ce9b92d0C0",
+					"status": "deterministic"
+				}
+			]
+		},
+		{
+			"slug": "commit-reveal-dark",
+			"name": "CommitRevealDark",
+			"contract": "CommitRevealDarkHook",
+			"family": "Order flow and MEV",
+			"summary": "Every swap must have been committed to in an earlier block, so nobody can react to an order they can see.",
+			"tags": [
+				"mev",
+				"anti-sandwich",
+				"commit-reveal",
+				"order-flow",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/commit-reveal-dark",
+			"repo": null,
+			"mask": "0x1080",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "depeg-shield",
+			"name": "DepegShield",
+			"contract": "DepegShieldHook",
+			"family": "Risk",
+			"summary": "Makes leaving a peg expensive and returning to it cheap, in proportion to how far the pool has already strayed.",
+			"tags": [
+				"risk",
+				"stablecoin",
+				"dynamic-fee",
+				"oracle-free"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/depeg-shield",
+			"repo": "https://github.com/nirholas/depeg-shield",
+			"mask": "0x1080",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": [
+				{
+					"chain": "unichain",
+					"chainId": 130,
+					"address": "0x6536608422113CFF4cbDb9c413E447EEd1fF1080",
+					"status": "deterministic"
+				},
+				{
+					"chain": "robinhood",
+					"chainId": 4663,
+					"address": "0x6D7B49F497e6Dec999147dF461038AE312609080",
+					"status": "deterministic"
+				},
+				{
+					"chain": "base",
+					"chainId": 8453,
+					"address": "0xFe88b1eECB9AeFF393f4E7a7fFBB1f80392D9080",
+					"status": "deterministic"
+				},
+				{
+					"chain": "arbitrum",
+					"chainId": 42161,
+					"address": "0xb888b2e1886d4C703c53C2a1650ced1262bCd080",
+					"status": "deterministic"
+				}
+			]
+		},
+		{
+			"slug": "drawdown-cap",
+			"name": "DrawdownCap",
+			"contract": "DrawdownCapHook",
+			"family": "Risk",
+			"summary": "A limit down. The pool may not fall more than a fixed distance below where the current epoch opened, and the limit resets on a schedule rather than on anyone's say-so.",
+			"tags": [
+				"risk",
+				"circuit-breaker",
+				"oracle-free",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/drawdown-cap",
+			"repo": "https://github.com/nirholas/drawdown-cap",
+			"mask": "0x10c0",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": [
+				{
+					"chain": "unichain",
+					"chainId": 130,
+					"address": "0x96DEB6525EACf0847E7a1E0250ABe65a892dd0c0",
+					"status": "deterministic"
+				},
+				{
+					"chain": "robinhood",
+					"chainId": 4663,
+					"address": "0xCDbF94558886fB07615550c21CDbAf3b9b68d0c0",
+					"status": "deterministic"
+				},
+				{
+					"chain": "base",
+					"chainId": 8453,
+					"address": "0xd9bDc663eaDf9f1Cf3dEEa393D45Be6342b510C0",
+					"status": "deterministic"
+				},
+				{
+					"chain": "arbitrum",
+					"chainId": 42161,
+					"address": "0xf3dffF3782A5789fC987389a647C8061A76e10c0",
+					"status": "deterministic"
+				}
+			]
+		},
+		{
+			"slug": "dutch-clearing-launch",
+			"name": "DutchClearingLaunch",
+			"contract": "DutchClearingLaunchHook",
+			"family": "Launch",
+			"summary": "A descending-price launch enforced as a floor on what the pool will sell at, so a token opens at the price the first real buyer is willing to pay rather than the price the deployer guessed.",
+			"tags": [
+				"launch",
+				"auction",
+				"price-discovery",
+				"anti-snipe",
+				"oracle-free"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/dutch-clearing-launch",
+			"repo": null,
+			"mask": "0x1040",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "epoch-rebalance",
+			"name": "EpochRebalance",
+			"contract": "EpochRebalanceHook",
+			"family": "Time",
+			"summary": "An index whose whole future is fixed before anybody deposits: the pool's target allocation glides along a schedule written at deployment, and nobody, including the deployer, can change it afterwards.",
+			"tags": [
+				"curve",
+				"index",
+				"rebalancing",
+				"schedule",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/epoch-rebalance",
+			"repo": null,
+			"mask": "0x2a88",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "expiry-settle",
+			"name": "ExpirySettle",
+			"contract": "ExpirySettleHook",
+			"family": "Time",
+			"summary": "Gives a pool a maturity, and makes moving its price monotonically more expensive as that maturity approaches, so the settlement price is dearest to manipulate exactly when manipulating it would pay most.",
+			"tags": [
+				"expiry",
+				"settlement",
+				"dynamic-fee",
+				"derivatives",
+				"oracle-free"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/expiry-settle",
+			"repo": "https://github.com/nirholas/expiry-settle",
+			"mask": "0x1880",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "flow-classifier",
+			"name": "FlowClassifier",
+			"contract": "FlowClassifierHook",
+			"family": "Order flow and MEV",
+			"summary": "Publishes, on-chain, how much of a pool's order flow arrives first in the block and how far it moves the price when it does. It changes nothing about the pool it measures.",
+			"tags": [
+				"mev",
+				"public-good",
+				"analytics",
+				"order-flow",
+				"oracle-free"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/flow-classifier",
+			"repo": "https://github.com/nirholas/flow-classifier",
+			"mask": "0x00c0",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "fungible-range",
+			"name": "FungibleRange",
+			"contract": "FungibleRangeHook",
+			"family": "Liquidity management",
+			"summary": "A concentrated position with fungible shares, whose band widens every time it is forced to move.",
+			"tags": [
+				"liquidity",
+				"concentrated",
+				"rebalancing",
+				"keeper-free",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/fungible-range",
+			"repo": null,
+			"mask": "0x1040",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "grid-ladder",
+			"name": "GridLadder",
+			"contract": "GridLadderHook",
+			"family": "Curves",
+			"summary": "A pool that quotes a bid and an ask, like a market maker, instead of one price both ways.",
+			"tags": [
+				"curve",
+				"custom-curve",
+				"market-making",
+				"spread",
+				"inventory"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/grid-ladder",
+			"repo": null,
+			"mask": "0x2a88",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "il-insurance",
+			"name": "ILInsurance",
+			"contract": "ILInsuranceHook",
+			"family": "Risk",
+			"summary": "Pays liquidity providers back for divergence loss, out of a fund the pool's own trading fills.",
+			"tags": [
+				"risk",
+				"impermanent-loss",
+				"lp-economics",
+				"insurance",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/il-insurance",
+			"repo": null,
+			"mask": "0x1544",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "impact-split",
+			"name": "ImpactSplit",
+			"contract": "ImpactSplitHook",
+			"family": "Fees and MEV",
+			"summary": "Charges a swap for the price impact that lasts, and gives back the impact that does not.",
+			"tags": [
+				"fees",
+				"price-impact",
+				"microstructure",
+				"rebate",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/impact-split",
+			"repo": null,
+			"mask": "0x10c4",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "lmsr",
+			"name": "LMSR",
+			"contract": "LMSRHook",
+			"family": "Curves",
+			"summary": "A pool whose worst case a provider can read before they deposit.",
+			"tags": [
+				"curve",
+				"custom-curve",
+				"bounded-loss",
+				"scoring-rule",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/lmsr",
+			"repo": null,
+			"mask": "0x2a88",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "liquidity-floor",
+			"name": "LiquidityFloor",
+			"contract": "LiquidityFloorHook",
+			"family": "Liquidity provider economics",
+			"summary": "A liquidity commitment enforced per position: a fraction of what you add cannot leave until the pool's unlock date, and every provider is held to that fraction of their own stake rather than to a shared pool total.",
+			"tags": [
+				"lp-economics",
+				"commitment",
+				"launch",
+				"rug-resistance"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/liquidity-floor",
+			"repo": "https://github.com/nirholas/liquidity-floor",
+			"mask": "0x1600",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": [
+				{
+					"chain": "unichain",
+					"chainId": 130,
+					"address": "0xFeCAf8bb3DD7fBE0Df1b6eFa0E865ef598535600",
+					"status": "deterministic"
+				},
+				{
+					"chain": "robinhood",
+					"chainId": 4663,
+					"address": "0x3041fD311d0f39428655f45ce4501DEC7BfAD600",
+					"status": "deterministic"
+				},
+				{
+					"chain": "base",
+					"chainId": 8453,
+					"address": "0x375ae2136a29aaA49E5f17c2Fc2A6A4832385600",
+					"status": "deterministic"
+				},
+				{
+					"chain": "arbitrum",
+					"chainId": 42161,
+					"address": "0x1b142F790e2FfEb875a36FAED37Bbf8cE1Cf9600",
+					"status": "deterministic"
+				}
+			]
+		},
+		{
+			"slug": "markout-fee",
+			"name": "MarkoutFee",
+			"contract": "MarkoutFeeHook",
+			"family": "Order flow and MEV",
+			"summary": "A fee that learns. The pool measures whether its own past trades turned out to be informed, and charges the next one accordingly.",
+			"tags": [
+				"mev",
+				"dynamic-fee",
+				"markout",
+				"adverse-selection",
+				"oracle-free"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/markout-fee",
+			"repo": "https://github.com/nirholas/markout-fee",
+			"mask": "0x10c0",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "oracle-band",
+			"name": "OracleBand",
+			"contract": "OracleBandHook",
+			"family": "Risk",
+			"summary": "Refuses to let a pool settle at a price the wider market does not recognise.",
+			"tags": [
+				"risk",
+				"oracle",
+				"manipulation-resistance",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/oracle-band",
+			"repo": "https://github.com/nirholas/oracle-band",
+			"mask": "0x10c0",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": [
+				{
+					"chain": "unichain",
+					"chainId": 130,
+					"address": "0x1EF02aDF27051C3Ce6675D106239471f3D4C50C0",
+					"status": "deterministic"
+				},
+				{
+					"chain": "robinhood",
+					"chainId": 4663,
+					"address": "0x81702603B79E31274F4BA493c8bb06b48c5CD0c0",
+					"status": "deterministic"
+				},
+				{
+					"chain": "base",
+					"chainId": 8453,
+					"address": "0x24A6D3d3822D2aabAa21cCD12E5f35B1dC1F90C0",
+					"status": "deterministic"
+				},
+				{
+					"chain": "arbitrum",
+					"chainId": 42161,
+					"address": "0x92724249d217BFC7d14277E83844645C5862d0c0",
+					"status": "deterministic"
+				}
+			]
+		},
+		{
+			"slug": "power-perp",
+			"name": "PowerPerp",
+			"contract": "PowerPerpHook",
+			"family": "Curves",
+			"summary": "A pool with a weight, so a liquidity provider chooses how much of the move they want instead of always getting the square root of it.",
+			"tags": [
+				"curve",
+				"custom-curve",
+				"weighted",
+				"lp-economics",
+				"exposure"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/power-perp",
+			"repo": null,
+			"mask": "0x2a88",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "priority-fee-tax",
+			"name": "PriorityFeeTax",
+			"contract": "PriorityFeeTaxHook",
+			"family": "Order flow and MEV",
+			"summary": "Charges a swap in proportion to what it paid the block producer to get where it is in the block.",
+			"tags": [
+				"mev",
+				"dynamic-fee",
+				"order-flow",
+				"oracle-free"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/priority-fee-tax",
+			"repo": "https://github.com/nirholas/priority-fee-tax",
+			"mask": "0x1080",
+			"recommendedChains": [
+				"base",
+				"unichain",
+				"ethereum",
+				"optimism",
+				"robinhood"
+			],
+			"deployments": [
+				{
+					"chain": "unichain",
+					"chainId": 130,
+					"address": "0xE1cbeD2C3A27dE98202ac5EA439fc8Cb06a71080",
+					"status": "deterministic"
+				},
+				{
+					"chain": "robinhood",
+					"chainId": 4663,
+					"address": "0x9ae664D21C02e33658A608AF6A5fE8cC1fDE9080",
+					"status": "deterministic"
+				},
+				{
+					"chain": "base",
+					"chainId": 8453,
+					"address": "0x782f29DCa46C5b5d6D9321A824aAf901e18B5080",
+					"status": "deterministic"
+				},
+				{
+					"chain": "arbitrum",
+					"chainId": 42161,
+					"address": "0x8092f20876753cb41A4CCEA20665288C58af1080",
+					"status": "deterministic"
+				}
+			]
+		},
+		{
+			"slug": "range-rent",
+			"name": "RangeRent",
+			"contract": "RangeRentHook",
+			"family": "Liquidity management",
+			"summary": "Makes a tick range something one provider holds, by renting it to them exclusively.",
+			"tags": [
+				"liquidity",
+				"jit-defence",
+				"exclusivity",
+				"concentrated",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/range-rent",
+			"repo": null,
+			"mask": "0x1800",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "ratchet-floor",
+			"name": "RatchetFloor",
+			"contract": "RatchetFloorHook",
+			"family": "Curves",
+			"summary": "A price floor that only ever moves up.",
+			"tags": [
+				"price-floor",
+				"launch",
+				"no-admin",
+				"oracle-free"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/ratchet-floor",
+			"repo": "https://github.com/nirholas/ratchet-floor",
+			"mask": "0x1040",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": [
+				{
+					"chain": "unichain",
+					"chainId": 130,
+					"address": "0x1EC0A28410eE094Ab636b2cf90174b878A75D040",
+					"status": "deterministic"
+				},
+				{
+					"chain": "robinhood",
+					"chainId": 4663,
+					"address": "0xee7bd53C33B8a3ffd2b2fbcBB9f1f99C0c42d040",
+					"status": "deterministic"
+				},
+				{
+					"chain": "base",
+					"chainId": 8453,
+					"address": "0x0Bc7Fe634b8fe736fcb7c96ee180f7DeB4bED040",
+					"status": "deterministic"
+				},
+				{
+					"chain": "arbitrum",
+					"chainId": 42161,
+					"address": "0xD70b7e7F9b45598167EB5199078ED15160345040",
+					"status": "deterministic"
+				}
+			]
+		},
+		{
+			"slug": "rebase-absorb",
+			"name": "RebaseAbsorb",
+			"contract": "RebaseAbsorbHook",
+			"family": "Curves",
+			"summary": "A pool whose reserves are real tokens it holds itself, so anything that happens to those tokens happens to the people who supplied them.",
+			"tags": [
+				"curve",
+				"rebasing",
+				"fee-on-transfer",
+				"custom-curve",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/rebase-absorb",
+			"repo": null,
+			"mask": "0x2a88",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "reputation-fee",
+			"name": "ReputationFee",
+			"contract": "ReputationFeeHook",
+			"family": "Agent-native",
+			"summary": "Charges a counterparty according to how it has behaved, using an on-chain reputation registry, with no signature to present and nothing for a router to forward.",
+			"tags": [
+				"agent",
+				"reputation",
+				"dynamic-fee",
+				"erc8004",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/reputation-fee",
+			"repo": null,
+			"mask": "0x1080",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "reserve-stable",
+			"name": "ReserveStable",
+			"contract": "ReserveStableHook",
+			"family": "Curves",
+			"summary": "A pegged-pair pool that pays arbitrageurs to rebalance it, out of a fund it filled while going wrong.",
+			"tags": [
+				"curve",
+				"stablecoin",
+				"custom-curve",
+				"rebalancing",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/reserve-stable",
+			"repo": null,
+			"mask": "0x2a88",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "retro-rebate",
+			"name": "RetroRebate",
+			"contract": "RetroRebateHook",
+			"family": "Liquidity provider economics",
+			"summary": "A volume rebate the pool pays out of its own flow, settled on-chain at the end of each epoch, with no Merkle root, no off-chain calculation and nobody who can decline to publish it.",
+			"tags": [
+				"rebate",
+				"volume",
+				"epochs",
+				"no-merkle",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/retro-rebate",
+			"repo": null,
+			"mask": "0x1044",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "step-curve",
+			"name": "StepCurve",
+			"contract": "StepCurveHook",
+			"family": "Curves",
+			"summary": "A pool whose price moves in discrete steps instead of continuously, so there is no infinitesimal arbitrage to take and a quote holds still long enough to be worth quoting.",
+			"tags": [
+				"curve",
+				"custom-curve",
+				"discrete-pricing",
+				"mev",
+				"oracle-free"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/step-curve",
+			"repo": null,
+			"mask": "0x2a88",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "stream-dca",
+			"name": "StreamDCA",
+			"contract": "StreamDCAHook",
+			"family": "Order types",
+			"summary": "A standing order that buys more when the price falls, settled inside other people's swaps.",
+			"tags": [
+				"order-types",
+				"dca",
+				"value-averaging",
+				"keeper-free",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/stream-dca",
+			"repo": null,
+			"mask": "0x0080",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "tenure-weighted-fees",
+			"name": "TenureWeightedFees",
+			"contract": "TenureWeightedFeesHook",
+			"family": "Liquidity provider economics",
+			"summary": "Pays liquidity that stays more than liquidity that visits, by skimming a slice of every swap into a pot and sharing it out in proportion to how long each position has been in the pool.",
+			"tags": [
+				"lp-economics",
+				"tenure",
+				"jit-defence",
+				"rewards",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/tenure-weighted-fees",
+			"repo": null,
+			"mask": "0x1544",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "tick-harberger",
+			"name": "TickHarberger",
+			"contract": "TickHarbergerHook",
+			"family": "Fees and MEV",
+			"summary": "Leases the right to price a pool's flow, one tick range at a time, under a Harberger tax.",
+			"tags": [
+				"fees",
+				"harberger",
+				"auction",
+				"mev",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/tick-harberger",
+			"repo": null,
+			"mask": "0x10c4",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "top-of-block-auction",
+			"name": "TopOfBlockAuction",
+			"contract": "TopOfBlockAuctionHook",
+			"family": "Order flow and MEV",
+			"summary": "Sells the right to trade first in a block, and gives the proceeds to the liquidity providers who are being traded against.",
+			"tags": [
+				"mev",
+				"auction",
+				"order-flow",
+				"lp-economics",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/top-of-block-auction",
+			"repo": null,
+			"mask": "0x1080",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "trading-calendar",
+			"name": "TradingCalendar",
+			"contract": "TradingCalendarHook",
+			"family": "Time",
+			"summary": "Gives a pool a trading session, and closes it by raising the price of immediacy rather than by reverting.",
+			"tags": [
+				"dynamic-fee",
+				"schedule",
+				"rwa",
+				"oracle-free"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/trading-calendar",
+			"repo": "https://github.com/nirholas/trading-calendar",
+			"mask": "0x1080",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": [
+				{
+					"chain": "unichain",
+					"chainId": 130,
+					"address": "0x55cE2fB1636B6E4E70C51689156d0088D48d5080",
+					"status": "deterministic"
+				},
+				{
+					"chain": "robinhood",
+					"chainId": 4663,
+					"address": "0x66341c30B3b860f0255bF51EEb431C2e92Bdd080",
+					"status": "deterministic"
+				},
+				{
+					"chain": "base",
+					"chainId": 8453,
+					"address": "0x58b9359042e81aA137972AF2Ff082476dDE09080",
+					"status": "deterministic"
+				},
+				{
+					"chain": "arbitrum",
+					"chainId": 42161,
+					"address": "0x0bB9D56c24767E5250C5BacE6100C11cb78FD080",
+					"status": "deterministic"
+				}
+			]
+		},
+		{
+			"slug": "variance-swap",
+			"name": "VarianceSwap",
+			"contract": "VarianceSwapHook",
+			"family": "Derivatives",
+			"summary": "Turns the exposure a liquidity provider already has into something they can actually sell.",
+			"tags": [
+				"derivatives",
+				"volatility",
+				"variance-swap",
+				"oracle-free",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/variance-swap",
+			"repo": null,
+			"mask": "0x1080",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "vested-buy",
+			"name": "VestedBuy",
+			"contract": "VestedBuyHook",
+			"family": "Time",
+			"summary": "Vests what a buyer receives, at the pool, so a launch can sell without handing every buyer a same-block exit.",
+			"tags": [
+				"launch",
+				"vesting",
+				"anti-flip",
+				"time",
+				"no-admin"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/vested-buy",
+			"repo": null,
+			"mask": "0x1044",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "x402-gate",
+			"name": "X402Gate",
+			"contract": "X402GateHook",
+			"family": "Agent-native",
+			"summary": "Makes the pool an x402 resource server: a swapper that presents a signed x402 payment gets a cheaper fee on that swap, and the payment settles atomically with the trade.",
+			"tags": [
+				"agent-native",
+				"x402",
+				"dynamic-fee",
+				"metering"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/x402-gate",
+			"repo": null,
+			"mask": "0x1080",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon"
+			],
+			"deployments": []
+		},
+		{
+			"slug": "yield-space",
+			"name": "YieldSpace",
+			"contract": "YieldSpaceHook",
+			"family": "Curves",
+			"summary": "An interest-rate market as a Uniswap v4 pool: the curve quotes a yield rather than a price, and converges to par at maturity on its own.",
+			"tags": [
+				"curve",
+				"custom-curve",
+				"fixed-rate",
+				"maturity",
+				"rates"
+			],
+			"docs": "https://hookforge.pages.dev/hooks/yield-space",
+			"repo": null,
+			"mask": "0x2a88",
+			"recommendedChains": [
+				"base",
+				"arbitrum",
+				"unichain",
+				"robinhood",
+				"ethereum",
+				"optimism",
+				"polygon",
+				"bnb"
+			],
+			"deployments": []
+		}
+	]
+}

@@ -5,6 +5,8 @@
  * never render the same number two different ways.
  */
 
+import { shortAddress as shortAddr } from './shared/address.js';
+
 const SOL = '◎';
 
 export function escapeHtml(s) {
@@ -57,10 +59,7 @@ export function pnlClass(n) {
 }
 
 /** Short pubkey: "7xKq…WtUK". */
-export function shortAddr(a, head = 4, tail = 4) {
-	if (!a || a.length <= head + tail + 1) return a || '';
-	return `${a.slice(0, head)}…${a.slice(-tail)}`;
-}
+export { shortAddr };
 
 /** Human hold duration from seconds: 10 → "10s", 125 → "2m", 5400 → "1.5h". */
 export function holdTime(seconds) {

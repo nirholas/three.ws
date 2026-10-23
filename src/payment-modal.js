@@ -17,6 +17,7 @@ import { resolveTokenProgramId } from './shared/spl-token-program.js';
 import { apiFetch } from './api.js';
 import { isPageOrigin } from './shared/embed-api-origin.js';
 import { log } from './shared/log.js';
+import { trapFocus } from './shared/focus-trap.js';
 
 const USDC_DECIMALS = 6;
 
@@ -264,7 +265,7 @@ export class SkillPaymentModal {
 		this._connection = null;
 		this._activePurchase = null;
 		this._el = null;
-		this._lastFocus = null;
+		this._trap = null;
 		this._hideTimer = null;
 		this._init();
 	}
@@ -314,42 +315,6 @@ export class SkillPaymentModal {
 		el.addEventListener('click', (e) => { if (e.target === el) this._cancel(); });
 		el.querySelector('#skill-pay-connect').addEventListener('click', () => this._connectWallet());
 		el.querySelector('.skill-pay-confirm').addEventListener('click', () => this._purchase());
-		// Keyboard: Escape dismisses, Tab is trapped inside the dialog so focus
-		// can't wander to the host page behind the modal.
-		el.addEventListener('keydown', (e) => this._onKeydown(e));
-	}
-
-	_onKeydown(e) {
-		if (!this._el || this._el.hasAttribute('hidden')) return;
-		if (e.key === 'Escape') { e.preventDefault(); this._cancel(); return; }
-		if (e.key !== 'Tab') return;
-		const focusable = this._focusables();
-		if (!focusable.length) return;
-		const first = focusable[0];
-		const last = focusable[focusable.length - 1];
-		const active = this._activeElement();
-		if (e.shiftKey && (active === first || !focusable.includes(active))) {
-			e.preventDefault();
-			last.focus();
-		} else if (!e.shiftKey && active === last) {
-			e.preventDefault();
-			first.focus();
-		}
-	}
-
-	// Visible, enabled, focusable controls inside the dialog box, in DOM order.
-	_focusables() {
-		const box = this._el?.querySelector('.skill-pay-box');
-		if (!box) return [];
-		const sel = 'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
-		return Array.from(box.querySelectorAll(sel)).filter(
-			(n) => n.offsetParent !== null || n.getClientRects().length > 0,
-		);
-	}
-
-	// activeElement resolves through the shadow boundary the modal lives in.
-	_activeElement() {
-		return this._root.activeElement || document.activeElement || null;
 	}
 
 	_prefersReducedMotion() {
@@ -357,14 +322,6 @@ export class SkillPaymentModal {
 			return !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
 		} catch {
 			return false;
-		}
-	}
-
-	_restoreFocus() {
-		const target = this._lastFocus;
-		this._lastFocus = null;
-		if (target && typeof target.focus === 'function') {
-			try { target.focus(); } catch { /* element may be gone */ }
 		}
 	}
 
@@ -446,23 +403,28 @@ export class SkillPaymentModal {
 				})
 				.catch(() => {});
 
+			const opener = this._root.activeElement || document.activeElement || null;
 			this._setStatus('');
 			this._el.querySelector('.skill-pay-confirm').disabled = true;
 			this._updateWalletArea();
 			this._setStep(this._wallet?.isConnected || window.solana?.isConnected ? 'approve' : 'connect');
 
-			// Remember what had focus so we can hand it back on close, then open
-			// with a fade/scale entrance and move focus to the primary action.
-			this._lastFocus = this._activeElement();
+			// Open with a fade/scale entrance. The trap makes the page behind the
+			// dialog inert, cycles Tab inside it, closes on Escape, and hands focus
+			// back to whatever opened the modal when it is released in hide().
 			if (this._hideTimer) { clearTimeout(this._hideTimer); this._hideTimer = null; }
 			this._el.removeAttribute('hidden');
 			const reveal = () => {
 				this._el.classList.add('is-open');
-				const primary =
-					this._el.querySelector('#skill-pay-connect') ||
-					this._el.querySelector('.skill-pay-confirm:not([disabled])') ||
-					this._el.querySelector('.skill-pay-close');
-				primary?.focus();
+				this._trap?.release(false);
+				this._trap = trapFocus(this._el.querySelector('.skill-pay-box'), {
+					onEscape: () => this._cancel(),
+					initialFocus: () =>
+						this._el.querySelector('#skill-pay-connect') ||
+						this._el.querySelector('.skill-pay-confirm:not([disabled])') ||
+						this._el.querySelector('.skill-pay-close'),
+					returnTo: opener,
+				});
 			};
 			if (this._prefersReducedMotion()) reveal();
 			else requestAnimationFrame(reveal);
@@ -473,7 +435,8 @@ export class SkillPaymentModal {
 		const el = this._el;
 		if (!el) return;
 		el.classList.remove('is-open');
-		this._restoreFocus();
+		this._trap?.release();
+		this._trap = null;
 		if (this._prefersReducedMotion()) {
 			el.setAttribute('hidden', '');
 			return;
@@ -519,7 +482,27 @@ export class SkillPaymentModal {
 			li.classList.remove('is-err');
 			const dot = li.querySelector('.skill-pay-step-dot');
 			if (dot) dot.textContent = done ? '✓' : String(idx + 1);
+			this._announceStep(li, done ? 'completed' : idx === activeIdx ? 'current step' : 'not started');
 		});
+	}
+
+	/**
+	 * Step state as text, not just a glyph and a tint (W3AG 1.4.1): screen
+	 * readers hear "Connect, completed" and `aria-current` marks the live step.
+	 */
+	_announceStep(li, state) {
+		let sr = li.querySelector('.skill-pay-step-state');
+		if (!sr) {
+			sr = document.createElement('span');
+			sr.className = 'skill-pay-step-state';
+			sr.style.cssText =
+				'position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0';
+			li.appendChild(sr);
+		}
+		sr.textContent = `, ${state}`;
+		if (state === 'current step') li.setAttribute('aria-current', 'step');
+		else li.removeAttribute('aria-current');
+		li.querySelector('.skill-pay-step-dot')?.setAttribute('aria-hidden', 'true');
 	}
 
 	/** Mark the currently active step as failed (keeps earlier ✓s). */
@@ -530,6 +513,7 @@ export class SkillPaymentModal {
 			li.classList.add('is-err');
 			const dot = li.querySelector('.skill-pay-step-dot');
 			if (dot) dot.textContent = '!';
+			this._announceStep(li, 'failed');
 		}
 	}
 

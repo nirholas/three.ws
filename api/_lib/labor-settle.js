@@ -15,7 +15,7 @@
 import { sql } from './db.js';
 import {
 	settlementSplit, defaultRoyaltyBps, claimSettle, recordVerdict,
-	markJobSettled, markJobFailed, setBountyStatus, atomicsToThree, _toBig as toBig,
+	markJobSettled, markJobFailed, setBountyStatus, releaseSettleClaim, atomicsToThree, _toBig as toBig,
 } from './agent-labor.js';
 import {
 	verifyDeliverable, resolveSkillAuthorPayout, emitReasoning,
@@ -26,6 +26,7 @@ import { payFromEscrow, ensureEscrowGas } from './labor-escrow.js';
 import { recoverSolanaAgentKeypair } from './agent-wallet.js';
 import { recordInvocationReceipt } from './agent-invocation-onchain.js';
 import { recordCustodyEvent } from './agent-trade-guards.js';
+import { recordFromActionLog } from './skill-candidates.js';
 
 async function loadAgentWallet(agentId) {
 	const [row] = await sql`
@@ -68,20 +69,24 @@ export async function runSettlement({ job, bounty, verdict: providedVerdict = nu
 	// against reputation). A moderator-administered refund is NOT the worker's
 	// fault → mark it 'refunded' so a dispute resolution never tarnishes a worker.
 	if (!verdict.pass) {
-		const moderated = !!verdict.moderator;
+		const moderated = !!verdict.moderator || !!verdict.neutral;
 		const failStatus = moderated ? 'refunded' : 'failed';
 		let refundSig = null;
-		let refundError = null;
+		const refundError = null;
 		try {
 			const poster = await loadAgentWallet(bounty.poster_agent_id);
 			if (poster?.meta?.solana_address) {
 				refundSig = await payFromEscrow({ toAddress: poster.meta.solana_address, amountAtomics: reward });
 			}
 		} catch (e) {
-			refundError = e?.message || String(e);
-			console.error('[labor-settle] refund failed', refundError);
+			// The refund did not land, so the reward is still in escrow. Marking the
+			// job failed now would strand it; hand the claim back and let the caller
+			// retry instead.
+			console.error('[labor-settle] refund failed', e?.message);
+			await releaseSettleClaim(job.id);
+			throw e;
 		}
-		const reason = moderated ? `moderator refund: ${verdict.reason}` : `verification failed: ${verdict.reason}`;
+		const reason = moderated ? `refund: ${verdict.reason}` : `verification failed: ${verdict.reason}`;
 		await markJobFailed(job.id, { reason, refundSig, status: failStatus });
 		await setBountyStatus(bounty.id, failStatus, { refundSig });
 		emitReasoning({
@@ -107,14 +112,27 @@ export async function runSettlement({ job, bounty, verdict: providedVerdict = nu
 		let refundSig = null;
 		try {
 			if (poster?.meta?.solana_address) refundSig = await payFromEscrow({ toAddress: poster.meta.solana_address, amountAtomics: reward });
-		} catch (e) { console.error('[labor-settle] refund (no worker wallet) failed', e?.message); }
+		} catch (e) {
+			console.error('[labor-settle] refund (no worker wallet) failed', e?.message);
+			await releaseSettleClaim(job.id);
+			throw e;
+		}
 		await markJobFailed(job.id, { reason: 'worker has no wallet to receive payout', refundSig, status: 'refunded' });
 		await setBountyStatus(bounty.id, 'refunded', { refundSig });
 		return { settled: false, status: 'refunded', reason: 'worker_no_wallet', refund_sig: refundSig };
 	}
 
 	// ── Release escrow on-chain (worker payout is the critical leg) ───────────
-	const settlementSig = await payFromEscrow({ toAddress: worker.meta.solana_address, amountAtomics: split.workerAtomics });
+	let settlementSig;
+	try {
+		settlementSig = await payFromEscrow({ toAddress: worker.meta.solana_address, amountAtomics: split.workerAtomics });
+	} catch (e) {
+		// The transfer did not land (payFromEscrow throws on a revert), so nothing
+		// moved. Free the claim: left set, every later settle would see "already
+		// owned" and no-op, stranding the job and the escrow behind it.
+		await releaseSettleClaim(job.id);
+		throw e;
+	}
 
 	// Royalty + poster refund are best-effort: a failure here leaves the residue in
 	// escrow (sweepable) but must not undo the worker's confirmed payout.
@@ -159,6 +177,15 @@ export async function runSettlement({ job, bounty, verdict: providedVerdict = nu
 		refundSig: posterRefundSig,
 	});
 	await setBountyStatus(bounty.id, 'settled');
+
+	// A passed, settled job is a verified success: keep the procedure as a
+	// skill candidate the worker's owner can review (never installs by itself).
+	recordFromActionLog({
+		agentId: job.worker_agent_id, userId: worker.user_id, signal: 'labor_escrow_passed',
+		sourceRef: `labor:${job.id}`, goal: bounty.title, verdict,
+		since: job.created_at ? new Date(job.created_at).toISOString() : undefined,
+		outcome: { bounty_id: bounty.id, job_id: job.id },
+	});
 
 	// Cross-wire: surface the worker's income in the custody ledger so it shows up
 	// on the wallet HUD / live money pulse as real earnings.

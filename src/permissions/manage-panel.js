@@ -14,6 +14,7 @@ import { CHAIN_META, addressExplorerUrl, txExplorerUrl } from '../erc8004/chain-
 import { DELEGATION_MANAGER_DEPLOYMENTS, DELEGATION_MANAGER_ABI } from '../erc7710/abi.js';
 import { GrantPermissionsModal } from './grant-modal.js';
 import { log } from '../shared/log.js';
+import { shortAddress } from '../shared/address.js';
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
@@ -351,10 +352,7 @@ function _esc(str) {
 	);
 }
 
-function _shortAddr(addr) {
-	if (!addr) return 'unknown';
-	return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
+function _shortAddr(addr) { return shortAddress(addr, 6, 4, { empty: 'unknown' }); }
 
 function _scopeSentence(scope) {
 	if (!scope) return 'Unknown scope';

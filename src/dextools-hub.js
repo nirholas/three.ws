@@ -15,11 +15,11 @@ import { watchEmbed, embedFallbackNode } from './shared/embed-guard.js';
 import { THREE_MINT } from './shared/pnl-snapshot.js';
 import { THREE_DEXTOOLS_PAIR, DEXTOOLS_PAIR_URL, SOCIAL_BOOST_WINS, socialBoostSummary } from './pump/dextools-social-boost.js';
 import { parseTokenInput, embedSnippets } from './dextools-input.js';
+import { shortAddress as shortAddr } from './shared/address.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) =>
 	String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const shortAddr = (a) => `${a.slice(0, 4)}…${a.slice(-4)}`;
 const fmtInt = (n) => Number(n || 0).toLocaleString('en-US');
 const fmtUsd0 = (n) => `$${Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
 const theme = () => (document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark');

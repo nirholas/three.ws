@@ -14,6 +14,9 @@
  *   · holders     holder count, top-10 share, top holder, dev share, bonding
  *                 curve share, early-buyer share, top-10 list (Helius DAS, or
  *                 the 20 largest accounts over plain RPC when Helius is down)
+ *   · signals     Gini of the top-50 holders, share of the first buyers seeded by
+ *                 one funder, and whether the creation transaction was v1
+ *                 (api/_lib/coin/holder-signals.js)
  *   · authorities mint and freeze authority as read off the mint account
  *   · curve       bonding curve progress, curve reserves, graduation state
  *   · market      liquidity and DEX Screener paid-profile state
@@ -31,6 +34,7 @@ import { pumpFetchJson, PUMP_FRONTEND_BASE, PUMP_SWAP_BASE } from '../_lib/pump-
 import { liveHolderSet } from '../_lib/coin/cohorts-live.js';
 import { getConnection } from '../_lib/pump.js';
 import { solPriceUsd } from '../_lib/sol-price.js';
+import { holderGini, readSeeding, readLaunchVersion, persistOracleSignals } from '../_lib/coin/holder-signals.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const DEXSCREENER = 'https://api.dexscreener.com';
@@ -188,6 +192,7 @@ export function holderStats(holders, { supply, creator, curve, pool, earlyBuyers
 		pool_pct: pool ? shareOfSupply(byWallet.get(pool) || 0n, supply) : null,
 		early_buyers: earlyBuyers && complete ? earlyBuyers.size : null,
 		early_buyers_pct: early == null ? null : shareOfSupply(early, supply),
+		...holderGini(holders, { curve, pool }),
 		top: top10.map((h) => ({
 			wallet: h.wallet,
 			pct: shareOfSupply(h.units, supply),
@@ -279,13 +284,17 @@ export async function buildStats(mint) {
 	const pool = coin?.pool_address || null;
 	const createdSec = num(coin?.created_timestamp) != null ? Math.floor(coin.created_timestamp / 1000) : null;
 
-	const [tradeHist, holderSet, authorities, dex, solUsd] = await Promise.all([
+	const [tradeHist, holderSet, authorities, dex, solUsd, launchVersion] = await Promise.all([
 		fetchDayOfTrades(mint, now),
 		readHolderSet(mint),
 		readAuthorities(mint),
 		readDexScreener(mint),
 		solPriceUsd().catch(() => null),
+		readLaunchVersion(mint).catch(() => null),
 	]);
+
+	// The first buyers are only nameable from a complete trade history.
+	const seeding = await readSeeding(mint, tradeHist?.complete ? tradeHist.trades : null, { creator }).catch(() => null);
 
 	// Early buyers are only knowable when the fetched history reaches the coin's
 	// first trade; otherwise the field stays null rather than undercounting.
@@ -314,6 +323,11 @@ export async function buildStats(mint) {
 	const virtualSol = coin?.virtual_sol_reserves != null ? Number(coin.virtual_sol_reserves) / 1e9 : null;
 	const curveLiquidityUsd = !graduated && virtualSol != null && solUsd ? virtualSol * 2 * solUsd : null;
 
+	const holders = holderSet
+		? { ...holderStats(holderSet.holders, { supply, creator, curve, pool, earlyBuyers, complete: holderSet.complete }), complete: holderSet.complete }
+		: null;
+	persistOracleSignals(mint, { gini: holders?.gini ?? null, seededShare: seeding?.seeded_share ?? null });
+
 	return {
 		mint,
 		as_of: new Date(now * 1000).toISOString(),
@@ -321,10 +335,10 @@ export async function buildStats(mint) {
 			? windowStats(tradeHist.trades, { now, coveredFrom: tradeHist.complete ? null : tradeHist.oldest })
 			: null,
 		trades_sampled: tradeHist?.trades.length ?? null,
-		holders: holderSet
-			? { ...holderStats(holderSet.holders, { supply, creator, curve, pool, earlyBuyers, complete: holderSet.complete }), complete: holderSet.complete }
-			: null,
+		holders,
 		authorities,
+		seeding,
+		launch_version: launchVersion,
 		dev: creator
 			? {
 					wallet: creator,

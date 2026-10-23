@@ -14,6 +14,7 @@
 import { apiFetch } from './api.js';
 import { resizedImageUrl } from './shared/image-url.js';
 import { skeletonHTML, emptyStateHTML, errorStateHTML, attachRetry, ensureStateKitStyles } from './shared/state-kit.js';
+import { shortAddress as short } from './shared/address.js';
 
 const API = '/api/v1/marketplace/agents';
 const view = document.getElementById('am-view');
@@ -25,9 +26,6 @@ function esc(s) {
 	return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
 
-function short(addr) {
-	return addr && addr.length > 12 ? `${addr.slice(0, 4)}…${addr.slice(-4)}` : addr || '';
-}
 
 function timeLeft(iso) {
 	const ms = new Date(iso).getTime() - Date.now();

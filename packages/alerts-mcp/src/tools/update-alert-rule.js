@@ -11,6 +11,7 @@ import { z } from 'zod';
 
 import { apiRequest } from '../lib/api.js';
 import { shapeRule } from '../lib/shapes.js';
+import { ANOMALY_FILTERS } from '../lib/anomaly-filters.js';
 
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const dropUndefined = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
@@ -33,7 +34,7 @@ export const def = {
 	inputSchema: {
 		rule_id: z.string().uuid().describe('Id of the rule to update (from list_alert_rules).'),
 		kind: z
-			.enum(['graduation', 'price_above', 'price_below', 'whale_buy', 'new_mint'])
+			.enum(['graduation', 'price_above', 'price_below', 'whale_buy', 'new_mint', 'market_anomaly'])
 			.optional()
 			.describe('Change the event kind. The rule is re-validated against it and incompatible fields are cleared.'),
 		target_mint: z
@@ -54,6 +55,7 @@ export const def = {
 			.nullable()
 			.optional()
 			.describe('USD market cap (price kinds) or SOL buy size (whale_buy), or null to clear.'),
+		filters: ANOMALY_FILTERS.nullable(),
 		deliver_in_app: z.boolean().optional().describe('Toggle in-app delivery.'),
 		webhook_url: z
 			.string()

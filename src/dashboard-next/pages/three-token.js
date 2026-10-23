@@ -19,6 +19,7 @@ import { createThreeTokenData } from '../../pump/three-token-data.js';
 import { paintVerifiedBadge } from '../../pump/verified-badge.js';
 import { errorStateHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
 import { toast } from '../../shared/toast.js';
+import { addressHtml } from '../../shared/address.js';
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
 // THREE_MINT is fetched live from /api/token/config below. This fallback is
@@ -1187,6 +1188,5 @@ function infoRow(label, value) {
 }
 
 function shortAddr(addr) {
-	if (!addr || addr.length < 12) return esc(addr || '');
-	return `<span title="${esc(addr)}" style="cursor:help">${esc(addr.slice(0, 6))}...${esc(addr.slice(-4))}</span>`;
+	return addressHtml(addr, { head: 6, tail: 4 });
 }

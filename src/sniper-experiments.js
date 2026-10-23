@@ -6,6 +6,7 @@
 // data; when an arm hasn't traded yet it honestly shows zero.
 
 import { escapeHtml as esc } from './shared/coin-format.js';
+import { shortAddress as shortAddr } from './shared/address.js';
 
 const $ = (id) => document.getElementById(id);
 const REFRESH_MS = 30_000;
@@ -116,10 +117,6 @@ function shortModel(m) {
 	return String(m).split('/').pop();
 }
 
-function shortAddr(a) {
-	if (!a) return null;
-	return `${a.slice(0, 4)}…${a.slice(-4)}`;
-}
 
 function walletLine(x) {
 	if (!x.wallet_address) return '<div class="xp-wallet xp-wallet-none">no wallet</div>';

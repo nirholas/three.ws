@@ -9,6 +9,7 @@
 import { BrowserProvider } from 'ethers';
 import { STATES, initialState, reduce } from './state.js';
 import { eagerConnectWallet, getWalletState } from '../erc8004/agent-registry.js';
+import { trapFocus } from '../shared/focus-trap.js';
 
 /** Chain IDs that match known ERC-8004 registry deployments. */
 const DEFAULT_CHAIN_IDS = [1, 8453, 10, 42161, 11155111, 84532];
@@ -438,6 +439,7 @@ function ensurePickerStyles() {
 			white-space: nowrap;
 		}
 		.cwb-pick-item:hover { background: rgba(255,255,255,0.07); }
+		.cwb-pick-item:focus-visible { outline: 2px solid #34d399; outline-offset: -2px; background: rgba(255,255,255,0.07); }
 		.cwb-pick-item + .cwb-pick-item { border-top: 1px solid #2d2d32; }
 		.cwb-pick-icon {
 			display: inline-flex;
@@ -458,6 +460,9 @@ function showWalletPicker(anchorEl, onBrowser, onWC) {
 
 	const picker = document.createElement('div');
 	picker.className = 'cwb-picker';
+	picker.setAttribute('role', 'dialog');
+	picker.setAttribute('aria-modal', 'true');
+	picker.setAttribute('aria-label', 'Choose a wallet to connect');
 
 	const mmBtn = document.createElement('button');
 	mmBtn.type = 'button';
@@ -488,16 +493,24 @@ function showWalletPicker(anchorEl, onBrowser, onWC) {
 	picker.style.top = `${rect.bottom + 6}px`;
 	picker.style.left = `${rect.left}px`;
 
-	mmBtn.onclick = (e) => { e.stopPropagation(); picker.remove(); onBrowser(); };
-	wcBtn.onclick = (e) => { e.stopPropagation(); picker.remove(); onWC(); };
-
-	const close = (e) => {
-		if (!picker.contains(e.target) && e.target !== anchorEl) {
-			picker.remove();
-			document.removeEventListener('click', close);
-		}
+	// W3AG 2.1.2: the page behind the chooser is inert, Tab cycles between the
+	// two options, Escape closes it, and focus returns to the Connect button.
+	let trap = null;
+	const closePicker = (restoreFocus = true) => {
+		document.removeEventListener('click', onOutside);
+		trap?.release(restoreFocus);
+		trap = null;
+		picker.remove();
 	};
-	setTimeout(() => document.addEventListener('click', close), 0);
+	const onOutside = (e) => {
+		if (!picker.contains(e.target) && e.target !== anchorEl) closePicker();
+	};
+
+	mmBtn.onclick = (e) => { e.stopPropagation(); closePicker(false); onBrowser(); };
+	wcBtn.onclick = (e) => { e.stopPropagation(); closePicker(false); onWC(); };
+
+	trap = trapFocus(picker, { onEscape: () => closePicker(), returnTo: anchorEl });
+	setTimeout(() => document.addEventListener('click', onOutside), 0);
 }
 
 const LABEL_DEFAULTS = {

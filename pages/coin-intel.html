@@ -266,6 +266,18 @@
 		/* bubble-map */
 		.bubblemap { width: 100%; height: 248px; background: radial-gradient(ellipse at 50% 45%, rgba(139,92,246,0.06), transparent 70%); border: 1px solid var(--ci-border); border-radius: 12px; }
 		.bubblemap text { font-family: var(--font-mono, monospace); }
+		.fg3d-wrap { position: relative; }
+		.fg3d { position: relative; width: 100%; height: 300px; background: radial-gradient(ellipse at 50% 45%, rgba(139,92,246,0.10), transparent 70%); border: 1px solid var(--ci-border); border-radius: 12px; overflow: hidden; }
+		.fg3d canvas:focus-visible { box-shadow: inset 0 0 0 2px var(--ci-accent, #8b5cf6); border-radius: 12px; }
+		.fg3d-tip { position: absolute; z-index: 2; pointer-events: none; max-width: calc(100% - 16px); padding: 4px 8px; border-radius: 6px; font: 11px var(--font-mono, monospace); color: var(--ci-text); background: rgba(10,12,18,0.92); border: 1px solid var(--ci-border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.fg3d-bar { display: flex; gap: 8px; align-items: center; margin-top: 8px; font-size: 11px; color: var(--ci-muted); }
+		.fg3d-bar button { font: inherit; color: var(--ci-text); background: transparent; border: 1px solid var(--ci-border); border-radius: 999px; padding: 3px 10px; cursor: pointer; transition: background .15s, border-color .15s; }
+		.fg3d-bar button:hover { background: rgba(255,255,255,0.06); border-color: var(--ci-muted); }
+		.fg3d-bar button:active { background: rgba(255,255,255,0.12); }
+		.fg3d-bar button:focus-visible { outline: 2px solid var(--ci-accent, #8b5cf6); outline-offset: 2px; }
+		.fg3d-bar button[aria-pressed="true"] { border-color: #22c55e; color: #22c55e; }
+		.fg3d-bar .fg3d-status { margin-left: auto; }
+		@media (max-width: 520px) { .fg3d { height: 240px; } }
 		.bm-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; font-size: 10.5px; color: var(--ci-muted); }
 		.bm-legend span { display: inline-flex; align-items: center; gap: 5px; }
 		.bm-legend .sw { width: 9px; height: 9px; border-radius: 50%; }
@@ -853,12 +865,45 @@
 
 		// ── detail drawer + bubble-map ────────────────────────────
 		const scrim = $('#ci-scrim'), drawer = $('#ci-drawer'), drawerBody = $('#ci-drawer-body');
-		function closeDrawer() { drawer.classList.remove('is-open'); scrim.classList.remove('is-open'); drawer.setAttribute('aria-hidden','true'); }
+		let funder3d = null;
+		function teardownFunder3d() { if (funder3d) { funder3d.destroy(); funder3d = null; } }
+		function hasWebgl() {
+			try { const c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl'))); } catch { return false; }
+		}
+		// Upgrades the SVG bubble map to the lazy-loaded 3D graph; the SVG stays as the
+		// fallback for no-WebGL, no wallets, a failed chunk load, or a lost GL context.
+		async function mountFunder3d(mint, wallets, clusters) {
+			teardownFunder3d();
+			const holders = wallets.filter(w => (w.net_sol || 0) > 0);
+			const wrap = $('#bm-3d-wrap'), host = $('#bm-3d'), svg = $('#bm-svg');
+			if (!wrap || !holders.length || !hasWebgl()) return;
+			const fallback = () => { teardownFunder3d(); wrap.hidden = true; if (svg) svg.hidden = false; };
+			try {
+				const { mountFunderGraph } = await import('/src/funder-graph.js');
+				if (drawerBody.dataset.mint !== mint || !host.isConnected) return;
+				const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+				wrap.hidden = false;
+				funder3d = mountFunderGraph(host, { wallets, clusters, mint, reducedMotion: reduced, onError: fallback });
+				svg.hidden = true;
+				const btn = $('#bm-live'), status = $('#bm-status');
+				const labels = { off: 'Drag to rotate · scroll to zoom', connecting: 'Connecting to live trades…', live: 'Live · new buyers join the graph', degraded: 'Live feed unavailable right now' };
+				btn.addEventListener('click', () => {
+					const on = btn.getAttribute('aria-pressed') !== 'true';
+					btn.setAttribute('aria-pressed', String(on));
+					funder3d?.setLive(on, (st) => { status.textContent = labels[st] || labels.off; });
+				});
+			} catch (err) {
+				console.warn('3D funder graph unavailable, using 2D map', err);
+				fallback();
+			}
+		}
+		function closeDrawer() { teardownFunder3d(); drawer.classList.remove('is-open'); scrim.classList.remove('is-open'); drawer.setAttribute('aria-hidden','true'); }
 		$('#ci-drawer-close').addEventListener('click', closeDrawer);
 		scrim.addEventListener('click', closeDrawer);
 		document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
 
 		async function openDrawer(mint) {
+			teardownFunder3d();
 			drawerBody.dataset.mint = mint;
 			drawer.classList.add('is-open'); scrim.classList.add('is-open'); drawer.setAttribute('aria-hidden','false');
 			drawer.scrollTop = 0;
@@ -1008,7 +1053,11 @@
 				</div></div>
 				<div class="d-section"><h4>Risk flags</h4><div class="flags">${flags}</div></div>
 				<div class="d-section"><h4>Wallet network · funder clusters</h4>
-					<svg id="bm-svg" class="bubblemap" viewBox="0 0 420 248" preserveAspectRatio="xMidYMid meet"></svg>
+					<div id="bm-3d-wrap" class="fg3d-wrap" hidden>
+						<div id="bm-3d"></div>
+						<div class="fg3d-bar"><button type="button" id="bm-live" aria-pressed="false">Live trades</button><span class="fg3d-status" id="bm-status" aria-live="polite">Drag to rotate · scroll to zoom</span></div>
+					</div>
+					<svg id="bm-svg" class="bubblemap" viewBox="0 0 420 248" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Wallet network grouped by shared funder"></svg>
 					${bmLegend}
 				</div>
 				<div class="d-section"><h4>Order book · classified ${wallets.length?`(${wallets.length} wallets)`:''}</h4>

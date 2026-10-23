@@ -16,6 +16,7 @@
 
 import { apiFetch } from './api.js';
 import { agentBus } from './agents/agent-bus.js';
+import { shortAddress } from './shared/address.js';
 
 const API = '/api';
 
@@ -33,10 +34,7 @@ function shortHash(h, n = 8) {
 	return h.length > n * 2 + 1 ? `${h.slice(0, n)}…${h.slice(-n)}` : h;
 }
 
-function shortAddr(a) {
-	if (!a) return '—';
-	return a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a;
-}
+function shortAddr(a) { return shortAddress(a, 6, 4, { empty: '\u2014' }); }
 
 function fmtBytes(n) {
 	if (!n) return '0 B';

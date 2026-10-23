@@ -935,6 +935,30 @@
 			"descHash": "9e737cbb83cb",
 			"annotations": "ref:MONEY",
 			"schemaHash": "29b676065365"
+		},
+		{
+			"name": "inbox_list",
+			"title": "List received mail",
+			"descHead": "Use this to see what mail has arrived for the agent. Received messages o",
+			"descHash": "82d71c8495e2",
+			"annotations": "ref:READ",
+			"schemaHash": "f5e3b9f51801"
+		},
+		{
+			"name": "inbox_read",
+			"title": "Read a received email",
+			"descHead": "Use this to open one received message from inbox_list. Returns the fence",
+			"descHash": "2f1a409e9ef1",
+			"annotations": "ref:READ",
+			"schemaHash": "9c1813dcbae3"
+		},
+		{
+			"name": "inbox_wait_for_code",
+			"title": "Wait for a verification code",
+			"descHead": "Use this right after you trigger a signup, login or verification that em",
+			"descHash": "704eb02070ca",
+			"annotations": "ref:READ",
+			"schemaHash": "0a8ffc9e17ef"
 		}
 	],
 	"api/_mcp/tools/memory.js": [

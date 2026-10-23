@@ -15,6 +15,7 @@
 
 import './agent-perps.css';
 import { consumeCsrfToken } from './api.js';
+import { shortAddress as shortAddr } from './shared/address.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const root = document.getElementById('apx-root');
@@ -120,9 +121,6 @@ function timeAgo(iso) {
 	return new Date(iso).toLocaleDateString();
 }
 
-function shortAddr(a) {
-	return a && a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '';
-}
 
 function newIdempotencyKey() {
 	return crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;

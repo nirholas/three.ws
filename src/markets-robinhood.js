@@ -212,13 +212,14 @@ async function loadLaunches() {
 		el.innerHTML = `
 			<div class="cv-table-wrap">
 				<table class="cv-table">
-					<thead><tr><th class="left">Token</th><th>Launchpad</th><th class="hide-md">Price</th><th class="hide-lg">Mkt Cap</th></tr></thead>
+					<thead><tr><th class="left">Token</th><th>Venue</th><th>Deployer</th><th class="hide-md">Price</th><th class="hide-lg">Mkt Cap</th></tr></thead>
 					<tbody>${launches
 						.map(
 							(l) => `
 						<tr data-href="/markets/robinhood/coin/${encodeURIComponent(l.token)}">
 							<td class="left cv-mono">${esc(l.symbol || `${l.token.slice(0, 6)}…${l.token.slice(-4)}`)}</td>
-							<td><span class="rh-launchpad-badge">${esc(l.launchpad)}</span></td>
+							<td><span class="rh-launchpad-badge">${esc(l.venue?.label || l.launchpad)}</span></td>
+							<td>${deployerCell(l)}</td>
 							<td class="hide-md cv-mono">${l.priceUsd != null ? esc(formatUsd(l.priceUsd)) : '—'}</td>
 							<td class="hide-lg">${l.marketCapUsd != null ? esc(formatUsd(l.marketCapUsd)) : '—'}</td>
 						</tr>`,
@@ -227,9 +228,30 @@ async function loadLaunches() {
 				</table>
 			</div>`;
 		wireRowLinks(el);
-	} catch {
-		el.innerHTML = '';
+	} catch (err) {
+		el.innerHTML = emptyState(err.message || 'Failed to load launches.', 'coins');
 	}
+}
+
+const FLAG_LABELS = {
+	dev_sold: ['Dev sold', 'The deployer has sold its whole launch allocation.'],
+	prior_dev_exit: ['Prior exit', 'This deployer has fully sold out of an earlier launch.'],
+	serial_exit: ['Serial exit', 'This deployer has sold out of two or more earlier launches.'],
+	serial_deployer: ['Serial deployer', 'This deployer has launched five or more tokens.'],
+};
+
+// Track record of the wallet that launched a coin, from the feed worker's
+// observed launches. Null means the worker did not grade this one (older than
+// its window, or the worker was unreachable), so say so instead of implying clean.
+function deployerCell(l) {
+	const rec = l.deployerRecord;
+	if (!rec) return '<span class="rh-deployer-note">Not graded</span>';
+	const flags = (l.flags || [])
+		.filter((f) => FLAG_LABELS[f])
+		.map((f) => `<span class="rh-flag rh-flag-${f}" title="${esc(FLAG_LABELS[f][1])}" tabindex="0">${esc(FLAG_LABELS[f][0])}</span>`)
+		.join('');
+	const sold = l.devSold === true && l.devSoldPct != null ? ` (${Math.round(l.devSoldPct)}%)` : '';
+	return `<span class="rh-deployer-note" title="Launches and full sell-outs seen on chain in the last ${rec.windowBlocks ?? '?'} blocks">${rec.priorLaunches} prior, ${rec.priorDevExits} exits</span>${flags}${sold ? `<span class="rh-deployer-note">${esc(sold)}</span>` : ''}`;
 }
 
 function renderCoinsShell() {

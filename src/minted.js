@@ -14,6 +14,7 @@
 
 import { createLogger } from './shared/log.js';
 import { enterStagger, updateValue, liveDot, setLiveDot } from './ui-juice.js';
+import { shortAddress } from './shared/address.js';
 
 const log = createLogger('minted');
 
@@ -33,11 +34,7 @@ const state = {
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-function shortAddr(a) {
-	if (!a) return '';
-	const s = String(a);
-	return s.length > 12 ? `${s.slice(0, 6)}…${s.slice(-4)}` : s;
-}
+function shortAddr(a) { return shortAddress(a, 6, 4); }
 
 function timeAgo(iso) {
 	const t = new Date(iso).getTime();

@@ -9,6 +9,7 @@ import { isUserRejection } from '../solana-mobile/src/mwa-errors.js';
 import { log } from './shared/log.js';
 import { showToast } from './ui-helpers.js';
 import { resolveError } from './shared/error-messages.js';
+import { shortAddress, spokenAddress } from './shared/address.js';
 
 let connectedWalletAddress = null;
 let listenersBound = false;
@@ -68,7 +69,7 @@ function setConnecting(btn, on) {
 		// here would double-broadcast on success.
 		const label = btn.querySelector('[data-wallet-label]') || btn;
 		label.textContent = connectedWalletAddress
-			? `${connectedWalletAddress.slice(0, 4)}...${connectedWalletAddress.slice(-4)}`
+			? shortAddress(connectedWalletAddress, 4, 4, { sep: '...' })
 			: defaultLabel();
 	}
 }
@@ -125,7 +126,7 @@ async function onConnectWallet() {
 export function updateWalletState(address) {
 	const btn = document.getElementById('connect-wallet-btn');
 	if (btn) {
-		const short = address ? `${address.slice(0, 4)}...${address.slice(-4)}` : defaultLabel();
+		const short = address ? shortAddress(address, 4, 4, { sep: '...' }) : defaultLabel();
 		// Buttons that wrap their text in a [data-wallet-label] span keep their
 		// icon/markup intact across state changes; plain-text buttons (e.g. the
 		// pump dashboard) fall back to replacing textContent.
@@ -135,7 +136,7 @@ export function updateWalletState(address) {
 		btn.classList.toggle('is-connected', Boolean(address));
 		if (address) {
 			btn.title = `Connected: ${address}`;
-			btn.setAttribute('aria-label', `Solana wallet connected: ${address}`);
+			btn.setAttribute('aria-label', `Solana wallet connected, ${short}. Full address: ${spokenAddress(address)}`);
 			btn.dataset.address = address;
 		} else {
 			btn.title = defaultHint();

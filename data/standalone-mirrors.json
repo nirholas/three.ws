@@ -911,6 +911,13 @@
 			"direction": "out",
 			"exporter": "sync",
 			"npm": "@three-ws/x402-payment-modal"
+		},
+		{
+			"repo": "3D-AR-Studio",
+			"path": "packages/ar-studio",
+			"direction": "out",
+			"exporter": "sync",
+			"npm": "3d-ar-studio"
 		}
 	]
 }

@@ -36,6 +36,7 @@
 
 import { computeView, getSolUsd } from '../widgets/bonding-curve.js';
 import { proxiedImageURL } from '../ipfs.js';
+import { shortAddress as shortMint } from '../shared/address.js';
 
 const COIN_ENDPOINT = '/api/pump/coin';
 const CURVE_ENDPOINT = '/api/pump/curve';
@@ -116,11 +117,6 @@ function timeSince(ms) {
 	return new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-function shortMint(s, head = 4, tail = 4) {
-	const str = String(s || '');
-	if (str.length <= head + tail + 1) return str;
-	return `${str.slice(0, head)}…${str.slice(-tail)}`;
-}
 
 // Plain-language values for screen readers — "1.2 million dollars" etc.
 function spokenUsd(n) {

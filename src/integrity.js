@@ -10,14 +10,12 @@
  */
 
 import { readOnchainAnchor } from './proof-of-custody/verifier.js';
+import { shortAddress } from './shared/address.js';
 
 const root = document.getElementById('intg-root');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-function short(s, h = 10, t = 10) {
-	const v = String(s || '');
-	return v.length > h + t + 1 ? `${v.slice(0, h)}…${v.slice(-t)}` : v;
-}
+function short(s, h = 10, t = 10) { return shortAddress(s, h, t); }
 function fmtTime(iso) {
 	if (!iso) return '—';
 	try { return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); } catch { return String(iso); }

@@ -17,6 +17,7 @@ import { fetchPassport } from './api.js';
 import { renderHandshake, parseIdentityProofs, hasDualIdentity } from './handshake.js';
 import { injectTrustSurfaceCss } from './trust-surface.css.js';
 import { log } from '../shared/log.js';
+import { shortAddress as shortAddr } from '../shared/address.js';
 
 const THREE_DECIMALS = 6;
 const LAMPORTS_PER_SOL = 1e9;
@@ -46,7 +47,6 @@ const fmtTimeAgo = (iso) => {
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => (
 	{ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
 ));
-const shortAddr = (a) => { const s = String(a ?? ''); return s.length > 12 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s; };
 
 function explorerTx(sig, cluster) { return sig ? `https://explorer.solana.com/tx/${sig}${cluster === 'mainnet' ? '' : '?cluster=devnet'}` : null; }
 function explorerAddr(a, cluster) { return a ? `https://explorer.solana.com/address/${a}${cluster === 'mainnet' ? '' : '?cluster=devnet'}` : null; }

@@ -6,6 +6,7 @@
 // and the public submission feed. Read-only.
 
 import { mdToHtml } from './md.js';
+import { shortAddress } from './shared/address.js';
 
 const SOLSCAN = 'https://solscan.io/account/';
 
@@ -234,9 +235,7 @@ function timeAgo(iso) {
 }
 // Addresses come from pump.fun's feed, so the result is escaped for innerHTML.
 function shortAddr(a) {
-	if (!a) return 'anon';
-	const s = String(a);
-	return esc(s.length > 12 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s);
+	return esc(shortAddress(a, 4, 4, { empty: 'anon' }));
 }
 
 init();

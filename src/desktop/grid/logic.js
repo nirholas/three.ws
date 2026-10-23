@@ -2,6 +2,8 @@
 // reach, the byte-tier ladder and the text helpers the panels use. No DOM and
 // no three.js, so tests/desktop-grid.test.js can check all of it.
 
+import { shortAddress } from '../../shared/address.js';
+
 /** The room is a square of this half-width, in metres. Walls stand on it. */
 export const ROOM = { half: 18, height: 10 };
 
@@ -121,7 +123,4 @@ export function wrap(text, max) {
 }
 
 /** A wallet address as `AbCd...wXyZ`. Anything short is returned whole. */
-export function shortWallet(addr) {
-	const a = String(addr ?? '');
-	return a.length > 12 ? `${a.slice(0, 4)}...${a.slice(-4)}` : a;
-}
+export function shortWallet(addr) { return shortAddress(addr, 4, 4, { sep: '...' }); }

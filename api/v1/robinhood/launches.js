@@ -2,18 +2,22 @@
 //
 // Free, keyless. Newest token launches from Pons V2 (the chain's busiest
 // launchpad: ETH bonding curve graduating into a locked Uniswap V4 pool), read
-// over RPC from its factory's TokenLaunched logs, plus NOXA (instant Uniswap
-// v3) and The Odyssey (bonding-curve) from Blockscout's decoded-log API. Each
-// launchpad source fails independently, so one indexer outage never empties
-// the board. Enriched with DexScreener market data where a pool already
-// exists. Newest first.
+// over RPC from its factory's TokenLaunched logs, and The Odyssey from
+// Blockscout's decoded-log API. The robinhood-feed worker adds every other
+// launch venue observed on chain and grades each deployer: venue, prior
+// launches, prior dev exits, a dev-sold flag. Each source fails independently,
+// so one outage never empties the board. Enriched with DexScreener market data
+// where a pool already exists. Newest first.
 
 import { defineEndpoint } from '../../_lib/gateway.js';
 import { rateLimited } from '../../_lib/http.js';
 import { limits } from '../../_lib/rate-limit.js';
 import { recentLaunches, dexSnapshot, BLOCKSCOUT_BASE, asOf } from '../../_lib/robinhood.js';
 import { recentPonsLaunches } from '../../_lib/pons.js';
+import { recentFeedLaunches } from '../../_lib/robinhood-feed.js';
 import { fetchCoinPriceUsdOrNull } from '../../_lib/market-fallbacks.js';
+
+const gradingOf = ({ venue, deployerRecord, devSold, devSoldPct, flags }) => ({ venue, deployerRecord, devSold, devSoldPct, flags });
 
 const CACHE_CONTROL = 'public, max-age=30, s-maxage=30, stale-while-revalidate=45';
 
@@ -26,7 +30,7 @@ export default defineEndpoint({
 		if (!rl.success) return rateLimited(res, rl, 'Robinhood Chain data is capped at 60 requests/min per IP');
 
 		const limit = Math.min(60, Math.max(1, Number(query.limit) || 40));
-		const [pons, others] = await Promise.all([
+		const [pons, others, feed] = await Promise.all([
 			recentPonsLaunches({ limit }).catch((err) => {
 				console.error('[v1/robinhood/launches] pons read failed', err?.shortMessage || err?.message);
 				return [];
@@ -35,8 +39,20 @@ export default defineEndpoint({
 				console.error('[v1/robinhood/launches] blockscout read failed', err?.message);
 				return [];
 			}),
+			recentFeedLaunches({ limit }).catch((err) => {
+				console.error('[v1/robinhood/launches] feed worker read failed', err?.message);
+				return [];
+			}),
 		]);
-		const launches = [...pons, ...others].sort((a, b) => b.block - a.block).slice(0, limit);
+		// The worker's rows carry venue and reputation; the Pons and Odyssey rows
+		// carry curve price and progress. Where both saw a token, keep the richer
+		// market row and overlay the worker's grading onto it.
+		const byToken = new Map([...pons, ...others].map((l) => [l.token.toLowerCase(), l]));
+		for (const f of feed) {
+			const key = f.token.toLowerCase();
+			byToken.set(key, byToken.has(key) ? { ...byToken.get(key), ...gradingOf(f) } : f);
+		}
+		const launches = [...byToken.values()].sort((a, b) => b.block - a.block).slice(0, limit);
 		const [dex, ethUsd] = await Promise.all([
 			dexSnapshot(launches.map((l) => l.token)),
 			launches.some((l) => l.priceEth != null) ? fetchCoinPriceUsdOrNull('ethereum') : null,
@@ -52,7 +68,12 @@ export default defineEndpoint({
 				launchpad: l.launchpad,
 				type: l.type,
 				token: l.token,
+				venue: l.venue ?? null,
 				deployer: l.deployer,
+				deployerRecord: l.deployerRecord ?? null,
+				devSold: l.devSold ?? null,
+				devSoldPct: l.devSoldPct ?? null,
+				flags: l.flags ?? [],
 				block: l.block,
 				txHash: l.txHash,
 				timestamp: l.timestamp,
@@ -78,10 +99,10 @@ export default defineEndpoint({
 			count: enriched.length,
 			launchpads: [
 				{ name: 'Pons', style: 'bonding-curve', url: 'https://ponsfamily.com' },
-				{ name: 'NOXA', style: 'instant', url: 'https://fun.noxa.fi' },
 				{ name: 'The Odyssey', style: 'bonding-curve', url: 'https://theodyssey.fun' },
+				{ name: 'Other venues', style: 'discovered on chain', url: null },
 			],
-			source: 'rpc (Pons factory logs) + blockscout (on-chain logs) + dexscreener',
+			source: 'rpc (Pons factory logs, mint-log venue scan) + blockscout (on-chain logs) + dexscreener',
 			asOf: asOf(),
 		};
 	},

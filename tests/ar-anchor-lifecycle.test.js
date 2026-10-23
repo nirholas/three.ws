@@ -24,7 +24,7 @@ import {
 	reticleVisual,
 	advancePulse,
 	RETICLE_PULSE_SECONDS,
-} from '../src/ar/anchor-lifecycle.js';
+} from '../packages/ar-studio/src/studio/anchor-lifecycle.js';
 
 describe('nextTrackingState — transition-only tracking loss', () => {
 	it('a single missed frame does not declare loss (blip tolerance)', () => {

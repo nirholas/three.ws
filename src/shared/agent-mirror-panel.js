@@ -13,6 +13,7 @@
 // signatures, real spend-policy caps). No mock leaders, no fake fills.
 
 import { apiFetch } from '../api.js';
+import { shortAddress as shortAddr } from './address.js';
 
 const VIOLET = 'var(--wallet-accent, #c4b5fd)';
 
@@ -36,7 +37,6 @@ function toast(msg, ms = 2600) {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const shortAddr = (a, h = 4, t = 4) => (a && a.length > h + t + 1 ? `${a.slice(0, h)}…${a.slice(-t)}` : a || '');
 function fmtSol(n) {
 	if (n == null || !Number.isFinite(Number(n))) return '—';
 	const v = Number(n);

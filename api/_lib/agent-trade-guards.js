@@ -29,6 +29,9 @@ import { sql } from './db.js';
 import { runLocked } from './locked-sql.js';
 import { solUsdPrice } from './avatar-wallet.js';
 import { logAudit } from './audit.js';
+// The capped-burner tiers: how much the agent may sign alone before the owner
+// must confirm. Pure, shared with the browser policy editor's live preview.
+import { normalizeBurnerPolicy, classifyBurnerSpend, validateBurnerPolicy, burnerEnabled } from './burner-tier.js';
 // The destination whitelist: cooldown-gated allowlist for every outbound category.
 import { evaluateDestination } from './destination-whitelist.js';
 // Sweeper-bot heuristic for owner-typed withdraw destinations: an injected
@@ -1115,6 +1118,88 @@ async function loadPolicyMeta(agentId) {
 	return { meta: row.meta || {}, userId: row.user_id ?? null };
 }
 
+// ── capped burner ─────────────────────────────────────────────────────────────
+
+/** Read the effective burner policy off an agent's meta blob. */
+export function getBurnerPolicy(meta) {
+	return normalizeBurnerPolicy(meta?.burner_policy);
+}
+
+/**
+ * USD the agent signed ALONE over the trailing window. A spend the owner
+ * approved (custody row carries meta.approval_id) is the owner's decision, so
+ * it does not eat the agent's own daily allowance.
+ */
+export async function getAutoSpendUsd(agentId, network = 'mainnet', windowHours = 24) {
+	const [row] = await sql`
+		SELECT COALESCE(SUM(usd), 0)::float8 AS usd
+		FROM agent_custody_events
+		WHERE agent_id = ${agentId}
+		  AND network = ${network}
+		  AND event_type = 'spend'
+		  AND status IN ('ok', 'pending', 'confirmed')
+		  AND usd IS NOT NULL
+		  AND (meta->>'approval_id') IS NULL
+		  AND created_at > now() - (${windowHours} || ' hours')::interval
+	`;
+	return Number(row?.usd || 0);
+}
+
+/**
+ * Persist a burner-policy patch (owner-only). Keys absent from `patch` are kept.
+ * An all-null autoMaxUsd turns the burner off. Writes a custody audit event and
+ * a platform audit row. Returns the new normalized policy.
+ */
+export async function setBurnerPolicy(agentId, userId, patch, { req = null } = {}) {
+	const [row] = await sql`
+		SELECT id, user_id, meta FROM agent_identities
+		WHERE id = ${agentId} AND deleted_at IS NULL
+	`;
+	if (!row) throw Object.assign(new Error('agent not found'), { status: 404, code: 'not_found' });
+	if (row.user_id !== userId) throw Object.assign(new Error('not your agent'), { status: 403, code: 'forbidden' });
+
+	const prev = getBurnerPolicy(row.meta);
+	const next = normalizeBurnerPolicy({
+		autoMaxUsd: 'autoMaxUsd' in patch ? patch.autoMaxUsd : prev.autoMaxUsd,
+		dailyAutoMaxUsd: 'dailyAutoMaxUsd' in patch ? patch.dailyAutoMaxUsd : prev.dailyAutoMaxUsd,
+		confirmAboveUsd: 'confirmAboveUsd' in patch ? patch.confirmAboveUsd : prev.confirmAboveUsd,
+		expiryMinutes: 'expiryMinutes' in patch ? patch.expiryMinutes : prev.expiryMinutes,
+	});
+	const problem = validateBurnerPolicy(next);
+	if (problem) throw Object.assign(new Error(problem), { status: 422, code: 'invalid_burner_policy' });
+	next.updatedAt = new Date().toISOString();
+
+	const meta = { ...(row.meta || {}), burner_policy: next };
+	await sql`UPDATE agent_identities SET meta = ${JSON.stringify(meta)}::jsonb WHERE id = ${agentId}`;
+
+	await recordCustodyEvent({
+		agentId, userId, eventType: 'limit_change', reason: 'burner_policy_updated', meta: { prev, next },
+	}).catch((e) => console.warn('[custody] burner limit_change record failed', e?.message));
+	logAudit({ userId, action: 'custody.burner_policy', resourceId: agentId, meta: { prev, next }, req });
+	return next;
+}
+
+/**
+ * The burner tier gate. Throws SpendLimitError('policy_step_up') with
+ * detail.burner = true when the spend is above what the agent may sign alone,
+ * so every caller that already turns a step-up into an approval request (wallet
+ * intents, agent commerce, trades) handles it with no new branch.
+ */
+async function enforceBurnerTier({ agentId, meta, category, usdValue, network }) {
+	if (meta == null) meta = (await loadPolicyMeta(agentId)).meta;
+	const policy = getBurnerPolicy(meta);
+	if (!burnerEnabled(policy)) return;
+	const hasUsd = typeof usdValue === 'number' && Number.isFinite(usdValue) && usdValue >= 0;
+	const autoSpentUsd = hasUsd && policy.dailyAutoMaxUsd != null ? await getAutoSpendUsd(agentId, network) : 0;
+	const verdict = classifyBurnerSpend({ policy, usd: hasUsd ? usdValue : null, autoSpentUsd });
+	if (verdict.tier === 'auto') return;
+	throw new SpendLimitError(
+		'policy_step_up',
+		`This spend needs your approval: ${verdict.reason}`,
+		{ decision: 'step_up', burner: true, tier: verdict.tier, reason: verdict.reason, category, usd: hasUsd ? usdValue : null, auto_spent_usd: autoSpentUsd, expiry_minutes: policy.expiryMinutes },
+	);
+}
+
 export async function enforceSpendLimit({
 	agentId,
 	meta,
@@ -1137,6 +1222,9 @@ export async function enforceSpendLimit({
 	// The owner already saw the sweeper-bot confirm for this exact destination
 	// and chose to proceed. See enforceDestinationAllowlist's docstring.
 	sweepRiskAck = false,
+	// The owner is the one acting (their own session, or a button only they can
+	// press), so the agent's burner cap, which bounds the AGENT, does not apply.
+	burnerExempt = false,
 }) {
 	// Fail closed: a caller that named neither the limits nor the meta gets the
 	// agent's REAL policy read from the row, never an empty default policy.
@@ -1166,6 +1254,13 @@ export async function enforceSpendLimit({
 	// withdraw paths all do (or pass `meta`).
 	const policy = policyRules || (meta ? getPolicyRules(meta) : null);
 	await enforcePolicyRules({ agentId, policy, category, usdValue, asset, destination, limits: lim, policyContext, userId, network, stepUpApproved });
+
+	// 2b. Capped burner: above the agent's own cap the spend becomes a pending
+	// approval (policy_step_up), never a failure. The owner's own actions, the
+	// owner's withdraw path and a spend the owner already approved skip it.
+	if (!burnerExempt && !stepUpApproved && category !== 'withdraw') {
+		await enforceBurnerTier({ agentId, meta, category, usdValue, network });
+	}
 
 	const hasUsd = typeof usdValue === 'number' && Number.isFinite(usdValue) && usdValue >= 0;
 
@@ -1277,6 +1372,9 @@ export async function reserveSpendUsd({
 	// The owner already saw the sweeper-bot confirm for this exact destination
 	// and chose to proceed. See enforceDestinationAllowlist's docstring.
 	sweepRiskAck = false,
+	// The owner is the one acting (their own session, or a button only they can
+	// press), so the agent's burner cap, which bounds the AGENT, does not apply.
+	burnerExempt = false,
 }) {
 	// Fail closed, exactly as enforceSpendLimit does: the reserve is the layer that
 	// runs before any key is touched, so it is the layer that must never default to
@@ -1305,6 +1403,11 @@ export async function reserveSpendUsd({
 	// run BEFORE the row is reserved so a policy block never claims daily headroom.
 	const policy = policyRules || (meta ? getPolicyRules(meta) : null);
 	await enforcePolicyRules({ agentId, policy, category, usdValue, asset, destination, limits: lim, policyContext, userId, network, stepUpApproved });
+
+	// Capped burner: same gate as enforceSpendLimit, before a row is reserved.
+	if (!burnerExempt && !stepUpApproved && category !== 'withdraw') {
+		await enforceBurnerTier({ agentId, meta, category, usdValue, network });
+	}
 
 	const hasUsd = typeof usdValue === 'number' && Number.isFinite(usdValue) && usdValue >= 0;
 

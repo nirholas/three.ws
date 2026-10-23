@@ -9,6 +9,7 @@
 import { isSolanaMobileTwa, isSolanaMobileDevice } from '../solana-mobile/src/seeker-detect.js';
 import { isUserRejection } from '../solana-mobile/src/mwa-errors.js';
 import { apiFetch } from './api.js';
+import { shortAddress as shorten } from './shared/address.js';
 
 // The wallet stack (Mobile Wallet Adapter + @solana/web3.js) is ~700 KB. It
 // is only needed to sign in, so the home screen loads without it: inside the
@@ -48,7 +49,6 @@ const onSeeker = () => {
 	try { return isSolanaMobileTwa() || isSolanaMobileDevice(); } catch { return false; }
 };
 
-const shorten = (addr) => (addr ? `${addr.slice(0, 4)}…${addr.slice(-4)}` : '');
 
 function escapeHtml(s) {
 	return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

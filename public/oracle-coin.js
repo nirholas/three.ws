@@ -757,6 +757,67 @@
 		canvas.innerHTML = `<div class="oc-chart-readout"><span class="oc-chart-price">${fmtPrice(last)}</span><span class="mkt-${chg.cls}">${chg.txt} · ${label}</span></div>${areaChartSvg(pts, markers)}${legend}`;
 	}
 
+
+	// ── Posts view ($THREE only) ─────────────────────────────────────────────────
+	// Every @trythreews post plotted at the $THREE price it went out at, sized by
+	// engagement and coloured by the +4h return, so the question "does posting move
+	// the coin" is answerable by looking. Built by `npm run x:archive:price` into
+	// /data/trythreews-post-impact.json; the bubbles are real links, laid over the
+	// line as HTML so they stay round at any width.
+	const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+
+	const fmtRet = (v) => (v == null ? 'n/a' : `${v > 0 ? '+' : ''}${v.toFixed(Math.abs(v) >= 100 ? 0 : 1)}%`);
+
+	function postsOverlay(points, posts) {
+		const w = 720, h = 240, volH = 38, pad = { t: 12, r: 8, b: 4, l: 8 };
+		const innerW = w - pad.l - pad.r, innerH = h - volH - pad.t - pad.b;
+		const closes = points.map((p) => p.c);
+		const min = Math.min(...closes), max = Math.max(...closes), span = (max - min) || max || 1;
+		const t0 = points[0].t, t1 = points[points.length - 1].t, tspan = (t1 - t0) || 1;
+		const maxEng = Math.max(1, ...posts.map((x) => x.engagement));
+		const sorted = [...posts].sort((a, b) => b.engagement - a.engagement); // small bubbles paint last, stay clickable
+		return sorted.map((x) => {
+			const tSec = Date.parse(x.postedAt) / 1000;
+			const xp = ((pad.l + ((tSec - t0) / tspan) * innerW) / w) * 100;
+			const yv = (pad.t + innerH - ((x.priceAtPost - min) / span) * innerH) / h * 100;
+			const d = Math.round(12 + 22 * Math.sqrt(x.engagement / maxEng));
+			const tone = x.r4h == null ? 'na' : x.r4h >= 0 ? 'up' : 'down';
+			const alpha = x.r4h == null ? 0.4 : 0.45 + 0.5 * Math.min(1, Math.abs(x.r4h) / 20);
+			const label = `${new Date(x.postedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}: ${x.text || 'post'} | ${x.engagement.toLocaleString()} engagements | +1h ${fmtRet(x.r1h)}, +4h ${fmtRet(x.r4h)}, +24h ${fmtRet(x.r24h)}`;
+			return `<a class="oc-post ${tone}" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" title="${esc(label)}" aria-label="${esc(label)}" style="left:${xp.toFixed(2)}%;top:${Math.max(2, Math.min(98, yv)).toFixed(2)}%;width:${d}px;height:${d}px;opacity:${alpha.toFixed(2)}"></a>`;
+		}).join('');
+	}
+
+	function postsSummary(summary) {
+		const cells = [['r1h', '+1h'], ['r4h', '+4h'], ['r24h', '+24h']].map(([k, label]) => {
+			const hz = summary.horizons[k];
+			const cls = hz.median == null ? 'flat' : hz.median >= 0 ? 'up' : 'down';
+			const base = hz.baselineMedian == null ? '' : `<span class="oc-post-base">any time ${fmtRet(hz.baselineMedian)}</span>`;
+			return `<div class="oc-post-stat"><span class="oc-post-stat-k">${label} median</span><span class="oc-post-stat-v mkt-${cls}">${fmtRet(hz.median)}</span>${base}<span class="oc-post-base">${hz.measured} posts${hz.unavailable ? `, ${hz.unavailable} unmeasured` : ''}</span></div>`;
+		}).join('');
+		return `<div class="oc-post-stats">${cells}</div>`;
+	}
+
+	async function loadPostsChart(canvas, mint) {
+		canvas.innerHTML = '<div class="oc-chart-skel"></div>';
+		const failed = (msg) => { canvas.innerHTML = `<div class="state" style="padding:34px 0">${msg}</div>`; };
+		let doc = null;
+		try {
+			const res = await fetch('/data/trythreews-post-impact.json', { cache: 'no-cache' });
+			if (res.ok) doc = await res.json();
+		} catch { /* handled below */ }
+		if (!doc || !Array.isArray(doc.posts) || !doc.posts.length) return failed('Post impact data did not load. Reload the page; it is rebuilt with <code>npm run x:archive:price</code>.');
+		const first = Math.floor(Date.parse(doc.posts[0].postedAt) / 1000) - 86400;
+		const to = Math.floor(Date.now() / 1000);
+		const interval = to - first <= 60 * 86400 ? '4h' : '12h';
+		const { ok, data } = await api(`/api/pump/price-history?mint=${encodeURIComponent(mint)}&interval=${interval}&from=${first}&to=${to}`, { timeout: 15000 });
+		const pts = ((data && data.data) || []).filter((p) => Number.isFinite(p.c));
+		if (!ok || pts.length < 2) return failed('Price history is unavailable right now. Try again in a moment.');
+		const shown = doc.posts.filter((x) => Date.parse(x.postedAt) / 1000 >= pts[0].t);
+		canvas.innerHTML = `${postsSummary(doc.summary)}<div class="oc-posts-plot">${areaChartSvg(pts)}${postsOverlay(pts, shown)}</div>`
+			+ `<div class="oc-chart-legend"><span>bubble size: engagement</span><span class="oc-lg buy"></span>+4h up<span class="oc-lg sell"></span>+4h down<span class="oc-lg na"></span>not measured<span class="oc-lg-ct">${shown.length} posts plotted</span></div>`;
+	}
+
 	// The chart view ids the page used before the shared switcher took over, mapped
 	// onto its ids, so a returning viewer's last choice here still opens.
 	const LEGACY_VIEW = { candles: 'dexscreener', line: 'line', trades: 'trades' };
@@ -790,6 +851,7 @@
 		const nativeViews = [
 			native('line', 'Line'),
 			...(hasTrades ? [native('trades', 'Agent trades', { markers: AGENT_TRADES })] : []),
+			...(mint === THREE_MINT ? [{ id: 'posts', label: 'Posts', mount: ({ host }) => { host.className = 'oc-chart-canvas oc-chart-native'; loadPostsChart(host, mint); } }] : []),
 		];
 
 		// Every chart terminal the rest of three.ws offers (DexScreener, Birdeye,

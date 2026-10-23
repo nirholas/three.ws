@@ -24,6 +24,8 @@
  * the host hands it and never names or recommends any token.
  */
 
+import { shortAddress as shortAddr } from './address.js';
+
 const STYLE_ID = 'tw-smartmoney-style';
 const STYLE = `
 .tw-sm { border: 1px solid var(--stroke, rgba(255,255,255,.1)); border-radius: var(--radius-md, 10px); background: var(--surface-1, rgba(255,255,255,.03)); padding: 12px 13px; display: flex; flex-direction: column; gap: 10px; font-size: var(--text-sm, .8125rem); animation: tw-sm-in var(--duration-base, 220ms) var(--ease-out, ease); }
@@ -75,10 +77,6 @@ function injectStyle() {
 	document.head.appendChild(tag);
 }
 
-function shortAddr(a) {
-	const s = String(a || '');
-	return s.length > 10 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s;
-}
 
 function solscanUrl(address, network) {
 	const cluster = network === 'devnet' ? '?cluster=devnet' : '';

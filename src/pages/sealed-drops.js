@@ -30,6 +30,7 @@ import {
 	parseX25519Key,
 } from '../solana/vanity/sealed-envelope.js';
 import { deriveClaimToken, hashClaimToken } from '../solana/vanity/drop-protocol.js';
+import { shortAddress } from '../shared/address.js';
 
 const API = '/api/vanity/drops';
 const $ = (id) => document.getElementById(id);
@@ -37,7 +38,7 @@ const $ = (id) => document.getElementById(id);
 export function esc(s) {
 	return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
-function shortAddr(a) { const s = String(a || ''); return s.length > 16 ? `${s.slice(0, 8)}…${s.slice(-6)}` : s; }
+function shortAddr(a) { return shortAddress(a, 8, 6); }
 function assetLabel(a) { return a === 'THREE' ? '$THREE' : String(a || ''); }
 function timeLeft(ms) {
 	const d = ms - Date.now();

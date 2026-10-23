@@ -35,12 +35,4 @@ export function formatWalletUsdSafe(n) {
 	return formatWalletUsd(Number.isFinite(v) ? v : 0) ?? '$0';
 }
 
-/**
- * Shorten an address / mint / id for display: head + ellipsis + tail.
- * Returns the input unchanged when it is already short enough to show in full.
- */
-export function shortAddress(value, head = 4, tail = 4) {
-	const s = String(value || '');
-	if (s.length <= head + tail + 1) return s;
-	return `${s.slice(0, head)}…${s.slice(-tail)}`;
-}
+export { shortAddress } from './address.js';

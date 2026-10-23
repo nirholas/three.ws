@@ -22,6 +22,7 @@ import { chartEmbedUrls } from '../shared/chart-embeds.js';
 import { watchEmbed, embedFallbackNode } from '../shared/embed-guard.js';
 import { dextoolsTokenUrl } from '../shared/trading-terminals.js';
 import { parseTarget, SOL_RE } from './target.js';
+import { shortAddress as short } from '../shared/address.js';
 
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const POLL_MS = 5000;
@@ -59,7 +60,6 @@ function el(tag, attrs = {}, children = []) {
 	return n;
 }
 
-const short = (a) => (a && a.length > 10 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '');
 
 async function getJson(url) {
 	const r = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(12_000) });

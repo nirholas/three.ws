@@ -18,6 +18,7 @@
 
 import { socialBoostCard } from './shared/dextools-boost.js';
 import { dextoolsTokenUrl } from './shared/trading-terminals.js';
+import { shortAddress as shortAddr } from './shared/address.js';
 
 const ORIGIN = 'https://three.ws';
 const SOL_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -37,7 +38,6 @@ function node(tag, attrs = {}, children = []) {
 	return n;
 }
 
-const shortAddr = (a) => `${a.slice(0, 4)}…${a.slice(-4)}`;
 
 function fmtUsd(n) {
 	if (!Number.isFinite(n)) return null;

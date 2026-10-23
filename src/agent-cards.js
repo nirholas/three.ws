@@ -13,6 +13,7 @@
 
 import './agent-cards.css';
 import { consumeCsrfToken } from './api.js';
+import { shortAddress as shortAddr } from './shared/address.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const root = document.getElementById('ac-root');
@@ -106,9 +107,6 @@ function timeAgo(iso) {
 	return new Date(iso).toLocaleDateString();
 }
 
-function shortAddr(a) {
-	return a && a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '';
-}
 
 function debounce(fn, ms) {
 	let t;

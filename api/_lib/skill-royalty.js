@@ -96,7 +96,7 @@ export function computeSkillRoyaltySplit({ priceAtomics, platformBps }) {
  *
  * @param {{ skillId: string, authorId: string, payer?: string|null,
  *   network?: string|null, txHash?: string|null, priceAtomics: bigint|number|string,
- *   platformBps?: number }} opts
+ *   platformBps?: number, source?: string }} opts
  * @returns {Promise<{ ok: boolean, accrual?: object, reason?: string }>}
  */
 export async function accrueSkillCallRoyalty(opts) {
@@ -116,7 +116,7 @@ export async function accrueSkillCallRoyalty(opts) {
 			VALUES
 				(${skillId}, ${null}, ${authorId}, ${split.authorUsd}, ${'settled'},
 				 now(), ${opts.txHash ?? null}, ${opts.network ?? null},
-				 ${opts.payer ?? null}, ${'x402'}, ${split.platformUsd})
+				 ${opts.payer ?? null}, ${opts.source ?? 'x402'}, ${split.platformUsd})
 			RETURNING id
 		`;
 		return { ok: true, accrual: { ...split, ledgerId: row?.id ?? null } };

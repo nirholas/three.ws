@@ -13,6 +13,10 @@ metadata:
 
 A guide to building LSTM (Long Short-Term Memory) neural networks for cryptocurrency price prediction. Covers the full pipeline from data collection to model deployment.
 
+## Reference notebook
+
+The companion repo is [nirholas/lstm-bitcoin-prediction.ipynb](https://github.com/nirholas/lstm-bitcoin-prediction.ipynb), a single self-contained Jupyter notebook that predicts the daily BTC/USD close. It fetches 2000 daily candles from the public CryptoCompare `histoday` endpoint (no key), holds out the last 10% by time with no shuffling, builds overlapping 7-day windows normalised to each window's first entry, and trains a Keras `Sequential` of `LSTM(20)`, `Dropout(0.25)`, `Dense(1)` with MAE loss and Adam for 50 epochs at batch size 4 (`np.random.seed(42)`). It then plots actual against predicted prices and daily returns. The repo is proprietary (all rights reserved): read it, do not copy it. The deeper multi-feature pipeline below is a larger design than the notebook.
+
 ## Pipeline Overview
 
 ```
@@ -30,7 +34,7 @@ from cryptodatapy import DataRequest
 
 # Fetch historical OHLCV data
 dr = DataRequest(
-    tickers=['SPA'],
+    tickers=['BTC'],
     fields=['open', 'high', 'low', 'close', 'volume'],
     freq='1h',
     start_date='2023-01-01',
@@ -180,7 +184,6 @@ print(f"MAE: ${mae:.4f}")
 
 ## Links
 
-- GitHub: https://github.com/nirholas/LSTM-price-prediction
+- GitHub: https://github.com/nirholas/lstm-bitcoin-prediction.ipynb
 - TensorFlow: https://www.tensorflow.org
 - ta-lib: https://ta-lib.org
-- Sperax: https://app.sperax.io

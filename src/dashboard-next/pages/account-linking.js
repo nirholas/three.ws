@@ -17,13 +17,11 @@ import { get, post, esc, relTime } from '../api.js';
 import { errorStateHTML } from '../../shared/state-kit.js';
 import { toast } from '../../shared/toast.js';
 import { withPayoutStepUp, cooldownNotice } from '../../payout-step-up.js';
+import { shortAddress } from '../../shared/address.js';
 
 const POLL_MS = 3000;
 
-function truncMid(s, head = 6, tail = 4) {
-	const str = String(s || '');
-	return str.length <= head + tail + 1 ? str : `${str.slice(0, head)}…${str.slice(-tail)}`;
-}
+function truncMid(s, head = 6, tail = 4) { return shortAddress(s, head, tail); }
 
 function btn(label, { kind = '', action, attrs = '' } = {}) {
 	return `<button class="dn-btn ${kind}" type="button" data-action="${action}" ${attrs} style="padding:5px 10px;font-size:12px">${label}</button>`;

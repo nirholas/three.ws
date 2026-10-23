@@ -24,6 +24,7 @@ import { createSafetyPanel } from '../shared/safety-panel.js';
 import { createSmartMoneyPanel } from '../shared/smart-money-panel.js';
 import { proxiedImageURL } from '../ipfs.js';
 import { leaveAppForPayment } from '../shared/native-handoff.js';
+import { shortAddress as shortAddr } from '../shared/address.js';
 
 const WSOL = 'So11111111111111111111111111111111111111112';
 const USDC_MINT = {
@@ -88,9 +89,6 @@ function fmtQuote(n, denom) {
 	return v.toLocaleString(undefined, { maximumFractionDigits: frac });
 }
 
-function shortAddr(a) {
-	return a ? `${a.slice(0, 4)}…${a.slice(-4)}` : '';
-}
 
 // The buy sheet shows the coin's own logo, which lives on whichever host its
 // creator used. The same-origin proxy keeps a rate-limited gateway from leaving

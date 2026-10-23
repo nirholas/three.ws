@@ -13,8 +13,23 @@
 //
 // SPAN sets the eth_getLogs block range (default 100000). Lower it for RPCs with a
 // tighter cap; the scan also shrinks the range on its own when a call is refused.
+//
+// Each unlisted hook line also carries its 14-bit permission mask decoded from the
+// address, the callbacks it enables, and, for the IDENTIFY_LIMIT busiest hooks (default
+// 500, 0 = all), the string `hookName()` returns plus the HookForge hook it matches
+// (data/hookforge-registry.json) when its address is a published deployment or its
+// name is a HookForge hook's name. Output columns:
+//   <hook> <poolCount> <mask> <callbacks|none> <hookforge-slug|-> <hookName|->
 
+import { readFile } from 'node:fs/promises';
 import { ethers } from 'ethers';
+import {
+	HOOK_NAME_ABI,
+	callbacksFromMask,
+	formatMask,
+	identifyHookForge,
+	permissionMask,
+} from './lib/v4-hook-flags.mjs';
 
 const [rpcUrl, poolManager, chainIdArg, hooklistChain, fromArg] = process.argv.slice(2);
 if (!rpcUrl || !poolManager || !chainIdArg || !hooklistChain) {
@@ -31,6 +46,9 @@ const INITIALIZE_TOPIC = ethers.id(
 const ZERO_HOOK = '0x' + '0'.repeat(40);
 const MAX_SPAN = Number(process.env.SPAN || 100000);
 const MIN_SPAN = 100;
+const IDENTIFY_LIMIT = Number(process.env.IDENTIFY_LIMIT ?? 500);
+const IDENTIFY_CONCURRENCY = 16;
+const SNAPSHOT_URL = new URL('../data/hookforge-registry.json', import.meta.url);
 
 // `hooks` is the third non-indexed field: fee, tickSpacing, hooks, sqrtPriceX96, tick.
 function hookFromLogData(data) {
@@ -78,6 +96,31 @@ async function listedHooks(chain) {
 	);
 }
 
+// `hookName()` is optional metadata: a hook that lacks it reverts or returns junk, which
+// is "no name", not an error.
+async function readHookName(provider, address) {
+	try {
+		const name = await new ethers.Contract(address, HOOK_NAME_ABI, provider).hookName();
+		return typeof name === 'string' && name.length <= 80 ? name.replace(/\s+/g, ' ').trim() : null;
+	} catch {
+		return null;
+	}
+}
+
+async function mapLimit(items, limit, fn) {
+	const out = new Array(items.length);
+	let next = 0;
+	await Promise.all(
+		Array.from({ length: Math.min(limit, items.length) }, async () => {
+			while (next < items.length) {
+				const i = next++;
+				out[i] = await fn(items[i]);
+			}
+		}),
+	);
+	return out;
+}
+
 const provider = new ethers.JsonRpcProvider(rpcUrl, Number(chainIdArg), { staticNetwork: true });
 const [{ latest, pools, poolsByHook }, listed] = await Promise.all([
 	scanHooks(provider),
@@ -88,6 +131,17 @@ const unlisted = [...poolsByHook.entries()]
 	.filter(([hook]) => !listed.has(hook))
 	.sort((a, b) => b[1] - a[1]);
 
+const snapshot = JSON.parse(await readFile(SNAPSHOT_URL, 'utf8'));
+const chainId = Number(chainIdArg);
+const toIdentify = IDENTIFY_LIMIT > 0 ? unlisted.slice(0, IDENTIFY_LIMIT) : unlisted;
+const names = await mapLimit(toIdentify, IDENTIFY_CONCURRENCY, ([hook]) => readHookName(provider, hook));
+const nameByHook = new Map(toIdentify.map(([hook], i) => [hook, names[i]]));
+const forgeByHook = new Map();
+for (const [hook] of unlisted) {
+	const match = identifyHookForge(snapshot, hook, nameByHook.get(hook), chainId);
+	if (match) forgeByHook.set(hook, match.slug);
+}
+
 console.error(
 	JSON.stringify({
 		chainId: Number(chainIdArg),
@@ -96,7 +150,15 @@ console.error(
 		distinctHooksOnChain: poolsByHook.size,
 		listedInRegistry: listed.size,
 		onChainButUnlisted: unlisted.length,
+		identifiedByName: [...nameByHook.values()].filter(Boolean).length,
+		hookForgeHooksFound: forgeByHook.size,
 	}),
 );
-// stdout: one "<hook> <poolCount>" line per unlisted hook, busiest first.
-for (const [hook, count] of unlisted) console.log(`${hook} ${count}`);
+// stdout: one line per unlisted hook, busiest first (columns in the header comment).
+for (const [hook, count] of unlisted) {
+	const mask = permissionMask(hook);
+	const callbacks = callbacksFromMask(mask).join(',') || 'none';
+	console.log(
+		`${hook} ${count} ${formatMask(mask)} ${callbacks} ${forgeByHook.get(hook) ?? '-'} ${nameByHook.get(hook) ?? '-'}`,
+	);
+}

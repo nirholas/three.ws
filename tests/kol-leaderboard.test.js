@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { getLeaderboard } from '../src/kol/leaderboard.js';
 import { parseKolscanLeaderboard } from '../src/kol/kolscan-live.js';
 
@@ -114,5 +114,59 @@ describe('getLeaderboard', () => {
 		const items = await getLeaderboard({ ...live });
 		expect(items.length).toBeGreaterThan(0);
 		expect(items.length).toBeLessThanOrEqual(25);
+	});
+});
+
+describe('fetchXProfile rung order', () => {
+	const guestUser = { username: 'synthkol', name: 'Synth KOL', avatar: 'https://example.test/a.jpg', verified: false, followers: 987 };
+
+	async function load() {
+		vi.resetModules();
+		vi.doMock('../api/_lib/cache.js', () => ({ cacheGet: async () => null, cacheSet: async () => {} }));
+		return (await import('../src/kol/x-profile.js')).fetchXProfile;
+	}
+	afterEach(() => {
+		delete process.env.TWITTER_BEARER_TOKEN;
+		vi.doUnmock('../api/_lib/cache.js');
+	});
+
+	it('uses the guest reader when the bearer token is unset', async () => {
+		delete process.env.TWITTER_BEARER_TOKEN;
+		const fetchXProfile = await load();
+		const bearerLookup = vi.fn();
+		const p = await fetchXProfile('synthkol', { bearerLookup, guestLookup: async () => guestUser });
+		expect(bearerLookup).not.toHaveBeenCalled();
+		expect(p).toMatchObject({ handle: 'synthkol', followerCount: 987, source: 'x-guest' });
+	});
+
+	it('prefers the bearer rung when it answers', async () => {
+		process.env.TWITTER_BEARER_TOKEN = 'synthetic-token';
+		const fetchXProfile = await load();
+		const guestLookup = vi.fn();
+		const p = await fetchXProfile('synthkol', {
+			bearerLookup: async () => ({ handle: 'synthkol', followerCount: 1000, source: 'x-api' }),
+			guestLookup,
+		});
+		expect(p.source).toBe('x-api');
+		expect(guestLookup).not.toHaveBeenCalled();
+	});
+
+	it('falls through to the guest reader when the bearer is rate limited', async () => {
+		process.env.TWITTER_BEARER_TOKEN = 'synthetic-token';
+		const fetchXProfile = await load();
+		const p = await fetchXProfile('synthkol', {
+			bearerLookup: async () => { throw new Error('Request failed with code 429'); },
+			guestLookup: async () => guestUser,
+		});
+		expect(p).toMatchObject({ followerCount: 987, source: 'x-guest' });
+	});
+
+	it('resolves null when both rungs fail, never a fabricated count', async () => {
+		delete process.env.TWITTER_BEARER_TOKEN;
+		const fetchXProfile = await load();
+		const p = await fetchXProfile('synthkol', {
+			guestLookup: async () => { throw Object.assign(new Error('cooling down'), { reason: 'rate_limited' }); },
+		});
+		expect(p).toBeNull();
 	});
 });

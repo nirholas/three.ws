@@ -21,6 +21,7 @@
 import { apiFetch } from '../../api.js';
 import { isSellable, skillMeta } from '../skills/skills-catalog.js';
 import { mountTradingBrain } from './trading-brain.js';
+import { shortAddress as short } from '../../shared/address.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
 	({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -33,7 +34,6 @@ const BALANCE_POLL_MS = 30000;
 
 const fmtUsdc = (atomic) => (Number(atomic || 0) / 10 ** USDC_DECIMALS);
 const toAtomic = (usdc) => Math.round(Number(usdc) * 10 ** USDC_DECIMALS);
-const short = (addr) => (addr ? `${addr.slice(0, 4)}…${addr.slice(-4)}` : '');
 
 function relTime(ts) {
 	if (!ts) return '';

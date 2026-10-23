@@ -355,7 +355,7 @@ export function generateAnchorBundle(rawIdl, { sourceUrl, programId } = {}) {
 		{ manifest, skillMd, tools: toolsJson, handlersSrc },
 		{ allowAddresses: [idl.address, ...idl.instructions.flatMap((ix) => flatten(ix.accounts).map((a) => a.address).filter(Boolean))] }
 	);
-	return { manifest, skillMd, tools: toolsJson, handlersSrc, sourceUrl: sourceUrl || `solana:${idl.address}` };
+	return { kind: 'anchor', manifest, skillMd, tools: toolsJson, handlersSrc, sourceUrl: sourceUrl || `solana:${idl.address}` };
 }
 
 /**
@@ -387,9 +387,10 @@ export async function fetchOnchainIdl(programId, { rpc }) {
 
 /**
  * @param {{idl_url?: string, program_id?: string, cluster?: string}} input
- * @param {{fetchUrl: typeof fetch, rpcUrls: Record<string,string>}} opts
+ * @param {{fetchUrl: typeof fetch, rpcUrl: (cluster: string) => string | Promise<string>}} opts
+ *   `rpcUrl` is only called for a program_id import, after the id is validated
  */
-export async function importFromAnchorIdl({ idl_url: idlUrl, program_id: programId, cluster = 'mainnet-beta' }, { fetchUrl, rpcUrls }) {
+export async function importFromAnchorIdl({ idl_url: idlUrl, program_id: programId, cluster = 'mainnet-beta' }, { fetchUrl, rpcUrl }) {
 	if (typeof fetchUrl !== 'function') throw new Error('importFromAnchorIdl requires opts.fetchUrl');
 	if (idlUrl) {
 		const res = await fetchUrl(idlUrl);
@@ -403,8 +404,8 @@ export async function importFromAnchorIdl({ idl_url: idlUrl, program_id: program
 		return generateAnchorBundle(raw, { sourceUrl: idlUrl, programId });
 	}
 	if (!programId) throw new AnchorIdlError('idl_url or program_id is required');
-	const endpoint = rpcUrls?.[cluster];
-	if (!endpoint) throw new AnchorIdlError(`cluster must be one of ${Object.keys(rpcUrls || {}).join(', ')}`);
+	if (!BASE58_RE.test(programId)) throw new AnchorIdlError('program_id must be a base58 address');
+	const endpoint = await rpcUrl(cluster);
 	const rpc = async (method, params) => {
 		const res = await fetchUrl(endpoint, {
 			method: 'POST',

@@ -265,6 +265,7 @@ function renderInfo() {
 			${c.remix_count ? `<span class="mp-stat" title="Remixes">⑂ <b>${formatCount(c.remix_count)}</b></span>` : ''}
 			<a class="mp-action" href="${esc(c.glb_url)}" download>Download GLB</a>
 			<a class="mp-action" href="/materialize?creation=${encodeURIComponent(c.id)}" title="Order this model as a real physical print, shipped to you">⬢ Materialize</a>
+			<button class="mp-action" id="mp-readme3d" type="button" title="Copy a block that GitHub renders as an interactive 3D model in any README">Copy for GitHub README</button>
 			<button class="mp-action" id="mp-embed" type="button">&lt;/&gt; Embed</button>
 			<button class="mp-action" id="mp-share" type="button">↗ Share</button>
 			<button class="mp-action" id="mp-slicer" type="button" aria-controls="mp-print-tools" title="Open this model in OrcaSlicer or Bambu Studio, or download a print-ready STL">⎙ 3D print</button>
@@ -520,6 +521,21 @@ function wireActions() {
 			toast('Embed code copied to clipboard');
 		} catch {
 			window.prompt('Copy this embed code:', snippet);
+		}
+	});
+
+	$('mp-readme3d')?.addEventListener('click', async () => {
+		const btn = $('mp-readme3d');
+		if (btn.disabled) return;
+		btn.disabled = true;
+		toast('Converting for GitHub…');
+		try {
+			const { copyReadme3d, describeResult } = await import('./readme-3d-copy.js');
+			toast(describeResult(await copyReadme3d(c.glb_url, { name: 'model' })));
+		} catch (err) {
+			toast(String(err?.message || 'Could not convert this model. Try again.'));
+		} finally {
+			btn.disabled = false;
 		}
 	});
 

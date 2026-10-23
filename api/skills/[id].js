@@ -4,6 +4,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.
 import { cors, json, error, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse, isUuid } from '../_lib/validate.js';
+import { SKILL_RAILS, enabledRails, normalizeRails } from '../_lib/skill-rails.js';
 import skillReviewHandler from './review.js';
 
 const SLUG_RE = /^[a-z0-9][a-z0-9_-]{0,59}$/;
@@ -26,6 +27,7 @@ const updateSchema = z.object({
 		.min(1)
 		.optional(),
 	content: z.string().trim().max(200000).optional(),
+	rails: z.array(z.enum(SKILL_RAILS)).min(1, 'enable at least one payment rail').optional(),
 });
 
 export default wrap(async (req, res) => {
@@ -72,6 +74,7 @@ function toSkill(row, { includeInstalled = false } = {}) {
 		rating_count: row.rating_count || 0,
 		schema_json: row.schema_json,
 		content: row.content ?? null,
+		rails: enabledRails(row),
 		author: row.author_id
 			? { id: row.author_id, display_name: row.author_display_name }
 			: null,
@@ -179,6 +182,10 @@ async function handleUpdate(req, res, id) {
 	if (body.content !== undefined) {
 		params.push(body.content);
 		setFrags.push(`content = $${params.length}`);
+	}
+	if (body.rails !== undefined) {
+		params.push(normalizeRails(body.rails));
+		setFrags.push(`rails = $${params.length}`);
 	}
 	setFrags.push(`updated_at = now()`);
 

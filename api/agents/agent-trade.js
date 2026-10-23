@@ -45,6 +45,8 @@ import {
 	checkSolHeadroom, checkPriceImpact, tradeGuardResponse,
 	SOL_FEE_HEADROOM_LAMPORTS, TRADE_LIMIT_DEFAULTS,
 } from '../_lib/agent-trade-guards.js';
+import { createApprovalRequest, approvalPath, publicApproval } from '../_lib/approvals.js';
+import { currentSignatureFor, agreementRequirement } from '../_lib/real-funds-agreement.js';
 import { assessTradeSafety, recordFirewallDecision, firewallGuardResponse } from '../_lib/trade-firewall.js';
 import { submitProtected } from '../_lib/execution-engine.js';
 import { buildAgentTradeFee } from '../_lib/pump-platform-fee.js';
@@ -60,11 +62,11 @@ function normNetwork(n) {
 // `spendCheck: false` because a preview moves nothing.
 async function resolveAuth(req, { spendCheck = true } = {}) {
 	const session = await getSessionUser(req);
-	if (session) return { userId: session.id };
+	if (session) return { userId: session.id, owner: true };
 	const bearer = await authenticateBearer(extractBearer(req));
 	if (!bearer) return null;
 	if (spendCheck) assertBearerMaySpend(bearer, req, { kind: 'trade' });
-	return { userId: bearer.userId };
+	return { userId: bearer.userId, owner: false };
 }
 
 // Owner gate shared by every route here. On any failure it writes the response
@@ -251,7 +253,7 @@ async function buildTradeInstructions({ ctx, side, venue, mintPk, ownerPk, lampo
 // shape. Buys are gated on the lamport caps + USD ceiling + balance; sells only
 // move SOL inward, so they skip the spend caps but still honor the kill switch,
 // the price-impact breaker, and a fee-headroom floor.
-async function runGuards({ id, side, tradeLimits, prep, walletLamports, network, meta, mintPk, ownerPk, userId, feeLamports = 0n }) {
+async function runGuards({ id, side, tradeLimits, prep, walletLamports, network, meta, mintPk, ownerPk, userId, feeLamports = 0n, burnerExempt = false, stepUpApproved = false }) {
 	const killed = checkKillSwitch(tradeLimits.kill_switch);
 	if (killed) return tradeGuardResponse(killed);
 
@@ -279,7 +281,7 @@ async function runGuards({ id, side, tradeLimits, prep, walletLamports, network,
 
 		// Cross-path USD ceiling (shared with withdraw / x402 / snipe).
 		try {
-			await enforceSpendLimit({ agentId: id, meta, category: 'trade', usdValue: prep.usdValue, network });
+			await enforceSpendLimit({ agentId: id, meta, category: 'trade', usdValue: prep.usdValue, network, burnerExempt, stepUpApproved });
 		} catch (e) {
 			if (e instanceof SpendLimitError) return { status: e.status, code: e.code, message: e.message, detail: e.detail };
 			throw e;
@@ -411,7 +413,7 @@ async function handleExecute(req, res, id) {
 
 	let result;
 	try {
-		result = await executeAgentTrade({ id, userId: auth.userId, meta, input, req, source: 'discretionary' });
+		result = await executeAgentTrade({ id, userId: auth.userId, meta, input, req, source: 'discretionary', burnerExempt: auth.owner === true });
 	} catch (e) {
 		console.error('[agents/agent-trade] execute crashed', e?.message);
 		return error(res, 500, 'internal_error', 'unexpected error executing the trade');
@@ -440,7 +442,7 @@ async function handleExecute(req, res, id) {
  * @returns {Promise<{ ok:true, status:number, data:object }
  *                  | { ok:false, status:number, code:string, message:string, detail?:object }>}
  */
-export async function executeAgentTrade({ id, userId, meta, input, req = null, source = 'discretionary', sourceMeta = null }) {
+export async function executeAgentTrade({ id, userId, meta, input, req = null, source = 'discretionary', sourceMeta = null, burnerExempt = false, approvalId = null }) {
 	const { side, network, simulate, slippagePct } = input;
 	const idempotencyKey = input.idempotencyKey || randomUUID();
 	const tradeLimits = getTradeLimits(meta);
@@ -521,10 +523,19 @@ export async function executeAgentTrade({ id, userId, meta, input, req = null, s
 	// Run the shared guardrails — identical for manual + strategy trades.
 	let blocked;
 	try {
-		blocked = await runGuards({ id, side, tradeLimits, prep, walletLamports, network, meta, mintPk: input.mintPk, ownerPk, userId, feeLamports });
+		blocked = await runGuards({
+			id, side, tradeLimits, prep, walletLamports, network, meta, mintPk: input.mintPk, ownerPk, userId, feeLamports,
+			burnerExempt,
+			// A dry run moves nothing, and an approved trade is the owner's own answer.
+			stepUpApproved: simulate || Boolean(approvalId),
+		});
 	} catch (e) {
 		console.error('[agents/agent-trade] guard check failed', e?.message);
 		return fail(502, 'guard_check_failed', 'could not verify the trade guardrails — try again');
+	}
+	// Above the agent's burner cap a buy is not refused: it waits in the owner's inbox.
+	if (blocked?.code === 'policy_step_up' && blocked.detail?.burner) {
+		return parkTradeForApproval({ id, userId, input, prep, network, blocked, idempotencyKey });
 	}
 	if (blocked) return fail(blocked.status, blocked.code, blocked.message, blocked.detail);
 
@@ -548,6 +559,7 @@ export async function executeAgentTrade({ id, userId, meta, input, req = null, s
 		min_out: prep.minOutRaw.toString(),
 		...(side === 'sell' ? { base_amount: prep.baseAmount.toString(), token_decimals: prep.decimals } : {}),
 		...(tradeFee ? { platform_fee: tradeFee.disclosure } : {}),
+		...(approvalId ? { approval_id: approvalId } : {}),
 		...(isStrategy ? { source: 'strategy', strategy: sourceMeta?.strategy ?? null, strategy_id: sourceMeta?.strategy_id ?? null, equip_id: sourceMeta?.equip_id ?? null } : {}),
 	};
 
@@ -758,7 +770,7 @@ async function handleQuote(req, res, id) {
 	}
 
 	try {
-		return json(res, 200, { data: await previewAgentTrade({ id, userId: auth.userId, meta, input }) });
+		return json(res, 200, { data: await previewAgentTrade({ id, userId: auth.userId, meta, input, burnerExempt: auth.owner === true }) });
 	} catch (e) {
 		return boundaryError(res, e);
 	}
@@ -774,7 +786,7 @@ async function handleQuote(req, res, id) {
  * unreachable RPC. A guard refusal is not thrown: it comes back as
  * `allowed: false` with `blocked_reason`, so the preview can always be shown.
  */
-export async function previewAgentTrade({ id, userId, meta, input }) {
+export async function previewAgentTrade({ id, userId, meta, input, burnerExempt = false }) {
 	const { side, network, slippagePct } = input;
 	const tradeLimits = getTradeLimits(meta);
 
@@ -799,7 +811,7 @@ export async function previewAgentTrade({ id, userId, meta, input }) {
 	const feeLamports = tradeFee ? BigInt(tradeFee.disclosure.amount) : 0n;
 
 	let blocked = null;
-	try { blocked = await runGuards({ id, side, tradeLimits, prep, walletLamports, network, meta, mintPk: input.mintPk, ownerPk, userId, feeLamports }); } catch { blocked = null; }
+	try { blocked = await runGuards({ id, side, tradeLimits, prep, walletLamports, network, meta, mintPk: input.mintPk, ownerPk, userId, feeLamports, burnerExempt }); } catch { blocked = null; }
 
 	return {
 		side, mint: input.mint, network, venue: prep.venue,
@@ -816,6 +828,101 @@ export async function previewAgentTrade({ id, userId, meta, input }) {
 		allowed: !blocked,
 		blocked_reason: blocked ? { code: blocked.code, message: blocked.message, detail: blocked.detail } : null,
 	};
+}
+
+// ── burner cap: park a trade for the owner, run it once they answer ─────────
+
+function shortMint(mint) {
+	return `${mint.slice(0, 4)}...${mint.slice(-4)}`;
+}
+
+async function parkTradeForApproval({ id, userId, input, prep, network, blocked, idempotencyKey }) {
+	const sol = lamportsToSol(prep.lamports);
+	const usd = prep.usdValue ?? null;
+	const payload = {
+		kind: 'agent_trade',
+		side: input.side,
+		mint: input.mint,
+		sol_amount: sol,
+		slippage_bps: input.slippageBps,
+		network,
+	};
+	const [agent] = await sql`SELECT name FROM agent_identities WHERE id = ${id}`;
+	let created;
+	try {
+		created = await createApprovalRequest({
+			userId,
+			agentId: id,
+			source: 'agent_trade',
+			sourceRef: `trade:${id}:${network}:${input.side}:${input.mint}:${sol}`,
+			actionType: 'trade_buy',
+			venue: 'agent_trade',
+			payload,
+			summary: `${agent?.name || 'Your agent'} wants to buy ${sol} SOL of ${shortMint(input.mint)}`,
+			amount: sol,
+			amountUsd: usd,
+			asset: 'SOL',
+			chain: 'solana',
+			network,
+			recipient: input.mint,
+			recipientLabel: 'Token',
+			riskNotes: [blocked.detail.reason, 'Memecoin trades can lose their full value. The price you approve is not locked: the trade runs at the market price when you confirm.'],
+			gateReason: blocked.message,
+			idempotencyKey: `burner-trade:${id}:${idempotencyKey}`,
+			autoApprovable: false,
+			burnerGated: true,
+		});
+	} catch (e) {
+		console.error('[agents/agent-trade] could not queue the approval', e?.message);
+		return { ok: false, status: 502, code: 'approval_unavailable', message: 'This trade is above the agent\'s burner cap and needs your approval, but the request could not be queued. Nothing was sent. Try again.', detail: null };
+	}
+	const view = publicApproval(created.request);
+	return {
+		ok: true,
+		status: 202,
+		data: {
+			pending_approval: true,
+			approval_id: created.request.id,
+			tier: blocked.detail.tier,
+			requires_wallet_signature: view.requires_wallet_signature,
+			expires_at: created.request.expires_at,
+			summary: created.request.summary,
+			confirmation: view.confirmation,
+			reason: blocked.detail.reason,
+			link: approvalPath(created.request),
+			side: input.side, mint: input.mint, network,
+		},
+	};
+}
+
+/**
+ * Approval inbox executor for a parked trade. Re-enters the normal trade engine
+ * with the approval id, which lifts only the burner step-up: the kill switch,
+ * per-trade cap, daily budget, spend policy, firewall and ledger all still run.
+ */
+export async function executeApprovedAgentTrade(row) {
+	const p = row.payload || {};
+	const [agent] = await sql`SELECT id, user_id, meta FROM agent_identities WHERE id = ${row.agent_id} AND deleted_at IS NULL`;
+	if (!agent) return { status: 'error', note: 'That agent no longer exists, so nothing was sent.' };
+	if (agent.user_id !== row.user_id) return { status: 'error', note: 'That agent is no longer owned by this account, so nothing was sent.' };
+
+	if (p.network !== 'devnet') {
+		let signed;
+		try { signed = await currentSignatureFor(agent.user_id); } catch {
+			return { status: 'error', note: 'Could not verify your signed real-funds agreements, so nothing was sent. Approve again in a moment.' };
+		}
+		if (!signed) return { status: 'error', note: `Sign the real-funds agreements before trading real funds. Nothing was sent. Sign here: ${agreementRequirement().sign_url}` };
+	}
+
+	let input;
+	try {
+		input = parseTradeInput({ side: p.side, mint: p.mint, amount: p.sol_amount, slippageBps: p.slippage_bps, network: p.network, idempotency_key: `approval:${row.id}` }, getTradeLimits(agent.meta));
+	} catch (e) {
+		return { status: 'error', note: e?.message || 'That trade is not valid any more, so nothing was sent.' };
+	}
+	const r = await executeAgentTrade({ id: agent.id, userId: agent.user_id, meta: agent.meta || {}, input, source: 'discretionary', burnerExempt: true, approvalId: row.id });
+	if (!r.ok) return { status: 'error', note: r.message, data: r.detail || undefined };
+	return { status: 'ok', signature: r.data.signature, usd: r.data.usd_value ?? null, data: r.data };
 }
 
 // ── limits (read / update) ──────────────────────────────────────────────────

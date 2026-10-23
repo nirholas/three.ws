@@ -29,6 +29,7 @@ import {
 	jsonDataUri,
 } from '@three-ws/metaplex-agent-mcp/lib/registration';
 import { proxiedImageURL } from './ipfs.js';
+import { shortAddress as short } from './shared/address.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -75,9 +76,6 @@ async function rpcCall(network, method, params) {
 	return body.result;
 }
 
-function short(addr) {
-	return addr.length > 12 ? `${addr.slice(0, 4)}…${addr.slice(-4)}` : addr;
-}
 
 async function refreshBalance() {
 	if (!state.walletAddr) return;

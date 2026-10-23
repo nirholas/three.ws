@@ -25,6 +25,7 @@
 
 import { hasThreeWsMark } from '../solana/vanity/brand.js';
 import { solToUsd } from '../shared/usd-price.js';
+import { shortAddress } from '../shared/address.js';
 
 const UNKNOWN_VALUE = '\u2014'; // the card's placeholder for a value it cannot read
 const LAMPORTS_PER_SOL = 1_000_000_000;
@@ -134,9 +135,7 @@ export function fmtPrice(value, { usd = false } = {}) {
 }
 
 export function shortMint(mint, n = 4) {
-	const s = String(mint || '');
-	if (s.length <= n * 2 + 1) return s;
-	return `${s.slice(0, n)}…${s.slice(-n)}`;
+	return shortAddress(mint, n, n);
 }
 
 /** Curve height fraction in [0,1] for a horizontal fraction t in [0,1]. */

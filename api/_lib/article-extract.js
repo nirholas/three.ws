@@ -11,9 +11,15 @@
 //                Jina Reader (r.jina.ai), a free, keyless reader service that
 //                renders the page and returns clean markdown. This recovers the
 //                full body for the Cloudflare-blocked publishers.
-//   3. feed    — the publisher's own RSS content:encoded body (full for the
+//   3. wayback, the Internet Archive's snapshot of the same URL (paywalled or
+//                since-removed stories keep their full body there)
+//   4. primary, the SEC EDGAR filing of the company the headline names
+//   5. siblings, other outlets' coverage of the same story (feed descriptions)
+//   6. feed   , the publisher's own RSS content:encoded body (full for the
 //                WordPress-style feeds, a teaser for the rest)
-//   4. preview — honest metadata-only preview with a read-at-source CTA
+//   7. preview, honest metadata-only preview with a read-at-source CTA
+//
+// Rungs 3-5 live in ./article-lanes.js.
 //
 // Every rung is SSRF-guarded by the shared platform guard (./ssrf-guard.js):
 // all DNS answers are validated (not just the first), the connection is pinned
@@ -23,6 +29,7 @@
 
 import { assertSafePublicUrl, fetchSafePublicUrlPinned } from './ssrf-guard.js';
 import { stripHtml } from './news.js';
+import { fetchViaWayback, fetchPrimaryFiling, fetchSiblings } from './article-lanes.js';
 
 const FETCH_TIMEOUT_MS = 10_000;
 const READER_TIMEOUT_MS = 20_000;
@@ -172,7 +179,7 @@ export async function fetchViaReader(url) {
 	return paragraphsFromReaderMarkdown(md);
 }
 
-// ── Rung 3: publisher feed body ────────────────────────────────────────────
+// ── Rung 6: publisher feed body ────────────────────────────────────────────
 
 export function paragraphsFromFeed(contentText) {
 	return String(contentText || '')
@@ -200,9 +207,11 @@ function feedBodyIsTeaser(paragraphs) {
  * @param {string} url             the (already-validated-as-absolute) target
  * @param {object} [opts]
  * @param {string} [opts.feedContentText]  publisher feed body, if any
- * @returns {Promise<{ paragraphs: string[], extraction: 'page'|'reader'|'feed'|'preview', blocked_reason: string|null, html: string|null }>}
+ * @param {string} [opts.title]            headline, used to find primary documents and sibling coverage
+ * @param {string} [opts.publishedAt]      publish time, to window the EDGAR search
+ * @returns {Promise<{ paragraphs: string[], extraction: 'page'|'reader'|'wayback'|'primary'|'siblings'|'feed'|'preview', blocked_reason: string|null, html: string|null, lane_sources: Array<{label: string, url: string}> }>}
  */
-export async function extractArticle(url, { feedContentText = null } = {}) {
+export async function extractArticle(url, { feedContentText = null, title = null, publishedAt = null } = {}) {
 	let html = null;
 	let fetchError = null;
 	try {
@@ -214,7 +223,7 @@ export async function extractArticle(url, { feedContentText = null } = {}) {
 	// Rung 1 — direct page prose.
 	let paragraphs = html ? extractParagraphs(html) : [];
 	if (paragraphs.length >= 3) {
-		return { paragraphs, extraction: 'page', blocked_reason: null, html };
+		return { paragraphs, extraction: 'page', blocked_reason: null, html, lane_sources: [] };
 	}
 
 	// Rung 2 — reader service. Runs when the page was blocked or yielded almost
@@ -224,7 +233,7 @@ export async function extractArticle(url, { feedContentText = null } = {}) {
 	try {
 		const readerParas = await fetchViaReader(url);
 		if (readerParas.length > paragraphs.length && readerParas.length >= 2) {
-			return { paragraphs: readerParas, extraction: 'reader', blocked_reason: null, html };
+			return { paragraphs: readerParas, extraction: 'reader', blocked_reason: null, html, lane_sources: [] };
 		}
 	} catch (err) {
 		readerError = err;
@@ -232,26 +241,28 @@ export async function extractArticle(url, { feedContentText = null } = {}) {
 
 	// A partial direct page (2 paragraphs) still beats the feed teaser.
 	if (paragraphs.length >= 2) {
-		return { paragraphs, extraction: 'page', blocked_reason: null, html };
+		return { paragraphs, extraction: 'page', blocked_reason: null, html, lane_sources: [] };
 	}
 
-	// Rung 3 — publisher feed body, when it is more than a teaser.
+	// Rung 6, publisher feed body, when it is more than a teaser.
 	if (feedContentText) {
 		const feedParas = paragraphsFromFeed(feedContentText);
 		if (feedParas.length && !feedBodyIsTeaser(feedParas)) {
-			return { paragraphs: feedParas, extraction: 'feed', blocked_reason: null, html };
+			return { paragraphs: feedParas, extraction: 'feed', blocked_reason: null, html, lane_sources: [] };
 		}
 		// Even a teaser is better than nothing when both live rungs failed.
 		if (feedParas.length && !html && readerError) {
-			return { paragraphs: feedParas, extraction: 'feed', blocked_reason: null, html };
+			return { paragraphs: feedParas, extraction: 'feed', blocked_reason: null, html, lane_sources: [] };
 		}
 	}
 
-	// Rung 4 — honest preview.
+	// Rung 7, honest preview.
 	const reason = fetchError
 		? String(fetchError.message || 'fetch failed')
 		: readerError
 			? String(readerError.message || 'reader failed')
-			: 'no extractable article body';
-	return { paragraphs, extraction: 'preview', blocked_reason: reason, html };
+			: laneError
+				? String(laneError.message || 'archive lookup failed')
+				: 'no extractable article body';
+	return { paragraphs, extraction: 'preview', blocked_reason: reason, html, lane_sources: [] };
 }

@@ -18,6 +18,7 @@
  */
 
 import { ensureRiskAck } from './risk-ack.js';
+import { trapFocus } from './focus-trap.js';
 
 const USDC_MINT_SOLANA = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
@@ -365,9 +366,11 @@ export async function showAddFunds({ walletAddress, requiredUsdc, asset: assetNa
 			statusEl.className = 'af-status' + (kind ? ` ${kind}` : '');
 		}
 
+		let trap = null;
 		function dismiss(result = null) {
 			if (destroyed) return;
 			destroyed = true;
+			trap?.release();
 			clearInterval(pollTimer);
 			if (popupWindow && !popupWindow.closed) popupWindow.close();
 			overlay.style.animation = 'af-fade-in 0.12s ease reverse forwards';
@@ -472,13 +475,8 @@ export async function showAddFunds({ walletAddress, requiredUsdc, asset: assetNa
 			if (e.target === overlay) dismiss(null);
 		});
 
-		// Keyboard dismiss
-		const keyHandler = (e) => {
-			if (e.key === 'Escape') { document.removeEventListener('keydown', keyHandler); dismiss(null); }
-		};
-		document.addEventListener('keydown', keyHandler);
-
-		// Focus the CTA on open
-		requestAnimationFrame(() => ctaBtn.focus());
+		// Focus the CTA on open, keep Tab inside, make the page behind inert,
+		// close on Escape, and return focus to the opener on dismiss.
+		trap = trapFocus(overlay, { onEscape: () => dismiss(null), initialFocus: ctaBtn });
 	});
 }

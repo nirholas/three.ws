@@ -322,6 +322,8 @@ const FEATURE_VALUE = {
 	concentration_top10: (it) => rawNum(it, 'concentration_top10') ?? pct01(it.structure?.top10Pct),
 	fresh_wallet_ratio: (it) => rawNum(it, 'fresh_wallet_ratio'),
 	bubblemap_connectivity: (it) => rawNum(it, 'bubblemap_connectivity'),
+	holder_gini: (it) => rawNum(it, 'holder_gini'),
+	seeded_share: (it) => rawNum(it, 'seeded_share'),
 	unique_buyers: (it) => rawNum(it, 'unique_buyers') ?? (it.structure?.uniqueBuyers ?? null),
 	unique_sellers: (it) => rawNum(it, 'unique_sellers'),
 	buy_sell_ratio: (it) => {
@@ -392,6 +394,8 @@ const FEATURE_TEXT = {
 	concentration_top10: 'top-10 holder share',
 	fresh_wallet_ratio: 'fresh-wallet share',
 	bubblemap_connectivity: 'funder clustering',
+	holder_gini: 'holder inequality',
+	seeded_share: 'single-funder seeding',
 	unique_buyers: 'unique early buyers',
 	unique_sellers: 'unique early sellers',
 	buy_sell_ratio: 'buy/sell pressure',

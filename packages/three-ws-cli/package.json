@@ -48,6 +48,13 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.8.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@napi-rs/keyring": "^2.1.2",
+    "@solana-program/system": "^0.16.0",
+    "@solana-program/token": "^0.18.0",
+    "@solana/kit": "^8.5.0",
+    "@x402/core": "^2.26.0",
+    "@x402/svm": "^2.14.0",
     "jsonc-parser": "^3.3.0",
     "smol-toml": "^1.3.0",
     "yaml": "^2.8.0"

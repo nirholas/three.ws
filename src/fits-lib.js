@@ -7,6 +7,8 @@
  * -sale ledger; nothing is estimated.
  */
 
+import { shortAddress as shortWallet } from './shared/address.js';
+
 export const RARITY_LABEL = {
 	common: 'Common',
 	rare: 'Rare',
@@ -47,11 +49,7 @@ export function fmtCount(n) {
 }
 
 /** @param {string} addr */
-export function shortWallet(addr) {
-	const s = String(addr || '');
-	if (s.length <= 12) return s;
-	return `${s.slice(0, 4)}…${s.slice(-4)}`;
-}
+export { shortWallet };
 
 /**
  * Collector accounts are a mix of real wallets and guest session handles

@@ -48,20 +48,12 @@ import {
 import { pollConfirmation } from './solana/confirm.js';
 import { fetchUpstream } from './upstream-fetch.js';
 
-// Jito's published mainnet tip accounts. A bundle's tip must transfer SOL to one
-// of these — Jito only accepts a bundle that pays a tip to a known tip account.
-// (https://docs.jito.wtf/lowlatencytxnsend/#tip-amount). We rotate per-attempt to
-// spread load and avoid a hot account.
-const JITO_TIP_ACCOUNTS = [
-	'96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
-	'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
-	'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
-	'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
-	'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
-	'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
-	'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
-	'3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
-];
+import { tipAccountAt } from '../../packages/avatar-agent-mcp/src/lib/jito-tip-accounts.js';
+
+// A bundle's tip must transfer SOL to one of Jito's tip accounts. The shared
+// module serves the engine's live getTipAccounts list (cached, refreshed in the
+// background so the snipe path never waits on it) with a pinned fallback. We
+// rotate per-attempt to spread load and avoid a hot account.
 
 const DEFAULT_JITO_URL = 'https://mainnet.block-engine.jito.wtf';
 // Jito's public regional block engines. Every region serves the same bundle API
@@ -132,7 +124,7 @@ function jitoEligible(network, tipMode) {
 }
 
 function pickTipAccount(attempt) {
-	return JITO_TIP_ACCOUNTS[attempt % JITO_TIP_ACCOUNTS.length];
+	return tipAccountAt(attempt, { baseUrl: jitoBlockEngineUrl() });
 }
 
 function clampBig(v, min, max) {

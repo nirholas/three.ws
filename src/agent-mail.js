@@ -1148,9 +1148,13 @@ function renderSettings() {
 				<span>Daily send cap</span>
 				<input type="number" name="daily_send_cap" min="0" max="${esc(limits.max_daily_send_cap)}" step="1" value="${policy.daily_send_cap ?? ''}" placeholder="no cap" />
 			</label>
+			<label class="am-field">
+				<span>Code senders <span class="am-dim-text">(services this agent may read verification codes and sign-in links from: an address, or @domain; empty reads none)</span></span>
+				<textarea name="code_senders" rows="3" spellcheck="false" placeholder="noreply@example.com&#10;@accounts.example">${esc((policy.code_senders || []).join('\n'))}</textarea>
+			</label>
 			<p class="am-hint">The platform also limits a new mailbox to ${esc(usage.warmup_per_hour)} per hour and ${esc(usage.warmup_per_day)} per day while it warms up. Sent in the last 24 hours: ${esc(usage.sent_last_day)}. These limits can only be changed here, signed in. The agent's API key cannot loosen them.</p>
 			<div class="am-row">
-				<button type="submit" class="am-btn am-btn--primary" disabled>Save limits</button>
+				<button type="submit" class="am-btn am-btn--primary" disabled>Save settings</button>
 				<span class="am-dim-text" id="am-policy-status" aria-live="polite">${policy.updated_at ? `Saved ${esc(timeAgo(policy.updated_at))}` : ''}</span>
 			</div>
 		</form>`;
@@ -1170,12 +1174,13 @@ function renderSettings() {
 					allowlist_enabled: form.allowlist_enabled.checked,
 					allowlist: form.allowlist.value.split('\n').map((s) => s.trim()).filter(Boolean),
 					daily_send_cap: capRaw === '' ? null : Number(capRaw),
+					code_senders: form.code_senders.value.split('\n').map((s) => s.trim()).filter(Boolean),
 				},
 			});
 			state.settings.policy = data.policy;
 			renderSettings();
 			renderUsage();
-			toast('Sending limits saved');
+			toast('Mail limits saved');
 		} catch (err) {
 			status.textContent = '';
 			save.disabled = false;

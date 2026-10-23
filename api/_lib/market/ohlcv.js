@@ -336,9 +336,10 @@ function sortCandles(rows) {
 		.sort((a, b) => a.t - b.t);
 }
 
-async function geckoCandles({ pool, network, timeframe, aggregate, limit }) {
+async function geckoCandles({ pool, network, timeframe, aggregate, limit, beforeTimestamp }) {
+	const before = beforeTimestamp ? `&before_timestamp=${Math.floor(beforeTimestamp)}` : '';
 	const json = await gecko(
-		`/networks/${network}/pools/${pool}/ohlcv/${timeframe}?aggregate=${aggregate}&limit=${limit}&currency=usd`,
+		`/networks/${network}/pools/${pool}/ohlcv/${timeframe}?aggregate=${aggregate}&limit=${limit}&currency=usd${before}`,
 	);
 	const list = json?.data?.attributes?.ohlcv_list;
 	if (!Array.isArray(list)) throw tagged('GeckoTerminal returned no candles', 502);
@@ -414,6 +415,9 @@ async function fetchOhlcvLive(args) {
 	} catch (e) {
 		firstErr = e;
 	}
+	// The other rungs cannot page back, and their newest bars would be passed off
+	// as the older window that was asked for.
+	if (args.beforeTimestamp) throw firstErr;
 	for (const rung of [birdeyePairCandles, cexCandles]) {
 		try {
 			const out = await rung(args);
@@ -429,6 +433,8 @@ async function fetchOhlcvLive(args) {
 // the base/quote token metadata GeckoTerminal includes in the same response.
 //   timeframe: 'minute' | 'hour' | 'day'   aggregate: bars per candle   limit: <=1000
 //   baseSymbol: optional base-asset ticker (e.g. 'SOL') that unlocks the CEX rung
+//   beforeTimestamp: epoch seconds; GeckoTerminal returns the candles before it,
+//     which is how a caller pages back past the newest 1000 bars
 // Result carries `source` ('geckoterminal' | 'birdeye' | 'cex') and, for the
 // CEX rung, `closeOnly: true`.
 export async function fetchOhlcv({
@@ -438,10 +444,11 @@ export async function fetchOhlcv({
 	aggregate = 1,
 	limit = 1000,
 	baseSymbol = null,
+	beforeTimestamp = null,
 }) {
 	if (!pool) throw tagged('pool is required', 400);
-	const args = { pool, network, timeframe, aggregate, limit, baseSymbol };
-	const key = `ohlcv:candles:v1:${network}:${pool}:${timeframe}:${aggregate}:${limit}`;
+	const args = { pool, network, timeframe, aggregate, limit, baseSymbol, beforeTimestamp };
+	const key = `ohlcv:candles:v1:${network}:${pool}:${timeframe}:${aggregate}:${limit}${beforeTimestamp ? `:b${Math.floor(beforeTimestamp)}` : ''}`;
 	const out = await cacheWrapLastGood(key, LKG_FRESH_S, () => fetchOhlcvLive(args), {
 		staleTtlSeconds: LKG_STALE_S,
 	});

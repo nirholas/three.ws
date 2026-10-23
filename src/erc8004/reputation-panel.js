@@ -28,6 +28,7 @@ import {
 } from './reputation.js';
 import { log } from '../shared/log.js';
 import { getEthPriceUsd } from '../shared/usd-price.js';
+import { shortAddress } from '../shared/address.js';
 
 const REVIEWS_LOOKBACK_BLOCKS = 50_000;
 const MIN_STAKE_ETH = 0.001;
@@ -393,10 +394,7 @@ function _score(n) {
 	return '★'.repeat(x) + '☆'.repeat(5 - x);
 }
 
-function _shortAddr(addr) {
-	if (!addr || typeof addr !== 'string' || addr.length < 10) return addr || '';
-	return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
+function _shortAddr(addr) { return shortAddress(addr, 6, 4); }
 
 function _esc(s) {
 	return String(s ?? '')

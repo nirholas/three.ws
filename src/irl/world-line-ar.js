@@ -20,6 +20,7 @@ import { getMeshoptDecoder } from '../viewer/internal.js';
 import { mountPinIdle } from './pin-idle.js';
 import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from '../shared/cinematic-render.js';
 import { applyAvatarMaterialRealism, looksLikeAvatarMesh } from '../shared/avatar-material-realism.js';
+import { shortAddress } from '../shared/address.js';
 
 // The quest agent is a person you meet, so it gets the same skin/eye/hair
 // treatment the /avatar viewer and the /irl pins get (one shared module, never
@@ -481,7 +482,4 @@ function loadingCard(text) {
 function esc(s) {
 	return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
-function short(k) {
-	const s = String(k || '');
-	return s.length > 12 ? `${s.slice(0, 6)}…${s.slice(-4)}` : s;
-}
+function short(k) { return shortAddress(k, 6, 4); }

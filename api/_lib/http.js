@@ -511,7 +511,7 @@ export function cors(
 	res.setHeader(
 		'access-control-allow-headers',
 		payments
-			? 'authorization, content-type, mcp-session-id, mcp-protocol-version, x-payment, payment-signature, idempotency-key, x-irl-device, x-irl-fix, x-forge-client, x-agent-id, x-forge-seed'
+			? 'authorization, content-type, mcp-session-id, mcp-protocol-version, x-payment, payment-signature, x-payment-rail, x-ap2-mandate, x-ap2-cart, x-a2a-extensions, idempotency-key, x-irl-device, x-irl-fix, x-forge-client, x-agent-id, x-forge-seed'
 			: 'authorization, content-type, mcp-session-id, mcp-protocol-version, idempotency-key, x-irl-device, x-irl-fix, x-forge-client, x-agent-id, x-forge-seed',
 	);
 	// x402: clients (drop-in modal, x402-fetch) must read these to drive the
@@ -519,7 +519,7 @@ export function cors(
 	// cross-origin readers only see CORS-safelisted response headers.
 	res.setHeader(
 		'access-control-expose-headers',
-		payments ? 'PAYMENT-REQUIRED, PAYMENT-RESPONSE, x-payment-response, x-payment-network, x-payment-tx, link' : 'link',
+		payments ? 'PAYMENT-REQUIRED, PAYMENT-RESPONSE, Payment-Receipt, WWW-Authenticate, x-a2a-extensions, x-payment-response, x-payment-network, x-payment-tx, link' : 'link',
 	);
 	res.setHeader('access-control-max-age', '86400');
 	if (req.method === 'OPTIONS') {

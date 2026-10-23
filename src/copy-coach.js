@@ -18,6 +18,7 @@
 
 import { apiFetch } from './api.js';
 import { receiptHTML, receiptSkeletonHTML, RECEIPT_CSS } from './shared/trade-receipt-view.js';
+import { shortAddress as short } from './shared/address.js';
 
 const STORE_KEY = 'twx_copy_coach_v1';
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -45,7 +46,6 @@ const CHIPS = {
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const short = (a) => (!a ? '' : `${a.slice(0, 4)}…${a.slice(-4)}`);
 
 function solFmt(v, { sign = false } = {}) {
 	if (v == null || !Number.isFinite(Number(v))) return 'n/a';

@@ -3,6 +3,8 @@
  * every tab. No DOM framework, no third-party deps.
  */
 
+import { shortAddress } from '../shared/address.js';
+
 /** Escape a string for safe interpolation into innerHTML. */
 export function escapeHtml(s) {
 	return String(s ?? '').replace(
@@ -12,11 +14,7 @@ export function escapeHtml(s) {
 }
 
 /** Compact a base58 address: "AbCd…WxYz". */
-export function shortAddress(addr, head = 4, tail = 4) {
-	if (!addr || typeof addr !== 'string') return '';
-	if (addr.length <= head + tail + 1) return addr;
-	return `${addr.slice(0, head)}…${addr.slice(-tail)}`;
-}
+export { shortAddress };
 
 /**
  * Copy text to the clipboard. Uses the async Clipboard API with a synchronous

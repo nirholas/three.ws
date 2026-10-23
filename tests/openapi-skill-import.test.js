@@ -263,3 +263,45 @@ describe('GET /api/skills/import/:id/*', () => {
 		expect((await callFile('00000000-0000-0000-0000-000000000000', 'manifest.json')).status).toBe(404);
 	});
 });
+
+describe('POST /api/skills/import with an Anchor IDL', () => {
+	const LICENSE_IDL = readFileSync(path.join(__dirname, '../contracts/idl/skill_license.json'), 'utf8');
+	let idlServer;
+	let idlUrl;
+
+	beforeAll(async () => {
+		idlServer = createServer((req, res) => {
+			res.setHeader('content-type', 'application/json');
+			res.end(req.url === '/bad.json' ? JSON.stringify({ openapi: '3.0.0' }) : LICENSE_IDL);
+		});
+		await new Promise((resolve) => idlServer.listen(0, '127.0.0.1', resolve));
+		idlUrl = `http://127.0.0.1:${idlServer.address().port}/skill_license.json`;
+	});
+
+	afterAll(async () => {
+		await new Promise((resolve) => idlServer.close(resolve));
+	});
+
+	it('imports idl_url as a disabled anchor draft with read, preview and destructive send tools', async () => {
+		const { status, body } = await callImport('POST', { idl_url: idlUrl });
+		expect(status).toBe(201);
+		expect(body.data).toMatchObject({ kind: 'anchor', enabled: false, hasHandlers: true });
+		const names = body.data.tools.tools.map((t) => t.name);
+		expect(names).toEqual(expect.arrayContaining(['read_marketplace', 'preview_mint_skill_license', 'send_mint_skill_license']));
+		const send = body.data.tools.tools.find((t) => t.name === 'send_set_minter');
+		expect(send.annotations.destructiveHint).toBe(true);
+		expect(db.rows[0].enabled).toBe(false);
+
+		const handlers = await callFile(body.data.id, 'handlers.js');
+		expect(handlers.status).toBe(200);
+		expect(handlers.text).toContain('export async function read_marketplace');
+	});
+
+	it('rejects a document that is not an IDL, a bad cluster and an unknown program id', async () => {
+		const bad = await callImport('POST', { idl_url: idlUrl.replace('skill_license', 'bad') });
+		expect(bad.status).toBe(400);
+		expect(bad.body.error).toBe('idl_error');
+		expect((await callImport('POST', { idl_url: idlUrl, cluster: 'testnet' })).status).toBe(400);
+		expect((await callImport('POST', { program_id: 'not-a-key' })).body.error).toBe('idl_error');
+	});
+});

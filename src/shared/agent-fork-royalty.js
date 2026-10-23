@@ -15,6 +15,8 @@
  * by descendant. The royalty layer stays in the wallet's violet family.
  */
 
+import { shortAddress as shortAddr } from './address.js';
+
 let _apiFetch = null;
 async function api() {
 	if (_apiFetch) return _apiFetch;
@@ -25,7 +27,6 @@ async function api() {
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
 	({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const shortAddr = (a) => (a && a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '');
 const pct = (bps) => `${(bps / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}%`;
 const sol = (n) => `${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 5 })} SOL`;
 const usd = (n) => (n == null ? '' : `$${Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 })}`);

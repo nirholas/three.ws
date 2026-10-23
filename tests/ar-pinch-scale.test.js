@@ -13,7 +13,7 @@ import { describe, it, expect } from 'vitest';
 import {
 	clampPinScale, createPinchState, pinchEnd, pinchMove, pinchStart,
 	PINCH_DEADZONE_PX, PINCH_SCALE_MAX, PINCH_SCALE_MIN,
-} from '../src/ar/pinch-scale.js';
+} from '../packages/ar-studio/src/studio/pinch.js';
 
 describe('pinchStart', () => {
 	it('engages on a real finger spread and captures the base scale', () => {

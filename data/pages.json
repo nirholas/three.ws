@@ -1001,6 +1001,14 @@
 					"showcase": true
 				},
 				{
+					"path": "/readme-3d",
+					"title": "README 3D",
+					"description": "Put an interactive 3D model in any GitHub README. Paste a GLB, glTF, OBJ or STL URL and get a block GitHub renders as a rotatable viewer, sized to fit its markdown limit.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-23"
+				},
+				{
 					"path": "/validation",
 					"title": "glTF Validator",
 					"description": "Khronos-spec validator for glTF/GLB files. Paste a URL or upload a model.",
@@ -3205,6 +3213,14 @@
 					"priority": 0.6,
 					"changefreq": "weekly",
 					"added": "2026-06-21"
+				},
+				{
+					"path": "/mcp-plans",
+					"title": "MCP Plans",
+					"description": "Prepay for paid MCP tools with credit bundles or time passes, use free trial calls on every tool, and see each credit spent.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-10-23"
 				},
 				{
 					"path": "/payments",

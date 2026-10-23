@@ -26,7 +26,7 @@ import {
 	hitMatrix,
 	mountWebXR,
 } from './helpers/fake-xr.js';
-import { TRACKING_LOSS_FRAMES } from '../src/ar/anchor-lifecycle.js';
+import { TRACKING_LOSS_FRAMES } from '../packages/ar-studio/src/studio/anchor-lifecycle.js';
 import { anchorPoseToPin } from '../src/irl/floor-anchor.js';
 import { geoToLocal } from '../src/irl/room-anchor.js';
 

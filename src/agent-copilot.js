@@ -32,6 +32,7 @@ import { executeAgentTrade, TradeError } from './agent-solana-wallet.js';
 import { createSafetyPanel } from './shared/safety-panel.js';
 import { consumeCsrfToken } from './api.js';
 import { mdToHtml } from './md.js';
+import { shortAddress as short } from './shared/address.js';
 
 const STYLE_ID = 'awh-copilot-style';
 const STYLE = `
@@ -214,7 +215,6 @@ function fmtTok(n) {
 	if (n >= 1000) return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 	return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
 }
-function short(s, h = 4, t = 4) { return !s || s.length <= h + t + 1 ? s || '' : `${s.slice(0, h)}…${s.slice(-t)}`; }
 function explorerTxUrl(sig, network) { return network === 'devnet' ? `https://explorer.solana.com/tx/${sig}?cluster=devnet` : `https://solscan.io/tx/${sig}`; }
 function uiToRaw(ui, decimals) {
 	if (!(Number(ui) > 0)) return '0';

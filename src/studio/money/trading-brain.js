@@ -34,10 +34,10 @@ import {
 	compileRuleToConfig, configToSniperStrategy,
 	PRESETS, applyPreset, matchingPresetId, scoreRisk,
 } from './trading-compile.js';
+import { shortAddress as short } from '../../shared/address.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
 	({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const short = (a) => (a ? `${a.slice(0, 4)}…${a.slice(-4)}` : '');
 const fmtSol = (n) => (n == null ? '—' : Number(n).toLocaleString(undefined, { maximumFractionDigits: 4 }));
 const fmtUsd = (n) => (n == null ? '—' : '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }));
 const fmtPct = (n) => (n == null ? '—' : `${n > 0 ? '+' : ''}${Number(n).toFixed(1)}%`);

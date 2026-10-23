@@ -20,6 +20,7 @@ export function shapeRule(r) {
 		target_mint: r.target_mint ?? null,
 		target_agent: r.target_agent ?? null,
 		threshold: r.threshold ?? null,
+		filters: r.filters ?? null,
 		deliver_in_app: r.deliver_in_app ?? null,
 		webhook_url: r.webhook_url ?? null,
 		// Per-rule HMAC secret for verifying the `webhook-signature` header on
@@ -88,6 +89,8 @@ export function summarizeAlert(p) {
 			return `${tok} mcap rose above ${usd(p.threshold_usd)} (now ${usd(p.market_cap_usd)})`;
 		case 'price_below':
 			return `${tok} mcap fell below ${usd(p.threshold_usd)} (now ${usd(p.market_cap_usd)})`;
+		case 'market_anomaly':
+			return p.summary || `${p.subject || 'market'} ${p.processor || ''} anomaly`.replace(/\s+/g, ' ').trim();
 		default:
 			return `${tok} alert`;
 	}

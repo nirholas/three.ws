@@ -16,6 +16,7 @@ import { REGISTRY_DEPLOYMENTS } from './erc8004/abi.js';
 import { onchainBadgeHTML } from './shared/onchain-badge.js';
 import { seeInWorldHref, hasCustomAvatar } from './shared/agent-3d.js';
 import { log } from './shared/log.js';
+import { shortAddress } from './shared/address.js';
 
 const CACHE_TTL_MS = 60000;
 const ITEMS_PER_PAGE = 24;
@@ -32,12 +33,7 @@ const PROTOCOL_LABELS = {
 	'avatar-3d': 'AVATAR',
 };
 
-function shortAddr(addr) {
-	if (!addr) return '';
-	const s = String(addr);
-	if (s.length <= 10) return s;
-	return s.slice(0, 6) + '…' + s.slice(-4);
-}
+function shortAddr(addr) { return shortAddress(addr, 6, 4); }
 
 function extractProtocols(metadata) {
 	const out = [];

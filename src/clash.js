@@ -14,6 +14,7 @@ import { initWalletButton, getConnectedWallet, getConnectedWalletAddress } from 
 import { log } from './shared/log.js';
 import { updateValue, ring, playRings, setLiveDot } from './ui-juice.js';
 import { proxiedImageURL } from './ipfs.js';
+import { shortAddress as short } from './shared/address.js';
 
 const $ = (id) => document.getElementById(id);
 const API = '/api/clash';
@@ -52,9 +53,6 @@ function el(tag, props = {}, kids = []) {
 	return n;
 }
 
-function short(addr) {
-	return addr ? `${addr.slice(0, 4)}…${addr.slice(-4)}` : '';
-}
 function fmtNum(n) {
 	n = Math.round(Number(n) || 0);
 	if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;

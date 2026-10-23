@@ -24,6 +24,7 @@ import {
 	fetchX402Activity,
 } from '../../agent-x402-pay.js';
 import { formatUsd, timeAgo, explorerTxUrl } from '../util.js';
+import { addressHtml } from '../../shared/address.js';
 
 const SEARCH_DEBOUNCE_MS = 350;
 
@@ -430,7 +431,7 @@ registerWalletTab({
 			const fundBlock = insufficient
 				? `<div class="awh-pay-fund">
 						<p>This agent has ${escapeHtml(usdcStr)} but the service costs ${escapeHtml(priceStr)}. Fund the wallet first.</p>
-						${state.depositAddress ? `<div class="awh-bal-addr"><span class="awh-mono" title="${escapeHtml(state.depositAddress)}">${escapeHtml(shortAddress(state.depositAddress, 6, 6))}</span><button class="awh-btn awh-bal-mini" type="button" data-act="copy-addr">Copy</button></div>` : ''}
+						${state.depositAddress ? `<div class="awh-bal-addr"><span class="awh-mono">${addressHtml(state.depositAddress, { head: 6, tail: 6, label: 'Wallet deposit address' })}</span><button class="awh-btn awh-bal-mini" type="button" data-act="copy-addr">Copy</button></div>` : ''}
 						<div class="awh-pay-actions"><button class="awh-btn awh-btn--primary" type="button" data-act="fund">Fund wallet →</button></div>
 					</div>`
 				: '';
@@ -438,7 +439,7 @@ registerWalletTab({
 			return head + `
 				<dl class="awh-pay-rows">
 					<div class="awh-pay-row"><dt>Price</dt><dd class="awh-pay-price">${escapeHtml(priceStr)}</dd></div>
-					<div class="awh-pay-row"><dt>Pay to</dt><dd class="awh-mono">${escapeHtml(shortAddress(p?.payTo || '', 6, 6))}</dd></div>
+					<div class="awh-pay-row"><dt>Pay to</dt><dd class="awh-mono">${addressHtml(p?.payTo || '', { head: 6, tail: 6, label: 'Recipient' })}</dd></div>
 					<div class="awh-pay-row"><dt>Method</dt><dd>${escapeHtml(sel.method)}</dd></div>
 					<div class="awh-pay-row"><dt>Agent balance</dt><dd>${escapeHtml(usdcStr)}</dd></div>
 				</dl>
@@ -473,7 +474,7 @@ registerWalletTab({
 				<div class="awh-pay-receipt">
 					<div class="awh-svc-name" style="color:var(--success,#4ade80)">Paid ✓ ${escapeHtml(amt)}</div>
 					<dl class="awh-pay-rows" style="margin-bottom:0">
-						<div class="awh-pay-row"><dt>Paid to</dt><dd class="awh-mono">${escapeHtml(shortAddress(pay.payTo || '', 6, 6))}</dd></div>
+						<div class="awh-pay-row"><dt>Paid to</dt><dd class="awh-mono">${addressHtml(pay.payTo || '', { head: 6, tail: 6, label: 'Recipient' })}</dd></div>
 						${pay.tx ? `<div class="awh-pay-row"><dt>Transaction</dt><dd><a class="awh-mono awh-act-sig" href="${escapeHtml(pay.explorer || explorerTxUrl(pay.tx, PAY_NETWORK))}" target="_blank" rel="noopener">${escapeHtml(shortAddress(pay.tx, 6, 6))} ↗</a></dd></div>` : ''}
 					</dl>
 				</div>

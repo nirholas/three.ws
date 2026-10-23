@@ -34,6 +34,7 @@ import {
 	validateSolanaAddress, enforceSpendLimit, SpendLimitError, lamportsToUsd,
 	getSpendLimits, setSpendLimits, listCustodyEvents, updateCustodyEvent, recordCustodyEvent,
 	getDailySpendUsd, getTradeLimits, setTradeLimits, getDailySpendLamports,
+	getBurnerPolicy, setBurnerPolicy, getAutoSpendUsd,
 	setPolicyRules, getPolicyRules, checkDestinationSweepRisk,
 } from '../_lib/agent-trade-guards.js';
 // Natural-language spend policies — owner authors rules in English (compiler),
@@ -1186,6 +1187,7 @@ async function handleLimits(req, res, id) {
 		const wantsSpend = ['daily_usd', 'per_tx_usd', 'per_counterparty_daily_usd', 'approval_threshold_usd', 'frozen'].some((k) => k in body);
 		let limitsOut = getSpendLimits(meta);
 		let tradeLimitsOut = getTradeLimits(meta);
+		let burnerOut = getBurnerPolicy(meta);
 		let whitelistOut = null;
 		try {
 			// The legacy whole-list write follows the destination whitelist rules: new
@@ -1203,6 +1205,9 @@ async function handleLimits(req, res, id) {
 			if (body.trade_limits && typeof body.trade_limits === 'object') {
 				tradeLimitsOut = await setTradeLimits(id, auth.userId, body.trade_limits, { req });
 			}
+			if (body.burner_policy && typeof body.burner_policy === 'object') {
+				burnerOut = await setBurnerPolicy(id, auth.userId, body.burner_policy, { req });
+			}
 		} catch (e) {
 			if (e?.status) return error(res, e.status, e.code || 'error', e.message, e.extra);
 			throw e;
@@ -1210,14 +1215,16 @@ async function handleLimits(req, res, id) {
 		limitsOut = { ...limitsOut, withdraw_allowlist: await activeAddresses(id) };
 		const spentUsd = await getDailySpendUsd(id, network).catch(() => 0);
 		const spentLamports = await getDailySpendLamports(id, network).catch(() => 0n);
-		return json(res, 200, { data: { whitelist: whitelistOut, limits: limitsOut, trade_limits: tradeLimitsOut, spend_policy: resolveSpendPolicy(meta), spent_today_usd: spentUsd, spent_today_sol: Number(spentLamports) / 1e9 } });
+		const autoSpentUsd = await getAutoSpendUsd(id, network).catch(() => 0);
+		return json(res, 200, { data: { whitelist: whitelistOut, limits: limitsOut, trade_limits: tradeLimitsOut, burner_policy: burnerOut, spend_policy: resolveSpendPolicy(meta), spent_today_usd: spentUsd, auto_spent_today_usd: autoSpentUsd, spent_today_sol: Number(spentLamports) / 1e9 } });
 	}
 
 	const limitsOut = { ...getSpendLimits(meta), withdraw_allowlist: await activeAddresses(id) };
 	const whitelistView = await getWhitelist(id, auth.userId).catch(() => null);
 	const spentUsd = await getDailySpendUsd(id, network).catch(() => 0);
 	const spentLamports = await getDailySpendLamports(id, network).catch(() => 0n);
-	return json(res, 200, { data: { whitelist: whitelistView, limits: limitsOut, trade_limits: getTradeLimits(meta), spend_policy: resolveSpendPolicy(meta), spent_today_usd: spentUsd, spent_today_sol: Number(spentLamports) / 1e9 } });
+	const autoSpentUsd = await getAutoSpendUsd(id, network).catch(() => 0);
+	return json(res, 200, { data: { whitelist: whitelistView, limits: limitsOut, trade_limits: getTradeLimits(meta), burner_policy: getBurnerPolicy(meta), spend_policy: resolveSpendPolicy(meta), spent_today_usd: spentUsd, auto_spent_today_usd: autoSpentUsd, spent_today_sol: Number(spentLamports) / 1e9 } });
 }
 
 // ── natural-language spend policy ─────────────────────────────────────────────

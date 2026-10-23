@@ -142,7 +142,7 @@ Oracle reads from a separate full-coverage data brain rather than touching the c
 - `wallet_reputation` feeds WHO (labels): label, smart_money_score, win_rate, early_win_rate, dump_rate, coins_traded, creator_count, creator_wins.
 - `pump_coin_outcomes` feeds evidence and settlement: graduated, rugged, ath_multiple, last_market_cap_usd.
 
-"Smart money" is not a hard-coded list. It is continuously re-earned from outcomes in the `wallet_reputation` graph. For wallets the brain hasn't judged yet, Oracle seeds a cold-start prior from a curated known-wallet set sourced from public KOL/wallet intelligence, so a brand-new coin still gets a useful pedigree read on its first scoring pass. Precedence is always earned reputation, then prior, then unproven.
+"Smart money" is not a hard-coded list. It is continuously re-earned from outcomes in the `wallet_reputation` graph. For wallets the brain hasn't judged yet, Oracle serves a cold-start prior from the same `wallet_reputation` table: the rows `api/cron/gmgn-seed.js` writes daily from gmgn.ai's smart-money rankings (with a kol-quest fallback) that the brain has not yet judged itself (`coins_traded < 5`, labelled `smart_money`, `kol` or `sniper`). `api/_lib/oracle/known-wallets.js` caches them in-process and refreshes on a 10-minute TTL (30 seconds after a failed read, keeping the last good rows), so a lookup is a synchronous map hit and the database sees at most one read per TTL per instance. Nothing is committed to git, and an empty table serves an empty prior and logs it. A brand-new coin still gets a useful pedigree read on its first scoring pass. Precedence is always earned reputation, then prior, then unproven.
 
 ## The worker
 

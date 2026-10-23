@@ -29,6 +29,17 @@ global `fetch`. In `api/skills/import.js` it is wired to
 `fetchSafePublicUrlPinned` from `api/_lib/ssrf-guard.js` so a spec URL can
 never be used to reach an internal address.
 
+## Solana Anchor IDL
+
+```js
+import { generateAnchorBundle, importFromAnchorIdl } from '@three-ws/skill-import';
+
+const bundle = generateAnchorBundle(idlJson, { sourceUrl });
+// or: await importFromAnchorIdl({ program_id, cluster: 'devnet' }, { fetchUrl, rpcUrl });
+```
+
+Produces `read_<account>`, `preview_<ix>` and `send_<ix>` tools. `send_*` is `destructiveHint: true` and only returns an unsigned instruction with `status: "confirmation_required"`; nothing in the generated handlers signs. The risk panel (`manifest.risk`, and the table in `SKILL.md`) flags token movement, SOL spend, account closure and authority changes. `src/anchor-runtime.js` is the self-contained Borsh codec appended to the generated `handlers.js`.
+
 ## Auth
 
 Operations that declare an OpenAPI security requirement get a generated

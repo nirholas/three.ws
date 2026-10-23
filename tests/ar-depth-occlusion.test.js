@@ -11,7 +11,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { DepthOcclusion } from '../src/ar/depth-occlusion.js';
+import { DepthOcclusion } from '../packages/ar-studio/src/studio/depth-occlusion.js';
 
 // A minimal stand-in for three's cached depth-sensing occluder mesh: a material
 // with the renderer defaults (colour ON, depth test ON) plus disposable resources.

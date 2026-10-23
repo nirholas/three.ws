@@ -9,6 +9,8 @@
 // the left even if the player closes the terminal mid-settlement, then it
 // auto-hides. Single instance, pure DOM, self-managing.
 
+import { shortAddress } from '../../shared/address.js';
+
 const STAGES = [
 	{ id: 'challenge', label: '402' },
 	{ id: 'built', label: 'Sign' },
@@ -18,7 +20,7 @@ const STAGES = [
 ];
 
 const fmtUsdc = (micro) => `${((Number(micro) || 0) / 1e6).toFixed(4)} USDC`;
-const shortAddr = (a) => (a ? `${String(a).slice(0, 4)}…${String(a).slice(-4)}` : '—');
+const shortAddr = (a) => shortAddress(a, 4, 4, { empty: '\u2014' });
 
 function injectStyles() {
 	if (document.getElementById('aixbt-payhud-styles')) return;

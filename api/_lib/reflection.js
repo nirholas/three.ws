@@ -19,6 +19,10 @@
 import { sql } from './db.js';
 import { llmComplete, LlmUnavailableError } from './llm.js';
 
+// The verified-success detector for skill candidates lives with the reflection
+// entry points so every runtime that reflects can also record a candidate.
+export { recordSkillCandidate } from './skill-candidates.js';
+
 // Preferred synthesis model. Per CLAUDE.md, default to the latest Claude for
 // synthesis quality — passed as the Anthropic model so that when the paid key
 // is live the chain uses it; the free providers (Groq/OpenRouter/NVIDIA) remain

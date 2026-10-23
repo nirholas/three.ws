@@ -13,6 +13,8 @@ import { CHAIN_META, supportedChainIds } from './chain-meta.js';
 import { proxiedImageURL } from '../ipfs.js';
 import { skeletonHTML, emptyStateHTML, errorStateHTML, ensureStateKitStyles } from '../shared/state-kit.js';
 import { onchainBadgeHTML, ensureOnchainBadgeStyles } from '../shared/onchain-badge.js';
+import { shortAddress } from '../shared/address.js';
+
 ensureStateKitStyles();
 ensureOnchainBadgeStyles();
 
@@ -38,7 +40,7 @@ const esc = (s) =>
 		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
 	);
 
-const shortAddr = (a) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '');
+const shortAddr = (a) => shortAddress(a, 6, 4);
 
 function loadNet() {
 	try {

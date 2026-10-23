@@ -25,6 +25,7 @@ import {
 } from '../widget-types.js';
 import { resolveURI, isDecentralizedURI } from '../ipfs.js';
 import { log } from '../shared/log.js';
+import { shortAddress } from '../shared/address.js';
 
 const CACHE_PREFIX = 'erc8004-passport:';
 const STALE_TTL_MS = 1000 * 60 * 60 * 24; // 24h hard ceiling on stale cache
@@ -499,11 +500,7 @@ function _writeCache(key, payload) {
 // Utilities
 // ---------------------------------------------------------------------------
 
-function _shortAddr(addr) {
-	if (!addr || typeof addr !== 'string') return '';
-	if (addr.length < 12) return addr;
-	return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
+function _shortAddr(addr) { return shortAddress(addr, 6, 4); }
 
 function _escapeHTML(s) {
 	return String(s ?? '')

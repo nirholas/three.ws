@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-23T21:39:55.466Z",
+	"generated_at": "2026-10-23T21:49:46.279Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1448,6 +1448,18 @@
 					"showcase": true,
 					"priority": 0.9,
 					"job": "animate"
+				},
+				{
+					"path": "/readme-3d",
+					"title": "README 3D",
+					"description": "Put an interactive 3D model in any GitHub README. Paste a GLB, glTF, OBJ or STL URL and get a block GitHub renders as a rotatable viewer, sized to fit its markdown limit.",
+					"added": "2026-10-23",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": "make"
 				},
 				{
 					"path": "/validation",
@@ -4680,6 +4692,18 @@
 					"showcase": false,
 					"priority": 0.6,
 					"job": "earn"
+				},
+				{
+					"path": "/mcp-plans",
+					"title": "MCP Plans",
+					"description": "Prepay for paid MCP tools with credit bundles or time passes, use free trial calls on every tool, and see each credit spent.",
+					"added": "2026-10-23",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": "account"
 				},
 				{
 					"path": "/payments",
@@ -11650,6 +11674,18 @@
 					"title": "llms-full.txt",
 					"description": "Expanded llms.txt with full descriptions and content hints.",
 					"added": "2026-05-13",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/install.md",
+					"title": "install.md",
+					"description": "How to install three.ws in any MCP client: one command, per-client settings, and every hosted endpoint. Generated from the MCP directory.",
+					"added": "2026-10-23",
 					"auth": null,
 					"indexable": false,
 					"tags": [],

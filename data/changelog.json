@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Agents can sign up to services: inbox codes and sign-in links",
+			"summary": "An agent's own address can now receive verification emails and hand back the one-time code or sign-in link. New inbox_list, inbox_read and inbox_wait_for_code tools read the code with a confidence score, only from services the owner lists under Code senders, only from authentic non-spam mail. Email bodies stay untrusted data and links are never fetched for the agent.",
+			"tags": [
+				"feature"
+			],
+			"link": "/agent-mail"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Chain turnover on /chains",
 			"summary": "The chains leaderboard now has a sortable Turnover column (24h DEX volume divided by TVL) that shows which chains have capital actively trading rather than parked. Chains with no TVL or no reported volume show n/a.",
 			"tags": [
@@ -14,21 +23,27 @@
 			"date": "2026-10-23",
 			"title": "Onchain viewer reads multi-part memo inscriptions",
 			"summary": "Paste any transaction of a first/1, firsts/1 or SPL404 inscription into /onchain and it collects the other parts, checks each part and the whole SHA-256, names missing parts, and shows the file. Images render from verified bytes; SVG and HTML are shown as text and never executed. The Solana Memo Media MCP gains a read_inscription tool that does the same.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/onchain"
 		},
 		{
 			"date": "2026-10-23",
 			"title": "Prepaid credit plans and free trials for paid MCP tools",
 			"summary": "Buy a credit bundle or a 24-hour or 30-day time pass at /mcp-plans and call paid MCP tools without paying each call over x402. Every account gets 3 free calls per tool. Credits are debited before a call, refunded when the tool errors, and every result reports creditsUsed and creditsRemaining. A drained plan falls back to the per-call payment-required error.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/mcp-plans"
 		},
 		{
 			"date": "2026-10-23",
 			"title": "Copy any model as a GitHub README 3D block",
 			"summary": "Forge results, avatar pages, the avatar dashboard and model pages now have a Copy as GitHub README 3D action. It simplifies the model to a size GitHub renders and puts a stl code fence on your clipboard that GitHub shows as an interactive 3D viewer in any README, issue or pull request. The same converter is a free API (POST /api/readme-3d) and has a live page at /readme-3d.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/readme-3d"
 		},
 		{
@@ -46,7 +61,9 @@
 			"title": "Oracle's smart-wallet prior now reads the live database",
 			"summary": "The cold-start wallet prior behind Oracle's pedigree pillar is loaded from the daily-seeded wallet_reputation table instead of a committed June snapshot, so it tracks the current gmgn.ai rankings. It is cached in-process with a bounded refresh, keeps the last good rows if the database blips, and serves an empty prior (and logs it) rather than inventing wallets.",
 			"link": "/docs/oracle",
-			"tags": ["improvement"]
+			"tags": [
+				"improvement"
+			]
 		},
 		{
 			"date": "2026-10-23",

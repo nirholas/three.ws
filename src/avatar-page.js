@@ -19,6 +19,7 @@
 
 import { openTalkMode } from './voice/talk-mode.js';
 import { downloadAvatar } from './avatar-export.js';
+import { copyReadme3d, describeResult } from './readme-3d-copy.js';
 import { fbxFromUrl } from './remesh-convert.js';
 import { safeUrl } from './safe-url.js';
 import { apiFetch } from './api.js';
@@ -1127,6 +1128,10 @@ function openDownloadMenu(ev) {
 			<strong>USDZ</strong>
 			<span>iOS AR — Safari Quick Look</span>
 		</button>
+		<button type="button" role="menuitem" data-format="readme">
+			<strong>README 3D</strong>
+			<span>Copy for GitHub \u2014 renders as an interactive 3D model</span>
+		</button>
 		<div class="av-download-status" data-status></div>
 	`;
 	document.body.appendChild(menu);
@@ -1138,7 +1143,7 @@ function openDownloadMenu(ev) {
 			const format = btn.dataset.format;
 			if (menu.dataset.busy === '1') return;
 			menu.dataset.busy = '1';
-			statusEl.textContent = `Preparing ${format.toUpperCase()}…`;
+			statusEl.textContent = `Preparing ${format === 'readme' ? 'README 3D' : format.toUpperCase()}…`;
 			statusEl.dataset.tone = 'busy';
 
 			try {
@@ -1150,6 +1155,11 @@ function openDownloadMenu(ev) {
 				} else if (format === 'usdz' && usdzUrl) {
 					triggerLink(usdzUrl, `${fileBase}.usdz`);
 					statusEl.textContent = 'Download started.';
+					statusEl.dataset.tone = 'ok';
+				} else if (format === 'readme') {
+					if (!glbUrl) throw new Error('No source GLB to convert.');
+					const result = await copyReadme3d(glbUrl, { name: fileBase });
+					statusEl.textContent = describeResult(result);
 					statusEl.dataset.tone = 'ok';
 				} else if (format === 'fbx') {
 					// FBX is built server-side from the GLB so the skeleton survives.

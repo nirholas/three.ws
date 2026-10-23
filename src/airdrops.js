@@ -11,6 +11,7 @@
 import { enterStagger } from './ui-juice.js';
 import { formatUsd, timeAgo, escapeHtml } from './shared/coin-format.js';
 import { createLogger } from './shared/log.js';
+import { shortAddress } from './shared/address.js';
 
 const log = createLogger('airdrops');
 const $ = (id) => document.getElementById(id);
@@ -34,9 +35,7 @@ function detectFamily(address) {
 	return null;
 }
 
-function shortAddr(a) {
-	return a.length > 13 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a;
-}
+function shortAddr(a) { return shortAddress(a, 6, 4); }
 
 /* ---------------- recents (shared with /portfolio) ---------------- */
 

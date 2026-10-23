@@ -9,6 +9,8 @@
 // Nothing here invents activity. If the stream is quiet, the theater shows its
 // quiet-market state from the real recent snapshot — never a fabricated bot.
 
+import { shortAddress as shortMint } from './shared/address.js';
+
 const SOL_EXPLORER = 'https://solscan.io';
 
 function solscanToken(mint, network) {
@@ -25,9 +27,6 @@ function fmtUsdc(atomic) {
 	const v = Number(atomic) / 1e6;
 	if (!Number.isFinite(v)) return null;
 	return `$${v >= 1000 ? Math.round(v).toLocaleString() : v.toFixed(2)}`;
-}
-function shortMint(m) {
-	return typeof m === 'string' && m.length > 10 ? `${m.slice(0, 4)}…${m.slice(-4)}` : m || '';
 }
 
 /**

@@ -16,6 +16,7 @@ import { getMemorySettings } from './settings.js';
 import { memoryPromptSection } from './memory.js';
 import { memoryNudge, shouldNudge } from './nudge.js';
 import { draftSkillFromRun } from './skill-drafts.js';
+import { learnFromRun } from '../skill-candidates.js';
 import { AUTONOMOUS_TOOL_NAMES, LEARNING_TOOL_NAMES, isLearningTool, learningToolHandlers, learningToolSchemas } from './tools.js';
 
 const OFF = Object.freeze({ enabled: false, block: '', memoryIds: [], nudge: null, toolNames: [], schemas: [], handlers: {}, settings: null });
@@ -100,18 +101,26 @@ export function toolCallsFromSteps(steps) {
  * touch a run whose answer is already delivered.
  */
 export async function afterRunCompleted({ agentId, userId, runRef, goal, steps, finalAnswer, complete }) {
+	const toolCalls = toolCallsFromSteps(steps);
+	// Executable-bundle candidates (skill-candidates.js) run beside the
+	// prompt-only draft; one failing never stops the other.
+	const candidate = learnFromRun({ agentId, userId, runRef, goal, calls: toolCalls, finalAnswer, ...(complete ? { complete } : {}) }).catch((err) => {
+		console.warn('[agent-learning] skill candidate failed', err?.message);
+	});
 	try {
 		return await draftSkillFromRun({
 			agentId,
 			userId,
 			runRef,
 			goal,
-			toolCalls: toolCallsFromSteps(steps),
+			toolCalls,
 			finalAnswer,
 			...(complete ? { complete } : {}),
 		});
 	} catch (err) {
 		console.warn('[agent-learning] skill draft failed', err?.message);
 		return { status: 'failed', reason: 'error' };
+	} finally {
+		await candidate;
 	}
 }

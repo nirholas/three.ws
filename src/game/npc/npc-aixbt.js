@@ -13,6 +13,7 @@
 // shared overlay lifecycle, plus a small .aixbt-* stylesheet injected once.
 
 import { aixbtPayHud } from './aixbt-pay-hud.js';
+import { shortAddress } from '../../shared/address.js';
 
 // ── tiny DOM helper (mirrors npc-services.js conventions) ─────────────────────
 function el(tag, attrs, kids) {
@@ -116,7 +117,7 @@ const PAY_STAGES = [
 	{ id: 'done', label: 'Confirmed' },
 ];
 const fmtUsdc = (micro) => `${((Number(micro) || 0) / 1e6).toFixed(4)} USDC`;
-const shortAddr = (a) => (a ? `${String(a).slice(0, 6)}…${String(a).slice(-4)}` : '—');
+const shortAddr = (a) => shortAddress(a, 6, 4, { empty: '\u2014' });
 
 function injectStyles() {
 	if (document.getElementById('aixbt-term-styles')) return;

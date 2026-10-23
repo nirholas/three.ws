@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { toCoinIntel } from '../../api/_lib/oracle/sources.js';
+import { xHandleFromLink, xAccountSignal } from '../../api/_lib/oracle/x-account.js';
 
 const coinRow = {
 	mint: 'MintAAA', symbol: 'AAA', name: 'Alpha', image_uri: 'x', category: 'ai',
@@ -67,5 +68,41 @@ describe('toCoinIntel', () => {
 	it('parses notable when stored as a JSON string', () => {
 		const ci = toCoinIntel({ coin: coinRow, smart: { notable: '[{"wallet":"w","label":"sniper","score":50}]' }, narr: null });
 		expect(ci.smartMoney.notable[0].label).toBe('sniper');
+	});
+});
+
+describe('linked X account signal', () => {
+	it('carries xAccount onto intel.social, null when absent', () => {
+		const xAccount = { handle: 'synthproj', ageDays: 3, followers: 41, verified: false, source: 'x-guest' };
+		expect(toCoinIntel({ coin: coinRow, smart: null, narr: null, xAccount }).social.xAccount).toEqual(xAccount);
+		expect(toCoinIntel({ coin: coinRow, smart: null, narr: null }).social.xAccount).toBeNull();
+	});
+});
+
+describe('xHandleFromLink / xAccountSignal', () => {
+	it('extracts handles from profile and status links, rejects non-profiles', () => {
+		expect(xHandleFromLink('https://x.com/SynthProj')).toBe('SynthProj');
+		expect(xHandleFromLink('https://twitter.com/synthproj/status/123')).toBe('synthproj');
+		expect(xHandleFromLink('@synthproj')).toBe('synthproj');
+		expect(xHandleFromLink('x.com/synthproj?s=20')).toBe('synthproj');
+		expect(xHandleFromLink('https://x.com/i/communities/123')).toBeNull();
+		expect(xHandleFromLink('https://example.com/synthproj')).toBeNull();
+		expect(xHandleFromLink('')).toBeNull();
+	});
+
+	it('derives account age in days and follower count from the guest profile', async () => {
+		const now = Date.parse('2026-02-01T00:00:00Z');
+		const sig = await xAccountSignal('https://x.com/synthproj', {
+			now: () => now,
+			lookup: async () => ({ username: 'synthproj', joined: '2026-01-29T00:00:00.000Z', followers: 41, verified: false }),
+		});
+		expect(sig).toMatchObject({ handle: 'synthproj', ageDays: 3, followers: 41, source: 'x-guest' });
+	});
+
+	it('resolves null (unknown, not zero) when the reader fails', async () => {
+		const sig = await xAccountSignal('https://x.com/synthfail', {
+			lookup: async () => { throw Object.assign(new Error('down'), { reason: 'rate_limited' }); },
+		});
+		expect(sig).toBeNull();
 	});
 });

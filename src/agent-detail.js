@@ -41,6 +41,7 @@ import { mountEarningsCard } from './shared/agent-earnings-card.js';
 import { mountAgentTokenPlan } from './agent-token-plan.js';
 import { consumeCsrfToken } from './api.js';
 import { countUp, updateValue, flashValue, ring, playRings, sparkline, enterStagger } from './ui-juice.js';
+import { shortAddress } from './shared/address.js';
 
 // Live coin-status widgets mounted on this page (token chip + launch-history
 // rows). Tracked so a re-render (e.g. avatar refresh) tears down their refresh
@@ -379,12 +380,7 @@ function avatarDataUri(name) {
 	return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-function shortAddr(s, head = 4, tail = 4) {
-	if (!s) return '—';
-	const str = String(s);
-	if (str.length <= head + tail + 1) return str;
-	return `${str.slice(0, head)}…${str.slice(-tail)}`;
-}
+function shortAddr(s, head = 4, tail = 4) { return shortAddress(s, head, tail, { empty: '\u2014' }); }
 
 // Deep-link this agent into /irl. Prefer the avatar id (resolveAvatarUrl reads it
 // directly); fall back to the always-real GLB (custom or mannequin) so the body

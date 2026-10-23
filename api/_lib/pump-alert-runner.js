@@ -13,10 +13,12 @@
 //   price_*     → pump.fun coins API (authoritative USD market cap)
 //   whale_buy   → pump.fun trades API (recent buys on the target mint)
 //   market_price → the prediction venue's live market price (api/_lib/predictions/)
+//   market_anomaly → market_anomaly_events (api/cron/market-anomalies.js scanner)
 //   launch_match → pump_coin_intel (every new launch, scored by the coin-intel
 //                  worker within ~90s) + pump_coin_outcomes for creator history
 
 import { sql } from './db.js';
+import { queryMarketAnomalies } from './market-anomaly-store.js';
 import {
 	cooldownElapsed,
 	gradMatchesRule,
@@ -30,6 +32,8 @@ import {
 	buildWhalePayload,
 	buildPricePayload,
 	launchMatchesRule,
+	marketAnomalyMatchesRule,
+	buildMarketAnomalyPayload,
 	buildLaunchMatchPayload,
 } from './pump-alert-eval.js';
 import { deliverAlert } from './alert-delivery.js';
@@ -97,7 +101,7 @@ export async function runPumpAlertRules(now = Date.now()) {
 	const fireState = new Map(fireRows.map((f) => [f.rule_id, f]));
 
 	// Partition rules by kind.
-	const byKind = { graduation: [], new_mint: [], price: [], whale_buy: [], market_price: [], launch_match: [] };
+	const byKind = { graduation: [], new_mint: [], price: [], whale_buy: [], market_price: [], launch_match: [], market_anomaly: [] };
 	for (const r of rules) {
 		if (r.kind === 'graduation') byKind.graduation.push(r);
 		else if (r.kind === 'new_mint') byKind.new_mint.push(r);
@@ -105,6 +109,7 @@ export async function runPumpAlertRules(now = Date.now()) {
 		else if (r.kind === 'whale_buy') byKind.whale_buy.push(r);
 		else if (r.kind === 'market_price') byKind.market_price.push(r);
 		else if (r.kind === 'launch_match') byKind.launch_match.push(r);
+		else if (r.kind === 'market_anomaly') byKind.market_anomaly.push(r);
 	}
 
 	const ctx = { now, solPrice: 0 };
@@ -116,6 +121,7 @@ export async function runPumpAlertRules(now = Date.now()) {
 		runWhaleRules(byKind.whale_buy, fireState, report, ctx).catch((e) => bumpErr(report, e)),
 		runMarketPriceRules(byKind.market_price, fireState, report, ctx).catch((e) => bumpErr(report, e)),
 		runLaunchMatchRules(byKind.launch_match, fireState, report, ctx).catch((e) => bumpErr(report, e)),
+		runMarketAnomalyRules(byKind.market_anomaly, fireState, report, ctx).catch((e) => bumpErr(report, e)),
 	]);
 
 	await pruneDeliveries();
@@ -223,6 +229,25 @@ async function runLaunchMatchRules(rules, fireState, report, ctx) {
 		}
 		if (!events.length) continue;
 		await deliverEventRule(rule, fireState.get(rule.id), events, report, ctx.now);
+	}
+}
+
+// ── market_anomaly (scanner events passing a severity/processor filter) ──────
+
+async function runMarketAnomalyRules(rules, fireState, report, ctx) {
+	if (!rules.length) return;
+	// Newest-first from the store; deliverEventRule wants oldest-first so its
+	// last_event_id cursor advances in order.
+	const { events } = await queryMarketAnomalies({ severity: 'medium', hours: 2, limit: 200 });
+	if (!events.length) return;
+	const ordered = events.slice().reverse();
+
+	for (const rule of rules) {
+		report.evaluated++;
+		const matched = ordered.filter((e) => marketAnomalyMatchesRule(rule, e));
+		if (!matched.length) continue;
+		const payloads = matched.map((e) => buildMarketAnomalyPayload(rule, e));
+		await deliverEventRule(rule, fireState.get(rule.id), payloads, report, ctx.now);
 	}
 }
 

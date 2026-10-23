@@ -6,27 +6,18 @@
 // nirholas/atomic (separate funder and creator wallets, leaked-key
 // rescues, sniper-resistant launches).
 //
-// Jito tip accounts rotate occasionally; if you start hitting
-// "Bundles must write lock at least one tip account" errors, fetch fresh
-// ones via the getTipAccounts JSON-RPC method against the block engine.
+// Tip accounts come from ./jito-tip-accounts.js: the live getTipAccounts list
+// with a pinned fallback, so a rotation never needs a code change.
 
 import { PublicKey } from '@solana/web3.js';
+import { JITO_TIP_ACCOUNTS, randomTipAccountAddress } from './jito-tip-accounts.js';
 
 export const JITO_BUNDLE_URL = 'https://mainnet.block-engine.jito.wtf/api/v1/bundles';
 
-export const JITO_TIP_ACCOUNTS = [
-	'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
-	'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
-	'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
-	'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
-	'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
-	'96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
-	'3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
-	'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
-];
+export { JITO_TIP_ACCOUNTS };
 
 export function randomTipAccount() {
-	return new PublicKey(JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]);
+	return new PublicKey(randomTipAccountAddress());
 }
 
 export async function submitBundle(bs58Txs) {

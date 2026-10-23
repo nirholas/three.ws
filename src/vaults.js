@@ -5,6 +5,8 @@
 
 import { apiFetch, noteSession } from './api.js';
 import { updateValue, flipReorder } from './ui-juice.js';
+import { shortAddress as shortMint, addressHtml } from './shared/address.js';
+import { trapFocus, focusablesIn } from './shared/focus-trap.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -37,7 +39,6 @@ const pctBps = (bps) => `${(Number(bps || 0) / 100).toFixed(bps % 100 === 0 ? 0 
 const roiText = (bps) => `${bps > 0 ? '+' : ''}${(Number(bps || 0) / 100).toFixed(2)}%`;
 const signClass = (n) => (n > 0 ? 'is-pos' : n < 0 ? 'is-neg' : 'is-flat');
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const shortMint = (m) => (m ? `${m.slice(0, 4)}…${m.slice(-4)}` : '');
 
 function toast(msg, kind = 'info') {
 	let host = $('#vx-toast');
@@ -504,7 +505,7 @@ function renderDetail(v, ledger) {
 	// open positions, and the table must say so rather than render bare headers.
 	const openPositions = v.positions.filter((p) => p.amount_raw !== '0');
 	const positionsRows = openPositions.length
-		? openPositions.map((p) => `<tr><td class="vx-mono">${shortMint(p.mint)}</td><td>${Number(p.amount_raw).toLocaleString()}</td><td>${p.mark_atomics != null ? usd(p.mark_atomics) : '<span class="vx-muted">repricing…</span>'}</td></tr>`).join('')
+		? openPositions.map((p) => `<tr><td class="vx-mono">${addressHtml(p.mint, { label: 'Token mint' })}</td><td>${Number(p.amount_raw).toLocaleString()}</td><td>${p.mark_atomics != null ? usd(p.mark_atomics) : '<span class="vx-muted">repricing…</span>'}</td></tr>`).join('')
 		: '<tr><td colspan="3" class="vx-muted">All capital is in USDC, no open positions.</td></tr>';
 
 	const ownerBlock = v.is_owner ? ownerPanel(v) : '';
@@ -661,15 +662,11 @@ async function claimFees(v) {
 }
 
 // ── back (deposit) + redeem modals ──────────────────────────────────────────────
-const FOCUSABLE = 'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])';
-let modalOpener = null;
-
-function focusablesIn(root) {
-	return $$(FOCUSABLE, root).filter((el) => el.offsetParent !== null);
-}
+const modalTraps = new Map();
 
 // A dialog that never takes focus leaves a keyboard user stranded behind the
 // backdrop, and one that never gives it back drops them at the top of the page.
+// The shared trap also makes the page behind it inert and closes on Escape.
 function modal(id, show) {
 	const m = $(id);
 	if (!m) return;
@@ -678,36 +675,23 @@ function modal(id, show) {
 	m.hidden = !show;
 	document.body.classList.toggle('vx-modal-open', show);
 	if (show) {
-		modalOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-		const target = focusablesIn(m).find((el) => !el.hasAttribute('data-close')) || focusablesIn(m)[0];
-		target?.focus();
+		modalTraps.set(
+			m,
+			trapFocus(m, {
+				onEscape: closeModals,
+				initialFocus: () =>
+					focusablesIn(m).find((el) => !el.hasAttribute('data-close')) || focusablesIn(m)[0],
+			}),
+		);
 		return;
 	}
-	modalOpener?.focus();
-	modalOpener = null;
-}
-
-function openModal() {
-	return $$('.vx-modal').find((m) => !m.hidden) || null;
+	modalTraps.get(m)?.release();
+	modalTraps.delete(m);
 }
 
 function closeModals() {
 	modal('#vx-open-modal', false);
 	modal('#vx-back-modal', false);
-}
-
-// Keep Tab inside the open dialog: aria-modal is a promise to assistive tech,
-// not an enforcement, so the cycle has to be real.
-function trapTab(e) {
-	if (e.key !== 'Tab') return;
-	const m = openModal();
-	if (!m) return;
-	const f = focusablesIn(m);
-	if (!f.length) return;
-	const first = f[0];
-	const last = f[f.length - 1];
-	if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-	else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 }
 
 function backModal(v) {
@@ -874,10 +858,6 @@ function wireGlobal() {
 	$('#vx-open-form')?.addEventListener('submit', submitOpen);
 	$$('.vx-tab').forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab)));
 	$$('.vx-modal [data-close]').forEach((el) => el.addEventListener('click', closeModals));
-	document.addEventListener('keydown', (e) => {
-		if (e.key === 'Escape') closeModals();
-		else trapTab(e);
-	});
 	window.addEventListener('popstate', () => {
 		const id = new URL(location.href).searchParams.get('v');
 		if (id) openDetail(id, { push: false }); else backToFeed({ push: false });

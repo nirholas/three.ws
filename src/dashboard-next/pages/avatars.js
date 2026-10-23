@@ -1045,6 +1045,7 @@ function openMoreMenu(root, anchor, card, a) {
 		{ label: 'Copy embed snippet', run: () => copyEmbedSnippet(root, a) },
 		{ label: 'Open in 3D studio', run: () => { location.href = `/app#avatar=${encodeURIComponent(a.id)}`; } },
 		{ label: 'Download GLB', run: () => downloadGlb(root, a) },
+		{ label: 'Copy as GitHub README 3D', run: () => copyReadme3dBlock(root, a) },
 		{ label: 'Delete', danger: true, run: () => confirmDelete(root, card, a) },
 	];
 	menu.innerHTML = items.map((item, i) => `
@@ -1207,6 +1208,25 @@ async function downloadGlb(root, a) {
 		toast(root, 'Download started');
 	} catch (err) {
 		toast(root, msgOf(err) || 'Download failed', true);
+	}
+}
+
+// ── Copy as GitHub README 3D ─────────────────────────────────────────────
+
+async function copyReadme3dBlock(root, a) {
+	toast(root, 'Converting for GitHub…');
+	try {
+		let url = a.model_url;
+		if (!url) {
+			const data = await get(`/api/avatars/${encodeURIComponent(a.id)}`);
+			url = data?.avatar?.url || data?.avatar?.model_url;
+		}
+		if (!url) throw new Error('No model URL available');
+		const { copyReadme3d, describeResult } = await import('../../readme-3d-copy.js');
+		const safeName = (a.name || 'avatar').replace(/[^a-z0-9._-]+/gi, '-').slice(0, 48) || 'avatar';
+		toast(root, describeResult(await copyReadme3d(url, { name: safeName })));
+	} catch (err) {
+		toast(root, msgOf(err) || 'Conversion failed', true);
 	}
 }
 

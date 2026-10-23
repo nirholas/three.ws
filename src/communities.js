@@ -10,6 +10,8 @@
 import { log } from './shared/log.js';
 import { safeUrl } from './safe-url.js';
 import { proxiedImageURL } from './ipfs.js';
+import { shortAddress as shortAddr } from './shared/address.js';
+
 const NAME_STORAGE_KEY = 'walk:player-name';
 const AVATAR_CHOICE_KEY = 'communities:avatar-choice';
 const DEFAULT_AVATAR_URL = '/avatars/default.glb';
@@ -437,7 +439,6 @@ function fmtAge(ts) {
 	return `${Math.floor(sec / 86400)}d ago`;
 }
 
-function shortAddr(a) { return a ? `${a.slice(0, 4)}…${a.slice(-4)}` : ''; }
 
 async function loadCoinProfile(mint, { force = false } = {}) {
 	// Retry re-requests the mint the page is already showing, so the

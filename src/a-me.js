@@ -15,6 +15,7 @@
 
 import { onchainBadgeHTML } from './shared/onchain-badge.js';
 import { walletChipHTML, wireWalletChips } from './shared/agent-wallet-chip.js';
+import { shortAddress } from './shared/address.js';
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
 
@@ -37,11 +38,7 @@ function relTime(iso) {
 	return new Date(iso).toLocaleDateString();
 }
 
-function truncAddr(s, head = 6, tail = 4) {
-	const str = String(s || '');
-	if (str.length <= head + tail + 1) return str;
-	return `${str.slice(0, head)}…${str.slice(-tail)}`;
-}
+function truncAddr(s, head = 6, tail = 4) { return shortAddress(s, head, tail); }
 
 async function api(method, path, body) {
 	const headers = { accept: 'application/json' };

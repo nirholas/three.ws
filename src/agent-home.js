@@ -18,6 +18,7 @@ import { mountAgentEthVanityCard } from './agent-eth-vanity-card.js';
 import { mountAgentOnchainCard } from './agent-onchain-card.js';
 import { mountClaimsPanel } from './agent-home-claims.js';
 import { walletChipHTML, wireWalletChips } from './shared/agent-wallet-chip.js';
+import { shortAddress } from './shared/address.js';
 
 const ACTION_ICONS = {
 	[ACTION_TYPES.SPEAK]: '💬',
@@ -655,10 +656,7 @@ function _esc(str) {
 	);
 }
 
-function _shortAddr(addr) {
-	if (!addr) return '';
-	return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
+function _shortAddr(addr) { return shortAddress(addr, 6, 4); }
 
 function _memIcon(type) {
 	return { user: '👤', feedback: '↩', project: '📋', reference: '🔗' }[type] || '·';

@@ -70,6 +70,8 @@ import {
 	writeInflight,
 } from './x402/payment-identifier-server.js';
 import { authenticateSiwx, declareSiwxExtensionFor, recordSiwxPayment } from './siwx-server.js';
+import { verifyAuthHintsSiwx } from './x402/auth-hints.js';
+import { declarePrepaidExtension, prepaidRequirement, servePrepaid } from './x402/prepaid-route.js';
 import { normalizeAddress } from './siwx-storage.js';
 import { normalizeBazaarEntry } from './x402/bazaar-helpers.js';
 import { buildOffersExtension, buildReceiptExtension } from './x402/offer-receipt-server.js';
@@ -434,6 +436,13 @@ export function paidEndpoint(spec) {
 		acceptThree = true,
 		// Optional SIWX (Sign-In-With-X, CAIP-122) opt-in. See file header.
 		siwx,
+		// 'exact' (default): every call is paid with its own x402 payment.
+		// 'prepaid': ALSO accept a debit from the caller's prepaid balance, proven
+		// by a SIGN-IN-WITH-X header with no X-PAYMENT. The balance is funded by one
+		// on-chain deposit and the sellers are paid in batches
+		// (api/_lib/x402/prepaid-ledger.js); a call that fails is never debited.
+		// A caller without a balance gets the normal 402 and can still pay per call.
+		mode = 'exact',
 		// Optional post-settlement hook for per-job metering (Roadmap phase 4:
 		// inference settlement). Called with the settled payment context BEFORE
 		// the response is flushed; the value it returns is JSON-merged into the
@@ -503,6 +512,13 @@ export function paidEndpoint(spec) {
 	if (siwx && typeof siwx.statement !== 'string') {
 		throw new Error('paidEndpoint: siwx.statement is required when siwx is set');
 	}
+	if (mode !== 'exact' && mode !== 'prepaid') {
+		throw new Error(`paidEndpoint: mode must be 'exact' or 'prepaid', got ${mode}`);
+	}
+	if (mode === 'prepaid' && (streaming || siwx)) {
+		throw new Error('paidEndpoint: mode prepaid cannot be combined with streaming or siwx');
+	}
+	const prepaidMode = mode === 'prepaid';
 
 	const routeConfig = { path: route, method: method.toUpperCase(), requiredScope };
 	const httpMethod = method.toUpperCase();
@@ -655,13 +671,16 @@ export function paidEndpoint(spec) {
 		// Wrapped in try-catch: a failure here must never surface as 500 — the
 		// 402 challenge is still valid without the SIWX extension.
 		let siwxExtensions = null;
-		if (siwx) {
+		const prepaidReq = prepaidMode ? prepaidRequirement(requirements) : null;
+		if (siwx || prepaidReq) {
 			try {
 				siwxExtensions = await declareSiwxExtensionFor({
 					networks: requirements.map((r) => r.network),
 					resourceUrl,
-					statement: siwx.statement,
-					expirationSeconds: siwx.expirationSeconds,
+					statement:
+						siwx?.statement ||
+						'Spend your prepaid x402 balance on this request. Signing does not move funds.',
+					expirationSeconds: siwx?.expirationSeconds,
 				});
 			} catch (err) {
 				console.error('[paidEndpoint] declareSiwxExtensionFor failed', err?.message || err);
@@ -673,6 +692,9 @@ export function paidEndpoint(spec) {
 			...(builderCode ? { [BUILDER_CODE]: builderCode } : {}),
 			...(siwxExtensions || {}),
 			...(authHintsExtension || {}),
+			...(prepaidReq
+				? declarePrepaidExtension({ requirement: prepaidReq, origin: new URL(resourceUrl).origin })
+				: {}),
 		};
 
 		// USE-17: sign one offer per accepts[] entry (when issuer is
@@ -865,6 +887,37 @@ export function paidEndpoint(spec) {
 
 		const paymentHeader = req.headers['x-payment'] || req.headers['payment-signature'];
 
+		// Prepaid balance. A SIGN-IN-WITH-X header with no X-PAYMENT proves the
+		// wallet; the price is debited from its prepaid balance and settled to us
+		// later in a batch. No balance, or an unreachable ledger, falls through to
+		// the ordinary 402 so the route is always payable per call.
+		let prepaidError = null;
+		if (prepaidReq && !paymentHeader && (req.headers['sign-in-with-x'] || req.headers['Sign-In-With-X'])) {
+			const auth = await verifyAuthHintsSiwx({ req, resourceUrl });
+			if (auth && !auth.ok) {
+				return error(res, 401, auth.reason || 'siwx_invalid', auth.detail || 'sign-in proof rejected');
+			}
+			if (auth?.ok) {
+				const outcome = await servePrepaid({
+					req,
+					res,
+					payer: auth.principal.address,
+					requirement: prepaidReq,
+					route,
+					resourceUrl,
+					handler,
+					challenge,
+					mimeType,
+					startedAt: requestStartTime,
+				});
+				if (outcome === 'served') return;
+				prepaidError =
+					outcome === 'insufficient'
+						? 'prepaid balance too low for this call; deposit more or pay per call'
+						: 'prepaid balances are temporarily unavailable; pay per call';
+			}
+		}
+
 		// SIWX short-circuit. A returning wallet sends `SIGN-IN-WITH-X: <base64>`
 		// instead of paying; we verify the CAIP-122 signature and skip the
 		// facilitator round-trip entirely. Only runs when the endpoint opted
@@ -916,7 +969,9 @@ export function paidEndpoint(spec) {
 			// auth === null → no SIGN-IN-WITH-X header → fall through to 402.
 		}
 
-		if (!paymentHeader) return await send402(res, challenge);
+		if (!paymentHeader) {
+			return await send402(res, prepaidError ? { ...challenge, error: prepaidError } : challenge);
+		}
 
 		// Abuse guard, tier 2 — only requests carrying an X-PAYMENT header reach the
 		// facilitator /verify round-trip below, so this is where a junk-payment flood

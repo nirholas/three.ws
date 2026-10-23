@@ -31,6 +31,8 @@ import { track, trackError, ANALYTICS_EVENTS } from './analytics.js';
 import { resizedImageUrl } from './shared/image-url.js';
 import { leaveAppForPayment } from './shared/native-handoff.js';
 import { withPayoutStepUp } from './payout-step-up.js';
+import { shortAddress as shortWalletAddress } from './shared/address.js';
+
 ensureStateKitStyles();
 
 const API = '/api';
@@ -3286,6 +3288,9 @@ function openPublishSkillModal() {
 	$('sp-description').value = '';
 	$('sp-category').value = 'general';
 	$('sp-price').value = '0';
+	for (const box of document.querySelectorAll('input[name="sp-rail"]')) {
+		box.checked = box.value === 'x402' || box.value === 'a2a';
+	}
 	$('sp-tags').value = '';
 	$('sp-schema').value = '';
 	const errEl = $('skill-publish-error');
@@ -3385,6 +3390,7 @@ function bindEarnTab() {
 		const description = ($('sp-description')?.value || '').trim();
 		const category = $('sp-category')?.value || 'general';
 		const price_per_call_usd = parseFloat($('sp-price')?.value || '0') || 0;
+		const rails = [...document.querySelectorAll('input[name="sp-rail"]:checked')].map((b) => b.value);
 		const tags = ($('sp-tags')?.value || '').split(',').map((t) => t.trim()).filter(Boolean);
 		const schemaRaw = ($('sp-schema')?.value || '').trim();
 		const errEl = $('skill-publish-error');
@@ -3395,6 +3401,10 @@ function bindEarnTab() {
 		}
 		if (!description) {
 			if (errEl) { errEl.textContent = 'Description is required.'; errEl.hidden = false; }
+			return;
+		}
+		if (price_per_call_usd > 0 && !rails.length) {
+			if (errEl) { errEl.textContent = 'Enable at least one payment rail for a priced skill.'; errEl.hidden = false; }
 			return;
 		}
 
@@ -3417,7 +3427,7 @@ function bindEarnTab() {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				credentials: 'include',
-				body: JSON.stringify({ name, description, category, tags, schema_json, is_public: true, price_per_call_usd }),
+				body: JSON.stringify({ name, description, category, tags, schema_json, is_public: true, price_per_call_usd, rails: rails.length ? rails : undefined }),
 			});
 			const j = await r.json();
 			if (!r.ok) throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
@@ -6810,9 +6820,6 @@ function walletInstallUrl(key) {
 	return 'https://phantom.app';
 }
 
-function shortWalletAddress(pk) {
-	return `${pk.slice(0, 4)}…${pk.slice(-4)}`;
-}
 
 function renderHeaderWallet() {
 	const slots = document.querySelectorAll('[data-wallet-connect]');

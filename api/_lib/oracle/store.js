@@ -11,7 +11,7 @@ import { convict, hitRateFor, PREDICTED_EVENT } from './conviction.js';
 import { ensureActiveModel, modelProvenance } from './model-store.js';
 import { summarizeActions } from './settle.js';
 import { evaluateExit } from './exit.js';
-import { knownWallet } from './known-wallets.js';
+import { knownWallet, loadKnownWallets } from './known-wallets.js';
 import { QUOTE_MINT_LIST, isQuoteMint } from '../quote-mints.js';
 
 /** Persist a narrative classification. */
@@ -299,7 +299,8 @@ export async function readCoin(mint, network = 'mainnet') {
 		limit 40
 	`.catch(() => []);
 
-	const [narr, outcome] = await Promise.all([
+	const [, narr, outcome] = await Promise.all([
+		loadKnownWallets(),
 		sql`select category, narrative, virality, confidence, source from oracle_narrative where mint = ${mint} and network = ${network} limit 1`
 			.then((r) => r[0]).catch(() => null),
 		coinOutcome(mint, network),

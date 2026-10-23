@@ -4,10 +4,12 @@
 //        The request with its confirmation table. With ?t= (the signed deep link
 //        every delivery carries) the response also says whether the link still
 //        matches the request on file (link_verified / link_problem).
-//   POST { decision: 'approve'|'deny', payload_hash, token?, via? }
+//   POST { decision: 'approve'|'deny', payload_hash, token?, via?, wallet_signature? }
 //        Decide. Approve needs the payload_hash the owner was shown; a mismatch
 //        is 409 and nothing runs, an expired request is 410. A repeat approve
-//        returns the request's current state with idempotent: true.
+//        returns the request's current state with idempotent: true. A request the
+//        agent's burner policy escalated (requires_wallet_signature) also needs
+//        wallet_signature { address, signature } over its sign_message.
 //        Session only + CSRF. `via` records the surface: 'web' (default) or
 //        'push' (the service worker's Approve/Deny buttons). Chat and mobile
 //        decisions are made server-side by their own gateways.
@@ -50,6 +52,9 @@ export default wrap(async (req, res) => {
 			payloadHash: body?.payload_hash ?? null,
 			token: body?.token || null,
 			via,
+			walletSignature: body?.wallet_signature && typeof body.wallet_signature === 'object'
+				? { address: String(body.wallet_signature.address || ''), signature: String(body.wallet_signature.signature || '') }
+				: null,
 			req,
 		});
 		return json(res, 200, out);

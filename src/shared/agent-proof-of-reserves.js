@@ -13,6 +13,7 @@
 
 import { apiFetch } from '../api.js';
 import { fmtUsd } from './agent-financial-reputation.js';
+import { shortAddress } from './address.js';
 
 const isBrowser = () => typeof window !== 'undefined' && typeof document !== 'undefined';
 const esc = (s) =>
@@ -46,10 +47,7 @@ function fmtSol(n) {
 	if (n < 0.001) return n.toExponential(1);
 	return n.toLocaleString(undefined, { maximumFractionDigits: n < 1 ? 4 : 3 });
 }
-function shortAddr(a) {
-	if (!a) return '—';
-	return a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a;
-}
+function shortAddr(a) { return shortAddress(a, 4, 4, { empty: '\u2014' }); }
 function timeAgo(iso) {
 	if (!iso) return '';
 	try {

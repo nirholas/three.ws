@@ -85,6 +85,7 @@ Every tool is account-scoped. Set **`THREE_WS_SESSION`** to the value of your `_
 | `price_below`  | `target_mint` (required)        | USD market cap            |
 | `whale_buy`    | `target_mint` (required)        | minimum buy size in SOL   |
 | `new_mint`     | `target_agent` (required)       | —                         |
+| `market_anomaly` | none (whole market); optional `filters`: `processors` (`price`, `tvl`, `stablecoin_supply`, `stablecoin_peg`, `funding`, `open_interest`), `min_severity` (`medium`, `high` default, `critical`), `subject` |, |
 
 At least one delivery channel must be on: `deliver_in_app` (default true), `webhook_url` (HTTPS — a per-rule `webhook_secret` is generated for verifying the `webhook-signature` header), and/or `telegram_chat` (numeric chat id or `@username`). `cooldown_seconds` (5–86400, default 300) throttles repeat fires.
 

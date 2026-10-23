@@ -22,7 +22,8 @@ vi.mock('../api/_lib/ssrf-guard.js', () => ({
 	assertSafePublicUrl: (...args) => assertSafe(...args),
 }));
 
-import { fetchArticleHtml, fetchViaReader } from '../api/_lib/article-extract.js';
+import { fetchArticleHtml, fetchViaReader, extractParagraphs } from '../api/_lib/article-extract.js';
+import { fetchViaWayback, fetchPrimaryFiling, LANE_USER_AGENT } from '../api/_lib/article-lanes.js';
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -106,6 +107,70 @@ describe('fetchViaReader (rung 2)', () => {
 		);
 
 		await expect(fetchViaReader('http://127.0.0.1:8080/internal')).rejects.toThrow();
+		expect(pinned).not.toHaveBeenCalled();
+	});
+});
+
+const json = (body) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
+const html = (body) => new Response(body, { status: 200, headers: { 'content-type': 'text/html' } });
+const PAGE = `<article><p>${'The archived story body is long enough to count as a real paragraph. '.repeat(2)}</p></article>`;
+
+describe('wayback lane', () => {
+	it('validates the target, then fetches lookup and snapshot only through the pinned guard', async () => {
+		const rawFetch = vi.fn();
+		vi.stubGlobal('fetch', rawFetch);
+		pinned
+			.mockResolvedValueOnce(json({ archived_snapshots: { closest: { available: true, timestamp: '20240105123000', url: 'http://web.archive.org/web/20240105123000/https://publisher.example/story' } } }))
+			.mockResolvedValueOnce(html(PAGE));
+
+		const out = await fetchViaWayback('https://publisher.example/story', extractParagraphs);
+
+		expect(assertSafe).toHaveBeenCalledWith('https://publisher.example/story', { allowHttp: true });
+		expect(pinned.mock.calls[0][0]).toContain('https://archive.org/wayback/available?url=');
+		expect(pinned.mock.calls[1][0]).toBe('https://web.archive.org/web/20240105123000id_/https://publisher.example/story');
+		expect(pinned.mock.calls[1][2]).toEqual({ maxBytes: MAX_BYTES });
+		expect(rawFetch).not.toHaveBeenCalled();
+		expect(out.paragraphs.length).toBe(1);
+	});
+
+	it('does not touch the archive for a target the guard rejects', async () => {
+		assertSafe.mockRejectedValueOnce(new Error('blocked'));
+		await expect(fetchViaWayback('http://169.254.169.254/x', extractParagraphs)).rejects.toThrow('blocked');
+		expect(pinned).not.toHaveBeenCalled();
+	});
+
+	it('returns no paragraphs and no snapshot fetch when nothing is archived', async () => {
+		pinned.mockResolvedValueOnce(json({ archived_snapshots: {} }));
+		const out = await fetchViaWayback('https://publisher.example/story', extractParagraphs);
+		expect(out).toEqual({ paragraphs: [], snapshot: null });
+		expect(pinned).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('primary lane (SEC EDGAR)', () => {
+	it('searches and fetches the filing through the guard with the SEC contact User-Agent, caching by accession', async () => {
+		const hit = { _id: '0001193125-26-000009:ex991.htm', _source: { ciks: ['0001234567'], display_names: ['Acme Holdings Corp  (CIK 0001234567)'], form: '8-K', file_type: 'EX-99.1', file_date: '2026-10-01' } };
+		pinned
+			.mockResolvedValueOnce(json({ hits: { hits: [hit] } }))
+			.mockResolvedValueOnce(html(PAGE))
+			.mockResolvedValueOnce(json({ hits: { hits: [hit] } }));
+
+		const first = await fetchPrimaryFiling('Acme Holdings Corp reports record quarter', '2026-10-01T00:00:00Z', extractParagraphs, Date.parse('2026-10-05'));
+		expect(first.filing.accession).toBe('0001193125-26-000009');
+		expect(pinned.mock.calls[0][0]).toContain('https://efts.sec.gov/LATEST/search-index?q=%22Acme%20Holdings%20Corp%22');
+		expect(pinned.mock.calls[0][0]).toContain('startdt=2026-09-17&enddt=2026-10-05');
+		expect(pinned.mock.calls[1][0]).toBe('https://www.sec.gov/Archives/edgar/data/1234567/000119312526000009/ex991.htm');
+		expect(pinned.mock.calls[1][1].headers['user-agent']).toBe(LANE_USER_AGENT);
+		expect(LANE_USER_AGENT).toMatch(/\S+@\S+\.\S+/);
+
+		const second = await fetchPrimaryFiling('Acme Holdings Corp reports record quarter', '2026-10-01T00:00:00Z', extractParagraphs, Date.parse('2026-10-05'));
+		expect(second.paragraphs).toEqual(first.paragraphs);
+		expect(pinned).toHaveBeenCalledTimes(3); // second run: search only, filing document served from the accession cache
+	});
+
+	it('makes no request when the headline names no filer', async () => {
+		const out = await fetchPrimaryFiling('Markets rally as rates fall', null, extractParagraphs);
+		expect(out).toEqual({ paragraphs: [], filing: null });
 		expect(pinned).not.toHaveBeenCalled();
 	});
 });

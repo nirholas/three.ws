@@ -23,6 +23,7 @@
 
 import { PublicKey } from '@solana/web3.js';
 import { sql } from './db.js';
+import { recordFromActionLog } from './skill-candidates.js';
 import { quoteTrade, buildTradeInstructions } from '../agents/solana-trade.js';
 import { recoverSolanaAgentKeypair } from './agent-wallet.js';
 import { solanaConnection } from './agent-pumpfun.js';
@@ -585,6 +586,14 @@ async function evaluateExits({ equip, agent, nowMs, killed }) {
 				SET last_value_lamports = ${curValue}, peak_value_lamports = ${peak}, last_quoted_at = now()
 				WHERE id = ${pos.id}
 			`.catch(() => {});
+			if (result.status === 'executed' && pnl != null && pnl > 0) {
+				recordFromActionLog({
+					agentId: agent.id, userId: agent.ownerId, signal: 'profitable_trade', sourceRef: `trade:${pos.id}`,
+					goal: `Open and close a profitable ${equip.strategy_name || 'strategy'} position`, pnlLamports: pnl,
+					since: pos.opened_at ? new Date(pos.opened_at).toISOString() : undefined,
+					outcome: { position_id: pos.id, pnl_pct: pnlPct != null ? Math.round(pnlPct * 10) / 10 : null },
+				});
+			}
 			pos.peak_value_lamports = peak;
 		}
 
@@ -728,6 +737,13 @@ export async function closeStrategyPositionNow({ positionId, ownerId, agentId })
 			    exit_lamports = ${exitLamports}, realized_pnl_lamports = ${pnl}, realized_pnl_pct = ${pnlPct}, closed_at = now()
 			WHERE id = ${claim.id}
 		`.catch(() => {});
+		if (result.status === 'executed' && pnl != null && pnl > 0) {
+			recordFromActionLog({
+				agentId: agent.id, userId: agent.ownerId, signal: 'profitable_trade', sourceRef: `trade:${claim.id}`,
+				goal: 'Open and close a profitable strategy position', pnlLamports: pnl,
+				outcome: { position_id: claim.id, pnl_pct: pnlPct != null ? Math.round(pnlPct * 10) / 10 : null },
+			});
+		}
 		return {
 			ok: true, status: 200,
 			data: {

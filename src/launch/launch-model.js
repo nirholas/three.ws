@@ -1,6 +1,8 @@
 // Pure logic behind /launch: form validation, the cost preview, and the small
 // formatting rules the page shares with its tests. No DOM, no network.
 
+import { shortAddress } from '../shared/address.js';
+
 export const NAME_MAX = 32;
 export const SYMBOL_MAX = 10;
 export const DESCRIPTION_MAX = 500;
@@ -98,10 +100,7 @@ export function formatAmount(n, maxDecimals = 6) {
 }
 
 /** "EPjF…Dt1v" */
-export function shortAddress(a, head = 4, tail = 4) {
-	const s = String(a || '');
-	return s.length > head + tail + 1 ? `${s.slice(0, head)}…${s.slice(-tail)}` : s;
-}
+export { shortAddress };
 
 /** A post announcing the launch, for the success screen's share button. */
 export function shareText({ name, symbol, mint, agentName }) {

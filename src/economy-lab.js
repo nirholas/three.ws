@@ -20,6 +20,7 @@ import {
 	envDiff,
 	LAMPORTS_PER_SOL,
 } from '../api/_lib/x402/runway-sim.js';
+import { shortAddress } from './shared/address.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -81,9 +82,7 @@ function fmtWhen(hour) {
 	return `in ${Math.floor(hour / 24)}d ${hour % 24}h (${clock})`;
 }
 
-function shortAddr(a) {
-	return a && a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || 'not configured';
-}
+function shortAddr(a) { return shortAddress(a, 4, 4, { empty: 'not configured' }); }
 
 // ── Accessible tooltips ────────────────────────────────────────────────────
 // Hover, focus, and touch all open; Escape and blur close. The tip is a single

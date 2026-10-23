@@ -1540,6 +1540,7 @@ create index if not exists agent_payments_status
 
 -- Additive migration: royalty pricing on skills.
 alter table marketplace_skills add column if not exists price_per_call_usd numeric(10,6) not null default 0;
+alter table marketplace_skills add column if not exists rails text[] not null default '{x402,a2a}';
 
 -- ── royalty_ledger — per-call micro-payment records ──────────────────────────
 create table if not exists royalty_ledger (
@@ -2095,6 +2096,10 @@ CREATE TABLE IF NOT EXISTS x402_receipts (
     transaction  text,
     issued_at    timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE x402_receipts ADD COLUMN IF NOT EXISTS rail text NOT NULL DEFAULT 'x402';
+ALTER TABLE x402_receipts ADD COLUMN IF NOT EXISTS skill_id uuid;
+ALTER TABLE x402_receipts ADD COLUMN IF NOT EXISTS author_atomics numeric;
+ALTER TABLE x402_receipts ADD COLUMN IF NOT EXISTS platform_atomics numeric;
 CREATE INDEX IF NOT EXISTS x402_receipts_payer_issued
     ON x402_receipts (payer, issued_at desc);
 CREATE INDEX IF NOT EXISTS x402_receipts_resource_issued

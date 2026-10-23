@@ -11,6 +11,8 @@
  * migrated (AMM) trades and is rock-solid.
  */
 
+import { shortAddress } from './shared/address.js';
+
 const TRENDING_URL = '/api/pump/trending?limit=24&rich=1';
 const TRADES_URL = (mint, limit = 30) =>
 	`/api/pump/coin-trades?mint=${encodeURIComponent(mint)}&limit=${limit}`;
@@ -24,10 +26,7 @@ function esc(s) {
 	);
 }
 
-function shortAddr(a) {
-	const s = String(a || '');
-	return s.length > 10 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s || 'unknown';
-}
+function shortAddr(a) { return shortAddress(a, 4, 4, { empty: 'unknown' }); }
 
 function cleanText(s, max) {
 	const t = String(s ?? '').trim().replace(/\s+/g, ' ');

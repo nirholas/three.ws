@@ -15,6 +15,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { track, ANALYTICS_EVENTS } from './analytics.js';
 import { walletChipHTML, wireWalletChips } from './shared/agent-wallet-chip.js';
+import { shortAddress as shortAddr } from './shared/address.js';
 
 const REDUCED_MOTION =
 	typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1621,10 +1622,6 @@ function toggleMoneyCam() {
 }
 
 // ── Money-Cam helpers ────────────────────────────────────────────────────────
-function shortAddr(w) {
-	if (!w || typeof w !== 'string') return '';
-	return w.length > 10 ? `${w.slice(0, 4)}…${w.slice(-4)}` : w;
-}
 function relTime(iso) {
 	const ms = Date.now() - new Date(iso).getTime();
 	if (!Number.isFinite(ms)) return '';

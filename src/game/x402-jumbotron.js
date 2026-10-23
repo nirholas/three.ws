@@ -22,6 +22,7 @@ import {
 	DoubleSide,
 } from 'three';
 import { makeScreenCanvas, makeScreenTexture, screenMaterial } from './screen-texture.js';
+import { shortAddress } from '../shared/address.js';
 
 const FEED_URL = (limit = 12) => `/api/x402-pay?feed=1&limit=${limit}`;
 const POLL_MS = 8000;
@@ -60,10 +61,7 @@ function fmtUsdc(micro) {
 	return '$' + usd.toFixed(4).replace(/0+$/, '').replace(/\.$/, '.00');
 }
 
-function shortAddr(a) {
-	const s = String(a || '');
-	return s.length > 11 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s || '—';
-}
+function shortAddr(a) { return shortAddress(a, 4, 4, { empty: '\u2014' }); }
 
 function shortTx(tx) {
 	const s = String(tx || '');

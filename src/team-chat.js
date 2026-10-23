@@ -15,6 +15,7 @@
 import { consumeCsrfToken } from './api.js';
 import { agentAvatarGlb } from './shared/agent-3d.js';
 import { resolveDevR2Url } from './shared/dev-r2-proxy.js';
+import { shortAddress as short } from './shared/address.js';
 
 const ROOT = document.getElementById('tcRoot');
 const CONTENT = document.getElementById('tcContent');
@@ -59,7 +60,6 @@ const RISK_ACK_CODE = 'risk_ack_required';
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const label = (s) => String(s || '').replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
-const short = (a) => (typeof a === 'string' && a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '');
 const roleOf = (role) => (ROLES.includes(role) ? role : 'custom');
 
 /** Build an element. Children and `text` land as text nodes, never as HTML. */

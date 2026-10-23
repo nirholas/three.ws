@@ -15,6 +15,7 @@ import { fetchReputationBatch } from '../shared/agent-reputation.js';
 import { fetchUnlocks } from '../shared/wallet-access.js';
 import { evaluateAccessKey, buildAccessContext } from '../shared/wallet-access-rules.js';
 import { mountRivalries } from './rivalries.js';
+import { shortAddress as shortWallet } from '../shared/address.js';
 
 const log = createLogger('arena');
 
@@ -43,7 +44,6 @@ const fmtPct = (n) => (n == null ? '' : `${n >= 0 ? '+' : ''}${Number(n).toFixed
 const esc = (s) => String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
 const hash = (s) => { let h = 0; for (let i = 0; i < String(s).length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); };
 const isBig = (p) => (p?.pnl_sol ?? 0) >= 0.4 || (p?.pnl_pct ?? 0) >= 100;
-const shortWallet = (a) => { const s = String(a || ''); return s.length > 10 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s; };
 
 let world = null;
 let labelLayer = null;

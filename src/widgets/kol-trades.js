@@ -14,6 +14,7 @@
  */
 
 import { mountBondingCurve } from './bonding-curve.js';
+import { shortAddress } from '../shared/address.js';
 
 const SOURCE_BADGE = {
 	kol: { label: 'KOL', color: '#ffffff' },
@@ -67,8 +68,7 @@ function injectStyles(doc) {
 }
 
 function shortAddr(s, n = 4) {
-	if (!s || s.length < n * 2 + 1) return s || '';
-	return `${s.slice(0, n)}…${s.slice(-n)}`;
+	return shortAddress(s, n, n);
 }
 
 function timeAgo(iso) {

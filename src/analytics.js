@@ -22,6 +22,8 @@
 // PostHog; comments describe the props each event should carry. Group by journey.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { shortAddress as shortWallet } from './shared/address.js';
+
 export const ANALYTICS_EVENTS = Object.freeze({
 	// ── Acquisition ──────────────────────────────────────────────────────────
 	/** Landing/home surfaced. props: { referrer?, utm_source?, path? } */
@@ -286,10 +288,7 @@ export function trackError(context, err, extra = {}) {
  * @param {string} addr
  * @returns {string}
  */
-export function shortWallet(addr) {
-	const s = String(addr || '');
-	return s.length > 10 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s;
-}
+export { shortWallet };
 
 // Defensive: strip obvious full-length wallet/PII shapes from props so a careless
 // call site can't leak a raw address. Values are kept otherwise as-is.

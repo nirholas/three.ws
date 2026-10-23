@@ -12,6 +12,8 @@
  * /api/traders/preview — no synthesized data.
  */
 
+import { shortAddress as shortAddr, addressHtml } from './shared/address.js';
+
 const WALLET_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const $ = (sel, root = document) => root.querySelector(sel);
 const LAMP_NA = '—';
@@ -142,10 +144,6 @@ function timeAgo(iso) {
 	if (s < 86400) return `${Math.round(s / 3600)}h`;
 	if (s < 86400 * 30) return `${Math.round(s / 86400)}d`;
 	return `${Math.round(s / (86400 * 30))}mo`;
-}
-function shortAddr(a) {
-	if (!a || a.length < 12) return a || '';
-	return `${a.slice(0, 4)}…${a.slice(-4)}`;
 }
 function pnlClass(v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : 'neu'; }
 
@@ -357,7 +355,7 @@ function identityHtml(wallet, profile) {
 		<div class="cw-avatar" style="${avatarStyle(wallet)}" aria-hidden="true">${esc(wallet.slice(0, 2).toUpperCase())}</div>
 		<div class="cw-id-main">
 			<div class="cw-id-addr">
-				<span class="cw-id-short">${esc(shortAddr(wallet))}</span>
+				<span class="cw-id-short">${addressHtml(wallet, { label: 'Wallet address' })}</span>
 				<button type="button" class="cw-copy" id="cwCopy" title="Copy full address" aria-label="Copy wallet address">
 					<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
 					<span>Copy</span>

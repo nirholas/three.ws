@@ -37,6 +37,7 @@ import {
 } from './wallet-api.js';
 import { openDepositSheet } from './wallet-deposit.js';
 import { ensureRiskAck } from './shared/risk-ack.js';
+import { shortAddress } from './shared/address.js';
 
 const root = document.getElementById('wlt-root');
 const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
@@ -62,10 +63,7 @@ function esc(s) {
 }
 
 /** Middle-truncate an address: enough head and tail to verify by eye. */
-function shortAddr(a, head = 6, tail = 6) {
-	const s = String(a || '');
-	return s.length <= head + tail + 1 ? s : `${s.slice(0, head)}…${s.slice(-tail)}`;
-}
+function shortAddr(a, head = 6, tail = 6) { return shortAddress(a, head, tail); }
 
 /**
  * Format a token amount without lying about precision. Balances arrive as

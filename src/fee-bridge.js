@@ -12,6 +12,8 @@
  *   GET  /api/auth/x/connect?scope=read&return_to=/fee-bridge   prove the handle
  */
 
+import { shortAddress as shortAddr } from './shared/address.js';
+
 const $ = (id) => document.getElementById(id);
 
 const esc = (s) =>
@@ -21,7 +23,6 @@ const usd = (atomics) => {
 	const n = Number(BigInt(atomics ?? 0)) / 1e6;
 	return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
-const shortAddr = (a) => (a && a.length > 10 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '');
 const solscanTx = (sig) => `https://solscan.io/tx/${encodeURIComponent(sig)}`;
 const HANDLE_RE = /^[A-Za-z0-9_]{1,15}$/;
 

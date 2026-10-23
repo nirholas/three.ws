@@ -19,8 +19,9 @@ import {
 	DoubleSide,
 } from 'three';
 import { makeScreenCanvas, makeScreenTexture, screenMaterial } from './screen-texture.js';
+import { shortAddress } from '../shared/address.js';
 
-// An EVM 0x-address identifies a Robinhood Chain coin (NOXA/Odyssey), routed
+// An EVM 0x-address identifies a Robinhood Chain coin, routed
 // to the robinhood-feed-backed endpoint; everything else is a pump.fun Solana
 // mint. Both endpoints share the identical { trades: [...] } contract, so no
 // other code in this file needs to know which chain a world is on.
@@ -79,10 +80,7 @@ function fmtSol(v) {
 	return n.toFixed(2);
 }
 
-function shortAddr(a) {
-	const s = String(a || '');
-	return s.length > 9 ? `${s.slice(0, 4)}…${s.slice(-3)}` : s || '—';
-}
+function shortAddr(a) { return shortAddress(a, 4, 3, { empty: '\u2014' }); }
 
 function relTime(ms) {
 	const s = Math.max(0, Math.round((Date.now() - ms) / 1000));

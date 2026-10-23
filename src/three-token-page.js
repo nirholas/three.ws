@@ -24,6 +24,7 @@ import {
 	DEXTOOLS_HOLDING,
 	socialBoostSummary,
 } from './pump/dextools-social-boost.js';
+import { shortAddress as shortAddr } from './shared/address.js';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 const PUMP_URL = `https://pump.fun/coin/${THREE_MINT}`;
@@ -51,7 +52,6 @@ const fmtPct = (n) => {
 	const s = v >= 0 ? '+' : '';
 	return `${s}${v.toFixed(2)}%`;
 };
-const shortAddr = (a) => { const s = String(a || ''); return s.length > 9 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s; };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 // Clipboard with a real fallback: navigator.clipboard is undefined on http
 // origins and can be permission-denied, so drop to a selection copy before

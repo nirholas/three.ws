@@ -16,7 +16,7 @@
 import { cors, method, rateLimited, error } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
-import { knownWallet } from '../_lib/oracle/known-wallets.js';
+import { knownWallet, loadKnownWallets } from '../_lib/oracle/known-wallets.js';
 import WebSocket from 'ws';
 import { pumpPortalWsUrl, handlePumpPortalAck } from '../_lib/pumpportal.js';
 
@@ -37,6 +37,7 @@ const PING_INTERVAL_MS = 12_000;
 // one thing this endpoint exists to provide. `tag` is seed-only — the ledger
 // has no such column.
 async function loadWalletRoster(mint, network) {
+	await loadKnownWallets();
 	try {
 		const rows = await sql`
 			select

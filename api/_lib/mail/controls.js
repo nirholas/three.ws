@@ -6,6 +6,9 @@
 // send, so an allowlist tightened between the two still holds. The cap sits on
 // top of the platform's warm-up limits: whichever is lower wins.
 //
+// `code_senders` is a second list in the same format: the services the agent
+// may extract one-time codes and magic links from (./otp.js).
+//
 // Allowlist entries are either a full address (ava@example.com) or a whole
 // domain written as @example.com. A bare domain (example.com) is accepted on
 // input and stored as @example.com.
@@ -75,6 +78,7 @@ export function policyView(row) {
 		allowlist_enabled: Boolean(row?.allowlist_enabled),
 		allowlist: row?.allowlist || [],
 		daily_send_cap: row?.daily_send_cap ?? null,
+		code_senders: row?.code_senders || [],
 		updated_at: row?.updated_at || null,
 	};
 }
@@ -103,17 +107,19 @@ export async function savePolicy({ agentId, userId, patch }) {
 		allowlist_enabled: patch.allowlist_enabled === undefined ? current.allowlist_enabled : Boolean(patch.allowlist_enabled),
 		allowlist: patch.allowlist === undefined ? current.allowlist : normalizeAllowlist(patch.allowlist),
 		daily_send_cap: patch.daily_send_cap === undefined ? current.daily_send_cap : parseCap(patch.daily_send_cap),
+		code_senders: patch.code_senders === undefined ? current.code_senders : normalizeAllowlist(patch.code_senders),
 	};
 	if (next.allowlist_enabled && !next.allowlist.length) {
 		throw new PolicyInputError('Add at least one address or @domain before turning the allowlist on, or every send would be refused.');
 	}
 	const [row] = await sql`
-		insert into agent_mail_policies (agent_id, user_id, allowlist_enabled, allowlist, daily_send_cap, updated_at)
-		values (${agentId}, ${userId}, ${next.allowlist_enabled}, ${next.allowlist}, ${next.daily_send_cap}, now())
+		insert into agent_mail_policies (agent_id, user_id, allowlist_enabled, allowlist, daily_send_cap, code_senders, updated_at)
+		values (${agentId}, ${userId}, ${next.allowlist_enabled}, ${next.allowlist}, ${next.daily_send_cap}, ${next.code_senders}, now())
 		on conflict (agent_id) do update set
 			allowlist_enabled = excluded.allowlist_enabled,
 			allowlist = excluded.allowlist,
 			daily_send_cap = excluded.daily_send_cap,
+			code_senders = excluded.code_senders,
 			updated_at = now()
 		returning *
 	`;

@@ -13,6 +13,7 @@ import { apiFetch } from '../api.js';
 import { ensureWallet } from '../erc8004/agent-registry.js';
 import { encodeScopedDelegation, signDelegation } from './toolkit.js';
 import { CAVEAT_ENFORCERS } from '../erc7710/abi.js';
+import { shortAddress } from '../shared/address.js';
 
 // ── Token tables ──────────────────────────────────────────────────────────────
 
@@ -63,10 +64,7 @@ function escapeHtml(s) {
 		.replace(/'/g, '&#039;');
 }
 
-function formatAddress(addr) {
-	if (!addr || addr === 'native') return addr;
-	return addr.slice(0, 6) + '…' + addr.slice(-4);
-}
+function formatAddress(addr) { return shortAddress(addr, 6, 4); }
 
 function formatAmount(raw, decimals) {
 	if (!raw) return '0';

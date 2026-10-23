@@ -11,6 +11,7 @@
 // is left, read from the station each frame (no timers of its own).
 
 import { Raycaster, Vector2, Vector3 } from 'three';
+import { shortAddress } from './shared/address.js';
 
 const TAG_LIFT = 0.42;       // metres above the dancer's head
 const PICK_RADIUS = 0.62;    // how close to the pole axis a click must land
@@ -58,9 +59,7 @@ function escapeHtml(s) {
 	return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function shortWallet(addr) {
-	return addr ? `${addr.slice(0, 4)}…${addr.slice(-4)}` : 'someone';
-}
+function shortWallet(addr) { return shortAddress(addr, 4, 4, { empty: 'someone' }); }
 
 export class ClubTipHud {
 	/**

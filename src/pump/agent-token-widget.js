@@ -24,6 +24,7 @@ import { mountBondingCurve } from '../components/bonding-curve.js';
 // module being both static and dynamic. A plain static import keeps the
 // withdraw path in the same chunk as the widget that calls it.
 import { resolveUsdcAta, signAndSendVTx } from './pump-modals.js';
+import { shortAddress } from '../shared/address.js';
 
 const POLL_MS = 10_000;
 
@@ -59,8 +60,7 @@ function fmtBps(bps) {
 }
 
 function shortAddr(s, n = 4) {
-	if (!s) return '';
-	return `${s.slice(0, n)}…${s.slice(-n)}`;
+	return shortAddress(s, n, n);
 }
 
 function timeAgo(iso) {

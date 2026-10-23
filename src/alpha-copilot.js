@@ -16,6 +16,7 @@ import { agentAvatarGlb } from './shared/agent-3d.js';
 import { resolveDevR2Url } from './shared/dev-r2-proxy.js';
 import { previewAgentTrade, executeAgentTrade, TradeError } from './agent-solana-wallet.js';
 import { countUp, enterStagger, rippleOnce, reducedMotion } from './ui-juice.js';
+import { shortAddress as short } from './shared/address.js';
 
 const NETWORK = 'mainnet';
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -59,7 +60,6 @@ function ageLabel(seconds) {
 	if (h < 48) return h + 'h';
 	return Math.round(h / 24) + 'd';
 }
-function short(s, h = 4, t = 4) { return !s || s.length <= h + t + 1 ? s || '' : `${s.slice(0, h)}…${s.slice(-t)}`; }
 function explorerTxUrl(sig) { return `https://solscan.io/tx/${sig}`; }
 
 // ── state ──────────────────────────────────────────────────────────────────

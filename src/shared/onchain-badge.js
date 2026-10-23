@@ -27,6 +27,8 @@
 // without breaking any surface that renders it outside the main style.css scope
 // (widgets, embeds, iframes). The isolated injected stylesheet below is the
 // authoritative fallback for those out-of-scope contexts.
+import { shortAddress as shortAddr } from './address.js';
+
 const PILL_BASE_CLASS = 'pill';
 const PILL_ONCHAIN_CLASS = 'pill--onchain';
 const PILL_DEVNET_CLASS = 'pill--devnet';
@@ -57,11 +59,6 @@ function esc(s) {
 	);
 }
 
-function shortAddr(s, head = 4, tail = 4) {
-	const str = String(s || '');
-	if (str.length <= head + tail + 1) return str;
-	return `${str.slice(0, head)}…${str.slice(-tail)}`;
-}
 
 function evmChainIdFromCaip2(caip2) {
 	const m = /^eip155:(\d+)$/.exec(String(caip2 || ''));

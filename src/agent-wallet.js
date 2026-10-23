@@ -15,6 +15,7 @@
  */
 
 import { mountAgentWalletHub } from './agent-wallet-hub/index.js';
+import { addressHtml } from './shared/address.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -103,8 +104,8 @@ function renderPicker(agents) {
 						const ready = !!(a.wallet_ready ?? a.walletReady);
 						const addr = a.solana_address || '';
 						const sub = addr
-							? `${addr.slice(0, 4)}…${addr.slice(-4)}`
-							: 'Wallet is being prepared';
+							? addressHtml(addr, { label: 'Wallet address' })
+							: escapeHtml('Wallet is being prepared');
 						return `<li>
 							<a class="awh-pick-row" href="/agents/${encodeURIComponent(a.id)}/wallet">
 								${
@@ -114,7 +115,7 @@ function renderPicker(agents) {
 								}
 								<span class="awh-pick-id">
 									<span class="awh-pick-name">${escapeHtml(a.name || 'Untitled agent')}</span>
-									<span class="awh-pick-sub">${escapeHtml(sub)}</span>
+									<span class="awh-pick-sub">${sub}</span>
 								</span>
 								<span class="awh-pick-state" data-state="${ready ? 'ready' : 'preparing'}">${ready ? 'Ready' : 'Preparing'}</span>
 								<span class="awh-pick-go" aria-hidden="true">→</span>

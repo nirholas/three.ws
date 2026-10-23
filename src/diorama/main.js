@@ -23,6 +23,7 @@ import {
 	MAX_PROMPT_LEN,
 	MOODS,
 } from './schema.js';
+import { shortAddress } from '../shared/address.js';
 
 const MOOD_LABEL = { dawn: 'Dawn', day: 'Daytime', dusk: 'Dusk', night: 'Night' };
 
@@ -738,10 +739,7 @@ function statusWord(status) {
 	}
 }
 
-function shortWallet(w) {
-	const s = String(w);
-	return s.length > 10 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s;
-}
+function shortWallet(w) { return shortAddress(w, 4, 4, { empty: 'null' }); }
 
 function slug(s) {
 	return (

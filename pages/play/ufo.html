@@ -5,17 +5,17 @@
 	<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title data-i18n="play_ufo.meta_title">Flappin UFO: retired demo · three.ws</title>
-	<meta name="description" content="The Flappin UFO arcade demo has been retired. Explore the live three.ws experiences instead: the coin communities world, Sniper Arena, and Coin Clash."  data-i18n-attr="content:play_ufo.meta_description"/>
-	<meta property="og:title" content="Flappin UFO: retired demo · three.ws"  data-i18n-attr="content:play_ufo.meta_og_title"/>
-	<meta property="og:description" content="This arcade demo is no longer available. Jump into the live three.ws experiences instead."  data-i18n-attr="content:play_ufo.meta_og_description"/>
+	<title>Flappin UFO: thread the asteroids, climb the leaderboard · three.ws</title>
+	<meta name="description" content="Fly the UFO through endless asteroid fields that get longer and tighter every level. Every run is replayed and verified on the server, and you race the ghost of the top score." />
+	<meta property="og:title" content="Flappin UFO: thread the asteroids, climb the leaderboard · three.ws" />
+	<meta property="og:description" content="Fly the UFO through endless asteroid fields that get longer and tighter every level. Every run is replayed and verified on the server, and you race the ghost of the top score." />
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/play/ufo" />
-	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Flappin+UFO%3A+retired+demo&amp;d=The+Flappin+UFO+arcade+demo+ran+on+an+external+deployment+that+is+no+longer+online%2C+so+the+game+has+been+retired.+The+page+now+points+visitors+to+the+live&amp;p=%2Fplay%2Fufo" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Flappin+UFO%3A+thread+the+asteroids&amp;d=Fly+the+UFO+through+endless+asteroid+fields+that+get+longer+and+tighter+every+level.+Every+run+is+replayed+and+verified+on+the+server%2C+and+you+race+th&amp;p=%2Fplay%2Fufo" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Flappin UFO: retired demo · three.ws"  data-i18n-attr="content:play_ufo.meta_twitter_title"/>
-	<meta name="twitter:description" content="This arcade demo is no longer available. Explore the live three.ws experiences instead."  data-i18n-attr="content:play_ufo.meta_twitter_description"/>
+	<meta name="twitter:title" content="Flappin UFO: thread the asteroids, climb the leaderboard · three.ws" />
+	<meta name="twitter:description" content="Fly the UFO through endless asteroid fields that get longer and tighter every level. Every run is replayed and verified on the server, and you race the ghost of the top score." />
 	<link rel="canonical" href="https://three.ws/play/ufo" />
 	<link rel="icon" href="/favicon.ico" />
 	<style>
@@ -44,233 +44,75 @@
 			--cyan: #0e7490;
 			--shadow: 0 18px 50px -22px rgba(20, 24, 50, 0.28), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
 		}
-
 		* { box-sizing: border-box; margin: 0; padding: 0; }
-
-		html, body {
-			min-height: 100%;
-			background: var(--bg);
-			color: var(--ink);
-			font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-			-webkit-font-smoothing: antialiased;
-		}
-
+		html, body { font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
 		a { color: inherit; text-decoration: none; }
 		button { font: inherit; color: inherit; cursor: pointer; border: none; background: none; }
-
-		/* ── stars background ───────────────────────────── */
-		.stars {
-			position: fixed; inset: 0; z-index: 0; pointer-events: none;
-			background:
-				radial-gradient(ellipse 80% 60% at 20% 30%, rgba(90, 60, 180, 0.12), transparent 70%),
-				radial-gradient(ellipse 60% 50% at 80% 70%, rgba(30, 80, 160, 0.1), transparent 70%);
-		}
-
-		/* ── top bar ─────────────────────────────────────── */
-		.bar {
-			position: fixed; top: 0; left: 0; right: 0; z-index: 10;
-			display: flex; align-items: center; gap: 12px; padding: 4px 16px;
-			min-height: 52px;
-		}
-
-		.brand {
-			display: inline-flex; align-items: center; gap: 8px;
-			min-height: 44px; padding-inline: 4px; margin-inline: -4px; border-radius: 10px;
-			font-weight: 700; font-size: 14px; letter-spacing: -0.02em;
-			opacity: 0.9; transition: opacity .2s;
-		}
+		.brand { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding-inline: 4px; border-radius: 10px; font-weight: 700; font-size: 14px; letter-spacing: -0.02em; opacity: .9; transition: opacity .2s; }
 		.brand:hover { opacity: 1; }
 		.brand:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 		.brand img { width: 20px; height: 20px; border-radius: 5px; }
 		.brand-sep { color: var(--faint); font-weight: 400; margin: 0 2px; }
-		.game-title {
-			font-weight: 700; font-size: 14px; letter-spacing: -0.01em; color: var(--muted);
-		}
-
-		.retired-badge {
-			display: inline-flex; align-items: center; gap: 5px;
-			padding: 3px 8px; border-radius: 999px;
-			border: 1px solid var(--line); background: rgba(255,255,255,0.04);
-			font: 700 9.5px/1 var(--mono); color: var(--faint);
-			letter-spacing: .08em; text-transform: uppercase;
-		}
-		.retired-badge::before {
-			content: ''; width: 5px; height: 5px; border-radius: 50%;
-			background: var(--faint);
-		}
-
-		/* ── retired state ───────────────────────────────── */
-		.wrap {
-			position: relative; z-index: 1;
-			min-height: 100vh; min-height: 100dvh;
-			display: grid; place-items: center;
-			padding: 88px 20px 40px;
-		}
-
-		.card {
-			width: 100%; max-width: 520px;
-			background: var(--panel); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-			border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow);
-			padding: 40px 32px 32px; text-align: center;
-			animation: rise .5s cubic-bezier(.22, 1, .36, 1) both;
-		}
-		@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-
-		.emblem {
-			width: 84px; height: 84px; margin: 0 auto 22px;
-			display: grid; place-items: center; border-radius: 50%;
-			border: 1px solid color-mix(in srgb, var(--violet) 28%, var(--line));
-			background:
-				radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--violet) 18%, transparent), transparent 70%);
-			position: relative;
-		}
-		.emblem svg { width: 40px; height: 40px; color: var(--violet); }
-		/* faint orbit ring */
-		.emblem::after {
-			content: ''; position: absolute; inset: -9px; border-radius: 50%;
-			border: 1px dashed color-mix(in srgb, var(--violet) 22%, transparent);
-			animation: spin 22s linear infinite;
-		}
-		@keyframes spin { to { transform: rotate(360deg); } }
-		@media (prefers-reduced-motion: reduce) {
-			.card { animation: none; }
-			.emblem::after { animation: none; }
-		}
-
-		.card h1 {
-			font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 10px;
-			background: linear-gradient(90deg, var(--violet), var(--cyan));
-			-webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-		}
-		.card p.lead {
-			font-size: 14px; color: var(--muted); line-height: 1.6; margin: 0 auto 26px;
-			max-width: 42ch;
-		}
-
-		.actions {
-			display: flex; flex-direction: column; gap: 10px; margin: 0 auto 8px;
-			max-width: 320px;
-		}
-
-		.btn {
-			display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-			padding: 12px 18px; border-radius: 12px;
-			border: 1px solid var(--line); background: rgba(255,255,255,0.03);
-			font-weight: 600; font-size: 13.5px; color: var(--ink);
-			transition: transform .12s, border-color .2s, background .2s;
-		}
-		.btn:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--violet) 45%, var(--line)); }
-		.btn:active { transform: translateY(0) scale(.98); }
-		.btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
-		.btn svg { width: 15px; height: 15px; flex: 0 0 auto; }
-		.btn.primary {
-			background: linear-gradient(135deg,
-				color-mix(in srgb, var(--violet) 24%, var(--panel)),
-				color-mix(in srgb, var(--cyan) 16%, var(--panel)));
-			border-color: color-mix(in srgb, var(--violet) 48%, var(--line));
-			color: #fff;
-		}
-		:root[data-theme="light"] .btn.primary { color: #1a1030; }
-
-		/* sibling demos row */
-		.siblings {
-			display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-			margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--line);
-		}
-		.chip {
-			display: inline-flex; align-items: center; gap: 7px;
-			min-height: 44px; padding: 8px 15px; border-radius: 999px;
-			border: 1px solid var(--line); background: rgba(255,255,255,0.03);
-			font-size: 12.5px; color: var(--muted);
-			transition: transform .12s, border-color .2s, color .2s;
-		}
-		.chip:hover { transform: translateY(-1px); color: var(--ink); border-color: color-mix(in srgb, var(--violet) 40%, var(--line)); }
-		.chip:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
-		.chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
-
-		.siblings-label {
-			width: 100%; font: 600 10px/1 var(--mono); letter-spacing: .12em;
-			text-transform: uppercase; color: var(--faint); margin-bottom: 4px;
-		}
-
-		@media (max-width: 480px) {
-			.game-title { display: none; }
-			.brand-sep { display: none; }
-			.card { padding: 32px 20px 26px; }
-			.card h1 { font-size: 19px; }
-		}
+		.game-title { font-weight: 700; font-size: 14px; letter-spacing: -0.01em; color: var(--muted); }
+		@media (max-width: 480px) { .game-title, .brand-sep { display: none; } }
 	</style>
-
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Flappin UFO: retired demo, three.ws">
+	<meta property="og:image:alt" content="Flappin UFO, three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Flappin UFO: retired demo","description":"The Flappin UFO arcade demo has been retired. Explore the live three.ws experiences instead.","url":"https://three.ws/play/ufo","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Play","item":"https://three.ws/play"},{"@type":"ListItem","position":3,"name":"Ufo","item":"https://three.ws/play/ufo"}]}]}</script>
-
-	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Flappin+UFO%3A+retired+demo&amp;d=The+Flappin+UFO+arcade+demo+ran+on+an+external+deployment+that+is+no+longer+online%2C+so+the+game+has+been+retired.+The+page+now+points+visitors+to+the+live&amp;p=%2Fplay%2Fufo">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"VideoGame","name":"Flappin UFO","description":"Fly the UFO through endless asteroid fields that get longer and tighter every level. Every run is replayed and verified on the server, and you race the ghost of the top score.","url":"https://three.ws/play/ufo","gamePlatform":"Web browser","applicationCategory":"Game","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Play","item":"https://three.ws/play"},{"@type":"ListItem","position":3,"name":"Flappin UFO","item":"https://three.ws/play/ufo"}]}]}</script>
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Flappin+UFO%3A+thread+the+asteroids&amp;d=Fly+the+UFO+through+endless+asteroid+fields+that+get+longer+and+tighter+every+level.+Every+run+is+replayed+and+verified+on+the+server%2C+and+you+race+th&amp;p=%2Fplay%2Fufo">
 </head>
 <body>
-<div class="stars"></div>
-
-<!-- top bar -->
 <header class="bar">
-	<a href="/" class="brand">
-		<img src="/favicon.svg" alt="" aria-hidden="true" />
-		<span data-i18n="play_ufo.three_ws">three.ws</span>
-	</a>
-	<span class="brand-sep">/</span>
-	<span class="game-title" data-i18n="play_ufo.flappin_ufo">Flappin UFO</span>
-	<span class="retired-badge" title="This demo is no longer available" data-i18n="play_ufo.retired" data-i18n-attr="title:play_ufo.this_demo_is_no_longer_avail_title">Retired</span>
+	<a href="/" class="brand" aria-label="three.ws home"><img src="/favicon.svg" alt="" width="20" height="20" /><span>three.ws</span></a>
+	<span class="brand-sep" aria-hidden="true">/</span>
+	<span class="game-title">Flappin UFO</span>
+	<span class="spacer"></span>
+	<a href="/rankings?metric=ufo_score" class="bar-link">Rankings</a>
+	<a href="/play" class="bar-link">More games</a>
 </header>
 
-<!-- designed retired state -->
-<main class="wrap">
-	<section class="card" aria-label="Flappin UFO has been retired">
-		<div class="emblem" aria-hidden="true">
-			<!-- UFO -->
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-				<path d="M8 8.5a4 4 0 0 1 8 0" />
-				<ellipse cx="12" cy="10.5" rx="9" ry="3" />
-				<path d="M6.5 12.5 5 16M12 13v3.5M17.5 12.5 19 16" />
-			</svg>
-		</div>
+<canvas id="ufo-canvas" role="img" aria-label="Flappin UFO game. Hold the mouse, a finger, or the space bar to fly up; release to fall."></canvas>
 
-		<h1 data-i18n="play_ufo.this_demo_has_flown_off">This demo has flown off</h1>
-		<p class="lead" data-i18n="play_ufo.flappin_ufo_was_an_external_arcade_demo">
-			Flappin UFO was an external arcade demo hosted off-platform, and its deployment
-			is no longer online. Rather than leave you staring at a broken screen, we've
-			grounded it: the live three.ws experiences are where the action is now.
-		</p>
+<div class="hud" aria-hidden="true">
+	<div>Score<b id="hud-score">0</b></div>
+	<div>Level<b id="hud-level">1</b></div>
+	<div>Best<b id="hud-best">0</b></div>
+</div>
+<p class="hint" id="hint" hidden>Hold to fly. Release to fall.</p>
+<p class="banner" id="banner" aria-hidden="true"></p>
+<p class="sr-only" id="live" role="status" aria-live="polite"></p>
 
-		<div class="actions">
-			<a href="/play" class="btn primary">
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<circle cx="12" cy="12" r="9" /><path d="M9.5 8.5v7l6-3.5-6-3.5z" fill="currentColor" stroke="none" />
-				</svg>
-				Enter the live coin world
-			</a>
-			<a href="/" class="btn">
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<path d="M3 11.5 12 4l9 7.5" /><path d="M5 10v9h14v-9" />
-				</svg>
-				Back to three.ws
-			</a>
-		</div>
+<section class="panel" id="panel-title" aria-labelledby="title-h">
+	<h1 id="title-h">Flappin UFO</h1>
+	<p class="lead">Hold to climb, release to fall. Thread the asteroids. Every level is longer and tighter than the last, and you race the ghost of the top score.</p>
+	<button type="button" class="btn" id="play-btn">Fly</button>
+	<p class="board-head" id="board-title-h">Top pilots</p>
+	<ol class="board" id="board-title" aria-labelledby="board-title-h"></ol>
+	<a class="more" href="/rankings?metric=ufo_score">See the full cross-platform rankings</a>
+</section>
 
-		<nav class="siblings" aria-label="Live experiences">
-			<span class="siblings-label" data-i18n="play_ufo.still_live">Still live</span>
-			<a href="/play/arena" class="chip" data-i18n-html="play_ufo.sniper_arena"><span class="dot"></span>Sniper Arena</a>
-			<a href="/clash" class="chip" data-i18n-html="play_ufo.coin_clash"><span class="dot"></span>Coin Clash</a>
-			<a href="/three-live" class="chip" data-i18n-html="play_ufo.three_live"><span class="dot"></span>Three Live</a>
-		</nav>
-	</section>
-</main>
-	<!-- Shared bottom-right corner stack. This page carries its own header
-	     instead of /nav.js, which is what normally loads it, so without this the
-	     auto-mounted language switcher and the Ctrl+K search hint both fall back
-	     to fixed positioning and stack on top of each other. -->
-	<script src="/corner-stack.js" defer></script>
-	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
-	<script type="module" src="/i18n.js"></script>
+<section class="panel" id="panel-over" aria-labelledby="over-h" hidden>
+	<h2 id="over-h">Crashed</h2>
+	<div class="stats">
+		<div>Score<b id="over-score">0</b></div>
+		<div>Level<b id="over-level">1</b></div>
+	</div>
+	<p class="note-line" id="over-note"></p>
+	<form id="submit-form" autocomplete="off">
+		<label class="sr-only" for="submit-name">Your name</label>
+		<input type="text" id="submit-name" maxlength="20" placeholder="Your name" enterkeyhint="send" />
+		<button type="submit" class="btn" id="submit-btn">Post score</button>
+	</form>
+	<p class="status" id="submit-status" role="status"></p>
+	<button type="button" class="btn ghost" id="again-btn">Fly again</button>
+	<p class="board-head" id="board-over-h">Top pilots</p>
+	<ol class="board" id="board-over" aria-labelledby="board-over-h"></ol>
+</section>
+
+<script type="module" src="/src/play/ufo/game.js"></script>
+<script src="/corner-stack.js" defer></script>
+<script type="module" src="/i18n.js"></script>
 </body>
 </html>

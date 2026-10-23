@@ -22,6 +22,7 @@ import { watchWorldPresence } from '../bnb/world-presence-reader.js';
 import { createGhostTracker } from '../bnb/onchain-ghosts.js';
 import { buildLabelSprite } from './citizen-avatar.js';
 import { log } from '../shared/log.js';
+import { shortAddress } from '../shared/address.js';
 
 const STORAGE_KEY = 'three.ws:bnb-presence-key';
 const COORD_SCALE = 1000; // mirrors src/bnb/move-sender.js's meters→millimeters convention
@@ -34,9 +35,7 @@ function fromContractPos({ x, y, z }) {
 function fromContractFacing(centidegrees) {
 	return ((centidegrees / 100) * Math.PI) / 180;
 }
-function shortAddr(addr) {
-	return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
+function shortAddr(addr) { return shortAddress(addr, 6, 4); }
 // Deterministic per-address hue so the same on-chain identity always renders
 // the same ghost color across sessions/tabs — a cheap, real "who's that"
 // visual cue with zero extra state.

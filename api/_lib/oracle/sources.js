@@ -16,8 +16,9 @@
 //   pump_coin_outcomes — ground-truth outcome (for the conviction backtest)
 
 import { sql } from '../db.js';
-import { knownWallet, knownIsProven } from './known-wallets.js';
+import { knownWallet, knownIsProven, loadKnownWallets } from './known-wallets.js';
 import { isQuoteMint, QUOTE_MINT_LIST } from '../quote-mints.js';
+import { xAccountSignal } from './x-account.js';
 
 const LAMPORTS = 1e9;
 const n = (v) => (v == null ? null : Number(v));
@@ -75,7 +76,7 @@ export async function assembleIntel(mint, network = 'mainnet') {
 	const coin = coinRows[0] || null;
 	if (!coin) return null;
 
-	const [smart, narr, topBuyers, funder, provenFlow, creatorRep] = await Promise.all([
+	const [smart, narr, topBuyers, funder, provenFlow, creatorRep, xAccount] = await Promise.all([
 		tryRow(() => sql`
 			select smart_money_score, smart_wallet_count, proven_buy_lamports, total_buy_lamports, notable
 			from coin_smart_money where mint = ${mint} and network = ${network} limit 1
@@ -126,9 +127,13 @@ export async function assembleIntel(mint, network = 'mainnet') {
 				from wallet_reputation where wallet = ${coin.creator} and network = ${network} limit 1
 			`)
 			: Promise.resolve(null),
+		// The coin's own linked X account (age, followers). Null when the coin
+		// links none, the link is not a profile, or the keyless reader is down.
+		xAccountSignal(coin.twitter),
 	]);
 
-	const intel = toCoinIntel({ coin, smart, narr, funder, provenFlow, creatorRep });
+	const intel = toCoinIntel({ coin, smart, narr, funder, provenFlow, creatorRep, xAccount });
+	await loadKnownWallets();
 	enrichWithKnownWallets(intel, topBuyers);
 	return intel;
 }
@@ -193,7 +198,7 @@ export function enrichWithKnownWallets(intel, topBuyers = []) {
  * Map raw brain rows → normalized CoinIntel. Pure given its inputs (exported so
  * it can be unit-tested without a DB).
  */
-export function toCoinIntel({ coin, smart, narr, funder, provenFlow, creatorRep } = {}) {
+export function toCoinIntel({ coin, smart, narr, funder, provenFlow, creatorRep, xAccount } = {}) {
 	const riskFlags = Array.isArray(coin.risk_flags) ? coin.risk_flags : [];
 	const devBuy = n(coin.dev_buy_lamports);
 	const buyVol = n(coin.buy_volume_lamports) || 0;
@@ -260,6 +265,8 @@ export function toCoinIntel({ coin, smart, narr, funder, provenFlow, creatorRep 
 			telegram: coin.telegram || null,
 			website: coin.website || null,
 			tags: Array.isArray(coin.tags) ? coin.tags : [],
+			// Age and followers of the linked X account, or null when unknown.
+			xAccount: xAccount || null,
 		},
 
 		// The wallet that launched the coin and its own track record. Null history

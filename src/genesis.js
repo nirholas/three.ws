@@ -20,6 +20,7 @@
 import { apiFetch } from './api.js';
 import { getMe } from './account.js';
 import { rippleOnce } from './ui-juice.js';
+import { shortAddress } from './shared/address.js';
 // wallet-auth.js and erc8004/agent-registry.js pull in ethers — heavy and only
 // needed when the user actually signs in or registers an identity. They're
 // dynamically imported at those call sites so the initial genesis bundle stays light.
@@ -631,8 +632,7 @@ async function hydrateReveal(agentId, avatarId, name) {
 
 // ── Reveal rendering ───────────────────────────────────────────────────────
 function shorten(addr) {
-	if (!addr) return '—';
-	return addr.length > 16 ? `${addr.slice(0, 6)}…${addr.slice(-6)}` : addr;
+	return shortAddress(addr, 6, 6, { empty: '\u2014' });
 }
 
 function walletRow(chainLabel, address) {

@@ -23,6 +23,7 @@ import {
 } from './game/avatar-rig.js';
 import { CC_AVATAR_KEY } from './game/play-handoff.js';
 import { applyCinematicDefaults, loadEnvironment, detectQualityTier } from './shared/cinematic-render.js';
+import { shortAddress } from './shared/address.js';
 
 // ── config ──────────────────────────────────────────────────────────────────
 
@@ -90,10 +91,7 @@ function fmtUsdc(micros) {
 	const n = Number(micros);
 	return '$' + (isFinite(n) && n > 0 ? (n / 1e6).toFixed(2) : '0.00');
 }
-function shortAddr(a) {
-	const s = String(a || '');
-	return s.length > 11 ? `${s.slice(0, 6)}…${s.slice(-4)}` : s || '—';
-}
+function shortAddr(a) { return shortAddress(a, 6, 4, { empty: '\u2014' }); }
 function shortTx(tx) {
 	const s = String(tx || '');
 	return s.length > 16 ? `${s.slice(0, 8)}…${s.slice(-6)}` : s;

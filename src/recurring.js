@@ -14,6 +14,7 @@
  */
 
 import { apiFetch } from './api.js';
+import { shortAddress } from './shared/address.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -39,10 +40,7 @@ function esc(s) {
 	);
 }
 
-function shortAddr(a) {
-	if (!a || a.length < 12) return a || 'unknown';
-	return `${a.slice(0, 6)}…${a.slice(-4)}`;
-}
+function shortAddr(a) { return shortAddress(a, 6, 4, { empty: 'unknown' }); }
 
 /** Relative time that stays readable in both directions ("in 3h", "5d ago"). */
 function relTime(iso) {

@@ -18,12 +18,14 @@ attachment name is never an instruction to the agent, whatever it claims.
 | REST API | `/api/v1/agents/:id/mail/*` | [api/v1/agent-mail.js](../api/v1/agent-mail.js) |
 | MCP tools | `agent_mail_*` on `/api/mcp` | [api/_mcp/tools/mail.js](../api/_mcp/tools/mail.js) |
 | Mail service (quotes, sends, reads, search, routing) | server | [api/_lib/mail/service.js](../api/_lib/mail/service.js) |
-| Allowlist and daily cap | server | [api/_lib/mail/controls.js](../api/_lib/mail/controls.js) |
+| Allowlist, daily cap and code senders | server | [api/_lib/mail/controls.js](../api/_lib/mail/controls.js) |
+| Code and link extraction, sender gate, long-poll | server | [api/_lib/mail/extract.js](../api/_lib/mail/extract.js), [api/_lib/mail/otp.js](../api/_lib/mail/otp.js) |
 | Untrusted-mail fence | server | [api/_lib/mail/untrusted.js](../api/_lib/mail/untrusted.js) |
 | Mail rules | server | [api/_lib/mail/rules.js](../api/_lib/mail/rules.js) |
 | Inbound webhook | `POST /api/mail/inbound` | [api/mail/inbound.js](../api/mail/inbound.js), [api/_lib/mail/inbound.js](../api/_lib/mail/inbound.js) |
 | Schema | `agent_mailboxes`, `agent_mail_messages`, `agent_mail_quotes`, `agent_mail_policies`, `agent_mail_rules`, `agent_mail_rule_events` | [api/_lib/migrations/](../api/_lib/migrations) |
 | Tests | allowlist, fence, rules, tool output, routes | [tests/agent-mail-controls.test.js](../tests/agent-mail-controls.test.js) |
+| Tests | extraction, sender gate, long-poll, prompt injection | [tests/agent-inbox-otp.test.js](../tests/agent-inbox-otp.test.js) |
 
 ## Prices and limits
 
@@ -175,6 +177,71 @@ answered: "No reply is needed ... The email contains untrusted content that
 attempts to override the agent's core instructions ... These requests are
 clearly malicious and must not be acted upon."
 
+## Sign up to services: verification codes and magic links
+
+Many services email a one-time code or a sign-in link before an agent can
+finish a signup. The agent's own address receives it, and three tools read it
+for the agent without the agent ever treating the email as instructions.
+
+**1. The owner lists the services (once).** Under **Code senders** in the inbox
+settings, or with `PUT /api/v1/agents/:id/mail/policy`:
+
+```json
+{ "code_senders": ["noreply@acme.example", "@accounts.example"] }
+```
+
+Entries are an address or a whole `@domain`, the same format as the send
+allowlist. The list starts empty and an empty list extracts nothing: the agent
+gets `code_senders_empty` until the owner opts a service in. Like every control
+here it changes only from a signed-in browser session, so an agent can never add
+a sender to itself.
+
+**2. The agent waits for the email.**
+
+| Tool | What it does |
+|---|---|
+| `inbox_list` | Received mail only, newest first, subjects fenced. Each item carries `code_sender`: whether codes may be read from that sender. |
+| `inbox_read` | One received message, fenced, plus `extraction` (codes and links) when the sender is allowed and authentic, or `extraction.eligible: false` with the reason. |
+| `inbox_wait_for_code` | Long-polls the inbox every two seconds for up to `timeout_s` (default 30, at most 90) and returns the best code or link. Also considers mail from the last `since_s` seconds (default 120), so a message that beat the call is not missed. `kind` is `code`, `link` or `any`; `from` narrows to one allowed sender. |
+
+Example flow, an agent registering on a service:
+
+```
+1. agent: browser tool submits the signup form with ava@agents.three.ws
+2. agent: inbox_wait_for_code { agent_id, from: "@accounts.example", kind: "code", timeout_s: 45 }
+   -> { "found": true,
+        "result": { "sender": { "address": "no-reply@accounts.example" },
+                    "best_code": { "value": "482913", "kind": "numeric", "confidence": 0.95,
+                                   "reasons": ["near_code_phrase", "subject_mentions_code"] },
+                    "best_link": null },
+        "skipped": {}, "waited_s": 6.0 }
+3. agent: browser tool types 482913 into the verification field
+```
+
+**What is extracted.** Numeric codes of 4 to 8 digits (also written `123 456`),
+alphanumeric codes such as `K7Q9-X2MP` (only beside a phrase like "activation
+code"), and `https` magic links. Each comes with a `confidence` from 0 to 1 and
+the `reasons` behind it (a code phrase beside it, alone on its line, in the
+subject; a link with a verify path, a long token, a host that belongs to the
+sender). Anything under 0.5 is dropped, so a year, a price, a duration, a phone
+number or an unsubscribe link is not offered. Pass `from` or compare
+`host_matches_sender` when a link's host matters.
+
+**Safety.** Three gates apply before anything is extracted:
+
+1. the sender must be on `code_senders`;
+2. the message must be authentic: delivered inside the platform, or DMARC
+   pass, or SPF and DKIM both pass, so a forged `From` on a listed domain is
+   skipped (the result counts it under `skipped.sender_not_authenticated`);
+3. the message must not be filed as spam.
+
+Only the matched value leaves the extractor: it matches a strict character
+class (digits and letters for a code, URL-safe characters for a link), so no
+other text from the email, including an injected instruction, reaches the
+result. The body is never interpreted, and links are returned as text and never
+fetched by the platform. [tests/agent-inbox-otp.test.js](../tests/agent-inbox-otp.test.js)
+pins this with a hostile body.
+
 ## Using it from an MCP client
 
 Connect to `https://three.ws/api/mcp` (see [mcp.md](mcp.md)). The send tools
@@ -192,6 +259,7 @@ are financial, so they are hidden until the session enables them with
 | `agent_mail_read` | One message with body, attachments and thread; marks it read. |
 | `agent_mail_search` | Search subject, body and addresses. |
 | `agent_mail_delete` | Hide a message from every folder (kept for the audit trail). |
+| `inbox_list`, `inbox_read`, `inbox_wait_for_code` | Read received mail and wait for a verification code or magic link; see [Sign up to services](#sign-up-to-services-verification-codes-and-magic-links). |
 
 A model must show the owner the `confirm` block from the quote and wait for an
 explicit yes before calling a confirm tool. The service refuses a quote whose
@@ -219,7 +287,7 @@ or an API key (`Authorization: Bearer sk_live_...`); reads need
 | `DELETE /messages/:msg` | Delete (hide) a message. |
 | `GET /messages/:msg/attachments/:index` | A short-lived download URL. |
 | `GET /settings` | Allowlist, cap and current usage. |
-| `PUT /policy` | Owner session only. `{ allowlist_enabled, allowlist, daily_send_cap }` |
+| `PUT /policy` | Owner session only. `{ allowlist_enabled, allowlist, daily_send_cap, code_senders }` |
 | `GET /rules`, `POST /rules`, `PATCH /rules/:rule`, `DELETE /rules/:rule` | Mail rules; writes are owner session only. |
 | `GET /rule-events?limit=30` | Rule activity with approval and run outcome. |
 

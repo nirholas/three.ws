@@ -316,6 +316,24 @@ Tools that only confirm or cancel an action you already approved in the browser 
 
 ---
 
+## Pricing: credit plans and free trials
+
+Paid tools on `/api/mcp` cost their per-call x402 price (shown in `tools/list` under `pricing`). An account that would rather prepay buys a plan at [/mcp-plans](/mcp-plans), paid from the prepaid balance on [/credits](/credits):
+
+- **Credit bundles.** One credit is worth $0.001 of a tool's per-call price, so `render_avatar` ($0.005) costs 5 credits and `optimize_model` ($0.05) costs 50. A bundle does not expire.
+- **Time passes.** Unlimited calls to every paid tool for 24 hours or 30 days.
+- **Free trials.** Every account gets 3 free calls per paid tool (`MCP_TRIAL_CALLS` overrides the count).
+
+When you call a paid tool with your bearer token, the server picks what pays for the call in this order: an active time pass, a credit bundle with enough credits, then a free trial call. The credits are debited before the tool runs and refunded if it errors. Every result carries the accounting in its `_meta`:
+
+```json
+{ "_meta": { "creditsUsed": 5, "creditsRemaining": 495, "creditSource": "plan" } }
+```
+
+`creditSource` is `plan`, `time_pass` (with `planExpiresAt`) or `trial` (with `trialRemaining`). When nothing covers the call, an account that holds a plan receives the same `-32402` payment-required error as the pay-per-call path, with `creditsRequired`, `creditsRemaining` and the tool's USDC price in `data`, and can either buy more credits or call without a bearer token and pay that call over x402. Accounts that never bought a plan keep today's behaviour (a bearer token bypasses payment); set `MCP_METER_ALL=1` on the server to meter every account.
+
+`GET /api/mcp-plans` returns the catalog, the per-tool credit costs and (signed in) your balances, trial usage and call history. `POST /api/mcp-plans` with `{ "plan": "<slug>", "idempotency_key": "<8-128 chars>" }` buys a plan; a retried key charges once.
+
 ## Connecting Claude Code
 
 Claude Code auto-discovers `.mcp.json` at the project root. Add your key to that file:

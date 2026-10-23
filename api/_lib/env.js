@@ -947,6 +947,11 @@ export const env = {
 	get X402_PAY_TO_SOLANA() {
 		return addr(opt('X402_PAY_TO_SOLANA', opt('X402_PAY_TO')));
 	},
+	// Where buyers send a prepaid x402 deposit. Unset = the prepaid settler's own
+	// address (X402_PREPAID_SETTLER_SECRET_BASE58), the wallet that pays sellers out.
+	get X402_PREPAID_DEPOSIT_WALLET() {
+		return addr(opt('X402_PREPAID_DEPOSIT_WALLET'));
+	},
 	get X402_PAY_TO_BASE() {
 		return addr(opt('X402_PAY_TO_BASE'));
 	},

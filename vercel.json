@@ -22,7 +22,7 @@
 		"api/cron/treasury-topup.js": {
 			"maxDuration": 120
 		},
-		"{api/cron/economy-reconcile,api/cron/x402-ring-leak-scan,api/cron/quality-bench,api/cron/likeness-eval,api/cron/fact-check-benchmark,api/cron/marketplace-escrow-sweep}.js": {
+		"{api/cron/economy-reconcile,api/cron/x402-ring-leak-scan,api/cron/x402-prepaid-settle,api/cron/quality-bench,api/cron/likeness-eval,api/cron/fact-check-benchmark,api/cron/marketplace-escrow-sweep}.js": {
 			"maxDuration": 300
 		},
 		"{api/strategies,api/cron/payment-session-sweep,api/cron/three-market-refresh}.js": {
@@ -769,6 +769,10 @@
 			"dest": "/api/agents/solana/[action]?action=validation"
 		},
 		{
+			"src": "/api/agents/([^/]+)/decision-trail/verify",
+			"dest": "/api/agents/[id]/decision-trail-verify?id=$1"
+		},
+		{
 			"src": "/api/agents/([^/]+)/economy",
 			"dest": "/api/agents/[id]/economy?id=$1"
 		},
@@ -827,6 +831,18 @@
 		{
 			"src": "/api/v1/me/?",
 			"dest": "/api/v1/rest"
+		},
+		{
+			"src": "/api/agents/([^/]+)/skill-candidates/([^/]+)/bundle/(.+)",
+			"dest": "/api/agents/[id]/skill-candidates?id=$1&candidate_id=$2&file=$3"
+		},
+		{
+			"src": "/api/agents/([^/]+)/skill-candidates/([^/]+)",
+			"dest": "/api/agents/[id]/skill-candidates?id=$1&candidate_id=$2"
+		},
+		{
+			"src": "/api/agents/([^/]+)/skill-candidates",
+			"dest": "/api/agents/[id]/skill-candidates?id=$1"
 		},
 		{
 			"src": "/api/agents/([^/]+)/custom-skills/([^/]+)",
@@ -1251,6 +1267,10 @@
 		{
 			"src": "/airdrops/?",
 			"dest": "/airdrops.html"
+		},
+		{
+			"src": "/readme-3d/?",
+			"dest": "/readme-3d.html"
 		},
 		{
 			"src": "/launcher/?",
@@ -2623,6 +2643,10 @@
 		{
 			"src": "/credits/?",
 			"dest": "/credits.html"
+		},
+		{
+			"src": "/mcp-plans/?",
+			"dest": "/mcp-plans.html"
 		},
 		{
 			"src": "/domains/?",
@@ -5941,6 +5965,14 @@
 			"dest": "/api/skills/import"
 		},
 		{
+			"src": "/api/skills/([^/]+)/invoke",
+			"dest": "/api/skills/[id]/invoke?id=$1"
+		},
+		{
+			"src": "/api/skills/([^/]+)/card",
+			"dest": "/api/skills/[id]/card?id=$1"
+		},
+		{
 			"src": "/api/skills/([^/]+)/install",
 			"dest": "/api/skills/[id]/install?id=$1"
 		},
@@ -7136,6 +7168,10 @@
 			"schedule": "*/10 * * * *"
 		},
 		{
+			"path": "/api/cron/oracle-social-ingest",
+			"schedule": "*/10 * * * *"
+		},
+		{
 			"path": "/api/cron/quota-check",
 			"schedule": "0 * * * *"
 		},
@@ -7146,6 +7182,10 @@
 		{
 			"path": "/api/cron/mcp-registry-sentinel",
 			"schedule": "41 6 * * *"
+		},
+		{
+			"path": "/api/cron/market-anomalies",
+			"schedule": "*/15 * * * *"
 		},
 		{
 			"path": "/api/cron/relayer-balance-check",
@@ -7418,6 +7458,14 @@
 		{
 			"path": "/api/cron/x402-ring-leak-scan",
 			"schedule": "*/10 * * * *"
+		},
+		{
+			"path": "/api/cron/x402-prepaid-settle",
+			"schedule": "23 * * * *"
+		},
+		{
+			"path": "/api/cron/x402-prepaid-reconcile",
+			"schedule": "17 3 * * *"
 		},
 		{
 			"path": "/api/cron/x402-settlement-reconcile",

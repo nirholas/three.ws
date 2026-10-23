@@ -65,6 +65,8 @@ import { onchainBadgeHTML, ensureOnchainBadgeStyles } from '../shared/onchain-ba
 import { apiFetch } from '../api.js';
 import { log } from '../shared/log.js';
 import { resolveURI } from '../ipfs.js';
+import { shortAddress } from '../shared/address.js';
+
 ensureOnchainBadgeStyles();
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -331,7 +333,7 @@ const esc = (s) =>
 		/[&<>"']/g,
 		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
 	);
-const shortAddr = (a) => (a ? a.slice(0, 6) + '…' + a.slice(-4) : '');
+const shortAddr = (a) => shortAddress(a, 6, 4);
 
 /**
  * True if `url` is already a content-addressed or durable public URL that

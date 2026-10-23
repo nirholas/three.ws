@@ -13,11 +13,12 @@
 // `onState(state)` reports 'loading' | 'empty' | 'zero' | 'earned' | 'error' so a
 // host page can decide whether to show the surrounding card at all.
 
+import { shortAddress as shortAddr } from './address.js';
+
 const STYLE_ID = 'tws-earnings-card-styles';
 
 const esc = (s) =>
 	String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const shortAddr = (a) => (a && a.length > 10 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '');
 
 export function fmtSol(n) {
 	const v = Number(n);

@@ -160,6 +160,8 @@ export const FEATURES = [
 	{ key: 'concentration_top10', pillar: 'structure', get: sig('concentration_top10'), edges: [0.3, 0.9] },
 	{ key: 'fresh_wallet_ratio', pillar: 'structure', get: sig('fresh_wallet_ratio'), edges: [0.2, 0.5, 0.8] },
 	{ key: 'bubblemap_connectivity', pillar: 'structure', get: sig('bubblemap_connectivity'), edges: [0.1, 0.3, 0.6] },
+	{ key: 'holder_gini', pillar: 'structure', get: sig('holder_gini'), edges: [0.5, 0.7, 0.85] },
+	{ key: 'seeded_share', pillar: 'structure', get: sig('seeded_share'), edges: [0.01, 0.3, 0.6] },
 
 	// momentum: what the first 90 seconds of tape actually did
 	{ key: 'unique_buyers', pillar: 'momentum', get: sig('unique_buyers'), edges: [1, 5, 15, 40] },

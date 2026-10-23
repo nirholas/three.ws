@@ -8,6 +8,7 @@ import { requireUser, get, post, patch, del, esc, relTime, initialsOf } from '..
 import { skeletonHTML, errorStateHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
 import { toast } from '../../shared/toast.js';
 import { loadLinkedDevices, loadPayoutWallets } from './account-linking.js';
+import { shortAddress } from '../../shared/address.js';
 
 // Loading placeholder — a stack of shimmer rows sized for a table/list slot.
 function skelStack(count) {
@@ -63,11 +64,7 @@ function chainChip(w) {
 	return `<span class="dn-tag" style="background:${style.bg};border-color:${style.border};color:${style.ink}">${style.label}</span>`;
 }
 
-function truncMid(s, head = 6, tail = 4) {
-	const str = String(s || '');
-	if (str.length <= head + tail + 1) return str;
-	return `${str.slice(0, head)}…${str.slice(-tail)}`;
-}
+function truncMid(s, head = 6, tail = 4) { return shortAddress(s, head, tail); }
 
 
 async function copyToClipboard(text) {

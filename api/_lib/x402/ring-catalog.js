@@ -82,13 +82,13 @@ const NO_BODY = () => null;
 // builder keeps this block honest instead of ~300 hand-copied lines. Queries
 // here are the cheapest valid canary per endpoint — a rotation call must
 // never 4xx. Rotation budget: only the two family representatives
-// (market-pulse, market-global) are autobuy — all 17 share one construction
+// (market-pulse, market-global) are autobuy, all 18 share one construction
 // rail (endpoint.js) and one fetcher module, so two hourly settles prove the
 // whole family's payment path without blowing the ring's calls-per-hour cap;
 // the rest get their one-time settle proof from the coverage sweep.
 const MARKET_FAMILY_NOTE =
 	'Family representative coverage: market-pulse + market-global keep the shared ' +
-	'api/_lib/market-data/endpoint.js rail settling hourly; rotating all 17 would ' +
+	'api/_lib/market-data/endpoint.js rail settling hourly; rotating all 18 would ' +
 	'exceed the ring hour budget. One-time settle proof via the coverage sweep.';
 const marketData = (
 	slug,
@@ -429,6 +429,7 @@ export const RING_CATALOG = [
 	marketData('market-stablecoins', 'Returns the top stablecoins by supply with peg health (DeFiLlama, read-only).'),
 	marketData('market-fees', 'Returns protocol fee/revenue rankings with market totals (DeFiLlama, read-only).'),
 	marketData('market-dex-volumes', 'Returns the top DEXs by 24h volume with market share (DeFiLlama, read-only).'),
+	marketData('market-anomalies', 'Returns statistically scored market anomalies from the scanner: price, TVL, stablecoin, funding and open-interest events (read-only).', { query: { limit: '3' } }),
 	marketData('market-hacks', 'Returns the searchable DeFi exploit database with loss stats (DeFiLlama, read-only).', { query: { limit: '3' } }),
 	marketData('market-pulse', 'Returns the one-call market bundle: global, F&G, top coins, gas, TVL, stables, DEX, fees (read-only).', { priceAtomicDefault: 5_000, autobuy: true }),
 	{

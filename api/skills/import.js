@@ -1,6 +1,10 @@
 /**
  * POST /api/skills/import { url }: turn an OpenAPI spec or a GitHub repo URL
  * into a skill bundle (packages/skill-import) and save it as a draft.
+ * POST /api/skills/import { idl_url | program_id, cluster? }: the same for a
+ * Solana Anchor program. program_id fetches the IDL the program published
+ * on chain; the generated tools read accounts, preview instructions, and hand
+ * writes to the confirm-gated wallet flow (nothing in the bundle signs).
  * GET  /api/skills/import: list the caller's own drafts.
  *
  * A draft is never enabled automatically: `enabled` starts false
@@ -23,7 +27,14 @@ import { cors, json, wrap, error, readJson } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { fetchSafePublicUrlPinned, SsrfBlockedError } from '../_lib/ssrf-guard.js';
-import { importFromUrl, OpenApiParseError, GithubDiscoveryError, SkillBundleValidationError } from '@three-ws/skill-import';
+import {
+	importFromUrl,
+	importFromAnchorIdl,
+	OpenApiParseError,
+	GithubDiscoveryError,
+	SkillBundleValidationError,
+	AnchorIdlError,
+} from '@three-ws/skill-import';
 import { createDraft, listDrafts, OpenApiSkillImportError } from '../_lib/openapi-skill-imports.js';
 
 const MAX_SPEC_BYTES = 4 * 1024 * 1024;
@@ -54,19 +65,40 @@ export default wrap(async (req, res) => {
 
 	const body = await readJson(req);
 	const url = typeof body?.url === 'string' ? body.url.trim() : '';
-	if (!url) return error(res, 400, 'validation_error', 'url is required');
+	const idlUrl = typeof body?.idl_url === 'string' ? body.idl_url.trim() : '';
+	const programId = typeof body?.program_id === 'string' ? body.program_id.trim() : '';
+	if (!url && !idlUrl && !programId) {
+		return error(res, 400, 'validation_error', 'url, idl_url or program_id is required');
+	}
+	const cluster = body?.cluster === undefined ? 'mainnet-beta' : body.cluster;
+	if (cluster !== 'mainnet-beta' && cluster !== 'devnet') {
+		return error(res, 400, 'validation_error', 'cluster must be mainnet-beta or devnet');
+	}
 
 	try {
-		const bundle = await importFromUrl(url, {
-			fetchUrl: guardedFetch,
-			githubToken: process.env.GITHUB_TOKEN || process.env.GH_TOKEN || undefined,
-		});
+		const bundle =
+			idlUrl || programId
+				? await importFromAnchorIdl(
+						{ idl_url: idlUrl || undefined, program_id: programId || undefined, cluster },
+						{
+							fetchUrl: guardedFetch,
+							rpcUrl: async (c) => {
+								const { solanaConnection } = await import('../_lib/agent-pumpfun.js');
+								return solanaConnection(c === 'devnet' ? 'devnet' : 'mainnet').rpcEndpoint;
+							},
+						},
+					)
+				: await importFromUrl(url, {
+						fetchUrl: guardedFetch,
+						githubToken: process.env.GITHUB_TOKEN || process.env.GH_TOKEN || undefined,
+					});
 		const draft = await createDraft(user.id, bundle);
 		return json(res, 201, { data: draft });
 	} catch (err) {
 		if (err instanceof SsrfBlockedError) return error(res, 400, 'url_blocked', err.message);
 		if (err instanceof OpenApiParseError) return error(res, 400, 'spec_parse_error', err.message);
 		if (err instanceof GithubDiscoveryError) return error(res, 400, 'github_error', err.message);
+		if (err instanceof AnchorIdlError) return error(res, 400, 'idl_error', err.message);
 		if (err instanceof SkillBundleValidationError) return error(res, 400, 'invalid_bundle', err.message);
 		if (err instanceof OpenApiSkillImportError) return error(res, err.status, err.code, err.message);
 		throw err;

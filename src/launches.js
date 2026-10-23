@@ -23,6 +23,7 @@ import { walletChipEl } from './shared/agent-wallet-chip.js';
 import { createLogger } from './shared/log.js';
 import { proxiedImageURL } from './ipfs.js';
 import { countUp, updateValue, enterStagger, rippleOnce, liveDot, setLiveDot } from './ui-juice.js';
+import { shortAddress as shortAddr } from './shared/address.js';
 
 const log = createLogger('launches');
 
@@ -108,11 +109,6 @@ function el(tag, props = {}, children = []) {
 	return node;
 }
 
-function shortAddr(s, head = 4, tail = 4) {
-	const str = String(s || '');
-	if (str.length <= head + tail + 1) return str;
-	return `${str.slice(0, head)}…${str.slice(-tail)}`;
-}
 
 function timeAgo(iso) {
 	const t = new Date(iso).getTime();

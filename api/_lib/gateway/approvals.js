@@ -93,7 +93,7 @@ export async function executePreview(preview, { confirm } = {}) {
 	} catch (e) {
 		return fail(e?.code || 'validation_error', e?.message || 'That trade is not valid.');
 	}
-	const r = await executeAgentTrade({ id: agent.id, userId: agent.user_id, meta: agent.meta || {}, input, source: 'discretionary' });
+	const r = await executeAgentTrade({ id: agent.id, userId: agent.user_id, meta: agent.meta || {}, input, source: 'discretionary', burnerExempt: true });
 	if (!r.ok) return fail(r.code, r.message, r.detail);
 	return { ok: true, data: r.data };
 }

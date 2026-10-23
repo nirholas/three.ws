@@ -22,6 +22,7 @@ import { registerWalletTab } from '../registry.js';
 import { formatUsd, explorerTxUrl, unsignableWalletCopy } from '../util.js';
 import { consumeCsrfToken } from '../../api.js';
 import { ensureRiskAck } from '../../shared/risk-ack.js';
+import { addressHtml } from '../../shared/address.js';
 
 const SOL_ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
@@ -394,7 +395,7 @@ registerWalletTab({
 					<div class="awh-empty" style="padding:0 0 12px;">
 						${state.unconfirmed
 							? 'Submitted to the network — confirm it on the explorer before retrying.'
-							: `${esc(fmtAmount(it.amount, it.decimals))} ${esc(it.assetName)} sent to ${esc(shortAddress(it.destination, 6, 6))}.`}
+							: `${esc(fmtAmount(it.amount, it.decimals))} ${esc(it.assetName)} sent to ${addressHtml(it.destination, { head: 6, tail: 6, label: 'Recipient' })}.`}
 					</div>
 					${explorer ? `<a class="awh-btn awh-btn--primary" href="${esc(explorer)}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;">View on explorer ↗</a>` : ''}
 					<div style="margin-top:14px;"><button class="awh-btn" id="awh-again" type="button">Withdraw more</button></div>

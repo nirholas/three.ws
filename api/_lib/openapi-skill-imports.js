@@ -37,7 +37,7 @@ export async function createDraft(userId, bundle) {
 		INSERT INTO openapi_skill_imports
 			(user_id, source_url, kind, manifest, skill_md, tools, handlers_src, enabled)
 		VALUES
-			(${userId}, ${bundle.sourceUrl}, ${bundle.tools ? 'openapi' : 'declarative'},
+			(${userId}, ${bundle.sourceUrl}, ${bundle.kind || (bundle.tools ? 'openapi' : 'declarative')},
 			 ${JSON.stringify(bundle.manifest)}::jsonb, ${bundle.skillMd},
 			 ${bundle.tools ? JSON.stringify(bundle.tools) : null}::jsonb, ${bundle.handlersSrc || null}, false)
 		RETURNING *

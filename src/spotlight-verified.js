@@ -11,13 +11,13 @@
  */
 
 import { el } from './spotlight-shared.js';
+import { shortAddress as shortMint } from './shared/address.js';
 
 const fmtUsd = (n) =>
 	Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
 const fmtSol = (n) => `${Number(n).toLocaleString('en-US', { maximumFractionDigits: 4 })} SOL`;
 
-const shortMint = (m) => (m && m.length > 10 ? `${m.slice(0, 4)}…${m.slice(-4)}` : m || '');
 
 function plural(n, one, many) {
 	return `${Number(n).toLocaleString('en-US')} ${n === 1 ? one : many}`;

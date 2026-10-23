@@ -12,6 +12,7 @@
 import { createLogger } from './shared/log.js';
 import { updateValue, enterRow, enterStagger, liveDot, setLiveDot } from './ui-juice.js';
 import { proxiedImageURL } from './ipfs.js';
+import { shortAddress } from './shared/address.js';
 
 const log = createLogger('deployments');
 
@@ -35,11 +36,7 @@ function fmtNum(n) {
 	return String(v);
 }
 
-function shortAddr(a) {
-	if (!a) return '';
-	const s = String(a);
-	return s.length > 12 ? `${s.slice(0, 6)}…${s.slice(-4)}` : s;
-}
+function shortAddr(a) { return shortAddress(a, 6, 4); }
 
 function timeAgo(iso) {
 	const t = new Date(iso).getTime();

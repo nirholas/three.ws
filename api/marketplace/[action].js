@@ -52,6 +52,7 @@ const CATEGORIES = [
 	'education',
 	'emotions',
 	'entertainment',
+	'finance',
 	'games',
 	'general',
 	'life',

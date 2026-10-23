@@ -27,6 +27,7 @@ import {
 	scoreRowsBySpace,
 } from './embeddings.js';
 import { extractEntities } from './memory-entities.js';
+import { outcomeWeight, groupOutcomes } from './memory-outcomes.js';
 
 export const MEMORY_TIERS = ['working', 'recall', 'archival'];
 
@@ -176,6 +177,24 @@ export async function searchMemories(agentId, query, opts = {}) {
 	`;
 	if (!rows.length) return { results: [], provider: embeddingsConfigured(), scored: 0 };
 
+	// Realized-outcome weights for the recalled-then-traded memories. Best-effort:
+	// before the memory_outcomes migration lands, or on a read failure, every weight
+	// is a neutral 1 and ranking is the plain semantic/lexical order.
+	let outcomesById = new Map();
+	try {
+		const orows = await sql`
+			SELECT memory_id, pnl_usd, win, closed_at FROM memory_outcomes
+			WHERE agent_id = ${agentId}
+		`;
+		outcomesById = groupOutcomes(orows);
+	} catch {
+		/* unweighted recall */
+	}
+	const weigh = (r) => {
+		const o = outcomeWeight(outcomesById.get(String(r.id)) || []);
+		return { weight: o.weight, samples: o.samples, wins: o.wins, losses: o.losses, netPnlUsd: o.net_pnl_usd, lastClosedAt: o.last_closed_at };
+	};
+
 	const embedded = rows.filter((r) => Array.isArray(r.embedding) && r.embedding.length);
 	let semantic = [];
 	let usedProvider = false;
@@ -184,7 +203,8 @@ export async function searchMemories(agentId, query, opts = {}) {
 			const { scored } = await scoreRowsBySpace(embedded, q);
 			semantic = scored
 				.filter((r) => r.score >= minScore)
-				.sort((a, b) => b.score - a.score);
+				.map((r) => ({ r, outcome: weigh(r) }))
+				.sort((a, b) => b.r.score * b.outcome.weight - a.r.score * a.outcome.weight);
 			usedProvider = true;
 		} catch (err) {
 			console.warn('[memory-store] scoring failed', err?.code || err?.message);
@@ -193,10 +213,15 @@ export async function searchMemories(agentId, query, opts = {}) {
 
 	const ranked = [];
 	const seen = new Set();
-	for (const r of semantic) {
+	for (const { r, outcome } of semantic) {
 		if (seen.has(r.id)) continue;
 		seen.add(r.id);
-		ranked.push(decorateMemory(r, { score: Number(r.score.toFixed(4)), match: 'semantic' }));
+		ranked.push(decorateMemory(r, {
+			score: Number(r.score.toFixed(4)),
+			rankScore: Number((r.score * outcome.weight).toFixed(4)),
+			outcome,
+			match: 'semantic',
+		}));
 		if (ranked.length >= topK) break;
 	}
 
@@ -206,11 +231,17 @@ export async function searchMemories(agentId, query, opts = {}) {
 		const ql = q.toLowerCase();
 		const lexical = rows
 			.filter((r) => !seen.has(r.id) && String(r.content || '').toLowerCase().includes(ql))
-			.sort((a, b) => (b.salience || 0) - (a.salience || 0));
-		for (const r of lexical) {
+			.map((r) => ({ r, outcome: weigh(r) }))
+			.sort((a, b) => (b.r.salience || 0) * b.outcome.weight - (a.r.salience || 0) * a.outcome.weight);
+		for (const { r, outcome } of lexical) {
 			if (seen.has(r.id)) continue;
 			seen.add(r.id);
-			ranked.push(decorateMemory(r, { score: null, match: 'lexical' }));
+			ranked.push(decorateMemory(r, {
+				score: null,
+				rankScore: Number(((r.salience || 0) * outcome.weight).toFixed(4)),
+				outcome,
+				match: 'lexical',
+			}));
 			if (ranked.length >= topK) break;
 		}
 	}

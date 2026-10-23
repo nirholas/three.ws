@@ -11,6 +11,7 @@ import { log } from '../shared/log.js';
 import { safeUrl } from '../safe-url.js';
 import { resolveURI } from '../ipfs.js';
 import { withPayoutStepUp, cooldownNotice } from '../payout-step-up.js';
+import { shortAddress } from '../shared/address.js';
 
 function escapeHtml(s) {
 	return String(s == null ? '' : s)
@@ -3607,9 +3608,7 @@ function isValidAddrFor(chain, addr) {
 }
 
 function shortAddr(a) {
-	if (!a) return '—';
-	if (a.length <= 14) return a;
-	return a.slice(0, 6) + '…' + a.slice(-4);
+	return shortAddress(a, 6, 4, { empty: '\u2014' });
 }
 
 function withdrawalStatusBadge(status) {

@@ -7,12 +7,12 @@
 // kill flows — every money action calls a real on-chain endpoint.
 
 import { flashValue } from './ui-juice.js';
+import { shortAddress as short } from './shared/address.js';
 
 const root = document.getElementById('sw-view');
 const SOL = (n) => (n == null ? '—' : `${Number(n).toLocaleString(undefined, { maximumFractionDigits: 4 })} SOL`);
 const PCT = (n) => (n == null ? '—' : `${(Number(n) * 100).toFixed(0)}%`);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const short = (a) => (a ? `${a.slice(0, 4)}…${a.slice(-4)}` : '');
 
 const state = { agents: null, authed: false };
 

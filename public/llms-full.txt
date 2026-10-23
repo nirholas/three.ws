@@ -712,6 +712,12 @@ URL: https://three.ws/pose
 
 Pose any three.ws avatar or the built-in mannequin with FK/IK, keyframe a timeline, and preview the motion live. Export an animated GLB or clip JSON, save animations to your account, play them back across the platform, and sell them for USDC.
 
+### README 3D
+
+URL: https://three.ws/readme-3d
+
+Put an interactive 3D model in any GitHub README. Paste a GLB, glTF, OBJ or STL URL and get a block GitHub renders as a rotatable viewer, sized to fit its markdown limit.
+
 ### glTF Validator
 
 URL: https://three.ws/validation
@@ -2354,6 +2360,12 @@ Search live registrar availability, see the exact yearly price, register a web d
 URL: https://three.ws/credits
 
 Top up with SOL or $THREE and spend credits on 3D generation, agents, and compute. Hold $THREE for up to 30% off every spend.
+
+### MCP Plans
+
+URL: https://three.ws/mcp-plans
+
+Prepay for paid MCP tools with credit bundles or time passes, use free trial calls on every tool, and see each credit spent.
 
 ### Agent Payment Sessions
 

@@ -25,6 +25,7 @@
 // Like the stylize/optimize panels, this module injects its own markup and
 // styles and only needs the result panel's download anchor to exist.
 
+import { copyReadme3d, describeResult } from './readme-3d-copy.js';
 import { createLogger } from './shared/log.js';
 import { creationIdFromGlbUrl, mountSlicerMenuItems } from './slicer-handoff.js';
 import { mountCraftcloudMenuItem } from './craftcloud-print.js';
@@ -69,6 +70,14 @@ if (download && resultPanel) {
 			blurb: 'Textured AR asset — opens directly on iPhone and Vision Pro.',
 			ext: 'usdz',
 			mime: 'model/vnd.usdz+zip',
+		},
+		{
+			id: 'readme',
+			label: 'GitHub README 3D',
+			tag: 'README',
+			blurb: 'Copy as GitHub README 3D: paste into any README or issue and GitHub renders it as an interactive 3D model.',
+			ext: 'md',
+			readme: true,
 		},
 		{
 			id: 'fbx',
@@ -196,7 +205,7 @@ if (download && resultPanel) {
 		item.setAttribute('role', 'menuitem');
 		item.dataset.format = f.id;
 		item.innerHTML = `
-			<span class="fmt">.${f.ext}</span>
+			<span class="fmt">${f.tag || `.${f.ext}`}</span>
 			<span class="blurb">${f.blurb}</span>
 			<span class="status" aria-live="polite"></span>
 		`;
@@ -429,6 +438,16 @@ if (download && resultPanel) {
 		};
 		spin('converting');
 		try {
+			if (format.readme) {
+				// A conversion runs on the server against the saved model URL, so an
+				// unsaved in-browser edit (a blob:) cannot be converted.
+				const result = await copyReadme3d(url, { name: baseName() });
+				status.textContent = describeResult(result);
+				setTimeout(() => {
+					if (status.textContent.endsWith('KB')) status.textContent = '';
+				}, 6000);
+				return;
+			}
 			if (format.server) {
 				const resultUrl = await convertOnServer(format, url, spin);
 				// Null means a new generation superseded this model mid-conversion;
@@ -460,7 +479,7 @@ if (download && resultPanel) {
 			// Say what went wrong. "failed" alone sent people re-clicking a button
 			// that was never going to work; a converter that is down and a mesh it
 			// cannot read need different responses from the user.
-			const why = format.server && err?.message ? `failed: ${err.message}` : 'failed, retry';
+			const why = (format.server || format.readme) && err?.message ? `failed: ${err.message}` : 'failed, retry';
 			status.textContent = why.length > 90 ? `${why.slice(0, 87)}…` : why;
 			status.classList.add('is-error');
 		} finally {

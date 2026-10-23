@@ -16,9 +16,10 @@
 import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
-import { recordOutcome, computeReputation, getReputationRecords } from '../_lib/reasoning-ledger.js';
+import { recordOutcome, linkOutcomeToMemories, computeReputation, getReputationRecords } from '../_lib/reasoning-ledger.js';
 import { anchorLedgerHead, latestAnchoredAnchor } from '../_lib/ledger-anchor.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { solPriceUsd } from '../_lib/sol-price.js';
 
 const LAMPORTS_PER_SOL = 1e9;
 const MAX_RECONCILE = 1000;   // decisions resolved per run
@@ -38,7 +39,7 @@ export default wrapCron(async (req, res) => {
 	try {
 		pending = await sql`
 			select d.id as decision_id, d.agent_id,
-			       p.realized_pnl_lamports, p.realized_pnl_pct, p.sell_sig, p.exit_reason, p.closed_at
+			       p.realized_pnl_lamports, p.realized_pnl_pct, p.sell_sig, p.exit_reason, p.closed_at, p.opened_at
 			from agent_decisions d
 			join agent_sniper_positions p on p.id = (d.inputs->>'position_id')::uuid
 			left join decision_outcomes o on o.decision_id = d.id
@@ -50,6 +51,10 @@ export default wrapCron(async (req, res) => {
 		report.errors++;
 		report.reconcile_error = err.message;
 	}
+
+	// 0 means the price feed has never resolved: outcomes are then stored unpriced
+	// (win/loss only) rather than valued with a guess.
+	const solUsd = pending.length ? await solPriceUsd().catch(() => 0) : 0;
 
 	for (const row of pending) {
 		try {
@@ -75,6 +80,18 @@ export default wrapCron(async (req, res) => {
 				report[wasCorrect ? 'wins' : 'losses']++;
 				touchedAgents.add(row.agent_id);
 			}
+			// Stamp the realized result onto every memory recalled into this decision.
+			// Independent of `out.reconciled` so a link that failed last run is retried.
+			const heldMs = row.opened_at && row.closed_at ? new Date(row.closed_at) - new Date(row.opened_at) : null;
+			const linked = await linkOutcomeToMemories({
+				decisionId: row.decision_id,
+				agentId: row.agent_id,
+				pnlUsd: solUsd > 0 ? Number((pnlSol * solUsd).toFixed(2)) : null,
+				win: wasCorrect,
+				holdSeconds: heldMs != null && Number.isFinite(heldMs) ? Math.max(0, Math.round(heldMs / 1000)) : null,
+				closedAt: row.closed_at,
+			});
+			report.memories_linked = (report.memories_linked || 0) + linked.linked;
 		} catch {
 			report.errors++;
 		}

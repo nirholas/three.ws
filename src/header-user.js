@@ -15,6 +15,7 @@
 //   mountHeaderUser({ slot: '#header-user-slot', user });
 
 import { resetIdentity } from './analytics.js';
+import { shortAddress } from './shared/address.js';
 
 let stylesInjected = false;
 
@@ -103,11 +104,7 @@ function isWalletEmail(email) {
 	return typeof email === 'string' && /^wallet-0x[0-9a-f]{40}@wallet\.local$/i.test(email);
 }
 
-function shortAddr(addr) {
-	if (!addr || typeof addr !== 'string') return '';
-	if (addr.length <= 12) return addr;
-	return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
+function shortAddr(addr) { return shortAddress(addr, 6, 4); }
 
 function deriveIdentity(user) {
 	const walletAddr = user?.wallet_address || (isWalletEmail(user?.email) ? user.email.slice(7, 49) : null);

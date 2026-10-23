@@ -11,6 +11,7 @@ import { sanitizeToolError } from '../_lib/mcp-error-sanitize.js';
 import { GETTING_STARTED_TOOL } from '../_lib/mcp-getting-started.js';
 import { TOOL_CATALOG, TOOLS } from './catalog.js';
 import { declaredArgs, finishCall, gateCall, listForRequest } from './policy.js';
+import { beginMeter, finishMeter, refundMeter } from '../_lib/mcp-credits.js';
 
 // The @three-ws/mcp-policy server id for /api/mcp.
 const POLICY_SERVER = 'three.ws';
@@ -255,6 +256,10 @@ async function onToolCall(params, auth, started, req) {
 		}
 	}
 
+	// Credit plans and trials (api/_lib/mcp-credits.js): debit before the call,
+	// refund below if it fails. Throws -32402 when a plan holder has nothing left.
+	const meter = await beginMeter({ auth, tool: name, args, rpcError });
+
 	try {
 		const result = await tool.handler(args, auth, req);
 		recordEvent({
@@ -266,8 +271,14 @@ async function onToolCall(params, auth, started, req) {
 			latencyMs: Date.now() - started,
 			meta: { args_summary: summarize(args) },
 		});
-		return await finishCall(POLICY_SERVER, name, sentArgs, auth, result, gate.preview);
+		if (result?.isError) await refundMeter(meter);
+		return await finishMeter(
+			meter,
+			await finishCall(POLICY_SERVER, name, sentArgs, auth, result, gate.preview),
+			args,
+		);
 	} catch (err) {
+		await refundMeter(meter);
 		recordEvent({
 			userId: auth.userId,
 			apiKeyId: auth.apiKeyId,
@@ -286,9 +297,9 @@ async function onToolCall(params, auth, started, req) {
 		// logs full detail to stderr with a log id, and passes safe
 		// handler-authored messages through unchanged.
 		const { message } = sanitizeToolError(err, { tool: name, server: 'mcp', log });
-		return {
+		return await finishMeter(meter, {
 			content: [{ type: 'text', text: `Error: ${message}` }],
 			isError: true,
-		};
+		});
 	}
 }

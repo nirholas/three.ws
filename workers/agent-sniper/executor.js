@@ -26,6 +26,7 @@ import { buildAmmSellInstructions, quoteAmmBuy, buildAmmBuyInstructions } from '
 import { getWalletBaseBalance, reconcileVanishedBag } from './reconcile.js';
 import { assessTradeSafety, recordFirewallDecision, criticalFirewallReason } from '../../api/_lib/trade-firewall.js';
 import { recordDecision } from '../../api/_lib/reasoning-ledger.js';
+import { searchMemories } from '../../api/_lib/memory-store.js';
 import { screenPush } from './screen-push.js';
 import { buildAgentTradeFee } from '../../api/_lib/pump-platform-fee.js';
 import { reclaimMintRent } from './rent-reclaim.js';
@@ -59,9 +60,15 @@ async function recordSnipeDecision({ strat, network, mint, posId, sig, mode, pri
 			`with ${priceImpactPct.toFixed(2)}% price impact` +
 			(firewall ? `; firewall verdict ${firewall.verdict} (score ${firewall.score}).` : '.') +
 			` Committed ${perTradeSol.toFixed(4)} SOL expecting a profitable exit.`;
+		// Memories the agent already holds about this token. Their ids ride along on
+		// the decision so the closed position's P&L can be written back onto them.
+		const recalled = await searchMemories(strat.agent_id, mint.mint, { topK: 5, minScore: 0.5, bump: false })
+			.then((r) => r.results)
+			.catch(() => []);
 		await recordDecision({
 			agentId: strat.agent_id,
 			kind: 'snipe',
+			recallIds: recalled.map((m) => m.id),
 			subjectRef: mint.mint,
 			actionRef: String(posId),
 			confidence,

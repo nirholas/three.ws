@@ -58,6 +58,13 @@ const EXTRA_HIGH_TRAFFIC = [
 	'/smart-home/privacy',
 	'/smart-home/satellite',
 	'/voice/home',
+	// Wallet and payment pages (W3AG, docs/accessibility.md). Disconnected
+	// state only here; the connected state, the connect picker and the payment
+	// modal are covered by tests/e2e/w3ag-wallet.spec.js.
+	'/wallet',
+	'/agent-wallet',
+	'/claim-wallet',
+	'/vaults',
 ];
 const coveredPaths = new Set(top30.map((p) => p.path));
 const extraPages = allPages.filter(
