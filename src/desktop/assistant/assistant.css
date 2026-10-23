@@ -21,8 +21,8 @@
 	transform: translateX(calc(100% + 24px));
 	opacity: 0;
 	transition:
-		transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1),
-		opacity 0.2s;
+		transform var(--duration-base) var(--ease-standard),
+		opacity var(--duration-base);
 }
 .asx.in {
 	transform: none;
@@ -254,8 +254,8 @@
 	text-align: left;
 	cursor: pointer;
 	transition:
-		background 0.15s,
-		border-color 0.15s;
+		background var(--duration-fast),
+		border-color var(--duration-fast);
 }
 .asx-sugs button:hover {
 	background: color-mix(in srgb, var(--card) 90%, transparent);
@@ -448,8 +448,8 @@
 	color: #fff;
 	cursor: pointer;
 	transition:
-		opacity 0.15s,
-		transform 0.1s;
+		opacity var(--duration-fast),
+		transform var(--duration-instant);
 }
 .asx-send:hover:not(:disabled) {
 	background: color-mix(in srgb, var(--accent) 86%, #fff);

@@ -37,7 +37,7 @@
 		.xc-btn {
 			display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; font: inherit; font-size: 0.92rem; font-weight: 650;
 			color: var(--ink); text-decoration: none; cursor: pointer; border-radius: var(--radius-md, 10px); border: 1px solid var(--stroke-strong); background: transparent;
-			transition: background var(--duration-fast, 140ms) ease, border-color var(--duration-fast, 140ms) ease, transform var(--duration-fast, 140ms) ease;
+			transition: background var(--duration-fast, var(--duration-fast)) var(--ease-standard), border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard), transform var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 		}
 		.xc-btn:hover { background: var(--surface-2, rgba(255,255,255,0.08)); border-color: var(--ink-faint, var(--stroke-strong)); }
 		.xc-btn:active { transform: translateY(1px); }

@@ -271,7 +271,7 @@
 		.fg3d canvas:focus-visible { box-shadow: inset 0 0 0 2px var(--ci-accent, #8b5cf6); border-radius: 12px; }
 		.fg3d-tip { position: absolute; z-index: 2; pointer-events: none; max-width: calc(100% - 16px); padding: 4px 8px; border-radius: 6px; font: 11px var(--font-mono, monospace); color: var(--ci-text); background: rgba(10,12,18,0.92); border: 1px solid var(--ci-border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 		.fg3d-bar { display: flex; gap: 8px; align-items: center; margin-top: 8px; font-size: 11px; color: var(--ci-muted); }
-		.fg3d-bar button { font: inherit; color: var(--ci-text); background: transparent; border: 1px solid var(--ci-border); border-radius: 999px; padding: 3px 10px; cursor: pointer; transition: background .15s, border-color .15s; }
+		.fg3d-bar button { font: inherit; color: var(--ci-text); background: transparent; border: 1px solid var(--ci-border); border-radius: 999px; padding: 3px 10px; cursor: pointer; transition: background var(--duration-fast), border-color var(--duration-fast); }
 		.fg3d-bar button:hover { background: rgba(255,255,255,0.06); border-color: var(--ci-muted); }
 		.fg3d-bar button:active { background: rgba(255,255,255,0.12); }
 		.fg3d-bar button:focus-visible { outline: 2px solid var(--ci-accent, #8b5cf6); outline-offset: 2px; }

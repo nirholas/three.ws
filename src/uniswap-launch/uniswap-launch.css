@@ -18,7 +18,7 @@
 	color: var(--cv-text);
 	font: inherit;
 	cursor: pointer;
-	transition: border-color 0.15s ease, background-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
 }
 .ul-option small {
 	color: var(--cv-text-2);

@@ -10,7 +10,7 @@
 	font: 14px/1.5 'Inter', system-ui, sans-serif;
 	-webkit-font-smoothing: antialiased;
 	overflow: hidden;
-	transition: opacity 0.7s ease, transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+	transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard);
 	user-select: none;
 	-webkit-user-select: none;
 }
@@ -74,7 +74,7 @@
 	padding: clamp(20px, 5vh, 56px) clamp(16px, 6vw, 96px);
 	max-width: 1100px;
 	margin: 0 auto;
-	transition: opacity 0.5s ease, transform 0.6s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard);
 }
 .os-boot-stage[data-phase='lock'] {
 	opacity: 0;
@@ -212,7 +212,7 @@
 	width: 0;
 	background: linear-gradient(90deg, #fff, #c4b5fd);
 	box-shadow: 0 0 16px rgba(196, 181, 253, 0.6);
-	transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 .os-boot-foot {
 	display: flex;
@@ -295,7 +295,7 @@
 	border-radius: 999px;
 	font-weight: 600;
 	font-size: 14px;
-	transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), background var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 }
 .os-lock-enter {
 	background: #fff;

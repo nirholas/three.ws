@@ -55,7 +55,7 @@
 	border-radius: var(--radius-control);
 	padding: var(--space-sm) var(--space-md);
 	cursor: pointer;
-	transition: background 0.15s ease, transform 0.1s ease;
+	transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .r3-btn:hover { background: var(--btn-secondary-bg-hover); }
 .r3-btn:active { background: var(--btn-secondary-bg-active); transform: translateY(1px); }
@@ -73,7 +73,7 @@
 	border-radius: 999px;
 	padding: 2px 12px;
 	cursor: pointer;
-	transition: background 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 .r3-chip:hover { background: var(--surface-3); }
 .r3-chip:active { background: var(--surface-3); transform: translateY(1px); }

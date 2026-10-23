@@ -73,7 +73,7 @@
 	border-radius: 5px;
 	background-color: var(--hover-b);
 	box-shadow: inset 0 0 0 1px var(--hr);
-	transition: background-color 0.12s;
+	transition: background-color var(--duration-fast);
 }
 .os .snap-zone {
 	background-color: var(--hover-b);
@@ -109,7 +109,7 @@
 	background: var(--bg50);
 	border: 1px solid var(--hr);
 	backdrop-filter: var(--blur-light);
-	transition: border-color 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 .snap-slot:not(.is-active) {
 	cursor: pointer;
@@ -143,7 +143,7 @@
 	background: var(--card);
 	border: 1px solid var(--hr);
 	font-size: 12px;
-	transition: transform 0.15s var(--ease-out), border-color 0.15s, background 0.15s;
+	transition: transform var(--duration-fast) var(--ease-out), border-color var(--duration-fast), background var(--duration-fast);
 	animation: snap-cand-in 0.24s var(--ease-out) backwards;
 }
 .snap-cand:nth-child(2) {
@@ -238,7 +238,7 @@
 	height: 26px;
 	border-radius: 6px;
 	opacity: 0.75;
-	transition: background 0.12s, opacity 0.12s;
+	transition: background var(--duration-fast), opacity var(--duration-fast);
 }
 .os .pk-x:hover {
 	background: #c42b1c;
@@ -260,7 +260,7 @@
 	border: 1px solid var(--hr);
 	font-size: 11px;
 	text-align: center;
-	transition: border-color 0.15s;
+	transition: border-color var(--duration-fast);
 }
 .os-peek:hover .pk-body {
 	border-color: var(--accent);
@@ -281,9 +281,9 @@
 }
 .os-layer .win {
 	transition:
-		box-shadow 0.2s,
-		opacity 0.25s,
-		transform 0.2s;
+		box-shadow var(--duration-base),
+		opacity var(--duration-base),
+		transform var(--duration-base);
 }
 .os-layer.is-peek .win:not(.is-peeked) {
 	opacity: 0.06;
@@ -309,7 +309,7 @@
 	border: 2px solid transparent;
 	background: var(--card);
 	text-align: left;
-	transition: border-color 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 .style-opt:hover {
 	border-color: var(--hr);
@@ -535,8 +535,8 @@
 		transform-origin: 50% 100%;
 		margin-inline: calc((var(--mag) - 1) * 25px);
 		transition:
-			transform 0.12s ease-out,
-			margin 0.12s ease-out;
+			transform var(--duration-fast) var(--ease-out),
+			margin var(--duration-fast) var(--ease-out);
 	}
 	.os[data-style='aqua'] .os-task-mid .os-tb:hover,
 	.os[data-style='aqua'] .os-task-mid .os-tb.run.on,
@@ -612,7 +612,7 @@
 		opacity: 1;
 		color: #0009;
 		box-shadow: inset 0 0 0 0.5px #0003;
-		transition: filter 0.12s;
+		transition: filter var(--duration-fast);
 	}
 	.os[data-style='aqua'] .win-bar .win-close {
 		order: 0;
@@ -641,7 +641,7 @@
 		width: 8px;
 		height: 8px;
 		opacity: 0;
-		transition: opacity 0.1s;
+		transition: opacity var(--duration-instant);
 	}
 	.os[data-style='aqua'] .win-ctl:hover .win-btn .ico,
 	.os[data-style='aqua'] .win-ctl:focus-within .win-btn .ico {

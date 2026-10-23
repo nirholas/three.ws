@@ -96,7 +96,7 @@ body {
 	font: 500 14px/1 inherit;
 	text-decoration: none;
 	cursor: pointer;
-	transition: background 0.15s, border-color 0.15s, transform 0.08s;
+	transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant);
 }
 .rr-btn:hover {
 	background: color-mix(in srgb, var(--rr-ink) 12%, transparent);
@@ -183,7 +183,7 @@ body {
 	color: var(--rr-dim);
 	font: 500 13px/1 inherit;
 	cursor: pointer;
-	transition: background 0.15s, color 0.15s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 }
 .rr-chip:hover {
 	color: var(--rr-ink);

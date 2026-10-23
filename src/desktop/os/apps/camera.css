@@ -40,8 +40,8 @@
 .napp-camera .cam-seg button svg { width: 16px; height: 16px; }
 .napp-camera .cam-seg button.on { background: var(--accent); color: #fff; }
 .napp-camera .cam-seg button:disabled:not(.on) { opacity: 0.4; }
-.napp-camera .cam-shutter { width: 58px; height: 58px; border-radius: 50%; border: 3px solid var(--text); background: transparent; position: relative; cursor: pointer; padding: 0; transition: transform 0.08s; }
-.napp-camera .cam-shutter::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: var(--text); transition: all 0.15s; }
+.napp-camera .cam-shutter { width: 58px; height: 58px; border-radius: 50%; border: 3px solid var(--text); background: transparent; position: relative; cursor: pointer; padding: 0; transition: transform var(--duration-instant); }
+.napp-camera .cam-shutter::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: var(--text); transition: all var(--duration-fast); }
 .napp-camera .cam-shutter.video::after { background: #ff3b30; }
 .napp-camera .cam-shutter.recording::after { inset: 15px; border-radius: 5px; }
 .napp-camera .cam-shutter.counting::after { background: var(--accent); }

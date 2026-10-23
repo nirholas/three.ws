@@ -60,7 +60,7 @@ body {
 	position: absolute;
 	inset: 0;
 	background-size: cover;
-	transition: background 0.6s;
+	transition: background var(--duration-slow);
 }
 .os[data-wall='three'] .os-wall {
 	background:
@@ -126,7 +126,7 @@ body {
 	font-size: 12px;
 	color: #fff;
 	text-shadow: 0 1px 3px #000a;
-	transition: background 0.15s;
+	transition: background var(--duration-fast);
 }
 .os-icon:hover {
 	background: #ffffff1c;
@@ -186,7 +186,7 @@ body {
 	background: var(--unfoc);
 	border: 1px solid var(--hr);
 	box-shadow: var(--shadow-md);
-	transition: box-shadow 0.2s, opacity 0.2s, transform 0.2s;
+	transition: box-shadow var(--duration-base), opacity var(--duration-base), transform var(--duration-base);
 }
 .win.is-focused {
 	box-shadow: var(--shadow-focus);
@@ -277,7 +277,7 @@ body {
 	place-items: center;
 	color: var(--text);
 	opacity: 0.8;
-	transition: background 0.12s, opacity 0.12s;
+	transition: background var(--duration-fast), opacity var(--duration-fast);
 }
 .win-tool {
 	width: 28px;
@@ -427,7 +427,7 @@ body {
 	backdrop-filter: var(--blur-light);
 	pointer-events: none;
 	z-index: 9999;
-	transition: all 0.12s;
+	transition: all var(--duration-fast);
 }
 
 /* ---------- Taskbar ---------- */
@@ -472,7 +472,7 @@ body {
 	width: 42px;
 	height: 40px;
 	border-radius: var(--siz-radius2);
-	transition: background 0.12s, transform 0.12s;
+	transition: background var(--duration-fast), transform var(--duration-fast);
 }
 .os-tb:hover {
 	background: var(--hover-b);
@@ -501,7 +501,7 @@ body {
 	margin-left: -3px;
 	border-radius: 2px;
 	background: var(--text2);
-	transition: width 0.2s, margin 0.2s, background 0.2s;
+	transition: width var(--duration-base), margin var(--duration-base), background var(--duration-base);
 }
 .os-tb.run.on::after {
 	width: 16px;
@@ -750,7 +750,7 @@ body {
 	background: var(--hover-b);
 	border: 1px solid var(--hr);
 	font-size: 13px;
-	transition: background 0.12s, transform 0.12s;
+	transition: background var(--duration-fast), transform var(--duration-fast);
 }
 .os-btn:hover {
 	background: var(--fill);
@@ -1047,7 +1047,7 @@ body {
 	padding: 6px 4px;
 	border: 1px solid transparent;
 	touch-action: none;
-	transition: background 0.12s, border-color 0.12s;
+	transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 .os-icons .os-icon .app-tile {
 	width: var(--icon-tile);
@@ -1222,7 +1222,7 @@ body {
 	border-radius: 50%;
 	background: #fff;
 	box-shadow: var(--shadow-sm);
-	transition: transform 0.15s;
+	transition: transform var(--duration-fast);
 }
 .set-switch[aria-checked='true'] {
 	background: var(--accent);

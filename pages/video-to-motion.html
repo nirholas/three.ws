@@ -90,7 +90,7 @@
 				width: min(320px, 90%); height: 4px; border-radius: 2px; background: var(--surface-1, #161616);
 				overflow: hidden; margin-top: 4px;
 			}
-			.vtm-progress > span { display: block; height: 100%; background: #6ee7a2; width: 0%; transition: width 0.3s ease; }
+			.vtm-progress > span { display: block; height: 100%; background: #6ee7a2; width: 0%; transition: width var(--duration-base) var(--ease-standard); }
 
 			.vtm-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; margin-top: 26px; }
 			@media (max-width: 900px) { .vtm-layout { grid-template-columns: 1fr; } }

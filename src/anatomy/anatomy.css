@@ -338,7 +338,7 @@
 	font: inherit;
 	font-weight: 500;
 	cursor: pointer;
-	transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+	transition: background-color var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast);
 }
 
 .anx-btn:hover:not(:disabled) {

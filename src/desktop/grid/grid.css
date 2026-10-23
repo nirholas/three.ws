@@ -27,7 +27,7 @@
 	display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px;
 	background: rgba(2, 10, 7, 0.82); color: var(--gd-ink); font: inherit; font-size: 13px;
 	border: 1px solid var(--gd-dim); border-radius: 0; cursor: pointer;
-	transition: background 120ms, border-color 120ms, color 120ms, transform 120ms;
+	transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast), transform var(--duration-fast);
 }
 .gd-tool:hover { background: #0a3d2c; border-color: var(--gd-ink); }
 .gd-tool:active { transform: translateY(1px); background: var(--gd-ink); color: var(--gd-bg); }
@@ -47,7 +47,7 @@
 .gd-tier { position: absolute; left: 50%; bottom: 56px; transform: translateX(-50%); width: min(380px, calc(100vw - 32px)); text-align: center; text-shadow: 0 0 10px rgba(25, 255, 176, 0.45); }
 .gd-tier-name { display: block; font-size: 15px; letter-spacing: 0.1em; }
 .gd-bar { height: 8px; margin: 8px 0 6px; border: 1px solid var(--gd-dim); background: rgba(2, 10, 7, 0.8); }
-.gd-bar i { display: block; height: 100%; width: 0; background: var(--gd-ink); box-shadow: 0 0 10px var(--gd-ink); transition: width 400ms ease-out; }
+.gd-bar i { display: block; height: 100%; width: 0; background: var(--gd-ink); box-shadow: 0 0 10px var(--gd-ink); transition: width var(--duration-slow) var(--ease-out); }
 .gd-tier-note { display: block; color: var(--gd-dim); font-size: 11px; }
 
 .gd-help { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; color: var(--gd-dim); font-size: 11px; letter-spacing: 0.06em; pointer-events: none; }

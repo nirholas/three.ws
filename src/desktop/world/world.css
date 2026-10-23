@@ -94,7 +94,7 @@
 	cursor: pointer;
 	backdrop-filter: blur(14px);
 	-webkit-backdrop-filter: blur(14px);
-	transition: background 0.15s, border-color 0.15s, transform 0.15s;
+	transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast);
 }
 .wd-tool:hover {
 	background: rgba(255, 255, 255, 0.08);
@@ -257,7 +257,7 @@
 	cursor: pointer;
 	backdrop-filter: blur(14px);
 	-webkit-backdrop-filter: blur(14px);
-	transition: background 0.15s, color 0.15s, border-color 0.15s;
+	transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
 }
 .wd-place:hover {
 	color: #fff;
@@ -506,7 +506,7 @@
 	background: #050505;
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity 0.55s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 }
 .wd-fade.is-on {
 	opacity: 1;
@@ -541,7 +541,7 @@
 	pointer-events: auto;
 	cursor: pointer;
 	will-change: transform;
-	transition: opacity 0.2s;
+	transition: opacity var(--duration-base);
 }
 .wd-tag[hidden] {
 	display: none;
@@ -562,7 +562,7 @@
 	white-space: nowrap;
 	backdrop-filter: blur(10px);
 	-webkit-backdrop-filter: blur(10px);
-	transition: border-color 0.15s, background 0.15s, transform 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast), transform var(--duration-fast);
 }
 .wd-tag:hover b,
 .wd-tag:focus-visible b {
@@ -769,7 +769,7 @@
 	background: rgba(255, 255, 255, 0.05);
 	color: #fff;
 	font: 14px 'Inter', system-ui, sans-serif;
-	transition: border-color 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 .wd-talk-input::placeholder {
 	color: rgba(255, 255, 255, 0.4);
@@ -792,7 +792,7 @@
 	background: rgba(196, 181, 253, 0.16);
 	color: #fff;
 	cursor: pointer;
-	transition: background 0.15s, transform 0.15s, opacity 0.15s;
+	transition: background var(--duration-fast), transform var(--duration-fast), opacity var(--duration-fast);
 }
 .wd-talk-send svg {
 	width: 16px;
@@ -829,7 +829,7 @@
 	font: 500 12px/1 'Inter', system-ui, sans-serif;
 	cursor: pointer;
 	white-space: nowrap;
-	transition: background 0.15s, border-color 0.15s, transform 0.15s;
+	transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast);
 }
 .wd-talk-btn svg {
 	width: 14px;

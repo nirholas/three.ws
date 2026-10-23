@@ -37,7 +37,7 @@
 	border: 1px solid var(--lp-border);
 	border-radius: 12px;
 	background: var(--lp-surface);
-	transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .lp-card:hover {
 	border-color: var(--lp-accent);
@@ -112,7 +112,7 @@
 	font-size: 0.85rem;
 	text-decoration: none;
 	cursor: pointer;
-	transition: background-color 0.15s ease, transform 0.1s ease;
+	transition: background-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .lp-btn:hover:not([disabled]) {
 	background: var(--lp-surface);

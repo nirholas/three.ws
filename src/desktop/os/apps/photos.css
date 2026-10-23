@@ -87,7 +87,7 @@
 	color: #fff;
 	background: linear-gradient(transparent, rgba(0, 0, 0, 0.65));
 	opacity: 0;
-	transition: opacity 0.12s;
+	transition: opacity var(--duration-fast);
 }
 .napp-photos .ph-cell:hover .ph-cellname,
 .napp-photos .ph-cell:focus-visible .ph-cellname {
@@ -253,7 +253,7 @@
 	opacity: 1;
 }
 .napp-photos .ph-img.turning {
-	transition: transform 0.18s ease;
+	transition: transform var(--duration-fast) var(--ease-standard);
 }
 @media (prefers-reduced-motion: reduce) {
 	.napp-photos .ph-img.turning {
@@ -292,7 +292,7 @@
 	background: var(--bg70, rgba(0, 0, 0, 0.5));
 	color: var(--text);
 	opacity: 0;
-	transition: opacity 0.15s;
+	transition: opacity var(--duration-fast);
 }
 .napp-photos .ph-nav[hidden] {
 	display: none;

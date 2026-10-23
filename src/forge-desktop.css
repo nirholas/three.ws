@@ -246,10 +246,10 @@ html[data-theme='light'] .fd-body {
 	text-decoration: none;
 	cursor: pointer;
 	transition:
-		background-color 0.15s ease,
-		border-color 0.15s ease,
-		transform 0.1s ease,
-		box-shadow 0.15s ease;
+		background-color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-instant) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard);
 }
 
 .fd-btn:hover {
@@ -327,8 +327,8 @@ html[data-theme='light'] .fd-body {
 	font-weight: var(--weight-medium);
 	cursor: pointer;
 	transition:
-		background-color 0.15s ease,
-		color 0.15s ease;
+		background-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
 }
 
 .fd-tab:hover {
@@ -357,7 +357,7 @@ html[data-theme='light'] .fd-body {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
-	transition: opacity 0.2s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 
 .fd-shot__frame.is-swapping img {
@@ -411,9 +411,9 @@ html[data-theme='light'] .fd-body {
 	border-radius: var(--radius-lg);
 	background: var(--surface-1);
 	transition:
-		border-color 0.2s ease,
-		transform 0.2s ease,
-		background-color 0.2s ease;
+		border-color var(--duration-base) var(--ease-standard),
+		transform var(--duration-base) var(--ease-standard),
+		background-color var(--duration-base) var(--ease-standard);
 }
 
 .fd-feature:hover {
@@ -474,7 +474,7 @@ html[data-theme='light'] .fd-body {
 }
 
 .fd-table tbody tr {
-	transition: background-color 0.15s ease;
+	transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
 .fd-table tbody tr:hover {
@@ -497,9 +497,9 @@ html[data-theme='light'] .fd-body {
 	color: var(--ink-dim);
 	cursor: copy;
 	transition:
-		color 0.15s ease,
-		border-color 0.15s ease,
-		background-color 0.15s ease;
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		background-color var(--duration-fast) var(--ease-standard);
 }
 
 .fd-hash:hover {
@@ -547,7 +547,7 @@ html[data-theme='light'] .fd-body {
 	padding: var(--space-sm) var(--space-md);
 	font-weight: var(--weight-medium);
 	cursor: pointer;
-	transition: color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 
 .fd-details summary:hover {

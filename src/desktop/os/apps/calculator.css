@@ -30,7 +30,7 @@
 .napp-calculator .calc-pad.sci .calc-key { font-size: 0.88rem; }
 .napp-calculator .calc-pad.prog { grid-auto-rows: minmax(36px, 1fr); }
 .napp-calculator .w2 { grid-column: span 2; }
-.napp-calculator .calc-key { border: 1px solid var(--bd); border-radius: 6px; background: var(--hover-half, var(--hover)); color: var(--text); font: inherit; font-size: 1.1rem; cursor: pointer; transition: background 0.1s, transform 0.06s; }
+.napp-calculator .calc-key { border: 1px solid var(--bd); border-radius: 6px; background: var(--hover-half, var(--hover)); color: var(--text); font: inherit; font-size: 1.1rem; cursor: pointer; transition: background var(--duration-instant), transform var(--duration-instant); }
 .napp-calculator .calc-key.num { background: var(--hover); font-weight: 600; }
 .napp-calculator .calc-key.op, .napp-calculator .calc-key.fn { font-weight: 500; }
 .napp-calculator .calc-key.fn { font-size: 0.98rem; }

@@ -15,7 +15,7 @@ body { background: var(--bg); touch-action: none; -webkit-user-select: none; use
 .bar-link {
 	display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 10px;
 	color: var(--muted); font-size: 13px; font-weight: 600;
-	transition: color .15s, background .15s;
+	transition: color var(--duration-fast), background var(--duration-fast);
 }
 .bar-link:hover { color: var(--ink); background: rgba(255, 255, 255, .06); }
 .bar-link:active { transform: scale(.97); }
@@ -41,7 +41,7 @@ body { background: var(--bg); touch-action: none; -webkit-user-select: none; use
 	position: fixed; z-index: 6; left: 50%; top: 34%; transform: translate(-50%, 8px); opacity: 0; pointer-events: none;
 	font-size: clamp(26px, 6vw, 44px); font-weight: 800; letter-spacing: -.02em; white-space: nowrap;
 	background: linear-gradient(90deg, var(--violet), var(--cyan)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-	transition: opacity .25s, transform .25s;
+	transition: opacity var(--duration-base), transform var(--duration-base);
 }
 .banner.show { opacity: 1; transform: translate(-50%, 0); }
 
@@ -65,7 +65,7 @@ body { background: var(--bg); touch-action: none; -webkit-user-select: none; use
 	display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 46px; padding: 0 18px; border-radius: 12px;
 	border: 1px solid color-mix(in srgb, var(--violet) 48%, var(--line));
 	background: linear-gradient(135deg, color-mix(in srgb, var(--violet) 26%, var(--panel)), color-mix(in srgb, var(--cyan) 18%, var(--panel)));
-	color: var(--ink); font-weight: 700; font-size: 14px; transition: transform .12s, border-color .2s, filter .2s;
+	color: var(--ink); font-weight: 700; font-size: 14px; transition: transform var(--duration-fast), border-color var(--duration-base), filter var(--duration-base);
 }
 .btn:hover { transform: translateY(-1px); filter: brightness(1.12); }
 .btn:active { transform: scale(.98); }

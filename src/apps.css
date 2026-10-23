@@ -137,7 +137,7 @@ html[data-theme='light'] .ap-body {
 	font-weight: 600;
 	text-decoration: none;
 	cursor: pointer;
-	transition: background 0.15s, border-color 0.15s, transform 0.1s;
+	transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant);
 }
 
 .ap-btn:hover {
@@ -253,7 +253,7 @@ html[data-theme='light'] .ap-body {
 	background: var(--bg-1, transparent);
 	color: var(--ink);
 	text-decoration: none;
-	transition: border-color 0.15s, transform 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), transform var(--duration-fast), background var(--duration-fast);
 }
 
 .ap-card:hover {

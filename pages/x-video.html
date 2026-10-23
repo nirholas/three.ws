@@ -31,7 +31,7 @@
 			.xv-input { flex: 1 1 320px; min-width: 0; padding: 13px 14px; font: inherit; color: inherit; background: var(--surface, #0e0e0e); border: 1px solid var(--border, #2a2a2a); border-radius: 10px; }
 			.xv-input:hover { border-color: #444; }
 			.xv-input:focus-visible, .xv-btn:focus-visible, .xv-dl:focus-visible { outline: 2px solid var(--accent-violet, #7c5df3); outline-offset: 2px; }
-			.xv-btn { padding: 13px 22px; font: inherit; font-weight: 600; color: #fff; background: var(--accent-violet, #7c5df3); border: 0; border-radius: 10px; cursor: pointer; transition: filter 0.15s, transform 0.05s; }
+			.xv-btn { padding: 13px 22px; font: inherit; font-weight: 600; color: #fff; background: var(--accent-violet, #7c5df3); border: 0; border-radius: 10px; cursor: pointer; transition: filter var(--duration-fast), transform var(--duration-instant); }
 			.xv-btn:hover { filter: brightness(1.12); }
 			.xv-btn:active { transform: translateY(1px); }
 			.xv-btn[disabled] { opacity: 0.55; cursor: progress; }
@@ -52,7 +52,7 @@
 			.xv-row:first-child { border-top: 0; }
 			.xv-q { font-weight: 600; min-width: 64px; }
 			.xv-meta { color: var(--text-muted, #a0a0a0); font-size: 13px; flex: 1; }
-			.xv-dl { padding: 8px 16px; color: #fff; background: var(--accent-violet, #7c5df3); border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; transition: filter 0.15s; }
+			.xv-dl { padding: 8px 16px; color: #fff; background: var(--accent-violet, #7c5df3); border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; transition: filter var(--duration-fast); }
 			.xv-dl:hover { filter: brightness(1.12); }
 			.xv-skel { height: 14px; border-radius: 6px; background: linear-gradient(90deg, var(--bg-1, #1a1a1a), #262626, var(--bg-1, #1a1a1a)); background-size: 200% 100%; animation: xv-shimmer 1.2s linear infinite; margin: 18px; }
 			@keyframes xv-shimmer { to { background-position: -200% 0; } }

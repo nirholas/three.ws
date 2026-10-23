@@ -40,9 +40,9 @@
 	font-size: 13px;
 	line-height: 1.35;
 	transition:
-		box-shadow 0.18s,
-		transform 0.18s,
-		border-color 0.18s;
+		box-shadow var(--duration-fast),
+		transform var(--duration-fast),
+		border-color var(--duration-fast);
 }
 .wgx:hover {
 	border-color: color-mix(in srgb, var(--text) 18%, transparent);
@@ -97,8 +97,8 @@
 	cursor: pointer;
 	opacity: 0;
 	transition:
-		opacity 0.15s,
-		background 0.15s;
+		opacity var(--duration-fast),
+		background var(--duration-fast);
 }
 .wgx:hover .wgx-more,
 .wgx:focus-within .wgx-more,
@@ -154,9 +154,9 @@
 	cursor: pointer;
 	white-space: nowrap;
 	transition:
-		background 0.15s,
-		border-color 0.15s,
-		transform 0.1s;
+		background var(--duration-fast),
+		border-color var(--duration-fast),
+		transform var(--duration-instant);
 }
 .wgx-btn:hover {
 	background: color-mix(in srgb, var(--text) 11%, transparent);
@@ -921,7 +921,7 @@
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
-	transition: transform 0.4s;
+	transition: transform var(--duration-slow);
 }
 .wgx-lead:hover img {
 	transform: scale(1.04);
@@ -1063,12 +1063,12 @@
 	pointer-events: auto;
 	animation: wgx-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 	transition:
-		right 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
-		top 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
-		width 0.24s,
-		height 0.24s,
-		box-shadow 0.18s,
-		border-color 0.18s;
+		right var(--duration-base) var(--ease-standard),
+		top var(--duration-base) var(--ease-standard),
+		width var(--duration-base),
+		height var(--duration-base),
+		box-shadow var(--duration-fast),
+		border-color var(--duration-fast);
 }
 .wgx-desk > .wgx > header {
 	cursor: grab;
@@ -1097,7 +1097,7 @@
 	background: color-mix(in srgb, var(--accent) 12%, transparent);
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity 0.12s;
+	transition: opacity var(--duration-fast);
 }
 .wgx-ghost.on {
 	opacity: 1;
@@ -1151,9 +1151,9 @@
 	opacity: 0;
 	visibility: hidden;
 	transition:
-		transform 0.2s,
-		opacity 0.2s,
-		visibility 0.2s;
+		transform var(--duration-base),
+		opacity var(--duration-base),
+		visibility var(--duration-base);
 }
 .wgx-desk.editing .wgx-editbar {
 	transform: translate(-50%, 0);
@@ -1389,8 +1389,8 @@
 	transform: translate(-50%, 24px);
 	opacity: 0;
 	transition:
-		transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
-		opacity 0.2s;
+		transform var(--duration-base) var(--ease-standard),
+		opacity var(--duration-base);
 }
 .wgx-board.in {
 	transform: translate(-50%, 0);
@@ -1399,7 +1399,7 @@
 .wgx-board.out {
 	transform: translate(-50%, 18px);
 	opacity: 0;
-	transition-duration: 0.16s;
+	transition-duration: var(--duration-fast);
 }
 .wgx-col {
 	display: flex;
@@ -1477,9 +1477,9 @@
 	color: var(--text);
 	text-decoration: none;
 	transition:
-		transform 0.18s,
-		border-color 0.18s,
-		background 0.18s;
+		transform var(--duration-fast),
+		border-color var(--duration-fast),
+		background var(--duration-fast);
 }
 .wgx-story:hover {
 	transform: translateY(-2px);

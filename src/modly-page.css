@@ -177,7 +177,7 @@ kbd {
 	text-decoration: none;
 	white-space: nowrap;
 	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease, opacity 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 
 .md-btn:hover {
@@ -272,7 +272,7 @@ kbd {
 	background: var(--surface-1);
 	color: var(--ink);
 	font: 400 14px var(--font-body);
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 
 .md-input.md-input--mono {
@@ -462,7 +462,7 @@ textarea.md-input {
 	border-right: 1.6px solid currentColor;
 	border-bottom: 1.6px solid currentColor;
 	transform: rotate(-45deg);
-	transition: transform 0.18s ease;
+	transition: transform var(--duration-fast) var(--ease-standard);
 }
 
 .md-details[open] > summary::before {
@@ -511,7 +511,7 @@ textarea.md-input {
 	border-radius: 50%;
 	background: var(--ink-faint);
 	flex: none;
-	transition: background 0.2s ease, box-shadow 0.2s ease;
+	transition: background var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 }
 
 .md-conn[data-state='connected'] .md-dot {
@@ -762,7 +762,7 @@ textarea.md-input {
 	color: var(--ink);
 	font: inherit;
 	cursor: pointer;
-	transition: border-color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 
 .md-model:hover {
@@ -781,7 +781,7 @@ textarea.md-input {
 	margin-top: 2px;
 	border-radius: 50%;
 	border: 1.6px solid var(--stroke-strong);
-	transition: border 0.15s ease;
+	transition: border var(--duration-fast) var(--ease-standard);
 }
 
 .md-model[aria-checked='true'] .md-model__radio {
@@ -897,7 +897,7 @@ textarea.md-input {
 	color: var(--ink-dim);
 	font: 600 12px var(--font-body);
 	cursor: pointer;
-	transition: background 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .md-tab:hover {
@@ -931,7 +931,7 @@ textarea.md-input {
 	text-align: center;
 	cursor: pointer;
 	overflow: hidden;
-	transition: border-color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 
 .md-drop:hover,
@@ -1102,7 +1102,7 @@ textarea.md-input {
 	transform-origin: left center;
 	transform: scaleX(0);
 	background: linear-gradient(90deg, var(--md-accent), color-mix(in srgb, var(--md-accent) 60%, #fff));
-	transition: transform 0.4s ease;
+	transition: transform var(--duration-slow) var(--ease-standard);
 	will-change: transform;
 }
 
@@ -1289,7 +1289,7 @@ textarea.md-input {
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-lg, 16px);
 	background: var(--surface-1);
-	transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 
 .md-way:hover,

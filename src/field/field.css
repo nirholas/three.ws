@@ -127,7 +127,7 @@ body {
 	white-space: nowrap;
 	cursor: pointer;
 	transform: translate(-50%, -50%) scale(var(--inv, 1));
-	transition: opacity 0.22s ease, border-color 0.15s ease, background 0.15s ease;
+	transition: opacity var(--duration-base) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .fd-d-tag b {
 	font: 600 15px/1.1 'Space Grotesk', 'Inter', sans-serif;
@@ -175,12 +175,12 @@ body {
 	cursor: default;
 	opacity: 0;
 	visibility: hidden;
-	transition: opacity 0.22s ease, visibility 0s linear 0.22s, box-shadow 0.2s ease;
+	transition: opacity var(--duration-base) var(--ease-standard), visibility var(--duration-instant) var(--ease-standard) var(--duration-base), box-shadow var(--duration-base) var(--ease-standard);
 }
 .fd[data-lod='near'] .fd-d-card {
 	opacity: 1;
 	visibility: visible;
-	transition: opacity 0.22s ease, visibility 0s;
+	transition: opacity var(--duration-base) var(--ease-standard), visibility var(--duration-instant);
 }
 .fd[data-lod='near'] .fd-d-tag {
 	opacity: 0;
@@ -236,7 +236,7 @@ body {
 	font-size: 10px;
 	font-weight: 600;
 	text-decoration: none;
-	transition: background 0.15s ease, border-color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .fd-d-enter:hover {
 	background: hsla(var(--hue), 85%, 60%, 0.18);
@@ -292,7 +292,7 @@ body {
 	line-height: 1;
 	text-decoration: none;
 	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .fd-ca-copy {
 	min-width: 54px;
@@ -358,7 +358,7 @@ body {
 	padding: 5px 6px;
 	border-radius: 8px;
 	text-decoration: none;
-	transition: background 0.12s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 .fd-list a:hover {
 	background: hsla(var(--hue), 80%, 60%, 0.12);
@@ -428,7 +428,7 @@ body {
 	border: 1px solid var(--fd-line);
 	background: linear-gradient(160deg, hsla(var(--hue), 80%, 60%, 0.16), transparent 70%);
 	text-decoration: none;
-	transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .fd-tile b {
 	font: 600 11.5px 'Space Grotesk', 'Inter', sans-serif;
@@ -461,7 +461,7 @@ body {
 	color: var(--fd-ink);
 	font: inherit;
 	font-size: 11px;
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 :root[data-theme='light'] .fd-forge input {
 	background: rgba(255, 255, 255, 0.7);
@@ -495,7 +495,7 @@ body {
 	object-fit: cover;
 	background: hsla(var(--hue), 60%, 50%, 0.18);
 	border: 1px solid var(--fd-line);
-	transition: border-color 0.15s ease, transform 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .fd-face span {
 	max-width: 100%;
@@ -574,7 +574,7 @@ body {
 	border: 1px solid var(--fd-line);
 	text-decoration: none;
 	font-size: 10px;
-	transition: border-color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .fd-chip span {
 	color: var(--fd-faint);
@@ -649,7 +649,7 @@ body {
 	cursor: pointer;
 	transform: translate(-50%, -100%) scale(var(--inv, 1));
 	transform-origin: 50% 100%;
-	transition: border-color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .fd-core-btn b {
 	font: 600 16px 'Space Grotesk', 'Inter', sans-serif;
@@ -728,7 +728,7 @@ body {
 	text-decoration: none;
 	white-space: nowrap;
 	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .fd-btn:hover {
 	background: var(--fd-glass-hi);
@@ -830,7 +830,7 @@ body {
 	color: var(--fd-ink);
 	font: 500 18px/1 'Inter', sans-serif;
 	cursor: pointer;
-	transition: background 0.12s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 .fd-zbtn + .fd-zbtn {
 	border-top: 1px solid var(--fd-line);
@@ -866,7 +866,7 @@ body {
 	box-shadow: var(--fd-shadow);
 	color: var(--fd-dim);
 	cursor: text;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .fd-ask-row:hover {
 	border-color: rgba(184, 166, 255, 0.35);
@@ -1023,7 +1023,7 @@ body {
 	z-index: 10;
 	opacity: 0;
 	transform: scale(0.985);
-	transition: opacity 0.24s ease, transform 0.24s ease;
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 	cursor: default;
 	user-select: text;
 	-webkit-user-select: text;

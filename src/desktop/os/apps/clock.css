@@ -11,7 +11,7 @@
 .napp-clock small { color: var(--text2); }
 .napp-clock .clk-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .napp-clock .clk-head small { display: block; margin-top: 2px; }
-.napp-clock .clk-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--bd); background: var(--hover); color: var(--text); font: inherit; font-size: 0.9rem; padding: 7px 14px; border-radius: 6px; cursor: pointer; transition: background 0.1s, transform 0.06s; }
+.napp-clock .clk-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--bd); background: var(--hover); color: var(--text); font: inherit; font-size: 0.9rem; padding: 7px 14px; border-radius: 6px; cursor: pointer; transition: background var(--duration-instant), transform var(--duration-instant); }
 .napp-clock .clk-btn:hover:not(:disabled) { background: var(--hover-b, var(--hover)); }
 .napp-clock .clk-btn:active:not(:disabled) { transform: scale(0.97); }
 .napp-clock .clk-btn:disabled { opacity: 0.4; cursor: default; }
@@ -66,7 +66,7 @@
 .napp-clock .clk-zone .r { text-align: right; display: flex; flex-direction: column; }
 .napp-clock .clk-zone .t { font-size: 1.5rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .napp-clock .clk-zone .dn { position: absolute; right: 12px; bottom: 12px; color: var(--text2); }
-.napp-clock .clk-zone .clk-x { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; opacity: 0; transition: opacity 0.12s; }
+.napp-clock .clk-zone .clk-x { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; opacity: 0; transition: opacity var(--duration-fast); }
 .napp-clock .clk-zone:hover .clk-x, .napp-clock .clk-zone .clk-x:focus-visible { opacity: 1; }
 /* alarms */
 .napp-clock .clk-form { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--bd); border-radius: 10px; margin-bottom: 12px; background: var(--hover-half, var(--hover)); }
@@ -85,8 +85,8 @@
 .napp-clock .clk-alarm .tm small { display: block; }
 .napp-clock .clk-alarm .inf { display: flex; flex-direction: column; min-width: 0; }
 .napp-clock .clk-alarm .inf b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.napp-clock .clk-switch { width: 42px; height: 22px; border-radius: 11px; border: 1px solid var(--text2); background: transparent; position: relative; cursor: pointer; padding: 0; transition: background 0.15s; }
-.napp-clock .clk-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--text2); transition: transform 0.15s, background 0.15s; }
+.napp-clock .clk-switch { width: 42px; height: 22px; border-radius: 11px; border: 1px solid var(--text2); background: transparent; position: relative; cursor: pointer; padding: 0; transition: background var(--duration-fast); }
+.napp-clock .clk-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--text2); transition: transform var(--duration-fast), background var(--duration-fast); }
 .napp-clock .clk-switch.on { background: var(--accent); border-color: var(--accent); }
 .napp-clock .clk-switch.on::after { transform: translateX(20px); background: #fff; }
 /* timers */
@@ -100,7 +100,7 @@
 .napp-clock .clk-timer .ring { width: 52px; height: 52px; transform: rotate(-90deg); }
 .napp-clock .clk-timer .ring circle { fill: none; stroke-width: 3.5; }
 .napp-clock .clk-timer .ring .bg { stroke: var(--bd); }
-.napp-clock .clk-timer .ring .fg { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 0.4s linear; }
+.napp-clock .clk-timer .ring .fg { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset var(--duration-slow) var(--ease-standard); }
 .napp-clock .clk-timer .left { font-size: 1.8rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .napp-clock .clk-timer.paused .left { opacity: 0.55; }
 .napp-clock .clk-timer.done { border-color: var(--accent); }

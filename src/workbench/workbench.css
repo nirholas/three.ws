@@ -116,7 +116,7 @@ button { cursor: pointer; }
 	height: 100%;
 	width: 0;
 	background: var(--wb-accent-hi);
-	transition: width 0.6s var(--wb-ease);
+	transition: width var(--duration-slow) var(--wb-ease);
 }
 .wb-top-link {
 	color: var(--wb-ink-dim);
@@ -124,7 +124,7 @@ button { cursor: pointer; }
 	font-size: 12px;
 	padding: 4px 8px;
 	border-radius: var(--wb-radius);
-	transition: color 0.15s, background 0.15s;
+	transition: color var(--duration-fast), background var(--duration-fast);
 }
 .wb-top-link:hover { color: var(--wb-ink); background: var(--wb-panel-2); }
 
@@ -150,7 +150,7 @@ button { cursor: pointer; }
 	background: transparent;
 	color: var(--wb-ink-dim);
 	font-size: 9.5px;
-	transition: color 0.15s, background 0.15s, transform 0.1s;
+	transition: color var(--duration-fast), background var(--duration-fast), transform var(--duration-instant);
 }
 .wb-rail-btn svg { width: 18px; height: 18px; }
 .wb-rail-btn:hover { color: var(--wb-ink); background: var(--wb-panel-2); }
@@ -191,7 +191,7 @@ button { cursor: pointer; }
 	background: var(--wb-field);
 	color: var(--wb-ink);
 	font-size: 12px;
-	transition: border-color 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 .wb-select:hover, .wb-input:hover { border-color: var(--wb-ink-faint); }
 .wb-select:focus, .wb-input:focus { border-color: var(--wb-accent-hi); outline: none; box-shadow: 0 0 0 2px var(--wb-accent-soft); }
@@ -207,7 +207,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	border-radius: var(--wb-radius);
 	background: var(--wb-field);
 	color: var(--wb-ink-dim);
-	transition: color 0.15s, border-color 0.15s, background 0.15s;
+	transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 }
 .wb-icon-btn svg { width: 14px; height: 14px; }
 .wb-icon-btn:hover { color: var(--wb-ink); border-color: var(--wb-ink-faint); }
@@ -246,7 +246,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	border-radius: 4px;
 	background: transparent;
 	color: var(--wb-ink-faint);
-	transition: transform 0.2s var(--wb-ease), color 0.15s, background 0.15s;
+	transition: transform var(--duration-base) var(--wb-ease), color var(--duration-fast), background var(--duration-fast);
 }
 .wb-chev:hover { color: var(--wb-ink); background: var(--wb-panel-2); }
 .wb-node[data-collapsed='true'] .wb-chev { transform: rotate(180deg); }
@@ -260,7 +260,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	inset: 0;
 	border-radius: 999px;
 	background: var(--wb-line);
-	transition: background 0.2s;
+	transition: background var(--duration-base);
 	pointer-events: none;
 }
 .wb-switch span::after {
@@ -272,7 +272,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	height: 11px;
 	border-radius: 50%;
 	background: #fff;
-	transition: transform 0.2s var(--wb-ease);
+	transition: transform var(--duration-base) var(--wb-ease);
 }
 .wb-switch input:checked + span { background: var(--wb-accent-hi); }
 .wb-switch input:checked + span::after { transform: translateX(11px); }
@@ -290,7 +290,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	color: var(--wb-ink-dim);
 	text-align: center;
 	overflow: hidden;
-	transition: border-color 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 .wb-drop:hover, .wb-drop.is-over { border-color: var(--wb-accent-hi); background: var(--wb-accent-soft); }
 .wb-drop img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 8px; }
@@ -326,7 +326,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	font-weight: 600;
 	font-size: 13px;
 	overflow: hidden;
-	transition: background 0.15s, transform 0.1s, opacity 0.15s;
+	transition: background var(--duration-fast), transform var(--duration-instant), opacity var(--duration-fast);
 }
 .wb-primary:hover { background: var(--wb-accent-hi); }
 .wb-primary:active { transform: translateY(1px); }
@@ -339,7 +339,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	height: 2px;
 	width: 0;
 	background: var(--wb-accent-hi);
-	transition: width 0.4s var(--wb-ease);
+	transition: width var(--duration-slow) var(--wb-ease);
 }
 .wb-run-log { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 11px; color: var(--wb-ink-dim); }
 .wb-run-log li { display: flex; gap: 6px; align-items: center; }
@@ -375,7 +375,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	color: var(--wb-ink);
 	font-size: 11.5px;
 	white-space: nowrap;
-	transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.1s;
+	transition: border-color var(--duration-fast), background var(--duration-fast), color var(--duration-fast), transform var(--duration-instant);
 }
 .wb-tool svg { width: 13px; height: 13px; color: var(--wb-ink-dim); }
 .wb-tool:hover:not(:disabled) { border-color: var(--wb-ink-faint); background: var(--wb-panel-2); }
@@ -400,7 +400,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	opacity: 0;
 	transform: translateY(-4px);
 	pointer-events: none;
-	transition: opacity 0.14s, transform 0.14s var(--wb-ease);
+	transition: opacity var(--duration-fast), transform var(--duration-fast) var(--wb-ease);
 }
 .wb-menu[data-open='true'] { opacity: 1; transform: none; pointer-events: auto; }
 .wb-menu button {
@@ -434,7 +434,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	opacity: 0;
 	transform: translateY(-4px);
 	pointer-events: none;
-	transition: opacity 0.14s, transform 0.14s var(--wb-ease);
+	transition: opacity var(--duration-fast), transform var(--duration-fast) var(--wb-ease);
 }
 .wb-popover[data-open='true'] { opacity: 1; transform: none; pointer-events: auto; }
 .wb-popover input[type='range'] { width: 100%; accent-color: var(--wb-accent-hi); }
@@ -472,7 +472,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	border-radius: 6px;
 	background: transparent;
 	color: var(--wb-ink-dim);
-	transition: color 0.15s, background 0.15s;
+	transition: color var(--duration-fast), background var(--duration-fast);
 }
 .wb-strip-btn svg { width: 15px; height: 15px; }
 .wb-strip-btn:hover { color: var(--wb-ink); background: var(--wb-panel-2); }
@@ -524,7 +524,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	display: grid;
 	place-items: center;
 	pointer-events: none;
-	transition: opacity 0.3s;
+	transition: opacity var(--duration-base);
 }
 .wb-empty[hidden] { display: none; }
 .wb-empty-card { max-width: 340px; padding: 0 20px; text-align: center; color: var(--wb-ink-dim); }
@@ -587,7 +587,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	font-weight: 600;
 	pointer-events: none;
 	opacity: 0;
-	transition: opacity 0.15s;
+	transition: opacity var(--duration-fast);
 }
 .wb-dropveil[data-on='true'] { opacity: 1; }
 
@@ -608,7 +608,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity 0.15s, transform 0.15s var(--wb-ease);
+	transition: opacity var(--duration-fast), transform var(--duration-fast) var(--wb-ease);
 }
 .wb-history[data-open='true'] { opacity: 1; transform: translate(0, -50%); pointer-events: auto; }
 .wb-history header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--wb-line-soft); }
@@ -625,7 +625,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	border-radius: 6px;
 	background: transparent;
 	text-align: left;
-	transition: background 0.15s;
+	transition: background var(--duration-fast);
 }
 .wb-history li button:hover, .wb-history li button:focus-visible { background: var(--wb-accent-soft); outline: none; }
 .wb-history li img { width: 40px; height: 40px; border-radius: 5px; object-fit: cover; background: var(--wb-field); }
@@ -716,7 +716,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	font-weight: 500;
 	text-decoration: none;
 	color: var(--wb-ink);
-	transition: border-color 0.15s, background 0.15s, transform 0.1s;
+	transition: border-color var(--duration-fast), background var(--duration-fast), transform var(--duration-instant);
 }
 .wb-btn:hover { border-color: var(--wb-ink-faint); }
 .wb-btn:active { transform: translateY(1px); }
@@ -736,7 +736,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	border-radius: 7px;
 	background: transparent;
 	text-align: left;
-	transition: background 0.15s, border-color 0.15s;
+	transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 .wb-flow-item:hover { background: var(--wb-panel-2); }
 .wb-flow-item[aria-current='true'] { border-color: var(--wb-accent-hi); background: var(--wb-accent-soft); }
@@ -769,7 +769,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	background: var(--wb-panel-2);
 	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 	user-select: none;
-	transition: border-color 0.15s, box-shadow 0.15s;
+	transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
 .wb-gnode:hover { border-color: var(--wb-ink-faint); }
 .wb-gnode[data-selected='true'] { border-color: var(--wb-accent-hi); box-shadow: 0 0 0 3px var(--wb-accent-soft), 0 6px 18px rgba(0, 0, 0, 0.3); }
@@ -792,7 +792,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	border: 2px solid var(--wb-panel-2);
 	border-radius: 50%;
 	cursor: crosshair;
-	transition: transform 0.12s;
+	transition: transform var(--duration-fast);
 }
 .wb-gnode .port.in .dot { left: -7px; background: var(--wb-io-in); }
 .wb-gnode .port.out .dot { right: -7px; background: var(--wb-io-out); }
@@ -811,7 +811,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 	border: 1px solid var(--wb-line);
 	border-radius: 10px;
 	background: var(--wb-panel-2);
-	transition: border-color 0.15s, transform 0.15s var(--wb-ease);
+	transition: border-color var(--duration-fast), transform var(--duration-fast) var(--wb-ease);
 }
 .wb-ext:hover { border-color: var(--wb-ink-faint); transform: translateY(-1px); }
 .wb-ext header { display: flex; align-items: flex-start; gap: 10px; }
@@ -873,7 +873,7 @@ textarea.wb-input { height: auto; min-height: 64px; padding: 7px 8px; resize: ve
 .wb-flow-warning p { margin: 0; color: var(--wb-ink-dim); line-height: 1.45; }
 .wb-run-log li[data-state='pending'] { opacity: 0.6; }
 .wb-run-log li[data-state='skipped'] { opacity: 0.45; text-decoration: line-through; }
-.wb-toast[data-leaving='true'] { opacity: 0; transform: translateY(6px); transition: opacity 0.2s, transform 0.2s; }
+.wb-toast[data-leaving='true'] { opacity: 0; transform: translateY(6px); transition: opacity var(--duration-base), transform var(--duration-base); }
 .wb-toast .wb-toast-x { display: inline-grid; place-items: center; width: 18px; height: 18px; color: var(--wb-ink-faint); border-radius: 4px; }
 .wb-toast .wb-toast-x:hover { color: var(--wb-ink); background: var(--wb-line-soft); text-decoration: none; }
 .wb-toast .wb-toast-x svg { width: 11px; height: 11px; }

@@ -158,9 +158,9 @@ textarea.tm-input { min-height: 74px; resize: vertical; }
 .tm-member { position: relative; display: grid; grid-template-rows: auto 1fr; background: linear-gradient(180deg, color-mix(in srgb, var(--role) 14%, var(--tm-panel)), var(--tm-panel) 62%); border: 1px solid var(--tm-line); border-top: 3px solid var(--role); border-radius: 16px; overflow: hidden; min-width: 0; transition: border-color var(--tm-fast), box-shadow var(--tm-base); }
 .tm-member.pulse { box-shadow: 0 0 0 2px var(--role), 0 0 28px -6px var(--role); }
 .tm-stage { position: relative; aspect-ratio: 3 / 4; display: grid; place-items: center; }
-.tm-stage agent-3d { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 600ms ease; }
+.tm-stage agent-3d { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity var(--duration-slow) var(--ease-standard); }
 .tm-stage agent-3d.ready { opacity: 1; }
-.tm-stage-img { width: 70%; aspect-ratio: 1; object-fit: cover; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--role) 50%, transparent); transition: opacity 400ms ease; }
+.tm-stage-img { width: 70%; aspect-ratio: 1; object-fit: cover; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--role) 50%, transparent); transition: opacity var(--duration-slow) var(--ease-standard); }
 .tm-stage-img.gone { opacity: 0; }
 .tm-stage-initial { width: 64%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; font-size: 40px; font-weight: 900; color: var(--role); background: color-mix(in srgb, var(--role) 12%, transparent); }
 .tm-member-body { padding: 10px 12px 12px; display: grid; gap: 6px; align-content: start; min-width: 0; }

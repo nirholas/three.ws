@@ -35,7 +35,7 @@
 	color: var(--ink); background: var(--surface-2);
 	border: 1px solid var(--stroke-strong); border-radius: var(--radius-control, 8px);
 	cursor: pointer; text-decoration: none; white-space: nowrap;
-	transition: border-color var(--duration-fast, .15s), background var(--duration-fast, .15s), transform .08s, opacity .15s;
+	transition: border-color var(--duration-fast, var(--duration-fast)), background var(--duration-fast, var(--duration-fast)), transform var(--duration-instant), opacity var(--duration-fast);
 }
 .ac-btn:hover { border-color: var(--ink-dim); background: var(--surface-3); }
 .ac-btn:active { transform: translateY(1px); }
@@ -57,7 +57,7 @@
 	margin-left: 8px; padding: 1px 8px;
 	font: var(--text-2xs, 11px) var(--font-body); color: var(--ink-dim);
 	background: none; border: 1px solid var(--stroke-strong); border-radius: 6px;
-	cursor: pointer; transition: color .15s, border-color .15s; vertical-align: middle;
+	cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast); vertical-align: middle;
 }
 .ac-copy:hover { color: var(--ink); border-color: var(--ink-dim); }
 
@@ -109,7 +109,7 @@
 .ac-inv-memo { font-size: var(--text-md); color: var(--ink); line-height: 1.5; overflow-wrap: anywhere; }
 .ac-inv-desc { font-size: var(--text-sm); color: var(--ink-dim); line-height: 1.6; margin-top: var(--space-sm); white-space: pre-wrap; overflow-wrap: anywhere; }
 .ac-progress { height: 6px; border-radius: 999px; background: var(--surface-3); overflow: hidden; margin-top: var(--space-md); }
-.ac-progress > span { display: block; height: 100%; background: var(--warn); border-radius: inherit; transition: width .4s var(--ease-out, ease); }
+.ac-progress > span { display: block; height: 100%; background: var(--warn); border-radius: inherit; transition: width var(--duration-slow) var(--ease-out, var(--ease-standard)); }
 .ac-progress.is-paid > span { background: var(--success); }
 .ac-progress-label { display: flex; justify-content: space-between; gap: 10px; font-size: var(--text-xs); color: var(--ink-dim); margin-top: 6px; font-variant-numeric: tabular-nums; }
 
@@ -165,7 +165,7 @@
 	display: inline-flex; align-items: center; gap: 6px; padding: 10px 14px;
 	font: var(--weight-medium) var(--text-sm) var(--font-body); color: var(--ink-dim);
 	background: none; border: 0; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap;
-	transition: color .15s, border-color .15s;
+	transition: color var(--duration-fast), border-color var(--duration-fast);
 }
 .ac-tab:hover { color: var(--ink); }
 .ac-tab[aria-selected="true"] { color: var(--ink-bright); border-bottom-color: var(--accent); }
@@ -185,7 +185,7 @@
 .ac-row {
 	display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; align-items: center;
 	background: var(--surface-1); border: 1px solid var(--stroke-strong); border-radius: var(--radius-md, 10px);
-	padding: 14px 16px; transition: border-color .15s, box-shadow .2s;
+	padding: 14px 16px; transition: border-color var(--duration-fast), box-shadow var(--duration-base);
 	animation: ac-enter .2s var(--ease-out, ease) both;
 }
 .ac-row:hover { border-color: var(--ink-faint); }
@@ -214,7 +214,7 @@
 .ac-field input, .ac-field select, .ac-field textarea {
 	width: 100%; font: var(--text-sm) var(--font-body); color: var(--ink);
 	background: var(--surface-2); border: 1px solid var(--stroke-strong); border-radius: 8px;
-	padding: 8px 10px; min-height: 38px; transition: border-color .15s;
+	padding: 8px 10px; min-height: 38px; transition: border-color var(--duration-fast);
 }
 .ac-field textarea { min-height: 84px; resize: vertical; line-height: 1.5; }
 .ac-field input:hover, .ac-field select:hover, .ac-field textarea:hover { border-color: var(--ink-faint); }
