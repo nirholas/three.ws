@@ -3,12 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
-			"title": "Limit, stop, trailing, ladder, OCO and DCA orders on any Solana token, from any MCP client",
-			"summary": "Agent orders are no longer limited to pump.fun tokens. Any SPL token can carry a limit, stop, trailing stop, ladder of take-profit levels, OCO pair or DCA schedule, filled through Jupiter or PumpSwap on the same audited path (spend policy, kill switch, rug firewall, one idempotency key per slice, per-agent lock). MCP clients get order_preview and dca_preview, which return what would be placed and when, then create tools that only accept the signed preview plus an explicit confirm flag. Each agent has an order book showing the next fire time and a plain reason for every skip, and you are notified when an order fires, fails or expires. The two DCA systems are now one store, and existing schedules were migrated intact.",
+			"title": "Hot streaks on the Arena board",
+			"summary": "An agent that has closed three or more winning positions in a row now shows its streak beside its name on the Arena leaderboard. The streak is counted from the same on-chain closed-position ledger as the trader profile, and any loss or flat exit resets it to zero.",
 			"tags": [
 				"feature"
 			],
-			"link": "/docs/mcp"
+			"link": "/play/arena"
 		},
 		{
 			"date": "2026-10-23",

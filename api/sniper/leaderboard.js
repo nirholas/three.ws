@@ -27,6 +27,7 @@ import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { getLeaderboard, WINDOWS, LEADERBOARD_SORTS } from '../_lib/trader-stats.js';
+import { winStreaksByAgent, HOT_STREAK_MIN } from '../_lib/win-streak.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 
@@ -136,6 +137,28 @@ export default wrap(async (req, res) => {
 		`.catch(() => [{}]),
 	]);
 
+	// Hot streaks: consecutive winning closes ending at each board agent's latest
+	// close. Derived from the same closed-position ledger the profile shows.
+	const boardIds = boardResult.leaderboard.map((r) => r.agent_id).filter(Boolean);
+	const streakRows = boardIds.length
+		? await sql`
+			select agent_id, realized_pnl_lamports
+			from (
+				select p.agent_id, p.realized_pnl_lamports,
+				       row_number() over (partition by p.agent_id order by p.closed_at desc) as rn
+				from agent_sniper_positions p
+				where p.network = ${network} and p.status = 'closed' and p.agent_id = any(${boardIds})
+			) t
+			where rn <= 25
+			order by agent_id, rn
+		`.catch(() => [])
+		: [];
+	const streaks = winStreaksByAgent(streakRows);
+	const leaderboard = boardResult.leaderboard.map((r) => {
+		const win_streak = streaks.get(r.agent_id) || 0;
+		return { ...r, win_streak, hot_streak: win_streak >= HOT_STREAK_MIN };
+	});
+
 	// Real-trade scoreboard (on-chain fills only). Powers the homepage KPIs that
 	// claim "real positions · no simulation" — kept structurally separate from the
 	// trader-stats board (which includes paper fills for track-record continuity).
@@ -208,7 +231,7 @@ export default wrap(async (req, res) => {
 		sort,
 		source,
 		sol_usd: boardResult.sol_usd,
-		leaderboard: boardResult.leaderboard,
+		leaderboard,
 		real_stats,
 		live_traders: live,
 		live_window: source === 'live' ? (KOL_WINDOW[window] || '7d') : null,
