@@ -114,7 +114,7 @@ body {
 }
 .rr-btn--primary {
 	background: var(--rr-bright);
-	color: #0a0a0a;
+	color: var(--bg-0, #0a0a0a);
 	border-color: var(--rr-bright);
 }
 .rr-btn--primary:hover {
@@ -190,7 +190,7 @@ body {
 	background: var(--rr-card-2);
 }
 .rr-chip.is-active {
-	color: #0a0a0a;
+	color: var(--bg-0, #0a0a0a);
 	background: var(--rr-bright);
 	border-color: var(--rr-bright);
 }

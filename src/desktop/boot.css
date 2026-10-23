@@ -181,7 +181,7 @@
 	color: #c4b5fd;
 }
 .os-boot-log li[data-state='fail'] b {
-	color: #f87171;
+	color: var(--danger, #f87171);
 }
 .os-boot-log li[data-state='running'] b {
 	color: #fff;

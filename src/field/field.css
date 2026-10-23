@@ -13,8 +13,8 @@
 	--fd-road: rgba(196, 181, 253, 0.08);
 	--fd-ring: rgba(196, 181, 253, 0.07);
 	--fd-accent: #b8a6ff;
-	--fd-up: #4ade80;
-	--fd-down: #f87171;
+	--fd-up: var(--success, #4ade80);
+	--fd-down: var(--danger, #f87171);
 	--fd-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.7);
 }
 :root[data-theme='light'] {
@@ -794,7 +794,7 @@ body {
 	animation: fd-live 2.4s ease-out infinite;
 }
 .fd.is-degraded .fd-live {
-	background: #fbbf24;
+	background: var(--warn, #fbbf24);
 	animation: none;
 }
 @keyframes fd-live {

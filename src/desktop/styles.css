@@ -413,7 +413,7 @@
 	border: 0;
 	background: #c0c0c0;
 	box-shadow:
-		inset -1px -1px #0a0a0a,
+		inset -1px -1px var(--bg-0, #0a0a0a),
 		inset 1px 1px #fff;
 }
 .style-prev[data-prev='classic'] .sp-bar {
@@ -428,7 +428,7 @@
 	border-top: 1px solid #fff;
 	background:
 		linear-gradient(#c0c0c0, #c0c0c0) 3px 2px / 18px 8px no-repeat,
-		linear-gradient(#0a0a0a, #0a0a0a) 4px 3px / 18px 8px no-repeat,
+		linear-gradient(var(--bg-0, #0a0a0a), var(--bg-0, #0a0a0a)) 4px 3px / 18px 8px no-repeat,
 		linear-gradient(#a8a8a8, #a8a8a8) 26px 2px / 34px 8px no-repeat,
 		#c0c0c0;
 }
@@ -699,8 +699,8 @@
  * ================================================================= */
 .os[data-style='classic'] {
 	--c-face: #c0c0c0;
-	--c-bevel-out: inset -1px -1px #0a0a0a, inset 1px 1px #fff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
-	--c-bevel-in: inset -1px -1px #fff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px #808080;
+	--c-bevel-out: inset -1px -1px var(--bg-0, #0a0a0a), inset 1px 1px #fff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+	--c-bevel-in: inset -1px -1px #fff, inset 1px 1px var(--bg-0, #0a0a0a), inset -2px -2px #dfdfdf, inset 2px 2px #808080;
 }
 .os[data-style='classic'] :is(.os-task, .os-pop, .os-peek, .snap-fly, .win-bar, .os-toast) {
 	--text: #000;

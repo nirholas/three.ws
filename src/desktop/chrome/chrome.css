@@ -987,7 +987,7 @@
 }
 .run-body .run-err {
 	margin: 10px 0 0;
-	color: #f87171;
+	color: var(--danger, #f87171);
 }
 .about-hero {
 	display: flex;

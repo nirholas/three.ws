@@ -26,6 +26,12 @@
 	--col-good: #5be45b;
 	--col-bad: #d44343;
 
+	/* The desktop is its own fixed-palette world: it pins the two site base
+	 * surfaces here so bevels and light-theme text resolve to the same values
+	 * whichever theme the page around it runs. */
+	--bg-0: #0a0a0a;
+	--bg-1: #1a1a1a;
+
 	/* Semantic surfaces (dark) */
 	--bg: #000000;
 	--bg50: #00000065;
@@ -35,7 +41,7 @@
 	--hover: #2a2a2a;
 	--hover-half: #2a2a2a60;
 	--hover-b: #333333;
-	--unfoc: #1a1a1a;
+	--unfoc: var(--bg-1);
 	--msg: #333333;
 	--hr: #ffffff20;
 	--bd: #333333;
@@ -108,7 +114,7 @@
 	--col-bg2: #ececec;
 	--col-bg3: #e0e0e0;
 	--col-bgh: #d0d0d0;
-	--col-txt1: #1a1a1a;
+	--col-txt1: var(--bg-1);
 	--col-txt2: #444444;
 	--col-txth: #000000;
 
