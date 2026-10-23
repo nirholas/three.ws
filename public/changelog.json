@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-23T22:44:01.591Z",
+	"generated_at": "2026-10-23T22:57:53.772Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -411,6 +411,16 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Wallet and payment screens now work with a keyboard and a screen reader",
+			"summary": "Addresses read as short text on screen and as the full value in groups of four to a screen reader, from one shared formatter that replaced more than a hundred copies. The connect picker, payment modal, vault dialogs and add-funds sheet trap focus, make the page behind inert, close on Escape and return focus to the button that opened them. Payment steps now say completed, current or failed in text, not only by color, and low-contrast labels in the payment modal and the vaults page were fixed. /wallet, /agent-wallet, /claim-wallet and /vaults joined the accessibility gate.",
+			"link": "/wallet",
+			"tags": [
+				"improvement"
 			]
 		},
 		{

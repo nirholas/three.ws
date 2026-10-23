@@ -327,6 +327,14 @@
 			<description>POST /api/skills/import now accepts idl_url or program_id. Each account type becomes a read tool that decodes it by address, each instruction a preview tool that builds the unsigned instruction with a plain summary, and a destructive send tool that hands it to the wallet confirm flow. A risk panel flags token movement, SOL spend, account closure and authority changes. Nothing the skill generates can sign.</description>
 		</item>
 		<item>
+			<title>Wallet and payment screens now work with a keyboard and a screen reader</title>
+			<link>https://three.ws/wallet</link>
+			<guid isPermaLink="false">2026-10-23:Wallet and payment screens now work with a keyboard and a screen reader</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Addresses read as short text on screen and as the full value in groups of four to a screen reader, from one shared formatter that replaced more than a hundred copies. The connect picker, payment modal, vault dialogs and add-funds sheet trap focus, make the page behind inert, close on Escape and return focus to the button that opened them. Payment steps now say completed, current or failed in text, not only by color, and low-contrast labels in the payment modal and the vaults page were fixed. /wallet, /agent-wallet, /claim-wallet and /vaults joined the accessibility gate.</description>
+		</item>
+		<item>
 			<title>x402 pay-for-what-you-use on Solana (upto)</title>
 			<link>https://three.ws/docs/x402-upto</link>
 			<guid isPermaLink="false">2026-10-23:x402 pay-for-what-you-use on Solana (upto)</guid>

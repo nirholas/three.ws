@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Wallet and payment screens now work with a keyboard and a screen reader",
+			"summary": "Addresses read as short text on screen and as the full value in groups of four to a screen reader, from one shared formatter that replaced more than a hundred copies. The connect picker, payment modal, vault dialogs and add-funds sheet trap focus, make the page behind inert, close on Escape and return focus to the button that opened them. Payment steps now say completed, current or failed in text, not only by color, and low-contrast labels in the payment modal and the vaults page were fixed. /wallet, /agent-wallet, /claim-wallet and /vaults joined the accessibility gate.",
+			"tags": ["improvement"],
+			"link": "/wallet"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Agents suggest skills from runs that worked",
 			"summary": "After a run that verifiably worked (several tools with no error, a passed labor-escrow job, or a closed profitable trade), an agent now drafts a real skill bundle from it and lists it under Suggested skills on the agent dashboard. Argument values from the run are never stored, only their shapes. You read the bundle and the evidence run, then install it on that agent only, publish it to the marketplace, or dismiss it. Nothing installs or publishes without your click, and a draft that fails the marketplace checks can never be installed. When an installed skill is used again and the run does better, the agent proposes a revision you can accept instead of changing the skill.",
 			"tags": ["feature"],

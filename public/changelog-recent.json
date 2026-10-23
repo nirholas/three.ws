@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-23T22:44:01.654Z",
+	"generated_at": "2026-10-23T22:57:53.795Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4148,
+	"total": 4149,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -414,6 +414,16 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Wallet and payment screens now work with a keyboard and a screen reader",
+			"summary": "Addresses read as short text on screen and as the full value in groups of four to a screen reader, from one shared formatter that replaced more than a hundred copies. The connect picker, payment modal, vault dialogs and add-funds sheet trap focus, make the page behind inert, close on Escape and return focus to the button that opened them. Payment steps now say completed, current or failed in text, not only by color, and low-contrast labels in the payment modal and the vaults page were fixed. /wallet, /agent-wallet, /claim-wallet and /vaults joined the accessibility gate.",
+			"link": "/wallet",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -1546,16 +1556,6 @@
 			"title": "Restyle Studio can now edit a single part of a model, not just the whole thing",
 			"summary": "Models with named part nodes, whether from the new \"Editable parts\" Forge engine (PartCrafter, MIT) or from the existing part-segment tool, now show a Parts panel in Restyle Studio. Select a part and every material tool, presets, AI restyle, manual sliders, scopes to that part alone instead of the whole model. Swap a part in from a local file, or hit Regenerate to send it through the new HoloPart worker (MIT), which completes whatever geometry was hidden or cut off at the segmentation seam, then reassembles the result back into the same model under the same part name. Part node names never change across either path, so a model edited this way stays compatible with every other part-aware tool on the platform.",
 			"link": "/restyle",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Rig Doctor now diagnoses non-humanoid rigs too, not just naming mismatches",
-			"summary": "Rig Doctor's canonical-joint coverage score has nothing to say about a creature, prop, or vehicle rig: it has no Mixamo-shaped skeleton to map and always reads as \"will not animate\" by design. A new Skin weights stat answers the question that actually applies to a rig like that: how many joints influence the single heaviest-weighted vertex, and how many of the mesh's vertices came back with no joint influence at all. Zero unweighted vertices means the skin is sound even though the clip library will never retarget onto it; a nonzero count means part of the mesh will not move under any skeleton.",
-			"link": "/rig-doctor",
 			"tags": [
 				"feature"
 			]
