@@ -181,6 +181,17 @@ Deep dives — every tool, argument, env var, and example:
 
 ---
 
+## Robinhood Chain tools
+
+Four read-only tools (`readOnlyHint: true`) expose Robinhood Crypto's chain (4663) through the same client as `/markets/robinhood`, with the RPC failover list in `api/_lib/robinhood.js`. Source: `api/_mcp/tools/robinhood.js`.
+
+| Tool | Returns |
+|---|---|
+| `robinhood_chain_stats` | Chain id, live block height, average block time, gas |
+| `robinhood_token_prices` | Live prices for chain tokens |
+| `robinhood_recent_launches` | Newest launches from The Odyssey factories (all venues with reputation and flags: `/api/v1/robinhood/launches`) |
+| `robinhood_wallet_holdings` | Token holdings for a wallet address |
+
 ## Trust grades
 
 Every server in the [MCP tools catalog](./mcp-tools.md) carries a 0-100 trust score and an A to F grade, so a visitor can tell a polished, documented, published server from a stub. `npm run build:mcp-catalog` computes them from facts this repository can check mechanically (`scripts/lib/mcp-trust.mjs`) and stores the grade with its full breakdown under `servers[].trust` in `public/mcp-catalog.json`. `/mcp-tools` shows the grade beside each server in the server table; hover or focus the badge for the breakdown, and click the Trust header to sort.

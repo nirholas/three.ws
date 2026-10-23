@@ -67,7 +67,7 @@ vi.mock('../../api/_lib/robinhood.js', () => ({
 	coingeckoCategory: async () => [
 		{ id: 'cash-cat', symbol: 'cashcat', name: 'CashCat', current_price: 0.177596, market_cap: 176098811, market_cap_rank: 1, total_volume: 5000000, price_change_percentage_24h_in_currency: 3.2, price_change_percentage_7d_in_currency: 10.1, sparkline_in_7d: { price: [0.1, 0.15, 0.17] } },
 	],
-	recentLaunches: async () => [{ launchpad: 'NOXA', type: 'instant', token: '0xtoken1234567890123456789012345678901234', deployer: '0xdeployer', block: 6880646, txHash: '0xtxhash', timestamp: '2026-07-11T10:44:33Z' }],
+	recentLaunches: async () => [{ launchpad: 'The Odyssey', type: 'bonding-curve', token: '0xtoken1234567890123456789012345678901234', deployer: '0xdeployer', block: 6880646, txHash: '0xtxhash', timestamp: '2026-07-11T10:44:33Z' }],
 	publicClient: () => ({ getBlockNumber: async () => 7700000n }),
 	BLOCKSCOUT_BASE: 'https://robinhoodchain.blockscout.com',
 	premiumPct: (dexUsd, navUsd) => {
@@ -262,12 +262,12 @@ describe('GET /api/v1/robinhood/launches', () => {
 		const { res, body } = await dispatch('../../api/v1/robinhood/launches.js', '/api/v1/robinhood/launches');
 		expect(res.statusCode).toBe(200);
 		expect(body.data.launches.length).toBe(2);
-		// Newest block first: the Pons launch leads, NOXA follows.
-		expect(body.data.launches.map((l) => l.launchpad)).toEqual(['Pons', 'NOXA']);
+		// Newest block first: the Pons launch leads, The Odyssey follows.
+		expect(body.data.launches.map((l) => l.launchpad)).toEqual(['Pons', 'The Odyssey']);
 		// A curve-stage coin has no DEX pair yet, so its on-chain name and symbol carry.
 		expect(body.data.launches[0].symbol).toBe('PROBE');
 		expect(body.data.launches[0].links.launchpad).toMatch(/^https:\/\/ponsfamily\.com\/launchpad\//);
-		expect(body.data.launchpads.map((l) => l.name)).toEqual(['Pons', 'NOXA', 'The Odyssey']);
+		expect(body.data.launchpads.map((l) => l.name)).toEqual(['Pons', 'The Odyssey', 'Other venues']);
 	});
 });
 
