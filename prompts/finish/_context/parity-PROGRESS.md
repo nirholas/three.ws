@@ -92,3 +92,9 @@ Cross-session handoff for the `parity-` orders ([parity-00-CONTEXT.md](parity-00
 - Shipped in `353a5a177`: `paidEndpoint` now records a failure after settlement (streaming handler throw, `siwx_record_failed`) as `failed_after_settle` and answers with `paid: true`, `retry_safe`, the settlement transaction, `retries_left` and a plain sentence; the same X-PAYMENT header re-runs the work with no second verify or settle (bounded by `X402_PAID_RETRY_MAX` and the retry window), a completed call still answers 409, an exhausted proof answers 409 `payment_retries_exhausted`. The helpers in `api/_lib/x402/spent-payments.js` and the migration existed from earlier commits but nothing in the wrapper called them; that wiring is the substance of this order. POST bodies now join the payment-identifier idempotency hash. `docs/mcp.md` has a Use cases section per guided prompt, guarded by `tests/mcp-use-cases-doc.test.js` (red run shown by renaming `pay_and_call()` in the doc). Docs: `docs/x402.md`, error table in `docs/api-reference.md`, changelog entry.
 - Verified: 13 tests in `tests/api/x402-spent-payments.test.js` (retry, replay 409, exhausted, siwx, POST body red/green), 179 x402/MCP test files green.
 - Not from this order: `npm run audit:docs` reports only `workers/cad-forge` (another lane's untracked directory) missing its README.
+
+## 2026-10-23: orders 919, 920, 921 (built, owner steps remain)
+
+- 919: `three-ws` launcher package committed in `2859eb153`; push, deploy and `npm publish` are owner-gated.
+- 920: external community skill sources committed in `dd69b9b4b`; owner approves the source list and sets `COMMUNITY_SKILL_SOURCES`.
+- 921: submission kit in `docs/awesome-solana-ai-submission.md`; PR #251 already open; second PR and mcp.so/Smithery await the owner.
