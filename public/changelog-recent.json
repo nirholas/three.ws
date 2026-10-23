@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-23T21:49:46.334Z",
+	"generated_at": "2026-10-23T21:54:53.583Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4120,
+	"total": 4123,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -52,6 +52,16 @@
 		{
 			"date": "2026-10-23",
 			"type": "update",
+			"title": "Agents can sign up to services: inbox codes and sign-in links",
+			"summary": "An agent's own address can now receive verification emails and hand back the one-time code or sign-in link. New inbox_list, inbox_read and inbox_wait_for_code tools read the code with a confidence score, only from services the owner lists under Code senders, only from authentic non-spam mail. Email bodies stay untrusted data and links are never fetched for the agent.",
+			"link": "/agent-mail",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
 			"title": "AR Studio source now lives in the monorepo",
 			"summary": "The 3d-ar-studio npm package and the /ar/studio page now run the same code: the package source moved into packages/ar-studio and the page imports its scene math, multi-anchor WebXR session, room client and lighting modules directly, so fixes land once instead of in two diverging copies.",
 			"link": "/ar/studio",
@@ -63,11 +73,32 @@
 		{
 			"date": "2026-10-23",
 			"type": "update",
+			"title": "Chain turnover on /chains",
+			"summary": "The chains leaderboard now has a sortable Turnover column (24h DEX volume divided by TVL) that shows which chains have capital actively trading rather than parked. Chains with no TVL or no reported volume show n/a.",
+			"link": "/chains",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
 			"title": "Copy any model as a GitHub README 3D block",
 			"summary": "Forge results, avatar pages, the avatar dashboard and model pages now have a Copy as GitHub README 3D action. It simplifies the model to a size GitHub renders and puts a stl code fence on your clipboard that GitHub shows as an interactive 3D viewer in any README, issue or pull request. The same converter is a free API (POST /api/readme-3d) and has a live page at /readme-3d.",
 			"link": "/readme-3d",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Leaked-wallet rescue runbook with a dry run, and live Jito tip accounts",
+			"summary": "A new rescue script moves every token and the remaining SOL out of a compromised wallet in one atomic Jito bundle, paid for by a separate safe wallet, and its default dry run simulates the whole bundle and prints the plan without sending anything. The leak alarm now links the runbook. Jito tips also read the block engine's live tip-account list with a pinned fallback, instead of three hardcoded copies.",
+			"link": null,
+			"tags": [
+				"security",
+				"infra"
 			]
 		},
 		{
@@ -1529,36 +1560,6 @@
 			"title": "Docs · Event Markets",
 			"summary": "Free-to-play prediction markets over three.ws events: how markets open, how they resolve from our own data with stored evidence, and how points are scored.",
 			"link": "/docs/event-markets",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Docs · Funded launch intents",
-			"summary": "Launch a coin from a priced quote paid by the agent wallet: quote, paid, submitted, confirmed, indexed. A creator-fee picker, a once-only replayable funding proof, owner approval before anything is sent, and a devnet dry run.",
-			"link": "/docs/launch-intents",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Docs · GitHub growth kit",
-			"summary": "The discovery layer every public repository carries: star and share links, AGENTS.md and llms.txt for AI agents, community health files, tuned settings, and the profile catalog that lists every repo.",
-			"link": "/docs/github-growth",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-10",
-			"type": "launch",
-			"title": "Docs · Grok Bot recipes",
-			"summary": "Six Grok Bot recipes run against production, not imagined: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief. Every output in the doc came from a real run.",
-			"link": "/docs/tutorials/grok-bot-recipes",
 			"tags": [
 				"launch"
 			]

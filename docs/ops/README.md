@@ -41,6 +41,7 @@ Start with [gcp-production.md](gcp-production.md); it is the complete operationa
 | [nvidia-inception-response-2026-09-14.md](nvidia-inception-response-2026-09-14.md) | Private correspondence record and owner-action runbook for NVIDIA's catalog, co-marketing, technical-resource, and invite-only GTC Pavilion reply. |
 | [wallet-key-migration.md](wallet-key-migration.md) | Incident record: stranded pool-agent wallets after the WALLET_ENCRYPTION_KEY migration. Also the standing runbook for where production's credentials live in Secret Manager, how to publish a new version, and the owner-gated master-wallet rotation. |
 | [stranded-wallets.md](stranded-wallets.md) | The standing owner decision on custodial wallets sealed by that rotation: measured list, why recovery is impossible, what crediting or writing off the customer balances costs, and the commands for each. |
+| [wallet-rescue.md](wallet-rescue.md) | Runbook for a leaked wallet key: dry-run and execute the atomic Jito rescue (`scripts/rescue-wallet.mjs`), plus how Jito tip accounts are sourced. Linked from the wallets-leak-scan alarm. |
 | [forge-multiview-migration-handoff.md](forge-multiview-migration-handoff.md) | Historical hand-off for the forge multi-view migrations (June 2026); superseded by gcp-production.md. |
 | [examples-repo-export.md](examples-repo-export.md) | How the public `three-ws/examples` satellite repo is assembled and published from this monorepo. |
 

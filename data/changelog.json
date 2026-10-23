@@ -3,12 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
-			"title": "Agents can sign up to services: inbox codes and sign-in links",
-			"summary": "An agent's own address can now receive verification emails and hand back the one-time code or sign-in link. New inbox_list, inbox_read and inbox_wait_for_code tools read the code with a confidence score, only from services the owner lists under Code senders, only from authentic non-spam mail. Email bodies stay untrusted data and links are never fetched for the agent.",
+			"title": "Leaked-wallet rescue runbook with a dry run, and live Jito tip accounts",
+			"summary": "A new rescue script moves every token and the remaining SOL out of a compromised wallet in one atomic Jito bundle, paid for by a separate safe wallet, and its default dry run simulates the whole bundle and prints the plan without sending anything. The leak alarm now links the runbook. Jito tips also read the block engine's live tip-account list with a pinned fallback, instead of three hardcoded copies.",
 			"tags": [
-				"feature"
-			],
-			"link": "/agent-mail"
+				"security",
+				"infra"
+			]
 		},
 		{
 			"date": "2026-10-23",

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-23T21:53:33.319Z",
+	"generated_at": "2026-10-23T21:54:53.509Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -85,6 +85,17 @@
 			"link": "/readme-3d",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Leaked-wallet rescue runbook with a dry run, and live Jito tip accounts",
+			"summary": "A new rescue script moves every token and the remaining SOL out of a compromised wallet in one atomic Jito bundle, paid for by a separate safe wallet, and its default dry run simulates the whole bundle and prints the plan without sending anything. The leak alarm now links the runbook. Jito tips also read the block engine's live tip-account list with a pinned fallback, instead of three hardcoded copies.",
+			"link": null,
+			"tags": [
+				"security",
+				"infra"
 			]
 		},
 		{

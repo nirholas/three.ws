@@ -27,6 +27,7 @@ import { runTripwire, lastActivityMs } from '../_lib/financial-tripwire.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
 const SIG_LIMIT = 100;
+const RESCUE_RUNBOOK = 'https://github.com/nirholas/three.ws/blob/main/docs/ops/wallet-rescue.md';
 const CANONICAL_USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
 // Same shape as x402-ring-leak-scan.js: a lease that doubles as the native
@@ -190,7 +191,7 @@ async function scanOne(conn, PublicKey, wallet, name, allowed, runId) {
 				isDelegation ? '🚨 Controlled-wallet delegation risk — SPL Approve' : '🚨 Controlled-wallet LEAK — funds left the platform set',
 				isDelegation
 					? `${name} (${wallet}) approved delegate ${ev.counterparty} to move ${amtLabel} in tx ${sig}. Revoke the approval and ROTATE ${envHint}. https://solscan.io/tx/${sig}`
-					: `${amtLabel} left ${name} (${wallet}) to ${ev.counterparty ?? 'an unknown address'} (${ev.reason}) in tx ${sig}. Treat the key as COMPROMISED: rotate ${envHint}, drain remaining funds to a controlled wallet, investigate. https://solscan.io/tx/${sig}`,
+					: `${amtLabel} left ${name} (${wallet}) to ${ev.counterparty ?? 'an unknown address'} (${ev.reason}) in tx ${sig}. Treat the key as COMPROMISED: rotate ${envHint}, drain remaining funds to a controlled wallet (dry-run the atomic rescue first: ${RESCUE_RUNBOOK}), investigate. https://solscan.io/tx/${sig}`,
 				{ signature: `wallet-leak:${sig}:${wallet}:${ev.reason}` },
 			);
 		}

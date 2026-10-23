@@ -71,6 +71,14 @@
 			<description>Forge results, avatar pages, the avatar dashboard and model pages now have a Copy as GitHub README 3D action. It simplifies the model to a size GitHub renders and puts a stl code fence on your clipboard that GitHub shows as an interactive 3D viewer in any README, issue or pull request. The same converter is a free API (POST /api/readme-3d) and has a live page at /readme-3d.</description>
 		</item>
 		<item>
+			<title>Leaked-wallet rescue runbook with a dry run, and live Jito tip accounts</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-23:Leaked-wallet rescue runbook with a dry run, and live Jito tip accounts</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>A new rescue script moves every token and the remaining SOL out of a compromised wallet in one atomic Jito bundle, paid for by a separate safe wallet, and its default dry run simulates the whole bundle and prints the plan without sending anything. The leak alarm now links the runbook. Jito tips also read the block engine's live tip-account list with a pinned fallback, instead of three hardcoded copies.</description>
+		</item>
+		<item>
 			<title>llms.txt links the docs as markdown, and install.md tells an agent how to connect</title>
 			<link>https://three.ws/docs/cli</link>
 			<guid isPermaLink="false">2026-10-23:llms.txt links the docs as markdown, and install.md tells an agent how to connect</guid>
