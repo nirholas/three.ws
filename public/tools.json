@@ -6333,7 +6333,7 @@
 			"category": "integrations",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this before run_macro to confirm what a spoken phrase would do.",
 			"page": "https://three.ws/mcp-tools/home-mcp/preview_macro"
 		},
 		{

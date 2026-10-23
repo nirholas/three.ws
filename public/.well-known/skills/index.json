@@ -83,7 +83,7 @@
 			"type": "skill-md",
 			"description": "Create a real three.ws AI agent (identity, 3D body, custodial Solana wallet, persona) from the command line and get its live public page. Use when you or the user want to create, build, deploy, launch, or set up an AI agent, a 3D agent, an on-chain agent, or \"my own agent\" on three.ws, attach a 3D body to an existing agent, edit an agent's persona or brain, or list the agents an account already owns. Returns the agent id, its Solana wallet address, and the public URL anyone can visit and chat with.",
 			"url": "https://three.ws/.well-known/agent-skills/create-a-three-ws-agent/SKILL.md",
-			"digest": "sha256:f1fcef3458d6056250abfd24746229816221233413fe8012b3347b8f9705136f",
+			"digest": "sha256:8aa823202c36af857b791bcc57c5b8220ef88c869e7426f0c1184172008a62cb",
 			"license": "MIT",
 			"category": "platform/agents"
 		},

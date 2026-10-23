@@ -13,7 +13,7 @@ export const def = {
 	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
 		'Resolve a phrase like "good night" to the scene or script this house would run, with the match confidence ' +
-		'and a reason, and run NOTHING. A phrase with no match returns match:null. Show the match to the person and, ' +
+		'and a reason, and run NOTHING. Use this before run_macro to confirm what a spoken phrase would do. A phrase with no match returns match:null. Show the match to the person and, ' +
 		'once they agree, call run_macro with the same phrase. A macro that would open the house is still refused ' +
 		'there, because confirming a guarded action takes a person on the hosted three.ws surface.',
 	inputSchema: {
