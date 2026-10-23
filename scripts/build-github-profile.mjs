@@ -139,7 +139,7 @@ export function buildProfile(allRepos, { includeGated = false, activityData = nu
 
 ## About
 
-I studied Marketing and Computer Science at the University of Washington and finished with a double bachelor's. I have done security research for Apple, AT&T, Microsoft, Google, the U.S. Department of Defense and the State of California. Before building open source full time I wrote full-stack software for some of the largest companies and brands, and I write and contribute at Entrepreneur Magazine.
+I studied Marketing and Computer Science at the University of Wisconsin and finished with a double bachelor's. I have done security research for Apple, AT&T, Microsoft, Google, the U.S. Department of Defense and the State of California. Before building open source full time I wrote full-stack software for some of the largest companies and brands, and I write and contribute at Entrepreneur Magazine.
 
 Today I ship in public: AI agents, MCP servers, 3D, on-chain tooling and the developer tools around them, all documented so a person or a coding agent can pick them up cold.
 
