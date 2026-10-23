@@ -13,8 +13,8 @@ backfill.
 This is not style advice. `avatars.thumbnail_key` is turned into a public URL by
 `publicUrl()` and handed to the browser inside an `<img>`. If the key points at an
 object that was never written, R2 answers `404` with a `text/plain` body. Chrome's
-Opaque Response Blocking then refuses the response — because a `text/plain` body is
-not a valid image — and logs:
+Opaque Response Blocking then refuses the response, because a `text/plain` body is
+not a valid image, and logs:
 
 ```
 GET https://<bucket>.r2.dev/thumb/<avatarId>.png net::ERR_BLOCKED_BY_ORB
@@ -22,8 +22,8 @@ GET https://<bucket>.r2.dev/thumb/<avatarId>.png net::ERR_BLOCKED_BY_ORB
 
 The homepage shipped exactly that bug: it *guessed* `thumb/<avatarId>.png` whenever
 the API honestly reported "no thumbnail", producing five blocked requests on every
-visit. The APIs were already correct — `/api/explore` returns `image: null` and
-`/api/marketplace` returns `thumbnail_url: null` — so the fix was to stop guessing
+visit. The APIs were already correct, `/api/explore` returns `image: null` and
+`/api/marketplace` returns `thumbnail_url: null`, so the fix was to stop guessing
 and render the designed initial-letter placeholder instead.
 
 **Never synthesise a thumbnail URL on the client.** If the API gives you `null`,
@@ -34,7 +34,7 @@ that avatar has no thumbnail; show a placeholder.
 The write paths guarantee that a key we store has an object behind it. The read
 paths have to survive the keys that predate that guarantee. `publicUrl()` passes an
 absolute value straight through, so a legacy `*_og.png` key becomes a URL pointing
-at an origin that holds no object — a 404 the browser blocks as ORB.
+at an origin that holds no object, a 404 the browser blocks as ORB.
 
 So every read path goes through one helper in
 [`api/_lib/r2.js`](../api/_lib/r2.js):
@@ -44,20 +44,26 @@ import { thumbnailUrl } from './_lib/r2.js';
 
 thumbnailUrl(null)                                  // → null
 thumbnailUrl('https://three.ws/avatars/x_og.png')   // → null  (legacy, always 404s)
-thumbnailUrl('thumb/abc.png')                       // → https://<cdn>/thumb/abc.png
-thumbnailUrl('thumb/abc.png')                       // → null  (S3_PUBLIC_DOMAIN unset)
+thumbnailUrl('thumb/abc.png')                       // → https://three.ws/cdn/thumb/abc.png
 ```
 
-That last case is why the helper is built on `publicUrlOrNull()` rather than bare
-`publicUrl()`: reading `env.S3_PUBLIC_DOMAIN` throws on a deployment without object
-storage, and a single un-renderable key must not take down a whole list response.
+The URL is a same-origin `/cdn/<key>` address (`cdnUrlOrNull()` in the same file),
+not the raw public `r2.dev` domain. The first-party proxy in `api/cdn-object.js`
+streams the object and fails over by itself when the public domain is blocked or
+storage is unhealthy, so every API consumer gets that for free. Upload-side code
+that needs the raw bucket address still uses `publicUrl()`.
+
+The helper is built on the `OrNull` variants rather than bare `cdnUrl()` or
+`publicUrl()` because building a URL can throw on a deployment without object
+storage configured, and a single un-renderable key must not take down a whole list
+response.
 It did: `/api/pulse` answered `502 pulse_failed` and `/api/search` answered
 `503 not_configured` for every caller until both were pointed at the read-path
 helper. Upload paths keep calling `publicUrl()`, where the throw is the correct
 signal that there is nowhere to put the bytes.
 
 Return `null` and let the surface render its designed placeholder. There were 43
-bare `publicUrl(<thumbnail key>)` call sites across 32 files — agent cards, the
+bare `publicUrl(<thumbnail key>)` call sites across 32 files, agent cards, the
 marketplace, explore, user profiles, leaderboards, and the image baked into on-chain
 token metadata. All now route through `thumbnailUrl()`, and
 [`tests/thumbnail-url-guard.test.js`](../tests/thumbnail-url-guard.test.js) walks
@@ -196,7 +202,7 @@ URL changes. The public bucket domain sends no `Cache-Control` header for these
 objects, so a fresh request sees the new bytes as soon as the overwrite lands,
 and a browser holding a heuristically cached copy revalidates against the ETag,
 which the overwrite changes. When the pose itself changes, bump
-`THUMBNAIL_POSE_VERSION` in `src/thumbnail-pose.js` and run the script again.
+`THUMBNAIL_POSE_VERSION` in `src/thumbnail-pose.js` and run the script again. Each re-render gets a two-minute budget; a model that never finishes is counted as failed and the pass moves on, so one stuck GLB cannot stall the run.
 
 ## The three crons
 
@@ -204,17 +210,19 @@ which the overwrite changes. When the pose itself changes, bump
 |---|---|---|
 | [`avatar-thumbnail-render`](../api/cron/avatar-thumbnail-render.js) | `*/10 * * * *` | Re-renders **stale** thumbnails for marketplace listings, driven by the x402 spend loop. |
 | [`avatar-thumbnail-backfill`](../api/cron/avatar-thumbnail-backfill.js) | `*/5 * * * *` | Fills in **absent** thumbnails: adopts forge previews, then renders whatever is left. |
-| [`agent-avatar-backfill`](../api/cron/agent-avatar-backfill.js) | `*/10 * * * *` | Assigns a 3D body to any **agent with no avatar** (`agent_identities.avatar_id IS NULL` or dangling): clones a random public, thumbnailed humanoid from the gallery into the agent owner's account (`api/_lib/agent-avatars.js`, reusing circulation's `cloneAvatarFor`). Pure DB work — the clone shares the source's `storage_key` and `thumbnail_key`, so the agent card has a preview immediately. Batch via `AGENT_AVATAR_BACKFILL_BATCH` (default 100). |
+| [`agent-avatar-backfill`](../api/cron/agent-avatar-backfill.js) | `*/10 * * * *` | Assigns a 3D body to any **agent with no avatar** (`agent_identities.avatar_id IS NULL` or dangling): clones a random public, thumbnailed humanoid from the gallery into the agent owner's account (`api/_lib/agent-avatars.js`, reusing circulation's `cloneAvatarFor`). Pure DB work: the clone shares the source's `storage_key` and `thumbnail_key`, so the agent card has a preview immediately. Batch via `AGENT_AVATAR_BACKFILL_BATCH` (default 100). |
 
 Together the last two make "every agent card shows a real preview" an invariant:
 one guarantees the agent has an avatar, the other guarantees the avatar has a
-thumbnail. Creation paths keep the gap from reopening — `createAvatar` accepts an
+thumbnail. Creation paths keep the gap from reopening: `createAvatar` accepts an
 internal `thumbnail_key` seed, auto-rig siblings inherit their source's thumbnail,
 and the forge/avatar seed crons adopt the forge preview at insert.
 
 They share the `thumb/<avatarId>.png` key space and each is a no-op on the other's
-rows. The backfill drains most-visible-first — `featured`, then public, then
-`view_count`, then newest — so the surfaces users actually look at heal first.
+rows. The backfill drains most-visible-first, `featured`, then public, then
+`view_count`, then newest, so the surfaces users actually look at heal first.
+
+Each cron handler is wrapped in `wrapCron()` with a 120 s budget (its `maxDuration`). A tick that overruns answers `503 { reason: "cron_timeout" }` and records a failed heartbeat instead of hanging until Cloud Run's 900 s kill, and the chromium render in `render-glb.js` bounds its own browser launch (30 s), page load (20 s) and screenshot (15 s).
 
 Tuning (env, on the Cloud Run service):
 
@@ -226,8 +234,8 @@ Tuning (env, on the Cloud Run service):
 
 ## Bounded retries
 
-A GLB that cannot be rendered — corrupt bytes, over the 25 MB cap, or a
-`storage_key` whose object has been deleted — would otherwise sit at the head of the
+A GLB that cannot be rendered, corrupt bytes, over the 25 MB cap, or a
+`storage_key` whose object has been deleted, would otherwise sit at the head of the
 priority order and burn every tick forever. The `avatar_thumbnail_backfill` table is
 a claim + retry ledger:
 
@@ -251,7 +259,7 @@ every remaining render fails in milliseconds with `Connection closed.`
 
 So the runner distinguishes the two:
 
-- **Model failure** (`glb fetch failed: …`, `render failed: …`) — charge the
+- **Model failure** (`glb fetch failed: …`, `render failed: …`): charge the
   attempt, record `last_error`, keep going.
 - **Infrastructure failure** (`Connection closed.`, `Target closed`, `Protocol
   error`, a `spawn EFAULT` / `ENOMEM` / `EAGAIN` launch refusal, or object storage
@@ -293,14 +301,14 @@ touches R2: that mode needs only `DATABASE_URL`, so the undo stays reachable whi
 object storage is exactly the thing that is broken.
 
 Running more than one bulk backfill at once is what causes the OOM in the first
-place. The claim ledger makes it *correct*, but not *free* — one runner at
+place. The claim ledger makes it *correct*, but not *free*, one runner at
 `--concurrency=2..3` beats three runners fighting for RAM.
 
 ## Operating the backfill
 
 [`scripts/backfill-avatar-thumbnails.mjs`](../scripts/backfill-avatar-thumbnails.mjs)
-is the bulk counterpart. It talks to Postgres and R2 directly — no admin token, no
-running server — and shares the same claim ledger, so it is safe to run while the
+is the bulk counterpart. It talks to Postgres and R2 directly, no admin token, no
+running server, and shares the same claim ledger, so it is safe to run while the
 cron is live.
 
 ```bash
@@ -357,8 +365,8 @@ that adoption HEAD-checks the preview object before persisting it.
 
 ## Related
 
-- [`tests/home-thumbnail-orb.test.js`](../tests/home-thumbnail-orb.test.js) — guards
+- [`tests/home-thumbnail-orb.test.js`](../tests/home-thumbnail-orb.test.js): guards
   the homepage against ever re-introducing a fabricated thumbnail URL.
-- [`api/_lib/r2.js`](../api/_lib/r2.js) — `publicUrl()`, `headObject()`, and
+- [`api/_lib/r2.js`](../api/_lib/r2.js): `publicUrl()`, `cdnUrl()`, `headObject()`, and
   `isLegacyOgThumbnailKey()`.
-- [STRUCTURE.md](../STRUCTURE.md) — where every product surface lives.
+- [STRUCTURE.md](../STRUCTURE.md): where every product surface lives.

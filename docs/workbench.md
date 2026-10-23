@@ -13,17 +13,21 @@ Page: [/workbench](https://three.ws/workbench)
 - **Top bar.** Brand, a live RAM meter (the JavaScript heap this tab is using, shown in Chromium browsers that expose it), links to Forge and these docs, and the theme toggle.
 - **Icon rail.** Generate, Workflows, Extensions, Settings. Each view has its own URL hash (`#workflows`, `#extensions`, `#settings`), so you can link straight to one.
 - **Generate panel.** A Workflow picker with an edit button, then one card per node in run order. Each card shows its input and output type (`image → mesh`), an on/off switch for optional nodes, a collapse chevron, and its settings. The purple **Generate 3D Model** button runs the workflow and turns into **Cancel** while it runs; underneath it a run log ticks through each step.
-- **Viewport.** A toolbar with Undo, Redo, Import, Export, Smooth, Decimate and Free memory; a floating vertical strip with view modes and toggles; a triangle and vertex count in the corner; and a History drawer of everything you have generated in this browser.
+- **Viewport.** A toolbar with Undo, Redo, Import, Export, Smooth, Decimate and Free memory; a floating vertical strip with view modes and toggles; a triangle and vertex count in the corner; a History drawer of everything you have generated in this browser; and a Batch drawer for queuing several prompts at once.
 
 ## Running a workflow
 
 1. Open [/workbench](https://three.ws/workbench).
 2. Drop a PNG, JPG or WebP (up to 8 MB) onto the Image node, click it to browse, or paste an image from the clipboard. The upload starts immediately so the run does not wait for it. No photo? Type a description in the prompt box instead; the server turns it into a reference image first.
-3. Adjust the Generate Mesh settings if you want to: **Engine** (Auto routes to the healthiest lane, or pin a specific one), **Quality** (Draft, Standard, or High for $THREE holders), **Resolution**, **Face budget**, **Texture** size, **Compression** (none, Meshopt or Draco) and **Seed**.
+3. Adjust the Generate Mesh settings if you want to: **Engine** (Auto routes to the healthiest lane, or pin a specific one), **Quality** (Draft, Standard, or High for $THREE holders), **Resolution**, **Face budget**, **Rest pose** (Auto, T-pose or A-pose; only lanes without a reference image can honor it, others report `pose_applied: false`), a **Width / Height / Depth** bounding-box fit in meters, **Texture** size, **Compression** (none, Meshopt or Draco) and **Seed**.
 4. Press **Generate 3D Model** or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>. The overlay shows the current step and elapsed time; the bar under the button fills as nodes finish.
 5. When the model lands it appears in the viewport, joins History with a thumbnail, and a toast offers a one-click GLB download.
 
 If a step fails, the toast says why and offers the fix that fits: switch the quality tier, retry on the lane the server suggests, add background removal for a photo it could not use, or try again after a rate limit.
+
+## Batch queue
+
+The **Batch** button in the tool strip (or <kbd>B</kbd>) opens a drawer where you type one idea per line, up to 8, and press **Submit**. Every item uses the Generate Mesh node's current engine, quality and controls and goes to `POST /api/forge-batch` as one group, with concurrency capped by your $THREE holder tier. The drawer polls the group (`GET /api/forge-batch?batch=<id>`) every 3 seconds, and a finished item opens straight into the viewport. It shares the corner with the History drawer, so opening one closes the other.
 
 ## Nodes
 
@@ -32,7 +36,7 @@ If a step fails, the toast says why and offers the fix that fits: switch the qua
 | Image | | image | Your browser | The photo, or a text prompt. Always first. |
 | Remove Background | image | image | GPU worker (`/api/forge-rembg`) | Cuts the subject out with BiRefNet, ISNet or U2-Net before reconstruction. Skipped automatically for a text prompt. |
 | Generate Mesh | image | mesh | Forge GPU lanes (`/api/forge`) | Reconstructs a textured GLB. Always present. |
-| Restyle Materials | mesh | mesh | `/api/material-studio` | Rewrites the PBR materials from a plain-language look such as "polished gold". |
+| Restyle Materials | mesh | mesh | `/api/material-studio` | Rewrites the PBR materials from a plain-language look such as "polished gold". The server refuses to save a restyle that changed topology, UVs, skeleton, skin or animation clips. |
 | Remesh | mesh | mesh | GPU worker (`/api/forge-remesh`) | Server-side retopology to triangles, quads or low poly at a target face count. |
 | Decimate | mesh | mesh | Your browser | Edge-collapse simplification that keeps UV seams and borders. |
 | Smooth | mesh | mesh | Your browser | Taubin smoothing, which does not shrink the mesh. |
@@ -72,6 +76,7 @@ Workflows are saved in this browser (`localStorage` key `wb:workflows`). Setting
 | <kbd>F</kbd> | Frame the model |
 | <kbd>G</kbd> / <kbd>E</kbd> / <kbd>T</kbd> | Grid, environment light, turntable |
 | <kbd>H</kbd> | History drawer |
+| <kbd>B</kbd> | Batch drawer |
 | <kbd>P</kbd> | Screenshot |
 | <kbd>Esc</kbd> | Close menus and the History drawer |
 

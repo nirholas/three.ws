@@ -38,7 +38,7 @@ pipeline, enforced before anything is sent:
 | A schedule anyone can read off the repository | The slot jitter is an HMAC under `X_CONTENT_SCHEDULE_SEED` (production only), and which post fills a slot is decided at the moment it opens. Unset, the jitter falls back to a public hash, and `plan` says its minutes are placeholders. |
 | A link that cannot be checked | Every link is resolved before a post can be approved, and again seconds before it is sent. npm answers 403 to any non-browser client, so a package page is resolved against `registry.npmjs.org`, which is the authoritative record of whether that package exists and answers any client. |
 | A broken post stalling the feed | A post that cannot go out (a link is down, a feature probe fails, X rejects the content) is held with the reason and a backoff, and the slot goes to the next-best post in the same run. |
-| Same format on repeat | Lane (audience) and pattern (post shape) rotate. A due item waits if it would repeat the previous lane or pattern too many times, unless it has been waiting a full day. |
+| Same format on repeat | Lane (audience), pattern (post shape) and feed format (video, GIF, still, text, Article) rotate. A due item waits if it would repeat the previous lane, pattern or format too many times, unless it has been waiting a full day. |
 | Retry double-posts | Every created media id, post id, and Article id is written to the ledger the moment X returns it. A crash mid-thread resumes at the next unposted reply. |
 
 ## What it can publish
@@ -65,6 +65,8 @@ X Articles require the posting account to be on X Premium.
 | `data/x-content/proofs/<id>.json` | What the filmed run did: each step, what it read, what the server answered, and the hash of the reel. |
 | `public/x-media/<id>/reel.mp4` | The reel. |
 | [api/_lib/x-content/outcomes.js](../api/_lib/x-content/outcomes.js) | The learning loop: measured results of the account's head posts, and the lifts learned from them. `app_settings` row `x_content_outcomes`. |
+| [api/_lib/x-content/price-impact.js](../api/_lib/x-content/price-impact.js) | What the $THREE price did 1, 4 and 24 hours after each post, from the pool's 15-minute candles. The learning loop stamps each outcome row with it. |
+| [api/_lib/x-content/formats.js](../api/_lib/x-content/formats.js) | Feed formats and heads: what leads a post in the timeline, and the checks that a derived head was cut from the reel on record. |
 | [api/_lib/x-content/approval.js](../api/_lib/x-content/approval.js) | The approval policy. |
 | [api/_lib/x-content/overlay.js](../api/_lib/x-content/overlay.js) | Signed bundles in object storage, laid over the image's files so a post can ship without a deploy. |
 | [scripts/x-outcomes.mjs](../scripts/x-outcomes.mjs), [scripts/x-bundle.mjs](../scripts/x-bundle.mjs) | `npm run x:outcomes` and `npm run x:bundle`. |
@@ -114,6 +116,7 @@ X Articles require the posting account to be on X Premium.
 ```
 
 - `status`: `draft` (may be unfinished), `review` (must pass `check`), `approved` (eligible to publish), `paused`, `posted`. Move an item to `approved` with `npm run x:content -- approve <slug>` (or `--status review` for a whole batch), which refuses anything a passing review record does not already cover. `npm run x:content -- advance` does the whole line: it films, reviews, and releases what the policy allows.
+- `head` is optional and only for a `post`. By default the reel leads the post. `{ "as": "card" | "gif" | "art" }` leads with a black headline card, a GIF cut from the reel, or AI key art instead, and the reel moves to a reply (`reelIn`, default the first reply). The head is built from the reel on record: `npm run x:content -- remix <slug>` rebuilds it, and a head cut from an older reel fails validation. A card or art headline may state only numbers a post in the item states.
 - `scenario` is the run that is filmed: see [Proof reels](#proof-reels) and [Writing a story](./x-story-authoring.md). An item with a scenario declares `{ "type": "scenario" }` in `probes`.
 - `covers` lists the backlog surfaces the story speaks for, by ledger key (`/galaxy`, `@three-ws/scene-mcp`, `workers/rig`), so the announcement plan stops offering them.
 - `tier`: 1 (flagship: partner news, $THREE utility, major launches), 2 (features with proof), or 3 (proof of work: short demos, stats, build notes). Each tier owns one slot a day.
@@ -125,7 +128,7 @@ X Articles require the posting account to be on X Premium.
 - `textFrom` is optional. When set, `check` fails if the inline text differs from that announcement-pack file, so the copy that was reviewed is the copy that ships.
 - An `article` item carries `"article": { "title", "body", "cover": { "path" } }`, and its optional `posts` quote the published Article. The body is copy like any post: its prose (headings, paragraphs, lists and quotes; code blocks and tables are literal samples and exempt) goes through the same language lint and claims ledger, so a number in the fourth section needs evidence like one in the title, its links are resolved at review, and its words are spell-checked. Replacing an inline image makes the review stale, the same as editing the Markdown. An Article in `review` or `approved` must also use the room X allows (owner, 2026-10-11): a title of 80 to 100 characters, 2,400 or more words in 8 or more sections, 3,000 or more characters of code and tables, 4 or more inline images, a "The partners behind ..." section covering every partner on `pages/partners.html`, and a "Try it" section. Drafts are exempt so work in progress can be saved.
 
-Cadence lives at the top of the file: `slots` (each `{ tier, at }` in UTC, a series slot `{ tier, series, at }`, or a kind slot `{ kind, at, everyDays, from }`, below), `windowMinutes` (how far a slot's opening may be jittered), `minimumMinutesApart`, `dailyCap`, and `quietHoursUtc` (a `["HH:MM", "HH:MM"]` pair, which may wrap midnight). `quality` sets the similarity limits, the maximum same-lane and same-pattern runs, and `maximumLength`: the longest a post may be, in weighted characters. @trythreews is on X Premium, so the queue sets it above the standard 280; a value under 280 is ignored. `approval` is the policy described below.
+Cadence lives at the top of the file: `slots` (each `{ tier, at }` in UTC, a series slot `{ tier, series, at }`, or a kind slot `{ kind, at, everyDays, from }`, below), `windowMinutes` (how far a slot's opening may be jittered), `minimumMinutesApart`, `dailyCap`, and `quietHoursUtc` (a `["HH:MM", "HH:MM"]` pair, which may wrap midnight). `quality` sets the similarity limits, the maximum same-lane, same-pattern and same-format runs, and `maximumLength`: the longest a post may be, in weighted characters. @trythreews is on X Premium, so the queue sets it above the standard 280; a value under 280 is ignored. `approval` is the policy described below.
 
 **What the cap counts:** `dailyCap` limits scheduled posts in the last 24 hours, and a scheduled post is one the scheduler placed in a slot. A post an operator sends by hand (`run --id`) carries no slot and does not count toward it, because counting those let four owner-requested posts on one afternoon hold every slot shut the following morning. Hand-sent posts do still count toward `minimumMinutesApart`, which measures from the last post of any kind, so the schedule never fires minutes after a manual post. To fill an open slot by hand and keep the schedule's bookkeeping right, run a scheduler tick (`npm run x:content -- run`, no `--id`): it takes the same lock as the cron, picks the post the cron would, and records the slot so the cron sees it as used.
 
@@ -164,13 +167,14 @@ closed unfilled in the last day is raised once as missed. The cure for either is
 
 | Part | What it measures |
 |---|---|
-| `learned` | What the account's own head posts of the last 90 days measured for a post of this shape (media, length, thread, tags, where the link sits), read through the X API. Present once 20 posts have matured. See [What the queue learns](#what-the-queue-learns). |
+| `learned` | What the account's own head posts of the last 90 days measured for a post of this shape (media, length, thread, tags, where the link sits), read through the X API, plus up to 4 points from the $THREE price after posts like it. Present once 20 posts have matured. See [What the queue learns](#what-the-queue-learns). |
 | `engagement` | The fallback when nothing has been learned yet: predicted lift from the archive report. |
 | `timely` | Up to +20 as an `expiresAt` window closes. |
 | `boost` | The owner's `priority`. |
 | `waiting` | +1 per day ready, capped at +10, so nothing starves. |
 | `review` | The AI editor's average score above or below 4. |
 | `variety` | -25 when the post would repeat the last lane or pattern too many times in a row. |
+| `format` | -25 when the post would repeat the last feed format too many times in a row. |
 
 **Quoting an earlier post:** a post item may carry `quotes`, the numeric id of an existing post (the id, not the URL, which the validator enforces). The head becomes a quote tweet of it and any further posts thread under the head as usual. That is how a follow-up adds the detail its original left out, such as the numbers behind a page, without repeating the original's copy.
 
@@ -234,6 +238,12 @@ read is paced like a read, so a refusal is not repeated every fifteen minutes. O
 weighted, small samples are shrunk toward nothing, and a post counts only once it is 48 hours old.
 Replies are left out of the outcome on purpose, because on this account they are mostly
 `$three @grok` farming. Hand-written posts teach it as much as its own.
+
+Each row is also stamped with the $THREE return 24 hours after the post, from the pool's candles. A
+row less than a day old, or with no trade near it, carries no return rather than a zero. Once 20
+matured posts carry one, the return becomes a second, much smaller lift: it moves a post's score by
+at most 4 points, against 15 for engagement, because the whole market moves the price and a post
+moves it little.
 
 ```bash
 npm run x:outcomes                # the learned table, and the best and worst posts of the window
@@ -300,12 +310,12 @@ unchanged engine against it, so every rule on this page still applies. A posted 
 replaced. If the signature does not verify, a file does not match its hash, or storage is down, the
 tick uses the image queue and says so in its response.
 
-It is off until both are set on the service:
+It is off until the signing secret and the switch are set on the service, together with one store. Cloud Storage is used when `X_CONTENT_BUNDLE_BUCKET` names a bucket, and the Cloud Run service account and the partner job authenticate with their own identity, so no key is stored. With no bucket named, the S3-compatible object store (R2) is used and needs its `S3_*` credentials. The first pull on a bucket that has never been published to succeeds with an empty overlay.
 
 ```bash
 gcloud run services update three-ws-api --region us-central1 \
   --update-secrets X_CONTENT_BUNDLE_SECRET=x-content-bundle-secret:latest \
-  --update-env-vars X_CONTENT_REMOTE_QUEUE=true
+  --update-env-vars X_CONTENT_REMOTE_QUEUE=true,X_CONTENT_BUNDLE_BUCKET=<bucket>
 ```
 
 ## Workflow
@@ -402,6 +412,6 @@ Queue edits reach production with the next deploy, because the cron reads the qu
 
 ## Tests
 
-[tests/x-content-reel.test.js](../tests/x-content-reel.test.js) covers scenario validation, the proof binding, proof as evidence, post length, and what the editor is given for a reel. [tests/x-content-approval.test.js](../tests/x-content-approval.test.js) covers the approval policy and story coverage. [tests/x-content-partners.test.js](../tests/x-content-partners.test.js) covers the partner spotlight: the registry check, the rotation, the series lint, claims built from the registry and the run, and the drafting loop. [tests/x-content-outcomes.test.js](../tests/x-content-outcomes.test.js) covers the learning loop, and [tests/x-content-overlay.test.js](../tests/x-content-overlay.test.js) the bundles.
+[tests/x-content-reel.test.js](../tests/x-content-reel.test.js) covers scenario validation, the proof binding, proof as evidence, post length, and what the editor is given for a reel. [tests/x-content-approval.test.js](../tests/x-content-approval.test.js) covers the approval policy and story coverage. [tests/x-content-partners.test.js](../tests/x-content-partners.test.js) covers the partner spotlight: the registry check, the rotation, the series lint, claims built from the registry and the run, and the drafting loop. [tests/x-content-outcomes.test.js](../tests/x-content-outcomes.test.js) covers the learning loop, including the price stamp and its lifts, and [tests/x-content-overlay.test.js](../tests/x-content-overlay.test.js) the bundles.
 
 [tests/x-content.test.js](../tests/x-content.test.js) covers the tiered slots, fill-down, priority scoring, holds and the fall-through that publishes the next post when one fails, stock counting, quote-tweet ids and their publish wiring, hand-sent posts counting toward spacing but not the cap, the video speed-up filter chain and its caption ordering, the voice and editorial lint, the claims ledger, media quality, review records binding approval to exact content, the editor verdict rules, the media rules, the Markdown to Article offsets, the scheduler's spacing, cap, embargo, and resume rules, and the publisher's thread chaining, crash resume, and Article draft, publish, and quote sequence.

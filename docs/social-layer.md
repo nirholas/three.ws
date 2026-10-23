@@ -130,8 +130,9 @@ PUT   /api/notifications/preferences   → update it
 
 Preferences are a category × channel matrix
 ([api/_lib/notify-prefs.js](../api/_lib/notify-prefs.js)): categories are
-sales, purchases, social, IRL, market alerts, creations, companion
-deliveries, knocks at your door, agent mail, and account & security; channels
+sales, purchases, social, IRL, market alerts, event markets, creations,
+companion deliveries, knocks at your door, agent mail, orders, approvals, and
+account & security; channels
 are `in_app`, `push`, `email`, `telegram`, `discord`, and `avatar`. Every channel is a
 per-category toggle (`in_app` defaults on everywhere, and is locked on for
 account & security so the bell record of security events never goes silent),
@@ -172,7 +173,8 @@ GET /api/leaderboard/unified?metric=creations&limit=50&offset=0
 ```
 
 `metric` is one of `creations`, `remixes_received`, `launches`, `followers`,
-`walk_distance` (limit 1..100, default 50). `launches` counts distinct mainnet
+`walk_distance`, `ufo_score` (best verified Flappin UFO run per user, from
+`ufo_runs`; see [play-ufo.md](./play-ufo.md); limit 1..100, default 50). `launches` counts distinct mainnet
 mints from the platform's own launch records (`pump_agent_mints`, including
 coins signed by an agent's custodial wallet, plus `fixed_supply_launches`),
 through [api/_lib/launch-counts.js](../api/_lib/launch-counts.js), the same
@@ -186,7 +188,7 @@ their own work.
 
 The streak engine ([api/_lib/streaks.js](../api/_lib/streaks.js),
 `recordDailyActivity()`) is called from sign-in, forge saves, diorama saves,
-restyle saves, walk metrics, and a confirmed on-chain trade (both legs of
+restyle saves, CAD part saves, anatomy saves, walk metrics, and a confirmed on-chain trade (both legs of
 [api/pump/[action].js](../api/pump/%5Baction%5D.js), fire-and-forget so the
 streak can never delay or fail the trade that earned it), and writes
 `user_streaks` / `user_badges`. The upsert is idempotent per UTC day, so a
@@ -197,7 +199,9 @@ sweeps the `top10_<metric>` badge awards. The rest of the catalog
 first remix received, a 7-day streak, completing the copy-trade path,
 founding or joining a syndicate, daily trading quests (first quest, a daily
 clear, a 7-day quest streak), and trader duels (first call, a correct call,
-three correct in a row, and 70% or better over ten or more decided duels).
+three correct in a row, and 70% or better over ten or more decided duels),
+plus the Event Market forecaster badges (first correct call, an upset call, five
+in a row, season top 10, season champion; see [event-markets.md](./event-markets.md)).
 Badges and streaks also render on profile pages.
 
 An authenticated request gets `streak` and `badges` back in the same response
@@ -243,12 +247,13 @@ click from the person who made it.
 One query across everything creatable on the platform.
 
 ```
-GET /api/search?q=<text>&type=all|avatar|agent|model|world|coin&limit=18
+GET /api/search?q=<text>&type=all|avatar|agent|model|world|part|coin&limit=18
 ```
 
-Five sources are queried in parallel
+Six sources are queried in parallel
 ([api/_lib/cross-search.js](../api/_lib/cross-search.js)): avatars, on-chain
-and Solana agents, forged models, worlds, and coins (platform launches first,
+and Solana agents, forged models, worlds, CAD parts (`type=part`, opening at
+`/cad/:id`, with no remix action), and coins (platform launches first,
 then external token search). Ranking is recency first, boosted by follower,
 remix, and view signals. `limit` is 4..48 (default 18); a scoped `type` search
 gives the full limit to that one source.

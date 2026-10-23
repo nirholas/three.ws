@@ -978,6 +978,15 @@ reverts by unsetting env URLs and the `FORGE_SELFHOST_PRIMARY` flag.
 > actions**, step 1). Latency/cost cells below are **pre-deploy estimates** — the
 > exact command to replace them with measured values is in *Cost per asset*.
 
+> **Update 2026-10-23:** this section is the original prompt 04 record and is kept
+> as written. The fleet has since grown beyond the six workers named above. The
+> forge lanes now include `trellis2` (the default), `trellis`, `pixal3d`, `anigen`,
+> `partcrafter`, `holopart`, `triposplat`, `modly`, `hunyuan`, `triposg`, `unirig`,
+> `video2scene` and `video2motion`. The Tencent-derived lanes (`hunyuan3d`,
+> `huggingface`, `modly_hunyuan`) are blocked in the EU, UK and KR and fail closed
+> (`api/_lib/forge-territory.js`). The live lane list and routing order are in
+> `api/_lib/forge-tiers.js`; trust it over the table in this section.
+
 ### Router wiring (landed, flag-gated, OFF by default)
 
 Self-host was already the health-aware default when its worker URLs are set

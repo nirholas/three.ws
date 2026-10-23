@@ -2,22 +2,28 @@
 
 Read `docs/prompts/README.md` first.
 
+## Status (2026-10-23)
+
+Delivered: the policy module. The table (groups, tiers, confirm flags, preview tools, bound arguments) and the enablement grammar live in [`packages/mcp-policy`](../../packages/mcp-policy/README.md) so the hosted servers and the stdio packages enforce one table. [`api/_mcp/policy.js`](../../api/_mcp/policy.js) binds it to the hosted side (Redis preview store, saved settings in `mcp_tool_settings`) and every dispatcher built on [`api/_lib/mcp-dispatch.js`](../../api/_lib/mcp-dispatch.js), plus `api/_mcp-studio` and `api/pump-fun-mcp`, calls `listForRequest`, `gateCall` and `finishCall`. `npx three-ws tools` chooses groups. [`docs/mcp.md`](../mcp.md) already explains turning the tools on.
+
+Still open: the `/settings/mcp-tools` page and the `/api/mcp-tools` writer for `mcp_tool_settings` (nothing writes the table yet, so saved settings only take effect once they exist), the generated model-facing skill (`.agents/skills/three-ws/SKILL.md`, `scripts/build-mcp-skill.mjs`, and its byte-for-byte test; the entry-point skill today is `public/skill.md`, rendered by `scripts/build-skills-pack.mjs` from `data/skill-md.template.md`), and a test that walks every server's tool list against the table. The sections below remain the brief for those parts; where they name the original design, the shipped names are given in brackets.
+
 ## The problem
 
-Our fund-moving safeguards are real but scattered: spend limits in `api/_lib/agent-trade-guards.js`, allowlists in `api/agent/guard.js`, confirm flags in `api/_mcp3d/tools/persona-identity.js` and `packages/x402-mcp/src/tools/pay-and-call.js`, payment sessions in `api/pay/`. There is no single policy that every tool registers under, no server-side default that hides financial tools until the user opts in, and no one document a model reads that lists every tool, its group, whether it moves funds, and which preview tool must precede it. The best platforms ship exactly that: a default set of read-mostly tools, explicit opt-in for the rest, a named confirm flag on every irreversible call, and a skill file that tells the model the rules.
+Before the policy module, our fund-moving safeguards were real but scattered: spend limits in `api/_lib/agent-trade-guards.js`, allowlists in `api/agent/guard.js`, confirm flags in `api/_mcp3d/tools/persona-identity.js` and `packages/x402-mcp/src/tools/pay-and-call.js`, payment sessions in `api/pay/`. There was no single policy that every tool registered under, no server-side default that hid financial tools until the user opted in, and no one document a model reads that lists every tool, its group, whether it moves funds, and which preview tool must precede it. The best platforms ship exactly that: a default set of read-mostly tools, explicit opt-in for the rest, a named confirm flag on every irreversible call, and a skill file that tells the model the rules.
 
 ## Build
 
 ### Tool policy module
 
-`api/_mcp/policy.js`, imported by every hosted server dispatcher (`api/_mcp/dispatch.js`, `api/_mcpagent/`, `api/_mcp3d/`, `api/_mcpbazaar/`, `api/_mcp-studio/`, `api/pump-fun-mcp`, `api/_mcpibm/`) and by every stdio package under `packages/*-mcp`. Every tool definition gains:
+`api/_mcp/policy.js` [the table itself is `packages/mcp-policy`], imported by every hosted server dispatcher (`api/_mcp/dispatch.js`, `api/_lib/mcp-dispatch.js` for `_mcpagent`, `_mcp3d`, `_mcpbazaar`, `_mcpibm`, `api/_mcp-studio/`, `api/pump-fun-mcp`) and by the stdio packages. Every tool definition gains:
 
-- `group`: one of `agents, chat, runs, skills, trading, orders, perps, lending, predictions, launch, marketplace, cards, mail, x402, wallet, billing, intelligence, integrations, account, allowlist, assets, utility`.
+- `group`: one of `agents, chat, runs, skills, trading, orders, perps, lending, predictions, launch, domains, marketplace, cards, mail, x402, wallet, commerce, billing, intelligence, integrations, account, allowlist, assets, gateway, sandbox, utility` (`GROUPS` in the package).
 - `tier`: `read` (default on), `write` (on by default, reversible), `financial` (off by default, moves funds or is irreversible).
-- `confirmFlag`: for every `financial` tool, the exact boolean argument name (`confirm_swap`, `confirm_transfer`, `confirm_launch`, `confirm_spend`, `confirm_payment`, `confirm_deposit`, `confirm_withdraw`, `confirm_delete`, `confirm_bid`, `confirm_send`). The tool refuses without it, with an error that names the preview tool to call first.
+- `confirmFlag`: for every `financial` tool, the exact boolean argument name (`confirm_swap`, `confirm_transfer`, `confirm_launch`, `confirm_spend`, `confirm_payment`, `confirm_deposit`, `confirm_withdraw`, `confirm_delete`, `confirm_bid`, `confirm_send`, and the later `confirm_run`, `confirm_listing`, `confirm_delist`, `confirm_accept`, `confirm_trade`, `confirm_reveal`, `confirm_cancel`; `CONFIRM_FLAGS` in the package). The tool refuses without it (`reason: "confirmation_required"`), with an error that names the preview tool to call first.
 - `previewTool`: the quote or preview tool that must run first; the server records the preview result id and the financial tool requires it (`quote_id` or `preview_id`), rejecting stale ones after ten minutes.
 
-Enforcement: `tools/list` returns only enabled tools for the session. Enablement comes from, in order: the client's allowed-tools list when present, an `X-Three-Tools` header or `tools` query the CLI from prompt 01 sets, the per-key setting stored by `api/api-keys.js`, then the default (read plus write). A disabled tool called anyway returns an error that says how to enable it (`npx three-ws tools`, or the settings page).
+Enforcement: `tools/list` returns only enabled tools for the session. Enablement comes from, in order: the client's allowed-tools list (`X-Three-Allowed-Tools`) when present, an `X-Three-Tools` header, the `tools` query the CLI from prompt 01 sets, the per-key override and then the account setting in `mcp_tool_settings`, then the default (read plus write). A disabled tool called anyway returns `reason: "tool_disabled"` with an error that says how to enable it (`npx three-ws tools`, or the settings page). Separately, a connector-preset API key (the "For an AI agent" key) never sees or calls a value-moving tool on any server (`movesValue` in `api/_mcp/policy.js`).
 
 Settings page: `/settings/mcp-tools` lists every group with its tier, a toggle per group, and per-key overrides. Every state designed. Add to `data/pages.json`.
 
@@ -40,7 +46,7 @@ Walk every tool in every server and package and assign group, tier, confirm flag
 
 ## Docs and wiring
 
-- `docs/mcp.md`: a "Tool policy" section explaining tiers, defaults and how to enable groups, with the settings page linked.
+- `docs/mcp.md`: the "Turning the tools on" guidance exists; add a "Tool policy" section explaining tiers, defaults and how to enable groups once the settings page ships.
 - `docs/agent-skills.md`: register the new skill.
 - `data/changelog.json` entry tagged `security, improvement`.
 
@@ -49,4 +55,4 @@ Walk every tool in every server and package and assign group, tier, confirm flag
 - A fresh key sees no `financial` tools in `tools/list` on any server; enabling the `trading` group makes `swap_execute` appear.
 - Calling `swap_execute` without `confirm_swap: true` or with a stale `quote_id` fails with an error that names `swap_quote`.
 - `scripts/build-mcp-skill.mjs` reproduces `SKILL.md` byte for byte; a test asserts it.
-- `tests/mcp-policy.test.js` covers every server's tool list against the policy (no tool without a group and tier); `npm test` green.
+- A test (`tests/mcp-policy.test.js`; `tests/api/mcp-policy.test.js` today covers only the `/api/mcp-policy` allowlist endpoint) covers every server's tool list against the policy (no tool without a group and tier); `npm test` green.

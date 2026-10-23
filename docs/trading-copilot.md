@@ -20,7 +20,7 @@ that wallet's positions and can place trades from it.
 | You say | It does |
 | --- | --- |
 | "How's my portfolio?" | Reads your live SOL balance, SPL holdings, and open sniper positions, and shows a **portfolio card** |
-| "Is `<mint>` safe to buy?" | Runs the rug/honeypot **firewall** and shows a verdict card (allow / warn / block) with reasons |
+| "Is `<mint>` safe to buy?" | Runs the rug/honeypot **firewall** and shows a verdict card (allow / warn / block) with reasons, including a warning when one of the coin's earliest buyers is linked to its creator |
 | "Is smart money in `<mint>`?" | Counts reputable wallets and scores smart-money conviction |
 | "Buy 0.25 SOL of `<mint>`" | Surfaces a **buy card** — fresh quote + firewall verdict — that you confirm |
 | "Sell 50% of `<mint>`" | Surfaces a **sell card** grounded on your actual held balance |
@@ -91,7 +91,11 @@ The model is **read-and-propose only**. It cannot sign, and it cannot bypass a g
      ledger also meters a `per_counterparty_daily_usd` ceiling on what one agent can send
      to a single destination per day. The copilot's risk-limits card edits the per-trade
      cap, daily budget, max price impact, and kill switch; the counterparty cap is set
-     from the wallet hub.
+     from the wallet hub. The capped-burner tier ([`api/_lib/burner-tier.js`](../api/_lib/burner-tier.js))
+     bounds what the *agent* may sign alone: above the owner's cap a spend becomes a
+     pending approval (`policy_step_up`), not a failure. A trade you confirm in the
+     copilot is your own action, so it is exempt from the burner cap (`burnerExempt`);
+     the per-trade, daily, firewall and kill-switch guards still apply.
    - `PUT /api/agents/:id/trade/limits` — patches guardrails by key.
 
 A conversation can therefore never bypass a spend cap, the kill switch, or the firewall.
@@ -100,7 +104,7 @@ If the firewall verdict is **block**, the buy card cannot be confirmed at all.
 ## The endpoint
 
 ```
-POST /api/agents/:id/copilot          Owner-only. Body: { messages:[{role,content}], network, model? }
+POST /api/agents/:id/copilot          Owner-only. Body: { messages:[{role,content}], network, model?, paid_fallback? }
                                       → text/event-stream
 GET  /api/agents/:id/copilot?after=<message id>&limit=<1-100>
                                       Owner-only. → { messages:[{id,role,content,channel,signatures,createdAt}], latest_id }
@@ -112,20 +116,25 @@ returns the agent's cross-channel thread oldest first (30 messages by default), 
 client can merge what the owner said in a paired chat; pass the returned `latest_id` as
 `after` next time to fetch only newer messages.
 
-`model` overrides the agent's default model for this one message (resolved by
-[`api/_lib/agent-model.js`](../api/_lib/agent-model.js)). Because the copilot is a tool
+`model` overrides the agent's default model for this one message. The brain is resolved in
+one place, [`api/_lib/agent-brain.js`](../api/_lib/agent-brain.js) (on top of
+[`api/_lib/agent-model.js`](../api/_lib/agent-model.js)), so the copilot, the chat gateways
+and the agent message API all honor an agent's chosen model, including a Grok brain that
+runs on the owner's saved xAI key when they have one. Because the copilot is a tool
 loop, an override without tool calling is refused (`400 model_lacks_tools`), as is an
 unknown id (`400 unknown_model`); an agent *default* without tool calling is skipped and
 the turn runs on the platform chain instead. A free open model draws on the owner's
 daily free-tier allowance and answers `429 free_tier_exhausted` with a `Retry-After`
-header once it is spent. Every model round is metered to the owner's usage ledger at the
+header once it is spent; the error body carries a paid route, and resending with
+`paid_fallback: true` skips the free tier, gates on the owner's credits, and bills each
+model round to them. Every model round is metered to the owner's usage ledger at the
 price of the lane that served it (free lanes cost nothing).
 
 SSE events:
 
 | Event | Payload | Meaning |
 | --- | --- | --- |
-| `model` | `{ model, source, served?, lane? }` | the model chosen for the turn; re-sent each round with the model and provider lane that actually answered |
+| `model` | `{ model, source, served?, lane?, chosen?, keySource?, failover? }` | the model chosen for the turn; re-sent each round with the model and provider lane that actually answered, the key source behind it, and whether a failover rung served instead of the chosen brain |
 | `status` | `{ phase }` | thinking / continuing / finalizing |
 | `tool` | `{ name, summary, data }` | a read-only tool ran; `data` is the card payload |
 | `proposal` | trade/limits proposal | a confirm-before-execute card |
@@ -163,6 +172,7 @@ plumbing — and never suggests, shills, or names another token on its own initi
 | Server route (auth, model choice, SSE, thread read) | [`api/agents/copilot.js`](../api/agents/copilot.js) |
 | Copilot engine (tools, prompt, loop; shared with the chat gateways) | [`api/_lib/copilot-engine.js`](../api/_lib/copilot-engine.js) |
 | Cross-channel thread store | [`api/_lib/agent-thread.js`](../api/_lib/agent-thread.js) |
+| Brain resolution and served-lane badge | [`api/_lib/agent-brain.js`](../api/_lib/agent-brain.js) |
 | Provider chain + streamed tool-call reader (shared with the chat agent loop) | [`api/_lib/llm-tool-chain.js`](../api/_lib/llm-tool-chain.js) |
 | Markdown renderer | [`src/md.js`](../src/md.js) |
 | UI contract tests | [`tests/agent-copilot-ui.test.js`](../tests/agent-copilot-ui.test.js) |

@@ -118,6 +118,10 @@ Grotesk display face).
   [Alpha Copilot](/alpha-copilot) and the [live trade feed](/trades). A
   mint-shaped id that isn't on the market data source points to its
   [launch profile](/launches) and [Coin Intelligence](/coin-intel) instead.
+- **Domain names**: live-availability suggestions for the project name,
+  mounted at the foot of the page by
+  [`src/domains/suggest-panel.js`](../src/domains/suggest-panel.js) and backed by
+  the [web domains service](domains.md).
 
 The detail endpoint ([`api/coin/detail.js`](../api/coin/detail.js)) requests
 CoinGecko's community and developer blocks and slims the multi-hundred-KB
@@ -390,8 +394,11 @@ key-free data" rule:
   (CoinGecko `/exchange_rates`) + `/api/coin/markets`/`detail`.
 - **`/defi`** — total DeFi TVL and the top protocols by TVL (CEX reserves
   excluded), category-filterable. New `/api/defi/protocols` (DeFiLlama).
-- **`/chains`** — every chain ranked by TVL with a dominance share bar. New
-  `/api/defi/chains` (DeFiLlama).
+- **`/chains`**: every chain ranked by TVL with a dominance share bar and a
+  sortable **Turnover** column (24h DEX volume divided by TVL: high means capital
+  is trading, low means it is parked; `n/a` when a chain reports no TVL or no DEX
+  volume). New `/api/defi/chains` (DeFiLlama; the volume side is summed per chain
+  from the same `/overview/dexs` feed `/dex-volumes` uses).
 - **`/stablecoins`** — stablecoins by circulating market cap with live peg
   health and backing mechanism. New `/api/defi/stablecoins` (DeFiLlama).
 - **`/yields`** — an explorer over ~15,000 live DeFi yield pools: filter by
@@ -568,10 +575,18 @@ paragraphs, publisher metadata, an AI summary + key points via the platform
 LLM chain (`api/_lib/llm.js`, free providers first, paid keys only as a tail
 backstop) with an extractive fallback when no provider is reachable,
 bullish/bearish/neutral sentiment, detected tickers, and a
-related-coverage rail. Publishers that block server fetches degrade through an
-honest ladder: page extraction → the publisher's own feed body
-(`content:encoded`) → a labelled preview with a read-at-source CTA. Never a
-dead end, never fabricated text.
+related-coverage rail. When an LLM provider answers, the page also shows a
+**Trading read**: the assets the story moves (direct, indirect or sector
+exposure, with direction), whether it is priced in, the horizon, and a required
+counter-argument (a read without one is discarded; the extractive fallback
+carries no trading read). Publishers that block server fetches degrade through an
+honest ladder ([`api/_lib/article-extract.js`](../api/_lib/article-extract.js)):
+page extraction → a reader service → the Internet Archive snapshot of the same
+URL → the SEC EDGAR filing the headline names → other outlets' coverage of the
+same story → the publisher's own feed body (`content:encoded`) → a labelled
+preview with a read-at-source CTA. Recovered text carries a badge ("full text
+recovered", "from web archive", "from SEC filing", "from other outlets") and
+links its sources. Never a dead end, never fabricated text.
 
 ### `/markets/digest` — the day in stories, not headlines
 
@@ -641,9 +656,9 @@ All data is real and fetched at runtime — nothing is hardcoded or sampled:
 | `/api/coin/global`      | CoinGecko `/global` + alternative.me Fear & Greed          | 120 s        |
 | `/api/coin/fear-greed`  | alternative.me `/fng` (current + history)                  | 300 s        |
 | `/api/coin/gas`         | public Ethereum RPC `eth_feeHistory` + CoinGecko ETH price | 15 s         |
-| `/api/coin/news`        | native aggregator (`api/_lib/news.js`, 197 publisher feeds) | 300 s        |
+| `/api/coin/news`        | native aggregator (`api/_lib/news.js`, 197 publisher feeds; a hosted news API is asked only if the native merge is empty) | 300 s        |
 | `/api/news/feed`        | native aggregator: 197 publisher RSS/Atom feeds (`api/_lib/news-sources.js`), per-source cache + serve-stale | 120 s |
-| `/api/news/article`     | publisher page fetch (SSRF-guarded) → publisher feed body → preview; LLM analysis via the platform chain (`api/_lib/llm.js`) with extractive fallback | 1800 s |
+| `/api/news/article`     | publisher page fetch (SSRF-guarded) → reader → web archive → SEC filing → sibling coverage → publisher feed body → preview; LLM analysis via the platform chain (`api/_lib/llm.js`) with extractive fallback | 1800 s |
 | `/api/news/archive`     | `gs://three-ws-news-archive` (662k-article JSONL corpus + indexes on GCS) | 300 s / 3600 s |
 | `/api/coin/liquidations`| `services/liquidation-collector` (Binance/Bybit/OKX public liquidation WebSocket streams) | 15 s, `503` no-fallback offline |
 

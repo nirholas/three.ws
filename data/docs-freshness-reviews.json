@@ -21,16 +21,16 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/agent-abilities/ABILITIES.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/agent-abilities/FULL-ARTICLE.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/agent-abilities/chapters/01-the-body.md": {
 			"commit": "53f2a200f",
@@ -98,6 +98,12 @@
 			"by": "agent",
 			"note": "dated record, kept as written"
 		},
+		"docs/apps.md": {
+			"commit": "c1390cb7d",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
 		"docs/assistant-widget.md": {
 			"commit": "53f2a200f",
 			"kind": "verified",
@@ -115,6 +121,12 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
+		},
+		"docs/avatar-thumbnails.md": {
+			"commit": "c1390cb7d",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/avatar-wardrobe.md": {
 			"commit": "53f2a200f",
@@ -153,10 +165,10 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/coin-pages.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/configuration.md": {
 			"commit": "53f2a200f",
@@ -183,10 +195,10 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/demo-routes.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/diorama.md": {
 			"commit": "53f2a200f",
@@ -386,6 +398,12 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/ops/gcp-credits.md": {
+			"commit": "c1390cb7d",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
 		"docs/ops/home-operations.md": {
 			"commit": "53f2a200f",
 			"kind": "verified",
@@ -423,10 +441,10 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/oracle-trading-mcp-plan.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/overlay-audit.md": {
 			"commit": "53f2a200f",
@@ -446,6 +464,12 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/prompts/03-mcp-tool-policy-skill.md": {
+			"commit": "c1390cb7d",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
 		"docs/pump-platform-fee.md": {
 			"commit": "53f2a200f",
 			"kind": "verified",
@@ -458,11 +482,23 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/research/3d-landscape-2026-10.md": {
+			"commit": "c1390cb7d",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "dated record, kept as written"
+		},
+		"docs/research/competitor-teardown-2026-09.md": {
+			"commit": "c1390cb7d",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "dated record, kept as written"
+		},
 		"docs/risk-acknowledgment.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/security/SECURITY_AUDIT.md": {
 			"commit": "53f2a200f",
@@ -495,10 +531,10 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/site-performance.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/smart-home.md": {
 			"commit": "53f2a200f",
@@ -507,10 +543,10 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/social-layer.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/solana-reputation.md": {
 			"commit": "53f2a200f",
@@ -547,6 +583,12 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
+		},
+		"docs/trading-copilot.md": {
+			"commit": "c1390cb7d",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/tutorials/mine-vanity-address.md": {
 			"commit": "53f2a200f",
@@ -585,64 +627,76 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/ux-flows/01-onboarding-creation.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/02-forge-text-to-3d.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/03-3d-editing-viewer.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/04-embed-widget-studio.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/05-discovery-social.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/06-marketplace-skills.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/07-crypto-trading-analytics.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/08-coin-launch-wallets.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/ux-flows/09-x402-agent-commerce.md": {
+			"commit": "c1390cb7d",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/ux-flows/10-chat-brain-labs.md": {
+			"commit": "c1390cb7d",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/11-account-dashboard.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/12-home-and-content.md": {
-			"commit": "53f2a200f",
+			"commit": "c1390cb7d",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/vaults.md": {
 			"commit": "53f2a200f",
@@ -656,11 +710,29 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/workbench.md": {
+			"commit": "c1390cb7d",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
 		"docs/x-accounts.md": {
 			"commit": "53f2a200f",
 			"kind": "verified",
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
+		},
+		"docs/x-content-pipeline.md": {
+			"commit": "c1390cb7d",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/x-posts/claims-ledger-thread.md": {
+			"commit": "c1390cb7d",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/x402-distribution.md": {
 			"commit": "53f2a200f",

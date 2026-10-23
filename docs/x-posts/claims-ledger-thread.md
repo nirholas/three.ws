@@ -13,7 +13,8 @@ Posting is owner-gated per [`CLAUDE.md`](../../CLAUDE.md). This file is copy wai
 to send.
 
 **Every claim below was verified on 2026-10-08**, against the code in this repository or the live
-site:
+site, and the rows that drift were re-checked on 2026-10-23 (the review-record counts, the policy
+release, the lint example, and the learning loop):
 
 | Claim in the thread | Where it was verified |
 |---|---|
@@ -31,13 +32,13 @@ site:
 | Editor scores six dimensions 1 to 5, returns JSON; a blocking issue or a score under 4 turns publish into revise | `SCORE_KEYS`, `SYSTEM`, `parseReview` in [`api/_lib/x-content/editor.js`](../../api/_lib/x-content/editor.js) |
 | The editor can add a blocker, not remove one | `reviewItem` in [`api/_lib/x-content/review.js`](../../api/_lib/x-content/review.js): lint and verification blockers are collected independently of the editor |
 | Five rungs, in that order; Groq is text-only; no-credential rungs skipped; errors and unparseable replies fall through | `modelRungs`, `viaChatCompletions`, `callModelChain` in [`api/_lib/x-content/llm.js`](../../api/_lib/x-content/llm.js) |
-| All 52 review records name the last rung; the records span three weeks | counted over [`data/x-content/reviews/`](../../data/x-content/reviews/): 52 tracked files, every `editor.model` is `nvidia:moonshotai/kimi-k3`, `reviewedAt` runs from 2026-09-18 to 2026-10-08; every record's `editor.fallbacks` lists OpenRouter 402 and OpenAI 429 `billing_not_active`, plus Vertex 403 (32) or no Google Cloud credentials (20) |
+| All 73 review records name the last rung; the records span more than three weeks | counted over [`data/x-content/reviews/`](../../data/x-content/reviews/) on 2026-10-23: 73 tracked files, every `editor.model` is `nvidia:moonshotai/kimi-k3`, `reviewedAt` runs from 2026-09-18 to 2026-10-13; every record's `editor.fallbacks` lists OpenRouter 402 and OpenAI 429 `billing_not_active`, plus Vertex 403 (55) or no Google Cloud credentials (18) |
 | Review bound to a SHA-256 of copy, media bytes, alt text, claims, mentions and probes; 14-day expiry | `contentHash`, `approvalProblems`, `REVIEW_MAX_AGE_DAYS = 14` in [`review.js`](../../api/_lib/x-content/review.js) |
 | On 8 October the validator refused two approved posts, at 17 and 19 days | output of `npm run x:content:check` run on 2026-10-08 (items `galaxy` and `ai-3d-skills`) |
 | Ledger writes every media id and post id as X returns it; a crashed thread resumes at the next reply | `uploadOnce`, `publishPosts`, `publishItem` in [`api/_lib/x-content/publisher.js`](../../api/_lib/x-content/publisher.js) |
-| Policy release conditions; veto window; ops alert | `policyBlockers`, `vetoUntil` in [`api/_lib/x-content/approval.js`](../../api/_lib/x-content/approval.js); `advance` in [`scripts/x-content.mjs`](../../scripts/x-content.mjs) |
+| Policy release conditions (tier or listed series, filmed proof, no tags, editor's own verdict); veto window; ops alert | `policyBlockers`, `vetoUntil` in [`api/_lib/x-content/approval.js`](../../api/_lib/x-content/approval.js); `advance` in [`scripts/x-content.mjs`](../../scripts/x-content.mjs) |
 | Outcomes read at most every 6 hours over 90 days; used for ranking only | `OUTCOMES_REFRESH_HOURS = 6`, `OUTCOMES_WINDOW_DAYS = 90` in [`api/_lib/x-content/outcomes.js`](../../api/_lib/x-content/outcomes.js); read by [`priority.js`](../../api/_lib/x-content/priority.js) and as editor calibration, by no deterministic check |
-| An engagement-ask phrase in the lint blocks the example post in our own docs | `PUSHY_CTAS` (`/\bdrop a\b/i`) in [`editorial.js`](../../api/_lib/x-content/editorial.js) against the "Queue item format" example in [`docs/x-content-pipeline.md`](../x-content-pipeline.md); reproduced with `lintItem` on 2026-10-08 |
+| An engagement-ask phrase in the lint blocked the example post in our own docs until it was reworded | `PUSHY_CTAS` (`/\bdrop a\b/i`) in [`editorial.js`](../../api/_lib/x-content/editorial.js) against the "Queue item format" example in [`docs/x-content-pipeline.md`](../x-content-pipeline.md), which began "Drop a .glb on Rig Doctor" and was reworded in commit `16f26b7a1` on 2026-10-08; the current example passes, so only the past tense is true |
 | The docs page is live | [three.ws/docs/x-content-pipeline](https://three.ws/docs/x-content-pipeline) answered 200 and rendered "The editorial bar" on 2026-10-08 |
 
 The thread also passes the pipeline's own offline gate: every post was run through
@@ -45,8 +46,8 @@ The thread also passes the pipeline's own offline gate: every post was run throu
 declared claims were run through `claimProblems` (no findings), with every `file` evidence string
 confirmed present.
 
-**Re-run before posting.** Three numbers are true of a day, not of the code: the 52 review records,
-the "two, at 17 and 19 days" refusal, and "three weeks". Before sending, re-count with:
+**Re-run before posting.** Three numbers are true of a day, not of the code: the 73 review records,
+the "two, at 17 and 19 days" refusal, and "more than three weeks". Before sending, re-count with:
 
 ```bash
 npm run x:content:check
@@ -59,12 +60,16 @@ If either has moved, change the copy to today's numbers or cut the sentence.
 
 1. **Do not say the pipeline runs on AWS or uses Amazon Bedrock.** It runs on Google Cloud Run, and
    the model chain is the five providers in `llm.js`.
-2. **Do not call the account autonomous or unattended.** Tier 1 posts, any post that tags an
-   account, and any editor override wait for a person; policy releases sit in a veto window.
+2. **Do not call the account autonomous or unattended.** Tier 1 posts outside the daily partner
+   series, any post that tags an account, and any editor override wait for a person; policy
+   releases sit in a veto window.
 3. **Do not say a reel proves the feature works in general.** It proves the steps passed once, on
    the commit and day in its stamp.
 4. **Do not tie the learning loop or any model to $THREE, price, or volume.** Say it learns from
-   the account's own measured posts. Nothing about pool volume belongs in this thread.
+   the account's own measured posts. Nothing about pool volume or price belongs in this thread,
+   even though the ranking now also reads a small $THREE price term
+   ([`price-impact.js`](../../api/_lib/x-content/price-impact.js)) and a volume model. Post 9 stays
+   true because engagement is still the main thing the loop learns from.
 5. **Do not say the lint has no false positives, or that the lint is AI.** It is regular
    expressions, and post 10 says so.
 6. **Do not say "verified AWS Partner" here.** The live [three.ws/aws](https://three.ws/aws) page
@@ -122,11 +127,11 @@ If either has moved, change the copy to today's numbers or cut the sentence.
 >
 > The editor scores six dimensions from 1 to 5 and returns JSON. Code enforces the verdict, not the model: a blocking issue or any score under 4 turns "publish" into "revise". The editor can add a blocker. It cannot remove one.
 
-**Post 7** (651 weighted characters)
+**Post 7** (661 weighted characters)
 
 > The model chain has five rungs: Claude on Vertex AI, gpt-oss-120b on Groq (text only, so a review that must see images skips it), Claude through OpenRouter, OpenAI, and Kimi K3 on NVIDIA NIM. A rung with no credentials is skipped, and one that errors or returns something unparseable falls through.
 >
-> Each review record names the model that wrote it. All 52 records in the repo today name the last rung, because each rung above it was either skipped or failing on billing or credentials. The review bar kept running through three weeks of that, which is the problem: the chain needs an alert when the rung that answered is not the one that should have.
+> Each review record names the model that wrote it. All 73 records in the repo today name the last rung, because each rung above it was either skipped or failing on billing or credentials. The review bar kept running through more than three weeks of that, which is the problem: the chain needs an alert when the rung that answered is not the one that should have.
 
 **Post 8** (488 weighted characters, image: `editorial-bar.png`)
 
@@ -134,17 +139,17 @@ If either has moved, change the copy to today's numbers or cut the sentence.
 >
 > The publish ledger writes each media id and post id the moment X returns it, so a thread cut off by a crash resumes at the next unposted reply instead of posting twice.
 
-**Post 9** (495 weighted characters)
+**Post 9** (505 weighted characters)
 
-> A post is released without a person only if its tier allows it, it was filmed and the proof covers it, it tags no one, and the editor passed it on its own verdict rather than on an override. Even then it waits out a veto window, and the release goes to our ops alerts.
+> A post is released without a person only if its tier or series allows it, it was filmed and the proof covers it, it tags no one, and the editor passed it on its own verdict rather than on an override. Even then it waits out a veto window, and the release goes to our ops alerts.
 >
 > The queue also reads its own posts back through the X API, at most every 6 hours, and learns what media, length and threads were worth over 90 days. That changes which ready post fills a slot. No deterministic check reads it.
 
-**Post 10** (454 weighted characters)
+**Post 10** (471 weighted characters)
 
 > What this does not prove: a reel shows the steps passed once, on the commit and the day in its stamp. Not on your phone, not under load, not next month, which is why the stamp is there and the record expires.
 >
-> The voice lint is regular expressions, and it has false positives: one of its engagement-ask phrases also blocks the example post in our own docs.
+> The voice lint is regular expressions, and it has false positives: one of its engagement-ask phrases blocked the example post in our own docs until we reworded it.
 >
 > The whole pipeline, every rule above, and its tests are documented here: three.ws/docs/x-content-pipeline
 ---
@@ -193,7 +198,7 @@ node_modules/ffmpeg-static/ffmpeg -ss 9 -i public/x-media/drive-copilot/reel.mp4
 ```
 
 Both reels were filmed on 2026-09-29. The queue's media rule treats a captured frame older than 21
-days as stale, so if this thread goes out after 2026-10-20, re-film the reels (`npm run x:content
+days as stale, and 2026-10-20 has passed, so before this thread goes out re-film the reels (`npm run x:content
 -- prove docs-world` and `prove drive-copilot`) and cut new frames, and update the commit and date
 in the alt text to match the new stamp.
 

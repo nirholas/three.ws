@@ -163,7 +163,7 @@ The rule above defers the *model*. The 253 KiB module that defines `<model-viewe
 
 `/create` is the smaller case and the more embarrassing one. It has exactly one viewer, in the hero card, and that viewer already deferred its model with `data-src` per the rule above. The bundle was still fetched and evaluated on load, **8,246ms of bootup**, to build a WebGL renderer for a card most visitors never touch.
 
-Both now load the element on demand, through the CDN failover chain in [src/shared/model-viewer-loader.js](../src/shared/model-viewer-loader.js) that the hardcoded `<script>` tags never had:
+Both now load the element on demand, through the CDN failover chain (jsDelivr, then cdnjs, then unpkg, pinned to one version, 4.4.0 as of 2026-10-23) in [src/shared/model-viewer-loader.js](../src/shared/model-viewer-loader.js) that the hardcoded `<script>` tags never had:
 
 - `/create` asks for it from `promoteSource()` in [src/shared/attended-rotation.js](../src/shared/attended-rotation.js), the same first attention that promotes `data-src`. Every `data-src` viewer on the platform inherits this.
 - `/discover` asks for it when a card that actually carries a GLB comes within a screen of the viewport, in [public/discover/discover.js](../public/discover/discover.js).
@@ -278,7 +278,7 @@ Verified in a browser against the dev server: `/create` and `/forge` still auto-
 
 The rule above was written about sections. The most expensive violation of it was not a section at all: it was the decorative robot in the site footer, and it was costing more than everything the rule had already caught.
 
-[public/footer.js](../public/footer.js) injects `/footer.html` into any page holding `<div id="footer-container">`, which was roughly 175 pages when this rule was written and is 269 HTML files under `pages/` and `public/` as of 2026-09-17 (`grep -rl footer-container pages/ public/ | wc -l`). It only ever grows, which is the point of the rule. That markup contains `#footer-bot-canvas`, and the injector booted its renderer immediately, at `DOMContentLoaded`, down one of two branches:
+[public/footer.js](../public/footer.js) injects `/footer.html` into any page holding `<div id="footer-container">`, which was roughly 175 pages when this rule was written and was 269 HTML files under `pages/` and `public/` on 2026-09-17 and is 328 as of 2026-10-23 (`grep -rl footer-container pages/ public/ | wc -l`). It only ever grows, which is the point of the rule. That markup contains `#footer-bot-canvas`, and the injector booted its renderer immediately, at `DOMContentLoaded`, down one of two branches:
 
 - A page carrying `<meta name="has-three-bundle">` (every Vite-built page) loaded `/footer-bot.js`, which builds a `WebGLRenderer`, claims a context off the shared budget in [src/webgl-budget.js](../src/webgl-budget.js), and loads `robotexpressive.glb`.
 - A plain HTML page (login, register, the dashboard, `/docs`, `/discover`) instead pulled **`model-viewer` from `ajax.googleapis.com`, a second complete 3D engine**, plus the meshopt shim and the same GLB.
@@ -542,5 +542,5 @@ The shape that would work is the one rule 5 used on the podium: ship the settled
 
 Two things in the numbers above are real and are not being fixed by tuning:
 
-- **`model-viewer` is a 1,587ms third-party evaluation** loaded from `ajax.googleapis.com`. It is preconnected and loaded lazily (measured arriving at 12.2s on the homepage, long after first paint), but the evaluation itself is the vendor's. Self-hosting it would move the bytes onto our CDN and change nothing about the parse cost. What *is* avoidable is paying it on a page that never mounts a viewer, which is rule 4's bundle clause.
+- **`model-viewer` is a 1,587ms third-party evaluation** (measured when it still loaded from `ajax.googleapis.com`; since the 4.4.0 move it comes from the jsDelivr, cdnjs, unpkg failover chain in [src/shared/model-viewer-loader.js](../src/shared/model-viewer-loader.js), and the evaluation cost is the same). It is preconnected and loaded lazily (measured arriving at 12.2s on the homepage, long after first paint), but the evaluation itself is the vendor's. Self-hosting it would move the bytes onto our CDN and change nothing about the parse cost. What *is* avoidable is paying it on a page that never mounts a viewer, which is rule 4's bundle clause.
 - **The homepage is a long page with a lot on it.** 14,825px of content with live 3D in the hero is a product decision, not an oversight. The rules above are what keep the parts a visitor has not reached from being charged to the parts they have.

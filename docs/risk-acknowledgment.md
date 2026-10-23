@@ -95,8 +95,13 @@ redeeming from, owner-trading and fee-claiming a [USDC vault](./vaults.md)
 (`vault-open`, `vault-resume`, `vault-deposit`, `vault-redeem`, `vault-trade`,
 `vault-claim-fees`), creating or resuming a programmable order
 (`order-create`, `order-resume`), and hiring another agent for a paid skill
-(`a2a-hire`). Pausing an order, like every other way of turning spending off,
-is not gated.
+(`a2a-hire`). The same gate also fronts the other agent money paths, each with
+its own context slug: strategies and DCA (`strategy`, `dca-create`,
+`dca-resume`), market-maker and oracle arming (`market-maker-arm`,
+`oracle-watch-arm`), the labor board (`labor-post`, `labor-award`,
+`labor-settle`), signal subscriptions, team trades, recurring payments, SNS
+registration, and the Uniswap, Robinhood Chain (Pons) and paired-quote launches.
+Pausing an order, like every other way of turning spending off, is not gated.
 
 Self-funded inference moves USDC out of the agent wallet into model credits, so
 it is gated at both ends: a credit top-up (`inference-topup`, `POST
@@ -116,8 +121,10 @@ cached, so a fresh signature takes effect on the next request.
 [`tests/real-funds-agreement-coverage.test.js`](../tests/real-funds-agreement-coverage.test.js)
 scans every route under `api/` (excluding `api/_lib/` and `api/cron/`) that
 decrypts a custodial key or imports a library that does. Each one must either
-call `requireRealFundsAgreement` or appear in the test's exemption list with a
-written reason. A new money endpoint that forgets the gate fails `npm test`.
+call `requireRealFundsAgreement` (or `currentSignatureFor` in MCP tool handlers
+that have no HTTP response), delegate to an `api/_lib` service that does (the
+perps tools), or appear in the test's exemption list with a written reason. A
+new money endpoint that forgets the gate fails `npm test`.
 
 ## The record
 
@@ -225,9 +232,14 @@ keeps the sign-in clickwrap record in step with the Terms version.
 | Tip an agent from a connected wallet | `src/shared/agent-tip-modal.js` | `tip` |
 | Master wallet: deposit, send, fund agent | `src/master-wallet.js` | `deposit`, `master-send`, `fund-agent` |
 | Oracle arm (live mode only) | `src/arm.js` | `oracle-arm` |
+| Strategy panel: equip or run a strategy with a real-funds leg | `src/shared/agent-strategy-panel.js` | `strategy` |
+| Prediction markets | `src/shared/predictions-core.js` | `prediction` |
 | Jupiter swap modal | `src/swap-jupiter.js` | `swap` |
 | pump.fun token launch | `src/pump/launch-token-modal.js` | `launch` |
 | The `/launch` launchpad: launch a coin, claim creator rewards | `src/launch/launch-page.js` | `launch`, `claim` |
+| Robinhood Chain (Pons) launch | `src/launch-robinhood/page.js` | `pons-launch` |
+| Paired-quote launch | `src/paired/launch.js` | `paired-launch` |
+| Uniswap launch | `src/uniswap-launch/page.js` | `uniswap-launch` |
 | Agent-home pump.fun buy/sell | `src/agent-home-pumpfun.js` | `pump-trade` |
 | pump.fun x402 access payment | `src/pump/pump-modals.js` | `x402-pay` |
 | Skill purchase modal | `src/payment-modal.js` | `skill-purchase` |
