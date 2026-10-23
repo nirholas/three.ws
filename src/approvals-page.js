@@ -11,6 +11,7 @@
 // API: api/approvals/*.js, api/audit-log.js. Doc: docs/approvals.md.
 
 import { apiFetch } from './api.js';
+import { injectedProvider } from './launch/launch-wallet.js';
 import { escNotif as esc, relTime } from './notifications.js';
 import { isPushSupported, getPushState, enablePush } from './push-notifications.js';
 
@@ -181,7 +182,7 @@ function cardHtml(item, { focus = false } = {}) {
 				<span class="ap-expiry${left < SOON_MS ? ' is-soon' : ''}" data-expiry="${esc(item.expires_at)}">${esc(fmtLeft(left))}</span>
 				<div class="ap-actions">
 					<button type="button" class="btn btn-deny" data-deny="${esc(item.id)}">Deny</button>
-					<button type="button" class="btn btn-approve" data-approve="${esc(item.id)}">Approve</button>
+					<button type="button" class="btn btn-approve" data-approve="${esc(item.id)}">${item.requires_wallet_signature ? 'Sign and approve' : 'Approve'}</button>
 				</div>
 			</div>`
 		: outcomeHtml(item);
@@ -197,6 +198,7 @@ function cardHtml(item, { focus = false } = {}) {
 		${tableHtml(item)}
 		${risks}
 		${gate}
+		${pending && item.requires_wallet_signature ? '<p class="ap-gate">This is above your wallet-signature threshold. Approving asks your main wallet to sign the details shown here.</p>' : ''}
 		${foot}
 		<div class="ap-card-msg" data-msg role="status"></div>
 		${focus ? `<p class="ap-hash" title="The exact action approving will run is pinned to this fingerprint">Action fingerprint ${esc(item.payload_hash)}</p>` : ''}
@@ -351,6 +353,33 @@ function outcomeMessage(req, idempotent) {
 	return ['Approved. Executing now.', 'ok'];
 }
 
+// Above the owner's wallet-signature threshold a tap is not enough: the main
+// wallet signs the exact request text. Base64 so the server can tell it apart
+// from a base58 signature by its padding.
+async function signWithOwnerWallet(message) {
+	const provider = injectedProvider();
+	if (!provider) throw new Error('This request needs your main wallet to sign it. Install or unlock a Solana wallet in this browser, then try again.');
+	let address;
+	try {
+		const resp = await provider.connect();
+		address = (resp?.publicKey || provider.publicKey)?.toString();
+	} catch {
+		throw new Error('The wallet connection was cancelled. Nothing was decided.');
+	}
+	if (!address) throw new Error('Could not read your wallet address. Nothing was decided.');
+	let signed;
+	try {
+		signed = await provider.signMessage(new TextEncoder().encode(message), 'utf8');
+	} catch {
+		throw new Error('The signature was cancelled. Nothing was decided.');
+	}
+	const bytes = signed?.signature || signed;
+	if (!(bytes instanceof Uint8Array) || bytes.length !== 64) throw new Error('Your wallet returned an unreadable signature. Nothing was decided.');
+	let bin = '';
+	for (const b of bytes) bin += String.fromCharCode(b);
+	return { address, signature: btoa(bin) };
+}
+
 async function decide(id, decision) {
 	const item = findItem(id);
 	if (!item) return;
@@ -361,6 +390,16 @@ async function decide(id, decision) {
 
 	const body = { decision, via: 'web' };
 	if (decision === 'approve') body.payload_hash = item.payload_hash;
+	if (decision === 'approve' && item.requires_wallet_signature) {
+		try {
+			body.wallet_signature = await signWithOwnerWallet(item.sign_message);
+		} catch (e) {
+			for (const c of cards) for (const b of c.querySelectorAll('[data-approve],[data-deny]')) b.disabled = false;
+			if (btn) btn.textContent = 'Sign and approve';
+			rerenderCard(id, esc(e?.message || 'Your wallet did not sign. Nothing was decided.'), 'err');
+			return;
+		}
+	}
 	if (state.focus?.id === id && state.focusToken) body.token = state.focusToken;
 
 	let r;
