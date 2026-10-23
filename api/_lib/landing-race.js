@@ -414,6 +414,11 @@ export function getLandingStats(network, store = defaultStore()) {
 	return s;
 }
 
+/** Drop the shared stats (tests, and a manual reset after a provider is repaired). */
+export function resetLandingStats() {
+	_stats.clear();
+}
+
 let _defaultStore;
 function defaultStore() {
 	if (_defaultStore !== undefined) return _defaultStore;
