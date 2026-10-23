@@ -1473,3 +1473,7 @@ this campaign, once nothing else in `prompts/finish/` references it:
 While any sibling prompt of this campaign is still on disk, leave this file in
 place and keep it accurate instead. The shrinking directory is the only signal
 to the next agent that a campaign is closed.
+
+## 2026-10-23: order 403 (agent index cursor heal) closed
+
+The `history not on node` classifier fix and its test shipped in `6e2ac65e7`; the doc row was already in `docs/ops/agent-index.md`. The live backlog was drained with `scripts/heal-agent-event-cursors.mjs --apply`: `history not on node` rows 34 to 0, healed 122, still failing 0. Final line: `agent_event_cursor now: 8/1720 erroring (0.5%)` (was 580/1720, 33.7% at measurement). The 8 residual rows are `solana rpc 429` (paid RPC quota, owner-tracked). Order 404 was already shipped (`03920b72a`, `b72233fb8`) and its file removed.
