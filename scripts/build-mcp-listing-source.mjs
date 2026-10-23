@@ -74,6 +74,16 @@ const OVERLAY = {
 			"Halve the triangle count on every mesh and export it as a new GLB.",
 		],
 	},
+	"io.github.nirholas/3d-ar-studio": {
+		tagline: "Put 3D models in someone's real room: generate, arrange, and hand back one AR link.",
+		category: "3d",
+		tags: ["ar", "augmented-reality", "3d", "gltf", "text-to-3d", "share-link"],
+		examplePrompts: [
+			"Generate a ceramic teapot and show me how it looks on my desk in AR.",
+			"Search the free model library for a mid-century armchair and a floor lamp.",
+			"Compose the armchair and the lamp into one scene and give me a single AR link to send.",
+		],
+	},
 	"io.github.nirholas/home-mcp": {
 		tagline: "Read and safely act on a real Home Assistant house: rooms, live state, scenes, gated actions.",
 		category: "home",

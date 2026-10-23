@@ -6,30 +6,30 @@
 	"totals": {
 		"all": {
 			"servers": 51,
-			"tools": 641,
-			"uniqueTools": 553,
+			"tools": 704,
+			"uniqueTools": 600,
 			"resources": 24,
 			"uniqueResources": 11,
 			"templates": 21,
 			"uniqueTemplates": 11,
-			"prompts": 39,
+			"prompts": 41,
 			"uniquePrompts": 23
 		},
 		"hosted": {
 			"servers": 10,
-			"tools": 377,
-			"uniqueTools": 334,
+			"tools": 419,
+			"uniqueTools": 377,
 			"resources": 22,
 			"uniqueResources": 9,
 			"templates": 21,
 			"uniqueTemplates": 11,
-			"prompts": 38,
+			"prompts": 40,
 			"uniquePrompts": 22
 		},
 		"stdio": {
 			"servers": 41,
-			"tools": 264,
-			"uniqueTools": 259,
+			"tools": 285,
+			"uniqueTools": 280,
 			"resources": 2,
 			"uniqueResources": 2,
 			"templates": 0,
@@ -44,13 +44,13 @@
 			"title": "three.ws",
 			"endpoint": "/api/mcp",
 			"transport": "remote",
-			"tools": 140,
-			"defaultOn": 122,
-			"readOnly": 80,
+			"tools": 149,
+			"defaultOn": 131,
+			"readOnly": 87,
 			"destructive": 19,
 			"resources": 7,
 			"templates": 10,
-			"prompts": 15,
+			"prompts": 16,
 			"auth": "oauth-or-x402"
 		},
 		{
@@ -58,13 +58,13 @@
 			"title": "Agent Wallet",
 			"endpoint": "/api/mcp-agent",
 			"transport": "remote",
-			"tools": 110,
-			"defaultOn": 84,
-			"readOnly": 53,
-			"destructive": 26,
+			"tools": 144,
+			"defaultOn": 101,
+			"readOnly": 70,
+			"destructive": 43,
 			"resources": 6,
 			"templates": 9,
-			"prompts": 9,
+			"prompts": 10,
 			"auth": "oauth-or-x402"
 		},
 		{
@@ -128,8 +128,8 @@
 			"title": "3D Studio for ChatGPT",
 			"endpoint": "/api/mcp-chatgpt",
 			"transport": "remote",
-			"tools": 9,
-			"defaultOn": 9,
+			"tools": 8,
+			"defaultOn": 8,
 			"readOnly": 1,
 			"destructive": 0,
 			"resources": 1,
@@ -185,9 +185,9 @@
 			"title": "@three-ws/mcp-server",
 			"endpoint": "npx -y @three-ws/mcp-server",
 			"transport": "stdio",
-			"tools": 25,
-			"defaultOn": 25,
-			"readOnly": 16,
+			"tools": 26,
+			"defaultOn": 26,
+			"readOnly": 17,
 			"destructive": 0,
 			"resources": 1,
 			"templates": 0,
@@ -479,9 +479,9 @@
 			"title": "@three-ws/intel-mcp",
 			"endpoint": "npx -y @three-ws/intel-mcp",
 			"transport": "stdio",
-			"tools": 6,
-			"defaultOn": 6,
-			"readOnly": 6,
+			"tools": 7,
+			"defaultOn": 7,
+			"readOnly": 7,
 			"destructive": 0,
 			"resources": 0,
 			"templates": 0,
@@ -661,9 +661,9 @@
 			"title": "@three-ws/solana-memo-media-mcp",
 			"endpoint": "npx -y @three-ws/solana-memo-media-mcp",
 			"transport": "stdio",
-			"tools": 4,
-			"defaultOn": 4,
-			"readOnly": 4,
+			"tools": 5,
+			"defaultOn": 5,
+			"readOnly": 5,
 			"destructive": 0,
 			"resources": 0,
 			"templates": 0,
@@ -745,10 +745,10 @@
 			"title": "@three-ws/x402-mcp",
 			"endpoint": "npx -y @three-ws/x402-mcp",
 			"transport": "stdio",
-			"tools": 4,
-			"defaultOn": 3,
-			"readOnly": 3,
-			"destructive": 1,
+			"tools": 22,
+			"defaultOn": 21,
+			"readOnly": 4,
+			"destructive": 18,
 			"resources": 0,
 			"templates": 0,
 			"prompts": 0,
@@ -1077,6 +1077,16 @@
 			"page": "https://three.ws/mcp-tools/mcp/pumpfun_recent_graduations"
 		},
 		{
+			"name": "pumpfun_prepare_launch",
+			"server": "mcp",
+			"title": "Prepare a pump.fun launch for a human to sign",
+			"category": "utility",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Use after the human has agreed on a name, ticker, description and image for their agent's coin.",
+			"page": "https://three.ws/mcp-tools/mcp/pumpfun_prepare_launch"
+		},
+		{
 			"name": "create_agent",
 			"server": "mcp",
 			"title": "Create an agent",
@@ -1205,6 +1215,16 @@
 			"price": 0,
 			"whenToUse": "Use this when the user explicitly wants the skill gone for good.",
 			"page": "https://three.ws/mcp-tools/mcp/delete_custom_skill"
+		},
+		{
+			"name": "list_skill_candidates",
+			"server": "mcp",
+			"title": "List suggested skills",
+			"category": "utility",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp/list_skill_candidates"
 		},
 		{
 			"name": "browse_external_skills",
@@ -2047,6 +2067,36 @@
 			"page": "https://three.ws/mcp-tools/mcp/agent_mail_delete"
 		},
 		{
+			"name": "inbox_list",
+			"server": "mcp",
+			"title": "List received mail",
+			"category": "mail",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Use this to see what mail has arrived for the agent.",
+			"page": "https://three.ws/mcp-tools/mcp/inbox_list"
+		},
+		{
+			"name": "inbox_read",
+			"server": "mcp",
+			"title": "Read a received email",
+			"category": "mail",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Use this to open one received message from inbox_list.",
+			"page": "https://three.ws/mcp-tools/mcp/inbox_read"
+		},
+		{
+			"name": "inbox_wait_for_code",
+			"server": "mcp",
+			"title": "Wait for a verification code",
+			"category": "mail",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp/inbox_wait_for_code"
+		},
+		{
 			"name": "get_whitelist",
 			"server": "mcp",
 			"title": "Get wallet allowlist",
@@ -2131,7 +2181,7 @@
 			"server": "mcp",
 			"title": "Poll a domain registration",
 			"category": "domains",
-			"safety": "read",
+			"safety": "write",
 			"price": 0,
 			"whenToUse": "Use this after domain_register to follow a registration until it is active or failed.",
 			"page": "https://three.ws/mcp-tools/mcp/domain_status"
@@ -2151,10 +2201,50 @@
 			"server": "mcp",
 			"title": "Check a connected domain",
 			"category": "domains",
-			"safety": "read",
+			"safety": "write",
 			"price": 0,
 			"whenToUse": "Use this after domain_connect to check when the domain is serving over HTTPS.",
 			"page": "https://three.ws/mcp-tools/mcp/domain_connect_status"
+		},
+		{
+			"name": "robinhood_chain_stats",
+			"server": "mcp",
+			"title": "Robinhood Chain stats",
+			"category": "utility",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Use this to check the chain is up or to get a block number.",
+			"page": "https://three.ws/mcp-tools/mcp/robinhood_chain_stats"
+		},
+		{
+			"name": "robinhood_token_prices",
+			"server": "mcp",
+			"title": "Robinhood Chain token prices",
+			"category": "utility",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp/robinhood_token_prices"
+		},
+		{
+			"name": "robinhood_recent_launches",
+			"server": "mcp",
+			"title": "Recent Robinhood Chain launches",
+			"category": "utility",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp/robinhood_recent_launches"
+		},
+		{
+			"name": "robinhood_wallet_holdings",
+			"server": "mcp",
+			"title": "Robinhood Chain wallet holdings",
+			"category": "utility",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp/robinhood_wallet_holdings"
 		},
 		{
 			"name": "getting_started",
@@ -3257,6 +3347,346 @@
 			"page": "https://three.ws/mcp-tools/mcp-agent/event_market_agent_pick"
 		},
 		{
+			"name": "weather_forecast_quote",
+			"server": "mcp-agent",
+			"title": "Price Weather Guard: Forecast without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before weather_forecast; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/weather_forecast_quote"
+		},
+		{
+			"name": "weather_forecast",
+			"server": "mcp-agent",
+			"title": "Weather Guard: Forecast",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/weather_forecast"
+		},
+		{
+			"name": "weather_go_no_go_quote",
+			"server": "mcp-agent",
+			"title": "Price Weather Guard: Activity Decision without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before weather_go_no_go; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/weather_go_no_go_quote"
+		},
+		{
+			"name": "weather_go_no_go",
+			"server": "mcp-agent",
+			"title": "Weather Guard: Activity Decision",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/weather_go_no_go"
+		},
+		{
+			"name": "carbon_now_quote",
+			"server": "mcp-agent",
+			"title": "Price Grid Carbon: Now without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before carbon_now; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/carbon_now_quote"
+		},
+		{
+			"name": "carbon_now",
+			"server": "mcp-agent",
+			"title": "Grid Carbon: Now",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/carbon_now"
+		},
+		{
+			"name": "carbon_best_window_quote",
+			"server": "mcp-agent",
+			"title": "Price Grid Carbon: Best Window without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before carbon_best_window; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/carbon_best_window_quote"
+		},
+		{
+			"name": "carbon_best_window",
+			"server": "mcp-agent",
+			"title": "Grid Carbon: Best Window",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/carbon_best_window"
+		},
+		{
+			"name": "domain_rdap_check_quote",
+			"server": "mcp-agent",
+			"title": "Price Domain Check (RDAP) without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before domain_rdap_check; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/domain_rdap_check_quote"
+		},
+		{
+			"name": "domain_rdap_check",
+			"server": "mcp-agent",
+			"title": "Domain Check (RDAP)",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/domain_rdap_check"
+		},
+		{
+			"name": "domain_rdap_check_bulk_quote",
+			"server": "mcp-agent",
+			"title": "Price Domain Check (Bulk RDAP) without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before domain_rdap_check_bulk; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/domain_rdap_check_bulk_quote"
+		},
+		{
+			"name": "domain_rdap_check_bulk",
+			"server": "mcp-agent",
+			"title": "Domain Check (Bulk RDAP)",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/domain_rdap_check_bulk"
+		},
+		{
+			"name": "research_search_quote",
+			"server": "mcp-agent",
+			"title": "Price Scholarly Search without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before research_search; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/research_search_quote"
+		},
+		{
+			"name": "research_search",
+			"server": "mcp-agent",
+			"title": "Scholarly Search",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/research_search"
+		},
+		{
+			"name": "research_paper_quote",
+			"server": "mcp-agent",
+			"title": "Price Paper Detail & Citation Graph without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before research_paper; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/research_paper_quote"
+		},
+		{
+			"name": "research_paper",
+			"server": "mcp-agent",
+			"title": "Paper Detail & Citation Graph",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/research_paper"
+		},
+		{
+			"name": "research_bibliography_quote",
+			"server": "mcp-agent",
+			"title": "Price Bibliography Formatter without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before research_bibliography; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/research_bibliography_quote"
+		},
+		{
+			"name": "research_bibliography",
+			"server": "mcp-agent",
+			"title": "Bibliography Formatter",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/research_bibliography"
+		},
+		{
+			"name": "book_search_quote",
+			"server": "mcp-agent",
+			"title": "Price Book Search without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before book_search; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/book_search_quote"
+		},
+		{
+			"name": "book_search",
+			"server": "mcp-agent",
+			"title": "Book Search",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/book_search"
+		},
+		{
+			"name": "book_read_quote",
+			"server": "mcp-agent",
+			"title": "Price Book Read without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before book_read; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/book_read_quote"
+		},
+		{
+			"name": "book_read",
+			"server": "mcp-agent",
+			"title": "Book Read",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/book_read"
+		},
+		{
+			"name": "news_wire_search_quote",
+			"server": "mcp-agent",
+			"title": "Price Global News Wire Search without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before news_wire_search; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/news_wire_search_quote"
+		},
+		{
+			"name": "news_wire_search",
+			"server": "mcp-agent",
+			"title": "Global News Wire Search",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/news_wire_search"
+		},
+		{
+			"name": "news_wire_poll_quote",
+			"server": "mcp-agent",
+			"title": "Price Global News Wire Pulse without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before news_wire_poll; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/news_wire_poll_quote"
+		},
+		{
+			"name": "news_wire_poll",
+			"server": "mcp-agent",
+			"title": "Global News Wire Pulse",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/news_wire_poll"
+		},
+		{
+			"name": "transit_plan_quote",
+			"server": "mcp-agent",
+			"title": "Price Transit Trip Plan without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before transit_plan; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/transit_plan_quote"
+		},
+		{
+			"name": "transit_plan",
+			"server": "mcp-agent",
+			"title": "Transit Trip Plan",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/transit_plan"
+		},
+		{
+			"name": "transit_delays_quote",
+			"server": "mcp-agent",
+			"title": "Price Transit Delay Snapshot without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before transit_delays; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/transit_delays_quote"
+		},
+		{
+			"name": "transit_delays",
+			"server": "mcp-agent",
+			"title": "Transit Delay Snapshot",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/transit_delays"
+		},
+		{
+			"name": "places_search_quote",
+			"server": "mcp-agent",
+			"title": "Price Places Search without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before places_search; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/places_search_quote"
+		},
+		{
+			"name": "places_search",
+			"server": "mcp-agent",
+			"title": "Places Search",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/places_search"
+		},
+		{
+			"name": "places_detail_quote",
+			"server": "mcp-agent",
+			"title": "Price Place Detail without paying",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this before places_detail; it needs the quote_id this returns.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/places_detail_quote"
+		},
+		{
+			"name": "places_detail",
+			"server": "mcp-agent",
+			"title": "Place Detail",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/places_detail"
+		},
+		{
 			"name": "getting_started",
 			"server": "mcp-3d",
 			"title": "Getting Started (free)",
@@ -3783,7 +4213,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this for a single object or creature from text; for a posable character call forge_avatar, and to change a model you already made call refine_model.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-studio/forge_free"
 		},
 		{
@@ -3793,7 +4223,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this for a character that only needs to be viewed; when it must be posed or animated call forge_avatar instead.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-studio/text_to_avatar"
 		},
 		{
@@ -3803,7 +4233,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this for a single object or prop when mesh quality matters most; for characters call text_to_avatar or forge_avatar.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-studio/mesh_forge"
 		},
 		{
@@ -3813,7 +4243,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this when you already have a static model; to generate and rig a character in one step call forge_avatar instead.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-studio/rig_mesh"
 		},
 		{
@@ -3823,7 +4253,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this when the user wants a character they can pose or animate.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-studio/forge_avatar"
 		},
 		{
@@ -3833,7 +4263,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this instead of a fresh generation when the user wants to change a model they already have.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-studio/refine_model"
 		},
 		{
@@ -3843,18 +4273,8 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this when the user is waiting to see the finished model; for quiet polling on a schedule call get_job instead.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-studio/check_job"
-		},
-		{
-			"name": "get_job",
-			"server": "mcp-studio",
-			"title": "Get the status of a 3D job",
-			"category": "assets",
-			"safety": "write",
-			"price": 0,
-			"whenToUse": "Use this to poll a pending job from code or a loop; call check_job with the same job_id when you want the finished model rendered in the inline viewer.",
-			"page": "https://three.ws/mcp-tools/mcp-studio/get_job"
 		},
 		{
 			"name": "look_at_model",
@@ -3863,8 +4283,18 @@
 			"category": "assets",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": "Use it to check your own work right after generating: is the subject complete, is the back finished, is anything melted or fused?",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-studio/look_at_model"
+		},
+		{
+			"name": "get_job",
+			"server": "mcp-studio",
+			"title": "Get a 3D generation job",
+			"category": "assets",
+			"safety": "write",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-studio/get_job"
 		},
 		{
 			"name": "search_catalog",
@@ -3933,7 +4363,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this for a single object or creature from text; for a posable character call forge_avatar, and to change a model you already made call refine_model.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/forge_free"
 		},
 		{
@@ -3943,7 +4373,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this for a character that only needs to be viewed; when it must be posed or animated call forge_avatar instead.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/text_to_avatar"
 		},
 		{
@@ -3953,7 +4383,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this for a single object or prop when mesh quality matters most; for characters call text_to_avatar or forge_avatar.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/mesh_forge"
 		},
 		{
@@ -3963,7 +4393,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this when you already have a static model; to generate and rig a character in one step call forge_avatar instead.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/rig_mesh"
 		},
 		{
@@ -3973,7 +4403,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this when the user wants a character they can pose or animate.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/forge_avatar"
 		},
 		{
@@ -3983,7 +4413,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this instead of a fresh generation when the user wants to change a model they already have.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/refine_model"
 		},
 		{
@@ -3993,18 +4423,8 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this when the user is waiting to see the finished model; for quiet polling on a schedule call get_job instead.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/check_job"
-		},
-		{
-			"name": "get_job",
-			"server": "mcp-chatgpt",
-			"title": "Get the status of a 3D job",
-			"category": "assets",
-			"safety": "write",
-			"price": 0,
-			"whenToUse": "Use this to poll a pending job from code or a loop; call check_job with the same job_id when you want the finished model rendered in the inline viewer.",
-			"page": "https://three.ws/mcp-tools/mcp-chatgpt/get_job"
 		},
 		{
 			"name": "look_at_model",
@@ -4013,7 +4433,7 @@
 			"category": "assets",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": "Use it to check your own work right after generating: is the subject complete, is the back finished, is anything melted or fused?",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/look_at_model"
 		},
 		{
@@ -4023,7 +4443,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this for a single object or creature from text; for a posable character call forge_avatar, and to change a model you already made call refine_model.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-grok/forge_free"
 		},
 		{
@@ -4033,7 +4453,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this for a character that only needs to be viewed; when it must be posed or animated call forge_avatar instead.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-grok/text_to_avatar"
 		},
 		{
@@ -4043,7 +4463,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this for a single object or prop when mesh quality matters most; for characters call text_to_avatar or forge_avatar.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-grok/mesh_forge"
 		},
 		{
@@ -4053,7 +4473,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this when you already have a static model; to generate and rig a character in one step call forge_avatar instead.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-grok/rig_mesh"
 		},
 		{
@@ -4063,7 +4483,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this when the user wants a character they can pose or animate.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-grok/forge_avatar"
 		},
 		{
@@ -4073,7 +4493,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this instead of a fresh generation when the user wants to change a model they already have.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-grok/refine_model"
 		},
 		{
@@ -4083,18 +4503,8 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Use this when the user is waiting to see the finished model; for quiet polling on a schedule call get_job instead.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-grok/check_job"
-		},
-		{
-			"name": "get_job",
-			"server": "mcp-grok",
-			"title": "Get the status of a 3D job",
-			"category": "assets",
-			"safety": "write",
-			"price": 0,
-			"whenToUse": "Use this to poll a pending job from code or a loop; call check_job with the same job_id when you want the finished model rendered in the inline viewer.",
-			"page": "https://three.ws/mcp-tools/mcp-grok/get_job"
 		},
 		{
 			"name": "look_at_model",
@@ -4103,8 +4513,18 @@
 			"category": "assets",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": "Use it to check your own work right after generating: is the subject complete, is the back finished, is anything melted or fused?",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/mcp-grok/look_at_model"
+		},
+		{
+			"name": "get_job",
+			"server": "mcp-grok",
+			"title": "Get a 3D generation job",
+			"category": "assets",
+			"safety": "write",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-grok/get_job"
 		},
 		{
 			"name": "search_catalog",
@@ -4755,6 +5175,16 @@
 			"price": 0,
 			"whenToUse": "Use this for raw, filterable headlines; for the day grouped into stories use crypto_news_digest, and for coverage older than a few days use crypto_news_archive.",
 			"page": "https://three.ws/mcp-tools/three-ws-mcp-server/crypto_news"
+		},
+		{
+			"name": "news_resolve",
+			"server": "three-ws-mcp-server",
+			"title": "Resolve a news article (excerpt, analysis, trading read)",
+			"category": "utility",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/three-ws-mcp-server/news_resolve"
 		},
 		{
 			"name": "crypto_news_digest",
@@ -5903,7 +6333,7 @@
 			"category": "integrations",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": "Use this first whenever a person asks for a scene, so they see what would run before anything does.",
+			"whenToUse": null,
 			"page": "https://three.ws/mcp-tools/home-mcp/preview_macro"
 		},
 		{
@@ -6055,6 +6485,16 @@
 			"price": 0,
 			"whenToUse": "Use this to vet one wallet before copying it or trusting its buys; to judge a coin by its buyers call smart_money_coin instead.",
 			"page": "https://three.ws/mcp-tools/intel-mcp/wallet_intel"
+		},
+		{
+			"name": "wallet_linkage",
+			"server": "intel-mcp",
+			"title": "Wallet linkage: same-controller scoring across 2-10 addresses",
+			"category": "utility",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Use this to check whether a coin's early buyers are independent, or the creator's own alts, or whether a copy-trade leader secretly controls the creator wallet of a coin they are pumping.",
+			"page": "https://three.ws/mcp-tools/intel-mcp/wallet_linkage"
 		},
 		{
 			"name": "signal_feed",
@@ -6927,6 +7367,16 @@
 			"page": "https://three.ws/mcp-tools/solana-memo-media-mcp/find_solana_memo_media"
 		},
 		{
+			"name": "read_inscription",
+			"server": "solana-memo-media-mcp",
+			"title": "Read and verify a multi-part Solana memo inscription",
+			"category": "utility",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/solana-memo-media-mcp/read_inscription"
+		},
+		{
 			"name": "get_solana_memo_media_status",
 			"server": "solana-memo-media-mcp",
 			"title": "Solana memo media capability",
@@ -7165,6 +7615,186 @@
 			"price": 0,
 			"whenToUse": "Use this after inspect_endpoint has shown the price and the user has approved paying it; a settled payment cannot be undone.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/pay_and_call"
+		},
+		{
+			"name": "spending_report",
+			"server": "x402-mcp",
+			"title": "This wallet's x402 spending report (totals by merchant and day)",
+			"category": "x402",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/spending_report"
+		},
+		{
+			"name": "weather_forecast",
+			"server": "x402-mcp",
+			"title": "Weather Guard: Forecast",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/weather_forecast"
+		},
+		{
+			"name": "weather_go_no_go",
+			"server": "x402-mcp",
+			"title": "Weather Guard: Activity Decision",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/weather_go_no_go"
+		},
+		{
+			"name": "carbon_now",
+			"server": "x402-mcp",
+			"title": "Grid Carbon: Now",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/carbon_now"
+		},
+		{
+			"name": "carbon_best_window",
+			"server": "x402-mcp",
+			"title": "Grid Carbon: Best Window",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/carbon_best_window"
+		},
+		{
+			"name": "domain_rdap_check",
+			"server": "x402-mcp",
+			"title": "Domain Check (RDAP)",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/domain_rdap_check"
+		},
+		{
+			"name": "domain_rdap_check_bulk",
+			"server": "x402-mcp",
+			"title": "Domain Check (Bulk RDAP)",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/domain_rdap_check_bulk"
+		},
+		{
+			"name": "research_search",
+			"server": "x402-mcp",
+			"title": "Scholarly Search",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/research_search"
+		},
+		{
+			"name": "research_paper",
+			"server": "x402-mcp",
+			"title": "Paper Detail & Citation Graph",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/research_paper"
+		},
+		{
+			"name": "research_bibliography",
+			"server": "x402-mcp",
+			"title": "Bibliography Formatter",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/research_bibliography"
+		},
+		{
+			"name": "book_search",
+			"server": "x402-mcp",
+			"title": "Book Search",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/book_search"
+		},
+		{
+			"name": "book_read",
+			"server": "x402-mcp",
+			"title": "Book Read",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/book_read"
+		},
+		{
+			"name": "news_wire_search",
+			"server": "x402-mcp",
+			"title": "Global News Wire Search",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/news_wire_search"
+		},
+		{
+			"name": "news_wire_poll",
+			"server": "x402-mcp",
+			"title": "Global News Wire Pulse",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/news_wire_poll"
+		},
+		{
+			"name": "transit_plan",
+			"server": "x402-mcp",
+			"title": "Transit Trip Plan",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/transit_plan"
+		},
+		{
+			"name": "transit_delays",
+			"server": "x402-mcp",
+			"title": "Transit Delay Snapshot",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/transit_delays"
+		},
+		{
+			"name": "places_search",
+			"server": "x402-mcp",
+			"title": "Places Search",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/places_search"
+		},
+		{
+			"name": "places_detail",
+			"server": "x402-mcp",
+			"title": "Place Detail",
+			"category": "x402",
+			"safety": "irreversible",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/x402-mcp/places_detail"
 		}
 	]
 }

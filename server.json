@@ -210,11 +210,6 @@
 					"name": "agent-report",
 					"title": "Agent status report",
 					"arguments": ["agentId"]
-				},
-				{
-					"name": "agent-report",
-					"title": "Agent status report",
-					"arguments": ["focus"]
 				}
 			]
 		}

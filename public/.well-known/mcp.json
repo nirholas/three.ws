@@ -181,7 +181,6 @@
 				"predictions",
 				"embed-avatar",
 				"agent-get-started",
-				"agent-report",
 				"agent-report"
 			]
 		},
@@ -192,19 +191,9 @@
 			"auth": "OAuth 2.1 or x402 pay-per-call",
 			"description": "Paid text-to-3D and image-to-3D generation, rigging, retexture, and optimization.",
 			"documentation": "https://three.ws/docs/mcp-3d-studio",
-			"resources": [
-				"three://me",
-				"three://agents",
-				"three://models"
-			],
-			"resourceTemplates": [
-				"three://agents/{agentId}",
-				"three://assets/{id}"
-			],
-			"prompts": [
-				"get-started",
-				"generate-3d"
-			]
+			"resources": ["three://me", "three://agents", "three://models"],
+			"resourceTemplates": ["three://agents/{agentId}", "three://assets/{id}"],
+			"prompts": ["get-started", "generate-3d"]
 		},
 		{
 			"name": "3D Studio (free)",
@@ -213,12 +202,7 @@
 			"auth": "none",
 			"description": "Free text-to-3D, image-to-3D, rigged avatars, persistent talking personas, and a search of the ready-made asset catalog. No account, no payment.",
 			"documentation": "https://three.ws/docs/mcp-studio",
-			"prompts": [
-				"agent-get-started",
-				"daily-3d-brief",
-				"asset-pack",
-				"avatar-from-photo"
-			]
+			"prompts": ["agent-get-started", "daily-3d-brief", "asset-pack", "avatar-from-photo"]
 		},
 		{
 			"name": "Grok",
@@ -282,18 +266,9 @@
 			"auth": "OAuth 2.1 or x402",
 			"description": "Discover, browse, and price paid agent services across the x402 facilitator network.",
 			"documentation": "https://three.ws/docs/mcp-x402-bazaar",
-			"resources": [
-				"three://me",
-				"three://x402/services",
-				"three://marketplace"
-			],
+			"resources": ["three://me", "three://x402/services", "three://marketplace"],
 			"resourceTemplates": [],
-			"prompts": [
-				"get-started",
-				"hire-agent",
-				"explore-marketplace",
-				"explore-x402"
-			]
+			"prompts": ["get-started", "hire-agent", "explore-marketplace", "explore-x402"]
 		},
 		{
 			"name": "pump.fun",

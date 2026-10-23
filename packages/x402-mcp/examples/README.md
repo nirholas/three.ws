@@ -63,7 +63,7 @@ tools:        22
 6. weather_forecast
    hints: destructive, open-world
 
-... (16 more named tools: weather_go_no_go, carbon_now, carbon_best_window,
+... (16 more named tools: weather_go_no_go, carbon_now, carbon_best_window, <!-- mcp-count-ignore -->
     domain_rdap_check, domain_rdap_check_bulk, research_search, research_paper,
     research_bibliography, book_search, book_read, news_wire_search,
     news_wire_poll, transit_plan, transit_delays, places_search, places_detail)

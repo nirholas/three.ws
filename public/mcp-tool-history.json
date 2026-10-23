@@ -1011,6 +1011,97 @@
 				"removed": 0,
 				"total": 641
 			}
+		},
+		{
+			"date": "2026-10-23",
+			"added": {
+				"intel-mcp": [
+					"wallet_linkage"
+				],
+				"mcp-agent": [
+					"book_read",
+					"book_read_quote",
+					"book_search",
+					"book_search_quote",
+					"carbon_best_window",
+					"carbon_best_window_quote",
+					"carbon_now",
+					"carbon_now_quote",
+					"domain_rdap_check",
+					"domain_rdap_check_bulk",
+					"domain_rdap_check_bulk_quote",
+					"domain_rdap_check_quote",
+					"news_wire_poll",
+					"news_wire_poll_quote",
+					"news_wire_search",
+					"news_wire_search_quote",
+					"places_detail",
+					"places_detail_quote",
+					"places_search",
+					"places_search_quote",
+					"research_bibliography",
+					"research_bibliography_quote",
+					"research_paper",
+					"research_paper_quote",
+					"research_search",
+					"research_search_quote",
+					"transit_delays",
+					"transit_delays_quote",
+					"transit_plan",
+					"transit_plan_quote",
+					"weather_forecast",
+					"weather_forecast_quote",
+					"weather_go_no_go",
+					"weather_go_no_go_quote"
+				],
+				"mcp": [
+					"inbox_list",
+					"inbox_read",
+					"inbox_wait_for_code",
+					"list_skill_candidates",
+					"pumpfun_prepare_launch",
+					"robinhood_chain_stats",
+					"robinhood_recent_launches",
+					"robinhood_token_prices",
+					"robinhood_wallet_holdings"
+				],
+				"solana-memo-media-mcp": [
+					"read_inscription"
+				],
+				"three-ws-mcp-server": [
+					"news_resolve"
+				],
+				"x402-mcp": [
+					"book_read",
+					"book_search",
+					"carbon_best_window",
+					"carbon_now",
+					"domain_rdap_check",
+					"domain_rdap_check_bulk",
+					"news_wire_poll",
+					"news_wire_search",
+					"places_detail",
+					"places_search",
+					"research_bibliography",
+					"research_paper",
+					"research_search",
+					"spending_report",
+					"transit_delays",
+					"transit_plan",
+					"weather_forecast",
+					"weather_go_no_go"
+				]
+			},
+			"removed": {
+				"mcp-chatgpt": [
+					"get_job"
+				]
+			},
+			"counts": {
+				"added": 64,
+				"removed": 1,
+				"total": 704
+			}
 		}
 	]
 }

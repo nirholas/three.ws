@@ -23,9 +23,9 @@
     "icon": "Card/avatar image on all directories."
   },
   "counts": {
-    "total": 53,
+    "total": 54,
     "remote": 8,
-    "stdio": 45
+    "stdio": 46
   },
   "servers": [
     {
@@ -84,6 +84,36 @@
       "websiteUrl": "https://three.ws",
       "repository": "https://github.com/nirholas/three.ws",
       "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2F3D-AI-Agent-Avatar",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/3d-ar-studio",
+      "title": "3D AR Studio",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y 3d-ar-studio-mcp",
+      "npmPackage": "3d-ar-studio-mcp",
+      "version": "0.3.2",
+      "description": "Put 3D models in someone's real room: generate, arrange, and hand back one AR link.",
+      "tagline": "Put 3D models in someone's real room: generate, arrange, and hand back one AR link.",
+      "category": "3d",
+      "tags": [
+        "ar",
+        "augmented-reality",
+        "3d",
+        "gltf",
+        "text-to-3d",
+        "share-link"
+      ],
+      "examplePrompts": [
+        "Generate a ceramic teapot and show me how it looks on my desk in AR.",
+        "Search the free model library for a mid-century armchair and a floor lamp.",
+        "Compose the armchair and the lamp into one scene and give me a single AR link to send."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://nirholas.github.io/3D-AR-Studio/",
+      "repository": "https://github.com/nirholas/3D-AR-Studio",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2F3d-ar-studio",
       "icon": "https://three.ws/three-ws-mcp-icon.svg"
     },
     {

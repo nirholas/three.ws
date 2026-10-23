@@ -70,7 +70,7 @@ claude mcp add x402 --env SOLANA_SECRET_KEY=<base58> -- npx -y @three-ws/x402-mc
 | `pay_and_call`     | **execution** | Pay an x402 endpoint in USDC from your Solana key and return its result. Bounded by `MAX_PAY_USD`.        |
 | `spending_report`  | read-only     | Totals of everything `pay_and_call` and the named tools below have paid, by merchant and by day.          |
 
-Plus 17 named tools, one per fixed three.ws x402 service, each cheaper for a model to call correctly than composing a raw `pay_and_call(url)`:
+Plus 17 named tools, one per fixed three.ws x402 service, each cheaper for a model to call correctly than composing a raw `pay_and_call(url)`: <!-- mcp-count-ignore -->
 
 | Tool                     | Price   | Endpoint                        |
 | ------------------------ | ------- | -------------------------------- |

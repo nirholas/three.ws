@@ -17,7 +17,7 @@ to skill sales and creator fees.
 | Owner console | [/commerce](https://three.ws/commerce) (also `/invoices`): Invoices, Offers, Purchases and Limit requests tabs | [pages/commerce.html](../pages/commerce.html), [src/commerce-page.js](../src/commerce-page.js) |
 | Public invoice and receipt page | `/invoices/<id>`: amount, Solana Pay QR and link, status timeline, "I've paid" check, receipt once paid | [pages/agent-invoice.html](../pages/agent-invoice.html), [src/agent-invoice-page.js](../src/agent-invoice-page.js) |
 | REST API | `/api/agent-commerce/*` (v1 envelope, scopes, CSRF, Idempotency-Key) | [api/_lib/agent-commerce/routes.js](../api/_lib/agent-commerce/routes.js) |
-| MCP tools | 13 tools on the agent wallet server, `https://three.ws/api/mcp-agent`, group `commerce` | [api/_mcpagent/commerce-tools.js](../api/_mcpagent/commerce-tools.js) |
+| MCP tools | 13 tools on the agent wallet server, `https://three.ws/api/mcp-agent`, group `commerce` | [api/_mcpagent/commerce-tools.js](../api/_mcpagent/commerce-tools.js) | <!-- mcp-count-ignore -->
 | Invoice watcher | `/api/cron/agent-invoice-watch`, every minute | [api/cron/agent-invoice-watch.js](../api/cron/agent-invoice-watch.js) |
 | Invoices, Solana Pay, verification | server | [invoices.js](../api/_lib/agent-commerce/invoices.js), [solana-pay.js](../api/_lib/agent-commerce/solana-pay.js) |
 | Sends, offers, limit requests, step-up | server | [send.js](../api/_lib/agent-commerce/send.js), [offers.js](../api/_lib/agent-commerce/offers.js), [limit-requests.js](../api/_lib/agent-commerce/limit-requests.js), [step-up.js](../api/_lib/agent-commerce/step-up.js) |

@@ -632,6 +632,14 @@
 			"schemaHash": "235b5953bcf3"
 		},
 		{
+			"name": "list_skill_candidates",
+			"title": "List suggested skills",
+			"descHead": "List the skills an agent suggested for itself after a run that verifiabl",
+			"descHash": "e3cc1c056bcf",
+			"annotations": "ref:READ",
+			"schemaHash": "519bb28e0243"
+		},
+		{
 			"name": "update_custom_skill",
 			"title": "Edit or toggle a custom skill",
 			"descHead": "Edit a custom skill on your agent: rename it, rewrite its instructions, ",
@@ -662,7 +670,7 @@
 			"title": "Check a connected domain",
 			"descHead": "Whether a connected domain is live: the certificate state, the DNS names",
 			"descHash": "2878fd9f409a",
-			"annotations": "ref:READ",
+			"annotations": "ref:SETTLE",
 			"schemaHash": "5a390848d5ae"
 		},
 		{
@@ -702,7 +710,7 @@
 			"title": "Poll a domain registration",
 			"descHead": "The state of a registration you started: registering, active (with its e",
 			"descHash": "c8f231ab5351",
-			"annotations": "ref:READ",
+			"annotations": "ref:SETTLE",
 			"schemaHash": "1f18b648f326"
 		}
 	],
@@ -1211,6 +1219,40 @@
 				"openWorldHint": false
 			},
 			"schemaHash": "046b33e27fe6"
+		}
+	],
+	"api/_mcp/tools/robinhood.js": [
+		{
+			"name": "robinhood_chain_stats",
+			"title": "Robinhood Chain stats",
+			"descHead": "Live Robinhood Chain (chain id 4663, an Arbitrum Orbit L2 with ETH gas) ",
+			"descHash": "77a46a67148f",
+			"annotations": "ref:READ",
+			"schemaHash": "b3761fba59a0"
+		},
+		{
+			"name": "robinhood_recent_launches",
+			"title": "Recent Robinhood Chain launches",
+			"descHead": "The newest coins launched on Robinhood Chain launchpads (The Odyssey bon",
+			"descHash": "b35ba3318725",
+			"annotations": "ref:READ",
+			"schemaHash": "0fc66100786c"
+		},
+		{
+			"name": "robinhood_token_prices",
+			"title": "Robinhood Chain token prices",
+			"descHead": "Live USD prices for tokens on Robinhood Chain. Pass registry Stock Token",
+			"descHash": "a316b1a9bf72",
+			"annotations": "ref:READ",
+			"schemaHash": "51d6cfcc172d"
+		},
+		{
+			"name": "robinhood_wallet_holdings",
+			"title": "Robinhood Chain wallet holdings",
+			"descHead": "Everything a wallet holds on Robinhood Chain: native ETH plus every ERC-",
+			"descHash": "51330ef32e14",
+			"annotations": "ref:READ",
+			"schemaHash": "3ef9c673a1c8"
 		}
 	],
 	"api/_mcp/tools/sign.js": [
@@ -2395,7 +2437,7 @@
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "ea83fa92b037"
+			"schemaHash": "24f996bd8131"
 		}
 	],
 	"packages/alerts-mcp/src/tools/delete-alert-rule.js": [
@@ -2425,7 +2467,7 @@
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "57448d8a874a"
+			"schemaHash": "3f98214061b6"
 		}
 	],
 	"packages/alerts-mcp/src/tools/list-alert-rules.js": [
@@ -2455,7 +2497,7 @@
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
-			"schemaHash": "28c55131a59d"
+			"schemaHash": "55bf4751606a"
 		}
 	],
 	"packages/assistant-mcp/src/tools/build-assistant-widget.js": [
@@ -3729,6 +3771,21 @@
 			"schemaHash": "e8343ba727ea"
 		}
 	],
+	"packages/intel-mcp/src/tools/wallet-linkage.js": [
+		{
+			"name": "wallet_linkage",
+			"title": "Wallet linkage: same-controller scoring across 2-10 addresses",
+			"descHead": "Cross-check 2 to 10 Solana addresses for shared control. Each pair gets ",
+			"descHash": "026875970cf1",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "149a6e87ffa4"
+		}
+	],
 	"packages/knock-mcp/src/tools/act.js": [
 		{
 			"name": "knock_act",
@@ -4624,6 +4681,21 @@
 			"schemaHash": "5e606dfa40ee"
 		}
 	],
+	"packages/solana-memo-media-mcp/src/tools/read-inscription.js": [
+		{
+			"name": "read_inscription",
+			"title": "Read and verify a multi-part Solana memo inscription",
+			"descHead": "Rebuild a file or message that was written across several Solana memo tr",
+			"descHash": "302387ca6bd9",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "37f74597554f"
+		}
+	],
 	"packages/solana-memo-media-mcp/src/tools/status.js": [
 		{
 			"name": "get_solana_memo_media_status",
@@ -4914,7 +4986,7 @@
 			"name": "pay_and_call",
 			"title": "Pay an x402 endpoint in USDC or $THREE and return its result",
 			"descHead": "Call a paid x402 endpoint and settle the payment automatically, then ret",
-			"descHash": "0507a1984716",
+			"descHash": "224364d23070",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": true,
@@ -4922,6 +4994,21 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "11dd41d810ab"
+		}
+	],
+	"packages/x402-mcp/src/tools/spending-report.js": [
+		{
+			"name": "spending_report",
+			"title": "This wallet's x402 spending report (totals by merchant and day)",
+			"descHead": "Report what this wallet has spent through pay_and_call and the named ser",
+			"descHash": "f9fa5f23a93e",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "9a3c36f08d6b"
 		}
 	],
 	"packages/x402-mcp/src/tools/x402-wallet.js": [

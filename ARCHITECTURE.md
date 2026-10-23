@@ -980,16 +980,16 @@ All remote servers implement **MCP 2025-06-18 Streamable HTTP transport** (JSON-
 
 | Server | Endpoint | Tools | Auth | Registry ID |
 |--------|----------|-------|------|-------------|
-| Main | `/api/mcp` | <!-- mcp-count:mcp.tools -->140<!-- /mcp-count --> | OAuth or x402 USDC | `io.github.nirholas/three.ws` |
+| Main | `/api/mcp` | <!-- mcp-count:mcp.tools -->149<!-- /mcp-count --> | OAuth or x402 USDC | `io.github.nirholas/three.ws` |
 | 3D Studio | `/api/mcp-3d` | <!-- mcp-count:mcp-3d.tools -->40<!-- /mcp-count --> | OAuth or x402 USDC | `io.github.nirholas/threews-3d-studio` |
 | Free Studio | `/api/mcp-studio` |<!-- mcp-count:mcp-studio.tools -->15<!-- /mcp-count --> | None (operator-funded) | `io.github.nirholas/threews-3d-studio-free` |
-| Agent Wallet | `/api/mcp-agent` | <!-- mcp-count:mcp-agent.tools -->104<!-- /mcp-count --> | OAuth | `io.github.nirholas/threews-agent` |
+| Agent Wallet | `/api/mcp-agent` | <!-- mcp-count:mcp-agent.tools -->144<!-- /mcp-count --> | OAuth | `io.github.nirholas/threews-agent` |
 | Bazaar | `/api/mcp-bazaar` | <!-- mcp-count:mcp-bazaar.tools -->6<!-- /mcp-count --> | None / OAuth | `io.github.nirholas/threews-x402-bazaar` |
 | IBM Granite | `/api/ibm-mcp` | <!-- mcp-count:ibm-mcp.tools -->6<!-- /mcp-count --> | x402 or OAuth | `io.github.nirholas/ibm-x402-mcp-remote` |
 | pump.fun | `/api/pump-fun-mcp` | <!-- mcp-count:pump-fun-mcp.tools -->25<!-- /mcp-count --> | None (open CORS) | `io.github.nirholas/threews-pumpfun` |
 | Viewer Control | `/api/chat/mcp` | <!-- mcp-count:chat-mcp.tools -->11<!-- /mcp-count --> | None | (unlisted) |
 
-#### `/api/mcp`: Main Server Tools (<!-- mcp-count:mcp.tools -->140<!-- /mcp-count --> tools)
+#### `/api/mcp`: Main Server Tools (<!-- mcp-count:mcp.tools -->149<!-- /mcp-count --> tools)
 
 Highlights below. Every tool on every server, with its schema, hints and price, is listed on [/mcp-tools](https://three.ws/mcp-tools) and in [/tools.json](https://three.ws/tools.json); the counts in this section are checked against that census by `npm run check:mcp-counts`.
 
@@ -1003,7 +1003,7 @@ Highlights below. Every tool on every server, with its schema, hints and price, 
 
 `forge_free` · `text_to_avatar` · `mesh_forge` · `rig_mesh` · `forge_avatar` · `refine_model` · `check_job` · `get_job` · `look_at_model` · `search_catalog` · `get_catalog_item` · `get_item_source` · `create_agent_persona` · `get_agent_persona` · `persona_say`
 
-#### `/api/mcp-agent`: Agent Wallet Tools (<!-- mcp-count:mcp-agent.tools -->104<!-- /mcp-count --> tools)
+#### `/api/mcp-agent`: Agent Wallet Tools (<!-- mcp-count:mcp-agent.tools -->144<!-- /mcp-count --> tools)
 
 The wallet core is `wallet_status` · `find_services` · `pay_and_call` · `provision_wallet` · `monetize_endpoint`; the rest of the server covers the agent's trading, strategy, portfolio, alert, commerce and lifecycle tools (full list on [/mcp-tools](https://three.ws/mcp-tools?server=mcp-agent)).
 
@@ -1048,13 +1048,13 @@ The wallet core is `wallet_status` · `find_services` · `pay_and_call` · `prov
 | `@three-ws/three-token-mcp` | 1.1.0 |<!-- mcp-count:three-token-mcp.tools -->3<!-- /mcp-count --> | `three_price`, `three_balance`, `three_burn` |
 | `@three-ws/ibm-watsonx-mcp` | 0.2.0 |<!-- mcp-count:ibm-watsonx-mcp.tools -->6<!-- /mcp-count --> | IBM Granite chat/gen/embed/tokenize/models (direct IBM Cloud) |
 | `@three-ws/ibm-x402-mcp` | 1.1.0 |<!-- mcp-count:ibm-x402-mcp.tools -->6<!-- /mcp-count --> | IBM Granite via x402 pay-per-call (no IBM account needed) |
-| `@three-ws/x402-mcp` | 0.2.0 |<!-- mcp-count:x402-mcp.tools -->4<!-- /mcp-count --> | Self-custodial x402 wallet: search bazaar, pay_and_call |
+| `@three-ws/x402-mcp` | 0.2.0 |<!-- mcp-count:x402-mcp.tools -->22<!-- /mcp-count --> | Self-custodial x402 wallet: search bazaar, pay_and_call |
 | `@three-ws/avatar-mcp` | 0.3.0 |<!-- mcp-count:threews-avatar-mcp.tools -->3<!-- /mcp-count --> | Avatar creation, animation, rendering |
 | `@three-ws/agora-mcp` | 0.1.0 |<!-- mcp-count:agora-mcp.tools -->11<!-- /mcp-count --> | Agora economy: board, register, claim/post tasks, passport, citizens |
 | `@three-ws/activity-mcp` | 0.1.0 |<!-- mcp-count:activity-mcp.tools -->5<!-- /mcp-count --> | Holder leaderboard, trending coins, agents, feed events |
 | `@three-ws/alerts-mcp` | 0.1.0 |<!-- mcp-count:alerts-mcp.tools -->5<!-- /mcp-count --> | pump.fun alert rules with Telegram/webhook delivery |
 | `@three-ws/clash-mcp` | 0.1.0 |<!-- mcp-count:clash-mcp.tools -->4<!-- /mcp-count --> | Coin Clash: state, leaderboard, enlist, rally |
-| `@three-ws/intel-mcp` | 0.1.0 |<!-- mcp-count:intel-mcp.tools -->6<!-- /mcp-count --> | Signal feed, smart money, wallet intel, KOL data |
+| `@three-ws/intel-mcp` | 0.1.0 |<!-- mcp-count:intel-mcp.tools -->7<!-- /mcp-count --> | Signal feed, smart money, wallet intel, KOL data |
 | `@three-ws/brain-mcp` | 0.1.0 |<!-- mcp-count:brain-mcp.tools -->2<!-- /mcp-count --> | `list_providers`, `chat` (20+ LLM providers) |
 | `@three-ws/vision-mcp` | 0.1.0 |<!-- mcp-count:vision-mcp.tools -->3<!-- /mcp-count --> | `analyze_image`, `describe_image`, `get_vision_status` |
 | `@three-ws/audio-mcp` | 0.1.0 |<!-- mcp-count:audio-mcp.tools -->5<!-- /mcp-count --> | TTS, STT, Audio2Face-3D, mocap clips |
@@ -2702,7 +2702,7 @@ The seeder autonomously mass-produces public, rigged 3D avatars into the `avatar
 
 | Package | Version | Tools |
 |---------|---------|-------|
-| `@three-ws/mcp-server` | 1.2.0 | <!-- mcp-count:three-ws-mcp-server.tools -->25<!-- /mcp-count --> tools, <!-- mcp-count:three-ws-mcp-server.paid -->20<!-- /mcp-count --> of them paid (Solana x402) |
+| `@three-ws/mcp-server` | 1.2.0 | <!-- mcp-count:three-ws-mcp-server.tools -->26<!-- /mcp-count --> tools, <!-- mcp-count:three-ws-mcp-server.paid -->20<!-- /mcp-count --> of them paid (Solana x402) |
 | `@three-ws/mcp-bridge` | 1.0.0 | 3 static + 20 dynamic Bazaar tools |
 | `@three-ws/avatar-agent` | 1.2.0 | <!-- mcp-count:avatar-agent-mcp.tools -->24<!-- /mcp-count --> tools (GLB, avatar, voice, wallet) |
 | `@three-ws/pumpfun-mcp` | 0.2.1 |<!-- mcp-count:pumpfun-mcp.tools -->23<!-- /mcp-count --> pump.fun read-only tools |
@@ -2710,7 +2710,7 @@ The seeder autonomously mass-produces public, rigged 3D avatars into the `avatar
 | `@three-ws/ibm-watsonx-mcp` | 0.2.0 |<!-- mcp-count:ibm-watsonx-mcp.tools -->6<!-- /mcp-count --> IBM Granite tools |
 | `@three-ws/ibm-x402-mcp` | 1.1.0 |<!-- mcp-count:ibm-x402-mcp.tools -->6<!-- /mcp-count --> IBM Granite x402 tools |
 | `@three-ws/autopilot-mcp` | 0.2.0 |<!-- mcp-count:autopilot-mcp.tools -->11<!-- /mcp-count --> agent autopilot tools |
-| `@three-ws/x402-mcp` | 0.2.0 |<!-- mcp-count:x402-mcp.tools -->4<!-- /mcp-count --> x402 wallet tools |
+| `@three-ws/x402-mcp` | 0.2.0 |<!-- mcp-count:x402-mcp.tools -->22<!-- /mcp-count --> x402 wallet tools |
 | `@three-ws/avatar-mcp` | 0.3.0 |<!-- mcp-count:threews-avatar-mcp.tools -->3<!-- /mcp-count --> avatar tools |
 | `@three-ws/agora-mcp` | 0.1.0 |<!-- mcp-count:agora-mcp.tools -->11<!-- /mcp-count --> Agora economy tools |
 | `@three-ws/clash-mcp` | 0.1.0 |<!-- mcp-count:clash-mcp.tools -->4<!-- /mcp-count --> Coin Clash tools |
@@ -2719,7 +2719,7 @@ The seeder autonomously mass-produces public, rigged 3D avatars into the `avatar
 | `@three-ws/brain-mcp` | 0.1.0 |<!-- mcp-count:brain-mcp.tools -->2<!-- /mcp-count --> LLM provider tools |
 | `@three-ws/vision-mcp` | 0.1.0 |<!-- mcp-count:vision-mcp.tools -->3<!-- /mcp-count --> vision tools |
 | `@three-ws/audio-mcp` | 0.1.0 |<!-- mcp-count:audio-mcp.tools -->5<!-- /mcp-count --> TTS/STT/A2F tools |
-| `@three-ws/intel-mcp` | 0.1.0 |<!-- mcp-count:intel-mcp.tools -->6<!-- /mcp-count --> market intelligence tools |
+| `@three-ws/intel-mcp` | 0.1.0 |<!-- mcp-count:intel-mcp.tools -->7<!-- /mcp-count --> market intelligence tools |
 | `@three-ws/signals-mcp` | 0.1.0 |<!-- mcp-count:signals-mcp.tools -->5<!-- /mcp-count --> signals tools |
 | `@three-ws/notifications-mcp` | 0.1.0 |<!-- mcp-count:notifications-mcp.tools -->7<!-- /mcp-count --> notification tools |
 | `@three-ws/marketplace-mcp` | 0.1.0 |<!-- mcp-count:marketplace-mcp.tools -->5<!-- /mcp-count --> marketplace tools |

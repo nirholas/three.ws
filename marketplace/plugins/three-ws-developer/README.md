@@ -23,7 +23,7 @@ Run `/reload-plugins` (or restart Claude Code) afterward.
 
 ## Bundled MCP server
 
-Installing this plugin registers the `3d-agent` MCP server (`npx -y @three-ws/mcp-server`), exposing <!-- mcp-count:three-ws-mcp-server.tools -->25<!-- /mcp-count --> tools: <!-- mcp-count:three-ws-mcp-server.free -->5<!-- /mcp-count --> free, and <!-- mcp-count:three-ws-mcp-server.paid -->20<!-- /mcp-count --> paid tools settled per call in USDC via x402:
+Installing this plugin registers the `3d-agent` MCP server (`npx -y @three-ws/mcp-server`), exposing <!-- mcp-count:three-ws-mcp-server.tools -->26<!-- /mcp-count --> tools: <!-- mcp-count:three-ws-mcp-server.free -->6<!-- /mcp-count --> free, and <!-- mcp-count:three-ws-mcp-server.paid -->20<!-- /mcp-count --> paid tools settled per call in USDC via x402:
 
 | Tool | Price | What it does |
 | :--- | :---- | :----------- |

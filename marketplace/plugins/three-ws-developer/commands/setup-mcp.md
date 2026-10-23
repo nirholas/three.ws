@@ -71,7 +71,7 @@ Then tell the user to restart Claude Desktop / Claude Code / Cursor for the tool
 
 ## Tools available
 
-Once configured, these <!-- mcp-count:three-ws-mcp-server.tools -->25<!-- /mcp-count --> tools will be available: <!-- mcp-count:three-ws-mcp-server.free -->5<!-- /mcp-count --> free, and <!-- mcp-count:three-ws-mcp-server.paid -->20<!-- /mcp-count --> paid (settled per call in USDC via x402):
+Once configured, these <!-- mcp-count:three-ws-mcp-server.tools -->26<!-- /mcp-count --> tools will be available: <!-- mcp-count:three-ws-mcp-server.free -->6<!-- /mcp-count --> free, and <!-- mcp-count:three-ws-mcp-server.paid -->20<!-- /mcp-count --> paid (settled per call in USDC via x402):
 
 | Tool | Price | What it does |
 |------|-------|--------------|
