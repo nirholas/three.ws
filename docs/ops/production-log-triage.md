@@ -597,6 +597,29 @@ HTTP 502 GET /api/pump/trending?limit=48&rich=1
 
 ---
 
+## 🟢 HTTP 502 on `/api/pump/coin`: `pump-coin-lookup-upstream-502` (§pump-coin-lookup-upstream)
+
+```
+HTTP 502 GET /api/pump/coin?mint=<mint>&miss=empty
+```
+
+- **Source:** `handleCoin()` in [api/pump/[action].js](../../api/pump/[action].js)
+  fetches `/coins/<mint>` from pump.fun and falls back to the last-good cached
+  copy (`serveStaleCoin`) on any non-2xx/non-404 upstream response. A 502
+  `upstream_failed` only fires when pump.fun rejects the request AND no
+  last-good copy exists yet for that specific mint.
+- **What it means:** confirmed 2026-10-23 by reading the app logs for the
+  sampled mint: pump.fun answered with its own Cloudflare anti-bot "Just a
+  moment..." challenge page (HTTP 403), not a real pump.fun-side 404 or 500.
+  Self-healing: the next successful fetch repopulates the cache for that mint.
+- **Added:** 2026-10-23 triage-lane sweep found 1 occurrence with no
+  app-level crash log, matching the known pump.fun Cloudflare-challenge shape
+  rather than a code fault.
+- **Monitor signature:** `pump-coin-lookup-upstream-502` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `self-healing`.
+
+---
+
 ## 🟡 `429 Client Error … huggingface.co` → `LocalEntryNotFoundError` on a model worker — `hf-hub-rate-limited`
 
 ```

@@ -313,6 +313,18 @@ const KNOWN_HTTP_SIGNATURES = [
 		action: `Birdeye and the pump.fun board fallback both failed inside the 5s upstream timeout with no cached board (live or stale) to serve. Check healthz rpc_lanes and Birdeye's "Compute units usage limit exceeded" message (same cause as pump-price-history-upstreams-502); the 30s live cache and 10-minute stale window recover automatically once either upstream answers. Investigate only if the same route persists across multiple sweeps with both upstreams reporting healthy. ${RUNBOOK} §pump-trending-upstreams.`,
 	},
 	{
+		id: 'pump-coin-lookup-upstream-502',
+		// api/pump/[action].js handleCoin() hits pump.fun's /coins/<mint> and
+		// falls back to the last-good cached copy (serveStaleCoin) on failure;
+		// a 502 upstream_failed means pump.fun rejected the request AND no
+		// last-good copy existed for that mint. Confirmed 2026-10-23: pump.fun
+		// answered with its own Cloudflare "Just a moment..." challenge page
+		// (403), not a real 404/500, for the sampled mint.
+		test: (g) => g.service === 'three-ws-api' && g.status === 502 && g.path === '/api/pump/coin',
+		class: 'self-healing',
+		action: `pump.fun's own Cloudflare anti-bot challenge rejected the /coins/<mint> lookup (confirmed via app logs: a "Just a moment..." 403 challenge page, not a pump.fun-side 404/500) and no last-good cached copy existed for that specific mint to fall back to. Nothing in our code is broken: api/pump/[action].js's handleCoin() already retries and falls back to the cache when one exists. Investigate only if the same mint 502s across multiple sweeps after pump.fun's public site itself loads cleanly in a browser. ${RUNBOOK} §pump-coin-lookup-upstream.`,
+	},
+	{
 		id: 'cc-unconfigured-503',
 		// Every /api/community/* and /api/clash route wraps the same client and
 		// answers the same designed 503 when CC_API_KEY is absent — match the

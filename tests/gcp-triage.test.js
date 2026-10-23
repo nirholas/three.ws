@@ -127,6 +127,17 @@ describe('gcp-triage HTTP classification', () => {
 		expect(finding.class).toBe('self-healing');
 	});
 
+	// 2026-10-23 triage-lane sweep: /api/pump/coin 502'd once with no app-level
+	// crash log; app logs showed pump.fun's own Cloudflare "Just a moment..."
+	// challenge page for the mint, and handleCoin() in api/pump/[action].js
+	// only 502s when that upstream rejection has no last-good cache to fall
+	// back to: an honest outage response, not a code fault.
+	it('classifies a single-coin lookup upstream rejection as self-healing', () => {
+		const [finding] = buildFindings([request({ status: 502, path: '/api/pump/coin' })]);
+		expect(finding.signature).toBe('pump-coin-lookup-upstream-502');
+		expect(finding.class).toBe('self-healing');
+	});
+
 	// 2026-10-15 deep sweep: /api/v1/ai/text-to-3d 502'd ("lane_error") pinning
 	// the NVIDIA NVCF TRELLIS backend, the same free-tier capacity flakiness
 	// already tracked for /api/vision and /api/tts/synthesize under
