@@ -1,8 +1,8 @@
 {
 	"probe": "scripts/mcp-client-probe.mjs",
 	"base": "https://three.ws",
-	"startedAt": "2026-10-09T03:33:00.967Z",
-	"finishedAt": "2026-10-09T03:33:21.987Z",
+	"startedAt": "2026-10-17T07:45:29.723Z",
+	"finishedAt": "2026-10-17T07:45:53.920Z",
 	"sdkVersion": "1.32.1",
 	"clientProtocolVersion": "2025-11-25",
 	"apiKeyMode": "ran",
@@ -68,17 +68,21 @@
 						"error": null
 					}
 				],
-				"sessionIssued": false
+				"session": {
+					"echoed": 200,
+					"unknown": 200
+				},
+				"sessionIssued": true
 			},
 			"modes": {
 				"anonymous": {
 					"transport": "streamable-http",
 					"ok": false,
-					"error": "Streamable HTTP error: Error POSTing to endpoint: {\"x402Version\":2,\"error\":\"X-PAYMENT header is required\",\"resource\":{\"url\":\"https://three.ws/api/mcp\",\"description\":\"three.ws MCP, Streamable HTTP transport (MCP 2025-06-18) exposing 3D avatar viewer, glTF/GLB model validation/inspection/optimization, and Solana agent data as JSON-RPC 2.0 tool calls. Pay-per-call in USDC on Base mainnet (eip155:8453",
+					"error": "Streamable HTTP error: Error POSTing to endpoint: {x402Version=2, error=\"X-PAYMENT header is required\", accepts=4}",
 					"status": 401,
 					"authRequired": true,
 					"warnings": [
-						"Streamable HTTP error: Error POSTing to endpoint: {\"x402Version\":2,\"error\":\"X-PAYMENT header is required\",\"resource\":{\"url\":\"https://three.ws/api/mcp\",\"description\":\"three.ws MCP, Streamable HTTP transport (MCP 2025-06-18) exposing 3D avatar viewer, glTF/GLB model validation/inspection/optimization, and Solana agent data as JSON-RPC 2.0 tool calls. Pay-per-call in USDC on Base mainnet (eip155:8453) or Solana mainnet. ≤256 tools/call output, ≤32-message JSON-RPC batches. Operated by three.ws.\",\"mimeType\":\"application/json\"},\"accepts\":[{\"scheme\":\"exact\",\"amount\":\"1000\",\"maxTimeoutSeconds\":60,\"resource\":\"https://three.ws/api/mcp\",\"network\":\"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp\",\"payTo\":\"wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU\",\"asset\":\"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v\",\"extra\":{\"name\":\"USDC\",\"decimals\":6,\"feePayer\":\"WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW\"}},{\"scheme\":\"exact\",\"amount\":\"10000000\",\"maxTimeoutSeconds\":60,\"resource\":\"https://three.ws/api/mcp\",\"network\":\"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp\",\"payTo\":\"wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU\",\"asset\":\"FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\",\"extra\":{\"name\":\"THREE\",\"decimals\":6,\"feePayer\":\"WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW\"}},{\"scheme\":\"exact\",\"amount\":\"1000\",\"maxTimeoutSeconds\":60,\"resource\":\"https://three.ws/api/mcp\",\"network\":\"eip155:8453\",\"payTo\":\"0x4022de2d36c334e73c7a108805cea11c0564f402\",\"asset\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"extra\":{\"name\":\"USD Coin\",\"version\":\"2\",\"decimals\":6}},{\"scheme\":\"exact\",\"network\":\"eip155:196\",\"amount\":\"1000\",\"payTo\":\"0x4022de2D36C334E73C7a108805Cea11C0564f402\",\"maxTimeoutSeconds\":86400,\"asset\":\"0x779ded0c9e1022225f8e0630b35a9b54be713736\",\"resource\":\"https://three.ws/api/mcp\",\"extra\":{\"symbol\":\"USDT\",\"name\":\"USD₮0\",\"version\":\"1\",\"transferMethod\":\"eip3009\",\"decimals\":6}}],\"extensions\":{\"bazaar\":{\"discoverable\":true,\"info\":{\"input\":{\"type\":\"http\",\"method\":\"POST\",\"body\":{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"validate_model\",\"arguments\":{\"url\":\"https://three.ws/avatars/cesium-man.glb\"}}},\"bodyType\":\"json\"},\"output\":{\"type\":\"json\",\"example\":{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"ok\\\":true,\\\"warnings\\\":[],\\\"meta\\\":{\\\"vertices\\\":12345}}\"}]}}}},\"schema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"input\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"const\":\"http\"},\"method\":{\"type\":\"string\",\"enum\":[\"POST\",\"PUT\",\"PATCH\"]},\"bodyType\":{\"type\":\"string\",\"enum\":[\"json\",\"form-data\",\"text\"]},\"body\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"required\":[\"jsonrpc\",\"method\"],\"properties\":{\"jsonrpc\":{\"type\":\"string\",\"const\":\"2.0\"},\"id\":{\"type\":[\"string\",\"number\"]},\"method\":{\"type\":\"string\",\"enum\":[\"initialize\",\"tools/list\",\"tools/call\",\"ping\"],\"description\":\"MCP JSON-RPC method.\"},\"params\":{\"type\":\"object\",\"description\":\"For tools/call: { name, arguments }. Tool names include validate_model, inspect_model, optimize_model, search_public_avatars, register_agent, solana_agent_reputation, and others, see tools/list.\"}}}},\"required\":[\"type\",\"method\",\"bodyType\",\"body\"],\"additionalProperties\":false},\"output\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"example\":{\"type\":\"object\",\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"properties\":{\"jsonrpc\":{\"type\":\"string\",\"const\":\"2.0\"},\"id\":{\"type\":[\"string\",\"number\"]},\"result\":{\"type\":\"object\",\"properties\":{\"content\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"type\",\"text\"],\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"text\"]},\"text\":{\"type\":\"string\"}}}}}},\"error\":{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"message\":{\"type\":\"string\"}}}}}},\"required\":[\"type\"]}},\"required\":[\"input\"]}},\"offer-receipt\":{\"includeTxHash\":false,\"offerValiditySeconds\":60,\"info\":{\"offers\":[{\"format\":\"jws\",\"acceptIndex\":0,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiJFUGpGV2RkNUF1ZnFTU3FlTTJxTjF4enliYXBDOEc0d0VHR2tad3lURHQxdiIsIm5ldHdvcmsiOiJzb2xhbmE6NWV5a3Q0VXNGdjhQOE5KZFRSRXBZMXZ6cUtxWkt2ZHAiLCJwYXlUbyI6Ind3d3d3RHhGV1JuN2dyZ3IzRXNyc2c1QzZOdkRvREhTQTRnYUNmZmNjclUiLCJyZXNvdXJjZVVybCI6Imh0dHBzOi8vdGhyZWUud3MvYXBpL21jcCIsInNjaGVtZSI6ImV4YWN0IiwidmFsaWRVbnRpbCI6MTc5MTUxNzA4MSwidmVyc2lvbiI6MX0.gtkSyctFWhSLo3ESTjxBniXFxemM4jeMWv-lxp7-8Kkr4tfD4RgPLhdPSmhRpr0GcmRL-9AShnEbWOVJ0FOgBg\"},{\"format\":\"jws\",\"acceptIndex\":1,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMDAwMCIsImFzc2V0IjoiRmVNYkRvWDdSMVBzYzRHRWN2SmRzYk5iWkEzYmZ6dGN5RENhdEpWSnB1bXAiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9tY3AiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3OTE1MTcwODEsInZlcnNpb24iOjF9.s9YYWmGls8rs1RLYet0lM3zbjnhdgRWIS73CH_pTQmL5gryzKQUDbdDiTZV9kgMy-Z6b1QUT7iNkAjbGeO36AA\"},{\"format\":\"jws\",\"acceptIndex\":2,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiIweDgzMzU4OWZDRDZlRGI2RTA4ZjRjN0MzMkQ0ZjcxYjU0YmRBMDI5MTMiLCJuZXR3b3JrIjoiZWlwMTU1Ojg0NTMiLCJwYXlUbyI6IjB4NDAyMmRlMmQzNmMzMzRlNzNjN2ExMDg4MDVjZWExMWMwNTY0ZjQwMiIsInJlc291cmNlVXJsIjoiaHR0cHM6Ly90aHJlZS53cy9hcGkvbWNwIiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzkxNTE3MDgxLCJ2ZXJzaW9uIjoxfQ.0YAAqe9a6cP4LzxGqFB-QuNcGlbGp5vFy8G3vXy1cQqkCfYCDRfPMQJntYtlu-5ZDqTyJjFrr1H1tFCOoHFUDw\"},{\"format\":\"jws\",\"acceptIndex\":3,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiIweDc3OWRlZDBjOWUxMDIyMjI1ZjhlMDYzMGIzNWE5YjU0YmU3MTM3MzYiLCJuZXR3b3JrIjoiZWlwMTU1OjE5NiIsInBheVRvIjoiMHg0MDIyZGUyRDM2QzMzNEU3M0M3YTEwODgwNUNlYTExQzA1NjRmNDAyIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9tY3AiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3OTE1MTcwODEsInZlcnNpb24iOjF9.5GP9mayCey4-ypGtqlpJPy6H_FCEVcGlAV3zqqmo5lV-wNorPU6gPUkzcPe_8yTvdXr0oU_PL9rCWpvDKq2bDw\"}]},\"schema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"offers\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"format\":{\"type\":\"string\"},\"acceptIndex\":{\"type\":\"integer\"},\"payload\":{\"type\":\"object\",\"properties\":{\"version\":{\"type\":\"integer\"},\"resourceUrl\":{\"type\":\"string\"},\"scheme\":{\"type\":\"string\"},\"network\":{\"type\":\"string\"},\"asset\":{\"type\":\"string\"},\"payTo\":{\"type\":\"string\"},\"amount\":{\"type\":\"string\"},\"validUntil\":{\"type\":\"integer\"}},\"required\":[\"version\",\"resourceUrl\",\"scheme\",\"network\",\"asset\",\"payTo\",\"amount\"]},\"signature\":{\"type\":\"string\"}},\"required\":[\"format\",\"signature\"]}}},\"required\":[\"offers\"]}}},\"setup\":{\"command\":\"npx three-ws setup\",\"message\":\"Run `npx three-ws setup` to sign in and wire three.ws into your MCP client in one step.\",\"docs\":\"https://three.ws/docs/cli\"}}"
+						"Streamable HTTP error: Error POSTing to endpoint: {x402Version=2, error=\"X-PAYMENT header is required\", accepts=4}"
 					]
 				},
 				"oauth": {
@@ -114,22 +118,25 @@
 						"version": "1.0.0"
 					},
 					"protocolVersion": "2025-06-18",
-					"sessionId": null,
+					"sessionId": "mcs_1a0fa80d-2d32-44e1-ba41-c81f0680f972",
 					"capabilities": [
 						"logging",
 						"prompts",
 						"resources",
 						"tools"
 					],
-					"tools": 82,
-					"prompts": 14,
+					"tools": 122,
+					"prompts": 15,
 					"call": {
 						"name": "search_catalog",
 						"ok": true,
-						"ms": 497,
+						"ms": 342,
 						"contentItems": 1,
 						"structured": true
-					}
+					},
+					"warnings": [
+						"terminate: Streamable HTTP error: Failed to terminate session: Not Found"
+					]
 				}
 			},
 			"failures": [],
@@ -195,17 +202,21 @@
 						"error": null
 					}
 				],
-				"sessionIssued": false
+				"session": {
+					"echoed": 200,
+					"unknown": 200
+				},
+				"sessionIssued": true
 			},
 			"modes": {
 				"anonymous": {
 					"transport": "streamable-http",
 					"ok": false,
-					"error": "Streamable HTTP error: Error POSTing to endpoint: {\"x402Version\":2,\"error\":\"X-PAYMENT header is required\",\"resource\":{\"url\":\"https://three.ws/api/mcp-3d\",\"description\":\"three.ws 3D Studio MCP: Streamable HTTP (MCP 2025-06-18) that turns text or images into interactive, animation-ready 3D models: text_to_3d (prompt → GLB), image_to_3d (1-4 reference views → GLB), generation_status (poll a job for t",
+					"error": "Streamable HTTP error: Error POSTing to endpoint: {x402Version=2, error=\"X-PAYMENT header is required\", accepts=4}",
 					"status": 401,
 					"authRequired": true,
 					"warnings": [
-						"Streamable HTTP error: Error POSTing to endpoint: {\"x402Version\":2,\"error\":\"X-PAYMENT header is required\",\"resource\":{\"url\":\"https://three.ws/api/mcp-3d\",\"description\":\"three.ws 3D Studio MCP: Streamable HTTP (MCP 2025-06-18) that turns text or images into interactive, animation-ready 3D models: text_to_3d (prompt → GLB), image_to_3d (1-4 reference views → GLB), generation_status (poll a job for the finished model), auto_rig_model, plus mesh editing (retexture, remesh, stylize, segment) and PBR material generation. Connect with a three.ws account (OAuth) or pay per call in USDC on Base or Solana mainnet, no API key. Operated by three.ws.\",\"mimeType\":\"application/json\",\"serviceName\":\"three.ws 3D Studio MCP\",\"tags\":[\"x402\",\"mcp\",\"3d\",\"text-to-3d\",\"glb\"],\"iconUrl\":\"https://three.ws/favicon.ico\"},\"accepts\":[{\"scheme\":\"exact\",\"amount\":\"1000\",\"maxTimeoutSeconds\":60,\"resource\":\"https://three.ws/api/mcp-3d\",\"network\":\"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp\",\"payTo\":\"wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU\",\"asset\":\"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v\",\"extra\":{\"name\":\"USDC\",\"decimals\":6,\"feePayer\":\"WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW\"}},{\"scheme\":\"exact\",\"amount\":\"10000000\",\"maxTimeoutSeconds\":60,\"resource\":\"https://three.ws/api/mcp-3d\",\"network\":\"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp\",\"payTo\":\"wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU\",\"asset\":\"FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\",\"extra\":{\"name\":\"THREE\",\"decimals\":6,\"feePayer\":\"WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW\"}},{\"scheme\":\"exact\",\"amount\":\"1000\",\"maxTimeoutSeconds\":60,\"resource\":\"https://three.ws/api/mcp-3d\",\"network\":\"eip155:8453\",\"payTo\":\"0x4022de2d36c334e73c7a108805cea11c0564f402\",\"asset\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"extra\":{\"name\":\"USD Coin\",\"version\":\"2\",\"decimals\":6}},{\"scheme\":\"exact\",\"network\":\"eip155:196\",\"amount\":\"1000\",\"payTo\":\"0x4022de2D36C334E73C7a108805Cea11C0564f402\",\"maxTimeoutSeconds\":86400,\"asset\":\"0x779ded0c9e1022225f8e0630b35a9b54be713736\",\"resource\":\"https://three.ws/api/mcp-3d\",\"extra\":{\"symbol\":\"USDT\",\"name\":\"USD₮0\",\"version\":\"1\",\"transferMethod\":\"eip3009\",\"decimals\":6}}],\"extensions\":{\"bazaar\":{\"discoverable\":true,\"info\":{\"input\":{\"type\":\"http\",\"method\":\"POST\",\"body\":{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"text_to_3d\",\"arguments\":{\"prompt\":\"a brass steampunk owl, full body\",\"tier\":\"standard\"}}},\"bodyType\":\"json\"},\"output\":{\"type\":\"json\",\"example\":{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"job_id\\\":\\\"abc123def4567890\\\",\\\"status\\\":\\\"queued\\\",\\\"eta_seconds\\\":60}\"}],\"structuredContent\":{\"ok\":true,\"job_id\":\"abc123def4567890\",\"status\":\"queued\",\"tier\":\"standard\",\"eta_seconds\":60}}}}},\"schema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"input\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"const\":\"http\"},\"method\":{\"type\":\"string\",\"enum\":[\"POST\",\"PUT\",\"PATCH\"]},\"bodyType\":{\"type\":\"string\",\"enum\":[\"json\",\"form-data\",\"text\"]},\"body\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"required\":[\"jsonrpc\",\"method\"],\"properties\":{\"jsonrpc\":{\"type\":\"string\",\"const\":\"2.0\"},\"id\":{\"type\":[\"string\",\"number\"]},\"method\":{\"type\":\"string\",\"enum\":[\"initialize\",\"tools/list\",\"tools/call\",\"ping\"],\"description\":\"MCP JSON-RPC method.\"},\"params\":{\"type\":\"object\",\"description\":\"For tools/call: { name, arguments }. Tool names: text_to_3d, image_to_3d, generation_status, auto_rig_model, retexture_model, remesh_model, stylize_model, segment_model, generate_material, direct_prompt, see tools/list.\"}}}},\"required\":[\"type\",\"method\",\"bodyType\",\"body\"],\"additionalProperties\":false},\"output\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"example\":{\"type\":\"object\",\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"properties\":{\"jsonrpc\":{\"type\":\"string\",\"const\":\"2.0\"},\"id\":{\"type\":[\"string\",\"number\"]},\"result\":{\"type\":\"object\",\"properties\":{\"content\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"type\",\"text\"],\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"text\"]},\"text\":{\"type\":\"string\"}}}}}},\"error\":{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"message\":{\"type\":\"string\"}}}}}},\"required\":[\"type\"]}},\"required\":[\"input\"]}},\"offer-receipt\":{\"includeTxHash\":false,\"offerValiditySeconds\":60,\"info\":{\"offers\":[{\"format\":\"jws\",\"acceptIndex\":0,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiJFUGpGV2RkNUF1ZnFTU3FlTTJxTjF4enliYXBDOEc0d0VHR2tad3lURHQxdiIsIm5ldHdvcmsiOiJzb2xhbmE6NWV5a3Q0VXNGdjhQOE5KZFRSRXBZMXZ6cUtxWkt2ZHAiLCJwYXlUbyI6Ind3d3d3RHhGV1JuN2dyZ3IzRXNyc2c1QzZOdkRvREhTQTRnYUNmZmNjclUiLCJyZXNvdXJjZVVybCI6Imh0dHBzOi8vdGhyZWUud3MvYXBpL21jcC0zZCIsInNjaGVtZSI6ImV4YWN0IiwidmFsaWRVbnRpbCI6MTc5MTUxNzA4NCwidmVyc2lvbiI6MX0.lHzF3v1gfjclyHDerIcpLQZk9LKTEWMXpUkQsbSYSAh4ZwpHvG3cInl7mDPlxKd2S2xHgdBvApaeeWp1TdSbDw\"},{\"format\":\"jws\",\"acceptIndex\":1,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMDAwMCIsImFzc2V0IjoiRmVNYkRvWDdSMVBzYzRHRWN2SmRzYk5iWkEzYmZ6dGN5RENhdEpWSnB1bXAiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9tY3AtM2QiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3OTE1MTcwODQsInZlcnNpb24iOjF9.jwCbN57cMHLz2G7DH0mocNP_9yB20T_nFaHZLHTjnzX3geqjgINowR2tO3f7L_PK1si2-Ny9PbPZw9qN5ZPMAg\"},{\"format\":\"jws\",\"acceptIndex\":2,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiIweDgzMzU4OWZDRDZlRGI2RTA4ZjRjN0MzMkQ0ZjcxYjU0YmRBMDI5MTMiLCJuZXR3b3JrIjoiZWlwMTU1Ojg0NTMiLCJwYXlUbyI6IjB4NDAyMmRlMmQzNmMzMzRlNzNjN2ExMDg4MDVjZWExMWMwNTY0ZjQwMiIsInJlc291cmNlVXJsIjoiaHR0cHM6Ly90aHJlZS53cy9hcGkvbWNwLTNkIiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzkxNTE3MDg0LCJ2ZXJzaW9uIjoxfQ.hLBf3LhOSKwmkbrgLbfLCwwp3wXGY66IYCZVZBtcGt8R7BXlbdOEXsoxUTaqGlikuJLNJTw8JmudePUENNvpBA\"},{\"format\":\"jws\",\"acceptIndex\":3,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiIweDc3OWRlZDBjOWUxMDIyMjI1ZjhlMDYzMGIzNWE5YjU0YmU3MTM3MzYiLCJuZXR3b3JrIjoiZWlwMTU1OjE5NiIsInBheVRvIjoiMHg0MDIyZGUyRDM2QzMzNEU3M0M3YTEwODgwNUNlYTExQzA1NjRmNDAyIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9tY3AtM2QiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3OTE1MTcwODQsInZlcnNpb24iOjF9.ZGp26z3fFIYeBhk2lD8Kxt4TxMs4MVIMjeFhcMelbKyZP8OrjIxIqpDSu5Xw2Z9aDJuaHCaABcEshfVq0Sl8Aw\"}]},\"schema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"offers\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"format\":{\"type\":\"string\"},\"acceptIndex\":{\"type\":\"integer\"},\"payload\":{\"type\":\"object\",\"properties\":{\"version\":{\"type\":\"integer\"},\"resourceUrl\":{\"type\":\"string\"},\"scheme\":{\"type\":\"string\"},\"network\":{\"type\":\"string\"},\"asset\":{\"type\":\"string\"},\"payTo\":{\"type\":\"string\"},\"amount\":{\"type\":\"string\"},\"validUntil\":{\"type\":\"integer\"}},\"required\":[\"version\",\"resourceUrl\",\"scheme\",\"network\",\"asset\",\"payTo\",\"amount\"]},\"signature\":{\"type\":\"string\"}},\"required\":[\"format\",\"signature\"]}}},\"required\":[\"offers\"]}}},\"setup\":{\"command\":\"npx three-ws setup\",\"message\":\"Run `npx three-ws setup` to sign in and wire three.ws into your MCP client in one step.\",\"docs\":\"https://three.ws/docs/cli\"}}"
+						"Streamable HTTP error: Error POSTing to endpoint: {x402Version=2, error=\"X-PAYMENT header is required\", accepts=4}"
 					]
 				},
 				"oauth": {
@@ -241,22 +252,25 @@
 						"version": "1.0.0"
 					},
 					"protocolVersion": "2025-06-18",
-					"sessionId": null,
+					"sessionId": "mcs_9060a8e0-8017-446c-8074-5aad15e4cc03",
 					"capabilities": [
 						"logging",
 						"prompts",
 						"resources",
 						"tools"
 					],
-					"tools": 36,
+					"tools": 38,
 					"prompts": 2,
 					"call": {
 						"name": "getting_started",
 						"ok": true,
-						"ms": 344,
+						"ms": 71,
 						"contentItems": 1,
 						"structured": true
-					}
+					},
+					"warnings": [
+						"terminate: Streamable HTTP error: Failed to terminate session: Not Found"
+					]
 				}
 			},
 			"failures": [],
@@ -276,7 +290,7 @@
 				"initialize": {
 					"status": 200,
 					"contentType": "application/json; charset=utf-8",
-					"sessionId": null,
+					"sessionId": "mcs_6e6c2445-9fbd-4607-bb90-ff9b29e83546",
 					"wwwAuthenticate": null,
 					"protocolVersion": "2025-06-18",
 					"rpcError": null
@@ -322,7 +336,11 @@
 						"error": null
 					}
 				],
-				"sessionIssued": false
+				"session": {
+					"echoed": 200,
+					"unknown": 200
+				},
+				"sessionIssued": true
 			},
 			"modes": {
 				"anonymous": {
@@ -333,18 +351,19 @@
 						"version": "1.0.0"
 					},
 					"protocolVersion": "2025-06-18",
-					"sessionId": null,
+					"sessionId": "mcs_989fc89c-4963-4e41-b211-35bfef0d96f5",
 					"capabilities": [
 						"logging",
+						"prompts",
 						"resources",
 						"tools"
 					],
-					"tools": 14,
-					"prompts": null,
+					"tools": 15,
+					"prompts": 4,
 					"call": {
 						"name": "search_catalog",
 						"ok": true,
-						"ms": 118,
+						"ms": 333,
 						"contentItems": 1,
 						"structured": true
 					}
@@ -357,23 +376,169 @@
 						"version": "1.0.0"
 					},
 					"protocolVersion": "2025-06-18",
-					"sessionId": null,
+					"sessionId": "mcs_67b88078-f7b9-40ad-9c45-dd53acd2ffc5",
 					"capabilities": [
 						"logging",
+						"prompts",
 						"resources",
 						"tools"
 					],
-					"tools": 14,
-					"prompts": null,
+					"tools": 15,
+					"prompts": 4,
 					"call": {
 						"name": "search_catalog",
 						"ok": true,
-						"ms": 113,
+						"ms": 465,
 						"contentItems": 1,
 						"structured": true
 					}
 				}
 			},
+			"failures": [],
+			"pass": true
+		},
+		{
+			"name": "Grok",
+			"endpoint": "https://three.ws/api/mcp-grok",
+			"url": "https://three.ws/api/mcp-grok",
+			"auth": "OAuth 2.1 or a connector API key for the account's agent tools; none needed for the free 3D tools",
+			"expects": {
+				"anonymous": true,
+				"oauth": true,
+				"apiKey": true
+			},
+			"http": {
+				"initialize": {
+					"status": 200,
+					"contentType": "application/json; charset=utf-8",
+					"sessionId": "grk_59a2190e-b9da-44e2-9f03-64843dd87fae",
+					"wwwAuthenticate": null,
+					"protocolVersion": "2025-06-18",
+					"rpcError": null
+				},
+				"getStream": {
+					"status": 405,
+					"contentType": "application/json; charset=utf-8",
+					"allow": "POST, OPTIONS",
+					"wwwAuthenticate": null
+				},
+				"getStreamProblem": null,
+				"negotiation": [
+					{
+						"requested": "2025-11-25",
+						"status": 200,
+						"negotiated": "2025-06-18",
+						"echoed": false,
+						"clientSupportsAnswer": true,
+						"error": null
+					},
+					{
+						"requested": "2025-06-18",
+						"status": 200,
+						"negotiated": "2025-06-18",
+						"echoed": true,
+						"clientSupportsAnswer": true,
+						"error": null
+					},
+					{
+						"requested": "2025-03-26",
+						"status": 200,
+						"negotiated": "2025-06-18",
+						"echoed": false,
+						"clientSupportsAnswer": true,
+						"error": null
+					},
+					{
+						"requested": "2024-11-05",
+						"status": 200,
+						"negotiated": "2025-06-18",
+						"echoed": false,
+						"clientSupportsAnswer": true,
+						"error": null
+					}
+				],
+				"session": {
+					"echoed": 200,
+					"unknown": 200
+				},
+				"sessionIssued": true
+			},
+			"modes": {
+				"anonymous": {
+					"transport": "streamable-http",
+					"ok": true,
+					"serverInfo": {
+						"name": "three-ws-3d-studio-free",
+						"version": "1.0.0"
+					},
+					"protocolVersion": "2025-06-18",
+					"sessionId": "grk_16508665-fe6e-4d3e-a99b-79d7199eb129",
+					"capabilities": [
+						"logging",
+						"prompts",
+						"tools"
+					],
+					"tools": 15,
+					"prompts": 4,
+					"call": {
+						"name": "search_catalog",
+						"ok": true,
+						"ms": 112,
+						"contentItems": 1,
+						"structured": true
+					}
+				},
+				"oauth": {
+					"failures": [],
+					"status": 401,
+					"wwwAuthenticate": "Bearer resource_metadata=\"https://three.ws/.well-known/oauth-protected-resource/api/mcp-grok\", resource=\"https://three.ws/api/mcp-grok\"",
+					"resourceMetadataUrl": "https://three.ws/.well-known/oauth-protected-resource/api/mcp-grok",
+					"metadata": {
+						"status": 200,
+						"resource": "https://three.ws/api/mcp-grok",
+						"authorizationServers": [
+							"https://three.ws"
+						]
+					},
+					"resourceAllowed": true,
+					"authorizationServer": {
+						"url": "https://three.ws/.well-known/oauth-authorization-server",
+						"status": 200,
+						"issuer": "https://three.ws",
+						"pkceS256": true,
+						"dynamicRegistration": true
+					},
+					"invalidBearer": {
+						"status": 401,
+						"wwwAuthenticate": "Bearer resource_metadata=\"https://three.ws/.well-known/oauth-protected-resource/api/mcp-grok\", resource=\"https://three.ws/api/mcp-grok\""
+					}
+				},
+				"apiKey": {
+					"transport": "streamable-http",
+					"ok": true,
+					"serverInfo": {
+						"name": "three-ws-3d-studio-free",
+						"version": "1.0.0"
+					},
+					"protocolVersion": "2025-06-18",
+					"sessionId": "grk_2478776d-d6af-46a7-8e93-2c4ede4b2d04",
+					"capabilities": [
+						"logging",
+						"prompts",
+						"tools"
+					],
+					"tools": 26,
+					"prompts": 5,
+					"call": {
+						"name": "search_catalog",
+						"ok": true,
+						"ms": 102,
+						"contentItems": 1,
+						"structured": true
+					}
+				}
+			},
+			"signIn": "https://three.ws/api/mcp-grok?auth=oauth",
 			"failures": [],
 			"pass": true
 		},
@@ -437,17 +602,21 @@
 						"error": null
 					}
 				],
-				"sessionIssued": false
+				"session": {
+					"echoed": 200,
+					"unknown": 200
+				},
+				"sessionIssued": true
 			},
 			"modes": {
 				"anonymous": {
 					"transport": "streamable-http",
 					"ok": false,
-					"error": "Streamable HTTP error: Error POSTing to endpoint: {\"x402Version\":2,\"error\":\"X-PAYMENT header is required\",\"resource\":{\"url\":\"https://three.ws/api/mcp-agent\",\"description\":\"three.ws Agent MCP: Streamable HTTP (MCP 2025-06-18) that gives an assistant a real on-chain wallet on the x402 network: wallet_status (address, USDC and SOL balance, spend caps), find_services (search the live facilitator netwo",
+					"error": "Streamable HTTP error: Error POSTing to endpoint: {x402Version=2, error=\"X-PAYMENT header is required\", accepts=4}",
 					"status": 401,
 					"authRequired": true,
 					"warnings": [
-						"Streamable HTTP error: Error POSTing to endpoint: {\"x402Version\":2,\"error\":\"X-PAYMENT header is required\",\"resource\":{\"url\":\"https://three.ws/api/mcp-agent\",\"description\":\"three.ws Agent MCP: Streamable HTTP (MCP 2025-06-18) that gives an assistant a real on-chain wallet on the x402 network: wallet_status (address, USDC and SOL balance, spend caps), find_services (search the live facilitator network for paid services), pay_and_call (call a paid x402 endpoint and settle the USDC payment from the signed-in user own three.ws agent wallet, bounded by their caps), provision_wallet, and monetize_endpoint (list your own paid service). Connect with a three.ws account (OAuth) or pay per call in USDC on Base or Solana mainnet, no API key. Operated by three.ws.\",\"mimeType\":\"application/json\",\"serviceName\":\"three.ws Agent MCP\",\"tags\":[\"x402\",\"mcp\",\"wallet\",\"payments\",\"agent\"],\"iconUrl\":\"https://three.ws/favicon.ico\"},\"accepts\":[{\"scheme\":\"exact\",\"amount\":\"1000\",\"maxTimeoutSeconds\":60,\"resource\":\"https://three.ws/api/mcp-agent\",\"network\":\"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp\",\"payTo\":\"wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU\",\"asset\":\"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v\",\"extra\":{\"name\":\"USDC\",\"decimals\":6}},{\"scheme\":\"exact\",\"amount\":\"10000000\",\"maxTimeoutSeconds\":60,\"resource\":\"https://three.ws/api/mcp-agent\",\"network\":\"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp\",\"payTo\":\"wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU\",\"asset\":\"FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\",\"extra\":{\"name\":\"THREE\",\"decimals\":6}},{\"scheme\":\"exact\",\"amount\":\"1000\",\"maxTimeoutSeconds\":60,\"resource\":\"https://three.ws/api/mcp-agent\",\"network\":\"eip155:8453\",\"payTo\":\"0x4022de2d36c334e73c7a108805cea11c0564f402\",\"asset\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"extra\":{\"name\":\"USD Coin\",\"version\":\"2\",\"decimals\":6}},{\"scheme\":\"exact\",\"network\":\"eip155:196\",\"amount\":\"1000\",\"payTo\":\"0x4022de2D36C334E73C7a108805Cea11C0564f402\",\"maxTimeoutSeconds\":86400,\"asset\":\"0x779ded0c9e1022225f8e0630b35a9b54be713736\",\"resource\":\"https://three.ws/api/mcp-agent\",\"extra\":{\"symbol\":\"USDT\",\"name\":\"USD₮0\",\"version\":\"1\",\"transferMethod\":\"eip3009\",\"decimals\":6}}],\"extensions\":{\"bazaar\":{\"discoverable\":true,\"info\":{\"input\":{\"type\":\"http\",\"method\":\"POST\",\"body\":{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"find_services\",\"arguments\":{\"query\":\"weather\",\"type\":\"http\",\"limit\":5}}},\"bodyType\":\"json\"},\"output\":{\"type\":\"json\",\"example\":{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"1. Weather Now - $0.001\\n   https://api.example.com/weather\"}],\"structuredContent\":{\"query\":\"weather\",\"count\":1,\"services\":[{\"resource\":\"https://api.example.com/weather\",\"name\":\"Weather Now\",\"price\":\"$0.001\",\"networks\":[\"eip155:8453\"]}]}}}}},\"schema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"input\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"const\":\"http\"},\"method\":{\"type\":\"string\",\"enum\":[\"POST\",\"PUT\",\"PATCH\"]},\"bodyType\":{\"type\":\"string\",\"enum\":[\"json\",\"form-data\",\"text\"]},\"body\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"required\":[\"jsonrpc\",\"method\"],\"properties\":{\"jsonrpc\":{\"type\":\"string\",\"const\":\"2.0\"},\"id\":{\"type\":[\"string\",\"number\"]},\"method\":{\"type\":\"string\",\"enum\":[\"initialize\",\"tools/list\",\"tools/call\",\"ping\"],\"description\":\"MCP JSON-RPC method.\"},\"params\":{\"type\":\"object\",\"description\":\"For tools/call: { name, arguments }. Tool names: getting_started (free), wallet_status, find_services, pay_and_call, provision_wallet, monetize_endpoint, see tools/list.\"}}}},\"required\":[\"type\",\"method\",\"bodyType\",\"body\"],\"additionalProperties\":false},\"output\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"example\":{\"type\":\"object\",\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"properties\":{\"jsonrpc\":{\"type\":\"string\",\"const\":\"2.0\"},\"id\":{\"type\":[\"string\",\"number\"]},\"result\":{\"type\":\"object\",\"properties\":{\"content\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"type\",\"text\"],\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"text\"]},\"text\":{\"type\":\"string\"}}}}}},\"error\":{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"message\":{\"type\":\"string\"}}}}}},\"required\":[\"type\"]}},\"required\":[\"input\"]}},\"offer-receipt\":{\"includeTxHash\":false,\"offerValiditySeconds\":60,\"info\":{\"offers\":[{\"format\":\"jws\",\"acceptIndex\":0,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiJFUGpGV2RkNUF1ZnFTU3FlTTJxTjF4enliYXBDOEc0d0VHR2tad3lURHQxdiIsIm5ldHdvcmsiOiJzb2xhbmE6NWV5a3Q0VXNGdjhQOE5KZFRSRXBZMXZ6cUtxWkt2ZHAiLCJwYXlUbyI6Ind3d3d3RHhGV1JuN2dyZ3IzRXNyc2c1QzZOdkRvREhTQTRnYUNmZmNjclUiLCJyZXNvdXJjZVVybCI6Imh0dHBzOi8vdGhyZWUud3MvYXBpL21jcC1hZ2VudCIsInNjaGVtZSI6ImV4YWN0IiwidmFsaWRVbnRpbCI6MTc5MTUxNzA5NCwidmVyc2lvbiI6MX0.wVvP0KNtMdlob_sLoUPsPP5VYeATMZHd1OClOrXJ9mVxSOq4JfSwd6VcsYwfKe6KRpLX04gnZwY_dyS2rKcYCQ\"},{\"format\":\"jws\",\"acceptIndex\":1,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMDAwMCIsImFzc2V0IjoiRmVNYkRvWDdSMVBzYzRHRWN2SmRzYk5iWkEzYmZ6dGN5RENhdEpWSnB1bXAiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9tY3AtYWdlbnQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3OTE1MTcwOTQsInZlcnNpb24iOjF9.pR7xaySbYLybIQtObVqXY1Bbr47hufwkZL9-aeNT4Kh-zFAPHY5lHwkVJOz3gAU2fnUXa3d9CybMTRm8ojthCg\"},{\"format\":\"jws\",\"acceptIndex\":2,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiIweDgzMzU4OWZDRDZlRGI2RTA4ZjRjN0MzMkQ0ZjcxYjU0YmRBMDI5MTMiLCJuZXR3b3JrIjoiZWlwMTU1Ojg0NTMiLCJwYXlUbyI6IjB4NDAyMmRlMmQzNmMzMzRlNzNjN2ExMDg4MDVjZWExMWMwNTY0ZjQwMiIsInJlc291cmNlVXJsIjoiaHR0cHM6Ly90aHJlZS53cy9hcGkvbWNwLWFnZW50Iiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzkxNTE3MDk0LCJ2ZXJzaW9uIjoxfQ.7gxb-maUljaC_dwtOdMiZbXKStkfkVk-FUfuoCWsoXb_il0z4GX8NfT6VFiPjEIebqv2CI5z8fxAFJOQra_vCw\"},{\"format\":\"jws\",\"acceptIndex\":3,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiIweDc3OWRlZDBjOWUxMDIyMjI1ZjhlMDYzMGIzNWE5YjU0YmU3MTM3MzYiLCJuZXR3b3JrIjoiZWlwMTU1OjE5NiIsInBheVRvIjoiMHg0MDIyZGUyRDM2QzMzNEU3M0M3YTEwODgwNUNlYTExQzA1NjRmNDAyIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9tY3AtYWdlbnQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3OTE1MTcwOTQsInZlcnNpb24iOjF9.siNoGqnMGpz-d0PG4JLKhoi-Xr1oT4IMTcfji_10ZafGelrO5Q9mvm98VlkL6hkrG_q29zjYz30-y3dzLoNaBA\"}]},\"schema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"offers\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"format\":{\"type\":\"string\"},\"acceptIndex\":{\"type\":\"integer\"},\"payload\":{\"type\":\"object\",\"properties\":{\"version\":{\"type\":\"integer\"},\"resourceUrl\":{\"type\":\"string\"},\"scheme\":{\"type\":\"string\"},\"network\":{\"type\":\"string\"},\"asset\":{\"type\":\"string\"},\"payTo\":{\"type\":\"string\"},\"amount\":{\"type\":\"string\"},\"validUntil\":{\"type\":\"integer\"}},\"required\":[\"version\",\"resourceUrl\",\"scheme\",\"network\",\"asset\",\"payTo\",\"amount\"]},\"signature\":{\"type\":\"string\"}},\"required\":[\"format\",\"signature\"]}}},\"required\":[\"offers\"]}}},\"setup\":{\"command\":\"npx three-ws setup\",\"message\":\"Run `npx three-ws setup` to sign in and wire three.ws into your MCP client in one step.\",\"docs\":\"https://three.ws/docs/cli\"}}"
+						"Streamable HTTP error: Error POSTing to endpoint: {x402Version=2, error=\"X-PAYMENT header is required\", accepts=4}"
 					]
 				},
 				"oauth": {
@@ -483,22 +652,25 @@
 						"version": "1.0.0"
 					},
 					"protocolVersion": "2025-06-18",
-					"sessionId": null,
+					"sessionId": "mcs_4a4fe0b5-1291-45d6-8ef1-f8408e37d053",
 					"capabilities": [
 						"logging",
 						"prompts",
 						"resources",
 						"tools"
 					],
-					"tools": 23,
-					"prompts": 7,
+					"tools": 84,
+					"prompts": 9,
 					"call": {
 						"name": "getting_started",
 						"ok": true,
-						"ms": 183,
+						"ms": 86,
 						"contentItems": 1,
 						"structured": true
-					}
+					},
+					"warnings": [
+						"terminate: Streamable HTTP error: Failed to terminate session: Not Found"
+					]
 				}
 			},
 			"failures": [],
@@ -564,17 +736,21 @@
 						"error": null
 					}
 				],
-				"sessionIssued": false
+				"session": {
+					"echoed": 200,
+					"unknown": 200
+				},
+				"sessionIssued": true
 			},
 			"modes": {
 				"anonymous": {
 					"transport": "streamable-http",
 					"ok": false,
-					"error": "Streamable HTTP error: Error POSTing to endpoint: {\"x402Version\":2,\"error\":\"X-PAYMENT header is required\",\"resource\":{\"url\":\"https://three.ws/api/mcp-bazaar\",\"description\":\"three.ws x402 Bazaar MCP: Streamable HTTP (MCP 2025-06-18) that discovers and prices paid agent services across the live x402 facilitator network: search_services (ranked search), browse_services (list what is payable), get_ser",
+					"error": "Streamable HTTP error: Error POSTing to endpoint: {x402Version=2, error=\"X-PAYMENT header is required\", accepts=4}",
 					"status": 401,
 					"authRequired": true,
 					"warnings": [
-						"Streamable HTTP error: Error POSTing to endpoint: {\"x402Version\":2,\"error\":\"X-PAYMENT header is required\",\"resource\":{\"url\":\"https://three.ws/api/mcp-bazaar\",\"description\":\"three.ws x402 Bazaar MCP: Streamable HTTP (MCP 2025-06-18) that discovers and prices paid agent services across the live x402 facilitator network: search_services (ranked search), browse_services (list what is payable), get_service (exact price, networks, recipient, input schema, and a ready pay link), and bazaar_service_details (live per-network price for cost tracking). Connect with a three.ws account (OAuth) or pay per call in USDC on Base or Solana mainnet, no API key. Operated by three.ws.\",\"mimeType\":\"application/json\",\"serviceName\":\"three.ws x402 Bazaar MCP\",\"tags\":[\"x402\",\"mcp\",\"discovery\",\"bazaar\",\"pricing\"],\"iconUrl\":\"https://three.ws/favicon.ico\"},\"accepts\":[{\"scheme\":\"exact\",\"amount\":\"1000\",\"maxTimeoutSeconds\":60,\"resource\":\"https://three.ws/api/mcp-bazaar\",\"network\":\"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp\",\"payTo\":\"wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU\",\"asset\":\"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v\",\"extra\":{\"name\":\"USDC\",\"decimals\":6,\"feePayer\":\"WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW\"}},{\"scheme\":\"exact\",\"amount\":\"10000000\",\"maxTimeoutSeconds\":60,\"resource\":\"https://three.ws/api/mcp-bazaar\",\"network\":\"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp\",\"payTo\":\"wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU\",\"asset\":\"FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\",\"extra\":{\"name\":\"THREE\",\"decimals\":6,\"feePayer\":\"WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW\"}},{\"scheme\":\"exact\",\"amount\":\"1000\",\"maxTimeoutSeconds\":60,\"resource\":\"https://three.ws/api/mcp-bazaar\",\"network\":\"eip155:8453\",\"payTo\":\"0x4022de2d36c334e73c7a108805cea11c0564f402\",\"asset\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"extra\":{\"name\":\"USD Coin\",\"version\":\"2\",\"decimals\":6}},{\"scheme\":\"exact\",\"network\":\"eip155:196\",\"amount\":\"1000\",\"payTo\":\"0x4022de2D36C334E73C7a108805Cea11C0564f402\",\"maxTimeoutSeconds\":86400,\"asset\":\"0x779ded0c9e1022225f8e0630b35a9b54be713736\",\"resource\":\"https://three.ws/api/mcp-bazaar\",\"extra\":{\"symbol\":\"USDT\",\"name\":\"USD₮0\",\"version\":\"1\",\"transferMethod\":\"eip3009\",\"decimals\":6}}],\"extensions\":{\"bazaar\":{\"discoverable\":true,\"info\":{\"input\":{\"type\":\"http\",\"method\":\"POST\",\"body\":{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"search_services\",\"arguments\":{\"query\":\"weather\",\"type\":\"http\",\"limit\":5}}},\"bodyType\":\"json\"},\"output\":{\"type\":\"json\",\"example\":{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"1. Weather Now - $0.001\\n   Current weather by city.\\n   networks: eip155:8453\"}],\"structuredContent\":{\"query\":\"weather\",\"type\":\"http\",\"count\":1,\"services\":[{\"type\":\"http\",\"resource\":\"https://api.example.com/weather\",\"name\":\"Weather Now\",\"price\":\"$0.001\",\"price_atomic\":1000,\"networks\":[\"eip155:8453\"]}]}}}}},\"schema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"input\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"const\":\"http\"},\"method\":{\"type\":\"string\",\"enum\":[\"POST\",\"PUT\",\"PATCH\"]},\"bodyType\":{\"type\":\"string\",\"enum\":[\"json\",\"form-data\",\"text\"]},\"body\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"required\":[\"jsonrpc\",\"method\"],\"properties\":{\"jsonrpc\":{\"type\":\"string\",\"const\":\"2.0\"},\"id\":{\"type\":[\"string\",\"number\"]},\"method\":{\"type\":\"string\",\"enum\":[\"initialize\",\"tools/list\",\"tools/call\",\"ping\"],\"description\":\"MCP JSON-RPC method.\"},\"params\":{\"type\":\"object\",\"description\":\"For tools/call: { name, arguments }. Tool names: getting_started (free), search_services, browse_services, get_service, bazaar_service_details, see tools/list.\"}}}},\"required\":[\"type\",\"method\",\"bodyType\",\"body\"],\"additionalProperties\":false},\"output\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"example\":{\"type\":\"object\",\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"properties\":{\"jsonrpc\":{\"type\":\"string\",\"const\":\"2.0\"},\"id\":{\"type\":[\"string\",\"number\"]},\"result\":{\"type\":\"object\",\"properties\":{\"content\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"type\",\"text\"],\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"text\"]},\"text\":{\"type\":\"string\"}}}}}},\"error\":{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"message\":{\"type\":\"string\"}}}}}},\"required\":[\"type\"]}},\"required\":[\"input\"]}},\"offer-receipt\":{\"includeTxHash\":false,\"offerValiditySeconds\":60,\"info\":{\"offers\":[{\"format\":\"jws\",\"acceptIndex\":0,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiJFUGpGV2RkNUF1ZnFTU3FlTTJxTjF4enliYXBDOEc0d0VHR2tad3lURHQxdiIsIm5ldHdvcmsiOiJzb2xhbmE6NWV5a3Q0VXNGdjhQOE5KZFRSRXBZMXZ6cUtxWkt2ZHAiLCJwYXlUbyI6Ind3d3d3RHhGV1JuN2dyZ3IzRXNyc2c1QzZOdkRvREhTQTRnYUNmZmNjclUiLCJyZXNvdXJjZVVybCI6Imh0dHBzOi8vdGhyZWUud3MvYXBpL21jcC1iYXphYXIiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3OTE1MTcwOTcsInZlcnNpb24iOjF9.axmdPYiOYKpw__OX1emgIUrlWarf2NiHcevGy5bXTahHyKesZEikqNNRWBTR6ZT5Wmb4z-w3WatyaHpKrLL5Cg\"},{\"format\":\"jws\",\"acceptIndex\":1,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMDAwMCIsImFzc2V0IjoiRmVNYkRvWDdSMVBzYzRHRWN2SmRzYk5iWkEzYmZ6dGN5RENhdEpWSnB1bXAiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9tY3AtYmF6YWFyIiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzkxNTE3MDk3LCJ2ZXJzaW9uIjoxfQ.TdwXSgR18oADnerb5nx7pviyikIbZ6z4u94_f1wx14Ss32AK2RuCMFl_IBudyBqJPWaghIxl5Ht55WW63OexCA\"},{\"format\":\"jws\",\"acceptIndex\":2,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiIweDgzMzU4OWZDRDZlRGI2RTA4ZjRjN0MzMkQ0ZjcxYjU0YmRBMDI5MTMiLCJuZXR3b3JrIjoiZWlwMTU1Ojg0NTMiLCJwYXlUbyI6IjB4NDAyMmRlMmQzNmMzMzRlNzNjN2ExMDg4MDVjZWExMWMwNTY0ZjQwMiIsInJlc291cmNlVXJsIjoiaHR0cHM6Ly90aHJlZS53cy9hcGkvbWNwLWJhemFhciIsInNjaGVtZSI6ImV4YWN0IiwidmFsaWRVbnRpbCI6MTc5MTUxNzA5NywidmVyc2lvbiI6MX0.XKMgoANVUK1abiPb4w2QtwXyKYlcIkDrzVNMR4Ws-H09ao7iEHdklPA2cdK2W9PKm4XpliOLlTx37Ov8khyQCQ\"},{\"format\":\"jws\",\"acceptIndex\":3,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiIweDc3OWRlZDBjOWUxMDIyMjI1ZjhlMDYzMGIzNWE5YjU0YmU3MTM3MzYiLCJuZXR3b3JrIjoiZWlwMTU1OjE5NiIsInBheVRvIjoiMHg0MDIyZGUyRDM2QzMzNEU3M0M3YTEwODgwNUNlYTExQzA1NjRmNDAyIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9tY3AtYmF6YWFyIiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzkxNTE3MDk3LCJ2ZXJzaW9uIjoxfQ.zGiiXMr1A6hjeXgsUHsu9kEAjNtYeVdIpRCPrCsspbXFpihF1nOTPWZDcBXJ6oacF7PWEKZ0pzsReHhn2BjICQ\"}]},\"schema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"offers\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"format\":{\"type\":\"string\"},\"acceptIndex\":{\"type\":\"integer\"},\"payload\":{\"type\":\"object\",\"properties\":{\"version\":{\"type\":\"integer\"},\"resourceUrl\":{\"type\":\"string\"},\"scheme\":{\"type\":\"string\"},\"network\":{\"type\":\"string\"},\"asset\":{\"type\":\"string\"},\"payTo\":{\"type\":\"string\"},\"amount\":{\"type\":\"string\"},\"validUntil\":{\"type\":\"integer\"}},\"required\":[\"version\",\"resourceUrl\",\"scheme\",\"network\",\"asset\",\"payTo\",\"amount\"]},\"signature\":{\"type\":\"string\"}},\"required\":[\"format\",\"signature\"]}}},\"required\":[\"offers\"]}}},\"setup\":{\"command\":\"npx three-ws setup\",\"message\":\"Run `npx three-ws setup` to sign in and wire three.ws into your MCP client in one step.\",\"docs\":\"https://three.ws/docs/cli\"}}"
+						"Streamable HTTP error: Error POSTing to endpoint: {x402Version=2, error=\"X-PAYMENT header is required\", accepts=4}"
 					]
 				},
 				"oauth": {
@@ -610,7 +786,7 @@
 						"version": "1.0.0"
 					},
 					"protocolVersion": "2025-06-18",
-					"sessionId": null,
+					"sessionId": "mcs_e8361566-5186-4a52-8fce-747f93cc26ef",
 					"capabilities": [
 						"logging",
 						"prompts",
@@ -622,10 +798,13 @@
 					"call": {
 						"name": "getting_started",
 						"ok": true,
-						"ms": 155,
+						"ms": 218,
 						"contentItems": 1,
 						"structured": true
-					}
+					},
+					"warnings": [
+						"terminate: Streamable HTTP error: Failed to terminate session: Not Found"
+					]
 				}
 			},
 			"failures": [],
@@ -645,7 +824,7 @@
 				"initialize": {
 					"status": 200,
 					"contentType": "application/json; charset=utf-8",
-					"sessionId": null,
+					"sessionId": "mcs_4af794d4-0281-4ca5-bd80-a5f713c35acd",
 					"wwwAuthenticate": null,
 					"protocolVersion": "2025-06-18",
 					"rpcError": null
@@ -691,7 +870,11 @@
 						"error": null
 					}
 				],
-				"sessionIssued": false
+				"session": {
+					"echoed": 200,
+					"unknown": 200
+				},
+				"sessionIssued": true
 			},
 			"modes": {
 				"anonymous": {
@@ -702,7 +885,7 @@
 						"version": "1.0.0"
 					},
 					"protocolVersion": "2025-06-18",
-					"sessionId": null,
+					"sessionId": "mcs_b2ff00fe-c4c3-41b9-91ec-6ed58fceb498",
 					"capabilities": [
 						"tools"
 					],
@@ -717,7 +900,7 @@
 						"version": "1.0.0"
 					},
 					"protocolVersion": "2025-06-18",
-					"sessionId": null,
+					"sessionId": "mcs_915ba9d1-eb62-4801-914e-99e7893b6886",
 					"capabilities": [
 						"tools"
 					],
@@ -794,11 +977,11 @@
 				"anonymous": {
 					"transport": "streamable-http",
 					"ok": false,
-					"error": "Streamable HTTP error: Error POSTing to endpoint: {\"x402Version\":2,\"error\":\"X-PAYMENT header is required\",\"resource\":{\"url\":\"https://three.ws/api/ibm-mcp\",\"description\":\"three.ws x402 MCP - Streamable HTTP (MCP 2025-06-18) exposing IBM Granite foundation models as pay-per-call tools: ibm_granite_chat (conversational AI), ibm_granite_code (generate/review/refactor/explain/test/document), ibm_granit",
+					"error": "Streamable HTTP error: Error POSTing to endpoint: {x402Version=2, error=\"X-PAYMENT header is required\", accepts=4}",
 					"status": 401,
 					"authRequired": true,
 					"warnings": [
-						"Streamable HTTP error: Error POSTing to endpoint: {\"x402Version\":2,\"error\":\"X-PAYMENT header is required\",\"resource\":{\"url\":\"https://three.ws/api/ibm-mcp\",\"description\":\"three.ws x402 MCP - Streamable HTTP (MCP 2025-06-18) exposing IBM Granite foundation models as pay-per-call tools: ibm_granite_chat (conversational AI), ibm_granite_code (generate/review/refactor/explain/test/document), ibm_granite_embed (multilingual embeddings), ibm_granite_analyze (structured document analysis), and ibm_granite_forecast (zero-shot time-series). Pay per call in USDC on Base or Solana mainnet - no IBM Cloud account required. Operated by three.ws.\",\"mimeType\":\"application/json\",\"serviceName\":\"three.ws Granite x402\",\"tags\":[\"x402\",\"mcp\",\"ibm\",\"granite\",\"ai\"],\"iconUrl\":\"https://three.ws/favicon.ico\"},\"accepts\":[{\"scheme\":\"exact\",\"amount\":\"1000\",\"maxTimeoutSeconds\":60,\"resource\":\"https://three.ws/api/ibm-mcp\",\"network\":\"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp\",\"payTo\":\"wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU\",\"asset\":\"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v\",\"extra\":{\"name\":\"USDC\",\"decimals\":6,\"feePayer\":\"WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW\"}},{\"scheme\":\"exact\",\"amount\":\"10000000\",\"maxTimeoutSeconds\":60,\"resource\":\"https://three.ws/api/ibm-mcp\",\"network\":\"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp\",\"payTo\":\"wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU\",\"asset\":\"FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\",\"extra\":{\"name\":\"THREE\",\"decimals\":6,\"feePayer\":\"WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW\"}},{\"scheme\":\"exact\",\"amount\":\"1000\",\"maxTimeoutSeconds\":60,\"resource\":\"https://three.ws/api/ibm-mcp\",\"network\":\"eip155:8453\",\"payTo\":\"0x4022de2d36c334e73c7a108805cea11c0564f402\",\"asset\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"extra\":{\"name\":\"USD Coin\",\"version\":\"2\",\"decimals\":6}},{\"scheme\":\"exact\",\"network\":\"eip155:196\",\"amount\":\"1000\",\"payTo\":\"0x4022de2D36C334E73C7a108805Cea11C0564f402\",\"maxTimeoutSeconds\":86400,\"asset\":\"0x779ded0c9e1022225f8e0630b35a9b54be713736\",\"resource\":\"https://three.ws/api/ibm-mcp\",\"extra\":{\"symbol\":\"USDT\",\"name\":\"USD₮0\",\"version\":\"1\",\"transferMethod\":\"eip3009\",\"decimals\":6}}],\"extensions\":{\"bazaar\":{\"discoverable\":true,\"info\":{\"input\":{\"type\":\"http\",\"method\":\"POST\",\"body\":{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"ibm_granite_chat\",\"arguments\":{\"messages\":[{\"role\":\"user\",\"content\":\"Summarize the IBM Granite model family in one sentence.\"}]}}},\"bodyType\":\"json\"},\"output\":{\"type\":\"json\",\"example\":{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"IBM Granite is a family of open foundation models...\"}],\"structuredContent\":{\"ok\":true,\"text\":\"IBM Granite is a family of open foundation models...\",\"model\":\"ibm/granite-3-8b-instruct\"}}}}},\"schema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"input\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"const\":\"http\"},\"method\":{\"type\":\"string\",\"enum\":[\"POST\",\"PUT\",\"PATCH\"]},\"bodyType\":{\"type\":\"string\",\"enum\":[\"json\",\"form-data\",\"text\"]},\"body\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"required\":[\"jsonrpc\",\"method\"],\"properties\":{\"jsonrpc\":{\"type\":\"string\",\"const\":\"2.0\"},\"id\":{\"type\":[\"string\",\"number\"]},\"method\":{\"type\":\"string\",\"enum\":[\"initialize\",\"tools/list\",\"tools/call\",\"ping\"],\"description\":\"MCP JSON-RPC method.\"},\"params\":{\"type\":\"object\",\"description\":\"For tools/call: { name, arguments }. Tool names: ibm_granite_chat, ibm_granite_code, ibm_granite_embed, ibm_granite_analyze, ibm_granite_forecast - see tools/list.\"}}}},\"required\":[\"type\",\"method\",\"bodyType\",\"body\"],\"additionalProperties\":false},\"output\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"example\":{\"type\":\"object\",\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"properties\":{\"jsonrpc\":{\"type\":\"string\",\"const\":\"2.0\"},\"id\":{\"type\":[\"string\",\"number\"]},\"result\":{\"type\":\"object\",\"properties\":{\"content\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"type\",\"text\"],\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"text\"]},\"text\":{\"type\":\"string\"}}}}}},\"error\":{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"message\":{\"type\":\"string\"}}}}}},\"required\":[\"type\"]}},\"required\":[\"input\"]}},\"offer-receipt\":{\"includeTxHash\":false,\"offerValiditySeconds\":60,\"info\":{\"offers\":[{\"format\":\"jws\",\"acceptIndex\":0,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiJFUGpGV2RkNUF1ZnFTU3FlTTJxTjF4enliYXBDOEc0d0VHR2tad3lURHQxdiIsIm5ldHdvcmsiOiJzb2xhbmE6NWV5a3Q0VXNGdjhQOE5KZFRSRXBZMXZ6cUtxWkt2ZHAiLCJwYXlUbyI6Ind3d3d3RHhGV1JuN2dyZ3IzRXNyc2c1QzZOdkRvREhTQTRnYUNmZmNjclUiLCJyZXNvdXJjZVVybCI6Imh0dHBzOi8vdGhyZWUud3MvYXBpL2libS1tY3AiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3OTE1MTcxMDAsInZlcnNpb24iOjF9.QCzK1NTitYJ8ZZbnOfaXP_ribDfjhlMnYRmKVsPVQdMTbEMklI46dHJUP9_fdwMqG_L5GdGCJq-UTHCWJTGKDg\"},{\"format\":\"jws\",\"acceptIndex\":1,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMDAwMCIsImFzc2V0IjoiRmVNYkRvWDdSMVBzYzRHRWN2SmRzYk5iWkEzYmZ6dGN5RENhdEpWSnB1bXAiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9pYm0tbWNwIiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzkxNTE3MTAwLCJ2ZXJzaW9uIjoxfQ._lBGhi3lD_uab2aa9ugjWLq4CYlTAIDMMBxkdm_jcBrQ5Sa1dGQZcfI11CXTfiOt0tRzv5KJC1TfhnaOa786Bg\"},{\"format\":\"jws\",\"acceptIndex\":2,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiIweDgzMzU4OWZDRDZlRGI2RTA4ZjRjN0MzMkQ0ZjcxYjU0YmRBMDI5MTMiLCJuZXR3b3JrIjoiZWlwMTU1Ojg0NTMiLCJwYXlUbyI6IjB4NDAyMmRlMmQzNmMzMzRlNzNjN2ExMDg4MDVjZWExMWMwNTY0ZjQwMiIsInJlc291cmNlVXJsIjoiaHR0cHM6Ly90aHJlZS53cy9hcGkvaWJtLW1jcCIsInNjaGVtZSI6ImV4YWN0IiwidmFsaWRVbnRpbCI6MTc5MTUxNzEwMCwidmVyc2lvbiI6MX0.E8vbvPwxQNX1UtTydZGmBEua_a8jgoblPdg-qnlWSb8STe5CgjS3sWrpNTTiaFnq69s6XRUZIwmfH9hHsOcXDw\"},{\"format\":\"jws\",\"acceptIndex\":3,\"signature\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiIweDc3OWRlZDBjOWUxMDIyMjI1ZjhlMDYzMGIzNWE5YjU0YmU3MTM3MzYiLCJuZXR3b3JrIjoiZWlwMTU1OjE5NiIsInBheVRvIjoiMHg0MDIyZGUyRDM2QzMzNEU3M0M3YTEwODgwNUNlYTExQzA1NjRmNDAyIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9pYm0tbWNwIiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzkxNTE3MTAwLCJ2ZXJzaW9uIjoxfQ.hiSDy8hCO2rfSlUANuiG-8hVyIfqVdb1_GUsumrQIFFhHFobsUqxtlwPxsUSW-bSlFp99t0QMGGtEoU4IY7PCA\"}]},\"schema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"offers\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"format\":{\"type\":\"string\"},\"acceptIndex\":{\"type\":\"integer\"},\"payload\":{\"type\":\"object\",\"properties\":{\"version\":{\"type\":\"integer\"},\"resourceUrl\":{\"type\":\"string\"},\"scheme\":{\"type\":\"string\"},\"network\":{\"type\":\"string\"},\"asset\":{\"type\":\"string\"},\"payTo\":{\"type\":\"string\"},\"amount\":{\"type\":\"string\"},\"validUntil\":{\"type\":\"integer\"}},\"required\":[\"version\",\"resourceUrl\",\"scheme\",\"network\",\"asset\",\"payTo\",\"amount\"]},\"signature\":{\"type\":\"string\"}},\"required\":[\"format\",\"signature\"]}}},\"required\":[\"offers\"]}}},\"setup\":{\"command\":\"npx three-ws setup\",\"message\":\"Run `npx three-ws setup` to sign in and wire three.ws into your MCP client in one step.\",\"docs\":\"https://three.ws/docs/cli\"}}"
+						"Streamable HTTP error: Error POSTing to endpoint: {x402Version=2, error=\"X-PAYMENT header is required\", accepts=4}"
 					]
 				},
 				"oauth": {
