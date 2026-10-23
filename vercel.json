@@ -777,6 +777,14 @@
 			"dest": "/api/agents/[id]/economy?id=$1"
 		},
 		{
+			"src": "/api/creator-payouts",
+			"dest": "/api/creator-payouts.js"
+		},
+		{
+			"src": "/creator/payouts/?",
+			"dest": "/creator-payouts.html"
+		},
+		{
 			"src": "/api/agents/([^/]+)/earnings",
 			"dest": "/api/agents/[id]/earnings?id=$1"
 		},
@@ -7446,6 +7454,14 @@
 		{
 			"path": "/api/cron/creator-earnings-snapshot",
 			"schedule": "11,41 * * * *"
+		},
+		{
+			"path": "/api/cron/creator-payout-distribute",
+			"schedule": "20 * * * *"
+		},
+		{
+			"path": "/api/cron/creator-payout-reconcile",
+			"schedule": "50 */3 * * *"
 		},
 		{
 			"path": "/api/cron/fee-bridge",

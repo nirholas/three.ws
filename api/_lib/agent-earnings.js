@@ -36,6 +36,7 @@ import { sql } from './db.js';
 import { solPriceUsd } from './sol-price.js';
 import { SOLANA_USDC_MINT } from '../payments/_config.js';
 import { cdnUrl } from './r2.js';
+import { getAgentPayouts } from './creator-payouts.js';
 
 // A portrait is decoration: a misconfigured URL resolver degrades it to null
 // instead of failing the board. Routed through /cdn/ (not a raw publicUrl())
@@ -301,7 +302,7 @@ async function rankedAgents(window, price, back = 0) {
  */
 export async function getAgentEarnings(agent, { window: rawWindow = 'all' } = {}) {
 	const window = normalizeWindow(rawWindow);
-	const [price, totals, lifetimeTotals, coins, devnet, claims] = await Promise.all([
+	const [price, totals, lifetimeTotals, coins, devnet, claims, payouts] = await Promise.all([
 		solPriceUsd(),
 		totalsByAgent(window, { agentId: agent.id }),
 		window === 'all' ? null : totalsByAgent('all', { agentId: agent.id }),
@@ -318,6 +319,8 @@ export async function getAgentEarnings(agent, { window: rawWindow = 'all' } = {}
 		`,
 		sql`select count(*)::int as n from pump_agent_mints where agent_id = ${agent.id} and network = 'devnet'`,
 		recentClaims(agent.id),
+		// The payout ledger is an additive block: a failure here must not hide earnings.
+		getAgentPayouts(agent.id).catch(() => null),
 	]);
 	const t = totals.get(agent.id) || emptyTotals();
 	const life = (lifetimeTotals ? lifetimeTotals.get(agent.id) : totals.get(agent.id)) || emptyTotals();
@@ -325,7 +328,10 @@ export async function getAgentEarnings(agent, { window: rawWindow = 'all' } = {}
 	const lifeSol = (v) => round(Number(v) / 1e9, 9);
 	const usd = (sol) => (price > 0 && sol != null ? round(sol * price, 2) : null);
 
-	const coinRows = coins.map((c) => shapeCoin(c, agent.solana_address, price));
+	const coinRows = coins.map((c) => ({
+		...shapeCoin(c, agent.solana_address, price),
+		payout: payouts?.per_coin?.[c.mint] || { sent_sol: 0, pending_sol: 0, held_sol: 0 },
+	}));
 	const refreshedTimes = coinRows.map((c) => c.refreshed_at).filter(Boolean).map((d) => new Date(d).getTime());
 	const refreshedAt = refreshedTimes.length ? new Date(Math.min(...refreshedTimes)).toISOString() : null;
 
@@ -350,6 +356,14 @@ export async function getAgentEarnings(agent, { window: rawWindow = 'all' } = {}
 		},
 		coins: coinRows,
 		claims,
+		payouts: payouts && {
+			...payouts,
+			total_earned_sol: lifeSol(life.lifetime_lamports),
+			total_claimed_sol: lifeSol(life.claimed_lamports),
+			// Earned and claimed are the lifetime creator-fee figures; sent, pending and
+			// held are the creator's share of recorded claims (claim minus the buyback earmark).
+			basis: 'Earned and claimed are lifetime creator fees. Sent, pending and held are your share of each recorded claim after the buyback earmark.',
+		},
 		rank,
 		refreshed_at: refreshedAt,
 		stale: refreshedAt ? Date.now() - new Date(refreshedAt).getTime() > 2 * 3_600_000 : false,
