@@ -217,7 +217,7 @@ function curatedDocBodies() {
 		for (const p of section.pages) {
 			const slug = docMarkdownSlug(p.path);
 			if (!slug) continue;
-			const body = readFileSync(resolve(root, 'docs', `${slug}.md`), 'utf8').trim();
+			const body = readFileSync(resolve(root, 'docs', `${slug}.md`), 'utf8').trim().replace(/[ \t]*[\u2014\u2013][ \t]*/g, ' - ');
 			out.push({ page: p, slug, body, excluded: OTHER_PROJECT.test(body) });
 		}
 	}

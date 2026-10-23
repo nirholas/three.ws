@@ -6952,7 +6952,7 @@ Global flags: `--json` for machine-readable output, `--origin <url>` (or `THREE_
 
 <doc title="Docs · x402 Protocol" url="https://three.ws/docs/x402.md">
 
-# x402 — paid agent skills
+# x402 - paid agent skills
 
 x402 is how machines pay for web requests: a paid endpoint answers
 `HTTP 402 Payment Required` with a price, the caller settles a small on-chain
@@ -6965,7 +6965,7 @@ for them (client side); the platform's own catalog of paid endpoints lives at
 [x402 paid endpoints](x402-endpoints.md).
 
 **Live activity:** [x402scan dashboard](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07)
-— browse paid calls, revenue, and per-skill pricing for this server.
+ - browse paid calls, revenue, and per-skill pricing for this server.
 
 ## Server side
 
@@ -7033,8 +7033,8 @@ in `meta.payments`. A buyer never sees two different wallets for one skill.
 
 Discovery:
 
-- `GET /.well-known/x402` — site-level resource list.
-- `GET /api/agents/x402/manifest?agent_id=…&skill=…` — per-skill price
+- `GET /.well-known/x402` - site-level resource list.
+- `GET /api/agents/x402/manifest?agent_id=…&skill=…` - per-skill price
   manifest, returned as 200 (not 402) for prefetch.
 - The 402 response includes a `Link` header with `rel="payment-config"`
   (pointing at `/.well-known/x402`) and `rel="payment-manifest"` (pointing at
@@ -7044,16 +7044,16 @@ Discovery:
 
 `api/agents/x402/[action].js` resolves the price for `(agent, skill)` via:
 
-1. The canonical `agent_skill_prices` marketplace table — the active
+1. The canonical `agent_skill_prices` marketplace table - the active
    `{ amount, currency_mint, chain }` row for `(agent_id, skill)`.
-2. Legacy `agent.meta.skill_prices[skill]` — `{ amount, currency }` per skill,
+2. Legacy `agent.meta.skill_prices[skill]` - `{ amount, currency }` per skill,
    for agents priced before the marketplace migration.
-3. Legacy `agent.meta.payments.default_price` — fallback for unspecified skills.
+3. Legacy `agent.meta.payments.default_price` - fallback for unspecified skills.
 
 If none is set the server returns `409 no_payments` rather than synthesizing a
-price — an agent must list a price before its skills are payable.
+price - an agent must list a price before its skills are payable.
 
-## Caller (browser) — automatic
+## Caller (browser) - automatic
 
 ```js
 import { x402Fetch } from 'src/onchain/x402/client.js';
@@ -7070,7 +7070,7 @@ const res = await x402Fetch('/api/agents/x402/invoke', {
 The wrapper pays via Pump.fun's `agent_accept_payment`, attaches
 `x-payment-intent: <intent_id>`, and retries the original call exactly once.
 
-## Caller (server / SDK) — manual
+## Caller (server / SDK) - manual
 
 ```bash
 # 1. Discover the price.
@@ -7096,7 +7096,7 @@ cannot both run. If the skill then fails, the intent flips back to `paid`
 buyer is not charged for a call that never delivered.
 
 For idempotency (don't double-charge on network retry), pass an
-`Idempotency-Key` header — implementations are free to dedupe before
+`Idempotency-Key` header - implementations are free to dedupe before
 consuming the intent. Not yet enforced server-side.
 
 ## A paid call that fails never asks the buyer to pay twice
@@ -7298,14 +7298,14 @@ The spent-payment ledger behind this is `x402_spent_payments`
 ## Open-source packages
 
 The x402 toolkit is published to npm and maintained as standalone, provider-neutral
-repositories — you can use any of them without a three.ws account. USDC is the
+repositories - you can use any of them without a three.ws account. USDC is the
 default settlement asset on every one; `$THREE` is a supported opt-in token.
 
 | Package | Install | What it does |
 |---|---|---|
 | [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch) | `npm i @three-ws/x402-fetch` | **Buyer.** A drop-in `fetch` wrapper that automatically pays a 402 challenge in USDC (EIP-3009 on Base) and retries. |
 | [`@three-ws/x402-server`](https://www.npmjs.com/package/@three-ws/x402-server) | `npm i @three-ws/x402-server` | **Seller.** Build 402 challenges and run the verify → dispatch → settle flow. Zero dependencies. |
-| [`@three-ws/x402-modal`](https://www.npmjs.com/package/@three-ws/x402-modal) | `npm i @three-ws/x402-modal` | **Browser modal (lightweight).** Drop-in payment modal for any paid endpoint — vanilla JS, CDN-friendly, no bundler. |
+| [`@three-ws/x402-modal`](https://www.npmjs.com/package/@three-ws/x402-modal) | `npm i @three-ws/x402-modal` | **Browser modal (lightweight).** Drop-in payment modal for any paid endpoint - vanilla JS, CDN-friendly, no bundler. |
 | [`@three-ws/x402-payment-modal`](https://www.npmjs.com/package/@three-ws/x402-payment-modal) | `npm i @three-ws/x402-payment-modal` | **Browser modal + adapters.** Fuller modal with `./server` (Express/Vercel) and `./react` subpaths, SIWX, and client-side spend caps. |
 | [`@three-ws/x402-mcp`](https://www.npmjs.com/package/@three-ws/x402-mcp) | `npx @three-ws/x402-mcp` | **MCP server (buyer).** Lets any MCP client (Claude Desktop, Cursor, Claude Code) discover, inspect, and pay x402 endpoints. |
 | [`@three-ws/ibm-x402-mcp`](https://www.npmjs.com/package/@three-ws/ibm-x402-mcp) | `npx @three-ws/ibm-x402-mcp` | **MCP server (seller).** Paid access to IBM Granite models via watsonx.ai, monetized over x402. |
@@ -7334,16 +7334,16 @@ and the payment flow.
 
 ## Tutorials
 
-- [Pay for an x402 service](tutorials/pay-for-x402-service.md) — settle a paid request end to end with `@three-ws/x402-fetch`.
-- [Build a paid x402 endpoint](tutorials/paid-x402-endpoint.md) — stand up a seller endpoint with `@three-ws/x402-server`.
+- [Pay for an x402 service](tutorials/pay-for-x402-service.md) - settle a paid request end to end with `@three-ws/x402-fetch`.
+- [Build a paid x402 endpoint](tutorials/paid-x402-endpoint.md) - stand up a seller endpoint with `@three-ws/x402-server`.
 
 ## Related
 
-- [x402 paid endpoints](x402-endpoints.md) — the catalog of the platform's own paid endpoints.
+- [x402 paid endpoints](x402-endpoints.md) - the catalog of the platform's own paid endpoints.
 - [Financial controls](financial-controls.md): where settled payments are recorded.
-- [x402 buyer client](x402-buyer.md) — how to settle a 402 challenge in code.
-- [x402 bazaar over MCP](mcp-x402-bazaar.md) — discover and pay endpoints through the MCP bazaar.
-- [Autonomous x402](autonomous-x402.md) — agents paying for services on their own.
+- [x402 buyer client](x402-buyer.md) - how to settle a 402 challenge in code.
+- [x402 bazaar over MCP](mcp-x402-bazaar.md) - discover and pay endpoints through the MCP bazaar.
+- [Autonomous x402](autonomous-x402.md) - agents paying for services on their own.
 
 </doc>
 
@@ -7351,7 +7351,7 @@ and the payment flow.
 
 # Skills System
 
-Skills are the extension mechanism for three.ws — modular, portable capability bundles that tell an agent *what it can do* and *how to do it*. A skill packages together the LLM instructions, the tool schema, and the JavaScript handler that runs when the tool is called. Because a skill is just a directory of files served from any URL, the same wave skill can be installed in every agent you build without copying any code.
+Skills are the extension mechanism for three.ws - modular, portable capability bundles that tell an agent *what it can do* and *how to do it*. A skill packages together the LLM instructions, the tool schema, and the JavaScript handler that runs when the tool is called. Because a skill is just a directory of files served from any URL, the same wave skill can be installed in every agent you build without copying any code.
 
 This document covers how to install skills, how to write them, the full context API available to handlers, the security model, and the lifecycle events that let host pages observe skill execution.
 
@@ -7364,11 +7364,11 @@ Every skill is a directory (a "bundle") with up to four files:
 | File | Required | Purpose |
 |------|----------|---------|
 | `manifest.json` | yes | Metadata, version, dependencies, compatibility |
-| `SKILL.md` | yes | LLM instructions — injected into the system prompt |
+| `SKILL.md` | yes | LLM instructions - injected into the system prompt |
 | `tools.json` | yes (if exposing tools) | JSON Schema tool definitions the LLM can invoke |
 | `handlers.js` | no | ES module that implements each tool |
 
-A skill without `handlers.js` is valid — it is a *declarative skill* that only injects prompt context. A "british-accent" skill that contains only `SKILL.md` ("Speak with a British accent. Use terms like 'brilliant', 'cheers'.") needs no handlers and no tools.
+A skill without `handlers.js` is valid - it is a *declarative skill* that only injects prompt context. A "british-accent" skill that contains only `SKILL.md` ("Speak with a British accent. Use terms like 'brilliant', 'cheers'.") needs no handlers and no tools.
 
 ### Full bundle layout
 
@@ -7390,7 +7390,7 @@ wave/
 └── LICENSE
 ```
 
-Assets (clips, morphs, prompts) are co-located in the bundle. Handlers reference them via `ctx.skillBaseURI` — the runtime resolves relative paths against the bundle's base URL automatically.
+Assets (clips, morphs, prompts) are co-located in the bundle. Handlers reference them via `ctx.skillBaseURI` - the runtime resolves relative paths against the bundle's base URL automatically.
 
 ---
 
@@ -7464,18 +7464,18 @@ console.log(el.skills);
   "name": "wave",
   "version": "0.1.0",
   "description": "Wave at the user with context-appropriate enthusiasm.",
-  "author": "0xDeadBeef...",   // optional — wallet address or name
+  "author": "0xDeadBeef...",   // optional - wallet address or name
   "license": "MIT",
   "tags": ["greeting", "gesture", "mixamo-compatible"],
 
-  // Compatibility — runtime checks these before installing
+  // Compatibility - runtime checks these before installing
   "requires": {
     "rig": ["mixamo", "any"],  // rigs this skill works with
     "runtime": ">=0.1.0",
     "tools": ["play_clip"]     // built-in tools this skill depends on
   },
 
-  // Skill dependencies — installed recursively before this skill
+  // Skill dependencies - installed recursively before this skill
   "dependencies": {
     "https://your-site.com/skills/gesture-base/": "^1.0.0"
   },
@@ -7514,9 +7514,9 @@ console.log(el.skills);
 
 ---
 
-## SKILL.md — LLM instructions
+## SKILL.md - LLM instructions
 
-The `SKILL.md` file is injected into the agent's system prompt whenever the skill is loaded. It tells the LLM when and how to use the skill's tools. Write it as instruction, not description — it speaks directly to the model.
+The `SKILL.md` file is injected into the agent's system prompt whenever the skill is loaded. It tells the LLM when and how to use the skill's tools. Write it as instruction, not description - it speaks directly to the model.
 
 ```markdown
 ---
@@ -7534,9 +7534,9 @@ cost: low
 When the user greets you, says goodbye, or when you are introduced to
 someone, wave at them. Pick the clip based on the vibe:
 
-- **wave-casual** — default, for most greetings
-- **wave-enthusiastic** — when the user seems excited, or after a win
-- **wave-subtle** — in a professional context or mid-conversation
+- **wave-casual** - default, for most greetings
+- **wave-enthusiastic** - when the user seems excited, or after a win
+- **wave-subtle** - in a professional context or mid-conversation
 
 Call `wave({ style: "casual" | "enthusiastic" | "subtle" })`.
 
@@ -7550,13 +7550,13 @@ Do not wave more than once per turn. Do not wave if you just waved.
 | `name` | string | Must match `manifest.json` |
 | `description` | string | Used in skill discovery UIs |
 | `triggers` | string[] | Semantic tags that surface this skill in the router |
-| `cost` | `low` \| `medium` \| `high` | Latency hint — controls eager vs. lazy loading |
+| `cost` | `low` \| `medium` \| `high` | Latency hint - controls eager vs. lazy loading |
 
 The runtime wraps the markdown body in a `<skill name="..." version="...">` XML tag before injecting it, so the LLM can attribute which skill each instruction came from.
 
 ---
 
-## tools.json — tool schema
+## tools.json - tool schema
 
 `tools.json` defines the callable functions the LLM sees. The format follows the Anthropic tool-use schema (`input_schema`, not `parameters`):
 
@@ -7612,7 +7612,7 @@ export async function wave(args, ctx) {
       played = true;
     }
   } catch {
-    // No bundled clip — fall back to built-in animation hint.
+    // No bundled clip - fall back to built-in animation hint.
   }
 
   if (!played) {
@@ -7629,7 +7629,7 @@ export async function wave(args, ctx) {
 ```js
 async function toolName(args, ctx) {
   // args: validated parameters from the LLM tool call
-  // ctx:  SkillContext — see full API below
+  // ctx:  SkillContext - see full API below
   return { ok: true, ...result };
 }
 ```
@@ -7671,7 +7671,7 @@ interface SkillContext {
   loadJSON(uri: string): Promise<any>;
   skillBaseURI: string;  // base URL of this skill's bundle
 
-  // Network (CORS rules apply)
+  // Network access, subject to CORS
   fetch(uri: string, opts?: RequestInit): Promise<Response>;
 
   // Cross-skill calls
@@ -7686,8 +7686,8 @@ interface SkillContext {
 **Key points:**
 
 - `ctx.skillBaseURI` always ends with `/`. Use `new URL('./clips/file.glb', ctx.skillBaseURI).href` for portable asset resolution.
-- `ctx.memory.recall()` is substring search — no embeddings yet.
-- `ctx.call()` invokes another tool by name. It crosses skill boundaries — you can call a built-in like `speak` from inside a custom skill handler.
+- `ctx.memory.recall()` is substring search - no embeddings yet.
+- `ctx.call()` invokes another tool by name. It crosses skill boundaries - you can call a built-in like `speak` from inside a custom skill handler.
 - `ctx.viewer.scene` is a read-only reference. Use the `viewer` methods to manipulate state rather than mutating the scene graph directly.
 - Individual `ctx.*` calls time out after **30 seconds**. A timed-out handler surfaces as `{ error: "..." }` without crashing the agent.
 
@@ -7702,10 +7702,10 @@ The worker receives handler source as text and loads it via a `blob:` URL dynami
 **Sandboxed handlers cannot:**
 - Read `document.cookie`, `window.localStorage`, `sessionStorage`, or any DOM API
 - Access `window`, `navigator`, or `location`
-- Import external modules (no `import` statements in handler source — the blob context has no base URL for relative imports)
+- Import external modules (no `import` statements in handler source - the blob context has no base URL for relative imports)
 - Make network requests outside `ctx.fetch` and `ctx.loadJSON` (standard CORS rules apply)
 
-**Sandboxed handlers can still do everything via `ctx.*`** — animation, memory, speech, LLM calls, cross-skill calls — through the postMessage proxy.
+**Sandboxed handlers can still do everything via `ctx.*`** - animation, memory, speech, LLM calls, cross-skill calls - through the postMessage proxy.
 
 ### Trusted main-thread opt-out
 
@@ -7729,7 +7729,7 @@ The `SkillRegistry` enforces a trust policy set per agent:
 |------|---------|
 | `owned-only` | Only run skills where `manifest.author` matches the agent owner's wallet (default) |
 | `whitelist` | Allow skills from a configured list of publisher wallets |
-| `any` | All skills from any URL are allowed — use for kiosks and demos |
+| `any` | All skills from any URL are allowed - use for kiosks and demos |
 
 Trust is configured in the agent manifest or passed to `SkillRegistry`:
 
@@ -7797,7 +7797,7 @@ Host pages embedding `<agent-3d>` also get DOM `CustomEvent`s re-dispatched on t
 | `skill-done` | `{ skill: string, result: { ok, output?, sentiment?, data? } }` |
 | `skill-error` | `{ skill: string, error: string }` |
 
-`skill-done` results with a `sentiment` number (−1 to 1) trigger the avatar's empathy layer — positive values produce a celebration blend, negative values produce concern.
+`skill-done` results with a `sentiment` number (−1 to 1) trigger the avatar's empathy layer - positive values produce a celebration blend, negative values produce concern.
 
 ---
 
@@ -7863,14 +7863,14 @@ merge tools into runtime tool-use schema
 inject SKILL.md into system prompt as <skill> fragment
       │
       ▼
-skill is live — LLM can now call its tools
+skill is live - LLM can now call its tools
 ```
 
 ---
 
 ## Worked example: the `wave` skill
 
-The `wave` skill is the minimal complete example — small enough to reproduce here
+The `wave` skill is the minimal complete example - small enough to reproduce here
 in full. Create it as a `wave/` directory anywhere you serve static files; every
 file the bundle needs is listed below. For real, installable bundles that ship
 with the repo, see [examples/skills/](../examples/skills/) (`pump-fun`,
@@ -7945,9 +7945,9 @@ cost: low
 When the user greets you, says goodbye, or when you are introduced,
 wave at them. Pick the clip based on the vibe:
 
-- **wave-casual** — default, for most greetings
-- **wave-enthusiastic** — when the user seems excited, or after a win
-- **wave-subtle** — in a professional context or mid-conversation
+- **wave-casual** - default, for most greetings
+- **wave-enthusiastic** - when the user seems excited, or after a win
+- **wave-subtle** - in a professional context or mid-conversation
 
 Call `wave({ style: "casual" | "enthusiastic" | "subtle" })`.
 
@@ -7970,7 +7970,7 @@ export async function wave(args, ctx) {
       played = true;
     }
   } catch {
-    // No bundled clip — fall back to built-in animation hint.
+    // No bundled clip - fall back to built-in animation hint.
   }
 
   if (!played) {
@@ -8032,9 +8032,9 @@ This is the pattern: `SKILL.md` in the skill bundle explains the tool in the abs
 
 A skill is just a directory of static files. Publish it anywhere:
 
-- **GitHub Releases** — attach a zip, reference the raw URL
-- **Vercel / Netlify / S3** — deploy the directory as a static site
-- **IPFS** — `ipfs add -r skills/wave/` and distribute the CID
+- **GitHub Releases** - attach a zip, reference the raw URL
+- **Vercel / Netlify / S3** - deploy the directory as a static site
+- **IPFS** - `ipfs add -r skills/wave/` and distribute the CID
 - **The platform itself**: first-party bundles live under `public/skills/<name>/` in this repo (e.g. `public/skills/tip-jar/`) and are served at `https://three.ws/skills/<name>/`
 - **npm**: publish the directory as a package and reference it via a CDN like jsDelivr
 
@@ -8149,8 +8149,8 @@ Those filters are also the page URL, so [/marketplace?tab=skills&tag=solana&sort
 
 ## Versioning
 
-- `spec: "skill/0.1"` — the skill bundle format version.
-- `version` in `manifest.json` — semver, author-controlled, used for dependency resolution.
+- `spec: "skill/0.1"` - the skill bundle format version.
+- `version` in `manifest.json` - semver, author-controlled, used for dependency resolution.
 - Agent manifests can pin an exact version (`"0.1.0"`) or a range (`"^0.1.0"`).
 - The runtime prefers the highest-compatible published version within range.
 
@@ -8158,10 +8158,10 @@ Those filters are also the page URL, so [/marketplace?tab=skills&tag=solana&sort
 
 ## See also
 
-- [Architecture Overview](./architecture.md) — how skills fit into the agent runtime
-- [Agent System](./agent-system.md) — the protocol bus and built-in tool system
-- [Web Component](./web-component.md) — embedding agents and passing skill attributes
-- `specs/SKILL_SPEC.md` — the authoritative skill bundle specification
-- `specs/PERMISSIONS_SPEC.md` — ERC-7710/ERC-7715 delegation for fine-grained skill permissions
+- [Architecture Overview](./architecture.md) - how skills fit into the agent runtime
+- [Agent System](./agent-system.md) - the protocol bus and built-in tool system
+- [Web Component](./web-component.md) - embedding agents and passing skill attributes
+- `specs/SKILL_SPEC.md` - the authoritative skill bundle specification
+- `specs/PERMISSIONS_SPEC.md` - ERC-7710/ERC-7715 delegation for fine-grained skill permissions
 
 </doc>

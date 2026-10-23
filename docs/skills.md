@@ -320,7 +320,7 @@ interface SkillContext {
   loadJSON(uri: string): Promise<any>;
   skillBaseURI: string;  // base URL of this skill's bundle
 
-  // Network (CORS rules apply)
+  // Network access, subject to CORS
   fetch(uri: string, opts?: RequestInit): Promise<Response>;
 
   // Cross-skill calls
