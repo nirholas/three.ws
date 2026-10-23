@@ -183,6 +183,14 @@
 			<description>A new scanner runs every 15 minutes over real market series (coin price, Solana TVL and stablecoin supply, stablecoin pegs, Hyperliquid funding and open interest) and records statistically scored anomalies with a medium, high or critical severity. Read them per call at /api/x402/market-anomalies ($0.001 USDC), or create a market_anomaly alert rule in alerts-mcp to be notified. Thin or flat series are skipped instead of guessed at.</description>
 		</item>
 		<item>
+			<title>News reader recovers blocked stories and gives a structured trading read</title>
+			<link>https://three.ws/markets/news</link>
+			<guid isPermaLink="false">2026-10-23:News reader recovers blocked stories and gives a structured trading read</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When a publisher blocks or paywalls an article, the reader now recovers it from the Internet Archive, the SEC EDGAR filing the headline names, or other outlets covering the same story, and says which lane it used. The analysis is now a structured trading read: affected assets with exposure and direction, whether the news is priced in, the horizon, and a counter-argument. The same resolution is available to agents as the free news_resolve MCP tool. The excerpt limit applies to every lane.</description>
+		</item>
+		<item>
 			<title>Onchain viewer reads multi-part memo inscriptions</title>
 			<link>https://three.ws/onchain</link>
 			<guid isPermaLink="false">2026-10-23:Onchain viewer reads multi-part memo inscriptions</guid>

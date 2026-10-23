@@ -30,6 +30,18 @@ The cap is not a UI preference. It is enforced server-side in [`api/_lib/news-ri
 
 The extraction ladder still fetches the full text internally: the LLM needs the whole article to summarize it accurately, and the agents' grounding corpus reasons over it server-side. What changes is that the full text never reaches a response.
 
+## Extraction lanes
+
+When a publisher page and the reader service both come back empty, the ladder in [`api/_lib/article-extract.js`](../api/_lib/article-extract.js) tries the lanes in [`api/_lib/article-lanes.js`](../api/_lib/article-lanes.js), in this order:
+
+| Lane | Source | Notes |
+|---|---|---|
+| `wayback` | The Internet Archive's closest snapshot of the same URL | Needs at least 3 paragraphs and more text than the live page |
+| `primary` | The SEC EDGAR filing (8-K exhibit, 10-K, 10-Q, S-1) of the company the headline names | Contact User-Agent (`SEC_CONTACT_EMAIL`, default `support@three.ws`), throttled to 8 requests/second, cached by accession |
+| `siblings` | Other outlets covering the same story, from the native feed | Each contributes only its own bounded feed description, attributed by name |
+
+Every network fetch goes through the SSRF guard, and the lane used is reported as `extraction` and `lane_sources` on `/api/news/article` and the `news_resolve` MCP tool. The excerpt cap above applies to every lane identically: a lane widens what we can read and analyze, never what a response quotes.
+
 ## Withdrawn stories and publishers
 
 `news-rights.js` holds two lists:

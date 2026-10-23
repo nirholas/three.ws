@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-23T22:24:41.310Z",
+	"generated_at": "2026-10-23T22:31:41.495Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4142,
+	"total": 4143,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -230,6 +230,17 @@
 			"link": "/docs/market-anomalies",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "News reader recovers blocked stories and gives a structured trading read",
+			"summary": "When a publisher blocks or paywalls an article, the reader now recovers it from the Internet Archive, the SEC EDGAR filing the headline names, or other outlets covering the same story, and says which lane it used. The analysis is now a structured trading read: affected assets with exposure and direction, whether the news is priced in, the horizon, and a counter-argument. The same resolution is available to agents as the free news_resolve MCP tool. The excerpt limit applies to every lane.",
+			"link": "/markets/news",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -1546,17 +1557,6 @@
 			"title": "The desktop behaves like a real computer",
 			"summary": "Drag a selection box across the desktop, move icons on a snap grid, right-click for view options, and open every app from desktop icons or All Apps. Settings now covers your profile, theme, accent colour, wallpaper (including your own photo), icon size and taskbar, and the whole session (windows, icon layout, preferences) is saved in your browser, with export, import and reset.",
 			"link": "/docs/desktop",
-			"tags": [
-				"feature",
-				"desktop"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "The desktop now looks and works like a real operating system",
-			"summary": "The desktop shell is rebuilt to feel like a computer, not a web page. A floating island taskbar with Start, Widgets and Assistant buttons. A new Start menu with your avatar, the time, an A to Z list of every app and page, pinned apps, recent files, quick folder links and a power button, plus search across apps, pages and your files. A system tray with live network, volume and battery readouts that opens quick settings (dark mode, night light, do not disturb, energy saver, sounds, full screen, brightness and volume). A notification centre over a month calendar, with toasts that open the app that sent them. A lock screen (Ctrl+Alt+L), a power menu with restart, shut down and sign out, a Run box (Ctrl+Alt+R) and an About page with your real device specs. The desktop is now your Desktop folder: create folders and text files from the right-click menu, rename with F2, delete to the Recycle Bin, drop files from your computer onto it, and set any picture as the wallpaper. New Bubbles wallpaper in dark and light, glossy app icons, and Ctrl+Alt shortcuts for every system surface.",
-			"link": "/?view=desktop",
 			"tags": [
 				"feature",
 				"desktop"
