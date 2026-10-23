@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildGraph, clusterColor } from '../src/funder-graph.js';
+import { ForceSimulation } from '../src/vendor/swarming/ForceSimulation.js';
 
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
@@ -34,5 +35,22 @@ describe('buildGraph', () => {
 
 	it('returns an empty graph for no holders', () => {
 		expect(buildGraph([], []).nodes).toEqual([]);
+	});
+});
+
+describe('ForceSimulation layout', () => {
+	it('keeps a 500-wallet graph compact so the fitted camera can frame every node', () => {
+		const wallets = Array.from({ length: 500 }, (_, i) => ({
+			wallet: `${THREE_MINT}${i}`,
+			net_sol: ((i * 7919) % 2000) / 100 + 0.1,
+			cluster: i % 3 === 0 ? i % 8 : null,
+		}));
+		const g = buildGraph(wallets, []);
+		const sim = new ForceSimulation();
+		sim.update(g.nodes, g.edges);
+		sim.settle();
+		const reach = Math.max(...sim.nodes.map((n) => Math.hypot(n.x, n.y, n.z)));
+		expect(Number.isFinite(reach)).toBe(true);
+		expect(reach).toBeLessThan(200);
 	});
 });
