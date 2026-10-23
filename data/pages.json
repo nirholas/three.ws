@@ -2275,10 +2275,10 @@
 				},
 				{
 					"path": "/play/ufo",
-					"title": "Flappin UFO: retired demo",
-					"description": "The Flappin UFO arcade demo ran on an external deployment that is no longer online, so the game has been retired. The page now points visitors to the live three.ws experiences instead.",
-					"priority": 0.3,
-					"changefreq": "yearly",
+					"title": "Flappin UFO: thread the asteroids, climb the leaderboard",
+					"description": "A hold-to-climb arcade game with levels that get longer and tighter. Every run is replayed and verified on the server, scores land on a real leaderboard, and you race the ghost of the top run.",
+					"priority": 0.5,
+					"changefreq": "weekly",
 					"added": "2026-06-19"
 				},
 				{
@@ -3658,6 +3658,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-08-08"
+				},
+				{
+					"path": "/docs/play-ufo",
+					"title": "Docs · Flappin UFO",
+					"description": "How Flappin UFO runs are recorded, replayed and verified on the server, how the leaderboard ranks players, and how the ghost of the top run works.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-10-23"
 				},
 				{
 					"path": "/docs/in-game-economy",

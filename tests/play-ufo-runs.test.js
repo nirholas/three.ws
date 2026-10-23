@@ -177,16 +177,17 @@ describe('/api/play/ufo-runs', () => {
 
 	it('ranks the best run per player, higher score first', async () => {
 		const low = goodRun(0);
+		const mid = goodRun(1);
 		const high = goodRun(2);
 		await call('POST', { body: { name: 'Ace', levels: low.levels } });
 		await call('POST', { body: { name: 'ace', levels: high.levels } });
-		const other = await call('POST', { body: { name: 'Bee', levels: low.levels } });
+		const other = await call('POST', { body: { name: 'Bee', levels: mid.levels } });
 		expect(other.status).toBe(201);
 		expect(other.body.rank).toBe(2);
 		const get = await call('GET');
 		expect(get.body.rows.map((r) => [r.name.toLowerCase(), r.score])).toEqual([
 			['ace', high.score],
-			['bee', low.score],
+			['bee', mid.score],
 		]);
 	});
 
@@ -222,13 +223,13 @@ describe('/api/play/ufo-runs', () => {
 	});
 
 	it('ties a signed-in submission to the account and falls back to its display name', async () => {
-		const [{ id }] = (await holder.db.query("insert into users (display_name) values ('Captain Zed') returning id")).rows;
-		holder.viewer = { userId: id };
+		const [{ id }] = await holder.db.query("insert into users (display_name) values ('Captain Zed') returning id");
+		holder.viewer = { id, display_name: 'Captain Zed' };
 		const run = goodRun();
 		const post = await call('POST', { body: { levels: run.levels } });
 		expect(post.status).toBe(201);
 		expect(post.body.name).toBe('Captain Zed');
-		const rows = (await holder.db.query('select user_id from ufo_runs')).rows;
+		const rows = (await holder.db.query('select user_id from ufo_runs'));
 		expect(rows[0].user_id).toBe(id);
 	});
 });
