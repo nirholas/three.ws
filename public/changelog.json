@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-23T21:49:46.300Z",
+	"generated_at": "2026-10-23T21:53:33.319Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -49,12 +49,32 @@
 		{
 			"date": "2026-10-23",
 			"type": "update",
+			"title": "Agents can sign up to services: inbox codes and sign-in links",
+			"summary": "An agent's own address can now receive verification emails and hand back the one-time code or sign-in link. New inbox_list, inbox_read and inbox_wait_for_code tools read the code with a confidence score, only from services the owner lists under Code senders, only from authentic non-spam mail. Email bodies stay untrusted data and links are never fetched for the agent.",
+			"link": "/agent-mail",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
 			"title": "AR Studio source now lives in the monorepo",
 			"summary": "The 3d-ar-studio npm package and the /ar/studio page now run the same code: the package source moved into packages/ar-studio and the page imports its scene math, multi-anchor WebXR session, room client and lighting modules directly, so fixes land once instead of in two diverging copies.",
 			"link": "/ar/studio",
 			"tags": [
 				"sdk",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Chain turnover on /chains",
+			"summary": "The chains leaderboard now has a sortable Turnover column (24h DEX volume divided by TVL) that shows which chains have capital actively trading rather than parked. Chains with no TVL or no reported volume show n/a.",
+			"link": "/chains",
+			"tags": [
+				"feature"
 			]
 		},
 		{

@@ -39,12 +39,28 @@
 			<description>An agent with its own connected X account and mention replies switched on is now polled by the mention bot. It replies in its own persona, attaches a render of its own avatar to conversational replies, and only acts on the intents its owner allowed, up to a daily cap. Dry run stays the default: nothing posts until the owner turns dry run off and the operator enables live mode. A connection missing the posting scope is reported as missing_scope instead of being polled.</description>
 		</item>
 		<item>
+			<title>Agents can sign up to services: inbox codes and sign-in links</title>
+			<link>https://three.ws/agent-mail</link>
+			<guid isPermaLink="false">2026-10-23:Agents can sign up to services: inbox codes and sign-in links</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>An agent's own address can now receive verification emails and hand back the one-time code or sign-in link. New inbox_list, inbox_read and inbox_wait_for_code tools read the code with a confidence score, only from services the owner lists under Code senders, only from authentic non-spam mail. Email bodies stay untrusted data and links are never fetched for the agent.</description>
+		</item>
+		<item>
 			<title>AR Studio source now lives in the monorepo</title>
 			<link>https://three.ws/ar/studio</link>
 			<guid isPermaLink="false">2026-10-23:AR Studio source now lives in the monorepo</guid>
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>sdk</category>
 			<description>The 3d-ar-studio npm package and the /ar/studio page now run the same code: the package source moved into packages/ar-studio and the page imports its scene math, multi-anchor WebXR session, room client and lighting modules directly, so fixes land once instead of in two diverging copies.</description>
+		</item>
+		<item>
+			<title>Chain turnover on /chains</title>
+			<link>https://three.ws/chains</link>
+			<guid isPermaLink="false">2026-10-23:Chain turnover on /chains</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The chains leaderboard now has a sortable Turnover column (24h DEX volume divided by TVL) that shows which chains have capital actively trading rather than parked. Chains with no TVL or no reported volume show n/a.</description>
 		</item>
 		<item>
 			<title>Copy any model as a GitHub README 3D block</title>
