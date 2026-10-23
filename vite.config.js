@@ -939,6 +939,7 @@ const appConfig = {
 				analytics: resolve(__dirname, 'pages/analytics.html'),
 				'why-three-ws': resolve(__dirname, 'pages/why-three-ws.html'),
 				experiments: resolve(__dirname, 'pages/experiments.html'),
+				compete: resolve(__dirname, 'pages/compete.html'),
 				economy: resolve(__dirname, 'pages/economy.html'),
 				'overlay-control': resolve(__dirname, 'pages/overlay-control.html'),
 				'mocap-studio': resolve(__dirname, 'pages/mocap-studio.html'),
@@ -1947,6 +1948,8 @@ const appConfig = {
 					'/fees/': resolve(root, 'pages/fees.html'),
 					'/sniper/experiments': resolve(root, 'pages/sniper-experiments.html'),
 					'/sniper/experiments/': resolve(root, 'pages/sniper-experiments.html'),
+					'/compete': resolve(root, 'pages/compete.html'),
+					'/compete/': resolve(root, 'pages/compete.html'),
 					'/dex-volumes': resolve(root, 'pages/dex-volumes.html'),
 					'/dex-volumes/': resolve(root, 'pages/dex-volumes.html'),
 					'/hacks': resolve(root, 'pages/hacks.html'),
@@ -2503,6 +2506,8 @@ const appConfig = {
 						filePath = resolve(root, 'pages/earnings.html');
 					else if (!filePath && /^\/agents\/[^/.]+\/earnings\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-earnings.html');
+					else if (!filePath && /^\/compete\/[^/.]+\/?$/.test(path))
+						filePath = resolve(root, 'pages/compete.html');
 					// /launch/intents/:id → one funded pump.fun launch intent (quote, funding,
 					// confirmation, stage tracker). Mirrors vercel.json's
 					// `/launch/intents/([^/.]+)/?`; the list itself is /launch/intents.

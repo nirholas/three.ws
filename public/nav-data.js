@@ -395,6 +395,12 @@ export const NAV_GROUPS = [
 						desc: 'What we tried, what it cost, what the numbers said and what we got wrong, with the queries behind every number',
 					},
 					{
+						title: 'Builder Competitions',
+						href: '/compete',
+						tier: 'advanced',
+						desc: 'Enter an agent, launch its coin, and rank by creator fees earned on a live leaderboard',
+					},
+					{
 						title: 'Platform Analytics',
 						href: '/analytics',
 						tier: 'advanced',

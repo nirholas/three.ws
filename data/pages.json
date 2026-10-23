@@ -2848,6 +2848,14 @@
 					"added": "2026-09-30"
 				},
 				{
+					"path": "/compete",
+					"title": "Builder competitions",
+					"description": "Build an agent, launch its coin on three.ws, and climb a live leaderboard ranked by creator fees earned. Dates, tracks, prizes, judges and rules for each competition, with registration and a countdown.",
+					"priority": 0.6,
+					"changefreq": "daily",
+					"added": "2026-10-23"
+				},
+				{
 					"path": "/analytics",
 					"title": "Platform Analytics",
 					"description": "Every three.ws platform total on one page, read live: agents, agents with a wallet, coins launched, 3D models generated, LLM tokens processed, x402 settlements and volume, marketplace sales and agent-to-agent hire volume, each with a daily growth chart over 30 days, 90 days or all time and a note on exactly how it is counted.",
@@ -6618,6 +6626,14 @@
 					"priority": 0.5,
 					"changefreq": "monthly",
 					"added": "2026-09-30"
+				},
+				{
+					"path": "/docs/competitions",
+					"title": "Docs · Running a builder competition",
+					"description": "How to run a tokenized builder competition: the data/competitions.json fields, the phases, how entries are ranked by creator fees earned, an example config and the registration API.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-10-23"
 				},
 				{
 					"path": "/docs/experiments-agent-launch-funnel",

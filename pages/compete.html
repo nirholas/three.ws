@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Builder competitions · three.ws</title>
+	<meta name="description" content="Build an agent, launch its coin on three.ws, and climb a live leaderboard ranked by the creator fees it earns. Dates, tracks, prizes and rules for every competition." />
+	<link rel="canonical" href="https://three.ws/compete" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:title" content="three.ws Builder competitions" />
+	<meta property="og:description" content="Build an agent, launch its coin, and climb a live leaderboard ranked by creator fees earned." />
+	<meta property="og:url" content="https://three.ws/compete" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Builder+competitions&amp;d=Build+an+agent%2C+launch+its+coin%2C+and+climb+a+live+leaderboard+ranked+by+creator+fees+earned.&amp;p=%2Fcompete" />
+	<meta property="og:image:alt" content="three.ws Builder competitions" />
+	<meta property="og:locale" content="en_US" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:title" content="three.ws Builder competitions" />
+	<meta name="twitter:description" content="Build an agent, launch its coin, and climb a live leaderboard ranked by creator fees earned." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Builder+competitions&amp;d=Build+an+agent%2C+launch+its+coin%2C+and+climb+a+live+leaderboard+ranked+by+creator+fees+earned.&amp;p=%2Fcompete" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Builder competitions","description":"Build an agent, launch its coin on three.ws, and climb a live leaderboard ranked by creator fees earned.","url":"https://three.ws/compete","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	<style>
+		:root { --cp-maxw: 1000px; --cp-ok: #16a34a; --cp-warn: #d97706; }
+		:root:not([data-theme="light"]) { --cp-ok: var(--success); --cp-warn: #fbbf24; }
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+		a { color: inherit; }
+		a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+		.cp-wrap { max-width: var(--cp-maxw); min-width: 0; width: 100%; margin: 0 auto; padding: 0 18px 96px; }
+		#cp-root { min-width: 0; width: 100%; }
+		.cp-hero { padding: 40px 0 8px; }
+		.cp-eyebrow { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-dim); font-weight: 650; margin: 0 0 10px; }
+		.cp-hero h1 { font-size: clamp(1.8rem, 4.6vw, 2.7rem); line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.025em; color: var(--ink-bright, var(--ink)); overflow-wrap: anywhere; }
+		.cp-hero p { margin: 0 0 10px; max-width: 66ch; color: var(--ink-dim); line-height: 1.6; font-size: 1.02rem; }
+		.cp-hero a, .cp-foot a, .cp-empty a { text-decoration: underline; text-underline-offset: 3px; }
+		.cp-hero a:hover, .cp-foot a:hover, .cp-empty a:hover { color: var(--ink-bright, var(--ink)); }
+
+		.cp-phase { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 650; padding: 3px 10px 3px 8px; border-radius: 999px; border: 1px solid var(--stroke-strong); color: var(--ink-dim); margin-bottom: 12px; }
+		.cp-phase::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+		.cp-phase[data-phase="open"] { color: var(--cp-ok); border-color: color-mix(in srgb, var(--cp-ok) 45%, transparent); }
+		.cp-phase[data-phase="building"] { color: var(--cp-warn); border-color: color-mix(in srgb, var(--cp-warn) 45%, transparent); }
+
+		.cp-count { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 4px; align-items: stretch; }
+		.cp-count-label { flex: 1 1 100%; font-size: 0.85rem; color: var(--ink-dim); }
+		.cp-unit { min-width: 76px; padding: 10px 12px; border-radius: var(--radius-md, 10px); background: var(--surface-1); border: 1px solid var(--stroke); text-align: center; }
+		.cp-unit b { display: block; font-size: 1.6rem; font-variant-numeric: tabular-nums; color: var(--ink-bright, var(--ink)); line-height: 1.2; }
+		.cp-unit span { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); }
+
+		.cp-section { margin-top: 36px; }
+		.cp-section h2 { font-size: 1.15rem; margin: 0 0 12px; letter-spacing: -0.01em; color: var(--ink-bright, var(--ink)); }
+		.cp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 12px; }
+		.cp-card { padding: 16px 18px; border-radius: var(--radius-md, 10px); background: var(--surface-1); border: 1px solid var(--stroke); transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
+		a.cp-card { display: block; text-decoration: none; }
+		a.cp-card:hover { border-color: var(--stroke-strong); background: var(--surface-2); }
+		a.cp-card:active { transform: translateY(1px); }
+		.cp-card h3 { margin: 0 0 6px; font-size: 1rem; color: var(--ink-bright, var(--ink)); overflow-wrap: anywhere; }
+		.cp-card p { margin: 0; color: var(--ink-dim); line-height: 1.55; font-size: 0.9rem; overflow-wrap: anywhere; }
+		.cp-big { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink-bright, var(--ink)); }
+		.cp-rules { margin: 0; padding-left: 20px; color: var(--ink); line-height: 1.65; font-size: 0.95rem; }
+		.cp-rules li { margin-bottom: 6px; overflow-wrap: anywhere; }
+		.cp-dates { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); min-width: 0; gap: 10px; margin: 0; }
+		.cp-dates div { padding: 10px 14px; border-radius: var(--radius-md, 10px); border: 1px solid var(--stroke); background: var(--surface-1); }
+		.cp-dates dt { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); }
+		.cp-dates dd { margin: 2px 0 0; font-variant-numeric: tabular-nums; }
+
+		.cp-form { display: grid; gap: 12px; max-width: 520px; padding: 18px; border-radius: var(--radius-md, 10px); background: var(--surface-1); border: 1px solid var(--stroke); }
+		.cp-form label { display: grid; gap: 4px; font-size: 0.85rem; color: var(--ink-dim); font-weight: 600; }
+		.cp-form input, .cp-form select { font: inherit; font-weight: 400; color: var(--ink); background: var(--bg-0); border: 1px solid var(--stroke-strong); border-radius: 8px; padding: 9px 11px; min-height: 40px; width: 100%; }
+		.cp-form input:hover, .cp-form select:hover { border-color: var(--ink-dim); }
+		.cp-btn { appearance: none; border: 1px solid var(--stroke-strong); background: var(--surface-3); color: var(--ink-bright, var(--ink)); font: inherit; font-size: 0.92rem; font-weight: 650; padding: 10px 16px; min-height: 40px; border-radius: 8px; cursor: pointer; text-decoration: none; display: inline-flex; justify-content: center; align-items: center; transition: background var(--duration-fast), transform var(--duration-instant); }
+		.cp-btn:hover { background: var(--surface-2); }
+		.cp-btn:active { transform: translateY(1px); }
+		.cp-btn[disabled] { opacity: 0.55; cursor: progress; }
+		.cp-msg { font-size: 0.88rem; line-height: 1.5; margin: 0; }
+		.cp-msg[data-kind="error"] { color: var(--danger, #f87171); }
+		.cp-msg[data-kind="ok"] { color: var(--cp-ok); }
+
+		.cp-tablewrap { overflow-x: auto; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); }
+		.cp-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 560px; }
+		.cp-table th, .cp-table td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--stroke); vertical-align: top; overflow-wrap: anywhere; }
+		.cp-table th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); background: var(--surface-1); }
+		.cp-table tr:last-child td { border-bottom: 0; }
+		.cp-table tbody tr:hover { background: var(--surface-1); }
+		.cp-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+		.cp-table a { text-decoration: underline; text-underline-offset: 3px; }
+		.cp-pill { font-size: 0.72rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--stroke-strong); color: var(--ink-dim); white-space: nowrap; }
+		.cp-method { margin: 10px 2px 0; font-size: 0.82rem; color: var(--ink-dim); line-height: 1.55; }
+
+		.cp-skel { height: 110px; border-radius: var(--radius-md, 10px); }
+		.skeleton { background: var(--surface-2); background-image: linear-gradient(90deg, var(--surface-1) 0%, var(--surface-3) 50%, var(--surface-1) 100%); background-size: 200% 100%; animation: cp-shimmer 1.4s ease-in-out infinite; }
+		@keyframes cp-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+		.cp-empty { padding: 28px 20px; border-radius: var(--radius-md, 10px); border: 1px dashed var(--stroke-strong); color: var(--ink-dim); line-height: 1.6; }
+		.cp-empty strong { color: var(--ink-bright, var(--ink)); display: block; margin-bottom: 4px; }
+		.cp-error { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border-radius: var(--radius-md, 10px); border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent); background: color-mix(in srgb, var(--danger) 9%, transparent); line-height: 1.5; font-size: 0.9rem; }
+		.cp-foot { margin-top: 32px; font-size: 0.86rem; color: var(--ink-dim); line-height: 1.6; }
+		@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="cp-wrap" id="main">
+		<div id="cp-root" aria-live="polite" aria-busy="true">
+			<section class="cp-hero">
+				<p class="cp-eyebrow">Builder competitions</p>
+				<h1>Build an agent. Launch its coin. Climb the board.</h1>
+			</section>
+			<div class="cp-skel skeleton" aria-hidden="true"></div>
+		</div>
+		<p class="cp-foot">Entries rank by the creator fees their agent earns, read from the same data as <a href="/leaderboard?tab=earned">the earnings leaderboard</a>. How a competition is run: <a href="/docs/competitions">competition docs</a>.</p>
+	</main>
+
+	<div id="footer-container"></div>
+	<script src="/footer.js"></script>
+	<script type="module" src="/src/compete.js"></script>
+</body>
+</html>

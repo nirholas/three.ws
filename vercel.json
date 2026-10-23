@@ -464,6 +464,26 @@
 			"dest": "/analytics.html"
 		},
 		{
+			"src": "/compete/?",
+			"dest": "/compete.html"
+		},
+		{
+			"src": "/compete/([^/]+)/?",
+			"dest": "/compete.html"
+		},
+		{
+			"src": "/api/competitions/?",
+			"dest": "/api/competitions.js"
+		},
+		{
+			"src": "/api/competitions/([^/]+)/entries/?",
+			"dest": "/api/competitions.js?slug=$1&part=entries"
+		},
+		{
+			"src": "/api/competitions/([^/]+)/?",
+			"dest": "/api/competitions.js?slug=$1"
+		},
+		{
 			"src": "/why-three-ws/?",
 			"dest": "/why-three-ws.html"
 		},
