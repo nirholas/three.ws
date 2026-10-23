@@ -9,6 +9,7 @@
 //   GET  /entries                  ledger rows, each with its transaction
 //   GET  /export                   the same rows as CSV (default) or JSON
 //   GET  /reconcile                the latest reconcile run
+//   GET  /sessions                 the owner's active payment sessions (targets for a tools-budget leg)
 //   POST /sync                     bring the ledger up to date now
 //   GET/PUT /agents/:id/settings   the public-earnings toggle
 //   GET/POST /rules, PATCH/DELETE /rules/:id, GET /rules/:id/preview, POST /rules/:id/pause
@@ -171,6 +172,19 @@ async function runsRoute({ principal, query }) {
 	return { runs: await listRuns({ userId: principal.userId, agentId, ruleId, limit: intParam(query.limit, { name: 'limit', min: 1, max: 100, fallback: 30 }) }) };
 }
 
+async function sessionsRoute({ principal }) {
+	const rows = await sql`
+		select id, label, budget_usdc, spent_usdc, network, expires_at from payment_sessions
+		where user_id = ${principal.userId} and status = 'active' and network = 'solana' and expires_at > now()
+		order by created_at desc limit 50`;
+	return {
+		sessions: rows.map((r) => ({
+			id: r.id, label: r.label || 'Payment session', network: r.network, expires_at: r.expires_at,
+			budget_usd: Number(r.budget_usdc) / 1e6, spent_usd: Number(r.spent_usdc) / 1e6,
+		})),
+	};
+}
+
 async function sourcesRoute() {
 	return { sources: SOURCES.map(({ key, label, kind, how }) => ({ key, label, kind, how })) };
 }
@@ -182,6 +196,7 @@ export const revenueRoutes = [
 	{ method: 'GET', path: '/entries', name: 'revenue.entries', auth: 'required', scope: 'wallet:read', handler: entriesRoute },
 	{ method: 'GET', path: '/export', name: 'revenue.export', auth: 'required', scope: 'wallet:read', handler: exportRoute },
 	{ method: 'GET', path: '/reconcile', name: 'revenue.reconcile', auth: 'required', scope: 'wallet:read', handler: reconcileRoute },
+	{ method: 'GET', path: '/sessions', name: 'revenue.sessions', auth: 'required', scope: 'wallet:read', handler: sessionsRoute },
 	{ method: 'POST', path: '/sync', name: 'revenue.sync', auth: 'required', scope: 'wallet:read', handler: syncRoute },
 	{ method: 'GET', path: '/agents/:id/settings', name: 'revenue.settings.get', auth: 'required', scope: 'wallet:read', handler: getSettingsRoute },
 	{ method: 'PUT', path: '/agents/:id/settings', name: 'revenue.settings.put', auth: 'required', scope: 'agents:write', handler: putSettingsRoute },

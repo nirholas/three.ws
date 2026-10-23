@@ -1437,6 +1437,10 @@
 			"dest": "/commerce.html"
 		},
 		{
+			"src": "/earnings/?",
+			"dest": "/earnings.html"
+		},
+		{
 			"src": "/invoices/?",
 			"dest": "/commerce.html"
 		},
@@ -5833,6 +5837,10 @@
 			"dest": "/agent-mail.html"
 		},
 		{
+			"src": "/agents/([^/.]+)/earnings/?",
+			"dest": "/agent-earnings.html"
+		},
+		{
 			"src": "/agents/([^/.]+)/classic/?",
 			"dest": "/agent-detail-classic.html"
 		},
@@ -7654,6 +7662,10 @@
 		{
 			"path": "/api/cron/revenue-reinvest",
 			"schedule": "37 * * * *"
+		},
+		{
+			"path": "/api/cron/data-canary",
+			"schedule": "*/30 * * * *"
 		}
 	]
 }

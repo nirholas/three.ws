@@ -920,6 +920,8 @@ const appConfig = {
 				quests: resolve(__dirname, 'pages/quests.html'),
 				approvals: resolve(__dirname, 'pages/approvals.html'),
 				commerce: resolve(__dirname, 'pages/commerce.html'),
+				earnings: resolve(__dirname, 'pages/earnings.html'),
+				'agent-earnings': resolve(__dirname, 'pages/agent-earnings.html'),
 				'agent-invoice': resolve(__dirname, 'pages/agent-invoice.html'),
 				spend: resolve(__dirname, 'pages/spend.html'),
 				duels: resolve(__dirname, 'pages/duels.html'),
@@ -2494,6 +2496,12 @@ const appConfig = {
 						filePath = resolve(root, 'pages/commerce.html');
 					else if (!filePath && /^\/invoices\/[^/.]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-invoice.html');
+					// /earnings → the revenue ledger console; /agents/:id/earnings → the
+					// agent's public earnings page. Mirrors vercel.json.
+					else if (!filePath && /^\/earnings\/?$/.test(path))
+						filePath = resolve(root, 'pages/earnings.html');
+					else if (!filePath && /^\/agents\/[^/.]+\/earnings\/?$/.test(path))
+						filePath = resolve(root, 'pages/agent-earnings.html');
 					// /launch/intents/:id → one funded pump.fun launch intent (quote, funding,
 					// confirmation, stage tracker). Mirrors vercel.json's
 					// `/launch/intents/([^/.]+)/?`; the list itself is /launch/intents.

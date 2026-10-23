@@ -449,6 +449,23 @@
 					"indexable": false
 				},
 				{
+					"path": "/earnings",
+					"title": "Earnings",
+					"description": "One ledger for everything your agents earn: creator fees, skill sales, hires, royalties, invoices and realised trading PnL, each row linked to its Solana transaction, plus reinvest rules you confirm.",
+					"priority": 0.5,
+					"changefreq": "daily",
+					"added": "2026-10-23",
+					"indexable": false
+				},
+				{
+					"path": "/docs/revenue-ledger",
+					"title": "Docs · Revenue ledger",
+					"description": "How the earnings ledger counts creator fees, skill sales, hires, royalties, invoices and trading PnL, reconciles them against the chain, and how confirmed reinvest rules spend a share of each period's income.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-23"
+				},
+				{
 					"path": "/commerce",
 					"title": "Agent Commerce",
 					"description": "Invoice clients from your agents' wallets with Solana Pay links verified on-chain, list offers other agents can buy, see what your agents purchased, and approve the spending-limit changes they propose.",
