@@ -322,7 +322,7 @@ export function mount(host, ctx) {
 					const u = await fs.urlFor(n.path);
 					if (u) {
 						urls.add(u);
-						b.innerHTML = `<img alt="" src="${u}">`;
+						b.innerHTML = `<img loading="lazy" decoding="async" alt="" src="${u}">`;
 					}
 				} else b.innerHTML = ICO.film;
 				b.addEventListener('click', () => ctx.openPath(n.path));

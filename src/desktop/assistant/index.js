@@ -133,7 +133,7 @@ function open(ctx) {
 
 	// ---------- who you're talking to ----------
 	const avatar = (a) =>
-		a?.avatar_thumbnail ? `<img src="${esc(a.avatar_thumbnail)}" alt="" referrerpolicy="no-referrer">` : a ? `<i>${esc(a.name.slice(0, 1).toUpperCase())}</i>` : `<i class="asx-logo">${icon('sparkle', 15)}</i>`;
+		a?.avatar_thumbnail ? `<img loading="lazy" decoding="async" src="${esc(a.avatar_thumbnail)}" alt="" referrerpolicy="no-referrer">` : a ? `<i>${esc(a.name.slice(0, 1).toUpperCase())}</i>` : `<i class="asx-logo">${icon('sparkle', 15)}</i>`;
 	const paintWho = () => {
 		who.innerHTML = `${avatar(state.agent)}<span><b>${esc(state.agent?.name || 'Assistant')}</b><small>${state.agent ? 'three.ws agent' : 'three.ws'}</small></span>${icon('chevron', 12)}`;
 		input.placeholder = state.agent ? `Message ${state.agent.name}` : 'Ask anything about three.ws';

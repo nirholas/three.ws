@@ -468,7 +468,7 @@ export function createAgentPanel(editor) {
 			li.className = 'tws-agent-version';
 			const time = new Date(version.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 			li.innerHTML = `
-				${version.screenshot ? `<img src="${version.screenshot}" alt="" width="48" height="36" />` : '<span class="tws-agent-version-noimg" aria-hidden="true"></span>'}
+				${version.screenshot ? `<img loading="lazy" decoding="async" src="${version.screenshot}" alt="" width="48" height="36" />` : '<span class="tws-agent-version-noimg" aria-hidden="true"></span>'}
 				<span class="tws-agent-version-label">${escapeHtml(version.label).slice(0, 60)}</span>
 				<span class="tws-agent-version-time">${time}</span>
 				<button type="button" data-restore="${version.id}">Restore</button>

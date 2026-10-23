@@ -190,7 +190,7 @@ function payMarkup(inv) {
 			${expired ? `<div class="ac-notice ac-notice-warn" style="margin-top:var(--space-sm)"><strong>This invoice is past due.</strong> A payment still settles it and is marked as paid late. Check with the issuer before paying if you are unsure it is still wanted.</div>` : ''}
 			${inv.network !== 'mainnet' ? `<div class="ac-notice ac-notice-info" style="margin-top:var(--space-sm)">This is a <strong>${esc(inv.network)}</strong> test invoice. Switch your wallet to ${esc(inv.network)} before paying; mainnet funds sent here are not counted.</div>` : ''}
 			<div class="ac-pay" style="margin-top:var(--space-md)">
-				<div class="ac-qr"><img src="${esc(qrSrc)}" width="200" height="200" alt="Solana Pay QR code for ${esc(fmtAmount(amountDue))} ${esc(inv.symbol)} to ${esc(shortAddr(inv.recipient))}" /></div>
+				<div class="ac-qr"><img loading="lazy" decoding="async" src="${esc(qrSrc)}" width="200" height="200" alt="Solana Pay QR code for ${esc(fmtAmount(amountDue))} ${esc(inv.symbol)} to ${esc(shortAddr(inv.recipient))}" /></div>
 				<div class="ac-pay-body">
 					<p class="ac-hint" style="margin:0">Scan with a Solana wallet app, or open the link in a wallet on this device. The amount, recipient, reference and memo are filled in for you.</p>
 					<div class="ac-pay-actions">

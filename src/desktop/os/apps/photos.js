@@ -231,7 +231,7 @@ export function mount(host, ctx) {
 				<button class="ph-b" data-act="download" title="Download" aria-label="Download">${icon('download', 17)}</button>
 				<button class="ph-b danger" data-act="delete" title="Delete (Del)" aria-label="Delete">${icon('trash', 17)}</button>
 			</div>
-			<div class="ph-stage loading" tabindex="0" aria-label="Picture"><img class="ph-img" alt="${esc(node.name)}" draggable="false" /><div class="ph-spin" aria-label="Loading picture"></div>
+			<div class="ph-stage loading" tabindex="0" aria-label="Picture"><img loading="lazy" decoding="async" class="ph-img" alt="${esc(node.name)}" draggable="false" /><div class="ph-spin" aria-label="Loading picture"></div>
 				<button class="ph-nav prev" data-act="prev" aria-label="Previous picture">${icon('ph-left', 24)}</button>
 				<button class="ph-nav next" data-act="next" aria-label="Next picture">${icon('ph-right', 24)}</button>
 			</div>
