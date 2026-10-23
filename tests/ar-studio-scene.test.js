@@ -26,7 +26,7 @@ import {
 	studioShareUrl,
 	touchAngle,
 	twistDelta,
-} from '../src/ar/studio-scene.js';
+} from '../packages/ar-studio/src/studio/scene-math.js';
 
 const box = (w, h, d, minY = 0) => ({
 	min: { x: -w / 2, y: minY, z: -d / 2 },
@@ -219,15 +219,15 @@ describe('studioSceneUrl', () => {
 	const scene = [{ src: 'https://x.co/a.glb', title: 'A', x: 1, z: 2, yaw: 0.5, scale: 1.2 }];
 
 	it('appends the arrangement hash to the src-list URL', () => {
-		const url = studioSceneUrl('https://three.ws', scene);
+		const url = studioSceneUrl('https://three.ws/ar/studio', scene);
 		const [base, hash] = url.split('#s=');
-		expect(base).toBe(studioShareUrl('https://three.ws', scene));
+		expect(base).toBe(studioShareUrl('https://three.ws/ar/studio', scene));
 		expect(sceneFromHashParam(hash)).toEqual(scene);
 	});
 
 	it('falls back to the src-only URL when the payload would be QR-hostile', () => {
-		const url = studioSceneUrl('https://three.ws', scene, 40);
-		expect(url).toBe(studioShareUrl('https://three.ws', scene));
+		const url = studioSceneUrl('https://three.ws/ar/studio', scene, 40);
+		expect(url).toBe(studioShareUrl('https://three.ws/ar/studio', scene));
 		expect(url).not.toContain('#s=');
 	});
 });
@@ -282,7 +282,7 @@ describe('roomLightFromPixels', () => {
 
 describe('studioShareUrl', () => {
 	it('embeds unique sources up to the cap', () => {
-		const url = studioShareUrl('https://three.ws', [
+		const url = studioShareUrl('https://three.ws/ar/studio', [
 			{ src: 'https://x.co/a.glb', title: 'A' },
 			{ src: 'https://x.co/a.glb', title: 'A again' }, // duplicate source
 			{ src: 'https://x.co/b.glb', title: 'B' },
@@ -292,7 +292,7 @@ describe('studioShareUrl', () => {
 	});
 
 	it('returns the bare studio URL for an empty or invalid scene', () => {
-		expect(studioShareUrl('https://three.ws', [])).toBe('https://three.ws/ar/studio');
-		expect(studioShareUrl('https://three.ws', [{ src: 'data:x' }])).toBe('https://three.ws/ar/studio');
+		expect(studioShareUrl('https://three.ws/ar/studio', [])).toBe('https://three.ws/ar/studio');
+		expect(studioShareUrl('https://three.ws/ar/studio', [{ src: 'data:x' }])).toBe('https://three.ws/ar/studio');
 	});
 });

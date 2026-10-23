@@ -1,0 +1,49 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/3d-ar-studio",
+	"title": "3D AR Studio",
+	"description": "Put 3D models in someone's real room: generate, arrange, and hand back one AR link.",
+	"websiteUrl": "https://nirholas.github.io/3D-AR-Studio/",
+	"repository": {
+		"url": "https://github.com/nirholas/3D-AR-Studio",
+		"source": "github"
+	},
+	"version": "0.3.2",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "3d-ar-studio-mcp",
+			"version": "0.3.2",
+			"runtimeHint": "npx",
+			"transport": {
+				"type": "stdio"
+			},
+			"environmentVariables": [
+				{
+					"name": "AR_STUDIO_PAGE_URL",
+					"description": "The page that composed AR scenes link to. Defaults to the hosted demo; set it to your own deployment of the studio.",
+					"isRequired": false,
+					"format": "string"
+				},
+				{
+					"name": "AR_STUDIO_ASSETS",
+					"description": "Catalogue URL that search_models searches. Defaults to the free CC0 model library.",
+					"isRequired": false,
+					"format": "string"
+				},
+				{
+					"name": "AR_STUDIO_MCP_ENDPOINT",
+					"description": "MCP endpoint used for text-to-3D generation. Defaults to the free, keyless three.ws 3D Studio connector.",
+					"isRequired": false,
+					"format": "string"
+				},
+				{
+					"name": "AR_STUDIO_ORIGIN",
+					"description": "Origin serving the hosted 'View in your space' launcher and the 3D viewer. Defaults to https://three.ws.",
+					"isRequired": false,
+					"format": "string"
+				}
+			]
+		}
+	]
+}

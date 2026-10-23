@@ -1,0 +1,485 @@
+# 3D-AR-Studio
+
+> Drop a full augmented-reality studio into any web page. Place any number of 3D models in your real room through the camera, generate new ones from a text prompt, arrange them, then share the scene as a link, a QR code, or a live room. WebXR + Quick Look + Scene Viewer, a free CC0 model library, and an MCP server for agents.
+
+# 3D AR Studio
+
+**Drop a full augmented-reality studio into any web page.**
+
+Place as many 3D models as you like in your real room through the camera, describe a new one
+and watch it appear, arrange everything by hand, then share the whole scene as a link, a QR
+code, or a live room someone else can build in with you.
+
+[**Live demo**](https://nirholas.github.io/3D-AR-Studio/) · [npm](https://www.npmjs.com/package/3d-ar-studio) · [MCP server](#mcp-server)
+
+```html
+<script type="module" src="https://unpkg.com/3d-ar-studio/dist/ar-studio.min.js"></script>
+<ar-studio></ar-studio>
+```
+
+That is a working AR studio. No build step, no API key, no account. It comes wired to a free
+library of a few hundred public-domain models and a free, keyless text-to-3D lane; point it at
+your own catalogue with one option when you are ready.
+
+---
+
+## Why this exists
+
+Every web-AR drop-in places exactly one model and then hands off to a native viewer, which
+ends the session. This one keeps the whole scene in your page:
+
+- **Many models, one room.** Place, drag, pinch-resize, twist-rotate and duplicate as many
+  models as you want in a single live camera view.
+- **Generate without leaving the camera.** Type "a brass desk lamp" into the dock. The
+  generation runs behind the live view and the finished model drops into the room.
+- **Real WebXR where it exists.** An always-armed hit-test reticle, one `XRAnchor` per placed
+  model, real-world light estimation, and depth occlusion so models hide behind your furniture.
+- **Real ARKit and ARCore everywhere else.** iPhones have no WebXR, so tapping **Place in your
+  space** opens Apple's AR Quick Look for real: true plane detection, true scale, true
+  occlusion, the system's own "View in AR" sheet. The model is converted to USDZ on the device
+  (a real conversion via three.js's `USDZExporter`, no server involved) and, because it is
+  exported from the copy already standing in your scene, it arrives at the size you pinched it
+  to and in the pose it was in, stood on the floor rather than hanging at the height it happened
+  to be modelled at. Android without WebXR gets Scene Viewer. Desktop gets a grid
+  preview and a QR hand-off to a phone.
+- **Scenes are links.** Models, positions, rotations and scales round-trip through the URL.
+  Compose on a laptop, scan the QR, it reopens exactly on your phone.
+- **Build together, live.** Open a room, share a six-character code, and every add and move
+  syncs to everyone in it.
+- **Characters actually move.** Any humanoid GLB with no baked animation gets an idle clip
+  retargeted onto its own skeleton. No rig allow-list, no T-poses.
+- **Agents can drive it.** A bundled MCP server lets Claude, ChatGPT or your own agent
+  generate a model, compose an arrangement, and hand a person one link that opens it in
+  their room.
+
+The rendering ladder, anchor lifecycle, retargeting pipeline, scene format and shared-room
+protocol are extracted from the AR surfaces running in production on
+[three.ws](https://three.ws), and generalized so they work on your site with your models.
+
+---
+
+## Install
+
+```bash
+npm i 3d-ar-studio three
+```
+
+`three` is a peer dependency, so you keep one copy of it and pick the version. The CDN bundle
+(`dist/ar-studio.min.js`) has three.js inside it and needs nothing else.
+
+```js
+import { createArStudio } from '3d-ar-studio'
+
+const studio = createArStudio('#stage', {
+  branding: { title: 'Acme AR', accent: '#00b894' },
+})
+
+studio.on('add', ({ placement }) => console.log('placed', placement.title))
+```
+
+The studio fills its host element absolutely, so give the host a height (any positioned box
+with a real height works; a `<div>` with no height gets a sensible `70vh` default rather than
+rendering invisibly).
+
+### Scaffold a deployable page
+
+```bash
+npx 3d-ar-studio create my-ar-site     # a folder you can publish as-is
+cd my-ar-site
+npx 3d-ar-studio dev                   # look at it locally
+npx 3d-ar-studio deploy                # push it and turn on GitHub Pages
+```
+
+`deploy` prints every `git` and `gh` command before it runs it. It needs
+[git](https://git-scm.com) and the [GitHub CLI](https://cli.github.com); without them it tells
+you the three manual steps instead of failing silently.
+
+Templates: `static` (one HTML file, no build), `vite`, `react`.
+
+Both `3d-ar-studio` and `ar-studio` run the CLI. The MCP server is a separate
+binary in its own package, so `npx 3d-ar-studio-mcp` resolves cleanly: see
+[MCP server](#mcp-server).
+
+---
+
+## Your own models
+
+The tray is filled from three.ws by default: a few hundred public-domain (CC0) props, free for
+commercial use, served with open CORS. Swap in your own with the `assets` option.
+
+**A JSON file anywhere.** Five common shapes are read without reshaping:
+
+```js
+createArStudio(el, { assets: 'https://cdn.acme.com/models.json' })
+```
+
+```jsonc
+// Any of these work:
+[ { "url": "https://cdn.acme.com/chair.glb", "name": "Aero chair" } ]
+{ "items":     [ … ] }
+{ "objects":   [ … ] }   // three.ws object library
+{ "creations": [ … ] }   // three.ws forge gallery
+{ "models":    [ … ] }
+```
+
+Per entry, the model URL is read from the first present of `src`, `url`, `glb`, `glb_url`,
+`glbUrl`, `file` or `model`; the label from `title`, `label`, `name` or `prompt`; and the
+thumbnail from `poster`, `thumb`, `thumbnail`, `image` or `preview_image_url`. Anything that
+is not an https (or site-relative) URL is dropped rather than handed to the loader.
+
+**A list you hold in code:**
+
+```js
+import { staticSource } from '3d-ar-studio/sources'
+
+createArStudio(el, {
+  assets: staticSource({
+    label: 'Our furniture',
+    items: [{ src: 'https://cdn.acme.com/chair.glb', title: 'Aero chair', poster: '…' }],
+  }),
+})
+```
+
+**Several tabs at once, in the order you want them:**
+
+```js
+createArStudio(el, { assets: ['recent', myCatalogue, 'objects', 'link'] })
+```
+
+Built-in keys: `'three.ws'` (the default set), `'recent'`, `'objects'`, `'community'`, `'link'`.
+
+**Anything else.** A source is an object with a `list()`:
+
+```js
+createArStudio(el, {
+  assets: {
+    id: 'search',
+    label: 'Search',
+    searchable: true,
+    async list() {
+      const rows = await fetch('/api/models').then((r) => r.json())
+      return rows.map((m) => ({ src: m.glb, title: m.name, poster: m.thumb }))
+    },
+  },
+})
+```
+
+Throwing from `list()` is fine: the tray renders a designed error state with a Retry button.
+
+**Your users can retarget it too**, without touching your code: `?assets=https://…/manifest.json`
+on the page URL. Only https URLs are accepted, and every model source is re-validated before it
+reaches the loader, so a hostile link can add a catalogue but can never smuggle a
+`javascript:` or `data:` model into the scene. Set `allowUrlOverride: false` to switch that off.
+
+### CORS
+
+Models are loaded by the browser, so the host serving your `.glb` files has to allow
+cross-origin requests (`access-control-allow-origin`). If a model fails to load, that is
+almost always why, and the studio says so in the status line rather than failing silently.
+
+---
+
+## Options
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `assets` | `'three.ws'` | Where models come from: a preset key, a manifest URL, a source object, or an array of them. |
+| `generate` | enabled | `{ enabled, endpoint, kind, tier, timeoutMs, pollMs }`. `endpoint` is any MCP server exposing a compatible generate tool. |
+| `rooms` | enabled | `{ enabled, server }`. Point `server` at your own Colyseus deployment to host shared rooms yourself. |
+| `animations` | three.ws idle clip | `{ enabled, manifestUrl, clip }`. The clip retargeted onto humanoid models that ship no animation. |
+| `lighting` | `'studio'` HDRI | `{ preset, urls }`. `preset: null` uses procedural lighting only and downloads no HDRI. |
+| `branding` |: | `{ title, accent, backHref, backLabel }`. |
+| `shareBaseUrl` | this page | Where share links and QR codes point. |
+| `origin` | `https://three.ws` | Origin for the hosted "View in your space" launcher and viewer links. |
+| `persistKey` | `'ar-studio:scene:v1'` | localStorage key for the saved scene. Change it to run two studios on one origin. |
+| `persist` | `true` | Restore the last scene on load. |
+| `maxPlacements` | `20` | Cap on simultaneous models. Keeps low-end phones interactive. |
+| `fullscreen` | auto | Render as a fixed full-screen layer. Defaults to true only when mounted on `document.body`. |
+| `allowUrlOverride` | `true` | Honour `?assets=`, `?src=`, `?room=` and `?forge=` on the hosting page's URL. |
+| `onEvent` | `null` | Called with `(event, detail)` for every notable action. Wire it to your analytics. |
+
+### URL parameters
+
+| Parameter | Effect |
+| --- | --- |
+| `?assets=<https url>` | Swap the catalogue. |
+| `?src=<glb>&title=<name>` | Load models into the scene. Repeatable. |
+| `#s=<payload>` | Reopen a full arrangement, transforms included. Written by `shareUrl()`. |
+| `?room=<code>` | Join a shared room. |
+| `?forge=<prompt>` | Start a generation on load. |
+
+### Methods
+
+```js
+await studio.addModel({ src, title })        // place a model
+studio.clear()                               // remove everything; returns what was there
+studio.getScene()                            // [{ src, title, x, z, yaw, scale }]
+await studio.setScene(items)                 // replace the arrangement
+studio.shareUrl()                            // a link that reopens it exactly
+await studio.generate('a brass desk lamp')   // text to 3D, into the room
+studio.viewInYourSpace(src, title)           // open the hosted launch page for one model
+await studio.startCamera()                   // needs a user gesture on iOS
+await studio.enterAR()                       // best AR path for this device
+studio.openArSheet()                         // the "Place in your space" hand-off sheet
+studio.closeArSheet()
+await studio.placeInYourSpace()              // straight to the native viewer, no sheet
+await studio.toggleImmersive()               // enter or leave WebXR specifically
+await studio.openRoom()                      // returns the room code
+studio.destroy()                             // releases camera, socket and GPU context
+```
+
+### Events
+
+`studio.on(name, fn)` returns an unsubscribe function. The same events also fire as
+`ar-studio:<name>` DOM events on the mounted element.
+
+| Event | Detail |
+| --- | --- |
+| `add` | `{ placement, remote }` |
+| `remove` | `{ src, title }` |
+| `select` | `{ placement }` (null when deselected) |
+| `clear` | `{ items }` |
+| `generate` | `{ model }` |
+| `generate-error` | `{ error, prompt }` |
+| `camera` | `{ active }` |
+| `xr` | `{ active }` |
+| `native-ar` | `{ src, title, viewer }` where viewer is `quicklook`, `sceneviewer` or `none` |
+| `native-ar-error` | `{ error, src }` |
+| `ar-sheet` | `{ open }` when the hand-off sheet opens or closes |
+| `room` | `{ status, code }` |
+| `share` | `{ url }` |
+
+---
+
+## Web component
+
+```html
+<ar-studio
+  assets="https://cdn.acme.com/models.json"
+  title="Acme AR"
+  accent="#00b894"
+  generate="true"
+  rooms="true"
+></ar-studio>
+```
+
+`element.studio` is the live instance. Importing `3d-ar-studio/auto` (what the CDN bundle
+does) registers the element for you.
+
+---
+
+## Keyboard and accessibility
+
+Every control is a real button with an accessible name, the source tabs implement the full
+ARIA tablist contract, and each dialog takes and returns focus.
+
+| Key | Action |
+| --- | --- |
+| Arrows | Nudge the selected model, camera-relative. Hold Shift for fine steps. |
+| `R` | Rotate 45°. |
+| `D` | Duplicate. |
+| Delete / Backspace | Remove, with an undo in the status line. |
+| Escape | Close the open panel, or deselect. |
+
+`prefers-reduced-motion` removes the spawn-in animation and every transition.
+
+---
+
+## MCP server
+
+```bash
+npx 3d-ar-studio-mcp
+```
+
+```json
+{
+  "mcpServers": {
+    "3d-ar-studio": {
+      "command": "npx",
+      "args": ["-y", "3d-ar-studio-mcp"]
+    }
+  }
+}
+```
+
+No API key. Every tool is free and keyless.
+
+| Tool | What it does |
+| --- | --- |
+| `generate_3d_model` | Turn a text prompt into a textured GLB. Returns the model plus links that open it in AR. |
+| `check_generation` | Collect a generation that was still rendering when the first call returned. |
+| `search_models` | Search the free CC0 library (or any catalogue you configure) by name, category and tag. |
+| `compose_ar_scene` | Arrange several models into one scene and return a single link that reopens it exactly. |
+| `export_ar` | Turn any GLB URL into a device-aware "View in your space" link. |
+| `create_ar_page` | Emit a complete, self-contained HTML page embedding the studio, ready to commit. |
+
+| Environment variable | Default | What it changes |
+| --- | --- | --- |
+| `AR_STUDIO_PAGE_URL` | the hosted demo | The page `compose_ar_scene` links to. Set it to your own deployment. |
+| `AR_STUDIO_ASSETS` | the free CC0 library | Catalogue `search_models` searches. |
+| `AR_STUDIO_MCP_ENDPOINT` | three.ws 3D Studio | The MCP endpoint used for generation. |
+| `AR_STUDIO_ORIGIN` | `https://three.ws` | Origin for hosted AR launch and viewer links. |
+
+A session looks like this:
+
+```
+> Put a mid-century lamp and a potted fern in my living room.
+
+  generate_3d_model  { prompt: "a brass mid-century desk lamp" }   → lamp.glb
+  search_models      { query: "potted plant" }                     → fern.glb
+  compose_ar_scene   { models: [{ src: lamp.glb, x: 0,   z: -1.4 },
+                                { src: fern.glb, x: 0.9, z: -1.2 }] }
+
+  → one link; open it on a phone and both objects stand in the room.
+```
+
+---
+
+## Device support
+
+| Device | Path | What you get |
+| --- | --- | --- |
+| Android Chrome | WebXR `immersive-ar` | The whole scene in the room: hit-test placement, per-model anchors, light estimation, depth occlusion. |
+| iOS Safari | AR Quick Look | One model at a time in Apple's own viewer, with real ARKit tracking, scale and occlusion. The model is converted to USDZ on the device. Camera passthrough with gyro world-lock composes the multi-model scene in-page alongside it. |
+| Android without WebXR | Scene Viewer | One model at a time through ARCore, with a browser fallback if ARCore is missing. |
+| Desktop | Preview | Grid floor, drag-look, QR hand-off to a phone. |
+| Headsets | WebXR | Same as Android Chrome. |
+
+The **AR** button in the top bar always takes the best path the device has, labels itself so it
+never promises the wrong one, and acts on the selected model (or the last one placed).
+
+Camera and WebXR both need a secure context: `https://` or `localhost`.
+
+### Placing one model in someone's real room
+
+On a device with WebXR the AR button goes straight into an immersive session. Everywhere else
+it opens the **hand-off sheet**: which model is going, a picker when the scene holds more than
+one, and a single primary button that opens the device's own AR viewer.
+
+The sheet exists for one specific reason, and it is worth knowing about if you are building
+your own UI on top of this package:
+
+> **iOS opens AR Quick Look only while the page still holds the user gesture that asked for
+> it.** Converting a GLB to USDZ takes a second or two. Start the conversion inside the tap
+> handler and by the time the `<a rel="ar">` is clicked the gesture has expired, Safari
+> silently declines, and the button looks broken. That is the single most common reason a
+> "View in AR" button does nothing on an iPhone.
+
+There is a second trap right behind it, and it is worse because the failure looks like success:
+
+> **Safari decides whether a URL is an AR asset from its file extension.** A `blob:` URL has no
+> path, so it has no extension. Hand one to `<a rel="ar">` with no filename and Safari still
+> opens Quick Look, but as a generic 3D preview: the viewer comes up in **Object** mode with AR
+> unavailable. Setting `download="something.usdz"` on the anchor gives Safari the name it
+> sniffs, and Quick Look enters AR. `openQuickLook()` does this for you.
+
+So the package splits preparing from opening, and never does them in one tap:
+
+```js
+import { prepareNativeAr, isQuickLookReady } from '3d-ar-studio';
+
+// Ahead of the tap: convert, cache, and keep the result.
+const handoff = await prepareNativeAr({
+  src: 'https://example.com/chair.glb',
+  title: 'Chair',
+  key: 'chair@1.0',            // cache identity; include the scale if you bake one in
+});
+
+// Inside the tap, synchronously. No await between the click and open().
+button.addEventListener('click', () => handoff?.open());
+```
+
+`prepareNativeAr` resolves to `null` on a device with no native AR viewer, `{ viewer:
+'quicklook' }` on iOS with a `blob:` USDZ ready to open, and `{ viewer: 'sceneviewer' }` on
+Android, where nothing needs converting at all. Conversions are cached (four at a time,
+least-recently-used, object URLs revoked on eviction); `isQuickLookReady(key)`,
+`releaseQuickLook(key)` and `clearQuickLookCache()` let you drive that cache yourself.
+
+The studio warms the cache in the background for whichever model the button would send, which
+is why the second tap of the day is instant. `placeInYourSpace()` still exists and still does
+both halves in one call: reach for it when the USDZ is already cached, or when you are calling
+it from your own already-prepared button.
+
+Exporting from the live scene rather than refetching the GLB is deliberate too: no second
+download, no second CORS round trip, and the person gets the pose and the size they are
+looking at. `objectToUsdzBlob(object3D)` is exported if you want that for your own three.js
+scene.
+
+### Why a model hangs in the air instead of resting on your floor
+
+The third trap, and the one that survives both of the others:
+
+> **AR Quick Look anchors the scene's ORIGIN to the plane it detects, and never looks at the
+> geometry.** A GLB authored around its bounding-box centre arrives half-buried; one authored
+> around a distant scene origin arrives floating across the room at whatever height it was
+> modelled at. Both read as broken tracking, and no anchoring property fixes either: the
+> content has to be moved.
+
+Every export from this package is therefore stood on `y = 0` with its footprint centred over
+the origin before it is written. `groundOnFloor()` is exported if you want to do that to your
+own scene.
+
+Two smaller ones ride along with it:
+
+> **`USDZExporter` walks `scene.children` and writes each node's LOCAL matrix**, so the
+> transform on the object you hand it is never written at all. Set a scale on the root and the
+> file comes out at the original size with no warning. `usdzExportRoot()` wraps content in an
+> identity root plus a `Model` stage node, and every placement this package applies rides on
+> the stage, which does get written.
+
+> **USDZ is metres** (`metersPerUnit = 1`). A 75 cm prop authored in centimetres arrives 75 m
+> tall, too large for any plane ARKit found indoors, and swims around the viewer. Pass
+> `{ fit: true }` to `sceneToUsdzBlob()` (`glbUrlToUsdzBlob()` already does) to normalize a
+> model straight off the network. Anything already within 2x of a believable real-world size
+> is left exactly as authored.
+
+And the one that looks most like broken tracking of all:
+
+> **Quick Look does not place a model until ARKit has found a plane big enough to hold it.**
+> Until then it hangs aligned to the camera and travels with the phone. Past a certain size
+> there is no such plane in an ordinary room, so it never lands at all. Every export is capped
+> at `MAX_AR_FOOTPRINT_M` (2.5 m) and `MAX_AR_HEIGHT_M` (2.5 m) by `clampToPlaceableSize()`.
+> A ceiling, not a normalizer: furniture, people and props go through untouched.
+
+### The camera is one client at a time
+
+The studio releases its `getUserMedia` passthrough on the way into the device's AR viewer and
+restarts it when you come back. Leave the page's stream running and ARKit starts against a
+camera another process is already holding: the model appears, and then world tracking and
+plane detection never converge, so it drifts with the phone instead of settling. If you drive
+the hand-off yourself from your own camera UI, stop your tracks before you call `open()`.
+
+Passthrough itself is a gyroscope over a video feed: it turns with you, and that is all. It has
+no plane detection and no positional tracking, so it will never hold a model to a spot on a
+real floor. On iOS that is what Quick Look is for, and the studio's status line says so.
+
+---
+
+## Development
+
+```bash
+npm install
+npm test                 # 75 unit tests, no browser needed
+npm run build            # dist/ bundles
+npm run build:site       # docs/ (the GitHub Pages site)
+npm run test:browser     # 35 end-to-end checks in a real browser (needs Playwright)
+npm run inspect          # MCP Inspector against the local server
+```
+
+The published site is committed under `docs/` and served by GitHub Pages from the `main`
+branch. There is no CI workflow: `npm run build && npm run build:site`, commit, push.
+
+---
+
+## Licence and credits
+
+Apache-2.0.
+
+The bundle includes [three.js](https://threejs.org) (MIT) and
+[colyseus.js](https://colyseus.io) (MIT). The default model library is CC0 content from
+[Poly Haven](https://polyhaven.com), and the default generation and animation lanes are hosted
+by [three.ws](https://three.ws). None of them is required: every one is a URL you can change.
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=nirholas/3D-AR-Studio&type=Date)](https://www.star-history.com/#nirholas/3D-AR-Studio&Date)

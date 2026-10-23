@@ -31,13 +31,13 @@ import {
 import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
 import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from './shared/cinematic-render.js';
 
-import { EstimatedLighting } from './ar/estimated-lighting.js';
+import { EstimatedLighting } from '../packages/ar-studio/src/studio/estimated-lighting.js';
 import {
 	generateRoomCode, localToShared, normalizeRoomCode, roomKeyForCode,
 	roomShareUrl, sharedToLocal,
-} from './ar/studio-coords.js';
+} from '../packages/ar-studio/src/studio/coords.js';
 import { StudioNet } from './ar/studio-net.js';
-import { MultiPlaceSession } from './ar/multi-place.js';
+import { MultiPlaceSession } from '../packages/ar-studio/src/studio/multi-place.js';
 import { canUseQuickLook, openQuickLook } from './ar/quick-look.js';
 import { canUseSceneViewer, openSceneViewer } from './ar/scene-viewer.js';
 import { glbBlobToUsdzBlob } from './usdz-pipeline.js';
@@ -46,13 +46,13 @@ import { cardTitleFromPrompt } from './model-lib.js';
 import {
 	createPinchState, pinchEnd, pinchMove, pinchStart, touchDist,
 	PINCH_SCALE_MAX, PINCH_SCALE_MIN,
-} from './ar/pinch-scale.js';
+} from '../packages/ar-studio/src/studio/pinch.js';
 import {
 	deserializeScene, fitTransform, MAX_PLACEMENTS, normalizeGlbUrl,
 	parseSrcParams, roomLightFromPixels, sceneFromHashParam, serializeScene,
 	SPAWN_DISTANCE_M, spawnPointInFront, studioSceneUrl, studioShareUrl,
 	touchAngle, twistDelta,
-} from './ar/studio-scene.js';
+} from '../packages/ar-studio/src/studio/scene-math.js';
 import { renderQRToSVG } from './erc8004/qr.js';
 import { deriveVerticalFovDeg, DEFAULT_DIAG_FOV_DEG } from './irl/camera-fov.js';
 import { createLoadQueue, loadGLTF } from './irl/load-queue.js';
@@ -67,6 +67,8 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) =>
 	String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+/** Canonical studio page; the base every share link and QR is built against. */
+const STUDIO_BASE_URL = 'https://three.ws/ar/studio';
 const SCENE_KEY = 'twx_ar_studio_scene_v1';
 // Shared with /ar (AR Forge) on purpose: a model forged on either page shows up
 // in the other's recents — one history, two doors.
@@ -880,10 +882,10 @@ function renderRoomModal() {
 		const box = $('ars-room-qr');
 		if (box) {
 			try {
-				box.innerHTML = renderQRToSVG(roomShareUrl('https://three.ws', roomCode), {
+				box.innerHTML = renderQRToSVG(roomShareUrl(STUDIO_BASE_URL, roomCode), {
 					scale: 5, margin: 2, dark: '#0b0b0b', light: '#ffffff',
 				});
-			} catch { box.textContent = roomShareUrl('https://three.ws', roomCode); }
+			} catch { box.textContent = roomShareUrl(STUDIO_BASE_URL, roomCode); }
 		}
 	}
 }
@@ -917,7 +919,7 @@ $('ars-room-create')?.addEventListener('click', async () => {
 	// create → find button → copy. Best-effort; the Copy button remains as backup.
 	if (net && net.status === 'online' && navigator.clipboard?.writeText) {
 		try {
-			await navigator.clipboard.writeText(roomShareUrl(location.origin, roomCode));
+			await navigator.clipboard.writeText(roomShareUrl(`${location.origin}/ar/studio`, roomCode));
 			setStatus(`Room ${roomCode} is live — invite link copied. Paste it to a friend.`);
 		} catch { /* clipboard blocked — the Copy button below still works */ }
 	}
@@ -938,7 +940,7 @@ $('ars-room-join-form')?.addEventListener('submit', async (e) => {
 });
 
 $('ars-room-copy')?.addEventListener('click', () => {
-	const url = roomShareUrl(location.origin, roomCode);
+	const url = roomShareUrl(`${location.origin}/ar/studio`, roomCode);
 	const btn = $('ars-room-copy');
 	const done = () => {
 		if (!btn) return;
@@ -2198,7 +2200,7 @@ photoBtn?.addEventListener('click', async () => {
 
 qrBtn?.addEventListener('click', () => {
 	if (!qrModal) return;
-	const url = studioSceneUrl('https://three.ws', placements.map((p) => ({
+	const url = studioSceneUrl(STUDIO_BASE_URL, placements.map((p) => ({
 		src: p.src,
 		title: p.title,
 		x: p.group.position.x,
@@ -2214,7 +2216,7 @@ qrBtn?.addEventListener('click', () => {
 			// Arrangement hash too dense for the encoder → a models-only QR still
 			// beats a wall of text (the full link below keeps the arrangement).
 			try {
-				box.innerHTML = renderQRToSVG(studioShareUrl('https://three.ws', placements), {
+				box.innerHTML = renderQRToSVG(studioShareUrl(STUDIO_BASE_URL, placements), {
 					scale: 6, margin: 2, dark: '#0b0b0b', light: '#ffffff',
 				});
 			} catch {

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>__TITLE__</title>
+<meta name="description" content="Place 3D models in your real room, straight from the browser." />
+<meta property="og:title" content="__TITLE__" />
+<meta property="og:description" content="Place 3D models in your real room, straight from the browser." />
+<style>
+	html, body { margin: 0; height: 100%; background: #06070a; color: #ecedf2;
+		font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+	#stage { position: fixed; inset: 0; }
+	noscript { display: block; padding: 40px; text-align: center; color: #9aa0af; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<noscript>This page needs JavaScript to render 3D models in your space.</noscript>
+<script type="module">
+import { createArStudio } from 'https://unpkg.com/3d-ar-studio/dist/ar-studio.min.js';
+
+createArStudio('#stage', {
+	branding: { title: '__TITLE__', accent: '__ACCENT__' },
+
+	// Where models come from. Leave it out for the free public-domain library,
+	// or point it at your own JSON catalogue:
+	//   assets: 'https://your.cdn/models.json',
+	// See https://github.com/nirholas/3D-AR-Studio#your-own-models
+
+	fullscreen: false,
+});
+</script>
+</body>
+</html>

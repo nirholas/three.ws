@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+title: "3D-AR-Studio"
+abstract: "Drop a full augmented-reality studio into any web page. Place any number of 3D models in your real room through the camera, generate new ones from a text prompt, arrange them, then share the scene as a link, a QR code, or a live room. WebXR + Quick Look + Scene Viewer, a free CC0 model library, and an MCP server for agents."
+license: Apache-2.0
+repository-code: "https://github.com/nirholas/3D-AR-Studio"
+url: "https://three.ws"
+authors:
+  - name: three.ws
+    website: "https://three.ws"

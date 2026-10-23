@@ -16,7 +16,7 @@ import {
 	roomKeyForCode,
 	roomShareUrl,
 	sharedToLocal,
-} from '../src/ar/studio-coords.js';
+} from '../packages/ar-studio/src/studio/coords.js';
 
 describe('angle normalization', () => {
 	it('wraps radians into [0, 2π) and degrees into [0, 360)', () => {
@@ -93,7 +93,7 @@ describe('room codes', () => {
 	it('derives a stable filterBy key and a valid share URL', () => {
 		const code = generateRoomCode(() => 0.42);
 		expect(roomKeyForCode(code)).toBe(`c-${code}`);
-		expect(roomShareUrl('https://three.ws', code)).toBe(`https://three.ws/ar/studio?room=${code}`);
-		expect(roomShareUrl('https://three.ws', 'bad')).toBe('https://three.ws/ar/studio');
+		expect(roomShareUrl('https://three.ws/ar/studio', code)).toBe(`https://three.ws/ar/studio?room=${code}`);
+		expect(roomShareUrl('https://three.ws/ar/studio', 'bad')).toBe('https://three.ws/ar/studio');
 	});
 });

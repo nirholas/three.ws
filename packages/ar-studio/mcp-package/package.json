@@ -1,0 +1,48 @@
+{
+	"name": "3d-ar-studio-mcp",
+	"version": "0.3.2",
+	"mcpName": "io.github.nirholas/3d-ar-studio",
+	"description": "MCP server for 3D AR Studio: generate 3D models, search a free CC0 library, arrange them into one scene, and hand back a link that opens the whole arrangement in augmented reality on a phone.",
+	"type": "module",
+	"license": "Apache-2.0",
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"homepage": "https://nirholas.github.io/3D-AR-Studio/",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/3D-AR-Studio.git",
+		"directory": "mcp-package"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/3D-AR-Studio/issues"
+	},
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"ar",
+		"augmented-reality",
+		"3d",
+		"glb",
+		"text-to-3d",
+		"webxr",
+		"quick-look",
+		"scene-viewer",
+		"three.ws"
+	],
+	"bin": {
+		"3d-ar-studio-mcp": "./bin.mjs"
+	},
+	"main": "./bin.mjs",
+	"files": [
+		"bin.mjs",
+		"README.md"
+	],
+	"dependencies": {
+		"3d-ar-studio": "^0.3.2"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

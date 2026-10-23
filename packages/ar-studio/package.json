@@ -1,0 +1,115 @@
+{
+	"name": "3d-ar-studio",
+	"version": "0.3.2",
+	"mcpName": "io.github.nirholas/3d-ar-studio",
+	"description": "Drop a full augmented-reality studio into any web page: place any number of 3D models in your real room through the camera, generate new ones from a text prompt, arrange them, share the scene as a link or QR code, and build together in a live shared room. WebXR + Quick Look + Scene Viewer, a free CC0 model library and keyless text-to-3D out of the box, and an MCP server so agents can compose AR scenes too.",
+	"type": "module",
+	"license": "Apache-2.0",
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"homepage": "https://nirholas.github.io/3D-AR-Studio/",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/ar-studio"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/3D-AR-Studio/issues"
+	},
+	"keywords": [
+		"ar",
+		"augmented-reality",
+		"webxr",
+		"threejs",
+		"3d",
+		"glb",
+		"gltf",
+		"quick-look",
+		"usdz",
+		"scene-viewer",
+		"arcore",
+		"arkit",
+		"text-to-3d",
+		"mcp",
+		"model-context-protocol",
+		"web-component",
+		"three.ws"
+	],
+	"main": "./src/index.js",
+	"module": "./src/index.js",
+	"types": "./types/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./types/index.d.ts",
+			"default": "./src/index.js"
+		},
+		"./element": "./src/element.js",
+		"./auto": "./src/auto.js",
+		"./ar-launch": "./src/ar-launch.js",
+		"./sources": "./src/sources/index.js",
+		"./forge": "./src/forge/client.js",
+		"./mcp": "./mcp/index.js",
+		"./dist/*": "./dist/*",
+		"./package.json": "./package.json"
+	},
+	"bin": {
+		"3d-ar-studio": "./bin/cli.mjs",
+		"ar-studio": "./bin/cli.mjs",
+		"3d-ar-studio-mcp": "./bin/mcp.mjs"
+	},
+	"files": [
+		"src",
+		"mcp",
+		"bin",
+		"dist",
+		"!dist/*.map",
+		"templates",
+		"types",
+		"server.json",
+		"README.md",
+		"LICENSE",
+		"CHANGELOG.md"
+	],
+	"scripts": {
+		"build": "node scripts/build.mjs",
+		"build:site": "node site/build.mjs",
+		"test": "node --test \"test/**/*.test.mjs\"",
+		"lint": "eslint src mcp bin scripts site test",
+		"test:browser": "node scripts/smoke-browser.mjs",
+		"dev": "node bin/cli.mjs dev --dir site/public",
+		"inspect": "npx -y @modelcontextprotocol/inspector node bin/mcp.mjs",
+		"prepack": "node scripts/build.mjs"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.31.0",
+		"zod": "^3.23.8"
+	},
+	"peerDependencies": {
+		"@colyseus/schema": "^3.0.0",
+		"colyseus.js": "^0.16.0",
+		"three": ">=0.160.0"
+	},
+	"peerDependenciesMeta": {
+		"three": {
+			"optional": false
+		},
+		"colyseus.js": {
+			"optional": true
+		},
+		"@colyseus/schema": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@colyseus/schema": "^3.0.0",
+		"colyseus.js": "^0.16.22",
+		"esbuild": "^0.28.0",
+		"eslint": "^9.20.0",
+		"three": "^0.184.0"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

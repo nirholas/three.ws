@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>MCP server: 3D AR Studio</title>
+<meta name="description" content="Let an agent generate 3D models, compose an AR scene, and hand a person one link that opens it in their room." />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="MCP server: 3D AR Studio" />
+<meta property="og:description" content="Let an agent generate 3D models, compose an AR scene, and hand a person one link that opens it in their room." />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%238b7cf8'/%3E%3Cpath d='M16 6l9 5.2v10.4L16 27l-9-5.4V11.2z' fill='none' stroke='%23fff' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<style>
+:root {
+	color-scheme: dark;
+	--bg: #07080c;
+	--panel: rgba(255, 255, 255, 0.04);
+	--line: rgba(255, 255, 255, 0.1);
+	--ink: #ecedf2;
+	--dim: #9aa0af;
+	--faint: #6b7080;
+	--accent: #8b7cf8;
+	--accent-ink: #dcd6ff;
+	--radius: 16px;
+	--font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+	--mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+	margin: 0;
+	font-family: var(--font);
+	background: radial-gradient(120% 90% at 50% 0%, #141827 0%, #0a0b11 45%, #06070a 100%);
+	color: var(--ink);
+	line-height: 1.6;
+	-webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent-ink); }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+header.site {
+	position: sticky; top: 0; z-index: 50;
+	backdrop-filter: blur(12px);
+	background: rgba(7, 8, 12, 0.72);
+	border-bottom: 1px solid var(--line);
+}
+header.site .wrap { display: flex; align-items: center; gap: 16px; height: 60px; }
+.brand { display: flex; align-items: center; gap: 9px; font-weight: 750; letter-spacing: -0.01em; text-decoration: none; color: var(--ink); }
+.brand .dot { width: 10px; height: 10px; border-radius: 3px; background: linear-gradient(135deg, var(--accent), #4fd1c5); box-shadow: 0 0 18px rgba(139, 124, 248, 0.7); }
+nav.site { margin-left: auto; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+nav.site a {
+	color: var(--dim); text-decoration: none; font-size: 14px; font-weight: 600;
+	padding: 7px 11px; border-radius: 9px; transition: color .15s, background .15s;
+}
+nav.site a:hover, nav.site a[aria-current="page"] { color: var(--ink); background: rgba(255, 255, 255, 0.07); }
+h1, h2, h3 { line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 12px; }
+h1 { font-size: clamp(34px, 6vw, 56px); font-weight: 800; }
+h2 { font-size: clamp(23px, 3.4vw, 31px); font-weight: 750; margin-top: 8px; }
+h3 { font-size: 17px; font-weight: 700; }
+p { margin: 0 0 14px; color: var(--dim); }
+p.lead { font-size: clamp(16px, 2.1vw, 19px); color: #c3c8d4; max-width: 62ch; }
+section { padding: 56px 0; border-top: 1px solid var(--line); }
+section:first-of-type { border-top: 0; }
+.eyebrow { font-size: 12px; font-weight: 750; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.btn {
+	display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+	font-size: 15px; font-weight: 700; padding: 12px 20px; border-radius: 12px;
+	background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); color: var(--ink);
+	transition: background .15s, border-color .15s, transform .06s;
+	cursor: pointer;
+}
+.btn:hover { background: rgba(255, 255, 255, 0.11); border-color: rgba(255, 255, 255, 0.24); }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #0d0b1e; }
+.btn.primary:hover { filter: brightness(1.08); }
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(232px, 1fr)); }
+.card {
+	background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+	padding: 18px 18px 16px;
+}
+.card h3 { margin-bottom: 6px; }
+.card p { font-size: 14px; margin: 0; }
+.card .ico { font-size: 22px; line-height: 1; margin-bottom: 10px; display: block; }
+pre {
+	margin: 0 0 14px; padding: 16px 18px; overflow-x: auto;
+	background: #0b0d13; border: 1px solid var(--line); border-radius: 13px;
+	font-family: var(--mono); font-size: 13.5px; line-height: 1.65; color: #d7dbe6;
+}
+code { font-family: var(--mono); font-size: 0.92em; }
+p code, li code, td code { background: rgba(255, 255, 255, 0.07); padding: 1.5px 6px; border-radius: 6px; color: var(--accent-ink); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 16px; display: block; overflow-x: auto; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 700; white-space: nowrap; }
+td { color: var(--dim); }
+ul { color: var(--dim); padding-left: 22px; }
+li { margin-bottom: 7px; }
+.stage {
+	position: relative; height: min(72vh, 620px); min-height: 420px;
+	border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
+	background: #06070a; box-shadow: 0 30px 80px -40px rgba(139, 124, 248, 0.5);
+}
+.pill {
+	display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 650;
+	color: var(--accent-ink); background: rgba(139, 124, 248, 0.14);
+	border: 1px solid rgba(139, 124, 248, 0.38); border-radius: 999px; padding: 6px 13px;
+	margin-bottom: 18px;
+}
+footer.site { border-top: 1px solid var(--line); padding: 34px 0 60px; color: var(--faint); font-size: 13.5px; }
+footer.site a { color: var(--dim); }
+.tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.tab {
+	appearance: none; cursor: pointer; font: inherit; font-size: 13px; font-weight: 650;
+	color: var(--dim); background: rgba(255, 255, 255, 0.05); border: 1px solid transparent;
+	border-radius: 999px; padding: 7px 14px;
+}
+.tab[aria-selected="true"] { color: var(--accent-ink); background: rgba(139, 124, 248, 0.16); border-color: rgba(139, 124, 248, 0.4); }
+[hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+
+</head>
+<body>
+
+<header class="site"><div class="wrap">
+	<a class="brand" href="./index.html"><span class="dot" aria-hidden="true"></span> 3D AR Studio</a>
+	<nav class="site">
+		<a href="./index.html">Overview</a>
+		<a href="./studio.html">Live demo</a>
+		<a href="./mcp.html" aria-current="page">MCP server</a>
+		<a href="https://github.com/nirholas/3D-AR-Studio">GitHub</a>
+		<a href="https://www.npmjs.com/package/3d-ar-studio">npm</a>
+	</nav>
+</div></header>
+
+<section class="wrap" style="padding-top:48px">
+	<span class="pill">Model Context Protocol</span>
+	<h1>Let an agent build the scene.</h1>
+	<p class="lead">
+		The package ships an MCP server. Point Claude, ChatGPT, Cursor or your own agent at it and
+		it can generate 3D models, compose an arrangement, and hand a person one link that opens
+		that arrangement in their actual room.
+	</p>
+	<h2>Install</h2>
+<pre><code>{
+  "mcpServers": {
+    "3d-ar-studio": {
+      "command": "npx",
+      "args": ["-y", "3d-ar-studio-mcp"]
+    }
+  }
+}</code></pre>
+	<p>No API key. Every tool below is free and keyless.</p>
+
+	<h2>Tools</h2>
+	<table>
+		<thead><tr><th>Tool</th><th>What it does</th></tr></thead>
+		<tbody>
+			<tr><td><code>generate_3d_model</code></td><td>Turn a text prompt into a downloadable, textured GLB. Returns the model URL plus links that open it in AR.</td></tr>
+			<tr><td><code>check_generation</code></td><td>Collect a generation that was still rendering when the first call returned.</td></tr>
+			<tr><td><code>search_models</code></td><td>Search the free CC0 library (or any catalogue you configure) by name, category and tag.</td></tr>
+			<tr><td><code>compose_ar_scene</code></td><td>Arrange several models into one scene and return a single link (and a QR-friendly short form) that reopens it exactly.</td></tr>
+			<tr><td><code>export_ar</code></td><td>Turn any GLB URL into a device-aware "View in your space" link: Quick Look on iOS, Scene Viewer on Android, WebGL on desktop.</td></tr>
+			<tr><td><code>create_ar_page</code></td><td>Emit a complete, self-contained HTML page that embeds the studio, configured for the caller's models: ready to commit and publish.</td></tr>
+		</tbody>
+	</table>
+
+	<h2>What a session looks like</h2>
+<pre><code>&gt; Put a mid-century lamp and a potted fern in my living room.
+
+  generate_3d_model  { prompt: "a brass mid-century desk lamp" }   → lamp.glb
+  search_models      { query: "potted plant" }                     → fern.glb
+  compose_ar_scene   { models: [{ src: lamp.glb, x: 0,   z: -1.4 },
+                                { src: fern.glb, x: 0.9, z: -1.2 }] }
+
+  → https://your-page.example/ar/#s=… (open it on a phone; both objects
+    stand in the room, exactly where they were arranged)</code></pre>
+
+	<h2>Configuration</h2>
+	<table>
+		<thead><tr><th>Environment variable</th><th>Default</th><th>What it changes</th></tr></thead>
+		<tbody>
+			<tr><td><code>AR_STUDIO_PAGE_URL</code></td><td>the hosted demo</td><td>The page <code>compose_ar_scene</code> links to. Set it to your own deployment.</td></tr>
+			<tr><td><code>AR_STUDIO_ASSETS</code></td><td>the free CC0 library</td><td>Catalogue URL <code>search_models</code> searches.</td></tr>
+			<tr><td><code>AR_STUDIO_MCP_ENDPOINT</code></td><td>three.ws 3D Studio</td><td>The MCP endpoint used for generation.</td></tr>
+			<tr><td><code>AR_STUDIO_ORIGIN</code></td><td><code>https://three.ws</code></td><td>Origin for the hosted "View in your space" launcher and viewer links.</td></tr>
+		</tbody>
+	</table>
+	<p style="margin-top:24px"><a class="btn primary" href="./studio.html">See what it builds</a>
+	<a class="btn" href="https://github.com/nirholas/3D-AR-Studio#mcp-server">Full MCP docs</a></p>
+</section>
+
+
+<footer class="site"><div class="wrap">
+	<p><strong style="color:var(--ink)">3D AR Studio</strong> is open source under Apache-2.0.
+	Models and the free text-to-3D lane are served by <a href="https://three.ws">three.ws</a>; point it at your own catalogue with one option.</p>
+	<p><a href="https://github.com/nirholas/3D-AR-Studio">GitHub</a> · <a href="https://www.npmjs.com/package/3d-ar-studio">npm</a> · <a href="https://registry.modelcontextprotocol.io/?q=3d-ar-studio">MCP registry</a> · <a href="https://three.ws">three.ws</a></p>
+</div></footer>
+</body>
+</html>

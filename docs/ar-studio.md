@@ -13,7 +13,18 @@ This doc covers what is unique to AR Studio. For the underlying `POST /api/forge
 
 ## How it works
 
-The page ([`pages/ar-studio.html`](../pages/ar-studio.html)) only imports [`src/ar-studio.js`](../src/ar-studio.js) after a WebGL check. Scene math, serialization, and the share hash live in [`src/ar/studio-scene.js`](../src/ar/studio-scene.js); the Colyseus client is [`src/ar/studio-net.js`](../src/ar/studio-net.js); WebXR multi-placement is [`src/ar/multi-place.js`](../src/ar/multi-place.js).
+The page ([`pages/ar-studio.html`](../pages/ar-studio.html)) only imports [`src/ar-studio.js`](../src/ar-studio.js) after a WebGL check. The page code owns the three.ws specifics (the forge, gallery and Objects tray, the HUD, the sign-in-free flows). Everything reusable lives in one place, the [`3d-ar-studio`](https://www.npmjs.com/package/3d-ar-studio) package at [`packages/ar-studio`](../packages/ar-studio), and the page imports it directly from there, so the npm package and the hosted studio can no longer drift:
+
+| Concern | Module (all under `packages/ar-studio/src/studio/`) |
+|---|---|
+| Scene math, serialization, the `#s=` share hash, share URLs | `scene-math.js` |
+| Shared logical frame and room codes | `coords.js` |
+| WebXR multi-placement with one anchor per model | `multi-place.js` (with `anchor-lifecycle.js`, `depth-occlusion.js`, `estimated-lighting.js`, `pinch.js`) |
+| Colyseus room client, timeout and single-retry reconnect | `net.js` (wire schema in `schemas.js`) |
+
+[`src/ar/studio-net.js`](../src/ar/studio-net.js) is a thin subclass of the package's `StudioNet` that only resolves which Colyseus host the three.ws site dials. The package's share-URL helpers take the full URL of the page that hosts the studio (`https://three.ws/ar/studio`), which is what lets a third-party embed build links against its own page. The room server keeps its own copy of the wire schema ([`multiplayer/src/studio-schemas.js`](../multiplayer/src/studio-schemas.js)); [`tests/ar-studio-package-parity.test.js`](../tests/ar-studio-package-parity.test.js) fails if it and the package schema ever diverge. [`src/ar/webxr.js`](../src/ar/webxr.js) (the single-model lane) and [`src/irl.js`](../src/irl.js) consume the same anchor, depth and pinch modules.
+
+Edit the shared modules in `packages/ar-studio`, not in `src/`. The directory is exported to [nirholas/3D-AR-Studio](https://github.com/nirholas/3D-AR-Studio) through `data/standalone-mirrors.json`; publishing a new `3d-ar-studio` version is an owner action.
 
 ### Model sources
 

@@ -1,0 +1,28 @@
+# 3D-AR-Studio
+
+> Drop a full augmented-reality studio into any web page. Place any number of 3D models in your real room through the camera, generate new ones from a text prompt, arrange them, then share the scene as a link, a QR code, or a live room. WebXR + Quick Look + Scene Viewer, a free CC0 model library, and an MCP server for agents.
+
+3D-AR-Studio is an open-source repository by nirholas, part of the three.ws ecosystem.
+
+## Docs
+
+- [README](https://github.com/nirholas/3D-AR-Studio/blob/HEAD/README.md): install, usage and reference
+- [Why this exists](https://github.com/nirholas/3D-AR-Studio/blob/HEAD/README.md#why-this-exists)
+- [Install](https://github.com/nirholas/3D-AR-Studio/blob/HEAD/README.md#install)
+- [Your own models](https://github.com/nirholas/3D-AR-Studio/blob/HEAD/README.md#your-own-models)
+- [Options](https://github.com/nirholas/3D-AR-Studio/blob/HEAD/README.md#options)
+- [Web component](https://github.com/nirholas/3D-AR-Studio/blob/HEAD/README.md#web-component)
+- [Keyboard and accessibility](https://github.com/nirholas/3D-AR-Studio/blob/HEAD/README.md#keyboard-and-accessibility)
+- [MCP server](https://github.com/nirholas/3D-AR-Studio/blob/HEAD/README.md#mcp-server)
+- [Device support](https://github.com/nirholas/3D-AR-Studio/blob/HEAD/README.md#device-support)
+- [AGENTS.md](https://github.com/nirholas/3D-AR-Studio/blob/HEAD/AGENTS.md): guidance for coding agents
+- [Full text for LLMs](https://github.com/nirholas/3D-AR-Studio/blob/HEAD/llms-full.txt): the README inlined
+
+## Project
+
+- [Source](https://github.com/nirholas/3D-AR-Studio)
+- [Issues](https://github.com/nirholas/3D-AR-Studio/issues)
+- [Discussions](https://github.com/nirholas/3D-AR-Studio/discussions)
+- [Homepage](https://nirholas.github.io/3D-AR-Studio/)
+- [three.ws](https://three.ws): the platform this is part of
+- [All repositories by nirholas](https://github.com/nirholas/nirholas#readme)

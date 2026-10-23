@@ -15,9 +15,9 @@ import {
 
 import {
 	advancePulse, isXrVisible, nextTrackingState, reticleVisual, TRACKING_LOSS_FRAMES,
-} from './anchor-lifecycle.js';
-import { DepthOcclusion } from './depth-occlusion.js';
-import { createPinchState, pinchEnd, pinchMove, pinchStart, touchDist } from './pinch-scale.js';
+} from '../../packages/ar-studio/src/studio/anchor-lifecycle.js';
+import { DepthOcclusion } from '../../packages/ar-studio/src/studio/depth-occlusion.js';
+import { createPinchState, pinchEnd, pinchMove, pinchStart, touchDist } from '../../packages/ar-studio/src/studio/pinch.js';
 
 /** prefers-reduced-motion: calm, static reticle/confirm states when set. */
 function _prefersReducedMotion() {
