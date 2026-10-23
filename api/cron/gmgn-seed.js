@@ -10,7 +10,7 @@
 //   1. Fetch each wallet-ranking tab from gmgn.ai's public (unauthenticated) API.
 //      The API patterns were reverse-engineered from their network traffic (see
 //      nirholas/scrape-smart-wallets). No API key required; we respect rate limits.
-//   2. Translate gmgn tags → our label taxonomy (smart_money/sniper/dumper/neutral).
+//   2. Translate gmgn tags → our label taxonomy (smart_money/kol/sniper/neutral).
 //   3. Upsert into wallet_reputation. Only sets label + smart_money_score from the
 //      gmgn signal; our own on-chain observed stats (wins/duds etc.) are never
 //      overwritten — they accumulate independently and take precedence on the score
@@ -33,13 +33,15 @@ const FETCH_TIMEOUT_MS = 8000;
 const INTER_REQUEST_DELAY_MS = 300;
 
 // gmgn tab → our label. smart_degen/pump_smart = proven smart money buyers.
-// launchpad_smart = launch specialists. renowned = KOL (community influence).
+// launchpad_smart = launch specialists. renowned = KOL (community influence;
+// labelled 'kol', which Oracle's pedigree treats as proven and its cold-start
+// prior serves from this table).
 // snipe_bot = sniper (high win rate but different risk profile). top_dev = creators.
 const TAG_MAP = {
 	smart_degen:     { label: 'smart_money', score: 82 },
 	pump_smart:      { label: 'smart_money', score: 78 },
 	launchpad_smart: { label: 'smart_money', score: 72 },
-	renowned:        { label: 'neutral',     score: 60 }, // KOL — influence, not edge
+	renowned:        { label: 'kol',         score: 74 },
 	snipe_bot:       { label: 'sniper',      score: 65 },
 	top_dev:         { label: 'neutral',     score: 55 }, // creators — not necessarily smart buyers
 	fresh_wallet:    { label: 'fresh',       score: 30 },
@@ -54,7 +56,7 @@ const KOLQUEST_FALLBACK_URL = 'https://raw.githubusercontent.com/nirholas/kol-qu
 const KQ_CATEGORY_MAP = {
 	smart_degen: { label: 'smart_money', score: 80 },
 	pump_smart:  { label: 'smart_money', score: 76 },
-	kol:         { label: 'neutral',     score: 60 },
+	kol:         { label: 'kol',         score: 74 },
 	sniper:      { label: 'sniper',      score: 65 },
 	top_dev:     { label: 'neutral',     score: 55 },
 };
