@@ -690,7 +690,7 @@
 		"dat.gui": "^0.7.9",
 		"delaunator": "^5.1.0",
 		"diff": "^5.2.2",
-		"dompurify": "^3.4.15",
+		"dompurify": "^3.4.17",
 		"draco3dgltf": "^1.5.7",
 		"esbuild": "^0.28.1",
 		"ethers": "^6.16.0",
