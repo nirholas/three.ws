@@ -23,7 +23,7 @@ export const def = {
 		'Create a pump.fun alert rule on the authenticated three.ws account. The pumpfun-monitor cron ' +
 		'evaluates it against the live event stream and delivers across the channels you enable, so it ' +
 		'fires across devices with no dashboard open. NOT idempotent — each call adds a new rule (max 50 ' +
-		'per account). Targeting by kind: `market_anomaly` watches the whole market (no target) and takes optional `filters` (processors, min_severity, subject) over the scanner's price, TVL, stablecoin, funding and open-interest events; `graduation` is global or scoped to target_mint OR target_agent; ' +
+		'per account). Targeting by kind: `market_anomaly` watches the whole market (no target) and takes optional `filters` (processors, min_severity, subject) over the scanner\'s price, TVL, stablecoin, funding and open-interest events; `graduation` is global or scoped to target_mint OR target_agent; ' +
 		'`price_above` / `price_below` / `whale_buy` require target_mint; `new_mint` requires target_agent. ' +
 		'`threshold` is required for the price/whale kinds — USD market cap for price_above/price_below, ' +
 		'minimum buy size in SOL for whale_buy. At least one delivery channel must be on (deliver_in_app ' +
