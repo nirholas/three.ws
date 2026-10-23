@@ -98,3 +98,7 @@ Cross-session handoff for the `parity-` orders ([parity-00-CONTEXT.md](parity-00
 - 919: `three-ws` launcher package committed in `2859eb153`; push, deploy and `npm publish` are owner-gated.
 - 920: external community skill sources committed in `dd69b9b4b`; owner approves the source list and sets `COMMUNITY_SKILL_SOURCES`.
 - 921: submission kit in `docs/awesome-solana-ai-submission.md`; PR #251 already open; second PR and mcp.so/Smithery await the owner.
+
+## 2026-10-23: order 923 (built, owner steps remain)
+
+- 923: builder competition shipped in `439b4a256` (API, migration, ranking) and `3172dcf7e` (pages, routes, docs, nav). Config ships empty. Migration unapplied, deploy and competition parameters are owner-gated; order trimmed to those.
