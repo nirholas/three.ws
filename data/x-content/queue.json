@@ -155,6 +155,7 @@
 					"media": [
 						{
 							"path": "public/x-media/genesis/reel.mp4",
+							"alt": "A screen recording of the three.ws Agent Genesis page: a prompt example, a cosmic oracle in star-speckled robes, is chosen, then the Selfie mode and the Remix mode that forks a public avatar are opened in turn",
 							"probe": {
 								"durationSec": 12.9,
 								"width": 1080,
@@ -18476,12 +18477,16 @@
 			"status": "approved",
 			"kind": "post",
 			"pattern": "mechanism",
+			"source": {
+				"path": "docs/announcements/openai-partner-benefits.md"
+			},
 			"posts": [
 				{
 					"text": "We are an OpenAI Select Partner, and the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits, valid for the full program year.\n\nThe workspace and credits fund testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents. The connector is live now and answers with 15 tools, no key and no account. three.ws/openai",
 					"media": [
 						{
 							"path": "public/x-media/openai-partner-benefits/reel.mp4",
+							"alt": "A screen recording of the three.ws OpenAI page showing the 15-tool 3D Studio connector, scrolling down through the Connect the server steps to the generation tools",
 							"probe": {
 								"durationSec": 11.8,
 								"width": 1280,
