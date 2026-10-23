@@ -192,6 +192,8 @@ The selection is enforced whichever way you signed in. With a browser sign-in, s
 | `provider use three-ws` / `provider show` | Point this machine's model clients at three.ws inference, billed to your credits |
 | `usage` | Credits, burn rate, days left and recent top-ups |
 | `ask "<prompt>"` | One completion through the active provider |
+| `wallet <init\|address\|export-public>` | A local payer key held in the OS keychain (or an encrypted file behind a passphrase); never printed |
+| `pay <url>` / `pay --dry-run <url>` | Settle an x402 or MPP 402 challenge on Solana with that key, inside `pay-permissions.json`; `pay init`, `pay mcp` (stdio MCP server). See the [package README](../packages/three-ws-cli/README.md#pay-for-x402-and-mpp-resources-from-the-terminal) |
 
 ## One command per client
 

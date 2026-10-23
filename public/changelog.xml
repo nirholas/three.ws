@@ -39,6 +39,14 @@
 			<description>Put an interactive 3D model in any GitHub README. Paste a GLB, glTF, OBJ or STL URL and get a block GitHub renders as a rotatable viewer, sized to fit its markdown limit.</description>
 		</item>
 		<item>
+			<title>X Video Downloader</title>
+			<link>https://three.ws/x-video</link>
+			<guid isPermaLink="false">2026-10-23:X Video Downloader</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Paste an X post link and download its video or GIF in every quality, with the post's likes, replies, reposts and views. Free, no account, no API key.</description>
+		</item>
+		<item>
 			<title>Agent memory now learns from trade results, and the decision trail has a verify endpoint</title>
 			<link>https://three.ws/reasoning-ledger</link>
 			<guid isPermaLink="false">2026-10-23:Agent memory now learns from trade results, and the decision trail has a verify endpoint</guid>
@@ -93,6 +101,22 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The arcade game returns as a native canvas game with touch and keyboard controls and levels that get longer and tighter. Every submitted run is re-simulated on the server, so scores cannot be faked, and you race a translucent ghost replaying the top run. Scores also appear on /rankings as the UFO High Score tab.</description>
+		</item>
+		<item>
+			<title>Free X video downloader, and post impact now sees engagement</title>
+			<link>https://three.ws/x-video</link>
+			<guid isPermaLink="false">2026-10-23:Free X video downloader, and post impact now sees engagement</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Paste any public X post link at /x-video to download its video or GIF in every quality, with the post's likes, replies, reposts and views, no account or API key. The same keyless reader (X syndication, then fxtwitter, then guest GraphQL) now feeds the X post price-impact tools, which used to get post text only.</description>
+		</item>
+		<item>
+			<title>KOL tracker shows follower counts without an X API key, and the Oracle reads KOL timelines</title>
+			<link>https://three.ws/tracker</link>
+			<guid isPermaLink="false">2026-10-23:KOL tracker shows follower counts without an X API key, and the Oracle reads KOL timelines</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A keyless X reader now backs the tracker when the paid API is unset or rate limited, so attached KOLs keep their follower counts. The Oracle also reads tracked timelines every 10 minutes to feed its social virality signal, and each coin's own linked X account age and followers now appear in its intel.</description>
 		</item>
 		<item>
 			<title>Leaked-wallet rescue runbook with a dry run, and live Jito tip accounts</title>
@@ -151,12 +175,28 @@
 			<description>The launches board stopped watching NOXA, which shut down in July, and now finds launches on every venue seen on chain. Each row names the launchpad, shows how many earlier tokens the deployer launched and how many it sold out of, and flags launches where the dev has already sold.</description>
 		</item>
 		<item>
+			<title>See whether our X posts move $THREE: a Posts view on the coin chart</title>
+			<link>https://three.ws/oracle/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump</link>
+			<guid isPermaLink="false">2026-10-23:See whether our X posts move $THREE: a Posts view on the coin chart</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The $THREE chart has a new Posts tab that plots every @trythreews post at the price it went out at, sized by engagement and coloured by the +4h return, each bubble linking to the post. Across 197 posts the median +1h and +4h return after a post was +1.6%, against -0.1% and -0.7% at arbitrary moments; the +24h median was -1.4% against -2.4%. The content pipeline now also records the +24h price return after each post and lets it nudge ranking, lightly, once enough posts carry one.</description>
+		</item>
+		<item>
 			<title>Splat Viewer: Spark 2.3 level of detail, saved camera hotspots, video export, and image to splat</title>
 			<link>https://three.ws/splat</link>
 			<guid isPermaLink="false">2026-10-23:Splat Viewer: Spark 2.3 level of detail, saved camera hotspots, video export, and image to splat</guid>
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The Splat Viewer now builds a level-of-detail tree for large scenes, lets you save up to 25 camera views as hotspots, play them as a camera path and export it as a video in the browser. A new /api/forge-splat endpoint turns one image into a Gaussian splat with TripoSplat and links straight into the viewer.</description>
+		</item>
+		<item>
+			<title>three-ws pay: settle x402 and MPP challenges from the terminal with a key you hold</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-23:three-ws pay: settle x402 and MPP challenges from the terminal with a key you hold</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The CLI can now pay a 402 itself. `three-ws pay &lt;url&gt;` reads an x402 v2, x402 v1 or MPP Solana challenge, prefers Solana, signs with a wallet kept in the OS keychain (or an encrypted file behind a passphrase), retries once and prints the body. `--dry-run` shows the payee, exact amount and network and signs nothing. A permissions file sets allowed origins, networks, assets and payees, per-call and per-day maximums and a confirm-above threshold, and a refused challenge exits with a stable code (10) and a reason string. `three-ws pay mcp` serves the same under the same permissions as a stdio MCP server with pay_quote and pay_fetch.</description>
 		</item>
 		<item>
 			<title>Turn a Solana program's Anchor IDL into an agent skill</title>

@@ -19,9 +19,14 @@ export function rpcUrlFor(network, env) {
  * @returns {Promise<{ headers: Record<string,string>, httpClient: x402HTTPClient }>}
  */
 export async function signX402({ offer, signer, rpcUrl }) {
-	const client = new x402Client();
-	if (offer.version === 1) client.registerV1(offer.raw.network, new ExactSvmSchemeV1(signer, { rpcUrl }));
-	else client.register(offer.network, new ExactSvmScheme(signer, { rpcUrl }));
+	const v1 = offer.version === 1;
+	const network = v1 ? offer.raw.network : offer.network;
+	// The library's own spend controls are a second lock behind the permissions
+	// file: this one asset on this one network, capped at the exact amount decided.
+	const client = x402Client.fromConfig({
+		schemes: [{ network, x402Version: v1 ? 1 : 2, client: v1 ? new ExactSvmSchemeV1(signer, { rpcUrl }) : new ExactSvmScheme(signer, { rpcUrl }) }],
+		spendControls: { maxAmountPerPayment: false, allowedAssets: [{ network, asset: offer.asset, maxAmountPerPayment: offer.amountAtomic.toString() }] },
+	});
 	// Only the chosen option is offered to the client, so it cannot pay any other one.
 	const required = { ...offer.required, accepts: [offer.raw] };
 	let payload;

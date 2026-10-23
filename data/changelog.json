@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "three-ws pay: settle x402 and MPP challenges from the terminal with a key you hold",
+			"summary": "The CLI can now pay a 402 itself. `three-ws pay <url>` reads an x402 v2, x402 v1 or MPP Solana challenge, prefers Solana, signs with a wallet kept in the OS keychain (or an encrypted file behind a passphrase), retries once and prints the body. `--dry-run` shows the payee, exact amount and network and signs nothing. A permissions file sets allowed origins, networks, assets and payees, per-call and per-day maximums and a confirm-above threshold, and a refused challenge exits with a stable code (10) and a reason string. `three-ws pay mcp` serves the same under the same permissions as a stdio MCP server with pay_quote and pay_fetch.",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Free X video downloader, and post impact now sees engagement",
+			"summary": "Paste any public X post link at /x-video to download its video or GIF in every quality, with the post's likes, replies, reposts and views, no account or API key. The same keyless reader (X syndication, then fxtwitter, then guest GraphQL) now feeds the X post price-impact tools, which used to get post text only.",
+			"tags": [
+				"feature"
+			],
+			"link": "/x-video"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "See whether our X posts move $THREE: a Posts view on the coin chart",
 			"summary": "The $THREE chart has a new Posts tab that plots every @trythreews post at the price it went out at, sized by engagement and coloured by the +4h return, each bubble linking to the post. Across 197 posts the median +1h and +4h return after a post was +1.6%, against -0.1% and -0.7% at arbitrary moments; the +24h median was -1.4% against -2.4%. The content pipeline now also records the +24h price return after each post and lets it nudge ranking, lightly, once enough posts carry one.",
 			"tags": [

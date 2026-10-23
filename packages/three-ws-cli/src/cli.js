@@ -21,6 +21,7 @@ ${c.bold('Commands')}
   setup                 Sign in, write the three.ws MCP servers into your clients, verify with tools/list
   login                 Sign in or switch accounts (OAuth by default)
   link <code>           Link this terminal with a code from three.ws/dashboard/account
+  signup --agent        An autonomous agent signs itself up: local Solana key, no email, no browser
   logout                Remove stored credentials and revoke the OAuth refresh token
   doctor                Diagnose a broken setup: bad config, expired sign-in, unreachable server
   status                Account, plan, wallet balance, token expiry, and every configured client
@@ -42,6 +43,9 @@ ${c.bold('Commands')}
   provider show         The active model provider
   usage                 Credits, burn rate, days left and recent top-ups (--agent for one agent's budget)
   ask "<prompt>"        One completion through the active provider
+  pay <url>             Pay an x402 or MPP challenge from a local Solana key, inside pay-permissions.json
+  pay init|permissions|mcp  Write the default limits, show them, or run the stdio MCP payer
+  wallet <sub>          The local pay key: init, address, export-public (never prints the private key)
   version               Print the version
 
 ${c.bold('Sign-in options')} (setup, login)
@@ -94,6 +98,18 @@ ${c.bold('Inference options')} (fund, provider, usage)
   --name <label>        Name for the minted inference key (fund)
   --yes                 Approve the printed transfer without a prompt (fund)
 
+${c.bold('Pay options')} (pay, wallet)
+  --dry-run             Print the decision, exact amount and payee; sign and send nothing
+  --max <amount>        Refuse anything above this many whole units (e.g. 0.05)
+  --network <net>       Only consider mainnet, devnet or a CAIP-2 network id
+  --method <verb>       HTTP method (default GET, POST with --data)
+  --data <text>         Request body, resent after payment
+  -H, --header <h>      Extra request header "Name: value" (repeatable)
+  --yes                 Approve a payment above confirmAbove without a prompt
+  --storage <where>     auto (keychain, else sealed file), keychain or file (wallet init)
+  Exit codes: 10 outside permissions, 11 needs confirmation, 12 no payable option,
+              13 payment rejected, 14 wallet missing or locked. Reason string in --json.
+
 ${c.bold('Global')}
   --json                Machine-readable output on stdout
   --origin <url>        Talk to another three.ws deployment (or THREE_WS_ORIGIN)
@@ -140,6 +156,12 @@ const OPTIONS = {
 	'creator-fee': { type: 'string' },
 	network: { type: 'string' },
 	watch: { type: 'boolean' },
+	'dry-run': { type: 'boolean' },
+	max: { type: 'string' },
+	method: { type: 'string' },
+	data: { type: 'string' },
+	header: { type: 'string', short: 'H', multiple: true },
+	storage: { type: 'string' },
 	claude: { type: 'boolean' },
 	cursor: { type: 'boolean' },
 	codex: { type: 'boolean' },
@@ -152,8 +174,15 @@ const OPTIONS = {
 
 // `--key` alone (no value) means "prompt for it"; parseArgs needs a value for a
 // string option, so a bare --key becomes --key= before parsing.
+// `signup --agent` is a mode switch, but `agent` is a string option elsewhere
+// (`--agent <id>`), so on the signup command a bare --agent becomes --agent=.
 function normalizeArgv(argv) {
-	return argv.map((a, i) => (a === '--key' && (argv[i + 1] === undefined || argv[i + 1].startsWith('-')) ? '--key=' : a));
+	const bare = (i) => argv[i + 1] === undefined || argv[i + 1].startsWith('-');
+	return argv.map((a, i) => {
+		if (a === '--key' && bare(i)) return '--key=';
+		if (a === '--agent' && argv[0] === 'signup' && bare(i)) return '--agent=';
+		return a;
+	});
 }
 
 export function parse(argv) {
@@ -171,6 +200,7 @@ const COMMANDS = {
 	setup: async (ctx) => (await import('./commands/setup.js')).setup(ctx),
 	login: async (ctx) => (await import('./commands/account.js')).login(ctx),
 	link: async (ctx) => (await import('./commands/account.js')).link(ctx),
+	signup: async (ctx) => (await import('./commands/signup.js')).signup(ctx),
 	logout: async (ctx) => (await import('./commands/account.js')).logout(ctx),
 	status: async (ctx) => (await import('./commands/account.js')).status(ctx),
 	whoami: async (ctx) => (await import('./commands/account.js')).whoami(ctx),
@@ -196,6 +226,8 @@ const COMMANDS = {
 		await runProxy({ url, server: ctx.flags.server || null, env: ctx.env });
 		return 0;
 	},
+	pay: async (ctx) => (await import('./commands/pay.js')).payCommand(ctx),
+	wallet: async (ctx) => (await import('./commands/wallet.js')).wallet(ctx),
 	fund: async (ctx) => (await import('./commands/inference.js')).fund(ctx),
 	provider: async (ctx) => (await import('./commands/inference.js')).provider(ctx),
 	usage: async (ctx) => (await import('./commands/inference.js')).usage(ctx),
@@ -243,10 +275,10 @@ export async function main(argv = process.argv.slice(2), env = systemEnv()) {
 			errorLine('Cancelled. Nothing after the last completed step was changed.');
 			return 130;
 		}
-		if (flags.json) printJson({ error: err.code || 'error', message: err.message, status: err instanceof ApiError ? err.status : undefined });
+		if (flags.json) printJson({ error: err.code || 'error', message: err.message, exit: err.exit, detail: err.detail, status: err instanceof ApiError ? err.status : undefined });
 		else errorLine(err.message);
 		if (env.vars.THREE_WS_DEBUG === '1' && err.stack) process.stderr.write(`${err.stack}\n`);
-		return 1;
+		return Number.isInteger(err.exit) ? err.exit : 1;
 	}
 }
 

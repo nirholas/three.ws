@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-23T21:56:11.233Z",
+	"generated_at": "2026-10-23T22:04:19.180Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -42,6 +42,16 @@
 			"title": "README 3D",
 			"summary": "Put an interactive 3D model in any GitHub README. Paste a GLB, glTF, OBJ or STL URL and get a block GitHub renders as a rotatable viewer, sized to fit its markdown limit.",
 			"link": "/readme-3d",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "X Video Downloader",
+			"summary": "Paste an X post link and download its video or GIF in every quality, with the post's likes, replies, reposts and views. Free, no account, no API key.",
+			"link": "/x-video",
 			"tags": [
 				"launch"
 			]
@@ -121,6 +131,26 @@
 		{
 			"date": "2026-10-23",
 			"type": "update",
+			"title": "Free X video downloader, and post impact now sees engagement",
+			"summary": "Paste any public X post link at /x-video to download its video or GIF in every quality, with the post's likes, replies, reposts and views, no account or API key. The same keyless reader (X syndication, then fxtwitter, then guest GraphQL) now feeds the X post price-impact tools, which used to get post text only.",
+			"link": "/x-video",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "KOL tracker shows follower counts without an X API key, and the Oracle reads KOL timelines",
+			"summary": "A keyless X reader now backs the tracker when the paid API is unset or rate limited, so attached KOLs keep their follower counts. The Oracle also reads tracked timelines every 10 minutes to feed its social virality signal, and each coin's own linked X account age and followers now appear in its intel.",
+			"link": "/tracker",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
 			"title": "Leaked-wallet rescue runbook with a dry run, and live Jito tip accounts",
 			"summary": "A new rescue script moves every token and the remaining SOL out of a compromised wallet in one atomic Jito bundle, paid for by a separate safe wallet, and its default dry run simulates the whole bundle and prints the plan without sending anything. The leak alarm now links the runbook. Jito tips also read the block engine's live tip-account list with a pinned fallback, instead of three hardcoded copies.",
 			"link": null,
@@ -192,11 +222,32 @@
 		{
 			"date": "2026-10-23",
 			"type": "update",
+			"title": "See whether our X posts move $THREE: a Posts view on the coin chart",
+			"summary": "The $THREE chart has a new Posts tab that plots every @trythreews post at the price it went out at, sized by engagement and coloured by the +4h return, each bubble linking to the post. Across 197 posts the median +1h and +4h return after a post was +1.6%, against -0.1% and -0.7% at arbitrary moments; the +24h median was -1.4% against -2.4%. The content pipeline now also records the +24h price return after each post and lets it nudge ranking, lightly, once enough posts carry one.",
+			"link": "/oracle/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
 			"title": "Splat Viewer: Spark 2.3 level of detail, saved camera hotspots, video export, and image to splat",
 			"summary": "The Splat Viewer now builds a level-of-detail tree for large scenes, lets you save up to 25 camera views as hotspots, play them as a camera path and export it as a video in the browser. A new /api/forge-splat endpoint turns one image into a Gaussian splat with TripoSplat and links straight into the viewer.",
 			"link": "/splat",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "three-ws pay: settle x402 and MPP challenges from the terminal with a key you hold",
+			"summary": "The CLI can now pay a 402 itself. `three-ws pay <url>` reads an x402 v2, x402 v1 or MPP Solana challenge, prefers Solana, signs with a wallet kept in the OS keychain (or an encrypted file behind a passphrase), retries once and prints the body. `--dry-run` shows the payee, exact amount and network and signs nothing. A permissions file sets allowed origins, networks, assets and payees, per-call and per-day maximums and a confirm-above threshold, and a refused challenge exits with a stable code (10) and a reason string. `three-ws pay mcp` serves the same under the same permissions as a stdio MCP server with pay_quote and pay_fetch.",
+			"link": null,
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{

@@ -52,6 +52,85 @@ npx @three-ws/cli create "Nova" --description "A deep-space guide."   # an agent
 npx @three-ws/cli launch --agent <id> --name Nova --symbol NOVA      # prefilled, you sign on three.ws/launch
 ```
 
+## Pay for x402 and MPP resources from the terminal
+
+`three-ws pay <url>` fetches a URL, reads its HTTP 402 challenge (x402 v2 `PAYMENT-REQUIRED`, x402 v1 body, or an MPP Solana charge), picks a Solana option, signs with a key that never leaves your machine, retries once and prints the body. Every payment is checked against a permissions file you own before anything is signed.
+
+```bash
+three-ws wallet init                      # key goes to the OS keychain, or an encrypted file behind a passphrase
+three-ws wallet address                   # the public address to fund with USDC
+three-ws pay init                         # writes ~/.config/three-ws/pay-permissions.json (safe defaults)
+three-ws pay --dry-run https://three.ws/api/x402/three-intel
+three-ws pay https://three.ws/api/x402/three-intel
+```
+
+The dry run signs nothing and prints the decision:
+
+```text
+Dry run: nothing was signed or sent.
+protocol  x402
+network   solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp
+amount    0.01 (10000 atomic)
+asset     EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+payee     wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU
+decision  allowed by pay-permissions.json
+```
+
+| Flag | Meaning |
+| --- | --- |
+| `--dry-run` | Print protocol, network, exact amount, asset and payee and the permission decision. Signs nothing, spends nothing. |
+| `--max <amount>` | Hard ceiling for this call in whole units (`0.05`), on top of the permissions file. |
+| `--network <id>` | Only consider offers on this network (`solana`, `devnet`, or a CAIP-2 id). |
+| `--method`, `--data`, `-H` | Forward a method, body and headers on both the probe and the paid retry. |
+| `--storage keychain\|file` | With `wallet init`: where the key lives. Default tries the keychain, then falls back to the file. |
+| `--json` | Machine-readable output, including errors (`{ "error": "<reason>", "exit": <code> }`). |
+
+Solana offers are always tried first. EVM offers are skipped.
+
+### Key custody
+
+`wallet init` generates a 32-byte seed and stores it in the OS keychain through `@napi-rs/keyring`. Where no keychain is reachable (headless Linux, containers) it writes `pay-wallet.sealed.json`, encrypted with AES-256-GCM under a scrypt-derived key, mode 0600, after prompting for a passphrase of at least 12 characters (or reading `THREE_WS_WALLET_PASSPHRASE`). The key is never written in plaintext, no command prints it, and `wallet init` never overwrites an existing wallet. `wallet export-public` prints the address only.
+
+### Permissions file
+
+`~/.config/three-ws/pay-permissions.json` (override with `THREE_WS_PAY_PERMISSIONS`). With no file, every payment is refused.
+
+```json
+{
+  "version": 1,
+  "allowedOrigins": ["https://three.ws"],
+  "allowedNetworks": ["solana"],
+  "allowedAssets": ["EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"],
+  "allowedPayees": [],
+  "maxPerCall": "0.10",
+  "maxPerDay": "1.00",
+  "confirmAbove": "0.05"
+}
+```
+
+`maxPerCall` is required. Limits are decimal strings in whole units of the asset, compared exactly. `maxPerDay` counts a UTC-day ledger of settled payments. Above `confirmAbove` the CLI asks on the terminal. `allowedAssets` defaults to mainnet and devnet USDC, and `allowedPayees` is unrestricted when omitted.
+
+### Exit codes
+
+| Code | Reason strings | Meaning |
+| --- | --- | --- |
+| 0 | | Success, or the resource was free |
+| 1 | | Other error |
+| 2 | | Usage error |
+| 10 | `permissions_missing`, `origin_not_allowed`, `network_not_allowed`, `asset_not_allowed`, `payee_not_allowed`, `per_call_limit`, `max_flag_exceeded`, `daily_limit` | Refused by the permissions file |
+| 11 | `confirm_required`, `declined_by_user` | Above `confirmAbove` and not confirmed |
+| 12 | `no_payable_option`, `unsupported_intent`, `challenge_expired` | The server offered nothing payable here |
+| 13 | `payment_rejected` | The server rejected the signed payment |
+| 14 | `wallet_missing`, `wallet_locked` | No usable wallet |
+
+### MCP server
+
+`three-ws pay mcp` is a stdio MCP server with `pay_quote` (read-only) and `pay_fetch`, under the same permissions. It has no confirmation channel, so it refuses any payment above `confirmAbove`.
+
+```json
+{ "mcpServers": { "three-ws-pay": { "command": "npx", "args": ["@three-ws/cli", "pay", "mcp"] } } }
+```
+
 ## Grok Bot
 
 Grok Bot's MCP configuration lives in xAI's cloud, so there is no file to write. `setup` handles the rest: it picks the Grok connector (`https://three.ws/api/mcp-grok`), copies the URL to your clipboard when a clipboard tool exists, prints the exact fields for Grok Bot's custom MCP connector, and runs a real `tools/list` against the public URL to prove it answers from outside.
