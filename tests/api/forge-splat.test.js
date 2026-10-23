@@ -139,7 +139,7 @@ describe('GET /api/forge-splat?job=', () => {
 		expect(body.splat_url).toMatch(/\.splat$/);
 		expect(body.ply_url).toMatch(/\.ply$/);
 		expect(body.num_gaussians).toBe(131072);
-		expect(body.viewer_url).toBe(`/splat?url=${encodeURIComponent(body.splat_url)}`);
+		expect(body.viewer_url).toBe(`/splat?src=${encodeURIComponent(body.splat_url)}`);
 	});
 
 	it('rejects a missing or malformed job id', async () => {

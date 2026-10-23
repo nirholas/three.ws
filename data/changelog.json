@@ -3,10 +3,69 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Chain turnover on /chains",
+			"summary": "The chains leaderboard now has a sortable Turnover column (24h DEX volume divided by TVL) that shows which chains have capital actively trading rather than parked. Chains with no TVL or no reported volume show n/a.",
+			"tags": [
+				"feature"
+			],
+			"link": "/chains"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Onchain viewer reads multi-part memo inscriptions",
 			"summary": "Paste any transaction of a first/1, firsts/1 or SPL404 inscription into /onchain and it collects the other parts, checks each part and the whole SHA-256, names missing parts, and shows the file. Images render from verified bytes; SVG and HTML are shown as text and never executed. The Solana Memo Media MCP gains a read_inscription tool that does the same.",
 			"tags": ["feature"],
 			"link": "/onchain"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Prepaid credit plans and free trials for paid MCP tools",
+			"summary": "Buy a credit bundle or a 24-hour or 30-day time pass at /mcp-plans and call paid MCP tools without paying each call over x402. Every account gets 3 free calls per tool. Credits are debited before a call, refunded when the tool errors, and every result reports creditsUsed and creditsRemaining. A drained plan falls back to the per-call payment-required error.",
+			"tags": ["feature"],
+			"link": "/mcp-plans"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Copy any model as a GitHub README 3D block",
+			"summary": "Forge results, avatar pages, the avatar dashboard and model pages now have a Copy as GitHub README 3D action. It simplifies the model to a size GitHub renders and puts a stl code fence on your clipboard that GitHub shows as an interactive 3D viewer in any README, issue or pull request. The same converter is a free API (POST /api/readme-3d) and has a live page at /readme-3d.",
+			"tags": ["feature"],
+			"link": "/readme-3d"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "AR Studio source now lives in the monorepo",
+			"summary": "The 3d-ar-studio npm package and the /ar/studio page now run the same code: the package source moved into packages/ar-studio and the page imports its scene math, multi-anchor WebXR session, room client and lighting modules directly, so fixes land once instead of in two diverging copies.",
+			"tags": [
+				"sdk",
+				"improvement"
+			],
+			"link": "/ar/studio"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Oracle's smart-wallet prior now reads the live database",
+			"summary": "The cold-start wallet prior behind Oracle's pedigree pillar is loaded from the daily-seeded wallet_reputation table instead of a committed June snapshot, so it tracks the current gmgn.ai rankings. It is cached in-process with a bounded refresh, keeps the last good rows if the database blips, and serves an empty prior (and logs it) rather than inventing wallets.",
+			"link": "/docs/oracle",
+			"tags": ["improvement"]
+		},
+		{
+			"date": "2026-10-23",
+			"title": "One catalog for all 39 HookForge hooks, and a census that recognizes them",
+			"summary": "The Uniswap v4 hooks guide now carries the full HookForge registry (39 hooks, pinned by commit) grouped by family, with the agent-native ones linked to their Solana counterparts, plus a design note reconciling AgentTierHook with reputation-fee. The hook census now decodes each hook's 14 permission bits from its address and calls hookName() to flag HookForge hooks when they show up on chain.",
+			"link": "/docs/uniswap-v4-hooks",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Turn a Solana program's Anchor IDL into an agent skill",
+			"summary": "POST /api/skills/import now accepts idl_url or program_id. Each account type becomes a read tool that decodes it by address, each instruction a preview tool that builds the unsigned instruction with a plain summary, and a destructive send tool that hands it to the wallet confirm flow. A risk panel flags token movement, SOL spend, account closure and authority changes. Nothing the skill generates can sign.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/skills/import"
 		},
 		{
 			"date": "2026-10-23",
@@ -19,9 +78,20 @@
 		},
 		{
 			"date": "2026-10-23",
+			"title": "Splat Viewer: Spark 2.3 level of detail, saved camera hotspots, video export, and image to splat",
+			"summary": "The Splat Viewer now builds a level-of-detail tree for large scenes, lets you save up to 25 camera views as hotspots, play them as a camera path and export it as a video in the browser. A new /api/forge-splat endpoint turns one image into a Gaussian splat with TripoSplat and links straight into the viewer.",
+			"tags": [
+				"feature"
+			],
+			"link": "/splat"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Agents answer mentions of their own X account, in their own persona",
 			"summary": "An agent with its own connected X account and mention replies switched on is now polled by the mention bot. It replies in its own persona, attaches a render of its own avatar to conversational replies, and only acts on the intents its owner allowed, up to a daily cap. Dry run stays the default: nothing posts until the owner turns dry run off and the operator enables live mode. A connection missing the posting scope is reported as missing_scope instead of being polled.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/agents"
 		},
 		{

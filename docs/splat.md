@@ -58,13 +58,20 @@ Supported inputs at a glance:
 - `.splat`: the antimatter15 layout (32 bytes per splat).
 - `.ksplat`: the compressed KSplat format for faster loads.
 
+## Large scenes, hotspots and video
+
+- **Level of detail**: once a scene clears 50,000 splats the viewer builds a Spark 2.3 LoD tree from the decoded buffer in Spark's worker pool, so distant regions render coarser. No network or paging is involved (Spark's `paged` mode streams chunked remote sources and has no path for an in-memory buffer).
+- **Hotspots**: save up to 25 named camera views from the current orbit position, jump to any of them, and see them as markers on the stage.
+- **Camera timeline**: play the saved views in order as a smooth camera path.
+- **Video export**: record the playing path in the browser with `MediaRecorder` and download it. Nothing is uploaded.
+
 ## States and limits
 
 - **Idle**: prompts you to load a splat, drop a file, or try a sample.
 - **Fetching / decoding**: shows the host and the buffer size in MB; large radiance fields take a moment to decode.
 - **Error**: an invalid file reports "that file isn't a valid splat"; a blocked fetch explains the CORS limit and suggests downloading then uploading; the retry loads a sample so the stage is never dead.
 - **CORS**: only hosts that send permissive cross-origin headers load by URL; the viewer auto-rewrites GitHub, Hugging Face, and Dropbox links, but other hosts may require a local upload.
-- **Client-side only**: files you upload are decoded in the browser and never sent to a server. There is no generation here; this is a viewer for captures produced elsewhere.
+- **Client-side only**: files you upload are decoded in the browser and never sent to a server. Generation is a separate step: `POST /api/forge-splat` (TripoSplat) turns one image into a splat and returns a `viewer_url` that opens here via `?src=`.
 - Rendering runs on WebGL; very large scenes are bounded by your device's GPU and memory.
 
 ## Related

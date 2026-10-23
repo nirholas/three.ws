@@ -8,7 +8,7 @@
  *     → { job_id, status, splat_url?, ply_url?, num_gaussians?, viewer_url?, error? }
  *
  * Routes to workers/model-triposplat (GCP Cloud Run) when MODEL_TRIPOSPLAT_URL
- * is set. The result opens in the Splat Viewer (/splat?url=...).
+ * is set. The result opens in the Splat Viewer (/splat?src=...).
  */
 
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
@@ -101,7 +101,7 @@ async function pollJob(req, res, jobId) {
 		splat_url: splatUrl,
 		ply_url: result.plyUrl || null,
 		num_gaussians: result.numGaussians ?? null,
-		viewer_url: splatUrl ? `/splat?url=${encodeURIComponent(splatUrl)}` : null,
+		viewer_url: splatUrl ? `/splat?src=${encodeURIComponent(splatUrl)}` : null,
 		error: result.error || null,
 	});
 }

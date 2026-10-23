@@ -307,6 +307,28 @@ curl -s 'https://three.ws/api/forge-holopart?job=<job_id>'
 `/api/forge-segment` and the `partcrafter` backend both produce); FBX is
 rejected the same way stylize and segment reject it.
 
+### Image to splat (TripoSplat)
+
+`/api/forge-splat` turns one reference image into a 3D Gaussian splat with
+[TripoSplat](https://github.com/VAST-AI-Research/TripoSplat) (MIT code and
+weights), served by `workers/model-triposplat`. The result is a `.splat` plus a
+`.ply`, and opens straight in the Splat Viewer.
+
+```bash
+curl -sX POST https://three.ws/api/forge-splat \
+  -H 'content-type: application/json' \
+  -d '{"image_url":"https://.../house.webp","num_gaussians":131072}'
+# → 202 { "job_id": "...", "status": "queued", "eta_seconds": 45 }
+
+curl -s 'https://three.ws/api/forge-splat?job=<job_id>'
+# → { "status": "done", "splat_url": "https://.../t.splat", "ply_url": "https://.../t.ply",
+#     "num_gaussians": 131072, "viewer_url": "/splat?src=..." }
+```
+
+`num_gaussians` is 8192 to 262144 (default 131072): fewer is lighter to render,
+more is sharper. Returns 503 `unconfigured` until `MODEL_TRIPOSPLAT_URL` and
+`GCP_RECONSTRUCTION_KEY` point at the deployed worker.
+
 **Regenerate part keeps the rig.** Before the regenerated part is swapped
 into the live model, Restyle Studio diffs the whole-model bytes HoloPart
 received against the whole-model bytes it returned with
