@@ -476,6 +476,31 @@ const KNOWN_HTTP_SIGNATURES = [
 		action: `The agent net-worth "look" endpoint exhausted every Solana RPC path for a wallet it has never read successfully, so it answered a designed 503 rpc_unavailable with Retry-After rather than a fake baseline (api/agents/solana-wallet.js handleNetWorth, comment above the catch block). Check healthz rpc_lanes/helius: fires in the same bursts as holders-rpc-exhausted-503 while every paid Solana RPC lane cools down (production-100-OWNER-ACTIONS.md row 24). Investigate only if it persists after rpc_lanes reads ok. ${RUNBOOK} §solana-rpc.`,
 	},
 	{
+		id: 'kol-trades-upstream-502',
+		// api/kol/trades.js answers err.status || 502 with Retry-After: 15 only after
+		// fetchKolTrades() failed AND no last-good copy existed for the mint.
+		test: (g) => g.service === 'three-ws-api' && g.status === 502 && g.path === '/api/kol/trades',
+		class: 'self-healing',
+		action: `The KOL trades route could not reach its Solana data lanes and had no cached last-good for this mint, so it answered a designed retryable 502 with Retry-After. Check healthz rpc_lanes: fires in the same bursts as holders-rpc-exhausted-503. Investigate only if it persists after rpc_lanes reads ok. ${RUNBOOK} §solana-rpc.`,
+	},
+	{
+		id: 'sentiment-pulse-pumpfun-502',
+		// api/social/sentiment-pulse.js: "A pump.fun outage with no caller-supplied
+		// texts answers 502" by design (upstream_unavailable).
+		test: (g) => g.service === 'three-ws-api' && g.status === 502 && g.path === '/api/social/sentiment-pulse',
+		class: 'self-healing',
+		action: `pump.fun was unreachable and the caller supplied no texts, so the sentiment pulse answered its designed 502 upstream_unavailable. Recovers when pump.fun answers. Investigate only if it persists across several sweeps. ${RUNBOOK} §pump-trending-upstreams.`,
+	},
+	{
+		id: 'redis-proxy-upstash-timeout',
+		// 2026-10-23: a 22:33Z burst of 5xx on three-ws-redis-proxy (GenServer.call
+		// time out toward Upstash, SET rpccool:v1) while every RPC lane was cooling;
+		// callers fall back to Postgres/in-memory (healthz cache.metrics.totalSetFailures).
+		test: (g) => g.service === 'three-ws-redis-proxy' && g.status >= 500,
+		class: 'self-healing',
+		action: `The Redis proxy timed out talking to Upstash (GenServer.call time out); the API's cache and rate limiter fall back to Postgres/in-memory and healthz cache stays ok. Investigate only if it persists beyond a burst: npm run logs -- -s three-ws-redis-proxy --errors --app --since 6h. ${RUNBOOK} §redis-proxy.`,
+	},
+	{
 		id: 'ccv-whales-500',
 		test: (g) => g.service === 'cryptocurrency-cv' && g.status >= 500 && g.path === '/api/whales',
 		class: 'owner',

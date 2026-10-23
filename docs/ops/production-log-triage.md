@@ -1469,6 +1469,18 @@ ERROR  502 POST /api/pump/launch-agent
 
 ---
 
+## 🟢 HTTP 502 `/api/kol/trades`: `kol-trades-upstream-502` (§solana-rpc)
+
+`api/kol/trades.js` answers a designed 502 with `Retry-After: 15` when `fetchKolTrades()` fails and no last-good copy exists for the mint. It fires in the same bursts as the holders 503 while every Solana RPC lane cools down (healthz `rpc_lanes`). No action; investigate only if it persists after `rpc_lanes` reads ok.
+
+## 🟢 HTTP 502 `/api/social/sentiment-pulse`: `sentiment-pulse-pumpfun-502` (§pump-trending-upstreams)
+
+By design (`api/social/sentiment-pulse.js`): a pump.fun outage with no caller-supplied texts answers 502 `upstream_unavailable`. Recovers when pump.fun answers.
+
+## 🟢 HTTP 5xx on `three-ws-redis-proxy`: `redis-proxy-upstash-timeout` (§redis-proxy)
+
+2026-10-23 22:33Z burst: the proxy's `GenServer.call` to Upstash timed out (`SET rpccool:v1`). The API's cache and rate limiter fall back to Postgres/in-memory and healthz `cache` stays ok, so nothing user-facing breaks. Investigate only if it outlasts a burst. See also `redis-proxy-srh-crash` and the optional dedicated cache store in the owner checklist.
+
 ## 🟢 HTTP 503 `/api/agents/<id>/solana/networth`: `agent-networth-rpc-unavailable-503` (§solana-rpc)
 
 - **Source:** `handleNetWorth()` in
