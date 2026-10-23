@@ -26,6 +26,7 @@
 import { enforceCap, commit, releaseUnusedCap, rollbackReservation } from './x402-spending-cap.js';
 import { BUILDER_CODE } from './x402-builder-code.js';
 import { env } from './env.js';
+import { readSolanaChargeChallenges, readSolanaChargeReceipt, solanaChargeAuthorization } from './mpp-solana.js';
 
 function selectRequirement(challenge, prefer, preferScheme) {
 	let accepts = Array.isArray(challenge?.accepts) ? challenge.accepts : [];
@@ -88,6 +89,14 @@ function b64decode(s) {
 //   { ok: true,  result, response, payment, settled }
 //   { ok: false, abort: true, reason }      — cap rejected; no network call
 //   { ok: false, status, error }            — server returned non-2xx
+//
+// The same call pays either protocol a 402 can speak. An x402 `accepts` list is
+// preferred; when a server offers only an MPP `WWW-Authenticate: Payment`
+// Solana charge (or `preferProtocol: 'mpp'` is set and one is on offer), the
+// charge is expressed as the equivalent `exact` requirement, so the spending
+// caps, `signPayment` and the guard layers see one shape, and the signed
+// transaction goes back as `Authorization: Payment`. `dryRun: true` stops after
+// the cap check and returns the quote, signing and paying nothing.
 export async function buyerFetch(url, opts = {}) {
 	const {
 		method = 'GET',
@@ -97,6 +106,8 @@ export async function buyerFetch(url, opts = {}) {
 		signPayment,
 		preferNetwork,
 		preferScheme,
+		preferProtocol,
+		dryRun = false,
 		fetchImpl = globalThis.fetch,
 	} = opts;
 
@@ -124,11 +135,22 @@ export async function buyerFetch(url, opts = {}) {
 			const header = probe.headers.get('payment-required');
 			return header ? b64decode(header) : null;
 		})();
-	if (!challenge || !Array.isArray(challenge.accepts)) {
+	const mppOffers = readSolanaChargeChallenges(probe.headers).filter((o) => !o.expired);
+	const hasX402 = Boolean(challenge) && Array.isArray(challenge.accepts);
+	if (!hasX402 && !mppOffers.length) {
 		return { ok: false, status: 402, error: 'invalid_402_body' };
 	}
 
-	const requirement = selectRequirement(challenge, preferNetwork, preferScheme);
+	let protocol = 'x402';
+	let mppOffer = null;
+	let requirement = null;
+	if (hasX402 && preferProtocol !== 'mpp') requirement = selectRequirement(challenge, preferNetwork, preferScheme);
+	if (!requirement && mppOffers.length) {
+		mppOffer = mppOffers.find((o) => o.requirement.network === preferNetwork) || mppOffers[0];
+		requirement = mppOffer.requirement;
+		protocol = 'mpp';
+	}
+	if (!requirement && hasX402) requirement = selectRequirement(challenge, preferNetwork, preferScheme);
 	if (!requirement) {
 		return { ok: false, status: 402, error: 'no_acceptable_requirement' };
 	}
@@ -137,9 +159,23 @@ export async function buyerFetch(url, opts = {}) {
 	if (caps) {
 		const verdict = await enforceCap({ requirement, opts: caps });
 		if (verdict.abort) {
-			return { ok: false, abort: true, reason: verdict.reason };
+			return { ok: false, abort: true, reason: verdict.reason, protocol, ...(dryRun ? { dryRun: true } : {}) };
 		}
 		reservation = verdict.reservation;
+	}
+
+	if (dryRun) {
+		if (reservation) await rollbackReservation(reservation);
+		return {
+			ok: true,
+			dryRun: true,
+			protocol,
+			quote: requirement,
+			offers: {
+				x402: hasX402 ? challenge.accepts : [],
+				mpp: mppOffers.map((o) => o.requirement),
+			},
+		};
 	}
 
 	try {
@@ -150,12 +186,26 @@ export async function buyerFetch(url, opts = {}) {
 			if (reservation) await rollbackReservation(reservation);
 			throw err;
 		}
-		ensureBuilderCodeEcho(challenge, paymentPayload);
-
-		const xPayment = b64encode(paymentPayload);
+		let paidHeaders;
+		if (protocol === 'mpp') {
+			const transaction = paymentPayload?.payload?.transaction;
+			if (typeof transaction !== 'string' || !transaction) {
+				throw new Error('buyerFetch: signPayment must return a Solana exact payload ({ payload: { transaction } }) to pay an MPP charge');
+			}
+			paidHeaders = {
+				Authorization: solanaChargeAuthorization({
+					challenge: mppOffer.challenge,
+					transaction,
+					...(typeof paymentPayload.payer === 'string' ? { source: paymentPayload.payer } : {}),
+				}),
+			};
+		} else {
+			ensureBuilderCodeEcho(challenge, paymentPayload);
+			paidHeaders = { 'X-PAYMENT': b64encode(paymentPayload) };
+		}
 		const paid = await fetchImpl(url, {
 			...init,
-			headers: { ...(init.headers || {}), 'X-PAYMENT': xPayment },
+			headers: { ...(init.headers || {}), ...paidHeaders },
 		});
 		const paidText = await paid.text();
 		const paidJson = safeJson(paidText) ?? paidText;
@@ -169,7 +219,10 @@ export async function buyerFetch(url, opts = {}) {
 				response: paid,
 			};
 		}
-		const settled = b64decode(paid.headers.get('x-payment-response'));
+		const receipt = protocol === 'mpp' ? readSolanaChargeReceipt(paid) : null;
+		const settled = receipt
+			? { success: true, transaction: receipt.reference, network: receipt.network ?? requirement.network, payer: receipt.payer }
+			: b64decode(paid.headers.get('x-payment-response'));
 		if (reservation && requirement.scheme === 'upto' && settled?.amount != null) {
 			reservation = await releaseUnusedCap(reservation, requirement, settled.amount);
 		}
@@ -182,6 +235,7 @@ export async function buyerFetch(url, opts = {}) {
 		}
 		return {
 			ok: true,
+			protocol,
 			result: paidJson,
 			response: paid,
 			payment: paymentPayload,

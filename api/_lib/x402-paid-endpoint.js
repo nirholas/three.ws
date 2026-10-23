@@ -76,6 +76,14 @@ import {
 	writeConflict,
 	writeInflight,
 } from './x402/payment-identifier-server.js';
+import {
+	buildSolanaChargeChallenge,
+	chargeMatchesRequirement,
+	chargeToX402Payment,
+	installMppResponse,
+	parseSolanaChargeCredential,
+	pickSolanaExact,
+} from './mpp-solana.js';
 import { authenticateSiwx, declareSiwxExtensionFor, recordSiwxPayment } from './siwx-server.js';
 import { verifyAuthHintsSiwx } from './x402/auth-hints.js';
 import { declarePrepaidExtension, prepaidRequirement, servePrepaid } from './x402/prepaid-route.js';
@@ -466,6 +474,13 @@ export function paidEndpoint(spec) {
 		// (api/_lib/x402/prepaid-ledger.js); a call that fails is never debited.
 		// A caller without a balance gets the normal 402 and can still pay per call.
 		mode = 'exact',
+		// MPP (Machine Payments Protocol) on Solana, additive to x402: when true
+		// the 402 also carries `WWW-Authenticate: Payment ... method="solana"
+		// intent="charge"`, an `Authorization: Payment` credential is redeemed
+		// through the same verify/settle path as an x402 `exact` payment, and a
+		// settled response gains `Payment-Receipt`. One price, one payee, one
+		// receipt. See api/_lib/mpp-solana.js and docs/mpp.md.
+		mpp = false,
 		// Optional post-settlement hook for per-job metering (Roadmap phase 4:
 		// inference settlement). Called with the settled payment context BEFORE
 		// the response is flushed; the value it returns is JSON-merged into the
@@ -582,7 +597,16 @@ export function paidEndpoint(spec) {
 		// wrong method that carries NO payment or auth credentials can only
 		// ever want the challenge, so serve it; anything carrying credentials
 		// intended to redeem the resource still gets the strict 405.
+		// An MPP credential is a payment, not a bearer token: lift it out of
+		// `authorization` so access control and the authenticated-caller bypass
+		// never mistake it for a login.
+		let mppAuthorization = null;
+		if (mpp && /^payment\s/i.test(req.headers?.authorization || '')) {
+			mppAuthorization = req.headers.authorization;
+			delete req.headers.authorization;
+		}
 		const hasCredentials =
+			!!mppAuthorization ||
 			!!req.headers?.['x-payment'] ||
 			!!req.headers?.['payment-signature'] ||
 			!!req.headers?.['sign-in-with-x'] ||
@@ -637,6 +661,28 @@ export function paidEndpoint(spec) {
 				err.code || 'misconfigured',
 				err.message || 'paid endpoint misconfigured',
 			);
+		}
+
+		if (mpp) {
+			const charge = pickSolanaExact(requirements);
+			if (charge) {
+				const challenge = buildSolanaChargeChallenge({ requirement: charge, description });
+				installMppResponse(res, { challengeHeader: challenge.header });
+				if (mppAuthorization && !req.headers['x-payment'] && !req.headers['payment-signature']) {
+					const parsed = parseSolanaChargeCredential(mppAuthorization);
+					if (!parsed.ok && parsed.code !== 'challenge_expired') {
+						return error(res, 401, parsed.code, parsed.message);
+					}
+					if (parsed.ok) {
+						if (!chargeMatchesRequirement(parsed.request, charge)) {
+							return error(res, 402, 'challenge_mismatch', 'the price or payee changed since this challenge, retry with a fresh one');
+						}
+						req.headers['x-payment'] = Buffer.from(
+							JSON.stringify(chargeToX402Payment({ requirement: charge, transaction: parsed.transaction })),
+						).toString('base64');
+					}
+				}
+			}
 		}
 
 		if (upto && uptoEnabled() && networks.includes('solana')) {

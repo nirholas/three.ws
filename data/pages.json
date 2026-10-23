@@ -4750,6 +4750,18 @@
 					"added": "2026-10-23"
 				},
 				{
+					"path": "/docs/skill-rails",
+					"title": "Docs · One paid skill, four rails",
+					"description": "Price a marketplace skill once and serve it over x402, MPP, A2A and AP2 with the same author and platform split, one agent card and one receipt. Includes the dry-run quote, rail toggles and 404 on a disabled rail.",
+					"added": "2026-10-23"
+				},
+				{
+					"path": "/docs/mpp-solana",
+					"title": "Docs · MPP on Solana",
+					"description": "Serve and pay MPP Payment challenges on Solana beside x402 on the same URL: the challenge and credential wire format, the mpp option on paid endpoints, the agent payer with spending caps and a dry-run quote, and how to verify it.",
+					"added": "2026-10-23"
+				},
+					{
 					"path": "/docs/skill-import",
 					"title": "Docs · Importing skills",
 					"description": "Install SKILL.md skills from any public GitHub repository or registry manifest: pinned to an exact commit, licence-checked, scanned for hostile instructions, approved by the owner, and run under the spend gate when they ask to spend, sign or message. Includes the fork and publish flow, the MCP tools and the REST API.",

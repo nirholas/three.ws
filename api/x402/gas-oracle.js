@@ -239,6 +239,7 @@ export default paidEndpoint({
 	method: 'GET',
 	priceAtomics: priceFor('gas-oracle', '1000'), // $0.001 USDC
 	networks: ['solana', 'base'],
+	mpp: true,
 	description: DESCRIPTION,
 	bazaar: BAZAAR,
 	service: withService({

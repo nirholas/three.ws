@@ -3,10 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
-			"title": "Trade from Telegram and Discord with a typed yes",
-			"summary": "A paired chat now takes /buy, /sell, /snipe, /orders and /cancel. Each replies with a quote (route, price impact, RugCheck, fees) and only the exact word yes typed within 60 seconds executes it; anything else cancels and a late yes sends nothing. Buys can rest a linked take-profit and stop-loss, and /positions sends a P&L share card for recent closes.",
-			"tags": ["feature"],
-			"link": "/docs/chat-gateways"
+			"title": "Pay any paid endpoint over MPP on Solana, and sell a skill on four rails from one price",
+			"summary": "Paid endpoints can now answer with an MPP Payment challenge beside the x402 one at the same price, and the agent payer pays either from one call with its spending caps and a dry-run quote. Marketplace skills are defined once and served over x402, MPP, A2A and AP2 with the same author and platform split and the same receipt.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/docs/mpp-solana"
 		},
 		{
 			"date": "2026-10-23",
