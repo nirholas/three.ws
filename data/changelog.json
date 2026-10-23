@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Bonding-curve status API no longer hard-fails when pump.fun blips",
+			"summary": "GET /api/crypto/bonding was returning a 503 to every caller during a pump.fun outage, even for mints it had already fetched successfully. It now caches each mint's bonding-curve status and keeps a longer last-known-good copy, so a failed upstream fetch serves that cached data (flagged with an x-pump-stale header) instead of a hard error. A 503 with a retry hint is now only returned for a mint that has no cached data at all.",
+			"tags": ["fix"],
+			"link": "/api/crypto/bonding"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Give your agent a spending cap and confirm anything bigger from your own wallet",
 			"summary": "A new Burner cap tab sets how much an agent may spend alone per spend and per day. Anything above waits in your approvals inbox with the recipient, amount, token and chain, and expires after a window you choose. Above a second line you approve by signing with your own wallet. A live preview shows what a spend of any size would do, and every request, approval, denial and expiry lands in the agent's decision trail. Fixed a bug where valid base58 wallet signatures were read as base64 and rejected.",
 			"tags": ["feature", "security"]

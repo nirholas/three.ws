@@ -1,9 +1,22 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// api/_lib/pump-bonding.js now reads/writes through api/_lib/cache.js (live +
+// last-known-good tiers). Fake it with a plain Map so getBondingStatus's cache
+// behavior is tested without Redis: same pattern as
+// tests/api/pump-feed-fetch.test.js, which proved this approach for the
+// sibling pump.fun readers.
+const cache = new Map();
+vi.mock('../api/_lib/cache.js', () => ({
+	cacheGet: async (k) => (cache.has(k) ? cache.get(k) : null),
+	cacheSet: async (k, v) => { cache.set(k, v); },
+}));
+
 import {
 	bondingProgressPct,
 	mapBondingStatus,
 	isPumpLaunch,
 	PUMP_CURVE_INITIAL_REAL_TOKENS,
+	getBondingStatus,
 } from '../api/_lib/pump-bonding.js';
 
 // Synthetic pump.fun coin objects. No real third-party mint — $THREE's CA is the
@@ -140,5 +153,88 @@ describe('mapBondingStatus — graduated branch', () => {
 		expect(s.graduated).toBe(true);
 		expect(s.onCurve).toBe(false);
 		expect(s.migratedTo).toBe('pumpswap');
+	});
+
+});
+// getBondingStatus: live cache / last-known-good fallback. Bug: before this,
+// a failed upstream fetch always returned `{kind:'upstream_down'}`, even when
+// a prior successful fetch for the same mint existed -- the live production
+// outage this suite reproduces.
+function jsonRes(body, status = 200) {
+	return {
+		ok: status >= 200 && status < 300,
+		status,
+		headers: { get: () => null },
+		json: async () => body,
+	};
+}
+
+const bondingCoin = {
+	mint: THREE_MINT,
+	complete: false,
+	real_token_reserves: String(PUMP_CURVE_INITIAL_REAL_TOKENS / 2),
+	real_sol_reserves: String(21 * 1e9),
+	usd_market_cap: 30000,
+};
+
+beforeEach(() => {
+	cache.clear();
+});
+
+afterEach(() => {
+	vi.unstubAllGlobals();
+});
+
+describe('getBondingStatus -- cache + last-known-good fallback', () => {
+	it('reproduces the outage: upstream down, no last-known-good, reports upstream_down', async () => {
+		vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network unreachable')));
+		const out = await getBondingStatus(THREE_MINT);
+		expect(out).toEqual({ kind: 'upstream_down' });
+	});
+
+	it('the bug: upstream down but a last-known-good copy exists, serves it stale instead of failing', async () => {
+		const status = mapBondingStatus(bondingCoin);
+		cache.set(`pump:bonding:lkg:${THREE_MINT}`, { status, coin: bondingCoin });
+		vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network unreachable')));
+
+		const out = await getBondingStatus(THREE_MINT);
+		expect(out.kind).toBe('ok');
+		expect(out.stale).toBe(true);
+		expect(out.status).toEqual(status);
+		expect(out.coin).toEqual(bondingCoin);
+	});
+
+	it('a successful fetch writes through to both the live and last-known-good caches', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(jsonRes(bondingCoin));
+		vi.stubGlobal('fetch', fetchMock);
+
+		const out = await getBondingStatus(THREE_MINT);
+		expect(out.kind).toBe('ok');
+		expect(out.stale).toBe(false);
+		expect(fetchMock).toHaveBeenCalledTimes(1); // coins-v2 hit, coins never tried
+
+		const live = cache.get(`pump:bonding:live:${THREE_MINT}`);
+		const lkg = cache.get(`pump:bonding:lkg:${THREE_MINT}`);
+		expect(live.coin).toEqual(bondingCoin);
+		expect(lkg.coin).toEqual(bondingCoin);
+	});
+
+	it('serves a second request for the same mint from the live cache without a second fetch', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(jsonRes(bondingCoin));
+		vi.stubGlobal('fetch', fetchMock);
+
+		await getBondingStatus(THREE_MINT);
+		const out = await getBondingStatus(THREE_MINT);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(out.kind).toBe('ok');
+		expect(out.stale).toBe(false);
+	});
+
+	it('not_found is never masked by a stale cache', async () => {
+		cache.set(`pump:bonding:lkg:${THREE_MINT}`, { status: mapBondingStatus(bondingCoin), coin: bondingCoin });
+		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonRes(null, 404)));
+
+		const out = await getBondingStatus(THREE_MINT);
+		expect(out).toEqual({ kind: 'not_found' });
 	});
 });

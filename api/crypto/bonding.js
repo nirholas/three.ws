@@ -97,8 +97,14 @@ export default wrap(async (req, res) => {
 			ts,
 			source: s.source,
 		},
-		// Bonding-curve state moves fast; short CDN cache + SWR keeps a polling agent
-		// responsive without hammering the pump.fun feed.
-		{ 'cache-control': 'public, s-maxage=15, stale-while-revalidate=30' },
+		result.stale
+			// Last-known-good: pump.fun's live feed failed but a prior fetch for
+			// this mint exists. Flag it and keep the CDN window short so a real
+			// recovery is picked back up quickly, matching /api/pump/coin's
+			// serveStaleCoin convention.
+			? { 'cache-control': 'public, max-age=10', 'x-pump-stale': '1' }
+			// Bonding-curve state moves fast; short CDN cache + SWR keeps a polling
+			// agent responsive without hammering the pump.fun feed.
+			: { 'cache-control': 'public, s-maxage=15, stale-while-revalidate=30' },
 	);
 });

@@ -17,12 +17,22 @@
 // no chain required.
 
 import { isGraduated } from './pump-launch-feed.js';
+import { pumpFetchJson } from './pump-feed-fetch.js';
+import { cacheGet, cacheSet } from './cache.js';
 
 export const PUMP_FRONTEND_BASE =
 	process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
 
 const FETCH_TIMEOUT_MS = 6_000;
-const UA = 'three.ws-crypto-api/1';
+
+// Live cache: collapses repeat polls of the same mint (a trading agent watching
+// a curve typically re-checks every few seconds) into one upstream fetch.
+const LIVE_TTL_S = Number(process.env.PUMP_BONDING_LIVE_TTL_S || 25);
+// Last-known-good: survives a Cloudflare challenge/rate-limit window so a mint
+// with a prior successful fetch never hard-fails, only goes stale.
+const LKG_TTL_S = Number(process.env.PUMP_BONDING_LKG_TTL_S || 1800);
+const liveKey = (mint) => `pump:bonding:live:${mint}`;
+const bondingLkgKey = (mint) => `pump:bonding:lkg:${mint}`;
 
 // pump.fun mints a fixed 1B supply (6 decimals). Of that, 793.1M tokens sit in
 // the bonding curve at launch; the coin graduates once the curve's float has been
@@ -136,29 +146,21 @@ export function mapBondingStatus(coin, { solPriceUsd = 0 } = {}) {
 	};
 }
 
+// Bounded retry on 429/5xx (honours Retry-After), never throws: the same
+// resilience the sibling pump.fun readers (trending, whales, /api/pump/coin)
+// already rely on, so a Cloudflare rate-limit blip recovers inside one request
+// instead of being treated as a hard outage on the first non-OK response.
 async function fetchOnce(url) {
-	const ctrl = new AbortController();
-	const tid = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
-	try {
-		const r = await fetch(url, {
-			signal: ctrl.signal,
-			headers: { accept: 'application/json', 'user-agent': UA },
-		});
-		// 404 = this mint isn't a pump.fun-indexed coin; a hard distinction from a
-		// transient upstream fault (5xx / network / timeout) so the caller can answer
-		// 400 vs 503 correctly.
-		if (r.status === 404) return { kind: 'not_found' };
-		if (!r.ok) return { kind: 'upstream_down' };
-		const j = await r.json().catch(() => null);
-		// A returned record that isn't a native bonding-curve launch (an externally
-		// indexed token) is "not a pump.fun mint", not a data-source fault.
-		if (j && j.mint && isPumpLaunch(j)) return { kind: 'ok', coin: j };
-		return { kind: 'not_found' };
-	} catch {
-		return { kind: 'upstream_down' };
-	} finally {
-		clearTimeout(tid);
-	}
+	const { ok, status, body } = await pumpFetchJson(url, { timeoutMs: FETCH_TIMEOUT_MS, retries: 1 });
+	// 404 = this mint isn't a pump.fun-indexed coin; a hard distinction from a
+	// transient upstream fault (5xx / network / timeout) so the caller can answer
+	// 400 vs 503 correctly.
+	if (status === 404) return { kind: 'not_found' };
+	if (!ok) return { kind: 'upstream_down' };
+	// A returned record that isn't a native bonding-curve launch (an externally
+	// indexed token) is "not a pump.fun mint", not a data-source fault.
+	if (body && body.mint && isPumpLaunch(body)) return { kind: 'ok', coin: body };
+	return { kind: 'not_found' };
 }
 
 /**
@@ -183,15 +185,36 @@ export async function fetchPumpCoin(mint) {
 }
 
 /**
- * Resolve the full bonding-curve status for a mint: fetch + map.
+ * Resolve the full bonding-curve status for a mint: live cache, then fetch +
+ * map, then a last-known-good fallback on upstream failure. Mirrors
+ * `readThroughFeed` in pump-feed-fetch.js: a live hit answers first; a miss
+ * fetches and writes through both tiers; a failed fetch serves the
+ * last-known-good copy (flagged `stale`) rather than hard-failing, and only
+ * reports `upstream_down` when no cached data exists at all for this mint.
  *
  * @param {string} mint
- * @returns {Promise<{ kind: 'ok', status: object, coin: object } | { kind: 'not_found' } | { kind: 'upstream_down' }>}
+ * @returns {Promise<{ kind: 'ok', status: object, coin: object, stale: boolean } | { kind: 'not_found' } | { kind: 'upstream_down' }>}
  */
 export async function getBondingStatus(mint) {
+	const lk = liveKey(mint);
+	const live = await cacheGet(lk);
+	if (live) return { kind: 'ok', status: live.status, coin: live.coin, stale: false };
+
 	const res = await fetchPumpCoin(mint);
-	if (res.kind !== 'ok') return res;
-	// pump.fun's coin object already carries `usd_market_cap`, so no extra SOL-price
-	// fetch is needed on the hot path; pass 0 and let mapBondingStatus prefer it.
-	return { kind: 'ok', status: mapBondingStatus(res.coin, { solPriceUsd: 0 }), coin: res.coin };
+	if (res.kind === 'ok') {
+		// pump.fun's coin object already carries `usd_market_cap`, so no extra
+		// SOL-price fetch is needed on the hot path; pass 0 and let
+		// mapBondingStatus prefer it.
+		const status = mapBondingStatus(res.coin, { solPriceUsd: 0 });
+		const entry = { status, coin: res.coin };
+		cacheSet(lk, entry, LIVE_TTL_S).catch(() => {});
+		cacheSet(bondingLkgKey(mint), entry, LKG_TTL_S).catch(() => {});
+		return { kind: 'ok', status, coin: res.coin, stale: false };
+	}
+	// Not a pump.fun mint is a real, stable answer; never masked by a stale cache.
+	if (res.kind === 'not_found') return res;
+
+	const lkg = await cacheGet(bondingLkgKey(mint));
+	if (lkg) return { kind: 'ok', status: lkg.status, coin: lkg.coin, stale: true };
+	return { kind: 'upstream_down' };
 }

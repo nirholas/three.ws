@@ -14,8 +14,8 @@ vi.mock('../api/_lib/http.js', () => ({
 		res._json = { status, body: { error: code, error_description: message, ...extra } };
 		return res;
 	},
-	json: (res, status, body) => {
-		res._json = { status, body };
+	json: (res, status, body, headers = {}) => {
+		res._json = { status, body, headers };
 		return res;
 	},
 }));
@@ -130,6 +130,27 @@ describe('GET /api/crypto/bonding', () => {
 			solInCurve: null,
 			tokensRemaining: null,
 		});
+	});
+
+	it('200s a stale last-known-good result with x-pump-stale set instead of 503', async () => {
+		getBondingStatus.mockResolvedValue({
+			kind: 'ok',
+			stale: true,
+			status: {
+				onCurve: true,
+				graduated: false,
+				migratedTo: null,
+				bondingProgressPct: 62.5,
+				solInCurve: 40,
+				tokensRemaining: 297_412_500,
+				marketCapUsd: 48000,
+				source: 'pumpfun',
+			},
+		});
+		const res = await call(`/api/crypto/bonding?mint=${THREE_MINT}`);
+		expect(res._json.status).toBe(200);
+		expect(res._json.headers['x-pump-stale']).toBe('1');
+		expect(res._json.body.onCurve).toBe(true);
 	});
 
 	it('429s when the per-IP limiter denies', async () => {
