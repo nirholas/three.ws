@@ -52,7 +52,7 @@
     "react": "^19.3.0",
     "react-color": "^2.19.3",
     "react-colorful": "^5.8.1",
-    "react-dom": "^19.3.0",
+    "react-dom": "^19.3.1",
     "react-i18next": "^17.0.19",
     "react-select": "^5.10.2",
     "sepia-speechrecognition-polyfill": "^1.0.0",
