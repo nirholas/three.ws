@@ -323,7 +323,7 @@ export function findLockDrift({ lock, root = ROOT } = {}) {
 		} catch {
 			if (info.optional || info.peer) continue;
 		}
-		if (installed === info.version) continue;
+		if (installed === info.version || String(installed).replace(/^v/, '') === info.version) continue;
 		drift.push({
 			path,
 			locked: info.version,
