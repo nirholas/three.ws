@@ -60,11 +60,12 @@ describe('github profile', () => {
 		expect(llms).not.toMatch(/three\.ws ecosystem|## Platform/);
 	});
 
-	it('embeds a themed star-history chart of the featured repos linked to star-history.com', () => {
+	it('puts the star-history Top Committer badge in the header row, linked to star-history.com', () => {
 		const { readme } = buildProfile(repos);
-		expect(readme).toContain('href="https://www.star-history.com/nirholas"');
-		expect(readme).toContain('https://api.star-history.com/svg?repos=nirholas/big-tool,nirholas/agent-mcp');
-		expect(readme).toContain('&theme=dark');
+		const header = readme.split('## About')[0];
+		expect(header).toContain('href="https://www.star-history.com/nirholas"');
+		expect(header).toContain('https://api.star-history.com/badge?user=nirholas&year=2026');
+		expect(readme).not.toContain('api.star-history.com/svg');
 	});
 
 	it('shortens section titles for tight labels', () => {
