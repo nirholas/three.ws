@@ -15,7 +15,7 @@ import { sql } from './db.js';
 import { solanaConnection } from './solana/connection.js';
 import { insertNotification } from './notify.js';
 import { syncLedger } from './revenue-ledger.js';
-import { SOURCE_BY_KEY } from './revenue-ledger-core.js';
+import { SOURCE_BY_KEY, reachedMilestones } from './revenue-ledger-core.js';
 
 const CHAIN_SAMPLE = 120;
 const NOT_FOUND_GRACE_MS = 2 * 3600 * 1000;
@@ -110,6 +110,34 @@ async function chainVerify() {
 }
 
 /**
+ * Announce lifetime-revenue milestones once per agent. Revenue only (trading
+ * PnL is not income), mainnet only, valued entries only. The unique
+ * (scope, milestone) row makes each fire exactly once.
+ */
+export async function announceMilestones() {
+	const totals = await sql`
+		select user_id, agent_id, sum(usd)::float8 as usd from revenue_ledger_entries
+		where kind = 'revenue' and counted and usd is not null and agent_id is not null group by user_id, agent_id`;
+	let announced = 0;
+	for (const t of totals) {
+		for (const m of reachedMilestones(t.usd)) {
+			const [row] = await sql`
+				insert into revenue_milestones (user_id, scope, milestone, usd_at_reach)
+				values (${t.user_id}, ${`agent:${t.agent_id}`}, ${`revenue_usd_${m}`}, ${t.usd})
+				on conflict (scope, milestone) do nothing returning id`;
+			if (!row) continue;
+			announced++;
+			insertNotification(t.user_id, 'revenue_milestone', {
+				title: `Your agent has earned $${m.toLocaleString('en-US')}`,
+				body: 'Lifetime revenue across creator fees, skill sales, hires, royalties and invoices.',
+				link: '/earnings',
+			});
+		}
+	}
+	return announced;
+}
+
+/**
  * One reconcile run. Records it in revenue_reconcile_runs and alerts owners
  * whose entries are flagged, and every owner when a source drifted.
  */
@@ -119,6 +147,7 @@ export async function runReconcile() {
 		const synced = await syncLedger({});
 		const checks = await dbChecks();
 		const chain = await chainVerify().catch((e) => ({ checked: 0, mismatches: 0, not_found: 0, flagged: [], error: e?.message }));
+		const milestones = await announceMilestones().catch(() => 0);
 		const [{ n }] = await sql`select count(*)::int as n from revenue_ledger_entries`;
 		const dbDrift = checks.filter((c) => c.drift).length;
 		const status = dbDrift || chain.mismatches || chain.not_found ? 'drift' : chain.error ? 'error' : 'clean';
@@ -156,7 +185,7 @@ export async function runReconcile() {
 				chain_mismatches = ${chain.mismatches}, chain_not_found = ${chain.not_found}, alerted_users = ${alerted},
 				error = ${chain.error || null}
 			where id = ${run.id}`;
-		return { id: run.id, status, synced, entries_total: n, db_checks: checks, chain: { checked: chain.checked, mismatches: chain.mismatches, not_found: chain.not_found, error: chain.error || null }, alerted };
+		return { id: run.id, status, synced, milestones, entries_total: n, db_checks: checks, chain: { checked: chain.checked, mismatches: chain.mismatches, not_found: chain.not_found, error: chain.error || null }, alerted };
 	} catch (err) {
 		await sql`update revenue_reconcile_runs set finished_at = now(), status = 'error', error = ${String(err?.message || err).slice(0, 500)} where id = ${run.id}`;
 		throw err;

@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Creator payouts · three.ws</title>
+		<meta name="description" content="Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution." />
+		<meta name="robots" content="noindex" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			:root {
+				--bg: #0d0d0d;
+				--bg-2: #141414;
+				--card: #181818;
+				--line: rgba(255,255,255,0.07);
+				--line-2: rgba(255,255,255,0.12);
+				--line-3: rgba(255,255,255,0.3);
+				--text: #e7e9ee;
+				--muted: rgba(231,233,238,0.6);
+				--dim: rgba(231,233,238,0.4);
+				--blue: #3b82f6;
+				--green: #22c55e;
+				--green-ink: #052e16;
+				--red: #ef4444;
+				--amber: #f59e0b;
+				--radius: 12px;
+				--skeleton-base: rgba(255,255,255,0.04);
+				--skeleton-sheen: rgba(255,255,255,0.08);
+				--mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+			}
+			[data-theme="light"] {
+				--bg: #f5f5f5;
+				--bg-2: #ffffff;
+				--card: #ffffff;
+				--line: rgba(0,0,0,0.07);
+				--line-2: rgba(0,0,0,0.12);
+				--line-3: rgba(0,0,0,0.3);
+				--text: #111;
+				--muted: rgba(0,0,0,0.6);
+				--dim: rgba(0,0,0,0.42);
+				--green: #15803d;
+				--green-ink: #ffffff;
+				--red: #dc2626;
+				--amber: #b45309;
+				--skeleton-base: rgba(0,0,0,0.04);
+				--skeleton-sheen: rgba(0,0,0,0.08);
+			}
+			*{box-sizing:border-box;margin:0;padding:0;}
+			html,body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;}
+			a{color:inherit;}
+			.page-shell{max-width:860px;margin:0 auto;padding:0 16px 100px;}
+			.crumbs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);padding-top:28px;}
+			.crumbs a{text-decoration:none;}
+			.crumbs a:hover{color:var(--text);}
+			.crumbs .here{color:var(--text);}
+			.page-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:20px 0 24px;flex-wrap:wrap;}
+			.page-hero h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;}
+			.page-hero p{color:var(--muted);margin-top:8px;font-size:14px;line-height:1.5;max-width:560px;}
+			.page-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+			.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;background:var(--card);color:var(--text);border:1px solid var(--line-2);cursor:pointer;transition:border-color .15s,background .15s,transform .08s,opacity .15s;font-family:inherit;text-decoration:none;min-height:36px;}
+			.btn:hover{border-color:var(--line-3);}
+			.btn:active{transform:translateY(1px);}
+			.btn:disabled{opacity:.45;cursor:default;transform:none;}
+			.btn:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,.li-pair:focus-visible,.li-copy:focus-visible,summary:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+			.btn-primary{background:var(--green);border-color:var(--green);color:var(--green-ink);font-weight:600;}
+			.btn-primary:hover{border-color:var(--green);filter:brightness(1.08);}
+			.btn-danger{color:var(--red);}
+			.btn-danger:hover{border-color:var(--red);background:color-mix(in srgb,var(--red) 8%,transparent);}
+			.btn-sm{padding:6px 10px;font-size:12px;min-height:30px;}
+			.notice{border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.5;margin-bottom:16px;border:1px solid;}
+			.notice strong{font-weight:600;}
+			.notice-error{background:color-mix(in srgb,var(--red) 8%,transparent);border-color:color-mix(in srgb,var(--red) 30%,transparent);color:var(--red);}
+			.notice-ok{background:color-mix(in srgb,var(--green) 8%,transparent);border-color:color-mix(in srgb,var(--green) 30%,transparent);color:var(--green);}
+			.notice-warn{background:color-mix(in srgb,var(--amber) 9%,transparent);border-color:color-mix(in srgb,var(--amber) 32%,transparent);color:var(--amber);}
+			.notice-info{background:var(--bg-2);border-color:var(--line-2);color:var(--muted);}
+			.notice a{color:inherit;}
+			.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+
+			/* Auth / empty / skeleton */
+			.li-auth{text-align:center;padding:110px 20px;}
+			.li-auth h2{font-size:22px;font-weight:700;margin-bottom:12px;}
+			.li-auth p{color:var(--muted);font-size:14px;margin:0 auto 24px;max-width:440px;line-height:1.55;}
+			.li-empty{text-align:center;padding:56px 20px;color:var(--muted);border:1px dashed var(--line-2);border-radius:var(--radius);}
+			.li-empty h3{font-size:17px;font-weight:600;color:var(--text);margin-bottom:8px;}
+			.li-empty p{font-size:14px;line-height:1.55;max-width:440px;margin:0 auto;}
+			.skeleton{background:var(--skeleton-base);background-image:linear-gradient(90deg,var(--skeleton-base) 0%,var(--skeleton-sheen) 50%,var(--skeleton-base) 100%);background-size:200% 100%;border-radius:6px;animation:shimmer 1.4s ease-in-out infinite;}
+			@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+			.cp-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+			.cp-card h2{font-size:16px;font-weight:600;margin-bottom:6px;}
+			.cp-card p,.cp-card small{font-size:13px;color:var(--muted);line-height:1.55;}
+			.cp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0 0;}
+			.cp-stat{background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;}
+			.cp-stat b{display:block;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;}
+			.cp-stat span{font-size:12px;color:var(--muted);}
+			.cp-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;}
+			.cp-row input,.cp-field input,.cp-field select{flex:1;min-width:200px;width:100%;background:var(--bg-2);color:var(--text);border:1px solid var(--line-2);border-radius:8px;padding:9px 12px;font:inherit;font-size:13px;}
+			.cp-row input{width:auto;}
+			.cp-field{margin-top:12px;}
+			.cp-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;}
+			.mono{font-family:var(--mono);font-size:12px;word-break:break-all;}
+			.cp-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+			.cp-table th{text-align:left;font-weight:500;color:var(--muted);font-size:12px;padding:8px;border-bottom:1px solid var(--line-2);}
+			.cp-table td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
+			.cp-scroll{overflow-x:auto;}
+			.pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;border:1px solid var(--line-2);}
+			.pill.sent{color:var(--green);border-color:color-mix(in srgb,var(--green) 40%,transparent);}
+			.pill.held{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 40%,transparent);}
+			.cp-flow{display:grid;gap:8px;margin-top:12px;}
+			.cp-leg{display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:baseline;}
+			.cp-leg b{font-size:18px;font-variant-numeric:tabular-nums;}
+			.cp-leg span{font-size:13px;color:var(--muted);}
+			.cp-sched{list-style:none;margin-top:10px;}
+			.cp-sched li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;}
+			.cp-sched li span:last-child{color:var(--muted);text-align:right;}
+			.cp-empty{padding:18px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--line-2);border-radius:10px;margin-top:10px;}
+			.cp-hold{margin-top:10px;font-size:13px;}
+			.cp-hold li{margin:6px 0 0 18px;line-height:1.5;}
+			@media(max-width:640px){.cp-stats{grid-template-columns:1fr;}.page-hero h1{font-size:24px;}.cp-leg{grid-template-columns:70px 1fr;}}
+			@media(prefers-reduced-motion:reduce){.skeleton{animation:none;}}
+		</style>
+		<link rel="canonical" href="https://three.ws/creator/payouts">
+		<meta property="og:type" content="website">
+		<meta property="og:site_name" content="three.ws">
+		<meta property="og:title" content="Creator payouts · three.ws">
+		<meta property="og:description" content="Register the wallet your agent's creator-fee share is paid to and see every distribution.">
+		<meta property="og:url" content="https://three.ws/creator/payouts">
+		<meta name="twitter:card" content="summary">
+		<meta name="twitter:site" content="@trythreews">
+		<meta name="twitter:title" content="Creator payouts · three.ws">
+		<meta name="twitter:description" content="Register the wallet your agent's creator-fee share is paid to and see every distribution.">
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="page-shell" id="main-content">
+			<nav class="crumbs" aria-label="Breadcrumb">
+				<a href="/dashboard">Dashboard</a>
+				<span aria-hidden="true">/</span>
+				<span class="here">Creator payouts</span>
+			</nav>
+			<div class="page-hero">
+				<div>
+					<h1>Creator payouts</h1>
+					<p>Your agent's coins earn creator fees. Register the wallet that receives your share, then watch each claim become a payout, or see exactly why it is held.</p>
+				</div>
+				<div class="page-actions">
+					<a href="/launch/intents" class="btn">Funded launches</a>
+					<a href="/approvals" class="btn">Approvals</a>
+				</div>
+			</div>
+
+			<div id="cp-auth" class="notice notice-info" hidden>
+				<strong>Sign in to manage payouts.</strong> Payout wallets belong to an agent you own.
+				<a href="/login?next=/creator/payouts" id="cp-login">Sign in</a>
+			</div>
+			<div id="cp-error" class="notice notice-error" role="alert" hidden></div>
+			<div id="cp-live" class="sr-only" aria-live="polite"></div>
+
+			<div id="cp-main" hidden>
+				<div class="cp-card">
+					<div class="cp-field" style="margin-top:0">
+						<label for="cp-agent">Agent</label>
+						<select id="cp-agent"></select>
+					</div>
+				</div>
+				<section id="cp-body" aria-label="Payout details" aria-busy="true">
+					<div class="cp-card"><div class="skeleton" style="height:18px;width:40%"></div><div class="skeleton" style="height:60px;margin-top:14px"></div></div>
+					<div class="cp-card"><div class="skeleton" style="height:18px;width:30%"></div><div class="skeleton" style="height:120px;margin-top:14px"></div></div>
+				</section>
+			</div>
+
+			<section class="cp-card" aria-labelledby="cp-how-h">
+				<h2 id="cp-how-h">How a claim becomes a payout</h2>
+				<div id="cp-flow" class="cp-flow"><div class="skeleton" style="height:48px"></div></div>
+				<ul id="cp-sched" class="cp-sched"></ul>
+				<p style="margin-top:10px">Schedules are read from the live cron definitions. Payouts under the minimum wait and add up across claims.</p>
+			</section>
+		</main>
+		<script src="/footer.js"></script>
+		<script type="module" src="/src/creator-payouts-page.js"></script>
+	</body>
+</html>

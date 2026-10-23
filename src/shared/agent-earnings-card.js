@@ -197,6 +197,17 @@ function subline(zero, coins, service) {
 	return 'Nothing earned yet. Creator fees accrue with every trade of this agent’s coin.';
 }
 
+function payoutLine(p) {
+	if (!p) return '';
+	const w = p.wallet?.wallet;
+	const parts = [];
+	if (Number(p.total_sent_sol) > 0) parts.push(`${fmtSol(p.total_sent_sol)} sent`);
+	if (Number(p.total_pending_sol) > 0) parts.push(`${fmtSol(p.total_pending_sol)} pending`);
+	if (Number(p.total_held_sol) > 0) parts.push(`${fmtSol(p.total_held_sol)} held`);
+	const where = w ? `Paid to ${shortAddr(w)}` : 'No payout wallet registered';
+	return `<p class="ern-sub">${esc(where)}${parts.length ? ` · ${esc(parts.join(' · '))}` : ''}</p>`;
+}
+
 function render(d) {
 	const lifetime = d.lifetime_creator_fees || {};
 	const service = d.service_income || {};
@@ -246,6 +257,7 @@ function render(d) {
 					`<div class="ern-stat"><span class="ern-stat-k">${esc(k)}</span><span class="ern-stat-v">${esc(v)}</span>${s ? `<span class="ern-stat-s">${esc(s)}</span>` : ''}</div>`,
 			)
 			.join('')}</div>
+		${payoutLine(d.payouts)}
 		${coins.length ? `<h4 class="ern-h">Per coin</h4><ul class="ern-list">${coins.map(coinRow).join('')}</ul>` : ''}
 		${claims.length ? `<h4 class="ern-h">Claims</h4><ul class="ern-list">${claims.map(claimRow).join('')}</ul>` : ''}
 		${footer(d)}

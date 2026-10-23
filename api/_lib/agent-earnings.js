@@ -356,8 +356,12 @@ export async function getAgentEarnings(agent, { window: rawWindow = 'all' } = {}
 		},
 		coins: coinRows,
 		claims,
+		// Public read model: the registered wallet and totals only. A staged wallet
+		// change and the cooldown stay on the owner's /creator/payouts page.
 		payouts: payouts && {
 			...payouts,
+			wallet: { ...payouts.wallet, pending: null },
+			recent_distributions: payouts.recent_distributions.map(({ payout_wallet, ...rest }) => rest),
 			total_earned_sol: lifeSol(life.lifetime_lamports),
 			total_claimed_sol: lifeSol(life.claimed_lamports),
 			// Earned and claimed are the lifetime creator-fee figures; sent, pending and

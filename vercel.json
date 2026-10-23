@@ -7646,6 +7646,14 @@
 		{
 			"path": "/api/cron/event-market-announce",
 			"schedule": "*/15 * * * *"
+		},
+		{
+			"path": "/api/cron/revenue-ledger-reconcile",
+			"schedule": "11 * * * *"
+		},
+		{
+			"path": "/api/cron/revenue-reinvest",
+			"schedule": "37 * * * *"
 		}
 	]
 }
