@@ -308,7 +308,7 @@ async function fetchJitoTipFloorLamports() {
 
 // Resolve the tip for this attempt: max(mode floor, live tip-floor) scaled by the
 // mode multiplier and the attempt index, hard-capped by the mode ceiling.
-function resolveTipLamports(tipMode, tipFloorLamports, attempt, maxTipLamports = null) {
+export function resolveTipLamports(tipMode, tipFloorLamports, attempt, maxTipLamports = null) {
 	const profile = TIP_PROFILE[tipMode];
 	if (!profile) return 0n;
 	const base = tipFloorLamports != null && tipFloorLamports > profile.floor ? tipFloorLamports : profile.floor;

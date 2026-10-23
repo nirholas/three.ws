@@ -2405,6 +2405,8 @@ export const limits = {
 	whitelistUser: (userId) => getLimiter('whitelist:user', { limit: 120, window: '5 m' }).limit(userId),
 	whitelistStepUp: (userId) => getLimiter('whitelist:stepup', { limit: 10, window: '10 m' }).limit(userId),
 	whitelistCancelIp: (ip) => getLimiter('whitelist:cancel-ip', { limit: 30, window: '10 m' }).limit(ip),
+	creatorPayoutUser: (userId) => getLimiter('creator-payout:user', { limit: 120, window: '5 m' }).limit(userId),
+	creatorPayoutInfoIp: (ip) => getLimiter('creator-payout:info-ip', { limit: 60, window: '1 m' }).limit(ip),
 	// Agent self-signup (api/v1/agents/signup.js). Creating an account mints
 	// wallets, so both lanes are tight and fail closed when Redis is down: a
 	// per-IP lane against one host spraying keys, and a per-public-key lane

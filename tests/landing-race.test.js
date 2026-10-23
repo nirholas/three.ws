@@ -8,7 +8,7 @@ import { Connection, Keypair, SystemProgram, VersionedTransaction } from '@solan
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
 import bs58 from 'bs58';
-import { submitProtected } from '../api/_lib/execution-engine.js';
+import { resolveTipLamports, submitProtected } from '../api/_lib/execution-engine.js';
 import {
 	LandingStats,
 	createSqlStatsStore,
@@ -223,7 +223,7 @@ describe('submitProtected through the landing race', () => {
 
 	it('reports a single landing from the faster extra provider while the slow primary is outpaced', async () => {
 		const { result, primaryNode, extraNode } = await engineRun({
-			primary: { delayMs: 900, landOnSend: false },
+			primary: { delayMs: 300, landOnSend: false },
 			extra: {},
 		});
 		console.log('ENGINE', JSON.stringify({ route: result.route, landedBy: result.landedBy, lanes: result.lanes }));
@@ -232,5 +232,18 @@ describe('submitProtected through the landing race', () => {
 		expect(extraNode.state.sends).toBe(1);
 		expect(primaryNode.state.sends).toBeLessThanOrEqual(1);
 		expect(result.signature).toMatch(/^[1-9A-HJ-NP-Za-km-z]{80,90}$/);
+	});
+});
+
+describe('per-trade tip ceiling', () => {
+	it('clamps every mode and attempt to the ceiling, and never exceeds the mode ceiling without one', () => {
+		for (const mode of ['economy', 'turbo']) {
+			for (let attempt = 0; attempt < 3; attempt++) {
+				expect(resolveTipLamports(mode, 400_000n, attempt, 50_000n)).toBeLessThanOrEqual(50_000n);
+			}
+		}
+		expect(resolveTipLamports('turbo', 10_000_000n, 2)).toBe(5_000_000n);
+		expect(resolveTipLamports('economy', null, 0, 20_000n)).toBe(15_000n);
+		expect(resolveTipLamports('economy', null, 0, 5_000n)).toBe(5_000n);
 	});
 });
