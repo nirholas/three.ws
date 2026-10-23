@@ -19,8 +19,17 @@
 -- "not classified by the winning implementation" rather than losing the column
 -- outright.
 
-alter table mcp_client_sessions
-	alter column client drop not null;
-
-alter table mcp_client_daily
-	alter column client drop not null;
+-- Databases where the second migration created the tables first never had a
+-- `client` column (they carry client_name/client_version instead), so each
+-- statement only runs when the legacy column exists.
+do $$
+begin
+	if exists (select 1 from information_schema.columns
+		where table_schema = current_schema() and table_name = 'mcp_client_sessions' and column_name = 'client') then
+		alter table mcp_client_sessions alter column client drop not null;
+	end if;
+	if exists (select 1 from information_schema.columns
+		where table_schema = current_schema() and table_name = 'mcp_client_daily' and column_name = 'client') then
+		alter table mcp_client_daily alter column client drop not null;
+	end if;
+end $$;
