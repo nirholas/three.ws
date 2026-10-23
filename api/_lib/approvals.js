@@ -34,6 +34,7 @@ import { env } from './env.js';
 import { logAudit } from './audit.js';
 import { normalizeBurnerPolicy, burnerEnabled, classifyBurnerSpend, ownerSignMessage } from './burner-tier.js';
 import { verifyOwnerSignature } from './owner-sign.js';
+import { recordDecision } from './reasoning-ledger.js';
 
 export const APPROVAL_STATUSES = Object.freeze(['pending', 'approved', 'executing', 'executed', 'failed', 'denied', 'expired']);
 export const DECISIONS = Object.freeze(['approve', 'deny']);
@@ -264,6 +265,36 @@ function explorerUrl(signature, network) {
 export function effectiveStatus(row, now = Date.now()) {
 	if (row.status === 'pending' && new Date(row.expires_at).getTime() <= now) return 'expired';
 	return row.status;
+}
+
+/**
+ * Write one burner-gate event (requested, approved, denied, expired) to the
+ * agent's tamper-evident decision trail. Only requests the burner cap parked are
+ * recorded here; best effort, because the trail must never be the reason an
+ * owner's answer fails. Idempotent per (request, event).
+ */
+async function recordBurnerTrail(row, event, detail = {}) {
+	if (!row?.agent_id || !row?.payload?._burner) return;
+	await recordDecision({
+		agentId: row.agent_id,
+		kind: 'burner_gate',
+		subjectRef: row.id,
+		actionRef: event,
+		inputs: {
+			event,
+			tier: row.payload._burner.tier,
+			recipient: row.recipient ?? null,
+			amount: row.amount != null ? Number(row.amount) : null,
+			asset: row.asset ?? null,
+			chain: row.chain ?? null,
+			network: row.network ?? null,
+			amount_usd: row.amount_usd != null ? Number(row.amount_usd) : null,
+			...detail,
+		},
+		rationale: `Burner cap: ${row.summary || 'a spend'} was ${event}.`,
+		confidence: 1,
+		network: row.network ?? null,
+	}).catch((e) => console.warn('[approvals] decision trail write failed', e?.message));
 }
 
 /** True when the owner must sign this request with a linked wallet. */
@@ -549,6 +580,7 @@ export async function createApprovalRequest({
 	}
 
 	logAudit({ userId, action: 'approval_requested', resourceId: row.id, meta: { source, action_type: actionType, venue, amount_usd: amountUsd, summary: row.summary } });
+	await recordBurnerTrail(row, 'requested', { expires_at: row.expires_at });
 	if (deliver) await deliverApproval(row).catch((e) => console.warn('[approvals] delivery failed', e?.message));
 	return { request: row, created: true, autoApproved: false, policy: null };
 }
@@ -745,6 +777,7 @@ async function deny(row, { userId, via, req }) {
 		RETURNING *
 	`;
 	if (updated) {
+		await recordBurnerTrail(updated, 'denied', { via });
 		logAudit({ userId, action: 'approval_denied', resourceId: row.id, meta: { via, summary: row.summary }, req });
 		return { request: publicApproval({ ...updated, agent_name: row.agent_name }), idempotent: false };
 	}
@@ -797,11 +830,13 @@ async function approve(row, { userId, shownHash, via, walletSignature = null, re
 		if (current.status === 'denied') throw new ApprovalError(409, 'already_denied', 'This request was denied; it can no longer be approved.');
 		if (current.status === 'pending' || current.status === 'expired') {
 			await sql`UPDATE approval_requests SET status = 'expired', updated_at = now() WHERE id = ${row.id} AND status = 'pending'`;
+			await recordBurnerTrail(row, 'expired');
 			throw new ApprovalError(410, 'expired', 'This request expired before it was approved, so nothing was executed. The agent will ask again if the action is still wanted.');
 		}
 		throw new ApprovalError(409, 'not_pending', `This request is ${current.status}.`);
 	}
 
+	await recordBurnerTrail(claimed, 'approved', { via, ...(signedBy ? { signed_by: signedBy } : {}) });
 	logAudit({ userId, action: 'approval_approved', resourceId: row.id, meta: { via, summary: row.summary, payload_hash: shownHash, ...(signedBy ? { signed_by: signedBy } : {}) }, req });
 	const done = await executeApproved({ ...claimed, agent_name: row.agent_name }, { userId, req });
 	return { request: done, idempotent: false };

@@ -34,6 +34,9 @@ vi.mock('../api/_lib/email.js', () => ({ sendApprovalRequestEmail: vi.fn(async (
 const executor = vi.hoisted(() => ({ executeApprovedIntentAction: vi.fn(async () => ({ status: 'ok', signature: 'SIGtest1111', usd: 12 })) }));
 vi.mock('../api/_lib/wallet-intents.js', () => executor);
 
+const trail = vi.hoisted(() => ({ recordDecision: vi.fn(async () => ({ id: 'd', seq: 1, entry_hash: 'h', deduped: false })) }));
+vi.mock('../api/_lib/reasoning-ledger.js', () => trail);
+
 const A = await import('../api/_lib/approvals.js');
 
 const MIGRATION = readFileSync(new URL('../api/_lib/migrations/20261010120000_approval_requests.sql', import.meta.url), 'utf8');
@@ -78,6 +81,7 @@ beforeEach(async () => {
 	await dbState.pg.exec('delete from approval_requests; delete from approval_auto_policies;');
 	await setPolicy({ autoMaxUsd: 25, dailyAutoMaxUsd: 60, confirmAboveUsd: 500, expiryMinutes: 10 });
 	executor.executeApprovedIntentAction.mockClear();
+	trail.recordDecision.mockClear();
 });
 
 describe('burner approval requests', () => {
@@ -183,5 +187,41 @@ describe('owner-sign tier', () => {
 		const { outcome } = await A.runApproved(stored, async () => { throw new Error('executor must not run'); });
 		expect(outcome.integrity).toBe(false);
 		expect(outcome.status).toBe('error');
+	});
+});
+
+describe('decision trail', () => {
+	const events = () => trail.recordDecision.mock.calls.map(([d]) => d.actionRef);
+
+	it('records the request with recipient, amount, token and chain, then the approval and who signed', async () => {
+		const { request: row } = await A.createApprovalRequest(request(900));
+		const first = trail.recordDecision.mock.calls[0][0];
+		expect(first).toMatchObject({ agentId: AGENT, kind: 'burner_gate', subjectRef: row.id, actionRef: 'requested' });
+		expect(first.inputs).toMatchObject({ recipient: THREE_MINT, asset: 'SOL', chain: 'solana', tier: 'owner_sign' });
+		await A.decideApproval({
+			userId: OWNER, id: row.id, decision: 'approve', payloadHash: row.payload_hash,
+			walletSignature: { address: ownerKey.publicKey.toBase58(), signature: sign(ownerKey, A.signMessageFor(row)) },
+		});
+		expect(events()).toEqual(['requested', 'approved']);
+		expect(trail.recordDecision.mock.calls[1][0].inputs.signed_by).toBe(ownerKey.publicKey.toBase58());
+	});
+
+	it('records a denial and an expiry', async () => {
+		const { request: a } = await A.createApprovalRequest(request(100));
+		await A.decideApproval({ userId: OWNER, id: a.id, decision: 'deny' });
+		const { request: b } = await A.createApprovalRequest(request(100));
+		await dbState.pg.query(`update approval_requests set expires_at = now() - interval '1 second' where id = $1`, [b.id]);
+		await expect(A.decideApproval({ userId: OWNER, id: b.id, decision: 'approve', payloadHash: b.payload_hash })).rejects.toMatchObject({ code: 'expired' });
+		expect(events()).toEqual(['requested', 'denied', 'requested', 'expired']);
+	});
+
+	it('records nothing for an agent without a burner cap, and a failing trail never blocks the answer', async () => {
+		await setPolicy({});
+		await A.createApprovalRequest(request(100));
+		expect(trail.recordDecision).not.toHaveBeenCalled();
+		await setPolicy({ autoMaxUsd: 25 });
+		trail.recordDecision.mockRejectedValueOnce(new Error('db down'));
+		const { request: row } = await A.createApprovalRequest(request(100));
+		expect(row.status).toBe('pending');
 	});
 });
