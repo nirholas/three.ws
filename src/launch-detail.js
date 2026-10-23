@@ -506,6 +506,11 @@ const share = (v) => {
 	return fmtPct(v * 100, { dp: v < 0.001 && v > 0 ? 3 : v < 0.1 ? 2 : 1 });
 };
 
+function seedingText(s) {
+	if (!s?.available || s.seeded_share == null) return '-';
+	return `${share(s.seeded_share)}${s.partial ? ' (partial)' : ''}`;
+}
+
 function statCell(label, value, { cls = '', title = null } = {}) {
 	return el('div', { class: 'ld-ts-cell', title }, [
 		el('span', { class: 'ld-ts-k', text: label }),
@@ -586,6 +591,16 @@ function factsGrid(stats) {
 		statCell('Dev holds', h ? share(h.dev_pct) : '-', { title: 'Supply held by the creator wallet.' }),
 		statCell('Early buyers', h?.early_buyers_pct != null ? `${share(h.early_buyers_pct)} · ${compact(h.early_buyers)}` : '-', {
 			title: 'Supply still held by wallets that bought within 5 seconds of launch, and how many there were.',
+		}),
+		statCell('Concentration (Gini)', h?.gini != null ? h.gini.toFixed(2) : '-', {
+			title: `How unevenly the top ${h?.gini_n ?? 50} holders split their combined balance: 0 is perfectly even, 1 is one wallet holding everything.`,
+		}),
+		statCell('Seeded by one funder', seedingText(stats.seeding), {
+			title: 'Share of the first buyers whose wallets were first funded by the same address. High values suggest one actor behind many wallets.',
+		}),
+		statCell('Launch tx', stats.launch_version?.available ? (stats.launch_version.is_v1 ? 'v1 launch' : stats.launch_version.version_label || 'legacy') : '-', {
+			cls: stats.launch_version?.is_v1 ? 'is-good' : '',
+			title: 'Whether the creation transaction used Solana transaction v1, a cheap signal of launch sophistication.',
 		}),
 		statCell('Mint authority', a ? authorityText(a.mint_authority) : '-', { title: 'Whether any account can still mint new supply.' }),
 		statCell('Freeze authority', a ? authorityText(a.freeze_authority) : '-', { title: 'Whether any account can still freeze token accounts.' }),
