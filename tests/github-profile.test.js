@@ -60,6 +60,13 @@ describe('github profile', () => {
 		expect(llms).not.toMatch(/three\.ws ecosystem|## Platform/);
 	});
 
+	it('embeds a themed star-history chart of the featured repos linked to star-history.com', () => {
+		const { readme } = buildProfile(repos);
+		expect(readme).toContain('href="https://www.star-history.com/nirholas"');
+		expect(readme).toContain('https://api.star-history.com/svg?repos=nirholas/big-tool,nirholas/agent-mcp');
+		expect(readme).toContain('&theme=dark');
+	});
+
 	it('shortens section titles for tight labels', () => {
 		expect(shortTitle('Developer tools and everything else')).toBe('Developer tools');
 		expect(shortTitle('MCP servers for AI agents')).toBe('MCP servers');

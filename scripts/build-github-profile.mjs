@@ -118,6 +118,9 @@ export function buildProfile(allRepos, { includeGated = false, activityData = nu
 	if (activity) Object.assign(assets, renderActivityVisuals(activity));
 	const pic = (name, alt) =>
 		`<picture><source media="(prefers-color-scheme: dark)" srcset="./assets/${name}-dark.svg"/><source media="(prefers-color-scheme: light)" srcset="./assets/${name}-light.svg"/><img alt="${alt}" src="./assets/${name}-light.svg" width="100%"/></picture>`;
+	const historyRepos = featured.map((r) => `${OWNER}/${r.name}`).join(',');
+	const historySvg = (dark) => `https://api.star-history.com/svg?repos=${historyRepos}&type=Date${dark ? '&theme=dark' : ''}`;
+	const starHistory = `<a href="https://www.star-history.com/${OWNER}"><picture><source media="(prefers-color-scheme: dark)" srcset="${historySvg(true)}"/><source media="(prefers-color-scheme: light)" srcset="${historySvg(false)}"/><img alt="Star history of the most-starred repositories" src="${historySvg(false)}" width="100%"/></picture></a>`;
 	const anchor = (t) => t.toLowerCase().replace(/[^a-z0-9 -]/g, '').trim().replace(/\s+/g, '-');
 
 	const readme = `<h1 align="center">${OWNER}</h1>
@@ -156,6 +159,8 @@ ${pic('growth', 'Cumulative repositories over time, stacked by section')}
 ${pic('languages', 'A spinning 3D donut of primary languages')}
 
 ${pic('punchcard', 'Punchcard of when repositories were created, by weekday and hour')}
+
+${starHistory}
 ${activity ? activitySection(activity, pic) : ''}
 ## Find your way
 
