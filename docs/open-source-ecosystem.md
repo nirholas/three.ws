@@ -14,7 +14,7 @@ Everything below is Apache-2.0.
 
 - One repository: 9,508 commits, 21 contributors, 60 pull requests, 104 stars, 26 forks.
 - 101 npm packages under the @three-ws scope, 42 of them MCP servers, 6,225 downloads in the last 30 days.
-- 72 MCP servers in the official Model Context Protocol registry under one namespace, io.github.nirholas.
+- Dozens of MCP servers in the official Model Context Protocol registry under one namespace, io.github.nirholas. The live count is whatever the registry returns for that namespace; `node scripts/publish-mcp-servers.mjs --dry-run` reports it against the repo.
 - 4,519 priced x402 endpoints in a live discovery catalog, 110,416 on-chain USDC settlements and 803,483 payment verifications through a facilitator we host ourselves.
 - ERC-8004 identity, reputation, and validation registries at the same address on 12 EVM mainnets. Two Solana programs. Seven Solidity contracts. Four Rust crates.
 - 3,000 validator attestations and 126,522 custody proofs written to Solana.
@@ -98,15 +98,15 @@ Everything on npm is installable today. Grouped by what it does:
 - @three-ws/irl, geofenced real-world presence with proof-of-presence.
 - @three-ws/agenc, a client for the AgenC coordination protocol on Solana.
 
-**42 MCP servers on npm**, each one `npx`-runnable: activity, agenc, alerts, alibaba-cloud, assistant, audio, autopilot, avatar, avatar-agent, billing, brain, clash, concierge, copy, data-workbench, ibm-watsonx, ibm-x402, intel, kol, loom, marketplace, mcp-server, metaplex-agent, naming, notifications, portfolio, provenance, pumpfun, scene, signals, spatial, three-token, tutor, vanity, vision, x402, plus 3d-ar-studio-mcp, hood-mcp, robinhood-chain-mcp, and robinhood-mcp. Section 3 has what each one does.
+**MCP servers on npm**, each one `npx`-runnable: activity, agenc, alerts, alibaba-cloud, assistant, audio, autopilot, avatar, avatar-agent, billing, brain, clash, concierge, copy, ibm-watsonx, ibm-x402, intel, kol, loom, marketplace, mcp-server, metaplex-agent, naming, notifications, portfolio, provenance, pumpfun, scene, signals, spatial, three-token, tutor, vanity, vision, x402, plus 3d-ar-studio-mcp, hood-mcp, robinhood-chain-mcp, and robinhood-mcp. Section 3 has what each one does.
 
 **The Robinhood Chain family, 17 packages**: hoodchain, robinhood-chain, hood-js, hood-cli, hood-api, hood-connect, hood-alerts, hood-launcher, hood-traders, hoodkit, hood402, hood402-facilitator, @three-ws/hood-pay, hood-mcp, robinhood-chain-mcp, robinhood-mcp, and erc8056, the reference implementation of the corporate-actions standard. A complete open SDK stack for a chain that launched this summer.
 
 ---
 
-## 3. MCP: 72 servers in the official registry
+## 3. MCP: our servers in the official registry
 
-The Model Context Protocol registry at registry.modelcontextprotocol.io is where AI clients discover servers. Under one namespace, io.github.nirholas, three.ws publishes 72 of them. Any MCP-capable client can install any of these today.
+The Model Context Protocol registry at registry.modelcontextprotocol.io is where AI clients discover servers. Under one namespace, io.github.nirholas, three.ws publishes dozens of them (count them live: `curl "https://registry.modelcontextprotocol.io/v0/servers?search=io.github.nirholas&version=latest&limit=100"`, following `metadata.next_cursor`). Any MCP-capable client can install any of these today.
 
 **3D and avatars**: three.ws (the hosted server at three.ws/api/mcp behind OAuth 2.1), threews-3d-studio and threews-3d-studio-free (text and image to 3D, rigging, animation, stylize, retexture, segment), threews-avatar (render a live on-chain avatar inline), 3D-AI-Agent-Avatar, 3d-agent-mcp, 3d-ar-studio, scene-mcp (speak a diorama into being), loom-mcp (the community gallery), assistant-widget, concierge-mcp, audio-mcp (TTS, STT, audio-to-face), vision-mcp (free NVIDIA NIM vision models).
 
@@ -114,11 +114,11 @@ The Model Context Protocol registry at registry.modelcontextprotocol.io is where
 
 **Payments**: x402-mcp, x402-bridge, threews-x402-bazaar, agentcore-payments-mcp, ibm-x402-mcp and ibm-x402-mcp-remote (pay-per-use IBM Granite in USDC, no IBM account), three-token-mcp (the first MCP server whose actions can burn a token).
 
-**Markets and data**: threews-pumpfun and pumpfun-solana-mcp (23 free read-only pump.fun tools), pump-fun-sdk, pumpfun-claims-bot, intel-mcp, kol-mcp, signals-mcp, copy-mcp, portfolio-mcp, agent-sniper, data-workbench-mcp, crypto-market-data, free-crypto-news, universal-crypto-mcp, defi-agents, hood-mcp, robinhood-mcp, vanity-mcp.
+**Markets and data**: threews-pumpfun and pumpfun-solana-mcp (23 free read-only pump.fun tools), pump-fun-sdk, pumpfun-claims-bot, intel-mcp, kol-mcp, signals-mcp, copy-mcp, portfolio-mcp, agent-sniper, crypto-market-data, free-crypto-news, universal-crypto-mcp, defi-agents, hood-mcp, robinhood-mcp, vanity-mcp.
 
 **Enterprise clouds**: ibm-watsonx, alibaba-cloud.
 
-**Developer tooling**: github-to-mcp (turn any GitHub repo into an MCP server), abi-to-mcp (turn any contract ABI into one), solidity-compiler, extract-llms-docs, tool-discovery-mcp, crypto-tools-registry, repo-intel, claude-code-explorer-mcp, mcp-notify, xactions.
+**Developer tooling**: github-to-mcp (turn any GitHub repo into an MCP server), abi-to-mcp (turn any contract ABI into one), solidity-compiler, extract-llms-docs, tool-discovery-mcp, crypto-tools-registry, repo-intel, mcp-notify, xactions.
 
 Beyond the official registry: 18 of these are indexed on PulseMCP and 10 on Glama; a LobeHub plugin manifest lives at three.ws/lobehub/plugin.json; the three.ws 3D Studio is a live app in the OpenAI GPT Store; and four Claude Code plugins ship from the repo's own marketplace (`/plugin marketplace add nirholas/three.ws`): three-ws-core (wallet and x402 skills), three-ws-3d (text to 3D and rigged avatars), three-ws-pump-fun (on-chain launch and trade skills), and three-ws-developer (scaffold agents and configure servers).
 

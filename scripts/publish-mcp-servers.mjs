@@ -25,6 +25,8 @@
 //   node scripts/publish-mcp-servers.mjs --only pumpfun-mcp,three-token-mcp
 //   node scripts/publish-mcp-servers.mjs --npm-only  # skip the registry step entirely
 //   node scripts/publish-mcp-servers.mjs --stale     # same check as publish-packages.mjs --stale
+//   node scripts/publish-mcp-servers.mjs --deprecate         # plan the DEPRECATIONS list (dry run)
+//   node scripts/publish-mcp-servers.mjs --deprecate --apply # mark them deprecated in the registry and on npm
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
@@ -142,9 +144,31 @@ const SERVERS = [
 	{ key: 'remote-grok', manifest: 'server-grok.json' },
 ];
 
+// Registry names we no longer stand behind: the source is lost, or the repository
+// they point at is gone. Deprecation keeps the name resolvable (existing installs
+// keep working) while clients and the registry UI warn against new use. Never
+// republish code we cannot see; deprecate it. `npm` is the package to deprecate
+// alongside, when one exists.
+const DEPRECATIONS = [
+	{
+		name: 'io.github.nirholas/claude-code-explorer-mcp',
+		npm: 'claude-code-explorer-mcp',
+		message:
+			'Deprecated: the source repository it points at was taken down. Use the three.ws MCP servers instead: https://three.ws/mcp',
+	},
+	{
+		name: 'io.github.nirholas/data-workbench-mcp',
+		npm: '@three-ws/data-workbench-mcp',
+		message:
+			'Deprecated: the source repository is no longer available and the server is unmaintained. Use the three.ws MCP servers instead: https://three.ws/mcp',
+	},
+];
+
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const npmOnly = args.includes('--npm-only');
+const deprecate = args.includes('--deprecate');
+const apply = args.includes('--apply');
 const onlyArg = args.find((a) => a.startsWith('--only'));
 const only = onlyArg
 	? (onlyArg.includes('=') ? onlyArg.split('=')[1] : args[args.indexOf(onlyArg) + 1] || '')
@@ -247,6 +271,57 @@ async function publishToRegistry(manifest, token) {
 	return JSON.parse(text);
 }
 
+async function registryStatus(name) {
+	const res = await fetch(`${REGISTRY}/v0/servers/${encodeURIComponent(name)}/versions/latest`);
+	if (res.status === 404) return null;
+	if (!res.ok) throw new Error(`MCP registry lookup for ${name} → HTTP ${res.status}`);
+	const body = await res.json();
+	return body?._meta?.['io.modelcontextprotocol.registry/official']?.status ?? 'active';
+}
+
+async function deprecateInRegistry(name, message, token) {
+	const res = await fetch(`${REGISTRY}/v0.1/servers/${encodeURIComponent(name)}/status`, {
+		method: 'PATCH',
+		headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+		body: JSON.stringify({ status: 'deprecated', statusMessage: message }),
+	});
+	const text = await res.text();
+	if (!res.ok) throw new Error(`registry deprecate → HTTP ${res.status}: ${text}`);
+}
+
+async function npmDeprecated(pkg) {
+	const out = execFileSync('npm', ['view', pkg, 'deprecated'], { encoding: 'utf8' }).trim();
+	return out.length > 0;
+}
+
+async function runDeprecations(live) {
+	let token = null;
+	for (const d of DEPRECATIONS) {
+		console.log(`\n── deprecate ${d.name}`);
+		try {
+			const status = await registryStatus(d.name);
+			if (status === null) console.log('   registry: not published, nothing to do');
+			else if (status === 'deprecated') console.log('   registry: already deprecated');
+			else if (!live) console.log(`   registry: would deprecate all versions (${d.message})`);
+			else {
+				token ??= await getRegistryToken();
+				await deprecateInRegistry(d.name, d.message, token);
+				console.log('   registry: deprecated');
+			}
+			if (d.npm) {
+				if (await npmDeprecated(d.npm)) console.log(`   npm: ${d.npm} already deprecated`);
+				else if (!live) console.log(`   npm: would deprecate ${d.npm}`);
+				else {
+					execFileSync('npm', ['deprecate', d.npm, d.message], { stdio: 'inherit' });
+					console.log(`   npm: ${d.npm} deprecated`);
+				}
+			}
+		} catch (err) {
+			fail(`${d.name}: deprecate failed: ${err.message}`);
+		}
+	}
+}
+
 function npmPublish(dir) {
 	execFileSync('npm', ['publish', '--access', 'public'], {
 		cwd: resolve(root, dir),
@@ -271,6 +346,12 @@ if (!process.argv[1] || import.meta.url !== pathToFileURL(process.argv[1]).href)
 // too is just a convenience alias, not a second implementation.
 if (args.includes('--stale')) {
 	process.exit(await runStaleCli(root));
+}
+
+if (deprecate) {
+	await runDeprecations(apply && !dryRun);
+	console.log(apply && !dryRun ? '\nDeprecation run complete.' : '\nDeprecation dry run complete (pass --apply to write).');
+	process.exit(process.exitCode ?? 0);
 }
 
 let registryToken = null;
@@ -324,7 +405,7 @@ for (const server of SERVERS) {
 			}
 		} catch (err) {
 			npmOk = false;
-			fail(`${server.key}: npm publish failed — ${err.message}`);
+			fail(`${server.key}: npm publish failed: ${err.message}`);
 		}
 	}
 	if (!npmOk || npmOnly) continue;
@@ -352,8 +433,10 @@ for (const server of SERVERS) {
 			console.log(`   registry: published (status ${out?.server?.status ?? 'ok'})`);
 		}
 	} catch (err) {
-		fail(`${server.key}: registry step failed — ${err.message}`);
+		fail(`${server.key}: registry step failed: ${err.message}`);
 	}
 }
+
+if (dryRun && !only) await runDeprecations(false);
 
 console.log(dryRun ? '\nDry run complete.' : '\nPublish run complete.');

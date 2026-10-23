@@ -1156,7 +1156,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/solana-memo-media-mcp",
       "npmPackage": "@three-ws/solana-memo-media-mcp",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Extract validated image data URIs from Solana SPL Memos and return them inline to MCP clients.",
       "tagline": "See the images people embed in Solana memos: give it a signature, get the picture back inline, validated.",
       "category": "market-data",

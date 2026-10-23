@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/solana-memo-media-mcp",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"mcpName": "io.github.nirholas/solana-memo-media-mcp",
 	"description": "Extract, validate, and display image data URIs embedded in Solana SPL Memo instructions. Read-only, local decoding, no key required.",
 	"type": "module",

@@ -1332,3 +1332,7 @@ and are logged there.
 Commits: `d7bcabdcc` (package + API routes + migration + rate limit + vercel.json fix +
 tests), `df5e2d380` (CLI), `e55c84a15` (UI tab), `7c28d186c` (docs, STRUCTURE.md, changelog),
 this closing commit (PROGRESS log, order-file removal).
+
+## 2026-10-23: order 530 (registry cleanup), partial, owner-gated
+
+Prepared: `scripts/publish-mcp-servers.mjs --deprecate` (dry run unless `--apply`; `--dry-run` also prints the plan), a DEPRECATIONS list (claude-code-explorer-mcp, data-workbench-mcp), solana-memo-media-mcp bumped to 0.1.1 to match npm (registry still has 0.1.0), ecosystem doc count replaced by its source of truth. Remaining and owned by the owner: run the registry publish and deprecate commands (external writes). Order file left in place.
