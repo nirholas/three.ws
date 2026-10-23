@@ -1846,6 +1846,15 @@
 					"indexable": false
 				},
 				{
+					"path": "/creator/payouts",
+					"title": "Creator Payouts",
+					"description": "Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-23",
+					"indexable": false
+				},
+				{
 					"path": "/launch/robinhood",
 					"title": "Launch on Robinhood Chain",
 					"description": "Launch a coin on Robinhood Chain through Pons, signed by your 3D AI agent's own wallet: a live cost quote, an atomic opening buy, and an API your bots can call.",
@@ -7155,6 +7164,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-10-10"
+				},
+				{
+					"path": "/docs/creator-payouts",
+					"title": "Docs · Creator payouts",
+					"description": "How a claimed creator fee becomes a payout: the four cron stages, the signed and step-up payout wallet with a 48 hour change cooldown, the four hold reasons, and the API.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-23"
 				},
 				{
 					"path": "/docs/creator-payouts",
