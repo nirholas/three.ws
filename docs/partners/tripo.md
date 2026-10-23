@@ -166,6 +166,48 @@ description of what shipped:
 
 ---
 
+## Refresh, 2026-10-23
+
+What was re-checked on this date. Anything not listed here is unchanged from the 2026-10-09
+draft above.
+
+| Item | 2026-10-23 reading | How |
+|---|---|---|
+| Tripo API pricing | Unchanged: text to 3D 10 to 20 credits, image to 3D 20 to 30, auto-rig 25, retarget 10 per animation, 1 credit = USD 0.01 | [developers.tripo3d.ai](https://developers.tripo3d.ai) fetched today |
+| API surface | v3 endpoint (`/v3/generation/text-to-model`), model `v3.1-20260211`. Listed models: H3.1, P2.0 (native quad), AI Texture, Segmentation V2 | Same page. It has no changelog or dated entries, so nothing newer than the model list can be reported |
+| Announcements since 2026-10-09 | None found. A web search surfaced no October 2026 Tripo announcement; the latest items were July 2026 funding coverage and the March 2026 H3.1 and P1.0 launch. Third-party sources disagree on some details, so those press items stay labelled as press | Web search, not an official Tripo source |
+| House key on the service | **Still absent.** `node scripts/read-service-env.mjs '^TRIPO' --names` finds no `TRIPO*` variable on `three-ws-api` | Cloud Run service env |
+| Order 084 | Closed (no `084` file in `prompts/finish`) | `ls prompts/finish` |
+
+### Tripo-family jobs, `forge_creations`, internal jobs excluded
+
+Read with a read-only SELECT against production on 2026-10-23.
+
+Last 30 days, by backend and status:
+
+| Lane | Finished | Failed |
+|---|---|---|
+| TripoSG, self-hosted (open weights) | 134 | 92 |
+| Tripo API, user's own key | 2 | 0 |
+
+Per calendar month, all Tripo-family backends:
+
+| Month | Jobs |
+|---|---|
+| 2026-07 | 32 |
+| 2026-08 | 81 |
+| 2026-09 | 99 |
+| 2026-10 (through the 23rd) | 190 |
+
+July and August match the 2026-10-09 table. September reads 99 here against 101 earlier; the
+cause was not investigated, so treat the earlier figure as the one that went into the draft.
+This query excludes `internal` rows but not the `forge_seed_jobs` catalog seeders, so for the
+wider usage claim use the audited 12,373 September figure in the
+[proof brief](./proof-brief-2026-10.md). The conclusion is unchanged: the open-weight lane
+grows each month and the paid lane is nearly unused (2 jobs).
+
+---
+
 ## Reply draft
 
 Send from the owner's account to the person who reached out, copying
