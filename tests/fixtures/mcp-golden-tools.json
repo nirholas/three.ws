@@ -635,7 +635,7 @@
 			"name": "list_skill_candidates",
 			"title": "List suggested skills",
 			"descHead": "List the skills an agent suggested for itself after a run that verifiabl",
-			"descHash": "e3cc1c056bcf",
+			"descHash": "62aef3b60d5c",
 			"annotations": "ref:READ",
 			"schemaHash": "519bb28e0243"
 		},
@@ -964,7 +964,7 @@
 			"name": "inbox_wait_for_code",
 			"title": "Wait for a verification code",
 			"descHead": "Use this right after you trigger a signup, login or verification that em",
-			"descHash": "704eb02070ca",
+			"descHash": "5e4def5750eb",
 			"annotations": "ref:READ",
 			"schemaHash": "0a8ffc9e17ef"
 		}
@@ -1234,7 +1234,7 @@
 			"name": "robinhood_recent_launches",
 			"title": "Recent Robinhood Chain launches",
 			"descHead": "The newest coins launched on Robinhood Chain launchpads (The Odyssey bon",
-			"descHash": "b35ba3318725",
+			"descHash": "ed809a7445bc",
 			"annotations": "ref:READ",
 			"schemaHash": "0fc66100786c"
 		},
@@ -1242,7 +1242,7 @@
 			"name": "robinhood_token_prices",
 			"title": "Robinhood Chain token prices",
 			"descHead": "Live USD prices for tokens on Robinhood Chain. Pass registry Stock Token",
-			"descHash": "a316b1a9bf72",
+			"descHash": "f432756ba40a",
 			"annotations": "ref:READ",
 			"schemaHash": "51d6cfcc172d"
 		},
@@ -1250,7 +1250,7 @@
 			"name": "robinhood_wallet_holdings",
 			"title": "Robinhood Chain wallet holdings",
 			"descHead": "Everything a wallet holds on Robinhood Chain: native ETH plus every ERC-",
-			"descHash": "51330ef32e14",
+			"descHash": "9407cd6662a8",
 			"annotations": "ref:READ",
 			"schemaHash": "3ef9c673a1c8"
 		}
@@ -3660,6 +3660,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -4686,7 +4687,7 @@
 			"name": "read_inscription",
 			"title": "Read and verify a multi-part Solana memo inscription",
 			"descHead": "Rebuild a file or message that was written across several Solana memo tr",
-			"descHash": "302387ca6bd9",
+			"descHash": "fcd6adce3eb2",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -5001,7 +5002,7 @@
 			"name": "spending_report",
 			"title": "This wallet's x402 spending report (totals by merchant and day)",
 			"descHead": "Report what this wallet has spent through pay_and_call and the named ser",
-			"descHash": "f9fa5f23a93e",
+			"descHash": "35958ebb1681",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,

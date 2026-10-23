@@ -12,7 +12,7 @@ export const def = {
 	title: "This wallet's x402 spending report (totals by merchant and day)",
 	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 	description:
-		'Report what this wallet has spent through pay_and_call and the named service tools, from the local ledger. Returns a grand total, totals per merchant (the endpoint\'s hostname), and totals per UTC day. Read-only, local file only: never touches the network or a key. Optionally filter by `since` (ISO-8601 timestamp) or `merchant`.',
+		'Report what this wallet has spent through pay_and_call and the named service tools, from the local ledger. Returns a grand total, totals per merchant (the endpoint\'s hostname), and totals per UTC day. Read-only, local file only: never touches the network or a key. Optionally filter by `since` (ISO-8601 timestamp) or `merchant`. Use this when you need to know how much this wallet has paid, and to whom, before approving another paid call.',
 	inputSchema: {
 		since: z.string().datetime({ offset: true }).optional().describe('Only include payments at or after this ISO-8601 timestamp.'),
 		merchant: z.string().optional().describe('Only include payments to this merchant hostname (e.g. "three.ws").'),

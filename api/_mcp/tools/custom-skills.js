@@ -280,7 +280,7 @@ export const toolDefs = [
 		annotations: READ,
 		_meta: policy('read'),
 		description:
-			'List the skills an agent suggested for itself after a run that verifiably worked (a multi-tool turn with no tool error, a passed labor-escrow job, or a closed profitable trade). Each candidate carries its goal, the ordered tool steps with argument shapes only (values are never stored), the draft bundle status (draft, invalid, installed, dismissed), validation errors for an invalid draft, and any revision proposals. Read-only: accepting, publishing or dismissing a candidate is the owner\'s click on the agent dashboard or POST /api/agents/:id/skill-candidates/:candidateId, never a tool call.',
+			'List the skills an agent suggested for itself after a run that verifiably worked (a multi-tool turn with no tool error, a passed labor-escrow job, or a closed profitable trade). Each candidate carries its goal, the ordered tool steps with argument shapes only (values are never stored), the draft bundle status (draft, invalid, installed, dismissed), validation errors for an invalid draft, and any revision proposals. Read-only: accepting, publishing or dismissing a candidate is the owner\'s click on the agent dashboard or POST /api/agents/:id/skill-candidates/:candidateId, never a tool call. Use this when you want to see which skills the agent has proposed for itself and what state each draft is in.',
 		inputSchema: {
 			type: 'object',
 			properties: {

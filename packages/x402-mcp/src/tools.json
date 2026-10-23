@@ -7,7 +7,7 @@
 			"path": "/api/x402/weather-guard-forecast",
 			"method": "GET",
 			"priceUsd": 0.001,
-			"description": "Pay $0.001 USDC (or use the free daily per-IP quota) for the next 24 hours of hourly temperature, wind speed, precipitation probability and WMO weather conditions at any latitude/longitude, sourced live from Open-Meteo with a US National Weather Service fallback and active NWS severe-weather alerts for US coordinates.",
+			"description": "Pay $0.001 USDC (or use the free daily per-IP quota) for the next 24 hours of hourly temperature, wind speed, precipitation probability and WMO weather conditions at any latitude/longitude, sourced live from Open-Meteo with a US National Weather Service fallback and active NWS severe-weather alerts for US coordinates. Use this when you need the raw hourly outlook for a location over the next day.",
 			"inputSchema": {
 				"type": "object",
 				"required": ["lat", "lon"],
@@ -23,7 +23,7 @@
 			"path": "/api/x402/weather-guard-decision",
 			"method": "GET",
 			"priceUsd": 0.002,
-			"description": "Pay $0.002 USDC per call to turn the next 6 hours of live forecast at any lat/lon into a go / caution / no-go verdict for a named activity (running, cycling, outdoor-event, drone-flight, photography), with the exact thresholds crossed and any active NWS severe-weather alert that forced a no-go.",
+			"description": "Pay $0.002 USDC per call to turn the next 6 hours of live forecast at any lat/lon into a go / caution / no-go verdict for a named activity (running, cycling, outdoor-event, drone-flight, photography), with the exact thresholds crossed and any active NWS severe-weather alert that forced a no-go. Use this when you need a yes/no/caution decision on doing an outdoor activity at a location, not raw forecast numbers.",
 			"inputSchema": {
 				"type": "object",
 				"required": ["lat", "lon", "activity"],
@@ -44,7 +44,7 @@
 			"path": "/api/x402/carbon-now",
 			"method": "GET",
 			"priceUsd": 0.001,
-			"description": "Pay $0.001 USDC (or use the free daily per-IP quota) for the current UK national grid carbon intensity in gCO2/kWh with its forecast/actual/index reading and full generation mix, live from the National Grid ESO Carbon Intensity API. Pass a GB postcode outcode for the regional reading instead.",
+			"description": "Pay $0.001 USDC (or use the free daily per-IP quota) for the current UK national grid carbon intensity in gCO2/kWh with its forecast/actual/index reading and full generation mix, live from the National Grid ESO Carbon Intensity API. Pass a GB postcode outcode for the regional reading instead. Use this when you need the current carbon intensity of the UK grid before running electricity-heavy work.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -58,7 +58,7 @@
 			"path": "/api/x402/carbon-best-window",
 			"method": "GET",
 			"priceUsd": 0.002,
-			"description": "Pay $0.002 USDC per call to scan the live 48h National Grid ESO carbon-intensity forecast for the lowest-carbon window of a given length (1 to 12 hours), nationally or for one GB postcode region, with the best window, up to 3 runners-up, the worst window, and a plain-language recommendation.",
+			"description": "Pay $0.002 USDC per call to scan the live 48h National Grid ESO carbon-intensity forecast for the lowest-carbon window of a given length (1 to 12 hours), nationally or for one GB postcode region, with the best window, up to 3 runners-up, the worst window, and a plain-language recommendation. Use this to schedule flexible UK electricity use into the lowest-carbon window of the next 48 hours.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -73,7 +73,7 @@
 			"path": "/api/x402/domains-check",
 			"method": "GET",
 			"priceUsd": 0.001,
-			"description": "Pay $0.001 USDC (or use the free daily per-IP quota) to query the authoritative RDAP server for a domain (IANA bootstrap registry, rdap.org fallback) and get its registration status, registrar, creation/update/expiry dates, nameservers, status flags, and DNSSEC signing state.",
+			"description": "Pay $0.001 USDC (or use the free daily per-IP quota) to query the authoritative RDAP server for a domain (IANA bootstrap registry, rdap.org fallback) and get its registration status, registrar, creation/update/expiry dates, nameservers, status flags, and DNSSEC signing state. Use this when you need the registration status, registrar, or expiry of a single domain.",
 			"inputSchema": {
 				"type": "object",
 				"required": ["domain"],
@@ -88,7 +88,7 @@
 			"path": "/api/x402/domains-bulk",
 			"method": "POST",
 			"priceUsd": 0.005,
-			"description": "Pay $0.005 USDC per call to check up to 50 domains in one request against their authoritative RDAP servers, with bounded concurrency. Returns a per-domain registration breakdown plus registered/available/unknown counts.",
+			"description": "Pay $0.005 USDC per call to check up to 50 domains in one request against their authoritative RDAP servers, with bounded concurrency. Returns a per-domain registration breakdown plus registered/available/unknown counts. Use this when you need to check availability or registration of many domains at once instead of calling domain_rdap_check repeatedly.",
 			"inputSchema": {
 				"type": "object",
 				"required": ["domains"],
@@ -109,7 +109,7 @@
 			"path": "/api/x402/research-search",
 			"method": "GET",
 			"priceUsd": 0.002,
-			"description": "Pay $0.002 USDC (or use the free daily per-IP quota) to query arXiv, Crossref, and Semantic Scholar in parallel and get a merged, de-duplicated ranking of papers with authors, year, venue, DOI, arXiv id, abstract, and citation count.",
+			"description": "Pay $0.002 USDC (or use the free daily per-IP quota) to query arXiv, Crossref, and Semantic Scholar in parallel and get a merged, de-duplicated ranking of papers with authors, year, venue, DOI, arXiv id, abstract, and citation count. Use this to find academic papers on a topic across several scholarly indexes in one call.",
 			"inputSchema": {
 				"type": "object",
 				"required": ["q"],
@@ -125,7 +125,7 @@
 			"path": "/api/x402/research-paper",
 			"method": "GET",
 			"priceUsd": 0.003,
-			"description": "Pay $0.003 USDC per call for a single paper's full metadata (title, abstract, TL;DR, year, venue, authors, fields of study, open-access PDF link) plus a two-sided citation graph, keyed by DOI, arXiv id, or Semantic Scholar id.",
+			"description": "Pay $0.003 USDC per call for a single paper's full metadata (title, abstract, TL;DR, year, venue, authors, fields of study, open-access PDF link) plus a two-sided citation graph, keyed by DOI, arXiv id, or Semantic Scholar id. Use this when you already have a paper identifier and need its full metadata and citation graph.",
 			"inputSchema": {
 				"type": "object",
 				"required": ["id"],
@@ -140,7 +140,7 @@
 			"path": "/api/x402/research-bibliography",
 			"method": "POST",
 			"priceUsd": 0.005,
-			"description": "Pay $0.005 USDC per call to get formatted BibTeX and/or APA 7 citation entries for up to 25 DOIs in one request, sourced live from Crossref.",
+			"description": "Pay $0.005 USDC per call to get formatted BibTeX and/or APA 7 citation entries for up to 25 DOIs in one request, sourced live from Crossref. Use this when you need ready-to-paste BibTeX or APA citations for a list of DOIs.",
 			"inputSchema": {
 				"type": "object",
 				"required": ["dois"],
@@ -156,7 +156,7 @@
 			"path": "/api/x402/books-search",
 			"method": "GET",
 			"priceUsd": 0.001,
-			"description": "Pay $0.001 USDC (or use the free daily per-IP quota) to search OpenLibrary editions by title (and optionally author) and get each edition annotated with whether a cleaned Project Gutenberg full text can be bought with book_read, resolved live via Gutendex with a gutenberg.org fallback.",
+			"description": "Pay $0.001 USDC (or use the free daily per-IP quota) to search OpenLibrary editions by title (and optionally author) and get each edition annotated with whether a cleaned Project Gutenberg full text can be bought with book_read, resolved live via Gutendex with a gutenberg.org fallback. Use this to find a public-domain book and its gutenbergId before reading it with book_read.",
 			"inputSchema": {
 				"type": "object",
 				"required": ["q"],
@@ -173,7 +173,7 @@
 			"path": "/api/x402/books-read",
 			"method": "GET",
 			"priceUsd": 0.01,
-			"description": "Pay $0.01 USDC per call to receive the complete text of a public-domain Project Gutenberg book, licence boilerplate stripped and split into chapters, as markdown JSON. Find a gutenbergId with book_search first.",
+			"description": "Pay $0.01 USDC per call to receive the complete text of a public-domain Project Gutenberg book, licence boilerplate stripped and split into chapters, as markdown JSON. Find a gutenbergId with book_search first. Use this when you need the full text of a public-domain book and already have its gutenbergId.",
 			"inputSchema": {
 				"type": "object",
 				"required": ["gutenbergId"],
@@ -188,7 +188,7 @@
 			"path": "/api/x402/news-wire-query",
 			"method": "GET",
 			"priceUsd": 0.003,
-			"description": "Pay $0.003 USDC (or use the free daily per-IP quota) to search the GDELT Project's real-time index of worldwide news media in 65+ languages. Returns matching articles plus a coverage-volume timeline. For an ongoing poll loop, switch to news_wire_poll after the first search.",
+			"description": "Pay $0.003 USDC (or use the free daily per-IP quota) to search the GDELT Project's real-time index of worldwide news media in 65+ languages. Returns matching articles plus a coverage-volume timeline. For an ongoing poll loop, switch to news_wire_poll after the first search. Use this to search worldwide news coverage of a topic for the first time, before monitoring it with news_wire_poll.",
 			"inputSchema": {
 				"type": "object",
 				"required": ["q"],
@@ -208,7 +208,7 @@
 			"path": "/api/x402/news-wire-pulse",
 			"method": "GET",
 			"priceUsd": 0.002,
-			"description": "Pay $0.002 USDC per call to get only the GDELT articles that have appeared for your query since a cursor you supply, plus a fresh cursor for the next poll. Start with news_wire_search to get a query working, then switch here for ongoing monitoring without re-fetching the same articles.",
+			"description": "Pay $0.002 USDC per call to get only the GDELT articles that have appeared for your query since a cursor you supply, plus a fresh cursor for the next poll. Start with news_wire_search to get a query working, then switch here for ongoing monitoring without re-fetching the same articles. Use this for ongoing monitoring of a query once news_wire_search has returned a cursor.",
 			"inputSchema": {
 				"type": "object",
 				"required": ["q", "cursor"],
@@ -225,7 +225,7 @@
 			"path": "/api/x402/transit-plan",
 			"method": "GET",
 			"priceUsd": 0.002,
-			"description": "Pay $0.002 USDC (or use the free daily per-IP quota) to plan a trip between two MBTA stops from the public GTFS feed. Each place accepts a feed stop id, a station name, or a \"lat,lon\" pair. Returns direct and one-transfer itineraries, with realtime predictions overlaid where the GTFS-Realtime feed has them.",
+			"description": "Pay $0.002 USDC (or use the free daily per-IP quota) to plan a trip between two MBTA stops from the public GTFS feed. Each place accepts a feed stop id, a station name, or a \"lat,lon\" pair. Returns direct and one-transfer itineraries, with realtime predictions overlaid where the GTFS-Realtime feed has them. Use this when you need to plan an MBTA trip between two places or to find a stop id.",
 			"inputSchema": {
 				"type": "object",
 				"required": ["from", "to"],
@@ -243,7 +243,7 @@
 			"path": "/api/x402/transit-delays",
 			"method": "GET",
 			"priceUsd": 0.001,
-			"description": "Pay $0.001 USDC per call to see how the MBTA's realtime feed compares to the scheduled timetable right now at a stop, optionally filtered to one route. Returns a per-arrival breakdown plus a running-well / minor-delays / significant-delays verdict. Find a stop id with transit_plan first.",
+			"description": "Pay $0.001 USDC per call to see how the MBTA's realtime feed compares to the scheduled timetable right now at a stop, optionally filtered to one route. Returns a per-arrival breakdown plus a running-well / minor-delays / significant-delays verdict. Find a stop id with transit_plan first. Use this when you need to know whether MBTA service at a stop is running on time right now.",
 			"inputSchema": {
 				"type": "object",
 				"required": ["stop"],
@@ -260,7 +260,7 @@
 			"path": "/api/x402/places-search",
 			"method": "GET",
 			"priceUsd": 0.002,
-			"description": "Pay $0.002 USDC (or use the free daily per-IP quota) to search OpenStreetMap via the Overpass API for points of interest within a radius of a coordinate, optionally filtered to a category (cafe, restaurant, pharmacy, museum, etc). Returns each place's name, category, coordinates, opening hours, phone, website, address, and cuisine where tagged.",
+			"description": "Pay $0.002 USDC (or use the free daily per-IP quota) to search OpenStreetMap via the Overpass API for points of interest within a radius of a coordinate, optionally filtered to a category (cafe, restaurant, pharmacy, museum, etc). Returns each place's name, category, coordinates, opening hours, phone, website, address, and cuisine where tagged. Use this to find nearby points of interest by category around a coordinate.",
 			"inputSchema": {
 				"type": "object",
 				"required": ["lat", "lon"],
@@ -279,7 +279,7 @@
 			"path": "/api/x402/places-detail",
 			"method": "GET",
 			"priceUsd": 0.002,
-			"description": "Pay $0.002 USDC per call to fetch the full live OpenStreetMap record for one place, by the id returned from places_search (e.g. \"node-1072800838\"). Returns every OSM tag alongside the structured fields.",
+			"description": "Pay $0.002 USDC per call to fetch the full live OpenStreetMap record for one place, by the id returned from places_search (e.g. \"node-1072800838\"). Returns every OSM tag alongside the structured fields. Use this when you need every tag and detail of one place already returned by places_search.",
 			"inputSchema": {
 				"type": "object",
 				"required": ["id"],

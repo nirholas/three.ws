@@ -32,7 +32,7 @@ const DEFS = [
 			'Returns status (pending, done or failed), phase, progress from 0 to 1, eta_seconds and elapsed_seconds ' +
 			'while it runs; when done, the model with its viewer_url, glb_url, poster_png_url and embed_html; when ' +
 			'failed, the reason and what to do next. Call it as often as you like: it never starts or repeats a ' +
-			'generation. Between calls, wait about the eta_seconds it reports, or 15 seconds when it reports none.',
+			'generation. Between calls, wait about the eta_seconds it reports, or 15 seconds when it reports none. Use this when a generation tool returned status "pending" and you need its current status or the finished model.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,

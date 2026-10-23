@@ -197,7 +197,7 @@ export const toolDefs = [
 		group: 'robinhood',
 		annotations: READ,
 		description:
-			'Live USD prices for tokens on Robinhood Chain. Pass registry Stock Token tickers in symbols (priced from the Chainlink NAV feed, uiMultiplier-correct) and/or any token contract addresses (priced from the deepest DEX pool). Each price reports its source, 24h change and pool liquidity; a token with no feed and no pool comes back with a null price, never a guess.',
+			'Live USD prices for tokens on Robinhood Chain. Pass registry Stock Token tickers in symbols (priced from the Chainlink NAV feed, uiMultiplier-correct) and/or any token contract addresses (priced from the deepest DEX pool). Each price reports its source, 24h change and pool liquidity; a token with no feed and no pool comes back with a null price, never a guess. Use this when you need current USD prices for Stock Tokens or other tokens on Robinhood Chain.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -220,7 +220,7 @@ export const toolDefs = [
 		group: 'robinhood',
 		annotations: READ,
 		description:
-			'The newest coins launched on Robinhood Chain launchpads (The Odyssey bonding curves), newest first, read from the factory contracts via the indexer. Each row has the token, launchpad, block and transaction. For every venue with deployer and dev-sold flags use /api/v1/robinhood/launches.',
+			'The newest coins launched on Robinhood Chain launchpads (The Odyssey bonding curves), newest first, read from the factory contracts via the indexer. Each row has the token, launchpad, block and transaction. For every venue with deployer and dev-sold flags use /api/v1/robinhood/launches. Use this to see which coins just launched on Robinhood Chain launchpads.',
 		inputSchema: {
 			type: 'object',
 			properties: { limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 } },
@@ -239,7 +239,7 @@ export const toolDefs = [
 		group: 'robinhood',
 		annotations: READ,
 		description:
-			'Everything a wallet holds on Robinhood Chain: native ETH plus every ERC-20, priced from the Chainlink NAV (Stock Tokens, multiplier-correct per ERC-8056) or the deepest DEX pool. Unpriced tokens are listed with a null value and counted in unpricedCount, never valued at zero. Read-only: any public address can be inspected, no signature needed.',
+			'Everything a wallet holds on Robinhood Chain: native ETH plus every ERC-20, priced from the Chainlink NAV (Stock Tokens, multiplier-correct per ERC-8056) or the deepest DEX pool. Unpriced tokens are listed with a null value and counted in unpricedCount, never valued at zero. Read-only: any public address can be inspected, no signature needed. Use this when you need a priced balance sheet of everything an address holds on Robinhood Chain.',
 		inputSchema: { type: 'object', properties: { address: ADDRESS }, required: ['address'], additionalProperties: false },
 		async handler(args, _auth, req) {
 			if (!normalizeAddress(args.address)) return bad('invalid_address', 'address must be a 20-byte 0x-prefixed Robinhood Chain address.');

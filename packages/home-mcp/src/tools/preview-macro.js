@@ -10,7 +10,7 @@ import { def as runMacro } from './run-macro.js';
 export const def = {
 	name: 'preview_macro',
 	title: 'Preview which scene a phrase would run (nothing runs)',
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
 		'Resolve a phrase like "good night" to the scene or script this house would run, with the match confidence ' +
 		'and a reason, and run NOTHING. A phrase with no match returns match:null. Show the match to the person and, ' +

@@ -1223,7 +1223,7 @@
 			"category": "utility",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you want to see which skills the agent has proposed for itself and what state each draft is in.",
 			"page": "https://three.ws/mcp-tools/mcp/list_skill_candidates"
 		},
 		{
@@ -2093,7 +2093,7 @@
 			"category": "mail",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Call this after a signup or login step that should email a code, instead of polling the inbox yourself.",
 			"page": "https://three.ws/mcp-tools/mcp/inbox_wait_for_code"
 		},
 		{
@@ -2223,7 +2223,7 @@
 			"category": "utility",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need current USD prices for Stock Tokens or other tokens on Robinhood Chain.",
 			"page": "https://three.ws/mcp-tools/mcp/robinhood_token_prices"
 		},
 		{
@@ -2233,7 +2233,7 @@
 			"category": "utility",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this to see which coins just launched on Robinhood Chain launchpads.",
 			"page": "https://three.ws/mcp-tools/mcp/robinhood_recent_launches"
 		},
 		{
@@ -2243,7 +2243,7 @@
 			"category": "utility",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need a priced balance sheet of everything an address holds on Robinhood Chain.",
 			"page": "https://three.ws/mcp-tools/mcp/robinhood_wallet_holdings"
 		},
 		{
@@ -3363,7 +3363,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need the raw hourly outlook for a location over the next day.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/weather_forecast"
 		},
 		{
@@ -3383,7 +3383,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need a yes/no/caution decision on doing an outdoor activity at a location, not raw forecast numbers.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/weather_go_no_go"
 		},
 		{
@@ -3403,7 +3403,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need the current carbon intensity of the UK grid before running electricity-heavy work.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/carbon_now"
 		},
 		{
@@ -3423,7 +3423,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this to schedule flexible UK electricity use into the lowest-carbon window of the next 48 hours.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/carbon_best_window"
 		},
 		{
@@ -3443,7 +3443,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need the registration status, registrar, or expiry of a single domain.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/domain_rdap_check"
 		},
 		{
@@ -3463,7 +3463,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need to check availability or registration of many domains at once instead of calling domain_rdap_check repeatedly.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/domain_rdap_check_bulk"
 		},
 		{
@@ -3483,7 +3483,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this to find academic papers on a topic across several scholarly indexes in one call.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/research_search"
 		},
 		{
@@ -3503,7 +3503,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you already have a paper identifier and need its full metadata and citation graph.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/research_paper"
 		},
 		{
@@ -3523,7 +3523,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need ready-to-paste BibTeX or APA citations for a list of DOIs.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/research_bibliography"
 		},
 		{
@@ -3543,7 +3543,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this to find a public-domain book and its gutenbergId before reading it with book_read.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/book_search"
 		},
 		{
@@ -3563,7 +3563,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need the full text of a public-domain book and already have its gutenbergId.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/book_read"
 		},
 		{
@@ -3583,7 +3583,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this to search worldwide news coverage of a topic for the first time, before monitoring it with news_wire_poll.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/news_wire_search"
 		},
 		{
@@ -3603,7 +3603,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this for ongoing monitoring of a query once news_wire_search has returned a cursor.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/news_wire_poll"
 		},
 		{
@@ -3623,7 +3623,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need to plan an MBTA trip between two places or to find a stop id.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/transit_plan"
 		},
 		{
@@ -3643,7 +3643,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need to know whether MBTA service at a stop is running on time right now.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/transit_delays"
 		},
 		{
@@ -3663,7 +3663,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this to find nearby points of interest by category around a coordinate.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/places_search"
 		},
 		{
@@ -3683,7 +3683,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need every tag and detail of one place already returned by places_search.",
 			"page": "https://three.ws/mcp-tools/mcp-agent/places_detail"
 		},
 		{
@@ -4213,7 +4213,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when the user wants a new 3D object, character or creature from a text description.",
 			"page": "https://three.ws/mcp-tools/mcp-studio/forge_free"
 		},
 		{
@@ -4223,7 +4223,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when the user wants a character or figure generated from a text description or a reference image.",
 			"page": "https://three.ws/mcp-tools/mcp-studio/text_to_avatar"
 		},
 		{
@@ -4233,7 +4233,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you want a higher quality mesh from a rough prompt or reference image, with the prompt refined for you first.",
 			"page": "https://three.ws/mcp-tools/mcp-studio/mesh_forge"
 		},
 		{
@@ -4243,7 +4243,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you already have a GLB and want it rigged so it can be posed and animated.",
 			"page": "https://three.ws/mcp-tools/mcp-studio/rig_mesh"
 		},
 		{
@@ -4253,7 +4253,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when the user wants a posable, animation-ready character in one step instead of generating then rigging.",
 			"page": "https://three.ws/mcp-tools/mcp-studio/forge_avatar"
 		},
 		{
@@ -4263,7 +4263,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when the user wants to change a model you already generated instead of starting over.",
 			"page": "https://three.ws/mcp-tools/mcp-studio/refine_model"
 		},
 		{
@@ -4273,7 +4273,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when a generation tool returned status \"pending\" and you need to collect the finished model.",
 			"page": "https://three.ws/mcp-tools/mcp-studio/check_job"
 		},
 		{
@@ -4283,7 +4283,7 @@
 			"category": "assets",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this to visually inspect a GLB for defects before you hand it to the user.",
 			"page": "https://three.ws/mcp-tools/mcp-studio/look_at_model"
 		},
 		{
@@ -4293,7 +4293,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when a generation tool returned status \"pending\" and you need its current status or the finished model.",
 			"page": "https://three.ws/mcp-tools/mcp-studio/get_job"
 		},
 		{
@@ -4363,7 +4363,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when the user wants a new 3D object, character or creature from a text description.",
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/forge_free"
 		},
 		{
@@ -4373,7 +4373,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when the user wants a character or figure generated from a text description or a reference image.",
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/text_to_avatar"
 		},
 		{
@@ -4383,7 +4383,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you want a higher quality mesh from a rough prompt or reference image, with the prompt refined for you first.",
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/mesh_forge"
 		},
 		{
@@ -4393,7 +4393,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you already have a GLB and want it rigged so it can be posed and animated.",
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/rig_mesh"
 		},
 		{
@@ -4403,7 +4403,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when the user wants a posable, animation-ready character in one step instead of generating then rigging.",
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/forge_avatar"
 		},
 		{
@@ -4413,7 +4413,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when the user wants to change a model you already generated instead of starting over.",
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/refine_model"
 		},
 		{
@@ -4423,7 +4423,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when a generation tool returned status \"pending\" and you need to collect the finished model.",
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/check_job"
 		},
 		{
@@ -4433,7 +4433,7 @@
 			"category": "assets",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this to visually inspect a GLB for defects before you hand it to the user.",
 			"page": "https://three.ws/mcp-tools/mcp-chatgpt/look_at_model"
 		},
 		{
@@ -4443,7 +4443,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when the user wants a new 3D object, character or creature from a text description.",
 			"page": "https://three.ws/mcp-tools/mcp-grok/forge_free"
 		},
 		{
@@ -4453,7 +4453,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when the user wants a character or figure generated from a text description or a reference image.",
 			"page": "https://three.ws/mcp-tools/mcp-grok/text_to_avatar"
 		},
 		{
@@ -4463,7 +4463,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you want a higher quality mesh from a rough prompt or reference image, with the prompt refined for you first.",
 			"page": "https://three.ws/mcp-tools/mcp-grok/mesh_forge"
 		},
 		{
@@ -4473,7 +4473,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you already have a GLB and want it rigged so it can be posed and animated.",
 			"page": "https://three.ws/mcp-tools/mcp-grok/rig_mesh"
 		},
 		{
@@ -4483,7 +4483,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when the user wants a posable, animation-ready character in one step instead of generating then rigging.",
 			"page": "https://three.ws/mcp-tools/mcp-grok/forge_avatar"
 		},
 		{
@@ -4493,7 +4493,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when the user wants to change a model you already generated instead of starting over.",
 			"page": "https://three.ws/mcp-tools/mcp-grok/refine_model"
 		},
 		{
@@ -4503,7 +4503,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when a generation tool returned status \"pending\" and you need to collect the finished model.",
 			"page": "https://three.ws/mcp-tools/mcp-grok/check_job"
 		},
 		{
@@ -4513,7 +4513,7 @@
 			"category": "assets",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this to visually inspect a GLB for defects before you hand it to the user.",
 			"page": "https://three.ws/mcp-tools/mcp-grok/look_at_model"
 		},
 		{
@@ -4523,7 +4523,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when a generation tool returned status \"pending\" and you need its current status or the finished model.",
 			"page": "https://three.ws/mcp-tools/mcp-grok/get_job"
 		},
 		{
@@ -5183,7 +5183,7 @@
 			"category": "utility",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you have a crypto news URL and need its content or a trading read, including for blocked or paywalled pages.",
 			"page": "https://three.ws/mcp-tools/three-ws-mcp-server/news_resolve"
 		},
 		{
@@ -7373,7 +7373,7 @@
 			"category": "utility",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you have a signature from a multi-part memo inscription and want the full file or message rebuilt and verified.",
 			"page": "https://three.ws/mcp-tools/solana-memo-media-mcp/read_inscription"
 		},
 		{
@@ -7623,7 +7623,7 @@
 			"category": "x402",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need to know how much this wallet has paid, and to whom, before approving another paid call.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/spending_report"
 		},
 		{
@@ -7633,7 +7633,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need the raw hourly outlook for a location over the next day.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/weather_forecast"
 		},
 		{
@@ -7643,7 +7643,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need a yes/no/caution decision on doing an outdoor activity at a location, not raw forecast numbers.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/weather_go_no_go"
 		},
 		{
@@ -7653,7 +7653,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need the current carbon intensity of the UK grid before running electricity-heavy work.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/carbon_now"
 		},
 		{
@@ -7663,7 +7663,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this to schedule flexible UK electricity use into the lowest-carbon window of the next 48 hours.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/carbon_best_window"
 		},
 		{
@@ -7673,7 +7673,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need the registration status, registrar, or expiry of a single domain.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/domain_rdap_check"
 		},
 		{
@@ -7683,7 +7683,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need to check availability or registration of many domains at once instead of calling domain_rdap_check repeatedly.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/domain_rdap_check_bulk"
 		},
 		{
@@ -7693,7 +7693,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this to find academic papers on a topic across several scholarly indexes in one call.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/research_search"
 		},
 		{
@@ -7703,7 +7703,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you already have a paper identifier and need its full metadata and citation graph.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/research_paper"
 		},
 		{
@@ -7713,7 +7713,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need ready-to-paste BibTeX or APA citations for a list of DOIs.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/research_bibliography"
 		},
 		{
@@ -7723,7 +7723,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this to find a public-domain book and its gutenbergId before reading it with book_read.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/book_search"
 		},
 		{
@@ -7733,7 +7733,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need the full text of a public-domain book and already have its gutenbergId.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/book_read"
 		},
 		{
@@ -7743,7 +7743,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this to search worldwide news coverage of a topic for the first time, before monitoring it with news_wire_poll.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/news_wire_search"
 		},
 		{
@@ -7753,7 +7753,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this for ongoing monitoring of a query once news_wire_search has returned a cursor.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/news_wire_poll"
 		},
 		{
@@ -7763,7 +7763,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need to plan an MBTA trip between two places or to find a stop id.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/transit_plan"
 		},
 		{
@@ -7773,7 +7773,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need to know whether MBTA service at a stop is running on time right now.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/transit_delays"
 		},
 		{
@@ -7783,7 +7783,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this to find nearby points of interest by category around a coordinate.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/places_search"
 		},
 		{
@@ -7793,7 +7793,7 @@
 			"category": "x402",
 			"safety": "irreversible",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when you need every tag and detail of one place already returned by places_search.",
 			"page": "https://three.ws/mcp-tools/x402-mcp/places_detail"
 		}
 	]
