@@ -1,0 +1,31 @@
+{
+	"price": "Free",
+	"license": "Apache-2.0",
+	"supportUrl": "https://three.ws",
+	"documentationUrl": "https://three.ws/docs/engine-bridges",
+	"sourceUrl": "https://github.com/nirholas/three.ws",
+	"dataDisclosure": "The bridge sends the text prompt or reference image you submit to the public three.ws Forge API over HTTPS and downloads the finished .glb. It sends a random per-install client handle for rate limiting. It reads no project files other than the image you choose to submit, and sends no telemetry.",
+	"releaseNotes": "0.1.0: first public release. Browse the catalog, generate a mesh from a text prompt or reference photos, poll the job, and import the result with the engine's own glTF importer, with collider, material and scale import settings.",
+	"store": "Fab (Unreal Engine plugin)",
+	"productName": "three.ws Forge Bridge",
+	"version": "0.1.0",
+	"minEngine": "5.3.0",
+	"tagline": "Text or photo to a textured 3D model, imported with Interchange.",
+	"description": "Generate a textured 3D model from a text prompt or reference photos with the free three.ws Forge pipeline, straight into the Unreal Editor. The plugin adds a Window > three.ws Forge Bridge dock with a prompt field, a quality tier and a Generate and import button. Downloads are imported through Unreal's own Interchange glTF pipeline, so there is no custom mesh parser. Import settings cover bounding-box collision, material import and scale. Includes a C++ client module usable from your own tools. Every call goes to the live public three.ws API.",
+	"category": "Code Plugins",
+	"tags": [
+		"3d",
+		"ai",
+		"gltf",
+		"interchange",
+		"generative",
+		"forge",
+		"text-to-3d",
+		"import"
+	],
+	"submission": {
+		"upload": "Fab Publisher Portal > Create listing > Code Plugin. Upload one build per supported engine version, produced with: RunUAT BuildPlugin -Plugin=<path>/ThreeWsBridge.uplugin -Package=<out> -TargetPlatforms=Win64+Linux. The packaged source zip in dist/engine-stores/unreal is the reviewable source for the listing.",
+		"media": "Thumbnail 1920x1080 and 3 or more screenshots; icon 512x512 rendered at dist/engine-stores/unreal/artwork.",
+		"note": "Unreal Editor is not installed on the packaging machine, so the binary build is the step that runs on the owner's Unreal install."
+	}
+}

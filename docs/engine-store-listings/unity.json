@@ -1,0 +1,31 @@
+{
+	"price": "Free",
+	"license": "Apache-2.0",
+	"supportUrl": "https://three.ws",
+	"documentationUrl": "https://three.ws/docs/engine-bridges",
+	"sourceUrl": "https://github.com/nirholas/three.ws",
+	"dataDisclosure": "The bridge sends the text prompt or reference image you submit to the public three.ws Forge API over HTTPS and downloads the finished .glb. It sends a random per-install client handle for rate limiting. It reads no project files other than the image you choose to submit, and sends no telemetry.",
+	"releaseNotes": "0.1.0: first public release. Browse the catalog, generate a mesh from a text prompt or reference photos, poll the job, and import the result with the engine's own glTF importer, with collider, material and scale import settings.",
+	"store": "Unity Asset Store (Publisher Portal, Package category)",
+	"productName": "three.ws Forge Bridge",
+	"version": "0.1.0",
+	"minEngine": "2021.3",
+	"tagline": "Text or photo to a textured 3D model, imported into your scene.",
+	"description": "Generate a textured 3D model from a text prompt or reference photos with the free three.ws Forge pipeline, and import it straight into the Unity Editor without leaving the project. The package adds a Window > three.ws > Forge Bridge editor window and a runtime importer. Downloads are handed to glTFast, Unity's own glTF importer, so there is no custom mesh parser to maintain. Import settings cover convex mesh colliders, material import and uniform scale. A runnable sample generates a mesh at runtime when you press Space. Every call goes to the live public three.ws API.",
+	"category": "Tools/Utilities (3D)",
+	"tags": [
+		"3d",
+		"ai",
+		"gltf",
+		"generative",
+		"forge",
+		"text-to-3d",
+		"image-to-3d",
+		"import"
+	],
+	"submission": {
+		"upload": "Asset Store Tools: open a Unity 2021.3 project containing packages/unity-bridge, Asset Store Tools > Package Upload, select the package folder, validate, upload.",
+		"media": "Icon 160x100, card 420x280, cover 1950x1300, 5 or more screenshots. Base artwork is rendered at dist/engine-stores/unity/artwork.",
+		"dependencies": "com.unity.cloud.gltfast 5.1.0 and com.unity.nuget.newtonsoft-json 3.2.1 resolve automatically through the Package Manager."
+	}
+}

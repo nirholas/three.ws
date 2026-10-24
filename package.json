@@ -248,6 +248,7 @@
 		"audit:pages": "node scripts/audit-page-index.mjs --strict",
 		"audit:meetup": "node scripts/meetup-audit.mjs",
 		"audit:docs": "node scripts/audit-docs.mjs",
+		"package:engine-stores": "node scripts/package-engine-bridges.mjs",
 		"listings:build": "node scripts/listings.mjs --build",
 		"listings:check": "node scripts/listings.mjs --check",
 		"listings:verify": "node scripts/listings.mjs --verify",

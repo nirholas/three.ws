@@ -5,6 +5,9 @@
 	"description": "Generate textured 3D models from a text prompt or reference photos with the free three.ws Forge pipeline, straight into the Unity Editor. Imports the result with glTFast, Unity's own glTF importer. No mock server: every call goes to the live public API documented in specs/ENGINE_BRIDGE.md.",
 	"unity": "2021.3",
 	"license": "Apache-2.0",
+	"documentationUrl": "https://three.ws/docs/engine-bridges",
+	"changelogUrl": "https://three.ws/changelog",
+	"licensesUrl": "https://github.com/nirholas/three.ws/blob/main/packages/unity-bridge/LICENSE",
 	"author": {
 		"name": "three.ws",
 		"url": "https://three.ws"

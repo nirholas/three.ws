@@ -6184,6 +6184,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/engine-store-publishing",
+					"title": "Docs · Publishing the engine bridges",
+					"description": "One command validates the Unity, Godot and Unreal bridges and builds a reproducible upload package for each store, with listing metadata and a submission checklist.",
+					"added": "2026-10-24",
+					"priority": 0.5,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/remix",
 					"title": "Docs · The remix economy",
 					"description": "Every model carries its provenance, and creators can opt a finished model into the remix bazaar: when someone builds on it, a creator-set royalty routes back automatically. How lineage and royalties are enforced.",
