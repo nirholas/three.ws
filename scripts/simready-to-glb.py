@@ -224,7 +224,9 @@ def weld(pos, nrm, uv):
 
 def build(asset_root, out_path, max_tex):
     root = Path(asset_root)
-    usds = sorted((root / 'simready_usd').glob('sm_*.usd')) or sorted((root / 'simready_usd').glob('*.usd'))
+    usd_dir = root / 'simready_usd'
+    usds = [f for pat in ('sm_*.usd', 'sm_*.usda', 'sm_*.usdc') for f in sorted(usd_dir.glob(pat))] \
+        or [f for pat in ('*.usd', '*.usda', '*.usdc') for f in sorted(usd_dir.glob(pat))]
     if not usds:
         raise SystemExit(f'no root usd in {root}/simready_usd')
     stage = Usd.Stage.Open(str(usds[0]))

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-24T04:16:24.927Z",
+	"generated_at": "2026-10-24T05:37:27.371Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4191,
+	"total": 4193,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -72,6 +72,16 @@
 		{
 			"date": "2026-10-24",
 			"type": "update",
+			"title": "2,575 NVIDIA SimReady objects in the Object Library",
+			"summary": "Every asset from NVIDIA's open-source SimReady dataset is converted to a web-ready GLB with materials and thumbnails, searchable in the Object Library and the asset catalog. Each carries its CC BY 4.0 license and NVIDIA credit.",
+			"link": "/objects",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
 			"title": "Agent perps on three venues: Phoenix, Jupiter and Hyperliquid",
 			"summary": "Agents can now trade perpetuals on Phoenix and Jupiter (Solana) and on Hyperliquid through a per-agent API wallet that can trade but never withdraw. Every venue goes through the same preview then confirmed execute, with new guards for maximum position notional and minimum liquidation distance. Unpinned market reads fail over to a healthy venue, live orders never reroute. MCP access to an agent's perps tools is now opt-in per agent and off by default.",
 			"link": "/docs/perps",
@@ -88,6 +98,16 @@
 			"link": "/docs/solana-agent-registry",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Chat no longer fails when its default NVIDIA model is retired",
+			"summary": "NVIDIA stopped serving the Nemotron 3 Super function while still listing it, so chat requests that fell through to it got a 404 and, with the other providers throttled, ended in a 503. Chat, the tool chain, the brain and the CAD writer now use the Nemotron 3.5 Lightning model (with Ultra as its fallback), both verified live.",
+			"link": "/chat",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1542,27 +1562,6 @@
 			"link": "/dissolve",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-12",
-			"type": "update",
-			"title": "Engine QA: a free real-time-engine fitness grade, plus real LOD chains",
-			"summary": "A new free grade answers the question a game engine's import step asks that neither glTF validation nor simulation readiness does: draw calls, material count, texel density against the mesh's real-world size, a per-level triangle budget for a LOD chain, and whether the mesh is cheap and closed enough to use as its own physics collider. GET/POST /api/3d/engine-qa grades any public GLB (format=stl exports a watertight mesh for printing); the same browser-only checks run with zero network cost in Rig Doctor, and the full grade with a one-click upgrade in the GLB viewer, through a shared <engine-qa> panel component. The underlying LOD builder (packages/glb-tools's buildLodChain, real meshoptimizer decimation tagged with MSFT_lod) is now also available on generation: send { \"lods\": true } to POST /api/forge and the finished creation gets a combined LOD-chain variant alongside its delivered mesh, the same opt-in, fire-and-forget pattern as the existing web-delivery variant.",
-			"link": "/docs/engine-qa",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-12",
-			"type": "update",
-			"title": "Every generated and purchased model now ships with a signed provenance credential, free, by default",
-			"summary": "Content credentials (specs/PROVENANCE_3D.md) used to be an on-demand, Claude-track action: you had to call anchor_provenance to get one. Now every GLB the Forge produces, across every generation lane (free NIM, Forge Pro, rigged avatars, self-host TRELLIS/Hunyuan, async GCP workers), gets an ed25519-signed content credential the moment it's materialized, and every first download of a paid asset from the x402 asset bazaar gets one too, with the hash and a verify link returned right in the download response. Signing and storage are free and local, no Solana write and no spend, so there's nothing to gate; the separate paid anchor_provenance upgrade, which additionally commits the hash on-chain, is untouched and still available. A credential is keyed by content hash, so it's issued exactly once per file no matter how many times a lane or endpoint touches it. Model pages now show the same verified / tampered / unverified badge the 3D viewer already had, and a third party can check any model for free with GET /api/provenance. The owner can turn automatic issuance off platform-wide with PROVENANCE_AUTO_DISABLE=true; nothing else about verification changes if they do.",
-			"link": "/docs/provenance",
-			"tags": [
-				"feature",
-				"security"
 			]
 		}
 	]

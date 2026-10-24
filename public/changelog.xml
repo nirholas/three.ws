@@ -55,6 +55,14 @@
 			<description>Call the OpenAI-compatible endpoint with a wallet instead of an account: the x402 upto challenge sized to the request, metered settlement, streaming close and dropped-stream behavior, with curl and SDK examples.</description>
 		</item>
 		<item>
+			<title>2,575 NVIDIA SimReady objects in the Object Library</title>
+			<link>https://three.ws/objects</link>
+			<guid isPermaLink="false">2026-10-24:2,575 NVIDIA SimReady objects in the Object Library</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every asset from NVIDIA's open-source SimReady dataset is converted to a web-ready GLB with materials and thumbnails, searchable in the Object Library and the asset catalog. Each carries its CC BY 4.0 license and NVIDIA credit.</description>
+		</item>
+		<item>
 			<title>Agent perps on three venues: Phoenix, Jupiter and Hyperliquid</title>
 			<link>https://three.ws/docs/perps</link>
 			<guid isPermaLink="false">2026-10-24:Agent perps on three venues: Phoenix, Jupiter and Hyperliquid</guid>
@@ -69,6 +77,14 @@
 			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Minted agents are enrolled in the open Solana agent registry (8004) with the platform authority signing, so owners pay nothing. The marketplace ranks providers by registry tier after completed hires, a hire can require a minimum tier, and agent pages show an 8004 tier badge when registered. A rate-limited back-fill covers existing agents.</description>
+		</item>
+		<item>
+			<title>Chat no longer fails when its default NVIDIA model is retired</title>
+			<link>https://three.ws/chat</link>
+			<guid isPermaLink="false">2026-10-24:Chat no longer fails when its default NVIDIA model is retired</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>NVIDIA stopped serving the Nemotron 3 Super function while still listing it, so chat requests that fell through to it got a 404 and, with the other providers throttled, ended in a 503. Chat, the tool chain, the brain and the CAD writer now use the Nemotron 3.5 Lightning model (with Ultra as its fallback), both verified live.</description>
 		</item>
 		<item>
 			<title>Desktop app moves to Electron 45</title>

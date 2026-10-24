@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-24T04:16:24.892Z",
+	"generated_at": "2026-10-24T05:37:27.349Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -69,6 +69,16 @@
 		{
 			"date": "2026-10-24",
 			"type": "update",
+			"title": "2,575 NVIDIA SimReady objects in the Object Library",
+			"summary": "Every asset from NVIDIA's open-source SimReady dataset is converted to a web-ready GLB with materials and thumbnails, searchable in the Object Library and the asset catalog. Each carries its CC BY 4.0 license and NVIDIA credit.",
+			"link": "/objects",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
 			"title": "Agent perps on three venues: Phoenix, Jupiter and Hyperliquid",
 			"summary": "Agents can now trade perpetuals on Phoenix and Jupiter (Solana) and on Hyperliquid through a per-agent API wallet that can trade but never withdraw. Every venue goes through the same preview then confirmed execute, with new guards for maximum position notional and minimum liquidation distance. Unpinned market reads fail over to a healthy venue, live orders never reroute. MCP access to an agent's perps tools is now opt-in per agent and off by default.",
 			"link": "/docs/perps",
@@ -85,6 +95,16 @@
 			"link": "/docs/solana-agent-registry",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Chat no longer fails when its default NVIDIA model is retired",
+			"summary": "NVIDIA stopped serving the Nemotron 3 Super function while still listing it, so chat requests that fell through to it got a 404 and, with the other providers throttled, ended in a 503. Chat, the tool chain, the brain and the CAD writer now use the Nemotron 3.5 Lightning model (with Ultra as its fallback), both verified live.",
+			"link": "/chat",
+			"tags": [
+				"fix"
 			]
 		},
 		{
