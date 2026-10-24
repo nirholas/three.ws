@@ -18,6 +18,7 @@ import { env } from './_lib/env.js';
 import { isUuid } from './_lib/validate.js';
 import { scriptJson } from './_lib/safe-text.js';
 import { creationJsonLd, renderPosterUrl, renderableGlb } from './_lib/creation-jsonld.js';
+import { normalizeStoredUrl } from './_lib/r2.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -63,7 +64,8 @@ export default wrap(async (req, res) => {
 			])
 		: null;
 	const poster = posterGlb ? renderPosterUrl(origin, posterGlb) : null;
-	const ogImage = row.preview_image_url || poster || `${origin}/api/forge-og?id=${id}`;
+	const previewImageUrl = normalizeStoredUrl(row.preview_image_url);
+	const ogImage = previewImageUrl || poster || `${origin}/api/forge-og?id=${id}`;
 	// X player card: interactive embed when the GLB is ready, degrading to the
 	// summary_large_image tags below for crawlers (Discord, Slack, pre-approval
 	// X) that never fetch twitter:player. Reuses /forge/embed (pages/forge-embed.html),
@@ -81,7 +83,7 @@ export default wrap(async (req, res) => {
 		description: desc,
 		glbUrl: finished ? row.glb_url : null,
 		glbSizeBytes: row.size_bytes,
-		thumbnailUrl: poster || row.preview_image_url || null,
+		thumbnailUrl: poster || previewImageUrl || null,
 		image: ogImage,
 		creator: row.creator_username
 			? { username: row.creator_username, displayName: row.creator_display_name }

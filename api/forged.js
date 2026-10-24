@@ -30,6 +30,7 @@ import { cors, json, method, serverError, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { cacheGet, cacheSet } from './_lib/cache.js';
 import { explorerTxUrl } from './_lib/avatar-wallet.js';
+import { normalizeStoredUrl } from './_lib/r2.js';
 import { CATEGORIES as PROP_CATEGORIES } from './_lib/x402/pipelines/forge-catalog.js';
 
 const FEED_TTL_S = 20;
@@ -46,6 +47,7 @@ function shortAddr(a) {
 
 function toProp(row) {
 	const priceUsdc = row.amount_atomic != null ? Number(row.amount_atomic) / 1e6 : null;
+	const glbUrl = normalizeStoredUrl(row.glb_url);
 	return {
 		id: Number(row.id),
 		ts: row.ts,
@@ -53,7 +55,7 @@ function toProp(row) {
 		category: row.category,
 		tier: row.tier,
 		status: row.status,
-		glb_url: row.glb_url,
+		glb_url: glbUrl,
 		novelty: row.novelty != null ? Number(row.novelty) : null,
 		cluster_id: row.cluster_id,
 		price_usdc: priceUsdc,
@@ -62,7 +64,7 @@ function toProp(row) {
 		payer_kind: row.payer_kind || 'agent',
 		tx_sig: row.tx_sig,
 		explorer_url: row.tx_sig ? explorerTxUrl(row.tx_sig) : null,
-		viewer_url: row.glb_url ? `/app?src=${encodeURIComponent(row.glb_url)}` : null,
+		viewer_url: glbUrl ? `/app?src=${encodeURIComponent(glbUrl)}` : null,
 	};
 }
 

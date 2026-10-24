@@ -10,6 +10,17 @@
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createServer } from 'node:http';
 
+// S3_PUBLIC_DOMAIN mocked (not api/_lib/r2.js itself) so normalizeStoredUrl's
+// real keyFromPublicUrl/cdnUrl logic runs against a deterministic domain: the
+// ORB regression this test guards against is that /gallery's model-viewer
+// loads forge_autonomous_props.glb_url straight off the row (src/forged-gallery.js),
+// so a legacy row still carrying the raw public r2.dev domain trips Chrome's
+// Opaque Response Blocking on the GLB fetch, exactly like the forge_creations
+// columns fixed in api/_lib/forge-store.js (see forge-store-listing-orb-safe.test.js).
+vi.mock('../../api/_lib/env.js', () => ({
+	env: { S3_PUBLIC_DOMAIN: 'https://pub-legacy.r2.dev', APP_ORIGIN: 'https://three.ws' },
+}));
+
 const ROWS = [
 	{
 		id: 141,
@@ -40,6 +51,22 @@ const ROWS = [
 		tx_sig: null,
 		payer: null,
 		amount_atomic: null,
+	},
+	// A row written before the write-path fix that routes glb_url through
+	// cdnUrl(): still carries the raw public r2.dev bucket domain.
+	{
+		id: 143,
+		ts: '2026-08-13T06:10:00.000Z',
+		prompt: 'a cargo drone, 3D prop',
+		category: 'vehicle',
+		tier: 'standard',
+		status: 'done',
+		glb_url: 'https://pub-legacy.r2.dev/forge/cargo-drone.glb',
+		novelty: '0.5',
+		cluster_id: 3,
+		tx_sig: 'SigTwo',
+		payer: 'X4o2UuVNMxnrgkzVy97kPF5gmS6CLRCVJGB48VastML',
+		amount_atomic: '200000',
 	},
 ];
 
@@ -122,6 +149,18 @@ describe('/api/forged feed', () => {
 
 		expect(body.stats).toMatchObject({ total: 2, done: 1, queued: 1, spent_usdc: 0.15 });
 		expect(body.stats.categories).toEqual({ vehicle: 1 });
+	});
+
+	it('normalizes a legacy raw-r2.dev glb_url before it reaches the model-viewer src', async () => {
+		const r = await fetch(`${base}/api/forged?limit=3`);
+		const body = await r.json();
+		const legacy = body.props.find((p) => p.id === 143);
+
+		expect(legacy.glb_url).toBe('https://three.ws/cdn/forge/cargo-drone.glb');
+		expect(legacy.glb_url).not.toMatch(/r2\.dev/);
+		expect(legacy.viewer_url).toBe(
+			`/app?src=${encodeURIComponent('https://three.ws/cdn/forge/cargo-drone.glb')}`,
+		);
 	});
 
 	it('caches the shaped payload under a key scoped to every filter', async () => {

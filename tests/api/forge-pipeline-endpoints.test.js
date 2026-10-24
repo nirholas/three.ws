@@ -122,6 +122,7 @@ const storageState = { configured: true, rejected: false };
 vi.mock('../../api/_lib/r2.js', () => ({
 	presignUpload: (...a) => presignMock(...a),
 	publicUrl: (key) => `https://cdn.example/${key}`,
+	normalizeStoredUrl: (url) => url,
 	objectStorageConfigured: () => storageState.configured,
 	objectStorageUsable: async () => {
 		if (!storageState.configured) return { ok: false, reason: 'unconfigured', message: null };

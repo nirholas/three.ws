@@ -45,8 +45,10 @@ vi.mock('../api/_lib/r2.js', async (importOriginal) => {
 	};
 });
 
-const { listCreations, listCreationsByUser, listShowcase, listRecentCreations, listRemixable, listMostRemixed } =
-	await import('../api/_lib/forge-store.js');
+const {
+	listCreations, listCreationsByUser, listShowcase, listRecentCreations, listRemixable, listMostRemixed,
+	getPublicCreation, listRelated,
+} = await import('../api/_lib/forge-store.js');
 const { publicUrl, cdnUrl } = await import('../api/_lib/r2.js');
 
 const LEGACY_GLB = publicUrl('forge/client-1/legacy.glb');
@@ -129,6 +131,36 @@ describe('forge-store listing reads normalize legacy raw-domain URLs', () => {
 			model_category: 'other', created_at: new Date().toISOString(), remix_count: 3,
 		}];
 		const [row] = await listMostRemixed({});
+		expect(row.glb_url).toBe(cdnUrl('forge/client-1/legacy.glb'));
+		expect(row.preview_image_url).toBe(cdnUrl('forge/thumb/legacy.png'));
+	});
+
+	it('getPublicCreation (model-page share/poster read): glb_url, web_glb_url, preview_image_url', async () => {
+		rows = [{
+			id: 'c7', prompt: 'x', aspect: null, glb_url: LEGACY_GLB, web_glb_url: LEGACY_GLB,
+			web_size_bytes: null, preview_image_url: LEGACY_PREVIEW, outcome: 'generated',
+			views_used: null, multiview: false, backend: 'trellis', tier: 'standard', path: 'image',
+			model_category: 'other', created_at: new Date().toISOString(),
+			x402_payer: null, x402_tx_sig: null, x402_price_atomic: null,
+			vote_count: 0, size_bytes: 1024, remixable: false, remix_royalty_bps: null,
+			parent_creation_id: null, refine_instruction: null, view_count: 0, remix_count: 0, voted: false,
+			creator_username: null, creator_display_name: null, creator_avatar_url: null,
+			sim_readiness: null, sim_readiness_graded_at: null,
+		}];
+		const row = await getPublicCreation({ id: 'c7' });
+		expect(row.glb_url).toBe(cdnUrl('forge/client-1/legacy.glb'));
+		expect(row.web_glb_url).toBe(cdnUrl('forge/client-1/legacy.glb'));
+		expect(row.preview_image_url).toBe(cdnUrl('forge/thumb/legacy.png'));
+		expect(row.glb_url).not.toMatch(/r2\.dev/);
+	});
+
+	it('listRelated (model-page sidebar poster read): glb_url, preview_image_url', async () => {
+		rows = [{
+			id: 'c8', prompt: 'x', glb_url: LEGACY_GLB, preview_image_url: LEGACY_PREVIEW,
+			model_category: 'other', backend: 'trellis', vote_count: 0, view_count: 0,
+			created_at: new Date().toISOString(), same_category: true,
+		}];
+		const [row] = await listRelated({ id: 'c7' });
 		expect(row.glb_url).toBe(cdnUrl('forge/client-1/legacy.glb'));
 		expect(row.preview_image_url).toBe(cdnUrl('forge/thumb/legacy.png'));
 	});

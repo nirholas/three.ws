@@ -1103,13 +1103,13 @@ export async function getPublicCreation({ id, voterKey = null }) {
 			id: r.id,
 			prompt: r.prompt,
 			aspect: r.aspect,
-			glb_url: r.glb_url,
+			glb_url: normalizeStoredUrl(r.glb_url),
 			// The phone-sized delivery variant, or null when one was never built.
 			// Viewers prefer it and fall back to glb_url; downloads always use
 			// glb_url. See buildWebVariant.
-			web_glb_url: r.web_glb_url ?? null,
+			web_glb_url: normalizeStoredUrl(r.web_glb_url) ?? null,
 			web_size_bytes: r.web_size_bytes ?? null,
-			preview_image_url: r.preview_image_url,
+			preview_image_url: normalizeStoredUrl(r.preview_image_url),
 			outcome: r.outcome,
 			views_used: r.views_used ?? null,
 			multiview: r.multiview ?? null,
@@ -1179,8 +1179,8 @@ export async function listRelated({ id, category, limit = 6 }) {
 		return rows.map((r) => ({
 			id: r.id,
 			prompt: r.prompt,
-			glb_url: r.glb_url,
-			preview_image_url: r.preview_image_url,
+			glb_url: normalizeStoredUrl(r.glb_url),
+			preview_image_url: normalizeStoredUrl(r.preview_image_url),
 			model_category: r.model_category ?? 'other',
 			backend: r.backend ?? null,
 			vote_count: r.vote_count ?? 0,
