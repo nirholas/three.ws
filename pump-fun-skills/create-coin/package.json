@@ -12,7 +12,7 @@
     "build-create-coin-tx": "node scripts/build-create-coin-tx.mjs"
   },
   "dependencies": {
-    "@three-ws/agent-payments": "^3.2.0",
+    "@three-ws/agent-payments": "^3.2.2",
     "@pump-fun/pump-sdk": "^4.0.0",
     "@pump-fun/pump-swap-sdk": "^2.1.0",
     "@solana/spl-token": "^0.4.13",
@@ -49,6 +49,8 @@
     "toml@^3": "^5.0.1",
     "undici@^5": "^6.29.0",
     "uuid@^8": "^11.1.1",
-    "jayson@^4": "^5.0.0"
+    "jayson@^4": "^5.0.0",
+    "helia@^5": "^7.1.16",
+    "@helia/unixfs@^4": "^7"
   }
 }
