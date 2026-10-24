@@ -37,6 +37,7 @@ import { solanaConnection } from './solana/connection.js';
 import { generateSolanaAgentWallet } from './agent-wallet.js';
 import { publishFeedEvent } from './feed.js';
 import { pinToIPFS } from './ipfs-pin.js';
+import { register8004Agent, registrationEnabled as registry8004Enabled } from './solana-8004.js';
 
 // Genesis-hash chain refs (CAIP-2), mirroring api/agents/onchain/[action].js.
 export const SOLANA_REFS = {
@@ -487,6 +488,20 @@ export async function registerAgentOnce({ umi, authoritySigner, agent, asset, co
 		)
 	`.catch(() => {});
 
+	// Enrol in the open 8004 registry too, on the same authority-managed path. The
+	// Metaplex identity above is already persisted, so a failure here is reported
+	// and left for the back-fill rather than unwinding it.
+	let registry8004 = null;
+	if (registry8004Enabled(network)) {
+		try {
+			const r = await register8004Agent({ agent: { ...agent, meta: { ...current, ...(isMainnet ? {} : { devnet: current.devnet }) } }, network });
+			registry8004 = { asset: r.asset, signature: r.signature, alreadyRegistered: r.alreadyRegistered };
+			onEvent?.('registry_8004', { agent_id: agent.id, asset: r.asset, signature: r.signature, already_registered: r.alreadyRegistered });
+		} catch (err) {
+			onEvent?.('registry_8004_error', { agent_id: agent.id, name: agentName, error: err.message });
+		}
+	}
+
 	onEvent?.('registered', {
 		agent_id: agent.id,
 		name: agentName,
@@ -497,5 +512,5 @@ export async function registerAgentOnce({ umi, authoritySigner, agent, asset, co
 		explorer_url: explorerUrl(identityPda, network),
 	});
 
-	return { asset: resolvedAsset, identityPda, registrationUri, signature, alreadyRegistered };
+	return { asset: resolvedAsset, identityPda, registrationUri, signature, alreadyRegistered, registry8004 };
 }

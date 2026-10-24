@@ -31,6 +31,7 @@ import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { limits } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { randomUUID } from 'node:crypto';
+import { liveRegistry8004, meetsMinTier, parseMinTier } from '../_lib/solana-8004.js';
 
 import {
 	SpendLimitError,
@@ -115,7 +116,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl, 'hire rate limit exceeded');
 
 	const body = (await readJson(req)) || {};
-	const { hirerAgentId, serviceSlug, input = null, maxUsd } = body;
+	const { hirerAgentId, serviceSlug, input = null, maxUsd, minRegistryTier = null } = body;
 	const idempotencyKey = body.idempotencyKey || randomUUID();
 
 	if (!hirerAgentId || typeof hirerAgentId !== 'string') {
@@ -187,6 +188,18 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'self_hire', 'an agent cannot hire its own service');
 	}
 
+	// Open Solana agent registry standing: read live from the chain, falling back to
+	// the stored snapshot (flagged stale) when the RPC is unreachable.
+	let minTierRank;
+	try {
+		minTierRank = parseMinTier(minRegistryTier);
+	} catch (e) {
+		return error(res, 400, 'validation_error', e.message);
+	}
+	if (offer.provider.registry_8004) {
+		offer.provider.registry_8004 = await liveRegistry8004(offer.provider.registry_8004);
+	}
+
 	const usd = atomicsToUsdc(offer.price_atomics);
 	const priceNetwork = offer.network === 'solana' ? 'solana' : 'base';
 
@@ -209,6 +222,13 @@ export default wrap(async (req, res) => {
 		return error(res, 402, 'over_cap', `this service costs $${usd.toFixed(2)}, above your $${maxUsd.toFixed(2)} per-call limit`, {
 			price_usd: usd,
 			max_usd: maxUsd,
+		});
+	}
+
+	if (!meetsMinTier(offer.provider.registry_8004, minTierRank)) {
+		return error(res, 409, 'provider_below_tier', `this provider is below the requested registry tier (${minRegistryTier})`, {
+			required_tier: minRegistryTier,
+			provider_tier: offer.provider.registry_8004?.tier || 'Unrated',
 		});
 	}
 

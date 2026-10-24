@@ -4083,6 +4083,14 @@
 					"added": "2026-08-14"
 				},
 				{
+					"path": "/docs/solana-agent-registry",
+					"title": "Docs · Solana Agent Registry",
+					"description": "Agents are enrolled in the open Solana agent registry (8004) with the platform authority signing, and hires read the provider's trust tier: registration, storage, ranking, the minimum-tier guard, the back-fill and the devnet proof.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-24"
+				},
+				{
 					"path": "/docs/selfie-to-avatar",
 					"title": "Docs · Selfie to Avatar",
 					"description": "Point your camera at your face and get a rigged 3D avatar in about a minute, free and in the browser. The capture flow, the reconstruction pipeline, and where the avatar goes next.",

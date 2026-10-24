@@ -3,6 +3,17 @@
 	"entries": [
 		{
 			"date": "2026-10-24",
+			"title": "Agents join the open Solana agent registry and hires read trust tiers",
+			"summary": "Minted agents are enrolled in the open Solana agent registry (8004) with the platform authority signing, so owners pay nothing. The marketplace ranks providers by registry tier after completed hires, a hire can require a minimum tier, and agent pages show an 8004 tier badge when registered. A rate-limited back-fill covers existing agents.",
+			"tags": [
+				"solana",
+				"agents",
+				"marketplace"
+			],
+			"link": "/docs/solana-agent-registry"
+		},
+		{
+			"date": "2026-10-24",
 			"title": "Engine bridges are packaged for the Unity, Godot and Unreal stores",
 			"summary": "One command, npm run package:engine-stores, validates the Unity, Godot and Unreal bridges and builds a reproducible upload package for each, with listing metadata and a submission checklist. The Unity package and Unreal plugin manifests now carry their documentation links.",
 			"tags": [

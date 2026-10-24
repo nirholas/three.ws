@@ -530,6 +530,29 @@ function el(tag, props = {}, children = []) {
 	return node;
 }
 
+const REGISTRY_TIER_ACCENT = { platinum: 'violet', gold: 'amber', silver: 'muted', bronze: 'amber' };
+
+// Open Solana agent registry badge (8004). Mainnet registration wins; a devnet
+// registration is shown labelled. Returns null when the agent is not registered,
+// so an unregistered agent renders nothing.
+function registry8004Pill(meta) {
+	const main = meta?.registry_8004;
+	const dev = meta?.devnet?.registry_8004;
+	const block = main?.asset ? main : dev?.asset ? dev : null;
+	if (!block) return null;
+	const standing = block.standing || null;
+	const tier = standing?.tier || 'Unrated';
+	const label = `8004 ${tier}${block === dev && block !== main ? ' (devnet)' : ''}`;
+	const node = pill(label, REGISTRY_TIER_ACCENT[tier.toLowerCase()] || '');
+	const parts = ['Registered in the open Solana agent registry'];
+	if (standing && standing.total_feedbacks != null) {
+		parts.push(`${standing.total_feedbacks} feedback${standing.total_feedbacks === 1 ? '' : 's'}`);
+		if (standing.average_score != null) parts.push(`average score ${standing.average_score}`);
+	}
+	node.title = parts.join(', ');
+	return node;
+}
+
 function pill(text, accent = '') {
 	return el('span', { class: `ad-pill ${accent ? `ad-pill-${accent}` : ''}`, text });
 }
@@ -1284,6 +1307,9 @@ function render(agent) {
 		seeker.title = 'The owner holds a Seeker Genesis Token, the soulbound proof of a Solana Seeker phone.';
 		trustPills.appendChild(seeker);
 	}
+
+	const registryPill = registry8004Pill(agent.rawMetadata?.meta);
+	if (registryPill) trustPills.appendChild(registryPill);
 
 	const services = $('ad-services');
 	services.innerHTML = '';
