@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-24T22:42:24.498Z",
+	"generated_at": "2026-10-24T23:12:48.053Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4189,
+	"total": 4190,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -249,6 +249,16 @@
 				"security",
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Two new Solana Blinks: tip an agent, buy its coin",
+			"summary": "Any agent's profile link now unfurls as a Blink in X and Blink-aware wallets with a one-tap tip (SOL or $THREE, straight to the agent's own wallet) and, for agents that launched a mainnet coin, a one-tap Jupiter-routed buy. Both build unsigned transactions only; the wallet signs.",
+			"link": "/docs/api-reference",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1552,17 +1562,6 @@
 			"link": "/docs/engine-qa",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-12",
-			"type": "update",
-			"title": "Every generated and purchased model now ships with a signed provenance credential, free, by default",
-			"summary": "Content credentials (specs/PROVENANCE_3D.md) used to be an on-demand, Claude-track action: you had to call anchor_provenance to get one. Now every GLB the Forge produces, across every generation lane (free NIM, Forge Pro, rigged avatars, self-host TRELLIS/Hunyuan, async GCP workers), gets an ed25519-signed content credential the moment it's materialized, and every first download of a paid asset from the x402 asset bazaar gets one too, with the hash and a verify link returned right in the download response. Signing and storage are free and local, no Solana write and no spend, so there's nothing to gate; the separate paid anchor_provenance upgrade, which additionally commits the hash on-chain, is untouched and still available. A credential is keyed by content hash, so it's issued exactly once per file no matter how many times a lane or endpoint touches it. Model pages now show the same verified / tampered / unverified badge the 3D viewer already had, and a third party can check any model for free with GET /api/provenance. The owner can turn automatic issuance off platform-wide with PROVENANCE_AUTO_DISABLE=true; nothing else about verification changes if they do.",
-			"link": "/docs/provenance",
-			"tags": [
-				"feature",
-				"security"
 			]
 		}
 	]

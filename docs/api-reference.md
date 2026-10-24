@@ -8372,10 +8372,11 @@ curl -s -X POST https://three.ws/api/tx/explain \
 
 ## Solana Actions API (Blinks)
 
-three.ws publishes a Solana Action so "Claim Your 3D Avatar" unfurls as a Blink
-card on X and in any Blink-aware wallet. `/.well-known/solana/actions.json` maps
-`/api/actions/**` for Action clients, and the card's icon is a live headless
-render of the avatar's own GLB rather than a static image.
+three.ws publishes Solana Actions so a Blink card unfurls on X and in any
+Blink-aware wallet: "Claim Your 3D Avatar", "Tip this agent", and "Buy this
+agent's coin". `/.well-known/solana/actions.json` maps `/api/actions/**` for
+Action clients. Every Action here returns an unsigned `VersionedTransaction`;
+the server never signs or broadcasts.
 
 ### Claim-avatar action
 
@@ -8433,6 +8434,68 @@ curl -s https://three.ws/api/actions/avatar | jq .title
 curl -s -X POST https://three.ws/api/actions/avatar \
   -H 'content-type: application/json' \
   -d '{"account":"FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"}' | jq -r .type
+```
+
+---
+
+### Tip-an-agent action
+
+```
+GET  /api/actions/agent-tip?agent=<agentId>&token=SOL|THREE
+POST /api/actions/agent-tip?agent=<agentId>&token=SOL|THREE
+```
+
+No auth required. `agent` must be a real agent id; anything else is `400
+bad_request`. `token` is optional and defaults to `SOL`; the only other allowed
+value is `THREE` (`$THREE`, `FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`). An
+unknown agent is `404 not_found`. The recipient is always the agent's own
+Solana wallet (`getOrCreateAgentSolanaWallet`); the caller never names a
+destination.
+
+The GET card offers a few preset amounts plus a free-entry amount field, per
+the Actions spec's `parameters` pattern. **POST body:** `{ "account":
+"<wallet pubkey>", "amount": <number> }` (an off-curve account is rejected
+before any transaction is built, same as the claim-avatar action above).
+**POST response:** a base64 `VersionedTransaction` carrying a single unsigned
+SOL or $THREE transfer with a `tip:<agentId>` memo, built by the same
+`buildTransferTransaction` helper every other non-custodial transfer path in
+this codebase shares.
+
+```bash
+curl -s "https://three.ws/api/actions/agent-tip?agent=<agentId>" | jq .title
+curl -s -X POST "https://three.ws/api/actions/agent-tip?agent=<agentId>" \
+  -H 'content-type: application/json' \
+  -d '{"account":"FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump","amount":0.1}' | jq -r .type
+```
+
+---
+
+### Buy-an-agent's-coin action
+
+```
+GET  /api/actions/agent-buy-coin?agent=<agentId>
+POST /api/actions/agent-buy-coin?agent=<agentId>
+```
+
+No auth required. `agent` must be a real agent id; anything else is `400
+bad_request`. The mint is resolved at runtime from the agent's own most recent
+mainnet pump.fun launch (`pump_agent_mints`), never from a caller-supplied
+parameter. An unknown agent, or one that has not launched a mainnet coin, is
+`404 not_found` rather than a card with nothing to buy.
+
+The GET card offers a few preset SOL amounts plus a free-entry amount field.
+**POST body:** `{ "account": "<wallet pubkey>", "amount": <SOL amount> }`.
+**POST response:** a base64 `VersionedTransaction` carrying an unsigned
+Jupiter-routed swap from SOL into the agent's mint, built by the same
+`buildSwapTransaction` helper the agent withdraw/trade external-signer paths
+use. A route that Jupiter cannot fill answers `422 no_route` or
+`422 swap_failed` rather than a generic `500`.
+
+```bash
+curl -s "https://three.ws/api/actions/agent-buy-coin?agent=<agentId>" | jq .title
+curl -s -X POST "https://three.ws/api/actions/agent-buy-coin?agent=<agentId>" \
+  -H 'content-type: application/json' \
+  -d '{"account":"FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump","amount":0.1}' | jq -r .type
 ```
 
 ---

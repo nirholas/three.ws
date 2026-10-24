@@ -1,6 +1,10 @@
 {
 	"rules": [
 		{ "pathPattern": "/api/actions/avatar", "apiPath": "/api/actions/avatar" },
-		{ "pathPattern": "/api/actions/avatar?*", "apiPath": "/api/actions/avatar?*" }
+		{ "pathPattern": "/api/actions/avatar?*", "apiPath": "/api/actions/avatar?*" },
+		{ "pathPattern": "/api/actions/agent-tip", "apiPath": "/api/actions/agent-tip" },
+		{ "pathPattern": "/api/actions/agent-tip?*", "apiPath": "/api/actions/agent-tip?*" },
+		{ "pathPattern": "/api/actions/agent-buy-coin", "apiPath": "/api/actions/agent-buy-coin" },
+		{ "pathPattern": "/api/actions/agent-buy-coin?*", "apiPath": "/api/actions/agent-buy-coin?*" }
 	]
 }

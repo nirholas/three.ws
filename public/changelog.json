@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-24T22:42:24.470Z",
+	"generated_at": "2026-10-24T23:12:48.028Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -246,6 +246,16 @@
 				"security",
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Two new Solana Blinks: tip an agent, buy its coin",
+			"summary": "Any agent's profile link now unfurls as a Blink in X and Blink-aware wallets with a one-tap tip (SOL or $THREE, straight to the agent's own wallet) and, for agents that launched a mainnet coin, a one-tap Jupiter-routed buy. Both build unsigned transactions only; the wallet signs.",
+			"link": "/docs/api-reference",
+			"tags": [
+				"feature"
 			]
 		},
 		{
