@@ -18,7 +18,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { sql, isDbUnavailableError } from './db.js';
 import { databaseConfigured } from './env.js';
-import { putObject, publicUrl, deleteObject, keyFromPublicUrl, objectStorageConfigured } from './r2.js';
+import { putObject, cdnUrl, deleteObject, keyFromPublicUrl, normalizeStoredUrl, objectStorageConfigured } from './r2.js';
 import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 import { recordGenerationEvent } from './forge-events.js';
 import { scoreGlbQuality } from './glb-quality.js';
@@ -531,7 +531,11 @@ async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, com
 	// `buffer` is the bytes actually stored, post-cleanup and post-compression, so
 	// a caller that hashes or grades them is describing the asset users receive
 	// rather than the provider's original, and does it without a second fetch.
-	return { bytes: buf.length, publicUrl: publicUrl(key), quality, compression, cleaned, pbr, fit, buffer: buf };
+	// The URL handed back is the same-origin /cdn/ proxy, not the raw bucket
+	// domain: a browser <img>/<model-viewer> consumer of this field is exactly
+	// what Chrome's ORB blocked above, so every durable forge URL must be
+	// ORB-safe the same way avatar thumbnails already are (thumbnailUrl()).
+	return { bytes: buf.length, publicUrl: cdnUrl(key), quality, compression, cleaned, pbr, fit, buffer: buf };
 }
 
 function imageExtFor(url) {
@@ -614,12 +618,12 @@ export function buildWebVariant({ buffer, creationId, keyPrefix }) {
 			await sql`
 				update forge_creations
 				set web_glb_key = ${key},
-					web_glb_url = ${publicUrl(key)},
+					web_glb_url = ${cdnUrl(key)},
 					web_size_bytes = ${result.outputBytes},
 					updated_at = now()
 				where id = ${creationId}
 			`;
-			return { key, url: publicUrl(key), bytes: result.outputBytes };
+			return { key, url: cdnUrl(key), bytes: result.outputBytes };
 		})
 		.catch((err) => {
 			console.warn('[forge-store] web delivery variant failed:', err?.message);
@@ -658,12 +662,12 @@ export function buildLodVariant({ buffer, creationId, keyPrefix }) {
 			await sql`
 				update forge_creations
 				set lod_glb_key = ${key},
-					lod_glb_url = ${publicUrl(key)},
+					lod_glb_url = ${cdnUrl(key)},
 					lod_levels = ${JSON.stringify(levels)},
 					updated_at = now()
 				where id = ${creationId}
 			`;
-			return { key, url: publicUrl(key), levels };
+			return { key, url: cdnUrl(key), levels };
 		})
 		.catch((err) => {
 			console.warn('[forge-store] LOD chain variant failed:', err?.message);
@@ -874,7 +878,7 @@ export async function attachPoster({ id, clientKey, body, contentType, ext }) {
 
 		const key = `forge/${clientKey.slice(0, 12)}/${id}-poster.${ext}`;
 		await putObject({ key, body, contentType, metadata: { source: 'forge-poster' } });
-		const url = publicUrl(key);
+		const url = cdnUrl(key);
 		const updated = await sql`
 			update forge_creations
 			set preview_key = ${key}, preview_image_url = ${url}, updated_at = now()
@@ -1287,9 +1291,9 @@ export async function listCreations({ clientKey, limit = 24 }) {
 			id: r.id,
 			prompt: r.prompt,
 			aspect: r.aspect,
-			glb_url: r.glb_url,
-			web_glb_url: r.web_glb_url ?? null,
-			preview_image_url: r.preview_image_url,
+			glb_url: normalizeStoredUrl(r.glb_url),
+			web_glb_url: normalizeStoredUrl(r.web_glb_url) ?? null,
+			preview_image_url: normalizeStoredUrl(r.preview_image_url),
 			outcome: r.outcome,
 			downloaded: r.downloaded,
 			views_used: r.views_used ?? null,
@@ -1345,9 +1349,9 @@ export async function listCreationsByUser({ userId, limit = 24, before } = {}) {
 			id: r.id,
 			type: 'model',
 			prompt: r.prompt,
-			glbUrl: r.glb_url,
-			webGlbUrl: r.web_glb_url ?? null,
-			previewImageUrl: r.preview_image_url,
+			glbUrl: normalizeStoredUrl(r.glb_url),
+			webGlbUrl: normalizeStoredUrl(r.web_glb_url) ?? null,
+			previewImageUrl: normalizeStoredUrl(r.preview_image_url),
 			category: r.model_category ?? 'other',
 			isRemix: Boolean(r.parent_creation_id),
 			remixable: Boolean(r.remixable),
@@ -1439,9 +1443,9 @@ export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh'
 		return rows.map((r) => ({
 			id: r.id,
 			prompt: r.prompt,
-			glb_url: r.glb_url,
-			web_glb_url: r.web_glb_url ?? null,
-			preview_image_url: r.preview_image_url,
+			glb_url: normalizeStoredUrl(r.glb_url),
+			web_glb_url: normalizeStoredUrl(r.web_glb_url) ?? null,
+			preview_image_url: normalizeStoredUrl(r.preview_image_url),
 			views_used: r.views_used ?? null,
 			multiview: r.multiview ?? null,
 			backend: r.backend ?? null,
@@ -1599,8 +1603,8 @@ export async function listRecentCreations({ limit = 24, before } = {}) {
 			id: r.id,
 			type: 'model',
 			prompt: r.prompt,
-			glbUrl: r.glb_url,
-			previewImageUrl: r.preview_image_url,
+			glbUrl: normalizeStoredUrl(r.glb_url),
+			previewImageUrl: normalizeStoredUrl(r.preview_image_url),
 			category: r.model_category ?? 'other',
 			isRemix: Boolean(r.parent_creation_id),
 			createdAt: r.created_at,
@@ -1736,8 +1740,8 @@ export async function listRemixable({ limit = 24, before, category, q, sort } = 
 		return rows.map((r) => ({
 			id: r.id,
 			prompt: r.prompt,
-			glb_url: r.glb_url,
-			preview_image_url: r.preview_image_url,
+			glb_url: normalizeStoredUrl(r.glb_url),
+			preview_image_url: normalizeStoredUrl(r.preview_image_url),
 			royaltyBps: r.remix_royalty_bps ?? 0,
 			// Provenance + terms VISIBLE before remixing — but never leak the raw
 			// payout wallet in the public feed; only whether royalties can route.
@@ -1790,8 +1794,8 @@ export async function listMostRemixed({ limit = 10 } = {}) {
 		return rows.map((r) => ({
 			id: r.id,
 			prompt: r.prompt,
-			glb_url: r.glb_url,
-			preview_image_url: r.preview_image_url,
+			glb_url: normalizeStoredUrl(r.glb_url),
+			preview_image_url: normalizeStoredUrl(r.preview_image_url),
 			royaltyBps: r.remix_royalty_bps ?? 0,
 			royaltyPayable: Boolean(r.creator_wallet_solana),
 			remixable: Boolean(r.remixable),

@@ -63,13 +63,29 @@ vi.mock('../api/_lib/r2.js', () => ({
 	// mock has to carry it or every store call throws before it runs.
 	objectStorageConfigured: () => true,
 	publicUrl: (key) => `https://cdn.example.com/${key}`,
+	// Every durable forge URL (glb, variants, previews) is a same-origin
+	// /cdn/ URL, not the raw bucket domain (prompt-402 "console errors" work
+	// order: a browser <img>/<model-viewer> loading the raw domain hits
+	// Chrome's ORB or a bare CORS rejection). Kept at a different domain than
+	// the publicUrl mock above so a test can tell the two apart.
+	cdnUrl: (key) => `https://app.example.com/cdn/${key}`,
 }));
 
 vi.mock('../api/_lib/forge-events.js', () => ({
 	recordGenerationEvent: vi.fn(async () => {}),
 }));
 
-const { materializeCreation, buildLodVariant } = await import('../api/_lib/forge-store.js');
+// The preview-image copy uses untrustedSource:true, which runs the real
+// per-hop SSRF check (dns.lookup) before fetching. The stubbed `global.fetch`
+// below never touches the network either way, but the SSRF pre-check would
+// still do a real DNS lookup on the fake "provider.example" host, so it is
+// stubbed out exactly like the network/db/object-storage boundaries above.
+vi.mock('../api/_lib/ssrf-guard.js', () => ({
+	assertSafePublicUrl: async () => {},
+	SsrfBlockedError: class SsrfBlockedError extends Error {},
+}));
+
+const { materializeCreation, buildLodVariant, attachPoster } = await import('../api/_lib/forge-store.js');
 
 function stubFetch(buf) {
 	global.fetch = vi.fn(async () => ({
@@ -97,7 +113,7 @@ describe('materializeCreation — quality + compression (additive, opt-in)', () 
 			clientKey: 'client-1',
 			glbUrl: 'https://provider.example/fox.glb',
 		});
-		expect(out.glbUrl).toBe(`https://cdn.example.com/forge/client-1/${existingRow.id}.glb`);
+		expect(out.glbUrl).toBe(`https://app.example.com/cdn/forge/client-1/${existingRow.id}.glb`);
 		expect(out.quality).toBeNull();
 		expect(out.compression).toBeNull();
 		// The geometry pass shrank the raw input.
@@ -177,6 +193,42 @@ describe('materializeCreation — quality + compression (additive, opt-in)', () 
 		expect(out.quality.valid).toBe(false);
 		expect(out.quality.flag).toBe('invalid');
 	});
+
+	// prompt-402 "console errors" work order: the homepage and /grok rendered
+	// their forge preview images straight from the raw r2.dev bucket domain,
+	// which Chrome's Opaque Response Blocking refuses to load as an <img>.
+	// Root cause: this write site handed back copyToBucket's publicUrl(key)
+	// verbatim instead of routing it through cdnUrl() like every avatar
+	// thumbnail already must (tests/thumbnail-url-guard.test.js). The variable
+	// here is named `copied`/`preview`, not "...thumb...", so that guard's
+	// regex never caught it.
+	it('writes preview_image_url through cdnUrl(), not the raw bucket domain (ORB fix)', async () => {
+		stubFetch(FOX_GLB);
+		sqlMock.mockImplementationOnce(async () => [
+			{ ...existingRow, id: 'creation-preview', preview_image_url: 'https://provider.example/ref.jpg' },
+		]);
+		const out = await materializeCreation({
+			replicateJobId: 'job-preview',
+			clientKey: 'client-1',
+			glbUrl: 'https://provider.example/fox.glb',
+		});
+		expect(out.previewImageUrl).toBe('https://app.example.com/cdn/forge/client-1/creation-preview.jpg');
+	});
+});
+
+describe('attachPoster: ORB-safe preview URL (prompt-402 "console errors" work order)', () => {
+	it('writes preview_image_url through cdnUrl(), not the raw bucket domain', async () => {
+		sqlMock.mockImplementationOnce(async () => [{ id: 'poster-1', preview_image_url: null }]);
+		sqlMock.mockImplementationOnce(async () => [{ id: 'poster-1' }]);
+		const url = await attachPoster({
+			id: 'poster-1',
+			clientKey: 'client-1',
+			body: Buffer.from('fake-webp-bytes'),
+			contentType: 'image/webp',
+			ext: 'webp',
+		});
+		expect(url).toBe('https://app.example.com/cdn/forge/client-1/poster-1-poster.webp');
+	});
 });
 
 describe('buildLodVariant: real MSFT_lod chain (prompt-071 "LOD and Engine QA" work order)', () => {
@@ -189,7 +241,7 @@ describe('buildLodVariant: real MSFT_lod chain (prompt-071 "LOD and Engine QA" w
 		const out = await buildLodVariant({ buffer: FOX_GLB, creationId: existingRow.id, keyPrefix: `forge/client-1/${existingRow.id}` });
 		expect(out).not.toBeNull();
 		expect(out.key).toBe(`forge/client-1/${existingRow.id}.lod.glb`);
-		expect(out.url).toBe(`https://cdn.example.com/forge/client-1/${existingRow.id}.lod.glb`);
+		expect(out.url).toBe(`https://app.example.com/cdn/forge/client-1/${existingRow.id}.lod.glb`);
 		expect(out.levels.length).toBeGreaterThanOrEqual(2);
 		for (let i = 1; i < out.levels.length; i++) {
 			expect(out.levels[i].triangleCount).toBeLessThanOrEqual(out.levels[i - 1].triangleCount);

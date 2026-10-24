@@ -27,6 +27,11 @@ const putObjectMock = vi.fn(async () => order.push('r2'));
 vi.mock('../api/_lib/r2.js', () => ({
 	putObject: (...a) => putObjectMock(...a),
 	publicUrl: (key) => `https://cdn.example/${key}`,
+	// renderThumbnail persists this as a same-origin /cdn/ URL, not the raw
+	// bucket domain (prompt-402 "console errors" work order: the raw domain
+	// trips Chrome's ORB on an <img> load). Different domain than the
+	// publicUrl mock above so a test can tell the two apart.
+	cdnUrl: (key) => `https://app.example/cdn/${key}`,
 }));
 
 const renderGlbToPngMock = vi.fn(async () => Buffer.from('x'.repeat(5000)));
@@ -65,7 +70,7 @@ describe('renderThumbnail', () => {
 		const r = await renderThumbnail({ id: 'c-2', glb_url: 'https://cdn/y.glb' });
 		expect(putObjectMock.mock.calls[0][0].key).toBe(forgeThumbKeyFor('c-2'));
 		expect(r.key).toBe('forge/thumb/c-2.png');
-		expect(r.url).toBe('https://cdn.example/forge/thumb/c-2.png');
+		expect(r.url).toBe('https://app.example/cdn/forge/thumb/c-2.png');
 		expect(r.filled).toBe(true);
 		// The UPDATE is fill-only — guarded by preview_image_url IS NULL.
 		const upd = sqlCalls.find((c) => /UPDATE forge_creations/i.test(c.text));

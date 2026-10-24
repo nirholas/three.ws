@@ -32,6 +32,10 @@ vi.mock('../api/_lib/r2.js', () => ({
 	publicUrl: (key) => `https://cdn.example.com/${key}`,
 	deleteObject: vi.fn(async () => {}),
 	keyFromPublicUrl: () => null,
+	// listCreations now routes glb_url/web_glb_url/preview_image_url through
+	// normalizeStoredUrl() (prompt-402 "console errors" work order); this
+	// mock's rows already carry CDN-shaped URLs, so a passthrough is correct.
+	normalizeStoredUrl: (url) => url,
 }));
 
 const { listCreations } = await import('../api/_lib/forge-store.js');

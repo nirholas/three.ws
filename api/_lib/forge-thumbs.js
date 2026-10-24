@@ -24,7 +24,7 @@
 // and a batch runner that aborts (refunding untouched claims) if chromium dies.
 
 import { sql } from './db.js';
-import { putObject, publicUrl } from './r2.js';
+import { putObject, cdnUrl } from './r2.js';
 import { thumbBackdropFor } from './avatar-thumbs.js';
 
 // 768² matches the avatar thumbnail size — crisp on retina cards, one PNG the
@@ -173,7 +173,9 @@ export async function renderThumbnail({ id, glb_url: glbUrl }) {
 
 	// Fill-only: only claim the preview slot if it is still empty, so a poster the
 	// maker captured in the meantime always wins over a headless render.
-	const url = publicUrl(key);
+	// Same-origin /cdn/ URL, not the raw bucket domain: a card's <img> loading
+	// this preview must not hit Chrome's Opaque Response Blocking (ORB).
+	const url = cdnUrl(key);
 	const updated = await sql`
 		UPDATE forge_creations
 		   SET preview_image_url = ${url}, preview_key = ${key}, updated_at = now()

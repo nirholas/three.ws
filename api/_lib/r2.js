@@ -398,7 +398,29 @@ export function isLegacyOgThumbnailKey(thumbnailKey) {
 // not bare publicUrl(). See docs/avatar-thumbnails.md.
 export function thumbnailUrl(thumbnailKey) {
 	if (!thumbnailKey || isLegacyOgThumbnailKey(thumbnailKey)) return null;
-	return cdnUrlOrNull(thumbnailKey);
+	// keyFromPublicUrl() reads S3_PUBLIC_DOMAIN, which throws when object
+	// storage isn't configured. cdnUrlOrNull() below needs no bucket domain
+	// at all, so a thrown lookup here must not stop this read path from
+	// still resolving the key through /cdn/.
+	let key = thumbnailKey;
+	try {
+		key = keyFromPublicUrl(thumbnailKey) || thumbnailKey;
+	} catch {
+		// object storage unconfigured: fall through with the raw key.
+	}
+	return cdnUrlOrNull(key);
+}
+
+// A stored *_url column (forge_creations.preview_image_url, glb_url,
+// web_glb_url) written before the fix that routed those writes through
+// cdnUrl() still carries the raw public *.r2.dev domain. That domain trips
+// Chrome's Opaque Response Blocking on an <img>/model-viewer load, so a read
+// path serving one of these columns to a browser must normalize it here
+// rather than return it verbatim. Anything already on cdnUrl()'s form, or an
+// external URL (a caller's own reference image), passes through untouched.
+export function normalizeStoredUrl(url) {
+	const key = keyFromPublicUrl(url);
+	return key ? cdnUrl(key) : url;
 }
 
 export function encodeR2Key(key) {

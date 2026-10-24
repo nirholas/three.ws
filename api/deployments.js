@@ -25,7 +25,7 @@ import { sql, isDbUnavailableError } from './_lib/db.js';
 import { cors, json, method, error, serverError, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { cacheGet, cacheSet } from './_lib/cache.js';
-import { publicUrl } from './_lib/r2.js';
+import { cdnUrl } from './_lib/r2.js';
 import { CHAINS, CHAIN_BY_ID, tokenExplorerUrl, addressExplorerUrl } from './_lib/erc8004-chains.js';
 
 const FEED_TTL_S = 20; // feed page cache — registrations land in minutes, not seconds
@@ -104,7 +104,8 @@ function decodeCursor(raw) {
 
 // Shape one feed row (EVM or Solana) into the public deployment event the client
 // renders. Pure. The `family` discriminator decides explorer-URL construction.
-function shapeRow(r) {
+// Exported for direct unit testing of the image-URL ORB fix below.
+export function shapeRow(r) {
 	if (r.family === 'solana') {
 		const asset = r.asset || r.agent_id;
 		return {
@@ -115,7 +116,9 @@ function shapeRow(r) {
 			agent_id: r.agent_id,
 			name: r.name || null,
 			description: r.description || null,
-			image: r.image || (r.image_key ? publicUrl(r.image_key) : null),
+			// Same-origin /cdn/ URL, not the raw bucket domain: this feeds an <img>
+			// in the deployments feed, so the raw r2.dev domain would ORB-block it.
+			image: r.image || (r.image_key ? cdnUrl(r.image_key) : null),
 			owner: r.owner || null,
 			has_3d: !!r.has_3d,
 			x402_support: !!r.x402_support,

@@ -36,7 +36,7 @@ import { sql, isDbUnavailableError } from './_lib/db.js';
 import { cors, json, method, error, serverError, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { isUuid } from './_lib/validate.js';
-import { publicUrlOrNull as r2PublicUrl } from './_lib/r2.js';
+import { thumbnailUrl } from './_lib/r2.js';
 import { explorerTxUrl, explorerAccountUrl } from './_lib/avatar-wallet.js';
 import { cacheGet, cacheSet } from './_lib/cache.js';
 import { marketplaceFeeBps } from './_lib/marketplace-platform-fee.js';
@@ -97,7 +97,7 @@ function decodeCursor(raw) {
 }
 
 const r2Url = (key, visible) =>
-	key && visible ? r2PublicUrl(key) : null;
+	key && visible ? thumbnailUrl(key) : null;
 
 // Shape one DB row into the public pulse event the client renders. Pure.
 function shapeEvent(r) {

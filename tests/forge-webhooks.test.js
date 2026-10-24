@@ -74,6 +74,10 @@ vi.mock('../api/_lib/r2.js', () => ({
 	putObject: vi.fn(async ({ key }) => ({ key })),
 	objectStorageConfigured: () => true,
 	publicUrl: (key) => `https://cdn.example.com/${key}`,
+	// materializeCreation writes the delivered glb_url through cdnUrl(), not the
+	// raw bucket domain (prompt-402 "console errors" work order), so this mock
+	// has to carry it or the write throws before dispatchWebhooks ever runs.
+	cdnUrl: (key) => `https://cdn.example.com/${key}`,
 }));
 
 vi.mock('../api/_lib/forge-events.js', () => ({
