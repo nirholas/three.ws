@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-10-24",
+			"title": "Opt-in WebGPU renderer with automatic WebGL2 fallback, starting in Restyle Studio",
+			"summary": "three is now r186. Add ?renderer=webgpu to /restyle to render on WebGPU with a TSL rim light, or leave it off for the same WebGL2 picture as before. If the browser has no GPU adapter or WebGPU fails to start, the page falls back to WebGL2 on its own. A badge shows which backend is running, and exported GLBs are identical on both paths. Measured parity and timings are in the WebGPU renderer doc.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/docs/webgpu-renderer"
+		},
+		{
 			"date": "2026-10-23",
 			"title": "Revoking a connected app now stops it everywhere",
 			"summary": "When Claude, ChatGPT or any MCP client ends its own grant, or you press Revoke in Connected apps, its access tokens stop on the next request and the token introspection endpoint reports them inactive. Other clients on your account stay connected. The consent screen tests now pin the Read, Manage, Trade, Spend and Launch groups.",
