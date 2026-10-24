@@ -13,7 +13,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { gatherSubsystemHealth, classifySniperBeat } from '../api/_lib/ops/subsystem-health.js';
-import { cacheSet } from '../api/_lib/cache.js';
+import { cacheSet, cacheDel } from '../api/_lib/cache.js';
 
 // Env the ring + x402-config checks read. Save/restore so cases don't leak.
 const ENV_KEYS = [
@@ -169,6 +169,21 @@ describe('gatherSubsystemHealth', () => {
 		expect(world.status).toBe('degraded');
 		expect(world.detail).toMatch(/UNPROTECTED/);
 		expect(world.hint).toMatch(/ADMIN_CODE/);
+	});
+
+	it('reports world as DOWN from a parked world-health outcome', async () => {
+		await cacheSet(
+			'world:health',
+			{ status: 'down', protected: null, problems: ['HTTP 503'], missingCount: 0, checkedAt: Date.now() },
+			3600,
+		);
+		const health = await gatherSubsystemHealth({ probeDb: false });
+		const world = sub(health, 'world');
+		expect(world.status).toBe('down');
+		expect(world.detail).toMatch(/503/);
+		expect(health.status).toBe('down');
+		expect(health.degraded).toContain('world');
+		await cacheDel('world:health');
 	});
 
 	it('reports cache as OK on the in-memory backend when no Redis is configured', async () => {

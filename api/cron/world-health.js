@@ -93,14 +93,24 @@ export default wrapCron(async (req, res) => {
 			sendOpsAlert('World DOWN', `${WORLD_STATUS_URL} returned HTTP ${r.status}`, {
 				signature: 'world-health:status-http',
 			});
+			await cacheSet(
+				WORLD_HEALTH_CACHE_KEY,
+				{ status: 'down', protected: null, problems: [`HTTP ${r.status}`], missingCount: 0, checkedAt: Date.now() },
+				WORLD_HEALTH_TTL_S,
+			).catch(() => {});
 			return json(res, 200, { status: 'down', protected: null, blueprintCount: 0, reason: `HTTP ${r.status}` });
 		}
 		status = await r.json();
 	} catch (e) {
 		const reason = e?.name === 'TimeoutError' ? 'timeout' : e?.message || 'unreachable';
-		sendOpsAlert('World DOWN', `${WORLD_STATUS_URL} unreachable — ${reason}`, {
+		sendOpsAlert('World DOWN', `${WORLD_STATUS_URL} unreachable - ${reason}`, {
 			signature: 'world-health:status-unreachable',
 		});
+		await cacheSet(
+			WORLD_HEALTH_CACHE_KEY,
+			{ status: 'down', protected: null, problems: [reason], missingCount: 0, checkedAt: Date.now() },
+			WORLD_HEALTH_TTL_S,
+		).catch(() => {});
 		return json(res, 200, { status: 'down', protected: null, blueprintCount: 0, reason });
 	}
 

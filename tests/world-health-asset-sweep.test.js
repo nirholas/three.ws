@@ -27,6 +27,7 @@ vi.mock('../api/_lib/cache.js', () => ({ cacheSet: vi.fn(async () => {}) }));
 
 import handler from '../api/cron/world-health.js';
 import { sendOpsAlert } from '../api/_lib/alerts.js';
+import { cacheSet } from '../api/_lib/cache.js';
 
 const SECRET = 'test-cron-secret';
 
@@ -93,6 +94,7 @@ beforeEach(() => {
 	warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 	logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 	sendOpsAlert.mockReset();
+	cacheSet.mockReset();
 });
 afterEach(() => {
 	vi.unstubAllGlobals();
@@ -166,5 +168,31 @@ describe('world-health asset sweep', () => {
 		expect(body.status).toBe('ok');
 		expect(body.unreachableAssets).toHaveLength(1);
 		expect(body.unreachableAssets[0].status).toBe(503);
+	});
+
+	it('parks a down verdict when /status answers a non-2xx status', async () => {
+		vi.stubGlobal('fetch', vi.fn(async (url) => {
+			if (String(url).endsWith('/status')) return { ok: false, status: 503, json: async () => ({}) };
+			throw new Error('must not HEAD any asset when /status itself failed');
+		}));
+		const body = await run();
+
+		expect(body.status).toBe('down');
+		expect(sendOpsAlert).toHaveBeenCalledTimes(1);
+		expect(sendOpsAlert.mock.calls[0][0]).toBe('World DOWN');
+		expect(cacheSet).toHaveBeenCalledTimes(1);
+		expect(cacheSet.mock.calls[0][0]).toBe('world:health');
+		expect(cacheSet.mock.calls[0][1]).toMatchObject({ status: 'down', protected: null });
+	});
+
+	it('parks a down verdict when /status is unreachable', async () => {
+		vi.stubGlobal('fetch', vi.fn(async () => {
+			throw Object.assign(new Error('timed out'), { name: 'TimeoutError' });
+		}));
+		const body = await run();
+
+		expect(body.status).toBe('down');
+		expect(cacheSet).toHaveBeenCalledTimes(1);
+		expect(cacheSet.mock.calls[0][1]).toMatchObject({ status: 'down', protected: null });
 	});
 });

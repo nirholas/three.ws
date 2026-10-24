@@ -340,6 +340,9 @@ async function checkWorld() {
 		if (age > WORLD_STALE_MS) {
 			return { ...base, status: 'unknown', detail: 'world-health report is stale' };
 		}
+		if (parked.status === 'down') {
+			return { ...base, status: 'down', detail: (parked.problems || []).join('; ') || 'world unreachable' };
+		}
 		if (parked.protected === false) {
 			return {
 				...base,
