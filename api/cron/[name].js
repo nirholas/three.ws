@@ -2657,6 +2657,19 @@ async function handleRunBuyback(req, res) {
 // single dollar moves.
 // ═══════════════════════════════════════════════════════════════════════════
 
+// Same over-invocation disease fixed above for run-buyback: economy-tick.js
+// fires /api/cron/run-three-buyback every minute (fan-out TARGETS) on top of
+// its own dedicated vercel.json `0 6 * * *` (once daily) Cloud Scheduler job.
+// Unlike run-buyback's burn-only default, a live run here sizes its spend off
+// the buyback wallet's CURRENT USDC balance (computeSpend), signs a real
+// Jupiter swap, and sweeps to treasury: nothing stops two overlapping real
+// runs from both reading the same pre-spend balance and each deploying up to
+// maxUsdPerRun(), doubling the per-run spend cap the policy relies on. The
+// lease only gates the live path; a dry run never signs, so monitoring/status
+// callers with ?dry_run=1 are never blocked by it.
+const THREE_BUYBACK_LEASE_KEY = 'cron:run-three-buyback:lease';
+const THREE_BUYBACK_LEASE_SECONDS = 23 * 60 * 60;
+
 async function handleRunThreeBuyback(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
@@ -2665,6 +2678,11 @@ async function handleRunThreeBuyback(req, res) {
 	const bb = await import('../_lib/token/buyback.js');
 	const dryRunRaw = String(req.query?.dry_run ?? '').toLowerCase();
 	const dryRun = dryRunRaw === '1' || dryRunRaw === 'true';
+
+	if (!dryRun && !(await acquireLock(THREE_BUYBACK_LEASE_KEY, THREE_BUYBACK_LEASE_SECONDS))) {
+		return json(res, 200, { ok: true, skipped: true, reason: 'lease_held' });
+	}
+
 	const slippage = bb.slippageBps();
 	const revenueAtomics = await bb.revenueFeeAtomicsToDate();
 	const revStr = revenueAtomics.toString();
