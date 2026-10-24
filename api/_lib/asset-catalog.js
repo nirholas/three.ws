@@ -109,6 +109,8 @@ function normalize(row, kind) {
 		bytes: Number.isFinite(row?.bytes) ? row.bytes : null,
 	};
 	if (collection) base.collection = collection;
+	const attribution = String(row?.attribution || '').trim();
+	if (attribution) base.attribution = attribution;
 
 	if (kind === 'animation') {
 		base.format = 'three-animation-clip-json';

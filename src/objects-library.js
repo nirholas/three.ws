@@ -1,10 +1,10 @@
-// /objects: the CC0 3D object/prop library gallery.
+// /objects: the free 3D object/prop library gallery (CC0 props plus CC BY NVIDIA SimReady assets).
 //
 // Browses the free, commercial-OK props served by GET /api/objects/library
 // (manifest on R2, mirroring /character-library). Each card offers:
 //   Preview  -> /app#model=<glb>&kind=object   (viewer in object mode: no agent chat)
 //   AR       -> /ar/studio?src=<glb>           (place the prop in your room)
-//   Download -> the GLB directly               (every object is CC0)
+//   Download -> the GLB directly               (CC0, or CC BY with the credit shown on the card)
 //
 // The library is ~500 entries and the whole manifest is fetched once, so search,
 // sort and category filtering are instant and never cost a round trip. What the
@@ -47,6 +47,14 @@ const state = { all: [], query: '', sort: 'az', category: '', view: [], rendered
 // nothing outside Poly Haven's own site. They stay on the object (and stay
 // searchable through its tags); they just do not earn a chip.
 const isBrowsableCategory = (c) => Boolean(c) && !/^collection\s*:/i.test(c);
+
+// The manifest carries each object's license. CC0 needs no credit; CC BY does, so a
+// card for an attributed object names the author next to the license pill and links
+// the license text, instead of the page claiming everything is public domain.
+const licenseLabel = (o) => String(o.license || 'CC0').replace(/^CC-BY-(\d)/i, 'CC BY $1');
+const licenseUrl = (o) => /^CC-BY-4\.0$/i.test(o.license || '') ? 'https://creativecommons.org/licenses/by/4.0/' : '';
+const attributionUrl = (o) => (String(o.attribution || '').match(/https?:\/\/\S+/) || [''])[0];
+const attributionText = (o) => String(o.attribution || '').replace(/,?\s*https?:\/\/\S+/, '').trim();
 
 const prefersReducedMotion =
 	typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -128,6 +136,10 @@ function renderCard(o) {
 	const arUrl = `/ar/studio?src=${encodeURIComponent(glbUrl)}&title=${encodeURIComponent(alt)}`;
 	const cat = (o.categories || []).find(isBrowsableCategory) || '';
 	const size = formatBytes(o.bytes);
+	const lic = licenseLabel(o);
+	const credit = o.attribution
+		? `<div class="ch-card-credit">Credit: <a href="${escapeAttr(attributionUrl(o))}" target="_blank" rel="noopener">${escapeHtml(attributionText(o))}</a>${licenseUrl(o) ? ` (<a href="${escapeAttr(licenseUrl(o))}" target="_blank" rel="noopener">${escapeHtml(lic)}</a>)` : ''}</div>`
+		: '';
 
 	const card = document.createElement('article');
 	card.className = 'ch-card';
@@ -137,7 +149,7 @@ function renderCard(o) {
 			${o.thumb
 				? `<img class="ch-card-img" src="${escapeAttr(o.thumb)}" alt="" loading="lazy" decoding="async" />`
 				: '<span class="ch-card-img ch-card-img--blank" aria-hidden="true"></span>'}
-			<span class="ch-card-pill">CC0</span>
+			<span class="ch-card-pill">${escapeHtml(lic)}</span>
 			<span class="ch-card-play" aria-hidden="true">&#9654;</span>
 		</a>
 		<div class="ch-card-body">
@@ -146,7 +158,7 @@ function renderCard(o) {
 			<div class="ch-card-actions">
 				<a class="ch-btn ch-btn--primary" href="${escapeAttr(previewUrl)}" title="Open ${escapeAttr(alt)} in the 3D viewer">Preview</a>
 				<a class="ch-btn ch-btn--ghost" href="${escapeAttr(arUrl)}" title="Place ${escapeAttr(alt)} in your room with AR Studio">AR</a>
-				<a class="ch-btn ch-btn--ghost" href="${escapeAttr(glbUrl)}" download title="Download the ${escapeAttr(alt)} GLB (CC0, free to reuse)">Download</a>
+				<a class="ch-btn ch-btn--ghost" href="${escapeAttr(glbUrl)}" download title="Download the ${escapeAttr(alt)} GLB (${escapeAttr(lic)}, free to reuse${o.attribution ? ', credit required' : ''})">Download</a>
 			</div>
 		</div>
 	`;
@@ -241,7 +253,7 @@ async function load() {
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const data = await res.json();
 		state.all = Array.isArray(data.objects) ? data.objects : [];
-		if (els.heroStats) els.heroStats.textContent = state.all.length ? `${state.all.length} CC0 props, free to use` : '';
+		if (els.heroStats) els.heroStats.textContent = state.all.length ? `${state.all.length} props, free to use` : '';
 		renderChips();
 		applyView();
 	} catch (err) {

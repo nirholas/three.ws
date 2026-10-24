@@ -72,7 +72,8 @@ Each entry in `objects`:
 | `bytes` | number | GLB file size |
 | `categories` | string[] | Categories, used by the gallery's filter chips |
 | `tags` | string[] | Free-text tags, searched by the gallery |
-| `license` | string | `"CC0"` |
+| `license` | string | `"CC0"` or `"CC-BY-4.0"` |
+| `attribution` | string (optional) | Credit line to show wherever the model is used; present on every `CC-BY-4.0` entry |
 | `source` | string | Origin catalog, e.g. `"polyhaven"` |
 
 Before the manifest is first uploaded, the endpoint returns `{ "objects": [], "total": 0 }` rather than an error, so consumers feature-detect by emptiness. A storage outage degrades the same way, but that response carries `Cache-Control: no-store` instead of the 300s edge cache, so the library reappears the moment storage recovers rather than staying empty for the rest of the cache window.
@@ -89,11 +90,12 @@ Returns the first two objects plus `total`, `offset`, and `next_offset`, each en
 
 ## Licensing
 
-Every object in the library is CC0 (public domain), and every manifest entry carries `"license": "CC0"`. That means:
+Every manifest entry carries its own `license`, and there are two:
 
-- Free for any use, personal or commercial.
-- No attribution required (crediting the original authors listed in the source catalogs is appreciated, never required).
-- You may download the GLB and use, modify, or redistribute it anywhere, inside or outside three.ws.
+- **`CC0`** (the Poly Haven props): public domain. Free for any use, personal or commercial, no attribution required (crediting the original authors is appreciated, never required), and you may download, modify and redistribute the GLB anywhere.
+- **`CC-BY-4.0`** (the [NVIDIA SimReady assets](./simready-assets.md)): free for any use, personal or commercial, as long as you credit the author. These entries also carry an `attribution` string (`NVIDIA SimReady Assets, CC BY 4.0, <source url>`), and the gallery prints it on the card. The GLBs are converted and decimated derivatives of NVIDIA's OpenUSD originals, which CC BY 4.0 permits with attribution.
+
+Read `license` before redistributing; do not assume CC0 for the whole library.
 
 ## How the library is staged (maintainers)
 
@@ -101,7 +103,8 @@ The gallery and API are read-only consumers of a manifest built by a local pipel
 
 1. `scripts/fetch-polyhaven-objects.mjs` downloads and converts the source models and writes `public/objects/polyhaven/catalog.json`.
 2. `scripts/render-glb-thumbnails.mjs` renders the PNG thumbnails to R2.
-3. `scripts/build-object-library.mjs` reads the catalog, keeps only completed models, includes a `thumb` only for thumbnails that actually rendered, and PUTs `objects/library/manifest.json` to R2 (`--dry-run` prints without uploading).
+   The NVIDIA SimReady set has its own ingest: see [SimReady assets](./simready-assets.md).
+3. `scripts/build-object-library.mjs` reads the catalogs (Poly Haven and SimReady), keeps only completed models, includes a `thumb` only for thumbnails that actually rendered, and PUTs `objects/library/manifest.json` to R2 (`--dry-run` prints without uploading).
 
 ## Related
 

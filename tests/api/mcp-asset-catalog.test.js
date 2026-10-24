@@ -34,6 +34,18 @@ const MANIFESTS = {
 				tags: ['wood', 'seating'],
 				license: 'CC0',
 			},
+			{
+				name: 'IV_pole_a01',
+				label: 'IV Pole',
+				url: 'https://cdn.test/objects/simready/IV_pole_a01.glb',
+				thumb: 'https://cdn.test/objects/simready/IV_pole_a01.webp',
+				bytes: 3124000,
+				categories: ['simready', 'hospital'],
+				tags: ['iv', 'pole'],
+				license: 'CC-BY-4.0',
+				attribution: 'NVIDIA SimReady Assets, CC BY 4.0, https://huggingface.co/datasets/nvidia/simready-assets',
+				source: 'simready',
+			},
 		],
 	},
 	'avatars/library/manifest.json': {
@@ -101,10 +113,11 @@ beforeEach(() => {
 describe('catalog join', () => {
 	it('reads all three libraries into one normalized list', async () => {
 		const res = await searchCatalog({ limit: 50 });
-		expect(res.total).toBe(4);
+		expect(res.total).toBe(5);
 		expect(res.items.map((i) => i.id).sort()).toEqual([
 			'animation:mx-wave-abc123',
 			'character:abe',
+			'object:IV_pole_a01',
 			'object:adjustable_wrench',
 			'object:wooden_chair',
 		]);
@@ -128,6 +141,18 @@ describe('catalog join', () => {
 		const afterFirst = getPublicObjectBuffer.mock.calls.length;
 		await searchCatalog({ q: 'wrench' });
 		expect(getPublicObjectBuffer.mock.calls.length).toBe(afterFirst);
+	});
+});
+
+describe('attribution', () => {
+	it('carries a CC BY attribution line through to the catalog item', async () => {
+		const item = await getCatalogItem('object:IV_pole_a01');
+		expect(item.license).toBe('CC-BY-4.0');
+		expect(item.attribution).toMatch(/NVIDIA SimReady Assets/);
+	});
+
+	it('leaves attribution off CC0 items that do not need one', async () => {
+		expect((await getCatalogItem('object:wooden_chair')).attribution).toBeUndefined();
 	});
 });
 
@@ -171,7 +196,9 @@ describe('ranking', () => {
 		expect(first.next_offset).toBe(1);
 		const second = await searchCatalog({ kind: 'object', limit: 1, offset: 1 });
 		expect(second.items[0].id).not.toBe(first.items[0].id);
-		expect(second.next_offset).toBeNull();
+		expect(second.next_offset).toBe(2);
+		const last = await searchCatalog({ kind: 'object', limit: 1, offset: 2 });
+		expect(last.next_offset).toBeNull();
 	});
 
 	it('resolves a bare name as well as a `<kind>:<name>` id', async () => {

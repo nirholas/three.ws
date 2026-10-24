@@ -20,12 +20,13 @@ const DRY = process.argv.includes('--dry-run');
 
 const SOURCES = [
 	{ catalog: join(ROOT, 'public', 'objects', 'polyhaven', 'catalog.json'), key: 'models' },
+	{ catalog: join(ROOT, 'public', 'objects', 'simready', 'catalog.json'), key: 'models' },
 ];
 
 // The set of thumbnails that actually rendered (render-glb-thumbnails.mjs), so a
 // failed poster is omitted rather than published as a 404 broken image.
 const renderedThumbs = new Set(
-	DRY ? [] : (await listKeys('objects/')).filter((o) => o.key.includes('/thumbs/') && o.key.endsWith('.png')).map((o) => o.key),
+	DRY ? [] : (await listKeys('objects/')).filter((o) => o.key.includes('/thumbs/') && /\.(png|webp)$/.test(o.key)).map((o) => o.key),
 );
 
 const objects = [];
@@ -44,6 +45,7 @@ for (const src of SOURCES) {
 			categories: m.categories || [],
 			tags: m.tags || [],
 			license: m.license || 'CC0',
+			...(m.attribution ? { attribution: m.attribution } : {}),
 			source: m.source || 'polyhaven',
 		});
 	}
