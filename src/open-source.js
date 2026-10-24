@@ -22,7 +22,9 @@ function escapeHtml(s) {
 function renderCard(entry) {
 	const kindLabel = KIND_LABEL[entry.kind] || entry.kind;
 	const links = [];
-	if (entry.repo) links.push(`<a href="${escapeHtml(entry.repo)}" rel="noopener" target="_blank">Source</a>`);
+	if (entry.repo && /^https?:\/\//.test(entry.repo)) {
+		links.push(`<a href="${escapeHtml(entry.repo)}" rel="noopener" target="_blank">Source</a>`);
+	}
 	if (entry.funding) links.push(`<a href="${escapeHtml(entry.funding)}" rel="noopener" target="_blank">Sponsor</a>`);
 	return `
 		<div class="os-card">

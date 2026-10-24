@@ -566,11 +566,21 @@ function npmEntries() {
 	return entries;
 }
 
-function normalizeRepoUrl(repo) {
+export function normalizeRepoUrl(repo) {
 	if (!repo) return null;
-	return repo
+	let url = repo
 		.replace(/^git\+/, '')
-		.replace(/\.git$/, '')
+		.replace(/\.git$/, '');
+	if (/^git@([^:]+):(.+)$/.test(url)) {
+		url = url.replace(/^git@([^:]+):(.+)$/, 'https://$1/$2');
+	} else if (/^ssh:\/\/git@([^/]+)\/(.+)$/.test(url)) {
+		url = url.replace(/^ssh:\/\/git@([^/]+)\/(.+)$/, 'https://$1/$2');
+	} else if (/^[^/:]+\.[^/:]+:[^/]+\/[^/]+$/.test(url)) {
+		url = url.replace(/^([^:]+):(.+)$/, 'https://$1/$2');
+	} else if (/^[^/\s:]+\/[^/\s:]+$/.test(url)) {
+		url = `https://github.com/${url}`;
+	}
+	return url
 		.replace(/^git:\/\//, 'https://')
 		.replace(/^github:/, 'https://github.com/');
 }

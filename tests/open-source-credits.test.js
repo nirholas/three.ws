@@ -12,7 +12,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { buildCredits, AREAS, ROOT } from '../scripts/lib/open-source-credits.mjs';
+import { buildCredits, normalizeRepoUrl, AREAS, ROOT } from '../scripts/lib/open-source-credits.mjs';
 
 describe('open-source-credits dataset', () => {
 	it('matches the committed data/open-source-credits.json exactly', () => {
@@ -58,5 +58,75 @@ describe('open-source-credits dataset', () => {
 		const enDash = String.fromCharCode(8211);
 		expect(text.includes(emDash)).toBe(false);
 		expect(text.includes(enDash)).toBe(false);
+	});
+
+	it('every entry with a repo field has an http(s) URL, never a three.ws-relative or ssh path', () => {
+		const { entries } = buildCredits();
+		for (const entry of entries) {
+			if (entry.repo) {
+				expect(entry.repo, `${entry.id} has a non-http(s) repo "${entry.repo}"`).toMatch(
+					/^https?:\/\//,
+				);
+			}
+		}
+	});
+});
+
+describe('normalizeRepoUrl', () => {
+	it('returns null for a missing repo field', () => {
+		expect(normalizeRepoUrl(null)).toBe(null);
+		expect(normalizeRepoUrl(undefined)).toBe(null);
+	});
+
+	it('leaves a full https URL unchanged', () => {
+		expect(normalizeRepoUrl('https://github.com/mrdoob/three.js')).toBe(
+			'https://github.com/mrdoob/three.js',
+		);
+	});
+
+	it('strips a leading git+ and trailing .git', () => {
+		expect(normalizeRepoUrl('git+https://github.com/foo/bar.git')).toBe(
+			'https://github.com/foo/bar',
+		);
+	});
+
+	it('converts git:// to https://', () => {
+		expect(normalizeRepoUrl('git://github.com/foo/bar.git')).toBe('https://github.com/foo/bar');
+	});
+
+	it('converts github: shorthand to a full URL', () => {
+		expect(normalizeRepoUrl('github:foo/bar')).toBe('https://github.com/foo/bar');
+	});
+
+	it('converts bare owner/repo shorthand to a GitHub URL', () => {
+		expect(normalizeRepoUrl('ajv-validator/ajv')).toBe('https://github.com/ajv-validator/ajv');
+		expect(normalizeRepoUrl('expressjs/express')).toBe('https://github.com/expressjs/express');
+		expect(normalizeRepoUrl('panva/jose')).toBe('https://github.com/panva/jose');
+		expect(normalizeRepoUrl('sindresorhus/p-limit')).toBe(
+			'https://github.com/sindresorhus/p-limit',
+		);
+		expect(normalizeRepoUrl('sparkjsdev/spark')).toBe('https://github.com/sparkjsdev/spark');
+		expect(normalizeRepoUrl('ai/nanoid')).toBe('https://github.com/ai/nanoid');
+	});
+
+	it('converts git@host:owner/repo SSH shorthand to a full URL', () => {
+		expect(normalizeRepoUrl('git@github.com:upstash/redis-js')).toBe(
+			'https://github.com/upstash/redis-js',
+		);
+		expect(normalizeRepoUrl('git@github.com:isaacs/node-glob')).toBe(
+			'https://github.com/isaacs/node-glob',
+		);
+	});
+
+	it('converts a scheme-less host:owner/repo form to a full URL', () => {
+		expect(normalizeRepoUrl('github.com:Kamino-Finance/klend-sdk')).toBe(
+			'https://github.com/Kamino-Finance/klend-sdk',
+		);
+	});
+
+	it('converts an explicit ssh://git@host/owner/repo URL to a full URL', () => {
+		expect(normalizeRepoUrl('ssh://git@github.com/isaacs/node-lru-cache')).toBe(
+			'https://github.com/isaacs/node-lru-cache',
+		);
 	});
 });

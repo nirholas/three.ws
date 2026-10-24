@@ -124,7 +124,7 @@
 			"name": "compression",
 			"area": "formats",
 			"license": "MIT",
-			"repo": "expressjs/compression",
+			"repo": "https://github.com/expressjs/compression",
 			"funding": "https://opencollective.com/express",
 			"version": "1.8.2",
 			"powers": null
@@ -669,7 +669,7 @@
 			"name": "@ethereum-attestation-service/eas-sdk",
 			"area": "infrastructure",
 			"license": "MIT",
-			"repo": "git@github.com:ethereum-attestation-service/eas-sdk",
+			"repo": "https://github.com/ethereum-attestation-service/eas-sdk",
 			"funding": null,
 			"version": "2.10.0",
 			"powers": null
@@ -757,7 +757,7 @@
 			"name": "@kamino-finance/klend-sdk",
 			"area": "infrastructure",
 			"license": "MIT",
-			"repo": "github.com:Kamino-Finance/klend-sdk",
+			"repo": "https://github.com/Kamino-Finance/klend-sdk",
 			"funding": null,
 			"version": "13.0.5",
 			"powers": null
@@ -1208,7 +1208,7 @@
 			"name": "@upstash/redis",
 			"area": "infrastructure",
 			"license": "MIT",
-			"repo": "git@github.com:upstash/redis-js",
+			"repo": "https://github.com/upstash/redis-js",
 			"funding": null,
 			"version": "1.39.0",
 			"powers": null
@@ -1406,7 +1406,7 @@
 			"name": "ajv",
 			"area": "infrastructure",
 			"license": "MIT",
-			"repo": "ajv-validator/ajv",
+			"repo": "https://github.com/ajv-validator/ajv",
 			"funding": "https://github.com/sponsors/epoberezkin",
 			"version": "8.20.0",
 			"powers": "JSON Schema validation for API payloads and agent tool schemas."
@@ -1472,7 +1472,7 @@
 			"name": "bn.js",
 			"area": "infrastructure",
 			"license": "MIT",
-			"repo": "git@github.com:indutny/bn.js",
+			"repo": "https://github.com/indutny/bn.js",
 			"funding": null,
 			"version": "5.2.5",
 			"powers": null
@@ -1505,7 +1505,7 @@
 			"name": "cborg",
 			"area": "infrastructure",
 			"license": "Apache-2.0",
-			"repo": "git@github.com:rvagg/cborg",
+			"repo": "https://github.com/rvagg/cborg",
 			"funding": null,
 			"version": "6.1.4",
 			"powers": null
@@ -1659,7 +1659,7 @@
 			"name": "express",
 			"area": "infrastructure",
 			"license": "MIT",
-			"repo": "expressjs/express",
+			"repo": "https://github.com/expressjs/express",
 			"funding": "https://opencollective.com/express",
 			"version": "5.3.0",
 			"powers": "The HTTP server behind server/index.mjs in production."
@@ -1703,7 +1703,7 @@
 			"name": "glob",
 			"area": "infrastructure",
 			"license": "BlueOak-1.0.0",
-			"repo": "git@github.com:isaacs/node-glob",
+			"repo": "https://github.com/isaacs/node-glob",
 			"funding": "https://github.com/sponsors/isaacs",
 			"version": "11.1.0",
 			"powers": null
@@ -1758,7 +1758,7 @@
 			"name": "jose",
 			"area": "infrastructure",
 			"license": "MIT",
-			"repo": "panva/jose",
+			"repo": "https://github.com/panva/jose",
 			"funding": "https://github.com/sponsors/panva",
 			"version": "6.2.13",
 			"powers": null
@@ -1813,7 +1813,7 @@
 			"name": "livekit-client",
 			"area": "infrastructure",
 			"license": "Apache-2.0",
-			"repo": "git@github.com:livekit/client-sdk-js",
+			"repo": "https://github.com/livekit/client-sdk-js",
 			"funding": null,
 			"version": "2.23.0",
 			"powers": "Real-time audio/video for the LiveKit avatar presence lane."
@@ -1835,7 +1835,7 @@
 			"name": "lru-cache",
 			"area": "infrastructure",
 			"license": "BlueOak-1.0.0",
-			"repo": "ssh://git@github.com/isaacs/node-lru-cache",
+			"repo": "https://github.com/isaacs/node-lru-cache",
 			"funding": null,
 			"version": "11.5.3",
 			"powers": null
@@ -1901,7 +1901,7 @@
 			"name": "nanoid",
 			"area": "infrastructure",
 			"license": "MIT",
-			"repo": "ai/nanoid",
+			"repo": "https://github.com/ai/nanoid",
 			"funding": "https://github.com/sponsors/ai",
 			"version": "6.0.2",
 			"powers": null
@@ -1956,7 +1956,7 @@
 			"name": "p-limit",
 			"area": "infrastructure",
 			"license": "MIT",
-			"repo": "sindresorhus/p-limit",
+			"repo": "https://github.com/sindresorhus/p-limit",
 			"funding": "https://github.com/sponsors/sindresorhus",
 			"version": "7.3.3",
 			"powers": null
@@ -1989,7 +1989,7 @@
 			"name": "prettier",
 			"area": "infrastructure",
 			"license": "MIT",
-			"repo": "prettier/prettier",
+			"repo": "https://github.com/prettier/prettier",
 			"funding": "https://github.com/prettier/prettier?sponsor=1",
 			"version": "3.9.10",
 			"powers": null
@@ -2055,7 +2055,7 @@
 			"name": "sas-lib",
 			"area": "infrastructure",
 			"license": "MIT",
-			"repo": "git@github.com:solana-foundation/solana-attestation-service",
+			"repo": "https://github.com/solana-foundation/solana-attestation-service",
 			"funding": null,
 			"version": "1.0.10",
 			"powers": null
@@ -2514,7 +2514,7 @@
 			"name": "@sparkjsdev/spark",
 			"area": "rendering",
 			"license": "MIT",
-			"repo": "sparkjsdev/spark",
+			"repo": "https://github.com/sparkjsdev/spark",
 			"funding": null,
 			"version": "2.4.0",
 			"powers": "Gaussian-splat rendering for captured scenes and reconstructed environments."
