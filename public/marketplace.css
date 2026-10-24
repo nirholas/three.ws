@@ -5509,6 +5509,10 @@ body.market-page > header {
 	margin-bottom: var(--space-sm);
 }
 
+.sp-bundle > summary:hover {
+	color: var(--accent, #00d9ff);
+}
+
 .sp-bundle textarea {
 	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 	font-size: 12px;

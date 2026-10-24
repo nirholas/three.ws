@@ -132,6 +132,7 @@
 @media (prefers-reduced-motion: reduce) { .er-skel { animation: none; } .er-bar .er-seg { transition: none; } }
 
 .er-toggle { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: var(--text-sm); }
+.er-toggle:hover { color: var(--ink-bright); }
 .er-toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
 .er-toggle input:focus-visible { outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #3b82f6); outline-offset: 2px; }
 .er-footnote { font-size: var(--text-xs); color: var(--ink-dim); line-height: 1.6; }
