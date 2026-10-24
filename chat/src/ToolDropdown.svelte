@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { scale, slide } from 'svelte/transition';
 	import { cubicIn } from 'svelte/easing';
 	import { toolSchema } from './stores.js';
@@ -8,15 +8,19 @@
 	import { focusOnMount } from './actions.js';
 	import ToolPackModal from './ToolPackModal.svelte';
 
-	export let open = false;
-	export let convo;
-	export let saveConversation;
+	interface Props {
+		open?: boolean;
+		convo: any;
+		saveConversation: any;
+	}
 
-	let collapsed = {};
-	let innerWidth;
-	let query = '';
+	let { open = $bindable(false), convo = $bindable(), saveConversation }: Props = $props();
 
-	$: filteredSchema = query.trim()
+	let collapsed = $state({});
+	let innerWidth = $state();
+	let query = $state('');
+
+	let filteredSchema = $derived(query.trim()
 		? $toolSchema
 				.map((group) => {
 					const q = query.toLowerCase();
@@ -27,7 +31,7 @@
 					return tools.length ? { ...group, schema: tools } : null;
 				})
 				.filter(Boolean)
-		: $toolSchema;
+		: $toolSchema);
 
 	function setTools(newTools) {
 		convo.tools = convo.tools.concat(newTools);
@@ -44,17 +48,17 @@
 		saveConversation(convo);
 	}
 
-	let packModalOpen = false;
+	let packModalOpen = $state(false);
 </script>
 
 <svelte:window
 	bind:innerWidth
-	on:click={(event) => {
+	onclick={(event) => {
 		if (!event.target.closest('#tool-dropdown')) {
 			open = false;
 		}
 	}}
-	on:touchstart={(event) => {
+	ontouchstart={(event) => {
 		if (!event.target.closest('#tool-dropdown')) {
 			open = false;
 		}
@@ -72,7 +76,7 @@
 					<h3 class="text-sm font-medium text-slate-800">Tools</h3>
 					<button
 						class="text-xs text-gray-600 hover:text-gray-800"
-						on:click={() => {
+						onclick={() => {
 							clearTools();
 						}}
 					>
@@ -93,13 +97,13 @@
 				{/if}
 				{#each filteredSchema as group}
 					<div class="relative w-full">
-						<!-- svelte-ignore a11y-label-has-associated-control -->
+						<!-- svelte-ignore a11y_label_has_associated_control -->
 						<label
 							class="flex w-full items-center gap-x-3 whitespace-nowrap py-2 pl-4 pr-3 text-left text-xs transition-colors hover:bg-gray-100"
 						>
 							<Checkbox
 								checked={group.schema.every((t) => convo.tools.includes(t.function.name))}
-								on:change={(event) => {
+								onchange={(event) => {
 									const names = group.schema.map((t) => t.function.name);
 									if (event.target.checked) {
 										setTools(names);
@@ -112,7 +116,7 @@
 						</label>
 
 						<button
-							on:click={() => (collapsed[group.name] = !collapsed[group.name])}
+							onclick={() => (collapsed[group.name] = !collapsed[group.name])}
 							class="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 rounded-full transition-colors hover:bg-gray-100"
 						>
 							<Icon
@@ -128,13 +132,13 @@
 						<div transition:slide={{ duration: 300 }}>
 							{#each group.schema as schema, i}
 								<li class="flex w-full">
-									<!-- svelte-ignore a11y-label-has-associated-control -->
+									<!-- svelte-ignore a11y_label_has_associated_control -->
 									<label
 										class="flex w-full items-center gap-x-3 whitespace-nowrap py-2 pl-6 pr-3 text-left text-xs transition-colors hover:bg-gray-100"
 									>
 										<Checkbox
 											checked={convo.tools.includes(schema.function.name)}
-											on:change={(event) => {
+											onchange={(event) => {
 												if (event.target.checked) {
 													setTools([schema.function.name]);
 												} else {
@@ -155,7 +159,7 @@
 			<div class="border-t border-slate-100 px-3 py-2">
 				<button
 					class="w-full rounded-lg border border-slate-200 py-1.5 text-[11px] text-slate-500 transition-colors hover:bg-gray-50 hover:text-slate-700"
-					on:click={() => (packModalOpen = true)}
+					onclick={() => (packModalOpen = true)}
 				>
 					Browse tool packs
 				</button>

@@ -1,16 +1,28 @@
-<script>
+<script lang="ts">
+	import FileTreeNode from './FileTreeNode.svelte';
 	import { slide } from 'svelte/transition';
 	import Checkbox from './Checkbox.svelte';
 	import Icon from './Icon.svelte';
 	import { feChevronDown } from './feather.js';
-	import { createEventDispatcher } from 'svelte';
 
-	const dispatch = createEventDispatcher();
 
-	export let item;
-	export let level = 0;
-	export let collapsed = {};
-	export let selectedFiles = [];
+	interface Props {
+		item: any;
+		level?: number;
+		collapsed?: any;
+		selectedFiles?: any;
+		onfileSelected?: (...args: any[]) => void;
+		onfileDeselected?: (...args: any[]) => void;
+	}
+
+	let {
+		item,
+		level = 0,
+		collapsed = $bindable({}),
+		selectedFiles = $bindable([]),
+		onfileSelected,
+		onfileDeselected
+	}: Props = $props();
 
 	// Helper function to get all files in a directory
 	function getAllFiles(dir) {
@@ -51,7 +63,7 @@
 			for (const path of filePaths) {
 				if (!selectedFiles.includes(path)) {
 					selectedFiles = [...selectedFiles, path];
-					dispatch('fileSelected', { path });
+					onfileSelected?.({ path });
 				}
 			}
 		} else {
@@ -65,7 +77,7 @@
 
 			// Dispatch events for deselected files
 			for (const path of pathsToDeselect) {
-				dispatch('fileDeselected', { path });
+				onfileDeselected?.({ path });
 			}
 		}
 	}
@@ -74,10 +86,10 @@
 	function toggleFile(path, nowEnabled) {
 		if (nowEnabled) {
 			selectedFiles = [...selectedFiles, path];
-			dispatch('fileSelected', { path });
+			onfileSelected?.({ path });
 		} else {
 			selectedFiles = selectedFiles.filter((p) => p !== path);
-			dispatch('fileDeselected', { path });
+			onfileDeselected?.({ path });
 		}
 	}
 </script>
@@ -90,7 +102,7 @@
 		>
 			<Checkbox
 				checked={isDirFullySelected(selectedFiles, item)}
-				on:change={() => {
+				onchange={() => {
 					toggleDir(item, !isDirFullySelected(selectedFiles, item));
 				}}
 			/>
@@ -98,7 +110,7 @@
 		</label>
 
 		<button
-			on:click={() => (collapsed[item.path] = !collapsed[item.path])}
+			onclick={() => (collapsed[item.path] = !collapsed[item.path])}
 			class="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 rounded-full transition-colors hover:bg-gray-100"
 		>
 			<Icon
@@ -113,7 +125,7 @@
 	{#if !collapsed[item.path]}
 		<div transition:slide={{ duration: 300 }}>
 			{#each item.children as child}
-				<svelte:self item={child} level={level + 1} {collapsed} bind:selectedFiles on:fileSelected on:fileDeselected />
+				<FileTreeNode item={child} level={level + 1} {collapsed} bind:selectedFiles {onfileSelected} {onfileDeselected} />
 			{/each}
 		</div>
 	{/if}
@@ -125,7 +137,7 @@
 		>
 			<Checkbox
 				checked={isFileSelected(selectedFiles, item.path)}
-				on:change={() => {
+				onchange={() => {
 					toggleFile(item.path, !isFileSelected(selectedFiles, item.path));
 				}}
 			/>

@@ -4,7 +4,7 @@
   import { feTrendingUp, feBarChart2, feActivity, feAlertCircle, feMoreHorizontal, feBox, feLayers, feZap } from '../feather.js';
   import MoreDropdown from './MoreDropdown.svelte';
 
-  let moreOpen = false;
+  let moreOpen = $state(false);
 
   const chips = [
     { id: 'text3d',    label: 'Text → 3D',          icon: feZap },
@@ -25,19 +25,19 @@
   {#each chips as c}
     <button
       class="three-ui-chip {$mode === c.id ? 'three-ui-chip-selected' : ''}"
-      on:click={() => pick(c.id)}
+      onclick={() => pick(c.id)}
     >
       <Icon icon={c.icon} class="h-4 w-4" />
       {c.label}
     </button>
   {/each}
   <div class="relative">
-    <button class="three-ui-chip" on:click={() => (moreOpen = !moreOpen)}>
+    <button class="three-ui-chip" onclick={() => (moreOpen = !moreOpen)}>
       <Icon icon={feMoreHorizontal} class="h-4 w-4" />
       More
     </button>
     {#if moreOpen}
-      <MoreDropdown on:close={() => (moreOpen = false)} />
+      <MoreDropdown onclose={() => (moreOpen = false)} />
     {/if}
   </div>
 </div>

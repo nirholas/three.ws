@@ -2,7 +2,11 @@
   import type { MarkdownOptions, Renderers } from '../../markedConfiguration'
   import type { Tokens } from 'marked'
 
-  export let token: Tokens.Codespan
+  interface Props {
+    token: Tokens.Codespan;
+  }
+
+  let { token }: Props = $props();
   export const options: MarkdownOptions = undefined
   export const renderers: Renderers = undefined
 </script>

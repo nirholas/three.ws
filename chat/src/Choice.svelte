@@ -1,13 +1,22 @@
-<script>
+<script lang="ts">
 	import { fade } from 'svelte/transition';
 	import Button from './Button.svelte';
 	import { feCheck, feX } from './feather';
 	import Icon from './Icon.svelte';
 
-	export let choiceHandler;
-	export let question = '';
-	export let choices = [];
-	export let chose = null;
+	interface Props {
+		choiceHandler: any;
+		question?: string;
+		choices?: any;
+		chose?: any;
+	}
+
+	let {
+		choiceHandler,
+		question = '',
+		choices = [],
+		chose = $bindable(null)
+	}: Props = $props();
 </script>
 
 <div class="mx-auto flex w-full max-w-[500px] flex-col">
@@ -27,7 +36,7 @@
 				class="{chose === i
 					? 'ring-2 ring-slate-800 ring-offset-1'
 					: ''} w-full !justify-center px-6 disabled:opacity-75 disabled:hover:bg-slate-800"
-				on:click={() => {
+				onclick={() => {
 					choiceHandler(choice);
 					chose = i;
 				}}
@@ -49,7 +58,7 @@
 
 	<Button
 		class="{chose !== null ? 'invisible' : ''} mt-6 self-center"
-		on:click={() => {
+		onclick={() => {
 			choiceHandler(
 				'User closed the prompt and refused to answer, do not prompt again unless explicitly asked.'
 			);

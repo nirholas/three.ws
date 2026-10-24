@@ -1,14 +1,13 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
 	import Button from './Button.svelte';
 	import Icon from './Icon.svelte';
 	import { feCheck, fePlus, feTrash } from './feather.js';
 
-	const dispatch = createEventDispatcher();
+	let { onsave } = $props();
 
-	let viewingUI = true;
+	let viewingUI = $state(true);
 
-	let toolDefinition = {
+	let toolDefinition = $state({
 		name: '',
 		description: '',
 		arguments: [
@@ -19,9 +18,9 @@
 			},
 		],
 		body: '',
-	};
+	});
 	export function load(definition) {
-		toolDefinition = structuredClone(definition);
+		toolDefinition = structuredClone($state.snapshot(definition));
 	}
 
 	function convertFunctionFormat(inputObj) {
@@ -79,7 +78,7 @@
 <div class="mb-4 flex items-center gap-8 sm:mb-5">
 	<h1 class="text-xl font-semibold">Client-side tool</h1>
 	<button
-		on:click={(event) => {
+		onclick={(event) => {
 			event.stopPropagation();
 			viewingUI = !viewingUI;
 		}}
@@ -110,7 +109,7 @@
 				bind:value={toolDefinition.description}
 				rows={3}
 				class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
-			/></label
+			></textarea></label
 		>
 
 		<p class="ml-[3px] mt-2 text-[10px] uppercase tracking-wide">Arguments:</p>
@@ -148,7 +147,7 @@
 					<Button
 						variant="outline"
 						class="h-[38px] w-[38px] shrink-0 self-end rounded-lg"
-						on:click={() => {
+						onclick={() => {
 							toolDefinition.arguments.splice(i, 1);
 							toolDefinition.arguments = toolDefinition.arguments;
 						}}
@@ -161,7 +160,7 @@
 			{/each}
 			<Button
 				class="mt-1 self-start px-5"
-				on:click={() => {
+				onclick={() => {
 					toolDefinition.arguments = [
 						...toolDefinition.arguments,
 						{ name: '', type: 'string', description: '' },
@@ -178,7 +177,7 @@
 				bind:value={toolDefinition.body}
 				rows={6}
 				class="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
-				on:keydown={(event) => {
+				onkeydown={(event) => {
 					if (event.key == 'Tab') {
 						event.preventDefault();
 						var start = event.target.selectionStart;
@@ -192,13 +191,13 @@
 						event.target.selectionStart = event.target.selectionEnd = start + 1;
 					}
 				}}
-			/></label
+			></textarea></label
 		>
 	</div>
 {:else}
 	<textarea
 		value={JSON.stringify(toolDefinition, null, 2)}
-		on:change={(event) => {
+		onchange={(event) => {
 			try {
 				toolDefinition = JSON.parse(event.target.value);
 			} catch (error) {
@@ -207,13 +206,13 @@
 		}}
 		class="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
 		rows={14}
-	/>
+	></textarea>
 {/if}
 
 <Button
 	class="ml-auto mt-5 !px-6"
-	on:click={() => {
-		dispatch('save', convertFunctionFormat(toolDefinition));
+	onclick={() => {
+		onsave?.(convertFunctionFormat(toolDefinition));
 	}}
 >
 	<Icon icon={feCheck} strokeWidth={3} class="mr-2 h-3 w-3 text-slate-700" />

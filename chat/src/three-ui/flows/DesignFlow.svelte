@@ -49,7 +49,7 @@
     {#each cards as card}
       <button
         class="bg-white border border-rule rounded-2xl p-5 flex gap-4 hover:bg-paper transition-colors text-left w-full"
-        on:click={() => selectCard(card.description)}
+        onclick={() => selectCard(card.description)}
       >
         <div class="flex-1 min-w-0">
           <div class="flex items-center justify-between text-ink font-semibold text-sm">

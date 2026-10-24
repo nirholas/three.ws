@@ -1,5 +1,5 @@
-<script>
-	import { afterUpdate, onDestroy, tick } from 'svelte';
+<script lang="ts">
+	import { onDestroy, tick } from 'svelte';
 	import { v4 as uuidv4 } from 'uuid';
 	import Icon from '../Icon.svelte';
 	import {
@@ -22,33 +22,17 @@
 	import FilesDropdown from '../FilesDropdown.svelte';
 	import FilePill from '../FilePill.svelte';
 
-	// Input.svelte-compatible props
-	export let generating;
-	export let convo;
-	export let saveMessage;
-	export let saveConversation;
-	export let submitCompletion;
-	export let scrollToBottom;
-	export let handleAbort;
-	export let tree;
-
-	// three.ws-specific props
-	export let placeholder = 'Assign a task or ask anything';
-	export let mode = null;
-	export let modes = [];
-	export let onModeClear = () => {};
-
 	const imageUrlRegex = /https?:\/\/[^\s]+?\.(png|jpe?g)(?=\s|$)/gi;
 
-	let content = '';
-	let pendingImages = [];
-	let imageUrlsBlacklist = [];
-	let pendingFiles = [];
-	let selectedFiles = [];
+	let content = $state('');
+	let pendingImages = $state([]);
+	let imageUrlsBlacklist = $state([]);
+	let pendingFiles = $state([]);
+	let selectedFiles = $state([]);
 
-	let toolsOpen = false;
-	let filesOpen = false;
-	let reasoningEffortDropdownOpen = false;
+	let toolsOpen = $state(false);
+	let filesOpen = $state(false);
+	let reasoningEffortDropdownOpen = $state(false);
 
 	const unsubFill = composerFill.subscribe((fill) => {
 		if (!fill) return;
@@ -66,12 +50,41 @@
 	});
 	onDestroy(unsubFill);
 
-	$: isMultimodal = convo.models[0].modality === 'text+image->text';
-	$: canSend = content.trim().length > 0 || pendingImages.length > 0 || pendingFiles.length > 0;
-	$: isGenerating = generating && convo.messages.filter((msg) => msg.generated).length > 0;
 
-	let fileInputEl;
-	export let inputTextareaEl;
+	let fileInputEl = $state();
+	interface Props {
+		// Input.svelte-compatible props
+		generating: any;
+		convo: any;
+		saveMessage: any;
+		saveConversation: any;
+		submitCompletion: any;
+		scrollToBottom: any;
+		handleAbort: any;
+		tree: any;
+		// three.ws-specific props
+		placeholder?: string;
+		mode?: any;
+		modes?: any;
+		onModeClear?: any;
+		inputTextareaEl: any;
+	}
+
+	let {
+		generating,
+		convo = $bindable(),
+		saveMessage,
+		saveConversation,
+		submitCompletion,
+		scrollToBottom,
+		handleAbort,
+		tree,
+		placeholder = 'Assign a task or ask anything',
+		mode = null,
+		modes = [],
+		onModeClear = () => {},
+		inputTextareaEl = $bindable()
+	}: Props = $props();
 
 	export function autoresizeTextarea() {
 		if (!inputTextareaEl) return;
@@ -247,7 +260,7 @@
 		event.target.value = '';
 	}
 
-	let recording = false;
+	let recording = $state(false);
 	let recognition = null;
 
 	function toggleVoiceInput() {
@@ -275,7 +288,7 @@
 		recording = true;
 	}
 
-	let containerEl, leftFadeEl, rightFadeEl;
+	let containerEl = $state(), leftFadeEl = $state(), rightFadeEl = $state();
 
 	function updateFades() {
 		if (!containerEl || !leftFadeEl || !rightFadeEl) return;
@@ -290,12 +303,29 @@
 		}
 	}
 
-	afterUpdate(updateFades);
+	// The pill row changes width whenever pills mount, unmount or resize, so watch the
+	// row itself rather than guessing which state changes affect it.
+	$effect(() => {
+		if (!containerEl) return;
+		updateFades();
+		const resize = new ResizeObserver(updateFades);
+		resize.observe(containerEl);
+		const mutation = new MutationObserver(updateFades);
+		mutation.observe(containerEl, { childList: true, subtree: true, characterData: true });
+		return () => {
+			resize.disconnect();
+			mutation.disconnect();
+		};
+	});
+
+	let isMultimodal = $derived(convo.models[0].modality === 'text+image->text');
+	let canSend = $derived(content.trim().length > 0 || pendingImages.length > 0 || pendingFiles.length > 0);
+	let isGenerating = $derived(generating && convo.messages.filter((msg) => msg.generated).length > 0);
 </script>
 
 <svelte:window
-	on:resize={updateFades}
-	on:keydown={(event) => {
+	onresize={updateFades}
+	onkeydown={(event) => {
 		if (navigator.platform.match(/Mac|iPhone|iPod|iPad/)) {
 			if (event.metaKey && event.key === 'p') {
 				filesOpen = true;
@@ -323,8 +353,8 @@
 				rows={1}
 				class="w-full resize-none bg-transparent border-0 p-0 outline-none ring-0 focus:outline-none focus:ring-0 text-base text-ink placeholder-ink-faint font-sans overflow-y-auto scrollbar-ultraslim"
 				style="max-height:320px;"
-				on:paste={handlePaste}
-				on:keydown={(event) => {
+				onpaste={handlePaste}
+				onkeydown={(event) => {
 					if (event.key === 'Enter' && !event.shiftKey && innerWidth > 880) {
 						event.preventDefault();
 						sendMessage();
@@ -332,7 +362,7 @@
 						event.currentTarget.blur();
 					}
 				}}
-				on:input={async () => {
+				oninput={async () => {
 					autoresizeTextarea();
 					const imageLinkedUrls = content.match(imageUrlRegex) || [];
 					for (const url of imageLinkedUrls) {
@@ -346,7 +376,7 @@
 						}
 					}
 				}}
-			/>
+			></textarea>
 
 			<!-- Attachment chips -->
 			{#if pendingFiles.length > 0 || pendingImages.length > 0}
@@ -355,7 +385,7 @@
 						<FilePill
 							{file}
 							canDelete
-							on:delete={() => {
+							ondelete={() => {
 								const [deleted] = pendingFiles.splice(i, 1);
 								pendingFiles = pendingFiles;
 								selectedFiles = selectedFiles.filter((f) => f !== deleted.path);
@@ -371,7 +401,7 @@
 								class="h-16 w-16 rounded-lg border border-rule object-cover"
 							/>
 							<button
-								on:click={() => {
+								onclick={() => {
 									pendingImages[i].fidelity =
 										pendingImages[i].fidelity === 'high' ? 'low' : 'high';
 									pendingImages = pendingImages;
@@ -384,7 +414,7 @@
 								</span>
 							</button>
 							<button
-								on:click={() => {
+								onclick={() => {
 									pendingImages.splice(i, 1);
 									pendingImages = pendingImages;
 									imageUrlsBlacklist.push(image.url);
@@ -406,7 +436,7 @@
 					<!-- "+" attach button -->
 					<button
 						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-rule bg-white text-ink hover:bg-paper-deep transition-colors text-xl leading-none"
-						on:click={() => fileInputEl.click()}
+						onclick={() => fileInputEl.click()}
 						title="Attach files"
 					>
 						<input
@@ -414,7 +444,7 @@
 							class="hidden"
 							bind:this={fileInputEl}
 							multiple
-							on:change={handleFileUpload}
+							onchange={handleFileUpload}
 						/>
 						+
 					</button>
@@ -430,7 +460,7 @@
 							<span>{modes.find((m) => m.id === mode)?.label ?? mode}</span>
 							<button
 								class="ml-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full hover:bg-rule transition-colors"
-								on:click={onModeClear}
+								onclick={onModeClear}
 							>
 								<Icon icon={feX} class="h-2.5 w-2.5" />
 							</button>
@@ -442,21 +472,21 @@
 						<div
 							bind:this={leftFadeEl}
 							class="pointer-events-none absolute left-0 top-0 z-10 h-full w-4 bg-gradient-to-r from-white to-transparent opacity-0 transition-opacity"
-						/>
+						></div>
 						<div
 							bind:this={rightFadeEl}
 							class="pointer-events-none absolute right-0 top-0 z-10 h-full w-4 bg-gradient-to-l from-white to-transparent opacity-0 transition-opacity"
-						/>
+						></div>
 						<div
 							bind:this={containerEl}
-							on:scroll={updateFades}
+							onscroll={updateFades}
 							class="flex max-w-[200px] gap-1.5 overflow-x-auto scrollbar-none sm:max-w-none"
 						>
 							<div id="tool-dropdown" class="contents">
 								<ToolPill
 									icon={feTool}
 									selected={toolsOpen}
-									on:click={() => (toolsOpen = !toolsOpen)}
+									onclick={() => (toolsOpen = !toolsOpen)}
 								>
 									Tools
 									{#if convo.tools?.length > 0}
@@ -477,7 +507,7 @@
 									<ToolPill
 										icon={feFolder}
 										selected={filesOpen}
-										on:click={() => (filesOpen = !filesOpen)}
+										onclick={() => (filesOpen = !filesOpen)}
 									>
 										Files
 										{#if pendingFiles.length > 0}
@@ -494,7 +524,7 @@
 										bind:open={filesOpen}
 										{tree}
 										bind:selectedFiles
-										on:fileSelected={async ({ detail }) => {
+										onfileSelected={async (detail) => {
 											const path = detail.path;
 											const response = await fetch(
 												`${$remoteServer.address}/read_file?path=${path}`
@@ -503,7 +533,7 @@
 											pendingFiles = [...pendingFiles, { path, contents }];
 											tick().then(() => autoresizeTextarea());
 										}}
-										on:fileDeselected={({ detail }) => {
+										onfileDeselected={(detail) => {
 											pendingFiles = pendingFiles.filter((f) => f.path !== detail.path);
 											tick().then(() => autoresizeTextarea());
 										}}
@@ -515,7 +545,7 @@
 								<ToolPill
 									icon={feSearch}
 									selected={convo.websearch}
-									on:click={() => {
+									onclick={() => {
 										convo.websearch = !convo.websearch;
 										saveConversation(convo);
 									}}
@@ -528,7 +558,7 @@
 								<ToolPill
 									icon={feZap}
 									selected={false}
-									on:click={() => {
+									onclick={() => {
 										if (convo.reasoningEffort === 'low') {
 											convo.reasoningEffort = 'medium';
 										} else if (convo.reasoningEffort === 'medium') {
@@ -550,7 +580,7 @@
 									<ToolPill
 										icon={feZap}
 										selected={reasoningEffortDropdownOpen}
-										on:click={() =>
+										onclick={() =>
 											(reasoningEffortDropdownOpen = !reasoningEffortDropdownOpen)}
 									>
 										Thinking
@@ -573,7 +603,7 @@
 					<button
 						type="button"
 						title={recording ? 'Stop recording' : 'Speak a message'}
-						on:click={toggleVoiceInput}
+						onclick={toggleVoiceInput}
 						class="flex h-9 w-9 items-center justify-center rounded-full transition-colors
 							{recording ? 'bg-red-500 text-white animate-pulse' : 'text-ink-faint hover:text-ink'}"
 					>
@@ -582,7 +612,7 @@
 					{#if isGenerating}
 						<button
 							class="flex h-9 w-9 items-center justify-center rounded-full bg-ink transition-colors hover:bg-[#333]"
-							on:click={handleAbort}
+							onclick={handleAbort}
 							title="Stop generating"
 						>
 							<Icon icon={feSquare} strokeWidth={4} class="h-3.5 w-3.5 text-white" />
@@ -593,7 +623,7 @@
 							class="flex h-9 w-9 items-center justify-center rounded-full transition-colors {canSend
 								? 'bg-black text-white hover:bg-[#333] cursor-pointer'
 								: 'bg-paper-deep text-ink-faint cursor-default'}"
-							on:click={sendMessage}
+							onclick={sendMessage}
 							title="Send message"
 						>
 							<Icon icon={feArrowUp} class="h-4 w-4" />

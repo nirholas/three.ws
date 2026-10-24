@@ -1,10 +1,14 @@
-<script>
+<script lang="ts">
 	import { params, activeAgent } from './stores.js';
 	import { t } from './i18n.js';
 	import KnowledgeBasePanel from './KnowledgeBasePanel.svelte';
 
-	export let knobsOpen = false;
-	export let db = null;
+	interface Props {
+		knobsOpen?: boolean;
+		db?: any;
+	}
+
+	let { knobsOpen = false, db = null }: Props = $props();
 </script>
 
 <aside

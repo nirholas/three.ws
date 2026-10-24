@@ -1,15 +1,25 @@
 <script>
-	/** @type {*} - object or array to display */
-	export let json;
-	/** @type {number} - initial expansion depth */
-	export let depth = Infinity;
-	export let _cur = 0;
-	export let _last = true;
+	import JsonView from './JsonView.svelte';
+	
+	
+	
+	/**
+	 * @typedef {Object} Props
+	 * @property {*} json
+	 * @property {number} [depth]
+	 * @property {number} [_cur]
+	 * @property {boolean} [_last]
+	 */
 
-	let items = [];
-	let isArray = false;
-	let brackets = ['', ''];
-	let collapsed = false;
+	/** @type {Props} */
+	let {
+		json,
+		depth = Infinity,
+		_cur = 0,
+		_last = true
+	} = $props();
+
+	let collapsed = $state(false);
 
 	/**
 	 * @param {*} i
@@ -54,13 +64,13 @@
 		if (e instanceof KeyboardEvent && ['Enter', ' '].includes(e.key)) clicked();
 	}
 
-	$: {
-		items = getType(json) === 'object' ? Object.keys(json) : [];
-		isArray = Array.isArray(json);
-		brackets = isArray ? ['[', ']'] : ['{', '}'];
-	}
+	const items = $derived(getType(json) === 'object' ? Object.keys(json) : []);
+	const isArray = $derived(Array.isArray(json));
+	const brackets = $derived(isArray ? ['[', ']'] : ['{', '}']);
 
-	$: collapsed = depth < _cur;
+	$effect.pre(() => {
+		collapsed = depth < _cur;
+	});
 </script>
 
 {#if !items.length}
@@ -73,8 +83,8 @@
 		class:isArray
 		role="button"
 		tabindex="0"
-		on:click={clicked}
-		on:keydown={pressed}>{brackets[0]}...{brackets[1]}</span
+		onclick={clicked}
+		onkeydown={pressed}>{brackets[0]}...{brackets[1]}</span
 	>{#if !_last && collapsed}<span class="_jsonSep">,</span>{/if}
 {:else}
 	<span
@@ -82,8 +92,8 @@
 		class:isArray
 		role="button"
 		tabindex="0"
-		on:click={clicked}
-		on:keydown={pressed}>{brackets[0]}</span
+		onclick={clicked}
+		onkeydown={pressed}>{brackets[0]}</span
 	>
 	<ul class="_jsonList">
 		{#each items as i, idx}
@@ -92,7 +102,7 @@
 					<span class="_jsonKey">{stringify(i)}</span><span class="_jsonSep">:</span>
 				{/if}
 				{#if getType(json[i]) === 'object'}
-					<svelte:self json={json[i]} {depth} _cur={_cur + 1} _last={idx === items.length - 1} />
+					<JsonView json={json[i]} {depth} _cur={_cur + 1} _last={idx === items.length - 1} />
 				{:else}
 					<span class="_jsonVal {getType(json[i])}">{format(json[i])}</span
 					>{#if idx < items.length - 1}<span class="_jsonSep">,</span>{/if}
@@ -105,41 +115,41 @@
 		class:isArray
 		role="button"
 		tabindex="0"
-		on:click={clicked}
-		on:keydown={pressed}>{brackets[1]}</span
+		onclick={clicked}
+		onkeydown={pressed}>{brackets[1]}</span
 	>{#if !_last}<span class="_jsonSep">,</span>{/if}
 {/if}
 
 <style>
-	:where(._jsonList) {
+	:where(:global(._jsonList)) {
 		list-style: none;
 		margin: 0;
 		padding: 0;
 		padding-left: var(--jsonPaddingLeft, 1rem);
 	}
-	:where(._jsonBkt) {
+	:where(:global(._jsonBkt)) {
 		color: var(--jsonBracketColor, currentcolor);
 	}
-	:where(._jsonBkt):not(.empty):hover {
+	:where(:global(._jsonBkt)):not(.empty):hover {
 		cursor: pointer;
 		background: var(--jsonBracketHoverBackground, rgba(255,255,255,0.08));
 	}
-	:where(._jsonSep) {
+	:where(:global(._jsonSep)) {
 		color: var(--jsonSeparatorColor, currentcolor);
 	}
-	:where(._jsonKey) {
+	:where(:global(._jsonKey)) {
 		color: var(--jsonKeyColor, currentcolor);
 	}
-	:where(._jsonVal) {
+	:where(:global(._jsonVal)) {
 		color: var(--jsonValColor, #9ca3af);
 	}
-	:where(._jsonVal).string {
+	:where(:global(._jsonVal)).string {
 		color: var(--jsonValStringColor, #34d399);
 	}
-	:where(._jsonVal).number {
+	:where(:global(._jsonVal)).number {
 		color: var(--jsonValNumberColor, #fbbf24);
 	}
-	:where(._jsonVal).boolean {
+	:where(:global(._jsonVal)).boolean {
 		color: var(--jsonValBooleanColor, #60a5fa);
 	}
 </style>

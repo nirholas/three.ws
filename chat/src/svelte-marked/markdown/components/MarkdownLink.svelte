@@ -3,8 +3,13 @@
   import type { Tokens } from 'marked'
   import type { MarkdownOptions, Renderers } from '../markedConfiguration'
 
-  export let token: Tokens.Link
-  export let options: MarkdownOptions
+  interface Props {
+    token: Tokens.Link;
+    options: MarkdownOptions;
+    children?: import('svelte').Snippet;
+  }
+
+  let { token, options, children }: Props = $props();
   export const renderers: Renderers = undefined
 </script>
 
@@ -14,5 +19,5 @@
     : token.href}
   title={token.title}
 >
-  <slot />
+  {@render children?.()}
 </a>

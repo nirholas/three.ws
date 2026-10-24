@@ -24,8 +24,8 @@
   ];
 
   const slideCountOptions = ['4 - 8', '8 - 12', '12 - 16', '16 - 20'];
-  let selectedSlideCount = '8 - 12';
-  let slideCountOpen = false;
+  let selectedSlideCount = $state('8 - 12');
+  let slideCountOpen = $state(false);
 
   /** The chosen length is part of every request, so the control actually steers output. */
   function withSlideCount(text) {
@@ -51,7 +51,7 @@
     {#each samplePrompts as prompt}
       <button
         class="bg-white border border-rule rounded-xl p-4 text-left h-[112px] flex flex-col justify-between hover:bg-paper transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
-        on:click={() => selectPrompt(prompt)}
+        onclick={() => selectPrompt(prompt)}
       >
         <span class="text-sm text-ink line-clamp-2">{prompt}</span>
         <Icon icon={feArrowUpLeft} class="w-[14px] h-[14px] text-ink-faint self-end shrink-0" />
@@ -66,7 +66,7 @@
         class="bg-white border border-rule rounded-full h-9 px-3 text-sm flex items-center gap-2 hover:bg-paper transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
         aria-expanded={slideCountOpen}
         aria-label="Slide count: {selectedSlideCount}"
-        on:click={() => (slideCountOpen = !slideCountOpen)}
+        onclick={() => (slideCountOpen = !slideCountOpen)}
       >
         <Icon icon={feLayout} class="w-4 h-4 text-ink-soft" />
         {selectedSlideCount}
@@ -78,7 +78,7 @@
             <button
               class="block w-full px-4 py-2 text-sm text-left text-ink hover:bg-paper first:rounded-t-xl last:rounded-b-xl"
               aria-current={option === selectedSlideCount ? 'true' : undefined}
-              on:click={() => { selectedSlideCount = option; slideCountOpen = false; }}
+              onclick={() => { selectedSlideCount = option; slideCountOpen = false; }}
             >
               {option}
             </button>
@@ -92,7 +92,7 @@
     {#each templates as template}
       <button
         class="aspect-[4/3] bg-paper-deep rounded-xl flex flex-col items-center justify-center gap-1.5 px-2 text-center hover:bg-white hover:border hover:border-rule transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
-        on:click={() => selectTemplate(template)}
+        onclick={() => selectTemplate(template)}
       >
         <span class="text-sm text-ink font-serif">{template.name}</span>
         <Icon icon={feArrowUpLeft} class="w-[14px] h-[14px] text-ink-faint" />

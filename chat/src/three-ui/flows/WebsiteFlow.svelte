@@ -1,4 +1,5 @@
 <script>
+
   import { websiteCategory, composerFill } from '../../stores.js';
   import Icon from '../../Icon.svelte';
   import {
@@ -38,8 +39,8 @@
     linkbio:   'Create a link-in-bio page for ',
   };
 
-  let referenceOpen = false;
-  let referenceUrl = '';
+  let referenceOpen = $state(false);
+  let referenceUrl = $state('');
 
   /** Append a site the model should take its cues from to whatever is composed. */
   function addReference() {
@@ -74,14 +75,14 @@
     <button
       class="inline-flex items-center gap-1.5 text-sm text-ink hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ink rounded"
       aria-expanded={referenceOpen}
-      on:click={() => (referenceOpen = !referenceOpen)}
+      onclick={() => (referenceOpen = !referenceOpen)}
     >
       <Icon icon={feLink} size={14} /> Add website reference
     </button>
   </div>
 
   {#if referenceOpen}
-    <form class="mt-3 flex gap-2" on:submit|preventDefault={addReference}>
+    <form class="mt-3 flex gap-2" onsubmit={(event) => { event.preventDefault(); addReference(); }}>
       <input
         type="url"
         bind:value={referenceUrl}
@@ -103,7 +104,7 @@
     {#each categories as c}
       <button
         class="three-ui-chip whitespace-nowrap {$websiteCategory === c.id ? 'three-ui-chip-selected' : ''}"
-        on:click={() => pick(c.id)}
+        onclick={() => pick(c.id)}
       >
         <Icon icon={c.icon} size={16} />
         {c.label}
@@ -116,7 +117,7 @@
       <h3 class="text-sm font-semibold mb-3">Explore ideas</h3>
       <div class="flex flex-wrap gap-2">
         {#each ideasByCategory[$websiteCategory] as idea}
-          <button class="three-ui-chip" on:click={() => selectIdea(idea)}>
+          <button class="three-ui-chip" onclick={() => selectIdea(idea)}>
             <span>{idea}</span>
             <Icon icon={feArrowUpLeft} size={14} class="text-ink-faint" />
           </button>

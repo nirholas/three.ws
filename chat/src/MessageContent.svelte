@@ -1,9 +1,8 @@
-<script>
+<script lang="ts">
 	import Markdown from './svelte-marked/markdown/Markdown.svelte';
 
-	export let message;
 
-	export let contentHeight = undefined;
+	let { message, contentHeight = $bindable(undefined) } = $props();
 </script>
 
 {#if message.error}

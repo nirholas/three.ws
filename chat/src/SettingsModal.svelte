@@ -1,5 +1,5 @@
-<script>
-	import { createEventDispatcher, onDestroy, tick } from 'svelte';
+<script lang="ts">
+	import { onDestroy, tick } from 'svelte';
 	import { v4 as uuidv4 } from 'uuid';
 	import {
 		anthropicAPIKey,
@@ -43,20 +43,25 @@
 	import { sendSingleItem, resetSyncCircuit } from './sync.js';
 	import AvatarPreview from './AvatarPreview.svelte';
 
-	const dispatch = createEventDispatcher();
 
-	export let open = false;
-	export let trigger = '';
+	interface Props {
+		open?: boolean;
+		trigger?: string;
+		onfetchModels?: (...args: any[]) => void;
+		ondisableTool?: (...args: any[]) => void;
+	}
 
-	let activeTab = 'api-keys';
+	let { open = $bindable(false), trigger = '', onfetchModels, ondisableTool }: Props = $props();
+
+	let activeTab = $state('api-keys');
 
 	// Brand admin panel
-	let adminKey = '';
-	let adminUnlocked = false;
-	let brandSaving = false;
-	let brandSaveError = '';
-	let brandSaveOk = false;
-	let brandDraft = { name: '', logo_url: '', accent_color: '#6366f1', tagline: '', system_prompt: '' };
+	let adminKey = $state('');
+	let adminUnlocked = $state(false);
+	let brandSaving = $state(false);
+	let brandSaveError = $state('');
+	let brandSaveOk = $state(false);
+	let brandDraft = $state({ name: '', logo_url: '', accent_color: '#6366f1', tagline: '', system_prompt: '' });
 
 	function openBrandTab() {
 		activeTab = 'brand';
@@ -102,11 +107,11 @@
 	}
 
 	// Avatar selector: pulls user's avatars (session auth) + featured public avatars
-	let myAvatars = [];
-	let featuredAvatars = [];
-	let avatarsLoading = false;
-	let avatarsError = '';
-	let avatarsLoaded = false;
+	let myAvatars = $state([]);
+	let featuredAvatars = $state([]);
+	let avatarsLoading = $state(false);
+	let avatarsError = $state('');
+	let avatarsLoaded = $state(false);
 
 	async function openAvatarTab() {
 		activeTab = 'avatar';
@@ -149,7 +154,7 @@
 	// Browser speech synthesis. Chrome populates getVoices() asynchronously, so
 	// the list starts empty and fills in on the voiceschanged event.
 	const speech = typeof window !== 'undefined' ? window.speechSynthesis : null;
-	let voices = [];
+	let voices = $state([]);
 
 	function loadVoices() {
 		voices = speech ? speech.getVoices() : [];
@@ -170,20 +175,20 @@
 		speech.speak(utt);
 	}
 
-	let addClientToolOpen = false;
-	let loadClientTool = null;
+	let addClientToolOpen = $state(false);
+	let loadClientTool = $state(null);
 
-	let elRefreshToolSchema;
+	let elRefreshToolSchema = $state();
 
 	// Draft values for API keys: nothing commits until Save is clicked
-	let draftKeys = {
+	let draftKeys = $state({
 		openrouter: $openrouterAPIKey,
 		anthropic: $anthropicAPIKey,
 		openai: $openaiAPIKey,
 		groq: $groqAPIKey,
 		mistral: $mistralAPIKey,
-	};
-	let savedKey = '';
+	});
+	let savedKey = $state('');
 
 	const keyStores = {
 		openrouter: openrouterAPIKey,
@@ -201,7 +206,7 @@
 	}
 
 	async function onAPIKeyUpdate() {
-		dispatch('fetchModels');
+		onfetchModels?.();
 		if ($syncServer.token && $syncServer.password) {
 			await sendSingleItem($syncServer.address, $syncServer.token, {
 				conversation: null,
@@ -224,7 +229,7 @@
 							class="{activeTab === 'api-keys'
 								? 'bg-gray-100/70'
 								: 'hover:bg-gray-100/70'} flex w-full items-center gap-x-2.5 rounded-lg px-4 py-2.5 text-left text-[13px] font-medium text-slate-700 transition-colors"
-							on:click={() => (activeTab = 'api-keys')}
+							onclick={() => (activeTab = 'api-keys')}
 						>
 							<Icon icon={feKey} class="h-3 w-3 text-slate-700" />
 							API keys
@@ -235,7 +240,7 @@
 							class="{activeTab === 'custom-instructions'
 								? 'bg-gray-100/70'
 								: 'hover:bg-gray-100/70'} flex w-full items-center gap-x-2.5 rounded-lg px-4 py-2.5 text-left text-[13px] font-medium text-slate-700 transition-colors"
-							on:click={() => (activeTab = 'custom-instructions')}
+							onclick={() => (activeTab = 'custom-instructions')}
 						>
 							<Icon icon={feEdit3} class="h-3 w-3 text-slate-700" />
 							Custom instructions
@@ -246,7 +251,7 @@
 							class="{activeTab === 'remote-server'
 								? 'bg-gray-100/70'
 								: ' hover:bg-gray-100/70'} flex w-full items-center gap-x-2.5 rounded-lg px-4 py-2.5 text-left text-[13px] font-medium text-slate-700 transition-colors"
-							on:click={() => (activeTab = 'remote-server')}
+							onclick={() => (activeTab = 'remote-server')}
 						>
 							<Icon icon={feHardDrive} class="h-3 w-3 text-slate-700" />
 							Sync and servers
@@ -257,7 +262,7 @@
 							class="{activeTab === 'tools'
 								? 'bg-gray-100/70'
 								: ' hover:bg-gray-100/70'} flex w-full items-center gap-x-2.5 rounded-lg px-4 py-2.5 text-left text-[13px] font-medium text-slate-700 transition-colors"
-							on:click={() => (activeTab = 'tools')}
+							onclick={() => (activeTab = 'tools')}
 						>
 							<Icon icon={feTool} class="h-3 w-3 text-slate-700" />
 							Tool calling
@@ -268,7 +273,7 @@
 							class="{activeTab === 'brand'
 								? 'bg-gray-100/70'
 								: ' hover:bg-gray-100/70'} flex w-full items-center gap-x-2.5 rounded-lg px-4 py-2.5 text-left text-[13px] font-medium text-slate-700 transition-colors"
-							on:click={openBrandTab}
+							onclick={openBrandTab}
 						>
 							<Icon icon={feLayout} class="h-3 w-3 text-slate-700" />
 							Brand
@@ -280,7 +285,7 @@
 							class="{activeTab === 'avatar'
 								? 'bg-gray-100/70'
 								: ' hover:bg-gray-100/70'} flex w-full items-center gap-x-2.5 rounded-lg px-4 py-2.5 text-left text-[13px] font-medium text-slate-700 transition-colors"
-							on:click={openAvatarTab}
+							onclick={openAvatarTab}
 						>
 							<Icon icon={feStar} class="h-3 w-3 text-slate-700" />
 							Avatar
@@ -312,7 +317,7 @@
 									{savedKey === key
 										? 'border-green-300 bg-green-50 text-green-700'
 										: 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100'}"
-								on:click={() => saveKey(key)}
+								onclick={() => saveKey(key)}
 							>
 								{savedKey === key ? '✓ Saved' : 'Save'}
 							</button>
@@ -345,7 +350,7 @@
 						bind:value={$params.customInstructions}
 						rows={10}
 						class="rounded-lg border border-slate-300 px-3 py-2 text-sm transition-colors scrollbar-slim focus:border-slate-400 focus:outline-none"
-					/></label
+					></textarea></label
 				>
 			{:else if activeTab === 'remote-server'}
 				<label class="mb-4 flex items-start gap-2 text-[13px] text-slate-700">
@@ -406,7 +411,7 @@
 					<input
 						type="text"
 						bind:value={$syncServer.address}
-						on:change={resetSyncCircuit}
+						onchange={resetSyncCircuit}
 						placeholder="https://your-sync-server.example.com"
 						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
 					/></label
@@ -475,13 +480,13 @@
 						readonly
 						class="mt-2 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors scrollbar-ultraslim placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
 						value={JSON.stringify($toolSchema, null, 2)}
-					/>
+					></textarea>
 					<div class="mt-3 flex flex-col gap-3 text-sm sm:flex-row">
 						<Button
 							bind:el={elRefreshToolSchema}
 							variant="outline"
 							class="self-start"
-							on:click={async () => {
+							onclick={async () => {
 								if (!$remoteServer.address) {
 									elRefreshToolSchema.dispatchEvent(new CustomEvent('flashError'));
 									return;
@@ -513,7 +518,7 @@
 							<Button
 								variant="outline"
 								class="self-start"
-								on:click={() => {
+								onclick={() => {
 									const clientToolsSchemaIndex = $toolSchema.findIndex(
 										(g) => g.name === 'Client-side'
 									);
@@ -543,13 +548,13 @@
 							?.schema.filter((t) => t.clientDefinition) || [] as tool}
 							<ClientTool
 								definition={tool.clientDefinition}
-								on:edit={async () => {
+								onedit={async () => {
 									addClientToolOpen = true;
 									await tick();
 									loadClientTool(tool.clientDefinition);
 								}}
-								on:delete={() => {
-									dispatch('disableTool', tool.clientDefinition.name);
+								ondelete={() => {
+									ondisableTool?.(tool.clientDefinition.name);
 									const clientToolsSchemaIndex = $toolSchema.findIndex(
 										(g) => g.name === 'Client-side'
 									);
@@ -567,7 +572,7 @@
 						{/each}
 						<Button
 							class="self-start"
-							on:click={async () => {
+							onclick={async () => {
 								addClientToolOpen = true;
 								await tick();
 
@@ -607,7 +612,7 @@
 						{#each [['snap', 'Snap'], ['elegant', 'Elegant'], ['smooth', 'Smooth']] as [val, label]}
 							<button
 								class="flex-1 rounded-lg border px-3 py-1.5 text-[13px] transition-colors {($config.messageAnimation ?? 'smooth') === val ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 text-slate-700 hover:border-slate-400'}"
-								on:click={() => ($config.messageAnimation = val)}
+								onclick={() => ($config.messageAnimation = val)}
 							>
 								{label}
 							</button>
@@ -629,7 +634,7 @@
 								/>
 								<button
 									class="rounded-lg bg-indigo-500 px-3 py-2 text-[13px] font-medium text-white hover:bg-indigo-600 disabled:opacity-50"
-									on:click={() => { if (adminKey.trim()) adminUnlocked = true; }}
+									onclick={() => { if (adminKey.trim()) adminUnlocked = true; }}
 								>Unlock</button>
 							</div>
 						</label>
@@ -707,7 +712,7 @@
 						<button
 							class="mt-1 rounded-lg bg-indigo-500 px-4 py-2 text-[13px] font-medium text-white hover:bg-indigo-600 disabled:opacity-50"
 							disabled={brandSaving}
-							on:click={saveBrand}
+							onclick={saveBrand}
 						>{brandSaving ? 'Saving…' : 'Save branding'}</button>
 					{/if}
 				</div>
@@ -745,7 +750,7 @@
 								</label>
 								<button
 									type="button"
-									on:click={previewVoice}
+									onclick={previewVoice}
 									class="rounded-md border border-slate-200 px-3 py-1.5 text-[12px] font-medium text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-300"
 								>Preview</button>
 							</div>
@@ -771,7 +776,7 @@
 								{#each myAvatars as a (a.id)}
 									<button
 										type="button"
-										on:click={() => selectAvatar(a)}
+										onclick={() => selectAvatar(a)}
 										class="flex flex-col items-center gap-1 rounded-md border p-1.5 text-left transition-colors {$talkingHeadAvatarUrl === a.model_url
 											? 'border-indigo-400 bg-indigo-50'
 											: 'border-slate-200 hover:border-indigo-300'}"
@@ -791,7 +796,7 @@
 								{#each featuredAvatars as a (a.id)}
 									<button
 										type="button"
-										on:click={() => selectAvatar(a)}
+										onclick={() => selectAvatar(a)}
 										class="flex flex-col items-center gap-1 rounded-md border p-1.5 text-left transition-colors {$talkingHeadAvatarUrl === a.model_url
 											? 'border-indigo-400 bg-indigo-50'
 											: 'border-slate-200 hover:border-indigo-300'}"
@@ -821,7 +826,7 @@
 							{#if $talkingHeadAvatarUrl}
 								<button
 									type="button"
-									on:click={clearAvatar}
+									onclick={clearAvatar}
 									class="text-[11px] text-slate-500 underline hover:text-slate-700"
 								>Reset to default</button>
 							{/if}
@@ -847,7 +852,7 @@
 <Modal bind:open={addClientToolOpen} class="!px-8 transition-[all] md:!w-[800px]">
 	<ClientToolSetting
 		bind:load={loadClientTool}
-		on:save={({ detail }) => {
+		onsave={(detail) => {
 			let clientToolsSchemaIndex = $toolSchema.findIndex((g) => g.name === 'Client-side');
 			if (clientToolsSchemaIndex === -1) {
 				$toolSchema.push({

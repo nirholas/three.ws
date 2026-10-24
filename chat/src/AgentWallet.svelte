@@ -1,20 +1,26 @@
-<script>
+<script lang="ts">
+	
 	// The wallet identity of the agent you're chatting with. Tip it for a good
 	// answer, copy its address, or open its full wallet on three.ws. Thin Svelte
 	// wrapper over the shared portable wallet (one module, mounted everywhere the
 	// avatar appears) so the chat never forks the wallet logic. Reads only public
 	// data from the CORS:* wallet-embed endpoint; it is the visitor view by
 	// construction (no owner controls in chat).
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount, onDestroy, untrack } from 'svelte';
 	import { mountPortableWallet } from '$shared/portable-wallet.js';
 
-	export let agentId = '';
-	/** 'chip' toggles a popover; 'card' renders the wallet open inline. */
-	export let variant = 'chip';
+	
+	interface Props {
+		agentId?: string;
+		/** 'chip' toggles a popover; 'card' renders the wallet open inline. */
+		variant?: string;
+	}
 
-	let host;
+	let { agentId = '', variant = 'chip' }: Props = $props();
+
+	let host = $state();
 	let mount = null;
-	let mountedId = null;
+	let mountedId = $state(null);
 
 	function remount(id) {
 		if (mount) {
@@ -38,7 +44,10 @@
 	onDestroy(() => { try { mount?.destroy(); } catch { /* gone */ } });
 
 	// Re-mount when the active agent changes.
-	$: if (host && agentId !== mountedId) remount(agentId);
+	$effect.pre(() => {
+		const id = agentId;
+		if (host && id !== mountedId) untrack(() => remount(id));
+	});
 </script>
 
 <span class="agent-wallet" bind:this={host}></span>

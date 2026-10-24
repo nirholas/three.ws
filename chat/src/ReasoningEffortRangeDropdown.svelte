@@ -1,22 +1,26 @@
-<script>
+<script lang="ts">
 	import { scale } from 'svelte/transition';
 	import { cubicIn } from 'svelte/easing';
 	import { params } from './stores.js';
 
-	export let open = false;
-	export let convo;
+	interface Props {
+		open?: boolean;
+		convo: any;
+	}
 
-	let innerWidth;
+	let { open = $bindable(false), convo }: Props = $props();
+
+	let innerWidth = $state();
 </script>
 
 <svelte:window
 	bind:innerWidth
-	on:click={(event) => {
+	onclick={(event) => {
 		if (!event.target.closest('#reasoning-effort-dropdown')) {
 			open = false;
 		}
 	}}
-	on:touchstart={(event) => {
+	ontouchstart={(event) => {
 		if (!event.target.closest('#reasoning-effort-dropdown')) {
 			open = false;
 		}
@@ -35,7 +39,7 @@
 				<div class="mb-2 flex items-baseline justify-between">
 					<button
 						class="flex self-start rounded-full bg-gray-200 px-2 py-0.5 text-left transition-colors hover:bg-gray-300"
-						on:click={() => {
+						onclick={() => {
 							$params.reasoningEffort['range'] = min;
 						}}
 					>
@@ -43,7 +47,7 @@
 					</button>
 					<button
 						class="flex rounded-full bg-gray-200 px-2 py-0.5 text-left transition-colors hover:bg-gray-300"
-						on:click={() => {
+						onclick={() => {
 							$params.reasoningEffort['range'] = max;
 						}}
 					>

@@ -69,7 +69,7 @@
     {#each samplePrompts as prompt}
       <button
         class="bg-white border border-rule rounded-xl p-4 h-[112px] flex flex-col justify-between text-left hover:bg-paper transition-colors"
-        on:click={() => selectPrompt(prompt)}
+        onclick={() => selectPrompt(prompt)}
       >
         <span class="text-sm text-ink leading-snug">{prompt}</span>
         <Icon icon={feArrowUpLeft} size={14} class="text-ink-faint self-end" />
@@ -83,7 +83,7 @@
     {#each platforms as p}
       <button
         class="three-ui-chip {$appPlatforms.has(p.id) ? 'three-ui-chip-selected' : ''}"
-        on:click={() => togglePlatform(p.id)}
+        onclick={() => togglePlatform(p.id)}
       >
         <Icon icon={p.icon} size={16} />
         {p.label}
@@ -95,7 +95,7 @@
   <h3 class="text-sm font-semibold mt-10 mb-3">Explore ideas</h3>
   <div class="flex flex-wrap gap-2">
     {#each ideas as idea}
-      <button class="three-ui-chip" on:click={() => selectIdea(idea)}>
+      <button class="three-ui-chip" onclick={() => selectIdea(idea)}>
         {idea}
         <Icon icon={feArrowUpLeft} size={14} class="text-ink-faint" />
       </button>

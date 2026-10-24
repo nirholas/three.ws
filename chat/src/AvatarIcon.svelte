@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	import {
 		Scene,
 		PerspectiveCamera,
@@ -63,14 +63,11 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { generating } from './stores.js';
 
-	export let avatarUrl = '';
-	/** When true (default), avatar plays walking while $generating, idle otherwise.
-	 *  When false, renders a single still frame (cheap for dense lists). */
-	export let live = true;
+	let { avatarUrl = '', live = true } = $props();
 
-	let canvas;
-	let state = avatarUrl ? 'loading' : 'error';
-	let mixer = null;
+	let canvas = $state();
+	let loadState = $state(avatarUrl ? 'loading' : 'error');
+	let mixer = $state.raw(null);
 	let walkAction = null;
 	let idleAction = null;
 	let renderer = null;
@@ -146,9 +143,9 @@
 			}
 
 			renderer.render(scene, camera);
-			state = 'done';
+			loadState = 'done';
 		} catch {
-			state = 'error';
+			loadState = 'error';
 		}
 	});
 
@@ -175,7 +172,9 @@
 		renderer?.render(scene, camera);
 	}
 
-	$: if (live && mixer) tickPlayState();
+	$effect(() => {
+		if (live && mixer) tickPlayState();
+	});
 
 	onDestroy(() => {
 		observer?.disconnect();
@@ -190,13 +189,13 @@
 	});
 </script>
 
-<span class="h-full w-full block {state === 'done' ? 'avatar-fall-in' : 'invisible'}">
+<span class="h-full w-full block {loadState === 'done' ? 'avatar-fall-in' : 'invisible'}">
 	<canvas
 		bind:this={canvas}
 		width="128"
 		height="128"
 		class="h-full w-full object-cover {$generating && live ? 'avatar-bob' : ''}"
-	/>
+	></canvas>
 </span>
 
 <style>

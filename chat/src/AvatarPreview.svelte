@@ -14,19 +14,21 @@
 	} from 'three';
 	import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-	export let thumbnail_url = null;
-	export let model_url = null;
-	export let alt = '';
-	export let size = 128;
-	export let class_name = 'h-16 w-full rounded object-cover';
-	export let bg_color = '#e8e8e8';
+	let {
+		thumbnail_url = null,
+		model_url = null,
+		alt = '',
+		size = 128,
+		class_name = 'h-16 w-full rounded object-cover',
+		bg_color = '#e8e8e8',
+	} = $props();
 
-	let canvas;
-	let state = thumbnail_url ? 'done' : model_url ? 'idle' : 'none';
+	let canvas = $state();
+	let loadState = $state(thumbnail_url ? 'done' : model_url ? 'idle' : 'none');
 	let observer;
 
 	onMount(() => {
-		if (state !== 'idle') return;
+		if (loadState !== 'idle') return;
 		observer = new IntersectionObserver(
 			(entries) => {
 				if (entries[0].isIntersecting) {
@@ -44,7 +46,7 @@
 	});
 
 	async function renderPreview() {
-		state = 'loading';
+		loadState = 'loading';
 		try {
 			const resp = await fetch(model_url, { mode: 'cors' });
 			if (!resp.ok) throw new Error(resp.status);
@@ -94,16 +96,16 @@
 				for (const m of mats) m.dispose();
 			});
 
-			state = 'done';
+			loadState = 'done';
 		} catch {
-			state = 'error';
+			loadState = 'error';
 		}
 	}
 </script>
 
 {#if thumbnail_url}
 	<img src={thumbnail_url} {alt} class={class_name} loading="lazy" />
-{:else if state === 'none'}
+{:else if loadState === 'none'}
 	<div class="{class_name} flex items-center justify-center bg-slate-100 text-[10px] text-slate-400">
 		No preview
 	</div>
@@ -112,9 +114,9 @@
 		bind:this={canvas}
 		width={size}
 		height={size}
-		class="{class_name} {state === 'loading' ? 'animate-pulse bg-slate-100' : ''} {state === 'error' ? 'hidden' : ''}"
-	/>
-	{#if state === 'error'}
+		class="{class_name} {loadState === 'loading' ? 'animate-pulse bg-slate-100' : ''} {loadState === 'error' ? 'hidden' : ''}"
+	></canvas>
+	{#if loadState === 'error'}
 		<div class="{class_name} flex items-center justify-center bg-slate-100 text-[10px] text-slate-400">
 			No preview
 		</div>

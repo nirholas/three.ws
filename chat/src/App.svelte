@@ -1,11 +1,13 @@
 <script>
+	
 	import { v4 as uuidv4 } from 'uuid';
-	import { onMount, tick } from 'svelte';
+	import { onMount, tick, untrack } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { complete, generateImage } from './convo.js';
 	import KnobsSidebar from './KnobsSidebar.svelte';
 	import Button from './Button.svelte';
-	import { marked } from 'marked';
+	// Same module instance the Markdown renderer lexes with, so the katex extension applies.
+	import { marked } from './svelte-marked/markdown/marked.esm.js';
 	import markedKatex from './marked-katex-extension';
 
 	import { persisted } from './localstorage.js';
@@ -86,17 +88,9 @@
 		})
 	);
 
-	// The chat app's own marketing pages were removed; every surface they
-	// covered is published for real at the site root. Old links still resolve:
-	// the hash is mapped to the live page and the location is replaced, so the
-	// dead route never occupies a history entry.
-	$: {
-		const retired = siteRouteFor($route);
-		if (retired) window.location.replace(retired);
-	}
 
 	const convoId = persisted('convoId');
-	let convos = {};
+	let convos = $state({});
 
 	// Initialize history and convo with a blank slate while we wait for IndexedDB to start
 	const defaultConvo = {
@@ -108,9 +102,9 @@
 		tools: [],
 		agentId: null,
 	};
-	let convo = defaultConvo;
+	let convo = $state(defaultConvo);
 
-	let db;
+	let db = $state();
 	const request = indexedDB.open('threews-chat', 3);
 	request.onupgradeneeded = (event) => {
 		const db = event.target.result;
@@ -171,7 +165,7 @@
 		const transaction = db.transaction(['messages'], 'readwrite');
 		const store = transaction.objectStore('messages');
 
-		store.put(msg);
+		store.put($state.snapshot(msg));
 
 		if (opts.syncToServer && $syncServer.token && $syncServer.password) {
 			sendSingleItem($syncServer.address, $syncServer.token, {
@@ -348,7 +342,7 @@
 			versions,
 		};
 
-		store.put(convoConvertedOrNot);
+		store.put($state.snapshot(convoConvertedOrNot));
 
 		if (
 			opts.syncToServer &&
@@ -412,55 +406,20 @@
 		};
 	}
 
-	let historyBuckets = [];
-	$: {
-		historyBuckets = [];
-		for (const entry of Object.values(convos).sort((a, b) => b.time - a.time)) {
-			if (entry.shared || isNaN(new Date(entry.time).getTime())) {
-				continue;
-			}
 
-			const bucketKey = getRelativeDate(entry.time);
+	let searchQuery = $state('');
 
-			const existingBucket = historyBuckets.find((bucket) => bucket.relativeDate === bucketKey);
-			if (!existingBucket) {
-				historyBuckets.push({ relativeDate: bucketKey, convos: [entry] });
-			} else {
-				existingBucket.convos.push(entry);
-			}
-		}
-		historyBuckets.sort((a, b) => b.convos[0].time - a.convos[0].time);
-	}
+	let generating = $state(false);
+	let editingTitleId = $state(null);
 
-	let searchQuery = '';
-	$: filteredConvos = searchQuery.trim()
-		? Object.values(convos).filter(
-				(c) =>
-					!c.shared &&
-					(c.messages.some(
-						(m) =>
-							typeof m.content === 'string' &&
-							m.content.toLowerCase().includes(searchQuery.toLowerCase())
-					) ||
-						(c.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-						(c.messages.find((m) => m.role === 'user')?.content || '')
-							.toLowerCase()
-							.includes(searchQuery.toLowerCase()))
-			)
-		: null;
+	let historyOpen = $state(false);
+	let knobsOpen = $state(false);
 
-	let generating = false;
-	$: $generatingStore = generating;
-	let editingTitleId = null;
+	let activeToolcall = $state(null);
 
-	let historyOpen = false;
-	let knobsOpen = false;
-
-	let activeToolcall = null;
-
-	let scrollableEl = null;
-	let previousScrollTop = 0;
-	let autoscrollCanceled;
+	let scrollableEl = $state(null);
+	let previousScrollTop = $state(0);
+	let autoscrollCanceled = $state();
 	let scrollAnimFrame = null;
 	function scrollToBottom() {
 		if (!scrollableEl) return;
@@ -484,22 +443,21 @@
 			scrollAnimFrame = requestAnimationFrame(step);
 		}
 	}
-	let textareaEls = [];
-	let inputTextareaEl;
+	let textareaEls = $state([]);
+	let inputTextareaEl = $state();
 
-	let handleFileDrop;
+	let handleFileDrop = $state();
 
-	let innerWidth = window.innerWidth;
+	let innerWidth = $state(window.innerWidth);
 
-	$: splitView = innerWidth > 1215 && activeToolcall && !$config.explicitToolView;
 
 	let settingsModalOpen = false;
-	let toolcallModalOpen = false;
+	let toolcallModalOpen = $state(false);
 
 	let thinkingStartTime = null;
 	let thinkingInterval = null;
 
-	let tree;
+	let tree = $state();
 
 	function handleAbort() {
 		if (!generating) {
@@ -1184,11 +1142,6 @@
 		saveConversation(convo);
 	}
 
-	$: if ($activeAgent !== undefined) {
-		const agentId = $activeAgent?.id ?? null;
-		switchToAgentConversation(agentId);
-		if ($activeAgent) applyAgentToConvo($activeAgent);
-	}
 
 	// Split history at this point:
 	function saveVersion(message, i) {
@@ -1200,8 +1153,8 @@
 		}
 		const nullIdx = convo.versions[message.vid].findIndex((v) => v === null);
 		convo.versions[message.vid][nullIdx] = [
-			structuredClone(message),
-			...structuredClone(convo.messages.slice(i + 1)).map((m) => {
+			$state.snapshot(message),
+			...$state.snapshot(convo.messages.slice(i + 1)).map((m) => {
 				return {
 					...m,
 					editing: false,
@@ -1320,7 +1273,7 @@
 		return ok;
 	}
 
-	let exportOpen = false;
+	let exportOpen = $state(false);
 
 	function downloadFile(content, filename, type) {
 		const blob = new Blob([content], { type });
@@ -1428,7 +1381,7 @@
 		}
 	}
 
-	let models = [...BUILTIN_MODELS];
+	let models = $state([...BUILTIN_MODELS]);
 
 	let loading = false;
 
@@ -1441,11 +1394,11 @@
 		}
 	}
 
-	let installToastMsg = '';
+	let installToastMsg = $state('');
 
 	// Token-gate enforcement state
-	let gateState = null; // null | 'pending' | 'checking' | 'denied'
-	let gateError = '';
+	let gateState = $state(null); // null | 'pending' | 'checking' | 'denied'
+	let gateError = $state('');
 	let activeGate = null; // { id, s, sl }
 
 	async function verifyGate(walletType) {
@@ -1506,7 +1459,7 @@
 		}
 	}
 
-	let choiceHandler;
+	let choiceHandler = $state();
 	async function makeChoice() {
 		return new Promise((resolve) => {
 			choiceHandler = (choice) => {
@@ -1515,17 +1468,17 @@
 		});
 	}
 
-	let isChoosing = false;
-	let question = '';
-	let choices = [];
-	let chose = null; // index
+	let isChoosing = $state(false);
+	let question = $state('');
+	let choices = $state([]);
+	let chose = $state(null); // index
 
 	// Wallet transaction approval gate. Tool bodies call
 	// window.requestWalletApproval(details) which resolves on Approve and rejects
 	// on Reject, pausing the transaction until the user confirms.
-	let txApprovalDetails = null;
-	let txApprovalResolve = null;
-	let txApprovalReject = null;
+	let txApprovalDetails = $state(null);
+	let txApprovalResolve = $state(null);
+	let txApprovalReject = $state(null);
 	export async function choose(newQuestion, newChoices) {
 		chose = null;
 		question = newQuestion;
@@ -1551,18 +1504,7 @@
 		return choseValue;
 	}
 
-	$: window.convo = convo;
-	$: window.saveConversation = saveConversation;
 
-	$: {
-		// Only a white-labeled brand renames the tab. On the stock build the title
-		// stays the one index.html declares, so the tab, the share card and the
-		// site's page index all say the same thing about /chat.
-		if ($brandConfig.name && $brandConfig.name !== STOCK_BRAND_NAME) {
-			document.title = $brandConfig.name;
-		}
-		document.documentElement.style.setProperty('--accent', $brandConfig.accent_color);
-	}
 
 	function syncRouteFromHash() {
 		const hash = window.location.hash.slice(1) || 'chat';
@@ -1873,50 +1815,26 @@
 	// For displaying compact tools, we need to collapse sequences of Assistant and Tool messages into a single message
 	// inside which we'll display all the tool calls.
 	// Returns a list of ranges of messages containing the start and end indices of messages that should be collapsed.
-	let collapsedRanges = [];
-	$: if (!$config.explicitToolView) {
-		collapsedRanges = [];
-		let range = { starti: null, endi: null };
-		for (let i = convo.messages.length - 1; i >= 0; i--) {
-			if (
-				convo.messages[i].role === 'tool' ||
-				(convo.messages[i].role === 'assistant' &&
-					convo.messages[i].toolcalls &&
-					i !== convo.messages.length - 1)
-			) {
-				if (range.endi === null) {
-					range.endi = i + 1;
-				}
-			} else {
-				if (range.endi !== null) {
-					range.starti = i + 1;
-					collapsedRanges.push(range);
-					collapsedRanges = collapsedRanges;
-					range = { starti: null, endi: null };
-				}
-			}
-		}
-	}
 
-	let savedTime = 0;
-	let video;
+	let savedTime = $state(0);
+	let video = $state();
 
 	// Floating 3D agent
-	let agentEl;
-	let agentReady = false;
-	let agentPendingSpeak = null;
-	let agentVisible = true;
-	let agentScriptLoaded = false;
+	let agentEl = $state();
+	let agentReady = $state(false);
+	let agentPendingSpeak = $state(null);
+	let agentVisible = $state(true);
+	let agentScriptLoaded = $state(false);
 	let prevThoughtBubbleActive = false;
-	let thinkingTransitioning = false;
+	let thinkingTransitioning = $state(false);
 	let agentPickerOpen = false;
-	let showAgentSettings = false;
+	let showAgentSettings = $state(false);
 
 	// Walk while tokens are actively arriving. `generating` flips false the
 	// instant the network stream ends, but we want the avatar to keep walking
 	// until rendering settles: a 600ms tail bridges micro-pauses between tokens
 	// and the gap between last token and DOM paint.
-	let tokensFlowing = false;
+	let tokensFlowing = $state(false);
 	let _tokensFlowingTimer = null;
 	function pulseTokens() {
 		tokensFlowing = true;
@@ -1926,25 +1844,7 @@
 
 	// Live thought bubble above the avatar: streams the active reasoning,
 	// then collapses to a "Thought for Xs" summary while the response streams.
-	let thoughtBubbleEl;
-	$: thinkingMessage = (() => {
-		const msgs = convo?.messages;
-		if (!msgs?.length || !generating) return null;
-		const last = msgs[msgs.length - 1];
-		if (!last || last.role !== 'assistant' || !last.reasoning) return null;
-		return last;
-	})();
-	$: thoughtBubbleActive = !!thinkingMessage?.thinking;
-	$: thoughtBubbleText = thinkingMessage?.thoughts || '';
-	$: thoughtBubbleSeconds = thinkingMessage?.thinkingTime
-		? thinkingMessage.thinkingTime < 1 ? '<1' : Math.ceil(thinkingMessage.thinkingTime)
-		: 0;
-	$: if (thoughtBubbleEl && thoughtBubbleActive && thoughtBubbleText) {
-		// Auto-scroll to bottom as tokens stream in
-		queueMicrotask(() => {
-			if (thoughtBubbleEl) thoughtBubbleEl.scrollTop = thoughtBubbleEl.scrollHeight;
-		});
-	}
+	let thoughtBubbleEl = $state();
 
 	// Drag state for the floating agent widget
 	/** @type {{ x: number | null, y: number | null }} */
@@ -1954,7 +1854,7 @@
 	let dragStart = { x: 0, y: 0 };
 	let dragMoved = false;
 	/** @type {'dying' | 'falling' | null} */
-	let avatarExitAnim = null;
+	let avatarExitAnim = $state(null);
 
 	/** @param {MouseEvent} e */
 	function onAvatarDragStart(e) {
@@ -2018,42 +1918,9 @@
 		setTimeout(() => { avatarExitAnim = null; }, 1200);
 	}
 
-	$: effectiveAgentId = $localAgentId || $brandConfig.agent_id || '';
 
-	$: if (effectiveAgentId && !agentScriptLoaded) {
-		agentScriptLoaded = true;
-		const s = document.createElement('script');
-		s.type = 'module';
-		s.src = '/agent-3d/latest/agent-3d.js';
-		document.head.appendChild(s);
-	}
 
-	// Expose to client tools
-	$: if (agentEl) window.__threewsAgent = agentEl;
 
-	$: if (agentEl && !agentReady) {
-		agentEl.addEventListener('agent:ready', () => {
-			agentReady = true;
-			// Re-frame once the canvas has its final on-screen size, because the
-			// internal framing happens at load time, before our ResizeObserver
-			// has reacted to the host's actual width/height. Without this, the
-			// avatar's feet can clip on first render at large element sizes.
-			try {
-				requestAnimationFrame(() => {
-					try { agentEl._viewer?.resize?.(); } catch {}
-					try { agentEl._viewer?.frameContent?.(); } catch {}
-				});
-			} catch {}
-			if (!avatarExitAnim) {
-				// STEP 1: force walk so we can verify the clip plays at all.
-				playClipWithFallback(agentEl, 'walk', ['walking', 'Walk', 'Walking', 'run', 'Run', 'idle']);
-			}
-			if (agentPendingSpeak) {
-				agentEl.speak(agentPendingSpeak);
-				agentPendingSpeak = null;
-			}
-		}, { once: true });
-	}
 
 	function playClipWithFallback(el, primary, fallbacks = []) {
 		if (!el) return;
@@ -2070,7 +1937,7 @@
 	// kicks idle right after scene init, the embedded GLB may have its own
 	// 'idle' on a separate mixer, and any of half a dozen handlers can call
 	// _stopWalkAnimation. Poll and brute-force walk until it sticks.
-	let walkWatchdogTimer = null;
+	let walkWatchdogTimer = $state(null);
 	let _walkDiagLogged = false;
 	function ensureWalkPlaying() {
 		if (!agentEl) { return; }
@@ -2135,40 +2002,9 @@
 		})();
 	}
 
-	// STEP 1: force the walking animation always so we can confirm it plays.
-	// (Idle / think switching deliberately disabled while we verify the walk clip.)
-	$: if (agentEl && agentReady && !avatarExitAnim && !thinkingTransitioning) {
-		ensureWalkPlaying();
-		clearInterval(walkWatchdogTimer);
-		walkWatchdogTimer = setInterval(ensureWalkPlaying, 500);
-	}
 
-	// When thinking ends, play a one-shot falling animation before resuming the loop.
-	$: {
-		const wasActive = prevThoughtBubbleActive;
-		prevThoughtBubbleActive = thoughtBubbleActive;
-		if (wasActive && !thoughtBubbleActive && agentEl && agentReady && !avatarExitAnim) {
-			thinkingTransitioning = true;
-			try { agentEl.play('falling', { loop: false }); } catch {}
-			setTimeout(() => {
-				thinkingTransitioning = false;
-				if (agentEl && agentReady && !avatarExitAnim) {
-					agentEl.play((generating || tokensFlowing) ? 'walk' : 'idle', { loop: true }).catch(() => {});
-				}
-			}, 1200);
-		}
-	}
 
-	$: if (effectiveAgentId) {
-		agentReady = false;
-		agentPendingSpeak = null;
-	}
 
-	// Inject 3D agent tools into schema when an agent is active
-	$: if (effectiveAgentId) {
-		const hasGroup = $toolSchema.some(g => g.name === '3D Agent');
-		if (!hasGroup) $toolSchema = [...$toolSchema, agentToolSchema];
-	}
 
 	function detectEmotion(text) {
 		const t = text.toLowerCase();
@@ -2195,7 +2031,6 @@
 		return top[1] >= 2 ? top[0] : null;
 	}
 
-	$: if ($mode !== 'website') websiteCategory.set(null);
 
 	// Providers differ on how a stream ends: some send a single chunk carrying
 	// finish_reason, others repeat it on a trailing usage chunk. Speaking is
@@ -2281,18 +2116,212 @@
 		}
 	}
 
-	let showSkillsMarketplace = false;
+	let showSkillsMarketplace = $state(false);
 
 	function removeSkill(name) {
 		toolSchema.update(groups => groups.filter(g => g.name !== name));
 	}
+	// The chat app's own marketing pages were removed; every surface they
+	// covered is published for real at the site root. Old links still resolve:
+	// the hash is mapped to the live page and the location is replaced, so the
+	// dead route never occupies a history entry.
+	$effect.pre(() => {
+		const retired = siteRouteFor($route);
+		if (retired) window.location.replace(retired);
+	});
+	const historyBuckets = $derived.by(() => {
+		const buckets = [];
+		for (const entry of Object.values(convos).sort((a, b) => b.time - a.time)) {
+			if (entry.shared || isNaN(new Date(entry.time).getTime())) {
+				continue;
+			}
+
+			const bucketKey = getRelativeDate(entry.time);
+
+			const existingBucket = buckets.find((bucket) => bucket.relativeDate === bucketKey);
+			if (!existingBucket) {
+				buckets.push({ relativeDate: bucketKey, convos: [entry] });
+			} else {
+				existingBucket.convos.push(entry);
+			}
+		}
+		return buckets.sort((a, b) => b.convos[0].time - a.convos[0].time);
+	});
+	let filteredConvos = $derived(searchQuery.trim()
+		? Object.values(convos).filter(
+				(c) =>
+					!c.shared &&
+					(c.messages.some(
+						(m) =>
+							typeof m.content === 'string' &&
+							m.content.toLowerCase().includes(searchQuery.toLowerCase())
+					) ||
+						(c.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+						(c.messages.find((m) => m.role === 'user')?.content || '')
+							.toLowerCase()
+							.includes(searchQuery.toLowerCase()))
+			)
+		: null);
+	$effect.pre(() => {
+		$generatingStore = generating;
+	});
+	let splitView = $derived(innerWidth > 1215 && activeToolcall && !$config.explicitToolView);
+	// Only the active agent triggers a switch; the conversation state the switch
+	// reads and writes must not re-run it.
+	$effect.pre(() => {
+		const agent = $activeAgent;
+		if (agent !== undefined) {
+			untrack(() => {
+				switchToAgentConversation(agent?.id ?? null);
+				if (agent) applyAgentToConvo(agent);
+			});
+		}
+	});
+	$effect.pre(() => {
+		window.convo = convo;
+	});
+	$effect.pre(() => {
+		window.saveConversation = saveConversation;
+	});
+	$effect.pre(() => {
+		// Only a white-labeled brand renames the tab. On the stock build the title
+		// stays the one index.html declares, so the tab, the share card and the
+		// site's page index all say the same thing about /chat.
+		if ($brandConfig.name && $brandConfig.name !== STOCK_BRAND_NAME) {
+			document.title = $brandConfig.name;
+		}
+		document.documentElement.style.setProperty('--accent', $brandConfig.accent_color);
+	});
+	const collapsedRanges = $derived.by(() => {
+		const ranges = [];
+		if ($config.explicitToolView) return ranges;
+		let range = { starti: null, endi: null };
+		for (let i = convo.messages.length - 1; i >= 0; i--) {
+			if (
+				convo.messages[i].role === 'tool' ||
+				(convo.messages[i].role === 'assistant' &&
+					convo.messages[i].toolcalls &&
+					i !== convo.messages.length - 1)
+			) {
+				if (range.endi === null) {
+					range.endi = i + 1;
+				}
+			} else {
+				if (range.endi !== null) {
+					range.starti = i + 1;
+					ranges.push(range);
+					range = { starti: null, endi: null };
+				}
+			}
+		}
+		return ranges;
+	});
+	let thinkingMessage = $derived((() => {
+		const msgs = convo?.messages;
+		if (!msgs?.length || !generating) return null;
+		const last = msgs[msgs.length - 1];
+		if (!last || last.role !== 'assistant' || !last.reasoning) return null;
+		return last;
+	})());
+	let thoughtBubbleActive = $derived(!!thinkingMessage?.thinking);
+	let thoughtBubbleText = $derived(thinkingMessage?.thoughts || '');
+	let thoughtBubbleSeconds = $derived(thinkingMessage?.thinkingTime
+		? thinkingMessage.thinkingTime < 1 ? '<1' : Math.ceil(thinkingMessage.thinkingTime)
+		: 0);
+	$effect.pre(() => {
+		if (thoughtBubbleEl && thoughtBubbleActive && thoughtBubbleText) {
+			// Auto-scroll to bottom as tokens stream in
+			queueMicrotask(() => {
+				if (thoughtBubbleEl) thoughtBubbleEl.scrollTop = thoughtBubbleEl.scrollHeight;
+			});
+		}
+	});
+	let effectiveAgentId = $derived($localAgentId || $brandConfig.agent_id || '');
+	$effect.pre(() => {
+		if (effectiveAgentId && !agentScriptLoaded) {
+			agentScriptLoaded = true;
+			const s = document.createElement('script');
+			s.type = 'module';
+			s.src = '/agent-3d/latest/agent-3d.js';
+			document.head.appendChild(s);
+		}
+	});
+	// Expose to client tools
+	$effect.pre(() => {
+		if (agentEl) window.__threewsAgent = agentEl;
+	});
+	$effect.pre(() => {
+		if (agentEl && !agentReady) {
+			agentEl.addEventListener('agent:ready', () => {
+				agentReady = true;
+				// Re-frame once the canvas has its final on-screen size, because the
+				// internal framing happens at load time, before our ResizeObserver
+				// has reacted to the host's actual width/height. Without this, the
+				// avatar's feet can clip on first render at large element sizes.
+				try {
+					requestAnimationFrame(() => {
+						try { agentEl._viewer?.resize?.(); } catch {}
+						try { agentEl._viewer?.frameContent?.(); } catch {}
+					});
+				} catch {}
+				if (!avatarExitAnim) {
+					// STEP 1: force walk so we can verify the clip plays at all.
+					playClipWithFallback(agentEl, 'walk', ['walking', 'Walk', 'Walking', 'run', 'Run', 'idle']);
+				}
+				if (agentPendingSpeak) {
+					agentEl.speak(agentPendingSpeak);
+					agentPendingSpeak = null;
+				}
+			}, { once: true });
+		}
+	});
+	$effect.pre(() => {
+		if (effectiveAgentId) {
+			agentReady = false;
+			agentPendingSpeak = null;
+		}
+	});
+	// When thinking ends, play a one-shot falling animation before resuming the loop.
+	$effect.pre(() => {
+		const wasActive = prevThoughtBubbleActive;
+		prevThoughtBubbleActive = thoughtBubbleActive;
+		if (wasActive && !thoughtBubbleActive && agentEl && agentReady && !avatarExitAnim) {
+			thinkingTransitioning = true;
+			try { agentEl.play('falling', { loop: false }); } catch {}
+			setTimeout(() => {
+				thinkingTransitioning = false;
+				if (agentEl && agentReady && !avatarExitAnim) {
+					agentEl.play((generating || tokensFlowing) ? 'walk' : 'idle', { loop: true }).catch(() => {});
+				}
+			}, 1200);
+		}
+	});
+	// STEP 1: force the walking animation always so we can confirm it plays.
+	// (Idle / think switching deliberately disabled while we verify the walk clip.)
+	$effect.pre(() => {
+		if (agentEl && agentReady && !avatarExitAnim && !thinkingTransitioning) {
+			untrack(ensureWalkPlaying);
+			clearInterval(walkWatchdogTimer);
+			walkWatchdogTimer = setInterval(ensureWalkPlaying, 500);
+		}
+	});
+	// Inject 3D agent tools into schema when an agent is active
+	$effect.pre(() => {
+		if (effectiveAgentId) {
+			const hasGroup = $toolSchema.some(g => g.name === '3D Agent');
+			if (!hasGroup) $toolSchema = [...$toolSchema, agentToolSchema];
+		}
+	});
+	$effect.pre(() => {
+		if ($mode !== 'website') websiteCategory.set(null);
+	});
 </script>
 
 <svelte:window
 	bind:innerWidth
-	on:touchstart={closeSidebars}
-	on:click={closeSidebars}
-	on:keydown={(event) => {
+	ontouchstart={closeSidebars}
+	onclick={closeSidebars}
+	onkeydown={(event) => {
 		if (
 			event.key === 'Escape' &&
 			generating &&
@@ -2321,15 +2350,15 @@
 		autoplay
 		loop
 		bind:this={video}
-		on:timeupdate={() => {
+		ontimeupdate={() => {
 			savedTime = video.currentTime;
 		}}
-		on:loadeddata={() => {
+		onloadeddata={() => {
 			if (savedTime > 0) {
 				video.currentTime = savedTime;
 			}
 		}}
-	/>
+	></video>
 {/if}
 
 {#if siteRouteFor($route)}
@@ -2351,7 +2380,7 @@
 	</div>
 	<div class="flex h-12 items-center gap-1 px-2 py-1 md:hidden">
 		<button
-			on:click={newConversation}
+			onclick={newConversation}
 			class="flex rounded-full p-2 transition-colors hover:bg-gray-100"
 		>
 			<Icon icon={feStar} strokeWidth={3} class="ml-auto h-4 w-4 text-slate-700" />
@@ -2359,7 +2388,7 @@
 		<button
 			data-trigger="history"
 			class="flex rounded-full p-2 transition-colors hover:bg-gray-100"
-			on:click={() => (historyOpen = !historyOpen)}
+			onclick={() => (historyOpen = !historyOpen)}
 		>
 			<Icon icon={feMenu} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
 		</button>
@@ -2367,11 +2396,11 @@
 		<ModelSelector
 			{convo}
 			{models}
-			on:change={({ detail }) => {
+			onchange={(detail) => {
 				convo.models = [detail];
 				saveConversation(convo);
 			}}
-			on:changeMulti={({ detail }) => {
+			onchangeMulti={(detail) => {
 				if (convo.models.find((m) => m.id === detail.id)) {
 					convo.models = convo.models.filter((m) => m.id !== detail.id);
 				} else {
@@ -2385,14 +2414,14 @@
 		<button
 			class="ml-auto flex rounded-full p-2 transition-colors hover:bg-gray-100"
 			use:flash
-			on:click={shareConversation}
+			onclick={shareConversation}
 		>
 			<Icon icon={feShare} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
 		</button>
 		<div class="relative">
 			<button
 				class="flex rounded-full p-2 transition-colors hover:bg-gray-100 disabled:opacity-40"
-				on:click={() => (exportOpen = !exportOpen)}
+				onclick={() => (exportOpen = !exportOpen)}
 				disabled={convo.messages.length === 0}
 				title="Export conversation"
 			>
@@ -2403,16 +2432,16 @@
 					class="fixed inset-0 z-20 cursor-default"
 					aria-hidden="true"
 					tabindex="-1"
-					on:click={() => (exportOpen = false)}
-				/>
+					onclick={() => (exportOpen = false)}
+				></button>
 				<div class="absolute right-0 top-full mt-1 z-30 w-48 rounded-xl border border-rule bg-white p-1 shadow-pop">
 					<button
 						class="flex h-9 w-full items-center rounded-lg px-3 text-sm font-medium text-ink hover:bg-paper"
-						on:click={exportConvoAsMarkdown}
+						onclick={exportConvoAsMarkdown}
 					>Export as Markdown</button>
 					<button
 						class="flex h-9 w-full items-center rounded-lg px-3 text-sm font-medium text-ink hover:bg-paper"
-						on:click={exportConvoAsJSON}
+						onclick={exportConvoAsJSON}
 					>Export as JSON</button>
 				</div>
 			{/if}
@@ -2423,7 +2452,7 @@
 			aria-label="Model settings"
 			aria-expanded={knobsOpen}
 			title="Model settings"
-			on:click={() => (knobsOpen = !knobsOpen)}
+			onclick={() => (knobsOpen = !knobsOpen)}
 		>
 			<Icon icon={feSidebar} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
 		</button>
@@ -2438,7 +2467,7 @@
 		>
 			<div class="mb-1 pr-3">
 				<button
-					on:click={newConversation}
+					onclick={newConversation}
 					class="three.ws-btn-primary flex w-full items-center justify-start gap-2 rounded-full px-4 py-2.5"
 				>
 					<span class="text-base font-medium leading-none">+</span>
@@ -2466,7 +2495,7 @@
 							)}
 							<li class="group relative">
 								<button
-									on:click={() => {
+									onclick={() => {
 										handleAbort();
 										historyOpen = false;
 										activeToolcall = null;
@@ -2502,7 +2531,7 @@
 									{/if}
 								</button>
 								<button
-									on:click={() => {
+									onclick={() => {
 										if ($convoId === historyConvo.id) {
 											const newId = Object.values(convos).find(
 												(e) => e.id !== historyConvo.id && !e.shared
@@ -2539,14 +2568,14 @@
 										<input
 											class="w-full bg-transparent text-sm text-ink outline-none"
 											bind:value={historyConvo.title}
-											on:blur={() => { saveConversation(historyConvo); convos = { ...convos }; editingTitleId = null; }}
-											on:keydown={(e) => e.key === 'Enter' && e.target.blur()}
+											onblur={() => { saveConversation(historyConvo); convos = { ...convos }; editingTitleId = null; }}
+											onkeydown={(e) => e.key === 'Enter' && e.target.blur()}
 											use:focusOnMount
 										/>
 									</div>
 								{:else}
 									<button
-										on:click={() => {
+										onclick={() => {
 											handleAbort();
 
 											historyOpen = false;
@@ -2567,7 +2596,7 @@
 									>
 										<span
 											class="line-clamp-1"
-											on:dblclick|stopPropagation={() => { editingTitleId = historyConvo.id; }}
+											ondblclick={(event) => { event.stopPropagation(); editingTitleId = historyConvo.id; }}
 										>
 											{historyConvo.title || (historyConvo.messages.length === 0
 												? 'New conversation'
@@ -2580,7 +2609,7 @@
 									</button>
 								{/if}
 								<button
-									on:click={() => {
+									onclick={() => {
 										if ($convoId === historyConvo.id) {
 											const newId = Object.values(convos).find(
 												(e) => e.id !== historyConvo.id && !e.shared
@@ -2612,7 +2641,7 @@
 				<button
 					data-trigger="settings"
 					class="mx-3 flex flex-1 items-center gap-x-4 rounded-lg border border-rule px-4 py-3 text-left text-sm font-medium hover:bg-paper-deep"
-					on:click={() => {
+					onclick={() => {
 						historyOpen = false;
 					}}
 				>
@@ -2627,11 +2656,11 @@
 				<ModelSelector
 					{convo}
 					{models}
-					on:change={({ detail }) => {
+					onchange={(detail) => {
 						convo.models = [detail];
 						saveConversation(convo);
 					}}
-					on:changeMulti={({ detail }) => {
+					onchangeMulti={(detail) => {
 						if (convo.models.find((m) => m.id === detail.id)) {
 							convo.models = convo.models.filter((m) => m.id !== detail.id);
 						} else {
@@ -2647,14 +2676,14 @@
 					use:flash
 					aria-label="Share conversation"
 					title="Share conversation"
-					on:click={shareConversation}
+					onclick={shareConversation}
 				>
 					<Icon icon={feShare} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
 				</button>
 				<div class="relative">
 					<button
 						class="flex rounded-full p-3 transition-colors hover:bg-gray-100 disabled:opacity-40"
-						on:click={() => (exportOpen = !exportOpen)}
+						onclick={() => (exportOpen = !exportOpen)}
 						disabled={convo.messages.length === 0}
 						title="Export conversation"
 					>
@@ -2665,23 +2694,23 @@
 							class="fixed inset-0 z-20 cursor-default"
 							aria-hidden="true"
 							tabindex="-1"
-							on:click={() => (exportOpen = false)}
-						/>
+							onclick={() => (exportOpen = false)}
+						></button>
 						<div class="absolute right-0 top-full mt-1 z-30 w-48 rounded-xl border border-rule bg-white p-1 shadow-pop">
 							<button
 								class="flex h-9 w-full items-center rounded-lg px-3 text-sm font-medium text-ink hover:bg-paper"
-								on:click={exportConvoAsMarkdown}
+								onclick={exportConvoAsMarkdown}
 							>Export as Markdown</button>
 							<button
 								class="flex h-9 w-full items-center rounded-lg px-3 text-sm font-medium text-ink hover:bg-paper"
-								on:click={exportConvoAsJSON}
+								onclick={exportConvoAsJSON}
 							>Export as JSON</button>
 						</div>
 					{/if}
 				</div>
 				<button
 					class="relative flex items-center gap-1 rounded-full p-3 transition-colors hover:bg-gray-100"
-					on:click={() => (showSkillsMarketplace = true)}
+					onclick={() => (showSkillsMarketplace = true)}
 					title="Skills Marketplace"
 				>
 					<Icon icon={feGrid} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
@@ -2696,7 +2725,7 @@
 					aria-label="Model settings"
 					aria-expanded={knobsOpen}
 					title="Model settings"
-					on:click={() => (knobsOpen = !knobsOpen)}
+					onclick={() => (knobsOpen = !knobsOpen)}
 				>
 					<Icon icon={feSidebar} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
 				</button>
@@ -2705,53 +2734,57 @@
 			{#if convo.messages.length === 0}
 				<div class="flex h-full w-full overflow-y-auto">
 					<EmptyState>
-						<svelte:fragment slot="composer">
-							<Composer
-								bind:generating
-								bind:convo
-								{saveMessage}
-								{saveConversation}
-								{submitCompletion}
-								{scrollToBottom}
-								{handleAbort}
-								{tree}
-								bind:inputTextareaEl
-								bind:handleFileDrop
-								placeholder={$mode === 'website' ? 'Describe the website you want to build' : $t('typeMessage')}
-								mode={$mode}
-								modes={[{ id: 'website', label: 'Website' }]}
-								onModeClear={() => mode.set(null)}
-							/>
-						</svelte:fragment>
-						<svelte:fragment slot="chips">
-							{#if $mode === 'website'}
-								<WebsiteFlow />
-							{:else if $mode === 'desktop'}
-								<DesktopFlow />
-							{:else}
-								<SuggestionChips />
-							{/if}
-						</svelte:fragment>
+						{#snippet composer()}
+															
+								<Composer
+									bind:generating
+									bind:convo
+									{saveMessage}
+									{saveConversation}
+									{submitCompletion}
+									{scrollToBottom}
+									{handleAbort}
+									{tree}
+									bind:inputTextareaEl
+									bind:handleFileDrop
+									placeholder={$mode === 'website' ? 'Describe the website you want to build' : $t('typeMessage')}
+									mode={$mode}
+									modes={[{ id: 'website', label: 'Website' }]}
+									onModeClear={() => mode.set(null)}
+								/>
+							
+															{/snippet}
+						{#snippet chips()}
+															
+								{#if $mode === 'website'}
+									<WebsiteFlow />
+								{:else if $mode === 'desktop'}
+									<DesktopFlow />
+								{:else}
+									<SuggestionChips />
+								{/if}
+							
+															{/snippet}
 					</EmptyState>
 				</div>
 			{:else}
 				<div class="flex h-full w-full">
-					<!-- svelte-ignore a11y-no-static-element-interactions -->
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
 						class="{splitView
 							? 'w-[50%]'
 							: 'w-full'} relative max-h-[calc(100vh-49px)] transition-[width] duration-500 ease-in-out"
-						on:dragover={(event) => {
+						ondragover={(event) => {
 							event.preventDefault();
 						}}
-						on:drop={handleFileDrop}
+						ondrop={handleFileDrop}
 					>
 						<div
 							bind:this={scrollableEl}
 							class="{splitView
 								? 'scrollbar-none'
 								: 'scrollbar-ultraslim'} scrollable flex h-full w-full flex-col overflow-y-auto pb-[128px]"
-							on:scroll={() => {
+							onscroll={() => {
 								const { scrollTop, scrollHeight, clientHeight } = scrollableEl;
 								if (scrollTop < previousScrollTop) {
 									autoscrollCanceled = true;
@@ -2785,7 +2818,7 @@
 										bind:chose
 										bind:activeToolcall
 										bind:textareaEls
-										on:rerender={() => {
+										onrerender={() => {
 											convo.messages = convo.messages;
 										}}
 									/>
@@ -2795,7 +2828,7 @@
 							</ul>
 						</div>
 
-						<div class="pointer-events-none absolute bottom-[72px] inset-x-0 h-8 z-[98] bg-gradient-to-t from-paper to-transparent" />
+						<div class="pointer-events-none absolute bottom-[72px] inset-x-0 h-8 z-[98] bg-gradient-to-t from-paper to-transparent"></div>
 						{#if $toolSchema.length > 0 || effectiveAgentId}
 							<div class="flex flex-wrap gap-1.5 px-4 pt-2 pb-0">
 								{#each $toolSchema as group}
@@ -2803,7 +2836,7 @@
 										{group.name}
 										<button
 											class="ml-0.5 rounded-full p-0.5 text-indigo-400 hover:bg-indigo-100 hover:text-indigo-600"
-											on:click={() => removeSkill(group.name)}
+											onclick={() => removeSkill(group.name)}
 											aria-label="Remove {group.name}"
 										>
 											<Icon icon={feX} class="h-2.5 w-2.5" />
@@ -2812,14 +2845,14 @@
 								{/each}
 								<button
 									class="text-[11px] text-slate-400 hover:text-slate-600"
-									on:click={() => (showSkillsMarketplace = true)}
+									onclick={() => (showSkillsMarketplace = true)}
 								>
 									+ Add skill
 								</button>
 								{#if effectiveAgentId}
 									<button
 										class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100"
-										on:click={agentVisible ? killAvatar : reviveAvatar}
+										onclick={agentVisible ? killAvatar : reviveAvatar}
 										title={agentVisible ? 'Hide avatar' : 'Show avatar'}
 									>
 										{agentVisible ? 'Hide avatar' : 'Show avatar'}
@@ -2859,7 +2892,7 @@
 								{question}
 								{choices}
 								class="!rounded-xl"
-								on:close={() => {
+								onclose={() => {
 									activeToolcall = null;
 								}}
 							/>
@@ -2877,11 +2910,11 @@
 <SettingsModal
 	open={settingsModalOpen}
 	trigger="settings"
-	on:fetchModels={async () => {
+	onfetchModels={async () => {
 		const fetched = await fetchModels({ onFinally: () => {} });
 		models = [...BUILTIN_MODELS, ...fetched];
 	}}
-	on:disableTool={({ detail: name }) => {
+	ondisableTool={(name) => {
 		convo.tools = convo.tools.filter((n) => n !== name);
 		saveConversation(convo);
 	}}
@@ -2897,7 +2930,7 @@
 		trigger="toolcall"
 		class="!p-0"
 		buttonClass="hidden"
-		on:close={() => {
+		onclose={() => {
 			activeToolcall = null;
 		}}
 	>
@@ -2912,7 +2945,7 @@
 			{question}
 			{choices}
 			class="!rounded-xl"
-			on:close={() => {
+			onclose={() => {
 				toolcallModalOpen = false;
 				activeToolcall = null;
 			}}
@@ -2947,14 +2980,14 @@
 				<div class="flex flex-col gap-3">
 					<button
 						class="flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-purple-700 active:scale-95"
-						on:click={() => verifyGate('solana')}
+						onclick={() => verifyGate('solana')}
 					>
 						<svg class="h-5 w-5" viewBox="0 0 128 128" fill="none"><circle cx="64" cy="64" r="64" fill="#9945FF"/><path d="M86 44H42l14 14h44L86 44zm0 26H42l14 14h44L86 70zM42 84h44l-14 14H28L42 84z" fill="white"/></svg>
 						Verify with Solana Wallet
 					</button>
 					<button
 						class="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 active:scale-95"
-						on:click={() => verifyGate('evm')}
+						onclick={() => verifyGate('evm')}
 					>
 						<svg class="h-5 w-5" viewBox="0 0 128 128" fill="none"><circle cx="64" cy="64" r="64" fill="#627EEA"/><path d="M64 20v33l28 12.5L64 20z" fill="white" fill-opacity=".6"/><path d="M64 20L36 65.5l28-12.5V20z" fill="white"/><path d="M64 88v20l28-38.5L64 88z" fill="white" fill-opacity=".6"/><path d="M64 108V88L36 69.5 64 108z" fill="white"/><path d="M64 82.5l28-16.9-28-12.6v29.5z" fill="white" fill-opacity=".2"/><path d="M36 65.5l28 16.9V53l-28 12.5z" fill="white" fill-opacity=".6"/></svg>
 						Verify with EVM Wallet
@@ -2972,7 +3005,7 @@
 				<div class="flex flex-col gap-2">
 					<button
 						class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
-						on:click={() => { gateState = 'pending'; gateError = ''; }}
+						onclick={() => { gateState = 'pending'; gateError = ''; }}
 					>Try a different wallet</button>
 				</div>
 			{/if}
