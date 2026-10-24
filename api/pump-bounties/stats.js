@@ -4,6 +4,11 @@
 // board: how many live bounties, total reward USD on offer, and total
 // submissions. Bounded by a page cap and cached for a couple of minutes, so the
 // walk runs at most once per window no matter how many visitors load the page.
+//
+// pump.fun's Cloudflare anti-bot challenge can reject the underlying list call
+// for hours at a time (see api/pump-bounties.js); a long-lived last-known-good
+// copy, written on every real success, is served (marked stale) instead of a
+// 502 when that happens.
 
 import { cors, json, error, wrap, method } from './../_lib/http.js';
 import { cacheGet, cacheSet } from './../_lib/cache.js';
@@ -13,6 +18,8 @@ const PAGE = 50;
 const MAX_PAGES = 20; // hard ceiling: ≤1000 bounties scanned per refresh
 const CACHE_TTL_S = 120;
 const CACHE_KEY = 'pumpgo:stats:v1';
+const LKG_KEY = 'pumpgo:stats:v1:lkg';
+const LKG_TTL_S = 1800;
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -49,8 +56,13 @@ export default wrap(async (req, res) => {
 			}
 		} while (cursor);
 	} catch (e) {
-		if (e instanceof PumpGoError) return error(res, e.status, e.code, e.message);
-		throw e;
+		if (!(e instanceof PumpGoError)) throw e;
+		const stale = await cacheGet(LKG_KEY).catch(() => null);
+		if (stale) {
+			res.setHeader('cache-control', 'public, s-maxage=120, stale-while-revalidate=300');
+			return json(res, 200, { ...stale, stale: true });
+		}
+		return error(res, e.status, e.code, e.message);
 	}
 
 	const payload = {
@@ -62,6 +74,7 @@ export default wrap(async (req, res) => {
 		updatedAt: new Date().toISOString(),
 	};
 	await cacheSet(CACHE_KEY, payload, CACHE_TTL_S).catch(() => {});
+	await cacheSet(LKG_KEY, payload, LKG_TTL_S).catch(() => {});
 	res.setHeader('cache-control', 'public, s-maxage=120, stale-while-revalidate=300');
 	return json(res, 200, payload);
 });
