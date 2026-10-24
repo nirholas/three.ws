@@ -4,10 +4,6 @@ These rules OVERRIDE defaults. Every agent in this workspace must follow them.
 
 ---
 
-## Identity
-
-You are building **three.ws**, a platform that competes with the best in the world. Every line of code, every UI element, every interaction should reflect that ambition. You are not a task-completing machine. You are a senior engineer and product thinker who happens to write code. Act like it.
-
 ## Prime directive
 
 **Execute. Do not interview the user.** Pick the most reasonable interpretation and ship a complete, polished feature. Questions waste the user's time.
@@ -36,15 +32,6 @@ Before stopping to ask anything, load the `self-unblock-playbook` skill (`.claud
 If a task cannot be 100% finished inside this session (an external review must land, a third party must respond), that is not "blocked": finish every part that can be finished, wire it so the remaining step is trivial, and say exactly what remains and who owns it in your final report.
 
 ---
-
-## Mindset: think like a founder, build like a craftsman
-
-Before writing a single line of code, answer these questions internally:
-
-1. **What is the user's user trying to accomplish?** Every feature exists for the end user. If you can't articulate who benefits and how, stop and think harder.
-2. **What would the best version of this look like?** Not the fastest to implement, the best to use. Study how top platforms (Vercel, Linear, Stripe, Figma) solve similar problems. Match that bar.
-3. **What's the second-order effect?** Does this feature interact with existing features? Does it create new possibilities? Wire those connections. A marketplace that doesn't link to agent profiles is half-built. A dashboard that doesn't surface actionable data is decoration.
-4. **What would make someone screenshot this and share it?** That's the quality bar. If the answer is "nothing," raise the bar.
 
 ## Hard rules (non-negotiable)
 
@@ -91,7 +78,7 @@ Before writing a single line of code, answer these questions internally:
 
 ## Engineering excellence
 
-Read before you write; match existing patterns; wire every path end to end (routing, data, state, UI, errors); delete dead code; search npm/GitHub/`package.json` before writing anything non-trivial; design every UI state (loading, empty, error, populated, overflow) with accessibility and responsive behavior; improve the adjacent platform, not just the ticket. Load the `engineering-standards` skill (`.claude/skills/engineering-standards/SKILL.md`) before building any non-trivial feature or UI.
+Load the `engineering-standards` skill (`.claude/skills/engineering-standards/SKILL.md`) before any non-trivial feature or UI. It holds the architecture, open-source-first, UI/UX and innovation standards, plus the founder mindset and the pre-completion self-review.
 
 ### Bug fixes are test-first (owner directive 2026-10-10)
 
@@ -115,18 +102,6 @@ A feature is NOT done until ALL of these are true:
 - [ ] You would be proud to demo this feature to a room of senior engineers.
 
 If you cannot verify a step, say so explicitly. Do not claim done.
-
-## Self-review protocol
-
-Before reporting any feature complete, run this internal audit:
-
-1. **The lazy check:** Did I take any shortcuts? Did I leave anything half-wired? Did I use a hardcoded value where a dynamic one belongs?
-2. **The user check:** If I were using this platform for the first time, would this feature make sense? Would I know how to find it? Would it feel polished?
-3. **The integration check:** Does this feature connect to the rest of the platform? Can the user navigate to it and away from it naturally? Does it share data/state with related features?
-4. **The edge case check:** What happens with 0 items? 1 item? 1000 items? A really long name? A network failure mid-operation? An expired session?
-5. **The pride check:** Would I put this in my portfolio? If not, what's stopping me? Fix that.
-
-Fix every issue found. Then report complete.
 
 ## Workflow
 
@@ -205,14 +180,12 @@ Production deploys need owner approval (gate 2) unless the current instruction i
 - Frontend: vanilla JS modules + Vite (`npm run dev`, port 3000).
 - 3D: Three.js with glTF/GLB.
 - Backend touchpoints: serverless-style handlers in `api/`, workers in `workers/`.
-- **Production runs on Google Cloud Run, NOT Vercel** (migrated 2026-07-07 after Vercel disabled the deployment). One container ([server/index.mjs](server/index.mjs)) serves the static frontend, the vercel.json route table, and all `api/**` handlers; the crons (145 as of 2026-10-23, see vercel.json) run on Cloud Scheduler. `vercel.json` is a LIVE config file: `server/index.mjs` reads its `routes` array on boot (split at the `{handle:"filesystem"}` marker into pre- and post-filesystem phases), and `scripts/create-gcp-scheduler.mjs` reads its `crons` array to sync Cloud Scheduler jobs. The server itself never reads `crons`. Never delete `vercel.json` as a leftover. GCP builds/deploys must pin the `three-ws-build@` (build) and `three-ws@` (runtime) service accounts; the project's default compute SA was deleted. Deploys: see the "Deploy runbook" section above.
+- **Production runs on Google Cloud Run, NOT Vercel** (migrated 2026-07-07 after Vercel disabled the deployment). One container ([server/index.mjs](server/index.mjs)) serves the static frontend, the vercel.json route table, and all `api/**` handlers; the crons (150 as of 2026-10-24, see vercel.json) run on Cloud Scheduler. `vercel.json` is a LIVE config file: `server/index.mjs` reads its `routes` array on boot (split at the `{handle:"filesystem"}` marker into pre- and post-filesystem phases), and `scripts/create-gcp-scheduler.mjs` reads its `crons` array to sync Cloud Scheduler jobs. The server itself never reads `crons`. Never delete `vercel.json` as a leftover. GCP builds/deploys must pin the `three-ws-build@` (build) and `three-ws@` (runtime) service accounts; the project's default compute SA was deleted. Deploys: see the "Deploy runbook" section above.
 - **Env-var trap:** `vercel env pull` returns EMPTY for secret-type vars. Never trust a Vercel env export as complete. Production env lives on the Cloud Run service (`gcloud run services describe/update three-ws-api --region us-central1`).
 - Solana/agent SDKs in `sdk/`, `solana-agent-sdk/`, `agent-payments-sdk/`.
 - Real APIs in use: Pump.fun feed, Solana RPC, OpenAI/Anthropic via worker proxies. Never mock these.
 - **Orientation:** `STRUCTURE.md` maps every product surface to its directory. Read it before exploring the 60+ top-level dirs.
-- **Shared worker code is vendored, and `npm run check:vendored` keeps the copies honest.** Each worker's Docker build context is its own directory, so `../` is unreachable and shared modules (`worker_security.py`, `oin.py`, `oin_upload.py`, `gltf_meshopt.py`, `test_gltf_meshopt.py`) live as a byte-identical copy inside every worker that needs them. Fix the canonical copy, mirror it to every worker, then rerun the check (`scripts/check-vendored-workers.mjs`, wired into `npm run gate`). It prints the exact `cp` command for each drifted copy.
-- **Caller-supplied glTF is meshopt-decoded before it is read.** Most three.ws avatars ship with `EXT_meshopt_compression`, which trimesh cannot decode, so a worker that loads a caller's mesh must route it through `gltf_meshopt.decode_if_meshopt` first (stylize, remesh, texture, segment, rig already do) and ship the pinned `gltfpack` binary in its image. A new mesh-consuming worker inherits that requirement.
-- **Avatar animation is universal: no rig allowlist.** Any humanoid avatar drives the pre-baked clip library: `src/glb-canonicalize.js` maps its bone names (Mixamo, Avaturn, Unreal, VRM/VRoid, VRM 1.0, Daz/Genesis, MakeHuman, Blender `.L`, simple `shoulderL` rigs) to the canonical set, and `src/animation-retarget.js` retargets idle/walk onto them, legs included. A rig that genuinely can't be skeleton-driven (no skin, non-humanoid prop) falls back to the default rig (`AnimationManager.supportsCanonicalClips()` gate), never a bind-pose T-pose. Hit a new skeleton convention? Add its bone-name mapping to `glb-canonicalize.js` (cover it with a case in `tests/glb-canonicalize.test.js`); don't hardcode a curated rig list.
+- **Workers and avatars:** shared worker modules are vendored byte-identical per worker (`npm run check:vendored`), caller glTF must be meshopt-decoded before a worker reads it, and avatar animation has no rig allowlist (add bone-name mappings to `src/glb-canonicalize.js`). Rules and commands: `docs/ops/worker-and-avatar-rules.md`.
 
 ## Known traps
 
