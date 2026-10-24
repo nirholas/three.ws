@@ -4782,6 +4782,12 @@
 					"added": "2026-10-23"
 				},
 				{
+					"path": "/docs/skill-supply-scan",
+					"title": "Docs · Skill supply-chain scanner",
+					"description": "How every marketplace skill is scanned for secret access, undeclared network hosts, hidden code and owner-confirmation bypasses; the clean, review and blocked verdicts; the requires.network manifest field; and the scan and moderation endpoints.",
+					"added": "2026-10-24"
+				},
+				{
 					"path": "/docs/skill-rails",
 					"title": "Docs · One paid skill, four rails",
 					"description": "Price a marketplace skill once and serve it over x402, MPP, A2A and AP2 with the same author and platform split, one agent card and one receipt. Includes the dry-run quote, rail toggles and 404 on a disabled rail.",

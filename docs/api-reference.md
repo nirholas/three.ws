@@ -10660,3 +10660,7 @@ a delivery from the log or the `/dashboard/developers` page. The signing secret
 | `POST /api/forge-keep` | optional $THREE wallet or payment | Release a creation for download. With `FORGE_PAY_TO_KEEP` off it always returns `kept: true`. Non-holders get `402 three_hold_required` with the `pay_per_use` action. A reused payment returns `409 payment_already_used`. |
 
 Details and the enable command: [forge.md](./forge.md#cost-preview-and-pay-to-keep).
+
+## Skill supply-chain scan
+
+Every published skill version is scanned. `POST /api/skills` and `PATCH /api/skills/:id` accept `manifest` and `handlers_src`, return a `scan` object, and answer `422 skill_blocked` when a skill is blocked. `POST /api/skills/scan` is a dry run for the publish form. `GET` and `POST /api/skills/moderation` (admin) list and decide held skills. Rules, verdicts and the `requires.network` manifest field: [skill-supply-scan.md](skill-supply-scan.md).

@@ -3281,6 +3281,72 @@ function renderEarnTransactions() {
 	if (moreEl) moreEl.hidden = earnState.entries.length <= earnState.txnVisible;
 }
 
+function renderSkillScan(scan, note) {
+	const box = $('skill-publish-scan');
+	if (!box) return;
+	if (!scan) {
+		box.hidden = true;
+		box.textContent = '';
+		return;
+	}
+	const items = (scan.findings || []).filter((f) => f.severity !== 'info');
+	box.dataset.verdict = scan.verdict;
+	box.textContent = '';
+	const head = document.createElement('p');
+	head.className = 'sp-scan-head';
+	head.textContent =
+		scan.verdict === 'clean'
+			? 'Scan passed. Nothing in this skill needs review.'
+			: scan.verdict === 'review'
+				? `Held for review. A moderator checks ${items.length} finding${items.length === 1 ? '' : 's'} before it is listed.`
+				: `Blocked. Fix ${items.length} finding${items.length === 1 ? '' : 's'} to publish.`;
+	box.append(head);
+	if (note) {
+		const n = document.createElement('div');
+		n.textContent = note;
+		box.append(n);
+	}
+	if (items.length) {
+		const ul = document.createElement('ul');
+		ul.className = 'sp-scan-list';
+		for (const f of items) {
+			const li = document.createElement('li');
+			li.className = 'sp-scan-item';
+			const loc = document.createElement('span');
+			loc.className = 'sp-scan-loc';
+			loc.textContent = `${f.file}${f.line ? `:${f.line}` : ''}  ${f.severity === 'block' ? 'blocks' : 'review'}`;
+			const msg = document.createElement('div');
+			msg.textContent = f.message;
+			li.append(loc, msg);
+			if (f.snippet) {
+				const code = document.createElement('code');
+				code.textContent = f.snippet;
+				li.append(code);
+			}
+			const fix = document.createElement('span');
+			fix.className = 'sp-scan-fix';
+			fix.textContent = `Fix: ${f.fix}`;
+			li.append(fix);
+			ul.append(li);
+		}
+		box.append(ul);
+	}
+	box.hidden = false;
+}
+
+function readSkillBundleFields() {
+	const content = ($('sp-content')?.value || '').trim();
+	const handlers_src = $('sp-handlers')?.value || '';
+	const manifestRaw = ($('sp-manifest')?.value || '').trim();
+	let manifest;
+	if (manifestRaw) manifest = JSON.parse(manifestRaw);
+	const out = {};
+	if (content) out.content = content;
+	if (handlers_src.trim()) out.handlers_src = handlers_src;
+	if (manifest) out.manifest = manifest;
+	return out;
+}
+
 function openPublishSkillModal() {
 	const overlay = $('skill-publish-overlay');
 	if (!overlay) return;
@@ -3293,6 +3359,8 @@ function openPublishSkillModal() {
 	}
 	$('sp-tags').value = '';
 	$('sp-schema').value = '';
+	for (const id of ['sp-content', 'sp-manifest', 'sp-handlers']) if ($(id)) $(id).value = '';
+	renderSkillScan(null);
 	const errEl = $('skill-publish-error');
 	if (errEl) { errEl.hidden = true; errEl.textContent = ''; }
 	overlay.hidden = false;
@@ -3384,6 +3452,39 @@ function bindEarnTab() {
 		if (e.target === $('skill-publish-overlay')) closePublishSkillModal();
 	});
 
+	// Dry-run scan, no publish
+	$('sp-check')?.addEventListener('click', async () => {
+		const errEl = $('skill-publish-error');
+		if (errEl) { errEl.hidden = true; errEl.textContent = ''; }
+		let schema_json;
+		let bundle;
+		try {
+			const schemaRaw = ($('sp-schema')?.value || '').trim();
+			if (schemaRaw) schema_json = JSON.parse(schemaRaw);
+			bundle = readSkillBundleFields();
+		} catch {
+			if (errEl) { errEl.textContent = 'Tool definitions and manifest.json must be valid JSON.'; errEl.hidden = false; }
+			return;
+		}
+		const btn = $('sp-check');
+		if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+		try {
+			const r = await fetch(`${API}/skills/scan`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({ name: ($('sp-name')?.value || '').trim(), description: ($('sp-description')?.value || '').trim(), schema_json, ...bundle }),
+			});
+			const j = await r.json();
+			if (!r.ok) throw new Error(r.status === 401 ? 'Sign in to check a skill.' : j.error_description || j.error || `HTTP ${r.status}`);
+			renderSkillScan(j.scan);
+		} catch (err) {
+			if (errEl) { errEl.textContent = err.message; errEl.hidden = false; }
+		} finally {
+			if (btn) { btn.disabled = false; btn.textContent = 'Check skill'; }
+		}
+	});
+
 	// Publish skill submit
 	$('sp-publish')?.addEventListener('click', async () => {
 		const name = ($('sp-name')?.value || '').trim();
@@ -3418,6 +3519,14 @@ function bindEarnTab() {
 			}
 		}
 
+		let bundle;
+		try {
+			bundle = readSkillBundleFields();
+		} catch {
+			if (errEl) { errEl.textContent = 'manifest.json must be valid JSON.'; errEl.hidden = false; }
+			return;
+		}
+
 		if (errEl) { errEl.hidden = true; errEl.textContent = ''; }
 		const btn = $('sp-publish');
 		if (btn) { btn.disabled = true; btn.textContent = 'Publishing…'; }
@@ -3427,10 +3536,24 @@ function bindEarnTab() {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				credentials: 'include',
-				body: JSON.stringify({ name, description, category, tags, schema_json, is_public: true, price_per_call_usd, rails: rails.length ? rails : undefined }),
+				body: JSON.stringify({ name, description, category, tags, schema_json, ...bundle, is_public: true, price_per_call_usd, rails: rails.length ? rails : undefined }),
 			});
 			const j = await r.json();
-			if (!r.ok) throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+			if (!r.ok) {
+				if (j.error === 'skill_blocked' && j.scan) {
+					renderSkillScan(j.scan);
+					throw new Error('Publishing was refused by the safety scan. The findings are listed above.');
+				}
+				throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+			}
+			const held = j.scan?.held || j.skill?.held_for_review;
+			if (held && j.scan) {
+				renderSkillScan(j.scan, 'Your skill was saved privately. It will be listed once a moderator approves it.');
+				skillsState.skills = [];
+				skillsState.loaded = false;
+				earnState.loaded = false;
+				return;
+			}
 			closePublishSkillModal();
 			// Reload skills tab cache
 			skillsState.skills = [];

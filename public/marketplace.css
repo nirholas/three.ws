@@ -5496,3 +5496,80 @@ body.market-page > header {
 		text-decoration-thickness var(--duration-fast) var(--ease-standard),
 		transform var(--duration-fast) var(--ease-standard);
 }
+
+/* ── Publish skill: supply-chain scan results ───────────────────────── */
+
+.sp-bundle {
+	margin: 0 0 12px;
+}
+
+.sp-bundle > summary {
+	cursor: pointer;
+	font-size: 13px;
+	margin-bottom: var(--space-sm);
+}
+
+.sp-bundle textarea {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 12px;
+}
+
+.sp-scan {
+	margin: 0 0 12px;
+	padding: var(--space-sm) var(--space-md);
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--border, rgba(127, 127, 127, 0.3));
+	font-size: 13px;
+}
+
+.sp-scan[data-verdict='clean'] {
+	border-color: rgba(34, 197, 94, 0.5);
+	background: rgba(34, 197, 94, 0.08);
+}
+
+.sp-scan[data-verdict='review'] {
+	border-color: rgba(245, 158, 11, 0.55);
+	background: rgba(245, 158, 11, 0.08);
+}
+
+.sp-scan[data-verdict='blocked'] {
+	border-color: rgba(239, 68, 68, 0.55);
+	background: rgba(239, 68, 68, 0.08);
+}
+
+.sp-scan-head {
+	font-weight: 600;
+	margin: 0 0 4px;
+}
+
+.sp-scan-list {
+	list-style: none;
+	margin: 8px 0 0;
+	padding: 0;
+	display: grid;
+	gap: 8px;
+	max-height: 240px;
+	overflow: auto;
+}
+
+.sp-scan-item code {
+	font-size: 12px;
+	overflow-wrap: anywhere;
+}
+
+.sp-scan-loc {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 12px;
+	opacity: 0.8;
+}
+
+.sp-scan-fix {
+	display: block;
+	opacity: 0.85;
+}
+
+#sp-check:focus-visible,
+.sp-bundle > summary:focus-visible {
+	outline: 2px solid var(--accent, #00d9ff);
+	outline-offset: 2px;
+}

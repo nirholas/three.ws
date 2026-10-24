@@ -66,7 +66,9 @@ beforeEach(async () => {
 		create table agent_identities (id uuid primary key, user_id uuid not null, name text, deleted_at timestamptz, skills text[] not null default '{}'::text[]);
 		create table marketplace_skills (
 			id uuid primary key default gen_random_uuid(), author_id uuid, name text, slug text unique, description text, category text,
-			tags text[], schema_json jsonb, content text, is_public boolean, price_per_call_usd numeric
+			tags text[], schema_json jsonb, content text, is_public boolean, price_per_call_usd numeric,
+			manifest jsonb, handlers_src text, scan_verdict text, scan_findings jsonb, scan_version text, scanned_at timestamptz,
+			review_status text not null default 'none'
 		);
 		insert into users values ('${USER}');
 		insert into agent_identities (id, user_id, name) values ('${AGENT}', '${USER}', 'Scout');
@@ -285,6 +287,8 @@ describe('owner approval', () => {
 		expect(pub.author_id).toBe(USER);
 		expect(pub.schema_json[0].function.name).toBe(c.bundle.tools.tools[0].name);
 		expect(pub.content).toBe(c.bundle.skill_md);
+		expect(pub.scan_verdict).toBe('clean');
+		expect(pub.scan_version).toBeTruthy();
 		await expect(cand.publishCandidate({ agentId: AGENT, userId: USER, id: c.id })).rejects.toMatchObject({ code: 'already_published' });
 	});
 });

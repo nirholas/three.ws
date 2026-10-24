@@ -6017,6 +6017,14 @@
 			"dest": "/api/skills/mint"
 		},
 		{
+			"src": "/api/skills/scan",
+			"dest": "/api/skills/scan"
+		},
+		{
+			"src": "/api/skills/moderation",
+			"dest": "/api/skills/moderation"
+		},
+		{
 			"src": "/api/skills/import",
 			"dest": "/api/skills/import"
 		},

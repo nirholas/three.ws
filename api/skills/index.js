@@ -5,6 +5,8 @@ import { cors, json, error, method, readJson, wrap, rateLimited } from '../_lib/
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse, isUuid } from '../_lib/validate.js';
 import { DEFAULT_SKILL_RAILS, SKILL_RAILS, enabledRails, normalizeRails } from '../_lib/skill-rails.js';
+import { scanSkillRow } from '../_lib/skill-supply-scan.js';
+import { stateFor, scanColumns, authorFacing } from '../_lib/skill-scan-store.js';
 
 const CATEGORY_RE = /^[a-z0-9-]{1,50}$/;
 // Tags are authored freely on publish, so browse matches them case-insensitively
@@ -41,6 +43,8 @@ const publishSchema = z.object({
 		.min(1)
 		.optional(),
 	content: z.string().trim().min(1).max(200000).optional(),
+	manifest: z.record(z.any()).optional(),
+	handlers_src: z.string().max(262144).optional(),
 	is_public: z.boolean().default(true),
 	price_per_call_usd: z.number().min(0).max(10).default(0),
 	rails: z
@@ -384,10 +388,30 @@ async function handlePublish(req, res) {
 		return error(res, 400, 'validation_error', 'skill must have schema_json or content');
 	}
 
+	// Publish-time supply-chain scan. A blocked skill is refused with its
+	// findings; a skill with review findings is saved private and held for a
+	// moderator; only a clean skill goes live on the author's say-so.
+	const candidate = {
+		name: body.name,
+		description: body.description,
+		content: body.content ?? null,
+		schema_json: body.schema_json ?? null,
+		manifest: body.manifest ?? null,
+		handlers_src: body.handlers_src ?? null,
+	};
+	const report = scanSkillRow(candidate);
+	if (report.verdict === 'blocked') {
+		return error(res, 422, 'skill_blocked', 'this skill failed the safety scan and cannot be published', { scan: authorFacing(report) });
+	}
+	const state = stateFor(report);
+	const cols = scanColumns(report);
+	const isPublic = body.is_public && state.may_be_public;
+
 	let row;
 	try {
 		[row] = await sql`
-			INSERT INTO marketplace_skills (author_id, name, slug, description, category, tags, schema_json, content, is_public, price_per_call_usd, rails)
+			INSERT INTO marketplace_skills (author_id, name, slug, description, category, tags, schema_json, content, is_public, price_per_call_usd, rails,
+			                                manifest, handlers_src, scan_verdict, scan_findings, scan_version, scanned_at, review_status)
 			VALUES (
 				${auth.userId},
 				${body.name},
@@ -397,9 +421,16 @@ async function handlePublish(req, res) {
 				${body.tags},
 				${body.schema_json ? JSON.stringify(body.schema_json) : null}::jsonb,
 				${body.content ?? null},
-				${body.is_public},
+				${isPublic},
 				${body.price_per_call_usd},
-				${normalizeRails(body.rails)}
+				${normalizeRails(body.rails)},
+				${body.manifest ? JSON.stringify(body.manifest) : null}::jsonb,
+				${body.handlers_src ?? null},
+				${cols.scan_verdict},
+				${cols.scan_findings}::jsonb,
+				${cols.scan_version},
+				now(),
+				${state.review_status}
 			)
 			RETURNING *
 		`;
@@ -414,5 +445,5 @@ async function handlePublish(req, res) {
 	row.avg_rating = 0;
 	row.rating_count = 0;
 
-	return json(res, 201, { skill: toSkill(row, { includeInstalled: true, includeSchema: true }) });
+	return json(res, 201, { skill: toSkill(row, { includeInstalled: true, includeSchema: true }), scan: authorFacing(report, state) });
 }
