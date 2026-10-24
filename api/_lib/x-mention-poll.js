@@ -121,17 +121,17 @@ export async function handleMention({ mention, account, limits, env, store = men
 	const { inserted } = await store.recordMention({ mention, parsed, dryRun });
 	if (!inserted) return { tweetId: mention.id, decision: 'duplicate', reason: null };
 
-	if (await paused(env)) {
-		await store.updateDecision(mention.id, { decision: 'paused', reason: 'kill_switch' });
-		return { tweetId: mention.id, intent: parsed.intent, decision: 'paused', reason: 'kill_switch' };
-	}
-
-	if (parsed.intent === 'ignore') {
-		await store.updateDecision(mention.id, { decision: 'skip', reason: parsed.reason });
-		return { tweetId: mention.id, intent: 'ignore', decision: 'skip', reason: parsed.reason };
-	}
-
 	try {
+		if (await paused(env)) {
+			await store.updateDecision(mention.id, { decision: 'paused', reason: 'kill_switch' });
+			return { tweetId: mention.id, intent: parsed.intent, decision: 'paused', reason: 'kill_switch' };
+		}
+
+		if (parsed.intent === 'ignore') {
+			await store.updateDecision(mention.id, { decision: 'skip', reason: parsed.reason });
+			return { tweetId: mention.id, intent: 'ignore', decision: 'skip', reason: parsed.reason };
+		}
+
 		const verdict = await guard({ mention, account: mention.account, env, store });
 		if (!verdict.allow && verdict.reason === 'known_bot' && !agentCtx) {
 			// A known xAI account tagged us: answer on behalf of the human at the

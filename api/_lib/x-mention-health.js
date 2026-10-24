@@ -77,6 +77,7 @@ export async function readMentionBotSignals({ env = process.env } = {}) {
 					percentile_disc(0.5) within group (order by extract(epoch from (decided_at - created_at)))
 						filter (where decision = 'reply' and decided_at is not null and created_at > now() - interval '1 day') as median_reply_seconds
 				from x_mention_events
+				where account_ref not like '%-evidence'
 			`,
 			QUERY_TIMEOUT_MS,
 		),

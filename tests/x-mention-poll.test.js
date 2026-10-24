@@ -157,6 +157,21 @@ describe('a poll with a cursor', () => {
 		expect(out.status).toBe('partial');
 		expect(BigInt(await store.getCursor(ACCT))).toBeLessThan(1800000000000000104n);
 	});
+
+	it('records decision:error instead of orphaning the row when paused() throws after the insert', async () => {
+		const id = '1900000000000000200';
+		const mention = {
+			id, userId: '42', username: 'alice', text: '@trythreews hello there', createdAt: new Date().toISOString(), conversationId: id, account: ACCT,
+			mentions: [{ username: 'trythreews', id: COMPANY.userId }], urls: [],
+			media: [], inReplyToUserId: null, repliedTo: null, quoted: null, isRetweet: false, fromSelf: false,
+		};
+		const paused = async () => { throw new Error('paused check exploded'); };
+		await expect(poll.handleMention({
+			mention, account: COMPANY, limits: poll.replyLimits({}), env: {}, paused,
+			guard: async () => ({ allow: true }),
+		})).resolves.toMatchObject({ decision: 'error' });
+		expect(await store.getMentionEvent(id)).toMatchObject({ decision: 'error' });
+	});
 });
 
 describe('the run lock', () => {

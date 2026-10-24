@@ -9,8 +9,50 @@
  * paused the bot on purpose.
  */
 
-import { describe, it, expect } from 'vitest';
-import { mentionBotVerdict, LAG_DEGRADED_MS, ERROR_RATE_DEGRADED } from '../api/_lib/x-mention-health.js';
+import { readFileSync } from 'node:fs';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { PGlite } from '@electric-sql/pglite';
+
+const dbState = { pg: null };
+
+vi.mock('../api/_lib/db.js', () => {
+	const sql = async (strings, ...values) => {
+		const text = strings.reduce((acc, part, i) => acc + part + (i < values.length ? `$${i + 1}` : ''), '');
+		return (await dbState.pg.query(text, values)).rows;
+	};
+	return { sql, isDbUnavailableError: () => false, isDbCapacityError: () => false };
+});
+
+const { mentionBotVerdict, LAG_DEGRADED_MS, ERROR_RATE_DEGRADED, readMentionBotSignals } = await import('../api/_lib/x-mention-health.js');
+
+const MIG = new URL('../api/_lib/migrations/', import.meta.url);
+const MIGRATION = readFileSync(new URL('20261008170000_x_mention_events.sql', MIG), 'utf8');
+const APP_SETTINGS = (() => {
+	const src = readFileSync(new URL('20260922210000_free_tier_models.sql', MIG), 'utf8');
+	const start = src.indexOf('CREATE TABLE IF NOT EXISTS app_settings');
+	return src.slice(start, src.indexOf(');', start) + 2);
+})();
+
+beforeEach(async () => {
+	dbState.pg = new PGlite();
+	await dbState.pg.exec(APP_SETTINGS);
+	await dbState.pg.exec(MIGRATION);
+});
+
+describe('readMentionBotSignals', () => {
+	it('excludes synthetic -evidence rows from the unprocessed count, and counts a real row', async () => {
+		await dbState.pg.query(
+			`insert into x_mention_events (tweet_id, account_kind, account_ref, author_id, intent, decision) values ($1,'company','trythreews-evidence','9000000000000000001','ignore',null)`,
+			['7514357880548491265'],
+		);
+		await dbState.pg.query(
+			`insert into x_mention_events (tweet_id, account_kind, account_ref, author_id, intent, decision) values ($1,'company','trythreews','9000000000000000002','chat',null)`,
+			['1900000000000000900'],
+		);
+		const signals = await readMentionBotSignals({ env: {} });
+		expect(signals.unprocessed).toBe(1);
+	});
+});
 
 describe('mentionBotVerdict', () => {
 	it('reads unknown before any mention has ever been recorded', () => {
