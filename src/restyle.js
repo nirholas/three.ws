@@ -32,6 +32,8 @@ import {
 import { optimizeAndValidateGlb } from './avatar-studio-optimize.js';
 import { seedLineage, appendVersion, summarizeLineage } from '../mcp-server/src/tools/_lineage.js';
 import { verifyPreserved } from '../api/_lib/preserve-contract.js';
+import { createAutoRenderer, pagePreference } from './renderer-factory.js';
+import { createRestyleEffects } from './restyle-effects.js';
 
 // A small, always-present local sample so the page is never an empty void — the
 // platform's default humanoid, served from /avatars.
@@ -65,15 +67,18 @@ const state = {
 	selectedPartIndex: null,
 	dimmed: [], // [{ material, opacity, transparent }] restored on deselect
 	regenRunToken: 0,
+	benchHold: false, // ?bench hook: pause the on-screen loop while it renders offscreen
+	backend: 'webgl', // which renderer the factory actually produced
+	fx: null, // view effects for that backend (restyle-effects.js)
 };
 
 const el = {};
 
 document.addEventListener('DOMContentLoaded', init);
 
-function init() {
+async function init() {
 	cache();
-	buildScene();
+	await buildScene();
 	buildPresetButtons();
 	wireControls();
 	const url = new URL(location.href).searchParams.get('url');
@@ -84,7 +89,7 @@ function init() {
 function cache() {
 	for (const id of [
 		'stage', 'canvas-wrap', 'presets', 'variants', 'variant-strip', 'history',
-		'metalness', 'roughness', 'emissive', 'basecolor', 'emissivecolor',
+		'metalness', 'roughness', 'emissive', 'basecolor', 'emissivecolor', 'rim', 'rimcolor', 'renderer-badge',
 		'seed', 'variant-count', 'gen-variants', 'reset', 'export', 'export-note',
 		'file', 'upload', 'url-input', 'load-url', 'load-note', 'status', 'error', 'error-msg', 'retry',
 		'ai-instruction', 'ai-restyle', 'ai-texture', 'ai-note',
@@ -98,8 +103,17 @@ function cache() {
 }
 
 // ── scene ────────────────────────────────────────────────────────────────────
-function buildScene() {
-	const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+async function buildScene() {
+	const { renderer, backend, reason } = await createAutoRenderer(
+		{ antialias: true, alpha: true, preserveDrawingBuffer: true },
+		{ prefer: pagePreference(), fallback: el['canvas-wrap'] },
+	);
+	state.backend = backend;
+	state.fx = await createRestyleEffects(backend);
+	if (el['renderer-badge']) {
+		el['renderer-badge'].textContent = backend === 'webgpu' ? 'WebGPU' : 'WebGL2';
+		el['renderer-badge'].title = reason;
+	}
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 	renderer.toneMapping = THREE.ACESFilmicToneMapping;
 	renderer.toneMappingExposure = 1.05;
@@ -111,7 +125,8 @@ function buildScene() {
 	state.scene = scene;
 	// RoomEnvironment gives metals/glass something real to reflect — chrome and
 	// gold read as metal, not flat grey, without shipping an HDRI asset.
-	const pmrem = new THREE.PMREMGenerator(renderer);
+	const Pmrem = backend === 'webgpu' ? (await import('three/webgpu')).PMREMGenerator : THREE.PMREMGenerator;
+	const pmrem = new Pmrem(renderer);
 	scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
 	const key = new THREE.DirectionalLight(0xffffff, 2.2);
@@ -132,13 +147,69 @@ function buildScene() {
 	controls.target.set(0, 1, 0);
 	state.controls = controls;
 
+	if (new URLSearchParams(location.search).has('bench')) exposeBenchHook(renderer, scene, camera, backend);
+
 	onResize();
 	const tick = () => {
 		state.raf = requestAnimationFrame(tick);
 		controls.update();
-		renderer.render(scene, camera);
+		if (!state.benchHold) renderer.render(scene, camera);
 	};
 	tick();
+}
+
+// scripts/renderer-bench.mjs hook (opt-in via ?bench). Headless software WebGPU
+// cannot present to a canvas, so parity is measured offscreen: render the live
+// scene into a render target and read the pixels back on either backend.
+function exposeBenchHook(renderer, scene, camera, backend) {
+	const gpu = backend === 'webgpu';
+	const makeTarget = async (w, h) => {
+		if (!gpu) return new THREE.WebGLRenderTarget(w, h);
+		return new (await import('three/webgpu')).RenderTarget(w, h);
+	};
+	const readback = async (rt, w, h) => {
+		if (gpu) {
+			const raw = await renderer.readRenderTargetPixelsAsync(rt, 0, 0, w, h);
+			const stride = Math.ceil((w * 4) / 256) * 256;
+			const out = new Uint8Array(w * h * 4);
+			for (let y = 0; y < h; y++) out.set(raw.subarray(y * stride, y * stride + w * 4), y * w * 4);
+			return out;
+		}
+		const raw = new Uint8Array(w * h * 4);
+		renderer.readRenderTargetPixels(rt, 0, 0, w, h, raw);
+		// GL reads bottom-up; flip to the top-down order WebGPU returns.
+		const out = new Uint8Array(w * h * 4);
+		for (let y = 0; y < h; y++) out.set(raw.subarray((h - 1 - y) * w * 4, (h - y) * w * 4), y * w * 4);
+		return out;
+	};
+	window.__restyleBench = {
+		backend,
+		setRim: (strength) => state.fx.setRim({ strength }),
+		async capture(w, h) {
+			state.benchHold = true;
+			const rt = await makeTarget(w, h);
+			renderer.setRenderTarget(rt);
+			renderer.render(scene, camera);
+			renderer.setRenderTarget(null);
+			const px = Array.from(await readback(rt, w, h));
+			state.benchHold = false;
+			return px;
+		},
+		async renderMs(w, h, frames) {
+			state.benchHold = true;
+			const rt = await makeTarget(w, h);
+			renderer.setRenderTarget(rt);
+			renderer.render(scene, camera); // warm-up: pipeline + shader compile
+			await readback(rt, w, h);
+			const t0 = performance.now();
+			for (let i = 0; i < frames; i++) renderer.render(scene, camera);
+			await readback(rt, w, h); // forces the GPU queue to drain
+			const ms = (performance.now() - t0) / frames;
+			renderer.setRenderTarget(null);
+			state.benchHold = false;
+			return ms;
+		},
+	};
 }
 
 function onResize() {
@@ -196,6 +267,7 @@ function mountModel(newRoot, label, opts = {}) {
 	state.lineage = [];
 	state.manual = { metalness: null, roughness: null, emissiveIntensity: 0 };
 	state.sourceLabel = label || '';
+	state.fx.adopt(newRoot);
 	captureOriginals(newRoot);
 	frameModel(newRoot);
 	state.scene.add(newRoot);
@@ -257,14 +329,23 @@ function mountModel(newRoot, label, opts = {}) {
 	renderLineageStrip();
 }
 
+// Serialise a root to GLB with the classic glTF materials in place, so a WebGPU
+// session exports the same asset a WebGL one does (see restyle-effects.js).
+function exportGlb(root) {
+	const exporter = new GLTFExporter();
+	return state.fx.withClassicMaterials(
+		root,
+		() => new Promise((res, rej) => {
+			exporter.parse(root, (result) => res(result), (err) => rej(err), { binary: true });
+		}),
+	);
+}
+
 // Export the CURRENT root as-is (used only to mint an origin URL for a
 // locally-uploaded File that has none — runs once, right after mount, before
 // any edit, so the "origin" checkpoint really is the original file).
 async function uploadOriginBytes(root) {
-	const exporter = new GLTFExporter();
-	const glb = await new Promise((res, rej) => {
-		exporter.parse(root, (result) => res(result), (err) => rej(err), { binary: true });
-	});
+	const glb = await exportGlb(root);
 	return uploadGlbBytes(glb);
 }
 
@@ -886,10 +967,7 @@ async function aiRestyle() {
 // button and any edit (e.g. a part regenerate) that needs to record a durable
 // lineage entry on its own rather than wait for a manual save.
 async function persistCurrentSceneAsVersion({ instruction, refKind, onStatus }) {
-	const exporter = new GLTFExporter();
-	const glb = await new Promise((res, rej) => {
-		exporter.parse(state.root, (result) => res(result), (err) => rej(err), { binary: true });
-	});
+	const glb = await exportGlb(state.root);
 	const rawBlob = new Blob([glb], { type: 'model/gltf-binary' });
 	const { blob } = await optimizeAndValidateGlb(rawBlob, { onStatus });
 	const url = await uploadGlbBytes(blob);
@@ -972,10 +1050,7 @@ async function exportModel() {
 	el.export.disabled = true;
 	setNote(el['export-note'], 'Exporting…');
 	try {
-		const exporter = new GLTFExporter();
-		const glb = await new Promise((res, rej) => {
-			exporter.parse(state.root, (result) => res(result), (err) => rej(err), { binary: true });
-		});
+		const glb = await exportGlb(state.root);
 		const rawBlob = new Blob([glb], { type: 'model/gltf-binary' });
 		const { blob, optimized, outputBytes, report } = await optimizeAndValidateGlb(rawBlob, {
 			onStatus: (s) => setNote(el['export-note'], s),
@@ -1015,6 +1090,8 @@ function wireControls() {
 	el.emissive.addEventListener('input', () => setManual('emissiveIntensity', +el.emissive.value));
 	el.basecolor.addEventListener('input', () => setManual('color', el.basecolor.value));
 	el.emissivecolor.addEventListener('input', () => setManual('emissive', el.emissivecolor.value));
+	el.rim.addEventListener('input', () => state.fx.setRim({ strength: +el.rim.value }));
+	el.rimcolor.addEventListener('input', () => state.fx.setRim({ color: el.rimcolor.value }));
 	el['gen-variants'].addEventListener('click', generateVariants);
 	el['save-variants'].addEventListener('click', persistVariants);
 	el.reset.addEventListener('click', resetModel);

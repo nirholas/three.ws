@@ -138,6 +138,7 @@
 						<button class="rs-btn" id="retry" data-i18n="restyle.load_the_sample_model">Load the sample model</button>
 					</div>
 					<div class="rs-stage-hint">Drag to orbit · scroll to zoom · drop a .glb to load</div>
+					<div class="rs-stage-hint" style="left: auto; right: 12px" title="Renderer in use. Add ?renderer=webgpu to the URL to opt in to WebGPU."><span class="sr-only">Renderer: </span><span id="renderer-badge">WebGL2</span></div>
 				</div>
 
 				<!-- Controls -->
@@ -199,9 +200,11 @@
 						<div class="rs-slider"><label for="metalness" data-i18n="restyle.metalness">Metalness</label><input id="metalness" type="range" min="0" max="1" step="0.01" /></div>
 						<div class="rs-slider"><label for="roughness" data-i18n="restyle.roughness">Roughness</label><input id="roughness" type="range" min="0" max="1" step="0.01" /></div>
 						<div class="rs-slider"><label for="emissive" data-i18n="restyle.emissive">Emissive</label><input id="emissive" type="range" min="0" max="4" step="0.05" /></div>
+						<div class="rs-slider"><label for="rim" title="View-only Fresnel edge light. Not written to the exported GLB.">Rim light</label><input id="rim" type="range" min="0" max="3" step="0.05" value="0" /></div>
 						<div class="rs-colors">
 							<label class="rs-color">Base <input id="basecolor" type="color" value="#888888" /></label>
 							<label class="rs-color">Glow <input id="emissivecolor" type="color" value="#000000" /></label>
+							<label class="rs-color">Rim <input id="rimcolor" type="color" value="#6ea8ff" /></label>
 						</div>
 					</div>
 
