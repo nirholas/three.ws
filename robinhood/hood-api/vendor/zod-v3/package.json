@@ -1,0 +1,22 @@
+{
+  "name": "zod-v3",
+  "version": "3.25.76-compat.1",
+  "description": "The zod 3 API (the frozen `zod/v3` build that ships inside zod 4), published under the name zod 3 consumers resolve. Lets x402 and @coinbase/cdp-sdk, which are written against the zod 3 API and pin zod ^3, run on a zod release that carries the GHSA-mrhx-c7xc-m3w5 fix.",
+  "license": "MIT",
+  "private": true,
+  "type": "commonjs",
+  "main": "./index.cjs",
+  "module": "./index.mjs",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "require": "./index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  }
+}
