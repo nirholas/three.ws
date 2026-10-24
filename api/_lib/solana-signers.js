@@ -108,6 +108,15 @@ export const SOLANA_SIGNERS = [
 		network: 'mainnet',
 	},
 	{
+		name: 'reasoning-ledger-attester',
+		env: 'ATTEST_AGENT_SECRET_KEY',
+		minSol: 0.02,
+		refillTo: 0.05,
+		purpose:
+			'signs the SPL-Memo tx that anchors the reasoning-ledger hash-chain head on-chain (api/_lib/ledger-anchor.js) and the separate trader-score attestation (api/_lib/trader-score-attest.js); both load this same key via loadAttesterKeypair(). Memo-only, pubkey Fcwqit9x1KmfUboPtoVWBUdEuonNyTA8T6xtfAEPpPeH: never holds tokens or user funds, only needs enough SOL for its own tx fees.',
+		network: 'mainnet',
+	},
+	{
 		name: 'three-buyback',
 		env: 'THREE_BUYBACK_SECRET_KEY_B64',
 		minSol: 0.05,
