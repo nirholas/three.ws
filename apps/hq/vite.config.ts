@@ -239,7 +239,7 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('/@xenova/transformers/') || id.includes('/onnxruntime-web/')) {
+            if (id.includes('/@huggingface/transformers/') || id.includes('/onnxruntime-web/')) {
               return 'ml';
             }
             if (id.includes('/@deck.gl/') || id.includes('/maplibre-gl/') || id.includes('/h3-js/')) {
