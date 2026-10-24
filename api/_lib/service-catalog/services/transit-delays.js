@@ -15,7 +15,7 @@ export default {
 	serviceName: 'three.ws Transit',
 	tags: ['transit', 'live-data', 'gtfs-rt', 'mbta', 'mobility'],
 	description: 'three.ws Transit Delay Snapshot: pay $0.001 USDC per call to see how the MBTA\'s realtime feed compares to the scheduled timetable right now at a stop, optionally filtered to one route. delaySeconds is the realtime prediction minus the scheduled time for the same trip, measured from the feed, never modelled. Returns a per-arrival breakdown plus a summary (on-time / late / early counts, median and worst delay, and a verdict). Find a stop id with Transit Trip Plan or by name first.',
-	input: { stop: 'South Station', route: null, limit: 20 },
+	input: { stop: 'South Station', route: 'Red', limit: 20 },
 	inputSchema: {
 		type: 'object',
 		required: ['stop'],
