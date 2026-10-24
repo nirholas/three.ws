@@ -57,10 +57,21 @@ import { resolveTier } from '../_lib/forge-tiers.js';
 import { acquireLock, cacheGet, cacheSet } from '../_lib/cache.js';
 import { getRedis } from '../_lib/redis.js';
 import { NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds } from '../forge.js';
+import { mapPoolSettled } from '../_lib/pool.js';
 
 export const maxDuration = 60;
 
 const BATCH_LIMIT = Number(process.env.FORGE_FINALIZE_BATCH) || 25;
+// Each row's status poll is an independent network round trip
+// (api/_providers/gcp.js status() allows up to 15s x 2 attempts on its own), so
+// sweeping BATCH_LIMIT rows one at a time can take minutes once a lane like
+// trellis_selfhost is unhealthy and every poll on it runs its full timeout.
+// That is exactly what blew the 60s cron budget on 2026-10-24 (see
+// docs/ops/production-log-triage.md "HTTP timeout with no cron context"): rows
+// are independent (keyed by their own replicate_job_id, no shared mutable
+// state besides the stateless provider clients), so sweeping them concurrently
+// bounds the tick's wall-clock time to the slowest row instead of the sum.
+export const ROW_CONCURRENCY = Number(process.env.FORGE_FINALIZE_CONCURRENCY) || 8;
 // Leave fresh rows to the attended browser poll path.
 const GRACE_MINUTES = 2;
 // Past this age a non-terminal generation is declared dead. The slowest real
@@ -291,15 +302,151 @@ export default wrapCron(async (req, res) => {
 		// NIM unconfigured: forge-token rows can't be polled here; hard TTL reaps.
 	}
 
+	const results = await mapPoolSettled(rows, ROW_CONCURRENCY, (row) => sweepRow(row, { gcp, nvidia }));
 	const out = { done: 0, failed: 0, failed_over: 0, resubmitted: 0, timed_out: 0, still_running: 0, unpollable: 0 };
+	for (const result of results) {
+		if (result.ok) {
+			for (const key of Object.keys(out)) out[key] += result.value[key] || 0;
+		} else {
+			console.warn(`[forge-finalize] row sweep threw: ${result.error?.message || result.error}`);
+			out.unpollable++;
+		}
+	}
 
-	for (const row of rows) {
-		const ageMinutes = (Date.now() - Date.parse(row.created_at)) / 60_000;
-		const envelope = decodeWorkerEnvelope(row.replicate_job_id);
+	return json(res, 200, {
+		enabled: true,
+		swept: rows.length,
+		...out,
+		elapsed_ms: Date.now() - t0,
+	});
+}, { maxDurationMs: maxDuration * 1000 });
 
-		if (envelope && gcp) {
-			const status = await gcp.status(row.replicate_job_id).catch(() => null);
+// One row's worth of the sweep above, factored out so it can run concurrently
+// across the batch (mapPoolSettled in the caller) instead of blocking the next
+// row on this row's network round trips. Returns the per-row delta to merge
+// into the tick's aggregate counters; never throws (mapPoolSettled would catch
+// it anyway, but a thrown row loses its counters, so every awaited call here
+// already carries its own `.catch`).
+export async function sweepRow(row, { gcp, nvidia }) {
+	const out = { done: 0, failed: 0, failed_over: 0, resubmitted: 0, timed_out: 0, still_running: 0, unpollable: 0 };
+	const ageMinutes = (Date.now() - Date.parse(row.created_at)) / 60_000;
+	const envelope = decodeWorkerEnvelope(row.replicate_job_id);
 
+	if (envelope && gcp) {
+		const status = await gcp.status(row.replicate_job_id).catch(() => null);
+
+		if (status?.status === 'done' && status.resultGlbUrl) {
+			const durable = await materializeCreation({
+				replicateJobId: row.replicate_job_id,
+				clientKey: row.client_key,
+				glbUrl: status.resultGlbUrl,
+			});
+			if (durable) {
+				out.done++;
+				if (row.user_id) {
+					notifyForgeComplete({
+						userId: row.user_id,
+						creationId: durable.id,
+						prompt: row.prompt,
+						previewImageUrl: durable.previewImageUrl ?? row.preview_image_url ?? null,
+					});
+				}
+				return out;
+			}
+			// Copy-to-durable failed (transient storage/network): leave the row
+			// for the next tick rather than failing a finished model.
+			out.still_running++;
+			return out;
+		}
+
+		if (status?.status === 'failed') {
+			// Inside the attended window a live browser may poll this failure
+			// seconds from now and run its own failover; acting here would race
+			// it into duplicate GPU work. Leave the row: an attended client
+			// resolves it, and an abandoned one ages into the branch below.
+			if (decideFailedSweep({ ageMinutes, hasReferenceImage: true }) === 'defer') {
+				out.still_running++;
+				return out;
+			}
+			if (row.backend) await markLaneUnhealthy(row.backend).catch(() => {});
+			const redispatched = await tryCronRedispatch(row, ageMinutes);
+			if (redispatched) {
+				await markFailed({
+					replicateJobId: row.replicate_job_id,
+					clientKey: row.client_key,
+					error: status.error || 'generation failed',
+				});
+				// Link the attempt to its successor so the ledger reads as a
+				// recovery: without it the health sensor and the error report both
+				// count this row as a user-visible loss, when the request is in
+				// fact still running on another lane.
+				if (redispatched.successorId) {
+					await markSupersededBy({
+						replicateJobId: row.replicate_job_id,
+						clientKey: row.client_key,
+						successorId: redispatched.successorId,
+					});
+				}
+				out.failed_over++;
+				// No failure notification: the successor row carries the job on,
+				// and its completion (or terminal failure) notifies instead.
+				return out;
+			}
+			await markFailed({
+				replicateJobId: row.replicate_job_id,
+				clientKey: row.client_key,
+				error: status.error || 'generation failed',
+			});
+			out.failed++;
+			if (row.user_id) {
+				notifyForgeFailed({ userId: row.user_id, creationId: row.id, prompt: row.prompt, error: status.error, backend: row.backend, tier: row.tier });
+			}
+			return out;
+		}
+
+		// queued / running / poll blip: fall through to the TTL check.
+	} else if (!envelope) {
+		// The paid x402 lane stores the FULL signed forge token (provider +
+		// upstream task id) so unattended agent purchases can be completed
+		// server-side here, so an agent that got its poll_url answer and moved on
+		// still ends with a finished gallery row, not a TTL orphan.
+		const forgeToken = decodeJobToken(row.replicate_job_id);
+		if (forgeToken?.provider === 'nvidia' && forgeToken.taskId && nvidia) {
+			const status = await nvidia
+				.status({ kind: forgeToken.kind, taskId: forgeToken.taskId })
+				.catch(() => null);
+			if (status?.status === 'done' && status.resultGlbUrl) {
+				const durable = await materializeCreation({
+					replicateJobId: row.replicate_job_id,
+					clientKey: row.client_key,
+					glbUrl: status.resultGlbUrl,
+				});
+				if (durable) {
+					out.done++;
+					return out;
+				}
+				out.still_running++;
+				return out;
+			}
+			if (status?.status === 'failed') {
+				await markFailed({
+					replicateJobId: row.replicate_job_id,
+					clientKey: row.client_key,
+					error: status.error || 'generation failed',
+				});
+				out.failed++;
+				return out;
+			}
+			// queued / running / poll blip: fall through to the TTL check.
+		} else if (row.backend === 'nvidia' && nvidia) {
+			// Browser/free-lane NIM rows store the BARE NVCF request id (only the
+			// x402 lane stores the signed token), so they used to be unpollable
+			// here and died at the hard TTL as "generation timed out" even when
+			// the GPU had finished. Poll the bare id directly, chasing the alias
+			// an attended expiry recovery may have written first.
+			const alias = await cacheGet(`nvcf:alias:${row.replicate_job_id}`).catch(() => null);
+			const taskId = typeof alias === 'string' && alias ? alias : row.replicate_job_id;
+			const status = await nvidia.status({ taskId }).catch(() => null);
 			if (status?.status === 'done' && status.resultGlbUrl) {
 				const durable = await materializeCreation({
 					replicateJobId: row.replicate_job_id,
@@ -316,47 +463,90 @@ export default wrapCron(async (req, res) => {
 							previewImageUrl: durable.previewImageUrl ?? row.preview_image_url ?? null,
 						});
 					}
-					continue;
+					return out;
 				}
-				// Copy-to-durable failed (transient storage/network): leave the row
-				// for the next tick rather than failing a finished model.
 				out.still_running++;
-				continue;
+				return out;
 			}
-
-			if (status?.status === 'failed') {
-				// Inside the attended window a live browser may poll this failure
-				// seconds from now and run its own failover; acting here would race
-				// it into duplicate GPU work. Leave the row: an attended client
-				// resolves it, and an abandoned one ages into the branch below.
-				if (decideFailedSweep({ ageMinutes, hasReferenceImage: true }) === 'defer') {
-					out.still_running++;
-					continue;
-				}
-				if (row.backend) await markLaneUnhealthy(row.backend).catch(() => {});
-				const redispatched = await tryCronRedispatch(row, ageMinutes);
-				if (redispatched) {
-					await markFailed({
-						replicateJobId: row.replicate_job_id,
-						clientKey: row.client_key,
-						error: status.error || 'generation failed',
-					});
-					// Link the attempt to its successor so the ledger reads as a
-					// recovery: without it the health sensor and the error report both
-					// count this row as a user-visible loss, when the request is in
-					// fact still running on another lane.
-					if (redispatched.successorId) {
-						await markSupersededBy({
-							replicateJobId: row.replicate_job_id,
-							clientKey: row.client_key,
-							successorId: redispatched.successorId,
-						});
+			if ((!status || status.status === 'running' || status.status === 'queued') && row.prompt) {
+				// Still running/queued, or the poll itself errored (status null): no
+				// alternate lane exists for text-only nvidia, so give the job one real
+				// resubmit before the hard TTL reaps it as dead. A distinct lock from
+				// nvcf:resub: below means this can never double-fire with the
+				// nvcf_expired recovery.
+				const stallDecision = decideNvidiaStall({
+					ageMinutes,
+					alreadyResubmitted: Boolean(
+						await cacheGet(`nvcf:stall-resub:${row.replicate_job_id}`).catch(() => null),
+					),
+				});
+				if (stallDecision === 'resubmit' && (await acquireLock(`nvcf:stall-lock:${row.replicate_job_id}`, NVCF_ALIAS_TTL_S))) {
+					try {
+						const resub = await nvidia.textTo3d({ prompt: row.prompt, tier: resolveTier(row.tier) });
+						await cacheSet(`nvcf:stall-resub:${row.replicate_job_id}`, '1', NVCF_ALIAS_TTL_S);
+						if (resub.taskId) {
+							await cacheSet(`nvcf:alias:${row.replicate_job_id}`, resub.taskId, NVCF_ALIAS_TTL_S);
+							console.warn(
+								`[forge-finalize] NVCF request stalled; resubmitted unattended job (creation ${row.id})`,
+							);
+							out.resubmitted++;
+							return out;
+						}
+						if (resub.resultGlbUrl) {
+							const durable = await materializeCreation({
+								replicateJobId: row.replicate_job_id,
+								clientKey: row.client_key,
+								glbUrl: resub.resultGlbUrl,
+							});
+							if (durable) {
+								out.done++;
+								return out;
+							}
+						}
+					} catch (err) {
+						console.warn(`[forge-finalize] NVCF stall resubmit failed: ${err?.message || err}`);
 					}
-					out.failed_over++;
-					// No failure notification: the successor row carries the job on,
-					// and its completion (or terminal failure) notifies instead.
-					continue;
 				}
+			}
+			if (status?.code === 'nvcf_expired' && row.prompt) {
+				// The request id is dead but the inputs live on the row: the same
+				// never-dead-end recovery the attended poll runs, sharing its
+				// once-per-job resub lock so the two paths can't double-submit.
+				// The alias keeps the row's handle stable; the next tick polls the
+				// resubmitted task and materializes onto this same row.
+				if (await acquireLock(`nvcf:resub:${row.replicate_job_id}`, NVCF_ALIAS_TTL_S)) {
+					try {
+						const resub = await nvidia.textTo3d({ prompt: row.prompt, tier: resolveTier(row.tier) });
+						if (resub.taskId) {
+							await cacheSet(`nvcf:alias:${row.replicate_job_id}`, resub.taskId, NVCF_ALIAS_TTL_S);
+							console.warn(
+								`[forge-finalize] NVCF request expired; resubmitted unattended job (creation ${row.id})`,
+							);
+							out.resubmitted++;
+							return out;
+						}
+						if (resub.resultGlbUrl) {
+							const durable = await materializeCreation({
+								replicateJobId: row.replicate_job_id,
+								clientKey: row.client_key,
+								glbUrl: resub.resultGlbUrl,
+							});
+							if (durable) {
+								out.done++;
+								return out;
+							}
+						}
+					} catch (err) {
+						console.warn(`[forge-finalize] NVCF resubmit failed: ${err?.message || err}`);
+					}
+				}
+				// Lock held by a prior recovery or the resubmit failed: the lane is
+				// cron-observed broken with no alternate text-to-3D lane to send new
+				// submissions to, so cool the same breaker forge.js's submit path
+				// reads before every new free-text request. Fall through to the TTL
+				// check so a second expiry fails honestly, not instantly.
+				await markProviderCooldown(NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds()).catch(() => {});
+			} else if (status?.status === 'failed') {
 				await markFailed({
 					replicateJobId: row.replicate_job_id,
 					clientKey: row.client_key,
@@ -366,195 +556,34 @@ export default wrapCron(async (req, res) => {
 				if (row.user_id) {
 					notifyForgeFailed({ userId: row.user_id, creationId: row.id, prompt: row.prompt, error: status.error, backend: row.backend, tier: row.tier });
 				}
-				continue;
+				return out;
 			}
-
 			// queued / running / poll blip: fall through to the TTL check.
-		} else if (!envelope) {
-			// The paid x402 lane stores the FULL signed forge token (provider +
-			// upstream task id) so unattended agent purchases can be completed
-			// server-side here, so an agent that got its poll_url answer and moved on
-			// still ends with a finished gallery row, not a TTL orphan.
-			const forgeToken = decodeJobToken(row.replicate_job_id);
-			if (forgeToken?.provider === 'nvidia' && forgeToken.taskId && nvidia) {
-				const status = await nvidia
-					.status({ kind: forgeToken.kind, taskId: forgeToken.taskId })
-					.catch(() => null);
-				if (status?.status === 'done' && status.resultGlbUrl) {
-					const durable = await materializeCreation({
-						replicateJobId: row.replicate_job_id,
-						clientKey: row.client_key,
-						glbUrl: status.resultGlbUrl,
-					});
-					if (durable) {
-						out.done++;
-						continue;
-					}
-					out.still_running++;
-					continue;
-				}
-				if (status?.status === 'failed') {
-					await markFailed({
-						replicateJobId: row.replicate_job_id,
-						clientKey: row.client_key,
-						error: status.error || 'generation failed',
-					});
-					out.failed++;
-					continue;
-				}
-				// queued / running / poll blip: fall through to the TTL check.
-			} else if (row.backend === 'nvidia' && nvidia) {
-				// Browser/free-lane NIM rows store the BARE NVCF request id (only the
-				// x402 lane stores the signed token), so they used to be unpollable
-				// here and died at the hard TTL as "generation timed out" even when
-				// the GPU had finished. Poll the bare id directly, chasing the alias
-				// an attended expiry recovery may have written first.
-				const alias = await cacheGet(`nvcf:alias:${row.replicate_job_id}`).catch(() => null);
-				const taskId = typeof alias === 'string' && alias ? alias : row.replicate_job_id;
-				const status = await nvidia.status({ taskId }).catch(() => null);
-				if (status?.status === 'done' && status.resultGlbUrl) {
-					const durable = await materializeCreation({
-						replicateJobId: row.replicate_job_id,
-						clientKey: row.client_key,
-						glbUrl: status.resultGlbUrl,
-					});
-					if (durable) {
-						out.done++;
-						if (row.user_id) {
-							notifyForgeComplete({
-								userId: row.user_id,
-								creationId: durable.id,
-								prompt: row.prompt,
-								previewImageUrl: durable.previewImageUrl ?? row.preview_image_url ?? null,
-							});
-						}
-						continue;
-					}
-					out.still_running++;
-					continue;
-				}
-				if ((!status || status.status === 'running' || status.status === 'queued') && row.prompt) {
-					// Still running/queued, or the poll itself errored (status null): no
-					// alternate lane exists for text-only nvidia, so give the job one real
-					// resubmit before the hard TTL reaps it as dead. A distinct lock from
-					// nvcf:resub: below means this can never double-fire with the
-					// nvcf_expired recovery.
-					const stallDecision = decideNvidiaStall({
-						ageMinutes,
-						alreadyResubmitted: Boolean(
-							await cacheGet(`nvcf:stall-resub:${row.replicate_job_id}`).catch(() => null),
-						),
-					});
-					if (stallDecision === 'resubmit' && (await acquireLock(`nvcf:stall-lock:${row.replicate_job_id}`, NVCF_ALIAS_TTL_S))) {
-						try {
-							const resub = await nvidia.textTo3d({ prompt: row.prompt, tier: resolveTier(row.tier) });
-							await cacheSet(`nvcf:stall-resub:${row.replicate_job_id}`, '1', NVCF_ALIAS_TTL_S);
-							if (resub.taskId) {
-								await cacheSet(`nvcf:alias:${row.replicate_job_id}`, resub.taskId, NVCF_ALIAS_TTL_S);
-								console.warn(
-									`[forge-finalize] NVCF request stalled; resubmitted unattended job (creation ${row.id})`,
-								);
-								out.resubmitted++;
-								continue;
-							}
-							if (resub.resultGlbUrl) {
-								const durable = await materializeCreation({
-									replicateJobId: row.replicate_job_id,
-									clientKey: row.client_key,
-									glbUrl: resub.resultGlbUrl,
-								});
-								if (durable) {
-									out.done++;
-									continue;
-								}
-							}
-						} catch (err) {
-							console.warn(`[forge-finalize] NVCF stall resubmit failed: ${err?.message || err}`);
-						}
-					}
-				}
-				if (status?.code === 'nvcf_expired' && row.prompt) {
-					// The request id is dead but the inputs live on the row — the same
-					// never-dead-end recovery the attended poll runs, sharing its
-					// once-per-job resub lock so the two paths can't double-submit.
-					// The alias keeps the row's handle stable; the next tick polls the
-					// resubmitted task and materializes onto this same row.
-					if (await acquireLock(`nvcf:resub:${row.replicate_job_id}`, NVCF_ALIAS_TTL_S)) {
-						try {
-							const resub = await nvidia.textTo3d({ prompt: row.prompt, tier: resolveTier(row.tier) });
-							if (resub.taskId) {
-								await cacheSet(`nvcf:alias:${row.replicate_job_id}`, resub.taskId, NVCF_ALIAS_TTL_S);
-								console.warn(
-									`[forge-finalize] NVCF request expired; resubmitted unattended job (creation ${row.id})`,
-								);
-								out.resubmitted++;
-								continue;
-							}
-							if (resub.resultGlbUrl) {
-								const durable = await materializeCreation({
-									replicateJobId: row.replicate_job_id,
-									clientKey: row.client_key,
-									glbUrl: resub.resultGlbUrl,
-								});
-								if (durable) {
-									out.done++;
-									continue;
-								}
-							}
-						} catch (err) {
-							console.warn(`[forge-finalize] NVCF resubmit failed: ${err?.message || err}`);
-						}
-					}
-					// Lock held by a prior recovery or the resubmit failed: the lane is
-					// cron-observed broken with no alternate text-to-3D lane to send new
-					// submissions to, so cool the same breaker forge.js's submit path
-					// reads before every new free-text request. Fall through to the TTL
-					// check so a second expiry fails honestly, not instantly.
-					await markProviderCooldown(NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds()).catch(() => {});
-				} else if (status?.status === 'failed') {
-					await markFailed({
-						replicateJobId: row.replicate_job_id,
-						clientKey: row.client_key,
-						error: status.error || 'generation failed',
-					});
-					out.failed++;
-					if (row.user_id) {
-						notifyForgeFailed({ userId: row.user_id, creationId: row.id, prompt: row.prompt, error: status.error, backend: row.backend, tier: row.tier });
-					}
-					continue;
-				}
-				// queued / running / poll blip: fall through to the TTL check.
-			} else {
-				out.unpollable++;
-			}
-		}
-
-		if (ageMinutes > HARD_TTL_MINUTES) {
-			if (row.backend === 'nvidia') {
-				// Reaping the bare TTL on nvidia is itself a cron-observed failure of
-				// the lane: cool the submit-time breaker so new free-text requests
-				// skip straight to the paid/image-intermediate path instead of landing
-				// on the same dead end for another HARD_TTL_MINUTES.
-				await markProviderCooldown(NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds()).catch(() => {});
-			}
-			await markFailed({
-				replicateJobId: row.replicate_job_id,
-				clientKey: row.client_key,
-				error: `generation timed out after ${Math.round(ageMinutes)} minutes`,
-			});
-			out.timed_out++;
-			if (row.user_id) {
-				notifyForgeFailed({ userId: row.user_id, creationId: row.id, prompt: row.prompt, error: 'generation timed out', backend: row.backend, tier: row.tier });
-			}
-		} else if (envelope) {
-			out.still_running++;
+		} else {
+			out.unpollable++;
 		}
 	}
 
-	return json(res, 200, {
-		enabled: true,
-		swept: rows.length,
-		...out,
-		elapsed_ms: Date.now() - t0,
-	});
-}, { maxDurationMs: maxDuration * 1000 });
+	if (ageMinutes > HARD_TTL_MINUTES) {
+		if (row.backend === 'nvidia') {
+			// Reaping the bare TTL on nvidia is itself a cron-observed failure of
+			// the lane: cool the submit-time breaker so new free-text requests
+			// skip straight to the paid/image-intermediate path instead of landing
+			// on the same dead end for another HARD_TTL_MINUTES.
+			await markProviderCooldown(NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds()).catch(() => {});
+		}
+		await markFailed({
+			replicateJobId: row.replicate_job_id,
+			clientKey: row.client_key,
+			error: `generation timed out after ${Math.round(ageMinutes)} minutes`,
+		});
+		out.timed_out++;
+		if (row.user_id) {
+			notifyForgeFailed({ userId: row.user_id, creationId: row.id, prompt: row.prompt, error: 'generation timed out', backend: row.backend, tier: row.tier });
+		}
+	} else if (envelope) {
+		out.still_running++;
+	}
+
+	return out;
+}
