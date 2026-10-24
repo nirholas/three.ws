@@ -15,10 +15,18 @@
 // The pure mapping (`mapBondingStatus`) is separated from the network fetch
 // (`fetchPumpCoin`) so the curve math is unit-testable with synthetic fixtures,
 // no chain required.
+//
+// A third tier backs both caches: when pump.fun's frontend is unreachable and
+// no last-known-good copy survives, `getBondingStatus` reads the bonding-curve
+// account straight off Solana RPC via `pump-curve-view.js`'s `getCurveView`,
+// the same on-chain source already proven live behind `/api/pump/curve`.
+// `mapOnchainCurveView` maps that into the identical status shape, tagged
+// `source: 'onchain'` instead of `'pumpfun'`.
 
 import { isGraduated } from './pump-launch-feed.js';
 import { pumpFetchJson } from './pump-feed-fetch.js';
 import { cacheGet, cacheSet } from './cache.js';
+import { getCurveView } from './pump-curve-view.js';
 
 export const PUMP_FRONTEND_BASE =
 	process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
@@ -146,6 +154,53 @@ export function mapBondingStatus(coin, { solPriceUsd = 0 } = {}) {
 	};
 }
 
+/**
+ * Map a getCurveView() `{ body }` payload (api/_lib/pump-curve-view.js's
+ * on-chain reader) into the same status shape mapBondingStatus produces, for
+ * getBondingStatus's true double-miss path: pump.fun's frontend unreachable
+ * AND no last-known-good copy survives. Pure; no network.
+ *
+ * getCurveView's on-chain curve account (sdk-bridge's getBondingCurveState)
+ * never carries pump.fun's `raydium_pool` / `pump_swap_pool` fields: those
+ * live only on the frontend API's raw coin object. A graduated read taken
+ * on-chain therefore cannot tell Raydium from PumpSwap and reports pump.fun's
+ * current default venue, the same fallback mapBondingStatus itself uses when
+ * neither pool field is present. Likewise getCurveView's on-curve price is
+ * SOL-denominated with no USD leg (that conversion only exists in the
+ * graduated/Jupiter branch), so `marketCapUsd` stays null for an on-curve
+ * on-chain read rather than mixing units.
+ *
+ * @param {{ curve: object|null, graduated?: boolean, graduatedPrice?: object }} body
+ * @returns {object}
+ */
+export function mapOnchainCurveView(body) {
+	if (body?.graduated) {
+		return {
+			onCurve: false,
+			graduated: true,
+			migratedTo: 'pumpswap',
+			bondingProgressPct: 100,
+			solInCurve: null,
+			tokensRemaining: null,
+			marketCapUsd: body.graduatedPrice?.marketCapUsd ?? null,
+			source: 'onchain',
+		};
+	}
+
+	const realTokenReserves = num(body?.curve?.realTokenReserves);
+	const realSolReserves = num(body?.curve?.realSolReserves);
+	return {
+		onCurve: true,
+		graduated: false,
+		migratedTo: null,
+		bondingProgressPct: bondingProgressPct(realTokenReserves),
+		solInCurve: realSolReserves != null ? realSolReserves / 1e9 : null,
+		tokensRemaining: realTokenReserves != null ? realTokenReserves / 1e6 : null,
+		marketCapUsd: null,
+		source: 'onchain',
+	};
+}
+
 // Bounded retry on 429/5xx (honours Retry-After), never throws: the same
 // resilience the sibling pump.fun readers (trending, whales, /api/pump/coin)
 // already rely on, so a Cloudflare rate-limit blip recovers inside one request
@@ -186,11 +241,15 @@ export async function fetchPumpCoin(mint) {
 
 /**
  * Resolve the full bonding-curve status for a mint: live cache, then fetch +
- * map, then a last-known-good fallback on upstream failure. Mirrors
- * `readThroughFeed` in pump-feed-fetch.js: a live hit answers first; a miss
- * fetches and writes through both tiers; a failed fetch serves the
- * last-known-good copy (flagged `stale`) rather than hard-failing, and only
- * reports `upstream_down` when no cached data exists at all for this mint.
+ * map, then a last-known-good fallback on upstream failure, then the on-chain
+ * reader as a last resort. Mirrors `readThroughFeed` in pump-feed-fetch.js: a
+ * live hit answers first; a miss fetches and writes through both tiers; a
+ * failed fetch serves the last-known-good copy (flagged `stale`) rather than
+ * hard-failing; and only when BOTH pump.fun's frontend and the LKG cache miss
+ * does it fall through to api/_lib/pump-curve-view.js's on-chain reader
+ * (the same Solana-RPC-backed source /api/pump/curve already serves live).
+ * `upstream_down` is now reserved for the case where that on-chain read also
+ * comes up empty.
  *
  * @param {string} mint
  * @returns {Promise<{ kind: 'ok', status: object, coin: object, stale: boolean } | { kind: 'not_found' } | { kind: 'upstream_down' }>}
@@ -216,5 +275,19 @@ export async function getBondingStatus(mint) {
 
 	const lkg = await cacheGet(bondingLkgKey(mint));
 	if (lkg) return { kind: 'ok', status: lkg.status, coin: lkg.coin, stale: true };
+
+	// True double miss: pump.fun's frontend is unreachable (the Cloudflare
+	// challenge it now answers every request with) and no cached copy for
+	// this mint survives either. Read the bonding-curve account straight off
+	// Solana RPC before giving up; it is the same data, proven live.
+	const onchain = await getCurveView({ mint, network: 'mainnet' });
+	if (onchain.httpStatus === 200 && onchain.body && (onchain.body.curve || onchain.body.graduated)) {
+		const status = mapOnchainCurveView(onchain.body);
+		// Cached into the LKG tier (never the pump.fun liveKey, which means
+		// "pump.fun answered this recently") so a repeat poll within the LKG
+		// window doesn't re-hit RPC.
+		cacheSet(bondingLkgKey(mint), { status, coin: null }, LKG_TTL_S).catch(() => {});
+		return { kind: 'ok', status, coin: null, stale: false };
+	}
 	return { kind: 'upstream_down' };
 }

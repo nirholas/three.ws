@@ -119,6 +119,14 @@
 			<description>A handful of forge creations and 3D props stored from before an earlier URL fix still pointed straight at the storage bucket's own domain instead of three.ws's own CDN link, which Chrome blocks as an opaque cross-origin response. Model-page posters, a creation's related-models sidebar, forge share-card previews (the image X and Discord show when a link is pasted), and the Forged gallery's model-viewer thumbnails now all resolve through the same CDN link as everything else.</description>
 		</item>
 		<item>
+			<title>GET /api/crypto/bonding falls back to an on-chain read when pump.fun is Cloudflare-blocked</title>
+			<link>https://three.ws/docs/api-reference</link>
+			<guid isPermaLink="false">2026-10-24:GET /api/crypto/bonding falls back to an on-chain read when pump.fun is Cloudflare-blocked</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>pump.fun's frontend API started answering every request from our servers with a Cloudflare challenge, which hard-failed /api/crypto/bonding for every mint, including $THREE's own, once the 30-minute last-known-good cache expired. The endpoint now reads the bonding-curve account straight off Solana RPC (the same reader already live behind /api/pump/curve) before giving up, so bonding/graduation status stays answerable even while pump.fun's edge blocks us.</description>
+		</item>
+		<item>
 			<title>Hundreds of dependency security advisories cleared across the repo</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-24:Hundreds of dependency security advisories cleared across the repo</guid>

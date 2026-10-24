@@ -11,13 +11,22 @@ vi.mock('../api/_lib/cache.js', () => ({
 	cacheSet: async (k, v) => { cache.set(k, v); },
 }));
 
+// The on-chain fallback (getCurveView) is the proven reader already live
+// behind /api/pump/curve; it is mocked here so this suite stays a unit test
+// of getBondingStatus's branching, not an RPC integration test.
+vi.mock('../api/_lib/pump-curve-view.js', () => ({
+	getCurveView: vi.fn(),
+}));
+
 import {
 	bondingProgressPct,
 	mapBondingStatus,
+	mapOnchainCurveView,
 	isPumpLaunch,
 	PUMP_CURVE_INITIAL_REAL_TOKENS,
 	getBondingStatus,
 } from '../api/_lib/pump-bonding.js';
+import { getCurveView } from '../api/_lib/pump-curve-view.js';
 
 // Synthetic pump.fun coin objects. No real third-party mint — $THREE's CA is the
 // platform's own coin; the reserves are illustrative curve states.
@@ -156,6 +165,41 @@ describe('mapBondingStatus — graduated branch', () => {
 	});
 
 });
+
+describe('mapOnchainCurveView -- pure mapping of getCurveView() output', () => {
+	it('maps an on-curve getCurveView body to the shared status shape, tagged onchain', () => {
+		const s = mapOnchainCurveView({
+			curve: {
+				realTokenReserves: String(PUMP_CURVE_INITIAL_REAL_TOKENS / 4),
+				realSolReserves: String(42 * 1e9),
+			},
+		});
+		expect(s.onCurve).toBe(true);
+		expect(s.graduated).toBe(false);
+		expect(s.migratedTo).toBeNull();
+		expect(s.bondingProgressPct).toBeCloseTo(75, 6);
+		expect(s.solInCurve).toBeCloseTo(42, 6);
+		expect(s.tokensRemaining).toBeCloseTo(PUMP_CURVE_INITIAL_REAL_TOKENS / 4 / 1e6, 6);
+		expect(s.marketCapUsd).toBeNull(); // body.price is SOL-denominated, no USD leg on this branch
+		expect(s.source).toBe('onchain');
+	});
+
+	it('maps a graduated getCurveView body (curve account closed) with the Jupiter-backed market cap', () => {
+		const s = mapOnchainCurveView({
+			curve: null,
+			graduated: true,
+			graduatedPrice: { priceUsd: 0.0003, source: 'jupiter', marketCapUsd: 300_000 },
+		});
+		expect(s.graduated).toBe(true);
+		expect(s.onCurve).toBe(false);
+		expect(s.bondingProgressPct).toBe(100);
+		expect(s.solInCurve).toBeNull();
+		expect(s.tokensRemaining).toBeNull();
+		expect(s.marketCapUsd).toBe(300_000);
+		expect(s.migratedTo).toBe('pumpswap'); // on-chain curve account never carries raydium_pool/pump_swap_pool
+		expect(s.source).toBe('onchain');
+	});
+});
 // getBondingStatus: live cache / last-known-good fallback. Bug: before this,
 // a failed upstream fetch always returned `{kind:'upstream_down'}`, even when
 // a prior successful fetch for the same mint existed -- the live production
@@ -179,6 +223,13 @@ const bondingCoin = {
 
 beforeEach(() => {
 	cache.clear();
+	// Default: the on-chain reader also has nothing for this mint, so tests
+	// that don't care about the fallback see the pre-fallback upstream_down
+	// behavior unless they override this mock.
+	getCurveView.mockReset().mockResolvedValue({
+		httpStatus: 404,
+		body: { error: 'no_curve', error_description: 'no bonding curve found for that mint' },
+	});
 });
 
 afterEach(() => {
@@ -186,10 +237,85 @@ afterEach(() => {
 });
 
 describe('getBondingStatus -- cache + last-known-good fallback', () => {
-	it('reproduces the outage: upstream down, no last-known-good, reports upstream_down', async () => {
+	it('the true double failure: upstream down, no last-known-good, on-chain reader also has nothing, reports upstream_down', async () => {
+		// Narrowed from the original "reproduces the outage" regression test now
+		// that a successful on-chain read fires on this path (see the two tests
+		// below): this case pins down that upstream_down is still reported, and
+		// reported cleanly, when BOTH the pump.fun fetch and the on-chain fallback
+		// come up empty, not just the former.
 		vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network unreachable')));
 		const out = await getBondingStatus(THREE_MINT);
 		expect(out).toEqual({ kind: 'upstream_down' });
+		expect(getCurveView).toHaveBeenCalledWith({ mint: THREE_MINT, network: 'mainnet' });
+	});
+
+	it('on-chain fallback: upstream down, no last-known-good, serves the on-curve bonding state read straight off Solana RPC', async () => {
+		vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network unreachable')));
+		getCurveView.mockResolvedValue({
+			httpStatus: 200,
+			body: {
+				mint: THREE_MINT,
+				network: 'mainnet',
+				curve: {
+					virtualTokenReserves: '500000000000000',
+					virtualSolReserves: '50000000000',
+					realTokenReserves: String(PUMP_CURVE_INITIAL_REAL_TOKENS / 2),
+					realSolReserves: String(21 * 1e9),
+					tokenTotalSupply: '1000000000000000',
+					complete: false,
+					creator: '9wgvwps9qK5jNniC5RJdrYCfaV3CLKTnxYVqBjXwegEV',
+					isMayhemMode: false,
+				},
+				price: { priceSol: '0.0001', marketCapSol: '1000' },
+				graduation: { isGraduated: false, progressBps: 5000 },
+			},
+		});
+
+		const out = await getBondingStatus(THREE_MINT);
+		expect(out.kind).toBe('ok');
+		expect(out.stale).toBe(false);
+		expect(out.coin).toBeNull();
+		expect(out.status.source).toBe('onchain');
+		expect(out.status.onCurve).toBe(true);
+		expect(out.status.graduated).toBe(false);
+		expect(out.status.bondingProgressPct).toBeCloseTo(50, 6);
+		expect(out.status.solInCurve).toBeCloseTo(21, 6);
+		expect(out.status.tokensRemaining).toBeCloseTo(PUMP_CURVE_INITIAL_REAL_TOKENS / 2 / 1e6, 6);
+
+		// Written through to the last-known-good tier (not the pump.fun live
+		// tier, which means "pump.fun answered this recently") so a repeat poll
+		// inside the LKG window doesn't re-hit RPC.
+		expect(cache.get(`pump:bonding:live:${THREE_MINT}`)).toBeUndefined();
+		const lkg = cache.get(`pump:bonding:lkg:${THREE_MINT}`);
+		expect(lkg.status.source).toBe('onchain');
+	});
+
+	it('on-chain fallback: upstream down, no last-known-good, serves the graduated state with its Jupiter-backed market cap', async () => {
+		vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network unreachable')));
+		getCurveView.mockResolvedValue({
+			httpStatus: 200,
+			body: {
+				mint: THREE_MINT,
+				network: 'mainnet',
+				curve: null,
+				graduated: true,
+				price: null,
+				graduation: { isGraduated: true, progressBps: 10_000 },
+				graduatedPrice: { priceUsd: 0.00029683255767706676, source: 'jupiter', marketCapUsd: 296832.55767706677 },
+			},
+		});
+
+		const out = await getBondingStatus(THREE_MINT);
+		expect(out.kind).toBe('ok');
+		expect(out.stale).toBe(false);
+		expect(out.status.source).toBe('onchain');
+		expect(out.status.graduated).toBe(true);
+		expect(out.status.onCurve).toBe(false);
+		expect(out.status.bondingProgressPct).toBe(100);
+		expect(out.status.solInCurve).toBeNull();
+		expect(out.status.tokensRemaining).toBeNull();
+		expect(out.status.marketCapUsd).toBeCloseTo(296832.55767706677, 3);
+		expect(out.status.migratedTo).toBe('pumpswap');
 	});
 
 	it('the bug: upstream down but a last-known-good copy exists, serves it stale instead of failing', async () => {

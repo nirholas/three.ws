@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-24T23:12:48.053Z",
+	"generated_at": "2026-10-24T23:24:05.471Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4190,
+	"total": 4191,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -149,6 +149,16 @@
 			"title": "Fixed three more legacy thumbnail links that browsers refused to load",
 			"summary": "A handful of forge creations and 3D props stored from before an earlier URL fix still pointed straight at the storage bucket's own domain instead of three.ws's own CDN link, which Chrome blocks as an opaque cross-origin response. Model-page posters, a creation's related-models sidebar, forge share-card previews (the image X and Discord show when a link is pasted), and the Forged gallery's model-viewer thumbnails now all resolve through the same CDN link as everything else.",
 			"link": "/forge",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "GET /api/crypto/bonding falls back to an on-chain read when pump.fun is Cloudflare-blocked",
+			"summary": "pump.fun's frontend API started answering every request from our servers with a Cloudflare challenge, which hard-failed /api/crypto/bonding for every mint, including $THREE's own, once the 30-minute last-known-good cache expired. The endpoint now reads the bonding-curve account straight off Solana RPC (the same reader already live behind /api/pump/curve) before giving up, so bonding/graduation status stays answerable even while pump.fun's edge blocks us.",
+			"link": "/docs/api-reference",
 			"tags": [
 				"fix"
 			]
@@ -1550,16 +1560,6 @@
 			"title": "Dissolve: turn any 3D model into a GPU particle storm",
 			"summary": "A new page that dissolves any GLB into up to a million GPU particles, morphs one shape into another, and lets you bend the storm with a black hole, a vortex, shockwaves and a collapse. Turn on the microphone and bass drives the storm. Pick a look, record a clip, save a PNG or share the exact pair as a link.",
 			"link": "/dissolve",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-12",
-			"type": "update",
-			"title": "Engine QA: a free real-time-engine fitness grade, plus real LOD chains",
-			"summary": "A new free grade answers the question a game engine's import step asks that neither glTF validation nor simulation readiness does: draw calls, material count, texel density against the mesh's real-world size, a per-level triangle budget for a LOD chain, and whether the mesh is cheap and closed enough to use as its own physics collider. GET/POST /api/3d/engine-qa grades any public GLB (format=stl exports a watertight mesh for printing); the same browser-only checks run with zero network cost in Rig Doctor, and the full grade with a one-click upgrade in the GLB viewer, through a shared <engine-qa> panel component. The underlying LOD builder (packages/glb-tools's buildLodChain, real meshoptimizer decimation tagged with MSFT_lod) is now also available on generation: send { \"lods\": true } to POST /api/forge and the finished creation gets a combined LOD-chain variant alongside its delivered mesh, the same opt-in, fire-and-forget pattern as the existing web-delivery variant.",
-			"link": "/docs/engine-qa",
 			"tags": [
 				"feature"
 			]

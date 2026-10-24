@@ -132,6 +132,27 @@ describe('GET /api/crypto/bonding', () => {
 		});
 	});
 
+	it('200s an on-chain fallback result with source onchain and no x-pump-stale header (it is live data, not stale pump.fun data)', async () => {
+		getBondingStatus.mockResolvedValue({
+			kind: 'ok',
+			stale: false,
+			status: {
+				onCurve: false,
+				graduated: true,
+				migratedTo: 'pumpswap',
+				bondingProgressPct: 100,
+				solInCurve: null,
+				tokensRemaining: null,
+				marketCapUsd: 296832.56,
+				source: 'onchain',
+			},
+		});
+		const res = await call(`/api/crypto/bonding?mint=${THREE_MINT}`);
+		expect(res._json.status).toBe(200);
+		expect(res._json.body.source).toBe('onchain');
+		expect(res._json.headers['x-pump-stale']).toBeUndefined();
+	});
+
 	it('200s a stale last-known-good result with x-pump-stale set instead of 503', async () => {
 		getBondingStatus.mockResolvedValue({
 			kind: 'ok',
