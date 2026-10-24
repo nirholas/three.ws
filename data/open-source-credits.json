@@ -396,6 +396,18 @@
 			"org": "danielgatis, ZhengPeng7"
 		},
 		{
+			"id": "model:sam3d-objects",
+			"kind": "model",
+			"name": "SAM 3D Objects",
+			"area": "generation",
+			"license": "SAM License (Meta, last updated November 19, 2025; use allowed subject to Trade Controls, gated weights)",
+			"repo": "https://github.com/facebookresearch/sam-3d-objects",
+			"funding": null,
+			"version": null,
+			"powers": "workers/model-sam3d-objects: rebuilds the objects in one photo as a laid-out 3D scene (Forge and AR Studio \"From a photo\"), a 32 GB+ GPU lane that stays off until the owner stages the weights.",
+			"org": "Meta"
+		},
+		{
 			"id": "model:hunyuan3d",
 			"kind": "model",
 			"name": "Tencent Hunyuan3D 2.1",

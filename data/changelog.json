@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-24",
+			"title": "Scene from a photo, built and waiting on weights",
+			"summary": "POST /api/forge-scene-objects rebuilds the objects in one photo as a laid-out 3D scene with SAM 3D Objects, and AR Studio gains a From a photo tab that drops the result into the room. The 32 GB+ GPU worker, its Cloud Build config and a one-command weights staging script are in the repo. It answers backend_unconfigured until the gated weights are staged and the worker is deployed.",
+			"tags": ["feature", "docs"],
+			"link": "/ar/studio"
+		},
+		{
+			"date": "2026-10-24",
 			"title": "Pay for a model request with a wallet, no account needed",
 			"summary": "POST /api/v1/chat/completions now answers an unauthenticated request with an x402 upto challenge on Solana, sized to the model's worst case for that request. Sign it, retry, and only the metered tokens are charged at the published per-token price; the rest of the cap is refunded. Streaming settles when the stream closes, and a dropped stream is charged only for the tokens already sent. GET /api/v1/models now lists the price sheet and round limits.",
 			"tags": ["feature", "docs"],

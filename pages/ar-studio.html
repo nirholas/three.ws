@@ -329,6 +329,8 @@
 			border-radius: 10px; padding: 10px 12px;
 		}
 		.ars-link-row input:focus { outline: none; border-color: rgba(139, 124, 248, 0.6); }
+		.ars-photo-progress { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-faint); }
+		.ars-photo-error { margin: 0; font-size: 12.5px; color: var(--warn, #f59e0b); line-height: 1.5; }
 		.ars-link-hint { margin: 0; font-size: 12.5px; color: var(--ink-faint); line-height: 1.5; }
 		.ars-objects-head { display: flex; flex-direction: column; gap: 7px; padding: 2px 2px 10px; }
 		.ars-objects-more { padding: 10px 0 2px; display: flex; justify-content: center; }
@@ -462,6 +464,7 @@
 				<button class="ars-tab" type="button" role="tab" id="ars-tab-community" data-tab="community" aria-selected="false" aria-controls="ars-tray-body" data-i18n="ar_studio.community">Community</button>
 				<button class="ars-tab" type="button" role="tab" id="ars-tab-objects" data-tab="objects" aria-selected="false" aria-controls="ars-tray-body" data-i18n="ar_studio.objects">Objects</button>
 				<button class="ars-tab" type="button" role="tab" id="ars-tab-link" data-tab="link" aria-selected="false" aria-controls="ars-tray-body" data-i18n="ar_studio.glb_link">GLB link</button>
+				<button class="ars-tab" type="button" role="tab" id="ars-tab-photo" data-tab="photo" aria-selected="false" aria-controls="ars-tray-body">From a photo</button>
 			</div>
 			<div class="ars-tray-body" id="ars-tray-body" role="tabpanel" tabindex="0" aria-labelledby="ars-tab-recent"></div>
 		</div>

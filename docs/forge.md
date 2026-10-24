@@ -649,3 +649,30 @@ dashboard at [/quality-bench](https://three.ws/quality-bench) (internal).
 - [Diorama](./diorama.md) forges a whole scene of Forge objects into one explorable world.
 - The 3D generation architecture: [3D pipeline](./3d-pipeline.md), [3D asset pipeline](./3d-asset-pipeline.md), [3D API](./3d-api.md).
 - Pages: [/create](https://three.ws/create) (the avatar creator), [/scene](https://three.ws/scene) (Scene Studio), [/restyle](https://three.ws/restyle) (re-skin a GLB), [/gallery](https://three.ws/gallery).
+
+### Scene from a photo (SAM 3D Objects)
+
+`/api/forge-scene-objects` rebuilds every object in one photo as a single GLB with
+a named node per object (`object_01`, ...), laid out the way the objects sit in
+the picture (relative layout, not metric). It runs
+[SAM 3D Objects](https://github.com/facebookresearch/sam-3d-objects) on
+`workers/model-sam3d-objects` and is also the AR Studio tray tab "From a photo".
+
+```bash
+curl -sX POST https://three.ws/api/forge-scene-objects \
+  -H 'content-type: application/json' \
+  -d '{"image_url":"https://.../desk.jpg","max_objects":8}'
+# → 202 { "job_id": "...", "status": "queued", "eta_seconds": 150,
+#         "source": "detected", "objects": [{ "label": "mug", "box": [...] }] }
+
+curl -s 'https://three.ws/api/forge-scene-objects?job=<job_id>'
+# → { "status": "done", "result_url": "https://.../scene.glb", "object_count": 3, "skipped": [] }
+```
+
+Choose the objects with `boxes` (`[x0,y0,x1,y1]` fractions, top-left origin),
+`mask_urls` (one https PNG per object), or neither and the vision chain finds
+them. Requests from comprehensively sanctioned territories (the SAM License's
+Trade Controls clause) get `451` before any work is queued. Returns `503
+backend_unconfigured` until `MODEL_SAM3D_URL` and `GCP_RECONSTRUCTION_KEY` point
+at the deployed worker; staging the gated weights is `npm run stage:sam3d-objects`
+(see the worker README).

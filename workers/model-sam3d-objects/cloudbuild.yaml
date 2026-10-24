@@ -1,0 +1,89 @@
+# Build + deploy the SAM 3D Objects "scene from a photo" worker.
+# Manual submit (SHORT_SHA is only auto-set by triggers):
+#   gcloud builds submit --config workers/model-sam3d-objects/cloudbuild.yaml \
+#     --substitutions=SHORT_SHA=manual$(date +%s) .
+#
+# Prerequisites, owner-run once:
+#   HF_TOKEN=... npm run stage:sam3d-objects -- --accept-sam-license
+#   GPU quota for the class named in _GPU_TYPE (see README: GPU class).
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  _REGION: us-central1
+  _RUN_SA: avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+  _SERVICE: model-sam3d-objects
+  _REPO: model-sam3d-objects
+  _GCS_BUCKET: three-ws-avatar-reconstructions
+  _WEIGHTS_BUCKET: three-ws-model-weights
+  # Upstream requires 32 GB+ of VRAM. The L4 (24 GB) the other workers use cannot
+  # run it. The 96 GB RTX Pro 6000 class can, and Cloud Run requires its larger
+  # CPU/memory floor, hence the values below. Override both together if the GPU
+  # type changes.
+  _GPU_TYPE: nvidia-rtx-pro-6000
+  _CPU: "20"
+  _MEMORY: 80Gi
+  # Scale-to-zero by default: a warm floor on a 96 GB GPU is a quota and spend
+  # decision for the owner, not a default.
+  _MIN_INSTANCES: "0"
+  _MAX_INSTANCES: "1"
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    dir: workers/model-sam3d-objects
+    args:
+      - build
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - --cache-from
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --region=${_REGION}
+      - --service-account=${_RUN_SA}
+      - --platform=managed
+      - --port=8080
+      - --gpu=1
+      - --gpu-type=${_GPU_TYPE}
+      - --no-gpu-zonal-redundancy
+      - --no-cpu-throttling
+      - --cpu=${_CPU}
+      - --memory=${_MEMORY}
+      - --min-instances=${_MIN_INSTANCES}
+      - --max-instances=${_MAX_INSTANCES}
+      - --timeout=900
+      - --startup-probe=tcpSocket.port=8080,initialDelaySeconds=0,periodSeconds=60,timeoutSeconds=60,failureThreshold=15
+      - --cpu-boost
+      - --allow-unauthenticated
+      - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
+      - --add-volume-mount=volume=weights,mount-path=/weights
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},MAX_CONCURRENT=1,WEIGHTS_ROOT=/weights/sam3d-objects
+      - --set-secrets=API_KEY=avatar-reconstruction-key:latest
+      - --liveness-probe=httpGet.path=/health,initialDelaySeconds=60,periodSeconds=60,timeoutSeconds=10,failureThreshold=3
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+
+options:
+  machineType: E2_HIGHCPU_32
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 3600s

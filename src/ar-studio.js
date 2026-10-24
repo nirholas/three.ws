@@ -1812,6 +1812,82 @@ async function fetchTrayItems(tab) {
 	return items;
 }
 
+
+// "From a photo": SAM 3D Objects (POST /api/forge-scene-objects) turns one photo
+// into a single GLB with a named node per object, laid out like the photo. The
+// scene lands in the room as one model. The endpoint answers 503
+// backend_unconfigured until the GPU worker is deployed, and the tab says so.
+const PHOTO_POLL_MS = 4000;
+const PHOTO_MAX_POLLS = 150;
+let photoJobRunning = false;
+
+async function runPhotoScene(imageUrl, ui) {
+	const res = await fetch('/api/forge-scene-objects', {
+		method: 'POST',
+		credentials: 'include',
+		headers: { 'content-type': 'application/json', 'x-forge-client': CLIENT_ID },
+		body: JSON.stringify({ image_url: imageUrl }),
+	});
+	const start = await res.json().catch(() => ({}));
+	if (!res.ok) throw new Error(start.message || start.error_description || `Request failed (${res.status}).`);
+	ui.progress(`Reading the photo: ${start.objects?.length || 'some'} object(s) found. Rebuilding in 3D…`);
+	for (let i = 0; i < PHOTO_MAX_POLLS; i++) {
+		await new Promise((r) => setTimeout(r, PHOTO_POLL_MS));
+		const poll = await fetch(`/api/forge-scene-objects?job=${encodeURIComponent(start.job_id)}`, { credentials: 'include' });
+		const body = await poll.json().catch(() => ({}));
+		if (!poll.ok) throw new Error(body.message || `Status check failed (${poll.status}).`);
+		if (body.status === 'failed' || body.error) throw new Error(body.error || 'The reconstruction failed.');
+		if (body.result_url) return body;
+	}
+	throw new Error('The reconstruction is taking too long. Try again in a few minutes.');
+}
+
+function renderPhotoTab() {
+	trayBody.innerHTML = `
+		<form class="ars-link-form" id="ars-photo-form">
+			<label class="ars-link-label" for="ars-photo-input">Paste a photo link</label>
+			<div class="ars-link-row">
+				<input id="ars-photo-input" type="url" inputmode="url" required
+					placeholder="https://example.com/desk.jpg" />
+				<button type="submit" class="ars-btn ars-btn-primary" id="ars-photo-go">Build scene</button>
+			</div>
+			<p class="ars-link-hint">Every object SAM 3D finds in the photo becomes a 3D object, laid out the way it sits in the picture. Takes a couple of minutes.</p>
+			<div id="ars-photo-state" role="status" aria-live="polite"></div>
+		</form>`;
+	const form = $('ars-photo-form');
+	const state = $('ars-photo-state');
+	const go = $('ars-photo-go');
+	form?.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		if (photoJobRunning) return;
+		const url = String($('ars-photo-input')?.value || '').trim();
+		if (!/^https:\/\//i.test(url)) {
+			state.innerHTML = '<p class="ars-photo-error">That needs to be a public https link to a photo.</p>';
+			return;
+		}
+		photoJobRunning = true;
+		go.disabled = true;
+		const ui = {
+			progress: (msg) => {
+				state.innerHTML = '<div class="ars-photo-progress"><span class="ars-spinner" aria-hidden="true"></span><span></span></div>';
+				state.querySelector('span:last-child').textContent = msg;
+			},
+		};
+		ui.progress('Finding the objects in your photo…');
+		try {
+			const done = await runPhotoScene(url, ui);
+			closeTray();
+			await addModel({ src: done.result_url, title: 'Photo scene' });
+		} catch (err) {
+			state.innerHTML = '<p class="ars-photo-error"></p>';
+			state.firstChild.textContent = err.message;
+		} finally {
+			photoJobRunning = false;
+			go.disabled = false;
+		}
+	});
+}
+
 async function renderTray() {
 	if (!trayBody) return;
 	const tab = trayTab;
@@ -1839,6 +1915,11 @@ async function renderTray() {
 			closeTray();
 			addModel({ src: url, title: url.split('/').pop()?.replace(/\.glb.*$/i, '') || 'Linked model' });
 		});
+		return;
+	}
+
+	if (tab === 'photo') {
+		renderPhotoTab();
 		return;
 	}
 
