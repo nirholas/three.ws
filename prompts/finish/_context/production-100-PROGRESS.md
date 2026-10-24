@@ -1598,3 +1598,18 @@ Read `docs/simready-assets.md` in full: it documents the NVIDIA SimReady CC BY 4
 `npm run audit:docs` now reports clean (2176 markdown files checked). `npm run audit:links` shows 0 broken internal links, 0 stub hrefs, 0 dangling routes. `npm run check:rules -- --paths data/pages.json` exits 0. `git diff` showed only the 7-line new `data/pages.json` entry. Fix commit: `10b5d26dc`.
 
 Left: nothing for this order. `prompts/finish/414-auto-register-simready-doc.md` deleted in this closing commit.
+
+
+## 2026-10-24: order 415 (x402 catalog self-reject: transit-delays schema) closed
+
+Measured: `npx vitest run tests/api/x402-discovery-green.test.js` failed with exactly one resource flagged, matching Step 0's prediction: `/api/x402/transit-delays: bazaar.info FAILS its own schema → CDP rejects: /input/queryParams/route must be string: expected [ { ...(3) } ] to deeply equal []`.
+
+Root cause confirmed by reading `api/_lib/service-catalog/services/transit-delays.js`: `route` is correctly optional (`required: ['stop']`) but typed strictly as `{ type: 'string' }` with no null allowed, while the file's own illustrative `input` example set `route: null`. That example flows unmodified into `bazaar.info.input.queryParams` via `buildBazaarSchema()`/`bazaar-helpers.js`, which is then validated against its own generated schema; `null` fails `{type:'string'}`.
+
+Fixed by changing line 18's example from `route: null` to `route: 'Red'`, the same MBTA route id already used as the canonical example in this file's own `outputExample.arrivals[0].routeId`. Did not widen the schema to accept null, since the real handler never meaningfully supports a null route filter.
+
+`npx vitest run tests/api/x402-discovery-green.test.js` now passes in full (4/4), with `transit-delays` no longer in the dropped list. Sibling grep `grep -rn ": null" api/_lib/service-catalog/services/*.js` found 8 hits across 8 other files (news-wire-pulse, hack-check, books-search, pipeline, news-wire-query, places-search, research-search, yield-scan); checked each and confirmed every hit sits inside that file's `outputExample`, not its `input` example, so none feed `bazaar.info.input.queryParams` and none share this defect. No `tests/x402-spec.test.js` exists, so that half of step 4 was skipped per the order's own instruction. `npm run check:rules -- --paths api/_lib/service-catalog/services/transit-delays.js` exits 0.
+
+`git diff` showed only the one-line example fix in `transit-delays.js`. Fix commit: `160746b60`.
+
+Left: nothing for this order. `prompts/finish/415-auto-x402-transit-delays-schema-self-reject.md` deleted in this closing commit.
