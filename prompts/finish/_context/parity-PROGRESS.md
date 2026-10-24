@@ -102,3 +102,9 @@ Cross-session handoff for the `parity-` orders ([parity-00-CONTEXT.md](parity-00
 ## 2026-10-23: order 923 (built, owner steps remain)
 
 - 923: builder competition shipped in `439b4a256` (API, migration, ranking) and `3172dcf7e` (pages, routes, docs, nav). Config ships empty. Migration unapplied, deploy and competition parameters are owner-gated; order trimmed to those.
+
+## 2026-10-24: order 924, pricing levers (partial, trimmed)
+
+- Step 0: the requested mechanisms already shipped as developer plans (`api/_lib/dev-plans/*`, enforced in `api/_lib/gateway.js`, dashboard usage page, docs) and the `THREE_CREDIT_BONUS_BPS` deposit bonus (`api/_lib/credit-deposit.js`, separate grant row, credits page). No code was rebuilt.
+- Verified: `tests/dev-plans-quota.test.js`, `tests/dev-plans-config.test.js`, `tests/credit-deposit-assets.test.js` pass (23 tests).
+- Remaining (owner): production usage distribution and the tier/bonus proposal; the production env reader hung this session. Order file trimmed to that step.
