@@ -476,7 +476,7 @@ const ERC8004_MIN_BLOCK_CHUNK = 100;
 // 2026-10-08 a testnet's dRPC lane answered "ranges over 10000 blocks are not
 // supported on free plan" to every window from 8,000 down to 200 and served 101.
 // It is still a range ceiling that shrinking reaches, which is all this asks.
-const RANGE_REJECTED = /block range|range is too large|too wide|too many blocks|ranges? over \d+ blocks|query returned more than|exceed maximum block range|limited to|response size|logs matched/i;
+const RANGE_REJECTED = /block range|range is too large|too wide|too many blocks|ranges? over \d+ blocks|query returned more than|exceed maximum block range|limited to|response size|logs matched|exceeds? max(?:imum)? results|retry with the range/i;
 
 /**
  * Is this RPC failure the provider refusing the width of the requested range?

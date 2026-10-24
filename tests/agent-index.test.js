@@ -506,6 +506,13 @@ describe('isRangeRejection', () => {
 		expect(isRangeRejection(null)).toBe(false);
 		expect(isRangeRejection('')).toBe(false);
 	});
+
+	it('reads Coinbase/Base RPC wording ("exceeds max results ... retry with the range") as a range ceiling', () => {
+		// Verbatim from erc8004_crawl_cursor.last_error on chain 8453 (Base), frozen since 2026-10-22.
+		expect(
+			isRangeRejection('RPC -32602: query exceeds max results 20000, retry with the range 52932450-52933133'),
+		).toBe(true);
+	});
 });
 
 // ─── Sweep capacity ──────────────────────────────────────────────────────────
