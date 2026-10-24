@@ -1551,3 +1551,13 @@ Did, test-first: added two cases to `tests/world-health-asset-sweep.test.js` (no
 `npm run check:rules` exits 0 on all 4 touched files. Filed OWNER-ACTIONS row 68 for the underlying decision (redeploy `hyperfy-world` or formally retire `world.three.ws`); row 67 was already taken by a prior concurrent entry, confirmed by re-reading the file before numbering. Fix commit: `118649a47`.
 
 Left: nothing for this order beyond OWNER-ACTIONS row 68, which is an owner decision, not a bug. `prompts/finish/413-auto-world-health-down-masked-unknown.md` deleted in this closing commit.
+
+## 2026-10-24: order 410 (awesome-solana-ai submission doc missing from pages.json) closed
+
+Measured: `npm run audit:docs` reported two findings, not the one the order was filed against: `docs/awesome-solana-ai-submission.md` (this order's target) and `docs/simready-assets.md` (a separate, newer gap already owned by order 414, confirmed by reading that file and leaving it untouched).
+
+Read `docs/awesome-solana-ai-submission.md`: a one-time PR packet preparing a `solana-foundation/awesome-solana-ai` README submission, ending in an "Owner message (one yes)" section gating the actual PRs on explicit owner approval. Nothing in `pages/`, `docs/`, or `prompts/` links to `/docs/awesome-solana-ai-submission` except the order files that reference it by path. This is the internal-packet case the order's task 3 describes, not the common discoverable-doc case, so registered it in `UNPUBLISHED_DOCS` in `scripts/audit-docs.mjs` (new entry `awesome-solana-ai-submission`, after the existing `listings-registry` entry) with the reason, rather than adding a `data/pages.json` entry.
+
+`npm run audit:docs` now reports only the pre-existing `docs/simready-assets.md` finding (order 414's scope); the targeted finding is gone. `npm run audit:links` shows 0 broken/dangling/stub links. `npm run check:rules -- --paths scripts/audit-docs.mjs` exits 0. Fix commit: `3e8bac005`.
+
+Left: nothing for this order. `prompts/finish/410-auto-register-awesome-solana-doc.md` deleted in this closing commit.
