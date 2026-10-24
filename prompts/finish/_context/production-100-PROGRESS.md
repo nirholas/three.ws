@@ -1587,3 +1587,14 @@ Fixed `api/ship/feed.js`'s `buildFeed()` to wrap its GitHub-dependent work in `c
 Re-ran both suites: `npx vitest run tests/ship-feed-endpoint.test.js tests/commit-feed-push.test.js` passes in full (33 tests). `npm run check:rules -- --paths api/ship/feed.js api/_lib/commit-feed-push.js tests/ship-feed-endpoint.test.js tests/commit-feed-push.test.js` exits 0. Fix commit: `baafb0a4c`.
 
 Left: one optional, non-blocking owner action (OWNER-ACTIONS row 70) to set `GITHUB_TOKEN` on `three-ws-api`, raising the shared ceiling from 60 to 5,000 requests/hour; does not block this order since the fix above already makes exhaustion a non-event. `prompts/finish/412-auto-github-ratelimit-resilience.md` deleted in this closing commit.
+
+
+## 2026-10-24: order 414 (docs/simready-assets.md missing from pages.json) closed
+
+Measured: `npm run audit:docs` reported exactly one finding, `docs/simready-assets.md` served at `/docs/simready-assets` but absent from `data/pages.json` (the `docs/awesome-solana-ai-submission.md` finding the order's step 0 also named had already been closed by order 410). `git log --oneline -- docs/simready-assets.md` showed one commit (`660b5ad97`, "add the NVIDIA SimReady asset pipeline..."); `grep -n "simready" data/pages.json` returned zero hits, confirming no other agent had shipped this first.
+
+Read `docs/simready-assets.md` in full: it documents the NVIDIA SimReady CC BY 4.0 asset-conversion pipeline and is two-way cross-linked from `docs/object-library.md` and `docs/3d-asset-pipeline.md`'s "Related" sections, the same discoverable-doc category as its siblings already in `data/pages.json`. Added an entry immediately after the `/docs/object-library` sibling (closest match) with `"path": "/docs/simready-assets"`, `"title": "Docs: SimReady Assets"`, a description summarizing the doc's actual CC BY 4.0 licensing and GLB-conversion content, `"priority": 0.7`, `"changefreq": "monthly"`, matching the sibling entries' shape exactly.
+
+`npm run audit:docs` now reports clean (2176 markdown files checked). `npm run audit:links` shows 0 broken internal links, 0 stub hrefs, 0 dangling routes. `npm run check:rules -- --paths data/pages.json` exits 0. `git diff` showed only the 7-line new `data/pages.json` entry. Fix commit: `10b5d26dc`.
+
+Left: nothing for this order. `prompts/finish/414-auto-register-simready-doc.md` deleted in this closing commit.
