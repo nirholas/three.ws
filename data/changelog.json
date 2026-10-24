@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-24",
+			"title": "Chat no longer fails when its default NVIDIA model is retired",
+			"summary": "NVIDIA stopped serving the Nemotron 3 Super function while still listing it, so chat requests that fell through to it got a 404 and, with the other providers throttled, ended in a 503. Chat, the tool chain, the brain and the CAD writer now use the Nemotron 3.5 Lightning model (with Ultra as its fallback), both verified live.",
+			"tags": ["fix"],
+			"link": "/chat"
+		},
+		{
+			"date": "2026-10-24",
 			"title": "Fixed three more legacy thumbnail links that browsers refused to load",
 			"summary": "A handful of forge creations and 3D props stored from before an earlier URL fix still pointed straight at the storage bucket's own domain instead of three.ws's own CDN link, which Chrome blocks as an opaque cross-origin response. Model-page posters, a creation's related-models sidebar, forge share-card previews (the image X and Discord show when a link is pasted), and the Forged gallery's model-viewer thumbnails now all resolve through the same CDN link as everything else.",
 			"tags": ["fix"],

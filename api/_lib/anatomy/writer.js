@@ -195,7 +195,7 @@ export function writerRungs(env = process.env) {
 	if (env.NVIDIA_API_KEY) {
 		// Three separate NIM functions on one key: Kimi writes the best specs,
 		// the Nemotron pair answers when Kimi's host is queued or stalled.
-		for (const model of ['moonshotai/kimi-k3', 'nvidia/nemotron-3-ultra-550b-a55b', 'nvidia/nemotron-3-super-120b-a12b']) {
+		for (const model of ['moonshotai/kimi-k3', 'nvidia/nemotron-3-ultra-550b-a55b']) {
 			rungs.push(
 				chat('nvidia', 'https://integrate.api.nvidia.com/v1/chat/completions', env.NVIDIA_API_KEY, model, {
 					body: { chat_template_kwargs: { thinking: false, enable_thinking: false } },

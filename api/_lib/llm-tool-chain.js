@@ -59,7 +59,7 @@ export function providerChain() {
 		});
 	});
 	if (env.NVIDIA_API_KEY) {
-		chain.push({ name: 'nvidia', url: 'https://integrate.api.nvidia.com/v1/chat/completions', key: env.NVIDIA_API_KEY, model: 'nvidia/nemotron-3-super-120b-a12b' });
+		chain.push({ name: 'nvidia', url: 'https://integrate.api.nvidia.com/v1/chat/completions', key: env.NVIDIA_API_KEY, model: 'nvidia/nemotron-3.5-lightning-30b-a3b' });
 	}
 	// Three more free lanes, same OpenAI wire format including tools + streamed
 	// tool_calls: SambaNova (Llama 3.3 70B, own quota pool), Mistral (Experiment

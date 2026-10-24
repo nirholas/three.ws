@@ -27,7 +27,7 @@ export function writerRungs(env = process.env) {
 	const rungs = [];
 	if (env.NVIDIA_API_KEY) {
 		rungs.push({ name: 'nvidia', url: NIM_URL, key: env.NVIDIA_API_KEY, model: env.CAD_WRITER_MODEL || CAD_WRITER_MODEL_DEFAULT, timeoutMs: 150_000 });
-		rungs.push({ name: 'nvidia', url: NIM_URL, key: env.NVIDIA_API_KEY, model: 'nvidia/nemotron-3-super-120b-a12b', timeoutMs: 60_000 });
+		rungs.push({ name: 'nvidia', url: NIM_URL, key: env.NVIDIA_API_KEY, model: 'nvidia/nemotron-3.5-lightning-30b-a3b', timeoutMs: 60_000 });
 	}
 	if (env.GROQ_API_KEY) {
 		rungs.push({ name: 'groq', url: GROQ_URL, key: env.GROQ_API_KEY, model: 'openai/gpt-oss-120b', timeoutMs: 45_000 });

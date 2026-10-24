@@ -592,7 +592,7 @@ export const PROVIDER_MODEL_DEFAULTS = {
 	anthropic: 'claude-sonnet-5',
 	openrouter: DEFAULT_FREE_MODEL,
 	groq: 'qwen/qwen3.8-27b',
-	nvidia: 'nvidia/nemotron-3-super-120b-a12b',
+	nvidia: 'nvidia/nemotron-3.5-lightning-30b-a3b',
 	sambanova: 'Meta-Llama-3.3-70B-Instruct',
 	mistral: 'mistral-small-latest',
 	zai: 'glm-4.7-flash',

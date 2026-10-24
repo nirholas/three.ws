@@ -165,6 +165,15 @@ describe('paid/BYOK model gating (OpenRouter Granite)', () => {
 	});
 });
 
+describe('retired NVIDIA NIM functions', () => {
+	// NIM still lists nemotron-3-super-120b-a12b but answers 404 "Function not found"
+	// on completions (observed 2026-10-24), which left anonymous chat with no
+	// working provider once Groq throttled. The direct NIM default must be a live model.
+	it('the nvidia default is not the retired super-120b function', () => {
+		expect(PROVIDER_MODEL_DEFAULTS.nvidia).not.toBe('nvidia/nemotron-3-super-120b-a12b');
+	});
+});
+
 describe('bounded fallback chain', () => {
 	it('caps attempts and wall-clock to prevent provider churn', () => {
 		expect(MAX_FALLBACK_ATTEMPTS).toBeGreaterThanOrEqual(2);

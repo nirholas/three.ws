@@ -384,7 +384,7 @@ const PROVIDERS = {
 		maxOutput: 16384,
 		description: 'NVIDIA’s flagship Nemotron MoE. Strong agentic reasoning, free on NIM.',
 		reasoningTrace: true,
-		native: () => (env.NVIDIA_API_KEY ? nvidia('nvidia/nemotron-3-super-120b-a12b') : null),
+		native: () => (env.NVIDIA_API_KEY ? nvidia('nvidia/nemotron-3.5-lightning-30b-a3b') : null),
 	},
 	'nvidia-nemotron-super-49b': {
 		label: 'Llama-Nemotron Super 49B',
