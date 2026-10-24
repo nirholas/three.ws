@@ -70,6 +70,7 @@
   "overrides": {
     "fflate@~0.7": "~0.7.5",
     "markdown-it@^15": "^15.0.3",
-    "smol-toml@^1": "^1.9.1"
+    "smol-toml@^1": "^1.9.1",
+    "fast-uri@^3": "^3.1.9"
   }
 }
