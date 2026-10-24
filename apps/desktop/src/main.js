@@ -38,6 +38,17 @@ import { trayTitle, trayTooltip } from './panel/model.js';
 import { detectEditors, connectEditor, disconnectEditor, mcpServers } from './main/editors.js';
 
 const SRC = dirname(fileURLToPath(import.meta.url));
+
+// Electron 44 removed openAsHidden / wasOpenedAsHidden. Windows now carries
+// --hidden as a login-item argument (the same args must be passed when reading
+// the setting back); macOS reports a login launch through wasOpenedAtLogin.
+const LOGIN_ARGS = ['--hidden'];
+const loginQuery = () => (process.platform === 'win32' ? { args: LOGIN_ARGS } : {});
+const launchAtLogin = () => app.getLoginItemSettings(loginQuery()).openAtLogin;
+function setLaunchAtLogin(enabled) {
+	app.setLoginItemSettings({ openAtLogin: Boolean(enabled), ...loginQuery() });
+}
+const launchedAtLogin = () => process.platform === 'darwin' && app.getLoginItemSettings().wasOpenedAtLogin === true;
 const ASSETS = join(SRC, '..', 'assets');
 
 // ── Settings (non-secret preferences) ────────────────────────────────────────
@@ -194,8 +205,8 @@ function refreshTray() {
 		{
 			label: 'Start at login',
 			type: 'checkbox',
-			checked: app.getLoginItemSettings().openAtLogin,
-			click: (item) => app.setLoginItemSettings({ openAtLogin: item.checked, openAsHidden: true }),
+			checked: launchAtLogin(),
+			click: (item) => setLaunchAtLogin(item.checked),
 		},
 		{ type: 'separator' },
 		{ label: 'Quit three.ws', role: 'quit' },
@@ -287,7 +298,7 @@ function appInfo() {
 		update: updater.state(),
 		companion: companion.status(),
 		encryptedStore: store.encrypted(),
-		launchAtLogin: app.getLoginItemSettings().openAtLogin,
+		launchAtLogin: launchAtLogin(),
 		mcpServers: mcpServers(session.apiBase()),
 	};
 }
@@ -409,9 +420,9 @@ function registerIpc() {
 	handle('app:checkUpdates', () => updater.check());
 	handle('app:installUpdate', () => updater.installNow());
 	handle('app:setLaunchAtLogin', (enabled) => {
-		app.setLoginItemSettings({ openAtLogin: Boolean(enabled), openAsHidden: true });
+		setLaunchAtLogin(enabled);
 		refreshTray();
-		return app.getLoginItemSettings().openAtLogin;
+		return launchAtLogin();
 	});
 	handle('app:openExternal', (url) => openExternal(url));
 	// A generic read for views that need a route not wrapped above. Reads only:
@@ -515,7 +526,7 @@ function boot() {
 	companion.setFace(localRuntime.runtime.face());
 
 	// Launched at login stays in the tray; launched by hand opens the console.
-	const hidden = app.getLoginItemSettings().wasOpenedAsHidden || process.argv.includes('--hidden');
+	const hidden = launchedAtLogin() || process.argv.includes('--hidden');
 	if (!hidden) openConsole();
 }
 

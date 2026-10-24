@@ -65,7 +65,8 @@ module.exports = {
 			{ target: 'nsis', arch: ['x64'] },
 			{ target: 'portable', arch: ['x64'] },
 		],
-		publisherName: 'three.ws',
+		// electron-builder 26 moved the signing options under signtoolOptions.
+		signtoolOptions: { publisherName: 'three.ws' },
 	},
 	nsis: {
 		oneClick: false,
@@ -92,7 +93,7 @@ module.exports = {
 		synopsis: 'Operate your three.ws agents from the desktop',
 		description: 'Sign in, chat with your agents, follow runs step by step, approve what they want to spend, and wire three.ws into every coding client on the machine.',
 		executableName: 'three-ws-desktop',
-		desktop: { StartupWMClass: 'three.ws Desktop' },
+		desktop: { entry: { StartupWMClass: 'three.ws Desktop' } },
 	},
 	deb: {
 		packageName: 'three-ws-desktop',
