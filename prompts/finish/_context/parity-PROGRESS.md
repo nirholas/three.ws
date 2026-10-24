@@ -115,3 +115,8 @@ Cross-session handoff for the `parity-` orders ([parity-00-CONTEXT.md](parity-00
 - Shipped: `api/_lib/x-mention-launch.js` and its wiring in `x-mention-poll.js` (linked author with a bodied agent gets the prefilled `/launch` link; unlinked, no-agent and no-body authors get the matching link; no spend path, asserted by an import-list test), `tests/x-mention-launch.test.js` (7 tests incl. PGlite handleMention dry run), docs, STRUCTURE row, changelog.
 - Verified: 27 tests green across launch and poll suites; Playwright against Vite on a spare port: the reply URL fills the `/launch` name, ticker and description fields, no page errors.
 - Remains: real-API dry-run tick evidence after deploy, and the owner's `X_MENTION_BOT_LIVE=1`. `check:claude` shows a cron-count drift (145 vs 150) from other work.
+
+## 2026-10-24: order 922, /why-three-ws (partial)
+
+- Shipped: `62fe9136b` (page, module, jsdom tests, routes, nav, pages.json, STRUCTURE row). Browser at 375, 768 and 1440 px in both themes: no overflow, no console errors, all five tiles live from `/api/platform/analytics`. `audit:links` 0 dangling; `build:pages` clean after fixing two invalid changelog tags (`844bd7e27`).
+- Remains: the named comparison table, owner-gated on the platform names. The order file is trimmed to that step.
