@@ -191,6 +191,14 @@ protocol client that connects there is sent through three.ws sign-in first,
 because most of that server's tools act on an account. The catalog tools never
 count against the generation quota.
 
+### Documentation search (`search_docs`)
+
+`search_docs` takes a plain-words `query` (and an optional `limit` of 1 to 10) and
+returns the documentation sections that answer it: a `title`, a `url` that opens the
+docs reader at that heading, and a `snippet` from the start of the section. It is
+the same tool and index as on the main server, documented in
+[docs/mcp.md](./mcp.md#search_docs). It never counts against the generation quota.
+
 ### Quality tiers
 
 `forge_free` takes an optional `tier` of `draft`, `standard`, or `high`.

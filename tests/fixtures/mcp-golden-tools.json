@@ -295,7 +295,7 @@
 			"name": "list_my_agents",
 			"title": "List my agents",
 			"descHead": "List the agents on your account, newest first: id, name, description, br",
-			"descHash": "dd1404d7fdfa",
+			"descHash": "bf9a632cd236",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -648,6 +648,21 @@
 			"schemaHash": "8eeb0fbab1ed"
 		}
 	],
+	"api/_mcp/tools/docs.js": [
+		{
+			"name": "search_docs",
+			"title": "Search the three.ws documentation",
+			"descHead": "FREE, no account or payment. Search the three.ws documentation for the s",
+			"descHash": "689c22f8d25d",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "9e651aeb3bc2"
+		}
+	],
 	"api/_mcp/tools/domains.js": [
 		{
 			"name": "domain_check",
@@ -740,6 +755,21 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "f6bbfa126bf8"
+		}
+	],
+	"api/_mcp/tools/expand.js": [
+		{
+			"name": "expand",
+			"title": "Expand a summarized result",
+			"descHead": "Get more of a result that another tool summarized. Use this when list_my",
+			"descHash": "cfbff304f4b1",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "c89f7916d9eb"
 		}
 	],
 	"api/_mcp/tools/feedback.js": [
@@ -987,7 +1017,7 @@
 			"name": "recall",
 			"title": "Recall",
 			"descHead": "Retrieve the most relevant memories for a query from one of your agents.",
-			"descHash": "09ae2c4899cb",
+			"descHash": "a101b6acd83f",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -1363,6 +1393,16 @@
 			"descHash": "3088aad5a068",
 			"annotations": "ref:ATTESTATION_READ_ANNOTATIONS",
 			"schemaHash": "72791cf29a31"
+		}
+	],
+	"api/_mcp/tools/token-due-diligence.js": [
+		{
+			"name": "token_due_diligence",
+			"title": "Token due diligence",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": "ref:READ",
+			"schemaHash": "1ba25dd7ff2b"
 		}
 	],
 	"api/_mcp/tools/tokenize.js": [

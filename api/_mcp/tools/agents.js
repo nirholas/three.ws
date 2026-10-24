@@ -1,4 +1,5 @@
 import { sql } from '../../_lib/db.js';
+import { clip, summarizeList } from '../../_lib/mcp-expand.js';
 import { limits } from '../../_lib/rate-limit.js';
 import { runAgentDelegation, AgentNotFoundError } from '../../_lib/agent-delegate.js';
 import { checkIdentityIntegrity } from '../../_lib/identity-integrity.js';
@@ -669,7 +670,7 @@ export const toolDefs = [
 			openWorldHint: false,
 		},
 		description:
-			'List the agents on your account, newest first: id, name, description, brain model, public Solana address, whether the page is published and the page URL. Use this first to get the agent ids that recall, list_custom_skills, attach_avatar_to_agent and call_agent need. Reads only; no funds move.',
+			'List the agents on your account, newest first: id, name, description, brain model, public Solana address, whether the page is published and the page URL. Use this first to get the agent ids that recall, list_custom_skills, attach_avatar_to_agent and call_agent need. Past ten agents it returns a summary, the count, a handle and the first ten; the expand tool reads the rest. Reads only; no funds move.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -702,6 +703,16 @@ export const toolDefs = [
 				created_at: r.created_at,
 				page_url: agentHomeUrl(r.id),
 			}));
+			const published = agents.filter((a) => a.is_published).length;
+			const summarized = await summarizeList({
+				tool: 'list_my_agents',
+				auth,
+				items: agents,
+				pageSize: 10,
+				summary: `${agents.length} agents on this account (${published} published, ${agents.length - published} unpublished), newest first. Newest: ${clip(agents[0].name, 80)}.`,
+				renderItem: (a, i) => `${i + 1}. ${clip(a.name, 80)} (${a.id})${a.is_published ? ' published' : ''}${a.model ? `, ${a.model}` : ''}`,
+			});
+			if (summarized) return summarized;
 			return toolResult({ count: agents.length, agents });
 		},
 	},

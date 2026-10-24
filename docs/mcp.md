@@ -649,7 +649,72 @@ The agents on the authenticated account, newest first. Read-only; no funds move.
 }
 ```
 
-Returns `count` and `agents[]`, each with `id`, `name`, `description`, `model`, the public `solana_address`, `is_published`, `created_at` and `page_url`. Use the ids with `recall`, `list_custom_skills`, `attach_avatar_to_agent` and `call_agent`. The [Grok connector](/docs/grok) lists it once signed in.
+Returns `count` and `agents[]`, each with `id`, `name`, `description`, `model`, the public `solana_address`, `is_published`, `created_at` and `page_url`. Past ten agents it returns a [summary-first envelope](#summary-first-results-and-expand) with the first ten and a handle for `expand`. Use the ids with `recall`, `list_custom_skills`, `attach_avatar_to_agent` and `call_agent`. The [Grok connector](/docs/grok) lists it once signed in.
+
+---
+
+### Summary-first results and `expand`
+
+A tool that can return a long list does not put the whole list in the model's context. `list_my_agents` (more than 10 agents), `recall` (more than 5 memories) and `crypto_data` (a list answer of more than 10 rows) answer with an envelope instead:
+
+```json
+{
+  "summary": "50 agents on this account (17 published, 33 unpublished), newest first. Newest: Agent 49.",
+  "handle": "mx1.eyJpIjoi...",
+  "count": 50,
+  "offset": 0,
+  "limit": 10,
+  "next_offset": 10,
+  "expires_at": "2026-10-24T00:40:00.000Z",
+  "items": [ "...the first page of rows..." ]
+}
+```
+
+The text block carries the summary, the first page as one line per row, and a sentence telling the model how to get the next page. Nothing is withheld: `expand` takes the handle back.
+
+| Argument | Meaning |
+|---|---|
+| `handle` | The `handle` from the envelope (required). |
+| `offset` | Row to start at; use the previous page's `next_offset`. |
+| `limit` | Rows to return, 1 to 100. Defaults to the original page size. |
+| `fields` | Keys to keep on each row; dot paths such as `detail.a` work. Use it to pull one column of a long list. |
+
+`expand` is read-only and free. Its answer has the same shape as the envelope without the summary (`count`, `offset`, `limit`, `next_offset`, `items`); `next_offset` is `null` on the last page.
+
+**Handles are signed, short-lived and bound to the account.** A handle is an HMAC-signed token that names the tool, the receiving principal (account or API key) and a 15 minute deadline; the list itself sits in the shared cache under that handle. Another account presenting it, or a token edited in any way, gets `invalid_handle` with no hint of what exists. After 15 minutes the answer is `handle_expired` and the message names the tool to call again. An anonymous caller gets `sign_in_required`.
+
+**Who gets an envelope.** Signed-in accounts and API keys. A pay-per-call x402 caller paid for the whole answer and an anonymous caller has no identity to bind a handle to, so both receive the full list as before. A list that fits one page is never wrapped. A list over 2,000 rows is stored up to 2,000 and the envelope says so with `total_available` and `truncated_to`.
+
+Measured against the live handlers on 2026-10-24 (tokens estimated at four characters each; the agent and memory rows are 50 and 30 generated rows through the real handlers, the market rows are live free-tier calls):
+
+| Call | Before | After |
+|---|---|---|
+| `list_my_agents`, 50 agents | 41,472 B, about 10,400 tokens | 4,922 B, about 1,230 tokens |
+| `recall`, 30 matches | 14,257 B, about 3,570 tokens | 3,446 B, about 860 tokens |
+| `crypto_data` `coingecko/markets`, 100 coins | 191,153 B, about 47,800 tokens | 17,496 B, about 4,370 tokens |
+| `crypto_data` `defillama/protocols`, every protocol | 4,224,593 B, about 1,056,000 tokens | 10,600 B, about 2,650 tokens |
+
+---
+
+### `search_docs`
+
+Search the three.ws documentation for the section that answers a question. Free, no account or payment, and listed on this server and on the keyless studio server ([docs/mcp-studio.md](./mcp-studio.md)).
+
+```json
+{
+  "type": "object",
+  "required": ["query"],
+  "properties": {
+    "query": { "type": "string", "minLength": 2, "maxLength": 300 },
+    "limit": { "type": "integer", "minimum": 1, "maximum": 10, "default": 5 }
+  },
+  "additionalProperties": false
+}
+```
+
+Returns `query`, `count` and `results[]`, each with `title` (page and heading), `url` (opens the docs reader at that heading), `snippet` (the start of the matching section) and `doc` (the page slug). A query that matches nothing returns `count: 0` and a text hint, not an error.
+
+It is the same index, tokenizer and ranking as the search field on the docs site and the Cmd-K palette: [`scripts/build-docs-search-index.mjs`](../scripts/build-docs-search-index.mjs) builds the index from `docs/`, [`public/docs-search.js`](../public/docs-search.js) ranks it, and [`api/_lib/docs-search.js`](../api/_lib/docs-search.js) loads it on the server. The server reads `dist/docs-search-index.json`, then `public/docs-search-index.json`, and if neither exists it builds the index in memory from `docs/` on first use.
 
 ---
 

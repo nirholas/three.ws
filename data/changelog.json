@@ -3,13 +3,10 @@
 	"entries": [
 		{
 			"date": "2026-10-24",
-			"title": "See and test launch fees before a coin goes live",
-			"summary": "The $THREE launchpad form now shows the launch fee in plain words and as a fee-over-time table. A new fee-config endpoint validates a decaying fee schedule against the Meteora SDK rules and can simulate the config transaction unsigned. Swap preparation accepts a referral token account, and a shared pump.fun fee vault now rejects holder splits that do not total 100 percent across 1 to 10 wallets.",
-			"tags": [
-				"feature",
-				"docs"
-			],
-			"link": "/docs/native-launchpad"
+			"title": "Long MCP answers arrive as a summary, and agents can search the docs",
+			"summary": "list_my_agents, recall and crypto_data now answer with a short summary, a count, a handle and the first page when the list is long, and the new expand tool reads the rest on request. A 100-coin market list drops from about 47,800 to 4,400 tokens. Handles are signed, account-bound and last 15 minutes. The new free search_docs tool answers how-to questions from the docs index on the main and studio servers.",
+			"tags": ["feature", "docs"],
+			"link": "/docs/mcp"
 		},
 		{
 			"date": "2026-10-24",
@@ -50,11 +47,7 @@
 			"date": "2026-10-24",
 			"title": "Agents join the open Solana agent registry and hires read trust tiers",
 			"summary": "Minted agents are enrolled in the open Solana agent registry (8004) with the platform authority signing, so owners pay nothing. The marketplace ranks providers by registry tier after completed hires, a hire can require a minimum tier, and agent pages show an 8004 tier badge when registered. A rate-limited back-fill covers existing agents.",
-			"tags": [
-				"solana",
-				"agents",
-				"marketplace"
-			],
+			"tags": ["feature"],
 			"link": "/docs/solana-agent-registry"
 		},
 		{
@@ -177,15 +170,6 @@
 				"feature"
 			],
 			"link": "/coin-intel"
-		},
-		{
-			"date": "2026-10-23",
-			"title": "Creator-fee payouts: register a wallet and see every distribution",
-			"summary": "Your share of each claimed creator fee now has a record and a destination. Register a payout wallet by signing with it and confirming with a step-up (a change waits 48 hours), then follow what is sent, pending or held and why on the new payouts page, and export every distribution as CSV. Sending stays off until payouts are switched on, and shares are recorded and held until then.",
-			"tags": [
-				"feature"
-			],
-			"link": "/creator/payouts"
 		},
 		{
 			"date": "2026-10-23",

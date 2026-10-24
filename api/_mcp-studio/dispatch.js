@@ -96,7 +96,8 @@ const GROK_ANONYMOUS_INSTRUCTIONS = [
 const CATALOG_INSTRUCTIONS = [
 	'Before generating a prop, character or animation, search_catalog(q) checks the thousands of ready-made CC0 props,',
 	'rigged characters and motion clips three.ws already publishes; get_item_source(id) returns paste-ready code for a',
-	'match. Say whether you used an existing asset or generated a new one.',
+	'match. Say whether you used an existing asset or generated a new one. For how-to questions about three.ws itself,',
+	'search_docs(query) returns the documentation sections that answer them.',
 ];
 
 // The full and Grok surfaces list get_job (./job-tools.js); the ChatGPT one

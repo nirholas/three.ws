@@ -75,6 +75,8 @@ export const POLICY = {
 		create_agent: w('agents'),
 		create_gated_embed: w('integrations'),
 		crypto_data: r('intelligence'),
+		search_docs: r('utility'),
+		expand: r('utility'),
 		delete_avatar: f('assets', 'confirm_delete', 'get_avatar', ['id']),
 		diff_models: r('assets'),
 		forget: f('agents', 'confirm_delete', 'recall', ['agent_id']),
@@ -447,6 +449,7 @@ export const POLICY = {
 
 	// /api/mcp-studio (free, keyless)
 	'threews-3d-studio-free': {
+		search_docs: r('utility'),
 		forge_free: w('assets'),
 		text_to_avatar: w('assets'),
 		mesh_forge: w('assets'),
