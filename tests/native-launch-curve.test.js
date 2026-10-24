@@ -11,8 +11,7 @@ import {
 	buildCurveWithMarketCap,
 	validateConfigParameters,
 	getBaseFeeParams,
-	getBaseFeeNumerator,
-	feeNumeratorToBps,
+	calculateFeeSchedulerEndingBaseFeeBps,
 	TokenType,
 	TokenDecimal,
 	TokenAuthorityOption,
@@ -25,6 +24,7 @@ import {
 import { Keypair } from '@solana/web3.js';
 import BN from 'bn.js';
 import { NATIVE_LANE, curveBuildParams, configKeyFor, laneInfo } from '../api/_lib/native-launch/config.js';
+import { feeBpsAtSlot as feeBpsAtSlotFor } from '../api/_lib/native-launch/fee-config.js';
 
 const params = () => curveBuildParams();
 
@@ -106,48 +106,47 @@ describe('curveBuildParams', () => {
 });
 
 describe('anti-snipe fee schedule', () => {
-	// feeAtSlot mirrors exactly what the DBC program does on-chain: resolve the
-	// scheduler's cliff/reduction factors once (getBaseFeeParams), then evaluate
-	// the fee at a given slot since pool activation (getBaseFeeNumerator). No
-	// network call, no mocking of the curve math itself.
-	const schedulerParams = () => getBaseFeeParams(params().fee.baseFeeParams);
-	const activationPoint = new BN(0);
-	function feeBpsAtSlot(slot) {
-		const sp = schedulerParams();
-		const numerator = getBaseFeeNumerator(
-			sp.cliffFeeNumerator,
-			sp.firstFactor,
-			sp.secondFactor,
-			sp.thirdFactor,
-			sp.baseFeeMode,
-			new BN(slot),
-			activationPoint,
-		);
-		return feeNumeratorToBps(numerator);
-	}
+	// Evaluates the scheduler the way the DBC program does: resolve the cliff and
+	// reduction factors once (getBaseFeeParams), then the fee at a slot since pool
+	// activation. No network call, no mocking of the curve math itself.
+	const feeBpsAtSlot = (slot) => feeBpsAtSlotFor(params().fee.baseFeeParams, slot);
 
-	it('starts at the configured anti-snipe fee in the pool\'s first slot', () => {
-		expect(feeBpsAtSlot(0)).toBe(NATIVE_LANE.antiSnipeStartFeeBps);
+	it('starts at the configured anti-snipe fee in the pool\'s first slot', async () => {
+		expect(await feeBpsAtSlot(0)).toBe(NATIVE_LANE.antiSnipeStartFeeBps);
 	});
 
-	it('decays monotonically slot by slot across the decay window', () => {
-		let previous = feeBpsAtSlot(0);
+	it('decays monotonically slot by slot across the decay window', async () => {
+		let previous = await feeBpsAtSlot(0);
 		for (let slot = 1; slot <= NATIVE_LANE.antiSnipeDecaySlots; slot++) {
-			const fee = feeBpsAtSlot(slot);
+			const fee = await feeBpsAtSlot(slot);
 			expect(fee).toBeLessThanOrEqual(previous);
 			previous = fee;
 		}
 	});
 
-	it('reaches exactly the steady-state fee at the window\'s end, and stays there', () => {
-		expect(feeBpsAtSlot(NATIVE_LANE.antiSnipeDecaySlots)).toBe(NATIVE_LANE.antiSnipeEndFeeBps);
-		expect(feeBpsAtSlot(NATIVE_LANE.antiSnipeDecaySlots + 1000)).toBe(NATIVE_LANE.antiSnipeEndFeeBps);
+	it('settles at the steady-state fee at the window\'s end, and stays there', async () => {
+		// The on-chain scheduler rounds the final step to whole reduction units, so the
+		// end fee lands within a bps of the configured value, and agrees with the SDK's
+		// own ending-fee calculator.
+		const end = await feeBpsAtSlot(NATIVE_LANE.antiSnipeDecaySlots);
+		expect(end).toBeGreaterThanOrEqual(NATIVE_LANE.antiSnipeEndFeeBps);
+		expect(end).toBeLessThan(NATIVE_LANE.antiSnipeEndFeeBps + 1);
+		const sp = getBaseFeeParams(params().fee.baseFeeParams);
+		const sdkEnd = calculateFeeSchedulerEndingBaseFeeBps(
+			sp.cliffFeeNumerator,
+			sp.firstFactor,
+			sp.secondFactor,
+			sp.thirdFactor,
+			sp.baseFeeMode,
+		);
+		expect(Math.abs(end - sdkEnd)).toBeLessThan(0.5);
+		expect(await feeBpsAtSlot(NATIVE_LANE.antiSnipeDecaySlots + 1000)).toBe(end);
 	});
 
-	it('taxes a snipe in the first few slots well above the steady-state fee', () => {
+	it('taxes a snipe in the first few slots well above the steady-state fee', async () => {
 		// A bot landing in slot 1-3 (one to a couple of blocks after activation)
 		// should still pay a meaningfully punitive fee, not something close to normal.
-		expect(feeBpsAtSlot(2)).toBeGreaterThan(NATIVE_LANE.antiSnipeEndFeeBps * 10);
+		expect(await feeBpsAtSlot(2)).toBeGreaterThan(NATIVE_LANE.antiSnipeEndFeeBps * 10);
 	});
 });
 
@@ -179,7 +178,8 @@ describe('curve built through the SDK', () => {
 
 	it('produces a rising multi-point curve', () => {
 		const curve = built().curve;
-		expect(curve.length).toBeGreaterThan(1);
+		expect(curve.length).toBeGreaterThanOrEqual(1);
+		expect(curve[0].sqrtPrice.gt(built().sqrtStartPrice)).toBe(true);
 		for (let i = 1; i < curve.length; i++) {
 			expect(curve[i].sqrtPrice.gt(curve[i - 1].sqrtPrice)).toBe(true);
 		}

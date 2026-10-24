@@ -449,6 +449,12 @@ function renderLaunch() {
 		<label class="tl-field"><span><span>Ticker</span><span>max 10</span></span><input name="symbol" maxlength="10" required autocomplete="off" placeholder="NOVA" /></label>
 		<label class="tl-field tl-span"><span><span>Description</span><span>optional</span></span><textarea name="description" maxlength="500" placeholder="What this agent does and why its coin exists."></textarea></label>
 		<label class="tl-field tl-span"><span><span>Your first buy, in $THREE</span><span>optional, fills the start of your own curve</span></span><input name="buy" inputmode="decimal" autocomplete="off" placeholder="0" /></label>
+		<section class="tl-span tl-fees" aria-labelledby="tl-fees-h">
+			<h3 id="tl-fees-h">Fee schedule</h3>
+			<p class="tl-fees-line" id="tl-fees-preview">${esc(state.lane?.fee_schedule_preview || '')}</p>
+			<div id="tl-fees-curve" aria-live="polite"><div class="tl-skel" aria-busy="true" style="height:56px"></div></div>
+			<p class="tl-fees-line tl-fees-ref">${esc(state.lane?.referral?.preview || '')}</p>
+		</section>
 		<div class="tl-span" style="margin-top:18px"><button type="submit" class="tl-btn tl-btn--primary tl-btn--block" id="tl-launch-btn">Launch on the $THREE curve</button><p class="tl-status" id="tl-launch-status" aria-live="polite"></p></div>
 	</form>`;
 	const form = $('#tl-form');
@@ -456,6 +462,28 @@ function renderLaunch() {
 	form.symbol.addEventListener('input', () => (form.symbol.value = form.symbol.value.toUpperCase().replace(/[^A-Z0-9]/g, '')));
 	form.buy.addEventListener('input', () => (form.buy.value = form.buy.value.replace(/[^0-9.]/g, '')));
 	form.addEventListener('submit', onLaunchSubmit);
+	loadFeeCurve();
+}
+
+// The fee a trade pays at several points in the pool's opening window, evaluated by the
+// server with the program's own scheduler rule for the config this lane launches under.
+async function loadFeeCurve() {
+	const slot = $('#tl-fees-curve');
+	if (!slot) return;
+	try {
+		const data = await api('/api/native-launch/fee-config', { method: 'POST', body: { network: NETWORK } });
+		if (!$('#tl-fees-curve')) return;
+		$('#tl-fees-preview').textContent = data.preview;
+		slot.innerHTML = `<table class="tl-fees-table"><caption class="tl-sr">Trading fee by time after the pool opens</caption><thead><tr><th scope="col">After</th><th scope="col">Fee</th></tr></thead><tbody>${data.fee_curve
+			.map((p) => `<tr><td>${p.seconds === 0 ? 'First block' : `${p.seconds}s`}</td><td>${fmt(p.fee_bps / 100, 2)}%</td></tr>`)
+			.join('')}</tbody></table>`;
+	} catch (err) {
+		slot.innerHTML = `<p class="tl-status" data-tone="error" role="alert">Could not load the fee curve: ${esc(err.message)} <button type="button" class="tl-btn" id="tl-fees-retry">Try again</button></p>`;
+		$('#tl-fees-retry')?.addEventListener('click', () => {
+			slot.innerHTML = '<div class="tl-skel" aria-busy="true" style="height:56px"></div>';
+			loadFeeCurve();
+		});
+	}
 }
 
 // A launch plan handed over by another surface (a team's Launcher, for one)

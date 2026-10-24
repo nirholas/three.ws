@@ -42,6 +42,14 @@
 //   NATIVE_LAUNCH_FEE_WALLET          (platform fee claimer + leftover receiver)
 
 import { env } from '../env.js';
+import {
+	FEE_SCHEDULE_MODES,
+	MIN_FEE_BPS,
+	MAX_FEE_BPS,
+	describeFeeSchedule,
+	describeReferral,
+	referralShareOfTradingFeePercent,
+} from '../../../src/shared/launch-fees.js';
 
 export const NATIVE_LANE = {
 	id: 'native',
@@ -74,10 +82,26 @@ export const NATIVE_LANE = {
 	antiSnipeDecaySlots: 100,
 };
 
+// The lane's own decaying-fee schedule in the shape src/shared/launch-fees.js
+// validates, so the page, the preview endpoint and the on-chain config all read
+// the same numbers.
+export function defaultFeeSchedule() {
+	return {
+		mode: 'exponential',
+		start_fee_bps: NATIVE_LANE.antiSnipeStartFeeBps,
+		end_fee_bps: NATIVE_LANE.antiSnipeEndFeeBps,
+		periods: NATIVE_LANE.antiSnipeDecayPeriods,
+		duration_slots: NATIVE_LANE.antiSnipeDecaySlots,
+	};
+}
+
 // Params for buildCurveWithMarketCap(). Enum values are inlined as numbers so
 // this module stays importable without pulling the SDK (the SDK is only
 // loaded lazily by dbc.js); dbc.js asserts them against the real enums.
-export function curveBuildParams() {
+//
+// `feeSchedule` (already run through validateFeeSchedule) swaps in a different
+// decaying-fee schedule for a candidate config; omitted, it builds the live lane.
+export function curveBuildParams({ feeSchedule = defaultFeeSchedule() } = {}) {
 	return {
 		token: {
 			tokenType: 0, // TokenType.SPLToken
@@ -99,12 +123,12 @@ export function curveBuildParams() {
 				// measure on devnet before it gets there. Exponential over linear
 				// because it front-loads the decay (steepest drop right after
 				// activation, where the snipers are, instead of a constant slope).
-				baseFeeMode: 1, // BaseFeeMode.FeeSchedulerExponential
+				baseFeeMode: FEE_SCHEDULE_MODES[feeSchedule.mode], // 0 Linear, 1 Exponential
 				feeSchedulerParam: {
-					startingFeeBps: NATIVE_LANE.antiSnipeStartFeeBps,
-					endingFeeBps: NATIVE_LANE.antiSnipeEndFeeBps,
-					numberOfPeriod: NATIVE_LANE.antiSnipeDecayPeriods,
-					totalDuration: NATIVE_LANE.antiSnipeDecaySlots,
+					startingFeeBps: feeSchedule.start_fee_bps,
+					endingFeeBps: feeSchedule.end_fee_bps,
+					numberOfPeriod: feeSchedule.periods,
+					totalDuration: feeSchedule.duration_slots,
 				},
 			},
 			dynamicFeeEnabled: true,
@@ -191,6 +215,13 @@ export function laneInfo(network = 'mainnet') {
 			decay_periods: NATIVE_LANE.antiSnipeDecayPeriods,
 			decay_slots: NATIVE_LANE.antiSnipeDecaySlots,
 			creator_first_buy_exempt: true,
+		},
+		fee_schedule: defaultFeeSchedule(),
+		fee_schedule_preview: describeFeeSchedule(defaultFeeSchedule()),
+		fee_limits: { min_fee_bps: MIN_FEE_BPS, max_fee_bps: MAX_FEE_BPS, slot_seconds: 0.4 },
+		referral: {
+			share_of_trading_fee_percent: referralShareOfTradingFeePercent(),
+			preview: describeReferral(),
 		},
 		migration_fee_percent: NATIVE_LANE.migrationFeePercent,
 		lp_locked_percent: NATIVE_LANE.lpLockedPercent,

@@ -213,7 +213,7 @@ export async function getPoolState({ network = 'mainnet', mint } = {}) {
 
 // Live quote against the curve. side 'buy': `amountIn` $THREE -> tokens out.
 // side 'sell': `amountIn` tokens -> $THREE out. Amounts are whole units, pre-slippage.
-async function quoteSwap({ network, mint, side, amountIn, slippageBps }) {
+async function quoteSwap({ network, mint, side, amountIn, slippageBps, hasReferral = false }) {
 	const BN = (await import('bn.js')).default;
 	const { client, pool, account, wrapped } = await fetchPool({ network, mint });
 	const config = await client.state.getPoolConfig(account.config);
@@ -228,7 +228,7 @@ async function quoteSwap({ network, mint, side, amountIn, slippageBps }) {
 		swapBaseForQuote: selling,
 		amountIn: new BN(toAtomics(amountIn, selling ? BASE_UNIT : QUOTE_UNIT)),
 		slippageBps,
-		hasReferral: false,
+		hasReferral,
 		eligibleForFirstSwapWithMinFee: false,
 		currentPoint: new BN(slot),
 	});
@@ -266,12 +266,20 @@ export async function quoteSell({ network = 'mainnet', mint, tokensIn, slippageB
 // Unsigned buy or sell on a live curve, for the trader's own wallet to sign. The
 // quote is taken in the same call, so the slippage floor in the transaction is the
 // one the trader was just shown.
-export async function buildSwapTx({ network = 'mainnet', mint, trader, side, amountIn, slippageBps = 100 } = {}) {
+//
+// `referralTokenAccount` (optional) is the referrer's token account for the quote mint:
+// the program pays it the referral share of the protocol fee, taken out of the
+// protocol's cut so the trader's price is unchanged.
+export async function buildSwapTx({ network = 'mainnet', mint, trader, side, amountIn, slippageBps = 100, referralTokenAccount = null } = {}) {
 	const BN = (await import('bn.js')).default;
 	const traderPk = solanaPubkey(trader);
 	if (!traderPk) throw Object.assign(new Error('invalid trader pubkey'), { status: 400, code: 'validation_error' });
+	const referralPk = referralTokenAccount ? solanaPubkey(referralTokenAccount) : null;
+	if (referralTokenAccount && !referralPk) {
+		throw Object.assign(new Error('invalid referral token account'), { status: 400, code: 'validation_error' });
+	}
 
-	const { pool, quote, selling } = await quoteSwap({ network, mint, side, amountIn, slippageBps });
+	const { pool, quote, selling } = await quoteSwap({ network, mint, side, amountIn, slippageBps, hasReferral: Boolean(referralPk) });
 	const client = await getDbcClient({ network });
 	const tx = await client.pool.swap({
 		owner: traderPk,
@@ -280,7 +288,7 @@ export async function buildSwapTx({ network = 'mainnet', mint, trader, side, amo
 		amountIn: new BN(toAtomics(amountIn, selling ? BASE_UNIT : QUOTE_UNIT)),
 		minimumAmountOut: quote.minimumAmountOut ?? quote.outputAmount,
 		swapBaseForQuote: selling,
-		referralTokenAccount: null,
+		referralTokenAccount: referralPk,
 	});
 	const txBase64 = await buildUnsignedTxBase64({ network, payer: traderPk, instructions: tx.instructions });
 	const outUnit = selling ? QUOTE_UNIT : BASE_UNIT;
@@ -292,5 +300,6 @@ export async function buildSwapTx({ network = 'mainnet', mint, trader, side, amo
 		expected_out: fromAtomics(quote.outputAmount, outUnit),
 		min_out: fromAtomics(quote.minimumAmountOut ?? quote.outputAmount, outUnit),
 		slippage_bps: slippageBps,
+		referral: Boolean(referralPk),
 	};
 }

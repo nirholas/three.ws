@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-24",
+			"title": "See and test launch fees before a coin goes live",
+			"summary": "The $THREE launchpad form now shows the launch fee in plain words and as a fee-over-time table. A new fee-config endpoint validates a decaying fee schedule against the Meteora SDK rules and can simulate the config transaction unsigned. Swap preparation accepts a referral token account, and a shared pump.fun fee vault now rejects holder splits that do not total 100 percent across 1 to 10 wallets.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/docs/native-launchpad"
+		},
+		{
+			"date": "2026-10-24",
 			"title": "See what a prediction strategy would have earned before it trades",
 			"summary": "Agent Predictions records every strategy decision at the live order-book price in shadow mode, marks it at resolution, and shows shadow beside live results. A fee-aware scanner reads Solana event contracts for YES plus NO pairs under $1. Live stays owner-only.",
 			"tags": ["feature"],

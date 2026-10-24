@@ -4616,7 +4616,7 @@
 			"dest": "/api/pump/[action]?action=launches"
 		},
 		{
-			"src": "/api/native-launch/(config|quote|pool|launch-prep|launch-confirm|launches)",
+			"src": "/api/native-launch/(config|quote|pool|launch-prep|launch-confirm|launches|swap-prep|fee-config)",
 			"dest": "/api/native-launch/[action]?action=$1"
 		},
 		{

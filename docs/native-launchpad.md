@@ -71,6 +71,16 @@ This mirrors the owner's EVM `anti-snipe-ramp` hook concept, but it is built ent
 
 One honest difference from the EVM hook: on an EVM AMM, an anti-snipe ramp's excess fee typically accrues to the pool's liquidity providers. On this lane, all trading fees (ramped or steady-state) flow through the same 50/50 creator/three.ws split that every other trade uses, never to LPs, because DBC pools have no third-party LPs before graduation. The anti-snipe premium a sniper pays is extra revenue for the coin's creator and the platform, not a yield booster for outside liquidity.
 
+### Fee schedule, referral share and shared fee vaults
+
+The lane's decaying fee is one value, `defaultFeeSchedule()` in [`config.js`](../api/_lib/native-launch/config.js), read by the on-chain config builder, `GET /api/native-launch/config` (`fee_schedule`, `fee_schedule_preview`, `fee_limits`, `referral`) and the launch form. Rules live in [`src/shared/launch-fees.js`](../src/shared/launch-fees.js) so the server and browser reject the same inputs. They mirror the SDK's `getFeeSchedulerParams`: fees between 25 and 9900 bps, a schedule that can only fall, `periods` and `duration_slots` both above zero when it falls (and both zero when it is flat), and `duration_slots >= periods`. The rate limiter mode is refused with the SDK's own reason: the program rejects it for new configs.
+
+`POST /api/native-launch/fee-config` (public, no session) takes `{ fee_schedule?, simulate?, wallet_address?, network? }`, runs the schedule through `buildCurveWithMarketCap` and `validateConfigParameters`, and returns a plain-language `preview` ("Fee starts at 30% and falls to 1% over about 80 seconds ..."), the fee at five points in the window, and the referral line. With `simulate: true` it also simulates `createConfigAndPool` for that schedule against the live DBC program and returns the unsigned transaction; the config account is an ephemeral key, so the result is never submittable. From a shell: `node scripts/native-launchpad-simulate-fees.mjs --start 3000 --end 100 --periods 20 --slots 200 [--network devnet]`. Creating a new on-chain config from a schedule stays the owner-gated `native-launchpad-create-config.mjs` step; coins already launched keep the config they launched under.
+
+Referral share: `swap-prep` takes an optional `referral_token_account` (the referrer's account for the quote mint). The program pays it 20% of the protocol's 20% cut of the trading fee (4% of the fee), taken out of the protocol's share, so the trader's price does not change.
+
+Shared fee vaults on the pump.fun lane use the same module: `POST /api/pump/update-fee-shares-prep` accepts 1 to 10 distinct wallets whose `share_bps` total exactly 10000 (`validateShareholders`), and the studio fees panel applies the same total-100% rule before it asks for a signature.
+
 ### Why `leftover: 1`
 
 The DBC program requires that the tokens on the curve, the tokens reserved for migration, and the leftover reconcile *exactly* against the fixed supply. A leftover of `0` fails that check on-chain with `InvalidTokenSupply`. One base unit of dust satisfies it. This was found by simulating the real `create_config` instruction against devnet, and it is pinned by a test so nobody "cleans it up" later.
