@@ -25,6 +25,7 @@ import { json, method, wrapCron } from '../_lib/http.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { withDbRetry } from '../_lib/db-retry.js';
 import { sql } from '../_lib/db.js';
+import { acquireLock } from '../_lib/cache.js';
 import { ECONOMY_MASTER_ADDRESS, RESERVE_SOL } from '../_lib/economy-master.js';
 import { SOLANA_SIGNERS, resolveSignerPubkey } from '../_lib/solana-signers.js';
 import { verifyChain } from '../_lib/economy-ledger.js';
@@ -39,6 +40,19 @@ const LEDGER_VERIFY_WINDOW_HOURS = 72;
 // drain — a real unauthorized transfer moves far more than a signature fee.
 const OUTBOUND_FEE_FLOOR_SOL = 0.0005;
 const LAMPORTS_PER_SOL = 1_000_000_000;
+
+// This route is also one of economy-tick.js's ~36 fan-out TARGETS, fired every
+// minute, on top of its own dedicated vercel.json `*/30 * * * *` Cloud
+// Scheduler job, with nothing stopping the two callers from overlapping. Each run
+// does a real on-chain scan (hash-chain verify, up to SIG_SCAN_LIMIT
+// getParsedTransaction calls, a balance read), so without a lease, production
+// queued many overlapping full scans against the Solana RPC every minute,
+// which is exactly what pushed every run past wrapCron's 120s default budget
+// during RPC lane exhaustion (100% `economy-reconcile exceeded its 120000ms
+// budget` in the 2026-10-24 sweep). Mirrors the lease x402-ring-leak-scan.js
+// uses for the identical disease: the TTL IS the cadence, never released.
+const LEASE_KEY = 'cron:economy-reconcile:lease';
+const LEASE_SECONDS = 25 * 60;
 
 async function upsertVerdict({ source, sourceRef, txSig, network, amountAtomic, dbStatus, chainStatus, reconciled, discrepancy, detail, runId }) {
 	try {
@@ -295,6 +309,12 @@ async function reconcileMaster(conn, masterPubkey, runId) {
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
+
+	// One run per cadence window, whoever fires it (the lease is never
+	// released; its TTL IS the cadence), see the comment on LEASE_KEY above.
+	if (!(await acquireLock(LEASE_KEY, LEASE_SECONDS))) {
+		return json(res, 200, { ok: true, skipped: true, reason: 'lease_held' });
+	}
 
 	const runId = (await import('node:crypto')).randomUUID();
 	const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
