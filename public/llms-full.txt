@@ -188,12 +188,6 @@ URL: https://three.ws/irl
 
 Pin a 3D AI agent at a real place and meet the ones around you. Walk up, see it through your camera, talk to it out loud, view it in AR on your own floor, and pay it on the spot.
 
-### Printable IRL sign
-
-URL: https://three.ws/irl/sign
-
-Print a sign for a placed IRL agent: its name, thumbnail and a QR of the visit link. Scan it at the spot to open IRL, walk up, and meet the 3D AI agent in AR. Carries no coordinate.
-
 ### How location works on IRL
 
 URL: https://three.ws/irl-privacy
@@ -455,12 +449,6 @@ What each three.ws partnership brings to builders and the community: OpenAI, NVI
 URL: https://three.ws/openai
 
 three.ws is an OpenAI Select Partner in the OpenAI Partner Network. Connect the free three.ws 3D Studio MCP server to ChatGPT and turn a prompt into an interactive, riggable, AR-ready 3D model inline in the conversation.
-
-### three.ws for Grok
-
-URL: https://three.ws/grok
-
-One sentence gives Grok Bot a 3D studio. Text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear. Works in Grok Bot, Grok connectors and the xAI API. Free, no account, no key.
 
 ### Claim your X creations
 
@@ -1349,13 +1337,6 @@ URL: https://three.ws/launch/intents
 Indexable: no (excluded from sitemap)
 
 Launch a pump.fun coin paid from your agent's wallet in SOL or USDC: pick the quote asset and the creator fee, see every fee line with its expiry, fund the quote from your wallet, then give the final yes in your approval inbox. Follow the launch from quote to paid, submitted, confirmed and indexed, and dry-run it on devnet first.
-
-### Creator Payouts
-
-URL: https://three.ws/creator/payouts
-Indexable: no (excluded from sitemap)
-
-Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.
 
 ### Creator Payouts
 
@@ -3284,7 +3265,7 @@ URL: https://three.ws/docs/trust-primitives
 
 Cross-chain Agent Reputation: score any wallet, mint, or agent id (Solana or EVM) 0-100 from real on-chain evidence before your agent pays, trades, or delegates.
 
-### Trenches Pulse
+### Docs · Trenches Pulse
 
 URL: https://three.ws/docs/trenches
 
@@ -4093,6 +4074,12 @@ The Character Library is a free, curated gallery of professionally rigged humano
 URL: https://three.ws/docs/object-library
 
 The Object Library is a free, curated gallery of CC0 3D objects and props: furniture, lighting, electronics, containers, tools, decor. Every object is public domain, free to use commercially with no attribution required.
+
+### Docs: SimReady Assets
+
+URL: https://three.ws/docs/simready-assets
+
+NVIDIA SimReady assets are thousands of simulation-ready props published as OpenUSD under CC BY 4.0. three.ws converts every asset to a web GLB (meshopt-simplified, PBR textures baked) and serves them from the object library and the asset catalog, with the CC BY 4.0 attribution line attached to every entry.
 
 ### Docs: Minted 3D Assets
 
@@ -5647,12 +5634,6 @@ How incoming issues and pull requests get sorted, what every label means, how to
 URL: https://three.ws/docs/launch-intents
 
 Launch a coin from a priced quote paid by the agent wallet: quote, paid, submitted, confirmed, indexed. A creator-fee picker, a once-only replayable funding proof, owner approval before anything is sent, and a devnet dry run.
-
-### Docs · Creator payouts
-
-URL: https://three.ws/docs/creator-payouts
-
-How a claimed creator fee becomes a payout: the four cron stages, the signed and step-up payout wallet with a 48 hour change cooldown, the four hold reasons, and the API.
 
 ### Docs · Creator payouts
 

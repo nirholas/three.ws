@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-24T05:37:27.371Z",
+	"generated_at": "2026-10-24T22:42:24.498Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4193,
+	"total": 4189,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -274,16 +274,6 @@
 		{
 			"date": "2026-10-23",
 			"type": "launch",
-			"title": "Creator Payouts",
-			"summary": "Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.",
-			"link": "/creator/payouts",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "launch",
 			"title": "Docs · Accessibility, W3AG levels A and AA",
 			"summary": "How three.ws holds its wallet and payment surfaces to the Web3 Accessibility Guidelines at levels A and AA on top of the WCAG 2.1 AA floor: what is met, how each claim is tested, and what is next.",
 			"link": "/docs/accessibility",
@@ -297,16 +287,6 @@
 			"title": "Docs · Backtest integrity",
 			"summary": "How every strategy backtest is audited for look-ahead bias, pinned to a hashed dataset manifest, backed by price and candle canaries, and walled off from live trading code.",
 			"link": "/docs/backtest-integrity",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "launch",
-			"title": "Docs · Creator payouts",
-			"summary": "How a claimed creator fee becomes a payout: the four cron stages, the signed and step-up payout wallet with a 48 hour change cooldown, the four hold reasons, and the API.",
-			"link": "/docs/creator-payouts",
 			"tags": [
 				"launch"
 			]
@@ -1562,6 +1542,27 @@
 			"link": "/dissolve",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Engine QA: a free real-time-engine fitness grade, plus real LOD chains",
+			"summary": "A new free grade answers the question a game engine's import step asks that neither glTF validation nor simulation readiness does: draw calls, material count, texel density against the mesh's real-world size, a per-level triangle budget for a LOD chain, and whether the mesh is cheap and closed enough to use as its own physics collider. GET/POST /api/3d/engine-qa grades any public GLB (format=stl exports a watertight mesh for printing); the same browser-only checks run with zero network cost in Rig Doctor, and the full grade with a one-click upgrade in the GLB viewer, through a shared <engine-qa> panel component. The underlying LOD builder (packages/glb-tools's buildLodChain, real meshoptimizer decimation tagged with MSFT_lod) is now also available on generation: send { \"lods\": true } to POST /api/forge and the finished creation gets a combined LOD-chain variant alongside its delivered mesh, the same opt-in, fire-and-forget pattern as the existing web-delivery variant.",
+			"link": "/docs/engine-qa",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-12",
+			"type": "update",
+			"title": "Every generated and purchased model now ships with a signed provenance credential, free, by default",
+			"summary": "Content credentials (specs/PROVENANCE_3D.md) used to be an on-demand, Claude-track action: you had to call anchor_provenance to get one. Now every GLB the Forge produces, across every generation lane (free NIM, Forge Pro, rigged avatars, self-host TRELLIS/Hunyuan, async GCP workers), gets an ed25519-signed content credential the moment it's materialized, and every first download of a paid asset from the x402 asset bazaar gets one too, with the hash and a verify link returned right in the download response. Signing and storage are free and local, no Solana write and no spend, so there's nothing to gate; the separate paid anchor_provenance upgrade, which additionally commits the hash on-chain, is untouched and still available. A credential is keyed by content hash, so it's issued exactly once per file no matter how many times a lane or endpoint touches it. Model pages now show the same verified / tampered / unverified badge the 3D viewer already had, and a third party can check any model for free with GET /api/provenance. The owner can turn automatic issuance off platform-wide with PROVENANCE_AUTO_DISABLE=true; nothing else about verification changes if they do.",
+			"link": "/docs/provenance",
+			"tags": [
+				"feature",
+				"security"
 			]
 		}
 	]

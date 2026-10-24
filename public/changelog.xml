@@ -207,14 +207,6 @@
 			<description>Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.</description>
 		</item>
 		<item>
-			<title>Creator Payouts</title>
-			<link>https://three.ws/creator/payouts</link>
-			<guid isPermaLink="false">2026-10-23:Creator Payouts</guid>
-			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.</description>
-		</item>
-		<item>
 			<title>Docs · Accessibility, W3AG levels A and AA</title>
 			<link>https://three.ws/docs/accessibility</link>
 			<guid isPermaLink="false">2026-10-23:Docs · Accessibility, W3AG levels A and AA</guid>
@@ -229,14 +221,6 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>How every strategy backtest is audited for look-ahead bias, pinned to a hashed dataset manifest, backed by price and candle canaries, and walled off from live trading code.</description>
-		</item>
-		<item>
-			<title>Docs · Creator payouts</title>
-			<link>https://three.ws/docs/creator-payouts</link>
-			<guid isPermaLink="false">2026-10-23:Docs · Creator payouts</guid>
-			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>How a claimed creator fee becomes a payout: the four cron stages, the signed and step-up payout wallet with a 48 hour change cooldown, the four hold reasons, and the API.</description>
 		</item>
 		<item>
 			<title>Docs · Creator payouts</title>
@@ -1327,6 +1311,14 @@
 			<description>A popover under the tray icon with your agent alive in 3D, its Solana wallet balance, start and stop, pending approvals that open the native review dialog, unread alerts and a one-line ask box.</description>
 		</item>
 		<item>
+			<title>Docs · Trenches Pulse</title>
+			<link>https://three.ws/docs/trenches</link>
+			<guid isPermaLink="false">2026-10-11:Docs · Trenches Pulse</guid>
+			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the Trenches Pulse surface is wired: the vendored Pulse service, the allowlisted /api/trenches proxy, the /trenches page, local run steps and the Cloud Run deploy notes.</description>
+		</item>
+		<item>
 			<title>Docs: Partner benefits</title>
 			<link>https://three.ws/docs/partner-benefits</link>
 			<guid isPermaLink="false">2026-10-11:Docs: Partner benefits</guid>
@@ -1421,14 +1413,6 @@
 			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Live market intelligence for the Solana and Robinhood Chain trenches: every pump.fun launch and graduation as it happens, the hottest tokens by trade flow, runner and death tracking, and scored smart-money wallets. Powered by Pulse.</description>
-		</item>
-		<item>
-			<title>Trenches Pulse</title>
-			<link>https://three.ws/docs/trenches</link>
-			<guid isPermaLink="false">2026-10-11:Trenches Pulse</guid>
-			<pubDate>Sun, 11 Oct 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>How the Trenches Pulse surface is wired: the vendored Pulse service, the allowlisted /api/trenches proxy, the /trenches page, local run steps and the Cloud Run deploy notes.</description>
 		</item>
 		<item>
 			<title>Web Desktop</title>
@@ -2797,14 +2781,6 @@
 			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Coins on Robinhood Chain that trade against up to five assets at once: tokenized stocks, WETH, stablecoins and chain coins, each in its own bonding curve with liquidity locked forever. Live pools priced in dollars, charts per pool, every trade, a buy and sell ticket, and the AI agents that launched them.</description>
-		</item>
-		<item>
-			<title>three.ws for Grok</title>
-			<link>https://three.ws/grok</link>
-			<guid isPermaLink="false">2026-10-08:three.ws for Grok</guid>
-			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>One sentence gives Grok Bot a 3D studio. Text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear. Works in Grok Bot, Grok connectors and the xAI API. Free, no account, no key.</description>
 		</item>
 		<item>
 			<title>three.ws x DEXTools</title>
@@ -5493,14 +5469,6 @@
 			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>A handheld console with a live 3D agent inside the screen. Steer it with the D-pad, swap cartridges for any public agent, and embed the whole console anywhere with one line of HTML.</description>
-		</item>
-		<item>
-			<title>Printable IRL sign</title>
-			<link>https://three.ws/irl/sign</link>
-			<guid isPermaLink="false">2026-09-05:Printable IRL sign</guid>
-			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Print a sign for a placed IRL agent: its name, thumbnail and a QR of the visit link. Scan it at the spot to open IRL, walk up, and meet the 3D AI agent in AR. Carries no coordinate.</description>
 		</item>
 		<item>
 			<title>3D models now open, animate and report on themselves inside VS Code</title>

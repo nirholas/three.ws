@@ -19,6 +19,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findDuplicatePaths } from './lib/duplicate-pages.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const vercel = JSON.parse(readFileSync(resolve(root, 'vercel.json'), 'utf8'));
@@ -191,6 +192,16 @@ for (const s of pages.sections || []) {
 	}
 }
 
+// ── Duplicate path entries ───────────────────────────────────────────────────
+//
+// The audit:seo title-duplicate/description-duplicate checks only catch a
+// duplicate pages.json entry when both rows happen to carry the same copy; a
+// duplicate pair given independently different titles would sail through
+// them. Catch it here instead, directly on the source of truth. See order
+// 419, prompts/finish/_context/production-100-PROGRESS.md.
+const rawPagesText = readFileSync(resolve(root, 'data/pages.json'), 'utf8');
+const duplicatePaths = findDuplicatePaths(pages, rawPagesText);
+
 console.log(`Route audit: ${routePaths.size} auditable page routes, ${documented.size} documented in pages.json.`);
 
 if (missing.length) {
@@ -203,6 +214,17 @@ if (missing.length) {
 
 if (undatedRecent.length && !strict) {
 	console.log(`\nℹ ${undatedRecent.length} manifest page(s) have no \`added\` date (omitted from /changelog). Fine for legacy pages; add dates as you touch them.`);
+}
+
+if (duplicatePaths.length) {
+	console.log(`\n⚠ ${duplicatePaths.length} duplicate path(s) in data/pages.json:`);
+	for (const d of duplicatePaths) {
+		const where = d.lines.length ? `lines ${d.lines.join(', ')}` : `${d.count} occurrences`;
+		console.log(`   ${d.path}: appears ${d.count} times (${where})`);
+	}
+	console.log('\n→ Each path must appear exactly once. Keep the most recent/complete entry, delete the rest.');
+} else {
+	console.log('✓ No duplicate path values in data/pages.json.');
 }
 
 if (contradictions.length) {
@@ -219,6 +241,10 @@ if (strict && missing.length) {
 }
 if (strict && contradictions.length) {
 	console.error(`\n✗ strict mode: ${contradictions.length} indexability contradiction(s). Failing.`);
+	process.exit(1);
+}
+if (strict && duplicatePaths.length) {
+	console.error(`\n✗ strict mode: ${duplicatePaths.length} duplicate path(s) in data/pages.json. Failing.`);
 	process.exit(1);
 }
 process.exit(0);

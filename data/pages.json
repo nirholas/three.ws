@@ -302,14 +302,6 @@
 					"added": "2026-06-13"
 				},
 				{
-					"path": "/irl/sign",
-					"title": "Printable IRL sign",
-					"description": "Print a sign for a placed IRL agent: its name, thumbnail and a QR of the visit link. Scan it at the spot to open IRL, walk up, and meet the 3D AI agent in AR. Carries no coordinate.",
-					"priority": 0.4,
-					"changefreq": "yearly",
-					"added": "2026-09-05"
-				},
-				{
 					"path": "/irl-privacy",
 					"title": "How location works on IRL",
 					"description": "Placed agents are private by location: they appear only to people physically standing near them, never on a map or a list. What's shared, what isn't, and how your camera, motion, and location are used.",
@@ -659,14 +651,6 @@
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-07-25"
-				},
-				{
-					"path": "/grok",
-					"title": "three.ws for Grok",
-					"description": "One sentence gives Grok Bot a 3D studio. Text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear. Works in Grok Bot, Grok connectors and the xAI API. Free, no account, no key.",
-					"priority": 0.8,
-					"changefreq": "monthly",
-					"added": "2026-10-08"
 				},
 				{
 					"path": "/x/claim",
@@ -1859,15 +1843,6 @@
 					"priority": 0.7,
 					"changefreq": "monthly",
 					"added": "2026-10-10",
-					"indexable": false
-				},
-				{
-					"path": "/creator/payouts",
-					"title": "Creator Payouts",
-					"description": "Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.",
-					"priority": 0.6,
-					"changefreq": "monthly",
-					"added": "2026-10-23",
 					"indexable": false
 				},
 				{
@@ -4427,7 +4402,7 @@
 				},
 				{
 					"path": "/docs/trenches",
-					"title": "Trenches Pulse",
+					"title": "Docs · Trenches Pulse",
 					"description": "How the Trenches Pulse surface is wired: the vendored Pulse service, the allowlisted /api/trenches proxy, the /trenches page, local run steps and the Cloud Run deploy notes.",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -7288,14 +7263,6 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-10-10"
-				},
-				{
-					"path": "/docs/creator-payouts",
-					"title": "Docs · Creator payouts",
-					"description": "How a claimed creator fee becomes a payout: the four cron stages, the signed and step-up payout wallet with a 48 hour change cooldown, the four hold reasons, and the API.",
-					"priority": 0.6,
-					"changefreq": "monthly",
-					"added": "2026-10-23"
 				},
 				{
 					"path": "/docs/creator-payouts",
