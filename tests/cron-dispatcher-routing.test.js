@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
+
+import { DEFAULT_CRON_MAX_DURATION_MS } from '../api/_lib/http.js';
 
 // The cron dispatcher (api/cron/[name].js) is reachable in production ONLY
 // through the explicit `/api/cron/(…)` entry in vercel.json's legacy `routes`
@@ -55,5 +57,29 @@ describe('cron dispatcher routing (vercel.json ↔ [name].js)', () => {
 			.map((f) => f.slice(0, -3));
 		const shadowed = dedicated.filter((n) => rx.test(`/api/cron/${n}`));
 		expect(shadowed, `route alternation shadows dedicated cron files: ${shadowed.join(', ')}`).toEqual([]);
+	});
+});
+
+// 2026-10-24 production incident: run-buyback (23 occurrences) and
+// solana-agents-crawl (12) both 503'd at ~120.0s latency over 24h, the exact
+// `[cron] <name> exceeded its 120000ms budget` wrapCron timeout signature.
+// Root cause: this dispatcher serves every HANDLERS job through ONE
+// `wrapCron(async (req, res) => {...})` call with no maxDurationMs option, so
+// wrapCron falls back to its DEFAULT_CRON_MAX_DURATION_MS (120s) for every job
+// behind it, even though vercel.json declares 300s for this exact route
+// (`"api/cron/[name].js": { "maxDuration": 300 }`). Any job that legitimately
+// needs more than 120s (a Solana registry crawl, an on-chain buyback sweep)
+// gets cut off by the external race before it can finish, regardless of how
+// much time Cloud Run actually gives it.
+describe('cron dispatcher timeout wiring', () => {
+	it('declares a maxDuration matching vercel.json, so wrapCron does not truncate every dispatched job at the 120s default', async () => {
+		const vercel = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8'));
+		const declaredMs = vercel.functions['api/cron/[name].js'].maxDuration * 1000;
+
+		const { maxDuration } = await import(pathToFileURL(join(ROOT, 'api/cron/[name].js')).href);
+
+		expect(maxDuration).toBeGreaterThan(0);
+		expect(maxDuration * 1000).toBe(declaredMs);
+		expect(maxDuration * 1000).toBeGreaterThan(DEFAULT_CRON_MAX_DURATION_MS);
 	});
 });

@@ -182,12 +182,21 @@ async function handleIrlDropsRefund(req, res) {
 	return json(res, 200, report);
 }
 
-export default wrapCron(async (req, res) => {
-	const name = req.query?.name;
-	const handler = typeof name === 'string' ? HANDLERS[name] : null;
-	if (!handler) return error(res, 404, 'not_found', 'unknown cron');
-	return handler(req, res);
-});
+// vercel.json grants this route 300s (`functions["api/cron/[name].js"].maxDuration`);
+// without passing maxDurationMs here, wrapCron falls back to its 120s default and
+// races every job behind this shared dispatcher against that instead, truncating
+// anything that legitimately needs more than 120s (e.g. run-buyback, solana-agents-crawl).
+export const maxDuration = 300;
+
+export default wrapCron(
+	async (req, res) => {
+		const name = req.query?.name;
+		const handler = typeof name === 'string' ? HANDLERS[name] : null;
+		if (!handler) return error(res, 404, 'not_found', 'unknown cron');
+		return handler(req, res);
+	},
+	{ maxDurationMs: maxDuration * 1000 },
+);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // solana-agents-crawl — index external Solana agents (Metaplex + AgenC)
