@@ -856,6 +856,7 @@ const appConfig = {
 				'agent-wallet': resolve(__dirname, 'pages/agent-wallet.html'),
 				'agent-cards': resolve(__dirname, 'pages/agent-cards.html'),
 				'agent-perps': resolve(__dirname, 'pages/agent-perps.html'),
+				'agent-predictions': resolve(__dirname, 'pages/agent-predictions.html'),
 				'agent-mail': resolve(__dirname, 'pages/agent-mail.html'),
 				wallet: resolve(__dirname, 'pages/wallet.html'),
 				guardian: resolve(__dirname, 'pages/guardian.html'),
@@ -2530,6 +2531,9 @@ const appConfig = {
 					// /agents/:id/perps and /agent-perps → Agent Perps (perpetual futures).
 					else if (!filePath && /^\/(agents\/[^/.]+\/perps|agent-perps)\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-perps.html');
+					// /agents/:id/predictions and /agent-predictions → Agent Predictions (shadow mode and scanner).
+					else if (!filePath && /^\/(agents\/[^/.]+\/predictions|agent-predictions)\/?$/.test(path))
+						filePath = resolve(root, 'pages/agent-predictions.html');
 					// /agents/:id/mail and /agent-mail → Agent Mail (the agent's inbox).
 					else if (!filePath && /^\/(agents\/[^/.]+\/mail|agent-mail)\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-mail.html');

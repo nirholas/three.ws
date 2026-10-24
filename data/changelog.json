@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-24",
+			"title": "See what a prediction strategy would have earned before it trades",
+			"summary": "Agent Predictions records every strategy decision at the live order-book price in shadow mode, marks it at resolution, and shows shadow beside live results. A fee-aware scanner reads Solana event contracts for YES plus NO pairs under $1. Live stays owner-only.",
+			"tags": ["feature"],
+			"link": "/agent-predictions"
+		},
+		{
+			"date": "2026-10-24",
 			"title": "Scene from a photo, built and waiting on weights",
 			"summary": "POST /api/forge-scene-objects rebuilds the objects in one photo as a laid-out 3D scene with SAM 3D Objects, and AR Studio gains a From a photo tab that drops the result into the room. The 32 GB+ GPU worker, its Cloud Build config and a one-command weights staging script are in the repo. It answers backend_unconfigured until the gated weights are staged and the worker is deployed.",
 			"tags": ["feature", "docs"],

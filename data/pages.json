@@ -3102,6 +3102,15 @@
 					"indexable": false
 				},
 				{
+					"path": "/agent-predictions",
+					"title": "Agent Predictions",
+					"description": "See what your agent's prediction strategy would have earned before it trades: shadow mode records every decision at the live price and marks it at resolution, beside a live fee-aware no-arbitrage scanner for Solana event contracts.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-10-24",
+					"indexable": false
+				},
+				{
 					"path": "/agent-perps",
 					"title": "Agent Perps",
 					"description": "Your agent goes long or short on perpetual futures with USDC collateral from its own Solana wallet: paper first at live prices, every order previewed and confirmed, with leverage caps, a live PnL and liquidation tracker, alerts and a kill switch.",
@@ -5559,6 +5568,13 @@
 					"title": "Docs: Agent Perps",
 					"description": "How an agent trades perpetual futures with USDC collateral from its own Solana wallet: paper and live modes, the mandatory leverage and margin caps, the preview and confirmed execute, the kill switch, the live tracker and alerts, and the REST and MCP reference.",
 					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/predictions",
+					"title": "Docs: Agent Predictions",
+					"description": "How a prediction strategy runs in shadow mode first: every decision recorded at the live order-book price and marked at resolution, shadow beside live results, the fee-aware no-arbitrage scanner, the editable fee models, and the REST routes behind the dashboard.",
+					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{

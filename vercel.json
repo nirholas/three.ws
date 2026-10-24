@@ -344,6 +344,10 @@
 			"dest": "/agent-perps.html"
 		},
 		{
+			"src": "/agent-predictions/?",
+			"dest": "/agent-predictions.html"
+		},
+		{
 			"src": "/agent-mail/?",
 			"dest": "/agent-mail.html"
 		},
@@ -5855,6 +5859,10 @@
 		{
 			"src": "/agents/[^/.]+/perps/?",
 			"dest": "/agent-perps.html"
+		},
+		{
+			"src": "/agents/[^/.]+/predictions/?",
+			"dest": "/agent-predictions.html"
 		},
 		{
 			"src": "/agents/[^/.]+/mail/?",

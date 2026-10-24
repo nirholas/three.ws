@@ -1,0 +1,20 @@
+{
+	"$comment": "Fee models and scanner thresholds for prediction markets. Data, not constants: edit this file (or pass an override to the scanner) to change what counts as an opportunity. A fee model is applied per contract at the price it is bought. kinds: bps_of_notional (price * bps / 10000), p_one_minus_p (rate * price * (1 - price), the published exchange schedule shape), flat_per_contract (usd). `providers` is keyed by the provider id the venue reports on a market; an id with no entry falls back to `default_provider`, set to the steepest published schedule so an unknown provider can only understate an edge, never overstate it. `venue` is charged by the Solana venue on top of the provider. Until a quote reports the venue's real fee (quote.fees_usd on a preview), the venue entry is a conservative allowance, so a reported edge is never overstated.",
+	"venue": { "kind": "bps_of_notional", "bps": 100 },
+	"providers": {},
+	"default_provider": { "kind": "p_one_minus_p", "rate": 0.07 },
+	"thresholds": {
+		"min_edge_per_contract": 0.005,
+		"min_edge_pct": 0.5,
+		"min_depth_usd": 25,
+		"max_markets_scanned": 60,
+		"max_books_fetched": 30,
+		"candidate_sum_min": 0.9,
+		"candidate_sum_max": 1.05
+	},
+	"strategy_defaults": {
+		"mode": "shadow",
+		"max_stake_usd": 25,
+		"min_edge_pct": 1
+	}
+}
