@@ -5,7 +5,7 @@ when_to_use: The user wants the tools available inside their client rather than 
 license: MIT
 metadata:
   category: platform/agents
-  cross-platform-safe: false
+  cross-platform-safe: "false"
   pack: three-ws-skills
 ---
 

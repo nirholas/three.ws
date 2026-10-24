@@ -1,11 +1,12 @@
 ---
 name: build-an-agent-skill
 description: Write a real three.ws agent skill bundle (manifest.json + SKILL.md + tools.json + handlers.js) that gives a 3D agent a new capability, then install it on an agent and test it. Use when you or the user want to build, write, author, or code a custom skill, capability, tool, or ability for a three.ws agent or an <agent-3d> embed ("give my agent a new skill", "make my agent able to check the weather", "write a custom tool for my avatar", "add a gesture skill"). Covers the four-file bundle layout, the handler context API, the sandbox limits, trust policy, and how to install the bundle.
-when_to_use: The user wants an agent to be able to DO something new. To then charge for it, use sell-an-agent-skill. To create the agent itself first, use create-a-three-ws-agent. This is not about Claude skills: it is the three.ws in-app skill format that runs inside the agent runtime.
+when_to_use: >-
+  The user wants an agent to be able to DO something new. To then charge for it, use sell-an-agent-skill. To create the agent itself first, use create-a-three-ws-agent. This is not about Claude skills: it is the three.ws in-app skill format that runs inside the agent runtime.
 license: MIT
 metadata:
   category: platform/agents
-  cross-platform-safe: false
+  cross-platform-safe: "false"
   pack: three-ws-skills
 ---
 

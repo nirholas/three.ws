@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-24",
+			"title": "Install the three.ws skills with one command on any agent runtime",
+			"summary": "Run npx skills add nirholas/three-ws-skills (or the 3D-only and agent-economy repos) to install the three.ws skills into Claude Code, Codex, Cursor and any other runtime that reads the open Agent Skills format. Every skill now passes the Agent Skills spec validator, which fixed 21 skills whose frontmatter some installers could not parse, and an install test proves each repo lists and installs every skill in a clean directory. Publishing the repos is still the owner's step.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/docs/agent-skills"
+		},
+		{
+			"date": "2026-10-24",
 			"title": "Opt-in WebGPU renderer with automatic WebGL2 fallback, starting in Restyle Studio",
 			"summary": "three is now r186. Add ?renderer=webgpu to /restyle to render on WebGPU with a TSL rim light, or leave it off for the same WebGL2 picture as before. If the browser has no GPU adapter or WebGPU fails to start, the page falls back to WebGL2 on its own. A badge shows which backend is running, and exported GLBs are identical on both paths. Measured parity and timings are in the WebGPU renderer doc.",
 			"tags": [

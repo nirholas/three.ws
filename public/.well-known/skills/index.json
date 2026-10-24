@@ -11,7 +11,7 @@
 			"type": "skill-md",
 			"description": "Explain how a machine works as an interactive isometric 3D cutaway. Use when the user asks how an engine, turbine, reactor, pump, clock, motor or any mechanism works and wants to see it, or types \"/anatomy <machine>\", for example \"/anatomy explain how a big airliner turbofan engine like the A380's makes thrust, interactive\". Produces a shareable three.ws link with real moving parts, shader effects (fire, exhaust, plasma, water, steam, sparks, arcs), flows, a section cut, an exploded view and a guided tour.",
 			"url": "https://three.ws/.well-known/agent-skills/anatomy/SKILL.md",
-			"digest": "sha256:ea5ce6ea7d3e81791d870956c331403f2a278d7357e0a357f7d41dbf7a34c831",
+			"digest": "sha256:cbce16e48252311ae41f4f70ccc5118a7e81731b0dbbe91215a1370b4c7fd39e",
 			"license": "MIT",
 			"category": "3d/creative"
 		},
@@ -20,7 +20,7 @@
 			"type": "skill-md",
 			"description": "Turn a text prompt (or reference image) into a rigged, animation-ready 3D avatar (GLB). Use when you or the user want to create, generate, or make a 3D avatar, character, or humanoid figure that can be posed and animated, for example \"make a 3D avatar of a knight\", \"generate a character I can animate\", \"create a rigged astronaut\". Generates the mesh and adds a humanoid skeleton in one step. Returns a GLB URL plus a pose-studio link.",
 			"url": "https://three.ws/.well-known/agent-skills/create-3d-avatar/SKILL.md",
-			"digest": "sha256:67d694905dd52cb005f47b279c5bb728e7f2ae3f4502720cf34dda6304d79fae",
+			"digest": "sha256:2eb74982a85bb4acf3c723473ec67476f1d4f27376d90a863cb23efb684fe71c",
 			"license": "MIT",
 			"category": "3d/creative"
 		},
@@ -29,7 +29,7 @@
 			"type": "skill-md",
 			"description": "Embed a live, animated three.ws 3D avatar in any website with the <agent-3d> web component. Use when you or the user want to embed, integrate, add, or show a 3D avatar, character, or agent on a site or app (\"embed a 3D avatar on my site\", \"add an animated character to my landing page\", \"integrate three.ws\", \"put an avatar in my hero section\"), wire avatar animations or moods from page code, let users design an avatar in the three.ws Avatar Studio from inside another app, or debug an existing agent-3d embed.",
 			"url": "https://three.ws/.well-known/agent-skills/embed-three-ws-avatar/SKILL.md",
-			"digest": "sha256:938d4b89c1c44146cff645687bbb82fe76d02f1a5237e1e0c824db6f1c7f0ac4",
+			"digest": "sha256:020ff7ec2294b814340839c2cece03d648a086035b069df42fa7df6dba299b0b",
 			"license": "MIT",
 			"category": "3d/creative"
 		},
@@ -38,7 +38,7 @@
 			"type": "skill-md",
 			"description": "Search thousands of ready-made 3D assets on three.ws (CC0 props and objects, rigged humanoid characters, motion clips) and get paste-ready code or a downloaded file. Use when you or the user need a 3D model, prop, object, character, or animation for a scene, site, game, or app (\"I need a 3D chair\", \"find a rigged character\", \"is there a wave animation\", \"add a lamp model to my page\"). Free: no account, no API key, no payment. Check here BEFORE generating a model from scratch.",
 			"url": "https://three.ws/.well-known/agent-skills/find-3d-assets/SKILL.md",
-			"digest": "sha256:fb3bde90a796628b97da99a0e9099afc5ac07d76f46abb191b43b781a4a7ce3a",
+			"digest": "sha256:02ff790e10db03750b27ea0f9b79ee846a2175452e076f8f30e866ddab9f269c",
 			"license": "MIT",
 			"category": "3d/creative"
 		},
@@ -47,7 +47,7 @@
 			"type": "skill-md",
 			"description": "Turn a text prompt into a downloadable, textured 3D model (GLB). Use when you or the user want to generate, create, make, or forge a 3D model, asset, object, mesh, or prop from a text description, for example \"make a 3D model of a robot\", \"generate a GLB of a sword\", \"I need a 3D chair\". Runs on the FREE text→3D lane (no key, no account, free). Returns a GLB URL plus a browser viewer link.",
 			"url": "https://three.ws/.well-known/agent-skills/generate-3d-model/SKILL.md",
-			"digest": "sha256:114795c9b8e8794537de8eb02f4a7fe0d33f90c22eca9b0f0c735a473f5ebf05",
+			"digest": "sha256:953aa9d307d97bdd0ee0b1e2aa888f0afc6e41c31c3803a1f008e86fdc7e39cb",
 			"license": "MIT",
 			"category": "3d/creative"
 		},
@@ -56,7 +56,7 @@
 			"type": "skill-md",
 			"description": "Auto-rig a static 3D GLB model into an animation-ready one. Use when you or the user have an existing GLB and want to rig it, add a skeleton, add bones, make it posable, or make it animatable, for example \"rig this model\", \"add a skeleton to my GLB\", \"make this character animation-ready\". Takes a GLB URL, adds a humanoid skeleton plus skin weights, and returns the rigged GLB URL and a pose-studio link.",
 			"url": "https://three.ws/.well-known/agent-skills/rig-a-model/SKILL.md",
-			"digest": "sha256:6b5eb4fc712f9e73f7213ff901ae5778db85434c8076f46956846a9c596839ee",
+			"digest": "sha256:e092d3a45dcb3584d090c16c7d136dd2dc8e53083019b5eb54db6a25ba6987ae",
 			"license": "MIT",
 			"category": "3d/creative"
 		},
@@ -65,7 +65,7 @@
 			"type": "skill-md",
 			"description": "Write a real three.ws agent skill bundle (manifest.json + SKILL.md + tools.json + handlers.js) that gives a 3D agent a new capability, then install it on an agent and test it. Use when you or the user want to build, write, author, or code a custom skill, capability, tool, or ability for a three.ws agent or an <agent-3d> embed (\"give my agent a new skill\", \"make my agent able to check the weather\", \"write a custom tool for my avatar\", \"add a gesture skill\"). Covers the four-file bundle layout, the handler context API, the sandbox limits, trust policy, and how to install the bundle.",
 			"url": "https://three.ws/.well-known/agent-skills/build-an-agent-skill/SKILL.md",
-			"digest": "sha256:0a1e49c876aacb76d8e46eafda2b025da0ec7f0f050778e29796b905237e71e3",
+			"digest": "sha256:2569dc89a057d08a4c4f932efbb57503b02e2cd28a419d51d440d3802031e7a7",
 			"license": "MIT",
 			"category": "platform/agents"
 		},
@@ -74,7 +74,7 @@
 			"type": "skill-md",
 			"description": "Connect any MCP client (Claude Code, Claude Desktop, the Agent SDK, or a custom one) to the three.ws MCP servers, so the model can generate 3D models and avatars, read and write agent data, and pay for services. Use when you or the user want to connect, add, install, configure, wire up, or debug three.ws MCP, an MCP server for 3D or avatars or agent wallets, a .mcp.json entry, or \"give Claude access to three.ws\". Also use to pick which of the hosted servers to add, and to test a connection that is not working.",
 			"url": "https://three.ws/.well-known/agent-skills/connect-three-ws-mcp/SKILL.md",
-			"digest": "sha256:66e5b3ef8b1c644d12945b8042a8c2bd8672fdd8ca78970f782d9abe618c2c77",
+			"digest": "sha256:60b739152003a616ec661fa744faa93aa21fa7123c6d66604fb58b43b352928d",
 			"license": "MIT",
 			"category": "platform/agents"
 		},
@@ -83,7 +83,7 @@
 			"type": "skill-md",
 			"description": "Create a real three.ws AI agent (identity, 3D body, custodial Solana wallet, persona) from the command line and get its live public page. Use when you or the user want to create, build, deploy, launch, or set up an AI agent, a 3D agent, an on-chain agent, or \"my own agent\" on three.ws, attach a 3D body to an existing agent, edit an agent's persona or brain, or list the agents an account already owns. Returns the agent id, its Solana wallet address, and the public URL anyone can visit and chat with.",
 			"url": "https://three.ws/.well-known/agent-skills/create-a-three-ws-agent/SKILL.md",
-			"digest": "sha256:8aa823202c36af857b791bcc57c5b8220ef88c869e7426f0c1184172008a62cb",
+			"digest": "sha256:bdc250bc2c40f882ad5d9f16fe8a7b2edd7bdf6f90930042612201bdedda4951",
 			"license": "MIT",
 			"category": "platform/agents"
 		},
@@ -92,7 +92,7 @@
 			"type": "skill-md",
 			"description": "Find a three.ws agent that already does the job, then buy its skill or have one of your own agents hire and pay it autonomously over x402. Use when you or the user want to hire, rent, buy, delegate to, or pay another AI agent or one of its skills (\"find an agent that can do X\", \"hire an agent to write this\", \"buy that skill\", \"let my agent pay another agent\", \"how much does that skill cost\", \"what did my agent spend\"). Covers browsing the offer catalog, free trials, Solana Pay checkout, agent-to-agent hiring with spend caps, and the receipts.",
 			"url": "https://three.ws/.well-known/agent-skills/hire-an-agent/SKILL.md",
-			"digest": "sha256:ad8b7dacab5566fdc1c8dd6bcadbe418f86823d955be3817df9bb446c21546a1",
+			"digest": "sha256:a0423dcf05a76e91bc15b9dd78cd4a1f8ac2c436cccdc8de3c84fb98f090e59a",
 			"license": "MIT",
 			"category": "platform/agents"
 		},
@@ -101,7 +101,7 @@
 			"type": "skill-md",
 			"description": "Publish an agent skill to the three.ws marketplace, price it per call in $THREE or USDC, offer a metered free trial, and collect the earnings. Use when you or the user want to sell, monetize, price, list, or make money from an agent skill or capability (\"sell my skill\", \"charge per call\", \"price this skill in $THREE\", \"put my agent's skill on the marketplace\", \"where are my skill earnings\", \"set up a free trial\"). Covers publishing to the catalog, the per-call x402 rail, the author/platform split, trials, payout wallet, and withdrawals.",
 			"url": "https://three.ws/.well-known/agent-skills/sell-an-agent-skill/SKILL.md",
-			"digest": "sha256:8aef691620347811e3f0e45e0561ef2ab024e938889701643d7b174f7cf57e1c",
+			"digest": "sha256:79684f7d88dd0ae1a5d455ef98215987637ed411411f1b373681e9ac216e878a",
 			"license": "MIT",
 			"category": "platform/agents"
 		},
@@ -110,7 +110,7 @@
 			"type": "skill-md",
 			"description": "Sign in to the wallet. Use when you or the user want to log in, sign in, connect, or set up the wallet, or when any wallet operation fails with authentication or \"not signed in\" errors. This skill is a prerequisite before sending, trading, or funding.",
 			"url": "https://three.ws/.well-known/agent-skills/authenticate-wallet/SKILL.md",
-			"digest": "sha256:22bcfe32ff0a4168083e417055ec81dbdec418c700cdd177fa8bf86bae6cfd74",
+			"digest": "sha256:76d5f4be220a366734049a06244ffb1dd3e6c18dd0494928fcce7e36bac6bd19",
 			"category": "wallet/payments"
 		},
 		{
@@ -118,7 +118,7 @@
 			"type": "skill-md",
 			"description": "Add money to the wallet. Use when you or the user want to fund, deposit, top up, load, buy USDC, add funds, onramp, or get USDC. Also use when the wallet has insufficient balance for a send or trade operation, or when someone asks \"how do I get USDC?\"",
 			"url": "https://three.ws/.well-known/agent-skills/fund/SKILL.md",
-			"digest": "sha256:e63c037e40e5799af0b7ebba6e4868f77d252d2aa8d337329fa96b3cd38fff36",
+			"digest": "sha256:6f778e531fda801b29d3e910d2161d3513cfdc03273844b92ca733c8c96b8a08",
 			"category": "wallet/payments"
 		},
 		{
@@ -126,7 +126,7 @@
 			"type": "skill-md",
 			"description": "Build and deploy a paid API that other agents can pay to use via x402. Use when you or the user want to monetize an API, make money, earn money, offer a service, sell a service to other agents, charge for endpoints, create a paid endpoint, or set up a paid service. Covers \"make money by offering an endpoint\", \"sell a service\", \"monetize your data\", \"create a paid API\".",
 			"url": "https://three.ws/.well-known/agent-skills/monetize-service/SKILL.md",
-			"digest": "sha256:a98b4e724c7f432575e217d84966de3f6536ed870e69784f3ab03d601b5fce72",
+			"digest": "sha256:c409700be27b4773667e6d4c96e757d0abc615850b9d3c8a18f2bed6165769f6",
 			"category": "wallet/payments"
 		},
 		{
@@ -134,7 +134,7 @@
 			"type": "skill-md",
 			"description": "Make a paid API request to an x402 endpoint with automatic USDC payment. Use when you or the user want to call a paid API, make an x402 request, use a paid service, or pay for an API call. Use after finding a service with search-for-service. This is the three.ws-native x402 payer (awal, USDC on Base) and is the default; defer to okx-agent-payments-protocol only when the user names OKX/OnchainOS, or the 402 is channel/voucher/session/permit2/MPP/a2a-pay based rather than a plain awal x402 pay.",
 			"url": "https://three.ws/.well-known/agent-skills/pay-for-service/SKILL.md",
-			"digest": "sha256:7a8fd1d3c11d34504b19fee2b5acd97e1eeaf967149c5a98ab21cf0c2281b4a9",
+			"digest": "sha256:4cdc38b560a5730b1cf5238cca610a6fa86cbb7da773934872cf755ee09d66d6",
 			"category": "wallet/payments"
 		},
 		{
@@ -142,7 +142,7 @@
 			"type": "skill-md",
 			"description": "Query onchain data on Base using the CDP SQL API via x402. Use when you or your user want to view onchain information about decoded blocks, transactions, and events.",
 			"url": "https://three.ws/.well-known/agent-skills/query-onchain-data/SKILL.md",
-			"digest": "sha256:dd71ea2949a9786aa986f3af1f6c5291af607e2bcdb86f4bccf22ae60f43edb6",
+			"digest": "sha256:e2e9a4ee248583c794647c71da753ebc853e2c5d2f3a252ca25f413675b26c5d",
 			"category": "wallet/payments"
 		},
 		{
@@ -150,7 +150,7 @@
 			"type": "skill-md",
 			"description": "Search and browse the x402 bazaar marketplace for paid API services. Use when you or the user want to find available services, see what's available, discover APIs, or need an external service to accomplish a task. Also use as a fallback when no other skill clearly matches: search the bazaar to see if a paid service exists. Covers \"what can I do?\", \"find me an API for...\", \"what services are available?\", \"search for...\", \"browse the bazaar\".",
 			"url": "https://three.ws/.well-known/agent-skills/search-for-service/SKILL.md",
-			"digest": "sha256:a630c1f0b8ca63fcde1126f889f5b8f3e1a93e5710f69dd84a87b451467e5328",
+			"digest": "sha256:2db257e3af647daf066edd2154bef4e6caf548dc0b9a1da03d0cb304fcf3bd12",
 			"category": "wallet/payments"
 		},
 		{
@@ -158,7 +158,7 @@
 			"type": "skill-md",
 			"description": "Send tokens (USDC, ETH, POL, or SOL) to an address or ENS name on Base, Polygon, or Solana. Use when you or the user want to send money, pay someone, transfer tokens, tip, donate, or send funds to a wallet address or .eth name. Covers phrases like \"send $5 to\", \"pay 0x...\", \"transfer to vitalik.eth\", or \"send USDC on Solana\". This is the three.ws-native wallet (awal) and is the default for sends; defer to okx-agentic-wallet only when the user names OKX, OnchainOS, an OKX-managed / Agentic Wallet account, or an OKX-specific chain/venue (e.g. X Layer).",
 			"url": "https://three.ws/.well-known/agent-skills/send-usdc/SKILL.md",
-			"digest": "sha256:910afb699cdccdb8c7fe276ad3db2ca138225c2ad742b0bd89b4b568f81110b7",
+			"digest": "sha256:80b85808bdfce893fc642cc8649e858009fdd7cc2d4852111fc20d121ead0d53",
 			"category": "wallet/payments"
 		},
 		{
@@ -166,7 +166,7 @@
 			"type": "skill-md",
 			"description": "Swap or trade tokens on Base or Polygon. Use when you or the user want to trade, swap, exchange, buy, sell, or convert between tokens like USDC, ETH, and POL. Covers phrases like \"buy ETH\", \"sell ETH for USDC\", \"convert USDC to ETH\", \"get some ETH\", \"buy POL\". This is the three.ws-native wallet (awal) and is the default for swaps; defer to okx-dex-swap only when the user names OKX, OnchainOS, an OKX-managed account, a named DEX/DApp venue, or an OKX-specific chain (e.g. X Layer, BSC, Arbitrum).",
 			"url": "https://three.ws/.well-known/agent-skills/trade/SKILL.md",
-			"digest": "sha256:d6081f3da8282db1e7bb9aa7abb64ee54f2e9c054b6202ee4a4955ce42a15af1",
+			"digest": "sha256:ad12768905ca19381a73d8fd38feb61750712f537a6182041196a5f47470a4f0",
 			"category": "wallet/payments"
 		},
 		{
@@ -174,7 +174,7 @@
 			"type": "skill-md",
 			"description": "Search for new services and make paid API requests using the x402 payment protocol. Use when you don't have a clear tool to choose, search the bazaar. You can also use this tool if you or the user want to call an x402 endpoint, discover payment requirements, browse the bazaar, or search for paid services. This is the three.ws-native x402 stack (awal, USDC on Base) and is the default; defer to okx-agent-payments-protocol only when the user names OKX/OnchainOS, or the 402 is channel/voucher/session/permit2/MPP/a2a-pay based rather than a plain awal x402 pay.",
 			"url": "https://three.ws/.well-known/agent-skills/x402/SKILL.md",
-			"digest": "sha256:a9806cd3186e2e09993b07036f3782d7b828fe77e851f21e761f7abcca44b754",
+			"digest": "sha256:d5d6139d39ebe2863c71b4e7337cfa6e57066e2a33948f4fa31a166fdb7a1c5f",
 			"category": "wallet/payments"
 		}
 	]

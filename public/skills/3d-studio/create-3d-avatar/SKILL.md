@@ -5,7 +5,7 @@ when_to_use: User wants a posable/animatable humanoid character. For a static ob
 license: MIT
 metadata:
   category: 3d/creative
-  cross-platform-safe: true
+  cross-platform-safe: "true"
   pack: three-ws-skills
 ---
 

@@ -5,7 +5,7 @@ when_to_use: User already has a GLB (a URL) and wants it rigged. To generate a n
 license: MIT
 metadata:
   category: 3d/creative
-  cross-platform-safe: true
+  cross-platform-safe: "true"
   pack: three-ws-skills
 ---
 
