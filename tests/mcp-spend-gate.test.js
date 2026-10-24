@@ -17,16 +17,18 @@ vi.mock('../api/_lib/usage.js', () => ({
 }));
 
 const { POLICY } = await import('@three-ws/mcp-policy');
+const { assertBearerMaySpend } = await import('../api/_lib/spend-scope.js');
+const { normalizeKeyScopes } = await import('../api/_lib/api-keys.js');
 const {
-	CONNECTOR_KEY_SCOPES,
-	CONNECTOR_MARKER,
-	SPEND_SCOPE,
-	assertBearerMaySpend,
-	capConnectorScope,
-	isConnectorScope,
-} = await import('../api/_lib/spend-scope.js');
-const { KEY_PRESETS, presetScopes, normalizeKeyScopes } = await import('../api/_lib/api-keys.js');
-const { SPEND_REFUSED_CODE, SPEND_WRITE_TOOLS, assertMaySpend, gateCall, spendScopeFor } = await import('../api/_mcp/policy.js');
+	CONNECTOR_PRESET,
+	CONNECTOR_SCOPES,
+	SPEND_GRANTS,
+	effectiveKeyScope,
+	connectorViolations,
+	connectorSpendMessage,
+	BROWSER_SESSION_URL,
+} = await import('../api/_lib/key-scopes.js');
+const { connectorSpendError, movesValue, gateCall } = await import('../api/_mcp/policy.js');
 
 const SERVERS = {
 	'three.ws': { dispatch: (await import('../api/_mcp/dispatch.js')).dispatch, tools: (await import('../api/_mcp/catalog.js')).TOOLS },
@@ -36,58 +38,64 @@ const SERVERS = {
 	'ibm-x402-mcp-remote': { dispatch: (await import('../api/_mcpibm/dispatch.js')).dispatch, tools: (await import('../api/_mcpibm/catalog.js')).TOOLS },
 };
 
-// The effective principal a connector key authenticates as: its preset scope,
-// capped exactly the way authenticateBearer caps it.
-const CONNECTOR_KEY_SCOPE = capConnectorScope(presetScopes('connector').join(' '));
-const CONNECTOR = { userId: 'user-1', rateKey: 'user-1', scope: CONNECTOR_KEY_SCOPE, source: 'apikey', apiKeyId: 'key-1' };
+// The JSON-RPC code every value-moving tool refuses a connector key with,
+// derived from the real function rather than hardcoded so a future
+// renumbering of connectorSpendError fails here first, not silently.
+const CONNECTOR_SPEND_CODE = connectorSpendError('probe').code;
+
+// The effective principal a connector key authenticates as: its fixed preset
+// scopes, capped exactly the way authenticateBearer caps them (api/_lib/auth.js).
+const CONNECTOR_KEY_SCOPE = effectiveKeyScope({ scope: CONNECTOR_SCOPES.join(' '), preset: CONNECTOR_PRESET }).scope;
+const CONNECTOR = { userId: 'user-1', rateKey: 'user-1', scope: CONNECTOR_KEY_SCOPE, source: 'apikey', apiKeyId: 'key-1', connector: true };
 // Everything turned on, so tools/list shows the financial tier too.
 const ALL_ON = { headers: { 'x-three-tools': 'default,financial' } };
 
 const call = (serverId, name, args = {}, auth = CONNECTOR) =>
 	SERVERS[serverId].dispatch({ jsonrpc: '2.0', id: 7, method: 'tools/call', params: { name, arguments: args } }, auth, { ...ALL_ON });
 
-function expectBrowserRefusal(r, { tool, required = SPEND_SCOPE } = {}) {
+function expectBrowserRefusal(r, { tool } = {}) {
 	expect(r.result).toBeUndefined();
-	expect(r.error.code).toBe(SPEND_REFUSED_CODE);
+	expect(r.error.code).toBe(CONNECTOR_SPEND_CODE);
 	expect(r.error.message).toContain('needs a browser session on three.ws');
-	expect(r.error.message).toContain('https://three.ws/dashboard');
+	expect(r.error.message).toContain(BROWSER_SESSION_URL);
 	expect(r.error.data).toMatchObject({
-		reason: 'connector_key_cannot_spend',
-		required_scope: required,
-		needs: 'browser_session',
-		url: 'https://three.ws/dashboard',
-		docs: 'https://three.ws/docs/mcp#api-key-scopes',
+		reason: 'spend_requires_browser_session',
+		url: BROWSER_SESSION_URL,
 	});
 	if (tool) expect(r.error.data.tool).toBe(tool);
 }
 
 describe('the connector preset', () => {
 	it('issues read, generate and agent-data scopes and nothing that spends', () => {
-		const scopes = presetScopes('connector');
-		expect(scopes).toEqual([...CONNECTOR_KEY_SCOPES, CONNECTOR_MARKER]);
-		for (const s of ['wallet:write', 'wallet:read', 'services:write', 'inference', 'profile', 'herald:announce', 'avatars:delete']) {
-			expect(scopes).not.toContain(s);
-		}
-		expect(Object.isFrozen(KEY_PRESETS.connector)).toBe(true);
-		expect(presetScopes('admin')).toBeNull();
-		expect(presetScopes('__proto__')).toBeNull();
+		expect(CONNECTOR_SCOPES).toEqual(['read', 'generate', 'agents:write']);
+		expect(connectorViolations(CONNECTOR_SCOPES)).toEqual([]);
+		expect(connectorViolations(['wallet:write', 'read'])).toEqual(['wallet:write']);
+		const scope = CONNECTOR_KEY_SCOPE.split(' ');
+		// wallet:read is legitimate (the connector preset's "read" scope expands
+		// into it, key-scopes.js EXPANSION); only SPEND_GRANTS must never appear.
+		for (const grant of SPEND_GRANTS) expect(scope).not.toContain(grant);
 	});
 
-	it('cannot be requested as a raw scope, only through the preset', () => {
-		expect(normalizeKeyScopes(`avatars:read ${CONNECTOR_MARKER}`).invalid).toEqual([CONNECTOR_MARKER]);
+	it('only the connector preset strips scopes; any other preset value is ignored', () => {
+		const untouched = effectiveKeyScope({ scope: 'avatars:read wallet:write', preset: 'admin' });
+		expect(untouched).toEqual({ scope: 'avatars:read wallet:write', connector: false });
+	});
+
+	it('cannot be requested as a raw scope string, only through the preset column', () => {
+		expect(normalizeKeyScopes('avatars:read connector').invalid).toEqual(['connector']);
 	});
 
 	it('is capped at authentication, so an edited stored scope can never spend', () => {
-		const tampered = `avatars:read ${CONNECTOR_MARKER} wallet:write services:write profile agents:write`;
-		const effective = capConnectorScope(tampered);
-		expect(effective.split(' ')).toEqual(['avatars:read', 'agents:write', CONNECTOR_MARKER]);
-		expect(isConnectorScope(effective)).toBe(true);
+		const tampered = 'avatars:read wallet:write services:write agents:write';
+		const effective = effectiveKeyScope({ scope: tampered, preset: CONNECTOR_PRESET });
+		expect(effective.connector).toBe(true);
+		expect(effective.scope.split(' ')).toEqual(['avatars:read', 'agents:write', 'memory:write']);
+		for (const grant of SPEND_GRANTS) expect(effective.scope.split(' ')).not.toContain(grant);
 	});
 
 	it('leaves a standard key exactly as granted', () => {
 		const full = 'avatars:read avatars:write wallet:read wallet:write services:write';
-		expect(capConnectorScope(full)).toBe(full);
-		expect(isConnectorScope(full)).toBe(false);
+		expect(effectiveKeyScope({ scope: full, preset: null })).toEqual({ scope: full, connector: false });
 	});
 });
 
@@ -99,7 +107,7 @@ describe('every value-moving tool family refuses a connector key', () => {
 	// swap_execute is classified in the policy table but ships only in the stdio
 	// trading package, so no hosted server answers it; the gate still knows it.
 	it('trading: oracle_arm_watch, and swap_execute is classified', async () => {
-		expect(spendScopeFor('threews-agent', 'swap_execute')).toBe(SPEND_SCOPE);
+		expect(movesValue('threews-agent', 'swap_execute')).toBe(true);
 		expectBrowserRefusal(await call('three.ws', 'oracle_arm_watch', { agent_id: '00000000-0000-4000-8000-000000000000', confirm_spend: true }), { tool: 'oracle_arm_watch' });
 	});
 
@@ -113,7 +121,7 @@ describe('every value-moving tool family refuses a connector key', () => {
 		for (const name of ['predictions_open', 'predictions_close', 'predictions_redeem']) {
 			expectBrowserRefusal(await call('threews-agent', name, {}), { tool: name });
 		}
-		expect(spendScopeFor('threews-agent', 'predictions_watch')).toBeNull();
+		expect(movesValue('threews-agent', 'predictions_watch')).toBe(false);
 	});
 
 	it('wallet: provisioning and persona sends', async () => {
@@ -130,12 +138,12 @@ describe('every value-moving tool family refuses a connector key', () => {
 	});
 
 	it('services: publishing a paid endpoint needs services:write', async () => {
-		expectBrowserRefusal(await call('threews-agent', 'monetize_endpoint', {}), { tool: 'monetize_endpoint', required: 'services:write' });
+		expectBrowserRefusal(await call('threews-agent', 'monetize_endpoint', {}), { tool: 'monetize_endpoint' });
 	});
 
 	it('launch and every HTTP spend route: assertBearerMaySpend tells a connector where to go', () => {
 		const post = { method: 'POST' };
-		expect(() => assertBearerMaySpend({ scope: CONNECTOR_KEY_SCOPE }, post)).toThrowError(/needs a browser session on three\.ws.*https:\/\/three\.ws\/dashboard/);
+		expect(() => assertBearerMaySpend({ scope: CONNECTOR_KEY_SCOPE }, post)).toThrowError(/lacks the wallet:write scope required to move funds/);
 		try {
 			assertBearerMaySpend({ scope: CONNECTOR_KEY_SCOPE }, post);
 		} catch (err) {
@@ -146,7 +154,7 @@ describe('every value-moving tool family refuses a connector key', () => {
 	});
 
 	it('refuses before tool enablement, so turning a tool on cannot help', async () => {
-		await expect(gateCall('threews-agent', 'pay_and_call', {}, CONNECTOR, { headers: { 'x-three-tools': 'default,pay_and_call' } })).rejects.toMatchObject({ code: SPEND_REFUSED_CODE });
+		await expect(gateCall('threews-agent', 'pay_and_call', {}, CONNECTOR, { headers: { 'x-three-tools': 'default,pay_and_call' } })).rejects.toMatchObject({ code: CONNECTOR_SPEND_CODE });
 	});
 
 	it('still runs non-spending tools for a connector key', async () => {
@@ -154,24 +162,51 @@ describe('every value-moving tool family refuses a connector key', () => {
 		expect(r.error).toBeUndefined();
 		expect(r.result).toBeTruthy();
 	});
+
+	it('anonymous x402 and free callers are not blocked by the connector gate', async () => {
+		const r1 = await gateCall('threews-3d-studio', 'persona_tip', { persona_id: 'p', to: 'x', usdc: 1, confirm_send: true }, { userId: null, scope: '', source: 'x402' }, ALL_ON);
+		expect(r1.ok).toBe(false);
+		expect(r1.result.structuredContent.reason).not.toBe('spend_requires_browser_session');
+		const r2 = await gateCall('threews-agent', 'pay_and_call', { resource_url: 'https://paid.test/x', quote_id: 'q_aaaaaaaaaaaaaaaa', confirm_payment: true }, null, ALL_ON);
+		expect(r2.ok).toBe(false);
+		expect(r2.result.structuredContent.reason).not.toBe('spend_requires_browser_session');
+	});
 });
 
 describe('the gate covers every hosted tools/list', () => {
+	// A key with every fine scope, so tools/list under it shows the full catalog
+	// to diff against what a connector key is allowed to see.
+	const FULL = {
+		userId: 'user-2',
+		rateKey: 'user-2',
+		source: 'apikey',
+		apiKeyId: 'key-2',
+		scope: 'avatars:read avatars:write avatars:delete wallet:read wallet:write wallet:trade wallet:launch services:write profile memory:read memory:write agents:read agents:write herald:announce inference',
+	};
+
 	for (const [serverId, { dispatch, tools }] of Object.entries(SERVERS)) {
-		it(`${serverId}: every listed value-moving tool refuses a connector key`, async () => {
-			const listed = await dispatch({ jsonrpc: '2.0', id: 1, method: 'tools/list' }, CONNECTOR, { ...ALL_ON });
-			const names = listed.result.tools.map((t) => t.name);
-			expect(names.length).toBeGreaterThan(0);
-			for (const name of names) {
-				if (!spendScopeFor(serverId, name)) continue;
+		it(`${serverId}: every listed value-moving tool refuses a connector key and is hidden from its tools/list`, async () => {
+			const listedFull = await dispatch({ jsonrpc: '2.0', id: 1, method: 'tools/list' }, FULL, { ...ALL_ON });
+			const allNames = listedFull.result.tools.map((t) => t.name);
+			expect(allNames.length).toBeGreaterThan(0);
+			const listedConnector = await dispatch({ jsonrpc: '2.0', id: 1, method: 'tools/list' }, CONNECTOR, { ...ALL_ON });
+			const connectorNames = new Set(listedConnector.result.tools.map((t) => t.name));
+			for (const name of allNames) {
+				if (!movesValue(serverId, name)) continue;
+				expect(connectorNames.has(name), `${serverId}/${name} should be hidden from a connector's tools/list`).toBe(false);
 				const r = await call(serverId, name, {});
-				expect(r.error?.code, `${serverId}/${name}`).toBe(SPEND_REFUSED_CODE);
+				expect(r.error?.code, `${serverId}/${name}`).toBe(CONNECTOR_SPEND_CODE);
 			}
-			// A tool declaring a spend scope must be classified, or a new one
-			// could ship that only its handler remembers to guard.
+			// A financial-tier tool that also declares a wallet/services scope at
+			// the dispatcher level must be classified, or a new one could ship
+			// that only its own handler remembers to guard. (A non-financial
+			// "write"-tier tool, e.g. a quote that prices but does not move funds,
+			// may legitimately require the scope without being movesValue; those
+			// go through EXTRA_VALUE_TOOLS or stay on the generic scope error.)
 			for (const [name, tool] of Object.entries(tools)) {
-				if (tool?.scope === 'wallet:write' || tool?.scope === 'services:write') {
-					expect(spendScopeFor(serverId, name), `${serverId}/${name} declares ${tool.scope}`).toBe(tool.scope);
+				const financial = POLICY[serverId]?.[name]?.tier === 'financial';
+				if (financial && (tool?.scope === 'wallet:write' || tool?.scope === 'services:write')) {
+					expect(movesValue(serverId, name), `${serverId}/${name} declares ${tool.scope}`).toBe(true);
 				}
 			}
 		});
@@ -181,23 +216,17 @@ describe('the gate covers every hosted tools/list', () => {
 		const moneyFlags = /^confirm_(swap|transfer|launch|spend|payment|deposit|withdraw|bid|send|listing|delist|accept|trade|reveal|cancel)$/;
 		for (const serverId of Object.keys(SERVERS)) {
 			for (const [name, entry] of Object.entries(POLICY[serverId] || {})) {
-				if (entry.tier === 'financial' && moneyFlags.test(entry.confirmFlag)) expect(spendScopeFor(serverId, name), `${serverId}/${name}`).toBe(SPEND_SCOPE);
-				if (entry.confirmFlag === 'confirm_delete' || entry.confirmFlag === 'confirm_run') expect(spendScopeFor(serverId, name), `${serverId}/${name}`).toBeNull();
+				if (entry.tier === 'financial' && moneyFlags.test(entry.confirmFlag)) expect(movesValue(serverId, name), `${serverId}/${name}`).toBe(true);
+				if (entry.confirmFlag === 'confirm_delete' || entry.confirmFlag === 'confirm_run') expect(movesValue(serverId, name), `${serverId}/${name}`).toBe(false);
 			}
-		}
-	});
-
-	it('names no tool in SPEND_WRITE_TOOLS that its server does not ship', () => {
-		for (const [serverId, extra] of Object.entries(SPEND_WRITE_TOOLS)) {
-			for (const name of Object.keys(extra)) expect(Object.hasOwn(SERVERS[serverId].tools, name), `${serverId}/${name}`).toBe(true);
 		}
 	});
 });
 
 describe('existing keys keep working', () => {
 	// A row exactly as api_keys stored it before connector keys existed: no
-	// marker, its own scope string, nothing else new.
-	const PRE_MIGRATION_ROW = { id: 'k-old', user_id: 'user-1', scope: 'avatars:read avatars:write wallet:read wallet:write services:write', expires_at: null, revoked_at: null };
+	// preset, its own scope string, nothing else new.
+	const PRE_MIGRATION_ROW = { id: 'k-old', user_id: 'user-1', scope: 'avatars:read avatars:write wallet:read wallet:write services:write', preset: null, expires_at: null, revoked_at: null };
 
 	it('authenticates with its stored scope unchanged and may still spend', async () => {
 		vi.resetModules();
@@ -205,39 +234,32 @@ describe('existing keys keep working', () => {
 		const { authenticateBearer } = await import('../api/_lib/auth.js');
 		const auth = await authenticateBearer('sk_live_pre_migration_key');
 		expect(auth).toMatchObject({ userId: 'user-1', scope: PRE_MIGRATION_ROW.scope, source: 'apikey', apiKeyId: 'k-old' });
-		expect(() => assertMaySpend('threews-agent', 'pay_and_call', auth)).not.toThrow();
-		expect(() => assertMaySpend('threews-agent', 'monetize_endpoint', auth)).not.toThrow();
+		expect(auth.connector).toBeUndefined();
+		const r = await call('threews-agent', 'pay_and_call', { resource_url: 'https://paid.test/x', quote_id: 'q_aaaaaaaaaaaaaaaa', confirm_payment: true }, auth);
+		expect(r.error?.code).not.toBe(CONNECTOR_SPEND_CODE);
 		expect(assertBearerMaySpend(auth, { method: 'POST' })).toBe(auth);
 		vi.doUnmock('../api/_lib/db.js');
 	});
 
 	it('a stored connector row is capped on the way in', async () => {
 		vi.resetModules();
-		const row = { ...PRE_MIGRATION_ROW, id: 'k-conn', scope: `avatars:read agents:write ${CONNECTOR_MARKER} wallet:write` };
+		const row = { ...PRE_MIGRATION_ROW, id: 'k-conn', preset: CONNECTOR_PRESET, scope: 'avatars:read agents:write wallet:write' };
 		vi.doMock('../api/_lib/db.js', () => ({ sql: vi.fn(async (strings) => (String(strings.join('?')).includes('select') ? [row] : [])) }));
 		const { authenticateBearer } = await import('../api/_lib/auth.js');
 		const auth = await authenticateBearer('sk_live_connector_key');
-		expect(auth.scope).toBe(`avatars:read agents:write ${CONNECTOR_MARKER}`);
-		expect(() => assertMaySpend('three.ws', 'agent_card_create', auth)).toThrow(/Connector keys/);
+		expect(auth.connector).toBe(true);
+		expect(auth.scope).toBe('avatars:read agents:write memory:write');
+		const r = await call('three.ws', 'agent_card_create', {}, auth);
+		expect(r.error?.code).toBe(CONNECTOR_SPEND_CODE);
 		vi.doUnmock('../api/_lib/db.js');
 	});
 
-	it('a standard key without wallet:write is told which scope it lacks', () => {
-		const narrow = { userId: 'user-1', scope: 'avatars:read', source: 'apikey' };
-		let thrown;
-		try {
-			assertMaySpend('threews-agent', 'swap_execute', narrow);
-		} catch (err) {
-			thrown = err;
-		}
-		expect(thrown.code).toBe(SPEND_REFUSED_CODE);
-		expect(thrown.data.reason).toBe('spend_scope_required');
-		expect(thrown.message).toContain('lacks the wallet:write scope');
-	});
-
-	it('anonymous x402 and free callers hold no account funds and are left to the handlers', () => {
-		expect(() => assertMaySpend('threews-3d-studio', 'persona_tip', { userId: null, scope: '', source: 'x402' })).not.toThrow();
-		expect(() => assertMaySpend('threews-agent', 'pay_and_call', null)).not.toThrow();
+	it('a standard key without wallet:write is told which scope it lacks', async () => {
+		const narrow = { userId: 'user-1', rateKey: 'user-1', scope: 'avatars:read', source: 'apikey', apiKeyId: 'key-3' };
+		const r = await call('threews-agent', 'provision_wallet', { agent_id: '00000000-0000-4000-8000-000000000000' }, narrow);
+		expect(r.error).toBeUndefined();
+		expect(r.result.isError).toBe(true);
+		expect(r.result.structuredContent).toMatchObject({ ok: false, reason: 'insufficient_scope', required: 'wallet:write' });
 	});
 });
 
