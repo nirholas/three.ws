@@ -35,7 +35,7 @@ import { explorerTxUrl } from '../_lib/avatar-wallet.js';
 import {
 	enforceSpendLimit, SpendLimitError, getSpendLimits, updateCustodyEvent, lamportsToUsd,
 	getTradeLimits, getDailySpendLamports,
-	checkKillSwitch, checkPerTradeCap, checkDailyBudgetLamports, checkSolHeadroom, checkPriceImpact,
+	checkKillSwitch, checkPerTradeCap, checkDailyBudgetLamports, checkSolHeadroom, checkPriceImpact, guardDueDiligence, tradeGuardResponse,
 	SOL_FEE_HEADROOM_LAMPORTS,
 } from '../_lib/agent-trade-guards.js';
 import {
@@ -462,6 +462,16 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 				message: `Price impact is ${quote.priceImpactPct.toFixed(1)}%, above the ${tradeLimits.max_price_impact_pct}% safety limit. Reduce the size or pick a deeper market.`,
 				detail: { price_impact_pct: quote.priceImpactPct, max_price_impact_pct: tradeLimits.max_price_impact_pct },
 			};
+		}
+	}
+
+	// Holder-quality breaker (insider / sniper / bundler / fresh-wallet share of
+	// supply). Buys only, mainnet only, and only when the owner set a limit.
+	if (!guardWarning && side === 'buy' && network === 'mainnet') {
+		const dd = await guardDueDiligence(mintStr, tradeLimits);
+		if (dd) {
+			const r = tradeGuardResponse(dd);
+			guardWarning = { status: r.status, code: r.code, message: r.message, detail: r.detail };
 		}
 	}
 

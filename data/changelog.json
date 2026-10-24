@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-23",
+			"title": "Token due diligence: insiders, snipers, bundlers, fresh wallets and a funding graph",
+			"summary": "Every Solana token now has holder due diligence computed from chain data we read ourselves: insider hold rate, sniper share, bundler exposure, fresh-wallet share and ratio, and smart-money holders scored from our own tracked wallet history. The /three token page shows the fields, each linked to its definition, plus a two-hop funding force graph. Agents can set max_insider_pct, max_sniper_pct, max_bundler_pct and max_fresh_wallet_pct trade limits to refuse buys above them. Available as GET /api/crypto/due-diligence, GET /api/crypto/funding-graph and the token_due_diligence MCP tool, cached per mint for five minutes. A field with too little chain evidence is withheld instead of shown as a low number.",
+			"tags": [
+				"feature",
+				"security"
+			],
+			"link": "/docs/token-due-diligence"
+		},
+		{
+			"date": "2026-10-23",
 			"title": "Ratcheting exit orders with named reason codes",
 			"summary": "Orders gain a trail_ratchet type: a wide initial stop that never moves down, then profit tiers that lock in gains (for example at +50% lock +10%, at +100% lock +50%), evaluated against the high-water mark so a gap down through a tier still sells. Every skipped or fired exit now carries a stable reason code (DAILY_LOSS, DRAWDOWN, IMPACT, TIER_LOCK) in the activity feed, the order events and the decision trail. The wallet hub Orders tab has a Ratchet form with an add-tier editor and shows the codes as chips.",
 			"tags": [

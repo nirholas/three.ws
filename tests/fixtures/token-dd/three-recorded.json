@@ -1,0 +1,314 @@
+{
+ "recorded_at": "2026-10-23T23:48:54.000Z",
+ "source": "mainnet RPC via rotating failover; wallet_reputation lookup",
+ "raw": {
+  "status": "ok",
+  "mint": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+  "supplyRaw": "999634594111305",
+  "decimals": 6,
+  "mint_authority_revoked": true,
+  "freeze_authority_revoked": true,
+  "launch": {
+   "slot": 441512330,
+   "time": 1787617736,
+   "creator": "JUPW3tHBxmNRzVnLmTyYUsUDB6izZSEtupY6znBC5mo",
+   "creator_funder": null
+  },
+  "holders": [
+   {
+    "owner": "5ByL7MZoLABYnwMPZKPKjf4MGkZ7FeBzrAnos19Pre2z",
+    "token_account": "5jeRNm8Rx8CrbhbiyNWE4wStfrtfrVpXU76cK9jovyGd",
+    "amount": "194397478636543",
+    "program_derived": true,
+    "first_slot": 460554412,
+    "first_time": 1792782089,
+    "profile": null
+   },
+   {
+    "owner": "8DgVVtnNZQRKu4Cx6xeAMTukUHMTE3f2Cqb1wMzJ9beU",
+    "token_account": "G24sg31UjRGZsMgeaMup1PJbEYvwfc5MWPUvyW7kndnW",
+    "amount": "20252320693638",
+    "program_derived": false,
+    "first_slot": 451744619,
+    "first_time": 1790712461,
+    "profile": {
+     "first_time": 1792798824,
+     "first_slot": 460633216,
+     "history_complete": false,
+     "sig_count": 6000,
+     "funder": null,
+     "funder_at": null,
+     "funded_lamports": null,
+     "funder2": null,
+     "funder2_at": null
+    }
+   },
+   {
+    "owner": "B4dBgTrDQa5ay5tK9YeHUKiqMg1KRLB1RZtWqPRWVoP1",
+    "token_account": "GipFNVyMfKWRD4A53CYD8eSDqntTv9X9LneaJ6zKjxFT",
+    "amount": "19372649305908",
+    "program_derived": false,
+    "first_slot": null,
+    "first_time": null,
+    "profile": {
+     "first_time": 1773382989,
+     "first_slot": 406079615,
+     "history_complete": true,
+     "sig_count": 186,
+     "funder": null,
+     "funder_at": null,
+     "funded_lamports": null,
+     "funder2": null,
+     "funder2_at": null
+    }
+   },
+   {
+    "owner": "3zgcLZ7E8UFo5Rg93Z8LcV4rR77gexNEpPDnVKE5dkRW",
+    "token_account": "2jMuCckAFvdE6T7SKy48NdZSn4RrDBdaigWzrQwMNU3p",
+    "amount": "14085590622970",
+    "program_derived": false,
+    "first_slot": null,
+    "first_time": null,
+    "profile": {
+     "first_time": 1738155182,
+     "first_slot": 317134603,
+     "history_complete": true,
+     "sig_count": 370,
+     "funder": "6r24mwhDAhE6ZuJoKdWX5wDsRThq6ZFABTWQ3y3z6F6e",
+     "funder_at": 1738155182,
+     "funded_lamports": 368213626,
+     "funder2": null,
+     "funder2_at": null
+    }
+   },
+   {
+    "owner": "5BceizACS858hZkg5VieUZzhs5sJ7a8ygsD3832iahWz",
+    "token_account": "z6fYeCwu3vKFgHFJdmu7YhZaVsP7uB7QjwwdiVwouAw",
+    "amount": "13955378041416",
+    "program_derived": false,
+    "first_slot": null,
+    "first_time": null,
+    "profile": {
+     "first_time": 1780593735,
+     "first_slot": 424287848,
+     "history_complete": true,
+     "sig_count": 231,
+     "funder": "7wHfZWdczyvjku8MssQE6xtuFut5N1bKPGaQhDzRJh2B",
+     "funder_at": 1780593735,
+     "funded_lamports": 80430000000,
+     "funder2": null,
+     "funder2_at": null
+    }
+   },
+   {
+    "owner": "7MvqRqEt7XdhGe5Fa9FED6uj4ZPcUkxJAeXbiRr96aMj",
+    "token_account": "9VAq8rDwF1UCCjsnvhYBa2QotZRi64CYoHr4Z5mNhVjq",
+    "amount": "13625087216853",
+    "program_derived": false,
+    "first_slot": null,
+    "first_time": null,
+    "profile": {
+     "first_time": null,
+     "first_slot": null,
+     "history_complete": true,
+     "sig_count": 0,
+     "funder": null,
+     "funder_at": null,
+     "funded_lamports": null,
+     "funder2": null,
+     "funder2_at": null
+    }
+   },
+   {
+    "owner": "5r6iVWbTkVRqavvXUaaVbi3rBgU3AikQJ1iSSyWtJT7X",
+    "token_account": "EvjTXqRXiAqs63UKXhZXtFqeuekJVwJ1gP8YK3JFCBAd",
+    "amount": "13508015596230",
+    "program_derived": false,
+    "first_slot": null,
+    "first_time": null,
+    "profile": {
+     "first_time": null,
+     "first_slot": null,
+     "history_complete": true,
+     "sig_count": 0,
+     "funder": null,
+     "funder_at": null,
+     "funded_lamports": null,
+     "funder2": null,
+     "funder2_at": null
+    }
+   },
+   {
+    "owner": "35x6tQdDLTj669tLKTMMy2EJ8ZpxfUn9fkkvfvEtui4c",
+    "token_account": "CVzX7rtap3Pt1m6yp8y3X4A2Y7NH1HN7LvJiUxbBEkQ8",
+    "amount": "11096000000000",
+    "program_derived": true,
+    "first_slot": null,
+    "first_time": null,
+    "profile": null
+   },
+   {
+    "owner": "6iKRxvAPmPG9Df2mShgLmTFPo2nbsTRnj1aYV8k3XpFv",
+    "token_account": "3CBPoHxxvRYYLx2RDPrm5y52nKXkgpqMXxVnztaosjnQ",
+    "amount": "10858409017391",
+    "program_derived": false,
+    "first_slot": null,
+    "first_time": null,
+    "profile": {
+     "first_time": null,
+     "first_slot": null,
+     "history_complete": true,
+     "sig_count": 0,
+     "funder": null,
+     "funder_at": null,
+     "funded_lamports": null,
+     "funder2": null,
+     "funder2_at": null
+    }
+   },
+   {
+    "owner": "68aRKnx7ofEU7smArNtuDfAEiUpQZZ8jXGwh5c9Rn1n7",
+    "token_account": "Hg8frvTDRVg7T1MpLBet7JLa1HtPak4DxniTCeX7SoDW",
+    "amount": "10147107308812",
+    "program_derived": false,
+    "first_slot": null,
+    "first_time": null,
+    "profile": {
+     "first_time": null,
+     "first_slot": null,
+     "history_complete": true,
+     "sig_count": 0,
+     "funder": null,
+     "funder_at": null,
+     "funded_lamports": null,
+     "funder2": null,
+     "funder2_at": null
+    }
+   },
+   {
+    "owner": "2n41SJe8j5VU8G8kXeV7pDP6Dc9YpufDZ3wkD3tViBzF",
+    "token_account": "AJsPBbd1EUsuYYoXDDQR3fWbqGqBu9aFJjtK9RZ24vR",
+    "amount": "10011794101873",
+    "program_derived": false,
+    "first_slot": null,
+    "first_time": null,
+    "profile": null
+   },
+   {
+    "owner": "5Ww9DCcZuHCPqmvhRJELsRCehEXmo6FEUkNq6inSbT9u",
+    "token_account": "4io19h5m4hn3Nc3FdqFcDVfMz9u34qswHQHyWcmjYCF4",
+    "amount": "10007843509301",
+    "program_derived": false,
+    "first_slot": null,
+    "first_time": null,
+    "profile": {
+     "first_time": null,
+     "first_slot": null,
+     "history_complete": true,
+     "sig_count": 0,
+     "funder": null,
+     "funder_at": null,
+     "funded_lamports": null,
+     "funder2": null,
+     "funder2_at": null
+    }
+   },
+   {
+    "owner": "AjHXjde7b5M6ec4WZWftK6KYC9X7AwAhu3dQTDWiUvZF",
+    "token_account": "GWbNZQiQBACAWee2SaY9H7beQp38EMqn2W5WXhv4DaDF",
+    "amount": "10000000000000",
+    "program_derived": true,
+    "first_slot": null,
+    "first_time": null,
+    "profile": null
+   },
+   {
+    "owner": "51PqavyPP9yQQ1C4BrnVkt8whAs9WpdfjeD6f3x8FDGq",
+    "token_account": "5wqH9iJdFQX81djnQPciwfQaWQ819P7LA7JG289MzsW6",
+    "amount": "9085972193404",
+    "program_derived": false,
+    "first_slot": null,
+    "first_time": null,
+    "profile": null
+   },
+   {
+    "owner": "EP5aoDiSvUdTyyWeqsMK9MdLwSgScDTADEcyJNceepJS",
+    "token_account": "C6NJ1oT82sK1cJYi8W6jG2jxv8BbRmxadPNJWdDbQXoj",
+    "amount": "9077172922418",
+    "program_derived": false,
+    "first_slot": null,
+    "first_time": null,
+    "profile": null
+   },
+   {
+    "owner": "4ev9BvN4QZQVpGpXqasbWV3zWnLfZ8p8uzeZvcgDGuug",
+    "token_account": "7R2kdzEi7bdZzkPPbb7C2dQjVcCMNga9CDMe75my3RZG",
+    "amount": "9017446050557",
+    "program_derived": false,
+    "first_slot": null,
+    "first_time": null,
+    "profile": {
+     "first_time": null,
+     "first_slot": null,
+     "history_complete": true,
+     "sig_count": 0,
+     "funder": null,
+     "funder_at": null,
+     "funded_lamports": null,
+     "funder2": null,
+     "funder2_at": null
+    }
+   },
+   {
+    "owner": "Db47sgUE7MjyaAkpPeu8jykJyC9Zzt1KZR7xZmM3zNpZ",
+    "token_account": "3Dx8yW18QS1VhzxmD8auPA8PmhszK4QdGRahYzDF8FZv",
+    "amount": "8612120990390",
+    "program_derived": false,
+    "first_slot": null,
+    "first_time": null,
+    "profile": {
+     "first_time": 1792789568,
+     "first_slot": 460589621,
+     "history_complete": true,
+     "sig_count": 12,
+     "funder": null,
+     "funder_at": null,
+     "funded_lamports": null,
+     "funder2": null,
+     "funder2_at": null
+    }
+   },
+   {
+    "owner": "BM9CcyErJcu2mjrFvUsRRrD3snGeHDDVirJLvL6EjvMN",
+    "token_account": "AT3mMM4QghqMNoPfaRVBh4N5yFbgkWu5pmnqak6MNPat",
+    "amount": "8458722425622",
+    "program_derived": true,
+    "first_slot": null,
+    "first_time": null,
+    "profile": null
+   },
+   {
+    "owner": "F7KccVDppZyYVZ8HKkts9GHDvcGoiaXrm7ws2tWm4ttq",
+    "token_account": "GU6ZW66vaJMKHBUK1DdAfpUtxD4cxrxFhLWZ1pXju7d6",
+    "amount": "8317907916006",
+    "program_derived": false,
+    "first_slot": null,
+    "first_time": null,
+    "profile": null
+   },
+   {
+    "owner": "7UiqScBJyZrqtU7Cx8xsnd2qERtruotTsLNNon2eYkjR",
+    "token_account": "43KdY81AG3N1ZL3kiXb4kNjwcNAzWYLH69ksCGvb2mdr",
+    "amount": "8151554279851",
+    "program_derived": false,
+    "first_slot": null,
+    "first_time": null,
+    "profile": null
+   }
+  ],
+  "services": [],
+  "read_errors": 7,
+  "now": 1792799334
+ },
+ "reputation": []
+}

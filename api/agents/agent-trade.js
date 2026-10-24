@@ -42,7 +42,7 @@ import {
 	getTradeLimits, setTradeLimits, getDailySpendLamports,
 	updateCustodyEvent,
 	checkKillSwitch, checkConcurrency, checkPerTradeCap, checkDailyBudgetLamports,
-	checkSolHeadroom, checkPriceImpact, tradeGuardResponse,
+	checkSolHeadroom, checkPriceImpact, guardDueDiligence, tradeGuardResponse,
 	SOL_FEE_HEADROOM_LAMPORTS, TRADE_LIMIT_DEFAULTS,
 } from '../_lib/agent-trade-guards.js';
 import { createApprovalRequest, approvalPath, publicApproval } from '../_lib/approvals.js';
@@ -261,6 +261,10 @@ async function runGuards({ id, side, tradeLimits, prep, walletLamports, network,
 	if (impact) return tradeGuardResponse(impact);
 
 	if (side === 'buy') {
+		if (mintPk && network === 'mainnet') {
+			const dd = await guardDueDiligence(mintPk.toBase58(), tradeLimits);
+			if (dd) return tradeGuardResponse(dd);
+		}
 		const lamports = prep.lamports;
 		const capLamports = tradeLimits.per_trade_sol == null ? null : solToLamports(tradeLimits.per_trade_sol);
 		const cap = checkPerTradeCap(lamports, capLamports);
@@ -992,6 +996,10 @@ const LIMIT_RANGES = {
 	max_price_impact_pct: { min: 0, max: 100, label: 'max_price_impact_pct must be a number between 0 and 100' },
 	max_slippage_bps: { min: 0, max: 10000, label: 'max_slippage_bps must be a number between 0 and 10000' },
 	max_concurrent: { min: 1, max: 10000, label: 'max_concurrent must be a whole number of at least 1, or null for no ceiling' },
+	max_insider_pct: { min: 0, max: 100, label: 'max_insider_pct must be a number between 0 and 100, or null to clear the limit' },
+	max_sniper_pct: { min: 0, max: 100, label: 'max_sniper_pct must be a number between 0 and 100, or null to clear the limit' },
+	max_bundler_pct: { min: 0, max: 100, label: 'max_bundler_pct must be a number between 0 and 100, or null to clear the limit' },
+	max_fresh_wallet_pct: { min: 0, max: 100, label: 'max_fresh_wallet_pct must be a number between 0 and 100, or null to clear the limit' },
 };
 
 function validateLimitsPatch(patch) {

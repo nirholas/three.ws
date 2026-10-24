@@ -6066,6 +6066,13 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/token-due-diligence",
+					"title": "Docs · Token due diligence",
+					"description": "How insider hold rate, sniper share, bundler exposure, fresh-wallet share and smart-money holders are computed from chain data, with every threshold and the trade guard limits.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/vroid-hub-import",
 					"title": "Docs · Import your VRoid Hub avatar",
 					"description": "How the VRoid Hub avatar import works: OAuth connection, the license badges on each character, and what happens to the file during import.",

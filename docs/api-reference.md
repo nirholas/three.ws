@@ -6623,6 +6623,25 @@ with serve-stale-on-error).
 
 ---
 
+## Token Due Diligence API
+
+Holder-quality fields for a Solana mint. Free, key-less, CORS `*`. Definitions
+and thresholds: [token due diligence](token-due-diligence.md).
+
+```
+GET /api/crypto/due-diligence?address=<mint>
+GET /api/crypto/funding-graph?wallet=<address>
+```
+
+`due-diligence` returns `{ status, mint, fields: { insider_pct, sniper_pct,
+bundler_pct, fresh_wallet_pct, fresh_wallet_ratio, smart_money_holders,
+smart_money_pct }, holders[], clusters[], coverage, notes[], graph,
+thresholds, definitions }`. A field is `null` with a "withheld" note when too
+few holders yielded evidence. Reports are cached per mint for 300 seconds.
+`funding-graph` returns the two-hop `{ nodes, edges }` for one wallet. The same
+report is the MCP tool `token_due_diligence` (`{ mint }`). Errors: `400` bad
+address, `429` rate limited, `503` chain reads unavailable.
+
 ## Crypto News API
 
 The engine behind [/markets/news](https://three.ws/markets/news) and
