@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-10-24",
+			"title": "Hundreds of dependency security advisories cleared across the repo",
+			"summary": "Every committed lockfile was audited and patched: same-line security releases everywhere, vetted moves to patched majors (vitest 4, zod 4, helia 7, Svelte 5 and Vite 7 in the chat app, transformers 4 in HQ, gltf-transform 4 for the meshopt worker), and each package's tests and builds were rerun before and after. What remains are advisories with no patched release published anywhere (bigint-buffer, elliptic, node-forge) and pins that upstream SDKs still require.",
+			"tags": ["security", "infra"]
+		},
+		{
+			"date": "2026-10-24",
+			"title": "Desktop app moves to Electron 45",
+			"summary": "The desktop app now runs on Electron 45 and electron-builder 26, clearing 61 security advisories from the old Electron 33 toolchain. Launch at login still starts the app hidden in the tray; on Windows, toggle the setting once if the console window opens at login.",
+			"tags": ["desktop", "security"]
+		},
+		{
+			"date": "2026-10-24",
+			"title": "Math renders in chat again",
+			"summary": "The chat app moved to Svelte 5, and KaTeX formulas in messages now render instead of showing raw TeX.",
+			"tags": ["fix"],
+			"link": "/chat"
+		},
+		{
+			"date": "2026-10-24",
 			"title": "Long MCP answers arrive as a summary, and agents can search the docs",
 			"summary": "list_my_agents, recall and crypto_data now answer with a short summary, a count, a handle and the first page when the list is long, and the new expand tool reads the rest on request. A 100-coin market list drops from about 47,800 to 4,400 tokens. Handles are signed, account-bound and last 15 minutes. The new free search_docs tool answers how-to questions from the docs index on the main and studio servers.",
 			"tags": ["feature", "docs"],

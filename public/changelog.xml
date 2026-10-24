@@ -71,6 +71,14 @@
 			<description>Minted agents are enrolled in the open Solana agent registry (8004) with the platform authority signing, so owners pay nothing. The marketplace ranks providers by registry tier after completed hires, a hire can require a minimum tier, and agent pages show an 8004 tier badge when registered. A rate-limited back-fill covers existing agents.</description>
 		</item>
 		<item>
+			<title>Desktop app moves to Electron 45</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-24:Desktop app moves to Electron 45</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>desktop</category>
+			<description>The desktop app now runs on Electron 45 and electron-builder 26, clearing 61 security advisories from the old Electron 33 toolchain. Launch at login still starts the app hidden in the tray; on Windows, toggle the setting once if the console window opens at login.</description>
+		</item>
+		<item>
 			<title>Drive the CLI from scripts and agents, and download a run report</title>
 			<link>https://three.ws/docs/cli</link>
 			<guid isPermaLink="false">2026-10-24:Drive the CLI from scripts and agents, and download a run report</guid>
@@ -87,6 +95,14 @@
 			<description>One command, npm run package:engine-stores, validates the Unity, Godot and Unreal bridges and builds a reproducible upload package for each, with listing metadata and a submission checklist. The Unity package and Unreal plugin manifests now carry their documentation links.</description>
 		</item>
 		<item>
+			<title>Hundreds of dependency security advisories cleared across the repo</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-24:Hundreds of dependency security advisories cleared across the repo</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Every committed lockfile was audited and patched: same-line security releases everywhere, vetted moves to patched majors (vitest 4, zod 4, helia 7, Svelte 5 and Vite 7 in the chat app, transformers 4 in HQ, gltf-transform 4 for the meshopt worker), and each package's tests and builds were rerun before and after. What remains are advisories with no patched release published anywhere (bigint-buffer, elliptic, node-forge) and pins that upstream SDKs still require.</description>
+		</item>
+		<item>
 			<title>Install the three.ws skills with one command on any agent runtime</title>
 			<link>https://three.ws/docs/agent-skills</link>
 			<guid isPermaLink="false">2026-10-24:Install the three.ws skills with one command on any agent runtime</guid>
@@ -101,6 +117,14 @@
 			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>list_my_agents, recall and crypto_data now answer with a short summary, a count, a handle and the first page when the list is long, and the new expand tool reads the rest on request. A 100-coin market list drops from about 47,800 to 4,400 tokens. Handles are signed, account-bound and last 15 minutes. The new free search_docs tool answers how-to questions from the docs index on the main and studio servers.</description>
+		</item>
+		<item>
+			<title>Math renders in chat again</title>
+			<link>https://three.ws/chat</link>
+			<guid isPermaLink="false">2026-10-24:Math renders in chat again</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The chat app moved to Svelte 5, and KaTeX formulas in messages now render instead of showing raw TeX.</description>
 		</item>
 		<item>
 			<title>Opt-in WebGPU renderer with automatic WebGL2 fallback, starting in Restyle Studio</title>
