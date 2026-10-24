@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-24T23:24:05.471Z",
+	"generated_at": "2026-10-24T23:45:10.921Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4191,
+	"total": 4192,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -158,6 +158,16 @@
 			"type": "update",
 			"title": "GET /api/crypto/bonding falls back to an on-chain read when pump.fun is Cloudflare-blocked",
 			"summary": "pump.fun's frontend API started answering every request from our servers with a Cloudflare challenge, which hard-failed /api/crypto/bonding for every mint, including $THREE's own, once the 30-minute last-known-good cache expired. The endpoint now reads the bonding-curve account straight off Solana RPC (the same reader already live behind /api/pump/curve) before giving up, so bonding/graduation status stays answerable even while pump.fun's edge blocks us.",
+			"link": "/docs/api-reference",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "GET /api/pump/coin degrades to on-chain data plus first-party metadata instead of a bare 502",
+			"summary": "pump.fun's frontend API has stayed Cloudflare-blocked long enough to exhaust /api/pump/coin's 24-hour last-known-good cache for some mints, including $THREE's own, leaving a hard 502 with no partial data. The endpoint now adds a third tier: numeric and curve fields come from the same on-chain bonding-curve reader already live behind /api/pump/curve, and identity fields (name, symbol, creator) come from pump_agent_mints for any mint three.ws itself tracks. Responses on this tier carry an x-pump-degraded: onchain header; a true triple-miss (no cache, no on-chain data, no registry row) still returns an honest 502 naming pump.fun.",
 			"link": "/docs/api-reference",
 			"tags": [
 				"fix"
@@ -1552,16 +1562,6 @@
 			"tags": [
 				"feature",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-12",
-			"type": "update",
-			"title": "Dissolve: turn any 3D model into a GPU particle storm",
-			"summary": "A new page that dissolves any GLB into up to a million GPU particles, morphs one shape into another, and lets you bend the storm with a black hole, a vortex, shockwaves and a collapse. Turn on the microphone and bass drives the storm. Pick a look, record a clip, save a PNG or share the exact pair as a link.",
-			"link": "/dissolve",
-			"tags": [
-				"feature"
 			]
 		}
 	]

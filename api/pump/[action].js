@@ -101,6 +101,7 @@ import { grindVanityNode, GrindExhaustedError } from '../../src/solana/vanity/gr
 import { logger } from '../_lib/usage.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
+import { getCurveView } from '../_lib/pump-curve-view.js';
 import { collectFeeAgentSchema } from '../_lib/pump-fee-schemas.js';
 import { isRpcOutageError, staleEnvelope } from '../_lib/rpc-degrade.js';
 import { getLaunchEconomics, describeFeeSplit } from '../_lib/launch-economics.js';
@@ -4167,6 +4168,59 @@ const COIN_TTL_MS = 30_000;
 const COIN_LKG_TTL_S = 24 * 3600;
 const coinLkgKey = (mint) => `pump:coin:lkg:${mint}`;
 
+// Third degrade tier for handleCoin, reached once both the in-memory cache and
+// the 24h last-known-good copy are empty: pump.fun's own metadata is gone, but
+// two real, first-party sources can still answer. Numeric/curve fields come
+// from the on-chain bonding-curve reader already proven live behind
+// /api/pump/curve (order 423); identity fields (name, symbol, creator) come
+// from pump_agent_mints, the platform's own launch registry, for any mint
+// three.ws itself launched. Neither source carries a stored image URL for a
+// curve launch, so `image`/`image_uri` stay null rather than guessing.
+// Returns null when neither source has anything, so the caller falls through
+// to the honest 502.
+async function fetchOnchainCoinDegrade(mint) {
+	let curveBody = null;
+	try {
+		const view = await getCurveView({ mint, network: 'mainnet' });
+		if (view?.httpStatus === 200 && view.body) curveBody = view.body;
+	} catch (err) {
+		console.warn('[pump/coin] on-chain curve fallback failed: %s', String(err?.message || err).slice(0, 160));
+	}
+
+	let dbRow = null;
+	try {
+		const rows = await sql`
+			select name, symbol, agent_authority from pump_agent_mints
+			where mint = ${mint} and network = 'mainnet'
+			limit 1
+		`;
+		dbRow = rows[0] || null;
+	} catch (err) {
+		console.warn('[pump/coin] pump_agent_mints lookup failed: %s', String(err?.message || err).slice(0, 160));
+	}
+
+	if (!curveBody && !dbRow) return null;
+
+	const curve = curveBody?.curve || null;
+	return {
+		mint,
+		name: dbRow?.name ?? null,
+		symbol: dbRow?.symbol ?? null,
+		image: null,
+		image_uri: null,
+		description: null,
+		creator: curve?.creator ?? dbRow?.agent_authority ?? null,
+		complete: curve ? Boolean(curve.complete) : curveBody?.graduated === true ? true : null,
+		usd_market_cap: curveBody?.graduatedPrice?.marketCapUsd ?? null,
+		virtual_token_reserves: curve?.virtualTokenReserves ?? null,
+		virtual_sol_reserves: curve?.virtualSolReserves ?? null,
+		real_token_reserves: curve?.realTokenReserves ?? null,
+		real_sol_reserves: curve?.realSolReserves ?? null,
+		total_supply: curve?.tokenTotalSupply ?? null,
+		metadataSource: dbRow ? 'platform' : 'onchain',
+	};
+}
+
 async function serveStaleCoin(res, mint, status, code, message) {
 	const hit = COIN_CACHE.get(mint) || (await cacheGet(coinLkgKey(mint)));
 	if (hit && hit.body && typeof hit.at === 'number') {
@@ -4174,11 +4228,17 @@ async function serveStaleCoin(res, mint, status, code, message) {
 		res.setHeader('x-pump-stale', '1');
 		return json(res, 200, staleEnvelope(hit.body, hit.at));
 	}
+	const degraded = await fetchOnchainCoinDegrade(mint);
+	if (degraded) {
+		res.setHeader('cache-control', 'public, max-age=10');
+		res.setHeader('x-pump-degraded', 'onchain');
+		return json(res, 200, { ...degraded, stale: true, as_of: new Date().toISOString() });
+	}
 	res.setHeader('Retry-After', '15');
 	return error(res, status, code, message, { retry_after: 15 });
 }
 
-async function handleCoin(req, res) {
+export async function handleCoin(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 	const rl = await limits.mcpIp(clientIp(req));
