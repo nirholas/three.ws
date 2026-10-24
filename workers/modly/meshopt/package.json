@@ -5,9 +5,9 @@
   "description": "Node dependencies of Modly's mesh-optimizer (decimate) op, pinned for workers/modly.",
   "license": "MIT",
   "dependencies": {
-    "@gltf-transform/core": "3.10.1",
-    "@gltf-transform/extensions": "3.10.1",
-    "@gltf-transform/functions": "3.10.1",
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/extensions": "4.5.1",
+    "@gltf-transform/functions": "4.5.1",
     "meshoptimizer": "0.22.0"
   }
 }
