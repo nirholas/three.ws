@@ -296,5 +296,8 @@ never a value; keys are encrypted at rest.
 | `THREE_CREDIT_BONUS_BPS` | no | Bonus credits for paying credits in $THREE, in basis points. Default: no bonus. See [hold-to-access.md](./hold-to-access.md). |
 | `CREDITS_DEPOSIT_WALLET_SOLANA` | yes, for deposits | The platform deposit wallet; falls back to the $THREE treasury wallet. |
 
+No key? A wallet can pay for a single request over x402 instead: see
+[metered-router.md](./metered-router.md).
+
 Related: [Payment sessions](./payment-sessions.md), [Approvals](./approvals.md),
 [Notifications](./notifications.md), [STRUCTURE.md](../STRUCTURE.md).

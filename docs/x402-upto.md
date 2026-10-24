@@ -32,6 +32,8 @@ export default paidEndpoint({
 
 `upto` is additive: the `exact` accepts stay in the challenge, so existing clients keep working unchanged. It is advertised only when the deployment opts in (`X402_UPTO_ENABLED=true`, plus the sponsor key and `X402_PAY_TO_SOLANA` / `X402_ASSET_MINT_SOLANA`). It cannot be combined with `streaming` (the body would ship before the charge is known). `api/x402/llm-proxy.js` is the first route converted: 5 atomics per token, at least 500, capped at five times the flat price.
 
+`POST /api/v1/chat/completions` uses the same primitives directly (not through `paidEndpoint`) so it can stream: it escrows the cap, runs the completion, and claims the metered tokens when the stream's usage is final. See [metered-router.md](./metered-router.md).
+
 SIWX is a poor fit for per-call metered routes (a returning wallet is served without paying again), so the llm-proxy route does not enable it. A fixed-price or time-boxed `upto` route can set `siwx` normally.
 
 ## Buyer

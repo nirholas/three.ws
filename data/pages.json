@@ -5420,6 +5420,14 @@
 					"added": "2026-10-10"
 				},
 				{
+					"path": "/docs/metered-router",
+					"title": "Docs: Pay-per-request model access",
+					"description": "Call the OpenAI-compatible endpoint with a wallet instead of an account: the x402 upto challenge sized to the request, metered settlement, streaming close and dropped-stream behavior, with curl and SDK examples.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-24"
+				},
+				{
 					"path": "/docs/approvals",
 					"title": "Docs: Approvals",
 					"description": "How agents pause for your yes before moving funds: the /approvals inbox, push Approve and Deny, signed deep links, payload-hash checks, auto-approve rules, and the API.",
