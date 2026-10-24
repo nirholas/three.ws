@@ -35,6 +35,15 @@ export default wrapCron(async (req, res) => {
 		const failed = Boolean(telegram.error);
 		if (failed) console.warn('[cron] commit-feed-push lane error', { telegram });
 		json(res, failed ? 502 : 200, { ok: !failed, telegram });
+	} catch (err) {
+		// pushTelegramLane only swallows its own GitHub-rate-limit case; a
+		// transient GitHub 5xx or network blip fetching a commit page throws
+		// here instead. The lane is idempotent (state lives in app_settings),
+		// so reporting the failure and letting the next tick retry is correct;
+		// re-throwing to wrap()'s generic handler only turned that into a raw
+		// 500 and an unnecessary ops alert.
+		console.warn('[cron] commit-feed-push threw', err?.message || err);
+		json(res, 502, { ok: false, error: String(err?.message || err) });
 	} finally {
 		await releaseLock().catch(() => {});
 	}
