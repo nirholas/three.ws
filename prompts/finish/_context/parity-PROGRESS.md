@@ -108,3 +108,10 @@ Cross-session handoff for the `parity-` orders ([parity-00-CONTEXT.md](parity-00
 - Step 0: the requested mechanisms already shipped as developer plans (`api/_lib/dev-plans/*`, enforced in `api/_lib/gateway.js`, dashboard usage page, docs) and the `THREE_CREDIT_BONUS_BPS` deposit bonus (`api/_lib/credit-deposit.js`, separate grant row, credits page). No code was rebuilt.
 - Verified: `tests/dev-plans-quota.test.js`, `tests/dev-plans-config.test.js`, `tests/credit-deposit-assets.test.js` pass (23 tests).
 - Remaining (owner): production usage distribution and the tier/bonus proposal; the production env reader hung this session. Order file trimmed to that step.
+
+## 2026-10-24: order 925, mention to launch (partial)
+
+- Step 0: reader, cron, cursor, dedupe, limits, dry run, X identity lookup and the `launch` grammar already existed; `launch` still answered help (`handler_not_built`). Mentions are readable on the current credentials (mentions-probe.json).
+- Shipped: `api/_lib/x-mention-launch.js` and its wiring in `x-mention-poll.js` (linked author with a bodied agent gets the prefilled `/launch` link; unlinked, no-agent and no-body authors get the matching link; no spend path, asserted by an import-list test), `tests/x-mention-launch.test.js` (7 tests incl. PGlite handleMention dry run), docs, STRUCTURE row, changelog.
+- Verified: 27 tests green across launch and poll suites; Playwright against Vite on a spare port: the reply URL fills the `/launch` name, ticker and description fields, no page errors.
+- Remains: real-API dry-run tick evidence after deploy, and the owner's `X_MENTION_BOT_LIVE=1`. `check:claude` shows a cron-count drift (145 vs 150) from other work.
