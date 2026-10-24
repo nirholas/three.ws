@@ -11,6 +11,8 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { DEFAULT_CRON_MAX_DURATION_MS } from '../api/_lib/http.js';
+
 const lockHeld = { value: false };
 vi.mock('../api/_lib/cache.js', () => ({
 	acquireLock: vi.fn(async () => !lockHeld.value),
@@ -25,7 +27,22 @@ vi.mock('../api/_lib/db.js', () => ({
 }));
 vi.mock('../api/_lib/alerts.js', () => ({ sendOpsAlert: vi.fn(async () => {}) }));
 
-const { scanWithinBudget, default: handler } = await import('../api/cron/x402-ring-leak-scan.js');
+const { scanWithinBudget, maxDuration, RUN_BUDGET_MS, default: handler } = await import('../api/cron/x402-ring-leak-scan.js');
+
+// 2026-10-24 production incident: every single invocation (100% over a 6h
+// sample) answered 503 at ~120.0s, logging `[cron] x402-ring-leak-scan
+// exceeded its 120000ms budget`. Root cause: the file never passed a
+// `maxDurationMs` option to wrapCron, so http.js's wrapCron fell back to
+// DEFAULT_CRON_MAX_DURATION_MS (120s) and raced every run against that, while
+// the handler's own RUN_BUDGET_MS (200s) assumed it had until vercel.json's
+// declared 300s maxDuration to work with. The external race always won first.
+describe('cron timeout wiring', () => {
+	it('declares a maxDuration that covers its own scan budget, so wrapCron does not truncate every run at the 120s default', () => {
+		expect(maxDuration).toBeGreaterThan(0);
+		expect(maxDuration * 1000).toBeGreaterThan(DEFAULT_CRON_MAX_DURATION_MS);
+		expect(maxDuration * 1000).toBeGreaterThan(RUN_BUDGET_MS);
+	});
+});
 
 describe('scanWithinBudget', () => {
 	it('stops starting wallets at the budget and reports how far it got', async () => {

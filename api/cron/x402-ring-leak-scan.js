@@ -76,7 +76,15 @@ const CANONICAL_USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 // with ledger activity is checked on the very next run.
 const LEASE_KEY = 'cron:x402-ring-leak-scan:lease';
 const LEASE_SECONDS = 9 * 60;
-const RUN_BUDGET_MS = 200_000;
+// 2026-10-24 incident: this file budgeted its own scan at 200s but never told
+// wrapCron (api/_lib/http.js) about it, so wrapCron's own race fell back to its
+// DEFAULT_CRON_MAX_DURATION_MS (120s) and answered 503 cron_timeout on every
+// single invocation, always before the 200s internal budget was ever reached.
+// vercel.json already declares 300s for this route; maxDuration below wires
+// that same number into wrapCron so the external race matches the budget the
+// scan was actually designed against.
+export const maxDuration = 300;
+export const RUN_BUDGET_MS = 200_000;
 const SCAN_CONCURRENCY = 4;
 
 // ── Pure classification (exported for tests) ──────────────────────────────────
@@ -761,4 +769,4 @@ export default wrapCron(async (req, res) => {
 		fee_cross_check: feeCheck,
 		results,
 	});
-});
+}, { maxDurationMs: maxDuration * 1000 });
