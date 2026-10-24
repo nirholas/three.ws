@@ -4011,6 +4011,14 @@
 					"added": "2026-07-18"
 				},
 				{
+					"path": "/docs/webgpu-renderer",
+					"title": "Docs · WebGPU renderer",
+					"description": "The opt-in WebGPU renderer: how to enable it, the automatic WebGL2 fallback, the TSL rim effect in Restyle Studio, and measured parity and timings from the bench harness.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-24"
+				},
+				{
 					"path": "/docs/workbench",
 					"title": "Docs · Workbench",
 					"description": "How the Workbench runs a photo through an editable workflow of real GPU nodes, edits the result in the viewport, exports GLB, OBJ, STL or PLY, and how scripts call the same pipeline.",
