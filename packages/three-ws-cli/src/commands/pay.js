@@ -12,8 +12,9 @@ import { EXIT, PayError } from '../pay/errors.js';
 import { pay, quote } from '../pay/engine.js';
 import { describeOffer, initPermissions, loadPermissions, permissionsPath } from '../pay/permissions.js';
 import { answer } from './common.js';
+import { isNonInteractive } from '../automation.js';
 
-const interactive = (ctx) => Boolean(process.stdin.isTTY && process.stderr.isTTY && !ctx.flags.json);
+const interactive = (ctx) => Boolean(process.stdin.isTTY && process.stderr.isTTY && !ctx.flags.json && !isNonInteractive(ctx.flags, ctx.env));
 
 export function keystoreFor(ctx) {
 	return createKeystore({

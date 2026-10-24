@@ -192,7 +192,7 @@ describe('three-ws skills import <external slug>', () => {
 	it('refuses without --yes in a non-interactive shell, printing source and commit, and installs nothing', async () => {
 		fetchMock.mockResolvedValueOnce(notFound()).mockResolvedValueOnce(reply(200, { skill: EXTERNAL }));
 		const { code, out } = await run(['skills', 'import', 'fixture-skill', '--agent', agent, '--origin', ORIGIN], env);
-		expect(code).toBe(1);
+		expect(code).toBe(4);
 		expect(out).toBe('');
 		expect(fetchMock).toHaveBeenCalledTimes(2);
 		expect(fetchMock.mock.calls.map(([u]) => u)).not.toContain(`${ORIGIN}/api/skill-imports/scan`);
@@ -202,7 +202,7 @@ describe('three-ws skills import <external slug>', () => {
 		fetchMock.mockResolvedValueOnce(notFound()).mockResolvedValueOnce(reply(200, { skill: EXTERNAL }));
 		const { runSkills } = await import('../src/commands/skills.js');
 		const result = await runSkills(['import', 'fixture-skill', '--agent', agent], { env, origin: ORIGIN });
-		expect(result.code).toBe(1);
+		expect(result.code).toBe(4);
 		expect(result.output).toContain('fixture-org/skills-repo');
 		expect(result.output).toContain(SHA);
 		expect(result.output).toContain('not reviewed by three.ws');
@@ -232,13 +232,14 @@ describe('three-ws skills import <external slug>', () => {
 			.mockResolvedValueOnce(reply(201, { data: { request: { id: 'r2', status: 'pending', verdict: 'caution', gated: true } } }));
 		const { runSkills } = await import('../src/commands/skills.js');
 		const result = await runSkills(['import', 'fixture-skill', '--agent', agent, '--yes'], { env, origin: ORIGIN });
-		expect(result.code).toBe(1);
+		expect(result.code).toBe(4);
 		expect(result.output).toContain('--acknowledge-gated');
 		expect(fetchMock).toHaveBeenCalledTimes(3);
 	});
 
 	it('reports a slug that is neither in-repo nor external as the original not-found error', async () => {
 		fetchMock.mockResolvedValueOnce(notFound()).mockResolvedValueOnce(notFound());
-		await expect(run(['skills', 'import', 'fixture-skill', '--agent', agent, '--yes', '--origin', ORIGIN], env)).rejects.toMatchObject({ status: 404, code: 'not_found' });
+		const { code } = await run(['skills', 'import', 'fixture-skill', '--agent', agent, '--yes', '--json', '--origin', ORIGIN], env);
+		expect(code).toBe(1);
 	});
 });

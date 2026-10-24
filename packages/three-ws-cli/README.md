@@ -132,6 +132,38 @@ Solana offers are always tried first. EVM offers are skipped.
 { "mcpServers": { "three-ws-pay": { "command": "npx", "args": ["@three-ws/cli", "pay", "mcp"] } } }
 ```
 
+## Automation mode
+
+Every command takes `--json` and `--non-interactive`. The CLI is built to be driven by scripts and by other agents.
+
+- `--json`: stdout carries exactly one JSON document and nothing else. Progress, warnings and the human sentence for an error go to stderr. A failure prints `{ "error": "<reason>", "message": "...", "exit": <code> }` on stdout.
+- `--non-interactive` (or `THREE_WS_NON_INTERACTIVE=1`): never prompts and never opens a browser. Missing input is a usage error (exit 2), a missing credential is an auth error (exit 3), and an external skill install without `--yes` is refused (exit 4). Authenticate with `THREE_WS_API_KEY` or `--key`.
+
+| Exit | Meaning |
+| --- | --- |
+| 0 | Success |
+| 1 | Other error (an unknown run, an unexpected server answer) |
+| 2 | Usage: unknown flag or command, missing or malformed input |
+| 3 | Auth: no credential, expired or revoked key, or forbidden |
+| 4 | Refused by a guard: the spend policy, the trade firewall, or an unconfirmed external skill |
+| 5 | Payment required (HTTP 402) |
+| 6 | Network: host unreachable, RPC failure, rate limit or a 5xx |
+
+`three-ws pay` keeps its own stable codes 10 to 14 (see above). They are the one exception to this table.
+
+| Command | Output (`--json`) |
+| --- | --- |
+| `agents list` / `agents get <id\|name>` | Your agents with their Solana address |
+| `runs list --agent <id\|name>` / `runs get <run-id>` | Run history, or one run with steps, tool traces and the receipt chain verdict |
+| `wallet balance [--agent <id\|name>]` | SOL and USDC of the local pay wallet (read from Solana RPC) or of an agent wallet |
+| `skill install <slug> --agent <id>` | Alias of `skills import` |
+| `orders list --agent <id\|name> [--network devnet]` | The agent's order-engine orders |
+| `report run <run-id> --out run.html` | One self-contained HTML report, see below |
+
+### Run report
+
+`three-ws report run <run-id> --out run.html` writes a single file with inline CSS and JS and no network access: the goal, outcome, decisions, trades, every tool call with input, output and receipt, the receipt chain head and the head hash of the agent's decision trail. It opens offline from disk and can be attached to a ticket or an audit. The same generator backs the "Download report" button on the run page. Run `three-ws report run` against a run you own; the decision trail head is fetched best-effort and the report says so when it could not be reached.
+
 ## Grok Bot
 
 Grok Bot's MCP configuration lives in xAI's cloud, so there is no file to write. `setup` handles the rest: it picks the Grok connector (`https://three.ws/api/mcp-grok`), copies the URL to your clipboard when a clipboard tool exists, prints the exact fields for Grok Bot's custom MCP connector, and runs a real `tools/list` against the public URL to prove it answers from outside.

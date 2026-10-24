@@ -19,9 +19,10 @@ import { requestJson } from '../http.js';
 import { readStore, updateStore } from '../store.js';
 import { credentialsPath } from '../paths.js';
 import { answer } from './common.js';
+import { isNonInteractive } from '../automation.js';
 import { c, line, printJson, rows, sym, tildify } from '../ui.js';
 
-const interactive = (ctx) => Boolean(process.stdin.isTTY && process.stderr.isTTY && !ctx.flags.json);
+const interactive = (ctx) => Boolean(process.stdin.isTTY && process.stderr.isTTY && !ctx.flags.json && !isNonInteractive(ctx.flags, ctx.env));
 
 function keystoreFor(ctx) {
 	return createKeystore({

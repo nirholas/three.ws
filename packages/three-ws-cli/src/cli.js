@@ -11,6 +11,7 @@ import { VERSION, ApiError } from './http.js';
 import { c, errorLine, line, printJson } from './ui.js';
 import { CancelledError } from './commands/common.js';
 import { clientsFromFlags } from './commands/quick.js';
+import { CliError, EXIT_CODES, exitCodeFor, isNonInteractive } from './automation.js';
 
 export const HELP = `${c.bold('three-ws')} ${c.dim(`v${VERSION}`)}: connect any MCP client to three.ws
 
@@ -36,7 +37,11 @@ ${c.bold('Commands')}
   mcp list              Show three.ws servers configured in each client (--available lists all servers)
   mcp add <server>      Add one server to your clients without prompts
   mcp remove <server>   Remove one server from your clients
-  skills <sub>          Browse and import community agent skills (list, search, show, import, installed)
+  skills <sub>          Browse and install community agent skills (list, search, show, import|install, installed)
+  agents list|get       Your agents, for scripts: ids, names, pages and wallets
+  runs list|get         An agent's runs (--agent), or one run with its steps, tool calls and receipt chain
+  orders list           An agent's programmable orders (--agent, --network)
+  report run <id>       One run as a single self-contained HTML file (--out report.html)
   proxy <url>           Run a stdio bridge to a hosted server (written into client configs by setup)
   fund                  Top up credits from an agent wallet (--amount, --agent); mints an inference key once
   provider use three-ws Point this machine's model clients at three.ws, billed to your credits
@@ -45,7 +50,7 @@ ${c.bold('Commands')}
   ask "<prompt>"        One completion through the active provider
   pay <url>             Pay an x402 or MPP challenge from a local Solana key, inside pay-permissions.json
   pay init|permissions|mcp  Write the default limits, show them, or run the stdio MCP payer
-  wallet <sub>          The local pay key: init, address, export-public (never prints the private key)
+  wallet <sub>          The local pay key: init, address, export-public, balance (never prints the private key)
   version               Print the version
 
 ${c.bold('Sign-in options')} (setup, login)
@@ -110,6 +115,12 @@ ${c.bold('Pay options')} (pay, wallet)
   Exit codes: 10 outside permissions, 11 needs confirmation, 12 no payable option,
               13 payment rejected, 14 wallet missing or locked. Reason string in --json.
 
+${c.bold('Automation')} (every command)
+  --json                One JSON document on stdout; diagnostics and errors' text go to stderr
+  --non-interactive     Never prompt (also THREE_WS_NON_INTERACTIVE=1); missing input exits 2
+  Exit codes: 0 ok, 1 error, 2 usage, 3 auth, 4 refused by a guard, 5 payment required, 6 network.
+              (\`pay\` keeps its own 10 to 14, listed above.) Full table: docs/cli.md
+
 ${c.bold('Global')}
   --json                Machine-readable output on stdout
   --origin <url>        Talk to another three.ws deployment (or THREE_WS_ORIGIN)
@@ -120,6 +131,8 @@ Docs: https://three.ws/docs/cli`;
 
 const OPTIONS = {
 	json: { type: 'boolean' },
+	'non-interactive': { type: 'boolean' },
+	out: { type: 'string' },
 	origin: { type: 'string' },
 	'no-color': { type: 'boolean' },
 	help: { type: 'boolean', short: 'h' },
@@ -214,7 +227,7 @@ const COMMANDS = {
 		if (sub === 'status') return (await import('./commands/live.js')).agentStatus(next);
 		if (sub === 'create') return (await import('./commands/agent.js')).create(next);
 		if (sub === 'launch') return (await import('./commands/agent.js')).launch(next);
-		throw new Error('usage: three-ws agent <status [id]|create [name]|launch [status <id>]>');
+		throw new CliError(EXIT_CODES.USAGE, 'usage', 'usage: three-ws agent <status [id]|create [name]|launch [status <id>]>');
 	},
 	create: async (ctx) => (await import('./commands/agent.js')).create(ctx),
 	launch: async (ctx) => (await import('./commands/agent.js')).launch(ctx),
@@ -226,6 +239,10 @@ const COMMANDS = {
 		await runProxy({ url, server: ctx.flags.server || null, env: ctx.env });
 		return 0;
 	},
+	agents: async (ctx) => (await import('./commands/automation.js')).agents(ctx),
+	runs: async (ctx) => (await import('./commands/automation.js')).runs(ctx),
+	orders: async (ctx) => (await import('./commands/automation.js')).orders(ctx),
+	report: async (ctx) => (await import('./commands/automation.js')).report(ctx),
 	pay: async (ctx) => (await import('./commands/pay.js')).payCommand(ctx),
 	wallet: async (ctx) => (await import('./commands/wallet.js')).wallet(ctx),
 	fund: async (ctx) => (await import('./commands/inference.js')).fund(ctx),
@@ -243,31 +260,58 @@ const COMMANDS = {
 	},
 };
 
+/**
+ * Print a failure and return its exit code. Under --json stdout carries exactly
+ * one JSON document (the error object) and the human sentence goes to stderr;
+ * otherwise the sentence goes to stderr alone.
+ */
+function failure(err, { json, env }) {
+	const exit = exitCodeFor(err);
+	if (json) {
+		printJson({ error: err.code || 'error', message: err.message, exit, detail: err.detail, status: err instanceof ApiError ? err.status : undefined });
+	}
+	errorLine(err.message);
+	if (env.vars.THREE_WS_DEBUG === '1' && err.stack) process.stderr.write(`${err.stack}\n`);
+	return exit;
+}
+
 export async function main(argv = process.argv.slice(2), env = systemEnv()) {
-	// `skills` owns its own argument grammar (see commands/skills.js).
-	if (argv[0] === 'skills') {
-		const { runSkills } = await import('./commands/skills.js');
-		const originIdx = argv.indexOf('--origin');
-		const { code, output } = await runSkills(argv.slice(1), { env, origin: originIdx > 0 ? argv[originIdx + 1] : undefined });
-		if (output) (code === 0 ? process.stdout : process.stderr).write(`${output}\n`);
-		return code;
+	// `skills` (alias `skill`) owns its own argument grammar (see commands/skills.js).
+	if (argv[0] === 'skills' || argv[0] === 'skill') {
+		const rest = argv.slice(1);
+		const json = rest.includes('--json');
+		try {
+			const { runSkills } = await import('./commands/skills.js');
+			const originIdx = rest.indexOf('--origin');
+			const { code, output } = await runSkills(rest, { env, origin: originIdx >= 0 ? rest[originIdx + 1] : undefined });
+			if (json && code !== 0) {
+				printJson({ error: code === EXIT_CODES.USAGE ? 'usage' : code === EXIT_CODES.GUARD ? 'refused_by_guard' : 'error', message: output, exit: code });
+				return code;
+			}
+			if (output) (code === 0 ? process.stdout : process.stderr).write(`${output}\n`);
+			return code;
+		} catch (err) {
+			return failure(err, { json, env });
+		}
 	}
 	let parsed;
 	try {
 		parsed = parse(argv);
 	} catch (err) {
+		if (argv.includes('--json')) printJson({ error: 'usage', message: err.message, exit: EXIT_CODES.USAGE });
 		errorLine(`${err.message}. Run \`three-ws --help\`.`);
-		return 2;
+		return EXIT_CODES.USAGE;
 	}
 	const { command, positionals, flags } = parsed;
 	if (flags.help && command !== 'help') return COMMANDS.help();
 	const run = COMMANDS[command];
 	if (!run) {
+		if (flags.json) printJson({ error: 'usage', message: `unknown command "${command}"`, exit: EXIT_CODES.USAGE });
 		errorLine(`unknown command "${command}". Run \`three-ws --help\`.`);
-		return 2;
+		return EXIT_CODES.USAGE;
 	}
 	const origin = resolveOrigin({ flag: flags.origin, env, store: readStore(env) });
-	const ctx = { command, positionals, flags, env, origin };
+	const ctx = { command, positionals, flags, env, origin, nonInteractive: isNonInteractive(flags, env) };
 	try {
 		return await run(ctx);
 	} catch (err) {
@@ -275,10 +319,7 @@ export async function main(argv = process.argv.slice(2), env = systemEnv()) {
 			errorLine('Cancelled. Nothing after the last completed step was changed.');
 			return 130;
 		}
-		if (flags.json) printJson({ error: err.code || 'error', message: err.message, exit: err.exit, detail: err.detail, status: err instanceof ApiError ? err.status : undefined });
-		else errorLine(err.message);
-		if (env.vars.THREE_WS_DEBUG === '1' && err.stack) process.stderr.write(`${err.stack}\n`);
-		return Number.isInteger(err.exit) ? err.exit : 1;
+		return failure(err, { json: flags.json, env });
 	}
 }
 

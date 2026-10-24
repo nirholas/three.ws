@@ -23,12 +23,13 @@ import { bearerFor } from '../oauth.js';
 import { readStore, resolveOrigin } from '../store.js';
 import { systemEnv } from '../paths.js';
 import { createInterface } from 'node:readline/promises';
+import { EXIT_CODES, isNonInteractive } from '../automation.js';
 
 export const SKILLS_USAGE = `Usage:
   three-ws skills list [--tag <tag>] [--author <name>] [--json]
   three-ws skills search <query> [--json]
   three-ws skills show <slug> [--json]
-  three-ws skills import <slug> --agent <agent-id> [--disabled] [--yes] [--acknowledge-gated] [--json]
+  three-ws skills import <slug> --agent <agent-id> [--disabled] [--yes] [--acknowledge-gated] [--json]   (alias: install)
   three-ws skills import <openapi-url-or-owner/repo> [--json]
   three-ws skills installed --agent <agent-id> [--json]
   three-ws skills drafts [--json]
@@ -49,6 +50,9 @@ export function isImportUrl(arg) {
 	return typeof arg === 'string' && (/^https?:\/\//i.test(arg) || /^[\w.-]+\/[\w.-]+$/.test(arg));
 }
 
+// Flags that never take a value, so `--json risk-manager` keeps `risk-manager` positional.
+const BOOLEAN_FLAGS = new Set(['json', 'yes', 'disabled', 'acknowledge-gated', 'non-interactive', 'no-color']);
+
 /** Split argv into positionals and --flags (a flag followed by a non-flag takes it as its value). */
 export function parseSkillsArgs(argv) {
 	const positional = [];
@@ -61,10 +65,11 @@ export function parseSkillsArgs(argv) {
 		}
 		const [key, inline] = a.slice(2).split('=', 2);
 		if (inline !== undefined) flags[key] = inline;
-		else if (argv[i + 1] !== undefined && !argv[i + 1].startsWith('--')) flags[key] = argv[++i];
+		else if (!BOOLEAN_FLAGS.has(key) && argv[i + 1] !== undefined && !argv[i + 1].startsWith('--')) flags[key] = argv[++i];
 		else flags[key] = true;
 	}
-	return { sub: positional[0] || 'list', args: positional.slice(1), flags };
+	const sub = positional[0] === 'install' ? 'import' : positional[0] || 'list';
+	return { sub, args: positional.slice(1), flags };
 }
 
 async function authHeaders(env) {
@@ -142,7 +147,7 @@ async function importExternal({ skill, agent, headers, origin, flags, confirm })
 	const notice = externalNotice(skill);
 	if (!flags.yes && !(await confirm(`${notice}\nInstall onto agent ${agent}?`))) {
 		return {
-			code: 1,
+			code: EXIT_CODES.GUARD,
 			output: `${notice}\n\nNot installed. Re-run with --yes to confirm (required when there is no terminal).`,
 		};
 	}
@@ -153,11 +158,11 @@ async function importExternal({ skill, agent, headers, origin, flags, confirm })
 	});
 	const request = scanned.request;
 	if (request.status === 'refused' || request.verdict === 'refused') {
-		return { code: 1, output: `${notice}\n\nThe scan refused this skill (${request.verdict}); it was not installed. Details: ${origin}/skills/import` };
+		return { code: EXIT_CODES.GUARD, output: `${notice}\n\nThe scan refused this skill (${request.verdict}); it was not installed. Details: ${origin}/skills/import` };
 	}
 	if (request.gated && !flags['acknowledge-gated']) {
 		return {
-			code: 1,
+			code: EXIT_CODES.GUARD,
 			output: `${notice}\n\nThis skill asks to spend, sign or send messages. It stays under the spend gate and needs --acknowledge-gated to install. Review the scan at ${origin}/skills/import first.`,
 			request,
 		};
@@ -178,12 +183,13 @@ export async function runSkills(argv, { env = systemEnv(), origin: originFlag, c
 	const { sub, args, flags } = parseSkillsArgs(argv);
 	const origin = resolveOrigin({ flag: originFlag || flags.origin, env, store: readStore(env) });
 	const json = Boolean(flags.json);
+	if (isNonInteractive(flags, env)) confirm = async () => false;
 	const done = (data, text) => ({ code: 0, output: json ? JSON.stringify(data, null, 2) : text });
 
 	if (sub === 'list' || sub === 'search') {
 		const q = new URLSearchParams();
 		if (sub === 'search') {
-			if (!args.length) return { code: 2, output: SKILLS_USAGE };
+			if (!args.length) return { code: EXIT_CODES.USAGE, output: SKILLS_USAGE };
 			q.set('q', args.join(' '));
 		}
 		if (typeof flags.tag === 'string') q.set('tag', flags.tag);
@@ -193,7 +199,7 @@ export async function runSkills(argv, { env = systemEnv(), origin: originFlag, c
 	}
 
 	if (sub === 'show') {
-		if (!args[0]) return { code: 2, output: SKILLS_USAGE };
+		if (!args[0]) return { code: EXIT_CODES.USAGE, output: SKILLS_USAGE };
 		const { skill } = await requestJson(`${origin}/api/skills/community/${encodeURIComponent(args[0])}`);
 		return done(skill, `${skill.name} (${skill.slug} v${skill.version}) by ${skill.author}\n${skill.description}\nTags: ${skill.tags.join(', ')}  ~${skill.tokens} tokens\nSource: ${skill.source_url}\n\n${skill.body}`);
 	}
@@ -235,7 +241,7 @@ export async function runSkills(argv, { env = systemEnv(), origin: originFlag, c
 			const { data } = await requestJson(base, { headers });
 			return done(data, formatInstalled(data));
 		}
-		if (!args[0]) return { code: 2, output: SKILLS_USAGE };
+		if (!args[0]) return { code: EXIT_CODES.USAGE, output: SKILLS_USAGE };
 		try {
 			const { data } = await requestJson(base, {
 				method: 'POST',

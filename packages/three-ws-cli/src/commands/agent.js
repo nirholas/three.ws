@@ -17,6 +17,7 @@
 
 import * as p from '@clack/prompts';
 import { answer, canPrompt, signIn } from './common.js';
+import { CliError, EXIT_CODES } from '../automation.js';
 import { c, line, rows, sym, printJson, shortAddress } from '../ui.js';
 import { bearerFor } from '../oauth.js';
 import { requestJson, ApiError } from '../http.js';
@@ -30,12 +31,13 @@ const COIN_DESCRIPTION_MAX = 500;
 
 /** A bearer for the signed-in account, signing in first when a prompt is allowed. */
 async function requireBearer(ctx) {
+	if (ctx.env.vars.THREE_WS_API_KEY) return ctx.env.vars.THREE_WS_API_KEY;
 	let bearer = await bearerFor(ctx.env, { origin: ctx.origin });
 	if (bearer) return bearer;
-	if (!canPrompt(ctx)) throw new ApiError('sign in first: `npx three-ws login` (or pass --key / set THREE_WS_API_KEY)');
+	if (!canPrompt(ctx)) throw new ApiError('sign in first: `npx three-ws login` (or pass --key / set THREE_WS_API_KEY)', { code: 'login_required' });
 	await signIn(ctx, {});
 	bearer = await bearerFor(ctx.env, { origin: ctx.origin });
-	if (!bearer) throw new ApiError('sign-in did not complete; run `npx three-ws login`');
+	if (!bearer) throw new ApiError('sign-in did not complete; run `npx three-ws login`', { code: 'login_required' });
 	return bearer;
 }
 
@@ -47,7 +49,7 @@ async function ask(ctx, { flag, message, placeholder, max, required = true, vali
 		return given.slice(0, max);
 	}
 	if (!canPrompt(ctx)) {
-		if (required) throw new Error(`${message.toLowerCase()} is required (pass it as a flag)`);
+		if (required) throw new CliError(EXIT_CODES.USAGE, 'missing_input', `${message.toLowerCase()} is required (pass it as a flag)`);
 		return '';
 	}
 	const value = answer(await p.text({

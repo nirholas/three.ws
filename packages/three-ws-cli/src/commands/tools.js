@@ -8,6 +8,7 @@
 
 import * as p from '@clack/prompts';
 import { answer, canPrompt } from './common.js';
+import { CliError, EXIT_CODES } from '../automation.js';
 import { c, line, sym, printJson } from '../ui.js';
 import { readStore, updateStore } from '../store.js';
 import { loadDirectory, hostedServers } from '../servers.js';
@@ -96,7 +97,7 @@ async function chooseServer(ctx, all) {
 		if (!s) throw new Error(`unknown server "${flags.server}". Known: ${all.map((x) => x.slug).join(', ')}`);
 		return s;
 	}
-	if (!canPrompt(ctx)) throw new Error(`pass --server <slug>. Servers: ${all.map((s) => s.slug).join(', ')}`);
+	if (!canPrompt(ctx)) throw new CliError(EXIT_CODES.USAGE, 'missing_input', `pass --server <slug>. Servers: ${all.map((s) => s.slug).join(', ')}`);
 	const store = readStore(ctx.env);
 	const configured = all.filter((s) => store.tools?.[s.slug]);
 	const slug = answer(await p.select({

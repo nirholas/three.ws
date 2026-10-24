@@ -12,6 +12,7 @@
 // kept in ?run= so a replay link from create_agent_run opens straight onto it.
 
 import { apiFetch } from './api.js';
+import { buildRunReport } from '../packages/three-ws-cli/src/report/run-report.js';
 import { emptyStateHTML, errorStateHTML, skeletonHTML } from './shared/state-kit.js';
 
 const POLL_MS = 2500;
@@ -412,6 +413,7 @@ export function mountRunReplay(root, { agentId, agentName = 'This agent', initia
 				<div class="rr-actions">
 					${live && !run.cancelRequested ? '<button type="button" class="rr-btn rr-btn--danger" data-act="cancel">Cancel run</button>' : ''}
 					<button type="button" class="rr-btn" data-act="copy-link">Copy link</button>
+					<button type="button" class="rr-btn" data-act="download-report" title="One self-contained HTML file with the goal, tool calls, decisions, trades, outcome and decision-trail head">Download report</button>
 				</div>
 			</div>
 			<div class="rr-meters">
@@ -535,6 +537,40 @@ export function mountRunReplay(root, { agentId, agentName = 'This agent', initia
 		}
 	}
 
+	async function downloadReport(btn) {
+		const label = btn.textContent;
+		btn.disabled = true;
+		btn.textContent = 'Building report...';
+		try {
+			const { run, steps, toolTraces, receiptChain } = state.detail;
+			let trail = null;
+			try {
+				const res = await apiFetch(`/api/agents/${encodeURIComponent(agentId)}/decision-trail/verify`);
+				if (res.ok) trail = await res.json();
+			} catch {
+				trail = null;
+			}
+			const html = buildRunReport({ run, steps, toolTraces: toolTraces || [], receiptChain, trail, origin: location.origin });
+			const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `run-${run.id}.html`;
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			setTimeout(() => URL.revokeObjectURL(url), 4000);
+			btn.textContent = 'Report saved';
+		} catch (err) {
+			btn.textContent = 'Report failed, retry';
+			btn.title = err.message;
+		} finally {
+			btn.disabled = false;
+			setTimeout(() => {
+				if (btn.isConnected) btn.textContent = label;
+			}, 2200);
+		}
+	}
+
 	root.addEventListener('click', (e) => {
 		const item = e.target.closest('.rr-item');
 		if (item) return selectRun(item.dataset.run);
@@ -553,6 +589,7 @@ export function mountRunReplay(root, { agentId, agentName = 'This agent', initia
 			else renderNoSelection();
 		} else if (a === 'cancel') cancel(act);
 		else if (a === 'replay') toggleReplay(act);
+		else if (a === 'download-report') downloadReport(act);
 		else if (a === 'copy-link') {
 			const url = new URL(location.href);
 			url.searchParams.set('view', 'runs');
