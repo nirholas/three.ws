@@ -178,9 +178,7 @@ function main() {
 		);
 		console.log('');
 	}
-	console.log(
-		`Users then install with:\n  npx skills add ${OWNER}/${built[0].spec.repo}\n  /plugin marketplace add ${OWNER}/${built[0].spec.repo}`,
-	);
+	console.log(`Users then install with:\n  /plugin marketplace add ${OWNER}/${built[0].spec.repo}`);
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -262,14 +260,7 @@ deciding to load it.
 
 ## Install
 
-Any agent runtime that reads the open Agent Skills layout (Claude Code, Codex, Cursor and
-others), one command:
-
-\`\`\`bash
-npx skills add ${OWNER}/${spec.repo}
-\`\`\`
-
-In Claude Code, as a plugin:
+In Claude Code:
 
 \`\`\`
 /plugin marketplace add ${OWNER}/${spec.repo}

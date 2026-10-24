@@ -5,7 +5,7 @@ when_to_use: A site or app (any framework, or plain HTML) should display or cont
 license: MIT
 metadata:
   category: 3d/creative
-  cross-platform-safe: "true"
+  cross-platform-safe: true
   pack: three-ws-skills
 ---
 

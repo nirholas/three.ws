@@ -55,6 +55,9 @@ Each agent stores its perps policy in `agent_identities.meta.perps_limits` (`api
 | `max_margin_per_position_usd` | `25` | `100000` | The margin one position ties up at the leverage cap (position notional over the cap) |
 | `max_slippage_bps` | `100` | `1000` | How far a market order may walk the book from the mark |
 | `max_quote_move_bps` | `50` | `500` | How far entry or liquidation may move between preview and execute |
+| `max_notional_usd` | `500` | `10000000` | The largest position notional one order may leave open |
+| `min_liquidation_distance_pct` | `10` | | The nearest an order may leave the liquidation price to the entry, in percent |
+| `mcp_enabled` | `false` | | Whether MCP clients may use this agent's `perps_*` tools at all (opt-in, owner only) |
 | `halted` | `false` | | The perps kill switch. While on, risk-increasing orders are refused |
 | `alert_liquidation_distance_pct` | `15` | | Alert when a position's mark is within this percent of its liquidation price |
 | `alert_loss_usd`, `alert_gain_usd`, `alert_funding_usd` | `null` (off) | | Alert on total unrealized PnL, or funding paid by one position |
@@ -73,10 +76,12 @@ Every order preview runs these checks and returns each one with `ok` and a plain
 6. **Position margin**: the position's notional over the leverage cap fits the per-position margin cap.
 7. **Free collateral**: the account keeps non-negative free collateral after the fill.
 8. **Slippage**: the walk off the book is within `max_slippage_bps`.
+9. **Notional**: the resulting position notional is within `max_notional_usd` (`max_notional_exceeded`).
+10. **Liquidation distance**: the liquidation price stays at least `min_liquidation_distance_pct` away (`liquidation_too_close`).
 
-In live mode the preview adds two more: the trader account exists, and the wallet holds SOL for fees. Deposits also run the wallet-wide spend policy (per-transaction and daily USD caps, rules and the anomaly guard).
+In live mode the preview adds venue checks: on Solana venues the trader account exists and the wallet holds SOL for fees; on Hyperliquid an approved API wallet must be linked (`api_wallet_missing`). Deposits also run the wallet-wide spend policy (per-transaction and daily USD caps, rules and the anomaly guard).
 
-Checks 2 through 8 apply only to orders that **increase** risk. A reduce-only order, a take-profit, a stop-loss, a close or a flatten always goes through, so an owner can get out of any position whatever the switches say.
+Checks 2 through 10 apply only to orders that **increase** risk. A reduce-only order, a take-profit, a stop-loss, a close or a flatten always goes through, so an owner can get out of any position whatever the switches say.
 
 ---
 
@@ -158,7 +163,7 @@ The same cron keeps paper desks honest while you are away: it settles funding, f
 
 ## REST reference
 
-All routes live under `/api/v1/agents/:id/perps` in the standard v1 envelope (`{ ok, data }` or `{ ok: false, error: { code, message, details } }`). Every route takes an optional `venue` (default `phoenix`). Agent routes take `mode` (`paper` or `live`, default: live if enabled, else paper).
+All routes live under `/api/v1/agents/:id/perps` in the standard v1 envelope (`{ ok, data }` or `{ ok: false, error: { code, message, details } }`). Every route takes an optional `venue` (`phoenix`, `jupiter` or `hyperliquid`; default `phoenix`). An unpinned `/markets` read fails over to another healthy venue if the default is down; a pinned read, and every live order, never reroutes. Agent routes take `mode` (`paper` or `live`, default: live if enabled, else paper).
 
 | Method | Path | Auth | What it does |
 | --- | --- | --- | --- |
@@ -169,6 +174,8 @@ All routes live under `/api/v1/agents/:id/perps` in the standard v1 envelope (`{
 | GET | `/executions` | `wallet:read` | Every execute this platform ran for the agent, with signatures |
 | GET | `/alerts` | `wallet:read` | Alerts delivered recently |
 | GET | `/stream` | `wallet:read` | The live tracker (server-sent events) |
+| GET | `/venues` | public | Every venue with its chain, execution kind and capabilities |
+| GET / PUT / DELETE | `/hyperliquid` | `wallet:read` / session | Status, link (mints the API wallet) or unlink Hyperliquid |
 | GET / PUT | `/limits` | `wallet:read` / `wallet:write` | Read the policy (with the defaults), or patch it. Loosening needs the owner's session |
 | POST | `/order/preview`, `/order` | `wallet:read`, `wallet:write` | Preview and execute an order |
 | POST | `/deposit/preview`, `/deposit` | `wallet:read`, `wallet:write` | Move USDC from the agent wallet into collateral (`amount_usd`) |
@@ -176,7 +183,7 @@ All routes live under `/api/v1/agents/:id/perps` in the standard v1 envelope (`{
 | POST | `/cancel/preview`, `/cancel` | `wallet:read`, `wallet:write` | Cancel a limit, take-profit or stop-loss (`order_id`, optional `kind`) |
 | POST | `/flatten/preview`, `/flatten` | `wallet:read`, `wallet:write` | The kill switch |
 
-Common error codes: `live_disabled`, `risk_ack_required`, `perps_halted`, `trade_kill_switch`, `wallet_frozen`, `leverage_cap_exceeded`, `position_margin_exceeded`, `insufficient_collateral`, `slippage_too_high`, `quote_moved`, `confirmation_required`, `idempotency_key_required`, `owner_session_required`, `unknown_venue`.
+Common error codes: `live_disabled`, `risk_ack_required`, `perps_halted`, `trade_kill_switch`, `wallet_frozen`, `leverage_cap_exceeded`, `position_margin_exceeded`, `insufficient_collateral`, `slippage_too_high`, `quote_moved`, `confirmation_required`, `idempotency_key_required`, `owner_session_required`, `max_notional_exceeded`, `liquidation_too_close`, `api_wallet_missing`, `mcp_not_enabled`, `not_supported_on_venue`, `unknown_venue`.
 
 ---
 
@@ -188,13 +195,40 @@ The `perps_*` tools on `/api/mcp-agent` are thin adapters over the same service.
 
 ## Venues
 
+Three venues are registered. `GET /venues` returns each one's `chain`, `execution` kind and `capabilities`:
+
+| Venue | Chain | Execution | Notes |
+| --- | --- | --- | --- |
+| `phoenix` | Solana | `instructions` | On-chain order book. Market, limit, take-profit, stop-loss. The platform compiles, simulates, signs and sends the instructions |
+| `jupiter` | Solana | `transaction` | Oracle priced with an impact fee, no book. SOL, BTC and ETH markets, up to 250x on the venue. The venue returns an unsigned transaction that the platform simulates within bounds, signs and submits. Longs post the market token as collateral, shorts post USDC |
+| `hyperliquid` | Hyperliquid (secondary) | `api_wallet` | 178 markets. Market and limit orders and cancels. The platform signs an L1 action with a per-agent API wallet. Deposit, withdraw and conditional orders are not supported |
+
+Solana leads: Phoenix stays the default. Operations a venue cannot do throw `not_supported_on_venue`.
+
+### Hyperliquid API wallet
+
+1. `PUT /hyperliquid` with the owner session and the Hyperliquid account address. The platform generates a key for the agent, stores it sealed in the agent record, and returns the API wallet address.
+2. The owner approves that address at https://app.hyperliquid.xyz/API. An API wallet can trade but can never withdraw.
+3. `GET /hyperliquid` reports `approved` once the venue lists the address (`extraAgents`). Live orders stay blocked with `api_wallet_missing` until then. `DELETE /hyperliquid` removes the key.
+
+### MCP opt-in
+
+MCP clients see no `perps_*` tools for an agent until the owner turns `mcp_enabled` on from a signed-in session. While off, `tools/list` hides them and calls are refused with `mcp_not_enabled`. `perps_limits` stays readable.
+
+### Live check
+
+`node scripts/perps-venue-probe.mjs` reads each venue live (ping, market count, a quote) and runs a Hyperliquid testnet signing check that proves the venue recovers the platform's signer address. Sample on 2026-10-24: Phoenix 99 markets, Jupiter 3, Hyperliquid 178; SOL quotes within 0.1 of each other.
+
+### Contract
+
 A venue is a module that implements the contract in `api/_lib/perps/index.js` (`VENUE_CONTRACT`):
 
 - **reads**: `listMarkets`, `getMarket`, `getMarketData`, `getAccount`;
 - **pricing**: `quoteOrder`;
-- **instruction builders**: `buildDeposit`, `buildWithdraw`, `buildOrder`, `buildCancel`, `buildFlatten`.
+- **builders**: `buildDeposit`, `buildWithdraw`, `buildOrder`, `buildCancel`, `buildFlatten`;
+- **metadata**: `chain`, `execution`, `capabilities`, `accountRef`, `ping`.
 
-A venue never signs. It returns Solana instructions, and the service simulates them, signs with the agent wallet and confirms. Every registered venue is checked against the contract by `tests/perps-desk.test.js`, so a second venue is one module and one line in the registry. The paper engine needs nothing venue-specific beyond those reads and `quoteOrder`.
+A venue never signs. It returns instructions, an unsigned transaction or an action, and the service simulates, signs and lands it according to `execution`. Every registered venue is checked against the contract by `tests/perps-desk.test.js`, so a second venue is one module and one line in the registry. The paper engine needs nothing venue-specific beyond those reads and `quoteOrder`.
 
 ### Venue selection
 
@@ -219,5 +253,7 @@ Every instruction the module builds was verified on mainnet with `simulateTransa
 - paper fills (add, partial close, flip, flat), funding, limit crossing and triggers;
 - paper liquidation, against the venue SDK's own formula;
 - alert evaluation and dedupe.
+
+`tests/perps-venues.test.js` covers the Jupiter and Hyperliquid normalizers, the msgpack encoder against a reference, signature recovery, the new guards and failover. `tests/perps-mcp-permission.test.js` covers the MCP opt-in.
 
 To exercise the whole flow end to end, use paper mode on a test agent: deposit, preview, execute, attach a take-profit and a stop-loss, then flatten. Never open a live position from a test.

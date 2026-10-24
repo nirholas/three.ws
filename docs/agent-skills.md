@@ -240,15 +240,6 @@ marketplace of one plugin:
 /plugin install three-ws-3d@three-ws-3d
 ```
 
-Each repo also installs on any runtime that reads the open Agent Skills layout (Claude
-Code, Codex, Cursor and others) with the open-standard installer, which finds the
-`skills/` folder and copies every skill into the runtime's skills directory:
-
-```bash
-npx skills add nirholas/three-ws-skills                 # all skills
-npx skills add nirholas/three-ws-3d-skills --skill '*'  # non-interactive, every skill
-```
-
 **They are generated, never hand-maintained.** `npm run build:skill-repos` assembles each
 one into `.data/standalone-repos/<repo>/` (gitignored) straight from `.agents/skills/`,
 using the same `collectSkills()` the pack manifest uses, and writes the
@@ -261,24 +252,6 @@ folders.
 anything (it fails if a selector stops matching any skill, or a selected skill has no
 `SKILL.md`) and is wired into `npm run gate`, alongside `npm run check:skills-pack` which
 fails when `SKILLS.md` / `skills-pack.json` are stale.
-
-`npm run check:skills-spec` validates every skill folder against the
-[Agent Skills specification](https://agentskills.io/specification) with a real YAML
-parser (name equals folder and is 1-64 lowercase letters, digits and single hyphens;
-description 1-1024 chars; `metadata` is a string-to-string map; `allowed-tools` is a
-space-separated string; no unknown fields; body under 500 lines). It is wired into
-`npm run gate`. Findings in vendored partner skills are printed as warnings and do not
-fail the run, since those folders stay byte-identical to their publishers. Two things
-bit native skills before the validator existed: an unquoted `: ` inside a description
-makes the frontmatter invalid YAML (use a `>-` block), and `cross-platform-safe: true`
-must be the string `"true"` because metadata values are strings.
-
-`npm run test:skills-install` is the end-to-end check: it builds the repos, runs
-`npx skills add <staged repo> --list` and a full non-interactive install into a clean
-temporary project per repo, and fails unless every promised skill is both listed by the
-installer and present as `.claude/skills/<name>/SKILL.md`. It needs network access for
-`npx` to fetch the installer. Listing copy for skill directories is drafted in
-[skill-directory-listings.md](skill-directory-listings.md).
 
 Vendored partner skills are deliberately excluded from every standalone repo: they belong
 to their publishers, and the `ops/production` skill is for maintainers of this repo rather

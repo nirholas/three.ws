@@ -5,7 +5,7 @@ when_to_use: The demand side of the three.ws marketplace. To sell instead of buy
 license: MIT
 metadata:
   category: platform/agents
-  cross-platform-safe: "false"
+  cross-platform-safe: false
   pack: three-ws-skills
 ---
 

@@ -5,7 +5,7 @@ when_to_use: The user wants an agent that exists on three.ws (a record with a pa
 license: MIT
 metadata:
   category: platform/agents
-  cross-platform-safe: "false"
+  cross-platform-safe: false
   pack: three-ws-skills
 ---
 

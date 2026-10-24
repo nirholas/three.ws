@@ -30,10 +30,32 @@ import {
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { solanaRpcEndpoints, isEndpointCooling } from '../solana/connection.js';
 import { perpsError } from './errors.js';
+import { num, round, memo, normalizeBook, estimateFill, projectPosition } from './venue-common.js';
+
+export { normalizeBook, estimateFill, projectPosition };
 
 export const id = 'phoenix';
 export const label = 'Solana on-chain order book';
 export const collateral = Object.freeze({ asset: 'USDC', decimals: 6 });
+export const chain = 'solana';
+export const execution = 'instructions';
+export const capabilities = Object.freeze({
+	order_types: Object.freeze(['market', 'limit', 'take_profit', 'stop_loss']),
+	conditional_orders: true,
+	trader_account: true,
+	deposit_withdraw: true,
+	cancel: true,
+	order_book: true,
+});
+
+/** The Phoenix trader authority is the agent's own Solana wallet. */
+export const accountRef = ({ wallet }) => wallet;
+
+export async function ping() {
+	const t0 = Date.now();
+	await listMarkets();
+	return { latency_ms: Date.now() - t0 };
+}
 
 const QUOTE_UNITS_PER_USD = 1_000_000;
 const TRADER_PDA_INDEX = 0;
@@ -68,33 +90,6 @@ function client() {
 
 // ── small helpers ────────────────────────────────────────────────────────────
 
-const _memo = new Map();
-async function memo(key, ttlMs, fn) {
-	const hit = _memo.get(key);
-	if (hit && (hit.promise || Date.now() - hit.at < ttlMs)) return hit.promise || hit.value;
-	const promise = fn().then(
-		(value) => {
-			_memo.set(key, { at: Date.now(), value });
-			return value;
-		},
-		(err) => {
-			if (hit?.value !== undefined) _memo.set(key, hit);
-			else _memo.delete(key);
-			throw err;
-		},
-	);
-	_memo.set(key, { ...(hit || {}), promise });
-	return promise;
-}
-
-const num = (v) => {
-	if (v == null || v === '') return null;
-	const n = typeof v === 'object' && v !== null && 'ui' in v ? Number(v.ui) : Number(v);
-	return Number.isFinite(n) ? n : null;
-};
-
-const round = (n, dp = 6) => (n == null || !Number.isFinite(n) ? null : Math.round(n * 10 ** dp) / 10 ** dp);
-
 /** Map a venue HTTP failure to a PerpsError: 4xx is a refusal, anything else is an outage. */
 async function venueCall(what, fn) {
 	try {
@@ -104,11 +99,21 @@ async function venueCall(what, fn) {
 		const status = Number(err?.status);
 		const venueMessage = (err?.body && typeof err.body === 'object' && err.body.error) || null;
 		if (err instanceof PhoenixHttpError && status >= 400 && status < 500) {
-			throw perpsError(422, 'venue_rejected', `The venue refused to ${what}: ${venueMessage || err.message}`, { venue_status: status });
+			throw perpsError(
+				422,
+				'venue_rejected',
+				`The venue refused to ${what}: ${venueMessage || err.message}`,
+				{ venue_status: status },
+			);
 		}
-		throw perpsError(502, 'venue_unavailable', `The venue did not answer while trying to ${what}. Nothing was signed; retry in a moment.`, {
-			cause: String(venueMessage || err?.message || err).slice(0, 240),
-		});
+		throw perpsError(
+			502,
+			'venue_unavailable',
+			`The venue did not answer while trying to ${what}. Nothing was signed; retry in a moment.`,
+			{
+				cause: String(venueMessage || err?.message || err).slice(0, 240),
+			},
+		);
 	}
 }
 
@@ -134,7 +139,11 @@ export function toWeb3Instruction(ix) {
 function registerIxToWeb3(ix) {
 	return new TransactionInstruction({
 		programId: new PublicKey(ix.programId),
-		keys: ix.keys.map((k) => ({ pubkey: new PublicKey(k.pubkey), isSigner: k.isSigner, isWritable: k.isWritable })),
+		keys: ix.keys.map((k) => ({
+			pubkey: new PublicKey(k.pubkey),
+			isSigner: k.isSigner,
+			isWritable: k.isWritable,
+		})),
 		data: Buffer.from(ix.data),
 	});
 }
@@ -191,7 +200,8 @@ export function normalizeMarket(config, stats) {
 		// Margin as a fraction of notional: initial is one over max leverage,
 		// maintenance is the venue's maintenance share of that initial margin.
 		initial_margin_rate: p.maxLeverage > 0 ? round(1 / p.maxLeverage, 8) : null,
-		maintenance_margin_rate: p.maxLeverage > 0 ? round(p.maintenanceBps / 10_000 / p.maxLeverage, 8) : null,
+		maintenance_margin_rate:
+			p.maxLeverage > 0 ? round(p.maintenanceBps / 10_000 / p.maxLeverage, 8) : null,
 		taker_fee_rate: p.takerFee,
 		maker_fee_rate: p.makerFee,
 		min_size: p.sizeStep,
@@ -204,12 +214,16 @@ export function normalizeMarket(config, stats) {
 }
 
 async function marketConfigs() {
-	return memo('configs', MARKETS_TTL_MS, () => venueCall('list markets', () => client().api.markets().getMarkets()));
+	return memo('configs', MARKETS_TTL_MS, () =>
+		venueCall('list markets', () => client().api.markets().getMarkets()),
+	);
 }
 
 async function marketStats() {
 	return memo('stats', STATS_TTL_MS, async () => {
-		const res = await venueCall('read market stats', () => client().api.markets().getLatestMarketsStats());
+		const res = await venueCall('read market stats', () =>
+			client().api.markets().getLatestMarketsStats(),
+		);
 		return new Map((res.markets || []).map((s) => [s.symbol, s]));
 	});
 }
@@ -218,7 +232,12 @@ async function configFor(symbol) {
 	const sym = normalizeSymbol(symbol);
 	const config = (await marketConfigs()).find((m) => m.symbol === sym);
 	if (!config) {
-		throw perpsError(404, 'unknown_market', `No perps market "${symbol}". Call perps_markets for the list.`, { symbol });
+		throw perpsError(
+			404,
+			'unknown_market',
+			`No perps market "${symbol}". Call perps_markets for the list.`,
+			{ symbol },
+		);
 	}
 	return config;
 }
@@ -248,57 +267,11 @@ export async function getMarket(symbol) {
 
 // ── market data ──────────────────────────────────────────────────────────────
 
-/** Pure: venue book levels ([price, size][]) into the interface's book shape. */
-export function normalizeBook(raw, depth = 20) {
-	const toLevels = (rows) =>
-		(Array.isArray(rows) ? rows : [])
-			.slice(0, depth)
-			.map(([price, size]) => ({ price: Number(price), size: Number(size) }))
-			.filter((l) => Number.isFinite(l.price) && Number.isFinite(l.size) && l.size > 0);
-	const bids = toLevels(raw?.bids);
-	const asks = toLevels(raw?.asks);
-	const bestBid = bids[0]?.price ?? null;
-	const bestAsk = asks[0]?.price ?? null;
-	const mid = bestBid != null && bestAsk != null ? (bestBid + bestAsk) / 2 : bestBid ?? bestAsk;
-	return {
-		slot: raw?.slot ?? null,
-		bids,
-		asks,
-		best_bid: bestBid,
-		best_ask: bestAsk,
-		mid,
-		spread_bps: bestBid != null && bestAsk != null && mid ? round(((bestAsk - bestBid) / mid) * 10_000, 2) : null,
-	};
-}
-
-/**
- * Pure: walk one side of a book to fill `size` base units.
- * @param {{price:number,size:number}[]} levels best price first
- */
-export function estimateFill(levels, size) {
-	let remaining = size;
-	let notional = 0;
-	let worst = null;
-	for (const l of levels) {
-		if (remaining <= 0) break;
-		const take = Math.min(remaining, l.size);
-		notional += take * l.price;
-		remaining -= take;
-		worst = l.price;
-	}
-	const filled = size - Math.max(0, remaining);
-	return {
-		filled: round(filled, 10),
-		complete: remaining <= 1e-12,
-		avg_price: filled > 0 ? notional / filled : null,
-		worst_price: worst,
-		notional_usd: notional,
-	};
-}
-
 async function orderbook(symbol, depth = 50) {
 	const config = await configFor(symbol);
-	const raw = await venueCall('read the order book', () => client().api.orderbook().getOrderbook(config.symbol));
+	const raw = await venueCall('read the order book', () =>
+		client().api.orderbook().getOrderbook(config.symbol),
+	);
 	return normalizeBook(raw, depth);
 }
 
@@ -319,7 +292,10 @@ export function normalizeTrades(rows) {
 /** Pure: venue funding history rows (seconds + percent strings) into funding points. */
 export function normalizeFunding(rows) {
 	return (Array.isArray(rows) ? rows : [])
-		.map((r) => ({ time: new Date(Number(r.timestamp) * 1000).toISOString(), rate_hourly_pct: Number(r.fundingRatePercentage) }))
+		.map((r) => ({
+			time: new Date(Number(r.timestamp) * 1000).toISOString(),
+			rate_hourly_pct: Number(r.fundingRatePercentage),
+		}))
 		.filter((r) => Number.isFinite(r.rate_hourly_pct));
 }
 
@@ -328,8 +304,16 @@ export async function getMarketData(symbol, { depth = 20, trades = 30, funding =
 	const [book, fills, fundingHistory] = await Promise.all([
 		orderbook(market.symbol, depth),
 		// A zero count skips that read: the venue refuses limit 0.
-		trades > 0 ? venueCall('read recent trades', () => client().api.trades().getMarketFills(market.symbol, { limit: trades })) : null,
-		funding > 0 ? venueCall('read funding history', () => client().api.funding().getFundingRateHistory(market.symbol, { limit: funding })) : null,
+		trades > 0
+			? venueCall('read recent trades', () =>
+					client().api.trades().getMarketFills(market.symbol, { limit: trades }),
+				)
+			: null,
+		funding > 0
+			? venueCall('read funding history', () =>
+					client().api.funding().getFundingRateHistory(market.symbol, { limit: funding }),
+				)
+			: null,
 	]);
 	const { params, ...pub } = market;
 	return {
@@ -352,9 +336,18 @@ const sideOf = (v) => {
  * plus the raw state snapshot (orders with exact ticks, conditional triggers),
  * as the interface's account shape.
  */
-export function normalizeAccount({ authority, traderAccount, view, snapshot, marks = new Map(), configs = [] }) {
+export function normalizeAccount({
+	authority,
+	traderAccount,
+	view,
+	snapshot,
+	marks = new Map(),
+	configs = [],
+}) {
 	const bySymbol = new Map(configs.map((c) => [c.symbol, c]));
-	const sub = snapshot?.snapshot?.subaccounts?.find((s) => s.subaccountIndex === CROSS_SUBACCOUNT) || null;
+	const sub =
+		snapshot?.snapshot?.subaccounts?.find((s) => s.subaccountIndex === CROSS_SUBACCOUNT) ||
+		null;
 
 	const positions = (view?.positions || [])
 		.map((p) => {
@@ -373,7 +366,8 @@ export function normalizeAccount({ authority, traderAccount, view, snapshot, mar
 				notional_usd: round(size * (mark ?? num(p.entryPrice) ?? 0), 2),
 				unrealized_pnl_usd: round(num(p.unrealizedPnl), 4),
 				liquidation_price: liq && liq > 0 ? liq : null,
-				liquidation_distance_pct: liq && liq > 0 && mark ? round((Math.abs(mark - liq) / mark) * 100, 2) : null,
+				liquidation_distance_pct:
+					liq && liq > 0 && mark ? round((Math.abs(mark - liq) / mark) * 100, 2) : null,
 				initial_margin_usd: round(num(p.initialMargin), 4),
 				maintenance_margin_usd: round(num(p.maintenanceMargin), 4),
 				funding_accrued_usd: round(num(p.accumulatedFunding), 4),
@@ -406,18 +400,55 @@ export function normalizeAccount({ authority, traderAccount, view, snapshot, mar
 	const pushTriggers = (symbol, row) => {
 		const config = bySymbol.get(symbol);
 		const params = config ? marketParams(config) : null;
-		const usd = (ticks) => (params && ticks != null ? ticksToUsdWithMarketParams(ticks, params) : null);
+		const usd = (ticks) =>
+			params && ticks != null ? ticksToUsdWithMarketParams(ticks, params) : null;
 		for (const t of row.conditionalTakeProfitTriggers || []) {
-			conditionals.push({ id: String(t.conditionalTakeProfitId), symbol, kind: 'take_profit', trigger_price: usd(t.trigger?.triggerPriceTicks), execution_price: usd(t.trigger?.executionPriceTicks), side: sideOf(t.trigger?.side), status: t.status, cancellable: true });
+			conditionals.push({
+				id: String(t.conditionalTakeProfitId),
+				symbol,
+				kind: 'take_profit',
+				trigger_price: usd(t.trigger?.triggerPriceTicks),
+				execution_price: usd(t.trigger?.executionPriceTicks),
+				side: sideOf(t.trigger?.side),
+				status: t.status,
+				cancellable: true,
+			});
 		}
 		for (const t of row.conditionalStopLossTriggers || []) {
-			conditionals.push({ id: String(t.conditionalStopLossId), symbol, kind: 'stop_loss', trigger_price: usd(t.trigger?.triggerPriceTicks), execution_price: usd(t.trigger?.executionPriceTicks), side: sideOf(t.trigger?.side), status: t.status, cancellable: true });
+			conditionals.push({
+				id: String(t.conditionalStopLossId),
+				symbol,
+				kind: 'stop_loss',
+				trigger_price: usd(t.trigger?.triggerPriceTicks),
+				execution_price: usd(t.trigger?.executionPriceTicks),
+				side: sideOf(t.trigger?.side),
+				status: t.status,
+				cancellable: true,
+			});
 		}
 		for (const t of row.takeProfitTriggers || []) {
-			conditionals.push({ id: String(t.takeProfitId), symbol, kind: 'take_profit', trigger_price: usd(t.trigger?.triggerPriceTicks), execution_price: usd(t.trigger?.executionPriceTicks), side: sideOf(t.trigger?.side), status: t.status, cancellable: false });
+			conditionals.push({
+				id: String(t.takeProfitId),
+				symbol,
+				kind: 'take_profit',
+				trigger_price: usd(t.trigger?.triggerPriceTicks),
+				execution_price: usd(t.trigger?.executionPriceTicks),
+				side: sideOf(t.trigger?.side),
+				status: t.status,
+				cancellable: false,
+			});
 		}
 		for (const t of row.stopLossTriggers || []) {
-			conditionals.push({ id: String(t.stopLossId), symbol, kind: 'stop_loss', trigger_price: usd(t.trigger?.triggerPriceTicks), execution_price: usd(t.trigger?.executionPriceTicks), side: sideOf(t.trigger?.side), status: t.status, cancellable: false });
+			conditionals.push({
+				id: String(t.stopLossId),
+				symbol,
+				kind: 'stop_loss',
+				trigger_price: usd(t.trigger?.triggerPriceTicks),
+				execution_price: usd(t.trigger?.executionPriceTicks),
+				side: sideOf(t.trigger?.side),
+				status: t.status,
+				cancellable: false,
+			});
 		}
 	};
 	for (const p of sub?.positions || []) pushTriggers(p.symbol, p);
@@ -454,7 +485,11 @@ export function normalizeAccount({ authority, traderAccount, view, snapshot, mar
 }
 
 async function traderAddress(authority) {
-	return client().pda.getTraderAddress({ authority, traderPdaIndex: TRADER_PDA_INDEX, subaccountIndex: CROSS_SUBACCOUNT });
+	return client().pda.getTraderAddress({
+		authority,
+		traderPdaIndex: TRADER_PDA_INDEX,
+		subaccountIndex: CROSS_SUBACCOUNT,
+	});
 }
 
 export async function getAccount(authority) {
@@ -495,7 +530,9 @@ export async function getAccount(authority) {
 export async function prepareAccount(authority) {
 	const traderAccount = await traderAddress(authority);
 	const res = await venueCall('build the account registration', () =>
-		client().api.exchange().buildRegisterIxs({ traderAuthority: authority, txFeePayer: authority }),
+		client()
+			.api.exchange()
+			.buildRegisterIxs({ traderAuthority: authority, txFeePayer: authority }),
 	);
 	return {
 		trader_account: res.traderPda || traderAccount,
@@ -509,7 +546,13 @@ export async function prepareAccount(authority) {
 /** Send a registration transaction the agent has signed; the venue co-signs and submits it. */
 export async function submitPrepare({ authority, transactionBase64 }) {
 	const res = await venueCall('submit the account registration', () =>
-		client().api.exchange().sendRegisterIxs({ transaction: transactionBase64, traderAuthority: authority, txFeePayer: authority }),
+		client()
+			.api.exchange()
+			.sendRegisterIxs({
+				transaction: transactionBase64,
+				traderAuthority: authority,
+				txFeePayer: authority,
+			}),
 	);
 	return { signature: res.signature, trader_account: res.traderPda };
 }
@@ -521,7 +564,12 @@ const toQuoteUnits = (usd) => BigInt(Math.floor(Number(usd) * QUOTE_UNITS_PER_US
 /** USDC from the agent wallet into trader collateral (one transaction, venue-converted). */
 export async function buildDeposit(authority, amountUsd) {
 	const res = await venueCall('build the collateral deposit', () =>
-		client().ixs.buildDepositIxs({ authority, amount: toQuoteUnits(amountUsd), traderPdaIndex: TRADER_PDA_INDEX, traderSubaccountIndex: CROSS_SUBACCOUNT }),
+		client().ixs.buildDepositIxs({
+			authority,
+			amount: toQuoteUnits(amountUsd),
+			traderPdaIndex: TRADER_PDA_INDEX,
+			traderSubaccountIndex: CROSS_SUBACCOUNT,
+		}),
 	);
 	return res.instructions.map(toWeb3Instruction);
 }
@@ -529,7 +577,12 @@ export async function buildDeposit(authority, amountUsd) {
 /** Trader collateral back to USDC in the agent wallet. */
 export async function buildWithdraw(authority, amountUsd) {
 	const res = await venueCall('build the collateral withdrawal', () =>
-		client().ixs.buildWithdrawIxs({ authority, amount: toQuoteUnits(amountUsd), traderPdaIndex: TRADER_PDA_INDEX, traderSubaccountIndex: CROSS_SUBACCOUNT }),
+		client().ixs.buildWithdrawIxs({
+			authority,
+			amount: toQuoteUnits(amountUsd),
+			traderPdaIndex: TRADER_PDA_INDEX,
+			traderSubaccountIndex: CROSS_SUBACCOUNT,
+		}),
 	);
 	return res.instructions.map(toWeb3Instruction);
 }
@@ -548,7 +601,12 @@ export function sizeToLots(size, params) {
 export function priceToTick(price, params, mode = 'nearest') {
 	const tick = params.tickUsd;
 	const steps = Number(price) / tick;
-	const n = mode === 'up' ? Math.ceil(steps - 1e-9) : mode === 'down' ? Math.floor(steps + 1e-9) : Math.round(steps);
+	const n =
+		mode === 'up'
+			? Math.ceil(steps - 1e-9)
+			: mode === 'down'
+				? Math.floor(steps + 1e-9)
+				: Math.round(steps);
 	const dp = Math.max(0, Math.ceil(-Math.log10(tick)));
 	return Number((n * tick).toFixed(dp));
 }
@@ -557,20 +615,6 @@ export function priceToTick(price, params, mode = 'nearest') {
  * Pure: apply a fill of `delta` base units (signed) at `price` to a position of
  * `size` (signed) held at `entry`. Handles adding, reducing, closing and flipping.
  */
-export function projectPosition({ size = 0, entry = 0, delta, price }) {
-	const next = size + delta;
-	if (size === 0 || Math.sign(size) === Math.sign(delta)) {
-		const total = Math.abs(size) + Math.abs(delta);
-		return { size: next, entry: total ? (Math.abs(size) * entry + Math.abs(delta) * price) / total : 0, realized_pnl: 0 };
-	}
-	const closing = Math.min(Math.abs(size), Math.abs(delta));
-	const realized = closing * (price - entry) * Math.sign(size);
-	if (Math.abs(delta) <= Math.abs(size) + 1e-12) {
-		return { size: Math.abs(next) < 1e-12 ? 0 : next, entry: Math.abs(next) < 1e-12 ? 0 : entry, realized_pnl: realized };
-	}
-	return { size: next, entry: price, realized_pnl: realized };
-}
-
 /**
  * Quote an order against the live book and the agent's live account. Returns
  * every number the guards and the confirmation screen need.
@@ -585,15 +629,34 @@ export function projectPosition({ size = 0, entry = 0, delta, price }) {
  * @param {number} [o.slippageBps]      market orders: worst acceptable price past the book walk
  * @param {object} o.account            the output of getAccount
  */
-export async function quoteOrder({ symbol, side, size, type, price = null, reduceOnly = false, slippageBps = 100, account }) {
+export async function quoteOrder({
+	symbol,
+	side,
+	size,
+	type,
+	price = null,
+	reduceOnly = false,
+	slippageBps = 100,
+	account,
+}) {
 	const market = await getMarket(symbol);
 	const { params } = market;
 	if (market.status !== 'active') {
-		throw perpsError(409, 'market_inactive', `${market.symbol} is ${market.status} on the venue right now, so it cannot take orders.`, { status: market.status });
+		throw perpsError(
+			409,
+			'market_inactive',
+			`${market.symbol} is ${market.status} on the venue right now, so it cannot take orders.`,
+			{ status: market.status },
+		);
 	}
 	const lot = sizeToLots(size, params);
 	if (lot.lots < 1) {
-		throw perpsError(400, 'size_too_small', `The smallest ${market.symbol} order is ${params.sizeStep} ${market.symbol}.`, { min_size: params.sizeStep });
+		throw perpsError(
+			400,
+			'size_too_small',
+			`The smallest ${market.symbol} order is ${params.sizeStep} ${market.symbol}.`,
+			{ min_size: params.sizeStep },
+		);
 	}
 	const book = await orderbook(market.symbol, 100);
 	const isLong = side === 'long';
@@ -607,17 +670,29 @@ export async function quoteOrder({ symbol, side, size, type, price = null, reduc
 	if (type === 'market') {
 		fill = estimateFill(isLong ? book.asks : book.bids, lot.size);
 		if (!fill.complete) {
-			throw perpsError(422, 'insufficient_liquidity', `The visible ${market.symbol} book cannot fill ${lot.size} right now (only ${fill.filled}). Use a smaller size or a limit order.`, { fillable: fill.filled });
+			throw perpsError(
+				422,
+				'insufficient_liquidity',
+				`The visible ${market.symbol} book cannot fill ${lot.size} right now (only ${fill.filled}). Use a smaller size or a limit order.`,
+				{ fillable: fill.filled },
+			);
 		}
 		entry = fill.avg_price;
 		feeRate = params.takerFee;
 		const slip = Math.max(0, Number(slippageBps) || 0) / 10_000;
-		limitPrice = priceToTick(isLong ? fill.worst_price * (1 + slip) : fill.worst_price * (1 - slip), params, isLong ? 'up' : 'down');
+		limitPrice = priceToTick(
+			isLong ? fill.worst_price * (1 + slip) : fill.worst_price * (1 - slip),
+			params,
+			isLong ? 'up' : 'down',
+		);
 	} else {
-		if (!(Number(price) > 0)) throw perpsError(400, 'price_required', 'A limit order needs a positive price.');
+		if (!(Number(price) > 0))
+			throw perpsError(400, 'price_required', 'A limit order needs a positive price.');
 		limitPrice = priceToTick(price, params, 'nearest');
 		entry = limitPrice;
-		crossesBook = isLong ? book.best_ask != null && limitPrice >= book.best_ask : book.best_bid != null && limitPrice <= book.best_bid;
+		crossesBook = isLong
+			? book.best_ask != null && limitPrice >= book.best_ask
+			: book.best_bid != null && limitPrice <= book.best_bid;
 		feeRate = crossesBook ? params.takerFee : params.makerFee;
 	}
 
@@ -627,18 +702,35 @@ export async function quoteOrder({ symbol, side, size, type, price = null, reduc
 	const delta = isLong ? lot.size : -lot.size;
 	if (reduceOnly) {
 		if (!existing || Math.sign(existing.signed_size) === Math.sign(delta)) {
-			throw perpsError(409, 'nothing_to_reduce', `A reduce-only ${side} needs an open ${isLong ? 'short' : 'long'} ${market.symbol} position to reduce.`);
+			throw perpsError(
+				409,
+				'nothing_to_reduce',
+				`A reduce-only ${side} needs an open ${isLong ? 'short' : 'long'} ${market.symbol} position to reduce.`,
+			);
 		}
 		if (lot.size > existing.size + 1e-12) {
-			throw perpsError(409, 'reduce_exceeds_position', `Reduce-only size ${lot.size} is larger than the open position (${existing.size}).`, { position_size: existing.size });
+			throw perpsError(
+				409,
+				'reduce_exceeds_position',
+				`Reduce-only size ${lot.size} is larger than the open position (${existing.size}).`,
+				{ position_size: existing.size },
+			);
 		}
 	}
-	const projected = projectPosition({ size: existing?.signed_size || 0, entry: existing?.entry_price || 0, delta, price: entry });
+	const projected = projectPosition({
+		size: existing?.signed_size || 0,
+		entry: existing?.entry_price || 0,
+		delta,
+		price: entry,
+	});
 
 	const markRef = mark || entry;
-	const imBefore = existing ? Math.abs(existing.signed_size) * markRef / params.maxLeverage : 0;
+	const imBefore = existing ? (Math.abs(existing.signed_size) * markRef) / params.maxLeverage : 0;
 	const imAfter = (Math.abs(projected.size) * markRef) / params.maxLeverage;
-	const accountNotionalAfter = account.notional_usd - (existing ? existing.notional_usd : 0) + Math.abs(projected.size) * markRef;
+	const accountNotionalAfter =
+		account.notional_usd -
+		(existing ? existing.notional_usd : 0) +
+		Math.abs(projected.size) * markRef;
 	const collateralAfter = account.collateral_usd - fee + projected.realized_pnl;
 	const equityAfter = account.equity_usd - fee;
 	const initialMarginAfter = account.initial_margin_usd - imBefore + imAfter;
@@ -651,8 +743,12 @@ export async function quoteOrder({ symbol, side, size, type, price = null, reduc
 			leverage: params.maxLeverage,
 			maintenanceMarginBps: params.maintenanceBps,
 			collateralUsd: collateralAfter,
-			otherAssetUnrealizedPnlUsd: account.unrealized_pnl_usd - (existing?.unrealized_pnl_usd || 0),
-			otherAssetMaintenanceMarginUsd: Math.max(0, account.maintenance_margin_usd - (existing?.maintenance_margin_usd || 0)),
+			otherAssetUnrealizedPnlUsd:
+				account.unrealized_pnl_usd - (existing?.unrealized_pnl_usd || 0),
+			otherAssetMaintenanceMarginUsd: Math.max(
+				0,
+				account.maintenance_margin_usd - (existing?.maintenance_margin_usd || 0),
+			),
 		});
 	}
 
@@ -682,15 +778,23 @@ export async function quoteOrder({ symbol, side, size, type, price = null, reduc
 			realized_pnl_usd: round(projected.realized_pnl, 6),
 		},
 		liquidation_price: liquidation && liquidation > 0 ? round(liquidation, 6) : null,
-		liquidation_distance_pct: liquidation && liquidation > 0 && markRef ? round((Math.abs(markRef - liquidation) / markRef) * 100, 3) : null,
+		liquidation_distance_pct:
+			liquidation && liquidation > 0 && markRef
+				? round((Math.abs(markRef - liquidation) / markRef) * 100, 3)
+				: null,
 		margin_impact_usd: round(imAfter - imBefore, 6),
 		initial_margin_after_usd: round(initialMarginAfter, 6),
 		collateral_after_usd: round(collateralAfter, 6),
 		equity_after_usd: round(equityAfter, 6),
 		free_collateral_after_usd: round(equityAfter - initialMarginAfter, 6),
 		account_notional_after_usd: round(accountNotionalAfter, 4),
-		account_leverage_after: equityAfter > 0 ? round(accountNotionalAfter / equityAfter, 4) : null,
-		risk_increasing: Math.abs(projected.size) > Math.abs(existing?.signed_size || 0) + 1e-12 || (existing && Math.sign(projected.size) !== Math.sign(existing.signed_size) && projected.size !== 0),
+		account_leverage_after:
+			equityAfter > 0 ? round(accountNotionalAfter / equityAfter, 4) : null,
+		risk_increasing:
+			Math.abs(projected.size) > Math.abs(existing?.signed_size || 0) + 1e-12 ||
+			(existing &&
+				Math.sign(projected.size) !== Math.sign(existing.signed_size) &&
+				projected.size !== 0),
 	};
 }
 
@@ -701,7 +805,12 @@ export async function buildOrder(authority, quote) {
 	const c = client();
 	const side = quote.side === 'long' ? Side.Bid : Side.Ask;
 	const orderFlags = quote.reduce_only ? OrderFlags.ReduceOnly : OrderFlags.None;
-	const base = { authority, symbol: quote.symbol, traderPdaIndex: TRADER_PDA_INDEX, traderSubaccountIndex: CROSS_SUBACCOUNT };
+	const base = {
+		authority,
+		symbol: quote.symbol,
+		traderPdaIndex: TRADER_PDA_INDEX,
+		traderSubaccountIndex: CROSS_SUBACCOUNT,
+	};
 	const ix = await venueCall(`build the ${quote.type} order`, async () => {
 		if (quote.type === 'market') {
 			const orderPacket = await c.orderPackets.buildMarketOrderPacket({
@@ -730,7 +839,17 @@ export async function buildOrder(authority, quote) {
  * closing side always come from the live position, never from the caller: a
  * trigger on the wrong side of a position is rejected by the program.
  */
-export async function buildConditional(authority, { symbol, kind, triggerPrice, position, sizePercent = 100, slippageBps = STOP_LOSS_SLIPPAGE_BPS }) {
+export async function buildConditional(
+	authority,
+	{
+		symbol,
+		kind,
+		triggerPrice,
+		position,
+		sizePercent = 100,
+		slippageBps = STOP_LOSS_SLIPPAGE_BPS,
+	},
+) {
 	const market = await getMarket(symbol);
 	const { params } = market;
 	const isLong = position.side === 'long';
@@ -742,9 +861,18 @@ export async function buildConditional(authority, { symbol, kind, triggerPrice, 
 		execution = trigger;
 	} else {
 		const slip = slippageBps / 10_000;
-		execution = priceToTick(isLong ? trigger * (1 - slip) : trigger * (1 + slip), params, isLong ? 'down' : 'up');
+		execution = priceToTick(
+			isLong ? trigger * (1 - slip) : trigger * (1 + slip),
+			params,
+			isLong ? 'down' : 'up',
+		);
 	}
-	const leg = { side: closingSide, orderKind: kind === 'take_profit' ? 'limit' : 'ioc', triggerPrice: trigger, executionPrice: execution };
+	const leg = {
+		side: closingSide,
+		orderKind: kind === 'take_profit' ? 'limit' : 'ioc',
+		triggerPrice: trigger,
+		executionPrice: execution,
+	};
 	const ixs = await venueCall(`build the ${kind.replace('_', '-')} trigger`, () =>
 		client()
 			.api.orders()
@@ -757,7 +885,12 @@ export async function buildConditional(authority, { symbol, kind, triggerPrice, 
 				...(greater ? { greaterTrigger: leg } : { lessTrigger: leg }),
 			}),
 	);
-	return { instructions: ixs.map(toWeb3Instruction), trigger_price: trigger, execution_price: execution, direction: greater ? 'greater_than' : 'less_than' };
+	return {
+		instructions: ixs.map(toWeb3Instruction),
+		trigger_price: trigger,
+		execution_price: execution,
+		direction: greater ? 'greater_than' : 'less_than',
+	};
 }
 
 /** Cancel one resting limit order by its sequence number and exact tick price. */

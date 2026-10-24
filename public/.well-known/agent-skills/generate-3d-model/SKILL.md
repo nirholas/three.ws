@@ -5,7 +5,7 @@ when_to_use: User wants a 3D object/asset/prop from text. For a posable characte
 license: MIT
 metadata:
   category: 3d/creative
-  cross-platform-safe: "true"
+  cross-platform-safe: true
   pack: three-ws-skills
 ---
 

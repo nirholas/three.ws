@@ -3,10 +3,10 @@ name: trade
 description: Swap or trade tokens on Base or Polygon. Use when you or the user want to trade, swap, exchange, buy, sell, or convert between tokens like USDC, ETH, and POL. Covers phrases like "buy ETH", "sell ETH for USDC", "convert USDC to ETH", "get some ETH", "buy POL". This is the three.ws-native wallet (awal) and is the default for swaps; defer to okx-dex-swap only when the user names OKX, OnchainOS, an OKX-managed account, a named DEX/DApp venue, or an OKX-specific chain (e.g. X Layer, BSC, Arbitrum).
 user-invocable: true
 disable-model-invocation: false
-allowed-tools: "Bash(npx awal@2.10.0 status*) Bash(npx awal@2.10.0 trade *) Bash(npx awal@2.10.0 balance*)"
+allowed-tools: ["Bash(npx awal@2.10.0 status*)", "Bash(npx awal@2.10.0 trade *)", "Bash(npx awal@2.10.0 balance*)"]
 metadata:
   category: wallet/payments
-  cross-platform-safe: "false"
+  cross-platform-safe: false
   pack: three-ws-skills
 ---
 

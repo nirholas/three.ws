@@ -3,10 +3,10 @@ name: authenticate-wallet
 description: Sign in to the wallet. Use when you or the user want to log in, sign in, connect, or set up the wallet, or when any wallet operation fails with authentication or "not signed in" errors. This skill is a prerequisite before sending, trading, or funding.
 user-invocable: true
 disable-model-invocation: false
-allowed-tools: "Bash(npx awal@2.10.0 status*) Bash(npx awal@2.10.0 auth *) Bash(npx awal@2.10.0 balance*) Bash(npx awal@2.10.0 address*) Bash(npx awal@2.10.0 show*)"
+allowed-tools: ["Bash(npx awal@2.10.0 status*)", "Bash(npx awal@2.10.0 auth *)", "Bash(npx awal@2.10.0 balance*)", "Bash(npx awal@2.10.0 address*)", "Bash(npx awal@2.10.0 show*)"]
 metadata:
   category: wallet/payments
-  cross-platform-safe: "false"
+  cross-platform-safe: false
   pack: three-ws-skills
 ---
 

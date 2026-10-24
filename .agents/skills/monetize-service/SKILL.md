@@ -3,10 +3,10 @@ name: monetize-service
 description: Build and deploy a paid API that other agents can pay to use via x402. Use when you or the user want to monetize an API, make money, earn money, offer a service, sell a service to other agents, charge for endpoints, create a paid endpoint, or set up a paid service. Covers "make money by offering an endpoint", "sell a service", "monetize your data", "create a paid API".
 user-invocable: true
 disable-model-invocation: false
-allowed-tools: "Bash(npx awal@2.10.0 status*) Bash(npx awal@2.10.0 address*) Bash(npx awal@2.10.0 x402 details *) Bash(npx awal@2.10.0 x402 pay *) Bash(npm *) Bash(node *) Bash(curl *) Bash(mkdir *)"
+allowed-tools: ["Bash(npx awal@2.10.0 status*)", "Bash(npx awal@2.10.0 address*)", "Bash(npx awal@2.10.0 x402 details *)", "Bash(npx awal@2.10.0 x402 pay *)", "Bash(npm *)", "Bash(node *)", "Bash(curl *)", "Bash(mkdir *)"]
 metadata:
   category: wallet/payments
-  cross-platform-safe: "false"
+  cross-platform-safe: false
   pack: three-ws-skills
 ---
 

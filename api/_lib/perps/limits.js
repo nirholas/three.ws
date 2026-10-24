@@ -10,6 +10,11 @@
 //   max_slippage_bps             ceiling on the slippage a market order may accept
 //   max_quote_move_bps           how far entry or liquidation may drift between
 //                                preview and execute before the execute refuses
+//   max_notional_usd             notional any one position may hold after an order
+//   min_liquidation_distance_pct how far the venue's liquidation price must stay
+//                                from the mark after an order that adds risk
+//   mcp_enabled                  false: MCP callers cannot see or call the perps
+//                                tools for this agent until the owner opts in
 //   halted                       set by the kill switch: risk-increasing orders
 //                                are refused until the owner resumes trading
 //   alert_*                      owner thresholds the tracker and the alert cron
@@ -29,6 +34,9 @@ export const PERPS_LIMIT_DEFAULTS = Object.freeze({
 	max_margin_per_position_usd: 25,
 	max_slippage_bps: 100,
 	max_quote_move_bps: 50,
+	max_notional_usd: 500,
+	min_liquidation_distance_pct: 10,
+	mcp_enabled: false,
 	halted: false,
 	alert_liquidation_distance_pct: 15,
 	alert_loss_usd: null,
@@ -42,6 +50,7 @@ export const PERPS_LIMIT_CEILINGS = Object.freeze({
 	max_margin_per_position_usd: 100_000,
 	max_slippage_bps: 1_000,
 	max_quote_move_bps: 500,
+	max_notional_usd: 10_000_000,
 });
 
 function clamp(v, def, min, max) {
@@ -69,6 +78,9 @@ export function normalizePerpsLimits(raw) {
 		max_margin_per_position_usd: clamp(r.max_margin_per_position_usd, d.max_margin_per_position_usd, 1, c.max_margin_per_position_usd),
 		max_slippage_bps: Math.round(clamp(r.max_slippage_bps, d.max_slippage_bps, 1, c.max_slippage_bps)),
 		max_quote_move_bps: Math.round(clamp(r.max_quote_move_bps, d.max_quote_move_bps, 1, c.max_quote_move_bps)),
+		max_notional_usd: clamp(r.max_notional_usd, d.max_notional_usd, 1, c.max_notional_usd),
+		min_liquidation_distance_pct: clamp(r.min_liquidation_distance_pct, d.min_liquidation_distance_pct, 0, 90),
+		mcp_enabled: r.mcp_enabled === true,
 		halted: r.halted === true,
 		alert_liquidation_distance_pct: 'alert_liquidation_distance_pct' in r
 			? optional(r.alert_liquidation_distance_pct, 0.5, 90)
@@ -98,10 +110,12 @@ export function loosenedPerpsKeys(prev, patch) {
 	const next = normalizePerpsLimits({ ...before, ...(patch && typeof patch === 'object' ? patch : {}) });
 	const out = [];
 	if (next.live_enabled && !before.live_enabled) out.push('live_enabled');
+	if (next.mcp_enabled && !before.mcp_enabled) out.push('mcp_enabled');
 	if (!next.halted && before.halted) out.push('halted');
-	for (const k of ['max_leverage', 'max_margin_per_position_usd', 'max_slippage_bps', 'max_quote_move_bps']) {
+	for (const k of ['max_leverage', 'max_margin_per_position_usd', 'max_slippage_bps', 'max_quote_move_bps', 'max_notional_usd']) {
 		if (next[k] > before[k]) out.push(k);
 	}
+	if (next.min_liquidation_distance_pct < before.min_liquidation_distance_pct) out.push('min_liquidation_distance_pct');
 	return out;
 }
 
@@ -199,6 +213,18 @@ export function checkPerpsOrder({ limits, quote, tradeKill = false, walletFrozen
 			id: 'position_margin',
 			ok: !increasing || marginAtCap <= lim.max_margin_per_position_usd + 1e-9,
 			label: `Margin this position needs at your leverage cap: $${marginAtCap.toFixed(2)} of $${lim.max_margin_per_position_usd.toFixed(2)} allowed`,
+		},
+		{
+			id: 'max_notional',
+			ok: !increasing || (quote.position_after?.notional_usd ?? 0) <= lim.max_notional_usd + 1e-9,
+			label: `Position notional after the order: $${Number(quote.position_after?.notional_usd || 0).toFixed(2)} of $${lim.max_notional_usd.toFixed(2)} allowed`,
+		},
+		{
+			id: 'liquidation_distance',
+			ok: !increasing || quote.liquidation_distance_pct == null || quote.liquidation_distance_pct >= lim.min_liquidation_distance_pct - 1e-9,
+			label: quote.liquidation_distance_pct == null
+				? 'No liquidation price on this position'
+				: `Liquidation sits ${Number(quote.liquidation_distance_pct).toFixed(1)}% from the mark, at least ${lim.min_liquidation_distance_pct}% required`,
 		},
 		{
 			id: 'free_collateral',

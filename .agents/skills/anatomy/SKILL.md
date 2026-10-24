@@ -5,7 +5,7 @@ when_to_use: The user wants a machine or mechanism explained visually and intera
 license: MIT
 metadata:
   category: 3d/creative
-  cross-platform-safe: "true"
+  cross-platform-safe: true
   pack: three-ws-skills
 ---
 

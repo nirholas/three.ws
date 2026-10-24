@@ -3,10 +3,10 @@ name: send-usdc
 description: Send tokens (USDC, ETH, POL, or SOL) to an address or ENS name on Base, Polygon, or Solana. Use when you or the user want to send money, pay someone, transfer tokens, tip, donate, or send funds to a wallet address or .eth name. Covers phrases like "send $5 to", "pay 0x...", "transfer to vitalik.eth", or "send USDC on Solana". This is the three.ws-native wallet (awal) and is the default for sends; defer to okx-agentic-wallet only when the user names OKX, OnchainOS, an OKX-managed / Agentic Wallet account, or an OKX-specific chain/venue (e.g. X Layer).
 user-invocable: true
 disable-model-invocation: false
-allowed-tools: "Bash(npx awal@2.10.0 status*) Bash(npx awal@2.10.0 send *) Bash(npx awal@2.10.0 balance*)"
+allowed-tools: ["Bash(npx awal@2.10.0 status*)", "Bash(npx awal@2.10.0 send *)", "Bash(npx awal@2.10.0 balance*)"]
 metadata:
   category: wallet/payments
-  cross-platform-safe: "false"
+  cross-platform-safe: false
   pack: three-ws-skills
 ---
 

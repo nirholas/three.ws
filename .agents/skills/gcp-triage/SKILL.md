@@ -5,7 +5,7 @@ when_to_use: Production health checks, log diagnosis, error triage, and the recu
 license: MIT
 metadata:
   category: ops/production
-  cross-platform-safe: "false"
+  cross-platform-safe: false
   pack: three-ws-ops
 ---
 

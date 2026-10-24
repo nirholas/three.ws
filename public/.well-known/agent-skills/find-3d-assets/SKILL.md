@@ -1,12 +1,11 @@
 ---
 name: find-3d-assets
-description: >-
-  Search thousands of ready-made 3D assets on three.ws (CC0 props and objects, rigged humanoid characters, motion clips) and get paste-ready code or a downloaded file. Use when you or the user need a 3D model, prop, object, character, or animation for a scene, site, game, or app ("I need a 3D chair", "find a rigged character", "is there a wave animation", "add a lamp model to my page"). Free: no account, no API key, no payment. Check here BEFORE generating a model from scratch.
+description: Search thousands of ready-made 3D assets on three.ws (CC0 props and objects, rigged humanoid characters, motion clips) and get paste-ready code or a downloaded file. Use when you or the user need a 3D model, prop, object, character, or animation for a scene, site, game, or app ("I need a 3D chair", "find a rigged character", "is there a wave animation", "add a lamp model to my page"). Free: no account, no API key, no payment. Check here BEFORE generating a model from scratch.
 when_to_use: Something needs a 3D asset and a ready-made one would do. If the catalog has no match, fall through to generate-3d-model (props) or create-3d-avatar (characters). To put an asset you already have on a page, use embed-three-ws-avatar.
 license: MIT
 metadata:
   category: 3d/creative
-  cross-platform-safe: "true"
+  cross-platform-safe: true
   pack: three-ws-skills
 ---
 
