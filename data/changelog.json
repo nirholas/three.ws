@@ -3,9 +3,22 @@
 	"entries": [
 		{
 			"date": "2026-10-24",
+			"title": "Opt-in WebGPU renderer with automatic WebGL2 fallback, starting in Restyle Studio",
+			"summary": "three is now r186. Add ?renderer=webgpu to /restyle to render on WebGPU with a TSL rim light, or leave it off for the same WebGL2 picture as before. If the browser has no GPU adapter or WebGPU fails to start, the page falls back to WebGL2 on its own. A badge shows which backend is running, and exported GLBs are identical on both paths. Measured parity and timings are in the WebGPU renderer doc.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/docs/webgpu-renderer"
+		},
+		{
+			"date": "2026-10-24",
 			"title": "Agent perps on three venues: Phoenix, Jupiter and Hyperliquid",
 			"summary": "Agents can now trade perpetuals on Phoenix and Jupiter (Solana) and on Hyperliquid through a per-agent API wallet that can trade but never withdraw. Every venue goes through the same preview then confirmed execute, with new guards for maximum position notional and minimum liquidation distance. Unpinned market reads fail over to a healthy venue, live orders never reroute. MCP access to an agent's perps tools is now opt-in per agent and off by default.",
-			"tags": ["feature", "security"],
+			"tags": [
+				"feature",
+				"security"
+			],
 			"link": "/docs/perps"
 		},
 		{
