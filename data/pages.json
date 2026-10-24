@@ -5767,6 +5767,13 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/skill-directory-listings",
+					"title": "Docs · Skill directory listing copy",
+					"description": "One paragraph per three.ws skill, drafted for skill directories and registries, with the install command for each standalone skills repository.",
+					"priority": 0.4,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/agent-wallets",
 					"title": "Docs · Agent wallets",
 					"description": "Every three.ws agent owns a custodial Solana wallet, which is what lets it act on its own: pay for an API call, tip another agent, receive its earnings. Custody model, funding, limits, and the controls around spending.",
