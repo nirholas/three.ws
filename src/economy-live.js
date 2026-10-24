@@ -18,6 +18,7 @@
 
 import { openHirePanel } from './shared/agent-hire.js';
 import { sanitizeUrl } from './shared/sanitize-url.js';
+import { thumbFallbackAttr, wireThumbFallback } from './shared/thumb-fallback.js';
 
 const $ = (sel) => /** @type {HTMLElement} */ (document.querySelector(sel));
 
@@ -113,10 +114,11 @@ function agentCard(a) {
 		: a.has_paid_skills ? '<span class="ae-chip">Paid skills</span>' : '<span class="ae-chip ae-chip-free">Free</span>';
 	const buyers = Number(a.buyers_total) || 0;
 	const buyers24 = Number(a.buyers_24h) || 0;
+	const avatarFallback = `<span class="ae-avatar-fallback">${esc((a.name || '?').slice(0, 1).toUpperCase())}</span>`;
 	return `
 		<a class="ae-card" href="/agents/${encodeURIComponent(a.id)}">
 			<div class="ae-card-top">
-				<div class="ae-avatar">${thumb ? `<img src="${esc(thumb)}" alt="" loading="lazy" />` : `<span class="ae-avatar-fallback">${esc((a.name || '?').slice(0, 1).toUpperCase())}</span>`}</div>
+				<div class="ae-avatar">${thumb ? `<img src="${esc(thumb)}" alt="" loading="lazy" ${thumbFallbackAttr(avatarFallback, esc)} />` : avatarFallback}</div>
 				<div class="ae-card-head">
 					<span class="ae-card-name">${esc(a.name || 'Untitled agent')}</span>
 					<span class="ae-muted ae-card-cat">${esc(a.category || 'general')}</span>
@@ -162,6 +164,7 @@ async function loadAgents({ quiet = false } = {}) {
 			return;
 		}
 		host.innerHTML = items.map(agentCard).join('');
+		wireThumbFallback(host);
 		setStat('#ae-stat-agents', items.length >= 24 ? '24+' : String(items.length));
 		const earners = items.filter((a) => (Number(a.buyers_total) || 0) > 0).length;
 		setStat('#ae-stat-earning', String(earners));
@@ -341,9 +344,10 @@ let _offers = [];
 
 function offerAvatar(offer) {
 	const url = offer?.provider?.avatar_thumbnail_url || '';
-	if (url) return `<span class="ae-offer-av"><img src="${esc(url)}" alt="" loading="lazy" /></span>`;
 	const letter = (offer?.provider?.name || offer?.name || '?').slice(0, 1).toUpperCase();
-	return `<span class="ae-offer-av"><span class="ae-offer-av-fallback">${esc(letter)}</span></span>`;
+	const fallback = `<span class="ae-offer-av-fallback">${esc(letter)}</span>`;
+	if (url) return `<span class="ae-offer-av"><img src="${esc(url)}" alt="" loading="lazy" ${thumbFallbackAttr(fallback, esc)} /></span>`;
+	return `<span class="ae-offer-av">${fallback}</span>`;
 }
 
 function offerStatsLine(st) {
@@ -428,6 +432,7 @@ function renderOffers() {
 	}
 	const mode = $('#ae-offer-sort')?.value || 'proven';
 	host.innerHTML = sortOffers(_offers, mode).map(offerCard).join('');
+	wireThumbFallback(host);
 	for (const btn of host.querySelectorAll('[data-hire]')) {
 		btn.addEventListener('click', () => {
 			const offer = _offers.find((o) => o.slug === btn.getAttribute('data-hire'));

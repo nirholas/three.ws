@@ -10,6 +10,7 @@
 // Terminal links come from the shared builder so this board carries the same
 // referral codes as the rest of the product and cannot drift from them.
 import { gmgnTokenUrl } from './shared/trading-terminals.js';
+import { thumbFallbackAttr, wireThumbFallback } from './shared/thumb-fallback.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -141,10 +142,11 @@ function fleetRow(agent) {
 	const hot = agent.last_action_at && Date.now() - new Date(agent.last_action_at).getTime() < 15 * 60 * 1000;
 	const initial = (agent.name || '?').trim().charAt(0).toUpperCase();
 	const skills = Array.isArray(agent.skills) ? agent.skills.length : 0;
+	const fleetFallback = `<div class="fleet-av-fb" aria-hidden="true">${esc(initial)}</div>`;
 	row.innerHTML = `
 		${agent.avatar_thumbnail
-			? `<img class="fleet-av" src="${esc(agent.avatar_thumbnail)}" alt="" loading="lazy" />`
-			: `<div class="fleet-av-fb" aria-hidden="true">${esc(initial)}</div>`}
+			? `<img class="fleet-av" src="${esc(agent.avatar_thumbnail)}" alt="" loading="lazy" ${thumbFallbackAttr(fleetFallback, esc)} />`
+			: fleetFallback}
 		<div class="fleet-meta">
 			<div class="fleet-name">${esc(agent.name || 'Unnamed agent')}${agent.is_registered ? '<span class="reg-chip">ERC-8004</span>' : ''}</div>
 			<div class="fleet-sub">${skills ? skills + ' skill' + (skills === 1 ? '' : 's') + ' · ' : ''}${nf.format(agent.chat_count || 0)} chats</div>
@@ -185,6 +187,7 @@ async function loadFleet() {
 		}
 		body.innerHTML = '';
 		for (const agent of agents) body.appendChild(fleetRow(agent));
+		wireThumbFallback(body);
 		if (!spotlightMounted) {
 			const first = agents.find((a) => a.avatar_thumbnail) || agents[0];
 			mountSpotlight(first);
@@ -228,12 +231,14 @@ async function loadOnAir() {
 			const row = document.createElement('a');
 			row.className = 'desk-row';
 			row.href = '/agents-live';
+			const deskFallback = '<div class="fleet-av-fb" aria-hidden="true">?</div>';
 			row.innerHTML = `
-				${desk.avatarUrl ? `<img class="fleet-av" src="${esc(desk.avatarUrl)}" alt="" loading="lazy" />` : '<div class="fleet-av-fb" aria-hidden="true">?</div>'}
+				${desk.avatarUrl ? `<img class="fleet-av" src="${esc(desk.avatarUrl)}" alt="" loading="lazy" ${thumbFallbackAttr(deskFallback, esc)} />` : deskFallback}
 				<div class="fleet-meta"><div class="fleet-name">${esc(desk.agentName || desk.agentId)}</div><div class="fleet-sub">screen cast in progress</div></div>
 				<span class="desk-live">LIVE</span>`;
 			body.appendChild(row);
 		}
+		wireThumbFallback(body);
 	} catch (err) {
 		showError(body, badge, 'Live-desk feed unreachable (' + err.message + ').', loadOnAir);
 	}
@@ -306,18 +311,20 @@ function renderLeaders(earners, busiest) {
 			'<div class="panel-empty">No tip earners in the last 24h. Tip any agent from its profile and it climbs this board.</div>';
 		return;
 	}
+	const leaderFallback = '<div class="fleet-av-fb" aria-hidden="true">?</div>';
 	body.innerHTML = list
 		.slice(0, 8)
 		.map(
 			(a, i) => `
 			<a class="desk-row" href="${esc(a.url || '#')}">
 				<span class="fleet-actions" style="min-width:14px">${i + 1}</span>
-				${a.avatar_thumbnail_url ? `<img class="fleet-av" src="${esc(a.avatar_thumbnail_url)}" alt="" loading="lazy" />` : '<div class="fleet-av-fb" aria-hidden="true">?</div>'}
+				${a.avatar_thumbnail_url ? `<img class="fleet-av" src="${esc(a.avatar_thumbnail_url)}" alt="" loading="lazy" ${thumbFallbackAttr(leaderFallback, esc)} />` : leaderFallback}
 				<div class="fleet-meta"><div class="fleet-name">${esc(a.name || 'agent')}</div><div class="fleet-sub">${a.tip_count != null ? nf.format(a.tip_count) + ' tips' : nf.format(a.events || 0) + ' events'}</div></div>
 				<span class="wire-amt">${a.usd != null ? usd(a.usd) : ''}</span>
 			</a>`
 		)
 		.join('');
+	wireThumbFallback(body);
 }
 
 function renderLaunches(launches) {
@@ -500,14 +507,17 @@ async function loadForge() {
 		}
 		body.innerHTML = `<div class="forge-grid">${creations
 			.slice(0, 12)
-			.map(
-				(c) => `
+			.map((c) => {
+				const letter = (c.model_category && c.model_category !== 'other' ? c.model_category : '3D').trim().charAt(0).toUpperCase();
+				const forgeFallback = `<div class="forge-cell-fb" aria-hidden="true">${esc(letter)}</div>`;
+				return `
 				<a class="forge-cell" href="/creations" title="${esc((c.prompt || '').slice(0, 140))}">
-					<img src="${esc(c.preview_image_url)}" alt="${esc((c.prompt || '3D creation').slice(0, 80))}" loading="lazy" />
+					<img src="${esc(c.preview_image_url)}" alt="${esc((c.prompt || '3D creation').slice(0, 80))}" loading="lazy" ${thumbFallbackAttr(forgeFallback, esc)} />
 					<span class="forge-tag">${esc(c.model_category && c.model_category !== 'other' ? c.model_category : rel(c.created_at) + ' ago')}</span>
-				</a>`
-			)
+				</a>`;
+			})
 			.join('')}</div>`;
+		wireThumbFallback(body);
 	} catch (err) {
 		showError(body, badge, 'Forge gallery unreachable (' + err.message + ').', loadForge);
 	}

@@ -23,6 +23,7 @@ import { onchainBadgeHTML } from './shared/onchain-badge.js';
 import { walletChipHTML, wireWalletChips } from './shared/agent-wallet-chip.js';
 
 import { ensureModelViewerOrFallback } from './shared/model-viewer-loader.js';
+import { thumbFallbackAttr, wireThumbFallback } from './shared/thumb-fallback.js';
 const PAGE_SIZE = 24;
 
 // Shared loader: three CDNs, a per-source timeout and a visible fallback on
@@ -387,6 +388,7 @@ export class AvatarGalleryPicker {
 				this._state.totalLoaded += 1;
 				for (const t of a.tags || []) this._state.loadedTags.add(t);
 			}
+			wireThumbFallback(this._els.grid);
 			// Stagger the freshly-landed avatar cards in (first page + each lazy page).
 			enterStagger(fresh);
 
@@ -475,9 +477,10 @@ export class AvatarGalleryPicker {
 		card.dataset.id = a.id;
 		if (a.id === this._state.selected?.id) card.classList.add('selected');
 
+		const phFallback = `<div class="agp-card-ph">${AVATAR_PH_SVG}</div>`;
 		const thumb = a.thumbnail_url
-			? `<img src="${esc(a.thumbnail_url)}" alt="${esc(a.name || 'Avatar')}" loading="lazy" decoding="async" />`
-			: `<div class="agp-card-ph">${AVATAR_PH_SVG}</div>`;
+			? `<img src="${esc(a.thumbnail_url)}" alt="${esc(a.name || 'Avatar')}" loading="lazy" decoding="async" ${thumbFallbackAttr(phFallback, esc)} />`
+			: phFallback;
 
 		const tags = (a.tags || []).slice(0, 2).map((t) =>
 			`<span class="agp-card-chip">${esc(t)}</span>`).join('');
