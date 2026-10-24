@@ -15,6 +15,6 @@
   },
   "dependencies": {
     "@browserbasehq/stagehand": "^3.6.0",
-    "zod": "^3"
+    "zod": "^4.6.7"
   }
 }
