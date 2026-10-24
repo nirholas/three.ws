@@ -612,6 +612,24 @@ with the Generate node's current engine, quality and controls.
 - **Photo input** accepts up to six views of one object (front, back, left, right, top, three-quarter); text-only engines are filtered out of the photo modes automatically.
 - Rate limits are per client IP on the shared 3D generation buckets.
 
+## Cost preview and pay-to-keep
+
+`GET /api/forge-quote` is a public, no-spend preview of what a generation costs before you press Generate. Query: `path` (`text`, `image`, `multi`), `tier` (`draft`, `standard`, `high`), optional `backend`, `images`, `own_key`, `gameready`, or `table=1` for every tier at once. Every figure comes from the same tier and catalog code the generator charges from ([api/_lib/forge-tiers.js](../api/_lib/forge-tiers.js), [api/_lib/pricing/catalog.js](../api/_lib/pricing/catalog.js)), so the preview cannot drift from the bill. The `/forge` page shows it as a line under the estimate and refreshes it as you change tier, engine or options.
+
+The response splits the cost into `generation` (free lane, your own key, or the High tier hold-or-pay gate), `keep` (the pay-to-keep step), the optional `gameready` export, and `total_usd`. Payments settle in $THREE on Solana.
+
+**Pay-to-keep** is off by default, and while it is off nothing changes: every download is free exactly as before. When the owner turns it on, a Draft or Standard result is generated free and previewed, and the Download button first calls `POST /api/forge-keep` for that creation. $THREE holders keep for free, High results are already paid or held at generation time, and everyone else pays the `forge.keep.<tier>` price through the existing single-use consumption ledger (a payment can release one creation, once). `GET /api/forge-keep?id=<creation>` reports whether a creation is already kept. The keep step fails open on server faults so an outage never blocks a download. In this release the flag gates the Forge download flow, not the secrecy of the stored GLB URL on the CDN.
+
+Enable or disable it with one command (it only updates the one env var, never the rest of the service env):
+
+```
+npm run forge:pay-to-keep -- status
+npm run forge:pay-to-keep -- on
+npm run forge:pay-to-keep -- off
+```
+
+Price points are derived from the tier prices (`forge.keep.draft` follows the Draft tier price, `forge.keep.standard` the Standard tier price) and are changed in the pricing catalog, not hardcoded in the UI.
+
 ## Measuring realism
 
 Any change that could affect output quality (a tier's sampler budget, a new

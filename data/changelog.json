@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-24",
+			"title": "See what a Forge generation costs before you press Generate",
+			"summary": "The Forge page now shows a live cost line for the tier, engine and options you picked, read from the same pricing code that bills you, with nothing spent. A pay-to-keep mode (free preview, pay in $THREE to download, holders keep free) is built and switched off, so downloads stay free until it is turned on.",
+			"tags": ["feature", "docs"],
+			"link": "/docs/forge"
+		},
+		{
+			"date": "2026-10-24",
 			"title": "Agents join the open Solana agent registry and hires read trust tiers",
 			"summary": "Minted agents are enrolled in the open Solana agent registry (8004) with the platform authority signing, so owners pay nothing. The marketplace ranks providers by registry tier after completed hires, a hire can require a minimum tier, and agent pages show an 8004 tier badge when registered. A rate-limited back-fill covers existing agents.",
 			"tags": [

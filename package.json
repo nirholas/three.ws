@@ -580,7 +580,8 @@
 		"awesome:standalone": "node scripts/build-awesome.mjs --standalone",
 		"verify:three-gate": "node scripts/verify-three-gate.mjs",
 		"check:mcp-catalog": "node scripts/check-mcp-catalog.mjs",
-		"vet:mcp-catalog": "node scripts/vet-mcp-integrations.mjs"
+		"vet:mcp-catalog": "node scripts/vet-mcp-integrations.mjs",
+		"forge:pay-to-keep": "node scripts/forge-pay-to-keep.mjs"
 	},
 	"dependencies": {
 		"8004-solana": "^0.8.5",

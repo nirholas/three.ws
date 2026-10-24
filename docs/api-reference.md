@@ -10650,3 +10650,13 @@ for verification code. A failed delivery retries after 30s, 2m, 10m, 30m, 1h, 3h
 and 8h (8 attempts total) and every attempt is kept in the delivery log; replay
 a delivery from the log or the `/dashboard/developers` page. The signing secret
 (`whsec_…`) is shown once at creation and on `rotate-secret`.
+
+## Forge cost preview and pay-to-keep
+
+| Method and path | Auth | Purpose |
+| --- | --- | --- |
+| `GET /api/forge-quote?path=text&tier=standard` | none | What a generation would cost. Optional `backend`, `images`, `own_key`, `gameready`; `table=1` returns every tier. No spend, `cache-control: private, max-age=30`. |
+| `GET /api/forge-keep?id=<creation>` | none | Whether the creation is kept, and whether pay-to-keep is enabled. |
+| `POST /api/forge-keep` | optional $THREE wallet or payment | Release a creation for download. With `FORGE_PAY_TO_KEEP` off it always returns `kept: true`. Non-holders get `402 three_hold_required` with the `pay_per_use` action. A reused payment returns `409 payment_already_used`. |
+
+Details and the enable command: [forge.md](./forge.md#cost-preview-and-pay-to-keep).

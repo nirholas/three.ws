@@ -59,6 +59,13 @@ export const GATED_FEATURES = Object.freeze({
 		why: 'Retopology + PBR re-bake runs the remesh GPU worker — holders fund it by holding, or pay per export.',
 		payPerUse: 'forge.gameready',
 	}),
+	'forge.keep': Object.freeze({
+		minLevel: 1,
+		enforced: false, // live only when FORGE_PAY_TO_KEEP is on (api/forge-keep.js); off by default
+		label: 'Keep a Forge generation (original file)',
+		why: 'Generating on the free lanes costs nothing; keeping the original file is a holder perk, or a one-time $THREE payment.',
+		payPerUse: null, // the price depends on the generation tier: forge.keep.<tier>
+	}),
 	'worlds.private': Object.freeze({
 		minLevel: 2,
 		enforced: false,

@@ -34,6 +34,10 @@ export const POLICY = Object.freeze({
 // Prices come from forge-tiers.js so they're never duplicated.
 const FORGE_STANDARD_USD = Number(priceUsdcForTier(TIERS.standard)); // 0.15
 const FORGE_HIGH_USD = Number(priceUsdcForTier(TIERS.high)); // 0.50
+// Pay-to-keep (api/forge-keep.js, off unless FORGE_PAY_TO_KEEP is on): generating on
+// a free lane stays free, keeping the original file costs the tier's published
+// price. Read from forge-tiers.js like every other Forge price.
+const FORGE_KEEP_DRAFT_USD = Number(priceUsdcForTier(TIERS.draft)); // 0.05
 // Game-Ready export price, read from OUTPUTS.gameready (its source of truth) so
 // it isn't duplicated. The export drives the remesh worker (real GPU cost) to turn
 // any model into an engine-ready asset — a deliverable, billed per export.
@@ -80,6 +84,18 @@ export const CATALOG = Object.freeze({
 		category: 'generation',
 		policy: POLICY.CONSUMPTION,
 		usd: FORGE_HIGH_USD,
+	},
+	'forge.keep.draft': {
+		label: 'Forge: keep a Draft generation',
+		category: 'generation',
+		policy: POLICY.CONSUMPTION,
+		usd: FORGE_KEEP_DRAFT_USD,
+	},
+	'forge.keep.standard': {
+		label: 'Forge: keep a Standard generation',
+		category: 'generation',
+		policy: POLICY.CONSUMPTION,
+		usd: FORGE_STANDARD_USD,
 	},
 	'forge.gameready': {
 		label: 'Forge: Game-Ready export (Unity/Unreal)',

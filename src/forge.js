@@ -21,6 +21,7 @@ import {
 import { injectFestivePresets } from './shared/festive-presets.js';
 import { renderLock, lockStateFromAccess } from './three-lock.js';
 import { payForHighGeneration } from './forge-pay.js';
+import { renderQuote, ensureKept } from './forge-keep.js';
 import { initWalletButton, getConnectedWalletAddress } from './wallet.js';
 import { generateForgePrompt } from './forge-prompt-gen.js';
 import { createForgeTimeline } from './forge-timeline.js';
@@ -119,6 +120,7 @@ const els = {
 	resultQuality: document.getElementById('result-quality'),
 	verdict: document.getElementById('verdict'),
 	download: document.getElementById('download'),
+	quote: document.getElementById('forge-quote'),
 	materialize: document.getElementById('materialize-it'),
 	again: document.getElementById('again'),
 	refine: document.getElementById('refine'),
@@ -1281,6 +1283,13 @@ function updateEstimate() {
 	else parts.push('renders a preview image, then builds 3D');
 	els.estimate.innerHTML = parts.join(' · ');
 	updateTierTitles();
+	renderQuote(els.quote, {
+		tier: selectedTier,
+		path: selectedEngine.path,
+		backend: selectedEngine.backend,
+		images: mode === 'image',
+		headers: CLIENT_HEADERS,
+	});
 }
 
 // Stamp each tier button's tooltip with the catalog's real blurb, the typical
@@ -4088,9 +4097,15 @@ if (els.categoryPicker) {
 // hand the user the stamped file. Any failure falls back to the raw provider
 // file — stamping must never block a download.
 els.download.addEventListener('click', async (e) => {
-	sendFeedback({ downloaded: true });
 	const glbUrl = els.download.href;
-	if (!glbUrl || glbUrl.startsWith('blob:') || els.download.dataset.stamping) return;
+	if (els.download.dataset.stamping) return;
+	// Pay-to-keep (off unless the owner enables it): a generation that is not yet
+	// kept needs a holder or a $THREE payment before the original file is released.
+	// Only a fresh or reopened durable creation can be gated; a local blob cannot.
+	if (!glbUrl || glbUrl.startsWith('blob:')) {
+		sendFeedback({ downloaded: true });
+		return;
+	}
 	e.preventDefault();
 	els.download.dataset.stamping = '1';
 	els.download.setAttribute('aria-busy', 'true');
@@ -4098,6 +4113,17 @@ els.download.addEventListener('click', async (e) => {
 	els.download.textContent = 'Preparing…';
 	const filename = els.download.getAttribute('download') || 'forge.glb';
 	try {
+		if (currentCreationId) {
+			const keep = await ensureKept(currentCreationId, { headers: CLIENT_HEADERS });
+			if (!keep.ok) {
+				if (els.quote) {
+					els.quote.textContent = keep.message;
+					els.quote.hidden = false;
+				}
+				return;
+			}
+		}
+		sendFeedback({ downloaded: true });
 		const res = await fetch(glbUrl);
 		if (!res.ok) throw new Error(`fetch ${res.status}`);
 		const stamped = stampGlbAttribution(await res.arrayBuffer(), {
