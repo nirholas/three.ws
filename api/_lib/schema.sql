@@ -2689,9 +2689,14 @@ CREATE TABLE IF NOT EXISTS agent_automations (
 CREATE INDEX IF NOT EXISTS agent_automations_agent_idx ON agent_automations (agent_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS agent_automations_live_idx ON agent_automations (trigger_type) WHERE enabled = true;
 
--- ── link codes ───────────────────────────────────────────────────────────────
--- An eight-character code pairs a device or chat gateway to an account for ten
--- minutes. Only the sha256 of the code is stored; redemption is single use.
+-- ── link codes (agents-v1 legacy shape) ────────────────────────────────────
+-- This is the ORIGINAL account_link_codes from the 2026-09-22 agents-v1
+-- feature (agent_id/scopes/redeemed_at/link_id). A fresh bootstrap creates it
+-- under this name so migration 20261024193900_fix_account_link_codes_collision.sql
+-- has something to rename, exactly mirroring what happened in production: the
+-- 2026-10-11 account-linking feature's own `account_link_codes` (status/
+-- device_kind/claim_secret_hash/...) is the table that migration actually
+-- creates and that api/_lib/account-link/link-codes.js reads and writes today.
 CREATE TABLE IF NOT EXISTS account_link_codes (
 	id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	code_hash    text NOT NULL UNIQUE,
