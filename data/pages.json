@@ -5345,6 +5345,13 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/simready-assets",
+					"title": "Docs: SimReady Assets",
+					"description": "NVIDIA SimReady assets are thousands of simulation-ready props published as OpenUSD under CC BY 4.0. three.ws converts every asset to a web GLB (meshopt-simplified, PBR textures baked) and serves them from the object library and the asset catalog, with the CC BY 4.0 attribution line attached to every entry.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/minted",
 					"title": "Docs: Minted 3D Assets",
 					"description": "three.ws/minted is the live, public gallery of every generated or owned avatar that a creator chose to mint as a Metaplex Core NFT through three.ws. It is the NFT counterpart of the /launches coin directory: real on-chain property, listed the moment it mints.",
