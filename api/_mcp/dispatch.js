@@ -49,6 +49,12 @@ const PUBLIC_TOOLS = new Set([
 	'domain_pricing',
 	// The launch-lane comparison is live platform config, no caller data.
 	'launch_lanes',
+	// Documentation search reads published docs and nothing about the caller.
+	'search_docs',
+	// expand takes a signed, account-bound handle. It is listed here only so a
+	// signed-in caller's bare request is not sent through the payment challenge;
+	// an anonymous call gets a designed sign-in message, never data.
+	'expand',
 ]);
 
 export function isPublicTool(name) {

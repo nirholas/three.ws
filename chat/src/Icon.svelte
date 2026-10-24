@@ -1,12 +1,21 @@
-<script>
-	export let icon;
-	let className = '';
-	export { className as class };
-  export let strokeWidth = 2;
-	export let use = [() => {}, {}];
+<script lang="ts">
+	
+	interface Props {
+		icon: any;
+		class?: string;
+		strokeWidth?: number;
+		use?: any;
+	}
 
-	$: useFn = use[0];
-	$: useParams = use[1];
+	let {
+		icon,
+		class: className = '',
+		strokeWidth = 2,
+		use = [() => {}, {}]
+	}: Props = $props();
+
+	let useFn = $derived(use[0]);
+	let useParams = $derived(use[1]);
 </script>
 
 <svg

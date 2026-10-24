@@ -25,6 +25,8 @@ import { basename, dirname, join } from 'node:path';
 
 import airdropsEntry from './airdrops.js';
 import bondingEntry from './bonding.js';
+import dueDiligenceEntry from './due-diligence.js';
+import fundingGraphEntry from './funding-graph.js';
 import holdersEntry from './holders.js';
 import launchesEntry from './launches.js';
 import linkageEntry from './linkage.js';
@@ -48,6 +50,8 @@ import whalesEntry from './whales.js';
 const STATIC_ENTRIES = [
 	{ mod: airdropsEntry, source: 'airdrops.js' },
 	{ mod: bondingEntry, source: 'bonding.js' },
+	{ mod: dueDiligenceEntry, source: 'due-diligence.js' },
+	{ mod: fundingGraphEntry, source: 'funding-graph.js' },
 	{ mod: holdersEntry, source: 'holders.js' },
 	{ mod: launchesEntry, source: 'launches.js' },
 	{ mod: linkageEntry, source: 'linkage.js' },

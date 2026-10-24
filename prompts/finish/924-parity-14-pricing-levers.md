@@ -13,42 +13,15 @@ How to run: paste this file's repo path into a fresh Claude Code chat in this re
 - Concurrent agents share this worktree: stage explicit paths only (never a bare add-everything), re-check `git status` before each commit, and commit finished work promptly.
 - Before committing, run `npm run check:rules -- --paths <files you touched>`. It must exit 0.
 
-## Why this matters
+## What remains (everything else shipped; verified 2026-10-24)
 
-Competitor X sells four API key tiers (free, builder, scale, enterprise) with rising monthly call allowances and falling swap fees, and gives a 3% credit bonus when a user deposits its own coin. Its own docs admit the call limits are recorded but never enforced. Two lessons: tiers give partners a clear paid path, and a tier that is not enforced is worse than none. Today three.ws has one flat limit on the versioned API (`apiV1`, 120 requests per minute per principal, `api/_lib/rate-limit.js`), account tiers for members (`api/_lib/account-tier.js`, pro, team, enterprise), and credit deposits in SOL or $THREE with no deposit bonus (`api/credits/deposit.js`); $THREE holders instead get up to 30% off spend.
+The mechanisms this order asked for already exist, under different names:
 
-## Step 0: re-derive the current state
+- Enforced tiers: developer plans (`api/_lib/dev-plans/config.js`: Free, Builder, Scale, Enterprise) with monthly quota, per-minute burst and concurrency enforced in `api/_lib/gateway.js` via `api/_lib/dev-plans/quota.js` (tests: `tests/dev-plans-quota.test.js`, `tests/dev-plans-config.test.js`). Visible on the dashboard at `src/dashboard-next/pages/developers-plan.js` (used, limit, reset); documented in `docs/api-reference.md` and `docs/developer-plans.md`.
+- Deposit bonus lever: `THREE_CREDIT_BONUS_BPS` (default 0) read by `creditBonusBps()`, credited as a separate `deposit.three_bonus` grant, shown on the credits page (tests: `tests/credit-deposit-assets.test.js`).
 
-    grep -n "apiV1" api/_lib/rate-limit.js api/_lib/agents-v1/http.js
-    grep -n "ACCOUNT_TIERS" -A40 api/_lib/account-tier.js | head -60
-    sed -n 1,80p api/credits/deposit.js
-    grep -rn "api_keys" api/_lib/migrations/*.sql | head
-    grep -n "discount\|holder" api/_lib/three-tier.js | head
+Remaining, owner-owned: the pricing proposal. Read production `usage_events` (kind `api`) for the per-key monthly call distribution (needs working gcloud/DB access; the env reader timed out in the 2026-10-24 session), then send the owner one message proposing plan limits and prices and a `THREE_CREDIT_BONUS_BPS` value, each with reasoning, asking yes/no per lever. On a yes, change only `config.js` or the env var.
 
-## Tasks
+## Close out
 
-1. **Key tiers, enforced.** A tier on each API key (default: the tier implied by the owner's account tier, so nothing changes for anyone today). A committed config maps tier to per-minute and per-month limits; `apiV1` reads the key's tier and applies both. Monthly usage is already metered into `usage_events` (kind `api`); the monthly check reads it with a cheap counter, and a 429 past the monthly cap says so (`reason: "monthly_quota"`) and names the reset date. Default config values must equal today's single limit so enabling the code changes no one's behaviour.
-2. **Visibility.** Dashboard → Data API (or the API keys page) shows each key's tier, the month's usage against its cap, and the reset date. `docs/api-reference.md` rate-limit section documents tiers from the config (generated or read, never retyped).
-3. **Deposit bonus lever.** A config value, `three_deposit_bonus_bps`, default `0`. When non-zero, a $THREE deposit credits `amount_usd * (1 + bps/10000)`, the ledger row records the bonus separately, and the credits page states the bonus. SOL deposits are unchanged.
-4. **The owner message (the gate).** Propose concrete tiers (names, per-minute and monthly limits, prices, what each unlocks) and a bonus value, each with the reasoning and today's usage numbers from production (the distribution of monthly API calls per key, read from `usage_events`). Ask for a yes on each lever separately. On a yes, change only the config and commit.
-
-## Definition of done
-
-- [ ] With default config, every existing rate-limit test passes unchanged and a new test proves a key's limits equal today's.
-- [ ] Tests prove: a key over its monthly cap gets 429 with `reason: "monthly_quota"`; a tier change takes effect on the next request; a $THREE deposit with `three_deposit_bonus_bps: 300` credits 3% more and records the bonus separately; with `0` it credits exactly as today.
-- [ ] Usage and tier are visible to the key owner in the dashboard (browser-verified).
-- [ ] Docs updated; the owner message carries the proposal with production usage numbers.
-
-## Never blocked
-
-| Blocker | Resolution (act, do not ask) |
-|---|---|
-| No monthly counter exists | Build it on the existing `usage_events` metering; do not add a second metering path. |
-| The owner declines tiers | Leave the enforced mechanism in place at today's limits; it is still correct and documented. |
-
-## Close out (required)
-
-1. Verify every Definition of done line with the actual command output in front of you. Never claim a line you did not verify.
-2. Commit with explicit paths and a subject that describes the diff (house style: `type(scope): what changed and why a reader cares`).
-3. If every Definition of done line passes, delete this file in that same commit (`git rm prompts/finish/924-parity-14-pricing-levers.md`) and append a dated entry to [_context/parity-PROGRESS.md](_context/parity-PROGRESS.md) with the commit SHAs. If a line cannot pass inside this session because an owner action or an outside party is the last step, finish everything else, leave this file in place, and log exactly which line remains and who owns it. Never delete this file on a partial.
-4. Final report, in this order: what step 0 measured; what changed (file list with commit SHAs); evidence for each Definition of done line; the single batched owner message, if the order has a gate; one-line judgment calls. No trailing questions.
+Delete this file once the owner has answered on each lever and the config reflects the answer. Never delete on a partial.

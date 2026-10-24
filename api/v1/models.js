@@ -19,17 +19,18 @@
 // models needs no key.
 
 import { cors, json, method, wrap } from '../_lib/http.js';
-import { inferencePricing } from '../_lib/inference-billing.js';
+import { INFERENCE_MODEL_ROWS } from '../_lib/pricing/inference-models.js';
+import { meteredAvailable } from '../_lib/metered-router.js';
+import { USDC_CREDIT_RATE } from '../_lib/pricing/catalog.js';
 import { listCatalogModels, freeTierAllowance } from '../_lib/model-catalog.js';
 
 // Fixed for the life of the model id, so clients that sort or cache by
 // `created` see a stable value.
 const CREATED = Math.floor(Date.UTC(2026, 8, 22) / 1000);
 
-function runtimeModel() {
-	const pricing = inferencePricing();
+function runtimeModel(row) {
 	return {
-		id: pricing.model,
+		id: row.id,
 		object: 'model',
 		created: CREATED,
 		owned_by: 'three.ws',
@@ -39,10 +40,21 @@ function runtimeModel() {
 		context_messages: 40,
 		tools: 'server-side, read-only',
 		pricing: {
-			input_usd_per_mtok: pricing.input_usd_per_mtok,
-			output_usd_per_mtok: pricing.output_usd_per_mtok,
-			min_call_usd: pricing.min_call_usd,
+			input_usd_per_mtok: row.input_usd_per_mtok,
+			output_usd_per_mtok: row.output_usd_per_mtok,
+			min_call_usd: row.min_call_usd,
+			usdc_credit_rate: USDC_CREDIT_RATE,
 			billed_to: 'account credits (https://three.ws/credits)',
+		},
+		pay_per_request: {
+			enabled: meteredAvailable(),
+			protocol: 'x402',
+			scheme: 'upto',
+			network: 'solana',
+			asset: 'USDC',
+			max_rounds: row.max_rounds,
+			max_output_tokens_round: row.max_output_tokens_round,
+			how: 'POST without a key: the 402 carries a cap sized to this request. Sign it, retry, and only the metered tokens are charged; the rest of the cap is refunded.',
 		},
 	};
 }
@@ -61,7 +73,7 @@ export default wrap(async (req, res) => {
 	res.setHeader('cache-control', live ? 'no-store' : 'public, max-age=60');
 	return json(res, 200, {
 		object: 'list',
-		data: [runtimeModel()],
+		data: INFERENCE_MODEL_ROWS.map(runtimeModel),
 		agent_models: catalog.models,
 		health_checked_at: catalog.health_checked_at,
 		free_tier: freeTier,

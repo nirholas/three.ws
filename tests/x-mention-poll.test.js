@@ -95,10 +95,10 @@ describe('a poll with a cursor', () => {
 		expect(await store.getCursor(ACCT)).toBe(out.cursor);
 	});
 
-	it('routes the make and launch intents (later orders) to help with handler_not_built', async () => {
+	it('routes the make intent (a later order) to help with handler_not_built', async () => {
 		await poll.pollAccount({ descriptor: DESCRIPTOR, env: {}, deps: deps() });
 		const rows = await store.recentDecisions(ACCT, { limit: 50 });
-		const unbuilt = rows.filter((r) => ['make', 'launch'].includes(r.intent) && r.decision === 'reply');
+		const unbuilt = rows.filter((r) => r.intent === 'make' && r.decision === 'reply');
 		for (const r of unbuilt) expect(r.reason).toBe('handler_not_built');
 	});
 

@@ -1,5 +1,5 @@
-<script>
-	import { createEventDispatcher, tick } from 'svelte';
+<script lang="ts">
+	import { tick } from 'svelte';
 	import { scale, slide } from 'svelte/transition';
 	import { cubicIn } from 'svelte/easing';
 	import { formatModelName, formatMultipleModelNames } from './providers.js';
@@ -9,19 +9,24 @@
 	import Icon from './Icon.svelte';
 	import Checkbox from './Checkbox.svelte';
 
-	const dispatch = createEventDispatcher();
 
-	export let convo;
-	export let models = [];
-	let className = '';
-	export { className as class };
+	interface Props {
+		convo: any;
+		models?: any;
+		class?: string;
+		onchange?: (...args: any[]) => void;
+		onchangeMulti?: (...args: any[]) => void;
+	}
+
+	let { convo, models = [], class: className = '', onchange, onchangeMulti }: Props = $props();
+	
 
 	let id = 'tool-selector';
-	let open = false;
-	let query = '';
+	let open = $state(false);
+	let query = $state('');
 
-	$: filteredModels =
-		query.length > 0
+	let filteredModels =
+		$derived(query.length > 0
 			? models.filter((model) => {
 					if (model.provider.toLowerCase() === query.toLowerCase()) {
 						return true;
@@ -33,21 +38,21 @@
 					}
 					model.name.toLowerCase().includes(query.toLowerCase());
 				})
-			: models;
+			: models);
 
-	let inputEl;
-	let innerWidth;
+	let inputEl = $state();
+	let innerWidth = $state();
 </script>
 
 <svelte:window
 	bind:innerWidth
-	on:click={(event) => {
+	onclick={(event) => {
 		if (!event.target.closest(`#${id}`)) {
 			open = false;
 			query = '';
 		}
 	}}
-	on:touchstart={(event) => {
+	ontouchstart={(event) => {
 		if (!event.target.closest(`#${id}`)) {
 			open = false;
 			query = '';
@@ -59,7 +64,7 @@
 	<div class="relative">
 		<button
 			class="flex h-9 w-full min-w-[190px] max-w-[200px] items-center gap-2.5 rounded-[10px] border border-slate-200 px-2 text-left transition-colors hover:border-slate-400 sm:h-10 sm:min-w-[280px] sm:pl-4 sm:pr-9"
-			on:click={async () => {
+			onclick={async () => {
 				open = !open;
 				if (open && innerWidth > 640) {
 					await tick();
@@ -99,9 +104,9 @@
 					placeholder="Search models..."
 					class="w-full appearance-none rounded-t-lg border-0 border-b border-slate-300 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-700 focus:outline-none focus:ring-0"
 					bind:value={query}
-					on:keydown={(event) => {
+					onkeydown={(event) => {
 						if (event.key === 'Enter') {
-							dispatch('change', filteredModels[0]);
+							onchange?.(filteredModels[0]);
 							open = false;
 							query = '';
 						}
@@ -112,8 +117,8 @@
 						<li>
 							<button
 								class="flex w-full items-center gap-2 whitespace-nowrap px-3 py-2 text-left text-xs transition-colors hover:bg-gray-100"
-								on:click={() => {
-									dispatch('change', model);
+								onclick={() => {
+									onchange?.(model);
 									open = false;
 									query = '';
 								}}
@@ -129,10 +134,9 @@
 
 								<Checkbox
 									checked={!!convo.models?.find((m) => m.id === model.id)}
-									on:change={() => {}}
-									on:click={(event) => {
+									onclick={(event) => {
 										event.stopPropagation();
-										dispatch('changeMulti', model);
+										onchangeMulti?.(model);
 									}}
 									class="ml-auto"
 								/>

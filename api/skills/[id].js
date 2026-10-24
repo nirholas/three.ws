@@ -6,6 +6,8 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse, isUuid } from '../_lib/validate.js';
 import { SKILL_RAILS, enabledRails, normalizeRails } from '../_lib/skill-rails.js';
 import skillReviewHandler from './review.js';
+import { scanSkillRow } from '../_lib/skill-supply-scan.js';
+import { stateFor, scanColumns, authorFacing, rowPartsChanged } from '../_lib/skill-scan-store.js';
 
 const SLUG_RE = /^[a-z0-9][a-z0-9_-]{0,59}$/;
 
@@ -27,6 +29,8 @@ const updateSchema = z.object({
 		.min(1)
 		.optional(),
 	content: z.string().trim().max(200000).optional(),
+	manifest: z.record(z.any()).optional(),
+	handlers_src: z.string().max(262144).optional(),
 	rails: z.array(z.enum(SKILL_RAILS)).min(1, 'enable at least one payment rail').optional(),
 });
 
@@ -142,7 +146,8 @@ async function handleUpdate(req, res, id) {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const [skill] = await sql`
-		SELECT id, author_id FROM marketplace_skills WHERE id = ${id}
+		SELECT id, author_id, name, description, content, schema_json, manifest, handlers_src, is_public, review_status
+		  FROM marketplace_skills WHERE id = ${id}
 	`;
 	if (!skill) return error(res, 404, 'not_found', 'skill not found');
 
@@ -157,8 +162,47 @@ async function handleUpdate(req, res, id) {
 		return error(res, 400, 'validation_error', 'no fields to update');
 	}
 
+	// Any edit to what the skill says or runs is a new version: scan the merged
+	// result before saving. Blocked edits are refused; review edits go private
+	// and wait for a moderator, even if the previous version had been approved.
+	const merged = {
+		name: body.name ?? skill.name,
+		description: body.description ?? skill.description,
+		content: body.content ?? skill.content,
+		schema_json: body.schema_json ?? skill.schema_json,
+		manifest: body.manifest ?? skill.manifest,
+		handlers_src: body.handlers_src ?? skill.handlers_src,
+	};
+	const report = scanSkillRow(merged);
+	if (report.verdict === 'blocked') {
+		return error(res, 422, 'skill_blocked', 'this skill failed the safety scan and cannot be saved', { scan: authorFacing(report) });
+	}
+	const state = stateFor(report, { previousStatus: skill.review_status, contentChanged: rowPartsChanged(skill, merged) });
+	if (body.is_public === true && !state.may_be_public) {
+		return error(res, 409, 'held_for_review', 'this skill is held for moderator review and cannot be made public yet', { scan: authorFacing(report, state) });
+	}
+	const cols = scanColumns(report);
+
 	const setFrags = [];
 	const params = [];
+	params.push(cols.scan_verdict);
+	setFrags.push(`scan_verdict = $${params.length}`);
+	params.push(cols.scan_findings);
+	setFrags.push(`scan_findings = $${params.length}::jsonb`);
+	params.push(cols.scan_version);
+	setFrags.push(`scan_version = $${params.length}`);
+	setFrags.push('scanned_at = now()');
+	params.push(state.review_status);
+	setFrags.push(`review_status = $${params.length}`);
+	if (!state.may_be_public) setFrags.push('is_public = false');
+	if (body.manifest !== undefined) {
+		params.push(JSON.stringify(body.manifest));
+		setFrags.push(`manifest = $${params.length}::jsonb`);
+	}
+	if (body.handlers_src !== undefined) {
+		params.push(body.handlers_src);
+		setFrags.push(`handlers_src = $${params.length}`);
+	}
 	if (body.name !== undefined) {
 		params.push(body.name);
 		setFrags.push(`name = $${params.length}`);
@@ -171,7 +215,7 @@ async function handleUpdate(req, res, id) {
 		params.push(body.tags);
 		setFrags.push(`tags = $${params.length}`);
 	}
-	if (body.is_public !== undefined) {
+	if (body.is_public !== undefined && state.may_be_public) {
 		params.push(body.is_public);
 		setFrags.push(`is_public = $${params.length}`);
 	}
@@ -216,7 +260,7 @@ async function handleUpdate(req, res, id) {
 	updated.avg_rating = stats?.avg_rating ?? 0;
 	updated.rating_count = stats?.rating_count ?? 0;
 
-	return json(res, 200, { skill: toSkill(updated) });
+	return json(res, 200, { skill: toSkill(updated), scan: authorFacing(report, state) });
 }
 
 async function handleDelete(req, res, id) {

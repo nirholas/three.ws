@@ -131,6 +131,19 @@ function reasonFor(caller) {
 }
 
 /**
+ * Read-only holder check: resolves the caller (comp, tier pass, on-chain tier) and
+ * reports whether they are eligible for a registered gated feature. Writes nothing
+ * to `res` beyond what comp resolution may set, so a handler that owns its own 402
+ * (a per-tier pay-per-use action, say) can branch on it.
+ * @returns {Promise<{ eligible: boolean, level: number, wallet: string|null }>}
+ */
+export async function checkFeatureAccess(req, res, featureId, { body = null } = {}) {
+	const caller = await resolveCaller(req, res, body);
+	const access = accessFromTierLevel(caller.level, featureId);
+	return { eligible: access.eligible, level: caller.level, wallet: caller.wallet };
+}
+
+/**
  * Require a minimum $THREE holder tier for a feature.
  * @param {object} req
  * @param {object} res

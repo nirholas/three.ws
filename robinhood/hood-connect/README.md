@@ -37,7 +37,7 @@ team hand-rolls that flow. hood-connect makes it one component (React) or three 
 - **`<HoodConnectButton />` and `<FundWallet />`** (React): the whole journey with a styled,
   themable skin; every visual state designed (no wallet, picker, connecting, adding, switching,
   wrong chain, connected, empty wallet, error).
-- **`hoodWagmiConfig()`** for teams already on wagmi v2. The core requires neither wagmi nor React.
+- **`hoodWagmiConfig()`** for teams already on wagmi (v2 or v3). The core requires neither wagmi nor React.
 
 Docs site with a live connect button: **https://nirholas.github.io/hood-connect/**
 
@@ -115,7 +115,7 @@ await getFundingStatus(quote, txHash)    // 'pending' | 'done' | 'failed'
 | `HoodConnectError` and subclasses | `hood-connect` | typed rejection paths (`ConnectionRejectedError`, `ChainAddRejectedError`, `ChainSwitchRejectedError`, ...) |
 | `HoodConnectButton` / `FundWallet` | `hood-connect/react` | drop-in components, themable via `--hc-*` CSS variables, `unstyled` opt-out |
 | `useHoodAccount` / `useEnsureChain` / `useWallets` | `hood-connect/react` | headless hooks over a shared connection store |
-| `hoodWagmiConfig` | `hood-connect/wagmi` | wagmi v2 config for chain 4663 (+ optional 46630) |
+| `hoodWagmiConfig` | `hood-connect/wagmi` | wagmi v2 or v3 config for chain 4663 (+ optional 46630) |
 
 Full guide with error-handling patterns: [docs/guide.html](https://nirholas.github.io/hood-connect/guide.html).
 

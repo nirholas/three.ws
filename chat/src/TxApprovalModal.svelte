@@ -1,25 +1,34 @@
-<script>
+<script lang="ts">
 	import { fade, scale } from 'svelte/transition';
 	import { cubicIn } from 'svelte/easing';
 	import Button from './Button.svelte';
 
-	export let details;   // { network, from, to, amount, token, memo?, estimatedFee? }
-	export let guard = null; // GuardChain verdict from /api/agent/guard, when preflighted
-	export let onApprove; // () => void
-	export let onReject;  // () => void
+	interface Props {
+		details: any; // { network, from, to, amount, token, memo?, estimatedFee? }
+		guard?: any; // GuardChain verdict from /api/agent/guard, when preflighted
+		onApprove: any; // () => void
+		onReject: any; // () => void
+	}
 
-	let pending = false;
+	let {
+		details,
+		guard = null,
+		onApprove,
+		onReject
+	}: Props = $props();
+
+	let pending = $state(false);
 
 	// A `block` verdict never reaches this modal (the tool body is refused
 	// before the wallet prompt). The intervention layer always reads
 	// approval_required here because this modal IS the intervention, so the
 	// chip keys off every OTHER layer: "cleared" means nothing beyond the
 	// approval you are already giving was flagged.
-	$: guardFlags = (guard?.layers || []).filter(
+	let guardFlags = $derived((guard?.layers || []).filter(
 		(l) => l.layer !== 'intervention' && ['warn', 'approval_required', 'block', 'error'].includes(l.status),
-	);
-	$: guardTone = guard && guardFlags.length === 0 ? 'ok' : 'review';
-	$: guardCriticalSpots = (guard?.blindSpots || []).filter((s) => s.severity === 'critical');
+	));
+	let guardTone = $derived(guard && guardFlags.length === 0 ? 'ok' : 'review');
+	let guardCriticalSpots = $derived((guard?.blindSpots || []).filter((s) => s.severity === 'critical'));
 
 	function truncate(addr) {
 		if (!addr || addr.length <= 12) return addr;
@@ -36,21 +45,21 @@
 		onReject();
 	}
 
-	$: rows = [
+	let rows = $derived([
 		{ label: 'Network', value: details.network },
 		{ label: 'From', value: truncate(details.from) },
 		{ label: 'To', value: truncate(details.to) },
 		{ label: 'Amount', value: `${details.amount} ${details.token}` },
 		...(details.memo ? [{ label: 'Memo', value: details.memo }] : []),
 		...(details.estimatedFee ? [{ label: 'Estimated Fee', value: details.estimatedFee }] : []),
-	];
+	]);
 </script>
 
 <div
 	transition:fade={{ duration: 200, easing: cubicIn }}
 	aria-hidden="true"
 	class="fixed inset-0 z-[200] bg-black/60"
-/>
+></div>
 
 <div
 	role="dialog"
@@ -103,7 +112,7 @@
 			variant="outline"
 			class="flex-1 !justify-center !border-slate-600 !bg-transparent !text-slate-300 hover:!border-slate-400 disabled:opacity-50"
 			disabled={pending}
-			on:click={reject}
+			onclick={reject}
 		>
 			Reject
 		</Button>
@@ -111,7 +120,7 @@
 			variant="dark"
 			class="flex-1 !justify-center !bg-indigo-600 hover:!bg-indigo-500 disabled:opacity-50"
 			disabled={pending}
-			on:click={approve}
+			onclick={approve}
 		>
 			Approve
 		</Button>

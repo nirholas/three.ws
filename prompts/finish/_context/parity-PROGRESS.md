@@ -92,3 +92,31 @@ Cross-session handoff for the `parity-` orders ([parity-00-CONTEXT.md](parity-00
 - Shipped in `353a5a177`: `paidEndpoint` now records a failure after settlement (streaming handler throw, `siwx_record_failed`) as `failed_after_settle` and answers with `paid: true`, `retry_safe`, the settlement transaction, `retries_left` and a plain sentence; the same X-PAYMENT header re-runs the work with no second verify or settle (bounded by `X402_PAID_RETRY_MAX` and the retry window), a completed call still answers 409, an exhausted proof answers 409 `payment_retries_exhausted`. The helpers in `api/_lib/x402/spent-payments.js` and the migration existed from earlier commits but nothing in the wrapper called them; that wiring is the substance of this order. POST bodies now join the payment-identifier idempotency hash. `docs/mcp.md` has a Use cases section per guided prompt, guarded by `tests/mcp-use-cases-doc.test.js` (red run shown by renaming `pay_and_call()` in the doc). Docs: `docs/x402.md`, error table in `docs/api-reference.md`, changelog entry.
 - Verified: 13 tests in `tests/api/x402-spent-payments.test.js` (retry, replay 409, exhausted, siwx, POST body red/green), 179 x402/MCP test files green.
 - Not from this order: `npm run audit:docs` reports only `workers/cad-forge` (another lane's untracked directory) missing its README.
+
+## 2026-10-23: orders 919, 920, 921 (built, owner steps remain)
+
+- 919: `three-ws` launcher package committed in `2859eb153`; push, deploy and `npm publish` are owner-gated.
+- 920: external community skill sources committed in `dd69b9b4b`; owner approves the source list and sets `COMMUNITY_SKILL_SOURCES`.
+- 921: submission kit in `docs/awesome-solana-ai-submission.md`; PR #251 already open; second PR and mcp.so/Smithery await the owner.
+
+## 2026-10-23: order 923 (built, owner steps remain)
+
+- 923: builder competition shipped in `439b4a256` (API, migration, ranking) and `3172dcf7e` (pages, routes, docs, nav). Config ships empty. Migration unapplied, deploy and competition parameters are owner-gated; order trimmed to those.
+
+## 2026-10-24: order 924, pricing levers (partial, trimmed)
+
+- Step 0: the requested mechanisms already shipped as developer plans (`api/_lib/dev-plans/*`, enforced in `api/_lib/gateway.js`, dashboard usage page, docs) and the `THREE_CREDIT_BONUS_BPS` deposit bonus (`api/_lib/credit-deposit.js`, separate grant row, credits page). No code was rebuilt.
+- Verified: `tests/dev-plans-quota.test.js`, `tests/dev-plans-config.test.js`, `tests/credit-deposit-assets.test.js` pass (23 tests).
+- Remaining (owner): production usage distribution and the tier/bonus proposal; the production env reader hung this session. Order file trimmed to that step.
+
+## 2026-10-24: order 925, mention to launch (partial)
+
+- Step 0: reader, cron, cursor, dedupe, limits, dry run, X identity lookup and the `launch` grammar already existed; `launch` still answered help (`handler_not_built`). Mentions are readable on the current credentials (mentions-probe.json).
+- Shipped: `api/_lib/x-mention-launch.js` and its wiring in `x-mention-poll.js` (linked author with a bodied agent gets the prefilled `/launch` link; unlinked, no-agent and no-body authors get the matching link; no spend path, asserted by an import-list test), `tests/x-mention-launch.test.js` (7 tests incl. PGlite handleMention dry run), docs, STRUCTURE row, changelog.
+- Verified: 27 tests green across launch and poll suites; Playwright against Vite on a spare port: the reply URL fills the `/launch` name, ticker and description fields, no page errors.
+- Remains: real-API dry-run tick evidence after deploy, and the owner's `X_MENTION_BOT_LIVE=1`. `check:claude` shows a cron-count drift (145 vs 150) from other work.
+
+## 2026-10-24: order 922, /why-three-ws (partial)
+
+- Shipped: `62fe9136b` (page, module, jsdom tests, routes, nav, pages.json, STRUCTURE row). Browser at 375, 768 and 1440 px in both themes: no overflow, no console errors, all five tiles live from `/api/platform/analytics`. `audit:links` 0 dangling; `build:pages` clean after fixing two invalid changelog tags (`844bd7e27`).
+- Remains: the named comparison table, owner-gated on the platform names. The order file is trimmed to that step.

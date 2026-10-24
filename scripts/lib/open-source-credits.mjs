@@ -203,6 +203,15 @@ export const WORKER_MODELS = [
 		powers: "workers/model-trellis2: the default image-to-3D PBR engine behind Forge's primary lane.",
 	},
 	{
+		id: 'model:sam3d-objects',
+		name: 'SAM 3D Objects',
+		org: 'Meta',
+		license: 'SAM License (Meta, last updated November 19, 2025; use allowed subject to Trade Controls, gated weights)',
+		repo: 'https://github.com/facebookresearch/sam-3d-objects',
+		area: 'generation',
+		powers: 'workers/model-sam3d-objects: rebuilds the objects in one photo as a laid-out 3D scene (Forge and AR Studio "From a photo"), a 32 GB+ GPU lane that stays off until the owner stages the weights.',
+	},
+	{
 		id: 'model:hunyuan3d',
 		name: 'Tencent Hunyuan3D 2.1',
 		org: 'Tencent',

@@ -1,13 +1,15 @@
-<script>
+<script lang="ts">
+	import { untrack } from 'svelte';
+	
 	import { activeAgent, openaiAPIKey, notify } from './stores.js';
 	import { ingestFile, getChunksForAgent, deleteChunksForFile } from './knowledge.js';
 
-	export let db;
+	let { db } = $props();
 
-	let files = [];
-	let uploading = false;
-	let uploadProgress = { stage: '', done: 0, total: 0 };
-	let fileInput;
+	let files = $state([]);
+	let uploading = $state(false);
+	let uploadProgress = $state({ stage: '', done: 0, total: 0 });
+	let fileInput = $state();
 
 	async function loadFiles() {
 		if (!db || !$activeAgent) return;
@@ -48,7 +50,9 @@
 		await loadFiles();
 	}
 
-	$: if (db && $activeAgent) loadFiles();
+	$effect.pre(() => {
+		if (db && $activeAgent) untrack(loadFiles);
+	});
 </script>
 
 <div class="flex flex-col gap-3">
@@ -66,7 +70,7 @@
 					</div>
 					<button
 						class="text-[12px] text-red-400 hover:text-red-600"
-						on:click={() => removeFile(f.filename)}
+						onclick={() => removeFile(f.filename)}
 					>Remove</button>
 				</li>
 			{/each}
@@ -87,7 +91,7 @@
 				type="file"
 				accept=".txt,.md"
 				class="hidden"
-				on:change={handleUpload}
+				onchange={handleUpload}
 			/>
 		</label>
 	{/if}

@@ -256,7 +256,7 @@ The endpoint allows cross-origin `GET` and `POST` requests and requires no authe
 curl -s https://three.ws/api/mcp-census | jq '.totals.all, .matchesBuild'
 ```
 
-Response fields: `totals` (`all`, `hosted`, `stdio`, each with `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`), `servers` (one row per server with a `source` of `live` or `build`), `method` (how each number is calculated), `matchesBuild` (false when the build ran on different code than is serving) and `drift` (the per-server differences). Today the build counts <!-- mcp-count:all.tools -->704<!-- /mcp-count --> tools on <!-- mcp-count:all.servers -->51<!-- /mcp-count --> servers. Browse them at [/mcp-tools](https://three.ws/mcp-tools); see [MCP Tools Catalog](mcp-tools.md#how-the-totals-are-calculated) for the method.
+Response fields: `totals` (`all`, `hosted`, `stdio`, each with `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`), `servers` (one row per server with a `source` of `live` or `build`), `method` (how each number is calculated), `matchesBuild` (false when the build ran on different code than is serving) and `drift` (the per-server differences). Today the build counts <!-- mcp-count:all.tools -->709<!-- /mcp-count --> tools on <!-- mcp-count:all.servers -->51<!-- /mcp-count --> servers. Browse them at [/mcp-tools](https://three.ws/mcp-tools); see [MCP Tools Catalog](mcp-tools.md#how-the-totals-are-calculated) for the method.
 
 ## Asset Catalog API
 
@@ -4231,6 +4231,32 @@ Quote a launch, fund it from the agent wallet, confirm it in the approvals inbox
 
 Full flow, errors and configuration: [launch-intents.md](launch-intents.md).
 
+### Creator payouts
+
+Where an agent's creator-fee share is sent, and the record of every distribution.
+
+| Method and path | Auth | Purpose |
+| --- | --- | --- |
+| `GET /api/creator-payouts?info=1` | none | Stage cadences and the per-$100 flow. |
+| `GET /api/creator-payouts?agent=<id>` | owner session | Payout wallet, pending change, totals, held reasons, recent distributions. |
+| `GET /api/creator-payouts?agent=<id>&format=csv` | owner session | Every distribution as CSV. |
+| `POST /api/creator-payouts` | owner session | `challenge`, `register` (needs a step-up grant) or `cancel`. |
+
+Rules, hold reasons and configuration: [creator-payouts.md](creator-payouts.md).
+
+### Creator payouts
+
+Where an agent's creator-fee share is sent, and the record of every distribution.
+
+| Method and path | Auth | Purpose |
+| --- | --- | --- |
+| `GET /api/creator-payouts?info=1` | none | Stage cadences and the per-$100 flow. |
+| `GET /api/creator-payouts?agent=<id>` | owner session | Payout wallet, pending change, totals, held reasons, recent distributions. |
+| `GET /api/creator-payouts?agent=<id>&format=csv` | owner session | Every distribution as CSV. |
+| `POST /api/creator-payouts` | owner session | `challenge`, `register` (needs a step-up grant) or `cancel`. |
+
+Rules, hold reasons and configuration: [creator-payouts.md](creator-payouts.md).
+
 ### Whales
 
 Whale / large-buy detection across pump.fun — **facts only**: which wallets
@@ -6596,6 +6622,25 @@ aggregator (`api/_lib/news.js`: 197 publisher feeds, per-source 5-minute cache
 with serve-stale-on-error).
 
 ---
+
+## Token Due Diligence API
+
+Holder-quality fields for a Solana mint. Free, key-less, CORS `*`. Definitions
+and thresholds: [token due diligence](token-due-diligence.md).
+
+```
+GET /api/crypto/due-diligence?address=<mint>
+GET /api/crypto/funding-graph?wallet=<address>
+```
+
+`due-diligence` returns `{ status, mint, fields: { insider_pct, sniper_pct,
+bundler_pct, fresh_wallet_pct, fresh_wallet_ratio, smart_money_holders,
+smart_money_pct }, holders[], clusters[], coverage, notes[], graph,
+thresholds, definitions }`. A field is `null` with a "withheld" note when too
+few holders yielded evidence. Reports are cached per mint for 300 seconds.
+`funding-graph` returns the two-hop `{ nodes, edges }` for one wallet. The same
+report is the MCP tool `token_due_diligence` (`{ mint }`). Errors: `400` bad
+address, `429` rate limited, `503` chain reads unavailable.
 
 ## Crypto News API
 
@@ -10605,3 +10650,17 @@ for verification code. A failed delivery retries after 30s, 2m, 10m, 30m, 1h, 3h
 and 8h (8 attempts total) and every attempt is kept in the delivery log; replay
 a delivery from the log or the `/dashboard/developers` page. The signing secret
 (`whsec_…`) is shown once at creation and on `rotate-secret`.
+
+## Forge cost preview and pay-to-keep
+
+| Method and path | Auth | Purpose |
+| --- | --- | --- |
+| `GET /api/forge-quote?path=text&tier=standard` | none | What a generation would cost. Optional `backend`, `images`, `own_key`, `gameready`; `table=1` returns every tier. No spend, `cache-control: private, max-age=30`. |
+| `GET /api/forge-keep?id=<creation>` | none | Whether the creation is kept, and whether pay-to-keep is enabled. |
+| `POST /api/forge-keep` | optional $THREE wallet or payment | Release a creation for download. With `FORGE_PAY_TO_KEEP` off it always returns `kept: true`. Non-holders get `402 three_hold_required` with the `pay_per_use` action. A reused payment returns `409 payment_already_used`. |
+
+Details and the enable command: [forge.md](./forge.md#cost-preview-and-pay-to-keep).
+
+## Skill supply-chain scan
+
+Every published skill version is scanned. `POST /api/skills` and `PATCH /api/skills/:id` accept `manifest` and `handlers_src`, return a `scan` object, and answer `422 skill_blocked` when a skill is blocked. `POST /api/skills/scan` is a dry run for the publish form. `GET` and `POST /api/skills/moderation` (admin) list and decide held skills. Rules, verdicts and the `requires.network` manifest field: [skill-supply-scan.md](skill-supply-scan.md).

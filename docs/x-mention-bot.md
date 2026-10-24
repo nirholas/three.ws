@@ -8,10 +8,8 @@ reviewed, and what is and is not wired yet.
 
 For the sibling capability that lets an X account *sign in* to three.ws
 (rather than be read as a mention), see the "Account linking" section below.
-For the launch-by-mention intent (`launch <NAME> $<TICKER>`), see
-`prompts/finish/925-parity-15-mention-to-launch.md`: it plugs its reply into
-the same parser and the same ledger this doc covers, and this file is the one
-place it should extend rather than write a second mention doc.
+For the launch-by-mention intent (`launch <NAME> $<TICKER>`), see the
+"Launch by mention" section below.
 
 ## Design rules
 
@@ -313,8 +311,34 @@ wait is recorded as `pending`. Every `x-mentions` tick then runs
   as `paused` for lack of a deliver.
 
 The `image3d` intent is routed to `handleImage3d()` in `handleMention` (dry
-run, same budget and per-author limits as any reply); only `make` and
-`launch` still answer with help (`handler_not_built`).
+run, same budget and per-author limits as any reply); only `make` still
+answers with help (`handler_not_built`).
+
+## Launch by mention
+
+`@trythreews launch Moon Cat $MCAT a cat on the moon` is answered with a link,
+never a launch. Launching signs with the agent's custodial wallet, which
+three.ws allows only from a same-site browser session, so the bot has no
+spend path at all: `api/_lib/x-mention-launch.js` imports a database handle,
+the X identity lookup and a URL helper, and nothing that can sign, pay or call
+a launch API (a test asserts the import list). The grammar is
+`parseLaunch` in `api/_lib/x-mention-intents.js`; tweet text reaches the
+reply only as URL-encoded query values of the `/launch` link.
+
+| Author | Reply | `reason` |
+|---|---|---|
+| X account linked to a three.ws account, with an agent that has a 3D body | Prefilled `/launch?avatar=...&name=...&symbol=...&description=...` plus "Nothing is paid until you review and sign on three.ws." | `launch_link` |
+| Linked, agent without a body | Link to the agent page to give it one | `launch_no_body` |
+| Linked, no agent | Link to `/create` | `launch_no_agent` |
+| Not linked (`findUserByXId`) | Link to `/x/claim` to sign in and connect X | `launch_unlinked` |
+
+The author is the X user id X attached to the post, never anything in the text.
+The agent is the newest live agent of the linked user that has a 3D body. The
+polling cron (`/api/cron/x-mentions`, every two minutes), the cursor, dedupe
+by tweet id, per-author limits and the decision ledger are the ones every
+other intent uses. With `X_MENTION_BOT_LIVE` unset the company account only
+records the reply it would send (`x_mention_events.reply_text`, visible in
+`/x/ops`); nothing is posted. Going live is the owner step (order 928).
 
 Going live stays the separate owner step.
 

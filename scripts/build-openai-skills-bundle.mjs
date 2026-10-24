@@ -39,6 +39,7 @@ import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, readdirSync
 import { join, resolve, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import YAML from 'yaml';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SKILLS_DIR = join(ROOT, '.agents', 'skills');
@@ -59,30 +60,12 @@ const argv = new Set(process.argv.slice(2));
 const checkOnly = argv.has('--check');
 const offline = argv.has('--offline') || checkOnly;
 
-/** Minimal frontmatter reader: the same subset build-skills-pack.mjs relies on. */
+/** Real YAML parse, so quoted values and folded blocks read as the spec defines them. */
 function frontmatter(text) {
 	const m = text.match(/^---\n([\s\S]*?)\n---\n/);
 	if (!m) return null;
-	const out = {};
-	let section = null;
-	for (const line of m[1].split('\n')) {
-		if (!line.trim() || line.trimStart().startsWith('#')) continue;
-		const nested = line.match(/^ {2}([A-Za-z0-9_-]+):\s*(.*)$/);
-		if (nested && section) {
-			out[section][nested[1]] = nested[2].trim();
-			continue;
-		}
-		const top = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
-		if (!top) continue;
-		if (top[2].trim() === '') {
-			section = top[1];
-			out[section] = {};
-		} else {
-			section = null;
-			out[top[1]] = top[2].trim();
-		}
-	}
-	return out;
+	const parsed = YAML.parse(m[1]);
+	return parsed && typeof parsed === 'object' ? parsed : null;
 }
 
 /**

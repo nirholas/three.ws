@@ -36,11 +36,37 @@ Rules that always hold:
 
 ## Commands
 
-`/balance`, `/portfolio`, `/runs`, `/launches`, `/agents`, `/use <agent>`, `/new`, `/voice on|off`, `/approvals`, `/positions`, `/pause`, `/kill`, `/unlink`, `/help`. `/help` is the source of truth; the list above mirrors [api/_lib/gateway/commands.js](../api/_lib/gateway/commands.js).
+`/balance`, `/portfolio`, `/runs`, `/launches`, `/agents`, `/use <agent>`, `/new`, `/voice on|off`, `/buy`, `/sell`, `/snipe`, `/orders`, `/cancel`, `/approvals`, `/positions`, `/pause`, `/kill`, `/unlink`, `/help`. `/help` is the source of truth; the list above mirrors [api/_lib/gateway/commands.js](../api/_lib/gateway/commands.js).
+
+## Trading from chat
+
+A paired chat takes five trade commands, as slash commands or as the bare words:
+
+| Command | What it does |
+| --- | --- |
+| `/buy <mint or symbol> <sol> [tp=<pct>] [sl=<pct>]` | Quote a buy. `tp` and `sl` rest a linked take-profit and stop-loss pair after the buy fills. |
+| `/sell <mint or symbol> <pct or all>` | Quote a sale of a percent of the wallet's holding. |
+| `/snipe <mint> <sol>` | Quote a buy of a full mint. Refused when RugCheck reports high or critical risk. |
+| `/orders` | List resting orders. |
+| `/cancel [<order id>]` | Cancel an order by id prefix (a linked pair cancels together), or drop the trade waiting for a yes. |
+
+Nothing signs from a command. Each one replies with a quote card: spend, expected output, route, price impact, RugCheck verdict, fees and slippage. The quote then waits for a typed confirmation.
+
+- Only the exact word `yes` (case and surrounding space ignored), typed by the paired owner within 60 seconds, executes it. Anything else cancels it. A late `yes` sends nothing and says the quote expired.
+- Voice notes, photos, forwarded messages and button presses never confirm a typed quote.
+- A new trade command while one is waiting cancels the first and quotes the second.
+- Execution goes through the same engine as the web app: kill switch, per-trade cap, daily budget, firewall, ledger and the mainnet real-funds agreement. A guard refusal comes back with its reason code.
+- Symbols resolve only against tokens the wallet already holds, because a symbol is not an identity. Anything else needs the full mint.
+- Token names and symbols come from the chain, so the quote card prints them stripped of links, mentions, markup and line breaks, in quotes, and never as instructions.
+- `tp` and `sl` need the programmable orders engine switched on with `GATEWAY_TPSL_ORDERS=1`. While it is off a buy that asks for them is refused before it is quoted.
+
+`/positions` lists open positions with live P&L, the last closed trades, and sends a PNG share card for each recent close (`/api/trade-og?id=<position id>&format=png`, the SVG card rasterized).
+
+Code: [trade-parse.js](../api/_lib/gateway/trade-parse.js) (grammar, escaping, confirmation rule), [trade-commands.js](../api/_lib/gateway/trade-commands.js) (quote, confirm, exits, orders). Tests: [tests/gateway-trade-parse.test.js](../tests/gateway-trade-parse.test.js), [workers/agent-gateway/tests/trade-commands.test.js](../workers/agent-gateway/tests/trade-commands.test.js).
 
 ## What can and cannot be approved from chat
 
-Trades never run from text alone. A preview arrives with Approve and Cancel buttons (or a six-digit code on platforms without buttons), expires after ten minutes, and only the exact approval executes it. Requests your spend policy holds arrive with Approve and Deny. `/pause` and `/kill` stop agents at once. Lifting a freeze is done on the web. Details: [approvals.md](./approvals.md#approving-from-telegram-and-discord). Changing a payout wallet is never auto-approved and always shows the old and new address.
+Trades the agent proposes in conversation never run from text alone, and the typed `/buy` family needs a typed `yes` (see Trading from chat). A preview arrives with Approve and Cancel buttons (or a six-digit code on platforms without buttons), expires after ten minutes, and only the exact approval executes it. Requests your spend policy holds arrive with Approve and Deny. `/pause` and `/kill` stop agents at once. Lifting a freeze is done on the web. Details: [approvals.md](./approvals.md#approving-from-telegram-and-discord). Changing a payout wallet is never auto-approved and always shows the old and new address.
 
 ## Telegram webhook
 

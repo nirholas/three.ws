@@ -19,6 +19,8 @@ import { isUuid } from './validate.js';
 import { insertNotification } from './notify.js';
 import { requireOwnedAgent, CustomSkillError } from './agent-custom-skills.js';
 import { validateBundle } from '@three-ws/skill-import';
+import { scanSkillBundle } from './skill-supply-scan.js';
+import { stateFor, scanColumns } from './skill-scan-store.js';
 import { completeText } from './agent-learning/llm.js';
 import { parseDraftJson } from './agent-learning/skill-drafts.js';
 import { getMemorySettings } from './agent-learning/settings.js';
@@ -340,15 +342,25 @@ export async function publishCandidate({ agentId, userId, id }) {
 	const errors = validateCandidateBundle(row.bundle);
 	if (errors.length) throw new SkillCandidateError(422, 'invalid_bundle', `the draft failed validation: ${errors[0]}`);
 
+	const report = scanSkillBundle({ manifest: row.bundle.manifest, skillMd: row.bundle.skill_md, tools: row.bundle.tools, handlersSrc: row.bundle.handlers_src, name: row.bundle.manifest.name, description: row.bundle.manifest.description });
+	if (report.verdict === 'blocked') {
+		const first = report.findings.find((f) => f.severity === 'block');
+		throw new SkillCandidateError(422, 'skill_blocked', `the draft failed the safety scan: ${first.message} (${first.file}${first.line ? `:${first.line}` : ''}). ${first.fix}`);
+	}
+	const state = stateFor(report);
+	const cols = scanColumns(report);
+
 	const base = row.bundle.manifest.name;
 	let skill = null;
 	for (let attempt = 0; attempt < 5 && !skill; attempt++) {
 		const slug = `${base}-${Math.random().toString(36).slice(2, 6)}`.slice(0, 60);
 		try {
 			[skill] = await sql`
-				INSERT INTO marketplace_skills (author_id, name, slug, description, category, tags, schema_json, content, is_public, price_per_call_usd)
+				INSERT INTO marketplace_skills (author_id, name, slug, description, category, tags, schema_json, content, is_public, price_per_call_usd,
+				                                manifest, handlers_src, scan_verdict, scan_findings, scan_version, scanned_at, review_status)
 				VALUES (${userId}, ${base.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}, ${slug}, ${row.bundle.manifest.description}, 'general',
-				        ${row.bundle.manifest.tags}, ${JSON.stringify(marketplaceSchema(row.bundle.tools))}::jsonb, ${row.bundle.skill_md}, true, 0)
+				        ${row.bundle.manifest.tags}, ${JSON.stringify(marketplaceSchema(row.bundle.tools))}::jsonb, ${row.bundle.skill_md}, ${state.may_be_public}, 0,
+				        ${JSON.stringify(row.bundle.manifest)}::jsonb, ${row.bundle.handlers_src}, ${cols.scan_verdict}, ${cols.scan_findings}::jsonb, ${cols.scan_version}, now(), ${state.review_status})
 				RETURNING id, slug, name
 			`;
 		} catch (err) {
@@ -359,7 +371,7 @@ export async function publishCandidate({ agentId, userId, id }) {
 	const [updated] = await sql`
 		UPDATE agent_skill_candidates SET published_skill_id = ${skill.id}, updated_at = now() WHERE id = ${row.id} RETURNING *
 	`;
-	return { candidate: presentCandidate(updated), skill };
+	return { candidate: presentCandidate(updated), skill: { ...skill, held_for_review: state.review_status === 'pending', scan_verdict: report.verdict } };
 }
 
 // ── Revisions ───────────────────────────────────────────────────────────────

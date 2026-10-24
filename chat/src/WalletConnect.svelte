@@ -2,8 +2,8 @@
   import { currentUser, loadCurrentUser, walletProvider } from './stores.js';
   import { signInWithEVM, signInWithSolana, signOut } from './walletAuth.js';
 
-  let loading = null; // 'evm' | 'sol' | null
-  let error = '';
+  let loading = $state(null); // 'evm' | 'sol' | null
+  let error = $state('');
 
   async function connectEVM() {
     error = '';
@@ -54,7 +54,7 @@
     <span class="opacity-30">·</span>
     <button
       class="text-sm text-ink-soft underline hover:text-ink"
-      on:click={handleSignOut}
+      onclick={handleSignOut}
     >Sign out</button>
   </span>
 {:else}
@@ -63,7 +63,7 @@
       <!-- EVM button -->
       <button
         disabled={loading !== null}
-        on:click={connectEVM}
+        onclick={connectEVM}
         class="h-9 rounded-full bg-black px-4 text-sm font-medium text-white transition-colors hover:bg-[#333] disabled:opacity-50"
       >
         {loading === 'evm' ? 'Connecting…' : 'Connect EVM'}
@@ -71,7 +71,7 @@
       <!-- Solana button -->
       <button
         disabled={loading !== null}
-        on:click={connectSolana}
+        onclick={connectSolana}
         class="h-9 rounded-full border border-rule bg-white px-4 text-sm font-medium text-ink transition-colors hover:bg-paper disabled:opacity-50"
       >
         {loading === 'sol' ? 'Connecting…' : 'Connect Solana'}

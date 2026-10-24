@@ -4,6 +4,8 @@
 // USER's funds to external services, which is orthogonal to tool billing.)
 import { makeDispatcher, PROTOCOL_VERSION } from '../_lib/mcp-dispatch.js';
 import { TOOL_CATALOG, TOOLS } from './catalog.js';
+import { PERPS_TOOL_NAMES } from './perps-tools.js';
+import { accountHasMcpPerps } from '../_lib/perps/service.js';
 
 export { PROTOCOL_VERSION };
 export { isPublicTool } from '../_lib/mcp-getting-started.js';
@@ -78,4 +80,6 @@ export const dispatch = makeDispatcher({
 	logName: 'mcp-agent',
 	policyServer: 'threews-agent',
 	resourceServer: 'mcp-agent',
+	// Perps tools are opt-in per agent: hidden until the account has one enabled.
+	hiddenTools: async (auth) => ((await accountHasMcpPerps(auth?.userId).catch(() => false)) ? [] : PERPS_TOOL_NAMES),
 });

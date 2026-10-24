@@ -1,0 +1,21 @@
+{
+  "name": "three-ws",
+  "version": "0.1.1",
+  "description": "The unscoped command for the three.ws CLI: npx three-ws setup connects any MCP client to three.ws. Thin launcher for @three-ws/cli.",
+  "keywords": ["three.ws", "mcp", "model-context-protocol", "cli", "solana", "agents"],
+  "author": "three.ws <support@three.ws> (https://three.ws)",
+  "license": "Apache-2.0",
+  "homepage": "https://three.ws/docs/cli",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "packages/three-ws"
+  },
+  "bugs": { "url": "https://github.com/nirholas/three.ws/issues" },
+  "type": "module",
+  "bin": { "three-ws": "./bin/three-ws.js" },
+  "files": ["bin", "README.md", "LICENSE"],
+  "dependencies": { "@three-ws/cli": "0.1.1" },
+  "engines": { "node": ">=20.18" },
+  "publishConfig": { "access": "public" }
+}

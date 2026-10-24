@@ -2,7 +2,11 @@
   import type { Tokens } from 'marked'
   import type { MarkdownOptions, Renderers } from '../markedConfiguration'
 
-  export let token: Tokens.Image
+  interface Props {
+    token: Tokens.Image;
+  }
+
+  let { token }: Props = $props();
   export const options: MarkdownOptions = undefined
   export const renderers: Renderers = undefined
 </script>

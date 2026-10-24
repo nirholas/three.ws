@@ -9,7 +9,8 @@
  *
  * For each lockfile this script:
  *   1. audits it in an isolated sibling copy (a root workspace member would
- *      otherwise resolve against, and rewrite, the root lockfile),
+ *      otherwise resolve against, and rewrite, the root lockfile); a workspace
+ *      root is worked on in place and restored unless it improves,
  *   2. finds the newest published version on the same release line (same
  *      major, or same minor for 0.x) that no advisory covers, or failing that
  *      the vetted CROSS_MAJOR target,
@@ -214,50 +215,60 @@ function trackedLockDirs() {
 
 function fixDir(dir) {
 	const abs = resolve(ROOT, dir);
-	// A sibling, not a tmpdir: `file:../x` specs must resolve exactly as they do from the
-	// real directory, and a sibling is in no `workspaces` list so npm treats it as its own root.
-	const iso = mkdtempSync(join(dirname(abs), `.lockfix-${basename(abs)}-`));
+	const originalManifest = readFileSync(join(abs, 'package.json'), 'utf8');
+	const originalLock = readFileSync(join(abs, 'package-lock.json'), 'utf8');
+	const manifest = JSON.parse(originalManifest);
+	// A workspace root needs its members beside it and nothing above can claim it, so it is
+	// worked on in place and restored unless it improves. Anything else runs in a sibling copy:
+	// a root workspace member would otherwise resolve against (and rewrite) the root lockfile,
+	// and a sibling rather than a tmpdir keeps `file:../x` specs resolving as they do for real.
+	const inPlace = Boolean(manifest.workspaces);
+	const work = inPlace ? abs : mkdtempSync(join(dirname(abs), `.lockfix-${basename(abs)}-`));
+	let keep = false;
 	try {
-		for (const f of ['package.json', 'package-lock.json', '.npmrc']) {
-			if (existsSync(join(abs, f))) copyFileSync(join(abs, f), join(iso, f));
+		if (!inPlace) {
+			for (const f of ['package.json', 'package-lock.json', '.npmrc']) {
+				if (existsSync(join(abs, f))) copyFileSync(join(abs, f), join(work, f));
+			}
 		}
-		const originalManifest = readFileSync(join(iso, 'package.json'), 'utf8');
-		const manifest = JSON.parse(originalManifest);
-		const before = alertCount(audit(iso));
+		const readLock = () => JSON.parse(readFileSync(join(work, 'package-lock.json'), 'utf8'));
+		let report = audit(work);
+		const before = alertCount(report);
 		const changes = [];
 		const notes = [];
-		let report = audit(iso);
-		let residue;
 		for (let pass = 0; pass < PASSES; pass++) {
-			const p = plan(report, JSON.parse(readFileSync(join(iso, 'package-lock.json'), 'utf8')));
-			const { applied, skipped } = applyPins(manifest, p.pins);
+			const { applied, skipped } = applyPins(manifest, plan(report, readLock()).pins);
 			notes.push(...skipped);
 			if (!applied.length) break;
 			changes.push(...applied);
-			writeJson(join(iso, 'package.json'), manifest, originalManifest);
+			writeJson(join(work, 'package.json'), manifest, originalManifest);
 			const install = ['install', '--package-lock-only', '--ignore-scripts', '--no-audit', '--no-fund'];
 			try {
-				npm(install, iso);
+				npm(install, work);
 			} catch (err) {
 				// Some committed lockfiles were last written past a peer conflict; resolve them the same way.
 				if (!String(err.stderr).includes('ERESOLVE')) throw err;
-				npm([...install, '--legacy-peer-deps'], iso);
+				npm([...install, '--legacy-peer-deps'], work);
 				notes.push('peer conflict in the existing tree: resolved with --legacy-peer-deps');
 			}
-			report = audit(iso);
+			report = audit(work);
 		}
-		residue = plan(report, JSON.parse(readFileSync(join(iso, 'package-lock.json'), 'utf8'))).residue;
+		const { residue } = plan(report, readLock());
 		const after = alertCount(report);
-		const improved = after < before;
-		if (improved && !dryRun) {
-			copyFileSync(join(iso, 'package.json'), join(abs, 'package.json'));
-			copyFileSync(join(iso, 'package-lock.json'), join(abs, 'package-lock.json'));
+		keep = after < before && !dryRun;
+		if (keep && !inPlace) {
+			copyFileSync(join(work, 'package.json'), join(abs, 'package.json'));
+			copyFileSync(join(work, 'package-lock.json'), join(abs, 'package-lock.json'));
 		}
-		return { dir, before, after, written: improved && !dryRun, changes, notes: [...new Set(notes)], residue };
+		return { dir, before, after, written: keep, changes, notes: [...new Set(notes)], residue };
 	} catch (err) {
 		return { dir, error: String(err.stderr || err.message).trim().split('\n').slice(-3).join(' | ') };
 	} finally {
-		rmSync(iso, { recursive: true, force: true });
+		if (!inPlace) rmSync(work, { recursive: true, force: true });
+		else if (!keep) {
+			writeFileSync(join(abs, 'package.json'), originalManifest);
+			writeFileSync(join(abs, 'package-lock.json'), originalLock);
+		}
 	}
 }
 

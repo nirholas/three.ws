@@ -16,8 +16,6 @@
 // identical whichever rail carried the call. This module is the pure policy
 // (rail names, quote, endpoint map, MPP framing) plus that one writer.
 
-import { createHmac, timingSafeEqual } from 'node:crypto';
-
 import { sql } from './db.js';
 import { env } from './env.js';
 import { priceFor } from './x402-prices.js';
@@ -166,92 +164,15 @@ export function detectRail(req, body) {
 }
 
 // ── MPP framing ──────────────────────────────────────────────────────────────
+// The wire format (spec-shaped Solana charge challenge, credential and receipt)
+// lives in mpp-solana.js so the skill rail, paid endpoints, the agent payer and
+// the CLI all speak the same bytes. These aliases keep the rail module's API.
 
-const MPP_REALM = 'three.ws';
-const MPP_CHALLENGE_TTL_SECONDS = 300;
-
-const b64url = (buf) => Buffer.from(buf).toString('base64url');
-
-function mppSecret() {
-	return env.A2A_MANDATE_SECRET;
-}
-
-function mppChallengeId({ request, expires }) {
-	return b64url(
-		createHmac('sha256', mppSecret()).update(`${MPP_REALM}|solana|charge|${request}|${expires}`).digest(),
-	);
-}
-
-/**
- * Build the MPP challenge for a skill: a stateless, HMAC-bound `Payment` challenge
- * whose request carries the exact Solana USDC charge (amount, recipient, asset,
- * resource). Nothing is stored server-side; the id proves we issued these terms.
- * @param {{ requirement: object, resourceUrl: string, description: string, nowSec?: number }} args
- */
-export function buildMppChallenge({ requirement, resourceUrl, description, nowSec = Math.floor(Date.now() / 1000) }) {
-	const expires = nowSec + MPP_CHALLENGE_TTL_SECONDS;
-	const request = b64url(
-		JSON.stringify({
-			amount: String(requirement.amount),
-			currency: requirement.asset,
-			recipient: requirement.payTo,
-			network: requirement.network,
-			resource: resourceUrl,
-			description,
-			scheme: requirement.scheme,
-			extra: requirement.extra ?? {},
-		}),
-	);
-	const id = mppChallengeId({ request, expires });
-	const header =
-		`Payment id="${id}", realm="${MPP_REALM}", method="solana", intent="charge", ` +
-		`request="${request}", expires="${expires}"`;
-	return { id, request, expires, header };
-}
-
-/**
- * Parse and authenticate an `Authorization: Payment <b64url JSON>` credential. The
- * credential echoes the challenge (id, request, expires) beside the payment payload;
- * the id must be the HMAC of exactly those terms and still inside its lifetime.
- * @returns {{ ok: true, payload: object, request: object } | { ok: false, code: string, message: string }}
- */
-export function parseMppCredential(authorization, { nowSec = Math.floor(Date.now() / 1000) } = {}) {
-	const m = /^\s*payment\s+(\S+)\s*$/i.exec(String(authorization || ''));
-	if (!m) return { ok: false, code: 'invalid_credential', message: 'Authorization must be "Payment <credential>"' };
-	let cred;
-	try {
-		cred = JSON.parse(Buffer.from(m[1], 'base64url').toString('utf8'));
-	} catch {
-		return { ok: false, code: 'invalid_credential', message: 'credential is not base64url JSON' };
-	}
-	const ch = cred?.challenge;
-	if (!ch || typeof ch.id !== 'string' || typeof ch.request !== 'string' || !cred.payload || typeof cred.payload !== 'object') {
-		return { ok: false, code: 'invalid_credential', message: 'credential needs { challenge: {id, request, expires}, payload }' };
-	}
-	const expires = Number(ch.expires);
-	if (!Number.isFinite(expires) || nowSec >= expires) {
-		return { ok: false, code: 'challenge_expired', message: 'the payment challenge has expired, request a new one' };
-	}
-	const want = Buffer.from(mppChallengeId({ request: ch.request, expires }));
-	const got = Buffer.from(ch.id);
-	if (want.length !== got.length || !timingSafeEqual(want, got)) {
-		return { ok: false, code: 'challenge_mismatch', message: 'credential does not match a challenge issued by this server' };
-	}
-	let request;
-	try {
-		request = JSON.parse(Buffer.from(ch.request, 'base64url').toString('utf8'));
-	} catch {
-		return { ok: false, code: 'invalid_credential', message: 'challenge request is not base64url JSON' };
-	}
-	return { ok: true, payload: cred.payload, request };
-}
-
-/** The MPP `Payment-Receipt` header value for a settled charge. */
-export function mppReceiptHeader({ transaction, network, payer, nowSec = Math.floor(Date.now() / 1000) }) {
-	return b64url(
-		JSON.stringify({ status: 'success', method: 'solana', reference: transaction, network, payer, timestamp: nowSec }),
-	);
-}
+export {
+	buildSolanaChargeChallenge as buildMppChallenge,
+	parseSolanaChargeCredential as parseMppCredential,
+	solanaChargeReceiptHeader as mppReceiptHeader,
+} from './mpp-solana.js';
 
 /** x402 payment header (base64 JSON) from a decoded payment payload. */
 export function encodePaymentHeader(payload) {

@@ -115,6 +115,13 @@ export async function revokeRefreshToken(secret, clientId) {
 	          where token_hash = ${hash} and client_id = ${clientId} and revoked_at is null
 	          returning id, user_id`;
 	if (row) {
+		// The client ended its own grant (RFC 7009): the access tokens already in
+		// flight for this user and client stop with it, same as Connected apps.
+		await sql`
+			insert into oauth_client_revocations (user_id, client_id, revoked_at)
+			values (${row.user_id}, ${clientId}, now())
+			on conflict (user_id, client_id) do update set revoked_at = excluded.revoked_at
+		`;
 		logAudit({
 			userId: row.user_id,
 			action: 'revoke_oauth_token',
@@ -292,7 +299,7 @@ export function extractBearer(req) {
 // Access tokens are stateless JWTs, so revoking a connected app also records a
 // cutoff per (user, client). A token issued at or before the cutoff is dead on
 // its next use; a token minted after the person re-authorizes the app is not.
-async function isGrantRevoked(payload) {
+export async function oauthGrantRevoked(payload) {
 	const rows = await sql`
 		select 1 from oauth_client_revocations
 		where user_id = ${payload.sub} and client_id = ${payload.client_id}
@@ -367,7 +374,7 @@ export async function authenticateBearer(token, { audience, ip } = {}) {
 		// token_use prevents a future token type (e.g. an id/refresh JWT) from
 		// being replayed against resource endpoints.
 		if (payload.token_use !== 'access') return null;
-		if (payload.client_id && await isGrantRevoked(payload)) return null;
+		if (payload.client_id && await oauthGrantRevoked(payload)) return null;
 		return {
 			userId: payload.sub,
 			scope: payload.scope || '',

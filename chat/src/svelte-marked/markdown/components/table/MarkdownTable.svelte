@@ -3,9 +3,13 @@
   import type { MarkdownOptions, Renderers } from '../../markedConfiguration'
   import type { Tokens } from 'marked'
 
-  export let token: Tokens.Table
-  export let options: MarkdownOptions
-  export let renderers: Renderers
+  interface Props {
+    token: Tokens.Table;
+    options: MarkdownOptions;
+    renderers: Renderers;
+  }
+
+  let { token, options, renderers }: Props = $props();
 </script>
 
 <table>

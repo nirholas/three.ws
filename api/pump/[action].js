@@ -51,6 +51,7 @@
 //   fee-sharing-agent             -> handleFeeSharingAgent (server-signs create +
 //                                    update sharing config; delegated fee rewards)
 
+import { validateShareholders } from '../../src/shared/launch-fees.js';
 import { z } from 'zod';
 import { Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { sql } from '../_lib/db.js';
@@ -4956,11 +4957,9 @@ const updateFeeSharesSchema = z.object({
 		)
 		.min(1)
 		.max(10)
-		.refine((arr) => arr.reduce((s, x) => s + x.share_bps, 0) === 10_000, {
-			message: 'share_bps must sum to 10000',
-		})
-		.refine((arr) => new Set(arr.map((x) => x.address)).size === arr.length, {
-			message: 'duplicate shareholder addresses',
+		.superRefine((arr, ctx) => {
+			// One rule set for the server and the launch UI: src/shared/launch-fees.js.
+			for (const message of validateShareholders(arr).errors) ctx.addIssue({ code: 'custom', message });
 		}),
 });
 

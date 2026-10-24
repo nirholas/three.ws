@@ -16,6 +16,7 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { toolDefs as libraryTools } from '../_mcp/tools/library.js';
+import { toolDefs as docsTools } from '../_mcp/tools/docs.js';
 
 // The studio's contract carries no payment vocabulary at all (tests/mcp-studio.test.js
 // holds every studio tool to that), so the main server's "no account or payment"
@@ -25,6 +26,12 @@ const MAIN_SERVER_LEAD = /^FREE, no account or payment\. /;
 function libraryTool(name) {
 	const def = libraryTools.find((d) => d.name === name);
 	if (!def) throw new Error(`api/_mcp/tools/library.js no longer defines ${name}`);
+	return { ...def, description: def.description.replace(MAIN_SERVER_LEAD, 'Free, no account needed. ') };
+}
+
+function docsTool(name) {
+	const def = docsTools.find((d) => d.name === name);
+	if (!def) throw new Error(`api/_mcp/tools/docs.js no longer defines ${name}`);
 	return { ...def, description: def.description.replace(MAIN_SERVER_LEAD, 'Free, no account needed. ') };
 }
 
@@ -40,6 +47,10 @@ const DEFS = [
 	{
 		...libraryTool('get_item_source'),
 		name: 'get_item_source',
+	},
+	{
+		...docsTool('search_docs'),
+		name: 'search_docs',
 	},
 ];
 

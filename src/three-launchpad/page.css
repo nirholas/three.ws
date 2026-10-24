@@ -539,3 +539,51 @@
 .tl-notice a {
 	color: var(--tl-accent);
 }
+
+.tl-fees {
+	margin-top: 6px;
+	padding: 14px 16px;
+	border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+	border-radius: var(--radius-card, 16px);
+	background: var(--surface-2);
+}
+.tl-fees h3 {
+	margin: 0 0 6px;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--ink);
+}
+.tl-fees-line {
+	margin: 0 0 10px;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--ink-dim);
+}
+.tl-fees-ref {
+	margin: 10px 0 0;
+}
+.tl-fees-table {
+	width: 100%;
+	border-collapse: collapse;
+	font: 500 12px/1.4 var(--font-mono);
+	color: var(--ink-dim);
+}
+.tl-fees-table th,
+.tl-fees-table td {
+	padding: 4px 0;
+	text-align: left;
+	border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+.tl-fees-table td:last-child,
+.tl-fees-table th:last-child {
+	text-align: right;
+	color: var(--ink);
+}
+.tl-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}

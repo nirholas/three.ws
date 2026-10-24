@@ -154,3 +154,92 @@ describe('three-ws skills drafts', () => {
 		expect(out).toContain('three-ws skills import');
 	});
 });
+
+describe('three-ws skills import <external slug>', () => {
+	const agent = '11111111-1111-4111-8111-111111111111';
+	const SHA = 'c'.repeat(40);
+	const EXTERNAL = {
+		slug: 'fixture-skill',
+		name: 'Fixture Skill',
+		origin: 'external',
+		source: 'fixture-org/skills-repo',
+		ref: SHA,
+		license: 'MIT',
+		tree_url: `https://github.com/fixture-org/skills-repo/tree/${SHA}/skills/fixture-skill`,
+		import: { registry: `https://github.com/fixture-org/skills-repo/tree/${SHA}/skills`, skill: 'fixture-skill' },
+	};
+	const notFound = () => reply(404, { error: 'not_found', error_description: 'no community skill "fixture-skill"' });
+	let env;
+	let fetchMock;
+	let ttyDescriptors;
+
+	beforeEach(() => {
+		env = tempEnv();
+		writeStore({ origin: ORIGIN, auth: { type: 'apikey', key: KEY, prefix: KEY.slice(0, 12) } }, env);
+		fetchMock = vi.fn();
+		vi.stubGlobal('fetch', fetchMock);
+		ttyDescriptors = ['stdin', 'stderr'].map((n) => [n, Object.getOwnPropertyDescriptor(process[n], 'isTTY')]);
+		for (const [n] of ttyDescriptors) Object.defineProperty(process[n], 'isTTY', { value: false, configurable: true });
+	});
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		for (const [n, d] of ttyDescriptors) {
+			if (d) Object.defineProperty(process[n], 'isTTY', d);
+			else delete process[n].isTTY;
+		}
+	});
+
+	it('refuses without --yes in a non-interactive shell, printing source and commit, and installs nothing', async () => {
+		fetchMock.mockResolvedValueOnce(notFound()).mockResolvedValueOnce(reply(200, { skill: EXTERNAL }));
+		const { code, out } = await run(['skills', 'import', 'fixture-skill', '--agent', agent, '--origin', ORIGIN], env);
+		expect(code).toBe(4);
+		expect(out).toBe('');
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+		expect(fetchMock.mock.calls.map(([u]) => u)).not.toContain(`${ORIGIN}/api/skill-imports/scan`);
+	});
+
+	it('prints the source, commit and license in the refusal text', async () => {
+		fetchMock.mockResolvedValueOnce(notFound()).mockResolvedValueOnce(reply(200, { skill: EXTERNAL }));
+		const { runSkills } = await import('../src/commands/skills.js');
+		const result = await runSkills(['import', 'fixture-skill', '--agent', agent], { env, origin: ORIGIN });
+		expect(result.code).toBe(4);
+		expect(result.output).toContain('fixture-org/skills-repo');
+		expect(result.output).toContain(SHA);
+		expect(result.output).toContain('not reviewed by three.ws');
+		expect(result.output).toContain('--yes');
+	});
+
+	it('with --yes scans at the pinned commit, then approves the scanned request', async () => {
+		fetchMock
+			.mockResolvedValueOnce(notFound())
+			.mockResolvedValueOnce(reply(200, { skill: EXTERNAL }))
+			.mockResolvedValueOnce(reply(201, { data: { request: { id: 'r1', status: 'pending', verdict: 'clean', gated: false } } }))
+			.mockResolvedValueOnce(reply(200, { data: { skill: { id: 's9', slug: 'fixture-skill', injected: true }, budget: { used_tokens: 5, cap_tokens: 100 } } }));
+		const { code } = await run(['skills', 'import', 'fixture-skill', '--agent', agent, '--yes', '--json', '--origin', ORIGIN], env);
+		expect(code).toBe(0);
+		const [scanUrl, scanInit] = fetchMock.mock.calls[2];
+		expect(scanUrl).toBe(`${ORIGIN}/api/skill-imports/scan`);
+		expect(JSON.parse(scanInit.body)).toEqual({ agent_id: agent, registry: EXTERNAL.import.registry, skill: 'fixture-skill' });
+		const [approveUrl, approveInit] = fetchMock.mock.calls[3];
+		expect(approveUrl).toBe(`${ORIGIN}/api/skill-imports/requests/r1`);
+		expect(JSON.parse(approveInit.body)).toMatchObject({ decision: 'approve', acknowledge_gated: false, enabled: true });
+	});
+
+	it('does not approve a gated skill without --acknowledge-gated', async () => {
+		fetchMock
+			.mockResolvedValueOnce(notFound())
+			.mockResolvedValueOnce(reply(200, { skill: EXTERNAL }))
+			.mockResolvedValueOnce(reply(201, { data: { request: { id: 'r2', status: 'pending', verdict: 'caution', gated: true } } }));
+		const { runSkills } = await import('../src/commands/skills.js');
+		const result = await runSkills(['import', 'fixture-skill', '--agent', agent, '--yes'], { env, origin: ORIGIN });
+		expect(result.code).toBe(4);
+		expect(result.output).toContain('--acknowledge-gated');
+		expect(fetchMock).toHaveBeenCalledTimes(3);
+	});
+
+	it('reports a slug that is neither in-repo nor external as the original not-found error', async () => {
+		fetchMock.mockResolvedValueOnce(notFound()).mockResolvedValueOnce(notFound());
+		const { code } = await run(['skills', 'import', 'fixture-skill', '--agent', agent, '--yes', '--json', '--origin', ORIGIN], env);
+		expect(code).toBe(1);
+	});
+});

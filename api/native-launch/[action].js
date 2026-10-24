@@ -16,6 +16,7 @@
 //   launch-prep     -> handleLaunchPrep    (authed: unsigned create-pool tx)
 //   launch-confirm  -> handleLaunchConfirm (authed: verify + record launch)
 //   launches        -> handleLaunches      (public: native launch directory)
+//   fee-config      -> handleFeeConfig     (public: validate + describe a decaying-fee schedule, optional devnet/mainnet simulation)
 
 import { z } from 'zod';
 import { Keypair } from '@solana/web3.js';
@@ -34,6 +35,7 @@ import { THREE_WS_VANITY, hasThreeWsMark } from '../../src/solana/vanity/brand.j
 import { grindVanityNode, GrindExhaustedError } from '../../src/solana/vanity/grinder-node.js';
 import { verifySignature, solanaPubkey } from '../_lib/pump.js';
 import { laneInfo, configKeyFor, quoteMintFor } from '../_lib/native-launch/config.js';
+import { previewFeeConfig, simulateFeeConfig } from '../_lib/native-launch/fee-config.js';
 import {
 	buildCreatePoolTx,
 	txInvokesDbcProgram,
@@ -103,6 +105,8 @@ const swapPrepSchema = z.object({
 	side: z.enum(['buy', 'sell']),
 	amount: z.number().positive().max(MAX_SWAP_AMOUNT),
 	slippage_bps: z.number().int().min(1).max(5000).default(100),
+	// Referrer's token account for the quote mint; it earns the referral share of the protocol fee.
+	referral_token_account: z.string().min(32).max(44).optional(),
 	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
 });
 
@@ -125,6 +129,7 @@ async function handleSwapPrep(req, res) {
 			side: body.side,
 			amountIn: body.amount,
 			slippageBps: body.slippage_bps,
+			referralTokenAccount: body.referral_token_account ?? null,
 		});
 		return json(res, 200, {
 			network: body.network,
@@ -136,6 +141,7 @@ async function handleSwapPrep(req, res) {
 			expected_out: built.expected_out,
 			min_out: built.min_out,
 			slippage_bps: built.slippage_bps,
+			referral: built.referral,
 		});
 	} catch (e) {
 		return error(res, e.status || 500, e.code || 'swap_prep_failed', e.message);
@@ -477,6 +483,58 @@ async function handleLaunches(req, res) {
 
 // ── dispatcher ─────────────────────────────────────────────────────────────
 
+// ── fee-config ─────────────────────────────────────────────────────────────
+
+const feeConfigSchema = z.object({
+	fee_schedule: z
+		.object({
+			mode: z.string().max(24).optional(),
+			start_fee_bps: z.number(),
+			end_fee_bps: z.number(),
+			periods: z.number().optional(),
+			duration_slots: z.number().optional(),
+		})
+		.optional(),
+	simulate: z.boolean().default(false),
+	wallet_address: z.string().min(32).max(44).optional(),
+	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
+});
+
+// Validates a candidate fee schedule exactly as the Dynamic Bonding Curve SDK and
+// program will (rate-limiter mode is refused), returns its plain-language preview and
+// fee curve, and with simulate:true also simulates creating the config plus a pool
+// under it. Nothing is signed or sent; omitting fee_schedule previews the live lane.
+async function handleFeeConfig(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['POST'])) return;
+	const rl = await limits.mcpIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+	try {
+		const body = parse(feeConfigSchema, await readJson(req));
+		const preview = await previewFeeConfig(body.fee_schedule);
+		const out = {
+			network: body.network,
+			fee_schedule: preview.schedule,
+			preview: preview.preview,
+			fee_curve: preview.fee_curve,
+			referral: {
+				share_of_trading_fee_percent: preview.referral_share_of_trading_fee_percent,
+				preview: preview.referral_preview,
+			},
+		};
+		if (body.simulate) {
+			out.simulation = await simulateFeeConfig({
+				network: body.network,
+				schedule: preview.schedule,
+				payer: body.wallet_address,
+			});
+		}
+		return json(res, 200, out);
+	} catch (e) {
+		return error(res, e.status || 500, e.code || 'fee_config_failed', e.message, e.details ? { details: e.details } : undefined);
+	}
+}
+
 async function dispatch(req, res) {
 	const url = new URL(req.url, `http://${req.headers.host}`);
 	const action = req.query?.action || url.searchParams.get('action');
@@ -488,6 +546,7 @@ async function dispatch(req, res) {
 		case 'launch-prep': return handleLaunchPrep(req, res);
 		case 'launch-confirm': return handleLaunchConfirm(req, res);
 		case 'launches': return handleLaunches(req, res);
+		case 'fee-config': return handleFeeConfig(req, res);
 		default:
 			return error(res, 404, 'not_found', `unknown launchpad action: ${action || '(none)'}`);
 	}

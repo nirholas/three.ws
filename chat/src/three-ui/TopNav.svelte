@@ -12,7 +12,7 @@
 	// never disagree on labels or hrefs.
 	import { CHAT_SITE_LINKS as siteLinks } from '../../../public/nav-data.js';
 
-	let mobileOpen = false;
+	let mobileOpen = $state(false);
 
 	function goChatHome() {
 		route.set('chat');
@@ -36,7 +36,7 @@
 			</a>
 			<span class="select-none text-base font-light text-ink-soft/60" aria-hidden="true">/</span>
 			<button
-				on:click={goChatHome}
+				onclick={goChatHome}
 				class="rounded-full px-2 py-1 text-sm font-medium text-ink transition-colors hover:bg-paper-deep"
 				aria-current={$route === 'chat' ? 'page' : undefined}
 			>
@@ -80,7 +80,7 @@
 				class="rounded-full p-2 text-ink transition-colors hover:bg-paper-deep xl:hidden"
 				aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
 				aria-expanded={mobileOpen}
-				on:click={() => (mobileOpen = !mobileOpen)}
+				onclick={() => (mobileOpen = !mobileOpen)}
 			>
 				<Icon icon={mobileOpen ? feX : feMenu} class="h-5 w-5" />
 			</button>
@@ -92,7 +92,7 @@
 		<div class="border-t border-rule bg-paper xl:hidden">
 			<div class="flex flex-col gap-1 px-4 py-3">
 				<button
-					on:click={goChatHome}
+					onclick={goChatHome}
 					class="flex h-11 items-center rounded-xl px-3 text-sm font-medium text-ink transition-colors hover:bg-paper-deep"
 					aria-current={$route === 'chat' ? 'page' : undefined}
 				>

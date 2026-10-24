@@ -151,8 +151,8 @@ describe('trials', () => {
 		holder.fail = true;
 		expect((await call('render_avatar')).result._meta.trialRemaining).toBe(1);
 		holder.fail = false;
-		expect((await call('render_avatar')).result._meta.trialRemaining).toBe(1);
 		expect((await call('render_avatar')).result._meta.trialRemaining).toBe(0);
+		expect((await call('render_avatar')).result._meta).toBeUndefined();
 		expect((await call('optimize_model')).result._meta.trialRemaining).toBe(1);
 	});
 

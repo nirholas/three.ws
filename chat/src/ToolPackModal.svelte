@@ -1,9 +1,13 @@
-<script>
+<script lang="ts">
 	import Modal from './Modal.svelte';
 	import { toolSchema } from './stores.js';
 	import { curatedToolPacks } from './tools.js';
 
-	export let open = false;
+	interface Props {
+		open?: boolean;
+	}
+
+	let { open = $bindable(false) }: Props = $props();
 
 	function isInstalled(pack) {
 		return $toolSchema.some((g) => g.name === pack.name);
@@ -35,14 +39,14 @@
 					{#if isInstalled(pack)}
 						<button
 							class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] text-slate-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-							on:click={() => remove(pack)}
+							onclick={() => remove(pack)}
 						>
 							Remove
 						</button>
 					{:else}
 						<button
 							class="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[12px] font-medium text-slate-700 transition-colors hover:bg-slate-100"
-							on:click={() => install(pack)}
+							onclick={() => install(pack)}
 						>
 							Install
 						</button>

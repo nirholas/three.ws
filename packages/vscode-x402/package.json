@@ -196,5 +196,8 @@
 	"devDependencies": {
 		"@types/vscode": "^1.85.0",
 		"esbuild": "^0.28.2"
+	},
+	"overrides": {
+		"zod@^3": "^4.6.7"
 	}
 }

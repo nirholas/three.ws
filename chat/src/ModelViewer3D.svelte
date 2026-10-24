@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import {
 		ACESFilmicToneMapping,
 		AnimationMixer,
@@ -20,24 +20,21 @@
 	import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 	import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-	const dispatch = createEventDispatcher();
-
 	// Envelope produced by the forge tools (application/model-3d) or a bare
 	// { glb } for GLB links found in message text.
-	export let content = {};
-	export let height = 340;
+	let { content = {}, height = 340, onresolved = undefined } = $props();
 
-	let container;
-	let canvas;
+	let container = $state();
+	let canvas = $state();
 	// none → generating → loading → ready, or error / lost at any point.
-	let state = 'none';
-	let errorMessage = '';
-	let loadPct = 0;
-	let genPct = 0;
-	let genLabel = 'Generating model';
-	let hasSkeleton = false;
-	let skeletonVisible = false;
-	let glbUrl = content?.glb || null;
+	let loadState = $state('none');
+	let errorMessage = $state('');
+	let loadPct = $state(0);
+	let genPct = $state(0);
+	let genLabel = $state('Generating model');
+	let hasSkeleton = $state(false);
+	let skeletonVisible = $state(false);
+	let glbUrl = $state(content?.glb || null);
 
 	let renderer = null;
 	let scene = null;
@@ -58,12 +55,12 @@
 	const prompt = content?.prompt || '';
 	const etaSeconds = typeof content?.eta === 'number' && content.eta > 0 ? content.eta : 60;
 	const forgeUrl = 'https://three.ws/forge' + (prompt ? '?prompt=' + encodeURIComponent(prompt) : '');
-	$: viewerUrl = glbUrl ? 'https://three.ws/viewer?src=' + encodeURIComponent(glbUrl) : null;
-	$: arUrl = glbUrl ? 'https://three.ws/ar?src=' + encodeURIComponent(glbUrl) : null;
+	const viewerUrl = $derived(glbUrl ? 'https://three.ws/viewer?src=' + encodeURIComponent(glbUrl) : null);
+	const arUrl = $derived(glbUrl ? 'https://three.ws/ar?src=' + encodeURIComponent(glbUrl) : null);
 
 	onMount(() => {
 		if (content?.error) {
-			state = 'error';
+			loadState = 'error';
 			errorMessage = String(content.error);
 			return;
 		}
@@ -97,13 +94,13 @@
 		} else if (content?.job) {
 			pollJob(content.job);
 		} else {
-			state = 'error';
+			loadState = 'error';
 			errorMessage = 'No model URL or generation job was provided.';
 		}
 	}
 
 	function pollJob(job) {
-		state = 'generating';
+		loadState = 'generating';
 		const startedAt = Date.now();
 		genTicker = setInterval(() => {
 			const elapsed = (Date.now() - startedAt) / 1000;
@@ -121,13 +118,13 @@
 					if (j.status === 'done' && j.glb_url) {
 						clearInterval(genTicker);
 						glbUrl = j.glb_url;
-						dispatch('resolved', { glb_url: j.glb_url });
+						onresolved?.({ glb_url: j.glb_url });
 						loadModel(j.glb_url);
 						return;
 					}
 					if (j.status === 'failed') {
 						clearInterval(genTicker);
-						state = 'error';
+						loadState = 'error';
 						errorMessage = j.error ? String(j.error) : 'Generation failed.';
 						return;
 					}
@@ -138,7 +135,7 @@
 			}
 			if (tries >= maxTries) {
 				clearInterval(genTicker);
-				state = 'error';
+				loadState = 'error';
 				errorMessage = 'Generation timed out. Open the Forge to check on it.';
 				return;
 			}
@@ -161,7 +158,7 @@
 	}
 
 	async function loadModel(url) {
-		state = 'loading';
+		loadState = 'loading';
 		loadPct = 0;
 		let gltf;
 		try {
@@ -176,14 +173,14 @@
 				gltf = await loadGlb('/api/glb?src=' + encodeURIComponent(url));
 			} catch {
 				if (destroyed) return;
-				state = 'error';
+				loadState = 'error';
 				errorMessage = 'Could not load the 3D model file.';
 				return;
 			}
 		}
 		if (destroyed) return;
-		// State first: animate() only runs while state === 'ready'.
-		state = 'ready';
+		// State first: animate() only runs while loadState === 'ready'.
+		loadState = 'ready';
 		setupScene(gltf);
 	}
 
@@ -223,7 +220,7 @@
 			(ev) => {
 				ev.preventDefault();
 				cancelAnimationFrame(rafId);
-				state = 'lost';
+				loadState = 'lost';
 			},
 			{ once: true },
 		);
@@ -262,7 +259,7 @@
 	}
 
 	function animate() {
-		if (destroyed || state !== 'ready') return;
+		if (destroyed || loadState !== 'ready') return;
 		rafId = requestAnimationFrame(animate);
 		// Skip rendering while scrolled far offscreen; the context stays warm.
 		if (!visible) return;
@@ -319,18 +316,18 @@
 	}
 </script>
 
-<!-- svelte-ignore a11y-no-noninteractive-tabindex a11y-no-noninteractive-element-interactions -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
 <div
 	bind:this={container}
 	class="relative w-full overflow-hidden rounded-lg border border-slate-200 bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400"
 	style="min-height: {height}px"
-	data-mv3d={state}
+	data-mv3d={loadState}
 	tabindex="0"
 	role="group"
 	aria-label={prompt ? '3D model: ' + prompt : '3D model viewer'}
-	on:keydown={onKeydown}
+	onkeydown={onKeydown}
 >
-	{#if state === 'error'}
+	{#if loadState === 'error'}
 		<div class="flex flex-col items-center justify-center gap-3 px-6 text-center" style="height: {height}px">
 			<span class="text-sm font-medium text-slate-700">3D generation didn't finish</span>
 			<span class="max-w-md text-xs text-slate-500">{errorMessage}</span>
@@ -343,7 +340,7 @@
 				Retry in the Forge ↗
 			</a>
 		</div>
-	{:else if state === 'generating' || state === 'none'}
+	{:else if loadState === 'generating' || loadState === 'none'}
 		<div class="flex flex-col items-center justify-center gap-4 px-6" style="height: {height}px">
 			{#if content?.preview}
 				<img
@@ -352,36 +349,34 @@
 					class="h-32 w-32 animate-pulse rounded-lg object-cover"
 				/>
 			{:else}
-				<div class="h-32 w-32 animate-pulse rounded-lg bg-slate-100" />
+				<div class="h-32 w-32 animate-pulse rounded-lg bg-slate-100"></div>
 			{/if}
 			<div class="flex w-full max-w-xs flex-col gap-1.5">
 				<div class="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
 					<div
 						class="h-full rounded-full bg-slate-500 transition-[width] duration-500"
-						style="width: {genPct}%"
-					/>
+						style="width: {genPct}%"></div>
 				</div>
 				<span class="text-center text-xs text-slate-500">{genLabel} · usually ~{etaSeconds}s</span>
 			</div>
 		</div>
-	{:else if state === 'loading'}
+	{:else if loadState === 'loading'}
 		<div class="flex flex-col items-center justify-center gap-4 px-6" style="height: {height}px">
-			<div class="h-32 w-32 animate-pulse rounded-lg bg-slate-100" />
+			<div class="h-32 w-32 animate-pulse rounded-lg bg-slate-100"></div>
 			<div class="flex w-full max-w-xs flex-col gap-1.5">
 				<div class="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
 					<div
 						class="h-full rounded-full bg-slate-500 transition-[width] duration-300"
-						style="width: {loadPct}%"
-					/>
+						style="width: {loadPct}%"></div>
 				</div>
 				<span class="text-center text-xs text-slate-500">Loading model…</span>
 			</div>
 		</div>
-	{:else if state === 'lost'}
+	{:else if loadState === 'lost'}
 		<div class="flex flex-col items-center justify-center gap-3 px-6" style="height: {height}px">
 			<span class="text-xs text-slate-500">The 3D view was paused to free graphics memory.</span>
 			<button
-				on:click={reload}
+				onclick={reload}
 				class="rounded-full border border-slate-200 px-3.5 py-1.5 text-xs text-slate-600 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400"
 			>
 				Reload 3D view
@@ -391,11 +386,11 @@
 
 	<canvas
 		bind:this={canvas}
-		class="{state === 'ready' ? 'block' : 'hidden'} w-full touch-none"
+		class="{loadState === 'ready' ? 'block' : 'hidden'} w-full touch-none"
 		style="height: {height}px"
-	/>
+	></canvas>
 
-	{#if state === 'ready'}
+	{#if loadState === 'ready'}
 		{#if prompt || content?.status_note}
 			<div class="pointer-events-none absolute left-3 top-2.5 max-w-[70%] rounded-lg bg-white/80 px-2.5 py-1.5 backdrop-blur-sm">
 				{#if prompt}
@@ -441,7 +436,7 @@
 				</a>
 			{/if}
 			<button
-				on:click={recenter}
+				onclick={recenter}
 				class="ml-auto rounded-full border border-slate-200 bg-white/85 px-2.5 py-1 text-[11px] text-slate-600 backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400"
 				aria-label="Recenter the camera"
 			>
@@ -449,7 +444,7 @@
 			</button>
 			{#if hasSkeleton}
 				<button
-					on:click={toggleSkeleton}
+					onclick={toggleSkeleton}
 					class="rounded-full border border-slate-200 bg-white/85 px-2.5 py-1 text-[11px] backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400 {skeletonVisible
 						? 'bg-slate-700 text-white hover:bg-slate-600'
 						: 'text-slate-600'}"

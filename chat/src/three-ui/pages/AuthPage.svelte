@@ -1,16 +1,21 @@
-<script>
+<script lang="ts">
+
   import { route, loadCurrentUser } from '../../stores.js';
   import { signInWithEVM, signInWithSolana } from '../../walletAuth.js';
   import { signInWithPassword, registerWithPassword } from '../../passwordAuth.js';
 
-  export let kind = 'signin'; // 'signin' | 'signup'
+  interface Props {
+    kind?: string; // 'signin' | 'signup'
+  }
 
-  let email = '';
-  let password = '';
-  let name = '';
-  let tosAccepted = false;
-  let loading = null; // 'evm' | 'sol' | 'password' | null
-  let error = '';
+  let { kind = 'signin' }: Props = $props();
+
+  let email = $state('');
+  let password = $state('');
+  let name = $state('');
+  let tosAccepted = $state(false);
+  let loading = $state(null); // 'evm' | 'sol' | 'password' | null
+  let error = $state('');
 
   async function connectEVM() {
     error = '';
@@ -74,14 +79,14 @@
     <div class="mt-6 space-y-3">
       <button
         disabled={loading !== null}
-        on:click={connectEVM}
+        onclick={connectEVM}
         class="bg-black text-white rounded-xl h-11 w-full flex items-center justify-center gap-2 hover:bg-[#333] text-sm font-medium disabled:opacity-50 transition-colors"
       >
         {loading === 'evm' ? 'Connecting…' : 'Connect EVM Wallet'}
       </button>
       <button
         disabled={loading !== null}
-        on:click={connectSolana}
+        onclick={connectSolana}
         class="bg-white border border-rule text-ink rounded-xl h-11 w-full flex items-center justify-center gap-2 hover:bg-paper text-sm font-medium disabled:opacity-50 transition-colors"
       >
         {loading === 'sol' ? 'Connecting…' : 'Connect Solana Wallet'}
@@ -89,10 +94,10 @@
     </div>
 
     <div class="flex items-center gap-3 text-xs text-ink-faint my-4">
-      <span class="flex-1 h-px bg-rule" />or<span class="flex-1 h-px bg-rule" />
+      <span class="flex-1 h-px bg-rule"></span>or<span class="flex-1 h-px bg-rule"></span>
     </div>
 
-    <form class="space-y-3" on:submit|preventDefault={submit}>
+    <form class="space-y-3" onsubmit={(event) => { event.preventDefault(); submit(); }}>
       {#if kind === 'signup'}
         <label class="block">
           <span class="text-xs font-medium text-ink-soft mb-1.5 block">Name</span>
@@ -143,10 +148,10 @@
   <p class="text-center text-sm text-ink-soft mt-6">
     {#if kind === 'signin'}
       Don't have an account?
-      <button class="text-ink underline" on:click={() => route.set('signup')}>Sign up</button>
+      <button class="text-ink underline" onclick={() => route.set('signup')}>Sign up</button>
     {:else}
       Already have an account?
-      <button class="text-ink underline" on:click={() => route.set('signin')}>Sign in</button>
+      <button class="text-ink underline" onclick={() => route.set('signin')}>Sign in</button>
     {/if}
   </p>
 </section>

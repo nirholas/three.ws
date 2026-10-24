@@ -9,7 +9,8 @@
 // Guide: docs/perps.md.
 
 import { apiError, requireUuid, strParam, intParam } from '../agents-v1/http.js';
-import { DEFAULT_VENUE } from './index.js';
+import { DEFAULT_VENUE, listVenues } from './index.js';
+import { venueHealth } from './venue-health.js';
 import { loosenedPerpsKeys, PERPS_LIMIT_DEFAULTS } from './limits.js';
 import { recentAlerts } from './alerts.js';
 import * as perps from './service.js';
@@ -106,8 +107,29 @@ async function streamRoute({ req, res, params, principal, query }) {
 
 export const agentRoutes = [
 	{
+		method: 'GET', path: '/agents/:id/perps/venues', name: 'perps.venues', auth: 'public',
+		handler: async ({ query }) => ({ venues: listVenues(), health: await venueHealth({ probe: query.probe !== '0' }) }),
+	},
+	{
+		method: 'GET', path: '/agents/:id/perps/hyperliquid', name: 'perps.hyperliquid.get', auth: 'required', scope: 'wallet:read',
+		handler: ({ params, principal }) => run(() => perps.hyperliquidStatus({ agentId: agentOf(params), userId: principal.userId })),
+	},
+	{
+		method: 'PUT', path: '/agents/:id/perps/hyperliquid', name: 'perps.hyperliquid.link', auth: 'required', scope: 'wallet:write',
+		handler: ({ params, principal, body, req }) => {
+			if (principal.source !== 'session') {
+				throw apiError(403, 'owner_session_required', 'Linking a Hyperliquid account mints a signing key for the agent, so the owner must do it while signed in.');
+			}
+			return run(() => perps.linkHyperliquid({ agentId: agentOf(params), userId: principal.userId, account: body.account, req }));
+		},
+	},
+	{
+		method: 'DELETE', path: '/agents/:id/perps/hyperliquid', name: 'perps.hyperliquid.unlink', auth: 'required', scope: 'wallet:write',
+		handler: ({ params, principal, req }) => run(() => perps.unlinkHyperliquid({ agentId: agentOf(params), userId: principal.userId, req })),
+	},
+	{
 		method: 'GET', path: '/agents/:id/perps/markets', name: 'perps.markets', auth: 'public',
-		handler: ({ query }) => run(() => perps.markets({ venueId: venueOf(query.venue), kind: strParam(query.kind, { name: 'kind', max: 20 }) })),
+		handler: ({ query }) => run(() => perps.markets({ venueId: query.venue ? String(query.venue) : null, kind: strParam(query.kind, { name: 'kind', max: 20 }) })),
 	},
 	{
 		method: 'GET', path: '/agents/:id/perps/market/:symbol', name: 'perps.market', auth: 'public',

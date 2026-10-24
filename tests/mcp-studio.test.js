@@ -21,7 +21,9 @@ const CATALOG = ['search_catalog', 'get_catalog_item', 'get_item_source'];
 // get_job, the agent-facing job status tool, rides beside the catalog tools on
 // the full surface and is not one of the eleven the ChatGPT listing carries.
 const JOB = ['get_job'];
-const ALL = [...ALLOWED, ...JOB, ...CATALOG, ...PERSONA];
+// search_docs answers how-to questions from the documentation index, free.
+const DOCS = ['search_docs'];
+const ALL = [...ALLOWED, ...JOB, ...CATALOG, ...DOCS, ...PERSONA];
 
 // Anything that would signal a crypto / payment surface. The whole point of the
 // free studio app is that NONE of this appears anywhere in its contract — the
@@ -604,7 +606,7 @@ describe('mcp-studio dispatch', () => {
 // handler, same schema) and hold the studio's no-payment-vocabulary bar.
 describe('mcp-studio asset catalog tools', () => {
 	it('serves the main server catalog tools with their own handlers and schemas', () => {
-		expect(CATALOG_TOOL_CATALOG.map((t) => t.name)).toEqual(CATALOG);
+		expect(CATALOG_TOOL_CATALOG.map((t) => t.name)).toEqual([...CATALOG, ...DOCS]);
 		for (const name of CATALOG) {
 			const lib = LIBRARY_TOOLS.find((d) => d.name === name);
 			const studio = CATALOG_TOOL_CATALOG.find((t) => t.name === name);

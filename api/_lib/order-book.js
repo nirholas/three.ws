@@ -31,7 +31,7 @@ const CODE_MAP = new Map([
 	['kill_switch', 'kill_switch'], ['trading_paused', 'kill_switch'], ['wallet_anomaly_frozen', 'kill_switch'],
 	['orders_global_kill', 'kill_switch'],
 	// Spend policy: per-trade cap, daily budget, USD ceilings, position limits.
-	['per_trade_cap', 'cap_hit'], ['daily_budget', 'cap_hit'], ['daily_exceeded', 'cap_hit'],
+	['per_trade_cap', 'cap_hit'], ['daily_loss_limit', 'cap_hit'], ['daily_budget', 'cap_hit'], ['daily_exceeded', 'cap_hit'],
 	['daily_budget_exceeded', 'cap_hit'], ['per_tx_exceeded', 'cap_hit'], ['max_positions', 'cap_hit'],
 	['spend_limit', 'cap_hit'], ['capability_required', 'cap_hit'], ['policy_unavailable', 'cap_hit'],
 	['policy_blocked', 'cap_hit'],
@@ -97,6 +97,10 @@ export function nextFire(o) {
 	const target = o.type === 'limit' ? o.limit_price : o.type === 'stop' ? o.stop_price : null;
 	if (o.type === 'trailing') {
 		return { at: null, label: o.side === 'sell' ? `After a ${o.trail_pct}% drop from the high` : `After a ${o.trail_pct}% bounce from the low` };
+	}
+	if (o.type === 'trail_ratchet') {
+		const first = o.ratchet?.tiers?.[0];
+		return { at: null, label: `Below ${o.ratchet?.initial_stop_pct}% under entry${first ? `, then locking profit from +${first.profit_pct}%` : ''}` };
 	}
 	const dir = (o.type === 'limit') === (o.side === 'buy') ? 'at or below' : 'at or above';
 	return { at: null, label: `When ${o.trigger_metric} is ${dir} ${target}` };

@@ -57,6 +57,12 @@ contract ThreeWsUniswapLauncherTest is Test {
             vm.skip(true);
             return;
         }
+        // OP-stack forks charge the L1 data fee from the caller's balance, so every pranked
+        // sender needs ETH or its call reverts with no data.
+        vm.deal(creator, 1 ether);
+        vm.deal(feeRecipient, 1 ether);
+        vm.deal(stranger, 1 ether);
+        vm.deal(makeAddr("attacker"), 1 ether);
         plain = new ThreeWsUniswapLauncher(PM, WETH, address(0), 0, 0);
         paid = new ThreeWsUniswapLauncher(PM, WETH, treasury, LAUNCH_FEE, 1000);
     }

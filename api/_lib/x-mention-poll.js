@@ -36,6 +36,8 @@ import * as xBudget from './x-budget.js';
 import { handleAvatar, finishPendingAvatars } from './x-mention-avatar.js';
 import { finishPendingMakes } from './x-mention-make.js';
 import { handleImage3d, finishPendingImage3d } from './x-mention-image3d.js';
+import { composeLaunchReply } from './x-mention-launch.js';
+import { selfOrigin } from './self-origin.js';
 import { createDeliver } from './x-mention-deliver.js';
 import { xBotLive } from './gateway/adapters/x.js';
 import { agentMentionAccounts, agentPosterUrl, agentTokenResolver, intentAllowed, tokenResolverForRow } from './x-agent-mentions.js';
@@ -49,7 +51,7 @@ const DAY = 86400;
 const REFUSED_REPLY = 'I cannot move funds or handle keys, and no one can ask me to. I make 3D models: try "make a red vintage scooter". https://three.ws/grok';
 
 /** Intents whose dedicated handler is a later order; they answer with help until it lands. */
-const UNBUILT_HANDLERS = Object.freeze(new Set(['make', 'launch']));
+const UNBUILT_HANDLERS = Object.freeze(new Set(['make']));
 
 function intEnv(env, name, fallback) {
 	const n = Number.parseInt(env[name] ?? '', 10);
@@ -96,9 +98,13 @@ export async function overReplyLimit(authorId, account, limits, store = mentionS
 }
 
 /** The text a parsed mention is answered with, or why it is not answered. */
-async function composeAnswer({ mention, parsed, account, compose, agent = null }) {
+async function composeAnswer({ mention, parsed, account, compose, agent = null, launch = composeLaunchReply }) {
 	if (parsed.intent === 'help') {
 		return { text: parsed.args?.topic === 'refused' ? REFUSED_REPLY : FIXED_HELP_REPLY, reason: parsed.reason };
+	}
+	if (parsed.intent === 'launch') {
+		const reply = await launch({ args: parsed.args, authorId: mention.userId || mention.author?.id || null, base: selfOrigin() });
+		return { text: reply.text, reason: reply.reason };
 	}
 	if (UNBUILT_HANDLERS.has(parsed.intent)) {
 		return { text: FIXED_HELP_REPLY, reason: 'handler_not_built' };
@@ -112,7 +118,7 @@ async function composeAnswer({ mention, parsed, account, compose, agent = null }
  * Only ever throws for a store failure on the mention row itself, which the
  * caller treats as "not fully recorded" and stops the batch there.
  */
-export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter, guard = guardMention, paused = isPaused, budget = xBudget, request = null, onBehalf = answerOnBehalf, knownBots = null, avatar = handleAvatar, image3d = handleImage3d, agentCtx = null, posterFor = agentPosterUrl }) {
+export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter, guard = guardMention, paused = isPaused, budget = xBudget, request = null, onBehalf = answerOnBehalf, knownBots = null, avatar = handleAvatar, image3d = handleImage3d, agentCtx = null, posterFor = agentPosterUrl, launch = composeLaunchReply }) {
 	const parsed = parseMentionIntent(mention, account);
 	// The company account is always dry run here. An agent answers for real only
 	// when its owner turned dry run off AND the operator's global switch is on.
@@ -186,7 +192,7 @@ export async function handleMention({ mention, account, limits, env, store = men
 			if (result.decision === 'reply') await budget.recordPosts(1);
 			return { tweetId: mention.id, intent: 'image3d', decision: result.decision, reason: result.reason, text: result.text, dry_run: dryRun };
 		}
-		const answer = await composeAnswer({ mention, parsed, account, compose, agent: agentCtx?.agent || null });
+		const answer = await composeAnswer({ mention, parsed, account, compose, agent: agentCtx?.agent || null, launch });
 		const adapter = adapterFactory({ mention, parsed, env, policyDryRun: agentCtx ? dryRun : true, getAccessToken });
 		const poster = agentCtx && parsed.intent === 'chat' ? await posterFor(agentCtx.agent).catch(() => null) : null;
 		if (poster) await adapter.sendMedia(mention.id, { url: poster, caption: answer.text });

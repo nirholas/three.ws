@@ -9,6 +9,7 @@
 // account and are refused with a designed, actionable message.
 
 import { sql } from '../../_lib/db.js';
+import { clip, summarizeList } from '../../_lib/mcp-expand.js';
 
 const VALID_TYPES = ['user', 'feedback', 'project', 'reference'];
 
@@ -39,6 +40,12 @@ async function ownsAgent(agentId, auth) {
 		SELECT user_id FROM agent_identities WHERE id = ${agentId} AND deleted_at IS NULL
 	`;
 	return !!row && row.user_id === auth.userId;
+}
+
+function countByType(rows) {
+	const counts = {};
+	for (const r of rows) counts[r.type] = (counts[r.type] || 0) + 1;
+	return Object.entries(counts).map(([t, n]) => `${n} ${t}`).join(', ');
 }
 
 function decorate(row) {
@@ -164,7 +171,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			'Retrieve the most relevant memories for a query from one of your agents. Ranks by relevance to the query blended with salience and recency, excluding expired memories. Returns an ordered list. Use this before answering when an agent should draw on what it already knows about the user or the work; to save a new fact call remember.',
+			'Retrieve the most relevant memories for a query from one of your agents. Ranks by relevance to the query blended with salience and recency, excluding expired memories. Returns an ordered list; when more than five memories match it returns a summary, a count, a handle and the top five, and the expand tool reads the rest. Use this before answering when an agent should draw on what it already knows about the user or the work; to save a new fact call remember.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -230,6 +237,16 @@ export const toolDefs = [
 						score: Math.round(score * 1000) / 1000,
 					};
 				});
+
+			const summarized = await summarizeList({
+				tool: 'recall',
+				auth,
+				items: ranked,
+				pageSize: 5,
+				summary: `${ranked.length} memories ranked for "${clip(args.query, 80)}" (${countByType(ranked)}). Best match: ${clip(ranked[0].content, 120)}`,
+				renderItem: (m, i) => `${i + 1}. [${m.type}] ${clip(m.content, 280)}`,
+			});
+			if (summarized) return summarized;
 
 			const summary = ranked.map((m, i) => `${i + 1}. [${m.type}] ${m.content}`).join('\n');
 			return {

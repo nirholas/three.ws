@@ -3,12 +3,16 @@
   import type { Tokens } from 'marked'
   import MarkdownToken from '../../MarkdownToken.svelte'
 
-  export let token: Tokens.List
-  export let options: MarkdownOptions
-  export let renderers: Renderers
+  interface Props {
+    token: Tokens.List;
+    options: MarkdownOptions;
+    renderers: Renderers;
+  }
 
-  let component: 'ol' | 'ul'
-  $: component = token.ordered ? 'ol' : 'ul'
+  let { token, options, renderers }: Props = $props();
+
+  let component: 'ol' | 'ul' = $derived(token.ordered ? 'ol' : 'ul')
+  
 </script>
 
 <svelte:element this={component} start={token.start || 1}>

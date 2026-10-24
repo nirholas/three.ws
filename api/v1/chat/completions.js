@@ -24,6 +24,12 @@
 //   3. chargeInference books one idempotent credit_ledger row for the summed
 //      tokens of every model round. A failed completion is not charged.
 //
+// A caller with no key and no session can pay for the single request instead,
+// over x402 `upto` on Solana (api/_lib/metered-router.js): the unauthenticated
+// request is answered 402 with a cap sized to the model's worst case, the
+// retry carries the signed payment, and the measured tokens times the model's
+// published price are what settle; the rest of the cap is refunded.
+//
 // The agent a call runs for is the one the key was provisioned from
 // (inference_keys), or the caller's own agent named by `agent_id` in the body
 // or the `X-Three-Agent` header. Without an agent the call bills the account
@@ -43,9 +49,19 @@ import {
 import { runAgentCompletion } from '../../agent/run.js';
 import { providerChain } from '../../_lib/llm-tool-chain.js';
 import { runClientToolCompletion, sanitizeClientTools } from '../../_lib/client-tool-round.js';
+import { clientIp } from '../../_lib/rate-limit.js';
+import { inferenceModelRow } from '../../_lib/pricing/inference-models.js';
+import {
+	admitMeteredPayment,
+	meteredAvailable,
+	paymentHeaderOf,
+	promptTokensOf,
+	sendMeteredChallenge,
+	settleMetered,
+	watchStream,
+} from '../../_lib/metered-router.js';
 
 const MAX_BODY_BYTES = 512_000;
-const ACCEPTED_MODELS = new Set([INFERENCE_MODEL_ID, 'three-ws', 'default']);
 
 async function resolveCaller(req) {
 	const bearerToken = extractBearer(req);
@@ -59,6 +75,7 @@ async function resolveCaller(req) {
 	}
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id, apiKeyId: null, clientId: null };
+	if (meteredAvailable()) return { anonymous: true };
 	return { error: [401, 'missing_api_key', 'Send a three.ws API key with the `inference` scope as `Authorization: Bearer sk_live_...`. The free, unmetered agent loop is POST /api/agent/run.'] };
 }
 
@@ -88,6 +105,67 @@ function openAiError(res, status, code, message, detail = {}) {
 	return error(res, status, code, message, { type: code, code, ...detail });
 }
 
+// The pay-per-request lane: no key, no session, one request paid over x402
+// `upto`. The cap is escrowed before any model call; the claim settles the
+// measured tokens (or nothing, when the completion produced none).
+async function handleMetered(req, res, body, row) {
+	if (body?.agent_id || req.headers['x-three-agent']) {
+		return openAiError(res, 401, 'sign_in_required', 'Naming an agent needs its owner: send an API key with the `inference` scope.');
+	}
+	let clientTools;
+	try {
+		clientTools = sanitizeClientTools(body?.tools);
+	} catch (err) {
+		return openAiError(res, err.status || 400, err.code || 'bad_tools', err.message);
+	}
+	const sizing = { clientTools: !!clientTools };
+	if (!paymentHeaderOf(req)) return sendMeteredChallenge(res, row, body, sizing);
+
+	const admitted = await admitMeteredPayment(req, res, row, body, sizing);
+	if (admitted.challenge) return;
+	const { session } = admitted;
+	const promptTokens = promptTokensOf(body);
+	const stream = watchStream(res, {
+		onClose: ({ outputTokens }) => {
+			if (session.settling) return;
+			settleMetered(session, { inputTokens: promptTokens, outputTokens, reason: 'client_closed' }).catch((err) =>
+				console.error('metered: claim after close failed', err?.message || err),
+			);
+		},
+	});
+
+	const onUsage = async (usage) => {
+		const settled = await settleMetered(session, {
+			inputTokens: usage.prompt_tokens,
+			outputTokens: usage.completion_tokens,
+		});
+		if (!res.headersSent) {
+			res.setHeader('x-payment-response', Buffer.from(JSON.stringify(settled)).toString('base64'));
+		}
+		return settled;
+	};
+
+	try {
+		if (clientTools) {
+			const chain = providerChain();
+			if (!chain.length) {
+				await settleMetered(session, { cancel: true, reason: 'no_lane' });
+				return openAiError(res, 503, 'llm_unavailable', 'No model lane is configured right now. Try again shortly.');
+			}
+			await runClientToolCompletion(req, res, body, { chain, tools: clientTools, modelId: INFERENCE_MODEL_ID, onUsage });
+		} else {
+			await runAgentCompletion(req, res, body, { rateLimited: true, learning: null, onUsage });
+		}
+	} finally {
+		if (!session.settling) {
+			const sent = stream.outputTokensSoFar();
+			await settleMetered(session, sent > 0
+				? { inputTokens: promptTokens, outputTokens: sent, reason: 'partial' }
+				: { cancel: true, reason: 'no_output' }).catch((err) => console.error('metered: final claim failed', err?.message || err));
+		}
+	}
+}
+
 export default wrap(async function handler(req, res) {
 	if (cors(req, res, { methods: 'POST, OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
@@ -95,7 +173,9 @@ export default wrap(async function handler(req, res) {
 	const caller = await resolveCaller(req);
 	if (caller.error) return openAiError(res, ...caller.error);
 
-	const rl = await limits.apiV1(caller.apiKeyId ? `key:${caller.apiKeyId}` : `user:${caller.userId}`);
+	const rl = await limits.apiV1(
+		caller.anonymous ? `ip:${clientIp(req)}` : caller.apiKeyId ? `key:${caller.apiKeyId}` : `user:${caller.userId}`,
+	);
 	setRateLimitHeaders(res, rl);
 	if (!rl.success) return rateLimited(res, rl);
 
@@ -105,9 +185,12 @@ export default wrap(async function handler(req, res) {
 	} catch (err) {
 		return openAiError(res, err?.status || 400, 'bad_json', err?.message || 'Body must be JSON.');
 	}
-	if (body?.model && !ACCEPTED_MODELS.has(String(body.model))) {
+	const modelRow = inferenceModelRow(body?.model);
+	if (!modelRow) {
 		return openAiError(res, 404, 'model_not_found', `Model "${body.model}" is not served here. Use "${INFERENCE_MODEL_ID}" (GET /api/v1/models).`);
 	}
+
+	if (caller.anonymous) return handleMetered(req, res, body, modelRow);
 
 	const resolved = await resolveAgent(req, body, caller);
 	if (resolved.error) return openAiError(res, ...resolved.error);

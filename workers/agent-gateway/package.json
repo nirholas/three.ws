@@ -20,5 +20,8 @@
 	"dependencies": {
 		"discord.js": "^14.27.0",
 		"grammy": "^1.46.0"
+	},
+	"overrides": {
+		"undici@^6": "^6.29.1"
 	}
 }

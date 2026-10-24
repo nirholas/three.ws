@@ -4,11 +4,11 @@
 	import Icon from './Icon.svelte';
 	import { feBell } from './feather.js';
 
-	let notifications = [];
-	let unreadCount = 0;
-	let open = false;
+	let notifications = $state([]);
+	let unreadCount = $state(0);
+	let open = $state(false);
 	let loading = false;
-	let el;
+	let el = $state();
 
 	async function fetchNotifications() {
 		if (!$currentUser) return;
@@ -79,14 +79,14 @@
 	});
 </script>
 
-<svelte:window on:click={handleWindowClick} on:focus={() => { if ($currentUser) fetchNotifications(); }} />
+<svelte:window onclick={handleWindowClick} onfocus={() => { if ($currentUser) fetchNotifications(); }} />
 
 {#if $currentUser}
 <div class="relative" bind:this={el}>
 	<button
 		class="relative rounded p-2 text-ink hover:bg-paper-deep"
 		aria-label="Notifications"
-		on:click={toggle}
+		onclick={toggle}
 	>
 		<Icon icon={feBell} class="h-5 w-5" />
 		{#if unreadCount > 0}
@@ -103,7 +103,7 @@
 				{#if unreadCount > 0}
 					<button
 						class="text-xs text-ink-soft hover:text-ink"
-						on:click={markAllRead}
+						onclick={markAllRead}
 					>Mark all read</button>
 				{/if}
 			</div>

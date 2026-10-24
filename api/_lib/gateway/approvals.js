@@ -149,6 +149,7 @@ export async function handleAction({ gw, event, link }) {
 	}
 
 	if (preview.status !== 'pending') return gw.ackAction(event, `Already ${preview.status}.`);
+	if (preview.proposal?.typed_confirm) return gw.ackAction(event, 'This quote runs only when you reply with the word yes in the chat.');
 	if (new Date(preview.expires_at) <= new Date()) {
 		await expirePreview(preview.id);
 		await ackThenSettle('This preview expired.');

@@ -1,10 +1,9 @@
-<script>
+<script lang="ts">
   import Icon from '../../Icon.svelte';
   import { feArrowUpLeft } from '../../feather.js';
   import { composerFill } from '../../stores.js';
 
-  export let title;
-  export let prompts;
+  let { title, prompts } = $props();
 </script>
 
 <div>
@@ -13,7 +12,7 @@
     {#each prompts as prompt}
       <button
         class="relative bg-white border border-rule rounded-xl p-4 h-[96px] text-left text-sm hover:bg-paper transition-colors overflow-hidden"
-        on:click={() => composerFill.set({ text: prompt, submit: true })}
+        onclick={() => composerFill.set({ text: prompt, submit: true })}
       >
         <span class="line-clamp-3 block pr-5">{prompt}</span>
         <Icon

@@ -201,7 +201,7 @@ function actionPreviewText(q) {
 	return [...head, ...body, checksText(q.checks), previewFooter(q, tool)].join('\n');
 }
 
-export const perpsToolDefs = [
+const perpsToolDefsBase = [
 	{
 		name: 'perps_markets',
 		title: 'List perpetual futures markets',
@@ -494,3 +494,40 @@ export const perpsToolDefs = [
 		}),
 	},
 ];
+
+/** Tools that act on one agent. perps_limits stays reachable so MCP can still tighten risk. */
+const MCP_GATE_EXEMPT = new Set(['perps_limits']);
+
+/** Names of every perps tool, for the tools/list visibility rule. */
+export const PERPS_TOOL_NAMES = perpsToolDefsBase.map((t) => t.name);
+
+/**
+ * MCP perps access is per agent and opt-in. Until the owner turns `mcp_enabled`
+ * on for an agent (from a signed-in session), every tool that names that agent
+ * refuses with `mcp_not_enabled`, and tools/list hides the perps group from
+ * accounts with no opted-in agent.
+ */
+export const perpsToolDefs = perpsToolDefsBase.map((def) => {
+	if (MCP_GATE_EXEMPT.has(def.name) || !def.inputSchema?.properties?.agent_id) return def;
+	return {
+		...def,
+		handler: async (args, auth, req) => {
+			if (auth?.userId) {
+				try {
+					if (!(await perps.mcpAccess({ agentId: args.agent_id, userId: auth.userId }))) {
+						return refusal(
+							`MCP perps trading is off for this agent. The owner turns it on signed in at https://three.ws/agents/${args.agent_id}/perps (limit mcp_enabled). Nothing was sent.`,
+							'mcp_not_enabled',
+							{ agent_id: args.agent_id },
+						);
+					}
+				} catch (err) {
+					const d = perps.describeError(err);
+					if (d) return refusal(d.message, d.code, d.detail ? { detail: d.detail } : {});
+					throw err;
+				}
+			}
+			return def.handler(args, auth, req);
+		},
+	};
+});

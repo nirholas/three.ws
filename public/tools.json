@@ -6,8 +6,8 @@
 	"totals": {
 		"all": {
 			"servers": 51,
-			"tools": 704,
-			"uniqueTools": 600,
+			"tools": 709,
+			"uniqueTools": 603,
 			"resources": 24,
 			"uniqueResources": 11,
 			"templates": 21,
@@ -17,8 +17,8 @@
 		},
 		"hosted": {
 			"servers": 10,
-			"tools": 419,
-			"uniqueTools": 377,
+			"tools": 424,
+			"uniqueTools": 380,
 			"resources": 22,
 			"uniqueResources": 9,
 			"templates": 21,
@@ -44,9 +44,9 @@
 			"title": "three.ws",
 			"endpoint": "/api/mcp",
 			"transport": "remote",
-			"tools": 149,
-			"defaultOn": 131,
-			"readOnly": 87,
+			"tools": 152,
+			"defaultOn": 134,
+			"readOnly": 90,
 			"destructive": 19,
 			"resources": 7,
 			"templates": 10,
@@ -114,9 +114,9 @@
 			"title": "3D Studio (free)",
 			"endpoint": "/api/mcp-studio",
 			"transport": "remote",
-			"tools": 15,
-			"defaultOn": 15,
-			"readOnly": 5,
+			"tools": 16,
+			"defaultOn": 16,
+			"readOnly": 6,
 			"destructive": 0,
 			"resources": 2,
 			"templates": 0,
@@ -142,9 +142,9 @@
 			"title": "3D Studio for Grok",
 			"endpoint": "/api/mcp-grok",
 			"transport": "remote",
-			"tools": 15,
-			"defaultOn": 15,
-			"readOnly": 5,
+			"tools": 16,
+			"defaultOn": 16,
+			"readOnly": 6,
 			"destructive": 0,
 			"resources": 0,
 			"templates": 0,
@@ -2247,6 +2247,36 @@
 			"page": "https://three.ws/mcp-tools/mcp/robinhood_wallet_holdings"
 		},
 		{
+			"name": "token_due_diligence",
+			"server": "mcp",
+			"title": "Token due diligence",
+			"category": "utility",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Use this when you are about to size or approve a buy and need to know whether insiders, snipers or bundles control the supply.",
+			"page": "https://three.ws/mcp-tools/mcp/token_due_diligence"
+		},
+		{
+			"name": "search_docs",
+			"server": "mcp",
+			"title": "Search the three.ws documentation",
+			"category": "utility",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Use this before guessing at an API or a flow; to browse ready-made 3D assets call search_catalog instead.",
+			"page": "https://three.ws/mcp-tools/mcp/search_docs"
+		},
+		{
+			"name": "expand",
+			"server": "mcp",
+			"title": "Expand a summarized result",
+			"category": "utility",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Use this when list_my_agents, recall or crypto_data returns a summary with a handle and a count: pass that handle here with an offset to read the next page, or with fields to receive only those keys of each row (dot paths allowed, for example [\"id\",\"name\"]).",
+			"page": "https://three.ws/mcp-tools/mcp/expand"
+		},
+		{
 			"name": "getting_started",
 			"server": "mcp-agent",
 			"title": "Getting Started (free)",
@@ -4327,6 +4357,16 @@
 			"page": "https://three.ws/mcp-tools/mcp-studio/get_item_source"
 		},
 		{
+			"name": "search_docs",
+			"server": "mcp-studio",
+			"title": "Search the three.ws documentation",
+			"category": "utility",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Use this before guessing at an API or a flow; to browse ready-made 3D assets call search_catalog instead.",
+			"page": "https://three.ws/mcp-tools/mcp-studio/search_docs"
+		},
+		{
 			"name": "create_agent_persona",
 			"server": "mcp-studio",
 			"title": "Save a rigged model as a living, persistent agent body",
@@ -4555,6 +4595,16 @@
 			"price": 0,
 			"whenToUse": "Use this when you are ready to put a catalog item on a page or in an app; call get_catalog_item first if you still need its license or metadata.",
 			"page": "https://three.ws/mcp-tools/mcp-grok/get_item_source"
+		},
+		{
+			"name": "search_docs",
+			"server": "mcp-grok",
+			"title": "Search the three.ws documentation",
+			"category": "utility",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Use this before guessing at an API or a flow; to browse ready-made 3D assets call search_catalog instead.",
+			"page": "https://three.ws/mcp-tools/mcp-grok/search_docs"
 		},
 		{
 			"name": "create_agent_persona",

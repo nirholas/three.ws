@@ -101,6 +101,7 @@ function normalizeRow(r, kind) {
 		score: r.score,
 		verified: r.verified,
 		copiers: r.copiers ?? 0,
+		win_streak: r.hot_streak ? (r.win_streak ?? 0) : 0,
 		image: r.image || '',
 	};
 }
@@ -786,7 +787,7 @@ function renderBoard(rows) {
 		const avatarFallback = `data-fallback="element" data-fallback-tag="span" data-fallback-class="r-av r-av-fb" data-fallback-text="${initial}"`;
 		const sub = r.kind === 'live'
 			? `${r.trades != null ? Number(r.trades).toLocaleString('en-US') + ' trades' : 'live'}${r.win_pct != null ? ' · ' + Math.round(r.win_pct) + '% win' : ''}`
-			: `${r.open} open · ${r.closed ? Math.round(r.win_pct) + '% win' : 'new'}`;
+			: `${r.open} open · ${r.closed ? Math.round(r.win_pct) + '% win' : 'new'}${r.win_streak ? ' · 🔥 ' + r.win_streak + ' wins in a row' : ''}`;
 		// Live wallets have no avatar — use the mono-initial tile directly.
 		const av = r.kind === 'live'
 			? `<span class="r-av r-av-fb">${initial}</span>`

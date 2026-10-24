@@ -1,28 +1,35 @@
-<script>
+<script lang="ts">
+	
 	import { scale } from 'svelte/transition';
 	import { cubicIn } from 'svelte/easing';
 	import FileTreeNode from './FileTreeNode.svelte';
-	import { createEventDispatcher } from 'svelte';
 
-	const dispatch = createEventDispatcher();
 
-	export let open = false;
-	export let tree;
-	export let selectedFiles = [];
+	interface Props {
+		open?: boolean;
+		tree: any;
+		selectedFiles?: any;
+		onfileSelected?: (...args: any[]) => void;
+		onfileDeselected?: (...args: any[]) => void;
+	}
+
+	let { open = $bindable(false), tree, selectedFiles = $bindable([]), onfileSelected, onfileDeselected }: Props = $props();
 
 	// For keeping track of collapsed state of directories
-	let collapsed = {};
+	let collapsed = $state({});
 
 	// For search functionality
-	let searchTerm = '';
+	let searchTerm = $state('');
 	let debouncedSearchTerm = '';
 	let debounceTimeout;
 
-	let inputEl;
+	let inputEl = $state();
 
-	$: if (open && inputEl) {
-		inputEl.focus();
-	}
+	$effect.pre(() => {
+		if (open && inputEl) {
+			inputEl.focus();
+		}
+	});
 
 	// Clear all selections
 	function clearSelections() {
@@ -112,22 +119,24 @@
 	}
 
 	// When search term changes, filter the tree
-	$: filteredTree = tree && filterTree(tree, searchTerm);
+	let filteredTree = $derived(tree && filterTree(tree, searchTerm));
 
 	// When searching, expand directories that contain matches
-	$: if (searchTerm && filteredTree) {
-		// Reset collapsed state when search term changes
-		collapsed = {};
-	}
+	$effect.pre(() => {
+		if (searchTerm && filteredTree) {
+			// Reset collapsed state when search term changes
+			collapsed = {};
+		}
+	});
 </script>
 
 <svelte:window
-	on:click={(event) => {
+	onclick={(event) => {
 		if (!event.target.closest('#files-dropdown')) {
 			open = false;
 		}
 	}}
-	on:touchstart={(event) => {
+	ontouchstart={(event) => {
 		if (!event.target.closest('#files-dropdown')) {
 			open = false;
 		}
@@ -146,7 +155,7 @@
 			<div class="w-full px-3 pb-2 pt-2.5">
 				<div class="mb-1 flex items-center justify-between">
 					<h3 class="text-sm font-medium text-slate-800">Files</h3>
-					<button class="text-xs text-gray-600 hover:text-gray-800" on:click={clearSelections}>
+					<button class="text-xs text-gray-600 hover:text-gray-800" onclick={clearSelections}>
 						Unselect all
 					</button>
 				</div>
@@ -154,12 +163,12 @@
 					bind:this={inputEl}
 					type="text"
 					value={searchTerm}
-					on:input={updateSearch}
-					on:keydown={(event) => {
+					oninput={updateSearch}
+					onkeydown={(event) => {
 						if (event.key === 'Enter') {
 							const firstFilteredFile = filteredTree?.children?.[0];
 							if (firstFilteredFile) {
-								dispatch('fileSelected', firstFilteredFile)
+								onfileSelected?.(firstFilteredFile)
 							}
 						}
 					}}
@@ -174,8 +183,8 @@
 						level={0}
 						{collapsed}
 						bind:selectedFiles
-						on:fileSelected
-						on:fileDeselected
+						{onfileSelected}
+						{onfileDeselected}
 					/>
 				{:else if searchTerm}
 					<li class="px-4 py-2 text-xs text-gray-500">No matching files found</li>

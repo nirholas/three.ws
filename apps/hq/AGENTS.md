@@ -15,7 +15,7 @@ HQ is a real-time DeFi and crypto market intelligence dashboard for [three.ws](h
 - **Frontend**: Vite 6 + vanilla TypeScript (no React, no framework)
 - **3D Map**: deck.gl 9.2 + MapLibre GL 5.16 (WebGL globe)
 - **Charts**: d3 7.9 (mobile SVG fallback + data visualizations)
-- **AI/ML**: @xenova/transformers (client-side NER, content classification)
+- **AI/ML**: @huggingface/transformers (client-side NER, content classification)
 - **Desktop**: Tauri v2 (macOS/Windows native app)
 - **API**: Vercel Serverless Functions (JavaScript, deployed on Vercel)
 - **Caching**: Upstash Redis (edge caching for API routes)

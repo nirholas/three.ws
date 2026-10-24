@@ -1102,6 +1102,28 @@
 				"removed": 1,
 				"total": 704
 			}
+		},
+		{
+			"date": "2026-10-24",
+			"added": {
+				"mcp-grok": [
+					"search_docs"
+				],
+				"mcp-studio": [
+					"search_docs"
+				],
+				"mcp": [
+					"expand",
+					"search_docs",
+					"token_due_diligence"
+				]
+			},
+			"removed": {},
+			"counts": {
+				"added": 5,
+				"removed": 0,
+				"total": 709
+			}
 		}
 	]
 }

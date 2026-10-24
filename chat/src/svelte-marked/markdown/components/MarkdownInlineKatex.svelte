@@ -1,9 +1,9 @@
 <script lang="ts">
 	import katex from 'katex';
 
-	export let token = undefined;
+	let { token = undefined } = $props();
 
-	$: html = katex.renderToString(token.text, { throwOnError: false, displayMode: token.displayMode });
+	let html = $derived(katex.renderToString(token.text, { throwOnError: false, displayMode: token.displayMode }));
 </script>
 
 {@html html}

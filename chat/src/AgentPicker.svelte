@@ -1,34 +1,33 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
 	import { localAgentId, activeAgent, agentLibraryUrl } from './stores.js';
 	import { focusOnMount } from './actions.js';
 	import { t } from './i18n.js';
 
-	const dispatch = createEventDispatcher();
+	let { onpick } = $props();
 
-	let query = '';
-	let myAgents = [];
-	let marketAgents = [];
-	let libraryAgents = [];
-	let loadingMine = false;
-	let loadingMarket = false;
-	let loadingLibrary = false;
+	let query = $state('');
+	let myAgents = $state([]);
+	let marketAgents = $state([]);
+	let libraryAgents = $state([]);
+	let loadingMine = $state(false);
+	let loadingMarket = $state(false);
+	let loadingLibrary = $state(false);
 	let debounceTimer;
 
 	// Marketplace filter/pagination state
-	let marketSort = 'popular';
+	let marketSort = $state('popular');
 	let marketCategory = '';
 	let marketCursor = null;
-	let marketHasMore = false;
-	let marketError = false;
+	let marketHasMore = $state(false);
+	let marketError = $state(false);
 
 	// Detail preview state
-	let previewAgent = null;
-	let previewLoading = false;
+	let previewAgent = $state(null);
+	let previewLoading = $state(false);
 
 	// Library pagination + error state
-	let libraryLimit = 60;
-	let libraryError = false;
+	let libraryLimit = $state(60);
+	let libraryError = $state(false);
 
 	// Normalizes a pai-chat / lobehub library agent (index entry) into the local agent shape.
 	function normalizeLibraryAgent(item) {
@@ -127,14 +126,14 @@
 		loadingMine = false;
 	}
 
-	$: filteredMine = query
+	let filteredMine = $derived(query
 		? myAgents.filter((a) =>
 				(a.name || '').toLowerCase().includes(query.toLowerCase()) ||
 				(a.description || '').toLowerCase().includes(query.toLowerCase()),
 		  )
-		: myAgents;
+		: myAgents);
 
-	$: filteredLibrary = (query
+	let filteredLibrary = $derived((query
 		? libraryAgents.filter((a) => {
 				const q = query.toLowerCase();
 				return (
@@ -145,7 +144,7 @@
 				);
 		  })
 		: libraryAgents
-	).slice(0, libraryLimit);
+	).slice(0, libraryLimit));
 
 	function onInput() {
 		clearTimeout(debounceTimer);
@@ -185,7 +184,7 @@
 			const detail = await loadLibraryAgentDetail(agent);
 			localAgentId.set(detail.id);
 			activeAgent.set(detail);
-			dispatch('pick', detail);
+			onpick?.(detail);
 			return;
 		}
 		try {
@@ -195,7 +194,7 @@
 				const detail = json.agent ?? json.data?.agent ?? agent;
 				localAgentId.set(detail.id);
 				activeAgent.set(detail);
-				dispatch('pick', detail);
+				onpick?.(detail);
 				return;
 			}
 		} catch {}
@@ -206,19 +205,19 @@
 				const detail = json.data?.agent ?? agent;
 				localAgentId.set(detail.id);
 				activeAgent.set(detail);
-				dispatch('pick', detail);
+				onpick?.(detail);
 				return;
 			}
 		} catch {}
 		localAgentId.set(agent.id);
 		activeAgent.set(agent);
-		dispatch('pick', agent);
+		onpick?.(agent);
 	}
 
 	function clear() {
 		localAgentId.set('');
 		activeAgent.set(null);
-		dispatch('pick', null);
+		onpick?.(null);
 	}
 
 	function initials(name) {
@@ -241,7 +240,7 @@
 	<input
 		type="text"
 		bind:value={query}
-		on:input={onInput}
+		oninput={onInput}
 		placeholder={$t('searchAgents')}
 		class="w-full rounded-lg border border-gray-200 px-3 py-2 text-[13px] outline-none focus:border-indigo-400"
 		use:focusOnMount
@@ -251,7 +250,7 @@
 		{#if $localAgentId}
 			<button
 				class="text-left text-[12px] text-slate-400 underline hover:text-slate-600"
-				on:click={clear}
+				onclick={clear}
 			>{$t('removeAgent')}</button>
 		{:else}
 			<span></span>
@@ -280,7 +279,7 @@
 						<button
 							class="flex flex-col items-center gap-1.5 rounded-xl p-2 text-center transition hover:bg-gray-50
 								{$localAgentId === agent.id ? 'bg-indigo-50 ring-2 ring-indigo-300' : 'ring-1 ring-gray-100'}"
-							on:click={() => pick(agent)}
+							onclick={() => pick(agent)}
 							title={agent.description || agent.name}
 						>
 							{#if agent.thumbnail_url}
@@ -311,7 +310,7 @@
 					<select
 						class="rounded border border-gray-200 px-1.5 py-0.5 text-[11px] text-slate-600 outline-none"
 						bind:value={marketSort}
-						on:change={() => searchMarket(query, true)}
+						onchange={() => searchMarket(query, true)}
 					>
 						<option value="popular">Popular</option>
 						<option value="recent">Recent</option>
@@ -324,14 +323,14 @@
 				<p class="text-center text-[12px] text-slate-400 py-3">{$t('loading')}</p>
 			{:else if marketError}
 				<p class="text-[12px] text-slate-400 py-2">
-					Failed to load. <button class="underline" on:click={() => searchMarket(query, true)}>retry</button>
+					Failed to load. <button class="underline" onclick={() => searchMarket(query, true)}>retry</button>
 				</p>
 			{:else if marketAgents.length === 0}
 				<p class="text-[12px] text-slate-400 py-2">{$t('noAgentsFound')}</p>
 			{:else if previewAgent}
 				<!-- Detail preview panel -->
 				<div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
-					<button class="mb-2 text-[11px] text-slate-400 hover:text-slate-600" on:click={() => previewAgent = null}>
+					<button class="mb-2 text-[11px] text-slate-400 hover:text-slate-600" onclick={() => previewAgent = null}>
 						← Back
 					</button>
 					<div class="flex items-start gap-3">
@@ -360,7 +359,7 @@
 					{/if}
 					<button
 						class="mt-3 w-full rounded-lg bg-indigo-600 px-3 py-2 text-[13px] font-medium text-white hover:bg-indigo-700"
-						on:click={() => pick(previewAgent)}
+						onclick={() => pick(previewAgent)}
 					>
 						Use this agent
 					</button>
@@ -371,7 +370,7 @@
 						<button
 							class="flex flex-col items-center gap-1.5 rounded-xl p-2 text-center transition hover:bg-gray-50
 								{$localAgentId === agent.id ? 'bg-indigo-50 ring-2 ring-indigo-300' : 'ring-1 ring-gray-100'}"
-							on:click={() => openPreview(agent)}
+							onclick={() => openPreview(agent)}
 							title={agent.description || agent.name}
 						>
 							{#if agent.thumbnail_url}
@@ -387,7 +386,7 @@
 					<button
 						class="mt-2 w-full rounded-lg border border-slate-200 py-1.5 text-[12px] text-slate-500 hover:bg-gray-50"
 						disabled={loadingMarket}
-						on:click={loadMoreMarket}
+						onclick={loadMoreMarket}
 					>
 						{loadingMarket ? 'Loading…' : 'Load more'}
 					</button>
@@ -410,7 +409,7 @@
 						<button
 							class="flex flex-col items-center gap-1.5 rounded-xl p-2 text-center transition hover:bg-gray-50
 								{$localAgentId === agent.id ? 'bg-indigo-50 ring-2 ring-indigo-300' : 'ring-1 ring-gray-100'}"
-							on:click={() => pick(agent)}
+							onclick={() => pick(agent)}
 							title={agent.description || agent.name}
 						>
 							{#if agent.thumbnail_url}
@@ -435,7 +434,7 @@
 				{#if !query && libraryAgents.length > filteredLibrary.length}
 					<button
 						class="mt-1.5 w-full rounded-lg border border-slate-200 py-1.5 text-[12px] text-slate-500 hover:bg-gray-50"
-						on:click={loadMoreLibrary}
+						onclick={loadMoreLibrary}
 					>
 						Show more ({libraryAgents.length - filteredLibrary.length} hidden)
 					</button>

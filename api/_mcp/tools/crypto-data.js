@@ -20,6 +20,7 @@
 import { ENDPOINT_INDEX, providerCatalog } from '../../v1/_providers.js';
 import { executeUpstream, resolveUpstreamKey } from '../../_lib/aggregator.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
+import { summarizeList } from '../../_lib/mcp-expand.js';
 
 function rpcError(code, message, data) {
 	const e = new Error(message);
@@ -127,6 +128,60 @@ async function runEndpoint({ providerId, endpointId, params, auth, req }) {
 	}
 }
 
+// Rows per page for a summarized crypto_data answer.
+const DATA_PAGE_SIZE = 10;
+
+/**
+ * The longest array in an upstream answer: the answer itself when it is a list,
+ * else the biggest list one or two levels down (a `data` or `pairs` key).
+ * Returns { path, rows } or null when nothing in it is a list.
+ */
+export function findRows(data) {
+	if (Array.isArray(data)) return { path: [], rows: data };
+	let best = null;
+	const visit = (node, path, depth) => {
+		if (!node || typeof node !== 'object' || Array.isArray(node) || depth > 2) return;
+		for (const [key, value] of Object.entries(node)) {
+			if (Array.isArray(value) && (!best || value.length > best.rows.length)) best = { path: [...path, key], rows: value };
+			else visit(value, [...path, key], depth + 1);
+		}
+	};
+	visit(data, [], 0);
+	return best;
+}
+
+function labelOf(row) {
+	if (row === null || typeof row !== 'object') return String(row);
+	for (const key of ['symbol', 'name', 'id', 'pairAddress', 'address', 'slug']) {
+		if (typeof row[key] === 'string' || typeof row[key] === 'number') return String(row[key]);
+	}
+	return Object.keys(row).slice(0, 3).join('/');
+}
+
+// A list answer becomes a summary, a count, a handle and the first page; the
+// rest of the upstream answer (everything outside the list) rides along in
+// `meta` so nothing but the extra rows is withheld.
+async function summarizeData({ pairKey, result, auth }) {
+	const found = findRows(result.data);
+	if (!found) return null;
+	const labels = found.rows.slice(0, 5).map(labelOf).join(', ');
+	let meta;
+	if (found.path.length) {
+		meta = structuredClone(result.data);
+		let node = meta;
+		for (const p of found.path.slice(0, -1)) node = node[p];
+		delete node[found.path[found.path.length - 1]];
+	}
+	return summarizeList({
+		tool: 'crypto_data',
+		auth,
+		items: found.rows,
+		pageSize: DATA_PAGE_SIZE,
+		summary: `${pairKey} returned ${found.rows.length} rows${found.path.length ? ` under ${found.path.join('.')}` : ''}. First: ${labels}.`,
+		extra: { provider: result.provider, endpoint: result.endpoint, ...(meta && Object.keys(meta).length ? { meta } : {}) },
+	});
+}
+
 const READ_ONLY_LIVE_FEED = {
 	readOnlyHint: true,
 	destructiveHint: false,
@@ -147,7 +202,7 @@ export const toolDefs = [
 				'per-IP quota, no wallet needed; an endpoint with no free tier (or an exhausted quota) ' +
 				'returns a payment-required error naming the exact REST URL and USDC price to pay via ' +
 				'x402. Use this for raw data from one named provider endpoint; for a merged one-call view of a ' +
-				'Solana token call token_snapshot.\n\nLive provider/endpoint pairs on this deployment:\n' + describePairs()
+				'Solana token call token_snapshot. A list answer longer than ten rows comes back as a summary, a count, a handle and the first ten rows; the expand tool reads the rest.\n\nLive provider/endpoint pairs on this deployment:\n' + describePairs()
 			);
 		},
 		inputSchema: {
@@ -184,6 +239,8 @@ export const toolDefs = [
 
 			const result = await runEndpoint({ providerId, endpointId, params: args?.params, auth, req });
 			if (result.ok) {
+				const summarized = await summarizeData({ pairKey, result, auth });
+				if (summarized) return summarized;
 				return toolResult({ provider: result.provider, endpoint: result.endpoint, data: result.data });
 			}
 			if (result.reason === 'quota_exceeded' || result.reason === 'payment_required') {

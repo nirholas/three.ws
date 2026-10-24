@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-24T03:09:34.581Z",
+	"generated_at": "2026-10-24T00:37:29.388Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -637,6 +637,42 @@
 					"showcase": false,
 					"priority": 0.5,
 					"job": "explore"
+				},
+				{
+					"path": "/earnings",
+					"title": "Earnings",
+					"description": "One ledger for everything your agents earn: creator fees, skill sales, hires, royalties, invoices and realised trading PnL, each row linked to its Solana transaction, plus reinvest rules you confirm.",
+					"added": "2026-10-23",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": "explore"
+				},
+				{
+					"path": "/docs/revenue-ledger",
+					"title": "Docs · Revenue ledger",
+					"description": "How the earnings ledger counts creator fees, skill sales, hires, royalties, invoices and trading PnL, reconciles them against the chain, and how confirmed reinvest rules spend a share of each period's income.",
+					"added": "2026-10-23",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": "dev"
+				},
+				{
+					"path": "/docs/backtest-integrity",
+					"title": "Docs · Backtest integrity",
+					"description": "How every strategy backtest is audited for look-ahead bias, pinned to a hashed dataset manifest, backed by price and candle canaries, and walled off from live trading code.",
+					"added": "2026-10-23",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": "dev"
 				},
 				{
 					"path": "/commerce",
@@ -2664,6 +2700,30 @@
 					"job": "launch"
 				},
 				{
+					"path": "/creator/payouts",
+					"title": "Creator Payouts",
+					"description": "Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.",
+					"added": "2026-10-23",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": "trade"
+				},
+				{
+					"path": "/creator/payouts",
+					"title": "Creator Payouts",
+					"description": "Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.",
+					"added": "2026-10-23",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": "trade"
+				},
+				{
 					"path": "/launch/robinhood",
 					"title": "Launch on Robinhood Chain",
 					"description": "Launch a coin on Robinhood Chain through Pons, signed by your 3D AI agent's own wallet: a live cost quote, an atomic opening buy, and an API your bots can call.",
@@ -4092,10 +4152,34 @@
 					"job": "worlds"
 				},
 				{
+					"path": "/compete",
+					"title": "Builder competitions",
+					"description": "Build an agent, launch its coin on three.ws, and climb a live leaderboard ranked by creator fees earned. Dates, tracks, prizes, judges and rules for each competition, with registration and a countdown.",
+					"added": "2026-10-23",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": "trade"
+				},
+				{
 					"path": "/analytics",
 					"title": "Platform Analytics",
 					"description": "Every three.ws platform total on one page, read live: agents, agents with a wallet, coins launched, 3D models generated, LLM tokens processed, x402 settlements and volume, marketplace sales and agent-to-agent hire volume, each with a daily growth chart over 30 days, 90 days or all time and a note on exactly how it is counted.",
 					"added": "2026-09-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.7,
+					"job": "trade"
+				},
+				{
+					"path": "/why-three-ws",
+					"title": "Why three.ws",
+					"description": "Why build an agent on three.ws: a 3D body, a custodial Solana wallet, MCP and CLI access, x402 selling, coin launch and a marketplace, with live platform totals that each link to how they are counted.",
+					"added": "2026-10-23",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -4444,6 +4528,18 @@
 					"title": "Agent Mail",
 					"description": "Each agent's own email inbox on agents.three.ws: read threads, send and reply through a quote you approve, set a recipient allowlist and a daily send cap, and route incoming mail to your approvals queue or an automation run.",
 					"added": "2026-10-10",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": "trade"
+				},
+				{
+					"path": "/agent-predictions",
+					"title": "Agent Predictions",
+					"description": "See what your agent's prediction strategy would have earned before it trades: shadow mode records every decision at the live price and marks it at resolution, beside a live fee-aware no-arbitrage scanner for Solana event contracts.",
+					"added": "2026-10-24",
 					"auth": null,
 					"indexable": false,
 					"tags": [],
@@ -5577,6 +5673,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/transaction-landing-race",
+					"title": "Docs · Transaction landing race",
+					"description": "How every signed Solana trade is sent through several landing providers at once: the provider table, first-confirmation-wins racing, per-provider landed and latency stats, failure-streak skipping with health probes, and the per-trade tip ceiling.",
+					"added": "2026-10-23",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
 					"path": "/docs/forge-desktop",
 					"title": "Docs · three.ws Forge for desktop",
 					"description": "How to install and use three.ws Forge, the desktop 3D studio: run it from source or an installer, generate on your own GPU or the three.ws cloud, build node workflows, import CC0 models, sign in and publish to three.ws, and fix common setup problems.",
@@ -5769,6 +5877,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/webgpu-renderer",
+					"title": "Docs · WebGPU renderer",
+					"description": "The opt-in WebGPU renderer: how to enable it, the automatic WebGL2 fallback, the TSL rim effect in Restyle Studio, and measured parity and timings from the bench harness.",
+					"added": "2026-10-24",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
 					"path": "/docs/workbench",
 					"title": "Docs · Workbench",
 					"description": "How the Workbench runs a photo through an editable workflow of real GPU nodes, edits the result in the viewport, exports GLB, OBJ, STL or PLY, and how scripts call the same pipeline.",
@@ -5857,6 +5977,18 @@
 					"title": "Docs · Draft Agent Mint",
 					"description": "Every finished reconstruction is stored durably and minted as a draft on-chain agent identity: the Solana leg, the ERC-8004 leg, the flags that arm each one, and how to prove the whole path on devnet.",
 					"added": "2026-08-14",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.7,
+					"job": null
+				},
+				{
+					"path": "/docs/solana-agent-registry",
+					"title": "Docs · Solana Agent Registry",
+					"description": "Agents are enrolled in the open Solana agent registry (8004) with the platform authority signing, and hires read the provider's trust tier: registration, storage, ranking, the minimum-tier guard, the back-fill and the devnet proof.",
+					"added": "2026-10-24",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -6897,10 +7029,46 @@
 					"job": null
 				},
 				{
+					"path": "/docs/grok",
+					"title": "Docs · three.ws for Grok",
+					"description": "Connect Grok Bot, Grok connectors or the xAI API to the free three.ws remote MCP server at /api/mcp-grok: text and image to 3D, rigged avatars, and a named 3D persona that lip-syncs its replies, with no account, payment or API key.",
+					"added": "2026-10-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
 					"path": "/docs/google-adk",
 					"title": "Docs · three.ws with Google ADK",
 					"description": "Connect a Google Agent Development Kit agent to the free three.ws 3D studio over MCPToolset: discover the tool catalog, forge and rig models, and run a full LlmAgent conversation. No account, payment or API key for the studio tools.",
 					"added": "2026-10-13",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/tutorials/grok-bot-recipes",
+					"title": "Tutorial · Grok Bot recipes",
+					"description": "Six jobs to hand Grok Bot, each with the exact sentence, the tools it calls in order, and the real output of running that sequence against production: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image as a 3D model, a weekly agent report and a $THREE market brief.",
+					"added": "2026-10-09",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/grok-bot",
+					"title": "Docs · Grok Bot connector reference",
+					"description": "Exact connector settings for Grok Bot, which sign-in and which server to pick, the links, jobs, retry and rate-limit contracts for unattended runs, the spend rule, and a fix for every failure the connector probe can report.",
+					"added": "2026-10-09",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -7008,6 +7176,42 @@
 					"path": "/docs/skill-candidates",
 					"title": "Docs · Suggested skills",
 					"description": "Agents draft a skill bundle from a run that verifiably worked, with argument values never stored. You review the bundle and evidence, then install it on that agent only, publish it, or dismiss it. Includes the API and the MCP tool.",
+					"added": "2026-10-23",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/skill-supply-scan",
+					"title": "Docs · Skill supply-chain scanner",
+					"description": "How every marketplace skill is scanned for secret access, undeclared network hosts, hidden code and owner-confirmation bypasses; the clean, review and blocked verdicts; the requires.network manifest field; and the scan and moderation endpoints.",
+					"added": "2026-10-24",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/skill-rails",
+					"title": "Docs · One paid skill, four rails",
+					"description": "Price a marketplace skill once and serve it over x402, MPP, A2A and AP2 with the same author and platform split, one agent card and one receipt. Includes the dry-run quote, rail toggles and 404 on a disabled rail.",
+					"added": "2026-10-23",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/mpp-solana",
+					"title": "Docs · MPP on Solana",
+					"description": "Serve and pay MPP Payment challenges on Solana beside x402 on the same URL: the challenge and credential wire format, the mpp option on paid endpoints, the agent payer with spending caps and a dry-run quote, and how to verify it.",
 					"added": "2026-10-23",
 					"auth": null,
 					"indexable": true,
@@ -8061,6 +8265,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/metered-router",
+					"title": "Docs: Pay-per-request model access",
+					"description": "Call the OpenAI-compatible endpoint with a wallet instead of an account: the x402 upto challenge sized to the request, metered settlement, streaming close and dropped-stream behavior, with curl and SDK examples.",
+					"added": "2026-10-24",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.7,
+					"job": null
+				},
+				{
 					"path": "/docs/approvals",
 					"title": "Docs: Approvals",
 					"description": "How agents pause for your yes before moving funds: the /approvals inbox, push Approve and Deny, signed deep links, payload-hash checks, auto-approve rules, and the API.",
@@ -8274,6 +8490,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.7,
+					"job": null
+				},
+				{
+					"path": "/docs/predictions",
+					"title": "Docs: Agent Predictions",
+					"description": "How a prediction strategy runs in shadow mode first: every decision recorded at the live order-book price and marked at resolution, shadow beside live results, the fee-aware no-arbitrage scanner, the editable fee models, and the REST routes behind the dashboard.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
 					"job": null
 				},
 				{
@@ -8658,6 +8886,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/skill-directory-listings",
+					"title": "Docs · Skill directory listing copy",
+					"description": "One paragraph per three.ws skill, drafted for skill directories and registries, with the install command for each standalone skills repository.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.4,
 					"job": null
 				},
 				{
@@ -9165,6 +9405,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/token-due-diligence",
+					"title": "Docs · Token due diligence",
+					"description": "How insider hold rate, sniper share, bundler exposure, fresh-wallet share and smart-money holders are computed from chain data, with every threshold and the trade guard limits.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
 					"path": "/docs/vroid-hub-import",
 					"title": "Docs · Import your VRoid Hub avatar",
 					"description": "How the VRoid Hub avatar import works: OAuth connection, the license badges on each character, and what happens to the file during import.",
@@ -9318,6 +9570,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/engine-store-publishing",
+					"title": "Docs · Publishing the engine bridges",
+					"description": "One command validates the Unity, Godot and Unreal bridges and builds a reproducible upload package for each store, with listing metadata and a submission checklist.",
+					"added": "2026-10-24",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
 					"job": null
 				},
 				{
@@ -10081,6 +10345,18 @@
 					"title": "Docs · How we run and publish experiments",
 					"description": "The six-section write-up template every three.ws experiment follows (question, method, spend, result, what we got wrong, what we changed), the data/experiments.json entry format, and the build check that enforces both.",
 					"added": "2026-09-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/competitions",
+					"title": "Docs · Running a builder competition",
+					"description": "How to run a tokenized builder competition: the data/competitions.json fields, the phases, how entries are ranked by creator fees earned, an example config and the registration API.",
+					"added": "2026-10-23",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -10981,6 +11257,30 @@
 					"title": "Docs · Funded launch intents",
 					"description": "Launch a coin from a priced quote paid by the agent wallet: quote, paid, submitted, confirmed, indexed. A creator-fee picker, a once-only replayable funding proof, owner approval before anything is sent, and a devnet dry run.",
 					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/creator-payouts",
+					"title": "Docs · Creator payouts",
+					"description": "How a claimed creator fee becomes a payout: the four cron stages, the signed and step-up payout wallet with a 48 hour change cooldown, the four hold reasons, and the API.",
+					"added": "2026-10-23",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/creator-payouts",
+					"title": "Docs · Creator payouts",
+					"description": "How a claimed creator fee becomes a payout: the four cron stages, the signed and step-up payout wallet with a 48 hour change cooldown, the four hold reasons, and the API.",
+					"added": "2026-10-23",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

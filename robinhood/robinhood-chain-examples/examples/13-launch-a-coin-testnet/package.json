@@ -12,5 +12,8 @@
   },
   "dependencies": {
     "hood-launcher": "^0.1.0"
+  },
+  "overrides": {
+    "zod@^3": "^4.6.7"
   }
 }

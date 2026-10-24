@@ -9,6 +9,7 @@ import { mkdtempSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createLocalRuntime } from '../src/runtime/index.js';
+import { createPumpFeed } from '../src/runtime/feed.js';
 
 const dir = mkdtempSync(join(tmpdir(), 'three-ws-runtime-smoke-'));
 const events = [];
@@ -27,15 +28,21 @@ try {
 	});
 	check('agent created with a keychain-store address', Boolean(agent.address) && keystore.address(agent.id) === agent.address, agent.address);
 
+	// The fill checks need real launches. When the venue's public feed is
+	// unreachable from this network (it answers 403 to some hosts), say so and
+	// skip them rather than reporting a runtime fault that is not one.
+	const feedLive = (await createPumpFeed().launches({ limit: 5 })).length > 0;
+	if (!feedLive) console.log('SKIP live launch feed unreachable from this network: fill checks not run');
+
 	await runtime.tick();
 
 	const after = runtime.getAgent(agent.id);
 	const receipts = runtime.receipts({ agentId: agent.id });
 	const positions = runtime.positions({ agentId: agent.id });
 	check('scheduler pass finished without error', after.status === 'idle', after.status + (after.detail ? ` (${after.detail})` : ''));
-	check('paper buy filled from live feed data', receipts.some((r) => r.kind === 'buy' && r.mode === 'paper' && r.tokens > 0 && r.signature === null), `${receipts.length} receipt(s)`);
-	check('position opened', positions.some((p) => p.status === 'open'), `${positions.length} position(s)`);
-	check('status events emitted', events.includes('status') && events.includes('receipt'));
+	if (feedLive) check('paper buy filled from live feed data', receipts.some((r) => r.kind === 'buy' && r.mode === 'paper' && r.tokens > 0 && r.signature === null), `${receipts.length} receipt(s)`);
+	if (feedLive) check('position opened', positions.some((p) => p.status === 'open'), `${positions.length} position(s)`);
+	check('status events emitted', events.includes('status') && (!feedLive || events.includes('receipt')));
 
 	runtime.pause(agent.id);
 	check('pause holds the agent', runtime.getAgent(agent.id).status === 'paused');

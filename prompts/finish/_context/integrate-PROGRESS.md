@@ -1414,3 +1414,17 @@ Owner note: whether the keyless guest reads fit X's terms for a commercial surfa
 Step 0 found everything shipped: `scripts/x-archive-price-impact.mjs`, `api/_lib/x-content/price-impact.js`, the Posts view in `public/oracle-coin.js`, the +24h `priceReturn24h` lift in `api/_lib/x-content/outcomes.js`, docs, STRUCTURE row and changelog entry. `tests/x-archive.test.js`, `tests/x-content-outcomes.test.js` and `tests/x-post-impact.test.js` pass (81 tests). The `x:archive:price` npm script had gone missing from package.json and was restored in `618b3fd84`. `public/data/trythreews-post-impact.json` (197 posts, all three horizons measured, generated 2026-10-23) is real data.
 
 Remaining: the three-width browser check of the Posts view and a fresh `npm run x:archive:price` run. This session's checkout had a broken `node_modules` (vite, playwright-core and lru-cache failed to resolve) and GeckoTerminal answered 429, so neither could run. Owner: whoever next has a healthy install runs the script and screenshots at 375, 768 and 1280.
+
+## 2026-10-23: order 534 follow-up pass, still partial
+
+Re-ran the four test files (74 pass). The live trading read still did not render: local provider chain returned kilo 429, ovh timeouts, llm7 401, and Vertex Gemini 403 (project billing dunning, owner action). The browser render check of `.art-trading` was prepared but could not run because concurrent `npm install` runs kept `node_modules` (vite, playwright) in a half-written state for the whole pass. Remaining: open a story at `/markets/news` under `npm run dev` once an LLM provider answers; owner: restore Vertex billing or supply a provider key. Order file left in place.
+
+## 2026-10-23: orders 539 (integrate 40) and 545 (integrate 46), code done, two checks open
+
+539: Gini, funder seeded share and v1-launch signals (`api/_lib/coin/holder-signals.js`, `api/pump/token-stats.js`, oracle features) shipped earlier via a sweep commit; this session added the trader-sheet cells in `src/launch-detail.js`. Local `/api/pump/token-stats?mint=<THREE>` returns gini 0.4952 (n=20), launch_version V0, seeding `available:false` (trade history unavailable from the capped upstream). Tests: coin-holder-signals, pump-token-stats, coin-intel, 62 pass. The dev server proxies /api to prod, so the page cells read "-" until the next deploy.
+545: 3D funder graph (`src/funder-graph.js`, vendored engine in `src/vendor/swarming/`) was already wired; this session found and fixed a real layout bug (500 nodes drifted to radius 1776, off camera) with per-axis gravity, bounded charge range and a percentile-based fit, covered by `tests/funder-graph.test.js`. Browser-verified at 390 (reduced motion, 60fps idle, graph framed), 768 and 1280 with a 500-node harness, zero console errors. 60fps with 500 nodes on a real GPU is unmeasured: this box only has software GL.
+Remaining (orders kept): 539 page cells need a post-deploy browser check against live /api (owner deploys); 545 needs the 500-node 60fps check on a real GPU.
+
+## 2026-10-23: order 547 (integrate 48, Robinhood Crypto MCP tools), done
+
+Four read-only tools (`robinhood_chain_stats`, `robinhood_token_prices`, `robinhood_recent_launches`, `robinhood_wallet_holdings`) in `api/_mcp/tools/robinhood.js`, registered in the catalog. Evidence: a live `robinhood_chain_stats` call returned block 96324688 on chain 4663, `tests/mcp-catalog.test.js` plus `tests/api/v1-robinhood.test.js` 28 passed (the launches test was updated for the NOXA removal), `audit:mcp-safety` passes. Docs section added to `docs/mcp.md`.

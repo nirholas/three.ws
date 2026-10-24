@@ -141,6 +141,22 @@ export default wrap(async (req, res) => {
 		fill="#6b7280" text-anchor="end">three.ws/arena</text>
 </svg>`;
 
+	// Chat apps (Telegram sendPhoto) reject SVG, so ?format=png rasterizes the very
+	// same card; an unreadable raster falls back to the SVG rather than a broken image.
+	if (url.searchParams.get('format') === 'png') {
+		try {
+			const sharp = (await import('sharp')).default;
+			const png = await sharp(Buffer.from(svg)).png().toBuffer();
+			res.statusCode = 200;
+			res.setHeader('content-type', 'image/png');
+			res.setHeader('cache-control', CACHE);
+			res.end(png);
+			return;
+		} catch (e) {
+			console.error('[trade-og] png render failed', e?.message);
+		}
+	}
+
 	res.statusCode = 200;
 	res.setHeader('content-type', 'image/svg+xml; charset=utf-8');
 	res.setHeader('cache-control', CACHE);

@@ -5,7 +5,7 @@
 //   three-ws skills list [--tag <tag>] [--author <name>]
 //   three-ws skills search <query>
 //   three-ws skills show <slug>
-//   three-ws skills import <slug> --agent <agent-id> [--disabled]
+//   three-ws skills import <slug> --agent <agent-id> [--disabled] [--yes] [--acknowledge-gated]
 //   three-ws skills import <url-or-owner/repo>
 //   three-ws skills installed --agent <agent-id>
 //   three-ws skills drafts
@@ -22,15 +22,22 @@ import { requestJson, ApiError } from '../http.js';
 import { bearerFor } from '../oauth.js';
 import { readStore, resolveOrigin } from '../store.js';
 import { systemEnv } from '../paths.js';
+import { createInterface } from 'node:readline/promises';
+import { EXIT_CODES, isNonInteractive } from '../automation.js';
 
 export const SKILLS_USAGE = `Usage:
   three-ws skills list [--tag <tag>] [--author <name>] [--json]
   three-ws skills search <query> [--json]
   three-ws skills show <slug> [--json]
-  three-ws skills import <slug> --agent <agent-id> [--disabled] [--json]
+  three-ws skills import <slug> --agent <agent-id> [--disabled] [--yes] [--acknowledge-gated] [--json]   (alias: install)
   three-ws skills import <openapi-url-or-owner/repo> [--json]
   three-ws skills installed --agent <agent-id> [--json]
   three-ws skills drafts [--json]
+
+An external skill (origin: external) comes from a third-party repository that
+three.ws has not reviewed. Importing one prints its source and pinned commit and
+asks you to confirm; without a terminal, pass --yes. It is scanned first, and a
+skill that asks to spend, sign or message also needs --acknowledge-gated.
 
 Browse every skill: https://three.ws/skills/community`;
 
@@ -42,6 +49,9 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export function isImportUrl(arg) {
 	return typeof arg === 'string' && (/^https?:\/\//i.test(arg) || /^[\w.-]+\/[\w.-]+$/.test(arg));
 }
+
+// Flags that never take a value, so `--json risk-manager` keeps `risk-manager` positional.
+const BOOLEAN_FLAGS = new Set(['json', 'yes', 'disabled', 'acknowledge-gated', 'non-interactive', 'no-color']);
 
 /** Split argv into positionals and --flags (a flag followed by a non-flag takes it as its value). */
 export function parseSkillsArgs(argv) {
@@ -55,10 +65,11 @@ export function parseSkillsArgs(argv) {
 		}
 		const [key, inline] = a.slice(2).split('=', 2);
 		if (inline !== undefined) flags[key] = inline;
-		else if (argv[i + 1] !== undefined && !argv[i + 1].startsWith('--')) flags[key] = argv[++i];
+		else if (!BOOLEAN_FLAGS.has(key) && argv[i + 1] !== undefined && !argv[i + 1].startsWith('--')) flags[key] = argv[++i];
 		else flags[key] = true;
 	}
-	return { sub: positional[0] || 'list', args: positional.slice(1), flags };
+	const sub = positional[0] === 'install' ? 'import' : positional[0] || 'list';
+	return { sub, args: positional.slice(1), flags };
 }
 
 async function authHeaders(env) {
@@ -97,20 +108,88 @@ export function formatInstalled({ skills, budget }) {
 	return [head, `${pad('SLUG', 24)} ${pad('TOKENS', 7)} ${pad('STATE', 12)} ID`, ...rows].join('\n');
 }
 
+/** The external skill with this slug, or null when the slug is unknown or in-repo. */
+async function externalSkill(origin, slug) {
+	try {
+		const { skill } = await requestJson(`${origin}/api/skills/community/${encodeURIComponent(slug)}`);
+		return skill?.origin === 'external' ? skill : null;
+	} catch (err) {
+		if (err instanceof ApiError && err.status === 404) return null;
+		throw err;
+	}
+}
+
+/** Ask on the terminal. Without one, the answer is no: an external skill never installs unattended. */
+async function askYesNo(question) {
+	if (!process.stdin.isTTY || !process.stderr.isTTY) return false;
+	const rl = createInterface({ input: process.stdin, output: process.stderr });
+	try {
+		return /^y(es)?$/i.test((await rl.question(`${question} [y/N] `)).trim());
+	} finally {
+		rl.close();
+	}
+}
+
+/** The notice shown before an external skill is installed. */
+export function externalNotice(skill) {
+	return [
+		`${skill.name} (${skill.slug}) is an EXTERNAL skill, not reviewed by three.ws.`,
+		`  Source:  ${skill.source}`,
+		`  Commit:  ${skill.ref}`,
+		`  License: ${skill.license}`,
+		`  Read it: ${skill.tree_url}`,
+		'It is a set of instructions your agent will follow. It is scanned before install and never enabled automatically.',
+	].join('\n');
+}
+
+/** Scan an external skill at its pinned commit, then approve exactly the scanned bytes. */
+async function importExternal({ skill, agent, headers, origin, flags, confirm }) {
+	const notice = externalNotice(skill);
+	if (!flags.yes && !(await confirm(`${notice}\nInstall onto agent ${agent}?`))) {
+		return {
+			code: EXIT_CODES.GUARD,
+			output: `${notice}\n\nNot installed. Re-run with --yes to confirm (required when there is no terminal).`,
+		};
+	}
+	const { data: scanned } = await requestJson(`${origin}/api/skill-imports/scan`, {
+		method: 'POST',
+		headers,
+		json: { agent_id: agent, registry: skill.import.registry, skill: skill.import.skill },
+	});
+	const request = scanned.request;
+	if (request.status === 'refused' || request.verdict === 'refused') {
+		return { code: EXIT_CODES.GUARD, output: `${notice}\n\nThe scan refused this skill (${request.verdict}); it was not installed. Details: ${origin}/skills/import` };
+	}
+	if (request.gated && !flags['acknowledge-gated']) {
+		return {
+			code: EXIT_CODES.GUARD,
+			output: `${notice}\n\nThis skill asks to spend, sign or send messages. It stays under the spend gate and needs --acknowledge-gated to install. Review the scan at ${origin}/skills/import first.`,
+			request,
+		};
+	}
+	const { data } = await requestJson(`${origin}/api/skill-imports/requests/${request.id}`, {
+		method: 'POST',
+		headers,
+		json: { decision: 'approve', acknowledge_gated: Boolean(flags['acknowledge-gated']), enabled: !flags.disabled },
+	});
+	return { code: 0, data, installed: data.skill, notice };
+}
+
 /**
  * Run a `skills` subcommand. Returns { code, output } so the dispatcher decides
  * where it goes; nothing here writes to stdout directly.
  */
-export async function runSkills(argv, { env = systemEnv(), origin: originFlag } = {}) {
+export async function runSkills(argv, { env = systemEnv(), origin: originFlag, confirm = askYesNo } = {}) {
 	const { sub, args, flags } = parseSkillsArgs(argv);
 	const origin = resolveOrigin({ flag: originFlag || flags.origin, env, store: readStore(env) });
 	const json = Boolean(flags.json);
+	if (isNonInteractive(flags, env)) confirm = async () => false;
 	const done = (data, text) => ({ code: 0, output: json ? JSON.stringify(data, null, 2) : text });
 
 	if (sub === 'list' || sub === 'search') {
 		const q = new URLSearchParams();
 		if (sub === 'search') {
-			if (!args.length) return { code: 2, output: SKILLS_USAGE };
+			if (!args.length) return { code: EXIT_CODES.USAGE, output: SKILLS_USAGE };
 			q.set('q', args.join(' '));
 		}
 		if (typeof flags.tag === 'string') q.set('tag', flags.tag);
@@ -120,7 +199,7 @@ export async function runSkills(argv, { env = systemEnv(), origin: originFlag } 
 	}
 
 	if (sub === 'show') {
-		if (!args[0]) return { code: 2, output: SKILLS_USAGE };
+		if (!args[0]) return { code: EXIT_CODES.USAGE, output: SKILLS_USAGE };
 		const { skill } = await requestJson(`${origin}/api/skills/community/${encodeURIComponent(args[0])}`);
 		return done(skill, `${skill.name} (${skill.slug} v${skill.version}) by ${skill.author}\n${skill.description}\nTags: ${skill.tags.join(', ')}  ~${skill.tokens} tokens\nSource: ${skill.source_url}\n\n${skill.body}`);
 	}
@@ -162,7 +241,7 @@ export async function runSkills(argv, { env = systemEnv(), origin: originFlag } 
 			const { data } = await requestJson(base, { headers });
 			return done(data, formatInstalled(data));
 		}
-		if (!args[0]) return { code: 2, output: SKILLS_USAGE };
+		if (!args[0]) return { code: EXIT_CODES.USAGE, output: SKILLS_USAGE };
 		try {
 			const { data } = await requestJson(base, {
 				method: 'POST',
@@ -177,6 +256,18 @@ export async function runSkills(argv, { env = systemEnv(), origin: originFlag } 
 					: 'saved, disabled';
 			return done(data, `Imported ${skill.name} (${skill.slug}) onto ${agent}: ${state}.\nBudget: ${budget.used_tokens} / ${budget.cap_tokens} tokens.\nManage: ${origin}/skills/community?agent=${agent}`);
 		} catch (err) {
+			if (err instanceof ApiError && (err.code === 'not_found' || err.status === 404)) {
+				const external = await externalSkill(origin, args[0]);
+				if (external) {
+					const result = await importExternal({ skill: external, agent, headers, origin, flags, confirm });
+					if (result.code !== 0) return result;
+					const skill = result.installed;
+					return done(
+						result.data,
+						`${result.notice}\n\nImported ${external.name} (${external.slug}) onto ${agent}${skill?.injected ? ': active in the agent\'s next reply' : ': saved, disabled or over budget'}.\nManage: ${origin}/skills/community?agent=${agent}`,
+					);
+				}
+			}
 			if (err instanceof ApiError && err.code === 'already_installed') {
 				return { code: 1, output: `${args[0]} is already installed on this agent (skill ${err.body?.skill_id}). Manage it at ${origin}/skills/community?agent=${agent}` };
 			}

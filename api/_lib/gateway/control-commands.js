@@ -23,6 +23,8 @@ import { fetchTraderPositions } from '../trader-stats.js';
 import { bulkDeny, expireStale } from '../approvals.js';
 import { listAccountAgents, pickAgent, resolveChatAgent } from './agents.js';
 import { sendApprovalToChat } from './approval-buttons.js';
+import { loadTradeCard } from '../trade-card-store.js';
+import { escapeUntrusted } from './trade-parse.js';
 import { appOrigin, agentWalletUrl, fmtNum, short } from './format.js';
 
 const OPEN_STATUSES = new Set(['open', 'opening', 'closing']);
@@ -80,31 +82,60 @@ function positionLine(p) {
 	const entry = Number(p.entry_quote_lamports) / 1e9;
 	const value = p.last_value_lamports != null ? Number(p.last_value_lamports) / 1e9 : null;
 	const pnl = value != null && entry > 0 ? ((value - entry) / entry) * 100 : null;
-	const label = p.symbol || p.name || short(p.mint);
+	const label = escapeUntrusted(p.symbol || p.name) || short(p.mint);
 	const state = p.status === 'open' ? '' : ` (${p.status})`;
 	const worth = value != null ? `, now ${fmtNum(value, 4)} SOL${pnl != null ? ` (${pnl >= 0 ? '+' : ''}${fmtNum(pnl, 1)}%)` : ''}` : '';
 	return `- ${label}${state}: in ${fmtNum(entry, 4)} SOL${worth}`;
 }
 
+const MAX_CLOSED_SHOWN = 3;
+
+function closedLine(p) {
+	const pct = p.realized_pnl_pct != null ? Number(p.realized_pnl_pct) : null;
+	const sol = p.realized_pnl_lamports != null ? Number(p.realized_pnl_lamports) / 1e9 : null;
+	const label = escapeUntrusted(p.symbol || p.name) || short(p.mint);
+	return `- ${label}: ${pct != null ? `${pct >= 0 ? '+' : ''}${fmtNum(pct, 1)}%` : 'closed'}${sol != null ? ` (${sol >= 0 ? '+' : ''}${fmtNum(sol, 4)} SOL)` : ''}`;
+}
+
+/** The shareable P&L image for each recently closed trade, sent as a picture. */
+async function sendPnlCards({ gw, event, closed }) {
+	if (typeof gw.sendMedia !== 'function') return;
+	for (const p of closed) {
+		const card = await loadTradeCard(p.id, { origin: appOrigin() }).catch(() => null);
+		if (!card) continue;
+		await gw.sendMedia(event.chatId, { url: `${card.ogImageUrl}&format=png`, kind: 'image', caption: `${card.title}\n${card.shareUrl}` }).catch((e) => {
+			console.error('[gateway] pnl card not delivered', e?.message);
+		});
+	}
+}
+
 export async function cmdPositions({ gw, event, link }) {
 	const agent = await targetAgent({ gw, event, link });
 	if (!agent) return;
-	const all = await fetchTraderPositions({ agentId: agent.id, network: 'mainnet', window: '24h' });
+	const all = await fetchTraderPositions({ agentId: agent.id, network: 'mainnet', window: '7d' });
 	const open = all.filter((p) => OPEN_STATUSES.has(p.status));
-	if (!open.length) {
+	const closed = all.filter((p) => p.status === 'closed').slice(0, MAX_CLOSED_SHOWN);
+	if (!open.length && !closed.length) {
 		return gw.sendText(event.chatId, `${agent.name || 'Your agent'} has no open positions on Solana mainnet.\n${agentWalletUrl(agent.id, 'portfolio')}`);
 	}
-	const entry = open.reduce((s, p) => s + Number(p.entry_quote_lamports || 0), 0) / 1e9;
-	const valued = open.filter((p) => p.last_value_lamports != null);
-	const value = valued.reduce((s, p) => s + Number(p.last_value_lamports), 0) / 1e9;
-	const lines = [
-		`${agent.name || 'Your agent'}: ${open.length} open position${open.length === 1 ? '' : 's'} (Solana mainnet)`,
-		...open.slice(0, MAX_POSITIONS_SHOWN).map(positionLine),
-	];
-	if (open.length > MAX_POSITIONS_SHOWN) lines.push(`and ${open.length - MAX_POSITIONS_SHOWN} more`);
-	lines.push('', `Total in: ${fmtNum(entry, 4)} SOL${valued.length ? `, marked at ${fmtNum(value, 4)} SOL${valued.length < open.length ? ` (${valued.length} of ${open.length} priced)` : ''}` : ''}`);
+	const lines = [];
+	if (open.length) {
+		const entry = open.reduce((s, p) => s + Number(p.entry_quote_lamports || 0), 0) / 1e9;
+		const valued = open.filter((p) => p.last_value_lamports != null);
+		const value = valued.reduce((s, p) => s + Number(p.last_value_lamports), 0) / 1e9;
+		lines.push(
+			`${agent.name || 'Your agent'}: ${open.length} open position${open.length === 1 ? '' : 's'} (Solana mainnet)`,
+			...open.slice(0, MAX_POSITIONS_SHOWN).map(positionLine),
+		);
+		if (open.length > MAX_POSITIONS_SHOWN) lines.push(`and ${open.length - MAX_POSITIONS_SHOWN} more`);
+		lines.push('', `Total in: ${fmtNum(entry, 4)} SOL${valued.length ? `, marked at ${fmtNum(value, 4)} SOL${valued.length < open.length ? ` (${valued.length} of ${open.length} priced)` : ''}` : ''}`);
+	} else {
+		lines.push(`${agent.name || 'Your agent'} has no open positions on Solana mainnet.`);
+	}
+	if (closed.length) lines.push('', 'Closed in the last 7 days:', ...closed.map(closedLine));
 	lines.push(agentWalletUrl(agent.id, 'portfolio'));
-	return gw.sendText(event.chatId, lines.join('\n'));
+	await gw.sendText(event.chatId, lines.join('\n'));
+	await sendPnlCards({ gw, event, closed });
 }
 
 /** Freeze one agent. Every writer is the one the web's Limits & Safety tab uses. */

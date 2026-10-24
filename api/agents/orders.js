@@ -33,6 +33,7 @@ import { sql } from '../_lib/db.js';
 import { getSolanaAddressBalances } from '../_lib/agent-wallet.js';
 import { getSpendLimits, getTradeLimits } from '../_lib/agent-trade-guards.js';
 import { getPumpTradeClient } from '../_lib/pump.js';
+import { evaluateRatchet, REASON_CODES } from '../_lib/exit-ratchet.js';
 import { assessTradeSafety } from '../_lib/trade-firewall.js';
 import { PublicKey } from '@solana/web3.js';
 import {
@@ -144,6 +145,7 @@ async function handleSchema(req, res, id) {
 	return json(res, 200, {
 		data: {
 			order_types: ORDER_TYPES,
+			reason_codes: REASON_CODES,
 			trigger_metrics: TRIGGER_METRICS,
 			venues: ORDER_VENUES,
 			group_kinds: GROUP_KINDS,
@@ -367,7 +369,7 @@ async function liveContext(o, orders) {
 	const need = new Set();
 	for (const leg of orders) {
 		if (leg.type === 'conditional') for (const k of conditionSignals(leg.condition)) need.add(k);
-		if (leg.type === 'trailing' || leg.type === 'conditional') need.add('mcap_usd');
+		if (leg.type === 'trailing' || leg.type === 'trail_ratchet' || leg.type === 'conditional') need.add('mcap_usd');
 		if (leg.price_band?.metric === 'mcap_usd') need.add('mcap_usd');
 	}
 	const venue = { requested: o.venue || 'auto', route: null, source: null };
@@ -395,6 +397,9 @@ function previewFrom(o, { market, signals }) {
 			preview.would_fire_now = r.fired; preview.missing = r.missing;
 		} else if (o.type === 'limit' || o.type === 'stop') {
 			preview.would_fire_now = shouldFirePrice(o, cur, cur);
+		} else if (o.type === 'trail_ratchet') {
+			const entry = o.reference_price ?? cur;
+			preview.would_fire_now = evaluateRatchet({ entry, peak: entry, value: cur, ratchet: o.ratchet }).fire;
 		} else if (o.type === 'trailing') {
 			preview.would_fire_now = false; // needs a tracked high/low-water mark first
 		} else if (o.type === 'dca' || o.type === 'twap') {

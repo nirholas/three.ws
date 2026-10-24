@@ -23,6 +23,8 @@ import { decideExit } from '../../workers/agent-sniper/exit-logic.js';
 import { getLearnedWeights } from '../../workers/agent-sniper/intel/store.js';
 import { normalizeStrategyConfig, researchGatesActive } from './strategy-schema.js';
 import { historicalGateReport, judgeHistoricalGates } from './strategy-preview.js';
+import { auditLookahead, checkPriorsCausal, withReproducibility } from './backtest-integrity.js';
+import { createResearchContext } from './research-context.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const MAX_CANDIDATES = 6000;
@@ -105,6 +107,61 @@ export function toIntelRecord(row) {
 		twitter: row.twitter, telegram: row.telegram, website: row.website,
 		risk_flags: Array.isArray(row.risk_flags) ? row.risk_flags : [],
 		smart_money: null,
+	};
+}
+
+function entryMarketCap(row) {
+	const athMult = n(row.ath_multiple);
+	const athMcUsd = n(row.ath_market_cap_usd);
+	return athMult != null && athMult > 0 && athMcUsd != null ? athMcUsd / athMult : null;
+}
+
+// The entry gate for one launch row: the same call the live worker makes.
+function entryVerdict(row, strategy, weights, useIntel) {
+	return useIntel
+		? scoreIntel(toIntelRecord(row), strategy, weights)
+		: scoreMint(toMintEvent(row, entryMarketCap(row)), strategy);
+}
+
+// Fields of a row that can change a backtest result. Their hash is the dataset
+// manifest's content hash.
+const MANIFEST_FIELDS = [
+	'mint', 'creator', 'first_seen_at', 'outcome', 'graduated', 'ath_multiple', 'ath_market_cap_usd',
+	'last_market_cap_usd', 'quality_score', 'bundle_score', 'organic_score', 'category',
+	'dev_buy_lamports', 'dev_sold', 'twitter', 'telegram', 'website', 'unique_buyers', 'sell_volume_lamports', 'buy_volume_lamports', 'creator_launches_prior', 'creator_graduated_prior',
+];
+const projectRow = (row) => [...MANIFEST_FIELDS.map((k) => row[k] ?? null), row.signals ?? null, row.risk_flags ?? null];
+
+/**
+ * Look-ahead audit of the entry gate over a captured universe. Each launch's
+ * verdict is recomputed with every later launch removed; it must not change.
+ * Creator priors are also checked for causality (they must rise with each
+ * earlier launch by the same creator, never fall).
+ */
+export function auditBacktestLookahead(rows, strategy, weights = null) {
+	const useIntel = strategy.trigger === 'intel_confirmed';
+	const gate = auditLookahead({
+		series: rows,
+		decide: (visible, i) => {
+			const v = entryVerdict(visible[i], strategy, weights, useIntel);
+			return { pass: !!v.pass, score: v.score ?? null };
+		},
+	});
+	const priors = checkPriorsCausal({
+		rows,
+		subjectOf: (r) => r.creator,
+		priorOf: (r) => n(r.creator_launches_prior),
+	});
+	return {
+		ok: gate.ok && priors.ok,
+		method: gate.method,
+		total: gate.total,
+		checked: gate.checked,
+		offending: gate.offending,
+		offending_truncated: gate.offending_truncated,
+		priors_causal: priors.ok,
+		priors_checked: priors.checked,
+		priors_offending: priors.offending,
 	};
 }
 
@@ -193,6 +250,14 @@ export async function runBacktest(strategy, { windowDays = 30, network = 'mainne
 	`;
 
 	const universeSize = rows.length;
+	const ctx = createResearchContext({
+		datasetId: `pump_coin_intel+pump_coin_outcomes:${network}:${days}d`,
+		source: 'postgres:pump_coin_intel+pump_coin_outcomes',
+		rows,
+		project: projectRow,
+		timeOf: (r) => r.first_seen_at,
+	});
+	const integrity = { manifest: ctx.manifest, lookahead: auditBacktestLookahead(ctx.rows, strategy, weights) };
 	const useIntel = strategy.trigger === 'intel_confirmed';
 	const perTradeSol = Number(BigInt(strategy.per_trade_lamports || '0')) / LAMPORTS_PER_SOL;
 	const stakeSol = perTradeSol > 0 ? perTradeSol : 0.1; // notional stake for drawdown/exposure when unset
@@ -209,13 +274,10 @@ export async function runBacktest(strategy, { windowDays = 30, network = 'mainne
 
 	for (const row of rows) {
 		const athMult = n(row.ath_multiple);
-		const athMcUsd = n(row.ath_market_cap_usd);
-		const entryMcUsd = athMult != null && athMult > 0 && athMcUsd != null ? athMcUsd / athMult : null;
+		const entryMcUsd = entryMarketCap(row);
 
 		// Entry gate — the SAME function the live worker runs.
-		const verdict = useIntel
-			? scoreIntel(toIntelRecord(row), strategy, weights)
-			: scoreMint(toMintEvent(row, entryMcUsd), strategy);
+		const verdict = entryVerdict(row, strategy, weights, useIntel);
 		if (!verdict.pass) { skip.gate++; continue; }
 		if (researchConfig) {
 			const gate = judgeHistoricalGates(researchConfig, historicalGateReport(row));
@@ -283,6 +345,8 @@ export async function runBacktest(strategy, { windowDays = 30, network = 'mainne
 			skipped: skip,
 			research_blocked_by: researchBlockedBy,
 			caveats,
+			integrity,
+			reproducible: true,
 		};
 	}
 
@@ -346,6 +410,8 @@ export async function runBacktest(strategy, { windowDays = 30, network = 'mainne
 		sample_hits: sampleHits,
 		sample_misses: sampleMisses,
 		caveats,
+		integrity,
+		reproducible: true,
 		ran_at: null, // stamped by the caller (Date.now is unavailable inside workflows)
 	};
 }
@@ -372,7 +438,7 @@ export async function getCachedBacktest(hash, ttlMinutes = 30) {
 			  AND ran_at > now() - (${Math.max(1, ttlMinutes)} || ' minutes')::interval
 			ORDER BY ran_at DESC LIMIT 1
 		`;
-		return row ? { ...row.metrics, sample_size: row.sample_size, ran_at: row.ran_at, cached: true } : null;
+		return row ? { ...withReproducibility(row.metrics), sample_size: row.sample_size, ran_at: row.ran_at, cached: true } : null;
 	} catch {
 		return null;
 	}

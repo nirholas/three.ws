@@ -16,7 +16,8 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
-import helvetikerBold from 'three/examples/fonts/helvetiker_bold.typeface.json';
+// Vendored: three r186 stopped shipping examples/fonts. Source: three r184 (MgOpen, license in ./fonts/LICENSE).
+import helvetikerBold from './fonts/helvetiker_bold.typeface.json';
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 

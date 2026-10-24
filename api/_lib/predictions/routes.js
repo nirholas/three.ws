@@ -21,6 +21,8 @@ import {
 	agentPositions, loadOwnedAgent, describeError,
 } from './engine.js';
 import { createWatch, listWatches, deleteWatch } from './watch.js';
+import { scanVenue } from './arb.js';
+import { getStrategy, setStrategy, submitIntent, listLedger } from './shadow.js';
 
 const SORTS = new Set(['volume', 'volume_24h', 'close', 'new']);
 const RANGES = new Set(['1d', '1w', '1m', 'max']);
@@ -90,12 +92,18 @@ async function marketRoute({ params, query }) {
 	return run(() => marketDetail(venue, market, range));
 }
 
+async function scanRoute({ query }) {
+	const out = await run(() => scanVenue(getVenue(venueId(query)), { limit: intParam(query.limit, { name: 'limit', min: 1, max: 40, fallback: 20 }) }));
+	return { ...out, venue: venueId(query) };
+}
+
 export function publicRoutes(prefix) {
 	return [
 		{ method: 'GET', path: `${prefix}/events`, name: 'predictions.events', auth: 'public', handler: listEventsRoute },
 		{ method: 'GET', path: `${prefix}/categories`, name: 'predictions.categories', auth: 'public', handler: categoriesRoute },
 		{ method: 'GET', path: `${prefix}/event/:eventId`, name: 'predictions.event', auth: 'public', handler: eventRoute },
 		{ method: 'GET', path: `${prefix}/market/:marketId`, name: 'predictions.market', auth: 'public', handler: marketRoute },
+		{ method: 'GET', path: `${prefix}/scan`, name: 'predictions.scan', auth: 'public', handler: scanRoute },
 	];
 }
 
@@ -122,6 +130,31 @@ export const agentRoutes = [
 	{
 		method: 'GET', path: '/agents/:id/predictions/positions', name: 'predictions.positions', auth: 'required', scope: 'wallet:read',
 		handler: ({ params, principal }) => run(() => agentPositions({ agentId: agentOf(params), userId: principal.userId })),
+	},
+	{
+		method: 'GET', path: '/agents/:id/predictions/strategy', name: 'predictions.strategy.get', auth: 'required', scope: 'wallet:read',
+		handler: async ({ params, principal }) => {
+			const agent = await run(() => loadOwnedAgent(agentOf(params), principal.userId));
+			return getStrategy(agent.meta);
+		},
+	},
+	{
+		method: 'PUT', path: '/agents/:id/predictions/strategy', name: 'predictions.strategy.set', auth: 'required', scope: 'wallet:trade',
+		handler: ({ params, principal, body, req }) => run(() => setStrategy({
+			agentId: agentOf(params), userId: principal.userId, patch: body, ownerSession: principal.source === 'session', req,
+		})),
+	},
+	{
+		method: 'GET', path: '/agents/:id/predictions/shadow', name: 'predictions.shadow.list', auth: 'required', scope: 'wallet:read',
+		handler: ({ params, principal, query }) => run(() => listLedger({
+			agentId: agentOf(params), userId: principal.userId, limit: intParam(query.limit, { name: 'limit', min: 1, max: 500, fallback: 100 }),
+		})),
+	},
+	{
+		method: 'POST', path: '/agents/:id/predictions/shadow/intent', name: 'predictions.shadow.intent', auth: 'required', scope: 'wallet:trade',
+		handler: async ({ params, principal, body }) => created(await run(() => submitIntent({
+			agentId: agentOf(params), userId: principal.userId, intent: body, source: sourceOf(principal), venueId: venueId(body),
+		}))),
 	},
 	{
 		method: 'GET', path: '/agents/:id/predictions/limits', name: 'predictions.limits.get', auth: 'required', scope: 'wallet:read',

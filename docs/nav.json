@@ -270,6 +270,10 @@
 					"path": "video-to-motion"
 				},
 				{
+					"label": "Import your VRoid Hub avatar",
+					"path": "vroid-hub-import"
+				},
+				{
 					"label": "Procedural animation",
 					"path": "procedural-animation"
 				},

@@ -1,9 +1,9 @@
 /**
- * ML Web Worker for ONNX inference using @xenova/transformers
+ * ML Web Worker for ONNX inference using @huggingface/transformers
  * Handles embeddings, sentiment analysis, summarization, and NER
  */
 
-import { pipeline, env } from '@xenova/transformers';
+import { pipeline, env } from '@huggingface/transformers';
 import { MODEL_CONFIGS, type ModelConfig } from '@/config/ml-config';
 
 // Configure transformers.js

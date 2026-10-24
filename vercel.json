@@ -344,6 +344,10 @@
 			"dest": "/agent-perps.html"
 		},
 		{
+			"src": "/agent-predictions/?",
+			"dest": "/agent-predictions.html"
+		},
+		{
 			"src": "/agent-mail/?",
 			"dest": "/agent-mail.html"
 		},
@@ -462,6 +466,30 @@
 		{
 			"src": "/analytics/?",
 			"dest": "/analytics.html"
+		},
+		{
+			"src": "/compete/?",
+			"dest": "/compete.html"
+		},
+		{
+			"src": "/compete/([^/]+)/?",
+			"dest": "/compete.html"
+		},
+		{
+			"src": "/api/competitions/?",
+			"dest": "/api/competitions.js"
+		},
+		{
+			"src": "/api/competitions/([^/]+)/entries/?",
+			"dest": "/api/competitions.js?slug=$1&part=entries"
+		},
+		{
+			"src": "/api/competitions/([^/]+)/?",
+			"dest": "/api/competitions.js?slug=$1"
+		},
+		{
+			"src": "/why-three-ws/?",
+			"dest": "/why-three-ws.html"
 		},
 		{
 			"src": "/experiments/?",
@@ -1442,6 +1470,10 @@
 		{
 			"src": "/commerce/?",
 			"dest": "/commerce.html"
+		},
+		{
+			"src": "/earnings/?",
+			"dest": "/earnings.html"
 		},
 		{
 			"src": "/invoices/?",
@@ -4591,7 +4623,7 @@
 			"dest": "/api/pump/[action]?action=launches"
 		},
 		{
-			"src": "/api/native-launch/(config|quote|pool|launch-prep|launch-confirm|launches)",
+			"src": "/api/native-launch/(config|quote|pool|launch-prep|launch-confirm|launches|swap-prep|fee-config)",
 			"dest": "/api/native-launch/[action]?action=$1"
 		},
 		{
@@ -5836,8 +5868,16 @@
 			"dest": "/agent-perps.html"
 		},
 		{
+			"src": "/agents/[^/.]+/predictions/?",
+			"dest": "/agent-predictions.html"
+		},
+		{
 			"src": "/agents/[^/.]+/mail/?",
 			"dest": "/agent-mail.html"
+		},
+		{
+			"src": "/agents/([^/.]+)/earnings/?",
+			"dest": "/agent-earnings.html"
 		},
 		{
 			"src": "/agents/([^/.]+)/classic/?",
@@ -5990,6 +6030,14 @@
 		{
 			"src": "/api/skills/mint",
 			"dest": "/api/skills/mint"
+		},
+		{
+			"src": "/api/skills/scan",
+			"dest": "/api/skills/scan"
+		},
+		{
+			"src": "/api/skills/moderation",
+			"dest": "/api/skills/moderation"
 		},
 		{
 			"src": "/api/skills/import",
@@ -7653,6 +7701,18 @@
 		{
 			"path": "/api/cron/event-market-announce",
 			"schedule": "*/15 * * * *"
+		},
+		{
+			"path": "/api/cron/revenue-ledger-reconcile",
+			"schedule": "11 * * * *"
+		},
+		{
+			"path": "/api/cron/revenue-reinvest",
+			"schedule": "37 * * * *"
+		},
+		{
+			"path": "/api/cron/data-canary",
+			"schedule": "*/30 * * * *"
 		}
 	]
 }

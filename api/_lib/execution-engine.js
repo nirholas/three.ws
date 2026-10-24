@@ -219,8 +219,11 @@ async function estimateComputeUnits(connection, payer, instructions, lookupTable
 		// pump.fun buy that opens an ATA).
 		return Math.min(1_400_000, 60_000 + instructions.length * 40_000);
 	}
-	// +15% headroom, clamped to the per-tx max (1.4M CU).
-	return Math.min(1_400_000, Math.ceil(units * 1.15));
+	// +15% headroom plus a flat allowance for the instructions the simulation did
+	// not contain: the two ComputeBudget instructions and a possible tip transfer
+	// each cost ~150 CU of their own, which a 15% margin alone does not cover on a
+	// tiny transaction. Clamped to the per-tx max (1.4M CU).
+	return Math.min(1_400_000, Math.ceil(units * 1.15) + 3 * 150);
 }
 
 // ── Jito Block Engine REST ────────────────────────────────────────────────────

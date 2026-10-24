@@ -94,8 +94,5 @@ export default defineConfig(function () {
 		define: {
 			'import.meta.env.BUILD_TIMESTAMP': JSON.stringify(buildTimestamp.toLocaleString()),
 		},
-		optimizeDeps: {
-			include: ['svelte-fast-dimension/action'],
-		},
 	};
 });

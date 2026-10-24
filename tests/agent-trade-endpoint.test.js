@@ -64,6 +64,13 @@ vi.mock('../api/_lib/avatar-wallet.js', () => ({
 
 vi.mock('../api/_lib/audit.js', () => ({ logAudit: vi.fn() }));
 
+// The holder due-diligence read is a chain-wide scan covered by
+// tests/token-due-diligence.test.js; here the report is the input to the guard.
+const ddState = { report: { status: 'ok', fields: { insider_pct: 3, sniper_pct: 1, bundler_pct: 0, fresh_wallet_pct: 0 } } };
+vi.mock('../api/_lib/token-due-diligence.js', () => ({
+	getTokenDueDiligence: vi.fn(async () => ddState.report),
+}));
+
 // CSRF is enforced on the live (non-simulate) trade path; the token round-trip is
 // covered by its own suite. Here we stub it to a pass so these tests exercise the
 // trade logic, exactly as auth/rate-limit/db are mocked above.
@@ -210,6 +217,7 @@ beforeEach(() => {
 	authState.session = { id: 'owner-1' };
 	authState.bearer = null;
 	clientState.buyImpact = 1;
+	ddState.report = { status: 'ok', fields: { insider_pct: 3, sniper_pct: 1, bundler_pct: 0, fresh_wallet_pct: 0 } };
 	clientState.expectedBaseTokens = '1000000';
 	clientState.sellImpact = 1;
 	clientState.expectedQuoteOut = '50000000';
@@ -374,6 +382,31 @@ describe('POST /api/agents/:id/trade — guard rejections', () => {
 		expect(res.json.error).toBe('price_impact');
 	});
 
+	it('insider share above the configured limit → 422 due_diligence', async () => {
+		setAgent({ trade_limits: { max_insider_pct: 10 } });
+		ddState.report = { status: 'ok', fields: { insider_pct: 30, sniper_pct: 1, bundler_pct: 0, fresh_wallet_pct: 0 } };
+		const res = await execTrade({ side: 'buy', mint: MINT, amount: 0.1 });
+		expect(res.statusCode).toBe(422);
+		expect(res.json.error).toBe('due_diligence');
+		expect(res.json.detail).toMatchObject({ field: 'insider_pct', value_pct: 30, max_pct: 10 });
+	});
+
+	it('insider share within the limit does not block the buy', async () => {
+		setAgent({ trade_limits: { max_insider_pct: 10 } });
+		ddState.report = { status: 'ok', fields: { insider_pct: 4, sniper_pct: 1, bundler_pct: 0, fresh_wallet_pct: 0 } };
+		const res = await execTrade({ side: 'buy', mint: MINT, amount: 0.1 });
+		expect(res.json.error).not.toBe('due_diligence');
+		expect(res.json.error).not.toBe('due_diligence_unavailable');
+	});
+
+	it('a holder limit with an unreadable report refuses the buy instead of passing it', async () => {
+		setAgent({ trade_limits: { max_insider_pct: 10 } });
+		ddState.report = { status: 'upstream_down' };
+		const res = await execTrade({ side: 'buy', mint: MINT, amount: 0.1 });
+		expect(res.statusCode).toBe(422);
+		expect(res.json.error).toBe('due_diligence_unavailable');
+	});
+
 	it('insufficient SOL → 400 insufficient_sol', async () => {
 		connState.balance = 0n;
 		const res = await execTrade({ side: 'buy', mint: MINT, amount: 0.1 });
@@ -525,6 +558,20 @@ describe('PUT /api/agents/:id/trade/limits: input validation', () => {
 		const res = await putLimits({ max_price_impact_pct: 500 });
 		expect(res.statusCode).toBe(400);
 		expect(savedLimits()).toBeNull();
+	});
+
+	it('rejects an out-of-range holder limit instead of silently clearing it', async () => {
+		const res = await putLimits({ max_insider_pct: 150 });
+		expect(res.statusCode).toBe(400);
+		expect(savedLimits()).toBeNull();
+	});
+
+	it('accepts and persists holder-quality limits', async () => {
+		const res = await putLimits({ max_insider_pct: 12.5, max_bundler_pct: '20' });
+		expect(res.statusCode).toBe(200);
+		expect(res.json.data.limits.max_insider_pct).toBe(12.5);
+		expect(res.json.data.limits.max_bundler_pct).toBe(20);
+		expect(savedLimits().max_insider_pct).toBe(12.5);
 	});
 
 	it('accepts real caps, numeric strings, and an explicit null clear', async () => {

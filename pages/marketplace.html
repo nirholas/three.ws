@@ -4978,8 +4978,25 @@
 							placeholder='[{"name":"search","description":"Search the web","input_schema":{"type":"object","properties":{"query":{"type":"string","description":"Search query"}},"required":["query"]}}]'
 						></textarea>
 					</div>
+					<details class="sp-bundle" id="sp-bundle">
+						<summary>Skill code and instructions <span class="field-hint">(optional, scanned before anything is listed)</span></summary>
+						<div class="market-field">
+							<label for="sp-content">SKILL.md instructions</label>
+							<textarea id="sp-content" rows="5" spellcheck="false" placeholder="When to use this skill and how the agent should call its tools."></textarea>
+						</div>
+						<div class="market-field">
+							<label for="sp-manifest">manifest.json <span class="field-hint">(declare hosts under <code>requires.network</code>)</span></label>
+							<textarea id="sp-manifest" rows="5" spellcheck="false" placeholder='{"name":"web-search","requires":{"network":["api.example.com"]}}'></textarea>
+						</div>
+						<div class="market-field">
+							<label for="sp-handlers">handlers.js</label>
+							<textarea id="sp-handlers" rows="8" spellcheck="false" placeholder="export async function search(args, ctx) { ... }"></textarea>
+						</div>
+					</details>
+					<div id="skill-publish-scan" class="sp-scan" role="status" aria-live="polite" hidden></div>
 					<div id="skill-publish-error" class="market-form-error" hidden></div>
 					<div class="market-submit-actions">
+						<button type="button" id="sp-check" class="market-btn-sec">Check skill</button>
 						<button type="button" id="sp-publish" class="market-btn-pri" data-i18n="marketplace.publish_skill_2">
 							Publish Skill
 						</button>

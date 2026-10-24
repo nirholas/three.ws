@@ -53,6 +53,7 @@ import {
 	skillDelivery,
 	splitSummary,
 } from '../../_lib/skill-rails.js';
+import { chargeMatchesRequirement, chargeToX402Payment } from '../../_lib/mpp-solana.js';
 import { isSolanaNetwork } from '../../_lib/x402/a2a-client.js';
 
 const DESCRIPTION_SUFFIX = 'paid per call in USDC, settled to the skill author';
@@ -186,7 +187,7 @@ function mppRequirement(requirements) {
 }
 
 function sendMppChallenge(res, skill, quote, requirement, errText) {
-	const challenge = buildMppChallenge({ requirement, resourceUrl: quote.resourceUrl, description: describe(skill) });
+	const challenge = buildMppChallenge({ requirement, description: describe(skill) });
 	return sendJson(
 		res,
 		402,
@@ -217,12 +218,7 @@ async function handleMpp(req, res, skill, quote) {
 			? sendMppChallenge(res, skill, quote, requirement, parsed.message)
 			: error(res, status, parsed.code, parsed.message);
 	}
-	const charge = parsed.request;
-	if (
-		charge.resource !== quote.resourceUrl ||
-		String(charge.amount) !== String(requirement.amount) ||
-		charge.recipient !== requirement.payTo
-	) {
+	if (!chargeMatchesRequirement(parsed.request, requirement)) {
 		return sendMppChallenge(res, skill, quote, requirement, 'the skill price or payout changed since this challenge, retry with a fresh one');
 	}
 	try {
@@ -231,7 +227,7 @@ async function handleMpp(req, res, skill, quote) {
 			quote,
 			rail: 'mpp',
 			requirements: [requirement],
-			paymentHeader: encodePaymentHeader(parsed.payload),
+			paymentHeader: encodePaymentHeader(chargeToX402Payment({ requirement, transaction: parsed.transaction })),
 		});
 		return sendJson(res, 200, skillDelivery(skill), {
 			'payment-receipt': mppReceiptHeader({ transaction: settled.transaction, network: settled.network, payer }),
@@ -433,7 +429,7 @@ async function dryRun(res, rail, skill, quote) {
 	} else if (rail === 'mpp') {
 		const requirement = mppRequirement(requirements);
 		if (!requirement) return error(res, 501, 'mpp_unavailable', 'no Solana payout is configured for this skill');
-		const c = buildMppChallenge({ requirement, resourceUrl: quote.resourceUrl, description: describe(skill) });
+		const c = buildMppChallenge({ requirement, description: describe(skill) });
 		challenge = { 'WWW-Authenticate': c.header };
 	} else if (rail === 'a2a') {
 		const { task } = buildPaymentRequiredTask({

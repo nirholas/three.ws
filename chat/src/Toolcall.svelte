@@ -1,5 +1,5 @@
-<script>
-	import { createEventDispatcher } from 'svelte';
+<script lang="ts">
+	
 	import { fade, slide } from 'svelte/transition';
 	import JsonView from './svelte-json-view/JsonView.svelte';
 	import Icon from './Icon.svelte';
@@ -7,68 +7,90 @@
 	import Choice from './Choice.svelte';
 	import { feCheck, feChevronDown, feLoader, feX } from './feather.js';
 
-	const dispatch = createEventDispatcher();
 
-	export let toolcall;
-	export let toolresponse;
-	export let collapsable = true;
-	export let closeButton = false;
 
-	export let isChoosing = false;
-	export let choiceHandler;
-	export let question = '';
-	export let choices = [];
-	export let chose = null;
 
-	let className = '';
-	export { className as class };
+	interface Props {
+		toolcall: any;
+		toolresponse: any;
+		collapsable?: boolean;
+		closeButton?: boolean;
+		isChoosing?: boolean;
+		choiceHandler: any;
+		question?: string;
+		choices?: any;
+		chose?: any;
+		class?: string;
+		onclose?: (...args: any[]) => void;
+		onclick?: (event: any) => void;
+	}
 
-	$: finished = toolcall.finished || toolresponse;
+	let {
+		toolcall,
+		toolresponse,
+		collapsable = true,
+		closeButton = false,
+		isChoosing = false,
+		choiceHandler,
+		question = '',
+		choices = [],
+		chose = $bindable(null),
+		class: className = '',
+		onclose,
+		onclick
+	}: Props = $props();
+	
 
-	let displayType = null;
-	let displayTypeDisabled = false;
-	let displayedContent = null;
-	$: if (toolresponse && toolresponse.content && toolresponse.content.contentType) {
-		displayType = null;
-		displayedContent = null;
-		// When a special contentType is returned, if a `content` field is not present,
-		// we automatically fill it with the value of whatever argument (single) was passed into the tool call.
-		// This is done in order to save tokens, because it prevents us having to re-send the content again to the model.
-		if (!toolresponse.content.content && Object.keys(toolcall.arguments).length === 1) {
-			displayedContent = toolcall.arguments[Object.keys(toolcall.arguments)[0]];
-		} else {
-			displayedContent = toolresponse.content.content;
-		}
-		if (displayedContent) {
-			const contentType = toolresponse.content.contentType;
-			// Get display type for this type of content:
-			if (contentType.startsWith('image/')) {
-				displayType = 'image';
-			} else if (contentType === 'text/html') {
-				displayType = 'webpage';
-			} else if (contentType === 'text/markdown') {
-				displayType = 'markdown';
-			} else if (contentType === 'application/tx-result') {
-				displayType = 'tx_result';
-			} else if (contentType === 'application/model-3d') {
-				displayType = 'model3d';
+	let finished = $derived(toolcall.finished || toolresponse);
+
+	let displayType = $state(null);
+	let displayTypeDisabled = $state(false);
+	let displayedContent = $state(null);
+	$effect.pre(() => {
+		if (toolresponse && toolresponse.content && toolresponse.content.contentType) {
+			displayType = null;
+			displayedContent = null;
+			// When a special contentType is returned, if a `content` field is not present,
+			// we automatically fill it with the value of whatever argument (single) was passed into the tool call.
+			// This is done in order to save tokens, because it prevents us having to re-send the content again to the model.
+			if (!toolresponse.content.content && Object.keys(toolcall.arguments).length === 1) {
+				displayedContent = toolcall.arguments[Object.keys(toolcall.arguments)[0]];
+			} else {
+				displayedContent = toolresponse.content.content;
 			}
-			// ...
+			if (displayedContent) {
+				const contentType = toolresponse.content.contentType;
+				// Get display type for this type of content:
+				if (contentType.startsWith('image/')) {
+					displayType = 'image';
+				} else if (contentType === 'text/html') {
+					displayType = 'webpage';
+				} else if (contentType === 'text/markdown') {
+					displayType = 'markdown';
+				} else if (contentType === 'application/tx-result') {
+					displayType = 'tx_result';
+				} else if (contentType === 'application/model-3d') {
+					displayType = 'model3d';
+				}
+				// ...
+			}
 		}
-	}
-	$: if (isChoosing) {
-		displayType = 'choice';
-	}
+	});
+	$effect.pre(() => {
+		if (isChoosing) {
+			displayType = 'choice';
+		}
+	});
 </script>
 
 <div class="{className} flex h-full w-full flex-col bg-white">
-	<!-- svelte-ignore a11y-no-static-element-interactions -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<svelte:element
 		this={collapsable ? 'button' : 'div'}
 		class="{!collapsable || toolcall.expanded ? '' : 'rounded-b-lg'} {collapsable
 			? 'transition-colors hover:bg-gray-50'
 			: ''} flex items-center gap-4 rounded-t-lg border border-slate-200 px-5 py-3 text-sm text-slate-700 sm:gap-3"
-		on:click
+		onclick={onclick}
 	>
 		{#if finished}
 			<span in:fade={{ duration: 300 }}>
@@ -93,7 +115,7 @@
 		<div class="-my-1.5 -mr-2 ml-auto flex items-center gap-2">
 			{#if displayType !== null}
 				<button
-					on:click={(event) => {
+					onclick={(event) => {
 						event.stopPropagation();
 						displayTypeDisabled = !displayTypeDisabled;
 					}}
@@ -115,8 +137,8 @@
 				/>
 			{:else if closeButton}
 				<button
-					on:click={() => {
-						dispatch('close');
+					onclick={() => {
+						onclose?.();
 					}}
 					class="flex rounded-full p-3 transition-colors hover:bg-gray-100"
 				>
@@ -145,11 +167,11 @@
 					{:else if toolcall.arguments}
 						{toolcall.arguments}
 					{:else}
-						<div class="h-3 w-3 shrink-0 animate-bounce rounded-full bg-slate-600" />
+						<div class="h-3 w-3 shrink-0 animate-bounce rounded-full bg-slate-600"></div>
 					{/if}
 				</div>
 				{#if toolresponse}
-					<div class="h-px w-full border-t border-dashed border-slate-300" />
+					<div class="h-px w-full border-t border-dashed border-slate-300"></div>
 					<div class="flex flex-col rounded-b-lg border border-t-0 border-slate-200">
 						<span class="px-4 pt-3 text-sm font-medium tracking-[0.01em] text-slate-700"
 							>Result:</span
@@ -179,7 +201,7 @@
 						class="h-full min-h-[50vh] w-full"
 						frameborder="0"
 						allowfullscreen
-					/>
+					></iframe>
 				</div>
 			{:else if displayType === 'choice'}
 				<div class="flex flex-col rounded-b-lg border border-t-0 border-slate-200 px-6 py-5">

@@ -1,12 +1,22 @@
-<script>
+<script lang="ts">
 	import { talkingHeadAvatarUrl } from './stores.js';
 	import AvatarIcon from './AvatarIcon.svelte';
 
-	export let model;
-	export let size = 'h-7 w-7';
-	export let rounded = null;
-	/** Live-animated walking avatar. Set false for dense lists (dropdown rows), which uses a still frame. */
-	export let live = true;
+	
+	interface Props {
+		model: any;
+		size?: string;
+		rounded?: any;
+		/** Live-animated walking avatar. Set false for dense lists (dropdown rows), which uses a still frame. */
+		live?: boolean;
+	}
+
+	let {
+		model,
+		size = 'h-7 w-7',
+		rounded = null,
+		live = true
+	}: Props = $props();
 
 	// Remember to update hasCompanyLogo from convo.js when adding new logos.
 	const base = import.meta.env.BASE_URL;

@@ -26,7 +26,7 @@ function smoothstep(u) {
 }
 
 // Sample the camera path at time `t`: clamp to the ends, ease each segment.
-function sampleCamera(kfs, t) {
+export function sampleCamera(kfs, t) {
 	if (!kfs.length) return null;
 	if (t <= kfs[0].time) return { position: kfs[0].position.clone(), target: kfs[0].target.clone() };
 	const last = kfs[kfs.length - 1];
@@ -48,6 +48,25 @@ function pickRecordingMimeType() {
 		if (MediaRecorder.isTypeSupported(t)) return t;
 	}
 	return null;
+}
+
+const TAIL_FRAMES = 2;
+const TAIL_TIMEOUT_MS = 1500;
+// A real encoded clip is far larger than a container header; anything under this
+// is a recorder that never received a frame.
+const MIN_VIDEO_BYTES = 1024;
+
+function flushTail(scene, track) {
+	return new Promise((resolve) => {
+		let left = TAIL_FRAMES;
+		const finish = () => { clearTimeout(timer); resolve(); };
+		const timer = setTimeout(finish, TAIL_TIMEOUT_MS);
+		scene.setOnRendered(() => {
+			track.requestFrame();
+			left -= 1;
+			if (left <= 0) finish();
+		});
+	});
 }
 
 function fmtTime(s) {
@@ -262,18 +281,44 @@ export function initHotspotTimeline() {
 		addBtn.disabled = true;
 		setStatus('Recording camera path…');
 		try {
-			const stream = scene.canvas.captureStream(EXPORT_FPS);
+			// Frame rate 0 hands the encoder exactly the frames we push with
+			// requestFrame() after each render. A fixed-rate capture samples the
+			// WebGL canvas on a timer instead, and on a slow device it can finish a
+			// whole recording without ever catching a finished frame.
+			let stream = scene.canvas.captureStream(0);
+			let track = stream.getVideoTracks()[0];
+			const manual = typeof track?.requestFrame === 'function';
+			if (!manual) {
+				track?.stop();
+				stream = scene.canvas.captureStream(EXPORT_FPS);
+				track = stream.getVideoTracks()[0];
+			}
+			let framesCaptured = 0;
+			if (manual) {
+				scene.setOnRendered(() => { track.requestFrame(); framesCaptured += 1; });
+			} else {
+				framesCaptured = Infinity;
+			}
 			const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000 });
 			const chunks = [];
 			recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
 			const stopped = new Promise((resolve) => { recorder.onstop = resolve; });
-			recorder.start();
+			recorder.start(250);
 			await new Promise((resolve) => {
 				playback = { startWallMs: performance.now(), startTime: kfs[0].time, kfs, onDone: resolve };
 				setPlayUI(true);
 			});
+			// Hold the recorder open for two more finished frames (or a short grace
+			// period on a very slow device) so the encoder's look-ahead flushes the
+			// last frames of the path instead of dropping them on stop().
+			if (manual) await flushTail(scene, track);
+			scene.setOnRendered(null);
+			recorder.requestData();
 			recorder.stop();
 			await stopped;
+			if (framesCaptured < 2 || chunks.reduce((n, c) => n + c.size, 0) < MIN_VIDEO_BYTES) {
+				throw new Error('the browser encoded no video because the scene rendered too slowly while recording. Close other tabs or load a smaller scene and try again');
+			}
 			const blob = new Blob(chunks, { type: mimeType });
 			const url = URL.createObjectURL(blob);
 			setStatus('');
@@ -286,6 +331,7 @@ export function initHotspotTimeline() {
 			status.innerHTML = '';
 			status.appendChild(a);
 		} catch (err) {
+			scene.setOnRendered?.(null);
 			setStatus(`Recording failed: ${err.message}`, true);
 			console.error('[splat] video export failed', err);
 		} finally {

@@ -14,6 +14,7 @@
 
 import { apiFetch } from '../api.js';
 import { esc, shortAddr, timeAgo, VIOLET } from './strategy-forms.js';
+import { renderIntegrity } from './backtest-integrity-view.js';
 
 // Plain-language names for every reason a launch can be filtered out. Entry
 // keys come from matchesEntry; research keys mirror RESEARCH_CHECK_LABELS in
@@ -419,6 +420,7 @@ function renderBacktest(r) {
 		</div>
 		<p class="sx-note">${fmtN(r.sample_size)} of ${fmtN(r.universe_size)} recorded launches over ${r.window_days} days passed your rules${r.cached ? ' (cached result for these exact settings)' : ''}.</p>
 		${blockedList(r)}
+		${renderIntegrity(r)}
 		${(r.caveats || []).length ? `<details class="sx-det"><summary>Caveats</summary><ul>${r.caveats.map((c) => `<li>${esc(c)}</li>`).join('')}</ul></details>` : ''}`;
 }
 

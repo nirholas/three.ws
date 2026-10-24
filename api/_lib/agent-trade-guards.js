@@ -143,6 +143,11 @@ export const SPEND_LIMIT_DEFAULTS = Object.freeze({
 //   max_slippage_bps      ceiling on the client-supplied slippage
 //   max_concurrent        max open discretionary positions (null = unlimited)
 //   kill_switch           when true, every discretionary trade is rejected
+//   max_insider_pct       refuse a buy when creator-linked holders own more than this % of supply
+//   max_sniper_pct        refuse a buy when launch-slot snipers own more than this % of supply
+//   max_bundler_pct       refuse a buy when bundled (shared-funder) holders own more than this % of supply
+//   max_fresh_wallet_pct  refuse a buy when fresh wallets own more than this % of supply
+//                         (the four holder limits read token_due_diligence; null = not checked)
 export const TRADE_LIMIT_DEFAULTS = Object.freeze({
 	per_trade_sol: null,
 	daily_budget_sol: null,
@@ -150,6 +155,10 @@ export const TRADE_LIMIT_DEFAULTS = Object.freeze({
 	max_slippage_bps: 1000,
 	max_concurrent: null,
 	kill_switch: false,
+	max_insider_pct: null,
+	max_sniper_pct: null,
+	max_bundler_pct: null,
+	max_fresh_wallet_pct: null,
 });
 
 /**
@@ -299,6 +308,12 @@ function clampNum(v, def, { min = 0, max = Infinity, round = false } = {}) {
 	return round ? Math.round(c) : c;
 }
 
+function pctCapOrNull(v) {
+	if (v == null || v === '') return null;
+	const n = Number(v);
+	return Number.isFinite(n) && n >= 0 && n <= 100 ? n : null;
+}
+
 /** Coerce arbitrary input into a clean, bounded trade-limit object. */
 export function normalizeTradeLimits(raw) {
 	const r = raw && typeof raw === 'object' ? raw : {};
@@ -309,6 +324,10 @@ export function normalizeTradeLimits(raw) {
 		max_slippage_bps: clampNum(r.max_slippage_bps, TRADE_LIMIT_DEFAULTS.max_slippage_bps, { max: 10000, round: true }),
 		max_concurrent: r.max_concurrent == null ? null : clampNum(r.max_concurrent, null, { min: 1, max: 10000, round: true }),
 		kill_switch: r.kill_switch === true,
+		max_insider_pct: pctCapOrNull(r.max_insider_pct),
+		max_sniper_pct: pctCapOrNull(r.max_sniper_pct),
+		max_bundler_pct: pctCapOrNull(r.max_bundler_pct),
+		max_fresh_wallet_pct: pctCapOrNull(r.max_fresh_wallet_pct),
 		updated_at: typeof r.updated_at === 'string' ? r.updated_at : null,
 	};
 }
@@ -340,6 +359,10 @@ export async function setTradeLimits(agentId, userId, patch, { req = null } = {}
 		max_slippage_bps: 'max_slippage_bps' in p ? p.max_slippage_bps : prev.max_slippage_bps,
 		max_concurrent: 'max_concurrent' in p ? p.max_concurrent : prev.max_concurrent,
 		kill_switch: 'kill_switch' in p ? p.kill_switch : prev.kill_switch,
+		max_insider_pct: 'max_insider_pct' in p ? p.max_insider_pct : prev.max_insider_pct,
+		max_sniper_pct: 'max_sniper_pct' in p ? p.max_sniper_pct : prev.max_sniper_pct,
+		max_bundler_pct: 'max_bundler_pct' in p ? p.max_bundler_pct : prev.max_bundler_pct,
+		max_fresh_wallet_pct: 'max_fresh_wallet_pct' in p ? p.max_fresh_wallet_pct : prev.max_fresh_wallet_pct,
 	});
 	next.updated_at = new Date().toISOString();
 
@@ -627,6 +650,50 @@ export function checkPriceImpact(priceImpactPct, maxPct) {
 	return null;
 }
 
+const DUE_DILIGENCE_LIMITS = [
+	['max_insider_pct', 'insider_pct', 'insider hold rate'],
+	['max_sniper_pct', 'sniper_pct', 'sniper share'],
+	['max_bundler_pct', 'bundler_pct', 'bundler exposure'],
+	['max_fresh_wallet_pct', 'fresh_wallet_pct', 'fresh-wallet share'],
+];
+
+/**
+ * Holder-quality breaker over the token_due_diligence fields. Pure: `fields` is
+ * the report's `fields` object (or null when the report could not be read).
+ * A limit that is set but cannot be evaluated (no report, or that one field is
+ * null because chain reads failed) blocks with `due_diligence_unavailable`, so
+ * a missing read never passes as a clean token. No limit set means no check.
+ */
+export function checkDueDiligence(fields, limits) {
+	for (const [limitKey, fieldKey, label] of DUE_DILIGENCE_LIMITS) {
+		const max = limits?.[limitKey];
+		if (max == null) continue;
+		const value = fields?.[fieldKey];
+		if (value == null) return { reason: 'due_diligence_unavailable', detail: { field: fieldKey, label, max_pct: Number(max) } };
+		if (Number(value) > Number(max)) return { reason: 'due_diligence', detail: { field: fieldKey, label, value_pct: Number(value), max_pct: Number(max) } };
+	}
+	return null;
+}
+
+/**
+ * Async wrapper for the trade endpoints. Fetches the cached report only when an
+ * owner set at least one holder limit, so agents without limits pay nothing.
+ * @param {string} mint
+ * @param {object} limits  normalized trade limits
+ * @param {{ load?: (mint:string)=>Promise<object|null> }} [opts]
+ */
+export async function guardDueDiligence(mint, limits, { load } = {}) {
+	if (!mint || !DUE_DILIGENCE_LIMITS.some(([k]) => limits?.[k] != null)) return null;
+	let report = null;
+	try {
+		const loader = load || (async (m) => (await import('./token-due-diligence.js')).getTokenDueDiligence(m));
+		report = await loader(mint);
+	} catch {
+		report = null;
+	}
+	return checkDueDiligence(report?.status === 'ok' ? report.fields : null, limits);
+}
+
 /** Lamports spent (buys) by an agent over the trailing window — the trade +
  *  snipe SOL outflow that backs the discretionary daily budget. One wallet, one
  *  budget: a buy from the sniper and a buy from the trade endpoint both count. */
@@ -678,6 +745,14 @@ const GUARD_RESPONSE = {
 	price_impact: {
 		status: 422,
 		message: (d) => `Price impact is ${Number(d.impact_pct).toFixed(2)}% — above the ${Number(d.max_pct).toFixed(2)}% safety breaker. Lower the trade size or raise the impact limit under Limits & Safety.`,
+	},
+	due_diligence: {
+		status: 422,
+		message: (d) => `This token fails your holder-quality limit: ${d.label} is ${Number(d.value_pct).toFixed(1)}% of supply, above your ${Number(d.max_pct).toFixed(1)}% limit. Raise the limit under Limits & Safety or pick another token.`,
+	},
+	due_diligence_unavailable: {
+		status: 422,
+		message: (d) => `Your ${d.label} limit of ${Number(d.max_pct).toFixed(1)}% could not be checked because the holder data for this token could not be read right now. Retry shortly, or clear the limit under Limits & Safety.`,
 	},
 	predictions_disabled: {
 		status: 403,

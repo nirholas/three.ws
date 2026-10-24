@@ -321,13 +321,22 @@ export async function pruneInbox({ keepDays = 7 } = {}) {
 
 // ── previews ─────────────────────────────────────────────────────────────────
 
-export async function createPreview({ linkId, userId, agentId, kind, proposal }) {
+export async function createPreview({ linkId, userId, agentId, kind, proposal, ttlSeconds = PREVIEW_TTL_MINUTES * 60 }) {
 	const [row] = await sql`
 		INSERT INTO gateway_previews (link_id, user_id, agent_id, kind, proposal, expires_at)
 		VALUES (${linkId}, ${userId}, ${agentId}, ${kind}, ${JSON.stringify(proposal)}::jsonb,
-		        now() + make_interval(mins => ${PREVIEW_TTL_MINUTES}))
+		        now() + make_interval(secs => ${ttlSeconds}))
 		RETURNING *`;
 	return row;
+}
+
+/** The newest preview on this chat that waits for a typed yes, live or lapsed. */
+export async function findTypedPending(linkId) {
+	const [row] = await sql`
+		SELECT * FROM gateway_previews
+		WHERE link_id = ${linkId} AND status = 'pending' AND proposal->>'typed_confirm' = 'true'
+		ORDER BY created_at DESC LIMIT 1`;
+	return row || null;
 }
 
 export async function setPreviewMessageRef(id, ref) {

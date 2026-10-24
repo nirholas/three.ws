@@ -45,6 +45,10 @@ import {
 } from '../action-previews.js';
 import { getVenue, DEFAULT_VENUE, listVenues, ORDER_TYPES, SIDES } from './index.js';
 import { PerpsError, perpsError } from './errors.js';
+import { Wallet } from 'ethers';
+import { decryptSecret, encryptSecret } from '../secret-box.js';
+import { postExchange } from './hyperliquid-signing.js';
+import { readWithFailover } from './venue-health.js';
 import { getPerpsLimits, setPerpsLimits, checkPerpsOrder, quoteMoved } from './limits.js';
 import {
 	mutatePaper, loadPaperState, buildPaperAccount, applyFill, settleFunding, limitCrossed, triggerHit,
@@ -159,17 +163,22 @@ function idempotencyKeyOf(key) {
 // ── market reads ─────────────────────────────────────────────────────────────
 
 /** Every market on the venue, most traded first. */
-export async function markets({ venueId = DEFAULT_VENUE, kind = null } = {}) {
-	const venue = getVenue(venueId);
-	const list = await venue.listMarkets({ kind });
-	return { venue: venue.id, venues: listVenues(), collateral: venue.collateral, markets: list.map(({ params, ...m }) => m) };
+export async function markets({ venueId = null, kind = null } = {}) {
+	const { venue, failed_over_from, result: list } = await readWithFailover(venueId, (v) => v.listMarkets({ kind }));
+	return {
+		venue: venue.id,
+		venues: listVenues(),
+		collateral: venue.collateral,
+		failed_over_from,
+		markets: list.map(({ params, asset_index: _i, ...m }) => m),
+	};
 }
 
 /** Book, recent trades and funding history for one market. */
 export async function marketData({ venueId = DEFAULT_VENUE, symbol, depth = 20, trades = 30, funding = 48 }) {
 	const venue = getVenue(venueId);
 	if (!symbol) throw perpsError(400, 'symbol_required', 'Pass a market symbol such as SOL or BTC. perps_markets lists them.');
-	const data = await venue.getMarketData(symbol, { depth, trades, funding });
+	const { result: data } = await readWithFailover(venue.id, (v) => v.getMarketData(symbol, { depth, trades, funding }));
 	return { venue: venue.id, ...data };
 }
 
@@ -272,10 +281,24 @@ function accountLiquidatable(state, mkts, now) {
 
 // ── account ──────────────────────────────────────────────────────────────────
 
+/**
+ * The account a venue reads and trades for this agent. Solana venues use the
+ * agent's own wallet; Hyperliquid uses the owner address linked on the agent.
+ */
+async function venueRef(venue, agent, userId, reason) {
+	if (venue.chain === 'solana') return venue.accountRef({ agent, wallet: await walletFor(agent, userId, reason) });
+	return venue.accountRef({ agent });
+}
+
+function requireCapability(venue, key, what) {
+	if (venue.capabilities?.[key] === false) {
+		throw perpsError(400, 'not_supported_on_venue', `${venue.label} does not support ${what}.`, { venue: venue.id, capability: key });
+	}
+}
+
 async function accountFor({ agent, userId, venue, mode, reason = 'perps_read' }) {
 	if (mode === 'paper') return syncPaper(agent.id, userId, venue);
-	const owner = await walletFor(agent, userId, reason);
-	return venue.getAccount(owner);
+	return venue.getAccount(await venueRef(venue, agent, userId, reason));
 }
 
 function summarize(account) {
@@ -299,16 +322,18 @@ export async function account({ agentId, userId, venueId = DEFAULT_VENUE, mode: 
 	const agent = await loadOwnedAgent(agentId, userId);
 	const limits = getPerpsLimits(agent.meta);
 	const mode = resolveMode(limits, requested);
-	const owner = await walletFor(agent, userId, 'perps_read');
+	const solana = venue.chain === 'solana';
+	const owner = solana ? await walletFor(agent, userId, 'perps_read') : (mode === 'live' ? await venueRef(venue, agent, userId, 'perps_read') : null);
 	const [acct, balances] = await Promise.all([
 		accountFor({ agent, userId, venue, mode }),
-		mode === 'live' ? getSolanaAddressBalances(owner, 'mainnet') : Promise.resolve(null),
+		mode === 'live' && solana ? getSolanaAddressBalances(owner, 'mainnet') : Promise.resolve(null),
 	]);
 	return {
 		agent: { id: agent.id, name: agent.name },
 		venue: venue.id,
 		venue_label: venue.label,
-		chain: 'solana',
+		chain: venue.chain,
+		capabilities: venue.capabilities,
 		mode,
 		wallet: { address: owner, usdc: balances?.usdc ?? null, sol: balances?.sol ?? null },
 		limits,
@@ -400,6 +425,86 @@ export async function trackerFrame({ agentId, userId, venueId = DEFAULT_VENUE, m
 	};
 }
 
+// ── MCP access ───────────────────────────────────────────────────────────────
+
+/** Has the owner opted this agent into MCP perps trading? Default is no. */
+export async function mcpAccess({ agentId, userId }) {
+	const agent = await loadOwnedAgent(agentId, userId);
+	return getPerpsLimits(agent.meta).mcp_enabled === true;
+}
+
+/** Does this account have at least one agent opted into MCP perps trading? */
+export async function accountHasMcpPerps(userId) {
+	if (!userId) return false;
+	const [row] = await sql`
+		SELECT 1 AS ok FROM agent_identities
+		WHERE user_id = ${userId} AND deleted_at IS NULL AND meta->'perps_limits'->>'mcp_enabled' = 'true'
+		LIMIT 1
+	`;
+	return Boolean(row);
+}
+
+// ── Hyperliquid API wallet ───────────────────────────────────────────────────
+
+const HL_APPROVE_URL = 'https://app.hyperliquid.xyz/API';
+
+/** Pure: the public status of an agent's Hyperliquid link. Never includes the key. */
+export function hyperliquidLinkView(meta, approved = null) {
+	const h = meta?.hyperliquid;
+	if (!h?.account) return { linked: false, account: null, api_wallet_address: null, approved: false, approve_url: HL_APPROVE_URL };
+	return {
+		linked: true,
+		account: h.account,
+		api_wallet_address: h.api_wallet?.address ?? null,
+		approved: approved === true,
+		approve_url: HL_APPROVE_URL,
+		created_at: h.api_wallet?.created_at ?? null,
+	};
+}
+
+/**
+ * Owner-only: link a Hyperliquid account and mint the agent's API wallet. The
+ * platform generates the key and stores it sealed, so the owner never pastes a
+ * secret. The owner then approves the returned address on Hyperliquid (an API
+ * wallet can trade but never withdraw). Re-linking replaces the key.
+ */
+export async function linkHyperliquid({ agentId, userId, account, req = null }) {
+	const agent = await loadOwnedAgent(agentId, userId);
+	if (!/^0x[0-9a-fA-F]{40}$/.test(String(account || ''))) {
+		throw perpsError(400, 'invalid_venue_account', 'account must be the 0x address of your Hyperliquid account.');
+	}
+	const apiWallet = Wallet.createRandom();
+	const record = {
+		account: String(account).toLowerCase(),
+		api_wallet: { address: apiWallet.address.toLowerCase(), encrypted: await encryptSecret(apiWallet.privateKey), created_at: new Date().toISOString() },
+	};
+	await sql`
+		UPDATE agent_identities
+		SET meta = jsonb_set(coalesce(meta, '{}'::jsonb), '{hyperliquid}', ${JSON.stringify(record)}::jsonb)
+		WHERE id = ${agent.id}
+	`;
+	logAudit({ userId, action: 'custody.perps_hyperliquid_link', resourceId: agent.id, meta: { account: record.account, api_wallet: record.api_wallet.address }, req });
+	return hyperliquidLinkView({ hyperliquid: record }, false);
+}
+
+/** Link status, with a live check of whether the owner has approved the API wallet. */
+export async function hyperliquidStatus({ agentId, userId }) {
+	const agent = await loadOwnedAgent(agentId, userId);
+	const view = hyperliquidLinkView(agent.meta, false);
+	if (!view.linked) return view;
+	const venue = getVenue('hyperliquid');
+	const approvedList = await venue.listApprovedApiWallets(view.account).catch(() => null);
+	return { ...view, approved: approvedList ? approvedList.some((w) => w.address === view.api_wallet_address) : null };
+}
+
+/** Owner-only: forget the account and destroy the sealed API wallet key. */
+export async function unlinkHyperliquid({ agentId, userId, req = null }) {
+	const agent = await loadOwnedAgent(agentId, userId);
+	await sql`UPDATE agent_identities SET meta = coalesce(meta, '{}'::jsonb) - 'hyperliquid' WHERE id = ${agent.id}`;
+	logAudit({ userId, action: 'custody.perps_hyperliquid_unlink', resourceId: agent.id, meta: {}, req });
+	return hyperliquidLinkView({}, false);
+}
+
 // ── limits ───────────────────────────────────────────────────────────────────
 
 export async function getLimits({ agentId, userId }) {
@@ -448,7 +553,7 @@ async function compile(conn, owner, instructions, units) {
  * Simulate against current chain state and verify the agent's USDC and SOL
  * move within bounds. Returns the compute units the transaction used.
  */
-async function simulateWithinBounds({ conn, vtx, owner, maxUsdcOutAtomic }) {
+async function simulateWithinBounds({ conn, vtx, owner, maxUsdcOutAtomic, maxLamportsOut = MAX_LAMPORTS_OUT }) {
 	const ownerKey = new PublicKey(owner);
 	const ata = usdcAta(owner);
 	const [preLamports, preUsdc] = await Promise.all([
@@ -480,10 +585,10 @@ async function simulateWithinBounds({ conn, vtx, owner, maxUsdcOutAtomic }) {
 			allowed_usdc_out: Number(maxUsdcOutAtomic) / 10 ** USDC_DECIMALS,
 		});
 	}
-	if (lamportsOut > MAX_LAMPORTS_OUT) {
+	if (lamportsOut > maxLamportsOut) {
 		throw perpsError(422, 'simulation_out_of_bounds', 'The venue transaction would spend more SOL than network fees and one account rent, so it was not signed.', {
 			sol_out: lamportsOut / 1e9,
-			allowed_sol_out: MAX_LAMPORTS_OUT / 1e9,
+			allowed_sol_out: maxLamportsOut / 1e9,
 		});
 	}
 	return { usdc_out: Number(usdcOut) / 10 ** USDC_DECIMALS, sol_out: lamportsOut / 1e9, units: v?.unitsConsumed ?? null };
@@ -534,6 +639,75 @@ async function landInstructions({ agentId, userId, owner, instructions, maxUsdcO
 		);
 	}
 	return { signature, explorer: explorer(signature), simulation: sim };
+}
+
+/**
+ * Land a venue-built Solana transaction (Jupiter): simulate it against current
+ * chain state inside the confirmed collateral bounds, sign with the agent
+ * wallet, submit through the venue and wait for confirmation.
+ */
+async function landTransaction({ agentId, userId, venue, owner, quote, reason, meta }) {
+	const conn = solanaConnection('mainnet');
+	const built = await venue.buildOrder(owner, quote);
+	const vtx = VersionedTransaction.deserialize(Buffer.from(built.serializedTxBase64, 'base64'));
+	const collateralUsd = quote.risk_increasing ? quote.notional_usd / (quote.quote_leverage || 1) : 0;
+	const usdcAllowed = quote.risk_increasing && quote.side === 'short' ? BigInt(Math.ceil((collateralUsd * 1.1 + (quote.fee_usd || 0) + 0.5) * 10 ** USDC_DECIMALS)) : 0n;
+	const solAllowed = quote.risk_increasing && quote.side === 'long' && quote.mark_price > 0
+		? Math.ceil((collateralUsd / quote.mark_price) * 1.1 * 1e9)
+		: 0;
+	const sim = await simulateWithinBounds({ conn, vtx, owner, maxUsdcOutAtomic: usdcAllowed, maxLamportsOut: MAX_LAMPORTS_OUT + solAllowed });
+	const keypair = await agentKeypair(agentId, userId, reason, meta);
+	vtx.sign([keypair]);
+	let signature;
+	try {
+		({ signature } = await venue.submitSigned({ action: built.action, serializedTxBase64: Buffer.from(vtx.serialize()).toString('base64') }));
+	} catch (err) {
+		if (err instanceof PerpsError) throw err;
+		throw perpsError(502, 'send_failed', 'The venue refused the transaction, so nothing moved. Try again.', { message: String(err?.message || err).slice(0, 240) });
+	}
+	try {
+		const lastValidBlockHeight = built.lastValidBlockHeight ?? (await conn.getBlockHeight('confirmed')) + 150;
+		await confirmOrThrow(conn, { signature, blockhash: built.blockhash || vtx.message.recentBlockhash, lastValidBlockHeight });
+	} catch (err) {
+		throw Object.assign(
+			perpsError(502, err?.code === 'tx_reverted' ? 'transaction_reverted' : 'confirmation_timeout',
+				err?.code === 'tx_reverted'
+					? 'The transaction landed but the venue program rejected it, so nothing changed beyond the network fee.'
+					: 'The transaction was sent but not confirmed in time. Check the explorer link before retrying.',
+				{ signature, explorer: explorer(signature) }),
+			{ sent: true, signature },
+		);
+	}
+	return { signature, explorer: explorer(signature), simulation: sim };
+}
+
+/**
+ * Sign a venue action with the agent's approved API wallet and post it. The API
+ * wallet can trade but cannot withdraw, so the worst a leaked key does is trade
+ * inside the owner's limits until they revoke it on the venue.
+ */
+async function landApiWallet({ agent, venue, action }) {
+	const sealed = agent.meta?.hyperliquid?.api_wallet?.encrypted;
+	if (!sealed) throw perpsError(409, 'api_wallet_missing', 'This agent has no Hyperliquid API wallet registered, so the platform cannot sign for it. Nothing was sent.');
+	const privateKey = await decryptSecret(sealed);
+	let res;
+	try {
+		res = await postExchange({ privateKey, action, isMainnet: true });
+	} catch (err) {
+		throw Object.assign(
+			perpsError(502, 'venue_unavailable', 'Hyperliquid did not confirm the request. Check the account before retrying.', { message: String(err?.message || err).slice(0, 240) }),
+			{ sent: true },
+		);
+	}
+	return { signature: null, explorer: null, venue_result: venue.parseOrderResponse(res) };
+}
+
+/** Land one quoted order on whatever rail the venue uses. */
+async function landVenueOrder({ agent, userId, venue, ref, quote, reason, meta }) {
+	if (venue.execution === 'api_wallet') return landApiWallet({ agent, venue, action: await venue.buildOrder(ref, quote) });
+	if (venue.execution === 'transaction') return landTransaction({ agentId: agent.id, userId, venue, owner: ref, quote, reason, meta });
+	const instructions = await venue.buildOrder(ref, quote);
+	return landInstructions({ agentId: agent.id, userId, owner: ref, instructions, maxUsdcOutAtomic: 0n, reason, meta });
 }
 
 const explorer = (sig) => `https://solscan.io/tx/${sig}`;
@@ -630,6 +804,7 @@ export async function previewDeposit({ agentId, userId, venueId = DEFAULT_VENUE,
 	const limits = getPerpsLimits(agent.meta);
 	const mode = resolveMode(limits, requested);
 	const amount = parseUsd(amountUsd, 'amount_usd');
+	if (mode === 'live') requireCapability(venue, 'deposit_withdraw', 'deposits from the agent wallet');
 	const owner = await walletFor(agent, userId, 'perps_preview');
 	const acct = await accountFor({ agent, userId, venue, mode });
 	const spend = getSpendLimits(agent.meta);
@@ -754,6 +929,7 @@ export async function previewWithdraw({ agentId, userId, venueId = DEFAULT_VENUE
 	const agent = await loadOwnedAgent(agentId, userId);
 	const limits = getPerpsLimits(agent.meta);
 	const mode = resolveMode(limits, requested);
+	if (mode === 'live') requireCapability(venue, 'deposit_withdraw', 'withdrawals to the agent wallet');
 	const owner = await walletFor(agent, userId, 'perps_preview');
 	const acct = await accountFor({ agent, userId, venue, mode });
 	const all = amountUsd === 'max' || amountUsd === 'all';
@@ -847,10 +1023,13 @@ const BLOCK_CODES = {
 	wallet_frozen: ['wallet_frozen', 403],
 	leverage: ['leverage_cap_exceeded', 403],
 	position_margin: ['position_margin_exceeded', 403],
+	max_notional: ['max_notional_exceeded', 403],
+	liquidation_distance: ['liquidation_too_close', 403],
 	free_collateral: ['insufficient_collateral', 409],
 	slippage: ['slippage_too_high', 400],
 	no_trader_account: ['no_trader_account', 409],
 	wallet_sol: ['insufficient_sol', 409],
+	api_wallet: ['api_wallet_missing', 409],
 };
 
 function throwBlocked(check, detail = {}) {
@@ -877,6 +1056,7 @@ async function quoteFor({ venue, o, acct, limits }) {
 	return venue.quoteOrder({
 		symbol: o.symbol, side: o.side, size: o.size, type: o.type, price: o.price,
 		reduceOnly: o.reduceOnly, slippageBps, account: acct,
+		leverage: Math.min(o.leverage || 2, limits.max_leverage),
 	});
 }
 
@@ -921,6 +1101,9 @@ export async function previewOrder({ agentId, userId, venueId = DEFAULT_VENUE, m
 	const limits = getPerpsLimits(agent.meta);
 	const mode = resolveMode(limits, requested);
 	const o = parseOrderInput(input);
+	if (!(venue.capabilities?.order_types || []).includes(o.type)) {
+		throw perpsError(400, 'order_type_unsupported', `${venue.label} takes ${(venue.capabilities?.order_types || []).join(', ')} orders, not ${o.type}.`, { venue: venue.id, supported: venue.capabilities?.order_types || [] });
+	}
 	if (o.type === 'market' || o.type === 'limit') o.size = await resolveSize(venue, o, limits);
 	if (o.type === 'limit' && !o.price) throw perpsError(400, 'price_required', 'A limit order needs price.');
 	const acct = await accountFor({ agent, userId, venue, mode, reason: 'perps_preview' });
@@ -929,7 +1112,14 @@ export async function previewOrder({ agentId, userId, venueId = DEFAULT_VENUE, m
 	const guard = checkPerpsOrder({ limits, quote, tradeKill: g.trade_kill_switch, walletFrozen: g.wallet_frozen, mode });
 	const checks = [...guard.checks];
 	let wallet = null;
-	if (mode === 'live') {
+	if (mode === 'live' && venue.execution === 'api_wallet') {
+		const hasKey = Boolean(agent.meta?.hyperliquid?.api_wallet?.encrypted);
+		wallet = { address: acct.authority, usdc: acct.equity_usd, sol: null };
+		checks.push(
+			{ id: 'no_trader_account', ok: acct.equity_usd > 0, label: acct.equity_usd > 0 ? `${venue.label} account holds $${acct.equity_usd.toFixed(2)}` : 'The linked account holds no collateral: fund it on the venue first' },
+			{ id: 'api_wallet', ok: hasKey, label: hasKey ? 'Agent API wallet is registered' : 'No agent API wallet registered: link and approve one first' },
+		);
+	} else if (mode === 'live') {
 		const owner = await walletFor(agent, userId, 'perps_preview');
 		const balances = await getSolanaAddressBalances(owner, 'mainnet');
 		wallet = { address: owner, usdc: balances.usdc, sol: balances.sol };
@@ -942,6 +1132,7 @@ export async function previewOrder({ agentId, userId, venueId = DEFAULT_VENUE, m
 		symbol: quote.symbol, side: o.side, type: o.type, size: quote.size, price: o.price, trigger_price: o.triggerPrice,
 		size_percent: o.sizePercent, reduce_only: o.type === 'take_profit' || o.type === 'stop_loss' ? true : o.reduceOnly,
 		slippage_bps: o.type === 'market' ? (o.slippageBps ?? limits.max_slippage_bps) : null,
+		leverage: o.leverage,
 	};
 	return storePreview({
 		agent, userId, venue, mode, kind: 'order', action: 'perps.order', ttlMs: ORDER_PREVIEW_TTL_MS, params,
@@ -958,7 +1149,7 @@ export async function executeOrder({ agentId, userId, previewId, confirm, idempo
 		const acct = await accountFor({ agent, userId, venue, mode, reason: 'perps_order' });
 		const o = {
 			symbol: p.symbol, side: p.side, type: p.type, size: p.size, price: p.price, triggerPrice: p.trigger_price,
-			sizePercent: p.size_percent, reduceOnly: p.reduce_only, slippageBps: p.slippage_bps,
+			sizePercent: p.size_percent, reduceOnly: p.reduce_only, slippageBps: p.slippage_bps, leverage: p.leverage ?? null,
 		};
 		const fresh = await quoteFor({ venue, o, acct, limits });
 		const moved = o.type === 'take_profit' || o.type === 'stop_loss'
@@ -972,7 +1163,8 @@ export async function executeOrder({ agentId, userId, previewId, confirm, idempo
 		const g = guardState(agent.meta);
 		const guard = checkPerpsOrder({ limits, quote: fresh, tradeKill: g.trade_kill_switch, walletFrozen: g.wallet_frozen, mode });
 		if (guard.blocked) throwBlocked(guard.blocked, { leverage_cap: guard.leverage_cap });
-		if (mode === 'live' && !acct.registered) throwBlocked({ id: 'no_trader_account', label: 'No trader account yet: deposit collateral first' });
+		if (mode === 'live' && venue.execution === 'api_wallet' && !agent.meta?.hyperliquid?.api_wallet?.encrypted) throwBlocked({ id: 'api_wallet', label: 'No agent API wallet registered' });
+		if (mode === 'live' && venue.execution !== 'api_wallet' && !acct.registered) throwBlocked({ id: 'no_trader_account', label: 'No trader account yet: deposit collateral first' });
 
 		await consumeActionPreview(preview.id, { hint: HINT });
 		try {
@@ -1055,14 +1247,12 @@ async function paperOrder({ agent, userId, venue, o, quote, previewId }) {
 }
 
 async function liveOrder({ agent, userId, venue, o, quote, previewId, source }) {
-	const owner = await walletFor(agent, userId, 'perps_order');
-	let instructions;
+	const owner = await venueRef(venue, agent, userId, 'perps_order');
+	let instructions = null;
 	let trigger = null;
 	if (o.type === 'take_profit' || o.type === 'stop_loss') {
 		trigger = await venue.buildConditional(owner, { symbol: quote.symbol, kind: o.type, triggerPrice: quote.trigger_price, position: quote.position, sizePercent: o.sizePercent });
 		instructions = trigger.instructions;
-	} else {
-		instructions = await venue.buildOrder(owner, quote);
 	}
 	const custodyId = await recordCustodyEvent({
 		agentId: agent.id, userId, eventType: 'perps_order', category: 'perps', asset: venue.collateral.asset,
@@ -1070,14 +1260,17 @@ async function liveOrder({ agent, userId, venue, o, quote, previewId, source }) 
 		meta: { venue: venue.id, symbol: quote.symbol, side: o.side, type: o.type, size: quote.size, preview_id: previewId, source },
 	});
 	try {
-		const landed = await landInstructions({ agentId: agent.id, userId, owner, instructions, maxUsdcOutAtomic: 0n, reason: 'perps_order', meta: { venue: venue.id, custody_event_id: custodyId } });
-		await updateCustodyEvent(custodyId, { status: 'confirmed', signature: landed.signature, meta: { simulation: landed.simulation } }).catch(() => {});
+		const landed = instructions
+			? await landInstructions({ agentId: agent.id, userId, owner, instructions, maxUsdcOutAtomic: 0n, reason: 'perps_order', meta: { venue: venue.id, custody_event_id: custodyId } })
+			: await landVenueOrder({ agent, userId, venue, ref: owner, quote, reason: 'perps_order', meta: { venue: venue.id, custody_event_id: custodyId } });
+		await updateCustodyEvent(custodyId, { status: 'confirmed', signature: landed.signature, meta: { simulation: landed.simulation ?? null, venue_result: landed.venue_result ?? null } }).catch(() => {});
 		const acct = await venue.getAccount(owner).catch(() => null);
 		return {
 			ok: true,
 			mode: 'live',
 			action: 'order',
-			status: o.type === 'market' ? 'submitted' : 'resting',
+			status: landed.venue_result ? landed.venue_result.state : o.type === 'market' ? 'submitted' : 'resting',
+			venue_result: landed.venue_result ?? null,
 			symbol: quote.symbol,
 			side: o.side,
 			type: o.type,
@@ -1085,7 +1278,7 @@ async function liveOrder({ agent, userId, venue, o, quote, previewId, source }) 
 			trigger: trigger ? { trigger_price: trigger.trigger_price, execution_price: trigger.execution_price } : null,
 			signature: landed.signature,
 			explorer: landed.explorer,
-			signatures: [landed.signature],
+			signatures: landed.signature ? [landed.signature] : [],
 			position: acct?.positions.find((x) => x.symbol === quote.symbol) || null,
 			account: acct ? summarize(acct) : null,
 			summary: orderSummary(o, quote),
@@ -1116,6 +1309,7 @@ export async function previewCancel({ agentId, userId, venueId = DEFAULT_VENUE, 
 	const agent = await loadOwnedAgent(agentId, userId);
 	const limits = getPerpsLimits(agent.meta);
 	const mode = resolveMode(limits, requested);
+	if (mode === 'live') requireCapability(venue, 'cancel', 'cancelling orders');
 	const acct = await accountFor({ agent, userId, venue, mode });
 	const target = findCancellable(acct, orderId, kind);
 	return storePreview({
@@ -1143,10 +1337,9 @@ export async function executeCancel({ agentId, userId, previewId, confirm, idemp
 					result: true,
 				}));
 			} else {
-				const owner = await walletFor(agent, userId, 'perps_cancel');
-				const ixs = await cancelInstructions(venue, owner, target);
-				const landed = await landInstructions({ agentId: agent.id, userId, owner, instructions: ixs, maxUsdcOutAtomic: 0n, reason: 'perps_cancel', meta: { venue: venue.id } });
-				signatures = [landed.signature];
+				const owner = await venueRef(venue, agent, userId, 'perps_cancel');
+				const landed = await landCancel({ agent, userId, venue, owner, targets: [target], reason: 'perps_cancel' });
+				signatures = landed.signature ? [landed.signature] : [];
 			}
 			logAudit({ userId, action: mode === 'paper' ? 'perps.paper_cancel' : 'custody.perps_cancel', resourceId: agent.id, meta: { ...p, signatures, source }, req });
 			return { ok: true, mode, action: 'cancel', order: target, signatures, signature: signatures[0] || null, explorer: signatures[0] ? explorer(signatures[0]) : null, summary: `Cancelled ${target.kind.replace('_', '-')} ${target.id} on ${target.symbol}` };
@@ -1155,6 +1348,18 @@ export async function executeCancel({ agentId, userId, previewId, confirm, idemp
 			throw err;
 		}
 	});
+}
+
+/** Cancel one or more resting orders on whatever rail the venue uses. */
+async function landCancel({ agent, userId, venue, owner, targets, reason }) {
+	requireCapability(venue, 'cancel', 'cancelling orders');
+	if (venue.execution === 'api_wallet') {
+		const action = { type: 'cancel', cancels: [] };
+		for (const t of targets) action.cancels.push(...(await venue.buildCancel(owner, { symbol: t.symbol, orderId: t.id })).cancels);
+		return landApiWallet({ agent, venue, action });
+	}
+	const ixs = (await Promise.all(targets.map((t) => cancelInstructions(venue, owner, t)))).flat();
+	return landInstructions({ agentId: agent.id, userId, owner, instructions: ixs, maxUsdcOutAtomic: 0n, reason, meta: { venue: venue.id } });
 }
 
 async function cancelInstructions(venue, owner, target) {
@@ -1250,7 +1455,7 @@ async function paperFlatten({ agent, userId, venue, slippageBps }) {
 }
 
 async function liveFlatten({ agent, userId, venue, slippageBps }) {
-	const owner = await walletFor(agent, userId, 'perps_flatten');
+	const owner = await venueRef(venue, agent, userId, 'perps_flatten');
 	const steps = [];
 	const signatures = [];
 	let acct = await venue.getAccount(owner);
@@ -1262,9 +1467,8 @@ async function liveFlatten({ agent, userId, venue, slippageBps }) {
 	for (let i = 0; i < cancellable.length; i += 4) {
 		const batch = cancellable.slice(i, i + 4);
 		try {
-			const ixs = (await Promise.all(batch.map((t) => cancelInstructions(venue, owner, t)))).flat();
-			const landed = await landInstructions({ agentId: agent.id, userId, owner, instructions: ixs, maxUsdcOutAtomic: 0n, reason: 'perps_flatten', meta: { venue: venue.id } });
-			signatures.push(landed.signature);
+			const landed = await landCancel({ agent, userId, venue, owner, targets: batch, reason: 'perps_flatten' });
+			if (landed.signature) signatures.push(landed.signature);
 			steps.push({ step: 'cancel_orders', ok: true, count: batch.length, signature: landed.signature, explorer: landed.explorer });
 		} catch (err) {
 			if (err?.signature) signatures.push(err.signature);
@@ -1275,9 +1479,8 @@ async function liveFlatten({ agent, userId, venue, slippageBps }) {
 	for (const pos of acct.positions) {
 		try {
 			const q = await venue.quoteOrder({ symbol: pos.symbol, side: pos.side === 'long' ? 'short' : 'long', size: pos.size, type: 'market', reduceOnly: true, slippageBps, account: acct });
-			const ixs = await venue.buildOrder(owner, q);
-			const landed = await landInstructions({ agentId: agent.id, userId, owner, instructions: ixs, maxUsdcOutAtomic: 0n, reason: 'perps_flatten', meta: { venue: venue.id, symbol: pos.symbol } });
-			signatures.push(landed.signature);
+			const landed = await landVenueOrder({ agent, userId, venue, ref: owner, quote: q, reason: 'perps_flatten', meta: { venue: venue.id, symbol: pos.symbol } });
+			if (landed.signature) signatures.push(landed.signature);
 			steps.push({ step: `close_${pos.symbol}`, ok: true, symbol: pos.symbol, size: pos.size, signature: landed.signature, explorer: landed.explorer });
 		} catch (err) {
 			if (err?.signature) signatures.push(err.signature);

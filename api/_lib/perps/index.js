@@ -12,17 +12,34 @@
 //   money     USD numbers; collateral is USDC-denominated with 6 decimals
 //   funding   percent per hour (`funding_rate_hourly_pct`) and its APR
 //
+// How a venue is driven, by `execution`:
+//   instructions  buildOrder returns @solana/web3.js instructions the platform
+//                 compiles, simulates, signs with the agent wallet and sends
+//   transaction   buildOrder returns a venue-built unsigned Solana transaction
+//                 the platform simulates, signs and submits (Jupiter)
+//   api_wallet    buildOrder returns a venue action the platform signs with the
+//                 agent's approved API wallet and posts (Hyperliquid)
+// `capabilities` says what the venue supports (order types, deposit/withdraw,
+// cancel); the service refuses an unsupported action before anything is signed.
+//
 // Instruction builders return @solana/web3.js TransactionInstruction arrays. The
 // caller owns signing and submission: every perps transaction is signed by the
 // agent's custodial wallet on the audited path in service.js, never inside a venue.
 
 import * as phoenix from './phoenix.js';
+import * as jupiter from './jupiter.js';
+import * as hyperliquid from './hyperliquid.js';
 
 /** Every member a venue module must export, with the kind of value it is. */
 export const VENUE_CONTRACT = Object.freeze({
 	id: 'string',
 	label: 'string',
 	collateral: 'object',
+	chain: 'string',
+	execution: 'string',
+	capabilities: 'object',
+	accountRef: 'function',
+	ping: 'function',
 	listMarkets: 'function',
 	getMarket: 'function',
 	getMarketData: 'function',
@@ -40,7 +57,7 @@ export const VENUE_CONTRACT = Object.freeze({
 
 /**
  * Check a module against VENUE_CONTRACT. Returns the list of problems, empty
- * when the module conforms. Run at load and by tests/perps-venue-contract.test.js.
+ * when the module conforms. Run at load and by tests/perps-desk.test.js.
  */
 export function venueContractProblems(venue) {
 	const problems = [];
@@ -52,7 +69,7 @@ export function venueContractProblems(venue) {
 	return problems;
 }
 
-const VENUES = new Map([[phoenix.id, phoenix]]);
+const VENUES = new Map([phoenix, jupiter, hyperliquid].map((v) => [v.id, v]));
 
 for (const venue of VENUES.values()) {
 	const problems = venueContractProblems(venue);
@@ -74,12 +91,20 @@ export function getVenue(id = DEFAULT_VENUE) {
 	return venue;
 }
 
+/** Every registered venue module, default first. */
+export function listVenueModules() {
+	return [...VENUES.values()].sort((a, b) => (a.id === DEFAULT_VENUE ? -1 : b.id === DEFAULT_VENUE ? 1 : 0));
+}
+
 /** Public description of every registered venue. */
 export function listVenues() {
 	return [...VENUES.values()].map((v) => ({
 		id: v.id,
 		label: v.label,
 		collateral: v.collateral,
+		chain: v.chain,
+		execution: v.execution,
+		capabilities: v.capabilities,
 		default: v.id === DEFAULT_VENUE,
 	}));
 }

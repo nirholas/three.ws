@@ -32,7 +32,7 @@
 		"@solana/web3.js": "^1.99.0",
 		"@three-ws/companion": "file:../../packages/companion-sdk",
 		"dompurify": "^3.4.15",
-		"electron-updater": "^6.8.9",
+		"electron-updater": "^6.8.11",
 		"marked": "^18.0.13",
 		"smol-toml": "^1.8.0"
 	},
@@ -40,12 +40,10 @@
 		"rpc-websockets": {
 			"uuid": "^11.1.0"
 		},
-		"builder-util-runtime@^9": "^9.7.0",
-		"uuid@^8": "^11.1.1",
 		"jayson@^4": "^5.0.0"
 	},
 	"devDependencies": {
-		"electron": "^33.2.0",
-		"electron-builder": "^25.1.8"
+		"electron": "^45.0.0",
+		"electron-builder": "^26.18.0"
 	}
 }

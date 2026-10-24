@@ -3,10 +3,10 @@ name: query-onchain-data
 description: Query onchain data on Base using the CDP SQL API via x402. Use when you or your user want to view onchain information about decoded blocks, transactions, and events.
 user-invocable: true
 disable-model-invocation: false
-allowed-tools: ["Bash(npx awal@2.10.0 status*)", "Bash(npx awal@2.10.0 balance*)", "Bash(npx awal@2.10.0 x402 pay *)"]
+allowed-tools: "Bash(npx awal@2.10.0 status*) Bash(npx awal@2.10.0 balance*) Bash(npx awal@2.10.0 x402 pay *)"
 metadata:
   category: wallet/payments
-  cross-platform-safe: false
+  cross-platform-safe: "false"
   pack: three-ws-skills
 ---
 

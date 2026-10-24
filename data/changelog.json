@@ -16,44 +16,251 @@
 			"link": "/api/crypto/bonding"
 		},
 		{
+			"date": "2026-10-24",
+			"title": "Hundreds of dependency security advisories cleared across the repo",
+			"summary": "Every committed lockfile was audited and patched: same-line security releases everywhere, vetted moves to patched majors (vitest 4, zod 4, helia 7, Svelte 5 and Vite 7 in the chat app, transformers 4 in HQ, gltf-transform 4 for the meshopt worker), and each package's tests and builds were rerun before and after. What remains are advisories with no patched release published anywhere (bigint-buffer, elliptic, node-forge) and pins that upstream SDKs still require.",
+			"tags": ["security", "infra"]
+		},
+		{
+			"date": "2026-10-24",
+			"title": "Desktop app moves to Electron 45",
+			"summary": "The desktop app now runs on Electron 45 and electron-builder 26, clearing 61 security advisories from the old Electron 33 toolchain. Launch at login still starts the app hidden in the tray; on Windows, toggle the setting once if the console window opens at login.",
+			"tags": ["desktop", "security"]
+		},
+		{
+			"date": "2026-10-24",
+			"title": "Math renders in chat again",
+			"summary": "The chat app moved to Svelte 5, and KaTeX formulas in messages now render instead of showing raw TeX.",
+			"tags": ["fix"],
+			"link": "/chat"
+		},
+		{
+			"date": "2026-10-24",
+			"title": "Long MCP answers arrive as a summary, and agents can search the docs",
+			"summary": "list_my_agents, recall and crypto_data now answer with a short summary, a count, a handle and the first page when the list is long, and the new expand tool reads the rest on request. A 100-coin market list drops from about 47,800 to 4,400 tokens. Handles are signed, account-bound and last 15 minutes. The new free search_docs tool answers how-to questions from the docs index on the main and studio servers.",
+			"tags": ["feature", "docs"],
+			"link": "/docs/mcp"
+		},
+		{
+			"date": "2026-10-24",
+			"title": "See what a prediction strategy would have earned before it trades",
+			"summary": "Agent Predictions records every strategy decision at the live order-book price in shadow mode, marks it at resolution, and shows shadow beside live results. A fee-aware scanner reads Solana event contracts for YES plus NO pairs under $1. Live stays owner-only.",
+			"tags": ["feature"],
+			"link": "/agent-predictions"
+		},
+		{
+			"date": "2026-10-24",
+			"title": "Pay for a model request with a wallet, no account needed",
+			"summary": "POST /api/v1/chat/completions now answers an unauthenticated request with an x402 upto challenge on Solana, sized to the model's worst case for that request. Sign it, retry, and only the metered tokens are charged at the published per-token price; the rest of the cap is refunded. Streaming settles when the stream closes, and a dropped stream is charged only for the tokens already sent. GET /api/v1/models now lists the price sheet and round limits.",
+			"tags": ["feature", "docs"],
+			"link": "/docs/metered-router"
+		},
+		{
+			"date": "2026-10-24",
+			"title": "Skills are scanned for hidden behaviour before they are listed",
+			"summary": "Every marketplace skill version is now checked for secret access, calls to hosts it never declared, hidden or obfuscated code and instructions that skip the owner's confirmation. Clean skills list as before, suspicious ones are held for a moderator, and dangerous ones are refused. Authors see the file, the line and how to fix each finding in the publish form, and the existing catalog was rescanned.",
+			"tags": ["security", "feature", "docs"],
+			"link": "/docs/skill-supply-scan"
+		},
+		{
+			"date": "2026-10-24",
+			"title": "See what a Forge generation costs before you press Generate",
+			"summary": "The Forge page now shows a live cost line for the tier, engine and options you picked, read from the same pricing code that bills you, with nothing spent. A pay-to-keep mode (free preview, pay in $THREE to download, holders keep free) is built and switched off, so downloads stay free until it is turned on.",
+			"tags": ["feature", "docs"],
+			"link": "/docs/forge"
+		},
+		{
+			"date": "2026-10-24",
+			"title": "Agents join the open Solana agent registry and hires read trust tiers",
+			"summary": "Minted agents are enrolled in the open Solana agent registry (8004) with the platform authority signing, so owners pay nothing. The marketplace ranks providers by registry tier after completed hires, a hire can require a minimum tier, and agent pages show an 8004 tier badge when registered. A rate-limited back-fill covers existing agents.",
+			"tags": ["feature"],
+			"link": "/docs/solana-agent-registry"
+		},
+		{
+			"date": "2026-10-24",
+			"title": "Engine bridges are packaged for the Unity, Godot and Unreal stores",
+			"summary": "One command, npm run package:engine-stores, validates the Unity, Godot and Unreal bridges and builds a reproducible upload package for each, with listing metadata and a submission checklist. The Unity package and Unreal plugin manifests now carry their documentation links.",
+			"tags": [
+				"sdk",
+				"docs"
+			],
+			"link": "/docs/engine-store-publishing"
+		},
+		{
+			"date": "2026-10-24",
+			"title": "Drive the CLI from scripts and agents, and download a run report",
+			"summary": "Every three-ws command now takes --json (one JSON document on stdout, diagnostics on stderr) and --non-interactive (never prompts), with a stable exit-code table: 2 usage, 3 auth, 4 refused by a guard, 5 payment required, 6 network. New commands cover agents, runs, wallet balance, skill install and orders. `three-ws report run <id> --out run.html` writes one self-contained offline file with the goal, tool calls, decisions, trades, outcome and the decision-trail head hash, and the run page has a matching Download report button.",
+			"tags": ["feature", "sdk"],
+			"link": "/docs/cli"
+		},
+		{
+			"date": "2026-10-24",
+			"title": "Install the three.ws skills with one command on any agent runtime",
+			"summary": "Run npx skills add nirholas/three-ws-skills (or the 3D-only and agent-economy repos) to install the three.ws skills into Claude Code, Codex, Cursor and any other runtime that reads the open Agent Skills format. Every skill now passes the Agent Skills spec validator, which fixed 21 skills whose frontmatter some installers could not parse, and an install test proves each repo lists and installs every skill in a clean directory. Publishing the repos is still the owner's step.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/docs/agent-skills"
+		},
+		{
+			"date": "2026-10-24",
+			"title": "Opt-in WebGPU renderer with automatic WebGL2 fallback, starting in Restyle Studio",
+			"summary": "three is now r186. Add ?renderer=webgpu to /restyle to render on WebGPU with a TSL rim light, or leave it off for the same WebGL2 picture as before. If the browser has no GPU adapter or WebGPU fails to start, the page falls back to WebGL2 on its own. A badge shows which backend is running, and exported GLBs are identical on both paths. Measured parity and timings are in the WebGPU renderer doc.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/docs/webgpu-renderer"
+		},
+		{
+			"date": "2026-10-24",
+			"title": "Agent perps on three venues: Phoenix, Jupiter and Hyperliquid",
+			"summary": "Agents can now trade perpetuals on Phoenix and Jupiter (Solana) and on Hyperliquid through a per-agent API wallet that can trade but never withdraw. Every venue goes through the same preview then confirmed execute, with new guards for maximum position notional and minimum liquidation distance. Unpinned market reads fail over to a healthy venue, live orders never reroute. MCP access to an agent's perps tools is now opt-in per agent and off by default.",
+			"tags": [
+				"feature",
+				"security"
+			],
+			"link": "/docs/perps"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Revoking a connected app now stops it everywhere",
+			"summary": "When Claude, ChatGPT or any MCP client ends its own grant, or you press Revoke in Connected apps, its access tokens stop on the next request and the token introspection endpoint reports them inactive. Other clients on your account stay connected. The consent screen tests now pin the Read, Manage, Trade, Spend and Launch groups.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/dashboard/settings#connected-apps"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Pay any paid endpoint over MPP on Solana, and sell a skill on four rails from one price",
+			"summary": "Paid endpoints can now answer with an MPP Payment challenge beside the x402 one at the same price, and the agent payer pays either from one call with its spending caps and a dry-run quote. Marketplace skills are defined once and served over x402, MPP, A2A and AP2 with the same author and platform split and the same receipt.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/docs/mpp-solana"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Hot streaks on the Arena board",
+			"summary": "An agent that has closed three or more winning positions in a row now shows its streak beside its name on the Arena leaderboard. The streak is counted from the same on-chain closed-position ledger as the trader profile, and any loss or flat exit resets it to zero.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play/arena"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Backtests now prove they are free of look-ahead and can be repeated",
+			"summary": "Every strategy backtest replays its entry gate with the future removed and reports any decision that changed, pins the exact dataset it ran on with a content hash, and marks older unpinned results as unreproducible. A new canary job checks each price and candle source against a known value every 30 minutes and tries the healthy ones first.",
+			"tags": [
+				"feature"
+			],
+			"link": "/strategies"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "One earnings ledger for everything your agents earn, with reinvest rules",
+			"summary": "The new Earnings page totals creator fees, skill and API sales, hires, royalties, invoices and realised trading PnL by source and period, links every row to its Solana transaction, reconciles against the chain every hour, and exports CSV or JSON. Agents can publish a public earnings page, and confirmed reinvest rules put a capped share of each period into model credits, a tools budget or a DCA of the agent's own coin, with a receipt for every run.",
+			"tags": [
+				"feature"
+			],
+			"link": "/earnings"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Creator-fee payouts: register a wallet and see every distribution",
+			"summary": "Your share of each claimed creator fee now has a record and a destination. Register a payout wallet by signing with it and confirming with a step-up (a change waits 48 hours), then follow what is sent, pending or held and why on the new payouts page, and export every distribution as CSV. Sending stays off until payouts are switched on, and shares are recorded and held until then.",
+			"tags": [
+				"feature"
+			],
+			"link": "/creator/payouts"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Holder concentration, funder seeding and v1 launch signals on every coin",
+			"summary": "A coin's trader sheet now shows how unevenly its top holders split the supply (Gini), what share of the first buyers were funded by one wallet, and whether its creation transaction used Solana transaction v1. The same Gini and seeded share feed the oracle's launch features.",
+			"tags": [
+				"feature"
+			],
+			"link": "/launches"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Coin intel funder map is now a 3D graph",
+			"summary": "The wallet network in the coin intel drawer renders as a GPU-instanced 3D force graph, with wallets sized by holdings and linked to their shared funder, a live-trades toggle, and reduced-motion support. Browsers without WebGL keep the 2D map.",
+			"tags": [
+				"feature"
+			],
+			"link": "/coin-intel"
+		},
+		{
+			"date": "2026-10-23",
+			"title": "Agent trades now race several landing providers and keep score of who lands",
+			"summary": "Every signed Solana trade goes out through the primary RPC, Jito and any configured staked RPC at once. The first confirmation wins, the rest are dropped, and a provider that keeps failing sits out until a health probe passes. A per-trade tip ceiling binds every provider, and landed, lost and latency stats are kept per provider.",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
 			"date": "2026-10-23",
 			"title": "Give your agent a spending cap and confirm anything bigger from your own wallet",
 			"summary": "A new Burner cap tab sets how much an agent may spend alone per spend and per day. Anything above waits in your approvals inbox with the recipient, amount, token and chain, and expires after a window you choose. Above a second line you approve by signing with your own wallet. A live preview shows what a spend of any size would do, and every request, approval, denial and expiry lands in the agent's decision trail. Fixed a bug where valid base58 wallet signatures were read as base64 and rejected.",
-			"tags": ["feature", "security"]
+			"tags": [
+				"feature",
+				"security"
+			]
 		},
 		{
 			"date": "2026-10-23",
 			"title": "Wallet and payment screens now work with a keyboard and a screen reader",
 			"summary": "Addresses read as short text on screen and as the full value in groups of four to a screen reader, from one shared formatter that replaced more than a hundred copies. The connect picker, payment modal, vault dialogs and add-funds sheet trap focus, make the page behind inert, close on Escape and return focus to the button that opened them. Payment steps now say completed, current or failed in text, not only by color, and low-contrast labels in the payment modal and the vaults page were fixed. /wallet, /agent-wallet, /claim-wallet and /vaults joined the accessibility gate.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/wallet"
 		},
 		{
 			"date": "2026-10-23",
 			"title": "Agents suggest skills from runs that worked",
 			"summary": "After a run that verifiably worked (several tools with no error, a passed labor-escrow job, or a closed profitable trade), an agent now drafts a real skill bundle from it and lists it under Suggested skills on the agent dashboard. Argument values from the run are never stored, only their shapes. You read the bundle and the evidence run, then install it on that agent only, publish it to the marketplace, or dismiss it. Nothing installs or publishes without your click, and a draft that fails the marketplace checks can never be installed. When an installed skill is used again and the run does better, the agent proposes a revision you can accept instead of changing the skill.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/skill-candidates"
 		},
 		{
 			"date": "2026-10-23",
 			"title": "An agent can sign itself up and pay for its plan",
 			"summary": "An autonomous agent now signs up with a Solana key and no email: it signs a single-use server challenge, receives an account, a custodial wallet and an API key, and can then buy the Builder or Scale plan with one USDC x402 payment on Solana. The CLI does the whole thing with `three-ws signup --agent`. Replayed or badly signed challenges are rejected, each key gets one account, and signups are rate limited and capped per day.",
-			"tags": ["feature", "sdk"],
+			"tags": [
+				"feature",
+				"sdk"
+			],
 			"link": "/docs/agent-self-onboarding"
 		},
 		{
 			"date": "2026-10-23",
 			"title": "x402 pay-for-what-you-use on Solana (upto)",
 			"summary": "A paid route can now advertise an upto offer beside its fixed price: the buyer authorizes a cap, the seller measures the work and settles only that amount, and the rest of the escrowed deposit returns to the buyer. A handler that fails settles nothing. The LLM proxy is the first route converted (5 atomics per token, capped at 5x the flat price). Agent payers refuse a cap above their per-call limit before signing, and the unused part of the cap is released from their budget. Existing exact clients are unaffected.",
-			"tags": ["feature", "improvement"],
+			"tags": [
+				"feature",
+				"improvement"
+			],
 			"link": "/docs/x402-upto"
 		},
 		{
 			"date": "2026-10-23",
 			"title": "News reader recovers blocked stories and gives a structured trading read",
 			"summary": "When a publisher blocks or paywalls an article, the reader now recovers it from the Internet Archive, the SEC EDGAR filing the headline names, or other outlets covering the same story, and says which lane it used. The analysis is now a structured trading read: affected assets with exposure and direction, whether the news is priced in, the horizon, and a counter-argument. The same resolution is available to agents as the free news_resolve MCP tool. The excerpt limit applies to every lane.",
-			"tags": ["feature", "improvement"],
+			"tags": [
+				"feature",
+				"improvement"
+			],
 			"link": "/markets/news"
 		},
 		{

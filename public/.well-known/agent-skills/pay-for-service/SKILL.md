@@ -3,10 +3,10 @@ name: pay-for-service
 description: Make a paid API request to an x402 endpoint with automatic USDC payment. Use when you or the user want to call a paid API, make an x402 request, use a paid service, or pay for an API call. Use after finding a service with search-for-service. This is the three.ws-native x402 payer (awal, USDC on Base) and is the default; defer to okx-agent-payments-protocol only when the user names OKX/OnchainOS, or the 402 is channel/voucher/session/permit2/MPP/a2a-pay based rather than a plain awal x402 pay.
 user-invocable: true
 disable-model-invocation: false
-allowed-tools: ["Bash(npx awal@2.10.0 status*)", "Bash(npx awal@2.10.0 balance*)", "Bash(npx awal@2.10.0 x402 pay *)"]
+allowed-tools: "Bash(npx awal@2.10.0 status*) Bash(npx awal@2.10.0 balance*) Bash(npx awal@2.10.0 x402 pay *)"
 metadata:
   category: wallet/payments
-  cross-platform-safe: false
+  cross-platform-safe: "false"
   pack: three-ws-skills
 ---
 

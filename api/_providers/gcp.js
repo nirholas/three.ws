@@ -33,6 +33,10 @@
 //   triposplat   → MODEL_TRIPOSPLAT_URL     (workers/model-triposplat, MIT)
 //                  One image → 3D Gaussian splat (.splat + .ply). Standard
 //                  /infer + /tasks/:id shape; the result is a splat, not a GLB.
+//   sam3d        → MODEL_SAM3D_URL          (workers/model-sam3d-objects, SAM License)
+//                  One photo → one GLB with a named node per object, laid out
+//                  like the photo. Needs a 32 GB+ GPU. Standard /infer +
+//                  /tasks/:id shape.
 //   remesh       → GCP_REMESH_URL           (workers/remesh)
 //   stylize      → GCP_STYLIZE_URL          (workers/stylize)
 //   retex        → GCP_TEXTURE_URL          (workers/texture)
@@ -139,6 +143,9 @@ function serviceUrlForMode(mode) {
 			// output of `segment`), preserving part node names. Same
 			// /infer + /tasks/:id task shape.
 			return readEnv('MODEL_HOLOPART_URL');
+		case 'sam3d':
+			// Self-hosted SAM 3D Objects worker (workers/model-sam3d-objects).
+			return readEnv('MODEL_SAM3D_URL');
 		case 'triposplat':
 			// Self-hosted TripoSplat worker (workers/model-triposplat): image to
 			// Gaussian splat. Same /infer + /tasks/:id task shape.
@@ -301,6 +308,22 @@ function buildWorkerRequest(request) {
 			? params.images
 			: [sourceUrl].filter(Boolean);
 		const body = { images: photos, num_parts: Math.round(Number(params?.num_parts) || 4) };
+		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
+		return {
+			path: '/infer',
+			resultKey: 'result_gcs_url',
+			body,
+		};
+	}
+
+	if (mode === 'sam3d') {
+		// Self-hosted SAM 3D Objects: one photo plus either per-object masks or
+		// boxes (never both). The worker rebuilds each object and lays them out
+		// like the photo in a single scene GLB.
+		const body = { image_url: sourceUrl };
+		if (Array.isArray(params?.maskUrls) && params.maskUrls.length) body.mask_urls = params.maskUrls;
+		else if (Array.isArray(params?.boxes) && params.boxes.length) body.boxes = params.boxes;
+		if (Number.isFinite(Number(params?.maxObjects))) body.max_objects = Math.round(Number(params.maxObjects));
 		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
 		return {
 			path: '/infer',
@@ -633,6 +656,8 @@ const MODE_ETA = {
 	holopart: 100,
 	// Single-pass flow-matching denoise plus a decoder replay on the L4.
 	triposplat: 45,
+	// Two diffusion stages per object, several objects, on a 96 GB-class GPU.
+	sam3d: 150,
 	// TripoSG's 20 to 50 flow steps plus repair and decimate on the L4.
 	modly: 60,
 	// Hunyuan3D 2 Mini Turbo is a few-step distilled sampler.
@@ -743,7 +768,7 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 			// on the primary view only (report 1 so a multi-view request is never
 			// silently claimed as fused); other modes are single-source.
 			const viewsUsed =
-				mode === 'hunyuan' || mode === 'triposplat' || mode === 'trellis2' || mode === 'modly' || mode === 'modly_hunyuan' || mode === 'anigen' || mode === 'partcrafter'
+				mode === 'hunyuan' || mode === 'triposplat' || mode === 'trellis2' || mode === 'modly' || mode === 'modly_hunyuan' || mode === 'anigen' || mode === 'partcrafter' || mode === 'sam3d'
 					? 1
 					: (mode === 'reconstruct' || mode === 'trellis' || mode === 'pixal3d') && Array.isArray(workerReq.body.images)
 						? workerReq.body.images.length
@@ -825,6 +850,12 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 					result.resultSplatUrl = url;
 					if (data.ply_url) result.plyUrl = data.ply_url;
 					if (typeof data.num_gaussians === 'number') result.numGaussians = data.num_gaussians;
+				} else if (mode === 'sam3d') {
+					// A laid-out scene GLB plus the per-object manifest.
+					result.resultGlbUrl = url;
+					if (Array.isArray(data.objects)) result.objects = data.objects;
+					if (typeof data.object_count === 'number') result.objectCount = data.object_count;
+					if (Array.isArray(data.skipped) && data.skipped.length) result.skipped = data.skipped;
 				} else if (mode === 'video2scene') {
 					// The result is a .ply point cloud, not a GLB mesh. Surface the
 					// reconstruction telemetry so the client can show point/frame counts.

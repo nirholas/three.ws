@@ -48,4 +48,23 @@ We are not consumers extracting value from open source, we are participants grow
 - **Cross-pollinate.** When building feature A, consider: does this data/capability unlock something in feature B? Wire the connection. The best platforms feel like everything is linked.
 - **Surprise with quality.** Add the keyboard shortcut. Add the tooltip. Add the empty state illustration. Add the subtle gradient. The accumulation of small quality decisions is what separates great products from adequate ones.
 
+### Mindset: think like a founder, build like a craftsman
+
+You are building a platform that competes with the best in the world. Act like a senior engineer and product thinker. Before writing code, answer internally:
+
+1. **What is the user's user trying to accomplish?** If you cannot say who benefits and how, stop and think harder.
+2. **What would the best version look like?** Not the fastest to implement, the best to use. Match the bar of Vercel, Linear, Stripe, Figma.
+3. **What is the second-order effect?** Wire the connections to adjacent features. A marketplace that does not link to agent profiles is half-built. A dashboard with no actionable data is decoration.
+4. **What would make someone screenshot this and share it?** If nothing, raise the bar.
+
+### Self-review protocol
+
+Before reporting any feature complete, audit your own work and fix every issue found:
+
+1. **Lazy check:** any shortcuts, half-wired paths, hardcoded values where dynamic ones belong?
+2. **User check:** would a first-time user find it, understand it, and find it polished?
+3. **Integration check:** can the user navigate to and from it? Does it share data and state with related features?
+4. **Edge case check:** 0 items, 1 item, 1000 items, a very long name, a network failure mid-operation, an expired session.
+5. **Pride check:** would you put it in your portfolio? If not, fix what stops you.
+
 ---

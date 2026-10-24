@@ -256,12 +256,16 @@ export async function mountSplatScene(host, buffer, {
 	// runs once per rendered frame, ahead of controls.update()/render, so camera
 	// playback and the one render loop this stage owns never fall out of sync.
 	let onFrame = null;
+	// Runs right after each renderer.render(): the one moment the canvas holds a
+	// finished frame, which is what a video recorder has to sample.
+	let onRendered = null;
 	const tick = () => {
 		if (disposed) return;
 		frame = requestAnimationFrame(tick);
 		onFrame?.();
 		controls.update();
 		renderer.render(scene, camera);
+		onRendered?.();
 	};
 	frame = requestAnimationFrame(tick);
 
@@ -293,6 +297,10 @@ export async function mountSplatScene(host, buffer, {
 		/** Install (or clear, with `null`) a per-frame hook for camera playback. */
 		setOnFrame(fn) {
 			onFrame = typeof fn === 'function' ? fn : null;
+		},
+		/** Install (or clear) a hook that runs after every rendered frame, for video capture. */
+		setOnRendered(fn) {
+			onRendered = typeof fn === 'function' ? fn : null;
 		},
 	};
 }

@@ -33,6 +33,7 @@ export async function wallet(ctx) {
 		}
 		return EXIT.OK;
 	}
+	if (sub === 'balance') return (await import('./automation.js')).walletBalance(ctx);
 	if (sub === 'address') {
 		const a = store.address();
 		if (ctx.flags.json) printJson(a);
@@ -45,6 +46,6 @@ export async function wallet(ctx) {
 		else line(a.address);
 		return EXIT.OK;
 	}
-	errorLine('usage: three-ws wallet <init [--storage auto|keychain|file]|address|export-public>');
+	errorLine('usage: three-ws wallet <init [--storage auto|keychain|file]|address|export-public|balance [--agent <id|name>] [--network mainnet|devnet]>');
 	return EXIT.USAGE;
 }

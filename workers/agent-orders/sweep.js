@@ -23,6 +23,8 @@ import { insertNotification } from '../../api/_lib/notify.js';
 import {
 	shouldFirePrice, evaluateCondition, conditionSignals, describeOrder,
 } from '../../api/_lib/orders.js';
+import { evaluateRatchet, reasonCodeForGuard, REASON_CODES } from '../../api/_lib/exit-ratchet.js';
+import { recordDecision } from '../../api/_lib/reasoning-ledger.js';
 import { skipCodeFor, isVenueFailure, skipLabel } from '../../api/_lib/order-book.js';
 import { getSignals, metricValue, getHolding } from './market.js';
 import {
@@ -180,12 +182,23 @@ async function evaluate(order, now) {
 		const base = order.peak_price ?? metricVal;
 		peak = order.side === 'sell' ? Math.max(base, metricVal) : Math.min(base, metricVal);
 	}
+	// A ratcheting stop's entry is its reference price (set at placement, or the
+	// first live observation); the high-water mark never starts below it.
+	const entry = order.reference_price ?? (order.type === 'trail_ratchet' ? metricVal : null);
+	if (order.type === 'trail_ratchet' && metricVal != null) {
+		peak = Math.max(order.peak_price ?? 0, entry ?? 0, metricVal);
+	}
 	await markEvaluated(order.id, { lastPrice: metricVal, peak });
 
 	let fire = null;
 	if (order.type === 'conditional') {
 		const { fired } = evaluateCondition(order.condition, signals);
 		if (fired) fire = { reason: 'condition', triggerPrice: metricVal, sliceIndex: 0, terminal: true, nextFireAt: null, route };
+	} else if (order.type === 'trail_ratchet') {
+		const r = evaluateRatchet({ entry, peak, value: metricVal, ratchet: order.ratchet });
+		if (r.fire) {
+			fire = { reason: r.code, exitCode: r.code, stop: r.stop, tier: r.tier, triggerPrice: metricVal, sliceIndex: 0, terminal: true, nextFireAt: null, route };
+		}
 	} else if (shouldFirePrice(order, metricVal, peak)) {
 		const reason = order.type === 'trailing'
 			? (order.side === 'sell' ? 'trailing_stop' : 'trailing_entry')
@@ -367,6 +380,29 @@ async function announce(order, kind, { code = null, message, link = null, meta =
 	});
 }
 
+// A ratchet exit leaves one row on the agent's tamper-evident decision trail
+// with its stable reason code. Best effort: the trail must never block a fill.
+async function recordExitDecision(order, fire, { status, signature }) {
+	try {
+		await recordDecision({
+			agentId: order.agent_id,
+			kind: 'order_exit',
+			subjectRef: order.id,
+			actionRef: `${fire.exitCode}:${fire.sliceIndex}`,
+			inputs: {
+				reason_code: fire.exitCode, order_type: order.type, mint: order.mint,
+				entry: order.reference_price, peak: order.peak_price, price: fire.triggerPrice,
+				stop: fire.stop, tier: fire.tier, fill_status: status, signature: signature || null,
+			},
+			rationale: `${REASON_CODES[fire.exitCode]}: ${describeOrder(order)}`,
+			confidence: 1,
+			network: order.network,
+		});
+	} catch (e) {
+		log.warn('exit decision not recorded', { order: order.id, error: e?.message });
+	}
+}
+
 /** Map an executor result onto an order_fills record + advance the order. */
 async function settle(order, fire, result, mode) {
 	const priorPartial = order.fill_count > 0;
@@ -398,9 +434,13 @@ async function settle(order, fire, result, mode) {
 		const skip = skipCodeFor(code);
 		const changed = order.last_skip_code !== skip;
 		if (isVenueFailure(code)) noteVenueResult(route, false);
-		await noteSkip(order, skip, `${code}: ${result.message || ''}`);
+		const reasonCode = reasonCodeForGuard(code);
+		await noteSkip(order, skip, `${reasonCode ? `[${reasonCode}] ` : ''}${code}: ${result.message || ''}`);
 		if (changed && NOTIFY_SKIPS.has(skip)) {
-			await announce(order, 'skip', { code: skip, message: `${skipLabel(skip)}. ${result.message || ''}`.trim() });
+			await announce(order, 'skip', {
+				code: skip, message: `${skipLabel(skip)}. ${result.message || ''}`.trim(),
+				meta: reasonCode ? { reason_code: reasonCode } : null,
+			});
 		}
 		log.info('order fire blocked (will retry)', { order: order.id, code });
 		return;
@@ -434,7 +474,9 @@ async function settle(order, fire, result, mode) {
 	const slices = order.schedule?.slices;
 	const sliceNote = slices ? ` Slice ${fire.sliceIndex + 1} of ${slices}.` : '';
 	const ocoNote = cancelled.length ? ' The other leg of the pair was cancelled.' : '';
+	if (fire.exitCode) await recordExitDecision(order, fire, { status, signature: sig });
 	await announce(order, 'fire', {
+		meta: fire.exitCode ? { reason_code: fire.exitCode, stop: fire.stop, tier: fire.tier } : null,
 		code: status,
 		message: `${simulated ? 'Paper fill (simulation, nothing was sent): ' : ''}${describeOrder(order)}${sliceNote}${ocoNote}`,
 		link: sig ? `https://solscan.io/tx/${sig}${order.network === 'devnet' ? '?cluster=devnet' : ''}` : null,

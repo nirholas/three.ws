@@ -27126,7 +27126,7 @@ The endpoint allows cross-origin `GET` and `POST` requests and requires no authe
 curl -s https://three.ws/api/mcp-census | jq '.totals.all, .matchesBuild'
 ```
 
-Response fields: `totals` (`all`, `hosted`, `stdio`, each with `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`), `servers` (one row per server with a `source` of `live` or `build`), `method` (how each number is calculated), `matchesBuild` (false when the build ran on different code than is serving) and `drift` (the per-server differences). Today the build counts <!-- mcp-count:all.tools -->704<!-- /mcp-count --> tools on <!-- mcp-count:all.servers -->51<!-- /mcp-count --> servers. Browse them at [/mcp-tools](https://three.ws/mcp-tools); see [MCP Tools Catalog](mcp-tools.md#how-the-totals-are-calculated) for the method.
+Response fields: `totals` (`all`, `hosted`, `stdio`, each with `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`), `servers` (one row per server with a `source` of `live` or `build`), `method` (how each number is calculated), `matchesBuild` (false when the build ran on different code than is serving) and `drift` (the per-server differences). Today the build counts <!-- mcp-count:all.tools -->709<!-- /mcp-count --> tools on <!-- mcp-count:all.servers -->51<!-- /mcp-count --> servers. Browse them at [/mcp-tools](https://three.ws/mcp-tools); see [MCP Tools Catalog](mcp-tools.md#how-the-totals-are-calculated) for the method.
 
 ## Asset Catalog API
 
@@ -106543,7 +106543,7 @@ page explains how the servers are grouped and how the paid ones charge.
 
 ## How the totals are calculated
 
-The totals are computed, never typed. At build time `npm run build:mcp-catalog` imports the exact catalog each hosted endpoint serves, and loads every stdio package in-process and asks it for `tools/list`, `resources/list` and `prompts/list` over an in-memory MCP transport. The result is [`/tools.json`](/tools.json) and [`/mcp-catalog.json`](/mcp-catalog.json), currently <!-- mcp-count:all.tools -->704<!-- /mcp-count --> tools (<!-- mcp-count:all.uniqueTools -->600<!-- /mcp-count --> unique names) on <!-- mcp-count:all.servers -->51<!-- /mcp-count --> servers. At request time [`/api/mcp-census`](/api/mcp-census) recounts the hosted endpoints from the running code and reports whether they still match the build.
+The totals are computed, never typed. At build time `npm run build:mcp-catalog` imports the exact catalog each hosted endpoint serves, and loads every stdio package in-process and asks it for `tools/list`, `resources/list` and `prompts/list` over an in-memory MCP transport. The result is [`/tools.json`](/tools.json) and [`/mcp-catalog.json`](/mcp-catalog.json), currently <!-- mcp-count:all.tools -->709<!-- /mcp-count --> tools (<!-- mcp-count:all.uniqueTools -->603<!-- /mcp-count --> unique names) on <!-- mcp-count:all.servers -->51<!-- /mcp-count --> servers. At request time [`/api/mcp-census`](/api/mcp-census) recounts the hosted endpoints from the running code and reports whether they still match the build.
 
 - **tools**: every tool a server can serve, including financial-tier tools the policy hides until a session enables them.
 - **resources, templates, prompts**: the matching `*/list` entries, prompts rendered against that server's own catalog.

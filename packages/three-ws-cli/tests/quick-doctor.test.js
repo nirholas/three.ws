@@ -266,7 +266,7 @@ describe('three-ws agent status and team', () => {
 		const bare = tempEnv();
 		const a = await run(['agent', 'status', '--origin', ORIGIN], bare);
 		const t = await run(['team', '--origin', ORIGIN], bare);
-		expect([a.code, t.code]).toEqual([1, 1]);
+		expect([a.code, t.code]).toEqual([3, 3]);
 	});
 });
 

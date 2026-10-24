@@ -12,6 +12,7 @@
 // rails; this module only records the business-level hire and its lifecycle so
 // it can be queried, rated, and audited.
 
+import { publicRegistry8004 } from './solana-8004.js';
 import { sql } from './db.js';
 import { cdnUrlOrNull } from './r2.js';
 
@@ -36,6 +37,7 @@ function shapeProvider(row) {
 		avatar_thumbnail_url: avatarThumb(row.provider_thumb_key, row.provider_avatar_vis),
 		solana_address: row.provider_addr || null,
 		is_public: row.provider_is_public !== false,
+		registry_8004: publicRegistry8004(row.provider_registry_8004, 'mainnet'),
 	};
 }
 
@@ -222,6 +224,7 @@ export async function listOffersWithStats({ limit = 60, providerAgentId = null }
 			ai.name         AS provider_name,
 			ai.is_public    AS provider_is_public,
 			ai.meta->>'solana_address' AS provider_addr,
+			ai.meta->'registry_8004' AS provider_registry_8004,
 			av.thumbnail_key AS provider_thumb_key,
 			av.visibility    AS provider_avatar_vis,
 			st.completed    AS completed,
@@ -249,7 +252,11 @@ export async function listOffersWithStats({ limit = 60, providerAgentId = null }
 		) st ON true
 		WHERE s.archived_at IS NULL AND s.bazaar_listed = true
 		${providerFilter}
-		ORDER BY st.completed DESC NULLS LAST, s.created_at DESC
+		ORDER BY st.completed DESC NULLS LAST,
+			CASE ai.meta->'registry_8004'->'standing'->>'tier'
+				WHEN 'Platinum' THEN 4 WHEN 'Gold' THEN 3 WHEN 'Silver' THEN 2 WHEN 'Bronze' THEN 1 ELSE 0
+			END DESC,
+			s.created_at DESC
 		LIMIT ${capped}
 	`;
 	return rows.map(shapeOffer);
@@ -269,6 +276,7 @@ async function listOffersBySlug(slug) {
 			s.reputation_discount_enabled AS reputation_discount_enabled,
 			ai.id AS provider_agent_id, ai.name AS provider_name, ai.is_public AS provider_is_public,
 			ai.meta->>'solana_address' AS provider_addr,
+			ai.meta->'registry_8004' AS provider_registry_8004,
 			av.thumbnail_key AS provider_thumb_key, av.visibility AS provider_avatar_vis,
 			NULL::bigint AS completed, NULL::bigint AS refunded, NULL::bigint AS total,
 			NULL::float8 AS earned_usd, NULL::float8 AS avg_rating, NULL::bigint AS rating_count,

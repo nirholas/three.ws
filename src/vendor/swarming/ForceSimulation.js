@@ -2,7 +2,7 @@
 // Changes: ported to plain JS; arbitrary weighted nodes and edges instead of the
 // hub/leaf grouping model; per-node radius drives collision; bounded node budget.
 
-import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide } from 'd3-force-3d';
+import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide, forceX, forceY, forceZ } from 'd3-force-3d';
 
 const DEFAULTS = {
 	charge: -60,
@@ -10,6 +10,7 @@ const DEFAULTS = {
 	damping: 0.4,
 	maxNodes: 5000,
 	alphaDecay: 0.02,
+	gravity: 0.12,
 };
 
 export class ForceSimulation {
@@ -20,8 +21,11 @@ export class ForceSimulation {
 		this.nodeMap = new Map();
 		const c = this.config;
 		this.simulation = forceSimulation([], 3)
-			.force('charge', forceManyBody().strength((d) => c.charge * (0.4 + d.radius * 0.3)))
+			.force('charge', forceManyBody().strength((d) => c.charge * (0.4 + d.radius * 0.3)).theta(1.4).distanceMax(60))
 			.force('center', forceCenter(0, 0, 0).strength(0.05))
+			.force('gravityX', forceX(0).strength(c.gravity))
+			.force('gravityY', forceY(0).strength(c.gravity))
+			.force('gravityZ', forceZ(0).strength(c.gravity))
 			.force('collide', forceCollide().radius((d) => d.radius + 0.4).strength(0.8))
 			.force(
 				'link',

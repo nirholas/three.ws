@@ -445,6 +445,38 @@
 	color: var(--accent, #a78bfa);
 }
 
+/* ── external skills ──────────────────────────────────────────────────── */
+
+.sc-external {
+	margin-top: var(--space-xl, 40px);
+}
+
+.sc-badge-external {
+	border-color: color-mix(in srgb, var(--warn, #f59e0b) 55%, transparent);
+	color: var(--warn, #f59e0b);
+}
+
+.sc-card-source {
+	position: relative;
+	z-index: 1;
+	font-size: var(--text-xs, 12px);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.6));
+	overflow-wrap: anywhere;
+}
+
+.sc-card-source a {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.sc-external-scan {
+	margin: var(--space-sm, 12px) 0 0;
+	padding: var(--space-sm, 12px);
+	border: 1px solid var(--line, rgba(255, 255, 255, 0.12));
+	border-radius: var(--radius, 10px);
+	font-size: var(--text-sm, 14px);
+}
+
 /* ── skeletons + states ───────────────────────────────────────────────── */
 
 .sc-skeleton span,

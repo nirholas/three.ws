@@ -94,5 +94,8 @@
     "typescript": "^7.0.2",
     "vite": "^8.3.3",
     "vitest": "^5.0.3"
+  },
+  "overrides": {
+    "fast-uri@^3": "^3.1.9"
   }
 }

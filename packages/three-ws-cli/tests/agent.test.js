@@ -69,7 +69,7 @@ describe('three-ws create', () => {
 	it('refuses to run without a credential when it cannot prompt', async () => {
 		const bare = tempEnv();
 		const { code, json } = await run(['create', 'Nova', '--json', '--origin', ORIGIN], bare);
-		expect(code).toBe(1);
+		expect(code).toBe(3);
 		expect(json.message).toContain('npx three-ws login');
 		expect(fetchMock).not.toHaveBeenCalled();
 	});

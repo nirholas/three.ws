@@ -1,21 +1,22 @@
 <script>
-	import { onMount, onDestroy } from 'svelte';
+	
+	import { onMount, onDestroy, untrack } from 'svelte';
 	import { currentUser, payAgentId, payWallet } from './stores.js';
 
-	let open = false;
-	let agents = [];          // [{ id, name, solana_address, usdc, sol, ... }]
-	let agentsLoading = false;
-	let agentsError = '';
-	let demoWallet = { address: null, usdc: null, sol: null, configured: null };
-	let demoLoading = false;
-	let demoError = '';
-	let demoUnconfigured = false;
-	let popoverEl;
-	let buttonEl;
+	let open = $state(false);
+	let agents = $state([]);          // [{ id, name, solana_address, usdc, sol, ... }]
+	let agentsLoading = $state(false);
+	let agentsError = $state('');
+	let demoWallet = $state({ address: null, usdc: null, sol: null, configured: null });
+	let demoLoading = $state(false);
+	let demoError = $state('');
+	let demoUnconfigured = $state(false);
+	let popoverEl = $state();
+	let buttonEl = $state();
 
-	$: signedIn = !!$currentUser;
-	$: agentsWithWallet = agents.filter((a) => !!a.solana_address);
-	$: selectedAgent = agentsWithWallet.find((a) => a.id === $payAgentId) || null;
+	let signedIn = $derived(!!$currentUser);
+	let agentsWithWallet = $derived(agents.filter((a) => !!a.solana_address));
+	let selectedAgent = $derived(agentsWithWallet.find((a) => a.id === $payAgentId) || null);
 
 	function fmtUsdc(v) {
 		if (v == null || Number.isNaN(Number(v))) return '- USDC';
@@ -105,7 +106,7 @@
 	// list makes Svelte track them; the guard form `if (x || y || z)` would
 	// be always-truthy here because `agents` is always an array and
 	// `demoWallet` always an object.
-	$: { agents; demoWallet; selectedAgent; publishWallet(); }
+	$effect.pre(() => { agents; demoWallet; selectedAgent; untrack(publishWallet); });
 
 	function selectShared() {
 		$payAgentId = null;
@@ -155,7 +156,7 @@
 		userUnsub?.();
 	});
 
-	$: currentLabel = (() => {
+	let currentLabel = $derived((() => {
 		const w = $payWallet;
 		if (w?.address) {
 			const usdc = fmtUsdc(w.usdc);
@@ -165,18 +166,18 @@
 		if (demoLoading || agentsLoading) return 'Pay · loading…';
 		if (demoError) return 'Pay · wallet error';
 		return 'Pay · not configured';
-	})();
-	$: dotClass = $payWallet?.address
+	})());
+	let dotClass = $derived($payWallet?.address
 		? 'bg-emerald-500'
 		: demoError
 			? 'bg-red-500'
-			: 'bg-slate-300';
+			: 'bg-slate-300');
 </script>
 
 <div class="relative">
 	<button
 		bind:this={buttonEl}
-		on:click={() => (open = !open)}
+		onclick={() => (open = !open)}
 		class="flex h-9 items-center gap-2 rounded-full border border-rule bg-white px-3 text-[12px] font-medium text-ink shadow-sm transition-colors hover:bg-paper-deep"
 		title="Wallet that pays for x402 paid-tool calls"
 	>
@@ -196,7 +197,7 @@
 				class="flex w-full items-start gap-3 rounded-lg border px-3 py-2 text-left transition-colors {$payAgentId == null
 					? 'border-emerald-500 bg-emerald-50'
 					: 'border-rule hover:bg-paper-deep'}"
-				on:click={selectShared}
+				onclick={selectShared}
 			>
 				<div class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-indigo-500 to-cyan-400 text-[10px] font-bold text-white">3</div>
 				<div class="min-w-0 flex-1">
@@ -240,7 +241,7 @@
 								: a.solana_address
 									? 'border-rule hover:bg-paper-deep'
 									: 'border-rule opacity-60'}"
-							on:click={() => selectAgent(a)}
+							onclick={() => selectAgent(a)}
 							disabled={!a.solana_address}
 							title={a.solana_address ? `Pay from ${a.name}` : 'This agent has no Solana wallet yet'}
 						>

@@ -1,25 +1,32 @@
-<script>
+<script lang="ts">
+	
 	import { activeAgent, params, toolSchema } from './stores.js';
 	import Modal from './Modal.svelte';
 
-	export let open = false;
-	export let onSave = null;
-
-	let draft = {};
-	$: if (open && $activeAgent) {
-		draft = {
-			system_prompt: $activeAgent.system_prompt || '',
-			greeting: $activeAgent.greeting || '',
-			preferred_model: $activeAgent.preferred_model || null,
-			temperature: $activeAgent.temperature ?? $params.temperature,
-			maxTokens: $activeAgent.maxTokens ?? $params.maxTokens,
-			tools: [...($activeAgent.tools || [])],
-		};
+	interface Props {
+		open?: boolean;
+		onSave?: any;
 	}
 
-	$: allTools = ($toolSchema || []).flatMap((g) =>
+	let { open = $bindable(false), onSave = null }: Props = $props();
+
+	let draft = $state({});
+	$effect.pre(() => {
+		if (open && $activeAgent) {
+			draft = {
+				system_prompt: $activeAgent.system_prompt || '',
+				greeting: $activeAgent.greeting || '',
+				preferred_model: $activeAgent.preferred_model || null,
+				temperature: $activeAgent.temperature ?? $params.temperature,
+				maxTokens: $activeAgent.maxTokens ?? $params.maxTokens,
+				tools: [...($activeAgent.tools || [])],
+			};
+		}
+	});
+
+	let allTools = $derived(($toolSchema || []).flatMap((g) =>
 		(g.schema || []).map((t) => ({ name: t.function.name, groupName: g.name }))
-	);
+	));
 
 	function toggleTool(name) {
 		if (draft.tools.includes(name)) {
@@ -61,7 +68,7 @@
 				rows="5"
 				class="rounded-lg border border-slate-200 px-3 py-2 text-[13px] text-slate-800 resize-y outline-none focus:border-indigo-400"
 				placeholder="You are a helpful assistant..."
-			/>
+			></textarea>
 		</label>
 
 		<label class="flex flex-col gap-1.5 text-[12px] font-medium text-slate-600">
@@ -71,7 +78,7 @@
 				rows="2"
 				class="rounded-lg border border-slate-200 px-3 py-2 text-[13px] text-slate-800 resize-y outline-none focus:border-indigo-400"
 				placeholder="Hello! How can I help you today?"
-			/>
+			></textarea>
 		</label>
 
 		<label class="flex flex-col gap-1.5 text-[12px] font-medium text-slate-600">
@@ -110,7 +117,7 @@
 							<input
 								type="checkbox"
 								checked={draft.tools.includes(tool.name)}
-								on:change={() => toggleTool(tool.name)}
+								onchange={() => toggleTool(tool.name)}
 								class="accent-indigo-500"
 							/>
 							{tool.name}
@@ -122,13 +129,13 @@
 
 		<div class="flex justify-end gap-2 pt-2">
 			<button
-				on:click={() => (open = false)}
+				onclick={() => (open = false)}
 				class="rounded-lg border border-slate-200 px-4 py-1.5 text-[13px] text-slate-600 hover:bg-slate-50"
 			>
 				Cancel
 			</button>
 			<button
-				on:click={save}
+				onclick={save}
 				class="rounded-lg bg-indigo-500 px-4 py-1.5 text-[13px] font-medium text-white hover:bg-indigo-600"
 			>
 				Save

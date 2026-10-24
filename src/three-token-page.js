@@ -15,6 +15,7 @@ import { paintVerifiedBadge } from './pump/verified-badge.js';
 import { chartEmbedUrls } from './shared/chart-embeds.js';
 import { watchEmbed, embedFallbackNode } from './shared/embed-guard.js';
 import { mountFeeFlow, FEE_FLOW_CSS } from './three-token-fee-flow.js';
+import { mountDueDiligence, DD_PANEL_CSS } from './token-dd-panel.js';
 import {
 	THREE_DEXTOOLS_PAIR,
 	DEXTOOLS_PAIR_URL,
@@ -224,7 +225,7 @@ function injectStyles() {
 	@media (prefers-reduced-motion: reduce){ html { scroll-behavior:auto; } .tk-trade.in { animation:none; } .tk-skel { animation:none; } .tk-bb-bar span { transition:none; } .tk-why-card { transition:none; } .tk-chart-skel, .tk-chart-frame { transition:none; } }
 	`;
 	const el = document.createElement('style');
-	el.textContent = css + FEE_FLOW_CSS;
+	el.textContent = css + FEE_FLOW_CSS + DD_PANEL_CSS;
 	document.head.appendChild(el);
 }
 
@@ -595,6 +596,10 @@ function boot() {
 			</div>
 		</div>
 		<section class="tk-card tk-ff" id="tk-fee-flow" data-fee-flow aria-label="Where every $100 goes"></section>
+		<section class="tk-card" id="tk-holder-dd" aria-label="Holder due diligence">
+			<h2>Who holds it</h2>
+			<div data-dd></div>
+		</section>
 		<div class="tk-card tk-bb" id="tk-bb-proof">
 			<h2>Programmatic buybacks</h2>
 			<div data-buyback><div class="tk-skel" style="height:96px"></div></div>
@@ -639,6 +644,9 @@ function boot() {
 	});
 
 	mountDextoolsChart(wrap.querySelector('[data-chart]'));
+
+	// Holder due diligence: insider / sniper / bundler / fresh-wallet fields + funding graph.
+	mountDueDiligence(wrap.querySelector('[data-dd]'), { mint: THREE_MINT });
 
 	// Bonding curve — real on-chain reads for the $THREE mint.
 	mountBondingCurve(wrap.querySelector('[data-curve]'), { mint: THREE_MINT, network: 'mainnet', showUsd: true, refreshMs: 15_000, accent: '#4ade80' });

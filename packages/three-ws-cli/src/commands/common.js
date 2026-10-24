@@ -4,6 +4,7 @@
 import * as p from '@clack/prompts';
 import { c, line, sym } from '../ui.js';
 import { loginOAuth, loginDevice, loginKey, looksLikeKey } from '../auth.js';
+import { CliError, EXIT_CODES, isNonInteractive } from '../automation.js';
 
 export class CancelledError extends Error {
 	constructor() {
@@ -18,9 +19,9 @@ export function answer(value) {
 	return value;
 }
 
-/** Prompts are allowed only on a TTY, and never with --json or --yes. */
+/** Prompts are allowed only on a TTY, and never with --json, --yes or --non-interactive. */
 export function canPrompt(ctx) {
-	return Boolean(process.stdin.isTTY && process.stdout.isTTY && !ctx.flags.json && !ctx.flags.yes);
+	return Boolean(process.stdin.isTTY && process.stdout.isTTY && !ctx.flags.json && !ctx.flags.yes && !isNonInteractive(ctx.flags, ctx.env));
 }
 
 export function authModeFromFlags(flags) {
@@ -41,6 +42,12 @@ function say(ctx, text) {
 export async function signIn(ctx, { mode = null, financial = false, extraScopes = [] } = {}) {
 	const { origin, env } = ctx;
 	let chosen = mode;
+	if (isNonInteractive(ctx.flags, env)) {
+		chosen = mode || (env.vars.THREE_WS_API_KEY ? 'key' : null);
+		if (chosen !== 'key') {
+			throw new CliError(EXIT_CODES.AUTH, 'login_required', 'sign-in needs a human in --non-interactive mode. Pass --key <sk_live_...> or set THREE_WS_API_KEY.');
+		}
+	}
 	if (!chosen && canPrompt(ctx)) {
 		chosen = answer(await p.select({
 			message: 'How should this machine sign in to three.ws?',
@@ -62,7 +69,7 @@ export async function signIn(ctx, { mode = null, financial = false, extraScopes 
 				validate: (v) => (looksLikeKey(v) ? undefined : 'Keys start with sk_live_ and are about 45 characters.'),
 			}));
 		}
-		if (!key) throw new Error('pass the key with --key <sk_live_...> or THREE_WS_API_KEY');
+		if (!key) throw new CliError(isNonInteractive(ctx.flags, env) ? EXIT_CODES.AUTH : EXIT_CODES.USAGE, 'missing_key', 'pass the key with --key <sk_live_...> or THREE_WS_API_KEY');
 		return loginKey({ origin, key, env });
 	}
 

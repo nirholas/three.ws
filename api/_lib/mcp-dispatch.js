@@ -62,7 +62,7 @@ function summarize(args) {
 //                shows only the session's enabled tools, and tools/call refuses
 //                a disabled tool or a financial one without its confirm flag
 //                and a fresh preview id (api/_mcp/policy.js).
-export function makeDispatcher({ serverInfo, instructions, catalog, tools, logName, resourceServer = null, policyServer = null }) {
+export function makeDispatcher({ serverInfo, instructions, catalog, tools, logName, resourceServer = null, policyServer = null, hiddenTools = null }) {
 	const log = logger(logName);
 	const catalogByName = new Map(catalog.map((t) => [t.name, t]));
 
@@ -160,7 +160,9 @@ export function makeDispatcher({ serverInfo, instructions, catalog, tools, logNa
 			if (method === 'ping') return ok(id, {});
 			if (method === 'notifications/initialized') return null;
 			if (method === 'tools/list') {
-				return ok(id, { tools: policyServer ? await listForRequest(policyServer, catalog, auth, req) : catalog });
+				const listed = policyServer ? await listForRequest(policyServer, catalog, auth, req) : catalog;
+				const hidden = hiddenTools ? new Set(await hiddenTools(auth)) : null;
+				return ok(id, { tools: hidden?.size ? listed.filter((t) => !hidden.has(t.name)) : listed });
 			}
 			if (method === 'tools/call')
 				return ok(id, await onToolCall(msg.params, auth, started, req));

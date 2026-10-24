@@ -5,7 +5,7 @@ when_to_use: The user has a capability and wants income from it. To author the s
 license: MIT
 metadata:
   category: platform/agents
-  cross-platform-safe: false
+  cross-platform-safe: "false"
   pack: three-ws-skills
 ---
 

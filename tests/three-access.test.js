@@ -29,6 +29,7 @@ const WALLET = 'So11111111111111111111111111111111111111112';
 const MIN_LEVEL = {
 	'forge.high': 1,
 	'forge.gameready': 1,
+	'forge.keep': 1,
 	'worlds.private': 2,
 	'mcp.priority': 2,
 	'worlds.branded': 3,
@@ -38,6 +39,7 @@ const MIN_LEVEL = {
 const REQUIRED_TIER_ID = {
 	'forge.high': 'bronze',
 	'forge.gameready': 'bronze',
+	'forge.keep': 'bronze',
 	'worlds.private': 'silver',
 	'mcp.priority': 'silver',
 	'worlds.branded': 'gold',
@@ -47,6 +49,7 @@ const REQUIRED_TIER_ID = {
 const PAY_PER_USE = {
 	'forge.high': 'forge.high',
 	'forge.gameready': 'forge.gameready',
+	'forge.keep': null,
 	'worlds.private': null,
 	'mcp.priority': null,
 	'worlds.branded': null,
@@ -61,6 +64,7 @@ const PAY_PER_USE = {
 const ENFORCED = {
 	'forge.high': true,
 	'forge.gameready': true,
+	'forge.keep': false,
 	'worlds.private': false,
 	'mcp.priority': false,
 	'worlds.branded': false,

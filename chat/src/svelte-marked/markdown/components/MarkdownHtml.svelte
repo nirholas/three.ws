@@ -4,12 +4,16 @@
 	import { parseXML } from '$src/widgets.js';
 	import ArtifactButton from '$src/ArtifactButton.svelte';
 
-	export let token: Tokens.HTML;
 	export const options: MarkdownOptions = undefined;
 	export const renderers: Renderers = undefined;
-	export let message;
+	interface Props {
+		token: Tokens.HTML;
+		message: any;
+	}
 
-	$: xml = parseXML(token.text);
+	let { token, message }: Props = $props();
+
+	let xml = $derived(parseXML(token.text));
 </script>
 
 {#if xml.element === 'artifact' && message?.role === 'assistant'}

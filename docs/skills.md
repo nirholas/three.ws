@@ -105,6 +105,8 @@ console.log(el.skills);
 
 ## Skills your agent suggests
 
+Every published version is scanned for secret access, undeclared network calls, hidden code and instructions that skip owner confirmation. Declare the hosts a skill calls under `requires.network` in `manifest.json`. See [skill-supply-scan.md](skill-supply-scan.md).
+
 An agent can draft a skill from a run that verifiably worked. The draft appears under **Suggested skills** on the agent dashboard and installs only when you click it. See [skill-candidates.md](skill-candidates.md).
 
 ## Skill manifest format

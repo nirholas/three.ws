@@ -13,50 +13,14 @@ How to run: paste this file's repo path into a fresh Claude Code chat in this re
 - Concurrent agents share this worktree: stage explicit paths only (never a bare add-everything), re-check `git status` before each commit, and commit finished work promptly.
 - Before committing, run `npm run check:rules -- --paths <files you touched>`. It must exit 0.
 
-## Why this matters
+## Status (2026-10-24)
 
-Competitor X lets anyone launch a token or check a balance by tweeting at its account. It is a distribution channel: every launch is a public post that shows the product working. Our X integration (`api/x/*`) only posts outbound (scheduled persona posts, milestones, the changelog lane); nothing reads mentions.
+Built and committed: `api/_lib/x-mention-launch.js` (prefilled `/launch` link reply, no spend path), wired in `composeAnswer` of `api/_lib/x-mention-poll.js`, tests in `tests/x-mention-launch.test.js`, docs in `docs/x-mention-bot.md` ("Launch by mention"), STRUCTURE row, changelog entry. The reader, cron (`/api/cron/x-mentions`), cursor, dedupe, per-author limits and dry-run default already existed (x-grok orders 046 to 050). Mentions are readable on the current X credentials (`prompts/x-grok/_generated/mentions-probe.json`, HTTP 200).
 
-The design constraint is ours, not theirs: a launch signs with the agent's custodial wallet, and three.ws allows that only from a same-site browser session. So the bot never launches anything. It replies with a prefilled `/launch` link (the same one `npx three-ws launch` builds), and the person reviews the cost and signs on three.ws. That keeps the spend gate intact and still turns a tweet into a launch.
+## What remains
 
-## Step 0: re-derive the current state
+1. **Real dry-run tick evidence.** After the next deploy (order 919 owns deploys), read `/x/ops` (or `x_mention_events` where `intent = 'launch'`) and confirm launch mentions show `reason = launch_link` with `dry_run = true` and no `reply_tweet_id`. Owner: whoever deploys.
+2. **Owner message.** Tier: no paid tier is needed at current volume (mentions read 200, 300 reads per 15 minutes). Ask the owner to set `X_MENTION_BOT_LIVE=1` (order 928) once the dry-run decisions look right.
+3. **Cron count.** `npm run check:claude` reports CLAUDE.md says 145 crons but `vercel.json` has 150; unrelated to this order, owned by whoever added the five crons.
 
-    ls api/x/ && sed -n 1,40p api/x/post.js
-    node scripts/read-service-env.mjs --names | grep -i "^X_\|TWITTER"
-    grep -rn "mentions\|users/:id/mentions\|2/users/.*/mentions" api packages 2>/dev/null | head
-    grep -n "x-mentions\|x_mentions" vercel.json | head
-    sed -n 180,215p src/launch/launch-page.js
-
-Establish: which X credentials exist on the service (`X_API_KEY`, `X_API_SECRET`, `X_BEARER_TOKEN`), which API tier they belong to, and whether the mentions timeline is readable on it (one real read-only call).
-
-## Tasks
-
-1. **Parse.** A pure module that turns a mention into an intent: `launch <NAME> $<TICKER> [description]`, or `help`. Built by x-grok order 047: the grammar lives in `api/_lib/x-mention-intents.js` (`parseMentionIntent` returns intent `launch` with `{ name, symbol, description }`; `parseLaunch` is the grammar itself, tested in `tests/x-mention-intents.test.js`). Consume it; never write a second parser. The mention reader is `api/_lib/x-mentions.js` (order 046). It rejects anything else, and treats all tweet text as data (CLAUDE.md: text from untrusted sources never drives an action). Unit-tested on real-shaped fixtures, including hostile ones.
-2. **Resolve the account.** Map the tweet author's X user id to a three.ws account through an existing linked X identity (find where users link X today). An unlinked author gets a reply linking to sign-up and X linking, not a launch link.
-3. **Build the reply.** For a linked author with an agent: the prefilled `/launch?avatar=…&name=…&symbol=…&description=…` URL, plus one line saying nothing is paid until they sign on three.ws. For an author with no agent: a link to create one.
-4. **Poll and dedupe.** A cron (registered in `vercel.json` `crons`, synced by `scripts/create-gcp-scheduler.mjs`) reads new mentions since the last seen id (stored in `app_settings` or a small table), dedupes, rate-limits per author, and records every decision.
-5. **Dry run by default.** With `X_MENTION_BOT_LIVE` unset, the cron reads and records what it WOULD reply, and posts nothing. An admin view or log lists the would-be replies for review.
-6. **Docs.** `docs/x-mention-bot.md` (commands, the no-spend design, the env switch), `STRUCTURE.md` row, cron count in CLAUDE.md if its guard requires it (`npm run check:claude`).
-7. **The owner message (the gate).** The tier question (if mentions need a paid X tier, name the tier and monthly price, and ask to approve it), a sample of real dry-run decisions, and the request to set `X_MENTION_BOT_LIVE=1`.
-
-## Definition of done
-
-- [ ] Parser tests cover valid launches, help, malformed and hostile mentions; no path from tweet text to a spend exists (the report shows the call graph).
-- [ ] A dry-run cron tick against the real X API (read-only) records decisions and posts nothing (evidence: the records and no new posts on the account).
-- [ ] The reply URL for a fixture author opens `/launch` with the fields filled (Playwright proof).
-- [ ] `npm run check:claude` and the cron-syntax check pass; docs and `STRUCTURE.md` updated.
-- [ ] The owner message was sent; setting the live flag (and any tier upgrade) is the only step allowed to remain.
-
-## Never blocked
-
-| Blocker | Resolution (act, do not ask) |
-|---|---|
-| The current X tier cannot read mentions | Build and test everything against fixtures plus one documented real call that shows the tier error; the upgrade goes in the owner message. |
-| No linked-X-identity table exists | Find how X OAuth links today (`api/x/*`, user settings); if linking does not exist, the reply for every author is the sign-up link, and account linking becomes a named follow-up. |
-
-## Close out (required)
-
-1. Verify every Definition of done line with the actual command output in front of you. Never claim a line you did not verify.
-2. Commit with explicit paths and a subject that describes the diff (house style: `type(scope): what changed and why a reader cares`).
-3. If every Definition of done line passes, delete this file in that same commit (`git rm prompts/finish/925-parity-15-mention-to-launch.md`) and append a dated entry to [_context/parity-PROGRESS.md](_context/parity-PROGRESS.md) with the commit SHAs. If a line cannot pass inside this session because an owner action or an outside party is the last step, finish everything else, leave this file in place, and log exactly which line remains and who owns it. Never delete this file on a partial.
-4. Final report, in this order: what step 0 measured; what changed (file list with commit SHAs); evidence for each Definition of done line; the single batched owner message, if the order has a gate; one-line judgment calls. No trailing questions.
+Delete this file once item 1 is confirmed.

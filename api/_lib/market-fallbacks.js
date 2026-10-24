@@ -25,6 +25,7 @@ import { PAPRIKA_BASE, paprikaGet } from './coinpaprika.js';
 import { CEX_BASE_BY_ID, cexPriceProviders, cexCandleProviders } from './cex-public.js';
 import { downsample } from '../../src/shared/coin-format.js';
 import { cacheGet, cacheSet } from './cache.js';
+import { orderByCanary } from './data-canary-health.js';
 
 // null/undefined and the empty string must stay null, not become 0: Number(null)
 // is 0, which is how a coin CoinGecko reports with market_cap_rank: null landed
@@ -483,7 +484,7 @@ export async function fetchExchangeChart(id, days) {
 	const base = CEX_BASE_BY_ID[id];
 	if (base) providers.push(...cexCandleProviders(base, days));
 	try {
-		const { value } = await fetchFirst(providers, { timeoutMs: 8000, label: `chart:${id}` });
+		const { value } = await fetchFirst(await orderByCanary(providers), { timeoutMs: 8000, label: `chart:${id}` });
 		return value;
 	} catch {
 		return null;

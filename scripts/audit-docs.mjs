@@ -285,6 +285,7 @@ if (!explicitFiles.length) {
 //               CLAUDE.md requires explicit owner approval before that lands in
 //               a commit, so registering one is a decision, never a default.
 const UNPUBLISHED_DOCS = new Map([
+	['orphaned-avatar-campaign', 'owner-gated: landing copy and post drafts awaiting owner wording approval before anything is published'],
 	['x-mention-bot', 'internal: operator runbook for the dry-run X mention bot safety rules, public once the bot goes live'],
 	['x-mention-image3d', 'internal: operator notes for the dry-run X image-to-3D reply, public once the bot goes live'],
 	['agora', 'internal: strategy framing, not a reader-facing product doc'],

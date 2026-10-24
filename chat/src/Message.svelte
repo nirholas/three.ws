@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	// Remembered position (in scroll-content space, so it's scroll-independent) of
 	// the avatar slot the agent last stood in. When a new assistant message mounts
 	// its own <agent-3d>, we use this to walk the avatar down from where it was to
@@ -8,8 +8,9 @@
 	const WALK_IN_MS = 820;
 </script>
 
-<script>
-	import { createEventDispatcher, tick } from 'svelte';
+<script lang="ts">
+	
+	import { tick, untrack } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
 	import { v4 as uuidv4 } from 'uuid';
@@ -40,11 +41,10 @@
 	import ToolcallButton from './ToolcallButton.svelte';
 	import ModelViewer3D from './ModelViewer3D.svelte';
 
-	const dispatch = createEventDispatcher();
 
-	let agentEl;
-	let agentSlotEl;
-	let agentWalkedIn = false;
+	let agentEl = $state();
+	let agentSlotEl = $state();
+	let agentWalkedIn = $state(false);
 	let lastReactedToUserId = null;
 
 	// Position of the avatar slot within the scroll container's content, immune to
@@ -94,15 +94,6 @@
 		setTimeout(() => done(), WALK_IN_MS + 120); // safety net if transitionend is missed
 	}
 
-	$: if (agentEl && agentSlotEl && !agentWalkedIn) {
-		agentWalkedIn = true;
-		const slot = agentSlotEl;
-		const run = () => walkAgentIntoPlace(slot, agentEl);
-		if (agentEl._mounted) run();
-		else agentEl.addEventListener('agent:ready', run, { once: true });
-		// Never leave the slot stuck invisible if the avatar fails to load.
-		setTimeout(() => { if (slot && slot.style.opacity === '0') slot.style.opacity = '1'; }, 6000);
-	}
 
 	function faceCamera(el) {
 		const apply = () => {
@@ -132,16 +123,6 @@
 		lastReactedToUserId = userMessage.id;
 	}
 
-	$: if (agentEl) faceCamera(agentEl);
-	$: if (agentEl && convo?.messages?.length) {
-		const last = convo.messages[i];
-		const isLatest = last?.role === 'assistant'
-			&& i === convo.messages.findLastIndex((m) => m.role === 'assistant');
-		if (isLatest) {
-			const prior = [...convo.messages.slice(0, i)].reverse().find((m) => m.role === 'user');
-			if (prior) reactToUserSentiment(agentEl, prior);
-		}
-	}
 
 	function msgTransition(node, { style }) {
 		if (style === 'snap') return { duration: 0 };
@@ -150,27 +131,30 @@
 	}
 
 
-	export let message;
-	export let i;
-	export let convo;
-	export let generating;
-	export let collapsedRanges;
 
-	export let saveMessage;
-	export let deleteMessage;
-	export let saveVersion;
-	export let saveConversation;
-	export let shiftVersion;
-	export let insertSystemPrompt;
-	export let submitCompletion;
-	export let isChoosing;
-	export let choiceHandler;
-	export let question;
-	export let choices;
 
-	export let chose;
-	export let activeToolcall;
-	export let textareaEls;
+	let {
+		message = $bindable(),
+		i,
+		convo = $bindable(),
+		generating,
+		collapsedRanges,
+		saveMessage,
+		deleteMessage,
+		saveVersion,
+		saveConversation,
+		shiftVersion,
+		insertSystemPrompt,
+		submitCompletion,
+		isChoosing,
+		choiceHandler,
+		question,
+		choices,
+		chose = $bindable(),
+		activeToolcall = $bindable(),
+		textareaEls = $bindable(),
+		onrerender
+	} = $props();
 
 	// Tool responses carrying a 3D model envelope, rendered inline in the thread
 	// (in addition to the clickable pill that opens the full tool view).
@@ -287,26 +271,52 @@
 		return toolcalls.reverse().flat();
 	}
 
-	let contentHeight;
-	let copied = false;
+	let contentHeight = $state();
+	let copied = $state(false);
 	async function copyContent() {
 		await navigator.clipboard.writeText(message.content || '');
 		copied = true;
 		setTimeout(() => (copied = false), 1500);
 	}
+	$effect.pre(() => {
+		if (agentEl && agentSlotEl && !agentWalkedIn) {
+			agentWalkedIn = true;
+			const slot = agentSlotEl;
+			const run = () => walkAgentIntoPlace(slot, agentEl);
+			if (agentEl._mounted) run();
+			else agentEl.addEventListener('agent:ready', run, { once: true });
+			// Never leave the slot stuck invisible if the avatar fails to load.
+			setTimeout(() => { if (slot && slot.style.opacity === '0') slot.style.opacity = '1'; }, 6000);
+		}
+	});
+	$effect.pre(() => {
+		const el = agentEl;
+		if (el) untrack(() => faceCamera(el));
+	});
+	$effect.pre(() => {
+		if (agentEl && convo?.messages?.length) {
+			const last = convo.messages[i];
+			const isLatest = last?.role === 'assistant'
+				&& i === convo.messages.findLastIndex((m) => m.role === 'assistant');
+			if (isLatest) {
+				const prior = [...convo.messages.slice(0, i)].reverse().find((m) => m.role === 'user');
+				if (prior) untrack(() => reactToUserSentiment(agentEl, prior));
+			}
+		}
+	});
 </script>
 
 {#if (['user', 'assistant'].includes(message.role) || (message.role === 'system' && (!message.customInstructions || (message.customInstructions && message.showCustomInstructions)))) && ($config.explicitToolView || !collapsedRanges.some((r) => i >= r.starti && i < r.endi))}
 	{@const effectiveAgentId = $localAgentId || $brandConfig?.agent_id || ''}
 	{@const hasLogo = message.role === 'assistant'}
 	{@const isLatestAssistant = message.role === 'assistant' && i === convo.messages.findLastIndex((m) => m.role === 'assistant')}
-	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
+	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
 	<li
 		data-role={message.role}
 		in:msgTransition={{ style: $config.messageAnimation ?? 'smooth' }}
 		class="group relative flex {message.role === 'user' ? 'justify-end' : 'justify-start'} pt-4 pb-10"
 		style="z-index: {convo.messages.length - i};"
-		on:touchstart={(event) => {
+		ontouchstart={(event) => {
 			// Make click trigger hover on mobile:
 			event.target.dispatchEvent(new MouseEvent('mouseenter'));
 		}}
@@ -315,7 +325,7 @@
 			<Button
 				variant="outline"
 				class="absolute left-1/2 top-0 z-[98] -translate-x-1/2 border-dashed text-xs opacity-0 transition-[border-color,opacity] group-hover:opacity-100"
-				on:click={insertSystemPrompt}
+				onclick={insertSystemPrompt}
 			>
 				<Icon icon={feTerminal} class="mr-2 h-3 w-3 text-slate-600" />
 				Add system prompt
@@ -324,7 +334,7 @@
 			<Button
 				variant="outline"
 				class="absolute left-1/2 top-0 z-[98] -translate-x-1/2 text-xs opacity-0 transition-opacity group-hover:opacity-100"
-				on:click={() => {
+				onclick={() => {
 					convo.messages[i - 1].showCustomInstructions = true;
 					saveMessage(convo.messages[i - 1]);
 				}}
@@ -359,7 +369,7 @@
 			{/if}
 			<button
 				disabled={message.role === 'system' || (message.role === 'assistant' && hasLogo && isLatestAssistant)}
-				on:click={() => {
+				onclick={() => {
 					if (message.role === 'assistant' && hasLogo && isLatestAssistant) return;
 					if (message.role === 'user') {
 						message.role = 'assistant';
@@ -376,7 +386,6 @@
 					     its window and pull it up so the empty headroom is cropped, keeping the
 					     figure large without the avatar floating in dead space. -->
 					<span bind:this={agentSlotEl} class="w-full h-full overflow-hidden inline-block shrink-0 rounded-[inherit] will-change-transform" style="opacity:0;">
-						<!-- svelte-ignore custom-element-no-implicit-ns -->
 						<agent-3d
 							bind:this={agentEl}
 							{...($talkingHeadAvatarUrl
@@ -420,14 +429,14 @@
 			</div>
 			{/if}
 
-			<!-- svelte-ignore a11y-no-static-element-interactions -->
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			{#if message.editing}
 				<textarea
 					bind:this={textareaEls[i]}
 					class="w-full resize-none border-none bg-transparent p-0 leading-[28px] text-slate-800 outline-none focus:ring-0"
 					rows={1}
 					bind:value={message.pendingContent}
-					on:keydown={(event) => {
+					onkeydown={(event) => {
 						if (
 							event.key === 'Enter' &&
 							!event.shiftKey &&
@@ -441,12 +450,12 @@
 							event.target.blur();
 						}
 					}}
-					on:input={(event) => {
+					oninput={(event) => {
 						// Resize textarea as content grows:
 						event.target.style.height = 'auto';
 						event.target.style.height = event.target.scrollHeight + 'px';
 					}}
-				/>
+				></textarea>
 			{:else}
 				<div class="flex w-full flex-col gap-6">
 					{#if !$config.explicitToolView}
@@ -476,7 +485,7 @@
 													{toolcall}
 													{toolresponse}
 													active={toolcall.id === activeToolcall?.id}
-													on:click={() => {
+													onclick={() => {
 														activeToolcall = toolcall;
 													}}
 												/>
@@ -485,7 +494,7 @@
 										{#each model3dResponses(message).filter((p) => toolcallsOnLine.includes(p.toolcall)) as pair (pair.toolcall.id)}
 											<ModelViewer3D
 												content={pair.resp.content.content}
-												on:resolved={(e) => persistResolvedModel(pair.resp, e.detail.glb_url)}
+												onresolved={(detail) => persistResolvedModel(pair.resp, detail.glb_url)}
 											/>
 										{/each}
 									{/if}
@@ -510,7 +519,7 @@
 									class="{message.thinking
 										? 'animate-pulse'
 										: ''} flex items-center gap-x-1.5 self-start rounded-full bg-paper-deep px-3.5 py-2 text-left text-xs text-ink-faint transition-colors hover:bg-paper-deep"
-									on:click={() => {
+									onclick={() => {
 										message.thoughtsExpanded = !message.thoughtsExpanded;
 										saveMessage(message);
 									}}
@@ -542,7 +551,7 @@
 										{#if contentHeight > 400}
 											<button
 												class="sticky z-10 bottom-2 left-1/2 flex translate-x-[calc(-50%+40px)] items-center gap-x-1.5 self-start rounded-full bg-paper-deep px-3.5 py-2 text-left text-xs text-ink-faint transition-colors hover:bg-paper-deep"
-												on:click={() => {
+												onclick={() => {
 													message.thoughtsExpanded = !message.thoughtsExpanded;
 													saveMessage(message);
 												}}
@@ -557,7 +566,7 @@
 					{/if}
 
 					{#if generating && message.role === 'assistant' && i === convo.messages.length - 1 && message.content === '' && !message.toolcalls}
-						<div class="mt-2 h-3 w-3 shrink-0 animate-bounce rounded-full bg-slate-600" />
+						<div class="mt-2 h-3 w-3 shrink-0 animate-bounce rounded-full bg-slate-600"></div>
 					{/if}
 
 					<MessageContent {message} />
@@ -574,7 +583,7 @@
 									{toolcall}
 									{toolresponse}
 									active={toolcall.id === activeToolcall?.id}
-									on:click={() => {
+									onclick={() => {
 										activeToolcall = toolcall;
 									}}
 								/>
@@ -583,7 +592,7 @@
 						{#each model3dResponses(message) as pair (pair.toolcall.id)}
 							<ModelViewer3D
 								content={pair.resp.content.content}
-								on:resolved={(e) => persistResolvedModel(pair.resp, e.detail.glb_url)}
+								onresolved={(detail) => persistResolvedModel(pair.resp, detail.glb_url)}
 							/>
 						{/each}
 					{/if}
@@ -601,7 +610,7 @@
 								{question}
 								{choices}
 								class="mb-1"
-								on:click={() => {
+								onclick={() => {
 									convo.messages[i].toolcalls[ti].expanded =
 										!convo.messages[i].toolcalls[ti].expanded;
 									saveMessage(convo.messages[i]);
@@ -617,7 +626,7 @@
 					{#if convo.messages.filter((msg) => msg.role !== 'system' && !msg.submitted).length >= 2 && i === convo.messages.length - 1 && message.role !== 'assistant'}
 						<button
 							class="flex items-center gap-x-1 rounded-full bg-green-100 px-3 py-2"
-							on:click={() => {
+							onclick={() => {
 								submitCompletion();
 							}}
 						>
@@ -628,7 +637,7 @@
 					{#if message.role !== 'assistant' && message.pendingContent && message.pendingContent !== message.content}
 						<button
 							class="flex items-center gap-x-1 rounded-full bg-green-50 px-3 py-2 hover:bg-green-100"
-							on:click={(event) => {
+							onclick={(event) => {
 								if (message.role === 'system') {
 									// If system message, accept the edit instead of submitting at point:
 									convo.messages[i].content = message.pendingContent;
@@ -654,7 +663,7 @@
 					{#if message.role === 'assistant' && message.pendingContent && message.pendingContent !== message.content && message.content !== '...' && i === convo.messages.length - 1}
 						<button
 							class="flex items-center gap-x-1.5 rounded-full bg-green-50 px-3 py-2 hover:bg-green-100"
-							on:click={async () => {
+							onclick={async () => {
 								convo.messages[i].unclosed = true;
 								saveMessage(convo.messages[i]);
 								submitCompletion(false);
@@ -666,7 +675,7 @@
 					{/if}
 					<button
 						class="flex items-center gap-x-1 rounded-full bg-gray-50 px-3 py-2 hover:bg-gray-100"
-						on:click={() => {
+						onclick={() => {
 							convo.messages[i].editing = false;
 							convo.messages[i].pendingContent = '';
 							saveMessage(convo.messages[i]);
@@ -688,7 +697,7 @@
 							<button
 								class="group flex h-6 w-6 shrink-0 rounded-full md:h-3 md:w-3"
 								disabled={versionIndex === 0}
-								on:click={() => {
+								onclick={() => {
 									shiftVersion(-1, message, i);
 								}}
 							>
@@ -703,7 +712,7 @@
 							<button
 								class="group flex h-6 w-6 shrink-0 rounded-full md:h-3 md:w-3"
 								disabled={versionIndex === versions.length - 1}
-								on:click={() => {
+								onclick={() => {
 									shiftVersion(1, message, i);
 								}}
 							>
@@ -723,7 +732,7 @@
 									<button
 										class="group flex h-6 w-6 shrink-0 rounded-full"
 										disabled={versionIndex === 0}
-										on:click={() => shiftVersion(-1, prevMsg, i - 1)}
+										onclick={() => shiftVersion(-1, prevMsg, i - 1)}
 									>
 										<Icon icon={feChevronLeft} class="m-auto h-3 w-3 group-disabled:opacity-30" />
 									</button>
@@ -731,7 +740,7 @@
 									<button
 										class="group flex h-6 w-6 shrink-0 rounded-full"
 										disabled={versionIndex === versions.length - 1}
-										on:click={() => shiftVersion(1, prevMsg, i - 1)}
+										onclick={() => shiftVersion(1, prevMsg, i - 1)}
 									>
 										<Icon icon={feChevronRight} class="m-auto h-3 w-3 group-disabled:opacity-30" />
 									</button>
@@ -753,7 +762,7 @@
 					{#if message.role !== 'system'}
 						<button
 							class="group/actions flex h-7 w-7 shrink-0 rounded-lg hover:bg-gray-100"
-							on:click={copyContent}
+							onclick={copyContent}
 							aria-label="Copy message"
 							title="Copy"
 						>
@@ -768,7 +777,7 @@
 						class="group/actions flex h-7 w-7 shrink-0 rounded-lg hover:bg-gray-100"
 						aria-label="Edit message"
 						title="Edit"
-						on:click={async () => {
+						onclick={async () => {
 							convo.messages[i].editing = true;
 							convo.messages[i].pendingContent = convo.messages[i].content;
 							await tick();
@@ -789,7 +798,7 @@
 							class="group/actions flex h-7 w-7 shrink-0 rounded-lg hover:bg-gray-100"
 							aria-label="Regenerate reply"
 							title="Regenerate"
-							on:click={() => {
+							onclick={() => {
 								activeToolcall = null;
 
 								if (message.role === 'user') {
@@ -829,12 +838,12 @@
 						class="group/actions flex h-7 w-7 shrink-0 rounded-lg hover:bg-gray-100"
 						aria-label="Delete message"
 						title="Delete"
-						on:click={() => {
+						onclick={() => {
 							// Remove this message from the conversation:
 							convo.messages = convo.messages.slice(0, i).concat(convo.messages.slice(i + 1));
 							deleteMessage(message);
 							saveConversation(convo);
-							dispatch('rerender');
+							onrerender?.();
 						}}
 					>
 						<Icon
@@ -849,7 +858,7 @@
 		<button
 			aria-label="Insert a message here"
 			title="Insert a message here"
-			on:click={async () => {
+			onclick={async () => {
 				// Insert a blank message inbetween the next message and the next next message:
 				let role;
 				if (message.role === 'assistant' || message.role === 'system') {

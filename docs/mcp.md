@@ -181,6 +181,17 @@ Deep dives — every tool, argument, env var, and example:
 
 ---
 
+## Robinhood Chain tools
+
+Four read-only tools (`readOnlyHint: true`) expose Robinhood Crypto's chain (4663) through the same client as `/markets/robinhood`, with the RPC failover list in `api/_lib/robinhood.js`. Source: `api/_mcp/tools/robinhood.js`.
+
+| Tool | Returns |
+|---|---|
+| `robinhood_chain_stats` | Chain id, live block height, average block time, gas |
+| `robinhood_token_prices` | Live prices for chain tokens |
+| `robinhood_recent_launches` | Newest launches from The Odyssey factories (all venues with reputation and flags: `/api/v1/robinhood/launches`) |
+| `robinhood_wallet_holdings` | Token holdings for a wallet address |
+
 ## Trust grades
 
 Every server in the [MCP tools catalog](./mcp-tools.md) carries a 0-100 trust score and an A to F grade, so a visitor can tell a polished, documented, published server from a stub. `npm run build:mcp-catalog` computes them from facts this repository can check mechanically (`scripts/lib/mcp-trust.mjs`) and stores the grade with its full breakdown under `servers[].trust` in `public/mcp-catalog.json`. `/mcp-tools` shows the grade beside each server in the server table; hover or focus the badge for the breakdown, and click the Trust header to sort.
@@ -244,7 +255,7 @@ A connector that runs in a vendor's cloud has no browser on your machine and no 
 
   `wallet:write` implies `wallet:trade` and `wallet:launch`, so a token minted before the split keeps every power it had. A client that registered only `wallet:trade` can trade but every route that moves funds out answers `insufficient_scope`.
 - **PKCE.** `code_challenge_method=S256` is required on every authorization request.
-- **Seeing and revoking.** Every connected app is listed at [Settings, Connected apps](https://three.ws/dashboard/settings#connected-apps) with when it was authorized and last used. `GET /api/oauth/grants` returns the same list and `DELETE /api/oauth/grants?client_id=...` revokes one app (browser session only, so a token can never list or revoke other apps). Revocation is effective on the app's next request: its refresh tokens are revoked and a cutoff is recorded that every access token issued before it fails against, so there is no one-hour tail. Other apps on the account are untouched: revoking Claude leaves ChatGPT connected, on its access token and its refresh token alike. The app can ask you again; a token issued after you approve it anew works.
+- **Seeing and revoking.** Every connected app is listed at [Settings, Connected apps](https://three.ws/dashboard/settings#connected-apps) with when it was authorized and last used. `GET /api/oauth/grants` returns the same list and `DELETE /api/oauth/grants?client_id=...` revokes one app (browser session only, so a token can never list or revoke other apps). Revocation is effective on the app's next request: its refresh tokens are revoked and a cutoff is recorded that every access token issued before it fails against, so there is no one-hour tail. The same cutoff applies when the app revokes its own refresh token (RFC 7009), and `POST /oauth/introspect` answers `active: false` for any access token older than it. Other apps on the account are untouched: revoking Claude leaves ChatGPT connected, on its access token and its refresh token alike. The app can ask you again; a token issued after you approve it anew works.
 - **Sign-in methods.** [Settings, Sign-in methods](https://three.ws/dashboard/settings#sign-in-methods) lists every way into the account and lets you link or unlink Google. Unlinking needs a fresh proof (the account password, or signing in to Google once more), and an account is never left with no way in. The flow itself is documented in [Authentication, Sign in with Google](/docs/authentication#sign-in-with-google).
 
 The end-to-end proof is `tests/e2e/oauth-cloud-connector.spec.js`: it registers "Grok Bot" with an external redirect URI, runs the PKCE flow as the QA account, calls `tools/list` on `/api/mcp`, revokes from Settings and watches the next call fail with `401`. `tests/oauth-endpoints.test.js` covers the grant groups (what the screen lists, what an unticked group removes from the code) and the two-client case (both connected, one revoked, the other still working on access and refresh tokens), and `tests/api/google-signin.test.js` covers the Google round trip.
@@ -638,7 +649,72 @@ The agents on the authenticated account, newest first. Read-only; no funds move.
 }
 ```
 
-Returns `count` and `agents[]`, each with `id`, `name`, `description`, `model`, the public `solana_address`, `is_published`, `created_at` and `page_url`. Use the ids with `recall`, `list_custom_skills`, `attach_avatar_to_agent` and `call_agent`. The [Grok connector](/docs/grok) lists it once signed in.
+Returns `count` and `agents[]`, each with `id`, `name`, `description`, `model`, the public `solana_address`, `is_published`, `created_at` and `page_url`. Past ten agents it returns a [summary-first envelope](#summary-first-results-and-expand) with the first ten and a handle for `expand`. Use the ids with `recall`, `list_custom_skills`, `attach_avatar_to_agent` and `call_agent`. The [Grok connector](/docs/grok) lists it once signed in.
+
+---
+
+### Summary-first results and `expand`
+
+A tool that can return a long list does not put the whole list in the model's context. `list_my_agents` (more than 10 agents), `recall` (more than 5 memories) and `crypto_data` (a list answer of more than 10 rows) answer with an envelope instead:
+
+```json
+{
+  "summary": "50 agents on this account (17 published, 33 unpublished), newest first. Newest: Agent 49.",
+  "handle": "mx1.eyJpIjoi...",
+  "count": 50,
+  "offset": 0,
+  "limit": 10,
+  "next_offset": 10,
+  "expires_at": "2026-10-24T00:40:00.000Z",
+  "items": [ "...the first page of rows..." ]
+}
+```
+
+The text block carries the summary, the first page as one line per row, and a sentence telling the model how to get the next page. Nothing is withheld: `expand` takes the handle back.
+
+| Argument | Meaning |
+|---|---|
+| `handle` | The `handle` from the envelope (required). |
+| `offset` | Row to start at; use the previous page's `next_offset`. |
+| `limit` | Rows to return, 1 to 100. Defaults to the original page size. |
+| `fields` | Keys to keep on each row; dot paths such as `detail.a` work. Use it to pull one column of a long list. |
+
+`expand` is read-only and free. Its answer has the same shape as the envelope without the summary (`count`, `offset`, `limit`, `next_offset`, `items`); `next_offset` is `null` on the last page.
+
+**Handles are signed, short-lived and bound to the account.** A handle is an HMAC-signed token that names the tool, the receiving principal (account or API key) and a 15 minute deadline; the list itself sits in the shared cache under that handle. Another account presenting it, or a token edited in any way, gets `invalid_handle` with no hint of what exists. After 15 minutes the answer is `handle_expired` and the message names the tool to call again. An anonymous caller gets `sign_in_required`.
+
+**Who gets an envelope.** Signed-in accounts and API keys. A pay-per-call x402 caller paid for the whole answer and an anonymous caller has no identity to bind a handle to, so both receive the full list as before. A list that fits one page is never wrapped. A list over 2,000 rows is stored up to 2,000 and the envelope says so with `total_available` and `truncated_to`.
+
+Measured against the live handlers on 2026-10-24 (tokens estimated at four characters each; the agent and memory rows are 50 and 30 generated rows through the real handlers, the market rows are live free-tier calls):
+
+| Call | Before | After |
+|---|---|---|
+| `list_my_agents`, 50 agents | 41,472 B, about 10,400 tokens | 4,922 B, about 1,230 tokens |
+| `recall`, 30 matches | 14,257 B, about 3,570 tokens | 3,446 B, about 860 tokens |
+| `crypto_data` `coingecko/markets`, 100 coins | 191,153 B, about 47,800 tokens | 17,496 B, about 4,370 tokens |
+| `crypto_data` `defillama/protocols`, every protocol | 4,224,593 B, about 1,056,000 tokens | 10,600 B, about 2,650 tokens |
+
+---
+
+### `search_docs`
+
+Search the three.ws documentation for the section that answers a question. Free, no account or payment, and listed on this server and on the keyless studio server ([docs/mcp-studio.md](./mcp-studio.md)).
+
+```json
+{
+  "type": "object",
+  "required": ["query"],
+  "properties": {
+    "query": { "type": "string", "minLength": 2, "maxLength": 300 },
+    "limit": { "type": "integer", "minimum": 1, "maximum": 10, "default": 5 }
+  },
+  "additionalProperties": false
+}
+```
+
+Returns `query`, `count` and `results[]`, each with `title` (page and heading), `url` (opens the docs reader at that heading), `snippet` (the start of the matching section) and `doc` (the page slug). A query that matches nothing returns `count: 0` and a text hint, not an error.
+
+It is the same index, tokenizer and ranking as the search field on the docs site and the Cmd-K palette: [`scripts/build-docs-search-index.mjs`](../scripts/build-docs-search-index.mjs) builds the index from `docs/`, [`public/docs-search.js`](../public/docs-search.js) ranks it, and [`api/_lib/docs-search.js`](../api/_lib/docs-search.js) loads it on the server. The server reads `dist/docs-search-index.json`, then `public/docs-search-index.json`, and if neither exists it builds the index in memory from `docs/` on first use.
 
 ---
 
@@ -1457,6 +1533,17 @@ merchant and by day, from the package's local append-only ledger
 (`X402_MCP_LEDGER_PATH`, default `~/.three-ws/x402-mcp-ledger.jsonl`).
 
 ---
+
+### Orders and DCA on any SPL token
+
+The threews-agent server places resting orders and DCA schedules from the agent wallet on any Solana token, routed through Jupiter or PumpSwap by liquidity. Every create is two steps so a model can never place anything the owner did not see:
+
+1. `order_preview` (limit, stop, trailing, ladder of up to 8 limit levels, or an OCO pair) or `dca_preview` returns the live price, whether it would fire now, the venue, the firewall verdict, the spend limits, when it acts, and a signed `preview_id` (ten minutes, single use, bound to the agent).
+2. After the user says yes, call the matching create tool (`limit_order_create`, `stop_order_create`, `trailing_order_create`, `ladder_order_create`, `oco_order_create` with `confirm_order: true`, or `dca_create` with `confirm_dca: true`) with that `preview_id`.
+
+Read and manage: `limit_order_list`, `limit_order_history`, `order_book` (next fire time and the reason for every skip: price outside band, cap hit, venue unhealthy), `dca_list`, `limit_order_cancel`, `dca_cancel`. Orders can carry an expiry, a price band and an OCO group; the owner is notified when an order fires, fails or expires. `dca_list` covers both rails: Solana schedules and EVM delegation schedules share one store (`orders`, rail `evm`), and the legacy `/api/dca-strategies` routes are adapters over it. Existing `dca_strategies` rows were copied by migration `20261010210000_orders_any_token.sql` without losing a schedule.
+
+Every fill runs the audited path in `workers/agent-orders`: spend policy, kill switch, rug firewall, an idempotency key per slice, and the per-agent lock. Creating requires the `wallet:write` scope and a signed real-funds agreement.
 
 ## Resources
 

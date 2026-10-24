@@ -9,11 +9,15 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Readable } from 'node:stream';
+import { Challenge } from 'mppx';
+import { solanaChargeAuthorization } from '../api/_lib/mpp-solana.js';
 
 const { state } = vi.hoisted(() => {
 	process.env.JWT_SECRET = 'skill-rails-test-secret-0123456789abcdef';
 	process.env.A2A_MANDATE_SECRET = 'skill-rails-mandate-secret-0123456789abcdef';
 	process.env.PUBLIC_APP_ORIGIN = 'https://three.test';
+	process.env.X402_FEE_PAYER_SOLANA = 'THREEsynthetic2222222222222222222222222222';
+	process.env.X402_ASSET_MINT_SOLANA = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 	return {
 		state: {
 			skill: null,
@@ -33,6 +37,7 @@ vi.mock('../api/_lib/db.js', () => {
 			state.inserts.push({ vals });
 			return Promise.resolve([{ id: `receipt-${state.inserts.length}` }]);
 		}
+		if (text.startsWith('insert into x402_spent_payments')) return Promise.resolve([{ payment_hash: String(vals[0]) }]);
 		if (text.startsWith('insert into royalty_ledger')) {
 			state.ledger.push({ vals });
 			return Promise.resolve([{ id: `ledger-${state.ledger.length}` }]);
@@ -127,19 +132,13 @@ async function call(handler, opts) {
 	return res;
 }
 
+let proofSeq = 0;
 const paymentHeader = (network = 'solana') =>
-	Buffer.from(JSON.stringify({ x402Version: 2, network, payer: PAYER, scheme: 'exact' })).toString('base64');
+	Buffer.from(JSON.stringify({ x402Version: 2, network, payer: PAYER, scheme: 'exact', nonce: ++proofSeq })).toString('base64');
 
-function mppAuthorization(res, { payer = PAYER } = {}) {
-	const www = res.getHeader('www-authenticate');
-	const id = /id="([^"]+)"/.exec(www)[1];
-	const request = /request="([^"]+)"/.exec(www)[1];
-	const expires = Number(/expires="([^"]+)"/.exec(www)[1]);
-	const credential = {
-		challenge: { id, request, expires },
-		payload: { x402Version: 2, network: 'solana', payer, scheme: 'exact' },
-	};
-	return `Payment ${Buffer.from(JSON.stringify(credential)).toString('base64url')}`;
+function mppAuthorization(res) {
+	const [challenge] = Challenge.fromHeadersList(new Headers({ 'www-authenticate': res.getHeader('www-authenticate') }));
+	return solanaChargeAuthorization({ challenge, transaction: 'dGVzdC10cmFuc2FjdGlvbg==', source: PAYER });
 }
 
 function a2aBody(metadata = {}) {
@@ -223,20 +222,22 @@ describe('challenges', () => {
 		expect(accepts[0].payTo).toBe(THREE_MINT);
 	});
 
-	it('mpp: answers 402 with a Payment challenge bound to the quote', async () => {
+	it('mpp: answers 402 with a spec Payment challenge for a Solana charge', async () => {
 		const res = await call(invoke, { headers: { 'x-payment-rail': 'mpp' } });
 		expect(res.statusCode).toBe(402);
 		const www = res.getHeader('www-authenticate');
 		expect(www).toMatch(/^Payment id="/);
-		const request = JSON.parse(Buffer.from(/request="([^"]+)"/.exec(www)[1], 'base64url').toString());
-		expect(request.amount).toBe('10000');
-		expect(request.recipient).toBe(THREE_MINT);
-		expect(request.resource).toBe(`https://three.test/api/skills/${SKILL_ID}/invoke`);
+		const [challenge] = Challenge.fromHeadersList(new Headers({ 'www-authenticate': www }));
+		expect(challenge.method).toBe('solana');
+		expect(challenge.intent).toBe('charge');
+		expect(challenge.request.amount).toBe('10000');
+		expect(challenge.request.recipient).toBe(THREE_MINT);
+		expect(challenge.request.methodDetails.decimals).toBe(6);
 	});
 
 	it('a2a: a JSON-RPC call without payment gets a payment-required task', async () => {
 		const res = await call(invoke, { method: 'POST', headers: a2aHeaders, body: a2aBody() });
-		expect(res.statusCode).toBe(200);
+		expect(res.statusCode, res._body).toBe(200);
 		const task = res.json.result;
 		expect(task.status.state).toBe('input-required');
 		expect(task.status.message.metadata['x402.payment.status']).toBe('payment-required');
@@ -341,12 +342,11 @@ describe('settlement writes one receipt shape on every rail', () => {
 });
 
 describe('mpp credentials', () => {
-	it('rejects a credential whose challenge id was not issued here', async () => {
+	it('rejects a credential whose challenge terms were altered', async () => {
 		const challenge = await call(invoke, { headers: { 'x-payment-rail': 'mpp' } });
-		const auth = mppAuthorization(challenge);
-		const cred = JSON.parse(Buffer.from(auth.split(' ')[1], 'base64url').toString());
-		cred.challenge.id = 'AAAA' + cred.challenge.id.slice(4);
-		const forged = `Payment ${Buffer.from(JSON.stringify(cred)).toString('base64url')}`;
+		const [c] = Challenge.fromHeadersList(new Headers({ 'www-authenticate': challenge.getHeader('www-authenticate') }));
+		c.request = { ...c.request, amount: '1' };
+		const forged = solanaChargeAuthorization({ challenge: c, transaction: 'dGVzdA==' });
 		const res = await call(invoke, { headers: { authorization: forged } });
 		expect(res.statusCode).toBe(401);
 		expect(res.json.error).toBe('challenge_mismatch');
@@ -355,8 +355,8 @@ describe('mpp credentials', () => {
 
 	it('treats an expired challenge as payment required again', () => {
 		const requirement = { amount: '10000', asset: 'USDC', payTo: THREE_MINT, network: 'solana', scheme: 'exact' };
-		const c = rails.buildMppChallenge({ requirement, resourceUrl: 'https://three.test/x', description: 'd', nowSec: 1000 });
-		const auth = `Payment ${Buffer.from(JSON.stringify({ challenge: { id: c.id, request: c.request, expires: c.expires }, payload: { a: 1 } })).toString('base64url')}`;
+		const c = rails.buildMppChallenge({ requirement, description: 'd', nowSec: 1000 });
+		const auth = solanaChargeAuthorization({ challenge: c.challenge, transaction: 'dGVzdA==' });
 		expect(rails.parseMppCredential(auth, { nowSec: 1001 }).ok).toBe(true);
 		const late = rails.parseMppCredential(auth, { nowSec: c.expires + 1 });
 		expect(late.ok).toBe(false);

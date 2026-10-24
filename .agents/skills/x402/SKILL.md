@@ -5,7 +5,7 @@ user-invocable: true
 disable-model-invocation: false
 metadata:
   category: wallet/payments
-  cross-platform-safe: false
+  cross-platform-safe: "false"
   pack: three-ws-skills
 ---
 

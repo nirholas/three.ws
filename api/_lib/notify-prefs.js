@@ -128,6 +128,11 @@ const TYPE_CATEGORY = {
 	invoice_paid: 'sales',
 	invoice_underpaid: 'sales',
 	invoice_expired: 'sales',
+	// Revenue ledger (api/_lib/revenue-*.js).
+	revenue_milestone: 'sales',
+	reinvest_run: 'sales',
+	reinvest_rule_failed: 'alerts',
+	revenue_reconcile_drift: 'alerts',
 
 	skill_purchase_confirmed: 'purchases',
 	asset_purchase_confirmed: 'purchases',

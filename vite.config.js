@@ -856,6 +856,7 @@ const appConfig = {
 				'agent-wallet': resolve(__dirname, 'pages/agent-wallet.html'),
 				'agent-cards': resolve(__dirname, 'pages/agent-cards.html'),
 				'agent-perps': resolve(__dirname, 'pages/agent-perps.html'),
+				'agent-predictions': resolve(__dirname, 'pages/agent-predictions.html'),
 				'agent-mail': resolve(__dirname, 'pages/agent-mail.html'),
 				wallet: resolve(__dirname, 'pages/wallet.html'),
 				guardian: resolve(__dirname, 'pages/guardian.html'),
@@ -920,6 +921,8 @@ const appConfig = {
 				quests: resolve(__dirname, 'pages/quests.html'),
 				approvals: resolve(__dirname, 'pages/approvals.html'),
 				commerce: resolve(__dirname, 'pages/commerce.html'),
+				earnings: resolve(__dirname, 'pages/earnings.html'),
+				'agent-earnings': resolve(__dirname, 'pages/agent-earnings.html'),
 				'agent-invoice': resolve(__dirname, 'pages/agent-invoice.html'),
 				spend: resolve(__dirname, 'pages/spend.html'),
 				duels: resolve(__dirname, 'pages/duels.html'),
@@ -935,7 +938,9 @@ const appConfig = {
 				'agent-economy': resolve(__dirname, 'pages/agent-economy.html'),
 				'agent-economy-volume': resolve(__dirname, 'pages/agent-economy-volume.html'),
 				analytics: resolve(__dirname, 'pages/analytics.html'),
+				'why-three-ws': resolve(__dirname, 'pages/why-three-ws.html'),
 				experiments: resolve(__dirname, 'pages/experiments.html'),
+				compete: resolve(__dirname, 'pages/compete.html'),
 				economy: resolve(__dirname, 'pages/economy.html'),
 				'overlay-control': resolve(__dirname, 'pages/overlay-control.html'),
 				'mocap-studio': resolve(__dirname, 'pages/mocap-studio.html'),
@@ -1064,6 +1069,7 @@ const appConfig = {
 				'launch-paired': resolve(__dirname, 'pages/launch-paired.html'),
 				'launch-uniswap': resolve(__dirname, 'pages/launch-uniswap.html'),
 				'launch-intent': resolve(__dirname, 'pages/launch-intent.html'),
+				'creator-payouts': resolve(__dirname, 'pages/creator-payouts.html'),
 				credits: resolve(__dirname, 'pages/credits.html'),
 				'mcp-plans': resolve(__dirname, 'pages/mcp-plans.html'),
 				domains: resolve(__dirname, 'pages/domains.html'),
@@ -1899,6 +1905,8 @@ const appConfig = {
 					'/launch/uniswap/': resolve(root, 'pages/launch-uniswap.html'),
 					'/launch/intents': resolve(root, 'pages/launch-intent.html'),
 					'/launch/intents/': resolve(root, 'pages/launch-intent.html'),
+					'/creator/payouts': resolve(root, 'pages/creator-payouts.html'),
+					'/creator/payouts/': resolve(root, 'pages/creator-payouts.html'),
 					'/markets/robinhood/portfolios': resolve(root, 'pages/hood-portfolios.html'),
 					'/markets/robinhood/portfolios/': resolve(root, 'pages/hood-portfolios.html'),
 					'/markets/robinhood/portfolios/universe': resolve(root, 'pages/hood-portfolios-universe.html'),
@@ -1941,6 +1949,8 @@ const appConfig = {
 					'/fees/': resolve(root, 'pages/fees.html'),
 					'/sniper/experiments': resolve(root, 'pages/sniper-experiments.html'),
 					'/sniper/experiments/': resolve(root, 'pages/sniper-experiments.html'),
+					'/compete': resolve(root, 'pages/compete.html'),
+					'/compete/': resolve(root, 'pages/compete.html'),
 					'/dex-volumes': resolve(root, 'pages/dex-volumes.html'),
 					'/dex-volumes/': resolve(root, 'pages/dex-volumes.html'),
 					'/hacks': resolve(root, 'pages/hacks.html'),
@@ -2491,6 +2501,14 @@ const appConfig = {
 						filePath = resolve(root, 'pages/commerce.html');
 					else if (!filePath && /^\/invoices\/[^/.]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-invoice.html');
+					// /earnings → the revenue ledger console; /agents/:id/earnings → the
+					// agent's public earnings page. Mirrors vercel.json.
+					else if (!filePath && /^\/earnings\/?$/.test(path))
+						filePath = resolve(root, 'pages/earnings.html');
+					else if (!filePath && /^\/agents\/[^/.]+\/earnings\/?$/.test(path))
+						filePath = resolve(root, 'pages/agent-earnings.html');
+					else if (!filePath && /^\/compete\/[^/.]+\/?$/.test(path))
+						filePath = resolve(root, 'pages/compete.html');
 					// /launch/intents/:id → one funded pump.fun launch intent (quote, funding,
 					// confirmation, stage tracker). Mirrors vercel.json's
 					// `/launch/intents/([^/.]+)/?`; the list itself is /launch/intents.
@@ -2513,6 +2531,9 @@ const appConfig = {
 					// /agents/:id/perps and /agent-perps → Agent Perps (perpetual futures).
 					else if (!filePath && /^\/(agents\/[^/.]+\/perps|agent-perps)\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-perps.html');
+					// /agents/:id/predictions and /agent-predictions → Agent Predictions (shadow mode and scanner).
+					else if (!filePath && /^\/(agents\/[^/.]+\/predictions|agent-predictions)\/?$/.test(path))
+						filePath = resolve(root, 'pages/agent-predictions.html');
 					// /agents/:id/mail and /agent-mail → Agent Mail (the agent's inbox).
 					else if (!filePath && /^\/(agents\/[^/.]+\/mail|agent-mail)\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-mail.html');

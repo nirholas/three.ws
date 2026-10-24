@@ -1,33 +1,35 @@
 <script>
+	import { untrack } from 'svelte';
+	
 	import Modal from './Modal.svelte';
 	import Markdown from './svelte-marked/markdown/Markdown.svelte';
 	import { toolSchema, knowledgeSkills, currentUser, notify, pluginLibraryUrl } from './stores.js';
 
-	export let open = false;
+	/**
+	 * @typedef {Object} Props
+	 * @property {boolean} [open]
+	 */
 
-	let view = 'browse';
-	$: if (view !== 'publish') publishError = null;
+	/** @type {Props} */
+	let { open = $bindable(false) } = $props();
+
+	let view = $state('browse');
 
 	// Browse state
-	let skills = [];
-	let localSkills = [];
-	let showLocalSkills = false;
-	let loading = false;
-	let loaded = false;
-	let fetchFailed = false;
-	let searchQuery = '';
-	let debouncedSearch = '';
-	let selectedCategory = null;
+	let skills = $state([]);
+	let localSkills = $state([]);
+	let showLocalSkills = $state(false);
+	let loading = $state(false);
+	let loaded = $state(false);
+	let fetchFailed = $state(false);
+	let searchQuery = $state('');
+	let debouncedSearch = $state('');
+	let selectedCategory = $state(null);
 	let page = null;
-	let hasMore = false;
+	let hasMore = $state(false);
 	let sort = 'popular';
-	let installPending = {};
+	let installPending = $state({});
 
-	$: if (open && !loaded) {
-		loadCategories();
-		loadSkills(true);
-		loadLocalSkills();
-	}
 
 	async function loadLocalSkills() {
 		try {
@@ -117,14 +119,14 @@
 	}
 
 	// Detail expansion state
-	let expandedSkillId = null;
-	let detailLoading = false;
-	let detail = null;
-	let userRating = null;
-	let hoverStar = 0;
+	let expandedSkillId = $state(null);
+	let detailLoading = $state(false);
+	let detail = $state(null);
+	let userRating = $state(null);
+	let hoverStar = $state(0);
 
 	// Publish state
-	let publishForm = {
+	let publishForm = $state({
 		name: '',
 		slug: '',
 		description: '',
@@ -149,13 +151,13 @@
 		),
 		isPublic: true,
 		pricePerCallUsd: 0
-	};
-	let publishError = null;
-	let publishLoading = false;
-	let schemaValid = null;
-	let schemaErrorMsg = '';
+	});
+	let publishError = $state(null);
+	let publishLoading = $state(false);
+	let schemaValid = $state(null);
+	let schemaErrorMsg = $state('');
 
-	let categories = [];
+	let categories = $state([]);
 
 	async function loadCategories() {
 		try {
@@ -527,11 +529,11 @@
 	}
 
 	// Library tab state
-	let libraryPlugins = [];
-	let loadingLibrary = false;
-	let libraryQuery = '';
-	let libraryInstalling = {};
-	let failedAvatars = new Set();
+	let libraryPlugins = $state([]);
+	let loadingLibrary = $state(false);
+	let libraryQuery = $state('');
+	let libraryInstalling = $state({});
+	let failedAvatars = $state(new Set());
 
 	async function loadPluginLibrary() {
 		loadingLibrary = true;
@@ -564,16 +566,6 @@
 		libraryLoaded = true;
 	}
 
-	$: filteredLibraryPlugins = libraryQuery
-		? libraryPlugins.filter((p) => {
-				const q = libraryQuery.toLowerCase();
-				return (
-					p.name.toLowerCase().includes(q) ||
-					p.description.toLowerCase().includes(q) ||
-					p.tags.some((t) => t.toLowerCase().includes(q))
-				);
-			})
-		: libraryPlugins;
 
 	function isLibraryPluginInstalled(identifier) {
 		return $toolSchema.some(
@@ -620,24 +612,13 @@
 		}
 	}
 
-	let libraryLoaded = false;
-	let libraryError = false;
-	let libraryFailed = {};
-	$: if (view === 'library' && !loadingLibrary && !libraryLoaded) loadPluginLibrary();
+	let libraryLoaded = $state(false);
+	let libraryError = $state(false);
+	let libraryFailed = $state({});
 
 
-	// init and keyboard
 
-	$: if (open && !loaded && !loading) {
-		Promise.all([loadSkills(true), loadCategories()]);
-	}
 
-	$: if (!open) { fetchFailed = false; loaded = false; }
-
-	$: tagPills = publishForm.tags
-		.split(',')
-		.map((t) => t.trim())
-		.filter(Boolean);
 
 	function handleKeydown(e) {
 		if (!open) return;
@@ -647,9 +628,48 @@
 			detail = null;
 		}
 	}
+	$effect.pre(() => {
+		if (view !== 'publish') publishError = null;
+	});
+	$effect.pre(() => {
+		if (!open) { fetchFailed = false; loaded = false; }
+	});
+	$effect.pre(() => {
+		if (open && !loaded) {
+			untrack(() => {
+				loadCategories();
+				loadSkills(true);
+				loadLocalSkills();
+			});
+		}
+	});
+	let filteredLibraryPlugins = $derived(libraryQuery
+		? libraryPlugins.filter((p) => {
+				const q = libraryQuery.toLowerCase();
+				return (
+					p.name.toLowerCase().includes(q) ||
+					p.description.toLowerCase().includes(q) ||
+					p.tags.some((t) => t.toLowerCase().includes(q))
+				);
+			})
+		: libraryPlugins);
+	$effect.pre(() => {
+		if (view === 'library' && !loadingLibrary && !libraryLoaded) untrack(loadPluginLibrary);
+	});
+	// init and keyboard
+
+	$effect.pre(() => {
+		if (open && !loaded && !loading) {
+			untrack(() => Promise.all([loadSkills(true), loadCategories()]));
+		}
+	});
+	let tagPills = $derived(publishForm.tags
+		.split(',')
+		.map((t) => t.trim())
+		.filter(Boolean));
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} />
 
 <Modal bind:open class="md:w-[820px] max-w-[820px]">
 	<!-- Tab bar -->
@@ -658,7 +678,7 @@
 			class="mr-4 border-b-2 pb-2 text-[13px] font-medium transition-colors {view === 'browse'
 				? 'border-indigo-500 text-indigo-600'
 				: 'border-transparent text-slate-500 hover:text-slate-700'}"
-			on:click={() => (view = 'browse')}
+			onclick={() => (view = 'browse')}
 		>
 			Browse
 		</button>
@@ -666,7 +686,7 @@
 			class="mr-4 border-b-2 pb-2 text-[13px] font-medium transition-colors {view === 'library'
 				? 'border-indigo-500 text-indigo-600'
 				: 'border-transparent text-slate-500 hover:text-slate-700'}"
-			on:click={() => (view = 'library')}
+			onclick={() => (view = 'library')}
 		>
 			Library
 		</button>
@@ -674,7 +694,7 @@
 			class="border-b-2 pb-2 text-[13px] font-medium transition-colors {view === 'publish'
 				? 'border-indigo-500 text-indigo-600'
 				: 'border-transparent text-slate-500 hover:text-slate-700'}"
-			on:click={() => (view = 'publish')}
+			onclick={() => (view = 'publish')}
 		>
 			Publish
 		</button>
@@ -688,7 +708,7 @@
 					class="rounded-md px-3 py-1.5 text-left text-[12px] font-medium transition-colors {selectedCategory === null
 						? 'bg-indigo-50 text-indigo-700'
 						: 'text-slate-600 hover:bg-slate-100'}"
-					on:click={() => selectCategory(null)}
+					onclick={() => selectCategory(null)}
 				>
 					All skills
 				</button>
@@ -697,7 +717,7 @@
 						class="rounded-md px-3 py-1.5 text-left text-[12px] transition-colors {categorySlug(selectedCategory) === cat.slug
 							? 'bg-indigo-50 font-medium text-indigo-700'
 							: 'text-slate-600 hover:bg-slate-100'}"
-						on:click={() => selectCategory(cat)}
+						onclick={() => selectCategory(cat)}
 					>
 						{cat.label}
 					</button>
@@ -713,24 +733,24 @@
 							class="px-3 py-1 rounded-full text-sm"
 							class:bg-white={!showLocalSkills}
 							class:text-slate-500={showLocalSkills}
-							on:click={() => (showLocalSkills = false)}>Marketplace</button
+							onclick={() => (showLocalSkills = false)}>Marketplace</button
 						>
 						<button
 							class="px-3 py-1 rounded-full text-sm"
 							class:bg-white={showLocalSkills}
 							class:text-slate-500={!showLocalSkills}
-							on:click={() => (showLocalSkills = true)}>Local</button
+							onclick={() => (showLocalSkills = true)}>Local</button
 						>
 					</div>
 					<input
 						type="text"
 						placeholder="Search skills..."
 						bind:value={searchQuery}
-						on:input={handleSearchInput}
+						oninput={handleSearchInput}
 						class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 					/>
 					<select
-						on:change={handleSortChange}
+						onchange={handleSortChange}
 						class="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[12px] text-slate-600 outline-none focus:border-indigo-400"
 					>
 						<option value="popular">Popular</option>
@@ -745,14 +765,14 @@
 						class="rounded-full border px-2.5 py-0.5 text-[11px] {selectedCategory === null
 							? 'border-indigo-400 bg-indigo-50 text-indigo-700'
 							: 'border-slate-200 text-slate-500'}"
-						on:click={() => selectCategory(null)}>All</button
+						onclick={() => selectCategory(null)}>All</button
 					>
 					{#each categories as cat (cat.slug)}
 						<button
 							class="rounded-full border px-2.5 py-0.5 text-[11px] {categorySlug(selectedCategory) === cat.slug
 								? 'border-indigo-400 bg-indigo-50 text-indigo-700'
 								: 'border-slate-200 text-slate-500'}"
-							on:click={() => selectCategory(cat)}>{cat.label}</button
+							onclick={() => selectCategory(cat)}>{cat.label}</button
 						>
 					{/each}
 				</div>
@@ -828,14 +848,14 @@
 												{:else if installed}
 													<button
 														class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] text-slate-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-														on:click={() => toggleLocalInstall(skill)}
+														onclick={() => toggleLocalInstall(skill)}
 													>
 														Remove
 													</button>
 												{:else}
 													<button
 														class="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 transition-colors hover:bg-slate-100"
-														on:click={() => toggleLocalInstall(skill)}
+														onclick={() => toggleLocalInstall(skill)}
 													>
 														Install
 													</button>
@@ -853,13 +873,13 @@
 					<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 						{#each skills as skill (skill.id)}
 							<!-- Card -->
-							<!-- svelte-ignore a11y-click-events-have-key-events -->
-							<!-- svelte-ignore a11y-no-static-element-interactions -->
+							<!-- svelte-ignore a11y_click_events_have_key_events -->
+							<!-- svelte-ignore a11y_no_static_element_interactions -->
 							<div
 								class="cursor-pointer rounded-lg border px-3 py-3 transition-colors {expandedSkillId === skill.id
 									? 'border-indigo-300 bg-indigo-50/30 ring-1 ring-indigo-200'
 									: 'border-slate-200 hover:border-slate-300'}"
-								on:click={() => toggleExpand(skill)}
+								onclick={() => toggleExpand(skill)}
 								aria-expanded={expandedSkillId === skill.id}
 							>
 								<div class="flex items-start justify-between gap-x-3">
@@ -901,14 +921,14 @@
 									{:else if isInstalled(skill)}
 										<button
 											class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] text-slate-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-											on:click={(e) => toggleInstall(skill, e)}
+											onclick={(e) => toggleInstall(skill, e)}
 										>
 											Remove
 										</button>
 									{:else}
 										<button
 											class="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 transition-colors hover:bg-slate-100"
-											on:click={(e) => toggleInstall(skill, e)}
+											onclick={(e) => toggleInstall(skill, e)}
 										>
 											Install
 										</button>
@@ -975,13 +995,13 @@
 																		  (!userRating && star <= Math.round(detail.avg_rating ?? 0))
 																		? '#f59e0b'
 																		: '#d1d5db'}"
-																on:click={() => {
+																onclick={() => {
 																	if ($currentUser && !userRating) submitRating(detail.id, star);
 																}}
-																on:mouseenter={() => {
+																onmouseenter={() => {
 																	if ($currentUser && !userRating) hoverStar = star;
 																}}
-																on:mouseleave={() => (hoverStar = 0)}
+																onmouseleave={() => (hoverStar = 0)}
 																tabindex={$currentUser && !userRating ? 0 : -1}
 																aria-label="Rate {star} star{star > 1 ? 's' : ''}"
 															>*</button>
@@ -1055,21 +1075,21 @@
 											{:else if isInstalled(skill)}
 												<button
 													class="rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] text-slate-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-													on:click={(e) => toggleInstall(skill, e)}
+													onclick={(e) => toggleInstall(skill, e)}
 												>
 													Remove skill
 												</button>
 											{:else}
 												<button
 													class="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[12px] font-medium text-indigo-700 transition-colors hover:bg-indigo-100"
-													on:click={(e) => toggleInstall(skill, e)}
+													onclick={(e) => toggleInstall(skill, e)}
 												>
 													Install skill
 												</button>
 											{/if}
 											<button
 												class="rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] text-slate-600 transition-colors hover:bg-slate-50"
-												on:click={(e) => copySlug(skill.slug, e)}
+												onclick={(e) => copySlug(skill.slug, e)}
 											>
 												Copy slug
 											</button>
@@ -1084,7 +1104,7 @@
 						<button
 							class="mt-4 w-full rounded-lg border border-slate-200 py-2 text-[12px] text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-50"
 							disabled={loading}
-							on:click={() => loadSkills(false)}
+							onclick={() => loadSkills(false)}
 						>
 							{loading ? 'Loading...' : 'Load more'}
 						</button>
@@ -1111,7 +1131,7 @@
 					<span>Failed to load plugin registry</span>
 					<button
 						class="ml-3 underline hover:text-red-900"
-						on:click={() => { libraryLoaded = false; loadPluginLibrary(); }}
+						onclick={() => { libraryLoaded = false; loadPluginLibrary(); }}
 					>
 						Retry
 					</button>
@@ -1128,7 +1148,7 @@
 									alt=""
 									class="h-8 w-8 shrink-0 rounded-md object-cover"
 									loading="lazy"
-									on:error={() => { failedAvatars = new Set([...failedAvatars, plugin.identifier]); }}
+									onerror={() => { failedAvatars = new Set([...failedAvatars, plugin.identifier]); }}
 								/>
 							{:else}
 								<span class="shrink-0 text-2xl leading-none">{plugin.avatar?.startsWith('http') ? '🔧' : plugin.avatar}</span>
@@ -1163,7 +1183,7 @@
 											: 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'}
 										disabled:opacity-50"
 									disabled={!!libraryInstalling[plugin.identifier]}
-									on:click={() =>
+									onclick={() =>
 										isLibraryPluginInstalled(plugin.identifier)
 											? toolSchema.update((g) => g.filter((x) => x.id !== `lib:${plugin.identifier}`))
 											: installLibraryPlugin(plugin)}
@@ -1196,7 +1216,7 @@
 					id="pf-name"
 					type="text"
 					bind:value={publishForm.name}
-					on:input={(e) => { handleNameInput(e); publishError = null; }}
+					oninput={(e) => { handleNameInput(e); publishError = null; }}
 					placeholder="My Skill"
 					class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 				/>
@@ -1208,7 +1228,7 @@
 					id="pf-slug"
 					type="text"
 					bind:value={publishForm.slug}
-					on:input={() => (publishError = null)}
+					oninput={() => (publishError = null)}
 					placeholder="my-skill"
 					class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 				/>
@@ -1222,11 +1242,11 @@
 				<textarea
 					id="pf-desc"
 					bind:value={publishForm.description}
-					on:input={() => (publishError = null)}
+					oninput={() => (publishError = null)}
 					placeholder="Describe what this skill does..."
 					rows="3"
 					class="resize-none rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
-				/>
+				></textarea>
 			</div>
 
 			<div class="flex gap-x-3">
@@ -1253,7 +1273,7 @@
 						id="pf-tags"
 						type="text"
 						bind:value={publishForm.tags}
-						on:input={() => (publishError = null)}
+						oninput={() => (publishError = null)}
 						placeholder="search, web, api"
 						class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 					/>
@@ -1275,16 +1295,16 @@
 				<textarea
 					id="pf-schema"
 					bind:value={publishForm.schemaText}
-					on:input={() => (publishError = null)}
+					oninput={() => (publishError = null)}
 					rows="10"
 					spellcheck="false"
 					class="resize-y rounded-lg border border-slate-200 px-3 py-1.5 font-mono text-[12px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
-				/>
+				></textarea>
 				<div class="flex items-center gap-x-2">
 					<button
 						type="button"
 						class="rounded-lg border border-slate-200 px-3 py-1 text-[11px] text-slate-600 transition-colors hover:bg-slate-50"
-						on:click={validateSchema}
+						onclick={validateSchema}
 					>
 						Validate JSON
 					</button>
@@ -1332,7 +1352,7 @@
 				type="button"
 				disabled={publishLoading || !publishForm.name || !publishForm.slug}
 				class="self-start rounded-lg bg-indigo-600 px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
-				on:click={publishSkill}
+				onclick={publishSkill}
 			>
 				{publishLoading ? 'Publishing...' : 'Publish skill'}
 			</button>

@@ -78,7 +78,7 @@ beforeAll(async () => {
 	dbState.pg = new PGlite();
 	await dbState.pg.exec(`
 		create table users (id uuid primary key, email text);
-		create table agent_identities (id uuid primary key, user_id uuid, name text, deleted_at timestamptz);
+		create table agent_identities (id uuid primary key, user_id uuid, name text, deleted_at timestamptz, meta jsonb);
 		insert into users (id, email) values ('${OWNER}', 'owner@example.com'), ('${STRANGER}', 'other@example.com');
 		insert into agent_identities (id, user_id, name) values ('${AGENT}', '${OWNER}', 'Scout');
 	`);

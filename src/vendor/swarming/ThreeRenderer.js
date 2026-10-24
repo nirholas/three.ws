@@ -32,6 +32,7 @@ export class ThreeRenderer {
 		this.ndc = new THREE.Vector2();
 		this.rafId = null;
 		this.lastFrame = 0;
+		this.maxZoom = 160;
 
 		this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
 		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -43,7 +44,7 @@ export class ThreeRenderer {
 		container.appendChild(canvas);
 
 		this.scene = new THREE.Scene();
-		this.camera = new THREE.PerspectiveCamera(50, 1, 0.1, 600);
+		this.camera = new THREE.PerspectiveCamera(50, 1, 0.1, 2000);
 		this.applyCamera();
 
 		this.scene.add(new THREE.AmbientLight(0xffffff, 0.9));
@@ -239,7 +240,7 @@ export class ThreeRenderer {
 
 	onWheel = (e) => {
 		e.preventDefault();
-		this.spherical.radius = Math.max(18, Math.min(160, this.spherical.radius + e.deltaY * 0.06));
+		this.spherical.radius = Math.max(18, Math.min(this.maxZoom, this.spherical.radius + e.deltaY * 0.06 * (this.maxZoom / 160)));
 		this.applyCamera();
 		this.requestRender();
 	};
@@ -251,7 +252,7 @@ export class ThreeRenderer {
 		else if (e.key === 'ArrowUp') this.spherical.phi = Math.max(0.15, this.spherical.phi - step);
 		else if (e.key === 'ArrowDown') this.spherical.phi = Math.min(Math.PI - 0.15, this.spherical.phi + step);
 		else if (e.key === '+' || e.key === '=') this.spherical.radius = Math.max(18, this.spherical.radius - 6);
-		else if (e.key === '-') this.spherical.radius = Math.min(160, this.spherical.radius + 6);
+		else if (e.key === '-') this.spherical.radius = Math.min(this.maxZoom, this.spherical.radius + 6);
 		else return;
 		e.preventDefault();
 		this.applyCamera();
@@ -260,9 +261,10 @@ export class ThreeRenderer {
 
 	/** Fit the camera distance to the current layout extent. */
 	fit() {
-		let r = 10;
-		for (const n of this.nodes) r = Math.max(r, Math.hypot(n.x || 0, n.y || 0, n.z || 0) + n.radius);
-		this.spherical.radius = Math.max(30, Math.min(150, r * 2.4));
+		const dists = this.nodes.map((n) => Math.hypot(n.x || 0, n.y || 0, n.z || 0) + n.radius).sort((a, b) => a - b);
+		const r = Math.max(10, dists.length ? dists[Math.floor((dists.length - 1) * 0.92)] : 10);
+		this.maxZoom = Math.max(160, r * 4);
+		this.spherical.radius = Math.max(30, Math.min(this.maxZoom, r * 2.4));
 		this.applyCamera();
 		this.requestRender();
 	}
