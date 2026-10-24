@@ -11,7 +11,6 @@ import {
 	buildCurveWithMarketCap,
 	validateConfigParameters,
 	getBaseFeeParams,
-	getBaseFeeNumerator,
 	feeNumeratorToBps,
 	TokenType,
 	TokenDecimal,
@@ -22,6 +21,7 @@ import {
 	MigrationFeeOption,
 	ActivationType,
 } from '@meteora-ag/dynamic-bonding-curve-sdk';
+import { getBaseFeeNumerator } from '@meteora-ag/dynamic-bonding-curve-sdk/math';
 import { Keypair } from '@solana/web3.js';
 import BN from 'bn.js';
 import { NATIVE_LANE, curveBuildParams, configKeyFor, laneInfo } from '../api/_lib/native-launch/config.js';
