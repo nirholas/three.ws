@@ -36,7 +36,7 @@ import { join } from 'node:path';
 
 import { cors, json, method, wrap, rateLimited, error } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { cacheGet, cacheSet } from '../_lib/cache.js';
+import { cacheWrapLastGood } from '../_lib/cache.js';
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
 import {
 	buildShipFeed,
@@ -106,29 +106,32 @@ const boundedFetch = (url, init) =>
 
 async function buildFeed({ limit, audience }) {
 	const key = `ship:feed:${limit}:${audience}`;
-	const cached = await cacheGet(key);
-	if (cached) return { ...cached, cached: true };
+	const { value, stale } = await cacheWrapLastGood(
+		key,
+		CACHE_TTL_S,
+		async () => {
+			const entries = loadChangelog();
+			const commits = await fetchGitHubCommits({
+				repo: REPO,
+				branch: 'main',
+				limit,
+				token: process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '',
+				fetchImpl: boundedFetch,
+				userAgent: 'three.ws-shipfeed',
+			});
 
-	const entries = loadChangelog();
-	const commits = await fetchGitHubCommits({
-		repo: REPO,
-		branch: 'main',
-		limit,
-		token: process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '',
-		fetchImpl: boundedFetch,
-		userAgent: 'three.ws-shipfeed',
-	});
-
-	const feed = buildShipFeed({
-		commits,
-		entries,
-		repo: REPO,
-		siteUrl: SITE,
-		minAudience: audience,
-		classify: { productScopes: PRODUCT_SCOPES },
-	});
-	await cacheSet(key, feed, CACHE_TTL_S);
-	return { ...feed, cached: false };
+			return buildShipFeed({
+				commits,
+				entries,
+				repo: REPO,
+				siteUrl: SITE,
+				minAudience: audience,
+				classify: { productScopes: PRODUCT_SCOPES },
+			});
+		},
+		{ withMeta: true },
+	);
+	return { ...value, cached: false, stale };
 }
 
 /**

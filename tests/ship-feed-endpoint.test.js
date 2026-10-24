@@ -50,6 +50,17 @@ const fetchUpstream = vi.fn(async () => ({
 vi.mock('../api/_lib/upstream-fetch.js', () => ({ fetchUpstream }));
 
 const { default: handler } = await import('../api/ship/feed.js');
+const { cacheDel } = await import('../api/_lib/cache.js');
+
+const RATE_LIMIT_RESPONSE = {
+	ok: false,
+	status: 403,
+	headers: {
+		get: (h) =>
+			h === 'x-ratelimit-remaining' ? '0' : h === 'x-ratelimit-reset' ? String(Math.floor(Date.now() / 1000) + 3600) : null,
+	},
+	json: async () => ({ message: 'API rate limit exceeded' }),
+};
 
 function mkRes() {
 	return {
@@ -145,6 +156,22 @@ describe('GET /api/ship/feed', () => {
 		const callsAfterFirst = fetchUpstream.mock.calls.length;
 		await call('/api/ship/feed?limit=19');
 		expect(fetchUpstream.mock.calls.length).toBe(callsAfterFirst);
+	});
+
+	it('serves the last-good feed, marked stale, when GitHub is rate-limited', async () => {
+		const first = JSON.parse((await call('/api/ship/feed?limit=20')).body);
+		expect(first.stale).toBe(false);
+
+		// Drop the fresh cache entry but leave the last-known-good mirror in
+		// place, so the next call is forced through fn() and has to fall back.
+		await cacheDel('ship:feed:20:internal');
+
+		fetchUpstream.mockImplementationOnce(async () => RATE_LIMIT_RESPONSE);
+		const res = await call('/api/ship/feed?limit=20');
+		expect(res.statusCode).toBe(200);
+		const second = JSON.parse(res.body);
+		expect(second.stale).toBe(true);
+		expect(second.stats.commits).toBe(first.stats.commits);
 	});
 
 	it('refuses a non-GET method', async () => {

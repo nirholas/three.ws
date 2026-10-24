@@ -128,6 +128,23 @@ export async function releaseLock() {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Tags a GitHub rate-limit exhaustion so callers can match on a stable flag
+// instead of pattern-matching the message string. A shared Cloud Run egress
+// IP can burn through the unauthenticated 60/hour ceiling without this cron
+// doing anything wrong, so this is an expected, no-fault condition, not a
+// bug: callers are expected to skip gracefully, not propagate it as a 5xx.
+export function githubRateLimitError(resetMs) {
+	const until = Number.isFinite(resetMs) ? new Date(resetMs).toISOString() : 'unknown';
+	return Object.assign(
+		new Error(`GitHub rate limit exhausted (resets ${until}); set GITHUB_TOKEN to raise it above 60/hour`),
+		{ githubRateLimited: true, retryAfter: Number.isFinite(resetMs) ? until : null },
+	);
+}
+
+export function isGithubRateLimitError(err) {
+	return Boolean(err?.githubRateLimited);
+}
+
 async function fetchCommitPage(page) {
 	const headers = { accept: 'application/vnd.github+json', 'user-agent': 'three.ws-commit-feed' };
 	const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
@@ -141,10 +158,7 @@ async function fetchCommitPage(page) {
 		// without this cron doing anything wrong.
 		if (res.headers.get('x-ratelimit-remaining') === '0') {
 			const reset = Number(res.headers.get('x-ratelimit-reset')) * 1000;
-			const until = Number.isFinite(reset) ? new Date(reset).toISOString() : 'unknown';
-			throw new Error(
-				`GitHub rate limit exhausted (resets ${until}); set GITHUB_TOKEN to raise it above 60/hour`,
-			);
+			throw githubRateLimitError(reset);
 		}
 		throw new Error(`GitHub commits fetch failed (${res.status})`);
 	}
@@ -272,13 +286,22 @@ async function sendTelegram(botToken, chatId, text, previewUrl) {
 	}
 }
 
-export async function pushTelegramLane() {
+export async function pushTelegramLane({ getPage = fetchCommitPage } = {}) {
 	const botToken = process.env.TELEGRAM_BOT_TOKEN;
 	const chatId = process.env.TELEGRAM_COMMITS_CHAT_ID || process.env.TELEGRAM_CHANGELOG_CHAT_ID;
 	if (!botToken || !chatId) return { skipped: 'not_configured' };
 
 	const state = (await getState(STATE_KEY)) || { lastSha: null, lastDate: null };
-	const { commits, found } = await fetchCommitsSince(state.lastSha);
+	let commits, found;
+	try {
+		({ commits, found } = await fetchCommitsSince(state.lastSha, { getPage }));
+	} catch (err) {
+		if (isGithubRateLimitError(err)) {
+			console.warn(`[commit-feed] ${err.message}`);
+			return { posted: 0, skipped: 'github_rate_limited', retryAfter: err.retryAfter };
+		}
+		throw err;
+	}
 	if (commits.length === 0) return { posted: 0 };
 
 	if (state.lastSha && !found) {

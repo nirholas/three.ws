@@ -1,5 +1,18 @@
-import { describe, it, expect } from 'vitest';
-import {
+import { readFileSync } from 'node:fs';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { PGlite } from '@electric-sql/pglite';
+
+const dbState = { pg: null };
+
+vi.mock('../api/_lib/db.js', () => {
+	const sql = async (strings, ...values) => {
+		const text = strings.reduce((acc, part, i) => acc + part + (i < values.length ? `$${i + 1}` : ''), '');
+		return (await dbState.pg.query(text, values)).rows;
+	};
+	return { sql };
+});
+
+const {
 	commitHeadline,
 	commitSummary,
 	commitPreviewUrl,
@@ -7,8 +20,23 @@ import {
 	commitDate,
 	fetchCommitsSince,
 	newCommitsSince,
-} from '../api/_lib/commit-feed-push.js';
-import commitOg from '../api/commit-og.js';
+	githubRateLimitError,
+	isGithubRateLimitError,
+	pushTelegramLane,
+} = await import('../api/_lib/commit-feed-push.js');
+const { default: commitOg } = await import('../api/commit-og.js');
+
+const MIG = new URL('../api/_lib/migrations/', import.meta.url);
+const APP_SETTINGS = (() => {
+	const src = readFileSync(new URL('20260922210000_free_tier_models.sql', MIG), 'utf8');
+	const start = src.indexOf('CREATE TABLE IF NOT EXISTS app_settings');
+	return src.slice(start, src.indexOf(');', start) + 2);
+})();
+
+beforeEach(async () => {
+	dbState.pg = new PGlite();
+	await dbState.pg.exec(APP_SETTINGS);
+});
 
 const commit = (over = {}) => ({
 	sha: 'abcdef1234567890abcdef1234567890abcdef12',
@@ -194,6 +222,46 @@ describe('newCommitsSince', () => {
 	it('reseeds when there is no anchor at all', () => {
 		expect(newCommitsSince(history(5), { lastSha: null }, NOW).reseed).toBe(true);
 		expect(newCommitsSince(history(5), { lastSha: 'unknown' }, NOW).reseed).toBe(true);
+	});
+});
+
+describe('githubRateLimitError / isGithubRateLimitError', () => {
+	it('round-trips a tagged error as rate-limited', () => {
+		const err = githubRateLimitError(Date.parse('2026-08-14T20:00:00Z'));
+		expect(isGithubRateLimitError(err)).toBe(true);
+		expect(err.retryAfter).toBe('2026-08-14T20:00:00.000Z');
+		expect(err.message).toContain('GitHub rate limit exhausted');
+	});
+
+	it('reads a generic error as not rate-limited', () => {
+		expect(isGithubRateLimitError(new Error('boom'))).toBe(false);
+		expect(isGithubRateLimitError(null)).toBe(false);
+	});
+});
+
+describe('pushTelegramLane', () => {
+	const ORIGINAL_ENV = { ...process.env };
+
+	beforeEach(() => {
+		process.env.TELEGRAM_BOT_TOKEN = 'test-bot-token';
+		process.env.TELEGRAM_COMMITS_CHAT_ID = 'test-chat-id';
+	});
+
+	afterEach(() => {
+		process.env = { ...ORIGINAL_ENV };
+	});
+
+	it('skips gracefully instead of throwing when GitHub answers a rate limit', async () => {
+		const resetMs = Date.parse('2026-08-14T20:00:00Z');
+		const getPage = async () => {
+			throw githubRateLimitError(resetMs);
+		};
+		const result = await pushTelegramLane({ getPage });
+		expect(result).toEqual({
+			posted: 0,
+			skipped: 'github_rate_limited',
+			retryAfter: new Date(resetMs).toISOString(),
+		});
 	});
 });
 
