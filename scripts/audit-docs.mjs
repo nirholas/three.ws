@@ -417,6 +417,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['ui-lint', 'internal: operator guide for the lintapple design-system QA script, not a reader-facing product doc'],
 	['standalone-repo-playbook', 'internal: the checklist for making a mirrored package discoverable by humans and LLM crawlers, written for whoever runs the mirror-promotion work'],
 	['listings-registry', 'internal: generated operator tracker of every listing surface and its status; the reader-facing record is docs/listings.md'],
+	['awesome-solana-ai-submission', 'internal: one-time PR packet for the solana-foundation/awesome-solana-ai README, owner-gated to post; register in data/pages.json only if it becomes an ongoing reader-facing page'],
 ]);
 const GENERATED_DOCS = new Set(['ALL', 'EVERYTHING', 'README']);
 
