@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-24T02:18:41.033Z",
+	"generated_at": "2026-10-24T04:16:24.927Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4192,
+	"total": 4191,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -121,6 +121,16 @@
 			"tags": [
 				"sdk",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Fixed three more legacy thumbnail links that browsers refused to load",
+			"summary": "A handful of forge creations and 3D props stored from before an earlier URL fix still pointed straight at the storage bucket's own domain instead of three.ws's own CDN link, which Chrome blocks as an opaque cross-origin response. Model-page posters, a creation's related-models sidebar, forge share-card previews (the image X and Discord show when a link is pasted), and the Forged gallery's model-viewer thumbnails now all resolve through the same CDN link as everything else.",
+			"link": "/forge",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -543,6 +553,16 @@
 			"link": "/strategies",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Bonding-curve status API no longer hard-fails when pump.fun blips",
+			"summary": "GET /api/crypto/bonding was returning a 503 to every caller during a pump.fun outage, even for mints it had already fetched successfully. It now caches each mint's bonding-curve status and keeps a longer last-known-good copy, so a failed upstream fetch serves that cached data (flagged with an x-pump-stale header) instead of a hard error. A 503 with a retry hint is now only returned for a mint that has no cached data at all.",
+			"link": "/api/crypto/bonding",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1543,28 +1563,6 @@
 			"tags": [
 				"feature",
 				"security"
-			]
-		},
-		{
-			"date": "2026-10-12",
-			"type": "update",
-			"title": "Forge generation controls (target faces, bbox fit, rest pose) and a batch endpoint for fanning out N generations",
-			"summary": "POST /api/forge and /api/x402/forge take three new, off-by-default controls: target_faces (alias of target_polycount) pins an explicit geometry budget on poly-aware backends; bbox: [x, y, z] uniformly rescales the delivered mesh to fit a box in meters, lane-agnostic since it runs as a post-generation GLB fit; pose: \"t\" | \"a\" requests a rest pose on backends without a caller-supplied reference image, with pose_applied echoed back so a photo-conditioned lane never silently ignores it. A new POST /api/forge-batch fans one call out to up to 8 independent /api/forge submissions, concurrency-capped by the caller's $THREE holder tier, and GET /api/forge-batch?batch=<id> polls the group: one item's failure never fails the batch, and group state is best-effort Redis so a job already returned stays pollable at /api/forge?job= even if the group expires. The Workbench's Generate Mesh node now exposes rest pose and width/height/depth bbox fields alongside the existing face budget, and a new Batch drawer (toolbar icon, or press B) queues up to 8 prompts at once against the new endpoint and opens any finished item straight into the viewport.",
-			"link": "/docs/forge",
-			"tags": [
-				"feature",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-12",
-			"type": "update",
-			"title": "Real VRM avatars: spring bones, expressions, and .vrma clips via @pixiv/three-vrm",
-			"summary": "The hand-rolled VRM loader is gone. vrm-boot.js now registers the real VRMLoaderPlugin (@pixiv/three-vrm) on the three.ws GLTFLoader, so VRM 0.x and 1.0 avatars get genuine MToon materials, spring-bone physics, node constraints, look-at, and all 18 expression presets, driven live by vrm.update(delta) in AnimationManager and mapped onto the ARKit-52 face-capture driver. VRMAnimationLoaderPlugin loads .vrma clips into the same retargeting pipeline that drives non-VRM humanoids, so a single clip plays on either. The Ready Player Me import page (/import-rpm) now accepts .vrm files alongside .glb, and a long-standing bug that 400'd every import at the final save step (it sent an invalid source value) is fixed. docs/avatar-engines.md upgrades three-vrm from interop to live.",
-			"link": "/docs/avatar-engines",
-			"tags": [
-				"feature",
-				"fix"
 			]
 		}
 	]

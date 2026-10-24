@@ -95,6 +95,14 @@
 			<description>One command, npm run package:engine-stores, validates the Unity, Godot and Unreal bridges and builds a reproducible upload package for each, with listing metadata and a submission checklist. The Unity package and Unreal plugin manifests now carry their documentation links.</description>
 		</item>
 		<item>
+			<title>Fixed three more legacy thumbnail links that browsers refused to load</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-24:Fixed three more legacy thumbnail links that browsers refused to load</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A handful of forge creations and 3D props stored from before an earlier URL fix still pointed straight at the storage bucket's own domain instead of three.ws's own CDN link, which Chrome blocks as an opaque cross-origin response. Model-page posters, a creation's related-models sidebar, forge share-card previews (the image X and Discord show when a link is pasted), and the Forged gallery's model-viewer thumbnails now all resolve through the same CDN link as everything else.</description>
+		</item>
+		<item>
 			<title>Hundreds of dependency security advisories cleared across the repo</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-24:Hundreds of dependency security advisories cleared across the repo</guid>
@@ -421,6 +429,14 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Every strategy backtest replays its entry gate with the future removed and reports any decision that changed, pins the exact dataset it ran on with a content hash, and marks older unpinned results as unreproducible. A new canary job checks each price and candle source against a known value every 30 minutes and tries the healthy ones first.</description>
+		</item>
+		<item>
+			<title>Bonding-curve status API no longer hard-fails when pump.fun blips</title>
+			<link>https://three.ws/api/crypto/bonding</link>
+			<guid isPermaLink="false">2026-10-23:Bonding-curve status API no longer hard-fails when pump.fun blips</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>GET /api/crypto/bonding was returning a 503 to every caller during a pump.fun outage, even for mints it had already fetched successfully. It now caches each mint's bonding-curve status and keeps a longer last-known-good copy, so a failed upstream fetch serves that cached data (flagged with an x-pump-stale header) instead of a hard error. A 503 with a retry hint is now only returned for a mint that has no cached data at all.</description>
 		</item>
 		<item>
 			<title>Chain turnover on /chains</title>
@@ -2335,14 +2351,6 @@
 			<description>Connect Grok Bot to three.ws as a custom MCP connector: exact fields for each sign-in mode, which server to pick, the links every result carries, jobs and safe retries, free limits and install tokens, why a connector key can never spend, guided prompts, and a fix for every connection failure.</description>
 		</item>
 		<item>
-			<title>Docs · Grok Bot connector reference</title>
-			<link>https://three.ws/docs/grok-bot</link>
-			<guid isPermaLink="false">2026-10-09:Docs · Grok Bot connector reference</guid>
-			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Exact connector settings for Grok Bot, which sign-in and which server to pick, the links, jobs, retry and rate-limit contracts for unattended runs, the spend rule, and a fix for every failure the connector probe can report.</description>
-		</item>
-		<item>
 			<title>Docs · Modly and three.ws</title>
 			<link>https://three.ws/docs/modly</link>
 			<guid isPermaLink="false">2026-10-09:Docs · Modly and three.ws</guid>
@@ -2413,14 +2421,6 @@
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Download three.ws Forge, the free desktop 3D studio for Windows, Linux and Apple silicon Macs. Turn a photo into a 3D model with open-source generators on your own GPU or the three.ws cloud, chain repair, remeshing, rigging and export in node workflows, import free CC0 models and publish to your three.ws account in one click. Based on Modly (MIT).</description>
-		</item>
-		<item>
-			<title>Tutorial · Grok Bot recipes</title>
-			<link>https://three.ws/tutorials/grok-bot-recipes</link>
-			<guid isPermaLink="false">2026-10-09:Tutorial · Grok Bot recipes</guid>
-			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Six jobs to hand Grok Bot, each with the exact sentence, the tools it calls in order, and the real output of running that sequence against production: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image as a 3D model, a weekly agent report and a $THREE market brief.</description>
 		</item>
 		<item>
 			<title>Workbench</title>
@@ -2757,14 +2757,6 @@
 			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Connect Grok Bot, Grok connectors and the xAI API to one free remote MCP server that turns text or an image into a textured 3D model, a rigged avatar, or a named 3D persona that lip-syncs its replies. No account, payment or API key.</description>
-		</item>
-		<item>
-			<title>Docs · three.ws for Grok</title>
-			<link>https://three.ws/docs/grok</link>
-			<guid isPermaLink="false">2026-10-08:Docs · three.ws for Grok</guid>
-			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Connect Grok Bot, Grok connectors or the xAI API to the free three.ws remote MCP server at /api/mcp-grok: text and image to 3D, rigged avatars, and a named 3D persona that lip-syncs its replies, with no account, payment or API key.</description>
 		</item>
 		<item>
 			<title>Launch a Paired Coin</title>

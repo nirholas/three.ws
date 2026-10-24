@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-24T02:18:40.977Z",
+	"generated_at": "2026-10-24T04:16:24.892Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -118,6 +118,16 @@
 			"tags": [
 				"sdk",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Fixed three more legacy thumbnail links that browsers refused to load",
+			"summary": "A handful of forge creations and 3D props stored from before an earlier URL fix still pointed straight at the storage bucket's own domain instead of three.ws's own CDN link, which Chrome blocks as an opaque cross-origin response. Model-page posters, a creation's related-models sidebar, forge share-card previews (the image X and Discord show when a link is pasted), and the Forged gallery's model-viewer thumbnails now all resolve through the same CDN link as everything else.",
+			"link": "/forge",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -540,6 +550,16 @@
 			"link": "/strategies",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Bonding-curve status API no longer hard-fails when pump.fun blips",
+			"summary": "GET /api/crypto/bonding was returning a 503 to every caller during a pump.fun outage, even for mints it had already fetched successfully. It now caches each mint's bonding-curve status and keeps a longer last-known-good copy, so a failed upstream fetch serves that cached data (flagged with an x-pump-stale header) instead of a hard error. A 503 with a retry hint is now only returned for a mint that has no cached data at all.",
+			"link": "/api/crypto/bonding",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -3016,16 +3036,6 @@
 		{
 			"date": "2026-10-09",
 			"type": "launch",
-			"title": "Docs · Grok Bot connector reference",
-			"summary": "Exact connector settings for Grok Bot, which sign-in and which server to pick, the links, jobs, retry and rate-limit contracts for unattended runs, the spend rule, and a fix for every failure the connector probe can report.",
-			"link": "/docs/grok-bot",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "launch",
 			"title": "Docs · Modly and three.ws",
 			"summary": "Every way three.ws works with Modly, the free open-source 3D app: generate on your own GPU from /modly or the Forge, add three.ws cloud nodes and publishing to Modly, the desktop app, and the mesh tools and slicer handoff built from Modly ideas.",
 			"link": "/docs/modly",
@@ -3109,16 +3119,6 @@
 			"title": "three.ws Forge for Desktop",
 			"summary": "Download three.ws Forge, the free desktop 3D studio for Windows, Linux and Apple silicon Macs. Turn a photo into a 3D model with open-source generators on your own GPU or the three.ws cloud, chain repair, remeshing, rigging and export in node workflows, import free CC0 models and publish to your three.ws account in one click. Based on Modly (MIT).",
 			"link": "/forge-desktop",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-09",
-			"type": "launch",
-			"title": "Tutorial · Grok Bot recipes",
-			"summary": "Six jobs to hand Grok Bot, each with the exact sentence, the tools it calls in order, and the real output of running that sequence against production: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image as a 3D model, a weekly agent report and a $THREE market brief.",
-			"link": "/tutorials/grok-bot-recipes",
 			"tags": [
 				"launch"
 			]
@@ -3551,16 +3551,6 @@
 			"type": "launch",
 			"title": "Docs · three.ws for Grok",
 			"summary": "Connect Grok Bot, Grok connectors and the xAI API to one free remote MCP server that turns text or an image into a textured 3D model, a rigged avatar, or a named 3D persona that lip-syncs its replies. No account, payment or API key.",
-			"link": "/docs/grok",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "launch",
-			"title": "Docs · three.ws for Grok",
-			"summary": "Connect Grok Bot, Grok connectors or the xAI API to the free three.ws remote MCP server at /api/mcp-grok: text and image to 3D, rigged avatars, and a named 3D persona that lip-syncs its replies, with no account, payment or API key.",
 			"link": "/docs/grok",
 			"tags": [
 				"launch"
