@@ -148,6 +148,17 @@ describe('gcp-triage HTTP classification', () => {
 		expect(finding.class).toBe('owner');
 	});
 
+	// 2026-10-24 triage-lane sweep: 21 /api/chat 503s in 6h, previously
+	// unclassified (fell through to investigate) despite sharing the same
+	// root cause as three-ws-ai-providers-unavailable-5xx (the GCP billing
+	// hold blocking the vertex-gemini anchor, row 20 in
+	// production-100-OWNER-ACTIONS.md).
+	it('classifies a chat fallback-chain exhaustion as owner-gated', () => {
+		const [finding] = buildFindings([request({ status: 503, path: '/api/chat' })]);
+		expect(finding.signature).toBe('chat-fallback-chain-exhausted-503');
+		expect(finding.class).toBe('owner');
+	});
+
 	it('classifies a holder-distribution RPC exhaustion 503 as self-healing', () => {
 		const [finding] = buildFindings([request({ status: 503, path: '/api/crypto/holders' })]);
 		expect(finding.signature).toBe('holders-rpc-exhausted-503');

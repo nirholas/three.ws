@@ -1437,6 +1437,38 @@ ERROR  502 POST /api/pump/launch-agent
 
 ---
 
+## 🔴 HTTP 503 `/api/chat`: `chat-fallback-chain-exhausted-503` (§chat-fallback-chain-exhausted)
+
+- **Source:** `/api/chat`'s failover chain (groq, then every openrouter
+  sibling, then nvidia, then the `vertex-gemini` anchor) answers 503
+  `rate_limited` only once every rung including the anchor has failed
+  ([api/chat.js](../../api/chat.js), the final branch around line 936). The
+  `vertex-gemini` anchor is deliberately exempt from the fallback cooldown and
+  the `MAX_FALLBACK_ATTEMPTS` cap specifically so a healthy anchor should never
+  let chat 503 (see `buildFallbackChain` in the same file).
+- **What it means:** added 2026-10-24 after a deep sweep found 21 `/api/chat`
+  503s in 6h. Traced one occurrence end to end via `npm run logs`: groq 429,
+  every openrouter sibling 429, nvidia 404 ("Function ... Not found for
+  account"), then the vertex-gemini anchor 403 on the same GCP billing dunning
+  hold ("Lightning dunning decision is deny" on `aerial-vehicle-466722-p5`,
+  row 20) that blocks the anchor for `three-ws-ai-providers-unavailable-5xx`
+  above. With the anchor itself billing-blocked there is nothing left to fail
+  over to. The nvidia 404 is a separate, narrower signal: that `NVIDIA_API_KEY`
+  account has lost access to the configured NIM function server-side (not a
+  stale model id in this repo; the model string is unchanged and groq's prior
+  429 already shows free-tier demand, not a routing bug, is the bottleneck).
+- **Resolve (owner, billing/credential):** restoring the Vertex billing hold
+  (row 20) clears this family the same way it clears
+  `three-ws-ai-providers-unavailable-5xx`. Separately, check the NVIDIA NIM
+  account behind `NVIDIA_API_KEY` at the build.nvidia.com console if the 404
+  "Not found for account" line persists; that is an upstream account-state
+  check, not a code fix. Nothing to fix in code unless a *new* rung (not
+  groq/openrouter/nvidia/vertex-gemini) is the one failing.
+- **Monitor signature:** `chat-fallback-chain-exhausted-503` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `owner`.
+
+---
+
 ## 🔴 HTTP 502 `/api/3d/generate`: `forge-image-ladder-exhausted-502` (§forge-image-ladder-exhausted)
 
 - **Source:** `/api/3d/generate` self-calls `/api/forge`, whose reference-image

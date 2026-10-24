@@ -439,6 +439,26 @@ const KNOWN_HTTP_SIGNATURES = [
 		action: `/api/vision, /api/tts/synthesize and /api/v1/ai/text-to-3d each walk a provider chain (NVIDIA, then Vertex Gemini, then OpenAI) and answer an honest 502/503 when every rung fails. The GCP billing hold "Lightning dunning decision is deny" on aerial-vehicle-466722-p5 blocks the Vertex/Gemini rung (production-100-OWNER-ACTIONS.md row 20) and the OpenAI key is dead (row 6); together that leaves only the NVIDIA rung, which the forge_generation health sensor shows intermittently failing on free-tier NVCF capacity. Nothing to fix in code: restoring either billing-held provider clears this family, same as the identical cryptocurrency-cv pattern (ccv-ai-providers-unavailable-503). ${RUNBOOK} §three-ws-ai-providers-unavailable.`,
 	},
 	{
+		id: 'chat-fallback-chain-exhausted-503',
+		// 2026-10-24 triage-lane sweep: 21 /api/chat 503s in 6h. Traced one
+		// occurrence end to end via npm run logs: groq 429 -> every openrouter
+		// sibling 429 -> nvidia 404 "Function ... Not found for account" -> the
+		// vertex-gemini anchor (api/chat.js's deliberately-unevictable last rung,
+		// see buildFallbackChain) 403 "Lightning dunning decision is deny" on
+		// aerial-vehicle-466722-p5, same billing hold as
+		// three-ws-ai-providers-unavailable-5xx (row 20). Once the anchor itself
+		// is billing-blocked there is nothing left to fail over to, so chat.js's
+		// final branch (api/chat.js ~line 936) correctly answers 503 rate_limited
+		// instead of a fake reply. The nvidia 404 is a separate, narrower signal
+		// (that NVAPI key's account lost access to the configured NIM function,
+		// not a stale id in this repo: the model string is unchanged and groq's
+		// prior 429 already proves free-tier demand is the bottleneck); it is
+		// owner-side NVIDIA account state, not fixable by editing code here.
+		test: (g) => g.service === 'three-ws-api' && g.status === 503 && g.path === '/api/chat',
+		class: 'owner',
+		action: `/api/chat's failover chain (groq -> openrouter siblings -> nvidia -> vertex-gemini anchor) answers 503 rate_limited only once every rung including the vertex-gemini anchor has failed. The anchor is the credits-funded lane with no free-tier cap, deliberately exempt from the fallback cooldown/cap specifically so chat should not 503 while it is healthy; a 503 here means the anchor itself is down, which the GCP billing hold "Lightning dunning decision is deny" on aerial-vehicle-466722-p5 explains (production-100-OWNER-ACTIONS.md row 20, same cause as three-ws-ai-providers-unavailable-5xx). Separately check whether nvidia is answering 404 "Function ... Not found for account" in the same window (npm run logs -- -s three-ws-api --app --since 6h --grep "Not found for account"): that is the configured NVIDIA_API_KEY's account losing access to its NIM function and needs the owner to check the build.nvidia.com console, not a code fix. Nothing to fix in code unless a NEW rung (not groq/openrouter/nvidia/vertex-gemini) is the one failing. ${RUNBOOK} §chat-fallback-chain-exhausted.`,
+	},
+	{
 		id: 'forge-image-ladder-exhausted-502',
 		// 2026-10-12 triage-lane sweep: /api/3d/generate self-calls /api/forge,
 		// whose reference-image step (api/_lib/forge-reference-image.js) tries
