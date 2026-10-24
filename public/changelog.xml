@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Fixed three more legacy thumbnail links that browsers refused to load</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-24:Fixed three more legacy thumbnail links that browsers refused to load</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A handful of forge creations and 3D props stored from before an earlier URL fix still pointed straight at the storage bucket's own domain instead of three.ws's own CDN link, which Chrome blocks as an opaque cross-origin response. Model-page posters, a creation's related-models sidebar, forge share-card previews (the image X and Discord show when a link is pasted), and the Forged gallery's model-viewer thumbnails now all resolve through the same CDN link as everything else.</description>
+		</item>
+		<item>
 			<title>Docs · Accessibility, W3AG levels A and AA</title>
 			<link>https://three.ws/docs/accessibility</link>
 			<guid isPermaLink="false">2026-10-23:Docs · Accessibility, W3AG levels A and AA</guid>

@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-10-24T02:18:39.715Z",
+	"generated_at": "2026-10-24T03:09:34.617Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4148,
+	"total": 4149,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Fixed three more legacy thumbnail links that browsers refused to load",
+			"summary": "A handful of forge creations and 3D props stored from before an earlier URL fix still pointed straight at the storage bucket's own domain instead of three.ws's own CDN link, which Chrome blocks as an opaque cross-origin response. Model-page posters, a creation's related-models sidebar, forge share-card previews (the image X and Discord show when a link is pasted), and the Forged gallery's model-viewer thumbnails now all resolve through the same CDN link as everything else.",
+			"link": "/forge",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-10-23",
 			"type": "launch",
@@ -1548,16 +1558,6 @@
 			"tags": [
 				"feature",
 				"desktop"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Menu bar panel for the desktop app",
-			"summary": "Click the three.ws icon in your menu bar or tray and a small panel shows your agent alive in 3D, its Solana wallet balance, a start and stop button, anything waiting on your approval, unread alerts and a box to ask the agent something. Approvals still open the native confirmation window, so what you approve is exactly what you were shown.",
-			"link": "/desktop",
-			"tags": [
-				"feature"
 			]
 		}
 	]

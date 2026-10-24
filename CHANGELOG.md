@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-10-24
+
+- **Fixed three more legacy thumbnail links that browsers refused to load**: A handful of forge creations and 3D props stored from before an earlier URL fix still pointed straight at the storage bucket's own domain instead of three.ws's own CDN link, which Chrome blocks as an opaque cross-origin response. Model-page posters, a creation's related-models sidebar, forge share-card previews (the image X and Discord show when a link is pasted), and the Forged gallery's model-viewer thumbnails now all resolve through the same CDN link as everything else. (`/forge`) `[fix]`
+
 ## 2026-10-23
 
 - **Docs · Accessibility, W3AG levels A and AA** (`/docs/accessibility`): How three.ws holds its wallet and payment surfaces to the Web3 Accessibility Guidelines at levels A and AA on top of the WCAG 2.1 AA floor: what is met, how each claim is tested, and what is next.
