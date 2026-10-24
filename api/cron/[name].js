@@ -72,6 +72,7 @@ import { runPumpAlertRules } from '../_lib/pump-alert-runner.js';
 import { publishUserEvent } from '../_lib/feed.js';
 import { confirmSkillPurchase } from '../_lib/purchase-confirm.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { acquireLock } from '../_lib/cache.js';
 import { resolveURI } from '../../src/ipfs.js';
 import {
 	OUTCOME,
@@ -2487,11 +2488,26 @@ async function resolveCoinQuoteCurrency({ network, mint, dbQuoteMint = null }) {
 	return { currencyStr: usdc, quoteSymbol: 'USDC', source: 'fallback' };
 }
 
+// Same over-invocation disease already fixed for economy-reconcile: this
+// route is also one of economy-tick.js's fan-out TARGETS, fired every minute,
+// on top of its own dedicated vercel.json `0 * * * *` Cloud Scheduler job,
+// with nothing stopping the two callers from overlapping. Each run reads and
+// can swap/burn up to 200 coins' buyback vaults, so an overlapping run risks
+// racing itself on the same vault balance, not just running long. The lease
+// makes the hourly cadence durable regardless of how often the route fires;
+// its TTL IS the cadence and is never explicitly released.
+const BUYBACK_LEASE_KEY = 'cron:run-buyback:lease';
+const BUYBACK_LEASE_SECONDS = 55 * 60;
+
 async function handleRunBuyback(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 
 	if (!requireCron(req, res)) return;
+
+	if (!(await acquireLock(BUYBACK_LEASE_KEY, BUYBACK_LEASE_SECONDS))) {
+		return json(res, 200, { ok: true, skipped: true, reason: 'lease_held' });
+	}
 
 	const relayer = await buybackLoadRelayer();
 
