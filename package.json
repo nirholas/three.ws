@@ -3,7 +3,7 @@
 	"type": "module",
 	"version": "1.5.2",
 	"name": "3d-agent",
-	"description": "three.ws \u2014 build, animate, rig, and monetize 3D AI agents on-chain. Three.js web app, SDKs, MCP servers, and x402 payment rails.",
+	"description": "three.ws — build, animate, rig, and monetize 3D AI agents on-chain. Three.js web app, SDKs, MCP servers, and x402 payment rails.",
 	"author": "nirholas",
 	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
@@ -47,7 +47,15 @@
 		"proxy-addr": "^2.0.8",
 		"@vercel/og": {
 			"sharp": "^0.35.5"
-		}
+		},
+		"adm-zip@~0.4": "~0.6.1",
+		"js-yaml@^4": "^4.3.2",
+		"jayson@^4": "^5.0.0",
+		"toml@^3": "^5.0.1",
+		"uuid@^9": "^11.1.1",
+		"uuid@^8": "^11.1.1",
+		"yaml@^1": "^1.10.3",
+		"zod@^4": "^4.6.7"
 	},
 	"engines": {
 		"node": "24.x"
@@ -391,7 +399,7 @@
 		"build:fast": "npm run build",
 		"build:production": "node scripts/build-vercel.mjs",
 		"build:vercel": "npm run build:production",
-		"apply:r2-cors": "node scripts/set-r2-cors.mjs || echo '[apply:r2-cors] skipped (missing creds or transient failure \u2014 see build log)'",
+		"apply:r2-cors": "node scripts/set-r2-cors.mjs || echo '[apply:r2-cors] skipped (missing creds or transient failure — see build log)'",
 		"build:all": "npm run build:chat && (npm run build & npm run build:lib & wait)",
 		"release:lib": "npm run build:lib:full && node scripts/release-lib.mjs",
 		"clean": "rm -rf dist/* dist-lib/* || true",
