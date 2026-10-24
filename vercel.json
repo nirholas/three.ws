@@ -1186,6 +1186,13 @@
 			"dest": "/pocket.html"
 		},
 		{
+			"src": "/apps/shopify/?$",
+			"headers": {
+				"content-security-policy": "base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws https://cdn.shopify.com; worker-src 'self' blob:; frame-ancestors 'self' https://ibm.com https://*.ibm.com https://*.seismic.com; report-uri /api/client-errors"
+			},
+			"continue": true
+		},
+		{
 			"src": "/spotlight/([0-9a-fA-F-]{36})/?$",
 			"has": [
 				{
