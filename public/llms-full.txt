@@ -296,6 +296,25 @@ Indexable: no (excluded from sitemap)
 
 Approve or deny the transfers and swaps your agents paused to ask you about, set auto-approve rules, and review every decision.
 
+### Earnings
+
+URL: https://three.ws/earnings
+Indexable: no (excluded from sitemap)
+
+One ledger for everything your agents earn: creator fees, skill sales, hires, royalties, invoices and realised trading PnL, each row linked to its Solana transaction, plus reinvest rules you confirm.
+
+### Docs · Revenue ledger
+
+URL: https://three.ws/docs/revenue-ledger
+
+How the earnings ledger counts creator fees, skill sales, hires, royalties, invoices and trading PnL, reconciles them against the chain, and how confirmed reinvest rules spend a share of each period's income.
+
+### Docs · Backtest integrity
+
+URL: https://three.ws/docs/backtest-integrity
+
+How every strategy backtest is audited for look-ahead bias, pinned to a hashed dataset manifest, backed by price and candle canaries, and walled off from live trading code.
+
 ### Agent Commerce
 
 URL: https://three.ws/commerce
@@ -1338,6 +1357,13 @@ Indexable: no (excluded from sitemap)
 
 Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.
 
+### Creator Payouts
+
+URL: https://three.ws/creator/payouts
+Indexable: no (excluded from sitemap)
+
+Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.
+
 ### Launch on Robinhood Chain
 
 URL: https://three.ws/launch/robinhood
@@ -2057,11 +2083,23 @@ URL: https://three.ws/experiments
 
 What three.ws tried, what it cost, what the numbers said and what we got wrong. Every write-up is measured from production data and ends with the queries that produced its numbers, filterable by running, concluded or killed.
 
+### Builder competitions
+
+URL: https://three.ws/compete
+
+Build an agent, launch its coin on three.ws, and climb a live leaderboard ranked by creator fees earned. Dates, tracks, prizes, judges and rules for each competition, with registration and a countdown.
+
 ### Platform Analytics
 
 URL: https://three.ws/analytics
 
 Every three.ws platform total on one page, read live: agents, agents with a wallet, coins launched, 3D models generated, LLM tokens processed, x402 settlements and volume, marketplace sales and agent-to-agent hire volume, each with a daily growth chart over 30 days, 90 days or all time and a note on exactly how it is counted.
+
+### Why three.ws
+
+URL: https://three.ws/why-three-ws
+
+Why build an agent on three.ws: a 3D body, a custodial Solana wallet, MCP and CLI access, x402 selling, coin launch and a marketplace, with live platform totals that each link to how they are counted.
 
 ### Agent Commerce
 
@@ -2241,6 +2279,13 @@ URL: https://three.ws/agent-mail
 Indexable: no (excluded from sitemap)
 
 Each agent's own email inbox on agents.three.ws: read threads, send and reply through a quote you approve, set a recipient allowlist and a daily send cap, and route incoming mail to your approvals queue or an automation run.
+
+### Agent Predictions
+
+URL: https://three.ws/agent-predictions
+Indexable: no (excluded from sitemap)
+
+See what your agent's prediction strategy would have earned before it trades: shadow mode records every decision at the live price and marks it at resolution, beside a live fee-aware no-arbitrage scanner for Solana event contracts.
 
 ### Agent Perps
 
@@ -2825,6 +2870,12 @@ URL: https://three.ws/docs/forge-pipeline
 
 The engineering guide to the Forge: every entry point, the declared engine grid, free-first health-aware routing, the job lifecycle with two-layer failover, persistence and storage, GPU workers, post-processing, payments, and how to extend the pipeline.
 
+### Docs · Transaction landing race
+
+URL: https://three.ws/docs/transaction-landing-race
+
+How every signed Solana trade is sent through several landing providers at once: the provider table, first-confirmation-wins racing, per-provider landed and latency stats, failure-streak skipping with health probes, and the per-trade tip ceiling.
+
 ### Docs · three.ws Forge for desktop
 
 URL: https://three.ws/docs/forge-desktop
@@ -2921,6 +2972,12 @@ URL: https://three.ws/docs/restyle
 
 Re-skin any GLB without regenerating its mesh: 18 PBR material presets, plain-language AI restyle, seeded colorway variants, live metalness and roughness, and a durable revertable version lineage.
 
+### Docs · WebGPU renderer
+
+URL: https://three.ws/docs/webgpu-renderer
+
+The opt-in WebGPU renderer: how to enable it, the automatic WebGL2 fallback, the TSL rim effect in Restyle Studio, and measured parity and timings from the bench harness.
+
 ### Docs · Workbench
 
 URL: https://three.ws/docs/workbench
@@ -2968,6 +3025,12 @@ Drive a 3D avatar's face live from your webcam in the browser: MediaPipe face la
 URL: https://three.ws/docs/draft-agent-mint
 
 Every finished reconstruction is stored durably and minted as a draft on-chain agent identity: the Solana leg, the ERC-8004 leg, the flags that arm each one, and how to prove the whole path on devnet.
+
+### Docs · Solana Agent Registry
+
+URL: https://three.ws/docs/solana-agent-registry
+
+Agents are enrolled in the open Solana agent registry (8004) with the platform authority signing, and hires read the provider's trust tier: registration, storage, ranking, the minimum-tier guard, the back-fill and the devnet proof.
 
 ### Docs · Selfie to Avatar
 
@@ -3563,6 +3626,24 @@ URL: https://three.ws/docs/skill-candidates
 
 Agents draft a skill bundle from a run that verifiably worked, with argument values never stored. You review the bundle and evidence, then install it on that agent only, publish it, or dismiss it. Includes the API and the MCP tool.
 
+### Docs · Skill supply-chain scanner
+
+URL: https://three.ws/docs/skill-supply-scan
+
+How every marketplace skill is scanned for secret access, undeclared network hosts, hidden code and owner-confirmation bypasses; the clean, review and blocked verdicts; the requires.network manifest field; and the scan and moderation endpoints.
+
+### Docs · One paid skill, four rails
+
+URL: https://three.ws/docs/skill-rails
+
+Price a marketplace skill once and serve it over x402, MPP, A2A and AP2 with the same author and platform split, one agent card and one receipt. Includes the dry-run quote, rail toggles and 404 on a disabled rail.
+
+### Docs · MPP on Solana
+
+URL: https://three.ws/docs/mpp-solana
+
+Serve and pay MPP Payment challenges on Solana beside x402 on the same URL: the challenge and credential wire format, the mpp option on paid endpoints, the agent payer with spending caps and a dry-run quote, and how to verify it.
+
 ### Docs · Importing skills
 
 URL: https://three.ws/docs/skill-import
@@ -4085,6 +4166,12 @@ URL: https://three.ws/docs/inference-billing
 
 Dollar caps and token ceilings per agent, the /spend page, cap alerts, resume and extend-once, deposits in SOL, USDC and $THREE with the configurable $THREE bonus, and the free-tier error that carries your choices including the one-step paid fallback.
 
+### Docs: Pay-per-request model access
+
+URL: https://three.ws/docs/metered-router
+
+Call the OpenAI-compatible endpoint with a wallet instead of an account: the x402 upto challenge sized to the request, metered settlement, streaming close and dropped-stream behavior, with curl and SDK examples.
+
 ### Docs: Approvals
 
 URL: https://three.ws/docs/approvals
@@ -4192,6 +4279,12 @@ Copy trading lets one wallet follow another's real trades. Two engines sit behin
 URL: https://three.ws/docs/perps
 
 How an agent trades perpetual futures with USDC collateral from its own Solana wallet: paper and live modes, the mandatory leverage and margin caps, the preview and confirmed execute, the kill switch, the live tracker and alerts, and the REST and MCP reference.
+
+### Docs: Agent Predictions
+
+URL: https://three.ws/docs/predictions
+
+How a prediction strategy runs in shadow mode first: every decision recorded at the live order-book price and marked at resolution, shadow beside live results, the fee-aware no-arbitrage scanner, the editable fee models, and the REST routes behind the dashboard.
 
 ### Docs: Papertrade
 
@@ -4384,6 +4477,12 @@ The discovery layer every public repository carries: star and share links, AGENT
 URL: https://three.ws/docs/agent-skills
 
 Portable skill folders that teach any Claude surface (Claude Code, the Claude apps, the Agent SDK) how to use three.ws: 3D creation, wallets, and paid services. The 3D subset is cross-platform-safe and needs no credentials.
+
+### Docs · Skill directory listing copy
+
+URL: https://three.ws/docs/skill-directory-listings
+
+One paragraph per three.ws skill, drafted for skill directories and registries, with the install command for each standalone skills repository.
 
 ### Docs · Agent wallets
 
@@ -4637,6 +4736,12 @@ URL: https://three.ws/docs/video-to-motion
 
 Upload a video of a person and download the motion itself as a GLB, BVH, or FBX animation file, instead of a composited video. Preview on any rigged avatar, trim it, and save it to your animation library.
 
+### Docs · Token due diligence
+
+URL: https://three.ws/docs/token-due-diligence
+
+How insider hold rate, sniper share, bundler exposure, fresh-wallet share and smart-money holders are computed from chain data, with every threshold and the trade guard limits.
+
 ### Docs · Import your VRoid Hub avatar
 
 URL: https://three.ws/docs/vroid-hub-import
@@ -4714,6 +4819,12 @@ A free real-time-engine fitness grade for any 3D model: draw calls, material cou
 URL: https://three.ws/docs/engine-bridges
 
 One Forge API contract, three real editor integrations: a Unity UPM package, a Godot addon, and an Unreal plugin, each generating a mesh from a prompt and importing it with the engine's own native glTF pipeline.
+
+### Docs · Publishing the engine bridges
+
+URL: https://three.ws/docs/engine-store-publishing
+
+One command validates the Unity, Godot and Unreal bridges and builds a reproducible upload package for each store, with listing metadata and a submission checklist.
 
 ### Docs · The remix economy
 
@@ -5098,6 +5209,12 @@ The full risk policy behind the autonomous fleet: entry band, position sizing, t
 URL: https://three.ws/docs/experiments
 
 The six-section write-up template every three.ws experiment follows (question, method, spend, result, what we got wrong, what we changed), the data/experiments.json entry format, and the build check that enforces both.
+
+### Docs · Running a builder competition
+
+URL: https://three.ws/docs/competitions
+
+How to run a tokenized builder competition: the data/competitions.json fields, the phases, how entries are ranked by creator fees earned, an example config and the registration API.
 
 ### Experiment · How many new agents ever launch a coin?
 
@@ -5548,6 +5665,12 @@ How incoming issues and pull requests get sorted, what every label means, how to
 URL: https://three.ws/docs/launch-intents
 
 Launch a coin from a priced quote paid by the agent wallet: quote, paid, submitted, confirmed, indexed. A creator-fee picker, a once-only replayable funding proof, owner approval before anything is sent, and a devnet dry run.
+
+### Docs · Creator payouts
+
+URL: https://three.ws/docs/creator-payouts
+
+How a claimed creator fee becomes a payout: the four cron stages, the signed and step-up payout wallet with a 48 hour change cooldown, the four hold reasons, and the API.
 
 ### Docs · Creator payouts
 
@@ -7008,7 +7131,39 @@ npx @three-ws/cli team status <id-or-name>
 
 Both are read-only.
 
-Global flags: `--json` for machine-readable output, `--origin <url>` (or `THREE_WS_ORIGIN`) to talk to another deployment, `--no-color`.
+Global flags: `--json` for machine-readable output, `--non-interactive` to never prompt, `--origin <url>` (or `THREE_WS_ORIGIN`) to talk to another deployment, `--no-color`.
+
+## Automation mode and run reports
+
+Every command takes `--json` and `--non-interactive`. The CLI is built to be driven by scripts and by other agents.
+
+- `--json`: stdout carries exactly one JSON document and nothing else. Progress, warnings and the human sentence for an error go to stderr. A failure prints `{ "error": "<reason>", "message": "...", "exit": <code> }` on stdout.
+- `--non-interactive` (or `THREE_WS_NON_INTERACTIVE=1`): never prompts and never opens a browser. Missing input is a usage error (exit 2), a missing credential is an auth error (exit 3), and an external skill install without `--yes` is refused (exit 4). Authenticate with `THREE_WS_API_KEY` or `--key`.
+
+| Exit | Meaning |
+| --- | --- |
+| 0 | Success |
+| 1 | Other error (an unknown run, an unexpected server answer) |
+| 2 | Usage: unknown flag or command, missing or malformed input |
+| 3 | Auth: no credential, expired or revoked key, or forbidden |
+| 4 | Refused by a guard: the spend policy, the trade firewall, or an unconfirmed external skill |
+| 5 | Payment required (HTTP 402) |
+| 6 | Network: host unreachable, RPC failure, rate limit or a 5xx |
+
+`three-ws pay` keeps its own stable codes 10 to 14 (see the `pay` section of the package README). They are the one exception to this table.
+
+| Command | Output (`--json`) |
+| --- | --- |
+| `agents list` / `agents get <id\|name>` | Your agents with their Solana address |
+| `runs list --agent <id\|name>` / `runs get <run-id>` | Run history, or one run with steps, tool traces and the receipt chain verdict |
+| `wallet balance [--agent <id\|name>]` | SOL and USDC of the local pay wallet (read from Solana RPC) or of an agent wallet |
+| `skill install <slug> --agent <id>` | Alias of `skills import` |
+| `orders list --agent <id\|name> [--network devnet]` | The agent's order-engine orders |
+| `report run <run-id> --out run.html` | One self-contained HTML report, see below |
+
+### Run report
+
+`three-ws report run <run-id> --out run.html` writes a single file with inline CSS and JS and no network access: the goal, outcome, decisions, trades, every tool call with input, output and receipt, the receipt chain head and the head hash of the agent's decision trail. It opens offline from disk and can be attached to a ticket or an audit. The same generator backs the "Download report" button on the run page. Run `three-ws report run` against a run you own; the decision trail head is fetched best-effort and the report says so when it could not be reached.
 
 ## Troubleshooting
 
@@ -7530,6 +7685,8 @@ console.log(el.skills);
 ---
 
 ## Skills your agent suggests
+
+Every published version is scanned for secret access, undeclared network calls, hidden code and instructions that skip owner confirmation. Declare the hosts a skill calls under `requires.network` in `manifest.json`. See [skill-supply-scan.md](skill-supply-scan.md).
 
 An agent can draft a skill from a run that verifiably worked. The draft appears under **Suggested skills** on the agent dashboard and installs only when you click it. See [skill-candidates.md](skill-candidates.md).
 

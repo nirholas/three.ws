@@ -10658,8 +10658,6 @@ a delivery from the log or the `/dashboard/developers` page. The signing secret
 | `GET /api/forge-quote?path=text&tier=standard` | none | What a generation would cost. Optional `backend`, `images`, `own_key`, `gameready`; `table=1` returns every tier. No spend, `cache-control: private, max-age=30`. |
 | `GET /api/forge-keep?id=<creation>` | none | Whether the creation is kept, and whether pay-to-keep is enabled. |
 | `POST /api/forge-keep` | optional $THREE wallet or payment | Release a creation for download. With `FORGE_PAY_TO_KEEP` off it always returns `kept: true`. Non-holders get `402 three_hold_required` with the `pay_per_use` action. A reused payment returns `409 payment_already_used`. |
-| `POST /api/forge-scene-objects` | none | One photo to a laid-out 3D scene (SAM 3D Objects). Body `{image_url, boxes? \| mask_urls?, max_objects?, seed?}`; auto-detects objects when neither is sent. `202 {job_id}`, `451` in sanctioned territories, `503 backend_unconfigured` until the worker is deployed. |
-| `GET /api/forge-scene-objects?job=<id>` | none | Job status with `result_url`, `objects`, `object_count`, `skipped`. |
 
 Details and the enable command: [forge.md](./forge.md#cost-preview-and-pay-to-keep).
 

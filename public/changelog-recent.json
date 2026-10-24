@@ -1,14 +1,214 @@
 {
-	"generated_at": "2026-10-23T23:18:35.540Z",
+	"generated_at": "2026-10-24T00:37:29.461Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4154,
+	"total": 4189,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-24",
+			"type": "launch",
+			"title": "Agent Predictions",
+			"summary": "See what your agent's prediction strategy would have earned before it trades: shadow mode records every decision at the live price and marks it at resolution, beside a live fee-aware no-arbitrage scanner for Solana event contracts.",
+			"link": "/agent-predictions",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "launch",
+			"title": "Docs · Publishing the engine bridges",
+			"summary": "One command validates the Unity, Godot and Unreal bridges and builds a reproducible upload package for each store, with listing metadata and a submission checklist.",
+			"link": "/docs/engine-store-publishing",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "launch",
+			"title": "Docs · Skill supply-chain scanner",
+			"summary": "How every marketplace skill is scanned for secret access, undeclared network hosts, hidden code and owner-confirmation bypasses; the clean, review and blocked verdicts; the requires.network manifest field; and the scan and moderation endpoints.",
+			"link": "/docs/skill-supply-scan",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "launch",
+			"title": "Docs · Solana Agent Registry",
+			"summary": "Agents are enrolled in the open Solana agent registry (8004) with the platform authority signing, and hires read the provider's trust tier: registration, storage, ranking, the minimum-tier guard, the back-fill and the devnet proof.",
+			"link": "/docs/solana-agent-registry",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "launch",
+			"title": "Docs · WebGPU renderer",
+			"summary": "The opt-in WebGPU renderer: how to enable it, the automatic WebGL2 fallback, the TSL rim effect in Restyle Studio, and measured parity and timings from the bench harness.",
+			"link": "/docs/webgpu-renderer",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "launch",
+			"title": "Docs: Pay-per-request model access",
+			"summary": "Call the OpenAI-compatible endpoint with a wallet instead of an account: the x402 upto challenge sized to the request, metered settlement, streaming close and dropped-stream behavior, with curl and SDK examples.",
+			"link": "/docs/metered-router",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Agent perps on three venues: Phoenix, Jupiter and Hyperliquid",
+			"summary": "Agents can now trade perpetuals on Phoenix and Jupiter (Solana) and on Hyperliquid through a per-agent API wallet that can trade but never withdraw. Every venue goes through the same preview then confirmed execute, with new guards for maximum position notional and minimum liquidation distance. Unpinned market reads fail over to a healthy venue, live orders never reroute. MCP access to an agent's perps tools is now opt-in per agent and off by default.",
+			"link": "/docs/perps",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Agents join the open Solana agent registry and hires read trust tiers",
+			"summary": "Minted agents are enrolled in the open Solana agent registry (8004) with the platform authority signing, so owners pay nothing. The marketplace ranks providers by registry tier after completed hires, a hire can require a minimum tier, and agent pages show an 8004 tier badge when registered. A rate-limited back-fill covers existing agents.",
+			"link": "/docs/solana-agent-registry",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Drive the CLI from scripts and agents, and download a run report",
+			"summary": "Every three-ws command now takes --json (one JSON document on stdout, diagnostics on stderr) and --non-interactive (never prompts), with a stable exit-code table: 2 usage, 3 auth, 4 refused by a guard, 5 payment required, 6 network. New commands cover agents, runs, wallet balance, skill install and orders. `three-ws report run <id> --out run.html` writes one self-contained offline file with the goal, tool calls, decisions, trades, outcome and the decision-trail head hash, and the run page has a matching Download report button.",
+			"link": "/docs/cli",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Engine bridges are packaged for the Unity, Godot and Unreal stores",
+			"summary": "One command, npm run package:engine-stores, validates the Unity, Godot and Unreal bridges and builds a reproducible upload package for each, with listing metadata and a submission checklist. The Unity package and Unreal plugin manifests now carry their documentation links.",
+			"link": "/docs/engine-store-publishing",
+			"tags": [
+				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Install the three.ws skills with one command on any agent runtime",
+			"summary": "Run npx skills add nirholas/three-ws-skills (or the 3D-only and agent-economy repos) to install the three.ws skills into Claude Code, Codex, Cursor and any other runtime that reads the open Agent Skills format. Every skill now passes the Agent Skills spec validator, which fixed 21 skills whose frontmatter some installers could not parse, and an install test proves each repo lists and installs every skill in a clean directory. Publishing the repos is still the owner's step.",
+			"link": "/docs/agent-skills",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Long MCP answers arrive as a summary, and agents can search the docs",
+			"summary": "list_my_agents, recall and crypto_data now answer with a short summary, a count, a handle and the first page when the list is long, and the new expand tool reads the rest on request. A 100-coin market list drops from about 47,800 to 4,400 tokens. Handles are signed, account-bound and last 15 minutes. The new free search_docs tool answers how-to questions from the docs index on the main and studio servers.",
+			"link": "/docs/mcp",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Opt-in WebGPU renderer with automatic WebGL2 fallback, starting in Restyle Studio",
+			"summary": "three is now r186. Add ?renderer=webgpu to /restyle to render on WebGPU with a TSL rim light, or leave it off for the same WebGL2 picture as before. If the browser has no GPU adapter or WebGPU fails to start, the page falls back to WebGL2 on its own. A badge shows which backend is running, and exported GLBs are identical on both paths. Measured parity and timings are in the WebGPU renderer doc.",
+			"link": "/docs/webgpu-renderer",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Pay for a model request with a wallet, no account needed",
+			"summary": "POST /api/v1/chat/completions now answers an unauthenticated request with an x402 upto challenge on Solana, sized to the model's worst case for that request. Sign it, retry, and only the metered tokens are charged at the published per-token price; the rest of the cap is refunded. Streaming settles when the stream closes, and a dropped stream is charged only for the tokens already sent. GET /api/v1/models now lists the price sheet and round limits.",
+			"link": "/docs/metered-router",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "See what a Forge generation costs before you press Generate",
+			"summary": "The Forge page now shows a live cost line for the tier, engine and options you picked, read from the same pricing code that bills you, with nothing spent. A pay-to-keep mode (free preview, pay in $THREE to download, holders keep free) is built and switched off, so downloads stay free until it is turned on.",
+			"link": "/docs/forge",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "See what a prediction strategy would have earned before it trades",
+			"summary": "Agent Predictions records every strategy decision at the live order-book price in shadow mode, marks it at resolution, and shows shadow beside live results. A fee-aware scanner reads Solana event contracts for YES plus NO pairs under $1. Live stays owner-only.",
+			"link": "/agent-predictions",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-24",
+			"type": "update",
+			"title": "Skills are scanned for hidden behaviour before they are listed",
+			"summary": "Every marketplace skill version is now checked for secret access, calls to hosts it never declared, hidden or obfuscated code and instructions that skip the owner's confirmation. Clean skills list as before, suspicious ones are held for a moderator, and dangerous ones are refused. Authors see the file, the line and how to fix each finding in the publish form, and the existing catalog was rescanned.",
+			"link": "/docs/skill-supply-scan",
+			"tags": [
+				"security",
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Builder competitions",
+			"summary": "Build an agent, launch its coin on three.ws, and climb a live leaderboard ranked by creator fees earned. Dates, tracks, prizes, judges and rules for each competition, with registration and a countdown.",
+			"link": "/compete",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Creator Payouts",
+			"summary": "Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.",
+			"link": "/creator/payouts",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-10-23",
 			"type": "launch",
@@ -25,6 +225,26 @@
 			"title": "Docs · Accessibility, W3AG levels A and AA",
 			"summary": "How three.ws holds its wallet and payment surfaces to the Web3 Accessibility Guidelines at levels A and AA on top of the WCAG 2.1 AA floor: what is met, how each claim is tested, and what is next.",
 			"link": "/docs/accessibility",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Docs · Backtest integrity",
+			"summary": "How every strategy backtest is audited for look-ahead bias, pinned to a hashed dataset manifest, backed by price and candle canaries, and walled off from live trading code.",
+			"link": "/docs/backtest-integrity",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Docs · Creator payouts",
+			"summary": "How a claimed creator fee becomes a payout: the four cron stages, the signed and step-up payout wallet with a 48 hour change cooldown, the four hold reasons, and the API.",
+			"link": "/docs/creator-payouts",
 			"tags": [
 				"launch"
 			]
@@ -62,6 +282,26 @@
 		{
 			"date": "2026-10-23",
 			"type": "launch",
+			"title": "Docs · MPP on Solana",
+			"summary": "Serve and pay MPP Payment challenges on Solana beside x402 on the same URL: the challenge and credential wire format, the mpp option on paid endpoints, the agent payer with spending caps and a dry-run quote, and how to verify it.",
+			"link": "/docs/mpp-solana",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Docs · One paid skill, four rails",
+			"summary": "Price a marketplace skill once and serve it over x402, MPP, A2A and AP2 with the same author and platform split, one agent card and one receipt. Includes the dry-run quote, rail toggles and 404 on a disabled rail.",
+			"link": "/docs/skill-rails",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
 			"title": "Docs · Owner-Funded Agent Budgets",
 			"summary": "Keep funds in your own wallet and give an agent a capped, expiring allowance enforced by the Solana Subscriptions and Allowances program. How the budget is created, pulled, guarded and revoked, and how to prove it on devnet.",
 			"link": "/docs/agent-allowance-budgets",
@@ -72,9 +312,39 @@
 		{
 			"date": "2026-10-23",
 			"type": "launch",
+			"title": "Docs · Revenue ledger",
+			"summary": "How the earnings ledger counts creator fees, skill sales, hires, royalties, invoices and trading PnL, reconciles them against the chain, and how confirmed reinvest rules spend a share of each period's income.",
+			"link": "/docs/revenue-ledger",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Docs · Running a builder competition",
+			"summary": "How to run a tokenized builder competition: the data/competitions.json fields, the phases, how entries are ranked by creator fees earned, an example config and the registration API.",
+			"link": "/docs/competitions",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
 			"title": "Docs · Suggested skills",
 			"summary": "Agents draft a skill bundle from a run that verifiably worked, with argument values never stored. You review the bundle and evidence, then install it on that agent only, publish it, or dismiss it. Includes the API and the MCP tool.",
 			"link": "/docs/skill-candidates",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Docs · Transaction landing race",
+			"summary": "How every signed Solana trade is sent through several landing providers at once: the provider table, first-confirmation-wins racing, per-provider landed and latency stats, failure-streak skipping with health probes, and the per-trade tip ceiling.",
+			"link": "/docs/transaction-landing-race",
 			"tags": [
 				"launch"
 			]
@@ -95,6 +365,16 @@
 			"title": "Docs: Agent self-onboarding",
 			"summary": "An agent signs itself up with a Solana key and no email, gets an account, a wallet and an API key, and buys a paid plan with one x402 payment. Challenge format, errors, limits and the CLI.",
 			"link": "/docs/agent-self-onboarding",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Earnings",
+			"summary": "One ledger for everything your agents earn: creator fees, skill sales, hires, royalties, invoices and realised trading PnL, each row linked to its Solana transaction, plus reinvest rules you confirm.",
+			"link": "/earnings",
 			"tags": [
 				"launch"
 			]
@@ -125,6 +405,16 @@
 			"title": "README 3D",
 			"summary": "Put an interactive 3D model in any GitHub README. Paste a GLB, glTF, OBJ or STL URL and get a block GitHub renders as a rotatable viewer, sized to fit its markdown limit.",
 			"link": "/readme-3d",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "launch",
+			"title": "Why three.ws",
+			"summary": "Why build an agent on three.ws: a 3D body, a custodial Solana wallet, MCP and CLI access, x402 selling, coin launch and a marketplace, with live platform totals that each link to how they are counted.",
+			"link": "/why-three-ws",
 			"tags": [
 				"launch"
 			]
@@ -216,9 +506,29 @@
 		{
 			"date": "2026-10-23",
 			"type": "update",
+			"title": "Backtests now prove they are free of look-ahead and can be repeated",
+			"summary": "Every strategy backtest replays its entry gate with the future removed and reports any decision that changed, pins the exact dataset it ran on with a content hash, and marks older unpinned results as unreproducible. A new canary job checks each price and candle source against a known value every 30 minutes and tries the healthy ones first.",
+			"link": "/strategies",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
 			"title": "Chain turnover on /chains",
 			"summary": "The chains leaderboard now has a sortable Turnover column (24h DEX volume divided by TVL) that shows which chains have capital actively trading rather than parked. Chains with no TVL or no reported volume show n/a.",
 			"link": "/chains",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Coin intel funder map is now a 3D graph",
+			"summary": "The wallet network in the coin intel drawer renders as a GPU-instanced 3D force graph, with wallets sized by holdings and linked to their shared funder, a live-trades toggle, and reduced-motion support. Browsers without WebGL keep the 2D map.",
+			"link": "/coin-intel",
 			"tags": [
 				"feature"
 			]
@@ -280,6 +590,26 @@
 			"title": "Hired work now has an independent evaluator, a dispute window and automatic release or refund",
 			"summary": "A bounty can name who judges the delivery: the platform checker (default), the hiring agent, or a registry agent, who signs a pass or fail attestation with a reason code and evidence link. The losing side then has a dispute window (24 hours by default, 0 to 30 days per job) to freeze the funds and send them to a second evaluator or the platform arbiter. When the window ends with no dispute a cron releases or refunds on its own, a job nobody evaluates refunds the buyer at its deadline, and a failed transfer is retried without ever paying twice. Every transition is written to a hash-chained trail shown on the job page, and both parties are notified.",
 			"link": "/labor-market",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Holder concentration, funder seeding and v1 launch signals on every coin",
+			"summary": "A coin's trader sheet now shows how unevenly its top holders split the supply (Gini), what share of the first buyers were funded by one wallet, and whether its creation transaction used Solana transaction v1. The same Gini and seeded share feed the oracle's launch features.",
+			"link": "/launches",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Hot streaks on the Arena board",
+			"summary": "An agent that has closed three or more winning positions in a row now shows its streak beside its name on the Arena leaderboard. The streak is counted from the same on-chain closed-position ledger as the trader profile, and any loss or flat exit resets it to zero.",
+			"link": "/play/arena",
 			"tags": [
 				"feature"
 			]
@@ -359,6 +689,16 @@
 		{
 			"date": "2026-10-23",
 			"type": "update",
+			"title": "One earnings ledger for everything your agents earn, with reinvest rules",
+			"summary": "The new Earnings page totals creator fees, skill and API sales, hires, royalties, invoices and realised trading PnL by source and period, links every row to its Solana transaction, reconciles against the chain every hour, and exports CSV or JSON. Agents can publish a public earnings page, and confirmed reinvest rules put a capped share of each period into model credits, a tools budget or a DCA of the agent's own coin, with a receipt for every run.",
+			"link": "/earnings",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
 			"title": "Oracle's smart-wallet prior now reads the live database",
 			"summary": "The cold-start wallet prior behind Oracle's pedigree pillar is loaded from the daily-seeded wallet_reputation table instead of a committed June snapshot, so it tracks the current gmgn.ai rankings. It is cached in-process with a bounded refresh, keeps the last good rows if the database blips, and serves an empty prior (and logs it) rather than inventing wallets.",
 			"link": "/docs/oracle",
@@ -379,6 +719,17 @@
 		{
 			"date": "2026-10-23",
 			"type": "update",
+			"title": "Pay any paid endpoint over MPP on Solana, and sell a skill on four rails from one price",
+			"summary": "Paid endpoints can now answer with an MPP Payment challenge beside the x402 one at the same price, and the agent payer pays either from one call with its spending caps and a dry-run quote. Marketplace skills are defined once and served over x402, MPP, A2A and AP2 with the same author and platform split and the same receipt.",
+			"link": "/docs/mpp-solana",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
 			"title": "Prepaid credit plans and free trials for paid MCP tools",
 			"summary": "Buy a credit bundle or a 24-hour or 30-day time pass at /mcp-plans and call paid MCP tools without paying each call over x402. Every account gets 3 free calls per tool. Credits are debited before a call, refunded when the tool errors, and every result reports creditsUsed and creditsRemaining. A drained plan falls back to the per-call payment-required error.",
 			"link": "/mcp-plans",
@@ -394,6 +745,17 @@
 			"link": "/docs/ops/x402-prepaid",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-23",
+			"type": "update",
+			"title": "Revoking a connected app now stops it everywhere",
+			"summary": "When Claude, ChatGPT or any MCP client ends its own grant, or you press Revoke in Connected apps, its access tokens stop on the next request and the token introspection endpoint reports them inactive. Other clients on your account stay connected. The consent screen tests now pin the Read, Manage, Trade, Spend and Launch groups.",
+			"link": "/dashboard/settings#connected-apps",
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -1204,360 +1566,6 @@
 			"tags": [
 				"feature",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-10-12",
-			"type": "update",
-			"title": "The Grid: walk a neon room where every app is a live surface",
-			"summary": "A new place beside the campus. Step into a wireframe room with a live board of new agents, launches, wallet moves and the $THREE quote, a directory wall, a Pulse wall and one kiosk per app. Walk up and press E to open the app on the desktop. Your byte tier, from Byte to Yottabyte, follows the gems you mine in the campus. Open it from the Grid button in the campus HUD.",
-			"link": "/?world=grid",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-12",
-			"type": "update",
-			"title": "Three new engine bridges: Unity, Godot, and Unreal, one prompt to a mesh in your editor",
-			"summary": "A shared contract (specs/ENGINE_BRIDGE.md) and three real, independent implementations: a Unity UPM package that imports with glTFast, a Godot addon that imports with Godot's own native GLTFDocument, and an Unreal plugin that imports through Unreal's Interchange glTF pipeline. Each one calls only the public Forge API (POST /api/forge to submit, GET /api/forge?job=<id> to poll, a plain HTTPS GET to download), the same free-first routing and anonymous x-forge-client auth every other Forge caller gets, with the same four import settings (generate_colliders, import_materials, scale, destination) mapped onto each engine's own equivalent. A dropdown and a Generate button in each editor: type a prompt, get a mesh dropped into your scene.",
-			"link": "/docs/engine-bridges",
-			"tags": [
-				"feature",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-10-12",
-			"type": "update",
-			"title": "Tripo house lane: v3 API, house key, signed webhooks, and engine-version attribution",
-			"summary": "The Tripo integration moved off the legacy v2 API onto v3 (openapi.tripo3d.com/v3): dedicated endpoints per capability, a unified input field, and a unified error envelope. Setting TRIPO_API_KEY turns Tripo from a bring-your-own-key engine into a High-tier house default billed to $THREE credits, with the BYOK path and the engine list unchanged when the variable is unset. A finished job can complete by poll or by Tripo's own signed webhook (api/forge/webhook/tripo.js), which verifies Tripo-Webhook-Signature and claims Tripo-Webhook-Delivery so a retried delivery cannot double-complete a job; polling stays the fallback. Every Tripo result, BYOK or house key, now names the exact model version it ran on in the submit, poll, and gallery responses and in the exported GLB's own metadata, and a new npm run forge:tripo reports the lane's own completion rate and median latency by day.",
-			"link": "/docs/forge",
-			"tags": [
-				"feature",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "Classic Home",
-			"summary": "The original three.ws landing page: the pitch, live agent demos and the front door to every flow, kept as the classic view of the desktop.",
-			"link": "/classic",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "Desktop Widgets and Assistant",
-			"summary": "The live widgets on the three.ws desktop and widgets board ($THREE, weather, Pulse, launches, new agents, headlines, system) and the assistant that answers about the platform, opens apps and lets you talk to any public agent.",
-			"link": "/docs/desktop-widgets",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "Docs · App pages",
-			"summary": "The /apps hub and the per-platform pages for Android, Solana Seeker, iPhone and iPad, desktop and the web desktop: what each states, where its data comes from, and how to keep them true.",
-			"link": "/docs/apps",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "Docs · Browse every feature by goal",
-			"summary": "How the /everything directory groups every three.ws page into twelve goals, where the classification lives, how to pin a page to the right goal, and the what-next strip under tool pages.",
-			"link": "/docs/everything",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "Docs · Menu bar panel for the desktop app",
-			"summary": "A popover under the tray icon with your agent alive in 3D, its Solana wallet balance, start and stop, pending approvals that open the native review dialog, unread alerts and a one-line ask box.",
-			"link": "/docs/desktop-menu-bar-panel",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "Docs: Partner benefits",
-			"summary": "How the public partner benefits page is built and the rules for what it may say: designations quoted exactly, no amounts or IDs, positive and factual.",
-			"link": "/docs/partner-benefits",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "Everything three.ws Does",
-			"summary": "Every three.ws feature organised by what you want to do: make a 3D avatar, build an agent, embed it, sell skills, launch a token, trade and more. Searchable, with pins and a new-this-month feed.",
-			"link": "/everything",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "Get the three.ws apps",
-			"summary": "Every way to run three.ws: the web desktop, Android, Solana Seeker, iPhone and iPad, and the Windows and Linux desktop app.",
-			"link": "/apps",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "Partner Benefits",
-			"summary": "What each three.ws partnership brings to builders and the community: OpenAI, NVIDIA, IBM, Google Cloud, AWS, Alibaba Cloud, Quicknode and HackerNoon.",
-			"link": "/partners/benefits",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "Run Receipts",
-			"summary": "Every 3D Studio generation writes down what each stage was expected to do, what it actually did, and the verdict, with the cause whenever a stage fell back or missed. Signed with ed25519, public, and verifiable offline. Aggregate stage-by-stage rates here, one receipt per run at /runs/<id>.",
-			"link": "/runs",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "The Field",
-			"summary": "How the three.ws homepage works: a live, zoomable map of every agent and product surface, its districts and data sources, semantic zoom, search, deep links and phone layout.",
-			"link": "/docs/field",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "three.ws Desktop",
-			"summary": "Agent console and a 3D companion for Windows and Linux, with local agents, native spend approvals and a live download feed.",
-			"link": "/apps/desktop",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "three.ws for Android",
-			"summary": "Download the native Android app: full-screen, Mobile Wallet Adapter signing, selfie to avatar and AR.",
-			"link": "/apps/android",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "three.ws for iPhone and iPad",
-			"summary": "The App Store build is finished and pending Apple enrollment; what runs on iPhone today and what the native app adds.",
-			"link": "/apps/ios",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "three.ws on Solana Seeker",
-			"summary": "Live on the Solana dApp Store: Seed Vault sign-in, Seeker Genesis Token verification, agents and the marketplace.",
-			"link": "/apps/seeker",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "three.ws web desktop",
-			"summary": "The whole platform as a desktop in your browser: taskbar, windows and a 3D campus you walk through as your avatar. Installable as an app.",
-			"link": "/apps/web",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "Trenches Pulse",
-			"summary": "Live market intelligence for the Solana and Robinhood Chain trenches: every pump.fun launch and graduation as it happens, the hottest tokens by trade flow, runner and death tracking, and scored smart-money wallets. Powered by Pulse.",
-			"link": "/trenches",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "Trenches Pulse",
-			"summary": "How the Trenches Pulse surface is wired: the vendored Pulse service, the allowlisted /api/trenches proxy, the /trenches page, local run steps and the Cloud Run deploy notes.",
-			"link": "/docs/trenches",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "launch",
-			"title": "Web Desktop",
-			"summary": "How the three.ws web desktop works: the CTRL Mica theme, taskbar and Start menu, snappable windows that frame real pages, deep links, saved layout, the classic view and how to add an app.",
-			"link": "/docs/desktop",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "3D viewers no longer flood the browser console, and /trenches stops hammering an offline feed",
-			"summary": "Every page with a 3D model viewer moved to model-viewer 4.4.0, the first release that both decodes our compressed avatars and drops the debug lines 4.3 printed for every model on the page. The trenches dashboard now checks the feed once and backs off while it is offline instead of sending five requests every 15 seconds, and desktop app windows no longer trigger a fullscreen-attribute warning.",
-			"link": "/marketplace",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "A daily partner spotlight on X: one partner, one feature built on it, filmed live every day",
-			"summary": "@trythreews now features one partner from the partners page every day, with a thread on something three.ws built on that partner's technology. Each spotlight is filmed working against production that morning, so the reel is proof rather than a promo, and it rotates between a card, a GIF, the reel and generated art for its head. Every sentence comes from a partner registry with evidence behind it, the program name is stated exactly as the partner grants it, and nobody is tagged. The spotlight owns the prime-time slot, and three days are kept in stock so a bad run never leaves the slot empty. Once a week the series also publishes a partner deep-dive as an X Article: every feature built on that partner, filmed that day, with the runs, the evidence behind each sentence, the real requests and responses, and inline frames from the reels.",
-			"link": "/partners",
-			"tags": [
-				"feature",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "A page for every three.ws app: Android, Solana Seeker, iPhone, desktop and the web desktop",
-			"summary": "The new Apps hub lists every way to run three.ws, each with its own page: the web desktop, the Android app (APK download), Solana Seeker (live on the dApp Store, Seed Vault sign-in and Genesis Token verification), iPhone and iPad (what runs today and what the native build adds once Apple enrollment clears), and the Windows and Linux desktop app, whose download button reads the live release feed and picks the right file for your system.",
-			"link": "/apps",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "A registry of every place three.ws is listed",
-			"summary": "The listings registry tracks 121 surfaces across MCP directories, x402 directories, aggregators, cloud marketplaces, awesome-list pull requests and press, with a command that re-fetches every live entry so a dropped listing shows up.",
-			"link": "/docs/listings-registry",
-			"tags": [
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "A stuck background job now fails fast instead of hanging for 15 minutes",
-			"summary": "Every scheduled background job (cron) on the platform now answers cleanly and quickly if something inside it gets stuck, instead of silently hanging until the server's own 15-minute connection limit cuts it off with no explanation. Each job now gets a real time budget matching what it already declared, the status board records the failed run immediately, and an alert fires with the job's name attached so it can be diagnosed in seconds instead of traced by hand from a blank timeout. Image rendering for 3D creations got the same treatment: a stuck browser launch, page load, or screenshot now times out on its own instead of tying up the render queue.",
-			"link": null,
-			"tags": [
-				"infra"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "An agent set to Grok now answers as Grok everywhere, with a badge when it can't",
-			"summary": "Profile chat, the agent editor's copilot, scheduled strategy runs, and the gateway all now read an agent's chosen brain through the same resolver, so picking Grok for an agent actually means Grok on every surface, not just the one where it was set. A Grok pick first tries the agent owner's own saved xAI key, then the platform's, before falling back to the free default chain. When Grok genuinely can't answer (no key reachable anywhere), profile chat now shows a small badge naming which model answered instead, so it's never a silent swap.",
-			"link": null,
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "API keys can no longer arm spenders or move payout addresses without the wallet scope",
-			"summary": "Sixteen routes that accept an API key could arm something that spends or redirect where money lands, for any key at all. They now require the wallet:write scope: the treasury autopilot, the auto-launcher, the market maker, live Oracle watches, the pump buyback and distribute policy, signal subscriptions, recurring agent charges, team tasks that hire paid agents, agent orders and spending mandates, an agent's wallet address, a skill listing's proceeds split, animation payout addresses, a Launchpad page's payout wallet or pricing, and opening or re-terming a vault. Pausing, cancelling and closing stay open to any key, and editing an agent no longer lets a narrow key raise its spend limits or change its payment fallbacks.",
-			"link": "/docs/mcp",
-			"tags": [
-				"security",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Auto-rigging now covers non-humanoid meshes, not just Mixamo-shaped ones",
-			"summary": "The auto-rigging worker behind the Forge's \"Animate it\" step used to assume a roughly humanoid mesh (a head, a torso, two arms, two legs); anything else, a creature, a prop, a vehicle, came back unrigged. A new fallback worker built on UniRig and SkinTokens (both MIT) now catches those cases: a lightweight shape heuristic in the rigging worker decides whether a mesh is humanoid-shaped, and anything that isn't routes to the new worker for a skeleton and skin weights built for its actual topology instead of forcing a Mixamo bone set onto it.",
-			"link": null,
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Avatar builds that hit a full library now say so, and the news knowledge base stops losing stories",
-			"summary": "If your avatar library filled up while a photo or prompt avatar was still generating, the finished job used to sit unresolved and retry in the background without telling you why nothing appeared. It now closes with a clear message: delete an avatar or upgrade, then build it again. News stories whose text contained a half-cut emoji or a stray null character were silently dropped from the knowledge base the 3D agents ground their answers on, about 120 a day; they are now cleaned and saved. Static files such as images and environment maps stop answering a server error when the CDN revalidates them, GPU workers fetch reference photos from hosts that refuse anonymous clients, and a stalled upstream can no longer hold an image or webhook request open until the platform timeout.",
-			"link": "/news",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Browse every feature by goal",
-			"summary": "A new /everything page groups all 340 product pages under twelve goals (make, animate, build an agent, embed, earn, launch, trade, on-chain, worlds, discover, developer tools, account) with search, pins, recents and a new-this-month feed. The nav leads with it, the command palette labels every result with its goal, and tool pages like Forge, Create and Widgets now end with a what-next strip.",
-			"link": "/everything",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Choose which @-mentions your agent answers, right from its editor",
-			"summary": "An agent's Social tab now has an \"Answer mentions\" section: turn it on, keep it in dry run while you watch what it would say, cap it at a daily reply count, and pick exactly which kinds of mentions it may act on. A new decisions list on the same page shows the agent's own recent calls, what it decided and why, so the owner never has to ask an admin to check a console on their behalf.",
-			"link": "/agents",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Every 3D generation now writes a signed run receipt",
-			"summary": "Each Studio run (avatars, rigged avatars, meshes, rigs, refinements) records stage by stage what was expected, what was observed, and a verdict: met, recovered by a named fallback, missed with its cause, or skipped. The rig is verified by reading the delivered file back, not by trusting the rigger. Receipts are ed25519-signed, linked from every result, browsable at /runs with stage-by-stage rates, and verifiable offline with one command.",
-			"link": "/runs",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-11",
-			"type": "update",
-			"title": "Forge adds a lane that hands back an already-rigged model",
-			"summary": "A new Forge engine, \"Rig on generate\", predicts a model's mesh, joint skeleton and skin weights together in one pass instead of handing back a bare mesh that still needs a separate rigging step. Built on VAST-AI-Research's AniGen (MIT), running on our own self-hosted worker. Pick it from the engine grid, give it a single reference image, and the finished creation arrives already animatable, with the poll response marking it rigged and reporting its joint count so the UI never offers a redundant rerig call. It is opt-in: generating without picking it behaves exactly as before.",
-			"link": "/forge",
-			"tags": [
-				"feature"
 			]
 		}
 	]

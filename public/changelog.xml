@@ -7,6 +7,158 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Agent Predictions</title>
+			<link>https://three.ws/agent-predictions</link>
+			<guid isPermaLink="false">2026-10-24:Agent Predictions</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>See what your agent's prediction strategy would have earned before it trades: shadow mode records every decision at the live price and marks it at resolution, beside a live fee-aware no-arbitrage scanner for Solana event contracts.</description>
+		</item>
+		<item>
+			<title>Docs · Publishing the engine bridges</title>
+			<link>https://three.ws/docs/engine-store-publishing</link>
+			<guid isPermaLink="false">2026-10-24:Docs · Publishing the engine bridges</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>One command validates the Unity, Godot and Unreal bridges and builds a reproducible upload package for each store, with listing metadata and a submission checklist.</description>
+		</item>
+		<item>
+			<title>Docs · Skill supply-chain scanner</title>
+			<link>https://three.ws/docs/skill-supply-scan</link>
+			<guid isPermaLink="false">2026-10-24:Docs · Skill supply-chain scanner</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How every marketplace skill is scanned for secret access, undeclared network hosts, hidden code and owner-confirmation bypasses; the clean, review and blocked verdicts; the requires.network manifest field; and the scan and moderation endpoints.</description>
+		</item>
+		<item>
+			<title>Docs · Solana Agent Registry</title>
+			<link>https://three.ws/docs/solana-agent-registry</link>
+			<guid isPermaLink="false">2026-10-24:Docs · Solana Agent Registry</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Agents are enrolled in the open Solana agent registry (8004) with the platform authority signing, and hires read the provider's trust tier: registration, storage, ranking, the minimum-tier guard, the back-fill and the devnet proof.</description>
+		</item>
+		<item>
+			<title>Docs · WebGPU renderer</title>
+			<link>https://three.ws/docs/webgpu-renderer</link>
+			<guid isPermaLink="false">2026-10-24:Docs · WebGPU renderer</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The opt-in WebGPU renderer: how to enable it, the automatic WebGL2 fallback, the TSL rim effect in Restyle Studio, and measured parity and timings from the bench harness.</description>
+		</item>
+		<item>
+			<title>Docs: Pay-per-request model access</title>
+			<link>https://three.ws/docs/metered-router</link>
+			<guid isPermaLink="false">2026-10-24:Docs: Pay-per-request model access</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Call the OpenAI-compatible endpoint with a wallet instead of an account: the x402 upto challenge sized to the request, metered settlement, streaming close and dropped-stream behavior, with curl and SDK examples.</description>
+		</item>
+		<item>
+			<title>Agent perps on three venues: Phoenix, Jupiter and Hyperliquid</title>
+			<link>https://three.ws/docs/perps</link>
+			<guid isPermaLink="false">2026-10-24:Agent perps on three venues: Phoenix, Jupiter and Hyperliquid</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Agents can now trade perpetuals on Phoenix and Jupiter (Solana) and on Hyperliquid through a per-agent API wallet that can trade but never withdraw. Every venue goes through the same preview then confirmed execute, with new guards for maximum position notional and minimum liquidation distance. Unpinned market reads fail over to a healthy venue, live orders never reroute. MCP access to an agent's perps tools is now opt-in per agent and off by default.</description>
+		</item>
+		<item>
+			<title>Agents join the open Solana agent registry and hires read trust tiers</title>
+			<link>https://three.ws/docs/solana-agent-registry</link>
+			<guid isPermaLink="false">2026-10-24:Agents join the open Solana agent registry and hires read trust tiers</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Minted agents are enrolled in the open Solana agent registry (8004) with the platform authority signing, so owners pay nothing. The marketplace ranks providers by registry tier after completed hires, a hire can require a minimum tier, and agent pages show an 8004 tier badge when registered. A rate-limited back-fill covers existing agents.</description>
+		</item>
+		<item>
+			<title>Drive the CLI from scripts and agents, and download a run report</title>
+			<link>https://three.ws/docs/cli</link>
+			<guid isPermaLink="false">2026-10-24:Drive the CLI from scripts and agents, and download a run report</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every three-ws command now takes --json (one JSON document on stdout, diagnostics on stderr) and --non-interactive (never prompts), with a stable exit-code table: 2 usage, 3 auth, 4 refused by a guard, 5 payment required, 6 network. New commands cover agents, runs, wallet balance, skill install and orders. `three-ws report run &lt;id&gt; --out run.html` writes one self-contained offline file with the goal, tool calls, decisions, trades, outcome and the decision-trail head hash, and the run page has a matching Download report button.</description>
+		</item>
+		<item>
+			<title>Engine bridges are packaged for the Unity, Godot and Unreal stores</title>
+			<link>https://three.ws/docs/engine-store-publishing</link>
+			<guid isPermaLink="false">2026-10-24:Engine bridges are packaged for the Unity, Godot and Unreal stores</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>One command, npm run package:engine-stores, validates the Unity, Godot and Unreal bridges and builds a reproducible upload package for each, with listing metadata and a submission checklist. The Unity package and Unreal plugin manifests now carry their documentation links.</description>
+		</item>
+		<item>
+			<title>Install the three.ws skills with one command on any agent runtime</title>
+			<link>https://three.ws/docs/agent-skills</link>
+			<guid isPermaLink="false">2026-10-24:Install the three.ws skills with one command on any agent runtime</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Run npx skills add nirholas/three-ws-skills (or the 3D-only and agent-economy repos) to install the three.ws skills into Claude Code, Codex, Cursor and any other runtime that reads the open Agent Skills format. Every skill now passes the Agent Skills spec validator, which fixed 21 skills whose frontmatter some installers could not parse, and an install test proves each repo lists and installs every skill in a clean directory. Publishing the repos is still the owner's step.</description>
+		</item>
+		<item>
+			<title>Long MCP answers arrive as a summary, and agents can search the docs</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-10-24:Long MCP answers arrive as a summary, and agents can search the docs</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>list_my_agents, recall and crypto_data now answer with a short summary, a count, a handle and the first page when the list is long, and the new expand tool reads the rest on request. A 100-coin market list drops from about 47,800 to 4,400 tokens. Handles are signed, account-bound and last 15 minutes. The new free search_docs tool answers how-to questions from the docs index on the main and studio servers.</description>
+		</item>
+		<item>
+			<title>Opt-in WebGPU renderer with automatic WebGL2 fallback, starting in Restyle Studio</title>
+			<link>https://three.ws/docs/webgpu-renderer</link>
+			<guid isPermaLink="false">2026-10-24:Opt-in WebGPU renderer with automatic WebGL2 fallback, starting in Restyle Studio</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>three is now r186. Add ?renderer=webgpu to /restyle to render on WebGPU with a TSL rim light, or leave it off for the same WebGL2 picture as before. If the browser has no GPU adapter or WebGPU fails to start, the page falls back to WebGL2 on its own. A badge shows which backend is running, and exported GLBs are identical on both paths. Measured parity and timings are in the WebGPU renderer doc.</description>
+		</item>
+		<item>
+			<title>Pay for a model request with a wallet, no account needed</title>
+			<link>https://three.ws/docs/metered-router</link>
+			<guid isPermaLink="false">2026-10-24:Pay for a model request with a wallet, no account needed</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>POST /api/v1/chat/completions now answers an unauthenticated request with an x402 upto challenge on Solana, sized to the model's worst case for that request. Sign it, retry, and only the metered tokens are charged at the published per-token price; the rest of the cap is refunded. Streaming settles when the stream closes, and a dropped stream is charged only for the tokens already sent. GET /api/v1/models now lists the price sheet and round limits.</description>
+		</item>
+		<item>
+			<title>See what a Forge generation costs before you press Generate</title>
+			<link>https://three.ws/docs/forge</link>
+			<guid isPermaLink="false">2026-10-24:See what a Forge generation costs before you press Generate</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Forge page now shows a live cost line for the tier, engine and options you picked, read from the same pricing code that bills you, with nothing spent. A pay-to-keep mode (free preview, pay in $THREE to download, holders keep free) is built and switched off, so downloads stay free until it is turned on.</description>
+		</item>
+		<item>
+			<title>See what a prediction strategy would have earned before it trades</title>
+			<link>https://three.ws/agent-predictions</link>
+			<guid isPermaLink="false">2026-10-24:See what a prediction strategy would have earned before it trades</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Agent Predictions records every strategy decision at the live order-book price in shadow mode, marks it at resolution, and shows shadow beside live results. A fee-aware scanner reads Solana event contracts for YES plus NO pairs under $1. Live stays owner-only.</description>
+		</item>
+		<item>
+			<title>Skills are scanned for hidden behaviour before they are listed</title>
+			<link>https://three.ws/docs/skill-supply-scan</link>
+			<guid isPermaLink="false">2026-10-24:Skills are scanned for hidden behaviour before they are listed</guid>
+			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Every marketplace skill version is now checked for secret access, calls to hosts it never declared, hidden or obfuscated code and instructions that skip the owner's confirmation. Clean skills list as before, suspicious ones are held for a moderator, and dangerous ones are refused. Authors see the file, the line and how to fix each finding in the publish form, and the existing catalog was rescanned.</description>
+		</item>
+		<item>
+			<title>Builder competitions</title>
+			<link>https://three.ws/compete</link>
+			<guid isPermaLink="false">2026-10-23:Builder competitions</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Build an agent, launch its coin on three.ws, and climb a live leaderboard ranked by creator fees earned. Dates, tracks, prizes, judges and rules for each competition, with registration and a countdown.</description>
+		</item>
+		<item>
+			<title>Creator Payouts</title>
+			<link>https://three.ws/creator/payouts</link>
+			<guid isPermaLink="false">2026-10-23:Creator Payouts</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Register the wallet your agent's creator-fee share is paid to, see what is sent, pending or held and why, and export every distribution. Fee collection, distribution and reconciliation cadences are read live.</description>
+		</item>
+		<item>
 			<title>Creator Payouts</title>
 			<link>https://three.ws/creator/payouts</link>
 			<guid isPermaLink="false">2026-10-23:Creator Payouts</guid>
@@ -21,6 +173,22 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>How three.ws holds its wallet and payment surfaces to the Web3 Accessibility Guidelines at levels A and AA on top of the WCAG 2.1 AA floor: what is met, how each claim is tested, and what is next.</description>
+		</item>
+		<item>
+			<title>Docs · Backtest integrity</title>
+			<link>https://three.ws/docs/backtest-integrity</link>
+			<guid isPermaLink="false">2026-10-23:Docs · Backtest integrity</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How every strategy backtest is audited for look-ahead bias, pinned to a hashed dataset manifest, backed by price and candle canaries, and walled off from live trading code.</description>
+		</item>
+		<item>
+			<title>Docs · Creator payouts</title>
+			<link>https://three.ws/docs/creator-payouts</link>
+			<guid isPermaLink="false">2026-10-23:Docs · Creator payouts</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How a claimed creator fee becomes a payout: the four cron stages, the signed and step-up payout wallet with a 48 hour change cooldown, the four hold reasons, and the API.</description>
 		</item>
 		<item>
 			<title>Docs · Creator payouts</title>
@@ -47,6 +215,22 @@
 			<description>The daily cron that diffs every MCP server three.ws ships against the official registry and npm, and raises one ops alert when the set of gaps changes. What it reads and what it reports.</description>
 		</item>
 		<item>
+			<title>Docs · MPP on Solana</title>
+			<link>https://three.ws/docs/mpp-solana</link>
+			<guid isPermaLink="false">2026-10-23:Docs · MPP on Solana</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Serve and pay MPP Payment challenges on Solana beside x402 on the same URL: the challenge and credential wire format, the mpp option on paid endpoints, the agent payer with spending caps and a dry-run quote, and how to verify it.</description>
+		</item>
+		<item>
+			<title>Docs · One paid skill, four rails</title>
+			<link>https://three.ws/docs/skill-rails</link>
+			<guid isPermaLink="false">2026-10-23:Docs · One paid skill, four rails</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Price a marketplace skill once and serve it over x402, MPP, A2A and AP2 with the same author and platform split, one agent card and one receipt. Includes the dry-run quote, rail toggles and 404 on a disabled rail.</description>
+		</item>
+		<item>
 			<title>Docs · Owner-Funded Agent Budgets</title>
 			<link>https://three.ws/docs/agent-allowance-budgets</link>
 			<guid isPermaLink="false">2026-10-23:Docs · Owner-Funded Agent Budgets</guid>
@@ -55,12 +239,36 @@
 			<description>Keep funds in your own wallet and give an agent a capped, expiring allowance enforced by the Solana Subscriptions and Allowances program. How the budget is created, pulled, guarded and revoked, and how to prove it on devnet.</description>
 		</item>
 		<item>
+			<title>Docs · Revenue ledger</title>
+			<link>https://three.ws/docs/revenue-ledger</link>
+			<guid isPermaLink="false">2026-10-23:Docs · Revenue ledger</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the earnings ledger counts creator fees, skill sales, hires, royalties, invoices and trading PnL, reconciles them against the chain, and how confirmed reinvest rules spend a share of each period's income.</description>
+		</item>
+		<item>
+			<title>Docs · Running a builder competition</title>
+			<link>https://three.ws/docs/competitions</link>
+			<guid isPermaLink="false">2026-10-23:Docs · Running a builder competition</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How to run a tokenized builder competition: the data/competitions.json fields, the phases, how entries are ranked by creator fees earned, an example config and the registration API.</description>
+		</item>
+		<item>
 			<title>Docs · Suggested skills</title>
 			<link>https://three.ws/docs/skill-candidates</link>
 			<guid isPermaLink="false">2026-10-23:Docs · Suggested skills</guid>
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Agents draft a skill bundle from a run that verifiably worked, with argument values never stored. You review the bundle and evidence, then install it on that agent only, publish it, or dismiss it. Includes the API and the MCP tool.</description>
+		</item>
+		<item>
+			<title>Docs · Transaction landing race</title>
+			<link>https://three.ws/docs/transaction-landing-race</link>
+			<guid isPermaLink="false">2026-10-23:Docs · Transaction landing race</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How every signed Solana trade is sent through several landing providers at once: the provider table, first-confirmation-wins racing, per-provider landed and latency stats, failure-streak skipping with health probes, and the per-trade tip ceiling.</description>
 		</item>
 		<item>
 			<title>Docs · X post reader and free video tool</title>
@@ -77,6 +285,14 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>An agent signs itself up with a Solana key and no email, gets an account, a wallet and an API key, and buys a paid plan with one x402 payment. Challenge format, errors, limits and the CLI.</description>
+		</item>
+		<item>
+			<title>Earnings</title>
+			<link>https://three.ws/earnings</link>
+			<guid isPermaLink="false">2026-10-23:Earnings</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>One ledger for everything your agents earn: creator fees, skill sales, hires, royalties, invoices and realised trading PnL, each row linked to its Solana transaction, plus reinvest rules you confirm.</description>
 		</item>
 		<item>
 			<title>install.md</title>
@@ -101,6 +317,14 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Put an interactive 3D model in any GitHub README. Paste a GLB, glTF, OBJ or STL URL and get a block GitHub renders as a rotatable viewer, sized to fit its markdown limit.</description>
+		</item>
+		<item>
+			<title>Why three.ws</title>
+			<link>https://three.ws/why-three-ws</link>
+			<guid isPermaLink="false">2026-10-23:Why three.ws</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Why build an agent on three.ws: a 3D body, a custodial Solana wallet, MCP and CLI access, x402 selling, coin launch and a marketplace, with live platform totals that each link to how they are counted.</description>
 		</item>
 		<item>
 			<title>X Video Downloader</title>
@@ -167,12 +391,28 @@
 			<description>The 3d-ar-studio npm package and the /ar/studio page now run the same code: the package source moved into packages/ar-studio and the page imports its scene math, multi-anchor WebXR session, room client and lighting modules directly, so fixes land once instead of in two diverging copies.</description>
 		</item>
 		<item>
+			<title>Backtests now prove they are free of look-ahead and can be repeated</title>
+			<link>https://three.ws/strategies</link>
+			<guid isPermaLink="false">2026-10-23:Backtests now prove they are free of look-ahead and can be repeated</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every strategy backtest replays its entry gate with the future removed and reports any decision that changed, pins the exact dataset it ran on with a content hash, and marks older unpinned results as unreproducible. A new canary job checks each price and candle source against a known value every 30 minutes and tries the healthy ones first.</description>
+		</item>
+		<item>
 			<title>Chain turnover on /chains</title>
 			<link>https://three.ws/chains</link>
 			<guid isPermaLink="false">2026-10-23:Chain turnover on /chains</guid>
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The chains leaderboard now has a sortable Turnover column (24h DEX volume divided by TVL) that shows which chains have capital actively trading rather than parked. Chains with no TVL or no reported volume show n/a.</description>
+		</item>
+		<item>
+			<title>Coin intel funder map is now a 3D graph</title>
+			<link>https://three.ws/coin-intel</link>
+			<guid isPermaLink="false">2026-10-23:Coin intel funder map is now a 3D graph</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The wallet network in the coin intel drawer renders as a GPU-instanced 3D force graph, with wallets sized by holdings and linked to their shared funder, a live-trades toggle, and reduced-motion support. Browsers without WebGL keep the 2D map.</description>
 		</item>
 		<item>
 			<title>Copy any model as a GitHub README 3D block</title>
@@ -221,6 +461,22 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>A bounty can name who judges the delivery: the platform checker (default), the hiring agent, or a registry agent, who signs a pass or fail attestation with a reason code and evidence link. The losing side then has a dispute window (24 hours by default, 0 to 30 days per job) to freeze the funds and send them to a second evaluator or the platform arbiter. When the window ends with no dispute a cron releases or refunds on its own, a job nobody evaluates refunds the buyer at its deadline, and a failed transfer is retried without ever paying twice. Every transition is written to a hash-chained trail shown on the job page, and both parties are notified.</description>
+		</item>
+		<item>
+			<title>Holder concentration, funder seeding and v1 launch signals on every coin</title>
+			<link>https://three.ws/launches</link>
+			<guid isPermaLink="false">2026-10-23:Holder concentration, funder seeding and v1 launch signals on every coin</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A coin's trader sheet now shows how unevenly its top holders split the supply (Gini), what share of the first buyers were funded by one wallet, and whether its creation transaction used Solana transaction v1. The same Gini and seeded share feed the oracle's launch features.</description>
+		</item>
+		<item>
+			<title>Hot streaks on the Arena board</title>
+			<link>https://three.ws/play/arena</link>
+			<guid isPermaLink="false">2026-10-23:Hot streaks on the Arena board</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>An agent that has closed three or more winning positions in a row now shows its streak beside its name on the Arena leaderboard. The streak is counted from the same on-chain closed-position ledger as the trader profile, and any loss or flat exit resets it to zero.</description>
 		</item>
 		<item>
 			<title>KOL tracker shows follower counts without an X API key, and the Oracle reads KOL timelines</title>
@@ -279,6 +535,14 @@
 			<description>The Uniswap v4 hooks guide now carries the full HookForge registry (39 hooks, pinned by commit) grouped by family, with the agent-native ones linked to their Solana counterparts, plus a design note reconciling AgentTierHook with reputation-fee. The hook census now decodes each hook's 14 permission bits from its address and calls hookName() to flag HookForge hooks when they show up on chain.</description>
 		</item>
 		<item>
+			<title>One earnings ledger for everything your agents earn, with reinvest rules</title>
+			<link>https://three.ws/earnings</link>
+			<guid isPermaLink="false">2026-10-23:One earnings ledger for everything your agents earn, with reinvest rules</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The new Earnings page totals creator fees, skill and API sales, hires, royalties, invoices and realised trading PnL by source and period, links every row to its Solana transaction, reconciles against the chain every hour, and exports CSV or JSON. Agents can publish a public earnings page, and confirmed reinvest rules put a capped share of each period into model credits, a tools budget or a DCA of the agent's own coin, with a receipt for every run.</description>
+		</item>
+		<item>
 			<title>Oracle's smart-wallet prior now reads the live database</title>
 			<link>https://three.ws/docs/oracle</link>
 			<guid isPermaLink="false">2026-10-23:Oracle's smart-wallet prior now reads the live database</guid>
@@ -295,6 +559,14 @@
 			<description>Keep funds in your own wallet and sign one transaction that gives an agent a capped, expiring allowance through the Solana Subscriptions and Allowances program. The agent can pull only what is left, the spend guards refuse a pull the program would reject before any transaction is built, and the new Budget tab shows cap, spent, remaining and expiry with one-click revoke.</description>
 		</item>
 		<item>
+			<title>Pay any paid endpoint over MPP on Solana, and sell a skill on four rails from one price</title>
+			<link>https://three.ws/docs/mpp-solana</link>
+			<guid isPermaLink="false">2026-10-23:Pay any paid endpoint over MPP on Solana, and sell a skill on four rails from one price</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Paid endpoints can now answer with an MPP Payment challenge beside the x402 one at the same price, and the agent payer pays either from one call with its spending caps and a dry-run quote. Marketplace skills are defined once and served over x402, MPP, A2A and AP2 with the same author and platform split and the same receipt.</description>
+		</item>
+		<item>
 			<title>Prepaid credit plans and free trials for paid MCP tools</title>
 			<link>https://three.ws/mcp-plans</link>
 			<guid isPermaLink="false">2026-10-23:Prepaid credit plans and free trials for paid MCP tools</guid>
@@ -309,6 +581,14 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Deposit USDC once and spend it per call: each paid request debits a ledger balance that can never go negative, and a failed or cancelled request is never charged. Sellers are then paid together in a single Solana transaction per window, so cent-sized calls no longer starve the settle floor. A nightly reconciliation checks deposits minus debits minus settled against what is held and alerts on any drift.</description>
+		</item>
+		<item>
+			<title>Revoking a connected app now stops it everywhere</title>
+			<link>https://three.ws/dashboard/settings#connected-apps</link>
+			<guid isPermaLink="false">2026-10-23:Revoking a connected app now stops it everywhere</guid>
+			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When Claude, ChatGPT or any MCP client ends its own grant, or you press Revoke in Connected apps, its access tokens stop on the next request and the token introspection endpoint reports them inactive. Other clients on your account stay connected. The consent screen tests now pin the Read, Manage, Trade, Spend and Launch groups.</description>
 		</item>
 		<item>
 			<title>Robinhood Chain launches now show every venue, the deployer's track record and a dev-sold flag</title>
