@@ -13,5 +13,8 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
     "hood-mcp": "^0.1.1"
+  },
+  "overrides": {
+    "zod@^3": "^4.6.7"
   }
 }
