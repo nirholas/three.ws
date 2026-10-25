@@ -924,6 +924,23 @@ describe('indexLagVerdict', () => {
 		);
 		expect(verdict.status).toBe('degraded');
 		expect(verdict.detail).toContain('the Solana index users read is fresh');
+		expect(verdict.detail).toContain('is fresh');
+	});
+
+	it('still caps at degraded when Solana is merely degraded, not ok, and EVM is down', () => {
+		// Measured on production 2026-10-25: Solana error rate 5.28% (104/1971,
+		// just over the 5% degraded threshold) with a fresh 45-minute median lag,
+		// while Base (EVM) sat 69h19m stale. The guard required solStatus === 'ok'
+		// exactly, so this combination escalated the whole subsystem to `down`
+		// even though no user-visible Solana fault exists.
+		const verdict = indexLagVerdict(
+			lagFixture({
+				solana: { agents: 1971, errored: 104, medianLagMin: 45 },
+				evm: { lagMin: 4159, worstBlocksBehind: 125_079, behindChains: 1, staleChains: 1 },
+			}),
+		);
+		expect(verdict.status).toBe('degraded');
+		expect(verdict.detail).toContain('degraded but not down');
 	});
 
 	it('still reports down when Solana itself is the leg that is behind', () => {

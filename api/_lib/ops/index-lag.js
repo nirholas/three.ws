@@ -265,7 +265,7 @@ export function indexLagVerdict(lag) {
 	// the surface said `down` for a stale secondary cursor while the actual
 	// Solana fault (two thirds of cursors wedged) was never scored at all. So an
 	// EVM-only fault caps at `degraded`, with the reason stated in the detail.
-	const evmOnlyFault = solStatus === 'ok' && evmStatus === 'down';
+	const evmOnlyFault = solStatus !== 'down' && evmStatus === 'down';
 	const status = worst(solStatus, evmOnlyFault ? 'degraded' : evmStatus);
 
 	const solPart =
@@ -294,7 +294,9 @@ export function indexLagVerdict(lag) {
 
 	const detail =
 		`${solPart}. ${evmPart}.` +
-		(evmOnlyFault ? ' Secondary-chain cursors only: the Solana index users read is fresh, so this is degraded, not down.' : '');
+		(evmOnlyFault
+			? ` Secondary-chain cursors only: the Solana index users read is ${solStatus === 'ok' ? 'fresh' : 'degraded but not down'}, so this is degraded, not down.`
+			: '');
 
 	const hint =
 		status === 'ok'
