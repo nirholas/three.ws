@@ -1,0 +1,1255 @@
+[
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "agents-access-control-agent-update-unowned-avatar-id-public-manifest-body-uri",
+  "title": "Agent update accepts an avatar_id the caller does not own; public manifest emits its CDN URL",
+  "description": "api/agents.js handleUpdate sets avatar_id = COALESCE(body.avatar_id, avatar_id) with no avatars.owner_id check (handleCreate checks at 308-312). Unauthenticated manifest/registration in api/agents/_id/_sub.js join the avatar and call resolveAvatarUrl with visibility hardcoded 'public', emitting the private avatar CDN URL in body.uri and registration. Verifier assessment: Source path holds: handleUpdate writes avatar_id with no owner check; public manifest/registration emit the CDN URL. Attacker needs the victim's random avatar UUID and the CDN may already be public. Non-binding priority hint: low. Suggested fix: Validate UUID and require avatars.owner_id = caller in handleUpdate as handleCreate does; in public manifest/registration only emit URLs for public or unlisted avatars owned by the agent owner.",
+  "claimed_root_cause": "Missing ownership check on update; public resolver forces public visibility.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "api/agents.js",
+    "line": 447,
+    "scope": "agents.js:447",
+    "description": "entrypoint step in agents.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/agents.js",
+    "line": 533,
+    "scope": "agents.js:533",
+    "description": "propagation step in agents.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/agents/_id/_sub.js",
+    "line": 378,
+    "scope": "_sub.js:378",
+    "description": "propagation step in _sub.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/_lib/avatars.js",
+    "line": 545,
+    "scope": "avatars.js:545",
+    "description": "propagation step in avatars.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/_lib/r2.js",
+    "line": 439,
+    "scope": "r2.js:439",
+    "description": "propagation step in r2.js"
+   },
+   {
+    "kind": "sink",
+    "file": "api/agents/_id/_sub.js",
+    "line": 441,
+    "scope": "_sub.js:441",
+    "description": "sink step in _sub.js"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "api/agents.js",
+    "line": 308,
+    "description": "create path checks avatar ownership"
+   },
+   {
+    "file": "api/agents/_id/_sub.js",
+    "line": 401,
+    "description": "visibility hardcoded public"
+   },
+   {
+    "file": "api/agents/_id/_sub.js",
+    "line": 515,
+    "description": "registration emits URL"
+   }
+  ],
+  "blockers": [
+   "Attacker needs the victim's unguessable avatar UUID; no leak source confirmed.",
+   "Whether /cdn/<key> or r2.dev serves private-visibility keys without auth (api/cdn-object.js suggests the bucket is public).",
+   "Not executed."
+  ],
+  "validation_plan": {
+   "local": "Two dummy users: A PATCHes own agent with B's private avatar_id, then fetch the public manifest and registration unauthenticated and check for B's CDN URL; test whether the URL serves bytes without auth.",
+   "deployment": "Owner checks whether private avatar keys are fetchable without auth and whether avatar UUIDs leak."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "ai-llm-agent-ask-anonymous-working-memory-poisoning",
+  "title": "Anonymous agent-ask visitors write working-tier memories injected into the owner's chat prompt",
+  "description": "agent-ask saveTurn (agent-ask.js:191, called 311) stores visitor question (<=1000 chars) and answer as agent_memories tier 'working', salience 0.2, 2h TTL. memory-store.js:481 computeContext selects all non-expired pinned or working rows; chat.js:2120 recallForChat merges them; chat.js:2198 appends '- (type) snippet' (160 char) to system prompt with no untrusted fence. Chat tools include sendSol (chat.js:402); Guardian inspects only user message. Funds impact depends on api/agent/send-sol.js:83 AVATAR_LOCK_RECIPIENT/AVATAR_DEMO_TOKEN config. Verifier assessment: Anonymous agent-ask writes visitor text to the working memory tier, which reaches the owner's chat system prompt unfenced. Rows default to non-public, sendSol is capped and guarded, so impact is bounded to the owner's own chat. Non-binding priority hint: low. Suggested fix: Do not write anonymous turns to the working tier; fence recalled snippets as untrusted data; require the user message to authorize sendSol.",
+  "claimed_root_cause": "Public unauthenticated write path stores attacker text in a tier the owner chat trusts; recall unfenced.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "api/agent-ask.js",
+    "line": 248,
+    "scope": "agent-ask.js:248",
+    "description": "entrypoint step in agent-ask.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/agent-ask.js",
+    "line": 311,
+    "scope": "agent-ask.js:311",
+    "description": "propagation step in agent-ask.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/agent-ask.js",
+    "line": 191,
+    "scope": "agent-ask.js:191",
+    "description": "propagation step in agent-ask.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/_lib/memory-store.js",
+    "line": 481,
+    "scope": "memory-store.js:481",
+    "description": "propagation step in memory-store.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/chat.js",
+    "line": 2120,
+    "scope": "chat.js:2120",
+    "description": "propagation step in chat.js"
+   },
+   {
+    "kind": "sink",
+    "file": "api/chat.js",
+    "line": 2198,
+    "scope": "chat.js:2198",
+    "description": "sink step in chat.js"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "api/agent-ask.js",
+    "line": 16,
+    "description": "comment claims lowest tier avoids polluting"
+   },
+   {
+    "file": "api/_lib/memory-store.js",
+    "line": 473,
+    "description": "working = in-context-now set"
+   },
+   {
+    "file": "api/chat.js",
+    "line": 402,
+    "description": "sendSol tool offered"
+   },
+   {
+    "file": "api/agent/send-sol.js",
+    "line": 83,
+    "description": "recipient lock depends on env"
+   }
+  ],
+  "blockers": [
+   "Model compliance with injected text unobserved.",
+   "Production send-sol env (recipient lock, demo token, caps) and GUARDIAN_DISABLE unknown.",
+   "Memories are not public by default, so only the owner chat is exposed."
+  ],
+  "validation_plan": {
+   "local": "POST anonymous /api/agent-ask with a marker instruction, then chat as owner and check the marker appears in recalled memory and the system prompt but not for a non-owner.",
+   "deployment": "Owner checks prod send-sol env and counts anon-originated working rows on a test agent."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "ai-llm-agent-ask-unpublished-persona-skills-disclosure",
+  "title": "agent-ask serves unpublished agents' private persona, system prompt and custom skills to anonymous callers",
+  "description": "POST /api/agent-ask (agent-ask.js:248) selects agent by id and deleted_at only (261), loads agentSkillsForPrompt (289), builds system prompt with persona/system_prompt and skills (70, 290) for anonymous asker. api/chat.js:546 requires is_published OR owner; chat.js:632 says persona prompts are private IP; 685 skills only when agentVisible. Anonymous caller knowing an unpublished agent UUID can have the model reveal persona/skills. Prompt instruction not to reveal is not deterministic. Verifier assessment: agent-ask looks up agents without an is_published/owner filter and injects persona and skills into the prompt; chat.js gates the same data. Needs an unpublished agent UUID. Non-binding priority hint: low. Suggested fix: Add AND (is_published = true OR user_id = caller) to the lookup at agent-ask.js:261 and load skills only for visible agents.",
+  "claimed_root_cause": "Missing visibility predicate on sibling path.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "api/agent-ask.js",
+    "line": 248,
+    "scope": "agent-ask.js:248",
+    "description": "entrypoint step in agent-ask.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/agent-ask.js",
+    "line": 261,
+    "scope": "agent-ask.js:261",
+    "description": "propagation step in agent-ask.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/agent-ask.js",
+    "line": 289,
+    "scope": "agent-ask.js:289",
+    "description": "propagation step in agent-ask.js"
+   },
+   {
+    "kind": "sink",
+    "file": "api/agent-ask.js",
+    "line": 290,
+    "scope": "agent-ask.js:290",
+    "description": "sink step in agent-ask.js"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "api/chat.js",
+    "line": 546,
+    "description": "sibling control"
+   },
+   {
+    "file": "api/chat.js",
+    "line": 632,
+    "description": "comment: private IP"
+   },
+   {
+    "file": "api/chat.js",
+    "line": 685,
+    "description": "skills gated by agentVisible"
+   },
+   {
+    "file": "api/agent-ask.js",
+    "line": 70,
+    "description": "persona and skills inserted verbatim"
+   }
+  ],
+  "blockers": [
+   "Leak reliability against the model unproven.",
+   "Needs an unpublished agent UUID; check whether any public surface leaks it.",
+   "Product intent for agent-ask on unpublished agents unclear."
+  ],
+  "validation_plan": {
+   "local": "Dummy DB with unpublished agent holding marker strings; anonymous POST /api/agent-ask asking to repeat instructions; compare with /api/chat.",
+   "deployment": "Owner tests own unpublished agent unauthenticated; checks public exposure of unpublished UUIDs."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "api-auth-login-csrf-unbound-signin-completion",
+  "title": "Sign-in completion endpoints issue a session without binding to the initiating browser (login CSRF)",
+  "description": "Handoff exchange GET (api/auth/handoff.js:98,131-132) redeems bearer code, destroySession then createSession for code owner, no origin/cookie binding (mint side line 69 requires isSameSiteOrigin). Telegram widget callback (telegram/[action].js:119 default {i:'login'} when flow cookie absent; signIn 70,180) creates session for payload identity. SAML ACS (saml/[action].js:72,119-120) accepts unsolicited POST. Attacker with own code/payload/assertion makes victim browser sign in as attacker; victim data saved under attacker account. privy/verify.js:40 enforces isSameSiteOrigin as comparable control. Session cookie SameSite=Lax (auth.js:144) so top-level GET carries/sets. Verifier assessment: Handoff exchange GET, Telegram callback without a flow cookie, and SAML ACS complete sign-in with no browser binding, so a victim can be signed in as the attacker (login CSRF). No account takeover; needs victim interaction. Non-binding priority hint: low. Suggested fix: Require the signed flow cookie on Telegram, enforce InResponseTo and bind RelayState for SAML, and add a confirm step or Sec-Fetch-Site check before the handoff replaces a session.",
+  "claimed_root_cause": "Completion handlers set session cookie with no per-flow browser binding.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "api/auth/handoff.js",
+    "line": 98,
+    "scope": "handoff.js:98",
+    "description": "entrypoint step in handoff.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/auth/handoff.js",
+    "line": 131,
+    "scope": "handoff.js:131",
+    "description": "propagation step in handoff.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/auth/telegram/[action].js",
+    "line": 119,
+    "scope": "[action].js:119",
+    "description": "propagation step in [action].js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/auth/telegram/[action].js",
+    "line": 180,
+    "scope": "[action].js:180",
+    "description": "propagation step in [action].js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/auth/saml/[action].js",
+    "line": 72,
+    "scope": "[action].js:72",
+    "description": "propagation step in [action].js"
+   },
+   {
+    "kind": "sink",
+    "file": "api/auth/saml/[action].js",
+    "line": 120,
+    "scope": "[action].js:120",
+    "description": "sink step in [action].js"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "api/auth/handoff.js",
+    "line": 69,
+    "description": "mint side has same-site check"
+   },
+   {
+    "file": "api/auth/privy/verify.js",
+    "line": 40,
+    "description": "comparable endpoint enforces guard"
+   },
+   {
+    "file": "api/auth/telegram/[action].js",
+    "line": 107,
+    "description": "flow cookie exists but absence tolerated at 119"
+   },
+   {
+    "file": "api/_lib/auth.js",
+    "line": 144,
+    "description": "SameSite=Lax"
+   }
+  ],
+  "blockers": [
+   "Telegram and SAML may not be enabled in production.",
+   "SAML InResponseTo handling untraced.",
+   "Handoff GET is bearer by design for iOS; any fix must keep that flow.",
+   "Attacker needs an account and a victim click."
+  ],
+  "validation_plan": {
+   "local": "Mint a handoff code as A, open the exchange GET in a session signed in as B and confirm the session switches to A; repeat Telegram callback without tgflow cookie and SAML with an unsolicited response.",
+   "deployment": "Confirm Telegram/SAML enabled in prod; any edge origin check on handoff exchange."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "api-ssrf-tty-guard-bypass-redirect-follow-unpinned-fetch",
+  "title": "Unauthenticated /api/tty SSRF guard bypassed by redirect-following, unpinned fetch",
+  "description": "GET /api/tty?src=<url> is unauthenticated and only IP-rate-limited. It validates src once with assertSafePublicUrl (DNS check only), then passes the URL string to packages/tty-3d loadModel, which calls global fetch with redirect:'follow' and no dispatcher pin. A public URL that 302s to an internal/metadata address passes the guard and is followed with no re-validation; DNS rebinding also works. The avatar branch passes avatar.model_url to loadModel with no SSRF check at all. Error message `could not read that model: ${err.message}` is returned to the caller. Verifier assessment: /api/tty validates the URL once then fetches with default fetch and redirect follow, so a public URL redirecting to an internal address or a rebinding host reaches internal targets. Mostly blind: the body must parse as GLB, but the error text leaks status. Non-binding priority hint: medium. Suggested fix: Pass the pinned per-hop fetcher with redirect manual to loadModel for both src and avatar.model_url branches; return a generic error.",
+  "claimed_root_cause": "tty.js uses assertSafePublicUrl as a one-shot pre-check and then delegates the fetch to loadModel with default global fetch and redirect:'follow', instead of the repo's pinned per-hop fetcher (fetchModel / fetchSafePublicUrlPinned).",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "api/tty.js",
+    "line": 111,
+    "scope": "tty.js:111",
+    "description": "entrypoint step in tty.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/tty.js",
+    "line": 85,
+    "scope": "tty.js:85",
+    "description": "propagation step in tty.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/_lib/ssrf-guard.js",
+    "line": 111,
+    "scope": "ssrf-guard.js:111",
+    "description": "propagation step in ssrf-guard.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/tty.js",
+    "line": 144,
+    "scope": "tty.js:144",
+    "description": "propagation step in tty.js"
+   },
+   {
+    "kind": "sink",
+    "file": "packages/tty-3d/src/index.js",
+    "line": 30,
+    "scope": "index.js:30",
+    "description": "sink step in index.js"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "api/tty.js",
+    "line": 85,
+    "description": "Guard is a pre-check only."
+   },
+   {
+    "file": "packages/tty-3d/src/index.js",
+    "line": 30,
+    "description": "redirect:'follow', global fetch, no pin."
+   },
+   {
+    "file": "api/tty.js",
+    "line": 95,
+    "description": "avatar.model_url passed to loadModel with no SSRF validation."
+   },
+   {
+    "file": "api/_lib/fetch-model.js",
+    "line": 79,
+    "description": "Contrast: sibling proxies use redirect:'manual' with per-hop resolvePublicHost and pinned dispatcher."
+   }
+  ],
+  "blockers": [
+   "Redirect following and rebinding not exercised.",
+   "Whether Cloud Run egress reaches useful internal services.",
+   "GCP metadata needs a header this fetch cannot send.",
+   "Response must be a valid GLB to render."
+  ],
+  "validation_plan": {
+   "local": "Two loopback fixtures, first 302s to second; with a test DNS allowance call resolveSource and loadModel and confirm the second is hit; add a regression test.",
+   "deployment": "Staging: point ?src at owned public host redirecting to an internal canary; check canary log and Cloud Run egress reachability."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "business-logic-oracle-follow-unauthenticated-chat-subscription-tamper",
+  "title": "Oracle follower subscriptions are unauthenticated and keyed by caller-supplied Telegram chat_id",
+  "description": "api/oracle/follow.js:14 documents no auth; POST (94,131) inserts oracle_followers, DELETE (139) removes, GET (158) lists, keyed by caller-supplied (agent_id, chat_id, network); only IP rate limits. Third party can unsubscribe victim chat, subscribe chats to platform bot messages (alerts.js:349 reads same table), enumerate follows. Verifier assessment: api/oracle/follow has no auth and keys subscriptions on caller-supplied chat_id, so anyone can unsubscribe or subscribe arbitrary chats. GET is a single-pair check, not a list. Content is public signals; delivery needs the chat to have started the bot. Non-binding priority hint: low. Suggested fix: Require proof of chat control, for example a signed /start deep-link nonce bound to chat_id and agent_id, on POST and DELETE.",
+  "claimed_root_cause": "chat_id used as identity with no proof of chat control.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "api/oracle/follow.js",
+    "line": 14,
+    "scope": "follow.js:14",
+    "description": "entrypoint step in follow.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/oracle/follow.js",
+    "line": 59,
+    "scope": "follow.js:59",
+    "description": "propagation step in follow.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/oracle/follow.js",
+    "line": 94,
+    "scope": "follow.js:94",
+    "description": "propagation step in follow.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/oracle/follow.js",
+    "line": 131,
+    "scope": "follow.js:131",
+    "description": "propagation step in follow.js"
+   },
+   {
+    "kind": "sink",
+    "file": "api/_lib/oracle/alerts.js",
+    "line": 349,
+    "scope": "alerts.js:349",
+    "description": "sink step in alerts.js"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "api/oracle/follow.js",
+    "line": 158,
+    "description": "anonymous list"
+   },
+   {
+    "file": "api/_lib/oracle/alerts.js",
+    "line": 349,
+    "description": "dispatch reads same table"
+   }
+  ],
+  "blockers": [
+   "Telegram delivers only to chats that started the bot.",
+   "Production rate-limit values unknown.",
+   "Unauthenticated access is documented as intended."
+  ],
+  "validation_plan": {
+   "local": "Anonymous POST, GET, DELETE with a chat_id the caller does not control on a test DB and bot; confirm rows change and alertFollowers delivers.",
+   "deployment": "Staging: anonymous POST/DELETE/GET with arbitrary chat_id."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "business-logic-oracle-test-alert-arbitrary-chat-html-injection",
+  "title": "Oracle test-alert sends unescaped owner-controlled HTML to an arbitrary chat from the platform bot",
+  "description": "api/oracle/test-alert.js: chat_id format-validated only (22); ownership of agent only not destination (49); agentName from owner agent record (60) interpolated unescaped (61) in parse_mode HTML message (80). Low confidence: auth exists, Telegram delivers only to chats that started the bot. Verifier assessment: test-alert lets any signed-in user send a bot message with raw agent.name in HTML parse mode to any chat_id. Telegram's tag subset limits it to links and formatting; needs a chat that started the bot. Non-binding priority hint: low. Suggested fix: HTML-escape agentName; bind chat_id to a chat the caller verified.",
+  "claimed_root_cause": "Unescaped interpolation and unrestricted destination.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "api/oracle/test-alert.js",
+    "line": 22,
+    "scope": "test-alert.js:22",
+    "description": "entrypoint step in test-alert.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/oracle/test-alert.js",
+    "line": 47,
+    "scope": "test-alert.js:47",
+    "description": "propagation step in test-alert.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/oracle/test-alert.js",
+    "line": 50,
+    "scope": "test-alert.js:50",
+    "description": "propagation step in test-alert.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/oracle/test-alert.js",
+    "line": 64,
+    "scope": "test-alert.js:64",
+    "description": "propagation step in test-alert.js"
+   },
+   {
+    "kind": "sink",
+    "file": "api/oracle/test-alert.js",
+    "line": 80,
+    "scope": "test-alert.js:80",
+    "description": "sink step in test-alert.js"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "api/oracle/test-alert.js",
+    "line": 61,
+    "description": "agentName unescaped"
+   },
+   {
+    "file": "api/oracle/test-alert.js",
+    "line": 80,
+    "description": "parse_mode HTML"
+   }
+  ],
+  "blockers": [
+   "Agent-name write path may restrict characters (not traced).",
+   "Delivery needs the target chat to have started the bot.",
+   "oracleTelegramTestIp ceiling not checked."
+  ],
+  "validation_plan": {
+   "local": "With Telegram stubbed, create an agent named with an anchor tag, POST test-alert with another chat_id and inspect the sendMessage payload."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "business-logic-vault-deposit-zero-share-mint-donation-inflation",
+  "title": "Vault deposit can mint zero shares after an outside donation inflates NAV",
+  "description": "depositToVault (vault-transfer.js:99 transfers USDC first, 114 navBefore, 115 minted=sharesForDeposit with no minted>0 guard). vault-accounting.js:122 par only when shares or navBefore zero else floor(deposit*shares/navBefore). vault-wallet.js:101,124 NAV includes live on-chain USDC of public vault_address (donation-manipulable). deposit.js:44 only checks real-funds agreement; no minimum. First depositor with tiny shares donates to inflate; later smaller deposit mints 0, funds kept by existing holders. Verifier assessment: Vault deposits mint floor(deposit*shares/NAV) with NAV read from the on-chain balance, no minted>0 check, no virtual shares, no min_shares. A first-depositor donation can make a later deposit mint zero shares. Non-binding priority hint: medium. Suggested fix: Reject minted<=0 and refund; add min_shares_out; seed dead or virtual shares; require a minimum first deposit; track accounted balance.",
+  "claimed_root_cause": "Share pricing from donation-manipulable live balance with no zero-mint guard or virtual shares.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "api/vaults/deposit.js",
+    "line": 44,
+    "scope": "deposit.js:44",
+    "description": "entrypoint step in deposit.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/vaults/deposit.js",
+    "line": 52,
+    "scope": "deposit.js:52",
+    "description": "propagation step in deposit.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/_lib/vault-transfer.js",
+    "line": 99,
+    "scope": "vault-transfer.js:99",
+    "description": "propagation step in vault-transfer.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/_lib/vault-transfer.js",
+    "line": 115,
+    "scope": "vault-transfer.js:115",
+    "description": "propagation step in vault-transfer.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/_lib/vault-accounting.js",
+    "line": 122,
+    "scope": "vault-accounting.js:122",
+    "description": "propagation step in vault-accounting.js"
+   },
+   {
+    "kind": "sink",
+    "file": "api/_lib/vault-wallet.js",
+    "line": 101,
+    "scope": "vault-wallet.js:101",
+    "description": "sink step in vault-wallet.js"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "api/_lib/vault-transfer.js",
+    "line": 115,
+    "description": "no positive-share guard"
+   },
+   {
+    "file": "api/_lib/vault-accounting.js",
+    "line": 122,
+    "description": "floor division"
+   },
+   {
+    "file": "api/_lib/vault-wallet.js",
+    "line": 124,
+    "description": "NAV from on-chain balance"
+   }
+  ],
+  "blockers": [
+   "Not executed.",
+   "transferUsdcGuarded spend policy may impose a minimum amount.",
+   "Vault creation gating not examined.",
+   "No min_shares parameter makes loss silent."
+  ],
+  "validation_plan": {
+   "local": "Unit test sharesForDeposit(1n, 1_000_000_000n, 1n) returns 0n; then on devnet or mocks: deposit 1 atomic, donate USDC to vault_address, second deposit mints 0 shares.",
+   "deployment": "Check transferUsdcGuarded and prod config for minimum deposit."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "chat-proxy-openrouter-body-passthrough-bypasses-free-model-gate",
+  "title": "Anonymous chat proxy forwards full request body to OpenRouter on platform key; extra fields can reach non-free models/paid features",
+  "description": "POST /api/chat/proxy unauthenticated, per-IP limit only. isFreeModelId (openrouter-free.js:46) checks only body.model ends ':free' (proxy.js:84). proxy.js:128 sends JSON.stringify({...body, model: activeModel}) with platform Bearer key, passing 'models' fallback, 'plugins', 'provider', large max_tokens. Billing effect unobserved. Verifier assessment: /api/chat/proxy gates only on a :free model suffix and then spreads the whole client body upstream with the platform key, so models, plugins, provider and max_tokens pass through. Billing effect depends on OpenRouter behavior. Non-binding priority hint: medium. Suggested fix: Build the upstream payload from an explicit allowlist; clamp max_tokens; cap message size.",
+  "claimed_root_cause": "Allowlist on one field but upstream payload built by spreading untrusted body.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "api/chat/proxy.js",
+    "line": 65,
+    "scope": "proxy.js:65",
+    "description": "entrypoint step in proxy.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/chat/proxy.js",
+    "line": 84,
+    "scope": "proxy.js:84",
+    "description": "propagation step in proxy.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/_lib/openrouter-free.js",
+    "line": 46,
+    "scope": "openrouter-free.js:46",
+    "description": "propagation step in openrouter-free.js"
+   },
+   {
+    "kind": "sink",
+    "file": "api/chat/proxy.js",
+    "line": 128,
+    "scope": "proxy.js:128",
+    "description": "sink step in proxy.js"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "api/chat/proxy.js",
+    "line": 84,
+    "description": "only :free suffix check"
+   },
+   {
+    "file": "api/chat/proxy.js",
+    "line": 128,
+    "description": "whole body spread, only model overridden"
+   },
+   {
+    "file": "api/_lib/openrouter-free.js",
+    "line": 46,
+    "description": "pure string suffix test"
+   }
+  ],
+  "blockers": [
+   "OpenRouter handling of models/plugins/provider with a :free primary and whether the key is charged.",
+   "Whether the key has paid credits.",
+   "Actual chatIp limit values."
+  ],
+  "validation_plan": {
+   "local": "Stub fetch, POST a :free model with models, plugins and a large max_tokens, assert the upstream body contains them, then add an allowlist and assert they are dropped.",
+   "deployment": "Owner reviews OpenRouter activity for non-:free generations/plugin charges on the proxy key; test with spend-capped staging key."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "chat-server-tool-server-unauthenticated-shell-default",
+  "title": "Go chat tool server exposes shell, file write and arbitrary file read with no auth by default, all interfaces, wildcard CORS",
+  "description": "chat/server/main.go: Addr :8081 (53), CORS origin * headers * (33), authMiddleware only when *password != \"\" (112) default empty (25). POST /tool InvokeTool (148) runs Shell via mvdan interp (toolfns/shell.go:214, real processes) and Edit (toolfns.go:112 arbitrary file write); GET /read_file reads any path (files.go:83). Web page in browser can hit localhost:8081; LAN host directly. Password compare is raw string 'Basic '+password, not constant-time. Request body (tool args) tee'd to stdout. Verifier assessment: The Go chat tool server defaults to no password, wildcard CORS and a listen address on all interfaces, and exposes shell, edit and file read. Any web page or LAN host could reach it if run with defaults. Non-binding priority hint: high. Suggested fix: Bind 127.0.0.1 by default; refuse to start without a password or generate a token; constant-time compare; restrict CORS; confine read_file and Edit; stop logging bodies.",
+  "claimed_root_cause": "Fail-open auth, non-loopback bind, wildcard CORS in front of OS command and file write surface.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "chat/server/main.go",
+    "line": 33,
+    "scope": "main.go:33",
+    "description": "entrypoint step in main.go"
+   },
+   {
+    "kind": "propagation",
+    "file": "chat/server/main.go",
+    "line": 53,
+    "scope": "main.go:53",
+    "description": "propagation step in main.go"
+   },
+   {
+    "kind": "propagation",
+    "file": "chat/server/main.go",
+    "line": 112,
+    "scope": "main.go:112",
+    "description": "propagation step in main.go"
+   },
+   {
+    "kind": "propagation",
+    "file": "chat/server/main.go",
+    "line": 148,
+    "scope": "main.go:148",
+    "description": "propagation step in main.go"
+   },
+   {
+    "kind": "propagation",
+    "file": "chat/server/toolfns/shell.go",
+    "line": 214,
+    "scope": "shell.go:214",
+    "description": "propagation step in shell.go"
+   },
+   {
+    "kind": "sink",
+    "file": "chat/server/files.go",
+    "line": 83,
+    "scope": "files.go:83",
+    "description": "sink step in files.go"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "chat/server/main.go",
+    "line": 25,
+    "description": "password default empty"
+   },
+   {
+    "file": "chat/server/main.go",
+    "line": 53,
+    "description": ":8081 all interfaces"
+   },
+   {
+    "file": "chat/server/files.go",
+    "line": 83,
+    "description": "ReadFile no confinement"
+   },
+   {
+    "file": "chat/server/toolfns/toolfns.go",
+    "line": 112,
+    "description": "Edit arbitrary write"
+   }
+  ],
+  "blockers": [
+   "Launch mode of the shipped binary (password flag, firewall, loopback proxy) unknown.",
+   "shell.go and toolfns.go sinks not independently re-read."
+  ],
+  "validation_plan": {
+   "local": "In an isolated VM run with no flags; send a preflight and POST /tool Shell id with a foreign Origin from another host; GET /read_file; repeat with -password set.",
+   "deployment": "Check released docs/commands for omitted -password."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "chat-third-party-persona-drives-visitor-home-tools",
+  "title": "Published agent's third-party persona/skills share a prompt with a signed-in visitor's home tools, executed under visitor authority",
+  "description": "POST /api/chat loads any published agent persona (chat.js:545,641), custom skills (688), public memories; offers home tools whenever caller has a home membership (706); model-emitted home calls run via runHomeRound/runHomeTool with visitor userId (1130,1346). Confirmation gate covers only unlock/open/disarm-class services (home/tools.js:528); other write services (lock, close, arm, scenes) execute immediately. sendSol gate applies only to gated imported skills. Verifier assessment: A published agent's persona and skills run for any visitor, and home tools are added for visitors with a home membership, so a malicious owner could try to prompt-inject unrequested home actions. Depends on model compliance and which services the classifier guards. Non-binding priority hint: medium. Suggested fix: Withhold home tools or require confirmation for every write when the agent owner differs from the caller and carries a persona or custom skills; mark persona content untrusted.",
+  "claimed_root_cause": "Visitor authority and untrusted third-party prompt content combined in one turn; no check that a home write was requested in the visitor message or withholding of tools for non-owned persona.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "api/chat.js",
+    "line": 545,
+    "scope": "chat.js:545",
+    "description": "entrypoint step in chat.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/chat.js",
+    "line": 641,
+    "scope": "chat.js:641",
+    "description": "propagation step in chat.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/chat.js",
+    "line": 688,
+    "scope": "chat.js:688",
+    "description": "propagation step in chat.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/chat.js",
+    "line": 706,
+    "scope": "chat.js:706",
+    "description": "propagation step in chat.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/chat.js",
+    "line": 1130,
+    "scope": "chat.js:1130",
+    "description": "propagation step in chat.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/chat.js",
+    "line": 1346,
+    "scope": "chat.js:1346",
+    "description": "propagation step in chat.js"
+   },
+   {
+    "kind": "sink",
+    "file": "api/_lib/home/tools.js",
+    "line": 528,
+    "scope": "tools.js:528",
+    "description": "sink step in tools.js"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "api/chat.js",
+    "line": 545,
+    "description": "any published agent loadable"
+   },
+   {
+    "file": "api/chat.js",
+    "line": 706,
+    "description": "tool set depends only on homeCount"
+   },
+   {
+    "file": "api/chat.js",
+    "line": 1346,
+    "description": "runs with visitor identity"
+   },
+   {
+    "file": "api/_lib/home/tools.js",
+    "line": 528,
+    "description": "confirmation gate only guarded classes"
+   }
+  ],
+  "blockers": [
+   "Model compliance with the injected persona unobserved.",
+   "Classifier guarded verdict per service not read.",
+   "Role scoping may limit guest targets."
+  ],
+  "validation_plan": {
+   "local": "Stub the LLM to return a home tool call; owner A publishes an agent, visitor B has a home membership and mock bridge; confirm an unguarded service executes with B's userId and no confirmation; dump classifier verdicts.",
+   "deployment": "Owner reviews home action logs for agent-actor actions in turns where visitor did not request them and agent not owned by visitor."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "contracts-agentpayments-createagent-caller-chosen-authority-token-squat",
+  "title": "createAgent authority gate is vacuous, letting the first caller squat any agentToken",
+  "description": "contracts/src/AgentPayments.sol:136-140 requires msg.sender to be owner or the caller-supplied agentAuthority, so a caller satisfies it by naming themself. First caller squats any agentToken; AgentExists blocks the real owner; acceptPayment (152) and withdraw (306) pay the squatter. Verifier assessment: createAgent accepts msg.sender == the caller-supplied agentAuthority, so any address can register any agentToken and block the real owner with AgentExists; payments then settle to the squatter. Non-binding priority hint: high. Suggested fix: Bind registration to proof of token control (owner-signed EIP-712, token owner check, or owner-only), and add an owner reassign or remove function.",
+  "claimed_root_cause": "Authority is taken from caller input rather than proven.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "contracts/src/AgentPayments.sol",
+    "line": 136,
+    "scope": "AgentPayments.sol:136",
+    "description": "entrypoint step in AgentPayments.sol"
+   },
+   {
+    "kind": "propagation",
+    "file": "contracts/src/AgentPayments.sol",
+    "line": 139,
+    "scope": "AgentPayments.sol:139",
+    "description": "propagation step in AgentPayments.sol"
+   },
+   {
+    "kind": "propagation",
+    "file": "contracts/src/AgentPayments.sol",
+    "line": 142,
+    "scope": "AgentPayments.sol:142",
+    "description": "propagation step in AgentPayments.sol"
+   },
+   {
+    "kind": "propagation",
+    "file": "contracts/src/AgentPayments.sol",
+    "line": 152,
+    "scope": "AgentPayments.sol:152",
+    "description": "propagation step in AgentPayments.sol"
+   },
+   {
+    "kind": "sink",
+    "file": "contracts/src/AgentPayments.sol",
+    "line": 306,
+    "scope": "AgentPayments.sol:306",
+    "description": "sink step in AgentPayments.sol"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "contracts/src/AgentPayments.sol",
+    "line": 136,
+    "description": "msg.sender == agentAuthority accepted"
+   }
+  ],
+  "blockers": [
+   "Not executed.",
+   "Deployment status and whether funds are held.",
+   "Whether the platform owner pre-registers legitimate tokens.",
+   "Whether an owner-side reassign or remove function exists (not checked)."
+  ],
+  "validation_plan": {
+   "local": "Foundry test: attacker createAgent(token, attacker, 0); real creator call reverts AgentExists; payer acceptPayment; attacker withdraws.",
+   "deployment": "Owner checks deployment and registered agents."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "contracts-hood-portfolios-rebalance-targets-unbounded-creator-drain",
+  "title": "Portfolio creator can propose unbounded rebalance targets and drain via open fillRebalance",
+  "description": "Portfolio.sol:440 proposeRebalance checks only targetUnits length. Constructor (198) sets no floor on rebalanceDelay/rebalanceInterval and PortfolioFactory.sol:49 forwards creator Config. quoteFill (312) prices from creator targets and fillRebalance (473) is open to any caller, so a creator-controlled fill can extract value. Verifier assessment: Portfolio proposeRebalance bounds only the targets length and the constructor sets no minimum delay or interval, so a creator can skew targets and let fillRebalance trade at off-market prices. Depositors can redeem during a nonzero delay. Real path is contracts/hood-portfolios/src, not contracts/src/hood. Non-binding priority hint: medium. Suggested fix: Add minimum delay and interval; cap per-leg target change; add an oracle or NAV-loss limit in quoteFill.",
+  "claimed_root_cause": "No bounds on creator-set targets or timing parameters.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "contracts/hood-portfolios/src/Portfolio.sol",
+    "line": 440,
+    "scope": "Portfolio.sol:440",
+    "description": "entrypoint step in Portfolio.sol"
+   },
+   {
+    "kind": "propagation",
+    "file": "contracts/hood-portfolios/src/Portfolio.sol",
+    "line": 447,
+    "scope": "Portfolio.sol:447",
+    "description": "propagation step in Portfolio.sol"
+   },
+   {
+    "kind": "propagation",
+    "file": "contracts/hood-portfolios/src/Portfolio.sol",
+    "line": 198,
+    "scope": "Portfolio.sol:198",
+    "description": "propagation step in Portfolio.sol"
+   },
+   {
+    "kind": "propagation",
+    "file": "contracts/hood-portfolios/src/PortfolioFactory.sol",
+    "line": 49,
+    "scope": "PortfolioFactory.sol:49",
+    "description": "propagation step in PortfolioFactory.sol"
+   },
+   {
+    "kind": "propagation",
+    "file": "contracts/hood-portfolios/src/Portfolio.sol",
+    "line": 312,
+    "scope": "Portfolio.sol:312",
+    "description": "propagation step in Portfolio.sol"
+   },
+   {
+    "kind": "sink",
+    "file": "contracts/hood-portfolios/src/Portfolio.sol",
+    "line": 473,
+    "scope": "Portfolio.sol:473",
+    "description": "sink step in Portfolio.sol"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "contracts/src/hood/Portfolio.sol",
+    "line": 440,
+    "description": "length-only check"
+   }
+  ],
+  "blockers": [
+   "Not executed.",
+   "Deployed portfolios, delay values and third-party TVL unknown.",
+   "Depositors may redeem during the timelock.",
+   "Constituents are creator-chosen and visible before deposit."
+  ],
+  "validation_plan": {
+   "local": "Foundry test in contracts/hood-portfolios/test: zero delay, valuable and worthless constituents, targets [0, huge], fill by a colluder, assert depositor loss; repeat with a nonzero delay and redeem early.",
+   "deployment": "Owner checks deployed portfolios and balances."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "custody-spend-policy-daily-cap-ignores-strategy-run-buys",
+  "title": "Strategy-run buys count as zero toward the agent daily SOL cap",
+  "description": "handleStrategyRun reaches pump-fun-trade handler which persists agent_actions pumpfun.buy with payload {mint, amountSol, sig}; agent-spend-policy.js:78 sums payload->>'solAmount', so strategy buys contribute zero to daily_sol_cap (default 5 SOL). Strategy path uses non-atomic checkBuyAllowed, not reserveSpend, and loadWallet without audit context, skipping assertPlatformSigningAllowed. Verifier assessment: Strategy buys persist payload key amountSol while the daily cap sums solAmount, so they count as zero toward daily_sol_cap. Only the per-tx cap applies. Principal is the agent owner or a spend-scoped key, so this bypasses the owner's cap rather than crossing tenants. The loadWallet audit-context point is not a separate bug. Non-binding priority hint: medium. Suggested fix: Write solAmount in the note or COALESCE(solAmount, amountSol) in the SUM; use atomic reserveSpend in the strategy path.",
+  "claimed_root_cause": "Cap sums a payload key the strategy path never writes.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "api/pump/[action].js",
+    "line": 3761,
+    "scope": "[action].js:3761",
+    "description": "entrypoint step in [action].js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/pump/[action].js",
+    "line": 3866,
+    "scope": "[action].js:3866",
+    "description": "propagation step in [action].js"
+   },
+   {
+    "kind": "propagation",
+    "file": "examples/skills/pump-fun-trade/handlers.js",
+    "line": 55,
+    "scope": "handlers.js:55",
+    "description": "propagation step in handlers.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/_lib/skill-runtime.js",
+    "line": 135,
+    "scope": "skill-runtime.js:135",
+    "description": "propagation step in skill-runtime.js"
+   },
+   {
+    "kind": "sink",
+    "file": "api/_lib/agent-spend-policy.js",
+    "line": 78,
+    "scope": "agent-spend-policy.js:78",
+    "description": "sink step in agent-spend-policy.js"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "api/pump/[action].js",
+    "line": 3869,
+    "description": "checkBuyAllowed instead of reserveSpend"
+   },
+   {
+    "file": "api/_lib/solana-wallet.js",
+    "line": 15,
+    "description": "loadWallet without audit context"
+   }
+  ],
+  "blockers": [
+   "Not executed.",
+   "Whether strategy-run is deployed and reachable.",
+   "Whether delegated or scoped keys are constrained by daily_sol_cap."
+  ],
+  "validation_plan": {
+   "local": "Run a mocked live strategy buy through makeRuntime, confirm payload has amountSol and no solAmount, then checkBuyAllowed with 4.9 SOL spent and expect a block.",
+   "deployment": "Owner sums strategy-run buys per agent per day against daily_sol_cap."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "extensions-walk-avatar-auth-callback-token-injection-no-state-binding",
+  "title": "Walk Avatar extension stores any token from a three.ws auth-callback URL (login CSRF / session fixation)",
+  "description": "background.js tabs.onUpdated persists the token query/hash param of any top-level tab whose URL starts with https://three.ws/extension/auth-callback into chrome.storage.local.threews_session, then closes the tab. No state/nonce ties it to a sign-in the user started; no check the token belongs to the current user; callback page treats any ?token= as success. Attacker mints own extension token (POST /api/auth/extension-token) and navigates victim to /extension/auth-callback?token=<attacker token>; extension then holds attacker identity (scope avatars:read). For a victim signed out of three.ws, popup avatar lists and narrator /api/tts/speak run as attacker account. Impact limited: tts/speak.js prefers cookie session over bearer, avatars/mine.js likely too. Verifier assessment: The extension accepts any auth-callback URL token with no state binding and overwrites its stored session (login CSRF). Token has extension scope only; cookie session takes precedence in speak.js. Non-binding priority hint: low. Suggested fix: Add a per-sign-in nonce in chrome.storage.session and accept the token only with a matching state, or deliver the token via runtime messaging.",
+  "claimed_root_cause": "Auth-callback capture is trust-on-navigation: token accepted from URL with no binding to a locally initiated login.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "extensions/walk-avatar/background.js",
+    "line": 224,
+    "scope": "background.js:224",
+    "description": "entrypoint step in background.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "extensions/walk-avatar/background.js",
+    "line": 226,
+    "scope": "background.js:226",
+    "description": "propagation step in background.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "extensions/walk-avatar/background.js",
+    "line": 231,
+    "scope": "background.js:231",
+    "description": "propagation step in background.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "extensions/walk-avatar/background.js",
+    "line": 237,
+    "scope": "background.js:237",
+    "description": "propagation step in background.js"
+   },
+   {
+    "kind": "propagation",
+    "file": "api/tts/speak.js",
+    "line": 67,
+    "scope": "speak.js:67",
+    "description": "propagation step in speak.js"
+   },
+   {
+    "kind": "sink",
+    "file": "api/auth/extension-token.js",
+    "line": 76,
+    "scope": "extension-token.js:76",
+    "description": "sink step in extension-token.js"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "extensions/walk-avatar/background.js",
+    "line": 226,
+    "description": "prefix-only check, no state"
+   },
+   {
+    "file": "extensions/walk-avatar/background.js",
+    "line": 237,
+    "description": "unconditional overwrite"
+   },
+   {
+    "file": "public/extension-auth-callback.html",
+    "line": 80,
+    "description": "any non-empty token treated as success"
+   },
+   {
+    "file": "api/auth/extension-token.js",
+    "line": 76,
+    "description": "any account can mint a token"
+   },
+   {
+    "file": "api/tts/speak.js",
+    "line": 67,
+    "description": "cookie session takes precedence over bearer"
+   }
+  ],
+  "blockers": [
+   "Extension not loaded; storage overwrite unconfirmed.",
+   "Whether APIs attribute to the bearer user when no cookie is present.",
+   "Victim must be induced to navigate to the crafted URL."
+  ],
+  "validation_plan": {
+   "local": "In a throwaway Chrome profile load the extension, mint B's token, open the callback URL while signed out and confirm threews_session is overwritten; repeat while signed in as A.",
+   "deployment": "Two test accounts; victim signed out; check attribution of /api/avatars/mine and /api/tts/speak and whether attacker can see text."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "glb-media-cad-forge-collect-follows-child-symlink",
+  "title": "CAD Forge parent reads child-controlled artifact paths with symlink-following open",
+  "description": "main._collect trusts child-written result.json 'files' list; checks name against ARTIFACT_KEYS and os.path.isfile then open(path,'rb') following symlinks. Workdir chowned to nobody; child can create symlinks (seccomp deny list lacks symlink/symlinkat). Symlink part.glb -> /proc/1/environ makes the root parent base64 it into the response; getsize on /proc reports 0 so 24MB cap does not bound it. Needs a child-side primitive (companion candidate). Verifier assessment: cad-forge _collect opens child-named files following symlinks, a conditional privilege gain only if submitted code can already create a symlink in the child. The policy exposes no such primitive on its own, so this is defense in depth. Non-binding priority hint: low. Suggested fix: Open with O_NOFOLLOW, fstat for a regular file, bounded read from the fd; add symlink, symlinkat, link and linkat to SECCOMP_DENY.",
+  "claimed_root_cause": "Privileged parent opens files from a child-controlled dir without lstat/O_NOFOLLOW/realpath confinement.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "workers/cad-forge/main.py",
+    "line": 311,
+    "scope": "main.py:311",
+    "description": "entrypoint step in main.py"
+   },
+   {
+    "kind": "propagation",
+    "file": "workers/cad-forge/sandbox_child.py",
+    "line": 185,
+    "scope": "sandbox_child.py:185",
+    "description": "propagation step in sandbox_child.py"
+   },
+   {
+    "kind": "propagation",
+    "file": "workers/cad-forge/main.py",
+    "line": 264,
+    "scope": "main.py:264",
+    "description": "propagation step in main.py"
+   },
+   {
+    "kind": "propagation",
+    "file": "workers/cad-forge/main.py",
+    "line": 218,
+    "scope": "main.py:218",
+    "description": "propagation step in main.py"
+   },
+   {
+    "kind": "sink",
+    "file": "workers/cad-forge/main.py",
+    "line": 228,
+    "scope": "main.py:228",
+    "description": "sink step in main.py"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "workers/cad-forge/main.py",
+    "line": 97,
+    "description": "workdir chowned to nobody"
+   },
+   {
+    "file": "workers/cad-forge/sandbox_child.py",
+    "line": 49,
+    "description": "SECCOMP_DENY lacks symlink/symlinkat"
+   },
+   {
+    "file": "workers/cad-forge/Dockerfile",
+    "line": 22,
+    "description": "comment: tests run as root like Cloud Run"
+   }
+  ],
+  "blockers": [
+   "Needs a companion policy-escape or native primitive in the child.",
+   "Whether production runs as uid 0 and what /proc/1/environ holds.",
+   "Whether getsize on /proc files bypasses the cap."
+  ],
+  "validation_plan": {
+   "local": "As root in the built image run main.run_build with a test-double child that writes part.glb as a symlink to a root-only dummy file; expect _collect to return its bytes.",
+   "deployment": "Owner: confirm container uid 0 and /proc/1/environ contents."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "glb-media-cad-forge-policy-frame-attribute-escape",
+  "title": "CAD Forge static policy does not block frame/code-object attributes (generator frame walk to real globals/builtins)",
+  "description": "workers/cad-forge/cad_policy.py check_source rejects only underscore-prefixed attributes plus format/format_map/vformat/mro. gi_frame, f_back, f_globals, f_builtins, f_locals, gi_code, cr_frame, tb_frame pass. `def g(): yield x.gi_frame.f_back.f_back.f_globals` could reach sandbox_child's globals (os, sys) and real builtins (open, eval, __import__). Program text comes from an LLM prompted by an arbitrary user of api/cad.js and MCP cad tool. If the walk works the AST/builtins layer is void; seccomp, nobody uid, rlimits remain. Verifier assessment: cad_policy blocks only underscore and a few attribute names, so generator and frame attributes such as gi_frame, f_back and f_globals pass and may reach the sandbox_child module globals (os, real builtins). Python behavior inferred; seccomp and uid drop remain. Non-binding priority hint: medium. Suggested fix: Switch to an attribute allowlist or deny gi_*, cr_*, ag_*, f_*, tb_* and co_*; reject Yield and GeneratorExp if unneeded; exec from a module whose frames reach nothing sensitive.",
+  "claimed_root_cause": "Attribute denylist is underscore-prefix based and omits non-underscore frame/generator/traceback introspection attributes.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "workers/cad-forge/main.py",
+    "line": 311,
+    "scope": "main.py:311",
+    "description": "entrypoint step in main.py"
+   },
+   {
+    "kind": "propagation",
+    "file": "workers/cad-forge/cad_policy.py",
+    "line": 58,
+    "scope": "cad_policy.py:58",
+    "description": "propagation step in cad_policy.py"
+   },
+   {
+    "kind": "propagation",
+    "file": "workers/cad-forge/cad_policy.py",
+    "line": 118,
+    "scope": "cad_policy.py:118",
+    "description": "propagation step in cad_policy.py"
+   },
+   {
+    "kind": "propagation",
+    "file": "workers/cad-forge/sandbox_child.py",
+    "line": 172,
+    "scope": "sandbox_child.py:172",
+    "description": "propagation step in sandbox_child.py"
+   },
+   {
+    "kind": "sink",
+    "file": "workers/cad-forge/sandbox_child.py",
+    "line": 185,
+    "scope": "sandbox_child.py:185",
+    "description": "sink step in sandbox_child.py"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "workers/cad-forge/cad_policy.py",
+    "line": 58,
+    "description": "BANNED_ATTRIBUTES only format,format_map,vformat,mro"
+   },
+   {
+    "file": "workers/cad-forge/cad_policy.py",
+    "line": 130,
+    "description": "underscore check only other control"
+   },
+   {
+    "file": "workers/cad-forge/cad_policy.py",
+    "line": 60,
+    "description": "safe builtins keep iter,next,super,isinstance; def/yield allowed ~141"
+   },
+   {
+    "file": "workers/cad-forge/sandbox_child.py",
+    "line": 172,
+    "description": "run_program frame f_globals is module namespace with os/sys at 22-31"
+   }
+  ],
+  "blockers": [
+   "Code not executed; the frame chain on the deployed Python version is inferred.",
+   "Whether the program text can be steered by the user or is only LLM-generated.",
+   "Seccomp, uid drop and rlimit effectiveness under Cloud Run.",
+   "Whether secrets are readable by the sandbox uid."
+  ],
+  "validation_plan": {
+   "local": "Feed sandbox_child.py via test_sandbox.py a generator-based program that reads f_back.f_back.f_globals['os'] and f_builtins['open']; expect a policy refusal; if it runs, add a test to test_cad_policy.py.",
+   "deployment": "Owner: confirm /health seccomp_required true, root->nobody drop, canary build refused."
+  }
+ }
+]
