@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>GET /api/pump-bounties and its stats/detail routes serve last-known-good data instead of a 502</title>
+			<link>https://three.ws/bounties</link>
+			<guid isPermaLink="false">2026-10-25:GET /api/pump-bounties and its stats/detail routes serve last-known-good data instead of a 502</guid>
+			<pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>pump.fun's Cloudflare anti-bot challenge has been rejecting livestream-api.pump.fun's bounty API for hours at a time, which left the bounty list, the aggregate stats, and individual bounty detail pages 502ing for every visitor even though the board itself had not changed. All three routes now go through the same last-known-good cache tier already proven on /api/portal and /api/crypto/bonding: a fresh answer is mirrored into a 24-hour backup, and that backup answers (flagged with an x-pump-stale header) instead of a 502 once the live fetch fails. A true miss, with nothing cached at all, still returns the original pump.fun error unchanged.</description>
+		</item>
+		<item>
 			<title>Image-to-3D Forge instances recycle before a VRAM leak crashes a job</title>
 			<link>https://three.ws/image-to-3d</link>
 			<guid isPermaLink="false">2026-10-25:Image-to-3D Forge instances recycle before a VRAM leak crashes a job</guid>

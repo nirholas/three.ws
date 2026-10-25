@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-10-25T01:03:00.076Z",
+	"generated_at": "2026-10-25T01:58:36.704Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4193,
+	"total": 4194,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-25",
+			"type": "update",
+			"title": "GET /api/pump-bounties and its stats/detail routes serve last-known-good data instead of a 502",
+			"summary": "pump.fun's Cloudflare anti-bot challenge has been rejecting livestream-api.pump.fun's bounty API for hours at a time, which left the bounty list, the aggregate stats, and individual bounty detail pages 502ing for every visitor even though the board itself had not changed. All three routes now go through the same last-known-good cache tier already proven on /api/portal and /api/crypto/bonding: a fresh answer is mirrored into a 24-hour backup, and that backup answers (flagged with an x-pump-stale header) instead of a 502 once the live fetch fails. A true miss, with nothing cached at all, still returns the original pump.fun error unchanged.",
+			"link": "/bounties",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-10-25",
 			"type": "update",
@@ -1550,17 +1560,6 @@
 			"tags": [
 				"feature",
 				"docs"
-			]
-		},
-		{
-			"date": "2026-10-12",
-			"type": "update",
-			"title": "Animation Studio: trim, loop-blend, and save any generated clip to your library",
-			"summary": "The Animation Studio's prompt-to-clip flow (type a prompt, generate motion on the self-hosted GPU worker, preview it retargeted onto the loaded avatar) now has an editing and persistence half. The transport grows trim start/end inputs, a loop-blend duration field, and a loop toggle, all recomputed through a non-destructive edit path so the live preview, the GLB export, and the saved clip always agree on the current edit. A Save to library button collects a name and visibility and posts the canonical, pre-retarget clip to the shared clip library, so it plays back correctly on any future rig, not just the avatar it was previewed on. A separate bug that crashed every generated clip's playback the moment it reached the browser (AnimationClip.parse() expected userData as a JSON string, the server was sending an object) is also fixed.",
-			"link": "/pose",
-			"tags": [
-				"feature",
-				"fix"
 			]
 		}
 	]

@@ -10,17 +10,17 @@
 // surfaced to us as a PumpGoError) with no server-side way to pass it. Before
 // 2026-10-24 that left this route 502ing for every visitor for hours at a time
 // (every 24h sample failed) even though the board had not actually changed.
-// A long-lived last-known-good copy, written on every real success and served
-// (marked stale) when the live fetch fails, rides out the block the same way
-// api/_lib/pump-feed-fetch.js already does for the other pump.fun feeds.
+// cacheWrapLastGood (api/_lib/cache.js) rides out the block the same way it
+// already does for api/portal.js and the other pump.fun feeds: a fresh value
+// is served for 30s, mirrored into a 24h last-known-good copy, and that copy
+// answers (flagged with an x-pump-stale header) instead of a 502 when the
+// live fetch throws.
 
 import { cors, json, error, wrap, method, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { cacheGet, cacheSet } from './_lib/cache.js';
+import { cacheWrapLastGood } from './_lib/cache.js';
 import { listBounties, PumpGoError } from './_lib/pump-go.js';
 import { clampInt } from './_lib/http-params.js';
-
-const LKG_TTL_S = 1800;
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -39,28 +39,16 @@ export default wrap(async (req, res) => {
 	const status = url.searchParams.get('status') || null;
 
 	const cacheKey = `pumpgo:list:${limit}:${cursor || '_'}:${status || '_'}`;
-	const lkgKey = `${cacheKey}:lkg`;
-	const cached = await cacheGet(cacheKey).catch(() => null);
-	if (cached) {
-		res.setHeader('cache-control', 'public, s-maxage=30, stale-while-revalidate=120');
-		return json(res, 200, cached);
-	}
 
-	let data;
+	let value, stale;
 	try {
-		data = await listBounties({ limit, cursor, status });
+		({ value, stale } = await cacheWrapLastGood(cacheKey, 30, () => listBounties({ limit, cursor, status }), { withMeta: true }));
 	} catch (e) {
 		if (!(e instanceof PumpGoError)) throw e;
-		const stale = await cacheGet(lkgKey).catch(() => null);
-		if (stale) {
-			res.setHeader('cache-control', 'public, s-maxage=30, stale-while-revalidate=120');
-			return json(res, 200, { ...stale, stale: true });
-		}
 		return error(res, e.status, e.code, e.message);
 	}
 
-	await cacheSet(cacheKey, data, 30).catch(() => {});
-	await cacheSet(lkgKey, data, LKG_TTL_S).catch(() => {});
+	if (stale) res.setHeader('x-pump-stale', '1');
 	res.setHeader('cache-control', 'public, s-maxage=30, stale-while-revalidate=120');
-	return json(res, 200, data);
+	return json(res, 200, value);
 });
