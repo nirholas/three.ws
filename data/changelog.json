@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-10-25",
+			"title": "Background-removal service moves to Pillow 13, closing 41 image-decoder advisories",
+			"summary": "The background-removal worker decodes images that callers upload, and its pinned Pillow carried 41 open advisories including heap overflows in the JPEG, TIFF and FlashPix loaders. It now runs Pillow 13.0.0 on rembg 2.0.86 (the first release that allows it), matching every other worker, and the image build gate passes against the real models.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-25",
 			"title": "Modly 3D-generation worker closes TLS, request-parsing and test-tooling advisories",
 			"summary": "The Modly host environment pinned old releases of certifi (a compromised emSign root CA finding), cryptography, python-multipart (multipart DoS and file-write findings) and pytest. All four are now on current releases, and the worker's contract and CPU test suites pass against them.",
 			"tags": [

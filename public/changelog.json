@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-25T11:58:50.978Z",
+	"generated_at": "2026-10-25T12:00:43.532Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -11,6 +11,16 @@
 			"type": "update",
 			"title": "Allowance pulls now require the signed real-funds agreement",
 			"summary": "Pulling funds through an owner-funded on-chain allowance now checks the signed real-funds agreements before the agent key is used, matching every other custodial signing path. Unsigned accounts get the standard agreement-required refusal and nothing is sent.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-25",
+			"type": "update",
+			"title": "Background-removal service moves to Pillow 13, closing 41 image-decoder advisories",
+			"summary": "The background-removal worker decodes images that callers upload, and its pinned Pillow carried 41 open advisories including heap overflows in the JPEG, TIFF and FlashPix loaders. It now runs Pillow 13.0.0 on rembg 2.0.86 (the first release that allows it), matching every other worker, and the image build gate passes against the real models.",
 			"link": null,
 			"tags": [
 				"fix"

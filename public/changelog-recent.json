@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-25T11:58:51.013Z",
+	"generated_at": "2026-10-25T12:00:43.566Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4203,
+	"total": 4204,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -14,6 +14,16 @@
 			"type": "update",
 			"title": "Allowance pulls now require the signed real-funds agreement",
 			"summary": "Pulling funds through an owner-funded on-chain allowance now checks the signed real-funds agreements before the agent key is used, matching every other custodial signing path. Unsigned accounts get the standard agreement-required refusal and nothing is sent.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-25",
+			"type": "update",
+			"title": "Background-removal service moves to Pillow 13, closing 41 image-decoder advisories",
+			"summary": "The background-removal worker decodes images that callers upload, and its pinned Pillow carried 41 open advisories including heap overflows in the JPEG, TIFF and FlashPix loaders. It now runs Pillow 13.0.0 on rembg 2.0.86 (the first release that allows it), matching every other worker, and the image build gate passes against the real models.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1542,17 +1552,6 @@
 			"title": "Import a VRoid Hub avatar with its creator's license honored",
 			"summary": "A new picker at /import/vroid lists every character you own or hearted on VRoid Hub, each scored against the real, live license conditions its creator set (public agent, export, modify, monetize), so three.ws only ever offers an action the creator actually permitted. Built end to end against VRoid Hub's live documented API (OAuth2 with mandatory PKCE, the two-step download-license flow), including encrypted token storage alongside three.ws's other social connections, through to a real import that lands the avatar in the editor with idle/walk already retargeted. VRoid Hub app registration and the OAuth client credentials are an owner action tracked in prompts/finish/_context/production-100-OWNER-ACTIONS.md; everything else is wired and tested. Docs: /docs/vroid-hub-import.",
 			"link": "/docs/vroid-hub-import",
-			"tags": [
-				"feature",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-13",
-			"type": "update",
-			"title": "Open source credits: every dependency, model, and asset source three.ws runs on, in one place",
-			"summary": "A new /open-source page lists every third-party dependency, GPU worker model, and free asset source the platform runs on, grouped by area (rendering, formats and compression, generation models, motion, voice, assets, infrastructure) with license, upstream link, and what each one powers here. The dataset is generated from package.json and each worker's own README, not hand-maintained, and a guard test fails the build if a new direct dependency lands without a credited entry. Credits now also show up where the work actually happens: /objects and the object viewer name Poly Haven, the CC0 asset library the catalog sources from; the Forge export dialog names meshoptimizer and glTF-Transform; and the animation gallery shows each clip's source and license, including a fallback for studio-tier clips that lack an explicit manifest entry. Docs: /docs/open-source-credits.",
-			"link": "/open-source",
 			"tags": [
 				"feature",
 				"docs"
