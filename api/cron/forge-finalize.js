@@ -267,6 +267,52 @@ async function tryCronRedispatch(row, ageMinutes) {
 	}
 }
 
+// Poll-free, BATCH_LIMIT-free hard-TTL reap: a single bulk UPDATE that flips
+// every row already past HARD_TTL_MINUTES to 'failed', no matter how old or
+// which backend/path it belongs to. This runs ahead of (and independently of)
+// the oldest-created_at-first, BATCH_LIMIT-bounded live-poll query below, so a
+// batch monopolized by one unhealthy backend (trellis_selfhost owning every
+// slot because its rows are the oldest) can never block a different, never-
+// selected lane's rows from ever being reaped: exactly the bug measured
+// 2026-10-25 in prompts/finish/436: 192 `rerig` rows sat 'generating' forever
+// because they never won a batch slot against older trellis_selfhost rows.
+// Message/column shape matches forge-store.js's markFailed exactly (error,
+// completed_at, updated_at) so no downstream matcher (forge-error-report.mjs's
+// `error ilike '%timed out%'`) sees a different error string.
+export async function reapExpiredRows() {
+	const rows = await sql`
+		update forge_creations
+		set status = 'failed',
+			error = 'generation timed out after ' || round(extract(epoch from (now() - created_at)) / 60) || ' minutes',
+			completed_at = coalesce(completed_at, now()),
+			updated_at = now()
+		where status = 'generating'
+			and replicate_job_id is not null
+			and created_at < now() - (${HARD_TTL_MINUTES} * interval '1 minute')
+		returning id, user_id, prompt, backend, tier, path
+	`;
+	for (const row of rows) {
+		if (row.backend === 'nvidia') {
+			// Reaping the bare TTL on nvidia is itself a cron-observed failure of
+			// the lane: cool the submit-time breaker so new free-text requests
+			// skip straight to the paid/image-intermediate path instead of landing
+			// on the same dead end for another HARD_TTL_MINUTES.
+			await markProviderCooldown(NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds()).catch(() => {});
+		}
+		if (row.user_id) {
+			notifyForgeFailed({
+				userId: row.user_id,
+				creationId: row.id,
+				prompt: row.prompt,
+				error: 'generation timed out',
+				backend: row.backend,
+				tier: row.tier,
+			});
+		}
+	}
+	return rows.length;
+}
+
 export default wrapCron(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
@@ -276,6 +322,8 @@ export default wrapCron(async (req, res) => {
 	}
 
 	const t0 = Date.now();
+
+	const reaped = await reapExpiredRows();
 
 	const rows = await sql`
 		select id, replicate_job_id, client_key, user_id, prompt, preview_image_url,
@@ -303,7 +351,7 @@ export default wrapCron(async (req, res) => {
 	}
 
 	const results = await mapPoolSettled(rows, ROW_CONCURRENCY, (row) => sweepRow(row, { gcp, nvidia }));
-	const out = { done: 0, failed: 0, failed_over: 0, resubmitted: 0, timed_out: 0, still_running: 0, unpollable: 0 };
+	const out = { done: 0, failed: 0, failed_over: 0, resubmitted: 0, timed_out: reaped, still_running: 0, unpollable: 0 };
 	for (const result of results) {
 		if (result.ok) {
 			for (const key of Object.keys(out)) out[key] += result.value[key] || 0;
@@ -315,6 +363,7 @@ export default wrapCron(async (req, res) => {
 
 	return json(res, 200, {
 		enabled: true,
+		reaped,
 		swept: rows.length,
 		...out,
 		elapsed_ms: Date.now() - t0,
@@ -564,24 +613,11 @@ export async function sweepRow(row, { gcp, nvidia }) {
 		}
 	}
 
-	if (ageMinutes > HARD_TTL_MINUTES) {
-		if (row.backend === 'nvidia') {
-			// Reaping the bare TTL on nvidia is itself a cron-observed failure of
-			// the lane: cool the submit-time breaker so new free-text requests
-			// skip straight to the paid/image-intermediate path instead of landing
-			// on the same dead end for another HARD_TTL_MINUTES.
-			await markProviderCooldown(NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds()).catch(() => {});
-		}
-		await markFailed({
-			replicateJobId: row.replicate_job_id,
-			clientKey: row.client_key,
-			error: `generation timed out after ${Math.round(ageMinutes)} minutes`,
-		});
-		out.timed_out++;
-		if (row.user_id) {
-			notifyForgeFailed({ userId: row.user_id, creationId: row.id, prompt: row.prompt, error: 'generation timed out', backend: row.backend, tier: row.tier });
-		}
-	} else if (envelope) {
+	// reapExpiredRows runs a poll-free, BATCH_LIMIT-free hard-TTL sweep ahead of
+	// the live-poll query that selects `rows` for this batch (see the handler
+	// above), so any row that reaches this point is, by construction, already
+	// inside HARD_TTL_MINUTES: there is no second TTL branch to duplicate here.
+	if (envelope) {
 		out.still_running++;
 	}
 

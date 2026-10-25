@@ -3,9 +3,60 @@
 // (see api/_providers/gcp.js) vs. opaque third-party ids the cron cannot poll.
 // Importing the cron module is safe: db/neon clients are created lazily.
 
-import { describe, it, expect } from 'vitest';
-import { decodeWorkerEnvelope, decideFailedSweep, decideNvidiaStall, sweepRow, ROW_CONCURRENCY } from '../api/cron/forge-finalize.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NIM_TRELLIS_COOLDOWN_KEY } from '../api/forge.js';
 import { mapPoolSettled } from '../api/_lib/pool.js';
+
+// TTL-reap tests below need to prove zero live-poll calls happen, so the
+// provider factories and the notification/cooldown side effects are mocked
+// here (module-wide for this file). The pre-existing describe blocks never
+// trigger these paths (their rows stay 'running', never 'failed' or past
+// HARD_TTL_MINUTES), so mocking them is a no-op for those tests. vi.mock is
+// hoisted above every import (including transitive ones like
+// api/_lib/rate-limit.js's own `sql` import), so the mocked values must come
+// from vi.hoisted rather than a plain top-level const.
+const { sql, gcpStatus, nvidiaStatus, notifyForgeFailed, markProviderCooldown } = vi.hoisted(() => ({
+	sql: vi.fn(async () => []),
+	gcpStatus: vi.fn(async () => {
+		throw new Error('reap pass must not poll gcp');
+	}),
+	nvidiaStatus: vi.fn(async () => {
+		throw new Error('reap pass must not poll nvidia');
+	}),
+	notifyForgeFailed: vi.fn(),
+	markProviderCooldown: vi.fn(async () => {}),
+}));
+
+vi.mock('../api/_lib/db.js', () => ({
+	sql,
+	isDbUnavailableError: () => false,
+	isDbCapacityError: () => false,
+	isStoragePressured: () => false,
+}));
+
+vi.mock('../api/_providers/gcp.js', () => ({
+	createRegenProvider: () => ({ status: gcpStatus }),
+}));
+
+vi.mock('../api/_providers/nvidia.js', () => ({
+	createNvidiaProvider: () => ({ status: nvidiaStatus, textTo3d: vi.fn() }),
+}));
+
+vi.mock('../api/_lib/forge-notify.js', () => ({
+	notifyForgeComplete: vi.fn(),
+	notifyForgeFailed,
+}));
+
+vi.mock('../api/_lib/provider-health.js', () => ({ markProviderCooldown }));
+
+const {
+	decodeWorkerEnvelope,
+	decideFailedSweep,
+	decideNvidiaStall,
+	sweepRow,
+	ROW_CONCURRENCY,
+	reapExpiredRows,
+} = await import('../api/cron/forge-finalize.js');
 
 function pack(obj) {
 	return Buffer.from(JSON.stringify(obj), 'utf8').toString('base64url');
@@ -183,5 +234,73 @@ describe('sweepRow concurrency', () => {
 		const results = await mapPoolSettled(rows, ROW_CONCURRENCY, (row) => sweepRow(row, { gcp, nvidia: null }));
 		const totalStillRunning = results.reduce((sum, r) => sum + (r.ok ? r.value.still_running : 0), 0);
 		expect(totalStillRunning).toBe(4);
+	});
+});
+
+// Measured 2026-10-25: 780+ `forge_creations` rows sat 'generating' for
+// ~24h against a documented 45-minute HARD_TTL_MINUTES. Root cause: the old
+// TTL reap only ran inside sweepRow, AFTER a row won a slot in the
+// oldest-created_at-first, BATCH_LIMIT-bounded live-poll batch. Once one
+// backend (trellis_selfhost) owned every slot because its rows were the
+// oldest, a different, never-selected lane's rows (the `rerig` cluster,
+// backend/path both null) never reached any reap logic at all and never
+// resolved. reapExpiredRows is a single poll-free, BATCH_LIMIT-free UPDATE
+// that runs ahead of that batch, so no backend can monopolize the reap.
+describe('TTL reap runs ahead of the live poll', () => {
+	beforeEach(() => {
+		sql.mockReset();
+		gcpStatus.mockClear();
+		nvidiaStatus.mockClear();
+		notifyForgeFailed.mockClear();
+		markProviderCooldown.mockClear();
+	});
+
+	function expiredRow(id, { backend = 'trellis_selfhost', path = null, userId = null } = {}) {
+		return { id, user_id: userId, prompt: `prompt-${id}`, backend, tier: 'draft', path };
+	}
+
+	it('reaps every row past HARD_TTL_MINUTES in one poll-free query, regardless of batch position', async () => {
+		// Simulates the production monopoly: 25 trellis_selfhost rows would
+		// fill an oldest-first batch on their own, and a `rerig` row (backend
+		// and path both null, like the real stalled cluster) would never win
+		// a slot against them. All are already past the hard TTL.
+		const monopolizingRows = Array.from({ length: 25 }, (_, i) => expiredRow(`trellis-${i}`));
+		const neverSelectedRow = expiredRow('rerig-1', { backend: null, path: null, userId: 'user-1' });
+		const fixtureRows = [...monopolizingRows, neverSelectedRow];
+
+		sql.mockImplementation(async (strings) => {
+			const text = strings.join(' ');
+			expect(text).toContain('update forge_creations');
+			// The whole point of this pass: no BATCH_LIMIT gates it.
+			expect(text).not.toContain('limit');
+			return fixtureRows;
+		});
+
+		const reapedCount = await reapExpiredRows();
+
+		expect(reapedCount).toBe(fixtureRows.length);
+		// The never-selected lane's row is reaped by this same pass: it never
+		// had to win a batch slot against trellis_selfhost's older rows.
+		expect(notifyForgeFailed).toHaveBeenCalledWith(
+			expect.objectContaining({ userId: 'user-1', creationId: 'rerig-1' }),
+		);
+		// No live poll of any kind: the reap pass never touches a provider.
+		expect(gcpStatus).not.toHaveBeenCalled();
+		expect(nvidiaStatus).not.toHaveBeenCalled();
+	});
+
+	it('cools the nvidia breaker for reaped nvidia rows, same as the old TTL branch', async () => {
+		const row = expiredRow('nvidia-1', { backend: 'nvidia', userId: 'user-2' });
+		sql.mockImplementation(async () => [row]);
+
+		await reapExpiredRows();
+
+		expect(markProviderCooldown).toHaveBeenCalledWith(NIM_TRELLIS_COOLDOWN_KEY, expect.any(Number));
+	});
+
+	it('does nothing when nothing is past the hard TTL', async () => {
+		sql.mockImplementation(async () => []);
+		expect(await reapExpiredRows()).toBe(0);
+		expect(notifyForgeFailed).not.toHaveBeenCalled();
 	});
 });
