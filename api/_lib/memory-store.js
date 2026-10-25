@@ -463,6 +463,16 @@ export async function memoriesForEntity(agentId, entityId, { limit = 50 } = {}) 
 	return rows.map((r) => decorateMemory(r));
 }
 
+/**
+ * True for a turn written by the public /api/agent-ask concierge. Those rows hold
+ * anonymous visitor text, so the owner's chat must never recall them into its
+ * system prompt.
+ */
+export function isVisitorQaMemory(m) {
+	const tags = Array.isArray(m?.tags) ? m.tags : [];
+	return tags.includes('qa') && tags.some((t) => typeof t === 'string' && t.startsWith('qa:'));
+}
+
 // ── Working context + token budget ──────────────────────────────────────────────
 
 /**

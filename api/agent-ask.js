@@ -262,6 +262,7 @@ export default wrap(async function handleAgentAsk(req, res) {
 		SELECT id, user_id, name, description, persona_prompt, system_prompt, meta
 		  FROM agent_identities
 		 WHERE id = ${agentId} AND deleted_at IS NULL
+		   AND (is_published = true OR user_id = ${userId})
 		 LIMIT 1
 	`;
 	if (!agent) return error(res, 404, 'not_found', 'agent not found');
