@@ -23,8 +23,8 @@ production are routinely dead and a chain that depends on them fails:
 | 1b | Groq `openai/gpt-oss-120b` | `GROQ_API_KEY` | free | **serving** (200, ~1.4s, 2026-09-04). Added 2026-09-04. Same key, separate 8,000 tok/min bucket, because Groq meters per model id. |
 | 2 | Cerebras `llama-3.3-70b` | `CEREBRAS_API_KEY` | free | not configured in prod |
 | 3 | OpenRouter `:free` routes, one rung per key | `OPENROUTER_API_KEY`, `OPENROUTER_FALLBACK_KEYS` | free | **model id was dead 2026-09-04**: `openai/gpt-oss-20b:free` was retired and 404'd all five rungs at once (fixed, now `google/gemma-4-31b-it:free`). The account is separately capped at 1,000 free-model requests/DAY across every key (they share one owner), and was at 0 remaining when measured. |
-| 4 | NVIDIA NIM `nvidia/nemotron-3-super-120b-a12b` | `NVIDIA_API_KEY` | free | **serving** (200, 1.8s-10.5s on a full-size prompt, 2026-09-04). Carried the whole platform on 2026-09-04 when Groq was token-capped, OpenRouter was dead, and both paid anchors were on billing holds. |
-| 4b | NVIDIA NIM `nvidia/nemotron-3-ultra-550b-a55b` | `NVIDIA_API_KEY` | free | **serving** (200, 1.8s through `llmComplete`, 2026-10-08). Added 2026-10-08. A separate NIM function on the same key, so it survives the Super function being throttled, queued, or retired. |
+| 4 | NVIDIA NIM `nvidia/nemotron-3-super-120b-a12b` | `NVIDIA_API_KEY` (+ `NVIDIA_FALLBACK_KEYS`, one rung each) | free | **retired upstream 2026-10-24**: NVIDIA stopped serving the Super function while still listing it, so it answers 404 (it served 200 in 1.8s-10.5s on 2026-09-04, when it carried the whole platform with Groq token-capped, OpenRouter dead and both paid anchors on billing holds). It is still pinned in `llm.js`, so the chain attempts it and falls through to 4b. Chat, the tool chain, `/brain` and the CAD and anatomy writers no longer default to it: `PROVIDER_MODEL_DEFAULTS.nvidia` is now the Lightning model (14b), with Ultra (4b) as its fallback. |
+| 4b | NVIDIA NIM `nvidia/nemotron-3-ultra-550b-a55b` | `NVIDIA_API_KEY` | free | **serving** (200, 1.8s through `llmComplete`, 2026-10-08). Added 2026-10-08. A separate NIM function on the same key, so it survives the Super function being throttled, queued, or retired (which is what happened on 2026-10-24). |
 | 5 | SambaNova `Meta-Llama-3.3-70B-Instruct` | `SAMBANOVA_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
 | 6 | Mistral `mistral-small-latest` (Experiment tier) | `MISTRAL_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
 | 7 | Z.AI `glm-4.7-flash` | `ZAI_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
@@ -43,7 +43,7 @@ production are routinely dead and a chain that depends on them fails:
 | 17 | Anthropic first-party | `ANTHROPIC_API_KEY` | paid | **absent** (no key anywhere) |
 | 18 | OpenRouter Claude mirror | `OPENROUTER_CLAUDE_MIRROR_MODEL` | paid | off by default (see below) |
 | 19 | OpenAI `gpt-5.4-nano` | `OPENAI_API_KEY` | paid | **dead**: 429 `billing_not_active` |
-| 20 | xAI Grok `grok-4.3`, reasoning off (`GROK_BUDGET_MODEL`) | `GROK_API_KEY` (or `XAI_API_KEY`) | paid | not configured in prod: no key in `.env`, `.env.local`, the `three-ws-api` service, or Secret Manager (checked 2026-10-11). A caller's own xAI key leads the chain instead, on `grok-4.7` unless they name a model. See [Grok model ids](#grok-model-ids). The same key, once set, also lights up a second rung of a different chain: X search for the Sentiment Scout fails over to xAI's `x_search` tool when the X bearer rung cannot answer (`searchMintPostsViaXai` in `api/_lib/x-search.js`, documented in [docs/sentiment-scout.md](../sentiment-scout.md#x-search-budget)). |
+| 20 | xAI Grok `grok-4.3`, reasoning off (`GROK_BUDGET_MODEL`) | `GROK_API_KEY` (or `XAI_API_KEY`) | paid | not configured in prod: no key in `.env`, `.env.local`, the `three-ws-api` service, or Secret Manager (checked 2026-10-11). A caller's own xAI key leads the chain instead, on `grok-4.7` unless they name a model; an agent whose owner saved a Grok key at `/api/user/provider-keys` bills that key for every visitor's turn (`api/_lib/agent-grok-key.js`), with the platform rung as the fallback. See [Grok model ids](#grok-model-ids). The same key, once set, also lights up a second rung of a different chain: X search for the Sentiment Scout fails over to xAI's `x_search` tool when the X bearer rung cannot answer (`searchMintPostsViaXai` in `api/_lib/x-search.js`, documented in [docs/sentiment-scout.md](../sentiment-scout.md#x-search-budget)). |
 
 The 2026-08-05 widening (SambaNova, Mistral, Z.AI, Cloudflare, LLM7,
 SiliconFlow) added six independent free quota pools; each is documented with
@@ -63,6 +63,12 @@ above it the way a provider actually dies (dropped socket, abort, empty 503) and
 requires the next rung to answer. A fallback that only catches a parse error is
 bypassed exactly when the provider fails, which is the defect class that test
 exists to prevent.
+
+Every OpenRouter request, on any rung or surface, spreads the one shared
+`OPENROUTER_ATTRIBUTION_HEADERS` constant (`api/_lib/openrouter-attribution.js`:
+`HTTP-Referer`, `X-Title`, `X-OpenRouter-Title`) so all of it counts toward
+three.ws's OpenRouter app page. Add new OpenRouter call sites the same way
+instead of inlining header values.
 
 `/brain` (`api/brain/chat.js`) runs its own chain with the same shape: requested
 model → OpenRouter mirror of that model → free safety net (Groq → OpenRouter
@@ -190,6 +196,12 @@ How it works now:
   `meta`. BYOK routes record `0`: the caller's key, not the platform's.
 - The one unmetered `/brain` lane is watsonx. IBM bills its trial entitlement
   outside per-token pricing, so there is no honest per-call number to record.
+
+Wallet-paid inference is a separate path with its own price table, not a chain
+rung: an unauthenticated `POST /api/v1/chat/completions` answers 402 with a Solana
+x402 `upto` offer, escrows the cap, and settles measured tokens times the published
+price (`api/_lib/metered-router.js`, prices in `api/_lib/pricing/inference-models.js`,
+served by `GET /api/v1/models`). See [metered-router.md](../metered-router.md).
 
 ### The check
 
@@ -343,6 +355,7 @@ them:
 - [gcp-credits.md](gcp-credits.md): the credit program, the Vertex lanes, and
   the revert runbook.
 - [gcp-production.md](gcp-production.md): the full production runbook.
+- [metered-router.md](../metered-router.md): pay-per-request access over x402 `upto`.
 - `api/_lib/llm.js`: the chain itself, with the policy comment at the top.
 - `api/_lib/chat-models.js`: the model catalog, capability flags, and
   `isPaidModel()`; `GROK_MODELS` is the only place a Grok id is written.

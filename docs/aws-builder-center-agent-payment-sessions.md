@@ -55,9 +55,9 @@ A private key fuses all three into one secret. Split them apart and the design g
                                 logs everything
 ```
 
-The developer creates a session: a budget envelope with a total, a per-transaction ceiling, a host allowlist, a network, and an expiry. In return they get a bearer token, once.
+The developer creates a session: a budget envelope with a total, a per-transaction ceiling, a host allowlist and denylist, an optional approval threshold, an optional rolling daily cap per rail, a network, and an expiry. In return they get a bearer token, once.
 
-They hand that token to the agent. The agent can now call paid endpoints. It cannot exceed the budget, cannot pay a host outside the allowlist, cannot spend after the expiry, and cannot sign anything itself, because the platform's wallet does the signing and the agent never sees a key.
+They hand that token to the agent. The agent can now call paid endpoints. It cannot exceed the budget, cannot pay a host outside the allowlist (or on the denylist), cannot spend after the expiry, cannot push a single payment over the approval threshold without the owner saying yes, and cannot sign anything itself, because the platform's wallet does the signing and the agent never sees a key.
 
 Custody sits with the platform. Authority sits with the developer. Execution sits with the agent. Compromising the agent gets an attacker exactly one thing: the remaining budget, spendable only at hosts you already approved, only until the session expires.
 
@@ -65,7 +65,7 @@ That is not zero. It is a number you chose in advance, which is the entire point
 
 ## The data model
 
-Two tables. The session is the policy plus the counter, and the execution log is the immutable audit trail.
+Two core tables (plus a small reservation table that backs the rolling per-rail cap). The session is the policy plus the counter, and the execution log is the immutable audit trail. The `CREATE TABLE` below is abridged to the policy columns.
 
 ```sql
 create table if not exists payment_sessions (
@@ -78,6 +78,9 @@ create table if not exists payment_sessions (
     spent_usdc          bigint not null default 0 check (spent_usdc >= 0),
     max_per_tx_usdc     bigint check (max_per_tx_usdc > 0),
     allowed_hosts       text[] not null default '{}',
+    blocked_hosts       text[] not null default '{}',
+    approval_threshold_usdc bigint check (approval_threshold_usdc > 0),
+    per_rail_daily_usdc jsonb not null default '{}'::jsonb,
     network             text not null default 'solana' check (network in ('solana', 'base')),
     connector_ref       text,
 
@@ -178,7 +181,7 @@ Small thing, easy to skip, and it matters: an agent should not burn budget disco
 
 ### Phase 2: the governor
 
-Now the policy runs, in order, cheapest and most decisive first: status, then expiry, then the allowlist, then the per-transaction ceiling, then the budget.
+Now the policy runs, in order, cheapest and most decisive first: status, then expiry, then the allowlist, then the denylist (an explicit block always beats a broad allow), then the per-transaction ceiling, then the rolling per-rail daily cap, then the budget, and last the approval threshold. A call over the threshold is not rejected: it is parked in the owner's approval inbox and the agent gets a `202` with a poll link, then the exact same reserve-and-settle path resumes if the owner approves.
 
 The allowlist check is the one worth showing, because the subdomain rule is where these go wrong:
 
@@ -198,7 +201,7 @@ The verdict is then `canonical.some((entry) => hostMatches(targetHost, entry))`.
 
 `targetHost.endsWith('.' + entry)` and not `targetHost.endsWith(entry)`. Without the dot, an allowlist entry of `example.com` also authorizes `evil-example.com`, and an attacker who can steer your agent to a URL just needs to register the right domain. That is exactly why this is a named function with a test behind it rather than an inline `endsWith`. Hosts are normalized through the URL parser first, so `HTTPS://Example.COM:443/x` and `example.com` compare equal.
 
-These predicates live in [`api/_lib/pay/policy.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/pay/policy.js) and are shared with the dry-run simulator, so a simulated verdict and an enforced one can never disagree.
+These predicates live in [`api/_lib/pay/policy.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/pay/policy.js) and are chained by one `evaluateCall()` that the dry-run simulator calls too, so a simulated verdict and an enforced one can never disagree. Every verdict, allow or deny, also carries a policy digest and an HMAC signature (keyed by `PAY_VERDICT_HMAC_KEY`, separate from the token secret) stored with its execution row, so a verdict cannot be edited after the fact without breaking the signature.
 
 ### Phase 3: the atomic reservation
 
@@ -242,17 +245,18 @@ if (!updated) {
   const remaining = fresh ? BigInt(fresh.budget_usdc) - BigInt(fresh.spent_usdc) : 0n;
   // The SQL predicate already decided; budgetVerdict only phrases the failure,
   // using the same wording the simulator shows for a predicted shortfall.
-  throwVerdict(
+  throwSigned(
     budgetVerdict(amount, remaining) ?? {
       code: 'insufficient_budget',
       message: 'Session was not active when the payment was reserved',
       detail: { need_usd: atomicsToUsd(amount), remaining_usd: atomicsToUsd(remaining) },
     },
+    { policyDigest, requestHash, timestamp },
   );
 }
 ```
 
-`throwVerdict` raises a `SpendGovernorError` carrying the machine-readable `code` the API layer maps to a status (`insufficient_budget` becomes a `402`).
+`throwSigned` raises a `SpendGovernorError` carrying the machine-readable `code` the API layer maps to a status (`insufficient_budget` becomes a `402`) plus the signed verdict. When a per-rail daily cap is set, a rolling-window reservation is taken first in its own advisory-locked statement and released if this `UPDATE` then loses the race.
 
 No advisory locks, no transaction retry loop, no distributed lock service. One statement whose `WHERE` clause is the invariant. If you take one thing from this article, take this: **write the budget check as a predicate in the `UPDATE`, not as a `SELECT` before it.**
 
@@ -280,16 +284,20 @@ This is the section most write-ups skip, and it is the one that decides whether 
 
 A payment has three possible outcomes, not two, and the third is the interesting one.
 
-**Rejected before settlement.** The service answers `402` again. No funds moved, so the reservation is safe to release and the budget goes back:
+**Rejected after signing.** The service answers `402` again. It is tempting to read that as "no funds moved" and release the reservation. We used to, and it was wrong: the signed transfer was already handed to the host, and a host that is also the fee payer can co-sign and broadcast it, then answer `402`. So the reservation stays spent and the failed execution is recorded:
 
 ```js
 if (paid.status === 402) {
-  await rollbackReservation(sessionRecord.id, amountAtomics).catch(() => {});
+  // The signed transfer was already handed to the host. A host that is also
+  // the fee payer can co-sign and broadcast it, then answer 402, so a 402
+  // is not proof nothing landed: the reservation stays spent.
   // ... record the failed execution ...
-  return error(res, 402, 'payment_rejected',
-    'Service rejected the payment before settlement. Budget has been restored.');
+  return { ok: false, status: 402, code: 'payment_rejected',
+    message: 'Service answered 402 after the signed payment was submitted. The budget stays reserved because the transfer may still land.' };
 }
 ```
+
+The release path (`rollbackReservation`, which also frees the rail-daily reservation) is reserved for failures that happen before anything is signed.
 
 **Settled.** Log the tx hash, return the result, done.
 
@@ -379,6 +387,7 @@ Create a session with the policy you are willing to live with:
   "expiry_seconds": 86400,
   "max_per_tx_usd": 0.50,
   "allowed_hosts": ["api.example.com", "data.provider.io"],
+  "approval_threshold_usd": 0.25,
   "network": "solana"
 }
 ```

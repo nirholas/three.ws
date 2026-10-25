@@ -94,14 +94,18 @@ node scripts/render-glb-poster.mjs public/avatars/default.glb public/avatars/def
 
 That poster is 15 KB against a 748 KB model.
 
-The same reasoning applies to the model-viewer bundle itself. It is 955 KB, and
-a page whose landing state has no 3D on screen should not parse it on arrival:
-that alone was `/forge`'s 1.5 s First Contentful Paint. Use
+The same reasoning applies to the model-viewer bundle itself. It is close to a
+megabyte, and a page whose landing state has no 3D on screen should not parse it
+on arrival: that alone was `/forge`'s 1.5 s First Contentful Paint. Use
 [`src/shared/model-viewer-loader.js`](../src/shared/model-viewer-loader.js)
-(`ensureModelViewer` / `ensureModelViewerOrFallback`, with CDN failover) at the
-moment the page actually needs a viewer. Keep `/model-viewer-meshopt.js` as a
-plain deferred script: it has to register the Meshopt decoder before any viewer
-starts loading, and nearly every three.ws GLB is meshopt-compressed.
+(`ensureModelViewer` / `ensureModelViewerOrFallback`) at the moment the page
+actually needs a viewer. It pins one version (4.4.0) and races three CDNs
+(jsDelivr, cdnjs, unpkg), abandoning a host after 12 s, and it registers the
+Meshopt decoder (`/vendor/meshopt_decoder.js`) as the element is defined. Pages
+that load model-viewer with a plain `<script>` tag instead must keep
+`/model-viewer-meshopt.js` ahead of it as a plain script: it has to register the
+decoder before any viewer starts loading, and nearly every three.ws GLB is
+meshopt-compressed.
 
 ## 3. Anything that arrives late needs its box reserved first
 
