@@ -20,6 +20,7 @@ import { sql } from '../_lib/db.js';
 import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
+import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { recoverSolanaAgentKeypair } from '../_lib/agent-wallet.js';
 import { solanaConnection } from '../_lib/agent-pumpfun.js';
 import { confirmOrThrow } from '../_lib/solana/confirm.js';
@@ -267,6 +268,7 @@ async function opPull({ req, res, id, auth, owned, body }) {
 		return json(res, 422, { error: mine.code, error_description: mine.reason, data: { detail: mine.detail ?? null } });
 	}
 
+	if (!(await requireRealFundsAgreement(req, res, { userId: auth.userId, network: row.network, context: 'allowance_pull' }))) return;
 	if (!owned.meta.encrypted_solana_secret) throw new AllowanceError('invalid_request', 'this agent has no custodial Solana key to sign with');
 	const agentKeypair = await recoverSolanaAgentKeypair(owned.meta.encrypted_solana_secret, {
 		agentId: id, userId: auth.userId, reason: 'allowance_pull',
