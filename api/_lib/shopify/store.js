@@ -44,6 +44,12 @@ export async function claimWebhookDelivery(shop, topic, deliveryId) {
 	return rows.length > 0;
 }
 
+// Drops a claim so Shopify's retry of a delivery whose side effect failed runs
+// the handler again instead of being acknowledged as a duplicate.
+export async function releaseWebhookDelivery(topic, deliveryId) {
+	await sql`delete from shopify_webhook_deliveries where topic = ${topic} and delivery_id = ${deliveryId}`;
+}
+
 export async function createMediaJob({ shop, productId, productTitle, imageUrl, forgeJobId }) {
 	const rows = await sql`
 		insert into shopify_media_jobs (shop_domain, product_id, product_title, image_url, forge_job_id, status)

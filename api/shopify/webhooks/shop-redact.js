@@ -6,21 +6,22 @@
 // billing records, the OAuth session row).
 
 import { cors, method, wrap, error, json } from '../../_lib/http.js';
-import { verifyAndClaim, WebhookAuthError } from '../../_lib/shopify/webhook-verify.js';
+import { verifyAndClaim, applyClaimed, WebhookAuthError } from '../../_lib/shopify/webhook-verify.js';
 import { eraseShopData } from '../../_lib/shopify/store.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	let shop, fresh;
+	let shop, claim;
 	try {
-		({ shop, fresh } = await verifyAndClaim(req, 'shop/redact'));
+		claim = await verifyAndClaim(req, 'shop/redact');
+		shop = claim.shop;
 	} catch (err) {
 		if (err instanceof WebhookAuthError) return error(res, 401, 'invalid_hmac', 'webhook HMAC verification failed');
 		throw err;
 	}
 
-	if (fresh) await eraseShopData(shop);
+	await applyClaimed(claim, () => eraseShopData(shop));
 	return json(res, 200, { ok: true });
 });

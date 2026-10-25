@@ -25,10 +25,10 @@ const DDL = `
 	);
 `;
 
-let verifyAndClaim, WebhookAuthError;
+let verifyAndClaim, applyClaimed, WebhookAuthError;
 
 beforeAll(async () => {
-	({ verifyAndClaim, WebhookAuthError } = await import('../api/_lib/shopify/webhook-verify.js'));
+	({ verifyAndClaim, applyClaimed, WebhookAuthError } = await import('../api/_lib/shopify/webhook-verify.js'));
 });
 
 beforeEach(async () => {
@@ -69,5 +69,23 @@ describe('verifyAndClaim', () => {
 	it('throws WebhookAuthError on an invalid signature', async () => {
 		const req = fakeReq({ a: 1 }, { secret: 'wrong-secret' });
 		await expect(verifyAndClaim(req, 'APP_UNINSTALLED')).rejects.toBeInstanceOf(WebhookAuthError);
+	});
+});
+
+describe('applyClaimed', () => {
+	it('releases the claim when the effect throws so Shopify\'s retry re-runs it', async () => {
+		const first = await verifyAndClaim(fakeReq({ a: 1 }, { deliveryId: 'retry-1' }), 'shop/redact');
+		await expect(applyClaimed(first, async () => { throw new Error('db down'); })).rejects.toThrow('db down');
+
+		const retry = await verifyAndClaim(fakeReq({ a: 1 }, { deliveryId: 'retry-1' }), 'shop/redact');
+		expect(retry.fresh).toBe(true);
+		let ran = 0;
+		await applyClaimed(retry, async () => { ran++; });
+		expect(ran).toBe(1);
+
+		const dup = await verifyAndClaim(fakeReq({ a: 1 }, { deliveryId: 'retry-1' }), 'shop/redact');
+		expect(dup.fresh).toBe(false);
+		await applyClaimed(dup, async () => { ran++; });
+		expect(ran).toBe(1);
 	});
 });

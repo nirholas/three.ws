@@ -8,12 +8,12 @@
 import { readBody } from '../http.js';
 import { verifyWebhookHmac } from './hmac.js';
 import { apiSecret } from './config.js';
-import { claimWebhookDelivery } from './store.js';
+import { claimWebhookDelivery, releaseWebhookDelivery } from './store.js';
 
 export class WebhookAuthError extends Error {}
 
 /**
- * @returns {Promise<{ shop: string, body: object, fresh: boolean }>}
+ * @returns {Promise<{ shop: string, body: object, fresh: boolean, topic: string, deliveryId: string }>}
  */
 export async function verifyAndClaim(req, topic) {
 	const raw = await readBody(req, 1_000_000);
@@ -30,5 +30,20 @@ export async function verifyAndClaim(req, topic) {
 	} catch {
 		body = {};
 	}
-	return { shop, body, fresh };
+	return { shop, body, fresh, topic, deliveryId };
+}
+
+/**
+ * Runs `effect` only for a freshly claimed delivery. If it throws, the claim is
+ * released before rethrowing, so the 5xx makes Shopify's retry run the effect
+ * again rather than hit the ledger and skip a GDPR erasure or uninstall.
+ */
+export async function applyClaimed(claim, effect) {
+	if (!claim.fresh) return;
+	try {
+		await effect();
+	} catch (err) {
+		if (claim.deliveryId) await releaseWebhookDelivery(claim.topic, claim.deliveryId).catch(() => {});
+		throw err;
+	}
 }
