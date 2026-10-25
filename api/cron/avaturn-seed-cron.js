@@ -49,6 +49,10 @@ const SLOT_TTL_MS = 280_000;
 // Username claims that may be retried within a tick before it gives up.
 const CLAIM_ATTEMPTS = 3;
 
+// vercel.json declares 300s for this route; without wiring it into wrapCron
+// below, wrapCron falls back to its own DEFAULT_CRON_MAX_DURATION_MS (120s).
+export const maxDuration = 300;
+
 // Origin the rigged base bodies are served from (/avatars/*.glb).
 const ORIGIN = () => env.APP_ORIGIN || 'https://three.ws';
 
@@ -259,4 +263,4 @@ export default wrapCron(async (req, res) => {
 	} finally {
 		await slot.release();
 	}
-});
+}, { maxDurationMs: maxDuration * 1000 });

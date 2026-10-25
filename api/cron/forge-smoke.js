@@ -51,6 +51,9 @@ const SMOKE_PROMPT = 'a small wooden toy boat with a striped sail';
 // a slow-but-working lane could blow the deadline instead of reporting. 240 s
 // leaves the alerting and the response inside that deadline.
 export const GENERATION_BUDGET_MS = 240_000;
+// vercel.json declares 300s for this route; without wiring it into wrapCron
+// below, wrapCron falls back to its own DEFAULT_CRON_MAX_DURATION_MS (120s).
+export const maxDuration = 300;
 const POLL_INTERVAL_MS = 5_000;
 const POLL_TIMEOUT_MS = 15_000;
 const LAST_STATUS_KEY = 'forge-smoke:last';
@@ -338,4 +341,4 @@ export default wrapCron(async (req, res) => {
 		llm: llm.ok ? { status: 'ok', provider: llm.provider } : { status: 'error', reason: llm.reason },
 		redis: redisBurn,
 	});
-});
+}, { maxDurationMs: maxDuration * 1000 });

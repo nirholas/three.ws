@@ -54,6 +54,12 @@ const LAMPORTS_PER_SOL = 1_000_000_000;
 const LEASE_KEY = 'cron:economy-reconcile:lease';
 const LEASE_SECONDS = 25 * 60;
 
+// vercel.json declares 300s for this route; wiring that into wrapCron (below)
+// is what makes the external race match it instead of wrapCron's own
+// DEFAULT_CRON_MAX_DURATION_MS (120s) fallback, same fix x402-ring-leak-scan.js
+// needed for the identical bug.
+export const maxDuration = 300;
+
 async function upsertVerdict({ source, sourceRef, txSig, network, amountAtomic, dbStatus, chainStatus, reconciled, discrepancy, detail, runId }) {
 	try {
 		await withDbRetry(() => sql`
@@ -345,4 +351,4 @@ export default wrapCron(async (req, res) => {
 		tampers,
 		results,
 	});
-});
+}, { maxDurationMs: maxDuration * 1000 });

@@ -53,6 +53,10 @@ import { requireCron } from '../_lib/cron-auth.js';
 
 const MAX_ATTEMPTS = 3;
 
+// vercel.json declares 300s for this route; without wiring it into wrapCron
+// below, wrapCron falls back to its own DEFAULT_CRON_MAX_DURATION_MS (120s).
+export const maxDuration = 300;
+
 function uploadsPerRun() {
 	const n = Number(env.SKETCHFAB_UPLOADS_PER_RUN || 2);
 	if (!Number.isFinite(n)) return 2;
@@ -294,4 +298,4 @@ export default wrapCron(async (req, res) => {
 		refreshed,
 		results,
 	});
-});
+}, { maxDurationMs: maxDuration * 1000 });

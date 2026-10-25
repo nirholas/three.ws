@@ -24,6 +24,10 @@ import { requireCron } from '../_lib/cron-auth.js';
 // cron budget and, at a 10-minute cadence, rolls a few thousand agents per hour.
 const BATCH = 40;
 
+// vercel.json declares 300s for this route; without wiring it into wrapCron
+// below, wrapCron falls back to its own DEFAULT_CRON_MAX_DURATION_MS (120s).
+export const maxDuration = 300;
+
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
@@ -51,4 +55,4 @@ export default wrapCron(async (req, res) => {
 		console.error('[recompute-reputation] failed:', err?.message || err);
 		return json(res, 200, { ok: false, error: err?.message || String(err) });
 	}
-}, { requireWriteCapacity: true });
+}, { requireWriteCapacity: true, maxDurationMs: maxDuration * 1000 });

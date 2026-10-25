@@ -17,6 +17,10 @@ import { requireCron } from '../_lib/cron-auth.js';
 
 const NETWORK = 'mainnet';
 
+// vercel.json declares 300s for this route; without wiring it into wrapCron
+// below, wrapCron falls back to its own DEFAULT_CRON_MAX_DURATION_MS (120s).
+export const maxDuration = 300;
+
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
@@ -32,4 +36,4 @@ export default wrapCron(async (req, res) => {
 		reason: result.reason || null,
 		ms: Date.now() - started,
 	});
-});
+}, { maxDurationMs: maxDuration * 1000 });

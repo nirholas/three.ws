@@ -44,6 +44,10 @@ const RUN_DEADLINE_MS = Number(process.env.FACT_CHECK_BENCHMARK_DEADLINE_MS) || 
 // and trips the refusal for no gain.
 const CONCURRENCY = Number(process.env.FACT_CHECK_BENCHMARK_CONCURRENCY) || 6;
 
+// vercel.json declares 300s for this route; without wiring it into wrapCron
+// below, wrapCron falls back to its own DEFAULT_CRON_MAX_DURATION_MS (120s).
+export const maxDuration = 300;
+
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
@@ -129,4 +133,4 @@ export default wrapCron(async (req, res) => {
 	} finally {
 		await releaseLock().catch(() => {});
 	}
-});
+}, { maxDurationMs: maxDuration * 1000 });

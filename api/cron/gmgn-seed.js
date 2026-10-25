@@ -32,6 +32,10 @@ const FETCH_TIMEOUT_MS = 8000;
 // Be respectful: 300ms between gmgn requests so we don't hammer them.
 const INTER_REQUEST_DELAY_MS = 300;
 
+// vercel.json declares 300s for this route; without wiring it into wrapCron
+// below, wrapCron falls back to its own DEFAULT_CRON_MAX_DURATION_MS (120s).
+export const maxDuration = 300;
+
 // gmgn tab → our label. smart_degen/pump_smart = proven smart money buyers.
 // launchpad_smart = launch specialists. renowned = KOL (community influence;
 // labelled 'kol', which Oracle's pedigree treats as proven and its cold-start
@@ -228,4 +232,4 @@ export default wrapCron(async (req, res) => {
 		fallback_used: fallbackUsed,
 		ms: Date.now() - started,
 	});
-});
+}, { maxDurationMs: maxDuration * 1000 });
