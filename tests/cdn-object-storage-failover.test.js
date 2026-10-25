@@ -168,9 +168,28 @@ describe('/cdn on a storage credential fault', () => {
 		send.mockRejectedValue(CREDENTIAL_FAULT);
 		fetchUpstream.mockRejectedValue(new Error('r2.dev unreachable'));
 		const res = makeRes();
-		await handler(req('thumb/abc.png'), res);
+		await handler(req('u/1/model.glb'), res);
 		expect(res.statusCode).toBe(502);
 		expect(res.getHeader('content-length')).toBeUndefined();
+	});
+
+	it('serves the placeholder image instead of a 502 for an image key once both lanes fail', async () => {
+		send.mockRejectedValue(CREDENTIAL_FAULT);
+		fetchUpstream.mockRejectedValue(new Error('r2.dev unreachable'));
+		const res = makeRes();
+		await handler(req('thumb/abc.png'), res);
+		expect(res.statusCode).toBe(200);
+		expect(res.getHeader('content-type')).toBe('image/png');
+		expect(res.written().length).toBeGreaterThan(0);
+		expect(res.getHeader('cache-control')).toBe('public, max-age=30, s-maxage=30');
+	});
+
+	it('still 502s a non-image key (GLB) once both lanes fail, no placeholder swap', async () => {
+		send.mockRejectedValue(CREDENTIAL_FAULT);
+		fetchUpstream.mockRejectedValue(new Error('r2.dev unreachable'));
+		const res = makeRes();
+		await handler(req('u/1/model.glb'), res);
+		expect(res.statusCode).toBe(502);
 	});
 
 	it('still 404s a missing object rather than bouncing it to the public domain', async () => {

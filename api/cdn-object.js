@@ -25,6 +25,14 @@ import { r2, isStorageInfrastructureError, publicUrlOrNull } from './_lib/r2.js'
 import { fetchUpstream } from './_lib/upstream-fetch.js';
 import { env } from './_lib/env.js';
 
+// A flat #e2e2e2 64x64 PNG, served in place of a 502 when the whole storage
+// product is down (both the signed read and the public-domain fallback fail
+// the same way, which a per-credential failover cannot route around).
+const PLACEHOLDER_PNG = Buffer.from(
+	'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAATElEQVR42u3PMQ0AAAwDoPqXWSWVsHsJOCB9LgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIClwEaOGJ3yOGdeQAAAABJRU5ErkJggg==',
+	'base64',
+);
+
 // Object keys are caller-controlled path input — keep them boring. UUID-based
 // keys, slashes, dots-in-filenames only; no traversal, no control chars.
 const KEY_RE = /^[\w!*'().@-]+(?:\/[\w!*'().@-]+)*(?:\.[\w-]+)?$/;
@@ -193,7 +201,8 @@ export default wrap(async (req, res) => {
 		// thumbnails costs r2.dev one fetch instead of one per viewer, and traffic
 		// still returns to the signed path within a minute of the credential being
 		// healthy again.
-		const fallback = isStorageInfrastructureError(err) ? publicUrlOrNull(key) : null;
+		const isInfraFault = isStorageInfrastructureError(err);
+		const fallback = isInfraFault ? publicUrlOrNull(key) : null;
 		if (fallback) {
 			console.error('[cdn-object] signed read failed, streaming public bucket domain:', key, err?.message);
 			try {
@@ -251,6 +260,21 @@ export default wrap(async (req, res) => {
 			}
 		}
 		console.error('[cdn-object] r2 fetch failed:', key, err?.message);
+		// Both lanes point at the same disabled storage product (an R2 account-wide
+		// outage, not a credential rejection the public domain can route around).
+		// An image key can at least avoid a broken-image icon; a model key cannot
+		// be stood in for by a flat PNG, so it still falls through to the 502.
+		if (isInfraFault && contentTypeFor(key, null).startsWith('image/')) {
+			res.removeHeader('content-length');
+			res.removeHeader('content-range');
+			res.removeHeader('etag');
+			res.statusCode = 200;
+			res.setHeader('content-type', 'image/png');
+			res.setHeader('cross-origin-resource-policy', 'cross-origin');
+			res.setHeader('cache-control', 'public, max-age=30, s-maxage=30');
+			if (req.method === 'HEAD') return res.end();
+			return res.end(PLACEHOLDER_PNG);
+		}
 		return error(res, 502, 'upstream_error', 'failed to fetch object');
 	}
 });
