@@ -25,7 +25,18 @@ export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
 
-	if (!(await acquireLock())) {
+	let acquired;
+	try {
+		acquired = await acquireLock();
+	} catch (err) {
+		// A transient DB fault while checking the lock leaves app_settings
+		// untouched and nothing acquired. Skip this tick (the next one is five
+		// minutes away) instead of surfacing a raw 500 and an ops alert.
+		console.warn('[cron] commit-feed-push lock check failed', err?.message || err);
+		json(res, 200, { ok: true, skipped: 'lock_error' });
+		return;
+	}
+	if (!acquired) {
 		json(res, 200, { ok: true, skipped: 'locked' });
 		return;
 	}

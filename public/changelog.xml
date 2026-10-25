@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Commit feed cron skips quietly on a lock-check fault</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-25:Commit feed cron skips quietly on a lock-check fault</guid>
+			<pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The commit feed cron now skips a tick with a 200 when the database lock check hits a transient fault, instead of answering a raw 500 and raising an ops alert. The next tick retries.</description>
+		</item>
+		<item>
 			<title>Fixed phone/desktop/CLI/Telegram account linking, which was failing on every attempt</title>
 			<link>https://three.ws/dashboard/account</link>
 			<guid isPermaLink="false">2026-10-25:Fixed phone/desktop/CLI/Telegram account linking, which was failing on every attempt</guid>
@@ -45,6 +53,14 @@
 			<pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The trellis lane's GPU worker already restarted itself between jobs once host memory ratcheted up, but had no equivalent check for GPU memory: a rasterizer dependency allocates outside torch's own memory pool, so an instance's usable VRAM only ever shrank, and the instance's own health check kept passing right up until a job crashed or Cloud Run killed it mid-generation. The worker now also tracks GPU memory after every job and restarts cleanly between jobs once it has ratcheted far enough, the same way the existing memory guard already does, so Forge image-to-3D jobs on this lane fail or stall less often.</description>
+		</item>
+		<item>
+			<title>Object-storage outages now answer a clean 503 with Retry-After instead of a raw 500</title>
+			<link>https://three.ws/docs/api-reference</link>
+			<guid isPermaLink="false">2026-10-25:Object-storage outages now answer a clean 503 with Retry-After instead of a raw 500</guid>
+			<pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the R2 bucket is unreachable (account disabled, keys rotated, endpoint down), any API route that writes or reads an object without its own error handling, such as avatar upload, used to answer a bare 500 and fire a Sentry event and an unhandled-5xx alert on every request. The shared error boundary now treats a storage fault like a database outage: a 503 service_unavailable with Retry-After, one throttled warning, a single deduped ops alert, and a clean skip for cron ticks. Deliberate 4xx errors and real handler bugs are unchanged.</description>
 		</item>
 		<item>
 			<title>Security hardening across sign-in, uploads, vaults, agents and the chat server</title>

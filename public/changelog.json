@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-10-25T11:43:02.465Z",
+	"generated_at": "2026-10-25T11:57:17.211Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-10-25",
+			"type": "update",
+			"title": "Commit feed cron skips quietly on a lock-check fault",
+			"summary": "The commit feed cron now skips a tick with a 200 when the database lock check hits a transient fault, instead of answering a raw 500 and raising an ops alert. The next tick retries.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-10-25",
 			"type": "update",
@@ -52,6 +62,16 @@
 			"title": "Image-to-3D Forge instances recycle before a VRAM leak crashes a job",
 			"summary": "The trellis lane's GPU worker already restarted itself between jobs once host memory ratcheted up, but had no equivalent check for GPU memory: a rasterizer dependency allocates outside torch's own memory pool, so an instance's usable VRAM only ever shrank, and the instance's own health check kept passing right up until a job crashed or Cloud Run killed it mid-generation. The worker now also tracks GPU memory after every job and restarts cleanly between jobs once it has ratcheted far enough, the same way the existing memory guard already does, so Forge image-to-3D jobs on this lane fail or stall less often.",
 			"link": "/image-to-3d",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-25",
+			"type": "update",
+			"title": "Object-storage outages now answer a clean 503 with Retry-After instead of a raw 500",
+			"summary": "When the R2 bucket is unreachable (account disabled, keys rotated, endpoint down), any API route that writes or reads an object without its own error handling, such as avatar upload, used to answer a bare 500 and fire a Sentry event and an unhandled-5xx alert on every request. The shared error boundary now treats a storage fault like a database outage: a 503 service_unavailable with Retry-After, one throttled warning, a single deduped ops alert, and a clean skip for cron ticks. Deliberate 4xx errors and real handler bugs are unchanged.",
+			"link": "/docs/api-reference",
 			"tags": [
 				"fix"
 			]

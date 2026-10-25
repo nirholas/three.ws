@@ -12,9 +12,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const lock = { held: false };
+const lockThrows = { value: null };
 const pushResult = { value: null, throws: null };
 vi.mock('../api/_lib/commit-feed-push.js', () => ({
-	acquireLock: vi.fn(async () => !lock.held),
+	acquireLock: vi.fn(async () => {
+		if (lockThrows.value) throw lockThrows.value;
+		return !lock.held;
+	}),
 	releaseLock: vi.fn(async () => {}),
 	pushTelegramLane: vi.fn(async () => {
 		if (pushResult.throws) throw pushResult.throws;
@@ -43,6 +47,8 @@ function makeReqRes() {
 describe('commit-feed-push handler', () => {
 	beforeEach(() => {
 		lock.held = false;
+		lockThrows.value = null;
+		vi.clearAllMocks();
 		pushResult.value = { posted: 0 };
 		pushResult.throws = null;
 	});
@@ -64,5 +70,17 @@ describe('commit-feed-push handler', () => {
 		const { req, res } = makeReqRes();
 		await handler(req, res);
 		expect(releaseLock).toHaveBeenCalled();
+	});
+
+	it('skips the tick with a 200, not a 500, when acquireLock itself rejects', async () => {
+		lockThrows.value = new Error('Connection terminated unexpectedly');
+		const { releaseLock, pushTelegramLane } = await import('../api/_lib/commit-feed-push.js');
+		const { req, res } = makeReqRes();
+		await handler(req, res);
+		expect(res.statusCode).not.toBe(500);
+		expect(res.statusCode).toBe(200);
+		expect(JSON.parse(res.body)).toEqual({ ok: true, skipped: 'lock_error' });
+		expect(releaseLock).not.toHaveBeenCalled();
+		expect(pushTelegramLane).not.toHaveBeenCalled();
 	});
 });
