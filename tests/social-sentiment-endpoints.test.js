@@ -268,7 +268,9 @@ describe('POST /api/social/sentiment-pulse', () => {
 	});
 
 	it('serves last-known-good callouts when pump.fun fails and a cached copy exists', async () => {
-		const LKG_MINT = 'ATVbubW5hCMW4EcVvM1jyQTfihw7yKqTJTLxkwRqpump';
+		// A clearly-synthetic placeholder mint, same convention as
+		// tests/community-ws-ticket-endpoint.test.js's THREEsynthetic* fixtures.
+		const LKG_MINT = 'THREEsyntheticSentimentCacheDegraded1pump';
 
 		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
 			upstream(200, {
