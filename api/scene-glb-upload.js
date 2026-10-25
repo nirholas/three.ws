@@ -26,6 +26,7 @@ import { randomUUID } from 'node:crypto';
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { presignUpload, publicUrl } from './_lib/r2.js';
+import { ANON_UPLOAD_LIMITS } from './_lib/anon-upload-limits.js';
 
 // Accepted export types → file extension for the storage key. Binary glTF is
 // the only format Scene Studio's Share action produces; the vendored editor's
@@ -37,7 +38,7 @@ const CONTENT_TYPE_EXT = Object.freeze({
 // A composed scene (multiple imported avatars/props + baked textures) can run
 // well past a single reference image — cap comfortably above what the editor
 // can hold in memory client-side without choking a low-end device first.
-const MAX_GLB_BYTES = 200 * 1024 * 1024;
+const MAX_GLB_BYTES = ANON_UPLOAD_LIMITS['scene/shares/'];
 
 function storageConfigured() {
 	return Boolean(

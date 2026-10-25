@@ -19,6 +19,7 @@ import { randomUUID } from 'node:crypto';
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { presignUpload, publicUrl } from './_lib/r2.js';
+import { ANON_UPLOAD_LIMITS } from './_lib/anon-upload-limits.js';
 import { hashClient } from './_lib/forge-store.js';
 
 // Accepted source-video types → file extension for the storage key.
@@ -30,7 +31,7 @@ const CONTENT_TYPE_EXT = Object.freeze({
 
 // A walkthrough clip is comfortably under this; anything larger is almost
 // certainly the wrong input for a streaming reconstruction.
-const MAX_VIDEO_BYTES = 512 * 1024 * 1024;
+const MAX_VIDEO_BYTES = ANON_UPLOAD_LIMITS['capture/uploads/'];
 
 function storageConfigured() {
 	return Boolean(

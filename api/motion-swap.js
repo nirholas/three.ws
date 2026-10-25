@@ -26,12 +26,13 @@ import { randomUUID } from 'node:crypto';
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { presignUpload, publicUrl } from './_lib/r2.js';
+import { ANON_UPLOAD_LIMITS } from './_lib/anon-upload-limits.js';
 import { createRegenProvider } from './_providers/gcp.js';
 
 // Provider job ids are base64url JSON envelopes (mode + task id + worker base
 // URL — see packJobId in _providers/gcp.js), so they run several hundred chars.
 const JOB_ID_RE = /^[A-Za-z0-9_-]{20,600}$/;
-const MAX_VIDEO_BYTES = 256 * 1024 * 1024;
+const MAX_VIDEO_BYTES = ANON_UPLOAD_LIMITS['motion-swap/uploads/'];
 const MAX_SECONDS = 90;
 
 const VIDEO_CONTENT_TYPE_EXT = Object.freeze({

@@ -207,6 +207,27 @@ export async function headObject(key) {
 	}
 }
 
+// One page of a prefix listing (key, size, last-modified). Used by sweepers that
+// must walk a prefix; callers loop on `nextToken` until it is null.
+export async function listObjectsPage({ prefix, continuationToken, maxKeys = 1000 }) {
+	const out = await r2.send(
+		new ListObjectsV2Command({
+			Bucket: env.S3_BUCKET,
+			Prefix: prefix,
+			ContinuationToken: continuationToken,
+			MaxKeys: maxKeys,
+		}),
+	);
+	return {
+		objects: (out.Contents || []).map((o) => ({
+			key: o.Key,
+			size: o.Size ?? 0,
+			lastModified: o.LastModified ?? null,
+		})),
+		nextToken: out.IsTruncated ? out.NextContinuationToken || null : null,
+	};
+}
+
 export async function deleteObject(key) {
 	if (isAbsoluteUrl(key)) return; // externally-hosted asset — nothing in our bucket to delete
 	await r2.send(new DeleteObjectCommand({ Bucket: env.S3_BUCKET, Key: key }));

@@ -138,3 +138,14 @@ every job. The edge keeps accepting it, because it never stopped.
 - [gcp-production.md](gcp-production.md) for the service, env, and deploy story
 - `npm run check:cron-drift` (declared vs live jobs) and
   `npm run audit:cron-liveness` (jobs that exist but never fire)
+
+## Anonymous upload size enforcement
+
+Anonymous presigned PUTs (`capture/uploads/`, `scene/shares/`,
+`motion-swap/uploads/`, `forge/uploads/`, `print/uploads/`) cannot sign
+`ContentLength` without breaking the browser CORS preflight, so the declared
+size is only checked at presign time. `/api/cron/anon-upload-sweep` (hourly,
+`api/cron/anon-upload-sweep.js`, logic in `api/_lib/anon-upload-sweep.js`)
+lists each prefix, HEAD-confirms objects over their ceiling and deletes them.
+Ceilings live in `api/_lib/anon-upload-limits.js`, shared with the presign
+handlers. Only objects modified in the last 26 hours are judged.

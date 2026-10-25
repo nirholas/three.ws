@@ -23,6 +23,7 @@
  * bucket is refusing us, and the user should come back shortly).
  */
 
+import { ANON_UPLOAD_LIMITS } from './_lib/anon-upload-limits.js';
 import { randomUUID } from 'node:crypto';
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
@@ -36,7 +37,7 @@ const CONTENT_TYPE_EXT = Object.freeze({
 	'image/webp': 'webp',
 });
 
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // matches forge-store's preview copy cap
+const MAX_IMAGE_BYTES = ANON_UPLOAD_LIMITS['forge/uploads/']; // matches forge-store's preview copy cap
 
 function clientKeyFrom(req) {
 	const raw = req.headers['x-forge-client'];

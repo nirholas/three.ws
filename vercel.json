@@ -4263,6 +4263,10 @@
 			"dest": "/api/oracle/test-alert.js"
 		},
 		{
+			"src": "/api/oracle/telegram-chat",
+			"dest": "/api/oracle/telegram-chat.js"
+		},
+		{
 			"src": "/api/social/sentiment",
 			"dest": "/api/social/sentiment.js"
 		},
@@ -7209,6 +7213,10 @@
 		{
 			"path": "/api/cron/gcp-burn-report",
 			"schedule": "0 14 * * *"
+		},
+		{
+			"path": "/api/cron/anon-upload-sweep",
+			"schedule": "17 * * * *"
 		},
 		{
 			"path": "/api/cron/auto-rig-sweep",
