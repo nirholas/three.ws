@@ -69,6 +69,7 @@ context file says otherwise.
 
 | Order | Why now |
 |---|---|
+| [436](finish/436-auto-forge-finalize-ttl-reap-decoupling.md) | Measured 2026-10-25: 96% of forge 3D generations in the last 24h never finished; 780 `forge_creations` rows stuck in `generating`, some over a day old against a documented 45-minute timeout. The core 3D-generation feature is effectively down for most users. |
 | [401](finish/401-auto-restore-green-vitest.md) | `npm run test:core` has 52 failing files and 108 failing tests on `evolve`. Every other order's "tests pass" line is unverifiable until this is green. |
 | [433](finish/433-auto-fix-account-link-codes-schema-collision.md) | A table-name collision in `account_link_codes` is breaking every phone/desktop/CLI/Telegram account-link call in production right now. |
 | [403](finish/403-auto-drain-docs-freshness.md) | 127 docs describe code that has since moved; the remainder of order 402's partial drain. |
