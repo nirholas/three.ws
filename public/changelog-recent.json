@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-25T11:06:21.844Z",
+	"generated_at": "2026-10-25T11:11:00.334Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4196,
+	"total": 4197,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -45,6 +45,16 @@
 			"title": "Image-to-3D Forge instances recycle before a VRAM leak crashes a job",
 			"summary": "The trellis lane's GPU worker already restarted itself between jobs once host memory ratcheted up, but had no equivalent check for GPU memory: a rasterizer dependency allocates outside torch's own memory pool, so an instance's usable VRAM only ever shrank, and the instance's own health check kept passing right up until a job crashed or Cloud Run killed it mid-generation. The worker now also tracks GPU memory after every job and restarts cleanly between jobs once it has ratcheted far enough, the same way the existing memory guard already does, so Forge image-to-3D jobs on this lane fail or stall less often.",
 			"link": "/image-to-3d",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-25",
+			"type": "update",
+			"title": "Security hardening across sign-in, uploads, vaults, agents and the chat server",
+			"summary": "A source audit led to fixes in many places. Agent updates only link avatars you own, and unpublished agents stay hidden from ask. Handoff, Telegram and SAML sign-ins are bound to the flow that started them, and the walk-avatar extension only accepts a token for a sign-in it began. Vault deposits that would mint zero shares are refunded, and strategy buys reserve against the daily SOL cap atomically. Oracle follow and test alerts need a linked Telegram chat, shown read-only in the panels. Anonymous uploads are size-checked hourly. The local chat server binds loopback and requires a token, and webhook retries re-run after a failed delivery.",
+			"link": "/oracle",
 			"tags": [
 				"fix"
 			]
@@ -1549,16 +1559,6 @@
 			"link": "/docs/engine-qa",
 			"tags": [
 				"launch"
-			]
-		},
-		{
-			"date": "2026-10-12",
-			"type": "update",
-			"title": "<agent-3d> gets model-viewer's AR contract: ar-modes, variants, hotspots, and /ar drops the third-party CDN",
-			"summary": "<agent-3d> now matches the AR/viewer contract the market expects from model-viewer (Apache-2.0): ar-modes picks which launch paths to try (WebXR, Scene Viewer, Quick Look), ar-placement anchors floor or wall, ios-src supplies a pre-baked USDZ or the element generates a best-effort one on device, variant-name switches a GLB's real KHR_materials_variants materials live, and any element with slot=\"hotspot\" tracks a 3D position and flies the camera to a saved orbit on click. /avatars/:id/ar and /agents/:id/ar (pages/ar.html) now run entirely on <agent-3d ar>; the page no longer loads a third-party viewer from a CDN.",
-			"link": "/avatars",
-			"tags": [
-				"feature"
 			]
 		}
 	]
