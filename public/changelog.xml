@@ -95,6 +95,14 @@
 			<description>When the R2 bucket is unreachable (account disabled, keys rotated, endpoint down), any API route that writes or reads an object without its own error handling, such as avatar upload, used to answer a bare 500 and fire a Sentry event and an unhandled-5xx alert on every request. The shared error boundary now treats a storage fault like a database outage: a 503 service_unavailable with Retry-After, one throttled warning, a single deduped ops alert, and a clean skip for cron ticks. Deliberate 4xx errors and real handler bugs are unchanged.</description>
 		</item>
 		<item>
+			<title>Paid Solana routes fall back to self-pay instead of advertising a sponsor that cannot settle</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-25:Paid Solana routes fall back to self-pay instead of advertising a sponsor that cannot settle</guid>
+			<pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The model-check, mint-to-mesh, vanity, forge, pipeline and sealed-drops paywalls kept naming the sponsor wallet as fee payer even when it sat under its SOL floor, so buyers signed payments the facilitator then refused. They now share one self-pay guard with every other paid route: when the sponsor cannot co-sign, the Solana accept stays on the challenge without a fee payer and the buyer pays its own network fee.</description>
+		</item>
+		<item>
 			<title>Rate limiter Redis path repaired and its health hint made honest</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-25:Rate limiter Redis path repaired and its health hint made honest</guid>
