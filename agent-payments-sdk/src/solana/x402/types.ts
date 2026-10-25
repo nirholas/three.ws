@@ -247,6 +247,15 @@ export interface ResourceServerConfig {
   mintRequirements?: (
     request: Request,
   ) => PaymentRequirements[] | Promise<PaymentRequirements[]>;
+  /**
+   * Server secret that binds every `pump-agent` invoice to this server. Memos are
+   * minted as an HMAC-tagged u64 and the resource server refuses an echoed
+   * invoice whose memo it did not mint for those exact fields, or whose window is
+   * closed, before any on-chain check. Strongly recommended in production; when
+   * you supply {@link mintRequirements}, mint with `buildPumpAgentRequirements`
+   * and the same `invoiceSecret`.
+   */
+  invoiceSecret?: string;
 }
 
 // ─── Client Configuration ───────────────────────────────────────────────────

@@ -15,6 +15,7 @@
  *     that returns 402s, verifies payment via a facilitator, and settles.
  */
 
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { PublicKey, Connection } from "@solana/web3.js";
 import { PumpAgent } from "../PumpAgent";
 import {
@@ -118,6 +119,78 @@ function generateMemo(): string {
   const ts = Date.now();
   memoCounter = (memoCounter + 1) % 1_000_000;
   return `${ts}${String(memoCounter).padStart(6, "0")}`;
+}
+
+/**
+ * Server-bound invoice memos. The on-chain invoice id is client-visible, so
+ * without a binding any paid invoice for the same agent, asset and amount
+ * (another server's, or a stranger's) could be presented here and redeemed. With
+ * an `invoiceSecret` the memo is a u64: the high 40 bits are an HMAC tag over
+ * the invoice fields plus a 24-bit nonce in the low bits. Only this server can
+ * mint a memo that verifies, and the nonce keeps same-second invoices unique.
+ */
+const MEMO_NONCE_BITS = 24n;
+const MEMO_TAG_BITS = 40n;
+
+function memoTag(
+  secret: string,
+  fields: { agentMint: string; asset: string; amount: string; payTo: string; startTime: number; endTime: number },
+  nonce: bigint,
+): bigint {
+  const mac = createHmac("sha256", secret)
+    .update(
+      [fields.agentMint, fields.asset, fields.amount, fields.payTo, fields.startTime, fields.endTime, nonce].join(":"),
+    )
+    .digest();
+  return mac.readBigUInt64BE(0) >> (64n - MEMO_TAG_BITS);
+}
+
+function generateSignedMemo(
+  secret: string,
+  fields: { agentMint: string; asset: string; amount: string; payTo: string; startTime: number; endTime: number },
+): string {
+  const nonce = BigInt(randomBytes(3).readUIntBE(0, 3));
+  return String((memoTag(secret, fields, nonce) << MEMO_NONCE_BITS) | nonce);
+}
+
+/** Skew allowed between the issuing clock and the verifying clock, seconds. */
+const INVOICE_CLOCK_SKEW_SECONDS = 60;
+
+/**
+ * True when the echoed invoice carries a memo this server minted for exactly
+ * these fields and its validity window is open now.
+ */
+function invoiceIsServerBound(secret: string, req: PumpAgentPaymentRequirements): boolean {
+  let memo: bigint;
+  try {
+    memo = BigInt(String(req.extra.memo));
+  } catch {
+    return false;
+  }
+  if (memo < 0n || memo >= 1n << 64n) return false;
+  const nonce = memo & ((1n << MEMO_NONCE_BITS) - 1n);
+  const expected = memoTag(
+    secret,
+    {
+      agentMint: req.extra.agentMint,
+      asset: req.asset,
+      amount: req.amount,
+      payTo: req.payTo,
+      startTime: req.extra.startTime,
+      endTime: req.extra.endTime,
+    },
+    nonce,
+  );
+  const got = Buffer.alloc(8);
+  const want = Buffer.alloc(8);
+  got.writeBigUInt64BE(memo >> MEMO_NONCE_BITS);
+  want.writeBigUInt64BE(expected);
+  if (!timingSafeEqual(got, want)) return false;
+  const now = Math.floor(Date.now() / 1000);
+  return (
+    req.extra.startTime <= now + INVOICE_CLOCK_SKEW_SECONDS &&
+    now <= req.extra.endTime + INVOICE_CLOCK_SKEW_SECONDS
+  );
 }
 
 /**
@@ -299,6 +372,11 @@ export interface PumpAgentRequirementsConfig {
   invoiceWindowSeconds?: number;
   /** Max settlement timeout in seconds (default: 60) */
   maxTimeoutSeconds?: number;
+  /**
+   * Server secret that binds each minted memo to this server. Pass the same
+   * value to {@link createResourceServer} so it rejects invoices it did not mint.
+   */
+  invoiceSecret?: string;
 }
 
 /**
@@ -309,17 +387,27 @@ export function buildPumpAgentRequirements(
 ): PumpAgentPaymentRequirements {
   const windowSec = config.invoiceWindowSeconds ?? 300;
   const now = Math.floor(Date.now() / 1000);
+  const asset = config.asset ?? USDC_MAINNET;
 
   return {
     scheme: "pump-agent",
     network: config.network ?? SOLANA_MAINNET,
-    asset: config.asset ?? USDC_MAINNET,
+    asset,
     amount: config.amount,
     payTo: config.payTo,
     maxTimeoutSeconds: config.maxTimeoutSeconds ?? 60,
     extra: {
       agentMint: config.agentMint,
-      memo: generateMemo(),
+      memo: config.invoiceSecret
+        ? generateSignedMemo(config.invoiceSecret, {
+            agentMint: config.agentMint,
+            asset,
+            amount: config.amount,
+            payTo: config.payTo,
+            startTime: now,
+            endTime: now + windowSec,
+          })
+        : generateMemo(),
       startTime: now,
       endTime: now + windowSec,
     },
@@ -332,18 +420,31 @@ export function buildPumpAgentRequirements(
  * (amount, asset, payTo, agentMint, network) are preserved from the template.
  * Non-pump-agent requirements are returned unchanged.
  */
-function refreshRequirement(req: PaymentRequirements): PaymentRequirements {
+function refreshRequirement(
+  req: PaymentRequirements,
+  invoiceSecret?: string,
+): PaymentRequirements {
   if (req.scheme !== "pump-agent") return req;
   const pump = req as PumpAgentPaymentRequirements;
   const now = Math.floor(Date.now() / 1000);
   const windowSec = Math.max(1, pump.extra.endTime - pump.extra.startTime || 300);
+  const endTime = now + windowSec;
   return {
     ...pump,
     extra: {
       ...pump.extra,
-      memo: generateMemo(),
+      memo: invoiceSecret
+        ? generateSignedMemo(invoiceSecret, {
+            agentMint: pump.extra.agentMint,
+            asset: pump.asset,
+            amount: pump.amount,
+            payTo: pump.payTo,
+            startTime: now,
+            endTime,
+          })
+        : generateMemo(),
       startTime: now,
-      endTime: now + windowSec,
+      endTime,
     },
   };
 }
@@ -361,7 +462,7 @@ async function mintRequirements(
   if (config.mintRequirements) {
     return config.mintRequirements(request);
   }
-  return config.requirements.map(refreshRequirement);
+  return config.requirements.map((r) => refreshRequirement(r, config.invoiceSecret));
 }
 
 /**
@@ -500,6 +601,16 @@ export function createResourceServer(
 
     if (!acceptedMatchesTemplate(accepted, template)) {
       return new Response("Payment requirement mismatch", { status: 400 });
+    }
+
+    if (
+      config.invoiceSecret &&
+      accepted.scheme === "pump-agent" &&
+      !invoiceIsServerBound(config.invoiceSecret, accepted as PumpAgentPaymentRequirements)
+    ) {
+      return new Response("Invoice was not issued by this server or has expired", {
+        status: 400,
+      });
     }
 
     const matchedReq = accepted;
