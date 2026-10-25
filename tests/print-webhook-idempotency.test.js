@@ -27,11 +27,15 @@ const claimWebhookDelivery = vi.fn(async ({ provider, deliveryId }) => {
 	return { fresh: true };
 });
 const markWebhookApplied = vi.fn(async () => {});
+const releaseWebhookDelivery = vi.fn(async ({ provider, deliveryId }) => {
+	ledger.delete(`${provider}:${deliveryId}`);
+});
 const getOrderByProviderId = vi.fn(async () => ORDER);
 
 vi.mock('../api/_lib/print/fulfillment-queries.js', () => ({
 	claimWebhookDelivery,
 	markWebhookApplied,
+	releaseWebhookDelivery,
 	getOrderByProviderId,
 	printStoreEnabled: () => true,
 	ADAPTER_DRIVABLE_STATUSES: ['submitted', 'printing', 'quality_check', 'shipped', 'delivered', 'canceled', 'rejected'],
@@ -143,6 +147,20 @@ describe('a replayed delivery is applied exactly once', () => {
 		await deliver(PAYLOAD, { headers: { 'x-print-delivery': 'dlv_7' } });
 		const replay = await deliver({ ...PAYLOAD, note: 'resent with a note' }, { headers: { 'x-print-delivery': 'dlv_7' } });
 		expect(replay.json.duplicate).toBe(true);
+		expect(timeline).toHaveLength(1);
+	});
+});
+
+describe('a failed apply releases the claim so the provider retry re-runs it', () => {
+	it('applies on the retry after the first apply threw', async () => {
+		const PAYLOAD = { id: 'p-42', state: 'shipped' };
+		applyProviderEvent.mockRejectedValueOnce(new Error('db write failed'));
+		const first = await deliver(PAYLOAD, { headers: { 'x-print-delivery': 'dlv_9' } });
+		expect(first.statusCode).toBeGreaterThanOrEqual(500);
+		const retry = await deliver(PAYLOAD, { headers: { 'x-print-delivery': 'dlv_9' } });
+		expect(retry.statusCode).toBe(200);
+		expect(retry.json.duplicate).toBeUndefined();
+		expect(retry.json.applied).toBe(true);
 		expect(timeline).toHaveLength(1);
 	});
 });

@@ -22,6 +22,9 @@ const claimForgeWebhookDelivery = vi.fn(async ({ provider, deliveryId }) => {
 	return { fresh: true };
 });
 const markForgeWebhookApplied = vi.fn(async () => {});
+const releaseForgeWebhookDelivery = vi.fn(async ({ provider, deliveryId }) => {
+	ledger.delete(`${provider}:${deliveryId}`);
+});
 const materializeCreation = vi.fn(async ({ replicateJobId }) => ({
 	id: 'creation-1',
 	glbUrl: `https://cdn.example.com/forge/creation-1.glb`,
@@ -32,6 +35,7 @@ const findByJobAnyClient = vi.fn(async () => ROW);
 vi.mock('../../api/_lib/forge-store.js', () => ({
 	claimForgeWebhookDelivery: (...a) => claimForgeWebhookDelivery(...a),
 	markForgeWebhookApplied: (...a) => markForgeWebhookApplied(...a),
+	releaseForgeWebhookDelivery: (...a) => releaseForgeWebhookDelivery(...a),
 	materializeCreation: (...a) => materializeCreation(...a),
 	markFailed: (...a) => markFailed(...a),
 	findByJobAnyClient: (...a) => findByJobAnyClient(...a),
@@ -219,12 +223,27 @@ describe('a replayed delivery is applied exactly once', () => {
 	});
 });
 
+describe('a failed side effect releases the claim so the retry re-runs it', () => {
+	it('lets the Tripo retry apply the completion after the first apply threw', async () => {
+		materializeCreation.mockRejectedValueOnce(new Error('r2 write failed'));
+		const first = await deliver(COMPLETED, { deliveryId: 'dlv-retry' });
+		expect(first.statusCode).toBeGreaterThanOrEqual(500);
+		expect(releaseForgeWebhookDelivery).toHaveBeenCalledWith({ provider: 'tripo', deliveryId: 'dlv-retry' });
+		const retry = await deliver(COMPLETED, { deliveryId: 'dlv-retry' });
+		expect(retry.statusCode).toBe(200);
+		expect(retry.json.duplicate).toBeUndefined();
+		expect(retry.json.applied).toBe(true);
+		expect(materializeCreation).toHaveBeenCalledTimes(2);
+	});
+});
+
 describe('the database being unavailable makes Tripo retry', () => {
 	it('returns 503 when forgeStoreEnabled() is false', async () => {
 		vi.resetModules();
 		vi.doMock('../../api/_lib/forge-store.js', () => ({
 			claimForgeWebhookDelivery,
 			markForgeWebhookApplied,
+			releaseForgeWebhookDelivery,
 			materializeCreation,
 			markFailed,
 			findByJobAnyClient,

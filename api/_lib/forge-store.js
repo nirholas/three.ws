@@ -340,6 +340,15 @@ export async function claimForgeWebhookDelivery({ provider, deliveryId, jobId })
 	return { fresh: rows.length > 0 };
 }
 
+// Drops a claim so the provider's retry of a delivery whose side effect failed
+// runs again instead of being acknowledged as a duplicate.
+export async function releaseForgeWebhookDelivery({ provider, deliveryId }) {
+	await sql`
+		delete from forge_webhook_deliveries
+		where provider = ${provider} and delivery_id = ${deliveryId}
+	`;
+}
+
 export async function markForgeWebhookApplied({ provider, deliveryId }) {
 	await sql`
 		update forge_webhook_deliveries

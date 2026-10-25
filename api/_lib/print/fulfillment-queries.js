@@ -200,6 +200,17 @@ export async function markWebhookApplied({ provider, deliveryId, orderId = null 
 }
 
 /**
+ * Drop a claim so the provider's retry of a delivery whose apply failed runs
+ * again instead of being acknowledged as a duplicate.
+ * @param {{ provider: string, deliveryId: string }} input
+ */
+export async function releaseWebhookDelivery({ provider, deliveryId }) {
+	await sql`
+		delete from print_webhook_deliveries
+		where provider = ${provider} and delivery_id = ${deliveryId}`;
+}
+
+/**
  * Deliveries recorded against an order, newest first. Diagnostic read for the
  * console: "did their webhook actually reach us?" is the first question when a
  * job looks stuck.

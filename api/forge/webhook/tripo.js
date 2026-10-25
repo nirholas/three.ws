@@ -34,6 +34,7 @@ import {
 	markFailed,
 	markForgeWebhookApplied,
 	materializeCreation,
+	releaseForgeWebhookDelivery,
 } from '../../_lib/forge-store.js';
 
 const PROVIDER = 'tripo';
@@ -124,36 +125,41 @@ export default wrap(async (req, res) => {
 		return json(res, 200, { ok: true, applied: false, reason: `event '${eventType}' is informational` });
 	}
 
-	const existing = await findByJobAnyClient({ replicateJobId: taskId });
-	if (!existing) {
-		// Verified sender, unknown job (e.g. a task submitted before this row's
-		// retention window, or outside forge entirely). Answer 200 so Tripo stops
-		// retrying.
-		return json(res, 200, { ok: true, applied: false, reason: 'no matching job' });
-	}
-
+	// The claim above is released if the lookup or the apply throws, so the 5xx
+	// makes Tripo's retry run the side effect again instead of hitting the ledger.
 	let applied = true;
-	let status = existing.status;
-	if (eventType === 'task.completed') {
-		const modelUrl = data?.output?.model_url;
-		if (!modelUrl) {
-			applied = false;
-			status = existing.status;
-		} else {
-			const result = await materializeCreation({
-				replicateJobId: taskId,
-				clientKey: existing.client_key,
-				glbUrl: modelUrl,
-			});
-			status = result ? 'done' : existing.status;
-			applied = Boolean(result);
+	let status;
+	try {
+		const existing = await findByJobAnyClient({ replicateJobId: taskId });
+		if (!existing) {
+			// Verified sender, unknown job (e.g. a task submitted before this row's
+			// retention window, or outside forge entirely). Answer 200 so Tripo stops
+			// retrying.
+			return json(res, 200, { ok: true, applied: false, reason: 'no matching job' });
 		}
-	} else {
-		await markFailed({ replicateJobId: taskId, clientKey: existing.client_key, error: failureMessage(data) });
-		status = 'failed';
+		status = existing.status;
+		if (eventType === 'task.completed') {
+			const modelUrl = data?.output?.model_url;
+			if (!modelUrl) {
+				applied = false;
+			} else {
+				const result = await materializeCreation({
+					replicateJobId: taskId,
+					clientKey: existing.client_key,
+					glbUrl: modelUrl,
+				});
+				status = result ? 'done' : existing.status;
+				applied = Boolean(result);
+			}
+		} else {
+			await markFailed({ replicateJobId: taskId, clientKey: existing.client_key, error: failureMessage(data) });
+			status = 'failed';
+		}
+		await markForgeWebhookApplied({ provider: PROVIDER, deliveryId });
+	} catch (err) {
+		await releaseForgeWebhookDelivery({ provider: PROVIDER, deliveryId }).catch(() => {});
+		throw err;
 	}
-
-	await markForgeWebhookApplied({ provider: PROVIDER, deliveryId });
 
 	return json(res, 200, { ok: true, applied, status });
 });

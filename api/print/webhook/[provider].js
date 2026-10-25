@@ -26,6 +26,7 @@ import {
 	getOrderByProviderId,
 	markWebhookApplied,
 	printStoreEnabled,
+	releaseWebhookDelivery,
 } from '../../_lib/print/fulfillment-queries.js';
 import { getAdapter } from '../../_lib/print/adapters/index.js';
 import { normalizeWebhookEvent } from '../../_lib/print/adapters/contract.js';
@@ -82,22 +83,32 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'validation_error', 'body must be JSON');
 	}
 
-	const event = normalizeWebhookEvent(adapter.key, adapter.parseWebhook(payload));
-	const order = await getOrderByProviderId(provider, event.providerOrderId);
-	if (!order) {
-		// Verified sender, unknown job. Answer 200 so they stop retrying, and say
-		// so plainly: this is a real condition when a provider replays history
-		// after we have deleted an order.
-		return json(res, 200, { ok: true, applied: false, reason: 'no matching order' });
+	// Both claims are released if the lookup or the apply throws, so the 5xx
+	// makes the provider's retry run the side effect again instead of hitting
+	// the ledger and being dropped as a duplicate.
+	try {
+		const event = normalizeWebhookEvent(adapter.key, adapter.parseWebhook(payload));
+		const order = await getOrderByProviderId(provider, event.providerOrderId);
+		if (!order) {
+			// Verified sender, unknown job. Answer 200 so they stop retrying, and say
+			// so plainly: this is a real condition when a provider replays history
+			// after we have deleted an order.
+			return json(res, 200, { ok: true, applied: false, reason: 'no matching order' });
+		}
+
+		const result = await applyProviderEvent({ order, event, actor: 'provider' });
+		await markWebhookApplied({ provider, deliveryId: verdict.deliveryId, orderId: order.id });
+
+		return json(res, 200, {
+			ok: true,
+			applied: result.applied,
+			status: result.order.status,
+			reason: result.reason || undefined,
+		});
+	} catch (err) {
+		for (const id of new Set([verdict.deliveryId, verdict.bodyDeliveryId])) {
+			if (id) await releaseWebhookDelivery({ provider, deliveryId: id }).catch(() => {});
+		}
+		throw err;
 	}
-
-	const result = await applyProviderEvent({ order, event, actor: 'provider' });
-	await markWebhookApplied({ provider, deliveryId: verdict.deliveryId, orderId: order.id });
-
-	return json(res, 200, {
-		ok: true,
-		applied: result.applied,
-		status: result.order.status,
-		reason: result.reason || undefined,
-	});
 });
