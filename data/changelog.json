@@ -3,12 +3,6 @@
 	"entries": [
 		{
 			"date": "2026-10-25",
-			"title": "Allowance pulls now require the signed real-funds agreement",
-			"summary": "Pulling funds through an owner-funded on-chain allowance now checks the signed real-funds agreements before the agent key is used, matching every other custodial signing path. Unsigned accounts get the standard agreement-required refusal and nothing is sent.",
-			"tags": ["fix"]
-		},
-		{
-			"date": "2026-10-25",
 			"title": "Commit feed cron skips quietly on a lock-check fault",
 			"summary": "The commit feed cron now skips a tick with a 200 when the database lock check hits a transient fault, instead of answering a raw 500 and raising an ops alert. The next tick retries.",
 			"tags": [
