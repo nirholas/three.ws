@@ -1428,3 +1428,7 @@ Remaining (orders kept): 539 page cells need a post-deploy browser check against
 ## 2026-10-23: order 547 (integrate 48, Robinhood Crypto MCP tools), done
 
 Four read-only tools (`robinhood_chain_stats`, `robinhood_token_prices`, `robinhood_recent_launches`, `robinhood_wallet_holdings`) in `api/_mcp/tools/robinhood.js`, registered in the catalog. Evidence: a live `robinhood_chain_stats` call returned block 96324688 on chain 4663, `tests/mcp-catalog.test.js` plus `tests/api/v1-robinhood.test.js` 28 passed (the launches test was updated for the NOXA removal), `audit:mcp-safety` passes. Docs section added to `docs/mcp.md`.
+
+## 2026-10-25: order 510 (integrate 11, per-coin earnings source), done
+
+Code shipped in 98744d430. Close-out found `20261015090000_agent_coin_earnings_timeline.sql` already `[applied]` in production (`npm run db:status`), the five new columns present on `agent_coin_earnings`, `tests/pump-creator-fees.test.js` plus `tests/agent-earnings-board.test.js` 24/24, and `launch-detail` answering 200 with `creator_fees.distributed` and `reconciliation` keys for a real earning mint (values fill when the snapshot cron next runs). OWNER-ACTIONS row 63 removed. Production still needs the normal deploy to serve the new code.
