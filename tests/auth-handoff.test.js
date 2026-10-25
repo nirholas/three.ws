@@ -76,8 +76,8 @@ async function mint(body, { origin = 'https://three.ws' } = {}) {
 	return res;
 }
 
-async function open(query) {
-	const req = { method: 'GET', url: `/api/auth/handoff?${query}`, headers: { 'user-agent': 'Safari' } };
+async function open(query, extraHeaders = {}) {
+	const req = { method: 'GET', url: `/api/auth/handoff?${query}`, headers: { 'user-agent': 'Safari', ...extraHeaders } };
 	const res = makeRes();
 	await handler(req, res);
 	return res;
@@ -221,5 +221,22 @@ describe('GET /api/auth/handoff (exchange)', () => {
 		const res = await open('code=' + 'd'.repeat(43));
 		expect(res.headers.location).toMatch(/^https:\/\/three\.ws\/login\?error=rate_limited/);
 		expect(createSession).not.toHaveBeenCalled();
+	});
+});
+
+describe('GET /api/auth/handoff (login CSRF)', () => {
+	it.each(['cross-site', 'same-site'])('does not redeem a code on a %s navigation', async (site) => {
+		state.consumeRow = { user_id: USER.id, next_path: '/launch' };
+		const res = await open(`code=${'a'.repeat(43)}&next=/launch`, { 'sec-fetch-site': site });
+		expect(createSession).not.toHaveBeenCalled();
+		expect(res.headers.location).toContain('/login?error=handoff_expired');
+		expect(state.queries.some((q) => q.text.startsWith('update session_handoffs'))).toBe(false);
+	});
+
+	it.each([['none'], [undefined]])('still redeems a code opened from the app (sec-fetch-site %s)', async (site) => {
+		state.consumeRow = { user_id: USER.id, next_path: '/launch' };
+		const res = await open(`code=${'a'.repeat(43)}&next=/launch`, site ? { 'sec-fetch-site': site } : {});
+		expect(createSession).toHaveBeenCalledTimes(1);
+		expect(res.headers.location).toContain('/launch');
 	});
 });

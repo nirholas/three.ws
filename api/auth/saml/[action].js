@@ -15,6 +15,7 @@ import { createSession, sessionCookie, destroySession, getSessionUser } from '..
 import { cors, redirect, error, wrap, readForm } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
+import { randomToken, constantTimeEquals } from '../../_lib/crypto.js';
 import { logAudit } from '../../_lib/audit.js';
 import { seedDefaultAgent } from '../../_lib/seed-default-agent.js';
 import { referralCodeCandidates } from '../../_lib/referrals.js';
@@ -28,6 +29,20 @@ import {
 	extractSamlIdentity,
 	subjectHash,
 } from '../../_lib/saml.js';
+
+// The IdP returns with a cross-site POST, which only a SameSite=None cookie
+// rides along on. It holds the RelayState this browser was given at /login.
+const FLOW_COOKIE = '__Host-samlflow';
+const flowCookie = (value, maxAge = 600) =>
+	`${FLOW_COOKIE}=${value}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=None`;
+
+function readFlowCookie(req) {
+	for (const part of String(req.headers?.cookie || '').split(';')) {
+		const i = part.indexOf('=');
+		if (i > 0 && part.slice(0, i).trim() === FLOW_COOKIE) return part.slice(i + 1).trim();
+	}
+	return '';
+}
 
 const loginUrl = (params) => `${env.APP_ORIGIN}/login${params ? `?${params}` : ''}`;
 
@@ -62,8 +77,11 @@ async function handleLogin(req, res) {
 		return redirect(res, loginUrl('error=sso_unavailable'));
 	}
 
-	const relayState = await signRelayState({ next, ts: Date.now() });
+	// A random nonce makes every RelayState unique, and the same value goes in
+	// a cookie so the ACS can tell this browser started the login.
+	const relayState = await signRelayState({ next, ts: Date.now(), n: randomToken(16) });
 	const authnUrl = await saml.getAuthorizeUrlAsync(relayState, undefined, {});
+	res.setHeader('set-cookie', flowCookie(relayState));
 	return redirect(res, authnUrl);
 }
 
@@ -90,6 +108,15 @@ async function handleAcs(req, res) {
 	const SAMLResponse = form.SAMLResponse;
 	const RelayState = form.RelayState;
 	if (!SAMLResponse) return redirect(res, loginUrl('error=saml_no_response'));
+
+	// Login CSRF: the response must come back to the browser that started the
+	// login. IdP-initiated sign-in has no such browser and is opt-in by config.
+	if (!env.SAML_ALLOW_IDP_INITIATED) {
+		const started = readFlowCookie(req);
+		if (!started || !RelayState || !constantTimeEquals(started, RelayState)) {
+			return redirect(res, loginUrl('error=saml_invalid'));
+		}
+	}
 
 	let saml;
 	try {
@@ -118,7 +145,7 @@ async function handleAcs(req, res) {
 		const userId = await findOrCreateUser(identity);
 		await destroySession(req);
 		const token = await createSession({ userId, userAgent: req.headers['user-agent'], ip });
-		res.setHeader('set-cookie', sessionCookie(token));
+		res.setHeader('set-cookie', [sessionCookie(token), flowCookie('', 0)]);
 		logAudit({ userId, action: 'login', req, meta: { method: 'saml', issuer: identity.issuer } });
 		return redirect(res, `${env.APP_ORIGIN}${next}`);
 	} catch (err) {

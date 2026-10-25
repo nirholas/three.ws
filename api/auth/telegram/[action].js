@@ -116,7 +116,11 @@ async function handleCallback(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
 	const url = new URL(req.url, 'http://x');
-	const flow = (await unsignIdentityPayload(readCookie(req, FLOW_COOKIE))) || { i: 'login', n: '/dashboard', u: null };
+	// Only this browser's own /start sets the flow cookie. Without it the payload
+	// could be an attacker's, replayed into a victim's browser to sign them in
+	// as the attacker, so nothing past this point runs.
+	const flow = await unsignIdentityPayload(readCookie(req, FLOW_COOKIE));
+	if (!flow) return redirect(res, loginUrl('telegram_expired', '/dashboard'));
 	const intent = WIDGET_INTENTS.includes(flow.i) ? flow.i : 'login';
 	const back = (code) => {
 		res.setHeader('set-cookie', clearCookie(FLOW_COOKIE));

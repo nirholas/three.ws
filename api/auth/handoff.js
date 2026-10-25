@@ -107,6 +107,12 @@ async function exchange(req, res) {
 	// land them on the page they asked for.
 	if (!url.searchParams.has('code')) return redirect(res, `${env.APP_ORIGIN}${fallbackNext}`);
 
+	// The app opens this URL in Safari, which sends `none` (or no header at
+	// all). A link followed from another page is cross-site or same-site, and
+	// honouring it would let an attacker sign a victim in as the attacker.
+	const fetchSite = req.headers['sec-fetch-site'];
+	if (fetchSite === 'cross-site' || fetchSite === 'same-site') return toLogin('handoff_expired');
+
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return toLogin('rate_limited');
 	if (!/^[A-Za-z0-9_-]{32,128}$/.test(code)) return toLogin('handoff_expired');
