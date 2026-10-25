@@ -1,0 +1,69 @@
+# 447. Stop `/api/catalog` from caching a confident "zero results" during an R2 outage
+
+How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate, no owner action required.
+
+## Operating clause (binding)
+
+- Read CLAUDE.md first. CLAUDE.md overrides everything, including this file.
+- Finish 100% in this session. Never end the turn with a question, an option list, or an unexecuted plan.
+- This is a bug fix: follow the test-first rule (CLAUDE.md, "Bug fixes are test-first"). Write the failing test first, confirm it fails for the stated reason, then fix the code, then confirm it passes. Commit the test with the fix.
+- The only permitted stops are the CLAUDE.md stop-and-ask gates (spend/on-chain writes, push/deploy, posting externally, committing content referencing a crypto project other than `$THREE`, destroying unrecoverable data). This order touches none of them.
+- Concurrent agents share this worktree: stage explicit paths only (never `git add -A` or `git add .`), re-check `git status` and `git diff --staged` before committing.
+- The em-dash and en-dash characters are banned in everything you write.
+
+## Why this matters (measured 2026-10-25)
+
+R2 object storage is down in production right now (tracked as owner-gated `production-100-OWNER-ACTIONS.md` row 36, "Please enable R2 through the Cloudflare Dashboard"; `/api/healthz` reports `object_storage: down`). That outage is not this order's problem to fix. What this order fixes is how three sibling endpoints *answer* while it is down, measured live just now:
+
+    curl -s "https://three.ws/api/catalog?q=lamp"
+    curl -s "https://three.ws/api/catalog"
+    curl -s "https://three.ws/api/objects/library?limit=3"
+    curl -s "https://three.ws/api/avatars/library?limit=3"
+
+All four return `200` with an empty, confidently-shaped payload, e.g. `{"ok":true,"items":[],"matched":0,"relaxed":false,"total":0,"offset":0,"next_offset":null,"facets":{"kinds":{},"categories":[],"tags":[]},"generated_at":{}}` for `/api/catalog`, and `{"objects":[],"total":0,"offset":0,"next_offset":null,"generated_at":null}` for `/api/objects/library`. Nothing in any of these bodies distinguishes "genuinely nothing published yet" from "storage is down right now": both the legitimate pre-launch 404 case and a real R2 outage degrade to the exact same empty shape.
+
+`/api/objects/library` (`api/objects/library.js:71-91`) and `/api/avatars/library.js` already compute this distinction internally (a `degraded` boolean, set only when the manifest read fails with something other than `NoSuchKey`/404) and use it to pick a `Cache-Control` header: `DEGRADED_CACHE = 'no-store'` instead of the normal 5-minute `PUBLISHED_CACHE`, specifically so a transient outage cannot get mirrored at the edge and keep answering "empty" after R2 recovers. That is a deliberate, already-reasoned design (see the header comment at `api/objects/library.js:18-23`); this order does not change it. But the `degraded` flag never leaves the function: the JSON body is identical in both branches, so no caller, human or agent, can act on the distinction either, and the fix is incomplete on its own terms.
+
+`api/_lib/asset-catalog.js`, which backs `/api/catalog` and the three free MCP tools (`search_catalog`, `get_catalog_item`, `get_item_source`), is worse: it has no `degraded` concept at all. Its `readManifest()` (`api/_lib/asset-catalog.js:49-65`) catches every error, logs the non-404 case, and always returns `{ rows: [], generatedAt: null }`, so `loadCatalog()` never learns a read failed. And `api/catalog.js:35` sets `Cache-Control: public, s-maxage=300, stale-while-revalidate=3600` unconditionally on every response, success or degraded, so during an outage the empty catalog gets mirrored at the edge for 5 minutes live plus up to an hour of stale-while-revalidate: every search, from every page and every MCP agent call, can answer "nothing matches" for over an hour after R2 has already recovered. This is strictly worse than the sibling endpoints it was modeled on (its own header comment at `api/_lib/asset-catalog.js:8-10` says it reads "the same keys the `/api/objects/library`, `/api/avatars/library` and `/api/animations/library` handlers use"), and it is a genuinely new finding: neither `tests/api/catalog-endpoint.test.js` nor `tests/api/mcp-asset-catalog.test.js` (the two existing test files for this module) has a case covering a non-404 storage failure; both only stub the happy path and the legitimate-404 path.
+
+## Task
+
+1. Read `api/_lib/asset-catalog.js` in full (through `searchCatalog`, `getCatalogItem`, `relatedItems`), `api/catalog.js` in full, and `api/objects/library.js:71-99` (the sibling pattern to match: a `degraded` boolean derived from whether the caught error is `NoSuchKey`/404). Read `tests/api/catalog-endpoint.test.js` in full (147 lines); it already `vi.mock`s `../../api/_lib/r2.js` with a `MANIFESTS` map keyed by manifest path and throws a `NoSuchKey` error for any key not in the map, which is exactly the harness this fix's new test needs.
+2. Run the existing suite once before changing anything, to confirm the starting state: `npx vitest run tests/api/catalog-endpoint.test.js tests/api/mcp-asset-catalog.test.js`. All current tests must pass.
+3. Write the failing test first, in `tests/api/catalog-endpoint.test.js`, inside `describe('GET /api/catalog', ...)`: a case named something like `'marks the response degraded and uncacheable when a manifest read fails for a reason other than not-yet-published'`. Make the `objects/library/manifest.json` entry in the mocked `getPublicObjectBuffer` throw a non-404 error (e.g. `new Error('R2 request failed: 500')`, no `.name = 'NoSuchKey'` and no `$metadata.httpStatusCode`) instead of returning the chair fixture, while the other three manifest keys behave as today. Assert that the response still returns `200` with whatever other kinds loaded successfully (the `avatars/library` chair-free catalog), but that the body now carries an explicit degraded signal (decide the exact field in task 5, e.g. `body.degraded === true`), and that `headers['cache-control']` is `no-store` rather than containing `s-maxage=300` for this response. Run it now and confirm it fails against the current, unfixed code (today the body has no `degraded` field at all and the header is the unconditional `s-maxage=300` one).
+4. Add an equivalent read-path check to `tests/api/mcp-asset-catalog.test.js` if that file calls `searchCatalog`/`getCatalog` directly (confirm by reading its imports): assert that a non-404 manifest failure is distinguishable from a legitimate empty result at the `searchCatalog`/`getCatalog` return-value level, matching whatever shape you land on in task 5.
+5. Fix `api/_lib/asset-catalog.js`:
+   - Change `readManifest()` to also return whether the failure was the expected "never published" case versus a real failure, mirroring `api/objects/library.js:93-95`'s `code = err?.$metadata?.httpStatusCode; if (err?.name !== 'NoSuchKey' && code !== 404)` check. Add a `degraded` boolean to the object `readManifest()` returns.
+   - Thread that through `loadCatalog()`: track whether *any* source degraded (a single boolean is enough; the caller does not need per-kind granularity to decide cacheability) and return it alongside `items`/`generated_at`/`counts`/`total`.
+   - Thread it through `getCatalog()`'s process-local memo (`CACHE`/`TTL_MS`): a degraded load must not be memoized for the full 5-minute TTL the same way a successful one is, for the same reason `api/objects/library.js` refuses to edge-cache it (a degraded catalog memoized for 5 minutes would keep serving "most things missing" for 5 minutes after R2 recovers). The simplest correct fix: when `loadCatalog()` reports degraded, do not write to `CACHE` at all, so the next call retries storage immediately instead of serving the degraded memo for the rest of the TTL window.
+   - Thread it through `searchCatalog()`'s return shape as a top-level `degraded` boolean (next to `items`/`total`/`matched`/`relaxed`/`facets`/`generated_at`) and through `getCatalogItem()` if that function also reads `getCatalog()` (confirm by reading it; if a degraded catalog simply means the specific id cannot be found, a 404 there is already correct and does not need a new field, but note the reasoning in your report either way).
+6. Fix `api/catalog.js`: read the `degraded` field off `searchCatalog()`'s result and set `Cache-Control` to `'no-store'` instead of the module-level `CACHE` constant whenever `result.degraded` is true, for both the search branch (line ~98) and leave the `?id=` detail branch as-is unless task 5 found it also needs the signal. Include `degraded: result.degraded` (or omit the key entirely when `false`, your call, but be consistent and document it in the header comment) in the JSON body so a caller can act on it without inspecting response headers.
+7. Update the header comments: `api/_lib/asset-catalog.js:54-58`'s "Anything else is logged and also degrades" comment should now say it also *signals* the degradation rather than hiding it; `api/catalog.js:31-35`'s comment claiming the response "carries no caller state, so it is safe to hold at the edge" needs a caveat for the degraded case.
+8. Run both test files again: `npx vitest run tests/api/catalog-endpoint.test.js tests/api/mcp-asset-catalog.test.js`. Every pre-existing test must still pass unchanged (a healthy, fully-mocked catalog load must still report `degraded: false`/absent and the normal `s-maxage=300` header), plus your new test(s) from tasks 3-4.
+9. Run `npm run check:rules -- --paths api/_lib/asset-catalog.js api/catalog.js tests/api/catalog-endpoint.test.js tests/api/mcp-asset-catalog.test.js` and fix anything it flags.
+10. Read the full diff (`git diff api/_lib/asset-catalog.js api/catalog.js tests/api/catalog-endpoint.test.js tests/api/mcp-asset-catalog.test.js`) and confirm every changed line traces to a task above.
+
+## Done when
+
+- A new test in `tests/api/catalog-endpoint.test.js` reproduces today's bug (a non-404 manifest read failure produces a `200` with no degraded signal and an unconditionally edge-cacheable header) and is confirmed to fail against the pre-fix code before the fix lands.
+- `readManifest()`/`loadCatalog()`/`getCatalog()`/`searchCatalog()` in `api/_lib/asset-catalog.js` carry a `degraded` signal that is `true` only when a manifest read failed for a reason other than "never published" (`NoSuchKey`/404), matching the sibling check already in `api/objects/library.js`.
+- A degraded `getCatalog()` load is not memoized for the normal 5-minute TTL (the next call retries storage rather than repeating the degraded result for the rest of the window).
+- `GET /api/catalog` sets `Cache-Control: no-store` and surfaces the degraded signal in its JSON body whenever the underlying catalog load degraded, instead of the normal 5-minute edge-cacheable header.
+- All pre-existing tests in `tests/api/catalog-endpoint.test.js` and `tests/api/mcp-asset-catalog.test.js` still pass unchanged, alongside the new test(s).
+- `npm run check:rules -- --paths api/_lib/asset-catalog.js api/catalog.js tests/api/catalog-endpoint.test.js tests/api/mcp-asset-catalog.test.js` passes.
+- Header comments in both touched source files describe the new degraded behavior; no stale claim that the response "carries no caller state, so it is safe to hold at the edge" is left unqualified.
+- `git diff` reviewed; every changed line traces to a task above.
+- The fix is committed on `evolve` with explicit paths and a commit message naming the bug and the fix.
+- This file is removed, with a dated entry added to `prompts/finish/_context/production-100-PROGRESS.md` citing the fix commit SHA and what was verified.
+
+## Never blocked
+
+| Looks like a blocker | It is not | Do this |
+|---|---|---|
+| R2 is down right now, so you cannot see the "fixed, healthy" response in production to compare against | The fix is entirely testable against the mocked `getPublicObjectBuffer` already used by both existing test files; production R2's live status never needs to be touched or waited on | Do all verification through the existing `vi.mock('../../api/_lib/r2.js', ...)` harness, exactly as the pre-existing tests already do |
+| `api/objects/library.js` already made a considered choice (empty body, `no-store` header, no body-level flag) and changing `/api/catalog` to add a body-level flag could look like second-guessing that design | This order does not touch `api/objects/library.js` or `api/avatars/library.js` at all, and does not claim their header-only signal was wrong; it only closes the gap that `api/_lib/asset-catalog.js` has no signal whatsoever (not even the header-only one) and that `/api/catalog`'s cache header is unconditional today, which is strictly behind where the siblings already are | Fix only `api/_lib/asset-catalog.js` and `api/catalog.js`. If you want `objects/library.js`/`avatars/library.js` to also gain a body-level flag for symmetry, note that as a follow-up idea in your report; do not expand this order's scope to touch them |
+| The live R2 outage (owner-gated row 36) feels like the "real" bug and this fix feels like it is just papering over it | Making our own endpoints degrade honestly during any storage outage, present or future, is the correct fix regardless of when row 36 is resolved; this order is not a workaround for the outage, it is a correctness fix for how the API reports its own state | Ship the degraded-signal fix. Do not attempt to resolve the underlying R2 outage itself; that stays row 36's owner action |
+
+## Report format
+
+State: the failing test's first (red) run output, the fix, the passing test run output (both test files), the `check:rules` result, the diff, and the commit SHA.
