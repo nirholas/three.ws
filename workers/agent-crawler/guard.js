@@ -7,7 +7,10 @@
 // Dependency-free so tests/agent-crawler-guard.test.js can pin it.
 
 import dns from 'node:dns/promises';
+import http from 'node:http';
+import https from 'node:https';
 import net from 'node:net';
+import { Readable } from 'node:stream';
 
 export const BOT_TOKEN = 'three.ws-crawler';
 export const USER_AGENT =
@@ -54,6 +57,48 @@ export async function guardHost(hostname) {
 	return ok;
 }
 
+// The address a hostname connects to is decided HERE, at connect time, and the
+// socket uses exactly that address. guardHost() alone checks one lookup and then
+// lets the HTTP client resolve again, so a DNS answer that flips between the two
+// (rebinding) would slip a private address past the fence.
+export function guardedLookup(hostname, options, callback) {
+	const cb = typeof options === 'function' ? options : callback;
+	const wantAll = typeof options === 'object' && options?.all === true;
+	dns.lookup(hostname, { all: true, verbatim: true }).then(
+		(addrs) => {
+			if (!addrs.length || addrs.some((a) => isBlockedAddress(a.address))) {
+				cb(new Error(`refused private host ${hostname}`));
+				return;
+			}
+			if (wantAll) cb(null, addrs);
+			else cb(null, addrs[0].address, addrs[0].family);
+		},
+		(err) => cb(err),
+	);
+}
+
+function pinnedRequest(u, { headers, signal }) {
+	return new Promise((resolve, reject) => {
+		const client = u.protocol === 'https:' ? https : http;
+		const req = client.request(
+			u,
+			{ method: 'GET', headers, lookup: guardedLookup, signal },
+			(res) => {
+				const responseHeaders = new Headers();
+				for (const [k, v] of Object.entries(res.headers)) {
+					if (Array.isArray(v)) for (const item of v) responseHeaders.append(k, item);
+					else if (v !== undefined) responseHeaders.set(k, v);
+				}
+				const noBody = [101, 204, 205, 304].includes(res.statusCode);
+				if (noBody) res.resume();
+				resolve(new Response(noBody ? null : Readable.toWeb(res), { status: res.statusCode, headers: responseHeaders }));
+			},
+		);
+		req.on('error', reject);
+		req.end();
+	});
+}
+
 // fetch() for the crawler's own side requests (robots.txt, search reseeds),
 // with the same host fence and a hard timeout. Redirects are followed by hand so
 // every hop's host passes guardHost before we connect to it; following them
@@ -66,11 +111,10 @@ export async function guardedFetch(url, { timeoutMs = 8000, headers = {} } = {})
 	for (let hops = 0; ; hops++) {
 		if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error(`refused scheme ${u.protocol}`);
 		if (!(await guardHost(u.hostname))) throw new Error(`refused private host ${u.hostname}`);
-		const res = await fetch(u, {
-			headers: { 'user-agent': USER_AGENT, accept: '*/*', ...headers },
-			redirect: 'manual',
-			signal,
-		});
+		const requestHeaders = { 'user-agent': USER_AGENT, accept: '*/*', ...headers };
+		const res = net.isIP(u.hostname.replace(/^\[|\]$/g, ''))
+			? await fetch(u, { headers: requestHeaders, redirect: 'manual', signal })
+			: await pinnedRequest(u, { headers: requestHeaders, signal });
 		const location = res.status >= 300 && res.status < 400 ? res.headers.get('location') : null;
 		if (!location) return res;
 		await res.body?.cancel().catch(() => {});

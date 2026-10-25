@@ -116,6 +116,22 @@ class PolicyTests(unittest.TestCase):
     def test_accepts_comprehensions_and_generator_expressions(self):
         check_source("total = sum(i * 2 for i in range(4))\nxs = [i for i in range(3)]\n")
 
+    def test_refuses_path_taking_io_names(self):
+        # These write or read an arbitrary path with the sandbox uid, which
+        # every sibling job's workdir shares. The runner exports by itself.
+        for name in ("export_step", "export_stl", "export_gltf", "export_svg",
+                     "import_step", "import_stl", "import_svg", "Mesher",
+                     "ExportSVG", "ExportDXF", "ImportSVG", "ImportDXF"):
+            self.assertRefused(f"from build123d import {name}\n", "is not allowed")
+            self.assertRefused(f"x = {name}\n", "is not available")
+        self.assertRefused("part.export_step('/tmp/cad-x/part.step')\n", "is not allowed")
+        self.assertRefused("part.import_stl('/tmp/a')\n", "is not allowed")
+        self.assertRefused("part.write('/tmp/a')\n", "is not allowed")
+        self.assertRefused("part.read('/tmp/a')\n", "is not allowed")
+
+    def test_still_accepts_plain_modeling(self):
+        check_source("from build123d import *\nwith BuildPart() as p:\n    Box(1, 2, 3)\nresult = p.part\n")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=1)

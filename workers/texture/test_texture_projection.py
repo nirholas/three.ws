@@ -287,7 +287,42 @@ def test_gap_fill_never_leaves_a_hole():
     print("ok  gap fill pads every unwritten texel")
 
 
+def test_face_budget_refuses_an_oversized_mesh():
+    tp.assert_face_budget(tp.MAX_MESH_FACES)
+    try:
+        tp.assert_face_budget(tp.MAX_MESH_FACES + 1)
+    except ValueError as exc:
+        assert "faces" in str(exc)
+    else:
+        raise AssertionError("an over-budget mesh must be refused")
+    print("ok  face budget refuses an oversized mesh")
+
+
+def test_image_decode_refuses_a_decompression_bomb():
+    import io
+
+    from PIL import Image
+
+    ok = io.BytesIO()
+    Image.new("L", (8, 8)).save(ok, format="PNG")
+    assert tp.open_bounded_image(ok.getvalue()).size == (8, 8)
+
+    # 20000 x 20000 solid grey compresses to well under a megabyte but would
+    # decode to 400 MP. The header alone must be enough to refuse it.
+    bomb = io.BytesIO()
+    Image.new("L", (20000, 20000)).save(bomb, format="PNG", compress_level=9)
+    try:
+        tp.open_bounded_image(bomb.getvalue())
+    except ValueError as exc:
+        assert "pixels" in str(exc)
+    else:
+        raise AssertionError("a decompression bomb must be refused before decode")
+    print("ok  image decode refuses a decompression bomb")
+
+
 TESTS = [
+    test_face_budget_refuses_an_oversized_mesh,
+    test_image_decode_refuses_a_decompression_bomb,
     test_view_projects_the_centre_to_the_centre,
     test_clip_planes_bracket_the_mesh,
     test_pose_matrix_is_orthonormal_and_looks_at_the_centre,

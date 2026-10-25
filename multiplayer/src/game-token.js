@@ -275,9 +275,26 @@ export async function verifySplitPayment({ txSig, sellerWallet, sellerRaw, treas
 
 	const sellerGain = delta(sellerATA);
 	const treasuryGain = delta(treasuryATA);
-	if (sellerGain < BigInt(sellerRaw)) return { ok: false, reason: 'seller_underpaid' };
-	if (treasuryGain < BigInt(treasuryRaw)) return { ok: false, reason: 'treasury_underpaid' };
+	const underpaid = underpaidLeg(delta, [
+		{ ata: sellerATA, raw: BigInt(sellerRaw), reason: 'seller_underpaid' },
+		{ ata: treasuryATA, raw: BigInt(treasuryRaw), reason: 'treasury_underpaid' },
+	]);
+	if (underpaid) return { ok: false, reason: underpaid };
 	return { ok: true, sellerGain: sellerGain.toString(), treasuryGain: treasuryGain.toString() };
+}
+
+// Check each payment leg against the token-account delta. When several legs
+// pay the same token account (REWARDS_SINK falls back to the treasury), that
+// account must have gained the SUM of those legs; checking each leg against the
+// shared delta independently would let one half-price transfer satisfy both.
+// `legs` is ordered; the first underfunded leg's reason is returned.
+function underpaidLeg(delta, legs) {
+	const owed = new Map();
+	for (const l of legs) owed.set(l.ata, (owed.get(l.ata) || 0n) + l.raw);
+	for (const l of legs) {
+		if (delta(l.ata) < owed.get(l.ata)) return l.reason;
+	}
+	return null;
 }
 
 // Resolve the account address for a token-balance entry's index across the
@@ -439,16 +456,16 @@ export async function verifySpinPayment({ quoteToken, txSig, buyerWallet, forAcc
 		const post = (tx.meta?.postTokenBalances || []).find((b) => b.mint === mint && accountKeyAt(tx, b.accountIndex) === ownerATA);
 		return BigInt(post?.uiTokenAmount?.amount || '0') - BigInt(pre?.uiTokenAmount?.amount || '0');
 	};
-	if (delta(rewardsATA) < BigInt(q.rewardsRaw)) return { ok: false, reason: 'rewards_underpaid' };
-	if (delta(treasuryATA) < BigInt(q.treasuryRaw)) return { ok: false, reason: 'treasury_underpaid' };
-	// Creator leg (R25): when the quote sealed a creator transfer, the on-chain tx
-	// must have moved at least that share to the creator's $THREE account — else the
-	// split didn't happen and we refuse to credit the sale. Quotes without a creator
-	// leg (spins, plain boutique sales) skip this and behave exactly as before.
+	const legs = [
+		{ ata: rewardsATA, raw: BigInt(q.rewardsRaw), reason: 'rewards_underpaid' },
+		{ ata: treasuryATA, raw: BigInt(q.treasuryRaw), reason: 'treasury_underpaid' },
+	];
 	if (q.creatorAddr && BigInt(q.creatorRaw || '0') > 0n) {
 		const creatorATA = (await getAssociatedTokenAddress(new PublicKey(mint), new PublicKey(q.creatorAddr))).toBase58();
-		if (delta(creatorATA) < BigInt(q.creatorRaw)) return { ok: false, reason: 'creator_underpaid' };
+		legs.push({ ata: creatorATA, raw: BigInt(q.creatorRaw), reason: 'creator_underpaid' });
 	}
+	const underpaid = underpaidLeg(delta, legs);
+	if (underpaid) return { ok: false, reason: underpaid };
 	return { ok: true, nonce: q.nonce, quote: q };
 }
 
@@ -606,15 +623,15 @@ export async function verifyTokenPurchase({ quoteToken, txSig, buyerWallet, purp
 		const post = (tx.meta?.postTokenBalances || []).find((b) => b.mint === mint && accountKeyAt(tx, b.accountIndex) === ownerATA);
 		return BigInt(post?.uiTokenAmount?.amount || '0') - BigInt(pre?.uiTokenAmount?.amount || '0');
 	};
-	if (delta(rewardsATA) < BigInt(q.rewardsRaw)) return { ok: false, reason: 'rewards_underpaid' };
-	if (delta(treasuryATA) < BigInt(q.treasuryRaw)) return { ok: false, reason: 'treasury_underpaid' };
-	// Creator leg (R25): when the quote sealed a creator transfer, the on-chain tx
-	// must have moved at least that share to the creator's $THREE account — else the
-	// split didn't happen and we refuse to credit the sale. Quotes without a creator
-	// leg (spins, plain boutique sales) skip this and behave exactly as before.
+	const legs = [
+		{ ata: rewardsATA, raw: BigInt(q.rewardsRaw), reason: 'rewards_underpaid' },
+		{ ata: treasuryATA, raw: BigInt(q.treasuryRaw), reason: 'treasury_underpaid' },
+	];
 	if (q.creatorAddr && BigInt(q.creatorRaw || '0') > 0n) {
 		const creatorATA = (await getAssociatedTokenAddress(new PublicKey(mint), new PublicKey(q.creatorAddr))).toBase58();
-		if (delta(creatorATA) < BigInt(q.creatorRaw)) return { ok: false, reason: 'creator_underpaid' };
+		legs.push({ ata: creatorATA, raw: BigInt(q.creatorRaw), reason: 'creator_underpaid' });
 	}
+	const underpaid = underpaidLeg(delta, legs);
+	if (underpaid) return { ok: false, reason: underpaid };
 	return { ok: true, nonce: q.nonce, quote: q };
 }

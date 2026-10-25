@@ -32,7 +32,10 @@ from __future__ import annotations
 import math
 from typing import Optional, Sequence
 
+import io
+
 import numpy as np
+from PIL import Image
 
 # Confidence falls off as cos(angle between the surface normal and the direction
 # to the camera) ** FACING_EXPONENT. A view that sees a texel head on should win
@@ -55,6 +58,43 @@ MIN_FACING = 0.12
 # an arm and the torso behind it. Tilted surfaces get more than this floor, see
 # the slope-scaled bias in project_views_to_uv.
 DEPTH_TOLERANCE_FRAC = 0.01
+
+# Work budgets. The UV rasterizer walks triangles in python, so its cost is
+# linear in face count, and a decoded image costs width * height * channels
+# whatever its compressed size. Both inputs come from a caller-supplied URL or
+# payload, so each is bounded here rather than trusted.
+MAX_MESH_FACES = 500_000
+MAX_DECODED_PIXELS = 64_000_000
+
+# Pillow only warns at this limit and errors at twice it; setting it makes the
+# library's own check part of the same budget for every decode in the process.
+Image.MAX_IMAGE_PIXELS = MAX_DECODED_PIXELS
+
+
+def assert_face_budget(face_count: int) -> None:
+    if face_count > MAX_MESH_FACES:
+        raise ValueError(
+            f"mesh has {face_count} faces, over the {MAX_MESH_FACES} face limit"
+        )
+
+
+def open_bounded_image(data: bytes) -> Image.Image:
+    """Open an image after checking its declared size against the pixel budget.
+
+    Image.open reads only the header, so the check costs nothing and happens
+    before any pixel is decoded.
+    """
+    try:
+        img = Image.open(io.BytesIO(data))
+    except Image.DecompressionBombError as exc:
+        raise ValueError("image exceeds the decoded pixels limit") from exc
+    width, height = img.size
+    if width * height > MAX_DECODED_PIXELS:
+        raise ValueError(
+            f"image is {width}x{height}, over the {MAX_DECODED_PIXELS} decoded pixels limit"
+        )
+    return img
+
 
 _WORLD_UP = np.array([0.0, 1.0, 0.0])
 _WORLD_UP_FALLBACK = np.array([0.0, 0.0, 1.0])

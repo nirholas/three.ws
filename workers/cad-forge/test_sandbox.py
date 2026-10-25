@@ -252,6 +252,13 @@ class IsolationLayerTests(unittest.TestCase):
             self.assertNotEqual(results["parent_env"], "read")
 
 
+class PerJobUidTests(unittest.TestCase):
+    def test_live_children_never_share_a_uid(self):
+        uids = [main.next_sandbox_uid() for _ in range(main.SANDBOX_UID_SPAN)]
+        self.assertEqual(len(set(uids)), main.SANDBOX_UID_SPAN)
+        self.assertTrue(all(u >= main.SANDBOX_UID_BASE for u in uids))
+
+
 class CollectTests(unittest.TestCase):
     def test_collect_does_not_follow_symlinked_artifacts(self):
         import tempfile

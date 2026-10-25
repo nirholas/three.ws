@@ -38,6 +38,7 @@ import stat
 import shutil
 import subprocess
 import sys
+import itertools
 import tempfile
 import threading
 import time
@@ -63,6 +64,16 @@ REQUIRE_SECCOMP = os.environ.get("REQUIRE_SECCOMP", "1") != "0"
 
 CHILD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sandbox_child.py")
 SANDBOX_UID = 65534  # nobody
+# Each child runs as its own uid from this block, so one job's program cannot
+# open a sibling job's workdir even if it learns the path. The block is far
+# larger than WARM_POOL + MAX_CONCURRENT, so live children never share a uid.
+SANDBOX_UID_BASE = int(os.environ.get("SANDBOX_UID_BASE", "200000"))
+SANDBOX_UID_SPAN = 20000
+_uid_counter = itertools.count()
+
+
+def next_sandbox_uid() -> int:
+    return SANDBOX_UID_BASE + (next(_uid_counter) % SANDBOX_UID_SPAN)
 MEMORY_LIMIT_BYTES = int(os.environ.get("SANDBOX_MEMORY_MB", "3072")) * 1024 * 1024
 CPU_LIMIT_S = int(BUILD_TIMEOUT_S * 2)
 MAX_ARTIFACT_BYTES = 24 * 1024 * 1024
@@ -95,8 +106,9 @@ class Child:
 def _spawn() -> Child:
     workdir = tempfile.mkdtemp(prefix="cad-")
     drop = os.geteuid() == 0
+    uid = next_sandbox_uid()
     if drop:
-        os.chown(workdir, SANDBOX_UID, SANDBOX_UID)
+        os.chown(workdir, uid, uid)
     env = {
         "PATH": "/usr/local/bin:/usr/bin:/bin",
         "HOME": workdir,
@@ -116,8 +128,8 @@ def _spawn() -> Child:
         stderr=subprocess.PIPE,
         close_fds=True,
         preexec_fn=_limits,
-        user=SANDBOX_UID if drop else None,
-        group=SANDBOX_UID if drop else None,
+        user=uid if drop else None,
+        group=uid if drop else None,
         extra_groups=[] if drop else None,
     )
     return Child(proc=proc, workdir=workdir, started=time.monotonic())

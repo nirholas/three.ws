@@ -54,6 +54,21 @@ BANNED_NAMES = frozenset({
     "__import__", "__builtins__", "__loader__", "__spec__",
 })
 
+# build123d functions and methods that take a filesystem path. The runner
+# writes every artifact itself, and each job's workdir is owned by an
+# unprivileged uid that a sibling job may share, so a program has no reason to
+# name a path at all. Matched by exact name here and by prefix below.
+BANNED_IO_NAMES = frozenset({
+    "Mesher", "ExportSVG", "ExportDXF", "ImportSVG", "ImportDXF",
+    "read", "write", "load", "save", "dump", "dumps",
+})
+BANNED_IO_PREFIXES = ("export", "import_")
+
+
+def _is_io_name(name: str) -> bool:
+    return name in BANNED_IO_NAMES or name.startswith(BANNED_IO_PREFIXES)
+
+
 # Attribute names that perform attribute lookups from inside a string.
 BANNED_ATTRIBUTES = frozenset({"format", "format_map", "vformat", "mro"})
 
@@ -138,11 +153,15 @@ def check_source(source: str) -> ast.Module:
                     raise PolicyViolation(f"'from {node.module} import *' is not allowed; import the names you use.", line)
                 if alias.name != "*" and alias.name.startswith("_"):
                     raise PolicyViolation(f"importing '{alias.name}' is not allowed.", line)
+                if alias.name != "*" and _is_io_name(alias.name):
+                    raise PolicyViolation(f"importing '{alias.name}' is not allowed; files are exported by the runner.", line)
         elif isinstance(node, ast.Attribute):
             if node.attr.startswith("_"):
                 raise PolicyViolation(f"access to '.{node.attr}' is not allowed.", line)
             if node.attr in INTROSPECTION_ATTRIBUTES or node.attr.startswith(INTROSPECTION_PREFIXES):
                 raise PolicyViolation(f"access to '.{node.attr}' is not allowed.", line)
+            if _is_io_name(node.attr):
+                raise PolicyViolation(f"access to '.{node.attr}' is not allowed; files are exported by the runner.", line)
             if node.attr in BANNED_ATTRIBUTES:
                 raise PolicyViolation(f"'.{node.attr}' is not available; use an f-string instead.", line)
         elif isinstance(node, ast.Name):
@@ -150,6 +169,8 @@ def check_source(source: str) -> ast.Module:
                 raise PolicyViolation(f"'{node.id}' is not available in a CAD program.", line)
             if node.id.startswith("__"):
                 raise PolicyViolation(f"the name '{node.id}' is not allowed.", line)
+            if _is_io_name(node.id):
+                raise PolicyViolation(f"'{node.id}' is not available in a CAD program; files are exported by the runner.", line)
         elif isinstance(node, (ast.Yield, ast.YieldFrom)):
             raise PolicyViolation("yield is not allowed; build the part with plain functions.", line)
         elif isinstance(node, (ast.AsyncFunctionDef, ast.Await, ast.AsyncFor, ast.AsyncWith)):

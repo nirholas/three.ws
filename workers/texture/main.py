@@ -131,6 +131,10 @@ SDXL_INPAINT_MODEL = os.environ.get(
     "SDXL_INPAINT_MODEL", "diffusers/stable-diffusion-xl-1.0-inpainting-0.1"
 )
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
+# A job that outlives this is reported failed to the caller. Threads cannot be
+# killed, so the concurrency slot stays held until the worker thread returns:
+# a stuck job can never admit more work than MAX_CONCURRENT.
+JOB_TIMEOUT_S = int(os.environ.get("JOB_TIMEOUT_S", "540"))
 
 # Every checkpoint here is loaded in half precision and run on an L4, so the
 # fp16 variant of each repo is the only one this service ever uses. Naming it
@@ -379,6 +383,7 @@ def _load_mesh(url: str):
     if isinstance(mesh, trimesh.Scene):
         meshes = [g for g in mesh.geometry.values() if isinstance(g, trimesh.Trimesh)]
         mesh = trimesh.util.concatenate(meshes)
+    tp.assert_face_budget(len(mesh.faces))
     if not hasattr(mesh.visual, "uv") or mesh.visual.uv is None:
         # Auto-unwrap using trimesh's built-in UV generation
         mesh = mesh.unwrap()
@@ -573,7 +578,7 @@ def _build_masks(
       boundary fades out smoothly (invisible seam). Texels at alpha 0 are left
       bit-identical.
     """
-    src = Image.open(io.BytesIO(mask_bytes)).convert("L").resize(size, Image.LANCZOS)
+    src = tp.open_bounded_image(mask_bytes).convert("L").resize(size, Image.LANCZOS)
     arr = np.asarray(src, dtype=np.uint8)
     hard = (arr > 127).astype(np.uint8) * 255
     if not hard.any():
@@ -625,8 +630,10 @@ def _load_textured_mesh(url: str):
             if getattr(g.visual, "uv", None) is not None
         ]
         name, mesh = max(textured or geoms, key=lambda ng: len(ng[1].faces))
+        tp.assert_face_budget(sum(len(g.faces) for _, g in geoms))
         return loaded, name, mesh
 
+    tp.assert_face_budget(len(loaded.faces))
     scene = trimesh.Scene(geometry={"mesh": loaded})
     return scene, "mesh", loaded
 
@@ -769,7 +776,18 @@ async def _run_task(task_id: str, runner: Callable[[], bytes], label: str) -> No
         loop = asyncio.get_event_loop()
         t0 = time.time()
         try:
-            glb_bytes = await loop.run_in_executor(None, runner)
+            job = asyncio.ensure_future(loop.run_in_executor(None, runner))
+            try:
+                glb_bytes = await asyncio.wait_for(asyncio.shield(job), JOB_TIMEOUT_S)
+            except asyncio.TimeoutError:
+                _tasks[task_id].update({
+                    "status": "failed",
+                    "error": f"job exceeded the {JOB_TIMEOUT_S}s time limit",
+                    "elapsed_ms": int((time.time() - t0) * 1000),
+                })
+                log.error("[%s] %s timed out after %ds", task_id, label, JOB_TIMEOUT_S)
+                await asyncio.gather(job, return_exceptions=True)
+                return
 
             blob_name = f"textured/{task_id}.glb"
             blob = _bucket.blob(blob_name)
