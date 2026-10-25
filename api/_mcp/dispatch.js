@@ -61,6 +61,16 @@ export function isPublicTool(name) {
 	return PUBLIC_TOOLS.has(name);
 }
 
+/**
+ * A scoped tool needs the scope on the caller's token. An x402 principal has no
+ * account, so a priced tool they paid for per call is the one case that stands
+ * in for the scope: the payment is the authorization.
+ */
+export function toolScopeSatisfied(tool, auth, name) {
+	if (!tool.scope || hasScope(auth.scope, tool.scope)) return true;
+	return auth.source === 'x402' && auth.x402Paid === true && Boolean(priceFor(name));
+}
+
 export const PROTOCOL_VERSION = '2025-06-18';
 const SERVER_INFO = { name: '3d-agent-mcp', version: '1.0.0' };
 const log = logger('mcp');
@@ -198,7 +208,7 @@ async function onToolCall(params, auth, started, req) {
 	const gate = await gateCall(POLICY_SERVER, name, sentArgs, auth, req, declaredArgs(CATALOG_BY_NAME.get(name)));
 	if (!gate.ok) return gate.result;
 	const args = gate.args === sentArgs ? rawArgs : gate.args;
-	if (tool.scope && !hasScope(auth.scope, tool.scope)) {
+	if (!toolScopeSatisfied(tool, auth, name)) {
 		throw rpcError(-32002, `insufficient scope, requires ${tool.scope}`);
 	}
 	// Defense-in-depth: validate args against the tool's inputSchema before

@@ -40,6 +40,7 @@ function workerConfig() {
 export const toolDefs = [
 	{
 		name: 'generate_garment',
+		scope: 'avatars:write',
 		title: 'Generate a wearable garment from a text prompt',
 		annotations: {
 			readOnlyHint: false,

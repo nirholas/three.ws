@@ -31,6 +31,7 @@ export async function unpaidMintLimited(network, auth) {
 export const toolDefs = [
 	{
 		name: 'mint_3d_asset',
+		scope: 'avatars:write',
 		title: 'Mint a 3D asset as a Solana NFT',
 		// Creates an on-chain Core NFT. Not destructive (it mints, never deletes),
 		// and idempotent: the claim-first guard means repeating a call with the
