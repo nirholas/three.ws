@@ -37,8 +37,10 @@ const FETCH_TIMEOUT_MS = 6_000;
 // a curve typically re-checks every few seconds) into one upstream fetch.
 const LIVE_TTL_S = Number(process.env.PUMP_BONDING_LIVE_TTL_S || 25);
 // Last-known-good: survives a Cloudflare challenge/rate-limit window so a mint
-// with a prior successful fetch never hard-fails, only goes stale.
-const LKG_TTL_S = Number(process.env.PUMP_BONDING_LKG_TTL_S || 1800);
+// with a prior successful fetch never hard-fails, only goes stale. 6 hours
+// matches the documented QUOTA_COOLDOWN_MS RPC-lane cooldown (ISSUES.md), the
+// longest recurring outage class this tier is known to face.
+const LKG_TTL_S = Number(process.env.PUMP_BONDING_LKG_TTL_S || 21600);
 const liveKey = (mint) => `pump:bonding:live:${mint}`;
 const bondingLkgKey = (mint) => `pump:bonding:lkg:${mint}`;
 

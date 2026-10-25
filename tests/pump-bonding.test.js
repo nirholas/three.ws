@@ -6,9 +6,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // tests/api/pump-feed-fetch.test.js, which proved this approach for the
 // sibling pump.fun readers.
 const cache = new Map();
+// Tracks every cacheSet call's (key, ttl) so tests can assert on the TTL
+// argument the LKG writes use, not just the stored value.
+const cacheSetCalls = [];
 vi.mock('../api/_lib/cache.js', () => ({
 	cacheGet: async (k) => (cache.has(k) ? cache.get(k) : null),
-	cacheSet: async (k, v) => { cache.set(k, v); },
+	cacheSet: async (k, v, ttl) => { cacheSetCalls.push({ key: k, ttl }); cache.set(k, v); },
 }));
 
 // The on-chain fallback (getCurveView) is the proven reader already live
@@ -223,6 +226,7 @@ const bondingCoin = {
 
 beforeEach(() => {
 	cache.clear();
+	cacheSetCalls.length = 0;
 	// Default: the on-chain reader also has nothing for this mint, so tests
 	// that don't care about the fallback see the pre-fallback upstream_down
 	// behavior unless they override this mock.
@@ -362,5 +366,38 @@ describe('getBondingStatus -- cache + last-known-good fallback', () => {
 
 		const out = await getBondingStatus(THREE_MINT);
 		expect(out).toEqual({ kind: 'not_found' });
+	});
+
+	it('writes the LKG cache entry (successful-fetch call site) with a TTL that survives a multi-hour outage, not just 30 minutes', async () => {
+		// The LKG tier exists to survive hours-long outages (a 6h RPC-lane
+		// cooldown, a multi-day Cloudflare block on pump.fun's frontend), so a
+		// 1800s (30min) TTL expires long before those windows close.
+		const fetchMock = vi.fn().mockResolvedValue(jsonRes(bondingCoin));
+		vi.stubGlobal('fetch', fetchMock);
+
+		await getBondingStatus(THREE_MINT);
+
+		const lkgWrite = cacheSetCalls.find((c) => c.key === `pump:bonding:lkg:${THREE_MINT}`);
+		expect(lkgWrite).toBeDefined();
+		expect(lkgWrite.ttl).toBeGreaterThanOrEqual(21600);
+	});
+
+	it('writes the LKG cache entry (on-chain-fallback call site) with the same >= 6h TTL', async () => {
+		vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network unreachable')));
+		getCurveView.mockResolvedValue({
+			httpStatus: 200,
+			body: {
+				curve: {
+					realTokenReserves: String(PUMP_CURVE_INITIAL_REAL_TOKENS / 2),
+					realSolReserves: String(21 * 1e9),
+				},
+			},
+		});
+
+		await getBondingStatus(THREE_MINT);
+
+		const lkgWrite = cacheSetCalls.find((c) => c.key === `pump:bonding:lkg:${THREE_MINT}`);
+		expect(lkgWrite).toBeDefined();
+		expect(lkgWrite.ttl).toBeGreaterThanOrEqual(21600);
 	});
 });
