@@ -7,6 +7,7 @@ import { captureException } from './sentry.js';
 import { sendOpsAlert } from './alerts.js';
 import { instrument as zauthInstrument, drain as zauthDrain } from './zauth.js';
 import { isDbUnavailableError, isDbCapacityError, isStoragePressured } from './db.js';
+import { isStorageInfrastructureError } from './r2.js';
 import { redactUrlSecrets } from './scrub-secrets.js';
 import { provenanceHeaders, withProvenance } from './brownout/provenance.js';
 import { CHAOS_HEADER, CHAOS_STATUS_HEADER, chaosDecision, withChaos } from './brownout/chaos.js';
@@ -222,6 +223,14 @@ export function reportServerError(err, { code = 'internal_error', status = 500, 
 		} catch { /* alerts best-effort */ }
 		return ref;
 	}
+	// Object storage (R2/S3) outage: same class of fault, own deduped alert.
+	if (isStorageInfrastructureError(err)) {
+		logDbUnavailableOnce(code, `object storage unavailable: ${detail}`);
+		try {
+			sendOpsAlert('object storage unavailable', `${detail}\nref ${ref}`, { signature: 'storage:unavailable' });
+		} catch { /* alerts best-effort */ }
+		return ref;
+	}
 	console.error(`[server-error ${ref}] ${code} (${status}): ${detail}`);
 	try {
 		// Capture the original Error (preserving its stack + class) only when its
@@ -263,6 +272,16 @@ export function serverError(res, status, code, err, extra = {}) {
 		return json(res, 503, {
 			error: 'service_unavailable',
 			error_description: 'database temporarily unavailable, retry shortly',
+			ref,
+			...extra,
+		}, { 'cache-control': 'no-store' });
+	}
+	if (isStorageInfrastructureError(err)) {
+		const ref = reportServerError(err, { code, status: 503 });
+		if (typeof res.setHeader === 'function') res.setHeader('retry-after', '30');
+		return json(res, 503, {
+			error: 'service_unavailable',
+			error_description: 'object storage temporarily unavailable, retry shortly',
 			ref,
 			...extra,
 		}, { 'cache-control': 'no-store' });
@@ -631,7 +650,12 @@ export function wrap(handler) {
 			// (the July 2026 siwe/siws nonce incident: JWT_SECRET unset → hundreds of
 			// anonymous 500s that never said which var was missing).
 			const missingEnv = !dbDegraded && /^Missing required env var: /.test(err?.message || '');
-			const status = dbDegraded || missingEnv ? 503 : (err.status || 500);
+			// An object-storage (R2/S3) fault is infrastructure too. Deliberate
+			// author-written errors (`expose`) and 4xx throws keep their own contract
+			// even when their text happens to match the storage pattern ("unauthorized").
+			const storageDown = !dbDegraded && !missingEnv && !err?.expose && !(err?.status && err.status < 500)
+				&& isStorageInfrastructureError(err);
+			const status = dbDegraded || missingEnv || storageDown ? 503 : (err.status || 500);
 			if (status >= 500) {
 				const ref = correlationId();
 				if (dbDegraded) {
@@ -643,6 +667,13 @@ export function wrap(handler) {
 					logDbUnavailableOnce(`${req.method} ${redactUrl(req.url)}`, err?.message || String(err));
 					sendOpsAlert(dbFull ? 'database at storage cap — retention needed' : 'database unavailable', `${err?.message || String(err)}\nref ${ref}`, {
 						signature: dbFull ? 'db:capacity' : 'db:unavailable',
+					});
+				} else if (storageDown) {
+					// Every route that writes to R2 without its own try/catch lands here
+					// during a bucket outage: throttle the log, skip Sentry, one deduped alert.
+					logDbUnavailableOnce(`${req.method} ${redactUrl(req.url)}`, `object storage unavailable: ${err?.message || String(err)}`);
+					sendOpsAlert('object storage unavailable', `${err?.message || String(err)}\nref ${ref}`, {
+						signature: 'storage:unavailable',
 					});
 				} else if (missingEnv) {
 					// One concise line + one deduped alert per (route, var) — the fix is
@@ -665,7 +696,7 @@ export function wrap(handler) {
 				// so err.message would leak HELIUS_API_KEY to the client. Hand back a
 				// sanitized envelope keyed to the same ref we just logged.
 				if (!res.headersSent && !res.writableEnded) {
-					if (dbDegraded) {
+					if (dbDegraded || storageDown) {
 						// 503 with Retry-After so clients and CDNs know to back off.
 						res.setHeader('retry-after', '30');
 					}
@@ -706,9 +737,11 @@ export function wrap(handler) {
 						// mapping our internal topology. 4xx keeps its code below, where
 						// it is a deliberate, documented part of each endpoint's contract.
 						json(res, status, {
-							error: dbDegraded ? 'service_unavailable' : 'internal_error',
+							error: dbDegraded || storageDown ? 'service_unavailable' : 'internal_error',
 							error_description: dbDegraded
 								? 'database temporarily unavailable, retry shortly'
+								: storageDown
+								? 'object storage temporarily unavailable, retry shortly'
 								: `internal error, quote ref ${ref} to support`,
 							ref,
 						}, { 'cache-control': 'no-store' });
@@ -829,6 +862,14 @@ export function wrapCron(handler, { requireWriteCapacity = false, maxDurationMs 
 					console.warn(`[cron] db ${full ? 'at storage cap' : 'unavailable'}, skipping tick:`, err.message);
 					if (!res.headersSent && !res.writableEnded) {
 						json(res, 200, { ok: false, reason: full ? 'db_full' : 'db_unavailable' });
+					}
+					return;
+				}
+				if (isStorageInfrastructureError(err) && !err?.expose && !(err?.status && err.status < 500)) {
+					console.warn('[cron] object storage unavailable, skipping tick:', err.message);
+					sendOpsAlert('object storage unavailable', `${err.message}\ncron tick skipped`, { signature: 'storage:unavailable' });
+					if (!res.headersSent && !res.writableEnded) {
+						json(res, 200, { ok: false, reason: 'storage_unavailable' });
 					}
 					return;
 				}
