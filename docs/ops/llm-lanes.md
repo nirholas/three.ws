@@ -158,6 +158,9 @@ Guardrails, all enforced in code:
   (`isPaidModel()`), or the rung is refused with a warning. That registration is
   what makes it metered rather than priced as free openrouter traffic, and what
   keeps it away from anonymous callers.
+- Anonymous callers of `api/chat.js` may only name a catalogued non-paid model or
+  an OpenRouter `:free` id (`anonModelAllowed()` in `api/_lib/chat-models.js`), so
+  an arbitrary paid id cannot be routed onto the funded platform key.
 - It sits in the **paid tail**, after every free rung, never leading.
 - It is skipped entirely when a caller BYOK key, a server `ANTHROPIC_API_KEY`, or
   Vertex Claude is available. It is a gap-filler, not a competitor.

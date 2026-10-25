@@ -17,7 +17,7 @@ All eight surfaces address the same custodial Solana keypair, obey the same owne
 | Surface | Route root | What it controls |
 |---|---|---|
 | Capabilities | `/api/agents/:id/capabilities` | Scoped, time-boxed, revocable session keys for autonomous spend |
-| Orders | `/api/agents/:id/orders` | The programmable order engine (limit, stop, trailing, DCA, TWAP, conditional) |
+| Orders | `/api/agents/:id/orders` | The programmable order engine (limit, stop, trailing, ratcheting stop, DCA, TWAP, conditional) |
 | Intents | `/api/agents/:id/intents` | Plain-language wallet rules compiled into structured, armed intents |
 | Treasury Autopilot | `/api/agents/:id/autopilot` | The self-funding treasury policy and its runway view |
 | Portfolio | `/api/agents/:id/portfolio` | FIFO cost basis, realized and unrealized P&L by source, live risk metrics |
@@ -306,6 +306,7 @@ Reads are owner-gated. `POST`, `PUT`, and `DELETE` are additionally CSRF-gated. 
 | `limit` | A buy at or below the target, a sell at or above it |
 | `stop` | A buy once the level breaks upward, a sell once it breaks downward |
 | `trailing` | A sell after `trail_pct` off the high-water mark, a buy after `trail_pct` off the low |
+| `trail_ratchet` | A sell-only two-phase stop: sells if the metric falls `ratchet.initial_stop_pct` below the entry, then lock tiers raise the floor as profit grows and it never moves down |
 | `dca` | On a fixed interval, `slices` times |
 | `twap` | One total order sliced over time to cut price impact |
 | `conditional` | A validated signal condition becomes true |
@@ -314,7 +315,7 @@ Shared fields: `type`, `side` (`buy` or `sell`), `mint` (validated Solana addres
 
 Sizing: a buy needs `size_sol`; a sell needs either `size_tokens` (raw base units) or `sell_pct` (over 0 through 100). A TWAP buy takes `total_sol` and derives the per-slice size; a TWAP sell takes `total_tokens` or `sell_pct` and divides it across the slices.
 
-Per-type fields: `limit_price` for `limit`, `stop_price` for `stop`, `trail_pct` (over 0, under 100) for `trailing`, `schedule: { interval_seconds, slices }` for `dca` (minimum 60 seconds, 1 slice) and `twap` (minimum 30 seconds, 2 slices, maximum 1000 slices), and `condition` for `conditional`.
+Per-type fields: `limit_price` for `limit`, `stop_price` for `stop`, `trail_pct` (over 0, under 100) for `trailing`, `ratchet: { initial_stop_pct, tiers }` for `trail_ratchet` (sell only; `initial_stop_pct` over 0 and under 100, 1 through 8 tiers of `{ profit_pct, lock_pct }`, both strictly ascending, each `lock_pct` below its `profit_pct` and at least `-initial_stop_pct`; optional `entry_price` in the trigger metric, otherwise the first live reading the sweep takes), `schedule: { interval_seconds, slices }` for `dca` (minimum 60 seconds, 1 slice) and `twap` (minimum 30 seconds, 2 slices, maximum 1000 slices), and `condition` for `conditional`.
 
 A condition is one level deep, with no expressions and no code: `{ "all": [leaf, …] }` or `{ "any": [leaf, …] }`, at most 8 leaves. Each leaf is `{ signal, op, value }`. The closed signal set is `price_sol`, `mcap_sol`, `mcap_usd`, `price_change_pct`, `smart_money_score` (numeric, operators `gt`, `gte`, `lt`, `lte`, `eq`, `ne`), plus `dev_dump` and `graduated` (boolean, operators `is_true`, `is_false`). A signal the worker cannot read is treated as indeterminate: it never counts as satisfied and is reported in `missing`, so an order cannot fire on absent data.
 
@@ -338,6 +339,7 @@ A condition is one level deep, with no expressions and no code: `{ "all": [leaf,
         "limit_price": 40000,
         "stop_price": null,
         "trail_pct": null,
+        "ratchet": null,
         "peak_price": null,
         "reference_price": null,
         "schedule": null,
@@ -376,7 +378,7 @@ A condition is one level deep, with no expressions and no code: `{ "all": [leaf,
 
 A live order trades from the agent wallet on its own when it fires, so this route requires a signed real-funds agreement: an unsigned account gets `403 risk_ack_required` and no order is created.
 
-Returns `201` with `{ "data": { "order": … } }`. Validation failures are `422` and carry the specific code from the normalizer: `invalid_order`, `invalid_type`, `invalid_side`, `invalid_mint`, `invalid_size`, `invalid_price`, `invalid_trail`, `invalid_schedule`, `invalid_expiry`, or `invalid_condition`, each with a human-readable `error_description`. A malformed body is `400 bad_request`, a wrong content type is `415`, and a database failure is `500 create_failed`.
+Returns `201` with `{ "data": { "order": … } }`. Validation failures are `422` and carry the specific code from the normalizer: `invalid_order`, `invalid_type`, `invalid_side`, `invalid_mint`, `invalid_size`, `invalid_price`, `invalid_trail`, `invalid_ratchet`, `invalid_schedule`, `invalid_expiry`, or `invalid_condition`, each with a human-readable `error_description`. A malformed body is `400 bad_request`, a wrong content type is `415`, and a database failure is `500 create_failed`.
 
 DCA and TWAP orders are created with `next_fire_at` set to now, so the first slice fires on the next worker sweep.
 
@@ -437,7 +439,7 @@ A valid order returns the normalized spec, its readback, a live market snapshot,
 }
 ```
 
-Three honest nulls to expect. `preview.current` is `null` when the quote lane misses, and the endpoint still succeeds. `would_fire_now` is always `false` for a trailing order, because a trail needs a tracked high or low-water mark that does not exist until the order is live. `firewall` is `null` for sells, for a wallet with no Solana address, and when the on-chain simulation cannot be run.
+Three honest nulls to expect. `preview.current` is `null` when the quote lane misses, and the endpoint still succeeds. `would_fire_now` is always `false` for a trailing order, because a trail needs a tracked high or low-water mark that does not exist until the order is live. A `trail_ratchet` preview is evaluated against its entry (`entry_price`, else the current reading), so it reports `false` unless the price is already through the initial stop. `firewall` is `null` for sells, for a wallet with no Solana address, and when the on-chain simulation cannot be run.
 
 ### POST /orders/cancel-all
 
@@ -449,7 +451,7 @@ No body. Cancels every order in `active`, `partial`, `firing`, or `paused` on th
 
 ### GET /orders/schema
 
-Returns `order_types`, `trigger_metrics`, `number_ops`, `bool_ops`, and `signals` (each signal as `{ kind, label }`). Build a client against this rather than hardcoding the vocabulary, since the endpoint and the worker import it from one module.
+Returns `order_types`, `reason_codes`, `trigger_metrics`, `number_ops`, `bool_ops`, and `signals` (each signal as `{ kind, label }`). `reason_codes` maps the stable codes to their meaning: `DAILY_LOSS` (a fill refused at the daily loss limit), `DRAWDOWN` (fell through the initial stop), `IMPACT` (price impact above the safety limit) and `TIER_LOCK` (fell back to a locked-in profit tier). They appear as `meta.reason_code` on order events, as a `[CODE]` prefix on skip details, in the agent's decision trail and as a chip in the wallet hub Orders tab. Codes are never renamed. Build a client against this rather than hardcoding the vocabulary, since the endpoint and the worker import it from one module.
 
 ### GET /orders/:orderId
 

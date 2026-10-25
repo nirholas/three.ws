@@ -16,11 +16,16 @@ Every public URL falls into one of these, and the failure modes are different:
    title, description, canonical, OG/Twitter tags and JSON-LD from
    `data/pages.json`, so the meta a crawler reads matches the catalog. Run it
    with `--write` after adding a page; it never overwrites a tag a page already
-   has.
+   has. The `/` entry resolves to `pages/desktop.html` (the web desktop home;
+   the previous homepage lives at `/classic`). `npm run audit:pages` fails on a
+   path listed twice in `data/pages.json` even when the rows carry different
+   copy, because each row would submit the same URL to the sitemap again, and a
+   page whose own meta says `noindex` does not belong in the manifest at all.
 
-2. **A server-rendered page** (`api/*-og.js`, `api/markets/*`). The handler
-   composes the document per request from the database. `/markets/news/...` and
-   the crawler pages below are here.
+2. **A server-rendered page** (`api/*-og.js`, `api/news/story-page.js`). The
+   handler composes the document per request from the database.
+   `/markets/news/<month>/<id>-<slug>` stories and the crawler pages below are
+   here.
 
 3. **A single-page-app shell.** One HTML file backs an unbounded URL space:
    `/coin/:id` renders `pages/coin.html`, `/m/:id` renders `pages/model.html`,
