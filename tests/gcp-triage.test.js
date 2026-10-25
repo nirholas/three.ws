@@ -237,6 +237,24 @@ describe('gcp-triage HTTP classification', () => {
 		expect(finding.signature).toBe('r2-downstream-5xx');
 		expect(finding.class).toBe('owner');
 	});
+
+	// 2026-10-25 deep sweep: /api/avatar/render and /api/avatar/capabilities
+	// both fetch an avatar's own model_url (api/_lib/avatar-render.js's
+	// renderAvatarImage, api/_lib/avatar-capabilities.js's inspectGlbCapabilities)
+	// the same way /api/render/animate already does, but neither path was in
+	// the r2-downstream-5xx list, so both fell through to `investigate` every
+	// sweep during the R2 flap even though nothing in either handler is broken.
+	it('classifies an avatar-render R2 fetch failure as the r2-downstream family', () => {
+		const [finding] = buildFindings([request({ status: 502, path: '/api/avatar/render' })]);
+		expect(finding.signature).toBe('r2-downstream-5xx');
+		expect(finding.class).toBe('owner');
+	});
+
+	it('classifies an avatar-capabilities R2 fetch failure as the r2-downstream family', () => {
+		const [finding] = buildFindings([request({ status: 502, path: '/api/avatar/capabilities' })]);
+		expect(finding.signature).toBe('r2-downstream-5xx');
+		expect(finding.class).toBe('owner');
+	});
 });
 
 describe('gcp-triage page failure summary', () => {

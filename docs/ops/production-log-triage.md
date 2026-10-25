@@ -1301,7 +1301,7 @@ ERROR  502 POST /api/pump/launch-agent
 
 ---
 
-## 🔴 5xx fan-out across `/api/forge`, `/api/gpt-forge`, `/api/glb`, avatars, `/api/3d/inspect`, `/api/print/quote`, `/cdn/*`, `/api/render/*`, `/api/animations/clips/<id>`: `r2-downstream-5xx` (§r2-downstream)
+## 🔴 5xx fan-out across `/api/forge`, `/api/gpt-forge`, `/api/glb`, avatars, `/api/3d/inspect`, `/api/print/quote`, `/cdn/*`, `/api/render/*`, `/api/animations/clips/<id>`, `/api/avatar/render`, `/api/avatar/capabilities`: `r2-downstream-5xx` (§r2-downstream)
 
 - **Source:** every route that reads or writes through
   [api/_lib/r2.js](../../api/_lib/r2.js) (`api/forge.js`, `api/gpt-forge.js`,
@@ -1316,7 +1316,11 @@ ERROR  502 POST /api/pump/launch-agent
   instead of `api/_lib/r2.js`: `api/render/animate.js` (502 `render_failed`),
   `api/render/glb.js` and `api/render/avatar-clip.js` (502, same lib), and
   GET `api/animations/[id].js` (`/api/animations/clips/<id>`, 502
-  `storage_error` from `getObjectBuffer`).
+  `storage_error` from `getObjectBuffer`). Added 2026-10-25: `api/avatar/render.js`
+  (502 `render_failed` from `avatar-render.js`'s `renderAvatarImage`) and
+  `api/avatar/capabilities.js` (502 `fetch_failed` from
+  `avatar-capabilities.js`'s `inspectGlbCapabilities`), the same
+  avatar.model_url fetch pattern under two more public route names.
 - **What it means:** Cloudflare R2 unreachable (healthz `object_storage`
   `down`/`degraded`, tracked at
   [production-100-OWNER-ACTIONS.md](../../prompts/finish/_context/production-100-OWNER-ACTIONS.md)
@@ -1354,7 +1358,8 @@ ERROR  502 POST /api/pump/launch-agent
   Regression-covered in
   [tests/gcp-triage.test.js](../../tests/gcp-triage.test.js) ("classifies an
   animated-render R2 fetch failure..." / "...a clip-detail R2 fetch
-  failure...").
+  failure..." / "...an avatar-render R2 fetch failure..." / "...an
+  avatar-capabilities R2 fetch failure...").
 - **Worker-side app-log variant (same outage, different shape):** a GPU/mesh
   worker that routes a caller-supplied model URL through
   `worker_security.py`'s `fetch_remote_bytes` (`remesh-service` confirmed
