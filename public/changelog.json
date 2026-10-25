@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-10-25T02:17:38.533Z",
+	"generated_at": "2026-10-25T11:06:21.812Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-10-25",
+			"type": "update",
+			"title": "Fixed phone/desktop/CLI/Telegram account linking, which was failing on every attempt",
+			"summary": "Every account-link action (mint, claim, poll, pending, decide, devices, revoke) behind /dashboard/account and the mobile-app pairing flow had been throwing on every call since the device-linking feature shipped on 2026-10-11, because its own first migration created a table under a name an older, unrelated agent-identity feature already owned, so the new table silently never got created with the right columns. The old table is renamed out of the way instead of dropped, so its rows are preserved, and the device-linking table now gets created with the shape the feature actually needs.",
+			"link": "/dashboard/account",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-10-25",
 			"type": "update",

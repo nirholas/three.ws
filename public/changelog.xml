@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Fixed phone/desktop/CLI/Telegram account linking, which was failing on every attempt</title>
+			<link>https://three.ws/dashboard/account</link>
+			<guid isPermaLink="false">2026-10-25:Fixed phone/desktop/CLI/Telegram account linking, which was failing on every attempt</guid>
+			<pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every account-link action (mint, claim, poll, pending, decide, devices, revoke) behind /dashboard/account and the mobile-app pairing flow had been throwing on every call since the device-linking feature shipped on 2026-10-11, because its own first migration created a table under a name an older, unrelated agent-identity feature already owned, so the new table silently never got created with the right columns. The old table is renamed out of the way instead of dropped, so its rows are preserved, and the device-linking table now gets created with the shape the feature actually needs.</description>
+		</item>
+		<item>
 			<title>Gallery and marketplace thumbnails degrade gracefully instead of showing a broken-image icon</title>
 			<link>https://three.ws/gallery</link>
 			<guid isPermaLink="false">2026-10-25:Gallery and marketplace thumbnails degrade gracefully instead of showing a broken-image icon</guid>
