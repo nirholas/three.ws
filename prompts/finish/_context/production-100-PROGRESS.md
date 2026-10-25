@@ -1980,3 +1980,7 @@ Diagnostic test passed unmodified, so branch A: the same-lane resubmit logic is 
 ## 2026-10-25 order 453 closed (/healthz world masked as unknown)
 
 `checkWorld()` in `api/_lib/ops/subsystem-health.js` now falls back to the durable `ops_alerts` rows (`world-health:status-http` / `status-unreachable`, last_seen within 40 minutes) when the Redis cache entry is missing or stale, so a real outage reports `down` instead of `unknown`. Six new cases in `tests/subsystem-health.test.js`. `STRUCTURE.md` and `deploy/world/README.md` now state that `hyperfy-world` was deleted 2026-10-23. No GCP infra touched. Commit: see git log for the `fix(ops): stop /healthz masking` subject.
+
+## 2026-10-25 order 454 closed (root CVE triage, @solana/pay pin)
+
+Re-measured `npm audit`: bigint-buffer, lodash.set and node-forge have no patched release and are unreachable from three.ws code; accepted with reachability notes in `docs/ops/security-exceptions.md` (linked from `docs/ops/README.md`). The root `@solana/pay` stays on `^0.2.6`: 1.x is a `@solana/kit` rewrite incompatible with the web3.js call sites on the payment path, so no bump was made; kit migration of the five verifiers is the follow-up. No dependency or lockfile change.
