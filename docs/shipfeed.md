@@ -81,6 +81,8 @@ Everything unclaimed is clustered into **ships**: bursts of commits separated by
 
 Public, no auth, cached for 5 minutes.
 
+If GitHub cannot be read (rate limit or outage) and an earlier response exists, the endpoint serves that last-good feed (kept up to 24 hours) with `"stale": true` instead of failing.
+
 | param | values | default |
 | --- | --- | --- |
 | `limit` | 1 to 500 commits | 200 |
@@ -158,7 +160,7 @@ The footer is best-effort by design: if GitHub cannot be read at that moment, th
 
 The same cron also replies to the @trythreews X thread with every entry that passes `data/changelog-x-filter.json` (no wallet, payment, key, outage or security internals, and nothing that is only a fix). That lane is isolated from Telegram, so one failing never blocks the other, and its tweets carry no provenance footer: just the title, summary and changelog link inside the 280-character budget.
 
-**The raw commit feed** (`/api/cron/commit-feed-push`, every 5 minutes) reads its headline from the same parser, so a scoped commit now says "Feature · resilience" rather than "feat(resilience)", and it skips commits the classifier calls noise: merges, `chore(deps):` bumps, and lockfile-only changes. A skipped commit still advances the lane's state, so nothing is ever re-read, and the tick reports `{ posted, skipped }` so the drop is visible in the logs rather than silent.
+**The raw commit feed** (`/api/cron/commit-feed-push`, every 5 minutes) reads its headline from the same parser, so a scoped commit now says "Feature · resilience" rather than "feat(resilience)", and it skips commits the classifier calls noise: merges, `chore(deps):` bumps, and lockfile-only changes. A skipped commit still advances the lane's state, so nothing is ever re-read, and the tick reports `{ posted, skipped }` so the drop is visible in the logs rather than silent. If GitHub's rate limit is exhausted the lane returns `{ skipped: 'github_rate_limited' }` and retries on the next tick (a 200, not an error). Any other failure reading GitHub answers 502 `{ ok: false, error }` and releases the lane lock; state lives in `app_settings`, so the next tick resumes where this one stopped.
 
 ---
 
@@ -200,6 +202,6 @@ The full reference, including the linking internals exported for tuning, is in t
 
 ## Known limits
 
-- **GitHub's unauthenticated rate limit is 60 requests an hour per IP.** Set `GITHUB_TOKEN` on the service to raise it. Without one, a busy hour can leave the feed serving its 5-minute cache and the Telegram footer absent.
+- **GitHub's unauthenticated rate limit is 60 requests an hour per IP.** Set `GITHUB_TOKEN` on the service to raise it. Without one, a busy hour leaves the feed serving its last-good copy (marked `stale`), the commit-feed lane skipping ticks, and the Telegram footer absent.
 - **Linking is a heuristic, and it publishes as one.** Every link carries a confidence and its reasons; a release note that legitimately found no code says so on the page rather than silently showing nothing.
 - **A commit older than the window can never be linked**, however well it matches. That is deliberate: the alternative is a note claiming work from a month it had nothing to do with.

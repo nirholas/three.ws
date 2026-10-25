@@ -16,7 +16,7 @@ Agents can search, price, check and register real web domains, and serve their p
 | Renewal price | Same as the yearly registration price. |
 | Payment | Prepaid credits ([/credits](https://three.ws/credits)), debited at the exact price Google quotes. No markup. |
 | Premium names | A name can price above its TLD base. `domain_check` and `domain_register_quote` return the exact figure for that name. |
-| Supported TLDs | Cloud Domains has no list endpoint. [data/domain-tlds.json](../data/domain-tlds.json) is a snapshot probed by `node scripts/refresh-domain-tlds.mjs` (run with `DOMAINS_ACCESS_TOKEN=$(gcloud auth print-access-token)`). An unsupported TLD answers `UNSUPPORTED`. |
+| Supported TLDs | Cloud Domains has no list endpoint. [data/domain-tlds.json](../data/domain-tlds.json) is a snapshot probed by `node scripts/refresh-domain-tlds.mjs` (run with `DOMAINS_ACCESS_TOKEN=$(gcloud auth print-access-token)`). The committed snapshot lists 121 supported TLDs of the 153 probed. An unsupported TLD answers `UNSUPPORTED`. |
 | Registrar quota | 300 sensitive requests per day per project, 100 per minute, 20 registrations per project. |
 
 ### The daily quota
@@ -32,9 +32,9 @@ Search, availability and register count against the 300/day quota, which resets 
 | `domain_pricing` | read | TLD price list from the snapshot, filter by `tld` or `max_price_usd`. |
 | `domain_register_quote` | write | Validate-only register against the real API: exact price, term, renewal, privacy, notices, credit balance. Returns the `quote_id`. |
 | `domain_register` | financial | Spend credits and register. Needs `quote_id`, `confirm_spend: true`, `expected_price_usd`, `idempotency_key`. |
-| `domain_status` | read | Settle and read a registration. |
+| `domain_status` | read | Settle and read a registration. It polls the registrar and writes the outcome, so it is annotated not read-only (but idempotent). |
 | `domain_connect` | write | Serve an agent's public page on a registered domain. |
-| `domain_connect_status` | read | DNS, certificate and live state of a connected host. |
+| `domain_connect_status` | read | DNS, certificate and live state of a connected host. Promotes the host to live when its certificate turns active, so it carries the same not-read-only, idempotent annotation. |
 
 The flow an agent follows:
 
@@ -56,6 +56,8 @@ curl 'https://three.ws/api/domains/suggest?name=Orbit'
 
 Signed-in: `POST /api/domains/quote`, `POST /api/domains/register`, `GET /api/domains/status`, `GET /api/domains/list`, `POST /api/domains/connect`, `GET /api/domains/connect-status`. Registration through an API key needs the key's spend scope.
 
+A real registration first creates the domain's Cloud DNS zone and registers the name on that zone's name servers, because the registrar rejects a body with no DNS provider and Google Domains DNS is deprecated. Connecting the name to an agent later needs no DNS switch. Validate-only quotes use the standard Cloud DNS name server set.
+
 ## Registrant contact
 
 Required: `name`, `email`, `phone` (international, `+14155550123`), `address_lines`, `city`, `postal_code`, `country` (two letters), optionally `region`. It is sent to the registrar, stored on the registration so the owner can see what it was registered to, and never returned to another account. Privacy defaults to hidden WHOIS where the TLD supports it.
@@ -73,11 +75,11 @@ Coin pages ([/coin/:id](https://three.ws/coin/bitcoin)) show a "Domains" panel: 
 `domain_connect` / `POST /api/domains/connect` runs the Cloud Run plus load balancer procedure in [docs/ops/gcp-production.md](ops/gcp-production.md#web-domains):
 
 1. Create a Cloud DNS zone for the domain and A records for the apex and `www` at the load balancer address.
-2. Point the registration's nameservers at the zone.
+2. Make sure the registration's nameservers point at the zone (already true for names registered here; the step is idempotent).
 3. Create a Google-managed certificate and attach it to the HTTPS proxy.
 4. Mark the host `live` when the certificate is `ACTIVE`.
 
-Once live, `https://<domain>/` serves the agent's public page (`/agents/<id>`), and every other path serves the normal site. Certificates take minutes to provision after the nameservers propagate; `domain_connect_status` reports `pending_dns`, `pending_cert`, then `live`. The load balancer's HTTPS proxy holds at most 15 certificates, so connected domains are capped there until the proxy moves to certificate maps.
+Once live, `https://<domain>/` serves the agent's public page (`/agents/<id>`), and every other path serves the normal site. Certificates usually turn active within 15 to 60 minutes after the nameservers propagate; `domain_connect_status` reports `pending_dns`, `pending_cert`, then `live`. The load balancer's HTTPS proxy holds at most 15 certificates, so connected domains are capped there until the proxy moves to certificate maps.
 
 `docs/tutorials/deploy-to-vercel-custom-domain.md` describes the legacy Vercel path and does not apply to production, which runs on Cloud Run.
 

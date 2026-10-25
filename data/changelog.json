@@ -3,6 +3,20 @@
 	"entries": [
 		{
 			"date": "2026-10-25",
+			"title": "Allowance pulls now require the signed real-funds agreement",
+			"summary": "Pulling funds through an owner-funded on-chain allowance now checks the signed real-funds agreements before the agent key is used, matching every other custodial signing path. Unsigned accounts get the standard agreement-required refusal and nothing is sent.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-10-25",
+			"title": "Commit feed cron skips quietly on a lock-check fault",
+			"summary": "The commit feed cron now skips a tick with a 200 when the database lock check hits a transient fault, instead of answering a raw 500 and raising an ops alert. The next tick retries.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-25",
 			"title": "Object-storage outages now answer a clean 503 with Retry-After instead of a raw 500",
 			"summary": "When the R2 bucket is unreachable (account disabled, keys rotated, endpoint down), any API route that writes or reads an object without its own error handling, such as avatar upload, used to answer a bare 500 and fire a Sentry event and an unhandled-5xx alert on every request. The shared error boundary now treats a storage fault like a database outage: a 503 service_unavailable with Retry-After, one throttled warning, a single deduped ops alert, and a clean skip for cron ticks. Deliberate 4xx errors and real handler bugs are unchanged.",
 			"tags": ["fix"],
@@ -102,82 +116,113 @@
 			"date": "2026-10-24",
 			"title": "Chat no longer fails when its default NVIDIA model is retired",
 			"summary": "NVIDIA stopped serving the Nemotron 3 Super function while still listing it, so chat requests that fell through to it got a 404 and, with the other providers throttled, ended in a 503. Chat, the tool chain, the brain and the CAD writer now use the Nemotron 3.5 Lightning model (with Ultra as its fallback), both verified live.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/chat"
 		},
 		{
 			"date": "2026-10-24",
 			"title": "Fixed three more legacy thumbnail links that browsers refused to load",
 			"summary": "A handful of forge creations and 3D props stored from before an earlier URL fix still pointed straight at the storage bucket's own domain instead of three.ws's own CDN link, which Chrome blocks as an opaque cross-origin response. Model-page posters, a creation's related-models sidebar, forge share-card previews (the image X and Discord show when a link is pasted), and the Forged gallery's model-viewer thumbnails now all resolve through the same CDN link as everything else.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/forge"
 		},
 		{
 			"date": "2026-10-23",
 			"title": "Bonding-curve status API no longer hard-fails when pump.fun blips",
 			"summary": "GET /api/crypto/bonding was returning a 503 to every caller during a pump.fun outage, even for mints it had already fetched successfully. It now caches each mint's bonding-curve status and keeps a longer last-known-good copy, so a failed upstream fetch serves that cached data (flagged with an x-pump-stale header) instead of a hard error. A 503 with a retry hint is now only returned for a mint that has no cached data at all.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/api/crypto/bonding"
 		},
 		{
 			"date": "2026-10-24",
 			"title": "Hundreds of dependency security advisories cleared across the repo",
 			"summary": "Every committed lockfile was audited and patched: same-line security releases everywhere, vetted moves to patched majors (vitest 4, zod 4, helia 7, Svelte 5 and Vite 7 in the chat app, transformers 4 in HQ, gltf-transform 4 for the meshopt worker), and each package's tests and builds were rerun before and after. What remains are advisories with no patched release published anywhere (bigint-buffer, elliptic, node-forge) and pins that upstream SDKs still require.",
-			"tags": ["security", "infra"]
+			"tags": [
+				"security",
+				"infra"
+			]
 		},
 		{
 			"date": "2026-10-24",
 			"title": "Desktop app moves to Electron 45",
 			"summary": "The desktop app now runs on Electron 45 and electron-builder 26, clearing 61 security advisories from the old Electron 33 toolchain. Launch at login still starts the app hidden in the tray; on Windows, toggle the setting once if the console window opens at login.",
-			"tags": ["desktop", "security"]
+			"tags": [
+				"desktop",
+				"security"
+			]
 		},
 		{
 			"date": "2026-10-24",
 			"title": "Math renders in chat again",
 			"summary": "The chat app moved to Svelte 5, and KaTeX formulas in messages now render instead of showing raw TeX.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/chat"
 		},
 		{
 			"date": "2026-10-24",
 			"title": "Long MCP answers arrive as a summary, and agents can search the docs",
 			"summary": "list_my_agents, recall and crypto_data now answer with a short summary, a count, a handle and the first page when the list is long, and the new expand tool reads the rest on request. A 100-coin market list drops from about 47,800 to 4,400 tokens. Handles are signed, account-bound and last 15 minutes. The new free search_docs tool answers how-to questions from the docs index on the main and studio servers.",
-			"tags": ["feature", "docs"],
+			"tags": [
+				"feature",
+				"docs"
+			],
 			"link": "/docs/mcp"
 		},
 		{
 			"date": "2026-10-24",
 			"title": "See what a prediction strategy would have earned before it trades",
 			"summary": "Agent Predictions records every strategy decision at the live order-book price in shadow mode, marks it at resolution, and shows shadow beside live results. A fee-aware scanner reads Solana event contracts for YES plus NO pairs under $1. Live stays owner-only.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/agent-predictions"
 		},
 		{
 			"date": "2026-10-24",
 			"title": "Pay for a model request with a wallet, no account needed",
 			"summary": "POST /api/v1/chat/completions now answers an unauthenticated request with an x402 upto challenge on Solana, sized to the model's worst case for that request. Sign it, retry, and only the metered tokens are charged at the published per-token price; the rest of the cap is refunded. Streaming settles when the stream closes, and a dropped stream is charged only for the tokens already sent. GET /api/v1/models now lists the price sheet and round limits.",
-			"tags": ["feature", "docs"],
+			"tags": [
+				"feature",
+				"docs"
+			],
 			"link": "/docs/metered-router"
 		},
 		{
 			"date": "2026-10-24",
 			"title": "Skills are scanned for hidden behaviour before they are listed",
 			"summary": "Every marketplace skill version is now checked for secret access, calls to hosts it never declared, hidden or obfuscated code and instructions that skip the owner's confirmation. Clean skills list as before, suspicious ones are held for a moderator, and dangerous ones are refused. Authors see the file, the line and how to fix each finding in the publish form, and the existing catalog was rescanned.",
-			"tags": ["security", "feature", "docs"],
+			"tags": [
+				"security",
+				"feature",
+				"docs"
+			],
 			"link": "/docs/skill-supply-scan"
 		},
 		{
 			"date": "2026-10-24",
 			"title": "See what a Forge generation costs before you press Generate",
 			"summary": "The Forge page now shows a live cost line for the tier, engine and options you picked, read from the same pricing code that bills you, with nothing spent. A pay-to-keep mode (free preview, pay in $THREE to download, holders keep free) is built and switched off, so downloads stay free until it is turned on.",
-			"tags": ["feature", "docs"],
+			"tags": [
+				"feature",
+				"docs"
+			],
 			"link": "/docs/forge"
 		},
 		{
 			"date": "2026-10-24",
 			"title": "Agents join the open Solana agent registry and hires read trust tiers",
 			"summary": "Minted agents are enrolled in the open Solana agent registry (8004) with the platform authority signing, so owners pay nothing. The marketplace ranks providers by registry tier after completed hires, a hire can require a minimum tier, and agent pages show an 8004 tier badge when registered. A rate-limited back-fill covers existing agents.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/solana-agent-registry"
 		},
 		{
@@ -194,7 +239,10 @@
 			"date": "2026-10-24",
 			"title": "Drive the CLI from scripts and agents, and download a run report",
 			"summary": "Every three-ws command now takes --json (one JSON document on stdout, diagnostics on stderr) and --non-interactive (never prompts), with a stable exit-code table: 2 usage, 3 auth, 4 refused by a guard, 5 payment required, 6 network. New commands cover agents, runs, wallet balance, skill install and orders. `three-ws report run <id> --out run.html` writes one self-contained offline file with the goal, tool calls, decisions, trades, outcome and the decision-trail head hash, and the run page has a matching Download report button.",
-			"tags": ["feature", "sdk"],
+			"tags": [
+				"feature",
+				"sdk"
+			],
 			"link": "/docs/cli"
 		},
 		{

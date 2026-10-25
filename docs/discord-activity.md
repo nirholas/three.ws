@@ -22,7 +22,9 @@ the call sees the same room:
 3. The finished model (preview image + an "Open in 3D" link) posts to
    everyone in the room at once, with a shared like/vote count.
 4. An agent reacts in text to what just happened, grounded only in the real
-   prompt and vote count (see [Agent reactions](#agent-reactions)).
+   prompt and vote count (`api/_lib/gateway/discord-activity-agent.js`: one
+   short LLM-written sentence, dropped for a deterministic template if it
+   fails the validation checks; it never mentions money, coins or wallets).
 
 No account creation, no wallet, no purchase: the room is free to use for
 anyone already in the voice channel.
@@ -41,10 +43,13 @@ The Activity never holds a Discord client secret. The flow, per
    finish authenticating the SDK itself.
 4. The client POSTs the access token plus the Activity's `instance_id`,
    `guild_id`, and `channel_id` to `POST /api/gateway/discord-activity-session`,
-   which re-verifies the token against Discord's own `/users/@me` (never
-   trusting the client's claimed identity), creates or updates the room, and
-   mints a short-lived (4 hour) HMAC-signed session token scoped to that one
-   room.
+   which re-verifies the token against Discord's own `/oauth2/@me` (never
+   trusting the client's claimed identity, and refusing with `wrong_audience`
+   any token that was not issued to our `DISCORD_CLIENT_ID` application),
+   creates or updates the room, and mints a short-lived (4 hour) HMAC-signed session token scoped to that one
+   room. An `instance_id` is bound to the guild and channel it was first seen
+   with; a later request claiming the same instance under a different guild
+   or channel is refused with `403 room_mismatch`.
 
 Every room API call after that carries `Authorization: Bearer <session token>`
 (the SSE stream carries it as `?token=` instead, since the browser's native
@@ -60,7 +65,11 @@ against needs an explicit URL Mapping in the Discord Developer Portal, or
 Discord's CSP blocks it.
 
 This app has exactly one such cross-origin dependency: the R2 CDN that serves
-Forge preview images and GLBs. The client calls
+Forge preview images and GLBs. (Forge reads now normalize stored media URLs to
+the same-origin `/cdn/` proxy form, so the mapping only matters for legacy
+rows or payloads that still carry the raw bucket domain. The client gets the
+host from `GET /api/gateway/discord-activity-config`, derived from
+`S3_PUBLIC_DOMAIN`.) The client calls
 `patchUrlMappings([{ prefix: 'cdn', target: cdnHost }], { patchFetch: true, patchXhr: true, patchSrcAttributes: true })`
 once at startup (`src/discord-activity/app.js`), which transparently rewrites
 any request to that host through Discord's proxy. The matching Developer

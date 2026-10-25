@@ -60,7 +60,7 @@ new work while those sit unexecuted; they were sequenced deliberately.
 
 The queue is also worked unattended. Evolve (`npm run evolve:start`, runbook
 [docs/ops/evolve.md](../ops/evolve.md)) runs headless Claude Code sessions
-around the clock in its own worktree: it runs the lowest runnable order, writes
+around the clock in its own worktree (on Sonnet by default, `EVOLVE_MODEL` overrides it): it runs the lowest runnable order, writes
 new scouted orders into the `400` band when the queue runs thin, and sweeps
 production every few hours. It leaves an order alone for 6 hours after a human
 last touched it, and `npm run evolve:pause` frees the subscription for
@@ -96,7 +96,7 @@ interactive work.
 ## 3. Engineering plays, ranked by (revenue impact x Fable advantage)
 
 These extend, never replace, the open work orders. Each is additive, flag-gated,
-and sourced from the REUSE-MAP where OSS applies. State as of 3 September 2026 is
+and sourced from the REUSE-MAP where OSS applies. State as of 25 October 2026 is
 noted per item so nobody rebuilds what already exists.
 
 ### Tier 1: direct revenue or conversion
@@ -114,7 +114,8 @@ noted per item so nobody rebuilds what already exists.
    (`npm run check:vendored` keeps the vendored copies honest). Remaining upside
    is measurement, not plumbing: prove the byte and first-render win per surface.
 3. **AR everywhere.** *Shipped.* `src/usdz-pipeline.js`, `src/usdz-animated.js`,
-   `src/ar-studio.js`, `api/ar.js` and `api/_lib/ar-launch.js` exist, with an AR
+   `src/ar-studio.js` (also extracted as the standalone `packages/ar-studio`,
+   kept in step with the app by a parity test), `api/ar.js` and `api/_lib/ar-launch.js` exist, with an AR
    MCP tool at `api/_mcp3d/tools/ar.js`. Remaining upside is placement: make the
    AR link unmissable on every generated artifact rather than a page you find.
 4. **Embed, oEmbed and OG thumbnails.** *Shipped.* `api/agent-oembed.js`,
@@ -136,9 +137,14 @@ Before building the next lane, instrument the ones that exist.
    the universal-rig doctrine in `CLAUDE.md`: no rig allowlist). This is graphics
    work competitors cannot hire cheaply and Fable does natively. It makes every
    avatar feel alive instead of looped.
-6. **Gaussian splatting lane.** Partially present (`src/splat-viewer.js`,
-   `pages/splat.html`). The open half is the pipeline: photo or video to splat to
-   embeddable scene, on the same monetization rails as Forge. All REUSE-MAP
+6. **Gaussian splatting lane.** Mostly present. The viewer (`src/splat-viewer.js`,
+   `pages/splat.html`) runs Spark 2.3.1 with worker-built LoD trees on large
+   scenes and saved camera hotspots with in-browser video export
+   (`src/splat-hotspots.js`). `POST /api/forge-splat` turns one image into a
+   splat (`workers/model-triposplat`), and the AR Studio "From a photo" tab
+   (`/api/forge-scene-objects`, `workers/model-sam3d-objects`) is built but off
+   until the gated weights are staged. The open half is the product loop: photo
+   or video to splat to embeddable scene, on the same monetization rails as Forge. All REUSE-MAP
    splatting picks in the allowed column are permissively licensed; the
    non-commercial rasterizers are a hard no regardless of demo quality.
 7. **WebGPU/TSL migration, flag-gated.** three.js ships a WebGPU renderer;
@@ -177,24 +183,24 @@ $50M to $100M ARR. The ladder:
 
 ### The measured position
 
-Run `npm run readout:revenue -- --window all`. As of 9 October 2026 that
+Run `npm run readout:revenue -- --window all`. As of 25 October 2026 that
 returns:
 
-- **61,767 settled x402 payments, $10,303.60 gross.**
-- **61,748 of them (99.97%, $10,163.51) are the internal ring**: platform-controlled
+- **51,796 settled x402 payments, $7,564.28 gross.**
+- **51,767 of them (99.94%, $7,414.21) are the internal ring**: platform-controlled
   wallets paying platform endpoints on a cron. Real money on a real chain, and
   entirely our own.
-- **0 calls are synthetic** (the classifier's bucket for test payers such as a
+- **1 call is synthetic** (the classifier's bucket for test payers such as a
   literal `PAYER` string from a replay-test path).
-- **External, all time: 19 calls from 4 addresses, $140.09.** $140.00 of it is
+- **External, all time: 28 calls from 5 addresses, $150.08.** $140.00 of it is
   two routes, nine `/api/x402/dance-tip` payments ($90) and five
   `/api/x402/club-cover` payments ($50); the rest is cents across
-  `/api/x402/skill-marketplace`, `/api/x402/pump-agent-audit` and
-  `/api/x402/mint-to-mesh-batch`. Four addresses is few enough to check by hand
+  `/api/x402/market-pulse`, `/api/x402/skill-marketplace`,
+  `/api/x402/pump-agent-audit` and a handful of other routes. Five addresses is few enough to check by hand
   that they are strangers before any of it is cited as rung-1 proof.
 
 So we are not on rung 1. We are below it, and the gross ledger hides that by a
-factor of roughly 74. This is the single most important fact in this
+factor of roughly 50. This is the single most important fact in this
 document, and until this readout existed it was not visible to anyone reading
 the numbers the platform reported about itself.
 

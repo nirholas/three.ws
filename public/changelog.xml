@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Allowance pulls now require the signed real-funds agreement</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-25:Allowance pulls now require the signed real-funds agreement</guid>
+			<pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Pulling funds through an owner-funded on-chain allowance now checks the signed real-funds agreements before the agent key is used, matching every other custodial signing path. Unsigned accounts get the standard agreement-required refusal and nothing is sent.</description>
+		</item>
+		<item>
 			<title>Commit feed cron skips quietly on a lock-check fault</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-25:Commit feed cron skips quietly on a lock-check fault</guid>

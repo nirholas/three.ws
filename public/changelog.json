@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-10-25T11:57:17.211Z",
+	"generated_at": "2026-10-25T11:57:28.802Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-10-25",
+			"type": "update",
+			"title": "Allowance pulls now require the signed real-funds agreement",
+			"summary": "Pulling funds through an owner-funded on-chain allowance now checks the signed real-funds agreements before the agent key is used, matching every other custodial signing path. Unsigned accounts get the standard agreement-required refusal and nothing is sent.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-10-25",
 			"type": "update",

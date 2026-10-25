@@ -13,7 +13,7 @@ three.ws ships as a native Android app for the Solana Seeker (and Saga) through 
 | Share sheet | Share a photo from any app to three.ws: it opens the selfie flow with the photo attached. Share a `.glb`: it opens the upload flow | `public/share-target-sw.js`, `src/shared/share-target.js` |
 | Offline | A branded offline screen that reloads itself when the network returns, instead of Chrome's error page | `public/offline.html`, `vite.config.js` (workbox `precacheFallback`) |
 | Home-screen shortcuts | Long-press the icon: Create, Discover, My agents | `solana-mobile/twa/twa-manifest.json`, web manifest in `vite.config.js` |
-| Icon | A maskable icon with the glyph inside Android's safe zone, so circle and squircle launchers never crop it | `public/pwa-maskable-*.png` |
+| Icon | A maskable icon with the glyph inside Android's safe zone, so circle and squircle launchers never crop it | `public/pwa-maskable-192x192.png`, `public/pwa-maskable-512x512.png` |
 | Seeker verification | Prove Seeker ownership by holding the soulbound Seeker Genesis Token; owners get a "Seeker verified" badge on every agent they own | `api/seeker/[action].js`, `api/_lib/seeker-genesis.js` |
 | Deep links | Any `https://three.ws/...` link opens inside the app once Digital Asset Links verify the release key | `public/.well-known/assetlinks.json` |
 
@@ -33,9 +33,9 @@ The web manifest declares a `share_target` at `POST /create/share`. The service 
 
 - an image goes to `/create/selfie?shared=1`, where the page picks it up as the frontal selfie (a second and third image fill the optional side angles);
 - a `.glb` goes to `/create?shared=glb`, where the upload flow validates and stages it;
-- anything else goes to `/create`.
+- anything else goes to `/create?shared=1`.
 
-The handoff is one-shot and expires after ten minutes, so a stale share can never resurface. On the Seeker the APK registers the same target with Android, so three.ws appears in the system share sheet for photos and `model/gltf-binary` files.
+The handoff is one-shot and expires after ten minutes, so a stale share can never resurface. (The iOS app has no service worker, so its share extension hands files over through the app instead, using the same one-shot rule; see `takeSharedFiles` in `src/shared/share-target.js`.) On the Seeker the APK registers the same target with Android, so three.ws appears in the system share sheet for photos and `model/gltf-binary` files.
 
 ## Testing without a Seeker
 

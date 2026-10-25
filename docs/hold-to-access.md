@@ -130,12 +130,17 @@ UI needs to recover — no second round-trip:
   "required": { "level": 1, "id": "bronze", "min_usd": 25 },
   "usd_to_go": 12.50,
   "acquire": { "mint": "Fe…pump", "symbol": "THREE", "swap_url": "…", "pump_url": "…" },
-  "pay_per_use": { "action": "forge.high", "usd": 0.49 }   // null when hold-only
+  "pay_per_use": { "action": "forge.high", "usd": 0.50 }   // null when hold-only
 }
 ```
 
 A feature with a `payPerUse` action lets a non-holder pay once in $THREE instead of
 holding. A hold-only feature omits `pay_per_use`.
+
+A handler that owns its own 402 (a pay-per-use action whose price depends on the request,
+like pay-to-keep below) uses `checkFeatureAccess(req, res, featureId, { body })` from the
+same module instead. It resolves the caller the same way (comp, pass, on-chain tier) but
+only reports `{ eligible, level, wallet }` and writes no gate response.
 
 ---
 
@@ -164,11 +169,26 @@ how an unbuilt feature ends up reading as a benefit, so when a gate ships, flip 
 |---------|----------|--------|-------------|---------|
 | `forge.high` — High-quality generation (200k poly + PBR) | Bronze | **Live** | yes | [`api/forge.js`](../api/forge.js) |
 | `forge.gameready` — Game-ready export (Unity/Unreal) | Bronze | **Live** | yes | [`api/forge-gameready.js`](../api/forge-gameready.js) |
+| `forge.keep`: Keep a Forge generation (original file) | Bronze | Off by default (`enforced: false`) | per-tier `forge.keep.<tier>` | [`api/forge-keep.js`](../api/forge-keep.js) |
 | `worlds.private` — Private, invite-only worlds | Silver | Planned | — | partial (no visibility dim yet) |
 | `mcp.priority` — Priority MCP routing | Silver | Planned | — | not built (no shared queue) |
 | `worlds.branded` — Branded worlds + custom environments | Gold | Planned | — | not built |
 | `drops.early` — Early access to drops | Gold | Planned | — | drop endpoints exist |
 | `names.first_dibs` — First dibs on rare `*.threews.sol` | Genesis | Planned | `name.auction` | SNS exists |
+
+### Pay-to-keep (`forge.keep`)
+
+[`api/forge-keep.js`](../api/forge-keep.js) is an optional gate on the original file of a
+Forge generation. It is **off** unless `FORGE_PAY_TO_KEEP=on` (flip it with
+`npm run forge:pay-to-keep -- on|off|status`, which uses `--update-env-vars`). While off,
+every generation is keepable and the endpoint answers `enabled: false, kept: true`. While
+on, generating and previewing on a free lane stays free, and the original file is released
+once per creation to a Bronze+ holder, or against one settled $THREE payment for
+`forge.keep.draft` ($0.05) or `forge.keep.standard` ($0.15). High needs no keep payment
+because it is already held or paid for at generation time. Because the registry flag
+describes a gate that is off by default, `forge.keep` stays `enforced: false` and `/three`
+shows it as Planned. `GET /api/forge-quote` prices a generation (and the keep step) per
+path, tier and options from the same tier and catalog code.
 
 ### Adjacent levers (live, not feature-gated)
 
@@ -261,7 +281,9 @@ Today worlds are **owner-based with no visibility concept**
 with its id. Making "private" a real perk means adding a visibility dimension and
 enforcing it on read.
 
-**1. Schema** — migration `api/_lib/migrations/2026-06-24-world-visibility.sql`:
+**1. Schema**: a new migration in `api/_lib/migrations/` (timestamp-prefixed, like
+`20261015000000_world_gems.sql`) against the `world_docs` table from
+`2026-06-01-world-docs.sql`:
 
 ```sql
 ALTER TABLE world_docs ADD COLUMN IF NOT EXISTS visibility text NOT NULL DEFAULT 'public';
@@ -344,6 +366,7 @@ Unit coverage for the same behavior lives in `tests/forge-high-gate.test.js`,
 | Env var | Required | Purpose |
 |---------|----------|---------|
 | `HOLDER_PASS_SECRET` | prod | HMAC key for signing/verifying tier passes |
+| `FORGE_PAY_TO_KEEP` | no | `on` enables the pay-to-keep gate in `api/forge-keep.js` (default off) |
 | `THREE_COMP_ACCOUNTS` | no | extra comped handles / emails / user ids, comma-separated (merged with the built-in allowlist) |
 | `THREE_TOKEN_MINT` | — | $THREE mint (defaults to the canonical CA) |
 | `THREE_TOKEN_DECIMALS` | — | token decimals (default 6) |

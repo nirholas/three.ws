@@ -35,7 +35,7 @@ Open [/drops](https://three.ws/drops), sign in, and press **Launch a
 collection**. You supply:
 
 - **Name and symbol.** The symbol is 2 to 10 letters or digits, shown on cards.
-- **Supply.** Up to 10,000. The roll is instant and free at any size, because no
+- **Supply.** 1 to 10,000. The roll is instant and free at any size, because no
   art is generated at this step.
 - **Base style.** The look every item shares, for example
   `stylized matte-clay guardian creature, soft rim light, chunky proportions`.
@@ -43,7 +43,8 @@ collection**. You supply:
   weights. The builder shows each option's resulting share as you type. An
   option can carry its own prompt fragment when the trait's display name is not
   what you want fed to the generator: the value `Bomber jacket` can generate
-  from `wearing a worn leather bomber jacket`.
+  from `wearing a worn leather bomber jacket`. A drop takes at most 12 layers
+  and 64 options per layer.
 
 Submitting rolls the supply and lands you on the collection page. The drop
 starts as a **draft**: its seed is withheld, so the provenance hash it publishes
@@ -79,7 +80,9 @@ curl -X POST https://three.ws/api/drops/create \
 ```
 
 A layer's options may be bare strings, in which case each weighs 1 and its value
-doubles as its prompt fragment. The response carries the `slug`, the
+doubles as its prompt fragment. Optional body fields are `description`,
+`visibility` (`public` by default, or `unlisted` / `private`) and `seed`. The
+`201` response wraps the collection in `drop`, which carries the `slug`, the
 `provenance_hash`, and (for the creator) the `seed`.
 
 ## How rarity is computed
@@ -107,8 +110,9 @@ uses for cosmetics:
 ## Reveal: art is forged per item
 
 A freshly rolled item is **sealed**. Its traits are already public and its rank
-is already fixed; only the art is unforged. Pressing **Reveal** on the collection
-page composes the item's prompt (the base style, then each rolled trait's prompt
+is already fixed; only the art is unforged. Pressing **Reveal this item** on the
+collection page (a draft must be published first, otherwise `409 not_published`)
+composes the item's prompt (the base style, then each rolled trait's prompt
 fragment in layer order, then the hints that keep the output riggable) and
 submits it to [the Forge](forge.md). The page then polls until the GLB lands.
 
@@ -120,8 +124,9 @@ Reveal states are `sealed`, `revealing`, `revealed`, and `failed`. A failed
 reveal keeps its error and is retryable from the same button. Claiming an item
 for reveal is a conditional database update, so a double-clicked button cannot
 start two paid generation jobs for the same token, and a claim that never comes
-back is released automatically after fifteen minutes rather than needing a
-sweeper cron.
+back is released to `sealed` by the next poll once it is fifteen minutes old,
+rather than needing a sweeper cron. The button reads **Retry reveal** after a
+failure.
 
 Because every item is generated as a full-body character in a neutral A-pose, it
 inherits the platform's universal animation retarget: any revealed item drives
