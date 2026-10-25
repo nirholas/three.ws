@@ -74,6 +74,41 @@ async function makeLoader() {
 	return _loaderPromise;
 }
 
+// Coalesce concurrent requests for the same key into one underlying load.
+// three.js's FileLoader keeps its own duplicate-request table (`loading[url]`
+// in node_modules/three/src/loaders/FileLoader.js), but that table's cleanup
+// has an edge where a second queued callback can see the entry already
+// deleted and rethrow into a promise chain FileLoader itself never returns or
+// awaits: an unhandled rejection no caller-side try/catch can intercept,
+// because it is not the promise loadAsync() ever handed back to us. Never
+// letting two of our own calls register against the same URL concurrently
+// means FileLoader's table never holds more than one callback for it. Pure
+// and loader-agnostic so it can be exercised directly in tests; exported for
+// that reason (see walk-sdk/test/load-avatar.test.mjs).
+const _inFlight = new Map();
+export function coalesceLoad(key, start) {
+	const existing = _inFlight.get(key);
+	if (existing) return existing.then((value) => ({ value, owner: false }));
+	const promise = start();
+	_inFlight.set(key, promise);
+	// Separate listener from the one below: cleans up the table on either
+	// outcome without affecting what the caller below awaits. Needs its own
+	// .catch(): a bare .finally() with nothing after it is exactly the
+	// floating-promise shape this whole fix exists to avoid.
+	promise.finally(() => {
+		if (_inFlight.get(key) === promise) _inFlight.delete(key);
+	}).catch(() => {});
+	return promise.then((value) => ({ value, owner: true }));
+}
+
+// A joiner must never share the owner's live gltf.scene: it gets attached to
+// its own rig and its own AnimationMixer/AnimationManager, and Object3D.add()
+// reparents (steals) a child already attached elsewhere, which would yank the
+// model out from under whichever caller mounted first.
+function cloneGltfForJoiner(gltf) {
+	return { ...gltf, scene: gltf.scene.clone(true) };
+}
+
 /**
  * Load a roster entry and build its controller.
  * @returns {Promise<{ model: import('three').Object3D, controller: object, gltf: object }>}
@@ -94,7 +129,8 @@ export async function loadWalkAvatar(entry, opts = {}) {
 	let active = entry;
 	let gltf;
 	try {
-		gltf = await loader.loadAsync(url);
+		const primary = await coalesceLoad(url, () => loader.loadAsync(url));
+		gltf = primary.owner ? primary.value : cloneGltfForJoiner(primary.value);
 	} catch (err) {
 		if (fallbackEntry && fallbackEntry.id !== entry.id) {
 			log.warn(
@@ -102,7 +138,9 @@ export async function loadWalkAvatar(entry, opts = {}) {
 				err?.message || err,
 			);
 			active = fallbackEntry;
-			gltf = await loader.loadAsync(resolveAvatarUrl(fallbackEntry, { assetBase, apiBase }));
+			const fallbackUrl = resolveAvatarUrl(fallbackEntry, { assetBase, apiBase });
+			const fallback = await coalesceLoad(fallbackUrl, () => loader.loadAsync(fallbackUrl));
+			gltf = fallback.owner ? fallback.value : cloneGltfForJoiner(fallback.value);
 		} else {
 			throw err;
 		}
