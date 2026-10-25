@@ -1432,3 +1432,10 @@ Four read-only tools (`robinhood_chain_stats`, `robinhood_token_prices`, `robinh
 ## 2026-10-25: order 510 (integrate 11, per-coin earnings source), done
 
 Code shipped in 98744d430. Close-out found `20261015090000_agent_coin_earnings_timeline.sql` already `[applied]` in production (`npm run db:status`), the five new columns present on `agent_coin_earnings`, `tests/pump-creator-fees.test.js` plus `tests/agent-earnings-board.test.js` 24/24, and `launch-detail` answering 200 with `creator_fees.distributed` and `reconciliation` keys for a real earning mint (values fill when the snapshot cron next runs). OWNER-ACTIONS row 63 removed. Production still needs the normal deploy to serve the new code.
+
+## 2026-10-25: order 534 closed
+Both open checks confirmed: the live LLM path returned a full trading read (assets with exposure and direction, priced_in, horizon, counter) via the platform chain, and the reader's trading-read markup rendered with the counter-argument section (no dev server run, per standing rule). Six news test files pass (94 tests). Order file removed.
+
+## 2026-10-25: order 536 (integrate 37), re-checked, still partial
+
+`tests/x-archive.test.js` and `tests/x-content-outcomes.test.js` pass (75 tests). `npm run x:archive:price` again failed on a GeckoTerminal 429 before writing, so `public/data/trythreews-post-impact.json` (generated 2026-10-23) is unchanged. The three-width browser check was not run: it needs a dev server, which this session was not permitted to start. Remaining: rerun the script when GeckoTerminal recovers, then screenshot the Posts view at 375, 768 and 1280. Order file left in place.
