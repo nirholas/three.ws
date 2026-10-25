@@ -272,6 +272,33 @@ describe('recordSplitDistribution — persisted allocations', () => {
 	});
 });
 
+describe('recordSplitDistribution - net already paid to the seller wallet', () => {
+	const split = {
+		id: 'split-9',
+		split_mode: 'ledger',
+		recipients: [
+			{ address: EVM_A, share_bps: 5000, recipient_user_id: 'u-a' },
+			{ address: EVM_B, share_bps: 5000, recipient_user_id: 'u-b' },
+		],
+	};
+
+	it('records informational settled rows so the treasury never pays the net twice', async () => {
+		const out = await recordSplitDistribution(fakeSql([]), {
+			purchaseId: 'p-9', split, netAtomics: 1000n, currencyMint: 'usdc', chain: 'solana',
+			settledToWallet: true,
+		});
+		expect(out.every((r) => r.status === 'settled')).toBe(true);
+	});
+
+	it('keeps accrued credit only when the net did not reach the seller wallet', async () => {
+		const out = await recordSplitDistribution(fakeSql([]), {
+			purchaseId: 'p-10', split, netAtomics: 1000n, currencyMint: 'usdc', chain: 'solana',
+			settledToWallet: false,
+		});
+		expect(out.every((r) => r.status === 'accrued')).toBe(true);
+	});
+});
+
 describe('enforceOnchainLicense — fail-open gate', () => {
 	const prev = process.env.SKILL_LICENSE_ENFORCE;
 	afterEach(() => {

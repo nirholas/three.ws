@@ -4,17 +4,20 @@
 # lower bounds only; the versions below satisfy every bound it declares.
 
 # ── Modly backend (api/requirements.txt at the pinned Modly commit) ──────────
+# python-multipart, cryptography, certifi and pytest are kept on current
+# releases (they carry open advisories at older pins). Nothing here is held down
+# by Modly's declared lower bounds, so they are free to move up.
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
-python-multipart==0.0.20
+python-multipart==0.0.32
 httpx==0.28.1
 mcp==1.30.0
 trimesh==4.5.3
 pymeshlab==2023.12.post2
 huggingface_hub==0.36.2
 hf_xet==1.1.10
-cryptography==45.0.7
-certifi==2025.8.3
+cryptography==50.0.2
+certifi==2026.10.23
 
 # ── Shared numeric stack (pymeshlab 2023.12 needs numpy 1.x) ─────────────────
 numpy==1.26.4
@@ -27,4 +30,4 @@ xatlas==0.0.11
 scipy==1.13.1
 Pillow==13.0.0
 google-cloud-storage==2.18.0
-pytest==8.3.5
+pytest==9.1.1
