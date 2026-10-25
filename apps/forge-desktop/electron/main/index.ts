@@ -2,7 +2,8 @@ import { app, BrowserWindow, shell, session } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { setupIpcHandlers } from './ipc-handlers'
-import { PythonBridge } from './python-bridge'
+import { PythonBridge, API_BASE_URL } from './python-bridge'
+import { installApiAuth } from './api-auth'
 import { logger, archiveCurrentSession } from './logger'
 import { initAutoUpdater } from './updater'
 import { syncBuiltinExtensions } from './builtin-sync'
@@ -93,6 +94,8 @@ app.whenReady().then(async () => {
   archiveCurrentSession()
   logger.info(`App started, version ${app.getVersion()}`)
   electronApp.setAppUserModelId('ws.three.forge')
+
+  installApiAuth(API_BASE_URL)
 
   // Clear Chromium disk cache on startup to recover from any corruption
   await session.defaultSession.clearCache()

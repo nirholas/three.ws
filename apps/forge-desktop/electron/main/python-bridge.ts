@@ -9,6 +9,7 @@ import { getThreeWsApiKey, THREE_WS_ORIGIN } from './three-ws-account'
 import { logger } from './logger'
 import { cleanPythonEnv, getVenvPythonExe } from './python-setup'
 import { getBuiltinExtensionsDir } from './builtin-sync'
+import { API_TOKEN, allowedRendererOrigins } from './api-auth'
 
 const API_PORT = 8765
 const API_HOST = '127.0.0.1'
@@ -55,6 +56,9 @@ export class PythonBridge {
       env: {
         ...cleanPythonEnv(),
         PYTHONUNBUFFERED:       '1',
+        // Access control for the loopback API (api/access_control.py).
+        FORGE_API_TOKEN:        API_TOKEN,
+        FORGE_ALLOWED_ORIGINS:  allowedRendererOrigins(),
         // mesh_ops uses Electron in Node mode for the existing meshoptimizer
         // backend, so packaged builds do not depend on a system Node install.
         THREEWS_NODE_EXECUTABLE:  process.execPath,
