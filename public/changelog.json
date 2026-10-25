@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-25T12:00:43.532Z",
+	"generated_at": "2026-10-25T12:00:57.759Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -24,6 +24,17 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-25",
+			"type": "update",
+			"title": "BNB Greenfield vault writes no longer ship a vulnerable XML builder",
+			"summary": "The Greenfield SDK and the Bot Framework expression library each carried a nested fast-xml-parser 4.5.7 that the version-scoped override never reached, leaving the XMLBuilder comment and CDATA injection advisory (GHSA-gh4j-gqv2-49f6) open. The override now applies to every copy, all of them resolve to 5.11.2, and a lockfile test guards every nested path.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{

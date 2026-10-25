@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-25",
+			"title": "BNB Greenfield vault writes no longer ship a vulnerable XML builder",
+			"summary": "The Greenfield SDK and the Bot Framework expression library each carried a nested fast-xml-parser 4.5.7 that the version-scoped override never reached, leaving the XMLBuilder comment and CDATA injection advisory (GHSA-gh4j-gqv2-49f6) open. The override now applies to every copy, all of them resolve to 5.11.2, and a lockfile test guards every nested path.",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-10-25",
 			"title": "Background-removal service moves to Pillow 13, closing 41 image-decoder advisories",
 			"summary": "The background-removal worker decodes images that callers upload, and its pinned Pillow carried 41 open advisories including heap overflows in the JPEG, TIFF and FlashPix loaders. It now runs Pillow 13.0.0 on rembg 2.0.86 (the first release that allows it), matching every other worker, and the image build gate passes against the real models.",
 			"tags": [
