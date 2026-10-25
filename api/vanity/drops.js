@@ -48,6 +48,7 @@ import {
 	settlePayment,
 	encodePaymentResponseHeader,
 	permit2VariantOf,
+	solanaSelfPayOnly,
 	resolveResourceUrl,
 	buildBazaarSchema,
 } from '../_lib/x402-spec.js';
@@ -132,7 +133,7 @@ const CREATE_FEE_ATOMICS = 50_000; // $0.05
 
 // ── x402 challenge ────────────────────────────────────────────────────────────
 
-function buildRequirements(resourceUrl, priceAtomics) {
+export function buildRequirements(resourceUrl, priceAtomics) {
 	const amount = String(priceAtomics);
 	const out = [];
 	if (env.X402_PAY_TO_BASE && env.X402_ASSET_ADDRESS_BASE) {
@@ -150,7 +151,7 @@ function buildRequirements(resourceUrl, priceAtomics) {
 		const permit2 = permit2VariantOf(eip3009);
 		if (permit2) out.push(permit2);
 	}
-	if (env.X402_PAY_TO_SOLANA && env.X402_FEE_PAYER_SOLANA && env.X402_ASSET_MINT_SOLANA) {
+	if (env.X402_PAY_TO_SOLANA && env.X402_ASSET_MINT_SOLANA && (env.X402_FEE_PAYER_SOLANA || solanaSelfPayOnly())) {
 		out.push({
 			scheme: 'exact',
 			network: NETWORK_SOLANA_MAINNET,
@@ -159,7 +160,7 @@ function buildRequirements(resourceUrl, priceAtomics) {
 			asset: env.X402_ASSET_MINT_SOLANA,
 			maxTimeoutSeconds: 60,
 			resource: resourceUrl,
-			extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
+			extra: { name: 'USDC', decimals: 6, ...(solanaSelfPayOnly() ? {} : { feePayer: env.X402_FEE_PAYER_SOLANA }) },
 		});
 	}
 	return out;
@@ -251,7 +252,7 @@ function bad(message, code) {
 function activeNetworks() {
 	const nets = [];
 	if (env.X402_PAY_TO_BASE && env.X402_ASSET_ADDRESS_BASE) nets.push('base');
-	if (env.X402_PAY_TO_SOLANA && env.X402_FEE_PAYER_SOLANA && env.X402_ASSET_MINT_SOLANA) nets.push('solana');
+	if (env.X402_PAY_TO_SOLANA && env.X402_ASSET_MINT_SOLANA && (env.X402_FEE_PAYER_SOLANA || solanaSelfPayOnly())) nets.push('solana');
 	return nets;
 }
 

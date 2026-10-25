@@ -17,7 +17,7 @@ function makeRoom({ creator = '' } = {}) {
 	room.columnCounts = new Map();
 	room.coinCreator = creator;
 	room.econ = new Map();
-	room.state = { players: new Map() };
+	Object.defineProperty(room, 'state', { value: { players: new Map() }, writable: true, configurable: true });
 	return room;
 }
 

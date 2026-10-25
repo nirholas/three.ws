@@ -39,6 +39,7 @@ import {
 	settlePayment,
 	encodePaymentResponseHeader,
 	permit2VariantOf,
+	solanaSelfPayOnly,
 	resolveResourceUrl,
 } from '../_lib/x402-spec.js';
 import { env } from '../_lib/env.js';
@@ -129,7 +130,7 @@ const ROUTE_DESCRIPTION = FORGE_ROUTE_DESCRIPTION;
 const INPUT_SCHEMA = FORGE_INPUT_SCHEMA;
 const ROUTE_BAZAAR = FORGE_BAZAAR;
 
-function buildRequirements(resourceUrl, priceAtomics) {
+export function buildRequirements(resourceUrl, priceAtomics) {
 	const amount = String(priceAtomics);
 	// The paid Forge settles in USDC on Solana mainnet ONLY. Base/EVM is
 	// intentionally not offered — every quote on this route is a Solana 402.
@@ -143,7 +144,7 @@ function buildRequirements(resourceUrl, priceAtomics) {
 				asset: env.X402_ASSET_MINT_SOLANA,
 				maxTimeoutSeconds: 60,
 				resource: resourceUrl,
-				extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
+				extra: { name: 'USDC', decimals: 6, ...(solanaSelfPayOnly() ? {} : { feePayer: env.X402_FEE_PAYER_SOLANA }) },
 			},
 		];
 	}

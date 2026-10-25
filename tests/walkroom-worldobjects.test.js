@@ -14,7 +14,7 @@ import { WorldObject } from '../multiplayer/src/schemas.js';
 
 function makeRoom() {
 	const room = Object.create(WalkRoom.prototype);
-	room.state = { objects: new Map() };
+	Object.defineProperty(room, 'state', { value: { objects: new Map() }, writable: true, configurable: true });
 	room.econ = new Map();
 	room._objCounters = new Map();
 	return room;

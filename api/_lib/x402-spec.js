@@ -209,10 +209,8 @@ export function paymentRequirements(resourceUrl, { amount } = {}) {
 	// broadcasts. Mirrors the same fallback in x402-paid-endpoint.js, so the 17
 	// hand-rolled paid endpoints on this builder keep receiving on an empty
 	// sponsor wallet instead of going dark with it.
-	const solanaSelfPayOnly =
-		resolveSolanaFacilitator().self &&
-		(!env.X402_FEE_PAYER_SOLANA || !solanaSettleable() || sponsorKnownBelowFloor());
-	if (env.X402_PAY_TO_SOLANA && (solanaSettleable() || solanaSelfPayOnly)) {
+	const selfPayOnly = solanaSelfPayOnly();
+	if (env.X402_PAY_TO_SOLANA && (solanaSettleable() || selfPayOnly)) {
 		out.push({
 			...common,
 			network: NETWORK_SOLANA_MAINNET,
@@ -225,7 +223,7 @@ export function paymentRequirements(resourceUrl, { amount } = {}) {
 			extra: {
 				name: 'USDC',
 				decimals: 6,
-				...(solanaSelfPayOnly ? {} : { feePayer: env.X402_FEE_PAYER_SOLANA }),
+				...(selfPayOnly ? {} : { feePayer: env.X402_FEE_PAYER_SOLANA }),
 			},
 		});
 		// $THREE alongside USDC on the same Solana rail (opt-in via
@@ -233,7 +231,7 @@ export function paymentRequirements(resourceUrl, { amount } = {}) {
 		// clients that pick the first Solana accept keep settling USDC; the modal
 		// surfaces both as a token chooser. Same fee-payer co-sign path, the
 		// checkout server transfers any SPL mint, so no extra wiring is needed.
-		if (env.X402_ACCEPT_THREE_SOLANA && (env.X402_FEE_PAYER_SOLANA || solanaSelfPayOnly)) {
+		if (env.X402_ACCEPT_THREE_SOLANA && (env.X402_FEE_PAYER_SOLANA || selfPayOnly)) {
 			out.push({
 				...common,
 				...(env.X402_THREE_AMOUNT_SOLANA ? { amount: String(env.X402_THREE_AMOUNT_SOLANA) } : {}),
@@ -243,7 +241,7 @@ export function paymentRequirements(resourceUrl, { amount } = {}) {
 				extra: {
 					name: 'THREE',
 					decimals: env.THREE_TOKEN_DECIMALS,
-					...(solanaSelfPayOnly ? {} : { feePayer: env.X402_FEE_PAYER_SOLANA }),
+					...(selfPayOnly ? {} : { feePayer: env.X402_FEE_PAYER_SOLANA }),
 				},
 			});
 		}
@@ -405,6 +403,19 @@ export function solanaSettleable() {
 	return !!String(process.env.X402_FEE_PAYER_SECRET_BASE58 || '').trim();
 }
 
+// True when Solana must be advertised WITHOUT extra.feePayer: we settle in-house
+// and the sponsor cannot co-sign (none configured, no key loaded, or the wallet
+// is under its SOL floor). The buyer then signs as its own fee payer and the
+// facilitator only broadcasts. Every Solana accept builder must consult this;
+// advertising a sponsor the facilitator refuses at the floor gate makes buyers
+// sign payments that can never settle.
+export function solanaSelfPayOnly() {
+	return (
+		resolveSolanaFacilitator().self &&
+		(!env.X402_FEE_PAYER_SOLANA || !solanaSettleable() || sponsorKnownBelowFloor())
+	);
+}
+
 // Shared exact-scheme requirements builder for the hand-rolled x402 endpoints that
 // call send402()/verifyPayment() directly instead of going through paidEndpoint().
 // Emits the platform-standard accept set for a USDC price:
@@ -423,11 +434,12 @@ export function solanaSettleable() {
 export function buildExactRequirements(resourceUrl, amount = env.X402_MAX_AMOUNT_REQUIRED) {
 	const amt = String(amount);
 	const out = [];
+	const selfPayOnly = solanaSelfPayOnly();
 	if (
 		env.X402_PAY_TO_SOLANA &&
 		env.X402_ASSET_MINT_SOLANA &&
-		env.X402_FEE_PAYER_SOLANA &&
-		solanaSettleable()
+		(solanaSettleable() || selfPayOnly) &&
+		(env.X402_FEE_PAYER_SOLANA || selfPayOnly)
 	) {
 		out.push({
 			scheme: 'exact',
@@ -437,7 +449,11 @@ export function buildExactRequirements(resourceUrl, amount = env.X402_MAX_AMOUNT
 			asset: env.X402_ASSET_MINT_SOLANA,
 			maxTimeoutSeconds: 60,
 			resource: resourceUrl,
-			extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
+			extra: {
+				name: 'USDC',
+				decimals: 6,
+				...(selfPayOnly ? {} : { feePayer: env.X402_FEE_PAYER_SOLANA }),
+			},
 		});
 	}
 	if (baseSettleable() && env.X402_PAY_TO_BASE && env.X402_ASSET_ADDRESS_BASE) {

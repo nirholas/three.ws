@@ -22,7 +22,7 @@ function player(name, x, z, dead = false) {
 // outgoing room messages so tests can assert what every client receives.
 function makeRoom() {
 	const room = Object.create(WalkRoom.prototype);
-	room.state = { players: new Map() };
+	Object.defineProperty(room, 'state', { value: { players: new Map() }, writable: true, configurable: true });
 	room.clients = [];
 	room.broadcasts = [];
 	room.sent = [];

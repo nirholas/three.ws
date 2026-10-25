@@ -13,7 +13,7 @@ import { WalkRoom } from '../multiplayer/src/rooms/WalkRoom.js';
 
 function makeRoom() {
 	const room = Object.create(WalkRoom.prototype);
-	room.state = { players: new Map() };
+	Object.defineProperty(room, 'state', { value: { players: new Map() }, writable: true, configurable: true });
 	room._actionCounters = new Map();
 	return room;
 }

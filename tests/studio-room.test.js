@@ -18,7 +18,7 @@ function makeRoom() {
 	room._opLedger = new Map();
 	const models = new Map();
 	const viewers = new Map();
-	room.state = { models, viewers, roomKey: room.roomKey };
+	Object.defineProperty(room, 'state', { value: { models, viewers, roomKey: room.roomKey }, writable: true, configurable: true });
 	// The reject channel: record what the server tells a client.
 	room._rejects = [];
 	return room;

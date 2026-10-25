@@ -34,6 +34,7 @@ import {
 	settlePayment,
 	encodePaymentResponseHeader,
 	permit2VariantOf,
+	solanaSelfPayOnly,
 	resolveResourceUrl,
 	buildBazaarSchema,
 } from '../_lib/x402-spec.js';
@@ -158,7 +159,7 @@ const OUTPUT_SCHEMA = {
 	},
 };
 
-function buildRequirements(resourceUrl, priceAtomics) {
+export function buildRequirements(resourceUrl, priceAtomics) {
 	const amount = String(priceAtomics);
 	// Solana mainnet USDC only in production. Base is a dev/preview failsafe when
 	// X402_PAY_TO_SOLANA is unset so the route never dead-ends with an empty 402.
@@ -172,7 +173,7 @@ function buildRequirements(resourceUrl, priceAtomics) {
 				asset: env.X402_ASSET_MINT_SOLANA,
 				maxTimeoutSeconds: 60,
 				resource: resourceUrl,
-				extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
+				extra: { name: 'USDC', decimals: 6, ...(solanaSelfPayOnly() ? {} : { feePayer: env.X402_FEE_PAYER_SOLANA }) },
 			},
 		];
 	}

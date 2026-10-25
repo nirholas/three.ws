@@ -166,3 +166,59 @@ describe('paymentRequirements shares the self-pay fallback', () => {
 		}
 	});
 });
+
+// The four sibling builders that never got the guard: they advertised the
+// sponsor as fee payer unconditionally, so a sponsor under its floor kept being
+// offered and every payment buyers signed against it was refused at settle.
+describe.each([
+	[
+		'buildExactRequirements',
+		async () => (await import('../api/_lib/x402-spec.js')).buildExactRequirements,
+	],
+	[
+		'pipeline.js buildRequirements',
+		async () => (await import('../api/x402/pipeline.js')).buildRequirements,
+	],
+	[
+		'forge.js buildRequirements',
+		async () => (await import('../api/x402/forge.js')).buildRequirements,
+	],
+	[
+		'drops.js buildRequirements',
+		async () => (await import('../api/vanity/drops.js')).buildRequirements,
+	],
+])('%s shares the self-pay fallback', (_name, load) => {
+	async function requirements({ belowFloor }) {
+		vi.doMock('../api/_lib/x402/self-facilitator.js', () => ({
+			sponsorKnownBelowFloor: () => belowFloor,
+			refreshSponsorFloorState: () => {},
+		}));
+		const build = await load();
+		return build('https://three.ws/api/x402/example', '1000');
+	}
+
+	it('keeps the Solana accept but drops feePayer when the sponsor is below its floor', async () => {
+		const accepts = solanaAccepts(await requirements({ belowFloor: true }));
+		expect(accepts.length).toBeGreaterThan(0);
+		for (const accept of accepts) {
+			expect(accept.extra.feePayer).toBeUndefined();
+		}
+	});
+
+	it('keeps sponsoring gas while the sponsor is healthy', async () => {
+		const accepts = solanaAccepts(await requirements({ belowFloor: false }));
+		expect(accepts.length).toBeGreaterThan(0);
+		for (const accept of accepts) {
+			expect(accept.extra.feePayer).toBe(SPONSOR);
+		}
+	});
+
+	it('advertises Solana via self-pay when no sponsor is configured', async () => {
+		delete process.env.X402_FEE_PAYER_SOLANA;
+		const accepts = solanaAccepts(await requirements({ belowFloor: false }));
+		expect(accepts.length).toBeGreaterThan(0);
+		for (const accept of accepts) {
+			expect(accept.extra.feePayer).toBeUndefined();
+		}
+	});
+});

@@ -30,6 +30,7 @@
 // Only `degraded` and `down` count against the overall roll-up; `paused` and
 // `unknown` are surfaced but neutral.
 
+import { createHash } from 'node:crypto';
 import { cacheHealth, cacheGet } from '../cache.js';
 import { heliusHealth } from '../balances.js';
 import { rpcLaneHealth } from '../solana/connection.js';
@@ -50,6 +51,38 @@ const WORLD_HEALTH_CACHE_KEY = 'world:health';
 // A parked world-health outcome older than this is treated as stale/unknown
 // rather than trusted — the 15-min cron should refresh it well within the window.
 const WORLD_STALE_MS = 90 * 60 * 1000;
+// The world-health cron's cache write is best-effort and per-instance when Redis
+// is failing, so /healthz can miss a real outage. Its sendOpsAlert calls land in
+// the durable ops_alerts table keyed by sha256(signature).slice(0,16) (see
+// signatureOf in ../alerts.js). A row refreshed within two 15-min cron ticks
+// plus slack means the world is down right now.
+const WORLD_DOWN_SIGNATURES = ['world-health:status-http', 'world-health:status-unreachable'].map(
+	(t) => createHash('sha256').update(t).digest('hex').slice(0, 16),
+);
+const WORLD_ALERT_FRESH_MS = 40 * 60 * 1000;
+
+/**
+ * Durable fallback for checkWorld(): the freshest world-down alert detail, or
+ * null when none is recent or the database cannot be read.
+ * @returns {Promise<string|null>}
+ */
+async function recentWorldDownAlert() {
+	try {
+		const { sql } = await import('../db.js');
+		const rows = await sql`
+			select detail, last_seen from ops_alerts
+			where signature in (${WORLD_DOWN_SIGNATURES[0]}, ${WORLD_DOWN_SIGNATURES[1]})
+			order by last_seen desc limit 1
+		`;
+		const row = rows?.[0];
+		if (!row?.last_seen) return null;
+		const age = Date.now() - new Date(row.last_seen).getTime();
+		if (!(age <= WORLD_ALERT_FRESH_MS)) return null;
+		return row.detail || 'world unreachable';
+	} catch {
+		return null;
+	}
+}
 // Sniper worker heartbeat (bot_heartbeat, worker='agent-sniper'). It beats every
 // ~30s; /api/sniper/status calls it dead past 90s. For paging we use a wider
 // window so a deploy blip doesn't page, but a real death pages within two ticks.
@@ -337,10 +370,14 @@ async function checkWorld() {
 	try {
 		const parked = await cacheGet(WORLD_HEALTH_CACHE_KEY);
 		if (!parked || typeof parked !== 'object') {
+			const alert = await recentWorldDownAlert();
+			if (alert) return { ...base, status: 'down', detail: alert };
 			return { ...base, status: 'unknown', detail: 'no world-health report yet' };
 		}
 		const age = parked.checkedAt ? Date.now() - parked.checkedAt : Infinity;
 		if (age > WORLD_STALE_MS) {
+			const alert = await recentWorldDownAlert();
+			if (alert) return { ...base, status: 'down', detail: alert };
 			return { ...base, status: 'unknown', detail: 'world-health report is stale' };
 		}
 		if (parked.status === 'down') {

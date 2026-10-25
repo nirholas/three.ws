@@ -10,7 +10,7 @@ function makeRoom() {
 	Object.defineProperty(room, 'roomId', { value: 'room-1' });
 	Object.defineProperty(room, 'clients', { value: [] });
 	room.coinCreator = '';
-	room.state = { coin: MINT, coinName: '', coinSymbol: '', coinImage: '' };
+	Object.defineProperty(room, 'state', { value: { coin: MINT, coinName: '', coinSymbol: '', coinImage: '' }, writable: true, configurable: true });
 	return room;
 }
 

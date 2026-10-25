@@ -20,7 +20,7 @@ const GOOD_URL = 'https://pub-test.r2.dev/u/anon/avatar/8f14e45f.glb';
 
 function makeRoom({ tier = '', creator = '' } = {}) {
 	const room = Object.create(WalkRoom.prototype);
-	room.state = { objects: new Map(), players: new Map(), tier, coin: 'THREEsynthetic1111111111111111111111111111' };
+	Object.defineProperty(room, 'state', { value: { objects: new Map(), players: new Map(), tier, coin: 'THREEsynthetic1111111111111111111111111111' }, writable: true, configurable: true });
 	room.econ = new Map();
 	room._objCounters = new Map();
 	room._objSeq = 0;

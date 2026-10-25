@@ -11,9 +11,20 @@
  * DB ping has its own behavior (down when unreachable) that isn't the point here.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { gatherSubsystemHealth, classifySniperBeat } from '../api/_lib/ops/subsystem-health.js';
 import { cacheSet, cacheDel } from '../api/_lib/cache.js';
+
+// Durable ops_alerts rows the world fallback reads. Default empty so every other
+// case behaves as before; the world-fallback cases set it per test.
+const dbState = vi.hoisted(() => ({ rows: [], throws: false, lastValues: null }));
+vi.mock('../api/_lib/db.js', () => ({
+	sql: async (strings, ...values) => {
+		if (dbState.throws) throw new Error('db down');
+		dbState.lastValues = values;
+		return dbState.rows;
+	},
+}));
 
 // Env the ring + x402-config checks read. Save/restore so cases don't leak.
 const ENV_KEYS = [
@@ -169,6 +180,72 @@ describe('gatherSubsystemHealth', () => {
 		expect(world.status).toBe('degraded');
 		expect(world.detail).toMatch(/UNPROTECTED/);
 		expect(world.hint).toMatch(/ADMIN_CODE/);
+	});
+
+	describe('world durable fallback (order 453)', () => {
+		afterEach(() => {
+			dbState.rows = [];
+			dbState.throws = false;
+			dbState.lastValues = null;
+		});
+
+		it('reports DOWN from a fresh ops_alerts row when the cache entry is missing', async () => {
+			await cacheDel('world:health');
+			dbState.rows = [
+				{
+					detail: 'https://world.three.ws/status returned HTTP 404',
+					last_seen: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
+				},
+			];
+			const health = await gatherSubsystemHealth({ probeDb: false });
+			const world = sub(health, 'world');
+			expect(world.status).toBe('down');
+			expect(world.detail).toMatch(/HTTP 404/);
+			expect(health.degraded).toContain('world');
+		});
+
+		it('reports DOWN from a fresh alert when the cache entry is stale', async () => {
+			await cacheSet(
+				'world:health',
+				{ status: 'ok', protected: true, problems: [], checkedAt: Date.now() - 3 * 60 * 60 * 1000 },
+				3600,
+			);
+			dbState.rows = [{ detail: 'unreachable - timeout', last_seen: new Date().toISOString() }];
+			const health = await gatherSubsystemHealth({ probeDb: false });
+			expect(sub(health, 'world').status).toBe('down');
+			await cacheDel('world:health');
+		});
+
+		it('stays UNKNOWN when the only alert row is older than the cron window', async () => {
+			await cacheDel('world:health');
+			dbState.rows = [
+				{ detail: 'old', last_seen: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString() },
+			];
+			const health = await gatherSubsystemHealth({ probeDb: false });
+			expect(sub(health, 'world').status).toBe('unknown');
+		});
+
+		it('stays UNKNOWN when there is no alert row at all', async () => {
+			await cacheDel('world:health');
+			dbState.rows = [];
+			const health = await gatherSubsystemHealth({ probeDb: false });
+			expect(sub(health, 'world').status).toBe('unknown');
+		});
+
+		it('degrades to cache-only UNKNOWN when the database read fails', async () => {
+			await cacheDel('world:health');
+			dbState.throws = true;
+			const health = await gatherSubsystemHealth({ probeDb: false });
+			expect(sub(health, 'world').status).toBe('unknown');
+		});
+
+		it('queries only the two down signatures the cron writes (sha256 prefix of the literal)', async () => {
+			await cacheDel('world:health');
+			await gatherSubsystemHealth({ probeDb: false });
+			const { createHash } = await import('node:crypto');
+			const h = (t) => createHash('sha256').update(t).digest('hex').slice(0, 16);
+			expect(dbState.lastValues).toEqual([h('world-health:status-http'), h('world-health:status-unreachable')]);
+		});
 	});
 
 	it('reports world as DOWN from a parked world-health outcome', async () => {

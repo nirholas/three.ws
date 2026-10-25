@@ -19,7 +19,7 @@ function player(name, x, z) {
 // client's own send), so tests can assert what peers and individuals receive.
 function makeRoom() {
 	const room = Object.create(WalkRoom.prototype);
-	room.state = { players: new Map() };
+	Object.defineProperty(room, 'state', { value: { players: new Map() }, writable: true, configurable: true });
 	room._tagImmunity = new Map();
 	room._tagTime = new Map();
 	room.clients = [];
