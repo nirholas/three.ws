@@ -63,6 +63,14 @@
 			<description>The trellis lane's GPU worker already restarted itself between jobs once host memory ratcheted up, but had no equivalent check for GPU memory: a rasterizer dependency allocates outside torch's own memory pool, so an instance's usable VRAM only ever shrank, and the instance's own health check kept passing right up until a job crashed or Cloud Run killed it mid-generation. The worker now also tracks GPU memory after every job and restarts cleanly between jobs once it has ratcheted far enough, the same way the existing memory guard already does, so Forge image-to-3D jobs on this lane fail or stall less often.</description>
 		</item>
 		<item>
+			<title>Modly 3D-generation worker closes TLS, request-parsing and test-tooling advisories</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-25:Modly 3D-generation worker closes TLS, request-parsing and test-tooling advisories</guid>
+			<pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Modly host environment pinned old releases of certifi (a compromised emSign root CA finding), cryptography, python-multipart (multipart DoS and file-write findings) and pytest. All four are now on current releases, and the worker's contract and CPU test suites pass against them.</description>
+		</item>
+		<item>
 			<title>Object-storage outages now answer a clean 503 with Retry-After instead of a raw 500</title>
 			<link>https://three.ws/docs/api-reference</link>
 			<guid isPermaLink="false">2026-10-25:Object-storage outages now answer a clean 503 with Retry-After instead of a raw 500</guid>

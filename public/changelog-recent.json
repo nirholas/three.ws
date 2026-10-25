@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-25T11:58:03.204Z",
+	"generated_at": "2026-10-25T11:58:51.013Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4202,
+	"total": 4203,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -75,6 +75,16 @@
 			"title": "Image-to-3D Forge instances recycle before a VRAM leak crashes a job",
 			"summary": "The trellis lane's GPU worker already restarted itself between jobs once host memory ratcheted up, but had no equivalent check for GPU memory: a rasterizer dependency allocates outside torch's own memory pool, so an instance's usable VRAM only ever shrank, and the instance's own health check kept passing right up until a job crashed or Cloud Run killed it mid-generation. The worker now also tracks GPU memory after every job and restarts cleanly between jobs once it has ratcheted far enough, the same way the existing memory guard already does, so Forge image-to-3D jobs on this lane fail or stall less often.",
 			"link": "/image-to-3d",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-25",
+			"type": "update",
+			"title": "Modly 3D-generation worker closes TLS, request-parsing and test-tooling advisories",
+			"summary": "The Modly host environment pinned old releases of certifi (a compromised emSign root CA finding), cryptography, python-multipart (multipart DoS and file-write findings) and pytest. All four are now on current releases, and the worker's contract and CPU test suites pass against them.",
+			"link": null,
 			"tags": [
 				"fix"
 			]
@@ -1545,17 +1555,6 @@
 			"link": "/open-source",
 			"tags": [
 				"feature",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-13",
-			"type": "update",
-			"title": "The Home Assistant integration is ready for the HACS default store",
-			"summary": "home-assistant-integration/ now validates clean against the real hassfest and HACS checks: manifest.json's documentation link fixed (it 404'd), version bumped to 1.0.1, and hacs.json's minimum Home Assistant version corrected to 2024.12.0 (the first release bundling the aiohttp.ClientWSTimeout the integration's relay client uses, confirmed against HA's own package_constraints.txt). It now ships its own local brand icons at the sizes both HACS and home-assistant/brands require. A new scripts/export-hacs-repo.mjs builds the exact standalone-repository tree (integration, README, LICENSE, hacs.json, and the two validation workflows, which exist only in that exported tree since this monorepo runs no GitHub Actions of its own) ready to push to a new repository. Verified end to end against a real Home Assistant container through its real config flow and a real services/home-relay server: 18 real entities, a confirmed auto-reconnect after a relay restart, and a documentation fix to the connectivity sensor's entity ID along the way. Creating the standalone repository and opening the hacs/default and home-assistant/brands pull requests are owner actions; submission text is ready in marketing/growth/submissions/home-assistant.md.",
-			"link": "/docs/home-relay",
-			"tags": [
-				"improvement",
 				"docs"
 			]
 		}

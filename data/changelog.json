@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-10-25",
+			"title": "Modly 3D-generation worker closes TLS, request-parsing and test-tooling advisories",
+			"summary": "The Modly host environment pinned old releases of certifi (a compromised emSign root CA finding), cryptography, python-multipart (multipart DoS and file-write findings) and pytest. All four are now on current releases, and the worker's contract and CPU test suites pass against them.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-25",
 			"title": "Rate limiter Redis path repaired and its health hint made honest",
 			"summary": "The rate limiter had been failing every Redis call because @upstash/ratelimit 2.1+ sends a script flag that self-hosted Redis rejects, so traffic ran on the Postgres fallback while healthz called it transient. The library is pinned to 2.0.8, and this class of fault is now logged and reported as a non-transient script incompatibility.",
 			"tags": [
