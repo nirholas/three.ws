@@ -444,7 +444,7 @@ export async function handleGetOne(req, res, id) {
 
 // ── Update ────────────────────────────────────────────────────────────────
 
-async function handleUpdate(req, res, id, auth) {
+export async function handleUpdate(req, res, id, auth) {
 	const scopeErr = requireScopeForMutation(auth, res, 'avatars:write');
 	if (scopeErr) return scopeErr;
 	const [existing] = await sql`
@@ -461,6 +461,21 @@ async function handleUpdate(req, res, id, auth) {
 	if (studioErr) return error(res, 400, 'validation_error', studioErr);
 	const homeUrl = normalizeHomeUrl(body.home_url);
 	if (homeUrl.error) return error(res, 400, 'validation_error', homeUrl.error);
+
+	// An agent may only point at an avatar its owner owns; the public manifest
+	// resolves the linked avatar's storage key without re-checking ownership.
+	let avatarId = null;
+	if (body.avatar_id) {
+		const raw = String(body.avatar_id);
+		if (!isUuid(raw)) return error(res, 400, 'validation_error', 'avatar_id must be a UUID');
+		const [av] = await sql`
+			SELECT id FROM avatars
+			 WHERE id = ${raw} AND owner_id = ${auth.userId} AND deleted_at IS NULL
+			 LIMIT 1
+		`;
+		if (!av) return error(res, 404, 'not_found', 'avatar not found');
+		avatarId = av.id;
+	}
 
 	// Server-side meta merge. GET strips encrypted_wallet_key /
 	// encrypted_solana_secret before returning meta, so a client read-modify-write
@@ -530,7 +545,7 @@ async function handleUpdate(req, res, id, auth) {
 		UPDATE agent_identities SET
 			name           = COALESCE(${body.name || null}, name),
 			description    = COALESCE(${body.description || null}, description),
-			avatar_id      = COALESCE(${body.avatar_id || null}, avatar_id),
+			avatar_id      = COALESCE(${avatarId}, avatar_id),
 			skills         = COALESCE(${body.skills || null}, skills),
 			meta           = COALESCE(${mergedMeta ? JSON.stringify(mergedMeta) : null}::jsonb, meta),
 			persona_prompt = COALESCE(${personaPrompt}, persona_prompt),
