@@ -11,8 +11,11 @@
  *   DELETE /api/oracle/follow  { agent_id, chat_id }
  *          → { ok: true }
  *
- * No auth required: the Telegram chat_id is the caller-supplied identity.
- * Rate-limited per IP and per (agent_id, chat_id) pair to prevent spam.
+ * Auth: session cookie or bearer token, and chat_id must be the Telegram chat the
+ * caller verified by linking Telegram to their account (their linked identity's
+ * id, which is their private chat id). A caller-supplied chat_id alone proves
+ * nothing, so without this anyone could unsubscribe or subscribe someone else.
+ * Rate-limited per IP.
  *
  * How the signals are delivered: when an armed Oracle agent makes a conviction
  * buy (in `workers/oracle/agent-loop.js`), the agent-loop calls
@@ -24,6 +27,7 @@ import { cors, json, readJson, wrap, error, rateLimited } from '../_lib/http.js'
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql, isDbUnavailableError } from '../_lib/db.js';
 import { isUuid } from '../_lib/validate.js';
+import { resolveUserId, verifiedTelegramChatId, UNVERIFIED_CHAT_MESSAGE } from '../_lib/oracle/verified-chat.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 
@@ -57,6 +61,22 @@ function asTrimmedString(v) {
 	return typeof v === 'string' ? v.trim() : '';
 }
 
+// Last trusted decision point for every verb: the caller must be signed in and
+// chat_id must be the chat their linked Telegram identity proves they control.
+async function requireOwnChat(req, res, chatId) {
+	const userId = await resolveUserId(req);
+	if (!userId) {
+		error(res, 401, 'unauthorized', 'sign in to manage Oracle follows');
+		return false;
+	}
+	const verified = await verifiedTelegramChatId(userId);
+	if (!verified || verified !== chatId) {
+		error(res, 403, 'forbidden', UNVERIFIED_CHAT_MESSAGE);
+		return false;
+	}
+	return true;
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', origins: '*' })) return;
 	const ip = clientIp(req);
@@ -77,6 +97,7 @@ export default wrap(async (req, res) => {
 
 		if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agent_id must be a UUID');
 		if (!validateChatId(chatId)) return error(res, 400, 'validation_error', 'chat_id must be a numeric ID or @handle');
+		if (!(await requireOwnChat(req, res, chatId))) return;
 
 		const rows = await sql`
 			select min_score from oracle_followers
@@ -105,6 +126,7 @@ export default wrap(async (req, res) => {
 
 		if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agent_id must be a UUID');
 		if (!validateChatId(chatId)) return error(res, 400, 'validation_error', 'chat_id must be a numeric Telegram ID or @handle');
+		if (!(await requireOwnChat(req, res, chatId))) return;
 
 		// Ensure the agent exists (guard against phantom subscriptions)
 		const agentRows = await sql`
@@ -149,6 +171,7 @@ export default wrap(async (req, res) => {
 
 		if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agent_id must be a UUID');
 		if (!validateChatId(chatId)) return error(res, 400, 'validation_error', 'chat_id must be a numeric Telegram ID or @handle');
+		if (!(await requireOwnChat(req, res, chatId))) return;
 
 		// No `.catch()` swallow: this statement IS the response. Reporting
 		// `{ ok: true }` on a delete that never ran leaves the follower subscribed

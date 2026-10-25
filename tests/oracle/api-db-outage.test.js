@@ -53,6 +53,13 @@ vi.mock('../../api/_lib/http.js', async () => {
 	};
 });
 
+// Follow now requires a signed-in caller whose linked Telegram identity is the
+// chat_id; the outage tests below run as that caller (see VERIFIED_CHAT).
+vi.mock('../../api/_lib/auth.js', async () => {
+	const actual = await vi.importActual('../../api/_lib/auth.js');
+	return { ...actual, getSessionUser: async () => ({ id: 'ab2aabd2-39f7-493b-8191-c9f174af62ab' }) };
+});
+
 vi.mock('../../api/_lib/rate-limit.js', () => ({
 	limits: {
 		publicIp: vi.fn(async () => ({ success: true })),
@@ -213,6 +220,10 @@ describe('GET /api/oracle/agent-stats', () => {
 });
 
 describe('/api/oracle/follow', () => {
+	// First read is the linked-identity lookup; the read under test comes after it.
+	const VERIFIED_CHAT = [{ subject: '12345' }];
+	beforeEach(() => { dbQueue = [VERIFIED_CHAT]; });
+
 	it('GET propagates a connectivity failure instead of reporting following: false', async () => {
 		nextDbError = CONN_ERROR;
 		await expect(follow(fakeReq(`/api/oracle/follow?agent_id=${AGENT_ID}&chat_id=12345`), fakeRes()))

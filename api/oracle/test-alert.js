@@ -13,21 +13,13 @@
  */
 
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
-import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { resolveUserId, verifiedTelegramChatId, escapeTelegramHtml, UNVERIFIED_CHAT_MESSAGE } from '../_lib/oracle/verified-chat.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { isUuid } from '../_lib/validate.js';
 
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
 const CHAT_ID_RE = /^-?\d{1,20}$|^@[A-Za-z0-9_]{3,32}$/;
-
-async function resolveUserId(req) {
-	const session = await getSessionUser(req);
-	if (session) return session.id;
-	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer) return bearer.userId;
-	return null;
-}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', origins: '*' })) return;
@@ -46,6 +38,10 @@ export default wrap(async (req, res) => {
 	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'invalid agent_id');
 	if (!CHAT_ID_RE.test(chatId)) return error(res, 400, 'validation_error', 'chat_id must be a numeric ID or @handle');
 
+	// The destination must be the chat the caller verified by linking Telegram.
+	const verifiedChat = await verifiedTelegramChatId(userId);
+	if (!verifiedChat || verifiedChat !== chatId) return error(res, 403, 'forbidden', UNVERIFIED_CHAT_MESSAGE);
+
 	// Verify ownership.
 	const [agent] = await sql`
 		select name from agent_identities
@@ -61,7 +57,7 @@ export default wrap(async (req, res) => {
 	const text = [
 		`🔮 <b>Oracle alerts are working</b>`,
 		``,
-		`<b>${agentName}</b> will send signals here when a coin crosses your conviction threshold.`,
+		`<b>${escapeTelegramHtml(agentName)}</b> will send signals here when a coin crosses your conviction threshold.`,
 		``,
 		`<i>This is a test message from <a href="https://three.ws/oracle">three.ws Oracle</a>.</i>`,
 	].join('\n');
