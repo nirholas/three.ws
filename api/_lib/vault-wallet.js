@@ -120,9 +120,13 @@ export async function computeVaultNav(vault, positions) {
 			marked.push({ mint: p.mint, amount_raw: String(amountRaw), mark_atomics: String(mark) });
 		}
 	}
+	// The owner's unclaimed performance fee sits in the same USDC balance but is
+	// not backer capital: leaving it in NAV let backers redeem it away.
+	const accrued = toBig(vault.accrued_fee_atomics);
+	const floorZero = (v) => (v > 0n ? v : 0n);
 	return {
-		navAtomics: usdcAtomics + positionsValue,
-		freeAtomics: usdcAtomics,
+		navAtomics: floorZero(usdcAtomics + positionsValue - accrued),
+		freeAtomics: floorZero(usdcAtomics - accrued),
 		usdcAtomics,
 		positions: marked,
 		priced,
