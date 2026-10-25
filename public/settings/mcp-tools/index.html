@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Tool Access · three.ws</title>
+		<meta name="description" content="Choose which three.ws MCP tool groups your agents and connectors can use." />
+		<meta name="robots" content="noindex" />
+		<link rel="icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--bg: #000;
+				--panel: #141414;
+				--border: #222;
+				--text: #eee;
+				--muted: #888;
+				--accent: #fff;
+				--ok: #6fcf97;
+				--err: #ff7b7b;
+			}
+			* { box-sizing: border-box; }
+			body {
+				font: 15px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif;
+				color: var(--text);
+				background: var(--bg);
+				margin: 0;
+				min-height: 100vh;
+			}
+			a { color: #ccc; }
+			a:hover { color: #fff; }
+			a:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+			header {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				padding: 0 24px;
+				height: 60px;
+				border-bottom: 1px solid var(--border);
+			}
+			header img { height: 1.55rem; width: auto; display: block; }
+			header .back { margin-left: auto; font-size: 13px; }
+			main { max-width: 760px; margin: 0 auto; padding: 32px 16px 96px; }
+			h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.01em; }
+			.sub { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+			.tiers {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 14px 16px;
+				font-size: 13.5px;
+				color: #ccc;
+				margin-bottom: 20px;
+			}
+			.tiers p { margin: 0 0 8px; }
+			.tiers p:last-child { margin: 0; }
+			.list { display: grid; gap: 8px; }
+			.group {
+				display: flex;
+				align-items: center;
+				gap: 14px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 12px 16px;
+			}
+			.group.changed { border-color: #555; }
+			.group .text { flex: 1; min-width: 0; }
+			.group .name { font-weight: 600; font-size: 14px; }
+			.group .summary { color: var(--muted); font-size: 13px; margin-top: 2px; }
+			select {
+				background: #0c0c0c;
+				color: var(--text);
+				border: 1px solid #333;
+				border-radius: 8px;
+				padding: 7px 10px;
+				font: inherit;
+				font-size: 13px;
+				max-width: 190px;
+				cursor: pointer;
+			}
+			select:hover { border-color: #555; }
+			.bar {
+				position: sticky;
+				bottom: 0;
+				display: flex;
+				align-items: center;
+				gap: 14px;
+				padding: 14px 0;
+				margin-top: 20px;
+				background: linear-gradient(to top, var(--bg) 70%, transparent);
+			}
+			.btn {
+				padding: 9px 20px;
+				border-radius: 9px;
+				border: 0;
+				font: inherit;
+				font-size: 13px;
+				font-weight: 600;
+				cursor: pointer;
+				background: var(--accent);
+				color: #000;
+				transition: filter 0.12s, transform 0.05s;
+			}
+			.btn:hover { filter: brightness(0.88); }
+			.btn:active { transform: translateY(1px); }
+			.btn:disabled { opacity: 0.45; cursor: not-allowed; filter: none; transform: none; }
+			.btn.sec { background: #222; color: #ddd; }
+			.btn.sec:hover { background: #2a2a2a; filter: none; }
+			#status { font-size: 13px; }
+			#status.ok { color: var(--ok); }
+			#status.err { color: var(--err); }
+			.skeleton {
+				height: 62px;
+				border-radius: 10px;
+				background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%);
+				background-size: 200% 100%;
+				animation: shimmer 1.2s infinite linear;
+			}
+			@keyframes shimmer { to { background-position: -200% 0; } }
+			@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+			.empty { color: var(--muted); padding: 24px 0; }
+			@media (max-width: 560px) {
+				header { padding: 0 16px; }
+				.group { flex-direction: column; align-items: stretch; gap: 10px; }
+				select { max-width: none; width: 100%; }
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<a href="/"><img src="/three.svg" alt="three.ws" /></a>
+			<a class="back" href="/settings">Back to settings</a>
+		</header>
+		<main>
+			<h1>Tool access</h1>
+			<p class="sub">Choose which tool groups your agents and MCP connectors can use on this account.</p>
+
+			<div class="tiers">
+				<p><strong>Read and write tools are on by default.</strong> They look things up or change account state that a follow-up call can undo.</p>
+				<p><strong>Financial tools are off by default.</strong> They move funds or cannot be undone. Setting a group to <em>On</em> turns on every tool in it, financial ones included. <em>Off</em> hides the whole group. <em>Default</em> keeps read and write on and financial off.</p>
+				<p>Details: <a href="/docs/mcp-safety">MCP tool safety</a>.</p>
+			</div>
+
+			<div id="list" class="list" aria-live="polite">
+				<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+			</div>
+
+			<div class="bar">
+				<button class="btn" id="save" disabled>Save changes</button>
+				<button class="btn sec" id="reset" disabled>Discard</button>
+				<span id="status" role="status"></span>
+			</div>
+		</main>
+
+		<script type="module">
+			import { apiFetch } from '/src/api.js';
+
+			const listEl = document.getElementById('list');
+			const saveBtn = document.getElementById('save');
+			const resetBtn = document.getElementById('reset');
+			const statusEl = document.getElementById('status');
+
+			// Option values are what the server stores: a group absent from the
+			// saved map follows the tier default, true is on, false is off.
+			const VALUE = (v) => (v === true ? 'on' : v === false ? 'off' : 'default');
+			const FROM = { on: true, off: false, default: null };
+
+			let groups = [];
+			let loaded = {};
+
+			const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+			function setStatus(type, text) {
+				statusEl.className = type;
+				statusEl.textContent = text;
+			}
+
+			async function errorText(res, fallback) {
+				const data = await res.json().catch(() => null);
+				return data?.error_description || data?.error || fallback;
+			}
+
+			function changes() {
+				const out = {};
+				for (const sel of listEl.querySelectorAll('select[data-id]')) {
+					const id = sel.dataset.id;
+					const next = FROM[sel.value];
+					const prev = Object.hasOwn(loaded, id) ? loaded[id] : null;
+					if (next !== prev) out[id] = next;
+				}
+				return out;
+			}
+
+			function refreshDirty() {
+				const dirty = Object.keys(changes()).length > 0;
+				saveBtn.disabled = !dirty;
+				resetBtn.disabled = !dirty;
+				for (const row of listEl.querySelectorAll('.group')) {
+					const sel = row.querySelector('select');
+					const prev = Object.hasOwn(loaded, sel.dataset.id) ? loaded[sel.dataset.id] : null;
+					row.classList.toggle('changed', FROM[sel.value] !== prev);
+				}
+			}
+
+			function render() {
+				if (!groups.length) {
+					listEl.innerHTML = '<p class="empty">No tool groups were returned. Reload the page, or try again in a minute.</p>';
+					return;
+				}
+				listEl.innerHTML = groups.map((g) => `
+					<div class="group">
+						<div class="text">
+							<div class="name"><label for="g-${esc(g.id)}">${esc(g.label)}</label></div>
+							<div class="summary">${esc(g.summary)}</div>
+						</div>
+						<select id="g-${esc(g.id)}" data-id="${esc(g.id)}">
+							<option value="default">Default</option>
+							<option value="on">On (all tools)</option>
+							<option value="off">Off</option>
+						</select>
+					</div>`).join('');
+				for (const sel of listEl.querySelectorAll('select')) {
+					sel.value = VALUE(Object.hasOwn(loaded, sel.dataset.id) ? loaded[sel.dataset.id] : null);
+				}
+				refreshDirty();
+			}
+
+			async function load() {
+				try {
+					const res = await apiFetch('/api/mcp-tools');
+					if (res.status === 401) {
+						location.href = '/login?next=' + encodeURIComponent(location.pathname);
+						return;
+					}
+					if (!res.ok) throw new Error(await errorText(res, 'Could not load your tool settings.'));
+					const data = await res.json();
+					groups = data.groups || [];
+					loaded = data.account || {};
+					render();
+				} catch (e) {
+					listEl.innerHTML = `<p class="empty">${esc(e.message || 'Could not load your tool settings.')} <button class="btn sec" id="retry">Try again</button></p>`;
+					document.getElementById('retry').addEventListener('click', () => {
+						listEl.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
+						load();
+					});
+				}
+			}
+
+			listEl.addEventListener('change', () => { setStatus('', ''); refreshDirty(); });
+			resetBtn.addEventListener('click', () => { render(); setStatus('', ''); });
+
+			saveBtn.addEventListener('click', async () => {
+				const body = { groups: changes() };
+				saveBtn.disabled = true;
+				resetBtn.disabled = true;
+				setStatus('', 'Saving…');
+				try {
+					const res = await apiFetch('/api/mcp-tools', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+					if (!res.ok) throw new Error(await errorText(res, 'Could not save your changes.'));
+					const data = await res.json();
+					loaded = data.account || {};
+					render();
+					setStatus('ok', 'Saved. New sessions pick this up immediately.');
+				} catch (e) {
+					setStatus('err', e.message || 'Could not save your changes.');
+					refreshDirty();
+				}
+			});
+
+			load();
+		</script>
+	</body>
+</html>

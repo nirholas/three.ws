@@ -564,11 +564,13 @@ export async function mintTokenized3dAsset(input, deps = defaultDeps()) {
 		// split — honestly reported, never a fabricated payout.
 		let remixRoyalty = null;
 		if (provenance.parentMint) {
-			remixRoyalty = await settleTokenizeRemixRoyalty({
+			remixRoyalty = await settleOrDeferRemixRoyalty({
 				sql: deps.sql,
+				rowId,
 				parentMint: provenance.parentMint,
 				network,
 				feeAtomics: input.mintFeeAtomicsCollected ?? 0n,
+				defer: input.deferRoyalty,
 			});
 		}
 
@@ -681,6 +683,26 @@ export async function settleTokenizeRemixRoyalty({ sql: sqlClient, parentMint, n
 	} catch (err) {
 		return { ...summary, paid: false, reason: 'royalty_transfer_failed', error: err?.message || 'transfer failed' };
 	}
+}
+
+/**
+ * Pay the parent creator's remix royalty, or hold it until the caller's x402
+ * payment has settled. The royalty comes out of the platform treasury, so it must
+ * not leave before the fee it is carved from has actually landed: a payer whose
+ * settlement fails would otherwise cost the platform the royalty.
+ *
+ * @param {object} p
+ * @param {(run: () => Promise<void>) => void} [p.defer] registers work to run
+ *   after settlement; omitted means pay now (no per-call fee to wait for).
+ */
+export async function settleOrDeferRemixRoyalty({ sql: sqlClient, rowId, parentMint, network, feeAtomics, defer }) {
+	const settle = () => settleTokenizeRemixRoyalty({ sql: sqlClient, parentMint, network, feeAtomics });
+	if (typeof defer !== 'function') return settle();
+	defer(async () => {
+		const settled = await settle();
+		await sqlClient`update tokenized_3d_assets set remix_royalty = ${JSON.stringify(settled)}::jsonb, updated_at = now() where id = ${rowId}`;
+	});
+	return { paid: false, reason: 'pending_payment_settlement', parent_mint: parentMint };
 }
 
 function formatMintResult(

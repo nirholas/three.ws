@@ -140,6 +140,11 @@ export const toolDefs = [
 					generationProvider: args.generation_provider,
 					idempotencyKey: args.idempotency_key,
 					mintFeeAtomicsCollected,
+					// The royalty is paid from the treasury, so it waits for the x402
+					// settlement that api/mcp.js performs after this handler returns.
+					deferRoyalty: paidPerCall
+						? (run) => { (auth.afterSettle ??= []).push(run); }
+						: undefined,
 				});
 				const text =
 					result.status === 'minted'
@@ -156,7 +161,9 @@ export const toolDefs = [
 							(result.remix_royalty
 								? result.remix_royalty.paid
 									? `\nRemix royalty: ${result.remix_royalty.creator_usd} USDC paid to the source creator (${result.remix_royalty.creator_tx})`
-									: `\nRemix royalty: not paid (${result.remix_royalty.reason})`
+									: result.remix_royalty.reason === 'pending_payment_settlement'
+										? '\nRemix royalty: paid to the source creator once your payment settles'
+										: `\nRemix royalty: not paid (${result.remix_royalty.reason})`
 								: '')
 						: `Mint in progress for this asset. Read it back with get_3d_asset_onchain once it confirms.`;
 				return { content: [{ type: 'text', text }], structuredContent: result };

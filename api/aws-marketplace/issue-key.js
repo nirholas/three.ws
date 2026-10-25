@@ -14,7 +14,7 @@
 import { cors, json, readJson, wrap } from '../_lib/http.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { issueSubscriptionForCustomer } from '../_lib/aws-marketplace-bridge.js';
-import { findCustomerByHandle } from '../_lib/aws-marketplace-store.js';
+import { findCustomerByHandle, claimCustomerForUser } from '../_lib/aws-marketplace-store.js';
 import { customerEntitlement } from '../_lib/aws-marketplace.js';
 import { env } from '../_lib/env.js';
 
@@ -85,9 +85,17 @@ export default wrap(async (req, res) => {
 		}
 	}
 
+	// Bind the row to the caller before minting: an unclaimed row must not hand
+	// a key to whoever presents its id first and then lock the real buyer out.
+	let owned = row;
+	if (!row.user_id) {
+		owned = await claimCustomerForUser(row.id, user.id);
+		if (!owned) return json(res, 403, { error: 'customer_linked_to_other_account' });
+	}
+
 	let issued;
 	try {
-		issued = await issueSubscriptionForCustomer({ ...row, user_id: row.user_id || user.id });
+		issued = await issueSubscriptionForCustomer({ ...owned, user_id: user.id });
 	} catch (err) {
 		console.error('[aws-marketplace/issue-key] failed', {
 			customerId,

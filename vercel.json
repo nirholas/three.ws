@@ -5736,6 +5736,10 @@
 			"dest": "/settings/index.html"
 		},
 		{
+			"src": "/settings/mcp-tools/?",
+			"dest": "/settings/mcp-tools/index.html"
+		},
+		{
 			"src": "/settings/(.*)",
 			"dest": "/settings/index.html"
 		},

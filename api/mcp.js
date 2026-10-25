@@ -112,6 +112,11 @@ export default wrap(async (req, res) => {
 			try {
 				const settled = await settlePayment({ verified: x402Ctx.verified });
 				res.setHeader('x-payment-response', encodePaymentResponseHeader(settled));
+				// Treasury-funded payouts carved from this fee (remix royalties) run
+				// only now that the fee has landed. Best-effort: the call already succeeded.
+				for (const run of auth?.afterSettle ?? []) {
+					await run().catch((e) => console.warn('[mcp] post-settle payout failed:', e?.message));
+				}
 			} catch (err) {
 				return sendX402Error(
 					res,

@@ -1706,6 +1706,7 @@
 			}
 
 			// ── Connections (paired chats) ────────────────────────────────
+			const JSON_HDR = { 'content-type': 'application/json' };
 			const CONN_PLATFORM = { telegram: 'Telegram', discord: 'Discord' };
 			const X_OUTCOMES = {
 				connected: ['ok', 'X account connected successfully.'],
@@ -1761,7 +1762,7 @@
 
 			async function connPatch(id, body, undo) {
 				try {
-					await apiJson('/api/gateway/connections', { method: 'PATCH', body: JSON.stringify({ id, ...body }) });
+					await apiJson('/api/gateway/connections', { method: 'PATCH', headers: JSON_HDR, body: JSON.stringify({ id, ...body }) });
 					connMsg('ok', 'Saved.');
 				} catch (e) {
 					undo();
@@ -1806,7 +1807,7 @@
 				const out = document.getElementById('conn-issued');
 				btn.disabled = true;
 				try {
-					const r = await apiJson('/api/gateway/connections', { method: 'POST', body: JSON.stringify({ action: 'issue' }) });
+					const r = await apiJson('/api/gateway/connections', { method: 'POST', headers: JSON_HDR, body: JSON.stringify({ action: 'issue' }) });
 					const mins = Math.max(1, Math.round((new Date(r.expires_at) - Date.now()) / 60000));
 					out.style.display = 'block';
 					out.innerHTML = `<div style="font-size:22px;font-weight:700;letter-spacing:.12em;font-family:monospace;color:#eee">${escHtml(r.code)}</div>
@@ -1825,7 +1826,7 @@
 				box.style.display = 'block';
 				box.innerHTML = '<p class="muted">Checking code…</p>';
 				try {
-					const r = await apiJson('/api/gateway/connections', { method: 'POST', body: JSON.stringify({ action: 'preview', code: rawCode }) });
+					const r = await apiJson('/api/gateway/connections', { method: 'POST', headers: JSON_HDR, body: JSON.stringify({ action: 'preview', code: rawCode }) });
 					const c = r.chat;
 					const name = c.chat_title || c.platform_username || 'a direct chat';
 					box.innerHTML = `
@@ -1839,7 +1840,7 @@
 					document.getElementById('conn-redeem-btn').addEventListener('click', async (ev) => {
 						ev.target.disabled = true;
 						try {
-							await apiJson('/api/gateway/connections', { method: 'POST', body: JSON.stringify({ action: 'redeem', code: rawCode, confirm: r.confirm }) });
+							await apiJson('/api/gateway/connections', { method: 'POST', headers: JSON_HDR, body: JSON.stringify({ action: 'redeem', code: rawCode, confirm: r.confirm }) });
 							box.style.display = 'none';
 							document.getElementById('conn-code-input').value = '';
 							connMsg('ok', 'Chat paired.');
