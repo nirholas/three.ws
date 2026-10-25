@@ -57,6 +57,18 @@ BANNED_NAMES = frozenset({
 # Attribute names that perform attribute lookups from inside a string.
 BANNED_ATTRIBUTES = frozenset({"format", "format_map", "vformat", "mro"})
 
+# Frame, code, generator, coroutine and traceback internals. None start with an
+# underscore, yet `gen.gi_frame.f_back.f_globals` walks from a harmless generator
+# to the sandbox runner's globals and the real builtins.
+INTROSPECTION_ATTRIBUTES = frozenset({
+    "f_back", "f_builtins", "f_code", "f_globals", "f_locals", "f_trace",
+    "gi_frame", "gi_code", "gi_yieldfrom", "gi_running", "gi_suspended",
+    "cr_frame", "cr_code", "cr_await", "cr_origin", "cr_running",
+    "ag_frame", "ag_code", "ag_await", "ag_running",
+    "tb_frame", "tb_next", "tb_lasti", "tb_lineno",
+})
+INTROSPECTION_PREFIXES = ("co_", "gi_", "cr_", "ag_", "tb_")
+
 SAFE_BUILTIN_NAMES = (
     "abs", "all", "any", "bool", "dict", "divmod", "enumerate", "filter",
     "float", "frozenset", "hasattr", "int", "isinstance", "iter", "len", "list",
@@ -129,6 +141,8 @@ def check_source(source: str) -> ast.Module:
         elif isinstance(node, ast.Attribute):
             if node.attr.startswith("_"):
                 raise PolicyViolation(f"access to '.{node.attr}' is not allowed.", line)
+            if node.attr in INTROSPECTION_ATTRIBUTES or node.attr.startswith(INTROSPECTION_PREFIXES):
+                raise PolicyViolation(f"access to '.{node.attr}' is not allowed.", line)
             if node.attr in BANNED_ATTRIBUTES:
                 raise PolicyViolation(f"'.{node.attr}' is not available; use an f-string instead.", line)
         elif isinstance(node, ast.Name):
@@ -136,6 +150,8 @@ def check_source(source: str) -> ast.Module:
                 raise PolicyViolation(f"'{node.id}' is not available in a CAD program.", line)
             if node.id.startswith("__"):
                 raise PolicyViolation(f"the name '{node.id}' is not allowed.", line)
+        elif isinstance(node, (ast.Yield, ast.YieldFrom)):
+            raise PolicyViolation("yield is not allowed; build the part with plain functions.", line)
         elif isinstance(node, (ast.AsyncFunctionDef, ast.Await, ast.AsyncFor, ast.AsyncWith)):
             raise PolicyViolation("async code is not allowed.", line)
         elif isinstance(node, (ast.FunctionDef, ast.ClassDef)):

@@ -52,6 +52,7 @@ SECCOMP_DENY = (
     "process_vm_writev", "unshare", "setns", "mount", "umount2", "pivot_root",
     "chroot", "keyctl", "add_key", "request_key", "bpf", "perf_event_open",
     "userfaultfd", "personality", "kexec_load", "init_module", "finit_module",
+    "symlink", "symlinkat", "link", "linkat",
 )
 
 

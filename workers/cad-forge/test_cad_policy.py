@@ -103,6 +103,19 @@ class PolicyTests(unittest.TestCase):
             self.assertNotIn(name, table)
         self.assertIs(table["__import__"], guarded_import)
 
+    def test_refuses_frame_and_generator_introspection(self):
+        for attr in ("gi_frame", "f_back", "f_globals", "f_builtins", "f_locals",
+                     "gi_code", "cr_frame", "tb_frame", "tb_next", "co_consts"):
+            self.assertRefused(f"x = y.{attr}", f"'.{attr}'")
+        self.assertRefused("g = (i for i in range(1))\nx = g.gi_frame.f_back.f_globals\n", "is not allowed")
+
+    def test_refuses_yield(self):
+        self.assertRefused("def g():\n    yield 1\n", "yield")
+        self.assertRefused("def g():\n    yield from range(2)\n", "yield")
+
+    def test_accepts_comprehensions_and_generator_expressions(self):
+        check_source("total = sum(i * 2 for i in range(4))\nxs = [i for i in range(3)]\n")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=1)

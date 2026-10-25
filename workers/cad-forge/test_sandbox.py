@@ -8,6 +8,7 @@ real escape attempts against each isolation layer. Runs in the Docker build
 
 import base64
 import os
+import shutil
 import subprocess
 import sys
 import textwrap
@@ -249,6 +250,27 @@ class IsolationLayerTests(unittest.TestCase):
         if drop:
             self.assertEqual(results["uid"], main.SANDBOX_UID)
             self.assertNotEqual(results["parent_env"], "read")
+
+
+class CollectTests(unittest.TestCase):
+    def test_collect_does_not_follow_symlinked_artifacts(self):
+        import tempfile
+
+        secret = tempfile.NamedTemporaryFile(delete=False)
+        secret.write(b"parent-only-secret")
+        secret.close()
+        workdir = tempfile.mkdtemp(prefix="cad-collect-")
+        try:
+            os.symlink(secret.name, os.path.join(workdir, "part.glb"))
+            with open(os.path.join(workdir, "part.stl"), "wb") as fh:
+                fh.write(b"solid")
+            child = main.Child(proc=None, workdir=workdir, started=0.0)
+            out = main._collect(child, {"ok": True, "files": ["part.glb", "part.stl"]})
+            self.assertNotIn("glb", out["artifacts"])
+            self.assertEqual(base64.b64decode(out["artifacts"]["stl"]), b"solid")
+        finally:
+            os.unlink(secret.name)
+            shutil.rmtree(workdir, ignore_errors=True)
 
 
 if __name__ == "__main__":

@@ -34,6 +34,7 @@ import os
 import re
 import resource
 import signal
+import stat
 import shutil
 import subprocess
 import sys
@@ -214,10 +215,21 @@ def _collect(child: Child, result: dict) -> dict:
     artifacts = {}
     total = 0
     for name in result.get("files", []):
-        path = os.path.join(child.workdir, name)
-        if name not in ARTIFACT_KEYS or not os.path.isfile(path):
+        if name not in ARTIFACT_KEYS:
             continue
-        total += os.path.getsize(path)
+        path = os.path.join(child.workdir, name)
+        # The workdir belongs to the unprivileged child, so a name can be a
+        # symlink to a file only the parent may read. O_NOFOLLOW refuses it, and
+        # fstat on the opened descriptor sizes the real file, not the link.
+        try:
+            fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        except OSError:
+            continue
+        with os.fdopen(fd, "rb") as fh:
+            if not stat.S_ISREG(os.fstat(fh.fileno()).st_mode):
+                continue
+            data = fh.read(MAX_ARTIFACT_BYTES + 1)
+        total += len(data)
         if total > MAX_ARTIFACT_BYTES:
             return {
                 "ok": False,
@@ -225,8 +237,7 @@ def _collect(child: Child, result: dict) -> dict:
                 "log": result.get("log", ""),
                 "elapsed_s": result.get("elapsed_s"),
             }
-        with open(path, "rb") as fh:
-            artifacts[ARTIFACT_KEYS[name]] = base64.b64encode(fh.read()).decode("ascii")
+        artifacts[ARTIFACT_KEYS[name]] = base64.b64encode(data).decode("ascii")
     result["artifacts"] = artifacts
     result.pop("files", None)
     return result
