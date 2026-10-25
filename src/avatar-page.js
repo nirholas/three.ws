@@ -41,6 +41,7 @@ import { mountCoinStatus } from './pump/coin-status-card.js';
 import { mountEarningsCard } from './shared/agent-earnings-card.js';
 import { renderHomeConfirmation } from './home-confirm-card.js';
 import { GROK_MENU_MODELS, grokMenuModelId } from '../api/_lib/chat-models.js';
+import { wireModelViewerFallback } from './shared/model-viewer-fallback.js';
 
 const ATTACHED_KEY_PREFIX = 'avatar_attached_v1:';
 
@@ -822,9 +823,15 @@ function renderShell(glbUrl) {
 		positionThoughtHotspot(viewer);
 		setupAnimationControls(viewer);
 	});
-	viewer?.addEventListener('error', () => {
-		const ld = $('av-stage-loading');
-		if (ld) ld.textContent = 'Failed to load 3D model.';
+	wireModelViewerFallback(viewer, {
+		onFallback: () => {
+			const ld = $('av-stage-loading');
+			if (ld) ld.textContent = "Couldn't load this avatar's body. Showing a placeholder.";
+		},
+		onFinalError: () => {
+			const ld = $('av-stage-loading');
+			if (ld) ld.textContent = 'Failed to load 3D model.';
+		},
 	});
 
 	// The wallet aura is an independent sibling layer over the stage — mount it

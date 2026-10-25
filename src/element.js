@@ -12,6 +12,7 @@ import { SkillRegistry } from './skills/index.js';
 import { Memory } from './memory/index.js';
 import { loadManifest, fetchRelative } from './manifest.js';
 import { uriCandidates } from './ipfs.js';
+import { DEFAULT_AVATAR_GLB } from './shared/model-viewer-fallback.js';
 import {
 	resolveAgentById,
 	resolveByAvatarId,
@@ -1960,6 +1961,7 @@ class Agent3DElement extends HTMLElement {
 			const bodyCandidates = uriCandidates(manifest.body?.uri);
 			let loadedCandidate = null;
 			let loadedGltf = null;
+			let usedFallbackBody = false;
 			if (bodyCandidates.length) {
 				let bodyErr;
 				let loaded = false;
@@ -1979,8 +1981,34 @@ class Agent3DElement extends HTMLElement {
 						}
 					}
 				}
+				// Every gateway for the real body failed. The local default avatar
+				// (bundled, same-origin, no R2/IPFS dependency) gets one try before
+				// giving up outright, so an object-storage outage degrades to a
+				// placeholder body instead of a dead viewer. Skipped when the real
+				// body candidates already included the default (nothing new to try).
+				if (!loaded && !bodyCandidates.includes(DEFAULT_AVATAR_GLB)) {
+					try {
+						loadedGltf = await viewer.load(DEFAULT_AVATAR_GLB, '', new Map());
+						loadedCandidate = DEFAULT_AVATAR_GLB;
+						loaded = true;
+						usedFallbackBody = true;
+						console.warn(
+							'[agent-3d] body load failed on %s, falling back to the default avatar',
+							bodyCandidates[bodyCandidates.length - 1],
+						);
+					} catch {
+						// Fallback also failed; the original error is the useful one.
+					}
+				}
 				if (!loaded)
 					throw bodyErr || new Error('avatar body could not be loaded from any gateway');
+				if (usedFallbackBody) {
+					this._emit(
+						'agent:body-fallback',
+						{ uri: bodyCandidates[bodyCandidates.length - 1], fallbackUri: DEFAULT_AVATAR_GLB },
+						{ bubbles: true, composed: true },
+					);
+				}
 				// Ensure walk + idle are hot before the first brain:stream fires.
 				// setAnimationDefs above registered the defs; ensureLoaded now
 				// actually fetches the clips (or returns immediately if cached).
@@ -2485,7 +2513,7 @@ class Agent3DElement extends HTMLElement {
 			spec: 'agent-manifest/0.1',
 			_baseURI: '',
 			name: this.getAttribute('name') || 'Agent',
-			body: { uri: 'https://three.ws/avatars/default.glb', format: 'gltf-binary' },
+			body: { uri: DEFAULT_AVATAR_GLB, format: 'gltf-binary' },
 			brain: this._brainConfig(instructionsAttr),
 			voice: { tts: { provider: 'browser' }, stt: { provider: 'browser' } },
 			skills: [],

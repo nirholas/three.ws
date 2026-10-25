@@ -32,6 +32,7 @@ import { resizedImageUrl } from './shared/image-url.js';
 import { leaveAppForPayment } from './shared/native-handoff.js';
 import { withPayoutStepUp } from './payout-step-up.js';
 import { shortAddress as shortWalletAddress } from './shared/address.js';
+import { wireModelViewerFallback } from './shared/model-viewer-fallback.js';
 
 ensureStateKitStyles();
 
@@ -1660,11 +1661,18 @@ function openAvatarModal(avatar) {
 		const label = progressEl.querySelector('.modal-load-label');
 		if (label) label.textContent = 'Failed to load 3D — try refreshing.';
 	}, 15_000);
-	mv.addEventListener('error', () => {
-		clearTimeout(loadTimeout);
-		const label = progressEl.querySelector('.modal-load-label');
-		if (label) label.textContent = 'Failed to load 3D model.';
-	}, { once: true });
+	wireModelViewerFallback(mv, {
+		onFallback: () => {
+			clearTimeout(loadTimeout);
+			const label = progressEl.querySelector('.modal-load-label');
+			if (label) label.textContent = "Couldn't load this avatar's body. Showing a placeholder.";
+		},
+		onFinalError: () => {
+			clearTimeout(loadTimeout);
+			const label = progressEl.querySelector('.modal-load-label');
+			if (label) label.textContent = 'Failed to load 3D model.';
+		},
+	});
 	mv.addEventListener('load', () => clearTimeout(loadTimeout), { once: true });
 
 	$('avatar-modal-title').textContent = avatar.name || 'Untitled avatar';
