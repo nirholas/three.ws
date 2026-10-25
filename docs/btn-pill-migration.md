@@ -56,7 +56,7 @@ Linked pills: use `<a class="pill pill--onchain">` — gets hover/focus states a
 
 ## Remaining long tail — classes → canonical equivalent
 
-These classes are defined across the codebase. Follow-up agents should replace them with canonical classes (keep old class as needed for scoped CSS overrides). Re-verified 2026-09-17: every class in both tables below is still in use in `pages/`, `src/`, or `public/`, so every row remains open work.
+These classes are defined across the codebase. Follow-up agents should replace them with canonical classes (keep old class as needed for scoped CSS overrides). Re-verified 2026-10-25: every class in both tables below is still in use in `pages/`, `src/`, or `public/`, so every row remains open work.
 
 ### Button class names → canonical
 

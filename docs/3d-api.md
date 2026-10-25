@@ -41,9 +41,12 @@ curl https://three.ws/api/3d
   "version": "1.0.0",
   "endpoints": [
     { "slug": "generate", "methods": ["POST"], "path": "/api/3d/generate", "title": "Text → 3D (free draft)", "…": "…" },
-    { "slug": "inspect",  "methods": ["GET", "POST"], "path": "/api/3d/inspect", "title": "3D Model Inspect & Validate", "…": "…" }
+    { "slug": "inspect",  "methods": ["GET", "POST"], "path": "/api/3d/inspect", "title": "3D Model Inspect & Validate", "…": "…" },
+    { "slug": "diff",     "methods": ["GET", "POST"], "path": "/api/3d/diff", "title": "3D Model Diff", "…": "…" },
+    { "slug": "print-quote",   "methods": ["POST"], "path": "/api/print/quote", "title": "Printability Report & Print Quote", "…": "…" },
+    { "slug": "print-prepare", "methods": ["POST"], "path": "/api/print/prepare", "title": "Repair & Export for Printing (STL, 3MF, GLB)", "…": "…" }
   ],
-  "count": 2,
+  "count": 5,
   "paidTiers": [
     { "name": "Forge Pro", "path": "/api/x402/forge", "price": "from $0.05 USDC", "why": "…" },
     { "name": "Rigged Avatar", "path": "/api/forge?action=rig", "price": "from $0.05 USDC", "why": "…" }
@@ -269,7 +272,9 @@ Returns one of four verdicts (`simulation_ready`, `needs_scale`,
 winding, real-world extents in meters, exact volume, centroid and inertia tensor
 at unit density, and how well a single convex hull approximates the shape. Free,
 no account, cached by content hash, and available to agents as the
-`grade_sim_readiness` MCP tool. Full reference: [Simulation
+`grade_sim_readiness` MCP tool. Grading by `?src=` is capped at 30 per five
+minutes per address (the `429` carries `Retry-After`); `?hash=` lookups of an
+already-graded model are not capped, so grade once and reuse hashes. Full reference: [Simulation
 readiness](/docs/sim-readiness).
 
 ### Upgrade path
@@ -295,7 +300,11 @@ generation: the single subject and its silhouette, its construction and part
 joins, per-part PBR material cues, one held art style, fine surface detail,
 and composition constraints tuned for clean image→mesh reconstruction
 (centered, isolated, no text, no collage). It is fail-soft: if the director
-LLM is unavailable, the raw prompt proceeds untouched. The prompt specs live in one
+LLM is unavailable, or its reply fails the safety check (empty, over the
+1000-character prompt ceiling, unfinished, carrying a link, or no richer than
+what you typed), the raw prompt proceeds untouched and the run receipt names
+the reason. The director is asked to stay under 90 words so a spec fits the
+ceiling. The prompt specs live in one
 module, [api/_lib/forge-director-prompts.js](../api/_lib/forge-director-prompts.js)
 (`MESH_DIRECTOR` for objects and props, `AVATAR_DIRECTOR` for rig-ready
 humanoids), so the free and paid lanes cannot drift apart.
@@ -549,6 +558,33 @@ When the report says "optimize," the paid pipelines do the work: **Forge Pro**
 (higher-quality generation), **Rigged Avatars** (auto-rigging), and the x402
 mesh-optimization routes. See
 [`/.well-known/x402.json`](https://three.ws/.well-known/x402.json).
+
+---
+
+## Diff two models (free)
+
+**`GET /api/3d/diff?a=<url>&b=<url>`** or **`POST /api/3d/diff`** with
+`{ "a": "<url>", "b": "<url>", "format": "json" }`. Compares a baseline and a
+candidate glTF/GLB (public https URLs, 32 MiB each) and reports what changed in
+geometry, hierarchy, materials, textures, skeletons and animation clips, with
+rename and move detection. The JSON carries a top-level `severity`
+(`none`, `cosmetic`, `minor`, `major`, `breaking`) to gate a build on;
+`format=markdown` returns a pull-request-ready report and `format=text` a
+terminal report. The engine is the `@three-ws/glb-diff` package, the same code
+the `/diff` page runs.
+
+```bash
+curl "https://three.ws/api/3d/diff?a=https://three.ws/avatars/cesium-man.glb&b=https://three.ws/avatars/cesium-man.glb&format=text"
+```
+
+## Printing (free)
+
+Two further catalog entries turn a model into a physical object.
+`POST /api/print/quote` returns a printability report (closed solid, wall
+thickness, volume, a 0-100 score) and, when you pass a `materialId`, an
+itemized quote with a signed token. `POST /api/print/prepare` repairs the mesh
+and writes an STL, a 3MF and the repaired GLB. Both are free and keyless;
+ordering is paid. See [Materialize](/docs/materialize).
 
 ---
 

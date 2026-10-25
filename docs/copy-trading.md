@@ -13,6 +13,8 @@ If you want to feel a leader's edge before committing money, that is a *separate
 
 A leader can also price *when* each copier is shown their signal: [alpha-drip](./alpha-drip.md) releases the copy intent to higher $THREE tiers first and everyone else after a delay the leader sets. It is off unless a leader turns it on, it delays the reveal and never the record, and the copier is shown the seat they get before they subscribe.
 
+Two more surfaces sit on the copier path: [Copy Coach](./copy-coach.md) walks a first-time copier to one tiny, capped copy they sign themselves, and [syndicates](./syndicates.md) let a named team of copiers follow a leader together, each member through an ordinary subscription with their own wallet and caps (no pooled funds).
+
 Related reading: [Smart Money Radar](./smart-money.md) for the first-party wallet reputation graph, [the trading surfaces](./trading-surfaces.md) for the screeners and the trading cockpit these leaders trade from, [agent wallets](./agent-wallets.md) for the custody and spend-policy model, and [signal marketplace](./signals.md) for the paid-feed variant that reuses the same guarded executor.
 
 ---
@@ -261,7 +263,7 @@ Validated by `normalizeSubscriptionInput` in `api/_lib/copy-engine.js`. `per_tra
 
 ### Who you are allowed to copy
 
-Two gates run before a subscription is written, both in `api/_lib/copy-eligibility.js`. Neither is a taste filter: they exist because a copy-trading board is worthless the moment a track record can be manufactured or a fee can be paid to yourself.
+Two gates run before a subscription is written, both in `api/_lib/copy-eligibility.js` and enforced through the shared `subscribeCopier` in `api/_lib/copy-subscribe.js` (the same path a syndicate join uses). Neither is a taste filter: they exist because a copy-trading board is worthless the moment a track record can be manufactured or a fee can be paid to yourself.
 
 **You cannot copy an agent you own.** A self-copy routes the performance fee back to its own owner while inflating that leader's public copier count, copied volume, and the "earned X for being copied" figure the leaderboard shows as social proof. The endpoint answers `403 self_copy`, and `api/cron/copy-fanout.js` skips any such row again at fan-out time so a subscription predating this rule cannot keep firing. The custodial mirror has always refused the equivalent (an agent may not mirror itself, and may not close a follow loop).
 
@@ -296,7 +298,7 @@ Leave `max_drawdown_pct` null to opt out; that is the behavior every subscriptio
 
 For every (leader event, subscription) pair it calls `planCopyOrder`, the pure engine in `api/_lib/copy-engine.js` (tested in `tests/copy-engine.test.js`):
 
-- **Safety gate on entries only.** A honeypot flag is fatal. Market cap is checked against your floor and ceiling. A dev holding 30 percent or more of supply is refused as `dev_heavy`. Liquidity under 1000 USD is refused as `low_liquidity`. A known Oracle conviction score below your `min_oracle_score` is refused. If coin context could not be fetched at all, the result depends on your `require_safety_pass` flag: with it on, the copy is skipped as `safety_unknown`. Coin context is best-effort from the public pump.fun coin endpoint (market cap) merged with the stored Oracle score.
+- **Safety gate on entries only.** A honeypot flag is fatal. Market cap is checked against your floor and ceiling. A dev holding 30 percent or more of supply is refused as `dev_heavy`. Liquidity under 1000 USD is refused as `low_liquidity`. A leader whose own trading wallet scores as the same controller as the coin's creator (a shared fee payer or first funder, scored by `@three-ws/wallet-linkage` at the "strong" band or above) is refused as `leader_linked_to_creator`, because copying it would only mirror the creator's own buy of their own launch. That check runs once per leader and coin per tick (`checkLeaderCreatorLinkage` in `api/_lib/copy-eligibility.js`) and fails open to "not linked" on any RPC or database error, so an outage never blocks a legitimate copy. A known Oracle conviction score below your `min_oracle_score` is refused. If coin context could not be fetched at all, the result depends on your `require_safety_pass` flag: with it on, the copy is skipped as `safety_unknown`. Coin context is best-effort from the public pump.fun coin endpoint (market cap) merged with the stored Oracle score.
 - **Open-copy cap.** More pending intents than `max_open_copies`, skipped.
 - **Sizing.** `fixed` uses `fixed_sol`, `multiplier` scales the leader's entry, `pct_balance` takes a percentage of your balance. The result is clamped to `per_trade_cap_sol`, then to the remaining `daily_budget_sol` (today's `pending` plus `acted` buy sizes), and rejected if it falls under `min_order_sol`.
 - **Exits.** A sell fans out with `order_sol: 0` and reason `mirror_exit`, and only to copiers who actually acted on the matching buy. Oracle sells are not modelled, because that engine has no explicit exit event.

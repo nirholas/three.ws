@@ -71,6 +71,14 @@
 			<description>When the R2 bucket is unreachable (account disabled, keys rotated, endpoint down), any API route that writes or reads an object without its own error handling, such as avatar upload, used to answer a bare 500 and fire a Sentry event and an unhandled-5xx alert on every request. The shared error boundary now treats a storage fault like a database outage: a 503 service_unavailable with Retry-After, one throttled warning, a single deduped ops alert, and a clean skip for cron ticks. Deliberate 4xx errors and real handler bugs are unchanged.</description>
 		</item>
 		<item>
+			<title>Rate limiter Redis path repaired and its health hint made honest</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-25:Rate limiter Redis path repaired and its health hint made honest</guid>
+			<pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The rate limiter had been failing every Redis call because @upstash/ratelimit 2.1+ sends a script flag that self-hosted Redis rejects, so traffic ran on the Postgres fallback while healthz called it transient. The library is pinned to 2.0.8, and this class of fault is now logged and reported as a non-transient script incompatibility.</description>
+		</item>
+		<item>
 			<title>Security hardening across sign-in, uploads, vaults, agents and the chat server</title>
 			<link>https://three.ws/oracle</link>
 			<guid isPermaLink="false">2026-10-25:Security hardening across sign-in, uploads, vaults, agents and the chat server</guid>

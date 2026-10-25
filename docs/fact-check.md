@@ -1,6 +1,6 @@
 # Fact Check: sourced verdicts with cryptographic attestations
 
-Fact Check submits a claim and returns a verdict, `supported`, `contradicted`, `mixed`, or `insufficient`, backed by live web search and LLM stance analysis, cited sources, a confidence score, and a SHA-256 attestation over the result you can recompute. It ships with a published, checkable accuracy benchmark instead of an asserted quality number, and a live free-check box on the page. The first 3 checks a day per IP run the exact same real chain for free; after that it is $0.10 USDC per check via x402 on Base or Solana. No account, no API key.
+Fact Check submits a claim and returns a verdict, `supported`, `contradicted`, `mixed`, or `insufficient`, backed by live web search and LLM stance analysis, cited sources, a confidence score, and a SHA-256 attestation over the result you can recompute. It ships with a published, checkable accuracy benchmark instead of an asserted quality number, and a live free-check box on the page. The first 3 checks a day per IP run the exact same real chain for free; after that it is $0.10 USDC per check via x402 on Solana or Base. No account, no API key.
 
 Page: [/fact-check](https://three.ws/fact-check)
 
@@ -17,7 +17,7 @@ The page (`src/fact-check.js`) hydrates three cards: the accuracy benchmark, a "
 The request routing:
 
 - A `POST` with a valid `claim` and free quota remaining runs the real chain and returns `200` with `lane: "free"` and `free_remaining_today`.
-- Once the free quota is exhausted, or if a payment header is present, the request falls through to the x402 rail: a `402` challenge for $0.10 USDC (100,000 atomics), payable on Base or Solana, and a paid run returns `lane: "paid"`.
+- Once the free quota is exhausted, or if a payment header is present, the request falls through to the x402 rail: a `402` challenge for $0.10 USDC (100,000 atomics), payable on Solana (listed first) or Base, and a paid run returns `lane: "paid"`.
 - Malformed JSON or a present-but-invalid claim returns a hard `400`; a body with no `claim` at all falls through to a valid 402 so discovery probes get a proper challenge.
 
 The fact-check pipeline (`runFactCheck`):
@@ -95,7 +95,7 @@ The response's `source` field says which one answered (`database` or `image`).
 
 ### Scheduled re-run
 
-`/api/cron/fact-check-benchmark` runs the suite weekly (Mondays 04:41 UTC, see `vercel.json`) in-process on Cloud Run, against the real chain with the Redis verdict cache disabled, and publishes to the DB. No credential is needed for this path: it calls the chain directly, below the x402 payment layer. Tune with `FACT_CHECK_BENCHMARK_CONCURRENCY` (default 6) and `FACT_CHECK_BENCHMARK_DEADLINE_MS` (default 240000, kept under Cloud Scheduler's 320s attempt deadline).
+`/api/cron/fact-check-benchmark` runs the suite weekly (Mondays 04:41 UTC, see `vercel.json`) in-process on Cloud Run, against the real chain with the Redis verdict cache disabled, and publishes to the DB. No credential is needed for this path: it calls the chain directly, below the x402 payment layer. Tune with `FACT_CHECK_BENCHMARK_CONCURRENCY` (default 6) and `FACT_CHECK_BENCHMARK_DEADLINE_MS` (default 240000, kept under Cloud Scheduler's 320s attempt deadline). The handler declares `maxDuration = 300` and passes it to `wrapCron` as `maxDurationMs`, so the cron answers its own clean 503 at 300s instead of `wrapCron`'s 120s default.
 
 ### Running it by hand
 
@@ -121,6 +121,8 @@ The runner's HTTP path calls the paid endpoint 40 times, which the 3-per-day fre
   Use `--update-env-vars` (merges), never `--set-env-vars` (replaces the whole set). Every bypassed call is logged to `x402_access_log` with caller `internal`.
 - **`FACT_CHECK_BYPASS_TOKEN`**, an OAuth bearer carrying the `x402:bypass` scope, sent as `Authorization: Bearer`. Use this when you want a scoped, per-user credential rather than the service key.
 
+A self-serve Premium pass key does not bypass this route: pass keys are scoped to `PREMIUM_PASS_ROUTES` (the archive search) and fall through to the normal 402 here.
+
 With neither, the runner exits before spending a run and writes nothing.
 
 ### Why a run can be refused
@@ -134,7 +136,7 @@ Two guards keep a bad run from becoming a published number:
 ## States and limits
 
 - **Free quota.** 3 checks per day per IP, running the identical real chain (`lane: "free"`). The limiter is critical: a cache or limiter outage fails closed to the paid rail rather than opening unlimited free checks.
-- **Paid lane.** $0.10 USDC (100,000 atomics) per check, on Base or Solana, discoverable in the x402 bazaar. Quota exhaustion or a payment header routes here.
+- **Paid lane.** $0.10 USDC (100,000 atomics) per check, on Solana or Base (Solana first in the 402), discoverable in the x402 bazaar. Quota exhaustion or a payment header routes here.
 - **Input validation.** Claim 5 to 1000 characters (else `400`), strictness one of `high`, `medium`, `low` (default `medium`), and an optional image URL that must be http(s) and under 2048 characters.
 - **Errors.** No search results returns `422 no_results`; a search failure `502 search_failed`; a provider failure `502 provider_error`; malformed JSON `400`; an oversized body `413`.
 - **Honest benchmark.** The score shown is whatever the runner last measured against the real chain, or a "not yet run" empty state. Because production currently runs on keyless search fallbacks, decisive verdicts are harder to reach, which the published benchmark reflects rather than hides.

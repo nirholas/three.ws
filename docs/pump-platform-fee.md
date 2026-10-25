@@ -13,6 +13,7 @@ signature.
 | Agent wallet trade tab + `/api/agents/:id/solana/trade` | `api/agents/solana-trade.js` `buildTradeInstructions` | SOL spent / minimum SOL out |
 | Agent strategies and mirror trading | same builder (`agent-strategy-runtime.js`, `agent-mirror.js`) | SOL spent / minimum SOL out |
 | `/api/agents/:id/trade`, the market-maker (`workers/agent-mm`), programmable orders (`workers/agent-orders`) | `api/agents/agent-trade.js` `executeAgentTrade` | SOL spent / minimum SOL out |
+| Aggregator and venue swaps by an agent (any SPL pair, `api/_lib/trading-tools/swap.js`, venues in `venues.js`; filled by `workers/agent-orders` for non-launchpad coins) | `api/agents/solana-trade.js` `buildVenueTradeInstructions`: the venue builds the swap, the same fee is appended so no venue can skip it. Quotes report it as `three_ws_fee_bps` | quote spent / minimum out |
 | Sniper buys and sells (`workers/agent-sniper/executor.js`) | appended before broadcast; included in the position's cost basis and P&L | SOL spent / slippage-floor proceeds |
 | Agent pump.fun buy, sell, AMM swap (`/api/agents/:id/pumpfun/*`) | `api/agents/pumpfun/[action].js` | quote spent / slippage-floor proceeds |
 | Coin launches | the dev buy, see [Launch fee](#launch-fee-on-by-default) | dev buy |
@@ -23,7 +24,7 @@ sell that fills at its floor always covers its own fee.
 **Not billed:**
 - **Platform-owned agents** (owner account `three-ws@users.three.ws.local` or `@agents.three.ws`,
   `isPlatformOwnedAgent`): the $THREE circulation desk, house sniper fleets and other three.ws
-  money movements (`isPlatformOwnedUser` in `api/_lib/pump-platform-fee.js`).
+  money movements (`isPlatformOwnedUser` in `api/_lib/pump-platform-fee.js`, cached for 10 minutes per account; `isPlatformOwnedAgent` in `api/_lib/custodial-key-health.js` holds the email rule).
 - **Trades made outside three.ws.** A trade on pump.fun, a terminal or another app never touches
   our transaction builders, and the pump.fun program has no third-party fee hook, so there is
   nothing to attach a fee to.

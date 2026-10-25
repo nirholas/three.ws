@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-25T11:57:28.846Z",
+	"generated_at": "2026-10-25T11:58:03.204Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4201,
+	"total": 4202,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -85,6 +85,16 @@
 			"title": "Object-storage outages now answer a clean 503 with Retry-After instead of a raw 500",
 			"summary": "When the R2 bucket is unreachable (account disabled, keys rotated, endpoint down), any API route that writes or reads an object without its own error handling, such as avatar upload, used to answer a bare 500 and fire a Sentry event and an unhandled-5xx alert on every request. The shared error boundary now treats a storage fault like a database outage: a 503 service_unavailable with Retry-After, one throttled warning, a single deduped ops alert, and a clean skip for cron ticks. Deliberate 4xx errors and real handler bugs are unchanged.",
 			"link": "/docs/api-reference",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-25",
+			"type": "update",
+			"title": "Rate limiter Redis path repaired and its health hint made honest",
+			"summary": "The rate limiter had been failing every Redis call because @upstash/ratelimit 2.1+ sends a script flag that self-hosted Redis rejects, so traffic ran on the Postgres fallback while healthz called it transient. The library is pinned to 2.0.8, and this class of fault is now logged and reported as a non-transient script incompatibility.",
+			"link": null,
 			"tags": [
 				"fix"
 			]
@@ -1544,17 +1554,6 @@
 			"title": "The Home Assistant integration is ready for the HACS default store",
 			"summary": "home-assistant-integration/ now validates clean against the real hassfest and HACS checks: manifest.json's documentation link fixed (it 404'd), version bumped to 1.0.1, and hacs.json's minimum Home Assistant version corrected to 2024.12.0 (the first release bundling the aiohttp.ClientWSTimeout the integration's relay client uses, confirmed against HA's own package_constraints.txt). It now ships its own local brand icons at the sizes both HACS and home-assistant/brands require. A new scripts/export-hacs-repo.mjs builds the exact standalone-repository tree (integration, README, LICENSE, hacs.json, and the two validation workflows, which exist only in that exported tree since this monorepo runs no GitHub Actions of its own) ready to push to a new repository. Verified end to end against a real Home Assistant container through its real config flow and a real services/home-relay server: 18 real entities, a confirmed auto-reconnect after a relay restart, and a documentation fix to the connectivity sensor's entity ID along the way. Creating the standalone repository and opening the hacs/default and home-assistant/brands pull requests are owner actions; submission text is ready in marketing/growth/submissions/home-assistant.md.",
 			"link": "/docs/home-relay",
-			"tags": [
-				"improvement",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-13",
-			"type": "update",
-			"title": "The public animation library is now openly licensed, every clip CC0 or self-generated",
-			"summary": "GET /api/animations/library used to serve a bulk motion library baked from Mixamo, redistributable by anyone through scripts/mirror-animation-library.mjs even though Mixamo's own terms permit using its animations inside a project but not redistributing the raw files. The library is rebuilt from two CC0 1.0 Universal sources instead (Quaternius's Universal Animation Library 2 and Mesh2Motion's human animation packs), retargeted through the existing pipeline with every clip carrying a source and license field end to end from scripts/cc0-library.config.json through the published manifest. The /animations gallery shows each clip's pack and license next to its category chip, and the endpoint itself now refuses to publish any entry missing a license or naming Mixamo as its source, so a raw Mixamo clip can never reach the public endpoint or its mirror again. scripts/mixamo-all.mjs keeps its download and local-build phases for offline retargeting research, but its upload phase is permanently disabled.",
-			"link": "/docs/animations",
 			"tags": [
 				"improvement",
 				"docs"

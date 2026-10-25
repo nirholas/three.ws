@@ -191,7 +191,7 @@ purchase or equip:
 
 - **Shop** (`src/game/cosmetics-shop.js`) — browse the real catalog
   (`/api/cosmetics/catalog`), preview any item live on your avatar, and buy premium pieces
-  with real USDC via x402 (`cosmetics-purchase.js` → `/api/x402/cosmetic-purchase`). Ownership
+  with real USDC via x402 on Solana or Base, Solana listed first (`cosmetics-purchase.js` → `/api/x402/cosmetic-purchase`). Ownership
   is recorded server-side (`api/_lib/cosmetics-ownership.js`) and validated by
   `multiplayer/src/economy.js`. Premium cosmetics are intentionally billed in USDC/`$THREE`,
   kept separate from the in-world cash economy (`multiplayer/src/shop.js`) — cash buys tools
@@ -205,7 +205,8 @@ purchase or equip:
 ### The public ledger: `/fits`
 
 Every premium purchase settles USDC and splits revenue with the creator of the coin world the
-fit belongs to, all of it recorded in the settled-sale ledger
+fit belongs to (the creator's cut is always a share of the item's USDC list price, whichever
+asset the buyer paid in), all of it recorded in the settled-sale ledger
 (`api/_lib/cosmetics-economy.js`). That ledger has a public page at
 [`/fits`](https://three.ws/fits) (`pages/fits.html` + `src/fits.js`, pure helpers in
 `src/fits-lib.js`), so the economy is readable without entering a world:

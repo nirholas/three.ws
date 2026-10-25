@@ -626,7 +626,7 @@ It is red. One of the seven, `workers/browser-gateway`, is an empty directory on
 
 ### 12.2 `npm run check:claude`
 
-This is the piece most relevant to teams adopting coding agents. [`scripts/check-claude-md.mjs`](https://github.com/nirholas/three.ws/blob/main/scripts/check-claude-md.mjs) treats the agent operating file as code with assertions, because when it drifts, "agents follow instructions into dead ends... and burn a session discovering the drift." It does not judge prose. It **re-derives each checkable claim from its source of truth** on every run:
+This is the piece most relevant to teams adopting coding agents. [`scripts/check-claude-md.mjs`](https://github.com/nirholas/three.ws/blob/main/scripts/check-claude-md.mjs) treats the agent operating file as code with assertions, because when it drifts, "agents follow instructions into dead ends... and burn a session discovering the drift." It does not judge prose. It **re-derives each checkable claim from its source of truth** on every run. Since 2026-10-10 the operating file is split: the deploy runbook, playbook and standards moved into on-demand skills under `.claude/skills/`, and the check reads the file and those skills as one body, so the claims below hold for all of it:
 
 - every `npm run` script and repo path the file names must exist;
 - the quoted scheduled-job count must equal the length of the config's job list;

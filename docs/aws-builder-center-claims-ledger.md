@@ -231,7 +231,7 @@ export function modelRungs(request, env = process.env) {
 	return [
 		() => viaVertex(request),
 		() => viaChatCompletions(request, { url: 'https://api.groq.com/openai/v1/chat/completions', key: env.GROQ_API_KEY, model: 'openai/gpt-oss-120b', label: 'groq', textOnly: true }),
-		() => viaChatCompletions(request, { url: 'https://openrouter.ai/api/v1/chat/completions', key: env.OPENROUTER_API_KEY, model: `anthropic/${EDITOR_MODEL}`, label: 'openrouter', extraHeaders: { 'http-referer': 'https://three.ws', 'x-title': 'three.ws editorial review' } }),
+		() => viaChatCompletions(request, { url: 'https://openrouter.ai/api/v1/chat/completions', key: env.OPENROUTER_API_KEY, model: `anthropic/${EDITOR_MODEL}`, label: 'openrouter', extraHeaders: OPENROUTER_ATTRIBUTION_HEADERS }),
 		() => viaChatCompletions(request, { url: 'https://api.openai.com/v1/chat/completions', key: env.OPENAI_API_KEY, model: 'gpt-5.5-pro', label: 'openai' }),
 		() => viaChatCompletions(request, { url: 'https://integrate.api.nvidia.com/v1/chat/completions', key: env.NVIDIA_API_KEY, model: 'moonshotai/kimi-k3', label: 'nvidia', maxTokens: RUNG_MAX_TOKENS }),
 	];
@@ -334,7 +334,7 @@ export function jitterMinutes(id, windowMinutes, seed = null) {
 }
 ```
 
-The HMAC is stable per slot, so a preview, a retry and the real tick agree on the minute, while nobody without the seed can compute it. Without the seed it falls back to the public hash, which keeps tests deterministic, and the planning command says its minutes are placeholders. Which post fills a slot is decided when the slot opens, so a correct guess at the minute would not say which post goes out. The account has three slots a day, one per tier (flagship, feature, proof of work), plus a slot for long-form X Articles every second day.
+The HMAC is stable per slot, so a preview, a retry and the real tick agree on the minute, while nobody without the seed can compute it. Without the seed it falls back to the public hash, which keeps tests deterministic, and the planning command says its minutes are placeholders. Which post fills a slot is decided when the slot opens, so a correct guess at the minute would not say which post goes out. The account has three slots a day, one per tier (flagship, feature, proof of work), plus a slot for long-form X Articles every second day. The flagship slot can also belong to a series: the queue gives it to a daily partner spotlight, and when no spotlight is ready it is the flagship slot as before.
 
 **Who approves** is [`api/_lib/x-content/approval.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/x-content/approval.js). In `owner` mode every post waits for a person. In `auto` mode a post is released without one only when all of these hold:
 
@@ -345,7 +345,7 @@ The HMAC is stable per slot, so a preview, a retry and the real tick agree on th
 | It tags no one | A tag puts a partner's name next to ours, and a person decides that |
 | The review passed on the editor's own verdict | An override is a person's judgment, so it needs a person |
 
-X Articles have their own switch: long-form writing rarely has a reel to film, so the review stands in for it (every probe re-run, every link resolved, every sentence of the body held to the claims ledger), while the tag, verdict and proof rules still apply. A release by policy is never immediate: the post waits out a veto window (the code's default is 24 hours; the queue sets its own), the release is written to the ops alerts, and one command takes it back. Human attention goes to tags, flagship claims and disagreements with the editor, not to re-reading a filmed, verified, linted post.
+A series has its own switch too (`approval.series`): a partner spotlight is flagship because it names a partner, so the tier rule alone would hold every one. What stands in for the owner's eye is a series lint that requires the partner's designation exactly as its registry entry gives it and bans any phrase that overstates the relationship, while the filmed, no-tag and editor-verdict conditions still apply. X Articles have their own switch: long-form writing rarely has a reel to film, so the review stands in for it (every probe re-run, every link resolved, every sentence of the body held to the claims ledger), while the tag, verdict and proof rules still apply. A release by policy is never immediate: the post waits out a veto window (the code's default is 24 hours; the queue sets its own), the release is written to the ops alerts, and one command takes it back. Human attention goes to tags, flagship claims and disagreements with the editor, not to re-reading a filmed, verified, linted post.
 
 ## 12. The learning loop, and the limits of what it learned
 
@@ -362,6 +362,8 @@ export function outcomeOf(row) {
 The guard rails are the part to copy. A post counts once it is 48 hours old, because likes arrive for about two days. Outcomes are recency-weighted with a 45-day half-life. Each attribute's measured difference is shrunk by `n / (n + 8)`, and a value seen on fewer than 3 posts moves no score. The learned part is ignored until 20 posts have matured and is clamped to between -15 and +15 ranking points, so it cannot overrule the owner's explicit boost. Overlapping attributes are not summed: the estimate is the strongest reason for, the strongest against, and the mean of the rest. Because X bills each post a read returns, a refresh only re-reads as far back as metrics can still move (7 days before the last read).
 
 A second model ranks by a different measured outcome: [`data/x-content/volume-model.json`](https://github.com/nirholas/three.ws/blob/main/data/x-content/volume-model.json) is a logistic regression fitted on 313 post moments, 54 of which were followed by a volume response on the $THREE pool. Read honestly, it is weak evidence: of its 9 features, only three (announcing a shipped thing, posting inside US working hours, posting from the company account) have confidence intervals that exclude no effect. It also rewards the word "introducing", which the voice lint bans as an opener. The lint wins, because it is a blocker and the model is a ranking term.
+
+The outcomes record can also carry a measured price return for each post ([`price-impact.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/x-content/price-impact.js)), which feeds a second set of lifts once 20 matured posts have one.
 
 The boundary that matters: no deterministic check reads any of this. The learned lifts and the volume model change which ready post fills a slot, and the best-measured posts are what the editor sees as calibration. A learned preference can reorder true posts; it cannot make a false one publishable.
 

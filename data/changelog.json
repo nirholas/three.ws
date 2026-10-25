@@ -3,6 +3,22 @@
 	"entries": [
 		{
 			"date": "2026-10-25",
+			"title": "Rate limiter Redis path repaired and its health hint made honest",
+			"summary": "The rate limiter had been failing every Redis call because @upstash/ratelimit 2.1+ sends a script flag that self-hosted Redis rejects, so traffic ran on the Postgres fallback while healthz called it transient. The library is pinned to 2.0.8, and this class of fault is now logged and reported as a non-transient script incompatibility.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-25",
+			"title": "Allowance pulls now require the signed real-funds agreement",
+			"summary": "Pulling funds through an owner-funded on-chain allowance now checks the signed real-funds agreements before the agent key is used, matching every other custodial signing path. Unsigned accounts get the standard agreement-required refusal and nothing is sent.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-25",
 			"title": "Commit feed cron skips quietly on a lock-check fault",
 			"summary": "The commit feed cron now skips a tick with a 200 when the database lock check hits a transient fault, instead of answering a raw 500 and raising an ops alert. The next tick retries.",
 			"tags": [
@@ -13,7 +29,9 @@
 			"date": "2026-10-25",
 			"title": "Object-storage outages now answer a clean 503 with Retry-After instead of a raw 500",
 			"summary": "When the R2 bucket is unreachable (account disabled, keys rotated, endpoint down), any API route that writes or reads an object without its own error handling, such as avatar upload, used to answer a bare 500 and fire a Sentry event and an unhandled-5xx alert on every request. The shared error boundary now treats a storage fault like a database outage: a 503 service_unavailable with Retry-After, one throttled warning, a single deduped ops alert, and a clean skip for cron ticks. Deliberate 4xx errors and real handler bugs are unchanged.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/docs/api-reference"
 		},
 		{
