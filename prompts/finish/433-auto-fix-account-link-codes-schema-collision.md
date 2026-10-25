@@ -1,5 +1,17 @@
 # 433. Fix the account_link_codes table-name collision breaking every phone/desktop/CLI/Telegram account-link call in production
 
+Evolve status (2026-10-25): every task this order can finish unattended is done and committed:
+migration `api/_lib/migrations/20261024193900_fix_account_link_codes_collision.sql` (renames the
+legacy agents-v1 table instead of dropping it, then creates the correctly-shaped table), the
+`api/_lib/schema.sql` comment fix, `tests/account-link-codes-schema.test.js` (confirmed red today
+against the live, still-broken database for the exact 42703 reason), the `data/changelog.json`
+entry, and owner-action row 72. What remains is exactly one step, and it is on evolve's hard-deny
+list, not a judgment call: apply the migration (`npm run db:migrate`), confirm with
+`npm run db:status` (no pending, no drift), then re-run
+`node --env-file=.env.local ./node_modules/.bin/vitest run tests/account-link-codes-schema.test.js`
+and confirm all 3 assertions pass. Once that's done, retire this order per the close-out steps
+below; nothing else is outstanding.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate.
 
 ## Operating clause (binding)
