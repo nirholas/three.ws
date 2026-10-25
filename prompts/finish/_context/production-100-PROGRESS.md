@@ -1960,3 +1960,7 @@ Verification: `npx vitest run tests/pump-bonding.test.js` passed 28/28 (26 pre-e
 Live production symptom: unverified, pending deploy. This is the evolve lane; no deploy happens here. The pump.fun Cloudflare block confirmed live in step 0 means `/api/crypto/bonding` is currently running on borrowed time against its LKG cache for any mint whose last successful fetch is approaching 30 minutes old; this fix raises that runway to 6 hours once deployed, matching the RPC-lane cooldown it was sized against.
 
 Left: nothing for this order's own scope. `prompts/finish/442-auto-bonding-lkg-ttl-too-short.md` deleted in this closing commit.
+
+## 2026-10-25 order 433 closed (account_link_codes collision)
+
+Migration `20261024193900_fix_account_link_codes_collision.sql` was applied to production and deployed (`1ad300d5b`). Verified live: `account_link_codes` has the device-linking columns (status, device_kind, claim_secret_hash, ...), `account_link_codes_agents_v1_legacy` exists with 0 preserved rows, `db:status` reports all applied, and `tests/account-link.test.js` plus `tests/account-link-codes-schema.test.js` pass 36/36. Owner-actions row 72 removed. Order file deleted in the closing commit.
