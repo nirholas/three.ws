@@ -3,7 +3,7 @@ import { __test__ } from '../../api/animations/sell.js';
 
 const { listSchema, delistSchema, shape, resolvePayto, resolveArtifactBytes } = __test__;
 
-const UUID = '11111111-2222-3333-4444-555555555555';
+const UUID = '11111111-2222-4333-8444-555555555555';
 const NS_KEY = `u/${UUID}/animations/spin-kick-12.glb`;
 const BASE_ADDR = '0x' + 'a'.repeat(40);
 const SOL_ADDR = 'So11111111111111111111111111111111111111112';

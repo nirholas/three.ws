@@ -10,7 +10,7 @@
 // with an explicit permission model. See `packages/tool-sdk/README.md` for the
 // full API + a runnable example.
 
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { z } from 'zod';
 
 import { normalizePermissions } from './permissions.js';
 
@@ -105,10 +105,10 @@ export function defineTool(config) {
 		}
 
 		const jsonSchema = /** @type {Record<string, any>} */ (
-			zodToJsonSchema(apiConfig.parameters, { $refStrategy: 'none', target: 'jsonSchema7' })
+			z.toJSONSchema(apiConfig.parameters, { target: 'draft-7' })
 		);
-		// zod-to-json-schema adds a top-level `$schema` meta key — strip it so
-		// the manifest carries a lean, self-contained object schema.
+		// z.toJSONSchema adds a top-level `$schema` meta key, strip it so the
+		// manifest carries a lean, self-contained object schema.
 		delete jsonSchema.$schema;
 
 		return {

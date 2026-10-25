@@ -155,10 +155,10 @@ async function invoke(req, res) {
 	return { res, json };
 }
 
-const BUYER_ID  = '00000000-0000-0000-0000-000000000001';
-const SELLER_ID = '00000000-0000-0000-0000-000000000002';
-const USER_ID   = 'aaaa0000-0000-0000-0000-000000000001';
-const OTHER_ID  = 'bbbb0000-0000-0000-0000-000000000001';
+const BUYER_ID  = '00000000-0000-4000-8000-000000000001';
+const SELLER_ID = '00000000-0000-4000-8000-000000000002';
+const USER_ID   = 'aaaa0000-0000-4000-8000-000000000001';
+const OTHER_ID  = 'bbbb0000-0000-4000-8000-000000000001';
 
 const BUYER_ROW  = { id: BUYER_ID,  user_id: USER_ID,  meta: { encrypted_solana_secret: 'enc' } };
 const SELLER_ROW = { id: SELLER_ID, user_id: OTHER_ID };

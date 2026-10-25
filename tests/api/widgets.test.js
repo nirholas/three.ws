@@ -286,7 +286,7 @@ describe('POST /api/widgets (create)', () => {
 			body: {
 				type: 'turntable',
 				name: 'Owned',
-				avatar_id: '11111111-1111-1111-1111-111111111111',
+				avatar_id: '11111111-1111-4111-8111-111111111111',
 			},
 		});
 		const res = mockRes();
@@ -694,7 +694,7 @@ describe('GET /api/widgets/og', () => {
 				id: 'wdgt_a',
 				name: 'Has avatar',
 				type: 'turntable',
-				avatar_id: '11111111-1111-1111-1111-111111111111',
+				avatar_id: '11111111-1111-4111-8111-111111111111',
 				is_public: true,
 			},
 		]);

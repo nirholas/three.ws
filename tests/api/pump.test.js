@@ -225,7 +225,7 @@ describe('POST /api/pump/launch-prep', () => {
 		const handler = pumpAction('launch-prep');
 		const { res } = await invoke(handler, {
 			method: 'POST', url: '/api/pump/launch-prep',
-			body: { agent_id: '00000000-0000-0000-0000-000000000001',
+			body: { agent_id: '00000000-0000-4000-8000-000000000001',
 				wallet_address: walletB58, name: 'X', symbol: 'X', uri: 'https://x/m.json' },
 		});
 		expect(res.statusCode).toBe(401);
@@ -242,7 +242,7 @@ describe('POST /api/pump/launch-prep', () => {
 		const { res, json } = await invoke(handler, {
 			method: 'POST', url: '/api/pump/launch-prep',
 			body: {
-				agent_id: '00000000-0000-0000-0000-000000000001',
+				agent_id: '00000000-0000-4000-8000-000000000001',
 				wallet_address: walletB58,
 				name: 'Foo', symbol: 'FOO', uri: 'https://x/m.json',
 				network: 'devnet', buyback_bps: 500,
@@ -263,7 +263,7 @@ describe('POST /api/pump/launch-prep', () => {
 		const { res, json } = await invoke(pumpAction('launch-prep'), {
 			method: 'POST', url: '/api/pump/launch-prep',
 			body: {
-				agent_id: '00000000-0000-0000-0000-000000000001',
+				agent_id: '00000000-0000-4000-8000-000000000001',
 				wallet_address: walletB58,
 				name: 'Foo', symbol: 'FOO', uri: 'https://x/m.json',
 				network: 'devnet', buyback_bps: 500,
@@ -354,7 +354,7 @@ describe('POST /api/pump/accept-payment-confirm', () => {
 		const { res, json } = await invoke(handler, {
 			method: 'POST', url: '/api/pump/accept-payment-confirm',
 			body: {
-				payment_id: '00000000-0000-0000-0000-000000000001',
+				payment_id: '00000000-0000-4000-8000-000000000001',
 				tx_signature: 'a'.repeat(88),
 			},
 		});
@@ -548,7 +548,7 @@ describe('GET /api/pump/by-agent', () => {
 		const handler = pumpAction('by-agent');
 		const { res, json } = await invoke(handler, {
 			method: 'GET',
-			url: '/api/pump/by-agent?agent_id=00000000-0000-0000-0000-000000000001',
+			url: '/api/pump/by-agent?agent_id=00000000-0000-4000-8000-000000000001',
 		});
 		expect(res.statusCode).toBe(200);
 		expect(json.data).toBe(null);
@@ -563,7 +563,7 @@ describe('GET /api/pump/by-agent', () => {
 		const handler = pumpAction('by-agent');
 		const { res, json } = await invoke(handler, {
 			method: 'GET',
-			url: '/api/pump/by-agent?agent_id=00000000-0000-0000-0000-000000000001',
+			url: '/api/pump/by-agent?agent_id=00000000-0000-4000-8000-000000000001',
 		});
 		expect(res.statusCode).toBe(200);
 		expect(json.data.mint).toBe(mintB58);
@@ -590,7 +590,7 @@ describe('GET /api/pump/by-agent', () => {
 		const handler = pumpAction('by-agent');
 		const { res } = await invoke(handler, {
 			method: 'GET',
-			url: '/api/pump/by-agent?agent_id=00000000-0000-0000-0000-000000000001',
+			url: '/api/pump/by-agent?agent_id=00000000-0000-4000-8000-000000000001',
 		});
 		expect(res.statusCode).toBe(200);
 		const burnQuery = sqlState.calls.find((c) => /pump_buyback_runs/.test(String(c.query)) && /last_burn_at/.test(String(c.query)));
@@ -775,7 +775,7 @@ describe('cookie-CSRF gate on pump mutations (2026-07-23 audit)', () => {
 			headers: { origin: 'https://evil.example' },
 			// A schema-valid body: launch-prep validates input before auth, so
 			// the CSRF gate inside resolveAuth is only reached with this shape.
-			body: { agent_id: '00000000-0000-0000-0000-000000000001',
+			body: { agent_id: '00000000-0000-4000-8000-000000000001',
 				wallet_address: walletB58, name: 'X', symbol: 'X', uri: 'https://x/m.json' },
 		});
 		expect(res.statusCode).toBe(403);
@@ -793,7 +793,7 @@ describe('cookie-CSRF gate on pump mutations (2026-07-23 audit)', () => {
 		const { res } = await invoke(handler, {
 			method: 'POST', url: '/api/pump/launch-prep',
 			headers: { origin: undefined },
-			body: { agent_id: '00000000-0000-0000-0000-000000000001',
+			body: { agent_id: '00000000-0000-4000-8000-000000000001',
 				wallet_address: walletB58, name: 'X', symbol: 'X', uri: 'https://x/m.json' },
 		});
 		expect(res.statusCode).toBe(403);

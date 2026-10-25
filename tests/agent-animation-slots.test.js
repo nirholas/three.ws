@@ -23,7 +23,7 @@ const SUB = readFileSync(resolve(__dirname, '../api/agents/_id/_sub.js'), 'utf8'
 // The handler's schema, rebuilt here from the same source of truth. Importing
 // the handler itself would pull in the DB client and the session layer.
 const schema = z
-	.record(
+	.partialRecord(
 		z.enum(/** @type {[string, ...string[]]} */ (SLOTS)),
 		z
 			.string()

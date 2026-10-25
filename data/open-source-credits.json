@@ -2310,7 +2310,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/colinhacks/zod",
 			"funding": "https://github.com/sponsors/colinhacks",
-			"version": "3.25.76",
+			"version": "4.6.7",
 			"powers": "Runtime schema validation across the API and agent SDKs."
 		},
 		{

@@ -183,7 +183,7 @@ const animationGraphSchema = z
 // deliberately not restricted to the platform manifest so an agent can point a
 // slot at one of its own uploaded clips. An empty object clears every override.
 const animationSlotsSchema = z
-	.record(
+	.partialRecord(
 		z.enum(/** @type {[string, ...string[]]} */ (SLOTS)),
 		z
 			.string()

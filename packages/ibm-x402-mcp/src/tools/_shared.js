@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export { toolError } from '../payments.js';
 
@@ -23,10 +22,7 @@ export const deterministicAnnotations = Object.freeze({
 });
 
 export function jsonSchemaFromZod(shape) {
-	const schema = zodToJsonSchema(z.object(shape).strict(), {
-		$refStrategy: 'none',
-		target: 'jsonSchema7',
-	});
+	const schema = z.toJSONSchema(z.object(shape).strict(), { target: 'draft-7' });
 	delete schema.$schema;
 	return schema;
 }

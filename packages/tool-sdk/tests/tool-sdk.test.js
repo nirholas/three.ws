@@ -47,7 +47,7 @@ describe('defineTool', () => {
 			},
 			required: ['symbol'],
 		});
-		// zod-to-json-schema's `$schema` meta key must be stripped.
+		// z.toJSONSchema's `$schema` meta key must be stripped.
 		expect(api.parameters.$schema).toBeUndefined();
 	});
 

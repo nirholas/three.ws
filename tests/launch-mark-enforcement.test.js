@@ -236,7 +236,7 @@ function resetAll() {
 
 // ── Shared fixtures ───────────────────────────────────────────────────────────
 const walletB58 = 'WalletPubkey111111111111111111111111111';
-const agentUUID = '00000000-0000-0000-0000-000000000001';
+const agentUUID = '00000000-0000-4000-8000-000000000001';
 const basePrepBody = {
 	agent_id: agentUUID,
 	wallet_address: walletB58,

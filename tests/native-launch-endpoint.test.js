@@ -209,7 +209,7 @@ describe('swap-prep', () => {
 
 describe('launch-prep', () => {
 	const body = {
-		avatar_id: '00000000-0000-0000-0000-000000000001',
+		avatar_id: '00000000-0000-4000-8000-000000000001',
 		wallet_address: WALLET,
 		name: 'Native Coin',
 		symbol: 'NTV',
