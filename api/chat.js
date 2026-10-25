@@ -64,7 +64,7 @@ import {
 	GROK_BUDGET_MODEL,
 	routableGrokModelId,
 } from './_lib/chat-models.js';
-import { computeContext, searchMemories } from './_lib/memory-store.js';
+import { computeContext, searchMemories, isVisitorQaMemory } from './_lib/memory-store.js';
 import { HOME_TOOL_DEFS, isHomeTool, runHomeTool } from './_lib/home/tools.js';
 import {
 	homeTurnGate,
@@ -703,7 +703,7 @@ export default wrap(async (req, res) => {
 			captureException(err, { route: 'chat', stage: 'home-membership' });
 		}
 	}
-	const toolSet = homeCount
+	const toolSet = homeToolsOffered({ homeCount, agentId: body.agentId, isOwner })
 		? {
 				anthropic: [...ACTION_TOOLS, ...HOME_ANTHROPIC_TOOLS],
 				openai: [...OPENAI_TOOLS, ...HOME_OPENAI_TOOLS],
@@ -1559,6 +1559,17 @@ function keylessVertexAvailable(name) {
 }
 
 /**
+ * Whether this turn may carry the visitor's smart-home tools. They run under the
+ * visitor's authority, so they are withheld whenever another account's persona or
+ * custom skills (untrusted text) share the prompt: only the agent's owner, or a
+ * turn with no agent at all, gets them.
+ * @param {{ homeCount: number, agentId: unknown, isOwner: boolean }} o
+ */
+export function homeToolsOffered({ homeCount, agentId, isOwner }) {
+	return homeCount > 0 && (!agentId || isOwner);
+}
+
+/**
  * Whether this turn should default to the agent's own configured brain
  * (api/_lib/agent-model.js) instead of the platform's provider ladder: only
  * when the caller named neither provider nor model, is signed in (grok, like
@@ -2118,7 +2129,7 @@ function toViewerAction(call) {
 // memories. Returns the compact shape the `done` event and the client bus event
 // share — id, type, tier, salience, a display snippet, and how it surfaced.
 async function recallForChat(agentId, message, isOwner) {
-	const visible = (m) => isOwner || m.isPublic;
+	const visible = (m) => !isVisitorQaMemory(m) && (isOwner || m.isPublic);
 	const [ctx, search] = await Promise.all([
 		computeContext(agentId).catch(() => ({ entries: [] })),
 		searchMemories(agentId, message, { topK: 6 }).catch(() => ({ results: [] })),
