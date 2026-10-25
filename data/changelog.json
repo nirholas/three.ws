@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-25",
+			"title": "Chat pairing and X connect returns land on a working Connections page",
+			"summary": "The /settings/connections link that the Telegram and Discord bots, the notification settings and the X connect flow all send people to returned a 404. Every /settings subpath now serves the settings app, and a new Connections tab lists paired chats, toggles notifications, picks the default agent, unpairs, issues a pairing code and redeems the code a bot prints.",
+			"tags": [
+				"fix"
+			],
+			"link": "/settings/connections"
+		},
+		{
+			"date": "2026-10-25",
 			"title": "Paid Solana routes fall back to self-pay instead of advertising a sponsor that cannot settle",
 			"summary": "The model-check, mint-to-mesh, vanity, forge, pipeline and sealed-drops paywalls kept naming the sponsor wallet as fee payer even when it sat under its SOL floor, so buyers signed payments the facilitator then refused. They now share one self-pay guard with every other paid route: when the sponsor cannot co-sign, the Solana accept stays on the challenge without a fee payer and the buyer pays its own network fee.",
 			"tags": [

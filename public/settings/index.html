@@ -457,6 +457,7 @@
 				<a href="#connected-accounts" data-tab="connected-accounts" data-i18n="settings_index.connected_accounts">Connected Accounts</a>
 				<a href="#privacy" data-tab="privacy" data-i18n="settings_index.privacy">Privacy</a>
 				<a href="#sessions" data-tab="sessions" data-i18n="settings_index.sessions">Sessions</a>
+				<a href="#connections" data-tab="connections">Connections</a>
 				<div class="aside-section">Workspace</div>
 				<a href="/dashboard#keys" data-i18n="settings_index.api_keys">API Keys ↗</a>
 				<a href="/dashboard#mcp" data-i18n="settings_index.mcp">MCP ↗</a>
@@ -628,6 +629,41 @@
 						<button class="btn sec" id="revoke-others-btn" data-i18n="settings_index.revoke_all_other_sessions">Revoke all other sessions</button>
 						<span class="inline-msg" id="sessions-msg" style="display:none"></span>
 					</div>
+				</div>
+
+				<!-- ── Connections (paired chats) ───────────────────────── -->
+				<div class="page" id="tab-connections">
+					<h2>Connections</h2>
+					<p class="sub">Telegram and Discord chats paired with your agents</p>
+					<span class="inline-msg" id="conn-msg" style="display:none;margin-bottom:12px"></span>
+
+					<div class="section" data-slot="redeem" id="conn-redeem" style="display:none"></div>
+
+					<div class="section">
+						<h3>Paired chats</h3>
+						<div data-slot="links-list" id="conn-links" aria-live="polite">
+							<p class="muted">Loading connections…</p>
+						</div>
+					</div>
+
+					<hr class="divider" />
+
+					<div class="section" data-slot="issue" id="conn-issue">
+						<h3>Pair a new chat</h3>
+						<p class="muted" style="font-size:13px;margin:0 0 12px">Generate a code here, then send it to the bot as <code>/link CODE</code> from the chat you want to pair. Or start in the chat: the bot prints a code you can paste back here.</p>
+						<div id="conn-bots" class="muted" style="font-size:13px;margin-bottom:12px"></div>
+						<div class="row">
+							<button class="btn" id="conn-issue-btn">Generate pairing code</button>
+						</div>
+						<div id="conn-issued" style="display:none;margin-top:14px"></div>
+						<div class="row" style="margin-top:18px">
+							<label for="conn-code-input" class="visually-hidden">Code from the bot</label>
+							<input id="conn-code-input" type="text" placeholder="Code from the bot, e.g. ABCD-EFGH" maxlength="16" autocomplete="off" style="max-width:280px" />
+							<button class="btn sec" id="conn-preview-btn">Check code</button>
+						</div>
+					</div>
+
+					<div class="section" id="conn-x" style="display:none;margin-top:18px"></div>
 				</div>
 
 				<!-- ── Connected Accounts ────────────────────────────────── -->
@@ -1669,6 +1705,201 @@
 				});
 			}
 
+			// ── Connections (paired chats) ────────────────────────────────
+			const CONN_PLATFORM = { telegram: 'Telegram', discord: 'Discord' };
+			const X_OUTCOMES = {
+				connected: ['ok', 'X account connected successfully.'],
+				denied: ['err', 'X connection cancelled.'],
+				unconfigured: ['err', 'X connections are not enabled on this deployment, so the connect could not start.'],
+				error: ['err', 'X connection failed. Try again.'],
+			};
+			let connState = { agents: [], bots: {} };
+			let connIntroDone = false;
+
+			function connMsg(type, text) {
+				showMsg(document.getElementById('conn-msg'), type, text);
+			}
+
+			function renderConnBots(bots) {
+				const parts = [];
+				if (bots.telegram?.available) parts.push(`<a href="${escHtml(bots.telegram.url)}" target="_blank" rel="noopener">@${escHtml(bots.telegram.username)} on Telegram</a>`);
+				if (bots.discord?.available) parts.push(`<a href="${escHtml(bots.discord.dm_url)}" target="_blank" rel="noopener">Message the Discord bot</a> or <a href="${escHtml(bots.discord.invite_url)}" target="_blank" rel="noopener">add it to a server</a>`);
+				document.getElementById('conn-bots').innerHTML = parts.length
+					? 'Bots: ' + parts.join(' &middot; ')
+					: 'No chat bots are enabled on this deployment yet.';
+			}
+
+			function renderConnLinks(links) {
+				const el = document.getElementById('conn-links');
+				if (!links.length) {
+					el.innerHTML = '<p class="muted">No chats are paired yet. Generate a code below and send it to the bot with <code>/link CODE</code>.</p>';
+					return;
+				}
+				el.innerHTML = links.map(l => {
+					const opts = ['<option value="">Default agent</option>']
+						.concat(connState.agents.map(a => `<option value="${escHtml(a.id)}"${a.id === l.default_agent_id ? ' selected' : ''}>${escHtml(a.name)}</option>`)).join('');
+					const title = l.chat_title || l.platform_username || 'Direct chat';
+					return `
+						<div class="social-card" data-link-id="${escHtml(l.id)}" style="margin-bottom:10px;flex-wrap:wrap">
+							<div class="provider-info">
+								<div>
+									<div class="provider-name">${escHtml(CONN_PLATFORM[l.platform] || l.platform)}: ${escHtml(title)}</div>
+									<div class="provider-meta">Paired ${escHtml(new Date(l.created_at).toLocaleDateString())}${l.default_agent_name ? ' &middot; ' + escHtml(l.default_agent_name) : ''}</div>
+								</div>
+							</div>
+							<div class="actions" style="flex-wrap:wrap">
+								<label class="visually-hidden" for="conn-agent-${escHtml(l.id)}">Agent for this chat</label>
+								<select id="conn-agent-${escHtml(l.id)}" data-act="agent" style="max-width:200px">${opts}</select>
+								<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#ccc;cursor:pointer">
+									<input type="checkbox" data-act="notify"${l.notify ? ' checked' : ''} /> Notify
+								</label>
+								<button class="btn sec" data-act="unpair" style="font-size:12px;padding:5px 14px">Unpair</button>
+							</div>
+						</div>`;
+				}).join('');
+			}
+
+			async function connPatch(id, body, undo) {
+				try {
+					await apiJson('/api/gateway/connections', { method: 'PATCH', body: JSON.stringify({ id, ...body }) });
+					connMsg('ok', 'Saved.');
+				} catch (e) {
+					undo();
+					connMsg('err', e.data?.error_description || 'Could not save that change.');
+				}
+			}
+
+			document.getElementById('conn-links').addEventListener('change', (e) => {
+				const card = e.target.closest('[data-link-id]');
+				if (!card) return;
+				const id = card.dataset.linkId;
+				if (e.target.dataset.act === 'notify') {
+					const box = e.target;
+					connPatch(id, { notify: box.checked }, () => { box.checked = !box.checked; });
+				} else if (e.target.dataset.act === 'agent') {
+					const sel = e.target;
+					const prev = sel.dataset.prev ?? [...sel.options].find(o => o.defaultSelected)?.value ?? '';
+					connPatch(id, { default_agent_id: sel.value || null }, () => { sel.value = prev; });
+					sel.dataset.prev = sel.value;
+				}
+			});
+
+			document.getElementById('conn-links').addEventListener('click', async (e) => {
+				const btn = e.target.closest('[data-act="unpair"]');
+				if (!btn) return;
+				const card = btn.closest('[data-link-id]');
+				if (!confirm('Unpair this chat? It will stop receiving replies and notifications until you pair it again.')) return;
+				btn.disabled = true;
+				try {
+					await apiJson('/api/gateway/connections?id=' + encodeURIComponent(card.dataset.linkId), { method: 'DELETE' });
+					card.remove();
+					if (!document.querySelector('#conn-links [data-link-id]')) renderConnLinks([]);
+					connMsg('ok', 'Chat unpaired.');
+				} catch (err) {
+					btn.disabled = false;
+					connMsg('err', err.data?.error_description || 'Could not unpair that chat.');
+				}
+			});
+
+			document.getElementById('conn-issue-btn').addEventListener('click', async () => {
+				const btn = document.getElementById('conn-issue-btn');
+				const out = document.getElementById('conn-issued');
+				btn.disabled = true;
+				try {
+					const r = await apiJson('/api/gateway/connections', { method: 'POST', body: JSON.stringify({ action: 'issue' }) });
+					const mins = Math.max(1, Math.round((new Date(r.expires_at) - Date.now()) / 60000));
+					out.style.display = 'block';
+					out.innerHTML = `<div style="font-size:22px;font-weight:700;letter-spacing:.12em;font-family:monospace;color:#eee">${escHtml(r.code)}</div>
+						<p class="muted" style="font-size:13px;margin:6px 0 0">Send <code>/link ${escHtml(r.code)}</code> to the bot from the chat to pair. Expires in about ${mins} minute${mins === 1 ? '' : 's'}.</p>`;
+				} catch (e) {
+					connMsg('err', e.data?.error_description || 'Could not create a pairing code.');
+				} finally {
+					btn.disabled = false;
+				}
+			});
+
+			// Redeem is two steps on the server: preview shows which chat printed the
+			// code and mints a confirmation, redeem pairs that exact chat.
+			async function previewConnCode(rawCode) {
+				const box = document.getElementById('conn-redeem');
+				box.style.display = 'block';
+				box.innerHTML = '<p class="muted">Checking code…</p>';
+				try {
+					const r = await apiJson('/api/gateway/connections', { method: 'POST', body: JSON.stringify({ action: 'preview', code: rawCode }) });
+					const c = r.chat;
+					const name = c.chat_title || c.platform_username || 'a direct chat';
+					box.innerHTML = `
+						<h3>Pair this chat?</h3>
+						<p style="font-size:14px;color:#ddd;margin:0 0 12px">${escHtml(CONN_PLATFORM[c.platform] || c.platform)}: <strong>${escHtml(name)}</strong>${c.already_linked ? ' (already paired to your account)' : ''}. Anyone in this chat will be able to talk to your agents and approve actions they request.</p>
+						<div class="row">
+							<button class="btn" id="conn-redeem-btn">Pair this chat</button>
+							<button class="btn sec" id="conn-redeem-cancel">Cancel</button>
+						</div>`;
+					document.getElementById('conn-redeem-cancel').addEventListener('click', () => { box.style.display = 'none'; });
+					document.getElementById('conn-redeem-btn').addEventListener('click', async (ev) => {
+						ev.target.disabled = true;
+						try {
+							await apiJson('/api/gateway/connections', { method: 'POST', body: JSON.stringify({ action: 'redeem', code: rawCode, confirm: r.confirm }) });
+							box.style.display = 'none';
+							document.getElementById('conn-code-input').value = '';
+							connMsg('ok', 'Chat paired.');
+							loadConnections();
+						} catch (e) {
+							ev.target.disabled = false;
+							connMsg('err', e.data?.error_description || 'Could not pair that chat.');
+						}
+					});
+				} catch (e) {
+					box.innerHTML = `<p class="inline-msg err" style="display:inline-block">${escHtml(e.data?.error_description || 'That code did not work. Ask the bot for a new one.')}</p>`;
+				}
+			}
+
+			document.getElementById('conn-preview-btn').addEventListener('click', () => {
+				const v = document.getElementById('conn-code-input').value.trim();
+				if (v) previewConnCode(v);
+				else connMsg('err', 'Enter the code the bot gave you.');
+			});
+
+			async function loadConnections() {
+				const el = document.getElementById('conn-links');
+				try {
+					const data = await apiJson('/api/gateway/connections');
+					connState = { agents: data.agents || [], bots: data.bots || {} };
+					renderConnBots(connState.bots);
+					renderConnLinks(data.links || []);
+				} catch (e) {
+					el.innerHTML = `<p class="muted">${escHtml(e.data?.error_description || 'Could not load your connections.')} <button class="btn sec" id="conn-retry" style="font-size:12px;padding:5px 14px">Retry</button></p>`;
+					document.getElementById('conn-retry').addEventListener('click', loadConnections);
+				}
+				if (connIntroDone) return;
+				connIntroDone = true;
+				// Query params from the flows that land here: ?code= from the bot's
+				// pairing prompt, ?x=&agent= from the X connect return.
+				const code = _urlP.get('code');
+				if (code) {
+					document.getElementById('conn-code-input').value = code;
+					previewConnCode(code);
+				}
+				const xOutcome = _urlP.get('x');
+				if (xOutcome && X_OUTCOMES[xOutcome]) {
+					const agent = _urlP.get('agent');
+					connMsg(...X_OUTCOMES[xOutcome]);
+					const box = document.getElementById('conn-x');
+					box.style.display = 'block';
+					box.innerHTML = '<a class="btn sec" style="text-decoration:none;display:inline-block" href="/settings?tab=connected-accounts'
+						+ (agent ? '&agent_id=' + encodeURIComponent(agent) : '') + '">Manage your X connection</a>';
+				}
+			}
+
+			// /settings/connections serves this same shell. Its trailing hash can be an
+			// outcome marker (#x) rather than a tab, so the path wins over the hash.
+			function startingTab() {
+				const hash = location.hash.slice(1);
+				if (/^\/settings\/connections\/?$/.test(location.pathname) && !document.getElementById('tab-' + hash)) return 'connections';
+				// Support ?tab= from OAuth redirects as well as #hash
+				return _urlP.get('tab') || hash || 'profile';
+			}
+
 			// ── Tab routing ───────────────────────────────────────────────
 			function navigate(tab) {
 				document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1680,17 +1911,18 @@
 				if (link) link.classList.add('active');
 				if (tab === 'sessions') loadSessions();
 				if (tab === 'connected-accounts') loadConnectedAccounts();
+				if (tab === 'connections') loadConnections();
 			}
 
 			document.querySelectorAll('aside a[data-tab]').forEach(a => {
 				a.addEventListener('click', (e) => {
 					e.preventDefault();
-					history.pushState(null, '', '#' + a.dataset.tab);
+					history.pushState(null, '', '/settings#' + a.dataset.tab);
 					navigate(a.dataset.tab);
 				});
 			});
 
-			window.addEventListener('popstate', () => navigate(location.hash.slice(1) || 'profile'));
+			window.addEventListener('popstate', () => navigate(startingTab()));
 
 			// ── Init ──────────────────────────────────────────────────────
 			(async () => {
@@ -1700,9 +1932,7 @@
 				} catch {
 					return; // redirect already fired
 				}
-				// Support ?tab= from OAuth redirects as well as #hash
-				const tabFromQuery = _urlP.get('tab');
-				navigate(tabFromQuery || location.hash.slice(1) || 'profile');
+				navigate(startingTab());
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
