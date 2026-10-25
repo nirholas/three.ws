@@ -730,8 +730,12 @@ async function resolveAuth(req) {
 
 // meta keys that move or route money: the treasury autopilot (the cron arms on
 // meta.autopilot.armed), spend and trade limits, policy rules, and the deposit
-// and payTo fallbacks.
-const MONEY_META_KEYS = ['autopilot', 'spend_limits', 'trade_limits', 'policy_rules', 'solana_address', 'payments'];
+// and payTo fallbacks, plus the caps the reserve, burner-tier and prediction guards
+// read directly (spend_policy, burner_policy, prediction_limits) and the recovery address.
+const MONEY_META_KEYS = [
+	'autopilot', 'spend_limits', 'trade_limits', 'policy_rules', 'solana_address', 'payments',
+	'spend_policy', 'burner_policy', 'prediction_limits', 'recovery',
+];
 
 function stableJson(v) {
 	if (Array.isArray(v)) return `[${v.map(stableJson).join(',')}]`;

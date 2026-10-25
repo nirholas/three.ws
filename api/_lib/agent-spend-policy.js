@@ -18,6 +18,8 @@
 
 import { sql } from './db.js';
 import { runLocked } from './locked-sql.js';
+import { enforceSpendLimit, SpendLimitError } from './agent-trade-guards.js';
+import { solUsdPrice } from './avatar-wallet.js';
 
 // SOL-outflow action types that draw down the daily cap.
 export const SOL_OUTFLOW_TYPES = ['pumpfun.buy', 'pumpfun.launch', 'pumpfun.swap.buy'];
@@ -175,10 +177,22 @@ export async function releaseSpend(reservationId) {
 // with the signature when the buy lands, or releases it when it fails. The
 // reserved row is the buy's agent_actions record, so the runtime must not
 // persist a second pumpfun.buy row for the same trade.
-export function createStrategySpendGuard({ agentId, meta }) {
+export function createStrategySpendGuard({ agentId, meta, userId = null }) {
 	const open = new Map();
 	return {
 		async guard({ mint, amountSol }) {
+			// The shared owner policy first (frozen switch, burner tier, USD caps,
+			// English rules), then the SOL reservation. Without this a frozen or
+			// capped wallet still traded through strategy-run.
+			const sol = Number(amountSol) || 0;
+			const price = await solUsdPrice().catch(() => null);
+			const usdValue = Number.isFinite(price) && price > 0 ? sol * price : null;
+			try {
+				await enforceSpendLimit({ agentId, meta, category: 'trade', usdValue, asset: 'SOL', userId });
+			} catch (err) {
+				if (err instanceof SpendLimitError) return { code: err.code, msg: err.message };
+				throw err;
+			}
 			const r = await reserveSpend({
 				agentId,
 				meta,

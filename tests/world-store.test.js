@@ -291,6 +291,13 @@ describe('world-store: write permission model (T16 hook)', () => {
 		expect(canWriteWorld({ isService: false, account: 'alice', currentOwner: 'alice' })).toBe(true);
 		expect(canWriteWorld({ isService: false, account: 'mallory', currentOwner: 'alice' })).toBe(false);
 	});
+	it('an existing row with no owner is service-managed: no signed-in account may overwrite it', () => {
+		expect(canWriteWorld({ isService: false, account: 'mallory', currentOwner: null, exists: true })).toBe(false);
+		expect(canWriteWorld({ isService: true, account: null, currentOwner: null, exists: true })).toBe(true);
+	});
+	it('a service-owned row denies every user account', () => {
+		expect(canWriteWorld({ isService: false, account: 'mallory', currentOwner: 'service:world', exists: true })).toBe(false);
+	});
 });
 
 describe('world-service-auth: only the multiplayer server can forge a service write', () => {

@@ -147,6 +147,24 @@ export function entityInScope(scope, { entityId, areaId = null } = {}) {
 	return Boolean(areaId && s.areas.includes(areaId));
 }
 
+/**
+ * Domains a scoped member may call. Every one acts on the entities named in
+ * entity_id and nothing else. scene, script, automation, homeassistant, notify
+ * and the rest run content or reach entities this scope check never sees, so a
+ * scoped member never gets them.
+ */
+export const SCOPED_CALL_DOMAINS = Object.freeze(new Set([
+	'light', 'switch', 'fan', 'cover', 'lock', 'climate', 'media_player', 'vacuum',
+	'humidifier', 'water_heater', 'valve', 'siren', 'input_boolean', 'alarm_control_panel',
+]));
+
+/** Why a scoped member's call is refused before scope is even compared, or null. */
+export function scopedCallRefusal(domain, targets = []) {
+	if (!SCOPED_CALL_DOMAINS.has(String(domain || '').toLowerCase())) return 'service_not_scopable';
+	if (!targets.length) return 'no_named_entity';
+	return null;
+}
+
 /** Every entity id in a resolved action that falls outside the scope. */
 export function outOfScopeEntities(scope, targets = []) {
 	return targets

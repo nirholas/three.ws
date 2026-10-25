@@ -47,6 +47,34 @@ export async function gatewayBots() {
 	return out;
 }
 
+async function telegramCall(method, payload) {
+	if (!telegramConfigured()) throw new Error('telegram not configured');
+	const r = await fetch(`${TG_API}/bot${process.env.TELEGRAM_BOT_TOKEN}/${method}`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify(payload),
+		signal: AbortSignal.timeout(8000),
+	});
+	const j = await r.json().catch(() => ({}));
+	if (!j.ok) throw Object.assign(new Error(j.description || `telegram ${r.status}`), { status: r.status, code: j.error_code });
+	return j.result;
+}
+
+/** Send a message with one row of inline buttons: `buttons` is [{ text, data }]. */
+export function sendTelegramButtons(chatId, text, buttons) {
+	return telegramCall('sendMessage', {
+		chat_id: chatId,
+		text: String(text).slice(0, 4000),
+		disable_web_page_preview: true,
+		reply_markup: { inline_keyboard: [buttons.map((b) => ({ text: b.text, callback_data: b.data }))] },
+	});
+}
+
+/** Acknowledge a button press so the client stops its spinner; `text` shows as a toast. */
+export function answerTelegramCallback(callbackQueryId, text = '') {
+	return telegramCall('answerCallbackQuery', { callback_query_id: callbackQueryId, text: String(text).slice(0, 190) });
+}
+
 /** Send one plain-text message to a paired chat. Throws on a platform refusal. */
 export async function sendPlatformText(platform, chatId, text) {
 	if (platform === 'telegram') {

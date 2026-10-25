@@ -14,6 +14,7 @@
 import { MACROS, resolveIntent } from '@three-ws/home-bridge';
 
 import { resolveHomeAccess } from '../../_lib/home/access.js';
+import { entityInScope } from '../../_lib/home/members.js';
 import { toHomeFailure } from '../../_lib/home/errors.js';
 import { withHome } from '../../_lib/home/runtime.js';
 import { cors, error, json, method, rateLimited, wrap } from '../../_lib/http.js';
@@ -32,7 +33,12 @@ export default wrap(async (req, res) => {
 
 	try {
 		const payload = await withHome(home.id, caller.userId, (bridge) => {
-			const macros = bridge.macros();
+			// A scoped member sees only the scenes and scripts they were given: the
+			// name of an out-of-scope "Disarm alarm" scene is itself a disclosure.
+			const all = bridge.macros();
+			const macros = access.scoped
+				? all.filter((m) => entityInScope(access.scope, { entityId: m.entityId }))
+				: all;
 			return {
 				macros: macros.map((m) => ({ entity_id: m.entityId, name: m.name, kind: m.kind })),
 				// Resolved against this house's real scene names, so an empty `match`

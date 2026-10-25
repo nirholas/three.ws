@@ -15,6 +15,7 @@
 import { lookup } from 'node:dns/promises';
 import { Agent } from 'undici';
 import { isPrivateIPv4, isPrivateIPv6 } from './ip-classify.js';
+import { readTextCapped } from './read-capped.js';
 
 export { isPrivateIPv4, isPrivateIPv6, parseIPv6Groups } from './ip-classify.js';
 
@@ -139,7 +140,7 @@ export async function assertPublicHttpsUrl(rawUrl, opts = {}) {
 // proxy to relay a buyer's call to the agent's upstream `target_url`.
 export async function safeFetchJson(
 	rawUrl,
-	{ method = 'GET', headers = {}, body, timeoutMs = 25_000, maxRedirects = 3, allowHttp } = {},
+	{ method = 'GET', headers = {}, body, timeoutMs = 25_000, maxRedirects = 3, allowHttp, maxResponseBytes = 5 * 1024 * 1024 } = {},
 ) {
 	let currentUrl = validatePublicUrl(rawUrl, { allowHttp });
 	let redirects = 0;
@@ -181,7 +182,10 @@ export async function safeFetchJson(
 				continue;
 			}
 
-			const text = await res.text();
+			const { text, truncated } = await readTextCapped(res, maxResponseBytes);
+			if (truncated) {
+				throw new SsrfError(`response exceeds ${maxResponseBytes} bytes`, 'response_too_large');
+			}
 			let data = text;
 			const ct = res.headers.get('content-type') || '';
 			if (ct.includes('application/json') || ct.includes('+json')) {

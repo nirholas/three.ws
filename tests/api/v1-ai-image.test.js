@@ -51,7 +51,7 @@ vi.mock('../../api/_mcp3d/text-to-image.js', () => ({
 }));
 
 // Free-quota module — controlled per test.
-const quotaState = vi.hoisted(() => ({ allowed: true, consumed: 0 }));
+const quotaState = vi.hoisted(() => ({ allowed: true, consumed: 0, reserveGranted: true }));
 vi.mock('../../api/_lib/ai-image-quota.js', () => ({
 	freePerDay: () => 5,
 	peekFreeQuota: vi.fn(async () => ({
@@ -61,9 +61,15 @@ vi.mock('../../api/_lib/ai-image-quota.js', () => ({
 		remaining: quotaState.allowed ? 5 : 0,
 		resetAt: '2026-07-08T00:00:00.000Z',
 	})),
-	consumeFreeQuota: vi.fn(async () => {
+	reserveFreeQuota: vi.fn(async () => {
+		if (!quotaState.reserveGranted) {
+			return { granted: false, counted: false, used: 5, limit: 5, remaining: 0, resetAt: '2026-07-08T00:00:00.000Z' };
+		}
 		quotaState.consumed += 1;
-		return { used: quotaState.consumed, limit: 5, remaining: 5 - quotaState.consumed, resetAt: '2026-07-08T00:00:00.000Z' };
+		return { granted: true, counted: true, used: quotaState.consumed, limit: 5, remaining: 5 - quotaState.consumed, resetAt: '2026-07-08T00:00:00.000Z' };
+	}),
+	releaseFreeQuota: vi.fn(async () => {
+		quotaState.consumed -= 1;
 	}),
 	__resetFreeQuota: () => {},
 }));
@@ -101,6 +107,7 @@ beforeEach(() => {
 	for (const k of LANE_ENV) savedEnv[k] = process.env[k];
 	quotaState.allowed = true;
 	quotaState.consumed = 0;
+	quotaState.reserveGranted = true;
 	laneState.impl = async () => ({ imageUrl: 'https://cdn.example/forge/refs/abc.jpg', model: 'black-forest-labs/flux.1-schnell' });
 	// A configured lane by default so the happy paths run.
 	process.env.NVIDIA_API_KEY = 'nvapi-test';
@@ -153,16 +160,16 @@ describe('validation (free path, fresh IP)', () => {
 	});
 
 	it('does not spend a quota slot on a validation error', async () => {
-		const { consumeFreeQuota } = await import('../../api/_lib/ai-image-quota.js');
+		const { reserveFreeQuota } = await import('../../api/_lib/ai-image-quota.js');
 		const res = makeRes();
 		await handler(makeReq({ body: { prompt: '' } }), res);
-		expect(consumeFreeQuota).not.toHaveBeenCalled();
+		expect(reserveFreeQuota).not.toHaveBeenCalled();
 	});
 });
 
 describe('free path success', () => {
 	it('serves an image free, shapes { url, provider, width, height }, and spends a slot', async () => {
-		const { consumeFreeQuota } = await import('../../api/_lib/ai-image-quota.js');
+		const { reserveFreeQuota } = await import('../../api/_lib/ai-image-quota.js');
 		const res = makeRes();
 		await handler(makeReq({ body: { prompt: 'a brass owl figurine', aspect_ratio: '16:9', seed: 42 } }), res);
 		expect(res.statusCode).toBe(200);
@@ -174,7 +181,7 @@ describe('free path success', () => {
 		expect(body.aspect_ratio).toBe('16:9');
 		expect(body.seed).toBe(42);
 		expect(body.free).toBe(true);
-		expect(consumeFreeQuota).toHaveBeenCalledTimes(1);
+		expect(reserveFreeQuota).toHaveBeenCalledTimes(1);
 	});
 
 	it('forwards the seed to the lane', async () => {
@@ -183,6 +190,28 @@ describe('free path success', () => {
 		const res = makeRes();
 		await handler(makeReq({ body: { prompt: 'a brass owl', seed: 7 } }), res);
 		expect(spy).toHaveBeenCalledWith('a brass owl', expect.objectContaining({ aspectRatio: '1:1', seed: 7 }));
+	});
+});
+
+describe('free quota reservation', () => {
+	it('refunds the reserved slot when the lane fails to deliver an image', async () => {
+		const { releaseFreeQuota } = await import('../../api/_lib/ai-image-quota.js');
+		laneState.impl = async () => ({ imageUrl: null, model: 'black-forest-labs/flux.1-schnell' });
+		const res = makeRes();
+		await handler(makeReq({ body: { prompt: 'a brass owl' } }), res);
+		expect(res.statusCode).toBe(502);
+		expect(releaseFreeQuota).toHaveBeenCalledTimes(1);
+		expect(quotaState.consumed).toBe(0);
+	});
+
+	it('refuses to generate when a concurrent request already took the last free slot', async () => {
+		quotaState.reserveGranted = false;
+		const spy = vi.fn(async () => ({ imageUrl: 'https://cdn.example/x.jpg', model: 'm' }));
+		laneState.impl = spy;
+		const res = makeRes();
+		await handler(makeReq({ body: { prompt: 'a brass owl' } }), res);
+		expect(res.statusCode).toBe(429);
+		expect(spy).not.toHaveBeenCalled();
 	});
 });
 

@@ -18,11 +18,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Readable } from 'node:stream';
 
 let globalQuotaOk = true;
+let ipQuotaOk = true;
+const globalSpy = vi.fn();
 vi.mock('../../api/_lib/rate-limit.js', () => ({
 	limits: {
 		apiV1: async () => ({ success: true, limit: 120, remaining: 119, reset: Date.now() + 60_000 }),
+		aixbtHourlyIp: async () =>
+			ipQuotaOk
+				? { success: true, limit: 60, remaining: 59, reset: Date.now() + 3_600_000 }
+				: { success: false, limit: 60, remaining: 0, reset: Date.now() + 3_600_000 },
 		aixbtGlobal: async () =>
-			globalQuotaOk
+			(globalSpy(), globalQuotaOk)
 				? { success: true, limit: 300, remaining: 299, reset: Date.now() + 60_000 }
 				: { success: false, limit: 300, remaining: 0, reset: Date.now() + 60_000 },
 	},
@@ -49,6 +55,8 @@ function upstreamError(message, status, code) {
 
 beforeEach(() => {
 	globalQuotaOk = true;
+	ipQuotaOk = true;
+	globalSpy.mockClear();
 	intelImpl = async () => ({ intel: [], pagination: null });
 	projectsImpl = async () => ({ projects: [], pagination: null });
 });
@@ -175,5 +183,15 @@ describe.each(DOORS)('GET /api/v1/market/$label', (door) => {
 		});
 		const { res } = await dispatch(door.module, door.url);
 		expect(res.getHeader('cache-control')).toBe('no-store');
+	});
+});
+
+describe('GET /api/v1/market/intel per-IP hourly share', () => {
+	it('429s a source that spent its own share without touching the shared global ceiling', async () => {
+		ipQuotaOk = false;
+		const { res, body } = await dispatch('../../api/v1/market/intel.js', '/api/v1/market/intel?limit=2');
+		expect(res.statusCode).toBe(429);
+		expect(body.error).toBe('rate_limited');
+		expect(globalSpy).not.toHaveBeenCalled();
 	});
 });

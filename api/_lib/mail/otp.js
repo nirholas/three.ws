@@ -5,7 +5,8 @@
 //   1. The sender must be on the agent's `code_senders` list (agent_mail_policies,
 //      changed only from an owner session). An empty list extracts nothing.
 //   2. The message must be authentic: delivered locally by the platform, or
-//      DMARC pass, or SPF and DKIM both pass. A forged From on an allowlisted
+//      DMARC pass (which requires SPF or DKIM to align with the From domain; SPF
+//      and DKIM passing for some other domain proves nothing). A forged From on an allowlisted
 //      domain is reported as skipped, with no content.
 //   3. It must not be filed as spam.
 // What comes out is only the matched code or link (see ./extract.js). The body
@@ -29,7 +30,10 @@ export function senderTrust(row, codeSenders) {
 	if (!allowlistAllows(codeSenders, address)) return 'sender_not_allowed';
 	if (row.provider === 'local') return 'ok';
 	const a = row.auth_results || {};
-	if (a.dmarc === 'pass' || (a.spf === 'pass' && a.dkim === 'pass')) return 'ok';
+	// DMARC pass is the only verdict tied to the From address the allowlist
+	// matched. SPF and DKIM can both pass for an attacker's own domain while the
+	// visible From is forged, so they never count on their own.
+	if (a.dmarc === 'pass') return 'ok';
 	return 'sender_not_authenticated';
 }
 

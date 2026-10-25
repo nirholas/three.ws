@@ -24,11 +24,11 @@
 // refused unlock is the single most important row in that table: it is the
 // evidence that the gate held.
 
-import { classifyCall, entityIdsOfData, flattenEntities, hasSelectorTargets } from '@three-ws/home-bridge';
+import { classifyCallTargets, entityIdsOfData, flattenEntities, hasSelectorTargets, sceneEntityIdsOfData } from '@three-ws/home-bridge';
 
 import { requireCsrf } from '../../_lib/csrf.js';
 import { canAssertConfirmation, CONFIRMATION_REQUIRES_SESSION, outOfScopeEntities, resolveHomeAccess } from '../../_lib/home/access.js';
-import { can } from '../../_lib/home/members.js';
+import { can, scopedCallRefusal } from '../../_lib/home/members.js';
 import { assertHomeActionAllowed, HomePausedError } from '../../_lib/home/entitlements.js';
 import { homeError, homeFailure, HOME_ERR, toHomeFailure } from '../../_lib/home/errors.js';
 import { acquire } from '../../_lib/home/runtime.js';
@@ -77,7 +77,7 @@ export default wrap(async (req, res) => {
 	const confirmed = body.confirmed === true;
 
 	const action = `${domain}.${service}`;
-	const targets = entityIdsOfData(data);
+	const targets = [...entityIdsOfData(data), ...sceneEntityIdsOfData(data)];
 
 	// WHO may say yes, asked before WHICH ROLE may say yes.
 	//
@@ -204,12 +204,7 @@ export default wrap(async (req, res) => {
 		// Classified for the LOG, not for the decision. The decision is made once,
 		// inside bridge.call, so there is exactly one gate and this cannot drift
 		// away from it.
-		const verdict = classifyCall({
-			domain,
-			service,
-			entityId: targets[0],
-			attributes: targets[0] ? bridge.states?.[targets[0]]?.attributes : undefined,
-		});
+		const verdict = classifyCallTargets({ domain, service, data, states: bridge.states ?? {} });
 
 		// Our own leg of the call, which is what the latency SLO is written against
 		// (docs/ops/home-operations.md). It deliberately includes the house's

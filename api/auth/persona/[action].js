@@ -101,7 +101,7 @@ async function esKeys() {
 // Tenant origin must be a valid https URL on a three.ws subdomain, or a
 // localhost dev origin. Anything else is rejected — prevents arbitrary sites
 // from minting tokens claiming the user's three.ws avatar.
-function validateTenantOrigin(origin) {
+export function validateTenantOrigin(origin) {
 	if (typeof origin !== 'string' || origin.length > 256) return null;
 	let u;
 	try {
@@ -114,7 +114,7 @@ function validateTenantOrigin(origin) {
 
 	const host = u.host.toLowerCase();
 	const isHttps = u.protocol === 'https:';
-	const isLocalhost = u.protocol === 'http:' && (host === 'localhost' || host.startsWith('localhost:') || host.startsWith('127.0.0.1'));
+	const isLocalhost = u.protocol === 'http:' && (u.hostname === 'localhost' || u.hostname === '127.0.0.1');
 	const isThreeWs = host === 'three.ws' || host.endsWith('.three.ws');
 
 	if (isLocalhost) return `${u.protocol}//${host}`;

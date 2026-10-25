@@ -27,7 +27,7 @@ import {
 import { providerChain } from '../../api/_lib/llm.js';
 import { freeFallbackChain } from '../../api/brain/chat.js';
 import { providerChain as copilotProviderChain } from '../../api/agents/copilot.js';
-import { pickProviderChain as widgetProviderChain } from '../../api/widgets/[id]/[action].js';
+import { pickProviderChain as widgetProviderChain, resolveVisitorBrain } from '../../api/widgets/[id]/[action].js';
 import { visionChain, visionConfigured } from '../../api/_lib/vision.js';
 import { modelFallbackChain, resolveModelRoute } from '../../api/llm/anthropic.js';
 
@@ -358,5 +358,36 @@ describe('vertex-gemini reasoning budget', () => {
 		const body = anchor.buildBody('sys', 'hello', 300);
 		expect(body.max_tokens).toBe(300 + vertexGeminiThinkingBudget());
 		expect(body.extra_body.google.thinking_config.thinking_budget).toBe(vertexGeminiThinkingBudget());
+	});
+});
+
+describe('widgets: resolveVisitorBrain keeps anonymous visitors on the free tier', () => {
+	const open = { brainProvider: 'auto', brainModel: null };
+
+	it('ignores a visitor-chosen paid provider and falls back to the owner config', () => {
+		expect(resolveVisitorBrain(open, { provider: 'anthropic', model: 'claude-opus-4' }, false)).toEqual({
+			provider: 'auto',
+			requestedModel: null,
+		});
+	});
+
+	it('ignores an uncatalogued model id on a free provider', () => {
+		const out = resolveVisitorBrain(open, { provider: 'openrouter', model: 'example-vendor/uncatalogued-paid-model' }, false);
+		expect(out).toEqual({ provider: 'openrouter', requestedModel: null });
+	});
+
+	it('honours a free provider with a :free model', () => {
+		const out = resolveVisitorBrain(open, { provider: 'openrouter', model: 'example-vendor/example-model:free' }, false);
+		expect(out).toEqual({ provider: 'openrouter', requestedModel: 'example-vendor/example-model:free' });
+	});
+
+	it('lets the widget owner pick any provider and model', () => {
+		const out = resolveVisitorBrain(open, { provider: 'anthropic', model: 'claude-opus-4' }, true);
+		expect(out).toEqual({ provider: 'anthropic', requestedModel: 'claude-opus-4' });
+	});
+
+	it('never lets a visitor override an owner-locked brain', () => {
+		const out = resolveVisitorBrain({ brainProvider: 'none' }, { provider: 'groq' }, false);
+		expect(out.provider).toBe('none');
 	});
 });

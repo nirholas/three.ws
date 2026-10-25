@@ -73,6 +73,7 @@ export default wrap(async (req, res) => {
 		SELECT id, name, description, embed_policy, meta, skills
 		FROM agent_identities
 		WHERE id = ${agentId} AND deleted_at IS NULL
+			AND (is_published = true OR user_id = ${userId})
 	`;
 	if (!agent) return error(res, 404, 'agent_not_found', 'agent not found');
 

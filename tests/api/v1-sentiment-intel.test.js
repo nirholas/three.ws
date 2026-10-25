@@ -25,6 +25,7 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 			apiV1Ok
 				? { success: true, limit: 120, remaining: 119, reset: Date.now() + 60_000 }
 				: { success: false, limit: 120, remaining: 0, reset: Date.now() + 60_000 },
+		aixbtHourlyIp: async () => ({ success: true, limit: 60, remaining: 59, reset: Date.now() + 3_600_000 }),
 		aixbtGlobal: async () =>
 			aixbtGlobalOk
 				? { success: true, limit: 1800, remaining: 1799, reset: Date.now() + 3_600_000 }

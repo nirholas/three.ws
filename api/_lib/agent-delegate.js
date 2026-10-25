@@ -18,16 +18,20 @@ export class AgentNotFoundError extends Error {
  * Transport concerns (auth, rate limiting, recursion-depth header) are enforced
  * by callers at their boundary, not in this shared core.
  *
- * @param {{ toAgentId: string, message: string }} params
+ * @param {{ toAgentId: string, message: string, callerUserId?: string|null }} params
  * @returns {Promise<{ response: string, agentId: string, model: string }>}
+ * Unpublished agents are private (their instructions are the system prompt), so
+ * only their owner (`callerUserId`) may drive them; anyone else gets the same
+ * not-found as a missing agent.
  * @throws {AgentNotFoundError} when no live agent matches `toAgentId`
  * @throws {import('./llm.js').LlmUnavailableError} when no LLM provider is configured
  */
-export async function runAgentDelegation({ toAgentId, message }) {
+export async function runAgentDelegation({ toAgentId, message, callerUserId = null }) {
 	const [agent] = await sql`
 		SELECT id, name, description, embed_policy, meta
 		FROM agent_identities
 		WHERE id = ${toAgentId} AND deleted_at IS NULL
+			AND (is_published = true OR user_id = ${callerUserId})
 	`;
 	if (!agent) throw new AgentNotFoundError(toAgentId);
 

@@ -18,6 +18,8 @@ vi.mock('../api/_lib/db.js', async (importActual) => {
 	return { ...actual, sql };
 });
 
+vi.mock('../api/_lib/avatar-wallet.js', () => ({ solUsdPrice: vi.fn(async () => 200) }));
+
 process.env.DATABASE_URL ||= 'postgres://pglite.test/db';
 
 const AGENT = '00000000-0000-0000-0000-000000000031';
@@ -67,3 +69,26 @@ describe('strategy spend guard reserves atomically', () => {
 		expect(r[0].payload.sig).toBe('sigC');
 	});
 });
+
+describe('strategy spend guard honours the full agent spend policy', () => {
+	it('refuses a live buy for a frozen wallet and reserves nothing', async () => {
+		const { createStrategySpendGuard } = await import('../api/_lib/agent-spend-policy.js');
+		await holder.db.query(`delete from agent_actions`);
+		const frozen = { ...META, spend_limits: { frozen: true } };
+		const g = createStrategySpendGuard({ agentId: AGENT, meta: frozen });
+		const blocked = await g.guard({ mint: 'THREEsyntheticMintE', amountSol: 0.1 });
+		expect(blocked).toMatchObject({ code: 'wallet_frozen' });
+		expect(await rows()).toHaveLength(0);
+	});
+
+	it('refuses a live buy over the per-transaction USD limit', async () => {
+		const { createStrategySpendGuard } = await import('../api/_lib/agent-spend-policy.js');
+		await holder.db.query(`delete from agent_actions`);
+		const capped = { ...META, spend_limits: { per_tx_usd: 10 } };
+		const g = createStrategySpendGuard({ agentId: AGENT, meta: capped });
+		const blocked = await g.guard({ mint: 'THREEsyntheticMintF', amountSol: 1 }); // $200 at the mocked price
+		expect(blocked).toMatchObject({ code: 'per_tx_exceeded' });
+		expect(await rows()).toHaveLength(0);
+	});
+});
+

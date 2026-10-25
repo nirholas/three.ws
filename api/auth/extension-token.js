@@ -12,7 +12,7 @@
 // avatars:read so the extension can list avatars and read identity, nothing more.
 
 import { SignJWT } from 'jose';
-import { getSessionUser } from '../_lib/auth.js';
+import { getSessionUser, WALK_EXTENSION_CLIENT_ID } from '../_lib/auth.js';
 import { sql } from '../_lib/db.js';
 import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -23,7 +23,10 @@ import { randomToken } from '../_lib/crypto.js';
 // long as a same-device web session would, and re-auth is a single click.
 const EXTENSION_TOKEN_TTL_SEC = 60 * 60 * 24 * 30;
 const EXTENSION_SCOPE = 'avatars:read';
-const EXTENSION_CLIENT_ID = 'walk-extension';
+// Shared with revokeAccountCredentials (api/_lib/auth.js): the token is stateless,
+// so deleting the account, resetting the password or signing out everywhere
+// kills it through the oauth_client_revocations cutoff for this client id.
+const EXTENSION_CLIENT_ID = WALK_EXTENSION_CLIENT_ID;
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;

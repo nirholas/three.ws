@@ -42,7 +42,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl, 'delegate rate limit exceeded');
 
 	try {
-		const out = await runAgentDelegation({ toAgentId, message });
+		const out = await runAgentDelegation({ toAgentId, message, callerUserId: userId });
 		return json(res, 200, out);
 	} catch (err) {
 		if (err instanceof AgentNotFoundError)

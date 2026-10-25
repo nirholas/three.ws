@@ -183,3 +183,18 @@ describe('bounded fallback chain', () => {
 		expect(TOTAL_BUDGET_MS).toBeLessThan(60_000);
 	});
 });
+
+describe('anonModelAllowed', () => {
+	it('allows no explicit model, catalogued free models and OpenRouter :free ids', async () => {
+		const { anonModelAllowed } = await import('../api/_lib/chat-models.js');
+		expect(anonModelAllowed(undefined)).toBe(true);
+		expect(anonModelAllowed('llama-3.3-70b')).toBe(true);
+		expect(anonModelAllowed('example-vendor/example-model:free')).toBe(true);
+	});
+
+	it('rejects catalogued paid models and uncatalogued ids that would reach the platform key', async () => {
+		const { anonModelAllowed } = await import('../api/_lib/chat-models.js');
+		expect(anonModelAllowed(GRANITE)).toBe(false);
+		expect(anonModelAllowed('example-vendor/uncatalogued-paid-model')).toBe(false);
+	});
+});

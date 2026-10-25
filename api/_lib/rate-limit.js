@@ -843,6 +843,10 @@ export const limits = {
 	// generous enough for an interactive feed. The global ceiling prevents many
 	// distributed IPs from collectively exhausting the shared upstream key.
 	aixbtIp: (ip) => getLimiter('aixbt:ip', { limit: 90, window: '1 m' }).limit(ip),
+	// Hourly per-IP share of the global ceiling for the optional-auth /api/v1
+	// market door: the per-minute bucket above would let one source spend the whole
+	// 1800/h budget in about 20 minutes and 429 every other caller.
+	aixbtHourlyIp: (ip) => getLimiter('aixbt:ip-hourly', { limit: 60, window: '1 h' }).limit(ip),
 	aixbtGlobal: () => getLimiter('aixbt:global', { limit: 1800, window: '1 h' }).limit('global'),
 	// Solana Developer Platform proxy (api/sdp/*). Each call fronts the SDP API
 	// under our server-side key, and writes (wallet create / issuance / payment)

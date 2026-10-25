@@ -57,14 +57,19 @@ const ALLOWED_METHODS = new Set([
 
 // getProgramAccounts is an unbounded scan in the general case — the prime
 // vector for draining the keyed upstream — so it is NOT in ALLOWED_METHODS.
-// We permit it ONLY when the caller supplies a `filters` array that bounds the
-// result set (e.g. a memcmp on a specific mint, as the pump dashboard's bonding
+// We permit it ONLY when the caller supplies a `filters` array containing at
+// least one memcmp (a dataSize filter alone still scans the whole program)
+// that bounds the result set (e.g. a memcmp on a specific mint, as the pump dashboard's bonding
 // curve probe does). A filtered, slice-limited query is cheap; a bare scan is
 // still refused.
 function isBoundedProgramScan(entry) {
 	if (entry.method !== 'getProgramAccounts') return false;
 	const opts = Array.isArray(entry.params) ? entry.params[1] : null;
-	return !!(opts && Array.isArray(opts.filters) && opts.filters.length > 0);
+	return !!(
+		opts &&
+		Array.isArray(opts.filters) &&
+		opts.filters.some((f) => f && typeof f === 'object' && f.memcmp && typeof f.memcmp === 'object')
+	);
 }
 
 // Cap batch requests so a single POST can't fan out into hundreds of upstream
@@ -81,7 +86,7 @@ function upstreamFetch(network) {
 
 // Validate one or a batch of JSON-RPC payloads. Returns an error code string,
 // or null when every entry is a well-formed call to an allowlisted method.
-function rejectReason(body) {
+export function rejectReason(body) {
 	const entries = Array.isArray(body) ? body : [body];
 	if (entries.length === 0) return 'empty_request';
 	if (entries.length > MAX_BATCH) return 'batch_too_large';

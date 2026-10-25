@@ -324,6 +324,7 @@ export const toolDefs = [
 				const out = await runAgentDelegation({
 					toAgentId: args.agent_id,
 					message: args.message,
+					callerUserId: auth.userId || null,
 				});
 				return {
 					content: [{ type: 'text', text: out.response }],

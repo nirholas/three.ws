@@ -9,7 +9,7 @@ import { randomToken, sha256, hmacSha256, constantTimeEquals } from './crypto.js
 import { recordDailyActivity } from './streaks.js';
 import { clientIp } from './rate-limit.js';
 import { effectiveKeyScope, withImpliedScopes } from './key-scopes.js';
-import { getCachedKeyRow, rememberKeyRow, keyRevokedSinceCached, shouldTouchLastUsed } from './api-key-cache.js';
+import { getCachedKeyRow, rememberKeyRow, keyRevokedSinceCached, shouldTouchLastUsed, invalidateApiKey } from './api-key-cache.js';
 import { ipAllowed } from './ip-allowlist.js';
 import { currentRequest } from './request-context.js';
 
@@ -82,30 +82,37 @@ export async function rotateRefreshToken({ oldSecret, clientId, narrowScope }) {
 	`;
 	const row = rows[0];
 	if (!row) throw Object.assign(new Error('invalid_grant'), { status: 400 });
-	if (row.revoked_at) {
-		// Reuse detected — revoke whole chain for this user+client.
+	const reuse = async () => {
+		// Reuse detected: revoke the whole chain for this user+client.
 		await sql`update oauth_refresh_tokens set revoked_at = now()
 		          where user_id = ${row.user_id} and client_id = ${clientId} and revoked_at is null`;
 		throw Object.assign(new Error('invalid_grant'), {
 			status: 400,
 			code: 'refresh_reuse_detected',
 		});
-	}
+	};
+	if (row.revoked_at) await reuse();
 	if (new Date(row.expires_at) < new Date()) {
 		throw Object.assign(new Error('invalid_grant'), { status: 400, code: 'refresh_expired' });
 	}
+	// Resolved before the claim so a rejected scope request does not burn the token.
 	// Bind the rotated refresh token to the narrowed scope (RFC 6749 §6 allows a
 	// subset). Without this, a caller could re-widen back to the full scope on
 	// the next rotation by omitting `scope`.
 	const effectiveScope = typeof narrowScope === 'function' ? narrowScope(row.scope) : row.scope;
+	// Claim the token before issuing its successor, in one conditional UPDATE.
+	// Two simultaneous redemptions of the same token cannot both win it: the
+	// loser gets zero rows and is treated as reuse, so the chain never forks.
+	const claimed = await sql`update oauth_refresh_tokens set revoked_at = now(), last_used_at = now()
+	          where id = ${row.id} and revoked_at is null returning id`;
+	if (!claimed.length) await reuse();
 	const next = await issueRefreshToken({
 		userId: row.user_id,
 		clientId,
 		scope: effectiveScope,
 		resource: row.resource,
 	});
-	await sql`update oauth_refresh_tokens set revoked_at = now(), replaced_by = ${next.id}, last_used_at = now()
-	          where id = ${row.id}`;
+	await sql`update oauth_refresh_tokens set replaced_by = ${next.id} where id = ${row.id}`;
 	return { next, userId: row.user_id, scope: effectiveScope, resource: row.resource };
 }
 
@@ -324,6 +331,33 @@ export async function revokeClientGrant({ userId, clientId }) {
 		on conflict (user_id, client_id) do update set revoked_at = excluded.revoked_at
 	`;
 	return revoked.length;
+}
+
+// The client id the Walk Avatar extension token carries (api/auth/extension-token.js).
+// That token is a stateless JWT with no refresh-token row, so the cutoff row
+// written for it here is the only way to kill one already handed out.
+export const WALK_EXTENSION_CLIENT_ID = 'walk-extension';
+
+// Cut off every non-session credential an account holds: a cutoff for every
+// OAuth client it granted (plus the walk extension) so access tokens in flight
+// die on next use, every refresh token, and, unless `includeApiKeys` is false,
+// every API key (evicted from every instance's key cache). Sessions are the
+// caller's to revoke. Account deletion and password reset pass everything;
+// a routine logout-everywhere keeps long-lived keys unless asked.
+// Returns how many API keys were revoked.
+export async function revokeAccountCredentials({ userId, includeApiKeys = true }) {
+	await sql`
+		insert into oauth_client_revocations (user_id, client_id, revoked_at)
+		select distinct user_id, client_id, now() from oauth_refresh_tokens where user_id = ${userId}
+		union
+		select ${userId}::uuid, ${WALK_EXTENSION_CLIENT_ID}, now()
+		on conflict (user_id, client_id) do update set revoked_at = excluded.revoked_at
+	`;
+	await sql`update oauth_refresh_tokens set revoked_at = now() where user_id = ${userId} and revoked_at is null`;
+	if (!includeApiKeys) return 0;
+	const keys = await sql`update api_keys set revoked_at = now() where user_id = ${userId} and revoked_at is null returning id`;
+	await Promise.all(keys.map((k) => invalidateApiKey(k.id)));
+	return keys.length;
 }
 
 // Returns { userId, scope, source: 'oauth'|'apikey', clientId?, apiKeyId? } or null.

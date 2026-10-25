@@ -211,8 +211,44 @@ const MAX_REDIRECTS = 5;
 //
 // Use this for render-only responses (images, GLBs). For executed/forwarded
 // responses use `fetchSafePublicUrlPinned` which closes the DNS rebinding window.
+//
+// `opts.maxBytes` caps the body: an advertised content-length over the cap throws
+// MaxBytesExceededError immediately, and the returned Response's body is metered
+// so a chunked or lying-content-length stream errors with MaxBytesExceededError
+// once it passes the cap (the read, e.g. arrayBuffer(), rejects and the stream is
+// cancelled). When a cap is set and the caller gave no `signal`, the fetch is also
+// bounded by `opts.timeoutMs` (default 60s).
+const DEFAULT_CAPPED_TIMEOUT_MS = 60_000;
+
+function capResponseBody(res, maxBytes) {
+	const declared = Number(res.headers.get('content-length') || 0);
+	if (declared > maxBytes) {
+		res.body?.cancel().catch(() => {});
+		throw new MaxBytesExceededError(declared, maxBytes);
+	}
+	if (!res.body) return res;
+	let seen = 0;
+	const metered = res.body.pipeThrough(
+		new TransformStream({
+			transform(chunk, controller) {
+				seen += chunk.byteLength;
+				if (seen > maxBytes) {
+					controller.error(new MaxBytesExceededError(seen, maxBytes));
+					return;
+				}
+				controller.enqueue(chunk);
+			},
+		}),
+	);
+	return new Response(metered, { status: res.status, statusText: res.statusText, headers: res.headers });
+}
+
 export async function fetchSafePublicUrl(input, init = {}, opts = {}) {
 	let url = await assertSafePublicUrl(input, opts);
+	const maxBytes = Number.isFinite(opts.maxBytes) && opts.maxBytes > 0 ? opts.maxBytes : 0;
+	if (maxBytes && !init.signal) {
+		init = { ...init, signal: AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_CAPPED_TIMEOUT_MS) };
+	}
 	let redirects = 0;
 	while (true) {
 		const res = await fetch(url.toString(), { ...init, redirect: 'manual' });
@@ -224,7 +260,7 @@ export async function fetchSafePublicUrl(input, init = {}, opts = {}) {
 			url = await assertSafePublicUrl(next.toString(), opts);
 			continue;
 		}
-		return res;
+		return maxBytes ? capResponseBody(res, maxBytes) : res;
 	}
 }
 

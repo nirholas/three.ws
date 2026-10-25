@@ -180,7 +180,7 @@ export default wrap(async (req, res) => {
 	try {
 		tree = await orchestrateGoal(
 			{ userId, leadAgentId, leadName: lead.name || null, goal: goal.trim(), maxUsd, catalog: catalogForPlan, emit, deadlineMs },
-			{ runDelegate: runAgentDelegation, runHire },
+			{ runDelegate: (p) => runAgentDelegation({ ...p, callerUserId: userId }), runHire },
 		);
 	} catch (err) {
 		if (err instanceof AgentNotFoundError) return error(res, 404, 'not_found', 'lead agent not found');

@@ -458,3 +458,34 @@ describe('throwDisposition: what a thrown attempt charges the lane', () => {
 		expect(throwDisposition({ callerAborted: false, attemptTimedOut: true, hasMethods: false })).toBe('cool-lane');
 	});
 });
+
+describe('solana-rpc proxy: getProgramAccounts must carry a memcmp bound', () => {
+	const gpa = (filters) => ({
+		jsonrpc: '2.0',
+		id: 1,
+		method: 'getProgramAccounts',
+		params: ['TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', { filters }],
+	});
+	let rejectReason;
+	beforeEach(async () => {
+		({ rejectReason } = await import('../api/solana-rpc.js'));
+	});
+
+	it('refuses a dataSize-only filter (a full-program scan)', () => {
+		expect(rejectReason(gpa([{ dataSize: 165 }]))).toBe('unbounded_scan');
+	});
+
+	it('refuses malformed filter entries', () => {
+		expect(rejectReason(gpa([null, 'x', {}]))).toBe('unbounded_scan');
+	});
+
+	it('accepts a memcmp-bounded scan, with or without a dataSize', () => {
+		const memcmp = { memcmp: { offset: 0, bytes: '11111111111111111111111111111111' } };
+		expect(rejectReason(gpa([memcmp]))).toBeNull();
+		expect(rejectReason(gpa([{ dataSize: 165 }, memcmp]))).toBeNull();
+	});
+
+	it('still refuses a bare scan', () => {
+		expect(rejectReason({ jsonrpc: '2.0', id: 1, method: 'getProgramAccounts', params: ['x'] })).toBe('unbounded_scan');
+	});
+});

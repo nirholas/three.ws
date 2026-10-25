@@ -30,6 +30,7 @@
 import { sql } from './db.js';
 import { createHmac, randomBytes } from 'node:crypto';
 import { randomToken, hmacSha256 } from './crypto.js';
+import { readTextCapped } from './read-capped.js';
 import { validatePublicUrl, resolvePublicHost, pinnedAgent, disposeAgent, SsrfError } from './ssrf.js';
 
 const DELIVERY_TIMEOUT_MS = 10_000;
@@ -414,7 +415,7 @@ export async function webhookUrlProblem(raw) {
 	return null;
 }
 
-async function deliver(url, secret, eventId, body) {
+export async function deliver(url, secret, eventId, body) {
 	const timestamp = Math.floor(Date.now() / 1000);
 	const signature = await signatureHeader(secret, eventId, timestamp, body);
 
@@ -469,8 +470,7 @@ async function deliver(url, secret, eventId, body) {
 
 		let responseBody = null;
 		try {
-			responseBody = await res.text();
-			if (responseBody.length > RESPONSE_BODY_MAX) responseBody = responseBody.slice(0, RESPONSE_BODY_MAX);
+			responseBody = (await readTextCapped(res, RESPONSE_BODY_MAX)).text;
 		} catch {
 			responseBody = null;
 		}

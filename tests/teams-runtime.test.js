@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import { beforeAll, beforeEach, describe, it, expect, vi } from 'vitest';
 import { PublicKey } from '@solana/web3.js';
 
-const holder = vi.hoisted(() => ({ db: null, research: null, trade: null }));
+const holder = vi.hoisted(() => ({ db: null, research: null, trade: null, auth: null }));
 
 // The team modules build their column lists as sql fragments at import time, so
 // the in-process database exists before any of them load.
@@ -22,6 +22,12 @@ vi.mock('../api/_lib/db.js', async (importActual) => {
 	holder.db ??= createPgliteSql();
 	return { ...actual, sql: (...args) => holder.db.sql(...args) };
 });
+vi.mock('../api/_lib/account-auth.js', () => ({ resolveAccount: async () => holder.auth }));
+vi.mock('../api/_lib/csrf.js', () => ({ requireCsrf: async () => true }));
+vi.mock('../api/_lib/rate-limit.js', () => ({
+	limits: new Proxy({}, { get: () => async () => ({ success: true }) }),
+	clientIp: () => '127.0.0.1',
+}));
 vi.mock('../api/_lib/r2.js', () => ({ publicUrlOrNull: () => null, thumbnailUrl: () => null }));
 vi.mock('../api/_lib/teams/research.js', async (importActual) => {
 	const actual = await importActual();
@@ -270,6 +276,56 @@ describe('findings board and Trader on Postgres', () => {
 			preview: vi.fn(async () => ({ allowed: true, blocked_reason: null, est_out: '1000' })),
 			execute: vi.fn(async () => ({ ok: true, status: 200, data: { simulated: true } })),
 		};
+	});
+
+	describe('PATCH /api/teams/:id policy caps need the spend scope for a bearer', () => {
+		function makeRes() {
+			return {
+				statusCode: 0, payload: null, headers: {},
+				setHeader(k, v) { this.headers[String(k).toLowerCase()] = v; },
+				getHeader(k) { return this.headers[String(k).toLowerCase()]; },
+				removeHeader(k) { delete this.headers[String(k).toLowerCase()]; },
+				writeHead(code) { this.statusCode = code; return this; },
+				get headersSent() { return false; },
+				get writableEnded() { return false; },
+				end(chunk) {
+					if (chunk) { try { this.payload = JSON.parse(String(chunk)); } catch { this.payload = String(chunk); } }
+					return this;
+				},
+			};
+		}
+		async function patch(body) {
+			const { default: handler } = await import('../api/teams/[id].js');
+			const res = makeRes();
+			await handler({
+				method: 'PATCH',
+				url: `/api/teams/${team.id}`,
+				headers: { 'content-type': 'application/json', origin: 'https://three.ws' },
+				body,
+			}, res);
+			return res;
+		}
+
+		it('refuses a bearer that only holds avatars:write', async () => {
+			holder.auth = { userId: OWNER, source: 'api_key', scope: 'avatars:write' };
+			const res = await patch({ policy: { per_trade_sol: 2, daily_budget_sol: 20 } });
+			expect(res.statusCode).toBe(403);
+			expect(res.payload.error).toBe('insufficient_scope');
+			const [row] = await holder.db.query('select policy from teams where id = $1', [team.id]);
+			expect(row.policy.per_trade_sol).toBe(POLICY_DEFAULTS.per_trade_sol);
+		});
+
+		it('lets a bearer with wallet:write change the caps', async () => {
+			holder.auth = { userId: OWNER, source: 'api_key', scope: 'wallet:write' };
+			const res = await patch({ policy: { per_trade_sol: 0.2, daily_budget_sol: 1 } });
+			expect(res.statusCode).toBe(200);
+		});
+
+		it('still lets a bearer rename the team without the spend scope', async () => {
+			holder.auth = { userId: OWNER, source: 'api_key', scope: 'avatars:write' };
+			const res = await patch({ name: 'Renamed desk' });
+			expect(res.statusCode).toBe(200);
+		});
 	});
 
 	it('findLiveResearch returns the newest live finding and ignores expired ones', async () => {

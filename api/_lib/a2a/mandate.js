@@ -22,6 +22,7 @@
 import * as jose from 'jose';
 
 import { env } from '../env.js';
+import { platformLimits } from './platform-ceiling.js';
 
 export const MANDATE_TYPE = 'a2a-intent-mandate';
 export const MANDATE_VERSION = 1;
@@ -118,6 +119,21 @@ export async function issueIntentMandate({
 	const perCall = toPositiveAtomics(perCallAtomics, 'perCallAtomics');
 	if (perCall > max) {
 		throw new MandateError('invalid_amount', 'perCallAtomics cannot exceed maxAtomics');
+	}
+	// Mandates are self-issued, so the platform bounds them: a caller cannot mint
+	// themselves an arbitrarily large budget or per-call allowance.
+	const platform = platformLimits();
+	if (max > BigInt(platform.maxMandateAtomics)) {
+		throw new MandateError(
+			'amount_exceeds_platform_cap',
+			`maxAtomics cannot exceed the platform mandate ceiling of ${platform.maxMandateAtomics}`,
+		);
+	}
+	if (perCall > BigInt(platform.perCallAtomics)) {
+		throw new MandateError(
+			'amount_exceeds_platform_cap',
+			`perCallAtomics cannot exceed the platform per-call ceiling of ${platform.perCallAtomics}`,
+		);
 	}
 
 	const nets = Array.isArray(networks) && networks.length ? networks : [DEFAULT_NETWORK];

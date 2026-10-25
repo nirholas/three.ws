@@ -38,7 +38,7 @@ import {
 	refusalReason,
 	SUPPORTED_ASPECT_RATIOS,
 } from '../../_lib/ai-image-lanes.js';
-import { peekFreeQuota, consumeFreeQuota, freePerDay } from '../../_lib/ai-image-quota.js';
+import { peekFreeQuota, reserveFreeQuota, releaseFreeQuota, freePerDay } from '../../_lib/ai-image-quota.js';
 import { isInlineImageRef } from '../../_lib/image-persist.js';
 
 const ROUTE = '/api/v1/ai/image';
@@ -218,6 +218,28 @@ async function generateAndRespond({ prompt, aspectRatio, seed }, { free, ip }) {
 		);
 	}
 
+	// The free slot is reserved atomically BEFORE the (seconds-long, paid-upstream)
+	// generation, so a burst of concurrent requests from one IP cannot all pass the
+	// access-control peek and all generate. It is refunded if no image is delivered.
+	let quota = null;
+	if (free) {
+		quota = await reserveFreeQuota(ip);
+		if (!quota.granted) {
+			throw Object.assign(
+				new Error('The daily free image allowance for this address is used up. Pay per image with x402 to continue.'),
+				{ status: 429, code: 'free_quota_exhausted' },
+			);
+		}
+	}
+	try {
+		return await generateImage({ prompt, aspectRatio, seed }, { free, quota });
+	} catch (err) {
+		if (quota?.counted) await releaseFreeQuota(ip);
+		throw err;
+	}
+}
+
+async function generateImage({ prompt, aspectRatio, seed }, { free, quota }) {
 	let result;
 	try {
 		result = await textToImage(prompt, { aspectRatio, seed });
@@ -251,9 +273,6 @@ async function generateAndRespond({ prompt, aspectRatio, seed }, { free, ip }) {
 	}
 
 	const { width, height } = dimensionsFor(aspectRatio);
-	let quota = null;
-	if (free) quota = await consumeFreeQuota(ip);
-
 	return {
 		url,
 		provider: providerLabel(result),
@@ -263,7 +282,7 @@ async function generateAndRespond({ prompt, aspectRatio, seed }, { free, ip }) {
 		aspect_ratio: aspectRatio,
 		seed: Number.isInteger(seed) ? seed : null,
 		free: Boolean(free),
-		...(quota ? { quota } : {}),
+		...(quota ? { quota: { used: quota.used, limit: quota.limit, remaining: quota.remaining, resetAt: quota.resetAt } } : {}),
 	};
 }
 

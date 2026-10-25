@@ -92,10 +92,18 @@ const sqlMock = vi.fn(async (strings, ...values) => {
 		const [hash, clientId] = values;
 		return db.refresh.filter((r) => r.token_hash === hash && r.client_id === clientId).slice(0, 1);
 	}
-	if (text.startsWith('update oauth_refresh_tokens set revoked_at = now(), replaced_by')) {
+	if (text.startsWith('update oauth_refresh_tokens set revoked_at = now(), last_used_at = now() where id')) {
+		const [id] = values;
+		const row = db.refresh.find((r) => r.id === id && !r.revoked_at);
+		if (!row) return [];
+		row.revoked_at = new Date().toISOString();
+		row.last_used_at = row.revoked_at;
+		return [{ id: row.id }];
+	}
+	if (text.startsWith('update oauth_refresh_tokens set replaced_by')) {
 		const [replacedBy, id] = values;
 		const row = db.refresh.find((r) => r.id === id);
-		if (row) { row.revoked_at = new Date().toISOString(); row.replaced_by = replacedBy; }
+		if (row) row.replaced_by = replacedBy;
 		return [];
 	}
 	if (text.startsWith('update oauth_refresh_tokens set revoked_at = now() where token_hash')) {

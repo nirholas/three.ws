@@ -105,23 +105,23 @@ describe('telegram magic link', () => {
 	const priv = { id: 42, type: 'private' };
 
 	it('rejects tokens that do not have the magic shape', async () => {
-		expect(await tl.claimMagicToken({ token: 'nope', from, chat: priv })).toEqual({ ok: false, reason: 'invalid' });
+		expect(await tl.requestMagicApproval({ token: 'nope', from, chat: priv })).toEqual({ ok: false, reason: 'invalid' });
 		expect(calls).toHaveLength(0);
 	});
 
 	it('refuses to claim from a group chat', async () => {
-		expect(await tl.claimMagicToken({ token, from, chat: { id: -1, type: 'group' } })).toEqual({ ok: false, reason: 'group' });
+		expect(await tl.requestMagicApproval({ token, from, chat: { id: -1, type: 'group' } })).toEqual({ ok: false, reason: 'group' });
 	});
 
 	it('a second tap (or an expired token) claims nothing', async () => {
 		queue.push([]);
-		expect(await tl.claimMagicToken({ token, from, chat: priv })).toEqual({ ok: false, reason: 'expired' });
+		expect(await tl.requestMagicApproval({ token, from, chat: priv })).toEqual({ ok: false, reason: 'expired' });
 	});
 
 	it('a link token cannot attach a Telegram account owned by someone else', async () => {
 		queue.push([{ id: 'row1', intent: 'link', user_id: 'u1' }], []);
 		findUserByIdentity.mockResolvedValue({ id: 'u2' });
-		expect(await tl.claimMagicToken({ token, from, chat: priv })).toEqual({ ok: false, reason: 'in_use' });
+		expect(await tl.requestMagicApproval({ token, from, chat: priv })).toEqual({ ok: false, reason: 'in_use' });
 	});
 
 	it('completing a link from a different signed-in account is refused and burns the token', async () => {
@@ -215,6 +215,31 @@ describe('payout wallet policy', () => {
 		expect(p.replacing).toBe(true);
 		const wait = new Date(p.effectiveAt).getTime() - new Date(p.approvedAt).getTime();
 		expect(wait).toBeGreaterThanOrEqual(ew.PAYOUT_COOLDOWN_HOURS * 3600 * 1000 - 1000);
+	});
+
+	it('a first per-agent wallet is judged against the account-level wallet it would redirect', async () => {
+		queue.push([], [{ address: 'ACCOUNT_WALLET' }]);
+		await expect(ew.payoutChangePolicy({ userId: 'u', agentId: 'a1', chain: 'solana', address: 'NEW' })).rejects.toMatchObject({ code: 'step_up_required', status: 403 });
+	});
+
+	it('a first per-agent wallet with step-up still waits out the cooldown', async () => {
+		queue.push([], [{ address: 'ACCOUNT_WALLET' }]);
+		const p = await ew.payoutChangePolicy({ userId: 'u', agentId: 'a1', chain: 'solana', address: 'NEW', stepUp: true });
+		expect(p.replacing).toBe(true);
+		expect(p.previous).toBe('ACCOUNT_WALLET');
+	});
+
+	it('an agent with no wallet of its own adopting the account address redirects nothing', async () => {
+		queue.push([], [{ address: 'SAME' }]);
+		const p = await ew.payoutChangePolicy({ userId: 'u', agentId: 'a1', chain: 'solana', address: 'SAME' });
+		expect(p.replacing).toBe(false);
+	});
+
+	it('setPayoutWallet refuses an owner redirect through a fresh per-agent row without step-up', async () => {
+		queue.push([{ id: 'a1', user_id: 'u', name: 'Bot' }], [], [{ address: 'ACCOUNT_WALLET', approved_at: new Date().toISOString(), effective_at: new Date().toISOString() }]);
+		await expect(ew.setPayoutWallet({ userId: 'u', agentId: 'a1', chain: 'solana', address: 'ATTACKER', signatureHash: 'h', actor: 'owner' }))
+			.rejects.toMatchObject({ code: 'step_up_required', status: 403 });
+		expect(calls.some((c) => /insert into agent_payout_wallets/.test(c.text))).toBe(false);
 	});
 
 	it('a proof with an unknown nonce is rejected', async () => {

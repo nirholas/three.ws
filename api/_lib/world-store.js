@@ -123,10 +123,13 @@ export function migrateDoc(doc /* , fromVersion */) {
 //   isService    — the request came from the authoritative game server.
 //   account      — the authenticated user id, or null for anonymous.
 //   currentOwner — owner_id on the existing row, or null for a new/unowned world.
-export function canWriteWorld({ isService = false, account = null, currentOwner = null } = {}) {
+//   exists      : a row for this world already exists. A row with no owner was
+//                  created by the game server (older saves carried no owner), so
+//                  it is service-managed, not an unclaimed world a user may seed.
+export function canWriteWorld({ isService = false, account = null, currentOwner = null, exists = false } = {}) {
 	if (isService) return true; // the game server is authoritative
 	if (!account) return false; // anonymous browsers can't write
-	if (!currentOwner) return true; // unclaimed world — first writer may seed it
+	if (!currentOwner) return !exists; // brand-new world: first writer may seed it
 	return account === currentOwner; // otherwise owner-only (T16 widens this)
 }
 

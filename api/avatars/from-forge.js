@@ -28,7 +28,7 @@ import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../
 import { storageKeyFor, createAvatar, defaultAvatarVisibilityFor } from '../_lib/avatars.js';
 import { putObject } from '../_lib/r2.js';
 import { isValidGlbHeader, inspectGlb } from '../_lib/glb-inspect.js';
-import { fetchSafePublicUrl, SsrfBlockedError } from '../_lib/ssrf-guard.js';
+import { fetchSafePublicUrl, SsrfBlockedError, MaxBytesExceededError } from '../_lib/ssrf-guard.js';
 import { provisionAvatarAgent } from '../_lib/avatar-agent.js';
 import { maybeAutoRigAvatar } from '../_lib/auto-rig.js';
 import { limits } from '../_lib/rate-limit.js';
@@ -96,8 +96,11 @@ export default wrap(async (req, res) => {
 	// never trusted to point at our own network.
 	let resp;
 	try {
-		resp = await fetchSafePublicUrl(glbUrl, {}, { allowHttp: false });
+		resp = await fetchSafePublicUrl(glbUrl, {}, { allowHttp: false, maxBytes: MAX_GLB_BYTES });
 	} catch (err) {
+		if (err instanceof MaxBytesExceededError) {
+			return error(res, 413, 'payload_too_large', `glb is over the ${MAX_GLB_BYTES} byte limit`);
+		}
 		if (err instanceof SsrfBlockedError) {
 			return error(res, 400, 'invalid_url', 'glb_url must be a public https URL');
 		}
@@ -112,7 +115,16 @@ export default wrap(async (req, res) => {
 	if (declared && declared > MAX_GLB_BYTES) {
 		return error(res, 413, 'payload_too_large', `glb is ${declared} bytes; max is ${MAX_GLB_BYTES}`);
 	}
-	const buf = Buffer.from(await resp.arrayBuffer());
+	let buf;
+	try {
+		buf = Buffer.from(await resp.arrayBuffer());
+	} catch (err) {
+		if (err instanceof MaxBytesExceededError) {
+			return error(res, 413, 'payload_too_large', `glb is over the ${MAX_GLB_BYTES} byte limit`);
+		}
+		console.warn('[from-forge] glb body read failed:', err?.message);
+		return error(res, 502, 'fetch_failed', 'Could not read that GLB URL, check the link and try again.');
+	}
 	if (buf.length > MAX_GLB_BYTES) {
 		return error(res, 413, 'payload_too_large', `glb is ${buf.length} bytes; max is ${MAX_GLB_BYTES}`);
 	}

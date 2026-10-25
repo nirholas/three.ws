@@ -5,6 +5,7 @@ import { cors, json, error, wrap, method, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { isUuid } from '../_lib/validate.js';
+import { invalidateApiKey } from '../_lib/api-key-cache.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'DELETE,OPTIONS', credentials: true })) return;
@@ -35,6 +36,10 @@ export default wrap(async (req, res) => {
 	`;
 
 	if (!row) return error(res, 404, 'not_found', 'API key not found or already revoked');
+
+	// Evict the key from every instance's cache now; otherwise it keeps
+	// authenticating from cache until the row's TTL lapses (api-key-cache.js).
+	await invalidateApiKey(row.id);
 
 	logAudit({
 		userId,

@@ -39,6 +39,7 @@ import { assertSafePublicUrl, SsrfBlockedError } from '../_lib/ssrf-guard.js';
 import { assertMandateAllows, MandateError, verifyIntentMandate } from '../_lib/a2a/mandate.js';
 import { issueCartMandate } from '../_lib/a2a/cart-mandate.js';
 import { release, reserve } from '../_lib/a2a/spend-ledger.js';
+import { PlatformCeilingError, releasePlatformCeiling, reservePlatformCeiling } from '../_lib/a2a/platform-ceiling.js';
 import { assertReputationOk, ReputationError } from '../_lib/a2a/reputation-gate.js';
 import {
 	getSpendLimits,
@@ -273,6 +274,24 @@ export default wrap(async (req, res) => {
 		});
 	}
 
+	// ── Gate 2b: platform ceilings ──────────────────────────────────────────
+	// The payer key is platform-held and the mandate is self-issued, so neither can
+	// bound what a user can route to a peer they chose. These caps are set by the
+	// platform and cannot be widened by the mandate or the agent's own limits.
+	try {
+		await reservePlatformCeiling({ userId, amount });
+	} catch (err) {
+		await release(mandate.mandateId, amount);
+		if (err instanceof PlatformCeilingError) {
+			return error(res, err.status, err.code, err.message, err.detail);
+		}
+		throw err;
+	}
+	const releaseBudgets = async () => {
+		await release(mandate.mandateId, amount);
+		await releasePlatformCeiling({ userId, amount });
+	};
+
 	// ── Gate 4c: the agent's own spend policy + the receipt ─────────────────
 	// Atomic: this both enforces the per-transaction, rolling-daily and
 	// per-counterparty ceilings (plus the owner's English rules, the anomaly guard
@@ -308,7 +327,7 @@ export default wrap(async (req, res) => {
 		});
 		receiptId = guarded.reservationId;
 	} catch (err) {
-		await release(mandate.mandateId, amount);
+		await releaseBudgets();
 		if (err instanceof SpendLimitError) {
 			return error(res, err.status, err.code, err.message, err.detail);
 		}
@@ -322,7 +341,7 @@ export default wrap(async (req, res) => {
 		await releaseSpendReservation(receiptId, reason).catch((e) =>
 			console.error('[agents/a2a-call] receipt release failed', e?.message || e),
 		);
-		await release(mandate.mandateId, amount);
+		await releaseBudgets();
 	};
 
 	// ── Settle ──────────────────────────────────────────────────────────────

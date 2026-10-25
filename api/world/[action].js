@@ -124,6 +124,7 @@ async function handleSave(req, res) {
 			isService: false,
 			account: account.userId,
 			currentOwner: existing?.ownerId ?? null,
+			exists: Boolean(existing),
 		});
 		if (!allowed) return error(res, 403, 'forbidden', 'not permitted to build in this world');
 	}

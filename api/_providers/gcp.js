@@ -795,6 +795,16 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 
 			const { mode, taskId, baseUrl, resultKey } = job;
 
+			// The job id is unsigned and client-supplied, and the poll carries the
+			// worker bearer key, so only a configured worker URL may be polled.
+			const trimUrl = (u) => (typeof u === 'string' ? u.replace(/\/+$/, '') : '');
+			const allowedBase = new Set(
+				[urlForMode(mode), serviceUrlForMode(mode), reconstructUrl].filter(Boolean).map(trimUrl),
+			);
+			if (typeof baseUrl !== 'string' || !allowedBase.has(trimUrl(baseUrl))) {
+				return { status: 'failed', error: 'malformed ext_job_id' };
+			}
+
 			// Legacy reconstruct path uses /jobs/:id; new workers use /tasks/:id.
 			const pollPath = mode === 'reconstruct'
 				? `/jobs/${encodeURIComponent(taskId)}`

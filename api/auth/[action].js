@@ -7,7 +7,7 @@
 import { sql } from '../_lib/db.js';
 import {
 	verifyPassword, hashPassword, createSession, destroySession, sessionCookie,
-	getSessionUser, hasSessionCookie, revokeRefreshToken,
+	getSessionUser, hasSessionCookie, revokeRefreshToken, revokeAccountCredentials,
 } from '../_lib/auth.js';
 import { randomToken, randomDigits, sha256 } from '../_lib/crypto.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
@@ -20,7 +20,6 @@ import { referralCodeCandidates, normalizeReferralCode } from '../_lib/referrals
 import { seedDefaultAgent } from '../_lib/seed-default-agent.js';
 import { recordEvent } from '../_lib/usage.js';
 import { logAudit } from '../_lib/audit.js';
-import { invalidateApiKey } from '../_lib/api-key-cache.js';
 import { tosAcceptanceFromBody, recordTosAcceptance } from '../_lib/legal.js';
 import { revokeAllMemberships } from '../_lib/home/members.js';
 import { z } from 'zod';
@@ -105,7 +104,11 @@ async function handleLogoutEverywhere(req, res) {
 	// tally read `undefined` and JSON.stringify dropped the key from the
 	// response entirely. Count the returned rows instead.
 	const revokedSessions = await sql`update sessions set revoked_at = now() where user_id = ${user.id} and revoked_at is null returning id`;
-	await sql`update oauth_refresh_tokens set revoked_at = now() where user_id = ${user.id} and revoked_at is null`;
+	// Access tokens in flight die with the refresh tokens. API keys are kept by
+	// default because CI keys are meant to outlive a sign-out; `include_keys`
+	// revokes them too.
+	const body = (await readJson(req).catch(() => null)) || {};
+	await revokeAccountCredentials({ userId: user.id, includeApiKeys: body.include_keys === true });
 	const clearCookies = sessionCookie('', { clear: true });
 	const existing = res.getHeader('set-cookie') || [];
 	res.setHeader('set-cookie', [...(Array.isArray(existing) ? existing : [existing]), ...clearCookies]);
@@ -295,18 +298,10 @@ async function handleDeleteAccount(req, res) {
 	// wallet/SAML paths key their `account_deleted` answer off finding this row.
 	await sql`update users set deleted_at = now(), username = null, updated_at = now() where id = ${user.id} and deleted_at is null`;
 	await sql`update sessions set revoked_at = now() where user_id = ${user.id} and revoked_at is null`;
-	// Access tokens already in flight are stateless JWTs: stamp a cutoff for every
-	// client this account ever granted so authenticateBearer rejects them now.
-	await sql`
-		insert into oauth_client_revocations (user_id, client_id, revoked_at)
-		select distinct user_id, client_id, now() from oauth_refresh_tokens where user_id = ${user.id}
-		on conflict (user_id, client_id) do update set revoked_at = excluded.revoked_at
-	`;
-	await sql`update oauth_refresh_tokens set revoked_at = now() where user_id = ${user.id} and revoked_at is null`;
-	// API keys are bearer credentials that outlive a session: retire them too and
-	// evict them from every instance's key cache so none keeps answering.
-	const keys = await sql`update api_keys set revoked_at = now() where user_id = ${user.id} and revoked_at is null returning id`;
-	await Promise.all(keys.map((k) => invalidateApiKey(k.id)));
+	// Access tokens already in flight are stateless JWTs, refresh tokens outlive a
+	// session, and API keys are bearer credentials: cut all of them off and evict
+	// the keys from every instance's cache so none keeps answering.
+	await revokeAccountCredentials({ userId: user.id });
 
 	// Household membership outlives a session, so revoking sessions is not enough
 	// to deprovision somebody: an account with a `guest` row in a house still has
@@ -480,10 +475,11 @@ async function handleResetPassword(req, res) {
 	const hash = await hashPassword(body.password);
 	await sql`update users set password_hash = ${hash}, updated_at = now() where id = ${userId}`;
 	// A reset is how an owner recovers a compromised account, so every credential
-	// the attacker could still hold goes: browser sessions and OAuth refresh
-	// tokens, exactly as logout-everywhere revokes them.
+	// the attacker could still hold goes: browser sessions, OAuth refresh tokens
+	// and access tokens already in flight, the walk extension token, and API keys
+	// (one minted during a brief compromise would otherwise outlive the reset).
 	await sql`update sessions set revoked_at = now() where user_id = ${userId} and revoked_at is null`;
-	await sql`update oauth_refresh_tokens set revoked_at = now() where user_id = ${userId} and revoked_at is null`;
+	await revokeAccountCredentials({ userId });
 	return json(res, 200, { success: true });
 }
 

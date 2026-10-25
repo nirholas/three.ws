@@ -35,6 +35,7 @@
 // lane is exhausted. Fix the keys or remove them to drop them entirely.
 
 import { ROSTER } from './model-roster.js';
+import { isFreeModelId } from './openrouter-free.js';
 
 // ── xAI Grok: the one place a Grok model id is written down ─────────────────
 //
@@ -554,6 +555,20 @@ export function isModelModerationGated(modelId) {
  */
 export function isPaidModel(modelId) {
 	return MODEL_CATALOG[resolveModelId(modelId)]?.paid === true;
+}
+
+/**
+ * Whether an anonymous caller may name this model. The platform key pays for it,
+ * so it must be a catalogued non-paid model or an OpenRouter ":free" id. An id
+ * the catalog does not know is NOT treated as free (isPaidModel() is false for
+ * it, which is why it cannot be the only gate): openrouter would otherwise pass
+ * an arbitrary paid id straight to the funded key.
+ */
+export function anonModelAllowed(modelId) {
+	if (!modelId) return true;
+	const entry = MODEL_CATALOG[resolveModelId(modelId)];
+	if (entry) return entry.paid !== true;
+	return isFreeModelId(modelId);
 }
 
 /**

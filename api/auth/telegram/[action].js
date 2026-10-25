@@ -9,10 +9,11 @@
 //           of the same URL fails.
 //   magic   /magic mints a one-time token and a t.me deep link (shown as a QR
 //           on /login). Tapping it sends /start <token> to the bot; the webhook
-//           (api/gateway/telegram.js) claims the token for the Telegram user
-//           who sent it, and the page polling /poll with the poll secret from
-//           /magic completes the sign-in. A token is claimed once and expires
-//           in ten minutes.
+//           (api/gateway/telegram.js) asks that Telegram user to approve, showing (IP,
+//           browser, time), and claims the token only when they press Approve.
+//           The browser that called /magic, bound by a signed cookie, then
+//           completes the sign-in by polling /poll with the poll secret. A
+//           token is claimed once and expires in ten minutes.
 //
 // Intents, as for Google (api/auth/google/[action].js): `login` needs no
 // session and signs in or creates an account; `link` needs a session and
@@ -49,6 +50,11 @@ const SETTINGS_URL = '/dashboard/settings#sign-in-methods';
 // account into whatever session happens to be open.
 const FLOW_COOKIE = '__Host-tgflow';
 const FLOW_TTL_SEC = 600;
+// A magic login is finished only by the browser that asked for it. /magic
+// sets this signed cookie naming the token; /poll signs nobody in without it,
+// so a poll URL (id + secret) navigated to by another browser logs that
+// browser into nothing.
+const MAGIC_COOKIE = '__Host-tgmagic';
 // The widget intents; the magic link only knows login and link.
 const WIDGET_INTENTS = Object.freeze([...INTENTS, 'reauth']);
 
@@ -68,7 +74,7 @@ function finish(res, next) {
 
 async function signIn(req, res, userId, { isNew = false, via = 'widget' } = {}) {
 	const token = await createSession({ userId, userAgent: req.headers['user-agent'], ip: clientIp(req) });
-	res.setHeader('set-cookie', [sessionCookie(token), clearCookie(FLOW_COOKIE)]);
+	res.setHeader('set-cookie', [sessionCookie(token), clearCookie(FLOW_COOKIE), clearCookie(MAGIC_COOKIE)]);
 	logAudit({ userId, action: isNew ? 'register:telegram' : 'login:telegram', meta: { via }, req });
 	if (isNew) queueMicrotask(() => seedDefaultAgent(userId));
 }
@@ -206,7 +212,11 @@ async function handleMagic(req, res) {
 		userId = user.id;
 	}
 	try {
-		const issued = await issueMagicToken({ intent, userId, next });
+		const issued = await issueMagicToken({ intent, userId, next, request: { ip: clientIp(req), ua: req.headers['user-agent'] } });
+		if (intent === 'login') {
+			const bound = await signIdentityPayload({ m: issued.id, e: Math.floor(Date.now() / 1000) + MAGIC_TTL_SEC });
+			res.setHeader('set-cookie', cookie(MAGIC_COOKIE, bound, MAGIC_TTL_SEC));
+		}
 		return json(res, 200, {
 			id: issued.id,
 			poll_secret: issued.pollSecret,
@@ -234,6 +244,10 @@ async function handlePoll(req, res) {
 	if (!row) return error(res, 404, 'not_found', 'unknown or expired login request');
 	if (row.status !== 'claimed') {
 		return json(res, 200, { status: row.status, intent: row.intent, expires_at: row.expires_at });
+	}
+	if (row.intent === 'login') {
+		const bound = await unsignIdentityPayload(readCookie(req, MAGIC_COOKIE));
+		if (!bound || bound.m !== row.id) return error(res, 403, 'wrong_browser', 'this sign-in was started in a different browser');
 	}
 	const sessionUser = row.intent === 'link' ? await getSessionUser(req, res) : null;
 	if (row.intent === 'link' && !sessionUser) return error(res, 401, 'unauthorized', 'sign in first');

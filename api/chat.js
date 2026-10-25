@@ -53,7 +53,7 @@ import {
 	OPENROUTER_SIBLINGS,
 	ANON_PROVIDER_LIST,
 	MODEL_CATALOG,
-	isPaidModel,
+	anonModelAllowed,
 	modelThinksByDefault,
 	promptCacheMinChars,
 	MAX_FALLBACK_ATTEMPTS,
@@ -504,7 +504,7 @@ export default wrap(async (req, res) => {
 		// the platform key, so it is authenticated-only — even though its provider
 		// (openrouter) is otherwise an anon free tier. Reject an explicit request
 		// for one before it can reach the funded key.
-		if (body.model && isPaidModel(body.model)) {
+		if (body.model && !anonModelAllowed(body.model)) {
 			return error(res, 401, 'unauthorized', 'sign in to use this model');
 		}
 		// Honor an explicitly-requested free-tier provider (groq/openrouter/nvidia).
@@ -703,7 +703,8 @@ export default wrap(async (req, res) => {
 			captureException(err, { route: 'chat', stage: 'home-membership' });
 		}
 	}
-	const toolSet = homeToolsOffered({ homeCount, agentId: body.agentId, isOwner })
+	const homeOffered = homeToolsOffered({ homeCount, agentId: body.agentId, isOwner });
+	const toolSet = homeOffered
 		? {
 				anthropic: [...ACTION_TOOLS, ...HOME_ANTHROPIC_TOOLS],
 				openai: [...OPENAI_TOOLS, ...HOME_OPENAI_TOOLS],
@@ -1120,7 +1121,7 @@ export default wrap(async (req, res) => {
 	 * key. See api/_lib/home/usage.js.
 	 */
 	let homeTouched = null;
-	if (auth?.userId && (result.toolCalls || []).some((c) => isHomeTool(c.name))) {
+	if (auth?.userId && homeCallsToRun(result.toolCalls, homeOffered).length) {
 		let pass = result;
 		let workingHistory = history;
 		for (let round = 0; round < HOME_TOOL_ROUNDS; round++) {
@@ -1492,42 +1493,72 @@ async function runFollowUpPass({ route, systemPrompt, sys, history, maxTokens, a
 // a governance summary for the done event. Best-effort: opt out via
 // GUARDIAN_DISABLE, and a Guardian/network failure still enforces the local
 // dollar cap (fail-safe on magnitude) while leaving model gating off.
-async function governActions(actions, userMessage) {
-	const sendIdx = actions.findIndex((a) => a.type === 'sendSol');
-	if (sendIdx === -1 || process.env.GUARDIAN_DISABLE === 'true') {
+export async function governActions(actions, userMessage) {
+	const sendIdxs = [];
+	actions.forEach((a, i) => {
+		if (a.type === 'sendSol') sendIdxs.push(i);
+	});
+	if (!sendIdxs.length || process.env.GUARDIAN_DISABLE === 'true') {
 		return { actions, governance: null };
 	}
 	const cfg = guardianConfig();
-	const usd = Number(actions[sendIdx].usd);
+	const cap = sendCapUsd();
+	const capBlock = (label) => ({
+		decision: 'block',
+		reasons: [{ risk: 'amount_cap', label, probability: 1 }],
+		cap,
+		capExceeded: true,
+	});
 
-	let verdict;
-	try {
-		verdict = await governSend(cfg, { input: userMessage, usd });
-	} catch (err) {
-		captureException(err, { route: 'chat', stage: 'guardian' });
-		console.warn('[chat:guardian] assessment failed, enforcing dollar cap only:', err.message);
-		const cap = sendCapUsd();
-		if (Number.isFinite(usd) && usd > cap) {
-			verdict = {
-				decision: 'block',
-				reasons: [
-					{
-						risk: 'amount_cap',
-						label: `above the $${cap} autonomous cap`,
-						probability: 1,
-					},
-				],
-				cap,
-				capExceeded: true,
-			};
-		} else {
-			return { actions, governance: { status: 'unavailable', enforced: false } };
+	// Every sendSol in the turn is screened, not just the first: a model that
+	// emits parallel tool calls must not get its later sends past Guardian. The
+	// per-turn total is also held to the autonomous cap, so splitting one large
+	// send into several small ones cannot slip under the per-send check.
+	const blockedIdx = new Set();
+	const blocked = [];
+	let firstBlock = null;
+	let firstOk = null;
+	let unavailable = false;
+	let turnUsd = 0;
+	for (const i of sendIdxs) {
+		const usd = Number(actions[i].usd);
+		let verdict;
+		try {
+			verdict = await governSend(cfg, { input: userMessage, usd });
+		} catch (err) {
+			captureException(err, { route: 'chat', stage: 'guardian' });
+			console.warn('[chat:guardian] assessment failed, enforcing dollar cap only:', err.message);
+			if (Number.isFinite(usd) && usd > cap) {
+				verdict = capBlock(`above the $${cap} autonomous cap`);
+			} else {
+				unavailable = true;
+				verdict = null;
+			}
+		}
+		if (verdict?.decision !== 'block' && Number.isFinite(usd)) {
+			if (turnUsd + usd > cap) {
+				verdict = capBlock(`this turn's sends total above the $${cap} autonomous cap`);
+			} else {
+				turnUsd += usd;
+			}
+		}
+		if (verdict?.decision === 'block') {
+			blockedIdx.add(i);
+			blocked.push({ type: 'sendSol', usd });
+			firstBlock ??= verdict;
+		} else if (verdict) {
+			firstOk ??= verdict;
 		}
 	}
 
-	// guardian unconfigured AND within the dollar cap → nothing to enforce.
-	if (!verdict) return { actions, governance: null };
-
+	const verdict = firstBlock || firstOk;
+	if (!verdict) {
+		// guardian unconfigured AND within the dollar cap → nothing to enforce.
+		return {
+			actions,
+			governance: unavailable ? { status: 'unavailable', enforced: false } : null,
+		};
+	}
 	const governance = {
 		status: 'ok',
 		model: cfg.model,
@@ -1536,10 +1567,10 @@ async function governActions(actions, userMessage) {
 		cap: verdict.cap,
 		capExceeded: verdict.capExceeded,
 	};
-	if (verdict.decision === 'block') {
+	if (firstBlock) {
 		governance.enforced = true;
-		governance.blocked = [{ type: 'sendSol', usd }];
-		return { actions: actions.filter((_, i) => i !== sendIdx), governance };
+		governance.blocked = blocked;
+		return { actions: actions.filter((_, i) => !blockedIdx.has(i)), governance };
 	}
 	governance.enforced = false;
 	return { actions, governance };
@@ -1567,6 +1598,18 @@ function keylessVertexAvailable(name) {
  */
 export function homeToolsOffered({ homeCount, agentId, isOwner }) {
 	return homeCount > 0 && (!agentId || isOwner);
+}
+
+/**
+ * The home-tool calls this turn may execute. Advertising is not enforcement: a
+ * persona the visitor does not own can steer the model into naming a home tool
+ * that was never offered, so nothing runs unless the turn offered the tools.
+ * @param {Array<{ name: string }>|undefined} toolCalls
+ * @param {boolean} offered result of homeToolsOffered() for this turn
+ */
+export function homeCallsToRun(toolCalls, offered) {
+	if (!offered) return [];
+	return (toolCalls || []).filter((c) => isHomeTool(c.name));
 }
 
 /**

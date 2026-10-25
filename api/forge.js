@@ -2970,6 +2970,24 @@ async function startRigJob(req, res) {
 		});
 	}
 
+	// Rigging runs on platform-paid GCP/Replicate capacity, so it needs the same
+	// breakers as the paid reconstruction lanes (startJobWithBody): the per-IP cap
+	// above is bypassed by rotating IPs, the global hourly ceiling and the
+	// per-client daily ceiling are not.
+	const globalRl = await limits.mcp3dGenerateGlobal();
+	if (!globalRl.success) {
+		return rateLimited(res, globalRl, 'Rigging is at capacity right now. Try again shortly.');
+	}
+	const daily = await dailyPaidAllowed(clientKeyFrom(req), {
+		limit: SCALE_LIMITS.paidDailyPerClient,
+	});
+	if (!daily.ok) {
+		return json(res, 429, {
+			error: 'daily_limit_reached',
+			message: 'You’ve reached today’s limit for paid generations. Try again tomorrow.',
+		});
+	}
+
 	try {
 		const job = await provider.submit({ mode: 'rerig', sourceUrl: glbUrl, params: {} });
 		// GCP rig jobs poll through a token-encoded handle so /api/forge?action=status

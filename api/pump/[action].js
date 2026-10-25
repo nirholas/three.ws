@@ -135,6 +135,8 @@ import { solanaConnection, loadAgentForSigning } from '../_lib/agent-pumpfun.js'
 import { connectPumpFunFeed } from '../_lib/pumpfun-ws-feed.js';
 import { makeRuntime } from '../_lib/skill-runtime.js';
 import { loadWallet } from '../_lib/solana-wallet.js';
+import { enforceSpendLimit, SpendLimitError } from '../_lib/agent-trade-guards.js';
+import { solUsdPrice } from '../_lib/avatar-wallet.js';
 import { requireRealFundsAgreement, currentSignatureFor } from '../_lib/real-funds-agreement.js';
 import {
 	createStrategySpendGuard,
@@ -2286,6 +2288,23 @@ async function handleLaunchAgent(req, res) {
 	// the daily cap. A USDC-paired dev buy moves no SOL (amount 0). Released on
 	// send failure, finalized with the signature on success.
 	const launchSolOutflow = (quote.isUsdc ? 0 : body.sol_buy_in || 0) + feeLamports / LAMPORTS_PER_SOL;
+	// The owner's full spend policy (frozen switch, burner tier, USD caps, English
+	// rules) applies before the SOL reservation, same as every other signing path.
+	try {
+		const price = await solUsdPrice().catch(() => null);
+		await enforceSpendLimit({
+			agentId: resolvedAgentId,
+			meta: loaded.meta,
+			category: 'trade',
+			usdValue: Number.isFinite(price) && price > 0 ? launchSolOutflow * price : null,
+			asset: 'SOL',
+			userId: user.id,
+			network: body.network,
+		});
+	} catch (err) {
+		if (err instanceof SpendLimitError) return error(res, err.status, err.code, err.message, err.detail);
+		throw err;
+	}
 	const reservation = await reserveSpend({
 		agentId: resolvedAgentId,
 		meta: loaded.meta,
@@ -3798,7 +3817,8 @@ async function handleStrategyRun(req, res) {
 
 	let wallet = null,
 		walletAddress = null,
-		agentMeta = null;
+		agentMeta = null,
+		agentOwnerId = null;
 	if (mode === 'live') {
 		// This handler is not behind wrap(), so a refusal thrown by resolveAuth
 		// (cross-site cookie, bearer without wallet:write) is answered here.
@@ -3817,6 +3837,7 @@ async function handleStrategyRun(req, res) {
 			wallet = r.wallet;
 			walletAddress = r.address;
 			agentMeta = r.meta;
+			agentOwnerId = auth.userId;
 		} catch (e) {
 			return error(
 				res,
@@ -3843,7 +3864,7 @@ async function handleStrategyRun(req, res) {
 	});
 
 	const spendGuard =
-		mode === 'live' ? createStrategySpendGuard({ agentId: body.agentId, meta: agentMeta }) : null;
+		mode === 'live' ? createStrategySpendGuard({ agentId: body.agentId, meta: agentMeta, userId: agentOwnerId }) : null;
 	const rt = makeRuntime({
 		wallet,
 		agentId: mode === 'live' ? body.agentId : undefined,

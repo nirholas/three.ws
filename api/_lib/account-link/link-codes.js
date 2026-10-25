@@ -57,7 +57,13 @@ function cleanText(value, max) {
 	return s ? s.slice(0, max) : null;
 }
 
-/** A device's self-description, bounded so a claim can never carry markup or a novel. */
+/**
+ * A device's self-description, bounded so a claim can never carry markup or a
+ * novel. A claim's `telegram` identity is deliberately NOT read from the
+ * device: only the authenticated chat gateway (api/_lib/gateway/core.js) knows
+ * which chat a code was sent from, so a self-described one would let any caller
+ * bind an arbitrary chat to the account that minted the code.
+ */
 export function describeClaim(raw = {}, { ip = null, userAgent = null } = {}) {
 	return {
 		name: cleanText(raw.name, 80),
@@ -65,7 +71,6 @@ export function describeClaim(raw = {}, { ip = null, userAgent = null } = {}) {
 		client: cleanText(raw.client, 60),
 		ip: ip ? String(ip).slice(0, 64) : null,
 		user_agent: userAgent ? String(userAgent).slice(0, 300) : null,
-		...(raw.telegram ? { telegram: raw.telegram } : {}),
 	};
 }
 
@@ -122,13 +127,15 @@ export async function mintLinkCode({ userId, deviceKind, label = null, requested
 /**
  * A device claims a code. Returns the claim secret it polls with. The UPDATE
  * is conditional on `issued` and unexpired, so a used or stale code is a
- * clean refusal rather than a second claimant.
+ * clean refusal rather than a second claimant. `forbidKinds` lists device kinds
+ * the caller may not claim at all (the public HTTP route forbids `telegram`).
  */
-export async function claimLinkCode({ code: raw, claim, expectKind = null }) {
+export async function claimLinkCode({ code: raw, claim, expectKind = null, forbidKinds = [] }) {
 	const code = normalizeLinkCode(raw);
 	if (!code) throw new LinkCodeError('invalid_code', 'that is not a link code; codes look like BCDF-GHJK');
 	const [existing] = await sql`select id, status, device_kind, expires_at from account_link_codes where code_hash = ${await hashCode(code)} limit 1`;
 	if (!existing) throw new LinkCodeError('unknown_code', 'that code does not exist or was mistyped', 404);
+	if (forbidKinds.includes(existing.device_kind)) throw new LinkCodeError('wrong_kind', `a ${DEVICE_LABELS[existing.device_kind].toLowerCase()} code can only be claimed from inside that app`, 409);
 	if (expectKind && existing.device_kind !== expectKind) throw new LinkCodeError('wrong_kind', `that code was minted for a ${DEVICE_LABELS[existing.device_kind].toLowerCase()}, not for this`, 409);
 	const claimSecret = randomToken(24);
 	const [row] = await sql`

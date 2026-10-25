@@ -38,10 +38,10 @@ import {
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { isUuid } from '../_lib/validate.js';
-import { ROLE, signToken } from '../../services/home-satellite/src/token.js';
+import { ROLE, SATELLITE_TOKEN_TTL_SECONDS, signToken } from '../../services/home-satellite/src/token.js';
 
 /** How long a satellite's own hub token lasts before it has to ask again. */
-const HUB_TOKEN_TTL_SECONDS = 24 * 60 * 60;
+const HUB_TOKEN_TTL_SECONDS = SATELLITE_TOKEN_TTL_SECONDS;
 
 /** How long a browser's viewer token lasts. Short: it is handed to a web page. */
 const VIEWER_TOKEN_TTL_SECONDS = 15 * 60;

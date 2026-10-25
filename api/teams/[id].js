@@ -99,6 +99,14 @@ async function teamRoot(req, res, id) {
 
 	const ctx = await ownerWrite(req, res, id, { readBody: req.method === 'PATCH' });
 	if (!ctx || !(await gate(req, res, ctx))) return;
+	if (req.method === 'PATCH' && ctx.auth.source !== 'session') {
+		// The spend caps live on the Trader agent's trade limits, so a bearer may
+		// only move them with the same scope that guards those limits elsewhere.
+		const policy = ctx.body.policy;
+		if (policy && typeof policy === 'object' && ('per_trade_sol' in policy || 'daily_budget_sol' in policy)) {
+			assertBearerMaySpend({ scope: ctx.auth.scope }, req);
+		}
+	}
 	if (req.method === 'DELETE') {
 		await archiveTeam(ctx.team);
 		return json(res, 200, { data: { id, status: 'archived' } });

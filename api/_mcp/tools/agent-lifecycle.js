@@ -22,7 +22,7 @@ import { logAudit } from '../../_lib/audit.js';
 import { hasScope } from '../../_lib/auth.js';
 import { env } from '../../_lib/env.js';
 import { putObject, publicUrl } from '../../_lib/r2.js';
-import { fetchSafePublicUrl, SsrfBlockedError } from '../../_lib/ssrf-guard.js';
+import { fetchSafePublicUrl, SsrfBlockedError, MaxBytesExceededError } from '../../_lib/ssrf-guard.js';
 import { isValidGlbHeader, inspectGlb } from '../../_lib/glb-inspect.js';
 import { storageKeyFor, createAvatar, defaultAvatarVisibilityFor, isPlanLimitError } from '../../_lib/avatars.js';
 import { maybeAutoRigAvatar } from '../../_lib/auto-rig.js';
@@ -254,15 +254,22 @@ function sniffImage(buf) {
 async function fetchUpload(url) {
 	let resp;
 	try {
-		resp = await fetchSafePublicUrl(url, {}, { allowHttp: false });
+		resp = await fetchSafePublicUrl(url, {}, { allowHttp: false, maxBytes: MAX_GLB_BYTES });
 	} catch (err) {
+		if (err instanceof MaxBytesExceededError) return { error: designedError('payload_too_large', `That file is over the ${MAX_GLB_BYTES} byte limit.`) };
 		if (err instanceof SsrfBlockedError) return { error: designedError('invalid_url', 'url must be a public https URL.') };
 		return { error: designedError('fetch_failed', 'Could not fetch that URL. Check the link and try again.') };
 	}
 	if (!resp.ok) return { error: designedError('fetch_failed', `That URL answered ${resp.status}.`) };
 	const declared = Number(resp.headers.get('content-length') || 0);
 	if (declared > MAX_GLB_BYTES) return { error: designedError('payload_too_large', `That file is ${declared} bytes; the limit is ${MAX_GLB_BYTES}.`) };
-	const buf = Buffer.from(await resp.arrayBuffer());
+	let buf;
+	try {
+		buf = Buffer.from(await resp.arrayBuffer());
+	} catch (err) {
+		if (err instanceof MaxBytesExceededError) return { error: designedError('payload_too_large', `That file is over the ${MAX_GLB_BYTES} byte limit.`) };
+		return { error: designedError('fetch_failed', 'Could not read that URL. Check the link and try again.') };
+	}
 	if (buf.length > MAX_GLB_BYTES) return { error: designedError('payload_too_large', `That file is ${buf.length} bytes; the limit is ${MAX_GLB_BYTES}.`) };
 	return { buf };
 }

@@ -76,10 +76,12 @@ async function handleClaim(req, res) {
 	const rl = await limits.linkCodeClaimIp(ip);
 	if (!rl.success) return rateLimited(res, rl);
 	const body = (await readJson(req)) || {};
+	// A Telegram chat is bound only by the authenticated bot gateway, never by a
+	// claim a caller describes over this unauthenticated route.
 	const expectKind = DEVICE_KINDS.includes(body.device_kind) ? body.device_kind : null;
 	try {
 		const claim = describeClaim(body.device || {}, { ip, userAgent: req.headers['user-agent'] || null });
-		const claimed = await claimLinkCode({ code: body.code, claim, expectKind });
+		const claimed = await claimLinkCode({ code: body.code, claim, expectKind, forbidKinds: ['telegram'] });
 		return json(res, 200, { ...claimed, poll_every_ms: 2000 });
 	} catch (err) {
 		return fail(res, err);

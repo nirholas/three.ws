@@ -278,4 +278,13 @@ describe('PUT /api/agents/:id: money keys in meta need the spend scope', async (
 		expect(changesMoneyMeta(stored, { payments: { receiver: 'THREEsynthetic2222' } })).toBe(true);
 		expect(changesMoneyMeta(stored, { solana_address: 'THREEsynthetic3333' })).toBe(true);
 	});
+
+	it('flags the spend-policy keys the reserve, burner and prediction guards read', () => {
+		expect(changesMoneyMeta(stored, { spend_policy: { max_sol_per_tx: 1000, daily_sol_cap: 1e6 } })).toBe(true);
+		expect(changesMoneyMeta(stored, { burner_policy: { cap_usd: 1e6 } })).toBe(true);
+		expect(changesMoneyMeta(stored, { prediction_limits: { max_usd: 1e6 } })).toBe(true);
+		expect(changesMoneyMeta(stored, { recovery: { address: 'THREEsynthetic4444' } })).toBe(true);
+		const withPolicy = { ...stored, spend_policy: { daily_sol_cap: 5 } };
+		expect(changesMoneyMeta(withPolicy, { spend_policy: { daily_sol_cap: 5 } })).toBe(false);
+	});
 });

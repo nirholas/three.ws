@@ -211,6 +211,20 @@ async function currentPayoutWallet({ userId, agentId, chain }) {
 }
 
 /**
+ * The wallet a change is judged against. An agent with no row of its own is
+ * already paid to the account-level wallet on the rail (the withdrawal query
+ * falls back to it), so its first per-agent wallet REDIRECTS earnings and must
+ * face the same step-up, approval and cooldown as any replacement. Judging it
+ * as a "first wallet" is how a stolen session or a wallet:write key could
+ * re-point payouts instantly.
+ */
+async function policyBaseWallet({ userId, agentId, chain }) {
+	const own = await currentPayoutWallet({ userId, agentId, chain });
+	if (own || !agentId) return own;
+	return currentPayoutWallet({ userId, agentId: null, chain });
+}
+
+/**
  * The cooldown and step-up rules, shared with the unproved writers
  * (api/monetization/wallet.js, api/billing/payout-wallets/index.js) so no
  * route can replace a live payout address instantly.
@@ -218,7 +232,7 @@ async function currentPayoutWallet({ userId, agentId, chain }) {
  *   a different address: step-up required, live after PAYOUT_COOLDOWN_HOURS
  */
 export async function payoutChangePolicy({ userId, agentId = null, chain, address, stepUp = false }) {
-	const existing = await currentPayoutWallet({ userId, agentId, chain });
+	const existing = await policyBaseWallet({ userId, agentId, chain });
 	const now = new Date().toISOString();
 	if (!existing || existing.address === address) return { approvedAt: now, effectiveAt: now, previous: null, replacing: false };
 	if (!stepUp) {
@@ -278,14 +292,17 @@ async function agentOwnedBy(agentId, userId) {
 export async function setPayoutWallet({ userId, agentId = null, chain, address, signatureHash, actor, stepUp = false, req = null }) {
 	const agent = await agentOwnedBy(agentId, userId);
 	const payoutChainName = payoutChain(chain);
-	const existing = await currentPayoutWallet({ userId, agentId, chain: payoutChainName });
+	const own = await currentPayoutWallet({ userId, agentId, chain: payoutChainName });
+	const existing = own || (agentId ? await currentPayoutWallet({ userId, agentId: null, chain: payoutChainName }) : null);
 	const proofChain = chain;
 
-	if (existing && existing.address === address && existing.approved_at) {
-		return { outcome: 'unchanged', wallet: publicPayoutWallet(existing) };
+	if (own && own.address === address && own.approved_at) {
+		return { outcome: 'unchanged', wallet: publicPayoutWallet(own) };
 	}
 
-	if (!existing) {
+	// No wallet at all, or the agent adopting the very address it is already
+	// paid to through the account wallet: nothing is redirected, so it is live.
+	if (!existing || (!own && existing.address === address)) {
 		const { row } = await writePayoutWallet({
 			userId, agentId, chain: payoutChainName, address, proofChain, signatureHash, setBy: actor,
 			approvedAt: new Date().toISOString(), effectiveAt: new Date().toISOString(),

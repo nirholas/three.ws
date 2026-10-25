@@ -86,13 +86,28 @@ function hostOf(uri) {
 	try { return new URL(uri).host || null; } catch { return null; }
 }
 
-// Host a person can check against what they expect: the client's own site when
-// it registered one, else where the code will be sent. Both are validated URLs.
-function clientHost(client, redirectUri) {
-	for (const candidate of [client.client_uri, redirectUri]) {
-		try { return new URL(candidate).host; } catch { /* try the next candidate */ }
+// The registrable-ish domain of a host: its last two labels. Good enough to
+// tell "app.example.com" from "example.com.evil.test"; never used to grant
+// anything, only to decide whether a self-declared site may be shown.
+function siteDomain(host) {
+	return host.split('.').slice(-2).join('.');
+}
+
+// Host a person can check against what they expect: where the code will be
+// sent, which is the only fact dynamic registration cannot fake. The client's
+// self-declared site (client_uri, never verified) is shown beside it only when
+// it is on the same domain as that redirect host, so a client cannot dress an
+// attacker redirect up as a site the person trusts.
+export function clientHost(client, redirectUri) {
+	let redirectHost = null;
+	try { redirectHost = new URL(redirectUri).host || null; } catch { /* no usable redirect */ }
+	let siteHost = null;
+	try { siteHost = new URL(client.client_uri).host || null; } catch { /* no usable site */ }
+	if (!redirectHost) return 'unknown host';
+	if (siteHost && siteHost !== redirectHost && siteDomain(siteHost.split(':')[0]) === siteDomain(redirectHost.split(':')[0])) {
+		return `${redirectHost} (registered as ${siteHost})`;
 	}
-	return 'unknown host';
+	return redirectHost;
 }
 
 // Design rule 2: a token a cloud agent holds unattended does not spend. The

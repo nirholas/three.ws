@@ -8,16 +8,17 @@
 //   • peekFreeQuota(ip)    — READ ONLY. Answers "is this IP still under quota?"
 //                            without spending a slot. Called at the access-control
 //                            hook, before the image is generated.
-//   • consumeFreeQuota(ip) — spend one slot. Called ONLY after an image is
-//                            actually delivered, so a validation error, a safety
-//                            refusal, or an upstream outage never burns a free
-//                            generation the caller didn't receive.
+//   • reserveFreeQuota(ip): atomically take one slot BEFORE generating, so
+//                            concurrent requests from one IP cannot all pass the
+//                            peek and all hit the paid image lanes. Refused when
+//                            the IP is already at its limit.
+//   • releaseFreeQuota(ip): give the slot back when no image was delivered, so a
+//                            validation error, a safety refusal, or an upstream
+//                            outage never burns a free generation the caller
+//                            didn't receive.
 //
-// The peek/consume split means the counter fails OPEN: under a burst two
-// instances can both peek "allowed" before either consumes, letting a caller
-// slip one or two extra free images. That is the correct bias for a free funnel
-// (generous, never wrongly charges) — the paid lane and the x402 rail carry the
-// money-critical guarantees, not this counter.
+// The peek is only a cheap pre-check for the access-control hook; the reserve is
+// the real gate. A storage error still fails OPEN (never wrongly charges).
 //
 // Storage: an atomic Redis INCR on a day-stamped key (natural daily reset). When
 // Redis is absent (local dev / tests) it degrades to a per-instance in-memory
@@ -105,18 +106,21 @@ export async function peekFreeQuota(ip) {
 }
 
 /**
- * Spend one free-image slot for an IP and return the post-increment view. Call
- * this only after an image was actually delivered. Atomic under Redis (INCR +
- * first-write EXPIRE); best-effort in-memory otherwise. Never throws — a failed
- * count must not fail an image the caller already received.
+ * Atomically reserve one free-image slot for an IP BEFORE the image is generated.
+ * Under Redis the INCR is the reservation, so N concurrent requests from one IP
+ * cannot all pass a peek and all generate: only the first `limit` increments are
+ * granted, the rest are rolled back and refused. Fails open on a storage error
+ * (granted, `counted: false`) so a Redis hiccup never wrongly blocks the free
+ * tier. Pair with releaseFreeQuota() when the image is not delivered.
  *
  * @param {string} ip
- * @returns {Promise<{used: number, limit: number, remaining: number, resetAt: string}>}
+ * @returns {Promise<{granted: boolean, counted: boolean, used: number, limit: number, remaining: number, resetAt: string}>}
  */
-export async function consumeFreeQuota(ip) {
+export async function reserveFreeQuota(ip) {
 	const limit = freePerDay();
 	const key = keyFor(ip);
 	let used = 1;
+	let counted = true;
 	try {
 		if (redis) {
 			used = Number(await redis.incr(key));
@@ -127,10 +131,32 @@ export async function consumeFreeQuota(ip) {
 			used = memIncr(key, ttlSeconds() * 1000);
 		}
 	} catch {
-		// Count lost — the image already shipped, so swallow and report a best guess.
+		counted = false;
+	}
+	if (counted && used > limit) {
+		await releaseFreeQuota(ip);
+		return { granted: false, counted: false, used: limit, limit, remaining: 0, resetAt: resetAtIso() };
 	}
 	const remaining = Math.max(0, limit - used);
-	return { used, limit, remaining, resetAt: resetAtIso() };
+	return { granted: true, counted, used, limit, remaining, resetAt: resetAtIso() };
+}
+
+/**
+ * Give back a reserved slot (the image was not delivered). Never throws.
+ *
+ * @param {string} ip
+ */
+export async function releaseFreeQuota(ip) {
+	const key = keyFor(ip);
+	try {
+		if (redis) await redis.decr(key);
+		else {
+			const hit = memory.get(key);
+			if (hit && hit.count > 0) hit.count -= 1;
+		}
+	} catch {
+		// Best effort: a lost refund costs the caller one free image, not money.
+	}
 }
 
 // Test hook — the in-memory fallback persists across a module's lifetime; tests

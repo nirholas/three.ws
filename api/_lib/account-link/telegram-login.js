@@ -138,14 +138,17 @@ export async function recordWidgetPayload(payloadHash, authDate) {
 // ── magic links ───────────────────────────────────────────────────────────────
 
 /** Mint a magic link. Returns the deep link for the chat and the poll secret for the browser. */
-export async function issueMagicToken({ intent, userId = null, next = null }) {
+export async function issueMagicToken({ intent, userId = null, next = null, request = null }) {
 	if (!INTENTS.includes(intent)) throw new TelegramLoginError('invalid_intent', `intent must be one of ${INTENTS.join(', ')}`);
 	if (intent === 'link' && !userId) throw new TelegramLoginError('unauthorized', 'sign in before linking Telegram', 401);
 	const token = `${MAGIC_PREFIX}${randomToken(32)}`;
 	const pollSecret = randomToken(24);
+	// Where the request came from, so the chat can show it before approving.
+	const origin = { ip: clean(request?.ip, 64), ua: clean(request?.ua, 160), at: new Date().toISOString() };
 	const [row] = await sql`
-		insert into telegram_login_tokens (token_hash, poll_secret_hash, intent, user_id, next, expires_at)
+		insert into telegram_login_tokens (token_hash, poll_secret_hash, intent, user_id, next, claims, expires_at)
 		values (${await sha256(token)}, ${await sha256(pollSecret)}, ${intent}, ${userId}, ${next},
+		        ${JSON.stringify({ request: origin })}::jsonb,
 		        now() + ${`${MAGIC_TTL_SEC} seconds`}::interval)
 		returning id, expires_at
 	`;
@@ -159,21 +162,30 @@ export async function issueMagicToken({ intent, userId = null, next = null }) {
 	};
 }
 
+function clean(v, max) {
+	return typeof v === 'string' && v ? v.replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, max) : null;
+}
+
 /**
- * The bot received `/start tl_...` from `from` in a private chat. Claim the
- * token for that Telegram account in one conditional UPDATE: a used, expired
- * or unknown token changes nothing and the caller tells the chat so.
+ * The bot received `/start tl_...` from `from` in a private chat. This does NOT
+ * claim the token: anyone can be lured into opening a deep link an attacker
+ * minted, so the chat must first show who asked (IP, browser, time) and wait
+ * for an explicit Approve press. The would-be claimant is parked on the row
+ * and only that same Telegram user's approval (claimMagicToken) completes it.
+ * A used, expired or unknown token changes nothing and the caller says so.
  */
-export async function claimMagicToken({ token, from, chat }) {
+export async function requestMagicApproval({ token, from, chat }) {
 	if (!isMagicToken(token)) return { ok: false, reason: 'invalid' };
 	if (chat && chat.type && chat.type !== 'private') return { ok: false, reason: 'group' };
 	const claims = claimsFrom(from);
 	const chatMeta = chat ? { chat_id: String(chat.id), chat_type: chat.type || 'private', chat_title: chat.title || chat.username || null } : null;
+	const pending = { claims: { ...claims, chat: chatMeta } };
 	const [row] = await sql`
 		update telegram_login_tokens
-		set status = 'claimed', claimed_at = now(), claims = ${JSON.stringify({ ...claims, chat: chatMeta })}::jsonb
+		set claims = coalesce(claims, '{}'::jsonb) || ${JSON.stringify({ pending })}::jsonb
 		where token_hash = ${await sha256(token)} and status = 'issued' and expires_at > now()
-		returning id, intent, user_id
+		  and (claims->'pending' is null or claims->'pending'->'claims'->>'subject' = ${claims.subject})
+		returning id, intent, user_id, claims->'request' as request
 	`;
 	if (!row) return { ok: false, reason: 'expired' };
 	if (row.intent === 'link') {
@@ -183,7 +195,49 @@ export async function claimMagicToken({ token, from, chat }) {
 			return { ok: false, reason: 'in_use' };
 		}
 	}
+	return { ok: true, id: row.id, intent: row.intent, request: row.request || null };
+}
+
+/**
+ * The Telegram user pressed Approve on the message requestMagicApproval
+ * caused. One conditional UPDATE claims the token only when the presser is the
+ * parked claimant, in the same private chat, so a button forwarded elsewhere
+ * or an attacker's own press claims nothing.
+ */
+export async function claimMagicToken({ id, from, chat }) {
+	if (!id || !from) return { ok: false, reason: 'invalid' };
+	if (chat && chat.type && chat.type !== 'private') return { ok: false, reason: 'group' };
+	const subject = String(from.id);
+	const chatId = chat ? String(chat.id) : '';
+	const [row] = await sql`
+		update telegram_login_tokens
+		set status = 'claimed', claimed_at = now(), claims = claims->'pending'->'claims'
+		where id = ${id} and status = 'issued' and expires_at > now()
+		  and claims->'pending'->'claims'->>'subject' = ${subject}
+		  and claims->'pending'->'claims'->'chat'->>'chat_id' = ${chatId}
+		returning id, intent, user_id, claims
+	`;
+	if (!row) return { ok: false, reason: 'expired' };
+	const claims = row.claims || {};
+	if (row.intent === 'link') {
+		const owner = await findUserByIdentity(PROVIDER, claims.subject);
+		if (owner && owner.id !== row.user_id) {
+			await sql`update telegram_login_tokens set status = 'expired' where id = ${row.id}`;
+			return { ok: false, reason: 'in_use' };
+		}
+	}
 	return { ok: true, id: row.id, intent: row.intent, claims };
+}
+
+/** The parked claimant pressed Decline: burn the token so the requesting browser cannot finish. */
+export async function declineMagicToken({ id, from }) {
+	if (!id || !from) return false;
+	const rows = await sql`
+		update telegram_login_tokens set status = 'expired'
+		where id = ${id} and status = 'issued' and claims->'pending'->'claims'->>'subject' = ${String(from.id)}
+		returning id
+	`;
+	return rows.length > 0;
 }
 
 /** What the browser sees while it polls. Only the poll secret unlocks the row. */

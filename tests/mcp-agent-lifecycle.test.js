@@ -410,7 +410,7 @@ describe('upload_agent_avatar', () => {
 		fetchSafePublicUrl.mockResolvedValueOnce(new Response(glb(), { status: 200 }));
 		const res = await call('upload_agent_avatar', { agent_id: AGENT, url: 'https://example.com/body.glb' });
 		expect(out(res).kind).toBe('glb');
-		expect(fetchSafePublicUrl).toHaveBeenCalledWith('https://example.com/body.glb', {}, { allowHttp: false });
+		expect(fetchSafePublicUrl).toHaveBeenCalledWith('https://example.com/body.glb', {}, expect.objectContaining({ allowHttp: false, maxBytes: expect.any(Number) }));
 	});
 
 	it('sets an image as the portrait', async () => {

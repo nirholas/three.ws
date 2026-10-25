@@ -470,3 +470,45 @@ describe('POST /api/agents/a2a-call — receipts', () => {
 		expect(await mandateSpent(mandate.mandateId)).toBe(0);
 	});
 });
+
+describe('platform ceilings on self-issued mandates', () => {
+	it('refuses to issue a mandate above the platform budget ceiling', async () => {
+		await expect(
+			issueIntentMandate({
+				ownerUserId: 'owner-1',
+				subjectAgentId: AGENT_ID,
+				maxAtomics: '900000000000',
+				perCallAtomics: '1000000',
+				ttlSec: 3600,
+			}),
+		).rejects.toMatchObject({ code: 'amount_exceeds_platform_cap' });
+	});
+
+	it('refuses to issue a mandate with a per-call allowance above the platform ceiling', async () => {
+		await expect(
+			issueIntentMandate({
+				ownerUserId: 'owner-1',
+				subjectAgentId: AGENT_ID,
+				maxAtomics: '100000000',
+				perCallAtomics: '90000000',
+				ttlSec: 3600,
+			}),
+		).rejects.toMatchObject({ code: 'amount_exceeds_platform_cap' });
+	});
+
+	it('stops a user at the platform daily ceiling even with a valid mandate and no agent limits', async () => {
+		// Each call pays $2; the per-user daily platform ceiling is $50, so the 26th
+		// call must be refused before anything is signed.
+		let last;
+		for (let i = 0; i < 26; i += 1) {
+			sqlState.queue.push(ownedAgent());
+			clientState.submitCalls = 0;
+			last = await callWithMandate();
+			if (i < 25) expect(last.res.statusCode).toBe(200);
+		}
+		expect(last.res.statusCode).toBe(403);
+		expect(last.res.payload.error).toBe('platform_user_daily_exceeded');
+		expect(clientState.submitCalls).toBe(0);
+		expect(await mandateSpent(last.mandate.mandateId)).toBe(0);
+	});
+});

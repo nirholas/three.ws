@@ -18,7 +18,7 @@ import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { captureException } from '../../_lib/sentry.js';
 import { isDemoWidgetId, getDemoWidget } from '../_demo-fixtures.js';
 import { decorate } from '../index.js';
-import { PROVIDER_MODEL_DEFAULTS, DEFAULT_PROVIDER_ORDER, MODEL_CATALOG, PER_CALL_TIMEOUT_MS, modelRejectsSampling, modelThinksByDefault } from '../../_lib/chat-models.js';
+import { PROVIDER_MODEL_DEFAULTS, DEFAULT_PROVIDER_ORDER, MODEL_CATALOG, ANON_PROVIDER_LIST, anonModelAllowed, PER_CALL_TIMEOUT_MS, modelRejectsSampling, modelThinksByDefault } from '../../_lib/chat-models.js';
 import { redactPii } from '../../_lib/pii.js';
 import { clientCountry } from '../../_lib/client-geo.js';
 import { embeddingsConfigured, scoreRowsBySpace } from '../../_lib/embeddings.js';
@@ -252,14 +252,8 @@ async function handleChat(req, res) {
 	// Owner config wins. If the owner explicitly set 'none' or 'custom', the
 	// visitor cannot override. Otherwise (auto or a named LLM provider) the
 	// visitor's `provider` / `model` choice from the chat header dropdown is
-	// honoured, but still constrained to the supported set.
-	const cfgProvider = cfg.brainProvider || 'auto';
-	let provider = cfgProvider;
-	let requestedModel = cfg.brainModel || null;
-	if (BRAIN_PROVIDERS.has(cfgProvider) && body.provider && BRAIN_PROVIDERS.has(body.provider)) {
-		provider = body.provider;
-		if (body.model) requestedModel = body.model;
-	}
+	// honoured, but only within the free tier (see resolveVisitorBrain).
+	const { provider, requestedModel } = resolveVisitorBrain(cfg, body, isOwner);
 	const allowedSkills = filterSkills(cfg.skills);
 
 	// A widget visitor's message reaches the brain as written. The platform adds
@@ -376,6 +370,31 @@ async function handleChat(req, res) {
 	}).catch((err) => {
 		if (process.env.DEBUG === 'true') console.warn('[widget-chat] persist', err?.message);
 	});
+}
+
+/**
+ * The provider and model a widget chat turn runs on. The owner's config wins; a
+ * visitor's header-dropdown choice is honoured only while the owner left the
+ * brain open ('auto' or a named LLM provider), and for a non-owner only within
+ * the free tier: a free provider (ANON_PROVIDER_LIST) and a catalogued non-paid
+ * or ":free" model. Anything else would let an unauthenticated visitor pick a
+ * paid provider or an arbitrary paid model id and spend the platform key.
+ * @param {{ brainProvider?: string|null, brainModel?: string|null }} cfg
+ * @param {{ provider?: string, model?: string }} body
+ * @param {boolean} isOwner
+ */
+export function resolveVisitorBrain(cfg, body, isOwner) {
+	const cfgProvider = cfg.brainProvider || 'auto';
+	let provider = cfgProvider;
+	let requestedModel = cfg.brainModel || null;
+	if (BRAIN_PROVIDERS.has(cfgProvider) && body.provider && BRAIN_PROVIDERS.has(body.provider)) {
+		const mayChoose = isOwner || body.provider === 'auto' || ANON_PROVIDER_LIST.includes(body.provider);
+		if (mayChoose) {
+			provider = body.provider;
+			if (body.model && (isOwner || anonModelAllowed(body.model))) requestedModel = body.model;
+		}
+	}
+	return { provider, requestedModel };
 }
 
 // ── Brain dispatchers ──────────────────────────────────────────────────────

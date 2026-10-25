@@ -159,8 +159,12 @@ describe('sender gate', () => {
 		expect(senderTrust(row(), [])).toBe('sender_not_allowed');
 	});
 
-	it('requires DMARC pass, or SPF and DKIM pass, unless the platform delivered it locally', () => {
+	it('requires DMARC pass (SPF and DKIM alone are not enough) unless the platform delivered it locally', () => {
 		expect(senderTrust(row({ auth_results: { spf: 'pass', dkim: 'none', dmarc: 'none' } }), ['@acme.example'])).toBe('sender_not_authenticated');
+		// An attacker domain with its own valid SPF and DKIM and a forged allowlisted
+		// From fails DMARC alignment; SPF+DKIM pass must not be enough.
+		expect(senderTrust(row({ auth_results: { spf: 'pass', dkim: 'pass', dmarc: 'fail' } }), ['@acme.example'])).toBe('sender_not_authenticated');
+		expect(senderTrust(row({ auth_results: { spf: 'pass', dkim: 'pass', dmarc: 'none' } }), ['@acme.example'])).toBe('sender_not_authenticated');
 		expect(senderTrust(row({ auth_results: { spf: 'none', dkim: 'none', dmarc: 'pass' } }), ['@acme.example'])).toBe('ok');
 		expect(senderTrust(row({ provider: 'local', auth_results: {} }), ['@acme.example'])).toBe('ok');
 	});
