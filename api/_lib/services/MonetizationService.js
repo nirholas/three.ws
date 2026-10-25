@@ -38,6 +38,18 @@ function svcError(status, code, message) {
 	return Object.assign(new Error(message), { status, code });
 }
 
+/**
+ * Hours of access a purchase grants. A skill with a fixed time-pass price sells
+ * exactly its configured window, whatever duration the caller asked for;
+ * otherwise a caller-chosen duration could stretch a cheap pass to any length.
+ * PWYW purchases are permanent and have no window.
+ */
+export function resolveAccessHours(price, requestedHours, isPwyw) {
+	if (isPwyw) return null;
+	if (price.time_pass_amount) return price.time_pass_hours || null;
+	return requestedHours ?? (price.time_pass_hours || null);
+}
+
 export class MonetizationService {
 	/**
 	 * @param {object|string|null} user - a session user ({ id }), an auth object
@@ -271,7 +283,7 @@ export class MonetizationService {
 		// PWYW is a permanent-purchase pricing mode and takes precedence over the
 		// time-pass path — a buyer who names their own price is buying the skill
 		// outright, not renting a window.
-		const effectiveDurationHours = isPwyw ? null : (durationHours ?? (price.time_pass_hours || null));
+		const effectiveDurationHours = resolveAccessHours(price, durationHours, isPwyw);
 		const isTimePass = effectiveDurationHours != null;
 
 		// Resolve the amount the buyer will be charged. Fixed skills bill the

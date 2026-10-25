@@ -89,6 +89,22 @@ beforeEach(() => {
 
 // ── 1. Fee calculation (api/_lib/fee.js) ────────────────────────────────────────
 
+describe('resolveAccessHours', () => {
+	const pass = { time_pass_amount: '1000', time_pass_hours: 24, amount: '50000' };
+
+	it('ignores the caller duration when the skill has a fixed time-pass price', async () => {
+		const { resolveAccessHours } = await import('../api/_lib/services/MonetizationService.js');
+		expect(resolveAccessHours(pass, 720, false)).toBe(24);
+		expect(resolveAccessHours(pass, null, false)).toBe(24);
+	});
+
+	it('honors the caller duration only when no fixed pass price exists', async () => {
+		const { resolveAccessHours } = await import('../api/_lib/services/MonetizationService.js');
+		expect(resolveAccessHours({ amount: '50000' }, 48, false)).toBe(48);
+		expect(resolveAccessHours(pass, 720, true)).toBeNull();
+	});
+});
+
 describe('calculateFee', () => {
 	it('exposes a sane default fee rate (250 bps = 2.5%)', () => {
 		const bps = getFeeBps();
