@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-25T11:11:00.310Z",
+	"generated_at": "2026-10-25T11:43:02.465Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,16 @@
 			"title": "Gallery and marketplace thumbnails degrade gracefully instead of showing a broken-image icon",
 			"summary": "Six image spots on /gallery and /marketplace (the avatar grid thumbnail, the equip-avatar picker row, the live-sale ticker avatar, the animation marketplace listing card, the animation buy-modal preview, and a tool-detail icon) rendered a plain <img> with no fallback, so a 502 or missing thumbnail left the browser's default broken-image glyph on two of the highest-traffic pages in the product. All six now carry the same data-fallback attribute the site already uses elsewhere: card-style thumbnails swap to the existing placeholder box, small avatar icons just disappear instead. A seventh untagged image turned up in the gallery's forge-card renderer while verifying the other six and got the same fix.",
 			"link": "/gallery",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-25",
+			"type": "update",
+			"title": "GET /api/crypto/bonding's last-known-good cache now survives a full RPC-lane cooldown, not just 30 minutes",
+			"summary": "The last-known-good tier behind /api/crypto/bonding (added to survive a pump.fun Cloudflare block) kept each mint's cached bonding-curve status for only 30 minutes, far shorter than the outages it exists to cover: the Solana RPC lane cooldown runs up to 6 hours once a lane exhausts its quota, and the pump.fun Cloudflare block it was built for has stayed up for multiple days straight. Once both the 25-second live cache and the 30-minute backup expired during one of those outages, the endpoint fell all the way through to a hard 503 on every /launches and /oracle/coin bonding-progress panel. The cache now holds each mint's last good read for 6 hours by default, still overridable with PUMP_BONDING_LKG_TTL_S.",
+			"link": "/docs/api-reference",
 			"tags": [
 				"fix"
 			]

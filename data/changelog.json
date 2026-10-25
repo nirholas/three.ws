@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-25",
+			"title": "GET /api/crypto/bonding's last-known-good cache now survives a full RPC-lane cooldown, not just 30 minutes",
+			"summary": "The last-known-good tier behind /api/crypto/bonding (added to survive a pump.fun Cloudflare block) kept each mint's cached bonding-curve status for only 30 minutes, far shorter than the outages it exists to cover: the Solana RPC lane cooldown runs up to 6 hours once a lane exhausts its quota, and the pump.fun Cloudflare block it was built for has stayed up for multiple days straight. Once both the 25-second live cache and the 30-minute backup expired during one of those outages, the endpoint fell all the way through to a hard 503 on every /launches and /oracle/coin bonding-progress panel. The cache now holds each mint's last good read for 6 hours by default, still overridable with PUMP_BONDING_LKG_TTL_S.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs/api-reference"
+		},
+		{
+			"date": "2026-10-25",
 			"title": "Security hardening across sign-in, uploads, vaults, agents and the chat server",
 			"summary": "A source audit led to fixes in many places. Agent updates only link avatars you own, and unpublished agents stay hidden from ask. Handoff, Telegram and SAML sign-ins are bound to the flow that started them, and the walk-avatar extension only accepts a token for a sign-in it began. Vault deposits that would mint zero shares are refunded, and strategy buys reserve against the daily SOL cap atomically. Oracle follow and test alerts need a linked Telegram chat, shown read-only in the panels. Anonymous uploads are size-checked hourly. The local chat server binds loopback and requires a token, and webhook retries re-run after a failed delivery.",
 			"tags": [
