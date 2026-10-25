@@ -29,10 +29,14 @@ const OWNER = '0x00000000000000000000000000000000000000a1';
 process.env.RPC_URL_8453 = OVERRIDE_RPC;
 
 const statements = [];
+let linkedWallets = [OWNER];
 function sqlMock(strings, ...values) {
 	const text = strings.join('?');
 	statements.push({ text, values });
 	if (text.includes('SELECT id, meta FROM agent_identities')) return Promise.resolve([]);
+	if (text.includes('FROM user_wallets')) {
+		return Promise.resolve(linkedWallets.includes(String(values[1]).toLowerCase()) ? [{ id: 'w-1' }] : []);
+	}
 	return Promise.resolve([]);
 }
 vi.mock('../api/_lib/db.js', () => ({
@@ -91,6 +95,7 @@ let transport = () => {
 const calledUrls = [];
 
 beforeEach(() => {
+	linkedWallets = [OWNER];
 	statements.length = 0;
 	calledUrls.length = 0;
 	vi.stubGlobal('fetch', async (url) => {
@@ -245,5 +250,15 @@ describe('POST /api/erc8004/register-confirm', () => {
 		const { status } = await confirm({ metadataUri: 'ipfs://' + 'a'.repeat(2100) });
 		expect(status).toBe(400);
 		expect(calledUrls).toHaveLength(0);
+	});
+
+	it('refuses to index or bind a registration whose owner is not a wallet linked to the caller', async () => {
+		transport = rpcOk(receipt());
+		linkedWallets = [];
+		const { status, body } = await confirm({ agentDbId: '11111111-1111-4111-8111-111111111111' });
+		expect(status).toBe(403);
+		expect(body.error).toBe('forbidden');
+		expect(statements.some((s) => s.text.includes('INSERT INTO erc8004_agents_index'))).toBe(false);
+		expect(statements.some((s) => s.text.includes('UPDATE agent_identities'))).toBe(false);
 	});
 });
