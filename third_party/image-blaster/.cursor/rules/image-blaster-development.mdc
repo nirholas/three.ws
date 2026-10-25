@@ -1,0 +1,32 @@
+---
+description: Cursor-only development guidance for the IMAGE-BLASTER repository
+alwaysApply: true
+---
+
+# IMAGE-BLASTER Development
+
+- This Cursor rule is for repository development in Cursor only. Do not mirror this into root `CLAUDE.md`; Claude Code end users should consume `.claude/rules/project.md` and `.claude/skills/*/SKILL.md`.
+- IMAGE-BLASTER has two main parts:
+  - Claude Skills in `.claude/skills/`, backed by scripts in `.claude/scripts/`.
+  - The React viewer in `app/`, built with TypeScript, Vite, React Three Fibre, SparkJS, Leva, Wouter, and Tailwind CSS.
+- The shared working area is `worlds/`, and staged user input starts in `input/`. Both are gitignored.
+- The canonical Image Blast file convention lives in `.claude/rules/project.md`. Keep generated state simple: `ls -a` first, visible indexed artifacts for outputs, hidden request JSON for request/resume details.
+- Environment keys:
+  - `WORLD_LABS_API_KEY` for `/image-blast-world`.
+  - `FAL_KEY` for `/image-blast-3d`, `/image-blast-sfx`, and FAL-backed image editing.
+- The repository root is the Bun workspace root. Run package-manager commands from the root; do not create ad hoc root dependencies outside the workspace.
+  - `bun install`
+  - `bun run dev`
+  - `bun run build`
+  - `bun run test`
+  - `bun run typecheck`
+- The React viewer package lives in `app/`. If you need to target it directly, use root commands with `--cwd=app`:
+  - `bun --cwd=app run dev`
+  - `bun --cwd=app run build`
+  - `bun --cwd=app run test`
+  - `bun --cwd=app run typecheck`
+- `worlds/<slug>/scene/project.json` is the shared Three.js editor scene contract. It uses the Three.js editor App format and is loaded by the React app through `THREE.ObjectLoader`.
+- Keep the React viewer modular. Character controller, audio, post-processing, loading transitions, scene objects, and splat rendering should remain independent modules composed at the scene level.
+- Use `wouter` for routing. The active world is driven by `/<world-name>`, and `/` loads the first available world.
+- Mobile support matters. Character controls should support touch input alongside keyboard/mouse.
+- FAL and World Labs API calls belong in implementation scripts, not standalone direct-use skills. Skills should stay thin workflow wrappers.

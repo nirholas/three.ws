@@ -1,0 +1,44 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(image-blast-project)",
+      "Skill(image-blast-uncover)",
+      "Skill(image-blast-world)",
+      "Skill(image-blast-3d)",
+      "Skill(image-blast-sfx)",
+      "Skill(image-blast-plate)",
+      "Skill(image-blast-image-edit)",
+      "Skill(image-blast-wildcard)",
+      "Bash(ls:*)",
+      "Bash(node .claude/scripts/**:*)",
+      "Bash(node .claude/scripts/project/show-url.mjs:*)",
+      "Bash(bun install:*)",
+      "Bash(bun run dev:*)",
+      "Bash(lsof:*)",
+      "Bash(mkdir:*)",
+      "Bash(cd:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/setup-check.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/input-check.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

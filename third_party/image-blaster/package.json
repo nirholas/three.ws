@@ -1,0 +1,14 @@
+{
+  "name": "image-blaster-workspace",
+  "private": true,
+  "workspaces": [
+    "app"
+  ],
+  "scripts": {
+    "dev": "bun --cwd=app run dev",
+    "build": "bun --cwd=app run build",
+    "preview": "bun --cwd=app run preview",
+    "test": "bun --cwd=app run test",
+    "typecheck": "bun --cwd=app run typecheck"
+  }
+}

@@ -20,11 +20,13 @@ diff against upstream rather than a merge against our edits.
 |---|---|---|---|---|
 | [threeui/](threeui) | [MengTo/threeui](https://github.com/MengTo/threeui) | `68802d5428071ada5c20db8094b1649e6bb770ed` (2026-09-01) | MIT, (c) 2026 Meng To | 430 |
 | [designcode-agent-skills/](designcode-agent-skills) | [MengTo/Skills](https://github.com/MengTo/Skills) | `321c769739b823de5eb94eb3a52aa1974fe783a2` (2026-08-29) | MIT, (c) 2026 Meng To | 898 |
+| [image-blaster/](image-blaster) | [neilsonnn/image-blaster](https://github.com/neilsonnn/image-blaster) | `4acb43ba126a12358f71838d1b1a05e856b10eaf` (2026-05-14) | MIT, (c) 2026 Neilson Koerner-Safrata | 140 |
 
-Both licences ship with their tree ([threeui/LICENSE](threeui/LICENSE),
-[designcode-agent-skills/LICENSE](designcode-agent-skills/LICENSE)). MIT
+All licences ship with their tree ([threeui/LICENSE](threeui/LICENSE),
+[designcode-agent-skills/LICENSE](designcode-agent-skills/LICENSE),
+[image-blaster/LICENSE.md](image-blaster/LICENSE.md)). MIT
 requires the copyright notice and permission notice to travel with the copy, so
-those two files are load-bearing: never delete or rewrite them.
+those files are load-bearing: never delete or rewrite them.
 
 What each tree is for, with entry points and worked examples, is documented on
 our side in [docs/vendored-design-libraries.md](../docs/vendored-design-libraries.md).
@@ -37,6 +39,16 @@ under [threeui/src/](threeui/src), 48 shader and scene studies under
 [threeui/src/shaders/](threeui/src/shaders), the publishable package under
 [threeui/packages/](threeui/packages), and the catalog application shell that
 renders each component with live controls, a variant picker and a source tab.
+
+### image-blaster
+
+A Claude Code workspace that turns one image into a 3D environment: a Gaussian
+splat of the static scene (World Labs Marble), GLB/OBJ meshes of the dynamic
+objects (Hunyuan 3D via FAL) and ambient plus per-object SFX (ElevenLabs via
+FAL). The pipeline is eight skills under [image-blaster/.claude/skills/](image-blaster/.claude/skills),
+six stage subagents, Node scripts under [image-blaster/.claude/scripts/](image-blaster/.claude/scripts)
+and a React viewer in [image-blaster/app/](image-blaster/app). Needs
+`WORLD_LABS_API_KEY` and `FAL_KEY`; see its README to run it.
 
 ### designcode-agent-skills
 
@@ -85,7 +97,7 @@ tests, installs, or ships:
   `eslint.config.js` and `.i18nrc.json` skip it for the same reason.
 - **Still scanned for credentials.** `scripts/check-secrets.mjs` deliberately
   does NOT skip `third_party/`: a third party's leaked key is still a leaked key
-  in our history. Both trees pass clean.
+  in our history. All trees pass clean.
 - **`demo/` needed an explicit re-include.** [.gitignore](../.gitignore) carries
   an unanchored `demo/` rule for local NVIDIA TRELLIS output, which silently
   swallowed 578 demo files here. `!third_party/**/demo/` re-includes them.
@@ -117,6 +129,7 @@ find third_party/threeui -type f | wc -l
 
 ## Attribution
 
-Both trees are the work of [Meng To](https://github.com/MengTo) and the
-[Design+Code](https://designcode.io) team, used here under the MIT licence.
+threeui and designcode-agent-skills are the work of [Meng To](https://github.com/MengTo) and the
+[Design+Code](https://designcode.io) team; image-blaster is the work of
+[Neilson Koerner-Safrata](https://github.com/neilsonnn). All are used here under the MIT licence.
 Anything we ship that derives from them keeps that attribution with it.

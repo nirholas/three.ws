@@ -1,8 +1,9 @@
 # Vendored design libraries
 
-Two complete MIT source trees from [Meng To](https://github.com/MengTo) live in
+Three complete MIT source trees live in
 [third_party/](../third_party): the **ThreeUI Community** component catalog and the
-**Design+Code agent skills** collection. This page is the three.ws-side guide to
+**Design+Code agent skills** collection (both from [Meng To](https://github.com/MengTo)), and
+**image-blaster**, an image-to-3D-environment pipeline. This page is the three.ws-side guide to
 them: what is in each, what it is good for here, and how to actually run one.
 
 The vendoring contract itself (why they are byte-identical, which guards skip
@@ -10,7 +11,7 @@ them, how to re-sync) is [third_party/README.md](../third_party/README.md). Read
 before you change anything under `third_party/`. The short version: never edit a file
 in place, and never import from `third_party/` at runtime.
 
-## Why these two are in the repo
+## Why these are in the repo
 
 three.ws is a Three.js platform whose product surfaces are galleries of
 interactive 3D things, and whose agents are driven by portable `SKILL.md`
@@ -144,9 +145,47 @@ our own pack is authored.
   unanchored `demo/` ignore rule had to be negated for `third_party/`: a skill
   without its demo is a description instead of a proof.
 
+## third_party/image-blaster
+
+[neilsonnn/image-blaster](https://github.com/neilsonnn/image-blaster), a Claude
+Code workspace that turns one image into a 3D environment in a few minutes: a
+Gaussian splat (`.spz`) of the static scene from World Labs Marble, GLB/OBJ
+meshes of each dynamic object from Hunyuan 3D on FAL, and ambient plus
+per-object SFX from ElevenLabs on FAL. It is the closest open-source reference
+to our own splat ([splat.md](./splat.md)) and Forge generation pipelines.
+
+```
+third_party/image-blaster/
+  .claude/skills/    image-blast-{project,plate,world,3d,sfx,image-edit,uncover,wildcard}
+  .claude/agents/    one subagent per pipeline stage
+  .claude/scripts/   FAL queue, Hunyuan/Meshy 3D, nano-banana and gpt-image-2 edit
+  app/               React + Vite viewer for the generated worlds
+```
+
+### Run it
+
+```bash
+cp -r third_party/image-blaster ~/image-blaster && cd ~/image-blaster
+cp .env.example .env     # WORLD_LABS_API_KEY and FAL_KEY
+claude                   # then: put an image in input/ and ask it to "blast it"
+```
+
+Run it from a copy, not in place: it writes `input/` and `worlds/` output next
+to itself, and the vendored tree must stay byte-identical to upstream.
+
+### What is worth studying first
+
+- `.claude/skills/image-blast-plate/SKILL.md`: the clean-plate step, which
+  removes confirmed foreground objects from the source image before the world
+  is generated.
+- `.claude/scripts/asset-pipeline/fal-queue.mjs`: the shared FAL queue helper
+  (`.env` loading, submit, poll, download) that the 3D and SFX stages reuse.
+- `app/src/utils/worldLoader.ts`: how the viewer discovers generated worlds
+  and resolves each world's local splat URL.
+
 ## Licence
 
-Both trees are MIT, copyright 2026 Meng To. The licence text ships with each
+All three trees are MIT. threeui and designcode-agent-skills are copyright 2026 Meng To; image-blaster is copyright 2026 Neilson Koerner-Safrata. The licence text ships with each
 tree and must stay with it, and with anything derived from it.
 
 ## See also
