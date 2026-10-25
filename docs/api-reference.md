@@ -4094,7 +4094,11 @@ Bonding-curve / graduation status for one pump.fun mint — % to graduation, SOL
 in the curve, tokens remaining, market cap, and whether it has already migrated
 to an AMM (Raydium / PumpSwap). Same engine as
 [`GET /api/crypto/bonding`](crypto-api.md)
-(`api/_lib/pump-bonding.js` `getBondingStatus`).
+(`api/_lib/pump-bonding.js` `getBondingStatus`). Data comes from pump.fun's frontend
+API, backed by a last-known-good copy that survives 6 hours
+(`PUMP_BONDING_LKG_TTL_S`). When pump.fun is unreachable and no copy survives,
+the curve account is read from Solana RPC and the response carries
+`"source": "onchain"` (with `marketCapUsd` null for a coin still on the curve).
 
 ```
 GET /api/v1/pump/curve?mint=<mint>
@@ -4766,7 +4770,7 @@ stored. Errors: `401 unauthenticated`, `403` (cross-site origin),
 GET /api/auth/handoff?code=<code>&next=<path>
 ```
 
-Opened by Safari, never called with `fetch`. On a valid code it consumes it,
+Opened by Safari, never called with `fetch`. A request whose `Sec-Fetch-Site` is `cross-site` or `same-site` (a link followed from another page) is refused and redirected to the login with `handoff_expired`, because honouring it would let an attacker sign a victim in as the attacker; the app's own navigation sends `none`. On a valid code it consumes it,
 replaces any session Safari already had with one for the code's user, and
 answers `302` to the path stored at mint time. A used, expired or malformed code
 redirects to `/login?error=handoff_expired&next=<path>`, so the visitor signs in
@@ -5925,10 +5929,10 @@ Three, not two, and the third is the one to design for.
 | Result | HTTP | Budget | What to do |
 | ------ | ---- | ------ | ---------- |
 | Settled | 200 | Debited | Use the result. `tx_hash` is your receipt. |
-| Rejected pre-settlement | 402 `payment_rejected` | **Restored** | Nothing moved on-chain. Safe to retry. |
+| Host answered 402 after the signed payment was sent | 402 `payment_rejected` | **Held** | The transfer was already handed to the host, and a host that is also the fee payer can broadcast it and still answer 402, so a 402 is not proof nothing landed. Check the ledger or the explorer before retrying. |
 | Submitted, unconfirmed | 502 `settle_uncertain` | **Held** | The transfer may have landed. Do not retry blindly: read `/api/pay/session/:id/executions` or the explorer first. |
 
-The budget is deliberately *not* restored on `settle_uncertain`. Releasing it would let the next call spend money that may already be gone, so the accounting stays conservative and the uncertainty stays visible in the ledger.
+The budget is deliberately *not* restored on `settle_uncertain` or on a 402 after the payment was signed and sent. Releasing it would let the next call spend money that may already be gone, so the accounting stays conservative and the uncertainty stays visible in the ledger.
 
 ### Expiry and refunds
 

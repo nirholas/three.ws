@@ -3,10 +3,16 @@
 	"$comment": "Review baselines for `npm run docs:freshness`. Without this file the only clock a doc has is its own last commit, so a page someone read end to end and found correct still measures as drifting, and the only way to clear it is a cosmetic edit that lies about what happened. A stamp here says a human or an agent checked this doc against the repo at that commit. Freshness is then measured from whichever is newer, the doc's last edit or its last review. Write stamps with `npm run docs:review -- <doc> [more docs] --note \"...\"`, never by hand: the tool resolves the commit, refuses a doc that does not exist, and keeps the ordering stable. kind `verified` means the prose was checked against the code and matched. kind `snapshot` means the doc is a dated record (an audit, an incident writeup, a finished work order) that documents a moment and must not be rewritten to match today's code, so it is never counted as drift.",
 	"reviews": {
 		"STRUCTURE.md": {
-			"commit": "dfd78ded2",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "verified against all 80 drifted files: all are incidental touches from the model-viewer version bump, motion-token migration, and MCP/guards regenerations, none of which change which directory a product surface maps to"
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/3d-api.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/3d-asset-pipeline.md": {
 			"commit": "53f2a200f",
@@ -15,19 +21,19 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/a2a-payments.md": {
-			"commit": "53f2a200f",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/agent-abilities/ABILITIES.md": {
-			"commit": "a3524e6f6",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/agent-abilities/FULL-ARTICLE.md": {
-			"commit": "a3524e6f6",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
@@ -37,6 +43,12 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
+		},
+		"docs/agent-abilities/chapters/04-the-mind.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/agent-abilities/chapters/11-markets-intelligence.md": {
 			"commit": "53f2a200f",
@@ -62,6 +74,12 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/agent-mail.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
 		"docs/agent-shell.md": {
 			"commit": "53f2a200f",
 			"kind": "verified",
@@ -81,10 +99,16 @@
 			"note": "dated record, kept as written"
 		},
 		"docs/agent-wallet-api.md": {
-			"commit": "53f2a200f",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/agora.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/agora/tasks/00-INDEX.md": {
 			"commit": "53f2a200f",
@@ -98,8 +122,26 @@
 			"by": "agent",
 			"note": "dated record, kept as written"
 		},
+		"docs/animation-seeding.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/api-reference.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
 		"docs/apps.md": {
 			"commit": "a3524e6f6",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/ar.md": {
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
@@ -134,23 +176,59 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/aws-builder-center-agent-payment-sessions.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/aws-builder-center-claims-ledger.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/aws-builder-center-open-weight-3d-forge.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
 		"docs/blender-mcp.md": {
 			"commit": "53f2a200f",
 			"kind": "verified",
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
-		"docs/btn-pill-migration.md": {
-			"commit": "53f2a200f",
+		"docs/bnb-vault.md": {
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/btn-pill-migration.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/ca2x402.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/character-studio.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/chatgpt-ar.md": {
-			"commit": "53f2a200f",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/choreography.md": {
 			"commit": "53f2a200f",
@@ -177,10 +255,10 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/copy-trading.md": {
-			"commit": "53f2a200f",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/crawl.md": {
 			"commit": "1396077cf",
@@ -212,11 +290,29 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/discord-activity.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
 		"docs/doc-freshness.md": {
 			"commit": "302d0ae31",
 			"kind": "verified",
 			"by": "agent",
 			"note": "re-read against the exclusion change"
+		},
+		"docs/domains.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/drops.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/economy-master.md": {
 			"commit": "53f2a200f",
@@ -235,6 +331,12 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "read against code drift; fixed where it differed"
+		},
+		"docs/erc8004/validation-attestation.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/event-readiness/01-play-first-impression.md": {
 			"commit": "53f2a200f",
@@ -266,6 +368,18 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/event-readiness/LIVE-OPS.md": {
+			"commit": "0a10f48c2",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "dated record, kept as written"
+		},
+		"docs/fact-check.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
 		"docs/feedback.md": {
 			"commit": "1396077cf",
 			"kind": "verified",
@@ -285,10 +399,10 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/forge-pipeline.md": {
-			"commit": "53f2a200f",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/free-crypto-apis.md": {
 			"commit": "53f2a200f",
@@ -297,10 +411,16 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/guards.md": {
-			"commit": "53f2a200f",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/hold-to-access.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/home-households.md": {
 			"commit": "53f2a200f",
@@ -320,6 +440,18 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/ibm-community-doc-freshness-post.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/ibm-community-long-running-mcp-tools-post.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
 		"docs/internal/MAINNET-TEST-2026-07-03.md": {
 			"commit": "53f2a200f",
 			"kind": "snapshot",
@@ -327,10 +459,10 @@
 			"note": "dated record, kept as written"
 		},
 		"docs/internal/fable-playbook.md": {
-			"commit": "53f2a200f",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/irl/THREAT-MODEL.md": {
 			"commit": "53f2a200f",
@@ -339,10 +471,10 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/labor-market.md": {
-			"commit": "53f2a200f",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/launch-usecases.md": {
 			"commit": "53f2a200f",
@@ -363,10 +495,10 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/money-map.md": {
-			"commit": "53f2a200f",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/news-rights.md": {
 			"commit": "53f2a200f",
@@ -404,6 +536,12 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/open-source-credits.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
 		"docs/ops/cron-auth.md": {
 			"commit": "53f2a200f",
 			"kind": "verified",
@@ -422,11 +560,23 @@
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
+		"docs/ops/guard-wiring.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
 		"docs/ops/home-operations.md": {
 			"commit": "53f2a200f",
 			"kind": "verified",
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
+		},
+		"docs/ops/llm-lanes.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ops/play-store-developer-page.md": {
 			"commit": "53f2a200f",
@@ -435,10 +585,10 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/ops/search-indexing.md": {
-			"commit": "53f2a200f",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ops/solana-rpc-lanes.md": {
 			"commit": "53f2a200f",
@@ -458,6 +608,12 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/ops/x-story-findings-2026-09-30.md": {
+			"commit": "0a10f48c2",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "dated record, kept as written"
+		},
 		"docs/oracle-trading-mcp-plan.md": {
 			"commit": "a3524e6f6",
 			"kind": "verified",
@@ -465,10 +621,10 @@
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/oracle.md": {
-			"commit": "1396077cf",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "read against code drift; fixed where it differed"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/overlay-audit.md": {
 			"commit": "53f2a200f",
@@ -477,10 +633,16 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/page-performance.md": {
-			"commit": "53f2a200f",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/paired-coins.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/play-hardening.md": {
 			"commit": "53f2a200f",
@@ -494,17 +656,29 @@
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
+		"docs/prompts/05-agents-rest-parity.md": {
+			"commit": "0a10f48c2",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "dated record, kept as written"
+		},
+		"docs/prompts/11-agent-mail.md": {
+			"commit": "0a10f48c2",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "dated record, kept as written"
+		},
 		"docs/pump-platform-fee.md": {
-			"commit": "53f2a200f",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/pumpfun-program/UPSTREAM-pumpswap-virtual-quote-reserves.md": {
-			"commit": "53f2a200f",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/research/3d-landscape-2026-10.md": {
 			"commit": "a3524e6f6",
@@ -519,13 +693,19 @@
 			"note": "dated record, kept as written"
 		},
 		"docs/risk-acknowledgment.md": {
-			"commit": "a3524e6f6",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/security/SECURITY_AUDIT.md": {
 			"commit": "53f2a200f",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "dated record, kept as written"
+		},
+		"docs/security/audit-2026-10-25/FINDINGS-DETAIL.md": {
+			"commit": "0a10f48c2",
 			"kind": "snapshot",
 			"by": "agent",
 			"note": "dated record, kept as written"
@@ -543,10 +723,10 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/seeker-app.md": {
-			"commit": "53f2a200f",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/seeker-publishing.md": {
 			"commit": "53f2a200f",
@@ -554,8 +734,14 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/shipfeed.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
 		"docs/site-performance.md": {
-			"commit": "a3524e6f6",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
@@ -693,7 +879,7 @@
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ux-flows/07-crypto-trading-analytics.md": {
-			"commit": "a3524e6f6",
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
@@ -760,6 +946,18 @@
 		},
 		"docs/x-content-pipeline.md": {
 			"commit": "a3524e6f6",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/x-mention-bot.md": {
+			"commit": "0a10f48c2",
+			"kind": "verified",
+			"by": "agent",
+			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/x-partner-series.md": {
+			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"

@@ -531,7 +531,7 @@ All writes are owner-gated and CSRF-gated. `:intentId` must be a UUID.
 
 ### The intent model
 
-Triggers: `on_tip_received` (optional `min_sol`), `on_income`, `on_balance_below` (required `threshold_sol`), `on_schedule` (`cadence` of `daily` or `weekly`, `weekday` 0 through 6, `hour` 0 through 23 UTC), `on_launch_matching` (needs a base58 `creator` and/or a `max_mcap_usd`, optional `min_mcap_usd`), `on_stream_started`, `credits_below` (required `threshold_usd`, the owner's account credits), and `on_mail_received` (optional `from_contains` and `subject_contains` filters, matched case-insensitively). A further trigger, `on_automation`, is fired only by the v1 automation engine, never by the sweep.
+Triggers: `on_tip_received` (optional `min_sol`), `on_income`, `on_balance_below` (required `threshold_sol`), `on_schedule` (`cadence` of `daily` or `weekly`, `weekday` 0 through 6, `hour` 0 through 23 UTC), `on_launch_matching` (needs a base58 `creator` and/or a `max_mcap_usd`, optional `min_mcap_usd`), `on_stream_started`, `credits_below` (required `threshold_usd`, the owner's account credits), and `on_mail_received` (optional `from_contains` and `subject_contains` filters, matched case-insensitively; `from_contains` is an exact sender address or a domain such as `acme.example` or `@acme.example`, which also covers its subdomains, never a substring; the rule fires only for mail whose sender passed DMARC). A further trigger, `on_automation`, is fired only by the v1 automation engine, never by the sweep.
 
 Actions: `tip`, `transfer`, `withdraw`, `split_income` (move SOL: take `pct` with an `of` basis of `tip`, `income`, or `balance`, or a fixed `amount_sol`, or for a withdraw an `above_sol` floor, plus a `destination`), `buy` and `snipe` (need `amount_sol`, plus a `mint` unless the trigger is `on_launch_matching`, with an optional `slippage_pct` clamped to 0 through 50 and defaulting to 5), `freeze` (no parameters, the kill switch), `notify` (optional `message`, `channel` of `email` or `log`), and `fund_inference` (top up the owner's account credits from the agent's USDC: `amount_usdc` from 0.1 to 1000, at most once per rule per UTC day).
 
@@ -1252,6 +1252,8 @@ Rejections are specific, each a `DelegationError` code: `invalid_delegation` (ma
 ### Preflight guard enforcement
 
 [`POST /api/agent/guard`](../api/agent/guard.js) is the one endpoint that actually enforces a delegation's cap. It accepts the same `{ delegation, delegationSignature }` pair inline (registering or re-registering before evaluating `calls`) and, for every proposed call, resolves the call's lamport cost and rejects with `blockedBy: "spend_delegation"` and `code: "DELEGATION_CAP_EXCEEDED"` or `"DELEGATION_EXPIRED"` when the active delegation would be breached. The delegation layer only ever *tightens* an `allow` into a `block`; if the guard's seven existing layers already blocked the call for another reason, the delegation check never runs or overrides it.
+
+The same endpoint also gates `allowance_pull` calls against an owner-funded on-chain allowance (the `/solana/allowance` route, covered in [agent-allowance-budgets.md](agent-allowance-budgets.md)). The live remaining amount is read from the program's own account, a pull it would reject is refused with `blockedBy: "onchain_allowance"` and a specific `code`, and the verdict carries an `allowance` object (`allow`, `code`, `reason`, `detail`, `allowanceId`, `remaining`). If the account cannot be read, the call is not blocked on that basis and a blind spot is recorded instead.
 
 ## Related
 

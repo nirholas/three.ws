@@ -54,7 +54,7 @@ You do not add an attribute to enable AR; you link to (or embed) one of the AR s
 | AR Forge | `/ar` | Generate a model from a prompt and place it immediately |
 | Living-agent AR | `/irl?avatar=<glbUrl>` | A rigged avatar that walks and talks in your room (WebXR) |
 
-The avatar AR page and `/ar/view` (the page `/api/ar` redirects to) render the model in Google's `<model-viewer>` element with `ar ar-modes="webxr scene-viewer quick-look"`, so the same page covers Quick Look, Scene Viewer, and WebXR. The **Place in your space** button appears only when the device exposes a usable AR mode (model-viewer's `canActivateAR`); on desktop the page shows a QR code handoff instead. `/api/ar` itself renders no 3D: it is a server-side router that either 302s into a Scene Viewer intent (plain Android) or serves a tiny Open-Graph interstitial that hands off to `/ar/view` (see [the launcher section](#one-tap-ar-for-any-glb--get-apiar--export_ar)).
+The avatar AR page (`/avatars/<id>/ar`, `/agents/<id>/ar`) renders the model in the `<agent-3d ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor">` element, which owns AR end to end and loads no third-party viewer CDN. `/ar/view` (the page `/api/ar` redirects to) renders it in Google's `<model-viewer>` element with the same `ar ar-modes` attributes. Either way one page covers Quick Look, Scene Viewer, and WebXR. The **Place in your space** button appears only when the device exposes a usable AR mode (model-viewer's `canActivateAR`); on desktop the page shows a QR code handoff instead. `/api/ar` itself renders no 3D: it is a server-side router that either 302s into a Scene Viewer intent (plain Android) or serves a tiny Open-Graph interstitial that hands off to `/ar/view` (see [the launcher section](#one-tap-ar-for-any-glb--get-apiar--export_ar)).
 
 ### Allow XR in iframes
 
@@ -73,7 +73,7 @@ Without `xr-spatial-tracking`, the browser blocks `navigator.xr` inside the fram
 
 ## Programmatic API
 
-On pages that render the model with `<model-viewer>` (the avatar AR page at `/avatars/<id>/ar`, the `/ar/view` launch page, Forge results), AR is driven through model-viewer's API. This is exactly what [src/ar-page.js](../src/ar-page.js) does:
+On pages that render the model with `<model-viewer>` (the `/ar/view` launch page, Forge results), AR is driven through model-viewer's API:
 
 ```js
 const viewer = document.querySelector('model-viewer');
@@ -90,6 +90,8 @@ viewer.addEventListener('ar-status', (e) => {
   console.log('AR status:', e.detail.status);
 });
 ```
+
+`<agent-3d>` matches that contract, which is what the avatar AR page ([src/ar-page.js](../src/ar-page.js)) relies on: the `ar`, `ar-modes`, `ar-placement` (`floor` or `wall`) and `ios-src` attributes, the `canActivateAR` getter and `activateAR()` method, and the `agent:ar-status` (`e.detail.message` progress text) and `agent:ar-ready` events. When no `ios-src` is given and `quick-look` is an allowed mode, the element bakes the USDZ on the device itself. The attribute list is in [specs/EMBED_SPEC.md](../specs/EMBED_SPEC.md).
 
 For a custom viewer without model-viewer, use the three.ws launcher modules directly; see [Using AR without model-viewer](#using-ar-without-model-viewer) below.
 
@@ -131,7 +133,7 @@ The child `<img>` element is required: without it, Safari won't intercept a prog
 
 ## Android Scene Viewer — deep dive
 
-Scene Viewer is launched via an Android intent URL. `src/ar/scene-viewer.js` builds the URL:
+Scene Viewer is launched via an Android intent URL. `src/ar/scene-viewer.js` builds the URL (pass `placement: 'wall'` to add `enable_vertical_placement=true` for models meant to hang on a wall; the default is floor):
 
 ```js
 function openSceneViewer(glbURL, { title = '', link = '' } = {}) {
@@ -208,11 +210,11 @@ navigator.xr.isSessionSupported('immersive-ar')
 For avatars on three.ws, the USDZ is handled automatically:
 
 1. **Pre-generated USDZ:** If the avatar record has a `usdz_url`, it's set as `ios-src` immediately — no conversion needed.
-2. **In-browser animated bake:** If not, the page downloads the GLB and bakes an *animated* USDZ via [src/usdz-animated.js](../src/usdz-animated.js) (`glbBlobToAnimatedUsdzBlob`): the avatar is driven through its idle clip, the skinned vertices are sampled at keyframes, and the samples are written into the USDA as time-sampled points that Quick Look loops natively. So a rigged avatar breathes and idles in your room instead of standing in a frozen pose. This runs inline (a dynamic import, not a Web Worker) and typically takes a few seconds depending on model complexity.
+2. **In-browser animated bake:** If not, the page (via `<agent-3d>`, through `buildBestEffortArUsdz` in [src/usdz-animated.js](../src/usdz-animated.js)) downloads the GLB and bakes an *animated* USDZ via [src/usdz-animated.js](../src/usdz-animated.js) (`glbBlobToAnimatedUsdzBlob`): the avatar is driven through its idle clip, the skinned vertices are sampled at keyframes, and the samples are written into the USDA as time-sampled points that Quick Look loops natively. So a rigged avatar breathes and idles in your room instead of standing in a frozen pose. This runs inline (a dynamic import, not a Web Worker) and typically takes a few seconds depending on model complexity.
 3. **Static fallback:** Any bake failure (no rig, no usable clip) falls back to the plain `USDZExporter` path in [src/usdz-pipeline.js](../src/usdz-pipeline.js), which produces a static frame-0 pose. AR never regresses below static.
 4. **Persistent storage (opt-in):** The AR page's in-browser conversion lives only for that visit (an object URL). Durable USDZ companions come from `generateAndSaveCompanions()` in [src/account.js](../src/account.js), which bakes the animated USDZ, uploads it via `POST /api/avatars/presign-usdz`, and saves `usdz_url` on the avatar record so later AR visits skip the conversion. Companion generation is opt-in per save (`generateCompanions: true`; the `/demos/usdz-ar` demo page enables it) because the bake costs several seconds of client CPU.
 
-The same animated bake serves the `/irl` Place-in-AR button and the `/avatars/:id/ar` page ([src/ar-page.js](../src/ar-page.js)).
+The same animated bake serves the `/irl` Place-in-AR button and the `/avatars/:id/ar` page, where `<agent-3d>` runs it and [src/ar-page.js](../src/ar-page.js) only reflects its `agent:ar-status` progress.
 
 **USDZ limitations to know:**
 - Quick Look plays exactly one baked clip; the full animation library and live retargeting need WebXR
@@ -462,7 +464,10 @@ How this link ships through ChatGPT end to end (the app connector, the custom GP
 ## Put this AR studio on your own site
 
 The multi-model studio at [/ar/studio](/ar/studio) is published as a standalone open-source
-package, so any site can embed the same thing:
+package, so any site can embed the same thing. Its source lives in this repo at
+[`packages/ar-studio`](../packages/ar-studio/README.md), mirrored one way to the repository below,
+and the in-app WebXR session (`src/ar/webxr.js`) imports the package's anchor, occlusion and pinch
+modules directly:
 
 ```html
 <script type="module" src="https://unpkg.com/3d-ar-studio/dist/ar-studio.min.js"></script>

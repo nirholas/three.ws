@@ -189,8 +189,8 @@ normally against the reduced reserve.
 
 | | |
 |---|---|
-| TypeScript SDK (PumpSwap) | `@pump-fun/pump-swap-sdk`, pinned in `package.json`; the field landed in 1.19.0 |
-| TypeScript SDK (bonding curve) | `@pump-fun/pump-sdk`, on the 2.x line since 2026-09-14 |
+| TypeScript SDK (PumpSwap) | `@pump-fun/pump-swap-sdk`, pinned in `package.json` (2.x); the field landed in 1.19.0 |
+| TypeScript SDK (bonding curve) | `@pump-fun/pump-sdk`, pinned in `package.json`; on the 4.x line since 2026-10-09 |
 | Rust SDK | `pump-rust-client@0.1.9` |
 | IDL | `contracts/idl/pump/pump_amm.json`, refreshed via `npm run pump:refresh-idls` |
 

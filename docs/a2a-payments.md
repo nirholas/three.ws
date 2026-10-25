@@ -26,7 +26,9 @@ for what settled A2A payments add up to.
 
 An **Intent Mandate** is a signed, offline-verifiable bearer credential: the
 user's recorded consent that a named agent may spend up to a total budget, with
-a per-call cap, on named networks, for up to 90 days. That is what makes
+a per-call cap, on named networks, for up to 90 days. Issuing one is itself a
+spend: a signed-in session may do it, but an API key or OAuth token needs the
+`wallet:write` scope (`assertBearerMaySpend`), as it does on `a2a-call`. That is what makes
 autonomy possible, and it is also why the mandate cannot be the whole safety
 story. A bearer credential has no revocation of its own: whoever holds it can
 spend its remaining budget until it expires.
@@ -50,7 +52,16 @@ token moves.
 | 4 | Mandate per-call policy | Is this amount, network, currency and resource inside what was authorized? | `amount_over_per_call`, `currency_mismatch`, `network_not_allowed`, `resource_not_allowed` |
 | 5 | Peer reputation (opt-in) | Does the peer clear the caller's ERC-8004 trust bar? | `reputation_too_low`, `reputation_too_few_reviews`, `reputation_unavailable` |
 | 6 | Mandate cumulative budget | Would lifetime spend under this mandate exceed its total cap? | `budget_exceeded` |
+| 6b | Platform ceilings | Is this inside the limits the platform sets and no mandate can widen? Per call $25, per user per day $50, whole payer wallet per day $500 (overridable by `A2A_PLATFORM_PER_CALL_ATOMICS`, `A2A_PLATFORM_USER_DAILY_ATOMICS`, `A2A_PLATFORM_DAILY_ATOMICS`) | `platform_per_call_exceeded`, `platform_user_daily_exceeded`, `platform_daily_exceeded` (all 403) |
 | 7 | The agent's own spend policy | Per-transaction, rolling-daily and per-counterparty ceilings, the owner's plain-English rules, the anomaly guard, any scoped capability | `per_tx_exceeded`, `daily_exceeded`, `counterparty_daily_exceeded`, `policy_blocked`, `policy_step_up`, `policy_freeze`, `wallet_anomaly_frozen`, `capability_required` |
+
+The payer key is platform-held and the mandate is self-issued, so gate 6b is the
+last line of defence when the mandate is huge and the agent's own limits are
+unset. The same platform caps apply when the mandate is issued: a total budget
+above $100 (`A2A_PLATFORM_MAX_MANDATE_ATOMICS`) or a per-call allowance above
+the per-call ceiling is refused with `amount_exceeds_platform_cap`. A payment
+that fails after gate 6b releases both the mandate and the platform
+reservations.
 
 Gate 7 is atomic: it enforces the ceilings **and** writes the payment's pending
 receipt row in one statement under a per-agent advisory lock, so concurrent
@@ -81,6 +92,7 @@ PUT  /api/agents/:id/solana/limits      (CSRF-gated for cookie callers)
 | `per_tx_usd` | Ceiling on any single payment | `null` (uncapped) |
 | `daily_usd` | Rolling 24h ceiling on total outflow | `null` (uncapped) |
 | `per_counterparty_daily_usd` | Rolling 24h ceiling **per payee** | `null` (uncapped) |
+| `approval_threshold_usd` | Above this amount an autonomous x402 payment (`/api/pay/execute`) or agent hire (`/api/agents/a2a-hire`) is parked in the Approval Inbox and answers 202 with a poll link instead of executing; it resumes when the owner approves. The mandate path above does not park, it keeps its hard gates | `null` (no threshold) |
 | `withdraw_allowlist` | Read-only view of the active [destination whitelist](./destination-whitelist.md). Edit it there: new addresses serve a cooldown and need step-up | `[]` |
 | `frozen` | The kill switch. Halts every autonomous path | `false` |
 | `require_capabilities` | Autonomous spends must present a covering scoped capability | `false` |

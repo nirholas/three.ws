@@ -2,8 +2,8 @@
 
 three.ws generates its own animation clips. A prompt from `data/motion-prompts.json`
 goes to our self-hosted text-to-motion GPU worker, the result is measured against a
-quality gate, and the keepers are published into the same clip library the curated
-Mixamo import already serves.
+quality gate, and the keepers are published into the same bulk clip library
+(`GET /api/animations/library`) that the CC0 packs feed.
 
 This document covers what the gate measures and why, because the "why" is the part
 that is easy to get catastrophically wrong.
@@ -13,16 +13,23 @@ that is easy to get catastrophically wrong.
 | Piece | What it does |
 |---|---|
 | `data/motion-prompts.json` | The prompt library: 180 prompts across 10 categories. Data, never a hardcoded list. |
-| `workers/model-text2motion/` | The GPU worker. Samples a motion-diffusion model and returns a three.js `AnimationClip` JSON. |
+| `workers/model-text2motion/` | The GPU worker. Samples a HumanML3D text-to-motion model and returns a three.js `AnimationClip` JSON. Two backends, chosen per `/infer` request with `model`: `mdm` (default, the one the seed runner and `/api/forge-motion` use, and the source of the Kabsch artifacts described below) and `momask`, loaded lazily on first use. |
 | `api/forge-motion.js` | The public route: `POST` a prompt, poll for a clip. Rate limited per IP. |
 | `api/_lib/motion-seed.js` | The prompt loader, the rest-shape conversion, the foot-flick and root-travel repairs, the quality gate, the publishing shape, the free-subset rotation. |
 | `api/_lib/motion-glb.js` | Bakes a clip onto the platform rig as one portable GLB, the artifact the marketplace sells. |
 | `api/_lib/generated-clip-market.js` | The generated collection as a marketplace product line: listing rows, price, and the weekly free rotation. |
 | `scripts/gcp/seed-motion.mjs` | The resumable bulk runner: generate, re-derive, publish, list for sale. |
-| `api/animations/library.js` | Serves the clip manifest that generated clips are merged into. |
+| `api/animations/library.js` | Serves the clip manifest that generated clips are merged into. Drops any entry with no `license`, or whose `source` names Mixamo, before the response serializes (`isPublishable()`). |
+| `scripts/cc0-animation-library.mjs` | Builds the rest of the bulk library from CC0 packs, with per-clip provenance in `scripts/cc0-library.config.json`. |
 
 Generated clips are named `gen-<prompt id>-<hash>`, so they are distinguishable from
-the `mx-` Mixamo import everywhere: in the manifest, the gallery, and any report.
+the other bulk-library clips everywhere: in the manifest, the gallery, and any report.
+Every generated entry carries its `source` and `license`, which the gallery shows
+on each card. The legacy `mx-` Mixamo import is no longer served: Adobe's terms
+allow in-project playback but not redistributing the raw clips, so the publish
+phase of `scripts/mixamo-all.mjs` is permanently disabled and the endpoint
+filters such entries out. Mixamo-era measurements below are kept as the record of
+how the gate was calibrated.
 
 ## Format: the names match, the basis did not
 
@@ -102,7 +109,10 @@ the same 882 takes in the new basis took the accept rate from 47% to 71%, and
 
 The same conversion now runs for on-demand generation: the `/api/forge-motion`
 poll returns the converted clip as `clip` next to the raw `clip_url`, and the
-Animation Studio plays `clip`.
+Animation Studio plays `clip`. `libraryReadyClip` hands `userData` over as a JSON
+string (the basis stamp included), because `AnimationClip.parse()` feeds it to
+`JSON.parse()`; a plain object there made every generated clip die client-side
+with `"[object Object]" is not valid JSON`.
 
 ## Foot flicks: a second Kabsch artifact
 
@@ -239,9 +249,9 @@ touching a number. A broken pipeline looks exactly like a strict gate.
 ## Loop seams
 
 A motion-diffusion sampler does not produce seamless loops. It samples a window, and
-the last frame has no reason to meet the first. This matters because **41% of the
-prompt library (56 of 137) is tagged `loop`**, concentrated exactly where looping
-matters: locomotion (16 of 20), dance (10 of 12), idle (10 of 14).
+the last frame has no reason to meet the first. This matters because **42% of the
+prompt library (75 of 180) is tagged `loop`**, concentrated exactly where looping
+matters: locomotion (21 of 25), dance (14 of 16), idle (14 of 18).
 
 Measured on real output, a generated walk ends **0.25 m** per joint from where it
 started (hips-relative), against **0.000** for the authored library's loops. Published

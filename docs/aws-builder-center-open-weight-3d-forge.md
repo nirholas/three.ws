@@ -3,7 +3,7 @@ title: "Open-weight text-to-3D in production: lanes, failover, and the GPU worke
 venue: AWS Builder Center
 account: three.ws (official organization account, byline "three.ws")
 status: draft, owner approval required before publishing (external-channel gate in CLAUDE.md)
-description: "How a sentence becomes a textured GLB on three.ws: a reference picture first, then a reconstruction lane picked by a health-aware router over our own TRELLIS, Hunyuan3D and TripoSG GPU workers, three layers of failover when a worker dies mid-job, honest cold starts, weight staging that survives a RAM-backed /tmp, the meshopt files our own workers could not read, and the per-generation ledger that tells us what actually happened. Real code, real numbers, and the limits."
+description: "How a sentence becomes a textured GLB on three.ws: a reference picture first, then a reconstruction lane picked by a health-aware router over our own TRELLIS.2, TRELLIS, Hunyuan3D, TripoSG and Modly GPU workers, three layers of failover when a worker dies mid-job, honest cold starts, weight staging that survives a RAM-backed /tmp, the meshopt files our own workers could not read, and the per-generation ledger that tells us what actually happened. Real code, real numbers, and the limits."
 tags: [machine-learning, generative-ai, gpu, open-source, 3d]
 index: docs/aws-builder-center.md
 ---
@@ -49,7 +49,7 @@ prompt
 reference image ladder  (Vertex Gemini, then FLUX lanes, then a keyless rung)
   |  one centered subject, plain background, even light
   v
-health-aware lane router  (our TRELLIS / Hunyuan3D / TripoSG workers, hosted rungs)
+health-aware lane router  (our TRELLIS.2 / TRELLIS / Hunyuan3D / Modly / TripoSG workers, hosted rungs)
   |  submit; failover at submit time if the lane refuses
   v
 GPU worker  (POST /infer -> 202, task state in Cloud Storage)
@@ -62,9 +62,9 @@ A photo skips the first two boxes, because the photo is the reference. A sketch 
 
 ## 2. A picture comes before the shape
 
-The open-weight reconstruction models we run (TRELLIS, Hunyuan3D 2.1, TripoSG) are image-conditioned: they read a picture, not a sentence. So a text prompt is first painted as a reference image, and the realism of the final mesh is set almost entirely by that one image. The module that builds it, [`api/_lib/forge-reference-image.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/forge-reference-image.js), asks for a single centered subject on a plain seamless studio background, soft shadowless light, and real-world materials, because that is what reconstructs into a mesh that looks real.
+The open-weight reconstruction models we run (TRELLIS.2, TRELLIS, Hunyuan3D 2.1, TripoSG) are image-conditioned: they read a picture, not a sentence. So a text prompt is first painted as a reference image, and the realism of the final mesh is set almost entirely by that one image. The module that builds it, [`api/_lib/forge-reference-image.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/forge-reference-image.js), asks for a single centered subject on a plain seamless studio background, soft shadowless light, and real-world materials, because that is what reconstructs into a mesh that looks real.
 
-The picture has its own failover ladder, and its most useful property is not the order of the rungs but the budget they share. Every lane is bounded on its own (90 seconds for Vertex, 60 for the hosted FLUX lane), but in August a stalled leading lane would burn its whole window, then the next lane would burn its own, and the caller's connection was gone before a 3D job even existed. The ladder now shares one budget (60 seconds by default), and a lane that still has a fallback behind it is capped so it hands off with real time to spare. From [`api/_mcp3d/text-to-image.js`](https://github.com/nirholas/three.ws/blob/main/api/_mcp3d/text-to-image.js):
+The picture has its own failover ladder, and its most useful property is not the order of the rungs but the budget they share. Every lane is bounded on its own (90 seconds for Vertex, 60 for the hosted FLUX lane), but in August a stalled leading lane would burn its whole window, then the next lane would burn its own, and the caller's connection was gone before a 3D job even existed. The ladder now shares one budget (60 seconds by default), and a lane that still has a fallback behind it is capped so it hands off with real time to spare. Since 12 October a lane that answers with an auth or billing fault (401, 402 or 403: a dunning hold on Vertex, an exhausted credit balance on a Hugging Face-routed provider) is also parked for five minutes through the shared provider-health breaker, and both the text-to-image ladder and the reference-image builder share one Vertex cooldown key, so a known-dead rung stops re-paying its full timeout on every request. From [`api/_mcp3d/text-to-image.js`](https://github.com/nirholas/three.ws/blob/main/api/_mcp3d/text-to-image.js):
 
 ```js
 export function laneTimeoutMs(ownCeilingMs, { budgetMs, remainingMs, laneRemains }) {
@@ -95,22 +95,24 @@ The engines that matter here:
 
 | Lane id | What runs | Where |
 |---|---|---|
+| `trellis2` | Microsoft TRELLIS.2 (4B, MIT), single-hop image to PBR GLB at 512, 1024 or 1536 resolution; the default image lane at every tier since 9 October | our Cloud Run worker (`workers/model-trellis2`), NVIDIA L4, max 2 instances, min 0 unless raised at deploy |
 | `trellis_selfhost` | Microsoft TRELLIS (image-large), single-hop image to textured GLB | our Cloud Run worker, NVIDIA L4, min 1, max 3 instances |
 | `hunyuan3d` | Tencent Hunyuan3D 2.1, shape DiT plus a PBR paint pass | our Cloud Run worker, NVIDIA RTX PRO 6000, min 1, max 1 |
-| `triposg` | VAST TripoSG, geometry only, no textures | our Cloud Run worker, NVIDIA L4, scales to zero |
+| `triposg` | VAST TripoSG, geometry only, no textures; the sketch lane | our Cloud Run worker, NVIDIA L4, scales to zero |
+| `modly`, `modly_hunyuan` | one Modly worker serving TripoSG (`modly`) and Hunyuan3D 2 Mini Turbo (`modly_hunyuan`), both untextured geometry decimated to the tier's polygon budget | our Cloud Run worker (`workers/modly`) |
 | `nvidia` | TRELLIS on NVIDIA's hosted inference, text only | hosted |
 | `huggingface` | community Spaces chaining Hunyuan3D 2.1, Hunyuan3D 2, TRELLIS, TripoSR | hosted |
 
-The instance counts are what `gcloud run services describe` returned on 8 October, not just what the build files request. Engines that need the caller's own API key also live in the registry, but the router never picks them; they run only when a user names one.
+The instance counts for the Hunyuan3D, TRELLIS and TripoSG rows are what `gcloud run services describe` returned on 8 October, not just what the build files request; the TRELLIS.2 row is what its Cloud Build config sets. Engines that need the caller's own API key also live in the registry, and the router never picks them on a user's behalf; they run only when a user names one. The one exception is Tripo: when the house `TRIPO_API_KEY` is set it becomes the default geometry engine on the High tier, billed to our own credits, and a user's own key is still preferred.
 
-The ordering is one function, `freeLaneCandidates`, and both the plain resolver and the health-aware resolver walk it, so they cannot drift apart. Draft and Standard name our TRELLIS worker; High names our Hunyuan3D worker; behind the named engine comes a fallback chain of `trellis_selfhost`, `hunyuan3d`, `huggingface`, `nvidia`. A photo filters out the text-only hosted lane. At the High tier a prompt that clearly reads as hard-surface (a robot, a vehicle, furniture) swaps TRELLIS ahead of Hunyuan3D, because single-hop reconstruction is crisper on mechanical shapes, while a prompt that trips both classifiers ("a knight in mecha armor") stays organic and keeps Hunyuan3D first. In production a flag, `FORGE_SELFHOST_PRIMARY`, hoists every self-hosted lane ahead of every hosted one, so requests are served on the GPUs we control before any external free allocation.
+The ordering is one function, `freeLaneCandidates`, and both the plain resolver and the health-aware resolver walk it, so they cannot drift apart. As of 9 October every tier names our TRELLIS.2 worker (`FREE_DEFAULT_FOR_TIERS`; the tier picks its resolution, so High buys 1536 rather than a different engine). Behind it comes a fallback chain of `trellis_selfhost`, `hunyuan3d`, `huggingface`, `modly`, `modly_hunyuan`, `nvidia`. A photo filters out the text-only hosted lane. TRELLIS.2 leads because it is MIT licensed with no territory exclusion. Hunyuan3D 2.1 and 2.0 ship under Tencent's community license, which grants no rights in the European Union, the United Kingdom or South Korea, so [`api/_lib/forge-territory.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/forge-territory.js) drops every Tencent-model lane (`hunyuan3d`, `huggingface`, `modly_hunyuan`) from routing, failover, redispatch and suggestions for a request from those countries. The country comes from the edge geo header, never from a caller field, an unknown country fails closed, and an explicit pick of a Tencent lane from a restricted country answers `403 region_restricted`. A hard-surface reorder (a robot, a vehicle, furniture) that used to swap TRELLIS ahead of Hunyuan3D at the High tier still exists in `freeLaneCandidates`, but with TRELLIS ahead of Hunyuan3D by default it is now a no-op. In production a flag, `FORGE_SELFHOST_PRIMARY`, hoists every self-hosted lane ahead of every hosted one, so requests are served on the GPUs we control before any external free allocation.
 
 Then health tempers preference, never the reverse. From `forge-tiers.js`:
 
 ```js
-export function defaultBackendForHealthAware(p, tierId, userImages, health, subjectClass = null) {
-	const candidates = freeLaneCandidates(p, tierId, userImages, subjectClass);
-	if (!candidates.length) return DEFAULT_BACKEND_FOR_PATH[p];
+export function defaultBackendForHealthAware(p, tierId, userImages, health, subjectClass = null, country = null) {
+	const candidates = freeLaneCandidates(p, tierId, userImages, subjectClass, country);
+	if (!candidates.length) return houseDefaultForPath(p, tierId) || DEFAULT_BACKEND_FOR_PATH[p];
 	const statusOf = (id) => health?.[id];
 	const preferred = candidates.find((id) => {
 		const s = statusOf(id);
@@ -119,11 +121,11 @@ export function defaultBackendForHealthAware(p, tierId, userImages, health, subj
 	if (preferred) return preferred;
 	const usable = candidates.find((id) => statusOf(id) !== 'down');
 	if (usable) return usable;
-	return DEFAULT_BACKEND_FOR_PATH[p];
+	return houseDefaultForPath(p, tierId) || DEFAULT_BACKEND_FOR_PATH[p];
 }
 ```
 
-Take the first lane that is healthy or simply unknown, because missing telemetry must never demote a preferred lane. Otherwise take the first that is not confirmed down, because a degraded lane beats a dead end. Only when every candidate is confirmed down, fall back to the standing default. The function is pure: the caller gathers a cached health snapshot and passes it in, and if gathering the snapshot throws, the request keeps the environment-resolved lane and behaves exactly as it did before health routing existed.
+Take the first lane that is healthy or simply unknown, because missing telemetry must never demote a preferred lane. Otherwise take the first that is not confirmed down, because a degraded lane beats a dead end. Only when every candidate is confirmed down, fall back to a configured house-key lane, then the standing default. The function is pure: the caller gathers a cached health snapshot and passes it in, and if gathering the snapshot throws, the request keeps the environment-resolved lane and behaves exactly as it did before health routing existed.
 
 ## 4. A health check has to read the right field
 
@@ -155,10 +157,10 @@ export const MAX_FAILOVER_HOPS = 3;
 ```
 
 ```js
-const ASYNC_REDISPATCH_ORDER = ['trellis_selfhost', 'hunyuan3d', 'trellis', 'triposg'];
+const ASYNC_REDISPATCH_ORDER = ['trellis2', 'trellis_selfhost', 'hunyuan3d', 'trellis', 'modly', 'modly_hunyuan', 'triposg'];
 ```
 
-A job gets its first lane plus up to three backups. Only lanes with an asynchronous submit and status API qualify: Hugging Face Spaces block for the entire generation, and the hosted NVIDIA lane takes text only while a poll-time rescue always rebuilds from the stored picture, so neither can be a rescue rung. In production the third entry, a paid hosted TRELLIS lane, is not configured, so the live chain is our TRELLIS worker, our Hunyuan3D worker, then TripoSG. TripoSG closes it because it returns an untextured mesh: it runs only once every textured lane has failed or is marked down. It earned the slot during an outage from 18 to 28 September that took the Hunyuan3D and TRELLIS workers down together; without it, roughly 400 photo jobs a day ended in a hard failure while the TripoSG worker sat healthy.
+A job gets its first lane plus up to three backups. Only lanes with an asynchronous submit and status API qualify: Hugging Face Spaces block for the entire generation, and the hosted NVIDIA lane takes text only while a poll-time rescue always rebuilds from the stored picture, so neither can be a rescue rung. In production the `trellis` entry, a paid hosted TRELLIS lane, is not configured, so the live chain is our TRELLIS.2 worker, our TRELLIS worker, our Hunyuan3D worker (skipped for requests from the EU, the UK and South Korea), then the untextured geometry lanes: Modly's TripoSG, Modly's Hunyuan3D Mini Turbo, and the TripoSG sketch worker. The geometry lanes close the chain because they return an untextured mesh: they run only once every textured lane has failed or is marked down. (The outage figures below predate TRELLIS.2 and the Modly lanes, when the chain was TRELLIS, Hunyuan3D, TripoSG.) It earned the slot during an outage from 18 to 28 September that took the Hunyuan3D and TRELLIS workers down together; without it, roughly 400 photo jobs a day ended in a hard failure while the TripoSG worker sat healthy.
 
 The one ordering decision we would defend hardest is in the poll handler, [`api/forge.js`](https://github.com/nirholas/three.ws/blob/main/api/forge.js): report "running" only after the successor is durably chaseable.
 
@@ -176,7 +178,7 @@ If the Redis write fails, the handler falls through to a designed failure instea
 
 **Layer two: the failure names its own way out.** When no successor is possible (cap reached, no stored image, nothing configured), the failed response carries `retryable: true` and `retry_backends`: the ordered, configured lanes a fresh request could still use. The Forge page hops to the first one automatically, once per submission, and flips the engine picker so the switch is visible. If that also fails, it shows the remaining lanes as one-click switches.
 
-**Layer three: nobody has to be watching.** A cron, [`api/cron/forge-finalize.js`](https://github.com/nirholas/three.ws/blob/main/api/cron/forge-finalize.js), runs every minute and sweeps rows still marked generating after two minutes. It polls the worker directly, materializes finished models with the same writer the browser path uses, applies the same poll-time failover, sends the completion notification (the attended path never notifies, because the result is already on screen), and after 45 minutes marks anything still unfinished as failed, so no row stays "generating" forever. Close the tab mid-generation and the model still lands in your gallery.
+**Layer three: nobody has to be watching.** A cron, [`api/cron/forge-finalize.js`](https://github.com/nirholas/three.ws/blob/main/api/cron/forge-finalize.js), runs every minute and sweeps rows still marked generating after two minutes, in batches of 25 rows polled eight at a time so one slow backend cannot serialize the tick. It polls the worker directly, materializes finished models with the same writer the browser path uses, applies the same poll-time failover, sends the completion notification (the attended path never notifies, because the result is already on screen), and marks anything still unfinished after 45 minutes as failed, so no row stays "generating" forever. That reap is its own poll-free bulk `UPDATE` that runs ahead of the live-poll batch: when it lived inside the per-row sweep, a backlog of old rows from one slow lane filled every batch and newer rows from other lanes never reached the timeout check. The cron also feeds what it sees back into the submit path: a give-up on the free NVIDIA text lane trips the same cooldown breaker new submissions read, and a stuck text-to-3D job gets one resubmit before it is failed. Close the tab mid-generation and the model still lands in your gallery.
 
 Did it work? Over the same seven days: our TRELLIS worker finished 2,882 jobs and failed 96 attempts, and **93 of those 96 were finished on another lane**. Hunyuan3D finished 312 and failed 67, of which 49 were rescued. TripoSG, the last rung, finished 37 and failed 49, and only 5 of those were rescued, which is what a last rung looks like.
 
@@ -238,7 +240,7 @@ The deploy is a plain `gcloud run deploy` inside a Cloud Build config. From [`wo
       - --timeout=900
 ```
 
-Each instance runs one inference at a time (`MAX_CONCURRENT=1`), so instance count is the concurrent-generation count, and task state lives in Cloud Storage so a job submitted to one instance resolves when polled on another.
+Each instance runs one inference at a time (`MAX_CONCURRENT=1`), so instance count is the concurrent-generation count, and task state lives in Cloud Storage so a job submitted to one instance resolves when polled on another. The TRELLIS worker also restarts itself between jobs: glibc malloc arenas are capped at two, and once host RAM or, since 25 October, GPU memory has ratcheted toward its ceiling (nvdiffrast allocates VRAM outside torch's caching allocator, so it only ever shrinks) the instance drains, refuses new `/infer` calls with a 503 so the caller fails over, finishes queued jobs, and exits so Cloud Run starts a fresh one. That replaces a mid-job OOM kill with one extra model load.
 
 Two worker behaviours came out of one outage. On 2 September a single transient 403 during the TRELLIS model load was cached as the instance's permanent error. Every later task failed against it instantly, and `min-instances=1` kept that dead instance resident and in rotation for about 12 hours. The load is now retried with exponential backoff, and the error latches only once the whole budget is spent:
 
@@ -287,11 +289,11 @@ Hunyuan3D 2.1 taught the second lesson. Its shape model is a single 6.9 GiB chec
       - --memory=80Gi
 ```
 
-That is [`workers/model-hunyuan3d/cloudbuild.hunyuan21rtx.yaml`](https://github.com/nirholas/three.ws/blob/main/workers/model-hunyuan3d/cloudbuild.hunyuan21rtx.yaml). The RTX PRO 6000 tier's platform minimum is 20 CPU and 80 GiB of memory, which clears the ceiling with room to spare. The second fix is the image: Blackwell is compute capability 12.0, and the CUDA 12.4 wheels in the L4 image ship no kernels for it, so the RTX image is built on CUDA 12.8 with its extensions compiled for both 8.9 and 12.0. The same image boots on either GPU, so which card runs it is a deploy flag, not a rebuild. The cost of that choice is build time: a cold build compiles torch extensions for two architectures, and the config allows two hours.
+That is [`workers/model-hunyuan3d/cloudbuild.hunyuan21rtx.yaml`](https://github.com/nirholas/three.ws/blob/main/workers/model-hunyuan3d/cloudbuild.hunyuan21rtx.yaml). The RTX PRO 6000 tier's platform minimum is 20 CPU and 80 GiB of memory, which clears the ceiling with room to spare. The second fix is the image: Blackwell is compute capability 12.0, and the CUDA 12.4 wheels in the L4 image ship no kernels for it, so the RTX image is built on CUDA 12.8 with its extensions compiled for both 8.9 and 12.0. The same image boots on either GPU, so which card runs it is a deploy flag, not a rebuild. The cost of that choice is build time: a cold build compiles torch extensions for two architectures, and the config allows two hours. The deploy step is not a plain rolling update either: the one-GPU RTX quota is held by the serving revision, so a new revision's instance can never start. The config scales the service to zero to release the GPU, deploys, then restores autoscaling (also when the deploy fails, which hands the GPU back to the previous revision), at the price of the lane being down for one model load.
 
 Two smaller habits: pull the previous image before building so `--cache-from` has layers to reuse, and keep the previous model generation deployed. Hunyuan3D 2.0 still runs as its own service, so rolling back is repointing one environment variable.
 
-**On licenses.** "Open-weight" is not one license. TRELLIS, TripoSG and TripoSR are MIT. Hunyuan3D 2.1 ships under Tencent's own license agreement, which carries its own terms; each worker's README records the license of the model it wraps, and we would tell any team to read those terms before choosing which model leads a lane.
+**On licenses.** "Open-weight" is not one license. TRELLIS, TripoSG and TripoSR are MIT. Hunyuan3D 2.1 ships under Tencent's own license agreement, which carries its own terms, including a territory clause that excludes the European Union, the United Kingdom and South Korea (which is why TRELLIS.2 is the default lane and section 3 filters Hunyuan lanes by country); each worker's README records the license of the model it wraps, and we would tell any team to read those terms before choosing which model leads a lane.
 
 ## 10. Every generation is a row
 
@@ -359,11 +361,11 @@ ARG GLTFPACK_VERSION=v1.2
 ARG GLTFPACK_SHA256=ebc236f5f6c08c7e5c5750476a187d24805d44d8c680449c4b7369c333f817b1
 ```
 
-The image build then runs the meshopt unit test, so a broken decoder fails the build instead of a user's job. The five workers that load caller-supplied meshes all pin the same version and checksum.
+The image build then runs the meshopt unit test, so a broken decoder fails the build instead of a user's job. Every worker that loads caller-supplied meshes pins the same version and checksum.
 
 ## 12. Vendored code, and the check that keeps it honest
 
-Each worker's Docker build context is its own directory, so `../` is unreachable and a shared Python module cannot simply be imported. We vendor instead: shared modules live as byte-identical copies in every worker that needs them. Today that is `worker_security.py` (the SSRF-safe fetch and bearer check, in 17 workers) and `gltf_meshopt.py` with its test (5 workers each). Two upload helpers are on the list too, ready for the day a second worker needs them.
+Each worker's Docker build context is its own directory, so `../` is unreachable and a shared Python module cannot simply be imported. We vendor instead: shared modules live as byte-identical copies in every worker that needs them. Today that is `worker_security.py` (the SSRF-safe fetch and bearer check, in 27 workers) and `gltf_meshopt.py` with its test (8 workers each). Two upload helpers are on the list too, ready for the day a second worker needs them.
 
 Copies drift. A fix applied to one copy silently leaves the others on the old behaviour, which this repository has already paid for once. So [`scripts/check-vendored-workers.mjs`](https://github.com/nirholas/three.ws/blob/main/scripts/check-vendored-workers.mjs) hashes every copy, treats the most common hash as canonical, and fails naming each drifted file and the exact `cp` to resync it:
 

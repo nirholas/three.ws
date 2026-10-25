@@ -118,7 +118,7 @@ trading: buys and sells only check that the pool exists.
 | --- | --- |
 | [/markets/robinhood/paired](https://three.ws/markets/robinhood/paired) | Every paired coin, newest first (24 per page, with a load-more button), each with its pool split, dollar market cap and the agent that launched it. Below it, every market a coin can pair with, filterable by class and searchable by ticker, name or contract address. |
 | `/markets/robinhood/paired/:address` | One coin: each pool priced in its own asset and in dollars, a candle chart per pool (`1m` to `1d`), the latest trades refreshed every 15 seconds while the tab is visible, the verified descriptor, and a trade ticket. |
-| [/launch/paired](https://three.ws/launch/paired) | An owner picks one of their agents, up to five markets, the weights (even split by default) and an optional opening buy. Every change is re-quoted live, a confirmation dialog shows the quoted cost before anything is signed, and the result links the new coin. |
+| [/launch/paired](https://three.ws/launch/paired) | A lane picker to switch to the other launch lanes, then an owner picks one of their agents, up to five markets, the weights (even split by default) and an optional opening buy. Every change is re-quoted live, a confirmation dialog shows the quoted cost before anything is signed, and the result links the new coin. |
 
 The trade ticket on a coin page runs entirely in the visitor's own wallet. It prices the trade
 with the launchpad's own `quoteBuy` / `quoteSell` at the curve's current point, sets the minimum
@@ -313,13 +313,15 @@ a coin on the launchpad answers `404 not_found`.
 ### Agent launch and fees
 
 These act for one of your agents and sign with its custodial EVM wallet. Authenticate with the
-owner's session (from the browser, same origin) or with an API key allowed to spend:
-`Authorization: Bearer <key>`. A cross-site request riding the session cookie is refused.
+owner's session (from the browser, same origin) or with an API key or OAuth token that holds
+`wallet:launch` (`wallet:write` implies it): `Authorization: Bearer <key>`. A cross-site request
+riding the session cookie is refused.
 
 | Endpoint | Does |
 | --- | --- |
 | `POST /api/agents/:id/paired/quote` | Prices the launch and checks policy and funding. Signs nothing. |
-| `POST /api/agents/:id/paired/launch` | Sends the launch the quote priced. Answers `201` once it is mined. |
+| `POST /api/agents/:id/paired/launch` | Sends the launch the quote priced. Answers `201` once it is mined, `202` while it is still in flight. |
+| `GET /api/launches/:id` | The launch record behind a `launch`: its stages, transaction, coin address and result. Owner only. |
 | `GET /api/agents/:id/paired/fees` | Swap fees the agent's wallet can claim now, per quote asset. |
 | `POST /api/agents/:id/paired/claim` | Claims every one of them in one transaction, into the agent's wallet. |
 
@@ -410,6 +412,15 @@ Requires the real-funds agreements to be signed. Re-runs every check, stores the
 the approval (only when the opening buy needs one) and the launch, and answers `201` once the
 launch is mined.
 
+Send an `Idempotency-Key` header (8 to 128 printable ASCII characters, scoped to your account).
+Every launch runs under a launch record, returned in a `Location: /api/launches/:id` header. A
+retry with the same key and body returns the same launch (`200` with `idempotent-replay: true`
+once it finished, `202` while it is in flight) instead of launching twice; the same key with a different body is `422 idempotency_key_reused`. If
+the request goes away before the receipt arrives, the response is `202` with `{ launch_id, status,
+launch }`, and `GET /api/launches/:id` finishes and reports the launch once the transaction lands.
+A launch that failed answers `409` with the failure's code and the record in `launch`; retrying needs a new key. The shared
+mechanics are in [launch lanes](launch-lanes.md#idempotency-and-status).
+
 ```json
 {
 	"data": {
@@ -425,6 +436,8 @@ launch is mined.
 			{ "quote_token": "0x117cc2133c37B721F49dE2A7a74833232B3B4C0C", "symbol": "SPY", "weight_pct": 20 }
 		],
 		"tx_hash": "0x…",
+		"launch_id": "…",
+		"launch": { "id": "…", "lane": "paired", "status": "finalized", "stages": ["…"] },
 		"block": "…",
 		"gas_used": "…",
 		"spent_eth": "…",
@@ -468,12 +481,14 @@ Errors use the standard `{ "error", "error_description" }` shape.
 | 400 | `bad_request` | The request is well formed but cannot be launched: an unknown or ambiguous market, a repeated market, weights that do not total 100, a ticker under two characters, a non-https link, a logo that is not an image. The message says which. |
 | 401 | `unauthorized` | No session and no API key. |
 | 403 | `forbidden` | Not your agent, or a cross-site request. |
-| 403 | `insufficient_scope` | The API key lacks `wallet:write`, which every POST here needs. |
-| 403 | `risk_ack_required` | Sign the real-funds agreements at [/legal/agreements](https://three.ws/legal/agreements) first. |
+| 403 | `insufficient_scope` | The API key or token lacks `wallet:launch` (or `wallet:write`), which every POST here needs. |
+| 403 | `risk_ack_required` | On `launch`: sign the real-funds agreements at [/legal/agreements](https://three.ws/legal/agreements) first. |
 | 404 | `not_found` | Unknown agent, or an unknown action. |
 | 409 | `launch_blocked` | The wallet cannot cover the launch. `detail.blockers` says what is missing. |
 | 409 | `platform_signing_disabled` | The agent is in external or session signing mode, so three.ws will not sign for it. |
 | 409 | `nothing_to_claim`, `needs_gas` | No fees have accrued yet, or the wallet cannot pay the claim's gas. |
+| 400 | `invalid_idempotency_key` | The `Idempotency-Key` header is not 8 to 128 printable ASCII characters. |
+| 422 | `idempotency_key_reused` | That key already launched a different coin. `detail.launch_id` names the original. |
 | 422 | `per_tx_limit`, `daily_limit`, `unpriced_spend` | The agent's spend policy refused the launch. |
 | 422 | `bad_request` | The launchpad would revert this exact launch. The message carries the reason. |
 | 422 | `simulation_failed` | The claim would revert. |
@@ -528,9 +543,9 @@ audit trail are identical on both surfaces.
 | `paired_coins` | read | read-only | none |
 | `paired_coin` | read | read-only | none |
 | `paired_launch_quote` | write | not read-only, not destructive | `wallet:read` |
-| `paired_launch` | financial | destructive (moves money) | `wallet:write` |
+| `paired_launch` | financial | destructive (moves money) | `wallet:launch` |
 | `paired_fees` | read | read-only | `wallet:read` |
-| `paired_claim_fees` | write | destructive (moves money) | `wallet:write` |
+| `paired_claim_fees` | write | destructive (moves money) | `wallet:launch` |
 
 The three reads are public on-chain state and are served to anonymous plain JSON-RPC callers:
 
@@ -549,7 +564,8 @@ curl -s -X POST https://three.ws/api/mcp \
 call is refused unless it carries `confirm_launch: true` and a fresh preview id. The preview id is
 issued on the `paired_launch_quote` result (in a text note and in
 `_meta["three.ws/preview"].quote_id`) and is valid for 10 minutes, for the same caller only. Pass it
-to `paired_launch` as `quote_id`. The policy binds every launch argument (`agent_id`, `markets`, `weights`,
+to `paired_launch` as `quote_id`, with an `idempotency_key` so a retry returns the same launch
+rather than a second one; `launch_status` (from the launch tools) reads the record back. The policy binds every launch argument (`agent_id`, `markets`, `weights`,
 `name`, `symbol`, `description`, `image_url`, `socials`, `dev_buy`), so a launch that differs from
 what was quoted is refused with `preview_mismatch`. Only send `confirm_launch: true` after the
 owner approved the quote.

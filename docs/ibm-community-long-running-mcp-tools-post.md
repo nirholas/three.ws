@@ -101,6 +101,7 @@ curl -s https://three.ws/api/mcp-studio \
     "capabilities": {
       "tools": { "listChanged": false },
       "resources": { "listChanged": false, "subscribe": false },
+      "prompts": { "listChanged": false },
       "logging": {}
     },
     "instructions": "three.ws 3D Studio turns a text prompt or an image into an interactive, downloadable 3D model (GLB), free. ... If a result comes back with status \"pending\", the model is still rendering: call check_job(job_id) after the suggested wait to collect it. Before generating a prop, character or animation, search_catalog(q) checks the thousands of ready-made CC0 props, rigged characters and motion clips three.ws already publishes ..."
@@ -108,9 +109,9 @@ curl -s https://three.ws/api/mcp-studio \
 }
 ```
 
-(Trimmed: `instructions` is one paragraph covering every tool.) The server teaches the long-running contract before the model has called anything: if you see `pending`, call `check_job` later.
+(Trimmed: `instructions` is one paragraph covering every tool. The `initialize` capture and the examples in sections 3 to 10 were taken on 2026-10-08; the server has since added `prompts`, which the capture above now shows.) The server teaches the long-running contract before the model has called anything: if you see `pending`, call `check_job` later.
 
-`tools/list` returns fourteen tools, in about 130 ms in our measurements:
+`tools/list` returns sixteen tools, in about 100 ms in our measurements (an early capture, taken on 2026-10-08, listed fourteen; `get_job` and `search_docs` arrived after it):
 
 ```bash
 curl -s https://three.ws/api/mcp-studio \
@@ -121,13 +122,13 @@ curl -s https://three.ws/api/mcp-studio \
 ```json
 [
   "forge_free", "text_to_avatar", "mesh_forge", "rig_mesh", "forge_avatar",
-  "refine_model", "check_job", "look_at_model",
-  "search_catalog", "get_catalog_item", "get_item_source",
+  "refine_model", "check_job", "look_at_model", "get_job",
+  "search_catalog", "get_catalog_item", "get_item_source", "search_docs",
   "create_agent_persona", "get_agent_persona", "persona_say"
 ]
 ```
 
-Six generators, a collector (`check_job`), an inspector (`look_at_model`), three catalog reads, and three persona tools. A second front door, `https://three.ws/api/mcp-chatgpt`, serves the same handler with only the eight 3D tools, for the ChatGPT app listing:
+Six generators, a collector (`check_job`), an inspector (`look_at_model`), a job status tool for unattended agents (`get_job`, see below), three catalog reads, a documentation search (`search_docs`), and three persona tools. A second front door, `https://three.ws/api/mcp-chatgpt`, serves the same handler with only the eight 3D tools, for the ChatGPT app listing:
 
 ```bash
 curl -s https://three.ws/api/mcp-chatgpt \
@@ -139,16 +140,18 @@ curl -s https://three.ws/api/mcp-chatgpt \
 ["forge_free","text_to_avatar","mesh_forge","rig_mesh","forge_avatar","refine_model","check_job","look_at_model"]
 ```
 
-Both doors are rows in one `SURFACES` table in [`api/_mcp-studio/dispatch.js`](https://github.com/nirholas/three.ws/blob/main/api/_mcp-studio/dispatch.js), each naming its catalog, widgets, model instructions and, for ChatGPT only, a call budget:
+The doors are rows in one `SURFACES` table in [`api/_mcp-studio/dispatch.js`](https://github.com/nirholas/three.ws/blob/main/api/_mcp-studio/dispatch.js), each naming its catalog, model instructions and, for hosts with a hard clock, a call budget. The listing below is condensed to the two doors this post uses; the table now has a third row for the Grok connector, with its own budget and sign-in:
 
 ```js
 const SURFACES = {
 	full: {
 		server: 'mcp-studio',
-		catalog: [...TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG],
-		tools: { ...TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
+		catalog: [...TOOL_CATALOG, ...JOB_TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG],
+		tools: { ...TOOLS, ...JOB_TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
 		personas: true,
-		instructions: [...BASE_INSTRUCTIONS, ...CATALOG_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS].join(' '),
+		prompts: true,
+		jobTool: 'get_job',
+		instructions: [...BASE_INSTRUCTIONS, ...JOB_INSTRUCTIONS, ...CATALOG_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS].join(' '),
 	},
 	chatgpt: {
 		server: 'mcp-chatgpt',
@@ -359,6 +362,8 @@ if (ticket) return { status: 'submitting', job_id: ticketHandle(ticket) };
 
 If you take one idea from this post, take this one: **any tool that starts asynchronous work should be able to name that work before it finishes starting it.** It is an idempotency key applied to the start of a long job: the client chooses the identifier, so a lost response never means a lost job, and a retry finds the same work instead of creating a second copy.
 
+**The client-named variant shipped next.** The ticket is minted by our own client for our own submit. An agent that retries a timed-out call needs the same property one level up, so every generation tool now takes an optional `idempotency_key` (any string up to 200 characters). The first call with a key runs; a later call from the same caller with the same key within 24 hours gets that first job back, still running or finished, instead of starting a second one and spending a second slot of the shared free quota. A key reused with different arguments is refused rather than guessed at. The same release added `get_job`, a status tool for agents that run unattended (it answers from the same code as `check_job`, never starts or repeats a generation, and returns `status`, `phase`, `progress` and `eta_seconds` in one stable shape), and `notifications/progress` events for clients that send a `progressToken` and accept an event stream. Details are in the [3D Studio MCP server documentation](https://three.ws/docs/mcp-studio?utm_source=ibm-community). Each generation also now carries a signed run receipt that records what each stage was expected to do and what it did, with the cause whenever a fallback carried a stage.
+
 The same commit fixed a failure that is easy to miss: provider **billing notices** accepted as output. The prompt director rewrites a short prompt into a fuller brief, and a provider's "raise your key budget at https://..." reply was being forwarded as the brief, which, the code comment records, "is how 22 production generations came out of a billing message." The validator now rejects any rewrite containing a link, any that does not end as a finished sentence, and any no longer than what the user typed, and falls back to the user's own words. **Treat upstream text as untrusted until it passes a shape check, especially text that becomes the input to an expensive job.**
 
 ---
@@ -476,7 +481,7 @@ What keeps this true is mechanical verification. `npm run audit:mcp-safety` pars
 
 MCP servers have two more primitives, **resources** and **prompts**, and both are underused. Resources let a client read state without a tool call; prompts let a server ship a whole workflow as a menu item.
 
-The free studio uses resources only for its widgets and lists no prompts. The four account-facing three.ws servers (the main server at `/api/mcp` and three siblings) use both since 2026-09-22, in the changelog's words: "Claude and other AI clients can now read your three.ws account and follow guided flows." The design, in [`api/_mcp/resources.js`](https://github.com/nirholas/three.ws/blob/main/api/_mcp/resources.js) and [`api/_mcp/prompts.js`](https://github.com/nirholas/three.ws/blob/main/api/_mcp/prompts.js), has decisions worth copying.
+The free studio uses resources only for its widgets and lists four prompts, written for unattended agents (`agent-get-started`, `daily-3d-brief`, `asset-pack`, `avatar-from-photo`); the ChatGPT listing serves none. The four account-facing three.ws servers (the main server at `/api/mcp` and three siblings) use both since 2026-09-22, in the changelog's words: "Claude and other AI clients can now read your three.ws account and follow guided flows." The design, in [`api/_mcp/resources.js`](https://github.com/nirholas/three.ws/blob/main/api/_mcp/resources.js) and [`api/_mcp/prompts.js`](https://github.com/nirholas/three.ws/blob/main/api/_mcp/prompts.js), has decisions worth copying.
 
 **Resources are live, read-only views under a URI scheme:** `three://me` (your account and quota), `three://agents` (the agents you own), `three://models` (every model an agent can think on). Each declares one access rule (public, any signed-in user, or a list of scopes) and reads the same tables as the REST route behind the dashboard, "so a resource can never disagree with the dashboard." An anonymous `resources/list` returns only the public ones, three today.
 
@@ -495,7 +500,7 @@ curl -s https://three.ws/api/mcp -H 'content-type: application/json' \
 
 **A fallback for clients without a resource reader:** every resource is also reachable through a `read_resource` tool on the same server. Host support for resources is uneven; the data should not be.
 
-**Prompts are rendered against the live tool catalog,** never a hand-kept list. A prompt is listed only where every tool it needs exists; each tool name passes through a function that throws if the server does not publish it; a test renders every prompt on every server against `tools/list`; confirmation flags are read from each tool's own `inputSchema`. The main server lists fourteen, among them `get-started`, `create-agent`, `hire-agent`, `review-costs` and `embed-avatar`.
+**Prompts are rendered against the live tool catalog,** never a hand-kept list. A prompt is listed only where every tool it needs exists; each tool name passes through a function that throws if the server does not publish it; a test renders every prompt on every server against `tools/list`; confirmation flags are read from each tool's own `inputSchema`. The main server lists sixteen, among them `get-started`, `create-agent`, `review-costs`, `embed-avatar` and `agent-get-started`.
 
 **Prices in metadata must be real.** `three://models` is what an assistant reads to compare model costs. On 2026-09-25 we fixed it so free models read `[0, 0]` rather than `null`, and a key that routes to another model is priced at the model that answers. The concrete case was IBM's: our `ibm-granite` key names no priced model itself, so it read `null`. Live today:
 
@@ -863,7 +868,7 @@ What the toy leaves out, and production needs:
 All of this runs with no account, key, or payment:
 
 ```bash
-# discover the server and its fourteen tools
+# discover the server and its sixteen tools
 curl -s https://three.ws/api/mcp-studio -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq '[.result.tools[].name]'
 
